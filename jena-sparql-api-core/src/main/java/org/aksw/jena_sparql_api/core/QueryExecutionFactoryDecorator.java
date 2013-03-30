@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.core;
 
 import com.hp.hpl.jena.query.Query;
+import com.hp.hpl.jena.query.QueryExecution;
 
 /**
  * @author Claus Stadler
@@ -28,12 +29,12 @@ public class QueryExecutionFactoryDecorator
     }
 
     @Override
-    public QueryExecutionStreaming createQueryExecution(Query query) {
+    public QueryExecution createQueryExecution(Query query) {
         return decoratee.createQueryExecution(query);
     }
 
     @Override
-    public QueryExecutionStreaming createQueryExecution(String queryString) {
+    public QueryExecution createQueryExecution(String queryString) {
         return decoratee.createQueryExecution(queryString);
     }
 }

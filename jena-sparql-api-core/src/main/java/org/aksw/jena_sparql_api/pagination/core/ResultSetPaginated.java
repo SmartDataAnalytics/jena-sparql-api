@@ -5,12 +5,12 @@ import java.util.Iterator;
 
 import org.aksw.commons.collections.PrefetchIterator;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.core.QueryExecutionStreaming;
-import org.openjena.atlas.lib.Closeable;
+import org.apache.jena.atlas.lib.Closeable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hp.hpl.jena.query.Query;
+import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.sparql.engine.binding.Binding;
 import com.hp.hpl.jena.sparql.engine.iterator.QueryIteratorResultSet;
@@ -85,7 +85,7 @@ public class ResultSetPaginated
                 //return null;
             }
 
-            QueryExecutionStreaming qe = service.createQueryExecution(query);
+            QueryExecution qe = service.createQueryExecution(query);
 
             if(execution != null) {
                 execution._setDecoratee(qe);

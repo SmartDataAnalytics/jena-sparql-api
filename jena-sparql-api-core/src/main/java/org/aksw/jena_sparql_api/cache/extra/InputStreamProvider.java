@@ -1,8 +1,8 @@
 package org.aksw.jena_sparql_api.cache.extra;
 
-import org.aksw.commons.collections.IClosable;
-
 import java.io.InputStream;
+
+import org.aksw.commons.collections.IClosable;
 
 /**
  * A class that can provide an InputStream.

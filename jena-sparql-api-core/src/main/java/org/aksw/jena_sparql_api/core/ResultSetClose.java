@@ -1,10 +1,11 @@
 package org.aksw.jena_sparql_api.core;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.hp.hpl.jena.query.QuerySolution;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.sparql.engine.binding.Binding;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 /**

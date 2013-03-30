@@ -1,8 +1,8 @@
 package org.aksw.jena_sparql_api.cache.extra;
 
-import org.apache.commons.compress.compressors.CompressorStreamFactory;
-
 import java.io.InputStream;
+
+import org.apache.commons.compress.compressors.CompressorStreamFactory;
 
 /**
  * @author Claus Stadler

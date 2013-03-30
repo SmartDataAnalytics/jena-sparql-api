@@ -2,11 +2,11 @@ package org.aksw.jena_sparql_api.pagination.core;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactoryBackQuery;
-import org.aksw.jena_sparql_api.core.QueryExecutionStreaming;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.pagination.extra.PaginationQueryIterator;
 
 import com.hp.hpl.jena.query.Query;
+import com.hp.hpl.jena.query.QueryExecution;
 
 /**
  * @author Claus Stadler
@@ -34,7 +34,7 @@ public class QueryExecutionFactoryPaginated
     }
 
     @Override
-    public QueryExecutionStreaming createQueryExecution(Query query) {
+    public QueryExecution createQueryExecution(Query query) {
         PaginationQueryIterator queryIterator = new PaginationQueryIterator(query, pageSize);
         
         return new QueryExecutionIterated(decoratee, queryIterator);

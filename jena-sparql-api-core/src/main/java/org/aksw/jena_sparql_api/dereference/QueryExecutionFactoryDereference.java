@@ -1,9 +1,9 @@
 package org.aksw.jena_sparql_api.dereference;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactoryBackQuery;
-import org.aksw.jena_sparql_api.core.QueryExecutionStreaming;
 
 import com.hp.hpl.jena.query.Query;
+import com.hp.hpl.jena.query.QueryExecution;
 
 /**
  * @author Claus Stadler
@@ -44,7 +44,7 @@ public class QueryExecutionFactoryDereference
     }
 
     @Override
-    public QueryExecutionStreaming createQueryExecution(Query query) {
+    public QueryExecution createQueryExecution(Query query) {
         return new QueryExecutionDereference(query, dereferencer);
     }
 }

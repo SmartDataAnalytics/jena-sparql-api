@@ -1,14 +1,15 @@
 package org.aksw.jena_sparql_api.dereference;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
+
+import org.aksw.jena_sparql_api.core.QueryExecutionAdapter;
+import org.aksw.jena_sparql_api.core.QueryExecutionBaseSelect;
+
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
-import org.aksw.jena_sparql_api.core.QueryExecutionAdapter;
-import org.aksw.jena_sparql_api.core.QueryExecutionBaseSelect;
-
-import java.io.IOException;
-import java.net.URISyntaxException;
 
 /**
  * @author Claus Stadler

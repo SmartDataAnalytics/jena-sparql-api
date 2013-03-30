@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.core;
 
 import com.hp.hpl.jena.query.Query;
+import com.hp.hpl.jena.query.QueryExecution;
 
 /**
  * Similar to QueryExecutionFactoryDecorator, except that a postProcess method can
@@ -17,22 +18,22 @@ public abstract class QueryExecutionFactoryWrapper
 		super(decoratee);
 	}
 
-	protected abstract QueryExecutionStreaming wrap(QueryExecutionStreaming qe);
+	protected abstract QueryExecution wrap(QueryExecution qe);
 	
     @Override
-    public QueryExecutionStreaming createQueryExecution(Query query) {
-    	QueryExecutionStreaming tmp = super.createQueryExecution(query);
+    public QueryExecution createQueryExecution(Query query) {
+    	QueryExecution tmp = super.createQueryExecution(query);
 
-    	QueryExecutionStreaming result = wrap(tmp); 
+    	QueryExecution result = wrap(tmp); 
     	
     	return result;
     }
 
     @Override
-    public QueryExecutionStreaming createQueryExecution(String queryString) {
-    	QueryExecutionStreaming tmp = super.createQueryExecution(queryString);
+    public QueryExecution createQueryExecution(String queryString) {
+    	QueryExecution tmp = super.createQueryExecution(queryString);
     	
-    	QueryExecutionStreaming result = wrap(tmp); 
+    	QueryExecution result = wrap(tmp); 
     	
     	return result;    	
     }

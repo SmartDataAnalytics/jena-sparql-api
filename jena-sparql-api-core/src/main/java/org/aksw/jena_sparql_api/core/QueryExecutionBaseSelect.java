@@ -50,7 +50,7 @@ class TestQueryExecutionBaseSelect
     }
 
     @Override
-    protected QueryExecutionStreaming executeCoreSelectX(Query query) {
+    protected QueryExecution executeCoreSelectX(Query query) {
         System.out.println("Got a query string: " + query);
         return null;
     }
@@ -85,7 +85,7 @@ class TestQueryExecutionBaseSelect
  */
 public abstract class QueryExecutionBaseSelect
         extends QueryExecutionDecorator
-        implements QueryExecutionStreaming
+        implements QueryExecution
 {
 	private static final Logger logger = LoggerFactory
 			.getLogger(QueryExecutionBaseSelect.class);
@@ -128,7 +128,7 @@ public abstract class QueryExecutionBaseSelect
 
     //private QueryExecution running = null;
 
-	abstract protected QueryExecutionStreaming executeCoreSelectX(Query query);
+	abstract protected QueryExecution executeCoreSelectX(Query query);
 	
     protected ResultSetClosable executeCoreSelect(Query query) {
         if(this.decoratee != null) {
@@ -223,7 +223,7 @@ public abstract class QueryExecutionBaseSelect
      * @return
      */
     @Override
-    public Iterator<Triple> execDescribeStreaming() {
+    public Iterator<Triple> execDescribeTriples() {
 
     	
         ResultSetClosable rs = null;
@@ -244,7 +244,7 @@ public abstract class QueryExecutionBaseSelect
         Describer tmp = Describer.create(query.getResultURIs(), query.getResultVars(), rs, subFactory);
 
         
-        final QueryExecutionStreaming self = this;
+        final QueryExecution self = this;
         
         Iterator<Triple> result = new IteratorWrapperClose<Triple>(tmp) {
         	@Override
@@ -275,7 +275,7 @@ public abstract class QueryExecutionBaseSelect
      */
 	@Override
 	public Model execDescribe(Model result) {
-        createModel(result, execDescribeStreaming());
+        createModel(result, execDescribeTriples());
         return result;
 
 
@@ -367,7 +367,7 @@ public abstract class QueryExecutionBaseSelect
 	}
 	
     @Override
-    public Iterator<Triple> execConstructStreaming() {
+    public Iterator<Triple> execConstructTriples() {
         return executeConstructStreaming(this.query);
     }
 

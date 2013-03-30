@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.query.Query;
+import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.QuerySolution;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.Model;
@@ -21,7 +22,7 @@ import com.hp.hpl.jena.util.FileManager;
  *         Time: 12:01 AM
  */
 public class QueryExecutionAdapter
-    implements QueryExecutionStreaming
+    implements QueryExecution
 {
     protected QueryExecutionTimeoutHelper timeoutHelper = new QueryExecutionTimeoutHelper(this);
 
@@ -113,12 +114,22 @@ public class QueryExecutionAdapter
     }
 
 	@Override
-	public Iterator<Triple> execConstructStreaming() {
+	public Iterator<Triple> execConstructTriples() {
         throw new RuntimeException("Not Implemented.");
 	}
 
 	@Override
-	public Iterator<Triple> execDescribeStreaming() {
+	public Iterator<Triple> execDescribeTriples() {
+        throw new RuntimeException("Not Implemented.");
+	}
+
+	@Override
+	public long getTimeout1() {
+        throw new RuntimeException("Not Implemented.");
+	}
+
+	@Override
+	public long getTimeout2() {
         throw new RuntimeException("Not Implemented.");
 	}
 }

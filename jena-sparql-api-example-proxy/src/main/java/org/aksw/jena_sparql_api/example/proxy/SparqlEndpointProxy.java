@@ -1,8 +1,6 @@
 package org.aksw.jena_sparql_api.example.proxy;
 
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -10,13 +8,13 @@ import javax.ws.rs.Path;
 import javax.ws.rs.core.Context;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.core.QueryExecutionStreaming;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.utils.UriUtils;
 import org.aksw.jena_sparql_api.web.SparqlEndpointBase;
 
 import com.google.common.collect.Multimap;
 import com.hp.hpl.jena.query.Query;
+import com.hp.hpl.jena.query.QueryExecution;
 
 
 
@@ -38,7 +36,7 @@ public class SparqlEndpointProxy
 	}
 	
 	@Override
-	public QueryExecutionStreaming createQueryExecution(final Query query, @Context HttpServletRequest req) {
+	public QueryExecution createQueryExecution(final Query query, @Context HttpServletRequest req) {
 		
 		Multimap<String, String> qs = UriUtils.parseQueryString(req.getQueryString());
 		
@@ -61,7 +59,7 @@ public class SparqlEndpointProxy
 
 		
 		QueryExecutionFactory qef = new QueryExecutionFactoryHttp(serviceUri);
-		QueryExecutionStreaming result = qef.createQueryExecution(query);
+		QueryExecution result = qef.createQueryExecution(query);
 		
 		return result;
 	}

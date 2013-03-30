@@ -5,7 +5,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactoryDecorator;
-import org.aksw.jena_sparql_api.core.QueryExecutionStreaming;
 import org.aksw.jena_sparql_api.core.Time;
 
 import com.hp.hpl.jena.query.Query;
@@ -70,8 +69,8 @@ public class QueryExecutionFactoryTimeout
     }
 
     @Override
-    public QueryExecutionStreaming createQueryExecution(Query query) {
-        QueryExecutionStreaming result = super.createQueryExecution(query);
+    public QueryExecution createQueryExecution(Query query) {
+        QueryExecution result = super.createQueryExecution(query);
 
         configureWithTimeout(result);
 
@@ -79,8 +78,8 @@ public class QueryExecutionFactoryTimeout
     }
 
     @Override
-    public QueryExecutionStreaming createQueryExecution(String queryString) {
-        QueryExecutionStreaming result = super.createQueryExecution(queryString);
+    public QueryExecution createQueryExecution(String queryString) {
+        QueryExecution result = super.createQueryExecution(queryString);
 
         configureWithTimeout(result);
 

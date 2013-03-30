@@ -1,9 +1,10 @@
 package org.aksw.jena_sparql_api.cache.extra;
 
 
+import org.aksw.commons.collections.IClosable;
+
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.Model;
-import org.aksw.commons.collections.IClosable;
 
 /**
  * @author Claus Stadler

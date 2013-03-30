@@ -1,9 +1,9 @@
 package org.aksw.jena_sparql_api.cache.extra;
 
-import org.aksw.commons.collections.IClosable;
-
 import java.io.IOException;
 import java.io.InputStream;
+
+import org.aksw.commons.collections.IClosable;
 
 /**
  * @author Claus Stadler

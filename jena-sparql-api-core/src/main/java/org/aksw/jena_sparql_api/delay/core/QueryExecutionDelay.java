@@ -2,11 +2,11 @@ package org.aksw.jena_sparql_api.delay.core;
 
 import java.util.Iterator;
 
-import org.aksw.jena_sparql_api.core.QueryExecutionStreaming;
-import org.aksw.jena_sparql_api.core.QueryExecutionStreamingDecorator;
+import org.aksw.jena_sparql_api.core.QueryExecutionDecorator;
 import org.aksw.jena_sparql_api.delay.extra.Delayer;
 
 import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.Model;
 
@@ -17,12 +17,12 @@ import com.hp.hpl.jena.rdf.model.Model;
  *         Time: 10:57 AM
  */
 public class QueryExecutionDelay
-    extends QueryExecutionStreamingDecorator
+    extends QueryExecutionDecorator
 
 {
     private Delayer delayer;
 
-    public QueryExecutionDelay(QueryExecutionStreaming decoratee, Delayer delayer) {
+    public QueryExecutionDelay(QueryExecution decoratee, Delayer delayer) {
         super(decoratee);
         this.delayer = delayer;
     }
@@ -64,15 +64,15 @@ public class QueryExecutionDelay
      }
      
      @Override
-     public Iterator<Triple> execConstructStreaming() {
+     public Iterator<Triple> execConstructTriples() {
          delayer.doDelay();
-         return super.execConstructStreaming();
+         return super.execConstructTriples();
      }
 
      @Override
-     public Iterator<Triple> execDescribeStreaming() {
+     public Iterator<Triple> execDescribeTriples() {
          delayer.doDelay();
-         return super.execConstructStreaming();
+         return super.execConstructTriples();
      }
      
 }

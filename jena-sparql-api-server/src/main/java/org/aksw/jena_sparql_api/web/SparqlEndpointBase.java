@@ -27,15 +27,15 @@ import org.aksw.jena_sparql_api.cache.extra.CacheCoreH2;
 import org.aksw.jena_sparql_api.cache.extra.CacheEx;
 import org.aksw.jena_sparql_api.cache.extra.CacheExImpl;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.core.QueryExecutionStreaming;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.pagination.core.QueryExecutionFactoryPaginated;
 import org.aksw.jena_sparql_api.utils.SparqlFormatterUtils;
-import org.openjena.atlas.lib.Sink;
-import org.openjena.riot.out.SinkTripleOutput;
+import org.apache.jena.atlas.lib.Sink;
+import org.apache.jena.riot.out.SinkTripleOutput;
 
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.Query;
+import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.QueryFactory;
 import com.hp.hpl.jena.query.Syntax;
 import com.hp.hpl.jena.rdf.model.Model;
@@ -67,7 +67,7 @@ public abstract class SparqlEndpointBase {
 	
 	//public abstract QueryExecutionFactory getQueryExecutionFactory(@Context HttpServletRequest req);
 	
-	public abstract QueryExecutionStreaming createQueryExecution(Query query, @Context HttpServletRequest req);	
+	public abstract QueryExecution createQueryExecution(Query query, @Context HttpServletRequest req);	
 	
 	//public abstract processQuery(@Context HttpServletRequest req, String queryString);
 	
@@ -89,7 +89,7 @@ public abstract class SparqlEndpointBase {
 				result.add(triple);
 			}
 		}
-		
+
 		return result;
 	}
 	
@@ -229,7 +229,7 @@ public abstract class SparqlEndpointBase {
 		
 		QueryExecutionFactory qef = createQef(serviceUri);
 
-		final QueryExecutionStreaming qe = qef.createQueryExecution(query);
+		final QueryExecution qe = qef.createQueryExecution(query);
 		
 		
 		return new StreamingOutput() {
@@ -285,7 +285,7 @@ public abstract class SparqlEndpointBase {
 	{
 		Query query = QueryFactory.create(queryString, Syntax.syntaxSPARQL_11);
 		
-		QueryExecutionStreaming qe = createQueryExecution(query, req);
+		QueryExecution qe = createQueryExecution(query, req);
 		
 		return ProcessQuery.processQuery(query, format, qe);
 	}
@@ -322,7 +322,7 @@ public abstract class SparqlEndpointBase {
 	//@Produces("application/rdf+xml")
 	//@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	@GET
-	@Produces(HttpParams.contentTypeRDFXML)
+	@Produces("application/rdf+xml") //HttpParams.contentTypeRDFXML)
 	public StreamingOutput executeQueryRdfXml(@Context HttpServletRequest req, @QueryParam("query") String queryString)
 			throws Exception {
 		return processQuery(req, queryString, SparqlFormatterUtils.FORMAT_RdfXml);
@@ -331,7 +331,7 @@ public abstract class SparqlEndpointBase {
 
 	@POST
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-	@Produces(HttpParams.contentTypeRDFXML)
+	@Produces("application/rdf+xml")// HttpParams.contentTypeRDFXML)
 	public StreamingOutput executeQueryRdfXmlPost(@Context HttpServletRequest req, @FormParam("query") String queryString)
 			throws Exception {
 		return processQuery(req, queryString, SparqlFormatterUtils.FORMAT_RdfXml);

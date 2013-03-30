@@ -3,8 +3,6 @@ package org.aksw.jena_sparql_api.compare;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactoryBackQuery;
-import org.aksw.jena_sparql_api.core.QueryExecutionStreaming;
-import org.aksw.jena_sparql_api.core.QueryExecutionStreamingWrapper;
 
 import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.query.QueryExecution;
@@ -39,7 +37,7 @@ public class QueryExecutionFactoryCompare
     }
 
     @Override
-    public QueryExecutionStreaming createQueryExecution(Query query) {
+    public QueryExecution createQueryExecution(Query query) {
 
         if(removeSlices) {
             query = (Query)query.clone();
@@ -50,8 +48,8 @@ public class QueryExecutionFactoryCompare
         }
 
         //boolean isOrdered = !query.getOrderBy().isEmpty();
-        QueryExecution tmp = new QueryExecutionCompare(query, a.createQueryExecution(query), b.createQueryExecution(query), false);
-        QueryExecutionStreaming result = QueryExecutionStreamingWrapper.wrap(tmp);
+        QueryExecution result = new QueryExecutionCompare(query, a.createQueryExecution(query), b.createQueryExecution(query), false);
+        //QueryExecution result = QueryExecutionWrapper.wrap(tmp);
         return result;
     }
 

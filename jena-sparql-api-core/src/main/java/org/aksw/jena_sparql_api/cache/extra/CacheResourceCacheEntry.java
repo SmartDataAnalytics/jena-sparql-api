@@ -1,17 +1,17 @@
 package org.aksw.jena_sparql_api.cache.extra;
 
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.query.ResultSetFactory;
-import com.hp.hpl.jena.rdf.model.Model;
-import org.aksw.jena_sparql_api.core.ResultSetClosable;
-import org.aksw.jena_sparql_api.core.ResultSetClose;
-import org.aksw.commons.util.StreamUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
+
+import org.aksw.commons.util.StreamUtils;
+import org.aksw.jena_sparql_api.core.ResultSetClosable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.hp.hpl.jena.query.ResultSet;
+import com.hp.hpl.jena.query.ResultSetFactory;
+import com.hp.hpl.jena.rdf.model.Model;
 
 
 /**

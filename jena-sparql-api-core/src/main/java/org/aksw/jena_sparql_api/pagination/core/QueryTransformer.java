@@ -1,9 +1,8 @@
 package org.aksw.jena_sparql_api.pagination.core;
 
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryVisitor;
-
 import java.util.Iterator;
+
+import com.hp.hpl.jena.query.Query;
 
 /**
  * @author Claus Stadler

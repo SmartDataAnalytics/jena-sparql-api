@@ -1,7 +1,9 @@
 package org.aksw.jena_sparql_api.core;
 
+import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 
+import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.query.QueryExecution;
@@ -24,12 +26,12 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
     protected T decoratee;
 
     public QueryExecutionDecoratorBase(T decoratee) {
-    	//this.decoratee = new QueryExecutionStreamingWrapper(decoratee);
+    	//this.decoratee = new QueryExecutionWrapper(decoratee);
     	this.setDecoratee(decoratee);
     }
 
     /*
-    public QueryExecutionDecoratorBase(QueryExecutionStreaming decoratee)
+    public QueryExecutionDecoratorBase(QueryExecution decoratee)
     {
     	this.setDecoratee(decoratee);
         //this.decoratee = decoratee;
@@ -135,4 +137,24 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
     public void setTimeout(long timeout1, long timeout2) {
         decoratee.setTimeout(timeout1, timeout2);
     }
+
+	@Override
+	public Iterator<Triple> execConstructTriples() {
+		return decoratee.execConstructTriples();
+	}
+
+	@Override
+	public Iterator<Triple> execDescribeTriples() {
+		return decoratee.execDescribeTriples();
+	}
+
+	@Override
+	public long getTimeout1() {
+		return decoratee.getTimeout1();
+	}
+
+	@Override
+	public long getTimeout2() {
+		return decoratee.getTimeout2();
+	}
 }

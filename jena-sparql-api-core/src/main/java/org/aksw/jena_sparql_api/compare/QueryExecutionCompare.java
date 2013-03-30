@@ -1,30 +1,30 @@
 package org.aksw.jena_sparql_api.compare;
 
-import com.google.common.collect.HashMultiset;
-import com.google.common.collect.Multiset;
-import com.google.common.collect.Multisets;
-import com.hp.hpl.jena.query.*;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.rdf.model.RDFNode;
-import com.hp.hpl.jena.sparql.core.QuerySolutionBase;
-import com.hp.hpl.jena.sparql.resultset.ResultSetCompare;
-import com.hp.hpl.jena.sparql.util.Context;
-import com.hp.hpl.jena.sparql.util.ResultSetUtils;
-import com.hp.hpl.jena.sparql.util.VarUtils;
-import com.hp.hpl.jena.util.FileManager;
+import java.util.Iterator;
+import java.util.concurrent.TimeUnit;
+
 import org.aksw.commons.collections.diff.Diff;
 import org.aksw.commons.collections.diff.ListDiff;
 import org.aksw.commons.collections.diff.ModelDiff;
 import org.aksw.commons.util.strings.StringUtils;
-import org.apache.commons.validator.Var;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import com.google.common.collect.HashMultiset;
+import com.google.common.collect.Multiset;
+import com.google.common.collect.Multisets;
+import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.query.Query;
+import com.hp.hpl.jena.query.QueryExecution;
+import com.hp.hpl.jena.query.QuerySolution;
+import com.hp.hpl.jena.query.ResultSet;
+import com.hp.hpl.jena.query.ResultSetFactory;
+import com.hp.hpl.jena.query.ResultSetRewindable;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.sparql.util.Context;
+import com.hp.hpl.jena.util.FileManager;
 
 
 /**
@@ -456,14 +456,34 @@ public class QueryExecutionCompare
         b.setTimeout(timeout1, timeout2);
     }
 
+	@Override
+	public Iterator<Triple> execConstructTriples() {
+		throw new RuntimeException("Not implemented yet");
+	}
+
+	@Override
+	public Iterator<Triple> execDescribeTriples() {
+		throw new RuntimeException("Not implemented yet");
+	}
+
+	@Override
+	public long getTimeout1() {
+		return a.getTimeout1();
+	}
+
+	@Override
+	public long getTimeout2() {
+		return a.getTimeout2();
+	}
+
     /*
     @Override
-    public Iterator<Triple> execConstructStreaming() {
+    public Iterator<Triple> execConstructTriples() {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
-    public Iterator<Triple> execDescribeStreaming() {
+    public Iterator<Triple> execDescribeTriples() {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }*/
 }

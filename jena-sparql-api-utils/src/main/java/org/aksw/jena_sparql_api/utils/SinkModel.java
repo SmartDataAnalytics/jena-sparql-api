@@ -1,11 +1,12 @@
 package org.aksw.jena_sparql_api.utils;
 
+import org.apache.jena.atlas.lib.Sink;
+
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.sparql.util.ModelUtils;
-import org.openjena.atlas.lib.Sink;
 
 
 /**

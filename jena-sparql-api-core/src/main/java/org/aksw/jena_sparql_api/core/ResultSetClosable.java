@@ -1,7 +1,8 @@
 package org.aksw.jena_sparql_api.core;
 
-import com.hp.hpl.jena.query.ResultSet;
 import org.aksw.commons.collections.IClosable;
+
+import com.hp.hpl.jena.query.ResultSet;
 
 /**
  * @author Claus Stadler

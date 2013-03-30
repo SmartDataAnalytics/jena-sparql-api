@@ -3,10 +3,9 @@ package org.aksw.jena_sparql_api.pagination.core;
 import java.util.Iterator;
 import java.util.List;
 
+import org.aksw.jena_sparql_api.core.QueryExecutionDecorator;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.core.QueryExecutionStreaming;
-import org.aksw.jena_sparql_api.core.QueryExecutionStreamingDecorator;
-import org.openjena.atlas.io.IndentedWriter;
+import org.apache.jena.atlas.io.IndentedWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +36,7 @@ import com.hp.hpl.jena.sparql.serializer.SerializationContext;
  *         Time: 7:59 PM
  */
 public class QueryExecutionIterated
-        extends QueryExecutionStreamingDecorator
+        extends QueryExecutionDecorator
 {
     private static final Logger logger = LoggerFactory.getLogger(QueryExecutionIterated.class);
 
@@ -54,7 +53,7 @@ public class QueryExecutionIterated
     private QueryExecution current;
 
 
-    synchronized void _setDecoratee(QueryExecutionStreaming decoratee) {
+    synchronized void _setDecoratee(QueryExecution decoratee) {
         super.setDecoratee(decoratee);
     }
 

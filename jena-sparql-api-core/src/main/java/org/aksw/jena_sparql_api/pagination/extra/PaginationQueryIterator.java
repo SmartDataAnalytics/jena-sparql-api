@@ -7,10 +7,9 @@ package org.aksw.jena_sparql_api.pagination.extra;
  *         Time: 8:00 PM
  */
 
-import com.hp.hpl.jena.query.Query;
 import org.aksw.commons.collections.SinglePrefetchIterator;
 
-import java.util.Iterator;
+import com.hp.hpl.jena.query.Query;
 
 /**
  *

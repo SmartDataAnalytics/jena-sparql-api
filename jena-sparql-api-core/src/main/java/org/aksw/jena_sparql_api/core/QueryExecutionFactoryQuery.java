@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.core;
 
 
 import com.hp.hpl.jena.query.Query;
+import com.hp.hpl.jena.query.QueryExecution;
 
 /**
  * @author Claus Stadler
@@ -10,5 +11,5 @@ import com.hp.hpl.jena.query.Query;
  *         Time: 9:30 PM
  */
 public interface QueryExecutionFactoryQuery {
-    QueryExecutionStreaming createQueryExecution(Query query);
+    QueryExecution createQueryExecution(Query query);
 }

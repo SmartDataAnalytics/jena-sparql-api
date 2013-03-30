@@ -1,12 +1,12 @@
 package org.aksw.jena_sparql_api.core;
 
 
+import java.util.List;
+
 import com.hp.hpl.jena.query.QuerySolution;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.sparql.engine.binding.Binding;
-
-import java.util.List;
 
 /**
  * @author Claus Stadler

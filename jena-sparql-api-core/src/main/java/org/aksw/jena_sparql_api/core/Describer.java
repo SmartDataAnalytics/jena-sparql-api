@@ -12,6 +12,7 @@ import org.aksw.jena_sparql_api.utils.CannedQueryUtils;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.Query;
+import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.sparql.core.Var;
 import com.hp.hpl.jena.sparql.engine.binding.Binding;
 
@@ -35,7 +36,7 @@ public class Describer
     private Iterator<Var> currentVar = null;
     private QueryExecutionFactory qef;
 
-    private QueryExecutionStreaming currentQe = null;
+    private QueryExecution currentQe = null;
 
     public Describer(Iterator<Node> openNodes, ResultSetClosable rs, Collection<Var> resultVars, QueryExecutionFactory qef)
     {
@@ -73,9 +74,9 @@ public class Describer
     public Iterator<Triple> describeNodeStreaming(Node node) {
         Query query = CannedQueryUtils.constructBySubject(node);
 
-        QueryExecutionStreaming qe = qef.createQueryExecution(query);
+        QueryExecution qe = qef.createQueryExecution(query);
 
-        return qe.execConstructStreaming();
+        return qe.execConstructTriples();
     }
 
     @Override
@@ -131,7 +132,7 @@ public class Describer
 //    	}
         currentQe = qef.createQueryExecution(q);
 
-        Iterator<Triple> result = currentQe.execConstructStreaming();
+        Iterator<Triple> result = currentQe.execConstructTriples();
         return result;
     }
     

@@ -2,7 +2,6 @@ package org.aksw.jena_sparql_api.limit;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactoryDecorator;
-import org.aksw.jena_sparql_api.core.QueryExecutionStreaming;
 
 import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.query.QueryExecution;
@@ -31,7 +30,7 @@ public class QueryExecutionFactoryLimit
         this.limit = limit;
     }
 
-    public QueryExecutionStreaming createQueryExecution(Query query) {
+    public QueryExecution createQueryExecution(Query query) {
         if(limit != null) {
             if(query.getLimit() == Query.NOLIMIT) {
                 if(doCloneQuery) {
@@ -56,9 +55,9 @@ public class QueryExecutionFactoryLimit
     }
 
     @Override
-    public QueryExecutionStreaming createQueryExecution(String queryString) {
+    public QueryExecution createQueryExecution(String queryString) {
     	Query query = QueryFactory.create(queryString);
-    	QueryExecutionStreaming result = createQueryExecution(query);
+    	QueryExecution result = createQueryExecution(query);
         return result;
     }
 

@@ -1,8 +1,6 @@
 package org.aksw.jena_sparql_api.model;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactoryBackQuery;
-import org.aksw.jena_sparql_api.core.QueryExecutionStreaming;
-import org.aksw.jena_sparql_api.core.QueryExecutionStreamingWrapper;
 
 import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.query.QueryExecution;
@@ -46,9 +44,9 @@ public class QueryExecutionFactoryModel
     }
 
     @Override
-    public QueryExecutionStreaming createQueryExecution(Query query) {
-    	QueryExecution tmp = QueryExecutionFactory.create(query, model);
-    	QueryExecutionStreaming result = QueryExecutionStreamingWrapper.wrap(tmp);
+    public QueryExecution createQueryExecution(Query query) {
+    	QueryExecution result = QueryExecutionFactory.create(query, model);
+    	//QueryExecution result = QueryExecutionWrapper.wrap(tmp);
     	return result;
     }
 }

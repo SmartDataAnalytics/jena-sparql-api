@@ -3,9 +3,9 @@ package org.aksw.jena_sparql_api.cache.core;
 import org.aksw.jena_sparql_api.cache.extra.CacheEx;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactoryDecorator;
-import org.aksw.jena_sparql_api.core.QueryExecutionStreaming;
 
 import com.hp.hpl.jena.query.Query;
+import com.hp.hpl.jena.query.QueryExecution;
 
 /**
  * @author Claus Stadler
@@ -30,12 +30,12 @@ public class QueryExecutionFactoryCacheEx
     }
 
     @Override
-    public QueryExecutionStreaming createQueryExecution(Query query) {
+    public QueryExecution createQueryExecution(Query query) {
         return new QueryExecutionCacheEx(super.createQueryExecution(query), service, query.toString(), cache);
     }
 
     @Override
-    public QueryExecutionStreaming createQueryExecution(String queryString) {
+    public QueryExecution createQueryExecution(String queryString) {
         return new QueryExecutionCacheEx(super.createQueryExecution(queryString), service, queryString, cache);
     }
 }

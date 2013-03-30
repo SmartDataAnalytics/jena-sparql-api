@@ -1,12 +1,13 @@
 package org.aksw.jena_sparql_api.core;
 
-import com.hp.hpl.jena.query.QueryExecution;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.hp.hpl.jena.query.QueryExecution;
 
 
 /**

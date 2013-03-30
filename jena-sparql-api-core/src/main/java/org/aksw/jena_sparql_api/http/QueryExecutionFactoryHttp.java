@@ -6,10 +6,9 @@ import java.util.Collections;
 import java.util.List;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactoryBackString;
-import org.aksw.jena_sparql_api.core.QueryExecutionStreaming;
-import org.aksw.jena_sparql_api.core.QueryExecutionStreamingWrapper;
 
 import com.google.common.base.Joiner;
+import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.sparql.engine.http.QueryEngineHTTP;
 
 /**
@@ -50,11 +49,11 @@ public class QueryExecutionFactoryHttp
     }
 
     @Override
-    public QueryExecutionStreaming createQueryExecution(String queryString) {
-        QueryEngineHTTP engine = new QueryEngineHTTP(service, queryString);
-        engine.setDefaultGraphURIs(defaultGraphs);
+    public QueryExecution createQueryExecution(String queryString) {
+        QueryEngineHTTP result = new QueryEngineHTTP(service, queryString);
+        result.setDefaultGraphURIs(defaultGraphs);
 
-        QueryExecutionStreaming result = QueryExecutionStreamingWrapper.wrap(engine);
+        //QueryExecution result = QueryExecutionWrapper.wrap(engine);
         
         return result;
     }

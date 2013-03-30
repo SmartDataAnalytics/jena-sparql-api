@@ -4,11 +4,11 @@ import java.io.IOException;
 
 import org.aksw.jena_sparql_api.cache.extra.Cache;
 import org.aksw.jena_sparql_api.cache.extra.CacheResource;
-import org.aksw.jena_sparql_api.core.QueryExecutionStreaming;
-import org.aksw.jena_sparql_api.core.QueryExecutionStreamingDecorator;
+import org.aksw.jena_sparql_api.core.QueryExecutionDecorator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
@@ -21,7 +21,7 @@ import com.hp.hpl.jena.rdf.model.ModelFactory;
  *         Time: 4:11 PM
  */
 public class QueryExecutionCache
-    extends QueryExecutionStreamingDecorator
+    extends QueryExecutionDecorator
 {
     private static final Logger logger = LoggerFactory.getLogger(QueryExecutionCache.class);
 
@@ -29,7 +29,7 @@ public class QueryExecutionCache
     private Cache cache;
     private String queryString;
 
-    public QueryExecutionCache(QueryExecutionStreaming decoratee, String queryString, Cache cache) {
+    public QueryExecutionCache(QueryExecution decoratee, String queryString, Cache cache) {
         super(decoratee);
 
         this.queryString = queryString;
