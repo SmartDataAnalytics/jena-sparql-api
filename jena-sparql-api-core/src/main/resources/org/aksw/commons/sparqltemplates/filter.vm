@@ -1,0 +1,3 @@
+#foreach( $filter in $filterList )
+$filter
+#end
