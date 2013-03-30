@@ -14,18 +14,18 @@ import org.slf4j.LoggerFactory;
 import com.sun.jersey.spi.container.servlet.ServletContainer;
 
 
-public class RestServiceMain {
+public class SparqlEndpointProxyMain {
 	/**
 	 * @param exitCode
 	 */
 	public static void printHelpAndExit(int exitCode) {
 		HelpFormatter formatter = new HelpFormatter();
-		formatter.printHelp(RestServiceMain.class.getName(), cliOptions);
+		formatter.printHelp(SparqlEndpointProxyMain.class.getName(), cliOptions);
 		System.exit(exitCode);
 	}
 
 	private static final Logger logger = LoggerFactory
-			.getLogger(RestServiceMain.class);
+			.getLogger(SparqlEndpointProxyMain.class);
 	private static final Options cliOptions = new Options();
 
 	/**
@@ -44,8 +44,8 @@ public class RestServiceMain {
 		CommandLineParser cliParser = new GnuParser();
 
 		cliOptions.addOption("P", "port", true, "Server port");
-		cliOptions.addOption("C", "context", true, "Context e.g. /sparqlify");
-		cliOptions.addOption("B", "backlog", true, "Maximum number of connections");
+		//cliOptions.addOption("C", "context", true, "Context e.g. /sparqlify");
+		//cliOptions.addOption("B", "backlog", true, "Maximum number of connections");
 
 		cliOptions.addOption("s", "default service uri", true, "");
 		cliOptions.addOption("o", "allow override of default service uri", true, "");
@@ -68,32 +68,16 @@ public class RestServiceMain {
 
 		
 		ServletHolder sh = new ServletHolder(ServletContainer.class);
-		
-		/*
-		 * For 0.8 and later the "com.sun.ws.rest" namespace has been renamed to
-		 * "com.sun.jersey". For 0.7 or early use the commented out code instead
-		 */
-		// sh.setInitParameter("com.sun.ws.rest.config.property.resourceConfigClass",
-		// "com.sun.ws.rest.api.core.PackagesResourceConfig");
-		// sh.setInitParameter("com.sun.ws.rest.config.property.packages",
-		// "jetty");
+		sh.setHeldClass(org.atmosphere.cpr.AtmosphereServlet.class);
+		sh.setInitParameter("com.sun.jersey.api.json.POJOMappingFeature", "true");
 		sh.setInitParameter(
 				"com.sun.jersey.config.property.resourceConfigClass",
 				"com.sun.jersey.api.core.PackagesResourceConfig");
 		sh.setInitParameter("com.sun.jersey.config.property.packages",
-				"org.aksw.jena_sparql_api.web");
+				"org.aksw.jena_sparql_api.example.proxy");
+	
 
 		Server server = new Server(port);
-
-
-		ServletHolder sh2 = new ServletHolder(ServletContainer.class);
-		sh2.setHeldClass(org.atmosphere.cpr.AtmosphereServlet.class);
-		sh2.setInitParameter("com.sun.jersey.api.json.POJOMappingFeature", "true");
-		sh2.setInitParameter(
-				"com.sun.jersey.config.property.resourceConfigClass",
-				"com.sun.jersey.api.core.PackagesResourceConfig");
-		sh2.setInitParameter("com.sun.jersey.config.property.packages",
-				"org.mappush.resource");
 
 		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
 		context.setContextPath("/");
@@ -102,7 +86,7 @@ public class RestServiceMain {
 		//context.addServlet(sh, "/*");
 		
 
-		context.addServlet(sh2, "/*");
+		context.addServlet(sh, "/*");
 
 		
 		context.setAttribute("defaultServiceUri", defaultServiceUri);

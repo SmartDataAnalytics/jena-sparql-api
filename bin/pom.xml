@@ -436,13 +436,13 @@
 			
 
 
-			<!-- The xerces depencency is needed at least with Jena 2.9.0-incubating -->
-			<dependency>
-				<groupId>xerces</groupId>
-				<artifactId>xercesImpl</artifactId>
-				<version>2.10.0</version>
-				<scope>runtime</scope>
-			</dependency>
+<!-- Not sure if we need this for getting Jena to work -->
+<!-- 			<dependency> -->
+<!-- 				<groupId>xerces</groupId> -->
+<!-- 				<artifactId>xercesImpl</artifactId> -->
+<!-- 				<version>2.10.0</version> -->
+<!-- 				<scope>runtime</scope> -->
+<!-- 			</dependency> -->
 	
 
 			<!-- Collection Libraries -->
