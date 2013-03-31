@@ -40,17 +40,17 @@ This library as of now is composed of two modules:
 
 ### Usage
 
-Here is a brief summary of what you can do. A complete example is avaible [here]()
+Here is a brief summary of what you can do. A complete example is avaible [here](https://github.com/AKSW/jena-sparql-api/blob/master/jena-sparql-api-core/src/main/java/org/aksw/jena_sparql_api/example/Example.java)
 
-* Http Query Execution Factory
+Http Query Execution Factory
 
     QueryExecutionFactory qef = new QueryExecutionFactoryHttp("http://dbpedia.org/sparql", "http://dbpedia.org");
 
-* Adding a 2000 millisecond delay in order to be nice to the backend
+Adding a 2000 millisecond delay in order to be nice to the backend
 
     qef = new QueryExecutionFactoryDelay(qef, 2000);
 
-* Set up a cache
+Set up a cache
 
     // Some boilerplace code which may get simpler soon
     long timeToLive = 24l * 60l * 60l * 1000l; 
@@ -59,11 +59,11 @@ Here is a brief summary of what you can do. A complete example is avaible [here]
 
     qef = new QueryExecutionFactoryCacheEx(qef, cacheFrontend);
 
-* Add pagination with (for the sake of demonstration) 900 entries per page (we could have used 1000 as well)
+Add pagination with (for the sake of demonstration) 900 entries per page (we could have used 1000 as well)
 
     qef = new QueryExecutionFactoryPaginated(qef, 900);
 
-* Create and run a query on this fully buffed QueryExecutionFactory
+Create and run a query on this fully buffed QueryExecutionFactory
 		
     QueryExecution qe = qef.createQueryExecution("Select ?s { ?s a <http://dbpedia.org/ontology/City> } Limit 5000");
 		
