@@ -1,4 +1,4 @@
-## Welcome to the SPARQL API project: A collection of simple extensions of Jena offering many goodies!
+## Welcome to the SPARQL API project: A collection of simple utilities for Jena offering many goodies!
 This library offers several [Jena](http://jena.apache.org/)-compatible ways to *transparently* add delays, caching, pagination and even query transformations before sending off your original SPARQL query.
 
 ### Maven
