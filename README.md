@@ -85,7 +85,7 @@ Running the example:
 
 In your browser or a terminal visit:
 
-[http://localhost:5522/sparql?service-uri=http://dbpedia.org/sparql&query=Select * { ?s ?p ?o } Limit 10](http://localhost:5522/sparql?service-uri=http%3A%2F%2Fdbpedia.org%2Fsparql?query=Select%20%2A%20%7B%20%3Fs%20%3Fp%20%3Fo%20%7D%20Limit%2010)
+[http://localhost:5522/sparql?service-uri=http://dbpedia.org/sparql&query=Select * { ?s ?p ?o } Limit 10](http://localhost:5522/sparql?service-uri=http%3A%2F%2Fdbpedia.org%2Fsparql&query=Select%20%2A%20%7B%20%3Fs%20%3Fp%20%3Fo%20%7D%20Limit%2010)
 
 
 ## License
