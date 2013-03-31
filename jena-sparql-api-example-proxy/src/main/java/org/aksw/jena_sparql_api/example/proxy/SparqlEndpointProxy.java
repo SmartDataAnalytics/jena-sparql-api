@@ -28,7 +28,9 @@ public class SparqlEndpointProxy
 	public SparqlEndpointProxy(@Context ServletContext context) {
 		
 		this.defaultServiceUri = (String)context.getAttribute("defaultServiceUri");
-		this.allowOverrideServiceUri = (Boolean)context.getAttribute("allowOverrideServiceUri");
+		
+		Boolean tmp = (Boolean)context.getAttribute("allowOverrideServiceUri");
+		this.allowOverrideServiceUri = tmp == null ? true : tmp; 
 		
 		if(!allowOverrideServiceUri && (defaultServiceUri == null || defaultServiceUri.isEmpty()) ) {
 			throw new RuntimeException("Overriding of service URI disabled, but no default URI set.");
@@ -40,7 +42,7 @@ public class SparqlEndpointProxy
 		
 		Multimap<String, String> qs = UriUtils.parseQueryString(req.getQueryString());
 		
-		Collection<String> serviceUris = qs.get("serviceUri");
+		Collection<String> serviceUris = qs.get("service-uri");
 		String serviceUri;
 		if(serviceUris == null || serviceUris.isEmpty()) {
 			serviceUri = defaultServiceUri;

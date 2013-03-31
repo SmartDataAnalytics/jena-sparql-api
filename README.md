@@ -1,15 +1,91 @@
 ## Welcome to the SPARQL API project: A collection of simple extensions of Jena offering many goodies!
 This library offers several [Jena](http://jena.apache.org/)-compatible ways to *transparently* add delays, caching, pagination and even query transformations before sending off your original SPARQL query.
 
-TODO Maven + Examples goes here.
+### Maven
+
+    <repositories>
+        <repository>
+            <id>maven.aksw.internal</id>
+            <name>University Leipzig, AKSW Maven2 Repository</name>
+            <url>http://maven.aksw.org/archiva/repository/internal</url>
+        </repository>
+
+        <repository>
+            <id>maven.aksw.snapshots</id>
+            <name>University Leipzig, AKSW Maven2 Repository</name>
+            <url>http://maven.aksw.org/archiva/repository/snapshots</url>
+        </repository>
+    </repositories>
+
+
+    <dependency>
+        <groupId>org.aksw.jena-sparql-api</groupId>
+        <artifactId>jena-sparql-api-core</artifactId>
+        <version>0.6.0-SNAPSHOT</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.aksw.jena-sparql-api</groupId>
+        <artifactId>jena-sparql-api-server</artifactId>
+        <version>0.6.0-SNAPSHOT</version>
+    </dependency>
+
+### Project structure
 
 This library as of now is composed of two modules:
-* `sparql-api`: Contains the core interfaces and basic implementations.
-* `sparql-server`: An abstract SPARQL enpdoint class that allows you to easily create your own SPARQL endpoint. For example, the SPARQL-SQL rewriter [Sparqlify](http://github.com/AKSW/Sparqlify) is implemented against these interfaces.
+* `jena-sparql-api-core`: Contains the core interfaces and basic implementations.
+* `jena-sparql-api-server`: An abstract SPARQL enpdoint class that allows you to easily create your own SPARQL endpoint. For example, the SPARQL-SQL rewriter [Sparqlify](http://github.com/AKSW/Sparqlify) is implemented against these interfaces.
+* `jena-sparql-api-utils`: Utilities common to all packages.
+* `jena-sparql-api-example-proxy`: An example how to create a simple SPARQL proxy. You can easily adapt it to add pagination, caching and delays.
+
+### Usage
+
+Here is a brief summary of what you can do. A complete example is avaible [here]()
+
+* Http Query Execution Factory
+
+    QueryExecutionFactory qef = new QueryExecutionFactoryHttp("http://dbpedia.org/sparql", "http://dbpedia.org");
+
+* Adding a 2000 millisecond delay in order to be nice to the backend
+
+    qef = new QueryExecutionFactoryDelay(qef, 2000);
+
+* Set up a cache
+
+    // Some boilerplace code which may get simpler soon
+    long timeToLive = 24l * 60l * 60l * 1000l; 
+    CacheCoreEx cacheBackend = CacheCoreH2.create("sparql", timeToLive, true);
+    CacheEx cacheFrontend = new CacheExImpl(cacheBackend);
+
+    qef = new QueryExecutionFactoryCacheEx(qef, cacheFrontend);
+
+* Add pagination with (for the sake of demonstration) 900 entries per page (we could have used 1000 as well)
+
+    qef = new QueryExecutionFactoryPaginated(qef, 900);
+
+* Create and run a query on this fully buffed QueryExecutionFactory
+		
+    QueryExecution qe = qef.createQueryExecution("Select ?s { ?s a <http://dbpedia.org/ontology/City> } Limit 5000");
+		
+    ResultSet rs = qe.execSelect();
+    System.out.println(ResultSetFormatter.asText(rs));
 
 
+### Proxy Server Example
+This example demonstrates how you can create your own SPARQL web service.
+You only have to subclass `SparqlEndpointBase` and override the `createQueryExecution` method.
 
-### Do it yourself data conversion
+Running the example:
+
+    cd jena-sparql-api-example-proxy
+    mvn jetty:run
+    # This will now start the proxy on part 5522
+
+In your browser or a terminal now 
+
+    [http://localhost:5522/sparql?service-uri=http%3A%2F%2Fdbpedia.org%2Fsparql?Select%20%2A%20%7B%20%3Fs%20%3Fp%20%3Fo%20%7D%20Limit%2010](http://http://localhost:5522/sparql?service-uri=http://dbpedia.org/sparql&query=Select * { ?s ?p ?o } Limit 10)
+
+
 ## License
 Will be clarified shortly.
 

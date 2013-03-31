@@ -67,8 +67,9 @@ public class SparqlEndpointProxyMain {
 
 
 		
-		ServletHolder sh = new ServletHolder(ServletContainer.class);
-		sh.setHeldClass(org.atmosphere.cpr.AtmosphereServlet.class);
+		//ServletHolder sh = new ServletHolder(ServletContainer.class);
+		ServletHolder sh = new ServletHolder(org.atmosphere.cpr.AtmosphereServlet.class);
+		//sh.setHeldClass(org.atmosphere.cpr.AtmosphereServlet.class);
 		sh.setInitParameter("com.sun.jersey.api.json.POJOMappingFeature", "true");
 		sh.setInitParameter(
 				"com.sun.jersey.config.property.resourceConfigClass",

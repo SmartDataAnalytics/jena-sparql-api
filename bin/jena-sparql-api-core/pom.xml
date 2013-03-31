@@ -31,6 +31,11 @@
             <groupId>org.apache.jena</groupId>
             <artifactId>jena-arq</artifactId>
         </dependency>
+<!-- 		<dependency> required at least by Jena 2.9.0-incubating -->
+<!-- 			<groupId>xerces</groupId> -->
+<!-- 			<artifactId>xercesImpl</artifactId> -->
+<!-- 		</dependency> -->
+
 
         <!-- Database - used for SPARQL caching, Runtime dep, as the DB is started automatically on connection -->
         <dependency>

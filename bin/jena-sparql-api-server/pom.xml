@@ -37,6 +37,11 @@
 				<groupId>org.atmosphere</groupId>
 				<artifactId>atmosphere-jersey</artifactId>
 			</dependency>
+			<dependency>
+			    <groupId>xml-apis</groupId>
+			    <artifactId>xml-apis</artifactId>
+			</dependency>
+			
 <!-- 			<dependency> -->
 <!-- 				<groupId>com.sun.jersey</groupId> -->
 <!-- 				<artifactId>jersey-json</artifactId> -->
