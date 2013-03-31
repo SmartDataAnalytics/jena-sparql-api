@@ -74,6 +74,7 @@ Create and run a query on this fully buffed QueryExecutionFactory
 ### Proxy Server Example
 This example demonstrates how you can create your own SPARQL web service.
 You only have to subclass `SparqlEndpointBase` and override the `createQueryExecution` method.
+Look at the [Source Code](https://github.com/AKSW/jena-sparql-api/blob/master/jena-sparql-api-example-proxy/src/main/java/org/aksw/jena_sparql_api/example/proxy/SparqlEndpointProxy.java) to see how easy it is.
 
 Running the example:
 
