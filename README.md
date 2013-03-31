@@ -40,7 +40,7 @@ This library as of now is composed of two modules:
 
 ### Usage
 
-Here is a brief summary of what you can do. A complete example is avaible [here](https://github.com/AKSW/jena-sparql-api/blob/master/jena-sparql-api-core/src/main/java/org/aksw/jena_sparql_api/example/Example.java)
+Here is a brief summary of what you can do. A complete example is avaible [here](https://github.com/AKSW/jena-sparql-api/blob/master/jena-sparql-api-core/src/main/java/org/aksw/jena_sparql_api/example/Example.java).
 
 Http Query Execution Factory
 
@@ -83,7 +83,7 @@ Running the example:
 
 In your browser or a terminal visit:
 
-[http://http://localhost:5522/sparql?service-uri=http://dbpedia.org/sparql&query=Select * { ?s ?p ?o } Limit 10](http://localhost:5522/sparql?service-uri=http%3A%2F%2Fdbpedia.org%2Fsparql?Select%20%2A%20%7B%20%3Fs%20%3Fp%20%3Fo%20%7D%20Limit%2010)
+[http://localhost:5522/sparql?service-uri=http://dbpedia.org/sparql&query=Select * { ?s ?p ?o } Limit 10](http://localhost:5522/sparql?service-uri=http%3A%2F%2Fdbpedia.org%2Fsparql?Select%20%2A%20%7B%20%3Fs%20%3Fp%20%3Fo%20%7D%20Limit%2010)
 
 
 ## License
