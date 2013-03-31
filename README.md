@@ -32,7 +32,7 @@ This library offers several [Jena](http://jena.apache.org/)-compatible ways to *
 
 ### Project structure
 
-This library as of now is composed of two modules:
+This library is composed of the following modules:
 * `jena-sparql-api-core`: Contains the core interfaces and basic implementations.
 * `jena-sparql-api-server`: An abstract SPARQL enpdoint class that allows you to easily create your own SPARQL endpoint. For example, the SPARQL-SQL rewriter [Sparqlify](http://github.com/AKSW/Sparqlify) is implemented against these interfaces.
 * `jena-sparql-api-utils`: Utilities common to all packages.
