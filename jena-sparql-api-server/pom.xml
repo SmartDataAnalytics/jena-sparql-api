@@ -129,10 +129,10 @@
 <!-- 			</dependency> -->
 
 			<!-- Gson: Java to Json conversion -->
-			<dependency>
-				<groupId>com.google.code.gson</groupId>
-				<artifactId>gson</artifactId>
-			</dependency>
+<!-- 			<dependency> -->
+<!-- 				<groupId>com.google.code.gson</groupId> -->
+<!-- 				<artifactId>gson</artifactId> -->
+<!-- 			</dependency> -->
 
 			<dependency>
 				<groupId>junit</groupId>
