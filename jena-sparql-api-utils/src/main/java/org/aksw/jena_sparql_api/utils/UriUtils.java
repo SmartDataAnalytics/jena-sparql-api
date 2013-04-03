@@ -30,6 +30,10 @@ public class UriUtils {
 	{
         Multimap<String, String> result = ArrayListMultimap.create();
 	    
+        if(queryString == null) {
+        	return result;
+        }
+        
         for (String param : queryString.split("&")) {
 	        String pair[] = param.split("=");
 	        String key = URLDecoder.decode(pair[0], "UTF-8");
