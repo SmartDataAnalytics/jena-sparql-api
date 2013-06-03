@@ -21,13 +21,13 @@ This library offers several [Jena](http://jena.apache.org/)-compatible ways to *
     <dependency>
         <groupId>org.aksw.jena-sparql-api</groupId>
         <artifactId>jena-sparql-api-core</artifactId>
-        <version>0.6.0-SNAPSHOT</version>
+        <version>2.10.0-3</version>
     </dependency>
 
     <dependency>
         <groupId>org.aksw.jena-sparql-api</groupId>
         <artifactId>jena-sparql-api-server</artifactId>
-        <version>0.6.0-SNAPSHOT</version>
+        <version>2.10.0-3</version>
     </dependency>
 
 ### Project structure
