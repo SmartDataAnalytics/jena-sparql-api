@@ -99,4 +99,3 @@ This project makes use of several dependencies: When in doubt, please cross-chec
 * [rdf-json-writer](https://github.com/kasabi/rdf-json-writer) (currently copied but also under Apache 2.0 license, will be changed to maven dep)
 
 
-
