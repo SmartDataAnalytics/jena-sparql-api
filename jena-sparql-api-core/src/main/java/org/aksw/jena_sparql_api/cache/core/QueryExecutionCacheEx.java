@@ -44,7 +44,7 @@ public class QueryExecutionCacheEx
     }
 
 
-    public ResultSet doCacheResultSet()
+    public synchronized ResultSet doCacheResultSet()
     {
         CacheResource resource = cache.lookup(service, queryString);
 
@@ -85,7 +85,7 @@ public class QueryExecutionCacheEx
         return resource.asResultSet();
     }
 
-    public Model doCacheModel(Model result, ModelProvider modelProvider) {
+    public synchronized Model doCacheModel(Model result, ModelProvider modelProvider) {
         try {
             return _doCacheModel(result, modelProvider);
         } catch (IOException e) {
@@ -93,7 +93,7 @@ public class QueryExecutionCacheEx
         }
     }
 
-    public Model _doCacheModel(Model result, ModelProvider modelProvider) throws IOException {
+    public synchronized Model _doCacheModel(Model result, ModelProvider modelProvider) throws IOException {
         CacheResource resource = cache.lookup(service, queryString);
 
         if(resource == null || resource.isOutdated()) {
@@ -130,7 +130,7 @@ public class QueryExecutionCacheEx
         return resource.asModel(result);
     }
     
-    public boolean doCacheBoolean()
+    public synchronized boolean doCacheBoolean()
     {
         CacheResource resource = cache.lookup(service, queryString);
 
