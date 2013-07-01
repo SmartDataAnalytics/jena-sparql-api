@@ -24,11 +24,12 @@ public class PaginationUtils {
         QueryExecution qe = factory.createQueryExecution(query);
         ResultSet rs = qe.execSelect();
 
-        long size = 1;
+        long size = 0;
         while(rs.hasNext()) {
             ++size;
             rs.next();
         }
+        size = Math.max(size, 1);
         qe.close();
 
         return size >= requestedPageSize
