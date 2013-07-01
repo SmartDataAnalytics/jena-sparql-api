@@ -24,7 +24,7 @@ public class PaginationUtils {
         QueryExecution qe = factory.createQueryExecution(query);
         ResultSet rs = qe.execSelect();
 
-        long size = 0;
+        long size = 1;
         while(rs.hasNext()) {
             ++size;
             rs.next();
