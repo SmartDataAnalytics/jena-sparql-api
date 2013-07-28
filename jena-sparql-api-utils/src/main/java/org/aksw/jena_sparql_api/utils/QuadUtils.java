@@ -6,12 +6,40 @@ import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.sparql.core.QuadPattern;
 import com.hp.hpl.jena.sparql.core.Var;
 import com.hp.hpl.jena.sparql.engine.binding.Binding;
+import com.hp.hpl.jena.sparql.engine.binding.BindingHashMap;
 import org.aksw.commons.collections.MapUtils;
 
 import java.util.*;
 
 public class QuadUtils
 {
+
+        public static final String ng = "g";
+        public static final String ns = "s";
+        public static final String np = "p";
+        public static final String no = "o";
+        public static final List<String>quadVarNames = Arrays.asList(ng, ns, np, no);
+
+        public static final Var vg = Var.alloc(ng);
+        public static final Var vs = Var.alloc(ns);
+        public static final Var vp = Var.alloc(np);
+        public static final Var vo = Var.alloc(no);
+
+        public static final List<Var >quadVars = Arrays.asList(vg, vs, vp, vo);
+
+
+        public static Binding quadToBinding(Quad quad) {
+                BindingHashMap result = new BindingHashMap();
+
+
+                result.add(vg, quad.getGraph());
+                result.add(vs, quad.getSubject());
+                result.add(vp, quad.getPredicate());
+                result.add(vo, quad.getObject());
+
+                return result;
+        }
+
 
 	/**
 	 * Substitutes the keys in the map
