@@ -29,6 +29,7 @@ public class PaginationUtils {
             ++size;
             rs.next();
         }
+        size = Math.max(size, 1);
         qe.close();
 
         return size >= requestedPageSize

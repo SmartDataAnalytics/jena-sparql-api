@@ -17,6 +17,7 @@ import com.hp.hpl.jena.sparql.expr.E_LogicalNot;
 import com.hp.hpl.jena.sparql.expr.Expr;
 import com.hp.hpl.jena.sparql.expr.ExprVar;
 import com.hp.hpl.jena.sparql.expr.NodeValue;
+import com.hp.hpl.jena.sparql.expr.aggregate.AggCount;
 import com.hp.hpl.jena.sparql.syntax.ElementFilter;
 import com.hp.hpl.jena.sparql.syntax.ElementGroup;
 import com.hp.hpl.jena.sparql.syntax.ElementPathBlock;
@@ -53,6 +54,35 @@ public class CannedQueryUtils {
             query.getProject().add(Var.alloc(o.getName()));
         }
 
+        return query;
+    }
+    
+    public static Query spoCountTemplate() {
+        return spoTemplate(Node.createVariable("s"), Node.createVariable("p"), Node.createVariable("o"));
+    }
+
+    public static Query spoCountTemplate(Node s, Node p, Node o)
+    {
+        Query query = QueryFactory.create();
+        query.setQuerySelectType();
+
+        Triple triple = new Triple(s, p, o);
+        ElementGroup group = new ElementGroup();
+        group.addTriplePattern(triple);
+        query.setQueryPattern(group);
+
+        if(s.isVariable()) {
+            query.getProject().add(Var.alloc(s.getName()));
+        }
+        if(p.isVariable()) {
+            query.getProject().add(Var.alloc(p.getName()));
+        }
+        if(o.isVariable()) {
+            query.getProject().add(Var.alloc(o.getName()));
+        }
+        
+        query.allocAggregate(new AggCount());
+        
         return query;
     }
 
