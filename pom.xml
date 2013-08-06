@@ -458,6 +458,14 @@
 				<artifactId>util</artifactId>
 				<version>${aksw.commons.version}</version>
 				<scope>compile</scope>
+
+                                <exclusions>
+                                        <exclusion>
+                                                <groupId>commons-logging</groupId>
+                                                <artifactId>commons-logging</artifactId>
+                                        </exclusion>
+                                </exclusions>
+
 			</dependency>
 <!-- 			<dependency> -->
 <!-- 				<groupId>org.aksw.commons</groupId> -->
@@ -559,6 +567,13 @@
 				<groupId>org.springframework</groupId>
 				<artifactId>spring-core</artifactId>
 				<version>${spring.version}</version>
+
+				<exclusions>
+					<exclusion>
+						<groupId>commons-logging</groupId>
+						<artifactId>commons-logging</artifactId>
+					</exclusion>
+				</exclusions>
 			</dependency>
 
 			<dependency>
