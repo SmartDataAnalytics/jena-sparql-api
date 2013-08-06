@@ -6,7 +6,7 @@
     <artifactId>jena-sparql-api-parent</artifactId>
 
     <packaging>pom</packaging>
-    <version>2.10.0-7-SNAPSHOT</version>
+    <version>2.10.0-7</version>
     <name>Jena SPARQL API - Parent</name>
 
     <modules>
@@ -19,7 +19,7 @@
     <scm>
 		<connection>scm:git:git@github.com:AKSW/jena-sparql-api.git</connection>
         <!-- developerConnection></developerConnection -->
-        <tag>HEAD</tag>
+        <tag>jena-sparql-api-parent-2.10.0-7</tag>
     </scm>
 
     <properties>
