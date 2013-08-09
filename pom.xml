@@ -29,12 +29,20 @@
 		<jetty-plugin.version>8.1.10.v20130312</jetty-plugin.version>
 <!-- 		<org.mortbay.jetty.version>7.0.0.pre5</org.mortbay.jetty.version> -->
 		<jersey.version>1.8</jersey.version>
+
+		<!--working: A -->
 		<!-- <spring.version>3.1.2.RELEASE</spring.version> -->
 		<spring.version>3.2.4.RELEASE</spring.version>
 		<aksw.commons.version>0.5</aksw.commons.version>
-		<atmosphere.version>1.0.9</atmosphere.version>
-<!-- 		<atmosphere.version>1.0.12</atmosphere.version> -->
-    	<javaee-api.version>6.0</javaee-api.version>
+
+		<!-- working A -->
+		<!-- <atmosphere.version>1.0.9</atmosphere.version> -->
+		<atmosphere.version>2.0.0.RC3</atmosphere.version>
+		<atmosphere-spring.version>1.1.0.RC5</atmosphere-spring.version>
+                <!-- <atmosphere-jersey.version>2.0.0.RC3</atmosphere-jersey.version> -->
+
+
+		<javaee-api.version>6.0</javaee-api.version>
     
 		<!-- Project Settings -->
 		<maven.compiler.source>1.6</maven.compiler.source>
@@ -348,7 +356,7 @@
 			<dependency>
 				<groupId>org.atmosphere</groupId>
 				<artifactId>atmosphere-spring</artifactId>
-				<version>${atmosphere.version}</version>
+				<version>${atmosphere-spring.version}</version>
 			</dependency>
 			
 <!-- 			<dependency> -->
