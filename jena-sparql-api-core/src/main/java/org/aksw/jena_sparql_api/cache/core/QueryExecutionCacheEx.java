@@ -13,12 +13,6 @@ import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 
-// TODO Replace with Factory1<Model>
-interface ModelProvider
-{
-    Model getModel();
-}
-
 /**
  * @author Claus Stadler
  *         <p/>
