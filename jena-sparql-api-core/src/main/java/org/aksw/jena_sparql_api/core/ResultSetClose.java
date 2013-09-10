@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.core;
 
+import org.apache.jena.atlas.lib.Closeable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,6 +22,7 @@ import com.hp.hpl.jena.sparql.engine.binding.Binding;
  */
 public class ResultSetClose
         extends ResultSetDecorator
+        implements Closeable
 {
     private static final Logger logger = LoggerFactory.getLogger(ResultSetClose.class);
 
@@ -129,6 +131,15 @@ public class ResultSetClose
         }
     }
 
+    @Override
     public void close() {
+    	if(!isClosed) {
+	    	if(decoratee instanceof Closeable) {
+	    		Closeable closeable = (Closeable)decoratee;
+	    		closeable.close();
+	    		isClosed = true;
+	    	}
+    	}
     }
 }
+
