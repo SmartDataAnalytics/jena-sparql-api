@@ -48,7 +48,7 @@
 		<!-- Project Settings -->
 		<maven.compiler.source>1.6</maven.compiler.source>
 		<maven.compiler.target>1.6</maven.compiler.target>
-		<java.version>1.6</java.version>
+<!-- 		<java.version>1.6</java.version> -->
 		<java.version.javadoc>http://java.sun.com/javase/6/docs/api/</java.version.javadoc>
 		<file.encoding>UTF-8</file.encoding>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -76,9 +76,8 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>2.4</version>
 				<configuration>
-					<!--We use 1.6 -->
-					<source>${compiler.version}</source>
-					<target>${compiler.version}</target>
+					<source>${maven.compiler.source}</source>
+					<target>${maven.compiler.target}</target>
 					<encoding>${project.build.sourceEncoding}</encoding>
 				</configuration>
 			</plugin>
