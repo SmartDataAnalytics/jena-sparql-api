@@ -104,9 +104,9 @@ public class CacheCoreH2
     {
             Class.forName("org.h2.Driver");
 
-            String jdbcString = "";
+            String jdbcString = ";AUTO_RECONNECT=TRUE";
             if(autoServerMode) {
-                jdbcString = ";AUTO_SERVER=TRUE";
+                jdbcString += ";AUTO_SERVER=TRUE";
             }
 
             // connect to database (created automatically if not existing)
