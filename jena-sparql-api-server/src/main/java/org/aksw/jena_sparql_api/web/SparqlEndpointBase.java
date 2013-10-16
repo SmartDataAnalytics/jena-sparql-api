@@ -11,6 +11,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.Response.Status;
 
 import org.aksw.jena_sparql_api.utils.SparqlFormatterUtils;
 
@@ -26,8 +27,6 @@ import com.hp.hpl.jena.query.Syntax;
  * @author Claus Stadler <cstadler@informatik.uni-leipzig.de>
  *
  */
-//@Produces("application/rdf+xml")
-//@Produces("text/plain")
 public abstract class SparqlEndpointBase {
 
 	public abstract QueryExecution createQueryExecution(Query query, @Context HttpServletRequest req);	
@@ -46,7 +45,8 @@ public abstract class SparqlEndpointBase {
 		
 		QueryExecution qe = createQueryExecution(query, req);
 		
-		return ProcessQuery.processQuery(query, format, qe);
+		StreamingOutput result = ProcessQuery.processQuery(query, format, qe);
+		return result;
 	}
 
 
@@ -57,7 +57,7 @@ public abstract class SparqlEndpointBase {
 
 		if(queryString == null) {
 			StreamingOutput so = StreamingOutputString.create("<error>No query specified. Append '?query=&lt;your SPARQL query&gt;'</error>");
-			return Response.ok(so).build(); // TODO: Return some error HTTP code
+			return Response.status(Status.BAD_REQUEST).entity(so).build(); // TODO: Return some error HTTP code
 		}
 		
 		return processQuery(req, queryString, SparqlFormatterUtils.FORMAT_XML);

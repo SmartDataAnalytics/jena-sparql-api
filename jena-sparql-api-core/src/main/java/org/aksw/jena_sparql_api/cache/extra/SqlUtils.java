@@ -137,6 +137,17 @@ public class SqlUtils {
 		return result;
 	}
 
+	
+	public static void close(Connection conn) {
+		try {
+			if(conn != null) {
+				conn.close();
+			}
+		} catch(SQLException e) {
+			logger.error("Failed to close connection", e);
+		}
+	}
+	
 	public static void close(ResultSet resultSet)
 	{
 		try {
