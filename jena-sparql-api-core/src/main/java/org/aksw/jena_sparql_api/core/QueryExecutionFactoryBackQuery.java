@@ -20,4 +20,11 @@ public abstract class QueryExecutionFactoryBackQuery
     	QueryExecution result = createQueryExecution(query);
     	return result;
     }
+    
+    @SuppressWarnings("unchecked")
+	@Override
+    public <T> T unwrap(Class<T> clazz) {
+    	T result = getClass().isAssignableFrom(clazz) ? (T)this : null;
+    	return result;
+    }
 }

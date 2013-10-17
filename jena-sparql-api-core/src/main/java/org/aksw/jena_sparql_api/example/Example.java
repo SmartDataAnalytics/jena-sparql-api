@@ -35,6 +35,9 @@ public class Example {
 		CacheEx cacheFrontend = new CacheExImpl(cacheBackend);		
 		qef = new QueryExecutionFactoryCacheEx(qef, cacheFrontend);
 
+		QueryExecutionFactoryHttp foo = qef.unwrap(QueryExecutionFactoryHttp.class);
+		System.out.println(foo);
+		
 		// Add pagination
 		qef = new QueryExecutionFactoryPaginated(qef, 900);
 

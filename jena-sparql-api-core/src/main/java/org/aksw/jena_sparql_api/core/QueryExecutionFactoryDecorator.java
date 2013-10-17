@@ -37,4 +37,19 @@ public class QueryExecutionFactoryDecorator
     public QueryExecution createQueryExecution(String queryString) {
         return decoratee.createQueryExecution(queryString);
     }
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T> T unwrap(Class<T> clazz) {
+		T result;
+		if(getClass().isAssignableFrom(clazz)) {
+			result = (T)this;
+		}
+		else {
+			result = decoratee.unwrap(clazz);
+		}
+ 
+		return result;
+	}
 }
+
