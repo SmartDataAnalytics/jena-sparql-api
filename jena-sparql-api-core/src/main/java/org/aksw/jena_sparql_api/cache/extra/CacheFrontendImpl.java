@@ -16,13 +16,13 @@ import com.hp.hpl.jena.rdf.model.Model;
  *         Date: 7/26/11
  *         Time: 5:12 PM
  */
-public class CacheExImpl
-    implements CacheEx
+public class CacheFrontendImpl
+    implements CacheFrontend
 {
-    private CacheCoreEx cacheCore;
+    private CacheBackend cacheBackend;
 
-    public CacheExImpl(CacheCoreEx cacheCore) {
-        this.cacheCore = cacheCore;
+    public CacheFrontendImpl(CacheBackend cacheBackend) {
+        this.cacheBackend = cacheBackend;
     }
 
 
@@ -50,7 +50,7 @@ public class CacheExImpl
             }
           }
         ).start();
-        cacheCore.write(service, queryString, in);
+        cacheBackend.write(service, queryString, in);
     }
 
     @Override
@@ -82,7 +82,7 @@ public class CacheExImpl
             }
           }
         ).start();
-        cacheCore.write(service, queryString, in);
+        cacheBackend.write(service, queryString, in);
     }
 
     @Override
@@ -92,7 +92,7 @@ public class CacheExImpl
 
     @Override
     public CacheResource lookup(String service, String queryString) {
-        CacheEntry cacheEntry = cacheCore.lookup(service, queryString);
+        CacheEntry cacheEntry = cacheBackend.lookup(service, queryString);
         return cacheEntry == null
                 ? null
                 : new CacheResourceCacheEntry(cacheEntry);
@@ -100,7 +100,7 @@ public class CacheExImpl
 
     @Override
     public CacheResource lookup(String service, Query query) {
-        CacheEntry cacheEntry = cacheCore.lookup(service, query.toString());
+        CacheEntry cacheEntry = cacheBackend.lookup(service, query.toString());
         return cacheEntry == null
                 ? null
                 : new CacheResourceCacheEntry(cacheEntry);
@@ -118,7 +118,7 @@ public class CacheExImpl
 	}
 	
 	public void _write(String service, String queryString, final boolean value) throws IOException {
-        cacheCore.write(service, queryString, new ByteArrayInputStream(String.valueOf(value).getBytes()));
+        cacheBackend.write(service, queryString, new ByteArrayInputStream(String.valueOf(value).getBytes()));
     }
 
 

@@ -17,18 +17,18 @@ import org.apache.commons.compress.compressors.CompressorStreamFactory;
  *         Time: 11:26 PM
  */
 public class CacheCoreExCompressor
-    implements CacheCoreEx
+    implements CacheBackend
 {
-    private CacheCoreEx decoratee;
+    private CacheBackend decoratee;
 
     private final CompressorStreamFactory streamFactory = new CompressorStreamFactory();
     private String compression = CompressorStreamFactory.BZIP2;
 
-    public CacheCoreExCompressor(CacheCoreEx decoratee) {
+    public CacheCoreExCompressor(CacheBackend decoratee) {
         this.decoratee = decoratee;
     }
 
-    public static CacheCoreExCompressor wrap(CacheCoreEx decoratee) {
+    public static CacheCoreExCompressor wrap(CacheBackend decoratee) {
         return new CacheCoreExCompressor(decoratee);
     }
 
@@ -94,7 +94,7 @@ public class CacheCoreExCompressor
     }
 
 
-    public CacheCoreEx getDecoratee() {
+    public CacheBackend getDecoratee() {
         return decoratee;
     }
 

@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
  */
 public class CacheCoreH2
     extends SqlDaoBase
-    implements CacheCore, CacheCoreEx
+    implements CacheCore, CacheBackend
 {
     private static final Logger logger = LoggerFactory.getLogger(CacheCoreH2.class);
 
@@ -99,7 +99,7 @@ public class CacheCoreH2
         return (CacheCoreH2)create(autoServerMode, dbDir, dbName, lifespan, false);
     }
 
-    public static CacheCoreEx create(boolean autoServerMode, String dbDir, String dbName, long lifespan, boolean useCompression)
+    public static CacheBackend create(boolean autoServerMode, String dbDir, String dbName, long lifespan, boolean useCompression)
             throws ClassNotFoundException, SQLException
     {
             Class.forName("org.h2.Driver");
@@ -122,7 +122,7 @@ public class CacheCoreH2
             : tmp;
     }
 
-    public static CacheCoreEx create(String dbName, long lifespan, boolean useCompression)
+    public static CacheBackend create(String dbName, long lifespan, boolean useCompression)
             throws ClassNotFoundException, SQLException
     {
         return create(true, "cache/sparql", dbName, lifespan, useCompression);

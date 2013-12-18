@@ -17,7 +17,7 @@ import com.hp.hpl.jena.rdf.model.Model;
  *         Date: 7/23/11
  *         Time: 10:22 PM
  */
-public interface CacheEx
+public interface CacheFrontend
 {
     void write(String service, String queryString, ResultSet resultSet);
     void write(String service, Query query, ResultSet resultSet);

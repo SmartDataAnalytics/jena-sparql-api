@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.cache.core;
 
-import org.aksw.jena_sparql_api.cache.extra.CacheEx;
+import org.aksw.jena_sparql_api.cache.extra.CacheFrontend;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactoryDecorator;
 
@@ -16,14 +16,14 @@ import com.hp.hpl.jena.query.QueryExecution;
 public class QueryExecutionFactoryCacheEx
         extends QueryExecutionFactoryDecorator
 {
-    private CacheEx cache;
+    private CacheFrontend cache;
     private String service;
 
-    public QueryExecutionFactoryCacheEx(QueryExecutionFactory decoratee, CacheEx cache) {
+    public QueryExecutionFactoryCacheEx(QueryExecutionFactory decoratee, CacheFrontend cache) {
         this(decoratee, decoratee.getId(), cache);
     }
 
-    public QueryExecutionFactoryCacheEx(QueryExecutionFactory decoratee, String service, CacheEx cache) {
+    public QueryExecutionFactoryCacheEx(QueryExecutionFactory decoratee, String service, CacheFrontend cache) {
         super(decoratee);
         this.service = service;
         this.cache = cache;

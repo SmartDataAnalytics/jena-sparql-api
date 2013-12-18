@@ -346,5 +346,4 @@ public class SparqlFormatterUtils {
 	public static void writeTurtle(OutputStream out, Model model) {
 		model.write(out, "TTL");
 	}
-
 }

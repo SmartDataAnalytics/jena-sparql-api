@@ -11,7 +11,7 @@ import java.io.InputStream;
  *         Date: 11/28/11
  *         Time: 10:55 PM
  */
-public interface CacheCoreEx {
+public interface CacheBackend {
     CacheEntry lookup(String service, String queryString);
     void write(String service, String queryString, InputStream in);
 }

@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.cache.core;
 
 import java.io.IOException;
 
-import org.aksw.jena_sparql_api.cache.extra.CacheEx;
+import org.aksw.jena_sparql_api.cache.extra.CacheFrontend;
 import org.aksw.jena_sparql_api.cache.extra.CacheResource;
 import org.aksw.jena_sparql_api.core.QueryExecutionDecorator;
 import org.slf4j.Logger;
@@ -25,11 +25,11 @@ public class QueryExecutionCacheEx
     private static final Logger logger = LoggerFactory.getLogger(QueryExecutionCacheEx.class);
 
 
-    private CacheEx cache;
+    private CacheFrontend cache;
     private String service;
     private String queryString;
 
-    public QueryExecutionCacheEx(QueryExecution decoratee, String service, String queryString, CacheEx cache) {
+    public QueryExecutionCacheEx(QueryExecution decoratee, String service, String queryString, CacheFrontend cache) {
         super(decoratee);
 
         this.service = service;

@@ -10,6 +10,7 @@ import java.sql.SQLException;
  *         Date: 11/28/11
  *         Time: 11:54 PM
  */
+@Deprecated
 public class InputStreamProviderResultSetBlob
     implements InputStreamProvider
 {
