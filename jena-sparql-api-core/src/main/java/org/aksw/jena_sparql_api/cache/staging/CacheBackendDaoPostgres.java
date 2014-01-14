@@ -81,9 +81,9 @@ public class CacheBackendDaoPostgres
 	private boolean validateHash = true;
 
 	
-	private String QUERY_LOOKUP = "SELECT * FROM \"sparql_query_cache\" WHERE \"query_hash\"=? LIMIT 2";
-	private String QUERY_INSERT = "INSERT INTO \"sparql_query_cache\" VALUES (?, ?, ?, ?)";
-	private String QUERY_UPDATE = "UPDATE \"query_cache\" SET \"data\"=?, \"time\"=? WHERE \"query_hash\"=?";
+	private String QUERY_LOOKUP = "SELECT * FROM \"sparql_query_cache\" WHERE \"id\" = ? LIMIT 2";
+	private String QUERY_INSERT = "INSERT INTO \"sparql_query_cache\"(\"id\", \"query_string\", \"data\", \"time_of_insertion\") VALUES (?, ?, ?, ?)";
+	private String QUERY_UPDATE = "UPDATE \"query_cache\" SET \"data\"=?, \"time\" = ? WHERE \"id\" = ?";
 
 
 	/**

@@ -34,7 +34,7 @@ public class CacheCoreIterator
 	{	
 		if (rs.next()) {
 
-			byte[] rawQueryHash = rs.getBytes("query_hash");
+			byte[] rawQueryHash = rs.getBytes("id");
 			String queryHash = StringUtils.bytesToHexString(rawQueryHash);
 
 			String queryString = rs.getString("query_string");

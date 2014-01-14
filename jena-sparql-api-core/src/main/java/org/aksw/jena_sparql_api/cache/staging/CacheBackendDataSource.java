@@ -2,7 +2,6 @@ package org.aksw.jena_sparql_api.cache.staging;
 
 import java.io.InputStream;
 import java.sql.Connection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -11,8 +10,6 @@ import javax.sql.DataSource;
 
 import org.aksw.jena_sparql_api.cache.extra.CacheBackend;
 import org.aksw.jena_sparql_api.cache.extra.CacheEntry;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 //interface StreamEndecoder {
 //	public void read(Out);
@@ -22,7 +19,7 @@ import org.slf4j.LoggerFactory;
 public class CacheBackendDataSource
     implements CacheBackend
 {
-	private static final Logger logger = LoggerFactory.getLogger(CacheBackendDataSource.class);
+	//private static final Logger logger = LoggerFactory.getLogger(CacheBackendDataSource.class);
 	
 	private DataSource dataSource;
 	private CacheBackendDao dao;

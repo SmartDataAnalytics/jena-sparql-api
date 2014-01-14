@@ -10,7 +10,9 @@
 	<name>Jena SPARQL API - Parent</name>
 
 	<modules>
+		<module>jena-sparql-api-resources</module>
 		<module>jena-sparql-api-core</module>
+		<module>jena-sparql-api-cache-h2</module>
 		<module>jena-sparql-api-utils</module>
 		<module>jena-sparql-api-server</module>
 		<module>jena-sparql-api-example-proxy</module>
@@ -747,11 +749,11 @@
 			<url>http://download.java.net/maven/2/</url>
 			<layout>default</layout>
 		</repository>
-		<repository>
-			<id>scala-tools.org</id>
-			<name>Scala-tools Maven2 Repository</name>
-			<url>http://scala-tools.org/repo-releases</url>
-		</repository>
+<!-- 		<repository> -->
+<!-- 			<id>scala-tools.org</id> -->
+<!-- 			<name>Scala-tools Maven2 Repository</name> -->
+<!-- 			<url>http://scala-tools.org/repo-releases</url> -->
+<!-- 		</repository> -->
 
 
 		<repository>
