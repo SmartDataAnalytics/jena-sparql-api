@@ -12,8 +12,8 @@ import java.util.List;
 
 import org.aksw.commons.collections.IClosable;
 import org.aksw.commons.util.strings.StringUtils;
-import org.aksw.jena_sparql_api.cache.extra.CacheEntryH2;
 import org.aksw.jena_sparql_api.cache.extra.SqlUtils;
+import org.aksw.jena_sparql_api.cache.extra.CacheEntryImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,7 +89,7 @@ public class CacheBackendDaoPostgres
 	/**
 	 */
 	@Override
-	public CacheEntryH2 lookup(Connection conn, String service, String queryString) throws SQLException
+	public CacheEntryImpl lookup(Connection conn, String service, String queryString) throws SQLException
 	{		
 		String md5 = StringUtils.md5Hash(createHashRoot(service, queryString));
 		// String md5 = StringUtils.md5Hash(queryString);
@@ -103,7 +103,7 @@ public class CacheBackendDaoPostgres
 			}
 		});
 		
-		CacheEntryH2 result = null;		
+		CacheEntryImpl result = null;		
 		if(it.hasNext()) {
 			result = it.next();
 			
@@ -134,7 +134,7 @@ public class CacheBackendDaoPostgres
 	{
 		String md5 = StringUtils.md5Hash(createHashRoot(service, queryString));
 
-		CacheEntryH2 entry = lookup(conn, service, queryString);
+		CacheEntryImpl entry = lookup(conn, service, queryString);
 
 		Timestamp timestamp = new Timestamp(new GregorianCalendar().getTimeInMillis());
 

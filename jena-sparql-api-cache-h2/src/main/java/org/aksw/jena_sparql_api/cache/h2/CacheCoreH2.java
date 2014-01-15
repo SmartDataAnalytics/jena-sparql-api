@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.cache.extra;
+package org.aksw.jena_sparql_api.cache.h2;
 
 import java.io.InputStream;
 import java.sql.Blob;
@@ -15,6 +15,14 @@ import java.util.Iterator;
 import org.aksw.commons.collections.SinglePrefetchIterator;
 import org.aksw.commons.util.strings.StringUtils;
 import org.aksw.jena_sparql_api.cache.core.QueryString;
+import org.aksw.jena_sparql_api.cache.extra.CacheBackend;
+import org.aksw.jena_sparql_api.cache.extra.CacheCore;
+import org.aksw.jena_sparql_api.cache.extra.CacheCoreExCompressor;
+import org.aksw.jena_sparql_api.cache.extra.CacheEntry;
+import org.aksw.jena_sparql_api.cache.extra.CacheEntryBase;
+import org.aksw.jena_sparql_api.cache.extra.CacheEntryImpl;
+import org.aksw.jena_sparql_api.cache.extra.InputStreamProviderResultSetBlob;
+import org.aksw.jena_sparql_api.cache.extra.SqlDaoBase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -152,15 +160,15 @@ public class CacheCoreH2
      * @return
      * @throws SQLException
      */
-    public Iterator<CacheEntryH2> iterator()
+    public Iterator<CacheEntryImpl> iterator()
             throws SQLException
     {
         final ResultSet rs = executeQuery(Query.DUMP);
 
-        return new SinglePrefetchIterator<CacheEntryH2>() {
+        return new SinglePrefetchIterator<CacheEntryImpl>() {
 
             @Override
-            protected CacheEntryH2 prefetch() throws Exception {
+            protected CacheEntryImpl prefetch() throws Exception {
                 if(!rs.next()) {
                     return null;
                 }
@@ -171,7 +179,7 @@ public class CacheCoreH2
                 Timestamp timestamp = rs.getTimestamp("time");
                 Blob data = rs.getBlob("data");
 
-                return new CacheEntryH2(timestamp.getTime(), lifespan, new InputStreamProviderResultSetBlob(rs, data), queryString, queryHash);
+                return new CacheEntryImpl(timestamp.getTime(), lifespan, new InputStreamProviderResultSetBlob(rs, data), queryString, queryHash);
             }
 
             @Override

@@ -1,10 +1,5 @@
 package org.aksw.jena_sparql_api.example;
 
-import org.aksw.jena_sparql_api.cache.core.QueryExecutionFactoryCacheEx;
-import org.aksw.jena_sparql_api.cache.extra.CacheBackend;
-import org.aksw.jena_sparql_api.cache.extra.CacheCoreH2;
-import org.aksw.jena_sparql_api.cache.extra.CacheFrontend;
-import org.aksw.jena_sparql_api.cache.extra.CacheFrontendImpl;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.delay.core.QueryExecutionFactoryDelay;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
@@ -31,9 +26,11 @@ public class Example {
 		// This creates a 'cache' folder, with a database file named 'sparql.db'
 		// Technical note: the cacheBackend's purpose is to only deal with streams,
 		// whereas the frontend interfaces with higher level classes - i.e. ResultSet and Model
+		/*
 		CacheBackend cacheBackend = CacheCoreH2.create("sparql", timeToLive, true);
 		CacheFrontend cacheFrontend = new CacheFrontendImpl(cacheBackend);		
 		qef = new QueryExecutionFactoryCacheEx(qef, cacheFrontend);
+		*/
 
 		QueryExecutionFactoryHttp foo = qef.unwrap(QueryExecutionFactoryHttp.class);
 		System.out.println(foo);

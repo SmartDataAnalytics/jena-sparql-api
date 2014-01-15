@@ -7,15 +7,15 @@ import java.sql.Timestamp;
 import org.aksw.commons.collections.IClosable;
 import org.aksw.commons.collections.SinglePrefetchIterator;
 import org.aksw.commons.util.strings.StringUtils;
-import org.aksw.jena_sparql_api.cache.extra.CacheEntryH2;
 import org.aksw.jena_sparql_api.cache.extra.SqlUtils;
+import org.aksw.jena_sparql_api.cache.extra.CacheEntryImpl;
 
 //interface InputStreamProviderClosableFactory {
 //	InputStreamProvider createInputStream
 //}
 
 public class CacheCoreIterator
-	extends SinglePrefetchIterator<CacheEntryH2>
+	extends SinglePrefetchIterator<CacheEntryImpl>
 {
 	private ResultSet rs;
 	
@@ -29,7 +29,7 @@ public class CacheCoreIterator
 	}
 	
 	@Override
-	protected CacheEntryH2 prefetch()
+	protected CacheEntryImpl prefetch()
 			throws Exception
 	{	
 		if (rs.next()) {
@@ -44,7 +44,7 @@ public class CacheCoreIterator
 			Timestamp timeOfExpiration = rs.getTimestamp("time_of_expiration");
 
 
-			CacheEntryH2 result = new CacheEntryH2(
+			CacheEntryImpl result = new CacheEntryImpl(
 					timeOfInsertion.getTime(),
 					1000l, //timeOfExpiration.g,
 					new InputStreamProviderBlobClosable(data, inputStreamCloseAction),
