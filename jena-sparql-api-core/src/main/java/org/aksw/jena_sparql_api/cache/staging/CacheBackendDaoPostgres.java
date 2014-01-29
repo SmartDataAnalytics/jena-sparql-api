@@ -12,8 +12,8 @@ import java.util.List;
 
 import org.aksw.commons.collections.IClosable;
 import org.aksw.commons.util.strings.StringUtils;
-import org.aksw.jena_sparql_api.cache.extra.SqlUtils;
 import org.aksw.jena_sparql_api.cache.extra.CacheEntryImpl;
+import org.aksw.jena_sparql_api.cache.extra.SqlUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,9 +81,9 @@ public class CacheBackendDaoPostgres
 	private boolean validateHash = true;
 
 	
-	private String QUERY_LOOKUP = "SELECT * FROM \"sparql_query_cache\" WHERE \"id\" = ? LIMIT 2";
-	private String QUERY_INSERT = "INSERT INTO \"sparql_query_cache\"(\"id\", \"query_string\", \"data\", \"time_of_insertion\") VALUES (?, ?, ?, ?)";
-	private String QUERY_UPDATE = "UPDATE \"query_cache\" SET \"data\"=?, \"time\" = ? WHERE \"id\" = ?";
+	private String QUERY_LOOKUP = "SELECT * FROM \"query_cache\" WHERE \"id\" = ? LIMIT 2";
+	private String QUERY_INSERT = "INSERT INTO \"query_cache\"(\"id\", \"query_string\", \"data\", \"time_of_insertion\", \"hit_count\") VALUES (?, ?, ?, ?, ?)";
+	private String QUERY_UPDATE = "UPDATE \"query_cache\" SET \"data\"=?, \"time_of_insertion\" = ? WHERE \"id\" = ?";
 
 
 	/**
@@ -124,7 +124,12 @@ public class CacheBackendDaoPostgres
 				logger.warn("Multiple cache hits found, just one expected.");
 			}		
 		}	
-			
+
+		if(result != null) {
+		    //logger.info("Cache hit for " + queryString);
+		    System.out.println("Cache hit for " + queryString);
+		}
+		
 		return result;
 	}
 
@@ -143,7 +148,7 @@ public class CacheBackendDaoPostgres
 		if (entry != null) {
 			SqlUtils.execute(conn, QUERY_UPDATE, Void.class, in, timestamp, md5);
 		} else {
-			SqlUtils.execute(conn, QUERY_INSERT, Void.class, md5, queryString, in, timestamp);
+			SqlUtils.execute(conn, QUERY_INSERT, Void.class, md5, queryString, in, timestamp, 1);
 		}
 		// return lookup(queryString);
 	}

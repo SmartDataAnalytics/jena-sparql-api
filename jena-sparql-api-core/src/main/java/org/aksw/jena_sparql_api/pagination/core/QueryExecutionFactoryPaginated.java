@@ -35,6 +35,7 @@ public class QueryExecutionFactoryPaginated
 
     @Override
     public QueryExecution createQueryExecution(Query query) {
+        query = query.cloneQuery();
         PaginationQueryIterator queryIterator = new PaginationQueryIterator(query, pageSize);
         
         return new QueryExecutionIterated(decoratee, queryIterator);

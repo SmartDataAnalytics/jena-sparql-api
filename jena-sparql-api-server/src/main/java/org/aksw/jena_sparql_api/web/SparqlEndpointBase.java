@@ -10,9 +10,10 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.StreamingOutput;
 
+import org.aksw.jena_sparql_api.core.utils.QueryExecutionAndType;
 import org.aksw.jena_sparql_api.utils.SparqlFormatterUtils;
 
 import com.hp.hpl.jena.query.Query;
@@ -29,24 +30,52 @@ import com.hp.hpl.jena.query.Syntax;
  */
 public abstract class SparqlEndpointBase {
 
-	public abstract QueryExecution createQueryExecution(Query query, @Context HttpServletRequest req);	
+    private @Context HttpServletRequest req;
+    
+
+    @Deprecated
+	public QueryExecution createQueryExecution(Query query, @Context HttpServletRequest req) {
+        QueryExecution result = createQueryExecution(query);
+        return result;
+    }
+
+    // IMPORTANT: You only need to override either this or the following method
+
+    public QueryExecution createQueryExecution(Query query) {
+        throw new RuntimeException("Not implemented");
+    }
+
+
+    /**
+     * Override this for special stuff, such as adding the EXPLAIN keyword
+     * 
+     * @param queryString
+     * @return
+     */
+    public QueryExecutionAndType createQueryExecution(String queryString) {
+        Query query = QueryFactory.create(queryString, Syntax.syntaxSPARQL_11);
+
+        QueryExecution qe = createQueryExecution(query);
+        
+        QueryExecutionAndType result = new QueryExecutionAndType(qe, query.getQueryType());
+        
+        return result;
+    }
 
 	
 	public Response processQuery(HttpServletRequest req, String queryString, String format) throws Exception {
-		StreamingOutput so = processQueryToStreaming(req, queryString, format);
+		StreamingOutput so = processQueryToStreaming(queryString, format);
 		Response response = Response.ok(so).build();
 		return response;
 	}
 	
-	public StreamingOutput processQueryToStreaming(HttpServletRequest req, String queryString, String format)
+	public StreamingOutput processQueryToStreaming(String queryString, String format)
 			throws Exception
 	{
-		Query query = QueryFactory.create(queryString, Syntax.syntaxSPARQL_11);
-		
-		QueryExecution qe = createQueryExecution(query, req);
-		
-		StreamingOutput result = ProcessQuery.processQuery(query, format, qe);
-		return result;
+	    QueryExecutionAndType qeAndType = createQueryExecution(queryString);
+
+        StreamingOutput result = ProcessQuery.processQuery(qeAndType, format);
+        return result;        
 	}
 
 

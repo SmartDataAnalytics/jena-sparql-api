@@ -20,6 +20,7 @@ import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.QuerySolution;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.query.ResultSetFactory;
+import com.hp.hpl.jena.query.ResultSetFormatter;
 import com.hp.hpl.jena.query.ResultSetRewindable;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
@@ -228,10 +229,20 @@ public class QueryExecutionCompare
     @Override
     public ResultSet execSelect() {
         ResultSetRewindable x;
-        ResultSet y;
+        ResultSetRewindable y;
         try {
-             x = ResultSetFactory.makeRewindable(a.execSelect());
-             y = b.execSelect();
+            ResultSet r = a.execSelect();
+            x = ResultSetFactory.makeRewindable(r);
+            //System.out.println("ResultSet [A]");
+            //ResultSetFormatter.out(System.out, x);
+            x.reset();
+            
+            ResultSet s = b.execSelect();
+            y = ResultSetFactory.makeRewindable(s);
+            //System.out.println("ResultSet [B]");
+            //ResultSetFormatter.out(System.out, y);
+            y.reset();
+            
         } catch(RuntimeException e) {
             // Set diff in order to indicate that the execution was performed
             resultSetDiff = new ListDiff<QuerySolution>();

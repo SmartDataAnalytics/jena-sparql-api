@@ -66,4 +66,10 @@ public class QuerySolutionWithEquals
     public int hashCode() {
         return this.map.hashCode();
     }
+
+    @Override
+    public String toString() {
+        return "" + map;
+    }
+
 }

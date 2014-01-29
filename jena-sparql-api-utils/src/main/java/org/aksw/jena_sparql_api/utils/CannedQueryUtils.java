@@ -31,7 +31,7 @@ import com.hp.hpl.jena.sparql.syntax.Template;
  */
 public class CannedQueryUtils {
     public static Query spoTemplate() {
-        return spoTemplate(Node.createVariable("s"), Node.createVariable("p"), Node.createVariable("o"));
+        return spoTemplate(Var.alloc("s"), Var.alloc("p"), Var.alloc("o"));
     }
 
     public static Query spoTemplate(Node s, Node p, Node o)
@@ -58,7 +58,7 @@ public class CannedQueryUtils {
     }
     
     public static Query spoCountTemplate() {
-        return spoTemplate(Node.createVariable("s"), Node.createVariable("p"), Node.createVariable("o"));
+        return spoTemplate(Var.alloc("s"), Var.alloc("p"), Var.alloc("o"));
     }
 
     public static Query spoCountTemplate(Node s, Node p, Node o)
@@ -164,8 +164,8 @@ public class CannedQueryUtils {
     }
 
     public static Query incoming(String varNameS, String varNameP, Node object) {
-        Node s = Node.createVariable(varNameS);
-        Node p = Node.createVariable(varNameP);
+        Node s = Var.alloc(varNameS);
+        Node p = Var.alloc(varNameP);
 
         return inOutTemplate(s, p, object);
     }
@@ -176,8 +176,8 @@ public class CannedQueryUtils {
 
     public static Query outgoing(Node subject, String varNameP, String varNameO)
     {
-        Node p = Node.createVariable(varNameP);
-        Node o = Node.createVariable(varNameO);
+        Node p = Var.alloc(varNameP);
+        Node o = Var.alloc(varNameO);
 
         return inOutTemplate(subject, p, o);
     }

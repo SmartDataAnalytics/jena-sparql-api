@@ -1,9 +1,14 @@
 package org.aksw.jena_sparql_api.example;
 
+import org.aksw.jena_sparql_api.cache.core.QueryExecutionFactoryCacheEx;
+import org.aksw.jena_sparql_api.cache.extra.CacheBackend;
+import org.aksw.jena_sparql_api.cache.extra.CacheFrontend;
+import org.aksw.jena_sparql_api.cache.extra.CacheFrontendImpl;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.delay.core.QueryExecutionFactoryDelay;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.pagination.core.QueryExecutionFactoryPaginated;
+import org.aksw.jena_sparql_api.retry.core.QueryExecutionFactoryRetry;
 
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.ResultSet;
@@ -16,8 +21,10 @@ public class Example {
 		// Create a query execution over DBpedia
 		QueryExecutionFactory qef = new QueryExecutionFactoryHttp("http://dbpedia.org/sparql", "http://dbpedia.org");
 		
+		qef = new QueryExecutionFactoryRetry(qef, 5, 10000);
+		
 		// Add delay in order to be nice to the remote server (delay in milli seconds)
-		qef = new QueryExecutionFactoryDelay(qef, 7000);
+		qef = new QueryExecutionFactoryDelay(qef, 5000);
 
 		// Set up a cache
 		// Cache entries are valid for 1 day
@@ -26,11 +33,12 @@ public class Example {
 		// This creates a 'cache' folder, with a database file named 'sparql.db'
 		// Technical note: the cacheBackend's purpose is to only deal with streams,
 		// whereas the frontend interfaces with higher level classes - i.e. ResultSet and Model
-		/*
-		CacheBackend cacheBackend = CacheCoreH2.create("sparql", timeToLive, true);
-		CacheFrontend cacheFrontend = new CacheFrontendImpl(cacheBackend);		
-		qef = new QueryExecutionFactoryCacheEx(qef, cacheFrontend);
-		*/
+
+//		CacheBackend cacheBackend = CacheCoreH2.create("sparql", timeToLive, true);
+//		CacheFrontend cacheFrontend = new CacheFrontendImpl(cacheBackend);		
+//		qef = new QueryExecutionFactoryCacheEx(qef, cacheFrontend);
+ 
+		
 
 		QueryExecutionFactoryHttp foo = qef.unwrap(QueryExecutionFactoryHttp.class);
 		System.out.println(foo);
@@ -40,6 +48,7 @@ public class Example {
 
 		// Create a QueryExecution object from a query string ...
 		QueryExecution qe = qef.createQueryExecution("Select ?s { ?s a <http://dbpedia.org/ontology/City> } Limit 5000");
+		
 		
 		// and run it.
 		ResultSet rs = qe.execSelect();

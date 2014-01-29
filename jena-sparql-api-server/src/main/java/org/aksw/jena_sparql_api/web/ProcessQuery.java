@@ -8,6 +8,7 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.StreamingOutput;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.utils.QueryExecutionAndType;
 import org.aksw.jena_sparql_api.utils.SparqlFormatterUtils;
 import org.aksw.jena_sparql_api.utils.Writer;
 
@@ -42,31 +43,39 @@ public class ProcessQuery {
 		};
 	}
 
-	public static StreamingOutput processQuery(String queryString, String format, QueryExecutionFactory qeFactory)
-		throws Exception
-	{
-		Query query = QueryFactory.create(queryString, Syntax.syntaxSPARQL_11);
-		StreamingOutput result = processQuery(query, format, qeFactory);
-		
-		return result;
-	}
+//	public static StreamingOutput processQuery(String queryString, String format, QueryExecutionFactory qeFactory)
+//		throws Exception
+//	{
+//		Query query = QueryFactory.create(queryString, Syntax.syntaxSPARQL_11);
+//		StreamingOutput result = processQuery(query, format, qeFactory);
+//		
+//		return result;
+//	}
 	
 	
-	public static StreamingOutput processQuery(Query query, String format, QueryExecutionFactory qeFactory)
-			throws Exception
-	{
-		QueryExecution qe = qeFactory.createQueryExecution(query);
-		StreamingOutput result = processQuery(query, format, qe);
-		
-		return result;
-	}
+//	public static StreamingOutput processQuery(Query query, String format, QueryExecutionFactory qeFactory)
+//			throws Exception
+//	{
+//		QueryExecution qe = qeFactory.createQueryExecution(query);
+//		StreamingOutput result = processQuery(query, format, qe);
+//		
+//		return result;
+//	}
 	
-	public static StreamingOutput processQuery(Query query, String format, QueryExecution qe)
+    public static StreamingOutput processQuery(QueryExecutionAndType queryAndType, String format)
+            throws Exception
+    {
+        StreamingOutput result = processQuery(queryAndType.getQueryExecution(), queryAndType.getQueryType(), format);
+        return result;
+    }
+
+
+    public static StreamingOutput processQuery(QueryExecution qe, int queryType, String format)
 			throws Exception
 	{
 		try {
 		
-			if (query.isAskType()) {
+			if (queryType == Query.QueryTypeAsk) {
 	
 				Writer<Boolean> writer = SparqlFormatterUtils
 						.getBooleanWriter(format);
@@ -78,7 +87,7 @@ public class ProcessQuery {
 				boolean value = qe.execAsk();
 				return wrapWriter(qe, writer, value);
 	
-			} else if (query.isConstructType()) {
+			} else if (queryType == Query.QueryTypeConstruct) {
 	
 				Writer<Iterator<Triple>> writer = SparqlFormatterUtils.getTripleWriter(format);
 				if (writer == null) {
@@ -89,7 +98,7 @@ public class ProcessQuery {
 				Iterator<Triple> it = qe.execConstructTriples();
 				return wrapWriter(qe, writer, it);
 	
-			} else if (query.isSelectType()) {
+			} else if (queryType == Query.QueryTypeSelect) {
 	
 				Writer<ResultSet> writer = SparqlFormatterUtils
 						.getResultSetWriter(format);
@@ -101,7 +110,7 @@ public class ProcessQuery {
 				ResultSet resultSet = qe.execSelect();
 				return wrapWriter(qe, writer, resultSet);
 	
-			} else if (query.isDescribeType()) {
+			} else if (queryType == Query.QueryTypeDescribe) {
 	
 				Writer<Model> writer = SparqlFormatterUtils.getModelWriter(format);
 				if (writer == null) {
@@ -111,11 +120,11 @@ public class ProcessQuery {
 	
 				// TODO: Get the prefixes from the sparqlify config
 				Model model = ModelFactory.createDefaultModel();
-				model.setNsPrefix("lgd-owl", "http://linkedgeodata.org/ontology/");
-				model.setNsPrefix("lgd-node",
-						"http://linkedgeodata.org/resource/node/");
-				model.setNsPrefix("lgd-way",
-						"http://linkedgeodata.org/resource/way/");
+//				model.setNsPrefix("lgd-owl", "http://linkedgeodata.org/ontology/");
+//				model.setNsPrefix("lgd-node",
+//						"http://linkedgeodata.org/resource/node/");
+//				model.setNsPrefix("lgd-way",
+//						"http://linkedgeodata.org/resource/way/");
 	
 				qe.execDescribe(model);
 	
