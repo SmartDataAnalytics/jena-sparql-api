@@ -103,7 +103,7 @@ public class CacheBackendDaoPostgres
 			}
 		});
 		
-		CacheEntryImpl result = null;		
+		CacheEntryImpl result = null;
 		if(it.hasNext()) {
 			result = it.next();
 			
@@ -125,10 +125,12 @@ public class CacheBackendDaoPostgres
 			}		
 		}	
 
-		if(result != null) {
-		    //logger.info("Cache hit for " + queryString);
-		    System.out.println("Cache hit for " + queryString);
-		}
+//		if(result != null) {
+//		    //logger.info("Cache hit for " + queryString);
+//		    System.out.println("Cache hit for " + queryString);
+//		} else {
+//		    System.out.println("Cache miss for " + queryString);
+//		}
 		
 		return result;
 	}

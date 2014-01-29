@@ -35,7 +35,8 @@ public abstract class SparqlEndpointBase {
 
     @Deprecated
 	public QueryExecution createQueryExecution(Query query, @Context HttpServletRequest req) {
-        QueryExecution result = createQueryExecution(query);
+        QueryExecutionAndType tmp = createQueryExecution(query.toString());
+        QueryExecution result = tmp.getQueryExecution();
         return result;
     }
 

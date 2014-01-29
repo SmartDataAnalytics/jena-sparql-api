@@ -128,23 +128,24 @@ public class SparqlTest {
     
     @Test
     public void testMultiThreaded() throws InterruptedException, ClassNotFoundException, SQLException, IOException {
-        int nThreads = 10;
-        int nResources = 100;
-        int nLoops = 1000;
+        int nThreads = 4;
+        int nResources = 50;
+        int nLoops = 100;
 
         
         Model model = createTestModel(nResources);
-        QueryExecutionFactory qef = new QueryExecutionFactoryModel(model);
+        QueryExecutionFactory qefBase = new QueryExecutionFactoryModel(model);
         
+        QueryExecutionFactory qef = qefBase;
 
-        QueryExecutionFactory qef2 = new QueryExecutionFactoryModel(model);
-        QueryExecutionFactory qef3 = new QueryExecutionFactoryModel(model);
+//        QueryExecutionFactory qef2 = new QueryExecutionFactoryModel(model);
+//        QueryExecutionFactory qef3 = new QueryExecutionFactoryModel(model);
 
         
         qef = new QueryExecutionFactoryRetry(qef, 5, 1);
         
         // Add delay in order to be nice to the remote server (delay in milli seconds)
-        qef = new QueryExecutionFactoryDelay(qef, 1);
+        //qef = new QueryExecutionFactoryDelay(qef, 1);
 
         // Set up a cache
         // Cache entries are valid for 1 day
@@ -193,7 +194,7 @@ public class SparqlTest {
         qef = new QueryExecutionFactoryPaginated(qef, 900);        
  
         
-        QueryExecutionFactoryCompare qefCompare = new QueryExecutionFactoryCompare(qef, qef2);
+        QueryExecutionFactoryCompare qefCompare = new QueryExecutionFactoryCompare(qef, qefBase);
         
         
         
@@ -203,8 +204,8 @@ public class SparqlTest {
         
         for(int i = 0; i < nThreads; ++i) {
             Runnable runnable = new QueryRunnable(nLoops, rand, nResources, qefCompare);
-            runnable.run();
-            //executors.submit(runnable);
+            //runnable.run();
+            executors.submit(runnable);
         }
         executors.shutdown();
         executors.awaitTermination(20, TimeUnit.SECONDS);
