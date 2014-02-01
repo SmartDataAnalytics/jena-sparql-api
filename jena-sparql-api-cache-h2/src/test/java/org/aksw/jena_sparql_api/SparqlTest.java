@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,7 +25,6 @@ import org.aksw.jena_sparql_api.cache.extra.CacheFrontend;
 import org.aksw.jena_sparql_api.cache.extra.CacheFrontendImpl;
 import org.aksw.jena_sparql_api.cache.extra.CacheImpl;
 import org.aksw.jena_sparql_api.cache.h2.CacheCoreH2;
-import org.aksw.jena_sparql_api.cache.h2.TestCachePostgres;
 import org.aksw.jena_sparql_api.cache.staging.CacheBackendDao;
 import org.aksw.jena_sparql_api.cache.staging.CacheBackendDaoPostgres;
 import org.aksw.jena_sparql_api.cache.staging.CacheBackendDataSource;
@@ -167,7 +166,7 @@ public class SparqlTest {
         dataSource.setPassword("sa");
 
         String schemaResourceName = "/org/aksw/jena_sparql_api/cache/cache-schema-pgsql.sql";
-        URL resource = TestCachePostgres.class.getResource(schemaResourceName);
+        URL resource = SparqlTest.class.getResource(schemaResourceName);
 
         InputStream in = resource.openStream();
 
