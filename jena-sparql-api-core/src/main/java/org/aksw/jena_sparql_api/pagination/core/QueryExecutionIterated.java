@@ -73,6 +73,7 @@ public class QueryExecutionIterated
     @Override
     public boolean execAsk() {
         Query query = queryIterator.next();
+        query.setLimit(Query.NOLIMIT);
         QueryExecution qe = factory.createQueryExecution(query);
         
         boolean result = qe.execAsk();
