@@ -70,7 +70,15 @@ public class QueryExecutionIterated
         this.stopOnEmptyResult = stopOnEmptyResult;
     }
 
-
+    @Override
+    public boolean execAsk() {
+        Query query = queryIterator.next();
+        QueryExecution qe = factory.createQueryExecution(query);
+        
+        boolean result = qe.execAsk();
+        return result;
+    }
+    
     @Override
     public ResultSet execSelect() {
         ResultSetPaginated it = new ResultSetPaginated(this, factory, queryIterator, stopOnEmptyResult);
