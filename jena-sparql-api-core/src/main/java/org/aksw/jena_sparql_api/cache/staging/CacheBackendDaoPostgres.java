@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.cache.staging;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -11,6 +12,7 @@ import java.util.GregorianCalendar;
 import java.util.List;
 
 import org.aksw.commons.collections.IClosable;
+import org.aksw.commons.util.StreamUtils;
 import org.aksw.commons.util.strings.StringUtils;
 import org.aksw.jena_sparql_api.cache.extra.CacheEntryImpl;
 import org.aksw.jena_sparql_api.cache.extra.SqlUtils;
@@ -147,10 +149,18 @@ public class CacheBackendDaoPostgres
 
 		//rs = executeQuery(Query.LOOKUP, md5);
 
+		String hack;
+		try {
+            hack = StreamUtils.toString(in);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+		
+		// hack should be in
 		if (entry != null) {
-			SqlUtils.execute(conn, QUERY_UPDATE, Void.class, in, timestamp, md5);
+			SqlUtils.execute(conn, QUERY_UPDATE, Void.class, hack, timestamp, md5);
 		} else {
-			SqlUtils.execute(conn, QUERY_INSERT, Void.class, md5, queryString, in, timestamp, 1);
+			SqlUtils.execute(conn, QUERY_INSERT, Void.class, md5, queryString, hack, timestamp, 1);
 		}
 		// return lookup(queryString);
 	}

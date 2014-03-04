@@ -1,5 +1,9 @@
 package org.aksw.jena_sparql_api.cache.extra;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -8,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.aksw.commons.util.StreamUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +30,35 @@ public class SqlUtils {
 		throws SQLException
 	{
 		for(int i = 0; i < args.length; ++i) {
-			stmt.setObject(i + 1, args[i]);
+		    int index = i + 1;
+		    Object arg = args[i];
+		    
+		    if(arg instanceof InputStream) {
+		        // A hack because of some Postgres drivers not capable of dealing with input streams
+		        // TODO Only use the hack as a fallback
+		        
+		        
+		        InputStream in = (InputStream)arg;
+		        //stmt.setBinaryStream(index, (InputStream)in);
+		        
+		        ByteArrayOutputStream out = new ByteArrayOutputStream();
+		        try {
+                    StreamUtils.copyThenClose(in, out);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+		        
+		        byte[] buf = out.toByteArray();
+		        ByteArrayInputStream in2 = new ByteArrayInputStream(buf);
+		        
+		        //stmt.setBytes(index, out.toByteArray());
+		        //stmt.setBlob(index, in2, buf.length);
+		        
+		        stmt.setBinaryStream(index, in2, buf.length);
+		        
+		    } else {
+		        stmt.setObject(index, arg);
+		    }
 		}
 
 		// Pad with nulls

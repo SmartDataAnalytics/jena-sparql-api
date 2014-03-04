@@ -1,14 +1,15 @@
 package org.aksw.jena_sparql_api.cache.staging;
 
-import java.sql.Blob;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
 
 import org.aksw.commons.collections.IClosable;
 import org.aksw.commons.collections.SinglePrefetchIterator;
 import org.aksw.commons.util.strings.StringUtils;
-import org.aksw.jena_sparql_api.cache.extra.SqlUtils;
 import org.aksw.jena_sparql_api.cache.extra.CacheEntryImpl;
+import org.aksw.jena_sparql_api.cache.extra.SqlUtils;
 
 //interface InputStreamProviderClosableFactory {
 //	InputStreamProvider createInputStream
@@ -38,7 +39,11 @@ public class CacheCoreIterator
 			String queryHash = StringUtils.bytesToHexString(rawQueryHash);
 
 			String queryString = rs.getString("query_string");
-			Blob data = rs.getBlob("data");
+			//Blob data = rs.getBlob("data");
+			//InputStream data = rs.getBinaryStream("data");
+			String str = rs.getString("data");
+			
+			InputStream data = new ByteArrayInputStream(str.getBytes());
 			
 			Timestamp timeOfInsertion = rs.getTimestamp("time_of_insertion");
 			Timestamp timeOfExpiration = rs.getTimestamp("time_of_expiration");
@@ -47,10 +52,12 @@ public class CacheCoreIterator
 			CacheEntryImpl result = new CacheEntryImpl(
 					timeOfInsertion.getTime(),
 					1000l, //timeOfExpiration.g,
-					new InputStreamProviderBlobClosable(data, inputStreamCloseAction),
+					//new InputStreamProviderBlobClosable(data, inputStreamCloseAction),
+                    new InputStreamProviderInputStreamClosable(data, inputStreamCloseAction),
 					queryString,
 					queryHash
 			);
+			
 			
 			return result;
 		}
