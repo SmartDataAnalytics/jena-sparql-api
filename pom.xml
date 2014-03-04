@@ -14,6 +14,7 @@
 		<module>jena-sparql-api-core</module>
 		<module>jena-sparql-api-cache-h2</module>
 		<module>jena-sparql-api-utils</module>
+		<module>jena-sparql-api-servlets</module>
 		<module>jena-sparql-api-server</module>
 		<module>jena-sparql-api-example-proxy</module>
 	</modules>
@@ -545,6 +546,34 @@
 				<scope>compile</scope>
 			</dependency>
 
+
+
+
+
+			<!-- Servlet APIs -->
+		    <dependency>
+				<groupId>javax.servlet</groupId>
+				<artifactId>servlet-api</artifactId>
+				<version>2.5</version>
+		    </dependency>
+
+			<dependency>
+				<groupId>javax.ws.rs</groupId>
+				<artifactId>jsr311-api</artifactId>
+				<version>1.1.1</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-beans</artifactId>
+				<version>${spring.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-context</artifactId>
+				<version>${spring.version}</version>
+			</dependency>
 
 
 
