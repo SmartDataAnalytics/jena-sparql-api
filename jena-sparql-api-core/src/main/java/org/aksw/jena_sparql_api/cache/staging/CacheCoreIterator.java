@@ -51,7 +51,7 @@ public class CacheCoreIterator
 
 			CacheEntryImpl result = new CacheEntryImpl(
 					timeOfInsertion.getTime(),
-					1000l, //timeOfExpiration.g,
+					24 * 60 * 60 * 1000l, //timeOfExpiration.g,
 					//new InputStreamProviderBlobClosable(data, inputStreamCloseAction),
                     new InputStreamProviderInputStreamClosable(data, inputStreamCloseAction),
 					queryString,
