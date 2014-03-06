@@ -91,7 +91,7 @@ public class CacheBackendDaoPostgres
 	/**
 	 */
 	@Override
-	public CacheEntryImpl lookup(Connection conn, String service, String queryString) throws SQLException
+	public CacheEntryImpl lookup(final Connection conn, String service, String queryString) throws SQLException
 	{		
 		String md5 = StringUtils.md5Hash(createHashRoot(service, queryString));
 		// String md5 = StringUtils.md5Hash(queryString);
@@ -101,7 +101,9 @@ public class CacheBackendDaoPostgres
 		CacheCoreIterator it = new CacheCoreIterator(rs, new IClosable() {
 			@Override
 			public void close() {
-				SqlUtils.close(rs);
+				//SqlUtils.close(rs); The result set is closed by the iterator anyway, but we also close the conn
+			    //TODO The close action is better set on the caller instead of in here
+				SqlUtils.close(conn);
 			}
 		});
 		
@@ -116,6 +118,7 @@ public class CacheBackendDaoPostgres
 					logger.error("HASH-CLASH:\n" + "Service: " + service
 							+ "\nNew QueryString: " + queryString
 							+ "\nOld QueryString: " + cachedQueryString);
+					it.close();
 					return null;
 				}
 			}
