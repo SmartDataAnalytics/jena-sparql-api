@@ -3,7 +3,8 @@ package org.aksw.jena_sparql_api.pagination.core;
 import java.util.Iterator;
 import java.util.List;
 
-import org.aksw.jena_sparql_api.core.QueryExecutionDecorator;
+import org.aksw.commons.collections.IClosable;
+import org.aksw.jena_sparql_api.core.QueryExecutionAdapter;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.apache.jena.atlas.io.IndentedWriter;
 import org.slf4j.Logger;
@@ -36,10 +37,11 @@ import com.hp.hpl.jena.sparql.serializer.SerializationContext;
  *         Time: 7:59 PM
  */
 public class QueryExecutionIterated
-        extends QueryExecutionDecorator
+        extends QueryExecutionAdapter
 {
     private static final Logger logger = LoggerFactory.getLogger(QueryExecutionIterated.class);
 
+    //private ResultSetPaginated currentSelectExecution;
 
     private QueryExecutionFactory factory;
     private Iterator<Query> queryIterator;
@@ -50,21 +52,23 @@ public class QueryExecutionIterated
     // (query iterators may be endless)
     private boolean stopOnEmptyResult = true;
 
-    private QueryExecution current;
+    private IClosable currentCloseAction = null;
+    
+    //private QueryExecution current;
 
 
-    synchronized void _setDecoratee(QueryExecution decoratee) {
-        super.setDecoratee(decoratee);
-    }
+//    synchronized void _setDecoratee(QueryExecution decoratee) {
+//        super.setDecoratee(decoratee);
+//    }
 
     public QueryExecutionIterated(QueryExecutionFactory factory, Iterator<Query> queryIterator) {
-        super(null);
+        //super(null);
         this.queryIterator = queryIterator;
         this.factory = factory;
     }
 
     public QueryExecutionIterated(QueryExecutionFactory factory, Iterator<Query> queryIterator, boolean stopOnEmptyResult) {
-        super(null);
+        //super(null);
         this.queryIterator = queryIterator;
         this.factory = factory;
         this.stopOnEmptyResult = stopOnEmptyResult;
@@ -82,9 +86,20 @@ public class QueryExecutionIterated
     
     @Override
     public ResultSet execSelect() {
-        ResultSetPaginated it = new ResultSetPaginated(this, factory, queryIterator, stopOnEmptyResult);
+        ResultSetPaginated it = new ResultSetPaginated(factory, queryIterator, stopOnEmptyResult);
+        
         // Note: This line forces the iterator to initialize the result set...
         it.hasNext();
+        
+        
+        // Also note, that hasNext() may return false if there are no result rows,
+        // but still the result vars will be initialized
+        
+        /*
+        if(!hasNext) {
+            throw new RuntimeException("Error attempting to iterate a paginated result set");
+        }
+        */
         
         // ... which makes the set of resultVars available
         List<String> resultVars = it.getCurrentResultSet().getResultVars();
@@ -111,8 +126,15 @@ public class QueryExecutionIterated
         try {
             while(queryIterator.hasNext()) {
                 query = queryIterator.next();
-                current = factory.createQueryExecution(query);
+                final QueryExecution current = factory.createQueryExecution(query);
 
+                currentCloseAction = new IClosable() {
+                    @Override
+                    public void close() {
+                        current.close();
+                    }
+                };
+                
                 logger.trace("Executing query: " + query);
                 Model tmp = current.execConstruct();
                 if(tmp.isEmpty() && stopOnEmptyResult) {
@@ -131,9 +153,14 @@ public class QueryExecutionIterated
 
     @Override
     public void close() {
+        if(currentCloseAction != null) {
+            currentCloseAction.close();
+        }
+        /*
         if(current != null) {
             current.close();
         }
+        */
     }
 }
 

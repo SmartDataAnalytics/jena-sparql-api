@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
 
+import org.aksw.commons.collections.IClosable;
 import org.aksw.commons.util.StreamUtils;
 import org.aksw.jena_sparql_api.core.ResultSetClosable;
 import org.slf4j.Logger;
@@ -61,8 +62,22 @@ public class CacheResourceCacheEntry
     public ResultSet _asResultSet()
             throws SQLException
     {
-        InputStream in = cacheEntry.getInputStreamProvider().open();
-        return new ResultSetClosable(ResultSetFactory.fromXML(in), new ClosableCacheSql(this, in));
+        final InputStream in = cacheEntry.getInputStream();
+        ResultSet resultSet = ResultSetFactory.fromXML(in);
+        //IClosable closable = new ClosableCacheSql(this, in);
+        IClosable closable = new IClosable() {
+            @Override
+            public void close() {
+                try {
+                    in.close();
+                } catch (IOException e) {
+                    logger.error("Error", e);
+                }
+            }    
+        };
+        
+        ResultSetClosable result = new ResultSetClosable(resultSet, closable);
+        return result;
     }
 
     @Override
@@ -80,7 +95,7 @@ public class CacheResourceCacheEntry
     }
 
     public Model _asModel(Model result) throws SQLException {
-        InputStream in = cacheEntry.getInputStreamProvider().open();
+        InputStream in = cacheEntry.getInputStream();
 
         /*
         ByteArrayInputStream tmp;
@@ -97,13 +112,15 @@ public class CacheResourceCacheEntry
         */
 
 	    result.read(in, null, "N-TRIPLES");
-        try {
-            in.close();
-        } catch (Exception e) {
-            logger.warn("Error", e);
-        }
-        cacheEntry.getInputStreamProvider().close();
-
+	    close();
+//        try {
+//            in.close();
+//        } catch (Exception e) {
+//            logger.warn("Error", e);
+//        }
+        //cacheEntry.getInputStream().close();
+        //close();
+        
         return result;
     }
     
@@ -117,18 +134,25 @@ public class CacheResourceCacheEntry
     }
 
     public boolean _asBoolean() throws SQLException, IOException {
-        String str = StreamUtils.toString(cacheEntry.getInputStreamProvider().open());
+        // NOTE: This function closes the stream
+        String str = StreamUtils.toString(cacheEntry.getInputStream());
 
         boolean result = Boolean.parseBoolean(str);
 
-        cacheEntry.getInputStreamProvider().close();
+        //cacheEntry.getInputStream().close();
+        //close();
 
         return result;
     }
 
     @Override
     public void close() {
-        cacheEntry.getInputStreamProvider().close();
+        try {
+            cacheEntry.getInputStream().close();
+        } catch (IOException e) {
+            //throw new RuntimeException(e);
+            logger.warn("Error", e);
+        }
     }
 
 }

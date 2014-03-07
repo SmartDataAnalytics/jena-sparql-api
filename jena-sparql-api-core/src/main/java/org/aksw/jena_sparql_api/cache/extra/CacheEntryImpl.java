@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.cache.extra;
 
+import java.io.InputStream;
+
 
 /**
  * @author Claus Stadler
@@ -13,8 +15,10 @@ public class CacheEntryImpl
     private String queryString;
     private String queryHash;
 
-    public CacheEntryImpl(long timestamp, long lifespan, InputStreamProvider inputStreamProvider, String queryString, String queryHash) {
-        super(timestamp, lifespan, inputStreamProvider);
+    //private List<ICloseable> closeActions = new ArrayList<>
+    
+    public CacheEntryImpl(long timestamp, long lifespan, InputStream inputStream, String queryString, String queryHash) {
+        super(timestamp, lifespan, inputStream);
         this.queryString = queryString;
         this.queryHash = queryHash;
     }

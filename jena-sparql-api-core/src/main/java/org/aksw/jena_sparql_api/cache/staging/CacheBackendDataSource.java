@@ -10,6 +10,8 @@ import javax.sql.DataSource;
 
 import org.aksw.jena_sparql_api.cache.extra.CacheBackend;
 import org.aksw.jena_sparql_api.cache.extra.CacheEntry;
+import org.aksw.jena_sparql_api.cache.extra.CacheEntryImpl;
+import org.aksw.jena_sparql_api.cache.extra.SqlUtils;
 
 //interface StreamEndecoder {
 //	public void read(Out);
@@ -86,9 +88,12 @@ public class CacheBackendDataSource
 			Connection conn = null;
 			try {
 				conn = dataSource.getConnection();
+				//System.out.println("ConnectionWatch Opened (lookup) " + conn);
 				conn.setAutoCommit(true);
 				
-				result = dao.lookup(conn, service, queryString);
+				result = dao.lookup(conn, service, queryString, true);
+				
+				//result = new CacheEntryImpl(timestamp, lifespan, inputStream, queryString, queryHash)
 			} catch (Exception e) {
 				throw new RuntimeException(e);
 			}
@@ -118,6 +123,7 @@ public class CacheBackendDataSource
 		try {
 			if(!isOngoingWrite) {
 				conn = dataSource.getConnection();
+                //System.out.println("ConnectionWatch Opened (write) " + conn);
 				conn.setAutoCommit(true);
 				
 				dao.write(conn, service, queryString, in);
@@ -127,6 +133,8 @@ public class CacheBackendDataSource
 			throw new RuntimeException(e);
 		}
 		finally {
+		    SqlUtils.close(conn);
+            //System.out.println("ConnectionWatch Closed (write) " + conn);
 			rwLock.writeLock().unlock();
 		}
 	}	

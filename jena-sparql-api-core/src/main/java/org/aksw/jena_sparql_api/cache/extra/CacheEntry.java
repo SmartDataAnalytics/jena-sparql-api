@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.cache.extra;
 
+import java.io.InputStream;
+
 /**
  * @author Claus Stadler
  *         <p/>
@@ -10,5 +12,5 @@ public interface CacheEntry {
 
     long getTimestamp();
     long getLifespan();
-    InputStreamProvider getInputStreamProvider();
+    InputStream getInputStream();
 }

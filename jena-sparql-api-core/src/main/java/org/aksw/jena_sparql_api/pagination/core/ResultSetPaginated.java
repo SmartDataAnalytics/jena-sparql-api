@@ -3,8 +3,10 @@ package org.aksw.jena_sparql_api.pagination.core;
 
 import java.util.Iterator;
 
+import org.aksw.commons.collections.IClosable;
 import org.aksw.commons.collections.PrefetchIterator;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.ResultSetClosable;
 import org.apache.jena.atlas.lib.Closeable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,23 +52,24 @@ public class ResultSetPaginated
 {
     private static Logger logger = LoggerFactory.getLogger(ResultSetPaginated.class);
 
-	private QueryExecutionFactory service;
-	private QueryExecutionIterated execution;
+	private QueryExecutionFactory serviceFactory;
+	//private QueryExecutionIterated execution;
 
     private Iterator<Query> queryIterator;
     private boolean stopOnEmptyResult = true;
 
     private ResultSet currentResultSet = null;
-
+    private QueryExecution currentExecution = null;
+    
     /*
 	public ResultSetPaginated(QueryExecutionIterated execution,QueryExecutionFactory service, Iterator<Query> queryIterator) {
 		this(execution, service, QueryFactory.create(queryString),);
 	}
 	*/
 
-	public ResultSetPaginated(QueryExecutionIterated execution, QueryExecutionFactory service, Iterator<Query> queryIterator, boolean stopOnEmptyResult) {
-		this.execution = execution;
-        this.service = service;
+	public ResultSetPaginated(QueryExecutionFactory service, Iterator<Query> queryIterator, boolean stopOnEmptyResult) {
+		//this.execution = execution;
+        this.serviceFactory = service;
 		//this.state = new PaginationQueryIterator(query, pageSize);
         this.queryIterator = queryIterator;
 	}
@@ -78,28 +81,30 @@ public class ResultSetPaginated
 	@Override
 	protected QueryIteratorResultSet prefetch() throws Exception {
         while(queryIterator.hasNext()) {
-
+            
             Query query = queryIterator.next();
             if(query == null) {
                 throw new RuntimeException("Null query encountered in iterator");
-                //return null;
             }
 
-            QueryExecution qe = service.createQueryExecution(query);
+            final QueryExecution qe = serviceFactory.createQueryExecution(query);
 
-            if(execution != null) {
-                execution._setDecoratee(qe);
-            }
-
-            //QueryIteratorCloseable
             logger.trace("Executing: " + query);
             currentResultSet = qe.execSelect();
+            
+            currentResultSet = new ResultSetClosable(currentResultSet, new IClosable() {
+                @Override
+                public void close() {
+                    qe.close();
+                }
+            });
+            
             if(!currentResultSet.hasNext()) {
                 if(stopOnEmptyResult) {
-                    return null;
-                } else {
-                    continue;
+                    break;
                 }
+                
+                continue;
             }
 
             return new QueryIteratorResultSet(currentResultSet);
@@ -110,9 +115,14 @@ public class ResultSetPaginated
 
     @Override
     public void close() {
+        if(currentExecution != null) {
+            currentExecution.close();
+        }
+        /*
         if(execution != null) {
             execution.close();
         }
+        */
     }
 }
 

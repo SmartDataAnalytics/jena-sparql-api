@@ -83,7 +83,7 @@ public class CacheBackendDaoPostgres
 	private boolean validateHash = true;
 
 	
-	private String QUERY_LOOKUP = "SELECT * FROM \"query_cache\" WHERE \"id\" = ? LIMIT 2";
+	private String QUERY_LOOKUP = "SELECT * FROM \"query_cache\" WHERE \"id\" = ?";
 	private String QUERY_INSERT = "INSERT INTO \"query_cache\"(\"id\", \"query_string\", \"data\", \"time_of_insertion\", \"hit_count\") VALUES (?, ?, ?, ?, ?)";
 	private String QUERY_UPDATE = "UPDATE \"query_cache\" SET \"data\"=?, \"time_of_insertion\" = ? WHERE \"id\" = ?";
 
@@ -91,25 +91,50 @@ public class CacheBackendDaoPostgres
 	/**
 	 */
 	@Override
-	public CacheEntryImpl lookup(final Connection conn, String service, String queryString) throws SQLException
+	public CacheEntryImpl lookup(final Connection conn, String service, String queryString, final boolean closeConn) throws SQLException
 	{		
 		String md5 = StringUtils.md5Hash(createHashRoot(service, queryString));
 		// String md5 = StringUtils.md5Hash(queryString);
-
+		
 		final ResultSet rs = SqlUtils.executeCore(conn, QUERY_LOOKUP, md5);
 
+		
+		
+		/*
 		CacheCoreIterator it = new CacheCoreIterator(rs, new IClosable() {
 			@Override
 			public void close() {
-				//SqlUtils.close(rs); The result set is closed by the iterator anyway, but we also close the conn
-			    //TODO The close action is better set on the caller instead of in here
-				SqlUtils.close(conn);
+	            SqlUtils.close(rs);
+	            if(closeConn) {
+	                System.out.println("ConnectionWatch Closed (lookup) " + conn);
+	                SqlUtils.close(conn);
+	            }
 			}
 		});
+		*/
 		
+
+        IClosable closeAction = new IClosable() {
+            boolean isClosed = false;
+            
+            @Override
+            public void close() {
+                if(!isClosed) {
+                
+                    SqlUtils.close(rs);
+                    if(closeConn) {
+                        //System.out.println("ConnectionWatch Closed (lookup) " + conn);
+                        SqlUtils.close(conn);
+                    }
+                }
+                
+                isClosed = true;
+            }
+        };
+
 		CacheEntryImpl result = null;
-		if(it.hasNext()) {
-			result = it.next();
+		if(rs.next()) {
+			result = CacheCoreIterator.createCacheEntry(rs, closeAction);
 			
 			if (validateHash) {
 				String cachedQueryString = result.getQueryString();
@@ -118,17 +143,23 @@ public class CacheBackendDaoPostgres
 					logger.error("HASH-CLASH:\n" + "Service: " + service
 							+ "\nNew QueryString: " + queryString
 							+ "\nOld QueryString: " + cachedQueryString);
-					it.close();
-					return null;
+					throw new RuntimeException("Hash-Clash - Man you're lucky"); 
+					//it.close();
+					//return null;
 				}
 			}
 
+			/*
 			if(it.hasNext()) {
 				// NOTE Can't happen anymore, as the md5 hash is now the primary key
 				// In the old version we had an auto increment column
 				logger.warn("Multiple cache hits found, just one expected.");
-			}		
-		}	
+			}
+			*/		
+		}
+		else {
+		    closeAction.close();
+		}
 
 //		if(result != null) {
 //		    //logger.info("Cache hit for " + queryString);
@@ -142,12 +173,20 @@ public class CacheBackendDaoPostgres
 
 
 	@Override
-	public void write(Connection conn, String service, String queryString, InputStream in) throws SQLException
+	public void write(Connection conn, String service, String queryString, InputStream in) throws SQLException, IOException
 	{
 		String md5 = StringUtils.md5Hash(createHashRoot(service, queryString));
 
-		CacheEntryImpl entry = lookup(conn, service, queryString);
-
+		// Issue: The lookup would close the connection, although we still need the connection to perform
+		// the write
+		CacheEntryImpl entry = lookup(conn, service, queryString, false);
+		boolean doesEntryExist = entry != null;
+		
+		if(doesEntryExist) {
+		    // Close the input stream associated with the entry
+		    entry.getInputStream().close();
+		}
+		
 		Timestamp timestamp = new Timestamp(new GregorianCalendar().getTimeInMillis());
 
 		//rs = executeQuery(Query.LOOKUP, md5);
@@ -160,7 +199,7 @@ public class CacheBackendDaoPostgres
         }
 		
 		// hack should be in
-		if (entry != null) {
+		if(doesEntryExist) {
 			SqlUtils.execute(conn, QUERY_UPDATE, Void.class, hack, timestamp, md5);
 		} else {
 			SqlUtils.execute(conn, QUERY_INSERT, Void.class, md5, queryString, hack, timestamp, 1);

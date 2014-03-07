@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 
+import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
 
 /**
@@ -33,10 +34,21 @@ public class CacheCoreExCompressor
     }
 
     public CacheEntry wrap(CacheEntry raw) {
-        return raw == null
-            ? null
-            : new CacheEntryBase(raw.getTimestamp(), raw.getLifespan(),
-                new InputStreamProviderBZip2(raw.getInputStreamProvider(), streamFactory, compression));
+        CacheEntry result;
+        if(raw == null) {
+            result = null;
+        }
+        else {
+            InputStream in;
+            try {
+                in = streamFactory.createCompressorInputStream(compression, raw.getInputStream());
+            } catch (CompressorException e) {
+                throw new RuntimeException(e);
+            }
+            result = new CacheEntryBase(raw.getTimestamp(), raw.getLifespan(), in);
+        }
+//                new InputStreamProviderBZip2(raw.getInputStream(), streamFactory, compression));
+        return result;
     }
 
     @Override

@@ -1,4 +1,5 @@
-package org.aksw.jena_sparql_api.cache.core;
+package org.aksw.jena_sparql_api.
+cache.core;
 
 import java.io.IOException;
 
@@ -29,6 +30,10 @@ public class QueryExecutionCacheEx
     private String service;
     private String queryString;
 
+    
+    // The cache resource - created upon execution of a query
+    private CacheResource currentResource = null;
+    
     public QueryExecutionCacheEx(QueryExecution decoratee, String service, String queryString, CacheFrontend cache) {
         super(decoratee);
 
@@ -37,13 +42,35 @@ public class QueryExecutionCacheEx
         this.cache = cache;
     }
 
+    /**
+     * Helper function that closes outdated resources
+     * 
+     * @param resource
+     * @return
+     */
+    public static boolean needsCaching(CacheResource resource) {
+        boolean result;
+
+        if(resource == null) {
+            result = true;
+        }
+        else if(resource.isOutdated()) {
+            resource.close();
+            result = true;
+        }
+        else {
+            result = false;
+        }
+        
+        return result;
+    }
 
     public synchronized ResultSet doCacheResultSet()
     {
         CacheResource resource = cache.lookup(service, queryString);
 
         ResultSet rs;
-        if(resource == null || resource.isOutdated()) {
+        if(needsCaching(resource)) {
 
             try {
                 rs = getDecoratee().execSelect();
@@ -76,6 +103,8 @@ public class QueryExecutionCacheEx
             logger.trace("Cache hit [" + service + "]:" + queryString);
         }
 
+        currentResource = resource;
+        
         return resource.asResultSet();
     }
 
@@ -90,8 +119,8 @@ public class QueryExecutionCacheEx
     public synchronized Model _doCacheModel(Model result, ModelProvider modelProvider) throws IOException {
         CacheResource resource = cache.lookup(service, queryString);
 
-        if(resource == null || resource.isOutdated()) {
-
+        if(needsCaching(resource)) {
+            
             Model model;
             try {
                 model = modelProvider.getModel(); //getDecoratee().execConstruct();
@@ -126,11 +155,16 @@ public class QueryExecutionCacheEx
     
     public synchronized boolean doCacheBoolean()
     {
+        /*
+        if(true) {
+            return false;
+        }
+        */
         CacheResource resource = cache.lookup(service, queryString);
 
         boolean ret;
-        if(resource == null || resource.isOutdated()) {
-
+        if(needsCaching(resource)) {
+            
             try {
                 ret = getDecoratee().execAsk();
             } catch(Exception e) {
@@ -150,6 +184,8 @@ public class QueryExecutionCacheEx
 
             logger.trace("Cache write [" + service + "]: " + queryString);
             cache.write(service, queryString, ret);
+            
+            
             resource = cache.lookup(service, queryString);
             if(resource == null) {
                 throw new RuntimeException("Cache error: Lookup of just written data failed");
@@ -201,5 +237,17 @@ public class QueryExecutionCacheEx
      @Override
      public boolean execAsk() {
          return doCacheBoolean();
+     }
+     
+     
+     @Override
+     public void close() {
+         if(currentResource != null) {
+             currentResource.close();
+         }
+         
+//         if(currentCloseAction != null) {
+//             currentCloseAction.close();
+//         }
      }
 }

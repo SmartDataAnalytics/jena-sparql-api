@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.cache.extra;
 
+import java.io.InputStream;
+
 /**
  * @author Claus Stadler
  *         <p/>
@@ -11,12 +13,12 @@ public class CacheEntryBase
 {
     private long timestamp;
     private long lifespan;
-    private InputStreamProvider inputStreamProvider;
+    private InputStream inputStream;
 
-    public CacheEntryBase(long timestamp, long lifespan, InputStreamProvider inputStreamProvider) {
+    public CacheEntryBase(long timestamp, long lifespan, InputStream inputStream) {
         this.timestamp = timestamp;
         this.lifespan = lifespan;
-        this.inputStreamProvider = inputStreamProvider;
+        this.inputStream = inputStream;
     }
 
     public long getTimestamp() {
@@ -27,8 +29,8 @@ public class CacheEntryBase
         return lifespan;
     }
 
-    public InputStreamProvider getInputStreamProvider() {
-        return inputStreamProvider;
+    public InputStream getInputStream() {
+        return inputStream;
     }
 
 }

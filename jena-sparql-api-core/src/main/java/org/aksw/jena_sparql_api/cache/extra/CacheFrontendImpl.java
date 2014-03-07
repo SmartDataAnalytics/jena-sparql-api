@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.cache.extra;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 
@@ -118,7 +119,8 @@ public class CacheFrontendImpl
 	}
 	
 	public void _write(String service, String queryString, final boolean value) throws IOException {
-        cacheBackend.write(service, queryString, new ByteArrayInputStream(String.valueOf(value).getBytes()));
+        InputStream in = new ByteArrayInputStream(String.valueOf(value).getBytes());
+	    cacheBackend.write(service, queryString, in);
     }
 
 

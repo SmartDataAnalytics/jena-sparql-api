@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.cache.staging;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 
 import org.aksw.commons.collections.IClosable;
@@ -29,6 +30,37 @@ public class CacheCoreIterator
 		this.inputStreamCloseAction = inputStreamCloseAction;
 	}
 	
+	
+	public static CacheEntryImpl createCacheEntry(ResultSet rs, IClosable closeAction) throws SQLException {
+
+        byte[] rawQueryHash = rs.getBytes("id");
+        String queryHash = StringUtils.bytesToHexString(rawQueryHash);
+
+        String queryString = rs.getString("query_string");
+        //Blob data = rs.getBlob("data");
+        //InputStream data = rs.getBinaryStream("data");
+        String str = rs.getString("data");
+        
+        InputStream data = new ByteArrayInputStream(str.getBytes());
+        
+        Timestamp timeOfInsertion = rs.getTimestamp("time_of_insertion");
+        Timestamp timeOfExpiration = rs.getTimestamp("time_of_expiration");
+
+
+        CacheEntryImpl result = new CacheEntryImpl(
+                timeOfInsertion.getTime(),
+                24 * 60 * 60 * 1000l, //timeOfExpiration.g,
+                //new InputStreamProviderBlobClosable(data, inputStreamCloseAction),
+                new InputStreamClosable(data, closeAction),
+                //new InputStreamProviderInputStreamClosable(data, inputStreamCloseAction),
+                queryString,
+                queryHash
+        );
+        
+        
+        return result;
+	}
+	
 	@Override
 	protected CacheEntryImpl prefetch()
 			throws Exception
@@ -53,7 +85,8 @@ public class CacheCoreIterator
 					timeOfInsertion.getTime(),
 					24 * 60 * 60 * 1000l, //timeOfExpiration.g,
 					//new InputStreamProviderBlobClosable(data, inputStreamCloseAction),
-                    new InputStreamProviderInputStreamClosable(data, inputStreamCloseAction),
+					new InputStreamClosable(data, inputStreamCloseAction),
+                    //new InputStreamProviderInputStreamClosable(data, inputStreamCloseAction),
 					queryString,
 					queryHash
 			);
@@ -67,6 +100,7 @@ public class CacheCoreIterator
 	
 	@Override
 	public void close() {
-		SqlUtils.close(rs);
+	    //inputStreamCloseAction.close();
+		//SqlUtils.close(rs);
 	}
 }
