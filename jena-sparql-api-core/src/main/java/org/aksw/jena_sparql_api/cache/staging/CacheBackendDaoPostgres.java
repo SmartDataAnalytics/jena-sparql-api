@@ -130,10 +130,10 @@ public class CacheBackendDaoPostgres
             
             @Override
             public void close() {
-                if(!isClosed) {
-                
+                if(!isClosed) {                
                     SqlUtils.close(rs);
                     SqlUtils.close(stmt);
+                    
                     if(closeConn) {
                         //System.out.println("ConnectionWatch Closed (lookup) " + conn);
                         SqlUtils.close(conn);
