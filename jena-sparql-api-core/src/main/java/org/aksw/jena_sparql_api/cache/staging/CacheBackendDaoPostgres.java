@@ -3,10 +3,12 @@ package org.aksw.jena_sparql_api.cache.staging;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.GregorianCalendar;
 import java.util.List;
@@ -96,7 +98,16 @@ public class CacheBackendDaoPostgres
 		String md5 = StringUtils.md5Hash(createHashRoot(service, queryString));
 		// String md5 = StringUtils.md5Hash(queryString);
 		
-		final ResultSet rs = SqlUtils.executeCore(conn, QUERY_LOOKUP, md5);
+		//final ResultSet rs = SqlUtils.executeCore(conn, QUERY_LOOKUP, md5);
+
+		Object[] args = {md5};
+		String sql = QUERY_LOOKUP;
+		logger.trace("Executing statement '" + sql + "' with args " + Arrays.asList(args));
+
+        final PreparedStatement stmt = conn.prepareStatement(sql);
+
+        SqlUtils.executeSetArgs(stmt, args);
+        final ResultSet rs = stmt.executeQuery();
 
 		
 		
@@ -122,6 +133,7 @@ public class CacheBackendDaoPostgres
                 if(!isClosed) {
                 
                     SqlUtils.close(rs);
+                    SqlUtils.close(stmt);
                     if(closeConn) {
                         //System.out.println("ConnectionWatch Closed (lookup) " + conn);
                         SqlUtils.close(conn);
