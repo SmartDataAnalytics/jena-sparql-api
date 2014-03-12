@@ -20,7 +20,7 @@ public class QueryExecutionFactoryCacheEx
     private String service;
 
     public QueryExecutionFactoryCacheEx(QueryExecutionFactory decoratee, CacheFrontend cache) {
-        this(decoratee, decoratee.getId(), cache);
+        this(decoratee, decoratee.getId() + "#" + decoratee.getState(), cache);
     }
 
     public QueryExecutionFactoryCacheEx(QueryExecutionFactory decoratee, String service, CacheFrontend cache) {
