@@ -1,4 +1,0 @@
-#if ($prefix)
-$prefix
-#end
-SELECT ?classes #parse("org.aksw.commons.sparqltemplates/from.vm") { <$instance>  rdf:type ?classes } #parse("org.aksw.commons.sparqltemplates/limit.vm")

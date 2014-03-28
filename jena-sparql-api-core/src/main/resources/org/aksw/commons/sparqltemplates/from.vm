@@ -1,3 +1,0 @@
-#foreach( $from in $fromList )
-from <$from>
-#end
