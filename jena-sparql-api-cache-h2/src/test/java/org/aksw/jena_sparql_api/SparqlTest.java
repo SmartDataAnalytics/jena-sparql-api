@@ -166,10 +166,8 @@ public class SparqlTest {
         dataSource.setPassword("sa");
 
         String schemaResourceName = "/org/aksw/jena_sparql_api/cache/cache-schema-pgsql.sql";
-        URL resource = SparqlTest.class.getResource(schemaResourceName);
-
-        InputStream in = resource.openStream();
-
+        InputStream in = SparqlTest.class.getResourceAsStream(schemaResourceName);
+        
         if(in == null) {
             throw new RuntimeException("Failed to load resource: " + schemaResourceName);
         }
