@@ -102,7 +102,12 @@ public class QueryExecutionIterated
         */
         
         // ... which makes the set of resultVars available
-        List<String> resultVars = it.getCurrentResultSet().getResultVars();
+        ResultSet tmp = it.getCurrentResultSet();
+        if(tmp == null) {
+            throw new RuntimeException("Underlying result set not avaliable - probably a query failed.");
+        }
+
+        List<String> resultVars = tmp.getResultVars();
 
         QueryIterator myQueryIterator = new MyQueryIteratorWrapper(it);
         QueryIteratorCloseable itClosable = new QueryIteratorCloseable(myQueryIterator, it);

@@ -17,6 +17,8 @@
 		<module>jena-sparql-api-servlets</module>
 		<module>jena-sparql-api-server</module>
 		<module>jena-sparql-api-example-proxy</module>
+
+                <module>jena-sparql-api-concepts</module>
 	</modules>
 
 	<scm>
@@ -302,6 +304,16 @@
 					</exclusion>
 				</exclusions>
 			</dependency>
+
+
+                        <dependency>
+                                <groupId>org.jgrapht</groupId>
+                                <artifactId>jgrapht-core</artifactId>
+<!--                            <version>0.8.3</version> -->
+<!-- 0.9.0 is so far only deployed in the aksw internal repo (2014-02-01) -->
+                                <version>0.9.0</version>
+                        </dependency>
+
 
 			<dependency>
 				<groupId>com.sun.jersey</groupId>
