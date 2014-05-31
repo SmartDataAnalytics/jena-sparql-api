@@ -202,6 +202,10 @@ public class SparqlFormatterUtils {
 		model.write(out, "RDF/XML");
 	}
 
+	public static void writeRdfXml(OutputStream out, ResultSet rs) {
+        ResultSetFormatter.outputAsXML(out, rs);	    
+	}
+	
 	public static void writeXml(OutputStream out, ResultSet rs) {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		ResultSetFormatter.outputAsXML(baos, rs);
