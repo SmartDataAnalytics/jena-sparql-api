@@ -19,6 +19,7 @@
 		<module>jena-sparql-api-example-proxy</module>
 
                 <module>jena-sparql-api-concepts</module>
+                <module>jena-sparql-api-batch</module>
 	</modules>
 
 	<scm>
@@ -33,6 +34,7 @@
 		<jersey-spring.version>1.17.1</jersey-spring.version>
 
 		<spring.version>3.2.4.RELEASE</spring.version>
+        <spring.batch.version>2.2.5.RELEASE</spring.batch.version>
 		<aksw.commons.version>0.5</aksw.commons.version>
 
 		<atmosphere.version>2.0.0.RC3</atmosphere.version>
@@ -607,6 +609,17 @@
 					</exclusion>
 				</exclusions>
 			</dependency>
+
+            <dependency>
+                    <groupId>org.springframework.batch</groupId>
+                    <artifactId>spring-batch-core</artifactId>
+                    <version>${spring.batch.version}</version>
+            </dependency>
+            <dependency>
+                    <groupId>org.springframework.batch</groupId>
+                    <artifactId>spring-batch-infrastructure</artifactId>
+                    <version>${spring.batch.version}</version>
+            </dependency>
 
 			<!-- URL Rewriting -->
 			<dependency>
