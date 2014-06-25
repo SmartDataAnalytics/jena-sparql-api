@@ -20,18 +20,19 @@ public class CacheCoreIterator
 	extends SinglePrefetchIterator<CacheEntryImpl>
 {
 	private ResultSet rs;
-	
-	// The action to perform when closing the input stream of a generated
+    private long timeToLive;
+
+    // The action to perform when closing the input stream of a generated
 	// cache entry. E.g. close the result set, commit the transaction, ...
 	private IClosable inputStreamCloseAction;
-	
-	public CacheCoreIterator(ResultSet rs, IClosable inputStreamCloseAction) {
-		this.rs = rs;
-		this.inputStreamCloseAction = inputStreamCloseAction;
-	}
-	
-	
-	public static CacheEntryImpl createCacheEntry(ResultSet rs, IClosable closeAction) throws SQLException {
+
+    public CacheCoreIterator(ResultSet rs, IClosable inputStreamCloseAction, long tileToLive) {
+        this.rs = rs;
+        this.inputStreamCloseAction = inputStreamCloseAction;
+        this.timeToLive = tileToLive;
+    }
+
+	public static CacheEntryImpl createCacheEntry(ResultSet rs, IClosable closeAction, long _timeToLive) throws SQLException {
 
         byte[] rawQueryHash = rs.getBytes("id");
         String queryHash = StringUtils.bytesToHexString(rawQueryHash);
@@ -49,7 +50,7 @@ public class CacheCoreIterator
 
         CacheEntryImpl result = new CacheEntryImpl(
                 timeOfInsertion.getTime(),
-                24 * 60 * 60 * 1000l, //timeOfExpiration.g,
+                _timeToLive, //timeOfExpiration.g,
                 //new InputStreamProviderBlobClosable(data, inputStreamCloseAction),
                 new InputStreamClosable(data, closeAction),
                 //new InputStreamProviderInputStreamClosable(data, inputStreamCloseAction),
@@ -83,7 +84,7 @@ public class CacheCoreIterator
 
 			CacheEntryImpl result = new CacheEntryImpl(
 					timeOfInsertion.getTime(),
-					24 * 60 * 60 * 1000l, //timeOfExpiration.g,
+                    timeToLive, //timeOfExpiration.g,
 					//new InputStreamProviderBlobClosable(data, inputStreamCloseAction),
 					new InputStreamClosable(data, inputStreamCloseAction),
                     //new InputStreamProviderInputStreamClosable(data, inputStreamCloseAction),
