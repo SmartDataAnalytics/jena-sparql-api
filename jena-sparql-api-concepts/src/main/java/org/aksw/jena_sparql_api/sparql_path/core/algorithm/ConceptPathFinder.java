@@ -36,6 +36,7 @@ import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
@@ -410,16 +411,19 @@ public class ConceptPathFinder {
         Model result = ModelFactory.createDefaultModel();
         
         Resource Path = ResourceFactory.createResource("http://ns.aksw.org/jassa/ontology/Path");
+        Property length = ResourceFactory.createProperty("http://ns.aksw.org/jassa/ontology/pathLength");
         
         int i = 0;
         for(Path path : paths) {
             String pathStr = path.toPathString();
             
-            Resource s = result.createResource("http://example.org/" + StringUtils.urlEncode(pathStr));
+            Resource s = result.createResource("http://example.org/path/" + StringUtils.urlEncode(pathStr));
             Literal o = result.createLiteral(pathStr);
+            Literal l = result.createTypedLiteral(path.getSteps().size());
             
             result.add(s, RDF.type, Path);
             result.add(s, RDFS.label, o);
+            result.add(s, length, l);
         }
         
         return result;
