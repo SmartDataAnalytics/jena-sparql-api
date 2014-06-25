@@ -83,20 +83,20 @@ public class CacheBackendDaoPostgres
 	private static final Logger logger = LoggerFactory.getLogger(CacheBackendDaoPostgres.class);
 
 	private boolean validateHash = true;
-    private long timeToLive;
+	private long timeToLive;
 
 	
 	private String QUERY_LOOKUP = "SELECT * FROM \"query_cache\" WHERE \"id\" = ?";
 	private String QUERY_INSERT = "INSERT INTO \"query_cache\"(\"id\", \"query_string\", \"data\", \"time_of_insertion\", \"hit_count\") VALUES (?, ?, ?, ?, ?)";
 	private String QUERY_UPDATE = "UPDATE \"query_cache\" SET \"data\"=?, \"time_of_insertion\" = ? WHERE \"id\" = ?";
 
-    public CacheBackendDaoPostgres() {
-        this.timeToLive = 24l * 60l * 60l * 1000l; // 1 day by default
-    }
+	public CacheBackendDaoPostgres() {
+		this.timeToLive = 24l * 60l * 60l * 1000l; // 1 day by default
+	}
 
-    public CacheBackendDaoPostgres(long timeToLive) {
-        this.timeToLive = timeToLive;
-    }
+	public CacheBackendDaoPostgres(long timeToLive) {
+		this.timeToLive = timeToLive;
+	}
 
 	/**
 	 */

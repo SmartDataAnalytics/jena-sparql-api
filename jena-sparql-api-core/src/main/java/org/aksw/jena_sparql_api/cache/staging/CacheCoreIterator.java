@@ -20,17 +20,17 @@ public class CacheCoreIterator
 	extends SinglePrefetchIterator<CacheEntryImpl>
 {
 	private ResultSet rs;
-    private long timeToLive;
+	private long timeToLive;
 
-    // The action to perform when closing the input stream of a generated
+	// The action to perform when closing the input stream of a generated
 	// cache entry. E.g. close the result set, commit the transaction, ...
 	private IClosable inputStreamCloseAction;
 
-    public CacheCoreIterator(ResultSet rs, IClosable inputStreamCloseAction, long tileToLive) {
-        this.rs = rs;
-        this.inputStreamCloseAction = inputStreamCloseAction;
-        this.timeToLive = tileToLive;
-    }
+	public CacheCoreIterator(ResultSet rs, IClosable inputStreamCloseAction, long tileToLive) {
+		this.rs = rs;
+		this.inputStreamCloseAction = inputStreamCloseAction;
+		this.timeToLive = tileToLive;
+	}
 
 	public static CacheEntryImpl createCacheEntry(ResultSet rs, IClosable closeAction, long _timeToLive) throws SQLException {
 
