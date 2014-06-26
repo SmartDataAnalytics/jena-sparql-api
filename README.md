@@ -1,4 +1,4 @@
-## Welcome to the Jena SPARQL API project: A collection of interfaces and classes for keeping concerns related to SPARQL query transformation/processing separate from the application layer.
+## Welcome to the Jena SPARQL API project!
 
 [![Build Status](http://ci.aksw.org/jenkins/job/jena-sparql-api/badge/icon)](http://ci.aksw.org/jenkins/job/jena-sparql-api/)
 
