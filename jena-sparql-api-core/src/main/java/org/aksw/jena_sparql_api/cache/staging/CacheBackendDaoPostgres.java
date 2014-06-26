@@ -91,7 +91,7 @@ public class CacheBackendDaoPostgres
 	private String QUERY_UPDATE = "UPDATE \"query_cache\" SET \"data\"=?, \"time_of_insertion\" = ? WHERE \"id\" = ?";
 
 	public CacheBackendDaoPostgres() {
-		this.timeToLive = 24l * 60l * 60l * 1000l; // 1 day by default
+	    this(24l * 60l * 60l * 1000l);
 	}
 
 	public CacheBackendDaoPostgres(long timeToLive) {

@@ -26,13 +26,13 @@ public class CacheCoreIterator
 	// cache entry. E.g. close the result set, commit the transaction, ...
 	private IClosable inputStreamCloseAction;
 
-	public CacheCoreIterator(ResultSet rs, IClosable inputStreamCloseAction, long tileToLive) {
+	public CacheCoreIterator(ResultSet rs, IClosable inputStreamCloseAction, long timeToLive) {
 		this.rs = rs;
 		this.inputStreamCloseAction = inputStreamCloseAction;
-		this.timeToLive = tileToLive;
+		this.timeToLive = timeToLive;
 	}
 
-	public static CacheEntryImpl createCacheEntry(ResultSet rs, IClosable closeAction, long _timeToLive) throws SQLException {
+	public static CacheEntryImpl createCacheEntry(ResultSet rs, IClosable closeAction, long timeToLive) throws SQLException {
 
         byte[] rawQueryHash = rs.getBytes("id");
         String queryHash = StringUtils.bytesToHexString(rawQueryHash);
@@ -50,7 +50,7 @@ public class CacheCoreIterator
 
         CacheEntryImpl result = new CacheEntryImpl(
                 timeOfInsertion.getTime(),
-                _timeToLive, //timeOfExpiration.g,
+                timeToLive, //timeOfExpiration.g,
                 //new InputStreamProviderBlobClosable(data, inputStreamCloseAction),
                 new InputStreamClosable(data, closeAction),
                 //new InputStreamProviderInputStreamClosable(data, inputStreamCloseAction),
@@ -67,7 +67,9 @@ public class CacheCoreIterator
 			throws Exception
 	{	
 		if (rs.next()) {
-
+		    CacheEntryImpl result = CacheCoreIterator.createCacheEntry(rs, inputStreamCloseAction, timeToLive);
+            return result;		    
+/*
 			byte[] rawQueryHash = rs.getBytes("id");
 			String queryHash = StringUtils.bytesToHexString(rawQueryHash);
 
@@ -91,9 +93,7 @@ public class CacheCoreIterator
 					queryString,
 					queryHash
 			);
-			
-			
-			return result;
+*/
 		}
 		
 		return finish();
