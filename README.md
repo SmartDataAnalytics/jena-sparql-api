@@ -1,4 +1,5 @@
-## Welcome to the Jena SPARQL API project: A collection of simple utilities for Jena offering many goodies!
+## Welcome to the Jena SPARQL API project: A collection of interfaces and classes for keeping concerns related to SPARQL query transformation/processing separate from the application layer.
+
 [![Build Status](http://ci.aksw.org/jenkins/job/jena-sparql-api/badge/icon)](http://ci.aksw.org/jenkins/job/jena-sparql-api/)
 
 This library offers several [Jena](http://jena.apache.org/)-compatible ways to *transparently* add delays, caching, pagination, retry and even query transformations before sending off your original SPARQL query. Also, the server module bundles Jena with the [Atmosphere](https://github.com/Atmosphere/atmosphere) framework, giving you a kickstart for REST and websocket implementations. 
