@@ -30,8 +30,13 @@ import com.hp.hpl.jena.sparql.syntax.Template;
  *         Time: 1:12 AM
  */
 public class CannedQueryUtils {
-    public static Query spoTemplate() {
-        return spoTemplate(Var.alloc("s"), Var.alloc("p"), Var.alloc("o"));
+    
+	private static final Var s = Var.alloc("s");
+	private static final Var p = Var.alloc("p");
+	private static final Var o = Var.alloc("o");
+
+	public static Query spoTemplate() {
+        return spoTemplate(s, p, o);
     }
 
     public static Query spoTemplate(Node s, Node p, Node o)
@@ -58,7 +63,7 @@ public class CannedQueryUtils {
     }
     
     public static Query spoCountTemplate() {
-        return spoTemplate(Var.alloc("s"), Var.alloc("p"), Var.alloc("o"));
+        return spoCountTemplate(s, p, o);
     }
 
     public static Query spoCountTemplate(Node s, Node p, Node o)
@@ -89,9 +94,6 @@ public class CannedQueryUtils {
 
 
     public static Query constructBySubjects(Collection<Node> ss) {
-        Var s = Var.alloc("s");
-        Var p = Var.alloc("p");
-        Var o = Var.alloc("o");
 
         ExprVar vs = new ExprVar(s);
 
@@ -127,8 +129,6 @@ public class CannedQueryUtils {
     }
 
     public static Query constructBySubject(Node s) {
-        Var p = Var.alloc("p");
-        Var o = Var.alloc("o");
         Triple triple = new Triple(s, p, o);
 
         BasicPattern basicPattern = new BasicPattern();
