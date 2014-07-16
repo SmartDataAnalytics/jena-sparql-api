@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>org.aksw.jena-sparql-api</groupId>
@@ -18,8 +19,9 @@
 		<module>jena-sparql-api-server</module>
 		<module>jena-sparql-api-example-proxy</module>
 
-                <module>jena-sparql-api-concepts</module>
-                <module>jena-sparql-api-batch</module>
+		<module>jena-sparql-api-concepts</module>
+		<module>jena-sparql-api-batch</module>
+		<module>jena-sparql-api-geo</module>
 	</modules>
 
 	<scm>
@@ -34,7 +36,7 @@
 		<jersey-spring.version>1.17.1</jersey-spring.version>
 
 		<spring.version>3.2.4.RELEASE</spring.version>
-        <spring.batch.version>2.2.5.RELEASE</spring.batch.version>
+		<spring.batch.version>2.2.5.RELEASE</spring.batch.version>
 		<aksw.commons.version>0.5</aksw.commons.version>
 
 		<atmosphere.version>2.0.0.RC3</atmosphere.version>
@@ -242,11 +244,17 @@
 				<version>${project.version}</version>
 			</dependency>
 
-            <dependency>
-                <groupId>org.aksw.jena-sparql-api</groupId>
-                <artifactId>jena-sparql-api-concepts</artifactId>
-                <version>${project.version}</version>
-            </dependency>
+			<dependency>
+				<groupId>org.aksw.jena-sparql-api</groupId>
+				<artifactId>jena-sparql-api-concepts</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.jena-sparql-api</groupId>
+				<artifactId>jena-sparql-api-geo</artifactId>
+				<version>${project.version}</version>
+			</dependency>
 
 			<dependency>
 				<groupId>org.apache.jena</groupId>
@@ -313,13 +321,13 @@
 			</dependency>
 
 
-                        <dependency>
-                                <groupId>org.jgrapht</groupId>
-                                <artifactId>jgrapht-core</artifactId>
-<!--                            <version>0.8.3</version> -->
-<!-- 0.9.0 is so far only deployed in the aksw internal repo (2014-02-01) -->
-                                <version>0.9.0</version>
-                        </dependency>
+			<dependency>
+				<groupId>org.jgrapht</groupId>
+				<artifactId>jgrapht-core</artifactId>
+				<!-- <version>0.8.3</version> -->
+				<!-- 0.9.0 is so far only deployed in the aksw internal repo (2014-02-01) -->
+				<version>0.9.0</version>
+			</dependency>
 
 
 			<dependency>
@@ -521,6 +529,13 @@
 			</dependency>
 
 
+            <!-- Java Topology Suite -->
+			<dependency>
+				<groupId>com.vividsolutions</groupId>
+				<artifactId>jts</artifactId>
+				<version>1.11</version>
+			</dependency>
+
 			<!-- Embedded Databases (will be moved to separate package) -->
 			<dependency>
 				<groupId>com.h2database</groupId>
@@ -570,11 +585,11 @@
 
 
 			<!-- Servlet APIs -->
-		    <dependency>
+			<dependency>
 				<groupId>javax.servlet</groupId>
 				<artifactId>javax.servlet-api</artifactId>
 				<version>3.1.0</version>
-		    </dependency>
+			</dependency>
 
 			<dependency>
 				<groupId>javax.ws.rs</groupId>
@@ -615,23 +630,23 @@
 				</exclusions>
 			</dependency>
 
-            <dependency>
-                    <groupId>org.springframework.batch</groupId>
-                    <artifactId>spring-batch-core</artifactId>
-                    <version>${spring.batch.version}</version>
-            </dependency>
-            <dependency>
-                    <groupId>org.springframework.batch</groupId>
-                    <artifactId>spring-batch-infrastructure</artifactId>
-                    <version>${spring.batch.version}</version>
-            </dependency>
+			<dependency>
+				<groupId>org.springframework.batch</groupId>
+				<artifactId>spring-batch-core</artifactId>
+				<version>${spring.batch.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework.batch</groupId>
+				<artifactId>spring-batch-infrastructure</artifactId>
+				<version>${spring.batch.version}</version>
+			</dependency>
 
-                        <!-- Gson: Java to Json conversion -->
-                        <dependency>
-                                <groupId>com.google.code.gson</groupId>
-                                <artifactId>gson</artifactId>
-                                <version>2.2.2</version>
-                        </dependency>
+			<!-- Gson: Java to Json conversion -->
+			<dependency>
+				<groupId>com.google.code.gson</groupId>
+				<artifactId>gson</artifactId>
+				<version>2.2.2</version>
+			</dependency>
 
 
 			<!-- URL Rewriting -->
