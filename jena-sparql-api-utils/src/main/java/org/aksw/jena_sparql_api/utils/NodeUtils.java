@@ -30,7 +30,7 @@ public class NodeUtils {
 			
 			result =  quote + encoded + quote;
 			
-			if(dt != null && dt.isEmpty()) {
+			if(dt != null && !dt.isEmpty()) {
 				result = result + "^^<" + dt+ ">";  
 			} else {
 				if(!lang.isEmpty()) {

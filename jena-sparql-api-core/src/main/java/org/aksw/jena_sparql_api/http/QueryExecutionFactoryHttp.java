@@ -29,12 +29,12 @@ public class QueryExecutionFactoryHttp
     }
 
     public QueryExecutionFactoryHttp(String service, String defaultGraphName) {
-        this(service, Collections.singleton(defaultGraphName));
+        this(service, defaultGraphName == null ? Collections.<String>emptySet() : Collections.singleton(defaultGraphName));
     }
 
     public QueryExecutionFactoryHttp(String service, Collection<String> defaultGraphs) {
         this.service = service;
-        this.defaultGraphs = new ArrayList<String>(defaultGraphs);
+        this.defaultGraphs = defaultGraphs == null ? new ArrayList<String>() : new ArrayList<String>(defaultGraphs);
         Collections.sort(this.defaultGraphs);
     }
 
