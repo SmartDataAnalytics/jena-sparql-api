@@ -1,12 +1,12 @@
-package org.aksw.jena_sparql_api.sparql_path.core.domain;
+package org.aksw.jena_sparql_api.concepts;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.aksw.jena_sparql_api.sparql_path.utils.ElementUtils;
-import org.aksw.jena_sparql_api.sparql_path.utils.VarUtils;
+import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.GeneratorBlacklist;
+import org.aksw.jena_sparql_api.utils.VarUtils;
 
 import com.google.common.collect.Sets;
 import com.hp.hpl.jena.graph.Triple;
@@ -19,6 +19,7 @@ import com.hp.hpl.jena.sparql.core.Substitute;
 import com.hp.hpl.jena.sparql.core.Var;
 import com.hp.hpl.jena.sparql.engine.binding.BindingHashMap;
 import com.hp.hpl.jena.sparql.lang.ParserSPARQL10;
+import com.hp.hpl.jena.sparql.lang.ParserSPARQL11;
 import com.hp.hpl.jena.sparql.syntax.Element;
 import com.hp.hpl.jena.sparql.syntax.ElementGroup;
 import com.hp.hpl.jena.sparql.syntax.ElementTriplesBlock;

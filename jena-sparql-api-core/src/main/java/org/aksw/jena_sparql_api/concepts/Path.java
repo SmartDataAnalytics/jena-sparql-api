@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.sparql_path.core.domain;
+package org.aksw.jena_sparql_api.concepts;
 
 import java.util.ArrayList;
 import java.util.Iterator;

@@ -7,7 +7,9 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.aksw.commons.util.strings.StringUtils;
-import org.aksw.jena_sparql_api.sparql_path.core.domain.Concept;
+import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.mapper.AggLiteral;
+import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.aksw.jena_sparql_api.utils.TripleUtils;
 
 import com.google.common.base.Function;

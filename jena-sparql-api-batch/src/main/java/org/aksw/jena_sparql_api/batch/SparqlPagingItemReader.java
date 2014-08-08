@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.mapper.BindingMapper;
 import org.springframework.batch.item.data.AbstractPaginatedDataItemReader;
 
 import com.hp.hpl.jena.query.Query;

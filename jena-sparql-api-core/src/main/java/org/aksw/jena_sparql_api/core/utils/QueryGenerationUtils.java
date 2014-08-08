@@ -1,11 +1,12 @@
-package org.aksw.jena_sparql_api.sparql_path.utils;
+package org.aksw.jena_sparql_api.core.utils;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.aksw.jena_sparql_api.sparql_path.core.domain.Concept;
+import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.utils.GeneratorBlacklist;
+import org.aksw.jena_sparql_api.utils.VarUtils;
 
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.sdb.core.Generator;

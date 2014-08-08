@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.geo;
+package org.aksw.jena_sparql_api.mapper;
 
 import org.aksw.jena_sparql_api.lookup.ResultSetPart;
 

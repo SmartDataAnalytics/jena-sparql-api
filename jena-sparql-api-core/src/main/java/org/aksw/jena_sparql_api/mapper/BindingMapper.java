@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.batch;
+package org.aksw.jena_sparql_api.mapper;
 
 import com.hp.hpl.jena.sparql.engine.binding.Binding;
 

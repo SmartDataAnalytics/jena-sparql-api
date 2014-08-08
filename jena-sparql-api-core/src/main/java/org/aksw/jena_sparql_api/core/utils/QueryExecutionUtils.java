@@ -8,9 +8,16 @@ import java.util.Set;
 import org.aksw.commons.collections.IClosable;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.ResultSetClosable;
-import org.aksw.jena_sparql_api.utils.CannedQueryUtils;
+import org.aksw.jena_sparql_api.mapper.BindingMapper;
+import org.aksw.jena_sparql_api.mapper.BindingMapperExtractNode;
+import org.aksw.jena_sparql_api.mapper.FunctionBindingMapper;
+import org.aksw.jena_sparql_api.mapper.IteratorResultSetBinding;
 import org.apache.jena.atlas.lib.Sink;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.Query;
@@ -25,6 +32,8 @@ import com.hp.hpl.jena.sparql.syntax.Element;
 
 
 public class QueryExecutionUtils {
+    private static final Logger logger = LoggerFactory.getLogger(QueryExecutionUtils.class);
+    
 	public static final Var vg = Var.alloc("g");
 	public static final Var vs = Var.alloc("s");
 	public static final Var vp = Var.alloc("p");
@@ -99,15 +108,53 @@ public class QueryExecutionUtils {
         return result;
     }
     
-    public static List<Node> executeList(QueryExecutionFactory qef, Query query) {
-        List<Node> result = new ArrayList<Node>();
-        
+    public static Var extractProjectVar(Query query) {
         List<Var> vars = query.getProjectVars();
         if(vars.size() != 1) {
             throw new RuntimeException("Exactly 1 var expected");
         }
         
-        Var var = vars.get(0);
+        Var result = vars.get(0);
+
+        return result;
+    }
+    
+    public static Node executeSingle(QueryExecutionFactory qef, Query query) {
+        Var var = extractProjectVar(query);
+
+        Node result = executeSingle(qef, query, var);
+        return result;
+    }
+    
+    public static Node executeSingle(QueryExecutionFactory qef, Query query, Var var) {
+        Node result = null;
+        
+        QueryExecution qe = qef.createQueryExecution(query);
+        ResultSet rs = qe.execSelect();
+        
+        if(rs.hasNext()) {
+            Binding binding = rs.nextBinding();
+            result = binding.get(var);
+        }
+        
+        if(rs.hasNext()) {
+            logger.warn("A single result was retrieved, but more results exist - is this intended?");
+        }
+
+        return result;
+    }
+    
+
+    public static List<Node> executeList(QueryExecutionFactory qef, Query query) {
+        Var var = extractProjectVar(query);
+
+        List<Node> result = executeList(qef, query, var);
+        return result;
+    }
+
+    
+    public static List<Node> executeList(QueryExecutionFactory qef, Query query, Var var) {
+        List<Node> result = new ArrayList<Node>();
         
         QueryExecution qe = qef.createQueryExecution(query);
         ResultSet rs = qe.execSelect();
@@ -120,5 +167,34 @@ public class QueryExecutionUtils {
         }
         
         return result;
-    }    
+    }
+    
+    public static Iterator<Node> executeIterator(QueryExecutionFactory qef, Query query) {
+        Var var = extractProjectVar(query);
+
+        Iterator<Node> result = executeIterator(qef, query, var);
+        return result;
+    }
+
+    
+    /**
+     * Warning: the iterator must be consumed, otherwise there will be a resource leak!!!
+     * 
+     * @param qef
+     * @param query
+     * @param var
+     * @return
+     */
+    public static Iterator<Node> executeIterator(QueryExecutionFactory qef, Query query, Var var) {
+        QueryExecution qe = qef.createQueryExecution(query);
+        ResultSet rs = qe.execSelect();
+       
+        Iterator<Binding> itBinding = new IteratorResultSetBinding(rs);       
+        Function<Binding, Node> fn = FunctionBindingMapper.create(new BindingMapperExtractNode(var));
+       
+        Iterator<Node> result = Iterators.transform(itBinding, fn);
+
+        return result;
+    }
+    
 }

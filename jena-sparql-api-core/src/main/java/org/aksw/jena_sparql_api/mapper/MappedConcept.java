@@ -1,6 +1,6 @@
-package org.aksw.jena_sparql_api.geo;
+package org.aksw.jena_sparql_api.mapper;
 
-import org.aksw.jena_sparql_api.sparql_path.core.domain.Concept;
+import org.aksw.jena_sparql_api.concepts.Concept;
 
 import com.hp.hpl.jena.sparql.expr.aggregate.Aggregator;
 

@@ -10,12 +10,12 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
+import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.concepts.Path;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
 import org.aksw.jena_sparql_api.model.QueryExecutionFactoryModel;
 import org.aksw.jena_sparql_api.sparql_path.core.algorithm.ConceptPathFinder;
-import org.aksw.jena_sparql_api.sparql_path.core.domain.Concept;
-import org.aksw.jena_sparql_api.sparql_path.core.domain.Path;
 import org.aksw.jena_sparql_api.utils.SparqlFormatterUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

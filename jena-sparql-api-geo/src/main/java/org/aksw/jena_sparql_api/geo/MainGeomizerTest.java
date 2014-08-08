@@ -11,6 +11,7 @@ import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceCacheMem;
 import org.aksw.jena_sparql_api.lookup.LookupServicePartition;
+import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.aksw.jena_sparql_api.utils.TripleUtils;
 
 import com.google.common.base.Function;
@@ -33,7 +34,7 @@ import com.vividsolutions.jts.geom.Geometry;
 public class MainGeomizerTest {
     
     public static LookupService<Node, Geometry> createLookupService(QueryExecutionFactory sparqlService, MappedConcept mc) {
-        LookupService<Node, Geometry> result = LookupServiceUtils.createGeoLookupService(sparqlService, mc);
+        LookupService<Node, Geometry> result = LookupServiceUtilsGeo.createGeoLookupService(sparqlService, mc);
         result = LookupServicePartition.create(result, 30, 5);
         result = LookupServiceCacheMem.create(result);
 

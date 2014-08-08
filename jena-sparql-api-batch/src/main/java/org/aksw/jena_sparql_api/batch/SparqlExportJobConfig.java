@@ -13,6 +13,7 @@ import javax.sql.DataSource;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
 import org.aksw.jena_sparql_api.core.utils.QueryExecutionUtils;
+import org.aksw.jena_sparql_api.mapper.BindingMapperPassThrough;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepContribution;

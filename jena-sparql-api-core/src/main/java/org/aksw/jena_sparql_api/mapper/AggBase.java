@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.geo;
+package org.aksw.jena_sparql_api.mapper;
 
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.sparql.expr.Expr;
