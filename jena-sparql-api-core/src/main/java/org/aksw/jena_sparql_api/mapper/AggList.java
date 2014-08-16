@@ -19,7 +19,8 @@ public class AggList<T>
 
     @Override
     public Acc<List<T>> createAccumulator() {
-        return new AccList<T>(subAgg);
+        Acc<List<T>> result = new AccList<T>(subAgg);
+        return result;
     }
 
     @Override

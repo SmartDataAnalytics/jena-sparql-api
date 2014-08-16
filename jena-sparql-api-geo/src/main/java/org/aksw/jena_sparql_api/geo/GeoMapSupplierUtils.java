@@ -60,7 +60,7 @@ public class GeoMapSupplierUtils {
 
     public static final Agg<String> createAggregatorWkt(Var wktVar) {
         Agg<String> result =
-            AggTransform.create(AggUtils.literal(new ExprVar(wktVar)),
+            AggTransform.create(AggUtils.literalNode(new ExprVar(wktVar)),
                 FunctionNodeToString.fn);
 
         return result;

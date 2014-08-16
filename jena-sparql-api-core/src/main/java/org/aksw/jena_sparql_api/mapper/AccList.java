@@ -15,7 +15,7 @@ import com.hp.hpl.jena.sparql.engine.binding.Binding;
  */
 public class AccList<T> implements Acc<List<T>> {
     private Agg<T> subAgg;
-    private List<Acc<T>> state;
+    private List<Acc<T>> state = new ArrayList<Acc<T>>();
 
     public AccList(Agg<T> subAgg) {
         this.subAgg = subAgg;
@@ -24,6 +24,7 @@ public class AccList<T> implements Acc<List<T>> {
     @Override
     public void accumulate(Binding binding) {
         Acc<T> acc = subAgg.createAccumulator();
+        acc.accumulate(binding);
         state.add(acc);
     }
 

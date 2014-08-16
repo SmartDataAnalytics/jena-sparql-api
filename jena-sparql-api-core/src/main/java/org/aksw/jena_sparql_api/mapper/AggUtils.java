@@ -11,13 +11,20 @@ public class AggUtils {
         return result;
     }
 
-    public static Agg<Node> literal(String exprStr) {
+    public static Agg<Node> literalNode(String exprStr) {
         BindingMapper<Node> m = AggUtils.mapper(exprStr);
         Agg<Node> result = new AggLiteral<Node>(m);
         return result;
     }
 
-    public static Agg<Node> literal(Expr expr) {
+    public static Agg<Object> literal(String exprStr) {
+        BindingMapper<Node> m = AggUtils.mapper(exprStr);
+        Agg<Node> tmp = new AggLiteral<Node>(m);
+        Agg<Object> result = AggTransform.create(tmp, FunctionNodeToObject.fn);
+        return result;
+    }
+
+    public static Agg<Node> literalNode(Expr expr) {
         BindingMapper<Node> m = new BindingMapperExpr(expr);
         Agg<Node> result = new AggLiteral<Node>(m);
         return result;
