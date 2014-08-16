@@ -1,32 +1,32 @@
 package org.aksw.jena_sparql_api.mapper;
 
 import com.hp.hpl.jena.sparql.engine.binding.Binding;
-import com.hp.hpl.jena.sparql.expr.NodeValue;
-import com.hp.hpl.jena.sparql.expr.aggregate.Accumulator;
 import com.hp.hpl.jena.sparql.function.FunctionEnv;
 
-public class AccLiteral
-    implements Accumulator
+public class AccLiteral<T>
+    implements Acc<T>
 {
-    private NodeValue value = null;
+    private T value = null;
     private int i = 0;
-    private BindingMapper<NodeValue> bindingMapper;
-    
-    public AccLiteral(BindingMapper<NodeValue> bindingMapper) {
+    private BindingMapper<T> bindingMapper;
+
+    public AccLiteral(BindingMapper<T> bindingMapper) {
         this.bindingMapper = bindingMapper;
-    }
-    
-    @Override
-    public void accumulate(Binding binding, FunctionEnv functionEnv) {
-        NodeValue node = bindingMapper.map(binding, i++);
-        
-        value = node;
     }
 
     @Override
-    public NodeValue getValue() {
-        //NodeValue result = NodeValue.makeNode(value);
-        //return result;
+    public void accumulate(Binding binding) {
+        // TODO Detect if we override the value and raise a warning!
+        value = bindingMapper.map(binding, i++);
+    }
+
+    @Override
+    public T getValue() {
         return value;
     }
+    
+    public static <T> AccLiteral<T> create(BindingMapper<T> bindingMapper) {
+        return new AccLiteral<T>(bindingMapper);
+    }
+
 }

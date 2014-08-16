@@ -3,39 +3,32 @@ package org.aksw.jena_sparql_api.mapper;
 import org.aksw.jena_sparql_api.lookup.ResultSetPart;
 
 import com.google.common.base.Function;
-import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.sparql.engine.binding.Binding;
-import com.hp.hpl.jena.sparql.expr.NodeValue;
-import com.hp.hpl.jena.sparql.expr.aggregate.Accumulator;
-import com.hp.hpl.jena.sparql.expr.aggregate.Aggregator;
-import com.hp.hpl.jena.sparql.function.FunctionEnv;
 
-public class FunctionResultSetAggregate
-    implements Function<ResultSetPart, NodeValue>
+public class FunctionResultSetAggregate<T>
+    implements Function<ResultSetPart, T>
 {
-    private Aggregator aggregator;
-    private FunctionEnv env;
-    
-    public FunctionResultSetAggregate(Aggregator aggregator) {
-        this(aggregator, null);
+    private Agg<T> agg;
+
+    public FunctionResultSetAggregate(Agg<T> agg) {
+        this.agg = agg;
     }
-    
-    public FunctionResultSetAggregate(Aggregator aggregator, FunctionEnv env) {
-        this.aggregator = aggregator;
-        this.env = env;
-    }
-    
+
     @Override
-    public NodeValue apply(ResultSetPart rs) {
-        Accumulator acc = aggregator.createAccumulator();
+    public T apply(ResultSetPart rs) {
+        Acc<T> acc = agg.createAccumulator();
         
-        //while(rs.hasNext()) {
         for(Binding binding : rs.getRows()) {
-            //Binding binding = rs.nextBinding();
-            acc.accumulate(binding, null);
+            acc.accumulate(binding);
         }
-    
-        NodeValue result = acc.getValue();
+
+        T result = acc.getValue();
+
         return result;
-    }    
+    }
+    
+    public static <T> FunctionResultSetAggregate<T> create(Agg<T> agg) {
+        FunctionResultSetAggregate<T> result = new FunctionResultSetAggregate<T>(agg);
+        return result;
+    }
 }

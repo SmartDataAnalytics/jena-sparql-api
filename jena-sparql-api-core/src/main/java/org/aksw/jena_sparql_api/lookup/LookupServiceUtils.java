@@ -10,7 +10,7 @@ import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.sparql.expr.NodeValue;
 
 public class LookupServiceUtils {
-    public static LookupService<Node, NodeValue> createGeoLookupService(QueryExecutionFactory sparqlService, MappedConcept mappedConcept) {
+    public static <T> LookupService<Node, T> createLookupService(QueryExecutionFactory sparqlService, MappedConcept<T> mappedConcept) {
         
         Concept concept = mappedConcept.getConcept();
         Query query = concept.asQuery();
@@ -20,9 +20,9 @@ public class LookupServiceUtils {
         
         LookupService<Node, ResultSetPart> base = new LookupServiceSparqlQuery(sparqlService, query, concept.getVar());
         
-        FunctionResultSetAggregate transform = new FunctionResultSetAggregate(mappedConcept.getAggregator());
+        FunctionResultSetAggregate<T> transform = FunctionResultSetAggregate.create(mappedConcept.getAggregator());
         
-        LookupService<Node, NodeValue> result = LookupServiceTransformValue.create(base, transform);
+        LookupService<Node, T> result = LookupServiceTransformValue.create(base, transform);
         return result;
     }
 }

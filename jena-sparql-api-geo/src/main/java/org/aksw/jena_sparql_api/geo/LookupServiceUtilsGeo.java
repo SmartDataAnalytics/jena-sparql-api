@@ -12,11 +12,10 @@ import com.hp.hpl.jena.sparql.expr.NodeValue;
 import com.vividsolutions.jts.geom.Geometry;
 
 public class LookupServiceUtilsGeo {
-    public static LookupService<Node, Geometry> createGeoLookupService(QueryExecutionFactory sparqlService, MappedConcept mappedConcept) {
+    public static LookupService<Node, Geometry> createGeoLookupService(QueryExecutionFactory sparqlService, MappedConcept<String> mappedConcept) {
      
-        LookupService<Node, NodeValue> ls = LookupServiceUtils.createGeoLookupService(sparqlService, mappedConcept);        
-        LookupService<Node, String> a = LookupServiceTransformValue.create(ls, FunctionNodeValueToString.fn);
-        LookupService<Node, Geometry> result = LookupServiceTransformValue.create(a, FunctionParseWkt.create());
+        LookupService<Node, String> ls = LookupServiceUtils.createLookupService(sparqlService, mappedConcept); 
+        LookupService<Node, Geometry> result = LookupServiceTransformValue.create(ls, FunctionParseWkt.create());
 
         return result;
     }

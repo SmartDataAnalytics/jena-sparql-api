@@ -2,26 +2,29 @@ package org.aksw.jena_sparql_api.mapper;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 
-import com.hp.hpl.jena.sparql.expr.aggregate.Aggregator;
-
-public class MappedConcept {
+public class MappedConcept<T> {
 
     // Grouping is performed by the concepts' variable
     private Concept concept;
-    private Aggregator aggregator;
+    private Agg<T> agg;
     
-    public MappedConcept(Concept concept, Aggregator aggregator) {
+    public MappedConcept(Concept concept, Agg<T> agg) {
         super();
         this.concept = concept;
-        this.aggregator = aggregator;
+        this.agg = agg;
     }
     
     public Concept getConcept() {
         return concept;
     }
 
-    public Aggregator getAggregator() {
-        return aggregator;
+    public Agg<T> getAggregator() {
+        return agg;
+    }
+
+    public static <T> MappedConcept<T> create(Concept concept, Agg<T> agg) {
+        MappedConcept<T> result = new MappedConcept<T>(concept, agg);
+        return result;
     }
 }
 

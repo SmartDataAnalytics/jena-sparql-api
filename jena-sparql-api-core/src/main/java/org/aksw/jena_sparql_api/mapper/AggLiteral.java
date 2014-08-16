@@ -1,28 +1,32 @@
 package org.aksw.jena_sparql_api.mapper;
 
-import com.hp.hpl.jena.sparql.expr.Expr;
-import com.hp.hpl.jena.sparql.expr.NodeValue;
-import com.hp.hpl.jena.sparql.expr.aggregate.Accumulator;
+import java.util.Set;
 
-public class AggLiteral
-    extends AggBase
+import com.hp.hpl.jena.sparql.core.Var;
+
+public class AggLiteral<T>
+    implements Agg<T>
 {
-    private Expr expr;
-    
-    public AggLiteral(Expr expr) {
-        this.expr = expr;
-    }
-    
-    @Override
-    public Expr getExpr() {
-        return expr;
+    private BindingMapper<T> mapper;
+
+    public AggLiteral(BindingMapper<T> mapper) {
+        this.mapper = mapper;
     }
 
     @Override
-    public Accumulator createAccumulator() {
-        BindingMapper<NodeValue> bindingMapper = new BindingMapperExpr(expr);
-        
-        Accumulator result = new AccLiteral(bindingMapper);
+    public Acc<T> createAccumulator() {
+        Acc<T> result = new AccLiteral<T>(mapper);
         return result;
-    }   
+    }
+
+    @Override
+    public Set<Var> getDeclaredVars() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+    
+    public AggLiteral<T> create(BindingMapper<T> mapper) {
+        AggLiteral<T> result = new AggLiteral<T>(mapper);
+        return result;
+    }
 }

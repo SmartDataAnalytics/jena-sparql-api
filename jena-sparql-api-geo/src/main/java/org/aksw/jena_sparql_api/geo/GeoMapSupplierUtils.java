@@ -8,7 +8,10 @@ import java.util.Set;
 
 import org.aksw.commons.util.strings.StringUtils;
 import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.mapper.AggLiteral;
+import org.aksw.jena_sparql_api.mapper.Agg;
+import org.aksw.jena_sparql_api.mapper.AggTransform;
+import org.aksw.jena_sparql_api.mapper.AggUtils;
+import org.aksw.jena_sparql_api.mapper.FunctionNodeToString;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.aksw.jena_sparql_api.utils.TripleUtils;
 
@@ -22,7 +25,6 @@ import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.sparql.core.BasicPattern;
 import com.hp.hpl.jena.sparql.core.Var;
 import com.hp.hpl.jena.sparql.expr.ExprVar;
-import com.hp.hpl.jena.sparql.expr.aggregate.Aggregator;
 import com.hp.hpl.jena.sparql.syntax.ElementTriplesBlock;
 import com.hp.hpl.jena.vocabulary.RDF;
 import com.vividsolutions.jts.geom.Geometry;
@@ -56,8 +58,10 @@ public class GeoMapSupplierUtils {
     }
 
 
-    public static final Aggregator createAggregatorWkt(Var wktVar) {
-        Aggregator result = new AggLiteral(new ExprVar(wktVar));
+    public static final Agg<String> createAggregatorWkt(Var wktVar) {
+        Agg<String> result =
+            AggTransform.create(AggUtils.literal(new ExprVar(wktVar)),
+                FunctionNodeToString.fn);
 
         return result;
     }
