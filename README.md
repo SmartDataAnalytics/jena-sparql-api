@@ -49,13 +49,13 @@ This library is composed of the following modules:
 Here is a brief summary of what you can do. A complete example is avaible [here](https://github.com/AKSW/jena-sparql-api/blob/master/jena-sparql-api-core/src/main/java/org/aksw/jena_sparql_api/example/Example.java).
 
 Http Query Execution Factory
-
+```Java
     QueryExecutionFactory qef = new QueryExecutionFactoryHttp("http://dbpedia.org/sparql", "http://dbpedia.org");
-
+```
 Adding a 2000 millisecond delay in order to be nice to the backend
-
-    qef = new QueryExecutionFactoryDelay(qef, 2000);
-
+```Java
+	qef = new QueryExecutionFactoryDelay(qef, 2000);
+```
 Set up a cache
 
 ```Java
@@ -68,16 +68,16 @@ qef = new QueryExecutionFactoryCacheEx(qef, cacheFrontend);
 ```
 Add pagination with (for the sake of demonstration) 900 entries per page (we could have used 1000 as well).
 Note: Should the pagination abort, such as because you ran out of memory and need to adjust your settings, you can resume from cache!
-
+```Java
     qef = new QueryExecutionFactoryPaginated(qef, 900);
-
+```
 Create and run a query on this fully buffed QueryExecutionFactory
-		
+```Java		
     QueryExecution qe = qef.createQueryExecution("Select ?s { ?s a <http://dbpedia.org/ontology/City> } Limit 5000");
 		
     ResultSet rs = qe.execSelect();
     System.out.println(ResultSetFormatter.asText(rs));
-
+```
 
 ### Proxy Server Example
 This example demonstrates how you can create your own SPARQL web service.
@@ -85,11 +85,11 @@ You only have to subclass `SparqlEndpointBase` and override the `createQueryExec
 Look at the [Source Code](https://github.com/AKSW/jena-sparql-api/blob/master/jena-sparql-api-example-proxy/src/main/java/org/aksw/jena_sparql_api/example/proxy/SparqlEndpointProxy.java) to see how easy it is.
 
 Running the example:
-
+```bash
     cd jena-sparql-api-example-proxy
     mvn jetty:run
     # This will now start the proxy on part 5522
-
+```
 In your browser or a terminal visit:
 
 [http://localhost:5522/sparql?service-uri=http://dbpedia.org/sparql&query=Select * { ?s ?p ?o } Limit 10](http://localhost:5522/sparql?service-uri=http%3A%2F%2Fdbpedia.org%2Fsparql&query=Select%20%2A%20%7B%20%3Fs%20%3Fp%20%3Fo%20%7D%20Limit%2010)
