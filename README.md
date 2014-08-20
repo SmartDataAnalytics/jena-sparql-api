@@ -55,13 +55,14 @@ Adding a 2000 millisecond delay in order to be nice to the backend
 
 Set up a cache
 
-    // Some boilerplace code which may get simpler soon
-    long timeToLive = 24l * 60l * 60l * 1000l; 
-    CacheCoreEx cacheBackend = CacheCoreH2.create("sparql", timeToLive, true);
-    CacheEx cacheFrontend = new CacheExImpl(cacheBackend);
+```Java
+// Some boilerplace code which may get simpler soon
+long timeToLive = 24l * 60l * 60l * 1000l; 
+CacheCoreEx cacheBackend = CacheCoreH2.create("sparql", timeToLive, true);
+CacheEx cacheFrontend = new CacheExImpl(cacheBackend);
 
-    qef = new QueryExecutionFactoryCacheEx(qef, cacheFrontend);
-
+qef = new QueryExecutionFactoryCacheEx(qef, cacheFrontend);
+```
 Add pagination with (for the sake of demonstration) 900 entries per page (we could have used 1000 as well).
 Note: Should the pagination abort, such as because you ran out of memory and need to adjust your settings, you can resume from cache!
 
