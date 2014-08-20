@@ -5,34 +5,37 @@
 This library offers several [Jena](http://jena.apache.org/)-compatible ways to *transparently* add delays, caching, pagination, retry and even query transformations before sending off your original SPARQL query. This frees your application layer from the hassle of dealing with those issues. Also, the server module bundles Jena with the [Atmosphere](https://github.com/Atmosphere/atmosphere) framework, giving you a kickstart for REST and websocket implementations. 
 
 ### Maven
+```xml
+<repositories>
+	<repository>
+	    <id>maven.aksw.internal</id>
+	    <name>University Leipzig, AKSW Maven2 Repository</name>
+	    <url>http://maven.aksw.org/archiva/repository/internal</url>
+	</repository>
+	
+	<repository>
+	    <id>maven.aksw.snapshots</id>
+	    <name>University Leipzig, AKSW Maven2 Repository</name>
+	    <url>http://maven.aksw.org/archiva/repository/snapshots</url>
+	</repository>
+</repositories>
 
-    <repositories>
-        <repository>
-            <id>maven.aksw.internal</id>
-            <name>University Leipzig, AKSW Maven2 Repository</name>
-            <url>http://maven.aksw.org/archiva/repository/internal</url>
-        </repository>
-
-        <repository>
-            <id>maven.aksw.snapshots</id>
-            <name>University Leipzig, AKSW Maven2 Repository</name>
-            <url>http://maven.aksw.org/archiva/repository/snapshots</url>
-        </repository>
-    </repositories>
-
-
-    <dependency>
-        <groupId>org.aksw.jena-sparql-api</groupId>
-        <artifactId>jena-sparql-api-core</artifactId>
-        <version>2.10.0-22</version>
-    </dependency>
-
-    <dependency>
-        <groupId>org.aksw.jena-sparql-api</groupId>
-        <artifactId>jena-sparql-api-server</artifactId>
-        <version>2.10.0-22</version>
-    </dependency>
-
+<dependencies>
+	<dependency>
+		<groupId>org.aksw.jena-sparql-api</groupId>
+		<artifactId>jena-sparql-api-core</artifactId>
+		<version>2.10.0-22</version>
+	</dependency>
+	
+	<dependency>
+		<groupId>org.aksw.jena-sparql-api</groupId>
+		<artifactId>jena-sparql-api-server</artifactId>
+		<version>2.10.0-22</version>
+	</dependency>
+	
+	...
+</dependencies>
+```
 ### Project structure
 
 This library is composed of the following modules:
