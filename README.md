@@ -69,7 +69,7 @@ qef = new QueryExecutionFactoryCacheEx(qef, cacheFrontend);
 Add pagination with (for the sake of demonstration) 900 entries per page (we could have used 1000 as well).
 Note: Should the pagination abort, such as because you ran out of memory and need to adjust your settings, you can resume from cache!
 ```Java
-    qef = new QueryExecutionFactoryPaginated(qef, 900);
+qef = new QueryExecutionFactoryPaginated(qef, 900);
 ```
 Create and run a query on this fully buffed QueryExecutionFactory
 ```Java		
