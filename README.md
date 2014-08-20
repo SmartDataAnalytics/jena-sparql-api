@@ -50,11 +50,11 @@ Here is a brief summary of what you can do. A complete example is avaible [here]
 
 Http Query Execution Factory
 ```Java
-    QueryExecutionFactory qef = new QueryExecutionFactoryHttp("http://dbpedia.org/sparql", "http://dbpedia.org");
+QueryExecutionFactory qef = new QueryExecutionFactoryHttp("http://dbpedia.org/sparql", "http://dbpedia.org");
 ```
 Adding a 2000 millisecond delay in order to be nice to the backend
 ```Java
-	qef = new QueryExecutionFactoryDelay(qef, 2000);
+qef = new QueryExecutionFactoryDelay(qef, 2000);
 ```
 Set up a cache
 
@@ -73,10 +73,10 @@ Note: Should the pagination abort, such as because you ran out of memory and nee
 ```
 Create and run a query on this fully buffed QueryExecutionFactory
 ```Java		
-    QueryExecution qe = qef.createQueryExecution("Select ?s { ?s a <http://dbpedia.org/ontology/City> } Limit 5000");
+QueryExecution qe = qef.createQueryExecution("Select ?s { ?s a <http://dbpedia.org/ontology/City> } Limit 5000");
 		
-    ResultSet rs = qe.execSelect();
-    System.out.println(ResultSetFormatter.asText(rs));
+ResultSet rs = qe.execSelect();
+System.out.println(ResultSetFormatter.asText(rs));
 ```
 
 ### Proxy Server Example
@@ -86,9 +86,9 @@ Look at the [Source Code](https://github.com/AKSW/jena-sparql-api/blob/master/je
 
 Running the example:
 ```bash
-    cd jena-sparql-api-example-proxy
-    mvn jetty:run
-    # This will now start the proxy on part 5522
+cd jena-sparql-api-example-proxy
+mvn jetty:run
+# This will now start the proxy on part 5522
 ```
 In your browser or a terminal visit:
 
