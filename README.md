@@ -99,10 +99,10 @@ In your browser or a terminal visit:
 The source code of this repo is published under the [Apache License Version 2.0](https://github.com/AKSW/jena-sparql-api/blob/master/LICENSE).
 
 This project makes use of several dependencies: When in doubt, please cross-check with the respective projects:
-* [Jena](https://jena.apache.org/)
-* [Atmosphere](https://github.com/Atmosphere/atmosphere)
-* [Guava](http://code.google.com/p/guava-libraries/)
-* [commons-lang](http://commons.apache.org/proper/commons-lang/)
+* [Apache Jena](https://jena.apache.org/) (Apache License 2.0)
+* [Atmosphere](https://github.com/Atmosphere/atmosphere) (Apache License 2.0/Partially CDDL License)
+* [Guava](http://code.google.com/p/guava-libraries/) (Apache License 2.0)
+* [commons-lang](http://commons.apache.org/proper/commons-lang/) (Apache License 2.0)
 * [rdf-json-writer](https://github.com/kasabi/rdf-json-writer) (currently copied but also under Apache 2.0 license, will be changed to maven dep)
 
 
