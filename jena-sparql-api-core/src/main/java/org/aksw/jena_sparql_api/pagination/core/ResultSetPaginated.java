@@ -90,7 +90,13 @@ public class ResultSetPaginated
             final QueryExecution qe = serviceFactory.createQueryExecution(query);
 
             logger.trace("Executing: " + query);
+
+            // TODO Virtuoso sometimes yields invalid XML (probably due to encoding issues) and thus execSelect fails
+            // Should this happen, we could try to recover by
+            // doing a binary partitioning of the current query range, and try to locate the bindings causing the error
             currentResultSet = qe.execSelect();
+            
+            
             
             currentResultSet = new ResultSetClosable(currentResultSet, new IClosable() {
                 @Override

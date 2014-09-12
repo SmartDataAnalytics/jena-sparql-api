@@ -5,9 +5,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.aksw.jena_sparql_api.sparql_path.core.domain.Concept;
-import org.aksw.jena_sparql_api.sparql_path.utils.ElementTreeAnalyser;
+import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.utils.CnfUtils;
+import org.aksw.jena_sparql_api.utils.ElementTreeAnalyser;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.ReplaceConstants;
 import org.slf4j.Logger;

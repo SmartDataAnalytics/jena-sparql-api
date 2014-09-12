@@ -20,6 +20,7 @@ import com.hp.hpl.jena.sparql.expr.NodeValue;
 import com.hp.hpl.jena.sparql.expr.aggregate.AggCount;
 import com.hp.hpl.jena.sparql.syntax.ElementFilter;
 import com.hp.hpl.jena.sparql.syntax.ElementGroup;
+import com.hp.hpl.jena.sparql.syntax.ElementNamedGraph;
 import com.hp.hpl.jena.sparql.syntax.ElementPathBlock;
 import com.hp.hpl.jena.sparql.syntax.Template;
 
@@ -31,6 +32,7 @@ import com.hp.hpl.jena.sparql.syntax.Template;
  */
 public class CannedQueryUtils {
     
+    private static final Var g = Var.alloc("g");
 	private static final Var s = Var.alloc("s");
 	private static final Var p = Var.alloc("p");
 	private static final Var o = Var.alloc("o");
@@ -204,4 +206,6 @@ public class CannedQueryUtils {
 
         return query;
     }
+        
+    
 }

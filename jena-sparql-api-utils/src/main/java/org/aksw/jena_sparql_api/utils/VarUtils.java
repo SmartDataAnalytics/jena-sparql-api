@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.sparql_path.utils;
+package org.aksw.jena_sparql_api.utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,7 +6,7 @@ import java.util.List;
 import com.hp.hpl.jena.sparql.core.Var;
 
 public class VarUtils {
-
+    
 	/**
 	 * Returns a list of variable names as strings for a given iterable of Var objects.
 	 * 

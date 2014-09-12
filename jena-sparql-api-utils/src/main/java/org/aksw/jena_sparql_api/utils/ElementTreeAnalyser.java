@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.sparql_path.utils;
+package org.aksw.jena_sparql_api.utils;
 
 import java.util.ArrayList;
 import java.util.List;

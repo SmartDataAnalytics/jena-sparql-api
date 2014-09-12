@@ -4,11 +4,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.concepts.Path;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.sparql_path.core.algorithm.ConceptPathFinder;
-import org.aksw.jena_sparql_api.sparql_path.core.domain.Concept;
-import org.aksw.jena_sparql_api.sparql_path.core.domain.Path;
 
 
 public class TestMain {

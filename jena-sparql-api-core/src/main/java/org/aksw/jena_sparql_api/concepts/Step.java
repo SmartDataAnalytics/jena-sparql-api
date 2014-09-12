@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.sparql_path.core.domain;
+package org.aksw.jena_sparql_api.concepts;
 
 public class Step {
 	private String propertyName;

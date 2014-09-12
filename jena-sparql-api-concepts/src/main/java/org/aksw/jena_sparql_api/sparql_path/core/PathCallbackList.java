@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.sparql_path.core;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.aksw.jena_sparql_api.sparql_path.core.domain.Path;
+import org.aksw.jena_sparql_api.concepts.Path;
 
 public class PathCallbackList
 	implements PathCallback
