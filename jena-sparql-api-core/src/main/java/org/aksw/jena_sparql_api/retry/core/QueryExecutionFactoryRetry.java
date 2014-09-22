@@ -1,11 +1,29 @@
 package org.aksw.jena_sparql_api.retry.core;
 
 
+import java.util.concurrent.TimeUnit;
+
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactoryDecorator;
+import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 
+import com.blogspot.nurkiewicz.asyncretry.backoff.Backoff;
+import com.blogspot.nurkiewicz.asyncretry.backoff.BoundedMaxBackoff;
+import com.blogspot.nurkiewicz.asyncretry.backoff.BoundedMinBackoff;
+import com.blogspot.nurkiewicz.asyncretry.backoff.ExponentialDelayBackoff;
+import com.blogspot.nurkiewicz.asyncretry.backoff.FixedIntervalBackoff;
+import com.blogspot.nurkiewicz.asyncretry.backoff.ProportionalRandomBackoff;
+import com.blogspot.nurkiewicz.asyncretry.backoff.UniformRandomBackoff;
+import com.blogspot.nurkiewicz.asyncretry.policy.MaxRetriesPolicy;
+import com.blogspot.nurkiewicz.asyncretry.policy.RetryPolicy;
+import com.blogspot.nurkiewicz.asyncretry.policy.exception.AbortPredicateRetryPolicy;
+import com.blogspot.nurkiewicz.asyncretry.policy.exception.ExceptionClassRetryPolicy;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.query.QueryExecution;
+import com.hp.hpl.jena.query.ResultSet;
+import com.hp.hpl.jena.query.ResultSetFormatter;
 
 public class QueryExecutionFactoryRetry
 	extends QueryExecutionFactoryDecorator
@@ -13,24 +31,149 @@ public class QueryExecutionFactoryRetry
 	private int retryCount;
 	private long retryDelayInMs;
 	
+	private final boolean fixedDelay;
+	private final RetryPolicy retryPolicy;
+	private final Backoff backoff;
+	
 	public QueryExecutionFactoryRetry(QueryExecutionFactory decoratee, int retryCount, long retryDelayInMs) {
-		super(decoratee);
+		this(decoratee, new MaxRetriesPolicy(RetryPolicy.DEFAULT, retryCount), new FixedIntervalBackoff(retryDelayInMs), true);
+		
+		//TODO remove the variables which are superseded by Async-Retry API
 		this.retryCount = retryCount;
 		this.retryDelayInMs = retryDelayInMs;
+	}
+	
+	public QueryExecutionFactoryRetry(QueryExecutionFactory decoratee, int retryCount, long retryDelayDuration, TimeUnit retryDelayTimeUnit) {
+		this(decoratee, new MaxRetriesPolicy(RetryPolicy.DEFAULT, retryCount), new FixedIntervalBackoff(retryDelayTimeUnit.toMillis(retryDelayDuration)), true);
+		
+		//TODO remove the variables which are superseded by Async-Retry API
+		this.retryCount = retryCount;
+		this.retryDelayInMs = retryDelayTimeUnit.toMillis(retryDelayDuration);
+	}
+	
+	public QueryExecutionFactoryRetry(QueryExecutionFactory decoratee) {
+		this(decoratee, RetryPolicy.DEFAULT, Backoff.DEFAULT);
+	}
+
+	public QueryExecutionFactoryRetry(QueryExecutionFactory decoratee, Backoff backoff) {
+		this(decoratee, RetryPolicy.DEFAULT, backoff);
+	}
+
+	public QueryExecutionFactoryRetry(QueryExecutionFactory decoratee, RetryPolicy retryPolicy) {
+		this(decoratee, retryPolicy, Backoff.DEFAULT);
+	}
+
+	public QueryExecutionFactoryRetry(QueryExecutionFactory decoratee, RetryPolicy retryPolicy, Backoff backoff) {
+		this(decoratee, retryPolicy, backoff, false);
+	}
+	
+	public QueryExecutionFactoryRetry(QueryExecutionFactory decoratee, RetryPolicy retryPolicy, Backoff backoff, boolean fixedDelay) {
+		super(decoratee);
+		this.retryPolicy = Preconditions.checkNotNull(retryPolicy);
+		this.backoff = Preconditions.checkNotNull(backoff);
+		this.fixedDelay = fixedDelay;
 	}
 
 	@Override
 	public QueryExecution createQueryExecution(Query query) {
 		QueryExecution qe = super.createQueryExecution(query);
-		QueryExecution result = new QueryExecutionRetry(qe, retryCount, retryDelayInMs);
+//		QueryExecution result = new QueryExecutionRetry(qe, retryCount, retryDelayInMs);
+		QueryExecution result = new QueryExecutionRetry(qe, retryPolicy, backoff, fixedDelay); 
 		return result;
 	}
 
 	@Override
 	public QueryExecution createQueryExecution(String queryString) {
 		QueryExecution qe = super.createQueryExecution(queryString);
-		QueryExecution result = new QueryExecutionRetry(qe, retryCount, retryDelayInMs);
+//		QueryExecution result = new QueryExecutionRetry(qe, retryCount, retryDelayInMs);
+		QueryExecution result = new QueryExecutionRetry(qe, retryPolicy, backoff, fixedDelay); 
 		return result;
+	}
+	
+	public QueryExecutionFactoryRetry withRetryPolicy(RetryPolicy retryPolicy) {
+		return new QueryExecutionFactoryRetry(decoratee, retryPolicy, backoff, fixedDelay);
+	}
+	
+	public QueryExecutionFactoryRetry withBackoff(Backoff backoff) {
+		return new QueryExecutionFactoryRetry(decoratee, retryPolicy, backoff, fixedDelay);
+	}
+	
+	public QueryExecutionFactoryRetry withExponentialBackoff(long initialDelayMillis, double multiplier) {
+		final ExponentialDelayBackoff backoff = new ExponentialDelayBackoff(initialDelayMillis, multiplier);
+		return new QueryExecutionFactoryRetry(decoratee, retryPolicy, backoff, fixedDelay);
+	}
+
+	public QueryExecutionFactoryRetry withFixedBackoff(long delayMillis) {
+		final FixedIntervalBackoff backoff = new FixedIntervalBackoff(delayMillis);
+		return new QueryExecutionFactoryRetry(decoratee, retryPolicy, backoff, fixedDelay);
+	}
+	
+	public QueryExecutionFactoryRetry withFixedRate() {
+		return new QueryExecutionFactoryRetry(decoratee, retryPolicy, backoff, true);
+	}
+
+	public QueryExecutionFactoryRetry withFixedRate(boolean fixedDelay) {
+		return new QueryExecutionFactoryRetry(decoratee, retryPolicy, backoff, fixedDelay);
+	}
+
+	@SafeVarargs
+	public QueryExecutionFactoryRetry retryOn(Class<? extends Throwable> ... retryOnThrowable) {
+		return this.withRetryPolicy(ExceptionClassRetryPolicy.retryOn(retryPolicy, retryOnThrowable));
+	}
+
+	@SafeVarargs
+	public QueryExecutionFactoryRetry abortOn(Class<? extends Throwable> ... abortOnThrowable) {
+		return this.withRetryPolicy(ExceptionClassRetryPolicy.abortOn(retryPolicy, abortOnThrowable));
+	}
+
+	public QueryExecutionFactoryRetry abortIf(Predicate<Throwable> abortPredicate) {
+		return this.withRetryPolicy(new AbortPredicateRetryPolicy(retryPolicy, abortPredicate));
+	}
+
+	public QueryExecutionFactoryRetry withUniformJitter() {
+		return this.withBackoff(new UniformRandomBackoff(backoff));
+	}
+
+	public QueryExecutionFactoryRetry withUniformJitter(long range) {
+		return this.withBackoff(new UniformRandomBackoff(backoff, range));
+	}
+
+	public QueryExecutionFactoryRetry withProportionalJitter() {
+		return this.withBackoff(new ProportionalRandomBackoff(backoff));
+	}
+
+	public QueryExecutionFactoryRetry withProportionalJitter(double multiplier) {
+		return this.withBackoff(new ProportionalRandomBackoff(backoff, multiplier));
+	}
+
+	public QueryExecutionFactoryRetry withMinDelay(long minDelayMillis) {
+		return this.withBackoff(new BoundedMinBackoff(backoff, minDelayMillis));
+	}
+
+	public QueryExecutionFactoryRetry withMaxDelay(long maxDelayMillis) {
+		return this.withBackoff(new BoundedMaxBackoff(backoff, maxDelayMillis));
+	}
+
+	public QueryExecutionFactoryRetry withMaxRetries(int times) {
+		return this.withRetryPolicy(new MaxRetriesPolicy(retryPolicy, times));
+	}
+
+	public QueryExecutionFactoryRetry dontRetry() {
+		return this.withRetryPolicy(new MaxRetriesPolicy(retryPolicy, 0));
+	}
+
+	public QueryExecutionFactoryRetry withNoDelay() {
+		return this.withBackoff(new FixedIntervalBackoff(0));
+	}
+	
+	public static void main(String[] args) throws Exception {
+		QueryExecutionFactory qef = new QueryExecutionFactoryHttp("http://live.dbpedia.org/sparql", "http://dbpedia.org");
+		qef = new QueryExecutionFactoryRetry(qef).retryOn(Exception.class).withMaxRetries(3).withMinDelay(500).withMaxDelay(1000);
+		String query = "SELECT ?type (COUNT(?s) AS ?cnt) WHERE {?s a <http://dbpedia.org/ontology/Person> . ?s a ?type .} GROUP BY ?type ORDER BY DESC(?cnt)";
+		QueryExecution qe = qef.createQueryExecution(query);
+		qe.setTimeout(10000);
+		ResultSet rs = qe.execSelect();
+		System.out.println(ResultSetFormatter.asText(rs));
 	}
 
 }

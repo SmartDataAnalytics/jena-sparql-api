@@ -12,7 +12,7 @@ import com.hp.hpl.jena.query.QueryExecution;
 public class QueryExecutionFactoryDecorator
     implements QueryExecutionFactory
 {
-    private QueryExecutionFactory decoratee;
+    protected QueryExecutionFactory decoratee;
 
     public QueryExecutionFactoryDecorator(QueryExecutionFactory decoratee) {
         this.decoratee = decoratee;
