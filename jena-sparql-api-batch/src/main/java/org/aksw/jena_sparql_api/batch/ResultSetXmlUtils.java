@@ -2,8 +2,8 @@ package org.aksw.jena_sparql_api.batch;
 
 import java.util.Collection;
 
-import org.apache.commons.lang.StringEscapeUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.sparql.core.Var;
@@ -77,7 +77,7 @@ public class ResultSetXmlUtils {
         
         String result = "<literal";
 
-        if(!StringUtils.isEmpty(lang))
+        if(!org.apache.commons.lang3.StringUtils.isEmpty(lang))
         {
             result += " xml:lang=\"" + lang + "\"";
         }
