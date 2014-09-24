@@ -97,7 +97,7 @@
         <dependency>
 	        <groupId>com.blogspot.nurkiewicz.asyncretry</groupId>
 	        <artifactId>asyncretry</artifactId>
-	        <version>0.0.1-SNAPSHOT</version>
+	        <version>0.0.1</version>
         </dependency>
 
     </dependencies>
