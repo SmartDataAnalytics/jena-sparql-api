@@ -36,7 +36,7 @@
 
 		<spring.version>3.2.4.RELEASE</spring.version>
 		<spring.batch.version>2.2.5.RELEASE</spring.batch.version>
-		<aksw.commons.version>0.5</aksw.commons.version>
+		<aksw.commons.version>0.7.4</aksw.commons.version>
 
 		<atmosphere.version>2.0.0.RC3</atmosphere.version>
 		<atmosphere-spring.version>1.1.0.RC5</atmosphere-spring.version>
@@ -513,7 +513,7 @@
 			<!-- AKSW Commons -->
 			<dependency>
 				<groupId>org.aksw.commons</groupId>
-				<artifactId>util</artifactId>
+				<artifactId>aksw-commons-util</artifactId>
 				<version>${aksw.commons.version}</version>
 				<scope>compile</scope>
 
@@ -528,7 +528,7 @@
 
 			<dependency>
 				<groupId>org.aksw.commons</groupId>
-				<artifactId>collections</artifactId>
+				<artifactId>aksw-commons-collections</artifactId>
 				<version>${aksw.commons.version}</version>
 				<scope>compile</scope>
 			</dependency>

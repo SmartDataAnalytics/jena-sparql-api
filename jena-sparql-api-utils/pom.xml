@@ -38,11 +38,11 @@
         <!-- Utils -->
 		<dependency>
 			<groupId>org.aksw.commons</groupId>
-			<artifactId>collections</artifactId>
+			<artifactId>aksw-commons-collections</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.aksw.commons</groupId>
-			<artifactId>util</artifactId>
+			<artifactId>aksw-commons-util</artifactId>
 		</dependency>
         
 
