@@ -58,9 +58,14 @@ import com.hp.hpl.jena.query.ResultSetFormatter;
 import com.hp.hpl.jena.sparql.algebra.Algebra;
 import com.hp.hpl.jena.sparql.algebra.Op;
 import com.hp.hpl.jena.sparql.algebra.OpAsQuery;
+import com.hp.hpl.jena.sparql.algebra.Table;
+import com.hp.hpl.jena.sparql.algebra.TableFactory;
 import com.hp.hpl.jena.sparql.algebra.op.OpFilter;
+import com.hp.hpl.jena.sparql.algebra.op.OpJoin;
+import com.hp.hpl.jena.sparql.algebra.op.OpNull;
 import com.hp.hpl.jena.sparql.algebra.op.OpProject;
 import com.hp.hpl.jena.sparql.algebra.op.OpQuadPattern;
+import com.hp.hpl.jena.sparql.algebra.op.OpTable;
 import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.sparql.core.QuadPattern;
 import com.hp.hpl.jena.sparql.core.Var;
@@ -78,6 +83,27 @@ import com.hp.hpl.jena.sparql.expr.NodeValue;
 import com.hp.hpl.jena.sparql.graph.NodeTransform;
 import com.hp.hpl.jena.sparql.syntax.Element;
 import com.hp.hpl.jena.vocabulary.RDF;
+
+
+class CacheHit {
+    private QuadFilterPatternCanonical pattern;
+    private Table table;
+
+    public CacheHit(QuadFilterPatternCanonical pattern, Table table) {
+        super();
+        this.pattern = pattern;
+        this.table = table;
+    }
+
+    public QuadFilterPatternCanonical getPattern() {
+        return pattern;
+    }
+
+    public Table getTable() {
+        return table;
+    }
+}
+
 
 class IteratorBindingJoin
     extends AbstractIterator<Binding>
@@ -516,7 +542,7 @@ class ConceptMap
 
     private Multimap<Set<Set<Expr>>, PatternSummary> quadCnfToSummary = HashMultimap.create();
 
-    private Map<PatternSummary, Map<Set<Var>, ResultSet>> cacheData = new HashMap<PatternSummary, Map<Set<Var>, ResultSet>>();
+    private Map<PatternSummary, Map<Set<Var>, Table>> cacheData = new HashMap<PatternSummary, Map<Set<Var>, Table>>();
 
     //private
 
@@ -749,9 +775,9 @@ class ConceptMap
         return result;
     }
 
-    public List<QuadFilterPatternCanonical> lookup(QuadFilterPattern qfp) {
+    public List<CacheHit> lookup(QuadFilterPattern qfp) {
 
-        List<QuadFilterPatternCanonical> result = new ArrayList<QuadFilterPatternCanonical>();
+        List<CacheHit> result = new ArrayList<CacheHit>();
 
         PatternSummary ps = summarize(qfp);
 
@@ -788,7 +814,7 @@ class ConceptMap
 
         for(PatternSummary cand : rawCands) {
             // Get the variable-combinations for which cache entries exist
-            Map<Set<Var>, ResultSet> tmp = cacheData.get(cand);
+            Map<Set<Var>, Table> tmp = cacheData.get(cand);
             Set<Set<Var>> candVarCombos = tmp.keySet();
 
 
@@ -821,12 +847,14 @@ class ConceptMap
                     Set<Var> candVars = candRename.getVarsMentioned();
 
                     //for(Set<Var> candVarCombo : candVarCombos) {
-                    for(Entry<Set<Var>, ResultSet> entry : tmp.entrySet()) {
+                    for(Entry<Set<Var>, Table> entry : tmp.entrySet()) {
 
                         Set<Var> candVarCombo = entry.getKey();
                         Set<Var> queryCandVarCombo = mapSet(candVarCombo, varMap);
 
-                        ResultSet rs = ResultSetFactory.copyResults(entry.getValue());
+                        //ResultSet rs = ResultSetFactory.copyResults(entry.getValue());
+                        Table table = entry.getValue();
+                        //ResultSet rs = table.toResultSet();
 
                         Set<Var> disallowedVars = Sets.difference(candVars, queryCandVarCombo);
 
@@ -842,14 +870,15 @@ class ConceptMap
 
 
                         if(intersection.isEmpty()) {
-                            Expr expr = createExpr(rs, varMap);
+                            CacheHit cacheHit = new CacheHit(test, table);
+                            //Expr expr = createExpr(rs, varMap);
 
                             //test.getFilterCnf()
-                            test.getFilterCnf().add(Collections.singleton(expr));
+                            //test.getFilterCnf().add(Collections.singleton(expr));
 
                             // TODO Convert back into a quad filter pattern
 
-                            result.add(test);
+                            result.add(cacheHit);
                         }
 
                     }
@@ -1218,27 +1247,43 @@ class ConceptMap
     }
 
 
+    public static Table createTable(ResultSet rs) {
+
+        List<Var> vars = VarUtils.toList(rs.getResultVars());
+
+        Table result = TableFactory.create(vars);
+
+        while(rs.hasNext()) {
+            Binding binding = rs.nextBinding();
+            result.addBinding(binding);
+        }
+
+        return result;
+    }
+
 
 
     public void index(Query query, ResultSet rs) {
+
+        Table table = createTable(rs);
 
         QuadFilterPattern qfp = transform(query);
         PatternSummary ps = summarize(qfp);
 
         Set<Var> vars = VarUtils.toSet(rs.getResultVars());
 
-        Map<Set<Var>, ResultSet> map = cacheData.get(qfp);
+        Map<Set<Var>, Table> map = cacheData.get(qfp);
         if(map == null) {
-            map = new HashMap<Set<Var>, ResultSet>();
+            map = new HashMap<Set<Var>, Table>();
             cacheData.put(ps, map);
         }
 
-        ResultSet tmp = map.get(vars);
+        Table tmp = map.get(vars);
         if(tmp != null) {
             throw new RuntimeException("Already cached data for result set");
         }
 
-        map.put(vars, rs);
+        map.put(vars, table);
 
 
         // Index the pattern summary
@@ -1351,7 +1396,7 @@ class QueryExecutionFactoryConceptCache
 
         QuadFilterPattern qfp = ConceptMap.transform(query);
 
-        List<QuadFilterPatternCanonical> cacheHits;
+        List<CacheHit> cacheHits;
 
         if(qfp == null) {
             cacheHits = Collections.emptyList();
@@ -1363,9 +1408,21 @@ class QueryExecutionFactoryConceptCache
         System.out.println("CacheHits: " + cacheHits.size());
 
         if(!cacheHits.isEmpty()) {
-            QuadFilterPatternCanonical qfpc = cacheHits.iterator().next();
+            CacheHit cacheHit = cacheHits.iterator().next();
+            QuadFilterPatternCanonical qfpc = cacheHit.getPattern();
             Op op = qfpc.toOp();
+
+            OpTable opTable = OpTable.create(cacheHit.getTable());
+
+            if(op instanceof OpNull) {
+                op = opTable;
+            } else {
+                op = OpJoin.create(opTable, op);
+            }
+
             Query yay = OpAsQuery.asQuery(op);
+
+
 
             yay.setQueryResultStar(false);
             yay.getProjectVars().clear();
@@ -1470,6 +1527,7 @@ public class ConceptCache {
     public static void main(String[] args) throws IOException {
         QueryExecutionFactory sparqlService = SparqlServiceBuilder
                 .http("http://akswnc3.informatik.uni-leipzig.de:8860/sparql", "http://dbpedia.org")
+                .withPagination(100000)
                 .create();
 
         ConceptCache cache = new ConceptCache(sparqlService);
@@ -1579,6 +1637,15 @@ public class ConceptCache {
             //query.setValuesDataBlock(variables, values);
         }
 
+
+        if(true) {
+            Query query = QueryFactory.create("Select * { ?x ?y ?z } VALUES (?x) { ('foo') ('bar')}");
+            Op op = Algebra.compile(query);
+            op = Algebra.toQuadForm(op);
+            System.out.println(op);
+            query = OpAsQuery.asQuery(op);
+            System.out.println(query);
+        }
 
         if(true) {
 

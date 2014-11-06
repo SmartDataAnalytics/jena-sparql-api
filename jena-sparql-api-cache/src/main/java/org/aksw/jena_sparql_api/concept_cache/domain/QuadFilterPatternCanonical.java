@@ -16,9 +16,12 @@ import org.aksw.jena_sparql_api.utils.QuadUtils;
 import com.google.common.collect.Sets;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.sparql.algebra.Op;
+import com.hp.hpl.jena.sparql.algebra.TableFactory;
 import com.hp.hpl.jena.sparql.algebra.op.OpFilter;
+import com.hp.hpl.jena.sparql.algebra.op.OpNull;
 import com.hp.hpl.jena.sparql.algebra.op.OpQuadPattern;
 import com.hp.hpl.jena.sparql.algebra.op.OpSequence;
+import com.hp.hpl.jena.sparql.algebra.op.OpTable;
 import com.hp.hpl.jena.sparql.core.BasicPattern;
 import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.sparql.core.QuadPattern;
@@ -54,7 +57,9 @@ public class QuadFilterPatternCanonical {
 
         Op result;
 
-        if(opqs.size() == 1) {
+        if(opqs.isEmpty()) {
+            result = OpNull.create();
+        } else if(opqs.size() == 1) {
             result = opqs.iterator().next();
         } else {
             OpSequence op = OpSequence.create();
