@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.concept_cache;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -14,9 +15,12 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.aksw.commons.collections.CartesianProduct;
+import org.aksw.commons.collections.CartesianProductIterator;
 import org.aksw.commons.collections.MapUtils;
+import org.aksw.commons.collections.PrefetchIterator;
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
+import org.aksw.commons.util.StreamUtils;
 import org.aksw.jena_sparql_api.concept_cache.domain.PatternSummary;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
@@ -33,9 +37,12 @@ import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
 import org.aksw.jena_sparql_api.utils.ReplaceConstants;
 import org.apache.commons.math3.util.CombinatoricsUtils;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
@@ -46,13 +53,12 @@ import com.hp.hpl.jena.query.QueryFactory;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.query.ResultSetFactory;
 import com.hp.hpl.jena.query.ResultSetFormatter;
-import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.sparql.algebra.Algebra;
 import com.hp.hpl.jena.sparql.algebra.Op;
 import com.hp.hpl.jena.sparql.algebra.OpAsQuery;
 import com.hp.hpl.jena.sparql.algebra.op.OpFilter;
+import com.hp.hpl.jena.sparql.algebra.op.OpProject;
 import com.hp.hpl.jena.sparql.algebra.op.OpQuadPattern;
-import com.hp.hpl.jena.sparql.algebra.op.OpSequence;
 import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.sparql.core.QuadPattern;
 import com.hp.hpl.jena.sparql.core.Var;
@@ -69,14 +75,141 @@ import com.hp.hpl.jena.sparql.expr.ExprVar;
 import com.hp.hpl.jena.sparql.expr.NodeValue;
 import com.hp.hpl.jena.sparql.graph.NodeTransform;
 import com.hp.hpl.jena.sparql.syntax.Element;
-import com.hp.hpl.jena.sparql.syntax.ElementData;
 import com.hp.hpl.jena.vocabulary.RDF;
+
+class IteratorBindingJoin
+    extends AbstractIterator<Binding>
+{
+    private Iterator<List<Binding>> bindings;
+
+    public IteratorBindingJoin(Iterator<List<Binding>> bindings) {
+        this.bindings = bindings;
+    }
+
+    @Override
+    protected Binding computeNext() {
+        while(bindings.hasNext()) {
+            List<Binding> cand = bindings.next();
+
+            Binding r = null;
+            for(Binding b : cand) {
+                if(r == null) {
+                    r = b;
+                } else {
+                    boolean isCompatible = Algebra.compatible(r, b);
+                    if(isCompatible) {
+                        r = Algebra.merge(r, b);
+                    } else {
+                        continue;
+                    }
+                }
+            }
+
+            return r;
+        }
+
+        return endOfData();
+    }
+}
+
+class IteratorJoin<K>
+    extends PrefetchIterator<Binding>
+{
+    private Iterator<K> itKey;
+
+    private Multimap<K, Binding> a;
+    private Multimap<K, Binding> b;
+
+
+    public IteratorJoin(Iterator<K> itKey, Multimap<K, Binding> a, Multimap<K, Binding> b) {
+        this.itKey = itKey;
+        this.a = a;
+        this.b = b;
+    }
+
+    @Override
+    protected Iterator<Binding> prefetch() throws Exception {
+
+        Iterator<Binding> result = null;
+
+        while(itKey.hasNext()) {
+            K key = itKey.next();
+
+            Collection<Binding> as = a.get(key);
+            Collection<Binding> bs = b.get(key);
+
+            if(as.isEmpty() || bs.isEmpty()) {
+                continue;
+            }
+
+            Iterator<List<Binding>> tmp = new CartesianProductIterator<Binding>(as, bs);
+
+            result = new IteratorBindingJoin(tmp);
+
+            break;
+        }
+
+        return result;
+    }
+
+}
+
+
 
 class ResultSetUtils {
 
-//    public static ResultSet join(Iterable<ResultSet> resultSets, Set<Var> joinVars) {
-//
-//    }
+    public static Multimap<List<Node>, Binding> index(ResultSet rs, List<Var> vars) {
+        Multimap<List<Node>, Binding> result = LinkedListMultimap.create();
+
+        while(rs.hasNext()) {
+            Binding binding = rs.nextBinding();
+
+            List<Node> key = new ArrayList<Node>(vars.size());
+            for(Var var : vars) {
+                Node node = binding.get(var);
+                key.add(node);
+            }
+
+            result.put(key, binding);
+        }
+
+        return result;
+    }
+
+    public static ResultSet join(ResultSet a, ResultSet b) {
+        //Set<String> aVarNames = new HashSet<String>(a.getResultVars());
+        List<String> aVarNames = a.getResultVars();
+
+        Set<String> joinVarNames = new HashSet<String>(aVarNames);
+        joinVarNames.retainAll(b.getResultVars());
+
+        List<String> bVarsOnly = new ArrayList<String>(b.getResultVars());
+        bVarsOnly.removeAll(joinVarNames);
+
+        List<String> allVars = new ArrayList<String>(aVarNames);
+        allVars.addAll(bVarsOnly);
+
+
+        List<Var> joinVars = VarUtils.toList(joinVarNames);
+
+        Multimap<List<Node>, Binding> ma = index(a, joinVars);
+        Multimap<List<Node>, Binding> mb = index(b, joinVars);
+
+        Set<List<Node>> keys = new HashSet<List<Node>>(ma.keySet());
+        keys.retainAll(mb.keySet());
+
+        // Clean up unused keys
+        ma.keySet().retainAll(keys);
+        mb.keySet().retainAll(keys);
+
+        Iterator<Binding> joinIterator = new IteratorJoin<List<Node>>(keys.iterator(), ma, mb);
+
+        QueryIterator queryIter = new QueryIterPlainWrapper(joinIterator);
+
+        ResultSet result = ResultSetFactory.create(queryIter, allVars);
+        return result;
+    }
+
 
     public static ResultSet project(ResultSet rs, Iterable<Var> vars, boolean uniq) {
 
@@ -354,6 +487,16 @@ class IteratorVarMapQuadGroup
 
 
 class VarUtils {
+    public static List<Var> toList(Collection<String> varNames) {
+        List<Var> result = new ArrayList<Var>(varNames.size());
+        for(String varName : varNames) {
+            Var var = Var.alloc(varName);
+            result.add(var);
+        }
+
+        return result;
+    }
+
     public static Set<Var> toSet(Collection<String> varNames) {
         Set<Var> result = new HashSet<Var>();
         for(String varName : varNames) {
@@ -465,6 +608,11 @@ class ConceptMap
         op = Algebra.toQuadForm(op);
         op = ReplaceConstants.replace(op);
 
+        //OpProject opProject;
+        if(op instanceof OpProject) {
+            op = ((OpProject)op).getSubOp();
+        }
+
         OpFilter opFilter;
         if(op instanceof OpFilter) {
             opFilter = (OpFilter)op;
@@ -540,7 +688,7 @@ class ConceptMap
             }
         }
 
-        System.out.println("varOccurrences: " + varOccurrences);
+        //System.out.println("varOccurrences: " + varOccurrences);
 
         // Remove all variables that only occur in the same quad
         boolean pruneVarOccs = false;
@@ -700,8 +848,6 @@ class ConceptMap
                             // TODO Convert back into a quad filter pattern
 
                             result.add(test);
-                            //System.out.println("yay");
-                            //System.out.println(test);
                         }
 
                     }
@@ -968,7 +1114,7 @@ class ConceptMap
 //
 
 
-        System.out.println("CandVarCombos: " + candVarCombos);
+        //System.out.println("CandVarCombos: " + candVarCombos);
 
 
 
@@ -1018,11 +1164,11 @@ class ConceptMap
 //            }
         }
 
-        if(true) {
-            System.out.println("CandToQuery: " + candToQuery);
-            System.out.println("queryToCand: " + candToQuery.getInverse());
-            return null;
-        }
+//        if(true) {
+//            System.out.println("CandToQuery: " + candToQuery);
+//            System.out.println("queryToCand: " + candToQuery.getInverse());
+//            return null;
+//        }
 
         // TODO Deal with ambiguous mappings
 
@@ -1128,16 +1274,16 @@ class ConceptMap
         // {?s ?s ?s ?s . Filter(?s In (...)} }
         // ?s => { 0, 1, 2, 3} // could use bit set
 
-        System.out.println("----------------------------");
-        for(Entry<Set<Set<Expr>>, Collection<PatternSummary>> entry : quadCnfToSummary.asMap().entrySet()) {
-            System.out.println(entry.getKey());
-
-            for(PatternSummary q : entry.getValue()) {
-                System.out.println("- " + q.getCanonicalPattern());
-            }
-
-            System.out.println("----------------------------");
-        }
+//        System.out.println("----------------------------");
+//        for(Entry<Set<Set<Expr>>, Collection<PatternSummary>> entry : quadCnfToSummary.asMap().entrySet()) {
+//            System.out.println(entry.getKey());
+//
+//            for(PatternSummary q : entry.getValue()) {
+//                System.out.println("- " + q.getCanonicalPattern());
+//            }
+//
+//            System.out.println("----------------------------");
+//        }
 
         //System.out.println(conditionsToQuery);
     }
@@ -1203,9 +1349,14 @@ class QueryExecutionFactoryConceptCache
 
         QuadFilterPattern qfp = ConceptMap.transform(query);
 
+        List<QuadFilterPatternCanonical> cacheHits;
 
+        if(qfp == null) {
+            cacheHits = Collections.emptyList();
+        } else {
+            cacheHits = conceptMap.lookup(qfp);
+        }
 
-        List<QuadFilterPatternCanonical> cacheHits = conceptMap.lookup(qfp);
 
         System.out.println("CacheHits: " + cacheHits.size());
 
@@ -1306,7 +1457,7 @@ public class ConceptCache {
         return null;
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         QueryExecutionFactory sparqlService = SparqlServiceBuilder
                 .http("http://akswnc3.informatik.uni-leipzig.de:8860/sparql", "http://dbpedia.org")
                 .create();
@@ -1364,7 +1515,7 @@ public class ConceptCache {
             cache.execSelect(query);
         }
 
-        if(true) {
+        if(false) {
             Query query;
             QueryExecution qe;
             ResultSet rs;
@@ -1377,6 +1528,13 @@ public class ConceptCache {
             rs = qe.execSelect();
             ResultSetFormatter.consume(rs);
 
+
+            //Query query = QueryFactory.create("Select * { ?a ?b ?c . ?c ?d ?e }");
+            query = QueryFactory.create("Select * { ?a a <http://dbpedia.org/ontology/Airport> }");
+
+            qe = sparqlService.createQueryExecution(query);
+            rs = qe.execSelect();
+            ResultSetFormatter.consume(rs);
 
 
             //cache.index(query);
@@ -1392,6 +1550,51 @@ public class ConceptCache {
 
 
             //cache.execSelect(query);
+        }
+
+
+        if(false) {
+            String queryString = "Select ?s ?name  { ?s a <Person> . Optional { ?s <label> ?name . } }";
+            Query query = QueryFactory.create(queryString);
+
+            Op op = Algebra.compile(query);
+            op = Algebra.toQuadForm(op);
+            System.out.println(op);
+
+            //query.setV
+            //op = ReplaceConstants.replace(op);
+
+
+            //TableData td = new TableData(variables, rows);
+            //query.setValuesDataBlock(variables, values);
+        }
+
+
+        if(true) {
+
+            PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver(); //TestBundleReader.class.getClass().getClassLoader());
+
+            Resource r;
+            String queryString;
+            Query query;
+            QueryExecution qe;
+            ResultSet rs;
+
+            r = resolver.getResource("lorenz-query-1.sparql");
+            queryString = StreamUtils.toString(r.getInputStream());
+            query = QueryFactory.create(queryString);
+            qe = sparqlService.createQueryExecution(query);
+            rs = qe.execSelect();
+            ResultSetFormatter.consume(rs);
+
+
+            r = resolver.getResource("lorenz-query-1b.sparql");
+            queryString = StreamUtils.toString(r.getInputStream());
+            query = QueryFactory.create(queryString);
+            qe = sparqlService.createQueryExecution(query);
+            rs = qe.execSelect();
+            ResultSetFormatter.consume(rs);
+
         }
 
 

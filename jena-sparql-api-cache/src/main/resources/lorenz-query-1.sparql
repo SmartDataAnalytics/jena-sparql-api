@@ -1,0 +1,15 @@
+Select ?x1 {
+    ?x1 <http://dbpedia.org/ontology/activeYearsStartYear> ?x2.
+    ?x1 <http://dbpedia.org/ontology/associatedBand> ?x3.
+    ?x1 <http://dbpedia.org/ontology/associatedMusicalArtist> ?x4.
+    ?x1 <http://dbpedia.org/ontology/background> "non_vocal_instrumentalist".
+    ?x1 <http://dbpedia.org/ontology/birthDate> ?x5.
+    ?x1 <http://dbpedia.org/ontology/birthPlace> ?x6.
+    ?x1 <http://dbpedia.org/ontology/birthYear> ?x7.
+    ?x1 <http://dbpedia.org/ontology/genre> ?x8.
+    ?x1 <http://dbpedia.org/ontology/instrument> ?x9.
+    ?x1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Agent>.
+    ?x1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Artist>.
+    ?x1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/MusicalArtist>.
+    ?x1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Person>.
+}
