@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.aksw.commons.collections.CartesianProduct;
 import org.aksw.commons.collections.CartesianProductIterator;
@@ -40,6 +41,7 @@ import org.apache.commons.math3.util.CombinatoricsUtils;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.LinkedListMultimap;
@@ -802,12 +804,12 @@ class ConceptMap
 
                 QuadFilterPatternCanonical candRename = cand.getCanonicalPattern().applyNodeTransform(rename);
 
-                System.out.println(varMap);
-                System.out.println(candRename);
-                System.out.println(ps.getCanonicalPattern());
+//                System.out.println(varMap);
+//                System.out.println(candRename);
+//                System.out.println(ps.getCanonicalPattern());
 
                 boolean isSubsumed = candRename.isSubsumedBy(ps.getCanonicalPattern());
-                System.out.println("isSubsumed: " + isSubsumed);
+//                System.out.println("isSubsumed: " + isSubsumed);
 
 
                 // If we found a subsumption, we need to finally check whether we can make use of it...
@@ -1364,7 +1366,15 @@ class QueryExecutionFactoryConceptCache
             QuadFilterPatternCanonical qfpc = cacheHits.iterator().next();
             Op op = qfpc.toOp();
             Query yay = OpAsQuery.asQuery(op);
-            System.out.println("Built query: " + yay.toString().substring(0, 200));
+
+            yay.setQueryResultStar(false);
+            yay.getProjectVars().clear();
+            for(Var x : query.getProjectVars()) {
+                yay.getProject().add(x);
+            }
+
+            //TODO We need to reset the projection...
+            System.out.println("Built query: " + yay.toString().substring(0, Math.min(2000, yay.toString().length())));
         }
 
 
@@ -1572,6 +1582,8 @@ public class ConceptCache {
 
         if(true) {
 
+            for(int i = 0; i < 10; ++i) {
+
             PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver(); //TestBundleReader.class.getClass().getClassLoader());
 
             Resource r;
@@ -1580,12 +1592,19 @@ public class ConceptCache {
             QueryExecution qe;
             ResultSet rs;
 
+            Stopwatch sw = Stopwatch.createStarted();
+
+            long a = sw.elapsed(TimeUnit.MILLISECONDS);
+
             r = resolver.getResource("lorenz-query-1.sparql");
             queryString = StreamUtils.toString(r.getInputStream());
             query = QueryFactory.create(queryString);
             qe = sparqlService.createQueryExecution(query);
             rs = qe.execSelect();
             ResultSetFormatter.consume(rs);
+
+            long b = sw.elapsed(TimeUnit.MILLISECONDS);
+            System.out.println("Time taken: " + (b - a));
 
 
             r = resolver.getResource("lorenz-query-1b.sparql");
@@ -1595,6 +1614,10 @@ public class ConceptCache {
             rs = qe.execSelect();
             ResultSetFormatter.consume(rs);
 
+            long c = sw.elapsed(TimeUnit.MILLISECONDS);
+            System.out.println("Time taken: " + (c - b));
+
+            }
         }
 
 
