@@ -398,6 +398,8 @@ class ConceptMap
 
 
                         if(intersection.isEmpty()) {
+                            table = Utils2.transform(table, rename);
+
                             CacheHit cacheHit = new CacheHit(test, table);
                             //Expr expr = createExpr(rs, varMap);
 

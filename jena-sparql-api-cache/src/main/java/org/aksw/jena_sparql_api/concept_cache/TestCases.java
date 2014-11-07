@@ -1,6 +1,5 @@
 package org.aksw.jena_sparql_api.concept_cache;
 
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import org.aksw.commons.util.StreamUtils;
@@ -16,7 +15,6 @@ import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.QueryFactory;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.query.ResultSetFormatter;
-import com.hp.hpl.jena.sparql.core.Var;
 
 
 class QueryRunner {
@@ -36,7 +34,22 @@ class QueryRunner {
 }
 
 public class TestCases {
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
+
+        /*
+        ApacheLogDirectory dir = new ApacheLogDirectory(new File("/home/raven/Desktop/Datasets/DBpedia"), Pattern.compile("access.log.*"));
+        Iterator<ApacheLogEntry> it = dir.getIterator(null, null, false, false);
+
+        while(it.hasNext()) {
+            ApacheLogEntry entry = it.next();
+            System.out.println(entry.getRequest());
+        }
+
+        if(true) {
+            System.exit(0);
+        }
+        */
+
         QueryExecutionFactory rawService = SparqlServiceBuilder
                 .http("http://akswnc3.informatik.uni-leipzig.de:8860/sparql", "http://dbpedia.org")
                 .withPagination(100000)

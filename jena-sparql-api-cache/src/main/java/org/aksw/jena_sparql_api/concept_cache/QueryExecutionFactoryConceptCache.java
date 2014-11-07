@@ -20,6 +20,7 @@ import com.hp.hpl.jena.sparql.algebra.op.OpJoin;
 import com.hp.hpl.jena.sparql.algebra.op.OpNull;
 import com.hp.hpl.jena.sparql.algebra.op.OpTable;
 import com.hp.hpl.jena.sparql.core.Var;
+import com.hp.hpl.jena.sparql.engine.binding.Binding;
 
 
 public class QueryExecutionFactoryConceptCache

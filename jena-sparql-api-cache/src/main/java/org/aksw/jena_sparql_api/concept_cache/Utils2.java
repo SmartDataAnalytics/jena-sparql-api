@@ -1,8 +1,11 @@
 package org.aksw.jena_sparql_api.concept_cache;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -12,10 +15,55 @@ import org.aksw.jena_sparql_api.utils.QuadUtils;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
+import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.sparql.algebra.Table;
+import com.hp.hpl.jena.sparql.algebra.table.TableN;
 import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.sparql.core.Var;
+import com.hp.hpl.jena.sparql.engine.binding.Binding;
+import com.hp.hpl.jena.sparql.engine.binding.BindingHashMap;
+import com.hp.hpl.jena.sparql.graph.NodeTransform;
 
 class Utils2 {
+
+    public static Binding transformKeys(Binding binding, NodeTransform transform) {
+        Iterator<Var> it = binding.vars();
+
+        BindingHashMap result = new BindingHashMap();
+        while(it.hasNext()) {
+            Var o = it.next();
+            Node node = binding.get(o);
+
+            Var n = (Var)transform.convert(o);
+
+            result.add(n, node);
+        }
+
+        return result;
+    }
+
+    public static Table transform(Table table, NodeTransform transform) {
+        List<Var> oldVars = table.getVars();
+
+        List<Var> newVars = new ArrayList<Var>(oldVars.size());
+        for(Var o : oldVars) {
+            Var n = (Var)transform.convert(o);
+            newVars.add(n);
+        }
+
+        //List<Binding> newBindings = new ArrayList<Binding>(table.size());
+        Table result = new TableN(newVars);
+
+        Iterator<Binding> it = table.rows();
+        while(it.hasNext()) {
+            Binding o = it.next();
+
+            Binding n = transformKeys(o, transform);
+            result.addBinding(n);;
+        }
+
+        return result;
+    }
 
     public static Set<Var> getCooccurrentVars(Set<Var> vars, Iterable<Quad> quads) {
 
