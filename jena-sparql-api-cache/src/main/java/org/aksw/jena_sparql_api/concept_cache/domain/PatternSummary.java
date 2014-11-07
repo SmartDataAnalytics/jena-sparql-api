@@ -63,5 +63,55 @@ public class PatternSummary
         return varOccurrences;
     }
 
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime
+                * result
+                + ((canonicalPattern == null) ? 0 : canonicalPattern.hashCode());
+        result = prime * result
+                + ((originalPattern == null) ? 0 : originalPattern.hashCode());
+        result = prime * result
+                + ((quadToCnf == null) ? 0 : quadToCnf.hashCode());
+        result = prime * result
+                + ((varOccurrences == null) ? 0 : varOccurrences.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        PatternSummary other = (PatternSummary) obj;
+        if (canonicalPattern == null) {
+            if (other.canonicalPattern != null)
+                return false;
+        } else if (!canonicalPattern.equals(other.canonicalPattern))
+            return false;
+        if (originalPattern == null) {
+            if (other.originalPattern != null)
+                return false;
+        } else if (!originalPattern.equals(other.originalPattern))
+            return false;
+        if (quadToCnf == null) {
+            if (other.quadToCnf != null)
+                return false;
+        } else if (!quadToCnf.equals(other.quadToCnf))
+            return false;
+        if (varOccurrences == null) {
+            if (other.varOccurrences != null)
+                return false;
+        } else if (!varOccurrences.equals(other.varOccurrences))
+            return false;
+        return true;
+    }
+
+    
+    
 
 }

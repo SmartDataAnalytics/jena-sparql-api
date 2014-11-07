@@ -1,4 +1,4 @@
-Select ?x1 {
+Select Distinct ?x1 {
     ?x1 <http://dbpedia.org/ontology/activeYearsStartYear> ?x2.
     ?x1 <http://dbpedia.org/ontology/associatedBand> ?x3.
     ?x1 <http://dbpedia.org/ontology/associatedMusicalArtist> ?x4.

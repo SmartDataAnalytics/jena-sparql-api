@@ -1,4 +1,4 @@
-Select ?x1 {
+Select Distinct ?x1 {
     ?x1 <http://dbpedia.org/ontology/activeYearsStartYear> ?x2.
     ?x1 <http://dbpedia.org/ontology/associatedBand> ?x3.
     ?x1 <http://dbpedia.org/ontology/associatedMusicalArtist> ?x4.
@@ -11,5 +11,4 @@ Select ?x1 {
     ?x1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Agent>.
     ?x1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Artist>.
     ?x1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/MusicalArtist>.
-    ?x1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Person>.
 }

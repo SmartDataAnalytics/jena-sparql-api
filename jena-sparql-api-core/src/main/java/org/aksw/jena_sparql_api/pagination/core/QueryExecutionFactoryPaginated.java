@@ -29,7 +29,8 @@ public class QueryExecutionFactoryPaginated
     public QueryExecutionFactoryPaginated(QueryExecutionFactory decoratee, long pageSize) {
         // Executes an ?s ?p ?o query with limit set to pageSize to
         // reduce it if necessary
-        this.pageSize = PaginationUtils.adjustPageSize(decoratee, pageSize);
+        //this.pageSize = PaginationUtils.adjustPageSize(decoratee, pageSize);
+        this.pageSize = pageSize;
         this.decoratee = decoratee;
     }
 
@@ -37,7 +38,7 @@ public class QueryExecutionFactoryPaginated
     public QueryExecution createQueryExecution(Query query) {
         query = query.cloneQuery();
         PaginationQueryIterator queryIterator = new PaginationQueryIterator(query, pageSize);
-        
+
         return new QueryExecutionIterated(decoratee, queryIterator);
     }
 
