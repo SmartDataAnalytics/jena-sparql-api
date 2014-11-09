@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.concept_cache;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -20,7 +21,6 @@ import com.hp.hpl.jena.sparql.algebra.op.OpJoin;
 import com.hp.hpl.jena.sparql.algebra.op.OpNull;
 import com.hp.hpl.jena.sparql.algebra.op.OpTable;
 import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.engine.binding.Binding;
 
 
 public class QueryExecutionFactoryConceptCache
@@ -49,26 +49,39 @@ public class QueryExecutionFactoryConceptCache
 
         QuadFilterPattern qfp = ConceptMap.transform(query);
 
-        List<CacheHit> cacheHits;
+        CacheResult cacheHits;
 
         if(qfp == null) {
-            cacheHits = Collections.emptyList();
+            cacheHits = null;
+            //cacheHits = Collections.emptyList();
         } else {
             cacheHits = conceptMap.lookup(qfp);
         }
 
 
-        System.out.println("CacheHits: " + cacheHits.size());
+        //System.out.println("CacheHits: " + cacheHits.size());
 
         boolean isPatternFree = false;
-        if(!cacheHits.isEmpty()) {
-            CacheHit cacheHit = cacheHits.iterator().next();
-            QuadFilterPatternCanonical qfpc = cacheHit.getPattern();
+        if(cacheHits != null) {
+            //CacheHit cacheHit = cacheHits.iterator().next();
+            CacheResult cacheHit = cacheHits;
+            QuadFilterPatternCanonical qfpc = cacheHit.getReplacementPattern();
             Op op = qfpc.toOp();
 
-            Table table = cacheHit.getTable();
-            OpTable opTable = OpTable.create(table);
-            System.out.println("Table size: " + table.size());
+            Collection<Table> tables = cacheHit.getTables();
+            Op opTable = null;
+            for(Table table : tables) {
+                Op tmp = OpTable.create(table);
+
+                if(opTable == null) {
+                    opTable = tmp;
+                } else {
+                    opTable = OpJoin.create(opTable, tmp);
+                }
+            }
+
+
+            //System.out.println("Table size: " + table.size());
 
             if(op instanceof OpNull) {
                 op = opTable;
@@ -79,7 +92,7 @@ public class QueryExecutionFactoryConceptCache
             //System.out.println("Op: " + op.toString().substring(0, Math.min(2000, op.toString().length())));
 
             isPatternFree = OpUtils.isPatternFree(op);
-            System.out.println("isPatternFree: " + isPatternFree);
+            //System.out.println("isPatternFree: " + isPatternFree);
 
             Query yay = OpAsQuery.asQuery(op);
 
@@ -97,6 +110,7 @@ public class QueryExecutionFactoryConceptCache
         System.out.println("Running query: " + query.toString().substring(0, Math.min(2000, query.toString().length())));
 
         //System.out.println("Running query: " + query);
+
 
         boolean isIndexable = qfp != null;
         List<Var> vars = query.getProjectVars();

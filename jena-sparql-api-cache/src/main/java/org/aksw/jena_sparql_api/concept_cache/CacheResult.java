@@ -1,30 +1,26 @@
 package org.aksw.jena_sparql_api.concept_cache;
 
+import java.util.Collection;
+
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 
 import com.hp.hpl.jena.sparql.algebra.Table;
 
-class CacheHit {
+class CacheResult {
     private QuadFilterPatternCanonical replacementPattern;
-    private QuadFilterPatternCanonical diffPattern;
-    private Table table;
+    private Collection<Table> tables;
 
-    public CacheHit(QuadFilterPatternCanonical replacementPattern, QuadFilterPatternCanonical diffPattern, Table table) {
+    public CacheResult(QuadFilterPatternCanonical replacementPattern, Collection<Table> tables) {
         super();
         this.replacementPattern = replacementPattern;
-        this.diffPattern = diffPattern;
-        this.table = table;
+        this.tables = tables;
     }
 
     public QuadFilterPatternCanonical getReplacementPattern() {
         return this.replacementPattern;
     }
 
-    public QuadFilterPatternCanonical getDiffPattern() {
-        return diffPattern;
-    }
-
-    public Table getTable() {
-        return table;
+    public Collection<Table> getTables() {
+        return tables;
     }
 }

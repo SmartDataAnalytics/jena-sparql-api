@@ -10,8 +10,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.aksw.commons.collections.CartesianProduct;
 import org.aksw.commons.collections.MapUtils;
@@ -21,7 +21,6 @@ import org.aksw.jena_sparql_api.concept_cache.domain.PatternSummary;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.domain.VarOccurrence;
-import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.utils.ClauseUtils;
 import org.aksw.jena_sparql_api.utils.CnfUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
@@ -51,12 +50,10 @@ import com.hp.hpl.jena.sparql.engine.binding.Binding;
 import com.hp.hpl.jena.sparql.expr.E_Equals;
 import com.hp.hpl.jena.sparql.expr.E_OneOf;
 import com.hp.hpl.jena.sparql.expr.Expr;
-import com.hp.hpl.jena.sparql.expr.ExprFunction;
 import com.hp.hpl.jena.sparql.expr.ExprList;
 import com.hp.hpl.jena.sparql.expr.ExprVar;
 import com.hp.hpl.jena.sparql.expr.NodeValue;
 import com.hp.hpl.jena.sparql.graph.NodeTransform;
-import com.hp.hpl.jena.sparql.syntax.Element;
 
 class ConceptMap
 {
@@ -66,19 +63,7 @@ class ConceptMap
 
     private Map<PatternSummary, Map<Set<Var>, Table>> cacheData = new HashMap<PatternSummary, Map<Set<Var>, Table>>();
 
-    //private
 
-
-    private void normalize(Expr expr) {
-        if(expr.isFunction()) {
-            ExprFunction fn = expr.getFunction();
-
-            // TODO: If the function is symmetric
-            // - Variables come before constants
-            // - If both arguments are of same type, order them by value (constants) or name (variables)
-
-        }
-    }
 
     /**
      * ([?s ?s ?s ?o], (fn(?s, ?o))
@@ -113,23 +98,6 @@ class ConceptMap
     }
 
 
-    //private Map<Quad, >
-
-    public void add(Concept concept, Object val) {
-        Element element = concept.getElement();
-
-        //com.hp.hpl.jena.sparql.algebra.optimize.
-
-        // For each quad pattern, get the constraints for each component
-        // alias: [ {cg}, {cs}, {cp}, {co} ]
-
-        // ViewDefinitionNormalizerImpl
-    }
-
-
-    public void add(Collection<Quad> quads, Collection<Expr> exprs) {
-    }
-
     public static Set<Set<Expr>> add(Quad quad, Set<Set<Expr>> cnf) {
         Set<Set<Expr>> result = new HashSet<Set<Expr>>();
 
@@ -144,11 +112,6 @@ class ConceptMap
         }
 
         return result;
-    }
-
-
-    public void lookup() {
-
     }
 
 
@@ -287,7 +250,7 @@ class ConceptMap
 
 
     public void lookup(Query query) {
-        System.out.println("LOOKUP: " + query);
+        //System.out.println("LOOKUP: " + query);
         QuadFilterPattern qfp = transform(query);
 
         lookup(qfp);
@@ -303,18 +266,17 @@ class ConceptMap
         return result;
     }
 
-    public List<CacheHit> lookup(QuadFilterPattern qfp) {
+    public CacheResult lookup(QuadFilterPattern queryQfp) {
 
         List<CacheHit> result = new ArrayList<CacheHit>();
 
-        PatternSummary ps = summarize(qfp);
+        PatternSummary queryPs = summarize(queryQfp);
+        Set<Set<Set<Expr>>> quadCnfs = queryPs.getQuadToCnf().getInverse().keySet();
 
-        Set<Set<Set<Expr>>> quadCnfs = ps.getQuadToCnf().getInverse().keySet();
 
+        Set<PatternSummary> rawCandsSet = new HashSet<PatternSummary>();
 
-        Set<PatternSummary> rawCands = new HashSet<PatternSummary>();
-
-        int querySize = qfp.getQuads().size();
+        int querySize = queryQfp.getQuads().size();
 
         for(Set<Set<Expr>> quadCnf : quadCnfs) {
             Collection<PatternSummary> cands = quadCnfToSummary.get(quadCnf);
@@ -327,7 +289,7 @@ class ConceptMap
                 int candSize = cand.getCanonicalPattern().getQuads().size();
 
                 if(candSize <= querySize) {
-                    rawCands.add(cand);
+                    rawCandsSet.add(cand);
                 }
             }
 
@@ -336,21 +298,38 @@ class ConceptMap
         }
 
 
-        System.out.println("#cands: " + rawCands.size());
+        //System.out.println("#cands: " + rawCands.size());
+
+        // Try candidates with largest potential overlap first
+        List<PatternSummary> rawCands = new ArrayList<PatternSummary>(rawCandsSet);
+        Collections.sort(rawCands, new Comparator<PatternSummary>() {
+            @Override
+            public int compare(PatternSummary a, PatternSummary b) {
+                int x = a.getCanonicalPattern().getQuads().size();
+                int y = b.getCanonicalPattern().getQuads().size();
+
+                int r = x - y;
+                return r;
+            }
+        });
 
 
 
+
+
+
+        // Iterate all candidate pattern summaries and
+        // check for their containment in the query
         for(PatternSummary cand : rawCands) {
             // Get the variable-combinations for which cache entries exist
             Map<Set<Var>, Table> tmp = cacheData.get(cand);
             Set<Set<Var>> candVarCombos = tmp.keySet();
 
 
+            // For a pattern there might be multiple candidate variable mappings
+            // Filter expressions are not considered at this stage
+            Iterator<Map<Var, Var>> varMaps = computeVarMapQuadBased(queryPs, cand, candVarCombos);
 
-
-            Iterator<Map<Var, Var>> varMaps = computeVarMapQuadBased(ps, cand, candVarCombos);
-
-            //while(Map<Var, Var> varMap)
             while(varMaps.hasNext()) {
                 Map<Var, Var> varMap = varMaps.next();
 
@@ -362,13 +341,14 @@ class ConceptMap
 //                System.out.println(candRename);
 //                System.out.println(ps.getCanonicalPattern());
 
-                boolean isSubsumed = candRename.isSubsumedBy(ps.getCanonicalPattern());
+                boolean isSubsumed = candRename.isSubsumedBy(queryPs.getCanonicalPattern());
 //                System.out.println("isSubsumed: " + isSubsumed);
 
 
                 // If we found a subsumption, we need to finally check whether we can make use of it...
                 // This means: no variable in the query that gets replaced by the cache pattern
                 // must occur in any other triple or filter
+                //List<Table> tables = new ArrayList<Table>();
 
 
                 if(isSubsumed) {
@@ -387,10 +367,10 @@ class ConceptMap
                         Set<Var> disallowedVars = Sets.difference(candVars, queryCandVarCombo);
 
 
-                        QuadFilterPatternCanonical test = candRename.diff(ps.getCanonicalPattern());
-                        Set<Var> testVars = test.getVarsMentioned();
+                        QuadFilterPatternCanonical diffPattern = candRename.diff(queryPs.getCanonicalPattern());
+                        Set<Var> testVars = diffPattern.getVarsMentioned();
 
-                        Set<Var> cooccurs = Utils2.getCooccurrentVars(queryCandVarCombo, test.getQuads());
+                        Set<Var> cooccurs = Utils2.getCooccurrentVars(queryCandVarCombo, diffPattern.getQuads());
 
                         disallowedVars = Sets.difference(disallowedVars, cooccurs);
 
@@ -398,9 +378,12 @@ class ConceptMap
 
 
                         if(intersection.isEmpty()) {
+
+
+
                             table = Utils2.transform(table, rename);
 
-                            CacheHit cacheHit = new CacheHit(test, table);
+                            CacheHit cacheHit = new CacheHit(candRename, diffPattern, table);
                             //Expr expr = createExpr(rs, varMap);
 
                             //test.getFilterCnf()
@@ -412,16 +395,42 @@ class ConceptMap
                         }
 
                     }
-
-
                 }
-
-
-
+                // We do not have to iterate additional var mappings if we found a subsumption
+                //break;
             }
         }
-        //IBiSetMultimap<K, V>
-        return result;
+
+
+        System.out.println("CacheHits: " + result.size());
+        //List<CacheHit> c = new ArrayList<CacheHit>();
+        //CacheHit r = null;
+        QuadFilterPatternCanonical r = null;
+        List<Table> tables = new ArrayList<Table>();
+        for(CacheHit ch : result) {
+            if(r == null) {
+                 r = ch.getReplacementPattern();
+                 tables.add(ch.getTable());
+            } else {
+                QuadFilterPatternCanonical diff = r.diff(ch.getDiffPattern());
+                if(!diff.equals(r)) {
+                    r = diff;
+                    tables.add(ch.getTable());
+                }
+            }
+        }
+
+        System.out.println("Tables: " + tables.size());
+
+        //result =
+        CacheResult cr;
+        if(r == null) {
+            cr = null;
+        } else {
+            cr = new CacheResult(r, tables);
+        }
+
+        return cr;
     }
 
     public static Expr createExpr(ResultSet rs, Map<Var, Var> varMap) {
@@ -579,6 +588,10 @@ class ConceptMap
 
             Collection<Quad> candQuads = entry.getValue();
             Collection<Quad> queryQuads = cnfToQueryQuad.get(cnf);
+
+            if(queryQuads.isEmpty()) {
+                return Collections.<Map<Var, Var>>emptySet().iterator();
+            }
 
             QuadGroup quadGroup = new QuadGroup(candQuads, queryQuads);
             quadGroups.add(quadGroup);

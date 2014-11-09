@@ -15,23 +15,10 @@ import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.QueryFactory;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.query.ResultSetFormatter;
+import com.hp.hpl.jena.shared.PrefixMapping;
+import com.hp.hpl.jena.shared.impl.PrefixMappingImpl;
+import com.hp.hpl.jena.sparql.algebra.TransformCopy;
 
-
-class QueryRunner {
-    private QueryExecutionFactory sparqlService;
-
-    public QueryRunner(QueryExecutionFactory sparqlService) {
-        this.sparqlService = sparqlService;
-    }
-
-    public QueryRunner trySelect(String queryString) {
-        QueryExecution qe = sparqlService.createQueryExecution(queryString);
-        ResultSet rs = qe.execSelect();
-        ResultSetFormatter.consume(rs);
-
-        return this;
-    }
-}
 
 public class TestCases {
     public static void main(String[] args) throws Exception {
@@ -72,46 +59,64 @@ public class TestCases {
         sparqlService = cachedService;
         //sparqlService = rawService;
 
-        QueryRunner runner = new QueryRunner(sparqlService);
+        PrefixMapping prefixMapping = new PrefixMappingImpl();
+        prefixMapping.setNsPrefix("r", "http://dbpedia.org/resource/");
+        prefixMapping.setNsPrefix("o", "http://dbpedia.org/ontology/");
 
-        for(int i = 0; i < 1000; ++i) {
-            Stopwatch sw = Stopwatch.createStarted();
+        QueryRunner runner = new QueryRunner(sparqlService, prefixMapping);
 
-            String varStr = "?hm_" + i;
-
-            String qs = "Prefix o: <http://dbpedia.org/ontology/> Select Distinct ?s { ?s a o:Airport ; o:city <http://dbpedia.org/resource/Leipzig> }".replace("?s", varStr);
-            System.out.println("qs = " + qs);
-            runner
-//                .trySelect("Prefix o: <http://dbpedia.org/ontology/> Select Distinct ?s { ?s a o:Airport }")
-                .trySelect(qs)
-                ;
-
-            System.out.println("Time taken: " + sw.elapsed(TimeUnit.MILLISECONDS));
-        }
-
-
-
-        for(int i = 0; i < 0; ++i) {
-            Stopwatch sw = Stopwatch.createStarted();
-
-            Resource r = resolver.getResource("query-lorenz-1a.sparql");
-            String queryString = StreamUtils.toString(r.getInputStream());
-            Query query = QueryFactory.create(queryString);
-
-            /*
-            Op op = Algebra.compile(query);
-            op = Algebra.toQuadForm(op);
-            System.out.println(op);
-            */
-
-            QueryExecution qe = sparqlService.createQueryExecution(query);
-            ResultSet rs = qe.execSelect();
-            ResultSetFormatter.consume(rs);
-            //System.out.println(ResultSetFormatter.asText(rs));
-
-            long elapsed = sw.elapsed(TimeUnit.MILLISECONDS);
-            System.out.println("Time taken: " + elapsed);
-        }
-
+        multiOverlap(runner);
     }
+
+    public static void multiOverlap(QueryRunner qr) {
+        qr
+            .trySelect("Select ?s { ?s a o:Airport ; o:city r:Leipzig }")
+            .trySelect("Select ?s { ?s a o:Airport ; o:city r:Leipzig }")
+            //.trySelect("Select ?s { ?s a o:Airport ; o:location r:Germany }")
+            //.trySelect("Select ?s { ?s a o:Airport ; o:city r:Leipzig ; o:location r:Germany }")
+            ;
+    }
+
+    public static void stuff(QueryRunner qr) {
+//
+//        for(int i = 0; i < 1000; ++i) {
+//            Stopwatch sw = Stopwatch.createStarted();
+//
+//            String varStr = "?s_" + i;
+//
+//            //System.out.println("qs = " + qs);
+//            runner
+//                //.trySelect("Select Distinct ?s { ?s a o:Airport }")
+//                .trySelect("Select Distinct ?s { ?s a o:Airport ; o:city <http://dbpedia.org/resource/Leipzig> }".replace("?s", varStr))
+//                //.trySelect("Select Distinct ?s { ?s o:city <http://dbpedia.org/resource/Leipzig> . <http://dbpedia.org/resource/European_Air_Transport> <http://dbpedia.org/ontology/hubAirport> ?s }".replace("?s", varStr))
+//                ;
+//
+//            System.out.println("Time taken: " + sw.elapsed(TimeUnit.MILLISECONDS));
+//        }
+//
+//
+//
+//        for(int i = 0; i < 0; ++i) {
+//            Stopwatch sw = Stopwatch.createStarted();
+//
+//            Resource r = resolver.getResource("query-lorenz-1a.sparql");
+//            String queryString = StreamUtils.toString(r.getInputStream());
+//            Query query = QueryFactory.create(queryString);
+//
+//            /*
+//            Op op = Algebra.compile(query);
+//            op = Algebra.toQuadForm(op);
+//            System.out.println(op);
+//            */
+//
+//            QueryExecution qe = sparqlService.createQueryExecution(query);
+//            ResultSet rs = qe.execSelect();
+//            ResultSetFormatter.consume(rs);
+//            //System.out.println(ResultSetFormatter.asText(rs));
+//
+//            long elapsed = sw.elapsed(TimeUnit.MILLISECONDS);
+//            System.out.println("Time taken: " + elapsed);
+//        }
+    }
+
 }
