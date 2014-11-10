@@ -409,7 +409,7 @@ class ConceptMap
         List<Table> tables = new ArrayList<Table>();
         for(CacheHit ch : result) {
             if(r == null) {
-                 r = ch.getReplacementPattern();
+                 r = ch.getDiffPattern();
                  tables.add(ch.getTable());
             } else {
                 QuadFilterPatternCanonical diff = r.diff(ch.getDiffPattern());

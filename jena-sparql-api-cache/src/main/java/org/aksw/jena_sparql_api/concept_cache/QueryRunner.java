@@ -1,7 +1,10 @@
 package org.aksw.jena_sparql_api.concept_cache;
 
+import java.util.concurrent.TimeUnit;
+
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 
+import com.google.common.base.Stopwatch;
 import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.QueryFactory;
@@ -31,6 +34,9 @@ public class QueryRunner {
     }
 
     public QueryRunner trySelect(String queryString) {
+        Stopwatch sw = Stopwatch.createStarted();
+
+
         Query query = new Query();
         query.setPrefixMapping(prefixMapping);
 
@@ -39,6 +45,9 @@ public class QueryRunner {
         QueryExecution qe = sparqlService.createQueryExecution(query);
         ResultSet rs = qe.execSelect();
         ResultSetFormatter.consume(rs);
+
+
+        System.out.println("Time taken: " + sw.elapsed(TimeUnit.MILLISECONDS));
 
         return this;
     }

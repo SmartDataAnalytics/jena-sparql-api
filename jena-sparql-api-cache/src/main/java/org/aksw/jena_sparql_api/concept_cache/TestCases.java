@@ -65,15 +65,17 @@ public class TestCases {
 
         QueryRunner runner = new QueryRunner(sparqlService, prefixMapping);
 
-        multiOverlap(runner);
+        for(int i = 0; i < 100; ++i) {
+            multiOverlap(runner);
+        }
     }
 
     public static void multiOverlap(QueryRunner qr) {
         qr
             .trySelect("Select ?s { ?s a o:Airport ; o:city r:Leipzig }")
             .trySelect("Select ?s { ?s a o:Airport ; o:city r:Leipzig }")
-            //.trySelect("Select ?s { ?s a o:Airport ; o:location r:Germany }")
-            //.trySelect("Select ?s { ?s a o:Airport ; o:city r:Leipzig ; o:location r:Germany }")
+            .trySelect("Select ?s { ?s a o:Airport ; o:location r:Germany }")
+            .trySelect("Select ?s { ?s a o:Airport ; o:city r:Leipzig ; o:location r:Germany }")
             ;
     }
 
