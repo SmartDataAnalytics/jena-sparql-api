@@ -506,7 +506,7 @@
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-ext</artifactId>
-                <version>1.6.0</version>
+                <version>1.7.10</version>
                 <type>jar</type>
                 <scope>compile</scope>
             </dependency>
@@ -560,7 +560,7 @@
             <dependency>
                 <groupId>com.h2database</groupId>
                 <artifactId>h2</artifactId>
-                <version>1.3.158</version>
+                <version>1.4.184</version>
                 <!--<scope>runtime</scope> -->
             </dependency>
 
@@ -569,7 +569,7 @@
             <dependency>
                 <groupId>com.jolbox</groupId>
                 <artifactId>bonecp</artifactId>
-                <version>0.7.1.RELEASE</version>
+                <version>0.8.0.RELEASE</version>
             </dependency>
 
             <dependency>
