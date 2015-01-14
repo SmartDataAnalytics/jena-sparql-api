@@ -34,7 +34,9 @@
     <properties>
         <jetty.version>8.1.12.v20130726</jetty.version>
         <jetty-plugin.version>8.1.10.v20130312</jetty-plugin.version>
-        <jersey-spring.version>1.17.1</jersey-spring.version>
+<!--         <jersey-spring.version>1.17.1</jersey-spring.version> -->
+
+        <jersey.version>2.15</jersey.version>
 
         <spring.version>3.2.4.RELEASE</spring.version>
         <spring.batch.version>2.2.5.RELEASE</spring.batch.version>
@@ -342,84 +344,102 @@
                 <version>0.9.0</version>
             </dependency>
 
-
             <dependency>
-                <groupId>com.sun.jersey</groupId>
-                <artifactId>jersey-servlet</artifactId>
-                <version>${jersey-spring.version}</version>
-
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.springframework</groupId>
-                        <artifactId>spring-aop</artifactId>
-                    </exclusion>
-                </exclusions>
+                <groupId>org.glassfish.jersey.containers</groupId>
+                <artifactId>jersey-container-servlet</artifactId>
+                <version>${jersey.version}</version>
+                <scope>provided</scope>
             </dependency>
 
+            <dependency>
+                <groupId>org.glassfish.jersey.media</groupId>
+                <artifactId>jersey-media-multipart</artifactId>
+                <version>${jersey.version}</version>
+            </dependency>
 
             <dependency>
-                <groupId>com.sun.jersey.contribs</groupId>
-                <artifactId>jersey-spring</artifactId>
-                <version>${jersey-spring.version}</version>
-
-                <exclusions>
-                    <exclusion>
-                        <groupId>com.sun.jersey</groupId>
-                        <artifactId>jersey-servlet</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.springframework</groupId>
-                        <artifactId>spring-core</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.springframework</groupId>
-                        <artifactId>spring-beans</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.springframework</groupId>
-                        <artifactId>spring-context</artifactId>
-                    </exclusion>
-
-                    <exclusion>
-                        <groupId>org.springframework</groupId>
-                        <artifactId>spring-web</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.springframework</groupId>
-                        <artifactId>spring-aop</artifactId>
-                    </exclusion>
-                </exclusions>
+                <groupId>org.glassfish.jersey.ext</groupId>
+                <artifactId>jersey-spring3</artifactId>
+                <version>${jersey.version}</version>
             </dependency>
+
+<!--             <dependency> -->
+<!--                 <groupId>com.sun.jersey</groupId> -->
+<!--                 <artifactId>jersey-servlet</artifactId> -->
+<!--                 <version>${jersey-spring.version}</version> -->
+
+<!--                 <exclusions> -->
+<!--                     <exclusion> -->
+<!--                         <groupId>org.springframework</groupId> -->
+<!--                         <artifactId>spring-aop</artifactId> -->
+<!--                     </exclusion> -->
+<!--                 </exclusions> -->
+<!--             </dependency> -->
+
+
+<!--             <dependency> -->
+<!--                 <groupId>com.sun.jersey.contribs</groupId> -->
+<!--                 <artifactId>jersey-spring</artifactId> -->
+<!--                 <version>${jersey-spring.version}</version> -->
+
+<!--                 <exclusions> -->
+<!--                     <exclusion> -->
+<!--                         <groupId>com.sun.jersey</groupId> -->
+<!--                         <artifactId>jersey-servlet</artifactId> -->
+<!--                     </exclusion> -->
+<!--                     <exclusion> -->
+<!--                         <groupId>org.springframework</groupId> -->
+<!--                         <artifactId>spring-core</artifactId> -->
+<!--                     </exclusion> -->
+<!--                     <exclusion> -->
+<!--                         <groupId>org.springframework</groupId> -->
+<!--                         <artifactId>spring-beans</artifactId> -->
+<!--                     </exclusion> -->
+<!--                     <exclusion> -->
+<!--                         <groupId>org.springframework</groupId> -->
+<!--                         <artifactId>spring-context</artifactId> -->
+<!--                     </exclusion> -->
+
+<!--                     <exclusion> -->
+<!--                         <groupId>org.springframework</groupId> -->
+<!--                         <artifactId>spring-web</artifactId> -->
+<!--                     </exclusion> -->
+<!--                     <exclusion> -->
+<!--                         <groupId>org.springframework</groupId> -->
+<!--                         <artifactId>spring-aop</artifactId> -->
+<!--                     </exclusion> -->
+<!--                 </exclusions> -->
+<!--             </dependency> -->
 
 
             <!-- Atmosphere framework -->
-            <dependency>
-                <groupId>org.atmosphere</groupId>
-                <artifactId>atmosphere-runtime</artifactId>
-                <version>${atmosphere.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.atmosphere</groupId>
-                <artifactId>atmosphere-jersey</artifactId>
-                <version>${atmosphere.version}</version>
-            </dependency>
+<!--             <dependency> -->
+<!--                 <groupId>org.atmosphere</groupId> -->
+<!--                 <artifactId>atmosphere-runtime</artifactId> -->
+<!--                 <version>${atmosphere.version}</version> -->
+<!--             </dependency> -->
+<!--             <dependency> -->
+<!--                 <groupId>org.atmosphere</groupId> -->
+<!--                 <artifactId>atmosphere-jersey</artifactId> -->
+<!--                 <version>${atmosphere.version}</version> -->
+<!--             </dependency> -->
 
-            <dependency>
-                <groupId>org.atmosphere</groupId>
-                <artifactId>atmosphere-spring</artifactId>
-                <version>${atmosphere-spring.version}</version>
+<!--             <dependency> -->
+<!--                 <groupId>org.atmosphere</groupId> -->
+<!--                 <artifactId>atmosphere-spring</artifactId> -->
+<!--                 <version>${atmosphere-spring.version}</version> -->
 
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.atmosphere</groupId>
-                        <artifactId>atmosphere-runtime</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.springframework</groupId>
-                        <artifactId>spring-webmvc</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
+<!--                 <exclusions> -->
+<!--                     <exclusion> -->
+<!--                         <groupId>org.atmosphere</groupId> -->
+<!--                         <artifactId>atmosphere-runtime</artifactId> -->
+<!--                     </exclusion> -->
+<!--                     <exclusion> -->
+<!--                         <groupId>org.springframework</groupId> -->
+<!--                         <artifactId>spring-webmvc</artifactId> -->
+<!--                     </exclusion> -->
+<!--                 </exclusions> -->
+<!--             </dependency> -->
 
             <!-- For somet reason atmosphere is not finding this class -->
             <dependency>
