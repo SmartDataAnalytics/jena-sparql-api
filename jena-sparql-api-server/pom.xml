@@ -44,10 +44,10 @@
                 <artifactId>jersey-media-multipart</artifactId>
             </dependency>
 
-            <dependency>
-                <groupId>org.glassfish.jersey.ext</groupId>
-                <artifactId>jersey-spring3</artifactId>
-            </dependency>
+<!--             <dependency> -->
+<!--                 <groupId>org.glassfish.jersey.ext</groupId> -->
+<!--                 <artifactId>jersey-spring3</artifactId> -->
+<!--             </dependency> -->
 
 
         <!-- Atmosphere framework -->

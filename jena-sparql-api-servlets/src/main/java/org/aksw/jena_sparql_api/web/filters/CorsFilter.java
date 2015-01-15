@@ -8,6 +8,7 @@ import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import javax.servlet.annotation.WebFilter;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -15,23 +16,24 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * 
- * Source: https://github.com/Atmosphere/atmosphere/wiki/Enabling-CORS 
+ *
+ * Source: https://github.com/Atmosphere/atmosphere/wiki/Enabling-CORS
  *
  */
+@WebFilter
 public class CorsFilter
     implements Filter
 {
     private static final Logger logger = LoggerFactory.getLogger(CorsFilter.class);
-    
-    
+
+
     @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) 
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
-        
-        
-        HttpServletRequest req = (HttpServletRequest)request;                                   
-        HttpServletResponse res = (HttpServletResponse)response;  
+
+
+        HttpServletRequest req = (HttpServletRequest)request;
+        HttpServletResponse res = (HttpServletResponse)response;
 
         if(req.getHeader("Origin") != null){
             res.addHeader("Access-Control-Allow-Origin", "*");
@@ -42,7 +44,7 @@ public class CorsFilter
             res.addHeader("Access-Control-Allow-Methods", "OPTIONS, GET, POST");
             res.addHeader("Access-Control-Allow-Headers", "Origin, Content-Type, X-Atmosphere-Framework, X-Cache-Date, X-Atmosphere-tracking-id, X-Atmosphere-Transport");
             res.addHeader("Access-Control-Max-Age", "-1");
-        }                                              
+        }
         chain.doFilter(req, res);
     }
 
@@ -53,6 +55,6 @@ public class CorsFilter
     public void init(FilterConfig arg0) throws ServletException {
 
         logger.info("CORS filter initialized");
-        
+
     }
 }
