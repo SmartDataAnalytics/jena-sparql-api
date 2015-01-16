@@ -8,6 +8,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.container.AsyncResponse;
+import javax.ws.rs.container.CompletionCallback;
 import javax.ws.rs.container.ConnectionCallback;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
@@ -194,21 +195,29 @@ public abstract class SparqlEndpointBase {
     public void processQueryAsync(final AsyncResponse asyncResponse, String queryString, final String format) {
         final QueryExecutionAndType qeAndType = createQueryExecution(queryString);
 
+//        asyncResponse
+//        .register(new CompletionCallback() {
+//
+//            @Override
+//            public void onComplete(Throwable arg0) {
+//                System.out.println("COMPLETE");
+//            }
+//        });
 
         asyncResponse
         .register(new ConnectionCallback() {
             @Override
-            public void onDisconnect(AsyncResponse arg0) {
+            public void onDisconnect(AsyncResponse arg) {
+                System.out.println("DISCONNECT");
 
                 qeAndType.getQueryExecution().abort();
 
-                System.out.println("DISCONNECT");
                 if(true) {
-                asyncResponse.resume(
+                arg.resume(
                     Response.status(Response.Status.SERVICE_UNAVAILABLE)
                     .entity("Connection Callback").build());
                 } else {
-                    asyncResponse.cancel();
+                    arg.cancel();
                 }
             }
         });
