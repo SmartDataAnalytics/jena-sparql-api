@@ -10,6 +10,8 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.container.AsyncResponse;
+import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
@@ -42,7 +44,8 @@ public class PathFindingApi {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public String findPathsPost(
+    public void findPathsPost(
+            @Suspended final AsyncResponse asyncResponse,
             @QueryParam("service-uri") String serviceUri,
             @QueryParam("default-graph-uri") List<String> defaultGraphUris,
             @QueryParam("source-element") String sourceElement,
@@ -55,14 +58,14 @@ public class PathFindingApi {
             @QueryParam("n-paths") Integer nPaths,
             @QueryParam("max-hops") Integer maxHops
     ) throws ClassNotFoundException, SQLException {
-        String result = findPaths(serviceUri, defaultGraphUris, sourceElement, sourceVar, targetElement, targetVar, joinSummaryServiceUri, joinSummaryGraphUris, queryString, nPaths, maxHops);
-        return result;
+        findPaths(asyncResponse, serviceUri, defaultGraphUris, sourceElement, sourceVar, targetElement, targetVar, joinSummaryServiceUri, joinSummaryGraphUris, queryString, nPaths, maxHops);
     }
 
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
-    public String findPathsGet(
+    public void findPathsGet(
+            @Suspended final AsyncResponse asyncResponse,
             @FormParam("service-uri") String serviceUri,
             @FormParam("default-graph-uri") List<String> defaultGraphUris,
             @FormParam("source-element") String sourceElement,
@@ -75,75 +78,82 @@ public class PathFindingApi {
             @FormParam("n-paths") Integer nPaths,
             @FormParam("max-hops") Integer maxHops
     ) throws ClassNotFoundException, SQLException {
-        String result = findPaths(serviceUri, defaultGraphUris, sourceElement, sourceVar, targetElement, targetVar, joinSummaryServiceUri, joinSummaryGraphUris, queryString, nPaths, maxHops);
-        return result;
+        findPaths(asyncResponse, serviceUri, defaultGraphUris, sourceElement, sourceVar, targetElement, targetVar, joinSummaryServiceUri, joinSummaryGraphUris, queryString, nPaths, maxHops);
     }
 
-    public String findPaths(
-            String serviceUri,
-            List<String> defaultGraphUris,
-            String sourceElement,
-            String sourceVar,
-            String targetElement,
-            String targetVar,
-            String joinSummaryServiceUri,
-            List<String> joinSummaryGraphUris,
-            String queryString,
-            Integer nPaths,
-            Integer maxHops
+    public void findPaths(
+            final AsyncResponse response,
+            final String serviceUri,
+            final List<String> defaultGraphUris,
+            final String sourceElement,
+            final String sourceVar,
+            final String targetElement,
+            final String targetVar,
+            final String joinSummaryServiceUri,
+            final List<String> joinSummaryGraphUris,
+            final String queryString,
+            final Integer nPaths,
+            final Integer maxHops
     ) throws ClassNotFoundException, SQLException {
-        nPaths = nPaths != null? nPaths : 3;
-        maxHops = maxHops != null ? maxHops : 3;
 
-        Concept sourceConcept = Concept.create(sourceElement, sourceVar);
-        Concept targetConcept = Concept.create(targetElement, targetVar);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
 
-        QueryExecutionFactory sparqlService = sparqlServiceFactory.createSparqlService(serviceUri, defaultGraphUris);
 
-        Model joinSummaryModel;
+                int _nPaths = nPaths != null? nPaths : 3;
+                int _maxHops = maxHops != null ? maxHops : 3;
 
-        if(joinSummaryServiceUri != null && !joinSummaryServiceUri.isEmpty()) {
+                Concept sourceConcept = Concept.create(sourceElement, sourceVar);
+                Concept targetConcept = Concept.create(targetElement, targetVar);
 
-            if(joinSummaryGraphUris == null) {
-                joinSummaryGraphUris = Collections.emptyList();
+                QueryExecutionFactory sparqlService = sparqlServiceFactory.createSparqlService(serviceUri, defaultGraphUris);
+
+                Model joinSummaryModel;
+
+                List<String> jss = joinSummaryGraphUris != null ? joinSummaryGraphUris : Collections.<String>emptyList();
+
+                if(joinSummaryServiceUri != null && !joinSummaryServiceUri.isEmpty()) {
+
+                    QueryExecutionFactory jsSparqlService = sparqlServiceFactory.createSparqlService(joinSummaryServiceUri, jss);
+                    joinSummaryModel = ConceptPathFinder.createJoinSummary(jsSparqlService);
+                } else {
+                    joinSummaryModel = ConceptPathFinder.createDefaultJoinSummaryModel(sparqlService);
+                }
+
+                List<Path> paths = ConceptPathFinder.findPaths(sparqlService, sourceConcept, targetConcept, _nPaths, _maxHops, joinSummaryModel);
+
+                String result;
+
+                // if there is a queryString, we will use sparql mode, otherwise, we will just return the json
+
+                if(queryString != null && !queryString.isEmpty()) {
+
+                    Model model = ConceptPathFinder.createModel(paths);
+                    QueryExecutionFactoryModel pathSparqlService = new QueryExecutionFactoryModel(model);
+                    QueryExecution qe = pathSparqlService.createQueryExecution(queryString);
+                    ResultSet rs = qe.execSelect();
+
+                    result = SparqlFormatterUtils._formatJson(rs);
+//                    Writer writer = new JsonWriter();
+//                    writer.wr
+
+                }
+                else {
+                    List<String> tmp = new ArrayList<String>();
+                    for(Path path : paths) {
+                        tmp.add(path.toPathString());
+                    }
+
+                    Gson gson = new Gson();
+                    result = gson.toJson(tmp);
+                }
+
+                //return result;
+
+                response.resume(result);
             }
-
-            QueryExecutionFactory jsSparqlService = sparqlServiceFactory.createSparqlService(joinSummaryServiceUri, joinSummaryGraphUris);
-            joinSummaryModel = ConceptPathFinder.createJoinSummary(jsSparqlService);
-        } else {
-            joinSummaryModel = ConceptPathFinder.createDefaultJoinSummaryModel(sparqlService);
-        }
-
-        List<Path> paths = ConceptPathFinder.findPaths(sparqlService, sourceConcept, targetConcept, nPaths, maxHops, joinSummaryModel);
-
-        String result;
-
-        // if there is a queryString, we will use sparql mode, otherwise, we will just return the json
-
-        if(queryString != null && !queryString.isEmpty()) {
-
-            Model model = ConceptPathFinder.createModel(paths);
-            QueryExecutionFactoryModel pathSparqlService = new QueryExecutionFactoryModel(model);
-            QueryExecution qe = pathSparqlService.createQueryExecution(queryString);
-            ResultSet rs = qe.execSelect();
-
-            result = SparqlFormatterUtils._formatJson(rs);
-//            Writer writer = new JsonWriter();
-//            writer.wr
-
-        }
-        else {
-            List<String> tmp = new ArrayList<String>();
-            for(Path path : paths) {
-                tmp.add(path.toPathString());
-            }
-
-            Gson gson = new Gson();
-            result = gson.toJson(tmp);
-        }
-
-        return result;
-
+        }).start();
     }
 
 

@@ -33,7 +33,8 @@
 
     <properties>
 <!--        <jetty.version>8.1.12.v20130726</jetty.version> -->
-    <jetty.version>9.3.0.M1</jetty.version>
+<!--    <jetty.version>9.3.0.M1</jetty.version> -->
+	<jetty.version>8.1.16.v20140903</jetty.version>
 
 <!--        <jetty-plugin.version>8.1.10.v20130312</jetty-plugin.version> -->
 <!--          <jersey-spring.version>1.17.1</jersey-spring.version> -->

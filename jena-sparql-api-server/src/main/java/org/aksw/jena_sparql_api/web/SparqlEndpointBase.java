@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.web;
 
+import java.util.concurrent.TimeUnit;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.FormParam;
@@ -11,6 +13,7 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.CompletionCallback;
 import javax.ws.rs.container.ConnectionCallback;
 import javax.ws.rs.container.Suspended;
+import javax.ws.rs.container.TimeoutHandler;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -192,7 +195,7 @@ public abstract class SparqlEndpointBase {
         processQueryAsync(asyncResponse, queryString, SparqlFormatterUtils.FORMAT_Json);
     }
 
-    public void processQueryAsync(final AsyncResponse asyncResponse, String queryString, final String format) {
+    public void processQueryAsync(final AsyncResponse response, String queryString, final String format) {
         final QueryExecutionAndType qeAndType = createQueryExecution(queryString);
 
 //        asyncResponse
@@ -204,35 +207,49 @@ public abstract class SparqlEndpointBase {
 //            }
 //        });
 
-        asyncResponse
+        response
         .register(new ConnectionCallback() {
             @Override
-            public void onDisconnect(AsyncResponse arg) {
+            public void onDisconnect(AsyncResponse disconnect) {
                 System.out.println("DISCONNECT");
 
                 qeAndType.getQueryExecution().abort();
 
                 if(true) {
-                arg.resume(
+                disconnect.resume(
                     Response.status(Response.Status.SERVICE_UNAVAILABLE)
                     .entity("Connection Callback").build());
                 } else {
-                    arg.cancel();
+                    disconnect.cancel();
                 }
             }
         });
 
-//        asyncResponse
-//        .setTimeoutHandler(new TimeoutHandler() {
-//           @Override
-//           public void handleTimeout(AsyncResponse asyncResponse) {
-//               asyncResponse.resume(
-//                   Response.status(Response.Status.SERVICE_UNAVAILABLE)
-//                   .entity("Operation time out.").build());
-//          }
-//        });
-//
-//        asyncResponse.setTimeout(600, TimeUnit.SECONDS);
+        response
+        .register(new CompletionCallback() {
+            @Override
+            public void onComplete(Throwable t) {
+                if(t == null) {
+                    System.out.println("Success!");
+                } else {
+                    System.out.println("Fail!");
+                }
+                qeAndType.getQueryExecution().close();
+            }
+        });
+
+        response
+        .setTimeoutHandler(new TimeoutHandler() {
+           @Override
+           public void handleTimeout(AsyncResponse asyncResponse) {
+               System.out.println("TIMEOUT");
+               asyncResponse.resume(
+                   Response.status(Response.Status.SERVICE_UNAVAILABLE)
+                   .entity("Operation time out.").build());
+          }
+        });
+
+        response.setTimeout(600, TimeUnit.SECONDS);
 
         new Thread(new Runnable() {
             @Override
@@ -240,12 +257,15 @@ public abstract class SparqlEndpointBase {
 
                 StreamingOutput result;
                 try {
+//                    QueryExecutionFactoryModel q = new QueryExecutionFactoryModel();
+//                    QueryExecution qe = q.createQueryExecution("Select * { ?s ?p ?o }");
+//                    result = ProcessQuery.processQuery(new QueryExecutionAndType(qe, Query.QueryTypeSelect) , SparqlFormatterUtils.FORMAT_Json);
                     result = ProcessQuery.processQuery(qeAndType, format);
                 } catch (Exception e) {
                     qeAndType.getQueryExecution().abort();
                     throw new RuntimeException();
                 }
-                asyncResponse.resume(result);
+                response.resume(result);
             }
         }).start();
     }
