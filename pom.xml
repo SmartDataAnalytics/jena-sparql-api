@@ -350,10 +350,15 @@
                 <version>${jersey.version}</version>
 
                 <exclusions>
-<!--                     <exclusion> -->
-<!--                         <groupId>javax.validation</groupId> -->
-<!--                         <artifactId>validation-api</artifactId> -->
-<!--                     </exclusion> -->
+                    <exclusion>
+                        <groupId>javax.validation</groupId>
+                        <artifactId>validation-api</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>aopalliance</groupId>
+                        <artifactId>aopalliance</artifactId>
+                    </exclusion>
+<!--
                     <exclusion>
                         <groupId>org.glassfish.hk2.external</groupId>
                         <artifactId>aopalliance-repackaged</artifactId>
@@ -362,11 +367,7 @@
                         <groupId>org.glassfish.hk2.external</groupId>
                         <artifactId>javax.inject</artifactId>
                     </exclusion>
-
-<!--                     <exclusion> -->
-<!--                         <groupId>aopalliance</groupId> -->
-<!--                         <artifactId>aopalliance</artifactId> -->
-<!--                     </exclusion> -->
+-->
                 </exclusions>
 
 
@@ -386,27 +387,27 @@
                 <version>${jersey.version}</version>
 
                 <exclusions>
-                    <exclusion>
-                        <groupId>org.glassfish.hk2.external</groupId>
-                        <artifactId>bean-validator</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.glassfish.hk2.external</groupId>
-                        <artifactId>javax.inject</artifactId>
-                    </exclusion>
-
 <!--                     <exclusion> -->
-<!--                         <groupId>javax.validation</groupId> -->
-<!--                         <artifactId>validation-api</artifactId> -->
+<!--                         <groupId>org.glassfish.hk2.external</groupId> -->
+<!--                         <artifactId>bean-validator</artifactId> -->
 <!--                     </exclusion> -->
 <!--                     <exclusion> -->
-<!--                         <groupId>aopalliance</groupId> -->
-<!--                         <artifactId>aopalliance</artifactId> -->
-<!--                     </exclusion> -->
-<!--                     <exclusion> -->
-<!--                         <groupId>javax.inject</groupId> -->
+<!--                         <groupId>org.glassfish.hk2.external</groupId> -->
 <!--                         <artifactId>javax.inject</artifactId> -->
 <!--                     </exclusion> -->
+
+                    <exclusion>
+                        <groupId>javax.validation</groupId>
+                        <artifactId>validation-api</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>aopalliance</groupId>
+                        <artifactId>aopalliance</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>javax.inject</groupId>
+                        <artifactId>javax.inject</artifactId>
+                    </exclusion>
                     <exclusion>
                         <groupId>org.glassfish.hk2.external</groupId>
                         <artifactId>aopalliance-repackaged</artifactId>
@@ -724,6 +725,10 @@
                 <artifactId>spring-webmvc</artifactId>
                 <version>${spring.version}</version>
                 <exclusions>
+                    <exclusion>
+                        <groupId>aopalliance</groupId>
+                        <artifactId>aopalliance</artifactId>
+                    </exclusion>
                     <exclusion>
                         <groupId>commons-logging</groupId>
                         <artifactId>commons-logging</artifactId>
