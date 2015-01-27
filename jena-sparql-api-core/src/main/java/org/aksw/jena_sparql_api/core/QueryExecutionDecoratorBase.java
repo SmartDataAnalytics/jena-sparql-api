@@ -11,7 +11,6 @@ import com.hp.hpl.jena.query.QuerySolution;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.sparql.util.Context;
-import com.hp.hpl.jena.util.FileManager;
 
 
 /**
@@ -45,11 +44,6 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
     protected void setDecoratee(T decoratee)
     {
         this.decoratee = decoratee;
-    }
-
-    @Override
-    public void setFileManager(FileManager fm) {
-        decoratee.setFileManager(fm);
     }
 
     @Override
@@ -156,5 +150,13 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
 	@Override
 	public long getTimeout2() {
 		return decoratee.getTimeout2();
+	}
+
+	/* (non-Javadoc)
+	 * @see com.hp.hpl.jena.query.QueryExecution#isClosed()
+	 */
+	@Override
+	public boolean isClosed() {
+		return decoratee.isClosed();
 	}
 }

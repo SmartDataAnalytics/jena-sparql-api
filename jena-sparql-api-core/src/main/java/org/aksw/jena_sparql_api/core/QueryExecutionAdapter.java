@@ -11,7 +11,6 @@ import com.hp.hpl.jena.query.QuerySolution;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.sparql.util.Context;
-import com.hp.hpl.jena.util.FileManager;
 
 /**
  * 
@@ -25,11 +24,6 @@ public class QueryExecutionAdapter
     implements QueryExecution
 {
     protected QueryExecutionTimeoutHelper timeoutHelper = new QueryExecutionTimeoutHelper(this);
-
-    @Override
-    public void setFileManager(FileManager fm) {
-        throw new RuntimeException("Not Implemented.");
-    }
 
     @Override
     public void setInitialBinding(QuerySolution binding) {
@@ -131,5 +125,10 @@ public class QueryExecutionAdapter
 	@Override
 	public long getTimeout2() {
         throw new RuntimeException("Not Implemented.");
+	}
+
+	@Override
+	public boolean isClosed() {
+		throw new RuntimeException("Not Implemented.");
 	}
 }

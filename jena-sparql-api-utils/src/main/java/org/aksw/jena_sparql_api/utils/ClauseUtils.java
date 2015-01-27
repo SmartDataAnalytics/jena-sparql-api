@@ -2,14 +2,14 @@ package org.aksw.jena_sparql_api.utils;
 
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
-import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.sparql.algebra.optimize.ExprTransformConstantFold;
 import com.hp.hpl.jena.sparql.core.Var;
 import com.hp.hpl.jena.sparql.engine.binding.BindingRoot;
 import com.hp.hpl.jena.sparql.expr.E_LogicalNot;
 import com.hp.hpl.jena.sparql.expr.Expr;
+import com.hp.hpl.jena.sparql.expr.ExprTransformer;
 import com.hp.hpl.jena.sparql.expr.NodeValue;
 import com.hp.hpl.jena.sparql.graph.NodeTransform;
 
@@ -91,7 +91,9 @@ public class ClauseUtils
     public static boolean isSatisfiable(Expr expr)
     {
         // NOTE Folding does not detect cases such as E_LogicalAnd(E_Equals(x = y), false)
-        Expr folded = expr.copySubstitute(BindingRoot.create(), true);
+    	Expr exprCopy = expr.copySubstitute(BindingRoot.create());
+    	Expr folded = ExprTransformer.transform(new ExprTransformConstantFold(), exprCopy) ;
+        
         return !folded.equals(NodeValue.FALSE);
     }
 

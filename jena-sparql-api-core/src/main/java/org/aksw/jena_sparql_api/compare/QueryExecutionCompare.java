@@ -20,12 +20,10 @@ import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.QuerySolution;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.query.ResultSetFactory;
-import com.hp.hpl.jena.query.ResultSetFormatter;
 import com.hp.hpl.jena.query.ResultSetRewindable;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.sparql.util.Context;
-import com.hp.hpl.jena.util.FileManager;
 
 
 /**
@@ -169,16 +167,6 @@ public class QueryExecutionCompare
         this.a = a;
         this.b = b;
         this.isOrdered = isOrdered;
-    }
-
-
-    /**
-     * Set the FileManger that might be used to load files.
-     * May not be supported by all QueryExecution implementations.
-     */
-    @Override
-    public void setFileManager(FileManager fm) {
-        //To change body of implemented methods use File | Settings | File Templates.
     }
 
     /**
@@ -485,6 +473,14 @@ public class QueryExecutionCompare
 	@Override
 	public long getTimeout2() {
 		return a.getTimeout2();
+	}
+
+	/* (non-Javadoc)
+	 * @see com.hp.hpl.jena.query.QueryExecution#isClosed()
+	 */
+	@Override
+	public boolean isClosed() {
+		return a.isClosed() && b.isClosed();
 	}
 
     /*
