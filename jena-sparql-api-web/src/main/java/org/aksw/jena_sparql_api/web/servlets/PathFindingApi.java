@@ -21,6 +21,7 @@ import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
 import org.aksw.jena_sparql_api.model.QueryExecutionFactoryModel;
 import org.aksw.jena_sparql_api.sparql_path.core.algorithm.ConceptPathFinder;
 import org.aksw.jena_sparql_api.utils.SparqlFormatterUtils;
+import org.aksw.jena_sparql_api.web.utils.ThreadUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -96,11 +97,9 @@ public class PathFindingApi {
             final Integer maxHops
     ) throws ClassNotFoundException, SQLException {
 
-        new Thread(new Runnable() {
+        ThreadUtils.start(response, new Runnable() {
             @Override
             public void run() {
-
-
                 int _nPaths = nPaths != null? nPaths : 3;
                 int _maxHops = maxHops != null ? maxHops : 3;
 
@@ -153,7 +152,7 @@ public class PathFindingApi {
 
                 response.resume(result);
             }
-        }).start();
+        });
     }
 
 

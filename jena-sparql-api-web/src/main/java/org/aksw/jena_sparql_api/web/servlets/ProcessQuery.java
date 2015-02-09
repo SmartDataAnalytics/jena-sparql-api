@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.web;
+package org.aksw.jena_sparql_api.web.servlets;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -38,7 +38,11 @@ public class ProcessQuery {
 
                 try {
                     writer.write(output, obj);
-                } finally {
+                }
+                catch(Exception e) {
+                    throw new RuntimeException(e);
+                }
+                finally {
                     qe.close();
                 }
 //                catch(Exception e) {

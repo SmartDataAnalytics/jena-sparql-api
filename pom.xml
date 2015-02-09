@@ -16,8 +16,7 @@
         <module>jena-sparql-api-cache</module>
         <module>jena-sparql-api-cache-h2</module>
         <module>jena-sparql-api-utils</module>
-        <module>jena-sparql-api-servlets</module>
-        <module>jena-sparql-api-server</module>
+        <module>jena-sparql-api-web</module>
         <module>jena-sparql-api-example-proxy</module>
 
         <module>jena-sparql-api-concepts</module>
@@ -34,7 +33,7 @@
     <properties>
 <!--        <jetty.version>8.1.12.v20130726</jetty.version> -->
 <!--    <jetty.version>9.3.0.M1</jetty.version> -->
-	<jetty.version>8.1.16.v20140903</jetty.version>
+    <jetty.version>8.1.16.v20140903</jetty.version>
 
 <!--        <jetty-plugin.version>8.1.10.v20130312</jetty-plugin.version> -->
 <!--          <jersey-spring.version>1.17.1</jersey-spring.version> -->
@@ -243,7 +242,7 @@
 
             <dependency>
                 <groupId>org.aksw.jena-sparql-api</groupId>
-                <artifactId>jena-sparql-api-server</artifactId>
+                <artifactId>jena-sparql-api-web</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

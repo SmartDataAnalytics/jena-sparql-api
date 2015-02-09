@@ -1,6 +1,4 @@
-package org.aksw.jena_sparql_api.web;
-
-import java.util.concurrent.TimeUnit;
+package org.aksw.jena_sparql_api.web.servlets;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
@@ -13,7 +11,6 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.CompletionCallback;
 import javax.ws.rs.container.ConnectionCallback;
 import javax.ws.rs.container.Suspended;
-import javax.ws.rs.container.TimeoutHandler;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -22,6 +19,9 @@ import javax.ws.rs.core.StreamingOutput;
 
 import org.aksw.jena_sparql_api.core.utils.QueryExecutionAndType;
 import org.aksw.jena_sparql_api.utils.SparqlFormatterUtils;
+import org.aksw.jena_sparql_api.web.utils.ThreadUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.query.QueryExecution;
@@ -36,6 +36,8 @@ import com.hp.hpl.jena.query.Syntax;
  *
  */
 public abstract class SparqlEndpointBase {
+
+    private static final Logger logger = LoggerFactory.getLogger(SparqlEndpointBase.class);
 
     private @Context HttpServletRequest req;
 
@@ -147,10 +149,10 @@ public abstract class SparqlEndpointBase {
             //.entity("Connection Callback").build());
 
             asyncResponse.resume(Response.ok(so).build()); // TODO: Return some error HTTP code
+        } else {
+        //  return processQuery(req, queryString, SparqlFormatterUtils.FORMAT_XML);
+            processQueryAsync(asyncResponse, queryString, SparqlFormatterUtils.FORMAT_XML);
         }
-
-        //return processQuery(req, queryString, SparqlFormatterUtils.FORMAT_XML);
-        processQueryAsync(asyncResponse, queryString, SparqlFormatterUtils.FORMAT_XML);
     }
 
 
@@ -196,7 +198,24 @@ public abstract class SparqlEndpointBase {
     }
 
     public void processQueryAsync(final AsyncResponse response, String queryString, final String format) {
-        final QueryExecutionAndType qeAndType = createQueryExecution(queryString);
+//        QueryExecutionAndType tmp;
+//
+//        try {
+//            tmp = createQueryExecution(queryString);
+//        } catch(Exception e) {
+//
+////            response.resume(
+////                    Response.status(Response.Status.SERVICE_UNAVAILABLE)
+////                    .entity("Connection Callback").build());
+////
+////            return;
+//            throw new RuntimeException(e);
+//        }
+
+//        final QueryExecutionAndType qeAndType = tmp;
+      final QueryExecutionAndType qeAndType = createQueryExecution(queryString);
+
+
 
 //        asyncResponse
 //        .register(new CompletionCallback() {
@@ -211,17 +230,17 @@ public abstract class SparqlEndpointBase {
         .register(new ConnectionCallback() {
             @Override
             public void onDisconnect(AsyncResponse disconnect) {
-                System.out.println("DISCONNECT");
+                logger.debug("Client disconnected");
 
                 qeAndType.getQueryExecution().abort();
 
-                if(true) {
-                disconnect.resume(
-                    Response.status(Response.Status.SERVICE_UNAVAILABLE)
-                    .entity("Connection Callback").build());
-                } else {
-                    disconnect.cancel();
-                }
+//                if(true) {
+//                disconnect.resume(
+//                    Response.status(Response.Status.SERVICE_UNAVAILABLE)
+//                    .entity("Connection Callback").build());
+//                } else {
+//                    disconnect.cancel();
+//                }
             }
         });
 
@@ -230,44 +249,38 @@ public abstract class SparqlEndpointBase {
             @Override
             public void onComplete(Throwable t) {
                 if(t == null) {
-                    System.out.println("Success!");
+                    logger.debug("Successfully completed query execution");
                 } else {
-                    System.out.println("Fail!");
+                    logger.debug("Failed query execution");
                 }
                 qeAndType.getQueryExecution().close();
             }
         });
 
-        response
-        .setTimeoutHandler(new TimeoutHandler() {
-           @Override
-           public void handleTimeout(AsyncResponse asyncResponse) {
-               System.out.println("TIMEOUT");
-               asyncResponse.resume(
-                   Response.status(Response.Status.SERVICE_UNAVAILABLE)
-                   .entity("Operation time out.").build());
-          }
-        });
+//        response
+//        .setTimeoutHandler(new TimeoutHandler() {
+//           @Override
+//           public void handleTimeout(AsyncResponse asyncResponse) {
+//               logger.debug("Timout on request");
+//               asyncResponse.resume(
+//                   Response.status(Response.Status.SERVICE_UNAVAILABLE)
+//                   .entity("Operation time out.").build());
+//          }
+//        });
+//
+//        response.setTimeout(600, TimeUnit.SECONDS);
 
-        response.setTimeout(600, TimeUnit.SECONDS);
-
-        new Thread(new Runnable() {
+        ThreadUtils.start(response, new Runnable() {
             @Override
             public void run() {
-
-                StreamingOutput result;
                 try {
-//                    QueryExecutionFactoryModel q = new QueryExecutionFactoryModel();
-//                    QueryExecution qe = q.createQueryExecution("Select * { ?s ?p ?o }");
-//                    result = ProcessQuery.processQuery(new QueryExecutionAndType(qe, Query.QueryTypeSelect) , SparqlFormatterUtils.FORMAT_Json);
-                    result = ProcessQuery.processQuery(qeAndType, format);
-                } catch (Exception e) {
-                    qeAndType.getQueryExecution().abort();
-                    throw new RuntimeException();
+                    StreamingOutput result = ProcessQuery.processQuery(qeAndType, format);
+                    response.resume(result);
+                } catch(Exception e) {
+                    throw new RuntimeException(e);
                 }
-                response.resume(result);
             }
-        }).start();
+        });
     }
 
 

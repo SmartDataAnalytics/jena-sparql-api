@@ -8,8 +8,8 @@
         <version>2.11.2-60-SNAPSHOT</version>
     </parent>
 
-    <artifactId>jena-sparql-api-servlets</artifactId>
-    <name>Jena SPARQL API - Servlets</name>
+    <artifactId>jena-sparql-api-web</artifactId>
+    <name>Jena SPARQL API - Web</name>
     <!-- <packaging>js</packaging> -->
     <packaging>jar</packaging>
 
@@ -108,6 +108,10 @@
             <artifactId>gson</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+        </dependency>
 
 
 
