@@ -17,6 +17,7 @@
         <module>jena-sparql-api-cache-h2</module>
         <module>jena-sparql-api-utils</module>
         <module>jena-sparql-api-web</module>
+        <module>jena-sparql-api-server</module>
         <module>jena-sparql-api-example-proxy</module>
 
         <module>jena-sparql-api-concepts</module>
