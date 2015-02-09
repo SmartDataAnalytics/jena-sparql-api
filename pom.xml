@@ -16,7 +16,7 @@
         <module>jena-sparql-api-cache</module>
         <module>jena-sparql-api-cache-h2</module>
         <module>jena-sparql-api-utils</module>
-        <module>jena-sparql-api-servlets</module>
+        <module>jena-sparql-api-web</module>
         <module>jena-sparql-api-server</module>
         <module>jena-sparql-api-example-proxy</module>
 
@@ -32,12 +32,17 @@
     </scm>
 
     <properties>
-        <jetty.version>8.1.12.v20130726</jetty.version>
-        <jetty-plugin.version>8.1.10.v20130312</jetty-plugin.version>
-        <jersey-spring.version>1.17.1</jersey-spring.version>
+<!--        <jetty.version>8.1.12.v20130726</jetty.version> -->
+<!--    <jetty.version>9.3.0.M1</jetty.version> -->
+    <jetty.version>8.1.16.v20140903</jetty.version>
 
-        <spring.version>3.2.4.RELEASE</spring.version>
-        <spring.batch.version>2.2.5.RELEASE</spring.batch.version>
+<!--        <jetty-plugin.version>8.1.10.v20130312</jetty-plugin.version> -->
+<!--          <jersey-spring.version>1.17.1</jersey-spring.version> -->
+
+        <jersey.version>2.15</jersey.version>
+
+        <spring.version>4.1.4.RELEASE</spring.version>
+        <spring.batch.version>3.0.3.RELEASE</spring.batch.version>
         <aksw.commons.version>0.7.4</aksw.commons.version>
 
         <atmosphere.version>2.0.0.RC3</atmosphere.version>
@@ -125,23 +130,20 @@
                 </configuration>
             </plugin>
 
-            <plugin>
-                <groupId>org.mortbay.jetty</groupId>
-                <artifactId>jetty-maven-plugin</artifactId>
-                <version>${jetty-plugin.version}</version>
-                <configuration>
-                    <systemProperties>
-                        <systemProperty>
-                            <name>jetty.port</name>
-                            <value>5522</value>
-                        </systemProperty>
-                    </systemProperties>
-                    <reload>manual</reload>
-                    <!-- <webApp> -->
-                    <!-- <contextPath>${platform.linkedData.contextPath}</contextPath> -->
-                    <!-- </webApp> -->
-                </configuration>
-            </plugin>
+<!--             <plugin> -->
+<!--                 <groupId>org.mortbay.jetty</groupId> -->
+<!--                 <artifactId>jetty-maven-plugin</artifactId> -->
+<!--                 <version>${jetty-plugin.version}</version> -->
+<!--                 <configuration> -->
+<!--                     <systemProperties> -->
+<!--                         <systemProperty> -->
+<!--                             <name>jetty.port</name> -->
+<!--                             <value>5522</value> -->
+<!--                         </systemProperty> -->
+<!--                     </systemProperties> -->
+<!--                     <reload>manual</reload> -->
+<!--                 </configuration> -->
+<!--             </plugin> -->
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -245,7 +247,7 @@
 
             <dependency>
                 <groupId>org.aksw.jena-sparql-api</groupId>
-                <artifactId>jena-sparql-api-server</artifactId>
+                <artifactId>jena-sparql-api-web</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -348,82 +350,158 @@
 
 
             <dependency>
-                <groupId>com.sun.jersey</groupId>
-                <artifactId>jersey-servlet</artifactId>
-                <version>${jersey-spring.version}</version>
+                <groupId>org.glassfish.jersey.containers</groupId>
+                <artifactId>jersey-container-servlet</artifactId>
+                <version>${jersey.version}</version>
 
                 <exclusions>
                     <exclusion>
-                        <groupId>org.springframework</groupId>
-                        <artifactId>spring-aop</artifactId>
+                        <groupId>javax.validation</groupId>
+                        <artifactId>validation-api</artifactId>
                     </exclusion>
+                    <exclusion>
+                        <groupId>aopalliance</groupId>
+                        <artifactId>aopalliance</artifactId>
+                    </exclusion>
+<!--
+                    <exclusion>
+                        <groupId>org.glassfish.hk2.external</groupId>
+                        <artifactId>aopalliance-repackaged</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.glassfish.hk2.external</groupId>
+                        <artifactId>javax.inject</artifactId>
+                    </exclusion>
+-->
                 </exclusions>
+
+
+<!--                 <scope>provided</scope> -->
+            </dependency>
+
+            <dependency>
+                <groupId>org.glassfish.jersey.media</groupId>
+                <artifactId>jersey-media-multipart</artifactId>
+                <version>${jersey.version}</version>
             </dependency>
 
 
             <dependency>
-                <groupId>com.sun.jersey.contribs</groupId>
-                <artifactId>jersey-spring</artifactId>
-                <version>${jersey-spring.version}</version>
+                <groupId>org.glassfish.jersey.ext</groupId>
+                <artifactId>jersey-spring3</artifactId>
+                <version>${jersey.version}</version>
 
                 <exclusions>
-                    <exclusion>
-                        <groupId>com.sun.jersey</groupId>
-                        <artifactId>jersey-servlet</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.springframework</groupId>
-                        <artifactId>spring-core</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.springframework</groupId>
-                        <artifactId>spring-beans</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.springframework</groupId>
-                        <artifactId>spring-context</artifactId>
-                    </exclusion>
+<!--                     <exclusion> -->
+<!--                         <groupId>org.glassfish.hk2.external</groupId> -->
+<!--                         <artifactId>bean-validator</artifactId> -->
+<!--                     </exclusion> -->
+<!--                     <exclusion> -->
+<!--                         <groupId>org.glassfish.hk2.external</groupId> -->
+<!--                         <artifactId>javax.inject</artifactId> -->
+<!--                     </exclusion> -->
 
                     <exclusion>
-                        <groupId>org.springframework</groupId>
-                        <artifactId>spring-web</artifactId>
+                        <groupId>javax.validation</groupId>
+                        <artifactId>validation-api</artifactId>
                     </exclusion>
                     <exclusion>
-                        <groupId>org.springframework</groupId>
-                        <artifactId>spring-aop</artifactId>
+                        <groupId>aopalliance</groupId>
+                        <artifactId>aopalliance</artifactId>
                     </exclusion>
+                    <exclusion>
+                        <groupId>javax.inject</groupId>
+                        <artifactId>javax.inject</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.glassfish.hk2.external</groupId>
+                        <artifactId>aopalliance-repackaged</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.jvnet</groupId>
+                        <artifactId>tiger-types</artifactId>
+                    </exclusion>
+
                 </exclusions>
             </dependency>
+
+<!--             <dependency> -->
+<!--                 <groupId>com.sun.jersey</groupId> -->
+<!--                 <artifactId>jersey-servlet</artifactId> -->
+<!--                 <version>${jersey-spring.version}</version> -->
+
+<!--                 <exclusions> -->
+<!--                     <exclusion> -->
+<!--                         <groupId>org.springframework</groupId> -->
+<!--                         <artifactId>spring-aop</artifactId> -->
+<!--                     </exclusion> -->
+<!--                 </exclusions> -->
+<!--             </dependency> -->
+
+
+<!--             <dependency> -->
+<!--                 <groupId>com.sun.jersey.contribs</groupId> -->
+<!--                 <artifactId>jersey-spring</artifactId> -->
+<!--                 <version>${jersey-spring.version}</version> -->
+
+<!--                 <exclusions> -->
+<!--                     <exclusion> -->
+<!--                         <groupId>com.sun.jersey</groupId> -->
+<!--                         <artifactId>jersey-servlet</artifactId> -->
+<!--                     </exclusion> -->
+<!--                     <exclusion> -->
+<!--                         <groupId>org.springframework</groupId> -->
+<!--                         <artifactId>spring-core</artifactId> -->
+<!--                     </exclusion> -->
+<!--                     <exclusion> -->
+<!--                         <groupId>org.springframework</groupId> -->
+<!--                         <artifactId>spring-beans</artifactId> -->
+<!--                     </exclusion> -->
+<!--                     <exclusion> -->
+<!--                         <groupId>org.springframework</groupId> -->
+<!--                         <artifactId>spring-context</artifactId> -->
+<!--                     </exclusion> -->
+
+<!--                     <exclusion> -->
+<!--                         <groupId>org.springframework</groupId> -->
+<!--                         <artifactId>spring-web</artifactId> -->
+<!--                     </exclusion> -->
+<!--                     <exclusion> -->
+<!--                         <groupId>org.springframework</groupId> -->
+<!--                         <artifactId>spring-aop</artifactId> -->
+<!--                     </exclusion> -->
+<!--                 </exclusions> -->
+<!--             </dependency> -->
 
 
             <!-- Atmosphere framework -->
-            <dependency>
-                <groupId>org.atmosphere</groupId>
-                <artifactId>atmosphere-runtime</artifactId>
-                <version>${atmosphere.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.atmosphere</groupId>
-                <artifactId>atmosphere-jersey</artifactId>
-                <version>${atmosphere.version}</version>
-            </dependency>
+<!--             <dependency> -->
+<!--                 <groupId>org.atmosphere</groupId> -->
+<!--                 <artifactId>atmosphere-runtime</artifactId> -->
+<!--                 <version>${atmosphere.version}</version> -->
+<!--             </dependency> -->
+<!--             <dependency> -->
+<!--                 <groupId>org.atmosphere</groupId> -->
+<!--                 <artifactId>atmosphere-jersey</artifactId> -->
+<!--                 <version>${atmosphere.version}</version> -->
+<!--             </dependency> -->
 
-            <dependency>
-                <groupId>org.atmosphere</groupId>
-                <artifactId>atmosphere-spring</artifactId>
-                <version>${atmosphere-spring.version}</version>
+<!--             <dependency> -->
+<!--                 <groupId>org.atmosphere</groupId> -->
+<!--                 <artifactId>atmosphere-spring</artifactId> -->
+<!--                 <version>${atmosphere-spring.version}</version> -->
 
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.atmosphere</groupId>
-                        <artifactId>atmosphere-runtime</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.springframework</groupId>
-                        <artifactId>spring-webmvc</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
+<!--                 <exclusions> -->
+<!--                     <exclusion> -->
+<!--                         <groupId>org.atmosphere</groupId> -->
+<!--                         <artifactId>atmosphere-runtime</artifactId> -->
+<!--                     </exclusion> -->
+<!--                     <exclusion> -->
+<!--                         <groupId>org.springframework</groupId> -->
+<!--                         <artifactId>spring-webmvc</artifactId> -->
+<!--                     </exclusion> -->
+<!--                 </exclusions> -->
+<!--             </dependency> -->
 
             <!-- For somet reason atmosphere is not finding this class -->
             <dependency>
@@ -652,6 +730,10 @@
                 <artifactId>spring-webmvc</artifactId>
                 <version>${spring.version}</version>
                 <exclusions>
+                    <exclusion>
+                        <groupId>aopalliance</groupId>
+                        <artifactId>aopalliance</artifactId>
+                    </exclusion>
                     <exclusion>
                         <groupId>commons-logging</groupId>
                         <artifactId>commons-logging</artifactId>

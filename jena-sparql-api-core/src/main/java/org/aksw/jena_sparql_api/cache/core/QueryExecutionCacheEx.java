@@ -30,10 +30,10 @@ public class QueryExecutionCacheEx
     private String service;
     private String queryString;
 
-    
+
     // The cache resource - created upon execution of a query
     private CacheResource currentResource = null;
-    
+
     public QueryExecutionCacheEx(QueryExecution decoratee, String service, String queryString, CacheFrontend cache) {
         super(decoratee);
 
@@ -44,7 +44,7 @@ public class QueryExecutionCacheEx
 
     /**
      * Helper function that closes outdated resources
-     * 
+     *
      * @param resource
      * @return
      */
@@ -61,7 +61,7 @@ public class QueryExecutionCacheEx
         else {
             result = false;
         }
-        
+
         return result;
     }
 
@@ -89,6 +89,12 @@ public class QueryExecutionCacheEx
                     throw new RuntimeException(e);
                 }*/
 
+                try {
+                    getDecoratee().abort();
+                } catch(Exception x) {
+                    logger.warn("Error", x);
+                }
+
                 throw new RuntimeException(e);
             }
 
@@ -104,7 +110,7 @@ public class QueryExecutionCacheEx
         }
 
         currentResource = resource;
-        
+
         return resource.asResultSet();
     }
 
@@ -120,7 +126,7 @@ public class QueryExecutionCacheEx
         CacheResource resource = cache.lookup(service, queryString);
 
         if(needsCaching(resource)) {
-            
+
             Model model;
             try {
                 model = modelProvider.getModel(); //getDecoratee().execConstruct();
@@ -152,7 +158,7 @@ public class QueryExecutionCacheEx
 
         return resource.asModel(result);
     }
-    
+
     public synchronized boolean doCacheBoolean()
     {
         /*
@@ -164,7 +170,7 @@ public class QueryExecutionCacheEx
 
         boolean ret;
         if(needsCaching(resource)) {
-            
+
             try {
                 ret = getDecoratee().execAsk();
             } catch(Exception e) {
@@ -184,8 +190,8 @@ public class QueryExecutionCacheEx
 
             logger.trace("Cache write [" + service + "]: " + queryString);
             cache.write(service, queryString, ret);
-            
-            
+
+
             resource = cache.lookup(service, queryString);
             if(resource == null) {
                 throw new RuntimeException("Cache error: Lookup of just written data failed");
@@ -238,14 +244,14 @@ public class QueryExecutionCacheEx
      public boolean execAsk() {
          return doCacheBoolean();
      }
-     
-     
+
+
      @Override
      public void close() {
          if(currentResource != null) {
              currentResource.close();
          }
-         
+
 //         if(currentCloseAction != null) {
 //             currentCloseAction.close();
 //         }

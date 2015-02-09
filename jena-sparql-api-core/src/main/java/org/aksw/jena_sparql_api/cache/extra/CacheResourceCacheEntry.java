@@ -73,9 +73,9 @@ public class CacheResourceCacheEntry
                 } catch (IOException e) {
                     logger.error("Error", e);
                 }
-            }    
+            }
         };
-        
+
         ResultSetClosable result = new ResultSetClosable(resultSet, closable);
         return result;
     }
@@ -111,8 +111,8 @@ public class CacheResourceCacheEntry
         in = tmp;
         */
 
-	    result.read(in, null, "N-TRIPLES");
-	    close();
+        result.read(in, null, "N-TRIPLES");
+        close();
 //        try {
 //            in.close();
 //        } catch (Exception e) {
@@ -120,10 +120,10 @@ public class CacheResourceCacheEntry
 //        }
         //cacheEntry.getInputStream().close();
         //close();
-        
+
         return result;
     }
-    
+
     @Override
     public boolean asBoolean() {
         try {

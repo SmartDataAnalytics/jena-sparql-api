@@ -29,6 +29,9 @@ public class QueryExecutionCacheFrontend
     private String service;
     private String queryString;
 
+
+    private CacheResource resource;
+
     public QueryExecutionCacheFrontend(QueryExecution decoratee, String service, String queryString, CacheFrontend cacheFrontend) {
         super(decoratee);
 
@@ -37,13 +40,32 @@ public class QueryExecutionCacheFrontend
         this.cacheFrontend = cacheFrontend;
     }
 
+    private void setResource(CacheResource resource) {
+        if(this.resource != null) {
+            this.resource.close();
+
+            if(resource != null) {
+                resource.close();
+            }
+            //throw new RuntimeException("Attempted to set a resource while another one was in use");
+        }
+
+        this.resource = resource;
+    }
 
     public synchronized ResultSet doCacheResultSet()
     {
-        CacheResource resource = cacheFrontend.lookup(service, queryString);
+        synchronized(this) {
+            resource = cacheFrontend.lookup(service, queryString);
+            setResource(resource);
+        }
 
         ResultSet rs;
         if(resource == null || resource.isOutdated()) {
+
+            if(resource != null) {
+                resource.close();
+            }
 
             try {
                 rs = getDecoratee().execSelect();
@@ -66,8 +88,15 @@ public class QueryExecutionCacheFrontend
             }
 
             logger.trace("Cache write [" + service + "]: " + queryString);
+
+            // TODO We need to get a promise for the write action so we can cancel it
             cacheFrontend.write(service, queryString, rs);
-            resource = cacheFrontend.lookup(service, queryString);
+
+            synchronized(this) {
+                resource = cacheFrontend.lookup(service, queryString);
+                setResource(resource);
+            }
+
             if(resource == null) {
                 throw new RuntimeException("Cache error: Lookup of just written data failed");
             }
@@ -88,7 +117,10 @@ public class QueryExecutionCacheFrontend
     }
 
     public synchronized Model _doCacheModel(Model result, ModelProvider modelProvider) throws IOException {
-        CacheResource resource = cacheFrontend.lookup(service, queryString);
+        synchronized(this) {
+            resource = cacheFrontend.lookup(service, queryString);
+            setResource(resource);
+        }
 
         if(resource == null || resource.isOutdated()) {
 
@@ -113,7 +145,10 @@ public class QueryExecutionCacheFrontend
 
             logger.trace("Cache write [" + service + "]: " + queryString);
             cacheFrontend.write(service, queryString, model);
-            resource = cacheFrontend.lookup(service, queryString);
+            synchronized(this) {
+                resource = cacheFrontend.lookup(service, queryString);
+                setResource(resource);
+            }
             if(resource == null) {
                 throw new RuntimeException("Cache error: Lookup of just written data failed");
             }
@@ -123,10 +158,13 @@ public class QueryExecutionCacheFrontend
 
         return resource.asModel(result);
     }
-    
+
     public synchronized boolean doCacheBoolean()
     {
-        CacheResource resource = cacheFrontend.lookup(service, queryString);
+        synchronized(this) {
+            resource = cacheFrontend.lookup(service, queryString);
+            setResource(resource);
+        }
 
         boolean ret;
         if(resource == null || resource.isOutdated()) {
@@ -150,7 +188,10 @@ public class QueryExecutionCacheFrontend
 
             logger.trace("Cache write [" + service + "]: " + queryString);
             cacheFrontend.write(service, queryString, ret);
-            resource = cacheFrontend.lookup(service, queryString);
+            synchronized(this) {
+                resource = cacheFrontend.lookup(service, queryString);
+                setResource(resource);
+            }
             if(resource == null) {
                 throw new RuntimeException("Cache error: Lookup of just written data failed");
             }
@@ -202,5 +243,17 @@ public class QueryExecutionCacheFrontend
      public boolean execAsk() {
          return doCacheBoolean();
      }
+
+     @Override
+     public void abort() {
+         if(resource != null) {
+             resource.close();
+         }
+
+         // TODO We also need to close writes!
+
+         super.abort();
+     }
+
 }
 
