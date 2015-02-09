@@ -1,27 +1,29 @@
 package org.aksw.jena_sparql_api.concept_cache;
 
-import java.util.concurrent.TimeUnit;
-
-import org.aksw.commons.util.StreamUtils;
 import org.aksw.jena_sparql_api.compare.QueryExecutionFactoryCompare;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlServiceBuilder;
-import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
-import com.google.common.base.Stopwatch;
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.query.QueryFactory;
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.query.ResultSetFormatter;
 import com.hp.hpl.jena.shared.PrefixMapping;
 import com.hp.hpl.jena.shared.impl.PrefixMappingImpl;
-import com.hp.hpl.jena.sparql.algebra.TransformCopy;
+import com.hp.hpl.jena.sparql.modify.request.UpdateModify;
+import com.hp.hpl.jena.update.UpdateFactory;
+import com.hp.hpl.jena.update.UpdateRequest;
 
 
 public class TestCases {
     public static void main(String[] args) throws Exception {
+
+        UpdateRequest x = UpdateFactory.create("Insert { ?s ?p ?o } Where { ?s ?p ?o }");
+        UpdateModify y = (UpdateModify)(x.getOperations().get(0));
+
+        Object o= y.toString();
+        System.out.println(o);
+
+        if(true) {
+            System.exit(0);
+        }
 
         /*
         ApacheLogDirectory dir = new ApacheLogDirectory(new File("/home/raven/Desktop/Datasets/DBpedia"), Pattern.compile("access.log.*"));
@@ -65,9 +67,9 @@ public class TestCases {
 
         QueryRunner runner = new QueryRunner(sparqlService, prefixMapping);
 
-        for(int i = 0; i < 100; ++i) {
+        //for(int i = 0; i < 100; ++i) {
             multiOverlap(runner);
-        }
+        //}
     }
 
     public static void multiOverlap(QueryRunner qr) {
