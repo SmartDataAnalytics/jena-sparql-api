@@ -5,8 +5,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.aksw.commons.collections.diff.Diff;
 import org.aksw.commons.collections.diff.ListDiff;
-import org.aksw.commons.collections.diff.ModelDiff;
 import org.aksw.commons.util.strings.StringUtils;
+import org.aksw.jena_sparql_api.utils.ModelDiff;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -224,13 +224,13 @@ public class QueryExecutionCompare
             //System.out.println("ResultSet [A]");
             //ResultSetFormatter.out(System.out, x);
             x.reset();
-            
+
             ResultSet s = b.execSelect();
             y = ResultSetFactory.makeRewindable(s);
             //System.out.println("ResultSet [B]");
             //ResultSetFormatter.out(System.out, y);
             y.reset();
-            
+
         } catch(RuntimeException e) {
             // Set diff in order to indicate that the execution was performed
             resultSetDiff = new ListDiff<QuerySolution>();
@@ -455,33 +455,33 @@ public class QueryExecutionCompare
         b.setTimeout(timeout1, timeout2);
     }
 
-	@Override
-	public Iterator<Triple> execConstructTriples() {
-		throw new RuntimeException("Not implemented yet");
-	}
+    @Override
+    public Iterator<Triple> execConstructTriples() {
+        throw new RuntimeException("Not implemented yet");
+    }
 
-	@Override
-	public Iterator<Triple> execDescribeTriples() {
-		throw new RuntimeException("Not implemented yet");
-	}
+    @Override
+    public Iterator<Triple> execDescribeTriples() {
+        throw new RuntimeException("Not implemented yet");
+    }
 
-	@Override
-	public long getTimeout1() {
-		return a.getTimeout1();
-	}
+    @Override
+    public long getTimeout1() {
+        return a.getTimeout1();
+    }
 
-	@Override
-	public long getTimeout2() {
-		return a.getTimeout2();
-	}
+    @Override
+    public long getTimeout2() {
+        return a.getTimeout2();
+    }
 
-	/* (non-Javadoc)
-	 * @see com.hp.hpl.jena.query.QueryExecution#isClosed()
-	 */
-	@Override
-	public boolean isClosed() {
-		return a.isClosed() && b.isClosed();
-	}
+    /* (non-Javadoc)
+     * @see com.hp.hpl.jena.query.QueryExecution#isClosed()
+     */
+    @Override
+    public boolean isClosed() {
+        return a.isClosed() && b.isClosed();
+    }
 
     /*
     @Override
