@@ -4,17 +4,9 @@ import javax.ws.rs.container.AsyncResponse;
 
 public class ThreadUtils {
 
-    public static void start(final AsyncResponse asyncResponse, final Runnable runnable) {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    runnable.run();
-                } catch(Exception e) {
-                    asyncResponse.cancel();
-                    throw new RuntimeException(e);
-                }
-            }
-        }).start();
+    public static void start(AsyncResponse asyncResponse, Runnable runnable) {
+        Runnable safeRunnable = new RunnableAsyncResponseSafe(asyncResponse, runnable);
+
+        new Thread(safeRunnable).start();
     }
 }

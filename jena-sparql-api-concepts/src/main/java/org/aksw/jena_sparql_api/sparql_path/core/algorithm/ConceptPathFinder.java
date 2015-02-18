@@ -364,14 +364,15 @@ public class ConceptPathFinder {
                 tmp.addAll(sourceConcept.getElements());
             }
 
-            if(!targetConcept.isSubjectConcept()) {
+            // TODO Should we treat the case where the target concept is a subject concept in a special way?
+            //if(!targetConcept.isSubjectConcept()) {
                 tmp.addAll(targetConcept.getElements());
-            }
+            //}
 
             tmp.addAll(pathElements);
 
             if(pathElements.isEmpty()) {
-                if(!sourceConcept.getVar().equals(targetConcept.getVar())) {
+                if(!sourceConcept.getVar().equals(targetConcept.getVar()) && !sourceConcept.isSubjectConcept()) {
                     tmp.add(new ElementFilter(new E_Equals(new ExprVar(sourceConcept.getVar()), new ExprVar(targetConcept.getVar()))));
                 }
             }
