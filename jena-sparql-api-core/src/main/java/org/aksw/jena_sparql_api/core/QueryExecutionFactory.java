@@ -12,6 +12,8 @@ public interface QueryExecutionFactory
 {
     String getId();
     String getState();
-    
+
     <T> T unwrap(Class<T> clazz);
+
+    void close();
 }

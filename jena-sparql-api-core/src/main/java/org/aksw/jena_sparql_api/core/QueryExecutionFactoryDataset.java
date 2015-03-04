@@ -38,4 +38,9 @@ public class QueryExecutionFactoryDataset
         QueryExecution result = QueryExecutionFactory.create(query, dataset);
         return result;
     }
+
+    @Override
+    public void close() {
+        dataset.close();
+    }
 }

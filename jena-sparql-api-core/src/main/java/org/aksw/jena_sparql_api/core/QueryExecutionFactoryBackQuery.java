@@ -17,15 +17,20 @@ public abstract class QueryExecutionFactoryBackQuery
 {
     @Override
     public QueryExecution createQueryExecution(String queryString) {
-    	Query query = QueryFactory.create(queryString, Syntax.syntaxARQ);
-    	QueryExecution result = createQueryExecution(query);
-    	return result;
+        Query query = QueryFactory.create(queryString, Syntax.syntaxARQ);
+        QueryExecution result = createQueryExecution(query);
+        return result;
     }
-    
+
     @SuppressWarnings("unchecked")
-	@Override
+    @Override
     public <T> T unwrap(Class<T> clazz) {
-    	T result = getClass().isAssignableFrom(clazz) ? (T)this : null;
-    	return result;
+        T result = getClass().isAssignableFrom(clazz) ? (T)this : null;
+        return result;
+    }
+
+    @Override
+    public void close() {
+        // Noop by default
     }
 }

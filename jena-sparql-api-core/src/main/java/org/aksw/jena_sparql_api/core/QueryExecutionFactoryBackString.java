@@ -16,11 +16,16 @@ public abstract class QueryExecutionFactoryBackString
     public QueryExecution createQueryExecution(Query query) {
         return createQueryExecution(query.toString());
     }
-    
+
     @SuppressWarnings("unchecked")
-	@Override
+    @Override
     public <T> T unwrap(Class<T> clazz) {
-    	T result = getClass().isAssignableFrom(clazz) ? (T)this : null;
-    	return result;
+        T result = getClass().isAssignableFrom(clazz) ? (T)this : null;
+        return result;
+    }
+
+    @Override
+    public void close() {
+        // Noop by default
     }
 }

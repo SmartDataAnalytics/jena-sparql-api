@@ -38,18 +38,23 @@ public class QueryExecutionFactoryDecorator
         return decoratee.createQueryExecution(queryString);
     }
 
-	@SuppressWarnings("unchecked")
-	@Override
-	public <T> T unwrap(Class<T> clazz) {
-		T result;
-		if(getClass().isAssignableFrom(clazz)) {
-			result = (T)this;
-		}
-		else {
-			result = decoratee.unwrap(clazz);
-		}
- 
-		return result;
-	}
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T> T unwrap(Class<T> clazz) {
+        T result;
+        if(getClass().isAssignableFrom(clazz)) {
+            result = (T)this;
+        }
+        else {
+            result = decoratee.unwrap(clazz);
+        }
+
+        return result;
+    }
+
+    @Override
+    public void close() {
+        decoratee.close();
+    }
 }
 
