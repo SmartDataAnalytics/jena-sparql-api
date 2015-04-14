@@ -17,39 +17,39 @@ import com.hp.hpl.jena.sparql.syntax.ElementTriplesBlock;
 import com.hp.hpl.jena.sparql.syntax.PatternVars;
 
 public class QueryGenerationUtils {
-    
-    
-	/**
-	 * Takes a concept and adds
-	 * 
-	 * @return
-	 */
-	public static Concept createPropertyQuery(Concept concept) {
-		Collection<Var> vars = PatternVars.vars(concept.getElement());
-		List<String> varNames = VarUtils.getVarNames(vars);
-		
-		Var s = concept.getVar();
-		
-		Generator gen = GeneratorBlacklist.create("v", varNames);
-		Var p = Var.alloc(gen.next());
-		Var o = Var.alloc(gen.next());
-		
-		
-		Triple triple = new Triple(s, p, o);
-		
-		BasicPattern bp = new BasicPattern();
-		bp.add(triple);
-		
-		List<Element> elements;
-		if(concept.isSubjectConcept()) {
-		    elements = new ArrayList<Element>();
-		} else {
-		    elements = concept.getElements();		    
-		}
-		elements.add(new ElementTriplesBlock(bp));
-		
-		Concept result = new Concept(elements, p);
-		
-		return result;
-	}
+
+
+    /**
+     * Takes a concept and adds
+     *
+     * @return
+     */
+    public static Concept createPropertyQuery(Concept concept) {
+        Collection<Var> vars = PatternVars.vars(concept.getElement());
+        List<String> varNames = VarUtils.getVarNames(vars);
+
+        Var s = concept.getVar();
+
+        Generator gen = GeneratorBlacklist.create("v", varNames);
+        Var p = Var.alloc(gen.next());
+        Var o = Var.alloc(gen.next());
+
+
+        Triple triple = new Triple(s, p, o);
+
+        BasicPattern bp = new BasicPattern();
+        bp.add(triple);
+
+        List<Element> elements;
+        if(concept.isSubjectConcept()) {
+            elements = new ArrayList<Element>();
+        } else {
+            elements = concept.getElements();
+        }
+        elements.add(new ElementTriplesBlock(bp));
+
+        Concept result = new Concept(elements, p);
+
+        return result;
+    }
 }
