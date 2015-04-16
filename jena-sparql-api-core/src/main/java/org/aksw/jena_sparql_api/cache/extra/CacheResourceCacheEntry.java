@@ -4,9 +4,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
 
-import org.aksw.commons.collections.IClosable;
 import org.aksw.commons.util.StreamUtils;
-import org.aksw.jena_sparql_api.core.ResultSetClosable;
+import org.aksw.jena_sparql_api.core.ResultSetCloseable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,19 +63,7 @@ public class CacheResourceCacheEntry
     {
         final InputStream in = cacheEntry.getInputStream();
         ResultSet resultSet = ResultSetFactory.fromXML(in);
-        //IClosable closable = new ClosableCacheSql(this, in);
-        IClosable closable = new IClosable() {
-            @Override
-            public void close() {
-                try {
-                    in.close();
-                } catch (IOException e) {
-                    logger.error("Error", e);
-                }
-            }
-        };
-
-        ResultSetClosable result = new ResultSetClosable(resultSet, closable);
+        ResultSetCloseable result = new ResultSetCloseable(resultSet, in);
         return result;
     }
 

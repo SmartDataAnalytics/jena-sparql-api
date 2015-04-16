@@ -10,32 +10,37 @@ import com.hp.hpl.jena.query.ResultSet;
 
 
 class ResultSetLimited
-	extends ResultSetClose
+    extends ResultSetClose
 {
-	private long limit;
+    private long limit;
 
-	private int offset;
-	
-	public ResultSetLimited(ResultSet decoratee, long limit) {
-		super(decoratee, decoratee.hasNext());
-		offset = decoratee.getRowNumber();
-		
-		this.limit = limit;
-	}
+    private int offset;
 
-	@Override
-	protected boolean checkClose() {
+    public ResultSetLimited(ResultSet decoratee, long limit) {
+        super(decoratee, decoratee.hasNext());
+        offset = decoratee.getRowNumber();
 
-		long rowNumber = decoratee.getRowNumber(); 
-		long pos = rowNumber - offset;
-		
-		if(pos >= limit) {
-			close();
-		}
-		
-		boolean result = super.checkClose();
-		return result;
-	}
+        this.limit = limit;
+    }
+
+    @Override
+    protected boolean checkClose() {
+
+        long rowNumber = decoratee.getRowNumber();
+        long pos = rowNumber - offset;
+
+        if(pos >= limit) {
+            try {
+                close();
+            } catch(Exception e) {
+                // TODO Throwing an exception here might be unsafe
+                throw new RuntimeException(e);
+            }
+        }
+
+        boolean result = super.checkClose();
+        return result;
+    }
 }
 
 
@@ -43,107 +48,107 @@ class ResultSetLimited
 class QueryExecutionPagiboost
 //	extends QueryExecutionBaseSelect
 {
-	private QueryExecutionFactory qef;
-	
-	
-	/*
-	private long offset;
-	private long limit;
-	*/
-	
-	private long start;
-	private long length;
+    private QueryExecutionFactory qef;
 
-	
-	public QueryExecutionPagiboost(QueryExecutionFactory qe) {
-		
-	}
 
-	//@Override
-	protected QueryExecution executeCoreSelectX(Query query) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
+    /*
+    private long offset;
+    private long limit;
+    */
+
+    private long start;
+    private long length;
+
+
+    public QueryExecutionPagiboost(QueryExecutionFactory qe) {
+
+    }
+
+    //@Override
+    protected QueryExecution executeCoreSelectX(Query query) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
 }
 
 
 
 /**
  * Expand the page size of any incoming query.
- * 
- * 
- * 
- * 
+ *
+ *
+ *
+ *
  * @author raven
  *
  */
 public class QueryExecutionFactoryPagiboost
-	extends QueryExecutionFactoryBackQuery
+    extends QueryExecutionFactoryBackQuery
 {
-	/**
-	 * If an underlying QueryExecutionPaginate is used, the
-	 * pageExpandSize should match up. 
-	 * 
-	 * 
-	 */
-	private QueryExecutionFactory qef;
-	private long pageExpandSize;
+    /**
+     * If an underlying QueryExecutionPaginate is used, the
+     * pageExpandSize should match up.
+     *
+     *
+     */
+    private QueryExecutionFactory qef;
+    private long pageExpandSize;
 
-	@Override
-	public String getId() {
-		return qef.getId();
-	}
+    @Override
+    public String getId() {
+        return qef.getId();
+    }
 
-	@Override
-	public String getState() {
-		return qef.getState();
-	}
+    @Override
+    public String getState() {
+        return qef.getState();
+    }
 
-	
-	public QueryExecutionFactoryPagiboost(QueryExecutionFactory qef, long pageExpandSize) {
-		this.qef = qef;
-		this.pageExpandSize = pageExpandSize;
-	}
-	
 
-	@Override
-	public QueryExecution createQueryExecution(Query query) {
-		Query q = query.cloneQuery();
+    public QueryExecutionFactoryPagiboost(QueryExecutionFactory qef, long pageExpandSize) {
+        this.qef = qef;
+        this.pageExpandSize = pageExpandSize;
+    }
 
-		long offset = q.getOffset() == Query.NOLIMIT ? 0 : q.getOffset();
-		long limit = q.getLimit();
-		
-		long o = (offset / pageExpandSize) * pageExpandSize;
 
-		long l;
-		if(limit != Query.NOLIMIT) {
-			long target = offset + limit;
-	
-			long t = ((target / pageExpandSize) + 1) * pageExpandSize;
-			l = t - o;
-			
-		} else {
-			l = Query.NOLIMIT;
-		}
+    @Override
+    public QueryExecution createQueryExecution(Query query) {
+        Query q = query.cloneQuery();
 
-		long start = o - offset;		
-		
-		// Align offset and target to pageExpandSize boundaries
-		
-		q.setOffset(o);
-		q.setLimit(l);
-		
-		QueryExecution qe = qef.createQueryExecution(q);
-		
-		//QueryExecutionRange result = new QueryExecutionRange(qe, start, l);
-		QueryExecution result = null;
-		
+        long offset = q.getOffset() == Query.NOLIMIT ? 0 : q.getOffset();
+        long limit = q.getLimit();
 
-		return result;
-	}
-	
-	
+        long o = (offset / pageExpandSize) * pageExpandSize;
 
-	
+        long l;
+        if(limit != Query.NOLIMIT) {
+            long target = offset + limit;
+
+            long t = ((target / pageExpandSize) + 1) * pageExpandSize;
+            l = t - o;
+
+        } else {
+            l = Query.NOLIMIT;
+        }
+
+        long start = o - offset;
+
+        // Align offset and target to pageExpandSize boundaries
+
+        q.setOffset(o);
+        q.setLimit(l);
+
+        QueryExecution qe = qef.createQueryExecution(q);
+
+        //QueryExecutionRange result = new QueryExecutionRange(qe, start, l);
+        QueryExecution result = null;
+
+
+        return result;
+    }
+
+
+
+
 }

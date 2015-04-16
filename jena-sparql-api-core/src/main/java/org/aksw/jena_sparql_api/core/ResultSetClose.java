@@ -1,6 +1,8 @@
 package org.aksw.jena_sparql_api.core;
 
-import org.apache.jena.atlas.lib.Closeable;
+import java.io.Closeable;
+import java.io.IOException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -111,7 +113,11 @@ public class ResultSetClose
             return result;
         } catch(Exception e) {
             if(closeOnException) {
-                close();
+                try {
+                    close();
+                } catch(Exception f) {
+                    throw new RuntimeException(f);
+                }
             }
             throw new RuntimeException(e);
         }
@@ -125,21 +131,25 @@ public class ResultSetClose
             return result;
         } catch(Exception e) {
             if(closeOnException) {
-                close();
+                try {
+                    close();
+                } catch(Exception f) {
+                    throw new RuntimeException(f);
+                }
             }
             throw new RuntimeException(e);
         }
     }
 
     @Override
-    public void close() {
-    	if(!isClosed) {
-	    	if(decoratee instanceof Closeable) {
-	    		Closeable closeable = (Closeable)decoratee;
-	    		closeable.close();
-	    		isClosed = true;
-	    	}
-    	}
+    public void close() throws IOException {
+        if(!isClosed) {
+            if(decoratee instanceof Closeable) {
+                Closeable closeable = (Closeable)decoratee;
+                closeable.close();
+                isClosed = true;
+            }
+        }
     }
 }
 

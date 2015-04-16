@@ -31,14 +31,14 @@ public class Describer
     //private QueryExe
     // TODO Keep track of the involved resources so we can close them properly
 
-    private ResultSetClosable rs;
+    private ResultSetCloseable rs;
     private Binding currentBinding = null;
     private Iterator<Var> currentVar = null;
     private QueryExecutionFactory qef;
 
     private QueryExecution currentQe = null;
 
-    public Describer(Iterator<Node> openNodes, ResultSetClosable rs, Collection<Var> resultVars, QueryExecutionFactory qef)
+    public Describer(Iterator<Node> openNodes, ResultSetCloseable rs, Collection<Var> resultVars, QueryExecutionFactory qef)
     {
         this.openNodes = openNodes;
         this.resultVars = resultVars;
@@ -46,7 +46,7 @@ public class Describer
         this.qef = qef;
     }
 
-    public static Describer create(List<Node> resultUris, List<String> resultVars, ResultSetClosable rs, QueryExecutionFactory qef) {
+    public static Describer create(List<Node> resultUris, List<String> resultVars, ResultSetCloseable rs, QueryExecutionFactory qef) {
 
         Set<Var> vars = null;
         if(rs != null) {
@@ -119,7 +119,7 @@ public class Describer
         }
 
         if(batch.isEmpty()) {
-        	currentQe = null;
+            currentQe = null;
             return null;
         }
 
@@ -135,14 +135,21 @@ public class Describer
         Iterator<Triple> result = currentQe.execConstructTriples();
         return result;
     }
-    
+
     @Override
     public void close() {
-    	if(rs != null) {
-    		rs.close();
-    	}
-    	if(currentQe != null) {
-    		currentQe.close();
-    	}
+        try {
+            if(rs != null) {
+                try {
+                    rs.close();
+                } catch(Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        } finally {
+            if(currentQe != null) {
+                currentQe.close();
+            }
+        }
     }
 }

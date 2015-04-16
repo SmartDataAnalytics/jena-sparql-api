@@ -7,42 +7,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.aksw.commons.collections.IClosable;
 import org.aksw.commons.util.strings.StringUtils;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.core.ResultSetClosable;
+import org.aksw.jena_sparql_api.core.ResultSetCloseable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.query.ResultSetFactory;
 import com.hp.hpl.jena.query.ResultSetFormatter;
 
-
-class ClosableInputStream
-    implements IClosable
-{
-    private InputStream stream;
-
-    public ClosableInputStream(InputStream stream) {
-        this.stream = stream;
-    }
-
-    public InputStream getStream() {
-        return stream;
-    }
-
-    @Override
-    public void close() {
-        if(stream != null) {
-            try {
-                stream.close();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
-}
 
 /**
  * @author Claus Stadler
@@ -70,8 +43,8 @@ public class CacheFile
             //cacheResultSetXml(rs, file);
         }
         InputStream in = new FileInputStream(file);
-        IClosable closable = new ClosableInputStream(in);
-        return new ResultSetClosable(ResultSetFactory.fromXML(in), closable);
+        ResultSetCloseable result = ResultSetCloseable.fromXml(in);
+        return result;
     }
 
     private File getCacheFile(String id, String state, String queryString) {
@@ -268,7 +241,7 @@ public class CacheFile
   }
 
   /*
-	def cacheLookup[T](file : File, resultType : Class[T]) : Option[T] = {
+    def cacheLookup[T](file : File, resultType : Class[T]) : Option[T] = {
     if(file.exists) {
       try {
         println("Cache hit for: " + file);

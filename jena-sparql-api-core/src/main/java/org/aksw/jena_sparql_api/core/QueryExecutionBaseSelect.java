@@ -2,8 +2,8 @@ package org.aksw.jena_sparql_api.core;
 
 import java.util.Iterator;
 
-import org.aksw.commons.collections.IClosable;
 import org.aksw.commons.collections.SinglePrefetchIterator;
+import org.aksw.jena_sparql_api.utils.CloseableQueryExecution;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,23 +22,23 @@ import com.hp.hpl.jena.update.UpdateRequest;
 
 
 class IteratorWrapperClose<T>
-	extends SinglePrefetchIterator<T>
+    extends SinglePrefetchIterator<T>
 {
-	private Iterator<T> it;
-	
-	public IteratorWrapperClose(Iterator<T> it) {
-		this.it = it;
-	}
+    private Iterator<T> it;
 
-	@Override
-	protected T prefetch() throws Exception {
-		if(!it.hasNext()) {
-			return finish();
-		} else {
-			T result = it.next();
-			return result;
-		}
-	}
+    public IteratorWrapperClose(Iterator<T> it) {
+        this.it = it;
+    }
+
+    @Override
+    protected T prefetch() throws Exception {
+        if(!it.hasNext()) {
+            return finish();
+        } else {
+            T result = it.next();
+            return result;
+        }
+    }
 }
 
 class TestQueryExecutionBaseSelect
@@ -70,10 +70,10 @@ class TestQueryExecutionBaseSelect
 /**
  * A Sparqler-class that implements ask, describe, and construct
  * based on the executeCoreSelect(Query) method.
- * 
+ *
  * Also, works on String and Query level.
- * 
- * Some of the code has been taken from 
+ *
+ * Some of the code has been taken from
  * com.hp.hpl.jena.sparql.engine.QueryExecutionBase, which is a
  * class with a similar purpose but not as reusable as this one
  * (This class reduces all operations to a single executeCoreSelect call)
@@ -87,8 +87,8 @@ public abstract class QueryExecutionBaseSelect
         extends QueryExecutionDecorator
         implements QueryExecution
 {
-	private static final Logger logger = LoggerFactory
-			.getLogger(QueryExecutionBaseSelect.class);
+    private static final Logger logger = LoggerFactory
+            .getLogger(QueryExecutionBaseSelect.class);
 
     private Query query;
 
@@ -128,9 +128,9 @@ public abstract class QueryExecutionBaseSelect
 
     //private QueryExecution running = null;
 
-	abstract protected QueryExecution executeCoreSelectX(Query query);
-	
-    protected ResultSetClosable executeCoreSelect(Query query) {
+    abstract protected QueryExecution executeCoreSelectX(Query query);
+
+    protected ResultSetCloseable executeCoreSelect(Query query) {
         if(this.decoratee != null) {
             throw new RuntimeException("A query is already running");
         }
@@ -145,53 +145,48 @@ public abstract class QueryExecutionBaseSelect
 
         ResultSet tmp = decoratee.execSelect();
         final QueryExecution self = this;
-        ResultSetClosable result = new ResultSetClosable(tmp, new IClosable() {
-            @Override
-            public void close() {
-                self.close();
-            }
-        });
+        ResultSetCloseable result = new ResultSetCloseable(tmp, new CloseableQueryExecution(self));
 
         return result;
 
-        
+
     }
 
 // Note: The super class already closes the decoratee
 //    @Override
 //    public void close() {
-//        decoratee.close();    	
+//        decoratee.close();
 //    }
 
-	@Override
-	public boolean execAsk() {
-		if (!query.isAskType()) {
-			throw new RuntimeException("ASK query expected. Got: ["
-					+ query.toString() + "]");
-		}
+    @Override
+    public boolean execAsk() {
+        if (!query.isAskType()) {
+            throw new RuntimeException("ASK query expected. Got: ["
+                    + query.toString() + "]");
+        }
 
-		Query selectQuery = QueryUtils.elementToQuery(query.getQueryPattern());
-		selectQuery.setLimit(1);
+        Query selectQuery = QueryUtils.elementToQuery(query.getQueryPattern());
+        selectQuery.setLimit(1);
 
-		ResultSet rs = executeCoreSelect(selectQuery);
+        ResultSet rs = executeCoreSelect(selectQuery);
 
-		long rowCount = 0;
-		while(rs.hasNext()) {
+        long rowCount = 0;
+        while(rs.hasNext()) {
             rs.next();
-			++rowCount;
-		}
+            ++rowCount;
+        }
 
-		if (rowCount > 1) {
-			logger.warn("Received " + rowCount + " rows for the query ["
-					+ query.toString() + "]");
-		}
+        if (rowCount > 1) {
+            logger.warn("Received " + rowCount + " rows for the query ["
+                    + query.toString() + "]");
+        }
 
-		return rowCount > 0;
-	}
+        return rowCount > 0;
+    }
 
     @Override
     public Model execDescribe() {
-    	Model model = ModelFactory.createDefaultModel();
+        Model model = ModelFactory.createDefaultModel();
         return execDescribe(model);
     }
 
@@ -225,8 +220,8 @@ public abstract class QueryExecutionBaseSelect
     @Override
     public Iterator<Triple> execDescribeTriples() {
 
-    	
-        ResultSetClosable rs = null;
+
+        ResultSetCloseable rs = null;
         if ( query.getQueryPattern() != null ) {
             Query q = new Query();
             q.setQuerySelectType();
@@ -239,20 +234,20 @@ public abstract class QueryExecutionBaseSelect
             rs = this.executeCoreSelect(q);
         }
 
-    	// Note: We need to close the connection when we are done
+        // Note: We need to close the connection when we are done
 
         Describer tmp = Describer.create(query.getResultURIs(), query.getResultVars(), rs, subFactory);
 
-        
+
         final QueryExecution self = this;
-        
+
         Iterator<Triple> result = new IteratorWrapperClose<Triple>(tmp) {
-        	@Override
-        	public void close() {
-        		self.close();
-        	}
+            @Override
+            public void close() {
+                self.close();
+            }
         };
-        
+
         return result;
     }
 
@@ -273,8 +268,8 @@ public abstract class QueryExecutionBaseSelect
      * @param result
      * @return
      */
-	@Override
-	public Model execDescribe(Model result) {
+    @Override
+    public Model execDescribe(Model result) {
         createModel(result, execDescribeTriples());
         return result;
 
@@ -327,9 +322,9 @@ public abstract class QueryExecutionBaseSelect
         ResultSet rs = executeCoreSelect(selectQuery);
 
 
-		//throw new RuntimeException("Sorry, DESCRIBE is not implemted yet.");
-		*/
-	}
+        //throw new RuntimeException("Sorry, DESCRIBE is not implemted yet.");
+        */
+    }
 
     private Iterator<Triple> executeConstructStreaming(Query query) {
         if (!query.isConstructType()) {
@@ -339,9 +334,9 @@ public abstract class QueryExecutionBaseSelect
 
         //Query selectQuery = QueryUtils.elementToQuery(query.getQueryPattern());
         query.setQueryResultStar(true);
-        ResultSetClosable rs = executeCoreSelect(query);
+        ResultSetCloseable rs = executeCoreSelect(query);
 
-        
+
         // insertPrefixesInto(result) ;
         Template template = query.getConstructTemplate();
 
@@ -354,36 +349,36 @@ public abstract class QueryExecutionBaseSelect
         return result;
     }
 
-	@Override
-	public Model execConstruct(Model result) {
-		return executeConstruct(this.query, result);
-	}
+    @Override
+    public Model execConstruct(Model result) {
+        return executeConstruct(this.query, result);
+    }
 
-	@Override
-	public Model execConstruct() {
-		Model result = ModelFactory.createDefaultModel();
-		execConstruct(result);
-		return result;
-	}
-	
+    @Override
+    public Model execConstruct() {
+        Model result = ModelFactory.createDefaultModel();
+        execConstruct(result);
+        return result;
+    }
+
     @Override
     public Iterator<Triple> execConstructTriples() {
         return executeConstructStreaming(this.query);
     }
 
-	@Override
-	public ResultSet execSelect() {
-		if (!query.isSelectType()) {
-			throw new RuntimeException("SELECT query expected. Got: ["
-					+ query.toString() + "]");
-		}
-		
-		return executeCoreSelect(query);
-	}
-	
-	//@Override
-	public void executeUpdate(UpdateRequest updateRequest)
-	{
-		throw new RuntimeException("Not implemented");
-	}
+    @Override
+    public ResultSet execSelect() {
+        if (!query.isSelectType()) {
+            throw new RuntimeException("SELECT query expected. Got: ["
+                    + query.toString() + "]");
+        }
+
+        return executeCoreSelect(query);
+    }
+
+    //@Override
+    public void executeUpdate(UpdateRequest updateRequest)
+    {
+        throw new RuntimeException("Not implemented");
+    }
 }
