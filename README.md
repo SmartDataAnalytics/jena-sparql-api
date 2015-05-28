@@ -24,13 +24,13 @@ This library offers several [Jena](http://jena.apache.org/)-compatible ways to *
 	<dependency>
 		<groupId>org.aksw.jena-sparql-api</groupId>
 		<artifactId>jena-sparql-api-core</artifactId>
-		<version>2.10.0-22</version>
+		<version>2.12.1-8</version>
 	</dependency>
 	
 	<dependency>
 		<groupId>org.aksw.jena-sparql-api</groupId>
 		<artifactId>jena-sparql-api-server</artifactId>
-		<version>2.10.0-22</version>
+		<version>2.12.1-8</version>
 	</dependency>
 	
 	...
