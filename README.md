@@ -72,8 +72,9 @@ Note: Should the pagination abort, such as because you ran out of memory and nee
 qef = new QueryExecutionFactoryPaginated(qef, 900);
 ```
 Create and run a query on this fully buffed QueryExecutionFactory
-```Java		
-QueryExecution qe = qef.createQueryExecution("Select ?s { ?s a <http://dbpedia.org/ontology/City> } Limit 5000");
+```Java
+String queryString = "SELECT ?s { ?s a <http://dbpedia.org/ontology/City> } LIMIT 5000";
+QueryExecution qe = qef.createQueryExecution(queryString);
 		
 ResultSet rs = qe.execSelect();
 System.out.println(ResultSetFormatter.asText(rs));
