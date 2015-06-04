@@ -28,11 +28,11 @@ import com.hp.hpl.jena.util.FileManager;
 import com.hp.hpl.jena.vocabulary.RDF;
 import com.vividsolutions.jts.geom.Geometry;
 
-//Query query = QueryFactory.create("Prefix geo: <http://www.w3.org/2003/01/geo/wgs84_pos#> Prefix dbpo: <http://dbpedia.org/ontology/> Select ?s ?w { ?s a dbpo:Castle ; geo:geometry ?w }");        
+//Query query = QueryFactory.create("Prefix geo: <http://www.w3.org/2003/01/geo/wgs84_pos#> Prefix dbpo: <http://dbpedia.org/ontology/> Select ?s ?w { ?s a dbpo:Castle ; geo:geometry ?w }");
 
 
 public class MainGeomizerTest {
-    
+
     public static LookupService<Node, Geometry> createLookupService(QueryExecutionFactory sparqlService, MappedConcept mc) {
         LookupService<Node, Geometry> result = LookupServiceUtilsGeo.createGeoLookupService(sparqlService, mc);
         result = LookupServicePartition.create(result, 30, 5);
@@ -41,19 +41,19 @@ public class MainGeomizerTest {
         return result;
     }
 
-    
+
     public static void main(String[] args) {
-        
-        
-        
-        //Model model = FileManager.get().loadModel("/home/raven/Projects/Eclipse/24-7-platform/link-specifications/dbpedia-linkedgeodata-university/positive.nt");        
+
+
+
+        //Model model = FileManager.get().loadModel("/home/raven/Projects/Eclipse/24-7-platform/link-specifications/dbpedia-linkedgeodata-university/positive.nt");
         Model model = FileManager.get().loadModel("/home/raven/Projects/Eclipse/24-7-platform/link-specifications/dbpedia-linkedgeodata-airport/positive.nt");
-        
+
         Graph graph = model.getGraph();
         Set<Triple> triples = graph.find(null, null, null).toSet();
-        
+
         triples = TripleUtils.swap(triples);
-        
+
         QueryExecutionFactory sparqlServiceSource = new QueryExecutionFactoryHttp("http://dbpedia.org/sparql", "http://dbpedia.org");
         QueryExecutionFactory sparqlServiceTarget = new QueryExecutionFactoryHttp("http://linkedgeodata.org/sparql", "http://linkedgeodata.org");
 
@@ -68,23 +68,23 @@ public class MainGeomizerTest {
 
         LookupService<Node, Geometry> lsA = createLookupService(sparqlServiceSource, mcA);
         LookupService<Node, Geometry> lsB = createLookupService(sparqlServiceTarget, mcB);
-        
+
 //        Collection<Node> test = Collections.singletonList(NodeFactory.createURI("http://linkedgeodata.org/triplify/node404580641"));
-//        Map<Node, Geometry> testResult = lsB.lookup(test);
+//        Map<Node, Geometry> testResult = lsB.apply(test);
 //        System.out.println("YAY: " + testResult);
 //
 //        if(true) {
 //            return;
 //        }
-        
+
         Map<Triple, Geometry> map = LinkGeomizer.geomize(triples, lsA, lsB);
-        
+
         Model result = ModelFactory.createDefaultModel();
         Set<Triple> ts = GeoMapSupplierUtils.geomizedToRdf(map);
         GraphUtil.add(result.getGraph(), ts.iterator());
-        
+
         result.write(System.out, "N-TRIPLES");
-        
-        
+
+
     }
 }

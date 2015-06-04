@@ -111,7 +111,7 @@ public class PatternSummary
         return true;
     }
 
-    
-    
+
+
 
 }

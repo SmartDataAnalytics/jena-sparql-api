@@ -53,7 +53,7 @@ public class QueryExecutionIterated
     private boolean stopOnEmptyResult = true;
 
     private IClosable currentCloseAction = null;
-    
+
     //private QueryExecution current;
 
 
@@ -79,35 +79,37 @@ public class QueryExecutionIterated
         Query query = queryIterator.next();
         query.setLimit(Query.NOLIMIT);
         QueryExecution qe = factory.createQueryExecution(query);
-        
+
         boolean result = qe.execAsk();
         return result;
     }
-    
+
     @Override
     public ResultSet execSelect() {
         ResultSetPaginated it = new ResultSetPaginated(factory, queryIterator, stopOnEmptyResult);
-        
+
         // Note: This line forces the iterator to initialize the result set...
         it.hasNext();
-        
-        
+
+
         // Also note, that hasNext() may return false if there are no result rows,
         // but still the result vars will be initialized
-        
+
         /*
         if(!hasNext) {
             throw new RuntimeException("Error attempting to iterate a paginated result set");
         }
         */
-        
+
         // ... which makes the set of resultVars available
+
+        // TODO ISSUE Jena disallows getting ResultVars from a closed result set; and exhausting a result set auto-closes it...
         ResultSet tmp = it.getCurrentResultSet();
         if(tmp == null) {
             throw new RuntimeException("Underlying result set not avaliable - probably a query failed.");
         }
 
-        List<String> resultVars = tmp.getResultVars();
+        List<String> resultVars =  it.getCurrentResultVars();//tmp.getResultVars();
 
         QueryIterator myQueryIterator = new MyQueryIteratorWrapper(it);
         QueryIteratorCloseable itClosable = new QueryIteratorCloseable(myQueryIterator, it);
@@ -139,7 +141,7 @@ public class QueryExecutionIterated
                         current.close();
                     }
                 };
-                
+
                 logger.trace("Executing query: " + query);
                 Model tmp = current.execConstruct();
                 if(tmp.isEmpty() && stopOnEmptyResult) {

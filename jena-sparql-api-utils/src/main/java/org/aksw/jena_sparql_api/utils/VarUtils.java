@@ -2,8 +2,10 @@ package org.aksw.jena_sparql_api.utils;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.hp.hpl.jena.sparql.core.Var;
 
@@ -24,6 +26,27 @@ public class VarUtils {
 
         return result;
     }
+
+    public static List<Var> toList(Collection<String> varNames) {
+        List<Var> result = new ArrayList<Var>(varNames.size());
+        for(String varName : varNames) {
+            Var var = Var.alloc(varName);
+            result.add(var);
+        }
+
+        return result;
+    }
+
+    public static Set<Var> toSet(Collection<String> varNames) {
+        Set<Var> result = new HashSet<Var>();
+        for(String varName : varNames) {
+            Var var = Var.alloc(varName);
+            result.add(var);
+        }
+
+        return result;
+    }
+
 
     public static List<String> map(Collection<String> varNames, Map<Var, Var> varMap) {
         List<String> result = new ArrayList<String>(varNames.size());

@@ -1,7 +1,9 @@
 package org.aksw.jena_sparql_api.pagination.core;
 
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 import org.aksw.commons.collections.PrefetchIterator;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
@@ -61,6 +63,12 @@ public class ResultSetPaginated
     private ResultSet currentResultSet = null;
     private QueryExecution currentExecution = null;
 
+    // A cache of the resultVars of the current resultSet
+    // This is needed, because we might empty result sets might close immediately before we
+    // have a change to access their metadata (i.e. the result vars)
+    // Jene even raises an exception when calling getResultVars() on a closed result set.
+    private List<String> currentResultVars = null;
+
     /*
     public ResultSetPaginated(QueryExecutionIterated execution,QueryExecutionFactory service, Iterator<Query> queryIterator) {
         this(execution, service, QueryFactory.create(queryString),);
@@ -76,6 +84,10 @@ public class ResultSetPaginated
 
     public ResultSet getCurrentResultSet() {
         return currentResultSet;
+    }
+
+    public List<String> getCurrentResultVars() {
+        return currentResultVars;
     }
 
     @Override
@@ -96,6 +108,7 @@ public class ResultSetPaginated
             // doing a binary partitioning of the current query range, and try to locate the bindings causing the error
             currentResultSet = qe.execSelect();
 
+            currentResultVars = new ArrayList<String>(currentResultSet.getResultVars());
 
 
             currentResultSet = new ResultSetCloseable(currentResultSet, new CloseableQueryExecution(qe));

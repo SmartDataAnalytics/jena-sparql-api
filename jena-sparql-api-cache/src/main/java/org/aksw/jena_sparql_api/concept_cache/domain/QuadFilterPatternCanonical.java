@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.aksw.commons.collections.multimaps.BiHashMultimap;
+import org.aksw.commons.collections.multimaps.IBiSetMultimap;
 import org.aksw.jena_sparql_api.utils.ClauseUtils;
 import org.aksw.jena_sparql_api.utils.CnfUtils;
 import org.aksw.jena_sparql_api.utils.NfUtils;
@@ -16,12 +18,10 @@ import org.aksw.jena_sparql_api.utils.QuadUtils;
 import com.google.common.collect.Sets;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.sparql.algebra.Op;
-import com.hp.hpl.jena.sparql.algebra.TableFactory;
 import com.hp.hpl.jena.sparql.algebra.op.OpFilter;
 import com.hp.hpl.jena.sparql.algebra.op.OpNull;
 import com.hp.hpl.jena.sparql.algebra.op.OpQuadPattern;
 import com.hp.hpl.jena.sparql.algebra.op.OpSequence;
-import com.hp.hpl.jena.sparql.algebra.op.OpTable;
 import com.hp.hpl.jena.sparql.core.BasicPattern;
 import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.sparql.core.QuadPattern;
@@ -38,6 +38,11 @@ public class QuadFilterPatternCanonical {
         super();
         this.quads = quads;
         this.filterCnf = filterCnf;
+    }
+
+    public boolean isEmpty() {
+        boolean result = quads.isEmpty() && filterCnf.isEmpty();
+        return result;
     }
 
     public Op toOp() {
@@ -161,4 +166,51 @@ public class QuadFilterPatternCanonical {
         return true;
     }
 
+    /*
+    public static void create(OpQuadPattern op) {
+
+        Set<Quad> quads = new HashSet<Quad>(op.getPattern().getList());
+
+
+        Set<Set<Expr>> filterCnf = CnfUtils.toSetCnf(expr);
+
+        // This is part of the result
+        //List<Set<Set<Expr>>> quadCnfList = new ArrayList<Set<Set<Expr>>>(quads.size());
+        IBiSetMultimap<Quad, Set<Set<Expr>>> quadToCnf = new BiHashMultimap<Quad, Set<Set<Expr>>>();
+
+
+        for(Quad quad : quads) {
+            Set<Var> quadVars = QuadUtils.getVarsMentioned(quad);
+
+            Set<Set<Expr>> cnf = new HashSet<Set<Expr>>(); //new HashSet<Clause>();
+
+            for(Set<Expr> clause : filterCnf) {
+                Set<Var> clauseVars = ClauseUtils.getVarsMentioned(clause);
+
+                boolean containsAll = quadVars.containsAll(clauseVars);
+                if(containsAll) {
+                    cnf.add(clause);
+                }
+            }
+
+
+            Set<Set<Expr>> quadCnf = normalize(quad, cnf);
+            //quadCnfList.add(quadCnf);
+            quadToCnf.put(quad, quadCnf);
+        }
+
+    }
+*/
+    public static void addFilter(QuadFilterPatternCanonical qfpc, ExprList exprs) {
+
+    }
+
+    /*
+    public static QuadFilterPatternCanonical rename(QuadFilterPatternCanonical pattern, Map<Var, Var> varMap) {
+        NodeTransform rename = new NodeTransformRenameMap(varMap);
+        QuadFilterPatternCanonical result = pattern.applyNodeTransform(rename);
+
+        return result;
+    }
+    */
 }

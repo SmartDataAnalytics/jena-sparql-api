@@ -35,6 +35,9 @@ public class GeoMapSupplierUtils {
     public static final Var vw = Var.alloc("w");
     public static final Var va = Var.alloc("a");
 
+    public static final Var vx = Var.alloc("x");
+    public static final Var vy = Var.alloc("y");
+
 
     public static Concept createConceptProperty(Node propertyNode) {
 
@@ -68,6 +71,18 @@ public class GeoMapSupplierUtils {
         return result;
     }
 
+
+    // TODO
+    public static final Agg<Geometry> createAggregatorWgs84(Var lonVar, Var latVar) {
+        Agg<Geometry> result =
+            AggTransform.create(
+                AggTransform.create(AggUtils.literalNode("POINT(" + lonVar + ", " + latVar + ")"),
+                        FunctionNodeToString.fn),
+                FunctionParseWkt.fn);
+
+        return result;
+    }
+
 //    public static final Function<ResultSet, NodeValue> createAggregatorWkt(Var wktVar) {
 //        Aggregator aggregator = new AggLiteral(new ExprVar(wktVar));
 //
@@ -76,11 +91,13 @@ public class GeoMapSupplierUtils {
 //        return result;
 //    }
 
+    public static final Concept conceptWgs84 = Concept.create("?s <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?x ; http://www.w3.org/2003/01/geo/wgs84_pos#lat ?y", "s");
     public static final Concept conceptWgsGeometry = createConceptProperty(NodeFactory.createURI("http://www.w3.org/2003/01/geo/wgs84_pos#geometry"));
     public static final Concept conceptOgcGeometry = createConcept2(NodeFactory.createURI("http://geovocab.org/geometry#geometry"), NodeFactory.createURI("http://www.opengis.net/ont/geosparql#asWKT"));
 
 
     public static final MappedConcept<Geometry> mcWgsGeometry = MappedConcept.create(conceptWgsGeometry, createAggregatorWkt(vw));
+    public static final MappedConcept<Geometry> mcWgs84 = MappedConcept.create(conceptWgs84, createAggregatorWgs84(vx, vy));
     public static final MappedConcept<Geometry> mcOgcGeometry = MappedConcept.create(conceptOgcGeometry, createAggregatorWkt(vw));
 
 

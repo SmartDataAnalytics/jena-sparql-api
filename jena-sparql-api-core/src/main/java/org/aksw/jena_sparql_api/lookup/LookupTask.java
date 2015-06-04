@@ -8,15 +8,15 @@ public class LookupTask<K, V>
 {
     private LookupService<K, V> base;
     private Iterable<K> keys;
-    
+
     public LookupTask(LookupService<K, V> base, Iterable<K> keys) {
         this.base = base;
         this.keys = keys;
     }
-    
+
     @Override
     public Map<K, V> call() throws Exception {
-        Map<K, V> result = base.lookup(keys);
+        Map<K, V> result = base.apply(keys);
         return result;
-    }   
+    }
 }
