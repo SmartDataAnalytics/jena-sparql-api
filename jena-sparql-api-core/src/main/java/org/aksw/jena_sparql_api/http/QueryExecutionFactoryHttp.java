@@ -3,12 +3,13 @@ package org.aksw.jena_sparql_api.http;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactoryBackString;
+import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
+import org.apache.jena.atlas.web.auth.HttpAuthenticator;
 
-import com.google.common.base.Joiner;
 import com.hp.hpl.jena.query.QueryExecution;
+import com.hp.hpl.jena.sparql.core.DatasetDescription;
 import com.hp.hpl.jena.sparql.engine.http.QueryEngineHTTP;
 
 /**
@@ -21,8 +22,10 @@ public class QueryExecutionFactoryHttp
     extends QueryExecutionFactoryBackString
 {
     private String service;
+    private DatasetDescription datasetDescription;
+    private HttpAuthenticator httpAuthenticator;
 
-    private List<String> defaultGraphs = new ArrayList<String>();
+    //private List<String> defaultGraphs = new ArrayList<String>();
 
     public QueryExecutionFactoryHttp(String service) {
         this(service, Collections.<String>emptySet());
@@ -33,9 +36,13 @@ public class QueryExecutionFactoryHttp
     }
 
     public QueryExecutionFactoryHttp(String service, Collection<String> defaultGraphs) {
+        this(service, new DatasetDescription(new ArrayList<String>(defaultGraphs), Collections.<String>emptyList()), null);
+    }
+
+    public QueryExecutionFactoryHttp(String service, DatasetDescription datasetDescription, HttpAuthenticator httpAuthenticator) {
         this.service = service;
-        this.defaultGraphs = defaultGraphs == null ? new ArrayList<String>() : new ArrayList<String>(defaultGraphs);
-        Collections.sort(this.defaultGraphs);
+        this.datasetDescription = datasetDescription;
+        this.httpAuthenticator = httpAuthenticator;
     }
 
     @Override
@@ -45,16 +52,20 @@ public class QueryExecutionFactoryHttp
 
     @Override
     public String getState() {
-        return Joiner.on("|").join(defaultGraphs);
+        String result = DatasetDescriptionUtils.toString(datasetDescription);
+
+            //TODO Include authenticator
+        return result;
     }
 
     @Override
     public QueryExecution createQueryExecution(String queryString) {
-        QueryEngineHTTP result = new QueryEngineHTTP(service, queryString);
-        result.setDefaultGraphURIs(defaultGraphs);
+        QueryEngineHTTP result = new QueryEngineHTTP(service, queryString, httpAuthenticator);
+        result.setDefaultGraphURIs(datasetDescription.getDefaultGraphURIs());
+        result.setNamedGraphURIs(datasetDescription.getNamedGraphURIs());
 
         //QueryExecution result = QueryExecutionWrapper.wrap(engine);
-        
+
         return result;
     }
 }

@@ -33,12 +33,18 @@
     <properties>
 <!--        <jetty.version>8.1.12.v20130726</jetty.version> -->
 <!--    <jetty.version>9.3.0.M1</jetty.version> -->
-    <jetty.version>8.1.16.v20140903</jetty.version>
+
+<!-- working -->
+<!--    <jetty.version>8.1.16.v20140903</jetty.version> -->
+
+        <jetty.version>8.1.17.v20150415</jetty.version>
+
 
 <!--        <jetty-plugin.version>8.1.10.v20130312</jetty-plugin.version> -->
 <!--          <jersey-spring.version>1.17.1</jersey-spring.version> -->
 
-        <jersey.version>2.15</jersey.version>
+<!-- 2.18 could be tried out next -->
+        <jersey.version>2.18</jersey.version>
 
         <spring.version>4.1.4.RELEASE</spring.version>
         <spring.batch.version>3.0.3.RELEASE</spring.batch.version>
@@ -558,6 +564,7 @@
                 <type>jar</type>
                 <scope>compile</scope>
             </dependency>
+<!--
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-jsp</artifactId>
@@ -565,7 +572,7 @@
                 <type>jar</type>
                 <scope>compile</scope>
             </dependency>
-
+-->
             <!-- <dependency> -->
             <!-- <groupId>org.eclipse.jetty</groupId> -->
             <!-- <artifactId>jetty-websocket</artifactId> -->

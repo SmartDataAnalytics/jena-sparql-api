@@ -107,11 +107,12 @@
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-http</artifactId>
         </dependency>
+<!--
                 <dependency>
                         <groupId>org.eclipse.jetty</groupId>
                         <artifactId>jetty-jsp</artifactId>
                 </dependency>
-
+-->
 
         <!-- Logging -->
         <dependency>
