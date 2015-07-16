@@ -1,5 +1,5 @@
-<http://dbpedia.org/resource/Cryssean> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Person> .
-<http://dbpedia.org/resource/Cryssean> <http://www.w3.org/2000/01/rdf-schema#label> "Cryssean Thorgar" .
+<http://dbpedia.org/resource/Gottfried_Wilhelm_Leibniz> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Person> .
+<http://dbpedia.org/resource/Gottfried_Wilhelm_Leibniz> <http://www.w3.org/2000/01/rdf-schema#label> "Gottfried Wilhelm Leibniz" .
 
-<http://dbpedia.org/resource/Saldria> <http://www.w3.org/2000/01/rdf-schema#label> "Saluduria"@ja .
-<http://dbpedia.org/resource/Saldria> <http://dbpedia.org/ontology/population> "75390"^^<http://www.w3.org/2001/XMLSchema#integer> .
+<http://dbpedia.org/resource/Leipzig> <http://www.w3.org/2000/01/rdf-schema#label> "Leipzig"@de .
+<http://dbpedia.org/resource/Leipzig> <http://dbpedia.org/ontology/population> "500000"^^<http://www.w3.org/2001/XMLSchema#integer> .
