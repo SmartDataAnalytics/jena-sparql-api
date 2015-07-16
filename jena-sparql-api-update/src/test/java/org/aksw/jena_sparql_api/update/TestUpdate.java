@@ -72,7 +72,7 @@ public class TestUpdate {
         test1();
 
         String requestStr = "Prefix owl: <http://www.w3.org/2002/07/owl#> Delete { ?s a owl:Thing } Where { ?s a <http://dbpedia.org/ontology/Person> }";
-        UpdateRequest updateRequest = UpdateUtils.parse(requestStr)
+        UpdateRequest updateRequest = UpdateUtils.parse(requestStr);
         UpdateProcessor processor = uef.createUpdateProcessor(updateRequest);
         processor.execute();
     }
