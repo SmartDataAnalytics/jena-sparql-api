@@ -52,6 +52,7 @@ public class SparqlExportManager {
         JobParameters jobParameters = new JobParametersBuilder()
             .addString(ConfigSparqlExportJob.JOBPARAM_SERVICE_URI, serviceUri, true)
             .addString(ConfigSparqlExportJob.JOBPARAM_DEFAULT_GRAPH_URIS, dgu, true)
+            //.addString(ConfigSparqlExportJob.JOBPARAM_NAMED_GRAPH_URIS, ngu, true)
             .addString(ConfigSparqlExportJob.JOBPARAM_QUERY_STRING, queryString, true)
             .addString(ConfigSparqlExportJob.JOBPARAM_TARGET_RESOURCE, targetResource, false)
             .toJobParameters();

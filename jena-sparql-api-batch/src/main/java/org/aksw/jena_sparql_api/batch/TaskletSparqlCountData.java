@@ -11,15 +11,15 @@ import org.springframework.beans.factory.InitializingBean;
 
 import com.hp.hpl.jena.query.Query;
 
-public class DataCountTasklet
+public class TaskletSparqlCountData
     extends StepExecutionListenerSupport implements Tasklet, InitializingBean
 {
-    public static final String KEY = DataCountTasklet.class.getSimpleName() + ".count";
+    public static final String KEY = TaskletSparqlCountData.class.getSimpleName() + ".count";
 
     private Query query;
     private QueryExecutionFactory sparqlService;
 
-    public DataCountTasklet(Query query, QueryExecutionFactory sparqlService) {
+    public TaskletSparqlCountData(Query query, QueryExecutionFactory sparqlService) {
         this.query = query;
         this.sparqlService = sparqlService;
     }

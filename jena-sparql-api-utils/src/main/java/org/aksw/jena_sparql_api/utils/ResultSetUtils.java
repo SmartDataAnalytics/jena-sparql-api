@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.utils;
 
+import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -10,6 +11,7 @@ import java.util.Set;
 import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.Multimap;
 import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.query.ResultSetFactory;
 import com.hp.hpl.jena.sparql.core.Var;
@@ -17,9 +19,37 @@ import com.hp.hpl.jena.sparql.engine.QueryIterator;
 import com.hp.hpl.jena.sparql.engine.binding.Binding;
 import com.hp.hpl.jena.sparql.engine.binding.BindingHashMap;
 import com.hp.hpl.jena.sparql.engine.iterator.QueryIterPlainWrapper;
+import com.hp.hpl.jena.util.iterator.ExtendedIterator;
+import com.hp.hpl.jena.util.iterator.WrappedIterator;
 
 
 public class ResultSetUtils {
+
+    public static ExtendedIterator<Binding> toIteratorBinding(QueryExecution qe) {
+        ResultSet rs = qe.execSelect();
+        ExtendedIterator<Binding> result = toIteratorBinding(rs, qe);
+        return result;
+    }
+    /**
+     * This version returns an iterator capable of closing the corresponding query execution
+     *
+     * @param rs
+     * @param qe
+     * @return
+     */
+    public static ExtendedIterator<Binding> toIteratorBinding(ResultSet rs, QueryExecution qe) {
+        Iterator<Binding> it = new IteratorResultSetBinding(rs);
+        Closeable closeable = new CloseableQueryExecution(qe);
+        Iterator<Binding> tmp = new IteratorClosable<Binding>(it, closeable);
+        ExtendedIterator<Binding> result = WrappedIterator.create(tmp);
+
+        return result;
+    }
+
+    public static Iterator<Binding> toIteratorBinding(ResultSet rs) {
+        Iterator<Binding> result = new IteratorResultSetBinding(rs);
+        return result;
+    }
 
     public static Multimap<List<Node>, Binding> index(ResultSet rs, List<Var> vars) {
         Multimap<List<Node>, Binding> result = LinkedListMultimap.create();

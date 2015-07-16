@@ -207,7 +207,7 @@ public class ConfigSparqlExportJob {
     @JobScope
     @Autowired
     public Step dataCountStep(Query query, QueryExecutionFactory sparqlService) {
-        Tasklet tasklet = new DataCountTasklet(query, sparqlService);
+        Tasklet tasklet = new TaskletSparqlCountData(query, sparqlService);
         return stepBuilders.get("dataCountStep").tasklet(tasklet).build();
     }
 
@@ -241,9 +241,9 @@ public class ConfigSparqlExportJob {
         itemReader.setSparqlService(sparqlService);
         itemReader.setBindingMapper(new BindingMapperPassThrough());
 
+        itemReader.setQuery(query);
         itemReader.setPageSize(chunkSize);
         itemReader.setSaveState(true);
-        itemReader.setQuery(query);
         //itemReader.setQueryString(queryString);
 //        itemReader.setServiceUri(serviceUri);
 //        itemReader.setDefaultGraphUris(dgus);

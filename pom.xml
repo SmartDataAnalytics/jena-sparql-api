@@ -22,6 +22,8 @@
         <module>jena-sparql-api-concepts</module>
         <module>jena-sparql-api-batch</module>
         <module>jena-sparql-api-geo</module>
+
+        <module>jena-sparql-api-update</module>
     </modules>
 
     <scm>
@@ -277,6 +279,12 @@
             <dependency>
                 <groupId>org.aksw.jena-sparql-api</groupId>
                 <artifactId>jena-sparql-api-resources</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.aksw.jena-sparql-api</groupId>
+                <artifactId>jena-sparql-api-update</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

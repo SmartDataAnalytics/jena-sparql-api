@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.mapper;
 import java.util.Iterator;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.utils.IteratorResultSetBinding;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
