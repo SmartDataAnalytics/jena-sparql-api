@@ -47,7 +47,7 @@ import com.hp.hpl.jena.vocabulary.RDF;
 
 public class ChangeSetUtils {
 
-    public static final Query queryMostRecentChangeSet = QueryFactory.parse(new Query(), "Prefix cs: <http://purl.org/vocab/changeset/schema#> Select ?s { ?s cs:subjectOfChange ?o . Optional { ?x cs:precedingChangeSet ?s } . Filter(!Bound(?x)) }", "http://example.org/", Syntax.syntaxSPARQL_10);
+    public static final Query queryMostRecentChangeSet = QueryFactory.parse(new Query(), "Prefix cs: <http://purl.org/vocab/changeset/schema#> Select ?s ?o { ?s cs:subjectOfChange ?o . Optional { ?x cs:precedingChangeSet ?s } . Filter(!Bound(?x)) }", "http://example.org/", Syntax.syntaxSPARQL_10);
 
 
     public static LookupService<Node, Node> createLookupServiceMostRecentChangeSet(QueryExecutionFactory qef) {
@@ -164,6 +164,8 @@ public class ChangeSetUtils {
         model.add(s, CS.createdDate, model.createTypedLiteral(md.getCreatedDate()));
         model.add(s, CS.creatorName, model.createLiteral(md.getCreatorName()));
 
+        model.add(s, CS.subjectOfChange, model.createResource(cs.getSubjectOfChange()));
+
         if(cs.getPrecedingChangeSet() != null) {
             model.add(s, CS.precedingChangeSet, model.createResource(cs.getPrecedingChangeSet()));
         }
@@ -219,6 +221,10 @@ public class ChangeSetUtils {
 
         for(ChangeSet cs : subjectToChangeSet.values()) {
             write(model, cs);
+
+            System.out.println("v ===================");
+            model.write(System.out, "TURTLE");
+            System.out.println("^ -------------------");
         }
 
         UpdateRequest result = UpdateUtils.createUpdateRequest(model, null);
@@ -232,7 +238,7 @@ public class ChangeSetUtils {
         LookupService<Node, Node> precedingChangeSetLs = ChangeSetUtils.createLookupServiceMostRecentChangeSet(qef);
 
         Graph added = diff.getAdded();
-        Graph removed = diff.getAdded();
+        Graph removed = diff.getRemoved();
 
         Map<Node, Graph> subjectToAdded = GraphUtils.indexBySubject(added);
         Map<Node, Graph> subjectToRemoved = GraphUtils.indexBySubject(removed);
@@ -241,7 +247,10 @@ public class ChangeSetUtils {
         subjects.addAll(subjectToAdded.keySet());
         subjects.addAll(subjectToRemoved.keySet());
 
-        Map<Node, Node> subjectToRecentChangeSet = precedingChangeSetLs.apply(subjects);
+        // Perform a lookup of latest changesets for the given subjects and create
+        // a writeable copy of the map
+        Map<Node, Node> tmp = precedingChangeSetLs.apply(subjects);
+        Map<Node, Node> subjectToRecentChangeSet = new HashMap<Node, Node>(tmp);
 
         Map<Node, ChangeSet> result = new HashMap<Node, ChangeSet>();
         for(Node s : subjects) {
@@ -252,6 +261,11 @@ public class ChangeSetUtils {
 
             String localName = StringUtils.md5Hash(subjectOfChange + " " + precedingId);
             String uri = prefix + localName;
+
+            // Update the preceding changeset
+            Node nextId = NodeFactory.createURI(uri);
+            subjectToRecentChangeSet.put(s, nextId);
+
 
             Graph addedGraph = subjectToAdded.get(s);
             Graph removedGraph = subjectToRemoved.get(s);
