@@ -5,6 +5,8 @@ import java.util.Set;
 
 import org.aksw.commons.collections.diff.Diff;
 import org.aksw.commons.collections.diff.HashSetDiff;
+import org.aksw.jena_sparql_api.changeset.ChangeSetMetadata;
+import org.aksw.jena_sparql_api.changeset.SinkChangeSetWriter;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.model.QueryExecutionFactoryModel;
 import org.junit.Before;
@@ -31,6 +33,12 @@ public class TestUpdate {
 
     private UpdateContext updateContext;
 
+
+    private Model csModel;
+    private UpdateExecutionFactory csUef;
+    private QueryExecutionFactory csQef;
+
+
     @Before
     public void init() throws Exception {
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
@@ -45,6 +53,12 @@ public class TestUpdate {
         updateContext = new UpdateContext(tmp, qef, 128, new QuadContainmentCheckerSimple()); //FunctionQuadDiffUnique.create(qef, )))
 
         uef = new UpdateExecutionFactoryEventSource(updateContext);
+
+
+        csModel = ModelFactory.createDefaultModel();
+        csQef = new QueryExecutionFactoryModel(csModel);
+        csUef = new UpdateExecutionFactoryModel(csModel);
+
     }
 
     @Test
@@ -55,6 +69,15 @@ public class TestUpdate {
             @Override
             public void onPreModify(Diff<Set<Quad>> diff, UpdateContext updateContext) {
                 System.out.println("Diff: " + diff);
+
+                ChangeSetMetadata metadata = new ChangeSetMetadata("Claus", "testing");
+
+                SinkChangeSetWriter sink = new SinkChangeSetWriter(metadata, csUef, csQef);
+                sink.send(diff);
+
+
+                csModel.write(System.out, "TURTLE");
+                //ChangeSetUtils.createUpdateRequest(metadata, csQef, csUef, diff, "http://example.org/");
             }
         });
 

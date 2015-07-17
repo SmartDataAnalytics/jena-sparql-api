@@ -7,7 +7,7 @@ import java.util.Set;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.ResultSetCloseable;
-import org.aksw.jena_sparql_api.mapper.BindingMapperExtractNode;
+import org.aksw.jena_sparql_api.mapper.BindingMapperProjectVar;
 import org.aksw.jena_sparql_api.mapper.FunctionBindingMapper;
 import org.aksw.jena_sparql_api.utils.CloseableQueryExecution;
 import org.aksw.jena_sparql_api.utils.IteratorResultSetBinding;
@@ -184,7 +184,7 @@ public class QueryExecutionUtils {
         ResultSet rs = qe.execSelect();
 
         Iterator<Binding> itBinding = new IteratorResultSetBinding(rs);
-        Function<Binding, Node> fn = FunctionBindingMapper.create(new BindingMapperExtractNode(var));
+        Function<Binding, Node> fn = FunctionBindingMapper.create(new BindingMapperProjectVar(var));
 
         Iterator<Node> result = Iterators.transform(itBinding, fn);
 
