@@ -31,7 +31,7 @@ public class SparqlServiceFactoryEventSource
         UpdateContext updateContext = new UpdateContext(core, 128, new QuadContainmentCheckerSimple()); //FunctionQuadDiffUnique.create(qef, )))
         UpdateExecutionFactoryEventSource uef = new UpdateExecutionFactoryEventSource(updateContext);
 
-        uef.getListeners().addAll(datasetListeners);
+        uef.getDatasetListeners().addAll(datasetListeners);
 
         SparqlService result = new SparqlServiceImpl(core.getQueryExecutionFactory(), uef);
 

@@ -39,7 +39,7 @@ public class UpdateProcessorEventSource
 
     @Override
     public void execute() {
-        Iterable<DatasetListener> allListeners = Iterables.concat(listeners, factory.getListeners());
+        Iterable<DatasetListener> allListeners = Iterables.concat(listeners, factory.getDatasetListeners());
 
         UpdateContext context = factory.getContext();
 
