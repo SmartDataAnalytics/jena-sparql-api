@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.update;
 
+import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
+
 public class FluentUpdateExecutionFactory {
     private UpdateExecutionFactory uef;
 

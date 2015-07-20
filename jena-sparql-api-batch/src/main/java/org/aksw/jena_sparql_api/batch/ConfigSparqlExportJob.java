@@ -10,11 +10,11 @@ import java.util.List;
 import javax.sql.DataSource;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.ListableJobLocator;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
@@ -197,17 +197,18 @@ public class ConfigSparqlExportJob {
 
         // TODO Add authenticator support
         DatasetDescription datasetDescription = new DatasetDescription(dgus, ngus);
-        QueryExecutionFactory sparqlService = sparqlServiceFactory.createSparqlService(serviceUri, datasetDescription, null);
+        SparqlService sparqlService = sparqlServiceFactory.createSparqlService(serviceUri, datasetDescription, null);
+        QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
 
-        return sparqlService;
+        return qef;
     }
 
     @Bean
     //@StepScope
     @JobScope
     @Autowired
-    public Step dataCountStep(Query query, QueryExecutionFactory sparqlService) {
-        Tasklet tasklet = new TaskletSparqlCountData(query, sparqlService);
+    public Step dataCountStep(Query query, QueryExecutionFactory qef) {
+        Tasklet tasklet = new TaskletSparqlCountData(query, qef);
         return stepBuilders.get("dataCountStep").tasklet(tasklet).build();
     }
 
@@ -231,14 +232,14 @@ public class ConfigSparqlExportJob {
     @Autowired
     public SparqlPagingItemReader<Binding> reader(
             Query query,
-            QueryExecutionFactory sparqlService,
+            QueryExecutionFactory qef,
 //            @Value("#{jobParameters[serviceUri]}") String serviceUri,
 //            @Value("#{jobParameters[defaultGraphUris]}") String defaultGraphUris,
             @Value("#{jobParameters[queryString]}") String queryString)
     {
         SparqlPagingItemReader<Binding> itemReader = new SparqlPagingItemReader<Binding>();
 
-        itemReader.setSparqlService(sparqlService);
+        itemReader.setSparqlService(qef);
         itemReader.setBindingMapper(new BindingMapperPassThrough());
 
         itemReader.setQuery(query);

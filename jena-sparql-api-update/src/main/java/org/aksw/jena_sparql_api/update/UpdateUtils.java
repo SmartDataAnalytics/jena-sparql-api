@@ -8,6 +8,8 @@ import java.util.Set;
 
 import org.aksw.commons.collections.diff.Diff;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.SparqlService;
+import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.ResultSetUtils;
 
@@ -169,7 +171,7 @@ public class UpdateUtils {
 
         if(removed != null && !Iterables.isEmpty(removed)) {
             QuadDataAcc deleteQuads = new QuadDataAcc(Lists.newArrayList(removed));
-            UpdateData deleteData = new UpdateDataInsert(deleteQuads);
+            UpdateData deleteData = new UpdateDataDelete(deleteQuads);
             result.add(deleteData);
         }
 
@@ -190,14 +192,18 @@ public class UpdateUtils {
         return result;
     }
 
-    public static void executeUpdate(UpdateExecutionFactory uef, QueryExecutionFactory qef, String requestStr, int batchSize, Iterable<DatasetListener> listeners, QuadContainmentChecker containmentChecker) { //, Function<Diff<? extends Iterable<Quad>>, Diff<Set<Quad>>> filter) {
+    //UpdateExecutionFactory uef, QueryExecutionFactory qef
+    public static void executeUpdate(SparqlService sparqlService, String requestStr, int batchSize, Iterable<DatasetListener> listeners, QuadContainmentChecker containmentChecker) { //, Function<Diff<? extends Iterable<Quad>>, Diff<Set<Quad>>> filter) {
         //UpdateRequest updateRequest = new UpdateRequest();
         //UpdateFactory.parse(updateRequest, requestStr);
         UpdateRequest updateRequest = parse(requestStr);
-        executeUpdate(uef, qef, updateRequest, batchSize, listeners, containmentChecker);
+        executeUpdate(sparqlService, updateRequest, batchSize, listeners, containmentChecker);
     }
 
-    public static void executeUpdate(UpdateExecutionFactory uef, QueryExecutionFactory qef, UpdateRequest request, int batchSize, Iterable<DatasetListener> listeners, QuadContainmentChecker containmentChecker) { //Function<Diff<? extends Iterable<Quad>>, Diff<Set<Quad>>> filter) {
+    public static void executeUpdate(SparqlService sparqlService, UpdateRequest request, int batchSize, Iterable<DatasetListener> listeners, QuadContainmentChecker containmentChecker) { //Function<Diff<? extends Iterable<Quad>>, Diff<Set<Quad>>> filter) {
+        QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
+        UpdateExecutionFactory uef = sparqlService.getUpdateExecutionFactory();
+
         Function<Diff<? extends Iterable<Quad>>, Diff<Set<Quad>>> filter = new FunctionQuadDiffUnique(qef, containmentChecker);
 
 

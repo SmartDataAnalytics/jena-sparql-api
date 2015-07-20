@@ -1,13 +1,14 @@
 package org.aksw.jena_sparql_api.update;
 
-import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.SparqlService;
 
 
 public class UpdateContext {
     // TODO Fill out this class
 
-    private UpdateExecutionFactory updateExecutionFactory;
-    private QueryExecutionFactory queryExecutionFactory;
+//    private UpdateExecutionFactory updateExecutionFactory;
+//    private QueryExecutionFactory queryExecutionFactory;
+    private SparqlService sparqlService;
     private int batchSize;
 
     private QuadContainmentChecker containmentChecker;
@@ -24,20 +25,25 @@ public class UpdateContext {
 //        this.batchSize = batchSize;
 //        this.filter = filter;
 //    }
-
-    public UpdateContext(UpdateExecutionFactory updateExecutionFactory, QueryExecutionFactory queryExecutionFactory, int batchSize, QuadContainmentChecker containmentChecker) {
-        this.updateExecutionFactory = updateExecutionFactory;
-        this.queryExecutionFactory = queryExecutionFactory;
+// UpdateExecutionFactory updateExecutionFactory, QueryExecutionFactory queryExecutionFactory,
+    public UpdateContext(SparqlService sparqlService, int batchSize, QuadContainmentChecker containmentChecker) {
+        this.sparqlService = sparqlService;
+        //this.updateExecutionFactory = updateExecutionFactory;
+        //this.queryExecutionFactory = queryExecutionFactory;
         this.batchSize = batchSize;
         this.containmentChecker = containmentChecker;
     }
 
-    public UpdateExecutionFactory getUpdateExecutionFactory() {
-        return updateExecutionFactory;
+    public SparqlService getSparqlService() {
+        return this.sparqlService;
     }
-    public QueryExecutionFactory getQueryExecutionFactory() {
-        return queryExecutionFactory;
-    }
+
+//    public UpdateExecutionFactory getUpdateExecutionFactory() {
+//        return updateExecutionFactory;
+//    }
+//    public QueryExecutionFactory getQueryExecutionFactory() {
+//        return queryExecutionFactory;
+//    }
 
     public int getBatchSize() {
         return batchSize;

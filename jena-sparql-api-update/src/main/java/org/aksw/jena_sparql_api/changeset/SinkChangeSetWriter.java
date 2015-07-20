@@ -2,7 +2,8 @@ package org.aksw.jena_sparql_api.changeset;
 
 import org.aksw.commons.collections.diff.Diff;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.update.UpdateExecutionFactory;
+import org.aksw.jena_sparql_api.core.SparqlService;
+import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
 import org.apache.jena.atlas.lib.Sink;
 
 import com.hp.hpl.jena.sparql.core.Quad;
@@ -12,20 +13,19 @@ import com.hp.hpl.jena.update.UpdateRequest;
 public class SinkChangeSetWriter
     implements Sink<Diff<? extends Iterable<Quad>>>
 {
-    private UpdateExecutionFactory uef;
-    private QueryExecutionFactory qef;
-
     private ChangeSetMetadata metadata;
+    private SparqlService sparqlService;
 
-
-    public SinkChangeSetWriter(ChangeSetMetadata metadata, UpdateExecutionFactory uef, QueryExecutionFactory qef) {
+    public SinkChangeSetWriter(ChangeSetMetadata metadata, SparqlService sparqlService) {
         this.metadata = metadata;
-        this.uef = uef;
-        this.qef = qef;
+        this.sparqlService = sparqlService;
     }
 
     @Override
     public void send(Diff<? extends Iterable<Quad>> diff) {
+        QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
+        UpdateExecutionFactory uef = sparqlService.getUpdateExecutionFactory();
+
         UpdateRequest updateRequest = ChangeSetUtils.createUpdateRequest(metadata, qef, diff, "http://example.org/");
         UpdateProcessor updateProcessor = uef.createUpdateProcessor(updateRequest);
         updateProcessor.execute();

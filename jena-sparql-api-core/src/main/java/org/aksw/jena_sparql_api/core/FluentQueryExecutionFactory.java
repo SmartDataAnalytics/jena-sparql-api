@@ -25,31 +25,31 @@ import com.hp.hpl.jena.rdf.model.Model;
  * @author Lorenz Buehmann
  *
  */
-public class SparqlServiceBuilder {
+public class FluentQueryExecutionFactory {
 
     private QueryExecutionFactory qef;
 
-    public SparqlServiceBuilder(QueryExecutionFactory qef) {
+    public FluentQueryExecutionFactory(QueryExecutionFactory qef) {
         this.qef = qef;
     }
 
-    public static SparqlServiceBuilder model(Model model){
-        return new SparqlServiceBuilder(new QueryExecutionFactoryModel(model));
+    public static FluentQueryExecutionFactory model(Model model){
+        return new FluentQueryExecutionFactory(new QueryExecutionFactoryModel(model));
     }
 
-    public static SparqlServiceBuilder http(String service, String ... defaultGraphs){
+    public static FluentQueryExecutionFactory http(String service, String ... defaultGraphs){
         return http(service, Arrays.asList(defaultGraphs));
     }
 
-    public static SparqlServiceBuilder http(String service, Collection<String> defaultGraphs){
-        return new SparqlServiceBuilder(new QueryExecutionFactoryHttp(service, defaultGraphs));
+    public static FluentQueryExecutionFactory http(String service, Collection<String> defaultGraphs){
+        return new FluentQueryExecutionFactory(new QueryExecutionFactoryHttp(service, defaultGraphs));
     }
 
-    public static SparqlServiceBuilder http(SparqlServiceReference sparqlService){
+    public static FluentQueryExecutionFactory http(SparqlServiceReference sparqlService){
         return http(sparqlService.getServiceURL(), sparqlService.getDefaultGraphURIs());
     }
 
-    public static SparqlServiceBuilder http(Collection<SparqlServiceReference> sparqlServices){
+    public static FluentQueryExecutionFactory http(Collection<SparqlServiceReference> sparqlServices){
         if(sparqlServices.size() == 1){
             return http(sparqlServices.iterator().next());
         }
@@ -57,30 +57,30 @@ public class SparqlServiceBuilder {
         for (SparqlServiceReference sparqlService : sparqlServices) {
             decoratees.add(new QueryExecutionFactoryHttp(sparqlService.getServiceURL(), sparqlService.getDefaultGraphURIs()));
         }
-        return new SparqlServiceBuilder(new QueryExecutionFactoryFallback(decoratees));
+        return new FluentQueryExecutionFactory(new QueryExecutionFactoryFallback(decoratees));
     }
 
-    public SparqlServiceBuilder withDelay(long delayDuration, TimeUnit delayTimeUnit){
+    public FluentQueryExecutionFactory withDelay(long delayDuration, TimeUnit delayTimeUnit){
         qef = new QueryExecutionFactoryDelay(qef, delayDuration, delayTimeUnit);
         return this;
     }
 
-    public SparqlServiceBuilder withPagination(long pageSize){
+    public FluentQueryExecutionFactory withPagination(long pageSize){
         qef = new QueryExecutionFactoryPaginated(qef, pageSize);
         return this;
     }
 
-    public SparqlServiceBuilder withRetry(int retryCount, long retryDelayDuration, TimeUnit retryDelayTimeUnit){
+    public FluentQueryExecutionFactory withRetry(int retryCount, long retryDelayDuration, TimeUnit retryDelayTimeUnit){
         qef = new QueryExecutionFactoryRetry(qef, retryCount, retryDelayDuration, retryDelayTimeUnit);
         return this;
     }
 
-    public SparqlServiceBuilder withCache(CacheFrontend cache){
+    public FluentQueryExecutionFactory withCache(CacheFrontend cache){
         qef = new QueryExecutionFactoryCacheEx(qef, cache);
         return this;
     }
 
-    public SparqlServiceBuilder withDefaultLimit(long limit, boolean doCloneQuery){
+    public FluentQueryExecutionFactory withDefaultLimit(long limit, boolean doCloneQuery){
         qef = new QueryExecutionFactoryLimit(qef, doCloneQuery, limit);
         return this;
     }

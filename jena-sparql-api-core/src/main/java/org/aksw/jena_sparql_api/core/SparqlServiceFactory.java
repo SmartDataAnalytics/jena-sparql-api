@@ -9,5 +9,5 @@ import com.hp.hpl.jena.sparql.core.DatasetDescription;
  *
  */
 public interface SparqlServiceFactory {
-    QueryExecutionFactory createSparqlService(String serviceUri, DatasetDescription datasetDescription, Object authenticator);
+    SparqlService createSparqlService(String serviceUri, DatasetDescription datasetDescription, Object authenticator);
 }

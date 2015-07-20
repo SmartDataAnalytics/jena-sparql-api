@@ -18,6 +18,7 @@ import javax.ws.rs.core.MediaType;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.Path;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
 import org.aksw.jena_sparql_api.model.QueryExecutionFactoryModel;
 import org.aksw.jena_sparql_api.sparql_path.core.algorithm.ConceptPathFinder;
@@ -123,8 +124,8 @@ public class PathFindingApi {
                 Concept sourceConcept = Concept.create(sourceElement, sourceVar);
                 Concept targetConcept = Concept.create(targetElement, targetVar);
 
-                QueryExecutionFactory sparqlService = sparqlServiceFactory.createSparqlService(serviceUri, datasetDescription, authenticator);
-
+                SparqlService sparqlService = sparqlServiceFactory.createSparqlService(serviceUri, datasetDescription, authenticator);
+                QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
                 Model joinSummaryModel;
 
                 List<String> jss = joinSummaryGraphUris != null ? joinSummaryGraphUris : Collections.<String>emptyList();
@@ -134,13 +135,14 @@ public class PathFindingApi {
                 if(joinSummaryServiceUri != null && !joinSummaryServiceUri.isEmpty()) {
 
                     // TODO Add support for authenticating at the join summary service
-                    QueryExecutionFactory jsSparqlService = sparqlServiceFactory.createSparqlService(joinSummaryServiceUri, jsDs, null);
-                    joinSummaryModel = ConceptPathFinder.createJoinSummary(jsSparqlService);
+                    SparqlService jsSparqlService = sparqlServiceFactory.createSparqlService(joinSummaryServiceUri, jsDs, null);
+                    QueryExecutionFactory jsQef = jsSparqlService.getQueryExecutionFactory();
+                    joinSummaryModel = ConceptPathFinder.createJoinSummary(jsQef);
                 } else {
-                    joinSummaryModel = ConceptPathFinder.createDefaultJoinSummaryModel(sparqlService);
+                    joinSummaryModel = ConceptPathFinder.createDefaultJoinSummaryModel(qef);
                 }
 
-                List<Path> paths = ConceptPathFinder.findPaths(sparqlService, sourceConcept, targetConcept, _nPaths, _maxHops, joinSummaryModel);
+                List<Path> paths = ConceptPathFinder.findPaths(qef, sourceConcept, targetConcept, _nPaths, _maxHops, joinSummaryModel);
 
                 String result;
 

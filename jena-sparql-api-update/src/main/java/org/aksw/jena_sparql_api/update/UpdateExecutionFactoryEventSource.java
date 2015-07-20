@@ -3,6 +3,9 @@ package org.aksw.jena_sparql_api.update;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
+import org.aksw.jena_sparql_api.update.DatasetListener;
+
 import com.hp.hpl.jena.update.UpdateRequest;
 
 /**

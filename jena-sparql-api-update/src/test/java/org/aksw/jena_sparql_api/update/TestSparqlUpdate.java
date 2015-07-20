@@ -4,10 +4,13 @@ import java.util.Collection;
 import java.util.Set;
 
 import org.aksw.commons.collections.diff.Diff;
-import org.aksw.commons.collections.diff.HashSetDiff;
 import org.aksw.jena_sparql_api.changeset.ChangeSetMetadata;
 import org.aksw.jena_sparql_api.changeset.SinkChangeSetWriter;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.SparqlService;
+import org.aksw.jena_sparql_api.core.SparqlServiceImpl;
+import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
+import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryModel;
 import org.aksw.jena_sparql_api.model.QueryExecutionFactoryModel;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -25,7 +28,7 @@ import com.hp.hpl.jena.update.UpdateRequest;
 
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class TestUpdate {
+public class TestSparqlUpdate {
 
     private Model model;
     private UpdateExecutionFactoryEventSource uef;
@@ -37,6 +40,7 @@ public class TestUpdate {
     private Model csModel;
     private UpdateExecutionFactory csUef;
     private QueryExecutionFactory csQef;
+    private SparqlService csSparqlService;
 
 
     @Before
@@ -50,7 +54,9 @@ public class TestUpdate {
         UpdateExecutionFactory tmp = new UpdateExecutionFactoryModel(model);
         qef = new QueryExecutionFactoryModel(model);
 
-        updateContext = new UpdateContext(tmp, qef, 128, new QuadContainmentCheckerSimple()); //FunctionQuadDiffUnique.create(qef, )))
+        SparqlService sparqlService = new SparqlServiceImpl(qef, uef);
+
+        updateContext = new UpdateContext(sparqlService, 128, new QuadContainmentCheckerSimple()); //FunctionQuadDiffUnique.create(qef, )))
 
         uef = new UpdateExecutionFactoryEventSource(updateContext);
 
@@ -59,6 +65,7 @@ public class TestUpdate {
         csQef = new QueryExecutionFactoryModel(csModel);
         csUef = new UpdateExecutionFactoryModel(csModel);
 
+        csSparqlService = new SparqlServiceImpl(csQef, csUef);
     }
 
     @Test
@@ -72,7 +79,7 @@ public class TestUpdate {
 
                 ChangeSetMetadata metadata = new ChangeSetMetadata("Claus", "testing");
 
-                SinkChangeSetWriter sink = new SinkChangeSetWriter(metadata, csUef, csQef);
+                SinkChangeSetWriter sink = new SinkChangeSetWriter(metadata, csSparqlService);
                 sink.send(diff);
 
 
@@ -106,15 +113,15 @@ public class TestUpdate {
         }
     }
 
-    public static void processChanges(HashSetDiff<Binding> diff) {
-        System.out.println("Added:");
-        System.out.println("-----------------");
-        print(diff.getAdded());
-
-        System.out.println();
-        System.out.println("Removed");
-        System.out.println("-----------------");
-        print(diff.getRemoved());
-        //System.out.println(ResultSetFormatter.asText(diff.getRemoved()));
-    }
+//    public static void processChanges(HashSetDiff<Binding> diff) {
+//        System.out.println("Added:");
+//        System.out.println("-----------------");
+//        print(diff.getAdded());
+//
+//        System.out.println();
+//        System.out.println("Removed");
+//        System.out.println("-----------------");
+//        print(diff.getRemoved());
+//        //System.out.println(ResultSetFormatter.asText(diff.getRemoved()));
+//    }
 }

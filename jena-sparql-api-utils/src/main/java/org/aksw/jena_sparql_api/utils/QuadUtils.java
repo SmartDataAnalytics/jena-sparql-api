@@ -23,6 +23,19 @@ import com.hp.hpl.jena.sparql.graph.NodeTransform;
 public class QuadUtils
 {
 
+    public static Map<Node, Set<Quad>> partitionByGraph(Iterable<Quad> quads) {
+        Map<Node, Set<Quad>> result = new HashMap<Node, Set<Quad>>();
+        for(Quad quad : quads) {
+            Node g = quad.getGraph();
+            Set<Quad> qs = result.get(g);
+            if(qs == null) {
+                qs = new HashSet<Quad>();
+                result.put(g, qs);
+            }
+        }
+        return result;
+    }
+
         public static final String ng = "g";
         public static final String ns = "s";
         public static final String np = "p";

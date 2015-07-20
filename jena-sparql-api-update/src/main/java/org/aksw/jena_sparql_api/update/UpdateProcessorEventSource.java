@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.update;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.SparqlService;
 
 import com.google.common.collect.Iterables;
 import com.hp.hpl.jena.sparql.util.Context;
@@ -44,11 +44,12 @@ public class UpdateProcessorEventSource
         UpdateContext context = factory.getContext();
 
 
-        UpdateExecutionFactory uef = context.getUpdateExecutionFactory();
-        QueryExecutionFactory qef = context.getQueryExecutionFactory();
+        //UpdateExecutionFactory uef = context.getUpdateExecutionFactory();
+        //QueryExecutionFactory qef = context.getQueryExecutionFactory();
+        SparqlService sparqlService = context.getSparqlService();
         int batchSize = context.getBatchSize();
         QuadContainmentChecker containmentChecker = context.getContainmentChecker();
-        UpdateUtils.executeUpdate(uef, qef, updateRequest, batchSize, allListeners, containmentChecker);
+        UpdateUtils.executeUpdate(sparqlService, updateRequest, batchSize, allListeners, containmentChecker);
     }
 
 }

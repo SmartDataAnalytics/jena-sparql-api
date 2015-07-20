@@ -13,7 +13,7 @@ import org.aksw.commons.util.StreamUtils;
 import org.aksw.jena_sparql_api.concept_cache.core.QueryExecutionFactoryConceptCache;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.core.SparqlServiceBuilder;
+import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.model.QueryExecutionFactoryModel;
 import org.apache.jena.riot.RDFDataMgr;
 import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
@@ -121,7 +121,7 @@ public class ConceptCache {
         String fileName = resource.getFilename();
 
         Model model = RDFDataMgr.loadModel(fileName);
-        QueryExecutionFactory sparqlService = SparqlServiceBuilder
+        QueryExecutionFactory sparqlService = FluentQueryExecutionFactory
             .model(model)
             .withPagination(100000)
             .create();

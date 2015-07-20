@@ -9,7 +9,7 @@ import java.util.Set;
 
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.core.SparqlServiceBuilder;
+import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.utils.QueryExecutionUtils;
 import org.aksw.jena_sparql_api.lookup.CountInfo;
 import org.aksw.jena_sparql_api.utils.CnfUtils;
@@ -188,7 +188,7 @@ public class JoinSizeChecker {
 
     public static void main(String[] args) {
         QueryExecutionFactory qef =
-                SparqlServiceBuilder
+                FluentQueryExecutionFactory
                 .http("http://dbpedia.org/sparql", "http://dbpedia.org")
                 .create();
 

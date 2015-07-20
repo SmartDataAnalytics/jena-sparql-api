@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.update;
+package org.aksw.jena_sparql_api.core;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.update.GraphStore;

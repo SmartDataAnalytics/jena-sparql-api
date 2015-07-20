@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.server;
+package org.aksw.jena_sparql_api.web.server;
 
 
 //Source: http://stackoverflow.com/questions/22434181/jersey-server-side-async-api-not-working-as-expected
@@ -7,7 +7,7 @@ package org.aksw.jena_sparql_api.server;
 //    protected Application configure() {
 //        return new ResourceConfig().register(CompareAsyncAndSyncResource.class);
 //    }
-public class SparqlEndpointTest {
+public class TestSparqlQuery {
 
     /**
      *

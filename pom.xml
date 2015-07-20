@@ -254,12 +254,6 @@
 
             <dependency>
                 <groupId>org.aksw.jena-sparql-api</groupId>
-                <artifactId>jena-sparql-api-web</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.aksw.jena-sparql-api</groupId>
                 <artifactId>jena-sparql-api-utils</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -285,6 +279,18 @@
             <dependency>
                 <groupId>org.aksw.jena-sparql-api</groupId>
                 <artifactId>jena-sparql-api-update</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.aksw.jena-sparql-api</groupId>
+                <artifactId>jena-sparql-api-server</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.aksw.jena-sparql-api</groupId>
+                <artifactId>jena-sparql-api-web</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -595,29 +601,32 @@
                 <groupId>log4j</groupId>
                 <artifactId>log4j</artifactId>
                 <version>1.2.17</version>
-                <type>jar</type>
-                <scope>compile</scope>
+<!--                 <type>jar</type> -->
+<!--                 <scope>compile</scope> -->
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
                 <version>1.7.10</version>
-                <type>jar</type>
-                <scope>compile</scope>
+<!--                 <scope>test</scope> -->
+<!--                 <type>jar</type> -->
+<!--                 <scope>compile</scope> -->
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-ext</artifactId>
                 <version>1.7.10</version>
-                <type>jar</type>
-                <scope>compile</scope>
+<!--                 <type>jar</type> -->
+<!--                 <scope>compile</scope> -->
+                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-log4j12</artifactId>
                 <version>1.7.10</version>
-                <type>jar</type>
-                <scope>runtime</scope>
+<!--                 <type>jar</type> -->
+<!--                 <scope>runtime</scope> -->
+                <scope>test</scope>
             </dependency>
 
             <!-- AKSW Commons -->
