@@ -27,7 +27,9 @@ class MainSparqlUpdateSimpleDemo {
         // However, should you need more flexibility, you can always create a custom SparqlService decorators.
         SparqlService sparqlService = FluentSparqlService
             .forModel()
-            .withUpdateListeners(new UpdateStrategyEventSource(), listeners)
+            .config()
+                .withUpdateListeners(new UpdateStrategyEventSource(), listeners)
+            .end()
             .create();
 
         // Perform the request - the listeners will be notified appropriately

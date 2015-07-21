@@ -7,49 +7,46 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
-import org.aksw.jena_sparql_api.cache.core.QueryExecutionFactoryCacheEx;
-import org.aksw.jena_sparql_api.cache.extra.CacheFrontend;
-import org.aksw.jena_sparql_api.delay.core.QueryExecutionFactoryDelay;
 import org.aksw.jena_sparql_api.fallback.QueryExecutionFactoryFallback;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
-import org.aksw.jena_sparql_api.limit.QueryExecutionFactoryLimit;
 import org.aksw.jena_sparql_api.model.QueryExecutionFactoryModel;
-import org.aksw.jena_sparql_api.pagination.core.QueryExecutionFactoryPaginated;
-import org.aksw.jena_sparql_api.retry.core.QueryExecutionFactoryRetry;
 
+import com.google.common.base.Function;
+import com.google.common.base.Supplier;
 import com.hp.hpl.jena.rdf.model.Model;
 
 /**
  * @author Lorenz Buehmann
  *
  */
-public class FluentQueryExecutionFactory {
+public class FluentQueryExecutionFactory<P>
+    extends FluentBase<QueryExecutionFactory, P>
+{
 
-    private QueryExecutionFactory qef;
+    //private QueryExecutionFactory qef;
 
     public FluentQueryExecutionFactory(QueryExecutionFactory qef) {
-        this.qef = qef;
+        this.fn = qef;
     }
 
-    public static FluentQueryExecutionFactory model(Model model){
-        return new FluentQueryExecutionFactory(new QueryExecutionFactoryModel(model));
+    public static FluentQueryExecutionFactory<?> model(Model model){
+        return new FluentQueryExecutionFactory<Object>(new QueryExecutionFactoryModel(model));
     }
 
-    public static FluentQueryExecutionFactory http(String service, String ... defaultGraphs){
+    public static FluentQueryExecutionFactory<?> http(String service, String ... defaultGraphs){
         return http(service, Arrays.asList(defaultGraphs));
     }
 
-    public static FluentQueryExecutionFactory http(String service, Collection<String> defaultGraphs){
-        return new FluentQueryExecutionFactory(new QueryExecutionFactoryHttp(service, defaultGraphs));
+    public static FluentQueryExecutionFactory<?> http(String service, Collection<String> defaultGraphs){
+        return new FluentQueryExecutionFactory<Object>(new QueryExecutionFactoryHttp(service, defaultGraphs));
     }
 
-    public static FluentQueryExecutionFactory http(SparqlServiceReference sparqlService){
+    public static FluentQueryExecutionFactory<?> http(SparqlServiceReference sparqlService){
         return http(sparqlService.getServiceURL(), sparqlService.getDefaultGraphURIs());
     }
 
-    public static FluentQueryExecutionFactory http(Collection<SparqlServiceReference> sparqlServices){
+    public static FluentQueryExecutionFactory<?> http(Collection<SparqlServiceReference> sparqlServices){
         if(sparqlServices.size() == 1){
             return http(sparqlServices.iterator().next());
         }
@@ -57,40 +54,64 @@ public class FluentQueryExecutionFactory {
         for (SparqlServiceReference sparqlService : sparqlServices) {
             decoratees.add(new QueryExecutionFactoryHttp(sparqlService.getServiceURL(), sparqlService.getDefaultGraphURIs()));
         }
-        return new FluentQueryExecutionFactory(new QueryExecutionFactoryFallback(decoratees));
+        return new FluentQueryExecutionFactory<Object>(new QueryExecutionFactoryFallback(decoratees));
     }
 
-    public FluentQueryExecutionFactory withDelay(long delayDuration, TimeUnit delayTimeUnit){
+
+
+    public FluentQueryExecutionFactoryFn<FluentQueryExecutionFactory<P>> config() {
+        final FluentQueryExecutionFactory<P> self = this;
+
+        final FluentQueryExecutionFactoryFn<FluentQueryExecutionFactory<P>> result = new FluentQueryExecutionFactoryFn<FluentQueryExecutionFactory<P>>();
+        result.setParentSupplier(new Supplier<FluentQueryExecutionFactory<P>>() {
+                @Override
+                public FluentQueryExecutionFactory<P> get() {
+                    // Apply the collection transformations
+                    Function<QueryExecutionFactory, QueryExecutionFactory> transform = result.value();
+                    fn = transform.apply(fn);
+
+                    return self;
+                }
+            });
+
+        return result;
+    }
+/*
+
+    public FluentQueryExecutionFactory<T> withDelay(long delayDuration, TimeUnit delayTimeUnit){
         qef = new QueryExecutionFactoryDelay(qef, delayDuration, delayTimeUnit);
         return this;
     }
 
-    public FluentQueryExecutionFactory withPagination(long pageSize){
+    public FluentQueryExecutionFactory<T> withPagination(long pageSize){
         qef = new QueryExecutionFactoryPaginated(qef, pageSize);
         return this;
     }
 
-    public FluentQueryExecutionFactory withRetry(int retryCount, long retryDelayDuration, TimeUnit retryDelayTimeUnit){
+    public FluentQueryExecutionFactory<T> withRetry(int retryCount, long retryDelayDuration, TimeUnit retryDelayTimeUnit){
         qef = new QueryExecutionFactoryRetry(qef, retryCount, retryDelayDuration, retryDelayTimeUnit);
         return this;
     }
 
-    public FluentQueryExecutionFactory withCache(CacheFrontend cache){
+    public FluentQueryExecutionFactory<T> withCache(CacheFrontend cache){
         qef = new QueryExecutionFactoryCacheEx(qef, cache);
         return this;
     }
 
-    public FluentQueryExecutionFactory withDefaultLimit(long limit, boolean doCloneQuery){
+    public FluentQueryExecutionFactory<T> withDefaultLimit(long limit, boolean doCloneQuery){
         qef = new QueryExecutionFactoryLimit(qef, doCloneQuery, limit);
         return this;
     }
-
+*/
     /**
      * Return the final query execution factory.
      * @return
      */
-    public QueryExecutionFactory create(){
-        return qef;
-    }
-
+//    public QueryExecutionFactory create() {
+//        return qef;
+//    }
+//
+//    public T end() {
+//        throw new RuntimeException("A call to .end() is invalid here");
+//    }
 }

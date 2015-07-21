@@ -2,8 +2,8 @@ package org.aksw.jena_sparql_api.concept_cache.dirty;
 
 import org.aksw.jena_sparql_api.compare.QueryExecutionFactoryCompare;
 import org.aksw.jena_sparql_api.concept_cache.core.QueryExecutionFactoryConceptCache;
-import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import com.hp.hpl.jena.shared.PrefixMapping;
@@ -42,7 +42,9 @@ public class TestCases {
 
         QueryExecutionFactory rawService = FluentQueryExecutionFactory
                 .http("http://akswnc3.informatik.uni-leipzig.de:8860/sparql", "http://dbpedia.org")
-                .withPagination(100000)
+                .config()
+                    .withPagination(100000)
+                .end()
                 .create();
 
         QueryExecutionFactory cachedService = new QueryExecutionFactoryConceptCache(rawService);
@@ -51,7 +53,9 @@ public class TestCases {
         if(forceCompareFailures) {
             rawService = FluentQueryExecutionFactory
                     .http("http://linkedgeodata.org/sparql", "http://linkedgeodata.org")
-                    .withPagination(100000)
+                    .config()
+                        .withPagination(100000)
+                    .end()
                     .create();
         }
 

@@ -6,21 +6,15 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.aksw.commons.util.StreamUtils;
 import org.aksw.jena_sparql_api.concept_cache.core.QueryExecutionFactoryConceptCache;
 import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.model.QueryExecutionFactoryModel;
 import org.apache.jena.riot.RDFDataMgr;
-import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
-import org.jgrapht.experimental.isomorphism.AdaptiveIsomorphismInspectorFactory;
-import org.jgrapht.experimental.isomorphism.GraphIsomorphismInspector;
-import org.jgrapht.experimental.isomorphism.IsomorphismRelation;
-import org.jgrapht.graph.DefaultEdge;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
@@ -123,7 +117,9 @@ public class ConceptCache {
         Model model = RDFDataMgr.loadModel(fileName);
         QueryExecutionFactory sparqlService = FluentQueryExecutionFactory
             .model(model)
-            .withPagination(100000)
+            .config()
+                .withPagination(100000)
+            .end()
             .create();
 
 
