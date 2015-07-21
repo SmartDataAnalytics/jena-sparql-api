@@ -22,4 +22,9 @@ public class SparqlServiceImpl
     public UpdateExecutionFactory getUpdateExecutionFactory() {
         return uef;
     }
+
+    public static SparqlServiceImpl create(QueryExecutionFactory qef, UpdateExecutionFactory uef) {
+        SparqlServiceImpl result = new SparqlServiceImpl(qef, uef);
+        return result;
+    }
 }

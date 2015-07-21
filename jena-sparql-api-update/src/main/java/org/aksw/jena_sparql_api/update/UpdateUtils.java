@@ -21,6 +21,8 @@ import com.google.common.collect.Sets;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.query.QueryExecution;
+import com.hp.hpl.jena.query.QueryFactory;
+import com.hp.hpl.jena.query.Syntax;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.sparql.engine.binding.Binding;
@@ -37,6 +39,31 @@ import com.hp.hpl.jena.update.UpdateRequest;
 import com.hp.hpl.jena.util.iterator.ExtendedIterator;
 
 public class UpdateUtils {
+
+    /**
+     * Copy data from one sparql service to another based on a construct query
+     *
+     * @param target
+     * @param source
+     * @param constructQueryStr
+     * @param batchSize
+     */
+    public static void copyByConstruct(SparqlService target, SparqlService source, String constructQueryStr, int batchSize) {
+        Query query = QueryFactory.create(constructQueryStr, "http://example.org/", Syntax.syntaxARQ);
+
+        QueryExecution qe = source.getQueryExecutionFactory().createQueryExecution(query);
+        Iterator<Triple> it = qe.execConstructTriples();
+
+        Iterator<List<Triple>> itPart = Iterators.partition(it, batchSize);
+
+        while(itPart.hasNext()) {
+            List<Triple> part = itPart.next();
+            System.out.println("Items in this chunk: " + part.size());
+            executeInsertTriples(target.getUpdateExecutionFactory(), part);
+        }
+        System.out.println("Done with this chunk");
+
+    }
 
     public static Iterator<Diff<Set<Quad>>> createIteratorDiff(Iterator<? extends Iterable<? extends Binding>> itBindings, Diff<? extends Iterable<Quad>> quadDiff) {
         FunctionDiffFromBindings fn = FunctionDiffFromBindings.create(quadDiff);
@@ -175,6 +202,32 @@ public class UpdateUtils {
             result.add(deleteData);
         }
 
+        return result;
+    }
+
+    public static UpdateProcessor executeInsertTriples(UpdateExecutionFactory uef, Iterable<Triple> triples) {
+        Iterable<Quad> quads = Iterables.transform(triples, FN_QuadFromTriple.fnDefaultGraphNodeGenerated);
+        UpdateProcessor result = executeInsertQuads(uef, quads);
+        return result;
+    }
+
+    public static UpdateProcessor executeDeleteTriples(UpdateExecutionFactory uef, Iterable<Triple> triples) {
+        Iterable<Quad> quads = Iterables.transform(triples, FN_QuadFromTriple.fnDefaultGraphNodeGenerated);
+        UpdateProcessor result = executeDeleteQuads(uef, quads);
+        return result;
+    }
+
+    public static UpdateProcessor executeInsertQuads(UpdateExecutionFactory uef, Iterable<Quad> quads) {
+        UpdateRequest updateRequest = createUpdateRequest(quads, Collections.<Quad>emptySet());
+        UpdateProcessor result = uef.createUpdateProcessor(updateRequest);
+        result.execute();
+        return result;
+    }
+
+    public static UpdateProcessor executeDeleteQuads(UpdateExecutionFactory uef, Iterable<Quad> quads) {
+        UpdateRequest updateRequest = createUpdateRequest(Collections.<Quad>emptySet(), quads);
+        UpdateProcessor result = uef.createUpdateProcessor(updateRequest);
+        result.execute();
         return result;
     }
 

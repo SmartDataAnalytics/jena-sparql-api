@@ -111,7 +111,7 @@ public class TestSparqlUpdate {
 
         // The fluent API offers convenient construction of common configurations
         // However, should you need more flexibility, you can always create a custom SparqlService decorators.
-        SparqlService sparqlService = FluentSparqlServiceFactory
+        SparqlService sparqlService = FluentSparqlService
             .forModel()
             .withUpdateListeners(new UpdateStrategyEventSource(), listeners)
             .create();

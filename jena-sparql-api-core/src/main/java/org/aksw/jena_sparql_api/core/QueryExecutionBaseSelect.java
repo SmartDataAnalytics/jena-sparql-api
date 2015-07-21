@@ -94,8 +94,8 @@ public abstract class QueryExecutionBaseSelect
 
 
     // Describe queries are sent as multiple individual queries, therefore we require a
-    // reference to a QueryExecutionFactory
-    private QueryExecutionFactory subFactory;
+    // back reference to the corresponding QueryExecutionFactory
+    private QueryExecutionFactory parentFactory;
 
 
     // TODO Move these two utility methods to a utility class
@@ -123,7 +123,7 @@ public abstract class QueryExecutionBaseSelect
     public QueryExecutionBaseSelect(Query query, QueryExecutionFactory subFactory) {
         super(null);
         this.query = query;
-        this.subFactory = subFactory;
+        this.parentFactory = subFactory;
     }
 
     //private QueryExecution running = null;
@@ -236,7 +236,7 @@ public abstract class QueryExecutionBaseSelect
 
         // Note: We need to close the connection when we are done
 
-        Describer tmp = Describer.create(query.getResultURIs(), query.getResultVars(), rs, subFactory);
+        Describer tmp = Describer.create(query.getResultURIs(), query.getResultVars(), rs, parentFactory);
 
 
         final QueryExecution self = this;
@@ -332,9 +332,12 @@ public abstract class QueryExecutionBaseSelect
                     + query.toString() + "]");
         }
 
+        Query clone = query.cloneQuery();
+        clone.setQuerySelectType();
+
         //Query selectQuery = QueryUtils.elementToQuery(query.getQueryPattern());
-        query.setQueryResultStar(true);
-        ResultSetCloseable rs = executeCoreSelect(query);
+        clone.setQueryResultStar(true);
+        ResultSetCloseable rs = executeCoreSelect(clone);
 
 
         // insertPrefixesInto(result) ;

@@ -14,10 +14,11 @@ import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
 public class FluentUpdateExecutionFactoryEndable
     extends FluentUpdateExecutionFactory
 {
-    private FluentSparqlServiceFactory fssf;
+    private FluentSparqlService fssf;
 
-    public FluentUpdateExecutionFactoryEndable(FluentSparqlServiceFactory fssf) {
+    public FluentUpdateExecutionFactoryEndable(FluentSparqlService fssf) {
         super(fssf.sparqlService.getUpdateExecutionFactory());
+        this.fssf = fssf;
     }
 
     /**
@@ -38,7 +39,7 @@ public class FluentUpdateExecutionFactoryEndable
 //        return result;
 //    }
 
-    public FluentSparqlServiceFactory end() {
+    public FluentSparqlService end() {
         QueryExecutionFactory qef= fssf.sparqlService.getQueryExecutionFactory();
         UpdateExecutionFactory uef = super.create();
 

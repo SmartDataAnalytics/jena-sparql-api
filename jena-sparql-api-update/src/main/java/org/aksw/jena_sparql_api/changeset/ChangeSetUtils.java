@@ -47,7 +47,7 @@ import com.hp.hpl.jena.vocabulary.RDF;
 
 public class ChangeSetUtils {
 
-    public static final Query queryMostRecentChangeSet = QueryFactory.parse(new Query(), "Prefix cs: <http://purl.org/vocab/changeset/schema#> Select ?s ?o { ?s cs:subjectOfChange ?o . Optional { ?x cs:precedingChangeSet ?s } . Filter(!Bound(?x)) }", "http://example.org/", Syntax.syntaxSPARQL_10);
+    public static final Query queryMostRecentChangeSet = QueryFactory.parse(new Query(), "Prefix cs: <http://purl.org/vocab/changeset/schema#> Select ?s ?o { ?s cs:subjectOfChange ?o . Optional { ?x cs:precedingChangeSet ?s } . Filter(!Bound(?x)) }", "http://example.org/", Syntax.syntaxSPARQL_11);
 
 
     public static LookupService<Node, Node> createLookupServiceMostRecentChangeSet(QueryExecutionFactory qef) {

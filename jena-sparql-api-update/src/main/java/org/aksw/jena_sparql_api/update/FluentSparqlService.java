@@ -12,7 +12,7 @@ import com.google.common.base.Function;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 
-public class FluentSparqlServiceFactory {
+public class FluentSparqlService {
     //private FluentQueryExecutionFactory fluentQef =
     //private FluentUpdateExecutionFactory fluentUef;
     protected SparqlService sparqlService;
@@ -20,7 +20,7 @@ public class FluentSparqlServiceFactory {
     private FluentQueryExecutionFactoryEndable fluentQef;
     private FluentUpdateExecutionFactoryEndable fluentUef;
 
-    public FluentSparqlServiceFactory(SparqlService sparqlService) {
+    public FluentSparqlService(SparqlService sparqlService) {
         this.sparqlService = sparqlService;
         this.fluentQef = new FluentQueryExecutionFactoryEndable(this);
         this.fluentUef = new FluentUpdateExecutionFactoryEndable(this);
@@ -40,7 +40,7 @@ public class FluentSparqlServiceFactory {
         return sparqlService;
     }
 
-    public <T extends UpdateExecutionFactory & DatasetListenable> FluentSparqlServiceFactory withUpdateListeners(Function<SparqlService, T> updateStrategy, Collection<DatasetListener> listeners) {
+    public <T extends UpdateExecutionFactory & DatasetListenable> FluentSparqlService withUpdateListeners(Function<SparqlService, T> updateStrategy, Collection<DatasetListener> listeners) {
 
         QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
         T uef = updateStrategy.apply(sparqlService);
@@ -55,25 +55,25 @@ public class FluentSparqlServiceFactory {
 
 
 
-    public static FluentSparqlServiceFactory forModel() {
+    public static FluentSparqlService forModel() {
         Model model = ModelFactory.createDefaultModel();
 
         QueryExecutionFactory qef = FluentQueryExecutionFactory.model(model).create();
         UpdateExecutionFactory uef = FluentUpdateExecutionFactory.from(model).create();
 
-        FluentSparqlServiceFactory result = from(qef, uef);
+        FluentSparqlService result = from(qef, uef);
 
         return result;
     }
 
-    public static FluentSparqlServiceFactory from(QueryExecutionFactory qef, UpdateExecutionFactory uef) {
+    public static FluentSparqlService from(QueryExecutionFactory qef, UpdateExecutionFactory uef) {
         SparqlService sparqlService = new SparqlServiceImpl(qef, uef);
-        FluentSparqlServiceFactory result = from(sparqlService);
+        FluentSparqlService result = from(sparqlService);
         return result;
     }
 
-    public static FluentSparqlServiceFactory from(SparqlService sparqlService) {
-        FluentSparqlServiceFactory result = new FluentSparqlServiceFactory(sparqlService);
+    public static FluentSparqlService from(SparqlService sparqlService) {
+        FluentSparqlService result = new FluentSparqlService(sparqlService);
         return result;
     }
 
