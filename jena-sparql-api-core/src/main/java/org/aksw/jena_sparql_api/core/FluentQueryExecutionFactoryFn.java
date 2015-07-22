@@ -39,7 +39,7 @@ public class FluentQueryExecutionFactoryFn<P>
         this.fn = fn;
     }
 
-    public FluentQueryExecutionFactoryFn<P> withDelay(final long delayDuration, final TimeUnit delayTimeUnit) {
+    public FluentQueryExecutionFactoryFn<P> withDelay(final int delayDuration, final TimeUnit delayTimeUnit) {
         compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
             @Override
             public QueryExecutionFactory apply(QueryExecutionFactory qef) {
@@ -51,7 +51,7 @@ public class FluentQueryExecutionFactoryFn<P>
         return this;
     }
 
-    public FluentQueryExecutionFactoryFn<P> withPagination(final long pageSize) {
+    public FluentQueryExecutionFactoryFn<P> withPagination(final int pageSize) {
         compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
             @Override
             public QueryExecutionFactory apply(QueryExecutionFactory qef) {
@@ -107,7 +107,7 @@ public class FluentQueryExecutionFactoryFn<P>
      *
      * @return
      */
-    public FluentQueryExecutionFactoryFn<P> selectOnly(){
+    public FluentQueryExecutionFactoryFn<P> selectOnly() {
         compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
             @Override
             public QueryExecutionFactory apply(QueryExecutionFactory qef) {
@@ -117,6 +117,10 @@ public class FluentQueryExecutionFactoryFn<P>
         });
 
         return this;
+    }
+
+    public static FluentQueryExecutionFactoryFn<?> start() {
+        return new FluentQueryExecutionFactoryFn<Object>();
     }
 
 }

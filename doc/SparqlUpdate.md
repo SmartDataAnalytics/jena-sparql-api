@@ -45,7 +45,7 @@ import com.hp.hpl.jena.update.UpdateRequest;
 
 class MainSparqlUpdateSimpleDemo {
 
-    public static void main(String[] args) throws Exception
+    public static void demoWithModel() throws Exception
     {
         // Define the listeners
         List<DatasetListener> listeners = Collections.<DatasetListener>singletonList(new DatasetListener() {
@@ -70,6 +70,35 @@ class MainSparqlUpdateSimpleDemo {
             .createUpdateProcessor(updateRequest)
             .execute();
     }
+
+    public static void demoWithRemoteHttpAccess() throws Exception
+        List<DatasetListener> listeners = Collections.<DatasetListener>singletonList(new DatasetListener() {
+            @Override
+            public void onPreModify(Diff<Set<Quad>> diff, UpdateContext updateContext) {
+                // Print out any changes to the console
+                System.out.println(diff);
+            }
+        });
+
+        HttpAuthenticator auth = new SimpleAuthenticator("dba", "dba".toCharArray());
+
+        SparqlService sparqlService = FluentSparqlService
+            .http("http://your.write.enabled/sparql-endpoint", "http://dpbedia.org", auth)
+            .config()
+                .configQuery()
+                    .withPagination(100)
+                .end()
+                .withUpdateListeners(new UpdateStrategyEventSource(), listeners)
+            .end()
+            .create();
+
+        UpdateRequest updateRequest = UpdateUtils.parse("Prefix ex: <http://example.org/> Insert { ex:s ex:p ex:o }");
+        sparqlService
+            .getUpdateExecutionFactory()
+            .createUpdateProcessor(updateRequest)
+            .execute();
+
+
 }
 
 ```

@@ -91,4 +91,8 @@ public class FluentSparqlServiceFn<P>
         return this;
     }
 
+    public static FluentSparqlServiceFn<?> start() {
+        return new FluentSparqlServiceFn<Object>();
+    }
+
 }

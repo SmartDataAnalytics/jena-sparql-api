@@ -31,13 +31,21 @@ public class ConfigApp {
             .from(coreFactory)
             .config()
                 .configQuery()
-                    .withPagination(1000l)
+                    .withPagination(1000)
                     .selectOnly()
                 .end()
             .end().create();
 
-
 /*
+
+        Function<QueryExecutionFactory, QueryExecutionFactory> x = FluentQueryExecutionFactoryFn.start().withPagination(1000l).withDefaultLimit(1000l, true).create();
+
+
+
+
+        qef = x.apply(qef);
+
+
         SparqlServiceFactory result = new SparqlServiceFactory() {
             @Override
             public SparqlService createSparqlService(String serviceUri, DatasetDescription datasetDescription, Object authenticator) {

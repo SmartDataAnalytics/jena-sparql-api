@@ -1,16 +1,25 @@
 package org.aksw.jena_sparql_api.update;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 import org.aksw.jena_sparql_api.core.FluentBase;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.SparqlServiceImpl;
+import org.aksw.jena_sparql_api.core.SparqlServiceReference;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
+import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryHttp;
+import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
+import org.apache.jena.atlas.web.auth.HttpAuthenticator;
 
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.sparql.core.DatasetDescription;
 
 public class FluentSparqlService<P>
     extends FluentBase<SparqlService, P>
@@ -84,6 +93,35 @@ public class FluentSparqlService<P>
 
         return result;
     }
+
+    public static FluentSparqlService<?> http(String service, String ... defaultGraphs) {
+        return http(service, Arrays.asList(defaultGraphs));
+    }
+
+    public static FluentSparqlService<?> http(String service, String defaultGraph, HttpAuthenticator authenticator) {
+        return http(service, new DatasetDescription(Collections.singletonList(defaultGraph), Collections.<String>emptyList()), authenticator);
+    }
+
+    public static FluentSparqlService<?> http(SparqlServiceReference sparqlService) {
+        return http(sparqlService.getServiceURL(), sparqlService.getDatasetDescription());
+    }
+
+    public static FluentSparqlService<?> http(String service, List<String> defaultGraphs) {
+        DatasetDescription datasetDescription = new DatasetDescription(defaultGraphs, Collections.<String>emptyList());
+
+        return http(service, datasetDescription, null);
+    }
+
+    public static FluentSparqlService<?> http(String service, DatasetDescription datasetDescription) {
+        return http(service, datasetDescription);
+    }
+
+    public static FluentSparqlService<?> http(String service, DatasetDescription datasetDescription, HttpAuthenticator authenticator) {
+        QueryExecutionFactory qef = new QueryExecutionFactoryHttp(service, datasetDescription, authenticator);
+        UpdateExecutionFactory uef = new UpdateExecutionFactoryHttp(service, datasetDescription, authenticator);
+        return from(qef, uef);
+    }
+
 
     public static FluentSparqlService<?> from(QueryExecutionFactory qef, UpdateExecutionFactory uef) {
         SparqlService sparqlService = new SparqlServiceImpl(qef, uef);
