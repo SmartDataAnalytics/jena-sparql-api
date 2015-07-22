@@ -1,5 +1,5 @@
-SPARQL Update
-=============
+## SPARQL Update
+
 Jena Sparql Api offers the following SPARQL Update features:
 
 * Core Interfaces for performing SPARQL Update requests together with basic implementations for HTTP and Model backends.
@@ -8,7 +8,7 @@ Jena Sparql Api offers the following SPARQL Update features:
 
 The core interface for creating update execution requests is `org.aksw.jena_sparql_api.core.UpdateExecutionFactory`.
 
-===Architecture===
+### Architecture
 The following concepts are crucial for understanding the jena-sparql-api SPARQL Update system:
 * SparqlService: An object providing SPARQL-based read and write functionality via `getQueryExecutionFactory` and `getUpdateExecutionFactory`.
 * UpdateStrategy: An `UpdateStrategy` is simply a `Function` that given a `SparqlService` returns a `UpdateExecutionFactory`. This is *not necessarily* the `SparqlService`'s native UpdateExecutionFactory.
@@ -20,7 +20,7 @@ Conversely, if there is a request to insert an already existing triple / remove 
 * Diff<Set<Quad>>: An object representing a set of added and removed quads.
 
 
-===Simple Example for Intercepting events===
+### Simple Example for Intercepting events
 The magic in this example comes from the `UpdateStrategyEventSource`:
 An `UpdateStrategy` is simply a `Function` that given a `SparqlService` returns a `UpdateExecutionFactory`.
 In the simplest case, this function could just return the service's native UpdateExecutionFactory (i.e. `sparqlService.getUpdateExecutionFactory()`).
