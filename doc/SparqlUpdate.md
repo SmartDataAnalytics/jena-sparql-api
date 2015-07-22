@@ -12,8 +12,8 @@ The core interface for creating update execution requests is `org.aksw.jena_spar
 The following concepts are crucial for understanding the jena-sparql-api SPARQL Update system:
 * SparqlService: An object providing SPARQL-based read and write functionality via `getQueryExecutionFactory` and `getUpdateExecutionFactory`.
 * UpdateStrategy: An `UpdateStrategy` is simply a `Function` that given a `SparqlService` returns a `UpdateExecutionFactory`. This is *not necessarily* the `SparqlService`'s native UpdateExecutionFactory.
-** UpdateStrategyEventSource: An `UpdateStrategy` whose created `UpdateExecutionFactory` support listening for changes to data.
-*** QuadContainmentChecker:  Interface for checking whether a set of quads is present in the data accessible via a `QueryExecutionFactory`.
+ * UpdateStrategyEventSource: An `UpdateStrategy` whose created `UpdateExecutionFactory` support listening for changes to data.
+  * QuadContainmentChecker:  Interface for checking whether a set of quads is present in the data accessible via a `QueryExecutionFactory`.
 This is needed in order for the `UpdateStrategyEventSource` to only emits events when there are actual changes.
 Conversely, if there is a request to insert an already existing triple / remove a non-existing triple, no event will be raised.
 * DatasetListener: An interface with the method `.onPreModify(...)` on which changes are announced using a `Diff` object.
