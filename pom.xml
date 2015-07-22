@@ -58,8 +58,8 @@
         <javaee-api.version>6.0</javaee-api.version>
 
         <!-- Project Settings -->
-        <maven.compiler.source>1.6</maven.compiler.source>
-        <maven.compiler.target>1.6</maven.compiler.target>
+        <maven.compiler.source>1.7</maven.compiler.source>
+        <maven.compiler.target>1.7</maven.compiler.target>
         <java.version.javadoc>http://java.sun.com/javase/6/docs/api/</java.version.javadoc>
         <file.encoding>UTF-8</file.encoding>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -76,7 +76,7 @@
                 <configuration>
                     <arguments>-P!source-artifacts</arguments>
                     <useReleaseProfile>false</useReleaseProfile>
-                    <goals>-Dmaven.test.skip=true deploy</goals>
+                    <goals>-Dmaven.test.skip=false deploy</goals>
                     <autoVersionSubmodules>true</autoVersionSubmodules>
                 </configuration>
             </plugin>
@@ -133,7 +133,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.17</version>
                 <configuration>
-                    <skipTests>true</skipTests>
+                    <skipTests>false</skipTests>
                 </configuration>
             </plugin>
 
