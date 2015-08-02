@@ -6,7 +6,7 @@ import java.util.List;
 
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
-import org.aksw.jena_sparql_api.update.UpdateUtils;
+import org.aksw.jena_sparql_api.core.utils.UpdateExecutionUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -37,7 +37,7 @@ public class TestServletSparqlUpdate {
 
 
         SparqlService ssLocal = ssf.createSparqlService("http://localhost:8890/sparql", new DatasetDescription(Collections.singletonList("http://jsa.aksw.org/test/data/"), Collections.<String>emptyList()), null);
-        UpdateUtils.copyByConstruct(ssLocal, ssDBpedia, s, 1000);
+        UpdateExecutionUtils.copyByConstruct(ssLocal, ssDBpedia, s, 1000);
 
 
         Server server = ServerUtils.startServer(port, new WebAppInitializer());

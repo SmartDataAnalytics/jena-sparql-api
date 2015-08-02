@@ -5,7 +5,10 @@ import java.util.List;
 import java.util.Set;
 
 import org.aksw.commons.collections.diff.Diff;
+import org.aksw.jena_sparql_api.core.DatasetListener;
 import org.aksw.jena_sparql_api.core.SparqlService;
+import org.aksw.jena_sparql_api.core.UpdateContext;
+import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
 
 import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.update.UpdateRequest;
@@ -33,7 +36,7 @@ class MainSparqlUpdateSimpleDemo {
             .create();
 
         // Perform the request - the listeners will be notified appropriately
-        UpdateRequest updateRequest = UpdateUtils.parse("Prefix ex: <http://example.org/> Insert Data { ex:s ex:p ex:o }");
+        UpdateRequest updateRequest = UpdateRequestUtils.parse("Prefix ex: <http://example.org/> Insert Data { ex:s ex:p ex:o }");
         sparqlService
             .getUpdateExecutionFactory()
             .createUpdateProcessor(updateRequest)

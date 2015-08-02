@@ -3,7 +3,11 @@ package org.aksw.jena_sparql_api.update;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.aksw.jena_sparql_api.core.DatasetListener;
+import org.aksw.jena_sparql_api.core.QuadContainmentChecker;
 import org.aksw.jena_sparql_api.core.SparqlService;
+import org.aksw.jena_sparql_api.core.UpdateContext;
+import org.aksw.jena_sparql_api.core.utils.UpdateExecutionUtils;
 
 import com.google.common.collect.Iterables;
 import com.hp.hpl.jena.sparql.util.Context;
@@ -49,7 +53,7 @@ public class UpdateProcessorEventSource
         SparqlService sparqlService = context.getSparqlService();
         int batchSize = context.getBatchSize();
         QuadContainmentChecker containmentChecker = context.getContainmentChecker();
-        UpdateUtils.executeUpdate(sparqlService, updateRequest, batchSize, allListeners, containmentChecker);
+        UpdateExecutionUtils.executeUpdate(sparqlService, updateRequest, batchSize, allListeners, containmentChecker);
     }
 
 }

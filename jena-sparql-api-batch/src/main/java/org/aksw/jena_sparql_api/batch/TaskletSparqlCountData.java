@@ -8,6 +8,7 @@ import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.util.Assert;
 
 import com.hp.hpl.jena.query.Query;
 
@@ -17,11 +18,11 @@ public class TaskletSparqlCountData
     public static final String KEY = TaskletSparqlCountData.class.getSimpleName() + ".count";
 
     private Query query;
-    private QueryExecutionFactory sparqlService;
+    private QueryExecutionFactory qef;
 
-    public TaskletSparqlCountData(Query query, QueryExecutionFactory sparqlService) {
+    public TaskletSparqlCountData(Query query, QueryExecutionFactory qef) {
         this.query = query;
-        this.sparqlService = sparqlService;
+        this.qef = qef;
     }
 
 
@@ -29,7 +30,7 @@ public class TaskletSparqlCountData
     public RepeatStatus execute(StepContribution contribution,
             ChunkContext chunkContext) throws Exception {
 
-        long count = QueryExecutionUtils.countQuery(query, sparqlService);
+        long count = QueryExecutionUtils.countQuery(query, qef);
 
         chunkContext.getStepContext().getStepExecution().getJobExecution().getExecutionContext().put(KEY, count);
 
@@ -38,5 +39,7 @@ public class TaskletSparqlCountData
 
     @Override
     public void afterPropertiesSet() throws Exception {
+        Assert.notNull(query);
+        Assert.notNull(qef);
     }
 }

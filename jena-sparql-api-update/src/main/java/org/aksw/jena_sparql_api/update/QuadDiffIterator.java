@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.aksw.commons.collections.diff.Diff;
+import org.aksw.jena_sparql_api.core.utils.UpdateDiffUtils;
 
 import com.google.common.collect.AbstractIterator;
 import com.hp.hpl.jena.sparql.core.Quad;
@@ -28,7 +29,7 @@ public class QuadDiffIterator
 
         if(itBindings.hasNext()) {
             Iterable<? extends Binding> bindings = itBindings.next();
-            result = UpdateUtils.buildDiff(bindings, quadDiff);
+            result = UpdateDiffUtils.buildDiff(bindings, quadDiff);
         } else {
             result = endOfData();
         }

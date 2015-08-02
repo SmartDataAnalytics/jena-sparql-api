@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.aksw.commons.util.StreamUtils;
-import org.aksw.jena_sparql_api.concept_cache.core.QueryExecutionFactoryConceptCache;
+import org.aksw.jena_sparql_api.concept_cache.core.QueryExecutionFactoryViewMatcher;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
@@ -131,7 +131,7 @@ public class ConceptCache {
         ConceptCache cache = new ConceptCache(sparqlService);
 
 
-        sparqlService = new QueryExecutionFactoryConceptCache(sparqlService);
+        sparqlService = new QueryExecutionFactoryViewMatcher(sparqlService);
 
 
         if(false) {

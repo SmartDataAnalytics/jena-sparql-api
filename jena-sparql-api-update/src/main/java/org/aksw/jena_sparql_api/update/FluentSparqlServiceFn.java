@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.update;
 
 import java.util.Collection;
 
+import org.aksw.jena_sparql_api.core.DatasetListener;
 import org.aksw.jena_sparql_api.core.FluentFnBase;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactoryFn;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;

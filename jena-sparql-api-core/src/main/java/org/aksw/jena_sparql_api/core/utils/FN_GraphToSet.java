@@ -1,6 +1,8 @@
-package org.aksw.jena_sparql_api.update;
+package org.aksw.jena_sparql_api.core.utils;
 
 import java.util.Set;
+
+import org.aksw.jena_sparql_api.utils.SetGraph;
 
 import com.google.common.base.Function;
 import com.hp.hpl.jena.graph.Graph;

@@ -9,15 +9,15 @@ import java.util.Set;
 import org.aksw.commons.collections.diff.Diff;
 import org.aksw.commons.util.strings.StringUtils;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceSparqlQuery;
 import org.aksw.jena_sparql_api.lookup.LookupServiceTransformValue;
 import org.aksw.jena_sparql_api.lookup.ResultSetPart;
 import org.aksw.jena_sparql_api.mapper.BindingMapperProjectVar;
 import org.aksw.jena_sparql_api.mapper.FunctionBindingMapper;
-import org.aksw.jena_sparql_api.update.SetGraph;
-import org.aksw.jena_sparql_api.update.UpdateUtils;
 import org.aksw.jena_sparql_api.utils.GraphUtils;
+import org.aksw.jena_sparql_api.utils.SetGraph;
 import org.aksw.jena_sparql_api.utils.Vars;
 
 import com.google.common.base.Function;
@@ -227,7 +227,7 @@ public class ChangeSetUtils {
             System.out.println("^ -------------------");
         }
 
-        UpdateRequest result = UpdateUtils.createUpdateRequest(model, null);
+        UpdateRequest result = UpdateRequestUtils.createUpdateRequest(model, null);
         return result;
     }
 

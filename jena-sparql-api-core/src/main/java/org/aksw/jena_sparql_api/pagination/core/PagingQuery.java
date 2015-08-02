@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.batch;
+package org.aksw.jena_sparql_api.pagination.core;
 
 import org.aksw.jena_sparql_api.pagination.extra.PaginationQueryIterator;
 

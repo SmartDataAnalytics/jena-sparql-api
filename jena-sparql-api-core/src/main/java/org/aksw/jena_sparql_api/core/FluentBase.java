@@ -8,6 +8,19 @@ public class FluentBase<T, P>
     protected Supplier<P> parentSupplier;
     protected T fn;
 
+    public FluentBase() {
+        this(null);
+    }
+
+    public FluentBase(T fn) {
+        this(fn, null);
+    }
+
+    public FluentBase(T fn, Supplier<P> parentSupplier) {
+        super();
+        this.fn = fn;
+        this.parentSupplier = parentSupplier;
+    }
 
     /*
     void enterFn(final FluentFnBase<T, P> subFluent) {

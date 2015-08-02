@@ -3,6 +3,8 @@ package org.aksw.jena_sparql_api.update;
 import java.util.Set;
 
 import org.aksw.commons.collections.diff.Diff;
+import org.aksw.jena_sparql_api.core.DatasetListener;
+import org.aksw.jena_sparql_api.core.UpdateContext;
 import org.apache.jena.atlas.lib.Sink;
 
 import com.hp.hpl.jena.sparql.core.Quad;

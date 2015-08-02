@@ -21,7 +21,7 @@ import javax.ws.rs.core.StreamingOutput;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
-import org.aksw.jena_sparql_api.update.UpdateUtils;
+import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
 import org.aksw.jena_sparql_api.web.utils.AuthenticatorUtils;
 import org.aksw.jena_sparql_api.web.utils.ThreadUtils;
 import org.apache.jena.atlas.web.auth.HttpAuthenticator;
@@ -104,7 +104,7 @@ public abstract class ServletSparqlUpdateBase {
 
         UpdateExecutionFactory uef = sparqlService.getUpdateExecutionFactory();
 
-        UpdateRequest updateRequest = UpdateUtils.parse(requestStr);
+        UpdateRequest updateRequest = UpdateRequestUtils.parse(requestStr);
         UpdateProcessor result = uef.createUpdateProcessor(updateRequest);
         return result;
     }

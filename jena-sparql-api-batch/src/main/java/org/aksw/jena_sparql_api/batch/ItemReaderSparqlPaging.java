@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.pagination.core.PagingQuery;
 import org.springframework.batch.item.data.AbstractPaginatedDataItemReader;
 
 import com.hp.hpl.jena.query.Query;
@@ -15,7 +16,14 @@ import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.sparql.engine.binding.Binding;
 
 
-public class SparqlPagingItemReader<T>
+/**
+ * Item reader that reads a SPARQL SELECT query using pagination
+ *
+ * @author raven
+ *
+ * @param <T>
+ */
+public class ItemReaderSparqlPaging<T>
 //    extends AbstractPagingItemReader<T>
     extends AbstractPaginatedDataItemReader<T>
 {
@@ -32,7 +40,7 @@ public class SparqlPagingItemReader<T>
     private volatile Iterator<Query> itQuery = null;
 
 
-    public SparqlPagingItemReader() {
+    public ItemReaderSparqlPaging() {
         setName(this.getClass().getName());
     }
 

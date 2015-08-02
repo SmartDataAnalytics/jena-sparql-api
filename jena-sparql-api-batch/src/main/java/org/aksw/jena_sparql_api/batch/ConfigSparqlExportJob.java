@@ -230,14 +230,14 @@ public class ConfigSparqlExportJob {
     @Bean
     @StepScope
     @Autowired
-    public SparqlPagingItemReader<Binding> reader(
+    public ItemReaderSparqlPaging<Binding> reader(
             Query query,
             QueryExecutionFactory qef,
 //            @Value("#{jobParameters[serviceUri]}") String serviceUri,
 //            @Value("#{jobParameters[defaultGraphUris]}") String defaultGraphUris,
             @Value("#{jobParameters[queryString]}") String queryString)
     {
-        SparqlPagingItemReader<Binding> itemReader = new SparqlPagingItemReader<Binding>();
+        ItemReaderSparqlPaging<Binding> itemReader = new ItemReaderSparqlPaging<Binding>();
 
         itemReader.setSparqlService(qef);
         itemReader.setBindingMapper(new BindingMapperPassThrough());

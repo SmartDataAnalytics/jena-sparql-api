@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.update;
 
 import java.util.Set;
 
+import org.aksw.jena_sparql_api.core.QuadContainmentChecker;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 
 import com.hp.hpl.jena.sparql.core.Quad;

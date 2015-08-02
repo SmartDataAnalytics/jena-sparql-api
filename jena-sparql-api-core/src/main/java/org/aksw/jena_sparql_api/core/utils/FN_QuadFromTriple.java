@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.update;
+package org.aksw.jena_sparql_api.core.utils;
 
 import com.google.common.base.Function;
 import com.hp.hpl.jena.graph.Node;

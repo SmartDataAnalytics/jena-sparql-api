@@ -1,6 +1,8 @@
 package org.aksw.jena_sparql_api.update;
 
+import org.aksw.jena_sparql_api.core.QuadContainmentChecker;
 import org.aksw.jena_sparql_api.core.SparqlService;
+import org.aksw.jena_sparql_api.core.UpdateContext;
 
 /**
  * @author raven

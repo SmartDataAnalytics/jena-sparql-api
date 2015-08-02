@@ -72,7 +72,7 @@ public class GeoMapSupplierUtils {
             AggTransform.create(
                 AggTransform.create(AggUtils.literalNode(new ExprVar(wktVar)),
                         FunctionNodeToString.fn),
-                FunctionParseWkt.fn);
+                FN_ParseWkt.fn);
 
         return result;
     }
@@ -94,7 +94,7 @@ public class GeoMapSupplierUtils {
             AggTransform.create(
                 AggTransform.create(AggUtils.literalNode(concat),
                         FunctionNodeToString.fn),
-                FunctionParseWkt.fn);
+                FN_ParseWkt.fn);
 
         return result;
     }

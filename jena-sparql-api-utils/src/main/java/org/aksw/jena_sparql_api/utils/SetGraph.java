@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.update;
+package org.aksw.jena_sparql_api.utils;
 
 import java.util.AbstractSet;
 

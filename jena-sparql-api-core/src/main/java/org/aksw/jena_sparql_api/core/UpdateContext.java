@@ -1,6 +1,5 @@
-package org.aksw.jena_sparql_api.update;
+package org.aksw.jena_sparql_api.core;
 
-import org.aksw.jena_sparql_api.core.SparqlService;
 
 
 public class UpdateContext {

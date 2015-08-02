@@ -16,6 +16,14 @@ import com.google.common.base.Functions;
 public abstract class FluentFnBase<T, P>
     extends FluentBase<Function<T, T>, P>
 {
+    public FluentFnBase() {
+        this(null);
+    }
+
+    public FluentFnBase(Function<T, T> fn) {
+        super(fn);
+    }
+
     public FluentFnBase<T, P> compose(Function<T, T> nextFn) {
         if(fn == null) {
             fn = nextFn;

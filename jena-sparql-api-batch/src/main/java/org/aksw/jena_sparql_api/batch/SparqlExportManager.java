@@ -89,7 +89,6 @@ public class SparqlExportManager {
 
 
     public static SparqlExportManager createTestInstance() {
-
         ApplicationContext context = new AnnotationConfigApplicationContext(ConfigSparqlExportJob.class);
         JobExplorer jobExplorer = context.getBean(JobExplorer.class);
         JobRepository jobRepository = context.getBean(JobRepository.class);
