@@ -13,4 +13,10 @@ public class FunctionGenPath
     implements Function<ResourceModel, ResourceModel>
 {
     private Path path;
+
+    @Override
+    public ResourceModel apply(ResourceModel arg0) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }

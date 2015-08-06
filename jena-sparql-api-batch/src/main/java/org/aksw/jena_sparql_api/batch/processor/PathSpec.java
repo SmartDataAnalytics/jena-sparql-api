@@ -26,7 +26,7 @@ import com.hp.hpl.jena.update.Update;
 class ModelUtils {
     
     public static Update deleteByConcept(Concept concept) {
-        
+        return null;
     }
 
     public static void clearGeometryWgs(Model model) {
