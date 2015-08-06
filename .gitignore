@@ -13,6 +13,7 @@ cache
 *.ear
 
 pom.xml.releaseBackup
+pom.xml.versionsBackup
 release.properties
 
 deptree.txt
