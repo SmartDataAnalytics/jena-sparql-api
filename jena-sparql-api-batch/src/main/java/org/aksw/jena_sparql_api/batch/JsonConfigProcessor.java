@@ -33,7 +33,7 @@ import org.springframework.beans.factory.support.GenericBeanDefinition;
 public class JsonConfigProcessor {
     public void process() {
         MethodInvokingFactoryBean bean = new MethodInvokingFactoryBean();
-        bean.set
+        //bean.set
     }
     
     
@@ -41,7 +41,7 @@ public class JsonConfigProcessor {
         
         for(Entry<String, Object> entry : context.entrySet()) {
             Object beanDef = entry.getValue();
-            processBean(beanDef);
+            //processBean(beanDef);
             
             
         }
@@ -73,9 +73,10 @@ public class JsonConfigProcessor {
      * 
      * @param map
      */
-    public static <T> resolveAttributeValue(Map<String, Object> map) {
-        ValueHolder vh;
-    }
+//    public static <T> resolveAttributeValue(Map<String, Object> map) {
+//        ValueHolder vh;
+//        return null;
+//    }
     
     public static void processBeanDefinition(BeanDefinitionRegistry registry, String beanName, Map<String, Object> map) {
         ConstructorArgumentValues cav;
@@ -98,13 +99,13 @@ public class JsonConfigProcessor {
         String beanClassName = (String)map.get("class");
         beanDef.setBeanClassName(beanClassName);
         
-        beanDef.setAttribute(name, value);
+        //beanDef.setAttribute(name, value);
         
         
         
         
         
 
-        registry.registerBeanDefinition(beanName, beanDefinition);
+        //registry.registerBeanDefinition(beanName, beanDefinition);
     }
 }
