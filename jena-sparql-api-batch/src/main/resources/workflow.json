@@ -1,0 +1,44 @@
+{
+  job: {
+    id: 'geoCodingJob',
+    jobRepository: 'defaultJobRepo',
+    context: {
+      srcSparqlService: {
+        class: 'foobar',
+        serviceUrl: 'http://dbpedia.org',
+        defaultGraphUris: ['http://dbpedia.org']
+      },
+      dstSparqlService: {
+      }
+    }
+    step: { // Perform geocoding and write intermediate result
+        reader: {
+          type: "sparql",
+          service: { ref: srcSparqlService }
+          queryString: 'Construct { ?s ?p ?o } { ?s ?p ?o . ?s a ex:Pub }'
+        },
+           // note: if processor is an array, the processing is chained
+        processor: [{ // build the address string first
+          type: "javascript",
+          code: "function foo(a, b, c, d) { return [a, b, c, d].join('foo'); }"
+          fnName: "foo" // can we automatically figure out all available functions in a script engine?
+          argmap: ['vcard:city', 'vcard:address' ] // Simple mapping of properties to function arguments
+          argtype: 'simple' // how to interpret the argmap / i.e. whether or not to convert RDF nodes to primitve java objects
+        }
+        {
+          type: "geocoder.nominatim",
+          
+        },
+        ],
+        writer: {
+          type: "sparql",
+          service: { ref: dstSparqlService} 
+        }
+        
+    },
+    step: { // Clear geometries of resources for which an intermediate result exists
+    },
+    step: { // Write the intermediate result
+    }
+  }
+}

@@ -20,9 +20,9 @@ import com.hp.hpl.jena.query.ResultSetFactory;
 
 
 
-public class MainSparqlExportJobLauncher {
+public class MainBatchWorkflow {
 
-    private static final Logger logger = LoggerFactory.getLogger(MainSparqlExportJobLauncher.class);
+    private static final Logger logger = LoggerFactory.getLogger(MainBatchWorkflow.class);
 
 
     /**
@@ -36,27 +36,17 @@ public class MainSparqlExportJobLauncher {
     {
         //cleanUp();
         System.out.println("Test");
-        //launchSparqlExport("http://dbpedia.org/sparql", Arrays.asList("http://dbpedia.org"), "Select * { ?s ?p ?o } Limit 10", "/tmp/foobar.txt");
-        //launchSparqlExport("http://fp7-pp.publicdata.eu/sparql", Arrays.asList("http://fp7-pp.publicdata.eu/"), "Select * { ?s ?p ?o }", "/tmp/fp7.txt");
+        
+        BatchWorkflowManager workflowManager = BatchWorkflowManager.createTestInstance();
 
-
-
-        //JobExecution je = launchSparqlExport("http://linkedgeodata.org/sparql", Arrays.asList("http://linkedgeodata.org"), "Select * { ?s a <http://linkedgeodata.org/ontology/Airport> . ?s ?p ?o }", "/tmp/lgd-airports.txt");
-        //JobExecution je = launchSparqlExport("http://localhost:8870/sparql", Arrays.asList("http://demo.geoknow.eu/y1/sparqlify/hotel-reviews/"), "Select * { ?s a <http://purl.org/acco/ns#Hotel> . ?s ?p ?o }", "/tmp/hotel-reviews.txt");
-        String fileName = "/tmp/people8.txt";
-        //String queryString = "Select * { ?s a <http://schema.org/Person> . }";
-        String queryString = "Select * { ?s a <http://schema.org/Airport> . }";
-
-        SparqlExportManager sparqlExportManager = SparqlExportManager.createTestInstance();
-
-        JobExecution je = sparqlExportManager.launchSparqlExport("http://localhost/data/dbpedia/3.9/sparql", Arrays.asList("http://dbpedia.org/3.9/"), queryString, fileName);
+        JobExecution je = workflowManager.launchWorkflowJob("{}");
 
 
         if(je.getStatus().equals(BatchStatus.COMPLETED)) {
-            ResultSet rs = ResultSetFactory.fromXML(new FileInputStream(fileName));
-            while(rs.hasNext()) {
-                System.out.println(rs.nextBinding());
-            }
+//            ResultSet rs = ResultSetFactory.fromXML(new FileInputStream(fileName));
+//            while(rs.hasNext()) {
+//                System.out.println(rs.nextBinding());
+//            }
         }
 
         //JobExecution je = launchSparqlExport("http://linkedgeodata.org/sparql", Arrays.asList("http://linkedgeodata.org"), "Select * { ?s a <http://linkedgeodata.org/ontology/Airport> }", "/tmp/lgd-airport-uris.txt");
@@ -79,6 +69,9 @@ public class MainSparqlExportJobLauncher {
             //ec.
             //System.out.println(entrySet);
         }
+        
+        
+        //ed.shutdown();
     }
 
 

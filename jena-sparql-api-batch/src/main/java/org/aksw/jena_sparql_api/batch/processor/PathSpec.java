@@ -36,7 +36,7 @@ class ModelUtils {
         String wgs = "PREFIX geo: <http://www.w3.org/2003/01/geo/wgs84_pos#> DELETE WHERE { ?s geo:long ?x ; geo:lat ?y }";
         String wgsGeometry = "PREFIX geo: <http://www.w3.org/2003/01/geo/wgs84_pos#> DELETE WHERE { ?s geo:geometry ?y }";
         String geoSparqlLiteral = "PREFIX sp: <http://www.opengis.net/ont/geosparql#> DELETE WHERE { ?s sp:asWKT ?w }";
-        // TODO Also add a delete statement that removes geometry resources???
+        // TODO Also add a delete statement that removes geometry resources (so not just the literal)???
     }
     
     
