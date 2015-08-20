@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.batch;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -12,13 +13,16 @@ import org.springframework.batch.core.job.builder.SimpleJobBuilder;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 public class JsonBatchProcessor {
     public static final String ATTR_JOB = "job";
     public static final String ATTR_TASKLET = "$tasklet";
     
     private AbstractBatchConfiguration config;
-    
+    private ApplicationContext mainContext;
+
     //private JobBuilder jobBuilder;
 //    private JobBuilderHelper<?> jobBuilder;
     
@@ -29,6 +33,14 @@ public class JsonBatchProcessor {
     
     
     public Job processJob(Map<String, Object> data) throws Exception {
+        
+        // Check if there is a context associated with the job
+        Object context = data.get(JsonContextProcessor.ATTR_CONTEXT);
+        AnnotationConfigApplicationContext c = new AnnotationConfigApplicationContext();
+        c.setParent(mainContext);
+        JsonContextProcessor.processContext(c, context, new HashMap<String, String>());
+        c.refresh();
+        
         JobBuilderFactory jobBuilders = config.jobBuilders();
         
         processStep(null, data);

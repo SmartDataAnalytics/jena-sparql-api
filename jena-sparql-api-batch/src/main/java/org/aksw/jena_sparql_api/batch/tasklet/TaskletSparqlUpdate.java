@@ -1,7 +1,6 @@
-package org.aksw.jena_sparql_api.batch;
+package org.aksw.jena_sparql_api.batch.tasklet;
 
-import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.core.utils.QueryExecutionUtils;
+import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.listener.StepExecutionListenerSupport;
 import org.springframework.batch.core.scope.context.ChunkContext;
@@ -10,19 +9,20 @@ import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 
-import com.hp.hpl.jena.query.Query;
+import com.hp.hpl.jena.update.UpdateProcessor;
+import com.hp.hpl.jena.update.UpdateRequest;
 
-public class TaskletSparqlCountData
+public class TaskletSparqlUpdate
     extends StepExecutionListenerSupport implements Tasklet, InitializingBean
 {
-    public static final String KEY = TaskletSparqlCountData.class.getSimpleName() + ".count";
+    //public static final String KEY = TaskletSparqlUpdate.class.getSimpleName() + ".count";
 
-    private Query query;
-    private QueryExecutionFactory qef;
+    private UpdateRequest updateRequest;
+    private UpdateExecutionFactory uef;
 
-    public TaskletSparqlCountData(Query query, QueryExecutionFactory qef) {
-        this.query = query;
-        this.qef = qef;
+    public TaskletSparqlUpdate(UpdateExecutionFactory uef, UpdateRequest updateRequest) {
+        this.uef = uef;
+        this.updateRequest = updateRequest;
     }
 
 
@@ -30,16 +30,15 @@ public class TaskletSparqlCountData
     public RepeatStatus execute(StepContribution contribution,
             ChunkContext chunkContext) throws Exception {
 
-        long count = QueryExecutionUtils.countQuery(query, qef);
-
-        chunkContext.getStepContext().getStepExecution().getJobExecution().getExecutionContext().put(KEY, count);
+        UpdateProcessor updateProcessor = uef.createUpdateProcessor(updateRequest);
+        updateProcessor.execute();
 
         return RepeatStatus.FINISHED;
     }
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        Assert.notNull(query);
-        Assert.notNull(qef);
+        Assert.notNull(uef);
+        Assert.notNull(updateRequest);
     }
 }

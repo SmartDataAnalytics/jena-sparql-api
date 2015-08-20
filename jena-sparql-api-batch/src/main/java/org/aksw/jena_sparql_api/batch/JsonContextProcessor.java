@@ -47,6 +47,8 @@ public class JsonContextProcessor {
     public static final String ATTR_TYPE = "type";
     public static final String ATTR_CTOR_ARGS = "ctor";
     
+    public static final String ATTR_CONTEXT = "context";
+    
     public void process() {
         MethodInvokingFactoryBean bean = new MethodInvokingFactoryBean();
     }

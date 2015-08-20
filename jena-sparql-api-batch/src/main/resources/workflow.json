@@ -1,10 +1,12 @@
 {
   // Note: Looks like we could YAML with this approach: http://stackoverflow.com/questions/23744216/how-do-i-convert-from-yaml-to-json-in-java
-
   job: {
     id: 'geoCodingJob',
     jobRepository: 'defaultJobRepo',
     context: {
+      nominatimLookupService: {
+          type: 'org.aksw.jena_sparql_api.geo.NominatimLookupServiceFactory'
+      },
       ssf: {
         type: 'org.aksw.jena_sparql_api.core.SparqlServiceFactoryHttp'
       },
