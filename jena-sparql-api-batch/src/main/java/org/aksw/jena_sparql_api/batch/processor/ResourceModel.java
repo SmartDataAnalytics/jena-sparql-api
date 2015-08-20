@@ -41,6 +41,18 @@ public class ResourceModel
     private Model metaModel;
 
     
+    /**
+    private Resource mainResource; // A resource of the dataModel
+    private Map<RDFNode, Model> dataModel;
+    private Map<RDFNode, Model> metaModel;
+    
+    getDataModel(RDFNode)
+     * 
+     * 
+     * @return
+     */
+    
+    
     public Resource getResource() {
         return resource;
     }

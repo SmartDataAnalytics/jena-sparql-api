@@ -1,9 +1,14 @@
 package org.aksw.jena_sparql_api.batch;
 
-import java.io.FileInputStream;
-import java.util.Arrays;
+import java.io.InputStream;
+import java.io.Reader;
+import java.io.StringReader;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
+import org.aksw.commons.util.StreamUtils;
+import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.BatchStatus;
@@ -14,9 +19,12 @@ import org.springframework.batch.core.repository.JobExecutionAlreadyRunningExcep
 import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
 import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.batch.item.ExecutionContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.query.ResultSetFactory;
+import com.google.gson.Gson;
+import com.google.gson.stream.JsonReader;
 
 
 
@@ -34,12 +42,44 @@ public class MainBatchWorkflow {
      */
     public static void main(String[] args) throws Exception
     {
+        
+        
+        
+        Map<String, String> classAliasMap = new HashMap<String, String>();
+        classAliasMap.put("QueryExecutionFactoryHttp", QueryExecutionFactoryHttp.class.getCanonicalName());
+        
+        Gson gson = new Gson();
+        
+        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+        Resource resource = resolver.getResource("workflow.json");        
+        InputStream in = resource.getInputStream();
+        String str = StreamUtils.toString(in);
+        Reader reader = new StringReader(str); //new InputStreamReader(in);
+        
+        JsonReader jsonReader = new JsonReader(reader);
+        jsonReader.setLenient(true);
+        Map<String, Object> data = gson.fromJson(jsonReader, Map.class);
+        System.out.println(data);
+        
+        
+        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
+        
+        JsonContextProcessor.processContext(context, ((Map)data.get("job")).get("context"), classAliasMap);
+        
+        context.refresh();
+        
+        System.exit(0);
+        
+        
+        //Gson gson = (new GsonBuilder()).
+        
         //cleanUp();
         System.out.println("Test");
         
         BatchWorkflowManager workflowManager = BatchWorkflowManager.createTestInstance();
 
-        JobExecution je = workflowManager.launchWorkflowJob("{}");
+        
+        JobExecution je = workflowManager.launchWorkflowJob(str);
 
 
         if(je.getStatus().equals(BatchStatus.COMPLETED)) {

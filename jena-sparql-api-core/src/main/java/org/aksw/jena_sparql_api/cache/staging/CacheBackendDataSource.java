@@ -89,8 +89,11 @@ public class CacheBackendDataSource
 			try {
 				conn = dataSource.getConnection();
 				//System.out.println("ConnectionWatch Opened (lookup) " + conn);
-				conn.setAutoCommit(true);
 				
+
+				//conn.setAutoCommit(false);
+				
+							
 				result = dao.lookup(conn, service, queryString, true);
 				
 				//result = new CacheEntryImpl(timestamp, lifespan, inputStream, queryString, queryHash)
@@ -124,10 +127,16 @@ public class CacheBackendDataSource
 			if(!isOngoingWrite) {
 				conn = dataSource.getConnection();
                 //System.out.println("ConnectionWatch Opened (write) " + conn);
-				conn.setAutoCommit(true);
+				conn.setAutoCommit(false);
 				
-				dao.write(conn, service, queryString, in);
-				conn.commit();
+				try {
+				    dao.write(conn, service, queryString, in);
+				} catch(Exception f) {
+				    conn.rollback();
+				    throw f;
+				} finally {
+				    conn.commit();
+				}
 			}
 		} catch (Exception e) {
 			throw new RuntimeException(e);
