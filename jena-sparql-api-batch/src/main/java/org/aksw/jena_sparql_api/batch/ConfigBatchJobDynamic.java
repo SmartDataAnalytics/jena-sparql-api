@@ -16,6 +16,7 @@ import org.aksw.jena_sparql_api.core.SparqlServiceFactoryHttp;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.ListableJobLocator;
+import org.springframework.batch.core.configuration.annotation.AbstractBatchConfiguration;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.JobScope;
@@ -25,7 +26,6 @@ import org.springframework.batch.core.explore.JobExplorer;
 import org.springframework.batch.core.explore.support.JobExplorerFactoryBean;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.job.builder.SimpleJobBuilder;
-import org.springframework.batch.core.job.flow.JobExecutionDecider;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.batch.core.launch.support.SimpleJobLauncher;
@@ -111,6 +111,7 @@ public class ConfigBatchJobDynamic {
 //    @Autowired
 //    private JobExplorer jobExplorer;
 
+    
     @Autowired
     private JobBuilderFactory jobBuilders;
 

@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.batch;
 
 import java.lang.reflect.Type;
+import java.sql.SQLException;
 import java.util.Map;
 
 import org.springframework.batch.core.BatchStatus;
@@ -18,9 +19,13 @@ import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
+import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
+import org.springframework.jdbc.datasource.init.ScriptException;
 
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -75,7 +80,7 @@ public class BatchWorkflowManager {
     }
 */
 
-    public static BatchWorkflowManager createTestInstance() {
+    public static BatchWorkflowManager createTestInstance() throws ScriptException, SQLException {
         EmbeddedDatabaseBuilder edb = new EmbeddedDatabaseBuilder();
         EmbeddedDatabase ed = edb
             .setType(EmbeddedDatabaseType.H2)
@@ -83,11 +88,27 @@ public class BatchWorkflowManager {
             .addScript("classpath:org/springframework/batch/core/schema-h2.sql")
             .build();
             ;
+            
+        // SDBConnectionDesc
         
+
+        /*
+        DriverManagerDataSource ds = new DriverManagerDataSource();
+        ds.setDriverClassName("org.postgresql.Driver");
+        ds.setUrl("jdbc:postgresql://localhost:5432/usecase");
+        ds.setUsername("postgres");
+        ds.setPassword("########");
         
+        ResourceDatabasePopulator rdp = new ResourceDatabasePopulator();
+        rdp.addScript(new ClassPathResource("/org/aksw/jena_sparql_api/cache/cache-schema-pgsql.sql"));
+        rdp.populate(ds.getConnection());
+        */
+        
+                
         AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
+        ConfigurableApplicationContext cac = (ConfigurableApplicationContext)context;
         
-        ConfigurableListableBeanFactory beanFactory = ((ConfigurableApplicationContext) context).getBeanFactory();
+        ConfigurableListableBeanFactory beanFactory = cac.getBeanFactory();
         beanFactory.registerSingleton(ed.getClass().getCanonicalName(), ed);
         
         context.register(ConfigBatchJobDynamic.class);

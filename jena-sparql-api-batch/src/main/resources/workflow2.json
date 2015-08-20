@@ -26,19 +26,7 @@
         arguments: ['http://dbpedia.org', null, null]
       }
     },
-    steps: [{
-      tasklet: {
-        
-      },
-      chunk: {
-        size: 1000,
-        reader: null,
-        processor: null,
-        writer: null
-      }
-        
-              
-        }, { // Perform geocoding and write intermediate result
+    steps: [{ // Perform geocoding and write intermediate result
         type: 'default', // By default a step is comprised of an (item) reader, processor and writer
         reader: {
           type: "sparql",
