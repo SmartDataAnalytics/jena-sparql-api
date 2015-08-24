@@ -41,4 +41,9 @@ public class VarGeneratorImpl
         return result;
     }
     
+    public static VarGeneratorImpl create(String base) {
+        Gensym gen = Gensym.create(base);
+        VarGeneratorImpl result = new VarGeneratorImpl(gen);
+        return result;
+    }
 }

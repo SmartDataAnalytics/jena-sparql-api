@@ -11,10 +11,12 @@ import java.util.Set;
 
 import org.aksw.commons.util.Pair;
 import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.TripleUtils;
+import org.aksw.jena_sparql_api.utils.VarGeneratorImpl;
 import org.aksw.jena_sparql_api.utils.Vars;
 
 import com.google.common.collect.HashMultimap;
@@ -26,7 +28,10 @@ import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.sparql.core.BasicPattern;
 import com.hp.hpl.jena.sparql.core.Var;
 import com.hp.hpl.jena.sparql.engine.binding.Binding;
+import com.hp.hpl.jena.sparql.expr.E_OneOf;
 import com.hp.hpl.jena.sparql.expr.Expr;
+import com.hp.hpl.jena.sparql.expr.ExprList;
+import com.hp.hpl.jena.sparql.expr.ExprVar;
 import com.hp.hpl.jena.sparql.expr.NodeValue;
 import com.hp.hpl.jena.sparql.function.FunctionEnv;
 import com.hp.hpl.jena.sparql.syntax.Element;
@@ -80,69 +85,132 @@ import com.hp.hpl.jena.sparql.syntax.PatternVars;
  *
  */
 public class ResourceShape {
-    // Constrains the set of resources; such as if one wants all
-    // triples about the buyers of a book, however, only for male buyers.
-    // (?p = buyerOfBook) ->outgoing
-    // May be null.
-    private Concept concept;
+    private Map<Relation, ResourceShape> outgoing = new HashMap<Relation, ResourceShape>();
+    private Map<Relation, ResourceShape> ingoing = new HashMap<Relation, ResourceShape>();
     
-//    Var startVar; // Usually ?s; but could be ?o - TODO would ?p be valid?
-    
-    // Join condition to sub triples, only valid variables are ?s, ?p and ?o
-    // Example: Outgoing edges could be: (?s a ?o) -> (?s ?p ?o)
-    private Multimap<Concept, ResourceShape> outgoing = HashMultimap.create();
-    private Multimap<Concept, ResourceShape> ingoing = HashMultimap.create();
-    
-    public Multimap<Concept, ResourceShape> getOutgoing() {
+    public Map<Relation, ResourceShape> getOutgoing() {
         return outgoing;
     }
 
-    public Multimap<Concept, ResourceShape> getIngoing() {
+    public Map<Relation, ResourceShape> getIngoing() {
         return ingoing;
     }
     
-    /**
-     * Create a construct query for fetching data in this shape
-     * @param startConcept
-     * @return
-     */
-    public Query createQuery(Concept startConcept, Generator<Var> generator) {
-        
-        
-        outgoing.asMap()
-        
-        // propertyConcept: ?p | ?p = rdf:type --- the set of all properties which to traverse
-        // objectConcept: ?o 
-        // outgoing(propertyConcept, objectConcept)@
-        
-        
-        
-        Triple triple = new Triple(Var)
-        
-        // Create a union of 
-        
-        
-    }
 
-    public List<Element> createElements(Multimap<Concept, ResourceShape> edges, boolean isInverse) {
-        List<Element> result = createElements(edges.asMap(), isInverse);
+    public static List<Concept> collectConcepts(ResourceShape source) {
+        List<Concept> result = new ArrayList<Concept>();
+        collectConcepts(result, source);
         return result;
     }
+
+    public static void collectConcepts(Collection<Concept> result, ResourceShape source) {
+        Generator<Var> vargen = VarGeneratorImpl.create("v");
+        
+        collectConcepts(result, source, vargen);
+    }
+
+    public static void collectConcepts(Collection<Concept> result, ResourceShape source, Generator<Var> vargen) {
+        collectConcepts(result, null, source, vargen);
+    }
+
+    public static void collectConcepts(Collection<Concept> result, Concept baseConcept, ResourceShape source, Generator<Var> vargen) {
+        
+        Map<Relation, ResourceShape> outgoing = source.getOutgoing();
+        Map<Relation, ResourceShape> ingoing = source.getIngoing();
+        
+        collectConcepts(result, baseConcept, outgoing, false, vargen);
+        collectConcepts(result, baseConcept, ingoing, false, vargen);
+        
+        //collectConcepts(result, null, source,);
+    }
+
+    public static void collectConcepts(Collection<Concept> result, Concept baseConcept, Map<Relation, ResourceShape> map, boolean isInverse, Generator<Var> vargen) {
     
-    public List<Element> createElements(Map<Concept, Collection<ResourceShape>> edges, boolean isInverse) {
-        List<Element> result = new ArrayList<Element>();
-        for(Entry<Concept, Collection<ResourceShape>> entry : edges.entrySet()) {
-            Concept concept = entry.getKey();
-            Collection<ResourceShape> children = entry.getValue();
-            
-            for(ResourceShape child : children) {
-                Element element = createElement(concept, child, isInverse);
-                result.add(element);
+        Var baseVar = baseConcept.getVar();
+        
+        Multimap<ResourceShape, Relation> groups = HashMultimap.create();
+          
+        for(Entry<Relation, ResourceShape> entry : map.entrySet()) {
+            groups.put(entry.getValue(), entry.getKey());
+        }
+        
+        for(Entry<ResourceShape, Collection<Relation>> group : groups.asMap().entrySet()) {
+            ResourceShape target = group.getKey();
+            Collection<Relation> raw = group.getValue();
+              
+            Collection<Relation> opt = group(raw);
+              
+              
+            for(Relation relation : opt) {
+                Concept sc = new Concept(relation.getElement(), baseVar);
+                  
+                Concept item = createConcept(sc, vargen, relation, target, isInverse);
+                result.add(item);
             }
+              
+              
+        }
+    }
+    
+    
+    public static List<Relation> group(Collection<Relation> relations) {
+        List<Relation> result = new ArrayList<Relation>();
+
+        
+        Set<Node> concretePredicates = new HashSet<Node>();
+        Set<Expr> simpleExprs = new HashSet<Expr>();
+        
+        // Find all relations that are simply ?p = expr
+        for(Relation relation : relations) {
+            Var s = relation.getSourceVar();
+            Var t = relation.getTargetVar();
+            Element e = relation.getElement();
+            
+            if(e instanceof ElementFilter) {
+                ElementFilter filter = (ElementFilter)e;
+                Expr expr = filter.getExpr();
+                Pair<Var, NodeValue> c = ExprUtils.extractConstantConstraint(expr);
+                if(c != null && c.getKey().equals(s)) {
+                    Node n = c.getValue().asNode();
+                    concretePredicates.add(n);
+                } else {
+                    simpleExprs.add(expr);
+                }
+            } else {
+                result.add(relation);
+                //throw new RuntimeException("Generic re")
+            }
+            
+        }
+        
+        if(!simpleExprs.isEmpty()) {
+            Expr orified = ExprUtils.orifyBalanced(simpleExprs);
+            Relation r = asRelation(orified);
+            result.add(r);
+        }
+        
+        if(!concretePredicates.isEmpty()) {
+            ExprList exprs = new ExprList();
+            for(Node node : concretePredicates) {
+                Expr expr = com.hp.hpl.jena.sparql.util.ExprUtils.nodeToExpr(node);
+                exprs.add(expr);
+            }
+            
+            Relation r = asRelation(new E_OneOf(new ExprVar(Vars.p), exprs));
+            result.add(r);
         }
         
         return result;
     }
+
+    
+    public static Relation asRelation(Expr expr) {
+        ElementFilter e = new ElementFilter(expr);
+        Relation result = new Relation(e, Vars.p, Vars.o);
+
+        return result;
+    }
+    
     
     /**
      * Creates elements for this node and then descends into its children
@@ -152,14 +220,10 @@ public class ResourceShape {
      * @param isInverse
      * @return
      */
-    public static Element createElement(Element baseElement, Generator<Var> vargen, Concept predicateConcept, ResourceShape target, boolean isInverse) {
-        // Rename the variables s, p, o with fresh variables from the vargenerator
-        Map<Var, Var> rename = new HashMap<Var, Var>();
-        rename.put(Vars.s, vargen.next());
-        rename.put(Vars.p, vargen.next());
-        rename.put(Vars.o, vargen.next());
-        
-        Element e1 = ElementUtils.substituteNodes(baseElement, rename);
+    public static Concept createConcept(Concept baseConcept, Generator<Var> vargen, Relation predicateRelation, ResourceShape target, boolean isInverse) {
+        Var baseVar = baseConcept.getVar();
+        Element baseElement = baseConcept.getElement();
+
         
         Triple triple = isInverse
                 ? new Triple(Vars.o, Vars.p, Vars.s)
@@ -169,19 +233,37 @@ public class ResourceShape {
         bp.add(triple);
         
         ElementTriplesBlock e2 = new ElementTriplesBlock(bp);
+
+        Element e;
+        if(baseElement != null) {
+            //Var baseVar = baseConcept.getVar();
+            //Element baseElement = baseConcept.getElement();
+    
+            
+            // Rename the variables s, p, o with fresh variables from the vargenerator
+            Map<Var, Var> rename = new HashMap<Var, Var>();
+            rename.put(Vars.s, vargen.next());
+            rename.put(Vars.p, vargen.next());
+            rename.put(Vars.o, Vars.s);            
+    
+            Element e1 = ElementUtils.substituteNodes(baseElement, rename);
+            e = ElementUtils.mergeElements(e1, e2);
+        }   else {
+            e = e2;
+        }
         
-        Element e = ElementUtils.mergeElements(e1, e2);
        
         Collection<Var> eVars = PatternVars.vars(e);
-        Set<Var> pVars = predicateConcept.getVarsMentioned();
+        Set<Var> pVars = predicateRelation.getVarsMentioned();
         
         // Add the predicateConcept
         Map<Var, Var> pc = ElementUtils.createDistinctVarMap(eVars, pVars, true, vargen);
         // Map the predicate concept's var to ?p
-        pc.put(predicateConcept.getVar(), Vars.p);
+        pc.put(predicateRelation.getSourceVar(), Vars.p);
+        pc.put(predicateRelation.getTargetVar(), Vars.o);
 
         
-        Element e3 = ElementUtils.substituteNodes(predicateConcept.getElement(), pc);
+        Element e3 = ElementUtils.substituteNodes(predicateRelation.getElement(), pc);
         
         Set<Node> concretePredicates = new HashSet<Node>(); 
         if(e3 instanceof ElementFilter) {
@@ -197,23 +279,25 @@ public class ResourceShape {
         Element newElement = ElementUtils.mergeElements(e, e3);
 
         
+        Concept result = new Concept(newElement, baseVar);
+        
         // TODO Use the target's concept here already?
         
         
         
         // Use the newElement as the next baseElement
         
-        Generator<Var> subGenerator = vargen.clone();
-
-        
-        target.createElements(vargen);
-        //target.getIngoing();
-        
-        //target.getOutgoing();
-        
-        
-        results.add(e);
-        
+//        Generator<Var> subGenerator = vargen.clone();
+//
+//        
+//        target.createElements(vargen);
+//        //target.getIngoing();
+//        
+//        //target.getOutgoing();
+//        
+//        
+//        results.add(e);
+//        
         
         return result;
     }
@@ -225,12 +309,12 @@ public class ResourceShape {
      * @param functionEnv
      * @return
      */
-    public boolean contains(Triple triple, FunctionEnv functionEnv) {
-        Set<Expr> exprs = Sets.union(outgoing.keySet(), ingoing.keySet());
-        
-        boolean result = contains(exprs, triple, functionEnv);        
-        return result;
-    }
+//    public boolean contains(Triple triple, FunctionEnv functionEnv) {
+//        Set<Expr> exprs = Sets.union(outgoing.keySet(), ingoing.keySet());
+//        
+//        boolean result = contains(exprs, triple, functionEnv);        
+//        return result;
+//    }
     
     public static boolean contains(Collection<Expr> exprs, Triple triple, FunctionEnv functionEnv) {
         Binding binding = TripleUtils.tripleToBinding(triple);
@@ -285,9 +369,46 @@ public class ResourceShape {
      * @param root
      * @return
      */
-    public static Query createQuery(ResourceShape root) {
-        List<Element> unionMembers = new ArrayList<Element>();
+//    public static Query createQuery(ResourceShape root) {
+//        List<Element> unionMembers = new ArrayList<Element>();
+//    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((ingoing == null) ? 0 : ingoing.hashCode());
+        result = prime * result
+                + ((outgoing == null) ? 0 : outgoing.hashCode());
+        return result;
     }
-    
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        ResourceShape other = (ResourceShape) obj;
+        if (ingoing == null) {
+            if (other.ingoing != null)
+                return false;
+        } else if (!ingoing.equals(other.ingoing))
+            return false;
+        if (outgoing == null) {
+            if (other.outgoing != null)
+                return false;
+        } else if (!outgoing.equals(other.outgoing))
+            return false;
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        return "ResourceShape [outgoing=" + outgoing + ", ingoing=" + ingoing
+                + "]";
+    }
     
 }

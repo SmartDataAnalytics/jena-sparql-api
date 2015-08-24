@@ -198,5 +198,6 @@ public class ResourceShapeParserJson {
             
         }
         
+        return null;
     }
 }

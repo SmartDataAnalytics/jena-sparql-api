@@ -13,6 +13,7 @@ import org.springframework.batch.item.data.AbstractPaginatedDataItemReader;
 import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.ResultSet;
+import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.sparql.engine.binding.Binding;
 
 
@@ -68,35 +69,34 @@ public class ItemReaderModel
         }
         */
 
-        //if(itQuery == null) {
-            PagingQuery pagingQuery = new PagingQuery(this.pageSize, this.query);
-            Iterator<Query> itQuery = pagingQuery.createQueryIterator(this.page * this.pageSize);
-        //}
-
-        Query query = itQuery.next();
-
-        if(query == null) {
-            Collection<T> tmp = Collections.emptyList();
-            return tmp.iterator();
-        }
-
-        //Query query = queryIterator.next();
-        QueryExecution qe = qef.createQueryExecution(query);
-        ResultSet rs = qe.execSelect();
-
-
-        List<T> items = new ArrayList<T>();
-        long rowId = 0;
-        while(rs.hasNext()) {
-            ++rowId;
-            Binding binding = rs.nextBinding();
-
-            T item = bindingMapper.map(binding, rowId);
-
-            items.add(item);
-            //results.add(item);
-        }
-
-        return items.iterator();
+//        PagingQuery pagingQuery = new PagingQuery(this.pageSize, this.query);
+//        Iterator<Query> itQuery = pagingQuery.createQueryIterator(this.page * this.pageSize);
+//
+//        Query query = itQuery.next();
+//
+//        if(query == null) {
+//            Collection<T> tmp = Collections.emptyList();
+//            return tmp.iterator();
+//        }
+//
+//        //Query query = queryIterator.next();
+//        QueryExecution qe = qef.createQueryExecution(query);
+//        ResultSet rs = qe.execSelect();
+//
+//
+//        List<T> items = new ArrayList<T>();
+//        long rowId = 0;
+//        while(rs.hasNext()) {
+//            ++rowId;
+//            Binding binding = rs.nextBinding();
+//
+//            T item = bindingMapper.map(binding, rowId);
+//
+//            items.add(item);
+//            //results.add(item);
+//        }
+//
+//        return items.iterator();
+        return null;
     }
 }
