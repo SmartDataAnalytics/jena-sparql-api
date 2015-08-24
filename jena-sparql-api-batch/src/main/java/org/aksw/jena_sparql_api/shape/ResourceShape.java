@@ -21,10 +21,8 @@ import org.aksw.jena_sparql_api.utils.Vars;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.sparql.core.BasicPattern;
 import com.hp.hpl.jena.sparql.core.Var;
 import com.hp.hpl.jena.sparql.engine.binding.Binding;
@@ -110,7 +108,8 @@ public class ResourceShape {
     }
 
     public static void collectConcepts(Collection<Concept> result, ResourceShape source, Generator<Var> vargen) {
-        collectConcepts(result, null, source, vargen);
+        Concept baseConcept = new Concept((Element)null, Var.alloc("x"));
+        collectConcepts(result, baseConcept, source, vargen);
     }
 
     public static void collectConcepts(Collection<Concept> result, Concept baseConcept, ResourceShape source, Generator<Var> vargen) {

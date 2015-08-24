@@ -34,7 +34,14 @@ public class ResourceShapeBuilder {
         this.prefixMapping = prefixMapping;
     }
     
-    
+    public ResourceShape getResourceShape() {
+        return resourceShape;
+    }
+
+    public PrefixMapping getPrefixMapping() {
+        return prefixMapping;
+    }
+
     public ResourceShapeBuilder outgoing(String propertyUri) {
         ResourceShapeBuilder result = nav(propertyUri, false);
         return result;

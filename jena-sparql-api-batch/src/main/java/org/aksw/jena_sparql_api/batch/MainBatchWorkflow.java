@@ -41,6 +41,7 @@ public class MainBatchWorkflow {
 
     
     public static void main(String[] args) throws Exception {
+        
         PrefixMapping pm = new PrefixMappingImpl();
         pm.setNsPrefix("rdf", RDF.getURI());
         pm.setNsPrefix("rdfs", RDFS.getURI());
@@ -48,8 +49,10 @@ public class MainBatchWorkflow {
         ResourceShapeBuilder b = new ResourceShapeBuilder(pm);
         b.outgoing("rdfs:label");
         b.outgoing("rdf:type");
+        //ElementTriplesBlock
+        //com.hp.hpl.jena.sparql.syntax.
         
-        List<Concept> concepts = ResourceShape.collectConcepts(null);
+        List<Concept> concepts = ResourceShape.collectConcepts(b.getResourceShape());
         for(Concept concept : concepts) {
             System.out.println(concept);
         }

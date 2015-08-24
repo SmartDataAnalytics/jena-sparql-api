@@ -17,7 +17,16 @@ import com.hp.hpl.jena.sparql.core.Var;
 import com.hp.hpl.jena.sparql.graph.NodeTransform;
 import com.hp.hpl.jena.sparql.graph.NodeTransformLib;
 import com.hp.hpl.jena.sparql.syntax.Element;
+import com.hp.hpl.jena.sparql.syntax.ElementData;
+import com.hp.hpl.jena.sparql.syntax.ElementFilter;
 import com.hp.hpl.jena.sparql.syntax.ElementGroup;
+import com.hp.hpl.jena.sparql.syntax.ElementNamedGraph;
+import com.hp.hpl.jena.sparql.syntax.ElementOptional;
+import com.hp.hpl.jena.sparql.syntax.ElementSubQuery;
+import com.hp.hpl.jena.sparql.syntax.ElementTriplesBlock;
+import com.hp.hpl.jena.sparql.syntax.ElementUnion;
+
+
 
 public class ElementUtils {
     
@@ -60,7 +69,7 @@ public class ElementUtils {
         return result;
     }
     
-    public static Element applyNodeTransform(Element element, NodeTransform nodeTransform) {
+    public static Element applyNodeTransform(Element element, NodeTransform nodeTransform) {        
         Op op = Algebra.compile(element);
         Op tmp = NodeTransformLib.transform(nodeTransform, op);
         Query query = OpAsQuery.asQuery(tmp);
