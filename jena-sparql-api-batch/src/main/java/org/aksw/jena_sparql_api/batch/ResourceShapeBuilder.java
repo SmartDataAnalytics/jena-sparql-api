@@ -119,7 +119,7 @@ public class ResourceShapeBuilder {
         ResourceShape rs = map.get(relation);
         if(rs == null) {
             rs = new ResourceShape();
-            resourceShape.getOutgoing().put(relation, rs);
+            map.put(relation, rs);
         }
         
         ResourceShapeBuilder result = new ResourceShapeBuilder(rs, prefixMapping);

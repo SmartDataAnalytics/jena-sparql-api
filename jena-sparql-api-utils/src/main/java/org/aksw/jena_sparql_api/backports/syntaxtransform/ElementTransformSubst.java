@@ -25,8 +25,11 @@ import com.hp.hpl.jena.graph.Node_Variable;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.sparql.core.TriplePath;
 import com.hp.hpl.jena.sparql.core.Var;
+import com.hp.hpl.jena.sparql.expr.Expr;
 import com.hp.hpl.jena.sparql.graph.NodeTransform;
+import com.hp.hpl.jena.sparql.graph.NodeTransformLib;
 import com.hp.hpl.jena.sparql.syntax.Element;
+import com.hp.hpl.jena.sparql.syntax.ElementFilter;
 import com.hp.hpl.jena.sparql.syntax.ElementPathBlock;
 import com.hp.hpl.jena.sparql.syntax.ElementTriplesBlock;
 
@@ -47,6 +50,18 @@ public class ElementTransformSubst extends ElementTransformCopyBase {
     public ElementTransformSubst(NodeTransform nodeTransform) {
         this.nodeTransform = nodeTransform ;
     }
+
+    @Override
+    public Element transform(ElementFilter el, Expr expr2) {
+        Expr expr = NodeTransformLib.transform(nodeTransform, expr2);
+
+        Element result = expr.equals(expr2)
+            ? el
+            : new ElementFilter(expr) ;
+        
+        return result;
+    }
+    
 
     @Override
     public Element transform(ElementTriplesBlock el) {

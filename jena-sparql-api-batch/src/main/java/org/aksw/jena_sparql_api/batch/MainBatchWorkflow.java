@@ -47,8 +47,8 @@ public class MainBatchWorkflow {
         pm.setNsPrefix("rdfs", RDFS.getURI());
         
         ResourceShapeBuilder b = new ResourceShapeBuilder(pm);
-        b.outgoing("rdfs:label");
-        b.outgoing("rdf:type").outgoing("rdf:type");
+        //b.outgoing("rdfs:label");
+        b.outgoing("rdf:type").outgoing("rdf:type").incoming("rdfs:label");
         //ElementTriplesBlock
         //com.hp.hpl.jena.sparql.syntax.
         

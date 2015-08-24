@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.aksw.commons.collections.MapUtils;
 import org.aksw.commons.util.Pair;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.Relation;
@@ -26,6 +27,7 @@ import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.sparql.core.BasicPattern;
 import com.hp.hpl.jena.sparql.core.Var;
 import com.hp.hpl.jena.sparql.engine.binding.Binding;
+import com.hp.hpl.jena.sparql.expr.E_Equals;
 import com.hp.hpl.jena.sparql.expr.E_OneOf;
 import com.hp.hpl.jena.sparql.expr.Expr;
 import com.hp.hpl.jena.sparql.expr.ExprList;
@@ -118,14 +120,14 @@ public class ResourceShape {
         Map<Relation, ResourceShape> ingoing = source.getIngoing();
         
         collectConcepts(result, baseConcept, outgoing, false, vargen);
-        collectConcepts(result, baseConcept, ingoing, false, vargen);
+        collectConcepts(result, baseConcept, ingoing, true, vargen);
         
         //collectConcepts(result, null, source,);
     }
 
     public static void collectConcepts(Collection<Concept> result, Concept baseConcept, Map<Relation, ResourceShape> map, boolean isInverse, Generator<Var> vargen) {
     
-        Var baseVar = baseConcept.getVar();
+//        Var baseVar = baseConcept.getVar();
         
         Multimap<ResourceShape, Relation> groups = HashMultimap.create();
           
@@ -141,10 +143,17 @@ public class ResourceShape {
               
               
             for(Relation relation : opt) {
-                Concept sc = new Concept(relation.getElement(), baseVar);
-                  
+                //Concept sc = new Concept(relation.getElement(), baseVar);
+                Concept sc = baseConcept;  
+                
                 Concept item = createConcept(sc, vargen, relation, target, isInverse);
+                                
                 result.add(item);
+
+                // Map the
+                
+                // Now use the concept as a base for its children
+                collectConcepts(result, item, target, vargen);
             }
               
               
@@ -162,7 +171,7 @@ public class ResourceShape {
         // Find all relations that are simply ?p = expr
         for(Relation relation : relations) {
             Var s = relation.getSourceVar();
-            Var t = relation.getTargetVar();
+//            Var t = relation.getTargetVar();
             Element e = relation.getElement();
             
             if(e instanceof ElementFilter) {
@@ -195,7 +204,12 @@ public class ResourceShape {
                 exprs.add(expr);
             }
             
-            Relation r = asRelation(new E_OneOf(new ExprVar(Vars.p), exprs));
+            ExprVar ep = new ExprVar(Vars.p);
+            Expr ex = exprs.size() > 1
+                    ? new E_OneOf(ep, exprs)
+                    : new E_Equals(ep, exprs.get(0));
+                    
+            Relation r = asRelation(ex);
             result.add(r);
         }
         
@@ -220,6 +234,8 @@ public class ResourceShape {
      * @return
      */
     public static Concept createConcept(Concept baseConcept, Generator<Var> vargen, Relation predicateRelation, ResourceShape target, boolean isInverse) {
+        Var sourceVar;
+
         Var baseVar = baseConcept.getVar();
         Element baseElement = baseConcept.getElement();
 
@@ -245,10 +261,12 @@ public class ResourceShape {
             rename.put(Vars.p, vargen.next());
             rename.put(Vars.o, Vars.s);            
     
+            sourceVar = MapUtils.getOrElse(rename, baseVar, baseVar); 
             Element e1 = ElementUtils.substituteNodes(baseElement, rename);
             e = ElementUtils.mergeElements(e1, e2);
         }   else {
             e = e2;
+            sourceVar = Vars.s;
         }
         
        
@@ -263,42 +281,10 @@ public class ResourceShape {
 
         
         Element e3 = ElementUtils.substituteNodes(predicateRelation.getElement(), pc);
-        
-        /*
-        Set<Node> concretePredicates = new HashSet<Node>(); 
-        if(e3 instanceof ElementFilter) {
-            ElementFilter filter = (ElementFilter)e3;
-            Expr expr = filter.getExpr();
-            Pair<Var, NodeValue> c = ExprUtils.extractConstantConstraint(expr);
-            if(c.getKey().equals(Vars.p)) {
-                Node n = c.getValue().asNode();
-                concretePredicates.add(n);
-            }
-        }
-        */
-        
         Element newElement = ElementUtils.mergeElements(e, e3);
 
         
-        Concept result = new Concept(newElement, baseVar);
-        
-        // TODO Use the target's concept here already?
-        
-        
-        
-        // Use the newElement as the next baseElement
-        
-//        Generator<Var> subGenerator = vargen.clone();
-//
-//        
-//        target.createElements(vargen);
-//        //target.getIngoing();
-//        
-//        //target.getOutgoing();
-//        
-//        
-//        results.add(e);
-//        
+        Concept result = new Concept(newElement, sourceVar);
         
         return result;
     }
