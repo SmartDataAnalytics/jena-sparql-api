@@ -7,24 +7,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformSubst;
+import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformer;
+
 import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.sdb.core.Gensym;
-import com.hp.hpl.jena.sparql.algebra.Algebra;
-import com.hp.hpl.jena.sparql.algebra.Op;
-import com.hp.hpl.jena.sparql.algebra.OpAsQuery;
 import com.hp.hpl.jena.sparql.core.Var;
 import com.hp.hpl.jena.sparql.graph.NodeTransform;
-import com.hp.hpl.jena.sparql.graph.NodeTransformLib;
 import com.hp.hpl.jena.sparql.syntax.Element;
-import com.hp.hpl.jena.sparql.syntax.ElementData;
-import com.hp.hpl.jena.sparql.syntax.ElementFilter;
 import com.hp.hpl.jena.sparql.syntax.ElementGroup;
-import com.hp.hpl.jena.sparql.syntax.ElementNamedGraph;
-import com.hp.hpl.jena.sparql.syntax.ElementOptional;
-import com.hp.hpl.jena.sparql.syntax.ElementSubQuery;
-import com.hp.hpl.jena.sparql.syntax.ElementTriplesBlock;
-import com.hp.hpl.jena.sparql.syntax.ElementUnion;
 
 
 
@@ -70,10 +61,11 @@ public class ElementUtils {
     }
     
     public static Element applyNodeTransform(Element element, NodeTransform nodeTransform) {        
-        Op op = Algebra.compile(element);
-        Op tmp = NodeTransformLib.transform(nodeTransform, op);
-        Query query = OpAsQuery.asQuery(tmp);
-        Element result = query.getQueryPattern();
+        //Op op = Algebra.compile(element);
+        //Op tmp = NodeTransformLib.transform(nodeTransform, op);
+        //Query query = OpAsQuery.asQuery(tmp);
+        ElementTransformSubst transform = new ElementTransformSubst(nodeTransform);
+        Element result = ElementTransformer.transform(element, transform);
         return result;
     }
     

@@ -41,7 +41,11 @@ public class ElementTransformSubst extends ElementTransformCopyBase {
     private final NodeTransform nodeTransform ;
 
     public ElementTransformSubst(Map<Var, Node> mapping) {
-        this.nodeTransform = new NodeTransformSubst(mapping) ;
+        this(new NodeTransformSubst(mapping)) ;
+    }
+
+    public ElementTransformSubst(NodeTransform nodeTransform) {
+        this.nodeTransform = nodeTransform ;
     }
 
     @Override
