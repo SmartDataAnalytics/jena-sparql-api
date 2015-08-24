@@ -48,7 +48,7 @@ public class MainBatchWorkflow {
         
         ResourceShapeBuilder b = new ResourceShapeBuilder(pm);
         b.outgoing("rdfs:label");
-        b.outgoing("rdf:type");
+        b.outgoing("rdf:type").outgoing("rdf:type");
         //ElementTriplesBlock
         //com.hp.hpl.jena.sparql.syntax.
         

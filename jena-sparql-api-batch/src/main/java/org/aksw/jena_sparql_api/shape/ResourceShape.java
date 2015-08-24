@@ -264,6 +264,7 @@ public class ResourceShape {
         
         Element e3 = ElementUtils.substituteNodes(predicateRelation.getElement(), pc);
         
+        /*
         Set<Node> concretePredicates = new HashSet<Node>(); 
         if(e3 instanceof ElementFilter) {
             ElementFilter filter = (ElementFilter)e3;
@@ -274,6 +275,7 @@ public class ResourceShape {
                 concretePredicates.add(n);
             }
         }
+        */
         
         Element newElement = ElementUtils.mergeElements(e, e3);
 
