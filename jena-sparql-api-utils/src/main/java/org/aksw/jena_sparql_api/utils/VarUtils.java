@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.hp.hpl.jena.sparql.core.Var;
+import com.hp.hpl.jena.sparql.graph.NodeTransform;
 
 public class VarUtils {
 
@@ -64,5 +65,17 @@ public class VarUtils {
 
         return result;
     }
+    
+    public static Var applyNodeTransform(Var var, NodeTransform nodeTransform) {
+        Var result = applyNodeTransform(var, nodeTransform, var);
+        return result;
+    }
+
+    public static Var applyNodeTransform(Var var, NodeTransform nodeTransform, Var defaultVar) {
+        Var tmp = (Var)nodeTransform.convert(var);
+        Var result = tmp == null ? defaultVar : tmp;
+        return result;
+    }
+
 
 }

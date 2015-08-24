@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.aksw.commons.collections.SetUtils;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.GeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.VarUtils;
@@ -18,8 +19,8 @@ import com.hp.hpl.jena.sparql.algebra.OpAsQuery;
 import com.hp.hpl.jena.sparql.core.Substitute;
 import com.hp.hpl.jena.sparql.core.Var;
 import com.hp.hpl.jena.sparql.engine.binding.BindingHashMap;
+import com.hp.hpl.jena.sparql.graph.NodeTransform;
 import com.hp.hpl.jena.sparql.lang.ParserSPARQL10;
-import com.hp.hpl.jena.sparql.lang.ParserSPARQL11;
 import com.hp.hpl.jena.sparql.syntax.Element;
 import com.hp.hpl.jena.sparql.syntax.ElementGroup;
 import com.hp.hpl.jena.sparql.syntax.ElementTriplesBlock;
@@ -36,6 +37,31 @@ public class Concept {
     private Element element;//List<Element> elements;
     private Var var;
 
+    /**
+     * Util method to parse strings that use a pipe as a separator between variable and sparql string
+     * ?s | ?s a ex:Airport
+     * 
+     * @param str
+     * @return
+     */
+    public static Concept parse(String str) {
+        String[] splits = str.split("\\|", 2);
+        if(splits.length != 2) {
+            throw new RuntimeException("Invalid string: " + str);
+            
+        }
+        
+        // Remove leading ? of the varName
+        String varName = splits[0].trim();
+        if(varName.charAt(0) != '?') {
+            throw new RuntimeException("var name must start with '?'");
+        }
+        varName = varName.substring(1);
+
+        Concept result = create(splits[1], varName);
+        return result;
+    }
+    
     public static Concept create(String elementStr, String varName) {
         Var var = Var.alloc(varName);
 
@@ -91,6 +117,21 @@ public class Concept {
         return false;
     }
 
+    public Concept applyNodeTransform(NodeTransform nodeTransform) {
+        Var tmpVar = (Var)nodeTransform.convert(var);
+        
+        Element e = ElementUtils.applyNodeTransform(element, nodeTransform);
+        Var v = tmpVar == null ? var : tmpVar;
+
+        Concept result = new Concept(e, v);
+        return result;
+    }
+    
+    public Set<Var> getVarsMentioned() {
+        Set<Var> result = SetUtils.asSet(PatternVars.vars(element));
+        result.add(var); // Var should always be part of element - but better add it here explicitly
+        return result;
+    }
 
     public Concept(Element element, Var var) {
         super();

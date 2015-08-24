@@ -27,7 +27,7 @@ public class ItemReaderSparqlPaging<T>
 //    extends AbstractPagingItemReader<T>
     extends AbstractPaginatedDataItemReader<T>
 {
-    private QueryExecutionFactory sparqlService;
+    private QueryExecutionFactory qef;
     private BindingMapper<T> bindingMapper;
 
     //private String queryString;
@@ -49,12 +49,12 @@ public class ItemReaderSparqlPaging<T>
 //    public void ge
 
 
-    public void setSparqlService(QueryExecutionFactory sparqlService) {
-        this.sparqlService = sparqlService;
+    public void setSparqlService(QueryExecutionFactory qef) {
+        this.qef = qef;
     }
 
-    public QueryExecutionFactory getSparqlService() {
-        return this.sparqlService;
+    public QueryExecutionFactory getQueryExecutionFactory() {
+        return this.qef;
     }
 
     public Query getQuery() {
@@ -128,7 +128,7 @@ public class ItemReaderSparqlPaging<T>
         }
 
         //Query query = queryIterator.next();
-        QueryExecution qe = sparqlService.createQueryExecution(query);
+        QueryExecution qe = qef.createQueryExecution(query);
         ResultSet rs = qe.execSelect();
 
 

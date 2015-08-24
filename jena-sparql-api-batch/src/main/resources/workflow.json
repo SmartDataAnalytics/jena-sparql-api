@@ -1,9 +1,31 @@
 {
+  // { ?s a <http://fp7-pp.publicdata.eu/ontology/Project> }
+  /*
+  { ?s <http://fp7-pp.publicdata.eu/ontology/address> ?o .
+     ?o <http://fp7-pp.publicdata.eu/ontology/city> ?city .
+     ?o <http://fp7-pp.publicdata.eu/ontology/country> ?country
+  }
+  */
+  // 
+
   // Note: Looks like we could YAML with this approach: http://stackoverflow.com/questions/23744216/how-do-i-convert-from-yaml-to-json-in-java
   job: {
     id: 'geoCodingJob',
     jobRepository: 'defaultJobRepo',
     context: {
+      /*
+      prefixes: {
+          type: 'com.hp.hpl.jena.shared.impl.PrefixMappingImpl',
+          $postActions: [
+              $exec: {}
+          ]
+      },
+      */
+      $prefixes: {
+          fp7o: 'http://fp7-pp.publicdata.eu/ontology/',
+          vcard: 'http://www.w3.org/2006/vcard/ns#',
+          ex: 'http://example.org'
+      },
       nominatimLookupService: {
           type: 'org.aksw.jena_sparql_api.geo.NominatimLookupServiceFactory'
       },
@@ -26,9 +48,48 @@
         // TODO: Should we allow "targetObject: 'ssf'" - i.e. without the ref
         targetMethod: 'createSparqlService',
         arguments: ['http://dbpedia.org', null, null]
-      }
+      },
+      baseConcept: { '?s <http://fp7-pp.publicdata.eu/ontology/address> ?o . ?o <http://fp7-pp.publicdata.eu/ontology/city> ?city . ?o <http://fp7-pp.publicdata.eu/ontology/country> ?country'
     },
     steps: [{
+      reader: {
+        type: 'org.aksw.jena_sparql_api.batch.ItemReaderModel',
+        // shape: true // fetch all data for each resource
+        shape: {
+            'fp7:city': true,
+            'fp7:country': true,
+            '$special': ['spatial'],
+            'spatial': true
+        },        
+        //frame: '?p In (fp7:city, fp7:country)',
+        concept: '#{baseConcept}'
+      },
+      processor: [{
+          type: 'SparqlUpdate',
+          request: 'Insert { ?s ex:addrStr ?x } { ?s fp7:city ?ci ; fp7:country ?co . Bind(concat(?ci, "-", ?co) as ?x) }' 
+      },
+      /*
+      {
+        type: 'createProperty'
+        property: 'http://myProperty'
+        term: {
+           value: {
+               fn: 'function() { }'
+               args: ['http://]
+           }
+        }
+      }*/]
+      
+    }]
+  }
+}
+    
+    
+ /*
+    steps: [{
+      context: {
+      },
+      
       tasklet: {
         
       },
@@ -88,3 +149,4 @@
     }
   }
 }
+*/

@@ -9,6 +9,9 @@ import org.aksw.commons.util.strings.StringUtils;
 import org.apache.jena.riot.writer.NTriplesWriter;
 
 import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.sparql.core.Quad;
+import com.hp.hpl.jena.sparql.engine.binding.Binding;
+import com.hp.hpl.jena.sparql.engine.binding.BindingHashMap;
 
 public class TripleUtils {
 
@@ -29,6 +32,22 @@ public class TripleUtils {
 //
 //        return result;
 //    }
+
+    public static Binding tripleToBinding(Triple triple) {
+        BindingHashMap result = new BindingHashMap();
+        
+        tripleToBinding(triple, result);
+        
+        return result;        
+    }
+    
+    public static Binding tripleToBinding(Triple triple, BindingHashMap result) {
+        result.add(Vars.s, triple.getSubject());
+        result.add(Vars.p, triple.getPredicate());
+        result.add(Vars.o, triple.getObject());
+
+        return result;
+    }
 
 
     public static String toNTripleString(Triple triple) {
