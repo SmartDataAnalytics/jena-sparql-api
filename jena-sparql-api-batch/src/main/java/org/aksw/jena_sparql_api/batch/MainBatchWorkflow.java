@@ -5,10 +5,13 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.aksw.commons.util.StreamUtils;
+import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
+import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.BatchStatus;
@@ -25,6 +28,10 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
+import com.hp.hpl.jena.shared.PrefixMapping;
+import com.hp.hpl.jena.shared.impl.PrefixMappingImpl;
+import com.hp.hpl.jena.vocabulary.RDF;
+import com.hp.hpl.jena.vocabulary.RDFS;
 
 
 
@@ -32,6 +39,21 @@ public class MainBatchWorkflow {
 
     private static final Logger logger = LoggerFactory.getLogger(MainBatchWorkflow.class);
 
+    
+    public static void main(String[] args) throws Exception {
+        PrefixMapping pm = new PrefixMappingImpl();
+        pm.setNsPrefix("rdf", RDF.getURI());
+        pm.setNsPrefix("rdfs", RDFS.getURI());
+        
+        ResourceShapeBuilder b = new ResourceShapeBuilder(pm);
+        b.outgoing("rdfs:label");
+        b.outgoing("rdf:type");
+        
+        List<Concept> concepts = ResourceShape.collectConcepts(null);
+        for(Concept concept : concepts) {
+            System.out.println(concept);
+        }
+    }
 
     /**
      * @param args
@@ -40,7 +62,7 @@ public class MainBatchWorkflow {
      * @throws JobRestartException
      * @throws JobExecutionAlreadyRunningException
      */
-    public static void main(String[] args) throws Exception
+    public static void main2(String[] args) throws Exception
     {
         
         

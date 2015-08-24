@@ -5,7 +5,7 @@ import org.junit.Test;
 public class TestSparqlBatch {
 
 
-    //@Test
+    @Test
     public void test() throws Exception {
         String[] args = new String[]{};
         MainBatchWorkflow.main(args);

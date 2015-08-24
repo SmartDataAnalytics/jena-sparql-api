@@ -20,7 +20,11 @@ import com.hp.hpl.jena.sparql.util.ExprUtils;
 public class ResourceShapeBuilder {
     private ResourceShape resourceShape;
     private PrefixMapping prefixMapping;
-    
+
+    public ResourceShapeBuilder(PrefixMapping prefixMapping) {
+        this(new ResourceShape(), prefixMapping);
+    }
+
     public ResourceShapeBuilder(ResourceShape resourceShape) {
         this(resourceShape, new PrefixMappingImpl());
     }
