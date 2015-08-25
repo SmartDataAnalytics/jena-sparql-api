@@ -30,8 +30,12 @@ import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
 import com.hp.hpl.jena.shared.PrefixMapping;
 import com.hp.hpl.jena.shared.impl.PrefixMappingImpl;
+import com.hp.hpl.jena.sparql.algebra.optimize.Optimize;
+import com.hp.hpl.jena.sparql.expr.NodeValue;
+import com.hp.hpl.jena.sparql.util.ExprUtils;
 import com.hp.hpl.jena.vocabulary.RDF;
 import com.hp.hpl.jena.vocabulary.RDFS;
+
 
 
 
@@ -45,10 +49,18 @@ public class MainBatchWorkflow {
         PrefixMapping pm = new PrefixMappingImpl();
         pm.setNsPrefix("rdf", RDF.getURI());
         pm.setNsPrefix("rdfs", RDFS.getURI());
+        pm.setNsPrefix("geo", "http://www.w3.org/2003/01/geo/wgs84_pos#");
+        pm.setNsPrefix("geom", "http://geovocab.org/geometry#");
+        pm.setNsPrefix("ogc", "http://www.opengis.net/ont/geosparql#");
         
         ResourceShapeBuilder b = new ResourceShapeBuilder(pm);
         //b.outgoing("rdfs:label");
-        b.outgoing("rdf:type").outgoing("rdf:type").incoming("rdfs:label");
+        b.outgoing("geo:lat");
+        b.outgoing("geo:long");
+        b.outgoing("geo:geometry");
+        b.outgoing("geom:geometry").outgoing("ogc:asWKT");
+        //b.outgoing("rdf:type").outgoing(NodeValue.TRUE).incoming(ExprUtils.parse("?p = rdfs:label && langMatches(lang(?o), 'en')", pm));
+
         //ElementTriplesBlock
         //com.hp.hpl.jena.sparql.syntax.
         

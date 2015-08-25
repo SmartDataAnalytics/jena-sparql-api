@@ -128,6 +128,19 @@ public class ResourceShape {
     public static void collectConcepts(Collection<Concept> result, Concept baseConcept, Map<Relation, ResourceShape> map, boolean isInverse, Generator<Var> vargen) {
     
 //        Var baseVar = baseConcept.getVar();
+
+        {
+            Set<Relation> raw = map.keySet();
+            Collection<Relation> opt = group(raw);
+    
+            for(Relation relation : opt) {
+                //Concept sc = new Concept(relation.getElement(), baseVar);
+                Concept sc = baseConcept;              
+                Concept item = createConcept(sc, vargen, relation, isInverse);                            
+                result.add(item);
+            }
+        }
+        
         
         Multimap<ResourceShape, Relation> groups = HashMultimap.create();
           
@@ -146,9 +159,9 @@ public class ResourceShape {
                 //Concept sc = new Concept(relation.getElement(), baseVar);
                 Concept sc = baseConcept;  
                 
-                Concept item = createConcept(sc, vargen, relation, target, isInverse);
+                Concept item = createConcept(sc, vargen, relation, isInverse);
                                 
-                result.add(item);
+                //result.add(item);
 
                 // Map the
                 
@@ -233,7 +246,7 @@ public class ResourceShape {
      * @param isInverse
      * @return
      */
-    public static Concept createConcept(Concept baseConcept, Generator<Var> vargen, Relation predicateRelation, ResourceShape target, boolean isInverse) {
+    public static Concept createConcept(Concept baseConcept, Generator<Var> vargen, Relation predicateRelation, boolean isInverse) {
         Var sourceVar;
 
         Var baseVar = baseConcept.getVar();
