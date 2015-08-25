@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.shape;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -12,18 +13,22 @@ import java.util.Set;
 import org.aksw.commons.collections.MapUtils;
 import org.aksw.commons.util.Pair;
 import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.concepts.ConceptOps;
 import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.TripleUtils;
+import org.aksw.jena_sparql_api.utils.Triples;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl;
+import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.sparql.core.BasicPattern;
 import com.hp.hpl.jena.sparql.core.Var;
 import com.hp.hpl.jena.sparql.engine.binding.Binding;
@@ -38,6 +43,7 @@ import com.hp.hpl.jena.sparql.syntax.Element;
 import com.hp.hpl.jena.sparql.syntax.ElementFilter;
 import com.hp.hpl.jena.sparql.syntax.ElementTriplesBlock;
 import com.hp.hpl.jena.sparql.syntax.PatternVars;
+import com.hp.hpl.jena.sparql.syntax.Template;
 
 
 
@@ -238,6 +244,40 @@ public class ResourceShape {
     }
     
     
+    public static Query createQuery(ResourceShape resourceShape, Concept filter) {
+        List<Concept> concepts = ResourceShape.collectConcepts(resourceShape);
+        
+        Query result = createQuery(concepts, filter);
+        return result;        
+    }
+    
+    public static Query createQuery(List<Concept> concepts, Concept filter) {
+        
+        Template template = new Template(BasicPattern.wrap(Collections.singletonList(Triples.spo)));
+
+        List<Concept> tmps = new ArrayList<Concept>();
+        for(Concept concept : concepts) {
+            Concept tmp = ConceptOps.intersect(concept, filter);
+            tmps.add(tmp);
+        }
+        
+        List<Element> elements = new ArrayList<Element>();
+        for(Concept concept : tmps) {
+            Element e = concept.getElement();
+            elements.add(e);
+        }
+
+        Element element = ElementUtils.union(elements);
+        
+        
+        Query result = new Query();
+        result.setQueryConstructType();        
+        result.setConstructTemplate(template);
+        result.setQueryPattern(element);
+        
+        return result;
+    }
+    
     /**
      * Creates elements for this node and then descends into its children
      * 
@@ -287,7 +327,7 @@ public class ResourceShape {
         Set<Var> pVars = predicateRelation.getVarsMentioned();
         
         // Add the predicateConcept
-        Map<Var, Var> pc = ElementUtils.createDistinctVarMap(eVars, pVars, true, vargen);
+        Map<Var, Var> pc = VarUtils.createDistinctVarMap(eVars, pVars, true, vargen);
         // Map the predicate concept's var to ?p
         pc.put(predicateRelation.getSourceVar(), Vars.p);
         pc.put(predicateRelation.getTargetVar(), Vars.o);

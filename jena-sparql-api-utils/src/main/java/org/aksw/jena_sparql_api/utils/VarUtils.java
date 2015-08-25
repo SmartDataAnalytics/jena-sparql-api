@@ -2,11 +2,13 @@ package org.aksw.jena_sparql_api.utils;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.hp.hpl.jena.sdb.core.Gensym;
 import com.hp.hpl.jena.sparql.core.Var;
 import com.hp.hpl.jena.sparql.graph.NodeTransform;
 
@@ -74,6 +76,38 @@ public class VarUtils {
     public static Var applyNodeTransform(Var var, NodeTransform nodeTransform, Var defaultVar) {
         Var tmp = (Var)nodeTransform.convert(var);
         Var result = tmp == null ? defaultVar : tmp;
+        return result;
+    }
+
+    /**
+     * Returns a map that maps *each* variable from vbs to a name that does not appear in vas.
+     * 
+     * @param excludeSymmetry if true, exclude mappings from a var in vbs to itself.
+     */    
+    public static Map<Var, Var> createDistinctVarMap(Collection<Var> vas, Collection<Var> vbs, boolean excludeSymmetry, Generator<Var> generator) {
+            //var vans = vas.map(VarUtils.getVarName);
+    
+        if (generator == null) {
+            generator = new VarGeneratorBlacklist(new VarGeneratorImpl(Gensym.create("v")), vas);
+        }
+    
+        // Rename all variables that are in common
+        Map<Var, Var> result = new HashMap<Var, Var>();
+    
+        for(Var oldVar : vbs) {
+            Var newVar;
+            if (vas.contains(oldVar)) {
+                newVar = generator.next();
+            } else {
+                newVar = oldVar;
+            }
+    
+            boolean isSame = oldVar.equals(newVar);
+            if(!(excludeSymmetry && isSame)) {            
+                result.put(oldVar, newVar);
+            }
+        }
+    
         return result;
     }
 

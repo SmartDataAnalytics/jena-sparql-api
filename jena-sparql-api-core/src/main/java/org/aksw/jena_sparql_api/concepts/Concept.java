@@ -13,6 +13,7 @@ import com.google.common.collect.Sets;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.sdb.core.Gensym;
+import com.hp.hpl.jena.shared.PrefixMapping;
 import com.hp.hpl.jena.sparql.algebra.Algebra;
 import com.hp.hpl.jena.sparql.algebra.Op;
 import com.hp.hpl.jena.sparql.algebra.OpAsQuery;
@@ -45,6 +46,11 @@ public class Concept {
      * @return
      */
     public static Concept parse(String str) {
+        Concept result = parse(str, null);
+        return result;
+    }
+    
+    public static Concept parse(String str, PrefixMapping pm) {
         String[] splits = str.split("\\|", 2);
         if(splits.length != 2) {
             throw new RuntimeException("Invalid string: " + str);
@@ -61,8 +67,13 @@ public class Concept {
         Concept result = create(splits[1], varName);
         return result;
     }
-    
+
     public static Concept create(String elementStr, String varName) {
+        Concept result = create(elementStr, varName, null);
+        return result;
+    }
+
+    public static Concept create(String elementStr, String varName, PrefixMapping prefixMapping) {
         Var var = Var.alloc(varName);
 
         String tmp = elementStr.trim();

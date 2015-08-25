@@ -3,7 +3,6 @@ package org.aksw.jena_sparql_api.utils;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -11,48 +10,44 @@ import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformSubst;
 import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformer;
 
 import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.sdb.core.Gensym;
-import com.hp.hpl.jena.sparql.core.Var;
 import com.hp.hpl.jena.sparql.graph.NodeTransform;
 import com.hp.hpl.jena.sparql.syntax.Element;
 import com.hp.hpl.jena.sparql.syntax.ElementGroup;
+import com.hp.hpl.jena.sparql.syntax.ElementUnion;
 
 
 
 public class ElementUtils {
     
-    /**
-     * Returns a map that maps *each* variable from vbs to a name that does not appear in vas.
-     * 
-     * @param excludeSymmetry if true, exclude mappings from a var in vbs to itself.
-     */    
-    public static Map<Var, Var> createDistinctVarMap(Collection<Var> vas, Collection<Var> vbs, boolean excludeSymmetry, Generator<Var> generator) {
-            //var vans = vas.map(VarUtils.getVarName);
-    
-        if (generator == null) {
-            generator = new VarGeneratorBlacklist(new VarGeneratorImpl(Gensym.create("v")), vas);
-        }
-    
-        // Rename all variables that are in common
-        Map<Var, Var> result = new HashMap<Var, Var>();
-    
-        for(Var oldVar : vbs) {
-            Var newVar;
-            if (vas.contains(oldVar)) {
-                newVar = generator.next();
-            } else {
-                newVar = oldVar;
+    public static Element toElement(Collection<Element> elements) {
+        Element result;
+        if(elements.size() == 1) {
+            result = elements.iterator().next();
+        } else {
+            ElementGroup e = new ElementGroup();
+            for(Element element : elements) {
+                e.addElement(element);
             }
-    
-            boolean isSame = oldVar.equals(newVar);
-            if(!(excludeSymmetry && isSame)) {            
-                result.put(oldVar, newVar);
-            }
+            result = e;
         }
-    
+        
         return result;
     }
-    
+
+    public static Element union(Collection<Element> elements) {
+        Element result;
+        if(elements.size() == 1) {
+            result = elements.iterator().next();
+        } else {
+            ElementUnion e= new ElementUnion();
+            for(Element element : elements) {
+                e.addElement(element);
+            }
+            result = e;
+        }
+        
+        return result;
+    }
     
     public static Element substituteNodes(Element element, Map<? extends Node, ? extends Node> nodeMap) {
         NodeTransform nodeTransform = new NodeTransformRenameMap(nodeMap);

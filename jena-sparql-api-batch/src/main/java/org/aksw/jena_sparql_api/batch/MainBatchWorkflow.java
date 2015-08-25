@@ -5,13 +5,17 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.aksw.commons.util.StreamUtils;
 import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.BatchStatus;
@@ -28,11 +32,11 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
+import com.hp.hpl.jena.query.Query;
+import com.hp.hpl.jena.query.QueryExecution;
+import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.shared.PrefixMapping;
 import com.hp.hpl.jena.shared.impl.PrefixMappingImpl;
-import com.hp.hpl.jena.sparql.algebra.optimize.Optimize;
-import com.hp.hpl.jena.sparql.expr.NodeValue;
-import com.hp.hpl.jena.sparql.util.ExprUtils;
 import com.hp.hpl.jena.vocabulary.RDF;
 import com.hp.hpl.jena.vocabulary.RDFS;
 
@@ -63,11 +67,25 @@ public class MainBatchWorkflow {
 
         //ElementTriplesBlock
         //com.hp.hpl.jena.sparql.syntax.
+
+        //Concept concept = Concept.parse("?s | ?s a <http://linkedgeodata.org/ontology/Castle>");
+        Concept concept = Concept.parse("?s | Filter(?s = <http://linkedgeodata.org/triplify/node289523439> || ?s = <http://linkedgeodata.org/triplify/node290076702>)");
         
-        List<Concept> concepts = ResourceShape.collectConcepts(b.getResourceShape());
-        for(Concept concept : concepts) {
-            System.out.println(concept);
-        }
+        Query query = ResourceShape.createQuery(b.getResourceShape(), concept);
+        System.out.println(query);
+        
+        QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://linkedgeodata.org/sparql", "http://linkedgeodata.org").create();
+        QueryExecution qe = qef.createQueryExecution(query);
+        Model model = qe.execConstruct();
+        
+        model.write(System.out, "TURTLE");
+        
+        
+        
+//        List<Concept> concepts = ResourceShape.collectConcepts(b.getResourceShape());
+//        for(Concept concept : concepts) {
+//            System.out.println(concept);
+//        }
     }
 
     /**
