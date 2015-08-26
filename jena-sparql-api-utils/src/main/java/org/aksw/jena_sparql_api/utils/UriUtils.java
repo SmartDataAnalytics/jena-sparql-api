@@ -2,6 +2,8 @@ package org.aksw.jena_sparql_api.utils;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
@@ -17,6 +19,27 @@ import com.google.common.collect.Multimap;
  */
 public class UriUtils {
 
+    public static final Pattern replaceNamespacePattern = Pattern.compile("(?<=/)[^/]+(?=/[^/]+/*$)");
+    
+    /**
+     * http://example.org/foo/bar 
+     * becomes
+     * http://example.org/baz/bar
+     * 
+     * 
+     * @param base
+     * @param replacement
+     * @return
+     */
+    public static String replaceNamespace(String base, String replacement) {
+        Matcher m = replaceNamespacePattern.matcher(base);
+        String result = m.replaceAll(replacement);
+
+        //String result = base.replace("([^/]+)/([^/]+)$", replacement);
+        return result;
+    }
+    
+    
 	public static Multimap<String, String> parseQueryString(String queryString) {
 		try {
 			return parseQueryStringEx(queryString);

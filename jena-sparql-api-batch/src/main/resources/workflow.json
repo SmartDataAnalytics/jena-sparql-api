@@ -21,10 +21,14 @@
           ]
       },
       */
-      $prefixes: {
+      $prefixes: { // Special attribute for global prefixes
+      },
+      prefixes: { 
+        $prefixes: { // Macro for creating a PrefixMapping object
           fp7o: 'http://fp7-pp.publicdata.eu/ontology/',
           vcard: 'http://www.w3.org/2006/vcard/ns#',
           ex: 'http://example.org'
+        }
       },
       nominatimLookupService: {
           type: 'org.aksw.jena_sparql_api.geo.NominatimLookupServiceFactory'
@@ -49,19 +53,21 @@
         targetMethod: 'createSparqlService',
         arguments: ['http://dbpedia.org', null, null]
       },
-      baseConcept: { '?s <http://fp7-pp.publicdata.eu/ontology/address> ?o . ?o <http://fp7-pp.publicdata.eu/ontology/city> ?city . ?o <http://fp7-pp.publicdata.eu/ontology/country> ?country'
+      baseConcept: { '?s a fp7:Partner }'
+      
+      //baseConcept: { '?s <http://fp7-pp.publicdata.eu/ontology/address> ?o . ?o <http://fp7-pp.publicdata.eu/ontology/city> ?city . ?o <http://fp7-pp.publicdata.eu/ontology/country> ?country'
     },
     steps: [{
       reader: {
         type: 'org.aksw.jena_sparql_api.batch.ItemReaderModel',
         // shape: true // fetch all data for each resource
         shape: {
-            'fp7:city': true,
-            'fp7:country': true,
+            'fp7:address': {
+              'fp7:country' : 'rdfs:label'
+              'fp7:city': 'rdfs:label
+            }
             '$special': ['spatial'],
-            'spatial': true
         },        
-        //frame: '?p In (fp7:city, fp7:country)',
         concept: '#{baseConcept}'
       },
       processor: [{

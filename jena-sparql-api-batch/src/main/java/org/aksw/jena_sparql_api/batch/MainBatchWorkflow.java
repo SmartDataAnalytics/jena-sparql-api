@@ -63,6 +63,7 @@ public class MainBatchWorkflow {
         b.outgoing("geo:long");
         b.outgoing("geo:geometry");
         b.outgoing("geom:geometry").outgoing("ogc:asWKT");
+                
         //b.outgoing("rdf:type").outgoing(NodeValue.TRUE).incoming(ExprUtils.parse("?p = rdfs:label && langMatches(lang(?o), 'en')", pm));
 
         //ElementTriplesBlock

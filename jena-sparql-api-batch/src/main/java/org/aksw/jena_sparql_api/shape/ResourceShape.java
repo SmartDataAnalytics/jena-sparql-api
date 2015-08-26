@@ -46,6 +46,36 @@ import com.hp.hpl.jena.sparql.syntax.PatternVars;
 import com.hp.hpl.jena.sparql.syntax.Template;
 
 
+/**
+ * How to deal with inserts?
+ * 
+ * For example, the shape is: get all buyers (of dvds) togther with their (immediate friends), thus:
+ * 
+ * Nav(Out(hasBuyer), Out(hasFriend))
+ * 
+ * 
+ * Whenever we add triples that were not part of the original working set,
+ * we could just add them to the store (it does not matter whether they already existed there or not).
+ * 
+ * Yet, it would be very useful to validate whether newly inserted triples are part of a working set or not.
+ * 
+ * 
+ * 
+ * 
+ * Whenever we delete triples from the working set, well, its a delete
+ * 
+ * 
+ * If we added (EvilDead hasBuyer Alice),
+ * then we know that this triple is real addition, because
+ * - the subject equals the source resource
+ * - the triple matches one of the immediate relations of the shape
+ * - the triple was not part of the shape's graph
+ * 
+ * However, if we added that triple, we might want to fetch data for Alice according to the shape.
+ * 
+ * 
+ * 
+ */
 
 //class Target {
 //    private Concept concept;
