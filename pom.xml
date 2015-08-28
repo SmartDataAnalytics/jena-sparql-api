@@ -26,9 +26,23 @@
         <module>jena-sparql-api-update</module>
     </modules>
 
+    <issueManagement>
+        <url>https://github.com/AKSW/jena-sparql-api.git/issues</url>
+        <system>GitHub</system>
+    </issueManagement>
+
+    <licenses>
+        <license>
+            <name>Apache License 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.html</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
     <scm>
-        <connection>scm:git:git@github.com:AKSW/jena-sparql-api.git</connection>
-        <!-- developerConnection></developerConnection -->
+        <url>https://github.com/AKSW/jena-sparql-api.git</url>
+        <connection>scm:git:git://github.com/AKSW/jena-sparql-api.git.git</connection>
+        <developerConnection>scm:git:git@github.com:AKSW/jena-sparql-api.git.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
 
