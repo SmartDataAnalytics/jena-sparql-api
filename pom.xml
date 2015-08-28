@@ -46,6 +46,14 @@
         <tag>HEAD</tag>
     </scm>
 
+    <developers>
+        <developer>
+            <name>Claus Stadler</name>
+            <organization>AKSW</organization>
+            <organizationUrl>http://aksw.org</organizationUrl>
+        </developer>
+    </developers>
+
     <properties>
         <!-- <jetty.version>8.1.12.v20130726</jetty.version> -->
         <!-- <jetty.version>9.3.0.M1</jetty.version> -->
