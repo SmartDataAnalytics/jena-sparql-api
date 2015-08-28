@@ -132,6 +132,12 @@ public class ResourceShape {
         return ingoing;
     }
     
+    public void extend(ResourceShape that) {
+        // TODO Maybe we should create a deep clone of 'that' first
+        this.outgoing.putAll(that.outgoing);
+        this.ingoing.putAll(that.ingoing);
+    }
+    
 
     public static List<Concept> collectConcepts(ResourceShape source) {
         List<Concept> result = new ArrayList<Concept>();

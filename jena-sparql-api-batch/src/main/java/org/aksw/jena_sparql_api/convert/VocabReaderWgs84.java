@@ -30,7 +30,7 @@ public class VocabReaderWgs84
      * Fore a double value either from a number or a string
      * 
      * @param o
-     * @return
+     * @return$
      */
     public static Double extractDouble(Object o) {
         Double result;

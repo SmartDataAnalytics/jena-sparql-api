@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
+import org.aksw.jena_sparql_api.shape.StepRelation;
 import org.aksw.jena_sparql_api.utils.Vars;
 
 import com.hp.hpl.jena.graph.Node;
@@ -86,7 +87,6 @@ public class ResourceShapeBuilder {
         return result;                
     }
 
-
     public ResourceShapeBuilder nav(String propertyUri, boolean isInverse) {
         String p = prefixMapping.expandPrefix(propertyUri);
         
@@ -109,6 +109,11 @@ public class ResourceShapeBuilder {
         return result;        
     }
 
+
+    public ResourceShapeBuilder nav(StepRelation step) {
+        ResourceShapeBuilder result = nav(step.getRelation(), step.isInverse());
+        return result;
+    }
 
     public ResourceShapeBuilder nav(Relation relation, boolean isInverse) {
         Map<Relation, ResourceShape> map = isInverse

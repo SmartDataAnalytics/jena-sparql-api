@@ -2,15 +2,20 @@ package org.aksw.jena_sparql_api.shape;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
+import org.aksw.jena_sparql_api.batch.ResourceShapeBuilder;
+import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.utils.Vars;
 
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.NodeFactory;
+import com.hp.hpl.jena.shared.PrefixMapping;
 import com.hp.hpl.jena.sparql.expr.E_Equals;
 import com.hp.hpl.jena.sparql.expr.Expr;
 import com.hp.hpl.jena.sparql.expr.ExprVar;
 import com.hp.hpl.jena.sparql.expr.NodeValue;
+import com.hp.hpl.jena.sparql.syntax.ElementFilter;
 import com.hp.hpl.jena.sparql.util.ExprUtils;
 
 
@@ -139,6 +144,11 @@ public class ResourceShapeParserJson {
     public static final String wgs84geometry = "['geo:geometry']";
     public static final String geoSparqlLgd = "[geom:geometry: 'ogc:AsWkt']";
     
+    private PrefixMapping prefixMapping;
+    
+    public ResourceShapeParserJson(PrefixMapping prefixMapping) {
+        this.prefixMapping = prefixMapping;
+    }
     
     
     /**
@@ -152,7 +162,7 @@ public class ResourceShapeParserJson {
      * @param str
      * @return
      */
-    public static OpOutgoing parseExpr(String str) {
+    public static StepRelation parseStep(String str, PrefixMapping prefixMapping) {
         str = str.trim();
         
         // Check the first character
@@ -172,30 +182,63 @@ public class ResourceShapeParserJson {
         
         Expr expr;
         if(isExpr) {
-            expr = ExprUtils.parse(str);
+            expr = ExprUtils.parse(str, prefixMapping);
         } else {
-            Node p = NodeFactory.createURI(str);
-            expr = new E_Equals(new ExprVar(Vars.p), NodeValue.makeNode(p));  
+            String p = prefixMapping.expandPrefix(str);
+            Node np = NodeFactory.createURI(p);
+            expr = new E_Equals(new ExprVar(Vars.p), NodeValue.makeNode(np));  
         }
         
-        OpOutgoing result = new OpOutgoing(expr, isInverse);
+        Relation relation = new Relation(new ElementFilter(expr), Vars.p, Vars.o);
+        
+        StepRelation result = new StepRelation(relation, isInverse);
         return result;
     }
     
     public ResourceShape parse(Object obj) {
+        ResourceShapeBuilder builder = new ResourceShapeBuilder(prefixMapping);
+        parse(obj, builder);
         
+        ResourceShape result = builder.getResourceShape();
+        return result;
+    }
+    
+    public ResourceShape parse(Object obj, ResourceShapeBuilder builder) {
         
+        if(obj == null) {
+            // nothing to do
+        }
         if(obj instanceof Boolean) { // true -> fetch all properties
-            
+            Boolean tf = (Boolean)obj;
+            if(tf == true) {
+                builder.nav(NodeValue.TRUE, true);
+            }
         }
         else if (obj instanceof String) { // fetch a single property
-        
+            String str = (String)obj;
+            StepRelation step = parseStep(str, prefixMapping);
+            
+            builder.nav(step);
         }
         else if (obj instanceof List) { // fetch an array of properties (possibly nested)c
-            
+            List<?> list = (List<?>)obj;
+            for(Object item : list) {
+                parse(item, builder);
+            }
         }
         else if (obj instanceof Map) { //
-            
+            @SuppressWarnings("unchecked")
+            Map<String, Object> map = (Map<String, Object>)obj;
+            for(Entry<String, Object> entry : map.entrySet()) {
+                String str = entry.getKey();
+                Object o = entry.getValue();
+                StepRelation step = parseStep(str, prefixMapping);
+                ResourceShapeBuilder subBilder = builder.nav(step);
+                parse(o, subBilder);
+                
+            }
+        } else {
+            throw new RuntimeException("Unsupported argument: " + obj);
         }
         
         return null;

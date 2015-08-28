@@ -5,11 +5,21 @@
      ?o <http://fp7-pp.publicdata.eu/ontology/city> ?city .
      ?o <http://fp7-pp.publicdata.eu/ontology/country> ?country
   }
+    // '$special': ['spatial'],        
   */
   // 
 
   // Note: Looks like we could YAML with this approach: http://stackoverflow.com/questions/23744216/how-do-i-convert-from-yaml-to-json-in-java
+
+  shape: {
+    'fp7:address': {
+      'fp7:country' : 'rdfs:label',
+      'fp7:city': 'rdfs:label'
+    }
+  },
   job: {
+      
+      
     id: 'geoCodingJob',
     jobRepository: 'defaultJobRepo',
     context: {
@@ -53,7 +63,7 @@
         targetMethod: 'createSparqlService',
         arguments: ['http://dbpedia.org', null, null]
       },
-      baseConcept: { '?s a fp7:Partner }'
+      baseConcept: '{ ?s a fp7:Partner }'
       
       //baseConcept: { '?s <http://fp7-pp.publicdata.eu/ontology/address> ?o . ?o <http://fp7-pp.publicdata.eu/ontology/city> ?city . ?o <http://fp7-pp.publicdata.eu/ontology/country> ?country'
     },
@@ -61,13 +71,6 @@
       reader: {
         type: 'org.aksw.jena_sparql_api.batch.ItemReaderModel',
         // shape: true // fetch all data for each resource
-        shape: {
-            'fp7:address': {
-              'fp7:country' : 'rdfs:label'
-              'fp7:city': 'rdfs:label
-            }
-            '$special': ['spatial'],
-        },        
         concept: '#{baseConcept}'
       },
       processor: [{

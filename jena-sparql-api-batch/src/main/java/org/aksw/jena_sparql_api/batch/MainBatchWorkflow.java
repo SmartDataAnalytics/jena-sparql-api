@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.batch;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
@@ -13,9 +14,7 @@ import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
-import org.apache.jena.riot.Lang;
-import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.riot.RDFFormat;
+import org.aksw.jena_sparql_api.shape.ResourceShapeParserJson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.BatchStatus;
@@ -43,8 +42,48 @@ import com.hp.hpl.jena.vocabulary.RDFS;
 
 
 
+
+interface Vobuild {
+    void add(ResourceShape shape);
+}
+
+class VobuildBase
+    implements Vobuild
+{
+    @Override
+    public void add(ResourceShape shape) {
+        // TODO Auto-generated method stub
+        
+    }
+    
+}
+
+class VobuildGeoSparql {
+    public void add(ResourceShape shape) {
+        ResourceShapeBuilder b = new ResourceShapeBuilder(shape);
+        b.outgoing("geom:geometry").outgoing("ogc:asWKT");
+    }
+}
+
+class VobuildWgs84 {
+    public void add(ResourceShape shape) {
+        ResourceShapeBuilder b = new ResourceShapeBuilder(shape);
+        b.outgoing("geo:lat");
+        b.outgoing("geo:long");
+    }
+}
+
+
 public class MainBatchWorkflow {
 
+    public void foo() {
+        Map<String, Vobuild> nameToVocab = new HashMap<String, Vobuild>();
+        //nameToVocab.put("geo", new VobuildWgs84());
+        
+        
+        
+    }
+    
     private static final Logger logger = LoggerFactory.getLogger(MainBatchWorkflow.class);
 
     
@@ -56,6 +95,7 @@ public class MainBatchWorkflow {
         pm.setNsPrefix("geo", "http://www.w3.org/2003/01/geo/wgs84_pos#");
         pm.setNsPrefix("geom", "http://geovocab.org/geometry#");
         pm.setNsPrefix("ogc", "http://www.opengis.net/ont/geosparql#");
+        pm.setNsPrefix("fp7", "http://fp7-pp.publicdata.eu/ontology/");
         
         ResourceShapeBuilder b = new ResourceShapeBuilder(pm);
         //b.outgoing("rdfs:label");
@@ -64,6 +104,12 @@ public class MainBatchWorkflow {
         b.outgoing("geo:geometry");
         b.outgoing("geom:geometry").outgoing("ogc:asWKT");
                 
+        
+        ResourceShapeParserJson parser = new ResourceShapeParserJson(pm);
+        Map<String, Object> json = readJsonResource("workflow.json");
+        ResourceShape rs = parser.parse(json.get("shape"));
+        System.out.println(rs);
+        
         //b.outgoing("rdf:type").outgoing(NodeValue.TRUE).incoming(ExprUtils.parse("?p = rdfs:label && langMatches(lang(?o), 'en')", pm));
 
         //ElementTriplesBlock
@@ -89,6 +135,36 @@ public class MainBatchWorkflow {
 //        }
     }
 
+    
+    public static <T> T readJsonResource(String r) throws IOException {
+        String str = readResource(r);
+        T result = readJson(str);
+        return result;
+    }
+    
+    public static String readResource(String r) throws IOException {
+        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+        Resource resource = resolver.getResource(r);        
+        InputStream in = resource.getInputStream();
+        String result = StreamUtils.toString(in);
+        return result;
+    }
+    
+    public static <T> T readJson(String str) throws IOException {
+        Gson gson = new Gson();
+
+        //String str = readResource(r);
+        Reader reader = new StringReader(str); //new InputStreamReader(in);
+        
+        JsonReader jsonReader = new JsonReader(reader);
+        jsonReader.setLenient(true);
+        Object tmp = gson.fromJson(jsonReader, Object.class);
+        
+        @SuppressWarnings("unchecked")
+        T result = (T)tmp;
+        return result;
+    }
+    
     /**
      * @param args
      * @throws JobParametersInvalidException
@@ -99,22 +175,12 @@ public class MainBatchWorkflow {
     public static void main2(String[] args) throws Exception
     {
         
-        
-        
+                
         Map<String, String> classAliasMap = new HashMap<String, String>();
         classAliasMap.put("QueryExecutionFactoryHttp", QueryExecutionFactoryHttp.class.getCanonicalName());
-        
-        Gson gson = new Gson();
-        
-        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-        Resource resource = resolver.getResource("workflow.json");        
-        InputStream in = resource.getInputStream();
-        String str = StreamUtils.toString(in);
-        Reader reader = new StringReader(str); //new InputStreamReader(in);
-        
-        JsonReader jsonReader = new JsonReader(reader);
-        jsonReader.setLenient(true);
-        Map<String, Object> data = gson.fromJson(jsonReader, Map.class);
+                
+        String str = readResource("workflow.json");
+        Map<String, Object> data = readJson(str);
         System.out.println(data);
         
         
