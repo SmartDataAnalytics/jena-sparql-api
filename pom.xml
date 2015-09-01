@@ -8,6 +8,8 @@
     <packaging>pom</packaging>
     <version>2.13.0-2-SNAPSHOT</version>
     <name>Jena SPARQL API - Parent</name>
+    <description>An RDF library for abstracting SPARQL queries.</description>
+    <url>https://github.com/AKSW/jena-sparql-api</url>
 
     <modules>
         <module>jena-sparql-api-resources</module>
@@ -49,6 +51,7 @@
     <developers>
         <developer>
             <name>Claus Stadler</name>
+            <url>http://aksw.org/ClausStadler</url>
             <organization>AKSW</organization>
             <organizationUrl>http://aksw.org</organizationUrl>
         </developer>
@@ -72,7 +75,7 @@
 
         <spring.version>4.1.4.RELEASE</spring.version>
         <spring.batch.version>3.0.3.RELEASE</spring.batch.version>
-        <aksw.commons.version>0.7.7</aksw.commons.version>
+        <aksw.commons.version>0.7.9</aksw.commons.version>
 
         <atmosphere.version>2.0.0.RC3</atmosphere.version>
         <atmosphere-spring.version>1.1.0.RC5</atmosphere-spring.version>
@@ -86,7 +89,7 @@
         <file.encoding>UTF-8</file.encoding>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <gpg.keyname>AKSW.GPG</gpg.keyname>
+        <gpg.keyname>AKSW</gpg.keyname>
 
     </properties>
 
@@ -100,7 +103,7 @@
                 <configuration>
                     <arguments>-P!source-artifacts</arguments>
                     <useReleaseProfile>false</useReleaseProfile>
-                    <goals>-Dmaven.test.skip=false deploy</goals>
+                    <goals>-Dmaven.test.skip=false deploy nexus-staging:release</goals>
                     <autoVersionSubmodules>true</autoVersionSubmodules>
                 </configuration>
             </plugin>
@@ -236,6 +239,18 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.sonatype.plugins</groupId>
+                <artifactId>nexus-staging-maven-plugin</artifactId>
+                <version>1.6.3</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <serverId>ossrh</serverId>
+                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                </configuration>
             </plugin>
 
         </plugins>
@@ -893,14 +908,13 @@
 
     <distributionManagement>
         <repository>
-            <id>maven.aksw.internal</id>
-            <name>AKSW Internal Release Repository</name>
-            <url>http://maven.aksw.org/repository/internal</url>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
         </repository>
         <snapshotRepository>
             <id>maven.aksw.snapshots</id>
             <name>AKSW Snapshot Repository</name>
-            <url>http://maven.aksw.org/repository/snapshots</url>
+            <url>http://maven.aksw.org/archiva/repository/snapshots</url>
         </snapshotRepository>
     </distributionManagement>
 
