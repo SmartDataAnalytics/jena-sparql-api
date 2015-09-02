@@ -24,14 +24,21 @@ public class ListServiceResourceShape
     @Override
     public List<Entry<Resource, Model>> fetchData(Concept concept, Long limit, Long offset) {
 
-        Query query = ResourceShape.createQuery(resourceShape, concept);
-        QueryExecution qe = qef.createQueryExecution(query);
-        Model model = qe.execConstruct();
+        //ListService
+
+        //Query query = ResourceShape.createQuery(resourceShape, concept);
+        //QueryExecution qe = qef.createQueryExecution(query);
+        //Model model = qe.execConstruct();
+
+        // TODO Create a map concept
+
+        throw new RuntimeException("not implemented yet");
     }
 
     @Override
     public CountInfo fetchCount(Concept concept, Long itemLimit) {
-        ListServiceConcept.createQueryCount(concept, itemLimit, rowLimit, resultVar)
+        //ListServiceConcept.createQueryCount(concept, itemLimit, n, resultVar)
+        throw new RuntimeException("not implemented yet");
     }
 
 }

@@ -75,7 +75,7 @@
         filters: ['spatial']
       },
       processor: [{
-          filters: ['tmp']
+          filters: ['tmp'],
           type: 'SparqlUpdate',
           request: 'Insert { ?s ex:addrStr ?x } { ?s fp7:city ?ci ; fp7:country ?co . Bind(concat(?ci, "-", ?co) as ?x) }'
       }],

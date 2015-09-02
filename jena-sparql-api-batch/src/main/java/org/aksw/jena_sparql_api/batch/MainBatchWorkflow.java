@@ -36,7 +36,8 @@ import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
 import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.query.ResultSet;
+import com.hp.hpl.jena.query.ResultSetFormatter;
 import com.hp.hpl.jena.shared.PrefixMapping;
 import com.hp.hpl.jena.shared.impl.PrefixMappingImpl;
 import com.hp.hpl.jena.vocabulary.RDF;
@@ -107,12 +108,6 @@ public class MainBatchWorkflow {
 //        b.outgoing("geo:geometry");
 //        b.outgoing("geom:geometry").outgoing("ogc:asWKT");
 
-
-        ResourceShapeParserJson parser = new ResourceShapeParserJson(pm);
-        Map<String, Object> json = readJsonResource("workflow.json");
-        ResourceShape rs = parser.parse(json.get("shape"));
-        System.out.println(rs);
-
         //b.outgoing("rdf:type").outgoing(NodeValue.TRUE).incoming(ExprUtils.parse("?p = rdfs:label && langMatches(lang(?o), 'en')", pm));
 
         //ElementTriplesBlock
@@ -121,7 +116,13 @@ public class MainBatchWorkflow {
         //Concept concept = Concept.parse("?s | ?s a <http://linkedgeodata.org/ontology/Castle>");
         //Concept concept = Concept.parse("?s | Filter(?s = <http://linkedgeodata.org/triplify/node289523439> || ?s = <http://linkedgeodata.org/triplify/node290076702>)");
 
-        Concept concept = Concept.parse("?s | Filter(?s = <http://fp7-pp.publicdata.eu/page/resource/project/257943> || ?s = <http://fp7-pp.publicdata.eu/resource/project/256975>)");
+
+        ResourceShapeParserJson parser = new ResourceShapeParserJson(pm);
+        Map<String, Object> json = readJsonResource("workflow.json");
+        ResourceShape rs = parser.parse(json.get("shape"));
+        System.out.println(rs);
+
+        Concept concept = Concept.parse("?s | Filter(?s = <http://fp7-pp.publicdata.eu/resource/project/257943> || ?s = <http://fp7-pp.publicdata.eu/resource/project/256975>)");
 
 
         Query query = ResourceShape.createQuery(rs, concept);
@@ -129,9 +130,11 @@ public class MainBatchWorkflow {
 
         QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://fp7-pp.publicdata.eu/sparql", "http://fp7-pp.publicdata.eu/").create();
         QueryExecution qe = qef.createQueryExecution(query);
-        Model model = qe.execConstruct();
+        //Model model = qe.execConstruct();
+        ResultSet resultSet = qe.execSelect();
 
-        model.write(System.out, "TURTLE");
+        //model.write(System.out, "TURTLE");
+        System.out.println(ResultSetFormatter.asText(resultSet));
 
 
 

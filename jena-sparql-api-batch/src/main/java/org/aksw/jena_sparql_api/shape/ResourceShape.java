@@ -41,6 +41,7 @@ import com.hp.hpl.jena.sparql.expr.NodeValue;
 import com.hp.hpl.jena.sparql.function.FunctionEnv;
 import com.hp.hpl.jena.sparql.syntax.Element;
 import com.hp.hpl.jena.sparql.syntax.ElementFilter;
+import com.hp.hpl.jena.sparql.syntax.ElementSubQuery;
 import com.hp.hpl.jena.sparql.syntax.ElementTriplesBlock;
 import com.hp.hpl.jena.sparql.syntax.PatternVars;
 import com.hp.hpl.jena.sparql.syntax.Template;
@@ -152,7 +153,7 @@ public class ResourceShape {
     }
 
     public static void collectConcepts(Collection<Concept> result, ResourceShape source, Generator<Var> vargen) {
-        Concept baseConcept = new Concept((Element)null, Var.alloc("x"));
+        Concept baseConcept = new Concept((Element)null, Vars.g);
         collectConcepts(result, baseConcept, source, vargen);
     }
 
@@ -280,6 +281,10 @@ public class ResourceShape {
     }
 
 
+    public static Element remapVars(Element element, Map<Var, Var> varMap) {
+        return null;
+    }
+
     public static Query createQuery(ResourceShape resourceShape, Concept filter) {
         List<Concept> concepts = ResourceShape.collectConcepts(resourceShape);
 
@@ -287,7 +292,15 @@ public class ResourceShape {
         return result;
     }
 
-    public static Query createQuery(List<Concept> concepts, Concept filter) {
+    /**
+     * Deprecated, because with the construct approach we cannot get a tripe's context resource
+     *
+     * @param concepts
+     * @param filter
+     * @return
+     */
+    @Deprecated
+    public static Query createQueryConstruct(List<Concept> concepts, Concept filter) {
 
         Template template = new Template(BasicPattern.wrap(Collections.singletonList(Triples.spo)));
 
@@ -309,6 +322,50 @@ public class ResourceShape {
         Query result = new Query();
         result.setQueryConstructType();
         result.setConstructTemplate(template);
+        result.setQueryPattern(element);
+
+        return result;
+    }
+
+    public static Query createQuery(List<Concept> concepts, Concept filter) {
+
+        List<Concept> tmps = new ArrayList<Concept>();
+        for(Concept concept : concepts) {
+            Concept tmp = ConceptOps.intersect(concept, filter);
+            tmps.add(tmp);
+        }
+
+        List<Element> elements = new ArrayList<Element>();
+        for(Concept concept : tmps) {
+            Element e = concept.getElement();
+
+            // Check if the Vars.g is part of the element - if not, create a sub query that remaps ?s to ?g
+            Collection<Var> vs = PatternVars.vars(e);
+            if(!vs.contains(Vars.g)) {
+                Query q = new Query();
+                q.setQuerySelectType();
+                q.getProject().add(Vars.g, new ExprVar(Vars.s));
+                q.getProject().add(Vars.s);
+                q.getProject().add(Vars.p);
+                q.getProject().add(Vars.o);
+                q.setQueryPattern(e);
+
+                e = new ElementSubQuery(q);
+            }
+
+
+
+            elements.add(e);
+        }
+
+        Element element = ElementUtils.union(elements);
+
+        Query result = new Query();
+        result.setQuerySelectType();
+        result.getProject().add(Vars.g);
+        result.getProject().add(Vars.s);
+        result.getProject().add(Vars.p);
+        result.getProject().add(Vars.o);
         result.setQueryPattern(element);
 
         return result;
@@ -350,9 +407,12 @@ public class ResourceShape {
             rename.put(Vars.p, vargen.next());
             rename.put(Vars.o, Vars.s);
 
+            rename.put(baseVar, Vars.g);
+
             sourceVar = MapUtils.getOrElse(rename, baseVar, baseVar);
             Element e1 = ElementUtils.substituteNodes(baseElement, rename);
             e = ElementUtils.mergeElements(e1, e2);
+
         }   else {
             e = e2;
             sourceVar = Vars.s;
