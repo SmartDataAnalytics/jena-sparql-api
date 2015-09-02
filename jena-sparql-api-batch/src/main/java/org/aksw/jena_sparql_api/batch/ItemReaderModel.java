@@ -1,20 +1,18 @@
 package org.aksw.jena_sparql_api.batch;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 
+import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.pagination.core.PagingQuery;
+import org.aksw.jena_sparql_api.lookup.ListService;
+import org.aksw.jena_sparql_api.lookup.ListServiceConcept;
 import org.springframework.batch.item.data.AbstractPaginatedDataItemReader;
 
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.query.ResultSet;
+import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.sparql.engine.binding.Binding;
+import com.hp.hpl.jena.rdf.model.Resource;
 
 
 /**
@@ -25,78 +23,83 @@ import com.hp.hpl.jena.sparql.engine.binding.Binding;
  * @param <T>
  */
 public class ItemReaderModel
-//    extends AbstractPagingItemReader<T>
-    extends AbstractPaginatedDataItemReader<Model>
+    extends AbstractPaginatedDataItemReader<Entry<Resource, Model>>
 {
     private QueryExecutionFactory qef;
-    private volatile Query query = null;
 
-    private volatile Iterator<Query> itQuery = null;
+    private Concept concept;
+    private ListService<Concept, Entry<Resource, Model>> listService;
 
 
     public ItemReaderModel() {
         setName(this.getClass().getName());
     }
-
-    public void setSparqlService(QueryExecutionFactory qef) {
-        this.qef = qef;
-    }
-
-    public QueryExecutionFactory getQueryExecutionFactory() {
-        return this.qef;
-    }
-
-    public Query getQuery() {
-        return query;
-    }
-
-    public void setQuery(Query query) {
-        this.query = query;
-    }
-
-    public String getQueryString() {
-        return "" + query;
-    }
-
     @Override
-    protected Iterator<Model> doPageRead() {
+    protected Iterator<Entry<Resource, Model>> doPageRead() {
+
+        ListServiceConcept ls = new ListServiceConcept(qef);
+        List<Node> nodes = ls.fetchData(concept, (long)this.pageSize, (long)page);
+
         /*
-        if (results == null) {
-            results = new CopyOnWriteArrayList<T>();
-        }
-        else {
-            results.clear();
+        Map<Resource, Model> chunk = new HashMap<Resource, Model>();
+        for(Node node : nodes) {
+            Model model = ModelFactory.createDefaultModel();
+            RDFNode rdfNode = ModelUtils.convertGraphNodeToRDFNode(node, model);
+            Resource r = (Resource)rdfNode;
+            chunk.put(r, model);
         }
         */
+        long limit = (long)this.pageSize;
+        long offset = this.page * this.pageSize;
 
-//        PagingQuery pagingQuery = new PagingQuery(this.pageSize, this.query);
-//        Iterator<Query> itQuery = pagingQuery.createQueryIterator(this.page * this.pageSize);
-//
-//        Query query = itQuery.next();
-//
-//        if(query == null) {
-//            Collection<T> tmp = Collections.emptyList();
-//            return tmp.iterator();
-//        }
-//
-//        //Query query = queryIterator.next();
-//        QueryExecution qe = qef.createQueryExecution(query);
-//        ResultSet rs = qe.execSelect();
-//
-//
-//        List<T> items = new ArrayList<T>();
-//        long rowId = 0;
-//        while(rs.hasNext()) {
-//            ++rowId;
-//            Binding binding = rs.nextBinding();
-//
-//            T item = bindingMapper.map(binding, rowId);
-//
-//            items.add(item);
-//            //results.add(item);
-//        }
-//
-//        return items.iterator();
-        return null;
+        List<Entry<Resource, Model>> chunk = listService.fetchData(concept, limit, offset);
+        Iterator<Entry<Resource, Model>> result = chunk.iterator();
+        return result;
     }
 }
+
+
+//
+//for(Entry<Resource, Model> entry : chunk.entrySet()) {
+//
+//}
+
+
+/*
+if (results == null) {
+  results = new CopyOnWriteArrayList<T>();
+}
+else {
+  results.clear();
+}
+*/
+
+//PagingQuery pagingQuery = new PagingQuery(this.pageSize, this.query);
+//Iterator<Query> itQuery = pagingQuery.createQueryIterator(this.page * this.pageSize);
+//
+//Query query = itQuery.next();
+//
+//if(query == null) {
+//  Collection<T> tmp = Collections.emptyList();
+//  return tmp.iterator();
+//}
+//
+////Query query = queryIterator.next();
+//QueryExecution qe = qef.createQueryExecution(query);
+//ResultSet rs = qe.execSelect();
+//
+//
+//List<T> items = new ArrayList<T>();
+//long rowId = 0;
+//while(rs.hasNext()) {
+//  ++rowId;
+//  Binding binding = rs.nextBinding();
+//
+//  T item = bindingMapper.map(binding, rowId);
+//
+//  items.add(item);
+//  //results.add(item);
+//}
+//
+//return items.iterator();
+//return null;

@@ -1,25 +1,15 @@
 {
-  // { ?s a <http://fp7-pp.publicdata.eu/ontology/Project> }
-  /*
-  { ?s <http://fp7-pp.publicdata.eu/ontology/address> ?o .
-     ?o <http://fp7-pp.publicdata.eu/ontology/city> ?city .
-     ?o <http://fp7-pp.publicdata.eu/ontology/country> ?country
-  }
-    // '$special': ['spatial'],        
-  */
-  // 
-
-  // Note: Looks like we could YAML with this approach: http://stackoverflow.com/questions/23744216/how-do-i-convert-from-yaml-to-json-in-java
-
   shape: {
-    'fp7:address': {
-      'fp7:country' : 'rdfs:label',
-      'fp7:city': 'rdfs:label'
+    'fp7o:funding': {
+      'fp7o:partner': {
+        'fp7o:address': {
+          'fp7o:country': 'rdfs:label',
+          'fp7o:city': 'rdfs:label'
+        }
+      }
     }
   },
   job: {
-      
-      
     id: 'geoCodingJob',
     jobRepository: 'defaultJobRepo',
     context: {
@@ -33,7 +23,7 @@
       */
       $prefixes: { // Special attribute for global prefixes
       },
-      prefixes: { 
+      prefixes: {
         $prefixes: { // Macro for creating a PrefixMapping object
           fp7o: 'http://fp7-pp.publicdata.eu/ontology/',
           vcard: 'http://www.w3.org/2006/vcard/ns#',
@@ -48,7 +38,7 @@
       },
       srcSparqlService: {
         type: 'org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp',
-        ctor: ['http://dbpedia.org']
+        ctor: ['http://fp7-pp.publicdata.eu/sparql']
         //ctor: ['http://dbpedia.org', ['http://dbpedia.org']]
         //ctor: ['http://dbpedia.org', {type: 'foo.bar.DatasetDescription', ctor: ['http://dbpedia.org']}]
       },
@@ -64,19 +54,40 @@
         arguments: ['http://dbpedia.org', null, null]
       },
       baseConcept: '{ ?s a fp7:Partner }'
-      
+
       //baseConcept: { '?s <http://fp7-pp.publicdata.eu/ontology/address> ?o . ?o <http://fp7-pp.publicdata.eu/ontology/city> ?city . ?o <http://fp7-pp.publicdata.eu/ontology/country> ?country'
     },
     steps: [{
       reader: {
         type: 'org.aksw.jena_sparql_api.batch.ItemReaderModel',
         // shape: true // fetch all data for each resource
-        concept: '#{baseConcept}'
+        concept: '#{baseConcept}',
+        shape: {
+            'fp7o:funding': {
+              'fp7o:partner': {
+                'fp7o:address': {
+                  'fp7o:country': 'rdfs:label',
+                  'fp7o:city': 'rdfs:label'
+                }
+              }
+            }
+          },
+        filters: ['spatial']
       },
       processor: [{
+          filters: ['tmp']
           type: 'SparqlUpdate',
-          request: 'Insert { ?s ex:addrStr ?x } { ?s fp7:city ?ci ; fp7:country ?co . Bind(concat(?ci, "-", ?co) as ?x) }' 
-      },
+          request: 'Insert { ?s ex:addrStr ?x } { ?s fp7:city ?ci ; fp7:country ?co . Bind(concat(?ci, "-", ?co) as ?x) }'
+      }],
+      writer: {
+
+      }
+    }]
+  }
+}
+
+
+ /*
       /*
       {
         type: 'createProperty'
@@ -87,20 +98,15 @@
                args: ['http://]
            }
         }
-      }*/]
-      
-    }]
-  }
-}
-    
-    
- /*
+      }*]
+  *
+  *
     steps: [{
       context: {
       },
-      
+
       tasklet: {
-        
+
       },
       chunk: {
         size: 1000,
@@ -108,8 +114,8 @@
         processor: null,
         writer: null
       }
-        
-              
+
+
         }, { // Perform geocoding and write intermediate result
         type: 'default', // By default a step is comprised of an (item) reader, processor and writer
         reader: {
@@ -148,9 +154,9 @@
         ],
         writer: {
           type: "sparql",
-          service: { ref: dstSparqlService} 
+          service: { ref: dstSparqlService}
         }
-        
+
     }],
     xstep: { // Clear geometries of resources for which an intermediate result exists
     },
@@ -158,4 +164,14 @@
     }
   }
 }
-*/
+  // { ?s a <http://fp7-pp.publicdata.eu/ontology/Project> }
+  /*
+  { ?s <http://fp7-pp.publicdata.eu/ontology/address> ?o .
+     ?o <http://fp7-pp.publicdata.eu/ontology/city> ?city .
+     ?o <http://fp7-pp.publicdata.eu/ontology/country> ?country
+  }
+    // '$special': ['spatial'],
+  */
+  //
+
+  // Note: Looks like we could YAML with this approach: http://stackoverflow.com/questions/23744216/how-do-i-convert-from-yaml-to-json-in-java

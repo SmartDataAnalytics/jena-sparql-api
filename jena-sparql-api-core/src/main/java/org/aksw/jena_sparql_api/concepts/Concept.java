@@ -41,7 +41,7 @@ public class Concept {
     /**
      * Util method to parse strings that use a pipe as a separator between variable and sparql string
      * ?s | ?s a ex:Airport
-     * 
+     *
      * @param str
      * @return
      */
@@ -49,14 +49,14 @@ public class Concept {
         Concept result = parse(str, null);
         return result;
     }
-    
+
     public static Concept parse(String str, PrefixMapping pm) {
         String[] splits = str.split("\\|", 2);
         if(splits.length != 2) {
             throw new RuntimeException("Invalid string: " + str);
-            
+
         }
-        
+
         // Remove leading ? of the varName
         String varName = splits[0].trim();
         if(varName.charAt(0) != '?') {
@@ -130,14 +130,14 @@ public class Concept {
 
     public Concept applyNodeTransform(NodeTransform nodeTransform) {
         Var tmpVar = (Var)nodeTransform.convert(var);
-        
+
         Element e = ElementUtils.applyNodeTransform(element, nodeTransform);
         Var v = tmpVar == null ? var : tmpVar;
 
         Concept result = new Concept(e, v);
         return result;
     }
-    
+
     public Set<Var> getVarsMentioned() {
         Set<Var> result = SetUtils.asSet(PatternVars.vars(element));
         result.add(var); // Var should always be part of element - but better add it here explicitly
