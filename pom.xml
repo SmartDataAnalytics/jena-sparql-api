@@ -102,8 +102,8 @@
                 <version>2.5.1</version>
                 <configuration>
                     <arguments>-P!source-artifacts</arguments>
-                    <useReleaseProfile>false</useReleaseProfile>
-                    <goals>-Dmaven.test.skip=false gpg:sign deploy nexus-staging:release</goals>
+                    <useReleaseProfile>true</useReleaseProfile>
+                    <goals>-Dmaven.test.skip=false deploy nexus-staging:release</goals>
                     <autoVersionSubmodules>true</autoVersionSubmodules>
                 </configuration>
             </plugin>
