@@ -7,17 +7,14 @@ import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactoryDecorator;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 
-import com.blogspot.nurkiewicz.asyncretry.backoff.Backoff;
-import com.blogspot.nurkiewicz.asyncretry.backoff.BoundedMaxBackoff;
-import com.blogspot.nurkiewicz.asyncretry.backoff.BoundedMinBackoff;
-import com.blogspot.nurkiewicz.asyncretry.backoff.ExponentialDelayBackoff;
-import com.blogspot.nurkiewicz.asyncretry.backoff.FixedIntervalBackoff;
-import com.blogspot.nurkiewicz.asyncretry.backoff.ProportionalRandomBackoff;
-import com.blogspot.nurkiewicz.asyncretry.backoff.UniformRandomBackoff;
-import com.blogspot.nurkiewicz.asyncretry.policy.MaxRetriesPolicy;
-import com.blogspot.nurkiewicz.asyncretry.policy.RetryPolicy;
-import com.blogspot.nurkiewicz.asyncretry.policy.exception.AbortPredicateRetryPolicy;
-import com.blogspot.nurkiewicz.asyncretry.policy.exception.ExceptionClassRetryPolicy;
+import com.nurkiewicz.asyncretry.backoff.Backoff;
+import com.nurkiewicz.asyncretry.backoff.BoundedMaxBackoff;
+import com.nurkiewicz.asyncretry.backoff.BoundedMinBackoff;
+import com.nurkiewicz.asyncretry.backoff.ExponentialDelayBackoff;
+import com.nurkiewicz.asyncretry.backoff.FixedIntervalBackoff;
+import com.nurkiewicz.asyncretry.backoff.ProportionalRandomBackoff;
+import com.nurkiewicz.asyncretry.backoff.UniformRandomBackoff;
+import com.nurkiewicz.asyncretry.policy.RetryPolicy;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.hp.hpl.jena.query.Query;
@@ -36,7 +33,7 @@ public class QueryExecutionFactoryRetry
     private final Backoff backoff;
 
     public QueryExecutionFactoryRetry(QueryExecutionFactory decoratee, int retryCount, long retryDelayInMs) {
-        this(decoratee, new MaxRetriesPolicy(RetryPolicy.DEFAULT, retryCount), new FixedIntervalBackoff(retryDelayInMs), true);
+        this(decoratee, new RetryPolicy().withMaxRetries(retryCount), new FixedIntervalBackoff(retryDelayInMs), true);
 
         //TODO remove the variables which are superseded by Async-Retry API
         this.retryCount = retryCount;
@@ -44,7 +41,7 @@ public class QueryExecutionFactoryRetry
     }
 
     public QueryExecutionFactoryRetry(QueryExecutionFactory decoratee, int retryCount, long retryDelayDuration, TimeUnit retryDelayTimeUnit) {
-        this(decoratee, new MaxRetriesPolicy(RetryPolicy.DEFAULT, retryCount), new FixedIntervalBackoff(retryDelayTimeUnit.toMillis(retryDelayDuration)), true);
+        this(decoratee, new RetryPolicy().withMaxRetries(retryCount), new FixedIntervalBackoff(retryDelayTimeUnit.toMillis(retryDelayDuration)), true);
 
         //TODO remove the variables which are superseded by Async-Retry API
         this.retryCount = retryCount;
@@ -118,16 +115,16 @@ public class QueryExecutionFactoryRetry
 
     //@SafeVarargs
     public QueryExecutionFactoryRetry retryOn(Class<? extends Throwable> ... retryOnThrowable) {
-        return this.withRetryPolicy(ExceptionClassRetryPolicy.retryOn(retryPolicy, retryOnThrowable));
+        return this.withRetryPolicy(new RetryPolicy().retryOn(retryOnThrowable));
     }
 
     //@SafeVarargs
     public QueryExecutionFactoryRetry abortOn(Class<? extends Throwable> ... abortOnThrowable) {
-        return this.withRetryPolicy(ExceptionClassRetryPolicy.abortOn(retryPolicy, abortOnThrowable));
+        return this.withRetryPolicy(new RetryPolicy().abortOn(abortOnThrowable));
     }
 
     public QueryExecutionFactoryRetry abortIf(Predicate<Throwable> abortPredicate) {
-        return this.withRetryPolicy(new AbortPredicateRetryPolicy(retryPolicy, abortPredicate));
+        return this.withRetryPolicy(new RetryPolicy().abortIf(abortPredicate));
     }
 
     public QueryExecutionFactoryRetry withUniformJitter() {
@@ -155,11 +152,11 @@ public class QueryExecutionFactoryRetry
     }
 
     public QueryExecutionFactoryRetry withMaxRetries(int times) {
-        return this.withRetryPolicy(new MaxRetriesPolicy(retryPolicy, times));
+        return this.withRetryPolicy(new RetryPolicy().withMaxRetries(times));
     }
 
     public QueryExecutionFactoryRetry dontRetry() {
-        return this.withRetryPolicy(new MaxRetriesPolicy(retryPolicy, 0));
+        return this.withRetryPolicy(new RetryPolicy().withMaxRetries(0));
     }
 
     public QueryExecutionFactoryRetry withNoDelay() {

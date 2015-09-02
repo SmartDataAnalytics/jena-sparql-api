@@ -9,10 +9,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import org.aksw.jena_sparql_api.core.QueryExecutionDecorator;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 
-import com.blogspot.nurkiewicz.asyncretry.AsyncRetryExecutor;
-import com.blogspot.nurkiewicz.asyncretry.RetryExecutor;
-import com.blogspot.nurkiewicz.asyncretry.backoff.Backoff;
-import com.blogspot.nurkiewicz.asyncretry.policy.RetryPolicy;
+import com.nurkiewicz.asyncretry.AsyncRetryExecutor;
+import com.nurkiewicz.asyncretry.RetryExecutor;
+import com.nurkiewicz.asyncretry.backoff.Backoff;
+import com.nurkiewicz.asyncretry.policy.RetryPolicy;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.hp.hpl.jena.graph.Triple;

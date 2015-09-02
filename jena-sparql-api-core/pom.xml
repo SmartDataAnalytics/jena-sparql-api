@@ -95,9 +95,9 @@
         
         <!-- Async-Retry API from https://github.com/nurkiewicz/async-retry -->
         <dependency>
-	        <groupId>com.blogspot.nurkiewicz.asyncretry</groupId>
-	        <artifactId>asyncretry</artifactId>
-	        <version>0.0.1</version>
+	        <groupId>com.nurkiewicz.asyncretry</groupId>
+	        <artifactId>asyncretry-jdk7</artifactId>
+	        <version>0.0.6</version>
         </dependency>
 
     </dependencies>
