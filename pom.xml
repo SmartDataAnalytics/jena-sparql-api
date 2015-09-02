@@ -864,12 +864,6 @@
                 <version>2.1</version>
             </dependency>
 
-            <dependency>
-                <groupId>org.aksw.coyotecache</groupId>
-                <artifactId>coyotecache-core</artifactId>
-                <version>0.0.1</version>
-            </dependency>
-
         </dependencies>
     </dependencyManagement>
 
@@ -906,20 +900,6 @@
             </build>
         </profile>
     </profiles>
-
-    <repositories>
-        <repository>
-            <id>maven.aksw.internal</id>
-            <name>University Leipzig, AKSW Maven2 Internal Repository</name>
-            <url>http://maven.aksw.org/repository/internal/</url>
-        </repository>
-
-        <repository>
-            <id>maven.aksw.snapshots</id>
-            <name>University Leipzig, AKSW Maven2 Snapshot Repository</name>
-            <url>http://maven.aksw.org/repository/snapshots/</url>
-        </repository>
-    </repositories>
 
     <distributionManagement>
         <repository>

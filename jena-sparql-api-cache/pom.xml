@@ -70,11 +70,6 @@
             <artifactId>spring-core</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>org.aksw.coyotecache</groupId>
-            <artifactId>coyotecache-core</artifactId>
-        </dependency>
-
         <!-- Database - used for SPARQL caching, Runtime dep, as the DB is started
             automatically on connection -->
         <dependency>
