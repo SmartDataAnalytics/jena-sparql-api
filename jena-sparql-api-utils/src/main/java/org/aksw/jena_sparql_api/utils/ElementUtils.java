@@ -18,7 +18,7 @@ import com.hp.hpl.jena.sparql.syntax.ElementUnion;
 
 
 public class ElementUtils {
-    
+
     public static Element toElement(Collection<Element> elements) {
         Element result;
         if(elements.size() == 1) {
@@ -30,7 +30,7 @@ public class ElementUtils {
             }
             result = e;
         }
-        
+
         return result;
     }
 
@@ -45,17 +45,17 @@ public class ElementUtils {
             }
             result = e;
         }
-        
+
         return result;
     }
-    
+
     public static Element substituteNodes(Element element, Map<? extends Node, ? extends Node> nodeMap) {
         NodeTransform nodeTransform = new NodeTransformRenameMap(nodeMap);
         Element result = applyNodeTransform(element, nodeTransform);
         return result;
     }
-    
-    public static Element applyNodeTransform(Element element, NodeTransform nodeTransform) {        
+
+    public static Element applyNodeTransform(Element element, NodeTransform nodeTransform) {
         //Op op = Algebra.compile(element);
         //Op tmp = NodeTransformLib.transform(nodeTransform, op);
         //Query query = OpAsQuery.asQuery(tmp);
@@ -63,11 +63,11 @@ public class ElementUtils {
         Element result = ElementTransformer.transform(element, transform);
         return result;
     }
-    
+
     public static void copyElements(ElementGroup target, Element source) {
         if(source instanceof ElementGroup) {
             ElementGroup es = (ElementGroup)source;
-            
+
             for(Element e : es.getElements()) {
                 target.addElement(e);
             }
@@ -75,11 +75,11 @@ public class ElementUtils {
             target.addElement(source);
         }
     }
-    
+
     /**
      * Creates a new ElementGroup that contains the elements of the given arguments.
      * Argument ElementGroups are flattened. ElementTriplesBlocks however are not combined.
-     * 
+     *
      * @param first
      * @param second
      * @return
@@ -89,22 +89,23 @@ public class ElementUtils {
 
         copyElements(result, first);
         copyElements(result, second);
-        
+
         return result;
     }
-    
+
     public static List<Element> toElementList(Element element) {
         List<Element> result;
-        
+
         if(element instanceof ElementGroup) {
             result = ((ElementGroup)element).getElements();
         } else {
             result = Arrays.asList(element);
         }
-        
+
         // This method always returns a copy of the elements
         result = new ArrayList<Element>(result);
-        
+
         return result;
     }
+
 }

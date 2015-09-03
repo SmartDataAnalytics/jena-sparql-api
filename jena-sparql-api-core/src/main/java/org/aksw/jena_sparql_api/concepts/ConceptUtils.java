@@ -144,34 +144,32 @@ public class ConceptUtils {
         Element attrElement = attrConcept.getElement();
         Element filterElement = filterConcept.getElement();
 
-        //var attrVar = attrConcept.getVar();
-
         Collection<Var> attrVars = PatternVars.vars(attrElement);
         Collection<Var> filterVars = PatternVars.vars(filterElement);
 
-        Set<Var> attrJoinVars = Collections.singleton(attrConcept.getVar());
-        Set<Var> filterJoinVars = Collections.singleton(filterConcept.getVar());
+        List<Var> attrJoinVars = Collections.singletonList(attrConcept.getVar());
+        List<Var> filterJoinVars = Collections.singletonList(filterConcept.getVar());
 
 
-        Map<Var, Var> result = ElementUtils.createJoinVarMap(attrVars, filterVars, attrJoinVars, filterJoinVars); //, varNameGenerator);
+        Map<Var, Var> result = VarUtils.createJoinVarMap(attrVars, filterVars, attrJoinVars, filterJoinVars, null); //, varNameGenerator);
 
         return result;
     }
 
     public static Concept createRenamedConcept(Concept attrConcept, Concept filterConcept) {
 
-        var varMap = this.createVarMap(attrConcept, filterConcept);
+        Map<Var, Var> varMap = createVarMap(attrConcept, filterConcept);
 
-        var attrVar = attrConcept.getVar();
-        var filterElement = filterConcept.getElement();
-        var newFilterElement = ElementUtils.createRenamedElement(filterElement, varMap);
+        Var attrVar = attrConcept.getVar();
+        Element filterElement = filterConcept.getElement();
+        Element newFilterElement = ElementUtils.createRenamedElement(filterElement, varMap);
 
-        var result = new Concept(newFilterElement, attrVar);
+        Concept result = new Concept(newFilterElement, attrVar);
 
         return result;
-    },
+    }
 
-    public static Concept createCombinedConcept(Concept attrConcept, Concept filterConcept, Map<Var, Var> renameVars, boolean attrsOptional, boolean filterAsSubquery) {
+    public static Concept createCombinedConcept(Concept attrConcept, Concept filterConcept, boolean renameVars, boolean attrsOptional, boolean filterAsSubquery) {
         // TODO Is it ok to rename vars here? // TODO The variables of baseConcept and tmpConcept must match!!!
         // Right now we just assume that.
         Var attrVar = attrConcept.getVar();

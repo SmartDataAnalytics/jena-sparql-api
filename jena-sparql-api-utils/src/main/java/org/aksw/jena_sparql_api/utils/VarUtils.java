@@ -67,7 +67,7 @@ public class VarUtils {
 
         return result;
     }
-    
+
     public static Var applyNodeTransform(Var var, NodeTransform nodeTransform) {
         Var result = applyNodeTransform(var, nodeTransform, var);
         return result;
@@ -81,19 +81,19 @@ public class VarUtils {
 
     /**
      * Returns a map that maps *each* variable from vbs to a name that does not appear in vas.
-     * 
+     *
      * @param excludeSymmetry if true, exclude mappings from a var in vbs to itself.
-     */    
+     */
     public static Map<Var, Var> createDistinctVarMap(Collection<Var> vas, Collection<Var> vbs, boolean excludeSymmetry, Generator<Var> generator) {
             //var vans = vas.map(VarUtils.getVarName);
-    
+
         if (generator == null) {
             generator = new VarGeneratorBlacklist(new VarGeneratorImpl(Gensym.create("v")), vas);
         }
-    
+
         // Rename all variables that are in common
         Map<Var, Var> result = new HashMap<Var, Var>();
-    
+
         for(Var oldVar : vbs) {
             Var newVar;
             if (vas.contains(oldVar)) {
@@ -101,15 +101,34 @@ public class VarUtils {
             } else {
                 newVar = oldVar;
             }
-    
+
             boolean isSame = oldVar.equals(newVar);
-            if(!(excludeSymmetry && isSame)) {            
+            if(!(excludeSymmetry && isSame)) {
                 result.put(oldVar, newVar);
             }
         }
-    
+
         return result;
     }
 
+    public static Map<Var, Var> createJoinVarMap(Collection<Var> sourceVars, Collection<Var> targetVars, List<Var> sourceJoinVars, List<Var> targetJoinVars, Generator<Var> generator) {
+
+        if (sourceJoinVars.size() != targetJoinVars.size()) {
+            throw new RuntimeException("Cannot join on different number of columns");
+        }
+
+        Map<Var, Var> result = VarUtils.createDistinctVarMap(sourceVars, targetVars, true, generator);
+
+        for (int i = 0; i < sourceJoinVars.size(); ++i) {
+            Var sourceJoinVar = sourceJoinVars.get(i);
+            Var targetJoinVar = targetJoinVars.get(i);
+
+            // Map targetVar to sourceVar
+            result.put(targetJoinVar, sourceJoinVar);
+            // rename[targetVar.getName()] = sourceVar;
+        }
+
+        return result;
+    }
 
 }
