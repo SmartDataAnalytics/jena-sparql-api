@@ -330,14 +330,22 @@ public class ConceptUtils {
 
     public static Query createQueryList(Concept concept, Long limit, Long offset) {
         Query result = new Query();
+        result.setQuerySelectType();
         result.setDistinct(true);
 
         result.setLimit(limit == null ? Query.NOLIMIT : limit);
         result.setOffset(offset == null ? Query.NOLIMIT : offset);
 
         result.getProject().add(concept.getVar());
-        result.setQueryPattern(concept.getElement());
+        Element e = concept.getElement();
+        if(e instanceof ElementSubQuery) {
+            e = ElementUtils.createElementGroup(e);
+        }
 
+        result.setQueryPattern(e);
+
+//        String str = result.toString();
+//        System.out.println(str);
         return result;
     }
 

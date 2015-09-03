@@ -7,6 +7,7 @@ import java.io.StringReader;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.aksw.commons.util.StreamUtils;
 import org.aksw.jena_sparql_api.concepts.Concept;
@@ -17,12 +18,8 @@ import org.aksw.jena_sparql_api.geo.vocab.GEOM;
 import org.aksw.jena_sparql_api.geo.vocab.GEOSPARQL;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.lookup.ListService;
-import org.aksw.jena_sparql_api.lookup.ListServiceConcept;
 import org.aksw.jena_sparql_api.lookup.ListServiceUtils;
-import org.aksw.jena_sparql_api.lookup.LookupService;
-import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
-import org.aksw.jena_sparql_api.mapper.MappedConceptUtils;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.aksw.jena_sparql_api.shape.ResourceShapeParserJson;
 import org.slf4j.Logger;
@@ -43,9 +40,8 @@ import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.query.ResultSetFormatter;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.shared.PrefixMapping;
 import com.hp.hpl.jena.shared.impl.PrefixMappingImpl;
 import com.hp.hpl.jena.vocabulary.RDF;
@@ -144,7 +140,13 @@ public class MainBatchWorkflow {
         ListService<Concept, Node, Graph> ls = ListServiceUtils.createListServiceMappedConcept(qef, mappedConcept, true);
 
         Map<Node, Graph> nodeToGraph = ls.fetchData(concept, null, null);
-        System.out.println(nodeToGraph);
+        for(Entry<Node, Graph> entry : nodeToGraph.entrySet()) {
+            System.out.println("=====================================");
+            System.out.println(entry.getKey());
+            Model m = ModelFactory.createModelForGraph(entry.getValue());
+            m.write(System.out, "TURTLE");
+        }
+        //System.out.println(nodeToGraph);
 
 
         //QueryExecution qe = qef.createQueryExecution(query);

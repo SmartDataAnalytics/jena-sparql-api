@@ -21,9 +21,13 @@ public class ListServiceUtils {
         Concept concept = mappedConcept.getConcept();
         Query query = ConceptUtils.createQueryList(concept);
 
+//        System.out.println(query);
+//        if(true) { throw new RuntimeException("foo"); }
+
+
         Agg<T> agg = mappedConcept.getAggregator();
 
-        Var  rowId = Var.alloc("rowId");
+        //Var  rowId = Var.alloc("rowId");
 
         // TODO Set up a projection using the grouping variable and the variables referenced by the aggregator
         Set<Var> vars = agg.getDeclaredVars();

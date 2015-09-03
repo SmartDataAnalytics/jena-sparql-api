@@ -355,6 +355,7 @@ public class ResourceShape {
 
     public static MappedConcept<Graph> createMappedConcept(ResourceShape resourceShape, Concept filter) {
         Query query = createQuery(resourceShape, filter);
+        System.out.println(query);
         MappedConcept<Graph> result = createMappedConcept(query);
         return result;
     }

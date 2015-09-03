@@ -51,7 +51,12 @@ public class ListServiceSparqlQuery
             filterConcept = ConceptUtils.createSubjectConcept();
         }
 
+        //System.out.println(attrQuery);
+        //if(true) { throw new RuntimeException("foo"); }
+
         Query query = ConceptUtils.createAttrQuery(this.attrQuery, attrVar, this.isLeftJoin, filterConcept, limit, offset, this.forceSubQuery);
+
+        //if(true) {throw new RuntimeException(""); }
 
         QueryExecution qe = qef.createQueryExecution(query);
         ResultSet rs = qe.execSelect();
