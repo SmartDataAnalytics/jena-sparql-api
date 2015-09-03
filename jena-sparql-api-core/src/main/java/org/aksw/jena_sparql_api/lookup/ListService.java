@@ -25,5 +25,5 @@ public interface ListService<C, K, V> {
      * //@param rowLimit Limits the number of rows to scan before applying distinct
      * @return
      */
-    CountInfo fetchCount(C concept, Long itemLimit);
+    CountInfo fetchCount(C concept, Long itemLimit, Long rowLimit);
 }

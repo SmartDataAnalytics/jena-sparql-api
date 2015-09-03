@@ -50,6 +50,14 @@ public class ElementUtils {
         return result;
     }
 
+    public static ElementGroup createElementGroup(Iterable<Element> members) {
+        ElementGroup result = new ElementGroup();
+        for(Element member : members) {
+            result.addElement(member);
+        }
+        return result;
+    }
+
     public static ElementGroup createElementGroup(Element ... members) {
         ElementGroup result = new ElementGroup();
         for(Element member : members) {

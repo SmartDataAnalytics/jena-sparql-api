@@ -5,6 +5,7 @@ import java.util.Map;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.utils.ServiceUtils;
 import org.aksw.jena_sparql_api.utils.ResultSetPart;
 import org.aksw.jena_sparql_api.utils.ResultSetUtils;
 
@@ -29,6 +30,10 @@ public class ListServiceSparqlQuery
         this(qef, attrQuery, attrVar, true, false);
     }
 
+    public ListServiceSparqlQuery(QueryExecutionFactory qef, Query attrQuery, Var attrVar, boolean isLeftJoin) {
+        this(qef, attrQuery, attrVar, isLeftJoin, false);
+    }
+
     public ListServiceSparqlQuery(QueryExecutionFactory qef, Query attrQuery,
             Var attrVar, boolean isLeftJoin, boolean forceSubQuery) {
         super();
@@ -50,12 +55,12 @@ public class ListServiceSparqlQuery
 
         QueryExecution qe = qef.createQueryExecution(query);
         ResultSet rs = qe.execSelect();
-        Map<Node, ResultSetPart> map = ResultSetUtils.partition(rs, attrVar);
-
-
+        Map<Node, ResultSetPart> result = ResultSetUtils.partition(rs, attrVar);
+        return result;
     }
+
     @Override
-    public CountInfo fetchCount(Concept filterConcept, Long itemLimit) {
+    public CountInfo fetchCount(Concept filterConcept, Long itemLimit, Long rowLimit) {
 
         if(filterConcept != null) {
             filterConcept = ConceptUtils.createSubjectConcept();
@@ -79,7 +84,7 @@ public class ListServiceSparqlQuery
 //            console.log('ROW ' + rowLimit);
         }
 
-        CountInfo result = ServiceUtils.fetchCountConcept(qef, countConcept, itemLimit); //rowLimit
+        CountInfo result = ServiceUtils.fetchCountConcept(qef, countConcept, itemLimit, null); //rowLimit
         return result;
     }
 }

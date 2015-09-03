@@ -3,9 +3,9 @@ package org.aksw.jena_sparql_api.utils;
 import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -21,15 +21,34 @@ import com.hp.hpl.jena.sparql.engine.QueryIterator;
 import com.hp.hpl.jena.sparql.engine.binding.Binding;
 import com.hp.hpl.jena.sparql.engine.binding.BindingHashMap;
 import com.hp.hpl.jena.sparql.engine.iterator.QueryIterPlainWrapper;
+import com.hp.hpl.jena.sparql.expr.NodeValue;
 import com.hp.hpl.jena.util.iterator.ExtendedIterator;
 import com.hp.hpl.jena.util.iterator.WrappedIterator;
 
 
 public class ResultSetUtils {
 
+    public static Integer resultSetToInt(ResultSet rs, Var v) {
+        Integer result = null;
+
+        if (rs.hasNext()) {
+            Binding binding = rs.nextBinding();
+
+            Node node = binding.get(v);
+            NodeValue nv = NodeValue.makeNode(node);
+            result = nv.getInteger().intValue();
+
+            // TODO Validate that the result actually is int.
+            //result = node.getLiteral().
+        }
+
+        return result;
+    }
+
+
     public static Map<Node, ResultSetPart> partition(ResultSet rs, Var var) {
         List<String> varNames = rs.getResultVars();
-        Map<Node, ResultSetPart> result = new HashMap<Node, ResultSetPart>();
+        Map<Node, ResultSetPart> result = new LinkedHashMap<Node, ResultSetPart>();
 
         while(rs.hasNext()) {
             Binding binding = rs.nextBinding();

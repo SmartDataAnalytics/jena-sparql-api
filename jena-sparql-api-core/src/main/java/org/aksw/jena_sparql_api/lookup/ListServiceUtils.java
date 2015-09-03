@@ -17,10 +17,9 @@ public class ListServiceUtils {
     public static <T> ListService<Concept, Node, T> createListServiceAcc(QueryExecutionFactory qef, MappedConcept<T> mappedConcept, boolean isLeftJoin) {
 
         Concept concept = mappedConcept.getConcept();
-        Query query = ConceptUtils.create();
-        //var query = ConceptUtils.createQueryList(concept);
+        Query query = ConceptUtils.createQueryList(concept);
 
-        Agg<T> agg = mappedConcept.getAgg();
+        Agg<T> agg = mappedConcept.getAggregator();
 
         Var  rowId = Var.alloc("rowId");
 
@@ -31,36 +30,37 @@ public class ListServiceUtils {
         }
         //query.setQueryResultStar(true);
 
-        var ls = new ListServiceSparqlQuery(sparqlService, query, concept.getVar(), isLeftJoin);
-    var result = new ListServiceTransformItem(ls, function(entry) {
-        var key = entry.key;
+        ListServiceSparqlQuery ls = new ListServiceSparqlQuery(qef, query, concept.getVar(), isLeftJoin);
 
-        var bindings = entry.val.getBindings();
+        var result = new ListServiceTransformItem(ls, function(entry) {
+            var key = entry.key;
 
-        // Clone the bindings to avoid corrupting caches
-        bindings = BindingUtils.cloneBindings(bindings);
+            var bindings = entry.val.getBindings();
 
-        // Augment them with a rowId attribute
-        BindingUtils.addRowIds(bindings, rowId);
+            // Clone the bindings to avoid corrupting caches
+            bindings = BindingUtils.cloneBindings(bindings);
 
-        var acc = agg.createAcc();
-        bindings.forEach(function(binding) {
-            acc.accumulate(binding);
+            // Augment them with a rowId attribute
+            BindingUtils.addRowIds(bindings, rowId);
+
+            var acc = agg.createAcc();
+            bindings.forEach(function(binding) {
+                acc.accumulate(binding);
+            });
+
+            var r = {key: key, val: acc};
+            return r;
         });
-
-        var r = {key: key, val: acc};
-        return r;
-    });
 
     //var result = this.createLookupServiceAgg(sparqlService, query, concept.getVar(), mappedConcept.getAgg());
     return result;
-},
+    }
 
-    public static <T> ListService<Concept, T> createListServiceMappedConcept(QueryExecutionFactory qef, MappedConcept<T> mappedConcept, boolean isLeftJoin) {
-        ListService<Concept, T> ls = createListServiceAcc(qef, mappedConcept, isLeftJoin);
+    public static <T> ListService<Concept, Node, T> createListServiceMappedConcept(QueryExecutionFactory qef, MappedConcept<T> mappedConcept, boolean isLeftJoin) {
+        ListService<Concept, Node, T> ls = createListServiceAcc(qef, mappedConcept, isLeftJoin);
 
         // Add a transformer that actually retrieves the value from the acc structure
-        ListService<T> result = new ListServiceTransformItem(ls, function(accEntries) {
+        ListService<Concept, Node, T> result = new ListServiceTransformItem(ls, function(accEntries) {
             var r = accEntries.map(function(accEntry) {
                 var s = accEntry.val.getValue();
                 return s;

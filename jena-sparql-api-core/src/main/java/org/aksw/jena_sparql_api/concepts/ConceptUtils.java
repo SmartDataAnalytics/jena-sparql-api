@@ -4,24 +4,28 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.aksw.commons.collections.MapUtils;
 import org.aksw.commons.collections.SetUtils;
+import org.aksw.jena_sparql_api.core.utils.QueryGenerationUtils;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
-import org.aksw.jena_sparql_api.utils.GeneratorBlacklist;
+import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.Triples;
+import org.aksw.jena_sparql_api.utils.VarExprListUtils;
+import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
+import org.aksw.jena_sparql_api.utils.VarGeneratorImpl;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 
 import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.sdb.core.Generator;
-import com.hp.hpl.jena.sdb.core.Gensym;
 import com.hp.hpl.jena.sparql.core.Var;
 import com.hp.hpl.jena.sparql.expr.Expr;
+import com.hp.hpl.jena.sparql.expr.ExprAggregator;
 import com.hp.hpl.jena.sparql.expr.ExprVar;
+import com.hp.hpl.jena.sparql.expr.aggregate.AggCount;
 import com.hp.hpl.jena.sparql.syntax.Element;
 import com.hp.hpl.jena.sparql.syntax.ElementGroup;
 import com.hp.hpl.jena.sparql.syntax.ElementOptional;
@@ -37,6 +41,34 @@ public class ConceptUtils {
     public static Concept listAllPredicates = Concept.create("?s ?p ?o", "p");
     public static Concept listAllGraphs = Concept.create("Graph ?g { ?s ?p ?o }", "g");
 
+
+
+    public static Query createQueryCount(Concept concept, Var outputVar, Long itemLimit, Long rowLimit) {
+        Query subQuery = createQueryList(concept);
+
+        if(rowLimit != null) {
+            subQuery.setDistinct(false);
+            subQuery.setLimit(rowLimit);
+
+            subQuery = QueryGenerationUtils.wrapAsSubQuery(subQuery, concept.getVar());
+            subQuery.setDistinct(true);
+        }
+
+        if(itemLimit != null) {
+            subQuery.setLimit(itemLimit);
+        }
+
+        Element esq = new ElementSubQuery(subQuery);
+
+        Query result = new Query();
+        result.setQuerySelectType();
+        result.getProject().add(outputVar, new ExprAggregator(null, new AggCount()));//new ExprAggregator(concept.getVar(), new AggCount()));
+        result.setQueryPattern(esq);
+
+        return result;
+    }
+
+
     public static Set<Var> getVarsMentioned(Concept concept) {
         Collection<Var> tmp = PatternVars.vars(concept.getElement());
         Set<Var> result = SetUtils.asSet(tmp);
@@ -50,9 +82,9 @@ public class ConceptUtils {
         return result;
     }
 
-    public static Map<Var, Var> createDistinctVarMap(Set<Var> workload, Set<Var> blacklist, Generator generator) {
-        Set<String> varNames = new HashSet<String>(VarUtils.getVarNames(blacklist));
-        Generator gen = new GeneratorBlacklist(generator, varNames);
+    public static Map<Var, Var> createDistinctVarMap(Set<Var> workload, Set<Var> blacklist, Generator<Var> generator) {
+        //Set<Var> varNames = new HashSet<String>(VarUtils.getVarNames(blacklist));
+        Generator<Var> gen = VarGeneratorBlacklist.create(generator, blacklist);
 
         Map<Var, Var> result = new HashMap<Var, Var>();
         for(Var var : workload) {
@@ -60,8 +92,8 @@ public class ConceptUtils {
 
             Var t;
             if(isBlacklisted) {
-                String name = generator.next();
-                t = Var.alloc(name);
+                t = generator.next();
+                //t = Var.alloc(name);
             } else {
                 t = var;
             }
@@ -77,23 +109,23 @@ public class ConceptUtils {
      * @param concept
      * @return
      */
-    public static Generator createGenerator(Concept concept) {
+    public static Generator<Var> createGenerator(Concept concept) {
         Collection<Var> tmp = PatternVars.vars(concept.getElement());
-        List<String> varNames = VarUtils.getVarNames(tmp);
+        //List<String> varNames = VarUtils.getVarNames(tmp);
 
-        Generator base = Gensym.create("v");
-        Generator result = new GeneratorBlacklist(base, varNames);
+        //Generator base = Gensym.create("v");
+        Generator<Var> result = VarGeneratorBlacklist.create("v", tmp);
 
         return result;
     }
 
     // Create a fresh var that is not part of the concept
-    public static Var freshVar(Concept concept) {
-        Generator gen = createGenerator(concept);
-        String varName = gen.next();
-        Var result = Var.alloc(varName);
-        return result;
-    }
+//    public static Var freshVar(Concept concept) {
+//        Generator gen = createGenerator(concept);
+//        String varName = gen.next();
+//        Var result = Var.alloc(varName);
+//        return result;
+//    }
 
     public static Concept renameVar(Concept concept, Var targetVar) {
 
@@ -105,7 +137,7 @@ public class ConceptUtils {
             // We need to rename the concept's var, thereby we need to rename
             // any occurrences of targetVar
             Set<Var> conceptVars = getVarsMentioned(concept);
-            Map<Var, Var> varMap = createDistinctVarMap(conceptVars, Collections.singleton(targetVar), Gensym.create("v"));
+            Map<Var, Var> varMap = createDistinctVarMap(conceptVars, Collections.singleton(targetVar), VarGeneratorImpl.create("v"));
             varMap.put(concept.getVar(), targetVar);
             Element replElement = ElementUtils.createRenamedElement(concept.getElement(), varMap);
             Var replVar = varMap.get(concept.getVar());
@@ -156,6 +188,16 @@ public class ConceptUtils {
         return result;
     }
 
+    public static Concept createRenamedConcept(Concept concept, Map<Var, Var> varMap) {
+        Var newVar = MapUtils.getOrElse(varMap, concept.getVar(), concept.getVar());
+        Element newElement = ElementUtils.createRenamedElement(concept.getElement(), varMap);
+
+        Concept result = new Concept(newElement, newVar);
+
+        return result;
+    }
+
+
     public static Concept createRenamedConcept(Concept attrConcept, Concept filterConcept) {
 
         Map<Var, Var> varMap = createVarMap(attrConcept, filterConcept);
@@ -188,11 +230,11 @@ public class ConceptUtils {
             //attrConcept.getVarsMentioned();
             // VarUtils.freshVar('cv', );  //
 
-            filterConcept = this.renameVars(filterConcept, varMap);
+            filterConcept = createRenamedConcept(filterConcept, varMap);
         }
 
         Concept tmpConcept;
-        if(renameVars != null) {
+        if(renameVars) {
             tmpConcept = createRenamedConcept(attrConcept, filterConcept);
         } else {
             tmpConcept = filterConcept;
@@ -210,7 +252,7 @@ public class ConceptUtils {
         Element attrElement = attrConcept.getElement();
 
         Element e;
-        if(tmpElements.length > 0) {
+        if(!tmpElements.isEmpty()) {
 
             if(tmpConcept.isSubjectConcept()) {
                 e = attrConcept.getElement(); //tmpConcept.getElement();
@@ -224,16 +266,17 @@ public class ConceptUtils {
                 newElements.add(attrElement);
 
                 if(filterAsSubquery) {
-                    tmpElements = [new ElementSubQuery(tmpConcept.asQuery())];
+                    tmpElements = Collections.<Element>singletonList(new ElementSubQuery(tmpConcept.asQuery()));
                 }
 
 
+                newElements.addAll(tmpElements);
                 //newElements.push.apply(newElements, attrElement);
-                newElements.push.apply(newElements, tmpElements);
+                //newElements.push.apply(newElements, tmpElements);
 
 
-                e = new ElementGroup(newElements);
-                e = e.flatten();
+                e = ElementUtils.createElementGroup(newElements);
+                //xxx e = e.flatten();
             }
         } else {
             e = attrElement;
@@ -279,6 +322,26 @@ public class ConceptUtils {
         return result;
     }
 
+
+    public static Query createQueryList(Concept concept) {
+        Query result = createQueryList(concept, null, null);
+        return result;
+    }
+
+    public static Query createQueryList(Concept concept, Long limit, Long offset) {
+        Query result = new Query();
+        result.setDistinct(true);
+
+        result.setLimit(limit == null ? Query.NOLIMIT : limit);
+        result.setOffset(offset == null ? Query.NOLIMIT : offset);
+
+        result.getProject().add(concept.getVar());
+        result.setQueryPattern(concept.getElement());
+
+        return result;
+    }
+
+
     public static Query createAttrQuery(Query attrQuery, Var attrVar, boolean isLeftJoin, Concept filterConcept, Long limit, Long offset, boolean forceSubQuery) {
 
         Concept attrConcept = new Concept(new ElementSubQuery(attrQuery), attrVar);
@@ -292,7 +355,7 @@ public class ConceptUtils {
 
         // Whether each value for attrVar uniquely identifies a row in the result set
         // In this case, we just join the filterConcept into the original query
-        boolean isAttrVarPrimaryKey = this.isConceptQuery(attrQuery, attrVar);
+        boolean isAttrVarPrimaryKey = isConceptQuery(attrQuery, attrVar);
         //isAttrVarPrimaryKey = false;
 
         Query result;
@@ -314,7 +377,7 @@ public class ConceptUtils {
 
                 Element tmp = new ElementSubQuery(sq);
 
-                Set<Var> refVars = attrQuery.getProject().getRefVars();
+                Set<Var> refVars = VarExprListUtils.getRefVars(attrQuery.getProject());
                 if(refVars.size() == 1 && attrVar.equals(refVars.iterator().next())) {
                     se = tmp;
                 } else {
@@ -330,7 +393,7 @@ public class ConceptUtils {
 
 
             if(!renamedFilterConcept.isSubjectConcept()) {
-                Element newElement = new ElementGroup([se, renamedFilterConcept.getElement()]);
+                Element newElement = ElementUtils.createElementGroup(se, renamedFilterConcept.getElement());
                 //newElement = newElement.flatten();
                 result.setQueryPattern(newElement);
             }
@@ -356,7 +419,7 @@ public class ConceptUtils {
                     if(renamedFilterConcept.isSubjectConcept()) {
                         subElement = attrQuery.getQueryPattern();
                     } else {
-                        subElement = new ElementGroup([attrQuery.getQueryPattern(), renamedFilterConcept.getElement()]);
+                        subElement = ElementUtils.createElementGroup(attrQuery.getQueryPattern(), renamedFilterConcept.getElement());
                     }
 
                     subConcept = new Concept(subElement, attrVar);
@@ -409,6 +472,21 @@ public class ConceptUtils {
 
         // console.log('Argh Query: ' + result, limit, offset);
         return result;
-    },
+    }
 
+    public static Var freshVar(Concept concept) {
+        Var result = freshVar(concept, null);
+        return result;
+    }
+
+    public static Var freshVar(Concept concept, String baseVarName) {
+        baseVarName = baseVarName == null ? "c" : baseVarName;
+
+        Set<Var> varsMentioned = concept.getVarsMentioned();
+
+        Generator<Var> varGen = VarUtils.createVarGen(baseVarName, varsMentioned);
+        Var result = varGen.next();
+
+        return result;
+    }
 }

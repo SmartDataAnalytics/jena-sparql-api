@@ -15,6 +15,24 @@ import com.hp.hpl.jena.sparql.graph.NodeTransform;
 public class VarUtils {
 
     /**
+     * Create a generator which yields fresh variables that is not contained in the array 'vars'.
+     * The new var name will have the given prefix
+     *
+     */
+    public static Generator<Var> createVarGen(String prefix, Collection<Var> excludeVars) {
+        prefix = prefix == null ? "v" : prefix;
+
+        Generator<Var> result = VarGeneratorBlacklist.create(prefix, excludeVars);
+        //      Set<//Var> excludeVarNames = getVarNames(excludeVars);
+        //var generator = GenSym.create(prefix);
+        //var genVarName = new GeneratorBlacklist(generator, excludeVarNames);
+
+        //var result = new VarGen(genVarName);
+
+        return result;
+    }
+
+    /**
      * Returns a list of variable names as strings for a given iterable of Var objects.
      *
      * @param vars
@@ -130,5 +148,8 @@ public class VarUtils {
 
         return result;
     }
+
+
+
 
 }

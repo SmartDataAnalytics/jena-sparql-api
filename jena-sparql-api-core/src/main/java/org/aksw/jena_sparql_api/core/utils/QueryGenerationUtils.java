@@ -9,14 +9,28 @@ import org.aksw.jena_sparql_api.utils.GeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 
 import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.sdb.core.Generator;
 import com.hp.hpl.jena.sparql.core.BasicPattern;
 import com.hp.hpl.jena.sparql.core.Var;
 import com.hp.hpl.jena.sparql.syntax.Element;
+import com.hp.hpl.jena.sparql.syntax.ElementSubQuery;
 import com.hp.hpl.jena.sparql.syntax.ElementTriplesBlock;
 import com.hp.hpl.jena.sparql.syntax.PatternVars;
 
 public class QueryGenerationUtils {
+
+    // Util for cerateQueryCount
+    public static Query wrapAsSubQuery(Query query, Var v) {
+        Element esq = new ElementSubQuery(query);
+
+        Query result = new Query();
+        result.setQuerySelectType();
+        result.getProject().add(v);
+        result.setQueryPattern(esq);
+
+        return result;
+    }
 
 
     /**
