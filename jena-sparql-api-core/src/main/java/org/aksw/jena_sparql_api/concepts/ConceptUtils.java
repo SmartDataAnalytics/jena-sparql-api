@@ -107,7 +107,7 @@ public class ConceptUtils {
             Set<Var> conceptVars = getVarsMentioned(concept);
             Map<Var, Var> varMap = createDistinctVarMap(conceptVars, Collections.singleton(targetVar), Gensym.create("v"));
             varMap.put(concept.getVar(), targetVar);
-            Element replElement = ElementUtils.substituteNodes(concept.getElement(), varMap);
+            Element replElement = ElementUtils.createRenamedElement(concept.getElement(), varMap);
             Var replVar = varMap.get(concept.getVar());
             result = new Concept(replElement, replVar);
         }
@@ -381,7 +381,7 @@ public class ConceptUtils {
 //            } else {
 
 
-            Query query = attrQuery.clone();
+            Query query = attrQuery.cloneQuery();
 
             Element attrElement = query.getQueryPattern();
 
@@ -391,15 +391,15 @@ public class ConceptUtils {
             }
             else {
                 if(isLeftJoin) {
-                    newAttrElement = new ElementGroup([
+                    newAttrElement = ElementUtils.createElementGroup(
                         newFilterElement,
                         new ElementOptional(attrElement)
-                    ]);
+                    );
                 } else {
-                    newAttrElement = new ElementGroup([
+                    newAttrElement = ElementUtils.createElementGroup(
                         attrElement,
                         newFilterElement
-                    ]);
+                    );
                 }
             }
 

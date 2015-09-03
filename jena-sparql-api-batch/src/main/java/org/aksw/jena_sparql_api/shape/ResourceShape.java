@@ -457,7 +457,7 @@ public class ResourceShape {
             rename.put(baseVar, Vars.g);
 
             sourceVar = MapUtils.getOrElse(rename, baseVar, baseVar);
-            Element e1 = ElementUtils.substituteNodes(baseElement, rename);
+            Element e1 = ElementUtils.createRenamedElement(baseElement, rename);
             e = ElementUtils.mergeElements(e1, e2);
 
         }   else {
@@ -476,7 +476,7 @@ public class ResourceShape {
         pc.put(predicateRelation.getTargetVar(), Vars.o);
 
 
-        Element e3 = ElementUtils.substituteNodes(predicateRelation.getElement(), pc);
+        Element e3 = ElementUtils.createRenamedElement(predicateRelation.getElement(), pc);
         Element newElement = ElementUtils.mergeElements(e, e3);
 
 

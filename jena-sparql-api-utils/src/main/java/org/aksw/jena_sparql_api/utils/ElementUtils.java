@@ -13,6 +13,7 @@ import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.sparql.graph.NodeTransform;
 import com.hp.hpl.jena.sparql.syntax.Element;
 import com.hp.hpl.jena.sparql.syntax.ElementGroup;
+import com.hp.hpl.jena.sparql.syntax.ElementOptional;
 import com.hp.hpl.jena.sparql.syntax.ElementUnion;
 
 
@@ -49,7 +50,15 @@ public class ElementUtils {
         return result;
     }
 
-    public static Element substituteNodes(Element element, Map<? extends Node, ? extends Node> nodeMap) {
+    public static ElementGroup createElementGroup(Element ... members) {
+        ElementGroup result = new ElementGroup();
+        for(Element member : members) {
+            result.addElement(member);
+        }
+        return result;
+    }
+
+    public static Element createRenamedElement(Element element, Map<? extends Node, ? extends Node> nodeMap) {
         NodeTransform nodeTransform = new NodeTransformRenameMap(nodeMap);
         Element result = applyNodeTransform(element, nodeTransform);
         return result;
