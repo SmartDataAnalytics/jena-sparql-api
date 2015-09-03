@@ -1,10 +1,9 @@
 package org.aksw.jena_sparql_api.lookup;
 
-import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map.Entry;
+import java.util.Map;
 
-import org.aksw.commons.util.Pair;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
@@ -30,17 +29,18 @@ public class ListServiceConcept
     }
 
     @Override
-    public List<Entry<Node, Node>> fetchData(Concept concept, Long limit, Long offset) {
+    public Map<Node, Node> fetchData(Concept concept, Long limit, Long offset) {
         Query query = concept.asQuery();
         query.setLimit(limit == null ? Query.NOLIMIT : limit);
         query.setOffset(offset == null ? Query.NOLIMIT : offset);
 
         List<Node> tmp = QueryExecutionUtils.executeList(qef, query, concept.getVar());
 
-        List<Entry<Node, Node>> result = new ArrayList<Entry<Node, Node>>(tmp.size());
+        //List<Entry<Node, Node>> result = new ArrayList<Entry<Node, Node>>(tmp.size());
+        Map<Node, Node> result = new LinkedHashMap<Node, Node>();
         for(Node node : tmp) {
-            Entry<Node, Node> item = Pair.create(node, node);
-            result.add(item);
+            //Entry<Node, Node> item = Pair.create(node, node);
+            result.put(node, node);
         }
 
 
@@ -88,10 +88,10 @@ public class ListServiceConcept
      * @param itemLimit number of distinct resources to scan before returning a count early
      */
     @Override
-    public CountInfo fetchCount(Concept concept, Long itemLimit) {
+    public CountInfo fetchCount(Concept concept, Long itemLimit, Long rowLimit) {
         Var c = Var.alloc("_c_");
         Long limit = itemLimit == null ? null : itemLimit + 1;
-        Query query = createQueryCount(concept, limit, null, c);
+        Query query = createQueryCount(concept, limit, rowLimit, c);
 
         //if(true) { return null; }
 
@@ -119,20 +119,20 @@ public class ListServiceConcept
 
         CountInfo countInfo;
 
-        countInfo = ls.fetchCount(concept, 2l);
+        countInfo = ls.fetchCount(concept, 2l, null);
         System.out.println(countInfo);
 
-        countInfo = ls.fetchCount(concept, 3l);
+        countInfo = ls.fetchCount(concept, 3l, null);
         System.out.println(countInfo);
 
-        countInfo = ls.fetchCount(concept, 4l);
+        countInfo = ls.fetchCount(concept, 4l, null);
         System.out.println(countInfo);
 
-        countInfo = ls.fetchCount(concept, null);
+        countInfo = ls.fetchCount(concept, null, null);
         System.out.println(countInfo);
 
 
-        List<Entry<Node, Node>> data = ls.fetchData(concept, null, null);
+        Map<Node, Node> data = ls.fetchData(concept, null, null);
 
         System.out.println(data);
     }

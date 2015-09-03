@@ -2,14 +2,17 @@ package org.aksw.jena_sparql_api.batch;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.lookup.ListService;
-import org.aksw.jena_sparql_api.lookup.ListServiceConcept;
+import org.aksw.jena_sparql_api.lookup.ListServiceUtils;
+import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.springframework.batch.item.data.AbstractPaginatedDataItemReader;
 
+import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -28,7 +31,8 @@ public class ItemReaderModel
     private QueryExecutionFactory qef;
 
     private Concept concept;
-    private ListService<Concept, Entry<Resource, Model>> listService;
+    private MappedConcept<Graph> mappedConcept;
+    //private ListService<Concept, Node, Graph> listService;
 
 
     public ItemReaderModel() {
@@ -37,8 +41,9 @@ public class ItemReaderModel
     @Override
     protected Iterator<Entry<Resource, Model>> doPageRead() {
 
-        ListServiceConcept ls = new ListServiceConcept(qef);
-        List<Node> nodes = ls.fetchData(concept, (long)this.pageSize, (long)page);
+        //ListServiceConcept ls = new ListServiceConcept(qef);
+        ListService<Concept, Node, Graph> ls = ListServiceUtils.createListServiceMappedConcept(qef, mappedConcept, true);
+        Map<Node, Graph> nodes = ls.fetchData(concept, (long)this.pageSize, (long)page);
 
         /*
         Map<Resource, Model> chunk = new HashMap<Resource, Model>();
@@ -48,13 +53,15 @@ public class ItemReaderModel
             Resource r = (Resource)rdfNode;
             chunk.put(r, model);
         }
-        */
-        long limit = (long)this.pageSize;
-        long offset = this.page * this.pageSize;
-
-        List<Entry<Resource, Model>> chunk = listService.fetchData(concept, limit, offset);
-        Iterator<Entry<Resource, Model>> result = chunk.iterator();
-        return result;
+//        */
+//        long limit = (long)this.pageSize;
+//        long offset = this.page * this.pageSize;
+//
+//        List<Entry<Resource, Model>> chunk = listService.fetchData(concept, limit, offset);
+//        Iterator<Entry<Resource, Model>> result = chunk.iterator();
+        Iterator<Entry<Node, Graph>> result = nodes.entrySet().iterator();
+        return null;
+        //return result;
     }
 }
 

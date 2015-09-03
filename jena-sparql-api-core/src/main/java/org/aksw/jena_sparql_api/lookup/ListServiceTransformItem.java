@@ -44,4 +44,9 @@ class ListServiceTransformItem<C, K, I, O>
         CountInfo result = listService.fetchCount(concept, itemLimit, rowLimit);
         return result;
     }
+
+    public static <C, K, I, O> ListServiceTransformItem<C, K, I, O> create(ListService<C, K, I> listService, Function<I, O> fnTransformItem) {
+        ListServiceTransformItem<C, K, I, O> result = new ListServiceTransformItem<C, K, I, O>(listService, fnTransformItem);
+        return result;
+    }
 }

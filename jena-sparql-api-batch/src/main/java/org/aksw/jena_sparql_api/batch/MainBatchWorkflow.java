@@ -16,7 +16,9 @@ import org.aksw.jena_sparql_api.geo.vocab.GEO;
 import org.aksw.jena_sparql_api.geo.vocab.GEOM;
 import org.aksw.jena_sparql_api.geo.vocab.GEOSPARQL;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
+import org.aksw.jena_sparql_api.lookup.ListService;
 import org.aksw.jena_sparql_api.lookup.ListServiceConcept;
+import org.aksw.jena_sparql_api.lookup.ListServiceUtils;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
@@ -137,7 +139,12 @@ public class MainBatchWorkflow {
 
 
         QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://fp7-pp.publicdata.eu/sparql", "http://fp7-pp.publicdata.eu/").create();
-        LookupService<Node, Graph> ls = LookupServiceUtils.createLookupService(qef, mappedConcept);
+        //LookupService<Node, Graph> ls = LookupServiceUtils.createLookupService(qef, mappedConcept);
+
+        ListService<Concept, Node, Graph> ls = ListServiceUtils.createListServiceMappedConcept(qef, mappedConcept, true);
+
+        Map<Node, Graph> nodeToGraph = ls.fetchData(concept, null, null);
+        System.out.println(nodeToGraph);
 
 
         //QueryExecution qe = qef.createQueryExecution(query);
@@ -145,7 +152,7 @@ public class MainBatchWorkflow {
         //ResultSet resultSet = qe.execSelect();
 
         //model.write(System.out, "TURTLE");
-        System.out.println(ResultSetFormatter.asText(resultSet));
+        //System.out.println(ResultSetFormatter.asText(resultSet));
 
 
 

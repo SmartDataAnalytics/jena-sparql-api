@@ -87,7 +87,7 @@ public class LookupServiceSparqlQuery
                 //ResultSetStream r = new ResultSetStream(rs.getResultVars(), null, entry.getValue().iterator());
                 //ResultSetRewindable rsw = ResultSetFactory.makeRewindable(r);
 
-                ResultSetPart rsp = new ResultSetPart(entry.getValue(), rs.getResultVars());
+                ResultSetPart rsp = new ResultSetPart(rs.getResultVars(), entry.getValue());
 
                 result.put(entry.getKey(), rsp);
             }
