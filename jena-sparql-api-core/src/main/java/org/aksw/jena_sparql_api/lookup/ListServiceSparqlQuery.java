@@ -5,15 +5,16 @@ import java.util.Map;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.core.utils.QueryExecutionUtils;
 import org.aksw.jena_sparql_api.utils.ResultSetPart;
+import org.aksw.jena_sparql_api.utils.ResultSetUtils;
 
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.util.ResultSetUtils;
+import com.hp.hpl.jena.sparql.syntax.ElementSubQuery;
+
 
 public class ListServiceSparqlQuery
     implements ListService<Concept, Node, ResultSetPart>
@@ -54,26 +55,31 @@ public class ListServiceSparqlQuery
 
     }
     @Override
-    public CountInfo fetchCount(Concept concept, Long itemLimit) {
-        Var c = Var.alloc("_c_");
-        Long limit = itemLimit == null ? null : itemLimit + 1;
-        Query query = createQueryCount(concept, limit, null, c);
+    public CountInfo fetchCount(Concept filterConcept, Long itemLimit) {
 
-        //if(true) { return null; }
-
-        Node countNode = QueryExecutionUtils.executeSingle(qef, query, c);
-        long count = ((Number)countNode.getLiteralValue()).longValue();
-
-        boolean hasMoreItems = false;
-
-        if(itemLimit != null && count > itemLimit) {
-            count = itemLimit;
-            hasMoreItems = true;
+        if(filterConcept != null) {
+            filterConcept = ConceptUtils.createSubjectConcept();
         }
 
+        Concept countConcept;
+        if(this.isLeftJoin) {
+            Query query = ConceptUtils.createAttrQuery(this.attrQuery, this.attrVar, this.isLeftJoin, filterConcept, itemLimit, null, this.forceSubQuery);
 
-        CountInfo result = new CountInfo(count, hasMoreItems, itemLimit);
+            countConcept = new Concept(query.getQueryPattern(), this.attrVar);
+        } else {
+            Concept attrConcept = ( this.forceSubQuery
+                ? new Concept(new ElementSubQuery(this.attrQuery), this.attrVar)
+                : new Concept(this.attrQuery.getQueryPattern(), this.attrVar) )
+                ;
 
+            countConcept = ConceptUtils.createCombinedConcept(attrConcept, filterConcept, true, false, false);
+//            console.log('FILTER ' + filterConcept);
+//            console.log('ATTR ' + attrConcept);
+//            console.log('COUNT ' + countConcept);
+//            console.log('ROW ' + rowLimit);
+        }
+
+        CountInfo result = ServiceUtils.fetchCountConcept(qef, countConcept, itemLimit); //rowLimit
         return result;
     }
 }
