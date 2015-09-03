@@ -1,0 +1,79 @@
+package org.aksw.jena_sparql_api.lookup;
+
+import java.util.Map;
+
+import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.concepts.ConceptUtils;
+import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.utils.QueryExecutionUtils;
+import org.aksw.jena_sparql_api.utils.ResultSetPart;
+
+import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.query.Query;
+import com.hp.hpl.jena.query.QueryExecution;
+import com.hp.hpl.jena.query.ResultSet;
+import com.hp.hpl.jena.sparql.core.Var;
+import com.hp.hpl.jena.sparql.util.ResultSetUtils;
+
+public class ListServiceSparqlQuery
+    implements ListService<Concept, Node, ResultSetPart>
+{
+    private QueryExecutionFactory qef;
+    private Query attrQuery;
+    private Var attrVar;
+    private boolean isLeftJoin;
+    private boolean forceSubQuery;
+
+    public ListServiceSparqlQuery(QueryExecutionFactory qef, Query attrQuery, Var attrVar) {
+        this(qef, attrQuery, attrVar, true, false);
+    }
+
+    public ListServiceSparqlQuery(QueryExecutionFactory qef, Query attrQuery,
+            Var attrVar, boolean isLeftJoin, boolean forceSubQuery) {
+        super();
+        this.qef = qef;
+        this.attrQuery = attrQuery;
+        this.attrVar = attrVar;
+        this.isLeftJoin = isLeftJoin;
+        this.forceSubQuery = forceSubQuery;
+    }
+
+
+    @Override
+    public Map<Node, ResultSetPart> fetchData(Concept filterConcept, Long limit, Long offset) {
+        if(filterConcept != null) {
+            filterConcept = ConceptUtils.createSubjectConcept();
+        }
+
+        Query query = ConceptUtils.createAttrQuery(this.attrQuery, attrVar, this.isLeftJoin, filterConcept, limit, offset, this.forceSubQuery);
+
+        QueryExecution qe = qef.createQueryExecution(query);
+        ResultSet rs = qe.execSelect();
+        Map<Node, ResultSetPart> map = ResultSetUtils.partition(rs, attrVar);
+
+
+    }
+    @Override
+    public CountInfo fetchCount(Concept concept, Long itemLimit) {
+        Var c = Var.alloc("_c_");
+        Long limit = itemLimit == null ? null : itemLimit + 1;
+        Query query = createQueryCount(concept, limit, null, c);
+
+        //if(true) { return null; }
+
+        Node countNode = QueryExecutionUtils.executeSingle(qef, query, c);
+        long count = ((Number)countNode.getLiteralValue()).longValue();
+
+        boolean hasMoreItems = false;
+
+        if(itemLimit != null && count > itemLimit) {
+            count = itemLimit;
+            hasMoreItems = true;
+        }
+
+
+        CountInfo result = new CountInfo(count, hasMoreItems, itemLimit);
+
+        return result;
+    }
+}

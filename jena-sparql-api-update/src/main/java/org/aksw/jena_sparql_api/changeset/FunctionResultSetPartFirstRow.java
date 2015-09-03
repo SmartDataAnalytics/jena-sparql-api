@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.changeset;
 
-import org.aksw.jena_sparql_api.lookup.ResultSetPart;
+import org.aksw.jena_sparql_api.utils.ResultSetPart;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
@@ -11,7 +11,7 @@ public class FunctionResultSetPartFirstRow
 {
     @Override
     public Binding apply(ResultSetPart input) {
-        Binding result = Iterables.getFirst(input.getRows(), null);
+        Binding result = Iterables.getFirst(input.getBindings(), null);
         return result;
     }
 

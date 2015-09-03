@@ -25,8 +25,8 @@ public class AggTransform<I, O>
 
     @Override
     public Set<Var> getDeclaredVars() {
-        // TODO Auto-generated method stub
-        return null;
+        Set<Var> result = subAgg.getDeclaredVars();
+        return result;
     }
 
     public static <I, O> AggTransform<I, O> create(Agg<I> subAgg, Function<I, O> transform) {

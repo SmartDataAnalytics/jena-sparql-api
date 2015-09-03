@@ -15,6 +15,11 @@ import org.aksw.commons.util.Pair;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptOps;
 import org.aksw.jena_sparql_api.concepts.Relation;
+import org.aksw.jena_sparql_api.mapper.Agg;
+import org.aksw.jena_sparql_api.mapper.AggGraph;
+import org.aksw.jena_sparql_api.mapper.AggMap;
+import org.aksw.jena_sparql_api.mapper.BindingMapperExpr;
+import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
@@ -26,6 +31,7 @@ import org.aksw.jena_sparql_api.utils.Vars;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.Query;
@@ -327,6 +333,46 @@ public class ResourceShape {
         return result;
     }
 
+
+//    public static MappedConcept<Map<Node, Graph>> createMappedConcept(ResourceShape resourceShape, Concept filter) {
+//        Query query = createQuery(resourceShape, filter);
+//        MappedConcept<Map<Node, Graph>> result = createMappedConcept(query);
+//        return result;
+//    }
+//
+//    public static MappedConcept<Map<Node, Graph>> createMappedConcept(Query query) {
+//        BasicPattern bgp = new BasicPattern();
+//        bgp.add(new Triple(Vars.s, Vars.p, Vars.o));
+//        Template template = new Template(bgp);
+//
+//        Agg<Map<Node, Graph>> agg = AggMap.create(new BindingMapperExpr(new ExprVar(Vars.g)), new AggGraph(template));
+//
+//        Concept concept = new Concept(new ElementSubQuery(query), Vars.g);
+//
+//        MappedConcept<Map<Node, Graph>> result = new MappedConcept<Map<Node, Graph>>(concept, agg);
+//        return result;
+//    }
+
+    public static MappedConcept<Graph> createMappedConcept(ResourceShape resourceShape, Concept filter) {
+        Query query = createQuery(resourceShape, filter);
+        MappedConcept<Graph> result = createMappedConcept(query);
+        return result;
+    }
+
+    public static MappedConcept<Graph> createMappedConcept(Query query) {
+        BasicPattern bgp = new BasicPattern();
+        bgp.add(new Triple(Vars.s, Vars.p, Vars.o));
+        Template template = new Template(bgp);
+
+        //Agg<Map<Node, Graph>> agg = AggMap.create(new BindingMapperExpr(new ExprVar(Vars.g)), new AggGraph(template));
+        Agg<Graph> agg = new AggGraph(template);
+
+        Concept concept = new Concept(new ElementSubQuery(query), Vars.g);
+
+        MappedConcept<Graph> result = new MappedConcept<Graph>(concept, agg);
+        return result;
+    }
+
     public static Query createQuery(List<Concept> concepts, Concept filter) {
 
         List<Concept> tmps = new ArrayList<Concept>();
@@ -367,6 +413,7 @@ public class ResourceShape {
         result.getProject().add(Vars.p);
         result.getProject().add(Vars.o);
         result.setQueryPattern(element);
+
 
         return result;
     }

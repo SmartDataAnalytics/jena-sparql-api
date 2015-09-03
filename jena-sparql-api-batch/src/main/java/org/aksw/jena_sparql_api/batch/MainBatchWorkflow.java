@@ -16,6 +16,11 @@ import org.aksw.jena_sparql_api.geo.vocab.GEO;
 import org.aksw.jena_sparql_api.geo.vocab.GEOM;
 import org.aksw.jena_sparql_api.geo.vocab.GEOSPARQL;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
+import org.aksw.jena_sparql_api.lookup.ListServiceConcept;
+import org.aksw.jena_sparql_api.lookup.LookupService;
+import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
+import org.aksw.jena_sparql_api.mapper.MappedConcept;
+import org.aksw.jena_sparql_api.mapper.MappedConceptUtils;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.aksw.jena_sparql_api.shape.ResourceShapeParserJson;
 import org.slf4j.Logger;
@@ -34,7 +39,8 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
-import com.hp.hpl.jena.query.Query;
+import com.hp.hpl.jena.graph.Graph;
+import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.query.ResultSetFormatter;
@@ -125,13 +131,18 @@ public class MainBatchWorkflow {
         Concept concept = Concept.parse("?s | Filter(?s = <http://fp7-pp.publicdata.eu/resource/project/257943> || ?s = <http://fp7-pp.publicdata.eu/resource/project/256975>)");
 
 
-        Query query = ResourceShape.createQuery(rs, concept);
-        System.out.println(query);
+        //Query query = ResourceShape.createQuery(rs, concept);
+        MappedConcept<Graph> mappedConcept = ResourceShape.createMappedConcept(rs, concept);
+        System.out.println(mappedConcept);
+
 
         QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://fp7-pp.publicdata.eu/sparql", "http://fp7-pp.publicdata.eu/").create();
-        QueryExecution qe = qef.createQueryExecution(query);
+        LookupService<Node, Graph> ls = LookupServiceUtils.createLookupService(qef, mappedConcept);
+
+
+        //QueryExecution qe = qef.createQueryExecution(query);
         //Model model = qe.execConstruct();
-        ResultSet resultSet = qe.execSelect();
+        //ResultSet resultSet = qe.execSelect();
 
         //model.write(System.out, "TURTLE");
         System.out.println(ResultSetFormatter.asText(resultSet));

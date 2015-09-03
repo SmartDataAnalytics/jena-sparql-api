@@ -3,9 +3,11 @@ package org.aksw.jena_sparql_api.utils;
 import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.google.common.collect.LinkedListMultimap;
@@ -24,6 +26,27 @@ import com.hp.hpl.jena.util.iterator.WrappedIterator;
 
 
 public class ResultSetUtils {
+
+    public static Map<Node, ResultSetPart> partition(ResultSet rs, Var var) {
+        List<String> varNames = rs.getResultVars();
+        Map<Node, ResultSetPart> result = new HashMap<Node, ResultSetPart>();
+
+        while(rs.hasNext()) {
+            Binding binding = rs.nextBinding();
+            Node node = binding.get(var);
+
+            ResultSetPart rsp = result.get(node);
+            if(rsp == null) {
+
+                rsp = new ResultSetPart(varNames);
+                result.put(node, rsp);
+            }
+
+            rsp.getBindings().add(binding);
+        }
+
+        return result;
+    }
 
     public static ExtendedIterator<Binding> toIteratorBinding(QueryExecution qe) {
         ResultSet rs = qe.execSelect();

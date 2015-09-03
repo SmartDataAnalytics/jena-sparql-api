@@ -13,10 +13,10 @@ import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceSparqlQuery;
 import org.aksw.jena_sparql_api.lookup.LookupServiceTransformValue;
-import org.aksw.jena_sparql_api.lookup.ResultSetPart;
 import org.aksw.jena_sparql_api.mapper.BindingMapperProjectVar;
 import org.aksw.jena_sparql_api.mapper.FunctionBindingMapper;
 import org.aksw.jena_sparql_api.utils.GraphUtils;
+import org.aksw.jena_sparql_api.utils.ResultSetPart;
 import org.aksw.jena_sparql_api.utils.SetGraph;
 import org.aksw.jena_sparql_api.utils.Vars;
 

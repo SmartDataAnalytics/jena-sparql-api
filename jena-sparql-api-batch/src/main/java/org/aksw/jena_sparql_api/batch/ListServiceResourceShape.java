@@ -7,22 +7,19 @@ import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.lookup.CountInfo;
 import org.aksw.jena_sparql_api.lookup.ListService;
-import org.aksw.jena_sparql_api.lookup.ListServiceConcept;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.graph.Graph;
+import com.hp.hpl.jena.graph.Node;
 
 public class ListServiceResourceShape
-    implements ListService<Concept, Entry<Resource, Model>>
+    implements ListService<Concept, Node, Graph>
 {
     private QueryExecutionFactory qef;
     private ResourceShape resourceShape;
 
     @Override
-    public List<Entry<Resource, Model>> fetchData(Concept concept, Long limit, Long offset) {
+    public List<Entry<Node, Graph>> fetchData(Concept concept, Long limit, Long offset) {
 
         //ListService
 

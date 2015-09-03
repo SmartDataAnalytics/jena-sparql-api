@@ -8,6 +8,7 @@ import java.util.Map.Entry;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
+import org.aksw.jena_sparql_api.utils.ResultSetPart;
 
 import com.google.common.collect.Iterables;
 import com.hp.hpl.jena.graph.Node;
