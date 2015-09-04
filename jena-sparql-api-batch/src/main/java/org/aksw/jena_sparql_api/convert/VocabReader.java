@@ -5,9 +5,11 @@ import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
  * Reads a value from a given resource that is stored in a certain vocabulary.
- * NULL if no appropriate data was found on the resource. 
- * 
- * 
+ * NULL if no appropriate data was found on the resource.
+ *
+ * TODO We need the capability to read all values of a certain vocabulary from a model
+ *
+ *
  * @author raven
  *
  * @param <T>

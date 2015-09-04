@@ -6,9 +6,11 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.aksw.commons.util.Pair;
 import org.aksw.commons.util.StreamUtils;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
@@ -33,7 +35,6 @@ import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteExcep
 import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import com.google.common.base.Function;
@@ -43,23 +44,27 @@ import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.rdf.model.RDFNode;
+import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.shared.PrefixMapping;
 import com.hp.hpl.jena.shared.impl.PrefixMappingImpl;
+import com.hp.hpl.jena.sparql.util.ModelUtils;
 import com.hp.hpl.jena.vocabulary.RDF;
 import com.hp.hpl.jena.vocabulary.RDFS;
 
 
 class Enrichments {
-	/**
-	 * Normalize WGS84 into a single wgs84 property
-	 * 
-	 */
-	
-	
-	/**
-	 * TODO Split 
-	 */
+    /**
+     * Normalize WGS84 into a single wgs84 property
+     *
+     */
+
+
+    /**
+     * TODO Split
+     */
 }
+
 
 interface Vobuild {
     void add(ResourceShape shape);
@@ -91,6 +96,39 @@ class VobuildWgs84 {
     }
 }
 
+class FN_ToModel
+    implements Function<Entry<Node, Graph>, Entry<Resource, Model>>
+{
+    @Override
+    public Entry<Resource, Model> apply(Entry<Node, Graph> input) {
+        Node n = input.getKey();
+        Graph g = input.getValue();
+
+
+        Model m = ModelFactory.createModelForGraph(g);
+        RDFNode tmp = ModelUtils.convertGraphNodeToRDFNode(n, m);
+        Resource r = (Resource)tmp;
+
+        Entry<Resource, Model> result = Pair.create(r, m);
+        return result;
+    }
+
+    public static final FN_ToModel fn = new FN_ToModel();
+
+    public static <IK, IV, OK, OV> Map<OK, OV> transform(Map<IK, IV> map, Function<Entry<IK, IV>, Entry<OK, OV>> fn) {
+        Map<OK, OV> result = new HashMap<OK, OV>();
+        transform(result, map, fn);
+        return result;
+    }
+
+    public static <IK, IV, OK, OV> Map<OK, OV> transform(Map<OK, OV> result, Map<IK, IV> map, Function<Entry<IK, IV>, Entry<OK, OV>> fn) {
+        for(Entry<IK, IV> entry : map.entrySet()) {
+            Entry<OK, OV> e = fn.apply(entry);
+            result.put(e.getKey(), e.getValue());
+        }
+        return result;
+    }
+}
 
 public class MainBatchWorkflow {
 
@@ -115,6 +153,8 @@ public class MainBatchWorkflow {
         pm.setNsPrefix("ogc", "http://www.opengis.net/ont/geosparql#");
         pm.setNsPrefix("fp7o", "http://fp7-pp.publicdata.eu/ontology/");
 
+
+
 //        ResourceShapeBuilder b = new ResourceShapeBuilder(pm);
 //        //b.outgoing("rdfs:label");
 //        b.outgoing("geo:lat");
@@ -133,7 +173,13 @@ public class MainBatchWorkflow {
 
         ResourceShapeParserJson parser = new ResourceShapeParserJson(pm);
         Map<String, Object> json = readJsonResource("workflow.json");
+
+
+        String str = (String)json.get("locationString");
+        Modifier<Model> m = new ModifierModelSparqlUpdate(str);
+
         ResourceShape rs = parser.parse(json.get("shape"));
+
         System.out.println(rs);
 
         Concept concept = Concept.parse("?s | Filter(?s = <http://fp7-pp.publicdata.eu/resource/project/257943> || ?s = <http://fp7-pp.publicdata.eu/resource/project/256975>)");
@@ -150,11 +196,20 @@ public class MainBatchWorkflow {
         ListService<Concept, Node, Graph> ls = ListServiceUtils.createListServiceMappedConcept(qef, mappedConcept, true);
 
         Map<Node, Graph> nodeToGraph = ls.fetchData(concept, null, null);
-        for(Entry<Node, Graph> entry : nodeToGraph.entrySet()) {
+
+
+        //Map<Resource, Model> resToModel = new LinkedHashMap<Resource, Model>();
+        Map<Resource, Model> resToModel = FN_ToModel.transform(new LinkedHashMap<Resource, Model>(), nodeToGraph, FN_ToModel.fn);
+        //resToModel.entrySet().addAll(Collections2.transform(nodeToGraph.entrySet(), FN_ToModel.fn));
+
+        for(Entry<Resource, Model> entry : resToModel.entrySet()) {
+
+            m.apply(entry.getValue());
+
             System.out.println("=====================================");
             System.out.println(entry.getKey());
-            Model m = ModelFactory.createModelForGraph(entry.getValue());
-            m.write(System.out, "N-TRIPLES");
+            //entry.getValue().write(System.out, "N-TRIPLES");
+            entry.getValue().write(System.out, "TURTLE");
         }
         //System.out.println(nodeToGraph);
 
@@ -183,7 +238,7 @@ public class MainBatchWorkflow {
 
     public static String readResource(String r) throws IOException {
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-        Resource resource = resolver.getResource(r);
+        org.springframework.core.io.Resource resource = resolver.getResource(r);
         InputStream in = resource.getInputStream();
         String result = StreamUtils.toString(in);
         return result;
