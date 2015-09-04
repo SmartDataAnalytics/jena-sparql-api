@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.batch;
+package org.aksw.jena_sparql_api.modifier;
 
 import com.hp.hpl.jena.rdf.model.Model;
 

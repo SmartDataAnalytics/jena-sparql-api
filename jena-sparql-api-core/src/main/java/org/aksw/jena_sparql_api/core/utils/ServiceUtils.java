@@ -1,17 +1,54 @@
 package org.aksw.jena_sparql_api.core.utils;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.lookup.CountInfo;
 import org.aksw.jena_sparql_api.utils.ResultSetUtils;
 
+import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.ResultSet;
+import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.sparql.core.Var;
 
 public class ServiceUtils {
+
+    public static List<Resource> fetchListResources(QueryExecutionFactory qef, Concept concept) {
+        List<Node> tmp = fetchList(qef, concept);
+        List<Resource> result = new ArrayList<Resource>(tmp.size());
+        for(Node node : tmp) {
+            Resource resource = ResourceFactory.createResource(node.getURI());
+            result.add(resource);
+        }
+
+        return result;
+    }
+
+    public static List<Node> fetchList(QueryExecutionFactory qef, Concept concept) {
+        Query query = ConceptUtils.createQueryList(concept);
+        List<Node> result = fetchList(qef, query, concept.getVar());
+        return result;
+    }
+
+    public static List<Node> fetchList(QueryExecutionFactory qef, Query query, Var v) {
+        QueryExecution qe = qef.createQueryExecution(query);
+        List<Node> result = fetchList(qe, v);
+        return result;
+    }
+
+    public static List<Node> fetchList(QueryExecution qe, Var v) {
+        ResultSet rs = qe.execSelect();
+        List<Node> result = ResultSetUtils.resultSetToList(rs, v);
+        return result;
+    }
+
+
     public static Integer fetchInteger(QueryExecutionFactory qef, Query query, Var v) {
         QueryExecution qe = qef.createQueryExecution(query);
         Integer result = fetchInteger(qe, v);

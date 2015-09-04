@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.batch;
+package org.aksw.jena_sparql_api.beans.json;
 
 import java.util.HashMap;
 import java.util.List;
@@ -35,10 +35,10 @@ public class JsonBatchProcessor {
     public Job processJob(Map<String, Object> data) throws Exception {
         
         // Check if there is a context associated with the job
-        Object context = data.get(JsonContextProcessor.ATTR_CONTEXT);
+        Object context = data.get(ContextProcessorJsonUtils.ATTR_CONTEXT);
         AnnotationConfigApplicationContext c = new AnnotationConfigApplicationContext();
         c.setParent(mainContext);
-        JsonContextProcessor.processContext(c, context, new HashMap<String, String>());
+        ContextProcessorJsonUtils.processContext(c, context, new HashMap<String, String>());
         c.refresh();
         
         JobBuilderFactory jobBuilders = config.jobBuilders();
@@ -85,7 +85,7 @@ public class JsonBatchProcessor {
     public Step processStepTasklet(StepBuilder stepBuilder, Map<String, Object> spec) throws Exception {
         Object d = spec.get(ATTR_TASKLET);
         
-        BeanDefinition taskletDef = JsonContextProcessor.processBean(d);
+        BeanDefinition taskletDef = ContextProcessorJsonUtils.processBean(d);
         Tasklet tasklet = null;
         
         Step result = stepBuilder.tasklet(tasklet).build();
@@ -96,7 +96,7 @@ public class JsonBatchProcessor {
     public Step processStepDefault(StepBuilder stepBuilder, Map<String, Object> spec) throws Exception {
 //        Integer chunkSize = MapUtils.getInteger(spec, "chunkSize", 1000);
         
-          JsonContextProcessor.processBean(spec, "reader");
+          ContextProcessorJsonUtils.processBean(spec, "reader");
           
         
 //        SimpleStepBuilder<Object, Object> ssb = stepBuilder.chunk(chunkSize);

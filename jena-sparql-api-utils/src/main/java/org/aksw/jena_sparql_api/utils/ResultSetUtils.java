@@ -46,6 +46,18 @@ public class ResultSetUtils {
     }
 
 
+    public static List<Node> resultSetToList(ResultSet rs, Var v) {
+        List<Node> result = new ArrayList<Node>();
+        while (rs.hasNext()) {
+            Binding binding = rs.nextBinding();
+
+            Node node = binding.get(v);
+            result.add(node);
+        }
+        return result;
+    }
+
+
     public static Map<Node, ResultSetPart> partition(ResultSet rs, Var var) {
         List<String> varNames = rs.getResultVars();
         Map<Node, ResultSetPart> result = new LinkedHashMap<Node, ResultSetPart>();

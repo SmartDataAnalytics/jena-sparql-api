@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.batch;
+package org.aksw.jena_sparql_api.modifier;
 
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryModel;
 import org.springframework.util.Assert;

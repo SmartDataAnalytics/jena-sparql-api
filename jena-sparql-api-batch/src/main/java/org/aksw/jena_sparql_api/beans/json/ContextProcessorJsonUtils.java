@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.batch;
+package org.aksw.jena_sparql_api.beans.json;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,46 +14,47 @@ import org.springframework.beans.factory.config.ConstructorArgumentValues;
 import org.springframework.beans.factory.config.MethodInvokingFactoryBean;
 import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.util.Assert;
 
 /**
- * 
+ *
  * Context := {
  *     context: [
  *         myBean1: 'MyClass',
  *         myBean2: { class: 'MyClass', args: [] }
  *     ],
  * }
- * 
+ *
  * BatchProcess := {
  *     context: { // jobContext
  *     },
  *     steps: [{
  *         context: // stepContext
- *         
+ *
  *     }]
- *     
+ *
  * }
- * 
- * 
+ *
+ *
  */
-public class JsonContextProcessor {
-    
-    private static final Logger logger = LoggerFactory.getLogger(JsonContextProcessor.class);
-    
+public class ContextProcessorJsonUtils {
+
+    private static final Logger logger = LoggerFactory.getLogger(ContextProcessorJsonUtils.class);
+
     public static final String ATTR_REF = "ref";
     public static final String ATTR_TYPE = "type";
     public static final String ATTR_CTOR_ARGS = "ctor";
-    
+
     public static final String ATTR_CONTEXT = "context";
-    
+
     public void process() {
         MethodInvokingFactoryBean bean = new MethodInvokingFactoryBean();
     }
-    
-    
+
+
     public static void processContext(AnnotationConfigApplicationContext c, Object context, Map<String, String> classAliasMap) throws Exception {
         processContext(c, (Map<String, Object>)context, classAliasMap);
     }
@@ -62,25 +63,25 @@ public class JsonContextProcessor {
         for(Entry<String, Object> entry : context.entrySet()) {
             String beanName = entry.getKey();
             Object value = entry.getValue();
-            
+
             logger.debug("Processing [" + beanName + "]");
-            
-            
+
+
             BeanDefinition beanDefinition = processBean(value);
             c.registerBeanDefinition(beanName, beanDefinition);
         }
     }
-    
-    
+
+
     public static void processJob() {
-        
+
     }
-    
+
     public static void processStep() {
-        
+
     }
-    
-    
+
+
     public static BeanDefinition processBean(Object data) throws Exception {
         BeanDefinition result;
         if(data == null) {
@@ -88,16 +89,16 @@ public class JsonContextProcessor {
         } else if(data instanceof String) {
             result = processBean((String)data);
         } else if(data instanceof List) {
-            
+
             // List<?> args = (List<?>)data;
 
             BeanDefinition beanDef = new GenericBeanDefinition();
             beanDef.setBeanClassName(ArrayList.class.getCanonicalName());
             ConstructorArgumentValues cav = beanDef.getConstructorArgumentValues();
-            
+
             List<BeanDefinition> args = processBeans((List<?>)data);
             cav.addGenericArgumentValue(args);
-            
+
             result = beanDef;
             //result = processBeans((List<Object>)data);
         } else if(data instanceof Map) {
@@ -105,7 +106,7 @@ public class JsonContextProcessor {
         } else {
             throw new RuntimeException("Unexpected type: " + data);
         }
-        
+
         return result;
     }
 
@@ -125,18 +126,18 @@ public class JsonContextProcessor {
 //        //Object result = clazz.newInstance();
 //        return result;
 //    }
-    
+
     public static List<BeanDefinition> processBeans(List<?> items) throws Exception {
         List<BeanDefinition> result = new ArrayList<BeanDefinition>();
         for(Object item : items) {
             BeanDefinition bean = processBean(item);
             result.add(bean);
         }
-        
+
         return result;
     }
-    
-    
+
+
     public static Object processAttr(Object data) throws Exception {
         Object result;
 
@@ -150,7 +151,7 @@ public class JsonContextProcessor {
             //Class<?> type = data == null ? null : data.getClass();
             //throw new RuntimeException("Unknown attribute type: " + data + " [" + type + "]");
         }
-        
+
         return result;
     }
 
@@ -164,7 +165,7 @@ public class JsonContextProcessor {
         } else {
             result = null;
         }
-        
+
         return result;
     }
 
@@ -173,9 +174,9 @@ public class JsonContextProcessor {
         BeanDefinition result = processBean(beanSpec);
         return result;
     }
-    
+
     public static BeanDefinition processBean(Map<String, Object> data) throws Exception {
-        
+
         BeanDefinition result = new GenericBeanDefinition();
 
         // Process special attributes
@@ -192,7 +193,7 @@ public class JsonContextProcessor {
             Assert.isInstanceOf(List.class, _ctorArgs);
             List<?> ctorArgs = (List<?>)_ctorArgs;
             List<BeanDefinition> args = processBeans(ctorArgs);
-            
+
             ConstructorArgumentValues cav = result.getConstructorArgumentValues();
             for(BeanDefinition arg : args) {
                 //cav.add
@@ -201,47 +202,47 @@ public class JsonContextProcessor {
                 cav.addGenericArgumentValue(arg);
             }
         }
-        
+
         // Create a new map with special attributes removed
         Map<String, Object> tmp = data;
         data = new HashMap<String, Object>(tmp);
         data.remove(ATTR_TYPE);
         data.remove(ATTR_CTOR_ARGS);
-        
-        
-        
+
+
+
         // Default handling of attributes
         for(Entry<String, Object> entry : data.entrySet()) {
 
             String key = entry.getKey();
             Object value = entry.getValue();
-            
+
             Object obj = processAttr(value);
             //result.setAttribute(key, obj);
             result.getPropertyValues().add(key, obj);
             //result.getPropertyValues()
         }
-        
-               
+
+
         return result;
-        
-        
+
+
         //values.addPropertyValue("beanProperty", new RuntimeBeanReference("beanName"));
     }
-    
-    
+
+
     public static void processConstructorArgumentValues() {
-        
+
     }
-    
+
     public static void processCtorArgs() {
         ConstructorArgumentValues cav = new ConstructorArgumentValues();
         //<constructor-arg type="java.lang.String" value="Zara"/>
         //cav.addGenericArgumentValue(value);
         //cav.addGenericArgumentValue(value, type);
     }
-    
-    
+
+
     /**
      * Resolves the value of a given attribute
      * Can be:
@@ -249,19 +250,19 @@ public class JsonContextProcessor {
      * - Lazy Reference: An object with only attribute {ref: "ref target"}.
      * - Object { class: someClass } or HashMap (an object without class attribute)
      * - ArrayList ([item1, ..., itemN])
-     * - 
-     * 
+     * -
+     *
      * @param map
      */
 //    public static <T> resolveAttributeValue(Map<String, Object> map) {
 //        ValueHolder vh;
 //        return null;
 //    }
-    
+
     public static void processBeanDefinition(BeanDefinitionRegistry registry, String beanName, Map<String, Object> map) {
         ConstructorArgumentValues cav;
         GenericBeanDefinition beanDef = new GenericBeanDefinition();
-        
+
         MutablePropertyValues propertyValues = new MutablePropertyValues();
         propertyValues.addPropertyValues(map);
         beanDef.setPropertyValues(propertyValues);
@@ -274,11 +275,11 @@ public class JsonContextProcessor {
                 beanDef.setAttribute(attr.getKey(), attr.getValue());
             }
         }
-        
+
         //BeanUtils.
         String beanClassName = (String)map.get("class");
         beanDef.setBeanClassName(beanClassName);
-        
+
         //beanDef.setAttribute(name, value);
         //registry.registerBeanDefinition(beanName, beanDefinition);
     }

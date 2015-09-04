@@ -12,6 +12,7 @@ import java.util.Map.Entry;
 
 import org.aksw.commons.util.Pair;
 import org.aksw.commons.util.StreamUtils;
+import org.aksw.jena_sparql_api.beans.json.ContextProcessorJsonUtils;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
@@ -22,6 +23,8 @@ import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.lookup.ListService;
 import org.aksw.jena_sparql_api.lookup.ListServiceUtils;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
+import org.aksw.jena_sparql_api.modifier.Modifier;
+import org.aksw.jena_sparql_api.modifier.ModifierModelSparqlUpdate;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.aksw.jena_sparql_api.shape.ResourceShapeParserJson;
 import org.slf4j.Logger;
@@ -142,8 +145,11 @@ public class MainBatchWorkflow {
 
     private static final Logger logger = LoggerFactory.getLogger(MainBatchWorkflow.class);
 
-
     public static void main(String[] args) throws Exception {
+        main2(args);
+    }
+
+    public static void main3(String[] args) throws Exception {
 
         PrefixMapping pm = new PrefixMappingImpl();
         pm.setNsPrefix("rdf", RDF.getURI());
@@ -152,6 +158,8 @@ public class MainBatchWorkflow {
         pm.setNsPrefix("geom", "http://geovocab.org/geometry#");
         pm.setNsPrefix("ogc", "http://www.opengis.net/ont/geosparql#");
         pm.setNsPrefix("fp7o", "http://fp7-pp.publicdata.eu/ontology/");
+
+
 
 
 
@@ -280,11 +288,11 @@ public class MainBatchWorkflow {
 
         AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
 
-        JsonContextProcessor.processContext(context, ((Map)data.get("job")).get("context"), classAliasMap);
+        ContextProcessorJsonUtils.processContext(context, ((Map)data.get("job")).get("context"), classAliasMap);
 
         context.refresh();
 
-        System.exit(0);
+        //System.exit(0);
 
 
         //Gson gson = (new GsonBuilder()).

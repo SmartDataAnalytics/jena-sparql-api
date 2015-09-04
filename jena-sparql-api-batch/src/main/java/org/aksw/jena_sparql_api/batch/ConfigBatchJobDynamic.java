@@ -40,8 +40,11 @@ import org.springframework.batch.item.file.FlatFileItemWriter;
 import org.springframework.batch.item.file.ResourceAwareItemWriterItemStream;
 import org.springframework.batch.item.file.transform.LineAggregator;
 import org.springframework.batch.item.support.PassThroughItemProcessor;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.FileSystemResource;
@@ -94,7 +97,18 @@ class ItemProcessorSparqlResultSet
  */
 @Configuration
 @EnableBatchProcessing
-public class ConfigBatchJobDynamic {
+public class ConfigBatchJobDynamic
+    implements ApplicationContextAware
+{
+    private ApplicationContext applicationContext;
+
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext)
+            throws BeansException {
+        this.applicationContext = applicationContext;
+    }
+
+
 
     /**
      * Attention: You have to name these beans jobBuilders and stepbuilders
@@ -112,7 +126,7 @@ public class ConfigBatchJobDynamic {
 //    @Autowired
 //    private JobExplorer jobExplorer;
 
-    
+
     @Autowired
     private JobBuilderFactory jobBuilders;
 
@@ -204,7 +218,7 @@ public class ConfigBatchJobDynamic {
         DatasetDescription datasetDescription = new DatasetDescription(dgus, ngus);
         SparqlServiceFactory ssf = new SparqlServiceFactoryHttp();
         SparqlService sparqlService = ssf.createSparqlService(serviceUri, datasetDescription, null);
-        
+
         //SparqlService sparqlService = sparqlServiceFactory.createSparqlService(serviceUri, datasetDescription, null);
         QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
 

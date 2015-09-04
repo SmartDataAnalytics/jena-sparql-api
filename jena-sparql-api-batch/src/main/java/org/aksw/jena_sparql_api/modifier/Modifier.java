@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.batch;
+package org.aksw.jena_sparql_api.modifier;
 
 /**
  * Modifies object T. Logging could be implemented as side effects of an

@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.batch;
 
 import java.util.Map.Entry;
 
+import org.aksw.jena_sparql_api.modifier.Modifier;
 import org.springframework.batch.item.ItemProcessor;
 
 import com.hp.hpl.jena.rdf.model.Model;
