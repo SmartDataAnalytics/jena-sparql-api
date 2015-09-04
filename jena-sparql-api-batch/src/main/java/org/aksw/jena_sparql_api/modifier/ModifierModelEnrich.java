@@ -30,6 +30,11 @@ public class ModifierModelEnrich
      */
     private Concept concept;
 
+    public ModifierModelEnrich(LookupService<Resource, Model> lookupService, Concept concept) {
+    	this.lookupService = lookupService;
+    	this.concept = concept;
+    }
+
     @Override
     public void apply(Model input) {
         QueryExecutionFactory qef = new QueryExecutionFactoryModel(input);

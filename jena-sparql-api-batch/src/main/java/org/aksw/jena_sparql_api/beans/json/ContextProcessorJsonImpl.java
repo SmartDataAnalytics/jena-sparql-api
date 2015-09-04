@@ -10,7 +10,7 @@ public class ContextProcessorJsonImpl
 
     @Override
     public void processContext(Object ctx) {
-        ContextProcessorJsonUtils.processContext(c, context, classAliasMap);
+        //ContextProcessorJsonUtils.processContext(c, context, classAliasMap);
         // TODO Auto-generated method stub
     }
     

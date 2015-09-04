@@ -7,6 +7,7 @@ import java.io.StringReader;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -27,6 +28,7 @@ import org.aksw.jena_sparql_api.modifier.Modifier;
 import org.aksw.jena_sparql_api.modifier.ModifierModelSparqlUpdate;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.aksw.jena_sparql_api.shape.ResourceShapeParserJson;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.BatchStatus;
@@ -51,9 +53,17 @@ import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.shared.PrefixMapping;
 import com.hp.hpl.jena.shared.impl.PrefixMappingImpl;
+import com.hp.hpl.jena.sparql.expr.NodeValue;
+import com.hp.hpl.jena.sparql.function.FunctionBase1;
+import com.hp.hpl.jena.sparql.function.FunctionFactory;
+import com.hp.hpl.jena.sparql.function.FunctionRegistry;
 import com.hp.hpl.jena.sparql.util.ModelUtils;
 import com.hp.hpl.jena.vocabulary.RDF;
 import com.hp.hpl.jena.vocabulary.RDFS;
+
+import fr.dudie.nominatim.client.JsonNominatimClient;
+import fr.dudie.nominatim.client.NominatimClient;
+import fr.dudie.nominatim.model.Address;
 
 
 class Enrichments {
@@ -133,6 +143,55 @@ class FN_ToModel
     }
 }
 
+class FunctionGeocodeNominatim
+	extends FunctionBase1
+{
+	private NominatimClient nominatimClient;
+
+	public FunctionGeocodeNominatim(NominatimClient nominatimClient) {
+		this.nominatimClient = nominatimClient;
+	}
+	
+	@Override
+	public NodeValue exec(NodeValue v) {
+		NodeValue result;
+		if(v.isString()) {
+			String locationString = v.getString();
+			List<Address> addresses;
+			try {
+				addresses = nominatimClient.search(locationString);
+				if(addresses.isEmpty()) {
+					result = NodeValue.nvNothing;
+				} else {
+					result = NodeValue.makeInteger(addresses.get(0).getOsmId());
+				}
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		} else {
+			result = NodeValue.nvNothing;
+		}
+		
+		return result;
+	}
+}
+
+class FunctionFactoryGeocodeNominatim
+	implements FunctionFactory
+{
+	private NominatimClient nominatimClient;
+	
+	public FunctionFactoryGeocodeNominatim(NominatimClient nominatimClient) {
+		this.nominatimClient = nominatimClient;
+	}
+
+	@Override
+	public com.hp.hpl.jena.sparql.function.Function create(String uri) {
+		FunctionGeocodeNominatim result = new FunctionGeocodeNominatim(nominatimClient);
+		return result;
+	}	
+}
+
 public class MainBatchWorkflow {
 
     public void foo() {
@@ -146,7 +205,7 @@ public class MainBatchWorkflow {
     private static final Logger logger = LoggerFactory.getLogger(MainBatchWorkflow.class);
 
     public static void main(String[] args) throws Exception {
-        main2(args);
+        main3(args);
     }
 
     public static void main3(String[] args) throws Exception {
@@ -160,7 +219,12 @@ public class MainBatchWorkflow {
         pm.setNsPrefix("fp7o", "http://fp7-pp.publicdata.eu/ontology/");
 
 
-
+        NominatimClient nominatimClient = new JsonNominatimClient(new DefaultHttpClient(), "cstadler@informatik.uni-leipzig.de");
+        
+        FunctionRegistry.get().put("http://example.org/geocode", new FunctionFactoryGeocodeNominatim(nominatimClient));
+        
+        String test = "Prefix ex: <http://example.org/> Insert { ?s ex:osmId ?o } Where { ?s ex:locationString ?l . Bind(ex:geocode(?l) As ?o) }";
+        
 
 
 //        ResourceShapeBuilder b = new ResourceShapeBuilder(pm);
@@ -210,9 +274,12 @@ public class MainBatchWorkflow {
         Map<Resource, Model> resToModel = FN_ToModel.transform(new LinkedHashMap<Resource, Model>(), nodeToGraph, FN_ToModel.fn);
         //resToModel.entrySet().addAll(Collections2.transform(nodeToGraph.entrySet(), FN_ToModel.fn));
 
+    	Modifier<Model> modi = new ModifierModelSparqlUpdate(test); 
+
         for(Entry<Resource, Model> entry : resToModel.entrySet()) {
 
             m.apply(entry.getValue());
+            modi.apply(entry.getValue());
 
             System.out.println("=====================================");
             System.out.println(entry.getKey());
