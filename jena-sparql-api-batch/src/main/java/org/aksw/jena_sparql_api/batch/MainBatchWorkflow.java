@@ -36,6 +36,7 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
+import com.google.common.base.Function;
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
 import com.hp.hpl.jena.graph.Graph;
@@ -48,8 +49,17 @@ import com.hp.hpl.jena.vocabulary.RDF;
 import com.hp.hpl.jena.vocabulary.RDFS;
 
 
-
-
+class Enrichments {
+	/**
+	 * Normalize WGS84 into a single wgs84 property
+	 * 
+	 */
+	
+	
+	/**
+	 * TODO Split 
+	 */
+}
 
 interface Vobuild {
     void add(ResourceShape shape);
@@ -144,7 +154,7 @@ public class MainBatchWorkflow {
             System.out.println("=====================================");
             System.out.println(entry.getKey());
             Model m = ModelFactory.createModelForGraph(entry.getValue());
-            m.write(System.out, "TURTLE");
+            m.write(System.out, "N-TRIPLES");
         }
         //System.out.println(nodeToGraph);
 
