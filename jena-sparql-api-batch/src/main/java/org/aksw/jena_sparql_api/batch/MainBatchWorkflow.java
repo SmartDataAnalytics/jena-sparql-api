@@ -7,7 +7,6 @@ import java.io.StringReader;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -46,6 +45,7 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import com.google.common.base.Function;
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
+import com.hp.hpl.jena.datatypes.TypeMapper;
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.rdf.model.Model;
@@ -54,9 +54,6 @@ import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.shared.PrefixMapping;
 import com.hp.hpl.jena.shared.impl.PrefixMappingImpl;
-import com.hp.hpl.jena.sparql.expr.NodeValue;
-import com.hp.hpl.jena.sparql.function.FunctionBase1;
-import com.hp.hpl.jena.sparql.function.FunctionFactory;
 import com.hp.hpl.jena.sparql.function.FunctionRegistry;
 import com.hp.hpl.jena.sparql.util.ModelUtils;
 import com.hp.hpl.jena.vocabulary.RDF;
@@ -64,7 +61,6 @@ import com.hp.hpl.jena.vocabulary.RDFS;
 
 import fr.dudie.nominatim.client.JsonNominatimClient;
 import fr.dudie.nominatim.client.NominatimClient;
-import fr.dudie.nominatim.model.Address;
 
 
 class Enrichments {
@@ -144,61 +140,13 @@ class FN_ToModel
     }
 }
 
-class FunctionGeocodeNominatim
-	extends FunctionBase1
-{
-	private NominatimClient nominatimClient;
-
-	public FunctionGeocodeNominatim(NominatimClient nominatimClient) {
-		this.nominatimClient = nominatimClient;
-	}
-	
-	@Override
-	public NodeValue exec(NodeValue v) {
-		NodeValue result;
-		if(v.isString()) {
-			String locationString = v.getString();
-			List<Address> addresses;
-			try {
-				addresses = nominatimClient.search(locationString);
-				if(addresses.isEmpty()) {
-					result = NodeValue.nvNothing;
-				} else {
-					result = NodeValue.makeInteger(addresses.get(0).getOsmId());
-				}
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		} else {
-			result = NodeValue.nvNothing;
-		}
-		
-		return result;
-	}
-}
-
-class FunctionFactoryGeocodeNominatim
-	implements FunctionFactory
-{
-	private NominatimClient nominatimClient;
-	
-	public FunctionFactoryGeocodeNominatim(NominatimClient nominatimClient) {
-		this.nominatimClient = nominatimClient;
-	}
-
-	@Override
-	public com.hp.hpl.jena.sparql.function.Function create(String uri) {
-		FunctionGeocodeNominatim result = new FunctionGeocodeNominatim(nominatimClient);
-		return result;
-	}	
-}
-
 public class MainBatchWorkflow {
 
     public void foo() {
         Map<String, Vobuild> nameToVocab = new HashMap<String, Vobuild>();
         //nameToVocab.put("geo", new VobuildWgs84());
 
+        //PropertyUtils.getProperty(bean, name)
 
 
     }
@@ -211,6 +159,16 @@ public class MainBatchWorkflow {
 
     public static void main3(String[] args) throws Exception {
 
+        TypeMapper.getInstance().registerDatatype(new RDFDatatypeJson());
+
+
+        NominatimClient nominatimClient = new JsonNominatimClient(new DefaultHttpClient(), "cstadler@informatik.uni-leipzig.de");
+        FunctionRegistry.get().put("http://example.org/geocode", new FunctionFactoryGeocodeNominatim(nominatimClient));
+
+        FunctionRegistry.get().put("http://example.org/jsonParse", E_JsonParse.class);
+        FunctionRegistry.get().put("http://example.org/jsonPath", E_JsonPath.class);
+
+
         PrefixMapping pm = new PrefixMappingImpl();
         pm.setNsPrefix("rdf", RDF.getURI());
         pm.setNsPrefix("rdfs", RDFS.getURI());
@@ -220,12 +178,9 @@ public class MainBatchWorkflow {
         pm.setNsPrefix("fp7o", "http://fp7-pp.publicdata.eu/ontology/");
 
 
-        NominatimClient nominatimClient = new JsonNominatimClient(new DefaultHttpClient(), "cstadler@informatik.uni-leipzig.de");
-        
-        FunctionRegistry.get().put("http://example.org/geocode", new FunctionFactoryGeocodeNominatim(nominatimClient));
-        
-        String test = "Prefix ex: <http://example.org/> Insert { ?s ex:osmId ?o } Where { ?s ex:locationString ?l . Bind(ex:geocode(?l) As ?o) }";
-        
+
+        String test = "Prefix ex: <http://example.org/> Insert { ?s ex:osmId ?o ; ex:o ?oet ; ex:i ?oei } Where { ?s ex:locationString ?l . Bind(ex:geocode(?l) As ?x) . Bind(str(ex:jsonPath(?x, '$[0].osm_type')) As ?oet) . Bind(str(ex:jsonPath(?x, '$[0].osm_id')) As ?oei) . Bind(uri(concat('http://linkedgeodata.org/triplify/', ?oet, ?oei)) As ?o) }";
+
 
 
 //        ResourceShapeBuilder b = new ResourceShapeBuilder(pm);
@@ -272,18 +227,18 @@ public class MainBatchWorkflow {
         QueryExecutionFactory qefLgd = FluentQueryExecutionFactory.http("http://linkedgeodata.org/sparql", "http://linkedgeodata.org").create();
 
         //tmp:enrich
-        
-        String osmIdToLgd = "Insert { ?s tmp:enrich ?o } Where { ?s tmp:osmId ?id ; tmp:osmEntityType ?et. Bind(concat('http://linkedgeodata.org/triplify/', ?et, ?et) As ?x) }";        
+
+        String osmIdToLgd = "Insert { ?s tmp:enrich ?o } Where { ?s tmp:osmId ?id ; tmp:osmEntityType ?et. Bind(concat('http://linkedgeodata.org/triplify/', ?et, ?et) As ?x) }";
         String enrichToSameAs = "Modify Insert { ?s owl:sameAs ?o } Delete { ?s tmp:enrich ?o } Where { ?s tmp:enrich ?o }";
         String fuse1 = "Modify Insert { ?s ?p ?o } Delete { ?x ?p ?o } Where { ?x tmp:fuse ?s ; ?s ?p ?o }";
         //String fuse2 = "Delete { ?s ?p ?o }"
-        
-        
+
+
         //LookupService<Node, Graph> ls = LookupServiceUtils.createLookupService(qef, mappedConcept);
         LookupServiceUtils.createLookupService(qefLgd, mcLgdShape);
-        Concept enrich = Concept.parse("");
+        //Concept enrich = Concept.parse("");
 
-        
+
         ListService<Concept, Node, Graph> ls = ListServiceUtils.createListServiceMappedConcept(qef, mappedConcept, true);
 
         Map<Node, Graph> nodeToGraph = ls.fetchData(concept, null, null);
@@ -293,7 +248,7 @@ public class MainBatchWorkflow {
         Map<Resource, Model> resToModel = FN_ToModel.transform(new LinkedHashMap<Resource, Model>(), nodeToGraph, FN_ToModel.fn);
         //resToModel.entrySet().addAll(Collections2.transform(nodeToGraph.entrySet(), FN_ToModel.fn));
 
-    	Modifier<Model> modi = new ModifierModelSparqlUpdate(test); 
+        Modifier<Model> modi = new ModifierModelSparqlUpdate(test);
 
         for(Entry<Resource, Model> entry : resToModel.entrySet()) {
 
