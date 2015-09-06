@@ -9,6 +9,10 @@
       }
     }
   },
+  lgdShape: {
+    'geom:geometry': 'ogc:asWKT',
+    'rdfs:label': false
+  },
   locationString:
 "Prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>\
 Prefix o: <http://fp7-pp.publicdata.eu/ontology/>\

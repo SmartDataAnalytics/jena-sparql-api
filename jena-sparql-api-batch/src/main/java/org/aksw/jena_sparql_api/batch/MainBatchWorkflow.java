@@ -23,6 +23,7 @@ import org.aksw.jena_sparql_api.geo.vocab.GEOSPARQL;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.lookup.ListService;
 import org.aksw.jena_sparql_api.lookup.ListServiceUtils;
+import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.aksw.jena_sparql_api.modifier.Modifier;
 import org.aksw.jena_sparql_api.modifier.ModifierModelSparqlUpdate;
@@ -252,7 +253,9 @@ public class MainBatchWorkflow {
 
         ResourceShape rs = parser.parse(json.get("shape"));
 
-        System.out.println(rs);
+        ResourceShape lgdShape = parser.parse(json.get("lgdShape"));
+
+        System.out.println(lgdShape);
 
         Concept concept = Concept.parse("?s | Filter(?s = <http://fp7-pp.publicdata.eu/resource/project/257943> || ?s = <http://fp7-pp.publicdata.eu/resource/project/256975>)");
 
@@ -260,11 +263,27 @@ public class MainBatchWorkflow {
         //Query query = ResourceShape.createQuery(rs, concept);
         MappedConcept<Graph> mappedConcept = ResourceShape.createMappedConcept(rs, concept);
         System.out.println(mappedConcept);
+        MappedConcept<Graph> mcLgdShape = ResourceShape.createMappedConcept(lgdShape, concept);
 
+        //LookupServiceListService
 
         QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://fp7-pp.publicdata.eu/sparql", "http://fp7-pp.publicdata.eu/").create();
-        //LookupService<Node, Graph> ls = LookupServiceUtils.createLookupService(qef, mappedConcept);
 
+        QueryExecutionFactory qefLgd = FluentQueryExecutionFactory.http("http://linkedgeodata.org/sparql", "http://linkedgeodata.org").create();
+
+        //tmp:enrich
+        
+        String osmIdToLgd = "Insert { ?s tmp:enrich ?o } Where { ?s tmp:osmId ?id ; tmp:osmEntityType ?et. Bind(concat('http://linkedgeodata.org/triplify/', ?et, ?et) As ?x) }";        
+        String enrichToSameAs = "Modify Insert { ?s owl:sameAs ?o } Delete { ?s tmp:enrich ?o } Where { ?s tmp:enrich ?o }";
+        String fuse1 = "Modify Insert { ?s ?p ?o } Delete { ?x ?p ?o } Where { ?x tmp:fuse ?s ; ?s ?p ?o }";
+        //String fuse2 = "Delete { ?s ?p ?o }"
+        
+        
+        //LookupService<Node, Graph> ls = LookupServiceUtils.createLookupService(qef, mappedConcept);
+        LookupServiceUtils.createLookupService(qefLgd, mcLgdShape);
+        Concept enrich = Concept.parse("");
+
+        
         ListService<Concept, Node, Graph> ls = ListServiceUtils.createListServiceMappedConcept(qef, mappedConcept, true);
 
         Map<Node, Graph> nodeToGraph = ls.fetchData(concept, null, null);
