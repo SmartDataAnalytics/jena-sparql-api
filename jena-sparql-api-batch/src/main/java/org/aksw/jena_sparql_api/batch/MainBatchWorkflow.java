@@ -56,6 +56,8 @@ import com.hp.hpl.jena.shared.PrefixMapping;
 import com.hp.hpl.jena.shared.impl.PrefixMappingImpl;
 import com.hp.hpl.jena.sparql.function.FunctionRegistry;
 import com.hp.hpl.jena.sparql.util.ModelUtils;
+import com.hp.hpl.jena.update.UpdateFactory;
+import com.hp.hpl.jena.update.UpdateRequest;
 import com.hp.hpl.jena.vocabulary.RDF;
 import com.hp.hpl.jena.vocabulary.RDFS;
 
@@ -165,8 +167,10 @@ public class MainBatchWorkflow {
         NominatimClient nominatimClient = new JsonNominatimClient(new DefaultHttpClient(), "cstadler@informatik.uni-leipzig.de");
         FunctionRegistry.get().put("http://example.org/geocode", new FunctionFactoryGeocodeNominatim(nominatimClient));
 
-        FunctionRegistry.get().put("http://example.org/jsonParse", E_JsonParse.class);
-        FunctionRegistry.get().put("http://example.org/jsonPath", E_JsonPath.class);
+        String jsonFn = "http://json.org/fn/";
+
+        FunctionRegistry.get().put(jsonFn + "parse", E_JsonParse.class);
+        FunctionRegistry.get().put(jsonFn + "path", E_JsonPath.class);
 
 
         PrefixMapping pm = new PrefixMappingImpl();
@@ -176,11 +180,16 @@ public class MainBatchWorkflow {
         pm.setNsPrefix("geom", "http://geovocab.org/geometry#");
         pm.setNsPrefix("ogc", "http://www.opengis.net/ont/geosparql#");
         pm.setNsPrefix("fp7o", "http://fp7-pp.publicdata.eu/ontology/");
+        pm.setNsPrefix("json", jsonFn);
 
 
 
-        String test = "Prefix ex: <http://example.org/> Insert { ?s ex:osmId ?o ; ex:o ?oet ; ex:i ?oei } Where { ?s ex:locationString ?l . Bind(ex:geocode(?l) As ?x) . Bind(str(ex:jsonPath(?x, '$[0].osm_type')) As ?oet) . Bind(str(ex:jsonPath(?x, '$[0].osm_id')) As ?oei) . Bind(uri(concat('http://linkedgeodata.org/triplify/', ?oet, ?oei)) As ?o) }";
+        String testx = "Prefix ex: <http://example.org/> Insert { ?s ex:osmId ?o ; ex:o ?oet ; ex:i ?oei } Where { ?s ex:locationString ?l . Bind(ex:geocode(?l) As ?x) . Bind(str(json:path(?x, '$[0].osm_type')) As ?oet) . Bind(str(json:path(?x, '$[0].osm_id')) As ?oei) . Bind(uri(concat('http://linkedgeodata.org/triplify/', ?oet, ?oei)) As ?o) }";
 
+        
+        UpdateRequest test = new UpdateRequest();
+        test.setPrefixMapping(pm);
+        UpdateFactory.parse(test, testx);
 
 
 //        ResourceShapeBuilder b = new ResourceShapeBuilder(pm);

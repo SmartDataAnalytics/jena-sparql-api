@@ -1,6 +1,10 @@
 package org.aksw.jena_sparql_api.batch;
 
 import com.google.gson.Gson;
+import com.hp.hpl.jena.datatypes.RDFDatatype;
+import com.hp.hpl.jena.datatypes.TypeMapper;
+import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.sparql.expr.NodeValue;
 import com.hp.hpl.jena.sparql.function.FunctionBase2;
 import com.jayway.jsonpath.JsonPath;
@@ -46,7 +50,16 @@ public class E_JsonPath
             String queryStr = query.getString();
 
             Object o = JsonPath.read(json, queryStr);
-            result = new NodeValueJson(o);
+            if(o instanceof Number) {
+            	RDFDatatype dtype = TypeMapper.getInstance().getTypeByValue(o);
+            	Node node = NodeFactory.createUncachedLiteral(o, dtype);
+            	result = NodeValue.makeNode(node);
+            } else if(o instanceof String) {
+            	result = NodeValue.makeString((String)o);
+            } else {
+                result = new NodeValueJson(o);
+            }
+            
         } else {
             result = NodeValue.nvNothing;
         }
