@@ -165,7 +165,7 @@ public class MainBatchWorkflow {
 
 
         NominatimClient nominatimClient = new JsonNominatimClient(new DefaultHttpClient(), "cstadler@informatik.uni-leipzig.de");
-        FunctionRegistry.get().put("http://example.org/geocode", new FunctionFactoryGeocodeNominatim(nominatimClient));
+        FunctionRegistry.get().put("http://example.org/geocode", FunctionFactoryCache.create(FunctionFactoryGeocodeNominatim.create(nominatimClient)));
 
         String jsonFn = "http://json.org/fn/";
 
@@ -186,7 +186,7 @@ public class MainBatchWorkflow {
 
         String testx = "Prefix ex: <http://example.org/> Insert { ?s ex:osmId ?o ; ex:o ?oet ; ex:i ?oei } Where { ?s ex:locationString ?l . Bind(ex:geocode(?l) As ?x) . Bind(str(json:path(?x, '$[0].osm_type')) As ?oet) . Bind(str(json:path(?x, '$[0].osm_id')) As ?oei) . Bind(uri(concat('http://linkedgeodata.org/triplify/', ?oet, ?oei)) As ?o) }";
 
-        
+
         UpdateRequest test = new UpdateRequest();
         test.setPrefixMapping(pm);
         UpdateFactory.parse(test, testx);
@@ -210,7 +210,6 @@ public class MainBatchWorkflow {
 
         ResourceShapeParserJson parser = new ResourceShapeParserJson(pm);
         Map<String, Object> json = readJsonResource("workflow.json");
-
 
         String str = (String)json.get("locationString");
         Modifier<Model> m = new ModifierModelSparqlUpdate(str);

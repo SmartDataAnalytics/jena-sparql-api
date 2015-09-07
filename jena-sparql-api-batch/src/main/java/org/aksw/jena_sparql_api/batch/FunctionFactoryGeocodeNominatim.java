@@ -18,4 +18,10 @@ public class FunctionFactoryGeocodeNominatim
         E_GeocodeNominatim result = new E_GeocodeNominatim(nominatimClient);
         return result;
     }
+
+
+    public static FunctionFactoryGeocodeNominatim create(NominatimClient nominatimClient) {
+        FunctionFactoryGeocodeNominatim result = new FunctionFactoryGeocodeNominatim(nominatimClient);
+        return result;
+    }
 }
