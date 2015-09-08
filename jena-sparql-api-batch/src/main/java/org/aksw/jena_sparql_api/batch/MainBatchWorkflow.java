@@ -23,6 +23,7 @@ import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.lookup.ListService;
 import org.aksw.jena_sparql_api.lookup.ListServiceUtils;
 import org.aksw.jena_sparql_api.lookup.LookupService;
+import org.aksw.jena_sparql_api.lookup.LookupServiceTransformKey2;
 import org.aksw.jena_sparql_api.lookup.LookupServiceTransformValue;
 import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
@@ -113,15 +114,15 @@ class VobuildWgs84 {
 
 
 class F_GraphToModel
-	implements Function<Graph, Model>
+    implements Function<Graph, Model>
 {
-	@Override
-	public Model apply(Graph graph) {
-		Model result = ModelFactory.createModelForGraph(g);
-		return result;
-	}
-	
-	public static final F_GraphToModel fn = new F_GraphToModel();
+    @Override
+    public Model apply(Graph graph) {
+        Model result = ModelFactory.createModelForGraph(g);
+        return result;
+    }
+
+    public static final F_GraphToModel fn = new F_GraphToModel();
 }
 
 class FN_ToModel
@@ -159,24 +160,24 @@ class FN_ToModel
 }
 
 class F_NodeToResource<T extends RDFNode>
-	implements Function<Entry<? extends Node, ? extends Model>, T>
+    implements Function<Entry<? extends Node, ? extends Model>, T>
 {
 
-	@Override
-	public T apply(Entry<? extends Node, ?extends Model> entry) {
-		Node node = entry.getKey();
-		Model model = entry.getValue();
-		
-		RDFNode tmp = ModelUtils.convertGraphNodeToRDFNode(node, model);
-		@SuppressWarnings("unchecked")
-		T result = (T)tmp;
-		return result;
-	}
-	
-	public static <T extends RDFNode> F_NodeToResource<T> create() {
-		F_NodeToResource<T> result = new F_NodeToResource<T>();
-		return result;
-	}
+    @Override
+    public T apply(Entry<? extends Node, ?extends Model> entry) {
+        Node node = entry.getKey();
+        Model model = entry.getValue();
+
+        RDFNode tmp = ModelUtils.convertGraphNodeToRDFNode(node, model);
+        @SuppressWarnings("unchecked")
+        T result = (T)tmp;
+        return result;
+    }
+
+    public static <T extends RDFNode> F_NodeToResource<T> create() {
+        F_NodeToResource<T> result = new F_NodeToResource<T>();
+        return result;
+    }
 }
 
 public class MainBatchWorkflow {
@@ -283,17 +284,14 @@ public class MainBatchWorkflow {
         //LookupService<Node, Graph> ls = LookupServiceUtils.createLookupService(qef, mappedConcept);
         LookupService<Node, Graph> lsLgdX = LookupServiceUtils.createLookupService(qefLgd, mcLgdShape);
         LookupService<Node, Model> lsLgd2 = LookupServiceTransformValue.create(lsLgdX, F_GraphToModel.fn);
-        
-        
-        
-        LookupService<Resource, Model> lsLgd = LookupServiceTransformKey2.create(lsLgd, F_NodeToResource.create());
-        
-        
+        LookupService<Resource, Model> lsLgd = LookupServiceTransformKey2.create(lsLgd2, F_ResourceToNode.fn, F_NodeModelToResource.<Resource>create());
+
+
         //LookupServiceTransformValue.create(lsLgd, );
-        
+
         Concept enrich = Concept.parse("?id | ?s tmp:osmId ?id");
         Modifier<Model> lgdEnrich = new ModifierModelEnrich(lsLgd, enrich);
-        
+
 
 
         ListService<Concept, Node, Graph> ls = ListServiceUtils.createListServiceMappedConcept(qef, mappedConcept, true);
