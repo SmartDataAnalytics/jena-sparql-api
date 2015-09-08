@@ -113,18 +113,6 @@ class VobuildWgs84 {
 }
 
 
-class F_GraphToModel
-    implements Function<Graph, Model>
-{
-    @Override
-    public Model apply(Graph graph) {
-        Model result = ModelFactory.createModelForGraph(g);
-        return result;
-    }
-
-    public static final F_GraphToModel fn = new F_GraphToModel();
-}
-
 class FN_ToModel
     implements Function<Entry<Node, Graph>, Entry<Resource, Model>>
 {
@@ -286,6 +274,7 @@ public class MainBatchWorkflow {
         LookupService<Node, Model> lsLgd2 = LookupServiceTransformValue.create(lsLgdX, F_GraphToModel.fn);
         LookupService<Resource, Model> lsLgd = LookupServiceTransformKey2.create(lsLgd2, F_ResourceToNode.fn, F_NodeModelToResource.<Resource>create());
 
+        //ListServiceUtils.
 
         //LookupServiceTransformValue.create(lsLgd, );
 
@@ -309,6 +298,7 @@ public class MainBatchWorkflow {
 
             m.apply(entry.getValue());
             modi.apply(entry.getValue());
+            lgdEnrich.apply(entry.getValue());
 
             System.out.println("=====================================");
             System.out.println(entry.getKey());

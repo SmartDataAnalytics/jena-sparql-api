@@ -4,13 +4,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.aksw.jena_sparql_api.batch.F_NodeModelToResource;
-import org.aksw.jena_sparql_api.batch.F_ResourceToNode;
-
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Resource;
 
 
 public class LookupServiceTransformKey2<KI, KO, V>

@@ -23,4 +23,15 @@ public class ModifierCompose<T>
             modifier.apply(item);
         }
     }
+
+    @SafeVarargs
+    public static <T> ModifierCompose<T> create(Modifier<T> ... modifiers) {
+        ModifierCompose<T> result = create(Arrays.asList(modifiers));
+        return result;
+    }
+
+    public static <T> ModifierCompose<T> create(List<Modifier<T>> modifiers) {
+        ModifierCompose<T> result = new ModifierCompose<T>(modifiers);
+        return result;
+    }
 }
