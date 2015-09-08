@@ -22,9 +22,12 @@ import org.aksw.jena_sparql_api.geo.vocab.GEOSPARQL;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.lookup.ListService;
 import org.aksw.jena_sparql_api.lookup.ListServiceUtils;
+import org.aksw.jena_sparql_api.lookup.LookupService;
+import org.aksw.jena_sparql_api.lookup.LookupServiceTransformValue;
 import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.aksw.jena_sparql_api.modifier.Modifier;
+import org.aksw.jena_sparql_api.modifier.ModifierModelEnrich;
 import org.aksw.jena_sparql_api.modifier.ModifierModelSparqlUpdate;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.aksw.jena_sparql_api.shape.ResourceShapeParserJson;
@@ -108,6 +111,19 @@ class VobuildWgs84 {
     }
 }
 
+
+class F_GraphToModel
+	implements Function<Graph, Model>
+{
+	@Override
+	public Model apply(Graph graph) {
+		Model result = ModelFactory.createModelForGraph(g);
+		return result;
+	}
+	
+	public static final F_GraphToModel fn = new F_GraphToModel();
+}
+
 class FN_ToModel
     implements Function<Entry<Node, Graph>, Entry<Resource, Model>>
 {
@@ -140,6 +156,27 @@ class FN_ToModel
         }
         return result;
     }
+}
+
+class F_NodeToResource<T extends RDFNode>
+	implements Function<Entry<? extends Node, ? extends Model>, T>
+{
+
+	@Override
+	public T apply(Entry<? extends Node, ?extends Model> entry) {
+		Node node = entry.getKey();
+		Model model = entry.getValue();
+		
+		RDFNode tmp = ModelUtils.convertGraphNodeToRDFNode(node, model);
+		@SuppressWarnings("unchecked")
+		T result = (T)tmp;
+		return result;
+	}
+	
+	public static <T extends RDFNode> F_NodeToResource<T> create() {
+		F_NodeToResource<T> result = new F_NodeToResource<T>();
+		return result;
+	}
 }
 
 public class MainBatchWorkflow {
@@ -228,6 +265,7 @@ public class MainBatchWorkflow {
         System.out.println(mappedConcept);
         MappedConcept<Graph> mcLgdShape = ResourceShape.createMappedConcept(lgdShape, concept);
 
+        //LookupServiceTransformKey.create(LookupServiceTransformValue.create(base, fn), keyMapper)
         //LookupServiceListService
 
         QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://fp7-pp.publicdata.eu/sparql", "http://fp7-pp.publicdata.eu/").create();
@@ -243,8 +281,19 @@ public class MainBatchWorkflow {
 
 
         //LookupService<Node, Graph> ls = LookupServiceUtils.createLookupService(qef, mappedConcept);
-        LookupServiceUtils.createLookupService(qefLgd, mcLgdShape);
-        //Concept enrich = Concept.parse("");
+        LookupService<Node, Graph> lsLgdX = LookupServiceUtils.createLookupService(qefLgd, mcLgdShape);
+        LookupService<Node, Model> lsLgd2 = LookupServiceTransformValue.create(lsLgdX, F_GraphToModel.fn);
+        
+        
+        
+        LookupService<Resource, Model> lsLgd = LookupServiceTransformKey2.create(lsLgd, F_NodeToResource.create());
+        
+        
+        //LookupServiceTransformValue.create(lsLgd, );
+        
+        Concept enrich = Concept.parse("?id | ?s tmp:osmId ?id");
+        Modifier<Model> lgdEnrich = new ModifierModelEnrich(lsLgd, enrich);
+        
 
 
         ListService<Concept, Node, Graph> ls = ListServiceUtils.createListServiceMappedConcept(qef, mappedConcept, true);
