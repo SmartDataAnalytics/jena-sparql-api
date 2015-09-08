@@ -23,6 +23,7 @@ import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.lookup.ListService;
 import org.aksw.jena_sparql_api.lookup.ListServiceUtils;
 import org.aksw.jena_sparql_api.lookup.LookupService;
+import org.aksw.jena_sparql_api.lookup.LookupServiceListService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceTransformKey2;
 import org.aksw.jena_sparql_api.lookup.LookupServiceTransformValue;
 import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
@@ -207,6 +208,7 @@ public class MainBatchWorkflow {
         pm.setNsPrefix("ogc", "http://www.opengis.net/ont/geosparql#");
         pm.setNsPrefix("fp7o", "http://fp7-pp.publicdata.eu/ontology/");
         pm.setNsPrefix("json", jsonFn);
+        pm.setNsPrefix("tmp", "http://example.org/tmp/");
 
 
 
@@ -252,7 +254,7 @@ public class MainBatchWorkflow {
         //Query query = ResourceShape.createQuery(rs, concept);
         MappedConcept<Graph> mappedConcept = ResourceShape.createMappedConcept(rs, concept);
         System.out.println(mappedConcept);
-        MappedConcept<Graph> mcLgdShape = ResourceShape.createMappedConcept(lgdShape, concept);
+        MappedConcept<Graph> mcLgdShape = ResourceShape.createMappedConcept(lgdShape, null);
 
         //LookupServiceTransformKey.create(LookupServiceTransformValue.create(base, fn), keyMapper)
         //LookupServiceListService
@@ -270,7 +272,10 @@ public class MainBatchWorkflow {
 
 
         //LookupService<Node, Graph> ls = LookupServiceUtils.createLookupService(qef, mappedConcept);
-        LookupService<Node, Graph> lsLgdX = LookupServiceUtils.createLookupService(qefLgd, mcLgdShape);
+
+        LookupService<Node, Graph> lsLgdX = LookupServiceListService.create(ListServiceResourceShape.create(qefLgd, lgdShape));
+
+        //LookupService<Node, Graph> lsLgdX = LookupServiceUtils.createLookupService(qefLgd, mcLgdShape);
         LookupService<Node, Model> lsLgd2 = LookupServiceTransformValue.create(lsLgdX, F_GraphToModel.fn);
         LookupService<Resource, Model> lsLgd = LookupServiceTransformKey2.create(lsLgd2, F_ResourceToNode.fn, F_NodeModelToResource.<Resource>create());
 
@@ -278,7 +283,7 @@ public class MainBatchWorkflow {
 
         //LookupServiceTransformValue.create(lsLgd, );
 
-        Concept enrich = Concept.parse("?id | ?s tmp:osmId ?id");
+        Concept enrich = Concept.parse("?id | ?s ex:osmId ?id", pm);
         Modifier<Model> lgdEnrich = new ModifierModelEnrich(lsLgd, enrich);
 
 

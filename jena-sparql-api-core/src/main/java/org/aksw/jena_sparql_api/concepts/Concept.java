@@ -21,7 +21,8 @@ import com.hp.hpl.jena.sparql.core.Substitute;
 import com.hp.hpl.jena.sparql.core.Var;
 import com.hp.hpl.jena.sparql.engine.binding.BindingHashMap;
 import com.hp.hpl.jena.sparql.graph.NodeTransform;
-import com.hp.hpl.jena.sparql.lang.ParserSPARQL10;
+import com.hp.hpl.jena.sparql.lang.ParserSPARQL11;
+import com.hp.hpl.jena.sparql.lang.SPARQLParser;
 import com.hp.hpl.jena.sparql.syntax.Element;
 import com.hp.hpl.jena.sparql.syntax.ElementGroup;
 import com.hp.hpl.jena.sparql.syntax.ElementTriplesBlock;
@@ -64,7 +65,7 @@ public class Concept {
         }
         varName = varName.substring(1);
 
-        Concept result = create(splits[1], varName);
+        Concept result = create(splits[1], varName, pm);
         return result;
     }
 
@@ -82,7 +83,17 @@ public class Concept {
             tmp = "{" + tmp + "}";
         }
 
-        Element element = ParserSPARQL10.parseElement(tmp);
+        //ParserSparql10 p;
+        tmp = "Select * " + tmp;
+
+        Query query = new Query();
+        query.setPrefixMapping(prefixMapping);
+        SPARQLParser parser = new ParserSPARQL11();
+        parser.parse(query, tmp);
+        Element element = query.getQueryPattern();
+
+        //Element element = ParserSPARQL10.parseElement(tmp);
+
         //Element element = ParserSPARQL11.parseElement(tmp);
 
         // TODO Find a generic flatten routine
