@@ -4,11 +4,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.aksw.commons.util.Pair;
 import org.aksw.commons.util.StreamUtils;
@@ -27,12 +30,19 @@ import org.aksw.jena_sparql_api.lookup.LookupServiceListService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceTransformKey2;
 import org.aksw.jena_sparql_api.lookup.LookupServiceTransformValue;
 import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
+import org.aksw.jena_sparql_api.mapper.Agg;
+import org.aksw.jena_sparql_api.mapper.AggGraph;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.aksw.jena_sparql_api.modifier.Modifier;
 import org.aksw.jena_sparql_api.modifier.ModifierModelEnrich;
 import org.aksw.jena_sparql_api.modifier.ModifierModelSparqlUpdate;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.aksw.jena_sparql_api.shape.ResourceShapeParserJson;
+import org.aksw.jena_sparql_api.utils.Generator;
+import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
+import org.aksw.jena_sparql_api.utils.NodeUtils;
+import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
+import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +56,7 @@ import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.util.Assert;
 
 import com.google.common.base.Function;
 import com.google.gson.Gson;
@@ -53,13 +64,24 @@ import com.google.gson.stream.JsonReader;
 import com.hp.hpl.jena.datatypes.TypeMapper;
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.NodeFactory;
+import com.hp.hpl.jena.query.Query;
+import com.hp.hpl.jena.query.QueryFactory;
+import com.hp.hpl.jena.query.Syntax;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.shared.PrefixMapping;
 import com.hp.hpl.jena.shared.impl.PrefixMappingImpl;
+import com.hp.hpl.jena.sparql.core.BasicPattern;
+import com.hp.hpl.jena.sparql.core.Var;
 import com.hp.hpl.jena.sparql.function.FunctionRegistry;
+import com.hp.hpl.jena.sparql.graph.NodeTransform;
+import com.hp.hpl.jena.sparql.graph.NodeTransformLib;
+import com.hp.hpl.jena.sparql.syntax.Element;
+import com.hp.hpl.jena.sparql.syntax.ElementTriplesBlock;
+import com.hp.hpl.jena.sparql.syntax.Template;
 import com.hp.hpl.jena.sparql.util.ModelUtils;
 import com.hp.hpl.jena.update.UpdateFactory;
 import com.hp.hpl.jena.update.UpdateRequest;
@@ -169,6 +191,131 @@ class F_NodeToResource<T extends RDFNode>
     }
 }
 
+interface MapTransformer
+	extends Function<Map<String, Object>, Map<String, Object>>
+{
+}
+
+/**
+ * Json simple transformer:
+ * $foo: { attrs }
+ * -> { attrs } union { type: f(foo) }
+ *
+ *
+ * @author raven
+ *
+ */
+class MapTransformerSimple
+	implements MapTransformer
+{
+	private Map<String, Object> defaults;
+
+	public MapTransformerSimple() {
+		this(new HashMap<String, Object>());
+	}
+
+	public MapTransformerSimple(Object ... pairs) {
+		Map<String, Object> map = new HashMap<String, Object>();
+		for(int i = 0; i < pairs.length; i+=2) {
+			String k = (String)pairs[i];
+			Object v = pairs[i + 1];
+			map.put(k, v);
+		}
+		this.defaults = map;
+	}
+
+	public MapTransformerSimple(Map<String, Object> defaults) {
+		this.defaults = defaults;
+	}
+
+	@Override
+	public Map<String, Object> apply(Map<String, Object> map) {
+		Map<String, Object> result = new LinkedHashMap<String, Object>();
+		result.putAll(map);
+		result.putAll(defaults);
+		return result;
+	}
+}
+
+/**
+ * Transformer that does nothing, but collects all encountered nodes
+ *
+ * @author raven
+ */
+class NodeTransformCollect
+	implements NodeTransform
+{
+	public Set<Node> nodes = new HashSet<Node>();
+
+	@Override
+	public Node convert(Node node) {
+		nodes.add(node);
+		return node;
+	}
+
+	public Set<Node> getNodes() {
+		return nodes;
+	}
+}
+
+/**
+ * Takes a CONSTRUCT WHERE query (i.e. query pattern matches the template)
+ * and a grouping variable and
+ * transforms it into a mapped concept that yields a graph for each resource
+ *
+ * @author raven
+ *
+ */
+class QueryTransformConstructGroupedGraph {
+	public static MappedConcept<Graph> query(Query query, Var groupVar) {
+		Assert.isTrue(query.isConstructType());
+
+		Template template = query.getConstructTemplate();
+		BasicPattern bgp = template.getBGP();
+
+		//NodeTransformBNodesToVariables nodeTransform = new NodeTransformBNodesToVariables();
+		//BasicPattern newBgp = NodeTransformLib.transform(nodeTransform, bgp);
+
+
+		NodeTransformCollect collector = new NodeTransformCollect();
+		NodeTransformLib.transform(collector, bgp);
+
+		Set<Node> nodes = collector.getNodes();
+		Set<Var> vars = NodeUtils.getVarsMentioned(nodes);
+		Set<Node> bnodes = NodeUtils.getBnodesMentioned(nodes);
+
+		Generator<Var> gen = VarGeneratorBlacklist.create("v", vars);
+
+		Map<Node, Var> map = new HashMap<Node, Var>();
+		for(Node node : bnodes) {
+			map.put(node, gen.next());
+		}
+		for(Var var : vars) {
+			if(var.getName().startsWith("?")) {
+				map.put(var, gen.next());
+			}
+			//System.out.println(var);
+		}
+
+		NodeTransformRenameMap nodeTransform = new NodeTransformRenameMap(map);
+
+		BasicPattern newBgp = NodeTransformLib.transform(nodeTransform, bgp);
+
+
+
+		//Element e = new Element
+		Element newElement = new ElementTriplesBlock(newBgp);
+		Template newTemplate = new Template(newBgp);
+
+
+		Concept concept = new Concept(newElement, groupVar);
+		Agg<Graph> agg = AggGraph.create(newTemplate);
+
+		MappedConcept<Graph> result = MappedConcept.create(concept, agg);
+		return result;
+	}
+}
+
 public class MainBatchWorkflow {
 
     public void foo() {
@@ -183,18 +330,58 @@ public class MainBatchWorkflow {
     private static final Logger logger = LoggerFactory.getLogger(MainBatchWorkflow.class);
 
     public static void main(String[] args) throws Exception {
-        main3(args);
+    	String str = "    		Prefix o: <http://fp7-pp.publicdata.eu/ontology/>\n" +
+    			"			Prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
+    			"	            Construct where {\n" +
+    			"	              ?s\n" +
+    			"	                o:funding [\n" +
+    			"	                  o:partner [\n" +
+    			"	                    o:address [\n" +
+    			"	                      o:country [ rdfs:label ?col ] ;\n" +
+    			"	                      o:city [ rdfs:label ?cil ]\n" +
+    			"	                    ]\n" +
+    			"	                  ]\n" +
+    			"	                ]\n" +
+    			"	            }\n" +
+    			"";
+
+
+    	Query q = QueryFactory.create(str, Syntax.syntaxSPARQL_11);
+    	MappedConcept<Graph> mc = QueryTransformConstructGroupedGraph.query(q, Vars.s);
+        QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://fp7-pp.publicdata.eu/sparql", "http://fp7-pp.publicdata.eu/").create();
+
+        System.out.println(mc);
+    	LookupService<Node, Graph> ls = LookupServiceUtils.createLookupService(qef, mc);
+    	Map<Node, Graph> map = ls.apply(Arrays.<Node>asList(NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/project/231648"),  NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/project/231549")));
+    	//ListService<Concept, Node, Graph> ls = ListServiceUtils.createListServiceMappedConcept(qef, mc, false);
+    	//Map<Node, Graph> map = ls.fetchData(null, 10l, 0l);
+
+
+        for(Entry<Node, Graph> entry : map.entrySet()) {
+
+
+            System.out.println("=====================================");
+            System.out.println(entry.getKey());
+            //entry.getValue().write(System.out, "N-TRIPLES");
+            Model m = ModelFactory.createModelForGraph(entry.getValue());
+            m.write(System.out, "TURTLE");
+        }
+
+    	//main3(args);
     }
 
     public static void main3(String[] args) throws Exception {
+
+    	Map<String, MapTransformer> keyToTransformer = new HashMap<String, MapTransformer>();
+    	keyToTransformer.put("$concept", new MapTransformerSimple());
 
         TypeMapper.getInstance().registerDatatype(new RDFDatatypeJson());
 
 
         NominatimClient nominatimClient = new JsonNominatimClient(new DefaultHttpClient(), "cstadler@informatik.uni-leipzig.de");
-        FunctionRegistry.get().put("http://example.org/geocode", FunctionFactoryCache.create(FunctionFactoryGeocodeNominatim.create(nominatimClient)));
+        FunctionRegistry.get().put("http://jsa.aksw.org/fn/nominatim/geocode", FunctionFactoryCache.create(FunctionFactoryGeocodeNominatim.create(nominatimClient)));
 
-        String jsonFn = "http://json.org/fn/";
+        String jsonFn = "http://jsa.aksw.org/fn/json/";
 
         FunctionRegistry.get().put(jsonFn + "parse", E_JsonParse.class);
         FunctionRegistry.get().put(jsonFn + "path", E_JsonPath.class);
@@ -209,10 +396,11 @@ public class MainBatchWorkflow {
         pm.setNsPrefix("fp7o", "http://fp7-pp.publicdata.eu/ontology/");
         pm.setNsPrefix("json", jsonFn);
         pm.setNsPrefix("tmp", "http://example.org/tmp/");
+        pm.setNsPrefix("nominatim", "http://jsa.aksw.org/fn/nominatim/");
 
 
 
-        String testx = "Prefix ex: <http://example.org/> Insert { ?s ex:osmId ?o ; ex:o ?oet ; ex:i ?oei } Where { ?s ex:locationString ?l . Bind(ex:geocode(?l) As ?x) . Bind(str(json:path(?x, '$[0].osm_type')) As ?oet) . Bind(str(json:path(?x, '$[0].osm_id')) As ?oei) . Bind(uri(concat('http://linkedgeodata.org/triplify/', ?oet, ?oei)) As ?o) }";
+        String testx = "Prefix ex: <http://example.org/> Insert { ?s ex:osmId ?o ; ex:o ?oet ; ex:i ?oei } Where { ?s ex:locationString ?l . Bind(nominatim:geocode(?l) As ?x) . Bind(str(json:path(?x, '$[0].osm_type')) As ?oet) . Bind(str(json:path(?x, '$[0].osm_id')) As ?oei) . Bind(uri(concat('http://linkedgeodata.org/triplify/', ?oet, ?oei)) As ?o) }";
 
 
         UpdateRequest test = new UpdateRequest();
@@ -234,10 +422,38 @@ public class MainBatchWorkflow {
 
         //Concept concept = Concept.parse("?s | ?s a <http://linkedgeodata.org/ontology/Castle>");
         //Concept concept = Concept.parse("?s | Filter(?s = <http://linkedgeodata.org/triplify/node289523439> || ?s = <http://linkedgeodata.org/triplify/node290076702>)");
+        /*
+        shape: {
+            'fp7o:funding': {
+              'fp7o:partner': {
+                'fp7o:address': {
+                  'fp7o:country': 'rdfs:label',
+                  'fp7o:city': 'rdfs:label'
+                }
+              }
+            }
 
+
+issue: this query syntax will allocate blank nodes :(
+yet, we can map them to variables, convert the query to a select form, and group by one of the variables
+we can then use an automaton representation and minimize the states, and convert it back to a sparql query
+			Prefix o: <http://fp7-pp.publicdata.eu/ontology/>
+			Prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            Construct {
+              ?s
+                o:funding [
+                  o:partner [
+                    o:address [
+                      o:country [ rdfs:label ?col ] ;
+                      o:city [ rdfs:label ?cil ]
+                    ]
+                  ]
+                ]
+            }
+            */
 
         ResourceShapeParserJson parser = new ResourceShapeParserJson(pm);
-        Map<String, Object> json = readJsonResource("workflow.json");
+        Map<String, Object> json = readJsonResource("workflow.js");
 
         String str = (String)json.get("locationString");
         Modifier<Model> m = new ModifierModelSparqlUpdate(str);
@@ -259,7 +475,7 @@ public class MainBatchWorkflow {
         //LookupServiceTransformKey.create(LookupServiceTransformValue.create(base, fn), keyMapper)
         //LookupServiceListService
 
-        QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://fp7-pp.publicdata.eu/sparql", "http://fp7-pp.publicdata.eu/").create();
+	        QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://fp7-pp.publicdata.eu/sparql", "http://fp7-pp.publicdata.eu/").create();
 
         QueryExecutionFactory qefLgd = FluentQueryExecutionFactory.http("http://linkedgeodata.org/sparql", "http://linkedgeodata.org").create();
 

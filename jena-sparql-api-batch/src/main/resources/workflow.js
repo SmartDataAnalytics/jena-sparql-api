@@ -13,21 +13,6 @@
     'geom:geometry': 'ogc:asWKT',
     'rdfs:label': false
   },
-  locationString:
-"Prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>\
-Prefix o: <http://fp7-pp.publicdata.eu/ontology/>\
-Prefix ex: <http://example.org/>\
-Insert  {\
-  ?s ex:locationString ?l\
-}\
-Where { \
-  ?s o:address [ \
-    o:country [ rdfs:label ?country] ; \
-    o:city [ rdfs:label ?city ] \
-  ] . \
-  Bind(concat(?city, ', ', ?country) As ?l) \
-}",
-
   job: {
     id: 'geoCodingJob',
     jobRepository: 'defaultJobRepo',

@@ -8,6 +8,17 @@ import com.hp.hpl.jena.sparql.core.Var;
 
 public class NodeUtils {
 
+	public static Set<Node> getBnodesMentioned(Iterable<Node> nodes) {
+        Set<Node> result = new HashSet<Node>();
+        for (Node node : nodes) {
+            if (node.isBlank()) {
+                result.add(node);
+            }
+        }
+
+        return result;
+	}
+
     public static Set<Var> getVarsMentioned(Iterable<Node> nodes)
     {
         Set<Var> result = new HashSet<Var>();

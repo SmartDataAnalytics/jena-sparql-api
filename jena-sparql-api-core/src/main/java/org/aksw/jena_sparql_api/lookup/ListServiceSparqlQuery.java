@@ -47,7 +47,7 @@ public class ListServiceSparqlQuery
 
     @Override
     public Map<Node, ResultSetPart> fetchData(Concept filterConcept, Long limit, Long offset) {
-        if(filterConcept != null) {
+        if(filterConcept == null) {
             filterConcept = ConceptUtils.createSubjectConcept();
         }
 
@@ -56,6 +56,7 @@ public class ListServiceSparqlQuery
 
         Query query = ConceptUtils.createAttrQuery(this.attrQuery, attrVar, this.isLeftJoin, filterConcept, limit, offset, this.forceSubQuery);
 
+        System.out.println(query);
         //if(true) {throw new RuntimeException(""); }
 
         QueryExecution qe = qef.createQueryExecution(query);
