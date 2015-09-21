@@ -1,7 +1,6 @@
 package org.aksw.jena_sparql_api.modifier;
 
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryModel;
-import org.springframework.util.Assert;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.update.UpdateFactory;

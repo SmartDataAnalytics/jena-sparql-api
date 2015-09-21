@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.batch.processor;
+package org.aksw.jena_sparql_api.batch.writer;
 
 import java.util.List;
 import java.util.Set;
@@ -18,10 +18,10 @@ public class ItemWriterSparqlDiff
 {
     private UpdateExecutionFactory uef;
 
-    public ItemWriterSparqlDiff() {
-        
+    public ItemWriterSparqlDiff(UpdateExecutionFactory uef) {
+    	this.uef = uef;
     }
-    
+
     public UpdateExecutionFactory getUpdateExecutionFactory() {
         return uef;
     }
@@ -33,8 +33,8 @@ public class ItemWriterSparqlDiff
     @Override
     public void write(List<? extends Diff<Set<Quad>>> diffs) throws Exception {
         Diff<Set<Quad>> diff = UpdateDiffUtils.combine(diffs);
-        
-        UpdateExecutionUtils.executeUpdate(uef, diff);        
+
+        UpdateExecutionUtils.executeUpdate(uef, diff);
     }
 
     @Override

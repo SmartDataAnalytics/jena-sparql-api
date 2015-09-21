@@ -9,6 +9,7 @@ import java.util.List;
 
 import javax.sql.DataSource;
 
+import org.aksw.jena_sparql_api.batch.reader.ItemReaderSparqlPaging;
 import org.aksw.jena_sparql_api.batch.tasklet.TaskletSparqlCountData;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;

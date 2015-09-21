@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.batch;
+package org.aksw.jena_sparql_api.batch.reader;
 
 import java.util.Iterator;
 import java.util.Map;

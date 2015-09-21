@@ -16,9 +16,8 @@ import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptOps;
 import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.mapper.Agg;
+import org.aksw.jena_sparql_api.mapper.AggDatasetGraph;
 import org.aksw.jena_sparql_api.mapper.AggGraph;
-import org.aksw.jena_sparql_api.mapper.AggMap;
-import org.aksw.jena_sparql_api.mapper.BindingMapperExpr;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
@@ -36,6 +35,9 @@ import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.sparql.core.BasicPattern;
+import com.hp.hpl.jena.sparql.core.DatasetGraph;
+import com.hp.hpl.jena.sparql.core.Quad;
+import com.hp.hpl.jena.sparql.core.QuadPattern;
 import com.hp.hpl.jena.sparql.core.Var;
 import com.hp.hpl.jena.sparql.engine.binding.Binding;
 import com.hp.hpl.jena.sparql.expr.E_Equals;
@@ -47,6 +49,7 @@ import com.hp.hpl.jena.sparql.expr.NodeValue;
 import com.hp.hpl.jena.sparql.function.FunctionEnv;
 import com.hp.hpl.jena.sparql.syntax.Element;
 import com.hp.hpl.jena.sparql.syntax.ElementFilter;
+import com.hp.hpl.jena.sparql.syntax.ElementNamedGraph;
 import com.hp.hpl.jena.sparql.syntax.ElementSubQuery;
 import com.hp.hpl.jena.sparql.syntax.ElementTriplesBlock;
 import com.hp.hpl.jena.sparql.syntax.PatternVars;
@@ -159,7 +162,7 @@ public class ResourceShape {
     }
 
     public static void collectConcepts(Collection<Concept> result, ResourceShape source, Generator<Var> vargen) {
-        Concept baseConcept = new Concept((Element)null, Vars.g);
+        Concept baseConcept = new Concept((Element)null, Vars.x);
         collectConcepts(result, baseConcept, source, vargen);
     }
 
@@ -353,12 +356,32 @@ public class ResourceShape {
 //        return result;
 //    }
 
+    public static MappedConcept<DatasetGraph> createMappedConcept2(ResourceShape resourceShape, Concept filter) {
+        Query query = createQuery(resourceShape, filter);
+        System.out.println(query);
+        MappedConcept<DatasetGraph> result = createMappedConcept2(query);
+        return result;
+    }
+
     public static MappedConcept<Graph> createMappedConcept(ResourceShape resourceShape, Concept filter) {
         Query query = createQuery(resourceShape, filter);
         System.out.println(query);
         MappedConcept<Graph> result = createMappedConcept(query);
         return result;
     }
+
+    public static MappedConcept<DatasetGraph> createMappedConcept2(Query query) {
+    	QuadPattern qp = new QuadPattern();
+    	qp.add(new Quad(Vars.g, Vars.s, Vars.p, Vars.o));
+
+    	Agg<DatasetGraph> agg = new AggDatasetGraph(qp);
+
+        Concept concept = new Concept(new ElementSubQuery(query), Vars.x);
+
+        MappedConcept<DatasetGraph> result = new MappedConcept<DatasetGraph>(concept, agg);
+        return result;
+    }
+
 
     public static MappedConcept<Graph> createMappedConcept(Query query) {
         BasicPattern bgp = new BasicPattern();
@@ -368,7 +391,7 @@ public class ResourceShape {
         //Agg<Map<Node, Graph>> agg = AggMap.create(new BindingMapperExpr(new ExprVar(Vars.g)), new AggGraph(template));
         Agg<Graph> agg = new AggGraph(template);
 
-        Concept concept = new Concept(new ElementSubQuery(query), Vars.g);
+        Concept concept = new Concept(new ElementSubQuery(query), Vars.x);
 
         MappedConcept<Graph> result = new MappedConcept<Graph>(concept, agg);
         return result;
@@ -388,10 +411,11 @@ public class ResourceShape {
 
             // Check if the Vars.g is part of the element - if not, create a sub query that remaps ?s to ?g
             Collection<Var> vs = PatternVars.vars(e);
-            if(!vs.contains(Vars.g)) {
+            if(!vs.contains(Vars.x)) {
                 Query q = new Query();
                 q.setQuerySelectType();
-                q.getProject().add(Vars.g, new ExprVar(Vars.s));
+                q.getProject().add(Vars.x, new ExprVar(Vars.s));
+                q.getProject().add(Vars.g);
                 q.getProject().add(Vars.s);
                 q.getProject().add(Vars.p);
                 q.getProject().add(Vars.o);
@@ -409,6 +433,7 @@ public class ResourceShape {
 
         Query result = new Query();
         result.setQuerySelectType();
+        result.getProject().add(Vars.x);
         result.getProject().add(Vars.g);
         result.getProject().add(Vars.s);
         result.getProject().add(Vars.p);
@@ -441,7 +466,8 @@ public class ResourceShape {
         BasicPattern bp = new BasicPattern();
         bp.add(triple);
 
-        ElementTriplesBlock e2 = new ElementTriplesBlock(bp);
+        Element etmp = new ElementTriplesBlock(bp);
+        Element e2 = new ElementNamedGraph(Vars.g, etmp);
 
         Element e;
         if(baseElement != null) {
@@ -455,7 +481,7 @@ public class ResourceShape {
             rename.put(Vars.p, vargen.next());
             rename.put(Vars.o, Vars.s);
 
-            rename.put(baseVar, Vars.g);
+            rename.put(baseVar, Vars.x);
 
             sourceVar = MapUtils.getOrElse(rename, baseVar, baseVar);
             Element e1 = ElementUtils.createRenamedElement(baseElement, rename);

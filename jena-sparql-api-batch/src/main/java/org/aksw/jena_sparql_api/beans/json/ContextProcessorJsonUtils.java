@@ -19,6 +19,8 @@ import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.util.Assert;
 
+import com.google.gson.JsonElement;
+
 /**
  *
  * Context := {
@@ -82,7 +84,12 @@ public class ContextProcessorJsonUtils {
     }
 
 
-    public static BeanDefinition processBean(Object data) throws Exception {
+//    public static BeanDefinition processBean(JsonElement json) {
+//    	json.getAsJsonObject().
+//    }
+
+    @SuppressWarnings("unchecked")
+	public static BeanDefinition processBean(Object data) throws Exception {
         BeanDefinition result;
         if(data == null) {
             result = new GenericBeanDefinition();

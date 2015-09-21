@@ -13,6 +13,7 @@ import org.aksw.jena_sparql_api.shape.ResourceShape;
 
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.sparql.core.DatasetGraph;
 
 public class ListServiceResourceShape
     implements ListService<Concept, Node, Graph>
@@ -29,8 +30,8 @@ public class ListServiceResourceShape
 
     @Override
     public Map<Node, Graph> fetchData(Concept concept, Long limit, Long offset) {
-        MappedConcept<Graph> mappedConcept = ResourceShape.createMappedConcept(resourceShape, concept);
-        ListService<Concept, Node, Graph> ls = ListServiceUtils.createListServiceMappedConcept(qef, mappedConcept, true);
+        MappedConcept<DatasetGraph> mappedConcept = ResourceShape.createMappedConcept(resourceShape, concept);
+        ListService<Concept, Node, DatasetGraph> ls = ListServiceUtils.createListServiceMappedConcept(qef, mappedConcept, true);
         Map<Node, Graph> result = ls.fetchData(concept, limit, offset);
         return result;
     }

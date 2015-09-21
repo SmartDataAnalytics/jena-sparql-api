@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.batch;
+package org.aksw.jena_sparql_api.batch.reader;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import org.aksw.jena_sparql_api.batch.BindingMapper;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.pagination.core.PagingQuery;
 import org.springframework.batch.item.data.AbstractPaginatedDataItemReader;

@@ -323,14 +323,12 @@ public class MainBatchWorkflow {
         //nameToVocab.put("geo", new VobuildWgs84());
 
         //PropertyUtils.getProperty(bean, name)
-
-
     }
 
     private static final Logger logger = LoggerFactory.getLogger(MainBatchWorkflow.class);
 
     public static void main(String[] args) throws Exception {
-    	String str = "    		Prefix o: <http://fp7-pp.publicdata.eu/ontology/>\n" +
+    	String str = "      Prefix o: <http://fp7-pp.publicdata.eu/ontology/>\n" +
     			"			Prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
     			"	            Construct where {\n" +
     			"	              ?s\n" +

@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.utils;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +18,18 @@ public class BindingUtils {
 //    public static Binding clone(Binding binding) {
 //        Binding result = new BindingHashMap();
 //    }
+
+    public static Map<Var, Node> toMap(Binding binding) {
+    	Map<Var, Node> result = new HashMap<Var, Node>();
+    	Iterator<Var> it = binding.vars();
+    	while(it.hasNext()) {
+    		Var v = it.next();
+    		Node n = binding.get(v);
+    		result.put(v, n);
+    	}
+
+    	return result;
+    }
 
     public static List<Binding> addRowIds(Collection<Binding> bindings, Var rowId) {
         List<Binding> result = new ArrayList<Binding>(bindings.size());
