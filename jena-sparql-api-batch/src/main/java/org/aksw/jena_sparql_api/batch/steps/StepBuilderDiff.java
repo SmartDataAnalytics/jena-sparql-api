@@ -26,6 +26,7 @@ import com.hp.hpl.jena.sparql.core.Quad;
 public class StepBuilderDiff {
 
 	protected StepBuilder stepBuilder;
+	protected ResourceShape shape;
 
 	protected String name;
 	//protected TODO How to represent the shape?
@@ -44,6 +45,7 @@ public class StepBuilderDiff {
 	}
 
 	public StepBuilderDiff shape(ResourceShape shape) {
+		this.shape = shape;
 		return this;
 	}
 
@@ -79,7 +81,7 @@ public class StepBuilderDiff {
 	}
 
 	public Step build() {
-		ListService<Node, Concept, DatasetGraph> listService = new ListServiceResourceShape(sourceQef, resourceShape);
+		ListService<Concept, Node, DatasetGraph> listService = new ListServiceResourceShape(sourceQef, shape);
 		ItemReader<Entry<Node, DatasetGraph>> itemReader = new ItemReaderDatasetGraph(listService, concept);
 		ItemProcessorModifierDatasetGraph itemProcessor = new ItemProcessorModifierDatasetGraph(modifier);
 		ItemWriter<Diff<Set<Quad>>> itemWriter = new ItemWriterSparqlDiff(targetUef);
