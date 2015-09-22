@@ -2,12 +2,14 @@ package org.aksw.jena_sparql_api.batch;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -32,8 +34,8 @@ import org.aksw.jena_sparql_api.mapper.Agg;
 import org.aksw.jena_sparql_api.mapper.AggGraph;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.aksw.jena_sparql_api.modifier.Modifier;
-import org.aksw.jena_sparql_api.modifier.ModifierModelEnrich;
-import org.aksw.jena_sparql_api.modifier.ModifierModelSparqlUpdate;
+import org.aksw.jena_sparql_api.modifier.ModifierDatasetGraphEnrich;
+import org.aksw.jena_sparql_api.modifier.ModifierDatasetGraphSparqlUpdate;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.aksw.jena_sparql_api.shape.ResourceShapeParserJson;
 import org.aksw.jena_sparql_api.utils.Generator;
@@ -63,6 +65,8 @@ import com.hp.hpl.jena.datatypes.TypeMapper;
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.NodeFactory;
+import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.query.QueryFactory;
 import com.hp.hpl.jena.query.Syntax;
@@ -317,6 +321,22 @@ class QueryTransformConstructGroupedGraph {
 
 public class MainBatchWorkflow {
 
+	public static void write(PrintStream out, DatasetGraph dg) {
+        Dataset ds = DatasetFactory.create(dg);
+
+        System.out.println("Default model -----------------------");
+        Model dm = ds.getDefaultModel();
+        dm.write(out, "TURTLE");
+        Iterator<String> it = ds.listNames();
+        while(it.hasNext()) {
+        	String name = it.next();
+        	Model model = ds.getNamedModel(name);
+        	System.out.println(name + " -----------------------");
+            model.write(out, "TURTLE");
+        }
+
+	}
+
     public void foo() {
         Map<String, Vobuild> nameToVocab = new HashMap<String, Vobuild>();
         //nameToVocab.put("geo", new VobuildWgs84());
@@ -344,7 +364,7 @@ public class MainBatchWorkflow {
 
 
     	Query q = QueryFactory.create(str, Syntax.syntaxSPARQL_11);
-    	MappedConcept<Graph> mc = QueryTransformConstructGroupedGraph.query(q, Vars.s);
+    	MappedConcept<DatasetGraph> mc = QueryTransformConstructGroupedGraph.query2(q, Vars.s);
         QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://fp7-pp.publicdata.eu/sparql", "http://fp7-pp.publicdata.eu/").create();
 
         System.out.println(mc);
@@ -453,7 +473,7 @@ we can then use an automaton representation and minimize the states, and convert
         Map<String, Object> json = readJsonResource("workflow.js");
 
         String str = (String)json.get("locationString");
-        Modifier<Model> m = new ModifierModelSparqlUpdate(str);
+        Modifier<DatasetGraph> m = new ModifierDatasetGraphSparqlUpdate(str);
 
         ResourceShape rs = parser.parse(json.get("shape"));
 
@@ -465,9 +485,9 @@ we can then use an automaton representation and minimize the states, and convert
 
 
         //Query query = ResourceShape.createQuery(rs, concept);
-        MappedConcept<Graph> mappedConcept = ResourceShape.createMappedConcept(rs, concept);
+        MappedConcept<DatasetGraph> mappedConcept = ResourceShape.createMappedConcept2(rs, concept);
         System.out.println(mappedConcept);
-        MappedConcept<Graph> mcLgdShape = ResourceShape.createMappedConcept(lgdShape, null);
+        MappedConcept<DatasetGraph> mcLgdShape = ResourceShape.createMappedConcept2(lgdShape, null);
 
         //LookupServiceTransformKey.create(LookupServiceTransformValue.create(base, fn), keyMapper)
         //LookupServiceListService
@@ -497,22 +517,22 @@ we can then use an automaton representation and minimize the states, and convert
         //LookupServiceTransformValue.create(lsLgd, );
 
         Concept enrich = Concept.parse("?id | ?s ex:osmId ?id", pm);
-        Modifier<Model> lgdEnrich = new ModifierDatasetGraphEnrich(lsLgd, enrich);
+        Modifier<DatasetGraph> lgdEnrich = new ModifierDatasetGraphEnrich(lsLgdX, enrich);
 
 
 
-        ListService<Concept, Node, Graph> ls = ListServiceUtils.createListServiceMappedConcept(qef, mappedConcept, true);
+        ListService<Concept, Node, DatasetGraph> ls = ListServiceUtils.createListServiceMappedConcept(qef, mappedConcept, true);
 
-        Map<Node, Graph> nodeToGraph = ls.fetchData(concept, null, null);
+        Map<Node, DatasetGraph> nodeToDatasetGraph = ls.fetchData(concept, null, null);
 
 
         //Map<Resource, Model> resToModel = new LinkedHashMap<Resource, Model>();
-        Map<Resource, Model> resToModel = FN_ToModel.transform(new LinkedHashMap<Resource, Model>(), nodeToGraph, FN_ToModel.fn);
+        //Map<Resource, Model> resToModel = FN_ToModel.transform(new LinkedHashMap<Resource, Model>(), nodeToGraph, FN_ToModel.fn);
         //resToModel.entrySet().addAll(Collections2.transform(nodeToGraph.entrySet(), FN_ToModel.fn));
 
-        Modifier<Model> modi = new ModifierModelSparqlUpdate(test);
+        Modifier<DatasetGraph> modi = new ModifierDatasetGraphSparqlUpdate(test);
 
-        for(Entry<Resource, Model> entry : resToModel.entrySet()) {
+        for(Entry<Node, DatasetGraph> entry : nodeToDatasetGraph.entrySet()) {
 
             m.apply(entry.getValue());
             modi.apply(entry.getValue());
@@ -521,7 +541,8 @@ we can then use an automaton representation and minimize the states, and convert
             System.out.println("=====================================");
             System.out.println(entry.getKey());
             //entry.getValue().write(System.out, "N-TRIPLES");
-            entry.getValue().write(System.out, "TURTLE");
+
+            write(System.out, entry.getValue());
         }
         //System.out.println(nodeToGraph);
 

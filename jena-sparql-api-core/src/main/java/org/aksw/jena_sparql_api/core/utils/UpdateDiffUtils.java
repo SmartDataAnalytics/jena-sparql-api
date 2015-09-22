@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.core.utils;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -10,6 +11,7 @@ import org.aksw.commons.collections.SetUtils;
 import org.aksw.commons.collections.diff.Diff;
 import org.aksw.jena_sparql_api.core.QuadContainmentChecker;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.utils.DatasetGraphDiffUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.ResultSetUtils;
 
@@ -18,6 +20,8 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.Sets;
 import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.query.QueryExecution;
+import com.hp.hpl.jena.sparql.core.DatasetGraph;
+import com.hp.hpl.jena.sparql.core.DatasetGraphFactory;
 import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.sparql.engine.binding.Binding;
 import com.hp.hpl.jena.sparql.modify.request.UpdateDataDelete;
@@ -29,11 +33,30 @@ import com.hp.hpl.jena.util.iterator.ExtendedIterator;
 
 public class UpdateDiffUtils {
 
-    public static Diff<Set<Quad>> combine(Iterable<? extends Diff<? extends Iterable<Quad>>> diffs) {
+	public static Diff<DatasetGraph> combineDatasetGraph(Iterable<? extends Diff<? extends DatasetGraph>> diffs) {
+		Diff<DatasetGraph> result = Diff.create(DatasetGraphFactory.createMem(), DatasetGraphFactory.createMem());
+
+		// Create a writable view on the result
+		Diff<Set<Quad>> resultView = DatasetGraphDiffUtils.wrapDatasetGraph(result);
+
+		for(Diff<? extends DatasetGraph> diff : diffs) {
+			Diff<Set<Quad>> itemView = DatasetGraphDiffUtils.wrapDatasetGraph(diff);
+			combine(resultView, itemView);
+		}
+
+		return result;
+	}
+
+
+	public static <T> void combine(Diff<? extends Collection<T>> target, Diff<? extends Iterable<T>> source) {
+        Iterables.addAll(target.getAdded(), source.getAdded());
+        Iterables.addAll(target.getRemoved(), source.getRemoved());
+	}
+
+    public static Diff<Set<Quad>> combineIterables(Iterable<? extends Diff<? extends Iterable<Quad>>> diffs) {
         Diff<Set<Quad>> result = Diff.<Set<Quad>>create(new HashSet<Quad>(), new HashSet<Quad>());
         for(Diff<? extends Iterable<Quad>> diff : diffs) {
-            Iterables.addAll(result.getAdded(), diff.getAdded());
-            Iterables.addAll(result.getRemoved(), diff.getRemoved());
+        	combine(result, diff);
         }
 
         return result;

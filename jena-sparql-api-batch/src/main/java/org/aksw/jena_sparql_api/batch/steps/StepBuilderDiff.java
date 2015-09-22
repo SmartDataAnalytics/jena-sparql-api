@@ -1,11 +1,10 @@
 package org.aksw.jena_sparql_api.batch.steps;
 
-import java.util.Set;
 import java.util.Map.Entry;
 
 import org.aksw.commons.collections.diff.Diff;
 import org.aksw.jena_sparql_api.batch.ListServiceResourceShape;
-import org.aksw.jena_sparql_api.batch.processor.ItemProcessorModifierDatasetGraph;
+import org.aksw.jena_sparql_api.batch.processor.ItemProcessorModifierDatasetGraphDiff;
 import org.aksw.jena_sparql_api.batch.reader.ItemReaderDatasetGraph;
 import org.aksw.jena_sparql_api.batch.writer.ItemWriterSparqlDiff;
 import org.aksw.jena_sparql_api.concepts.Concept;
@@ -16,12 +15,12 @@ import org.aksw.jena_sparql_api.modifier.Modifier;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.step.builder.StepBuilder;
+import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
 
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
-import com.hp.hpl.jena.sparql.core.Quad;
 
 public class StepBuilderDiff {
 
@@ -83,11 +82,11 @@ public class StepBuilderDiff {
 	public Step build() {
 		ListService<Concept, Node, DatasetGraph> listService = new ListServiceResourceShape(sourceQef, shape);
 		ItemReader<Entry<Node, DatasetGraph>> itemReader = new ItemReaderDatasetGraph(listService, concept);
-		ItemProcessorModifierDatasetGraph itemProcessor = new ItemProcessorModifierDatasetGraph(modifier);
-		ItemWriter<Diff<Set<Quad>>> itemWriter = new ItemWriterSparqlDiff(targetUef);
+		ItemProcessor<Entry<? extends Node, ? extends DatasetGraph>, Entry<Node, Diff<DatasetGraph>>> itemProcessor = new ItemProcessorModifierDatasetGraphDiff(modifier);
+		ItemWriter<Entry<? extends Node, ? extends Diff<? extends DatasetGraph>>> itemWriter = new ItemWriterSparqlDiff(targetUef);
 
 	    Step result = stepBuilder
-	    		.<Entry<Node, DatasetGraph>, Entry<Node, DatasetGraph>>chunk(chunkSize)
+	    		.<Entry<Node, DatasetGraph>, Entry<Node, Diff<DatasetGraph>>>chunk(chunkSize)
 	            .reader(itemReader)
 	            .processor(itemProcessor)
 	            .writer(itemWriter)

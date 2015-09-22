@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api.batch.writer;
 
 import java.util.List;
-import java.util.Set;
+import java.util.Map.Entry;
 
 import org.aksw.commons.collections.diff.Diff;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
@@ -11,10 +11,12 @@ import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 
-import com.hp.hpl.jena.sparql.core.Quad;
+import com.google.common.collect.Lists;
+import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.sparql.core.DatasetGraph;
 
 public class ItemWriterSparqlDiff
-    implements ItemWriter<Diff<Set<Quad>>>, InitializingBean
+    implements ItemWriter<Entry<? extends Node, ? extends Diff<? extends DatasetGraph>>>, InitializingBean
 {
     private UpdateExecutionFactory uef;
 
@@ -31,10 +33,17 @@ public class ItemWriterSparqlDiff
     }
 
     @Override
-    public void write(List<? extends Diff<Set<Quad>>> diffs) throws Exception {
-        Diff<Set<Quad>> diff = UpdateDiffUtils.combine(diffs);
+    public void write(List<? extends Entry<? extends Node, ? extends Diff<? extends DatasetGraph>>> items) throws Exception {
+        List<Diff<? extends DatasetGraph>> diffs = Lists.newArrayList();
 
-        UpdateExecutionUtils.executeUpdate(uef, diff);
+        for(Entry<? extends Node, ? extends Diff<? extends DatasetGraph>> item : items) {
+        	Diff<? extends DatasetGraph> diff = item.getValue();
+        	diffs.add(diff);
+        }
+
+    	Diff<DatasetGraph> diff = UpdateDiffUtils.combineDatasetGraph(diffs);
+
+        UpdateExecutionUtils.executeUpdateDatasetGraph(uef, diff);
     }
 
     @Override

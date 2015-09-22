@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.core.utils;
 
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.Set;
 
 import org.aksw.commons.collections.diff.Diff;
@@ -10,6 +11,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.sparql.modify.request.QuadDataAcc;
 import com.hp.hpl.jena.sparql.modify.request.UpdateData;
@@ -19,8 +21,16 @@ import com.hp.hpl.jena.update.UpdateFactory;
 import com.hp.hpl.jena.update.UpdateRequest;
 
 public class UpdateRequestUtils {
+    public static UpdateRequest createUpdateRequestDatasetGraph(Diff<? extends DatasetGraph> diff)
+    {
+    	Iterator<Quad> a = diff.getAdded().find();
+    	Iterator<Quad> b = diff.getRemoved().find();
 
-    public static UpdateRequest createUpdateRequest(Diff<? extends Iterable<Quad>> diff)
+    	UpdateRequest result = createUpdateRequest(a, b);
+    	return result;
+    }
+
+    public static UpdateRequest createUpdateRequest(Diff<? extends Iterable<? extends Quad>> diff)
     {
         UpdateRequest result = createUpdateRequest(diff.getAdded(), diff.getRemoved());
         return result;
@@ -38,17 +48,24 @@ public class UpdateRequestUtils {
         return result;
     }
 
+    public static UpdateRequest createUpdateRequest(Iterable<? extends Quad> added, Iterable<? extends Quad> removed) {
+    	Iterator<? extends Quad> a = added.iterator();
+    	Iterator<? extends Quad> b = removed.iterator();
 
-    public static UpdateRequest createUpdateRequest(Iterable<Quad> added, Iterable<Quad> removed) {
+    	UpdateRequest result = createUpdateRequest(a, b);
+    	return result;
+    }
+
+    public static UpdateRequest createUpdateRequest(Iterator<? extends Quad> added, Iterator<? extends Quad> removed) {
         UpdateRequest result = new UpdateRequest();
 
-        if(added != null && !Iterables.isEmpty(added)) {
+        if(added != null && added.hasNext()) {
             QuadDataAcc insertQuads = new QuadDataAcc(Lists.newArrayList(added));
             UpdateData insertData = new UpdateDataInsert(insertQuads);
             result.add(insertData);
         }
 
-        if(removed != null && !Iterables.isEmpty(removed)) {
+        if(removed != null && removed.hasNext()) {
             QuadDataAcc deleteQuads = new QuadDataAcc(Lists.newArrayList(removed));
             UpdateData deleteData = new UpdateDataDelete(deleteQuads);
             result.add(deleteData);

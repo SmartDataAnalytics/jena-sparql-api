@@ -11,6 +11,7 @@ import org.aksw.jena_sparql_api.core.QuadContainmentChecker;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
+import org.aksw.jena_sparql_api.utils.DatasetGraphDiffUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,6 +23,7 @@ import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.QueryFactory;
 import com.hp.hpl.jena.query.Syntax;
+import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.update.Update;
 import com.hp.hpl.jena.update.UpdateProcessor;
@@ -107,15 +109,24 @@ public class UpdateExecutionUtils {
         return result;
     }
 
-    public static UpdateProcessor executeDeleteQuads(UpdateExecutionFactory uef, Iterable<Quad> quads) {
+    public static UpdateProcessor executeDeleteQuads(UpdateExecutionFactory uef, Iterable<? extends Quad> quads) {
         UpdateRequest updateRequest = UpdateRequestUtils.createUpdateRequest(Collections.<Quad>emptySet(), quads);
         UpdateProcessor result = uef.createUpdateProcessor(updateRequest);
         result.execute();
         return result;
     }
 
-    public static UpdateProcessor executeUpdate(UpdateExecutionFactory uef, Diff<? extends Iterable<Quad>> diff) {
+    public static UpdateProcessor executeUpdate(UpdateExecutionFactory uef, Diff<? extends Iterable<? extends Quad>> diff) {
         UpdateRequest updateRequest = UpdateRequestUtils.createUpdateRequest(diff);
+        UpdateProcessor result = uef.createUpdateProcessor(updateRequest);
+        result.execute();
+        return result;
+    }
+
+    public static UpdateProcessor executeUpdateDatasetGraph(UpdateExecutionFactory uef, Diff<? extends DatasetGraph> diff) {
+        Diff<Set<Quad>> d = DatasetGraphDiffUtils.wrapDatasetGraph(diff);
+
+    	UpdateRequest updateRequest = UpdateRequestUtils.createUpdateRequest(d);
         UpdateProcessor result = uef.createUpdateProcessor(updateRequest);
         result.execute();
         return result;

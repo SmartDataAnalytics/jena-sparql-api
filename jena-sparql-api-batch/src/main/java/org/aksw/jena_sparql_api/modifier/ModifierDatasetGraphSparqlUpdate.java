@@ -1,14 +1,14 @@
 package org.aksw.jena_sparql_api.modifier;
 
-import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryDataset;
+import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryDatasetGraph;
 
-import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import com.hp.hpl.jena.update.UpdateFactory;
 import com.hp.hpl.jena.update.UpdateProcessor;
 import com.hp.hpl.jena.update.UpdateRequest;
 
 public class ModifierDatasetGraphSparqlUpdate
-	implements Modifier<Dataset>
+	implements Modifier<DatasetGraph>
 {
 	private UpdateRequest updateRequest;
 
@@ -21,8 +21,8 @@ public class ModifierDatasetGraphSparqlUpdate
 	}
 
 	@Override
-	public void apply(Dataset dataset) {
-	    UpdateExecutionFactoryDataset uef = new UpdateExecutionFactoryDataset(dataset);
+	public void apply(DatasetGraph dataset) {
+	    UpdateExecutionFactoryDatasetGraph uef = new UpdateExecutionFactoryDatasetGraph(dataset);
 	    UpdateProcessor updateProcessor = uef.createUpdateProcessor(updateRequest);
 	    updateProcessor.execute();
 	}

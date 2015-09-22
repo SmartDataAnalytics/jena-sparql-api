@@ -17,6 +17,22 @@ public class SetDatasetGraph
     }
 
     @Override
+    public boolean add(Quad quad) {
+    	boolean result = contains(quad);
+    	graph.add(quad);
+    	return result;
+    }
+
+    @Override
+    public boolean contains(Object item) {
+    	boolean result = item instanceof Quad
+    			? graph.contains((Quad)item)
+    			: false;
+
+    	return result;
+    }
+
+    @Override
     public Iterator<Quad> iterator() {
         Iterator<Quad> result = graph.find(Node.ANY, Node.ANY, Node.ANY, Node.ANY);
         return result;
