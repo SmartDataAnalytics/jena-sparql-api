@@ -359,15 +359,20 @@ public class MainBatchWorkflow {
 	public static void write(PrintStream out, DatasetGraph dg) {
         Dataset ds = DatasetFactory.create(dg);
 
-        System.out.println("Default model -----------------------");
+
         Model dm = ds.getDefaultModel();
-        dm.write(out, "TURTLE");
+        if(!dm.isEmpty()) {
+        	out.println("Begin of Default model -----------------------");
+        	dm.write(out, "TURTLE");
+        	out.println("End of Default model -----------------------");
+        }
         Iterator<String> it = ds.listNames();
         while(it.hasNext()) {
         	String name = it.next();
         	Model model = ds.getNamedModel(name);
-        	System.out.println(name + " -----------------------");
+        	System.out.println("Begin of " + name + " -----------------------");
             model.write(out, "TURTLE");
+            System.out.println("End of " + name + " -----------------------");
         }
 
 	}
