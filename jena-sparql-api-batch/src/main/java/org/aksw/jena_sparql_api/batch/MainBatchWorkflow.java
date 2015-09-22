@@ -31,6 +31,7 @@ import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceListService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
 import org.aksw.jena_sparql_api.mapper.Agg;
+import org.aksw.jena_sparql_api.mapper.AggDatasetGraph;
 import org.aksw.jena_sparql_api.mapper.AggGraph;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.aksw.jena_sparql_api.modifier.Modifier;
@@ -76,13 +77,16 @@ import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.shared.PrefixMapping;
 import com.hp.hpl.jena.shared.impl.PrefixMappingImpl;
+import com.hp.hpl.jena.sparql.algebra.op.OpQuadPattern;
 import com.hp.hpl.jena.sparql.core.BasicPattern;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
+import com.hp.hpl.jena.sparql.core.QuadPattern;
 import com.hp.hpl.jena.sparql.core.Var;
 import com.hp.hpl.jena.sparql.function.FunctionRegistry;
 import com.hp.hpl.jena.sparql.graph.NodeTransform;
 import com.hp.hpl.jena.sparql.graph.NodeTransformLib;
 import com.hp.hpl.jena.sparql.syntax.Element;
+import com.hp.hpl.jena.sparql.syntax.ElementNamedGraph;
 import com.hp.hpl.jena.sparql.syntax.ElementTriplesBlock;
 import com.hp.hpl.jena.sparql.syntax.Template;
 import com.hp.hpl.jena.sparql.util.ModelUtils;
@@ -270,16 +274,39 @@ class NodeTransformCollect
  *
  */
 class QueryTransformConstructGroupedGraph {
-	public static MappedConcept<Graph> query(Query query, Var groupVar) {
+	public static MappedConcept<DatasetGraph> query2(Query query, Var partitionVar) {
 		Assert.isTrue(query.isConstructType());
 
 		Template template = query.getConstructTemplate();
 		BasicPattern bgp = template.getBGP();
 
+		BasicPattern newBgp = allocVarsForBlankNodes(bgp);
+
+		//org.aksw.jena_sparql_api.utils.VarUtils.
+		// Allocate a fresh var for the graph
+		Var g = Var.alloc("_g_");
+
+		//Element e = new Element
+		Element tmp = new ElementTriplesBlock(newBgp);
+		Element newElement = new ElementNamedGraph(g, tmp);
+
+		OpQuadPattern tmpOp = new OpQuadPattern(g, newBgp);
+		QuadPattern quadPattern = tmpOp.getPattern();
+
+
+		Concept concept = new Concept(newElement, partitionVar);
+		Agg<DatasetGraph> agg = AggDatasetGraph.create(quadPattern);
+
+		MappedConcept<DatasetGraph> result = MappedConcept.create(concept, agg);
+		return result;
+
+	}
+
+
+	public static BasicPattern allocVarsForBlankNodes(BasicPattern bgp) {
+
 		//NodeTransformBNodesToVariables nodeTransform = new NodeTransformBNodesToVariables();
 		//BasicPattern newBgp = NodeTransformLib.transform(nodeTransform, bgp);
-
-
 		NodeTransformCollect collector = new NodeTransformCollect();
 		NodeTransformLib.transform(collector, bgp);
 
@@ -302,16 +329,24 @@ class QueryTransformConstructGroupedGraph {
 
 		NodeTransformRenameMap nodeTransform = new NodeTransformRenameMap(map);
 
-		BasicPattern newBgp = NodeTransformLib.transform(nodeTransform, bgp);
+		BasicPattern result = NodeTransformLib.transform(nodeTransform, bgp);
+		return result;
+	}
 
+	public static MappedConcept<Graph> query(Query query, Var partitionVar) {
+		Assert.isTrue(query.isConstructType());
 
+		Template template = query.getConstructTemplate();
+		BasicPattern bgp = template.getBGP();
+
+		BasicPattern newBgp = allocVarsForBlankNodes(bgp);
 
 		//Element e = new Element
 		Element newElement = new ElementTriplesBlock(newBgp);
 		Template newTemplate = new Template(newBgp);
 
 
-		Concept concept = new Concept(newElement, groupVar);
+		Concept concept = new Concept(newElement, partitionVar);
 		Agg<Graph> agg = AggGraph.create(newTemplate);
 
 		MappedConcept<Graph> result = MappedConcept.create(concept, agg);
@@ -368,20 +403,22 @@ public class MainBatchWorkflow {
         QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://fp7-pp.publicdata.eu/sparql", "http://fp7-pp.publicdata.eu/").create();
 
         System.out.println(mc);
-    	LookupService<Node, Graph> ls = LookupServiceUtils.createLookupService(qef, mc);
-    	Map<Node, Graph> map = ls.apply(Arrays.<Node>asList(NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/project/231648"),  NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/project/231549")));
+    	LookupService<Node, DatasetGraph> ls = LookupServiceUtils.createLookupService(qef, mc);
+    	Map<Node, DatasetGraph> map = ls.apply(Arrays.<Node>asList(NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/project/231648"),  NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/project/231549")));
     	//ListService<Concept, Node, Graph> ls = ListServiceUtils.createListServiceMappedConcept(qef, mc, false);
     	//Map<Node, Graph> map = ls.fetchData(null, 10l, 0l);
 
 
-        for(Entry<Node, Graph> entry : map.entrySet()) {
+        for(Entry<Node, DatasetGraph> entry : map.entrySet()) {
 
 
             System.out.println("=====================================");
             System.out.println(entry.getKey());
+
+            write(System.out, entry.getValue());
             //entry.getValue().write(System.out, "N-TRIPLES");
-            Model m = ModelFactory.createModelForGraph(entry.getValue());
-            m.write(System.out, "TURTLE");
+            //Model m = ModelFactory.createModelForGraph(entry.getValue());
+            //m.write(System.out, "TURTLE");
         }
 
     	//main3(args);
