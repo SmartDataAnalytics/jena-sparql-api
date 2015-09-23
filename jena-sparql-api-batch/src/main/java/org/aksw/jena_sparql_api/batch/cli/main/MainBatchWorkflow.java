@@ -16,8 +16,11 @@ import org.aksw.jena_sparql_api.batch.FunctionFactoryCache;
 import org.aksw.jena_sparql_api.batch.FunctionFactoryGeocodeNominatim;
 import org.aksw.jena_sparql_api.batch.ListServiceResourceShape;
 import org.aksw.jena_sparql_api.batch.QueryTransformConstructGroupedGraph;
+import org.aksw.jena_sparql_api.batch.config.ConfigBatchJobDynamic;
 import org.aksw.jena_sparql_api.batch.to_review.MapTransformer;
 import org.aksw.jena_sparql_api.batch.to_review.MapTransformerSimple;
+import org.aksw.jena_sparql_api.beans.json.ContextProcessorJson;
+import org.aksw.jena_sparql_api.beans.json.ContextProcessorJsonImpl;
 import org.aksw.jena_sparql_api.beans.json.ContextProcessorJsonUtils;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
@@ -46,14 +49,19 @@ import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobParametersInvalidException;
 import org.springframework.batch.core.StepExecution;
+import org.springframework.batch.core.configuration.annotation.AbstractBatchConfiguration;
+import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
 import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
 import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.support.GenericApplicationContext;
+import org.springframework.core.convert.ConversionService;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.stream.JsonReader;
 import com.hp.hpl.jena.datatypes.TypeMapper;
 import com.hp.hpl.jena.graph.Node;
@@ -79,6 +87,58 @@ public class MainBatchWorkflow {
 	private static final Logger logger = LoggerFactory.getLogger(MainBatchWorkflow.class);
 
     public static void main(String[] args) throws Exception {
+    	mainContext(args);
+    }
+
+    public static void mainContext(String[] args) throws Exception {
+
+        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ConfigBatchJobDynamic.class);
+        //GenericApplicationContext context = new GenericApplicationContext(foo);
+
+
+        //context.refresh();
+
+        ConversionService conversionService = context.getBean(ConversionService.class);
+
+        System.out.println(conversionService);
+        //conversionService.addConverter(new C_SparqlServiceToQueryExecutionFactory());
+
+        //context.regi
+
+    	ContextProcessorJson contextProcessor = new ContextProcessorJsonImpl(context);
+
+        JsonElement json = readJsonElementFromResource("workflow.js");
+        System.out.println(json);
+        contextProcessor.processContext(json);
+
+        //CustomP
+
+
+
+    	//GenericApplicationContext c = new GenericApplicationContext();
+    	//c.get
+
+
+
+        //context.register
+        //BeanDefinitionRegistry bdr;
+        //bdr.regi
+
+
+
+        //DefaultListableBeanFactory dlbf;
+        //dlbf.
+
+        //context.refresh();
+
+        AbstractBatchConfiguration batchConfig = context.getBean(AbstractBatchConfiguration.class);
+        StepBuilderFactory stepBuilders = batchConfig.stepBuilders();
+
+        System.out.println(stepBuilders);
+    }
+
+
+    public static void main1(String[] args) throws Exception {
     	String str = "      Prefix o: <http://fp7-pp.publicdata.eu/ontology/>\n" +
     			"			Prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
     			"	            Construct where {\n" +
@@ -325,6 +385,25 @@ we can then use an automaton representation and minimize the states, and convert
         T result = (T)tmp;
         return result;
     }
+
+    public static JsonElement readJsonElementFromResource(String r) throws IOException {
+        String str = readResource(r);
+        JsonElement result = readJsonElement(str);
+        return result;
+    }
+
+
+    public static JsonElement readJsonElement(String str) throws IOException {
+        Gson gson = new Gson();
+
+        Reader reader = new StringReader(str); //new InputStreamReader(in);
+        JsonReader jsonReader = new JsonReader(reader);
+        jsonReader.setLenient(true);
+        JsonElement result = gson.fromJson(jsonReader, JsonElement.class);
+
+        return result;
+    }
+
 
     /**
      * @param args

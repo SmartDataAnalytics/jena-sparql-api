@@ -9,6 +9,8 @@ import com.hp.hpl.jena.sparql.function.FunctionBase2;
 /**
  * jsonLiteral jsonp(jsonLiteral, queryString)
  *
+ * http://www.mkyong.com/java/apache-httpclient-examples/
+ *
  * @author raven
  *
  */
