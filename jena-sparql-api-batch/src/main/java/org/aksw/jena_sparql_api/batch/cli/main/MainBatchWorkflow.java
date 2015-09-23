@@ -1,48 +1,43 @@
-package org.aksw.jena_sparql_api.batch;
+package org.aksw.jena_sparql_api.batch.cli.main;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
-import org.aksw.commons.util.Pair;
 import org.aksw.commons.util.StreamUtils;
+import org.aksw.jena_sparql_api.batch.BatchWorkflowManager;
+import org.aksw.jena_sparql_api.batch.FunctionFactoryCache;
+import org.aksw.jena_sparql_api.batch.FunctionFactoryGeocodeNominatim;
+import org.aksw.jena_sparql_api.batch.ListServiceResourceShape;
+import org.aksw.jena_sparql_api.batch.QueryTransformConstructGroupedGraph;
+import org.aksw.jena_sparql_api.batch.to_review.MapTransformer;
+import org.aksw.jena_sparql_api.batch.to_review.MapTransformerSimple;
 import org.aksw.jena_sparql_api.beans.json.ContextProcessorJsonUtils;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.geo.vocab.GEO;
-import org.aksw.jena_sparql_api.geo.vocab.GEOM;
-import org.aksw.jena_sparql_api.geo.vocab.GEOSPARQL;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.lookup.ListService;
 import org.aksw.jena_sparql_api.lookup.ListServiceUtils;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceListService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
-import org.aksw.jena_sparql_api.mapper.Agg;
-import org.aksw.jena_sparql_api.mapper.AggDatasetGraph;
-import org.aksw.jena_sparql_api.mapper.AggGraph;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.aksw.jena_sparql_api.modifier.Modifier;
 import org.aksw.jena_sparql_api.modifier.ModifierDatasetGraphEnrich;
 import org.aksw.jena_sparql_api.modifier.ModifierDatasetGraphSparqlUpdate;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.aksw.jena_sparql_api.shape.ResourceShapeParserJson;
-import org.aksw.jena_sparql_api.utils.Generator;
-import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
-import org.aksw.jena_sparql_api.utils.NodeUtils;
-import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
+import org.aksw.jena_sparql_api.sparql.ext.json.E_JsonParse;
+import org.aksw.jena_sparql_api.sparql.ext.json.E_JsonPath;
+import org.aksw.jena_sparql_api.sparql.ext.json.RDFDatatypeJson;
+import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.slf4j.Logger;
@@ -57,39 +52,19 @@ import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-import org.springframework.util.Assert;
 
-import com.google.common.base.Function;
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
 import com.hp.hpl.jena.datatypes.TypeMapper;
-import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.NodeFactory;
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.query.QueryFactory;
 import com.hp.hpl.jena.query.Syntax;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.rdf.model.RDFNode;
-import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.shared.PrefixMapping;
 import com.hp.hpl.jena.shared.impl.PrefixMappingImpl;
-import com.hp.hpl.jena.sparql.algebra.op.OpQuadPattern;
-import com.hp.hpl.jena.sparql.core.BasicPattern;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
-import com.hp.hpl.jena.sparql.core.QuadPattern;
-import com.hp.hpl.jena.sparql.core.Var;
 import com.hp.hpl.jena.sparql.function.FunctionRegistry;
-import com.hp.hpl.jena.sparql.graph.NodeTransform;
-import com.hp.hpl.jena.sparql.graph.NodeTransformLib;
-import com.hp.hpl.jena.sparql.syntax.Element;
-import com.hp.hpl.jena.sparql.syntax.ElementNamedGraph;
-import com.hp.hpl.jena.sparql.syntax.ElementTriplesBlock;
-import com.hp.hpl.jena.sparql.syntax.Template;
-import com.hp.hpl.jena.sparql.util.ModelUtils;
 import com.hp.hpl.jena.update.UpdateFactory;
 import com.hp.hpl.jena.update.UpdateRequest;
 import com.hp.hpl.jena.vocabulary.RDF;
@@ -99,292 +74,9 @@ import fr.dudie.nominatim.client.JsonNominatimClient;
 import fr.dudie.nominatim.client.NominatimClient;
 
 
-class Enrichments {
-    /**
-     * Normalize WGS84 into a single wgs84 property
-     *
-     */
-
-
-    /**
-     * TODO Split
-     */
-}
-
-
-interface Vobuild {
-    void add(ResourceShape shape);
-}
-
-class VobuildBase
-    implements Vobuild
-{
-    @Override
-    public void add(ResourceShape shape) {
-        // TODO Auto-generated method stub
-
-    }
-
-}
-
-class VobuildGeoSparql {
-    public void add(ResourceShape shape) {
-        ResourceShapeBuilder b = new ResourceShapeBuilder(shape);
-        b.outgoing(GEOM.geometry).outgoing(GEOSPARQL.asWKT);
-    }
-}
-
-class VobuildWgs84 {
-    public void add(ResourceShape shape) {
-        ResourceShapeBuilder b = new ResourceShapeBuilder(shape);
-        b.outgoing(GEO.lat);
-        b.outgoing(GEO.xlong);
-    }
-}
-
-
-class FN_ToModel
-    implements Function<Entry<Node, Graph>, Entry<Resource, Model>>
-{
-    @Override
-    public Entry<Resource, Model> apply(Entry<Node, Graph> input) {
-        Node n = input.getKey();
-        Graph g = input.getValue();
-
-
-        Model m = ModelFactory.createModelForGraph(g);
-        RDFNode tmp = ModelUtils.convertGraphNodeToRDFNode(n, m);
-        Resource r = (Resource)tmp;
-
-        Entry<Resource, Model> result = Pair.create(r, m);
-        return result;
-    }
-
-    public static final FN_ToModel fn = new FN_ToModel();
-
-    public static <IK, IV, OK, OV> Map<OK, OV> transform(Map<IK, IV> map, Function<Entry<IK, IV>, Entry<OK, OV>> fn) {
-        Map<OK, OV> result = new HashMap<OK, OV>();
-        transform(result, map, fn);
-        return result;
-    }
-
-    public static <IK, IV, OK, OV> Map<OK, OV> transform(Map<OK, OV> result, Map<IK, IV> map, Function<Entry<IK, IV>, Entry<OK, OV>> fn) {
-        for(Entry<IK, IV> entry : map.entrySet()) {
-            Entry<OK, OV> e = fn.apply(entry);
-            result.put(e.getKey(), e.getValue());
-        }
-        return result;
-    }
-}
-
-class F_NodeToResource<T extends RDFNode>
-    implements Function<Entry<? extends Node, ? extends Model>, T>
-{
-
-    @Override
-    public T apply(Entry<? extends Node, ?extends Model> entry) {
-        Node node = entry.getKey();
-        Model model = entry.getValue();
-
-        RDFNode tmp = ModelUtils.convertGraphNodeToRDFNode(node, model);
-        @SuppressWarnings("unchecked")
-        T result = (T)tmp;
-        return result;
-    }
-
-    public static <T extends RDFNode> F_NodeToResource<T> create() {
-        F_NodeToResource<T> result = new F_NodeToResource<T>();
-        return result;
-    }
-}
-
-interface MapTransformer
-	extends Function<Map<String, Object>, Map<String, Object>>
-{
-}
-
-/**
- * Json simple transformer:
- * $foo: { attrs }
- * -> { attrs } union { type: f(foo) }
- *
- *
- * @author raven
- *
- */
-class MapTransformerSimple
-	implements MapTransformer
-{
-	private Map<String, Object> defaults;
-
-	public MapTransformerSimple() {
-		this(new HashMap<String, Object>());
-	}
-
-	public MapTransformerSimple(Object ... pairs) {
-		Map<String, Object> map = new HashMap<String, Object>();
-		for(int i = 0; i < pairs.length; i+=2) {
-			String k = (String)pairs[i];
-			Object v = pairs[i + 1];
-			map.put(k, v);
-		}
-		this.defaults = map;
-	}
-
-	public MapTransformerSimple(Map<String, Object> defaults) {
-		this.defaults = defaults;
-	}
-
-	@Override
-	public Map<String, Object> apply(Map<String, Object> map) {
-		Map<String, Object> result = new LinkedHashMap<String, Object>();
-		result.putAll(map);
-		result.putAll(defaults);
-		return result;
-	}
-}
-
-/**
- * Transformer that does nothing, but collects all encountered nodes
- *
- * @author raven
- */
-class NodeTransformCollect
-	implements NodeTransform
-{
-	public Set<Node> nodes = new HashSet<Node>();
-
-	@Override
-	public Node convert(Node node) {
-		nodes.add(node);
-		return node;
-	}
-
-	public Set<Node> getNodes() {
-		return nodes;
-	}
-}
-
-/**
- * Takes a CONSTRUCT WHERE query (i.e. query pattern matches the template)
- * and a grouping variable and
- * transforms it into a mapped concept that yields a graph for each resource
- *
- * @author raven
- *
- */
-class QueryTransformConstructGroupedGraph {
-	public static MappedConcept<DatasetGraph> query2(Query query, Var partitionVar) {
-		Assert.isTrue(query.isConstructType());
-
-		Template template = query.getConstructTemplate();
-		BasicPattern bgp = template.getBGP();
-
-		BasicPattern newBgp = allocVarsForBlankNodes(bgp);
-
-		//org.aksw.jena_sparql_api.utils.VarUtils.
-		// Allocate a fresh var for the graph
-		Var g = Var.alloc("_g_");
-
-		//Element e = new Element
-		Element tmp = new ElementTriplesBlock(newBgp);
-		Element newElement = new ElementNamedGraph(g, tmp);
-
-		OpQuadPattern tmpOp = new OpQuadPattern(g, newBgp);
-		QuadPattern quadPattern = tmpOp.getPattern();
-
-
-		Concept concept = new Concept(newElement, partitionVar);
-		Agg<DatasetGraph> agg = AggDatasetGraph.create(quadPattern);
-
-		MappedConcept<DatasetGraph> result = MappedConcept.create(concept, agg);
-		return result;
-
-	}
-
-
-	public static BasicPattern allocVarsForBlankNodes(BasicPattern bgp) {
-
-		//NodeTransformBNodesToVariables nodeTransform = new NodeTransformBNodesToVariables();
-		//BasicPattern newBgp = NodeTransformLib.transform(nodeTransform, bgp);
-		NodeTransformCollect collector = new NodeTransformCollect();
-		NodeTransformLib.transform(collector, bgp);
-
-		Set<Node> nodes = collector.getNodes();
-		Set<Var> vars = NodeUtils.getVarsMentioned(nodes);
-		Set<Node> bnodes = NodeUtils.getBnodesMentioned(nodes);
-
-		Generator<Var> gen = VarGeneratorBlacklist.create("v", vars);
-
-		Map<Node, Var> map = new HashMap<Node, Var>();
-		for(Node node : bnodes) {
-			map.put(node, gen.next());
-		}
-		for(Var var : vars) {
-			if(var.getName().startsWith("?")) {
-				map.put(var, gen.next());
-			}
-			//System.out.println(var);
-		}
-
-		NodeTransformRenameMap nodeTransform = new NodeTransformRenameMap(map);
-
-		BasicPattern result = NodeTransformLib.transform(nodeTransform, bgp);
-		return result;
-	}
-
-	public static MappedConcept<Graph> query(Query query, Var partitionVar) {
-		Assert.isTrue(query.isConstructType());
-
-		Template template = query.getConstructTemplate();
-		BasicPattern bgp = template.getBGP();
-
-		BasicPattern newBgp = allocVarsForBlankNodes(bgp);
-
-		//Element e = new Element
-		Element newElement = new ElementTriplesBlock(newBgp);
-		Template newTemplate = new Template(newBgp);
-
-
-		Concept concept = new Concept(newElement, partitionVar);
-		Agg<Graph> agg = AggGraph.create(newTemplate);
-
-		MappedConcept<Graph> result = MappedConcept.create(concept, agg);
-		return result;
-	}
-}
-
 public class MainBatchWorkflow {
 
-	public static void write(PrintStream out, DatasetGraph dg) {
-        Dataset ds = DatasetFactory.create(dg);
-
-
-        Model dm = ds.getDefaultModel();
-        if(!dm.isEmpty()) {
-        	out.println("Begin of Default model -----------------------");
-        	dm.write(out, "TURTLE");
-        	out.println("End of Default model -----------------------");
-        }
-        Iterator<String> it = ds.listNames();
-        while(it.hasNext()) {
-        	String name = it.next();
-        	Model model = ds.getNamedModel(name);
-        	System.out.println("Begin of " + name + " -----------------------");
-            model.write(out, "TURTLE");
-            System.out.println("End of " + name + " -----------------------");
-        }
-
-	}
-
-    public void foo() {
-        Map<String, Vobuild> nameToVocab = new HashMap<String, Vobuild>();
-        //nameToVocab.put("geo", new VobuildWgs84());
-
-        //PropertyUtils.getProperty(bean, name)
-    }
-
-    private static final Logger logger = LoggerFactory.getLogger(MainBatchWorkflow.class);
+	private static final Logger logger = LoggerFactory.getLogger(MainBatchWorkflow.class);
 
     public static void main(String[] args) throws Exception {
     	String str = "      Prefix o: <http://fp7-pp.publicdata.eu/ontology/>\n" +
@@ -420,7 +112,7 @@ public class MainBatchWorkflow {
             System.out.println("=====================================");
             System.out.println(entry.getKey());
 
-            write(System.out, entry.getValue());
+            DatasetGraphUtils.write(System.out, entry.getValue());
             //entry.getValue().write(System.out, "N-TRIPLES");
             //Model m = ModelFactory.createModelForGraph(entry.getValue());
             //m.write(System.out, "TURTLE");
@@ -584,7 +276,7 @@ we can then use an automaton representation and minimize the states, and convert
             System.out.println(entry.getKey());
             //entry.getValue().write(System.out, "N-TRIPLES");
 
-            write(System.out, entry.getValue());
+            DatasetGraphUtils.write(System.out, entry.getValue());
         }
         //System.out.println(nodeToGraph);
 

@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.batch;
+package org.aksw.jena_sparql_api.sparql.ext.json;
 
 import com.google.gson.Gson;
 import com.hp.hpl.jena.sparql.expr.NodeValue;

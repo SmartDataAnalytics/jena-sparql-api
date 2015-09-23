@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.batch;
+package org.aksw.jena_sparql_api.batch.config;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -9,6 +9,8 @@ import java.util.List;
 
 import javax.sql.DataSource;
 
+import org.aksw.jena_sparql_api.batch.BindingMapperPassThrough;
+import org.aksw.jena_sparql_api.batch.LineAggregatorBindingToXml;
 import org.aksw.jena_sparql_api.batch.reader.ItemReaderSparqlPaging;
 import org.aksw.jena_sparql_api.batch.tasklet.TaskletSparqlCountData;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;

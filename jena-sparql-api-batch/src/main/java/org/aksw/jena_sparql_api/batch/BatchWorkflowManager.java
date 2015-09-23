@@ -4,6 +4,8 @@ import java.lang.reflect.Type;
 import java.sql.SQLException;
 import java.util.Map;
 
+import org.aksw.jena_sparql_api.batch.config.ConfigBatchJobDynamic;
+import org.aksw.jena_sparql_api.batch.config.ConfigSparqlExportJob;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;

@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.aksw.jena_sparql_api.batch.config.ConfigSparqlExportJob;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;

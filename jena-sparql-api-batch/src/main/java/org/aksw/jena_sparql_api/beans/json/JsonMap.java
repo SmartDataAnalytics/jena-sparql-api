@@ -15,7 +15,7 @@ import com.google.gson.JsonPrimitive;
 import riotcmd.json;
 
 
-class FnToList
+class F_JsonArrayToList
 	implements Function<JsonArray, List<Object>>
 {
 	@Override

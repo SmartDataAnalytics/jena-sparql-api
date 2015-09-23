@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.batch;
+package org.aksw.jena_sparql_api.batch.functions;
 
 import com.google.common.base.Function;
 import com.hp.hpl.jena.graph.Node;

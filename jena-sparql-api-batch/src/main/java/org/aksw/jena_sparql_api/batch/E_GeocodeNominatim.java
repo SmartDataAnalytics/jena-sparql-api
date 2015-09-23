@@ -3,6 +3,8 @@ package org.aksw.jena_sparql_api.batch;
 import java.io.IOException;
 import java.util.List;
 
+import org.aksw.jena_sparql_api.sparql.ext.json.NodeValueJson;
+
 import com.hp.hpl.jena.sparql.expr.NodeValue;
 import com.hp.hpl.jena.sparql.function.FunctionBase1;
 
