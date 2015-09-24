@@ -1,10 +1,13 @@
 package org.aksw.jena_sparql_api.beans.json;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.aksw.jena_sparql_api.sparql.ext.json.E_JsonPath;
 import org.slf4j.Logger;
@@ -24,6 +27,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+
 
 /**
  *
@@ -119,7 +123,7 @@ public class ContextProcessorJsonUtils {
             result = beanDef;
             //result = processBeans((List<Object>)data);
         } else if(data instanceof Map) {
-            result = processBean((Map<String, Object>)data);
+            result = processBeanFromObject((Map<String, Object>)data);
         } else {
             throw new RuntimeException("Unexpected type: " + data);
         }
@@ -206,14 +210,52 @@ public class ContextProcessorJsonUtils {
         return result;
     }
 
+    public static Object processAttr(JsonElement json) throws Exception {
+        Object result;
 
-    public static Object processAttr(Object data) throws Exception {
+        if(json.isJsonObject()) {
+            JsonObject obj = json.getAsJsonObject();
+            result = processAttrMap(obj);
+        } else {
+        	result = E_JsonPath.jsonToObject(json); //processBean(json);
+        }
+
+//        else if(json.isJsonPrimitive()) {
+//        	JsonPrimitive p = json.getAsJsonPrimitive();
+//            result = E_JsonPath.primitiveJsonToObject(p);
+//        } else {
+//        	throw new RuntimeException("Unexpected json array: " + json);
+//        }
+
+        return result;
+    }
+
+    public static Object processAttrMap(JsonObject json) throws Exception {
+        Object result;
+        JsonElement _ref = json.get(ATTR_REF);
+        if(_ref != null) {
+            Assert.isTrue(_ref.isJsonPrimitive());
+            JsonPrimitive p = _ref.getAsJsonPrimitive();
+            Assert.isTrue(p.isString());
+
+            String ref = p.getAsString();
+            result = new RuntimeBeanReference(ref);
+        } else {
+            result = E_JsonPath.jsonToObject(json); //processBean(json);
+        }
+
+        return result;
+    }
+
+
+
+    public static Object processAttrFromObject(Object data) throws Exception {
         Object result;
 
         if(data instanceof Map) {
             @SuppressWarnings("unchecked")
             Map<String, Object> map = (Map<String, Object>)data;
-            result = processAttrMap(map);
+            result = processAttrMapFromObject(map);
         //} else if(data instanceof List) {
         } else {
             result = data;
@@ -224,7 +266,7 @@ public class ContextProcessorJsonUtils {
         return result;
     }
 
-    public static Object processAttrMap(Map<String, Object> data) {
+    public static Object processAttrMapFromObject(Map<String, Object> data) {
         Object result;
         Object _ref = data.get(ATTR_REF);
         if(_ref != null) {
@@ -250,7 +292,7 @@ public class ContextProcessorJsonUtils {
         return result;
     }
 
-    public static BeanDefinition processBean(Map<String, Object> data) throws Exception {
+    public static BeanDefinition processBeanFromObject(Map<String, Object> data) throws Exception {
 
         BeanDefinition result = new GenericBeanDefinition();
 
@@ -291,6 +333,77 @@ public class ContextProcessorJsonUtils {
 
             String key = entry.getKey();
             Object value = entry.getValue();
+
+            Object obj = processAttrFromObject(value);
+            //result.setAttribute(key, obj);
+            result.getPropertyValues().add(key, obj);
+            //result.getPropertyValues()
+        }
+
+
+        return result;
+
+
+        //values.addPropertyValue("beanProperty", new RuntimeBeanReference("beanName"));
+    }
+
+
+    public static BeanDefinition processBean(JsonObject json) throws Exception {
+
+        BeanDefinition result = new GenericBeanDefinition();
+
+        // Process special attributes
+        JsonElement _clazz = json.get(ATTR_TYPE);
+        if(_clazz != null) {
+            Assert.isTrue(_clazz.isJsonPrimitive());
+            JsonPrimitive p = _clazz.getAsJsonPrimitive();
+            Assert.isTrue(p.isString());
+
+            String clazz = p.getAsString();
+            result.setBeanClassName(clazz);
+        }
+
+        // check for ctor args
+        JsonElement _ctorArgs = json.get(ATTR_CTOR_ARGS);
+        if(_ctorArgs != null) {
+        	JsonArray ctorArgs;
+        	if(!_ctorArgs.isJsonArray()) {
+        		ctorArgs = new JsonArray();
+        		ctorArgs.add(_ctorArgs);
+        	} else {
+        		ctorArgs = _ctorArgs.getAsJsonArray();
+        	}
+
+            List<BeanDefinition> args = processBeans(ctorArgs);
+
+            ConstructorArgumentValues cav = result.getConstructorArgumentValues();
+            for(BeanDefinition arg : args) {
+                //cav.add
+                //ValueHolder holder = new ValueHolder(null);
+                //holder.get
+                cav.addGenericArgumentValue(arg);
+            }
+        }
+
+        // Create a new map with special attributes removed
+//        Map<String, Object> tmp = json;
+//        json = new HashMap<String, Object>(tmp);
+//        json.remove(ATTR_TYPE);
+//        json.remove(ATTR_CTOR_ARGS);
+
+        Set<String> specialAttributes = new HashSet<String>(Arrays.<String>asList(ATTR_TYPE, ATTR_CTOR_ARGS));
+
+
+        // Default handling of attributes
+        for(Entry<String, JsonElement> entry : json.entrySet()) {
+
+            String key = entry.getKey();
+
+            if(specialAttributes.contains(key)) {
+            	continue;
+            }
+
+            JsonElement value = entry.getValue();
 
             Object obj = processAttr(value);
             //result.setAttribute(key, obj);

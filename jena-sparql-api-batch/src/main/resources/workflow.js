@@ -1,19 +1,19 @@
 {
     context: {
-    	shape: {
-		    'fp7o:funding': {
-		      'fp7o:partner': {
-		        'fp7o:address': {
-		          'fp7o:country': 'rdfs:label',
-		          'fp7o:city': 'rdfs:label'
-		        }
-		      }
-		    }
-		  },
-		  lgdShape: {
-		    'geom:geometry': 'ogc:asWKT',
-		    'rdfs:label': false
-		  },
+//    	shape: {
+//		    'fp7o:funding': {
+//		      'fp7o:partner': {
+//		        'fp7o:address': {
+//		          'fp7o:country': 'rdfs:label',
+//		          'fp7o:city': 'rdfs:label'
+//		        }
+//		      }
+//		    }
+//		  },
+//		  lgdShape: {
+//		    'geom:geometry': 'ogc:asWKT',
+//		    'rdfs:label': false
+//		  },
 
       /*
       prefixes: {
@@ -23,31 +23,32 @@
           ]
       },
       */
-      $prefixes: { // Special attribute for global prefixes
-      },
-      prefixes: {
-        $prefixes: { // Macro for creating a PrefixMapping object
-          fp7o: 'http://fp7-pp.publicdata.eu/ontology/',
-          vcard: 'http://www.w3.org/2006/vcard/ns#',
-          ex: 'http://example.org'
-        }
-      },
-      nominatimLookupService: {
-          type: 'org.aksw.jena_sparql_api.geo.NominatimLookupServiceFactory'
-      },
+//      $prefixes: { // Special attribute for global prefixes
+//      },
+//      prefixes: {
+//        $prefixes: { // Macro for creating a PrefixMapping object
+//          fp7o: 'http://fp7-pp.publicdata.eu/ontology/',
+//          vcard: 'http://www.w3.org/2006/vcard/ns#',
+//          ex: 'http://example.org'
+//        }
+//      },
+//      nominatimLookupService: {
+//          type: 'org.aksw.jena_sparql_api.geo.NominatimLookupServiceFactory'
+//      },
+
       ssf: {
         type: 'org.aksw.jena_sparql_api.core.SparqlServiceFactoryHttp'
       },
-      srcSparqlService: {
-        type: 'org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp',
-        ctor: ['http://fp7-pp.publicdata.eu/sparql']
-        //ctor: ['http://dbpedia.org', ['http://dbpedia.org']]
-        //ctor: ['http://dbpedia.org', {type: 'foo.bar.DatasetDescription', ctor: ['http://dbpedia.org']}]
-      },
-      dstSparqlService: {
-        type: 'org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp',
-        ctor: ['http://linkedgeodata.org']
-      },
+//      srcSparqlService: {
+//        type: 'org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp',
+//        ctor: ['http://fp7-pp.publicdata.eu/sparql']
+//        //ctor: ['http://dbpedia.org', ['http://dbpedia.org']]
+//        //ctor: ['http://dbpedia.org', {type: 'foo.bar.DatasetDescription', ctor: ['http://dbpedia.org']}]
+//      },
+//      dstSparqlService: {
+//        type: 'org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp',
+//        ctor: ['http://linkedgeodata.org']
+//      },
       fooBean: {
         type: 'org.springframework.beans.factory.config.MethodInvokingFactoryBean',
         targetObject: {ref: 'ssf'},

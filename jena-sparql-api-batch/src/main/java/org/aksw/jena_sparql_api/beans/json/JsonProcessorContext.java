@@ -4,6 +4,7 @@ import org.springframework.context.ApplicationContext;
 
 import com.google.gson.JsonElement;
 
+
 public class JsonProcessorContext
     implements JsonProcessor
 {
@@ -21,6 +22,4 @@ public class JsonProcessorContext
 			throw new RuntimeException(e);
 		}
     }
-
-
 }

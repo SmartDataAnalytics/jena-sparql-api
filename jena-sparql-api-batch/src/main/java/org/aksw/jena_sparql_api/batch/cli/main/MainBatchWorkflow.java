@@ -184,7 +184,7 @@ public class MainBatchWorkflow {
         JsonProcessorContext contextProcessor = new JsonProcessorContext(batchContext);
 
         JsonProcessorMap documentProcessor = new JsonProcessorMap();
-        documentProcessor.register("beans", false, contextProcessor);
+        documentProcessor.register("context", false, contextProcessor);
 
 
 
@@ -196,6 +196,10 @@ public class MainBatchWorkflow {
         batchContext.refresh();
 
         JobOperator jobOperator = batchContext.getBean(JobOperator.class);
+
+        Collection<String> allBeans = Arrays.asList(batchContext.getBeanDefinitionNames());
+        System.out.println("Got " + allBeans.size() + " beans: " + allBeans);
+
         System.out.println(jobOperator);
         //AbstractBatchConfiguration batchConfig = context.getBean(AbstractBatchConfiguration.class);
         //SimpleBatchConfiguration x;
