@@ -19,9 +19,10 @@ import org.aksw.jena_sparql_api.batch.QueryTransformConstructGroupedGraph;
 import org.aksw.jena_sparql_api.batch.config.ConfigBatchJobDynamic;
 import org.aksw.jena_sparql_api.batch.to_review.MapTransformer;
 import org.aksw.jena_sparql_api.batch.to_review.MapTransformerSimple;
-import org.aksw.jena_sparql_api.beans.json.ContextProcessorJson;
-import org.aksw.jena_sparql_api.beans.json.ContextProcessorJsonImpl;
 import org.aksw.jena_sparql_api.beans.json.ContextProcessorJsonUtils;
+import org.aksw.jena_sparql_api.beans.json.JsonProcessorContext;
+import org.aksw.jena_sparql_api.beans.json.JsonProcessorKey;
+import org.aksw.jena_sparql_api.beans.json.JsonProcessorMap;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
@@ -49,14 +50,13 @@ import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobParametersInvalidException;
 import org.springframework.batch.core.StepExecution;
-import org.springframework.batch.core.configuration.annotation.AbstractBatchConfiguration;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
 import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
 import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.core.convert.ConversionService;
+import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import com.google.gson.Gson;
@@ -92,7 +92,7 @@ public class MainBatchWorkflow {
     public static void main(String[] args) throws Exception {
     	initJenaExtensions();
 
-    	//mainContext(args);
+    	mainContext(args);
     }
 
     public static String jsonFn = "http://jsa.aksw.org/fn/json/";
@@ -154,49 +154,57 @@ public class MainBatchWorkflow {
 
     public static void mainContext(String[] args) throws Exception {
 
-        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ConfigBatchJobDynamic.class);
-        //GenericApplicationContext context = new GenericApplicationContext(foo);
+        AnnotationConfigApplicationContext baseContext = new AnnotationConfigApplicationContext(ConfigBatchJobDynamic.class);
+
+        GenericApplicationContext batchContext = new GenericApplicationContext(baseContext);
+
+        /*
+         * Context processing
+         *
+         * - preprocessor
+         * - actual processing
+         */
+
+        // Preprocessors
+        JsonProcessorKey contextPreprocessor = new JsonProcessorKey();
+
+        // Alias mappings
+        // replaces certain type-values with qualified java class names
+        //JsonProcessorMap
+
+        // Attribute-based typing (duck typing)
+        // src: { serviceUrl: 'http://...' } -> inject type: 'SparqlService'
+
+        // Special type preprocessing:
+        // src: $sparqlService: { serviceUrl} -> { type: 'sparqlService',
+
+        //contextPreprocessor.getProcessors().add(alias);
+
+        // Core Beans processor
+        JsonProcessorContext contextProcessor = new JsonProcessorContext(batchContext);
+
+        JsonProcessorMap documentProcessor = new JsonProcessorMap();
+        documentProcessor.register("beans", false, contextProcessor);
 
 
-        //context.refresh();
-
-        ConversionService conversionService = context.getBean(ConversionService.class);
-
-        System.out.println(conversionService);
-        //conversionService.addConverter(new C_SparqlServiceToQueryExecutionFactory());
-
-        //context.regi
-
-    	ContextProcessorJson contextProcessor = new ContextProcessorJsonImpl(context);
 
         JsonElement json = readJsonElementFromResource("workflow.js");
         System.out.println(json);
-        contextProcessor.processContext(json);
-
-        //CustomP
+        documentProcessor.process(json);
 
 
+        batchContext.refresh();
 
-    	//GenericApplicationContext c = new GenericApplicationContext();
-    	//c.get
-
-
-
-        //context.register
-        //BeanDefinitionRegistry bdr;
-        //bdr.regi
+        JobOperator jobOperator = batchContext.getBean(JobOperator.class);
+        System.out.println(jobOperator);
+        //AbstractBatchConfiguration batchConfig = context.getBean(AbstractBatchConfiguration.class);
+        //SimpleBatchConfiguration x;
+        //batchConfig.job
 
 
+        //StepBuilderFactory stepBuilders = batchConfig.stepBuilders();
 
-        //DefaultListableBeanFactory dlbf;
-        //dlbf.
-
-        //context.refresh();
-
-        AbstractBatchConfiguration batchConfig = context.getBean(AbstractBatchConfiguration.class);
-        StepBuilderFactory stepBuilders = batchConfig.stepBuilders();
-
-        System.out.println(stepBuilders);
+        //System.out.println(stepBuilders);
     }
 
 

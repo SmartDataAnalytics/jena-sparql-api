@@ -1,8 +1,15 @@
 package org.aksw.jena_sparql_api.batch.config;
 
 import org.aksw.jena_sparql_api.spring.conversion.ConverterRegistryPostProcessor;
+import org.springframework.batch.core.configuration.ListableJobLocator;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
+import org.springframework.batch.core.explore.JobExplorer;
+import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.batch.core.launch.JobOperator;
+import org.springframework.batch.core.launch.support.SimpleJobOperator;
+import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -75,20 +82,16 @@ public class ConfigBatchJobDynamic
     	return result;
     }
 
-//    @Autowired
-//    private AbstractBatchConfiguration batchConfiguration;
+    @Bean
+    @Autowired
+    public JobOperator jobOperator(JobExplorer jobExplorer, JobLauncher jobLauncher, JobRepository jobRepository, ListableJobLocator jobRegistry)
+    {
+        SimpleJobOperator jobOperator = new SimpleJobOperator();
+        jobOperator.setJobExplorer(jobExplorer);
+        jobOperator.setJobLauncher(jobLauncher);
+        jobOperator.setJobRepository(jobRepository);
+        jobOperator.setJobRegistry(jobRegistry);
 
-//    @Bean
-//    public AbstractBatchConfiguration batchConfiguration() {
-//    	return this.batchConfiguration;
-//    }
-
-
-//
-//    @Autowired
-//    private JobBuilderFactory jobBuilders;
-//
-//    @Autowired
-//    private StepBuilderFactory stepBuilders;
-//
+        return jobOperator;
+    }
 }

@@ -16,46 +16,49 @@ import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+
 public class JsonBatchProcessor {
     public static final String ATTR_JOB = "job";
     public static final String ATTR_TASKLET = "$tasklet";
-    
+
     private AbstractBatchConfiguration config;
     private ApplicationContext mainContext;
 
     //private JobBuilder jobBuilder;
 //    private JobBuilderHelper<?> jobBuilder;
-    
+
     public void processDefaultJob(Map<String, Object> data) {
         // Check for a job attribute
         Object obj = data.get(ATTR_JOB);
     }
-    
-    
+
+
     public Job processJob(Map<String, Object> data) throws Exception {
-        
+
         // Check if there is a context associated with the job
         Object context = data.get(ContextProcessorJsonUtils.ATTR_CONTEXT);
         AnnotationConfigApplicationContext c = new AnnotationConfigApplicationContext();
         c.setParent(mainContext);
         ContextProcessorJsonUtils.processContext(c, context, new HashMap<String, String>());
         c.refresh();
-        
+
         JobBuilderFactory jobBuilders = config.jobBuilders();
-        
+
         processStep(null, data);
-        
-        
-        
+
+
+
         JobBuilder jobBuilder = jobBuilders.get("sparqlExportJob");
-        
+
         // Process the job context and the step context
         SimpleJobBuilder x = jobBuilder.start((Step)null);
-        
+
         return null;
     }
-    
-    
+
+
     public void processSteps(JobBuilder jobBuilder, List<Object> stepSpecs) {
 
         boolean isFirstStep = true;
@@ -75,54 +78,54 @@ public class JsonBatchProcessor {
 
         Job job = jb.build();
     }
-    
+
     public Step processStep(StepBuilder stepBuilder, Object data) {
         return null;
     }
-    
 
-    
-    public Step processStepTasklet(StepBuilder stepBuilder, Map<String, Object> spec) throws Exception {
-        Object d = spec.get(ATTR_TASKLET);
-        
+
+
+    public Step processStepTasklet(StepBuilder stepBuilder, JsonObject spec) throws Exception {
+        JsonElement d = spec.get(ATTR_TASKLET);
+
         BeanDefinition taskletDef = ContextProcessorJsonUtils.processBean(d);
         Tasklet tasklet = null;
-        
+
         Step result = stepBuilder.tasklet(tasklet).build();
         return result;
     }
-    
-    
-    public Step processStepDefault(StepBuilder stepBuilder, Map<String, Object> spec) throws Exception {
+
+
+    public Step processStepDefault(StepBuilder stepBuilder, JsonObject spec) throws Exception {
 //        Integer chunkSize = MapUtils.getInteger(spec, "chunkSize", 1000);
-        
+
           ContextProcessorJsonUtils.processBean(spec, "reader");
-          
-        
+
+
 //        SimpleStepBuilder<Object, Object> ssb = stepBuilder.chunk(chunkSize);
 
 //        ssb.reader();
         return null;
     }
-    
+
 }
 
 /*
-        
+
 //        BeanDefinitionRegistry registry;
 //        registry.
-//        
+//
 //        ApplicationContext context;
 //        context.
-        
-        
-        
+
+
+
         //bf.
         //org.springframework.beans.factory.xml.
         // TODO How to instantiate a bean definition?
-        
-        
-        
+
+
+
 
     public Step dataCountStep(Query query, QueryExecutionFactory qef) {
         Tasklet tasklet = new TaskletSparqlCountData(query, qef);

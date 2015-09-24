@@ -1,22 +1,20 @@
 {
-  shape: {
-    'fp7o:funding': {
-      'fp7o:partner': {
-        'fp7o:address': {
-          'fp7o:country': 'rdfs:label',
-          'fp7o:city': 'rdfs:label'
-        }
-      }
-    }
-  },
-  lgdShape: {
-    'geom:geometry': 'ogc:asWKT',
-    'rdfs:label': false
-  },
-  job: {
-    id: 'geoCodingJob',
-    jobRepository: 'defaultJobRepo',
     context: {
+    	shape: {
+		    'fp7o:funding': {
+		      'fp7o:partner': {
+		        'fp7o:address': {
+		          'fp7o:country': 'rdfs:label',
+		          'fp7o:city': 'rdfs:label'
+		        }
+		      }
+		    }
+		  },
+		  lgdShape: {
+		    'geom:geometry': 'ogc:asWKT',
+		    'rdfs:label': false
+		  },
+
       /*
       prefixes: {
           type: 'com.hp.hpl.jena.shared.impl.PrefixMappingImpl',
@@ -61,6 +59,9 @@
 
       //baseConcept: { '?s <http://fp7-pp.publicdata.eu/ontology/address> ?o . ?o <http://fp7-pp.publicdata.eu/ontology/city> ?city . ?o <http://fp7-pp.publicdata.eu/ontology/country> ?country'
     },
+  job: {
+    //id: 'geoCodingJob',
+    //jobRepository: 'defaultJobRepo',
     steps: [{
       reader: {
         type: 'org.aksw.jena_sparql_api.batch.ItemReaderModel',

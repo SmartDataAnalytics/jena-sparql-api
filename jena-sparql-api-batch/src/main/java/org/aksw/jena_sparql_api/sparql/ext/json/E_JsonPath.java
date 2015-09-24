@@ -48,27 +48,37 @@ public class E_JsonPath
         return result;
     }
 
+    public static Object primitiveJsonToObject(JsonPrimitive p) {
+    	Object result;
+    	if(p.isNumber()) {
+    		result = p.getAsNumber();
+    	} else if(p.isString()) {
+    		result = p.getAsString();
+    	} else if(p.isBoolean()) {
+    		result = p.getAsBoolean();
+    		return result;
+    	} else {
+    		throw new RuntimeException("Unknown type " + p);
+    	}
+
+    	return result;
+    }
+
     public static NodeValue jsonToNodeValue(JsonElement e) {
     	NodeValue result;
     	if(e == null) {
     		result = NodeValue.nvNothing;
     	} else if(e.isJsonPrimitive()) {
     		JsonPrimitive p = e.getAsJsonPrimitive();
-    		Object o = null;
-
-    		if(p.isNumber()) {
-    			o = p.getAsNumber();
-    		} else if(p.isBoolean()) {
-    			o = p.getAsBoolean();
-    		}
+    		Object o = primitiveJsonToObject(p);
 
     		if(o != null) {
 	        	RDFDatatype dtype = TypeMapper.getInstance().getTypeByValue(o);
 	        	Node node = NodeFactory.createUncachedLiteral(o, dtype);
 	        	result = NodeValue.makeNode(node);
-    		} else if(p.isString()) {
-    			String str = p.getAsString();
-    			result = NodeValue.makeString(str);
+//    		} else if(p.isString()) {
+//    			String str = p.getAsString();
+//    			result = NodeValue.makeString(str);
     		} else {
     			throw new RuntimeException("Datatype not supported " + p);
     		}
