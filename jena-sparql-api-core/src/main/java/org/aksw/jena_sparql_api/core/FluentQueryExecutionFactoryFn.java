@@ -7,10 +7,12 @@ import org.aksw.jena_sparql_api.cache.extra.CacheFrontend;
 import org.aksw.jena_sparql_api.delay.core.QueryExecutionFactoryDelay;
 import org.aksw.jena_sparql_api.limit.QueryExecutionFactoryLimit;
 import org.aksw.jena_sparql_api.pagination.core.QueryExecutionFactoryPaginated;
+import org.aksw.jena_sparql_api.prefix.core.QueryExecutionFactoryPrefix;
 import org.aksw.jena_sparql_api.retry.core.QueryExecutionFactoryRetry;
 
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
+import com.hp.hpl.jena.shared.PrefixMapping;
 
 /**
  * A fluent API for conveniently building 'recipes' of transformations to apply to any QueryExecutionFactory.
@@ -44,6 +46,18 @@ public class FluentQueryExecutionFactoryFn<P>
             @Override
             public QueryExecutionFactory apply(QueryExecutionFactory qef) {
                 QueryExecutionFactory r = new QueryExecutionFactoryDelay(qef, delayDuration, delayTimeUnit);
+                return r;
+            }
+        });
+
+        return this;
+    }
+
+    public FluentQueryExecutionFactoryFn<P> withPrefixes(final PrefixMapping pm, final boolean doClone) {
+        compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
+            @Override
+            public QueryExecutionFactory apply(QueryExecutionFactory qef) {
+                QueryExecutionFactory r = new QueryExecutionFactoryPrefix(qef, pm, doClone);
                 return r;
             }
         });

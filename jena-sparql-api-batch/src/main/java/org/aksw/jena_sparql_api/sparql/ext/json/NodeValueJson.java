@@ -37,4 +37,9 @@ public class NodeValueJson
     public void visit(NodeValueVisitor arg0) {
         throw new NotImplementedException();
     }
+
+    public static NodeValueJson create(Object obj) {
+    	NodeValueJson result = new NodeValueJson(obj);
+    	return result;
+    }
 }

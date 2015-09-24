@@ -15,6 +15,8 @@ import org.aksw.jena_sparql_api.model.QueryExecutionFactoryModel;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.sparql.core.DatasetGraph;
+import com.hp.hpl.jena.sparql.core.DatasetGraphFactory;
 
 /**
  * @author Lorenz Buehmann
@@ -32,6 +34,14 @@ public class FluentQueryExecutionFactory<P>
 
     public static FluentQueryExecutionFactory<?> model(Model model){
         return new FluentQueryExecutionFactory<Object>(new QueryExecutionFactoryModel(model));
+    }
+
+    public static FluentQueryExecutionFactory<?> defaultDatasetGraph(){
+        return FluentQueryExecutionFactory.start(DatasetGraphFactory.createMem());
+    }
+
+    public static FluentQueryExecutionFactory<?> start(DatasetGraph datasetGraph){
+        return new FluentQueryExecutionFactory<Object>(new QueryExecutionFactoryDatasetGraph(datasetGraph, false));
     }
 
     public static FluentQueryExecutionFactory<?> http(String service, String ... defaultGraphs){

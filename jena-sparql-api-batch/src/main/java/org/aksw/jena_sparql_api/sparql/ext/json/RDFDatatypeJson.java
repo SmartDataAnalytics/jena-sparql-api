@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.sparql.ext.json;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.hp.hpl.jena.datatypes.BaseDatatype;
 import com.hp.hpl.jena.datatypes.DatatypeFormatException;
 import com.hp.hpl.jena.vocabulary.XSD;
@@ -38,8 +39,9 @@ public class RDFDatatypeJson
      * @throws DatatypeFormatException if the lexical form is not legal
      */
     @Override
-    public Object parse(String lexicalForm) throws DatatypeFormatException {
-        Object result = gson.fromJson(lexicalForm, Object.class);
+    public JsonElement parse(String lexicalForm) throws DatatypeFormatException {
+    	//Object result = gson.fromJson(lexicalForm, Object.class);
+    	JsonElement result = gson.fromJson(lexicalForm, JsonElement.class);
         return result;
     }
 

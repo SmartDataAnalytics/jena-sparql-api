@@ -56,7 +56,6 @@ import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteExcep
 import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
@@ -67,28 +66,91 @@ import com.hp.hpl.jena.datatypes.TypeMapper;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.query.Query;
+import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.QueryFactory;
+import com.hp.hpl.jena.query.ResultSetFormatter;
 import com.hp.hpl.jena.query.Syntax;
 import com.hp.hpl.jena.shared.PrefixMapping;
 import com.hp.hpl.jena.shared.impl.PrefixMappingImpl;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
+import com.hp.hpl.jena.sparql.core.Prologue;
 import com.hp.hpl.jena.sparql.function.FunctionRegistry;
+import com.hp.hpl.jena.sparql.pfunction.PropertyFunctionRegistry;
 import com.hp.hpl.jena.update.UpdateFactory;
 import com.hp.hpl.jena.update.UpdateRequest;
 import com.hp.hpl.jena.vocabulary.RDF;
 import com.hp.hpl.jena.vocabulary.RDFS;
+import com.hp.hpl.jena.vocabulary.XSD;
 
 import fr.dudie.nominatim.client.JsonNominatimClient;
 import fr.dudie.nominatim.client.NominatimClient;
-
 
 public class MainBatchWorkflow {
 
 	private static final Logger logger = LoggerFactory.getLogger(MainBatchWorkflow.class);
 
     public static void main(String[] args) throws Exception {
-    	mainContext(args);
+    	initJenaExtensions();
+
+    	//mainContext(args);
     }
+
+    public static String jsonFn = "http://jsa.aksw.org/fn/json/";
+
+    public static PrefixMapping getDefaultPrefixMapping() {
+        PrefixMapping pm = new PrefixMappingImpl();
+        pm.setNsPrefix("rdf", RDF.getURI());
+        pm.setNsPrefix("rdfs", RDFS.getURI());
+        pm.setNsPrefix("geo", "http://www.w3.org/2003/01/geo/wgs84_pos#");
+        pm.setNsPrefix("geom", "http://geovocab.org/geometry#");
+        pm.setNsPrefix("ogc", "http://www.opengis.net/ont/geosparql#");
+        pm.setNsPrefix("fp7o", "http://fp7-pp.publicdata.eu/ontology/");
+        pm.setNsPrefix("json", jsonFn);
+        pm.setNsPrefix("tmp", "http://example.org/tmp/");
+        pm.setNsPrefix("nominatim", "http://jsa.aksw.org/fn/nominatim/");
+        pm.setNsPrefix("xsd", XSD.getURI());
+
+        return pm;
+    }
+
+    public static void initJenaExtensions() {
+        TypeMapper.getInstance().registerDatatype(new RDFDatatypeJson());
+
+
+        NominatimClient nominatimClient = new JsonNominatimClient(new DefaultHttpClient(), "cstadler@informatik.uni-leipzig.de");
+        FunctionRegistry.get().put("http://jsa.aksw.org/fn/nominatim/geocode", FunctionFactoryCache.create(FunctionFactoryGeocodeNominatim.create(nominatimClient)));
+
+        FunctionRegistry.get().put(jsonFn + "parse", E_JsonParse.class);
+        FunctionRegistry.get().put(jsonFn + "path", E_JsonPath.class);
+
+
+        PropertyFunctionRegistry.get().put(jsonFn + "unnest", new PropertyFunctionFactoryJsonUnnest());
+
+        PrefixMapping pm = getDefaultPrefixMapping();
+
+        QueryExecutionFactory qef = FluentQueryExecutionFactory
+        	.defaultDatasetGraph()
+        	.config()
+        		.withPrefixes(pm, true)
+        	.end()
+        	.create();
+
+        Query query = new Query();
+        query.setPrefixMapping(pm);
+
+        QueryFactory.parse(query, "Select * {"
+        		+ "  Bind(\"['foo', ['bar', 'baz']]\"^^xsd:json As ?json)\n"
+        		+ "  ?json json:unnest ?lvl1.\n"
+        		+ "  Optional { ?lvl1 json:unnest ?lvl2. }\n"
+        		+ "}", "http://example.org/base/", Syntax.syntaxARQ);
+
+        Prologue prologue = new Prologue(pm);
+
+        QueryExecution qe = qef.createQueryExecution(query);
+        System.out.println(ResultSetFormatter.asText(qe.execSelect(), prologue));
+
+    }
+
 
     public static void mainContext(String[] args) throws Exception {
 
@@ -186,29 +248,8 @@ public class MainBatchWorkflow {
     	Map<String, MapTransformer> keyToTransformer = new HashMap<String, MapTransformer>();
     	keyToTransformer.put("$concept", new MapTransformerSimple());
 
-        TypeMapper.getInstance().registerDatatype(new RDFDatatypeJson());
 
-
-        NominatimClient nominatimClient = new JsonNominatimClient(new DefaultHttpClient(), "cstadler@informatik.uni-leipzig.de");
-        FunctionRegistry.get().put("http://jsa.aksw.org/fn/nominatim/geocode", FunctionFactoryCache.create(FunctionFactoryGeocodeNominatim.create(nominatimClient)));
-
-        String jsonFn = "http://jsa.aksw.org/fn/json/";
-
-        FunctionRegistry.get().put(jsonFn + "parse", E_JsonParse.class);
-        FunctionRegistry.get().put(jsonFn + "path", E_JsonPath.class);
-
-
-        PrefixMapping pm = new PrefixMappingImpl();
-        pm.setNsPrefix("rdf", RDF.getURI());
-        pm.setNsPrefix("rdfs", RDFS.getURI());
-        pm.setNsPrefix("geo", "http://www.w3.org/2003/01/geo/wgs84_pos#");
-        pm.setNsPrefix("geom", "http://geovocab.org/geometry#");
-        pm.setNsPrefix("ogc", "http://www.opengis.net/ont/geosparql#");
-        pm.setNsPrefix("fp7o", "http://fp7-pp.publicdata.eu/ontology/");
-        pm.setNsPrefix("json", jsonFn);
-        pm.setNsPrefix("tmp", "http://example.org/tmp/");
-        pm.setNsPrefix("nominatim", "http://jsa.aksw.org/fn/nominatim/");
-
+    	PrefixMapping pm = getDefaultPrefixMapping();
 
 
         String testx = "Prefix ex: <http://example.org/> Insert { ?s ex:osmId ?o ; ex:o ?oet ; ex:i ?oei } Where { ?s ex:locationString ?l . Bind(nominatim:geocode(?l) As ?x) . Bind(str(json:path(?x, '$[0].osm_type')) As ?oet) . Bind(str(json:path(?x, '$[0].osm_id')) As ?oei) . Bind(uri(concat('http://linkedgeodata.org/triplify/', ?oet, ?oei)) As ?o) }";
