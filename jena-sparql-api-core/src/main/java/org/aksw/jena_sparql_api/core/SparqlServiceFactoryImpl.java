@@ -41,6 +41,10 @@ public class SparqlServiceFactoryImpl
     @Override
     public SparqlService createSparqlService(String serviceUri, DatasetDescription datasetDescription, Object authenticator) {
 
+    	if(datasetDescription == null) {
+    		datasetDescription = new DatasetDescription();
+    	}
+
         String str = DatasetDescriptionUtils.toString(datasetDescription);
         String key = serviceUri + str;
 

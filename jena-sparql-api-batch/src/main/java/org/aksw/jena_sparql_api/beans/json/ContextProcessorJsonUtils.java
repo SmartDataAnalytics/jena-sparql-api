@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.aksw.jena_sparql_api.sparql.ext.json.E_JsonPath;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.MutablePropertyValues;
@@ -137,7 +136,7 @@ public class ContextProcessorJsonUtils {
             result = new GenericBeanDefinition();
         } else if(json.isJsonPrimitive()) {
         	JsonPrimitive p = json.getAsJsonPrimitive();
-        	Object o = E_JsonPath.primitiveJsonToObject(p);
+        	Object o = JsonTransformerUtils.toJavaObject(p);
         	result = processPrimitiveBean(o);
 
         } else if(json.isJsonArray()) {
@@ -217,7 +216,7 @@ public class ContextProcessorJsonUtils {
             JsonObject obj = json.getAsJsonObject();
             result = processAttrMap(obj);
         } else {
-        	result = E_JsonPath.jsonToObject(json); //processBean(json);
+        	result = JsonTransformerUtils.toJavaObject(json); //processBean(json);
         }
 
 //        else if(json.isJsonPrimitive()) {
@@ -241,7 +240,7 @@ public class ContextProcessorJsonUtils {
             String ref = p.getAsString();
             result = new RuntimeBeanReference(ref);
         } else {
-            result = E_JsonPath.jsonToObject(json); //processBean(json);
+            result = JsonTransformerUtils.toJavaObject(json); //processBean(json);
         }
 
         return result;
@@ -347,7 +346,34 @@ public class ContextProcessorJsonUtils {
         //values.addPropertyValue("beanProperty", new RuntimeBeanReference("beanName"));
     }
 
+    public static RuntimeBeanReference getAsRef(JsonObject json) {
+    	RuntimeBeanReference result;
+    	JsonElement _ref = json.get(ATTR_REF);
+        if(_ref != null) {
+            Assert.isTrue(_ref.isJsonPrimitive());
+            JsonPrimitive p = _ref.getAsJsonPrimitive();
+            Assert.isTrue(p.isString());
+            String ref = p.getAsString();
+            result = new RuntimeBeanReference(ref);
+        } else {
+        	throw new RuntimeException("Not a ref: " + json);
+        }
 
+        return result;
+    }
+
+    public static boolean isRef(JsonObject json) {
+        JsonElement _ref = json.get(ATTR_REF);
+
+        boolean result = _ref != null && _ref.isJsonPrimitive();
+        result = result && _ref.getAsJsonPrimitive().isString();
+
+        return result;
+    }
+
+
+
+// Function<JsonElement, Object> transformer
     public static BeanDefinition processBean(JsonObject json) throws Exception {
 
         BeanDefinition result = new GenericBeanDefinition();

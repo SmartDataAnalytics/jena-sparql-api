@@ -200,6 +200,9 @@ public class MainBatchWorkflow {
         Collection<String> allBeans = Arrays.asList(batchContext.getBeanDefinitionNames());
         System.out.println("Got " + allBeans.size() + " beans: " + allBeans);
 
+        Object foo = batchContext.getBean("fooBean");
+        System.out.println(foo);
+
         System.out.println(jobOperator);
         //AbstractBatchConfiguration batchConfig = context.getBean(AbstractBatchConfiguration.class);
         //SimpleBatchConfiguration x;
