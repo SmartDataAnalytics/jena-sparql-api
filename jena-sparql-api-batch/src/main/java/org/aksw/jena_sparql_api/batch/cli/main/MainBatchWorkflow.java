@@ -21,6 +21,9 @@ import org.aksw.jena_sparql_api.beans.json.ContextProcessorJsonUtils;
 import org.aksw.jena_sparql_api.beans.json.JsonProcessorContext;
 import org.aksw.jena_sparql_api.beans.json.JsonProcessorKey;
 import org.aksw.jena_sparql_api.beans.json.JsonProcessorMap;
+import org.aksw.jena_sparql_api.beans.json.JsonVisitorRewriteJson;
+import org.aksw.jena_sparql_api.beans.json.JsonVisitorRewriteShape;
+import org.aksw.jena_sparql_api.beans.json.JsonWalker;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
@@ -59,6 +62,7 @@ import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.stream.JsonReader;
 import com.hp.hpl.jena.datatypes.TypeMapper;
@@ -91,7 +95,7 @@ public class MainBatchWorkflow {
     public static void main(String[] args) throws Exception {
     	initJenaExtensions();
 
-    	//mainContext(args);
+    	mainContext(args);
     }
 
     public static String jsonFn = "http://jsa.aksw.org/fn/json/";
@@ -152,21 +156,22 @@ public class MainBatchWorkflow {
         		+ "}", "http://example.org/base/", Syntax.syntaxARQ);
         }
 
-        QueryFactory.parse(query, "Select ?osmType ?osmId ?x ?y {"
-        		+ "  VALUES(?s) { (<http://nominatim.openstreetmap.org/search/?format=json&q=Leipzig>) }\n"
-        		+ "  BIND(http:get(?s) As ?json).\n"
-        		+ "  ?json json:unnest ?item.\n"
-        		+ "  BIND(json:path(?item, '$.osm_type') As ?osmType)\n"
-        		+ "  BIND(json:path(?item, '$.osm_id') As ?osmId)\n"
-        		+ "  BIND(json:path(?item, '$.lon') As ?x)\n"
-        		+ "  BIND(json:path(?item, '$.lat') As ?y)\n"
-        		+ "}", "http://example.org/base/", Syntax.syntaxARQ);
+        if(false) {
+	        QueryFactory.parse(query, "Select ?osmType ?osmId ?x ?y {"
+	        		+ "  VALUES(?s) { (<http://nominatim.openstreetmap.org/search/?format=json&q=Leipzig>) }\n"
+	        		+ "  BIND(http:get(?s) As ?json).\n"
+	        		+ "  ?json json:unnest ?item.\n"
+	        		+ "  BIND(json:path(?item, '$.osm_type') As ?osmType)\n"
+	        		+ "  BIND(json:path(?item, '$.osm_id') As ?osmId)\n"
+	        		+ "  BIND(xsd:decimal(json:path(?item, '$.lon')) As ?x)\n"
+	        		+ "  BIND(xsd:decimal(json:path(?item, '$.lat')) As ?y)\n"
+	        		+ "}", "http://example.org/base/", Syntax.syntaxARQ);
 
-        Prologue prologue = new Prologue(pm);
+	        Prologue prologue = new Prologue(pm);
 
-        QueryExecution qe = qef.createQueryExecution(query);
-        System.out.println(ResultSetFormatter.asText(qe.execSelect(), prologue));
-
+	        QueryExecution qe = qef.createQueryExecution(query);
+	        System.out.println(ResultSetFormatter.asText(qe.execSelect(), prologue));
+        }
     }
 
 
@@ -201,14 +206,21 @@ public class MainBatchWorkflow {
         // Core Beans processor
         JsonProcessorContext contextProcessor = new JsonProcessorContext(batchContext);
 
-        JsonProcessorMap documentProcessor = new JsonProcessorMap();
-        documentProcessor.register("context", false, contextProcessor);
+        JsonProcessorMap jobProcessor = new JsonProcessorMap();
+        jobProcessor.register("context", false, contextProcessor);
 
 
 
         JsonElement json = readJsonElementFromResource("workflow.js");
-        System.out.println(json);
-        documentProcessor.process(json);
+        json = JsonWalker.rewrite(json, new JsonVisitorRewriteShape());
+        json = JsonWalker.rewrite(json, new JsonVisitorRewriteJson());
+
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    	String str = gson.toJson(json);
+    	System.out.println(str);
+
+
+        jobProcessor.process(json);
 
 
         batchContext.refresh();
