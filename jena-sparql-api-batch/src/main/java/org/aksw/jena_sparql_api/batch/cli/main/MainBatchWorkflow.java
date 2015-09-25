@@ -6,6 +6,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +17,9 @@ import org.aksw.jena_sparql_api.batch.BatchWorkflowManager;
 import org.aksw.jena_sparql_api.batch.ListServiceResourceShape;
 import org.aksw.jena_sparql_api.batch.QueryTransformConstructGroupedGraph;
 import org.aksw.jena_sparql_api.batch.config.ConfigBatchJobDynamic;
+import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteJson;
+import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteShape;
+import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteSparqlStep;
 import org.aksw.jena_sparql_api.batch.to_review.MapTransformer;
 import org.aksw.jena_sparql_api.batch.to_review.MapTransformerSimple;
 import org.aksw.jena_sparql_api.beans.json.ContextProcessorJsonUtils;
@@ -23,8 +27,6 @@ import org.aksw.jena_sparql_api.beans.json.JsonProcessorContext;
 import org.aksw.jena_sparql_api.beans.json.JsonProcessorKey;
 import org.aksw.jena_sparql_api.beans.json.JsonProcessorMap;
 import org.aksw.jena_sparql_api.beans.json.JsonVisitorRewrite;
-import org.aksw.jena_sparql_api.beans.json.JsonVisitorRewriteJson;
-import org.aksw.jena_sparql_api.beans.json.JsonVisitorRewriteShape;
 import org.aksw.jena_sparql_api.beans.json.JsonWalker;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
@@ -216,7 +218,8 @@ public class MainBatchWorkflow {
         JsonElement json = readJsonElementFromResource("workflow.js");
 
 
-        List<JsonVisitorRewrite> rewriters = Arrays.asList(new JsonVisitorRewriteShape(), new JsonVisitorRewriteJson());
+        //List<JsonVisitorRewrite> rewriters = Collections.emptyList();
+        List<JsonVisitorRewrite> rewriters = Arrays.<JsonVisitorRewrite>asList(new JsonVisitorRewriteShape(), new JsonVisitorRewriteJson(), new JsonVisitorRewriteSparqlStep());
         json = JsonWalker.rewriterUntilNoChange(json, rewriters);
 
         Gson gson = new GsonBuilder().setPrettyPrinting().create();

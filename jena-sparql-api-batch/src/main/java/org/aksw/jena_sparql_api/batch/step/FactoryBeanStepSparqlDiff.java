@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.batch.steps;
+package org.aksw.jena_sparql_api.batch.step;
 
 import java.util.Map.Entry;
 
@@ -23,7 +23,7 @@ import org.springframework.beans.factory.FactoryBean;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
 
-public class FactoryBeanStepBuilderDiff
+public class FactoryBeanStepSparqlDiff
 	implements FactoryBean<Step>
 {
 
@@ -41,44 +41,44 @@ public class FactoryBeanStepBuilderDiff
 
 	protected UpdateExecutionFactory targetUef;
 
-	public FactoryBeanStepBuilderDiff chunk(int chunkSize) {
+	public FactoryBeanStepSparqlDiff chunk(int chunkSize) {
 		this.chunkSize = chunkSize;
 		return this;
 	}
 
-	public FactoryBeanStepBuilderDiff shape(ResourceShape shape) {
+	public FactoryBeanStepSparqlDiff shape(ResourceShape shape) {
 		this.shape = shape;
 		return this;
 	}
 
 
-	public FactoryBeanStepBuilderDiff modifier(Modifier<? super DatasetGraph> modifier) {
+	public FactoryBeanStepSparqlDiff modifier(Modifier<? super DatasetGraph> modifier) {
 		this.modifier = modifier;
 		return this;
 	}
 
-	public FactoryBeanStepBuilderDiff modifier(Concept concept) {
+	public FactoryBeanStepSparqlDiff modifier(Concept concept) {
 		this.concept = concept;
 		return this;
 	}
 
-	public FactoryBeanStepBuilderDiff setName(String name) {
+	public FactoryBeanStepSparqlDiff setName(String name) {
 		this.name = name;
 		return this;
 	}
 
-	public FactoryBeanStepBuilderDiff setSource(QueryExecutionFactory sourceQef) {
+	public FactoryBeanStepSparqlDiff setSource(QueryExecutionFactory sourceQef) {
 		this.sourceQef = sourceQef;
 		return this;
 	}
 
-	public FactoryBeanStepBuilderDiff setConcept(Concept concept) {
+	public FactoryBeanStepSparqlDiff setConcept(Concept concept) {
 		this.concept = concept;
 		return this;
 	}
 
 
-	public FactoryBeanStepBuilderDiff setTarget(UpdateExecutionFactory targetUef) {
+	public FactoryBeanStepSparqlDiff setTarget(UpdateExecutionFactory targetUef) {
 		this.targetUef = targetUef;
 		return this;
 	}

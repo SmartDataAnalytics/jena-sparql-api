@@ -1,4 +1,6 @@
-package org.aksw.jena_sparql_api.beans.json;
+package org.aksw.jena_sparql_api.batch.json.domain;
+
+import org.aksw.jena_sparql_api.beans.json.JsonVisitorRewrite;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;

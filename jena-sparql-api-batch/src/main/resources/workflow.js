@@ -8,11 +8,11 @@
         ssf: {
             type: 'org.aksw.jena_sparql_api.core.SparqlServiceFactoryHttp'
         },
-        dbpedia: {
+        fp7pp: {
             type: 'org.springframework.beans.factory.config.MethodInvokingFactoryBean',
             targetObject: {ref: 'ssf'},
             targetMethod: 'createSparqlService',
-            arguments: ['http://dbpedia.org/sparql', 'http://dbpedia.org', null]
+            arguments: ['http://fp7-pp.publicdata.eu/sparql', 'http://fp7-pp.publicdata.eu/', null]
         },
     	shape: {
     		$shape: {
@@ -25,33 +25,30 @@
 			      }
 			    }
     		}
-		  }
+		  },
+        update: ' \
+INSERT { \
+    ?s foo:lgd ?l \
+} WHERE \
+  VALUES(?s) { (<http://nominatim.openstreetmap.org/search/?format=json&q=Leipzig>) } \
+  BIND(http:get(?s) As ?json). \
+  ?json json:unnest ?item. \
+  BIND(json:path(?item, '$.osm_type') AS ?osmType) \
+  BIND(json:path(?item, '$.osm_id') AS ?osmId) \
+  BIND(json:path(?item, '$.lon') AS ?x) \
+  BIND(json:path(?item, '$.lat') AS ?y) \
+  BIND(concat('http://linkedgeodata.org/triplify/', ?osmType, ?osmId) AS ?l) \
+}'
     },
     steps: [{
-      reader: {
-        type: 'org.aksw.jena_sparql_api.batch.ItemReaderModel',
-        // shape: true // fetch all data for each resource
-        concept: '#{baseConcept}',
-        shape: {
-            'fp7o:funding': {
-              'fp7o:partner': {
-                'fp7o:address': {
-                  'fp7o:country': 'rdfs:label',
-                  'fp7o:city': 'rdfs:label'
-                }
-              }
-            }
-          },
-        filters: ['spatial']
-      },
-      processor: [{
-          filters: ['tmp'],
-          type: 'SparqlUpdate',
-          request: 'Insert { ?s ex:addrStr ?x } { ?s fp7:city ?ci ; fp7:country ?co . Bind(concat(?ci, "-", ?co) as ?x) }'
-      }],
-      writer: {
-
-      }
+        $sparqlStep: {
+        	chunk: 1000,
+        	concept: '?s | ?s a <http://fp7-pp.publicdata.eu/ontology/Project>',
+        	shape: { ref: 'shape' },
+        	source: { ref: 'fp7pp'},
+        	target: { ref: 'fp7pp'},
+        	modifier: { ref: 'update' }
+        }
     }]
 }
 
