@@ -41,26 +41,26 @@ public class FactoryBeanStepSparqlDiff
 
 	protected UpdateExecutionFactory targetUef;
 
-	public FactoryBeanStepSparqlDiff chunk(int chunkSize) {
+	public FactoryBeanStepSparqlDiff setChunk(int chunkSize) {
 		this.chunkSize = chunkSize;
 		return this;
 	}
 
-	public FactoryBeanStepSparqlDiff shape(ResourceShape shape) {
+	public FactoryBeanStepSparqlDiff setShape(ResourceShape shape) {
 		this.shape = shape;
 		return this;
 	}
 
 
-	public FactoryBeanStepSparqlDiff modifier(Modifier<? super DatasetGraph> modifier) {
+	public FactoryBeanStepSparqlDiff setModifier(Modifier<? super DatasetGraph> modifier) {
 		this.modifier = modifier;
 		return this;
 	}
 
-	public FactoryBeanStepSparqlDiff modifier(Concept concept) {
-		this.concept = concept;
-		return this;
-	}
+//	public FactoryBeanStepSparqlDiff setModifier(Concept concept) {
+//		this.concept = concept;
+//		return this;
+//	}
 
 	public FactoryBeanStepSparqlDiff setName(String name) {
 		this.name = name;
@@ -83,6 +83,40 @@ public class FactoryBeanStepSparqlDiff
 		return this;
 	}
 
+
+
+
+	public StepBuilder getStepBuilder() {
+		return stepBuilder;
+	}
+
+	public ResourceShape getShape() {
+		return shape;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public int getChunkSize() {
+		return chunkSize;
+	}
+
+	public QueryExecutionFactory getSource() {
+		return sourceQef;
+	}
+
+	public Concept getConcept() {
+		return concept;
+	}
+
+	public Modifier<? super DatasetGraph> getModifier() {
+		return modifier;
+	}
+
+	public UpdateExecutionFactory getTarget() {
+		return targetUef;
+	}
 
 	@Override
 	public Step getObject() throws Exception {

@@ -42,7 +42,7 @@ import org.aksw.jena_sparql_api.modifier.Modifier;
 import org.aksw.jena_sparql_api.modifier.ModifierDatasetGraphEnrich;
 import org.aksw.jena_sparql_api.modifier.ModifierDatasetGraphSparqlUpdate;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
-import org.aksw.jena_sparql_api.shape.ResourceShapeParserJson;
+import org.aksw.jena_sparql_api.shape.ResourceShapeParserJsonObject;
 import org.aksw.jena_sparql_api.sparql.ext.http.E_Http;
 import org.aksw.jena_sparql_api.sparql.ext.json.E_JsonParse;
 import org.aksw.jena_sparql_api.sparql.ext.json.E_JsonPath;
@@ -61,6 +61,9 @@ import org.springframework.batch.core.repository.JobExecutionAlreadyRunningExcep
 import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
 import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.batch.item.ExecutionContext;
+import org.springframework.beans.factory.config.BeanDefinitionHolder;
+import org.springframework.beans.factory.config.RuntimeBeanReference;
+import org.springframework.beans.factory.support.BeanDefinitionReaderUtils;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
@@ -237,7 +240,7 @@ public class MainBatchWorkflow {
         Collection<String> allBeans = Arrays.asList(batchContext.getBeanDefinitionNames());
         System.out.println("Got " + allBeans.size() + " beans: " + allBeans);
 
-        Object foo = batchContext.getBean("fooBean");
+        Object foo = batchContext.getBean("steps");
         System.out.println(foo);
 
         System.out.println(jobOperator);
@@ -355,8 +358,11 @@ we can then use an automaton representation and minimize the states, and convert
                 ]
             }
             */
+//BeanDefinitionHolder x = new
+        //BeanDefinitionReaderUtils.
 
-        ResourceShapeParserJson parser = new ResourceShapeParserJson(pm);
+
+        ResourceShapeParserJsonObject parser = new ResourceShapeParserJsonObject(pm);
         Map<String, Object> json = readJsonResource("workflow.js");
 
         String str = (String)json.get("locationString");

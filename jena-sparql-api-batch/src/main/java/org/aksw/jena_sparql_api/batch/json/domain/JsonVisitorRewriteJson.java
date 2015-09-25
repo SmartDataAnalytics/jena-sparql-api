@@ -19,8 +19,8 @@ public class JsonVisitorRewriteJson
 			String str = gson.toJson($json);
 
 			JsonObject o = new JsonObject();
-			o.addProperty("type", "json");
-			o.addProperty("ctor", str);
+			o.addProperty("type", "org.aksw.jena_sparql_api.batch.step.FactoryBeanJsonElement");
+			o.addProperty("jsonStr", str);
 
 			result = o;
 		} else {

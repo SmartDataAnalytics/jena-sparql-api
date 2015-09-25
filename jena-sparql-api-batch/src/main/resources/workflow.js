@@ -15,7 +15,7 @@
             arguments: ['http://fp7-pp.publicdata.eu/sparql', 'http://fp7-pp.publicdata.eu/', null]
         },
     	shape: {
-    		$shape: {
+    		$json: {
 			    'fp7o:funding': {
 			      'fp7o:partner': {
 			        'fp7o:address': {
@@ -38,18 +38,19 @@ INSERT { \
   BIND(json:path(?item, '$.lon') AS ?x) \
   BIND(json:path(?item, '$.lat') AS ?y) \
   BIND(concat('http://linkedgeodata.org/triplify/', ?osmType, ?osmId) AS ?l) \
-}"
-    },
-    steps: [{
-        $sparqlStep: {
-        	chunk: 1000,
-        	concept: '?s | ?s a <http://fp7-pp.publicdata.eu/ontology/Project>',
-        	shape: { ref: 'shape' },
-        	source: { ref: 'fp7pp'},
-        	target: { ref: 'fp7pp'},
-        	modifier: { ref: 'update' }
-        }
-    }]
+}",
+	steps: {
+	    $sparqlStep: {
+	    	chunk: 1000,
+	    	concept: '?s | ?s a <http://fp7-pp.publicdata.eu/ontology/Project>',
+	    	shape: { ref: 'shape' },
+	    	source: { ref: 'fp7pp'},
+	    	target: { ref: 'fp7pp'}
+	    	//modifier: { ref: 'update' }
+	    }
+	}
+
+    }
 }
 
 
