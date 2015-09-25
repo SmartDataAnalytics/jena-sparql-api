@@ -49,4 +49,6 @@ public class JsonTransformerObject
 		Object result = JsonTransformerUtils.toJavaObject(json);
 		return result;
 	}
+
+	public static final JsonTransformerObject toJava = new JsonTransformerObject();
 }

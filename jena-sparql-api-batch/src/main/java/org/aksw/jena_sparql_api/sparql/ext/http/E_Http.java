@@ -11,6 +11,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 
 import com.google.common.net.MediaType;
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.sparql.expr.NodeValue;
 import com.hp.hpl.jena.sparql.function.FunctionBase1;
@@ -86,10 +87,7 @@ public class E_Http
 
 				boolean isJson = MediaType.parse(contentTypeValue).is(MediaType.JSON_UTF_8);
 				if(isJson) {
-					Gson gson = new Gson();
-					Object o = gson.fromJson(str, Object.class);
-					result = NodeValueJson.create(o);
-
+					result = NodeValueJson.create(str);
 				} else {
 					result = NodeValue.makeString(str);
 				}

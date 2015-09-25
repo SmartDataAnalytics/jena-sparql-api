@@ -10,12 +10,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.activation.MimeType;
-
 import org.aksw.commons.util.StreamUtils;
 import org.aksw.jena_sparql_api.batch.BatchWorkflowManager;
-import org.aksw.jena_sparql_api.batch.FunctionFactoryCache;
-import org.aksw.jena_sparql_api.batch.FunctionFactoryGeocodeNominatim;
 import org.aksw.jena_sparql_api.batch.ListServiceResourceShape;
 import org.aksw.jena_sparql_api.batch.QueryTransformConstructGroupedGraph;
 import org.aksw.jena_sparql_api.batch.config.ConfigBatchJobDynamic;
@@ -78,7 +74,6 @@ import com.hp.hpl.jena.shared.impl.PrefixMappingImpl;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import com.hp.hpl.jena.sparql.core.Prologue;
 import com.hp.hpl.jena.sparql.function.FunctionRegistry;
-import com.hp.hpl.jena.sparql.function.user.UserDefinedFunctionFactory;
 import com.hp.hpl.jena.sparql.pfunction.PropertyFunctionRegistry;
 import com.hp.hpl.jena.update.UpdateFactory;
 import com.hp.hpl.jena.update.UpdateRequest;
@@ -124,7 +119,7 @@ public class MainBatchWorkflow {
 
 
         NominatimClient nominatimClient = new JsonNominatimClient(new DefaultHttpClient(), "cstadler@informatik.uni-leipzig.de");
-        FunctionRegistry.get().put("http://jsa.aksw.org/fn/nominatim/geocode", FunctionFactoryCache.create(FunctionFactoryGeocodeNominatim.create(nominatimClient)));
+        //FunctionRegistry.get().put("http://jsa.aksw.org/fn/nominatim/geocode", FunctionFactoryCache.create(FunctionFactoryGeocodeNominatim.create(nominatimClient)));
 
         FunctionRegistry.get().put(jsonFn + "parse", E_JsonParse.class);
         FunctionRegistry.get().put(jsonFn + "path", E_JsonPath.class);
@@ -157,10 +152,11 @@ public class MainBatchWorkflow {
         		+ "}", "http://example.org/base/", Syntax.syntaxARQ);
         }
 
-        QueryFactory.parse(query, "Select * {"
+        QueryFactory.parse(query, "Select ?placeId {"
         		+ "  VALUES(?s) { (<http://nominatim.openstreetmap.org/search/?format=json&q=Leipzig>) }\n"
         		+ "  BIND(http:get(?s) As ?json).\n"
         		+ "  ?json json:unnest ?item.\n"
+        		+ "  BIND(json:path(?item, '$.place_id') As ?placeId)\n"
         		+ "}", "http://example.org/base/", Syntax.syntaxARQ);
 
         Prologue prologue = new Prologue(pm);

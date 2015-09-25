@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.sparql.ext.json;
 
+import org.aksw.jena_sparql_api.beans.json.JsonTransformerObject;
 import org.aksw.jena_sparql_api.beans.json.JsonTransformerUtils;
 
 import com.google.gson.Gson;
@@ -33,21 +34,52 @@ public class E_JsonPath
         this.gson = gson;
     }
 
-    public static Object asJson(NodeValue nv, Gson gson) {
+    public static JsonElement asJson(NodeValue nv) {
     	Node asNode = nv.asNode();
-        Object result;
+        JsonElement result;
         if(nv instanceof NodeValueJson) {
             result = ((NodeValueJson)nv).getJson();
         } else if(asNode.getLiteralDatatype() instanceof RDFDatatypeJson) {
-            result = asNode.getLiteralValue();
-        } else if(nv.isString()) {
-            String str = nv.getString();
-            result = gson.fromJson(str, Object.class);
+            result = (JsonElement)asNode.getLiteralValue();
+//        } else if(nv.isString()) {
+//            String str = nv.getString();
+//            result = gson.fromJson(str, Object.class);
         } else {
             result = null;
         }
 
         return result;
+    }
+
+    public static NodeValue createPrimitiveNodeValue(Object o) {
+    	RDFDatatype dtype = TypeMapper.getInstance().getTypeByValue(o);
+    	Node node = NodeFactory.createUncachedLiteral(o, dtype);
+    	NodeValue result = NodeValue.makeNode(node);
+    	return result;
+    }
+
+    public static NodeValue jsonToNodeValue(Object o, Gson gson) {
+    	boolean isPrimitive = o instanceof Boolean || o instanceof Number || o instanceof String;
+
+    	NodeValue result;
+    	if(o == null) {
+    		result = NodeValue.nvNothing;
+    	} else if(isPrimitive) {
+    		result = createPrimitiveNodeValue(o);
+    	} else if(o instanceof JsonElement) {
+            JsonElement e = (JsonElement)o;
+            result = jsonToNodeValue(e);
+    	} else {
+    		// Write the object to json and re-read it as a json-element
+            String str = gson.toJson(o);
+            JsonElement e = gson.fromJson(str, JsonElement.class);
+            result = jsonToNodeValue(e);
+    	}
+//    	else {
+//    		throw new RuntimeException("Unknown type: " + o);
+//    	}
+
+    	return result;
     }
 
     public static NodeValue jsonToNodeValue(JsonElement e) {
@@ -59,12 +91,7 @@ public class E_JsonPath
     		Object o = JsonTransformerUtils.toJavaObject(p);
 
     		if(o != null) {
-	        	RDFDatatype dtype = TypeMapper.getInstance().getTypeByValue(o);
-	        	Node node = NodeFactory.createUncachedLiteral(o, dtype);
-	        	result = NodeValue.makeNode(node);
-//    		} else if(p.isString()) {
-//    			String str = p.getAsString();
-//    			result = NodeValue.makeString(str);
+    			result = createPrimitiveNodeValue(o);
     		} else {
     			throw new RuntimeException("Datatype not supported " + p);
     		}
@@ -77,34 +104,36 @@ public class E_JsonPath
         return result;
     }
 
-    public static NodeValue jsonToNodeValue(Object o) {
-    	NodeValue result;
-    	if(o == null) {
-    		result = NodeValue.nvNothing;
-    	} else if(o instanceof Number) {
-        	RDFDatatype dtype = TypeMapper.getInstance().getTypeByValue(o);
-        	Node node = NodeFactory.createUncachedLiteral(o, dtype);
-        	result = NodeValue.makeNode(node);
-        } else if(o instanceof String) {
-        	result = NodeValue.makeString((String)o);
-        } else {
-            result = new NodeValueJson(o);
-        }
-
-        return result;
-    }
+//    public static NodeValue jsonToNodeValue(Object o) {
+//    	NodeValue result;
+//    	if(o == null) {
+//    		result = NodeValue.nvNothing;
+//    	} else if(o instanceof Number) {
+//        	RDFDatatype dtype = TypeMapper.getInstance().getTypeByValue(o);
+//        	Node node = NodeFactory.createUncachedLiteral(o, dtype);
+//        	result = NodeValue.makeNode(node);
+//        } else if(o instanceof String) {
+//        	result = NodeValue.makeString((String)o);
+//        } else {
+//            result = new NodeValueJson(o);
+//        }
+//
+//        return result;
+//    }
 
     @Override
     public NodeValue exec(NodeValue nv, NodeValue query) {
 
-    	Object json = asJson(nv, gson);
+    	JsonElement json = asJson(nv);
 
         NodeValue result;
         if(query.isString() && json != null) {
+        	Object tmp = JsonTransformerObject.toJava.apply(json);
             String queryStr = query.getString();
 
-            Object o = JsonPath.read(json, queryStr);
-            result = jsonToNodeValue(o);
+            Object o = JsonPath.read(tmp, queryStr);
+            result = jsonToNodeValue(o, gson);
+
         } else {
             result = NodeValue.nvNothing;
         }

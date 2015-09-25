@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.sparql.ext.json;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.hp.hpl.jena.sparql.expr.NodeValue;
 import com.hp.hpl.jena.sparql.function.FunctionBase1;
 
@@ -23,7 +24,7 @@ public class E_JsonParse
         NodeValue result;
         if(nv.isString()) {
             String str = nv.getString();
-            Object json = gson.fromJson(str, Object.class);
+            JsonElement json = gson.fromJson(str, JsonElement.class);
 
             result = new NodeValueJson(json);
         } else {
