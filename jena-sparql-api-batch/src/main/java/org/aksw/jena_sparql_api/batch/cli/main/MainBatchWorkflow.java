@@ -152,11 +152,14 @@ public class MainBatchWorkflow {
         		+ "}", "http://example.org/base/", Syntax.syntaxARQ);
         }
 
-        QueryFactory.parse(query, "Select ?placeId {"
+        QueryFactory.parse(query, "Select ?osmType ?osmId ?x ?y {"
         		+ "  VALUES(?s) { (<http://nominatim.openstreetmap.org/search/?format=json&q=Leipzig>) }\n"
         		+ "  BIND(http:get(?s) As ?json).\n"
         		+ "  ?json json:unnest ?item.\n"
-        		+ "  BIND(json:path(?item, '$.place_id') As ?placeId)\n"
+        		+ "  BIND(json:path(?item, '$.osm_type') As ?osmType)\n"
+        		+ "  BIND(json:path(?item, '$.osm_id') As ?osmId)\n"
+        		+ "  BIND(json:path(?item, '$.lon') As ?x)\n"
+        		+ "  BIND(json:path(?item, '$.lat') As ?y)\n"
         		+ "}", "http://example.org/base/", Syntax.syntaxARQ);
 
         Prologue prologue = new Prologue(pm);
