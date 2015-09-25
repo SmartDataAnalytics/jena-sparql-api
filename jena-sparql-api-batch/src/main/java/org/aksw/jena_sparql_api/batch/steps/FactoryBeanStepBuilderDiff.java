@@ -18,11 +18,14 @@ import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
+import org.springframework.beans.factory.FactoryBean;
 
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
 
-public class StepBuilderDiff {
+public class FactoryBeanStepBuilderDiff
+	implements FactoryBean<Step>
+{
 
 	protected StepBuilder stepBuilder;
 	protected ResourceShape shape;
@@ -38,48 +41,51 @@ public class StepBuilderDiff {
 
 	protected UpdateExecutionFactory targetUef;
 
-	public StepBuilderDiff chunk(int chunkSize) {
+	public FactoryBeanStepBuilderDiff chunk(int chunkSize) {
 		this.chunkSize = chunkSize;
 		return this;
 	}
 
-	public StepBuilderDiff shape(ResourceShape shape) {
+	public FactoryBeanStepBuilderDiff shape(ResourceShape shape) {
 		this.shape = shape;
 		return this;
 	}
 
-	public StepBuilderDiff modifier(Modifier<? super DatasetGraph> modifier) {
+
+	public FactoryBeanStepBuilderDiff modifier(Modifier<? super DatasetGraph> modifier) {
 		this.modifier = modifier;
 		return this;
 	}
 
-	public StepBuilderDiff modifier(Concept concept) {
+	public FactoryBeanStepBuilderDiff modifier(Concept concept) {
 		this.concept = concept;
 		return this;
 	}
 
-	public StepBuilderDiff setName(String name) {
+	public FactoryBeanStepBuilderDiff setName(String name) {
 		this.name = name;
 		return this;
 	}
 
-	public StepBuilderDiff sourceQef(QueryExecutionFactory sourceQef) {
+	public FactoryBeanStepBuilderDiff setSource(QueryExecutionFactory sourceQef) {
 		this.sourceQef = sourceQef;
 		return this;
 	}
 
-	public StepBuilderDiff concept(Concept concept) {
+	public FactoryBeanStepBuilderDiff setConcept(Concept concept) {
 		this.concept = concept;
 		return this;
 	}
 
 
-	public StepBuilderDiff targetUef(UpdateExecutionFactory targetUef) {
+	public FactoryBeanStepBuilderDiff setTarget(UpdateExecutionFactory targetUef) {
 		this.targetUef = targetUef;
 		return this;
 	}
 
-	public Step build() {
+
+	@Override
+	public Step getObject() throws Exception {
 		ListService<Concept, Node, DatasetGraph> listService = new ListServiceResourceShape(sourceQef, shape);
 		ItemReader<Entry<Node, DatasetGraph>> itemReader = new ItemReaderDatasetGraph(listService, concept);
 		ItemProcessor<Entry<? extends Node, ? extends DatasetGraph>, Entry<Node, Diff<DatasetGraph>>> itemProcessor = new ItemProcessorModifierDatasetGraphDiff(modifier);
@@ -95,5 +101,13 @@ public class StepBuilderDiff {
 	    return result;
 	}
 
+	@Override
+	public Class<?> getObjectType() {
+		return Step.class;
+	}
 
+	@Override
+	public boolean isSingleton() {
+		return false;
+	}
 }

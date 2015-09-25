@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import javax.activation.MimeType;
+
 import org.aksw.commons.util.StreamUtils;
 import org.aksw.jena_sparql_api.batch.BatchWorkflowManager;
 import org.aksw.jena_sparql_api.batch.FunctionFactoryCache;
@@ -38,6 +40,7 @@ import org.aksw.jena_sparql_api.modifier.ModifierDatasetGraphEnrich;
 import org.aksw.jena_sparql_api.modifier.ModifierDatasetGraphSparqlUpdate;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.aksw.jena_sparql_api.shape.ResourceShapeParserJson;
+import org.aksw.jena_sparql_api.sparql.ext.http.E_Http;
 import org.aksw.jena_sparql_api.sparql.ext.json.E_JsonParse;
 import org.aksw.jena_sparql_api.sparql.ext.json.E_JsonPath;
 import org.aksw.jena_sparql_api.sparql.ext.json.RDFDatatypeJson;
@@ -75,6 +78,7 @@ import com.hp.hpl.jena.shared.impl.PrefixMappingImpl;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import com.hp.hpl.jena.sparql.core.Prologue;
 import com.hp.hpl.jena.sparql.function.FunctionRegistry;
+import com.hp.hpl.jena.sparql.function.user.UserDefinedFunctionFactory;
 import com.hp.hpl.jena.sparql.pfunction.PropertyFunctionRegistry;
 import com.hp.hpl.jena.update.UpdateFactory;
 import com.hp.hpl.jena.update.UpdateRequest;
@@ -92,10 +96,11 @@ public class MainBatchWorkflow {
     public static void main(String[] args) throws Exception {
     	initJenaExtensions();
 
-    	mainContext(args);
+    	//mainContext(args);
     }
 
     public static String jsonFn = "http://jsa.aksw.org/fn/json/";
+    public static String httpFn = "http://jsa.aksw.org/fn/http/";
 
     public static PrefixMapping getDefaultPrefixMapping() {
         PrefixMapping pm = new PrefixMappingImpl();
@@ -105,10 +110,11 @@ public class MainBatchWorkflow {
         pm.setNsPrefix("geom", "http://geovocab.org/geometry#");
         pm.setNsPrefix("ogc", "http://www.opengis.net/ont/geosparql#");
         pm.setNsPrefix("fp7o", "http://fp7-pp.publicdata.eu/ontology/");
-        pm.setNsPrefix("json", jsonFn);
         pm.setNsPrefix("tmp", "http://example.org/tmp/");
         pm.setNsPrefix("nominatim", "http://jsa.aksw.org/fn/nominatim/");
         pm.setNsPrefix("xsd", XSD.getURI());
+        pm.setNsPrefix("json", jsonFn);
+        pm.setNsPrefix("http", httpFn);
 
         return pm;
     }
@@ -123,6 +129,11 @@ public class MainBatchWorkflow {
         FunctionRegistry.get().put(jsonFn + "parse", E_JsonParse.class);
         FunctionRegistry.get().put(jsonFn + "path", E_JsonPath.class);
 
+        FunctionRegistry.get().put(httpFn + "get", E_Http.class);
+
+
+        //FunctionRegistry.get().put
+        //UserDefinedFunctionFactory.getFactory().add(httpFn + "getJson", "", args);
 
         PropertyFunctionRegistry.get().put(jsonFn + "unnest", new PropertyFunctionFactoryJsonUnnest());
 
@@ -138,10 +149,18 @@ public class MainBatchWorkflow {
         Query query = new Query();
         query.setPrefixMapping(pm);
 
+        if(false) {
         QueryFactory.parse(query, "Select * {"
         		+ "  Bind(\"['foo', ['bar', 'baz']]\"^^xsd:json As ?json)\n"
         		+ "  ?json json:unnest ?lvl1.\n"
         		+ "  Optional { ?lvl1 json:unnest ?lvl2. }\n"
+        		+ "}", "http://example.org/base/", Syntax.syntaxARQ);
+        }
+
+        QueryFactory.parse(query, "Select * {"
+        		+ "  VALUES(?s) { (<http://nominatim.openstreetmap.org/search/?format=json&q=Leipzig>) }\n"
+        		+ "  BIND(http:get(?s) As ?json).\n"
+        		+ "  ?json json:unnest ?item.\n"
         		+ "}", "http://example.org/base/", Syntax.syntaxARQ);
 
         Prologue prologue = new Prologue(pm);

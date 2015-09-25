@@ -1,15 +1,26 @@
 {
     context: {
-//    	shape: {
-//		    'fp7o:funding': {
-//		      'fp7o:partner': {
-//		        'fp7o:address': {
-//		          'fp7o:country': 'rdfs:label',
-//		          'fp7o:city': 'rdfs:label'
-//		        }
-//		      }
-//		    }
-//		  },
+        ssf: {
+            type: 'org.aksw.jena_sparql_api.core.SparqlServiceFactoryHttp'
+        },
+        dbpedia: {
+            type: 'org.springframework.beans.factory.config.MethodInvokingFactoryBean',
+            targetObject: {ref: 'ssf'},
+            targetMethod: 'createSparqlService',
+            arguments: ['http://dbpedia.org/sparql', 'http://dbpedia.org', null]
+        },
+    	shape: {
+    		$shape: {
+			    'fp7o:funding': {
+			      'fp7o:partner': {
+			        'fp7o:address': {
+			          'fp7o:country': 'rdfs:label',
+			          'fp7o:city': 'rdfs:label'
+			        }
+			      }
+			    }
+    		}
+		  },
 //		  lgdShape: {
 //		    'geom:geometry': 'ogc:asWKT',
 //		    'rdfs:label': false
@@ -35,10 +46,6 @@
 //      nominatimLookupService: {
 //          type: 'org.aksw.jena_sparql_api.geo.NominatimLookupServiceFactory'
 //      },
-
-      ssf: {
-        type: 'org.aksw.jena_sparql_api.core.SparqlServiceFactoryHttp'
-      },
 //      srcSparqlService: {
 //        type: 'org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp',
 //        ctor: ['http://fp7-pp.publicdata.eu/sparql']
@@ -49,14 +56,7 @@
 //        type: 'org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp',
 //        ctor: ['http://linkedgeodata.org']
 //      },
-      fooBean: {
-        type: 'org.springframework.beans.factory.config.MethodInvokingFactoryBean',
-        targetObject: {ref: 'ssf'},
-        // TODO: Should we allow "targetObject: 'ssf'" - i.e. without the ref
-        targetMethod: 'createSparqlService',
-        arguments: ['http://dbpedia.org', null, null]
-      },
-      baseConcept: '{ ?s a fp7:Partner }'
+//      baseConcept: '{ ?s a fp7:Partner }'
 
       //baseConcept: { '?s <http://fp7-pp.publicdata.eu/ontology/address> ?o . ?o <http://fp7-pp.publicdata.eu/ontology/city> ?city . ?o <http://fp7-pp.publicdata.eu/ontology/country> ?country'
     },
