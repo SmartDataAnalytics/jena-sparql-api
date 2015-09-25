@@ -26,7 +26,7 @@
 			    }
     		}
 		  },
-        update: ' \
+        update: " \
 INSERT { \
     ?s foo:lgd ?l \
 } WHERE \
@@ -38,7 +38,7 @@ INSERT { \
   BIND(json:path(?item, '$.lon') AS ?x) \
   BIND(json:path(?item, '$.lat') AS ?y) \
   BIND(concat('http://linkedgeodata.org/triplify/', ?osmType, ?osmId) AS ?l) \
-}'
+}"
     },
     steps: [{
         $sparqlStep: {
