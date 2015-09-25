@@ -7,6 +7,7 @@ import java.io.StringReader;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -21,6 +22,7 @@ import org.aksw.jena_sparql_api.beans.json.ContextProcessorJsonUtils;
 import org.aksw.jena_sparql_api.beans.json.JsonProcessorContext;
 import org.aksw.jena_sparql_api.beans.json.JsonProcessorKey;
 import org.aksw.jena_sparql_api.beans.json.JsonProcessorMap;
+import org.aksw.jena_sparql_api.beans.json.JsonVisitorRewrite;
 import org.aksw.jena_sparql_api.beans.json.JsonVisitorRewriteJson;
 import org.aksw.jena_sparql_api.beans.json.JsonVisitorRewriteShape;
 import org.aksw.jena_sparql_api.beans.json.JsonWalker;
@@ -212,8 +214,10 @@ public class MainBatchWorkflow {
 
 
         JsonElement json = readJsonElementFromResource("workflow.js");
-        json = JsonWalker.rewrite(json, new JsonVisitorRewriteShape());
-        json = JsonWalker.rewrite(json, new JsonVisitorRewriteJson());
+
+
+        List<JsonVisitorRewrite> rewriters = Arrays.asList(new JsonVisitorRewriteShape(), new JsonVisitorRewriteJson());
+        json = JsonWalker.rewriterUntilNoChange(json, rewriters);
 
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
     	String str = gson.toJson(json);

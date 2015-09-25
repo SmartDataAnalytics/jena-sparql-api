@@ -26,12 +26,12 @@ public class JsonTransformerRewrite
 	}
 
 	@Override
-	public JsonElement apply(JsonNull json) {
+	public JsonElement visit(JsonNull json) {
 		return json;
 	}
 
 	@Override
-	public JsonElement apply(JsonObject json) {
+	public JsonElement visit(JsonObject json) {
 		JsonObject copy = new JsonObject();
 
 		boolean hasChanged = false;
@@ -52,7 +52,7 @@ public class JsonTransformerRewrite
 	}
 
 	@Override
-	public JsonElement apply(JsonArray json) {
+	public JsonElement visit(JsonArray json) {
 		JsonArray copy = new JsonArray();
 
 		boolean hasChanged = false;
@@ -71,7 +71,7 @@ public class JsonTransformerRewrite
 	}
 
 	@Override
-	public JsonElement apply(JsonPrimitive json) {
+	public JsonElement visit(JsonPrimitive json) {
 		return json;
 	}
 }

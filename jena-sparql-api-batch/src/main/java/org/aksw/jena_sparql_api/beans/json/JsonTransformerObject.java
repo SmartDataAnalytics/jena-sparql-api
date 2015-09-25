@@ -16,12 +16,12 @@ public class JsonTransformerObject
 	extends JsonTransformerBase<Object>
 {
 	@Override
-	public Object apply(JsonNull json) {
+	public Object visit(JsonNull json) {
 		return null;
 	}
 
 	@Override
-	public Object apply(JsonObject json) {
+	public Object visit(JsonObject json) {
 		Map<String, Object> result = new HashMap<String, Object>();
 		for (Entry<String, JsonElement> entry : json.entrySet()) {
 			String key = entry.getKey();
@@ -34,7 +34,7 @@ public class JsonTransformerObject
 	}
 
 	@Override
-	public Object apply(JsonArray json) {
+	public Object visit(JsonArray json) {
 		List<Object> result = new ArrayList<Object>(json.size());
 
 		for (JsonElement item : json) {
@@ -45,7 +45,7 @@ public class JsonTransformerObject
 	}
 
 	@Override
-	public Object apply(JsonPrimitive json) {
+	public Object visit(JsonPrimitive json) {
 		Object result = JsonTransformerUtils.toJavaObject(json);
 		return result;
 	}

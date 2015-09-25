@@ -76,6 +76,39 @@ public class JsonWalker {
 		JsonElement result = walker.apply(json);
 		return result;
 	}
+
+	public static JsonElement rewrite(JsonElement json, Iterable<? extends JsonVisitor<? extends JsonElement>> rewriters) {
+		JsonElement result = json;
+		for(JsonVisitor<? extends JsonElement> rewriter : rewriters) {
+			JsonTransformerRewrite walker = new JsonTransformerRewrite(rewriter);
+			 JsonElement n = walker.apply(result);
+			 result = n;
+		}
+
+		return result;
+	}
+
+	public static JsonElement rewriterUntilNoChange(JsonElement json, Iterable<? extends JsonVisitor<? extends JsonElement>> rewriters) {
+		JsonElement result = json;
+
+		int max = 100;
+		int i;
+		for(i = 0; i < max; ++i) {
+			JsonElement n = rewrite(result, rewriters);
+
+			if(result == n) {
+				break;
+			}
+
+			result = n;
+		}
+
+		if(i >= max) {
+			throw new RuntimeException("Max iterations of rewriting json reached (" + i + ") - endless loop?");
+		}
+
+		return result;
+	}
 //
 //	public void walk(JsonElement json) {
 //

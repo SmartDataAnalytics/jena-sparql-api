@@ -14,7 +14,7 @@ public class JsonTransformerBeanDefinition
 	}
 
 	@Override
-	public Object apply(JsonObject json) {
+	public Object visit(JsonObject json) {
         Object result;
 
         if(ContextProcessorJsonUtils.isRef(json)) {

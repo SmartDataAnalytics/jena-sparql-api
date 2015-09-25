@@ -9,22 +9,22 @@ public class JsonTransformerBaseAdapter<T>
 	extends JsonTransformerBase<T>
 {
 	@Override
-	public T apply(JsonNull json) {
+	public T visit(JsonNull json) {
 		return null;
 	}
 
 	@Override
-	public T apply(JsonObject json) {
+	public T visit(JsonObject json) {
 		return null;
 	}
 
 	@Override
-	public T apply(JsonArray json) {
+	public T visit(JsonArray json) {
 		return null;
 	}
 
 	@Override
-	public T apply(JsonPrimitive json) {
+	public T visit(JsonPrimitive json) {
 		return null;
 	}
 }
