@@ -13,14 +13,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.MutablePropertyValues;
 import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.config.ConstructorArgumentValues;
 import org.springframework.beans.factory.config.MethodInvokingFactoryBean;
 import org.springframework.beans.factory.config.RuntimeBeanReference;
-import org.springframework.beans.factory.support.AutowireCandidateQualifier;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.util.Assert;
 
 import com.google.gson.JsonArray;
@@ -75,6 +74,8 @@ public class ContextProcessorJsonUtils {
 
     public static void processContext(ApplicationContext ctx, JsonObject json) throws Exception {
 
+    	BeanDefinitionRegistry registry = ((BeanDefinitionRegistry)ctx);
+
 		for(Entry<String, JsonElement> entry : json.entrySet()) {
             String beanName = entry.getKey();
             JsonElement value = entry.getValue();
@@ -82,11 +83,11 @@ public class ContextProcessorJsonUtils {
             logger.debug("Processing [" + beanName + "]");
 
 
-            BeanDefinition beanDefinition = processBean(value);
+            BeanDefinition beanDefinition = processBean(value, registry);
 
 //            AutowireCandidateQualifier.
 
-            ((GenericApplicationContext)ctx).registerBeanDefinition(beanName, beanDefinition);
+            registry.registerBeanDefinition(beanName, beanDefinition);
         }
     }
 
@@ -113,16 +114,29 @@ public class ContextProcessorJsonUtils {
             result = processPrimitiveBean((String)data);
         } else if(data instanceof List) {
 
-            // List<?> args = (List<?>)data;
+        	if(true) {
+	            BeanDefinition beanDef = new GenericBeanDefinition();
+	            beanDef.setBeanClassName(ArrayList.class.getCanonicalName());
+	            ConstructorArgumentValues cav = beanDef.getConstructorArgumentValues();
 
-            BeanDefinition beanDef = new GenericBeanDefinition();
-            beanDef.setBeanClassName(ArrayList.class.getCanonicalName());
-            ConstructorArgumentValues cav = beanDef.getConstructorArgumentValues();
+	            List<BeanDefinition> args = processBeans((List<?>)data);
+	            for(BeanDefinition b : args) {
+	            	 cav.addGenericArgumentValue(b);
+	            }
+//	            cav.addGenericArgumentValue(args);
 
-            List<BeanDefinition> args = processBeans((List<?>)data);
-            cav.addGenericArgumentValue(args);
+/*
+	            for(BeanDefinition b : args) {
+	            	BeanDefinitionHolder h = new BeanDefinitionHolder(b, null);
+	            	cav.addGenericArgumentValue(h);
+	            }
+ */
 
-            result = beanDef;
+	            result = beanDef;
+        	} else {
+        		//result = processBeans((List<?>)data);
+        	}
+
             //result = processBeans((List<Object>)data);
         } else if(data instanceof Map) {
             result = processBeanFromObject((Map<String, Object>)data);
@@ -133,30 +147,49 @@ public class ContextProcessorJsonUtils {
         return result;
     }
 
-	public static BeanDefinition processBean(JsonElement json) throws Exception {
+    public static int beanCounter = 0;
+	public static BeanDefinition processBean(JsonElement json, BeanDefinitionRegistry registry) throws Exception {
         BeanDefinition result;
-        if(json == null) {
-            result = new GenericBeanDefinition();
+        if(json.isJsonNull()) {
+        	result = null;
+            //result = new GenericBeanDefinition();
         } else if(json.isJsonPrimitive()) {
         	JsonPrimitive p = json.getAsJsonPrimitive();
         	Object o = JsonTransformerUtils.toJavaObject(p);
         	result = processPrimitiveBean(o);
 
         } else if(json.isJsonArray()) {
+        	JsonArray arr = json.getAsJsonArray();
             // List<?> args = (List<?>)data;
 
             BeanDefinition beanDef = new GenericBeanDefinition();
             beanDef.setBeanClassName(ArrayList.class.getCanonicalName());
             ConstructorArgumentValues cav = beanDef.getConstructorArgumentValues();
 
-            List<BeanDefinition> args = processBeans(json.getAsJsonArray());
-            cav.addGenericArgumentValue(args);
+            List<BeanDefinition> args = processBeans(arr, registry);
+            //cav.addGenericArgumentValue(args);
+            List<BeanDefinitionHolder> tmps = new ArrayList<BeanDefinitionHolder>();
+            for(BeanDefinition arg : args) {
+            	String name = "bean" + ++beanCounter;
+            	if(arg != null) {
+            		tmps.add(new BeanDefinitionHolder(arg, name));
+            	} else {
+            		tmps.add(null);
+            	}
+            }
+            cav.addGenericArgumentValue(tmps);
+
+//            List<BeanDefinition> args = processBeans(arr);
+//            for(BeanDefinition arg : args) {
+//            	cav.addGenericArgumentValue(arg);
+//            }
+
 
             result = beanDef;
             //result = processBeans((List<Object>)data);
         } else if(json.isJsonObject()) {
         	JsonObject obj = json.getAsJsonObject();
-            result = processBean(obj);
+            result = processBean(obj, registry);
         } else {
             throw new RuntimeException("Unexpected type: " + json);
         }
@@ -202,10 +235,10 @@ public class ContextProcessorJsonUtils {
         return result;
     }
 
-    public static List<BeanDefinition> processBeans(JsonArray arr) throws Exception {
+    public static List<BeanDefinition> processBeans(JsonArray arr, BeanDefinitionRegistry registry) throws Exception {
         List<BeanDefinition> result = new ArrayList<BeanDefinition>();
         for(JsonElement item : arr) {
-            BeanDefinition bean = processBean(item);
+            BeanDefinition bean = processBean(item, registry);
             result.add(bean);
         }
 
@@ -215,7 +248,15 @@ public class ContextProcessorJsonUtils {
     public static Object processAttr(JsonElement json) throws Exception {
         Object result;
 
-        if(json.isJsonObject()) {
+        if(json.isJsonArray()) {
+        	JsonArray arr = json.getAsJsonArray();
+        	List<Object> list = new ArrayList<Object>();
+        	for(JsonElement item : arr) {
+        		list.add(processAttr(item));
+        	}
+        	result = list;
+        	//result = processBean(json);
+        } else if(json.isJsonObject()) {
             JsonObject obj = json.getAsJsonObject();
             result = processAttrMap(obj);
         } else {
@@ -288,9 +329,9 @@ public class ContextProcessorJsonUtils {
         return result;
     }
 
-    public static BeanDefinition processBean(JsonObject data, String key) throws Exception {
+    public static BeanDefinition processBean(JsonObject data, String key, BeanDefinitionRegistry registry) throws Exception {
         JsonElement beanSpec = data.get(key);
-        BeanDefinition result = processBean(beanSpec);
+        BeanDefinition result = processBean(beanSpec, registry);
         return result;
     }
 
@@ -377,7 +418,7 @@ public class ContextProcessorJsonUtils {
 
 
 // Function<JsonElement, Object> transformer
-    public static BeanDefinition processBean(JsonObject json) throws Exception {
+    public static BeanDefinition processBean(JsonObject json, BeanDefinitionRegistry registry) throws Exception {
 
         BeanDefinition result = new GenericBeanDefinition();
 
@@ -403,7 +444,7 @@ public class ContextProcessorJsonUtils {
         		ctorArgs = _ctorArgs.getAsJsonArray();
         	}
 
-            List<BeanDefinition> args = processBeans(ctorArgs);
+            List<BeanDefinition> args = processBeans(ctorArgs, registry);
 
             ConstructorArgumentValues cav = result.getConstructorArgumentValues();
             for(BeanDefinition arg : args) {

@@ -18,13 +18,13 @@ import org.aksw.jena_sparql_api.batch.QueryTransformConstructGroupedGraph;
 import org.aksw.jena_sparql_api.batch.config.ConfigBatchJobDynamic;
 import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteJson;
 import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteShape;
+import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteSimpleJob;
 import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteSparqlStep;
 import org.aksw.jena_sparql_api.batch.to_review.MapTransformer;
 import org.aksw.jena_sparql_api.batch.to_review.MapTransformerSimple;
 import org.aksw.jena_sparql_api.beans.json.ContextProcessorJsonUtils;
 import org.aksw.jena_sparql_api.beans.json.JsonProcessorContext;
 import org.aksw.jena_sparql_api.beans.json.JsonProcessorKey;
-import org.aksw.jena_sparql_api.beans.json.JsonProcessorMap;
 import org.aksw.jena_sparql_api.beans.json.JsonVisitorRewrite;
 import org.aksw.jena_sparql_api.beans.json.JsonWalker;
 import org.aksw.jena_sparql_api.concepts.Concept;
@@ -52,15 +52,18 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.BatchStatus;
+import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobParametersInvalidException;
 import org.springframework.batch.core.StepExecution;
+import org.springframework.batch.core.configuration.xml.BeanDefinitionUtils;
 import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
 import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
 import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.batch.item.ExecutionContext;
-import org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor;
+import org.springframework.beans.factory.support.BeanDefinitionReaderUtils;
+import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigUtils;
 import org.springframework.context.support.GenericApplicationContext;
@@ -186,6 +189,8 @@ public class MainBatchWorkflow {
 
         GenericApplicationContext batchContext = new GenericApplicationContext(baseContext);
         AnnotationConfigUtils.registerAnnotationConfigProcessors(batchContext);
+        //Bean
+
 
         /*
          * Context processing
@@ -212,35 +217,44 @@ public class MainBatchWorkflow {
         // Core Beans processor
         JsonProcessorContext contextProcessor = new JsonProcessorContext(batchContext);
 
-        JsonProcessorMap jobProcessor = new JsonProcessorMap();
-        jobProcessor.register("context", false, contextProcessor);
+        //JsonProcessorMap jobProcessor = new JsonProcessorMap();
+        //jobProcessor.register("context", false, contextProcessor);
 
 
 
         JsonElement json = readJsonElementFromResource("workflow.js");
 
+        //GenericBeanDefinition x;
+        //x.
 
         //List<JsonVisitorRewrite> rewriters = Collections.emptyList();
-        List<JsonVisitorRewrite> rewriters = Arrays.<JsonVisitorRewrite>asList(new JsonVisitorRewriteShape(), new JsonVisitorRewriteJson(), new JsonVisitorRewriteSparqlStep());
+        List<JsonVisitorRewrite> rewriters = Arrays.<JsonVisitorRewrite>asList(
+        		new JsonVisitorRewriteShape(),
+        		new JsonVisitorRewriteJson(),
+        		new JsonVisitorRewriteSparqlStep(),
+        		new JsonVisitorRewriteSimpleJob()
+        		);
         json = JsonWalker.rewriterUntilNoChange(json, rewriters);
 
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
     	String str = gson.toJson(json);
     	System.out.println(str);
 
-
-        jobProcessor.process(json);
+    	contextProcessor.process(json);
+        //jobProcessor.process(json);
 
         batchContext.refresh();
 
 
         JobOperator jobOperator = batchContext.getBean(JobOperator.class);
+        Job job = batchContext.getBean(Job.class);
 
         Collection<String> allBeans = Arrays.asList(batchContext.getBeanDefinitionNames());
         System.out.println("Got " + allBeans.size() + " beans: " + allBeans);
 
-        Object foo = batchContext.getBean("steps");
-        System.out.println(foo);
+        System.out.println("Job: " + job);
+//        Object foo = batchContext.getBean("steps");
+//        System.out.println(foo);
 
         System.out.println(jobOperator);
 
