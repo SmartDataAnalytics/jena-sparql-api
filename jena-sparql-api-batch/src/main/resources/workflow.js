@@ -41,6 +41,7 @@ INSERT { \
 }",
 	steps: {
 	    $sparqlStep: {
+	    	name: 'step1',
 	    	chunk: 1000,
 	    	concept: '?s | ?s a <http://fp7-pp.publicdata.eu/ontology/Project>',
 	    	shape: { ref: 'shape' },

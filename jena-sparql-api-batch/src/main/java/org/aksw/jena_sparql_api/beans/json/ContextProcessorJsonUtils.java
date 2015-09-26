@@ -16,6 +16,7 @@ import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConstructorArgumentValues;
 import org.springframework.beans.factory.config.MethodInvokingFactoryBean;
 import org.springframework.beans.factory.config.RuntimeBeanReference;
+import org.springframework.beans.factory.support.AutowireCandidateQualifier;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.context.ApplicationContext;
@@ -82,6 +83,8 @@ public class ContextProcessorJsonUtils {
 
 
             BeanDefinition beanDefinition = processBean(value);
+
+//            AutowireCandidateQualifier.
 
             ((GenericApplicationContext)ctx).registerBeanDefinition(beanName, beanDefinition);
         }
@@ -432,8 +435,9 @@ public class ContextProcessorJsonUtils {
             JsonElement value = entry.getValue();
 
             Object obj = processAttr(value);
+            MutablePropertyValues properties = result.getPropertyValues();
             //result.setAttribute(key, obj);
-            result.getPropertyValues().add(key, obj);
+            properties.add(key, obj);
             //result.getPropertyValues()
         }
 
@@ -476,6 +480,8 @@ public class ContextProcessorJsonUtils {
     public static void processBeanDefinition(BeanDefinitionRegistry registry, String beanName, Map<String, Object> map) {
         ConstructorArgumentValues cav;
         GenericBeanDefinition beanDef = new GenericBeanDefinition();
+        //beanDef.
+        //beanDef.setAutowireMode(GenericBeanDefinition.AUTOWIRE_BY_TYPE);
 
         MutablePropertyValues propertyValues = new MutablePropertyValues();
         propertyValues.addPropertyValues(map);

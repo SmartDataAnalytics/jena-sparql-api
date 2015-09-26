@@ -57,7 +57,7 @@ class ItemProcessorSparqlResultSet
  * @author raven
  */
 @Configuration
-@ComponentScan({"org.aksw.jena_sparql_api.spring"})
+@ComponentScan({"org.aksw.jena_sparql_api.spring", "org.aksw.jena_sparql_api.batch.step"})
 @EnableBatchProcessing
 public class ConfigBatchJobDynamic
     implements ApplicationContextAware

@@ -6,7 +6,6 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,10 +60,9 @@ import org.springframework.batch.core.repository.JobExecutionAlreadyRunningExcep
 import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
 import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.batch.item.ExecutionContext;
-import org.springframework.beans.factory.config.BeanDefinitionHolder;
-import org.springframework.beans.factory.config.RuntimeBeanReference;
-import org.springframework.beans.factory.support.BeanDefinitionReaderUtils;
+import org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigUtils;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
@@ -187,6 +185,7 @@ public class MainBatchWorkflow {
         AnnotationConfigApplicationContext baseContext = new AnnotationConfigApplicationContext(ConfigBatchJobDynamic.class);
 
         GenericApplicationContext batchContext = new GenericApplicationContext(baseContext);
+        AnnotationConfigUtils.registerAnnotationConfigProcessors(batchContext);
 
         /*
          * Context processing
@@ -232,8 +231,8 @@ public class MainBatchWorkflow {
 
         jobProcessor.process(json);
 
-
         batchContext.refresh();
+
 
         JobOperator jobOperator = batchContext.getBean(JobOperator.class);
 
@@ -244,6 +243,10 @@ public class MainBatchWorkflow {
         System.out.println(foo);
 
         System.out.println(jobOperator);
+
+        //BeanDefinition x;
+        //x.get
+
         //AbstractBatchConfiguration batchConfig = context.getBean(AbstractBatchConfiguration.class);
         //SimpleBatchConfiguration x;
         //batchConfig.job

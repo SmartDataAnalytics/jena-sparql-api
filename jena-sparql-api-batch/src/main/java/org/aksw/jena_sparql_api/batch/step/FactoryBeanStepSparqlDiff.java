@@ -14,20 +14,32 @@ import org.aksw.jena_sparql_api.lookup.ListService;
 import org.aksw.jena_sparql_api.modifier.Modifier;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.springframework.batch.core.Step;
+import org.springframework.batch.core.configuration.annotation.AbstractBatchConfiguration;
+import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
-import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.AbstractFactoryBean;
+import org.springframework.stereotype.Component;
 
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
 
 public class FactoryBeanStepSparqlDiff
-	implements FactoryBean<Step>
+	extends AbstractFactoryBean<Step>
 {
+	//protected AbstractBatchConfiguration batchConfig;
+	protected StepBuilderFactory stepBuilders;
 
-	protected StepBuilder stepBuilder;
+//	@Autowired
+//	protected StepBuilder stepBuilder;
+
+//	public FactoryBeanStepSparqlDiff(StepBuilder stepBuilder) {
+//		this.stepBuilder = stepBuilder;
+//	}
+
 	protected ResourceShape shape;
 
 	protected String name;
@@ -40,6 +52,32 @@ public class FactoryBeanStepSparqlDiff
 
 
 	protected UpdateExecutionFactory targetUef;
+
+	public FactoryBeanStepSparqlDiff() {
+		setSingleton(false);
+	}
+
+//	@Autowired
+//	public FactoryBeanStepSparqlDiff(StepBuilderFactory stepBuilders) {
+//		setSingleton(false);
+//		this.stepBuilders = stepBuilders;
+//	}
+
+
+	@Autowired
+	public void setStepBuilders(StepBuilderFactory stepBuilders) {
+		this.stepBuilders = stepBuilders;
+	}
+
+//	@Autowired
+//	public void setBatchConfig(AbstractBatchConfiguration batchConfig) {
+//		try {
+//			this.stepBuilders = batchConfig.stepBuilders();
+//		} catch (Exception e) {
+//			throw new RuntimeException(e);
+//		}
+//	}
+
 
 	public FactoryBeanStepSparqlDiff setChunk(int chunkSize) {
 		this.chunkSize = chunkSize;
@@ -86,9 +124,9 @@ public class FactoryBeanStepSparqlDiff
 
 
 
-	public StepBuilder getStepBuilder() {
-		return stepBuilder;
-	}
+//	public StepBuilder getStepBuilder() {
+//		return stepBuilder;
+//	}
 
 	public ResourceShape getShape() {
 		return shape;
@@ -119,11 +157,14 @@ public class FactoryBeanStepSparqlDiff
 	}
 
 	@Override
-	public Step getObject() throws Exception {
+	public Step createInstance() throws Exception {
 		ListService<Concept, Node, DatasetGraph> listService = new ListServiceResourceShape(sourceQef, shape);
 		ItemReader<Entry<Node, DatasetGraph>> itemReader = new ItemReaderDatasetGraph(listService, concept);
 		ItemProcessor<Entry<? extends Node, ? extends DatasetGraph>, Entry<Node, Diff<DatasetGraph>>> itemProcessor = new ItemProcessorModifierDatasetGraphDiff(modifier);
 		ItemWriter<Entry<? extends Node, ? extends Diff<? extends DatasetGraph>>> itemWriter = new ItemWriterSparqlDiff(targetUef);
+
+		//StepBuilderFactory stepBuilders = batchConfig.stepBuilders();
+		StepBuilder stepBuilder = stepBuilders.get(name);
 
 	    Step result = stepBuilder
 	    		.<Entry<Node, DatasetGraph>, Entry<Node, Diff<DatasetGraph>>>chunk(chunkSize)
@@ -138,10 +179,5 @@ public class FactoryBeanStepSparqlDiff
 	@Override
 	public Class<?> getObjectType() {
 		return Step.class;
-	}
-
-	@Override
-	public boolean isSingleton() {
-		return false;
 	}
 }

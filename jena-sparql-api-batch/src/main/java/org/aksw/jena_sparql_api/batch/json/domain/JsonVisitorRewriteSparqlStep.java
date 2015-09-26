@@ -24,11 +24,16 @@ public class JsonVisitorRewriteSparqlStep
 
 			JsonObject o = new JsonObject();
 
+			o.addProperty("type", "org.aksw.jena_sparql_api.batch.step.FactoryBeanStepSparqlDiff");
+
 			for(Entry<String, JsonElement> entry : $sparqlStep.entrySet()) {
 				o.add(entry.getKey(), entry.getValue());
 			}
 
-			o.addProperty("type", "org.aksw.jena_sparql_api.batch.step.FactoryBeanStepSparqlDiff");
+
+//			JsonObject autwired = new JsonObject();
+//			autwired.addProperty("autowired", "byType");
+//			o.add("stepBuilders", autwired);
 
 			result = o;
 		} else {
