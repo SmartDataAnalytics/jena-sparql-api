@@ -39,8 +39,7 @@ public class FactoryBeanSimpleJob
 
 	@Override
 	public Class<?> getObjectType() {
-		// TODO Auto-generated method stub
-		return null;
+		return Job.class;
 	}
 
 	@Override

@@ -85,28 +85,28 @@ public class JsonBatchProcessor {
 
 
 
-    public Step processStepTasklet(StepBuilder stepBuilder, JsonObject spec) throws Exception {
-        JsonElement d = spec.get(ATTR_TASKLET);
-
-        BeanDefinition taskletDef = ContextProcessorJsonUtils.processBean(d);
-        Tasklet tasklet = null;
-
-        Step result = stepBuilder.tasklet(tasklet).build();
-        return result;
-    }
-
-
-    public Step processStepDefault(StepBuilder stepBuilder, JsonObject spec) throws Exception {
-//        Integer chunkSize = MapUtils.getInteger(spec, "chunkSize", 1000);
-
-          ContextProcessorJsonUtils.processBean(spec, "reader");
-
-
-//        SimpleStepBuilder<Object, Object> ssb = stepBuilder.chunk(chunkSize);
-
-//        ssb.reader();
-        return null;
-    }
+//    public Step processStepTasklet(StepBuilder stepBuilder, JsonObject spec) throws Exception {
+//        JsonElement d = spec.get(ATTR_TASKLET);
+//
+//        BeanDefinition taskletDef = ContextProcessorJsonUtils.processBean(d);
+//        Tasklet tasklet = null;
+//
+//        Step result = stepBuilder.tasklet(tasklet).build();
+//        return result;
+//    }
+//
+//
+//    public Step processStepDefault(StepBuilder stepBuilder, JsonObject spec) throws Exception {
+////        Integer chunkSize = MapUtils.getInteger(spec, "chunkSize", 1000);
+//
+//          ContextProcessorJsonUtils.processBean(spec, "reader");
+//
+//
+////        SimpleStepBuilder<Object, Object> ssb = stepBuilder.chunk(chunkSize);
+//
+////        ssb.reader();
+//        return null;
+//    }
 
 }
 

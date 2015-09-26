@@ -62,10 +62,12 @@ import org.springframework.batch.core.repository.JobExecutionAlreadyRunningExcep
 import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
 import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.batch.item.ExecutionContext;
+import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.support.BeanDefinitionReaderUtils;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigUtils;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
@@ -100,9 +102,16 @@ public class MainBatchWorkflow {
 
 	private static final Logger logger = LoggerFactory.getLogger(MainBatchWorkflow.class);
 
-    public static void main(String[] args) throws Exception {
-    	initJenaExtensions();
+    public static void mainXml() throws Exception {
+    	ClassPathXmlApplicationContext test = new ClassPathXmlApplicationContext("testList.xml");
+    	//org.springframework.beans.factory.xml.BeanDefinitionParser
+    	Collection<String> allBeans = Arrays.asList(test.getBeanDefinitionNames());
+        System.out.println("Got " + allBeans.size() + " beans: " + allBeans);
+    }
 
+    public static void main(String[] args) throws Exception {
+//    	mainXml();
+    	initJenaExtensions();
     	mainContext(args);
     }
 
@@ -189,6 +198,12 @@ public class MainBatchWorkflow {
 
         GenericApplicationContext batchContext = new GenericApplicationContext(baseContext);
         AnnotationConfigUtils.registerAnnotationConfigProcessors(batchContext);
+        //ValueHold
+        //batchContext.add
+        //BeanFactoryPostProcessor
+        //BeanDefinitionRegistry x;
+        //x.
+        //BeanDefinition
         //Bean
 
 

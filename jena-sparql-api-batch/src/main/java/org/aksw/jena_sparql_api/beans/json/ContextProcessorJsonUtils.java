@@ -13,12 +13,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.MutablePropertyValues;
 import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.config.ConstructorArgumentValues;
 import org.springframework.beans.factory.config.MethodInvokingFactoryBean;
 import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
+import org.springframework.beans.factory.support.ManagedList;
 import org.springframework.context.ApplicationContext;
 import org.springframework.util.Assert;
 
@@ -167,17 +167,17 @@ public class ContextProcessorJsonUtils {
             ConstructorArgumentValues cav = beanDef.getConstructorArgumentValues();
 
             List<BeanDefinition> args = processBeans(arr, registry);
-            //cav.addGenericArgumentValue(args);
-            List<BeanDefinitionHolder> tmps = new ArrayList<BeanDefinitionHolder>();
-            for(BeanDefinition arg : args) {
-            	String name = "bean" + ++beanCounter;
-            	if(arg != null) {
-            		tmps.add(new BeanDefinitionHolder(arg, name));
-            	} else {
-            		tmps.add(null);
-            	}
-            }
-            cav.addGenericArgumentValue(tmps);
+            cav.addGenericArgumentValue(args);
+//            List<BeanDefinitionHolder> tmps = new ArrayList<BeanDefinitionHolder>();
+//            for(BeanDefinition arg : args) {
+//            	String name = "bean" + ++beanCounter;
+//            	if(arg != null) {
+//            		tmps.add(new BeanDefinitionHolder(arg, name));
+//            	} else {
+//            		tmps.add(null);
+//            	}
+//            }
+//            cav.addGenericArgumentValue(tmps);
 
 //            List<BeanDefinition> args = processBeans(arr);
 //            for(BeanDefinition arg : args) {
@@ -235,8 +235,8 @@ public class ContextProcessorJsonUtils {
         return result;
     }
 
-    public static List<BeanDefinition> processBeans(JsonArray arr, BeanDefinitionRegistry registry) throws Exception {
-        List<BeanDefinition> result = new ArrayList<BeanDefinition>();
+    public static ManagedList<BeanDefinition> processBeans(JsonArray arr, BeanDefinitionRegistry registry) throws Exception {
+    	ManagedList<BeanDefinition> result = new ManagedList<BeanDefinition>();
         for(JsonElement item : arr) {
             BeanDefinition bean = processBean(item, registry);
             result.add(bean);
@@ -245,20 +245,36 @@ public class ContextProcessorJsonUtils {
         return result;
     }
 
-    public static Object processAttr(JsonElement json) throws Exception {
+    public static Object processAttr(JsonElement json, BeanDefinitionRegistry registry) throws Exception {
         Object result;
 
         if(json.isJsonArray()) {
         	JsonArray arr = json.getAsJsonArray();
-        	List<Object> list = new ArrayList<Object>();
-        	for(JsonElement item : arr) {
-        		list.add(processAttr(item));
+        	if(false) {
+	        	List<Object> list = new ArrayList<Object>();
+	        	for(JsonElement item : arr) {
+	        		list.add(processAttr(item, registry));
+	        	}
+	        	result = list;
+        	} else {
+        		result = processBeans(arr, registry);
         	}
-        	result = list;
-        	//result = processBean(json);
         } else if(json.isJsonObject()) {
-            JsonObject obj = json.getAsJsonObject();
-            result = processAttrMap(obj);
+        	JsonObject obj = json.getAsJsonObject();
+        	if(isRef(obj)) {
+        		result = getAsRef(obj);
+        	} else {
+
+	        	BeanDefinition bd = processBean(obj, registry);
+	        	result = bd;
+	        	//String name = "bean" + ++beanCounter;
+	        	//registry.registerBeanDefinition(name, bd);
+	        	//result = new RuntimeBeanReference(name);
+        	}
+
+        	//
+//            JsonObject obj = json.getAsJsonObject();
+//            result = processAttrMap(obj);
         } else {
         	result = JsonTransformerUtils.toJavaObject(json); //processBean(json);
         }
@@ -475,7 +491,7 @@ public class ContextProcessorJsonUtils {
 
             JsonElement value = entry.getValue();
 
-            Object obj = processAttr(value);
+            Object obj = processAttr(value, registry);
             MutablePropertyValues properties = result.getPropertyValues();
             //result.setAttribute(key, obj);
             properties.add(key, obj);
