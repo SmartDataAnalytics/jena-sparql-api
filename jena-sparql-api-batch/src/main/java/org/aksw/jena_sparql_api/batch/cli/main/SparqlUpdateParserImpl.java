@@ -2,9 +2,9 @@ package org.aksw.jena_sparql_api.batch.cli.main;
 
 import com.google.common.base.Supplier;
 import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryFactory;
 import com.hp.hpl.jena.query.Syntax;
 import com.hp.hpl.jena.sparql.core.Prologue;
+import com.hp.hpl.jena.update.UpdateFactory;
 import com.hp.hpl.jena.update.UpdateRequest;
 
 public class SparqlUpdateParserImpl
@@ -23,9 +23,9 @@ public class SparqlUpdateParserImpl
     }
 
     @Override
-    public UpdateRequest apply(String queryString) {
+    public UpdateRequest apply(String updateString) {
         UpdateRequest result = updateRequestSupplier.get();
-        QueryFactory.parse(result, queryString, baseURI, syntax);
+        UpdateFactory.parse(result, updateString, baseURI, syntax);
         return result;
     }
 
@@ -40,9 +40,9 @@ public class SparqlUpdateParserImpl
     }
 
     public static SparqlUpdateParserImpl create(Syntax syntax, Prologue prologue) {
-        Supplier<Query> querySupplier= new QuerySupplierImpl(prologue);
+        Supplier<UpdateRequest> updateSupplier= new UpdateSupplierImpl(prologue);
 
-        SparqlUpdateParserImpl result = new SparqlUpdateParserImpl(querySupplier, syntax, null);
+        SparqlUpdateParserImpl result = new SparqlUpdateParserImpl(updateSupplier, syntax, null);
         return result;
     }
 
