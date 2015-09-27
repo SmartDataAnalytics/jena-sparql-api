@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.batch.step;
 
+import java.util.List;
 import java.util.Map.Entry;
 
 import org.aksw.commons.collections.diff.Diff;
@@ -12,9 +13,9 @@ import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
 import org.aksw.jena_sparql_api.lookup.ListService;
 import org.aksw.jena_sparql_api.modifier.Modifier;
+import org.aksw.jena_sparql_api.modifier.ModifierList;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.AbstractBatchConfiguration;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
@@ -22,16 +23,16 @@ import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.AbstractFactoryBean;
-import org.springframework.stereotype.Component;
 
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
 
+
 public class FactoryBeanStepSparqlDiff
-	extends AbstractFactoryBean<Step>
+    extends AbstractFactoryBean<Step>
 {
-	//protected AbstractBatchConfiguration batchConfig;
-	protected StepBuilderFactory stepBuilders;
+    //protected AbstractBatchConfiguration batchConfig;
+    protected StepBuilderFactory stepBuilders;
 
 //	@Autowired
 //	protected StepBuilder stepBuilder;
@@ -40,22 +41,22 @@ public class FactoryBeanStepSparqlDiff
 //		this.stepBuilder = stepBuilder;
 //	}
 
-	protected ResourceShape shape;
+    protected ResourceShape shape;
 
-	protected String name;
-	//protected TODO How to represent the shape?
-	protected int chunkSize;
-	protected QueryExecutionFactory sourceQef;
-	protected Concept concept;
-	//protected ListService<>
-	protected Modifier<? super DatasetGraph> modifier;
+    protected String name;
+    //protected TODO How to represent the shape?
+    protected int chunkSize;
+    protected QueryExecutionFactory sourceQef;
+    protected Concept concept;
+    //protected ListService<>
+    protected List<Modifier<? super DatasetGraph>> modifiers;
 
 
-	protected UpdateExecutionFactory targetUef;
+    protected UpdateExecutionFactory targetUef;
 
-	public FactoryBeanStepSparqlDiff() {
-		setSingleton(false);
-	}
+    public FactoryBeanStepSparqlDiff() {
+        setSingleton(false);
+    }
 
 //	@Autowired
 //	public FactoryBeanStepSparqlDiff(StepBuilderFactory stepBuilders) {
@@ -64,10 +65,10 @@ public class FactoryBeanStepSparqlDiff
 //	}
 
 
-	@Autowired
-	public void setStepBuilders(StepBuilderFactory stepBuilders) {
-		this.stepBuilders = stepBuilders;
-	}
+    @Autowired
+    public void setStepBuilders(StepBuilderFactory stepBuilders) {
+        this.stepBuilders = stepBuilders;
+    }
 
 //	@Autowired
 //	public void setBatchConfig(AbstractBatchConfiguration batchConfig) {
@@ -79,47 +80,52 @@ public class FactoryBeanStepSparqlDiff
 //	}
 
 
-	public FactoryBeanStepSparqlDiff setChunk(int chunkSize) {
-		this.chunkSize = chunkSize;
-		return this;
-	}
+    public FactoryBeanStepSparqlDiff setChunk(int chunkSize) {
+        this.chunkSize = chunkSize;
+        return this;
+    }
 
-	public FactoryBeanStepSparqlDiff setShape(ResourceShape shape) {
-		this.shape = shape;
-		return this;
-	}
+    public FactoryBeanStepSparqlDiff setShape(ResourceShape shape) {
+        this.shape = shape;
+        return this;
+    }
 
 
-	public FactoryBeanStepSparqlDiff setModifier(Modifier<? super DatasetGraph> modifier) {
-		this.modifier = modifier;
-		return this;
-	}
+//    public FactoryBeanStepSparqlDiff setModifier(Modifier<? super DatasetGraph> modifier) {
+//        this.modifier = modifier;
+//        return this;
+//    }
+
+    public FactoryBeanStepSparqlDiff setModifiers(List<Modifier<? super DatasetGraph>> modifiers) {
+        this.modifiers = modifiers;
+        return this;
+    }
 
 //	public FactoryBeanStepSparqlDiff setModifier(Concept concept) {
 //		this.concept = concept;
 //		return this;
 //	}
 
-	public FactoryBeanStepSparqlDiff setName(String name) {
-		this.name = name;
-		return this;
-	}
+    public FactoryBeanStepSparqlDiff setName(String name) {
+        this.name = name;
+        return this;
+    }
 
-	public FactoryBeanStepSparqlDiff setSource(QueryExecutionFactory sourceQef) {
-		this.sourceQef = sourceQef;
-		return this;
-	}
+    public FactoryBeanStepSparqlDiff setSource(QueryExecutionFactory sourceQef) {
+        this.sourceQef = sourceQef;
+        return this;
+    }
 
-	public FactoryBeanStepSparqlDiff setConcept(Concept concept) {
-		this.concept = concept;
-		return this;
-	}
+    public FactoryBeanStepSparqlDiff setConcept(Concept concept) {
+        this.concept = concept;
+        return this;
+    }
 
 
-	public FactoryBeanStepSparqlDiff setTarget(UpdateExecutionFactory targetUef) {
-		this.targetUef = targetUef;
-		return this;
-	}
+    public FactoryBeanStepSparqlDiff setTarget(UpdateExecutionFactory targetUef) {
+        this.targetUef = targetUef;
+        return this;
+    }
 
 
 
@@ -128,56 +134,58 @@ public class FactoryBeanStepSparqlDiff
 //		return stepBuilder;
 //	}
 
-	public ResourceShape getShape() {
-		return shape;
-	}
+    public ResourceShape getShape() {
+        return shape;
+    }
 
-	public String getName() {
-		return name;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public int getChunkSize() {
-		return chunkSize;
-	}
+    public int getChunkSize() {
+        return chunkSize;
+    }
 
-	public QueryExecutionFactory getSource() {
-		return sourceQef;
-	}
+    public QueryExecutionFactory getSource() {
+        return sourceQef;
+    }
 
-	public Concept getConcept() {
-		return concept;
-	}
+    public Concept getConcept() {
+        return concept;
+    }
 
-	public Modifier<? super DatasetGraph> getModifier() {
-		return modifier;
-	}
+    public List<Modifier<? super DatasetGraph>> getModifiers() {
+        return modifiers;
+    }
 
-	public UpdateExecutionFactory getTarget() {
-		return targetUef;
-	}
+    public UpdateExecutionFactory getTarget() {
+        return targetUef;
+    }
 
-	@Override
-	public Step createInstance() throws Exception {
-		ListService<Concept, Node, DatasetGraph> listService = new ListServiceResourceShape(sourceQef, shape);
-		ItemReader<Entry<Node, DatasetGraph>> itemReader = new ItemReaderDatasetGraph(listService, concept);
-		ItemProcessor<Entry<? extends Node, ? extends DatasetGraph>, Entry<Node, Diff<DatasetGraph>>> itemProcessor = new ItemProcessorModifierDatasetGraphDiff(modifier);
-		ItemWriter<Entry<? extends Node, ? extends Diff<? extends DatasetGraph>>> itemWriter = new ItemWriterSparqlDiff(targetUef);
+    @Override
+    public Step createInstance() throws Exception {
+        Modifier<DatasetGraph> modifier = ModifierList.<DatasetGraph>create(modifiers);
 
-		//StepBuilderFactory stepBuilders = batchConfig.stepBuilders();
-		StepBuilder stepBuilder = stepBuilders.get(name);
+        ListService<Concept, Node, DatasetGraph> listService = new ListServiceResourceShape(sourceQef, shape);
+        ItemReader<Entry<Node, DatasetGraph>> itemReader = new ItemReaderDatasetGraph(listService, concept);
+        ItemProcessor<Entry<? extends Node, ? extends DatasetGraph>, Entry<Node, Diff<DatasetGraph>>> itemProcessor = new ItemProcessorModifierDatasetGraphDiff(modifier);
+        ItemWriter<Entry<? extends Node, ? extends Diff<? extends DatasetGraph>>> itemWriter = new ItemWriterSparqlDiff(targetUef);
 
-	    Step result = stepBuilder
-	    		.<Entry<Node, DatasetGraph>, Entry<Node, Diff<DatasetGraph>>>chunk(chunkSize)
-	            .reader(itemReader)
-	            .processor(itemProcessor)
-	            .writer(itemWriter)
-	            .build();
+        //StepBuilderFactory stepBuilders = batchConfig.stepBuilders();
+        StepBuilder stepBuilder = stepBuilders.get(name);
 
-	    return result;
-	}
+        Step result = stepBuilder
+                .<Entry<Node, DatasetGraph>, Entry<Node, Diff<DatasetGraph>>>chunk(chunkSize)
+                .reader(itemReader)
+                .processor(itemProcessor)
+                .writer(itemWriter)
+                .build();
 
-	@Override
-	public Class<?> getObjectType() {
-		return Step.class;
-	}
+        return result;
+    }
+
+    @Override
+    public Class<?> getObjectType() {
+        return Step.class;
+    }
 }
