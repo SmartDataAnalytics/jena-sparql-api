@@ -69,14 +69,14 @@ public class ContextProcessorJsonUtils {
     }
 
     public static void processContext(ApplicationContext ctx, JsonElement json) throws Exception {
-    	processContext(ctx, json.getAsJsonObject());
+        processContext(ctx, json.getAsJsonObject());
     }
 
     public static void processContext(ApplicationContext ctx, JsonObject json) throws Exception {
 
-    	BeanDefinitionRegistry registry = ((BeanDefinitionRegistry)ctx);
+        BeanDefinitionRegistry registry = ((BeanDefinitionRegistry)ctx);
 
-		for(Entry<String, JsonElement> entry : json.entrySet()) {
+        for(Entry<String, JsonElement> entry : json.entrySet()) {
             String beanName = entry.getKey();
             JsonElement value = entry.getValue();
 
@@ -106,7 +106,7 @@ public class ContextProcessorJsonUtils {
 //    }
 
     @SuppressWarnings("unchecked")
-	public static BeanDefinition processBeanFromObject(Object data) throws Exception {
+    public static BeanDefinition processBeanFromObject(Object data) throws Exception {
         BeanDefinition result;
         if(data == null) {
             result = new GenericBeanDefinition();
@@ -114,28 +114,28 @@ public class ContextProcessorJsonUtils {
             result = processPrimitiveBean((String)data);
         } else if(data instanceof List) {
 
-        	if(true) {
-	            BeanDefinition beanDef = new GenericBeanDefinition();
-	            beanDef.setBeanClassName(ArrayList.class.getCanonicalName());
-	            ConstructorArgumentValues cav = beanDef.getConstructorArgumentValues();
+            if(true) {
+                BeanDefinition beanDef = new GenericBeanDefinition();
+                beanDef.setBeanClassName(ArrayList.class.getCanonicalName());
+                ConstructorArgumentValues cav = beanDef.getConstructorArgumentValues();
 
-	            List<BeanDefinition> args = processBeans((List<?>)data);
-	            for(BeanDefinition b : args) {
-	            	 cav.addGenericArgumentValue(b);
-	            }
+                List<BeanDefinition> args = processBeans((List<?>)data);
+                for(BeanDefinition b : args) {
+                     cav.addGenericArgumentValue(b);
+                }
 //	            cav.addGenericArgumentValue(args);
 
 /*
-	            for(BeanDefinition b : args) {
-	            	BeanDefinitionHolder h = new BeanDefinitionHolder(b, null);
-	            	cav.addGenericArgumentValue(h);
-	            }
+                for(BeanDefinition b : args) {
+                    BeanDefinitionHolder h = new BeanDefinitionHolder(b, null);
+                    cav.addGenericArgumentValue(h);
+                }
  */
 
-	            result = beanDef;
-        	} else {
-        		//result = processBeans((List<?>)data);
-        	}
+                result = beanDef;
+            } else {
+                //result = processBeans((List<?>)data);
+            }
 
             //result = processBeans((List<Object>)data);
         } else if(data instanceof Map) {
@@ -148,25 +148,25 @@ public class ContextProcessorJsonUtils {
     }
 
     public static int beanCounter = 0;
-	public static BeanDefinition processBean(JsonElement json, BeanDefinitionRegistry registry) throws Exception {
+    public static BeanDefinition processBean(JsonElement json, BeanDefinitionRegistry registry) throws Exception {
         BeanDefinition result;
         if(json.isJsonNull()) {
-        	result = null;
+            result = null;
             //result = new GenericBeanDefinition();
         } else if(json.isJsonPrimitive()) {
-        	JsonPrimitive p = json.getAsJsonPrimitive();
-        	Object o = JsonTransformerUtils.toJavaObject(p);
-        	result = processPrimitiveBean(o);
+            JsonPrimitive p = json.getAsJsonPrimitive();
+            Object o = JsonTransformerUtils.toJavaObject(p);
+            result = processPrimitiveBean(o);
 
         } else if(json.isJsonArray()) {
-        	JsonArray arr = json.getAsJsonArray();
+            JsonArray arr = json.getAsJsonArray();
             // List<?> args = (List<?>)data;
 
             BeanDefinition beanDef = new GenericBeanDefinition();
             beanDef.setBeanClassName(ArrayList.class.getCanonicalName());
             ConstructorArgumentValues cav = beanDef.getConstructorArgumentValues();
 
-            List<BeanDefinition> args = processBeans(arr, registry);
+            List<?> args = processBeans(arr, registry);
             cav.addGenericArgumentValue(args);
 //            List<BeanDefinitionHolder> tmps = new ArrayList<BeanDefinitionHolder>();
 //            for(BeanDefinition arg : args) {
@@ -188,7 +188,7 @@ public class ContextProcessorJsonUtils {
             result = beanDef;
             //result = processBeans((List<Object>)data);
         } else if(json.isJsonObject()) {
-        	JsonObject obj = json.getAsJsonObject();
+            JsonObject obj = json.getAsJsonObject();
             result = processBean(obj, registry);
         } else {
             throw new RuntimeException("Unexpected type: " + json);
@@ -235,10 +235,20 @@ public class ContextProcessorJsonUtils {
         return result;
     }
 
-    public static ManagedList<BeanDefinition> processBeans(JsonArray arr, BeanDefinitionRegistry registry) throws Exception {
-    	ManagedList<BeanDefinition> result = new ManagedList<BeanDefinition>();
+//    public static ManagedList<BeanDefinition> processBeans(JsonArray arr, BeanDefinitionRegistry registry) throws Exception {
+//        ManagedList<BeanDefinition> result = new ManagedList<BeanDefinition>();
+//        for(JsonElement item : arr) {
+//            BeanDefinition bean = processBean(item, registry);
+//            result.add(bean);
+//        }
+//
+//        return result;
+//    }
+    public static ManagedList<Object> processBeans(JsonArray arr, BeanDefinitionRegistry registry) throws Exception {
+        ManagedList<Object> result = new ManagedList<Object>();
         for(JsonElement item : arr) {
-            BeanDefinition bean = processBean(item, registry);
+            //BeanDefinition bean = processBean(item, registry);
+            Object bean = processAttr(item, registry);
             result.add(bean);
         }
 
@@ -249,34 +259,34 @@ public class ContextProcessorJsonUtils {
         Object result;
 
         if(json.isJsonArray()) {
-        	JsonArray arr = json.getAsJsonArray();
-        	if(false) {
-	        	List<Object> list = new ArrayList<Object>();
-	        	for(JsonElement item : arr) {
-	        		list.add(processAttr(item, registry));
-	        	}
-	        	result = list;
-        	} else {
-        		result = processBeans(arr, registry);
-        	}
+            JsonArray arr = json.getAsJsonArray();
+            if(false) {
+                List<Object> list = new ArrayList<Object>();
+                for(JsonElement item : arr) {
+                    list.add(processAttr(item, registry));
+                }
+                result = list;
+            } else {
+                result = processBeans(arr, registry);
+            }
         } else if(json.isJsonObject()) {
-        	JsonObject obj = json.getAsJsonObject();
-        	if(isRef(obj)) {
-        		result = getAsRef(obj);
-        	} else {
+            JsonObject obj = json.getAsJsonObject();
+            if(isRef(obj)) {
+                result = getAsRef(obj);
+            } else {
 
-	        	BeanDefinition bd = processBean(obj, registry);
-	        	result = bd;
-	        	//String name = "bean" + ++beanCounter;
-	        	//registry.registerBeanDefinition(name, bd);
-	        	//result = new RuntimeBeanReference(name);
-        	}
+                BeanDefinition bd = processBean(obj, registry);
+                result = bd;
+                //String name = "bean" + ++beanCounter;
+                //registry.registerBeanDefinition(name, bd);
+                //result = new RuntimeBeanReference(name);
+            }
 
-        	//
+            //
 //            JsonObject obj = json.getAsJsonObject();
 //            result = processAttrMap(obj);
         } else {
-        	result = JsonTransformerUtils.toJavaObject(json); //processBean(json);
+            result = JsonTransformerUtils.toJavaObject(json); //processBean(json);
         }
 
 //        else if(json.isJsonPrimitive()) {
@@ -407,8 +417,8 @@ public class ContextProcessorJsonUtils {
     }
 
     public static RuntimeBeanReference getAsRef(JsonObject json) {
-    	RuntimeBeanReference result;
-    	JsonElement _ref = json.get(ATTR_REF);
+        RuntimeBeanReference result;
+        JsonElement _ref = json.get(ATTR_REF);
         if(_ref != null) {
             Assert.isTrue(_ref.isJsonPrimitive());
             JsonPrimitive p = _ref.getAsJsonPrimitive();
@@ -416,7 +426,7 @@ public class ContextProcessorJsonUtils {
             String ref = p.getAsString();
             result = new RuntimeBeanReference(ref);
         } else {
-        	throw new RuntimeException("Not a ref: " + json);
+            throw new RuntimeException("Not a ref: " + json);
         }
 
         return result;
@@ -452,18 +462,18 @@ public class ContextProcessorJsonUtils {
         // check for ctor args
         JsonElement _ctorArgs = json.get(ATTR_CTOR_ARGS);
         if(_ctorArgs != null) {
-        	JsonArray ctorArgs;
-        	if(!_ctorArgs.isJsonArray()) {
-        		ctorArgs = new JsonArray();
-        		ctorArgs.add(_ctorArgs);
-        	} else {
-        		ctorArgs = _ctorArgs.getAsJsonArray();
-        	}
+            JsonArray ctorArgs;
+            if(!_ctorArgs.isJsonArray()) {
+                ctorArgs = new JsonArray();
+                ctorArgs.add(_ctorArgs);
+            } else {
+                ctorArgs = _ctorArgs.getAsJsonArray();
+            }
 
-            List<BeanDefinition> args = processBeans(ctorArgs, registry);
+            List<?> args = processBeans(ctorArgs, registry);
 
             ConstructorArgumentValues cav = result.getConstructorArgumentValues();
-            for(BeanDefinition arg : args) {
+            for(Object arg : args) {
                 //cav.add
                 //ValueHolder holder = new ValueHolder(null);
                 //holder.get
@@ -486,7 +496,7 @@ public class ContextProcessorJsonUtils {
             String key = entry.getKey();
 
             if(specialAttributes.contains(key)) {
-            	continue;
+                continue;
             }
 
             JsonElement value = entry.getValue();

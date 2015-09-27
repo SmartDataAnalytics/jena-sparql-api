@@ -50,6 +50,7 @@ INSERT { \
                 shape: { ref: 'shape' },
                 source: { ref: 'fp7pp'},
                 target: { ref: 'fp7pp'},
+                //modifiers: []
                 modifiers: [
                     { ref: 'update' }
                 ]
