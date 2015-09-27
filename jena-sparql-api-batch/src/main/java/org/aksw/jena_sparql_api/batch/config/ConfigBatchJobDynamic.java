@@ -75,12 +75,6 @@ public class ConfigBatchJobDynamic
     }
 
     @Bean
-    public BeanFactoryPostProcessor beanFactoryPostProcessor() {
-        BeanFactoryPostProcessor result = new ConverterRegistryPostProcessor();
-        return result;
-    }
-
-    @Bean
     public ConversionService conversionService() {
         ConversionService result = new DefaultConversionService();
         return result;
@@ -107,8 +101,14 @@ public class ConfigBatchJobDynamic
     }
 
     @Bean
-    public SparqlUpdateParser defaultSparqlStmtParser() {
+    public SparqlUpdateParser sparqlUpdateParserDefault() {
         SparqlUpdateParser result = SparqlUpdateParserImpl.create();
+        return result;
+    }
+
+    @Bean
+    public BeanFactoryPostProcessor beanFactoryPostProcessor() {
+        BeanFactoryPostProcessor result = new ConverterRegistryPostProcessor();
         return result;
     }
 }

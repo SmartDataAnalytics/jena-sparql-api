@@ -15,6 +15,7 @@ public class UpdateSupplierImpl
 
     public UpdateSupplierImpl(Prologue prologue) {
         super();
+        this.prologue = prologue;
     }
 
 

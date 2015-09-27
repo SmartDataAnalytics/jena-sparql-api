@@ -22,8 +22,8 @@
       },
     update: " \
 INSERT { \
-    ?s foo:lgd ?l \
-} WHERE \
+    ?s fp7o:lgd ?l \
+} WHERE { \
   VALUES(?s) { (<http://nominatim.openstreetmap.org/search/?format=json&q=Leipzig>) } \
   BIND(http:get(?s) As ?json). \
   ?json json:unnest ?item. \

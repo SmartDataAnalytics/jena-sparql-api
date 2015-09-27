@@ -7,11 +7,11 @@ import org.springframework.core.convert.converter.Converter;
 import com.hp.hpl.jena.update.UpdateRequest;
 
 @AutoRegistered
-public class C_StringToUpdateRequest
+public class C_StringToModifier
     implements Converter<String, UpdateRequest>
 {
     @Autowired
-    private SparqlUpdateParser updateParser; // = SparqlUpdateParserImpl.create();
+    private SparqlUpdateParser updateParser;
 
     public UpdateRequest convert(String str) {
         UpdateRequest result = updateParser.apply(str);

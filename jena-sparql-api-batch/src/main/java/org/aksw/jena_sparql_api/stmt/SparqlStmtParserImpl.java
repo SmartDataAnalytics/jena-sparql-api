@@ -1,7 +1,12 @@
 package org.aksw.jena_sparql_api.stmt;
 
+import java.util.Comparator;
+
 import com.hp.hpl.jena.query.Query;
+import com.hp.hpl.jena.query.QueryParseException;
 import com.hp.hpl.jena.update.UpdateRequest;
+
+
 
 /**
  * Default implementation that delegates statement parsing to
@@ -29,14 +34,21 @@ public class SparqlStmtParserImpl
         try {
             Query query = queryParser.apply(stmtStr);
             result = new SparqlStmtQuery(query);
-        } catch(Exception qe) {
+        } catch(QueryParseException queryException) {
 
             try {
-                UpdateRequest update = updateParser.apply(stmtStr);
-                result = new SparqlStmtUpdate(update);
+                UpdateRequest updateRequest = updateParser.apply(stmtStr);
+                result = new SparqlStmtUpdate(updateRequest);
 
-            } catch(Exception ue) {
-                throw new RuntimeException("Failed to parse " + stmtStr);
+            } catch(QueryParseException updateException) {
+                int delta = QueryParseExceptionComparator.doCompare(queryException, updateException);
+
+                boolean isQueryException = delta <= 0;
+                if(isQueryException) {
+                    throw new RuntimeException("Failed to parse " + stmtStr, queryException);
+                } else {
+                    throw new RuntimeException("Failed to parse " + stmtStr, updateException);
+                }
             }
 
         }
