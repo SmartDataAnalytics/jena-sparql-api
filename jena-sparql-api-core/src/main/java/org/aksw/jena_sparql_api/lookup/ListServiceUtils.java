@@ -27,6 +27,8 @@ public class ListServiceUtils {
 
         Agg<T> agg = mappedConcept.getAggregator();
 
+        System.out.println("Vars: " + agg.getDeclaredVars());
+
         //Var  rowId = Var.alloc("rowId");
 
         // TODO Set up a projection using the grouping variable and the variables referenced by the aggregator

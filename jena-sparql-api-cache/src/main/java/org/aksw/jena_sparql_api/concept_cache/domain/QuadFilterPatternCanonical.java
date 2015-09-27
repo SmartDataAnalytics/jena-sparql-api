@@ -92,7 +92,7 @@ public class QuadFilterPatternCanonical {
     }
 
     public Set<Var> getVarsMentioned() {
-        Set<Var> result = QuadUtils.getVarsMentioned(quads);
+        Set<Var> result = QuadPatternUtils.getVarsMentioned(quads);
 
         // Optionally, include the filterCnf, although a filter should never include any vars that are not part
         // of the quads

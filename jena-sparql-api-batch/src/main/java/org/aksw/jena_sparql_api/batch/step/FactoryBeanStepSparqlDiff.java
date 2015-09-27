@@ -181,10 +181,13 @@ public class FactoryBeanStepSparqlDiff
     public Step createInstance() throws Exception {
         Modifier<DatasetGraph> modifier = ModifierList.<DatasetGraph>create(modifiers);
 
-        ListService<Concept, Node, DatasetGraph> listService = new ListServiceResourceShape(sourceQef, shape);
-        ItemReader<Entry<Node, DatasetGraph>> itemReader = new ItemReaderDatasetGraph(listService, concept);
+        ListService<Concept, Node, DatasetGraph> listService = new ListServiceResourceShape(sourceQef, shape, true);
+        //ItemReader<Entry<Node, DatasetGraph>> itemReader = new ItemReaderDatasetGraph(listService, concept);
+        ItemReaderDatasetGraph itemReader = new ItemReaderDatasetGraph(listService, concept);
         ItemProcessor<Entry<? extends Node, ? extends DatasetGraph>, Entry<Node, Diff<DatasetGraph>>> itemProcessor = new ItemProcessorModifierDatasetGraphDiff(modifier);
         ItemWriter<Entry<? extends Node, ? extends Diff<? extends DatasetGraph>>> itemWriter = new ItemWriterSparqlDiff(targetUef);
+
+        itemReader.setPageSize(chunkSize);
 
         //StepBuilderFactory stepBuilders = batchConfig.stepBuilders();
         StepBuilder stepBuilder = stepBuilders.get(name);

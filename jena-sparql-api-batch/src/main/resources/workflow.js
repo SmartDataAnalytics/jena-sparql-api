@@ -8,18 +8,19 @@
         targetMethod: 'createSparqlService',
         arguments: ['http://fp7-pp.publicdata.eu/sparql', 'http://fp7-pp.publicdata.eu/', null]
     },
-    shape: {
-        $json: {
-            'fp7o:funding': {
-              'fp7o:partner': {
-                'fp7o:address': {
-                  'fp7o:country': 'rdfs:label',
-                  'fp7o:city': 'rdfs:label'
-                }
-              }
-            }
-        }
-      },
+    shape: { $json: {} },
+//    shape: {
+//        $json: {
+//            'fp7o:funding': {
+//              'fp7o:partner': {
+//                'fp7o:address': {
+//                  'fp7o:country': 'rdfs:label',
+//                  'fp7o:city': 'rdfs:label'
+//                }
+//              }
+//            }
+//        }
+//      },
     update: " \
 INSERT { \
     ?s fp7o:lgd ?l \
@@ -45,7 +46,7 @@ INSERT { \
         steps: [{
             $sparqlStep: {
                 name: 'step1',
-                chunk: 1000,
+                chunk: 1,
                 concept: '?s | ?s a <http://fp7-pp.publicdata.eu/ontology/Project>',
                 shape: { ref: 'shape' },
                 source: { ref: 'fp7pp'},

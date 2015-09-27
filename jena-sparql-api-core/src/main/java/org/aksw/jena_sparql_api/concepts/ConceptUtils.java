@@ -399,9 +399,12 @@ public class ConceptUtils {
                 se = attrQuery.getQueryPattern();
             }
 
+            if(isLeftJoin) {
+                se = new ElementOptional(se);
+            }
 
             if(!renamedFilterConcept.isSubjectConcept()) {
-                Element newElement = ElementUtils.createElementGroup(se, renamedFilterConcept.getElement());
+                Element newElement = ElementUtils.createElementGroup(renamedFilterConcept.getElement(), se);
                 //newElement = newElement.flatten();
                 result.setQueryPattern(newElement);
             }
@@ -457,7 +460,7 @@ public class ConceptUtils {
             Element attrElement = query.getQueryPattern();
 
             Element newAttrElement;
-            if(!requireSubQuery && (filterConcept != null || filterConcept.isSubjectConcept())) {
+            if(!requireSubQuery && (filterConcept != null && filterConcept.isSubjectConcept())) {
                 newAttrElement = attrElement;
             }
             else {

@@ -27,7 +27,7 @@ import com.hp.hpl.jena.sparql.syntax.ElementTriplesBlock;
 
 public class QuadUtils {
 
-    
+
     public static Map<Node, Set<Quad>> partitionByGraph(Iterable<Quad> quads) {
         Map<Node, Set<Quad>> result = new HashMap<Node, Set<Quad>>();
         for (Quad quad : quads) {
@@ -46,33 +46,33 @@ public class QuadUtils {
         Element result = toElement(map);
         return result;
     }
-    
+
     public static Element toElement(Map<Node, Set<Quad>> graphToQuads) {
         ElementGroup es = new ElementGroup();
         for(Entry<Node, Set<Quad>> entry : graphToQuads.entrySet()) {
             ElementTriplesBlock e = new ElementTriplesBlock();
             for(Quad quad : entry.getValue()) {
                 Triple triple = quad.asTriple();
-                e.addTriple(triple);                
+                e.addTriple(triple);
             }
-            
+
             Node graph = entry.getKey();
-            
+
             Element f = graph == null || graph.equals(Quad.defaultGraphNodeGenerated)
                     ? e
                     : new ElementNamedGraph(graph, e);
-            
+
             es.addElement(f);
         }
-        
+
         Element result = es.getElements().size() == 1
                 ? es.getElements().get(0)
                 : es;
 
         return result;
     }
-    
-    
+
+
     public static final String ng = "g";
     public static final String ns = "s";
     public static final String np = "p";
@@ -157,7 +157,7 @@ public class QuadUtils {
 
     /**
      * Create a quad from an array
-     * 
+     *
      * @param nodes
      * @return
      */
@@ -226,15 +226,6 @@ public class QuadUtils {
         result.add(quad.getSubject());
         result.add(quad.getPredicate());
         result.add(quad.getObject());
-
-        return result;
-    }
-
-    public static Set<Var> getVarsMentioned(Iterable<Quad> quadPattern) {
-        Set<Var> result = new HashSet<Var>();
-        for (Quad quad : quadPattern) {
-            result.addAll(getVarsMentioned(quad));
-        }
 
         return result;
     }

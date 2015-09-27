@@ -451,7 +451,7 @@ we can then use an automaton representation and minimize the states, and convert
 
         //LookupService<Node, Graph> ls = LookupServiceUtils.createLookupService(qef, mappedConcept);
 
-        LookupService<Node, DatasetGraph> lsLgdX = LookupServiceListService.create(ListServiceResourceShape.create(qefLgd, lgdShape));
+        LookupService<Node, DatasetGraph> lsLgdX = LookupServiceListService.create(ListServiceResourceShape.create(qefLgd, lgdShape, true));
 
         //LookupService<Node, Graph> lsLgdX = LookupServiceUtils.createLookupService(qefLgd, mcLgdShape);
         //LookupService<Node, Model> lsLgd2 = LookupServiceTransformValue.create(lsLgdX, F_GraphToModel.fn);

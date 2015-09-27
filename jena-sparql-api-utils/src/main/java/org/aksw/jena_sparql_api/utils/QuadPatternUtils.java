@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.utils;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -14,11 +15,13 @@ import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.sparql.core.BasicPattern;
 import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.sparql.core.QuadPattern;
+import com.hp.hpl.jena.sparql.core.Var;
 import com.hp.hpl.jena.sparql.graph.GraphFactory;
 import com.hp.hpl.jena.sparql.util.NodeComparator;
 import com.hp.hpl.jena.sparql.util.TripleComparator;
 
 public class QuadPatternUtils {
+
 
     public static String toNTripleString(QuadPattern quadPattern) throws Exception {
 
@@ -140,6 +143,16 @@ public class QuadPatternUtils {
             graph.add(quad.asTriple());
         }
 
+        return result;
+    }
+
+    public static Set<Var> getVarsMentioned(Iterable<Quad> quadPattern) {
+        Set<Var> result = new HashSet<Var>();
+        for (Quad quad : quadPattern) {
+            Set<Var> tmp = QuadUtils.getVarsMentioned(quad);
+            result.addAll(tmp);
+        }
+    
         return result;
     }
 
