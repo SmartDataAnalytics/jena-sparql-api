@@ -51,20 +51,13 @@ import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.Job;
-import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersInvalidException;
-import org.springframework.batch.core.StepExecution;
-import org.springframework.batch.core.configuration.xml.BeanDefinitionUtils;
 import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
 import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
 import org.springframework.batch.core.repository.JobRestartException;
-import org.springframework.batch.item.ExecutionContext;
-import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
-import org.springframework.beans.factory.support.BeanDefinitionReaderUtils;
-import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigUtils;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
@@ -198,6 +191,9 @@ public class MainBatchWorkflow {
 
         GenericApplicationContext batchContext = new GenericApplicationContext(baseContext);
         AnnotationConfigUtils.registerAnnotationConfigProcessors(batchContext);
+
+        BatchWorkflowManager manager = baseContext.getBean(BatchWorkflowManager.class);//new BatchWorkflowManager(config);
+
         //ValueHold
         //batchContext.add
         //BeanFactoryPostProcessor
@@ -262,16 +258,28 @@ public class MainBatchWorkflow {
 
 
         JobOperator jobOperator = batchContext.getBean(JobOperator.class);
+        //JobLauncher jobLauncher = batchContext.getBean(JobLauncher.class);
         Job job = batchContext.getBean(Job.class);
+
+
 
         Collection<String> allBeans = Arrays.asList(batchContext.getBeanDefinitionNames());
         System.out.println("Got " + allBeans.size() + " beans: " + allBeans);
 
         System.out.println("Job: " + job);
+
+        manager.launch(job, new JobParameters());
+
+
+        Thread.sleep(3000);
+        System.out.println("Waited for 3 sec");
 //        Object foo = batchContext.getBean("steps");
 //        System.out.println(foo);
 
-        System.out.println(jobOperator);
+        //System.out.println(jobOperator);
+        //jobOperator.st
+        //jobOperator.start(job.getName(), );
+        //jobLauncher.
 
         //BeanDefinition x;
         //x.get
@@ -572,36 +580,36 @@ we can then use an automaton representation and minimize the states, and convert
         BatchWorkflowManager workflowManager = BatchWorkflowManager.createTestInstance();
 
 
-        JobExecution je = workflowManager.launchWorkflowJob(str);
-
-
-        if(je.getStatus().equals(BatchStatus.COMPLETED)) {
-//            ResultSet rs = ResultSetFactory.fromXML(new FileInputStream(fileName));
-//            while(rs.hasNext()) {
-//                System.out.println(rs.nextBinding());
-//            }
-        }
+//        JobExecution je = workflowManager.launchWorkflowJob(str);
+//
+//
+//        if(je.getStatus().equals(BatchStatus.COMPLETED)) {
+////            ResultSet rs = ResultSetFactory.fromXML(new FileInputStream(fileName));
+////            while(rs.hasNext()) {
+////                System.out.println(rs.nextBinding());
+////            }
+//        }
 
         //JobExecution je = launchSparqlExport("http://linkedgeodata.org/sparql", Arrays.asList("http://linkedgeodata.org"), "Select * { ?s a <http://linkedgeodata.org/ontology/Airport> }", "/tmp/lgd-airport-uris.txt");
-
-        for(;;) {
-            Collection<StepExecution> stepExecutions = je.getStepExecutions();
-
-            for(StepExecution stepExecution : stepExecutions) {
-                ExecutionContext sec = stepExecution.getExecutionContext();
-                //long processedItemCount = sec.getLong("FlatFileItemWriter.current.count");
-                System.out.println("CONTEXT");
-                System.out.println(sec.entrySet());
-                Thread.sleep(5000);
-                //System.out.println(processedItemCount);
-            }
-
-
-            //Set<Entry<String, Object>> entrySet = je.getExecutionContext().entrySet();
-            //ExecutionContext ec = je.getExecutionContext();
-            //ec.
-            //System.out.println(entrySet);
-        }
+//
+//        for(;;) {
+//            Collection<StepExecution> stepExecutions = je.getStepExecutions();
+//
+//            for(StepExecution stepExecution : stepExecutions) {
+//                ExecutionContext sec = stepExecution.getExecutionContext();
+//                //long processedItemCount = sec.getLong("FlatFileItemWriter.current.count");
+//                System.out.println("CONTEXT");
+//                System.out.println(sec.entrySet());
+//                Thread.sleep(5000);
+//                //System.out.println(processedItemCount);
+//            }
+//
+//
+//            //Set<Entry<String, Object>> entrySet = je.getExecutionContext().entrySet();
+//            //ExecutionContext ec = je.getExecutionContext();
+//            //ec.
+//            //System.out.println(entrySet);
+//        }
 
 
         //ed.shutdown();

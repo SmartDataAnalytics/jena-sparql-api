@@ -1,7 +1,9 @@
 package org.aksw.jena_sparql_api.batch.config;
 
+import org.aksw.jena_sparql_api.batch.BatchWorkflowManager;
 import org.aksw.jena_sparql_api.spring.conversion.ConverterRegistryPostProcessor;
 import org.springframework.batch.core.configuration.ListableJobLocator;
+import org.springframework.batch.core.configuration.annotation.AbstractBatchConfiguration;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.explore.JobExplorer;
 import org.springframework.batch.core.launch.JobLauncher;
@@ -93,5 +95,12 @@ public class ConfigBatchJobDynamic
         jobOperator.setJobRegistry(jobRegistry);
 
         return jobOperator;
+    }
+
+    @Bean
+    @Autowired
+    public BatchWorkflowManager manager(AbstractBatchConfiguration batchConfig) {
+    	BatchWorkflowManager result = new BatchWorkflowManager(batchConfig);
+    	return result;
     }
 }

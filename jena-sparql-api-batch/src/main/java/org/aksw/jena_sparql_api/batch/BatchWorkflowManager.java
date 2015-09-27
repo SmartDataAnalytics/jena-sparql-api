@@ -5,13 +5,12 @@ import java.sql.SQLException;
 import java.util.Map;
 
 import org.aksw.jena_sparql_api.batch.config.ConfigBatchJobDynamic;
-import org.aksw.jena_sparql_api.batch.config.ConfigSparqlExportJob;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobParameters;
-import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.JobParametersInvalidException;
+import org.springframework.batch.core.configuration.annotation.AbstractBatchConfiguration;
 import org.springframework.batch.core.explore.JobExplorer;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
@@ -21,57 +20,67 @@ import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
-import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.jdbc.datasource.init.ScriptException;
 
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
 public class BatchWorkflowManager {
-    private JobExplorer jobExplorer;
-    private JobRepository jobRepository;
-    private JobLauncher jobLauncher;
-    private Job job;
+//    private JobExplorer jobExplorer;
+//    private JobRepository jobRepository;
+//    private JobLauncher jobLauncher;
+//    private Job job;
+	private AbstractBatchConfiguration config;
 
     public void processWorkflow(String workflow) {
         Gson gson = new Gson();
-        
+
         Type type = new TypeToken<Map<String, Object>>() {}.getType();
-        
+
         gson.fromJson(workflow, type);
     }
-    
 
+
+    /*
     public BatchWorkflowManager(JobExplorer jobExplorer, JobRepository jobRepository, JobLauncher jobLauncher, Job job) {
         this.jobExplorer = jobExplorer;
         this.jobRepository = jobRepository;
         this.jobLauncher = jobLauncher;
         this.job = job;
     }
+    */
+    public BatchWorkflowManager(AbstractBatchConfiguration config) {
+    	this.config = config;
+    }
 
-    public JobExecution launchWorkflowJob(String workflowDesc) throws JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException, JobParametersInvalidException
-    {
-        JobParameters jobParameters = new JobParametersBuilder()
-            .addString(ConfigSparqlExportJob.JOBPARAM_SERVICE_URI, workflowDesc, true)
-            .toJobParameters();
+//    public Job createJob(String workflowDesc) {
+//
+//    }
 
-        JobExecution result = jobRepository.getLastJobExecution(job.getName(), jobParameters);
+    public JobExecution launch(Job job, JobParameters jobParameters) throws JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException, JobParametersInvalidException, Exception {
+        //JobParameters jobParameters = new JobParametersBuilder()
+                //.addString(ConfigSparqlExportJob.JOBPARAM_SERVICE_URI, workflowDesc, true)
+                //.toJobParameters();
+
+        JobExecution result = config.jobRepository().getLastJobExecution(job.getName(), jobParameters);
 
         // If there was a prior job, return its execution context
         BatchStatus status = result == null ? null : result.getStatus();
         if(status == null || !(status.isRunning() || status.equals(BatchStatus.COMPLETED))) {
-            result = jobLauncher.run(job, jobParameters);
+            result = config.jobLauncher().run(job, jobParameters);
         }
 
         return result;
     }
 
-/*    
+//    public JobExecution launchWorkflowJob(String workflowDesc) throws JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException, JobParametersInvalidException
+//    {
+//    }
+
+/*
     public InputStream getTargetInputStream(long jobExecutionId) throws FileNotFoundException {
         JobExecution jobExecution = jobExplorer.getJobExecution(jobExecutionId);
         JobParameters jobParameters = jobExecution.getJobParameters();
@@ -90,9 +99,9 @@ public class BatchWorkflowManager {
             .addScript("classpath:org/springframework/batch/core/schema-h2.sql")
             .build();
             ;
-            
+
         // SDBConnectionDesc
-        
+
 
         /*
         DriverManagerDataSource ds = new DriverManagerDataSource();
@@ -100,29 +109,31 @@ public class BatchWorkflowManager {
         ds.setUrl("jdbc:postgresql://localhost:5432/usecase");
         ds.setUsername("postgres");
         ds.setPassword("########");
-        
+
         ResourceDatabasePopulator rdp = new ResourceDatabasePopulator();
         rdp.addScript(new ClassPathResource("/org/aksw/jena_sparql_api/cache/cache-schema-pgsql.sql"));
         rdp.populate(ds.getConnection());
         */
-        
-                
+
+
         AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
         ConfigurableApplicationContext cac = (ConfigurableApplicationContext)context;
-        
+
         ConfigurableListableBeanFactory beanFactory = cac.getBeanFactory();
         beanFactory.registerSingleton(ed.getClass().getCanonicalName(), ed);
-        
+
         context.register(ConfigBatchJobDynamic.class);
         context.refresh();
-        
-        JobExplorer jobExplorer = context.getBean(JobExplorer.class);
-        JobRepository jobRepository = context.getBean(JobRepository.class);
-        //JobOperator jobOperator = context.getBean(JobOperator.class);
-        JobLauncher jobLauncher = context.getBean(JobLauncher.class);
-        Job job = context.getBean(Job.class);
 
-        BatchWorkflowManager result = new BatchWorkflowManager(jobExplorer, jobRepository, jobLauncher, job);
+        AbstractBatchConfiguration batchConfig = context.getBean(AbstractBatchConfiguration.class);
+
+//        JobExplorer jobExplorer = context.getBean(JobExplorer.class);
+//        JobRepository jobRepository = context.getBean(JobRepository.class);
+//        //JobOperator jobOperator = context.getBean(JobOperator.class);
+//        JobLauncher jobLauncher = context.getBean(JobLauncher.class);
+//        Job job = context.getBean(Job.class);
+
+        BatchWorkflowManager result = new BatchWorkflowManager(batchConfig);//jobExplorer, jobRepository, jobLauncher, job);
         //context.
         return result;
     }
