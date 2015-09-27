@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.batch.cli.main;
+package org.aksw.jena_sparql_api.spring.conversion;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;

@@ -1,6 +1,5 @@
 package org.aksw.jena_sparql_api.spring.conversion;
 
-import org.aksw.jena_sparql_api.batch.cli.main.AutoRegistered;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.aksw.jena_sparql_api.shape.ResourceShapeParserJson;
 import org.springframework.core.convert.converter.Converter;

@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.batch.cli.main;
+package org.aksw.jena_sparql_api.stmt;
 
 public class SparqlStmtBase
     implements SparqlStmt

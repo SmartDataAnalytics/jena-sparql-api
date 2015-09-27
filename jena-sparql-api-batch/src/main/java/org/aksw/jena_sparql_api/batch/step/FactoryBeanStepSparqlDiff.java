@@ -15,6 +15,7 @@ import org.aksw.jena_sparql_api.lookup.ListService;
 import org.aksw.jena_sparql_api.modifier.Modifier;
 import org.aksw.jena_sparql_api.modifier.ModifierList;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
+import org.aksw.jena_sparql_api.stmt.SparqlUpdateParser;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.step.builder.StepBuilder;
@@ -49,7 +50,10 @@ public class FactoryBeanStepSparqlDiff
     protected QueryExecutionFactory sourceQef;
     protected Concept concept;
     //protected ListService<>
+
+    protected SparqlUpdateParser updateParser;
     protected List<Modifier<? super DatasetGraph>> modifiers;
+    //protected List<?> modifiers;
 
 
     protected UpdateExecutionFactory targetUef;
@@ -68,6 +72,12 @@ public class FactoryBeanStepSparqlDiff
     @Autowired
     public void setStepBuilders(StepBuilderFactory stepBuilders) {
         this.stepBuilders = stepBuilders;
+    }
+
+
+    @Autowired
+    public void setSparqlUpdateParser(SparqlUpdateParser updateParser) {
+        this.updateParser = updateParser;
     }
 
 //	@Autowired
@@ -100,6 +110,11 @@ public class FactoryBeanStepSparqlDiff
         this.modifiers = modifiers;
         return this;
     }
+
+//    public FactoryBeanStepSparqlDiff setModifiers(List<?> modifiers) {
+//        this.modifiers = modifiers;
+//        return this;
+//    }
 
 //	public FactoryBeanStepSparqlDiff setModifier(Concept concept) {
 //		this.concept = concept;

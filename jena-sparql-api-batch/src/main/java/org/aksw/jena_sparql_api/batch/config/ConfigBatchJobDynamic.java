@@ -2,6 +2,8 @@ package org.aksw.jena_sparql_api.batch.config;
 
 import org.aksw.jena_sparql_api.batch.BatchWorkflowManager;
 import org.aksw.jena_sparql_api.spring.conversion.ConverterRegistryPostProcessor;
+import org.aksw.jena_sparql_api.stmt.SparqlUpdateParser;
+import org.aksw.jena_sparql_api.stmt.SparqlUpdateParserImpl;
 import org.springframework.batch.core.configuration.ListableJobLocator;
 import org.springframework.batch.core.configuration.annotation.AbstractBatchConfiguration;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
@@ -74,14 +76,14 @@ public class ConfigBatchJobDynamic
 
     @Bean
     public BeanFactoryPostProcessor beanFactoryPostProcessor() {
-    	BeanFactoryPostProcessor result = new ConverterRegistryPostProcessor();
-    	return result;
+        BeanFactoryPostProcessor result = new ConverterRegistryPostProcessor();
+        return result;
     }
 
     @Bean
     public ConversionService conversionService() {
-    	ConversionService result = new DefaultConversionService();
-    	return result;
+        ConversionService result = new DefaultConversionService();
+        return result;
     }
 
     @Bean
@@ -100,7 +102,13 @@ public class ConfigBatchJobDynamic
     @Bean
     @Autowired
     public BatchWorkflowManager manager(AbstractBatchConfiguration batchConfig) {
-    	BatchWorkflowManager result = new BatchWorkflowManager(batchConfig);
-    	return result;
+        BatchWorkflowManager result = new BatchWorkflowManager(batchConfig);
+        return result;
+    }
+
+    @Bean
+    public SparqlUpdateParser defaultSparqlStmtParser() {
+        SparqlUpdateParser result = SparqlUpdateParserImpl.create();
+        return result;
     }
 }

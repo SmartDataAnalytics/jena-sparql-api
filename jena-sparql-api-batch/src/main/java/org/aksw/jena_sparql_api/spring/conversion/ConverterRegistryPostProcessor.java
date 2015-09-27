@@ -3,7 +3,6 @@ package org.aksw.jena_sparql_api.spring.conversion;
 import java.util.Collection;
 import java.util.Map;
 
-import org.aksw.jena_sparql_api.batch.cli.main.AutoRegistered;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;

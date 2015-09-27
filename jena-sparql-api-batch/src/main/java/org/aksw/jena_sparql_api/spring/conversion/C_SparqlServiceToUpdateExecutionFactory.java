@@ -1,6 +1,5 @@
 package org.aksw.jena_sparql_api.spring.conversion;
 
-import org.aksw.jena_sparql_api.batch.cli.main.AutoRegistered;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
 import org.springframework.core.convert.converter.Converter;

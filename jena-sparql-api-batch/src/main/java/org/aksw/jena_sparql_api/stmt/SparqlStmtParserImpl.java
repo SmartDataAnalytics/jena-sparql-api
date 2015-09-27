@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.batch.cli.main;
+package org.aksw.jena_sparql_api.stmt;
 
 import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.update.UpdateRequest;
@@ -43,6 +43,10 @@ public class SparqlStmtParserImpl
 
         return result;
     }
+
+//    public static SparqlStmtParserImpl create() {
+//        SparqlStmtParserImpl result
+//    }
 
     public static SparqlStmtParserImpl create(SparqlParserConfig config) {
         SparqlQueryParser queryParser = SparqlQueryParserImpl.create(config);

@@ -46,6 +46,10 @@ import org.aksw.jena_sparql_api.sparql.ext.http.E_Http;
 import org.aksw.jena_sparql_api.sparql.ext.json.E_JsonParse;
 import org.aksw.jena_sparql_api.sparql.ext.json.E_JsonPath;
 import org.aksw.jena_sparql_api.sparql.ext.json.RDFDatatypeJson;
+import org.aksw.jena_sparql_api.stmt.SparqlParserConfig;
+import org.aksw.jena_sparql_api.stmt.SparqlStmt;
+import org.aksw.jena_sparql_api.stmt.SparqlStmtParser;
+import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -93,19 +97,27 @@ import fr.dudie.nominatim.client.NominatimClient;
 
 public class MainBatchWorkflow {
 
-	private static final Logger logger = LoggerFactory.getLogger(MainBatchWorkflow.class);
+    private static final Logger logger = LoggerFactory.getLogger(MainBatchWorkflow.class);
 
     public static void mainXml() throws Exception {
-    	ClassPathXmlApplicationContext test = new ClassPathXmlApplicationContext("testList.xml");
-    	//org.springframework.beans.factory.xml.BeanDefinitionParser
-    	Collection<String> allBeans = Arrays.asList(test.getBeanDefinitionNames());
+        ClassPathXmlApplicationContext test = new ClassPathXmlApplicationContext("testList.xml");
+        //org.springframework.beans.factory.xml.BeanDefinitionParser
+        Collection<String> allBeans = Arrays.asList(test.getBeanDefinitionNames());
         System.out.println("Got " + allBeans.size() + " beans: " + allBeans);
     }
 
     public static void main(String[] args) throws Exception {
+        Prologue p = new Prologue(getDefaultPrefixMapping());
+        SparqlParserConfig c = SparqlParserConfig.create(Syntax.syntaxARQ, p);
+        SparqlStmtParser parser = SparqlStmtParserImpl.create(c);
+
+        SparqlStmt stmt = parser.apply("INSERT DATA { <s> <p> <o> }");
+        System.out.println("Statement: " + stmt);
+
+
 //    	mainXml();
-    	initJenaExtensions();
-    	mainContext(args);
+        initJenaExtensions();
+        mainContext(args);
     }
 
     public static String jsonFn = "http://jsa.aksw.org/fn/json/";
@@ -149,38 +161,38 @@ public class MainBatchWorkflow {
         PrefixMapping pm = getDefaultPrefixMapping();
 
         QueryExecutionFactory qef = FluentQueryExecutionFactory
-        	.defaultDatasetGraph()
-        	.config()
-        		.withPrefixes(pm, true)
-        	.end()
-        	.create();
+            .defaultDatasetGraph()
+            .config()
+                .withPrefixes(pm, true)
+            .end()
+            .create();
 
         Query query = new Query();
         query.setPrefixMapping(pm);
 
         if(false) {
         QueryFactory.parse(query, "Select * {"
-        		+ "  Bind(\"['foo', ['bar', 'baz']]\"^^xsd:json As ?json)\n"
-        		+ "  ?json json:unnest ?lvl1.\n"
-        		+ "  Optional { ?lvl1 json:unnest ?lvl2. }\n"
-        		+ "}", "http://example.org/base/", Syntax.syntaxARQ);
+                + "  Bind(\"['foo', ['bar', 'baz']]\"^^xsd:json As ?json)\n"
+                + "  ?json json:unnest ?lvl1.\n"
+                + "  Optional { ?lvl1 json:unnest ?lvl2. }\n"
+                + "}", "http://example.org/base/", Syntax.syntaxARQ);
         }
 
         if(false) {
-	        QueryFactory.parse(query, "Select ?osmType ?osmId ?x ?y {"
-	        		+ "  VALUES(?s) { (<http://nominatim.openstreetmap.org/search/?format=json&q=Leipzig>) }\n"
-	        		+ "  BIND(http:get(?s) As ?json).\n"
-	        		+ "  ?json json:unnest ?item.\n"
-	        		+ "  BIND(json:path(?item, '$.osm_type') As ?osmType)\n"
-	        		+ "  BIND(json:path(?item, '$.osm_id') As ?osmId)\n"
-	        		+ "  BIND(xsd:decimal(json:path(?item, '$.lon')) As ?x)\n"
-	        		+ "  BIND(xsd:decimal(json:path(?item, '$.lat')) As ?y)\n"
-	        		+ "}", "http://example.org/base/", Syntax.syntaxARQ);
+            QueryFactory.parse(query, "Select ?osmType ?osmId ?x ?y {"
+                    + "  VALUES(?s) { (<http://nominatim.openstreetmap.org/search/?format=json&q=Leipzig>) }\n"
+                    + "  BIND(http:get(?s) As ?json).\n"
+                    + "  ?json json:unnest ?item.\n"
+                    + "  BIND(json:path(?item, '$.osm_type') As ?osmType)\n"
+                    + "  BIND(json:path(?item, '$.osm_id') As ?osmId)\n"
+                    + "  BIND(xsd:decimal(json:path(?item, '$.lon')) As ?x)\n"
+                    + "  BIND(xsd:decimal(json:path(?item, '$.lat')) As ?y)\n"
+                    + "}", "http://example.org/base/", Syntax.syntaxARQ);
 
-	        Prologue prologue = new Prologue(pm);
+            Prologue prologue = new Prologue(pm);
 
-	        QueryExecution qe = qef.createQueryExecution(query);
-	        System.out.println(ResultSetFormatter.asText(qe.execSelect(), prologue));
+            QueryExecution qe = qef.createQueryExecution(query);
+            System.out.println(ResultSetFormatter.asText(qe.execSelect(), prologue));
         }
     }
 
@@ -240,18 +252,18 @@ public class MainBatchWorkflow {
 
         //List<JsonVisitorRewrite> rewriters = Collections.emptyList();
         List<JsonVisitorRewrite> rewriters = Arrays.<JsonVisitorRewrite>asList(
-        		new JsonVisitorRewriteShape(),
-        		new JsonVisitorRewriteJson(),
-        		new JsonVisitorRewriteSparqlStep(),
-        		new JsonVisitorRewriteSimpleJob()
-        		);
+                new JsonVisitorRewriteShape(),
+                new JsonVisitorRewriteJson(),
+                new JsonVisitorRewriteSparqlStep(),
+                new JsonVisitorRewriteSimpleJob()
+                );
         json = JsonWalker.rewriterUntilNoChange(json, rewriters);
 
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    	String str = gson.toJson(json);
-    	System.out.println(str);
+        String str = gson.toJson(json);
+        System.out.println(str);
 
-    	contextProcessor.process(json);
+        contextProcessor.process(json);
         //jobProcessor.process(json);
 
         batchContext.refresh();
@@ -296,31 +308,31 @@ public class MainBatchWorkflow {
 
 
     public static void main1(String[] args) throws Exception {
-    	String str = "      Prefix o: <http://fp7-pp.publicdata.eu/ontology/>\n" +
-    			"			Prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
-    			"	            Construct where {\n" +
-    			"	              ?s\n" +
-    			"	                o:funding [\n" +
-    			"	                  o:partner [\n" +
-    			"	                    o:address [\n" +
-    			"	                      o:country [ rdfs:label ?col ] ;\n" +
-    			"	                      o:city [ rdfs:label ?cil ]\n" +
-    			"	                    ]\n" +
-    			"	                  ]\n" +
-    			"	                ]\n" +
-    			"	            }\n" +
-    			"";
+        String str = "      Prefix o: <http://fp7-pp.publicdata.eu/ontology/>\n" +
+                "			Prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
+                "	            Construct where {\n" +
+                "	              ?s\n" +
+                "	                o:funding [\n" +
+                "	                  o:partner [\n" +
+                "	                    o:address [\n" +
+                "	                      o:country [ rdfs:label ?col ] ;\n" +
+                "	                      o:city [ rdfs:label ?cil ]\n" +
+                "	                    ]\n" +
+                "	                  ]\n" +
+                "	                ]\n" +
+                "	            }\n" +
+                "";
 
 
-    	Query q = QueryFactory.create(str, Syntax.syntaxSPARQL_11);
-    	MappedConcept<DatasetGraph> mc = QueryTransformConstructGroupedGraph.query2(q, Vars.s);
+        Query q = QueryFactory.create(str, Syntax.syntaxSPARQL_11);
+        MappedConcept<DatasetGraph> mc = QueryTransformConstructGroupedGraph.query2(q, Vars.s);
         QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://fp7-pp.publicdata.eu/sparql", "http://fp7-pp.publicdata.eu/").create();
 
         System.out.println(mc);
-    	LookupService<Node, DatasetGraph> ls = LookupServiceUtils.createLookupService(qef, mc);
-    	Map<Node, DatasetGraph> map = ls.apply(Arrays.<Node>asList(NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/project/231648"),  NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/project/231549")));
-    	//ListService<Concept, Node, Graph> ls = ListServiceUtils.createListServiceMappedConcept(qef, mc, false);
-    	//Map<Node, Graph> map = ls.fetchData(null, 10l, 0l);
+        LookupService<Node, DatasetGraph> ls = LookupServiceUtils.createLookupService(qef, mc);
+        Map<Node, DatasetGraph> map = ls.apply(Arrays.<Node>asList(NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/project/231648"),  NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/project/231549")));
+        //ListService<Concept, Node, Graph> ls = ListServiceUtils.createListServiceMappedConcept(qef, mc, false);
+        //Map<Node, Graph> map = ls.fetchData(null, 10l, 0l);
 
 
         for(Entry<Node, DatasetGraph> entry : map.entrySet()) {
@@ -335,16 +347,16 @@ public class MainBatchWorkflow {
             //m.write(System.out, "TURTLE");
         }
 
-    	//main3(args);
+        //main3(args);
     }
 
     public static void main3(String[] args) throws Exception {
 
-    	Map<String, MapTransformer> keyToTransformer = new HashMap<String, MapTransformer>();
-    	keyToTransformer.put("$concept", new MapTransformerSimple());
+        Map<String, MapTransformer> keyToTransformer = new HashMap<String, MapTransformer>();
+        keyToTransformer.put("$concept", new MapTransformerSimple());
 
 
-    	PrefixMapping pm = getDefaultPrefixMapping();
+        PrefixMapping pm = getDefaultPrefixMapping();
 
 
         String testx = "Prefix ex: <http://example.org/> Insert { ?s ex:osmId ?o ; ex:o ?oet ; ex:i ?oei } Where { ?s ex:locationString ?l . Bind(nominatim:geocode(?l) As ?x) . Bind(str(json:path(?x, '$[0].osm_type')) As ?oet) . Bind(str(json:path(?x, '$[0].osm_id')) As ?oei) . Bind(uri(concat('http://linkedgeodata.org/triplify/', ?oet, ?oei)) As ?o) }";
@@ -384,8 +396,8 @@ public class MainBatchWorkflow {
 issue: this query syntax will allocate blank nodes :(
 yet, we can map them to variables, convert the query to a select form, and group by one of the variables
 we can then use an automaton representation and minimize the states, and convert it back to a sparql query
-			Prefix o: <http://fp7-pp.publicdata.eu/ontology/>
-			Prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            Prefix o: <http://fp7-pp.publicdata.eu/ontology/>
+            Prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             Construct {
               ?s
                 o:funding [
@@ -425,7 +437,7 @@ we can then use an automaton representation and minimize the states, and convert
         //LookupServiceTransformKey.create(LookupServiceTransformValue.create(base, fn), keyMapper)
         //LookupServiceListService
 
-	        QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://fp7-pp.publicdata.eu/sparql", "http://fp7-pp.publicdata.eu/").create();
+            QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://fp7-pp.publicdata.eu/sparql", "http://fp7-pp.publicdata.eu/").create();
 
         QueryExecutionFactory qefLgd = FluentQueryExecutionFactory.http("http://linkedgeodata.org/sparql", "http://linkedgeodata.org").create();
 
