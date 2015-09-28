@@ -8,6 +8,12 @@
         targetMethod: 'createSparqlService',
         arguments: ['http://fp7-pp.publicdata.eu/sparql', 'http://fp7-pp.publicdata.eu/', null]
     },
+    target: {
+        type: 'org.springframework.beans.factory.config.MethodInvokingFactoryBean',
+        targetObject: {ref: 'ssf'},
+        targetMethod: 'createSparqlService',
+        arguments: ['http://localhost:8890/sparql', 'http://fp7-pp.publicdata.eu/', null]
+    },
     shape: { $json: {} },
 //    shape: {
 //        $json: {
@@ -50,7 +56,7 @@ INSERT { \
                 concept: '?s | ?s a <http://fp7-pp.publicdata.eu/ontology/Project>',
                 shape: { ref: 'shape' },
                 source: { ref: 'fp7pp'},
-                target: { ref: 'fp7pp'},
+                target: { ref: 'target'},
                 //modifiers: []
                 modifiers: [
                     { ref: 'update' }

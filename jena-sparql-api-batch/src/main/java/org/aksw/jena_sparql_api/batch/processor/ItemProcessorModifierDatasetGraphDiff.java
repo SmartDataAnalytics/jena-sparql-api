@@ -66,11 +66,11 @@ public class ItemProcessorModifierDatasetGraphDiff
 	}
 
 
-    public Entry<Node, Diff<Set<Quad>>> process2(Entry<Node, DatasetGraph> item)
-            throws Exception {
-        DatasetGraph m = item.getValue();
-
-        modifier.apply(m);
-        return null;
-    }
+//    public Entry<Node, Diff<Set<Quad>>> process2(Entry<Node, DatasetGraph> item)
+//            throws Exception {
+//        DatasetGraph m = item.getValue();
+//
+//        modifier.apply(m);
+//        return null;
+//    }
 }

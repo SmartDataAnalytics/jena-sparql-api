@@ -23,9 +23,12 @@ import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.QueryFactory;
 import com.hp.hpl.jena.query.Syntax;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import com.hp.hpl.jena.sparql.core.Quad;
+import com.hp.hpl.jena.update.GraphStoreFactory;
 import com.hp.hpl.jena.update.Update;
+import com.hp.hpl.jena.update.UpdateFactory;
 import com.hp.hpl.jena.update.UpdateProcessor;
 import com.hp.hpl.jena.update.UpdateRequest;
 
@@ -104,22 +107,19 @@ public class UpdateExecutionUtils {
 
     public static UpdateProcessor executeInsertQuads(UpdateExecutionFactory uef, Iterable<Quad> quads) {
         UpdateRequest updateRequest = UpdateRequestUtils.createUpdateRequest(quads, Collections.<Quad>emptySet());
-        UpdateProcessor result = uef.createUpdateProcessor(updateRequest);
-        result.execute();
+        UpdateProcessor result = executeUnlessEmpty(uef, updateRequest);
         return result;
     }
 
     public static UpdateProcessor executeDeleteQuads(UpdateExecutionFactory uef, Iterable<? extends Quad> quads) {
         UpdateRequest updateRequest = UpdateRequestUtils.createUpdateRequest(Collections.<Quad>emptySet(), quads);
-        UpdateProcessor result = uef.createUpdateProcessor(updateRequest);
-        result.execute();
+        UpdateProcessor result = executeUnlessEmpty(uef, updateRequest);
         return result;
     }
 
     public static UpdateProcessor executeUpdate(UpdateExecutionFactory uef, Diff<? extends Iterable<? extends Quad>> diff) {
         UpdateRequest updateRequest = UpdateRequestUtils.createUpdateRequest(diff);
-        UpdateProcessor result = uef.createUpdateProcessor(updateRequest);
-        result.execute();
+        UpdateProcessor result = executeUnlessEmpty(uef, updateRequest);
         return result;
     }
 
@@ -127,9 +127,22 @@ public class UpdateExecutionUtils {
         Diff<Set<Quad>> d = DatasetGraphDiffUtils.wrapDatasetGraph(diff);
 
     	UpdateRequest updateRequest = UpdateRequestUtils.createUpdateRequest(d);
-        UpdateProcessor result = uef.createUpdateProcessor(updateRequest);
-        result.execute();
+        UpdateProcessor result = executeUnlessEmpty(uef, updateRequest);
         return result;
     }
 
+    public static UpdateProcessor executeUnlessEmpty(UpdateExecutionFactory uef, UpdateRequest updateRequest) {
+    	UpdateProcessor result;
+    	if(updateRequest.getOperations().isEmpty()) {
+    		// Create a fake update request
+    		UpdateRequest update = UpdateFactory.create("PREFIX ex: <http://example.org/> INSERT { ex:s ex:p ex:o } WHERE { ex:s ex:p ex:o }");
+    		result = com.hp.hpl.jena.update.UpdateExecutionFactory.create(update, GraphStoreFactory.create(ModelFactory.createDefaultModel()));
+    		result.execute();
+    	} else {
+            result = uef.createUpdateProcessor(updateRequest);
+            result.execute();
+    	}
+
+        return result;
+    }
 }

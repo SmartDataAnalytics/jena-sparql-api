@@ -18,11 +18,11 @@ public class DatasetGraphUtils {
 			addAll(target, it);
 	}
 
-    public static void addAll(DatasetGraph datasetGraph, Iterable<Quad> items) {
+    public static void addAll(DatasetGraph datasetGraph, Iterable<? extends Quad> items) {
     	addAll(datasetGraph, items.iterator());
     }
 
-    public static void addAll(DatasetGraph datasetGraph, Iterator<Quad> it) {
+    public static void addAll(DatasetGraph datasetGraph, Iterator<? extends Quad> it) {
 		while(it.hasNext()) {
 			Quad q = it.next();
 			datasetGraph.add(q);
@@ -41,14 +41,18 @@ public class DatasetGraphUtils {
     	DatasetGraph added = DatasetGraphFactory.createMem();
     	DatasetGraph removed = DatasetGraphFactory.createMem();
 
+    	DatasetGraphUtils.addAll(added, diff.getAdded());
+    	DatasetGraphUtils.addAll(removed, diff.getRemoved());
+
+
     	Diff<DatasetGraph> result = new Diff<DatasetGraph>(added, removed, null);
     	return result;
     }
 
 	public static void write(PrintStream out, DatasetGraph dg) {
 	    Dataset ds = DatasetFactory.create(dg);
-	
-	
+
+
 	    Model dm = ds.getDefaultModel();
 	    if(!dm.isEmpty()) {
 	    	out.println("Begin of Default model -----------------------");
@@ -63,7 +67,7 @@ public class DatasetGraphUtils {
 	        model.write(out, "TURTLE");
 	        System.out.println("End of " + name + " -----------------------");
 	    }
-	
+
 	}
 
 }
