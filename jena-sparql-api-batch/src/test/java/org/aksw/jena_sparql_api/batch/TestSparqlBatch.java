@@ -8,7 +8,7 @@ public class TestSparqlBatch {
 
     @Test
     public void test() throws Exception {
-        String[] args = new String[]{};
-        MainBatchWorkflow.main(args);
+//        String[] args = new String[]{};
+//        MainBatchWorkflow.main(args);
     }
 }
