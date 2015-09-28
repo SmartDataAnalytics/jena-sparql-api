@@ -55,6 +55,17 @@ INSERT { \
                 chunk: 1,
                 concept: '?s | ?s a <http://fp7-pp.publicdata.eu/ontology/Project>',
                 shape: { ref: 'shape' },
+                source: { ref: 'target'},
+                target: { ref: 'target'},
+                modifiers: [ 'DELETE { ?s ?p ?o } WHERE { ?s ?p ?o }']
+            }
+        },
+        {
+            $sparqlStep: {
+                name: 'step2',
+                chunk: 1,
+                concept: '?s | ?s a <http://fp7-pp.publicdata.eu/ontology/Project>',
+                shape: { ref: 'shape' },
                 source: { ref: 'fp7pp'},
                 target: { ref: 'target'},
                 //modifiers: []
@@ -62,6 +73,7 @@ INSERT { \
                     { ref: 'update' }
                 ]
             }
-        }]
+        }
+        ]
     } }
 }

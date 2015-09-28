@@ -8,10 +8,9 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
 
 import com.google.common.net.MediaType;
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.sparql.expr.NodeValue;
 import com.hp.hpl.jena.sparql.function.FunctionBase1;
@@ -93,6 +92,7 @@ public class E_Http
 				}
 			}
 
+			EntityUtils.consume(response.getEntity());
 		}
 
 		if(result == null) {
