@@ -24,13 +24,13 @@ This library offers several [Jena](http://jena.apache.org/)-compatible ways to *
 	<dependency>
 		<groupId>org.aksw.jena-sparql-api</groupId>
 		<artifactId>jena-sparql-api-core</artifactId>
-		<version>2.10.0-22</version>
+		<version>2.12.1-8</version>
 	</dependency>
 	
 	<dependency>
 		<groupId>org.aksw.jena-sparql-api</groupId>
 		<artifactId>jena-sparql-api-server</artifactId>
-		<version>2.10.0-22</version>
+		<version>2.12.1-8</version>
 	</dependency>
 	
 	...
@@ -72,8 +72,9 @@ Note: Should the pagination abort, such as because you ran out of memory and nee
 qef = new QueryExecutionFactoryPaginated(qef, 900);
 ```
 Create and run a query on this fully buffed QueryExecutionFactory
-```Java		
-QueryExecution qe = qef.createQueryExecution("Select ?s { ?s a <http://dbpedia.org/ontology/City> } Limit 5000");
+```Java
+String queryString = "SELECT ?s { ?s a <http://dbpedia.org/ontology/City> } LIMIT 5000";
+QueryExecution qe = qef.createQueryExecution(queryString);
 		
 ResultSet rs = qe.execSelect();
 System.out.println(ResultSetFormatter.asText(rs));

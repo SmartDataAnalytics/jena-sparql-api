@@ -145,7 +145,7 @@ public class CacheCoreH2
         try {
             conn.createStatement().executeUpdate(Query.CREATE.getQueryString());
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.warn("Cannot create Statement",e);
         }
 
         setConnection(conn);

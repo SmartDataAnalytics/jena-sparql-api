@@ -114,9 +114,9 @@ public class QueryExecutionFallback
 				}
 				results.add(currentIndex, result);
 			} catch (InterruptedException e) {
-				e.printStackTrace();
+                logger.warn("Thread interrupted", e);
 			} catch (ExecutionException e) {
-				e.printStackTrace();
+                logger.warn("Execution exception", e);
 			}
 		}
 		threadPool.shutdown();

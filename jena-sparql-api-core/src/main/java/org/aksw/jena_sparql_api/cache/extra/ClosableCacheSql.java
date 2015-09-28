@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.aksw.commons.collections.IClosable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Claus Stadler
@@ -14,6 +16,9 @@ import org.aksw.commons.collections.IClosable;
 public class ClosableCacheSql
     implements IClosable
 {
+    private static final Logger logger = LoggerFactory.getLogger(ClosableCacheSql.class);
+
+
     private CacheResource resource;
     private InputStream in;
 
@@ -31,7 +36,7 @@ public class ClosableCacheSql
             try {
                 in.close();
             } catch (IOException e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                logger.warn("Cannot close resource",e);
             }
         }
     }
