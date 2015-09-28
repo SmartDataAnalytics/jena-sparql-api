@@ -38,7 +38,7 @@ public class ItemProcessorModifierDatasetGraphDiff
 		Set<Quad> cloneQuads = SetDatasetGraph.wrap(clone);
 
 		//Diff<Set<Quad>>
-		Diff<Set<Quad>> tmp = createDiff(baseQuads, cloneQuads);
+		Diff<Set<Quad>> tmp = createDiff(cloneQuads, baseQuads);
 		Diff<DatasetGraph> result = DatasetGraphUtils.wrapDiffDatasetGraph(tmp);
 
 		return result;
@@ -55,9 +55,9 @@ public class ItemProcessorModifierDatasetGraphDiff
 		return result;
 	}
 
-	public static <T> Diff<Set<T>> createDiff(Collection<T> before, Collection<T> after) {
-		Set<T> x = SetUtils.asSet(before);
-		Set<T> y = SetUtils.asSet(after);
+	public static <T> Diff<Set<T>> createDiff(Collection<T> after, Collection<T> before) {
+		Set<T> x = SetUtils.asSet(after);
+		Set<T> y = SetUtils.asSet(before);
 
 		Set<T> added = new HashSet<T>(Sets.difference(x, y));
 		Set<T> removed = new HashSet<T>(Sets.difference(y, x));

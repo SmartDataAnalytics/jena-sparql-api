@@ -27,7 +27,7 @@ public class ListServiceUtils {
 
         Agg<T> agg = mappedConcept.getAggregator();
 
-        System.out.println("Vars: " + agg.getDeclaredVars());
+        //System.out.println("Vars: " + agg.getDeclaredVars());
 
         //Var  rowId = Var.alloc("rowId");
 
