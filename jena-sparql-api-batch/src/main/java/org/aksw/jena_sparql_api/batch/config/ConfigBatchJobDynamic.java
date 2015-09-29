@@ -1,6 +1,8 @@
 package org.aksw.jena_sparql_api.batch.config;
 
 import org.aksw.jena_sparql_api.batch.BatchWorkflowManager;
+import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
+import org.aksw.jena_sparql_api.core.SparqlServiceFactoryHttp;
 import org.aksw.jena_sparql_api.spring.conversion.ConverterRegistryPostProcessor;
 import org.aksw.jena_sparql_api.stmt.SparqlUpdateParser;
 import org.aksw.jena_sparql_api.stmt.SparqlUpdateParserImpl;
@@ -77,6 +79,12 @@ public class ConfigBatchJobDynamic
     @Bean
     public ConversionService conversionService() {
         ConversionService result = new DefaultConversionService();
+        return result;
+    }
+
+    @Bean
+    public SparqlServiceFactory defaultSparqlServiceFactory() {
+        SparqlServiceFactory result = new SparqlServiceFactoryHttp();
         return result;
     }
 

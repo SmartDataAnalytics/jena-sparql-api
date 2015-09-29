@@ -19,6 +19,7 @@ import org.aksw.jena_sparql_api.batch.config.ConfigBatchJobDynamic;
 import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteJson;
 import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteShape;
 import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteSimpleJob;
+import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteSparqlService;
 import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteSparqlStep;
 import org.aksw.jena_sparql_api.batch.to_review.MapTransformer;
 import org.aksw.jena_sparql_api.batch.to_review.MapTransformerSimple;
@@ -252,6 +253,7 @@ public class MainBatchWorkflow {
 
         //List<JsonVisitorRewrite> rewriters = Collections.emptyList();
         List<JsonVisitorRewrite> rewriters = Arrays.<JsonVisitorRewrite>asList(
+                new JsonVisitorRewriteSparqlService(),
                 new JsonVisitorRewriteShape(),
                 new JsonVisitorRewriteJson(),
                 new JsonVisitorRewriteSparqlStep(),

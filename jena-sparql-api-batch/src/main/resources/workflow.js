@@ -1,19 +1,6 @@
 {
-    ssf: {
-        type: 'org.aksw.jena_sparql_api.core.SparqlServiceFactoryHttp'
-    },
-    fp7pp: {
-        type: 'org.springframework.beans.factory.config.MethodInvokingFactoryBean',
-        targetObject: {ref: 'ssf'},
-        targetMethod: 'createSparqlService',
-        arguments: ['http://fp7-pp.publicdata.eu/sparql', 'http://fp7-pp.publicdata.eu/', null]
-    },
-    target: {
-        type: 'org.springframework.beans.factory.config.MethodInvokingFactoryBean',
-        targetObject: {ref: 'ssf'},
-        targetMethod: 'createSparqlService',
-        arguments: ['http://localhost:8890/sparql', 'http://fp7-pp.publicdata.eu/', null]
-    },
+    fp7pp: { $sparqlService: ['http://localhost:8890/sparql', 'http://fp7-pp.publicdata.eu/'] },
+    target: { $sparqlService: ['http://localhost:8890/sparql', 'http://fp7-pp.publicdata.eu/'] },
     shape: { $json: {} },
 //    shape: {
 //        $json: {
@@ -57,7 +44,7 @@ INSERT { \
                 shape: { ref: 'shape' },
                 source: { ref: 'target'},
                 target: { ref: 'target'},
-                modifiers: [ 'DELETE { ?s ?p ?o } WHERE { ?s ?p ?o }']
+                modifiers: ['DELETE { ?s ?p ?o } WHERE { ?s ?p ?o }']
             }
         },
         {
