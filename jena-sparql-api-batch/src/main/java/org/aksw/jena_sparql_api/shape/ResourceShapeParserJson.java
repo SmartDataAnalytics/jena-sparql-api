@@ -2,9 +2,9 @@ package org.aksw.jena_sparql_api.shape;
 
 import java.util.Map.Entry;
 
+import org.aksw.gson.utils.JsonVisitor;
+import org.aksw.gson.utils.JsonWalker;
 import org.aksw.jena_sparql_api.batch.ResourceShapeBuilder;
-import org.aksw.jena_sparql_api.beans.json.JsonVisitor;
-import org.aksw.jena_sparql_api.beans.json.JsonWalker;
 import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.utils.Vars;
 

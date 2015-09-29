@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api.sparql.ext.json;
 
-import org.aksw.jena_sparql_api.beans.json.JsonTransformerObject;
-import org.aksw.jena_sparql_api.beans.json.JsonTransformerUtils;
+import org.aksw.gson.utils.JsonTransformerObject;
+import org.aksw.gson.utils.JsonTransformerUtils;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;

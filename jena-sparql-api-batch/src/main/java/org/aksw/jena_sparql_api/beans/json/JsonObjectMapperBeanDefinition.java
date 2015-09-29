@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.beans.json;
 
+import org.aksw.gson.utils.JsonObjectMapper;
 import org.springframework.beans.factory.config.BeanDefinition;
 
 import com.google.gson.JsonObject;

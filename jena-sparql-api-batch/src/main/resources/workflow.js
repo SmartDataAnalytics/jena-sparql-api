@@ -1,6 +1,9 @@
 {
     fp7pp: { $sparqlService: ['http://localhost:8890/sparql', 'http://fp7-pp.publicdata.eu/'] },
     target: { $sparqlService: ['http://localhost:8890/sparql', 'http://fp7-pp.publicdata.eu/'] },
+    $prefixes: {
+    },
+
     shape: { $json: {} },
 //    shape: {
 //        $json: {
@@ -37,6 +40,13 @@ INSERT { \
         //jobRepository: 'defaultJobRepo',
 
         steps: [{
+                $sparqlPipe: {
+                    source: { ref: 'fp7pp' },
+                    target: '#{ target}',
+                    query: 'Construct { ?s ?p ?o } { ?s ?p ?o . ?s a fp7o:Project }'
+                }
+            },{
+
             $sparqlStep: {
                 name: 'step1',
                 chunk: 1,

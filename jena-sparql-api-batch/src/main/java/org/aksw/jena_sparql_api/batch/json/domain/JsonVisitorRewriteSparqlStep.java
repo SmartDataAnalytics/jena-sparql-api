@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.batch.json.domain;
 
 import java.util.Map.Entry;
 
-import org.aksw.jena_sparql_api.beans.json.JsonVisitorRewrite;
+import org.aksw.gson.utils.JsonVisitorRewrite;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;

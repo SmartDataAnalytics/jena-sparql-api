@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.spring.conversion;
 
+import java.util.List;
+
 import org.springframework.core.convert.converter.Converter;
 
 import com.hp.hpl.jena.sparql.core.DatasetDescription;
@@ -7,11 +9,11 @@ import com.hp.hpl.jena.sparql.core.DatasetDescription;
 
 @AutoRegistered
 public class C_ListOfStringsToDatasetDescription
-	implements Converter<String, DatasetDescription>
+	implements Converter<List<String>, DatasetDescription>
 {
-    public DatasetDescription convert(String defaultGraphUri) {
+    public DatasetDescription convert(List<String> defaultGraphUris) {
     	DatasetDescription result = new DatasetDescription();
-    	result.addDefaultGraphURI(defaultGraphUri);
+    	result.addAllDefaultGraphURIs(defaultGraphUris);
     	return result;
     }
 }

@@ -2,8 +2,8 @@ package org.aksw.jena_sparql_api.batch.json.domain;
 
 import java.util.Map.Entry;
 
-import org.aksw.jena_sparql_api.beans.json.JsonUtils;
-import org.aksw.jena_sparql_api.beans.json.JsonVisitorRewrite;
+import org.aksw.gson.utils.JsonUtils;
+import org.aksw.gson.utils.JsonVisitorRewrite;
 import org.aksw.jena_sparql_api.utils.ListUtils;
 
 import com.google.gson.JsonArray;
