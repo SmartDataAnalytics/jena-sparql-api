@@ -7,12 +7,14 @@ import java.io.StringReader;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import org.aksw.commons.util.StreamUtils;
 import org.aksw.gson.utils.JsonProcessorKey;
+import org.aksw.gson.utils.JsonTransformerRewrite;
 import org.aksw.gson.utils.JsonVisitorRewrite;
 import org.aksw.gson.utils.JsonWalker;
 import org.aksw.jena_sparql_api.batch.BatchWorkflowManager;
@@ -24,6 +26,7 @@ import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteShape;
 import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteSimpleJob;
 import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteSparqlService;
 import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteSparqlStep;
+import org.aksw.jena_sparql_api.batch.step.GraphResource;
 import org.aksw.jena_sparql_api.batch.to_review.MapTransformer;
 import org.aksw.jena_sparql_api.batch.to_review.MapTransformerSimple;
 import org.aksw.jena_sparql_api.beans.json.JsonProcessorContext;
@@ -37,6 +40,7 @@ import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceListService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
+import org.aksw.jena_sparql_api.model.QueryExecutionFactoryModel;
 import org.aksw.jena_sparql_api.modifier.Modifier;
 import org.aksw.jena_sparql_api.modifier.ModifierDatasetGraphEnrich;
 import org.aksw.jena_sparql_api.modifier.ModifierDatasetGraphSparqlUpdate;
@@ -59,6 +63,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersInvalidException;
+import org.springframework.batch.core.job.SimpleJob;
 import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
 import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
@@ -74,8 +79,10 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.stream.JsonReader;
 import com.hp.hpl.jena.datatypes.TypeMapper;
+import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.NodeFactory;
+import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.QueryFactory;
@@ -108,6 +115,22 @@ public class MainBatchWorkflow {
     }
 
     public static void main(String[] args) throws Exception {
+
+        //QueryExecutionFactoryResource qef = new QueryExecutionFactoryResource("dbpedia-airport-eu-snippet.nt");
+        Graph graph = new GraphResource("dbpedia-airport-eu-snippet.nt");
+        //Graph graph = new GraphResource("/home/raven/tmp/2014-09-09-AerialwayThing.way.sorted.nt");
+        QueryExecutionFactory qef = new QueryExecutionFactoryModel(graph);
+        // ?s a <http://schema.org/Airport> .
+
+        QueryExecution qe = qef.createQueryExecution("Construct { ?s ?p ?o } { ?s ?p ?o }");
+        Iterator<Triple> it = qe.execConstructTriples();
+        while(it.hasNext()) {
+            System.out.println(it.next());
+        }
+        //model.write(System.out, "TTL");
+        System.exit(0);
+
+
         Prologue p = new Prologue(getDefaultPrefixMapping());
         SparqlParserConfig c = SparqlParserConfig.create(Syntax.syntaxARQ, p);
         SparqlStmtParser parser = SparqlStmtParserImpl.create(c);
@@ -198,6 +221,7 @@ public class MainBatchWorkflow {
     }
 
 
+
     public static void mainContext(String[] args) throws Exception {
 
         AnnotationConfigApplicationContext baseContext = new AnnotationConfigApplicationContext(ConfigBatchJobDynamic.class);
@@ -248,6 +272,26 @@ public class MainBatchWorkflow {
 
         JsonElement json = readJsonElementFromResource("workflow.js");
 
+        JsonElement jobParamsJson = readJsonElementFromResource("params.js");
+        //List<JsonVisitorRewrite> jr = Arrays.<JsonVisitorRewrite>asList(
+
+        JsonVisitorRewriteJobParameters subVisitor = new JsonVisitorRewriteJobParameters();
+        JsonVisitorRewriteKeys visitor = JsonVisitorRewriteKeys.create(JsonTransformerRewrite.create(subVisitor, false));
+
+        JsonElement effectiveJobParamsJson = JsonWalker.visit(jobParamsJson, visitor);
+
+        //);
+
+        //JsonElement effectiveJobParamsJson = JsonWalker.rewrite(jobParamsJson, jr);
+
+        System.out.println("Job params: " +  new GsonBuilder().setPrettyPrinting().create().toJson(effectiveJobParamsJson));
+
+        JobParameters jobParams = JobParametersJsonUtils.toJobParameters(effectiveJobParamsJson, null);
+
+        System.out.println(jobParams);
+
+
+        //System.exit(0);
         //GenericBeanDefinition x;
         //x.
 
@@ -258,7 +302,7 @@ public class MainBatchWorkflow {
                 new JsonVisitorRewriteJson(),
                 new JsonVisitorRewriteSparqlStep(),
                 new JsonVisitorRewriteSimpleJob()
-                );
+        );
         json = JsonWalker.rewriterUntilNoChange(json, rewriters);
 
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -266,6 +310,12 @@ public class MainBatchWorkflow {
         System.out.println(str);
 
         contextProcessor.process(json);
+
+
+
+        //contextProcessor.process(json);
+
+
         //jobProcessor.process(json);
 
         batchContext.refresh();
@@ -275,6 +325,8 @@ public class MainBatchWorkflow {
         //JobLauncher jobLauncher = batchContext.getBean(JobLauncher.class);
         Job job = batchContext.getBean(Job.class);
 
+
+        System.out.println("STEP: " + ((SimpleJob)job).getStepNames());
 
 
         Collection<String> allBeans = Arrays.asList(batchContext.getBeanDefinitionNames());

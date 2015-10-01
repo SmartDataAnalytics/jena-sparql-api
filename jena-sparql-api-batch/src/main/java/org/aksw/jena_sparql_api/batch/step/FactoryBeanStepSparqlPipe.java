@@ -16,6 +16,7 @@ import org.aksw.jena_sparql_api.modifier.Modifier;
 import org.aksw.jena_sparql_api.modifier.ModifierList;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.aksw.jena_sparql_api.stmt.SparqlUpdateParser;
+import org.apache.jena.atlas.lib.Sink;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.step.builder.StepBuilder;
@@ -33,6 +34,7 @@ import com.hp.hpl.jena.sparql.core.DatasetGraph;
 //    extends AbstractFactoryBean<Step>
 //{
 //    protected StepBuilderFactory stepBuilders;
+//
 //
 //    protected String name;
 //    protected int chunkSize;

@@ -1,8 +1,18 @@
+/*
+---
+fp7pp:
+  $sparqlService:
+    - "http://localhost:8890/sparql"
+    - "http://fp7-pp.publicdata.eu/"
+target:
+  $sparqlService:
+    - "http://localhost:8890/sparql"
+    - "http://fp7-pp.publicdata.eu/"
+ *
+ */
 {
     fp7pp: { $sparqlService: ['http://localhost:8890/sparql', 'http://fp7-pp.publicdata.eu/'] },
     target: { $sparqlService: ['http://localhost:8890/sparql', 'http://fp7-pp.publicdata.eu/'] },
-    $prefixes: {
-    },
 
     shape: { $json: {} },
 //    shape: {
@@ -30,6 +40,7 @@ INSERT { \
   BIND(json:path(?item, '$.lat') AS ?y) \
   BIND(concat('http://linkedgeodata.org/triplify/', ?osmType, ?osmId) AS ?l) \
 }",
+myName: 'foobar',
 
     job: { $simpleJob: {
         //type: 'org.springframework.batch.core.job.SimpleJob',
@@ -39,16 +50,27 @@ INSERT { \
         name: 'geoCodingJob',
         //jobRepository: 'defaultJobRepo',
 
-        steps: [{
-                $sparqlPipe: {
-                    source: { ref: 'fp7pp' },
-                    target: '#{ target}',
-                    query: 'Construct { ?s ?p ?o } { ?s ?p ?o . ?s a fp7o:Project }'
-                }
-            },{
+        steps: [
+//            {
+//                $sparqlLoad: {
+//                    name: 'load task',
+//                    source: '#{ sourceFile }',
+//                    target: '#{ target }',
+//                    chunk : 1
+//                }
+//            }, {
+//
+//            }, {
+//                $sparqlPipe: {
+//                    source: { ref: 'fp7pp' },
+//                    target: '#{ target }',
+//                    query: 'Construct { ?s ?p ?o } { ?s ?p ?o . ?s a fp7o:Project }'
+//                }
+//            },
+            {
 
             $sparqlStep: {
-                name: 'step1',
+                name: ' #{ myName + (1 + 1) }  ',
                 chunk: 1,
                 concept: '?s | ?s a <http://fp7-pp.publicdata.eu/ontology/Project>',
                 shape: { ref: 'shape' },
@@ -56,21 +78,21 @@ INSERT { \
                 target: { ref: 'target'},
                 modifiers: ['DELETE { ?s ?p ?o } WHERE { ?s ?p ?o }']
             }
-        },
-        {
-            $sparqlStep: {
-                name: 'step2',
-                chunk: 1,
-                concept: '?s | ?s a <http://fp7-pp.publicdata.eu/ontology/Project>',
-                shape: { ref: 'shape' },
-                source: { ref: 'fp7pp'},
-                target: { ref: 'target'},
-                //modifiers: []
-                modifiers: [
-                    { ref: 'update' }
-                ]
-            }
         }
+//        {
+//            $sparqlStep: {
+//                name: 'step2',
+//                chunk: 1,
+//                concept: '?s | ?s a <http://fp7-pp.publicdata.eu/ontology/Project>',
+//                shape: { ref: 'shape' },
+//                source: { ref: 'fp7pp'},
+//                target: { ref: 'target'},
+//                //modifiers: []
+//                modifiers: [
+//                    { ref: 'update' }
+//                ]
+//            }
+//        }
         ]
     } }
 }
