@@ -7,10 +7,13 @@ import java.io.StringReader;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import javax.script.Invocable;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
 
 import org.aksw.commons.util.StreamUtils;
 import org.aksw.gson.utils.JsonProcessorKey;
@@ -24,15 +27,16 @@ import org.aksw.jena_sparql_api.batch.config.ConfigBatchJobDynamic;
 import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteJson;
 import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteShape;
 import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteSimpleJob;
+import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteSparqlFile;
 import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteSparqlService;
 import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteSparqlStep;
-import org.aksw.jena_sparql_api.batch.step.GraphResource;
 import org.aksw.jena_sparql_api.batch.to_review.MapTransformer;
 import org.aksw.jena_sparql_api.batch.to_review.MapTransformerSimple;
 import org.aksw.jena_sparql_api.beans.json.JsonProcessorContext;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.lookup.ListService;
 import org.aksw.jena_sparql_api.lookup.ListServiceUtils;
@@ -40,7 +44,6 @@ import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceListService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
-import org.aksw.jena_sparql_api.model.QueryExecutionFactoryModel;
 import org.aksw.jena_sparql_api.modifier.Modifier;
 import org.aksw.jena_sparql_api.modifier.ModifierDatasetGraphEnrich;
 import org.aksw.jena_sparql_api.modifier.ModifierDatasetGraphSparqlUpdate;
@@ -50,10 +53,6 @@ import org.aksw.jena_sparql_api.sparql.ext.http.E_Http;
 import org.aksw.jena_sparql_api.sparql.ext.json.E_JsonParse;
 import org.aksw.jena_sparql_api.sparql.ext.json.E_JsonPath;
 import org.aksw.jena_sparql_api.sparql.ext.json.RDFDatatypeJson;
-import org.aksw.jena_sparql_api.stmt.SparqlParserConfig;
-import org.aksw.jena_sparql_api.stmt.SparqlStmt;
-import org.aksw.jena_sparql_api.stmt.SparqlStmtParser;
-import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.spring.json.ContextProcessorJsonUtils;
@@ -79,10 +78,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.stream.JsonReader;
 import com.hp.hpl.jena.datatypes.TypeMapper;
-import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.NodeFactory;
-import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.QueryFactory;
@@ -114,30 +111,45 @@ public class MainBatchWorkflow {
         System.out.println("Got " + allBeans.size() + " beans: " + allBeans);
     }
 
+    public static void foo() throws Exception {
+        ScriptEngineManager manager = new ScriptEngineManager();
+        ScriptEngine engine = manager.getEngineByName("JavaScript");
+
+        // JavaScript code in a String
+        String script1 = (String)"function hello(name) {print ('Hello, ' + name);}";
+        // evaluate script
+        engine.eval(script1);
+
+        Invocable inv = (Invocable) engine;
+
+        inv.invokeFunction("hello", "Scripting!!" );  //This one works.
+    }
+
+
     public static void main(String[] args) throws Exception {
-
-        //QueryExecutionFactoryResource qef = new QueryExecutionFactoryResource("dbpedia-airport-eu-snippet.nt");
-        Graph graph = new GraphResource("dbpedia-airport-eu-snippet.nt");
-        //Graph graph = new GraphResource("/home/raven/tmp/2014-09-09-AerialwayThing.way.sorted.nt");
-        QueryExecutionFactory qef = new QueryExecutionFactoryModel(graph);
-        // ?s a <http://schema.org/Airport> .
-
-        QueryExecution qe = qef.createQueryExecution("Construct { ?s ?p ?o } { ?s ?p ?o }");
-        Iterator<Triple> it = qe.execConstructTriples();
-        while(it.hasNext()) {
-            System.out.println(it.next());
-        }
-        //model.write(System.out, "TTL");
-        System.exit(0);
-
-
-        Prologue p = new Prologue(getDefaultPrefixMapping());
-        SparqlParserConfig c = SparqlParserConfig.create(Syntax.syntaxARQ, p);
-        SparqlStmtParser parser = SparqlStmtParserImpl.create(c);
-
-        SparqlStmt stmt = parser.apply("INSERT DATA { <s> <p> <o> }");
-        System.out.println("Statement: " + stmt);
-
+//
+//        //QueryExecutionFactoryResource qef = new QueryExecutionFactoryResource("dbpedia-airport-eu-snippet.nt");
+//        Graph graph = new GraphResource("dbpedia-airport-eu-snippet.nt");
+//        //Graph graph = new GraphResource("/home/raven/tmp/2014-09-09-AerialwayThing.way.sorted.nt");
+//        QueryExecutionFactory qef = new QueryExecutionFactoryModel(graph);
+//        // ?s a <http://schema.org/Airport> .
+//
+//        QueryExecution qe = qef.createQueryExecution("Construct { ?s ?p ?o } { ?s ?p ?o }");
+//        Iterator<Triple> it = qe.execConstructTriples();
+//        while(it.hasNext()) {
+//            System.out.println(it.next());
+//        }
+//        //model.write(System.out, "TTL");
+//        System.exit(0);
+//
+//
+//        Prologue p = new Prologue(getDefaultPrefixMapping());
+//        SparqlParserConfig c = SparqlParserConfig.create(Syntax.syntaxARQ, p);
+//        SparqlStmtParser parser = SparqlStmtParserImpl.create(c);
+//
+//        SparqlStmt stmt = parser.apply("INSERT DATA { <s> <p> <o> }");
+//        System.out.println("Statement: " + stmt);
+//
 
 //    	mainXml();
         initJenaExtensions();
@@ -301,7 +313,8 @@ public class MainBatchWorkflow {
                 new JsonVisitorRewriteShape(),
                 new JsonVisitorRewriteJson(),
                 new JsonVisitorRewriteSparqlStep(),
-                new JsonVisitorRewriteSimpleJob()
+                new JsonVisitorRewriteSimpleJob(),
+                new JsonVisitorRewriteSparqlFile()
         );
         json = JsonWalker.rewriterUntilNoChange(json, rewriters);
 
@@ -320,6 +333,8 @@ public class MainBatchWorkflow {
 
         batchContext.refresh();
 
+        SparqlService test = (SparqlService)batchContext.getBean("sourceFile");
+        System.out.println("SourceFile: " + test);
 
         JobOperator jobOperator = batchContext.getBean(JobOperator.class);
         //JobLauncher jobLauncher = batchContext.getBean(JobLauncher.class);

@@ -61,7 +61,7 @@ public class FactoryBeanSparqlService
     }
 
     @Override
-    protected SparqlService createInstance() throws Exception {
+    public SparqlService createInstance() throws Exception {
         SparqlService result = factory.createSparqlService(service, dataset, auth);
         return result;
     }

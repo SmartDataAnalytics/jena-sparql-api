@@ -14,6 +14,8 @@ target:
     fp7pp: { $sparqlService: ['http://localhost:8890/sparql', 'http://fp7-pp.publicdata.eu/'] },
     target: { $sparqlService: ['http://localhost:8890/sparql', 'http://fp7-pp.publicdata.eu/'] },
 
+    sourceFile: { $sparqlFile: 'dbpedia-airport-eu-snippet.nt' },
+
     shape: { $json: {} },
 //    shape: {
 //        $json: {
