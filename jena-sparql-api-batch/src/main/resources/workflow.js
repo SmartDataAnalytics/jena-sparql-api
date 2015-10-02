@@ -1,18 +1,6 @@
-/*
----
-fp7pp:
-  $sparqlService:
-    - "http://localhost:8890/sparql"
-    - "http://fp7-pp.publicdata.eu/"
-target:
-  $sparqlService:
-    - "http://localhost:8890/sparql"
-    - "http://fp7-pp.publicdata.eu/"
- *
- */
 {
     fp7pp: { $sparqlService: ['http://localhost:8890/sparql', 'http://fp7-pp.publicdata.eu/'] },
-    target: { $sparqlService: ['http://localhost:8890/sparql', 'http://fp7-pp.publicdata.eu/'] },
+    target: { $sparqlService: ['http://localhost:8890/sparql', 'http://test.org/load/'] },
 
     sourceFile: { $sparqlFile: 'dbpedia-airport-eu-snippet.nt' },
 
@@ -70,12 +58,13 @@ myName: 'foobar',
 //                }
 //            },
 // simplified syntax: [target, source, query] (query defaults to CONSTRUCT WHERE { ?s ?p ?o }
-            $sparqlPipe: {
+            { $sparqlPipe: {
+              name: 'loadStep',
               chunk: 1,
               source: '#{ sourceFile }',
               target: '#{ target }',
-              query: 'Construct { ?s ?p ?o } { ?s ?p ?o . }'
-            }
+              query: 'Construct Where { ?s ?p ?o }'
+            } }
 //            $sparqlUpdate: {
 //                target:
 //                query: 'Update'
@@ -109,3 +98,16 @@ myName: 'foobar',
         ]
     } }
 }
+
+/*
+---
+fp7pp:
+  $sparqlService:
+    - "http://localhost:8890/sparql"
+    - "http://fp7-pp.publicdata.eu/"
+target:
+  $sparqlService:
+    - "http://localhost:8890/sparql"
+    - "http://fp7-pp.publicdata.eu/"
+ *
+ */

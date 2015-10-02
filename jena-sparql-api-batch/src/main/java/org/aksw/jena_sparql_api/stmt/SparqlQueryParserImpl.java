@@ -33,6 +33,11 @@ public class SparqlQueryParserImpl
         return result;
     }
 
+    public static SparqlQueryParserImpl create() {
+        SparqlQueryParserImpl result = create(Syntax.syntaxARQ, null);
+        return result;
+    }
+
     public static SparqlQueryParserImpl create(Syntax syntax) {
         SparqlQueryParserImpl result = create(syntax, null);
         return result;

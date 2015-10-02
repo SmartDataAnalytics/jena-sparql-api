@@ -24,10 +24,12 @@ import org.aksw.jena_sparql_api.batch.BatchWorkflowManager;
 import org.aksw.jena_sparql_api.batch.ListServiceResourceShape;
 import org.aksw.jena_sparql_api.batch.QueryTransformConstructGroupedGraph;
 import org.aksw.jena_sparql_api.batch.config.ConfigBatchJobDynamic;
+import org.aksw.jena_sparql_api.batch.config.ConfigServicesCore;
 import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteJson;
 import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteShape;
 import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteSimpleJob;
 import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteSparqlFile;
+import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteSparqlPipe;
 import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteSparqlService;
 import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteSparqlStep;
 import org.aksw.jena_sparql_api.batch.to_review.MapTransformer;
@@ -235,8 +237,17 @@ public class MainBatchWorkflow {
 
 
     public static void mainContext(String[] args) throws Exception {
+        AnnotationConfigApplicationContext coreContext = new AnnotationConfigApplicationContext(ConfigServicesCore.class);
 
-        AnnotationConfigApplicationContext baseContext = new AnnotationConfigApplicationContext(ConfigBatchJobDynamic.class);
+
+        AnnotationConfigApplicationContext baseContext = new AnnotationConfigApplicationContext();
+        baseContext.setParent(coreContext);
+        baseContext.register(ConfigBatchJobDynamic.class);
+        baseContext.refresh();
+
+        //AnnotationConfigApplicationContext baseContext = new AnnotationConfigApplicationContext(ConfigBatchJobDynamic.class);
+        //AnnotationConfigApplicationContext x = new AnnotationConfigApplicationContext()
+
 
         GenericApplicationContext batchContext = new GenericApplicationContext(baseContext);
         AnnotationConfigUtils.registerAnnotationConfigProcessors(batchContext);
@@ -314,7 +325,8 @@ public class MainBatchWorkflow {
                 new JsonVisitorRewriteJson(),
                 new JsonVisitorRewriteSparqlStep(),
                 new JsonVisitorRewriteSimpleJob(),
-                new JsonVisitorRewriteSparqlFile()
+                new JsonVisitorRewriteSparqlFile(),
+                new JsonVisitorRewriteSparqlPipe()
         );
         json = JsonWalker.rewriterUntilNoChange(json, rewriters);
 

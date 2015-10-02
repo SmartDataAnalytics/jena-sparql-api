@@ -29,8 +29,8 @@ public class QueryPaginator {
     {
         this.query = query;
 
-        nextOffset = query.getOffset() == Query.NOLIMIT ? 0 : query.getOffset();
-        nextRemaining = query.getLimit() == Query.NOLIMIT ? null : query.getLimit();
+        this.nextOffset = query.getOffset() == Query.NOLIMIT ? 0 : query.getOffset();
+        this.nextRemaining = query.getLimit() == Query.NOLIMIT ? null : query.getLimit();
     }
 
 

@@ -11,10 +11,10 @@ public class C_StringToModifier
     implements Converter<String, UpdateRequest>
 {
     @Autowired
-    private SparqlUpdateParser updateParser;
+    private SparqlUpdateParser parser;
 
     public UpdateRequest convert(String str) {
-        UpdateRequest result = updateParser.apply(str);
+        UpdateRequest result = parser.apply(str);
         return result;
     }
 }
