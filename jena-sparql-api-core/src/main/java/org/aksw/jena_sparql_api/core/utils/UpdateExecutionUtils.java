@@ -105,7 +105,7 @@ public class UpdateExecutionUtils {
         return result;
     }
 
-    public static UpdateProcessor executeInsertQuads(UpdateExecutionFactory uef, Iterable<Quad> quads) {
+    public static UpdateProcessor executeInsertQuads(UpdateExecutionFactory uef, Iterable<? extends Quad> quads) {
         UpdateRequest updateRequest = UpdateRequestUtils.createUpdateRequest(quads, Collections.<Quad>emptySet());
         UpdateProcessor result = executeUnlessEmpty(uef, updateRequest);
         return result;
@@ -126,22 +126,22 @@ public class UpdateExecutionUtils {
     public static UpdateProcessor executeUpdateDatasetGraph(UpdateExecutionFactory uef, Diff<? extends DatasetGraph> diff) {
         Diff<Set<Quad>> d = DatasetGraphDiffUtils.wrapDatasetGraph(diff);
 
-    	UpdateRequest updateRequest = UpdateRequestUtils.createUpdateRequest(d);
+        UpdateRequest updateRequest = UpdateRequestUtils.createUpdateRequest(d);
         UpdateProcessor result = executeUnlessEmpty(uef, updateRequest);
         return result;
     }
 
     public static UpdateProcessor executeUnlessEmpty(UpdateExecutionFactory uef, UpdateRequest updateRequest) {
-    	UpdateProcessor result;
-    	if(updateRequest.getOperations().isEmpty()) {
-    		// Create a fake update request
-    		UpdateRequest update = UpdateFactory.create("PREFIX ex: <http://example.org/> INSERT { ex:s ex:p ex:o } WHERE { ex:s ex:p ex:o }");
-    		result = com.hp.hpl.jena.update.UpdateExecutionFactory.create(update, GraphStoreFactory.create(ModelFactory.createDefaultModel()));
-    		result.execute();
-    	} else {
+        UpdateProcessor result;
+        if(updateRequest.getOperations().isEmpty()) {
+            // Create a fake update request
+            UpdateRequest update = UpdateFactory.create("PREFIX ex: <http://example.org/> INSERT { ex:s ex:p ex:o } WHERE { ex:s ex:p ex:o }");
+            result = com.hp.hpl.jena.update.UpdateExecutionFactory.create(update, GraphStoreFactory.create(ModelFactory.createDefaultModel()));
+            result.execute();
+        } else {
             result = uef.createUpdateProcessor(updateRequest);
             result.execute();
-    	}
+        }
 
         return result;
     }

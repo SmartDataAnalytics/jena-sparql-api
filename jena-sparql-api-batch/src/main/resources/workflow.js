@@ -69,18 +69,29 @@ myName: 'foobar',
 //                    query: 'Construct { ?s ?p ?o } { ?s ?p ?o . ?s a fp7o:Project }'
 //                }
 //            },
-            {
-
-            $sparqlStep: {
-                name: ' #{ myName + (1 + 1) }  ',
-                chunk: 1,
-                concept: '?s | ?s a <http://fp7-pp.publicdata.eu/ontology/Project>',
-                shape: { ref: 'shape' },
-                source: { ref: 'target'},
-                target: { ref: 'target'},
-                modifiers: ['DELETE { ?s ?p ?o } WHERE { ?s ?p ?o }']
+// simplified syntax: [target, source, query] (query defaults to CONSTRUCT WHERE { ?s ?p ?o }
+            $sparqlPipe: {
+              chunk: 1,
+              source: '#{ sourceFile }',
+              target: '#{ target }',
+              query: 'Construct { ?s ?p ?o } { ?s ?p ?o . }'
             }
-        }
+//            $sparqlUpdate: {
+//                target:
+//                query: 'Update'
+//            }
+
+
+//            $sparqlStep: {
+//                name: ' #{ myName + (1 + 1) }  ',
+//                chunk: 1,
+//                concept: '?s | ?s a <http://fp7-pp.publicdata.eu/ontology/Project>',
+//                shape: { ref: 'shape' },
+//                source: { ref: 'target'},
+//                target: { ref: 'target'},
+//                modifiers: ['DELETE { ?s ?p ?o } WHERE { ?s ?p ?o }']
+//            }
+//        }
 //        {
 //            $sparqlStep: {
 //                name: 'step2',

@@ -20,59 +20,37 @@ import com.hp.hpl.jena.query.Query;
 public class PaginationQueryIterator
     extends SinglePrefetchIterator<Query>
 {
-	private long nextOffset;
-	private Long nextRemaining;
+    private long pageSize;
+    private QueryPaginator queryPaginator;
 
-	private Query query;
-	private long pageSize;
-
-	/**
-	 * Note: The query object's limit and offest will be modified.
-	 * Use Query.cloneQuery in order to create a copy.
-	 *
-	 * @param query
-	 * @param pageSize
-	 */
-	public PaginationQueryIterator(Query query, long pageSize)
-	{
-		this.query = query;
-		this.pageSize = pageSize;
+    /**
+     * Note: The query object's limit and offest will be modified.
+     * Use Query.cloneQuery in order to create a copy.
+     *
+     * @param query
+     * @param pageSize
+     */
+    public PaginationQueryIterator(Query query, long pageSize)
+    {
+        this.queryPaginator = new QueryPaginator(query);
+        this.pageSize = pageSize;
+    }
 
 
-		nextOffset = query.getOffset() == Query.NOLIMIT ? 0 : query.getOffset();
-		nextRemaining = query.getLimit() == Query.NOLIMIT ? null : query.getLimit();
-	}
+    /**
+     * Returns the next query or null
+     *
+     * @return
+     * @throws Exception
+     */
+    public Query prefetch()
+    {
+        Query result = queryPaginator.nextPage(pageSize);
+        if(result == null) {
+            return finish();
+        }
 
+        return result;
+    }
 
-	/**
-	 * Returns the next query or null
-	 *
-	 * @return
-	 * @throws Exception
-	 */
-	public Query prefetch()
-	{
-		if(nextOffset == 0) {
-			query.setOffset(Query.NOLIMIT);
-		} else {
-			query.setOffset(nextOffset);
-		}
-
-		if(nextRemaining == null) {
-			query.setLimit(pageSize);
-			nextOffset += pageSize;
-		} else {
-			long limit = Math.min(pageSize, nextRemaining);
-			nextOffset += limit;
-			nextRemaining -= limit;
-
-			if(limit == 0) {
-				return finish();
-			}
-
-			query.setLimit(limit);
-		}
-
-		return query;
-	}
 }
