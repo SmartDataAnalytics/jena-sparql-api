@@ -56,6 +56,7 @@ import org.aksw.jena_sparql_api.sparql.ext.http.E_Http;
 import org.aksw.jena_sparql_api.sparql.ext.json.E_JsonParse;
 import org.aksw.jena_sparql_api.sparql.ext.json.E_JsonPath;
 import org.aksw.jena_sparql_api.sparql.ext.json.RDFDatatypeJson;
+import org.aksw.jena_sparql_api.sparql.ext.term.E_TermValid;
 import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.spring.json.ContextProcessorJsonUtils;
@@ -161,6 +162,7 @@ public class MainBatchWorkflow {
 
     public static String jsonFn = "http://jsa.aksw.org/fn/json/";
     public static String httpFn = "http://jsa.aksw.org/fn/http/";
+    public static String termFn = "http://jsa.aksw.org/fn/term/";
 
     public static PrefixMapping getDefaultPrefixMapping() {
         PrefixMapping pm = new PrefixMappingImpl();
@@ -175,6 +177,7 @@ public class MainBatchWorkflow {
         pm.setNsPrefix("xsd", XSD.getURI());
         pm.setNsPrefix("json", jsonFn);
         pm.setNsPrefix("http", httpFn);
+        pm.setNsPrefix("term", termFn);
 
         return pm;
     }
@@ -191,6 +194,7 @@ public class MainBatchWorkflow {
 
         FunctionRegistry.get().put(httpFn + "get", E_Http.class);
 
+        FunctionRegistry.get().put(termFn + "valid", E_TermValid.class);
 
         //FunctionRegistry.get().put
         //UserDefinedFunctionFactory.getFactory().add(httpFn + "getJson", "", args);

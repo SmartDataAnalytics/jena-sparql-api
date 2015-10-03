@@ -1,6 +1,6 @@
 {
-    fp7pp: { $sparqlService: ['http://localhost:8890/sparql', 'http://fp7-pp.publicdata.eu/'] },
-    target: { $sparqlService: ['http://localhost:8890/sparql', 'http://test.org/load/'] },
+    fp7pp: { $sparqlService: ['http://fp7-pp.publicdata.eu/sparql', 'http://fp7-pp.publicdata.eu/'] },
+    target: { $sparqlService: ['http://localhost:8890/sparql', 'http://fp7-pp.publicdata.eu/'] },
 
     sourceFile: { $sparqlFile: 'dbpedia-airport-eu-snippet.nt' },
 
@@ -62,15 +62,16 @@ myName: 'foobar',
                 name: 'updateStep',
                 target: '#{ target }',
                 update: 'DELETE { ?s ?p ?o } WHERE { ?s ?p ?o}'
-            } }
+            } },
 
-//            { $sparqlPipe: {
-//              name: 'loadStep',
-//              chunk: 1,
-//              source: '#{ sourceFile }',
-//              target: '#{ target }',
-//              query: 'Construct Where { ?s ?p ?o }'
-//            } },
+            { $sparqlPipe: {
+              name: 'loadStep',
+              chunk: 1000,
+              source: '#{ fp7pp }',
+              target: '#{ target }',
+              query: 'Construct Where { ?s ?p ?o }',
+              filter: 'term:valid(?s) && term:valid(?p) && term:valid(?o)'
+            } }
 
 //            $sparqlUpdate: {
 //                target:

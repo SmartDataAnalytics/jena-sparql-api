@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.batch.step;
 
 import org.aksw.jena_sparql_api.batch.reader.ItemReaderQuad;
+import org.aksw.jena_sparql_api.batch.reader.PredicateQuadExpr;
 import org.aksw.jena_sparql_api.batch.writer.ItemWriterQuad;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
@@ -12,8 +13,10 @@ import org.springframework.batch.item.support.PassThroughItemProcessor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.AbstractFactoryBean;
 
+import com.google.common.base.Predicate;
 import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.sparql.core.Quad;
+import com.hp.hpl.jena.sparql.expr.Expr;
 
 
 public class FactoryBeanStepSparqlPipe
@@ -28,6 +31,9 @@ public class FactoryBeanStepSparqlPipe
 
     protected QueryExecutionFactory source;
     protected UpdateExecutionFactory target;
+
+    // A filter expression over the read triples
+    protected Expr filter;
 
 
     public FactoryBeanStepSparqlPipe() {
@@ -96,10 +102,20 @@ public class FactoryBeanStepSparqlPipe
         this.target = target;
     }
 
+    public Expr getFilter() {
+        return filter;
+    }
+
+    public void setFilter(Expr filter) {
+        this.filter = filter;
+    }
 
     @Override
     public Step createInstance() throws Exception {
-        ItemReaderQuad reader = new ItemReaderQuad(source, query);
+
+        Predicate<Quad> predicate = filter == null ? null : new PredicateQuadExpr(filter);
+
+        ItemReaderQuad reader = new ItemReaderQuad(source, query, predicate);
         ItemProcessor<? super Quad, ? extends Quad> processor = new PassThroughItemProcessor<Quad>();
         ItemWriterQuad writer = new ItemWriterQuad(target);
 

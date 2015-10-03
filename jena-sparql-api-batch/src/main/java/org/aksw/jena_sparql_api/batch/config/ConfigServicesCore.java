@@ -2,9 +2,12 @@ package org.aksw.jena_sparql_api.batch.config;
 
 import java.util.List;
 
+import org.aksw.jena_sparql_api.batch.cli.main.MainBatchWorkflow;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactoryHttp;
 import org.aksw.jena_sparql_api.spring.conversion.ConverterRegistryPostProcessor;
+import org.aksw.jena_sparql_api.stmt.SparqlExprParser;
+import org.aksw.jena_sparql_api.stmt.SparqlExprParserImpl;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParser;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.stmt.SparqlUpdateParser;
@@ -23,6 +26,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.convert.support.ConfigurableConversionService;
 import org.springframework.core.convert.support.DefaultConversionService;
+
+import com.hp.hpl.jena.shared.PrefixMapping;
+import com.hp.hpl.jena.shared.impl.PrefixMappingImpl;
 
 @Configuration
 @ComponentScan({"org.aksw.jena_sparql_api.spring.conversion"})
@@ -44,20 +50,36 @@ public class ConfigServicesCore
     }
 
     @Bean
-    public SparqlServiceFactory defaultSparqlServiceFactory() {
-        SparqlServiceFactory result = new SparqlServiceFactoryHttp();
+    public PrefixMapping defaultPrefixMapping() {
+//        PrefixMapping result = new PrefixMappingImpl();
+//
+//        result.getNsPrefixMap().putAll(MainBatchWorkflow.getDefaultPrefixMapping().getNsPrefixMap());
+        PrefixMapping result = MainBatchWorkflow.getDefaultPrefixMapping();
         return result;
     }
 
     @Bean
-    public SparqlQueryParser sparqlQueryParserDefault() {
+    public SparqlQueryParser defaultSparqlQueryParser() {
         SparqlQueryParser result = SparqlQueryParserImpl.create();
         return result;
     }
 
     @Bean
-    public SparqlUpdateParser sparqlUpdateParserDefault() {
+    public SparqlUpdateParser defaultSparqlUpdateParser() {
         SparqlUpdateParser result = SparqlUpdateParserImpl.create();
+        return result;
+    }
+
+    @Bean
+    @Autowired
+    public SparqlExprParser defaultSparqlExprParser(PrefixMapping pm) {
+        SparqlExprParser result = new SparqlExprParserImpl(pm);
+        return result;
+    }
+
+    @Bean
+    public SparqlServiceFactory defaultSparqlServiceFactory() {
+        SparqlServiceFactory result = new SparqlServiceFactoryHttp();
         return result;
     }
 

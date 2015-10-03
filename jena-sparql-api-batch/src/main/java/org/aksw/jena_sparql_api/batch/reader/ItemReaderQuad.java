@@ -9,12 +9,12 @@ import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.pagination.core.PagingQuery;
 import org.springframework.batch.item.data.AbstractPaginatedDataItemReader;
 
+import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.sparql.core.Quad;
-
 
 /**
  * Item reader that reads a SPARQL SELECT query using pagination
@@ -28,12 +28,13 @@ public class ItemReaderQuad
 {
     private Query query;
     private QueryExecutionFactory qef;
+    private Predicate<Quad> predicate;
 
-
-    public ItemReaderQuad(QueryExecutionFactory qef, Query query) {
+    public ItemReaderQuad(QueryExecutionFactory qef, Query query, Predicate<Quad> predicate) {
         setName(this.getClass().getName());
         this.qef = qef;
         this.query = query;
+        this.predicate = predicate;
     }
 
 
@@ -54,7 +55,11 @@ public class ItemReaderQuad
         } else {
             QueryExecution qe = qef.createQueryExecution(query);
             Iterator<Triple> triplesIt = qe.execConstructTriples();
+
             result = Iterators.transform(triplesIt, F_TripleToQuad.fn);
+            if(predicate != null) {
+                result = Iterators.filter(result, predicate);
+            }
         }
 
         return result;
