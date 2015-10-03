@@ -58,13 +58,20 @@ myName: 'foobar',
 //                }
 //            },
 // simplified syntax: [target, source, query] (query defaults to CONSTRUCT WHERE { ?s ?p ?o }
-            { $sparqlPipe: {
-              name: 'loadStep',
-              chunk: 1,
-              source: '#{ sourceFile }',
-              target: '#{ target }',
-              query: 'Construct Where { ?s ?p ?o }'
+            { $sparqlUpdate: {
+                name: 'updateStep',
+                target: '#{ target }',
+                update: 'DELETE { ?s ?p ?o } WHERE { ?s ?p ?o}'
             } }
+
+//            { $sparqlPipe: {
+//              name: 'loadStep',
+//              chunk: 1,
+//              source: '#{ sourceFile }',
+//              target: '#{ target }',
+//              query: 'Construct Where { ?s ?p ?o }'
+//            } },
+
 //            $sparqlUpdate: {
 //                target:
 //                query: 'Update'

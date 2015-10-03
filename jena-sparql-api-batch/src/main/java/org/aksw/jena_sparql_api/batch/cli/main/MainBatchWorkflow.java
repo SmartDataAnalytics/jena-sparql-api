@@ -32,6 +32,7 @@ import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteSparqlFile;
 import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteSparqlPipe;
 import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteSparqlService;
 import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteSparqlStep;
+import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteSparqlUpdate;
 import org.aksw.jena_sparql_api.batch.to_review.MapTransformer;
 import org.aksw.jena_sparql_api.batch.to_review.MapTransformerSimple;
 import org.aksw.jena_sparql_api.beans.json.JsonProcessorContext;
@@ -326,7 +327,8 @@ public class MainBatchWorkflow {
                 new JsonVisitorRewriteSparqlStep(),
                 new JsonVisitorRewriteSimpleJob(),
                 new JsonVisitorRewriteSparqlFile(),
-                new JsonVisitorRewriteSparqlPipe()
+                new JsonVisitorRewriteSparqlPipe(),
+                new JsonVisitorRewriteSparqlUpdate()
         );
         json = JsonWalker.rewriterUntilNoChange(json, rewriters);
 
