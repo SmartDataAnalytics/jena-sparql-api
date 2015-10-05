@@ -17,6 +17,7 @@ import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.shared.PrefixMapping;
 import com.hp.hpl.jena.shared.impl.PrefixMappingImpl;
+import com.hp.hpl.jena.sparql.core.Prologue;
 import com.hp.hpl.jena.sparql.expr.E_Equals;
 import com.hp.hpl.jena.sparql.expr.Expr;
 import com.hp.hpl.jena.sparql.expr.ExprVar;
@@ -72,25 +73,29 @@ import com.hp.hpl.jena.sparql.util.ExprUtils;
  *
  */
 public class ResourceShapeParserJson
-	implements JsonVisitor<Void>
+    implements JsonVisitor<Void>
 {
-	protected ResourceShapeBuilder builder;
+    protected ResourceShapeBuilder builder;
 
-	public ResourceShapeBuilder getBuilder() {
-		return builder;
-	}
+    public ResourceShapeBuilder getBuilder() {
+        return builder;
+    }
 
-	public ResourceShapeParserJson() {
-		this(new PrefixMappingImpl());
-	}
+    public ResourceShapeParserJson() {
+        this(new PrefixMappingImpl());
+    }
 
     public ResourceShapeParserJson(PrefixMapping prefixMapping) {
-    	this(new ResourceShapeBuilder(prefixMapping));
+        this(new ResourceShapeBuilder(prefixMapping));
+    }
+
+    public ResourceShapeParserJson(Prologue prologue) {
+        this(new ResourceShapeBuilder(prologue));
     }
 
     public ResourceShapeParserJson(ResourceShapeBuilder builder) {
-    	this.builder = builder;
-    	//this.builder = new ResourceShapeBuilder(prefixMapping);
+        this.builder = builder;
+        //this.builder = new ResourceShapeBuilder(prefixMapping);
     }
 
 
@@ -139,31 +144,31 @@ public class ResourceShapeParserJson
     }
 
     public static ResourceShape parse(JsonElement json) {
-    	ResourceShapeParserJson parser = new ResourceShapeParserJson();
-    	JsonWalker.visit(json, parser);
+        ResourceShapeParserJson parser = new ResourceShapeParserJson();
+        JsonWalker.visit(json, parser);
 
         ResourceShape result = parser.getBuilder().getResourceShape();
         return result;
     }
 
     public static ResourceShape parse(JsonElement json, ResourceShapeBuilder builder) {
-    	ResourceShapeParserJson parser = new ResourceShapeParserJson(builder);
+        ResourceShapeParserJson parser = new ResourceShapeParserJson(builder);
 
-    	JsonWalker.visit(json, parser);
+        JsonWalker.visit(json, parser);
         ResourceShape result = builder.getResourceShape();
         return result;
     }
 
 
-	@Override
-	public Void visit(JsonNull json) {
-		return null;
-	}
+    @Override
+    public Void visit(JsonNull json) {
+        return null;
+    }
 
 
-	@Override
-	public Void visit(JsonObject json) {
-		PrefixMapping pm = builder.getPrefixMapping();
+    @Override
+    public Void visit(JsonObject json) {
+        PrefixMapping pm = builder.getPrefixMapping();
 
         for(Entry<String, JsonElement> entry : json.entrySet()) {
             String str = entry.getKey();
@@ -175,23 +180,23 @@ public class ResourceShapeParserJson
         }
 
         return null;
-	}
+    }
 
 
-	@Override
-	public Void visit(JsonArray json) {
+    @Override
+    public Void visit(JsonArray json) {
         for(JsonElement item : json) {
             JsonWalker.walk(item, this);
         }
         return null;
-	}
+    }
 
 
-	@Override
-	public Void visit(JsonPrimitive json) {
-		PrefixMapping pm = builder.getPrefixMapping();
+    @Override
+    public Void visit(JsonPrimitive json) {
+        PrefixMapping pm = builder.getPrefixMapping();
 
-		if(json.isBoolean()) {
+        if(json.isBoolean()) {
             Boolean tf = json.getAsBoolean();
             if(tf == true) {
                 builder.nav(NodeValue.TRUE, true);
@@ -204,6 +209,6 @@ public class ResourceShapeParserJson
             builder.nav(step);
         }
 
-		return null;
-	}
+        return null;
+    }
 }

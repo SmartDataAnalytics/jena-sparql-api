@@ -12,6 +12,7 @@ import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.shared.PrefixMapping;
 import com.hp.hpl.jena.shared.impl.PrefixMappingImpl;
+import com.hp.hpl.jena.sparql.core.Prologue;
 import com.hp.hpl.jena.sparql.expr.E_Equals;
 import com.hp.hpl.jena.sparql.expr.Expr;
 import com.hp.hpl.jena.sparql.expr.ExprVar;
@@ -22,6 +23,11 @@ import com.hp.hpl.jena.sparql.util.ExprUtils;
 public class ResourceShapeBuilder {
     private ResourceShape resourceShape;
     private PrefixMapping prefixMapping;
+    //private Prologue prologue;
+
+    public ResourceShapeBuilder(Prologue prologue) {
+        this(prologue.getPrefixMapping());
+    }
 
     public ResourceShapeBuilder(PrefixMapping prefixMapping) {
         this(new ResourceShape(), prefixMapping);

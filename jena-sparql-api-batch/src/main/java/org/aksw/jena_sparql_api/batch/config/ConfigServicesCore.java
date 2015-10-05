@@ -6,6 +6,8 @@ import org.aksw.jena_sparql_api.batch.cli.main.MainBatchWorkflow;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactoryHttp;
 import org.aksw.jena_sparql_api.spring.conversion.ConverterRegistryPostProcessor;
+import org.aksw.jena_sparql_api.stmt.ResourceShapeParser;
+import org.aksw.jena_sparql_api.stmt.ResourceShapeParserImpl;
 import org.aksw.jena_sparql_api.stmt.SparqlConceptParser;
 import org.aksw.jena_sparql_api.stmt.SparqlConceptParserImpl;
 import org.aksw.jena_sparql_api.stmt.SparqlElementParser;
@@ -31,6 +33,7 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.convert.support.ConfigurableConversionService;
 import org.springframework.core.convert.support.DefaultConversionService;
 
+import com.google.gson.Gson;
 import com.hp.hpl.jena.query.Syntax;
 import com.hp.hpl.jena.shared.PrefixMapping;
 import com.hp.hpl.jena.sparql.core.Prologue;
@@ -46,6 +49,12 @@ public class ConfigServicesCore
     public void setApplicationContext(ApplicationContext applicationContext)
             throws BeansException {
         this.applicationContext = applicationContext;
+    }
+
+    @Bean
+    public Gson defaultGson() {
+        Gson result = new Gson();
+        return result;
     }
 
     @Bean
@@ -108,6 +117,13 @@ public class ConfigServicesCore
     @Bean
     public SparqlServiceFactory defaultSparqlServiceFactory() {
         SparqlServiceFactory result = new SparqlServiceFactoryHttp();
+        return result;
+    }
+
+    @Bean
+    @Autowired
+    public ResourceShapeParser defaultResourceShapeParser(Prologue prologue, Gson gson) {
+        ResourceShapeParser result = new ResourceShapeParserImpl(prologue, gson);
         return result;
     }
 
