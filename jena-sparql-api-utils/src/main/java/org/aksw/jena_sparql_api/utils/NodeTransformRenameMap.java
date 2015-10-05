@@ -19,6 +19,7 @@ public class NodeTransformRenameMap
 
     public final Node convert(Node node)
     {
-        return MapUtils.getOrElse(map, node, node);
+        Node result = MapUtils.getOrElse(map, node, node);
+        return result;
     }
 }

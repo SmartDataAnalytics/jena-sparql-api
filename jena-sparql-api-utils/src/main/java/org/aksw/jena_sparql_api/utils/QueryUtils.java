@@ -13,6 +13,17 @@ import java.util.Set;
 
 public class QueryUtils {
 
+    public static Query fixVarNames(Query query) {
+        Query result = query.cloneQuery();
+
+        Element element = query.getQueryPattern();
+        Element repl = ElementUtils.fixVarNames(element);
+
+        result.setQueryPattern(repl);
+        return result;
+    }
+
+
     /**
      *
      *
@@ -42,49 +53,49 @@ public class QueryUtils {
 
     }
 
-	public static Query elementToQuery(Element pattern)
-	{
+    public static Query elementToQuery(Element pattern)
+    {
         return elementToQuery(pattern, null);
-	}
+    }
 
-	/**
-	 * This method does basically the same as
-	 *     com.hp.hpl.jena.sparql.engine.QueryExecutionBase.execConstruct
-	 *     and SparqlerBaseSelect
-	 * note sure if it is redundant
-	 *
-	 * @param quads
-	 * @param binding
-	 * @return
-	 */
-	public static Set<Quad> instanciate(Iterable<Quad> quads, Binding binding)
-	{
-		Set<Quad> result = new HashSet<Quad>();
-		Node nodes[] = new Node[4];
-		for(Quad quad : quads) {
-			for(int i = 0; i < 4; ++i) {
-				Node node = QuadUtils.getNode(quad, i);
+    /**
+     * This method does basically the same as
+     *     com.hp.hpl.jena.sparql.engine.QueryExecutionBase.execConstruct
+     *     and SparqlerBaseSelect
+     * note sure if it is redundant
+     *
+     * @param quads
+     * @param binding
+     * @return
+     */
+    public static Set<Quad> instanciate(Iterable<Quad> quads, Binding binding)
+    {
+        Set<Quad> result = new HashSet<Quad>();
+        Node nodes[] = new Node[4];
+        for(Quad quad : quads) {
+            for(int i = 0; i < 4; ++i) {
+                Node node = QuadUtils.getNode(quad, i);
 
-				// If the node is a variable, then substitute it's value
-				if(node.isVariable()) {
-					node = binding.get((Var)node);
-				}
+                // If the node is a variable, then substitute it's value
+                if(node.isVariable()) {
+                    node = binding.get((Var)node);
+                }
 
-				// If the node is null, or any non-object position
-				// gets assigned a literal then we cannot instanciate
-				if(node == null || (i < 3 && node.isLiteral())) {
-					result.clear();
-					return result;
-				}
+                // If the node is null, or any non-object position
+                // gets assigned a literal then we cannot instanciate
+                if(node == null || (i < 3 && node.isLiteral())) {
+                    result.clear();
+                    return result;
+                }
 
-				nodes[i] = node;
-			}
+                nodes[i] = node;
+            }
 
-			Quad inst = QuadUtils.create(nodes);
-			result.add(inst);
-		}
+            Quad inst = QuadUtils.create(nodes);
+            result.add(inst);
+        }
 
-		return result;
-	}
+        return result;
+    }
 
 }

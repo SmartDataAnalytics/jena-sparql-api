@@ -39,7 +39,7 @@ import org.aksw.jena_sparql_api.beans.json.JsonProcessorContext;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.core.SparqlService;
+import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.lookup.ListService;
 import org.aksw.jena_sparql_api.lookup.ListServiceUtils;
@@ -75,8 +75,6 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.context.annotation.AnnotationConfigUtils;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.context.support.GenericApplicationContext;
-import org.springframework.core.env.JOptCommandLinePropertySource;
-import org.springframework.core.env.PropertySource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import com.google.gson.Gson;
@@ -134,6 +132,19 @@ public class MainBatchWorkflow {
 
 
     public static void main(String[] args) throws Exception {
+
+        String queryStr = "INSERT { ?s tmp:location ?l } WHERE { ?s o:address [ o:country [ rdfs:label ?col ] ; o:city [ rdfs:label ?cil ]  ] BIND(concat(?cil, ' ', ?col) As ?l) }";
+
+        UpdateRequest ur = new UpdateRequest();
+        ur.setPrefixMapping(getDefaultPrefixMapping());
+        UpdateFactory.parse(ur, queryStr, "http://example.org/", Syntax.syntaxARQ);
+        UpdateRequestUtils.fixVarNames(ur);
+        //QueryTransformConstructGroupedGraph.fixVarNames(query);
+        String x = ur.toString();
+
+        System.out.println(x);
+        System.exit(0);
+
 
 
 //
@@ -274,7 +285,6 @@ public class MainBatchWorkflow {
         //x.
         //BeanDefinition
         //Bean
-
 
         /*
          * Context processing

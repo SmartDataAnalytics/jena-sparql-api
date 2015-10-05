@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.core;
 
+import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
 import org.apache.jena.atlas.web.auth.HttpAuthenticator;
 
 import com.hp.hpl.jena.sparql.core.DatasetDescription;
@@ -30,6 +31,8 @@ public class UpdateExecutionFactoryHttp
 
     @Override
     public UpdateProcessor createUpdateProcessor(UpdateRequest updateRequest) {
+        UpdateRequestUtils.fixVarNames(updateRequest);
+
         UpdateProcessRemote result = new UpdateProcessRemote(updateRequest, remoteEndpoint, null);//request, endpoint, context);
 
         result.setAuthenticator(authenticator);
