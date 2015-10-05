@@ -1,20 +1,8 @@
 {
-    source: { $sparqlService: ['http://fp7-pp.publicdata.eu/sparql', 'http://fp7-pp.publicdata.eu/'] },
+//    source: { $sparqlService: ['http://fp7-pp.publicdata.eu/sparql', 'http://fp7-pp.publicdata.eu/'] },
+    source: { $sparqlService: ['http://localhost:8890/sparql', 'http://fp7-pp.publicdata.eu/'] },
     target: { $sparqlService: ['http://localhost:8890/sparql', 'http://fp7-pp.publicdata.eu/'] },
 
-    shape: { $json: {} },
-//    shape: {
-//        $json: {
-//            'fp7o:funding': {
-//              'fp7o:partner': {
-//                'fp7o:address': {
-//                  'fp7o:country': 'rdfs:label',
-//                  'fp7o:city': 'rdfs:label'
-//                }
-//              }
-//            }
-//        }
-//      },
     job: { $simpleJob: {
         name: 'geoCodingJob',
 

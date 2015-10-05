@@ -169,3 +169,17 @@ target:
     - "http://fp7-pp.publicdata.eu/"
  *
  */
+//    shape: {
+//        $json: {
+//            'fp7o:funding': {
+//              'fp7o:partner': {
+//                'fp7o:address': {
+//                  'fp7o:country': 'rdfs:label',
+//                  'fp7o:city': 'rdfs:label'
+//                }
+//              }
+//            }
+//        }
+//      },
+
+

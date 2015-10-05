@@ -15,12 +15,12 @@ import org.aksw.jena_sparql_api.lookup.ListService;
 import org.aksw.jena_sparql_api.modifier.Modifier;
 import org.aksw.jena_sparql_api.modifier.ModifierList;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
+import org.aksw.jena_sparql_api.stmt.ResourceShapeParser;
 import org.aksw.jena_sparql_api.stmt.SparqlUpdateParser;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
-import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.AbstractFactoryBean;
@@ -34,6 +34,8 @@ public class FactoryBeanStepSparqlDiff
 {
     //protected AbstractBatchConfiguration batchConfig;
     protected StepBuilderFactory stepBuilders;
+
+
 
 //	@Autowired
 //	protected StepBuilder stepBuilder;
@@ -52,6 +54,10 @@ public class FactoryBeanStepSparqlDiff
     //protected ListService<>
 
     protected SparqlUpdateParser updateParser;
+
+    @Autowired
+    protected ResourceShapeParser shapeParser;
+
     protected List<Modifier<? super DatasetGraph>> modifiers;
     //protected List<?> modifiers;
 
