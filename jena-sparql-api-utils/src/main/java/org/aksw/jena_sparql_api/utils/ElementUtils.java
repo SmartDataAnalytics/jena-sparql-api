@@ -106,9 +106,6 @@ public class ElementUtils {
     }
 
     public static Element applyNodeTransform(Element element, NodeTransform nodeTransform) {
-        //Op op = Algebra.compile(element);
-        //Op tmp = NodeTransformLib.transform(nodeTransform, op);
-        //Query query = OpAsQuery.asQuery(tmp);
         ElementTransformSubst elementTransform = new ElementTransformSubst(nodeTransform);
         ExprTransform exprTransform = new ExprTransformNodeElement(nodeTransform, elementTransform);
         Element result = ElementTransformer.transform(element, elementTransform, exprTransform);
