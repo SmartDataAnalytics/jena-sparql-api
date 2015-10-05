@@ -1,6 +1,6 @@
 {
-//    source: { $sparqlService: ['http://fp7-pp.publicdata.eu/sparql', 'http://fp7-pp.publicdata.eu/'] },
-    source: { $sparqlService: ['http://localhost:8890/sparql', 'http://fp7-pp.publicdata.eu/'] },
+    source: { $sparqlService: ['http://fp7-pp.publicdata.eu/sparql', 'http://fp7-pp.publicdata.eu/'] },
+//    source: { $sparqlService: ['http://localhost:8890/sparql', 'http://fp7-pp.publicdata.eu/'] },
     target: { $sparqlService: ['http://localhost:8890/sparql', 'http://fp7-pp.publicdata.eu/'] },
 
     job: { $simpleJob: {
@@ -54,13 +54,13 @@ WHERE { \
             { $sparqlStep: {
                 name: 'geocodeLocations',
                 chunk: 1000,
-                source: '#{ source }',
+                source: '#{ target }',
+                target: '#{ target }',
                 concept: '?s | { ?s tmp:location ?j . Optional { ?s tmp:geocodeJson ?j } Filter(!Bound(?j)) }',
                 shape: { $json: {
                     'tmp:location': false,
                     'tmp:geocodeJson': false
                 } },
-                target: '#{ target }',
                 modifiers: [ 'DELETE WHERE { ?s tmp:geocodeJson ?o } ',
 '\
 INSERT { \
@@ -80,11 +80,11 @@ WHERE { \
             { $sparqlStep: {
                 name: 'createLgdUrls',
                 chunk: 1000,
-                source: '#{ source }',
+                source: '#{ target }',
+                target: '#{ target }',
                 shape: { $json: {
                     'tmp:geocodeJson': false
                 } },
-                target: '#{ target }',
                 modifiers: ['\
 INSERT { \
     ?s tmp:lgdLink ?l \
