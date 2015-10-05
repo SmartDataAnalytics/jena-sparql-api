@@ -6,6 +6,10 @@ import org.aksw.jena_sparql_api.batch.cli.main.MainBatchWorkflow;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactoryHttp;
 import org.aksw.jena_sparql_api.spring.conversion.ConverterRegistryPostProcessor;
+import org.aksw.jena_sparql_api.stmt.SparqlConceptParser;
+import org.aksw.jena_sparql_api.stmt.SparqlConceptParserImpl;
+import org.aksw.jena_sparql_api.stmt.SparqlElementParser;
+import org.aksw.jena_sparql_api.stmt.SparqlElementParserImpl;
 import org.aksw.jena_sparql_api.stmt.SparqlExprParser;
 import org.aksw.jena_sparql_api.stmt.SparqlExprParserImpl;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParser;
@@ -27,8 +31,9 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.convert.support.ConfigurableConversionService;
 import org.springframework.core.convert.support.DefaultConversionService;
 
+import com.hp.hpl.jena.query.Syntax;
 import com.hp.hpl.jena.shared.PrefixMapping;
-import com.hp.hpl.jena.shared.impl.PrefixMappingImpl;
+import com.hp.hpl.jena.sparql.core.Prologue;
 
 @Configuration
 @ComponentScan({"org.aksw.jena_sparql_api.spring.conversion"})
@@ -59,14 +64,37 @@ public class ConfigServicesCore
     }
 
     @Bean
-    public SparqlQueryParser defaultSparqlQueryParser() {
-        SparqlQueryParser result = SparqlQueryParserImpl.create();
+    @Autowired
+    public Prologue defaultPrologue(PrefixMapping prefixMapping) {
+        Prologue result = new Prologue(prefixMapping);
         return result;
     }
 
     @Bean
-    public SparqlUpdateParser defaultSparqlUpdateParser() {
-        SparqlUpdateParser result = SparqlUpdateParserImpl.create();
+    @Autowired
+    public SparqlQueryParser defaultSparqlQueryParser(Prologue prologue) {
+        SparqlQueryParser result = SparqlQueryParserImpl.create(Syntax.syntaxARQ, prologue);
+        return result;
+    }
+
+    @Bean
+    @Autowired
+    public SparqlUpdateParser defaultSparqlUpdateParser(Prologue prologue) {
+        SparqlUpdateParser result = SparqlUpdateParserImpl.create(Syntax.syntaxARQ, prologue);
+        return result;
+    }
+
+    @Bean
+    @Autowired
+    public SparqlElementParser defaultSparqlElementParser(SparqlQueryParser queryParser) {
+        SparqlElementParser result = new SparqlElementParserImpl(queryParser);
+        return result;
+    }
+
+    @Bean
+    @Autowired
+    public SparqlConceptParser defaultSparqlConceptParser(SparqlElementParser elementParser) {
+        SparqlConceptParser result = new SparqlConceptParserImpl(elementParser);
         return result;
     }
 

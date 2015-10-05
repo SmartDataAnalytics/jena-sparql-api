@@ -31,6 +31,7 @@ import com.hp.hpl.jena.sparql.syntax.PatternVars;
 /**
  * A concept combines a SPARQL graph pattern (element) with a variable.
  *
+ * NOTE: For concept parsing, rather use SparqlConceptParser than the static methods on this class.
  *
  * @author raven
  *

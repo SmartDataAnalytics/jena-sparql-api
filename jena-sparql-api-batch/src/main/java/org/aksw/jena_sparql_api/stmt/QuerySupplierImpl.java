@@ -15,6 +15,7 @@ public class QuerySupplierImpl
 
     public QuerySupplierImpl(Prologue prologue) {
         super();
+        this.prologue = prologue;
     }
 
 

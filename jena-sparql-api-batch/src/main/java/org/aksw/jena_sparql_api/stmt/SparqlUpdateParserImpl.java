@@ -45,7 +45,7 @@ public class SparqlUpdateParserImpl
     }
 
     public static SparqlUpdateParserImpl create(Syntax syntax, Prologue prologue) {
-        Supplier<UpdateRequest> updateSupplier= new UpdateSupplierImpl(prologue);
+        Supplier<UpdateRequest> updateSupplier = new UpdateSupplierImpl(prologue);
 
         SparqlUpdateParserImpl result = new SparqlUpdateParserImpl(updateSupplier, syntax, null);
         return result;

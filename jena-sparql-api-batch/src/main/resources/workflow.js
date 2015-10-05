@@ -1,8 +1,6 @@
 {
-    fp7pp: { $sparqlService: ['http://fp7-pp.publicdata.eu/sparql', 'http://fp7-pp.publicdata.eu/'] },
+    source: { $sparqlService: ['http://fp7-pp.publicdata.eu/sparql', 'http://fp7-pp.publicdata.eu/'] },
     target: { $sparqlService: ['http://localhost:8890/sparql', 'http://fp7-pp.publicdata.eu/'] },
-
-    sourceFile: { $sparqlFile: 'dbpedia-airport-eu-snippet.nt' },
 
     shape: { $json: {} },
 //    shape: {
@@ -17,105 +15,123 @@
 //            }
 //        }
 //      },
-    update: " \
-INSERT { \
-    ?s fp7o:lgd ?l \
-} WHERE { \
-  VALUES(?s) { (<http://nominatim.openstreetmap.org/search/?format=json&q=Leipzig>) } \
-  BIND(http:get(?s) As ?json). \
-  ?json json:unnest ?item. \
-  BIND(json:path(?item, '$.osm_type') AS ?osmType) \
-  BIND(json:path(?item, '$.osm_id') AS ?osmId) \
-  BIND(json:path(?item, '$.lon') AS ?x) \
-  BIND(json:path(?item, '$.lat') AS ?y) \
-  BIND(concat('http://linkedgeodata.org/triplify/', ?osmType, ?osmId) AS ?l) \
-}",
-myName: 'foobar',
-
     job: { $simpleJob: {
-        //type: 'org.springframework.batch.core.job.SimpleJob',
-        /**
-         * Metadata
-         */
         name: 'geoCodingJob',
-        //jobRepository: 'defaultJobRepo',
 
         steps: [
-//            {
-//                $sparqlLoad: {
-//                    name: 'load task',
-//                    source: '#{ sourceFile }',
-//                    target: '#{ target }',
-//                    chunk : 1
-//                }
-//            }, {
-//
-//            }, {
-//                $sparqlPipe: {
-//                    source: { ref: 'fp7pp' },
-//                    target: '#{ target }',
-//                    query: 'Construct { ?s ?p ?o } { ?s ?p ?o . ?s a fp7o:Project }'
-//                }
-//            },
-// simplified syntax: [target, source, query] (query defaults to CONSTRUCT WHERE { ?s ?p ?o }
             { $sparqlUpdate: {
-                name: 'updateStep',
+                name: 'clearData',
                 target: '#{ target }',
                 update: 'DELETE { ?s ?p ?o } WHERE { ?s ?p ?o}'
             } },
 
             { $sparqlPipe: {
-              name: 'loadStep',
+              name: 'loadData',
               chunk: 1000,
-              source: '#{ fp7pp }',
+              source: '#{ source }',
               target: '#{ target }',
-              query: 'Construct Where { ?s ?p ?o }',
+              query: 'Construct Where { ?s ?p ?o } Limit 1000',
               filter: 'term:valid(?s) && term:valid(?p) && term:valid(?o)'
+            } },
+
+            { $sparqlUpdate: {
+                name: 'clearWgs84',
+                target: '#{ target }',
+                update: 'DELETE { ?s ?p ?o } WHERE { ?s ?p ?o . Filter(?p In (geo:lat, geo:long)) }'
+            } },
+
+//            { $sparqlUpdate: {
+//                name: 'clearLocations',
+//                target: '#{ target }',
+//                update: 'DELETE { ?s ?p ?o } WHERE { ?s ?p ?o . Filter(?p In (geo:lat, geo:long)) }'
+//            } },
+
+            { $sparqlUpdate: {
+                name: 'createLocations',
+                target: '#{ target }',
+                update: '\
+INSERT { \
+  ?s tmp:location ?l \
+} \
+WHERE { \
+  ?s\
+    o:address [\
+      o:country [ rdfs:label ?col ] ; \
+      o:city [ rdfs:label ?cil ] \
+    ] \
+  BIND(concat(?cil, " ", ?col) As ?l) \
+}'
+            } },
+
+            { $sparqlStep: {
+                name: 'geocodeLocations',
+                chunk: 1000,
+                concept: '?s | { ?s tmp:location ?j . Optional { ?s tmp:geocodeJson ?j } Filter(!Bound(?j)) }',
+                shape: { $json: {
+                    'tmp:location': false,
+                    'tmp:geocodeJson': false
+                } },
+                target: '#{ target }',
+                modifiers: [ 'DELETE WHERE { ?s tmp:geocodeJson ?o } ',
+'\
+INSERT { \
+    ?s tmp:geocodeJson ?j \
+} \
+WHERE { \
+\
+  { SELECT ?l (http:get(concat("http://nominatim.openstreetmap.org/search?format=json&email=cstadler%40informatik.uni-leipzig.de&polygon_text=1&q=", ?l)) AS ?j) { \
+    { SELECT DISTINCT ?l { \
+      ?s tmp:location ?l \
+    } } \
+  } } \
+  ?s tmp:location ?l \
+}']
+            } },
+
+            { $sparqlUpdate: {
+                name: 'createLgdUrls',
+                target: '#{ target }',
+                update: '\
+INSERT { \
+    ?s tmp:lgdLink ?l \
+} WHERE { \
+  ?s tmp:geocodeJson ?j \
+  BIND(json:path(?item, "$[0].osm_type") AS ?osmType) \
+  BIND(json:path(?item, "$[0].osm_id") AS ?osmId) \
+  BIND(concat("http://linkedgeodata.org/triplify/", ?osmType, ?osmId) AS ?l) \
+}'
+            } },
+
+//            { $sparqlUpdate: {
+//                name: 'enrichWithLgd',
+//                target: '#{ target }',
+//                update:
+//            } },
+
+            { $sparqlUpdate: {
+                name: 'tmpToSameAs',
+                target: '#{ target }',
+                update: 'INSERT { ?s owl:sameAs ?l } WHERE { ?s tmp:lgdLink ?l }'
+            } },
+
+            { $sparqlUpdate: {
+                name: 'removeTmp',
+                target: '#{ target }',
+                update: 'DELETE { ?s tmp:lgdLink ?l } WHERE { ?s tmp:lgdLink ?l }'
             } }
 
-//            $sparqlUpdate: {
-//                target:
-//                query: 'Update'
-//            }
+// Jena does not support MODIFY???
+//            { $sparqlUpdate: {
+//                name: 'renameLgdLinks',
+//                target: '#{ target }',
+//                update: 'MODIFY DELETE { ?s tmp:lgdLink ?l } INSERT { ?s owl:sameAs ?l } WHERE { ?s tmp:lgdLink ?l }'
+//            } },
 
-
-//            $sparqlStep: {
-//                name: ' #{ myName + (1 + 1) }  ',
-//                chunk: 1,
-//                concept: '?s | ?s a <http://fp7-pp.publicdata.eu/ontology/Project>',
-//                shape: { ref: 'shape' },
-//                source: { ref: 'target'},
-//                target: { ref: 'target'},
-//                modifiers: ['DELETE { ?s ?p ?o } WHERE { ?s ?p ?o }']
-//            }
-//        }
-//        {
-//            $sparqlStep: {
-//                name: 'step2',
-//                chunk: 1,
-//                concept: '?s | ?s a <http://fp7-pp.publicdata.eu/ontology/Project>',
-//                shape: { ref: 'shape' },
-//                source: { ref: 'fp7pp'},
-//                target: { ref: 'target'},
-//                //modifiers: []
-//                modifiers: [
-//                    { ref: 'update' }
-//                ]
-//            }
-//        }
+//            { $sparqlUpdate : {
+//                name: 'fuseSameAs',
+//                target: '#{ target }',
+//                update: 'MODIFY DELETE { ?o ?x ?y } INSERT { ?s ?x ?y } WHERE { ?s owl:sameAs ?o . ?o ?x ?y}'
+//            } }
         ]
-    } }
+    } } // end of job
 }
-
-/*
----
-fp7pp:
-  $sparqlService:
-    - "http://localhost:8890/sparql"
-    - "http://fp7-pp.publicdata.eu/"
-target:
-  $sparqlService:
-    - "http://localhost:8890/sparql"
-    - "http://fp7-pp.publicdata.eu/"
- *
- */

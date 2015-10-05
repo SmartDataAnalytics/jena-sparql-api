@@ -1,3 +1,6 @@
+    sourceFile: { $sparqlFile: 'dbpedia-airport-eu-snippet.nt' },
+
+
 //    fp7pp: {
 //        type: 'org.springframework.beans.factory.config.MethodInvokingFactoryBean',
 //        targetObject: {ref: 'ssf'},
@@ -104,3 +107,65 @@
 // baseConcept: { '?s <http://fp7-pp.publicdata.eu/ontology/address> ?o . ?o
 // <http://fp7-pp.publicdata.eu/ontology/city> ?city . ?o
 // <http://fp7-pp.publicdata.eu/ontology/country> ?country'
+
+//            {
+//                $sparqlLoad: {
+//                    name: 'load task',
+//                    source: '#{ sourceFile }',
+//                    target: '#{ target }',
+//                    chunk : 1
+//                }
+//            }, {
+//
+//            }, {
+//                $sparqlPipe: {
+//                    source: { ref: 'fp7pp' },
+//                    target: '#{ target }',
+//                    query: 'Construct { ?s ?p ?o } { ?s ?p ?o . ?s a fp7o:Project }'
+//                }
+//            },
+// simplified syntax: [target, source, query] (query defaults to CONSTRUCT WHERE { ?s ?p ?o }
+
+
+//            $sparqlUpdate: {
+//                target:
+//                query: 'Update'
+//            }
+
+
+//            $sparqlStep: {
+//                name: ' #{ myName + (1 + 1) }  ',
+//                chunk: 1,
+//                concept: '?s | ?s a <http://fp7-pp.publicdata.eu/ontology/Project>',
+//                shape: { ref: 'shape' },
+//                source: { ref: 'target'},
+//                target: { ref: 'target'},
+//                modifiers: ['DELETE { ?s ?p ?o } WHERE { ?s ?p ?o }']
+//            }
+//        }
+//        {
+//            $sparqlStep: {
+//                name: 'step2',
+//                chunk: 1,
+//                concept: '?s | ?s a <http://fp7-pp.publicdata.eu/ontology/Project>',
+//                shape: { ref: 'shape' },
+//                source: { ref: 'fp7pp'},
+//                target: { ref: 'target'},
+//                //modifiers: []
+//                modifiers: [
+//                    { ref: 'update' }
+//                ]
+//            }
+//        }
+/*
+---
+fp7pp:
+  $sparqlService:
+    - "http://localhost:8890/sparql"
+    - "http://fp7-pp.publicdata.eu/"
+target:
+  $sparqlService:
+    - "http://localhost:8890/sparql"
+    - "http://fp7-pp.publicdata.eu/"
+ *
+ */

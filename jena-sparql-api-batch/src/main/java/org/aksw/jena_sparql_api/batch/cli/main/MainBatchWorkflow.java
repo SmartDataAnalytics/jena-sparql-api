@@ -75,6 +75,8 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.context.annotation.AnnotationConfigUtils;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.context.support.GenericApplicationContext;
+import org.springframework.core.env.JOptCommandLinePropertySource;
+import org.springframework.core.env.PropertySource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import com.google.gson.Gson;
@@ -97,6 +99,7 @@ import com.hp.hpl.jena.sparql.function.FunctionRegistry;
 import com.hp.hpl.jena.sparql.pfunction.PropertyFunctionRegistry;
 import com.hp.hpl.jena.update.UpdateFactory;
 import com.hp.hpl.jena.update.UpdateRequest;
+import com.hp.hpl.jena.vocabulary.OWL;
 import com.hp.hpl.jena.vocabulary.RDF;
 import com.hp.hpl.jena.vocabulary.RDFS;
 import com.hp.hpl.jena.vocabulary.XSD;
@@ -131,6 +134,8 @@ public class MainBatchWorkflow {
 
 
     public static void main(String[] args) throws Exception {
+
+
 //
 //        //QueryExecutionFactoryResource qef = new QueryExecutionFactoryResource("dbpedia-airport-eu-snippet.nt");
 //        Graph graph = new GraphResource("dbpedia-airport-eu-snippet.nt");
@@ -163,21 +168,24 @@ public class MainBatchWorkflow {
     public static String jsonFn = "http://jsa.aksw.org/fn/json/";
     public static String httpFn = "http://jsa.aksw.org/fn/http/";
     public static String termFn = "http://jsa.aksw.org/fn/term/";
+    public static String tmpNs = "http://jsa.aksw.org/tmp/";
 
     public static PrefixMapping getDefaultPrefixMapping() {
         PrefixMapping pm = new PrefixMappingImpl();
         pm.setNsPrefix("rdf", RDF.getURI());
         pm.setNsPrefix("rdfs", RDFS.getURI());
+        pm.setNsPrefix("owl", OWL.getURI());
         pm.setNsPrefix("geo", "http://www.w3.org/2003/01/geo/wgs84_pos#");
         pm.setNsPrefix("geom", "http://geovocab.org/geometry#");
         pm.setNsPrefix("ogc", "http://www.opengis.net/ont/geosparql#");
         pm.setNsPrefix("fp7o", "http://fp7-pp.publicdata.eu/ontology/");
-        pm.setNsPrefix("tmp", "http://example.org/tmp/");
+        pm.setNsPrefix("o", "http://fp7-pp.publicdata.eu/ontology/");
         pm.setNsPrefix("nominatim", "http://jsa.aksw.org/fn/nominatim/");
         pm.setNsPrefix("xsd", XSD.getURI());
         pm.setNsPrefix("json", jsonFn);
         pm.setNsPrefix("http", httpFn);
         pm.setNsPrefix("term", termFn);
+        pm.setNsPrefix("tmp", tmpNs);
 
         return pm;
     }
@@ -351,8 +359,8 @@ public class MainBatchWorkflow {
 
         batchContext.refresh();
 
-        SparqlService test = (SparqlService)batchContext.getBean("sourceFile");
-        System.out.println("SourceFile: " + test);
+//        SparqlService test = (SparqlService)batchContext.getBean("sourceFile");
+//        System.out.println("SourceFile: " + test);
 
         JobOperator jobOperator = batchContext.getBean(JobOperator.class);
         //JobLauncher jobLauncher = batchContext.getBean(JobLauncher.class);
