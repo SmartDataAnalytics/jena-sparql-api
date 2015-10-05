@@ -40,7 +40,7 @@ import com.hp.hpl.jena.sparql.graph.NodeTransform;
 import com.hp.hpl.jena.sparql.syntax.Element;
 import com.hp.hpl.jena.sparql.syntax.ElementGroup;
 
-/** Support for transformation of query abstract syntax. */ 
+/** Support for transformation of query abstract syntax. */
 
 public class QueryTransformOps {
     public static Query transform(Query query, Map<Var, Node> substitutions) {
@@ -70,7 +70,7 @@ public class QueryTransformOps {
     }
 
     public static Query transform(Query query, ElementTransform transform) {
-        ExprTransform noop = new ExprTransformApplyElementTransform(transform) ;  
+        ExprTransform noop = new ExprTransformApplyElementTransform(transform) ;
         return transform(query, transform, noop) ;
     }
 
@@ -84,6 +84,8 @@ public class QueryTransformOps {
             Expr e = varExprList.getExpr(v) ;
             ExprVar ev = new ExprVar(v) ;
             Expr ev2 = exprTransform.transform(ev) ;
+
+            /*
             if ( ev != ev2 ) {
                 if ( e != null )
                     throw new ARQException("Can't substitute " + v + " because it's used as an AS variable") ;
@@ -94,6 +96,7 @@ public class QueryTransformOps {
                 } else
                     throw new ARQException("Can't substitute " + v + " because it's not a simple value: " + ev2) ;
             }
+            */
             if ( e == null )
                 continue ;
 
@@ -126,7 +129,7 @@ public class QueryTransformOps {
                 for (String x : desc.getDefaultGraphURIs())
                     newQuery.addNamedGraphURI(x) ;
             }
-            
+
             // Aggregators.
             newQuery.getAggregators().addAll(query.getAggregators()) ;
         }

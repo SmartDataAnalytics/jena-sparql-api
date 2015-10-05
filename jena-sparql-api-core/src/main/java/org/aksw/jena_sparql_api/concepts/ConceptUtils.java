@@ -352,6 +352,9 @@ public class ConceptUtils {
 
     public static Query createAttrQuery(Query attrQuery, Var attrVar, boolean isLeftJoin, Concept filterConcept, Long limit, Long offset, boolean forceSubQuery) {
 
+        //filterConcept.getElement()
+        // TODO Deal with prefixes...
+
         Concept attrConcept = new Concept(new ElementSubQuery(attrQuery), attrVar);
 
         Concept renamedFilterConcept = ConceptUtils.createRenamedConcept(attrConcept, filterConcept);

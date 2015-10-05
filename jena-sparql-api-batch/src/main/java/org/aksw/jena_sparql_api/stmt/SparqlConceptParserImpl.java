@@ -46,13 +46,13 @@ public class SparqlConceptParserImpl
         Var var = Var.alloc(varName);
 
         String tmp = elementStr.trim();
-        boolean isEnclosed = tmp.startsWith("{") && tmp.endsWith("}");
-        if(!isEnclosed) {
-            tmp = "{" + tmp + "}";
-        }
-
-        //ParserSparql10 p;
-        tmp = "Select * " + tmp;
+//        boolean isEnclosed = tmp.startsWith("{") && tmp.endsWith("}");
+//        if(!isEnclosed) {
+//            tmp = "{" + tmp + "}";
+//        }
+//
+//        //ParserSparql10 p;
+//        tmp = "Select * " + tmp;
 
         Element element = elementParser.apply(tmp);
 

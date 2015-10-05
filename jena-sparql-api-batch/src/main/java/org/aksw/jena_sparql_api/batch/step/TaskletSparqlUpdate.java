@@ -1,6 +1,9 @@
 package org.aksw.jena_sparql_api.batch.step;
 
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
+import org.apache.jena.atlas.web.HttpException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
@@ -13,6 +16,8 @@ import com.hp.hpl.jena.update.UpdateRequest;
 public class TaskletSparqlUpdate
     implements Tasklet
 {
+    private static final Logger logger = LoggerFactory.getLogger(TaskletSparqlUpdate.class);
+
     private UpdateExecutionFactory uef;
     private UpdateRequest updateRequest;
 
@@ -25,7 +30,15 @@ public class TaskletSparqlUpdate
     @Override
     public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
         UpdateProcessor updateProcessor = uef.createUpdateProcessor(updateRequest);
-        updateProcessor.execute();
+        try {
+            updateProcessor.execute();
+        } catch(Exception e) {
+            if(e instanceof HttpException) {
+                HttpException x = (HttpException)e;
+                logger.debug(x.getResponse());
+                throw e;
+            }
+        }
 
         return RepeatStatus.FINISHED;
     }

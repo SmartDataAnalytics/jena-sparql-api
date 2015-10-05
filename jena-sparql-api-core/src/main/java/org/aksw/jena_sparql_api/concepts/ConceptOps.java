@@ -16,27 +16,29 @@ import com.hp.hpl.jena.sparql.syntax.Element;
 public class ConceptOps {
 
     public static Concept intersect(Concept concept, Concept filter) {
-        
+
         Concept result;
-        
+
         if(filter != null && !filter.isSubjectConcept()) {
             Set<Var> vas = concept.getVarsMentioned();
             Set<Var> vbs = filter.getVarsMentioned();
-            Generator<Var> generator = VarGeneratorImpl.create("v"); 
+            Generator<Var> generator = VarGeneratorImpl.create("v");
             Map<Var, Var> varMap = VarUtils.createDistinctVarMap(vas, vbs, true, generator);
-            
+
+            //if(!filter.getVar().equals(concept.getVar())) {
             varMap.put(filter.getVar(), concept.getVar());
-            
+            //}
+
             NodeTransform nodeTransform = new NodeTransformRenameMap(varMap);
-            
+
             Concept tmp = filter.applyNodeTransform(nodeTransform);
-            
+
             Element e = ElementUtils.mergeElements(concept.getElement(), tmp.getElement());
             result = new Concept(e, concept.getVar());
         } else {
             result = concept;
         }
-        
+
         return result;
     }
 }

@@ -54,6 +54,7 @@ WHERE { \
             { $sparqlStep: {
                 name: 'geocodeLocations',
                 chunk: 1000,
+                source: '#{ source }',
                 concept: '?s | { ?s tmp:location ?j . Optional { ?s tmp:geocodeJson ?j } Filter(!Bound(?j)) }',
                 shape: { $json: {
                     'tmp:location': false,
@@ -76,10 +77,15 @@ WHERE { \
 }']
             } },
 
-            { $sparqlUpdate: {
+            { $sparqlStep: {
                 name: 'createLgdUrls',
+                chunk: 1000,
+                source: '#{ source }',
+                shape: { $json: {
+                    'tmp:geocodeJson': false
+                } },
                 target: '#{ target }',
-                update: '\
+                modifiers: ['\
 INSERT { \
     ?s tmp:lgdLink ?l \
 } WHERE { \
@@ -87,7 +93,7 @@ INSERT { \
   BIND(json:path(?item, "$[0].osm_type") AS ?osmType) \
   BIND(json:path(?item, "$[0].osm_id") AS ?osmId) \
   BIND(concat("http://linkedgeodata.org/triplify/", ?osmType, ?osmId) AS ?l) \
-}'
+}']
             } },
 
 //            { $sparqlUpdate: {

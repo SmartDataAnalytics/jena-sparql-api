@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.aksw.commons.collections.SetUtils;
+import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformCopyBase;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.GeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.VarUtils;
@@ -39,6 +40,7 @@ import com.hp.hpl.jena.sparql.syntax.PatternVars;
 public class Concept {
     private Element element;//List<Element> elements;
     private Var var;
+
 
     /**
      * Util method to parse strings that use a pipe as a separator between variable and sparql string
