@@ -1,6 +1,10 @@
 {
-    source: { $sparqlService: ['http://fp7-pp.publicdata.eu/sparql', 'http://fp7-pp.publicdata.eu/'] },
-//    source: { $sparqlService: ['http://localhost:8890/sparql', 'http://fp7-pp.publicdata.eu/'] },
+    prefixes: { $prefixes: {
+       'foo': 'http://bar'
+    } },
+
+//    source: { $sparqlService: ['http://fp7-pp.publicdata.eu/sparql', 'http://fp7-pp.publicdata.eu/'] },
+    source: { $sparqlService: ['http://localhost:8890/sparql', 'http://fp7-pp.publicdata.eu/'] },
     target: { $sparqlService: ['http://localhost:8890/sparql', 'http://fp7-pp.publicdata.eu/'] },
 
     job: { $simpleJob: {
@@ -10,7 +14,8 @@
             { $sparqlUpdate: {
                 name: 'clearData',
                 target: '#{ target }',
-                update: 'DELETE { ?s ?p ?o } WHERE { ?s ?p ?o}'
+                update: 'DELETE
+                    WHERE { ?s ?p ?o}'
             } },
 
             { $sparqlPipe: {
