@@ -40,7 +40,6 @@ import org.aksw.jena_sparql_api.beans.json.JsonProcessorContext;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.lookup.ListService;
 import org.aksw.jena_sparql_api.lookup.ListServiceUtils;
@@ -72,6 +71,7 @@ import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
 import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
 import org.springframework.batch.core.repository.JobRestartException;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigUtils;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
@@ -259,9 +259,7 @@ public class MainBatchWorkflow {
         }
     }
 
-
-
-    public static void mainContext(String[] args) throws Exception {
+    public static ApplicationContext initBaseContext() {
         AnnotationConfigApplicationContext coreContext = new AnnotationConfigApplicationContext(ConfigServicesCore.class);
 
 
@@ -270,6 +268,11 @@ public class MainBatchWorkflow {
         baseContext.register(ConfigBatchJobDynamic.class);
         baseContext.refresh();
 
+        return baseContext;
+    }
+
+    public static GenericApplicationContext initBatchContext(ApplicationContext baseContext) {
+        //ApplicationContext baseContext = initBaseContext();
         //AnnotationConfigApplicationContext baseContext = new AnnotationConfigApplicationContext(ConfigBatchJobDynamic.class);
         //AnnotationConfigApplicationContext x = new AnnotationConfigApplicationContext()
 
@@ -277,22 +280,13 @@ public class MainBatchWorkflow {
         GenericApplicationContext batchContext = new GenericApplicationContext(baseContext);
         AnnotationConfigUtils.registerAnnotationConfigProcessors(batchContext);
 
-        BatchWorkflowManager manager = baseContext.getBean(BatchWorkflowManager.class);//new BatchWorkflowManager(config);
+        return batchContext;
+    }
 
-        //ValueHold
-        //batchContext.add
-        //BeanFactoryPostProcessor
-        //BeanDefinitionRegistry x;
-        //x.
-        //BeanDefinition
-        //Bean
+    public static ApplicationContext initContext() throws Exception {
 
-        /*
-         * Context processing
-         *
-         * - preprocessor
-         * - actual processing
-         */
+        ApplicationContext baseContext = initBaseContext();
+        GenericApplicationContext batchContext = initBatchContext(baseContext);
 
         // Preprocessors
         JsonProcessorKey contextPreprocessor = new JsonProcessorKey();
@@ -371,6 +365,12 @@ public class MainBatchWorkflow {
 
         batchContext.refresh();
 
+        return batchContext;
+    }
+
+    public static void mainContext(String[] args) throws Exception {
+        ApplicationContext batchContext = initContext();
+
 //        SparqlService test = (SparqlService)batchContext.getBean("sourceFile");
 //        System.out.println("SourceFile: " + test);
 
@@ -386,6 +386,8 @@ public class MainBatchWorkflow {
         System.out.println("Got " + allBeans.size() + " beans: " + allBeans);
 
         System.out.println("Job: " + job);
+
+        BatchWorkflowManager manager = batchContext.getBean(BatchWorkflowManager.class);//new BatchWorkflowManager(config);
 
         manager.launch(job, new JobParameters());
 

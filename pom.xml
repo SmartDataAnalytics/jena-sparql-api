@@ -772,6 +772,19 @@
 
             <dependency>
                 <groupId>org.springframework</groupId>
+                <artifactId>spring-aop</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-tx</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
+
+
+            <dependency>
+                <groupId>org.springframework</groupId>
                 <artifactId>spring-context</artifactId>
                 <version>${spring.version}</version>
             </dependency>
@@ -795,6 +808,7 @@
                 <artifactId>spring-web</artifactId>
                 <version>${spring.version}</version>
             </dependency>
+
 
             <dependency>
                 <groupId>org.springframework</groupId>
@@ -822,7 +836,6 @@
                 <artifactId>spring-batch-infrastructure</artifactId>
                 <version>${spring.batch.version}</version>
             </dependency>
-
 
             <dependency>
                 <groupId>fr.dudie</groupId>
@@ -930,8 +943,12 @@
             <id>maven.aksw.snapshots</id>
             <name>AKSW Snapshot Repository</name>
             <url>http://maven.aksw.org/archiva/repository/snapshots</url>
-            <releases><enabled>false</enabled></releases>
-            <snapshots><enabled>true</enabled></snapshots>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
         </repository>
     </repositories>
 
