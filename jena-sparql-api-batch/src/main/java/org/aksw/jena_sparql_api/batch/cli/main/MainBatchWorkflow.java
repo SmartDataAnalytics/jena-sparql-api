@@ -187,7 +187,7 @@ public class MainBatchWorkflow {
         pm.setNsPrefix("rdf", RDF.getURI());
         pm.setNsPrefix("rdfs", RDFS.getURI());
         pm.setNsPrefix("owl", OWL.getURI());
-        pm.setNsPrefix("geo", "http://www.w3.org/2003/01/geo/wgs84_pos#");
+        //pm.setNsPrefix("geo", "http://www.w3.org/2003/01/geo/wgs84_pos#");
         pm.setNsPrefix("geom", "http://geovocab.org/geometry#");
         pm.setNsPrefix("ogc", "http://www.opengis.net/ont/geosparql#");
         pm.setNsPrefix("fp7o", "http://fp7-pp.publicdata.eu/ontology/");

@@ -1,15 +1,19 @@
 package org.aksw.jena_sparql_api.core.utils;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.lookup.CountInfo;
+import org.aksw.jena_sparql_api.utils.CloseableJena;
+import org.aksw.jena_sparql_api.utils.CloseableQueryExecution;
 import org.aksw.jena_sparql_api.utils.ResultSetUtils;
 
 import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.ResultSet;
@@ -27,6 +31,12 @@ public class ServiceUtils {
             result.add(resource);
         }
 
+        return result;
+    }
+
+    public static List<Node> fetchList(QueryExecutionFactory qef, Concept concept, Long limit, Long offset) {
+        Query query = ConceptUtils.createQueryList(concept, limit, offset);
+        List<Node> result = fetchList(qef, query, concept.getVar());
         return result;
     }
 
@@ -89,5 +99,25 @@ public class ServiceUtils {
         CountInfo result = new CountInfo(c, hasMoreItems, itemLimit);
         return result;
     }
+
+    /**
+     * CONSTRUCT queries are mapped to result sets with the variables ?s ?p ?o
+     *
+     */
+    public static ResultSet forceExecResultSet(QueryExecution qe, Query query) {
+        ResultSet result;
+        if(query.isSelectType()) {
+            result = qe.execSelect();
+
+        } else if(query.isConstructType()) {
+            Iterator<Triple> it = qe.execConstructTriples();
+            result = org.aksw.jena_sparql_api.core.utils.ResultSetUtils.tripleIteratorToResultSet(it, new CloseableQueryExecution(qe));
+        } else {
+            throw new RuntimeException("Query type is not supported: " + query);
+        }
+
+        return result;
+    }
+
 }
 

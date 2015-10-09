@@ -12,6 +12,7 @@ import org.aksw.commons.collections.MapUtils;
 import org.aksw.commons.collections.SetUtils;
 import org.aksw.jena_sparql_api.core.utils.QueryGenerationUtils;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
+import org.aksw.jena_sparql_api.utils.ExprListUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.Triples;
 import org.aksw.jena_sparql_api.utils.VarExprListUtils;
@@ -20,13 +21,17 @@ import org.aksw.jena_sparql_api.utils.VarGeneratorImpl;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 
+import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.sparql.core.Var;
+import com.hp.hpl.jena.sparql.expr.E_OneOf;
 import com.hp.hpl.jena.sparql.expr.Expr;
 import com.hp.hpl.jena.sparql.expr.ExprAggregator;
+import com.hp.hpl.jena.sparql.expr.ExprList;
 import com.hp.hpl.jena.sparql.expr.ExprVar;
 import com.hp.hpl.jena.sparql.expr.aggregate.AggCount;
 import com.hp.hpl.jena.sparql.syntax.Element;
+import com.hp.hpl.jena.sparql.syntax.ElementFilter;
 import com.hp.hpl.jena.sparql.syntax.ElementGroup;
 import com.hp.hpl.jena.sparql.syntax.ElementOptional;
 import com.hp.hpl.jena.sparql.syntax.ElementSubQuery;
@@ -41,6 +46,33 @@ public class ConceptUtils {
     public static Concept listAllPredicates = Concept.create("?s ?p ?o", "p");
     public static Concept listAllGraphs = Concept.create("Graph ?g { ?s ?p ?o }", "g");
 
+
+    public static Concept createRelatedConcept(Collection<Node> nodes, Relation relation) {
+        Var sourceVar = relation.getSourceVar();
+        Var targetVar = relation.getTargetVar();
+        Element relationEl = relation.getElement();
+
+        ExprVar ev = new ExprVar(sourceVar);
+        ExprList el = ExprListUtils.nodesToExprs(nodes);
+        ElementFilter filterEl = new ElementFilter(new E_OneOf(ev, el));
+
+        Element resultEl = ElementUtils.mergeElements(relationEl, filterEl);
+
+        Concept result = new Concept(resultEl, targetVar);
+        return result;
+    }
+
+
+    public static Concept getRelatedConcept(Concept source, Relation relation) {
+        Concept renamedSource = createRenamedSourceConcept(source, relation);
+
+        Element merged = ElementUtils.mergeElements(renamedSource.getElement(), relation.getElement());
+
+        Var targetVar = relation.getTargetVar();
+
+        Concept result = new Concept(merged, targetVar);
+        return result;
+    }
 
 
     public static Query createQueryCount(Concept concept, Var outputVar, Long itemLimit, Long rowLimit) {
@@ -188,6 +220,18 @@ public class ConceptUtils {
         return result;
     }
 
+    /**
+     *
+     * @param concept The concept subject to renaming such that it can act as a filter on the relation's source variable
+     * @param relation The relation; variables will remain unchanged
+     * @return
+     */
+    public static Concept createRenamedSourceConcept(Concept concept, Relation relation) {
+        Concept attrConcept = new Concept(relation.getElement(), relation.getSourceVar());
+        Concept result = createRenamedConcept(attrConcept, concept);
+        return result;
+    }
+
     public static Concept createRenamedConcept(Concept concept, Map<Var, Var> varMap) {
         Var newVar = MapUtils.getOrElse(varMap, concept.getVar(), concept.getVar());
         Element newElement = ElementUtils.createRenamedElement(concept.getElement(), varMap);
@@ -198,6 +242,13 @@ public class ConceptUtils {
     }
 
 
+    /**
+     *
+     *
+     * @param attrConcept The concept whose attributes will remained unchanged
+     * @param filterConcept The concept whose variables will be renamed such that it filters the attrConcept
+     * @return
+     */
     public static Concept createRenamedConcept(Concept attrConcept, Concept filterConcept) {
 
         Map<Var, Var> varMap = createVarMap(attrConcept, filterConcept);

@@ -10,6 +10,7 @@ import org.aksw.jena_sparql_api.batch.reader.ItemReaderDatasetGraph;
 import org.aksw.jena_sparql_api.batch.writer.ItemWriterSparqlDiff;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
 import org.aksw.jena_sparql_api.lookup.ListService;
 import org.aksw.jena_sparql_api.modifier.Modifier;
@@ -149,6 +150,11 @@ public class FactoryBeanStepSparqlDiff
     }
 
 
+    public FactoryBeanStepSparqlDiff setService(SparqlService sparqlService) {
+        this.sourceQef = sparqlService.getQueryExecutionFactory();
+        this.targetUef = sparqlService.getUpdateExecutionFactory();
+        return this;
+    }
 
 
 //	public StepBuilder getStepBuilder() {

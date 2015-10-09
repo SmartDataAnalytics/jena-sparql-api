@@ -60,7 +60,8 @@ public class ListServiceSparqlQuery
         //if(true) {throw new RuntimeException(""); }
 
         QueryExecution qe = qef.createQueryExecution(query);
-        ResultSet rs = qe.execSelect();
+        //ResultSet rs = qe.execSelect();
+        ResultSet rs = ServiceUtils.forceExecResultSet(qe, query);
         Map<Node, ResultSetPart> result = ResultSetUtils.partition(rs, attrVar);
         return result;
     }

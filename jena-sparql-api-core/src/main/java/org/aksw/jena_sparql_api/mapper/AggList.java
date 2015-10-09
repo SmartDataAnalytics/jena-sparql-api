@@ -28,7 +28,7 @@ public class AggList<T>
         // TODO Auto-generated method stub
         return null;
     }
-    
+
     public static <T> AggList<T> create(Agg<T> subAgg) {
         AggList<T> result = new AggList<T>(subAgg);
         return result;

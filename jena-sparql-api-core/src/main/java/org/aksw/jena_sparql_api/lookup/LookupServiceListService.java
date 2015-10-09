@@ -5,6 +5,7 @@ import java.util.Map;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.utils.Vars;
 
+import com.google.common.base.Functions;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.sparql.expr.E_OneOf;
 import com.hp.hpl.jena.sparql.expr.Expr;

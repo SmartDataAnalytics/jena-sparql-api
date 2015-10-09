@@ -24,8 +24,8 @@ public class AggLiteral<T>
         // TODO Auto-generated method stub
         return null;
     }
-    
-    public AggLiteral<T> create(BindingMapper<T> mapper) {
+
+    public static <T> AggLiteral<T> create(BindingMapper<T> mapper) {
         AggLiteral<T> result = new AggLiteral<T>(mapper);
         return result;
     }
