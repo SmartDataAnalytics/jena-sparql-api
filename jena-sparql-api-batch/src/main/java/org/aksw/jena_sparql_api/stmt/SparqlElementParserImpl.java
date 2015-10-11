@@ -8,6 +8,10 @@ public class SparqlElementParserImpl
 {
     protected SparqlQueryParser queryParser;
 
+    public SparqlElementParserImpl() {
+        this(new SparqlQueryParserImpl());
+    }
+
     public SparqlElementParserImpl(SparqlQueryParser queryParser) {
         this.queryParser = queryParser;
     }

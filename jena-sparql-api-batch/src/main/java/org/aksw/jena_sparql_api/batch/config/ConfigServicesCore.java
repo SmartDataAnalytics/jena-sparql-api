@@ -16,6 +16,8 @@ import org.aksw.jena_sparql_api.stmt.SparqlExprParser;
 import org.aksw.jena_sparql_api.stmt.SparqlExprParserImpl;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParser;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
+import org.aksw.jena_sparql_api.stmt.SparqlRelationParser;
+import org.aksw.jena_sparql_api.stmt.SparqlRelationParserImpl;
 import org.aksw.jena_sparql_api.stmt.SparqlUpdateParser;
 import org.aksw.jena_sparql_api.stmt.SparqlUpdateParserImpl;
 import org.springframework.beans.BeansException;
@@ -106,6 +108,14 @@ public class ConfigServicesCore
         SparqlConceptParser result = new SparqlConceptParserImpl(elementParser);
         return result;
     }
+
+    @Bean
+    @Autowired
+    public SparqlRelationParser defaultSparqlRelationParser(SparqlElementParser elementParser) {
+        SparqlRelationParser result = new SparqlRelationParserImpl(elementParser);
+        return result;
+    }
+
 
     @Bean
     @Autowired

@@ -104,7 +104,6 @@ WHERE { \
                 source: '#{ resloc }',
                 concept: '?l | ?s tmp:location ?l',
                 shape: { $hop: {
-                  queries: [{ query: foo, on: bar}]
                   relations: [{
                       via: '?s ?x | { }',
                       on: bar,

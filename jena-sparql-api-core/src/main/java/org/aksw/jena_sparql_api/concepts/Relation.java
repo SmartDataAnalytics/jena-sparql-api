@@ -16,9 +16,9 @@ import com.hp.hpl.jena.sparql.syntax.PatternVars;
 
 /**
  * This is a binary relation used to relate two concepts to each other
- * 
+ *
  * @author raven
- * 
+ *
  */
 public class Relation {
     private Var sourceVar;
@@ -30,7 +30,7 @@ public class Relation {
         this.sourceVar = sourceVar;
         this.targetVar = targetVar;
     }
-    
+
     public Var getSourceVar() {
         return sourceVar;
     }
@@ -69,20 +69,20 @@ public class Relation {
 
         return result;
     }
-    
-    
+
+
     public Set<Var> getVarsMentioned() {
         Set<Var> result = SetUtils.asSet(PatternVars.vars(element));
         result.add(sourceVar);
         result.add(targetVar);
-        return result;        
+        return result;
     }
-    
+
     public Relation applyNodeTransform(NodeTransform nodeTransform) {
         Var s = VarUtils.applyNodeTransform(sourceVar, nodeTransform);
         Var t = VarUtils.applyNodeTransform(targetVar, nodeTransform);
         Element e = ElementUtils.applyNodeTransform(element, nodeTransform);
-        
+
         Relation result = new Relation(e, s, t);
         return result;
     }
@@ -128,9 +128,13 @@ public class Relation {
 
     @Override
     public String toString() {
+        String result = sourceVar + " " + targetVar + " | " + element;
+        return result;
+        /*
         return "Relation [sourceVar=" + sourceVar + ", targetVar=" + targetVar
                 + ", element=" + element + "]";
+         */
     }
-    
-    
+
+
 }

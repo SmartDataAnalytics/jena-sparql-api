@@ -13,6 +13,9 @@ public class SparqlQueryParserImpl
     protected Syntax syntax;
     protected String baseURI;
 
+    public SparqlQueryParserImpl() {
+        this(new QuerySupplierImpl(), Syntax.syntaxARQ, "http://example.org/base/");
+    }
 
     public SparqlQueryParserImpl(Supplier<Query> querySupplier, Syntax syntax, String baseURI) {
         super();
