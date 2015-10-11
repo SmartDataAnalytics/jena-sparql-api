@@ -15,6 +15,12 @@ public class HopRelation
         super(qef);
     }
 
+    public HopRelation(QueryExecutionFactory qef, Relation relation, List<Hop> hops) {
+        super(qef);
+        this.relation = relation;
+        this.hops = hops;
+    }
+
     public Relation getRelation() {
         return relation;
     }

@@ -25,6 +25,7 @@ import org.aksw.jena_sparql_api.batch.ListServiceResourceShape;
 import org.aksw.jena_sparql_api.batch.QueryTransformConstructGroupedGraph;
 import org.aksw.jena_sparql_api.batch.config.ConfigBatchJobDynamic;
 import org.aksw.jena_sparql_api.batch.config.ConfigServicesCore;
+import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteHop;
 import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteJson;
 import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewritePrefixes;
 import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteShape;
@@ -346,7 +347,8 @@ public class MainBatchWorkflow {
                 new JsonVisitorRewriteSparqlFile(),
                 new JsonVisitorRewriteSparqlPipe(),
                 new JsonVisitorRewriteSparqlUpdate(),
-                new JsonVisitorRewritePrefixes()
+                new JsonVisitorRewritePrefixes(),
+                new JsonVisitorRewriteHop()
         );
         json = JsonWalker.rewriterUntilNoChange(json, rewriters);
 

@@ -103,7 +103,28 @@ WHERE { \
                 chunk: 1000,
                 source: '#{ resloc }',
                 concept: '?l | ?s tmp:location ?l',
-                shape: { $hop: [
+                shape: { $hop: {
+                  queries: [{ query: foo, on: bar}]
+                  relations: [{
+                      via: '?s ?x | { }',
+                      on: bar,
+                      hops: [{
+                          queries: [{}],
+
+
+                      }]
+/*
+relations: [
+  'foaf:knows', '#{someService}', [
+
+  ]
+]
+
+ */
+
+
+                  ]
+
                   [ '?l | CONSTRUCT { ?x tmp:geocodeJson ?j } WHERE { ?x tmp:geocodeJson ?j ; tmp:hasLocation ?l }', '#{ geocoderCache }'],
                   [ '?l | CONSTRUCT { ?x tmp:lgdLink ?l }', '#{ source }'],
                   { via: '?x ?l | ?x sameAs ?l',
