@@ -9,6 +9,7 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Iterables;
 
@@ -16,6 +17,8 @@ import com.google.common.collect.Iterables;
 public class LookupServicePartition<K, V>
     implements LookupService<K, V>
 {
+    //private static final Logger logger = LoggerFactory.getLogger(LookupServicePartition.class);
+
     private LookupService<K, V> base;
     private int partitionSize;
     private int nThreads;
@@ -60,6 +63,8 @@ public class LookupServicePartition<K, V>
         }
 
         executorService.shutdown();
+
+        executorService.awaitTermination(60, TimeUnit.SECONDS);
 
         Map<K, V> result = new HashMap<K, V>();
 

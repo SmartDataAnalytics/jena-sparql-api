@@ -16,6 +16,7 @@ import org.aksw.jena_sparql_api.lookup.ListService;
 import org.aksw.jena_sparql_api.lookup.ListServiceUtils;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceListService;
+import org.aksw.jena_sparql_api.lookup.LookupServicePartition;
 import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
 import org.aksw.jena_sparql_api.mapper.MappedQuery;
 import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
@@ -31,6 +32,8 @@ public class ListServiceHop
 {
     protected QueryExecutionFactory defaultQef;
     protected Hop root;
+
+    public static int chunkSize = 30;
 
     public ListServiceHop(QueryExecutionFactory defaultQef, Hop root) {
         super();
@@ -64,6 +67,9 @@ public class ListServiceHop
             ListService<Concept, Node, DatasetGraph> listService = ListServiceUtils.createListServiceMappedQuery(qef, mappedQuery, true);
             LookupService<Node, DatasetGraph> lookupService = LookupServiceListService.create(listService);
 
+            lookupService = LookupServicePartition.create(lookupService, chunkSize);
+
+
             Map<Node,DatasetGraph> nodeToGraph = lookupService.apply(nodes);
             DatasetGraphUtils.mergeInPlace(result, nodeToGraph);
         }
@@ -75,6 +81,9 @@ public class ListServiceHop
 
         MappedQuery<DatasetGraph> mappedQuery = hopQuery.getMappedQuery();
         LookupService<Node, DatasetGraph> ls = LookupServiceUtils.createLookupService(qef, mappedQuery);
+
+        ls = LookupServicePartition.create(ls, chunkSize);
+
         Map<Node, DatasetGraph> map = ls.apply(sourceNodes);
         DatasetGraphUtils.mergeInPlace(result, map);
     }
@@ -102,6 +111,9 @@ public class ListServiceHop
 
         Relation relation = hopRelation.getRelation();
         LookupService<Node, List<Node>> ls = LookupServiceUtils.createLookupService(qef, relation);
+        ls = LookupServicePartition.create(ls, chunkSize);
+
+
         Map<Node, List<Node>> map = ls.apply(sourceNodes);
         Set<Node> relatedNodes = Sets.<Node>newHashSet(flatMap(map));
 

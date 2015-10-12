@@ -6,7 +6,9 @@ import java.util.Collections;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactoryBackString;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
+import org.apache.jena.atlas.web.ContentType;
 import org.apache.jena.atlas.web.auth.HttpAuthenticator;
+import org.apache.jena.riot.WebContent;
 
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.sparql.core.DatasetDescription;
@@ -65,8 +67,8 @@ public class QueryExecutionFactoryHttp
         qe.setNamedGraphURIs(datasetDescription.getNamedGraphURIs());
 
 
-        //QueryExecution result = new QueryExecutionHttpWrapper(qe);
-        QueryExecution result = qe;
+        QueryExecution result = new QueryExecutionHttpWrapper(qe);
+        //QueryExecution result = qe;
 
         return result;
     }
