@@ -60,11 +60,13 @@ public class QueryExecutionFactoryHttp
 
     @Override
     public QueryExecution createQueryExecution(String queryString) {
-        QueryEngineHTTP result = new QueryEngineHTTP(service, queryString, httpAuthenticator);
-        result.setDefaultGraphURIs(datasetDescription.getDefaultGraphURIs());
-        result.setNamedGraphURIs(datasetDescription.getNamedGraphURIs());
+        QueryEngineHTTP qe = new QueryEngineHTTP(service, queryString, httpAuthenticator);
+        qe.setDefaultGraphURIs(datasetDescription.getDefaultGraphURIs());
+        qe.setNamedGraphURIs(datasetDescription.getNamedGraphURIs());
 
-        //QueryExecution result = QueryExecutionWrapper.wrap(engine);
+
+        //QueryExecution result = new QueryExecutionHttpWrapper(qe);
+        QueryExecution result = qe;
 
         return result;
     }

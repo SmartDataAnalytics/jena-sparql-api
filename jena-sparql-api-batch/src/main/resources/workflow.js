@@ -25,26 +25,26 @@
         name: 'geoCodingJob',
 
         steps: [
-            { $sparqlUpdate: {
-                name: 'clearData',
-                target: '#{ target }',
-                update: 'DELETE WHERE { ?s ?p ?o }'
-            } },
-
-            { $sparqlPipe: {
-              name: 'loadData',
-              chunk: 1000,
-              source: '#{ source }',
-              target: '#{ target }',
-              query: 'Construct Where { ?s ?p ?o }',
-              filter: 'term:valid(?s) && term:valid(?p) && term:valid(?o)'
-            } },
-
-            { $sparqlUpdate: {
-                name: 'clearLocations',
-                target: '#{ target }',
-                update: 'DELETE { ?s ?p ?o } WHERE { ?s ?p ?o . Filter(?p In (geo:lat, geo:long)) }'
-            } },
+//            { $sparqlUpdate: {
+//                name: 'clearData',
+//                target: '#{ target }',
+//                update: 'DELETE WHERE { ?s ?p ?o }'
+//            } },
+//
+//            { $sparqlPipe: {
+//              name: 'loadData',
+//              chunk: 1000,
+//              source: '#{ source }',
+//              target: '#{ target }',
+//              query: 'Construct Where { ?s ?p ?o }',
+//              filter: 'term:valid(?s) && term:valid(?p) && term:valid(?o)'
+//            } },
+//
+//            { $sparqlUpdate: {
+//                name: 'clearLocations',
+//                target: '#{ target }',
+//                update: 'DELETE { ?s ?p ?o } WHERE { ?s ?p ?o . Filter(?p In (geo:lat, geo:long)) }'
+//            } },
 
             { $sparqlPipe: {
                 name: 'createLocations',
@@ -109,34 +109,41 @@ WHERE { \
 }'
                 //'DELETE WHERE { ?x tmp:geocodeJson ?j }'
 ]
+            } },
+
+
+
+            { $sparqlStep: {
+                name: 'createLgdUrls',
+                chunk: 1000,
+                source: '#{ resloc }',
+                concept: '?l | ?s tmp:location ?l',
+                hop: { $hop: {
+                  queries: [
+                    [ '?l | CONSTRUCT WHERE { ?x tmp:geocodeJson ?j ; tmp:hasLocation ?l }', '#{ geocoderCache }']
+                  ],
+                  relations: [
+                    [ '?l ?s | ?s tmp:location ?l', {
+                       queries: [
+                         [ '?s | CONSTRUCT WHERE { ?s tmp:lgdLink ?l }', '#{ source }'],
+                         [ '?s | CONSTRUCT WHERE { ?s tmp:location ?l }', '#{ resloc }']
+                    ] } ]
+                  ]
+                } },
+                modifiers: ['DELETE WHERE { ?s tmp:lgdLink ?l }',
+'\
+INSERT { \
+    ?s tmp:lgdLink ?z \
+} WHERE { \
+  ?s tmp:location ?l . \
+  ?x tmp:hasLocation ?l . \
+  ?x tmp:geocodeJson ?j . \
+  BIND(json:path(?j, "$[0].osm_type") AS ?osmType) \
+  BIND(json:path(?j, "$[0].osm_id") AS ?osmId) \
+  BIND(concat("http://linkedgeodata.org/triplify/", ?osmType, ?osmId) AS ?z) \
+}'],
+                target: '#{ target }'
             } }
-//
-//
-//
-//            { $sparqlStep: {
-//                name: 'createLgdUrls',
-//                chunk: 1000,
-//                source: '#{ resloc }',
-//                concept: '?l | ?s tmp:location ?l',
-//                hop: { $hop: {
-//                  queries: [
-//                    [ '?l | CONSTRUCT { ?x tmp:geocodeJson ?j } WHERE { ?x tmp:geocodeJson ?j ; tmp:hasLocation ?l }', '#{ geocoderCache }'],
-//                    [ '?l | CONSTRUCT WHERE { ?x tmp:lgdLink ?l }', '#{ source }']
-//                  ]
-//                } },
-//                modifiers: ['DELETE WHERE { ?s tmp:lgdLink ?l }',
-//'\
-//INSERT { \
-//    ?s tmp:lgdLink ?l \
-//} WHERE { \
-//  ?s tmp:geocodeJson ?j \
-//\
-//  BIND(json:path(?item, "$[0].osm_type") AS ?osmType) \
-//  BIND(json:path(?item, "$[0].osm_id") AS ?osmId) \
-//  BIND(concat("http://linkedgeodata.org/triplify/", ?osmType, ?osmId) AS ?l) \
-//}'],
-//                target: '#{ target }'
-//            } },
 //
 //            { $sparqlUpdate: {
 //                name: 'clearWgs84',

@@ -73,7 +73,7 @@ public class JsonVisitorRewriteHop
 
         JsonArray result = new JsonArray();
         for(JsonElement item : src) {
-            JsonElement tmp = processHop(src);
+            JsonElement tmp = processHop(item);
             result.add(tmp);
         }
 
@@ -254,7 +254,7 @@ public class JsonVisitorRewriteHop
         }
 
         JsonObject result = new JsonObject();
-        result.add("relation", relation);
+        result.add("via", relation);
         result.add("on", on);
         result.add("hops", hops);
 
@@ -302,16 +302,19 @@ public class JsonVisitorRewriteHop
     public static JsonElement processRelation(JsonElement json) {
         JsonObject tmpObj = json.isJsonArray() ? expandRelationShortuct(json.getAsJsonArray()) : json.getAsJsonObject();
 
-        JsonElement via = tmpObj.get("via");
-        JsonElement on = tmpObj.get("on");
-        JsonElement tmpHops = tmpObj.get("hops");
+        JsonElement result = processRelationCore(tmpObj);
 
-        JsonElement hops = processHops(tmpHops);
+//        JsonElement via = tmpObj.get("via");
+//        JsonElement on = tmpObj.get("on");
+//        JsonElement tmpHops = tmpObj.get("hops");
 
-        JsonObject result = new JsonObject();
-        result.add("via", via);
-        result.add("on", on);
-        result.add("hops", hops);
+        //JsonElement hops = processHops(tmpHops);
+
+//        JsonObject tmp = new JsonObject();
+//        tmp.add("via", via);
+//        tmp.add("on", on);
+//        tmp.add("hops", hops);
+
         return result;
     }
 
