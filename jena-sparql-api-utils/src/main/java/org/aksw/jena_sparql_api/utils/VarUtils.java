@@ -14,6 +14,19 @@ import com.hp.hpl.jena.sparql.graph.NodeTransform;
 
 public class VarUtils {
 
+    public static Var parseVar(String str) {
+        // Remove leading ? of the varName
+        String varName = str.trim();
+        if(varName.charAt(0) != '?') {
+            throw new RuntimeException("var name must start with '?'");
+        }
+        varName = varName.substring(1);
+
+        Var result = Var.alloc(varName);
+        return result;
+    }
+
+
     /**
      * Create a generator which yields fresh variables that is not contained in the array 'vars'.
      * The new var name will have the given prefix

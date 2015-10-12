@@ -26,4 +26,11 @@ public class MappedQuery<T> {
         MappedQuery<T> result = new MappedQuery<T>(new PartitionedQuery(query, partitionVar), agg);
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "" + partQuery + " with " + agg;
+    }
+
+
 }

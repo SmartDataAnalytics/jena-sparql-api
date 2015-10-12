@@ -4,6 +4,7 @@ import org.aksw.gson.utils.JsonUtils;
 import org.aksw.gson.utils.JsonVisitorRewrite;
 import org.aksw.jena_sparql_api.hop.Hop;
 import org.aksw.jena_sparql_api.hop.HopQuery;
+import org.aksw.jena_sparql_api.hop.HopRelation;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -44,19 +45,25 @@ public class JsonVisitorRewriteHop
     public JsonElement visit(JsonObject json) {
         JsonElement result;
         if(json.has("$hop")) {
-            JsonArray arr = json.get("$hop").getAsJsonArray();
-
-            JsonObject o = new JsonObject();
-
-            o.addProperty("type", "org.aksw.jena_sparql_api.batch.step.FactoryBeanHop");
-            o.add("service", JsonUtils.safeGet(arr, 0));
-            o.add("dataset", JsonUtils.safeGet(arr, 1));
-            o.add("auth", JsonUtils.safeGet(arr, 2));
-
-            result = o;
+            JsonElement data = json.get("$hop");
+            result = processHop(data);
         } else {
             result = json;
         }
+//            JsonArray arr = json.get("$hop").getAsJsonArray();
+//
+//            JsonObject o = new JsonObject();
+//
+//            o.addProperty("type", "org.aksw.jena_sparql_api.batch.step.FactoryBeanHop");
+//            o.add("service", JsonUtils.safeGet(arr, 0));
+//            o.add("dataset", JsonUtils.safeGet(arr, 1));
+//            o.add("auth", JsonUtils.safeGet(arr, 2));
+//
+//            result = o;
+//        } else {
+//            result = json;
+//        }
+
 
         return result;
     }
@@ -67,7 +74,7 @@ public class JsonVisitorRewriteHop
         JsonArray result = new JsonArray();
         for(JsonElement item : src) {
             JsonElement tmp = processHop(src);
-            result.add(item);
+            result.add(tmp);
         }
 
         return result;
@@ -89,21 +96,21 @@ public class JsonVisitorRewriteHop
     public static JsonElement processHopCore(JsonElement json) {
         JsonObject obj = json.getAsJsonObject();
 
-        JsonObject result;
-        if(!obj.has("type")) {
-            JsonElement tmpQueries = obj.get("queries");
-            JsonElement tmpRelations = obj.get("relations");
+        JsonElement tmpQueries = obj.get("queries");
+        JsonElement tmpRelations = obj.get("relations");
 
-            JsonElement queries = processQueries(tmpQueries);
-            JsonElement relations = processRelations(tmpRelations);
+        JsonElement queries = processQueries(tmpQueries);
+        JsonElement relations = processRelations(tmpRelations);
 
-            result = new JsonObject();
-            result.addProperty("type", HopQuery.class.getName());
-            result.add("queries", queries);
-            result.add("relations", relations);
-        } else {
-            result = obj;
-        }
+        JsonArray ctorArgs = new JsonArray();
+        ctorArgs.add(queries);
+        ctorArgs.add(relations);
+
+        JsonObject result = new JsonObject();
+        result.addProperty("type", Hop.class.getName());
+        result.add("ctor", ctorArgs);
+//            result.add("queries", queries);
+//            result.add("relations", relations);
 
         return result;
 
@@ -131,9 +138,9 @@ public class JsonVisitorRewriteHop
      * @return
      */
     public static JsonElement processQueries(JsonElement json) {
-        boolean isQueryShortcut = isQueryShortcut(json);
+        boolean isShortcut = isQueryShortcut(json);
 
-        JsonArray src = isQueryShortcut ? JsonUtils.singletonArray(json) : json.getAsJsonArray();
+        JsonArray src = isShortcut ? JsonUtils.singletonArray(json) : safeArray(json);
 
         JsonArray result = new JsonArray();
         for(JsonElement tmpItem : src) {
@@ -147,7 +154,7 @@ public class JsonVisitorRewriteHop
 
     public static boolean isQueryShortcut(JsonElement json) {
         boolean isQueryShortcut = false;
-        if(json.isJsonArray()) {
+        if(json != null && json.isJsonArray()) {
             JsonArray arr = json.getAsJsonArray();
 
             if(arr.size() <= 2) {
@@ -175,7 +182,7 @@ public class JsonVisitorRewriteHop
      */
     public static boolean isRelationShortcut(JsonElement json) {
         boolean isQueryShortcut = false;
-        if(json.isJsonArray()) {
+        if(json != null && json.isJsonArray()) {
             JsonArray arr = json.getAsJsonArray();
 
             if(arr.size() <= 3) {
@@ -254,11 +261,34 @@ public class JsonVisitorRewriteHop
         return result;
     }
 
+//    public static JsonElement arrayIfNull(JsonElement json) {
+//        JsonElement result = (json == null || json.isJsonNull() ? new JsonArray() : json);
+//        return result;
+//    }
+//
+//    public static JsonElement objectIfNull(JsonElement json) {
+//        JsonElement result = (json == null || json.isJsonNull() ? new JsonObject() : json);
+//        return result;
+//    }
+//
+    public static JsonArray safeArray(JsonElement json) {
+        JsonArray result;
+        if(json == null || json.isJsonNull()) {
+            result = new JsonArray();
+        } else if(json.isJsonArray()) {
+            result = json.getAsJsonArray();
+        } else {
+            throw new RuntimeException("Array expected, instead got: " + json);
+        }
+
+        return result;
+    }
 
     public static JsonElement processRelations(JsonElement json) {
+
         boolean isShortcut = isRelationShortcut(json);
 
-        JsonArray src = isShortcut ? JsonUtils.singletonArray(json) : json.getAsJsonArray();
+        JsonArray src = isShortcut ? JsonUtils.singletonArray(json) : safeArray(json);
 
         JsonArray result = new JsonArray();
         for(JsonElement tmpItem : src) {
@@ -298,7 +328,7 @@ public class JsonVisitorRewriteHop
         ctorArgs.add(hops);
 
         JsonObject result = new JsonObject();
-        result.addProperty("type", Hop.class.getName());
+        result.addProperty("type", HopRelation.class.getName());
         result.add("ctor", ctorArgs);
 
         return result;

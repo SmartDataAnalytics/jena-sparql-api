@@ -103,36 +103,12 @@ WHERE { \
                 chunk: 1000,
                 source: '#{ resloc }',
                 concept: '?l | ?s tmp:location ?l',
-                shape: { $hop: {
-                  relations: [{
-                      via: '?s ?x | { }',
-                      on: bar,
-                      hops: [{
-                          queries: [{}],
-
-
-                      }]
-/*
-relations: [
-  'foaf:knows', '#{someService}', [
-
-  ]
-]
-
- */
-
-
+                hop: { $hop: {
+                  queries: [
+                    [ '?l | CONSTRUCT { ?x tmp:geocodeJson ?j } WHERE { ?x tmp:geocodeJson ?j ; tmp:hasLocation ?l }', '#{ geocoderCache }'],
+                    [ '?l | CONSTRUCT WHERE { ?x tmp:lgdLink ?l }', '#{ source }']
                   ]
-
-                  [ '?l | CONSTRUCT { ?x tmp:geocodeJson ?j } WHERE { ?x tmp:geocodeJson ?j ; tmp:hasLocation ?l }', '#{ geocoderCache }'],
-                  [ '?l | CONSTRUCT { ?x tmp:lgdLink ?l }', '#{ source }'],
-                  { via: '?x ?l | ?x sameAs ?l',
-                    hop: [ '?l | CONSTRUCT { ?x tmp:lgdLink ?l }', '#{ source }']
-                  }
-                ] },
-            shape: { $json: {
-                'tmp:geocodeJson': false
-            } },
+                } },
                 modifiers: ['DELETE WHERE { ?s tmp:lgdLink ?l }',
 '\
 INSERT { \

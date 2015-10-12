@@ -28,4 +28,11 @@ public class HopRelation
     public List<Hop> getHops() {
         return hops;
     }
+
+    @Override
+    public String toString() {
+        return "HopRelation [relation=" + relation + ", qef="
+                + super.toString() + ", hops=" + hops + "]";
+    }
+
 }

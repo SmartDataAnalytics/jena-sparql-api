@@ -18,4 +18,10 @@ public class HopQuery
     public MappedQuery<DatasetGraph> getMappedQuery() {
         return mappedQuery;
     }
+
+    @Override
+    public String toString() {
+        return "HopQuery [mappedQuery=" + mappedQuery + ", qef="
+                + super.toString() + "]";
+    }
 }

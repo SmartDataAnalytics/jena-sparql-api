@@ -156,4 +156,24 @@ public class ElementUtils {
         return result;
     }
 
+    /**
+     * TODO This method should flatten elements recursively
+     *
+     * @param e
+     * @return
+     */
+    public static Element flatten(Element e) {
+        Element result;
+        if(e instanceof ElementGroup) {
+            ElementGroup tmp = (ElementGroup)e;
+            List<Element> els = tmp.getElements();
+
+            result = els.size() == 1 ? els.get(0) : tmp;
+        } else {
+            result = e;
+        }
+
+        return result;
+    }
+
 }

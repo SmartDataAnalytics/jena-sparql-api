@@ -14,4 +14,8 @@ public class HopBase {
         return qef;
     }
 
+    @Override
+    public String toString() {
+        return "HopBase [qef=" + qef + "]";
+    }
 }

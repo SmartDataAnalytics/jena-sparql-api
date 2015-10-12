@@ -12,6 +12,8 @@ import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
+import org.aksw.jena_sparql_api.hop.Hop;
+import org.aksw.jena_sparql_api.hop.ListServiceHop;
 import org.aksw.jena_sparql_api.lookup.ListService;
 import org.aksw.jena_sparql_api.modifier.Modifier;
 import org.aksw.jena_sparql_api.modifier.ModifierList;
@@ -46,6 +48,10 @@ public class FactoryBeanStepSparqlDiff
 //	}
 
     protected ResourceShape shape;
+//
+    protected Hop hop;
+
+//    protected Object shape;
 
     protected String name;
     //protected TODO How to represent the shape?
@@ -102,8 +108,18 @@ public class FactoryBeanStepSparqlDiff
         return this;
     }
 
+//    public FactoryBeanStepSparqlDiff setShape(Object shape) {
+//        this.shape = shape;
+//        return this;
+//    }
+
     public FactoryBeanStepSparqlDiff setShape(ResourceShape shape) {
         this.shape = shape;
+        return this;
+    }
+//
+    public FactoryBeanStepSparqlDiff setHop(Hop hop) {
+        this.hop = hop;
         return this;
     }
 
@@ -161,9 +177,9 @@ public class FactoryBeanStepSparqlDiff
 //		return stepBuilder;
 //	}
 
-    public ResourceShape getShape() {
-        return shape;
-    }
+//    public ResourceShape getShape() {
+//        return shape;
+//    }
 
     public String getName() {
         return name;
@@ -189,11 +205,30 @@ public class FactoryBeanStepSparqlDiff
         return targetUef;
     }
 
+    public ListService<Concept, Node, DatasetGraph> createListService() {
+
+        //Hop hop = (shape instanceof Hop) ? (Hop)shape : null;
+        //ResourceShape sh = (shape instanceof ResourceShape) ? (ResourceShape)shape : null;
+        ResourceShape sh = shape;
+
+        ListService<Concept, Node, DatasetGraph> result;
+        if(hop != null) {
+             result = new ListServiceHop(sourceQef, hop);
+        } else if(sh != null) {
+            result = new ListServiceResourceShape(sourceQef, sh, true);
+        } else {
+            throw new RuntimeException("No shape provided");
+        }
+
+        return result;
+    }
+
     @Override
     public Step createInstance() throws Exception {
         Modifier<DatasetGraph> modifier = ModifierList.<DatasetGraph>create(modifiers);
 
-        ListService<Concept, Node, DatasetGraph> listService = new ListServiceResourceShape(sourceQef, shape, true);
+
+        ListService<Concept, Node, DatasetGraph> listService = createListService();
         //ItemReader<Entry<Node, DatasetGraph>> itemReader = new ItemReaderDatasetGraph(listService, concept);
         ItemReaderDatasetGraph itemReader = new ItemReaderDatasetGraph(listService, concept);
         ItemProcessor<Entry<? extends Node, ? extends DatasetGraph>, Entry<Node, Diff<DatasetGraph>>> itemProcessor = new ItemProcessorModifierDatasetGraphDiff(modifier);

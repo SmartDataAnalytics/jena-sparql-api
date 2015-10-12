@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.stmt;
 
+import org.aksw.jena_sparql_api.utils.ElementUtils;
+
 import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.sparql.syntax.Element;
 
@@ -28,7 +30,8 @@ public class SparqlElementParserImpl
         tmp = "Select * " + tmp;
 
         Query query = queryParser.apply(tmp);
-        Element result = query.getQueryPattern();
+        Element raw = query.getQueryPattern();
+        Element result = ElementUtils.flatten(raw);
 
         return result;
     }

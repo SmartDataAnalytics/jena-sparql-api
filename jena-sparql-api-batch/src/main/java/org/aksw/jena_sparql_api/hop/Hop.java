@@ -25,4 +25,10 @@ public class Hop {
     public List<HopRelation> getHopRelations() {
         return hopRelations;
     }
+
+    @Override
+    public String toString() {
+        return "Hop [hopQueries=" + hopQueries + ", hopRelations="
+                + hopRelations + "]";
+    }
 }
