@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.batch.cli.main;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.Arrays;
@@ -53,6 +54,7 @@ import org.aksw.jena_sparql_api.modifier.ModifierDatasetGraphEnrich;
 import org.aksw.jena_sparql_api.modifier.ModifierDatasetGraphSparqlUpdate;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.aksw.jena_sparql_api.shape.ResourceShapeParserJsonObject;
+import org.aksw.jena_sparql_api.sparql.ext.http.E_EncodeForQsa;
 import org.aksw.jena_sparql_api.sparql.ext.http.E_Http;
 import org.aksw.jena_sparql_api.sparql.ext.json.E_JsonParse;
 import org.aksw.jena_sparql_api.sparql.ext.json.E_JsonPath;
@@ -65,6 +67,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.Job;
+import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersInvalidException;
 import org.springframework.batch.core.job.SimpleJob;
@@ -214,6 +217,7 @@ public class MainBatchWorkflow {
         FunctionRegistry.get().put(jsonFn + "path", E_JsonPath.class);
 
         FunctionRegistry.get().put(httpFn + "get", E_Http.class);
+        FunctionRegistry.get().put(httpFn + "encode_for_qsa", E_EncodeForQsa.class);
 
         FunctionRegistry.get().put(termFn + "valid", E_TermValid.class);
 
@@ -391,11 +395,15 @@ public class MainBatchWorkflow {
 
         BatchWorkflowManager manager = batchContext.getBean(BatchWorkflowManager.class);//new BatchWorkflowManager(config);
 
-        manager.launch(job, new JobParameters());
+        JobExecution exec = manager.launch(job, new JobParameters());
 
 
         Thread.sleep(3000);
         System.out.println("Waited for 3 sec");
+
+        for(Throwable t : exec.getAllFailureExceptions()) {
+            t.printStackTrace();
+        }
 //        Object foo = batchContext.getBean("steps");
 //        System.out.println(foo);
 
@@ -459,6 +467,21 @@ public class MainBatchWorkflow {
         }
 
         //main3(args);
+    }
+
+    public static void write(PrintStream out, Map<Node, DatasetGraph> map) {
+        for(Entry<Node, DatasetGraph> entry : map.entrySet()) {
+
+
+            System.out.println("=====================================");
+            System.out.println(entry.getKey());
+
+            DatasetGraphUtils.write(out, entry.getValue());
+            //entry.getValue().write(System.out, "N-TRIPLES");
+            //Model m = ModelFactory.createModelForGraph(entry.getValue());
+            //m.write(System.out, "TURTLE");
+        }
+
     }
 
     public static void main3(String[] args) throws Exception {

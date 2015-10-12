@@ -8,6 +8,7 @@ import java.util.Map.Entry;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
+import org.aksw.jena_sparql_api.utils.ExprListUtils;
 import org.aksw.jena_sparql_api.utils.ResultSetPart;
 
 import com.google.common.collect.Iterables;
@@ -47,12 +48,7 @@ public class LookupServiceSparqlQuery
 
         if(!Iterables.isEmpty(keys)) {
 
-            ExprList exprs = new ExprList();
-            for(Node key : keys) {
-                Expr e = NodeValue.makeNode(key);
-                exprs.add(e);
-            }
-
+            ExprList exprs = ExprListUtils.nodesToExprs(keys);
 
             E_OneOf expr = new E_OneOf(new ExprVar(var), exprs);
             Element filterElement = new ElementFilter(expr);

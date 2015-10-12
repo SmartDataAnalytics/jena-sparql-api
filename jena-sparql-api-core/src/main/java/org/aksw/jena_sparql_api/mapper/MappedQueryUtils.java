@@ -18,7 +18,7 @@ public class MappedQueryUtils {
 
     public static MappedQuery<DatasetGraph> fromConstructQuery(PartitionedQuery partQuery) {
         QuadPattern qp = new QuadPattern();
-        qp.add(new Quad(Vars.g, Vars.s, Vars.p, Vars.o));
+        qp.add(new Quad(Quad.defaultGraphNodeGenerated, Vars.s, Vars.p, Vars.o));
         Agg<DatasetGraph> agg = AggDatasetGraph.create(qp);
 
         MappedQuery<DatasetGraph> result = new MappedQuery<DatasetGraph>(partQuery, agg);

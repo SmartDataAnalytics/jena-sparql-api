@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.aksw.jena_sparql_api.batch.cli.main.MainBatchWorkflow;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
@@ -43,6 +44,8 @@ public class ListServiceHop
 
         Map<Node, DatasetGraph> result = new HashMap<Node, DatasetGraph>();
         execRec(root, sourceNodes, result, defaultQef);
+
+        MainBatchWorkflow.write(System.out, result);
 
         return result;
     }
