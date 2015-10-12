@@ -115,7 +115,7 @@ WHERE { \
 
             { $sparqlStep: {
                 name: 'createLgdUrls',
-                chunk: 1000,
+                chunk: 1,
                 source: '#{ resloc }',
                 concept: '?l | ?s tmp:location ?l',
                 hop: { $hop: {

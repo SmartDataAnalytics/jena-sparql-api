@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.aksw.jena_sparql_api.batch.cli.main.MainBatchWorkflow;
@@ -23,6 +24,9 @@ import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
 
 import com.google.common.base.Functions;
 import com.google.common.collect.FluentIterable;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
@@ -46,7 +50,8 @@ public class ListServiceHop
         List<Node> sourceNodes = ServiceUtils.fetchList(defaultQef, concept, limit, offset);
 
         Map<Node, DatasetGraph> result = new HashMap<Node, DatasetGraph>();
-        execRec(root, sourceNodes, result, defaultQef);
+        //HashMultimap.<Node, Node>create()
+        execRec(root, sourceNodes, result, defaultQef, null);
 
         MainBatchWorkflow.write(System.out, result);
 
@@ -75,7 +80,7 @@ public class ListServiceHop
         }
     }
 
-    public static void processHopQuery(HopQuery hopQuery, Collection<Node> sourceNodes, Map<Node, DatasetGraph> result, QueryExecutionFactory defaultQef) {
+    public static void processHopQuery(HopQuery hopQuery, Collection<Node> sourceNodes, Map<Node, DatasetGraph> result, QueryExecutionFactory defaultQef, Multimap<Node, Node> back) {
         QueryExecutionFactory qef = hopQuery.getQef();
         qef = (qef == null ? defaultQef : qef);
 
@@ -84,13 +89,33 @@ public class ListServiceHop
 
         ls = LookupServicePartition.create(ls, chunkSize);
 
-        Map<Node, DatasetGraph> map = ls.apply(sourceNodes);
+        Map<Node, DatasetGraph> tmpMap = ls.apply(sourceNodes);
+
+
+        Map<Node, DatasetGraph> map;
+        if(back != null) {
+            map = new HashMap<Node, DatasetGraph>();
+            for(Entry<Node, DatasetGraph> entry : tmpMap.entrySet()) {
+                Node tmpNode = entry.getKey();
+                DatasetGraph datasetGraph = entry.getValue();
+                Collection<Node> keys = back.get(tmpNode);
+
+                for(Node key : keys) {
+                    map.put(key, datasetGraph);
+                }
+
+            }
+        } else {
+            map = tmpMap;
+        }
+
+
         DatasetGraphUtils.mergeInPlace(result, map);
     }
 
-    public static void processHopQueries(List<HopQuery> hopQueries, Collection<Node> sourceNodes, Map<Node, DatasetGraph> result, QueryExecutionFactory defaultQef) {
+    public static void processHopQueries(List<HopQuery> hopQueries, Collection<Node> sourceNodes, Map<Node, DatasetGraph> result, QueryExecutionFactory defaultQef, Multimap<Node, Node> back) {
         for(HopQuery hopQuery : hopQueries) {
-            processHopQuery(hopQuery, sourceNodes, result, defaultQef);
+            processHopQuery(hopQuery, sourceNodes, result, defaultQef, back);
         }
     }
 
@@ -99,13 +124,13 @@ public class ListServiceHop
         return result;
     }
 
-    public static void processHopRelations(List<HopRelation> hopRelations, Collection<Node> sourceNodes, Map<Node, DatasetGraph> result, QueryExecutionFactory defaultQef) {
+    public static void processHopRelations(List<HopRelation> hopRelations, Collection<Node> sourceNodes, Map<Node, DatasetGraph> result, QueryExecutionFactory defaultQef, Multimap<Node, Node> back) {
         for(HopRelation hopRelation : hopRelations) {
-            processHopRelation(hopRelation, sourceNodes, result, defaultQef);
+            processHopRelation(hopRelation, sourceNodes, result, defaultQef, back);
         }
     }
 
-    public static void processHopRelation(HopRelation hopRelation, Collection<Node> sourceNodes, Map<Node, DatasetGraph> result, QueryExecutionFactory defaultQef) {
+    public static void processHopRelation(HopRelation hopRelation, Collection<Node> sourceNodes, Map<Node, DatasetGraph> result, QueryExecutionFactory defaultQef, Multimap<Node, Node> back) {
         QueryExecutionFactory qef = hopRelation.getQef();
         qef = (qef == null ? defaultQef : qef);
 
@@ -115,20 +140,50 @@ public class ListServiceHop
 
 
         Map<Node, List<Node>> map = ls.apply(sourceNodes);
+
+        Multimap<Node, Node> tmpMm = HashMultimap.create();
+        for (Entry<Node, List<Node>> entry : map.entrySet()) {
+            tmpMm.putAll(entry.getKey(), entry.getValue());
+        }
+
+        Multimap<Node, Node> tmpBack = Multimaps.invertFrom(tmpMm, HashMultimap.<Node, Node>create());
+
+
+        Multimap<Node, Node> nextBack;
+        if(back != null) {
+            nextBack = HashMultimap.<Node, Node>create();
+            for(Entry<Node, Node> entry : nextBack.entries()) {
+                Node src = entry.getKey();
+                Node tmp = entry.getValue();
+
+                Collection<Node> tgts = back.get(tmp);
+
+                for(Node tgt : tgts) {
+                    nextBack.put(src, tgt);
+                }
+            }
+        } else {
+            nextBack = tmpBack;
+        }
+
+        //Multimaps.invertFrom(Multimaps.<Node, Node>forMap(map), HashMultimap.<Node, Node>create());
+
+
+
         Set<Node> relatedNodes = Sets.<Node>newHashSet(flatMap(map));
 
         for(Hop hop : hopRelation.getHops()) {
-            execRec(hop, relatedNodes, result, qef);
+            execRec(hop, relatedNodes, result, qef, nextBack);
         }
     }
 
-    public static void execRec(Hop hop,  Collection<Node> sourceNodes,  Map<Node, DatasetGraph> result, QueryExecutionFactory defaultQef) {
+    public static void execRec(Hop hop,  Collection<Node> sourceNodes,  Map<Node, DatasetGraph> result, QueryExecutionFactory defaultQef, Multimap<Node, Node> back) {
 
         List<HopQuery> hopQueries = hop.getHopQueries();
         List<HopRelation> hopRelations = hop.getHopRelations();
 
-        processHopQueries(hopQueries, sourceNodes, result, defaultQef);
-        processHopRelations(hopRelations, sourceNodes, result, defaultQef);
+        processHopQueries(hopQueries, sourceNodes, result, defaultQef, back);
+        processHopRelations(hopRelations, sourceNodes, result, defaultQef, back);
     }
 }
 
