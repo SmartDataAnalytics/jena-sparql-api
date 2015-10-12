@@ -7,6 +7,7 @@ import org.aksw.commons.collections.diff.Diff;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
 import org.aksw.jena_sparql_api.core.utils.UpdateDiffUtils;
 import org.aksw.jena_sparql_api.core.utils.UpdateExecutionUtils;
+import org.apache.jena.atlas.web.HttpException;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
@@ -21,7 +22,7 @@ public class ItemWriterSparqlDiff
     private UpdateExecutionFactory uef;
 
     public ItemWriterSparqlDiff(UpdateExecutionFactory uef) {
-    	this.uef = uef;
+        this.uef = uef;
     }
 
     public UpdateExecutionFactory getUpdateExecutionFactory() {
@@ -37,13 +38,22 @@ public class ItemWriterSparqlDiff
         List<Diff<? extends DatasetGraph>> diffs = Lists.newArrayList();
 
         for(Entry<? extends Node, ? extends Diff<? extends DatasetGraph>> item : items) {
-        	Diff<? extends DatasetGraph> diff = item.getValue();
-        	diffs.add(diff);
+            Diff<? extends DatasetGraph> diff = item.getValue();
+            diffs.add(diff);
         }
 
-    	Diff<DatasetGraph> diff = UpdateDiffUtils.combineDatasetGraph(diffs);
+        Diff<DatasetGraph> diff = UpdateDiffUtils.combineDatasetGraph(diffs);
 
-        UpdateExecutionUtils.executeUpdateDatasetGraph(uef, diff);
+        try {
+            UpdateExecutionUtils.executeUpdateDatasetGraph(uef, diff);
+        } catch(Exception e) {
+            if(e instanceof HttpException) {
+                HttpException x = (HttpException)e;
+                String response = ((HttpException) e).getResponse();
+                throw new RuntimeException(response, e);
+            }
+
+        }
     }
 
     @Override

@@ -99,6 +99,7 @@ import com.hp.hpl.jena.shared.impl.PrefixMappingImpl;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import com.hp.hpl.jena.sparql.core.Prologue;
 import com.hp.hpl.jena.sparql.function.FunctionRegistry;
+import com.hp.hpl.jena.sparql.function.user.UserDefinedFunctionFactory;
 import com.hp.hpl.jena.sparql.pfunction.PropertyFunctionRegistry;
 import com.hp.hpl.jena.update.UpdateFactory;
 import com.hp.hpl.jena.update.UpdateRequest;
@@ -325,6 +326,11 @@ public class MainBatchWorkflow {
         JsonVisitorRewriteKeys visitor = JsonVisitorRewriteKeys.create(JsonTransformerRewrite.create(subVisitor, false));
 
         JsonElement effectiveJobParamsJson = JsonWalker.visit(jobParamsJson, visitor);
+
+        //UserDefinedFunctionFactory fff;
+        // my:foo(?x, ?y ?z) = someotherexpression
+        // by convention, the expression must be of type E_Equals with the left hand side must be a function with only variables as arguments
+        // we could add a hack to allow := instead (well, in addition to) =
 
         //);
 

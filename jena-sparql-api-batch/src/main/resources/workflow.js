@@ -25,26 +25,26 @@
         name: 'geoCodingJob',
 
         steps: [
-//            { $sparqlUpdate: {
-//                name: 'clearData',
-//                target: '#{ target }',
-//                update: 'DELETE WHERE { ?s ?p ?o }'
-//            } },
-//
-//            { $sparqlPipe: {
-//              name: 'loadData',
-//              chunk: 1000,
-//              source: '#{ source }',
-//              target: '#{ target }',
-//              query: 'Construct Where { ?s ?p ?o }',
-//              filter: 'term:valid(?s) && term:valid(?p) && term:valid(?o)'
-//            } },
+            { $sparqlUpdate: {
+                name: 'clearData',
+                target: '#{ target }',
+                update: 'DELETE WHERE { ?s ?p ?o }'
+            } },
 
-//            { $sparqlUpdate: {
-//                name: 'clearLocations',
-//                target: '#{ target }',
-//                update: 'DELETE { ?s ?p ?o } WHERE { ?s ?p ?o . Filter(?p In (geo:lat, geo:long)) }'
-//            } },
+            { $sparqlPipe: {
+              name: 'loadData',
+              chunk: 1000,
+              source: '#{ source }',
+              target: '#{ target }',
+              query: 'Construct Where { ?s ?p ?o }',
+              filter: 'term:valid(?s) && term:valid(?p) && term:valid(?o)'
+            } },
+
+            { $sparqlUpdate: {
+                name: 'clearLocations',
+                target: '#{ target }',
+                update: 'DELETE { ?s ?p ?o } WHERE { ?s ?p ?o . Filter(?p In (geo:lat, geo:long)) }'
+            } },
 
             { $sparqlPipe: {
                 name: 'createLocations',
@@ -78,7 +78,7 @@ WHERE { \
 
             { $sparqlStep: {
                 name: 'geocodeLocations',
-                chunk: 1000,
+                chunk: 1,
                 service: '#{ geocoderCache }',
                 concept: '?l | { ?x tmp:hasLocation ?l . Optional { ?x tmp:geocodeJson ?j } Filter(!Bound(?j)) }',
                 hop: { $hop: {
@@ -99,12 +99,13 @@ INSERT { \
 } \
 WHERE { \
 \
-  { SELECT ?l (http:get(concat("http://nominatim.openstreetmap.org/search?format=json&email=cstadler%40informatik.uni-leipzig.de&polygon_text=1&q=", http:encode_for_qsa(?l))) AS ?j) { \
+  { SELECT ?l (http:get(concat("http://nominatim.openstreetmap.org/search?format=json&email=cstadler%40informatik.uni-leipzig.de&polygon_text=1&q=", http:encode_for_qsa(?l))) AS ?tmpJ) { \
     { SELECT DISTINCT ?l { \
       ?x tmp:hasLocation ?l \
     } } \
   } } \
-  ?x tmp:location ?l \
+  ?x tmp:hasLocation ?l . \
+  Bind(if(strlen(str(?tmpJ)) > 5000000, "[]", ?tmpJ) As ?j) \
 }'
                 //'DELETE WHERE { ?x tmp:geocodeJson ?j }'
 ]
