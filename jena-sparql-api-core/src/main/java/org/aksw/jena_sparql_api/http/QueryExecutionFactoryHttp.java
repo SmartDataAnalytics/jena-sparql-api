@@ -63,6 +63,7 @@ public class QueryExecutionFactoryHttp
     @Override
     public QueryExecution createQueryExecution(String queryString) {
         QueryEngineHTTP qe = new QueryEngineHTTP(service, queryString, httpAuthenticator);
+
         qe.setDefaultGraphURIs(datasetDescription.getDefaultGraphURIs());
         qe.setNamedGraphURIs(datasetDescription.getNamedGraphURIs());
 

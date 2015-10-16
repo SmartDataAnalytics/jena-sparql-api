@@ -249,7 +249,7 @@ public class MainBatchWorkflow {
                 + "}", "http://example.org/base/", Syntax.syntaxARQ);
         }
 
-        if(false) {
+        if(true) {
             QueryFactory.parse(query, "Select ?osmType ?osmId ?x ?y {"
                     + "  VALUES(?s) { (<http://nominatim.openstreetmap.org/search/?format=json&q=Leipzig>) }\n"
                     + "  BIND(http:get(?s) As ?json).\n"
@@ -265,6 +265,9 @@ public class MainBatchWorkflow {
             QueryExecution qe = qef.createQueryExecution(query);
             System.out.println(ResultSetFormatter.asText(qe.execSelect(), prologue));
         }
+
+
+        System.exit(0);
     }
 
     public static ApplicationContext initBaseContext() {

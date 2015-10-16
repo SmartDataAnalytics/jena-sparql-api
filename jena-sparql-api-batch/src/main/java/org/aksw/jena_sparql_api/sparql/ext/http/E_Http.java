@@ -43,6 +43,10 @@ public class E_Http
     public E_Http(HttpClient httpClient) {
         super();
         this.httpClient = httpClient;
+
+        HttpRequestInterceptorLogging x = new HttpRequestInterceptorLogging();
+        ((DefaultHttpClient)httpClient).addRequestInterceptor(x);
+        ((DefaultHttpClient)httpClient).addResponseInterceptor(x);
     }
 
     @Override

@@ -100,7 +100,7 @@ public class UpdateExecutionUtils {
                     : diff;
 
             if(listeners != null) {
-                DatasetListenerUtils.notifyListeners(listeners, filteredDiff, null);
+                DatasetListenerUtils.notifyListeners(listeners, filteredDiff, null, null);
             }
 
             executeUpdate(uef, diff);

@@ -18,15 +18,13 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.eclipse.jetty.server.Server;
 import org.junit.Assert;
-import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
-import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.sparql.core.DatasetDescription;
 
 public class TestServletSparqlUpdate {
     // TODO Make this test work in offline mode
-    @Test
+    //@Test
     public void test1() throws Exception {
         int port = 7533;
 
