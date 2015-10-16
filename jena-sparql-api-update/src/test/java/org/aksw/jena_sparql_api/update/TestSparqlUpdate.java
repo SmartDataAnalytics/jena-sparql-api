@@ -8,6 +8,7 @@ import java.util.Set;
 import org.aksw.commons.collections.diff.Diff;
 import org.aksw.jena_sparql_api.core.DatasetListener;
 import org.aksw.jena_sparql_api.core.SparqlService;
+import org.aksw.jena_sparql_api.core.SparqlServiceReference;
 import org.aksw.jena_sparql_api.core.UpdateContext;
 import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
 import org.junit.FixMethodOrder;
@@ -106,7 +107,7 @@ public class TestSparqlUpdate {
         // Define the listeners
         List<DatasetListener> listeners = Collections.<DatasetListener>singletonList(new DatasetListener() {
             @Override
-            public void onPreModify(Diff<Set<Quad>> diff, UpdateContext updateContext) {
+            public void onPreModify(Diff<Set<Quad>> diff, SparqlServiceReference serviceRef, UpdateContext updateContext) {
                 // Print out any changes to the console
                 System.out.println(diff);
             }

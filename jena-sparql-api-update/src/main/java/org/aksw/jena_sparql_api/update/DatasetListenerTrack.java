@@ -4,23 +4,25 @@ import java.util.Set;
 
 import org.aksw.commons.collections.diff.Diff;
 import org.aksw.jena_sparql_api.core.DatasetListener;
+import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.SparqlServiceReference;
 import org.aksw.jena_sparql_api.core.UpdateContext;
-import org.apache.jena.atlas.lib.Sink;
 
 import com.hp.hpl.jena.sparql.core.Quad;
 
-public class DatasetListenerSink
+public class DatasetListenerTrack
     implements DatasetListener
 {
-    private Sink<Diff<? extends Iterable<Quad>>> sink;
+    //private Sink<Diff<? extends Iterable<Quad>>> sink;
+    //private UpdateExecutionFactory uef;
+    private SparqlService trackerService;
 
-    public DatasetListenerSink(Sink<Diff<? extends Iterable<Quad>>> sink) {
-        this.sink = sink;
+    public DatasetListenerTrack(SparqlService trackerService) {
+        this.trackerService = trackerService;
     }
 
     @Override
     public void onPreModify(Diff<Set<Quad>> diff, SparqlServiceReference serviceReference, UpdateContext updateContext) {
-        sink.send(diff);
+        //sink.send(diff);
     }
 }

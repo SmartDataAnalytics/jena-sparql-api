@@ -10,6 +10,7 @@ import com.hp.hpl.jena.query.Query;
 public class C_StringToQuery
     implements Converter<String, Query>
 {
+    @Autowired
     private SparqlQueryParser parser;
 
 //    public C_StringToQuery() {
@@ -20,7 +21,6 @@ public class C_StringToQuery
         return parser;
     }
 
-    @Autowired
     public void setParser(SparqlQueryParser parser) {
         this.parser = parser;
     }

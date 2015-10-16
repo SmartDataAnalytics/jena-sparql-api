@@ -13,9 +13,11 @@ public class ItemWriterQuad
     implements ItemWriter<Quad>
 {
     private UpdateExecutionFactory uef;
+    private boolean isDelete;
 
-    public ItemWriterQuad(UpdateExecutionFactory uef) {
+    public ItemWriterQuad(UpdateExecutionFactory uef, boolean isDelete) {
         this.uef = uef;
+        this.isDelete = isDelete;
 
         Assert.notNull(uef);
     }
@@ -24,8 +26,12 @@ public class ItemWriterQuad
         return uef;
     }
 
+    public boolean isDelete() {
+        return isDelete;
+    }
+
     @Override
     public void write(List<? extends Quad> quads) throws Exception {
-        UpdateExecutionUtils.executeInsertQuads(uef, quads);
+        UpdateExecutionUtils.executeUpdateQuads(uef, quads, isDelete);
     }
 }

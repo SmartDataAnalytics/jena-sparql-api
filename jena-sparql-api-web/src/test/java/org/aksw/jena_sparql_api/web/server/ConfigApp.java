@@ -36,6 +36,36 @@ public class ConfigApp {
                 .end()
             .end().create();
 
+        return result;
+    }
+
+    @Bean
+    @Autowired
+    @Qualifier("init")
+    public SparqlService sparqlServiceChangeSet(@Qualifier("init") SparqlServiceFactory ssf) {
+        HttpAuthenticator authenticator = new SimpleAuthenticator("dba", "dba".toCharArray());
+        DatasetDescription ds = new DatasetDescription(Arrays.asList("http://jsa.aksw.org/test/changesets"), Collections.<String>emptyList());;
+        SparqlService result = ssf.createSparqlService("http://localhost:8890/sparql", ds, authenticator);
+        return result;
+    }
+
+    @Bean
+    @Autowired
+    @Primary
+    public SparqlServiceFactory sparqlServiceFactory(@Qualifier("init") SparqlServiceFactory ssf, @Qualifier("init") SparqlService ssfChangeSet) {
+
+        ChangeSetMetadata metadata = new ChangeSetMetadata("claus", "testing");
+        SparqlServiceFactoryEventSource result = new SparqlServiceFactoryEventSource(ssf);
+        SinkChangeSetWriter sink = new SinkChangeSetWriter(metadata, ssfChangeSet);
+        result.getListeners().add(new DatasetListenerSink(sink));
+
+        return result;
+    }
+
+}
+
+
+
 /*
 
         Function<QueryExecutionFactory, QueryExecutionFactory> x = FluentQueryExecutionFactoryFn.start().withPagination(1000l).withDefaultLimit(1000l, true).create();
@@ -72,30 +102,3 @@ public class ConfigApp {
         };
 
 */
-        return result;
-    }
-
-    @Bean
-    @Autowired
-    @Qualifier("init")
-    public SparqlService sparqlServiceChangeSet(@Qualifier("init") SparqlServiceFactory ssf) {
-        HttpAuthenticator authenticator = new SimpleAuthenticator("dba", "dba".toCharArray());
-        DatasetDescription ds = new DatasetDescription(Arrays.asList("http://jsa.aksw.org/test/changesets"), Collections.<String>emptyList());;
-        SparqlService result = ssf.createSparqlService("http://localhost:8890/sparql", ds, authenticator);
-        return result;
-    }
-
-    @Bean
-    @Autowired
-    @Primary
-    public SparqlServiceFactory sparqlServiceFactory(@Qualifier("init") SparqlServiceFactory ssf, @Qualifier("init") SparqlService ssfChangeSet) {
-
-        ChangeSetMetadata metadata = new ChangeSetMetadata("claus", "testing");
-        SparqlServiceFactoryEventSource result = new SparqlServiceFactoryEventSource(ssf);
-        SinkChangeSetWriter sink = new SinkChangeSetWriter(metadata, ssfChangeSet);
-        result.getListeners().add(new DatasetListenerSink(sink));
-
-        return result;
-    }
-
-}

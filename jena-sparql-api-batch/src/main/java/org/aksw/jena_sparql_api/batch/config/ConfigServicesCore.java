@@ -1,8 +1,11 @@
 package org.aksw.jena_sparql_api.batch.config;
 
 import java.util.List;
+import java.util.Random;
 
 import org.aksw.jena_sparql_api.batch.cli.main.MainBatchWorkflow;
+import org.aksw.jena_sparql_api.changeset.ChangeSetMetadata;
+import org.aksw.jena_sparql_api.changeset.SinkChangeSetWriter;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactoryHttp;
 import org.aksw.jena_sparql_api.spring.conversion.ConverterRegistryPostProcessor;
@@ -20,6 +23,8 @@ import org.aksw.jena_sparql_api.stmt.SparqlRelationParser;
 import org.aksw.jena_sparql_api.stmt.SparqlRelationParserImpl;
 import org.aksw.jena_sparql_api.stmt.SparqlUpdateParser;
 import org.aksw.jena_sparql_api.stmt.SparqlUpdateParserImpl;
+import org.aksw.jena_sparql_api.update.DatasetListenerSink;
+import org.aksw.jena_sparql_api.update.SparqlServiceFactoryEventSource;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor;
@@ -124,9 +129,23 @@ public class ConfigServicesCore
         return result;
     }
 
+    private Random random = new Random();
+
     @Bean
     public SparqlServiceFactory defaultSparqlServiceFactory() {
         SparqlServiceFactory result = new SparqlServiceFactoryHttp();
+
+        long jobInstanceId = random.nextLong();
+
+
+//        DatasetListenerSink
+//        //Fluent
+//        ChangeSetMetadata metadata = new ChangeSetMetadata("claus", "testing");
+//        SparqlServiceFactoryEventSource result = new SparqlServiceFactoryEventSource(ssf);
+//        SinkChangeSetWriter sink = new SinkChangeSetWriter(metadata, ssfChangeSet);
+//        result.getListeners().add(new DatasetListenerSink(sink));
+
+
         return result;
     }
 

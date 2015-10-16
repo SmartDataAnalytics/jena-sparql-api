@@ -10,6 +10,9 @@ import org.aksw.jena_sparql_api.core.UpdateContext;
 import org.aksw.jena_sparql_api.core.utils.UpdateExecutionUtils;
 
 import com.google.common.collect.Iterables;
+import com.hp.hpl.jena.sparql.modify.request.UpdateDataInsert;
+import com.hp.hpl.jena.sparql.modify.request.UpdateDeleteInsert;
+import com.hp.hpl.jena.sparql.modify.request.UpdateModify;
 import com.hp.hpl.jena.sparql.util.Context;
 import com.hp.hpl.jena.update.GraphStore;
 import com.hp.hpl.jena.update.UpdateProcessor;

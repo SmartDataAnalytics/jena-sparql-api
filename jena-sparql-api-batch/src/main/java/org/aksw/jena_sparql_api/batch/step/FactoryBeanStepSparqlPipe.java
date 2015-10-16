@@ -28,6 +28,7 @@ public class FactoryBeanStepSparqlPipe
     protected String name;
     protected int chunkSize;
     protected Query query;
+    protected boolean isDelete;
 
     protected QueryExecutionFactory source;
     protected UpdateExecutionFactory target;
@@ -110,6 +111,14 @@ public class FactoryBeanStepSparqlPipe
         this.filter = filter;
     }
 
+    public boolean isDelete() {
+        return isDelete;
+    }
+
+    public void setDelete(boolean isDelete) {
+        this.isDelete = isDelete;
+    }
+
     @Override
     public Step createInstance() throws Exception {
 
@@ -117,7 +126,7 @@ public class FactoryBeanStepSparqlPipe
 
         ItemReaderQuad reader = new ItemReaderQuad(source, query, predicate);
         ItemProcessor<? super Quad, ? extends Quad> processor = new PassThroughItemProcessor<Quad>();
-        ItemWriterQuad writer = new ItemWriterQuad(target);
+        ItemWriterQuad writer = new ItemWriterQuad(target, isDelete);
 
         reader.setPageSize(chunkSize);
 

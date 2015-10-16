@@ -75,21 +75,35 @@ public class UpdateExecutionUtils {
 
 
         for(Update update : request.getOperations()) {
-            Iterator<Diff<Set<Quad>>> itDiff = UpdateDiffUtils.createIteratorDiff(qef, update, batchSize);
+            executeUpdateCore(qef, uef, update, filter, batchSize, listeners);
+        }
+    }
 
-            while(itDiff.hasNext()) {
-                Diff<Set<Quad>> diff = itDiff.next();
 
-                Diff<Set<Quad>> filteredDiff = filter != null
-                        ? filter.apply(diff)
-                        : diff;
+    public static void executeUpdateCore(
+            QueryExecutionFactory qef,
+            UpdateExecutionFactory uef,
+            Update update,
+            Function<Diff<? extends Iterable<Quad>>, Diff<Set<Quad>>> filter,
+            int batchSize,
+            Iterable<DatasetListener> listeners)
+    {
+        String withIri = UpdateUtils.getWithIri(update);
 
-                if(listeners != null) {
-                    DatasetListenerUtils.notifyListeners(listeners, filteredDiff, null);
-                }
+        Iterator<Diff<Set<Quad>>> itDiff = UpdateDiffUtils.createIteratorDiff(qef, update, batchSize);
 
-                executeUpdate(uef, diff);
+        while(itDiff.hasNext()) {
+            Diff<Set<Quad>> diff = itDiff.next();
+
+            Diff<Set<Quad>> filteredDiff = filter != null
+                    ? filter.apply(diff)
+                    : diff;
+
+            if(listeners != null) {
+                DatasetListenerUtils.notifyListeners(listeners, filteredDiff, null);
             }
+
+            executeUpdate(uef, diff);
         }
     }
 
@@ -102,6 +116,14 @@ public class UpdateExecutionUtils {
     public static UpdateProcessor executeDeleteTriples(UpdateExecutionFactory uef, Iterable<Triple> triples) {
         Iterable<Quad> quads = Iterables.transform(triples, FN_QuadFromTriple.fnDefaultGraphNodeGenerated);
         UpdateProcessor result = executeDeleteQuads(uef, quads);
+        return result;
+    }
+
+    public static UpdateProcessor executeUpdateQuads(UpdateExecutionFactory uef, Iterable<? extends Quad> quads, boolean isDelete) {
+        UpdateProcessor result = isDelete
+                ? executeDeleteQuads(uef, quads)
+                : executeInsertQuads(uef, quads)
+                ;
         return result;
     }
 

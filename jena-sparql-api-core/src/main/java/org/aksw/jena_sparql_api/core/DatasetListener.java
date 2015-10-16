@@ -11,7 +11,7 @@ public interface DatasetListener {
      * Event notifying about a modification to an RDF dataset, i.e. a set of quads being added or removed.
      * @param diff
      */
-    void onPreModify(Diff<Set<Quad>> diff, UpdateContext updateContext);
+    void onPreModify(Diff<Set<Quad>> diff, SparqlServiceReference serviceRef, UpdateContext updateContext);
 
     //void onPreDelete(Iterator<Quad> it);
     //void onPreInsert(Iterator<Quad> it);

@@ -9,6 +9,7 @@ import java.util.Set;
 import org.aksw.commons.collections.diff.Diff;
 import org.aksw.commons.util.strings.StringUtils;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.SparqlServiceReference;
 import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceSparqlQuery;
@@ -19,6 +20,8 @@ import org.aksw.jena_sparql_api.utils.GraphUtils;
 import org.aksw.jena_sparql_api.utils.ResultSetPart;
 import org.aksw.jena_sparql_api.utils.SetGraph;
 import org.aksw.jena_sparql_api.utils.Vars;
+import org.apache.commons.lang3.reflect.FieldUtils;
+import org.apache.jena.atlas.web.auth.SimpleAuthenticator;
 
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
@@ -37,6 +40,7 @@ import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.rdf.model.Statement;
+import com.hp.hpl.jena.sparql.core.DatasetDescription;
 import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.sparql.graph.GraphFactory;
 import com.hp.hpl.jena.sparql.util.ModelUtils;
@@ -44,11 +48,68 @@ import com.hp.hpl.jena.update.UpdateRequest;
 import com.hp.hpl.jena.util.iterator.ExtendedIterator;
 import com.hp.hpl.jena.vocabulary.RDF;
 
+// TODO A vocubulary class, name it properly
+class V {
+    public static final String ns = "http://example.org/";
+
+    public static final Resource RdfDataset = ResourceFactory.createResource(ns + " RdfDataset");
+
+    public static final Property endpoint = ResourceFactory.createProperty(ns + " endpoint");
+    public static final Property target = ResourceFactory.createProperty(ns + " target");
+    public static final Property username = ResourceFactory.createProperty(ns + "username");
+    public static final Property password = ResourceFactory.createProperty(ns + "password");
+}
+
+class ResourceUtils {
+    public static Resource createSubResource(Resource parent, String subName) {
+        String str = parent.getURI() + "/" + subName;
+        Model m = parent.getModel();
+        Resource result;
+        if(m == null) {
+            result = ResourceFactory.createResource(str);
+        } else {
+            result = m.createResource(str);
+        }
+        return result;
+    }
+}
 
 public class ChangeSetUtils {
 
     public static final Query queryMostRecentChangeSet = QueryFactory.parse(new Query(), "Prefix cs: <http://purl.org/vocab/changeset/schema#> Select ?s ?o { ?s cs:subjectOfChange ?o . Optional { ?x cs:precedingChangeSet ?s } . Filter(!Bound(?x)) }", "http://example.org/", Syntax.syntaxSPARQL_11);
 
+
+
+    public static String createHash(SparqlServiceReference serviceRef) {
+        String result = serviceRef.getServiceURL() + serviceRef.getDefaultGraphURIs() + serviceRef.getNamedGraphURIs();
+
+        result = StringUtils.md5Hash(result);
+
+        return result;
+    }
+
+    public static void writeServiceReference(SparqlServiceReference serviceRef, String targetGraph, Resource root, Model model) throws IllegalAccessException {
+
+        Resource dgs = ResourceUtils.createSubResource(root, "defaultGraphs");
+        Resource ngs = ResourceUtils.createSubResource(root, "namedGraphs");
+
+
+        // An update can only go to a single graph
+        model.add(root, RDF.type, V.RdfDataset);
+        model.add(root, V.endpoint, model.createResource(serviceRef.getServiceURL()));
+        model.add(root, V.target, model.createResource(targetGraph));
+
+        Object auth = serviceRef.getAuthenticator();
+        if(auth instanceof SimpleAuthenticator) {
+            SimpleAuthenticator a = (SimpleAuthenticator)auth;
+
+            String username = (String)FieldUtils.readField(a, "username" , true);
+            char[] password = (char[])FieldUtils.readField(a, "password" , true);
+
+            model.add(root, V.username, model.createLiteral(username));
+            model.add(root, V.password, model.createLiteral(new String(password)));
+        }
+    }
 
     public static LookupService<Node, Node> createLookupServiceMostRecentChangeSet(QueryExecutionFactory qef) {
 

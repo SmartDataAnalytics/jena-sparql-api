@@ -9,7 +9,11 @@ import com.hp.hpl.jena.sparql.core.DatasetDescription;
 
 /**
  * Wraps a SPARQL service instance(dataset) accessible via HTTP.
+ *
+ * 2015-10-15: Added authenticator ~ Claus
+ *
  * @author Lorenz Buehmann
+ *
  *
  */
 public class SparqlServiceReference {
@@ -26,10 +30,17 @@ public class SparqlServiceReference {
 //    public SparqlServiceReference(String serviceURL, List<String> defaultGraphURIs) {
 //        this(serviceURL, defaultGraphURIs, Collections.<String>emptySet());
 //    }
+    private final Object authenticator;
+
 
     public SparqlServiceReference(String serviceURL, DatasetDescription datasetDescription) {
+        this(serviceURL, datasetDescription, null);
+    }
+
+    public SparqlServiceReference(String serviceURL, DatasetDescription datasetDescription, Object authenticator) {
         this.serviceURL = serviceURL;
         this.datasetDescription = datasetDescription;
+        this.authenticator = authenticator;
     }
 
     /**
@@ -50,14 +61,6 @@ public class SparqlServiceReference {
         return datasetDescription.getDefaultGraphURIs();
     }
 
-    /* (non-Javadoc)
-     * @see java.lang.Object#toString()
-     */
-    @Override
-    public String toString() {
-        return super.toString();
-    }
-
     /**
      * @return the namedGraphURIs
      */
@@ -65,14 +68,18 @@ public class SparqlServiceReference {
         return datasetDescription.getNamedGraphURIs();
     }
 
+    public Object getAuthenticator() {
+        return authenticator;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime
-                * result
-                + ((datasetDescription == null) ? 0 : datasetDescription
-                        .hashCode());
+        result = prime * result
+                + ((authenticator == null) ? 0 : authenticator.hashCode());
+        result = prime * result + ((datasetDescription == null) ? 0
+                : datasetDescription.hashCode());
         result = prime * result
                 + ((serviceURL == null) ? 0 : serviceURL.hashCode());
         return result;
@@ -87,6 +94,11 @@ public class SparqlServiceReference {
         if (getClass() != obj.getClass())
             return false;
         SparqlServiceReference other = (SparqlServiceReference) obj;
+        if (authenticator == null) {
+            if (other.authenticator != null)
+                return false;
+        } else if (!authenticator.equals(other.authenticator))
+            return false;
         if (datasetDescription == null) {
             if (other.datasetDescription != null)
                 return false;
@@ -99,4 +111,12 @@ public class SparqlServiceReference {
             return false;
         return true;
     }
+
+    @Override
+    public String toString() {
+        return "SparqlServiceReference [serviceURL=" + serviceURL
+                + ", datasetDescription=" + datasetDescription
+                + ", authenticator=" + authenticator + "]";
+    }
+
 }

@@ -64,6 +64,7 @@ import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.spring.json.ContextProcessorJsonUtils;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.jena.web.DatasetGraphAccessorBasic;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.Job;
@@ -138,6 +139,7 @@ public class MainBatchWorkflow {
 
 
     public static void main(String[] args) throws Exception {
+
 
 //        String queryStr = "INSERT { ?s tmp:location ?l } WHERE { ?s o:address [ o:country [ rdfs:label ?col ] ; o:city [ rdfs:label ?cil ]  ] BIND(concat(?cil, ' ', ?col) As ?l) }";
 //
@@ -398,6 +400,8 @@ public class MainBatchWorkflow {
         System.out.println("Got " + allBeans.size() + " beans: " + allBeans);
 
         System.out.println("Job: " + job);
+
+        System.exit(0);
 
         BatchWorkflowManager manager = batchContext.getBean(BatchWorkflowManager.class);//new BatchWorkflowManager(config);
 
