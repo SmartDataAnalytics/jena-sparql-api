@@ -12,6 +12,8 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.springframework.util.StreamUtils;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.net.MediaType;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.sparql.expr.NodeValue;
@@ -34,19 +36,19 @@ public class E_Http
 {
     //public static final MimeType mtJson = new MimeType("application/json");
 
-    private HttpClient httpClient;
+    private Supplier<HttpClient> httpClientSupplier;
 
     public E_Http() {
         this(new DefaultHttpClient());
     }
 
     public E_Http(HttpClient httpClient) {
-        super();
-        this.httpClient = httpClient;
+        this(Suppliers.ofInstance(httpClient));
+    }
 
-        HttpRequestInterceptorLogging x = new HttpRequestInterceptorLogging();
-        ((DefaultHttpClient)httpClient).addRequestInterceptor(x);
-        ((DefaultHttpClient)httpClient).addResponseInterceptor(x);
+    public E_Http(Supplier<HttpClient> httpClientSupplier) {
+        super();
+        this.httpClientSupplier = httpClientSupplier;
     }
 
     @Override
@@ -79,7 +81,8 @@ public class E_Http
             System.out.println("HTTP Request: " + request);
 
             // add request header
-            //request.addHeader("User-Agent", USER_AGENT);
+            //request.addHeader("User-Agent", USER_AGENT)
+            HttpClient httpClient = httpClientSupplier.get();
             HttpResponse response = httpClient.execute(request);
 
 

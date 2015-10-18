@@ -18,11 +18,13 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
+import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.QueryFactory;
 import com.hp.hpl.jena.query.Syntax;
+import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import com.hp.hpl.jena.sparql.core.Quad;
@@ -31,6 +33,7 @@ import com.hp.hpl.jena.update.Update;
 import com.hp.hpl.jena.update.UpdateFactory;
 import com.hp.hpl.jena.update.UpdateProcessor;
 import com.hp.hpl.jena.update.UpdateRequest;
+import com.hp.hpl.jena.util.iterator.ExtendedIterator;
 
 public class UpdateExecutionUtils {
 
@@ -59,6 +62,39 @@ public class UpdateExecutionUtils {
         }
         logger.debug("Done with this chunk");
     }
+
+    public static UpdateProcessor executeInsert(UpdateExecutionFactory uef, Model model) {
+        Graph graph = model.getGraph();
+        UpdateProcessor result = executeInsert(uef, graph);
+        return result;
+    }
+
+    public static UpdateProcessor executeInsert(UpdateExecutionFactory uef, Graph graph) {
+        //ExtendedIterator<Triple> it = graph.find(null, null, null);
+        Set<Triple> triples = graph.find(null, null, null).toSet();
+        UpdateProcessor result = executeInsertTriples(uef, triples);
+
+        //UpdateProcessor result = executeInsertIterator(uef, it, 1000);
+        return result;
+    }
+
+//    public static UpdateProcessor executeInsertIterator(UpdateExecutionFactory uef, Iterator<Triple> tripleIt, int chunksize)
+//    {
+//
+//        try {
+//            Iterator<List<Triple>> it = Iterators.partition(tripleIt, chunksize);
+//            while(it.hasNext()) {
+//                List<Triple> triples = it.next();
+//                executeInsertTriples(uef, triples);
+//            }
+//        } finally {
+//            if(tripleIt instanceof ExtendedIterator) {
+//                ExtendedIterator<?> tmp = (ExtendedIterator<?>)tripleIt;
+//                tmp.close();
+//            }
+//        }
+//    }
+
 
     public static void executeUpdate(SparqlService sparqlService, String requestStr, int batchSize, Iterable<DatasetListener> listeners, QuadContainmentChecker containmentChecker) { //, Function<Diff<? extends Iterable<Quad>>, Diff<Set<Quad>>> filter) {
         //UpdateRequest updateRequest = new UpdateRequest();

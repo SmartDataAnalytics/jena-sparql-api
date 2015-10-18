@@ -55,7 +55,7 @@ import org.aksw.jena_sparql_api.modifier.ModifierDatasetGraphSparqlUpdate;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.aksw.jena_sparql_api.shape.ResourceShapeParserJsonObject;
 import org.aksw.jena_sparql_api.sparql.ext.http.E_EncodeForQsa;
-import org.aksw.jena_sparql_api.sparql.ext.http.E_Http;
+import org.aksw.jena_sparql_api.sparql.ext.http.FunctionFactoryE_Http;
 import org.aksw.jena_sparql_api.sparql.ext.json.E_JsonParse;
 import org.aksw.jena_sparql_api.sparql.ext.json.E_JsonPath;
 import org.aksw.jena_sparql_api.sparql.ext.json.RDFDatatypeJson;
@@ -63,8 +63,8 @@ import org.aksw.jena_sparql_api.sparql.ext.term.E_TermValid;
 import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.spring.json.ContextProcessorJsonUtils;
+import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.jena.web.DatasetGraphAccessorBasic;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.Job;
@@ -83,6 +83,7 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
+import com.google.common.base.Supplier;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -100,7 +101,6 @@ import com.hp.hpl.jena.shared.impl.PrefixMappingImpl;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import com.hp.hpl.jena.sparql.core.Prologue;
 import com.hp.hpl.jena.sparql.function.FunctionRegistry;
-import com.hp.hpl.jena.sparql.function.user.UserDefinedFunctionFactory;
 import com.hp.hpl.jena.sparql.pfunction.PropertyFunctionRegistry;
 import com.hp.hpl.jena.update.UpdateFactory;
 import com.hp.hpl.jena.update.UpdateRequest;
@@ -180,8 +180,10 @@ public class MainBatchWorkflow {
 //
 
 //    	mainXml();
-        initJenaExtensions();
-        mainContext(args);
+        ApplicationContext baseContext = initBaseContext();
+
+        initJenaExtensions(baseContext);
+        mainContext(baseContext);
     }
 
     public static String jsonFn = "http://jsa.aksw.org/fn/json/";
@@ -209,7 +211,12 @@ public class MainBatchWorkflow {
         return pm;
     }
 
-    public static void initJenaExtensions() {
+    public static void initJenaExtensions(ApplicationContext context) {
+        //ApplicationContext baseContext = initBaseContext();
+        @SuppressWarnings("unchecked")
+        Supplier<HttpClient> httpClientSupplier = (Supplier<HttpClient>)context.getBean("httpClientSupplier");
+
+
         TypeMapper.getInstance().registerDatatype(new RDFDatatypeJson());
 
 
@@ -219,7 +226,9 @@ public class MainBatchWorkflow {
         FunctionRegistry.get().put(jsonFn + "parse", E_JsonParse.class);
         FunctionRegistry.get().put(jsonFn + "path", E_JsonPath.class);
 
-        FunctionRegistry.get().put(httpFn + "get", E_Http.class);
+        //Context.
+
+        FunctionRegistry.get().put(httpFn + "get", new FunctionFactoryE_Http(httpClientSupplier));
         FunctionRegistry.get().put(httpFn + "encode_for_qsa", E_EncodeForQsa.class);
 
         FunctionRegistry.get().put(termFn + "valid", E_TermValid.class);
@@ -267,7 +276,7 @@ public class MainBatchWorkflow {
         }
 
 
-        System.exit(0);
+        //System.exit(0);
     }
 
     public static ApplicationContext initBaseContext() {
@@ -294,9 +303,8 @@ public class MainBatchWorkflow {
         return batchContext;
     }
 
-    public static ApplicationContext initContext() throws Exception {
+    public static ApplicationContext initContext(ApplicationContext baseContext) throws Exception {
 
-        ApplicationContext baseContext = initBaseContext();
         GenericApplicationContext batchContext = initBatchContext(baseContext);
 
         // Preprocessors
@@ -385,8 +393,8 @@ public class MainBatchWorkflow {
         return batchContext;
     }
 
-    public static void mainContext(String[] args) throws Exception {
-        ApplicationContext batchContext = initContext();
+    public static void mainContext(ApplicationContext baseContext) throws Exception {
+        ApplicationContext batchContext = initContext(baseContext);
 
 //        SparqlService test = (SparqlService)batchContext.getBean("sourceFile");
 //        System.out.println("SourceFile: " + test);
@@ -404,7 +412,7 @@ public class MainBatchWorkflow {
 
         System.out.println("Job: " + job);
 
-        System.exit(0);
+        //System.exit(0);
 
         BatchWorkflowManager manager = batchContext.getBean(BatchWorkflowManager.class);//new BatchWorkflowManager(config);
 

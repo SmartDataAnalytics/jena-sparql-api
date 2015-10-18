@@ -23,6 +23,7 @@ import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.QueryFactory;
 import com.hp.hpl.jena.query.ResultSet;
+import com.hp.hpl.jena.query.ResultSetFormatter;
 import com.hp.hpl.jena.query.Syntax;
 import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.sparql.core.Var;
@@ -38,6 +39,25 @@ public class QueryExecutionUtils {
     public static final Var vp = Var.alloc("p");
     public static final Var vo = Var.alloc("o");
 
+
+    public static boolean validate(QueryExecutionFactory qef, boolean suppressException) {
+
+        boolean result;
+        try {
+            Query query = QueryFactory.create("SELECT * { ?s a ?t } Limit 1");
+            QueryExecution qe = qef.createQueryExecution(query);
+            ResultSet rs = qe.execSelect();
+            ResultSetFormatter.consume(rs);
+            result = true;
+        } catch(Exception e) {
+            if(!suppressException) {
+                throw new RuntimeException(e);
+            }
+            result = false;
+        }
+
+        return result;
+    }
 
 
     public static Iterator<Quad> createIteratorDumpQuads(QueryExecutionFactory qef) {

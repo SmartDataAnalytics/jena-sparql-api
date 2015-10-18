@@ -4,10 +4,11 @@ import java.util.List;
 import java.util.Random;
 
 import org.aksw.jena_sparql_api.batch.cli.main.MainBatchWorkflow;
-import org.aksw.jena_sparql_api.changeset.ChangeSetMetadata;
-import org.aksw.jena_sparql_api.changeset.SinkChangeSetWriter;
+import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactoryHttp;
+import org.aksw.jena_sparql_api.sparql.ext.http.HttpInterceptorRdfLogging;
+import org.aksw.jena_sparql_api.sparql.ext.http.SinkModelWriter;
 import org.aksw.jena_sparql_api.spring.conversion.ConverterRegistryPostProcessor;
 import org.aksw.jena_sparql_api.stmt.ResourceShapeParser;
 import org.aksw.jena_sparql_api.stmt.ResourceShapeParserImpl;
@@ -23,11 +24,14 @@ import org.aksw.jena_sparql_api.stmt.SparqlRelationParser;
 import org.aksw.jena_sparql_api.stmt.SparqlRelationParserImpl;
 import org.aksw.jena_sparql_api.stmt.SparqlUpdateParser;
 import org.aksw.jena_sparql_api.stmt.SparqlUpdateParserImpl;
-import org.aksw.jena_sparql_api.update.DatasetListenerSink;
-import org.aksw.jena_sparql_api.update.SparqlServiceFactoryEventSource;
+import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.SystemDefaultHttpClient;
+import org.apache.jena.riot.web.HttpOp;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.BeanPostProcessor;
@@ -40,6 +44,8 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.convert.support.ConfigurableConversionService;
 import org.springframework.core.convert.support.DefaultConversionService;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.gson.Gson;
 import com.hp.hpl.jena.query.Syntax;
 import com.hp.hpl.jena.shared.PrefixMapping;
@@ -56,6 +62,35 @@ public class ConfigServicesCore
     public void setApplicationContext(ApplicationContext applicationContext)
             throws BeansException {
         this.applicationContext = applicationContext;
+    }
+
+
+    @Bean
+    @Qualifier("logging")
+    public SparqlService defaultLoggerStore() {
+        SparqlServiceFactory ssf = new SparqlServiceFactoryHttp();
+        SparqlService result = ssf.createSparqlService("http://localhost:8890/sparql", DatasetDescriptionUtils.createDefaultGraph("http://jsa.aksw.org/log/"), null);
+        return result;
+    }
+
+    @Bean
+    @Autowired
+    public Supplier<HttpClient> httpClientSupplier(@Qualifier("logging") SparqlService sparqlService) {
+        SinkModelWriter sink = new SinkModelWriter(sparqlService);
+
+        HttpInterceptorRdfLogging logger = new HttpInterceptorRdfLogging(sink);
+
+        SystemDefaultHttpClient httpClient = new SystemDefaultHttpClient();
+        httpClient.addRequestInterceptor(logger);
+        httpClient.addResponseInterceptor(logger);
+
+        // TODO This sets the httpClient globally, which is actually not desired
+        HttpOp.setDefaultHttpClient(httpClient);
+        HttpOp.setUseDefaultClientWithAuthentication(true);
+
+        Supplier<HttpClient> result = Suppliers.<HttpClient>ofInstance(httpClient);
+
+        return result;
     }
 
     @Bean
