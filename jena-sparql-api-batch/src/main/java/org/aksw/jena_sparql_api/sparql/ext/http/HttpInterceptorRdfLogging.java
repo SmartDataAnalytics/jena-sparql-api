@@ -1,8 +1,11 @@
 package org.aksw.jena_sparql_api.sparql.ext.http;
 
 import java.io.IOException;
+import java.net.URI;
+import java.util.GregorianCalendar;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
@@ -18,6 +21,8 @@ import com.google.common.base.Stopwatch;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.vocabulary.DCTerms;
+import com.hp.hpl.jena.vocabulary.RDF;
 import com.hp.hpl.jena.vocabulary.RDFS;
 
 /**
@@ -89,29 +94,51 @@ public class HttpInterceptorRdfLogging
     @Override
     public void process(HttpResponse response, HttpContext context)
             throws HttpException, IOException {
-        Stopwatch sw = (Stopwatch)context.getAttribute("stopwatch");
-
-        HttpEntity entity = response.getEntity();
-        int statusCode = response.getStatusLine().getStatusCode();
-System.out.println(statusCode);
-
 
         HttpRequestBase orig = (HttpRequestBase)context.getAttribute("request");
-        String uri = orig.getURI().toString();
-        if(!uri.contains("log")) {
+        URI uri = orig.getURI();
+        String uriStr = uri.toString();
+        if(!uriStr.contains("log")) {
+
+            Stopwatch sw = (Stopwatch)context.getAttribute("stopwatch");
+
+            HttpEntity entity = response.getEntity();
+            int statusCode = response.getStatusLine().getStatusCode();
+            //System.out.println(statusCode);
+
+
+
 
 
             //response.getR
-            System.out.println("TIME TAKEN: " + sw.elapsed(TimeUnit.MILLISECONDS));
+            long requestDuration = sw.elapsed(TimeUnit.MILLISECONDS);
+            System.out.println("TIME TAKEN: " + requestDuration);
             //HttpRequest r
 
-            Model model = ModelFactory.createDefaultModel();
+            Model m = ModelFactory.createDefaultModel();
             String prefix = "http://example.org/log/";
-            Resource s = model.createResource(prefix + "msg-" + System.nanoTime());
+            Resource s = m.createResource(prefix + "msg-" + System.nanoTime());
 
-            model.add(s, RDFS.label, s);
+            String http = "http://jsa.aksw.org/ontology/http/";
+            String u = "http://jsa.aksw.org/ontology/uri/";
 
-            modelSink.send(model);
+            m.add(s, RDF.type, http + "Message");
+            m.add(s, m.createProperty(u + "uri"), uri.toString());
+            m.add(s, m.createProperty(u + "scheme"), uri.getScheme());
+            m.add(s, m.createProperty(u + "host"), uri.getHost());
+            m.add(s, m.createProperty(u + "path"), uri.getPath());
+            m.add(s, m.createProperty(u + "query"), uri.getQuery());
+            m.add(s, m.createProperty(u + "port"), m.createTypedLiteral(uri.getPort()));
+            m.add(s, m.createProperty(u + "fragment"), StringUtils.defaultIfEmpty(uri.getFragment(), ""));
+            m.add(s, m.createProperty(u + "authority"), uri.getAuthority());
+
+
+            m.add(s, DCTerms.created, m.createTypedLiteral(new GregorianCalendar()));
+            m.add(s, m.createProperty(http + "duration"), m.createTypedLiteral(requestDuration));
+            m.add(s, m.createProperty(http + "statusCode"), m.createTypedLiteral(statusCode));
+
+
+            modelSink.send(m);
         }
         System.out.println("Request: " + context.getAttribute("request"));
     }
