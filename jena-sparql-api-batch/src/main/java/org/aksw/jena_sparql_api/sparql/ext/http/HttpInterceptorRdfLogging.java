@@ -107,9 +107,6 @@ public class HttpInterceptorRdfLogging
             //System.out.println(statusCode);
 
 
-
-
-
             //response.getR
             long requestDuration = sw.elapsed(TimeUnit.MILLISECONDS);
             System.out.println("TIME TAKEN: " + requestDuration);

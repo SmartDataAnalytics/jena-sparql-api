@@ -8,6 +8,8 @@ import java.util.regex.Pattern;
 import org.aksw.jena_sparql_api.concepts.Relation;
 
 import com.google.common.base.Function;
+import com.hp.hpl.jena.query.Syntax;
+import com.hp.hpl.jena.sparql.core.Prologue;
 import com.hp.hpl.jena.sparql.core.Var;
 import com.hp.hpl.jena.sparql.syntax.Element;
 
@@ -71,6 +73,12 @@ public class SparqlRelationParserImpl
 
         Relation result = new Relation(element, sourceVar, targetVar);
 
+        return result;
+    }
+
+    public static SparqlRelationParserImpl create(Syntax syntax, Prologue prologue) {
+        SparqlElementParser elementParser = SparqlElementParserImpl.create(syntax, prologue);
+        SparqlRelationParserImpl result = new SparqlRelationParserImpl(elementParser);
         return result;
     }
 }

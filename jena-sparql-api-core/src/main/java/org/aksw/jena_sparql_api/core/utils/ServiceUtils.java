@@ -22,6 +22,8 @@ import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.sparql.core.Var;
 
 public class ServiceUtils {
+//    public static fetchList(QueryExecutionFactory, QueryExecutionFactory)
+
 
     public static List<Resource> fetchListResources(QueryExecutionFactory qef, Concept concept) {
         List<Node> tmp = fetchList(qef, concept);

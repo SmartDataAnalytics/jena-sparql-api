@@ -203,4 +203,13 @@ public class UpdateExecutionUtils {
 
         return result;
     }
+
+    public static UpdateProcessor executeUpdateDelta(UpdateExecutionFactory uef, DatasetGraph after, DatasetGraph before) {
+        Diff<Set<Quad>> diff = UpdateDiffUtils.computeDelta(after, before);
+        UpdateProcessor result = executeUpdate(uef, diff);
+        return result;
+    }
+
+//    public static Diff<Set<Quad>> createDiff(Set<Quad> after, Set<Quad> before) {
+//    }
 }

@@ -6,23 +6,75 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import org.aksw.commons.collections.MapUtils;
 import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformSubst;
 import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformer;
 import org.aksw.jena_sparql_api.backports.syntaxtransform.ExprTransformNodeElement;
 
 import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.sparql.core.Var;
+import com.hp.hpl.jena.sparql.expr.Expr;
 import com.hp.hpl.jena.sparql.expr.ExprTransform;
 import com.hp.hpl.jena.sparql.graph.NodeTransform;
 import com.hp.hpl.jena.sparql.syntax.Element;
+import com.hp.hpl.jena.sparql.syntax.ElementFilter;
 import com.hp.hpl.jena.sparql.syntax.ElementGroup;
+import com.hp.hpl.jena.sparql.syntax.ElementTriplesBlock;
 import com.hp.hpl.jena.sparql.syntax.ElementUnion;
 import com.hp.hpl.jena.sparql.syntax.PatternVars;
 
 
 
 public class ElementUtils {
+
+    public static List<Triple> extractTriples(Element e) {
+        List<Triple> result = new ArrayList<Triple>();
+        extractTriples(e, result);
+        return result;
+    }
+
+    public static Triple extractTriple(Element e) {
+        //Node result = null;
+        Triple result = null;
+
+        if(e instanceof ElementFilter) {
+            ElementFilter x = (ElementFilter)e;
+            Expr expr = x.getExpr();
+            Set<Set<Expr>> cnf = CnfUtils.toSetCnf(expr);
+            Map<Var, Node> map = CnfUtils.getConstants(cnf);
+
+            //Node g = MapUtils.getOrElse(map, Vars.g, Node.ANY);
+            Node s = MapUtils.getOrElse(map, Vars.s, Node.ANY);
+            Node p = MapUtils.getOrElse(map, Vars.p, Node.ANY);
+            Node o = MapUtils.getOrElse(map, Vars.o, Node.ANY);
+            result = new Triple(s, p, o);
+        } else {
+            List<Triple> triples = extractTriples(e);
+            if(triples.size() == 1) {
+                result = triples.get(0);
+                //Triple t = triples.get(0);
+                //result = t.getPredicate();
+            }
+        }
+        return result;
+    }
+
+    public static void extractTriples(Element e, List<Triple> result) {
+
+        if(e instanceof ElementGroup) {
+            ElementGroup g = (ElementGroup)e;
+            for(Element item : g.getElements()) {
+                extractTriples(item, result);
+            }
+        } else if(e instanceof ElementTriplesBlock) {
+            ElementTriplesBlock b = (ElementTriplesBlock)e;
+            List<Triple> triples = b.getPattern().getList();
+            result.addAll(triples);
+        }
+    }
 
     public static Map<Node, Var> createMapFixVarNames(Element element) {
         Collection<Var> vars = PatternVars.vars(element);

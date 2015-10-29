@@ -3,6 +3,8 @@ package org.aksw.jena_sparql_api.stmt;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 
 import com.hp.hpl.jena.query.Query;
+import com.hp.hpl.jena.query.Syntax;
+import com.hp.hpl.jena.sparql.core.Prologue;
 import com.hp.hpl.jena.sparql.syntax.Element;
 
 public class SparqlElementParserImpl
@@ -33,6 +35,12 @@ public class SparqlElementParserImpl
         Element raw = query.getQueryPattern();
         Element result = ElementUtils.flatten(raw);
 
+        return result;
+    }
+
+    public static SparqlElementParserImpl create(Syntax syntax, Prologue prologue) {
+        SparqlQueryParser queryParser = SparqlQueryParserImpl.create(syntax, prologue);
+        SparqlElementParserImpl result = new SparqlElementParserImpl(queryParser);
         return result;
     }
 }

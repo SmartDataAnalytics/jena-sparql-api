@@ -47,7 +47,7 @@ public class SparqlQueryParserImpl
     }
 
     public static SparqlQueryParserImpl create(Syntax syntax, Prologue prologue) {
-        Supplier<Query> querySupplier= new QuerySupplierImpl(prologue);
+        Supplier<Query> querySupplier = new QuerySupplierImpl(prologue);
 
         SparqlQueryParserImpl result = new SparqlQueryParserImpl(querySupplier, syntax, null);
         return result;

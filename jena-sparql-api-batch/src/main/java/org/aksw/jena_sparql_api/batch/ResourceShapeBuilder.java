@@ -25,6 +25,10 @@ public class ResourceShapeBuilder {
     private PrefixMapping prefixMapping;
     //private Prologue prologue;
 
+    public ResourceShapeBuilder() {
+        this(new Prologue());
+    }
+
     public ResourceShapeBuilder(Prologue prologue) {
         this(prologue.getPrefixMapping());
     }
