@@ -164,11 +164,11 @@ public class UpdateDiffUtils {
         SetDatasetGraph afterSet = new SetDatasetGraph(after);
         SetDatasetGraph beforeSet = new SetDatasetGraph(before);
 
-        Diff<Set<Quad>> result = createDiff(afterSet, beforeSet);
+        Diff<Set<Quad>> result = computeDelta(afterSet, beforeSet);
         return result;
     }
 
-    public static Diff<Set<Quad>> createDiff(Set<Quad> after, Set<Quad> before) {
+    public static Diff<Set<Quad>> computeDelta(Set<Quad> after, Set<Quad> before) {
         Set<Quad> actualAdded = Sets.difference(after, before);
         Set<Quad> actualRemoved = Sets.difference(before, after);
 

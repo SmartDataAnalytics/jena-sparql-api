@@ -119,12 +119,17 @@ public class FluentSparqlService<P>
     public static FluentSparqlService<?> http(String service, DatasetDescription datasetDescription, HttpAuthenticator authenticator) {
         QueryExecutionFactory qef = new QueryExecutionFactoryHttp(service, datasetDescription, authenticator);
         UpdateExecutionFactory uef = new UpdateExecutionFactoryHttp(service, datasetDescription, authenticator);
-        return from(qef, uef);
+        return from(datasetDescription, qef, uef);
+    }
+
+    public static FluentSparqlService<?> from(QueryExecutionFactory qef, UpdateExecutionFactory uef) {
+        FluentSparqlService<?> result = from(null, qef, uef);
+        return result;
     }
 
 
-    public static FluentSparqlService<?> from(QueryExecutionFactory qef, UpdateExecutionFactory uef) {
-        SparqlService sparqlService = new SparqlServiceImpl(qef, uef);
+    public static FluentSparqlService<?> from(DatasetDescription datasetDescription, QueryExecutionFactory qef, UpdateExecutionFactory uef) {
+        SparqlService sparqlService = new SparqlServiceImpl(datasetDescription, qef, uef);
         FluentSparqlService<?> result = from(sparqlService);
         return result;
     }
