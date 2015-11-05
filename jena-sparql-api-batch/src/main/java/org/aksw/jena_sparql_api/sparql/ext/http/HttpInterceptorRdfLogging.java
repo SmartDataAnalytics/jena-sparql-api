@@ -124,7 +124,7 @@ public class HttpInterceptorRdfLogging
             m.add(s, m.createProperty(u + "scheme"), uri.getScheme());
             m.add(s, m.createProperty(u + "host"), uri.getHost());
             m.add(s, m.createProperty(u + "path"), uri.getPath());
-            m.add(s, m.createProperty(u + "query"), uri.getQuery());
+            //m.add(s, m.createProperty(u + "query"), uri.getQuery());
             m.add(s, m.createProperty(u + "port"), m.createTypedLiteral(uri.getPort()));
             m.add(s, m.createProperty(u + "fragment"), StringUtils.defaultIfEmpty(uri.getFragment(), ""));
             m.add(s, m.createProperty(u + "authority"), uri.getAuthority());

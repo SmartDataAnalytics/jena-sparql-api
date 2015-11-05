@@ -1,12 +1,17 @@
 package org.aksw.jena_sparql_api.batch.config;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
+import org.aksw.commons.collections.diff.Diff;
 import org.aksw.jena_sparql_api.batch.cli.main.MainBatchWorkflow;
+import org.aksw.jena_sparql_api.core.DatasetListener;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactoryHttp;
+import org.aksw.jena_sparql_api.core.UpdateContext;
 import org.aksw.jena_sparql_api.shape.ResourceShapeParser;
 import org.aksw.jena_sparql_api.shape.ResourceShapeParserImpl;
 import org.aksw.jena_sparql_api.sparql.ext.http.HttpInterceptorRdfLogging;
@@ -24,6 +29,8 @@ import org.aksw.jena_sparql_api.stmt.SparqlRelationParser;
 import org.aksw.jena_sparql_api.stmt.SparqlRelationParserImpl;
 import org.aksw.jena_sparql_api.stmt.SparqlUpdateParser;
 import org.aksw.jena_sparql_api.stmt.SparqlUpdateParserImpl;
+import org.aksw.jena_sparql_api.update.FluentSparqlServiceFactory;
+import org.aksw.jena_sparql_api.update.UpdateStrategyEventSource;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.SystemDefaultHttpClient;
@@ -50,6 +57,7 @@ import com.google.gson.Gson;
 import com.hp.hpl.jena.query.Syntax;
 import com.hp.hpl.jena.shared.PrefixMapping;
 import com.hp.hpl.jena.sparql.core.Prologue;
+import com.hp.hpl.jena.sparql.core.Quad;
 
 @Configuration
 @ComponentScan({"org.aksw.jena_sparql_api.spring.conversion"})
@@ -168,9 +176,21 @@ public class ConfigServicesCore
 
     @Bean
     public SparqlServiceFactory defaultSparqlServiceFactory() {
-        SparqlServiceFactory result = new SparqlServiceFactoryHttp();
+        SparqlServiceFactory tmp = new SparqlServiceFactoryHttp();
 
         long jobInstanceId = random.nextLong();
+
+        List<DatasetListener> listeners = Collections.<DatasetListener>singletonList(new DatasetListener() {
+            @Override
+            public void onPreModify(Diff<Set<Quad>> diff, UpdateContext updateContext) {
+                System.out.println(updateContext.getSparqlService().getDatasetDescription());
+            }
+        });
+
+        SparqlServiceFactory result = FluentSparqlServiceFactory.from(tmp).config()
+            .withUpdateListeners(new UpdateStrategyEventSource(), listeners)
+            .end()
+            .create();
 
 
 //        DatasetListenerSink

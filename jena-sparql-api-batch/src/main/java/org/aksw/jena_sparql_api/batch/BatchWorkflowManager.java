@@ -33,7 +33,7 @@ public class BatchWorkflowManager {
 //    private JobRepository jobRepository;
 //    private JobLauncher jobLauncher;
 //    private Job job;
-	private AbstractBatchConfiguration config;
+    private AbstractBatchConfiguration config;
 
     public void processWorkflow(String workflow) {
         Gson gson = new Gson();
@@ -53,7 +53,7 @@ public class BatchWorkflowManager {
     }
     */
     public BatchWorkflowManager(AbstractBatchConfiguration config) {
-    	this.config = config;
+        this.config = config;
     }
 
 //    public Job createJob(String workflowDesc) {

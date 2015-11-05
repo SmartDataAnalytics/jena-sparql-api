@@ -12,6 +12,7 @@ import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
 
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
+import com.hp.hpl.jena.sparql.core.DatasetDescription;
 
 public class FluentSparqlServiceFn<P>
     extends FluentFnBase<SparqlService, P>
@@ -84,7 +85,11 @@ public class FluentSparqlServiceFn<P>
                 //UpdateContext updateContext = new UpdateContext(sparqlService, batchSize, containmentChecker);
 
                 //UpdateExecutionFactory uef = new UpdateExecutionFactoryEventSource(updateContext);
-                SparqlService r = new SparqlServiceImpl(qef, uef);
+                String serviceUri = sparqlService.getServiceUri();
+                DatasetDescription datasetDescription = sparqlService.getDatasetDescription();
+
+
+                SparqlService r = new SparqlServiceImpl(serviceUri, datasetDescription, qef, uef);
                 return r;
             }
         });
