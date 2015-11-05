@@ -36,8 +36,8 @@ public class TaskletSparqlUpdate
             if(e instanceof HttpException) {
                 HttpException x = (HttpException)e;
                 logger.debug(x.getResponse());
-                throw e;
             }
+            throw e;
         }
 
         return RepeatStatus.FINISHED;

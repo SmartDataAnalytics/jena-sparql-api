@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.aksw.commons.collections.SetUtils;
@@ -12,6 +13,9 @@ import org.aksw.commons.collections.diff.Diff;
 import org.aksw.jena_sparql_api.core.QuadContainmentChecker;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.utils.DatasetGraphDiffUtils;
+import org.aksw.jena_sparql_api.utils.GraphUtils;
+import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
+import org.aksw.jena_sparql_api.utils.QuadUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.ResultSetUtils;
 import org.aksw.jena_sparql_api.utils.SetDatasetGraph;
@@ -19,14 +23,18 @@ import org.aksw.jena_sparql_api.utils.SetDatasetGraph;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Sets;
+import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.query.QueryExecution;
+import com.hp.hpl.jena.sparql.core.BasicPattern;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import com.hp.hpl.jena.sparql.core.DatasetGraphFactory;
 import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.sparql.engine.binding.Binding;
+import com.hp.hpl.jena.sparql.modify.request.QuadAcc;
 import com.hp.hpl.jena.sparql.modify.request.UpdateDataDelete;
 import com.hp.hpl.jena.sparql.modify.request.UpdateDataInsert;
+import com.hp.hpl.jena.sparql.modify.request.UpdateDeleteWhere;
 import com.hp.hpl.jena.sparql.modify.request.UpdateModify;
 import com.hp.hpl.jena.sparql.syntax.Element;
 import com.hp.hpl.jena.update.Update;
@@ -95,10 +103,28 @@ public class UpdateDiffUtils {
             result = createIteratorDiff(qef, (UpdateDataInsert)update);
         } else if(update instanceof UpdateDataDelete) {
             result = createIteratorDiff(qef, (UpdateDataDelete)update);
+        } else if(update instanceof UpdateDeleteWhere) {
+            result = createIteratorDiff(qef, (UpdateDeleteWhere)update, batchSize);
         } else {
             throw new RuntimeException("Unsupported update type: " + update.getClass());
         }
 
+        return result;
+    }
+
+    public static Iterator<Diff<Set<Quad>>> createIteratorDiff(QueryExecutionFactory qef, UpdateDeleteWhere update, int batchSize) {
+
+        UpdateModify tmp = new UpdateModify();
+        QuadAcc acc = tmp.getDeleteAcc();
+
+        for(Quad quad : update.getQuads()) {
+            acc.addQuad(quad);
+        }
+
+        Element element = QuadUtils.toElement(acc.getQuads());
+        tmp.setElement(element);
+
+        Iterator<Diff<Set<Quad>>> result = createIteratorDiff(qef, tmp, batchSize);
         return result;
     }
 
