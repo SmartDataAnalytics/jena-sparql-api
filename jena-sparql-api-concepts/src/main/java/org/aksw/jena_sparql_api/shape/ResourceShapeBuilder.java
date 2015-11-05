@@ -1,10 +1,8 @@
-package org.aksw.jena_sparql_api.batch;
+package org.aksw.jena_sparql_api.shape;
 
 import java.util.Map;
 
 import org.aksw.jena_sparql_api.concepts.Relation;
-import org.aksw.jena_sparql_api.shape.ResourceShape;
-import org.aksw.jena_sparql_api.shape.StepRelation;
 import org.aksw.jena_sparql_api.utils.Vars;
 
 import com.hp.hpl.jena.graph.Node;

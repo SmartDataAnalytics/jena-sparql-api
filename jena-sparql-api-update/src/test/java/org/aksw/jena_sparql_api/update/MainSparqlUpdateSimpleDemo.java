@@ -21,7 +21,7 @@ class MainSparqlUpdateSimpleDemo {
         // Define the listeners
         List<DatasetListener> listeners = Collections.<DatasetListener>singletonList(new DatasetListener() {
             @Override
-            public void onPreModify(Diff<Set<Quad>> diff, SparqlServiceReference serviceRef, UpdateContext updateContext) {
+            public void onPreModify(Diff<Set<Quad>> diff, UpdateContext updateContext) {
                 // Print out any changes to the console
                 System.out.println(diff);
             }

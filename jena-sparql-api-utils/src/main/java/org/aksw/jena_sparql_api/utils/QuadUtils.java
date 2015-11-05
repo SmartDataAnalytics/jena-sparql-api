@@ -37,9 +37,26 @@ public class QuadUtils {
                 qs = new HashSet<Quad>();
                 result.put(g, qs);
             }
+            qs.add(quad);
         }
         return result;
     }
+
+    public static Map<Node, Set<Triple>> partitionByGraphTriples(Iterable<Quad> quads) {
+        Map<Node, Set<Triple>> result = new HashMap<Node, Set<Triple>>();
+        for (Quad quad : quads) {
+            Node g = quad.getGraph();
+            Set<Triple> ts = result.get(g);
+            if (ts == null) {
+                ts = new HashSet<Triple>();
+                result.put(g, ts);
+            }
+            Triple t = quad.asTriple();
+            ts.add(t);
+        }
+        return result;
+    }
+
 
     public static Element toElement(Iterable<Quad> quads) {
         Map<Node, Set<Quad>> map = partitionByGraph(quads);

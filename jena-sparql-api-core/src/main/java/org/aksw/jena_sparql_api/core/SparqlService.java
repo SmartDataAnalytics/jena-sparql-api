@@ -16,7 +16,9 @@ public interface SparqlService {
      * May be null.
      * @return
      */
+    String getServiceUri();
     DatasetDescription getDatasetDescription();
+
     QueryExecutionFactory getQueryExecutionFactory();
     UpdateExecutionFactory getUpdateExecutionFactory();
 }

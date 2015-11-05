@@ -20,7 +20,7 @@ public class DatasetListenerSink
     }
 
     @Override
-    public void onPreModify(Diff<Set<Quad>> diff, SparqlServiceReference serviceReference, UpdateContext updateContext) {
+    public void onPreModify(Diff<Set<Quad>> diff, UpdateContext updateContext) {
         sink.send(diff);
     }
 }

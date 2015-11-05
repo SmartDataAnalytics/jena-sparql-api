@@ -10,6 +10,8 @@ import org.aksw.jena_sparql_api.core.DatasetListener;
 import org.aksw.jena_sparql_api.core.QuadContainmentChecker;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
+import org.aksw.jena_sparql_api.core.SparqlServiceReference;
+import org.aksw.jena_sparql_api.core.UpdateContext;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
 import org.aksw.jena_sparql_api.utils.DatasetGraphDiffUtils;
 import org.slf4j.Logger;
@@ -33,7 +35,6 @@ import com.hp.hpl.jena.update.Update;
 import com.hp.hpl.jena.update.UpdateFactory;
 import com.hp.hpl.jena.update.UpdateProcessor;
 import com.hp.hpl.jena.update.UpdateRequest;
-import com.hp.hpl.jena.util.iterator.ExtendedIterator;
 
 public class UpdateExecutionUtils {
 
@@ -96,35 +97,38 @@ public class UpdateExecutionUtils {
 //    }
 
 
-    public static void executeUpdate(SparqlService sparqlService, String requestStr, int batchSize, Iterable<DatasetListener> listeners, QuadContainmentChecker containmentChecker) { //, Function<Diff<? extends Iterable<Quad>>, Diff<Set<Quad>>> filter) {
+    public static void executeUpdate(SparqlService sparqlService, String requestStr, int batchSize, QuadContainmentChecker containmentChecker, Iterable<DatasetListener> listeners) { //, Function<Diff<? extends Iterable<Quad>>, Diff<Set<Quad>>> filter) {
         //UpdateRequest updateRequest = new UpdateRequest();
         //UpdateFactory.parse(updateRequest, requestStr);
         UpdateRequest updateRequest = UpdateRequestUtils.parse(requestStr);
-        executeUpdate(sparqlService, updateRequest, batchSize, listeners, containmentChecker);
+        executeUpdate(sparqlService, updateRequest, batchSize, containmentChecker, listeners);
     }
 
-    public static void executeUpdate(SparqlService sparqlService, UpdateRequest request, int batchSize, Iterable<DatasetListener> listeners, QuadContainmentChecker containmentChecker) { //Function<Diff<? extends Iterable<Quad>>, Diff<Set<Quad>>> filter) {
+    public static void executeUpdate(SparqlService sparqlService, UpdateRequest request, int batchSize, QuadContainmentChecker containmentChecker, Iterable<DatasetListener> listeners) { //Function<Diff<? extends Iterable<Quad>>, Diff<Set<Quad>>> filter) {
         QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
-        UpdateExecutionFactory uef = sparqlService.getUpdateExecutionFactory();
+//        UpdateExecutionFactory uef = sparqlService.getUpdateExecutionFactory();
 
         Function<Diff<? extends Iterable<Quad>>, Diff<Set<Quad>>> filter = new FN_QuadDiffUnique(qef, containmentChecker);
 
+        //SparqlServiceReference ssr = sparqlService.getDatasetDescription();
 
         for(Update update : request.getOperations()) {
-            executeUpdateCore(qef, uef, update, filter, batchSize, listeners);
+            executeUpdateCore(sparqlService, update, filter, batchSize, listeners);
         }
     }
 
 
     public static void executeUpdateCore(
-            QueryExecutionFactory qef,
-            UpdateExecutionFactory uef,
+            SparqlService sparqlService,
             Update update,
             Function<Diff<? extends Iterable<Quad>>, Diff<Set<Quad>>> filter,
             int batchSize,
             Iterable<DatasetListener> listeners)
     {
-        String withIri = UpdateUtils.getWithIri(update);
+        QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
+        UpdateExecutionFactory uef = sparqlService.getUpdateExecutionFactory();
+
+        //String withIri = UpdateUtils.getWithIri(update);
 
         Iterator<Diff<Set<Quad>>> itDiff = UpdateDiffUtils.createIteratorDiff(qef, update, batchSize);
 
@@ -136,7 +140,8 @@ public class UpdateExecutionUtils {
                     : diff;
 
             if(listeners != null) {
-                DatasetListenerUtils.notifyListeners(listeners, filteredDiff, null, null);
+                UpdateContext updateContext = new UpdateContext(sparqlService, batchSize, null);
+                DatasetListenerUtils.notifyListeners(listeners, filteredDiff, updateContext);
             }
 
             executeUpdate(uef, diff);

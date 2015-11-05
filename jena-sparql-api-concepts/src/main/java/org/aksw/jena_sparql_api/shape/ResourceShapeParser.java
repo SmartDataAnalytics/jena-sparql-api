@@ -1,6 +1,4 @@
-package org.aksw.jena_sparql_api.stmt;
-
-import org.aksw.jena_sparql_api.shape.ResourceShape;
+package org.aksw.jena_sparql_api.shape;
 
 import com.google.common.base.Function;
 

@@ -6,6 +6,7 @@ import java.util.Set;
 import org.aksw.jena_sparql_api.core.DatasetListener;
 import org.aksw.jena_sparql_api.core.QuadContainmentChecker;
 import org.aksw.jena_sparql_api.core.SparqlService;
+import org.aksw.jena_sparql_api.core.SparqlServiceReference;
 import org.aksw.jena_sparql_api.core.UpdateContext;
 import org.aksw.jena_sparql_api.core.utils.UpdateExecutionUtils;
 
@@ -21,17 +22,19 @@ import com.hp.hpl.jena.update.UpdateRequest;
 public class UpdateProcessorEventSource
     implements UpdateProcessor
 {
-    private UpdateExecutionFactoryEventSource factory;
-    private UpdateRequest updateRequest;
+    protected UpdateExecutionFactoryEventSource factory;
+    protected UpdateRequest updateRequest;
+    //protected SparqlServiceReference ssr;
 
     /**
      * Listeners only for this individual update request
      */
-    private Set<DatasetListener> listeners = new HashSet<DatasetListener>();
+    protected Set<DatasetListener> listeners = new HashSet<DatasetListener>();
 
     public UpdateProcessorEventSource(UpdateExecutionFactoryEventSource factory, UpdateRequest updateRequest) {
         this.factory = factory;
         this.updateRequest = updateRequest;
+        //this.ssr = ssr;
     }
 
     @Override
@@ -56,7 +59,7 @@ public class UpdateProcessorEventSource
         SparqlService sparqlService = context.getSparqlService();
         int batchSize = context.getBatchSize();
         QuadContainmentChecker containmentChecker = context.getContainmentChecker();
-        UpdateExecutionUtils.executeUpdate(sparqlService, updateRequest, batchSize, allListeners, containmentChecker);
+        UpdateExecutionUtils.executeUpdate(sparqlService, updateRequest, batchSize, containmentChecker, allListeners);
     }
 
 }

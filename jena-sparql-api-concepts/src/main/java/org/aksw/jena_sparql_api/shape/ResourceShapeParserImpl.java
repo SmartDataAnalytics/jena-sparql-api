@@ -1,8 +1,4 @@
-package org.aksw.jena_sparql_api.stmt;
-
-import org.aksw.jena_sparql_api.batch.ResourceShapeBuilder;
-import org.aksw.jena_sparql_api.shape.ResourceShape;
-import org.aksw.jena_sparql_api.shape.ResourceShapeParserJson;
+package org.aksw.jena_sparql_api.shape;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;

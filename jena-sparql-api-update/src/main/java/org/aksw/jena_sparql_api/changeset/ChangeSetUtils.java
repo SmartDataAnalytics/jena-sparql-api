@@ -40,7 +40,6 @@ import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.rdf.model.Statement;
-import com.hp.hpl.jena.sparql.core.DatasetDescription;
 import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.sparql.graph.GraphFactory;
 import com.hp.hpl.jena.sparql.util.ModelUtils;
@@ -227,6 +226,9 @@ public class ChangeSetUtils {
 
         model.add(s, CS.subjectOfChange, model.createResource(cs.getSubjectOfChange()));
 
+        //model.add(s, CS.datasetSet);
+
+
         if(cs.getPrecedingChangeSet() != null) {
             model.add(s, CS.precedingChangeSet, model.createResource(cs.getPrecedingChangeSet()));
         }
@@ -252,28 +254,35 @@ public class ChangeSetUtils {
         }
     }
 
+//    public static UpdateRequest createUpdateRequest(ChangeSetMetadata metadata,
+//            QueryExecutionFactory qef,
+//            Diff<? extends Iterable<Quad>> diff,
+//            String prefix) {
+//        Diff<Graph> d = new Diff<Graph>(GraphFactory.createGraphMem(), GraphFactory.createGraphMem(), null);
+//
+//        for(Quad quad : diff.getAdded()) {
+//            d.getAdded().add(quad.asTriple());
+//        }
+//
+//        for(Quad quad : diff.getRemoved()) {
+//            d.getRemoved().add(quad.asTriple());
+//        }
+//
+//        UpdateRequest result = createUpdateRequestGraph(metadata, qef, d, prefix);
+//        return result;
+//    }
+
+
     public static UpdateRequest createUpdateRequest(ChangeSetMetadata metadata,
             QueryExecutionFactory qef,
             Diff<? extends Iterable<Quad>> diff,
             String prefix) {
-        Diff<Graph> d = new Diff<Graph>(GraphFactory.createGraphMem(), GraphFactory.createGraphMem(), null);
-
-        for(Quad quad : diff.getAdded()) {
-            d.getAdded().add(quad.asTriple());
-        }
-
-        for(Quad quad : diff.getRemoved()) {
-            d.getRemoved().add(quad.asTriple());
-        }
-
-        UpdateRequest result = createUpdateRequestGraph(metadata, qef, d, prefix);
-        return result;
+        throw new UnsupportedOperationException();
     }
-
 
     public static UpdateRequest createUpdateRequestGraph(ChangeSetMetadata metadata,
             QueryExecutionFactory qef,
-            Diff<Graph> diff,
+            Diff<Set<Triple>> diff,
             String prefix) {
 
         Map<Node, ChangeSet> subjectToChangeSet = createChangeSets(qef, metadata, diff, prefix);
@@ -295,11 +304,11 @@ public class ChangeSetUtils {
 
 //    public Map<Node, ChangeSet> apply(Diff<Graph> diff) {
 
-    public static Map<Node, ChangeSet> createChangeSets(QueryExecutionFactory qef, ChangeSetMetadata metadata, Diff<Graph> diff, String prefix) {
+    public static Map<Node, ChangeSet> createChangeSets(QueryExecutionFactory qef, ChangeSetMetadata metadata, Diff<Set<Triple>> diff, String prefix) {
         LookupService<Node, Node> precedingChangeSetLs = ChangeSetUtils.createLookupServiceMostRecentChangeSet(qef);
 
-        Graph added = diff.getAdded();
-        Graph removed = diff.getRemoved();
+        Set<Triple> added = diff.getAdded();
+        Set<Triple> removed = diff.getRemoved();
 
         Map<Node, Graph> subjectToAdded = GraphUtils.indexBySubject(added);
         Map<Node, Graph> subjectToRemoved = GraphUtils.indexBySubject(removed);
@@ -341,6 +350,21 @@ public class ChangeSetUtils {
 
         return result;
     }
+
+
+    public static void enrichWithSource(Model model, Node g, SparqlServiceReference ssr) {
+
+
+
+        Set<Resource> rs = model.listSubjectsWithProperty(RDF.type, CS.ChangeSet).toSet();
+
+
+
+        // TODO Auto-generated method stub
+
+    }
+
+
 
 //  public static Query createQueryPrecedingChangeSet() {
     //String str = "Prefix cs: <http://purl.org/vocab/changeset/schema#> Select ?s { ?s cs:subjectOfChange <" + uri + "> ; cs:createdDate ?d } Order By Desc(?d) Limit 1";

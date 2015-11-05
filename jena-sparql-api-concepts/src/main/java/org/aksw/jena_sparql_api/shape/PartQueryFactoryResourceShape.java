@@ -1,7 +1,7 @@
-package org.aksw.jena_sparql_api.stmt;
+package org.aksw.jena_sparql_api.shape;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.shape.ResourceShape;
+import org.aksw.jena_sparql_api.stmt.PartQueryFactory;
 
 import com.hp.hpl.jena.query.Query;
 

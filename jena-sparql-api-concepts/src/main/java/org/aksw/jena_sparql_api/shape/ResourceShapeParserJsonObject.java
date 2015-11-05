@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.aksw.jena_sparql_api.batch.ResourceShapeBuilder;
 import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.utils.Vars;
 

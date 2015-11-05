@@ -26,7 +26,7 @@ public class SinkDiffQuadDistributor
 
     @Override
     public void send(Diff<? extends Iterable<Quad>> item) {
-        Map<Node, Diff<Set<Quad>>> graphToDiff = DiffQuadUtils.partitionByGraph(item);
+        Map<Node, Diff<Set<Quad>>> graphToDiff = DiffQuadUtils.partitionQuadsByGraph(item);
 
         for(Entry<Node, Diff<Set<Quad>>> entry : graphToDiff.entrySet()) {
             String graphName = entry.getKey().toString();

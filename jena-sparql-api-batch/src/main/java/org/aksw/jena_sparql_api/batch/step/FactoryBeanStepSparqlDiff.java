@@ -18,7 +18,7 @@ import org.aksw.jena_sparql_api.lookup.ListService;
 import org.aksw.jena_sparql_api.modifier.Modifier;
 import org.aksw.jena_sparql_api.modifier.ModifierList;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
-import org.aksw.jena_sparql_api.stmt.ResourceShapeParser;
+import org.aksw.jena_sparql_api.shape.ResourceShapeParser;
 import org.aksw.jena_sparql_api.stmt.SparqlUpdateParser;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;

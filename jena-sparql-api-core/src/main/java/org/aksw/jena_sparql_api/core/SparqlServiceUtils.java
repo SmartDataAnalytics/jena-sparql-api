@@ -16,7 +16,7 @@ public class SparqlServiceUtils {
         QueryExecutionFactoryHttp qef = new QueryExecutionFactoryHttp(serviceUri, datasetDescription, httpAuthenticator);
         UpdateExecutionFactoryHttp uef = new UpdateExecutionFactoryHttp(serviceUri, datasetDescription, httpAuthenticator);
 
-        SparqlService result = new SparqlServiceImpl(qef, uef);
+        SparqlService result = new SparqlServiceImpl(serviceUri, datasetDescription, qef, uef);
         return result;
     }
 

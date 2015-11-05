@@ -10,9 +10,9 @@ import org.aksw.jena_sparql_api.core.UpdateContext;
 import com.hp.hpl.jena.sparql.core.Quad;
 
 public class DatasetListenerUtils {
-    public static void notifyListeners(Iterable<DatasetListener> listeners, Diff<Set<Quad>> diff, SparqlServiceReference serviceRef, UpdateContext updateContext) {
+    public static void notifyListeners(Iterable<DatasetListener> listeners, Diff<Set<Quad>> diff, UpdateContext updateContext) {
         for(DatasetListener listener : listeners) {
-            listener.onPreModify(diff, serviceRef, updateContext);
+            listener.onPreModify(diff, updateContext);
         }
     }
 }

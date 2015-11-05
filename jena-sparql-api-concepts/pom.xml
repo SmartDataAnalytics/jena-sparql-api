@@ -1,30 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-	<artifactId>jena-sparql-api-concepts</artifactId>
-	<packaging>jar</packaging>
+    <artifactId>jena-sparql-api-concepts</artifactId>
+    <packaging>jar</packaging>
 
-	<name>Jena SPARQL API - Concepts</name>
-	<url>http://github.org/AKSW/jena-sparql-api</url>
+    <name>Jena SPARQL API - Concepts</name>
+    <url>http://github.org/AKSW/jena-sparql-api</url>
 
-	<parent>
-		<groupId>org.aksw.jena-sparql-api</groupId>
-		<artifactId>jena-sparql-api-parent</artifactId>
-		<version>2.13.0-6-SNAPSHOT</version>
-	</parent>
+    <parent>
+        <groupId>org.aksw.jena-sparql-api</groupId>
+        <artifactId>jena-sparql-api-parent</artifactId>
+        <version>2.13.0-6-SNAPSHOT</version>
+    </parent>
 
     <dependencies>
-    	<!-- Self Dependencies -->
-    	<dependency>
+        <!-- Self Dependencies -->
+        <dependency>
             <groupId>org.aksw.jena-sparql-api</groupId>
-            <artifactId>jena-sparql-api-core</artifactId>    	
-    	</dependency>
+            <artifactId>jena-sparql-api-core</artifactId>
+        </dependency>
 
-		<dependency>
-		    <groupId>org.jgrapht</groupId>
-		    <artifactId>jgrapht-core</artifactId>
-		</dependency>
+        <dependency>
+            <groupId>org.jgrapht</groupId>
+            <artifactId>jgrapht-core</artifactId>
+        </dependency>
 
+        <dependency>
+            <groupId>org.aksw.gson</groupId>
+            <artifactId>gson-utils-core</artifactId>
+        </dependency>
     </dependencies>
 </project>

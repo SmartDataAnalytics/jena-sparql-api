@@ -5,21 +5,29 @@ import com.hp.hpl.jena.sparql.core.DatasetDescription;
 public class SparqlServiceImpl
     implements SparqlService
 {
-    private DatasetDescription datasetDescription;
-    private QueryExecutionFactory qef;
-    private UpdateExecutionFactory uef;
+    protected String serviceUri;
+    protected DatasetDescription datasetDescription;
+    protected QueryExecutionFactory qef;
+    protected UpdateExecutionFactory uef;
 
     public SparqlServiceImpl(QueryExecutionFactory qef, UpdateExecutionFactory uef) {
-        this(null, qef, uef);
+        this(null, null, qef, uef);
     }
 
-    public SparqlServiceImpl(DatasetDescription datasetDescription, QueryExecutionFactory qef, UpdateExecutionFactory uef) {
+    public SparqlServiceImpl(String serviceUri, DatasetDescription datasetDescription, QueryExecutionFactory qef, UpdateExecutionFactory uef) {
         super();
+        this.serviceUri = serviceUri;
         this.datasetDescription = datasetDescription;
         this.qef = qef;
         this.uef = uef;
     }
 
+    @Override
+    public String getServiceUri() {
+        return serviceUri;
+    }
+
+    @Override
     public DatasetDescription getDatasetDescription() {
         return datasetDescription;
     }

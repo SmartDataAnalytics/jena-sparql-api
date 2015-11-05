@@ -180,7 +180,7 @@ public class MainBatchWorkflow {
 //
 
 //    	mainXml();
-        ApplicationContext baseContext = initBaseContext();
+        ApplicationContext baseContext = initBaseContext(null);
 
         initJenaExtensions(baseContext);
         mainContext(baseContext);
@@ -279,8 +279,13 @@ public class MainBatchWorkflow {
         //System.exit(0);
     }
 
-    public static ApplicationContext initBaseContext() {
-        AnnotationConfigApplicationContext coreContext = new AnnotationConfigApplicationContext(ConfigServicesCore.class);
+    public static ApplicationContext initBaseContext(ApplicationContext appContext) {
+        AnnotationConfigApplicationContext coreContext = new AnnotationConfigApplicationContext();
+        //if(appContext != null) {
+            coreContext.setParent(appContext);
+        //}
+        coreContext.register(ConfigServicesCore.class);
+        coreContext.refresh();
 
 
         AnnotationConfigApplicationContext baseContext = new AnnotationConfigApplicationContext();
