@@ -5,6 +5,11 @@ package org.aksw.jena_sparql_api.core;
 
 import java.util.Collection;
 
+import org.aksw.jena_sparql_api.mapper.annotation.Base;
+import org.aksw.jena_sparql_api.mapper.annotation.DefaultIri;
+import org.aksw.jena_sparql_api.mapper.annotation.Iri;
+import org.aksw.jena_sparql_api.mapper.annotation.RdfType;
+
 import com.hp.hpl.jena.sparql.core.DatasetDescription;
 
 /**
@@ -16,11 +21,18 @@ import com.hp.hpl.jena.sparql.core.DatasetDescription;
  *
  *
  */
+
+@Base("http://jpa.aksw.org/ontology/")
+@RdfType("SparqlServiceReference")
+@DefaultIri("r:#{#md5(serviceURL + datasetDescription.defaultGraphURIs + datasetDescription.namedGraphURIs)}")
 public class SparqlServiceReference {
 
+    @Iri
     private final String serviceURL;
     //private final Collection<String> defaultGraphURIs;
     //private final Collection<String> namedGraphURIs;
+
+    @Iri
     private final DatasetDescription datasetDescription;
 
 //    public SparqlServiceReference(String serviceURL) {

@@ -1,13 +1,15 @@
 package org.aksw.jena_sparql_api.mapper.model;
 
-import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
-import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.aksw.commons.util.strings.StringUtils;
 import org.aksw.jena_sparql_api.concepts.Relation;
@@ -17,6 +19,8 @@ import org.aksw.jena_sparql_api.mapper.annotation.Iri;
 import org.aksw.jena_sparql_api.mapper.annotation.RdfType;
 import org.aksw.jena_sparql_api.stmt.SparqlRelationParser;
 import org.aksw.jena_sparql_api.stmt.SparqlRelationParserImpl;
+import org.springframework.beans.BeanWrapper;
+import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.Expression;
@@ -44,6 +48,7 @@ public class RdfClassFactory {
     protected Prologue prologue;
     protected SparqlRelationParser relationParser;
 
+    protected Map<Class<?>, RdfClassImpl> classToMapping = new HashMap<Class<?>, RdfClassImpl>();
 
 
     public RdfClassFactory(ExpressionParser parser, ParserContext parserContext, EvaluationContext evalContext, Prologue prologue, SparqlRelationParser relationParser) {
@@ -55,8 +60,8 @@ public class RdfClassFactory {
         this.relationParser = relationParser;
     }
 
-    public RdfClass create(Class<?> clazz) {
-        RdfClass result;
+    public RdfClassImpl create(Class<?> clazz) {
+        RdfClassImpl result;
         try {
             result = _create(clazz);
         } catch (IntrospectionException e) {
@@ -92,52 +97,124 @@ public class RdfClassFactory {
     }
 
 
+    /**
+     * Allocates a new RdfClass object for a given java class or returns an
+     * existing one. Does not populate property descriptors.
+     *
+     * @param clazz
+     * @return
+     */
+    protected RdfClassImpl getOrAllocate(Class<?> clazz) {
+        RdfClassImpl result = classToMapping.get(clazz);
+        if(result == null) {
+            result = allocate(clazz);
+            classToMapping.put(clazz, result);
+        }
+        return result;
+    }
 
-    protected RdfClass _create(Class<?> clazz) throws IntrospectionException {
-        PrefixMapping prefixMapping = prologue.getPrefixMapping();
 
-        RdfType x = clazz.getAnnotation(RdfType.class);
+    /**
+     * Allocates a new RdfClass object for a given java class.
+     * Does not populate property descriptors.
+     *
+     * @param clazz
+     * @return
+     */
+    protected RdfClassImpl allocate(Class<?> clazz) {
+        RdfType rdfType = clazz.getAnnotation(RdfType.class);
+
         DefaultIri defaultIri = clazz.getAnnotation(DefaultIri.class);
 
         Function<Object, String> defaultIriFn = null;
-        if(defaultIri != null) {
+        if (defaultIri != null) {
             String iriStr = defaultIri.value();
-            Expression expression = parser.parseExpression(iriStr, parserContext);
-             defaultIriFn = new F_GetValue<String>(String.class, expression, evalContext);
+            Expression expression = parser.parseExpression(iriStr,
+                    parserContext);
+            defaultIriFn = new F_GetValue<String>(String.class, expression,
+                    evalContext);
         }
 
-        Map<String, RdfProperty> rdfProperties = new LinkedHashMap<String, RdfProperty>();
+        RdfClassImpl result = new RdfClassImpl(clazz, defaultIriFn, prologue);
 
-        BeanInfo bi = Introspector.getBeanInfo(clazz);
-        PropertyDescriptor[] pds = bi.getPropertyDescriptors();
-        for(PropertyDescriptor pd : pds) {
-            String propertyName = pd.getName();
-            System.out.println("PropertyName: " + propertyName);
-
-            Iri iri = getAnnotation(clazz, pd, Iri.class);
-            if(iri != null) {
-                String iriStr = iri.value();
-
-                //Relation relation = relationParser.apply(iriStr);
-
-
-                Relation relation = RelationUtils.createRelation(iriStr, false, prefixMapping);
-
-                RdfProperty rdfProperty = new RdfProperty(propertyName, relation);
-                rdfProperties.put(propertyName, rdfProperty);
-
-                System.out.println("--- Found anno: " + iri.value());
-            }
-        }
-
-        RdfClass result = new RdfClass(clazz, defaultIriFn, rdfProperties, prologue);
         return result;
+    }
 
 
+    protected RdfClassImpl _create(Class<?> clazz) throws IntrospectionException {
+        RdfClassImpl result = allocate(clazz);
+        populateClasses(result);
+        //Map<String, RdfProperty> rdfProperties = processProperties(clazz);
 
-//        Expression expr = parser.parseExpression(exprStr, parserContext);
-//        String rawIri = expr.getValue(evalContext, w, String.class);
-//        System.out.println(rawIri);
+        //RdfClassImpl result = new RdfClassImpl(clazz, defaultIriFn, rdfProperties, prologue);
+        return result;
+    }
+
+    private void populateClasses(RdfClassImpl rootRdfClass) {
+        Set<RdfClassImpl> open = new HashSet<RdfClassImpl>();
+        open.add(rootRdfClass);
+
+        while(!open.isEmpty()) {
+            RdfClassImpl rdfClass = open.iterator().next();
+            open.remove(rdfClass);
+
+            populateProperties(rdfClass, open);
+        }
+    }
+
+
+    private void populateProperties(RdfClassImpl rdfClass, Collection<RdfClassImpl> open) {
+        if(!rdfClass.isPopulated()) {
+            Map<String, RdfProperty> rdfProperties = new LinkedHashMap<String, RdfProperty>();
+
+            Class<?> clazz = rdfClass.getTargetClass();
+            BeanWrapper beanInfo = new BeanWrapperImpl(clazz);
+            //BeanInfo beanInfo = Introspector.getBeanInfo(clazz);
+
+            PropertyDescriptor[] pds = beanInfo.getPropertyDescriptors();
+            for(PropertyDescriptor pd : pds) {
+                String propertyName = pd.getName();
+                RdfProperty rdfProperty = processProperty(beanInfo, pd, open);
+                rdfProperties.put(propertyName, rdfProperty);
+            }
+
+            rdfClass.propertyToMapping = rdfProperties;
+        }
+    }
+
+    protected RdfProperty processProperty(BeanWrapper beanInfo, PropertyDescriptor pd, Collection<RdfClassImpl> open) {
+        PrefixMapping prefixMapping = prologue.getPrefixMapping();
+
+        RdfProperty result;
+
+        String propertyName = pd.getName();
+        System.out.println("PropertyName: " + propertyName);
+
+        Class<?> sourceClass = beanInfo.getWrappedClass();
+
+        // If necessary, add the target class to the set of classes that yet
+        // need to be populated
+        Class<?> targetClass = pd.getPropertyType();
+        RdfClassImpl trc = getOrAllocate(targetClass);
+        if(!trc.isPopulated()) {
+            open.add(trc);
+        }
+
+
+        Iri iri = getAnnotation(sourceClass, pd, Iri.class);
+        if(iri != null) {
+            String iriStr = iri.value();
+
+            //Relation relation = relationParser.apply(iriStr);
+            Relation relation = RelationUtils.createRelation(iriStr, false, prefixMapping);
+            result = new RdfProperty(propertyName, relation, trc);
+
+            System.out.println("--- Found anno: " + iri.value());
+        } else {
+            throw new RuntimeException("should not happen");
+        }
+
+        return result;
     }
 
     public static RdfClassFactory createDefault() {

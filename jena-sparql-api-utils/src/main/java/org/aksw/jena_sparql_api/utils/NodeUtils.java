@@ -3,12 +3,23 @@ package org.aksw.jena_sparql_api.utils;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.hp.hpl.jena.datatypes.RDFDatatype;
+import com.hp.hpl.jena.datatypes.TypeMapper;
 import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.sparql.core.Var;
 
 public class NodeUtils {
 
-	public static Set<Node> getBnodesMentioned(Iterable<Node> nodes) {
+    public static Node createTypedLiteral(TypeMapper typeMapper, Object o) {
+        Class<?> clazz = o.getClass();
+        RDFDatatype dtype = typeMapper.getTypeByClass(clazz);
+        String lex = dtype.unparse(o);
+        Node result = NodeFactory.createLiteral(lex, dtype);
+        return result;
+    }
+
+    public static Set<Node> getBnodesMentioned(Iterable<Node> nodes) {
         Set<Node> result = new HashSet<Node>();
         for (Node node : nodes) {
             if (node.isBlank()) {
@@ -17,7 +28,7 @@ public class NodeUtils {
         }
 
         return result;
-	}
+    }
 
     public static Set<Var> getVarsMentioned(Iterable<Node> nodes)
     {

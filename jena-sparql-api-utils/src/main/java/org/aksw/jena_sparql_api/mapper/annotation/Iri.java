@@ -11,6 +11,8 @@ import java.lang.annotation.RetentionPolicy;
  *   <li>Attribute: the RDF property</li>
  * </ul>
  *
+ * If the value is an empty string, the annotated property's name
+ * will be treated as a relative IRI.
  *
  *
  * @author raven
@@ -18,5 +20,5 @@ import java.lang.annotation.RetentionPolicy;
  */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Iri {
-    String value();
+    String value() default "";
 }

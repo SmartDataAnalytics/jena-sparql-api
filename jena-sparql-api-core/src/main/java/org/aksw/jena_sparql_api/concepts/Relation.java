@@ -136,5 +136,29 @@ public class Relation {
          */
     }
 
+    /**
+     * An empty relation does is equivalent to a zero-length path, i.e.
+     * it navigates from a set of resources to the same set of resources.
+     *
+     * It is expressed as an empty graph pattern (ElementGroup), and
+     * equal variables in source and target;
+     *
+     * @return
+     */
+    public static boolean isEmpty(Relation relation) {
+        boolean result;
+
+        Element e = relation.getElement();
+        if(e instanceof ElementGroup) {
+            ElementGroup g = (ElementGroup)e;
+            result = g.getElements().isEmpty();
+
+            //relation.getSourceVar().equals(relation.getTargetVar())
+        } else {
+            result = false;
+        }
+
+        return result;
+    }
 
 }

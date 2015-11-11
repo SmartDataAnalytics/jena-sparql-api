@@ -3,6 +3,9 @@ package org.aksw.jena_sparql_api.mapper.model;
 import org.aksw.jena_sparql_api.concepts.Relation;
 
 public class RdfProperty {
+    //protected RdfClass rdfClass;
+    //protected  collectiontype
+
     /**
      * The name of the attribute
      */
@@ -13,12 +16,14 @@ public class RdfProperty {
      */
     protected Relation relation;
 
+    protected RdfClassImpl targetRdfClass;
 
 
-    public RdfProperty(String name, Relation relation) {
+    public RdfProperty(String name, Relation relation, RdfClassImpl targetRdfClass) {
         super();
         this.name = name;
         this.relation = relation;
+        this.targetRdfClass = targetRdfClass;
     }
 
     public String getName() {
@@ -27,5 +32,9 @@ public class RdfProperty {
 
     public Relation getRelation() {
         return relation;
+    }
+
+    public RdfClassImpl getTargetRdfClass() {
+        return targetRdfClass;
     }
 }

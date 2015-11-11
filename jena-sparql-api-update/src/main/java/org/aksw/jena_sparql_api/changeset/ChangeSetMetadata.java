@@ -8,6 +8,10 @@ public class ChangeSetMetadata {
     private Calendar createdDate;
     private String changeReason;
 
+    public ChangeSetMetadata() {
+        this("anonymous", "unspecified reason");
+    }
+
     public ChangeSetMetadata(String creatorName,
             String changeReason) {
         this(creatorName, changeReason, new GregorianCalendar());

@@ -212,6 +212,13 @@ public class ChangeSetUtils {
         model.add(s, RDF.object, stmt.getObject());
     }
 
+    public static void add(Model model, Resource s, Property p, RDFNode o)
+    {
+        if(s != null && p != null && o != null) {
+            model.add(s, p, o);
+        }
+    }
+
     public static void write(Model model, ChangeSet cs) {
         Resource s = model.createResource(cs.getUri());
 
@@ -354,6 +361,7 @@ public class ChangeSetUtils {
 
     public static void enrichWithSource(Model model, Node g, SparqlServiceReference ssr) {
 
+        model.write(System.out, "TTL");
 
 
         Set<Resource> rs = model.listSubjectsWithProperty(RDF.type, CS.ChangeSet).toSet();
