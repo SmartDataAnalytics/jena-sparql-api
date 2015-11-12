@@ -1,11 +1,24 @@
 package org.aksw.jena_sparql_api.mapper.model;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.NavigableMap;
+import java.util.TreeMap;
+
+import org.aksw.jena_sparql_api.concepts.PropertyRelation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Function;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import com.hp.hpl.jena.sparql.core.Quad;
+import com.hp.hpl.jena.sparql.expr.Expr;
+import com.hp.hpl.jena.sparql.util.ExprUtils;
 import com.hp.hpl.jena.vocabulary.RDF;
 
 /**
@@ -23,6 +36,8 @@ import com.hp.hpl.jena.vocabulary.RDF;
  *
  */
 public class RdfPropertySeq {
+    private static final Logger logger = LoggerFactory.getLogger(RdfPropertySeq.class);
+
     //protected EntityManagerRdf;
     //protected
 
@@ -30,25 +45,13 @@ public class RdfPropertySeq {
 
     protected Function<Object, Node> objectToNode;
 
-    protected RdfClassImpl targetRdfClass;
+    protected RdfClass targetRdfClass;
+
+    public static final PropertyRelation seqRelation = PropertyRelation.create("?s ?p ?o . Filter(regex(?p, 'http://www.w3.org/1999/02/22-rdf-syntax-ns#_[0-9]+'))", "s", "p", "o");
+    public static final Expr seqExpr = ExprUtils.parse("regex(?p, 'http://www.w3.org/1999/02/22-rdf-syntax-ns#_[0-9]+')");
 
 
     public void toRdf(DatasetGraph target, List<Object> items) {
-
-        // Create the sub-property
-
-        // Create memberships
-        for(int i = 0; i < items.size(); ++i) {
-            Object item = items.get(i);
-
-            Node p = RDF.li(i + 1).asNode();
-
-            Node node = objectToNode.apply(item);
-            Quad quad = new Quad(quad.getGraph(), quad.getSubject(), quad.getPredicate(), node);
-
-            target.add(quad);
-        }
-
     }
 
 

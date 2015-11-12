@@ -48,7 +48,7 @@ public class RdfClassFactory {
     protected Prologue prologue;
     protected SparqlRelationParser relationParser;
 
-    protected Map<Class<?>, RdfClassImpl> classToMapping = new HashMap<Class<?>, RdfClassImpl>();
+    protected Map<Class<?>, RdfClass> classToMapping = new HashMap<Class<?>, RdfClass>();
 
 
     public RdfClassFactory(ExpressionParser parser, ParserContext parserContext, EvaluationContext evalContext, Prologue prologue, SparqlRelationParser relationParser) {
@@ -60,8 +60,8 @@ public class RdfClassFactory {
         this.relationParser = relationParser;
     }
 
-    public RdfClassImpl create(Class<?> clazz) {
-        RdfClassImpl result;
+    public RdfClass create(Class<?> clazz) {
+        RdfClass result;
         try {
             result = _create(clazz);
         } catch (IntrospectionException e) {
@@ -104,8 +104,8 @@ public class RdfClassFactory {
      * @param clazz
      * @return
      */
-    protected RdfClassImpl getOrAllocate(Class<?> clazz) {
-        RdfClassImpl result = classToMapping.get(clazz);
+    protected RdfClass getOrAllocate(Class<?> clazz) {
+        RdfClass result = classToMapping.get(clazz);
         if(result == null) {
             result = allocate(clazz);
             classToMapping.put(clazz, result);
@@ -121,7 +121,7 @@ public class RdfClassFactory {
      * @param clazz
      * @return
      */
-    protected RdfClassImpl allocate(Class<?> clazz) {
+    protected RdfClass allocate(Class<?> clazz) {
         RdfType rdfType = clazz.getAnnotation(RdfType.class);
 
         DefaultIri defaultIri = clazz.getAnnotation(DefaultIri.class);
@@ -135,14 +135,14 @@ public class RdfClassFactory {
                     evalContext);
         }
 
-        RdfClassImpl result = new RdfClassImpl(clazz, defaultIriFn, prologue);
+        RdfClass result = new RdfClass(clazz, defaultIriFn, prologue);
 
         return result;
     }
 
 
-    protected RdfClassImpl _create(Class<?> clazz) throws IntrospectionException {
-        RdfClassImpl result = allocate(clazz);
+    protected RdfClass _create(Class<?> clazz) throws IntrospectionException {
+        RdfClass result = allocate(clazz);
         populateClasses(result);
         //Map<String, RdfProperty> rdfProperties = processProperties(clazz);
 
@@ -150,12 +150,12 @@ public class RdfClassFactory {
         return result;
     }
 
-    private void populateClasses(RdfClassImpl rootRdfClass) {
-        Set<RdfClassImpl> open = new HashSet<RdfClassImpl>();
+    private void populateClasses(RdfClass rootRdfClass) {
+        Set<RdfClass> open = new HashSet<RdfClass>();
         open.add(rootRdfClass);
 
         while(!open.isEmpty()) {
-            RdfClassImpl rdfClass = open.iterator().next();
+            RdfClass rdfClass = open.iterator().next();
             open.remove(rdfClass);
 
             populateProperties(rdfClass, open);
@@ -163,7 +163,7 @@ public class RdfClassFactory {
     }
 
 
-    private void populateProperties(RdfClassImpl rdfClass, Collection<RdfClassImpl> open) {
+    private void populateProperties(RdfClass rdfClass, Collection<RdfClass> open) {
         if(!rdfClass.isPopulated()) {
             Map<String, RdfProperty> rdfProperties = new LinkedHashMap<String, RdfProperty>();
 
@@ -182,7 +182,7 @@ public class RdfClassFactory {
         }
     }
 
-    protected RdfProperty processProperty(BeanWrapper beanInfo, PropertyDescriptor pd, Collection<RdfClassImpl> open) {
+    protected RdfProperty processProperty(BeanWrapper beanInfo, PropertyDescriptor pd, Collection<RdfClass> open) {
         PrefixMapping prefixMapping = prologue.getPrefixMapping();
 
         RdfProperty result;
@@ -195,7 +195,7 @@ public class RdfClassFactory {
         // If necessary, add the target class to the set of classes that yet
         // need to be populated
         Class<?> targetClass = pd.getPropertyType();
-        RdfClassImpl trc = getOrAllocate(targetClass);
+        RdfClass trc = getOrAllocate(targetClass);
         if(!trc.isPopulated()) {
             open.add(trc);
         }

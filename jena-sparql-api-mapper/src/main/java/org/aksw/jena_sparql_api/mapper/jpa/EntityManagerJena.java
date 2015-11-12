@@ -26,7 +26,7 @@ import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.aksw.jena_sparql_api.mapper.jpa.criteria.CriteriaBuilderJena;
-import org.aksw.jena_sparql_api.mapper.model.RdfClassImpl;
+import org.aksw.jena_sparql_api.mapper.model.RdfClass;
 import org.aksw.jena_sparql_api.mapper.model.RdfClassFactory;
 import org.aksw.jena_sparql_api.mapper.proxy.MethodInterceptorRdf;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
@@ -71,7 +71,7 @@ public class EntityManagerJena
     public <T> T find(Class<T> clazz, Object primaryKey) {
 
         RdfClassFactory rdfClassFactory = RdfClassFactory.createDefault(prologue);
-        RdfClassImpl rdfClass = rdfClassFactory.create(clazz);
+        RdfClass rdfClass = rdfClassFactory.create(clazz);
 
         MappedConcept<DatasetGraph> shape = rdfClass.getMappedQuery();
 
@@ -112,7 +112,7 @@ public class EntityManagerJena
 
     @Override
     public <T> T merge(T entity) {
-        MethodInterceptorRdf interceptor = RdfClassImpl.getMethodInterceptor(entity);
+        MethodInterceptorRdf interceptor = RdfClass.getMethodInterceptor(entity);
 
         DatasetGraph oldState = interceptor == null
                 ? DatasetGraphFactory.createMem()
@@ -120,7 +120,7 @@ public class EntityManagerJena
                 ;
 
         Class<?> clazz = entity.getClass();
-        RdfClassImpl rdfClass = RdfClassFactory.createDefault(prologue).create(clazz);
+        RdfClass rdfClass = RdfClassFactory.createDefault(prologue).create(clazz);
 
 
         DatasetDescription datasetDescription = sparqlService.getDatasetDescription();

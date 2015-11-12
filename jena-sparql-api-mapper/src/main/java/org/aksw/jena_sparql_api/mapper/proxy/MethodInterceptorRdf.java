@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.mapper.proxy;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
 
-import org.aksw.jena_sparql_api.mapper.model.RdfClassImpl;
+import org.aksw.jena_sparql_api.mapper.model.RdfClass;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.beans.PropertyValue;
@@ -21,13 +21,13 @@ public class MethodInterceptorRdf
 
     protected Object proxied;
 
-    protected RdfClassImpl rdfClass;
+    protected RdfClass rdfClass;
 
     protected Node presetSubject; // The subject URI that corresponds to the proxied object
     protected DatasetGraph datasetGraph;
 
 
-    public MethodInterceptorRdf(Object proxied, RdfClassImpl rdfClass, Node subject, DatasetGraph datasetGraph) {
+    public MethodInterceptorRdf(Object proxied, RdfClass rdfClass, Node subject, DatasetGraph datasetGraph) {
         this.proxied = proxied;
 
         this.rdfClass = rdfClass;
@@ -43,7 +43,7 @@ public class MethodInterceptorRdf
         this.datasetGraph = datasetGraph;
     }
 
-    public RdfClassImpl getRdfClass() {
+    public RdfClass getRdfClass() {
         return rdfClass;
     }
 

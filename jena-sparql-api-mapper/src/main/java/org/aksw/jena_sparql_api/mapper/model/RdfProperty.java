@@ -1,40 +1,52 @@
 package org.aksw.jena_sparql_api.mapper.model;
 
 import org.aksw.jena_sparql_api.concepts.Relation;
+import org.springframework.beans.BeanWrapper;
 
 public class RdfProperty {
     //protected RdfClass rdfClass;
     //protected  collectiontype
 
+    //protected PropertyDescriptor propertyDescription;
+
     /**
-     * The name of the attribute
+     * The (java) name of the attribute
      */
-    protected String name;
+    protected String propertyName;
+
+    protected BeanWrapper owningBean;
 
     /**
      * The corresponding RDF predicate
      */
     protected Relation relation;
 
-    protected RdfClassImpl targetRdfClass;
+    protected RdfClass targetRdfClass;
+
+    /**
+     * The type can be either simply a class (including primitive ones), but it can also be
+     * a parameterized class, such as a List&lt;Person&gt;
+     *
+     */
+    protected RdfType rdfType;
 
 
-    public RdfProperty(String name, Relation relation, RdfClassImpl targetRdfClass) {
+    public RdfProperty(String name, Relation relation, RdfClass targetRdfClass) {
         super();
-        this.name = name;
+        this.propertyName = name;
         this.relation = relation;
         this.targetRdfClass = targetRdfClass;
     }
 
     public String getName() {
-        return name;
+        return propertyName;
     }
 
     public Relation getRelation() {
         return relation;
     }
 
-    public RdfClassImpl getTargetRdfClass() {
+    public RdfClass getTargetRdfClass() {
         return targetRdfClass;
     }
 }

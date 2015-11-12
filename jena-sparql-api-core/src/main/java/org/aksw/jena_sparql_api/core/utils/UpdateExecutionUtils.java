@@ -10,7 +10,6 @@ import org.aksw.jena_sparql_api.core.DatasetListener;
 import org.aksw.jena_sparql_api.core.QuadContainmentChecker;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
-import org.aksw.jena_sparql_api.core.SparqlServiceReference;
 import org.aksw.jena_sparql_api.core.UpdateContext;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
 import org.aksw.jena_sparql_api.utils.DatasetGraphDiffUtils;
@@ -21,6 +20,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Graph;
+import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.query.QueryExecution;
@@ -30,6 +30,7 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import com.hp.hpl.jena.sparql.core.Quad;
+import com.hp.hpl.jena.sparql.modify.request.UpdateDeleteInsert;
 import com.hp.hpl.jena.update.GraphStoreFactory;
 import com.hp.hpl.jena.update.Update;
 import com.hp.hpl.jena.update.UpdateFactory;
@@ -212,6 +213,46 @@ public class UpdateExecutionUtils {
     public static UpdateProcessor executeUpdateDelta(UpdateExecutionFactory uef, DatasetGraph after, DatasetGraph before) {
         Diff<Set<Quad>> diff = UpdateDiffUtils.computeDelta(after, before);
         UpdateProcessor result = executeUpdate(uef, diff);
+        return result;
+    }
+
+
+    public static UpdateDeleteInsert createUpdateRename(Node before, Node after, int i) {
+        //TripleUtils.
+
+        // TODO
+        return null;
+    }
+
+    /**
+     * DELETE { &lt;s&gt; ?p ?o } INSERT { &lt;x&gt; ?p ?o} WHERE { &lt;s&gt; ?p ?o }
+     *
+     * @param uef
+     * @param before
+     * @param after
+     * @return
+     */
+    public static UpdateRequest createUpdateRequestRename(Node before, Node after) {
+        UpdateRequest result = new UpdateRequest();
+
+        Update g = createUpdateRename(before, after, 0);
+        Update s = createUpdateRename(before, after, 1);
+        Update p = createUpdateRename(before, after, 2);
+        Update o = createUpdateRename(before, after, 3);
+
+        result.add(g);
+        result.add(s);
+        result.add(p);
+        result.add(o);
+
+        return result;
+    }
+
+
+    public static UpdateProcessor executeUpdateRename(UpdateExecutionFactory uef, Node before, Node after) {
+        UpdateRequest updateRequest = createUpdateRequestRename(before, after);
+        UpdateProcessor result = executeUnlessEmpty(uef, updateRequest);
+
         return result;
     }
 

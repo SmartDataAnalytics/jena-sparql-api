@@ -17,8 +17,10 @@ public class F_ObjectToNode
     implements Function<Object, Node>
 {
     protected TypeMapper typeMapper;
+    protected RdfClassFactory rdfClassFactory;
 
-    public F_ObjectToNode(TypeMapper typeMapper) {
+    public F_ObjectToNode(RdfClassFactory rdfClassFactory, TypeMapper typeMapper) {
+        this.rdfClassFactory = rdfClassFactory;
         this.typeMapper = typeMapper;
     }
 
@@ -35,6 +37,7 @@ public class F_ObjectToNode
             // Use jena's type mapper
             result = NodeUtils.createTypedLiteral(typeMapper, o);
         } else {
+            RdfClass rdfClass = rdfClassFactory.getOrAllocate(clazz);
             result = rdfClass.getSubject(o);
         }
 

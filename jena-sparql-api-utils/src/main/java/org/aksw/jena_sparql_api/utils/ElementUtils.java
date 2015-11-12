@@ -36,6 +36,9 @@ public class ElementUtils {
         return result;
     }
 
+
+    //public static Element join()
+
     public static Triple extractTriple(Element e) {
         //Node result = null;
         Triple result = null;
