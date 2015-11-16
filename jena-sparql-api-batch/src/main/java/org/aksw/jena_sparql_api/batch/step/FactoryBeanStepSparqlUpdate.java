@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.batch.step;
 
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
+import org.aksw.jena_sparql_api.mapper.annotation.Iri;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.tasklet.Tasklet;

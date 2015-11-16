@@ -25,7 +25,8 @@ import org.aksw.jena_sparql_api.batch.BatchWorkflowManager;
 import org.aksw.jena_sparql_api.batch.ListServiceResourceShape;
 import org.aksw.jena_sparql_api.batch.QueryTransformConstructGroupedGraph;
 import org.aksw.jena_sparql_api.batch.config.ConfigBatchJobDynamic;
-import org.aksw.jena_sparql_api.batch.config.ConfigServicesCore;
+import org.aksw.jena_sparql_api.batch.config.ConfigParsersCore;
+import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteClass;
 import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteHop;
 import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteJson;
 import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewritePrefixes;
@@ -58,6 +59,7 @@ import org.aksw.jena_sparql_api.sparql.ext.http.E_EncodeForQsa;
 import org.aksw.jena_sparql_api.sparql.ext.http.FunctionFactoryE_Http;
 import org.aksw.jena_sparql_api.sparql.ext.json.E_JsonParse;
 import org.aksw.jena_sparql_api.sparql.ext.json.E_JsonPath;
+import org.aksw.jena_sparql_api.sparql.ext.json.PropertyFunctionFactoryJsonUnnest;
 import org.aksw.jena_sparql_api.sparql.ext.json.RDFDatatypeJson;
 import org.aksw.jena_sparql_api.sparql.ext.term.E_TermValid;
 import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
@@ -82,6 +84,7 @@ import org.springframework.context.annotation.AnnotationConfigUtils;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 import com.google.common.base.Supplier;
 import com.google.gson.Gson;
@@ -284,7 +287,7 @@ public class MainBatchWorkflow {
         //if(appContext != null) {
             coreContext.setParent(appContext);
         //}
-        coreContext.register(ConfigServicesCore.class);
+        coreContext.register(ConfigParsersCore.class);
         coreContext.refresh();
 
 
@@ -366,19 +369,20 @@ public class MainBatchWorkflow {
         //x.
 
         //List<JsonVisitorRewrite> rewriters = Collections.emptyList();
-        List<JsonVisitorRewrite> rewriters = Arrays.<JsonVisitorRewrite>asList(
-                new JsonVisitorRewriteSparqlService(),
-                new JsonVisitorRewriteShape(),
-                new JsonVisitorRewriteJson(),
-                new JsonVisitorRewriteSparqlStep(),
-                new JsonVisitorRewriteSimpleJob(),
-                new JsonVisitorRewriteSparqlFile(),
-                new JsonVisitorRewriteSparqlPipe(),
-                new JsonVisitorRewriteSparqlUpdate(),
-                new JsonVisitorRewritePrefixes(),
-                new JsonVisitorRewriteHop()
-        );
-        json = JsonWalker.rewriterUntilNoChange(json, rewriters);
+//        List<JsonVisitorRewrite> rewriters = Arrays.<JsonVisitorRewrite>asList(
+//                new JsonVisitorRewriteSparqlService(),
+//                new JsonVisitorRewriteShape(),
+//                new JsonVisitorRewriteJson(),
+//                new JsonVisitorRewriteSparqlStep(),
+//                new JsonVisitorRewriteSimpleJob(),
+//                new JsonVisitorRewriteSparqlFile(),
+//                new JsonVisitorRewriteSparqlPipe(),
+//                new JsonVisitorRewriteSparqlUpdate(),
+//                new JsonVisitorRewritePrefixes(),
+//                new JsonVisitorRewriteHop()
+//        );
+//        json = JsonWalker.rewriteUntilNoChange(json, rewriters);
+        json = rewrite(json);
 
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         String str = gson.toJson(json);
@@ -396,6 +400,24 @@ public class MainBatchWorkflow {
         batchContext.refresh();
 
         return batchContext;
+    }
+
+    public static JsonElement rewrite(JsonElement json) {
+        List<JsonVisitorRewrite> rewriters = Arrays.<JsonVisitorRewrite>asList(
+                new JsonVisitorRewriteSparqlService(),
+                new JsonVisitorRewriteShape(),
+                new JsonVisitorRewriteJson(),
+                new JsonVisitorRewriteSparqlStep(),
+                new JsonVisitorRewriteSimpleJob(),
+                new JsonVisitorRewriteSparqlFile(),
+                new JsonVisitorRewriteSparqlPipe(),
+                new JsonVisitorRewriteSparqlUpdate(),
+                new JsonVisitorRewritePrefixes(),
+                new JsonVisitorRewriteHop(),
+                new JsonVisitorRewriteClass("$dataSource", DriverManagerDataSource.class.getName())
+        );
+        JsonElement result = JsonWalker.rewriteUntilNoChange(json, rewriters);
+        return result;
     }
 
     public static void mainContext(ApplicationContext baseContext) throws Exception {
@@ -674,14 +696,6 @@ we can then use an automaton representation and minimize the states, and convert
         return result;
     }
 
-    public static String readResource(String r) throws IOException {
-        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-        org.springframework.core.io.Resource resource = resolver.getResource(r);
-        InputStream in = resource.getInputStream();
-        String result = StreamUtils.toString(in);
-        return result;
-    }
-
     public static <T> T readJson(String str) throws IOException {
         Gson gson = new Gson();
 
@@ -697,11 +711,24 @@ we can then use an automaton representation and minimize the states, and convert
         return result;
     }
 
+
+    public static String readResource(String r) throws IOException {
+        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+        org.springframework.core.io.Resource resource = resolver.getResource(r);
+        InputStream in = resource.getInputStream();
+        String result = StreamUtils.toString(in);
+        return result;
+    }
+
     public static JsonElement readJsonElementFromResource(String r) throws IOException {
         String str = readResource(r);
         JsonElement result = readJsonElement(str);
         return result;
     }
+
+//    public static JsonElement readJsonElementFromResource(Resource resource) throws IOException {
+//
+//    }
 
 
     public static JsonElement readJsonElement(String str) throws IOException {

@@ -1,7 +1,5 @@
 package org.aksw.jena_sparql_api.sparql.ext.json;
 
-import org.apache.commons.lang.NotImplementedException;
-
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.hp.hpl.jena.datatypes.RDFDatatype;
@@ -37,18 +35,18 @@ public class NodeValueJson
 
     @Override
     public void visit(NodeValueVisitor arg0) {
-        throw new NotImplementedException();
+        throw new UnsupportedOperationException();
     }
 
     public static NodeValueJson create(JsonElement obj) {
-    	NodeValueJson result = new NodeValueJson(obj);
-    	return result;
+        NodeValueJson result = new NodeValueJson(obj);
+        return result;
     }
 
     public static NodeValueJson create(String jsonStr) {
-		Gson gson = new Gson();
-		JsonElement e = gson.fromJson(jsonStr, JsonElement.class);
-		NodeValueJson result = create(e);
-		return result;
+        Gson gson = new Gson();
+        JsonElement e = gson.fromJson(jsonStr, JsonElement.class);
+        NodeValueJson result = create(e);
+        return result;
     }
 }

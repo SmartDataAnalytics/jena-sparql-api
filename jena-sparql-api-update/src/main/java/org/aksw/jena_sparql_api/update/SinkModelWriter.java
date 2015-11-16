@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.sparql.ext.http;
+package org.aksw.jena_sparql_api.update;
 
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;

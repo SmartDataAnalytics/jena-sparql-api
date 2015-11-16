@@ -91,9 +91,10 @@
         </dependency>
 
         <dependency>
-            <groupId>com.jayway.jsonpath</groupId>
-            <artifactId>json-path</artifactId>
+            <groupId>org.aksw.jena-sparql-api</groupId>
+            <artifactId>jena-sparql-api-sparql-ext</artifactId>
         </dependency>
+
 
         <!-- <dependency> -->
         <!-- <groupId>org.apache.jena</groupId> -->
