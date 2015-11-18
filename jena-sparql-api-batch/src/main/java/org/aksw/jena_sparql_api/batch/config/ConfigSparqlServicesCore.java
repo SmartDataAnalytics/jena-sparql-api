@@ -18,10 +18,12 @@ import org.apache.jena.riot.web.HttpOp;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 
+@Configuration
 public class ConfigSparqlServicesCore {
 
 //    @Bean
@@ -35,8 +37,9 @@ public class ConfigSparqlServicesCore {
     private Random random = new Random();
 
     @Bean
+    @Autowired
     //@Qualifier("workflow")
-    public SparqlServiceFactory defaultSparqlServiceFactory(SparqlServiceFactory ssf, @Qualifier("tracking") SparqlService trackerService) {
+    public SparqlServiceFactory defaultWorkflowSparqlServiceFactory(SparqlServiceFactory ssf, @Qualifier("tracking") SparqlService trackerService) {
 
         long jobInstanceId = random.nextLong();
 
