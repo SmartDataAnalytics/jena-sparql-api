@@ -16,9 +16,13 @@ import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.aksw.jena_sparql_api.mapper.annotation.DefaultIri;
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
+import org.aksw.jena_sparql_api.mapper.annotation.IriType;
 import org.aksw.jena_sparql_api.mapper.annotation.RdfType;
 import org.aksw.jena_sparql_api.stmt.SparqlRelationParser;
 import org.aksw.jena_sparql_api.stmt.SparqlRelationParserImpl;
+import org.aksw.jena_sparql_api.utils.UriUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.core.annotation.AnnotationUtils;
@@ -32,11 +36,17 @@ import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.util.ReflectionUtils;
 
 import com.google.common.base.Function;
+import com.hp.hpl.jena.datatypes.RDFDatatype;
+import com.hp.hpl.jena.datatypes.TypeMapper;
+import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.query.Syntax;
 import com.hp.hpl.jena.shared.PrefixMapping;
 import com.hp.hpl.jena.sparql.core.Prologue;
 
 public class RdfClassFactory {
+
+    private static final Logger logger = LoggerFactory.getLogger(RdfClassFactory.class);
 
     /*
      * SpEL parser and evaluator
@@ -49,16 +59,22 @@ public class RdfClassFactory {
     protected SparqlRelationParser relationParser;
 
     protected Map<Class<?>, RdfClass> classToMapping = new HashMap<Class<?>, RdfClass>();
+    protected TypeMapper typeMapper;
 
-
-    public RdfClassFactory(ExpressionParser parser, ParserContext parserContext, EvaluationContext evalContext, Prologue prologue, SparqlRelationParser relationParser) {
+    public RdfClassFactory(ExpressionParser parser, ParserContext parserContext, EvaluationContext evalContext, TypeMapper typeMapper, Prologue prologue, SparqlRelationParser relationParser) {
         super();
         this.parser = parser;
         this.evalContext = evalContext;
         this.parserContext = parserContext;
+        this.typeMapper = typeMapper;
         this.prologue = prologue;
         this.relationParser = relationParser;
     }
+
+    public Prologue getPrologue() {
+        return prologue;
+    }
+
 
     public RdfClass create(Class<?> clazz) {
         RdfClass result;
@@ -140,6 +156,16 @@ public class RdfClassFactory {
         return result;
     }
 
+    protected String resolveIriExpr(String exprStr) {
+        Expression expression = parser.parseExpression(exprStr, parserContext);
+        String tmp = expression.getValue(evalContext, String.class);
+        tmp = tmp.trim();
+
+        PrefixMapping prefixMapping = prologue.getPrefixMapping();
+        String result = prefixMapping.expandPrefix(tmp);
+        return result;
+    }
+
 
     protected RdfClass _create(Class<?> clazz) throws IntrospectionException {
         RdfClass result = allocate(clazz);
@@ -168,29 +194,97 @@ public class RdfClassFactory {
             Map<String, RdfProperty> rdfProperties = new LinkedHashMap<String, RdfProperty>();
 
             Class<?> clazz = rdfClass.getTargetClass();
+
+
             BeanWrapper beanInfo = new BeanWrapperImpl(clazz);
             //BeanInfo beanInfo = Introspector.getBeanInfo(clazz);
 
             PropertyDescriptor[] pds = beanInfo.getPropertyDescriptors();
             for(PropertyDescriptor pd : pds) {
                 String propertyName = pd.getName();
-                RdfProperty rdfProperty = processProperty(beanInfo, pd, open);
-                rdfProperties.put(propertyName, rdfProperty);
+                boolean isReadable = beanInfo.isReadableProperty(propertyName);
+                boolean isWritable = beanInfo.isWritableProperty(propertyName);
+
+                Class<?> propertyType = pd.getPropertyType();
+                RDFDatatype dtype = typeMapper.getTypeByClass(propertyType);
+                boolean isLiteral = dtype != null;
+
+                boolean isCandidate = isReadable && isWritable;
+
+
+                Iri iriAnn = getAnnotation(clazz, pd, Iri.class);
+                String iriExprStr = iriAnn == null ? null : iriAnn.value();
+                String iriStr = iriExprStr == null ? null : resolveIriExpr(iriExprStr);
+                boolean hasIri = iriStr != null && !iriStr.isEmpty();
+
+                if(isCandidate && hasIri) {
+                    logger.debug("Annotation on property " + propertyName + " detected: " + iriStr);
+
+                    Node predicate = NodeFactory.createURI(iriStr);
+
+                    RdfProperty rdfProperty = isLiteral
+                        ? processDatatypeProperty(beanInfo, pd, predicate, dtype)
+                        : processObjectProperty(beanInfo, pd, predicate, open)
+                        ;
+
+                    if(rdfProperty != null) {
+                        rdfProperties.put(propertyName, rdfProperty);
+                    }
+                } else {
+                    logger.debug("Ignoring property " + propertyName);
+                }
             }
 
             rdfClass.propertyToMapping = rdfProperties;
         }
     }
 
-    protected RdfProperty processProperty(BeanWrapper beanInfo, PropertyDescriptor pd, Collection<RdfClass> open) {
+
+
+    /**
+     *
+     *
+     * @param beanInfo
+     * @param pd
+     * @param dtype
+     * @return
+     */
+    protected RdfProperty processDatatypeProperty(BeanWrapper beanInfo, PropertyDescriptor pd, Node predicate, RDFDatatype dtype) {
+        Class<?> beanClass = beanInfo.getWrappedClass();
+        Class<?> propertyType = pd.getPropertyType();
+
+        IriType iriType = getAnnotation(beanClass, pd, IriType.class);
+
+
+        RdfValueMapper rdfValueMapper;
+        if(iriType == null) {
+            //RDFDatatype dtype = typeMapper.getTypeByClass(propertyType);
+            rdfValueMapper = new RdfValueMapperSimple(propertyType, dtype, null);
+        } else {
+            rdfValueMapper = new RdfValueMapperStringIri();
+        }
+
+
+        RdfProperty result = new RdfPropertyDatatype(beanInfo, pd, null, predicate, rdfValueMapper);
+        return result;
+    }
+
+    /**
+     * Process a property with a complex value
+     *
+     * @param beanInfo
+     * @param pd
+     * @param open
+     * @return
+     */
+    protected RdfProperty processObjectProperty(BeanWrapper beanInfo, PropertyDescriptor pd, Node predicate, Collection<RdfClass> open) {
         PrefixMapping prefixMapping = prologue.getPrefixMapping();
 
         RdfProperty result;
 
         String propertyName = pd.getName();
-        System.out.println("PropertyName: " + propertyName);
+        //System.out.println("PropertyName: " + propertyName);
 
-        Class<?> sourceClass = beanInfo.getWrappedClass();
 
         // If necessary, add the target class to the set of classes that yet
         // need to be populated
@@ -200,19 +294,24 @@ public class RdfClassFactory {
             open.add(trc);
         }
 
+        Relation relation = RelationUtils.createRelation(predicate.getURI(), false, prefixMapping);
+        result = new RdfProperyObject(propertyName, relation, trc);
 
-        Iri iri = getAnnotation(sourceClass, pd, Iri.class);
-        if(iri != null) {
-            String iriStr = iri.value();
 
-            //Relation relation = relationParser.apply(iriStr);
-            Relation relation = RelationUtils.createRelation(iriStr, false, prefixMapping);
-            result = new RdfProperty(propertyName, relation, trc);
-
-            System.out.println("--- Found anno: " + iri.value());
-        } else {
-            throw new RuntimeException("should not happen");
-        }
+//        Iri iri = getAnnotation(sourceClass, pd, Iri.class);
+//        if(iri != null) {
+//            String iriStr = iri.value();
+//
+//            //Relation relation = relationParser.apply(iriStr);
+//            Relation relation = RelationUtils.createRelation(iriStr, false, prefixMapping);
+//            result = new RdfProperyObject(propertyName, relation, trc);
+//
+//            logger.debug("Annotation on property " + propertyName + " detected: " + iri.value());
+//        } else {
+//            result = null;
+//            logger.debug("Ignoring property " + propertyName);
+//            //throw new RuntimeException("should not happen");
+//        }
 
         return result;
     }
@@ -229,6 +328,8 @@ public class RdfClassFactory {
 
         try {
             evalContext.registerFunction("md5", StringUtils.class.getDeclaredMethod("md5Hash", new Class[] { String.class }));
+            evalContext.registerFunction("localName", UriUtils.class.getDeclaredMethod("getLocalName", new Class[] { String.class }));
+            evalContext.registerFunction("nameSpace", UriUtils.class.getDeclaredMethod("getNameSpace", new Class[] { String.class }));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -236,7 +337,8 @@ public class RdfClassFactory {
 
         SparqlRelationParser relationParser = SparqlRelationParserImpl.create(Syntax.syntaxARQ, prologue);
 
-        RdfClassFactory result = new RdfClassFactory(parser, parserContext, evalContext, prologue, relationParser);
+        TypeMapper typeMapper = TypeMapper.getInstance();
+        RdfClassFactory result = new RdfClassFactory(parser, parserContext, evalContext, typeMapper, prologue, relationParser);
         return result;
     }
 }

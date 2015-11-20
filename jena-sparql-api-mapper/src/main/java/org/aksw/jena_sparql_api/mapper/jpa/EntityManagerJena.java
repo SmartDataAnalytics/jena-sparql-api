@@ -45,6 +45,8 @@ public class EntityManagerJena
 {
     protected Prologue prologue;
 
+    protected RdfClassFactory rdfClassFactory;
+
     /**
      * The languagePreferences acts as a default method to priorize and filter items in a set of (literal)
      * nodes, such as values of the rdfs:label or rdfs:comment properties.
@@ -59,18 +61,24 @@ public class EntityManagerJena
     protected SparqlService sparqlService;
 
 
-    public EntityManagerJena(Prologue prologue,
+    public EntityManagerJena(RdfClassFactory rdfClassFactory,
             List<String> readLangs, SparqlService sparqlService) {
         super();
-        this.prologue = prologue;
+        //this.prologue = prologue;
+        this.rdfClassFactory = rdfClassFactory;
         this.readLangs = readLangs;
         this.sparqlService = sparqlService;
+    }
+
+
+    public RdfClassFactory getRdfClassFactory() {
+        return rdfClassFactory;
     }
 
     @Override
     public <T> T find(Class<T> clazz, Object primaryKey) {
 
-        RdfClassFactory rdfClassFactory = RdfClassFactory.createDefault(prologue);
+        //RdfClassFactory rdfClassFactory = RdfClassFactory.createDefault(prologue);
         RdfClass rdfClass = rdfClassFactory.create(clazz);
 
         MappedConcept<DatasetGraph> shape = rdfClass.getMappedQuery();
@@ -120,7 +128,8 @@ public class EntityManagerJena
                 ;
 
         Class<?> clazz = entity.getClass();
-        RdfClass rdfClass = RdfClassFactory.createDefault(prologue).create(clazz);
+        //RdfClass rdfClass = RdfClassFactory.createDefault(prologue).create(clazz);
+        RdfClass rdfClass = rdfClassFactory.create(clazz);
 
 
         DatasetDescription datasetDescription = sparqlService.getDatasetDescription();

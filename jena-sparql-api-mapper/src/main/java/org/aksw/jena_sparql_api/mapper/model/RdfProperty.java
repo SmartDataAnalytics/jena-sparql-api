@@ -1,52 +1,48 @@
 package org.aksw.jena_sparql_api.mapper.model;
 
 import org.aksw.jena_sparql_api.concepts.Relation;
-import org.springframework.beans.BeanWrapper;
 
-public class RdfProperty {
-    //protected RdfClass rdfClass;
-    //protected  collectiontype
+import com.hp.hpl.jena.graph.Graph;
+import com.hp.hpl.jena.graph.Node;
 
-    //protected PropertyDescriptor propertyDescription;
+public interface RdfProperty {
 
     /**
-     * The (java) name of the attribute
+     * Get the RdfClass of the property value
+     *
+     * @return
      */
-    protected String propertyName;
-
-    protected BeanWrapper owningBean;
+    RdfClass getTargetRdfClass();
 
     /**
-     * The corresponding RDF predicate
+     * The name of the property
+     *
+     * @return
      */
-    protected Relation relation;
+    String getName();
 
-    protected RdfClass targetRdfClass;
 
     /**
-     * The type can be either simply a class (including primitive ones), but it can also be
-     * a parameterized class, such as a List&lt;Person&gt;
+     *
      *
      */
-    protected RdfType rdfType;
+    Relation getRelation();
 
 
-    public RdfProperty(String name, Relation relation, RdfClass targetRdfClass) {
-        super();
-        this.propertyName = name;
-        this.relation = relation;
-        this.targetRdfClass = targetRdfClass;
-    }
+    /**
+     * Write the property value of the given object as RDF
+     *
+     * @param obj
+     * @param outputGraph
+     */
+    void writePropertyValue(Object obj, Node subject, Graph outputGraph);
 
-    public String getName() {
-        return propertyName;
-    }
-
-    public Relation getRelation() {
-        return relation;
-    }
-
-    public RdfClass getTargetRdfClass() {
-        return targetRdfClass;
-    }
+    /**
+     * Read the property value from a given RDF graph
+     *
+     * @param graph
+     * @param subject
+     * @return
+     */
+    Object readPropertyValue(Graph graph, Node subject);
 }

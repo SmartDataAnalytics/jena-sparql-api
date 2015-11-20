@@ -26,12 +26,18 @@ import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.shared.PrefixMapping;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import com.hp.hpl.jena.sparql.core.DatasetGraphFactory;
 import com.hp.hpl.jena.sparql.core.Prologue;
 import com.hp.hpl.jena.sparql.core.Quad;
 
+/**
+ * An RdfClass is one type of implementation that can map Java objects to and from RDF graphs.
+ *
+ */
 public class RdfClass
     implements RdfType
 {
@@ -234,6 +240,9 @@ public class RdfClass
         PrefixMapping prefixMapping = prologue.getPrefixMapping();
 
         DatasetGraph result = DatasetGraphFactory.createMem();
+
+        Graph graph = result.getGraph(g);
+
         Collection<RdfProperty> rdfProperties = propertyToMapping.values();
 
         BeanWrapper bean = new BeanWrapperImpl(obj);
@@ -250,30 +259,34 @@ public class RdfClass
 
                 System.out.println("Value of " + propertyName + " = " + propertyValue);
 
-                Relation relation = pd.getRelation();
-                Triple t = RelationUtils.extractTriple(relation);
-                if(t != null) {
-                    Node pRaw = t.getPredicate();
-                    if(Node.ANY.equals(pRaw)) {
-                        throw new RuntimeException("Could not obtain a valid RDF property for bean property " + propertyName + " with value " + propertyValue);
+                pd.writePropertyValue(obj, s, graph);
+
+                if(false) {
+                    Relation relation = pd.getRelation();
+                    Triple t = RelationUtils.extractTriple(relation);
+                    if(t != null) {
+                        Node pRaw = t.getPredicate();
+                        if(Node.ANY.equals(pRaw)) {
+                            throw new RuntimeException("Could not obtain a valid RDF property for bean property " + propertyName + " with value " + propertyValue);
+                        }
+
+                        String pStr = prefixMapping.expandPrefix(pRaw.getURI());
+                        Node p = NodeFactory.createURI(pStr);
+
+                        TypeMapper typeMapper = TypeMapper.getInstance();
+                        RDFDatatype datatype = typeMapper.getTypeByClass(propertyClass);
+                        String lex = datatype.unparse(propertyValue);
+                        Node o = NodeFactory.createLiteral(lex, datatype);
+
+                        //datasetDescription.getDefaultGraphURIs()
+                        Quad quad = new Quad(g, s, p, o);
+                        result.add(quad);
+                        // TODO Now apply lang filtering
+
+                        //int i = 0;
+
+                        //Node o = rep;
                     }
-
-                    String pStr = prefixMapping.expandPrefix(pRaw.getURI());
-                    Node p = NodeFactory.createURI(pStr);
-
-                    TypeMapper typeMapper = TypeMapper.getInstance();
-                    RDFDatatype datatype = typeMapper.getTypeByClass(propertyClass);
-                    String lex = datatype.unparse(propertyValue);
-                    Node o = NodeFactory.createLiteral(lex, datatype);
-
-                    //datasetDescription.getDefaultGraphURIs()
-                    Quad quad = new Quad(g, s, p, o);
-                    result.add(quad);
-                    // TODO Now apply lang filtering
-
-                    //int i = 0;
-
-                    //Node o = rep;
                 }
             }
         }

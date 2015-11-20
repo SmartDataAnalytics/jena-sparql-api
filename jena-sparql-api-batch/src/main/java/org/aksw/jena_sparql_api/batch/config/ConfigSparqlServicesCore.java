@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -38,8 +39,9 @@ public class ConfigSparqlServicesCore {
 
     @Bean
     @Autowired
+    @Primary
     //@Qualifier("workflow")
-    public SparqlServiceFactory defaultWorkflowSparqlServiceFactory(SparqlServiceFactory ssf, @Qualifier("tracking") SparqlService trackerService) {
+    public SparqlServiceFactory workflowSparqlServiceFactory(@Qualifier("config") SparqlServiceFactory ssf, @Qualifier("tracking") SparqlService trackerService) {
 
         long jobInstanceId = random.nextLong();
 
