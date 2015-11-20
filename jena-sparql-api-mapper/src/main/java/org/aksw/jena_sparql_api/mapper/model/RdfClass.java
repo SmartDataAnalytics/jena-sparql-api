@@ -192,41 +192,49 @@ public class RdfClass
         PrefixMapping prefixMapping = prologue.getPrefixMapping();
 
         DatasetGraph result = DatasetGraphFactory.createMem();
+
+        Graph graph = result.getDefaultGraph();
+
         Collection<RdfProperty> rdfProperties = propertyToMapping.values();
 
         BeanWrapper bean = new BeanWrapperImpl(targetObj);
 
         Node s = getSubject(targetObj);
-        TypeMapper typeMapper = TypeMapper.getInstance();
+        //TypeMapper typeMapper = TypeMapper.getInstance();
 
         for(RdfProperty pd : rdfProperties) {
-            String propertyName = pd.getName();
-            Object propertyValue = bean.getPropertyValue(propertyName);
+            //String propertyName = pd.getName();
+            //Object propertyValue = bean.getPropertyValue(propertyName);
 
-            System.out.println("Value of " + propertyName + " = " + propertyValue);
 
-            Relation relation = pd.getRelation();
-            Triple t = RelationUtils.extractTriple(relation);
-            if(t != null) {
-                Node pRaw = t.getPredicate();
-                if(Node.ANY.equals(pRaw)) {
-                    throw new RuntimeException("Could not obtain a valid RDF property for bean property " + propertyName + " with value " + propertyValue);
-                }
+            pd.readPropertyValue(graph, s);
 
-                String pStr = prefixMapping.expandPrefix(pRaw.getURI());
-                Node p = NodeFactory.createURI(pStr);
-
-                // Get the value of the triple
-                List<Node> os = ListObjectsOfDatasetGraph.create(datasetGraph, Node.ANY, s, p);
-                Node o = os.isEmpty() ? null : os.iterator().next();
-
-                // Convert o to java
-                Object java = toJava(o);
-
-                bean.setPropertyValue(propertyName, java);
-            }
+//            System.out.println("Value of " + propertyName + " = " + propertyValue);
+//
+//            Relation relation = pd.getRelation();
+//            Triple t = RelationUtils.extractTriple(relation);
+//            if(t != null) {
+//                Node pRaw = t.getPredicate();
+//                if(Node.ANY.equals(pRaw)) {
+//                    throw new RuntimeException("Could not obtain a valid RDF property for bean property " + propertyName + " with value " + propertyValue);
+//                }
+//
+//                String pStr = prefixMapping.expandPrefix(pRaw.getURI());
+//                Node p = NodeFactory.createURI(pStr);
+//
+//                // Get the value of the triple
+//                List<Node> os = ListObjectsOfDatasetGraph.create(datasetGraph, Node.ANY, s, p);
+//                Node o = os.isEmpty() ? null : os.iterator().next();
+//
+//                // Convert o to java
+//                Object java = toJava(o);
+//
+//                bean.setPropertyValue(propertyName, java);
+//            }
         }
     }
+
+    //writeGraph(Object obj, Node g, )
 
     /**
      * Extract triples for a given object in the specified target graph.

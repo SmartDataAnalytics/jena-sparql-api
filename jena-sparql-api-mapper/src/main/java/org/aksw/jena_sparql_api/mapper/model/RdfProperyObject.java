@@ -1,10 +1,15 @@
 package org.aksw.jena_sparql_api.mapper.model;
 
 import org.aksw.jena_sparql_api.concepts.Relation;
+import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.springframework.beans.BeanWrapper;
 
 import com.hp.hpl.jena.graph.Graph;
+import com.hp.hpl.jena.graph.GraphUtil;
 import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.sparql.core.DatasetGraph;
+import com.hp.hpl.jena.sparql.core.Quad;
 
 public class RdfProperyObject
     implements RdfProperty
@@ -58,12 +63,27 @@ public class RdfProperyObject
 
     @Override
     public void writePropertyValue(Object obj, Node subject, Graph outputGraph) {
-        // TODO Auto-generated method stub
+        Node o = targetRdfClass.getSubject(obj);
 
+        Triple tmp = RelationUtils.extractTriple(relation);
+        Node p = tmp.getPredicate();
+
+        Triple t = new Triple(subject, p, o);
+
+        if(!outputGraph.contains(t)) {
+            outputGraph.add(t);
+
+            DatasetGraph dg = targetRdfClass.createDatasetGraph(obj, Quad.defaultGraphIRI);
+            Graph g = dg.getDefaultGraph();
+            GraphUtil.addInto(outputGraph, g);
+        }
     }
 
     @Override
     public Object readPropertyValue(Graph graph, Node subject) {
+
+
+
         // TODO Auto-generated method stub
         return null;
     }
