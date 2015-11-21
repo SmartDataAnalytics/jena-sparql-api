@@ -243,12 +243,12 @@ public class RdfClass
      * @return
      */
     @Override
-    public DatasetGraph createDatasetGraph(Object obj, Node g) {
+    public void writeGraph(Graph out, Object obj) {
         PrefixMapping prefixMapping = prologue.getPrefixMapping();
 
-        DatasetGraph result = DatasetGraphFactory.createMem();
+        //DatasetGraph result = DatasetGraphFactory.createMem();
 
-        Graph graph = result.getGraph(g);
+        //Graph graph = result.getGraph(g);
 
         Collection<RdfProperty> rdfProperties = propertyToMapping.values();
 
@@ -266,7 +266,7 @@ public class RdfClass
 
                 System.out.println("Value of " + propertyName + " = " + propertyValue);
 
-                pd.writePropertyValue(obj, s, graph);
+                pd.writePropertyValue(out, obj, s);
 
                 if(false) {
                     Relation relation = pd.getRelation();
@@ -286,8 +286,11 @@ public class RdfClass
                         Node o = NodeFactory.createLiteral(lex, datatype);
 
                         //datasetDescription.getDefaultGraphURIs()
-                        Quad quad = new Quad(g, s, p, o);
-                        result.add(quad);
+                        //Quad quad = new Quad(g, s, p, o);
+                        //out.add(quad);
+                        Triple triple = new Triple(s, p, o);
+                        out.add(triple);
+
                         // TODO Now apply lang filtering
 
                         //int i = 0;
@@ -298,7 +301,7 @@ public class RdfClass
             }
         }
 
-        return result;
+        //return result;
     }
 
 

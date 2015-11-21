@@ -9,7 +9,7 @@ import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
 
 public class RdfTypeLiteralTyped
-    extends RdfTypeBase
+    extends RdfTypePrimitive
 {
     protected RDFDatatype rdfDatatype;
 
@@ -37,12 +37,6 @@ public class RdfTypeLiteralTyped
     }
 
     @Override
-    public DatasetGraph createDatasetGraph(Object obj, Node g) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
     public Node getRootNode(Object obj) {
         String lex = rdfDatatype.unparse(obj);
         Node result = NodeFactory.createLiteral(lex, rdfDatatype);
@@ -54,10 +48,5 @@ public class RdfTypeLiteralTyped
     public Object createJavaObject(Node node) {
         Object result = node.getLiteralValue();
         return result;
-    }
-
-    @Override
-    public boolean isSimpleType() {
-        return true;
     }
 }

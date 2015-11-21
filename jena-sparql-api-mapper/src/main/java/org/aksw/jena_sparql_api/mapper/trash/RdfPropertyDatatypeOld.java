@@ -38,7 +38,7 @@ public class RdfPropertyDatatypeOld
     }
 
     @Override
-    public void writePropertyValue(Object obj, Node subject, Graph outputGraph) {
+    public void writePropertyValue(Graph outputGraph, Object obj, Node subject) {
         String propertyName = propertyDescriptor.getName();
 
         BeanWrapper bean = new BeanWrapperImpl(obj);

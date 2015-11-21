@@ -35,7 +35,7 @@ public interface RdfProperty {
      * @param obj
      * @param outputGraph
      */
-    void writePropertyValue(Object obj, Node subject, Graph outputGraph);
+    void writePropertyValue(Graph out, Object obj, Node subject);
 
     /**
      * Read the property value from a given RDF graph

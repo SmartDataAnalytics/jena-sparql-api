@@ -4,10 +4,8 @@ import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.concepts.RelationUtils;
 
 import com.hp.hpl.jena.graph.Graph;
-import com.hp.hpl.jena.graph.GraphUtil;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import com.hp.hpl.jena.sparql.core.Quad;
 
 public class RdfPropertyImpl
@@ -61,20 +59,19 @@ public class RdfPropertyImpl
 
 
     @Override
-    public void writePropertyValue(Object obj, Node subject, Graph outputGraph) {
+    public void writePropertyValue(Graph out, Object obj, Node subject) {
         Node o = targetRdfType.getRootNode(obj);
 
         Triple tmp = RelationUtils.extractTriple(relation);
         Node p = tmp.getPredicate();
 
+        //Quad t = new Quad(Quad.defaultGraphIRI, subject, p, o);
         Triple t = new Triple(subject, p, o);
 
-        if(!outputGraph.contains(t)) {
-            outputGraph.add(t);
+        if(!out.contains(t)) {
+            out.add(t);
 
-            DatasetGraph dg = targetRdfType.createDatasetGraph(obj, Quad.defaultGraphIRI);
-            Graph g = dg.getDefaultGraph();
-            GraphUtil.addInto(outputGraph, g);
+            targetRdfType.writeGraph(out, obj);
         }
     }
 

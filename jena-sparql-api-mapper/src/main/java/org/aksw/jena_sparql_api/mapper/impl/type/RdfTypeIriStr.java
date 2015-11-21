@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.mapper.impl.type;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 
+import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
@@ -48,14 +49,15 @@ public class RdfTypeIriStr
     public void setValues(Object targetObj, DatasetGraph datasetGraph) {
     }
 
-    @Override
-    public DatasetGraph createDatasetGraph(Object obj, Node g) {
-        return null;
-    }
 
     @Override
     public boolean isSimpleType() {
-        return true;
+        // TODO Auto-generated method stub
+        return false;
     }
 
+
+    @Override
+    public void writeGraph(Graph out, Object obj) {
+    }
 }

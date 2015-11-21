@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.mapper.model;
 
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 
+import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
 
@@ -91,5 +92,6 @@ public interface RdfType
 
     // These two methods only make sense on classes; but not on primitive types ; maybe move down in the type hierarchy.
     void setValues(Object targetObj, DatasetGraph datasetGraph); //, Node g, Node s);
-    DatasetGraph createDatasetGraph(Object obj, Node g);
+    //DatasetGraph createDatasetGraph(Object obj, Node g);
+    void writeGraph(Graph out, Object obj);
 }

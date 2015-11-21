@@ -31,6 +31,7 @@ import org.aksw.jena_sparql_api.mapper.proxy.MethodInterceptorRdf;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
 import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
 
+import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.sparql.core.DatasetDescription;
@@ -139,7 +140,9 @@ public class EntityManagerJena
         }
         Node g = NodeFactory.createURI(gStr);
 
-        DatasetGraph newState = rdfClass.createDatasetGraph(entity, g);
+        DatasetGraph newState = DatasetGraphFactory.createMem();
+        Graph out = newState.getGraph(g);
+        rdfClass.writeGraph(out, entity);
 
         System.out.println("oldState");
         DatasetGraphUtils.write(System.out, oldState);

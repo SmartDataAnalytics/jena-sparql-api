@@ -6,6 +6,7 @@ import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 
+import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
 
@@ -42,12 +43,6 @@ public class RdfTypeSeq
     }
 
     @Override
-    public DatasetGraph createDatasetGraph(Object obj, Node g) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
     public Class<?> getTargetClass() {
         // TODO Auto-generated method stub
         return null;
@@ -70,4 +65,11 @@ public class RdfTypeSeq
         // TODO Auto-generated method stub
         return false;
     }
+
+    @Override
+    public void writeGraph(Graph out, Object obj) {
+        // TODO Auto-generated method stub
+
+    }
+
 }
