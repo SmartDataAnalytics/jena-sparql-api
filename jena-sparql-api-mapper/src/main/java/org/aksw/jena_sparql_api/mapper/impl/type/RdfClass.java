@@ -266,7 +266,7 @@ public class RdfClass
 
                 System.out.println("Value of " + propertyName + " = " + propertyValue);
 
-                pd.writePropertyValue(out, obj, s);
+                pd.writePropertyValue(out, propertyValue, s);
 
                 if(false) {
                     Relation relation = pd.getRelation();

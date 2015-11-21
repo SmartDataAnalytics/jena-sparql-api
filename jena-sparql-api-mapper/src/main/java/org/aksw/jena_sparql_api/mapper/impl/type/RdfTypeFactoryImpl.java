@@ -314,7 +314,7 @@ public class RdfTypeFactoryImpl
               }
             }
         } else {
-            Assert.isTrue(clazz.equals(String.class));
+            Assert.isTrue(String.class.isAssignableFrom(propertyType));
             targetType = new RdfTypeIriStr(this);
         }
 
