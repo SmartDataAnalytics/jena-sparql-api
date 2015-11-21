@@ -12,7 +12,6 @@ import javax.persistence.FlushModeType;
 import javax.persistence.LockModeType;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
-import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.metamodel.Metamodel;
 
@@ -25,9 +24,9 @@ import org.aksw.jena_sparql_api.core.utils.UpdateExecutionUtils;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
+import org.aksw.jena_sparql_api.mapper.impl.type.RdfClass;
+import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
 import org.aksw.jena_sparql_api.mapper.jpa.criteria.CriteriaBuilderJena;
-import org.aksw.jena_sparql_api.mapper.model.RdfClass;
-import org.aksw.jena_sparql_api.mapper.model.RdfClassFactory;
 import org.aksw.jena_sparql_api.mapper.proxy.MethodInterceptorRdf;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
 import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
@@ -45,7 +44,7 @@ public class EntityManagerJena
 {
     protected Prologue prologue;
 
-    protected RdfClassFactory rdfClassFactory;
+    protected RdfTypeFactoryImpl rdfClassFactory;
 
     /**
      * The languagePreferences acts as a default method to priorize and filter items in a set of (literal)
@@ -61,7 +60,7 @@ public class EntityManagerJena
     protected SparqlService sparqlService;
 
 
-    public EntityManagerJena(RdfClassFactory rdfClassFactory,
+    public EntityManagerJena(RdfTypeFactoryImpl rdfClassFactory,
             List<String> readLangs, SparqlService sparqlService) {
         super();
         //this.prologue = prologue;
@@ -71,7 +70,7 @@ public class EntityManagerJena
     }
 
 
-    public RdfClassFactory getRdfClassFactory() {
+    public RdfTypeFactoryImpl getRdfClassFactory() {
         return rdfClassFactory;
     }
 
@@ -79,7 +78,7 @@ public class EntityManagerJena
     public <T> T find(Class<T> clazz, Object primaryKey) {
 
         //RdfClassFactory rdfClassFactory = RdfClassFactory.createDefault(prologue);
-        RdfClass rdfClass = rdfClassFactory.create(clazz);
+        RdfClass rdfClass = (RdfClass)rdfClassFactory.forJavaType(clazz);
 
         MappedConcept<DatasetGraph> shape = rdfClass.getMappedQuery();
 
@@ -103,7 +102,8 @@ public class EntityManagerJena
         //System.out.println(dg);
 
 
-        Object proxy = rdfClass.createProxy(dg, node);
+        //Object proxy = rdfClass.createProxy(dg, node);
+        Object proxy = rdfClass.createJavaObject(node);
 
         rdfClass.setValues(proxy, dg);
 
@@ -129,7 +129,7 @@ public class EntityManagerJena
 
         Class<?> clazz = entity.getClass();
         //RdfClass rdfClass = RdfClassFactory.createDefault(prologue).create(clazz);
-        RdfClass rdfClass = rdfClassFactory.create(clazz);
+        RdfClass rdfClass = (RdfClass)rdfClassFactory.forJavaType(clazz);
 
 
         DatasetDescription datasetDescription = sparqlService.getDatasetDescription();

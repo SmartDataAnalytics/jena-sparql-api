@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.mapper.model;
 
+import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
 import org.aksw.jena_sparql_api.utils.NodeUtils;
 
 import com.google.common.base.Function;
@@ -17,9 +18,9 @@ public class F_ObjectToNode
     implements Function<Object, Node>
 {
     protected TypeMapper typeMapper;
-    protected RdfClassFactory rdfClassFactory;
+    protected RdfTypeFactoryImpl rdfClassFactory;
 
-    public F_ObjectToNode(RdfClassFactory rdfClassFactory, TypeMapper typeMapper) {
+    public F_ObjectToNode(RdfTypeFactoryImpl rdfClassFactory, TypeMapper typeMapper) {
         this.rdfClassFactory = rdfClassFactory;
         this.typeMapper = typeMapper;
     }
@@ -37,8 +38,8 @@ public class F_ObjectToNode
             // Use jena's type mapper
             result = NodeUtils.createTypedLiteral(typeMapper, o);
         } else {
-            RdfClass rdfClass = rdfClassFactory.getOrAllocate(clazz);
-            result = rdfClass.getSubject(o);
+            RdfType rdfType = rdfClassFactory.forJavaType(clazz);
+            result = rdfType.getRootNode(o);
         }
 
 

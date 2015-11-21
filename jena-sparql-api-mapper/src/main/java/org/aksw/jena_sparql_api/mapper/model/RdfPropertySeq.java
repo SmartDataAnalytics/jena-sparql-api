@@ -10,6 +10,7 @@ import java.util.NavigableMap;
 import java.util.TreeMap;
 
 import org.aksw.jena_sparql_api.concepts.PropertyRelation;
+import org.aksw.jena_sparql_api.mapper.impl.type.RdfClass;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

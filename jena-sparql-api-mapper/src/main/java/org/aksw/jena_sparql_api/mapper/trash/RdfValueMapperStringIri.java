@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.mapper.model;
+package org.aksw.jena_sparql_api.mapper.trash;
 
 import java.util.List;
 

@@ -1,22 +1,24 @@
-package org.aksw.jena_sparql_api.mapper.model;
+package org.aksw.jena_sparql_api.mapper.trash;
 
 import java.beans.PropertyDescriptor;
 
 import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.concepts.RelationUtils;
+import org.aksw.jena_sparql_api.mapper.impl.type.RdfClass;
+import org.aksw.jena_sparql_api.mapper.model.RdfPropertyBase;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Node;
 
-public class RdfPropertyDatatype
+public class RdfPropertyDatatypeOld
     extends RdfPropertyBase
 {
     protected Node predicate;
     protected RdfValueMapper rdfValueMapper;
 
-    public RdfPropertyDatatype(BeanWrapper beanWrapper, PropertyDescriptor propertyDescriptor,
+    public RdfPropertyDatatypeOld(BeanWrapper beanWrapper, PropertyDescriptor propertyDescriptor,
             RdfClass targetRdfClass, Node predicate, RdfValueMapper rdfValueMapper) {
         super(beanWrapper, propertyDescriptor, targetRdfClass);
         this.predicate = predicate;
@@ -24,7 +26,7 @@ public class RdfPropertyDatatype
     }
 
     @Override
-    public RdfClass getTargetRdfClass() {
+    public RdfClass getTargetRdfType() {
         // TODO Auto-generated method stub
         return null;
     }

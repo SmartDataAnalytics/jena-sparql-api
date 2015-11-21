@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.mapper.model;
 
 import java.beans.PropertyDescriptor;
 
+import org.aksw.jena_sparql_api.mapper.impl.type.RdfClass;
 import org.springframework.beans.BeanWrapper;
 
 public abstract class RdfPropertyBase

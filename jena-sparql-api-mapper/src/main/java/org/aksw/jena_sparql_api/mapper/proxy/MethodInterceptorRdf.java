@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.mapper.proxy;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
 
-import org.aksw.jena_sparql_api.mapper.model.RdfClass;
+import org.aksw.jena_sparql_api.mapper.impl.type.RdfClass;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.beans.PropertyValue;
@@ -12,6 +12,7 @@ import org.springframework.cglib.proxy.MethodProxy;
 
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
+import com.hp.hpl.jena.sparql.core.DatasetGraphFactory;
 
 public class MethodInterceptorRdf
     implements MethodInterceptor
@@ -26,6 +27,9 @@ public class MethodInterceptorRdf
     protected Node presetSubject; // The subject URI that corresponds to the proxied object
     protected DatasetGraph datasetGraph;
 
+    public MethodInterceptorRdf(Object proxied, RdfClass rdfClass, Node subject) {
+        this(proxied, rdfClass, subject, DatasetGraphFactory.createMem());
+    }
 
     public MethodInterceptorRdf(Object proxied, RdfClass rdfClass, Node subject, DatasetGraph datasetGraph) {
         this.proxied = proxied;
@@ -59,7 +63,9 @@ public class MethodInterceptorRdf
         return datasetGraph;
     }
 
-
+    public void setDatasetGraph(DatasetGraph datasetGraph) {
+        this.datasetGraph = datasetGraph;
+    }
 
     @Override
     public Object intercept(Object object, Method method, Object[] args, MethodProxy methodProxy) throws Throwable {

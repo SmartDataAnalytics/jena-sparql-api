@@ -36,6 +36,14 @@ public interface RdfType
      * @return
      */
 
+
+    /**
+     * Get the type factory that was used to create this RdfType
+     *
+     */
+    RdfTypeFactory getTypeFactory();
+
+
     /**
      * Return the Java class corresponding to this type
      * (maybe it should be Type instead of Type)
@@ -43,7 +51,45 @@ public interface RdfType
      */
     Class<?> getTargetClass();
 
+    /**
+     * Return the root node that corresponds to the given object in regard to this RdfType.
+     * In the case of classes, this is an IRI node, whereas for literals this is
+     * either a plain or typed literal node.
+     *
+     * Note, that the following condition is expected to hold:
+     *
+     * getRootNode(createJavaObject(node)).equals(node)
+     *
+     * @param obj
+     * @return
+     */
+    Node getRootNode(Object obj);
+
+    /**
+     * Create an empty java object (i.e. no properties set) based on the given
+     * node.
+     * In the case of primitive types (e.g. String, Long, etc), the object will already carry the correct value.
+     * In the case of classes, only the ID will be set (most likely just on the returned proxy).
+     *
+     *
+     *
+     * @param node
+     * @return
+     */
+    Object createJavaObject(Node node);
+
+    /**
+     * A simple type is a type that does not need to emit any triples, i.e.
+     * a simple type can de/serialize java objects to and from Node objects.
+     *
+     * @return
+     */
+    boolean isSimpleType();
+
+
     void build(ResourceShapeBuilder rsb); // Alternative: ResourceShapeBuilder build();
+
+    // These two methods only make sense on classes; but not on primitive types ; maybe move down in the type hierarchy.
     void setValues(Object targetObj, DatasetGraph datasetGraph); //, Node g, Node s);
     DatasetGraph createDatasetGraph(Object obj, Node g);
 }

@@ -12,7 +12,7 @@ public interface RdfProperty {
      *
      * @return
      */
-    RdfClass getTargetRdfClass();
+    RdfType getTargetRdfType();
 
     /**
      * The name of the property

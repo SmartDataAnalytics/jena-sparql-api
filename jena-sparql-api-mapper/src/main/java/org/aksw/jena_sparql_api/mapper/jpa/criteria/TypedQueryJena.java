@@ -14,7 +14,7 @@ import javax.persistence.TypedQuery;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.SparqlService;
-import org.aksw.jena_sparql_api.mapper.model.RdfClass;
+import org.aksw.jena_sparql_api.mapper.impl.type.RdfClass;
 
 public class TypedQueryJena<X>
     implements TypedQuery<X>

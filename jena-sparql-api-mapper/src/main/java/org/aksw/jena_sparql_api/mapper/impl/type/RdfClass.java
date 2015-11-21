@@ -1,18 +1,18 @@
-package org.aksw.jena_sparql_api.mapper.model;
+package org.aksw.jena_sparql_api.mapper.impl.type;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
+import org.aksw.jena_sparql_api.mapper.model.RdfProperty;
+import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.aksw.jena_sparql_api.mapper.proxy.MethodInterceptorRdf;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
-import org.aksw.jena_sparql_api.utils.ListObjectsOfDatasetGraph;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.cglib.proxy.Callback;
@@ -26,8 +26,6 @@ import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.shared.PrefixMapping;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import com.hp.hpl.jena.sparql.core.DatasetGraphFactory;
@@ -39,7 +37,7 @@ import com.hp.hpl.jena.sparql.core.Quad;
  *
  */
 public class RdfClass
-    implements RdfType
+    extends RdfTypeBase
 {
     // TODO: Add type parameters
 
@@ -74,8 +72,8 @@ public class RdfClass
 
     protected boolean isPopulated;
 
-    public RdfClass(Class<?> targetClass, Function<Object, String> defaultIriFn, Prologue prologue) {
-        this(targetClass, defaultIriFn, prologue, new LinkedHashMap<String, RdfProperty>());
+    public RdfClass(RdfTypeFactory typeFactory, Class<?> targetClass, Function<Object, String> defaultIriFn, Prologue prologue) {
+        this(typeFactory, targetClass, defaultIriFn, prologue, new LinkedHashMap<String, RdfProperty>());
     }
 
     public Collection<RdfProperty> getRdfProperties() {
@@ -96,8 +94,8 @@ public class RdfClass
         return isPopulated;
     }
 
-    public RdfClass(Class<?> targetClass, Function<Object, String> defaultIriFn, Prologue prologue, Map<String, RdfProperty> propertyToMapping) {
-        super();
+    public RdfClass(RdfTypeFactory typeFactory, Class<?> targetClass, Function<Object, String> defaultIriFn, Prologue prologue, Map<String, RdfProperty> propertyToMapping) {
+        super(typeFactory);
         this.targetClass = targetClass;
         this.defaultIriFn = defaultIriFn;
         this.prologue = prologue;
@@ -150,7 +148,8 @@ public class RdfClass
      * @param o
      * @return
      */
-    public Node getSubject(Object o) {
+    @Override
+    public Node getRootNode(Object o) {
         MethodInterceptorRdf m = getMethodInterceptor(o);
         Node result = m != null ? m.getPresetSubject() : null;
 
@@ -199,7 +198,7 @@ public class RdfClass
 
         BeanWrapper bean = new BeanWrapperImpl(targetObj);
 
-        Node s = getSubject(targetObj);
+        Node s = getRootNode(targetObj);
         //TypeMapper typeMapper = TypeMapper.getInstance();
 
         for(RdfProperty pd : rdfProperties) {
@@ -255,7 +254,7 @@ public class RdfClass
 
         BeanWrapper bean = new BeanWrapperImpl(obj);
 
-        Node s = getSubject(obj);
+        Node s = getRootNode(obj);
 
         for(RdfProperty pd : rdfProperties) {
             String propertyName = pd.getName();
@@ -307,9 +306,13 @@ public class RdfClass
     /**
      * Create a proxied instance of the class based on the given graph
      *
+     * @deprecated Use createJavaObject first, and initialize values from a datasetGraph using a separate call to one of the methods of this class
+     * TODO which method?
+     *
      * @param datasetGraph
      * @return
      */
+    @Deprecated
     public Object createProxy(DatasetGraph datasetGraph, Node subject) {
 
         Object o;
@@ -325,6 +328,26 @@ public class RdfClass
         Object result = Enhancer.create(targetClass, null, interceptor);
 
         return result;
+    }
+
+    @Override
+    public Object createJavaObject(Node subject) {
+        Object o;
+        try {
+            o = targetClass.newInstance();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        MethodInterceptorRdf interceptor = new MethodInterceptorRdf(o, this, subject);
+        Object result = Enhancer.create(targetClass, null, interceptor);
+
+        return result;
+    }
+
+    @Override
+    public boolean isSimpleType() {
+        return false;
     }
 
 }
