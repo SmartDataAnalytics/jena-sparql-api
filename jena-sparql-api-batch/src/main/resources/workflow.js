@@ -99,7 +99,7 @@ INSERT { \
 } \
 WHERE { \
 \
-  { SELECT ?l (http:get(concat("http://nominatim.openstreetmap.org/search?format=json&email=cstadler%40informatik.uni-leipzig.de&polygon_text=1&q=", http:encode_for_qsa(?l))) AS ?tmpJ) { \
+  { SELECT ?l (http:get(concat("http://nominatim.linkedgeodata.org/?format=json&email=cstadler%40informatik.uni-leipzig.de&polygon_text=1&q=", http:encode_for_qsa(?l))) AS ?tmpJ) { \
     { SELECT DISTINCT ?l { \
       ?x tmp:hasLocation ?l \
     } } \
