@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.mapper.impl.type;
 
+import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfPopulationContext;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
@@ -20,7 +21,7 @@ public abstract class RdfTypePrimitive
     }
 
     @Override
-    public void writeGraph(Graph out, Object obj) {
+    public void emitTriples(RdfEmitterContext emitterContext, Graph out, Object obj) {
     }
 
 	@Override
@@ -31,6 +32,6 @@ public abstract class RdfTypePrimitive
 
 
 	@Override
-	public void setValues(RdfPopulationContext populationContext, Object targetObj, DatasetGraph datasetGraph) {
+	public void populateBean(RdfPopulationContext populationContext, Object targetObj, DatasetGraph datasetGraph) {
 	}
 }

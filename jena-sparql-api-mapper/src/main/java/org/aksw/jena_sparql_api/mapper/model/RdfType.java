@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.mapper.model;
 
+import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfPopulationContext;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 
@@ -97,7 +98,7 @@ public interface RdfType
     void exposeShape(ResourceShapeBuilder rsb); // Alternative: ResourceShapeBuilder build();
 
     // These two methods only make sense on classes; but not on primitive types ; maybe move down in the type hierarchy.
-    void setValues(RdfPopulationContext populationContext, Object targetObj, DatasetGraph datasetGraph); //, Node g, Node s);
+    void populateBean(RdfPopulationContext populationContext, Object bean, DatasetGraph datasetGraph); //, Node g, Node s);
     //DatasetGraph createDatasetGraph(Object obj, Node g);
-    void writeGraph(Graph out, Object obj);
+    void emitTriples(RdfEmitterContext emitterContext, Graph out, Object obj);
 }

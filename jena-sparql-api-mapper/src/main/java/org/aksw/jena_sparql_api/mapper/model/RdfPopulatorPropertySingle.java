@@ -22,7 +22,11 @@ public class RdfPopulatorPropertySingle
 
     @Override
     public void emitTriples(Graph out, Object obj, Node subject) {
-        Node o = targetRdfType.getRootNode(obj);
+    	BeanWrapper beanWrapper = new BeanWrapperImpl(obj);
+    	Object value = beanWrapper.getPropertyValue(propertyName);
+
+
+        Node o = targetRdfType.getRootNode(value);
 
 //        Triple tmp = RelationUtils.extractTriple(relation);
 //        Node p = tmp.getPredicate();
@@ -31,6 +35,10 @@ public class RdfPopulatorPropertySingle
         Triple t = new Triple(subject, predicate, o);
         out.add(t);
 
+
+        //RdfPopulationContext emitterContext;
+        //emitterContext.g
+        //emitterContext.$(value, obj, propertyName);
 //        if(!out.contains(t)) {
 //
 //            targetRdfType.writeGraph(out, obj);

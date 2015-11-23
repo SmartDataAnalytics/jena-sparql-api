@@ -1,10 +1,13 @@
 package org.aksw.jena_sparql_api.mapper.impl.type;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfPopulationContext;
 import org.aksw.jena_sparql_api.mapper.model.RdfPopulator;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
@@ -74,7 +77,7 @@ public class RdfClass
      * Each property has a corresponding RdfType
      *
      */
-    protected List<RdfPopulator> populators;
+    protected List<RdfPopulator> populators = new ArrayList<RdfPopulator>();
 
     /**
      * PropertyDescriptors map the Java property types to RdfType instances.
@@ -82,7 +85,7 @@ public class RdfClass
      * RdfType and value in regard to a populationContext.
      *
      */
-    protected Map<String, RdfPropertyDescriptor> propertyDescriptors;
+    protected Map<String, RdfPropertyDescriptor> propertyDescriptors = new HashMap<String, RdfPropertyDescriptor>();
 
 
 
@@ -247,7 +250,7 @@ public class RdfClass
      * @param datasetGraph
      */
     @Override
-    public void setValues(RdfPopulationContext populationContext, Object bean, DatasetGraph datasetGraph) {
+    public void populateBean(RdfPopulationContext populationContext, Object bean, DatasetGraph datasetGraph) {
         //PrefixMapping prefixMapping = prologue.getPrefixMapping();
 
         DatasetGraph result = DatasetGraphFactory.createMem();
@@ -304,7 +307,7 @@ public class RdfClass
      * @return
      */
     @Override
-    public void writeGraph(Graph out, Object obj) {
+    public void emitTriples(RdfEmitterContext emitterContext, Graph out, Object obj) {
         //PrefixMapping prefixMapping = prologue.getPrefixMapping();
 
         //DatasetGraph result = DatasetGraphFactory.createMem();
@@ -363,7 +366,17 @@ public class RdfClass
 //            }
         }
 
-        //return result;
+        /**
+         * Notify the emitter context loose ends
+         *
+         */
+        BeanWrapper beanWrapper = new BeanWrapperImpl(obj);
+        for(RdfPropertyDescriptor pd : propertyDescriptors.values()) {
+        	String propertyName = pd.getName();
+
+        	Object propertyValue = beanWrapper.getPropertyValue(propertyName);
+        	emitterContext.add(propertyValue, obj, propertyName);
+        }
     }
 
 

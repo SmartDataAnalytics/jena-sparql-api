@@ -32,7 +32,7 @@ public class RdfTypeLiteralTyped
     }
 
     @Override
-    public void setValues(RdfPopulationContext populationContext, Object targetObj, DatasetGraph datasetGraph) {
+    public void populateBean(RdfPopulationContext populationContext, Object targetObj, DatasetGraph datasetGraph) {
         // TODO Auto-generated method stub
 
     }

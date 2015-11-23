@@ -15,12 +15,17 @@ import org.aksw.jena_sparql_api.lookup.ListService;
 import org.aksw.jena_sparql_api.lookup.ListServiceUtils;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
+import org.aksw.jena_sparql_api.mapper.context.Frontier;
+import org.aksw.jena_sparql_api.mapper.context.FrontierImpl;
+import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
+import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContextFrontier;
 import org.aksw.jena_sparql_api.mapper.context.RdfPopulationContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfPopulationContextImpl;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfClass;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfPropertyDescriptor;
 import org.aksw.jena_sparql_api.mapper.model.RdfPopulator;
 import org.aksw.jena_sparql_api.mapper.model.RdfPopulatorProperty;
+import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.aksw.jena_sparql_api.mapper.proxy.MethodInterceptorRdf;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
@@ -182,8 +187,9 @@ public class RdfMapperEngineImpl
 	    Node g = NodeFactory.createURI(gStr);
 
 	    DatasetGraph newState = DatasetGraphFactory.createMem();
-	    Graph out = newState.getGraph(g);
-	    rdfClass.writeGraph(out, entity);
+	    Graph outGraph = newState.getGraph(g);
+	    //rdfClass.emitTriples(out, entity);
+	    emitTriples(outGraph, entity);
 
 	    System.out.println("oldState");
 	    DatasetGraphUtils.write(System.out, oldState);
@@ -206,4 +212,22 @@ public class RdfMapperEngineImpl
 	}
 
 
+	@Override
+	public void emitTriples(Graph outGraph, Object entity) {
+		Frontier<Object> frontier = FrontierImpl.createIdentityFrontier();
+		RdfEmitterContext emitterContext = new RdfEmitterContextFrontier(frontier);
+
+		frontier.add(entity);
+
+		while(!frontier.isEmpty()) {
+			Object current = frontier.next();
+
+			Class<?> clazz = current.getClass();
+			RdfType rdfType = typeFactory.forJavaType(clazz);
+
+			// TODO We now need to know which additional
+			// (property) values also need to be emitted
+			rdfType.emitTriples(emitterContext, outGraph, entity);
+		}
+	}
 }
