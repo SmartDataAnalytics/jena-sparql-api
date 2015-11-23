@@ -31,6 +31,16 @@ public interface RdfPopulationContext
 	//RdfTypeFactory getTypeFactory();
 
 	/**
+	 * Return an RDF node for this entity
+	 *
+	 * @param entity
+	 * @return
+	 */
+	Node getRootNode(Object entity);
+	void setRootNode(Object entity, Node node);
+
+
+	/**
 	 * Return either an existing Java object for the given node under a given rdfType,
 	 * or return a fresh, unpopulated Java object for that given rdfType
 	 *
