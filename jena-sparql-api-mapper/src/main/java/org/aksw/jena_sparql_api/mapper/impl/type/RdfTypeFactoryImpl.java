@@ -3,6 +3,8 @@ package org.aksw.jena_sparql_api.mapper.impl.type;
 import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -11,14 +13,13 @@ import java.util.Map;
 import java.util.Set;
 
 import org.aksw.commons.util.strings.StringUtils;
-import org.aksw.jena_sparql_api.concepts.Relation;
-import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.aksw.jena_sparql_api.mapper.annotation.DefaultIri;
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
 import org.aksw.jena_sparql_api.mapper.annotation.IriType;
+import org.aksw.jena_sparql_api.mapper.annotation.MultiValued;
 import org.aksw.jena_sparql_api.mapper.model.F_GetValue;
-import org.aksw.jena_sparql_api.mapper.model.RdfProperty;
-import org.aksw.jena_sparql_api.mapper.model.RdfPropertyImpl;
+import org.aksw.jena_sparql_api.mapper.model.RdfPopulatorProperty;
+import org.aksw.jena_sparql_api.mapper.model.RdfPopulatorPropertySingle;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.aksw.jena_sparql_api.stmt.SparqlRelationParser;
@@ -183,7 +184,7 @@ public class RdfTypeFactoryImpl
                     evalContext);
         }
 
-        RdfClass result = new RdfClass(this, clazz, defaultIriFn, prologue);
+        RdfClass result = new RdfClass(this, clazz, defaultIriFn);
 
         return result;
     }
@@ -223,9 +224,9 @@ public class RdfTypeFactoryImpl
 
     private void populateProperties(RdfClass rdfClass, Collection<RdfClass> open) {
         if(!rdfClass.isPopulated()) {
-            Map<String, RdfProperty> rdfProperties = new LinkedHashMap<String, RdfProperty>();
+            //Map<String, RdfPopulatorProperty> rdfProperties = new LinkedHashMap<String, RdfPopulatorProperty>();
 
-            Class<?> clazz = rdfClass.getTargetClass();
+            Class<?> clazz = rdfClass.getBeanClass();
 
 
             BeanWrapper beanInfo = new BeanWrapperImpl(clazz);
@@ -233,22 +234,26 @@ public class RdfTypeFactoryImpl
 
             PropertyDescriptor[] pds = beanInfo.getPropertyDescriptors();
             for(PropertyDescriptor pd : pds) {
-                String propertyName = pd.getName();
-                RdfProperty rdfProperty = processProperty(beanInfo, pd, open);
-
-                if(rdfProperty != null) {
-                    rdfProperties.put(propertyName, rdfProperty);
-                }
+                //String propertyName = pd.getName();
+            	processProperty(rdfClass, beanInfo, pd, open);
+//                RdfPopulatorProperty rdfPopulator = processProperty(rdfClass, beanInfo, pd, open);
+//
+//                if(rdfPopulator != null) {
+//                	rdfClass.addPopulator(rdfPopulator);
+//                    //rdfProperties.put(propertyName, rdfProperty);
+//                }
 
             }
 
-            rdfClass.propertyToMapping = rdfProperties;
+            //rdfClass.propertyToMapping = rdfProperties;
         }
+        rdfClass.setPopulated(true);
     }
 
 
-    protected RdfProperty processProperty(BeanWrapper beanInfo, PropertyDescriptor pd, Collection<RdfClass> open) {
-        RdfProperty result = null;
+    //RdfPopulatorProperty
+    protected void processProperty(RdfClass rdfClass, BeanWrapper beanInfo, PropertyDescriptor pd, Collection<RdfClass> open) {
+        RdfPopulatorProperty result = null;
 
         //processProperty(beanInfo, pd, predicate, targetRdfType, open);
         Class<?> clazz = beanInfo.getWrappedClass();
@@ -272,7 +277,7 @@ public class RdfTypeFactoryImpl
 
             Node predicate = NodeFactory.createURI(iriStr);
 
-            result = processProperty(beanInfo, pd, predicate, open);
+            processProperty(rdfClass, beanInfo, pd, predicate, open);
 
 //            result = isClass
 //                ? processDatatypeProperty(beanInfo, pd, predicate, dtype)
@@ -284,18 +289,44 @@ public class RdfTypeFactoryImpl
         }
 
 
+        //return result;
+    }
+
+    public static Class<?> extractItemType(Type genericType) {
+    	Class<?> result = null;
+        if(genericType instanceof ParameterizedType) {
+        	ParameterizedType pt = (ParameterizedType)genericType;
+        	java.lang.reflect.Type[] types = pt.getActualTypeArguments();
+        	if(types.length == 1) {
+        		result = (Class<?>)types[0];
+        	}
+
+        }
+
         return result;
     }
 
-
-    protected RdfProperty processProperty(BeanWrapper beanInfo, PropertyDescriptor pd, Node predicate, Collection<RdfClass> open) {
-        PrefixMapping prefixMapping = prologue.getPrefixMapping();
-
+    protected void processProperty(RdfClass rdfClass, BeanWrapper beanInfo, PropertyDescriptor pd, Node predicate, Collection<RdfClass> open) {
         Class<?> clazz = beanInfo.getWrappedClass();
 
         String propertyName = pd.getName();
 
         Class<?> propertyType = pd.getPropertyType();
+
+        boolean isCollectionProperty = Collection.class.isAssignableFrom(propertyType);
+        boolean isMultiValued = getAnnotation(clazz, pd, MultiValued.class) != null;
+
+        if(isMultiValued && !isCollectionProperty) {
+        	throw new RuntimeException("Invalid annotation: " + beanInfo.getWrappedClass() + "." + pd.getName() + ": " + " is declared MultiValued however is not a Collection");
+        }
+
+        Class<?> itemType = null;
+        if(isCollectionProperty) {
+        	Type paramType = pd.getWriteMethod().getGenericParameterTypes()[0];
+        	itemType = extractItemType(paramType);
+        }
+
+
         RDFDatatype dtype = typeMapper.getTypeByClass(propertyType);
         boolean isLiteral = dtype != null;
 
@@ -318,11 +349,16 @@ public class RdfTypeFactoryImpl
             targetType = new RdfTypeIriStr(this);
         }
 
-        Relation relation = RelationUtils.createRelation(predicate.getURI(), false, prefixMapping);
+        //Relation relation = RelationUtils.createRelation(predicate.getURI(), false, prefixMapping);
 
         //RdfProperty result = new RdfPropertyDatatypeOld(beanInfo, pd, null, predicate, rdfValueMapper);
-        RdfProperty result = new RdfPropertyImpl(propertyName, relation, targetType);
-        return result;
+        RdfPropertyDescriptor descriptor = new RdfPropertyDescriptor(propertyName, targetType, "");
+        RdfPopulatorProperty populator = new RdfPopulatorPropertySingle(propertyName, predicate, targetType);
+
+        rdfClass.addPropertyDescriptor(descriptor);
+        rdfClass.addPopulator(populator);
+
+        //return result;
 
     }
 //

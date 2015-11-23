@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.mapper.impl.type;
 
+import org.aksw.jena_sparql_api.mapper.context.RdfPopulationContext;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 
@@ -14,7 +15,7 @@ import com.hp.hpl.jena.sparql.core.DatasetGraph;
  *
  */
 public class RdfTypeIriStr
-    extends RdfTypeBase
+    extends RdfTypePrimitive
 {
     public RdfTypeIriStr(RdfTypeFactory typeFactory) {
         super(typeFactory);
@@ -23,7 +24,7 @@ public class RdfTypeIriStr
 
 
     @Override
-    public Class<?> getTargetClass() {
+    public Class<?> getBeanClass() {
         return String.class;
     }
 
@@ -40,24 +41,4 @@ public class RdfTypeIriStr
         return result;
     }
 
-    @Override
-    public void build(ResourceShapeBuilder rsb) {
-        // Nothing to do as we do not require any sub properties
-    }
-
-    @Override
-    public void setValues(Object targetObj, DatasetGraph datasetGraph) {
-    }
-
-
-    @Override
-    public boolean isSimpleType() {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-
-    @Override
-    public void writeGraph(Graph out, Object obj) {
-    }
 }

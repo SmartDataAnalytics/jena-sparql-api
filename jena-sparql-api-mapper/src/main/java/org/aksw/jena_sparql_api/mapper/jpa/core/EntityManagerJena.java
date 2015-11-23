@@ -1,9 +1,8 @@
-package org.aksw.jena_sparql_api.mapper.jpa;
+package org.aksw.jena_sparql_api.mapper.jpa.core;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -15,37 +14,20 @@ import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.metamodel.Metamodel;
 
-import org.aksw.commons.collections.diff.Diff;
-import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
-import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
-import org.aksw.jena_sparql_api.core.utils.UpdateDiffUtils;
-import org.aksw.jena_sparql_api.core.utils.UpdateExecutionUtils;
 import org.aksw.jena_sparql_api.lookup.LookupService;
-import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
-import org.aksw.jena_sparql_api.mapper.MappedConcept;
-import org.aksw.jena_sparql_api.mapper.impl.type.RdfClass;
-import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
+import org.aksw.jena_sparql_api.mapper.impl.engine.RdfMapperEngine;
 import org.aksw.jena_sparql_api.mapper.jpa.criteria.CriteriaBuilderJena;
-import org.aksw.jena_sparql_api.mapper.proxy.MethodInterceptorRdf;
-import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
-import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
+import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 
-import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.NodeFactory;
-import com.hp.hpl.jena.sparql.core.DatasetDescription;
-import com.hp.hpl.jena.sparql.core.DatasetGraph;
-import com.hp.hpl.jena.sparql.core.DatasetGraphFactory;
-import com.hp.hpl.jena.sparql.core.Prologue;
-import com.hp.hpl.jena.sparql.core.Quad;
+
 
 public class EntityManagerJena
     implements EntityManager
 {
-    protected Prologue prologue;
-
-    protected RdfTypeFactoryImpl rdfClassFactory;
+	protected RdfMapperEngine engine;
 
     /**
      * The languagePreferences acts as a default method to priorize and filter items in a set of (literal)
@@ -61,30 +43,21 @@ public class EntityManagerJena
     protected SparqlService sparqlService;
 
 
-    public EntityManagerJena(RdfTypeFactoryImpl rdfClassFactory,
-            List<String> readLangs, SparqlService sparqlService) {
+    public EntityManagerJena(RdfMapperEngine engine) {
         super();
-        //this.prologue = prologue;
-        this.rdfClassFactory = rdfClassFactory;
-        this.readLangs = readLangs;
-        this.sparqlService = sparqlService;
+        this.engine = engine;
     }
 
-
-    public RdfTypeFactoryImpl getRdfClassFactory() {
-        return rdfClassFactory;
+    public RdfTypeFactory getRdfTypeFactory() {
+    	RdfTypeFactory result = engine.getRdfTypeFactory();
+    	return result;
     }
+
 
     @Override
     public <T> T find(Class<T> clazz, Object primaryKey) {
 
-        //RdfClassFactory rdfClassFactory = RdfClassFactory.createDefault(prologue);
-        RdfClass rdfClass = (RdfClass)rdfClassFactory.forJavaType(clazz);
-
-        MappedConcept<DatasetGraph> shape = rdfClass.getMappedQuery();
-
-        QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
-        LookupService<Node, DatasetGraph> ls = LookupServiceUtils.createLookupService(qef, shape);
+    	LookupService<Node, T> ls = engine.getLookupService(clazz);
 
         Node node;
         if(primaryKey instanceof String) {
@@ -95,22 +68,9 @@ public class EntityManagerJena
             throw new RuntimeException("Invalid primary key type: " + primaryKey);
         }
 
-        Map<Node, DatasetGraph> nodeToGraph = ls.apply(Collections.singleton(node));
-        DatasetGraph dg = nodeToGraph.get(node);
-        if(dg == null) {
-            dg = DatasetGraphFactory.createMem();
-        }
-        //System.out.println(dg);
+        Map<Node, T> nodeToBean = ls.apply(Collections.singleton(node));
+        T result = nodeToBean.get(node);
 
-
-        //Object proxy = rdfClass.createProxy(dg, node);
-        Object proxy = rdfClass.createJavaObject(node);
-
-        rdfClass.setValues(proxy, dg);
-
-
-        T result = (T)proxy;
-        //List<T> result = Collections.<T>singletonList(item);
         return result;
     }
 
@@ -121,43 +81,8 @@ public class EntityManagerJena
 
     @Override
     public <T> T merge(T entity) {
-        MethodInterceptorRdf interceptor = RdfClass.getMethodInterceptor(entity);
-
-        DatasetGraph oldState = interceptor == null
-                ? DatasetGraphFactory.createMem()
-                : interceptor.getDatasetGraph()
-                ;
-
-        Class<?> clazz = entity.getClass();
-        //RdfClass rdfClass = RdfClassFactory.createDefault(prologue).create(clazz);
-        RdfClass rdfClass = (RdfClass)rdfClassFactory.forJavaType(clazz);
-
-
-        DatasetDescription datasetDescription = sparqlService.getDatasetDescription();
-        String gStr = DatasetDescriptionUtils.getSingleDefaultGraphUri(datasetDescription);
-        if(gStr == null) {
-            throw new RuntimeException("No target graph specified");
-        }
-        Node g = NodeFactory.createURI(gStr);
-
-        DatasetGraph newState = DatasetGraphFactory.createMem();
-        Graph out = newState.getGraph(g);
-        rdfClass.writeGraph(out, entity);
-
-        System.out.println("oldState");
-        DatasetGraphUtils.write(System.out, oldState);
-
-        System.out.println("newState");
-        DatasetGraphUtils.write(System.out, newState);
-
-        Diff<Set<Quad>> diff = UpdateDiffUtils.computeDelta(newState, oldState);
-        System.out.println("diff: " + diff);
-        UpdateExecutionFactory uef = sparqlService.getUpdateExecutionFactory();
-        UpdateExecutionUtils.executeUpdate(uef, diff);
-
-        return entity;
-
-//        UpdateExecutionUtils.executeUpdateDelta(uef, newState, oldState);
+    	T result = engine.merge(entity);
+    	return result;
     }
 
 

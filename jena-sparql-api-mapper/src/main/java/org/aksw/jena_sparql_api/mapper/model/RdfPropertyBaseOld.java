@@ -5,14 +5,14 @@ import java.beans.PropertyDescriptor;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfClass;
 import org.springframework.beans.BeanWrapper;
 
-public abstract class RdfPropertyBase
-    implements RdfProperty
+public abstract class RdfPropertyBaseOld
+    implements RdfPopulatorProperty
 {
     protected BeanWrapper beanWrapper;
     protected PropertyDescriptor propertyDescriptor;
     protected RdfClass targetRdfClass;
 
-    public RdfPropertyBase(BeanWrapper beanWrapper, PropertyDescriptor propertyDescriptor, RdfClass targetRdfClass) {
+    public RdfPropertyBaseOld(BeanWrapper beanWrapper, PropertyDescriptor propertyDescriptor, RdfClass targetRdfClass) {
         super();
         this.beanWrapper = beanWrapper;
         this.propertyDescriptor = propertyDescriptor;
@@ -20,7 +20,7 @@ public abstract class RdfPropertyBase
     }
 
     @Override
-    public String getName() {
+    public String getPropertyName() {
         String result = propertyDescriptor.getName();
         return result;
     }

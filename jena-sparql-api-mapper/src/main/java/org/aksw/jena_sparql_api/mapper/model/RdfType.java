@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.mapper.model;
 
+import org.aksw.jena_sparql_api.mapper.context.RdfPopulationContext;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 
 import com.hp.hpl.jena.graph.Graph;
@@ -50,7 +51,7 @@ public interface RdfType
      * (maybe it should be Type instead of Type)
      * @return
      */
-    Class<?> getTargetClass();
+    Class<?> getBeanClass();
 
     /**
      * Return the root node that corresponds to the given object in regard to this RdfType.
@@ -70,7 +71,9 @@ public interface RdfType
      * Create an empty java object (i.e. no properties set) based on the given
      * node.
      * In the case of primitive types (e.g. String, Long, etc), the object will already carry the correct value.
-     * In the case of classes, only the ID will be set (most likely just on the returned proxy).
+     * In the case of classes,
+     *   the result may either be a Java object regardless of the node argument,
+     *   or a proxy to such java object that holds the node
      *
      *
      *
@@ -78,6 +81,9 @@ public interface RdfType
      * @return
      */
     Object createJavaObject(Node node);
+
+
+    // boolean isHydrated(Object bean)
 
     /**
      * A simple type is a type that does not need to emit any triples, i.e.
@@ -88,10 +94,10 @@ public interface RdfType
     boolean isSimpleType();
 
 
-    void build(ResourceShapeBuilder rsb); // Alternative: ResourceShapeBuilder build();
+    void exposeShape(ResourceShapeBuilder rsb); // Alternative: ResourceShapeBuilder build();
 
     // These two methods only make sense on classes; but not on primitive types ; maybe move down in the type hierarchy.
-    void setValues(Object targetObj, DatasetGraph datasetGraph); //, Node g, Node s);
+    void setValues(RdfPopulationContext populationContext, Object targetObj, DatasetGraph datasetGraph); //, Node g, Node s);
     //DatasetGraph createDatasetGraph(Object obj, Node g);
     void writeGraph(Graph out, Object obj);
 }

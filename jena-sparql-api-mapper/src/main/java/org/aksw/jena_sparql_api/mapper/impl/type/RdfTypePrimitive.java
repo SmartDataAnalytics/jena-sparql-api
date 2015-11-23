@@ -1,8 +1,11 @@
 package org.aksw.jena_sparql_api.mapper.impl.type;
 
+import org.aksw.jena_sparql_api.mapper.context.RdfPopulationContext;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
+import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 
 import com.hp.hpl.jena.graph.Graph;
+import com.hp.hpl.jena.sparql.core.DatasetGraph;
 
 public abstract class RdfTypePrimitive
     extends RdfTypeBase
@@ -19,4 +22,15 @@ public abstract class RdfTypePrimitive
     @Override
     public void writeGraph(Graph out, Object obj) {
     }
+
+	@Override
+	public void exposeShape(ResourceShapeBuilder rsb) {
+		// TODO Auto-generated method stub
+
+	}
+
+
+	@Override
+	public void setValues(RdfPopulationContext populationContext, Object targetObj, DatasetGraph datasetGraph) {
+	}
 }

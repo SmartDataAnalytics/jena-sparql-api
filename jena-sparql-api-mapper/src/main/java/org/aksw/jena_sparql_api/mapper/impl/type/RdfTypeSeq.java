@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.mapper.impl.type;
 
 import org.aksw.jena_sparql_api.concepts.PropertyRelation;
+import org.aksw.jena_sparql_api.mapper.context.RdfPopulationContext;
 import org.aksw.jena_sparql_api.mapper.model.RdfSeqUtils;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
@@ -31,19 +32,13 @@ public class RdfTypeSeq
     }
 
     @Override
-    public void build(ResourceShapeBuilder rsb) {
+    public void exposeShape(ResourceShapeBuilder rsb) {
         // TODO Auto-generated method stub
 
     }
 
     @Override
-    public void setValues(Object targetObj, DatasetGraph datasetGraph) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public Class<?> getTargetClass() {
+    public Class<?> getBeanClass() {
         // TODO Auto-generated method stub
         return null;
     }
@@ -71,5 +66,11 @@ public class RdfTypeSeq
         // TODO Auto-generated method stub
 
     }
+
+	@Override
+	public void setValues(RdfPopulationContext populationContext, Object targetObj, DatasetGraph datasetGraph) {
+		// TODO Auto-generated method stub
+
+	}
 
 }

@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.mapper.impl.type;
 
+import org.aksw.jena_sparql_api.mapper.context.RdfPopulationContext;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 
@@ -19,19 +20,19 @@ public class RdfTypeLiteralTyped
     }
 
     @Override
-    public Class<?> getTargetClass() {
+    public Class<?> getBeanClass() {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public void build(ResourceShapeBuilder rsb) {
+    public void exposeShape(ResourceShapeBuilder rsb) {
         // TODO Auto-generated method stub
 
     }
 
     @Override
-    public void setValues(Object targetObj, DatasetGraph datasetGraph) {
+    public void setValues(RdfPopulationContext populationContext, Object targetObj, DatasetGraph datasetGraph) {
         // TODO Auto-generated method stub
 
     }
