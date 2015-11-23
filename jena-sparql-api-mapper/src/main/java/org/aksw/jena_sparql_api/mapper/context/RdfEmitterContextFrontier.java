@@ -1,5 +1,8 @@
 package org.aksw.jena_sparql_api.mapper.context;
 
+import org.aksw.jena_sparql_api.util.frontier.Frontier;
+import org.aksw.jena_sparql_api.util.frontier.FrontierImpl;
+import org.aksw.jena_sparql_api.util.frontier.FrontierStatus;
 
 public class RdfEmitterContextFrontier
 	implements RdfEmitterContext
@@ -20,11 +23,11 @@ public class RdfEmitterContextFrontier
 	}
 
 	public boolean isEmitted(Object entity) {
-		boolean result = frontier.isDone(entity);
+		boolean result = FrontierStatus.DONE.equals(frontier.getStatus(entity));
 		return result;
 	}
 
 	public void setEmitted(Object entity, boolean status) {
-		frontier.makeDone(entity);
+		frontier.setStatus(entity, FrontierStatus.DONE);
 	}
 }

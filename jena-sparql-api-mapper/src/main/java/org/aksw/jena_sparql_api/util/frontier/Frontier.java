@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.mapper.context;
+package org.aksw.jena_sparql_api.util.frontier;
 
 /**
  * The set of beans that yet need population
@@ -20,6 +20,8 @@ public interface Frontier<T>
 	boolean isEmpty();
 
 
-	boolean isDone(T item);
-	void makeDone(T item);
+	FrontierStatus getStatus(Object item);
+	void setStatus(T item, FrontierStatus status);
+	//boolean isDone(T item);
+	//void makeDone(T item);
 }

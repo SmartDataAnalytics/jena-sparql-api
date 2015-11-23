@@ -1,6 +1,7 @@
-package org.aksw.jena_sparql_api.mapper.context;
+package org.aksw.jena_sparql_api.util.frontier;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 
 import org.springframework.util.Assert;
@@ -12,6 +13,10 @@ public class FrontierImpl<T>
 {
 	protected Collection<T> open;
 	protected Collection<T> done;
+
+	public FrontierImpl() {
+		this(new HashSet<T>(), new HashSet<T>());
+	}
 
 	public FrontierImpl(Collection<T> open, Collection<T> done) {
 		super();
@@ -58,14 +63,45 @@ public class FrontierImpl<T>
 	}
 
 	@Override
-	public boolean isDone(T item) {
-		boolean result = done.contains(item);
+	public FrontierStatus getStatus(Object item) {
+		FrontierStatus result;
+		boolean isDone = done.contains(item);
+		boolean isOpen = open.contains(item);
+
+		if(isDone) {
+			if(isOpen) {
+				throw new IllegalStateException();
+			} else {
+				result = FrontierStatus.DONE;
+			}
+		} else {
+			result = isOpen ? FrontierStatus.OPEN : FrontierStatus.UNKNOWN;
+		}
+
 		return result;
 	}
 
 	@Override
-	public void makeDone(T item) {
-		open.remove(item);
-		done.add(item);
+	public void setStatus(T item, FrontierStatus status) {
+		switch(status) {
+			case DONE: {
+				open.remove(item);
+				done.add(item);
+				break;
+			}
+			case OPEN: {
+				done.remove(item);
+				open.add(item);
+				break;
+			}
+			case UNKNOWN: {
+				done.remove(item);
+				open.remove(item);
+				break;
+			}
+			default: {
+				throw new IllegalStateException();
+			}
+		}
 	}
 }

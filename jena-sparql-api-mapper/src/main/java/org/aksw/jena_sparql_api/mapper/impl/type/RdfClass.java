@@ -251,49 +251,16 @@ public class RdfClass
      */
     @Override
     public void populateBean(RdfPopulationContext populationContext, Object bean, DatasetGraph datasetGraph) {
-        //PrefixMapping prefixMapping = prologue.getPrefixMapping();
-
         DatasetGraph result = DatasetGraphFactory.createMem();
 
         Graph graph = result.getDefaultGraph();
-
-        //Collection<RdfProperty> rdfProperties = propertyToMapping.values();
-
-        BeanWrapper beanWrapper = new BeanWrapperImpl(bean);
-
         Node s = getRootNode(bean);
-        //TypeMapper typeMapper = TypeMapper.getInstance();
 
+        /*
+         *  Run all of this class' populators
+         */
         for(RdfPopulator pd : populators) {
-            //String propertyName = pd.getName();
-            //Object propertyValue = bean.getPropertyValue(propertyName);
-
-
-            //pd.readPropertyValue(graph, s);
         	pd.populateBean(populationContext, bean, graph, s);
-
-//            System.out.println("Value of " + propertyName + " = " + propertyValue);
-//
-//            Relation relation = pd.getRelation();
-//            Triple t = RelationUtils.extractTriple(relation);
-//            if(t != null) {
-//                Node pRaw = t.getPredicate();
-//                if(Node.ANY.equals(pRaw)) {
-//                    throw new RuntimeException("Could not obtain a valid RDF property for bean property " + propertyName + " with value " + propertyValue);
-//                }
-//
-//                String pStr = prefixMapping.expandPrefix(pRaw.getURI());
-//                Node p = NodeFactory.createURI(pStr);
-//
-//                // Get the value of the triple
-//                List<Node> os = ListObjectsOfDatasetGraph.create(datasetGraph, Node.ANY, s, p);
-//                Node o = os.isEmpty() ? null : os.iterator().next();
-//
-//                // Convert o to java
-//                Object java = toJava(o);
-//
-//                bean.setPropertyValue(propertyName, java);
-//            }
         }
     }
 
@@ -308,67 +275,19 @@ public class RdfClass
      */
     @Override
     public void emitTriples(RdfEmitterContext emitterContext, Graph out, Object obj) {
-        //PrefixMapping prefixMapping = prologue.getPrefixMapping();
-
-        //DatasetGraph result = DatasetGraphFactory.createMem();
-
-        //Graph graph = result.getGraph(g);
-
-        //Collection<RdfProperty> rdfProperties = propertyToMapping.values();
-
-        //BeanWrapper bean = new BeanWrapperImpl(obj);
-
         Node s = getRootNode(obj);
 
-        for(RdfPopulator pd : populators) {
-        	pd.emitTriples(out, obj, s);
-//            String propertyName = pd.getName();
-//            Object propertyValue = bean.getPropertyValue(propertyName);
-//
-//            if(propertyValue != null) {
-//
-//                Class<?> propertyClass = propertyValue.getClass();
-//
-//                System.out.println("Value of " + propertyName + " = " + propertyValue);
-//
-//                pd.emitTriples(out, propertyValue, s);
-//
-//                if(false) {
-//                    Relation relation = pd.getRelation();
-//                    Triple t = RelationUtils.extractTriple(relation);
-//                    if(t != null) {
-//                        Node pRaw = t.getPredicate();
-//                        if(Node.ANY.equals(pRaw)) {
-//                            throw new RuntimeException("Could not obtain a valid RDF property for bean property " + propertyName + " with value " + propertyValue);
-//                        }
-//
-//                        String pStr = prefixMapping.expandPrefix(pRaw.getURI());
-//                        Node p = NodeFactory.createURI(pStr);
-//
-//                        TypeMapper typeMapper = TypeMapper.getInstance();
-//                        RDFDatatype datatype = typeMapper.getTypeByClass(propertyClass);
-//                        String lex = datatype.unparse(propertyValue);
-//                        Node o = NodeFactory.createLiteral(lex, datatype);
-//
-//                        //datasetDescription.getDefaultGraphURIs()
-//                        //Quad quad = new Quad(g, s, p, o);
-//                        //out.add(quad);
-//                        Triple triple = new Triple(s, p, o);
-//                        out.add(triple);
-//
-//                        // TODO Now apply lang filtering
-//
-//                        //int i = 0;
-//
-//                        //Node o = rep;
-//                    }
-//                }
-//            }
+        /*
+         * Run the emitters of all of this class' populators
+         */
+        for(RdfPopulator populator : populators) {
+        	populator.emitTriples(out, obj, s);
         }
 
-        /**
-         * Notify the emitter context loose ends
-         *
+        /*
+         * Based on the property descriptors, the RdfClass
+         * notifies the emitter context which property values need additional
+         * emitting
          */
         BeanWrapper beanWrapper = new BeanWrapperImpl(obj);
         for(RdfPropertyDescriptor pd : propertyDescriptors.values()) {

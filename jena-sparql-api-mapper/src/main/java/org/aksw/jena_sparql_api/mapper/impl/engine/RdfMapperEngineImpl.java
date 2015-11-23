@@ -1,35 +1,33 @@
 package org.aksw.jena_sparql_api.mapper.impl.engine;
 
+import java.util.Collections;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import org.aksw.commons.collections.diff.Diff;
-import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
 import org.aksw.jena_sparql_api.core.utils.UpdateDiffUtils;
 import org.aksw.jena_sparql_api.core.utils.UpdateExecutionUtils;
-import org.aksw.jena_sparql_api.lookup.ListService;
-import org.aksw.jena_sparql_api.lookup.ListServiceUtils;
 import org.aksw.jena_sparql_api.lookup.LookupService;
+import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
-import org.aksw.jena_sparql_api.mapper.context.Frontier;
-import org.aksw.jena_sparql_api.mapper.context.FrontierImpl;
+import org.aksw.jena_sparql_api.mapper.context.PopulationRequest;
 import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContextFrontier;
 import org.aksw.jena_sparql_api.mapper.context.RdfPopulationContext;
+import org.aksw.jena_sparql_api.mapper.context.RdfPopulationContextFrontier;
 import org.aksw.jena_sparql_api.mapper.context.RdfPopulationContextImpl;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfClass;
-import org.aksw.jena_sparql_api.mapper.impl.type.RdfPropertyDescriptor;
-import org.aksw.jena_sparql_api.mapper.model.RdfPopulator;
 import org.aksw.jena_sparql_api.mapper.model.RdfPopulatorProperty;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.aksw.jena_sparql_api.mapper.proxy.MethodInterceptorRdf;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
+import org.aksw.jena_sparql_api.util.frontier.Frontier;
+import org.aksw.jena_sparql_api.util.frontier.FrontierImpl;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
 import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
 
@@ -73,69 +71,51 @@ public class RdfMapperEngineImpl
     	return null;
     }
 
-    public ListService<Concept, Node, DatasetGraph> prepareListService(RdfClass rdfClass, Concept filterConcept) {
-    	Concept classConcept = rdfClass.getConcept();
-    	//Concept concept = ConceptUtils.createCombinedConcept(attrConcept, filterConcept, renameVars, attrsOptional, filterAsSubquery)
-    	//TODO Create a combined concept
-    	Concept concept = filterConcept;
+//    public ListService<Concept, Node, DatasetGraph> prepareListService(RdfClass rdfClass, Concept filterConcept) {
+//
+
+    @Override
+    public <T> T find(Class<T> clazz, Node rootNode) {
+    	RdfType rootRdfType = typeFactory.forJavaType(clazz);
+
+    	Frontier<PopulationRequest> frontier = new FrontierImpl<PopulationRequest>();
+    	RdfPopulationContext populationContext = new RdfPopulationContextFrontier(frontier);
+
+    	PopulationRequest first = new PopulationRequest(rootRdfType, rootNode);
+    	frontier.add(first);
+
+    	while(!frontier.isEmpty()) {
+    		PopulationRequest pr = frontier.next();
+
+    		RdfType rdfType = pr.getRdfType();
+    		Node node = pr.getNode();
+
+            ResourceShapeBuilder builder = new ResourceShapeBuilder(prologue);
+            rdfType.exposeShape(builder);
 
 
-        ResourceShapeBuilder builder = new ResourceShapeBuilder(prologue);
+            // Fetch the graph
+            QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
+            ResourceShape shape = builder.getResourceShape();
+            MappedConcept<DatasetGraph> mc = ResourceShape.createMappedConcept2(shape, null);
+            LookupService<Node, DatasetGraph> ls = LookupServiceUtils.createLookupService(qef, mc);
 
-        //rdfClass.build(builder);
-        for(RdfPopulator populator : rdfClass.getPopulators()) {
-        	populator.exposeShape(builder);
-        }
+            Map<Node, DatasetGraph> map = ls.apply(Collections.singleton(node));
+            //ListService<Concept, Node, Graph> ls = ListServiceUtils.createListServiceMappedConcept(qef, mc, true);
 
-        QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
-        ResourceShape shape = builder.getResourceShape();
-        //MappedConcept<DatasetGraph> mc = ResourceShape.createMappedConcept2(shape, null);
-        MappedConcept<Graph> mc = ResourceShape.createMappedConcept(shape, null);
-        ListService<Concept, Node, Graph> ls = ListServiceUtils.createListServiceMappedConcept(qef, mc, true);
-
-        //Gragh graph;
-
-        Map<Node, Graph> nodeToGraph = ls.fetchData(null, null, null);
-
-        // For each node...
-        //RdfPopulationContext populationContext;
-        RdfPopulationContextImpl context = new RdfPopulationContextImpl();
-        for(Entry<Node, Graph> entry : nodeToGraph.entrySet()) {
-        	Node subject = entry.getKey();
-        	Graph graph = entry.getValue();
-
-        	Object bean = context.objectFor(rdfClass, subject);
-
-
-        	//context
-        	//BeanState beanState = context.getBeanState(rdfClass, subject);
-
-
-        	// Run the class's populators
-            for(RdfPopulator populator : rdfClass.getPopulators()) {
-            	populator.populateBean(context, bean, graph, subject);
-            }
-
-            context.setPopulated(bean, true);
-
-            // Mark the class as populated
-            //context.setBeanState(bean, "populated", true);
-            //beanState.setPopulated(true);
-
-            // Check with property values need further population
-            for(RdfPropertyDescriptor pd : rdfClass.getPropertyDescriptors()) {
-            	if(pd.getRdfType().isSimpleType()) {
-
-            	}
-            }
-        }
+//            MappedConcept<Graph> mc = ResourceShape.createMappedConcept(shape, null);
+//            ListService<Concept, Node, Graph> ls = ListServiceUtils.createListServiceMappedConcept(qef, mc, true);
 
 
 
 
-        //rdfClass.createJavaObject(subject);
+            //Graph graph = null;
+            DatasetGraph datasetGraph = map.get(node);
 
+            Object bean = populationContext.objectFor(rdfType, node);
 
+            rdfType.populateBean(populationContext, bean, datasetGraph);
+    	}
 
 
         return null;

@@ -1,6 +1,5 @@
 package org.aksw.jena_sparql_api.mapper.jpa.core;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -15,7 +14,6 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.metamodel.Metamodel;
 
 import org.aksw.jena_sparql_api.core.SparqlService;
-import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.mapper.impl.engine.RdfMapperEngine;
 import org.aksw.jena_sparql_api.mapper.jpa.criteria.CriteriaBuilderJena;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
@@ -57,7 +55,7 @@ public class EntityManagerJena
     @Override
     public <T> T find(Class<T> clazz, Object primaryKey) {
 
-    	LookupService<Node, T> ls = engine.getLookupService(clazz);
+    	//LookupService<Node, T> ls = engine.getLookupService(clazz);
 
         Node node;
         if(primaryKey instanceof String) {
@@ -68,8 +66,9 @@ public class EntityManagerJena
             throw new RuntimeException("Invalid primary key type: " + primaryKey);
         }
 
-        Map<Node, T> nodeToBean = ls.apply(Collections.singleton(node));
-        T result = nodeToBean.get(node);
+        T result = engine.find(clazz, node);
+        //Map<Node, T> nodeToBean = ls.apply(Collections.singleton(node));
+        //T result = nodeToBean.get(node);
 
         return result;
     }
