@@ -10,7 +10,6 @@ import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.sparql.core.DatasetGraph;
 
 /**
  * A type that
@@ -68,10 +67,10 @@ public class RdfTypeSeq
 
     }
 
-	@Override
-	public void populateBean(RdfPopulationContext populationContext, Object targetObj, DatasetGraph datasetGraph) {
-		// TODO Auto-generated method stub
+    @Override
+    public void populateBean(RdfPopulationContext populationContext, Object targetObj, Graph graph) {
+        // TODO Auto-generated method stub
 
-	}
+    }
 
 }

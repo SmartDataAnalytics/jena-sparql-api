@@ -4,11 +4,11 @@ import org.aksw.jena_sparql_api.mapper.model.RdfType;
 
 import com.hp.hpl.jena.graph.Node;
 
-public class PopulationRequest {
+public class TypedNode {
 	protected RdfType rdfType;
 	protected Node node;
 
-	public PopulationRequest(RdfType rdfType, Node node) {
+	public TypedNode(RdfType rdfType, Node node) {
 		super();
 		this.rdfType = rdfType;
 		this.node = node;
@@ -39,7 +39,7 @@ public class PopulationRequest {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		PopulationRequest other = (PopulationRequest) obj;
+		TypedNode other = (TypedNode) obj;
 		if (node == null) {
 			if (other.node != null)
 				return false;

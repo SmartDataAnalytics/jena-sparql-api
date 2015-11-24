@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.mapper.model;
 import java.util.List;
 
 import org.aksw.jena_sparql_api.mapper.context.RdfPopulationContext;
+import org.aksw.jena_sparql_api.mapper.context.TypedNode;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
@@ -14,16 +15,16 @@ import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 
 public class RdfPopulatorPropertySingle
-	extends RdfPopulatorPropertyBase
+    extends RdfPopulatorPropertyBase
 {
-	public RdfPopulatorPropertySingle(String propertyName, Node predicate, RdfType targetRdfType) { // String fetchMode) {
-		super(propertyName, predicate, targetRdfType);
-	}
+    public RdfPopulatorPropertySingle(String propertyName, Node predicate, RdfType targetRdfType) { // String fetchMode) {
+        super(propertyName, predicate, targetRdfType);
+    }
 
     @Override
     public void emitTriples(Graph out, Object obj, Node subject) {
-    	BeanWrapper beanWrapper = new BeanWrapperImpl(obj);
-    	Object value = beanWrapper.getPropertyValue(propertyName);
+        BeanWrapper beanWrapper = new BeanWrapperImpl(obj);
+        Object value = beanWrapper.getPropertyValue(propertyName);
 
 
         Node o = targetRdfType.getRootNode(value);
@@ -45,32 +46,37 @@ public class RdfPopulatorPropertySingle
 //        }
     }
 
-	@Override
-	public void populateBean(RdfPopulationContext populationContext, Object bean, Graph graph, Node subject) {
+    @Override
+    public void populateBean(RdfPopulationContext populationContext, Object bean, Graph graph, Node subject) {
 //		Class<?> beanClass = bean.getClass();
 //		RdfType rdfType = populationContext.forJavaType(beanClass);
 //		RdfClass rdfClass = (RdfClass)rdfType;
 //		RdfPropertyDescriptor propertyDescriptor = rdfClass.getPropertyDescriptors(propertyName);
 //		RdfType targetRdfType = propertyDescriptor.getRdfType();
 
-		List<Node> objects = GraphUtil.listObjects(graph, subject, predicate).toList();
-		Node node = Iterables.getFirst(objects, null);
+        List<Node> objects = GraphUtil.listObjects(graph, subject, predicate).toList();
+        Node node = Iterables.getFirst(objects, null);
 
-		Object value = populationContext.objectFor(targetRdfType, node);//rdfType.createJavaObject(node);
+        TypedNode typedNode = new TypedNode(targetRdfType, node);
 
-		BeanWrapper beanWrapper = new BeanWrapperImpl(bean);
-		beanWrapper.setPropertyValue(propertyName, value);
-	}
+        Object value = node == null
+                ? null
+                : populationContext.objectFor(typedNode)
+                ;//rdfType.createJavaObject(node);
 
-	@Override
-	public void exposeShape(ResourceShapeBuilder shapeBuilder) {
-		shapeBuilder.outgoing(predicate);
+        BeanWrapper beanWrapper = new BeanWrapperImpl(bean);
+        beanWrapper.setPropertyValue(propertyName, value);
+    }
+
+    @Override
+    public void exposeShape(ResourceShapeBuilder shapeBuilder) {
+        shapeBuilder.outgoing(predicate);
 //		ResourceShapeBuilder targetShape = shapeBuilder.outgoing(predicate);
 
 //		if("eager".equals(fetchMode)) {
 //			targetRdfType.build(targetShape);
 //		}
-	}
+    }
 
 //	@Override
 //	public Object readPropertyValue(Graph graph, Node subject) {

@@ -21,67 +21,79 @@ import com.hp.hpl.jena.graph.Node;
  */
 public interface RdfPopulationContext
 {
-	/**
-	 * Return an Rdf type for a given Java class
-	 *
-	 * @param clazz
-	 * @return
-	 */
-	//RdfType forJavaType(Class<?> clazz);
-	//RdfTypeFactory getTypeFactory();
+    /**
+     * Return an Rdf type for a given Java class
+     *
+     * @param clazz
+     * @return
+     */
+    //RdfType forJavaType(Class<?> clazz);
+    //RdfTypeFactory getTypeFactory();
 
-	/**
-	 * Return an RDF node for this entity
-	 *
-	 * @param entity
-	 * @return
-	 */
-	Node getRootNode(Object entity);
-	void setRootNode(Object entity, Node node);
+    /**
+     * Return an RDF node for this entity
+     *
+     * @param entity
+     * @return
+     */
+//	Node getRootNode(Object entity);
+//	void setRootNode(Object entity, Node node);
 
 
-	/**
-	 * Return either an existing Java object for the given node under a given rdfType,
-	 * or return a fresh, unpopulated Java object for that given rdfType
-	 *
-	 * @param rdfType
-	 * @param node
-	 * @return
-	 */
-	Object objectFor(RdfType rdfType, Node node);
+    /**
+     * Return either an existing Java object for the given node under a given rdfType,
+     * or return a fresh, unpopulated Java object for that given rdfType
+     *
+     * @param rdfType
+     * @param node
+     * @return
+     */
+    Object objectFor(TypedNode typedNode);
 
-	/**
-	 * Whether the given bean is managed by this context; i.e.
-	 * whether the bean has bean created with .objectFor()
-	 *
-	 * @param bean
-	 * @return
-	 */
-	boolean isManaged(Object bean);
 
-	/**
-	 * Whether according to this context the given bean has been populated
-	 *
-	 * @param bean
-	 * @return
-	 */
-	boolean isPopulated(Object bean);
+    /**
+     * Only returns a non-null result if there already exists an entity for the typedNode
+     *
+     * @param typedNode
+     * @return
+     */
+    Object getEntity(TypedNode typedNode);
 
-	//boolean setPopulated(O)
 
-	/**
-	 * Whether according to the context the bean has been populated
-	 *
-	 * @param bean
-	 * @return
-	 */
-	//boolean isPopulated(Object bean);
+    Node getRootNode(Object entity);
 
-	/**
-	 * Notify the context that for the given object and property,
-	 *
-	 * @param obj
-	 * @param propertyName
-	 */
-	//void addLooseEnd(Object obj, String propertyName);
+    /**
+     * Whether the given bean is managed by this context; i.e.
+     * whether the bean has bean created with .objectFor()
+     *
+     * @param bean
+     * @return
+     */
+    boolean isManaged(Object entity);
+
+    /**
+     * Whether according to this context the given bean has been populated
+     *
+     * @param bean
+     * @return
+     */
+    boolean isPopulated(Object entity);
+
+    //boolean setPopulated(O)
+
+    /**
+     * Whether according to the context the bean has been populated
+     *
+     * @param bean
+     * @return
+     */
+    //boolean isPopulated(Object bean);
+
+    /**
+     * Notify the context that for the given object and property,
+     *
+     * @param obj
+     * @param propertyName
+     */
+    //void addLooseEnd(Object obj, String propertyName);
 }

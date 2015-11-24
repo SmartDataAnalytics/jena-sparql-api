@@ -1,13 +1,10 @@
 package org.aksw.jena_sparql_api.mapper.impl.type;
 
-import org.aksw.jena_sparql_api.mapper.context.RdfPopulationContext;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
-import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 
 import com.hp.hpl.jena.datatypes.RDFDatatype;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.NodeFactory;
-import com.hp.hpl.jena.sparql.core.DatasetGraph;
 
 public class RdfTypeLiteralTyped
     extends RdfTypePrimitive
@@ -21,21 +18,20 @@ public class RdfTypeLiteralTyped
 
     @Override
     public Class<?> getBeanClass() {
-        // TODO Auto-generated method stub
         return null;
     }
 
-    @Override
-    public void exposeShape(ResourceShapeBuilder rsb) {
-        // TODO Auto-generated method stub
+//    @Override
+//    public void exposeShape(ResourceShapeBuilder rsb) {
+//        // TODO Auto-generated method stub
+//
+//    }
 
-    }
-
-    @Override
-    public void populateBean(RdfPopulationContext populationContext, Object targetObj, DatasetGraph datasetGraph) {
-        // TODO Auto-generated method stub
-
-    }
+//    @Override
+//    public void populateBean(RdfPopulationContext populationContext, Object targetObj, Graph ) {
+//        // TODO Auto-generated method stub
+//
+//    }
 
     @Override
     public Node getRootNode(Object obj) {

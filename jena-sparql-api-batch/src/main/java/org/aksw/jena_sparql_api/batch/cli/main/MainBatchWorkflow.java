@@ -311,7 +311,7 @@ public class MainBatchWorkflow {
         return batchContext;
     }
 
-    public static ApplicationContext initContext(ApplicationContext baseContext) throws Exception {
+    public static ApplicationContext initContext(ApplicationContext baseContext, JsonElement json) throws Exception {
 
         GenericApplicationContext batchContext = initBatchContext(baseContext);
 
@@ -338,7 +338,6 @@ public class MainBatchWorkflow {
 
 
 
-        JsonElement json = readJsonElementFromResource("workflow.js");
 
         JsonElement jobParamsJson = readJsonElementFromResource("params.js");
         //List<JsonVisitorRewrite> jr = Arrays.<JsonVisitorRewrite>asList(
@@ -421,7 +420,9 @@ public class MainBatchWorkflow {
     }
 
     public static void mainContext(ApplicationContext baseContext) throws Exception {
-        ApplicationContext batchContext = initContext(baseContext);
+        JsonElement jobJson = readJsonElementFromResource("workflow.js");
+
+        ApplicationContext batchContext = initContext(baseContext, jobJson);
 
 //        SparqlService test = (SparqlService)batchContext.getBean("sourceFile");
 //        System.out.println("SourceFile: " + test);

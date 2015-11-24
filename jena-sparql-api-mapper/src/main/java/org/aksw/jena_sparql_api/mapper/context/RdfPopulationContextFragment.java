@@ -39,25 +39,25 @@ import com.hp.hpl.jena.graph.Node;
 public class RdfPopulationContextFragment
 //	implements RdfPopulationContext
 {
-	protected RdfPopulationContext parentContext;
-	protected RdfMapperEngineImpl engine;
+    protected RdfPopulationContext parentContext;
+    protected RdfMapperEngineImpl engine;
 
-	protected Set<Object> unpopulatedBeans = new HashSet<Object>();
+    protected Set<Object> unpopulatedBeans = new HashSet<Object>();
 
-	//@Override
-	public Object objectFor(RdfType rdfType, Node node) {
-		Object result = parentContext.objectFor(rdfType, node);
-		boolean isPopulated = true;
+    //@Override
+    public Object objectFor(TypedNode typedNode) {
+        Object result = parentContext.objectFor(typedNode);
+        boolean isPopulated = true;
 
-		if(!isPopulated) {
-			unpopulatedBeans.add(result);
-		}
+        if(!isPopulated) {
+            unpopulatedBeans.add(result);
+        }
 
-		//parentContext
+        //parentContext
 
-		// TODO Auto-generated method stub
-		return result;
-	}
+        // TODO Auto-generated method stub
+        return result;
+    }
 
 //	public void resolveAll() {
 //		Set<Object> open = new HashSet<Object>(unpopulatedBeans);
@@ -66,22 +66,22 @@ public class RdfPopulationContextFragment
 //		}
 //	}
 
-	/**
-	 * Get the bean's node. For primitive types, this is usually the corresponding
-	 * plain literal node (There could be cases where multiple triples should be generated from a primitive,
-	 * such as representing a Geometry with neo geo).
-	 * For classes, this is usually an IRI.
-	 *
-	 *
-	 * @param bean
-	 * @return
-	 */
-	public Node getRootNode(Object bean) {
-		//Node result = parent.getRootNode(bean);
-		//return result;
-		//beanToNode.
-		return null;
-	}
+    /**
+     * Get the bean's node. For primitive types, this is usually the corresponding
+     * plain literal node (There could be cases where multiple triples should be generated from a primitive,
+     * such as representing a Geometry with neo geo).
+     * For classes, this is usually an IRI.
+     *
+     *
+     * @param bean
+     * @return
+     */
+    public Node getRootNode(Object bean) {
+        //Node result = parent.getRootNode(bean);
+        //return result;
+        //beanToNode.
+        return null;
+    }
 
 //	public void resolve(Object bean) {
 //		RdfType type = null;

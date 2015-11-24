@@ -4,14 +4,18 @@ import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.sparql.core.Prologue;
 
 public interface RdfMapperEngine {
-	RdfTypeFactory getRdfTypeFactory();
 
-	//<T> LookupService<Node, T> getLookupService(Class<T> clazz);
-	public <T> T find(Class<T> clazz, Node rootNode);
+    Prologue getPrologue();
 
-	<T> T merge(T entity);
+    RdfTypeFactory getRdfTypeFactory();
 
-	void emitTriples(Graph outGraph, Object entity);
+    //<T> LookupService<Node, T> getLookupService(Class<T> clazz);
+    public <T> T find(Class<T> clazz, Node rootNode);
+
+    <T> T merge(T entity);
+
+    void emitTriples(Graph outGraph, Object entity);
 }

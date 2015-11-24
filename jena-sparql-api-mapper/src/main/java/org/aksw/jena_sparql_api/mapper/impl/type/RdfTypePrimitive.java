@@ -6,7 +6,6 @@ import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 
 import com.hp.hpl.jena.graph.Graph;
-import com.hp.hpl.jena.sparql.core.DatasetGraph;
 
 public abstract class RdfTypePrimitive
     extends RdfTypeBase
@@ -24,14 +23,17 @@ public abstract class RdfTypePrimitive
     public void emitTriples(RdfEmitterContext emitterContext, Graph out, Object obj) {
     }
 
-	@Override
-	public void exposeShape(ResourceShapeBuilder rsb) {
-		// TODO Auto-generated method stub
+    @Override
+    public void exposeShape(ResourceShapeBuilder rsb) {
+        // TODO Auto-generated method stub
 
-	}
+    }
 
+  @Override
+  public void populateBean(RdfPopulationContext populationContext, Object targetObj, Graph graph) {
+  }
 
-	@Override
-	public void populateBean(RdfPopulationContext populationContext, Object targetObj, DatasetGraph datasetGraph) {
-	}
+//	@Override
+//	public void populateBean(RdfPopulationContext populationContext, Object targetObj, DatasetGraph datasetGraph) {
+//	}
 }

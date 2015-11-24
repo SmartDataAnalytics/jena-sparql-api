@@ -97,8 +97,12 @@ public interface RdfType
 
     void exposeShape(ResourceShapeBuilder rsb); // Alternative: ResourceShapeBuilder build();
 
+    void populateBean(RdfPopulationContext populationContext, Object bean, Graph graph); //, Node g, Node s);
+
     // These two methods only make sense on classes; but not on primitive types ; maybe move down in the type hierarchy.
-    void populateBean(RdfPopulationContext populationContext, Object bean, DatasetGraph datasetGraph); //, Node g, Node s);
+//    void populateBean(RdfPopulationContext populationContext, Object bean, DatasetGraph datasetGraph); //, Node g, Node s);
+
+
     //DatasetGraph createDatasetGraph(Object obj, Node g);
     void emitTriples(RdfEmitterContext emitterContext, Graph out, Object obj);
 }

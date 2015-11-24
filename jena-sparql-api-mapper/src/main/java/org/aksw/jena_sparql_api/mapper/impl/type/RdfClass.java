@@ -101,13 +101,13 @@ public class RdfClass
     }
 
     public Collection<RdfPropertyDescriptor> getPropertyDescriptors() {
-    	Collection<RdfPropertyDescriptor> result = propertyDescriptors.values();
-    	return result;
+        Collection<RdfPropertyDescriptor> result = propertyDescriptors.values();
+        return result;
     }
 
     public RdfPropertyDescriptor getPropertyDescriptors(String propertyName) {
-    	RdfPropertyDescriptor result = propertyDescriptors.get(propertyName);
-    	return result;
+        RdfPropertyDescriptor result = propertyDescriptors.get(propertyName);
+        return result;
     }
 
 //    public List<String> getPropertyNames() {
@@ -116,7 +116,7 @@ public class RdfClass
 //    }
 
     public Concept getConcept() {
-    	return concept;
+        return concept;
     }
 
     public void setPopulated(boolean isPopulated) {
@@ -124,22 +124,22 @@ public class RdfClass
     }
 
     public void checkPopulated() {
-    	if(isPopulated) {
-    		throw new IllegalStateException("Class has already been populated");
-    	}
+        if(isPopulated) {
+            throw new IllegalStateException("Class has already been populated");
+        }
     }
 
     public void addPropertyDescriptor(RdfPropertyDescriptor propertyDescriptor) {
-    	checkPopulated();
-    	String name = propertyDescriptor.getName();
+        checkPopulated();
+        String name = propertyDescriptor.getName();
 
-    	propertyDescriptors.put(name, propertyDescriptor);
+        propertyDescriptors.put(name, propertyDescriptor);
     }
 
     public void addPopulator(RdfPopulator populator) {
-    	checkPopulated();
+        checkPopulated();
 
-    	populators.add(populator);
+        populators.add(populator);
 //    	Set<String> propertyNames = populator.getPropertyNames();
 //    	for(String propertyName : propertyNames) {
 //    		propertyToMapping.put(propertyName, populator);
@@ -173,7 +173,7 @@ public class RdfClass
     @Override
     public void exposeShape(ResourceShapeBuilder builder) {
         for(RdfPopulator populator : populators) {
-        	populator.exposeShape(builder);
+            populator.exposeShape(builder);
         }
     }
 
@@ -250,17 +250,17 @@ public class RdfClass
      * @param datasetGraph
      */
     @Override
-    public void populateBean(RdfPopulationContext populationContext, Object bean, DatasetGraph datasetGraph) {
-        DatasetGraph result = DatasetGraphFactory.createMem();
+    public void populateBean(RdfPopulationContext populationContext, Object bean, Graph graph) {
+        //DatasetGraph result = DatasetGraphFactory.createMem();
 
-        Graph graph = result.getDefaultGraph();
-        Node s = getRootNode(bean);
+        //Graph graph = result.getDefaultGraph();
+        Node s = populationContext.getRootNode(bean);
 
         /*
          *  Run all of this class' populators
          */
         for(RdfPopulator pd : populators) {
-        	pd.populateBean(populationContext, bean, graph, s);
+            pd.populateBean(populationContext, bean, graph, s);
         }
     }
 
@@ -281,7 +281,7 @@ public class RdfClass
          * Run the emitters of all of this class' populators
          */
         for(RdfPopulator populator : populators) {
-        	populator.emitTriples(out, obj, s);
+            populator.emitTriples(out, obj, s);
         }
 
         /*
@@ -291,10 +291,10 @@ public class RdfClass
          */
         BeanWrapper beanWrapper = new BeanWrapperImpl(obj);
         for(RdfPropertyDescriptor pd : propertyDescriptors.values()) {
-        	String propertyName = pd.getName();
+            String propertyName = pd.getName();
 
-        	Object propertyValue = beanWrapper.getPropertyValue(propertyName);
-        	emitterContext.add(propertyValue, obj, propertyName);
+            Object propertyValue = beanWrapper.getPropertyValue(propertyName);
+            emitterContext.add(propertyValue, obj, propertyName);
         }
     }
 
@@ -329,15 +329,16 @@ public class RdfClass
 
     @Override
     public Object createJavaObject(Node subject) {
-        Object o;
+        Object result;
         try {
-            o = beanClass.newInstance();
+            result = beanClass.newInstance();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
-        MethodInterceptorRdf interceptor = new MethodInterceptorRdf(o, this, subject);
-        Object result = Enhancer.create(beanClass, null, interceptor);
+// TODO The proxy mechanism is not controlled at type level, but at engine level
+//        MethodInterceptorRdf interceptor = new MethodInterceptorRdf(o, this, subject);
+//        Object result = Enhancer.create(beanClass, null, interceptor);
 
         return result;
     }

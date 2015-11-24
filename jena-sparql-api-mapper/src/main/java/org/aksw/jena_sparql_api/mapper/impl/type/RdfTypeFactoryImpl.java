@@ -7,10 +7,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 
 import org.aksw.commons.util.strings.StringUtils;
 import org.aksw.jena_sparql_api.mapper.annotation.DefaultIri;
@@ -24,6 +21,8 @@ import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.aksw.jena_sparql_api.stmt.SparqlRelationParser;
 import org.aksw.jena_sparql_api.stmt.SparqlRelationParserImpl;
+import org.aksw.jena_sparql_api.util.frontier.Frontier;
+import org.aksw.jena_sparql_api.util.frontier.FrontierImpl;
 import org.aksw.jena_sparql_api.utils.UriUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -210,19 +209,18 @@ public class RdfTypeFactoryImpl
 //    }
 
     private void populateClasses(RdfClass rootRdfClass) {
-        Set<RdfClass> open = new HashSet<RdfClass>();
-        open.add(rootRdfClass);
+        Frontier<RdfClass> frontier = FrontierImpl.createIdentityFrontier();
 
-        while(!open.isEmpty()) {
-            RdfClass rdfClass = open.iterator().next();
-            open.remove(rdfClass);
-
-            populateProperties(rdfClass, open);
+        frontier.add(rootRdfClass);
+        while(!frontier.isEmpty()) {
+            RdfClass rdfClass = frontier.next();
+            populateProperties(rdfClass, frontier);
         }
+
     }
 
 
-    private void populateProperties(RdfClass rdfClass, Collection<RdfClass> open) {
+    private void populateProperties(RdfClass rdfClass, Frontier<RdfClass> frontier) {
         if(!rdfClass.isPopulated()) {
             //Map<String, RdfPopulatorProperty> rdfProperties = new LinkedHashMap<String, RdfPopulatorProperty>();
 
@@ -235,7 +233,7 @@ public class RdfTypeFactoryImpl
             PropertyDescriptor[] pds = beanInfo.getPropertyDescriptors();
             for(PropertyDescriptor pd : pds) {
                 //String propertyName = pd.getName();
-            	processProperty(rdfClass, beanInfo, pd, open);
+                processProperty(rdfClass, beanInfo, pd, frontier);
 //                RdfPopulatorProperty rdfPopulator = processProperty(rdfClass, beanInfo, pd, open);
 //
 //                if(rdfPopulator != null) {
@@ -252,7 +250,7 @@ public class RdfTypeFactoryImpl
 
 
     //RdfPopulatorProperty
-    protected void processProperty(RdfClass rdfClass, BeanWrapper beanInfo, PropertyDescriptor pd, Collection<RdfClass> open) {
+    protected void processProperty(RdfClass rdfClass, BeanWrapper beanInfo, PropertyDescriptor pd, Frontier<RdfClass> frontier) {
         RdfPopulatorProperty result = null;
 
         //processProperty(beanInfo, pd, predicate, targetRdfType, open);
@@ -277,7 +275,7 @@ public class RdfTypeFactoryImpl
 
             Node predicate = NodeFactory.createURI(iriStr);
 
-            processProperty(rdfClass, beanInfo, pd, predicate, open);
+            processProperty(rdfClass, beanInfo, pd, predicate, frontier);
 
 //            result = isClass
 //                ? processDatatypeProperty(beanInfo, pd, predicate, dtype)
@@ -293,20 +291,20 @@ public class RdfTypeFactoryImpl
     }
 
     public static Class<?> extractItemType(Type genericType) {
-    	Class<?> result = null;
+        Class<?> result = null;
         if(genericType instanceof ParameterizedType) {
-        	ParameterizedType pt = (ParameterizedType)genericType;
-        	java.lang.reflect.Type[] types = pt.getActualTypeArguments();
-        	if(types.length == 1) {
-        		result = (Class<?>)types[0];
-        	}
+            ParameterizedType pt = (ParameterizedType)genericType;
+            java.lang.reflect.Type[] types = pt.getActualTypeArguments();
+            if(types.length == 1) {
+                result = (Class<?>)types[0];
+            }
 
         }
 
         return result;
     }
 
-    protected void processProperty(RdfClass rdfClass, BeanWrapper beanInfo, PropertyDescriptor pd, Node predicate, Collection<RdfClass> open) {
+    protected void processProperty(RdfClass rdfClass, BeanWrapper beanInfo, PropertyDescriptor pd, Node predicate, Frontier<RdfClass> frontier) {
         Class<?> clazz = beanInfo.getWrappedClass();
 
         String propertyName = pd.getName();
@@ -317,13 +315,13 @@ public class RdfTypeFactoryImpl
         boolean isMultiValued = getAnnotation(clazz, pd, MultiValued.class) != null;
 
         if(isMultiValued && !isCollectionProperty) {
-        	throw new RuntimeException("Invalid annotation: " + beanInfo.getWrappedClass() + "." + pd.getName() + ": " + " is declared MultiValued however is not a Collection");
+            throw new RuntimeException("Invalid annotation: " + beanInfo.getWrappedClass() + "." + pd.getName() + ": " + " is declared MultiValued however is not a Collection");
         }
 
         Class<?> itemType = null;
         if(isCollectionProperty) {
-        	Type paramType = pd.getWriteMethod().getGenericParameterTypes()[0];
-        	itemType = extractItemType(paramType);
+            Type paramType = pd.getWriteMethod().getGenericParameterTypes()[0];
+            itemType = extractItemType(paramType);
         }
 
 
@@ -340,7 +338,7 @@ public class RdfTypeFactoryImpl
               if(targetType instanceof RdfClass) {
                   RdfClass tmp = (RdfClass)targetType;
                   if(!tmp.isPopulated()) {
-                      open.add(tmp);
+                      frontier.add(tmp);
                   }
               }
             }

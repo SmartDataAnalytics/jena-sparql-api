@@ -9,11 +9,14 @@ import java.lang.annotation.Target;
  * Annotation on how to generate IDs for the annotated class.
  * Spring SPEL expressions can be used to create IRIs from instance's state.
  *
+ * If used on properties (i.e. field or method), this iri will be used
+ * if the attribute is null
+ *
  * @author raven
  *
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
+@Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD})
 public @interface DefaultIri {
     String value();
 }
