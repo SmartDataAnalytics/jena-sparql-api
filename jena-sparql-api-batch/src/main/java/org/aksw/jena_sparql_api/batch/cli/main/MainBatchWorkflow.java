@@ -195,14 +195,18 @@ public class MainBatchWorkflow {
     public static String tmpNs = "http://jsa.aksw.org/tmp/";
 
     public static PrefixMapping getDefaultPrefixMapping() {
-        PrefixMapping pm = new PrefixMappingImpl();
+        PrefixMapping result = new PrefixMappingImpl();
+        addDefaultPrefixMapping(result);
+        return result;
+    }
+
+    public static void addDefaultPrefixMapping(PrefixMapping pm) {
         pm.setNsPrefix("rdf", RDF.getURI());
         pm.setNsPrefix("rdfs", RDFS.getURI());
         pm.setNsPrefix("owl", OWL.getURI());
         //pm.setNsPrefix("geo", "http://www.w3.org/2003/01/geo/wgs84_pos#");
         pm.setNsPrefix("geom", "http://geovocab.org/geometry#");
         pm.setNsPrefix("ogc", "http://www.opengis.net/ont/geosparql#");
-        pm.setNsPrefix("fp7o", "http://fp7-pp.publicdata.eu/ontology/");
         //pm.setNsPrefix("o", "http://fp7-pp.publicdata.eu/ontology/");
         pm.setNsPrefix("nominatim", "http://jsa.aksw.org/fn/nominatim/");
         pm.setNsPrefix("xsd", XSD.getURI());
@@ -211,7 +215,6 @@ public class MainBatchWorkflow {
         pm.setNsPrefix("term", termFn);
         pm.setNsPrefix("tmp", tmpNs);
 
-        return pm;
     }
 
     public static void initJenaExtensions(ApplicationContext context) {
@@ -223,7 +226,7 @@ public class MainBatchWorkflow {
         TypeMapper.getInstance().registerDatatype(new RDFDatatypeJson());
 
 
-        NominatimClient nominatimClient = new JsonNominatimClient(new DefaultHttpClient(), "cstadler@informatik.uni-leipzig.de");
+        //NominatimClient nominatimClient = new JsonNominatimClient(new DefaultHttpClient(), "cstadler@informatik.uni-leipzig.de");
         //FunctionRegistry.get().put("http://jsa.aksw.org/fn/nominatim/geocode", FunctionFactoryCache.create(FunctionFactoryGeocodeNominatim.create(nominatimClient)));
 
         FunctionRegistry.get().put(jsonFn + "parse", E_JsonParse.class);
@@ -261,7 +264,7 @@ public class MainBatchWorkflow {
                 + "}", "http://example.org/base/", Syntax.syntaxARQ);
         }
 
-        if(true) {
+        if(false) {
             QueryFactory.parse(query, "Select ?osmType ?osmId ?x ?y {"
                     + "  VALUES(?s) { (<http://nominatim.openstreetmap.org/search/?format=json&q=Leipzig>) }\n"
                     + "  BIND(http:get(?s) As ?json).\n"

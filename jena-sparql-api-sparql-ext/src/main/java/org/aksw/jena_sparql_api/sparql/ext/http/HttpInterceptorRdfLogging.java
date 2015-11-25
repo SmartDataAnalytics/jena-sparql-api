@@ -101,7 +101,7 @@ public class HttpInterceptorRdfLogging
 
             Stopwatch sw = (Stopwatch)context.getAttribute("stopwatch");
 
-            HttpEntity entity = response.getEntity();
+            //HttpEntity entity = response.getEntity();
             int statusCode = response.getStatusLine().getStatusCode();
             //System.out.println(statusCode);
 
