@@ -76,35 +76,45 @@ public class E_Http
 
         NodeValue result = null;
         if(url != null) {
-            HttpGet request = new HttpGet(url);
+            HttpGet request = null;
+            try {
+                request = new HttpGet(url);
 
-            System.out.println("HTTP Request: " + request);
+                System.out.println("HTTP Request: " + request);
 
-            // add request header
-            //request.addHeader("User-Agent", USER_AGENT)
-            HttpClient httpClient = httpClientSupplier.get();
-            HttpResponse response = httpClient.execute(request);
+                // add request header
+                //request.addHeader("User-Agent", USER_AGENT)
+                HttpClient httpClient = httpClientSupplier.get();
+                HttpResponse response = httpClient.execute(request);
 
 
-            HttpEntity entity = response.getEntity();
-            int statusCode = response.getStatusLine().getStatusCode();
+                HttpEntity entity = response.getEntity();
+                int statusCode = response.getStatusLine().getStatusCode();
 
-            if(statusCode == 200) {
-                //String str = StreamUtils.toString(entity.getContent());
-                String str = StreamUtils.copyToString(entity.getContent(), Charset.forName("UTF-8"));
+                if(statusCode == 200) {
+                    //String str = StreamUtils.toString(entity.getContent());
+                    String str = StreamUtils.copyToString(entity.getContent(), Charset.forName("UTF-8"));
 
-                Header contentType = entity.getContentType();
-                String contentTypeValue = contentType.getValue();
+                    Header contentType = entity.getContentType();
+                    String contentTypeValue = contentType.getValue();
 
-                boolean isJson = MediaType.parse(contentTypeValue).is(MediaType.JSON_UTF_8);
-                if(isJson) {
-                    result = NodeValueJson.create(str);
-                } else {
-                    result = NodeValue.makeString(str);
+                    boolean isJson = MediaType.parse(contentTypeValue).is(MediaType.JSON_UTF_8);
+                    if(isJson) {
+                        result = NodeValueJson.create(str);
+                    } else {
+                        result = NodeValue.makeString(str);
+                    }
                 }
+                EntityUtils.consume(entity);
+            } catch(Exception e) {
+                if(request != null) {
+                    request.releaseConnection();
+                }
+                throw new RuntimeException(e);
             }
+            //EntityUtils.consume(entity);
+            //entity.
 
-            EntityUtils.consume(response.getEntity());
         }
 
         if(result == null) {

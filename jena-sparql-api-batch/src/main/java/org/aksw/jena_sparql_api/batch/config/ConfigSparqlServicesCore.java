@@ -55,11 +55,12 @@ public class ConfigSparqlServicesCore {
 //            }
 //        });
 
-        SparqlServiceFactory result = FluentSparqlServiceFactory.from(ssf).config()
-            .withUpdateListeners(new UpdateStrategyEventSource(), listeners)
-            .end()
-            .create();
+//        SparqlServiceFactory result = FluentSparqlServiceFactory.from(ssf).config()
+//            .withUpdateListeners(new UpdateStrategyEventSource(), listeners)
+//            .end()
+//            .create();
 
+        SparqlServiceFactory result = ssf;
 
 //        DatasetListenerSink
 //        //Fluent
