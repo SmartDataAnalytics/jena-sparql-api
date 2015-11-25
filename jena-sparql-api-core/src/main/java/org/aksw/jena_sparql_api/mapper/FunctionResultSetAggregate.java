@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.mapper;
 
-import org.aksw.jena_sparql_api.lookup.ResultSetPart;
+import org.aksw.jena_sparql_api.utils.ResultSetPart;
 
 import com.google.common.base.Function;
 import com.hp.hpl.jena.sparql.engine.binding.Binding;
@@ -18,7 +18,7 @@ public class FunctionResultSetAggregate<T>
     public T apply(ResultSetPart rs) {
         Acc<T> acc = agg.createAccumulator();
         
-        for(Binding binding : rs.getRows()) {
+        for(Binding binding : rs.getBindings()) {
             acc.accumulate(binding);
         }
 

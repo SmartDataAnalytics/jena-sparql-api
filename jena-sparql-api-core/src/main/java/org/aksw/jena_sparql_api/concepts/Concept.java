@@ -4,6 +4,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.aksw.commons.collections.SetUtils;
+import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformCopyBase;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.GeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.VarUtils;
@@ -12,14 +14,16 @@ import com.google.common.collect.Sets;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.sdb.core.Gensym;
+import com.hp.hpl.jena.shared.PrefixMapping;
 import com.hp.hpl.jena.sparql.algebra.Algebra;
 import com.hp.hpl.jena.sparql.algebra.Op;
 import com.hp.hpl.jena.sparql.algebra.OpAsQuery;
 import com.hp.hpl.jena.sparql.core.Substitute;
 import com.hp.hpl.jena.sparql.core.Var;
 import com.hp.hpl.jena.sparql.engine.binding.BindingHashMap;
-import com.hp.hpl.jena.sparql.lang.ParserSPARQL10;
+import com.hp.hpl.jena.sparql.graph.NodeTransform;
 import com.hp.hpl.jena.sparql.lang.ParserSPARQL11;
+import com.hp.hpl.jena.sparql.lang.SPARQLParser;
 import com.hp.hpl.jena.sparql.syntax.Element;
 import com.hp.hpl.jena.sparql.syntax.ElementGroup;
 import com.hp.hpl.jena.sparql.syntax.ElementTriplesBlock;
@@ -28,6 +32,7 @@ import com.hp.hpl.jena.sparql.syntax.PatternVars;
 /**
  * A concept combines a SPARQL graph pattern (element) with a variable.
  *
+ * NOTE: For concept parsing, rather use SparqlConceptParser than the static methods on this class.
  *
  * @author raven
  *
@@ -36,7 +41,43 @@ public class Concept {
     private Element element;//List<Element> elements;
     private Var var;
 
+
+    /**
+     * Util method to parse strings that use a pipe as a separator between variable and sparql string
+     * ?s | ?s a ex:Airport
+     *
+     * @param str
+     * @return
+     */
+    public static Concept parse(String str) {
+        Concept result = parse(str, null);
+        return result;
+    }
+
+    public static Concept parse(String str, PrefixMapping pm) {
+        String[] splits = str.split("\\|", 2);
+        if(splits.length != 2) {
+            throw new RuntimeException("Invalid string: " + str);
+
+        }
+
+        // Remove leading ? of the varName
+        String varName = splits[0].trim();
+        if(varName.charAt(0) != '?') {
+            throw new RuntimeException("var name must start with '?'");
+        }
+        varName = varName.substring(1);
+
+        Concept result = create(splits[1], varName, pm);
+        return result;
+    }
+
     public static Concept create(String elementStr, String varName) {
+        Concept result = create(elementStr, varName, null);
+        return result;
+    }
+
+    public static Concept create(String elementStr, String varName, PrefixMapping prefixMapping) {
         Var var = Var.alloc(varName);
 
         String tmp = elementStr.trim();
@@ -45,7 +86,17 @@ public class Concept {
             tmp = "{" + tmp + "}";
         }
 
-        Element element = ParserSPARQL10.parseElement(tmp);
+        //ParserSparql10 p;
+        tmp = "Select * " + tmp;
+
+        Query query = new Query();
+        query.setPrefixMapping(prefixMapping);
+        SPARQLParser parser = new ParserSPARQL11();
+        parser.parse(query, tmp);
+        Element element = query.getQueryPattern();
+
+        //Element element = ParserSPARQL10.parseElement(tmp);
+
         //Element element = ParserSPARQL11.parseElement(tmp);
 
         // TODO Find a generic flatten routine
@@ -91,6 +142,21 @@ public class Concept {
         return false;
     }
 
+    public Concept applyNodeTransform(NodeTransform nodeTransform) {
+        Var tmpVar = (Var)nodeTransform.convert(var);
+
+        Element e = ElementUtils.applyNodeTransform(element, nodeTransform);
+        Var v = tmpVar == null ? var : tmpVar;
+
+        Concept result = new Concept(e, v);
+        return result;
+    }
+
+    public Set<Var> getVarsMentioned() {
+        Set<Var> result = SetUtils.asSet(PatternVars.vars(element));
+        result.add(var); // Var should always be part of element - but better add it here explicitly
+        return result;
+    }
 
     public Concept(Element element, Var var) {
         super();

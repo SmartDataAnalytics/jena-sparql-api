@@ -10,6 +10,14 @@ import com.hp.hpl.jena.sparql.core.Var;
 import com.hp.hpl.jena.sparql.engine.binding.Binding;
 
 public class ResultSetXmlUtils {
+
+    /*
+    public static String toXmlStringBinding(Binding binding) {
+        binding.v
+        String result = toXmlStringBinding(binding)
+    }
+    */
+
     public static String toXmlStringBinding(Binding binding, Collection<String> varNames) {
         String result = "<result>";
         for(String varName : varNames) {
@@ -21,15 +29,15 @@ public class ResultSetXmlUtils {
         return result;
     }
 
-    
+
     public static String toXmlStringBindingItem(String varName, Node node) {
         String nodeStr = toXmlStringNode(node);
-        
+
         String result = nodeStr == null ? "" : "<binding name=\"" + varName + "\">" + nodeStr + "</binding>";
 
         return result;
     }
-    
+
     public static String toXmlStringNode(Node node) {
         String result;
         if(node == null) {
@@ -56,9 +64,9 @@ public class ResultSetXmlUtils {
 //        if(node == null) {
 //            return null;
 //        }
-//        
+//
 //        String nodeStr = toXmlStringNode(node);
-//        
+//
 //        String result;
 //        if(nodeStr == null) {
 //            result = "";
@@ -66,43 +74,43 @@ public class ResultSetXmlUtils {
 //        else {
 //            result = "<binding name=\"" + varName + "\" />" + nodeStr + "</binding>";
 //        }
-// 
+//
 //        return result;
 //    }
-    
+
     public static String toXmlStringLiteral(Node node)
     {
         String datatype = node.getLiteralDatatypeURI();
         String lang = node.getLiteralLanguage();
-        
+
         String result = "<literal";
 
-        if(!org.apache.commons.lang3.StringUtils.isEmpty(lang))
+        if(!StringUtils.isEmpty(lang))
         {
             result += " xml:lang=\"" + lang + "\"";
         }
-            
+
         if(!StringUtils.isEmpty(datatype))
         {
             result += " datatype=\"" + datatype + "\"";
         }
 
         result += ">" + StringEscapeUtils.escapeXml(node.getLiteralLexicalForm()) + "</literal>";
-        
+
         return result;
     }
-    
-    
+
+
     public static String toXmlStringBlank(Node node) {
         String label = node.getBlankNodeId().getLabelString();
 
         String result = "<bnode>" + label + "</bnode>";
         return result;
     }
-    
+
     public static String toXmlStringUri(Node node)
     {
-        String result = "<uri>" + StringEscapeUtils.escapeXml(node.getURI()) + "</uri>"; 
+        String result = "<uri>" + StringEscapeUtils.escapeXml(node.getURI()) + "</uri>";
         return result;
     }
 

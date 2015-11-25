@@ -3,10 +3,14 @@ package org.aksw.jena_sparql_api.concept_cache.domain;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
 
+import com.hp.hpl.jena.sparql.algebra.op.OpQuadPattern;
 import com.hp.hpl.jena.sparql.core.Quad;
+import com.hp.hpl.jena.sparql.core.QuadPattern;
 import com.hp.hpl.jena.sparql.expr.Expr;
+import com.hp.hpl.jena.sparql.expr.ExprList;
 import com.hp.hpl.jena.sparql.graph.NodeTransform;
 
 
@@ -76,4 +80,5 @@ public class QuadFilterPattern {
     public String toString() {
         return "QuadFilterPattern [quads=" + quads + ", expr=" + expr + "]";
     }
+
 }

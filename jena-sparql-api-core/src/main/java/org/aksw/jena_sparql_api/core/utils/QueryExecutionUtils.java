@@ -7,10 +7,10 @@ import java.util.Set;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.ResultSetCloseable;
-import org.aksw.jena_sparql_api.mapper.BindingMapperExtractNode;
+import org.aksw.jena_sparql_api.mapper.BindingMapperProjectVar;
 import org.aksw.jena_sparql_api.mapper.FunctionBindingMapper;
-import org.aksw.jena_sparql_api.mapper.IteratorResultSetBinding;
 import org.aksw.jena_sparql_api.utils.CloseableQueryExecution;
+import org.aksw.jena_sparql_api.utils.IteratorResultSetBinding;
 import org.apache.jena.atlas.lib.Sink;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +23,7 @@ import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.QueryFactory;
 import com.hp.hpl.jena.query.ResultSet;
+import com.hp.hpl.jena.query.ResultSetFormatter;
 import com.hp.hpl.jena.query.Syntax;
 import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.sparql.core.Var;
@@ -38,6 +39,25 @@ public class QueryExecutionUtils {
     public static final Var vp = Var.alloc("p");
     public static final Var vo = Var.alloc("o");
 
+
+    public static boolean validate(QueryExecutionFactory qef, boolean suppressException) {
+
+        boolean result;
+        try {
+            Query query = QueryFactory.create("SELECT * { ?s a ?t } Limit 1");
+            QueryExecution qe = qef.createQueryExecution(query);
+            ResultSet rs = qe.execSelect();
+            ResultSetFormatter.consume(rs);
+            result = true;
+        } catch(Exception e) {
+            if(!suppressException) {
+                throw new RuntimeException(e);
+            }
+            result = false;
+        }
+
+        return result;
+    }
 
 
     public static Iterator<Quad> createIteratorDumpQuads(QueryExecutionFactory qef) {
@@ -184,7 +204,7 @@ public class QueryExecutionUtils {
         ResultSet rs = qe.execSelect();
 
         Iterator<Binding> itBinding = new IteratorResultSetBinding(rs);
-        Function<Binding, Node> fn = FunctionBindingMapper.create(new BindingMapperExtractNode(var));
+        Function<Binding, Node> fn = FunctionBindingMapper.create(new BindingMapperProjectVar(var));
 
         Iterator<Node> result = Iterators.transform(itBinding, fn);
 

@@ -1,16 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.aksw.jena-sparql-api</groupId>
     <artifactId>jena-sparql-api-parent</artifactId>
 
     <packaging>pom</packaging>
-    <version>2.12.1-9-SNAPSHOT</version>
+    <version>2.13.0-6-SNAPSHOT</version>
     <name>Jena SPARQL API - Parent</name>
+    <description>An RDF library for abstracting SPARQL queries.</description>
+    <url>https://github.com/AKSW/jena-sparql-api</url>
 
     <modules>
         <module>jena-sparql-api-resources</module>
+
+        <module>jena-sparql-api-sparql-ext</module>
+
         <module>jena-sparql-api-core</module>
         <module>jena-sparql-api-cache</module>
         <module>jena-sparql-api-cache-h2</module>
@@ -22,27 +28,59 @@
         <module>jena-sparql-api-concepts</module>
         <module>jena-sparql-api-batch</module>
         <module>jena-sparql-api-geo</module>
+
+        <module>jena-sparql-api-update</module>
+        <module>jena-sparql-api-mapper</module>
     </modules>
 
+    <issueManagement>
+        <url>https://github.com/AKSW/jena-sparql-api/issues</url>
+        <system>GitHub</system>
+    </issueManagement>
+
+    <licenses>
+        <license>
+            <name>Apache License 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.html</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
     <scm>
-        <connection>scm:git:git@github.com:AKSW/jena-sparql-api.git</connection>
-        <!-- developerConnection></developerConnection -->
+        <url>https://github.com/AKSW/jena-sparql-api</url>
+        <connection>scm:git:git://github.com/AKSW/jena-sparql-api.git</connection>
+        <developerConnection>scm:git:git@github.com:AKSW/jena-sparql-api.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
 
+    <developers>
+        <developer>
+            <name>Claus Stadler</name>
+            <url>http://aksw.org/ClausStadler</url>
+            <organization>AKSW</organization>
+            <organizationUrl>http://aksw.org</organizationUrl>
+        </developer>
+    </developers>
+
     <properties>
-<!--        <jetty.version>8.1.12.v20130726</jetty.version> -->
-<!--    <jetty.version>9.3.0.M1</jetty.version> -->
-    <jetty.version>8.1.16.v20140903</jetty.version>
+        <!-- <jetty.version>8.1.12.v20130726</jetty.version> -->
+        <!-- <jetty.version>9.3.0.M1</jetty.version> -->
 
-<!--        <jetty-plugin.version>8.1.10.v20130312</jetty-plugin.version> -->
-<!--          <jersey-spring.version>1.17.1</jersey-spring.version> -->
+        <!-- working -->
+        <!-- <jetty.version>8.1.16.v20140903</jetty.version> -->
 
-        <jersey.version>2.15</jersey.version>
+        <jetty.version>8.1.17.v20150415</jetty.version>
+
+
+        <!-- <jetty-plugin.version>8.1.10.v20130312</jetty-plugin.version> -->
+        <!-- <jersey-spring.version>1.17.1</jersey-spring.version> -->
+
+        <!-- 2.18 could be tried out next -->
+        <jersey.version>2.18</jersey.version>
 
         <spring.version>4.1.4.RELEASE</spring.version>
         <spring.batch.version>3.0.3.RELEASE</spring.batch.version>
-        <aksw.commons.version>0.7.5</aksw.commons.version>
+        <aksw.commons.version>0.7.9</aksw.commons.version>
 
         <atmosphere.version>2.0.0.RC3</atmosphere.version>
         <atmosphere-spring.version>1.1.0.RC5</atmosphere-spring.version>
@@ -50,12 +88,14 @@
         <javaee-api.version>6.0</javaee-api.version>
 
         <!-- Project Settings -->
-        <maven.compiler.source>1.6</maven.compiler.source>
-        <maven.compiler.target>1.6</maven.compiler.target>
+        <maven.compiler.source>1.7</maven.compiler.source>
+        <maven.compiler.target>1.7</maven.compiler.target>
         <java.version.javadoc>http://java.sun.com/javase/6/docs/api/</java.version.javadoc>
         <file.encoding>UTF-8</file.encoding>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <gpg.keyname>AKSW</gpg.keyname>
+
     </properties>
 
     <build>
@@ -64,11 +104,12 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
-                <version>2.5.1</version>
+                <version>2.5.2</version>
                 <configuration>
                     <arguments>-P!source-artifacts</arguments>
                     <useReleaseProfile>false</useReleaseProfile>
-                    <goals>-Dmaven.test.skip=true deploy</goals>
+                    <releaseProfiles>release</releaseProfiles>
+                    <goals>-Dmaven.test.skip=false deploy</goals>
                     <autoVersionSubmodules>true</autoVersionSubmodules>
                 </configuration>
             </plugin>
@@ -125,24 +166,24 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.17</version>
                 <configuration>
-                    <skipTests>true</skipTests>
+                    <skipTests>false</skipTests>
                 </configuration>
             </plugin>
 
-<!--             <plugin> -->
-<!--                 <groupId>org.mortbay.jetty</groupId> -->
-<!--                 <artifactId>jetty-maven-plugin</artifactId> -->
-<!--                 <version>${jetty-plugin.version}</version> -->
-<!--                 <configuration> -->
-<!--                     <systemProperties> -->
-<!--                         <systemProperty> -->
-<!--                             <name>jetty.port</name> -->
-<!--                             <value>5522</value> -->
-<!--                         </systemProperty> -->
-<!--                     </systemProperties> -->
-<!--                     <reload>manual</reload> -->
-<!--                 </configuration> -->
-<!--             </plugin> -->
+            <!-- <plugin> -->
+            <!-- <groupId>org.mortbay.jetty</groupId> -->
+            <!-- <artifactId>jetty-maven-plugin</artifactId> -->
+            <!-- <version>${jetty-plugin.version}</version> -->
+            <!-- <configuration> -->
+            <!-- <systemProperties> -->
+            <!-- <systemProperty> -->
+            <!-- <name>jetty.port</name> -->
+            <!-- <value>5522</value> -->
+            <!-- </systemProperty> -->
+            <!-- </systemProperties> -->
+            <!-- <reload>manual</reload> -->
+            <!-- </configuration> -->
+            <!-- </plugin> -->
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -184,6 +225,18 @@
                         <!-- <exclude>commons-beanutils-core-</exclude> -->
                         <!-- <exclude>postgresql-</exclude> -->
                     </excludes>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.sonatype.plugins</groupId>
+                <artifactId>nexus-staging-maven-plugin</artifactId>
+                <version>1.6.6</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <serverId>ossrh</serverId>
+                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
                 </configuration>
             </plugin>
 
@@ -234,6 +287,12 @@
             <!-- Modules -->
             <dependency>
                 <groupId>org.aksw.jena-sparql-api</groupId>
+                <artifactId>jena-sparql-api-sparql-ext</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.aksw.jena-sparql-api</groupId>
                 <artifactId>jena-sparql-api-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -241,12 +300,6 @@
             <dependency>
                 <groupId>org.aksw.jena-sparql-api</groupId>
                 <artifactId>jena-sparql-api-cache</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.aksw.jena-sparql-api</groupId>
-                <artifactId>jena-sparql-api-web</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -275,9 +328,27 @@
             </dependency>
 
             <dependency>
+                <groupId>org.aksw.jena-sparql-api</groupId>
+                <artifactId>jena-sparql-api-update</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.aksw.jena-sparql-api</groupId>
+                <artifactId>jena-sparql-api-server</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.aksw.jena-sparql-api</groupId>
+                <artifactId>jena-sparql-api-web</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>org.apache.jena</groupId>
                 <artifactId>jena-arq</artifactId>
-                <version>2.12.1</version>
+                <version>2.13.0</version>
                 <scope>compile</scope>
                 <!-- <exclusions> -->
                 <!-- <exclusion> -->
@@ -289,7 +360,7 @@
             <dependency>
                 <groupId>org.apache.jena</groupId>
                 <artifactId>jena-core</artifactId>
-                <version>2.12.1</version>
+                <version>2.13.0</version>
                 <scope>compile</scope>
                 <!-- <exclusions> -->
                 <!-- <exclusion> -->
@@ -301,7 +372,7 @@
             <dependency>
                 <groupId>org.apache.jena</groupId>
                 <artifactId>jena-iri</artifactId>
-                <version>1.1.1</version>
+                <version>1.1.2</version>
                 <scope>compile</scope>
                 <!-- <exclusions> -->
                 <!-- <exclusion> -->
@@ -314,7 +385,7 @@
             <dependency>
                 <groupId>org.apache.jena</groupId>
                 <artifactId>jena-sdb</artifactId>
-                <version>1.5.1</version>
+                <version>1.5.2</version>
                 <type>jar</type>
                 <scope>compile</scope>
 
@@ -362,20 +433,13 @@
                         <groupId>aopalliance</groupId>
                         <artifactId>aopalliance</artifactId>
                     </exclusion>
-<!--
-                    <exclusion>
-                        <groupId>org.glassfish.hk2.external</groupId>
-                        <artifactId>aopalliance-repackaged</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.glassfish.hk2.external</groupId>
-                        <artifactId>javax.inject</artifactId>
-                    </exclusion>
--->
+                    <!-- <exclusion> <groupId>org.glassfish.hk2.external</groupId> <artifactId>aopalliance-repackaged</artifactId>
+                        </exclusion> <exclusion> <groupId>org.glassfish.hk2.external</groupId> <artifactId>javax.inject</artifactId>
+                        </exclusion> -->
                 </exclusions>
 
 
-<!--                 <scope>provided</scope> -->
+                <!-- <scope>provided</scope> -->
             </dependency>
 
             <dependency>
@@ -391,21 +455,17 @@
                 <version>${jersey.version}</version>
 
                 <exclusions>
-<!--                     <exclusion> -->
-<!--                         <groupId>org.glassfish.hk2.external</groupId> -->
-<!--                         <artifactId>bean-validator</artifactId> -->
-<!--                     </exclusion> -->
-<!--                     <exclusion> -->
-<!--                         <groupId>org.glassfish.hk2.external</groupId> -->
-<!--                         <artifactId>javax.inject</artifactId> -->
-<!--                     </exclusion> -->
+                    <!-- <exclusion> -->
+                    <!-- <groupId>org.glassfish.hk2.external</groupId> -->
+                    <!-- <artifactId>bean-validator</artifactId> -->
+                    <!-- </exclusion> -->
+                    <!-- <exclusion> -->
+                    <!-- <groupId>org.glassfish.hk2.external</groupId> -->
+                    <!-- <artifactId>javax.inject</artifactId> -->
+                    <!-- </exclusion> -->
 
-<!--
-                    <exclusion>
-                        <groupId>org.springframework</groupId>
-                        <artifactId>spring-web</artifactId>
-                    </exclusion>
--->
+                    <!-- <exclusion> <groupId>org.springframework</groupId> <artifactId>spring-web</artifactId>
+                        </exclusion> -->
                     <exclusion>
                         <groupId>javax.validation</groupId>
                         <artifactId>validation-api</artifactId>
@@ -430,83 +490,83 @@
                 </exclusions>
             </dependency>
 
-<!--             <dependency> -->
-<!--                 <groupId>com.sun.jersey</groupId> -->
-<!--                 <artifactId>jersey-servlet</artifactId> -->
-<!--                 <version>${jersey-spring.version}</version> -->
+            <!-- <dependency> -->
+            <!-- <groupId>com.sun.jersey</groupId> -->
+            <!-- <artifactId>jersey-servlet</artifactId> -->
+            <!-- <version>${jersey-spring.version}</version> -->
 
-<!--                 <exclusions> -->
-<!--                     <exclusion> -->
-<!--                         <groupId>org.springframework</groupId> -->
-<!--                         <artifactId>spring-aop</artifactId> -->
-<!--                     </exclusion> -->
-<!--                 </exclusions> -->
-<!--             </dependency> -->
+            <!-- <exclusions> -->
+            <!-- <exclusion> -->
+            <!-- <groupId>org.springframework</groupId> -->
+            <!-- <artifactId>spring-aop</artifactId> -->
+            <!-- </exclusion> -->
+            <!-- </exclusions> -->
+            <!-- </dependency> -->
 
 
-<!--             <dependency> -->
-<!--                 <groupId>com.sun.jersey.contribs</groupId> -->
-<!--                 <artifactId>jersey-spring</artifactId> -->
-<!--                 <version>${jersey-spring.version}</version> -->
+            <!-- <dependency> -->
+            <!-- <groupId>com.sun.jersey.contribs</groupId> -->
+            <!-- <artifactId>jersey-spring</artifactId> -->
+            <!-- <version>${jersey-spring.version}</version> -->
 
-<!--                 <exclusions> -->
-<!--                     <exclusion> -->
-<!--                         <groupId>com.sun.jersey</groupId> -->
-<!--                         <artifactId>jersey-servlet</artifactId> -->
-<!--                     </exclusion> -->
-<!--                     <exclusion> -->
-<!--                         <groupId>org.springframework</groupId> -->
-<!--                         <artifactId>spring-core</artifactId> -->
-<!--                     </exclusion> -->
-<!--                     <exclusion> -->
-<!--                         <groupId>org.springframework</groupId> -->
-<!--                         <artifactId>spring-beans</artifactId> -->
-<!--                     </exclusion> -->
-<!--                     <exclusion> -->
-<!--                         <groupId>org.springframework</groupId> -->
-<!--                         <artifactId>spring-context</artifactId> -->
-<!--                     </exclusion> -->
+            <!-- <exclusions> -->
+            <!-- <exclusion> -->
+            <!-- <groupId>com.sun.jersey</groupId> -->
+            <!-- <artifactId>jersey-servlet</artifactId> -->
+            <!-- </exclusion> -->
+            <!-- <exclusion> -->
+            <!-- <groupId>org.springframework</groupId> -->
+            <!-- <artifactId>spring-core</artifactId> -->
+            <!-- </exclusion> -->
+            <!-- <exclusion> -->
+            <!-- <groupId>org.springframework</groupId> -->
+            <!-- <artifactId>spring-beans</artifactId> -->
+            <!-- </exclusion> -->
+            <!-- <exclusion> -->
+            <!-- <groupId>org.springframework</groupId> -->
+            <!-- <artifactId>spring-context</artifactId> -->
+            <!-- </exclusion> -->
 
-<!--                     <exclusion> -->
-<!--                         <groupId>org.springframework</groupId> -->
-<!--                         <artifactId>spring-web</artifactId> -->
-<!--                     </exclusion> -->
-<!--                     <exclusion> -->
-<!--                         <groupId>org.springframework</groupId> -->
-<!--                         <artifactId>spring-aop</artifactId> -->
-<!--                     </exclusion> -->
-<!--                 </exclusions> -->
-<!--             </dependency> -->
+            <!-- <exclusion> -->
+            <!-- <groupId>org.springframework</groupId> -->
+            <!-- <artifactId>spring-web</artifactId> -->
+            <!-- </exclusion> -->
+            <!-- <exclusion> -->
+            <!-- <groupId>org.springframework</groupId> -->
+            <!-- <artifactId>spring-aop</artifactId> -->
+            <!-- </exclusion> -->
+            <!-- </exclusions> -->
+            <!-- </dependency> -->
 
 
             <!-- Atmosphere framework -->
-<!--             <dependency> -->
-<!--                 <groupId>org.atmosphere</groupId> -->
-<!--                 <artifactId>atmosphere-runtime</artifactId> -->
-<!--                 <version>${atmosphere.version}</version> -->
-<!--             </dependency> -->
-<!--             <dependency> -->
-<!--                 <groupId>org.atmosphere</groupId> -->
-<!--                 <artifactId>atmosphere-jersey</artifactId> -->
-<!--                 <version>${atmosphere.version}</version> -->
-<!--             </dependency> -->
+            <!-- <dependency> -->
+            <!-- <groupId>org.atmosphere</groupId> -->
+            <!-- <artifactId>atmosphere-runtime</artifactId> -->
+            <!-- <version>${atmosphere.version}</version> -->
+            <!-- </dependency> -->
+            <!-- <dependency> -->
+            <!-- <groupId>org.atmosphere</groupId> -->
+            <!-- <artifactId>atmosphere-jersey</artifactId> -->
+            <!-- <version>${atmosphere.version}</version> -->
+            <!-- </dependency> -->
 
-<!--             <dependency> -->
-<!--                 <groupId>org.atmosphere</groupId> -->
-<!--                 <artifactId>atmosphere-spring</artifactId> -->
-<!--                 <version>${atmosphere-spring.version}</version> -->
+            <!-- <dependency> -->
+            <!-- <groupId>org.atmosphere</groupId> -->
+            <!-- <artifactId>atmosphere-spring</artifactId> -->
+            <!-- <version>${atmosphere-spring.version}</version> -->
 
-<!--                 <exclusions> -->
-<!--                     <exclusion> -->
-<!--                         <groupId>org.atmosphere</groupId> -->
-<!--                         <artifactId>atmosphere-runtime</artifactId> -->
-<!--                     </exclusion> -->
-<!--                     <exclusion> -->
-<!--                         <groupId>org.springframework</groupId> -->
-<!--                         <artifactId>spring-webmvc</artifactId> -->
-<!--                     </exclusion> -->
-<!--                 </exclusions> -->
-<!--             </dependency> -->
+            <!-- <exclusions> -->
+            <!-- <exclusion> -->
+            <!-- <groupId>org.atmosphere</groupId> -->
+            <!-- <artifactId>atmosphere-runtime</artifactId> -->
+            <!-- </exclusion> -->
+            <!-- <exclusion> -->
+            <!-- <groupId>org.springframework</groupId> -->
+            <!-- <artifactId>spring-webmvc</artifactId> -->
+            <!-- </exclusion> -->
+            <!-- </exclusions> -->
+            <!-- </dependency> -->
 
             <!-- For somet reason atmosphere is not finding this class -->
             <dependency>
@@ -562,10 +622,11 @@
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-jsp</artifactId>
                 <version>${jetty.version}</version>
-                <type>jar</type>
-                <scope>compile</scope>
             </dependency>
 
+            <!-- <dependency> <groupId>org.eclipse.jetty</groupId> <artifactId>jetty-jsp</artifactId>
+                <version>${jetty.version}</version> <type>jar</type> <scope>compile</scope>
+                </dependency> -->
             <!-- <dependency> -->
             <!-- <groupId>org.eclipse.jetty</groupId> -->
             <!-- <artifactId>jetty-websocket</artifactId> -->
@@ -574,35 +635,43 @@
             <!-- <scope>compile</scope> -->
             <!-- </dependency> -->
 
+            <dependency>
+                <groupId>org.hibernate.javax.persistence</groupId>
+                <artifactId>hibernate-jpa-2.0-api</artifactId>
+                <version>1.0.1.Final</version>
+            </dependency>
 
             <!-- Logging -->
             <dependency>
                 <groupId>log4j</groupId>
                 <artifactId>log4j</artifactId>
                 <version>1.2.17</version>
-                <type>jar</type>
-                <scope>compile</scope>
+                <!-- <type>jar</type> -->
+                <!-- <scope>compile</scope> -->
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
                 <version>1.7.10</version>
-                <type>jar</type>
-                <scope>compile</scope>
+                <!-- <scope>test</scope> -->
+                <!-- <type>jar</type> -->
+                <!-- <scope>compile</scope> -->
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-ext</artifactId>
                 <version>1.7.10</version>
-                <type>jar</type>
-                <scope>compile</scope>
+                <!-- <type>jar</type> -->
+                <!-- <scope>compile</scope> -->
+                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-log4j12</artifactId>
                 <version>1.7.10</version>
-                <type>jar</type>
-                <scope>runtime</scope>
+                <!-- <type>jar</type> -->
+                <!-- <scope>runtime</scope> -->
+                <scope>test</scope>
             </dependency>
 
             <!-- AKSW Commons -->
@@ -647,7 +716,7 @@
             <dependency>
                 <groupId>com.h2database</groupId>
                 <artifactId>h2</artifactId>
-                <version>1.4.186</version>
+                <version>1.4.187</version>
                 <!--<scope>runtime</scope> -->
             </dependency>
 
@@ -663,8 +732,6 @@
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
                 <version>3.3.2</version>
-                <type>jar</type>
-                <scope>compile</scope>
             </dependency>
 
 
@@ -683,8 +750,6 @@
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
                 <version>18.0</version>
-                <type>jar</type>
-                <scope>compile</scope>
             </dependency>
 
 
@@ -718,13 +783,38 @@
 
             <dependency>
                 <groupId>org.springframework</groupId>
-                <artifactId>spring-context</artifactId>
+                <artifactId>spring-aop</artifactId>
                 <version>${spring.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.springframework</groupId>
+                <artifactId>spring-tx</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
+
+
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-context</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
+
+    <!-- <dependency> -->
+    <!-- <groupId>org.springframework</groupId> -->
+    <!-- <artifactId>spring-utils</artifactId> -->
+    <!-- <version>${spring.version}</version> -->
+    <!-- </dependency> -->
+
+            <dependency>
+                <groupId>org.springframework</groupId>
                 <artifactId>spring-core</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-jdbc</artifactId>
                 <version>${spring.version}</version>
             </dependency>
 
@@ -735,6 +825,7 @@
                 <artifactId>spring-web</artifactId>
                 <version>${spring.version}</version>
             </dependency>
+
 
             <dependency>
                 <groupId>org.springframework</groupId>
@@ -763,13 +854,42 @@
                 <version>${spring.batch.version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>fr.dudie</groupId>
+                <artifactId>nominatim-api</artifactId>
+                <version>3.1</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.apache.httpcomponents</groupId>
+                        <artifactId>httpclient</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
             <!-- Gson: Java to Json conversion -->
             <dependency>
                 <groupId>com.google.code.gson</groupId>
                 <artifactId>gson</artifactId>
-                <version>2.2.4</version>
+                <version>2.3.1</version>
             </dependency>
 
+            <dependency>
+                <groupId>org.aksw.gson</groupId>
+                <artifactId>gson-utils-core</artifactId>
+                <version>1.0.0-SNAPSHOT</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.aksw.spring</groupId>
+                <artifactId>spring-json-core</artifactId>
+                <version>1.0.0-SNAPSHOT</version>
+            </dependency>
+
+            <dependency>
+                <groupId>commons-validator</groupId>
+                <artifactId>commons-validator</artifactId>
+                <version>1.4.1</version>
+            </dependency>
 
             <!-- URL Rewriting -->
             <dependency>
@@ -800,39 +920,65 @@
             </dependency>
 
             <dependency>
-                <groupId>org.aksw.coyotecache</groupId>
-                <artifactId>coyotecache-core</artifactId>
-                <version>0.0.1</version>
+                <groupId>com.jayway.jsonpath</groupId>
+                <artifactId>json-path</artifactId>
+                <version>2.0.0</version>
             </dependency>
-
         </dependencies>
     </dependencyManagement>
 
-        <repositories>
-                <repository>
-                        <id>maven.aksw.internal</id>
-                        <name>University Leipzig, AKSW Maven2 Internal Repository</name>
-                        <url>http://maven.aksw.org/repository/internal/</url>
-                </repository>
-
-                <repository>
-                        <id>maven.aksw.snapshots</id>
-                        <name>University Leipzig, AKSW Maven2 Snapshot Repository</name>
-                        <url>http://maven.aksw.org/repository/snapshots/</url>
-                </repository>
-        </repositories>
+    <profiles>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.6</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                                <configuration>
+                                    <keyname>AKSW</keyname>
+                                    <passphraseServerId>${gpg.keyname}</passphraseServerId>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
     <distributionManagement>
         <repository>
-            <id>maven.aksw.internal</id>
-            <name>AKSW Internal Release Repository</name>
-            <url>http://maven.aksw.org/repository/internal</url>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
         </repository>
         <snapshotRepository>
             <id>maven.aksw.snapshots</id>
             <name>AKSW Snapshot Repository</name>
-            <url>http://maven.aksw.org/repository/snapshots</url>
+            <url>http://maven.aksw.org/archiva/repository/snapshots</url>
         </snapshotRepository>
     </distributionManagement>
+
+    <repositories>
+        <repository>
+            <id>maven.aksw.snapshots</id>
+            <name>AKSW Snapshot Repository</name>
+            <url>http://maven.aksw.org/archiva/repository/snapshots</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
 
 </project>

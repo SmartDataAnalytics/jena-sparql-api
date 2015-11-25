@@ -1,0 +1,819 @@
+package org.aksw.jena_sparql_api.batch.cli.main;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
+import java.io.Reader;
+import java.io.StringReader;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import javax.script.Invocable;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+
+import org.aksw.commons.util.StreamUtils;
+import org.aksw.gson.utils.JsonProcessorKey;
+import org.aksw.gson.utils.JsonTransformerRewrite;
+import org.aksw.gson.utils.JsonVisitorRewrite;
+import org.aksw.gson.utils.JsonWalker;
+import org.aksw.jena_sparql_api.batch.BatchWorkflowManager;
+import org.aksw.jena_sparql_api.batch.ListServiceResourceShape;
+import org.aksw.jena_sparql_api.batch.QueryTransformConstructGroupedGraph;
+import org.aksw.jena_sparql_api.batch.config.ConfigBatchJobDynamic;
+import org.aksw.jena_sparql_api.batch.config.ConfigParsersCore;
+import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteClass;
+import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteHop;
+import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteJson;
+import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewritePrefixes;
+import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteShape;
+import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteSimpleJob;
+import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteSparqlFile;
+import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteSparqlPipe;
+import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteSparqlService;
+import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteSparqlStep;
+import org.aksw.jena_sparql_api.batch.json.domain.JsonVisitorRewriteSparqlUpdate;
+import org.aksw.jena_sparql_api.batch.to_review.MapTransformer;
+import org.aksw.jena_sparql_api.batch.to_review.MapTransformerSimple;
+import org.aksw.jena_sparql_api.beans.json.JsonProcessorContext;
+import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
+import org.aksw.jena_sparql_api.lookup.ListService;
+import org.aksw.jena_sparql_api.lookup.ListServiceUtils;
+import org.aksw.jena_sparql_api.lookup.LookupService;
+import org.aksw.jena_sparql_api.lookup.LookupServiceListService;
+import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
+import org.aksw.jena_sparql_api.mapper.MappedConcept;
+import org.aksw.jena_sparql_api.modifier.Modifier;
+import org.aksw.jena_sparql_api.modifier.ModifierDatasetGraphEnrich;
+import org.aksw.jena_sparql_api.modifier.ModifierDatasetGraphSparqlUpdate;
+import org.aksw.jena_sparql_api.shape.ResourceShape;
+import org.aksw.jena_sparql_api.shape.ResourceShapeParserJsonObject;
+import org.aksw.jena_sparql_api.sparql.ext.http.E_EncodeForQsa;
+import org.aksw.jena_sparql_api.sparql.ext.http.FunctionFactoryE_Http;
+import org.aksw.jena_sparql_api.sparql.ext.json.E_JsonParse;
+import org.aksw.jena_sparql_api.sparql.ext.json.E_JsonPath;
+import org.aksw.jena_sparql_api.sparql.ext.json.PropertyFunctionFactoryJsonUnnest;
+import org.aksw.jena_sparql_api.sparql.ext.json.RDFDatatypeJson;
+import org.aksw.jena_sparql_api.sparql.ext.term.E_TermValid;
+import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
+import org.aksw.jena_sparql_api.utils.Vars;
+import org.aksw.spring.json.ContextProcessorJsonUtils;
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.batch.core.Job;
+import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.JobParameters;
+import org.springframework.batch.core.JobParametersInvalidException;
+import org.springframework.batch.core.job.SimpleJob;
+import org.springframework.batch.core.launch.JobOperator;
+import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
+import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
+import org.springframework.batch.core.repository.JobRestartException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigUtils;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.springframework.context.support.GenericApplicationContext;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
+
+import com.google.common.base.Supplier;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.stream.JsonReader;
+import com.hp.hpl.jena.datatypes.TypeMapper;
+import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.NodeFactory;
+import com.hp.hpl.jena.query.Query;
+import com.hp.hpl.jena.query.QueryExecution;
+import com.hp.hpl.jena.query.QueryFactory;
+import com.hp.hpl.jena.query.ResultSetFormatter;
+import com.hp.hpl.jena.query.Syntax;
+import com.hp.hpl.jena.shared.PrefixMapping;
+import com.hp.hpl.jena.shared.impl.PrefixMappingImpl;
+import com.hp.hpl.jena.sparql.core.DatasetGraph;
+import com.hp.hpl.jena.sparql.core.Prologue;
+import com.hp.hpl.jena.sparql.function.FunctionRegistry;
+import com.hp.hpl.jena.sparql.pfunction.PropertyFunctionRegistry;
+import com.hp.hpl.jena.update.UpdateFactory;
+import com.hp.hpl.jena.update.UpdateRequest;
+import com.hp.hpl.jena.vocabulary.OWL;
+import com.hp.hpl.jena.vocabulary.RDF;
+import com.hp.hpl.jena.vocabulary.RDFS;
+import com.hp.hpl.jena.vocabulary.XSD;
+
+import fr.dudie.nominatim.client.JsonNominatimClient;
+import fr.dudie.nominatim.client.NominatimClient;
+
+public class MainBatchWorkflow {
+
+    private static final Logger logger = LoggerFactory.getLogger(MainBatchWorkflow.class);
+
+    public static void mainXml() throws Exception {
+        ClassPathXmlApplicationContext test = new ClassPathXmlApplicationContext("testList.xml");
+        //org.springframework.beans.factory.xml.BeanDefinitionParser
+        Collection<String> allBeans = Arrays.asList(test.getBeanDefinitionNames());
+        System.out.println("Got " + allBeans.size() + " beans: " + allBeans);
+    }
+
+    public static void foo() throws Exception {
+        ScriptEngineManager manager = new ScriptEngineManager();
+        ScriptEngine engine = manager.getEngineByName("JavaScript");
+
+        // JavaScript code in a String
+        String script1 = (String)"function hello(name) {print ('Hello, ' + name);}";
+        // evaluate script
+        engine.eval(script1);
+
+        Invocable inv = (Invocable) engine;
+
+        inv.invokeFunction("hello", "Scripting!!" );  //This one works.
+    }
+
+
+    public static void main(String[] args) throws Exception {
+
+
+//        String queryStr = "INSERT { ?s tmp:location ?l } WHERE { ?s o:address [ o:country [ rdfs:label ?col ] ; o:city [ rdfs:label ?cil ]  ] BIND(concat(?cil, ' ', ?col) As ?l) }";
+//
+//        UpdateRequest ur = new UpdateRequest();
+//        ur.setPrefixMapping(getDefaultPrefixMapping());
+//        UpdateFactory.parse(ur, queryStr, "http://example.org/", Syntax.syntaxARQ);
+//        UpdateRequestUtils.fixVarNames(ur);
+//        //QueryTransformConstructGroupedGraph.fixVarNames(query);
+//        String x = ur.toString();
+//
+//        System.out.println(x);
+//        System.exit(0);
+
+
+
+//
+//        //QueryExecutionFactoryResource qef = new QueryExecutionFactoryResource("dbpedia-airport-eu-snippet.nt");
+//        Graph graph = new GraphResource("dbpedia-airport-eu-snippet.nt");
+//        //Graph graph = new GraphResource("/home/raven/tmp/2014-09-09-AerialwayThing.way.sorted.nt");
+//        QueryExecutionFactory qef = new QueryExecutionFactoryModel(graph);
+//        // ?s a <http://schema.org/Airport> .
+//
+//        QueryExecution qe = qef.createQueryExecution("Construct { ?s ?p ?o } { ?s ?p ?o }");
+//        Iterator<Triple> it = qe.execConstructTriples();
+//        while(it.hasNext()) {
+//            System.out.println(it.next());
+//        }
+//        //model.write(System.out, "TTL");
+//        System.exit(0);
+//
+//
+//        Prologue p = new Prologue(getDefaultPrefixMapping());
+//        SparqlParserConfig c = SparqlParserConfig.create(Syntax.syntaxARQ, p);
+//        SparqlStmtParser parser = SparqlStmtParserImpl.create(c);
+//
+//        SparqlStmt stmt = parser.apply("INSERT DATA { <s> <p> <o> }");
+//        System.out.println("Statement: " + stmt);
+//
+
+//    	mainXml();
+        ApplicationContext baseContext = initBaseContext(null);
+
+        initJenaExtensions(baseContext);
+        mainContext(baseContext);
+    }
+
+    public static String jsonFn = "http://jsa.aksw.org/fn/json/";
+    public static String httpFn = "http://jsa.aksw.org/fn/http/";
+    public static String termFn = "http://jsa.aksw.org/fn/term/";
+    public static String tmpNs = "http://jsa.aksw.org/tmp/";
+
+    public static PrefixMapping getDefaultPrefixMapping() {
+        PrefixMapping pm = new PrefixMappingImpl();
+        pm.setNsPrefix("rdf", RDF.getURI());
+        pm.setNsPrefix("rdfs", RDFS.getURI());
+        pm.setNsPrefix("owl", OWL.getURI());
+        //pm.setNsPrefix("geo", "http://www.w3.org/2003/01/geo/wgs84_pos#");
+        pm.setNsPrefix("geom", "http://geovocab.org/geometry#");
+        pm.setNsPrefix("ogc", "http://www.opengis.net/ont/geosparql#");
+        pm.setNsPrefix("fp7o", "http://fp7-pp.publicdata.eu/ontology/");
+        //pm.setNsPrefix("o", "http://fp7-pp.publicdata.eu/ontology/");
+        pm.setNsPrefix("nominatim", "http://jsa.aksw.org/fn/nominatim/");
+        pm.setNsPrefix("xsd", XSD.getURI());
+        pm.setNsPrefix("json", jsonFn);
+        pm.setNsPrefix("http", httpFn);
+        pm.setNsPrefix("term", termFn);
+        pm.setNsPrefix("tmp", tmpNs);
+
+        return pm;
+    }
+
+    public static void initJenaExtensions(ApplicationContext context) {
+        //ApplicationContext baseContext = initBaseContext();
+        @SuppressWarnings("unchecked")
+        Supplier<HttpClient> httpClientSupplier = (Supplier<HttpClient>)context.getBean("httpClientSupplier");
+
+
+        TypeMapper.getInstance().registerDatatype(new RDFDatatypeJson());
+
+
+        NominatimClient nominatimClient = new JsonNominatimClient(new DefaultHttpClient(), "cstadler@informatik.uni-leipzig.de");
+        //FunctionRegistry.get().put("http://jsa.aksw.org/fn/nominatim/geocode", FunctionFactoryCache.create(FunctionFactoryGeocodeNominatim.create(nominatimClient)));
+
+        FunctionRegistry.get().put(jsonFn + "parse", E_JsonParse.class);
+        FunctionRegistry.get().put(jsonFn + "path", E_JsonPath.class);
+
+        //Context.
+
+        FunctionRegistry.get().put(httpFn + "get", new FunctionFactoryE_Http(httpClientSupplier));
+        FunctionRegistry.get().put(httpFn + "encode_for_qsa", E_EncodeForQsa.class);
+
+        FunctionRegistry.get().put(termFn + "valid", E_TermValid.class);
+
+        //FunctionRegistry.get().put
+        //UserDefinedFunctionFactory.getFactory().add(httpFn + "getJson", "", args);
+
+        PropertyFunctionRegistry.get().put(jsonFn + "unnest", new PropertyFunctionFactoryJsonUnnest());
+
+        PrefixMapping pm = getDefaultPrefixMapping();
+
+        QueryExecutionFactory qef = FluentQueryExecutionFactory
+            .defaultDatasetGraph()
+            .config()
+                .withPrefixes(pm, true)
+            .end()
+            .create();
+
+        Query query = new Query();
+        query.setPrefixMapping(pm);
+
+        if(false) {
+        QueryFactory.parse(query, "Select * {"
+                + "  Bind(\"['foo', ['bar', 'baz']]\"^^xsd:json As ?json)\n"
+                + "  ?json json:unnest ?lvl1.\n"
+                + "  Optional { ?lvl1 json:unnest ?lvl2. }\n"
+                + "}", "http://example.org/base/", Syntax.syntaxARQ);
+        }
+
+        if(true) {
+            QueryFactory.parse(query, "Select ?osmType ?osmId ?x ?y {"
+                    + "  VALUES(?s) { (<http://nominatim.openstreetmap.org/search/?format=json&q=Leipzig>) }\n"
+                    + "  BIND(http:get(?s) As ?json).\n"
+                    + "  ?json json:unnest ?item.\n"
+                    + "  BIND(json:path(?item, '$.osm_type') As ?osmType)\n"
+                    + "  BIND(json:path(?item, '$.osm_id') As ?osmId)\n"
+                    + "  BIND(xsd:decimal(json:path(?item, '$.lon')) As ?x)\n"
+                    + "  BIND(xsd:decimal(json:path(?item, '$.lat')) As ?y)\n"
+                    + "}", "http://example.org/base/", Syntax.syntaxARQ);
+
+            Prologue prologue = new Prologue(pm);
+
+            QueryExecution qe = qef.createQueryExecution(query);
+            System.out.println(ResultSetFormatter.asText(qe.execSelect(), prologue));
+        }
+
+
+        //System.exit(0);
+    }
+
+    public static ApplicationContext initBaseContext(ApplicationContext appContext) {
+        AnnotationConfigApplicationContext coreContext = new AnnotationConfigApplicationContext();
+        //if(appContext != null) {
+            coreContext.setParent(appContext);
+        //}
+        coreContext.register(ConfigParsersCore.class);
+        coreContext.refresh();
+
+
+        AnnotationConfigApplicationContext baseContext = new AnnotationConfigApplicationContext();
+        baseContext.setParent(coreContext);
+        baseContext.register(ConfigBatchJobDynamic.class);
+        baseContext.refresh();
+
+        return baseContext;
+    }
+
+    public static GenericApplicationContext initBatchContext(ApplicationContext baseContext) {
+        //ApplicationContext baseContext = initBaseContext();
+        //AnnotationConfigApplicationContext baseContext = new AnnotationConfigApplicationContext(ConfigBatchJobDynamic.class);
+        //AnnotationConfigApplicationContext x = new AnnotationConfigApplicationContext()
+
+
+        GenericApplicationContext batchContext = new GenericApplicationContext(baseContext);
+        AnnotationConfigUtils.registerAnnotationConfigProcessors(batchContext);
+
+        return batchContext;
+    }
+
+    public static ApplicationContext initContext(ApplicationContext baseContext, JsonElement json) throws Exception {
+
+        GenericApplicationContext batchContext = initBatchContext(baseContext);
+
+        // Preprocessors
+        JsonProcessorKey contextPreprocessor = new JsonProcessorKey();
+
+        // Alias mappings
+        // replaces certain type-values with qualified java class names
+        //JsonProcessorMap
+
+        // Attribute-based typing (duck typing)
+        // src: { serviceUrl: 'http://...' } -> inject type: 'SparqlService'
+
+        // Special type preprocessing:
+        // src: $sparqlService: { serviceUrl} -> { type: 'sparqlService',
+
+        //contextPreprocessor.getProcessors().add(alias);
+
+        // Core Beans processor
+        JsonProcessorContext contextProcessor = new JsonProcessorContext(batchContext);
+
+        //JsonProcessorMap jobProcessor = new JsonProcessorMap();
+        //jobProcessor.register("context", false, contextProcessor);
+
+
+
+
+        JsonElement jobParamsJson = readJsonElementFromResource("params.js");
+        //List<JsonVisitorRewrite> jr = Arrays.<JsonVisitorRewrite>asList(
+
+        JsonVisitorRewriteJobParameters subVisitor = new JsonVisitorRewriteJobParameters();
+        JsonVisitorRewriteKeys visitor = JsonVisitorRewriteKeys.create(JsonTransformerRewrite.create(subVisitor, false));
+
+        JsonElement effectiveJobParamsJson = JsonWalker.visit(jobParamsJson, visitor);
+
+        //UserDefinedFunctionFactory fff;
+        // my:foo(?x, ?y ?z) = someotherexpression
+        // by convention, the expression must be of type E_Equals with the left hand side must be a function with only variables as arguments
+        // we could add a hack to allow := instead (well, in addition to) =
+
+        //);
+
+        //JsonElement effectiveJobParamsJson = JsonWalker.rewrite(jobParamsJson, jr);
+
+        System.out.println("Job params: " +  new GsonBuilder().setPrettyPrinting().create().toJson(effectiveJobParamsJson));
+
+        JobParameters jobParams = JobParametersJsonUtils.toJobParameters(effectiveJobParamsJson, null);
+
+        System.out.println(jobParams);
+
+
+        //System.exit(0);
+        //GenericBeanDefinition x;
+        //x.
+
+        //List<JsonVisitorRewrite> rewriters = Collections.emptyList();
+//        List<JsonVisitorRewrite> rewriters = Arrays.<JsonVisitorRewrite>asList(
+//                new JsonVisitorRewriteSparqlService(),
+//                new JsonVisitorRewriteShape(),
+//                new JsonVisitorRewriteJson(),
+//                new JsonVisitorRewriteSparqlStep(),
+//                new JsonVisitorRewriteSimpleJob(),
+//                new JsonVisitorRewriteSparqlFile(),
+//                new JsonVisitorRewriteSparqlPipe(),
+//                new JsonVisitorRewriteSparqlUpdate(),
+//                new JsonVisitorRewritePrefixes(),
+//                new JsonVisitorRewriteHop()
+//        );
+//        json = JsonWalker.rewriteUntilNoChange(json, rewriters);
+        json = rewrite(json);
+
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        String str = gson.toJson(json);
+        System.out.println(str);
+
+        contextProcessor.process(json);
+
+
+
+        //contextProcessor.process(json);
+
+
+        //jobProcessor.process(json);
+
+        batchContext.refresh();
+
+        return batchContext;
+    }
+
+    public static JsonElement rewrite(JsonElement json) {
+        List<JsonVisitorRewrite> rewriters = Arrays.<JsonVisitorRewrite>asList(
+                new JsonVisitorRewriteSparqlService(),
+                new JsonVisitorRewriteShape(),
+                new JsonVisitorRewriteJson(),
+                new JsonVisitorRewriteSparqlStep(),
+                new JsonVisitorRewriteSimpleJob(),
+                new JsonVisitorRewriteSparqlFile(),
+                new JsonVisitorRewriteSparqlPipe(),
+                new JsonVisitorRewriteSparqlUpdate(),
+                new JsonVisitorRewritePrefixes(),
+                new JsonVisitorRewriteHop(),
+                new JsonVisitorRewriteClass("$dataSource", DriverManagerDataSource.class.getName())
+        );
+        JsonElement result = JsonWalker.rewriteUntilNoChange(json, rewriters);
+        return result;
+    }
+
+    public static void mainContext(ApplicationContext baseContext) throws Exception {
+        JsonElement jobJson = readJsonElementFromResource("workflow.js");
+
+        ApplicationContext batchContext = initContext(baseContext, jobJson);
+
+//        SparqlService test = (SparqlService)batchContext.getBean("sourceFile");
+//        System.out.println("SourceFile: " + test);
+
+        JobOperator jobOperator = batchContext.getBean(JobOperator.class);
+        //JobLauncher jobLauncher = batchContext.getBean(JobLauncher.class);
+        Job job = batchContext.getBean(Job.class);
+
+
+        System.out.println("STEP: " + ((SimpleJob)job).getStepNames());
+
+
+        Collection<String> allBeans = Arrays.asList(batchContext.getBeanDefinitionNames());
+        System.out.println("Got " + allBeans.size() + " beans: " + allBeans);
+
+        System.out.println("Job: " + job);
+
+        //System.exit(0);
+
+        BatchWorkflowManager manager = batchContext.getBean(BatchWorkflowManager.class);//new BatchWorkflowManager(config);
+
+        JobExecution exec = manager.launch(job, new JobParameters());
+
+
+        Thread.sleep(3000);
+        System.out.println("Waited for 3 sec");
+
+        for(Throwable t : exec.getAllFailureExceptions()) {
+            t.printStackTrace();
+        }
+//        Object foo = batchContext.getBean("steps");
+//        System.out.println(foo);
+
+        //System.out.println(jobOperator);
+        //jobOperator.st
+        //jobOperator.start(job.getName(), );
+        //jobLauncher.
+
+        //BeanDefinition x;
+        //x.get
+
+        //AbstractBatchConfiguration batchConfig = context.getBean(AbstractBatchConfiguration.class);
+        //SimpleBatchConfiguration x;
+        //batchConfig.job
+
+
+        //StepBuilderFactory stepBuilders = batchConfig.stepBuilders();
+
+        //System.out.println(stepBuilders);
+    }
+
+
+    public static void main1(String[] args) throws Exception {
+        String str = "      Prefix o: <http://fp7-pp.publicdata.eu/ontology/>\n" +
+                "			Prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
+                "	            Construct where {\n" +
+                "	              ?s\n" +
+                "	                o:funding [\n" +
+                "	                  o:partner [\n" +
+                "	                    o:address [\n" +
+                "	                      o:country [ rdfs:label ?col ] ;\n" +
+                "	                      o:city [ rdfs:label ?cil ]\n" +
+                "	                    ]\n" +
+                "	                  ]\n" +
+                "	                ]\n" +
+                "	            }\n" +
+                "";
+
+
+        Query q = QueryFactory.create(str, Syntax.syntaxSPARQL_11);
+        MappedConcept<DatasetGraph> mc = QueryTransformConstructGroupedGraph.query2(q, Vars.s);
+        QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://fp7-pp.publicdata.eu/sparql", "http://fp7-pp.publicdata.eu/").create();
+
+        System.out.println(mc);
+        LookupService<Node, DatasetGraph> ls = LookupServiceUtils.createLookupService(qef, mc);
+        Map<Node, DatasetGraph> map = ls.apply(Arrays.<Node>asList(NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/project/231648"),  NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/project/231549")));
+        //ListService<Concept, Node, Graph> ls = ListServiceUtils.createListServiceMappedConcept(qef, mc, false);
+        //Map<Node, Graph> map = ls.fetchData(null, 10l, 0l);
+
+
+        for(Entry<Node, DatasetGraph> entry : map.entrySet()) {
+
+
+            System.out.println("=====================================");
+            System.out.println(entry.getKey());
+
+            DatasetGraphUtils.write(System.out, entry.getValue());
+            //entry.getValue().write(System.out, "N-TRIPLES");
+            //Model m = ModelFactory.createModelForGraph(entry.getValue());
+            //m.write(System.out, "TURTLE");
+        }
+
+        //main3(args);
+    }
+
+    public static void write(PrintStream out, Map<Node, DatasetGraph> map) {
+        for(Entry<Node, DatasetGraph> entry : map.entrySet()) {
+
+
+            System.out.println("=====================================");
+            System.out.println(entry.getKey());
+
+            DatasetGraphUtils.write(out, entry.getValue());
+            //entry.getValue().write(System.out, "N-TRIPLES");
+            //Model m = ModelFactory.createModelForGraph(entry.getValue());
+            //m.write(System.out, "TURTLE");
+        }
+
+    }
+
+    public static void main3(String[] args) throws Exception {
+
+        Map<String, MapTransformer> keyToTransformer = new HashMap<String, MapTransformer>();
+        keyToTransformer.put("$concept", new MapTransformerSimple());
+
+
+        PrefixMapping pm = getDefaultPrefixMapping();
+
+
+        String testx = "Prefix ex: <http://example.org/> Insert { ?s ex:osmId ?o ; ex:o ?oet ; ex:i ?oei } Where { ?s ex:locationString ?l . Bind(nominatim:geocode(?l) As ?x) . Bind(str(json:path(?x, '$[0].osm_type')) As ?oet) . Bind(str(json:path(?x, '$[0].osm_id')) As ?oei) . Bind(uri(concat('http://linkedgeodata.org/triplify/', ?oet, ?oei)) As ?o) }";
+
+
+        UpdateRequest test = new UpdateRequest();
+        test.setPrefixMapping(pm);
+        UpdateFactory.parse(test, testx);
+
+
+//        ResourceShapeBuilder b = new ResourceShapeBuilder(pm);
+//        //b.outgoing("rdfs:label");
+//        b.outgoing("geo:lat");
+//        b.outgoing("geo:long");
+//        b.outgoing("geo:geometry");
+//        b.outgoing("geom:geometry").outgoing("ogc:asWKT");
+
+        //b.outgoing("rdf:type").outgoing(NodeValue.TRUE).incoming(ExprUtils.parse("?p = rdfs:label && langMatches(lang(?o), 'en')", pm));
+
+        //ElementTriplesBlock
+        //com.hp.hpl.jena.sparql.syntax.
+
+        //Concept concept = Concept.parse("?s | ?s a <http://linkedgeodata.org/ontology/Castle>");
+        //Concept concept = Concept.parse("?s | Filter(?s = <http://linkedgeodata.org/triplify/node289523439> || ?s = <http://linkedgeodata.org/triplify/node290076702>)");
+        /*
+        shape: {
+            'fp7o:funding': {
+              'fp7o:partner': {
+                'fp7o:address': {
+                  'fp7o:country': 'rdfs:label',
+                  'fp7o:city': 'rdfs:label'
+                }
+              }
+            }
+
+
+issue: this query syntax will allocate blank nodes :(
+yet, we can map them to variables, convert the query to a select form, and group by one of the variables
+we can then use an automaton representation and minimize the states, and convert it back to a sparql query
+            Prefix o: <http://fp7-pp.publicdata.eu/ontology/>
+            Prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            Construct {
+              ?s
+                o:funding [
+                  o:partner [
+                    o:address [
+                      o:country [ rdfs:label ?col ] ;
+                      o:city [ rdfs:label ?cil ]
+                    ]
+                  ]
+                ]
+            }
+            */
+//BeanDefinitionHolder x = new
+        //BeanDefinitionReaderUtils.
+
+
+        ResourceShapeParserJsonObject parser = new ResourceShapeParserJsonObject(pm);
+        Map<String, Object> json = readJsonResource("workflow.js");
+
+        String str = (String)json.get("locationString");
+        Modifier<DatasetGraph> m = new ModifierDatasetGraphSparqlUpdate(str);
+
+        ResourceShape rs = parser.parse(json.get("shape"));
+
+        ResourceShape lgdShape = parser.parse(json.get("lgdShape"));
+
+        System.out.println(lgdShape);
+
+        Concept concept = Concept.parse("?s | Filter(?s = <http://fp7-pp.publicdata.eu/resource/project/257943> || ?s = <http://fp7-pp.publicdata.eu/resource/project/256975>)");
+
+
+        //Query query = ResourceShape.createQuery(rs, concept);
+        MappedConcept<DatasetGraph> mappedConcept = ResourceShape.createMappedConcept2(rs, concept);
+        System.out.println(mappedConcept);
+        MappedConcept<DatasetGraph> mcLgdShape = ResourceShape.createMappedConcept2(lgdShape, null);
+
+        //LookupServiceTransformKey.create(LookupServiceTransformValue.create(base, fn), keyMapper)
+        //LookupServiceListService
+
+            QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://fp7-pp.publicdata.eu/sparql", "http://fp7-pp.publicdata.eu/").create();
+
+        QueryExecutionFactory qefLgd = FluentQueryExecutionFactory.http("http://linkedgeodata.org/sparql", "http://linkedgeodata.org").create();
+
+        //tmp:enrich
+
+        String osmIdToLgd = "Insert { ?s tmp:enrich ?o } Where { ?s tmp:osmId ?id ; tmp:osmEntityType ?et. Bind(concat('http://linkedgeodata.org/triplify/', ?et, ?et) As ?x) }";
+        String enrichToSameAs = "Modify Insert { ?s owl:sameAs ?o } Delete { ?s tmp:enrich ?o } Where { ?s tmp:enrich ?o }";
+        String fuse1 = "Modify Insert { ?s ?p ?o } Delete { ?x ?p ?o } Where { ?x tmp:fuse ?s ; ?s ?p ?o }";
+        //String fuse2 = "Delete { ?s ?p ?o }"
+
+
+        //LookupService<Node, Graph> ls = LookupServiceUtils.createLookupService(qef, mappedConcept);
+
+        LookupService<Node, DatasetGraph> lsLgdX = LookupServiceListService.create(ListServiceResourceShape.create(qefLgd, lgdShape, true));
+
+        //LookupService<Node, Graph> lsLgdX = LookupServiceUtils.createLookupService(qefLgd, mcLgdShape);
+        //LookupService<Node, Model> lsLgd2 = LookupServiceTransformValue.create(lsLgdX, F_GraphToModel.fn);
+        //LookupService<Resource, Model> lsLgd = LookupServiceTransformKey2.create(lsLgd2, F_ResourceToNode.fn, F_NodeModelToResource.<Resource>create());
+
+        //ListServiceUtils.
+
+        //LookupServiceTransformValue.create(lsLgd, );
+
+        Concept enrich = Concept.parse("?id | ?s ex:osmId ?id", pm);
+        Modifier<DatasetGraph> lgdEnrich = new ModifierDatasetGraphEnrich(lsLgdX, enrich);
+
+
+
+        ListService<Concept, Node, DatasetGraph> ls = ListServiceUtils.createListServiceMappedConcept(qef, mappedConcept, true);
+
+        Map<Node, DatasetGraph> nodeToDatasetGraph = ls.fetchData(concept, null, null);
+
+
+        //Map<Resource, Model> resToModel = new LinkedHashMap<Resource, Model>();
+        //Map<Resource, Model> resToModel = FN_ToModel.transform(new LinkedHashMap<Resource, Model>(), nodeToGraph, FN_ToModel.fn);
+        //resToModel.entrySet().addAll(Collections2.transform(nodeToGraph.entrySet(), FN_ToModel.fn));
+
+        Modifier<DatasetGraph> modi = new ModifierDatasetGraphSparqlUpdate(test);
+
+        for(Entry<Node, DatasetGraph> entry : nodeToDatasetGraph.entrySet()) {
+
+            m.apply(entry.getValue());
+            modi.apply(entry.getValue());
+            lgdEnrich.apply(entry.getValue());
+
+            System.out.println("=====================================");
+            System.out.println(entry.getKey());
+            //entry.getValue().write(System.out, "N-TRIPLES");
+
+            DatasetGraphUtils.write(System.out, entry.getValue());
+        }
+        //System.out.println(nodeToGraph);
+
+
+        //QueryExecution qe = qef.createQueryExecution(query);
+        //Model model = qe.execConstruct();
+        //ResultSet resultSet = qe.execSelect();
+
+        //model.write(System.out, "TURTLE");
+        //System.out.println(ResultSetFormatter.asText(resultSet));
+
+
+
+//        List<Concept> concepts = ResourceShape.collectConcepts(b.getResourceShape());
+//        for(Concept concept : concepts) {
+//            System.out.println(concept);
+//        }
+    }
+
+
+    public static <T> T readJsonResource(String r) throws IOException {
+        String str = readResource(r);
+        T result = readJson(str);
+        return result;
+    }
+
+    public static <T> T readJson(String str) throws IOException {
+        Gson gson = new Gson();
+
+        //String str = readResource(r);
+        Reader reader = new StringReader(str); //new InputStreamReader(in);
+
+        JsonReader jsonReader = new JsonReader(reader);
+        jsonReader.setLenient(true);
+        Object tmp = gson.fromJson(jsonReader, Object.class);
+
+        @SuppressWarnings("unchecked")
+        T result = (T)tmp;
+        return result;
+    }
+
+
+    public static String readResource(String r) throws IOException {
+        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+        org.springframework.core.io.Resource resource = resolver.getResource(r);
+        InputStream in = resource.getInputStream();
+        String result = StreamUtils.toString(in);
+        return result;
+    }
+
+    public static JsonElement readJsonElementFromResource(String r) throws IOException {
+        String str = readResource(r);
+        JsonElement result = readJsonElement(str);
+        return result;
+    }
+
+//    public static JsonElement readJsonElementFromResource(Resource resource) throws IOException {
+//
+//    }
+
+
+    public static JsonElement readJsonElement(String str) throws IOException {
+        Gson gson = new Gson();
+
+        Reader reader = new StringReader(str); //new InputStreamReader(in);
+        JsonReader jsonReader = new JsonReader(reader);
+        jsonReader.setLenient(true);
+        JsonElement result = gson.fromJson(jsonReader, JsonElement.class);
+
+        return result;
+    }
+
+
+    /**
+     * @param args
+     * @throws JobParametersInvalidException
+     * @throws JobInstanceAlreadyCompleteException
+     * @throws JobRestartException
+     * @throws JobExecutionAlreadyRunningException
+     */
+    public static void main2(String[] args) throws Exception
+    {
+
+
+        Map<String, String> classAliasMap = new HashMap<String, String>();
+        classAliasMap.put("QueryExecutionFactoryHttp", QueryExecutionFactoryHttp.class.getCanonicalName());
+
+        String str = readResource("workflow.json");
+        Map<String, Object> data = readJson(str);
+        System.out.println(data);
+
+
+        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
+
+        ContextProcessorJsonUtils.processContext(context, ((Map)data.get("job")).get("context"), classAliasMap);
+
+        context.refresh();
+
+        //System.exit(0);
+
+
+        //Gson gson = (new GsonBuilder()).
+
+        //cleanUp();
+        System.out.println("Test");
+
+        BatchWorkflowManager workflowManager = BatchWorkflowManager.createTestInstance();
+
+
+//        JobExecution je = workflowManager.launchWorkflowJob(str);
+//
+//
+//        if(je.getStatus().equals(BatchStatus.COMPLETED)) {
+////            ResultSet rs = ResultSetFactory.fromXML(new FileInputStream(fileName));
+////            while(rs.hasNext()) {
+////                System.out.println(rs.nextBinding());
+////            }
+//        }
+
+        //JobExecution je = launchSparqlExport("http://linkedgeodata.org/sparql", Arrays.asList("http://linkedgeodata.org"), "Select * { ?s a <http://linkedgeodata.org/ontology/Airport> }", "/tmp/lgd-airport-uris.txt");
+//
+//        for(;;) {
+//            Collection<StepExecution> stepExecutions = je.getStepExecutions();
+//
+//            for(StepExecution stepExecution : stepExecutions) {
+//                ExecutionContext sec = stepExecution.getExecutionContext();
+//                //long processedItemCount = sec.getLong("FlatFileItemWriter.current.count");
+//                System.out.println("CONTEXT");
+//                System.out.println(sec.entrySet());
+//                Thread.sleep(5000);
+//                //System.out.println(processedItemCount);
+//            }
+//
+//
+//            //Set<Entry<String, Object>> entrySet = je.getExecutionContext().entrySet();
+//            //ExecutionContext ec = je.getExecutionContext();
+//            //ec.
+//            //System.out.println(entrySet);
+//        }
+
+
+        //ed.shutdown();
+    }
+
+
+}

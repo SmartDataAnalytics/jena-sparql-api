@@ -7,11 +7,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.GregorianCalendar;
-import java.util.List;
 
 import org.aksw.commons.collections.IClosable;
 import org.aksw.commons.util.StreamUtils;
@@ -22,61 +19,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-class CloseActionCollection
-	implements IClosable
-{
-	private Collection<IClosable> closables;
-	
-	public CloseActionCollection() {
-		closables = new ArrayList<IClosable>();
-	}
-	
-	public CloseActionCollection(Collection<IClosable> closables) {
-		this.closables = closables; 
-	}
-	
-	public Collection<IClosable> getClosables() {
-		return this.closables;
-	}
-
-	@Override
-	public void close() {
-		List<Exception> exceptions = null;
-		for(IClosable closable: closables) {
-			try {
-				closable.close();
-			} catch(Exception e) {
-				if(exceptions == null) {
-					exceptions = new ArrayList<Exception>();
-					exceptions.add(e);
-				}
-			}
-		}
-		
-		if(exceptions != null) {
-			throw new RuntimeException(exceptions.size() + " exceptions thrown." + exceptions);
-		}		
-	}
-}
-
-
-//enum Transaction {
-//	Nothing,
-//	Commit,
-//	Rollback,
-//}
-//
-//class CloseActionConnection
-//	implements IClosable
-//{
-//	private Connection conn;
-//	
-//	public CloseActionConnection(Connection conn) {
-//		
-//	}
-//}
-
-
+/**
+ * 
+ * 
+ * @author raven
+ *
+ */
 public class CacheBackendDaoPostgres
     implements CacheBackendDao
 {	
@@ -99,6 +47,7 @@ public class CacheBackendDaoPostgres
 	}
 
 	/**
+	 * @param closeConn Whether to COMMIT(!) AND CLOSE the connection after consuming or closing the result of a lookup operation
 	 */
 	@Override
 	public CacheEntryImpl lookup(final Connection conn, String service, String queryString, final boolean closeConn) throws SQLException
@@ -138,12 +87,17 @@ public class CacheBackendDaoPostgres
             
             @Override
             public void close() {
-                if(!isClosed) {                
+                if(!isClosed) {
                     SqlUtils.close(rs);
                     SqlUtils.close(stmt);
                     
                     if(closeConn) {
                         //System.out.println("ConnectionWatch Closed (lookup) " + conn);
+                        try {
+                            conn.commit();
+                        } catch(Exception e) {
+                            throw new RuntimeException(e);
+                        }
                         SqlUtils.close(conn);
                     }
                 }
@@ -211,6 +165,9 @@ public class CacheBackendDaoPostgres
 
 		//rs = executeQuery(Query.LOOKUP, md5);
 
+		
+		// Unfortunately we have to read the whole string into memory, as the postgres driver otherwise raises
+		// an exception that writing from an InputStream into the database is not supported :(
 		String hack;
 		try {
             hack = StreamUtils.toString(in);
@@ -218,7 +175,7 @@ public class CacheBackendDaoPostgres
             throw new RuntimeException(e);
         }
 		
-		// hack should be in
+		// hack should be the InputStream 'in'
 		if(doesEntryExist) {
 			SqlUtils.execute(conn, QUERY_UPDATE, Void.class, hack, timestamp, md5);
 		} else {

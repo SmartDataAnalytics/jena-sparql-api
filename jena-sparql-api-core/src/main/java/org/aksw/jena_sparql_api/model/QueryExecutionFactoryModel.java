@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.model;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactoryBackQuery;
 
+import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.QueryExecutionFactory;
@@ -22,6 +23,10 @@ public class QueryExecutionFactoryModel
     public QueryExecutionFactoryModel()
     {
         this.model = ModelFactory.createDefaultModel();
+    }
+
+    public QueryExecutionFactoryModel(Graph graph) {
+        this(ModelFactory.createModelForGraph(graph));
     }
 
     public QueryExecutionFactoryModel(Model model)
@@ -45,8 +50,8 @@ public class QueryExecutionFactoryModel
 
     @Override
     public QueryExecution createQueryExecution(Query query) {
-    	QueryExecution result = QueryExecutionFactory.create(query, model);
-    	//QueryExecution result = QueryExecutionWrapper.wrap(tmp);
-    	return result;
+        QueryExecution result = QueryExecutionFactory.create(query, model);
+        //QueryExecution result = QueryExecutionWrapper.wrap(tmp);
+        return result;
     }
 }

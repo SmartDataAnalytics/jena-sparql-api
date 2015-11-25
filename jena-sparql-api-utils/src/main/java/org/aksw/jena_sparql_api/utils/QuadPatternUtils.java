@@ -1,6 +1,8 @@
 package org.aksw.jena_sparql_api.utils;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -13,11 +15,13 @@ import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.sparql.core.BasicPattern;
 import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.sparql.core.QuadPattern;
+import com.hp.hpl.jena.sparql.core.Var;
 import com.hp.hpl.jena.sparql.graph.GraphFactory;
 import com.hp.hpl.jena.sparql.util.NodeComparator;
 import com.hp.hpl.jena.sparql.util.TripleComparator;
 
 public class QuadPatternUtils {
+
 
     public static String toNTripleString(QuadPattern quadPattern) throws Exception {
 
@@ -121,17 +125,34 @@ public class QuadPatternUtils {
     }
 
     public static Map<Node, Graph> indexAsGraphs(Iterable<Quad> quads) {
+        Map<Node, Graph> result = indexAsGraphs(quads.iterator());
+        return result;
+    }
+
+    public static Map<Node, Graph> indexAsGraphs(Iterator<Quad> it) {
         Map<Node, Graph> result = new HashMap<Node, Graph>();
-        for(Quad q : quads) {
-            Graph graph = result.get(q.getGraph());
+        while(it.hasNext()) {
+            Quad quad = it.next();
+
+            Graph graph = result.get(quad.getGraph());
             if(graph == null) {
                 graph = GraphFactory.createDefaultGraph();
-                result.put(q.getGraph(), graph);
+                result.put(quad.getGraph(), graph);
             }
 
-            graph.add(q.asTriple());
+            graph.add(quad.asTriple());
         }
 
+        return result;
+    }
+
+    public static Set<Var> getVarsMentioned(Iterable<Quad> quadPattern) {
+        Set<Var> result = new HashSet<Var>();
+        for (Quad quad : quadPattern) {
+            Set<Var> tmp = QuadUtils.getVarsMentioned(quad);
+            result.addAll(tmp);
+        }
+    
         return result;
     }
 

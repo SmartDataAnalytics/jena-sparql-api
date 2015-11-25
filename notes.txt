@@ -1,0 +1,2 @@
+Set version of a multi module project
+mvn versions:set -DnewVersion=2.13.0-1-SNAPSHOT

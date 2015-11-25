@@ -1,54 +1,76 @@
 package org.aksw.jena_sparql_api.core;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
 
 import org.aksw.jena_sparql_api.cache.core.QueryExecutionFactoryCacheEx;
 import org.aksw.jena_sparql_api.cache.extra.CacheFrontend;
-//import org.aksw.jena_sparql_api.cache.core.QueryExecutionFactoryCacheEx;
-//import org.aksw.jena_sparql_api.cache.extra.CacheFrontend;
-import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.pagination.core.QueryExecutionFactoryPaginated;
+import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
+
+import com.hp.hpl.jena.sparql.core.DatasetDescription;
+
 
 public class SparqlServiceFactoryImpl
     implements SparqlServiceFactory
 {
-    private Map<String, QueryExecutionFactory> keyToSparqlService = new HashMap<String, QueryExecutionFactory>();
+    private Map<String, SparqlService> keyToSparqlService = new HashMap<String, SparqlService>();
 
-    private CacheFrontend cacheFrontend = null;
+    private CacheFrontend cacheFrontend;
+    private SparqlServiceFactory delegate;
+    private Integer pageSize;;
 
     public SparqlServiceFactoryImpl(CacheFrontend cacheFrontend) {
+        this(new SparqlServiceFactoryHttp(), cacheFrontend, null);
+    }
+
+    public SparqlServiceFactoryImpl(CacheFrontend cacheFrontend, Integer pageSize) {
+        this(new SparqlServiceFactoryHttp(), cacheFrontend, pageSize);
+    }
+
+    public SparqlServiceFactoryImpl(Integer pageSize) {
+        this(new SparqlServiceFactoryHttp(), null, pageSize);
+    }
+
+    public SparqlServiceFactoryImpl(SparqlServiceFactory delegate, CacheFrontend cacheFrontend, Integer pageSize) {
+        this.delegate = delegate;
         this.cacheFrontend = cacheFrontend;
+        this.pageSize = pageSize;
     }
 
     @Override
-    public QueryExecutionFactory createSparqlService(String serviceUri, Collection<String> defaultGraphUris) {
+    public SparqlService createSparqlService(String serviceUri, DatasetDescription datasetDescription, Object authenticator) {
 
-        Set<String> tmp = new TreeSet<String>(defaultGraphUris);
-        String key = serviceUri + tmp;
+    	if(datasetDescription == null) {
+    		datasetDescription = new DatasetDescription();
+    	}
 
-        QueryExecutionFactory result;
+        String str = DatasetDescriptionUtils.toString(datasetDescription);
+        String key = serviceUri + str;
+
+        SparqlService result;
 
         result = keyToSparqlService.get(key);
 
         if(result == null) {
 
-            result = new QueryExecutionFactoryHttp(serviceUri, defaultGraphUris);
-            //result = new QueryExecutionFactoryPag
-//            result = new QueryExecutionFactoryDelay(result, 1000l); // 1 second delay between queries
-            //result = new QueryExecutionFactoryRetry(result, 3, 5000l); // 3 retries, 5 second delay between retries
+            SparqlService tmp = delegate.createSparqlService(serviceUri, datasetDescription, authenticator);
+
+            QueryExecutionFactory qef = tmp.getQueryExecutionFactory();
+
             if(cacheFrontend != null) {
-                result = new QueryExecutionFactoryCacheEx(result, cacheFrontend);
+                qef = new QueryExecutionFactoryCacheEx(qef, cacheFrontend);
             }
-            result = new QueryExecutionFactoryPaginated(result);
+
+            if(pageSize != null && pageSize >= 0) {
+                qef = new QueryExecutionFactoryPaginated(qef);
+            }
+
+            result = new SparqlServiceImpl(qef, tmp.getUpdateExecutionFactory());
 
             keyToSparqlService.put(key, result);
         }
 
         return result;
     }
-
 }

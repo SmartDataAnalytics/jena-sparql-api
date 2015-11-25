@@ -16,45 +16,45 @@ import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.geom.PrecisionModel;
 import com.vividsolutions.jts.operation.distance.DistanceOp;
 
-//class 
+//class
 
 public class LinkGeomizer {
     public static Map<Triple, Geometry> geomize(Iterable<Triple> triples, LookupService<Node, Geometry> lookupServiceSubjects, LookupService<Node, Geometry> lookupServiceObjects) {
         Map<Triple, Geometry> result = new HashMap<Triple, Geometry>();
-        
+
         Set<Node> subjects = new HashSet<Node>();
         Set<Node> objects = new HashSet<Node>();
-        
+
         for(Triple triple : triples) {
             subjects.add(triple.getSubject());
             objects.add(triple.getObject());
         }
-        
-        Map<Node, Geometry> mapSubjects = lookupServiceSubjects.lookup(subjects);
-        Map<Node, Geometry> mapObjects = lookupServiceObjects.lookup(objects);
-        
+
+        Map<Node, Geometry> mapSubjects = lookupServiceSubjects.apply(subjects);
+        Map<Node, Geometry> mapObjects = lookupServiceObjects.apply(objects);
+
         System.out.println("mapSubjects: " + mapSubjects);
         System.out.println("mapObjects: " + mapObjects);
-        
+
         GeometryFactory gf = new GeometryFactory(new PrecisionModel(PrecisionModel.FLOATING), 4326);
-        
+
         for(Triple triple : triples) {
             Geometry gs = mapSubjects.get(triple.getSubject());
             Geometry go = mapObjects.get(triple.getObject());
-            
+
             if(gs == null || go == null) {
                 continue;
             }
-            
+
             Coordinate[] coordinates = DistanceOp.nearestPoints(gs, go);
 
 //            Point ps = GeometryFactory.createPointFromInternalCoord(points[0], gs);
 //            Point po = GeometryFactory.createPointFromInternalCoord(points[1], go);
-            
+
             LineString lineString = gf.createLineString(coordinates);
             result.put(triple, lineString);
         }
-        
+
         return result;
     }
 }

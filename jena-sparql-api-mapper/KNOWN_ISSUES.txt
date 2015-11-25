@@ -1,0 +1,7 @@
+
+Potential design issue:
+- The RdfPopulatorPropertyBase has the targetRdfType set, which is a duplication from the
+  RdfClass's property descriptor. Also, the default implementations' behavior is quite
+  generic, so it appears there is no need to directly bind to a specific RdfType.
+  Maybe the populator should obtain the targetRdfType indirectly
+  either from the populationContext, or from the bean's rdfClass (i.e. beanRdfClass.getPropertyDescriptor(propertyName).getRdfType()

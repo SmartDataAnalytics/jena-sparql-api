@@ -55,6 +55,9 @@ public class QueryExecutionCacheFrontend
 
     public synchronized ResultSet doCacheResultSet()
     {
+        // TODO I think we can now remove the synchronized blocks, as the
+        // CacheBackend does synchronization
+        
         synchronized(this) {
             resource = cacheFrontend.lookup(service, queryString);
             setResource(resource);

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -17,11 +18,14 @@ import javax.ws.rs.core.MediaType;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.Path;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
 import org.aksw.jena_sparql_api.model.QueryExecutionFactoryModel;
 import org.aksw.jena_sparql_api.sparql_path.core.algorithm.ConceptPathFinder;
 import org.aksw.jena_sparql_api.utils.SparqlFormatterUtils;
+import org.aksw.jena_sparql_api.web.utils.AuthenticatorUtils;
 import org.aksw.jena_sparql_api.web.utils.ThreadUtils;
+import org.apache.jena.atlas.web.auth.HttpAuthenticator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +33,7 @@ import com.google.gson.Gson;
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.sparql.core.DatasetDescription;
 
 
 @Service
@@ -43,12 +48,16 @@ public class PathFindingApi {
     @Autowired
     private SparqlServiceFactory sparqlServiceFactory;
 
+    @Autowired
+    private HttpServletRequest req;
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public void findPathsPost(
             @Suspended final AsyncResponse asyncResponse,
             @QueryParam("service-uri") String serviceUri,
             @QueryParam("default-graph-uri") List<String> defaultGraphUris,
+            @QueryParam("named-graph-uri") List<String> namedGraphUris,
             @QueryParam("source-element") String sourceElement,
             @QueryParam("source-var") String sourceVar,
             @QueryParam("target-element") String targetElement,
@@ -59,7 +68,7 @@ public class PathFindingApi {
             @QueryParam("n-paths") Integer nPaths,
             @QueryParam("max-hops") Integer maxHops
     ) throws ClassNotFoundException, SQLException {
-        findPaths(asyncResponse, serviceUri, defaultGraphUris, sourceElement, sourceVar, targetElement, targetVar, joinSummaryServiceUri, joinSummaryGraphUris, queryString, nPaths, maxHops);
+        findPaths(asyncResponse, serviceUri, defaultGraphUris, namedGraphUris, sourceElement, sourceVar, targetElement, targetVar, joinSummaryServiceUri, joinSummaryGraphUris, queryString, nPaths, maxHops);
     }
 
 
@@ -69,6 +78,7 @@ public class PathFindingApi {
             @Suspended final AsyncResponse asyncResponse,
             @FormParam("service-uri") String serviceUri,
             @FormParam("default-graph-uri") List<String> defaultGraphUris,
+            @FormParam("named-graph-uri") List<String> namedGraphUris,
             @FormParam("source-element") String sourceElement,
             @FormParam("source-var") String sourceVar,
             @FormParam("target-element") String targetElement,
@@ -79,13 +89,14 @@ public class PathFindingApi {
             @FormParam("n-paths") Integer nPaths,
             @FormParam("max-hops") Integer maxHops
     ) throws ClassNotFoundException, SQLException {
-        findPaths(asyncResponse, serviceUri, defaultGraphUris, sourceElement, sourceVar, targetElement, targetVar, joinSummaryServiceUri, joinSummaryGraphUris, queryString, nPaths, maxHops);
+        findPaths(asyncResponse, serviceUri, defaultGraphUris, namedGraphUris, sourceElement, sourceVar, targetElement, targetVar, joinSummaryServiceUri, joinSummaryGraphUris, queryString, nPaths, maxHops);
     }
 
     public void findPaths(
             final AsyncResponse response,
             final String serviceUri,
             final List<String> defaultGraphUris,
+            final List<String> namedGraphUris,
             final String sourceElement,
             final String sourceVar,
             final String targetElement,
@@ -97,30 +108,41 @@ public class PathFindingApi {
             final Integer maxHops
     ) throws ClassNotFoundException, SQLException {
 
+        // Must parse the authenticator here (outside of the async thread)
+        final HttpAuthenticator authenticator = AuthenticatorUtils.parseAuthenticator(req);
+
+
         ThreadUtils.start(response, new Runnable() {
             @Override
             public void run() {
                 int _nPaths = nPaths != null? nPaths : 3;
                 int _maxHops = maxHops != null ? maxHops : 3;
 
+
+                DatasetDescription datasetDescription = new DatasetDescription(defaultGraphUris, namedGraphUris);
+
                 Concept sourceConcept = Concept.create(sourceElement, sourceVar);
                 Concept targetConcept = Concept.create(targetElement, targetVar);
 
-                QueryExecutionFactory sparqlService = sparqlServiceFactory.createSparqlService(serviceUri, defaultGraphUris);
-
+                SparqlService sparqlService = sparqlServiceFactory.createSparqlService(serviceUri, datasetDescription, authenticator);
+                QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
                 Model joinSummaryModel;
 
                 List<String> jss = joinSummaryGraphUris != null ? joinSummaryGraphUris : Collections.<String>emptyList();
 
+                DatasetDescription jsDs = new DatasetDescription(jss, Collections.<String>emptyList());
+
                 if(joinSummaryServiceUri != null && !joinSummaryServiceUri.isEmpty()) {
 
-                    QueryExecutionFactory jsSparqlService = sparqlServiceFactory.createSparqlService(joinSummaryServiceUri, jss);
-                    joinSummaryModel = ConceptPathFinder.createJoinSummary(jsSparqlService);
+                    // TODO Add support for authenticating at the join summary service
+                    SparqlService jsSparqlService = sparqlServiceFactory.createSparqlService(joinSummaryServiceUri, jsDs, null);
+                    QueryExecutionFactory jsQef = jsSparqlService.getQueryExecutionFactory();
+                    joinSummaryModel = ConceptPathFinder.createJoinSummary(jsQef);
                 } else {
-                    joinSummaryModel = ConceptPathFinder.createDefaultJoinSummaryModel(sparqlService);
+                    joinSummaryModel = ConceptPathFinder.createDefaultJoinSummaryModel(qef);
                 }
 
-                List<Path> paths = ConceptPathFinder.findPaths(sparqlService, sourceConcept, targetConcept, _nPaths, _maxHops, joinSummaryModel);
+                List<Path> paths = ConceptPathFinder.findPaths(qef, sourceConcept, targetConcept, _nPaths, _maxHops, joinSummaryModel);
 
                 String result;
 
