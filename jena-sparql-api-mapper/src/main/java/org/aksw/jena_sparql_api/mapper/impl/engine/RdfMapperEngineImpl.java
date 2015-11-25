@@ -105,30 +105,33 @@ public class RdfMapperEngineImpl
 
             // Fetch the graph
             QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
-            ResourceShape shape = builder.getResourceShape();
 
-//            MappedConcept<DatasetGraph> mc = ResourceShape.createMappedConcept2(shape, null);
-//            LookupService<Node, DatasetGraph> ls = LookupServiceUtils.createLookupService(qef, mc);
-//            Map<Node, DatasetGraph> map = ls.apply(Collections.singleton(node));
+            if(!rdfType.isSimpleType()) {
+                ResourceShape shape = builder.getResourceShape();
 
-
-            MappedConcept<Graph> mc = ResourceShape.createMappedConcept(shape, null);
-            LookupService<Node, Graph> ls = LookupServiceUtils.createLookupService(qef, mc);
-            Map<Node, Graph> map = ls.apply(Collections.singleton(node));
-
-            //ListService<Concept, Node, Graph> ls = ListServiceUtils.createListServiceMappedConcept(qef, mc, true);
-
-//            MappedConcept<Graph> mc = ResourceShape.createMappedConcept(shape, null);
-//            ListService<Concept, Node, Graph> ls = ListServiceUtils.createListServiceMappedConcept(qef, mc, true);
+    //            MappedConcept<DatasetGraph> mc = ResourceShape.createMappedConcept2(shape, null);
+    //            LookupService<Node, DatasetGraph> ls = LookupServiceUtils.createLookupService(qef, mc);
+    //            Map<Node, DatasetGraph> map = ls.apply(Collections.singleton(node));
 
 
-            Graph graph = map.get(node);
-            if(graph != null) {
-                //DatasetGraph datasetGraph = map.get(node);
+                MappedConcept<Graph> mc = ResourceShape.createMappedConcept(shape, null);
+                LookupService<Node, Graph> ls = LookupServiceUtils.createLookupService(qef, mc);
+                Map<Node, Graph> map = ls.apply(Collections.singleton(node));
 
-                Object bean = populationContext.objectFor(typedNode);
+                //ListService<Concept, Node, Graph> ls = ListServiceUtils.createListServiceMappedConcept(qef, mc, true);
 
-                rdfType.populateBean(populationContext, bean, graph);
+    //            MappedConcept<Graph> mc = ResourceShape.createMappedConcept(shape, null);
+    //            ListService<Concept, Node, Graph> ls = ListServiceUtils.createListServiceMappedConcept(qef, mc, true);
+
+
+                Graph graph = map.get(node);
+                if(graph != null) {
+                    //DatasetGraph datasetGraph = map.get(node);
+
+                    Object bean = populationContext.objectFor(typedNode);
+
+                    rdfType.populateBean(populationContext, bean, graph);
+                }
             }
         }
 
