@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.batch.json.domain;
+package org.aksw.jena_sparql_api.batch.json.rewriters;
 
 import org.aksw.gson.utils.JsonVisitorRewrite;
 
