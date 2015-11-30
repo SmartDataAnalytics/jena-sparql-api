@@ -36,7 +36,7 @@
               chunk: 1000,
               source: '#{ source }',
               target: '#{ target }',
-              query: 'Construct Where { ?s ?p ?o }',
+              query: 'CONSTRUCT WHERE { ?s ?p ?o }',
               filter: 'term:valid(?s) && term:valid(?p) && term:valid(?o)'
             } },
 
