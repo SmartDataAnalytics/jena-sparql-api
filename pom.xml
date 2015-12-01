@@ -26,11 +26,11 @@
         <module>jena-sparql-api-example-proxy</module>
 
         <module>jena-sparql-api-concepts</module>
-        <module>jena-sparql-api-batch</module>
         <module>jena-sparql-api-geo</module>
 
         <module>jena-sparql-api-update</module>
         <module>jena-sparql-api-mapper</module>
+        <module>jena-sparql-api-batch</module>
     </modules>
 
     <issueManagement>
