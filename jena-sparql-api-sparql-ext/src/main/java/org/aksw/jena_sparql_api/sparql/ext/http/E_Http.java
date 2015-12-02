@@ -16,6 +16,7 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.net.MediaType;
 import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.sparql.expr.NodeValue;
 import com.hp.hpl.jena.sparql.function.FunctionBase1;
 
@@ -64,6 +65,10 @@ public class E_Http
     }
 
     public NodeValue _exec(NodeValue nv) throws Exception {
+//        if(true) {
+//            return NodeValue.nvNothing;
+//        }
+
         String url;
         if(nv.isString()) {
             url = nv.getString();
@@ -80,7 +85,7 @@ public class E_Http
             try {
                 request = new HttpGet(url);
 
-                System.out.println("HTTP Request: " + request);
+                //System.out.println("HTTP Request: " + request);
 
                 // add request header
                 //request.addHeader("User-Agent", USER_AGENT)
@@ -123,4 +128,12 @@ public class E_Http
 
         return result;
     }
+
+//    public static void main(String[] args) {
+//        E_Http expr = new E_Http();
+//        for(int i  = 0; i < 1000; ++i) {
+//            NodeValue res = expr.exec(NodeValue.makeNode(NodeFactory.createURI("http://cstadler.aksw.org")));
+//            System.out.println(res);
+//        }
+//    }
 }

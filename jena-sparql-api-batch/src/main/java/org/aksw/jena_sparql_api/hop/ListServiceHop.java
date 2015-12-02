@@ -53,7 +53,7 @@ public class ListServiceHop
         //HashMultimap.<Node, Node>create()
         execRec(root, sourceNodes, result, defaultQef, null);
 
-        MainBatchWorkflow.write(System.out, result);
+        //MainBatchWorkflow.write(System.out, result);
 
         return result;
     }

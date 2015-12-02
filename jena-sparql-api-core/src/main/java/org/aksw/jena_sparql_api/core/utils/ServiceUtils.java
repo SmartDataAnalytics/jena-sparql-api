@@ -55,9 +55,13 @@ public class ServiceUtils {
     }
 
     public static List<Node> fetchList(QueryExecution qe, Var v) {
-        ResultSet rs = qe.execSelect();
-        List<Node> result = ResultSetUtils.resultSetToList(rs, v);
-        return result;
+        try {
+            ResultSet rs = qe.execSelect();
+            List<Node> result = ResultSetUtils.resultSetToList(rs, v);
+            return result;
+        } finally {
+            qe.close();
+        }
     }
 
 

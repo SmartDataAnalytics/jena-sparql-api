@@ -42,7 +42,7 @@ public class LookupServiceSparqlQuery
 
     @Override
     public Map<Node, ResultSetPart> apply(Iterable<Node> keys) {
-        System.out.println("Lookup Request with " + Iterables.size(keys) + " keys: " + keys);
+        //System.out.println("Lookup Request with " + Iterables.size(keys) + " keys: " + keys);
 
         Map<Node, ResultSetPart> result = new HashMap<Node, ResultSetPart>();
 
@@ -57,35 +57,41 @@ public class LookupServiceSparqlQuery
             Element newElement = ElementUtils.mergeElements(q.getQueryPattern(), filterElement);
             q.setQueryPattern(newElement);
 
-            System.out.println("Lookup query: " + q);
-
-            QueryExecution qe = sparqlService.createQueryExecution(q);
-            ResultSet rs = qe.execSelect();
+            //System.out.println("Lookup query: " + q);
 
             Map<Node, List<Binding>> map = new HashMap<Node, List<Binding>>();
-            while(rs.hasNext()) {
-                Binding binding = rs.nextBinding();
+            QueryExecution qe = sparqlService.createQueryExecution(q);
+            //List<String> resultVars;
+            try {
+                ResultSet rs = qe.execSelect();
+                List<String> resultVars = new ArrayList<String>(rs.getResultVars());
 
-                Node key = binding.get(var);
+                while(rs.hasNext()) {
+                    Binding binding = rs.nextBinding();
 
-                //ResultSetMem x = (ResultSetMem)result.get(key);
-                List<Binding> x= map.get(key);
-                if(x == null) {
-                    //x = new ResultSetMem();
-                    x = new ArrayList<Binding>();
-                    map.put(key, x);
+                    Node key = binding.get(var);
+
+                    //ResultSetMem x = (ResultSetMem)result.get(key);
+                    List<Binding> x= map.get(key);
+                    if(x == null) {
+                        //x = new ResultSetMem();
+                        x = new ArrayList<Binding>();
+                        map.put(key, x);
+                    }
+
+                    x.add(binding);
                 }
 
-                x.add(binding);
-            }
+                for(Entry<Node, List<Binding>> entry : map.entrySet()) {
+                    //ResultSetStream r = new ResultSetStream(rs.getResultVars(), null, entry.getValue().iterator());
+                    //ResultSetRewindable rsw = ResultSetFactory.makeRewindable(r);
 
-            for(Entry<Node, List<Binding>> entry : map.entrySet()) {
-                //ResultSetStream r = new ResultSetStream(rs.getResultVars(), null, entry.getValue().iterator());
-                //ResultSetRewindable rsw = ResultSetFactory.makeRewindable(r);
+                    ResultSetPart rsp = new ResultSetPart(resultVars, entry.getValue());
 
-                ResultSetPart rsp = new ResultSetPart(rs.getResultVars(), entry.getValue());
-
-                result.put(entry.getKey(), rsp);
+                    result.put(entry.getKey(), rsp);
+                }
+            } finally {
+                qe.close();
             }
         }
 

@@ -81,6 +81,7 @@ WHERE { \
                 chunk: 1,
                 service: '#{ geocoderCache }',
                 concept: '?l | { ?x tmp:hasLocation ?l . Optional { ?x tmp:geocodeJson ?j } Filter(!Bound(?j)) }',
+                //concept: '?l | { ?x tmp:hasLocation ?l }',
                 hop: { $hop: {
                     queries: [
                         [ '?l | CONSTRUCT WHERE { ?x tmp:hasLocation ?l }', '#{ geocoderCache }' ]
