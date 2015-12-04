@@ -39,6 +39,7 @@ import org.aksw.jena_sparql_api.batch.json.rewriters.JsonVisitorRewriteSparqlPip
 import org.aksw.jena_sparql_api.batch.json.rewriters.JsonVisitorRewriteSparqlService;
 import org.aksw.jena_sparql_api.batch.json.rewriters.JsonVisitorRewriteSparqlStep;
 import org.aksw.jena_sparql_api.batch.json.rewriters.JsonVisitorRewriteSparqlUpdate;
+import org.aksw.jena_sparql_api.batch.step.FactoryBeanStepLog;
 import org.aksw.jena_sparql_api.batch.to_review.MapTransformer;
 import org.aksw.jena_sparql_api.batch.to_review.MapTransformerSimple;
 import org.aksw.jena_sparql_api.beans.json.JsonProcessorContext;
@@ -77,6 +78,7 @@ import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersInvalidException;
 import org.springframework.batch.core.configuration.xml.BeanDefinitionUtils;
 import org.springframework.batch.core.job.SimpleJob;
+import org.springframework.batch.core.jsr.configuration.xml.StepFactoryBean;
 import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
 import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
@@ -411,7 +413,8 @@ public class MainBatchWorkflow {
 
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         String str = gson.toJson(json);
-        System.out.println(str);
+        logger.debug("Final JSON specification: " + str);
+        //System.out.println(str);
 
         contextProcessor.process(json);
 
@@ -478,6 +481,7 @@ public class MainBatchWorkflow {
                 new JsonVisitorRewritePrefixes(),
                 new JsonVisitorRewriteHop(),
                 new JsonVisitorRewriteClass("$dataSource", DriverManagerDataSource.class.getName()),
+                new JsonVisitorRewriteClass("$logStep", FactoryBeanStepLog.class.getName()),
                 new JsonVisitorRewriteBeanClassName(),
                 new JsonVisitorRewriteBeanDefinition()
         );

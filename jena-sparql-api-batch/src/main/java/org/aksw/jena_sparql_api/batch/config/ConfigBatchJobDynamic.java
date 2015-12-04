@@ -4,13 +4,12 @@ import org.aksw.jena_sparql_api.batch.BatchWorkflowManager;
 import org.springframework.batch.core.configuration.ListableJobLocator;
 import org.springframework.batch.core.configuration.annotation.AbstractBatchConfiguration;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.explore.JobExplorer;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.batch.core.launch.support.SimpleJobOperator;
 import org.springframework.batch.core.repository.JobRepository;
-import org.springframework.batch.core.scope.StepScope;
+import org.springframework.batch.core.scope.JobScope;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -82,6 +81,12 @@ public class ConfigBatchJobDynamic
     @Autowired
     public BatchWorkflowManager manager(AbstractBatchConfiguration batchConfig) {
         BatchWorkflowManager result = new BatchWorkflowManager(batchConfig);
+        return result;
+    }
+
+    @Bean
+    public JobScope jobScope() {
+        JobScope result = new JobScope();
         return result;
     }
 
