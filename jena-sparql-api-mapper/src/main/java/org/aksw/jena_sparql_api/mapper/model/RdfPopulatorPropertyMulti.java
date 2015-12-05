@@ -31,7 +31,7 @@ import com.hp.hpl.jena.graph.Triple;
  * </pre>
  * The targetRdfType in this case is String.
  *
- * If however MultiValuedProperty is not present, by default an RDF Seq will be used which will be assigned its own IRI and thus identity.
+ * If however @MultiValuedProperty is not present, by default an RDF Seq will be used which will be assigned its own IRI and thus identity.
  *
  *
  * TODO Clarify relation to indexed properties
