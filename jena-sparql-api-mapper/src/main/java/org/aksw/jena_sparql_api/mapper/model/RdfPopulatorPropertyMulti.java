@@ -101,7 +101,7 @@ public class RdfPopulatorPropertyMulti
 
         for(Node o : os) {
             TypedNode typedNode = new TypedNode(targetRdfType, o);
-            Object value = populationContext.objectFor(typedNode);
+            Object value = populationContext.entityFor(typedNode);
             //Object value = rdfType.createJavaObject(o);
             collection.add(value);
         }

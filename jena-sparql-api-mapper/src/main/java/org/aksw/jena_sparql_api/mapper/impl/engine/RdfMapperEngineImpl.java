@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
+import org.aksw.commons.collections.MultiMaps;
 import org.aksw.commons.collections.diff.Diff;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
@@ -31,6 +32,7 @@ import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
 import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
 
 import com.hp.hpl.jena.graph.Graph;
+import com.hp.hpl.jena.graph.GraphUtil;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.sparql.core.DatasetDescription;
@@ -48,6 +50,9 @@ public class RdfMapperEngineImpl
 
     protected RdfTypeFactory typeFactory;
     protected RdfPopulationContext populationContext;
+
+    protected EntityGraphMap entityGraphMap = new EntityGraphMap();
+
 
     public RdfMapperEngineImpl(SparqlService sparqlService, RdfTypeFactory typeFactory) {
         this(sparqlService, typeFactory, new Prologue(), null); //new RdfPopulationContextImpl());
@@ -125,12 +130,15 @@ public class RdfMapperEngineImpl
 
 
                 Graph graph = map.get(node);
+
                 if(graph != null) {
                     //DatasetGraph datasetGraph = map.get(node);
 
-                    Object bean = populationContext.objectFor(typedNode);
+                    Object entity = populationContext.entityFor(typedNode);
+                    entityGraphMap.clearGraph(entity);
+                	entityGraphMap.putAll(graph, entity);
 
-                    rdfType.populateBean(populationContext, bean, graph);
+                    rdfType.populateBean(populationContext, entity, graph);
                 }
             }
         }
@@ -173,6 +181,12 @@ public class RdfMapperEngineImpl
                 ? DatasetGraphFactory.createMem()
                 : interceptor.getDatasetGraph()
                 ;
+
+                {
+                	Graph graph = entityGraphMap.getGraphForEntity(entity);
+                	GraphUtil.addInto(oldState.getDefaultGraph(), graph);
+                }
+
 
         Class<?> clazz = entity.getClass();
         //RdfClass rdfClass = RdfClassFactory.createDefault(prologue).create(clazz);
