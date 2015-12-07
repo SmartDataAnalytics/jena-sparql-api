@@ -43,10 +43,10 @@ public class LookupServiceSparqlConstruct
         this.query = query;
         this.var = var;
     }
-    
+
     @Override
     public Map<Node, Model> apply(Iterable<Node> keys) {
-        System.out.println("Lookup Request with " + Iterables.size(keys) + " keys: " + keys);
+        //System.out.println("Lookup Request with " + Iterables.size(keys) + " keys: " + keys);
 
         Map<Node, Model> result = new HashMap<Node, Model>();
 
@@ -66,7 +66,7 @@ public class LookupServiceSparqlConstruct
             Element newElement = ElementUtils.mergeElements(q.getQueryPattern(), filterElement);
             q.setQueryPattern(newElement);
 
-            System.out.println("Lookup query: " + q);
+            //System.out.println("Lookup query: " + q);
 
             QueryExecution qe = qef.createQueryExecution(q);
             Model fullModel = qe.execConstruct();
@@ -74,7 +74,7 @@ public class LookupServiceSparqlConstruct
             Iterator<Node> it = keys.iterator();
             while(it.hasNext()) {
                 Node key = it.next();
-                               
+
                 Resource s = new ResourceImpl(key, (ModelCom)fullModel);
                 Model tmp = ModelUtils.filterBySubject(fullModel, s);
                 result.put(key, tmp);

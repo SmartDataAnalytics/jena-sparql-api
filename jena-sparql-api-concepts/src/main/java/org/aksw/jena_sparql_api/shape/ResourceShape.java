@@ -27,6 +27,8 @@ import org.aksw.jena_sparql_api.utils.Triples;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -131,6 +133,9 @@ import com.hp.hpl.jena.sparql.syntax.Template;
  *
  */
 public class ResourceShape {
+
+    private static final Logger logger = LoggerFactory.getLogger(ResourceShape.class);
+
     private Map<Relation, ResourceShape> outgoing = new HashMap<Relation, ResourceShape>();
     private Map<Relation, ResourceShape> ingoing = new HashMap<Relation, ResourceShape>();
 
@@ -358,23 +363,23 @@ public class ResourceShape {
 
     public static MappedConcept<DatasetGraph> createMappedConcept2(ResourceShape resourceShape, Concept filter) {
         Query query = createQuery(resourceShape, filter);
-        System.out.println(query);
+        logger.debug("Created query from resource shape: " + query);
         MappedConcept<DatasetGraph> result = createMappedConcept2(query);
         return result;
     }
 
     public static MappedConcept<Graph> createMappedConcept(ResourceShape resourceShape, Concept filter) {
         Query query = createQuery(resourceShape, filter);
-        System.out.println(query);
+        logger.debug("Created query from resource shape: " + query);
         MappedConcept<Graph> result = createMappedConcept(query);
         return result;
     }
 
     public static MappedConcept<DatasetGraph> createMappedConcept2(Query query) {
-    	QuadPattern qp = new QuadPattern();
-    	qp.add(new Quad(Vars.g, Vars.s, Vars.p, Vars.o));
+        QuadPattern qp = new QuadPattern();
+        qp.add(new Quad(Vars.g, Vars.s, Vars.p, Vars.o));
 
-    	Agg<DatasetGraph> agg = new AggDatasetGraph(qp);
+        Agg<DatasetGraph> agg = new AggDatasetGraph(qp);
 
         Concept concept = new Concept(new ElementSubQuery(query), Vars.x);
 

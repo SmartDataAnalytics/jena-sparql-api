@@ -13,7 +13,10 @@ import org.aksw.jena_sparql_api.update.FluentSparqlServiceFactory;
 import org.aksw.jena_sparql_api.update.SinkModelWriter;
 import org.aksw.jena_sparql_api.update.UpdateStrategyEventSource;
 import org.apache.http.client.HttpClient;
+import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.SystemDefaultHttpClient;
+import org.apache.http.impl.conn.PoolingClientConnectionManager;
 import org.apache.jena.riot.web.HttpOp;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -87,7 +90,14 @@ public class ConfigSparqlServicesCore {
 
         HttpInterceptorRdfLogging logger = new HttpInterceptorRdfLogging(sink);
 
-        SystemDefaultHttpClient httpClient = new SystemDefaultHttpClient();
+        PoolingClientConnectionManager connManager = new PoolingClientConnectionManager();
+        connManager.setMaxTotal(100);
+        connManager.setDefaultMaxPerRoute(100);
+
+        DefaultHttpClient httpClient = new DefaultHttpClient(connManager);//new SystemDefaultHttpClient();
+        //httpClient.getConnectionManager().
+
+
         httpClient.addRequestInterceptor(logger);
         httpClient.addResponseInterceptor(logger);
 

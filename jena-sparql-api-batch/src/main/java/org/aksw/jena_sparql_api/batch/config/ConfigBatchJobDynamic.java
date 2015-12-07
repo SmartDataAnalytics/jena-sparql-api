@@ -1,7 +1,6 @@
 package org.aksw.jena_sparql_api.batch.config;
 
 import org.aksw.jena_sparql_api.batch.BatchWorkflowManager;
-import org.aksw.jena_sparql_api.spring.conversion.ConverterRegistryPostProcessor;
 import org.springframework.batch.core.configuration.ListableJobLocator;
 import org.springframework.batch.core.configuration.annotation.AbstractBatchConfiguration;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
@@ -10,13 +9,11 @@ import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.batch.core.launch.support.SimpleJobOperator;
 import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.scope.JobScope;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.convert.support.ConfigurableConversionService;
-import org.springframework.core.convert.support.DefaultConversionService;
 
 
 
@@ -87,5 +84,19 @@ public class ConfigBatchJobDynamic
         return result;
     }
 
+    @Bean
+    public JobScope jobScope() {
+        JobScope result = new JobScope();
+        return result;
+    }
+
+//    @Bean
+//    @Autowired
+//    // JobScope jobScope,
+//    public String deleteThisTest(StepScope stepScope) {
+//        //System.out.println(jobScope);
+//        System.out.println(stepScope);
+//        return "yay";
+//    }
 
 }

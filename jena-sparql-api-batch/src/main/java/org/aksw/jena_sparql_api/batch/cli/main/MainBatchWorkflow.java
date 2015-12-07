@@ -26,6 +26,8 @@ import org.aksw.jena_sparql_api.batch.ListServiceResourceShape;
 import org.aksw.jena_sparql_api.batch.QueryTransformConstructGroupedGraph;
 import org.aksw.jena_sparql_api.batch.config.ConfigBatchJobDynamic;
 import org.aksw.jena_sparql_api.batch.config.ConfigParsersCore;
+import org.aksw.jena_sparql_api.batch.json.rewriters.JsonVisitorRewriteBeanClassName;
+import org.aksw.jena_sparql_api.batch.json.rewriters.JsonVisitorRewriteBeanDefinition;
 import org.aksw.jena_sparql_api.batch.json.rewriters.JsonVisitorRewriteClass;
 import org.aksw.jena_sparql_api.batch.json.rewriters.JsonVisitorRewriteHop;
 import org.aksw.jena_sparql_api.batch.json.rewriters.JsonVisitorRewriteJson;
@@ -37,6 +39,7 @@ import org.aksw.jena_sparql_api.batch.json.rewriters.JsonVisitorRewriteSparqlPip
 import org.aksw.jena_sparql_api.batch.json.rewriters.JsonVisitorRewriteSparqlService;
 import org.aksw.jena_sparql_api.batch.json.rewriters.JsonVisitorRewriteSparqlStep;
 import org.aksw.jena_sparql_api.batch.json.rewriters.JsonVisitorRewriteSparqlUpdate;
+import org.aksw.jena_sparql_api.batch.step.FactoryBeanStepLog;
 import org.aksw.jena_sparql_api.batch.to_review.MapTransformer;
 import org.aksw.jena_sparql_api.batch.to_review.MapTransformerSimple;
 import org.aksw.jena_sparql_api.beans.json.JsonProcessorContext;
@@ -73,11 +76,19 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersInvalidException;
+import org.springframework.batch.core.configuration.xml.BeanDefinitionUtils;
 import org.springframework.batch.core.job.SimpleJob;
+import org.springframework.batch.core.jsr.configuration.xml.StepFactoryBean;
 import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
 import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
 import org.springframework.batch.core.repository.JobRestartException;
+import org.springframework.batch.core.scope.StepScope;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.BeanFactoryUtils;
+import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigUtils;
@@ -314,7 +325,21 @@ public class MainBatchWorkflow {
         return batchContext;
     }
 
-    public static ApplicationContext initContext(ApplicationContext baseContext, JsonElement json) throws Exception {
+    /**
+     * Returns a NON-REFRESHED context object
+     * This means that modifications on the returned object are still allowed,
+     * however .refresh() must be eventually called
+     *
+     *
+     * @param baseContext
+     * @param json
+     * @return
+     * @throws Exception
+     */
+    public static GenericApplicationContext initContext(ApplicationContext baseContext, JsonElement json) throws Exception {
+
+//        Object stepScope = baseContext.getBean("step");
+//        System.out.println("StepScope: " + stepScope);
 
         GenericApplicationContext batchContext = initBatchContext(baseContext);
 
@@ -342,13 +367,13 @@ public class MainBatchWorkflow {
 
 
 
-        JsonElement jobParamsJson = readJsonElementFromResource("params.js");
+        //JsonElement jobParamsJson = readJsonElementFromResource("params.js");
         //List<JsonVisitorRewrite> jr = Arrays.<JsonVisitorRewrite>asList(
 
         JsonVisitorRewriteJobParameters subVisitor = new JsonVisitorRewriteJobParameters();
         JsonVisitorRewriteKeys visitor = JsonVisitorRewriteKeys.create(JsonTransformerRewrite.create(subVisitor, false));
 
-        JsonElement effectiveJobParamsJson = JsonWalker.visit(jobParamsJson, visitor);
+        //JsonElement effectiveJobParamsJson = JsonWalker.visit(jobParamsJson, visitor);
 
         //UserDefinedFunctionFactory fff;
         // my:foo(?x, ?y ?z) = someotherexpression
@@ -359,11 +384,11 @@ public class MainBatchWorkflow {
 
         //JsonElement effectiveJobParamsJson = JsonWalker.rewrite(jobParamsJson, jr);
 
-        System.out.println("Job params: " +  new GsonBuilder().setPrettyPrinting().create().toJson(effectiveJobParamsJson));
+        //System.out.println("Job params: " +  new GsonBuilder().setPrettyPrinting().create().toJson(effectiveJobParamsJson));
 
-        JobParameters jobParams = JobParametersJsonUtils.toJobParameters(effectiveJobParamsJson, null);
+        //JobParameters jobParams = JobParametersJsonUtils.toJobParameters(effectiveJobParamsJson, null);
 
-        System.out.println(jobParams);
+        //System.out.println(jobParams);
 
 
         //System.exit(0);
@@ -388,7 +413,8 @@ public class MainBatchWorkflow {
 
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         String str = gson.toJson(json);
-        System.out.println(str);
+        logger.debug("Final JSON specification: " + str);
+        //System.out.println(str);
 
         contextProcessor.process(json);
 
@@ -397,11 +423,49 @@ public class MainBatchWorkflow {
         //contextProcessor.process(json);
 
 
-        //jobProcessor.process(json);
-
-        batchContext.refresh();
+        //batchContext.refresh();
 
         return batchContext;
+    }
+
+    public static BeanDefinition beanDefinitionOfType(BeanDefinitionRegistry context, Class<?> clazz) {
+        BeanDefinition result = null;
+
+        //jobProcessor.process(json);
+        String[] names = context.getBeanDefinitionNames();
+        for(String name : names) {
+            BeanDefinition bd = context.getBeanDefinition(name);
+            String className = bd.getBeanClassName();
+            Class<?> c;
+            try {
+                c = Class.forName(className);
+            } catch (ClassNotFoundException e) {
+                logger.warn("Unexpected non-fatal expection", e);
+                continue;
+                // Nothing to do here; we just ignore it
+            }
+
+            // If the clazz is a FactoryBean, get its type
+            if(FactoryBean.class.isAssignableFrom(c)) {
+                FactoryBean<?> fb;
+                try {
+                    fb = (FactoryBean<?>)c.newInstance();
+                } catch (Exception e) {
+                    logger.warn("Unexpected non-fatal exception", e);
+                    continue;
+                }
+                c = fb.getObjectType();
+            }
+
+            if(clazz.isAssignableFrom(c)) {
+                result = bd;
+                break;
+            }
+            //BeanFactoryUtils.beanOfType(batchContext, Job.class);
+            //BeanFactoryUtils.
+        }
+
+        return result;
     }
 
     public static JsonElement rewrite(JsonElement json) {
@@ -416,7 +480,10 @@ public class MainBatchWorkflow {
                 new JsonVisitorRewriteSparqlUpdate(),
                 new JsonVisitorRewritePrefixes(),
                 new JsonVisitorRewriteHop(),
-                new JsonVisitorRewriteClass("$dataSource", DriverManagerDataSource.class.getName())
+                new JsonVisitorRewriteClass("$dataSource", DriverManagerDataSource.class.getName()),
+                new JsonVisitorRewriteClass("$logStep", FactoryBeanStepLog.class.getName()),
+                new JsonVisitorRewriteBeanClassName(),
+                new JsonVisitorRewriteBeanDefinition()
         );
         JsonElement result = JsonWalker.rewriteUntilNoChange(json, rewriters);
         return result;

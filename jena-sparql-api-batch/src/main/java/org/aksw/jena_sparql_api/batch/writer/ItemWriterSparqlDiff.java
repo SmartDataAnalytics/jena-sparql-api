@@ -49,7 +49,7 @@ public class ItemWriterSparqlDiff
         } catch(Exception e) {
             if(e instanceof HttpException) {
                 HttpException x = (HttpException)e;
-                String response = ((HttpException) e).getResponse();
+                String response = x.getResponse();
                 throw new RuntimeException(response, e);
             }
 

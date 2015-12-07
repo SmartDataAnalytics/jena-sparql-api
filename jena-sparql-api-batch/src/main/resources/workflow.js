@@ -36,7 +36,7 @@
               chunk: 1000,
               source: '#{ source }',
               target: '#{ target }',
-              query: 'Construct Where { ?s ?p ?o }',
+              query: 'CONSTRUCT WHERE { ?s ?p ?o }',
               filter: 'term:valid(?s) && term:valid(?p) && term:valid(?o)'
             } },
 
@@ -81,6 +81,7 @@ WHERE { \
                 chunk: 1,
                 service: '#{ geocoderCache }',
                 concept: '?l | { ?x tmp:hasLocation ?l . Optional { ?x tmp:geocodeJson ?j } Filter(!Bound(?j)) }',
+                //concept: '?l | { ?x tmp:hasLocation ?l }',
                 hop: { $hop: {
                     queries: [
                         [ '?l | CONSTRUCT WHERE { ?x tmp:hasLocation ?l }', '#{ geocoderCache }' ]

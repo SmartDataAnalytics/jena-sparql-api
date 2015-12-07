@@ -26,11 +26,11 @@
         <module>jena-sparql-api-example-proxy</module>
 
         <module>jena-sparql-api-concepts</module>
-        <module>jena-sparql-api-batch</module>
         <module>jena-sparql-api-geo</module>
 
         <module>jena-sparql-api-update</module>
         <module>jena-sparql-api-mapper</module>
+        <module>jena-sparql-api-batch</module>
     </modules>
 
     <issueManagement>
@@ -876,13 +876,13 @@
             <dependency>
                 <groupId>org.aksw.gson</groupId>
                 <artifactId>gson-utils-core</artifactId>
-                <version>1.0.0-SNAPSHOT</version>
+                <version>1.0.0</version>
             </dependency>
 
             <dependency>
                 <groupId>org.aksw.spring</groupId>
                 <artifactId>spring-json-core</artifactId>
-                <version>1.0.0-SNAPSHOT</version>
+                <version>1.0.1-SNAPSHOT</version>
             </dependency>
 
             <dependency>

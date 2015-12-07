@@ -26,7 +26,8 @@ public class FactoryBeanStepSparqlPipe
 
 
     protected String name;
-    protected int chunkSize;
+    protected int chunkSize = 1000;
+    protected int readSize = 1000;
     protected Query query;
     protected boolean isDelete;
 
@@ -64,10 +65,17 @@ public class FactoryBeanStepSparqlPipe
         return this;
     }
 
+    public int getReadSize() {
+        return readSize;
+    }
+
+    public void setReadSize(int readSize) {
+        this.readSize = readSize;
+    }
+
     public int getChunkSize() {
         return chunkSize;
     }
-
 
     public void setChunkSize(int chunkSize) {
         this.chunkSize = chunkSize;
@@ -125,6 +133,7 @@ public class FactoryBeanStepSparqlPipe
         Predicate<Quad> predicate = filter == null ? null : new PredicateQuadExpr(filter);
 
         ItemReaderQuad reader = new ItemReaderQuad(source, query, predicate);
+        reader.setPageSize(readSize);
         ItemProcessor<? super Quad, ? extends Quad> processor = new PassThroughItemProcessor<Quad>();
         ItemWriterQuad writer = new ItemWriterQuad(target, isDelete);
 

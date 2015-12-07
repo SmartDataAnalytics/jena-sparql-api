@@ -205,14 +205,14 @@ public class RdfMapperEngineImpl
         //rdfClass.emitTriples(out, entity);
         emitTriples(outGraph, entity);
 
-        System.out.println("oldState");
-        DatasetGraphUtils.write(System.out, oldState);
-
-        System.out.println("newState");
-        DatasetGraphUtils.write(System.out, newState);
+//        System.out.println("oldState");
+//        DatasetGraphUtils.write(System.out, oldState);
+//
+//        System.out.println("newState");
+//        DatasetGraphUtils.write(System.out, newState);
 
         Diff<Set<Quad>> diff = UpdateDiffUtils.computeDelta(newState, oldState);
-        System.out.println("diff: " + diff);
+//        System.out.println("diff: " + diff);
         UpdateExecutionFactory uef = sparqlService.getUpdateExecutionFactory();
         UpdateExecutionUtils.executeUpdate(uef, diff);
 
