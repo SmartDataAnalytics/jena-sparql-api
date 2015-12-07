@@ -62,7 +62,7 @@ public class RdfPopulatorPropertySingle
 
         Object value = node == null
                 ? null
-                : populationContext.objectFor(typedNode)
+                : populationContext.entityFor(typedNode)
                 ;//rdfType.createJavaObject(node);
 
         BeanWrapper beanWrapper = new BeanWrapperImpl(bean);

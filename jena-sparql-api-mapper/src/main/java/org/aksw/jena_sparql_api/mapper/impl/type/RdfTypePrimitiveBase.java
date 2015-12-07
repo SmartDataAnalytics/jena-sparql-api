@@ -7,10 +7,10 @@ import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 
 import com.hp.hpl.jena.graph.Graph;
 
-public abstract class RdfTypePrimitive
+public abstract class RdfTypePrimitiveBase
     extends RdfTypeBase
 {
-    public RdfTypePrimitive(RdfTypeFactory typeFactory) {
+    public RdfTypePrimitiveBase(RdfTypeFactory typeFactory) {
         super(typeFactory);
     }
 

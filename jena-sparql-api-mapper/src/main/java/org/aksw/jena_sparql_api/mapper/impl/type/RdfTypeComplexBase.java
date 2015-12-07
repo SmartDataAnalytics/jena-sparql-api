@@ -3,10 +3,10 @@ package org.aksw.jena_sparql_api.mapper.impl.type;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 
 
-public abstract class RdfTypeComplex
+public abstract class RdfTypeComplexBase
     extends RdfTypeBase
 {
-    public RdfTypeComplex(RdfTypeFactory typeFactory) {
+    public RdfTypeComplexBase(RdfTypeFactory typeFactory) {
         super(typeFactory);
     }
 

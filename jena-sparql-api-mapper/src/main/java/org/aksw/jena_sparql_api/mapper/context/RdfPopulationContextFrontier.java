@@ -27,7 +27,7 @@ public class RdfPopulationContextFrontier
     }
 
     @Override
-    public Object objectFor(TypedNode typedNode) {
+    public Object entityFor(TypedNode typedNode) {
         RdfType rdfType = typedNode.getRdfType();
         Node node = typedNode.getNode();
 

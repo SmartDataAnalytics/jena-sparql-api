@@ -1,11 +1,10 @@
 package org.aksw.jena_sparql_api.mapper.context;
 
-import org.aksw.jena_sparql_api.mapper.model.RdfType;
-import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
-
 import com.hp.hpl.jena.graph.Node;
 
 /**
+ * TODO Maybe this could subclass from BeanFactory?
+ *
  * A population context holds information needed to
  * populate a Java object graph.
  *
@@ -48,7 +47,7 @@ public interface RdfPopulationContext
      * @param node
      * @return
      */
-    Object objectFor(TypedNode typedNode);
+    Object entityFor(TypedNode typedNode);
 
 
     /**

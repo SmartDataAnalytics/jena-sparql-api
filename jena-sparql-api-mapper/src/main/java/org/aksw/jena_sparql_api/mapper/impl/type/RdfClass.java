@@ -31,7 +31,7 @@ import com.hp.hpl.jena.sparql.core.DatasetGraphFactory;
  *
  */
 public class RdfClass
-    extends RdfTypeBase
+    extends RdfTypeComplexBase
 {
     // TODO: Add type parameters
 
@@ -342,10 +342,4 @@ public class RdfClass
 
         return result;
     }
-
-    @Override
-    public boolean isSimpleType() {
-        return false;
-    }
-
 }

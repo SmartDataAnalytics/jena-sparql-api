@@ -7,7 +7,7 @@ import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.NodeFactory;
 
 public class RdfTypeLiteralTyped
-    extends RdfTypePrimitive
+    extends RdfTypePrimitiveBase
 {
     protected RDFDatatype rdfDatatype;
 

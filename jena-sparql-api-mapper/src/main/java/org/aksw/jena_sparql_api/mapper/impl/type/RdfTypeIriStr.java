@@ -15,7 +15,7 @@ import com.hp.hpl.jena.sparql.core.DatasetGraph;
  *
  */
 public class RdfTypeIriStr
-    extends RdfTypePrimitive
+    extends RdfTypePrimitiveBase
 {
     public RdfTypeIriStr(RdfTypeFactory typeFactory) {
         super(typeFactory);

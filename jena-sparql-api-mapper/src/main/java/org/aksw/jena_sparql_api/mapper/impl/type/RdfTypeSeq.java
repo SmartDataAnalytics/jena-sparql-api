@@ -18,7 +18,7 @@ import com.hp.hpl.jena.graph.Node;
  *
  */
 public class RdfTypeSeq
-    extends RdfTypeBase
+    extends RdfTypeComplexBase
 {
     public RdfTypeSeq(RdfTypeFactory typeFactory, RdfType itemRdfType) {
         super(typeFactory);
@@ -55,11 +55,6 @@ public class RdfTypeSeq
         return null;
     }
 
-    @Override
-    public boolean isSimpleType() {
-        // TODO Auto-generated method stub
-        return false;
-    }
 
     @Override
     public void emitTriples(RdfEmitterContext emitterContext, Graph out, Object obj) {

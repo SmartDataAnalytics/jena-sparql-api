@@ -46,7 +46,7 @@ public class RdfPopulationContextFragment
 
     //@Override
     public Object objectFor(TypedNode typedNode) {
-        Object result = parentContext.objectFor(typedNode);
+        Object result = parentContext.entityFor(typedNode);
         boolean isPopulated = true;
 
         if(!isPopulated) {
