@@ -24,6 +24,11 @@ public class RDFDatatypeJson
         this.gson = gson;
     }
 
+    @Override
+    public Class<?> getJavaClass() {
+        return Gson.class;
+    }
+
     /**
      * Convert a value of this datatype out
      * to lexical form.

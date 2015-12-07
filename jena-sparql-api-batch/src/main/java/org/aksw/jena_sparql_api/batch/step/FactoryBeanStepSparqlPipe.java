@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.batch.step;
 
+
 import org.aksw.jena_sparql_api.batch.reader.ItemReaderQuad;
 import org.aksw.jena_sparql_api.batch.reader.PredicateQuadExpr;
 import org.aksw.jena_sparql_api.batch.writer.ItemWriterQuad;
@@ -10,6 +11,9 @@ import org.springframework.batch.core.configuration.annotation.StepBuilderFactor
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.support.PassThroughItemProcessor;
+import org.springframework.batch.item.validator.ValidatingItemProcessor;
+import org.springframework.batch.item.validator.ValidationException;
+import org.springframework.batch.item.validator.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.AbstractFactoryBean;
 
@@ -130,11 +134,32 @@ public class FactoryBeanStepSparqlPipe
     @Override
     public Step createInstance() throws Exception {
 
-        Predicate<Quad> predicate = filter == null ? null : new PredicateQuadExpr(filter);
+        final Predicate<Quad> predicate = filter == null ? null : new PredicateQuadExpr(filter);
 
-        ItemReaderQuad reader = new ItemReaderQuad(source, query, predicate);
+        ItemReaderQuad reader = new ItemReaderQuad(source, query);
         reader.setPageSize(readSize);
-        ItemProcessor<? super Quad, ? extends Quad> processor = new PassThroughItemProcessor<Quad>();
+
+        ItemProcessor<? super Quad, ? extends Quad> processor;
+        if(predicate != null) {
+	        ValidatingItemProcessor<Quad> validatingProcessor = new ValidatingItemProcessor<Quad>();
+	        validatingProcessor.setValidator(new Validator<Quad>() {
+				@Override
+				public void validate(Quad quad) throws ValidationException {
+					boolean isValid = predicate.apply(quad);
+					if(!isValid) {
+						throw new ValidationException("A quad failed validation: " + quad);
+					}
+				}
+			});
+	        validatingProcessor.setFilter(true);
+	        validatingProcessor.afterPropertiesSet();
+
+	        processor = validatingProcessor;
+        } else {
+        	processor = new PassThroughItemProcessor<Quad>();
+        }
+
+        //ItemProcessor<? super Quad, ? extends Quad> processor = new PassThroughItemProcessor<Quad>();
         ItemWriterQuad writer = new ItemWriterQuad(target, isDelete);
 
         reader.setPageSize(chunkSize);

@@ -37,7 +37,7 @@ public class EntityGraphMap {
 
 	public void clearGraph(Object entity) {
 		Graph graph = entityToGraph.get(entity);
-		if(graph == null) {
+		if(graph != null) {
 			removeAll(graph, entity);
 		}
 	}

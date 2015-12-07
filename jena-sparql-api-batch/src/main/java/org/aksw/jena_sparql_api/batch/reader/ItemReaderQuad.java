@@ -28,15 +28,15 @@ public class ItemReaderQuad
 {
     private Query query;
     private QueryExecutionFactory qef;
-    private Predicate<Quad> predicate;
+    // TODO Validation is not part of the reader but of the processor!
+    //private Predicate<Quad> predicate;
 
-    public ItemReaderQuad(QueryExecutionFactory qef, Query query, Predicate<Quad> predicate) {
+    public ItemReaderQuad(QueryExecutionFactory qef, Query query) { //, Predicate<Quad> predicate) {
         setName(this.getClass().getName());
         this.qef = qef;
         this.query = query;
-        this.predicate = predicate;
+        //this.predicate = predicate;
     }
-
 
     @Override
     protected Iterator<Quad> doPageRead() {
@@ -57,9 +57,9 @@ public class ItemReaderQuad
             Iterator<Triple> triplesIt = qe.execConstructTriples();
 
             result = Iterators.transform(triplesIt, F_TripleToQuad.fn);
-            if(predicate != null) {
-                result = Iterators.filter(result, predicate);
-            }
+//            if(predicate != null) {
+//                result = Iterators.filter(result, predicate);
+//            }
         }
 
         return result;

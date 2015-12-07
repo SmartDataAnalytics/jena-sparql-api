@@ -20,6 +20,7 @@ import org.aksw.jena_sparql_api.mapper.context.RdfPopulationContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfPopulationContextFrontier;
 import org.aksw.jena_sparql_api.mapper.context.TypedNode;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfClass;
+import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
 import org.aksw.jena_sparql_api.mapper.model.RdfPopulatorProperty;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
@@ -40,6 +41,7 @@ import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import com.hp.hpl.jena.sparql.core.DatasetGraphFactory;
 import com.hp.hpl.jena.sparql.core.Prologue;
 import com.hp.hpl.jena.sparql.core.Quad;
+import com.hp.hpl.jena.sparql.graph.GraphFactory;
 
 public class RdfMapperEngineImpl
     implements RdfMapperEngine
@@ -53,6 +55,9 @@ public class RdfMapperEngineImpl
 
     protected EntityGraphMap entityGraphMap = new EntityGraphMap();
 
+    public RdfMapperEngineImpl(SparqlService sparqlService) {
+        this(sparqlService, RdfTypeFactoryImpl.createDefault(), new Prologue(), null); //new RdfPopulationContextImpl());
+    }
 
     public RdfMapperEngineImpl(SparqlService sparqlService, RdfTypeFactory typeFactory) {
         this(sparqlService, typeFactory, new Prologue(), null); //new RdfPopulationContextImpl());
@@ -184,7 +189,15 @@ public class RdfMapperEngineImpl
 
                 {
                 	Graph graph = entityGraphMap.getGraphForEntity(entity);
-                	GraphUtil.addInto(oldState.getDefaultGraph(), graph);
+                	Graph targetGraph = oldState.getDefaultGraph();
+                	if(targetGraph == null) {
+                		targetGraph = GraphFactory.createDefaultGraph();
+                		oldState.setDefaultGraph(targetGraph);
+                	}
+
+                	if(graph != null) {
+                		GraphUtil.addInto(oldState.getDefaultGraph(), graph);
+                	}
                 }
 
 
@@ -201,7 +214,7 @@ public class RdfMapperEngineImpl
         Node g = NodeFactory.createURI(gStr);
 
         DatasetGraph newState = DatasetGraphFactory.createMem();
-        Graph outGraph = newState.getGraph(g);
+        Graph outGraph = Quad.defaultGraphIRI.equals(g) ? newState.getDefaultGraph() : newState.getGraph(g);
         //rdfClass.emitTriples(out, entity);
         emitTriples(outGraph, entity);
 
