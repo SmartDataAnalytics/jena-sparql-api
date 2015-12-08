@@ -39,7 +39,7 @@ import com.hp.hpl.jena.graph.Node;
 public class RdfPopulationContextFragment
 //	implements RdfPopulationContext
 {
-    protected RdfPopulationContext parentContext;
+    protected RdfPersistenceContext parentContext;
     protected RdfMapperEngineImpl engine;
 
     protected Set<Object> unpopulatedBeans = new HashSet<Object>();

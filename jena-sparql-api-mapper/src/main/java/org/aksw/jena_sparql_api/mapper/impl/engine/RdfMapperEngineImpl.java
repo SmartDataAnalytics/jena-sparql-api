@@ -4,7 +4,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-import org.aksw.commons.collections.MultiMaps;
 import org.aksw.commons.collections.diff.Diff;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
@@ -16,8 +15,8 @@ import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContextFrontier;
-import org.aksw.jena_sparql_api.mapper.context.RdfPopulationContext;
-import org.aksw.jena_sparql_api.mapper.context.RdfPopulationContextFrontier;
+import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
+import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContextFrontier;
 import org.aksw.jena_sparql_api.mapper.context.TypedNode;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfClass;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
@@ -30,7 +29,6 @@ import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.aksw.jena_sparql_api.util.frontier.Frontier;
 import org.aksw.jena_sparql_api.util.frontier.FrontierImpl;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
-import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
 
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.GraphUtil;
@@ -44,16 +42,15 @@ import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.sparql.graph.GraphFactory;
 
 public class RdfMapperEngineImpl
-    implements RdfMapperEngine
+    implements RdfMapperEngine, PersistenceContextSupplier
 {
     protected Prologue prologue;
     //protected QueryExecutionFactory qef;
     protected SparqlService sparqlService;
 
     protected RdfTypeFactory typeFactory;
-    protected RdfPopulationContext populationContext;
+    protected RdfPersistenceContext persistenceContext;
 
-    protected EntityGraphMap entityGraphMap = new EntityGraphMap();
 
     public RdfMapperEngineImpl(SparqlService sparqlService) {
         this(sparqlService, RdfTypeFactoryImpl.createDefault(), new Prologue(), null); //new RdfPopulationContextImpl());
@@ -68,14 +65,18 @@ public class RdfMapperEngineImpl
     }
 
 //QueryExecutionFactory qef
-    public RdfMapperEngineImpl(SparqlService sparqlService, RdfTypeFactory typeFactory, Prologue prologue, RdfPopulationContext populationContext) {
+    public RdfMapperEngineImpl(SparqlService sparqlService, RdfTypeFactory typeFactory, Prologue prologue, RdfPersistenceContext persistenceContext) {
         super();
         this.sparqlService = sparqlService;
         this.typeFactory = typeFactory;
         this.prologue = prologue;
-        this.populationContext = populationContext;
+        this.persistenceContext = persistenceContext != null ? persistenceContext : new RdfPersistenceContextFrontier(new FrontierImpl<TypedNode>());
     }
 
+    @Override
+    public RdfPersistenceContext getPersistenceContext() {
+    	return this.persistenceContext;
+    };
 
     public Prologue getPrologue() {
         return prologue;
@@ -96,11 +97,16 @@ public class RdfMapperEngineImpl
     public <T> T find(Class<T> clazz, Node rootNode) {
         RdfType rootRdfType = typeFactory.forJavaType(clazz);
 
-        Frontier<TypedNode> frontier = new FrontierImpl<TypedNode>();
-        RdfPopulationContext populationContext = new RdfPopulationContextFrontier(frontier);
+
+
+        //Frontier<TypedNode> frontier = new FrontierImpl<TypedNode>();
+        //RdfPersistenceContext persistenceContext = new RdfPersistenceContextFrontier(frontier);
+
+        EntityGraphMap entityGraphMap = persistenceContext.getEntityGraphMap();
 
         TypedNode first = new TypedNode(rootRdfType, rootNode);
 
+        Frontier<TypedNode> frontier = persistenceContext.getFrontier();
         frontier.add(first);
 
         while(!frontier.isEmpty()) {
@@ -139,17 +145,17 @@ public class RdfMapperEngineImpl
                 if(graph != null) {
                     //DatasetGraph datasetGraph = map.get(node);
 
-                    Object entity = populationContext.entityFor(typedNode);
+                    Object entity = persistenceContext.entityFor(typedNode);
                     entityGraphMap.clearGraph(entity);
                 	entityGraphMap.putAll(graph, entity);
 
-                    rdfType.populateBean(populationContext, entity, graph);
+                    rdfType.populateBean(persistenceContext, entity, graph);
                 }
             }
         }
 
         @SuppressWarnings("unchecked")
-        T result = (T)populationContext.getEntity(first);
+        T result = (T)persistenceContext.getEntity(first);
 
         return result;
     }
@@ -188,6 +194,7 @@ public class RdfMapperEngineImpl
                 ;
 
                 {
+                	EntityGraphMap entityGraphMap = persistenceContext.getEntityGraphMap();
                 	Graph graph = entityGraphMap.getGraphForEntity(entity);
                 	Graph targetGraph = oldState.getDefaultGraph();
                 	if(targetGraph == null) {

@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api.mapper.impl.type;
 
 import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
-import org.aksw.jena_sparql_api.mapper.context.RdfPopulationContext;
+import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 
@@ -30,7 +30,7 @@ public abstract class RdfTypePrimitiveBase
     }
 
   @Override
-  public void populateBean(RdfPopulationContext populationContext, Object targetObj, Graph graph) {
+  public void populateBean(RdfPersistenceContext persistenceContext, Object targetObj, Graph graph) {
   }
 
 //	@Override

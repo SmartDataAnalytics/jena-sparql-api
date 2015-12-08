@@ -1,5 +1,8 @@
 package org.aksw.jena_sparql_api.mapper.context;
 
+import org.aksw.jena_sparql_api.mapper.impl.engine.EntityGraphMap;
+import org.aksw.jena_sparql_api.util.frontier.Frontier;
+
 import com.hp.hpl.jena.graph.Node;
 
 /**
@@ -18,7 +21,7 @@ import com.hp.hpl.jena.graph.Node;
  * @author raven
  *
  */
-public interface RdfPopulationContext
+public interface RdfPersistenceContext
 {
     /**
      * Return an Rdf type for a given Java class
@@ -77,6 +80,16 @@ public interface RdfPopulationContext
      * @return
      */
     boolean isPopulated(Object entity);
+
+
+    EntityGraphMap getEntityGraphMap();
+
+    /**
+     * The set of not yet populated type/node pairs.
+     * @return
+     */
+    Frontier<TypedNode> getFrontier();
+    // EntityGraphMap entityGraphMap = new EntityGraphMap();
 
     //boolean setPopulated(O)
 

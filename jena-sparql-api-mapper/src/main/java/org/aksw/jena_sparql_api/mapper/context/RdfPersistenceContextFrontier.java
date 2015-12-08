@@ -1,24 +1,44 @@
 package org.aksw.jena_sparql_api.mapper.context;
 
+import org.aksw.jena_sparql_api.mapper.impl.engine.EntityGraphMap;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.util.frontier.Frontier;
 import org.aksw.jena_sparql_api.util.frontier.FrontierStatus;
 
 import com.hp.hpl.jena.graph.Node;
 
-public class RdfPopulationContextFrontier
-    implements RdfPopulationContext
+public class RdfPersistenceContextFrontier
+    implements RdfPersistenceContext
 {
     protected EntityContext<Object> entityContext = EntityContextImpl.createIdentityContext(Object.class);
     protected EntityContext<TypedNode> typedNodeContext = new EntityContextImpl<TypedNode>();
 
+    protected EntityGraphMap entityGraphMap = new EntityGraphMap();
+
     protected Frontier<TypedNode> frontier;
 
-    public RdfPopulationContextFrontier(Frontier<TypedNode> frontier) {
+    public RdfPersistenceContextFrontier(Frontier<TypedNode> frontier) {
         super();
         this.frontier = frontier;
     }
 
+    public Frontier<TypedNode> getFrontier() {
+		return frontier;
+	}
+
+//	public void setFrontier(Frontier<TypedNode> frontier) {
+//		this.frontier = frontier;
+//	}
+
+	/**
+     * TODO Exposing the entity graph map directly does not seem to be good encapsulation
+     *
+     * @return
+     */
+    @Override
+    public EntityGraphMap getEntityGraphMap() {
+    	return entityGraphMap;
+    }
 
     @Override
     public Object getEntity(TypedNode typedNode) {

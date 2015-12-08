@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.mapper.impl.type;
 
 import org.aksw.jena_sparql_api.concepts.PropertyRelation;
 import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
-import org.aksw.jena_sparql_api.mapper.context.RdfPopulationContext;
+import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.mapper.model.RdfSeqUtils;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
@@ -63,7 +63,7 @@ public class RdfTypeSeq
     }
 
     @Override
-    public void populateBean(RdfPopulationContext populationContext, Object targetObj, Graph graph) {
+    public void populateBean(RdfPersistenceContext persistenceContext, Object targetObj, Graph graph) {
         // TODO Auto-generated method stub
 
     }

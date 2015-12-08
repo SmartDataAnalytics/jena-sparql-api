@@ -72,7 +72,7 @@ public class LookupServiceSparqlQuery
                     Node key = binding.get(var);
 
                     //ResultSetMem x = (ResultSetMem)result.get(key);
-                    List<Binding> x= map.get(key);
+                    List<Binding> x = map.get(key);
                     if(x == null) {
                         //x = new ResultSetMem();
                         x = new ArrayList<Binding>();

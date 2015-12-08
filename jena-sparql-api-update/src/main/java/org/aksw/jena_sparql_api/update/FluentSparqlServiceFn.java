@@ -6,13 +6,18 @@ import org.aksw.jena_sparql_api.core.DatasetListener;
 import org.aksw.jena_sparql_api.core.FluentFnBase;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactoryFn;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.QueryExecutionFactoryDatasetDescription;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.SparqlServiceImpl;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
+import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryDatasetDescription;
+import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
 
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
+import com.hp.hpl.jena.query.Syntax;
 import com.hp.hpl.jena.sparql.core.DatasetDescription;
+import com.hp.hpl.jena.sparql.core.Prologue;
 
 public class FluentSparqlServiceFn<P>
     extends FluentFnBase<SparqlService, P>
@@ -33,7 +38,9 @@ public class FluentSparqlServiceFn<P>
 
                         qef = fn.apply(qef);
 
-                        SparqlService r = new SparqlServiceImpl(qef, uef);
+                        String serviceUri = sparqlService.getServiceUri();
+                        DatasetDescription datasetDescription = sparqlService.getDatasetDescription();
+                        SparqlService r = new SparqlServiceImpl(serviceUri, datasetDescription, qef, uef);
                         return r;
                     }
                 });
@@ -62,7 +69,9 @@ public class FluentSparqlServiceFn<P>
 
                         uef = fn.apply(uef);
 
-                        SparqlService r = new SparqlServiceImpl(qef, uef);
+                        String serviceUri = sparqlService.getServiceUri();
+                        DatasetDescription datasetDescription = sparqlService.getDatasetDescription();
+                        SparqlService r = new SparqlServiceImpl(serviceUri, datasetDescription, qef, uef);
                         return r;
                     }
                 });
@@ -87,8 +96,6 @@ public class FluentSparqlServiceFn<P>
                 //UpdateExecutionFactory uef = new UpdateExecutionFactoryEventSource(updateContext);
                 String serviceUri = sparqlService.getServiceUri();
                 DatasetDescription datasetDescription = sparqlService.getDatasetDescription();
-
-
                 SparqlService r = new SparqlServiceImpl(serviceUri, datasetDescription, qef, uef);
                 return r;
             }
@@ -96,6 +103,58 @@ public class FluentSparqlServiceFn<P>
 
         return this;
     }
+
+//    public FluentSparqlServiceFn<P> withParser(final Syntax syntax, final Prologue prologue) {
+//        compose(new Function<SparqlService, SparqlService>() {
+//            @Override
+//            public SparqlService apply(SparqlService sparqlService) {
+//                QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
+//                qef = new QueryExecutionFactoryDatasetDescription(qef, datasetDescription);
+//
+//                UpdateExecutionFactory uef = sparqlService.getUpdateExecutionFactory();
+//                uef = new UpdateExecutionFactoryDatasetDescription(uef, withIri, datasetDescription);
+//
+//                String serviceUri = sparqlService.getServiceUri();
+//                SparqlService r = new SparqlServiceImpl(serviceUri, datasetDescription, qef, uef);
+//                return r;
+//            }
+//        });
+//
+//    	return result;
+//    }
+
+
+    public FluentSparqlServiceFn<P> withDatasetDescription(final DatasetDescription datasetDescription) {
+    	String withIri = DatasetDescriptionUtils.getSingleDefaultGraphUri(datasetDescription);
+
+    	if(withIri == null) {
+    		throw new RuntimeException("Can only derive a withIri if there is exactly one default graph; got: " + DatasetDescriptionUtils.toString(datasetDescription));
+    	}
+
+    	FluentSparqlServiceFn<P> result = withDatasetDescription(datasetDescription, withIri);
+    	return result;
+    }
+
+    public FluentSparqlServiceFn<P> withDatasetDescription(final DatasetDescription datasetDescription, final String withIri) {
+
+        compose(new Function<SparqlService, SparqlService>() {
+            @Override
+            public SparqlService apply(SparqlService sparqlService) {
+                QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
+                qef = new QueryExecutionFactoryDatasetDescription(qef, datasetDescription);
+
+                UpdateExecutionFactory uef = sparqlService.getUpdateExecutionFactory();
+                uef = new UpdateExecutionFactoryDatasetDescription(uef, withIri, datasetDescription);
+
+                String serviceUri = sparqlService.getServiceUri();
+                SparqlService r = new SparqlServiceImpl(serviceUri, datasetDescription, qef, uef);
+                return r;
+            }
+        });
+
+        return this;
+    }
+
 
     public static FluentSparqlServiceFn<?> start() {
         return new FluentSparqlServiceFn<Object>();

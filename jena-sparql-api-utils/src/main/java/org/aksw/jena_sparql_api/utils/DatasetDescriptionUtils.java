@@ -39,6 +39,10 @@ public class DatasetDescriptionUtils {
         return result;
     }
 
+    public static DatasetDescription createDefaultGraph(Node defaultGraph) {
+    	DatasetDescription result = createDefaultGraph(defaultGraph.getURI());
+    	return result;
+    }
 
     public static DatasetDescription createDefaultGraph(String defaultGraph) {
         DatasetDescription result = new DatasetDescription();

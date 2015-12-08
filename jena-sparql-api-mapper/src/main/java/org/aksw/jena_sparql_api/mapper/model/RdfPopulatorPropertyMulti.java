@@ -4,7 +4,7 @@ import java.beans.PropertyDescriptor;
 import java.util.Collection;
 import java.util.List;
 
-import org.aksw.jena_sparql_api.mapper.context.RdfPopulationContext;
+import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.mapper.context.TypedNode;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.springframework.beans.BeanWrapper;
@@ -93,7 +93,7 @@ public class RdfPopulatorPropertyMulti
 
     @SuppressWarnings("unchecked")
     @Override
-    public void populateBean(RdfPopulationContext populationContext, Object bean, Graph graph, Node subject) {
+    public void populateBean(RdfPersistenceContext populationContext, Object bean, Graph graph, Node subject) {
         // Creates a collection under the given property
         Collection<? super Object> collection = (Collection<? super Object>)getOrCreateBean(bean, propertyName);
 

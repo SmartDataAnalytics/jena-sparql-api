@@ -1,17 +1,42 @@
 package org.aksw.jena_sparql_api.utils;
 
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.query.Query;
+import com.hp.hpl.jena.sparql.core.DatasetDescription;
 import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.sparql.core.Var;
 import com.hp.hpl.jena.sparql.engine.binding.Binding;
 import com.hp.hpl.jena.sparql.syntax.Element;
 
-import java.util.HashSet;
-import java.util.Set;
-
 public class QueryUtils {
+
+	public static void applyDatasetDescription(Query query, DatasetDescription dd) {
+		DatasetDescription present = query.getDatasetDescription();
+		if(present == null && dd != null) {
+			{
+				List<String> items = dd.getDefaultGraphURIs();
+				if(items != null) {
+					for(String item : items) {
+						query.addGraphURI(item);
+					}
+				}
+			}
+
+			{
+				List<String> items = dd.getNamedGraphURIs();
+				if(items != null) {
+					for(String item : items) {
+						query.addNamedGraphURI(item);
+					}
+				}
+			}
+		}
+	}
 
     public static Query fixVarNames(Query query) {
         Query result = query.cloneQuery();

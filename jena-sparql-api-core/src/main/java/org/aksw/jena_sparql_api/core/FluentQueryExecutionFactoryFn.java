@@ -7,12 +7,15 @@ import org.aksw.jena_sparql_api.cache.extra.CacheFrontend;
 import org.aksw.jena_sparql_api.delay.core.QueryExecutionFactoryDelay;
 import org.aksw.jena_sparql_api.limit.QueryExecutionFactoryLimit;
 import org.aksw.jena_sparql_api.pagination.core.QueryExecutionFactoryPaginated;
+import org.aksw.jena_sparql_api.parse.QueryExecutionFactoryParse;
 import org.aksw.jena_sparql_api.prefix.core.QueryExecutionFactoryPrefix;
 import org.aksw.jena_sparql_api.retry.core.QueryExecutionFactoryRetry;
 
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
+import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.shared.PrefixMapping;
+import com.hp.hpl.jena.sparql.core.DatasetDescription;
 
 /**
  * A fluent API for conveniently building 'recipes' of transformations to apply to any QueryExecutionFactory.
@@ -65,6 +68,18 @@ public class FluentQueryExecutionFactoryFn<P>
         return this;
     }
 
+    public FluentQueryExecutionFactoryFn<P> withParser(final Function<String, Query> parser) {
+        compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
+            @Override
+            public QueryExecutionFactory apply(QueryExecutionFactory qef) {
+                QueryExecutionFactory r = new QueryExecutionFactoryParse(qef, parser);
+                return r;
+            }
+        });
+
+        return this;
+    }
+
     public FluentQueryExecutionFactoryFn<P> withPagination(final int pageSize) {
         compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
             @Override
@@ -106,6 +121,19 @@ public class FluentQueryExecutionFactoryFn<P>
             @Override
             public QueryExecutionFactory apply(QueryExecutionFactory qef) {
                 QueryExecutionFactory r = new QueryExecutionFactoryLimit(qef, doCloneQuery, limit);
+                return r;
+            }
+        });
+
+        return this;
+    }
+
+
+    public FluentQueryExecutionFactoryFn<P> withDatasetDescription(final DatasetDescription datasetDescription) {
+        compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
+            @Override
+            public QueryExecutionFactory apply(QueryExecutionFactory qef) {
+                QueryExecutionFactory r = new QueryExecutionFactoryDatasetDescription(qef, datasetDescription);
                 return r;
             }
         });

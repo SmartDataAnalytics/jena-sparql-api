@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.mapper.model;
 
 import java.util.Set;
 
-import org.aksw.jena_sparql_api.mapper.context.RdfPopulationContext;
+import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 
 import com.hp.hpl.jena.graph.Graph;
@@ -57,5 +57,5 @@ public interface RdfPopulator {
      * @param subject
      * @return
      */
-    void populateBean(RdfPopulationContext populationContext, Object bean, Graph graph, Node subject);
+    void populateBean(RdfPersistenceContext populationContext, Object bean, Graph graph, Node subject);
 }

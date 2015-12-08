@@ -30,7 +30,6 @@ public class TestMapperSimple {
 		person.setBirthDate(new GregorianCalendar(2000, 0, 0));
 
 		SparqlService sparqlService = FluentSparqlService.forModel().create();
-
 		EntityManagerJena em = new EntityManagerJena(new RdfMapperEngineImpl(sparqlService));
 		em.persist(person);
 

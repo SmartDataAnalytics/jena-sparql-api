@@ -1,13 +1,9 @@
 package org.aksw.jena_sparql_api.mapper.impl.type;
 
-import org.aksw.jena_sparql_api.mapper.context.RdfPopulationContext;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
-import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 
-import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.NodeFactory;
-import com.hp.hpl.jena.sparql.core.DatasetGraph;
 
 /**
  * RdfType to map Java Strings to IRIs and vice versa

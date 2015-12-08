@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.mapper.model;
 
 import java.util.List;
 
-import org.aksw.jena_sparql_api.mapper.context.RdfPopulationContext;
+import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.mapper.context.TypedNode;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.springframework.beans.BeanWrapper;
@@ -48,7 +48,7 @@ public class RdfPopulatorPropertySingle
     }
 
     @Override
-    public void populateBean(RdfPopulationContext populationContext, Object bean, Graph graph, Node subject) {
+    public void populateBean(RdfPersistenceContext populationContext, Object bean, Graph graph, Node subject) {
 //		Class<?> beanClass = bean.getClass();
 //		RdfType rdfType = populationContext.forJavaType(beanClass);
 //		RdfClass rdfClass = (RdfClass)rdfType;

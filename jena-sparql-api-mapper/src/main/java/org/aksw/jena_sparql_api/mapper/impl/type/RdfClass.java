@@ -8,7 +8,7 @@ import java.util.Map;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
-import org.aksw.jena_sparql_api.mapper.context.RdfPopulationContext;
+import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.mapper.model.RdfPopulator;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.aksw.jena_sparql_api.mapper.proxy.MethodInterceptorRdf;
@@ -72,7 +72,7 @@ public class RdfClass
      * However, the value and the RdfType of the property determine whether
      * additional population is needed.
      *
-     * A populationContext is used to keep track of beans that were not populated yet.
+     * A persistenceContext is used to keep track of beans that were not populated yet.
      *
      * Each property has a corresponding RdfType
      *
@@ -82,7 +82,7 @@ public class RdfClass
     /**
      * PropertyDescriptors map the Java property types to RdfType instances.
      * The population status of a property value depends on the
-     * RdfType and value in regard to a populationContext.
+     * RdfType and value in regard to a persistenceContext.
      *
      */
     protected Map<String, RdfPropertyDescriptor> propertyDescriptors = new HashMap<String, RdfPropertyDescriptor>();
@@ -250,17 +250,17 @@ public class RdfClass
      * @param datasetGraph
      */
     @Override
-    public void populateBean(RdfPopulationContext populationContext, Object bean, Graph graph) {
+    public void populateBean(RdfPersistenceContext persistenceContext, Object bean, Graph graph) {
         //DatasetGraph result = DatasetGraphFactory.createMem();
 
         //Graph graph = result.getDefaultGraph();
-        Node s = populationContext.getRootNode(bean);
+        Node s = persistenceContext.getRootNode(bean);
 
         /*
          *  Run all of this class' populators
          */
         for(RdfPopulator pd : populators) {
-            pd.populateBean(populationContext, bean, graph, s);
+            pd.populateBean(persistenceContext, bean, graph, s);
         }
     }
 
