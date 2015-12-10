@@ -12,6 +12,7 @@ import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
 import org.aksw.jena_sparql_api.utils.transform.F_QueryTransformDatesetDescription;
+import org.aksw.jena_sparql_api.utils.transform.F_QueryTransformLimit;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.junit.Test;
@@ -69,6 +70,7 @@ public class TestMapperMultiProperty {
 					.withDatasetDescription(dd, graphName)
 					.configQuery()
 						.withQueryTransform(F_QueryTransformDatesetDescription.fn)
+						.withQueryTransform(F_QueryTransformLimit.create(1000))
 					.end()
 				.end()
 				.create();

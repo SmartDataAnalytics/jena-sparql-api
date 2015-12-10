@@ -14,6 +14,43 @@ import com.hp.hpl.jena.sparql.engine.binding.Binding;
 import com.hp.hpl.jena.sparql.syntax.Element;
 
 public class QueryUtils {
+	public static Query applyLimit(Query query, Long limit, boolean cloneOnChange) {
+		Long adjustment = getAdjustedLimit(query, limit);
+		if(adjustment != null) {
+			if(cloneOnChange) {
+				query = query.cloneQuery();
+			}
+			query.setLimit(adjustment);
+		}
+
+		return query;
+	}
+
+
+	/**
+	 * Returns the adjusted limit for the given query.
+	 * Null if no adjustment is necessary
+	 *
+	 * @param query
+	 * @param limit
+	 * @return
+	 */
+	public static Long getAdjustedLimit(Query query, Long limit) {
+		Long result = null;
+    	if(limit != null && !limit.equals(Query.NOLIMIT)) {
+	        if(query.getLimit() == Query.NOLIMIT) {
+	            result = limit;
+	        } else {
+	            long tmpLimit = Math.min(limit, query.getLimit());
+
+	            if(tmpLimit != query.getLimit()) {
+	                result = tmpLimit;
+	            }
+	        }
+	    }
+
+    	return result;
+	}
 
 	public static void applyDatasetDescription(Query query, DatasetDescription dd) {
 		DatasetDescription present = query.getDatasetDescription();
