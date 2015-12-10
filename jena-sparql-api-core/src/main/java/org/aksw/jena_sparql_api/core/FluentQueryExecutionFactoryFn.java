@@ -10,6 +10,7 @@ import org.aksw.jena_sparql_api.pagination.core.QueryExecutionFactoryPaginated;
 import org.aksw.jena_sparql_api.parse.QueryExecutionFactoryParse;
 import org.aksw.jena_sparql_api.prefix.core.QueryExecutionFactoryPrefix;
 import org.aksw.jena_sparql_api.retry.core.QueryExecutionFactoryRetry;
+import org.aksw.jena_sparql_api.transform.QueryExecutionFactoryQueryTransform;
 
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
@@ -121,6 +122,18 @@ public class FluentQueryExecutionFactoryFn<P>
             @Override
             public QueryExecutionFactory apply(QueryExecutionFactory qef) {
                 QueryExecutionFactory r = new QueryExecutionFactoryLimit(qef, doCloneQuery, limit);
+                return r;
+            }
+        });
+
+        return this;
+    }
+
+    public FluentQueryExecutionFactoryFn<P> withQueryTransform(final Function<Query, Query> queryTransform){
+        compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
+            @Override
+            public QueryExecutionFactory apply(QueryExecutionFactory qef) {
+                QueryExecutionFactory r = new QueryExecutionFactoryQueryTransform(qef, queryTransform);
                 return r;
             }
         });

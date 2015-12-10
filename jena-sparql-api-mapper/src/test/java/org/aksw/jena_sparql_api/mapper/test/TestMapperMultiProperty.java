@@ -11,18 +11,28 @@ import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
+import org.aksw.jena_sparql_api.utils.transform.F_QueryTransformDatesetDescription;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFDataMgr;
 import org.junit.Test;
+import org.springframework.core.io.ClassPathResource;
 
+import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.datatypes.RDFDatatype;
 import com.hp.hpl.jena.datatypes.TypeMapper;
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.query.ARQ;
+import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.query.DatasetFactory;
+import com.hp.hpl.jena.query.QueryExecution;
+import com.hp.hpl.jena.query.QueryExecutionFactory;
+import com.hp.hpl.jena.query.ResultSet;
+import com.hp.hpl.jena.query.ResultSetFormatter;
+import com.hp.hpl.jena.sparql.ARQConstants;
 import com.hp.hpl.jena.sparql.core.DatasetDescription;
-import com.hp.hpl.jena.sparql.core.DatasetGraph;
-import com.hp.hpl.jena.sparql.core.DatasetGraphFactory;
-import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.sparql.graph.GraphFactory;
 
 public class TestMapperMultiProperty {
@@ -34,47 +44,51 @@ public class TestMapperMultiProperty {
 	 * @throws ParseException
 	 */
 	@Test
-	public void testCherryPicking() throws ParseException {
+	public void testCherryPicking() throws Exception {
+		Dataset ds = DatasetFactory.createMem();
+		RDFDataMgr.read(ds, new ClassPathResource("test-person.nq").getInputStream(), Lang.NQUADS);
+
+		String graphName = ds.listNames().next();
+		Node s = ds.getNamedModel(graphName).listStatements().toSet().iterator().next().asTriple().getSubject();
+
+//		QueryExecution qe = QueryExecutionFactory.create("SELECT * { GRAPH ?g { ?s ?p ?o } }", ds);
+
+
 		RDFDatatype intType = TypeMapper.getInstance().getTypeByClass(Integer.class);
 
-		//Graph graph = GraphFactory.createDefaultGraph();
-		DatasetGraph dg = DatasetGraphFactory.createMem();
-		//Graph graph = dg.getDefaultGraph();
-		Node aut = NodeFactory.createURI("http://ex.org/Austria");
-		Node label = NodeFactory.createURI("http://ex.org/label");
-		Node population = NodeFactory.createURI("http://ex.org/population");
+		DatasetDescription dd = DatasetDescriptionUtils.createDefaultGraph(graphName);
 
-		Node g = aut;
-		dg.add(new Quad(g, aut, label, NodeFactory.createLiteral("Austria")));
-		dg.add(new Quad(g, aut, population, NodeFactory.createLiteral("7", intType)));
-		dg.add(new Quad(g, aut, population, NodeFactory.createLiteral("8", intType)));
-
-//		DatasetDescription dd = DatasetDescriptionUtils.createDefaultGraph(g);
-
-		DatasetDescription dd = new DatasetDescription();//DatasetDescriptionUtils.createDefaultGraph(g);
-		dd.addNamedGraphURI(g.getURI());
-		dd.addDefaultGraphURI(g.getURI());
-		SparqlService sparqlService = FluentSparqlService.from(dg)
+//		DatasetDescription dd = new DatasetDescription();//DatasetDescriptionUtils.createDefaultGraph(g);
+//		dd.addNamedGraphURI(g.getURI());
+//		dd.addDefaultGraphURI(g.getURI());
+		SparqlService sparqlService = FluentSparqlService.from(ds)
 				.config()
 					.configQuery()
 						.withParser(SparqlQueryParserImpl.create())
 					.end()
-					.withDatasetDescription(dd, g.getURI())
+					.withDatasetDescription(dd, graphName)
+					.configQuery()
+						.withQueryTransform(F_QueryTransformDatesetDescription.fn)
+					.end()
 				.end()
 				.create();
 
-		sparqlService.getQueryExecutionFactory()
-			.createQueryExecution("CONSTRUCT { ?s ?p ?o } { ?s ?p ?o }").execConstruct().write(System.out, "TTL");
+//		sparqlService.getQueryExecutionFactory()
+//			.createQueryExecution("CONSTRUCT { ?s ?p ?o } { ?s ?p ?o }").execConstruct().write(System.out, "TTL");
 			//.createQueryExecution("CONSTRUCT { ?g a ?s . ?s ?p ?o } WHERE { GRAPH ?g { ?s ?p ?o } }").execConstruct().write(System.out, "TTL");
+
+
+		System.out.println("names: " + Iterators.toString(ds.listNames()));
+
+
+
+		System.out.println(ResultSetFormatter.asText(sparqlService.getQueryExecutionFactory()
+				.createQueryExecution("SELECT * { ?s ?p ?o }").execSelect()));
 		System.out.println("---");
 
-		//UpdateExecutionUtils.executeInsert(sparqlService.getUpdateExecutionFactory(), graph);
-		//sparqlService.getQueryExecutionFactory().createQueryExecution("CONSTRUCT WHERE { ?s ?p ?o }").execConstruct().write(System.out, "TTL");
-		//System.out.println(ResultSetFormatter.asText(sparqlService.getQueryExecutionFactory().createQueryExecution("SELECT ?x ?g ?s ?p ?o WHERE { SELECT  (?s AS ?x) ?g ?s ?p ?o WHERE { GRAPH ?g { ?s  ?p  ?o .} FILTER ( ?p IN (<http://ex.org/label>, <http://ex.org/population>) ) } }").execSelect()));
-		//System.out.println(ResultSetFormatter.asText(sparqlService.getQueryExecutionFactory().createQueryExecution("SELECT ?s ?p ?o WHERE { ?s  ?p  ?o . FILTER ( ?p IN (<http://ex.org/label>, <http://ex.org/population>) ) }").execSelect()));
-		//System.out.println(ResultSetFormatter.asText(sparqlService.getQueryExecutionFactory().createQueryExecution("SELECT ?g ?s ?p ?o WHERE { Graph ?g { ?s  ?p  ?o . FILTER ( ?p IN (<http://ex.org/label>, <http://ex.org/population>) ) } }").execSelect()));
-		//System.out.println(ResultSetFormatter.asText(sparqlService.getQueryExecutionFactory().createQueryExecution("SELECT ?g ?s ?p ?o WHERE { Graph ?g { ?s  ?p  ?o } }").execSelect()));
-		//System.out.println("---");
+		if(true) {
+			return;
+		}
 
 		EntityManagerJena em = new EntityManagerJena(new RdfMapperEngineImpl(sparqlService));
 //		RdfType countryType = em.getRdfTypeFactory().forJavaType(Country.class);
@@ -85,7 +99,7 @@ public class TestMapperMultiProperty {
 //		Country entity = (Country)tmp;
 //		em.getPersistenceContext().getEntityGraphMap().putAll(graph, entity);
 
-		Country country = em.find(Country.class, aut);
+		Country country = em.find(Country.class, s);
 		country.setPopulation(9);
 		em.merge(country);
 

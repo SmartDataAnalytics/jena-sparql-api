@@ -1,8 +1,11 @@
 package org.aksw.jena_sparql_api.utils;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
+import com.google.common.collect.Iterables;
 import com.hp.hpl.jena.datatypes.RDFDatatype;
 import com.hp.hpl.jena.datatypes.TypeMapper;
 import com.hp.hpl.jena.graph.Node;
@@ -10,6 +13,14 @@ import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.sparql.core.Var;
 
 public class NodeUtils {
+	public static List<Node> fromUris(Iterable<String> uris) {
+		List<Node> result = new ArrayList<Node>(Iterables.size(uris));
+		for(String uri : uris) {
+			Node node = NodeFactory.createURI(uri);
+			result.add(node);
+		}
+		return result;
+	}
 
     public static Node createTypedLiteral(TypeMapper typeMapper, Object o) {
         Class<?> clazz = o.getClass();
