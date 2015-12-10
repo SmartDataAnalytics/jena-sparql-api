@@ -5,6 +5,7 @@ import java.util.List;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.mapper.context.TypedNode;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
+import org.apache.jena.atlas.lib.Sink;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 
@@ -49,31 +50,37 @@ public class RdfPopulatorPropertySingle
     }
 
     @Override
-    public void populateBean(RdfPersistenceContext populationContext, Object bean, Graph graph, Node subject) {
+    public void populateBean(RdfPersistenceContext persistenceContext, Object bean, Graph graph, Node subject, Sink<Triple> outSink) {
 //		Class<?> beanClass = bean.getClass();
 //		RdfType rdfType = populationContext.forJavaType(beanClass);
 //		RdfClass rdfClass = (RdfClass)rdfType;
 //		RdfPropertyDescriptor propertyDescriptor = rdfClass.getPropertyDescriptors(propertyName);
 //		RdfType targetRdfType = propertyDescriptor.getRdfType();
+        List<Triple> triples = graph.find(subject, predicate, Node.ANY).toList();
 
-        List<Node> objects = GraphUtil.listObjects(graph, subject, predicate).toList();
-        Node node = Iterables.getFirst(objects, null);
+        Triple t = Iterables.getFirst(triples, null);
 
-        TypedNode typedNode = new TypedNode(targetRdfType, node);
+        Node node;
+        if(t != null) {
+            node = t.getObject();
+            outSink.send(t);
+        } else {
+            node = null;
+        }
 
         Object value = node == null
                 ? null
-                : populationContext.entityFor(typedNode)
+                : persistenceContext.entityFor(new TypedNode(targetRdfType, node))
                 ;//rdfType.createJavaObject(node);
 
 
 
         BeanWrapper beanWrapper = new BeanWrapperImpl(bean);
 
-        // We cannot set property values of primitive type to null
+        // We cannot set property values of primitive types to null
         Class<?> valueType = beanWrapper.getPropertyType(propertyName);
         if(value == null && valueType.isPrimitive()) {
-        	value = Defaults.defaultValue(valueType);
+            value = Defaults.defaultValue(valueType);
         }
         beanWrapper.setPropertyValue(propertyName, value);
     }

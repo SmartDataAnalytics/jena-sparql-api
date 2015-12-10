@@ -7,9 +7,11 @@ import org.aksw.jena_sparql_api.mapper.model.RdfSeqUtils;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
+import org.apache.jena.atlas.lib.Sink;
 
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.Triple;
 
 /**
  * A type that
@@ -38,7 +40,7 @@ public class RdfTypeSeq
     }
 
     @Override
-    public Class<?> getBeanClass() {
+    public Class<?> getEntityClass() {
         // TODO Auto-generated method stub
         return null;
     }
@@ -57,13 +59,13 @@ public class RdfTypeSeq
 
 
     @Override
-    public void emitTriples(RdfEmitterContext emitterContext, Graph out, Object obj) {
+    public void emitTriples(RdfPersistenceContext persistenceContext, RdfEmitterContext emitterContext, Graph out, Object obj) {
         // TODO Auto-generated method stub
 
     }
 
     @Override
-    public void populateBean(RdfPersistenceContext persistenceContext, Object targetObj, Graph graph) {
+    public void populateEntity(RdfPersistenceContext persistenceContext, Object targetObj, Graph graph, Sink<Triple> outSink) {
         // TODO Auto-generated method stub
 
     }

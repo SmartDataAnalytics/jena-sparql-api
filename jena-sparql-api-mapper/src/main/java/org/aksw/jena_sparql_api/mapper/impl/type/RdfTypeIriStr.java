@@ -20,7 +20,7 @@ public class RdfTypeIriStr
 
 
     @Override
-    public Class<?> getBeanClass() {
+    public Class<?> getEntityClass() {
         return String.class;
     }
 

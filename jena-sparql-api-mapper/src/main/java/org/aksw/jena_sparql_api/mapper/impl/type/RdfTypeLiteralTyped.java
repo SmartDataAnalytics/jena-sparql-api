@@ -17,7 +17,7 @@ public class RdfTypeLiteralTyped
     }
 
     @Override
-    public Class<?> getBeanClass() {
+    public Class<?> getEntityClass() {
         return null;
     }
 
@@ -34,8 +34,8 @@ public class RdfTypeLiteralTyped
 //    }
 
     @Override
-    public Node getRootNode(Object obj) {
-        String lex = rdfDatatype.unparse(obj);
+    public Node getRootNode(Object entity) {
+        String lex = rdfDatatype.unparse(entity);
         Node result = NodeFactory.createLiteral(lex, rdfDatatype);
 
         return result;

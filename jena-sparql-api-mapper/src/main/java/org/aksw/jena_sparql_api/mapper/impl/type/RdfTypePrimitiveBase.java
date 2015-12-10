@@ -4,8 +4,10 @@ import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
+import org.apache.jena.atlas.lib.Sink;
 
 import com.hp.hpl.jena.graph.Graph;
+import com.hp.hpl.jena.graph.Triple;
 
 public abstract class RdfTypePrimitiveBase
     extends RdfTypeBase
@@ -20,7 +22,7 @@ public abstract class RdfTypePrimitiveBase
     }
 
     @Override
-    public void emitTriples(RdfEmitterContext emitterContext, Graph out, Object obj) {
+    public void emitTriples(RdfPersistenceContext persistenceContext, RdfEmitterContext emitterContext, Graph out, Object obj) {
     }
 
     @Override
@@ -30,7 +32,7 @@ public abstract class RdfTypePrimitiveBase
     }
 
   @Override
-  public void populateBean(RdfPersistenceContext persistenceContext, Object targetObj, Graph graph) {
+  public void populateEntity(RdfPersistenceContext persistenceContext, Object targetObj, Graph graph, Sink<Triple> outSink) {
   }
 
 //	@Override

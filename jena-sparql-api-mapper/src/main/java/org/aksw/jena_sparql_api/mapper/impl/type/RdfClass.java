@@ -13,6 +13,7 @@ import org.aksw.jena_sparql_api.mapper.model.RdfPopulator;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.aksw.jena_sparql_api.mapper.proxy.MethodInterceptorRdf;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
+import org.apache.jena.atlas.lib.Sink;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.cglib.proxy.Callback;
@@ -23,8 +24,8 @@ import com.google.common.base.Function;
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.NodeFactory;
+import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
-import com.hp.hpl.jena.sparql.core.DatasetGraphFactory;
 
 /**
  * An RdfClass is one type of implementation that can map Java objects to and from RDF graphs.
@@ -166,7 +167,7 @@ public class RdfClass
     }
 
     @Override
-    public Class<?> getBeanClass() {
+    public Class<?> getEntityClass() {
         return beanClass;
     }
 
@@ -250,7 +251,7 @@ public class RdfClass
      * @param datasetGraph
      */
     @Override
-    public void populateBean(RdfPersistenceContext persistenceContext, Object bean, Graph graph) {
+    public void populateEntity(RdfPersistenceContext persistenceContext, Object bean, Graph inGraph, Sink<Triple> outSink) {
         //DatasetGraph result = DatasetGraphFactory.createMem();
 
         //Graph graph = result.getDefaultGraph();
@@ -260,7 +261,7 @@ public class RdfClass
          *  Run all of this class' populators
          */
         for(RdfPopulator pd : populators) {
-            pd.populateBean(persistenceContext, bean, graph, s);
+            pd.populateBean(persistenceContext, bean, inGraph, s, outSink);
         }
     }
 
@@ -269,19 +270,20 @@ public class RdfClass
     /**
      * Extract triples for a given object in the specified target graph.
      *
-     * @param obj
+     * @param entity
      * @param g
      * @return
      */
     @Override
-    public void emitTriples(RdfEmitterContext emitterContext, Graph out, Object obj) {
-        Node s = getRootNode(obj);
+    public void emitTriples(RdfPersistenceContext persistenceContext, RdfEmitterContext emitterContext, Graph out, Object entity) {
+        //Node s = getRootNode(obj);
+        Node s = persistenceContext.getRootNode(entity);
 
         /*
          * Run the emitters of all of this class' populators
          */
         for(RdfPopulator populator : populators) {
-            populator.emitTriples(out, obj, s);
+            populator.emitTriples(out, entity, s);
         }
 
         /*
@@ -289,12 +291,12 @@ public class RdfClass
          * notifies the emitter context which property values need additional
          * emitting
          */
-        BeanWrapper beanWrapper = new BeanWrapperImpl(obj);
+        BeanWrapper beanWrapper = new BeanWrapperImpl(entity);
         for(RdfPropertyDescriptor pd : propertyDescriptors.values()) {
             String propertyName = pd.getName();
 
             Object propertyValue = beanWrapper.getPropertyValue(propertyName);
-            emitterContext.add(propertyValue, obj, propertyName);
+            emitterContext.add(propertyValue, entity, propertyName);
         }
     }
 

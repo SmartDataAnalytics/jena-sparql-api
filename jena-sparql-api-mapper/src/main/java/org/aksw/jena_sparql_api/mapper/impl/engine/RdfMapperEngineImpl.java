@@ -29,11 +29,14 @@ import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.aksw.jena_sparql_api.util.frontier.Frontier;
 import org.aksw.jena_sparql_api.util.frontier.FrontierImpl;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
+import org.apache.jena.atlas.lib.Sink;
+import org.apache.jena.riot.lang.SinkTriplesToGraph;
 
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.GraphUtil;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.NodeFactory;
+import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.sparql.core.DatasetDescription;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import com.hp.hpl.jena.sparql.core.DatasetGraphFactory;
@@ -75,7 +78,7 @@ public class RdfMapperEngineImpl
 
     @Override
     public RdfPersistenceContext getPersistenceContext() {
-    	return this.persistenceContext;
+        return this.persistenceContext;
     };
 
     public Prologue getPrologue() {
@@ -147,9 +150,13 @@ public class RdfMapperEngineImpl
 
                     Object entity = persistenceContext.entityFor(typedNode);
                     entityGraphMap.clearGraph(entity);
-                	entityGraphMap.putAll(graph, entity);
 
-                    rdfType.populateBean(persistenceContext, entity, graph);
+                    Graph refs = GraphFactory.createDefaultGraph();
+                    Sink<Triple> refSink = new SinkTriplesToGraph(false, refs);
+                    rdfType.populateEntity(persistenceContext, entity, graph, refSink);
+                    refSink.close();
+
+                    entityGraphMap.putAll(refs, entity);
                 }
             }
         }
@@ -186,6 +193,15 @@ public class RdfMapperEngineImpl
 
     @Override
     public <T> T merge(T entity) {
+        DatasetDescription datasetDescription = sparqlService.getDatasetDescription();
+
+        String gStr = DatasetDescriptionUtils.getSingleDefaultGraphUri(datasetDescription);
+        if(gStr == null) {
+            throw new RuntimeException("No target graph specified");
+        }
+        Node g = NodeFactory.createURI(gStr);
+
+
         MethodInterceptorRdf interceptor = RdfClass.getMethodInterceptor(entity);
 
         DatasetGraph oldState = interceptor == null
@@ -194,17 +210,17 @@ public class RdfMapperEngineImpl
                 ;
 
                 {
-                	EntityGraphMap entityGraphMap = persistenceContext.getEntityGraphMap();
-                	Graph graph = entityGraphMap.getGraphForEntity(entity);
-                	Graph targetGraph = oldState.getDefaultGraph();
-                	if(targetGraph == null) {
-                		targetGraph = GraphFactory.createDefaultGraph();
-                		oldState.setDefaultGraph(targetGraph);
-                	}
+                    EntityGraphMap entityGraphMap = persistenceContext.getEntityGraphMap();
+                    Graph graph = entityGraphMap.getGraphForEntity(entity);
+                    Graph targetGraph = oldState.getGraph(g);
+                    if(targetGraph == null) {
+                        targetGraph = GraphFactory.createDefaultGraph();
+                        oldState.addGraph(g, targetGraph);
+                    }
 
-                	if(graph != null) {
-                		GraphUtil.addInto(oldState.getDefaultGraph(), graph);
-                	}
+                    if(graph != null) {
+                        GraphUtil.addInto(targetGraph, graph);
+                    }
                 }
 
 
@@ -212,13 +228,6 @@ public class RdfMapperEngineImpl
         //RdfClass rdfClass = RdfClassFactory.createDefault(prologue).create(clazz);
         RdfClass rdfClass = (RdfClass)typeFactory.forJavaType(clazz);
 
-
-        DatasetDescription datasetDescription = sparqlService.getDatasetDescription();
-        String gStr = DatasetDescriptionUtils.getSingleDefaultGraphUri(datasetDescription);
-        if(gStr == null) {
-            throw new RuntimeException("No target graph specified");
-        }
-        Node g = NodeFactory.createURI(gStr);
 
         DatasetGraph newState = DatasetGraphFactory.createMem();
         Graph outGraph = Quad.defaultGraphIRI.equals(g) ? newState.getDefaultGraph() : newState.getGraph(g);
@@ -261,7 +270,7 @@ public class RdfMapperEngineImpl
 
             // TODO We now need to know which additional
             // (property) values also need to be emitted
-            rdfType.emitTriples(emitterContext, outGraph, entity);
+            rdfType.emitTriples(persistenceContext, emitterContext, outGraph, entity);
         }
     }
 }

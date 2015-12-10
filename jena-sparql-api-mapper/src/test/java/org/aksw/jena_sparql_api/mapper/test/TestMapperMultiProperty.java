@@ -39,47 +39,47 @@ import com.hp.hpl.jena.sparql.graph.GraphFactory;
 
 public class TestMapperMultiProperty {
 
-	/**
-	 * Create a Country entity and populate it from a set of triples which contain multiple values for the
-	 * country's population.
-	 *
-	 * @throws ParseException
-	 */
-	@Test
-	public void testCherryPicking() throws Exception {
-		Dataset ds = DatasetFactory.createMem();
-		RDFDataMgr.read(ds, new ClassPathResource("test-person.nq").getInputStream(), Lang.NQUADS);
+    /**
+     * Create a Country entity and populate it from a set of triples which contain multiple values for the
+     * country's population.
+     *
+     * @throws ParseException
+     */
+    @Test
+    public void testCherryPicking() throws Exception {
+        Dataset ds = DatasetFactory.createMem();
+        RDFDataMgr.read(ds, new ClassPathResource("test-country.nq").getInputStream(), Lang.NQUADS);
 
-		String graphName = ds.listNames().next();
-		Node s = ds.getNamedModel(graphName).listStatements().toSet().iterator().next().asTriple().getSubject();
+        String graphName = ds.listNames().next();
+        Node s = ds.getNamedModel(graphName).listStatements().toSet().iterator().next().asTriple().getSubject();
 
-		DatasetDescription dd = DatasetDescriptionUtils.createDefaultGraph(graphName);
-		SparqlService sparqlService = FluentSparqlService.from(ds)
-				.config()
-					.configQuery()
-						.withParser(SparqlQueryParserImpl.create())
-					.end()
-					.withDatasetDescription(dd, graphName)
-					.configQuery()
-						.withQueryTransform(F_QueryTransformDatesetDescription.fn)
-						.withQueryTransform(F_QueryTransformLimit.create(1000))
-					.end()
-				.end()
-				.create();
-
-
-		RDFDatatype intType = TypeMapper.getInstance().getTypeByClass(Integer.class);
-
-		System.out.println("names: " + Iterators.toString(ds.listNames()));
+        DatasetDescription dd = DatasetDescriptionUtils.createDefaultGraph(graphName);
+        SparqlService sparqlService = FluentSparqlService.from(ds)
+                .config()
+                    .configQuery()
+                        .withParser(SparqlQueryParserImpl.create())
+                    .end()
+                    .withDatasetDescription(dd, graphName)
+                    .configQuery()
+                        .withQueryTransform(F_QueryTransformDatesetDescription.fn)
+                        .withQueryTransform(F_QueryTransformLimit.create(1000))
+                    .end()
+                .end()
+                .create();
 
 
+        RDFDatatype intType = TypeMapper.getInstance().getTypeByClass(Integer.class);
 
-		System.out.println(ResultSetFormatter.asText(sparqlService.getQueryExecutionFactory()
-				.createQueryExecution("SELECT * { ?s ?p ?o }").execSelect()));
-		System.out.println("---");
+        System.out.println("names: " + Iterators.toString(ds.listNames()));
 
 
-		EntityManagerJena em = new EntityManagerJena(new RdfMapperEngineImpl(sparqlService));
+
+        System.out.println(ResultSetFormatter.asText(sparqlService.getQueryExecutionFactory()
+                .createQueryExecution("SELECT * { ?s ?p ?o }").execSelect()));
+        System.out.println("---");
+
+
+        EntityManagerJena em = new EntityManagerJena(new RdfMapperEngineImpl(sparqlService));
 //		RdfType countryType = em.getRdfTypeFactory().forJavaType(Country.class);
 //
 //		TypedNode typedNode = new TypedNode(countryType, aut);
@@ -88,50 +88,52 @@ public class TestMapperMultiProperty {
 //		Country entity = (Country)tmp;
 //		em.getPersistenceContext().getEntityGraphMap().putAll(graph, entity);
 
-		Country country = em.find(Country.class, s);
-		country.setPopulation(9);
-		em.merge(country);
+        Country country = em.find(Country.class, s);
+        System.out.println("Found: " + country);
+        country.setPopulation(9);
+        em.merge(country);
 
-		sparqlService.getQueryExecutionFactory().createQueryExecution("CONSTRUCT WHERE { ?s ?p ?o }").execConstruct().write(System.out, "TTL");
-	}
-
-
-	/**
-	 * Test setting inial data on the persistence context rather than the sparql endpoint
-	 * @throws ParseException
-	 */
-	//@Test
-	public void testLowLevelCherryPicking() throws ParseException {
-		RDFDatatype intType = TypeMapper.getInstance().getTypeByClass(Integer.class);
-
-		Graph graph = GraphFactory.createDefaultGraph();
-		Node aut = NodeFactory.createURI("http://ex.org/Austria");
-		Node label = NodeFactory.createURI("http://ex.org/label");
-		Node population = NodeFactory.createURI("http://ex.org/population");
-
-		graph.add(new Triple(aut, label, NodeFactory.createLiteral("Austria")));
-		graph.add(new Triple(aut, population, NodeFactory.createUncachedLiteral(7, intType)));
-		graph.add(new Triple(aut, population, NodeFactory.createUncachedLiteral(8, intType)));
+        System.out.println("New state:");
+        sparqlService.getQueryExecutionFactory().createQueryExecution("CONSTRUCT WHERE { ?s ?p ?o }").execConstruct().write(System.out, "TTL");
+    }
 
 
-		SparqlService sparqlService = FluentSparqlService.forDataset().create();
+    /**
+     * Test setting inial data on the persistence context rather than the sparql endpoint
+     * @throws ParseException
+     */
+    //@Test
+    public void testLowLevelCherryPicking() throws ParseException {
+        RDFDatatype intType = TypeMapper.getInstance().getTypeByClass(Integer.class);
+
+        Graph graph = GraphFactory.createDefaultGraph();
+        Node aut = NodeFactory.createURI("http://ex.org/Austria");
+        Node label = NodeFactory.createURI("http://ex.org/label");
+        Node population = NodeFactory.createURI("http://ex.org/population");
+
+        graph.add(new Triple(aut, label, NodeFactory.createLiteral("Austria")));
+        graph.add(new Triple(aut, population, NodeFactory.createUncachedLiteral(7, intType)));
+        graph.add(new Triple(aut, population, NodeFactory.createUncachedLiteral(8, intType)));
+
+
+        SparqlService sparqlService = FluentSparqlService.forDataset().create();
 //sparqlService.getDatasetDescription().
-		EntityManagerJena em = new EntityManagerJena(new RdfMapperEngineImpl(sparqlService));
-		RdfType countryType = em.getRdfTypeFactory().forJavaType(Country.class);
+        EntityManagerJena em = new EntityManagerJena(new RdfMapperEngineImpl(sparqlService));
+        RdfType countryType = em.getRdfTypeFactory().forJavaType(Country.class);
 
-		TypedNode typedNode = new TypedNode(countryType, aut);
-		RdfPersistenceContext persistenceContext = em.getPersistenceContext();
-		Object tmp = persistenceContext.entityFor(typedNode);
-		Country entity = (Country)tmp;
-		em.getPersistenceContext().getEntityGraphMap().putAll(graph, entity);
+        TypedNode typedNode = new TypedNode(countryType, aut);
+        RdfPersistenceContext persistenceContext = em.getPersistenceContext();
+        Object tmp = persistenceContext.entityFor(typedNode);
+        Country entity = (Country)tmp;
+        em.getPersistenceContext().getEntityGraphMap().putAll(graph, entity);
 
-		em.find(Country.class, aut);
-		sparqlService.getQueryExecutionFactory().createQueryExecution("CONSTRUCT WHERE { ?s ?p ?o }").execConstruct().write(System.out, "TTL");
+        em.find(Country.class, aut);
+        sparqlService.getQueryExecutionFactory().createQueryExecution("CONSTRUCT WHERE { ?s ?p ?o }").execConstruct().write(System.out, "TTL");
 
-		entity.setPopulation(9);
-		em.merge(entity);
+        entity.setPopulation(9);
+        em.merge(entity);
 
-		sparqlService.getQueryExecutionFactory().createQueryExecution("CONSTRUCT WHERE { ?s ?p ?o }").execConstruct().write(System.out, "TTL");
-	}
+        sparqlService.getQueryExecutionFactory().createQueryExecution("CONSTRUCT WHERE { ?s ?p ?o }").execConstruct().write(System.out, "TTL");
+    }
 
 }

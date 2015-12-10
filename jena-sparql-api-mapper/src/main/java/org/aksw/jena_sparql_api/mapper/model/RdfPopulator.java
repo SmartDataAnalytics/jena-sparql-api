@@ -4,9 +4,11 @@ import java.util.Set;
 
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
+import org.apache.jena.atlas.lib.Sink;
 
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.Triple;
 
 /**
  * RdfPopulators map bean properties to triples and vice versa.
@@ -22,32 +24,32 @@ import com.hp.hpl.jena.graph.Node;
  */
 public interface RdfPopulator {
 
-	/**
-	 * Return the set of bean properties which this populator uses.
-	 *
-	 *
-	 * @return
-	 */
-	Set<String> getPropertyNames();
+    /**
+     * Return the set of bean properties which this populator uses.
+     *
+     *
+     * @return
+     */
+    Set<String> getPropertyNames();
 
 
-	/**
-	 * Expose SPARQL patterns that identify the set of triples
-	 * that are needed to populate the *immediate* properties
-	 *
-	 *
-	 * @param shapeBuilder
-	 */
-	void exposeShape(ResourceShapeBuilder shapeBuilder);
+    /**
+     * Expose SPARQL patterns that identify the set of triples
+     * that are needed to populate the *immediate* properties
+     *
+     *
+     * @param shapeBuilder
+     */
+    void exposeShape(ResourceShapeBuilder shapeBuilder);
 
 
-	/**
+    /**
      * Emit triples from the object
-	 *
-	 * @param outGraph
-	 * @param bean
-	 * @param subject
-	 */
+     *
+     * @param outGraph
+     * @param bean
+     * @param subject
+     */
     void emitTriples(Graph outGraph, Object bean, Node subject);
 
     /**
@@ -57,5 +59,5 @@ public interface RdfPopulator {
      * @param subject
      * @return
      */
-    void populateBean(RdfPersistenceContext populationContext, Object bean, Graph graph, Node subject);
+    void populateBean(RdfPersistenceContext populationContext, Object bean, Graph graph, Node subject, Sink<Triple> outSink);
 }

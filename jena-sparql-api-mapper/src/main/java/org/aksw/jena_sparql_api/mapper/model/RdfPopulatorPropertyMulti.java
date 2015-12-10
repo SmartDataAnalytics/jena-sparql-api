@@ -2,16 +2,15 @@ package org.aksw.jena_sparql_api.mapper.model;
 
 import java.beans.PropertyDescriptor;
 import java.util.Collection;
-import java.util.List;
 
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.mapper.context.TypedNode;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
+import org.apache.jena.atlas.lib.Sink;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 
 import com.hp.hpl.jena.graph.Graph;
-import com.hp.hpl.jena.graph.GraphUtil;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 
@@ -93,13 +92,17 @@ public class RdfPopulatorPropertyMulti
 
     @SuppressWarnings("unchecked")
     @Override
-    public void populateBean(RdfPersistenceContext populationContext, Object bean, Graph graph, Node subject) {
+    public void populateBean(RdfPersistenceContext populationContext, Object bean, Graph graph, Node subject, Sink<Triple> outSink) {
         // Creates a collection under the given property
         Collection<? super Object> collection = (Collection<? super Object>)getOrCreateBean(bean, propertyName);
 
-        List<Node> os = GraphUtil.listObjects(graph, subject, predicate).toList();
+        for(Triple t : graph.find(subject, predicate, Node.ANY).toSet()) {
+            outSink.send(t);
 
-        for(Node o : os) {
+            Node o = t.getObject();
+        //List<Node> os = GraphUtil.listObjects(graph, subject, predicate).toList();
+
+        //for(Node o : os) {
             TypedNode typedNode = new TypedNode(targetRdfType, o);
             Object value = populationContext.entityFor(typedNode);
             //Object value = rdfType.createJavaObject(o);

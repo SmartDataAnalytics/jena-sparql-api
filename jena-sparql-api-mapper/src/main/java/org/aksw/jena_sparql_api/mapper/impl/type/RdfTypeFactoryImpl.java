@@ -224,7 +224,7 @@ public class RdfTypeFactoryImpl
         if(!rdfClass.isPopulated()) {
             //Map<String, RdfPopulatorProperty> rdfProperties = new LinkedHashMap<String, RdfPopulatorProperty>();
 
-            Class<?> clazz = rdfClass.getBeanClass();
+            Class<?> clazz = rdfClass.getEntityClass();
 
 
             BeanWrapper beanInfo = new BeanWrapperImpl(clazz);
