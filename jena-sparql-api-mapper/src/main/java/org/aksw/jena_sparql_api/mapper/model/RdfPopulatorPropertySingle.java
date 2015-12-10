@@ -8,6 +8,7 @@ import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 
+import com.google.common.base.Defaults;
 import com.google.common.collect.Iterables;
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.GraphUtil;
@@ -65,7 +66,15 @@ public class RdfPopulatorPropertySingle
                 : populationContext.entityFor(typedNode)
                 ;//rdfType.createJavaObject(node);
 
+
+
         BeanWrapper beanWrapper = new BeanWrapperImpl(bean);
+
+        // We cannot set property values of primitive type to null
+        Class<?> valueType = beanWrapper.getPropertyType(propertyName);
+        if(value == null && valueType.isPrimitive()) {
+        	value = Defaults.defaultValue(valueType);
+        }
         beanWrapper.setPropertyValue(propertyName, value);
     }
 

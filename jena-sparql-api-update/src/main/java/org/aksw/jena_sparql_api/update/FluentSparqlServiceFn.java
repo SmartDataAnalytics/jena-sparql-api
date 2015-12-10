@@ -6,18 +6,14 @@ import org.aksw.jena_sparql_api.core.DatasetListener;
 import org.aksw.jena_sparql_api.core.FluentFnBase;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactoryFn;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.core.QueryExecutionFactoryDatasetDescription;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.SparqlServiceImpl;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
-import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryDatasetDescription;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
 
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
-import com.hp.hpl.jena.query.Syntax;
 import com.hp.hpl.jena.sparql.core.DatasetDescription;
-import com.hp.hpl.jena.sparql.core.Prologue;
 
 public class FluentSparqlServiceFn<P>
     extends FluentFnBase<SparqlService, P>
@@ -136,22 +132,35 @@ public class FluentSparqlServiceFn<P>
     }
 
     public FluentSparqlServiceFn<P> withDatasetDescription(final DatasetDescription datasetDescription, final String withIri) {
-
-        compose(new Function<SparqlService, SparqlService>() {
-            @Override
-            public SparqlService apply(SparqlService sparqlService) {
-                QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
-                qef = new QueryExecutionFactoryDatasetDescription(qef, datasetDescription);
-
-                UpdateExecutionFactory uef = sparqlService.getUpdateExecutionFactory();
-                uef = new UpdateExecutionFactoryDatasetDescription(uef, withIri, datasetDescription);
-
-                String serviceUri = sparqlService.getServiceUri();
-                SparqlService r = new SparqlServiceImpl(serviceUri, datasetDescription, qef, uef);
-                return r;
-            }
-        });
-
+    	configQuery()
+    		.withDatasetDescription(datasetDescription)
+    	.end()
+    	.configUpdate()
+    		.withDatasetDescription(withIri, datasetDescription)
+    	.end()
+    	.compose(new Function<SparqlService, SparqlService>() {
+           @Override
+            public SparqlService apply(SparqlService ss) {
+        	   SparqlService r = new SparqlServiceImpl(ss.getServiceUri(), datasetDescription, ss.getQueryExecutionFactory(), ss.getUpdateExecutionFactory());
+        	   return r;
+    		}
+    	});
+//
+//        compose(new Function<SparqlService, SparqlService>() {
+//            @Override
+//            public SparqlService apply(SparqlService sparqlService) {
+//                QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
+//                qef = new QueryExecutionFactoryDatasetDescription(qef, datasetDescription);
+//
+//                UpdateExecutionFactory uef = sparqlService.getUpdateExecutionFactory();
+//                uef = new UpdateExecutionFactoryDatasetDescription(uef, withIri, datasetDescription);
+//
+//                String serviceUri = sparqlService.getServiceUri();
+//                SparqlService r = new SparqlServiceImpl(serviceUri, datasetDescription, qef, uef);
+//                return r;
+//            }
+//        });
+//
         return this;
     }
 

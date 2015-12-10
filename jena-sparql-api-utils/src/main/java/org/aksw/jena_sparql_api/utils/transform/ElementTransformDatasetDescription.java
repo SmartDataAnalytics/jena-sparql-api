@@ -43,159 +43,159 @@ import com.hp.hpl.jena.sparql.syntax.PatternVars;
  *
  */
 public class ElementTransformDatasetDescription
-	extends ElementTransformCopyBase
+    extends ElementTransformCopyBase
 {
-	protected ExprList defaultGraphExprs;
-	protected ExprList namedGraphExprs;
-	protected Stack<Node> graphs;
+    protected ExprList defaultGraphExprs;
+    protected ExprList namedGraphExprs;
+    protected Stack<Node> graphs;
 
-	protected Generator<Var> varGen;
+    protected Generator<Var> varGen;
 
-	public ElementTransformDatasetDescription(Stack<Node> graphs, Generator<Var> varGen, ExprList defaultGraphExprs, ExprList namedGraphExprs) {
-		this.graphs = graphs;
-		this.varGen = varGen;
-		this.defaultGraphExprs = defaultGraphExprs;
-		this.namedGraphExprs = namedGraphExprs;
-	}
+    public ElementTransformDatasetDescription(Stack<Node> graphs, Generator<Var> varGen, ExprList defaultGraphExprs, ExprList namedGraphExprs) {
+        this.graphs = graphs;
+        this.varGen = varGen;
+        this.defaultGraphExprs = defaultGraphExprs;
+        this.namedGraphExprs = namedGraphExprs;
+    }
 
-	public static ElementTransformDatasetDescription create(Stack<Node> graphs, Element e, DatasetDescription dd) {
-		Collection<Var> vars = PatternVars.vars(e);
-		Generator<Var> varGen = VarGeneratorBlacklist.create("v", vars);
+    public static ElementTransformDatasetDescription create(Stack<Node> graphs, Element e, DatasetDescription dd) {
+        Collection<Var> vars = PatternVars.vars(e);
+        Generator<Var> varGen = VarGeneratorBlacklist.create("v", vars);
 
-		ExprList defaultGraphExprs = ExprListUtils.fromUris(dd.getDefaultGraphURIs());
-		ExprList namedGraphExprs = ExprListUtils.fromUris(dd.getNamedGraphURIs());
+        ExprList defaultGraphExprs = ExprListUtils.fromUris(dd.getDefaultGraphURIs());
+        ExprList namedGraphExprs = ExprListUtils.fromUris(dd.getNamedGraphURIs());
 
-		ElementTransformDatasetDescription result = new ElementTransformDatasetDescription(graphs, varGen, defaultGraphExprs, namedGraphExprs);
-		return result;
-	}
+        ElementTransformDatasetDescription result = new ElementTransformDatasetDescription(graphs, varGen, defaultGraphExprs, namedGraphExprs);
+        return result;
+    }
 
     @Override
     public Element transform(ElementTriplesBlock el) {
-    	Element result = applyDefaultGraphs(el);
-    	return result;
+        Element result = applyDefaultGraphs(el);
+        return result;
     }
 
     @Override
     public Element transform(ElementPathBlock el) {
-    	Element result = applyDefaultGraphs(el);
-    	return result;
+        Element result = applyDefaultGraphs(el);
+        return result;
     }
 
     public Element applyDefaultGraphs(Element el) {
-    	Element result;
+        Element result;
 
-    	// If there are no graphs, inject a graph block constrained to
-    	// the default graphs
-    	if(graphs.isEmpty() && !defaultGraphExprs.isEmpty()) {
-        	Var v = varGen.next();
-    		result = applyGraphs(varGen, v, el, defaultGraphExprs);
-    	} else {
-    		result = el;
-    	}
+        // If there are no graphs, inject a graph block constrained to
+        // the default graphs
+        if(graphs.isEmpty() && !defaultGraphExprs.isEmpty()) {
+            Var v = varGen.next();
+            result = applyGraphs(varGen, v, el, defaultGraphExprs);
+        } else {
+            result = el;
+        }
 
         return result;
     }
 
     public static Element applyGraphs(Generator<Var> varGen, Node gn, Element elt1, ExprList exprs) {
-    	//System.out.println("apply " + gn);
-    	Element result;
+        //System.out.println("apply " + gn);
+        Element result;
 
-    	if(!exprs.isEmpty()) {
-    		Var v;
-    		ExprList tmp;
-    		if(gn.isURI() || gn.isLiteral()) {
-    			v = varGen.next();
-    			tmp = new ExprList();
-    			tmp.add(NodeValue.makeNode(gn));
-    			tmp.addAll(exprs);
-    		} else if(gn.isVariable()) {
-    			v = (Var)gn;
-    			tmp = exprs;
-    		} else if(gn.isBlank()) {
-    			v = varGen.next();
-    			tmp = exprs;
-    		} else {
-    			throw new RuntimeException("Unexpected case");
-    		}
+        if(!exprs.isEmpty()) {
+            Var v;
+            ExprList tmp;
+            if(gn.isURI() || gn.isLiteral()) {
+                v = varGen.next();
+                tmp = new ExprList();
+                tmp.add(NodeValue.makeNode(gn));
+                tmp.addAll(exprs);
+            } else if(gn.isVariable()) {
+                v = (Var)gn;
+                tmp = exprs;
+            } else if(gn.isBlank()) {
+                v = varGen.next();
+                tmp = exprs;
+            } else {
+                throw new RuntimeException("Unexpected case");
+            }
 
-    		ExprVar ev = new ExprVar(v);
+            ExprVar ev = new ExprVar(v);
 
-	        Element el = new ElementNamedGraph(v, elt1);
-	    	ElementFilter filter = new ElementFilter(new E_OneOf(ev, exprs));
+            Element el = new ElementNamedGraph(v, elt1);
+            ElementFilter filter = new ElementFilter(new E_OneOf(ev, exprs));
 
-	    	ElementGroup group = new ElementGroup();
-	    	group.addElement(el);
-	    	group.addElement(filter);
+            ElementGroup group = new ElementGroup();
+            group.addElement(el);
+            group.addElement(filter);
 
-	    	result = group;
-    	} else {
-    		result = new ElementNamedGraph(gn, elt1);
-    	}
+            result = group;
+        } else {
+            result = new ElementNamedGraph(gn, elt1);
+        }
 
-    	return result;
+        return result;
     }
 
     @Override
     public Element transform(ElementNamedGraph el, Node gn, Element elt1) {
-    	Element result = applyGraphs(varGen, gn, elt1, namedGraphExprs);
-    	return result;
+        Element result = applyGraphs(varGen, gn, elt1, namedGraphExprs);
+        return result;
     }
 
     public static Query rewrite(Query query) {
-    	DatasetDescription dd = query.getDatasetDescription();
-    	Query result;
-    	if(dd != null) {
-    		result = query.cloneQuery();
-    		Element before = result.getQueryPattern();
-    		Element after = rewrite(before, dd);
-    		result.setQueryPattern(after);
-    	} else {
-    		result = query;
-    	}
+        DatasetDescription dd = query.getDatasetDescription();
+        Query result;
+        if(dd != null) {
+            result = query.cloneQuery();
+            Element before = result.getQueryPattern();
+            Element after = rewrite(before, dd);
+            result.setQueryPattern(after);
+        } else {
+            result = query;
+        }
 
-    	return result;
+        return result;
     }
 
     public static Element rewrite(Element element, DatasetDescription dd) {
-		final Stack<Node> graphs = new Stack<Node>();
+        final Stack<Node> graphs = new Stack<Node>();
 
-		ExprTransform exprTransform = new ExprTransformCopy();
-		ElementTransform elementTransform = ElementTransformDatasetDescription.create(graphs, element, dd);
-		ElementVisitor beforeVisitor = new ElementVisitorBase() {
-			@Override
-			public void visit(ElementNamedGraph el) {
-				graphs.push(el.getGraphNameNode());
-				//System.out.println("push " + el.getGraphNameNode());
-			}
-		};
-		ElementVisitor afterVisitor = new ElementVisitorBase() {
-			@Override
-			public void visit(ElementNamedGraph el) {
-				graphs.pop();
-				//System.out.println("pop " + el.getGraphNameNode());
-			}
-		};
+        ExprTransform exprTransform = new ExprTransformCopy();
+        ElementTransform elementTransform = ElementTransformDatasetDescription.create(graphs, element, dd);
+        ElementVisitor beforeVisitor = new ElementVisitorBase() {
+            @Override
+            public void visit(ElementNamedGraph el) {
+                graphs.push(el.getGraphNameNode());
+                //System.out.println("push " + el.getGraphNameNode());
+            }
+        };
+        ElementVisitor afterVisitor = new ElementVisitorBase() {
+            @Override
+            public void visit(ElementNamedGraph el) {
+                graphs.pop();
+                //System.out.println("pop " + el.getGraphNameNode());
+            }
+        };
 
-		Element result = ElementTransformer.transform(element, elementTransform, exprTransform, beforeVisitor, afterVisitor);
+        Element result = ElementTransformer.transform(element, elementTransform, exprTransform, beforeVisitor, afterVisitor);
 
-		return result;
+        return result;
     }
 
-	public static void main(String[] args) {
-		//Query query = QueryFactory.create("SELECT * { { ?s ?p ?o } Union { Graph ?g { ?s ?p ?o } } }");
-		//Query query = QueryFactory.create("SELECT * { { { Select * { ?s ?p ?o . Filter(?p = <p>) } } } Union { Graph ?g { ?s ?p ?o } } }");
-		Query query = QueryFactory.create("SELECT * { { ?s ?p ?o . Graph ?x { ?a ?b ?c } } Union { Graph ?g { ?s ?p ?o } } }");
-		query.addGraphURI("dg1");
-		query.addGraphURI("dg2");
-		query.addNamedGraphURI("ng1");
-		query.addNamedGraphURI("ng2");
+    public static void main(String[] args) {
+        //Query query = QueryFactory.create("SELECT * { { ?s ?p ?o } Union { Graph ?g { ?s ?p ?o } } }");
+        //Query query = QueryFactory.create("SELECT * { { { Select * { ?s ?p ?o . Filter(?p = <p>) } } } Union { Graph ?g { ?s ?p ?o } } }");
+        Query query = QueryFactory.create("SELECT * { { ?s ?p ?o . Graph ?x { ?a ?b ?c } } Union { Graph ?g { ?s ?p ?o } } }");
+        query.addGraphURI("dg1");
+        query.addGraphURI("dg2");
+        query.addNamedGraphURI("ng1");
+        query.addNamedGraphURI("ng2");
 
-		Query tmp = rewrite(query);
+        Query tmp = rewrite(query);
 
-		Op op = Algebra.compile(tmp);
-		Op op2 = Transformer.transformSkipService(new TransformFilterPlacement(), op) ;
-		tmp = OpAsQuery.asQuery(op2);
+        Op op = Algebra.compile(tmp);
+        Op op2 = Transformer.transformSkipService(new TransformFilterPlacement(), op) ;
+        tmp = OpAsQuery.asQuery(op2);
 
-		System.out.println(tmp);
-	}
+        System.out.println(tmp);
+    }
 }

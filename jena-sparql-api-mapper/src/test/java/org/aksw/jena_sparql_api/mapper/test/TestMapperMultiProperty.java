@@ -9,6 +9,7 @@ import org.aksw.jena_sparql_api.mapper.impl.engine.RdfMapperEngineImpl;
 import org.aksw.jena_sparql_api.mapper.jpa.core.EntityManagerJena;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
+import org.aksw.jena_sparql_api.stmt.SparqlStmt;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
 import org.aksw.jena_sparql_api.utils.transform.F_QueryTransformDatesetDescription;
@@ -52,16 +53,7 @@ public class TestMapperMultiProperty {
 		String graphName = ds.listNames().next();
 		Node s = ds.getNamedModel(graphName).listStatements().toSet().iterator().next().asTriple().getSubject();
 
-//		QueryExecution qe = QueryExecutionFactory.create("SELECT * { GRAPH ?g { ?s ?p ?o } }", ds);
-
-
-		RDFDatatype intType = TypeMapper.getInstance().getTypeByClass(Integer.class);
-
 		DatasetDescription dd = DatasetDescriptionUtils.createDefaultGraph(graphName);
-
-//		DatasetDescription dd = new DatasetDescription();//DatasetDescriptionUtils.createDefaultGraph(g);
-//		dd.addNamedGraphURI(g.getURI());
-//		dd.addDefaultGraphURI(g.getURI());
 		SparqlService sparqlService = FluentSparqlService.from(ds)
 				.config()
 					.configQuery()
@@ -75,10 +67,8 @@ public class TestMapperMultiProperty {
 				.end()
 				.create();
 
-//		sparqlService.getQueryExecutionFactory()
-//			.createQueryExecution("CONSTRUCT { ?s ?p ?o } { ?s ?p ?o }").execConstruct().write(System.out, "TTL");
-			//.createQueryExecution("CONSTRUCT { ?g a ?s . ?s ?p ?o } WHERE { GRAPH ?g { ?s ?p ?o } }").execConstruct().write(System.out, "TTL");
 
+		RDFDatatype intType = TypeMapper.getInstance().getTypeByClass(Integer.class);
 
 		System.out.println("names: " + Iterators.toString(ds.listNames()));
 
@@ -88,9 +78,6 @@ public class TestMapperMultiProperty {
 				.createQueryExecution("SELECT * { ?s ?p ?o }").execSelect()));
 		System.out.println("---");
 
-		if(true) {
-			return;
-		}
 
 		EntityManagerJena em = new EntityManagerJena(new RdfMapperEngineImpl(sparqlService));
 //		RdfType countryType = em.getRdfTypeFactory().forJavaType(Country.class);
