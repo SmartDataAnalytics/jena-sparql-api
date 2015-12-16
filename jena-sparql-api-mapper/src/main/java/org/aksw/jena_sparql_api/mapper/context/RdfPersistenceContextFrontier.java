@@ -23,21 +23,21 @@ public class RdfPersistenceContextFrontier
     }
 
     public Frontier<TypedNode> getFrontier() {
-		return frontier;
-	}
+        return frontier;
+    }
 
 //	public void setFrontier(Frontier<TypedNode> frontier) {
 //		this.frontier = frontier;
 //	}
 
-	/**
+    /**
      * TODO Exposing the entity graph map directly does not seem to be good encapsulation
      *
      * @return
      */
     @Override
     public EntityGraphMap getEntityGraphMap() {
-    	return entityGraphMap;
+        return entityGraphMap;
     }
 
     @Override
@@ -50,6 +50,14 @@ public class RdfPersistenceContextFrontier
     public Object entityFor(TypedNode typedNode) {
         RdfType rdfType = typedNode.getRdfType();
         Node node = typedNode.getNode();
+
+        // TODO If we request an entity for a typed node for which an entity
+        // already exists for a base class, what then?
+        // i.e: given Person implements Thing, .entityFor(Thing, node1) followed by .entityFor(Person, node1)
+        // I suppose on merging all entities have to be updated.
+        // or entityFor needs to be replaced by entityPoolFor().
+        // and all entities in a pool are proxied such that setting any property in the pool
+        // updates all other entities in that pool - hm, but then entityFor would always have to return a proxy
 
         // Check if there is already a java object for the given class with the given id
         Object result = typedNodeContext.getAttribute(typedNode, "entity", null);

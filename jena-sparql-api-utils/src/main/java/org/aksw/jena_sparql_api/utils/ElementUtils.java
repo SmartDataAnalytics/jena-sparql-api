@@ -15,6 +15,8 @@ import org.aksw.jena_sparql_api.backports.syntaxtransform.ExprTransformNodeEleme
 
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.sparql.core.BasicPattern;
+import com.hp.hpl.jena.sparql.core.TriplePath;
 import com.hp.hpl.jena.sparql.core.Var;
 import com.hp.hpl.jena.sparql.expr.Expr;
 import com.hp.hpl.jena.sparql.expr.ExprTransform;
@@ -22,6 +24,7 @@ import com.hp.hpl.jena.sparql.graph.NodeTransform;
 import com.hp.hpl.jena.sparql.syntax.Element;
 import com.hp.hpl.jena.sparql.syntax.ElementFilter;
 import com.hp.hpl.jena.sparql.syntax.ElementGroup;
+import com.hp.hpl.jena.sparql.syntax.ElementPathBlock;
 import com.hp.hpl.jena.sparql.syntax.ElementTriplesBlock;
 import com.hp.hpl.jena.sparql.syntax.ElementUnion;
 import com.hp.hpl.jena.sparql.syntax.PatternVars;
@@ -29,6 +32,20 @@ import com.hp.hpl.jena.sparql.syntax.PatternVars;
 
 
 public class ElementUtils {
+
+    public static ElementTriplesBlock createElement(Triple triple) {
+        BasicPattern bgp = new BasicPattern();
+        bgp.add(triple);
+        ElementTriplesBlock result = new ElementTriplesBlock(bgp);
+        return result;
+    }
+
+    public static ElementPathBlock createElement(TriplePath triplePath) {
+        ElementPathBlock result = new ElementPathBlock();
+        result.addTriplePath(triplePath);
+        return result;
+    }
+
 
     public static List<Triple> extractTriples(Element e) {
         List<Triple> result = new ArrayList<Triple>();

@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.mapper.model;
 
 import java.util.List;
 
+import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.mapper.context.TypedNode;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
@@ -12,7 +13,6 @@ import org.springframework.beans.BeanWrapperImpl;
 import com.google.common.base.Defaults;
 import com.google.common.collect.Iterables;
 import com.hp.hpl.jena.graph.Graph;
-import com.hp.hpl.jena.graph.GraphUtil;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 
@@ -24,8 +24,8 @@ public class RdfPopulatorPropertySingle
     }
 
     @Override
-    public void emitTriples(Graph out, Object obj, Node subject) {
-        BeanWrapper beanWrapper = new BeanWrapperImpl(obj);
+    public void emitTriples(RdfPersistenceContext persistenceContext, RdfEmitterContext emitterContext, Graph out, Object entity, Node subject) {
+        BeanWrapper beanWrapper = new BeanWrapperImpl(entity);
         Object value = beanWrapper.getPropertyValue(propertyName);
 
         if(value != null) {
@@ -50,7 +50,7 @@ public class RdfPopulatorPropertySingle
     }
 
     @Override
-    public void populateBean(RdfPersistenceContext persistenceContext, Object bean, Graph graph, Node subject, Sink<Triple> outSink) {
+    public void populateEntity(RdfPersistenceContext persistenceContext, Object bean, Graph graph, Node subject, Sink<Triple> outSink) {
 //		Class<?> beanClass = bean.getClass();
 //		RdfType rdfType = populationContext.forJavaType(beanClass);
 //		RdfClass rdfClass = (RdfClass)rdfType;

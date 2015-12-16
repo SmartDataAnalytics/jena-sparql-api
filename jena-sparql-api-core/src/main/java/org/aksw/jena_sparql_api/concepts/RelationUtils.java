@@ -19,6 +19,19 @@ import com.hp.hpl.jena.sparql.util.ExprUtils;
 
 public class RelationUtils {
 
+//    public static Relation createRelationRenamed(Relation prototype, Relation target) {
+//        RelationUtils.create
+//
+//        Set<Var> allowed = new HashSet<Var>(Arrays.asList(sourceVar, targetVar));
+//        Set<Var> bl = Sets.difference(blacklist, allowed);
+//
+//        Generator<Var> gen = VarGeneratorBlacklist.create("v", bl);
+//
+//        Set<Var> sourceVars = relation.getVarsMentioned();
+//        Map<Var, Var> varMap = VarUtils.createJoinVarMap();
+//
+//    }
+
 
     public static Triple extractTriple(Relation relation) {
         Element e = relation.getElement();

@@ -261,7 +261,7 @@ public class RdfClass
          *  Run all of this class' populators
          */
         for(RdfPopulator pd : populators) {
-            pd.populateBean(persistenceContext, bean, inGraph, s, outSink);
+            pd.populateEntity(persistenceContext, bean, inGraph, s, outSink);
         }
     }
 
@@ -283,7 +283,7 @@ public class RdfClass
          * Run the emitters of all of this class' populators
          */
         for(RdfPopulator populator : populators) {
-            populator.emitTriples(out, entity, s);
+            populator.emitTriples(persistenceContext, emitterContext, out, entity, s);
         }
 
         /*
@@ -291,13 +291,13 @@ public class RdfClass
          * notifies the emitter context which property values need additional
          * emitting
          */
-        BeanWrapper beanWrapper = new BeanWrapperImpl(entity);
-        for(RdfPropertyDescriptor pd : propertyDescriptors.values()) {
-            String propertyName = pd.getName();
-
-            Object propertyValue = beanWrapper.getPropertyValue(propertyName);
-            emitterContext.add(propertyValue, entity, propertyName);
-        }
+//        BeanWrapper beanWrapper = new BeanWrapperImpl(entity);
+//        for(RdfPropertyDescriptor pd : propertyDescriptors.values()) {
+//            String propertyName = pd.getName();
+//
+//            Object propertyValue = beanWrapper.getPropertyValue(propertyName);
+//            emitterContext.add(propertyValue, entity, propertyName);
+//        }
     }
 
 

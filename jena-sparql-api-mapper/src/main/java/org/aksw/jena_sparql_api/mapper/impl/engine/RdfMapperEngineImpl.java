@@ -31,6 +31,7 @@ import org.aksw.jena_sparql_api.util.frontier.FrontierImpl;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
 import org.apache.jena.atlas.lib.Sink;
 import org.apache.jena.riot.lang.SinkTriplesToGraph;
+import org.springframework.beans.BeanUtils;
 
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.GraphUtil;
@@ -192,7 +193,20 @@ public class RdfMapperEngineImpl
 
 
     @Override
-    public <T> T merge(T entity) {
+    public <T> T merge(T tmpEntity) {
+        RdfType rootRdfType = typeFactory.forJavaType(tmpEntity.getClass());
+        Node rootNode = rootRdfType.getRootNode(tmpEntity);
+        Object entity = persistenceContext.entityFor(new TypedNode(rootRdfType, rootNode));
+
+        if(entity != tmpEntity) {
+            BeanUtils.copyProperties(tmpEntity, entity);
+        }
+
+        @SuppressWarnings("unchecked")
+        T result = (T)entity;
+
+        //Node rootNode = persistenceContext.getRootNode(tmpEntity);
+
         DatasetDescription datasetDescription = sparqlService.getDatasetDescription();
 
         String gStr = DatasetDescriptionUtils.getSingleDefaultGraphUri(datasetDescription);
@@ -224,9 +238,9 @@ public class RdfMapperEngineImpl
                 }
 
 
-        Class<?> clazz = entity.getClass();
+        //Class<?> clazz = tmpEntity.getClass();
         //RdfClass rdfClass = RdfClassFactory.createDefault(prologue).create(clazz);
-        RdfClass rdfClass = (RdfClass)typeFactory.forJavaType(clazz);
+        //RdfClass rdfClass = (RdfClass)typeFactory.forJavaType(clazz);
 
 
         DatasetGraph newState = DatasetGraphFactory.createMem();
@@ -245,7 +259,7 @@ public class RdfMapperEngineImpl
         UpdateExecutionFactory uef = sparqlService.getUpdateExecutionFactory();
         UpdateExecutionUtils.executeUpdate(uef, diff);
 
-        return entity;
+        return result;
     }
 
 

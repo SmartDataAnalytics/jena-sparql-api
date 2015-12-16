@@ -2,8 +2,10 @@ package org.aksw.jena_sparql_api.mapper.model;
 
 import java.util.Set;
 
+import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
+import org.aksw.jena_sparql_api.util.frontier.Frontier;
 import org.apache.jena.atlas.lib.Sink;
 
 import com.hp.hpl.jena.graph.Graph;
@@ -50,7 +52,7 @@ public interface RdfPopulator {
      * @param bean
      * @param subject
      */
-    void emitTriples(Graph outGraph, Object bean, Node subject);
+    void emitTriples(RdfPersistenceContext persistenceContext, RdfEmitterContext emitterContext, Graph outGraph, Object bean, Node subject);
 
     /**
      * Set bean property values from a given subject's RDF graph
@@ -59,5 +61,5 @@ public interface RdfPopulator {
      * @param subject
      * @return
      */
-    void populateBean(RdfPersistenceContext populationContext, Object bean, Graph graph, Node subject, Sink<Triple> outSink);
+    void populateEntity(RdfPersistenceContext persistenceContext, Object bean, Graph graph, Node subject, Sink<Triple> outSink);
 }

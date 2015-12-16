@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.mapper.model;
 import java.beans.PropertyDescriptor;
 import java.util.Collection;
 
+import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.mapper.context.TypedNode;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
@@ -47,9 +48,9 @@ public class RdfPopulatorPropertyMulti
 
 
     @Override
-    public void emitTriples(Graph out, Object bean, Node subject) {
+    public void emitTriples(RdfPersistenceContext persistenceContext, RdfEmitterContext emitterContext, Graph out, Object entity, Node subject) {
 
-        BeanWrapper beanWrapper = new BeanWrapperImpl(bean);
+        BeanWrapper beanWrapper = new BeanWrapperImpl(entity);
         Collection<?> items = (Collection<?>)beanWrapper.getPropertyValue(propertyName);
 
         for(Object item : items) {
@@ -57,6 +58,10 @@ public class RdfPopulatorPropertyMulti
             Triple t = new Triple(subject, predicate, o);
 
             out.add(t);
+
+
+            emitterContext.add(item, entity, propertyName);
+
 //	        if(!out.contains(t)) {
 //
 //	            targetRdfType.writeGraph(out, item);
@@ -66,12 +71,12 @@ public class RdfPopulatorPropertyMulti
 
     /**
      * TODO The collection
-     * @param bean
+     * @param entity
      * @param propertyName
      * @return
      */
-    public static Object getOrCreateBean(Object bean, String propertyName) {
-        BeanWrapper beanWrapper = new BeanWrapperImpl(bean);
+    public static Object getOrCreateBean(Object entity, String propertyName) {
+        BeanWrapper beanWrapper = new BeanWrapperImpl(entity);
         Object result = beanWrapper.getPropertyValue(propertyName);
 
         if(result == null) {
@@ -92,7 +97,7 @@ public class RdfPopulatorPropertyMulti
 
     @SuppressWarnings("unchecked")
     @Override
-    public void populateBean(RdfPersistenceContext populationContext, Object bean, Graph graph, Node subject, Sink<Triple> outSink) {
+    public void populateEntity(RdfPersistenceContext populationContext, Object bean, Graph graph, Node subject, Sink<Triple> outSink) {
         // Creates a collection under the given property
         Collection<? super Object> collection = (Collection<? super Object>)getOrCreateBean(bean, propertyName);
 
