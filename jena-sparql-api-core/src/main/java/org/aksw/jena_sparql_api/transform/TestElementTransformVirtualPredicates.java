@@ -16,12 +16,13 @@ public class TestElementTransformVirtualPredicates {
     @Test
     public void test() {
         Map<Node, Relation> virtualPredicates = new HashMap<Node, Relation>();
-        virtualPredicates.put(NodeFactory.createURI("http://ex.org/label"), Relation.create("?s skos:label [ skos: value ?l]", "s", "l"));
+        virtualPredicates.put(NodeFactory.createURI("http://ex.org/label"), Relation.create("?s <skos:label> [ <skos:value> ?l]", "s", "l"));
 
-        Query query = QueryFactory.create("Select * { ?s <http://ex.org/label> ?o }");
+        //Query query = QueryFactory.create("Select * { ?s <http://ex.org/label> ?o }");
+
+        Query query = QueryFactory.create("Select * { ?s ?p ?o . ?a ?b ?c .Filter(?p = <http://ex.org/label>) }");
 
         Query actual = ElementTransformVirtualPredicates.transform(query, virtualPredicates, true);
         System.out.println(actual);
-
     }
 }

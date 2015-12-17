@@ -155,6 +155,25 @@ public class ElementUtils {
         return result;
     }
 
+    public static Element groupIfNeeded(Iterable<Element> members) {
+        ElementGroup tmp = new ElementGroup();
+        for(Element member : members) {
+            if(member != null) {
+                tmp.addElement(member);
+            }
+        }
+
+        Element result = flatten(tmp);
+
+        return result;
+
+    }
+
+    public static Element groupIfNeeded(Element ... members) {
+        Element result = groupIfNeeded(Arrays.asList(members));
+        return result;
+    }
+
     public static ElementGroup createElementGroup(Iterable<Element> members) {
         ElementGroup result = new ElementGroup();
         for(Element member : members) {

@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.transform;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -13,17 +14,21 @@ import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformer;
 import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
+import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Iterables;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.sparql.core.BasicPattern;
+import com.hp.hpl.jena.sparql.core.PathBlock;
+import com.hp.hpl.jena.sparql.core.TriplePath;
 import com.hp.hpl.jena.sparql.core.Var;
 import com.hp.hpl.jena.sparql.expr.NodeValue;
 import com.hp.hpl.jena.sparql.syntax.Element;
 import com.hp.hpl.jena.sparql.syntax.ElementBind;
-import com.hp.hpl.jena.sparql.syntax.ElementGroup;
 import com.hp.hpl.jena.sparql.syntax.ElementPathBlock;
 import com.hp.hpl.jena.sparql.syntax.ElementTriplesBlock;
 
@@ -49,6 +54,8 @@ import com.hp.hpl.jena.sparql.syntax.ElementTriplesBlock;
 public class ElementTransformVirtualPredicates
     extends ElementTransformCopyBase
 {
+    private static final Logger logger = LoggerFactory.getLogger(ElementTransformVirtualPredicates.class);
+
     protected Map<Node, Relation> virtualPredicates;
     protected Generator<Var> varGen;
 
@@ -57,8 +64,13 @@ public class ElementTransformVirtualPredicates
     }
 
     public ElementTransformVirtualPredicates(Map<Node, Relation> virtualPredicates) {
+        this(virtualPredicates, VarGeneratorImpl2.create("v"));
+    }
+
+    public ElementTransformVirtualPredicates(Map<Node, Relation> virtualPredicates, Generator<Var> varGen) {
         super();
         this.virtualPredicates = virtualPredicates;
+        this.varGen = varGen;
     }
 
 
@@ -75,18 +87,19 @@ public class ElementTransformVirtualPredicates
 
     @Override
     public Element transform(ElementPathBlock el) {
-        Element result = applyTransform(el);
+        Element result = applyTransform(el, virtualPredicates, varGen);
         return result;
     }
 
     // Constraint: mayEqual(
 
-    public static Element applyTransform(ElementTriplesBlock el, Map<Node, Relation> virtualPredicates, Generator<Var> varGen) {
+    public static Element applyTransform(ElementTriplesBlock el, Map<Node, Relation> virtualPredicates, Generator<Var> rootVarGen) {
         BasicPattern bgp = el.getPattern();
 
         BasicPattern newPattern = new BasicPattern();
         List<Element> elements = new ArrayList<Element>(bgp.size());
         for(Triple triple : bgp) {
+            Generator<Var> varGen = rootVarGen.clone();
             Element e = applyTransform(triple, virtualPredicates, varGen);
             if(e == null) {
                 newPattern.add(triple);
@@ -103,8 +116,37 @@ public class ElementTransformVirtualPredicates
         Element result = ElementUtils.createElementGroup(items);
         return result;
     }
-    public static Element applyTransform(ElementPathBlock el) {
-        throw new RuntimeException("Not implemented yet");
+
+
+    public static Element applyTransform(ElementPathBlock el, Map<Node, Relation> virtualPredicates, Generator<Var> rootVarGen) {
+        PathBlock bgp = el.getPattern();
+
+        ElementPathBlock newPattern = new ElementPathBlock();
+        List<Element> elements = new ArrayList<Element>(bgp.size());
+        for(TriplePath tp : bgp) {
+            if(tp.isTriple()) {
+                Triple triple = tp.asTriple();
+
+                Generator<Var> varGen = rootVarGen.clone();
+                Element e = applyTransform(triple, virtualPredicates, varGen);
+                if(e == null) {
+                    newPattern.addTriple(new TriplePath(triple));
+                } else {
+                    elements.add(e);
+                }
+            } else {
+                logger.warn("Triple path expressions not supported");
+                newPattern.addTriple(tp);
+            }
+        }
+
+        Iterable<Element> items = newPattern.isEmpty()
+                ? elements
+                : Iterables.concat(Collections.singleton(newPattern), elements)
+                ;
+
+        Element result = ElementUtils.createElementGroup(items);
+        return result;
     }
 
 
@@ -123,7 +165,7 @@ public class ElementTransformVirtualPredicates
         Node s = triple.getSubject();
         Node o = triple.getObject();
 
-        Var pVar = p.isVariable() ? (Var)p : varGen.next();
+        Var pVar = p.isVariable() ? (Var)p : null; //varGen.next();
 
         Element result = null;
         if(p.isConcrete()) {
@@ -202,25 +244,26 @@ public class ElementTransformVirtualPredicates
     public static Element createElementForConcretePredicate(Var pVar, Node pRef, Node s, Node o, Relation relation, Generator<Var> varGen) {
         //Relation relation = virtualProperties.get(pRef);
 
-        ElementBind bind = new ElementBind(pVar, NodeValue.makeNode(pRef));
+        Var sourceVar = relation.getSourceVar();
+        Var targetVar = relation.getTargetVar();
+
+        ElementBind bind = pVar == null ? null : new ElementBind(pVar, NodeValue.makeNode(pRef));
 
         Set<Var> vars = relation.getVarsMentioned();
         Map<Node, Node> nodeMap = new HashMap<Node, Node>();
+
+        List<Var> skip = Arrays.asList(sourceVar, targetVar);
         for(Var var : vars) {
-            Var freshVar = varGen.next();
-            nodeMap.put(var, freshVar);
+            if(!skip.contains(var)) {
+                Var freshVar = varGen.next();
+                nodeMap.put(var, freshVar);
+            }
         }
 
-        nodeMap.put(relation.getSourceVar(), s);
-        nodeMap.put(relation.getTargetVar(), o);
+        nodeMap.put(sourceVar, s);
+        nodeMap.put(targetVar, o);
         Element fragment = ElementUtils.createRenamedElement(relation.getElement(), nodeMap);
-
-        ElementGroup group = new ElementGroup();
-        group.addElement(fragment);
-        group.addElement(bind);
-
-
-        Element result = group;
+        Element result = ElementUtils.groupIfNeeded(fragment, bind);
 
         return result;
     }
