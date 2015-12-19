@@ -19,16 +19,19 @@ public class TaskletSparqlCountData
     // The sink could then be backed by the spring expression language, such that we could do
     // sink = new SpelSink("jobContext['TaskletSparqlCountData.count']);
     // sink.setValue(count);
-    
-    public static final String KEY = TaskletSparqlCountData.class.getSimpleName() + ".count";
 
-    
-    private Query query;
-    private QueryExecutionFactory qef;
+    //public static final String DEFAULT_KEY = TaskletSparqlCountData.class.getSimpleName() + ".count";
 
-    public TaskletSparqlCountData(Query query, QueryExecutionFactory qef) {
+
+    protected Query query;
+    protected QueryExecutionFactory qef;
+    protected String key;
+
+
+    public TaskletSparqlCountData(Query query, QueryExecutionFactory qef, String key) {
         this.query = query;
         this.qef = qef;
+        this.key = key;
     }
 
 
@@ -38,7 +41,9 @@ public class TaskletSparqlCountData
 
         long count = QueryExecutionUtils.countQuery(query, qef);
 
-        chunkContext.getStepContext().getStepExecution().getJobExecution().getExecutionContext().put(KEY, count);
+        String k = key != null ? key : chunkContext.getStepContext().getStepName() + ".count";
+
+        chunkContext.getStepContext().getStepExecution().getJobExecution().getExecutionContext().put(k, count);
 
         return RepeatStatus.FINISHED;
     }

@@ -8,6 +8,7 @@ import org.aksw.jena_sparql_api.batch.step.F_TripleToQuad;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.pagination.core.PagingQuery;
 import org.springframework.batch.item.data.AbstractPaginatedDataItemReader;
+import org.springframework.beans.factory.InitializingBean;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
@@ -25,11 +26,40 @@ import com.hp.hpl.jena.sparql.core.Quad;
  */
 public class ItemReaderQuad
     extends AbstractPaginatedDataItemReader<Quad>
+    implements InitializingBean
 {
     private Query query;
     private QueryExecutionFactory qef;
     // TODO Validation is not part of the reader but of the processor!
     //private Predicate<Quad> predicate;
+
+    public ItemReaderQuad() {
+        super();
+        setName(this.getClass().getName());
+    }
+
+    public Query getQuery() {
+        return query;
+    }
+
+    public void setQuery(Query query) {
+        this.query = query;
+    }
+
+    public QueryExecutionFactory getQef() {
+        return qef;
+    }
+
+    public void setQef(QueryExecutionFactory qef) {
+        this.qef = qef;
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        // TODO Assert that properties are valid
+        System.out.println("TODO validate settings");
+    }
+
 
     public ItemReaderQuad(QueryExecutionFactory qef, Query query) { //, Predicate<Quad> predicate) {
         setName(this.getClass().getName());

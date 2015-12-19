@@ -213,7 +213,7 @@ public class ConfigSparqlExportJob {
     @JobScope
     @Autowired
     public Step dataCountStep(Query query, QueryExecutionFactory qef) {
-        Tasklet tasklet = new TaskletSparqlCountData(query, qef);
+        Tasklet tasklet = new TaskletSparqlCountData(query, qef, TaskletSparqlCountData.class.getSimpleName() + ".count");
         return stepBuilders.get("dataCountStep").tasklet(tasklet).build();
     }
 

@@ -13,16 +13,26 @@ public class TaskletLog
 {
     private static final Logger logger = LoggerFactory.getLogger(TaskletLog.class);
 
-    protected String message;
+    protected String text;
 
-    public TaskletLog(String message) {
-        this.message = message;
+    public TaskletLog() {
     }
 
+    public TaskletLog(String message) {
+        this.text = message;
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    public void setText(String text) {
+        this.text = text;
+    }
 
     @Override
     public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
-        logger.info(message);
+        logger.info(text);
         return RepeatStatus.FINISHED;
     }
 }

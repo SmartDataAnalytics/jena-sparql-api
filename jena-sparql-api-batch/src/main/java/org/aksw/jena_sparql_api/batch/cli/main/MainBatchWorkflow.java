@@ -40,6 +40,7 @@ import org.aksw.jena_sparql_api.batch.json.rewriters.JsonVisitorRewriteSparqlSer
 import org.aksw.jena_sparql_api.batch.json.rewriters.JsonVisitorRewriteSparqlStep;
 import org.aksw.jena_sparql_api.batch.json.rewriters.JsonVisitorRewriteSparqlUpdate;
 import org.aksw.jena_sparql_api.batch.step.FactoryBeanStepLog;
+import org.aksw.jena_sparql_api.batch.step.FactoryBeanStepSparqlCount;
 import org.aksw.jena_sparql_api.batch.to_review.MapTransformer;
 import org.aksw.jena_sparql_api.batch.to_review.MapTransformerSimple;
 import org.aksw.jena_sparql_api.beans.json.JsonProcessorContext;
@@ -88,6 +89,7 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.config.Scope;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -313,6 +315,13 @@ public class MainBatchWorkflow {
         return baseContext;
     }
 
+    public static void copyScopes(GenericApplicationContext targetCtx, GenericApplicationContext sourceCtx) {
+        for(String scopeName : sourceCtx.getBeanFactory().getRegisteredScopeNames()) {
+            Scope scope = sourceCtx.getBeanFactory().getRegisteredScope(scopeName);
+            targetCtx.getBeanFactory().registerScope(scopeName, scope);
+        }
+    }
+
     public static GenericApplicationContext initBatchContext(ApplicationContext baseContext) {
         //ApplicationContext baseContext = initBaseContext();
         //AnnotationConfigApplicationContext baseContext = new AnnotationConfigApplicationContext(ConfigBatchJobDynamic.class);
@@ -321,6 +330,8 @@ public class MainBatchWorkflow {
 
         GenericApplicationContext batchContext = new GenericApplicationContext(baseContext);
         AnnotationConfigUtils.registerAnnotationConfigProcessors(batchContext);
+
+        copyScopes(batchContext, (GenericApplicationContext)baseContext);
 
         return batchContext;
     }
@@ -481,7 +492,8 @@ public class MainBatchWorkflow {
                 new JsonVisitorRewritePrefixes(),
                 new JsonVisitorRewriteHop(),
                 new JsonVisitorRewriteClass("$dataSource", DriverManagerDataSource.class.getName()),
-                new JsonVisitorRewriteClass("$logStep", FactoryBeanStepLog.class.getName()),
+                new JsonVisitorRewriteClass("$log", FactoryBeanStepLog.class.getName()),
+                new JsonVisitorRewriteClass("$sparqlCount", FactoryBeanStepSparqlCount.class.getName()),
                 new JsonVisitorRewriteBeanClassName(),
                 new JsonVisitorRewriteBeanDefinition()
         );

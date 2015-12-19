@@ -1,8 +1,8 @@
 package org.aksw.jena_sparql_api.batch.step;
 
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
-import org.aksw.jena_sparql_api.mapper.annotation.Iri;
 import org.springframework.batch.core.Step;
+import org.springframework.batch.core.step.builder.AbstractTaskletStepBuilder;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 
@@ -31,12 +31,11 @@ public class FactoryBeanStepSparqlUpdate
     }
 
     @Override
-    protected Step createInstance(StepBuilder stepBuilder) {
+    protected Step configureStep(StepBuilder stepBuilder) {
         Tasklet tasklet = new TaskletSparqlUpdate(target, update);
 
-        Step result = stepBuilder
-                .tasklet(tasklet)
-                .build();
+        Step result = stepBuilder.tasklet(tasklet).build();
+                //.build();
         return result;
     }
 
