@@ -1,14 +1,12 @@
 package org.aksw.jena_sparql_api.batch.step;
 
 
-import java.util.Arrays;
-
 import org.aksw.jena_sparql_api.batch.reader.ItemReaderQuad;
 import org.aksw.jena_sparql_api.batch.reader.PredicateQuadExpr;
 import org.aksw.jena_sparql_api.batch.writer.ItemWriterQuad;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
-import org.springframework.aop.scope.ScopedProxyFactoryBean;
+import org.springframework.aop.scope.ScopedProxyUtils;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.partition.support.Partitioner;
 import org.springframework.batch.core.step.builder.StepBuilder;
@@ -16,11 +14,10 @@ import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.support.PassThroughItemProcessor;
 import org.springframework.batch.item.validator.ValidatingItemProcessor;
-import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.config.BeanDefinitionHolder;
+import org.springframework.beans.factory.support.BeanDefinitionReaderUtils;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.support.RootBeanDefinition;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ConfigurableApplicationContext;
 
 import com.google.common.base.Predicate;
@@ -32,7 +29,6 @@ import com.hp.hpl.jena.sparql.expr.Expr;
 public class FactoryBeanStepSparqlPipe
     //extends AbstractFactoryBean<Step>
     extends FactoryBeanStepBase
-    implements ApplicationContextAware
 {
 //    protected StepBuilderFactory stepBuilders;
 
@@ -206,9 +202,14 @@ public class FactoryBeanStepSparqlPipe
 //        return Step.class;
 //    }
 
+//    @StepScope
+//    @Autowired
+
+
     @Override
     protected Step configureStep(StepBuilder stepBuilder) {
-        DefaultListableBeanFactory beanFactory = (DefaultListableBeanFactory)((ConfigurableApplicationContext)context).getBeanFactory();
+
+        DefaultListableBeanFactory beanFactory = (DefaultListableBeanFactory)((ConfigurableApplicationContext)ctx).getBeanFactory();
         RootBeanDefinition itemReaderBd = new RootBeanDefinition(ItemReaderQuad.class);
         itemReaderBd.setScope("step");
         itemReaderBd.getPropertyValues()
@@ -219,20 +220,34 @@ public class FactoryBeanStepSparqlPipe
             .add("query", query)
             ;
 
-        String itemReaderName = name + "-itemReader";
-        beanFactory.registerBeanDefinition(itemReaderName, itemReaderBd);
-        System.out.println(Arrays.toString(beanFactory.getRegisteredScopeNames()));
+        String itemReaderName = BeanDefinitionReaderUtils.registerWithGeneratedName(itemReaderBd, beanFactory);
 
+        BeanDefinitionHolder proxyHolder = ScopedProxyUtils.createScopedProxy(new BeanDefinitionHolder(itemReaderBd, itemReaderName), beanFactory, true);
+        BeanDefinitionReaderUtils.registerBeanDefinition(proxyHolder, beanFactory);
 
-        String proxyName = itemReaderName + "-proxy";
-        RootBeanDefinition proxyBd = new RootBeanDefinition(ScopedProxyFactoryBean.class);
-        proxyBd.getPropertyValues()
-            .add("targetBeanName", itemReaderName);
-        beanFactory.registerBeanDefinition(proxyName, proxyBd);
-
-        Object itemReader = beanFactory.getBean(proxyName);
+        String proxyName = proxyHolder.getBeanName();
         @SuppressWarnings("unchecked")
-        ItemReader<Quad> reader = (ItemReader<Quad>)itemReader;
+        ItemReader<Quad> reader = (ItemReader<Quad>)beanFactory.getBean(proxyName);
+
+        //BeanDefinitionHolder proxyHolder = ScopedProxyUtils.createScopedProxy(
+
+//        ItemReaderQuad tmp = new ItemReaderQuad(source, query);
+//        tmp.setQef(source);
+//        tmp.setQuery(query);
+//        tmp.setPageSize(readSize);
+//
+//        BeanDefinitionProxyUtils.createScopedProxy(beanFactory, bean, scopeName, propertyToSpel)
+//        BeanDefinitionBuilder.genericBeanDefinition().addPropertyValue(name, value)
+
+
+//        tmp.setCurrentItemCount(count);
+//        tmp.getExecutionContextKey(key)
+
+//        String proxyName = itemReaderName + "-proxy";
+//        RootBeanDefinition proxyBd = new RootBeanDefinition(ScopedProxyFactoryBean.class);
+//        proxyBd.getPropertyValues()
+//            .add("targetBeanName", itemReaderName);
+//        beanFactory.registerBeanDefinition(proxyName, proxyBd);
 
 //        SimpleStepFactoryBean x;
 //        RootBeanDefinition stepBd = new RootBeanDefinition(SimpleStepFactoryBean.class);
@@ -248,7 +263,7 @@ public class FactoryBeanStepSparqlPipe
 
 
 //        ScopedProxyUtils.createScopedProxy(definition, registry, proxyTargetClass)
-        beanFactory.registerBeanDefinition(name + "itemReader", itemReaderBd);
+//        beanFactory.registerBeanDefinition(name + "itemReader", itemReaderBd);
 
         //Object bean = beanFactory.getBean("mytest");
         //Object bean = context.getBean("mytest");
@@ -288,6 +303,7 @@ public class FactoryBeanStepSparqlPipe
                 .reader(reader)
                 .processor(processor)
                 .writer(writer)
+                .throttleLimit(throttle)
                 .build()
                 ;
 
@@ -310,13 +326,5 @@ public class FactoryBeanStepSparqlPipe
         }
 
         return result;
-    }
-
-    ApplicationContext context;
-
-    @Override
-    public void setApplicationContext(ApplicationContext context) throws BeansException {
-        this.context = context;
-        //System.out.println("My context is: " + context);
     }
 }

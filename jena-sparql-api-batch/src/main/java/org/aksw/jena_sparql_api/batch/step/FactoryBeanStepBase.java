@@ -4,13 +4,23 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.step.builder.AbstractTaskletStepBuilder;
 import org.springframework.batch.core.step.builder.StepBuilder;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.AbstractFactoryBean;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.task.TaskExecutor;
 
 public abstract class FactoryBeanStepBase
     extends AbstractFactoryBean<Step>
+    implements ApplicationContextAware
 {
+    /**
+     * Used for creating additional beans as part of creating the one actually returned
+     * by the factory
+     */
+    protected ApplicationContext ctx;
+
     protected StepBuilderFactory stepBuilders;
     protected String name;
 
@@ -83,5 +93,10 @@ public abstract class FactoryBeanStepBase
     }
 
     protected abstract Step configureStep(StepBuilder stepBuilder);
+
+    @Override
+    public void setApplicationContext(ApplicationContext ctx) throws BeansException {
+        this.ctx = ctx;
+    }
 
 }

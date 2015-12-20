@@ -7,10 +7,11 @@ import java.util.Iterator;
 import org.aksw.jena_sparql_api.batch.step.F_TripleToQuad;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.pagination.core.PagingQuery;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.data.AbstractPaginatedDataItemReader;
 import org.springframework.beans.factory.InitializingBean;
 
-import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.Query;
@@ -28,14 +29,22 @@ public class ItemReaderQuad
     extends AbstractPaginatedDataItemReader<Quad>
     implements InitializingBean
 {
+    private static final Logger logger = LoggerFactory.getLogger(ItemReaderQuad.class);
+
     private Query query;
     private QueryExecutionFactory qef;
     // TODO Validation is not part of the reader but of the processor!
     //private Predicate<Quad> predicate;
 
+    public static int nextId = 0;
+
+    private int id;
+
     public ItemReaderQuad() {
         super();
         setName(this.getClass().getName());
+
+        this.id = ++nextId;
     }
 
     public Query getQuery() {
@@ -73,6 +82,8 @@ public class ItemReaderQuad
         //long limit = (long)this.pageSize;
         long offset = this.page * this.pageSize;
 
+        logger.info("[START] ItemReader " + id + " on page " + this.page);
+
         PagingQuery pagingQuery = new PagingQuery(this.pageSize, this.query);
         Iterator<Query> itQuery = pagingQuery.createQueryIterator(offset);
         Query query = itQuery.next();
@@ -91,6 +102,7 @@ public class ItemReaderQuad
 //                result = Iterators.filter(result, predicate);
 //            }
         }
+        logger.info("[DONE] ItemReader " + id + " on page " + this.page);
 
         return result;
     }
