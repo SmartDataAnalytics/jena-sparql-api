@@ -322,14 +322,18 @@ public class MainBatchWorkflow {
         }
     }
 
-    public static GenericApplicationContext initBatchContext(ApplicationContext baseContext) {
+    public static AnnotationConfigApplicationContext initBatchContext(ApplicationContext baseContext) {
         //ApplicationContext baseContext = initBaseContext();
         //AnnotationConfigApplicationContext baseContext = new AnnotationConfigApplicationContext(ConfigBatchJobDynamic.class);
         //AnnotationConfigApplicationContext x = new AnnotationConfigApplicationContext()
 
 
-        GenericApplicationContext batchContext = new GenericApplicationContext(baseContext);
-        AnnotationConfigUtils.registerAnnotationConfigProcessors(batchContext);
+//        GenericApplicationContext batchContext = new GenericApplicationContext(baseContext);
+//        AnnotationConfigUtils.registerAnnotationConfigProcessors(batchContext);
+
+
+        AnnotationConfigApplicationContext batchContext = new AnnotationConfigApplicationContext();
+        batchContext.setParent(baseContext);
 
         copyScopes(batchContext, (GenericApplicationContext)baseContext);
 
@@ -347,12 +351,12 @@ public class MainBatchWorkflow {
      * @return
      * @throws Exception
      */
-    public static GenericApplicationContext initContext(ApplicationContext baseContext, JsonElement json) throws Exception {
+    public static AnnotationConfigApplicationContext initContext(ApplicationContext baseContext, JsonElement json) throws Exception {
 
 //        Object stepScope = baseContext.getBean("step");
 //        System.out.println("StepScope: " + stepScope);
 
-        GenericApplicationContext batchContext = initBatchContext(baseContext);
+        AnnotationConfigApplicationContext result = initBatchContext(baseContext);
 
         // Preprocessors
         JsonProcessorKey contextPreprocessor = new JsonProcessorKey();
@@ -370,7 +374,7 @@ public class MainBatchWorkflow {
         //contextPreprocessor.getProcessors().add(alias);
 
         // Core Beans processor
-        JsonProcessorContext contextProcessor = new JsonProcessorContext(batchContext);
+        JsonProcessorContext contextProcessor = new JsonProcessorContext(result);
 
         //JsonProcessorMap jobProcessor = new JsonProcessorMap();
         //jobProcessor.register("context", false, contextProcessor);
@@ -436,7 +440,7 @@ public class MainBatchWorkflow {
 
         //batchContext.refresh();
 
-        return batchContext;
+        return result;
     }
 
     public static BeanDefinition beanDefinitionOfType(BeanDefinitionRegistry context, Class<?> clazz) {

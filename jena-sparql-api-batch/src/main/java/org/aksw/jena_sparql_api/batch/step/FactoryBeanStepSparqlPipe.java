@@ -303,7 +303,7 @@ public class FactoryBeanStepSparqlPipe
                 .reader(reader)
                 .processor(processor)
                 .writer(writer)
-                .throttleLimit(throttle)
+                //.throttleLimit(throttle)
                 .build()
                 ;
 
@@ -318,6 +318,7 @@ public class FactoryBeanStepSparqlPipe
                 .partitioner(slaveStep)
                 .partitioner(name, partitioner)
                 .taskExecutor(taskExecutor)
+                .gridSize(throttle)
                 .build()
                 ;
 
