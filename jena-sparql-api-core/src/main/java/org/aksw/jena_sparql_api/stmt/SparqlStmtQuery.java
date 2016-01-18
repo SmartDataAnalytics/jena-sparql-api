@@ -8,7 +8,23 @@ public class SparqlStmtQuery
     protected Query query;
 
     public SparqlStmtQuery(Query query) {
-        super();
+        this(query, query.toString());
+    }
+
+    public SparqlStmtQuery(String queryString) {
+        this(null, queryString);
+    }
+
+    public SparqlStmtQuery(Query query, String queryString) {
+        this(query, queryString, null);
+    }
+
+    public SparqlStmtQuery(String queryString, Exception parseException) {
+        this(null, queryString, parseException);
+    }
+
+    public SparqlStmtQuery(Query query, String queryString, Exception parseException) {
+        super(queryString, parseException);
         this.query = query;
     }
 
@@ -16,9 +32,17 @@ public class SparqlStmtQuery
         return query;
     }
 
+//    public String getQueryString() {
+//        return this.queryString;
+//    }
+
     @Override
     public boolean isQuery() {
         return true;
+    }
+
+    public boolean isParsed() {
+        return this.query != null;
     }
 
     @Override
@@ -29,7 +53,7 @@ public class SparqlStmtQuery
     @Override
     public int hashCode() {
         final int prime = 31;
-        int result = 1;
+        int result = super.hashCode();
         result = prime * result + ((query == null) ? 0 : query.hashCode());
         return result;
     }
@@ -38,7 +62,7 @@ public class SparqlStmtQuery
     public boolean equals(Object obj) {
         if (this == obj)
             return true;
-        if (obj == null)
+        if (!super.equals(obj))
             return false;
         if (getClass() != obj.getClass())
             return false;
@@ -55,5 +79,4 @@ public class SparqlStmtQuery
     public String toString() {
         return "SparqlStmtQuery [query=" + query + "]";
     }
-
 }

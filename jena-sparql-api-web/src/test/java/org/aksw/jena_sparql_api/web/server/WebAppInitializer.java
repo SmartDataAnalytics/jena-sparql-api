@@ -23,7 +23,8 @@ public class WebAppInitializer
 //        AnnotationConfigWebApplicationContext dispatcherContext = new AnnotationConfigWebApplicationContext();
 //        dispatcherContext.register(ConfigWebMvc.class);
         ServletRegistration.Dynamic servlet = servletContext.addServlet("servletSparqlUpdate", new ServletContainer());
-        servlet.setInitParameter("jersey.config.server.provider.classnames", "org.aksw.jena_sparql_api.web.server.ServletSparqlUpdate");
+        servlet.setInitParameter("jersey.config.server.provider.classnames", "org.aksw.jena_sparql_api.web.servlets.ServletSparqlServiceImpl");
+        //servlet.addMapping("/sparql");
         servlet.addMapping("/*");
         servlet.setAsyncSupported(true);
         servlet.setLoadOnStartup(1);

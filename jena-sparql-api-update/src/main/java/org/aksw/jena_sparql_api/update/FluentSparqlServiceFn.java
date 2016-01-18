@@ -121,30 +121,30 @@ public class FluentSparqlServiceFn<P>
 
 
     public FluentSparqlServiceFn<P> withDatasetDescription(final DatasetDescription datasetDescription) {
-    	String withIri = DatasetDescriptionUtils.getSingleDefaultGraphUri(datasetDescription);
+        String withIri = DatasetDescriptionUtils.getSingleDefaultGraphUri(datasetDescription);
 
-    	if(withIri == null) {
-    		throw new RuntimeException("Can only derive a withIri if there is exactly one default graph; got: " + DatasetDescriptionUtils.toString(datasetDescription));
-    	}
+        if(withIri == null) {
+            throw new RuntimeException("Can only derive a withIri if there is exactly one default graph; got: " + DatasetDescriptionUtils.toString(datasetDescription));
+        }
 
-    	FluentSparqlServiceFn<P> result = withDatasetDescription(datasetDescription, withIri);
-    	return result;
+        FluentSparqlServiceFn<P> result = withDatasetDescription(datasetDescription, withIri);
+        return result;
     }
 
     public FluentSparqlServiceFn<P> withDatasetDescription(final DatasetDescription datasetDescription, final String withIri) {
-    	configQuery()
-    		.withDatasetDescription(datasetDescription)
-    	.end()
-    	.configUpdate()
-    		.withDatasetDescription(withIri, datasetDescription)
-    	.end()
-    	.compose(new Function<SparqlService, SparqlService>() {
+        configQuery()
+            .withDatasetDescription(datasetDescription)
+        .end()
+        .configUpdate()
+            .withDatasetDescription(withIri, datasetDescription)
+        .end()
+        .compose(new Function<SparqlService, SparqlService>() {
            @Override
             public SparqlService apply(SparqlService ss) {
-        	   SparqlService r = new SparqlServiceImpl(ss.getServiceUri(), datasetDescription, ss.getQueryExecutionFactory(), ss.getUpdateExecutionFactory());
-        	   return r;
-    		}
-    	});
+               SparqlService r = new SparqlServiceImpl(ss.getServiceUri(), datasetDescription, ss.getQueryExecutionFactory(), ss.getUpdateExecutionFactory());
+               return r;
+            }
+        });
 //
 //        compose(new Function<SparqlService, SparqlService>() {
 //            @Override

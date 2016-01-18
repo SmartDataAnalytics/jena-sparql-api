@@ -12,7 +12,10 @@ import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.UpdateContext;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
+import org.aksw.jena_sparql_api.http.HttpExceptionUtils;
 import org.aksw.jena_sparql_api.utils.DatasetGraphDiffUtils;
+import org.apache.jena.atlas.web.HttpException;
+import org.apache.jena.web.JenaHttpException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -199,12 +202,17 @@ public class UpdateExecutionUtils {
         UpdateProcessor result;
         if(updateRequest.getOperations().isEmpty()) {
             // Create a fake update request
-            UpdateRequest update = UpdateFactory.create("PREFIX ex: <http://example.org/> INSERT { ex:s ex:p ex:o } WHERE { ex:s ex:p ex:o }");
+            UpdateRequest update = UpdateFactory.create("PREFIX ex: <http://example.org/> INSERT { ex:_s ex:_p ex:_o } WHERE { ex:_s ex:_p ex:_o }");
             result = com.hp.hpl.jena.update.UpdateExecutionFactory.create(update, GraphStoreFactory.create(ModelFactory.createDefaultModel()));
             result.execute();
         } else {
             result = uef.createUpdateProcessor(updateRequest);
-            result.execute();
+            try {
+                result.execute();
+            } catch(Exception e) {
+                RuntimeException f = HttpExceptionUtils.makeHumanFriendly(e);
+                throw f;
+            }
         }
 
         return result;

@@ -5,4 +5,5 @@ import com.hp.hpl.jena.update.UpdateRequest;
 
 public interface UpdateExecutionFactory {
     UpdateProcessor createUpdateProcessor(UpdateRequest updateRequest);
+    UpdateProcessor createUpdateProcessor(String updateRequestStr);
 }

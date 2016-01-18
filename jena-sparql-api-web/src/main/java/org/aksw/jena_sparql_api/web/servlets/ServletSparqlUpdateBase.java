@@ -38,7 +38,7 @@ public abstract class ServletSparqlUpdateBase {
 
     private static final Logger logger = LoggerFactory.getLogger(ServletSparqlUpdateBase.class);
 
-    private @Context HttpServletRequest req;
+    protected @Context HttpServletRequest req;
 
     protected abstract SparqlServiceFactory getSparqlServiceFactory();
 
@@ -48,7 +48,7 @@ public abstract class ServletSparqlUpdateBase {
             @QueryParam("service-uri") String serviceUri,
             @QueryParam("update") String queryString,
             @QueryParam("using-graph-uri") List<String> usingGraphUris,
-            @QueryParam("using-named-graphuri") List<String> usingNamedGraphUris)
+            @QueryParam("using-named-graph-uri") List<String> usingNamedGraphUris)
         throws Exception
     {
         executeUpdateAny(asyncResponse, serviceUri, queryString, usingGraphUris, usingNamedGraphUris);
@@ -61,7 +61,7 @@ public abstract class ServletSparqlUpdateBase {
             @FormParam("service-uri") String serviceUri,
             @FormParam("update") String queryString,
             @FormParam("using-graph-uri") List<String> usingGraphUris,
-            @FormParam("using-named-graphuri") List<String> usingNamedGraphUris)
+            @FormParam("using-named-graph-uri") List<String> usingNamedGraphUris)
         throws Exception
     {
         executeUpdateAny(asyncResponse, serviceUri, queryString, usingGraphUris, usingNamedGraphUris);

@@ -18,6 +18,7 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.eclipse.jetty.server.Server;
 import org.junit.Assert;
+import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import com.hp.hpl.jena.sparql.core.DatasetDescription;
@@ -70,6 +71,27 @@ public class TestServletSparqlUpdate {
 
         server.stop();
         server.join();
+
+    }
+
+    //@Test
+    public void test2() throws InterruptedException {
+        int port = 7533;
+
+        Server server = ServerUtils.startServer(port, new WebAppInitializer());
+        server.join();
+
+//        AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext(ConfigApp.class);
+//        SparqlServiceFactory ssf = (SparqlServiceFactory) ctx.getBean("sparqlServiceFactory");
+
+        //SparqlService ssDBpedia = ssf.createSparqlService("http://akswnc3.informatik.uni-leipzig.de/data/jassa/sparql", new DatasetDescription(Collections.singletonList("http://dbpedia.org"), Collections.<String>emptyList()), null);
+        //String s = "Construct { ?s ?p ?o } { ?s ?p ?o { Select Distinct ?s { ?s a <http://dbpedia.org/ontology/Person> } Limit 10 } }";
+
+
+        //SparqlService ssLocal = ssf.createSparqlService("http://localhost:8890/sparql", new DatasetDescription(Collections.singletonList("http://jsa.aksw.org/test/data/"), Collections.<String>emptyList()), null);
+        //UpdateExecutionUtils.copyByConstruct(ssLocal, ssDBpedia, s, 1000);
+
+
 
     }
 }

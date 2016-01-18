@@ -11,15 +11,20 @@ import org.aksw.jena_sparql_api.core.SparqlServiceFactoryHttp;
 import org.aksw.jena_sparql_api.update.DatasetListenerSink;
 import org.aksw.jena_sparql_api.update.FluentSparqlServiceFactory;
 import org.aksw.jena_sparql_api.update.SparqlServiceFactoryEventSource;
+import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
 import org.apache.jena.atlas.web.auth.HttpAuthenticator;
 import org.apache.jena.atlas.web.auth.SimpleAuthenticator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
+import com.google.common.base.Predicates;
 import com.hp.hpl.jena.sparql.core.DatasetDescription;
 
+@Configuration
+//@ComponentScan({"org.aksw.jassa.web", "org.aksw.facete2.web"}) // TODO I think we can drop jassa.web from scannig by now
 public class ConfigApp {
 
     @Bean
@@ -29,12 +34,15 @@ public class ConfigApp {
 
         SparqlServiceFactory result = FluentSparqlServiceFactory
             .from(coreFactory)
-            .config()
-                .configQuery()
-                    .withPagination(1000)
-                    .selectOnly()
-                .end()
-            .end().create();
+            .configFactory()
+                .configService()
+                    .configQuery()
+                        .withPagination(1000)
+                        .selectOnly()
+                        .end()
+                    .end()
+            .end()
+            .create();
 
         return result;
     }
@@ -55,9 +63,18 @@ public class ConfigApp {
     public SparqlServiceFactory sparqlServiceFactory(@Qualifier("init") SparqlServiceFactory ssf, @Qualifier("init") SparqlService ssfChangeSet) {
 
         ChangeSetMetadata metadata = new ChangeSetMetadata("claus", "testing");
-        SparqlServiceFactoryEventSource result = new SparqlServiceFactoryEventSource(ssf);
+        SparqlServiceFactoryEventSource tmp = new SparqlServiceFactoryEventSource(ssf);
         SinkChangeSetWriter sink = new SinkChangeSetWriter(metadata, ssfChangeSet);
-        result.getListeners().add(new DatasetListenerSink(sink));
+        //tmp.getListeners().add(new DatasetListenerSink(sink));
+
+        SparqlServiceFactory result = FluentSparqlServiceFactory
+            .from(tmp)
+            .configFactory()
+                .defaultServiceUri("http://akswnc3.informatik.uni-leipzig.de/data/jassa/sparql", Predicates.<String>alwaysFalse())
+            .end()
+            .create();
+
+        //SparqlService test = tmp.createSparqlService(null, null, null);
 
         return result;
     }

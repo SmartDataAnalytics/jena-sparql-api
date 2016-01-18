@@ -6,8 +6,9 @@ import com.hp.hpl.jena.update.GraphStoreFactory;
 import com.hp.hpl.jena.update.UpdateProcessor;
 import com.hp.hpl.jena.update.UpdateRequest;
 
+@Deprecated // Use UpdateExecutionFactoryGraphStore instead
 public class UpdateExecutionFactoryDatasetGraph
-    implements UpdateExecutionFactory
+    extends UpdateExecutionFactoryParsingBase
 {
     private DatasetGraph datasetGraph;
 

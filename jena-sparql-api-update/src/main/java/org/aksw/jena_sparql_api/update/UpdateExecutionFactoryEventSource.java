@@ -5,7 +5,7 @@ import java.util.Set;
 
 import org.aksw.jena_sparql_api.core.DatasetListener;
 import org.aksw.jena_sparql_api.core.UpdateContext;
-import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
+import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryParsingBase;
 
 import com.hp.hpl.jena.update.UpdateRequest;
 
@@ -15,7 +15,8 @@ import com.hp.hpl.jena.update.UpdateRequest;
  *
  */
 public class UpdateExecutionFactoryEventSource
-    implements UpdateExecutionFactory, DatasetListenable
+    extends UpdateExecutionFactoryParsingBase
+    implements DatasetListenable
 {
     private UpdateContext updateContext;
 

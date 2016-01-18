@@ -9,6 +9,12 @@ import com.hp.hpl.jena.sparql.core.DatasetDescription;
 import com.hp.hpl.jena.sparql.core.Quad;
 
 public class DatasetDescriptionUtils {
+
+    public static void mergeInto(DatasetDescription target, DatasetDescription source) {
+        target.addAllDefaultGraphURIs(source.getDefaultGraphURIs());
+        target.addAllNamedGraphURIs(source.getNamedGraphURIs());
+    }
+
     public static Node getSingleDefaultGraph(DatasetDescription datasetDescription) {
         String str = getSingleDefaultGraphUri(datasetDescription);
         Node result = NodeFactory.createURI(str);
@@ -22,26 +28,26 @@ public class DatasetDescriptionUtils {
      * @return
      */
     public static String getSingleDefaultGraphUri(DatasetDescription datasetDescription) {
-    	String result;
+        String result;
 
-    	if(datasetDescription == null) {
-    		result = Quad.defaultGraphIRI.getURI();
-    	} else {
+        if(datasetDescription == null) {
+            result = Quad.defaultGraphIRI.getURI();
+        } else {
 
-	        List<String> dgus = datasetDescription.getDefaultGraphURIs();
+            List<String> dgus = datasetDescription.getDefaultGraphURIs();
 
-	        result = datasetDescription != null && dgus.size() == 1
-	                ? dgus.iterator().next()
-	                : null
-	                ;
-    	}
+            result = datasetDescription != null && dgus.size() == 1
+                    ? dgus.iterator().next()
+                    : null
+                    ;
+        }
 
         return result;
     }
 
     public static DatasetDescription createDefaultGraph(Node defaultGraph) {
-    	DatasetDescription result = createDefaultGraph(defaultGraph.getURI());
-    	return result;
+        DatasetDescription result = createDefaultGraph(defaultGraph.getURI());
+        return result;
     }
 
     public static DatasetDescription createDefaultGraph(String defaultGraph) {

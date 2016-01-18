@@ -9,7 +9,7 @@ import com.hp.hpl.jena.update.UpdateProcessor;
 import com.hp.hpl.jena.update.UpdateRequest;
 
 public class UpdateExecutionFactoryHttp
-    implements UpdateExecutionFactory
+    extends UpdateExecutionFactoryParsingBase
 {
     private String remoteEndpoint;
     private HttpAuthenticator authenticator;

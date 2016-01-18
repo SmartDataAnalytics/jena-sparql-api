@@ -30,7 +30,7 @@ public class SparqlServiceFactoryEventSource
 
     @Override
     public SparqlService createSparqlService(String serviceUri, DatasetDescription datasetDescription, Object authenticator) {
-        SparqlServiceReference serviceRef = new SparqlServiceReference(serviceUri, datasetDescription, authenticator);
+        //SparqlServiceReference serviceRef = new SparqlServiceReference(serviceUri, datasetDescription, authenticator);
 
         SparqlService core = delegate.createSparqlService(serviceUri, datasetDescription, authenticator);
         UpdateContext updateContext = new UpdateContext(core, 128, new QuadContainmentCheckerSimple()); //FunctionQuadDiffUnique.create(qef, )))
@@ -38,7 +38,7 @@ public class SparqlServiceFactoryEventSource
 
         uef.getDatasetListeners().addAll(datasetListeners);
 
-        SparqlService result = new SparqlServiceImpl(core.getQueryExecutionFactory(), uef);
+        SparqlService result = new SparqlServiceImpl(serviceUri, datasetDescription, core.getQueryExecutionFactory(), uef);
 
         return result;
     }

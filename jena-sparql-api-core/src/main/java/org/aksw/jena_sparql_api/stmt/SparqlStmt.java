@@ -6,4 +6,7 @@ public interface SparqlStmt {
 
     SparqlStmtUpdate getAsUpdateStmt();
     SparqlStmtQuery getAsQueryStmt();
+
+    Exception getParseException();
+    String getOriginalString();
 }

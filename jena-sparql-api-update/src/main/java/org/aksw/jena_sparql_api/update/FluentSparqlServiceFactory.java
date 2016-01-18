@@ -8,6 +8,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.hp.hpl.jena.sparql.core.DatasetDescription;
 
+
 public class FluentSparqlServiceFactory<P>
     extends FluentBase<SparqlServiceFactory, P>
 {
@@ -15,6 +16,36 @@ public class FluentSparqlServiceFactory<P>
         this.fn = sparqlServiceFactory;
     }
 
+    public FluentSparqlServiceFactoryFn<FluentSparqlServiceFactory<P>> configFactory() {
+        final FluentSparqlServiceFactory<P> self = this;
+
+        final FluentSparqlServiceFactoryFn<FluentSparqlServiceFactory<P>> result = new FluentSparqlServiceFactoryFn<FluentSparqlServiceFactory<P>>();
+        result.setParentSupplier(new Supplier<FluentSparqlServiceFactory<P>>() {
+                @Override
+                public FluentSparqlServiceFactory<P> get() {
+                    // Apply the collection transformations
+                    Function<SparqlServiceFactory, SparqlServiceFactory> transform = result.value();
+                    fn = transform.apply(fn);
+
+                    return self;
+                }
+            });
+
+        return result;
+    }
+
+
+//    public FluentSparqlServiceFn<FluentSparqlServiceFactory<P>> configService() {
+//        FluentSparqlServiceFn<FluentSparqlServiceFactory<P>> result = config();
+//        return result;
+//    }
+
+    /**
+     * Use configService instead
+     *
+     * @return
+     */
+    @Deprecated
     public FluentSparqlServiceFn<FluentSparqlServiceFactory<P>> config() {
         final FluentSparqlServiceFactory<P> self = this;
 

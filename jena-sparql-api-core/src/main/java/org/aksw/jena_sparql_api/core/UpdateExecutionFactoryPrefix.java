@@ -5,34 +5,31 @@ import com.hp.hpl.jena.update.UpdateProcessor;
 import com.hp.hpl.jena.update.UpdateRequest;
 
 public class UpdateExecutionFactoryPrefix
-	implements UpdateExecutionFactory
+    extends UpdateExecutionFactoryParsingBase
 {
-	private UpdateExecutionFactory delegate;
-	private PrefixMapping prefixMapping;
-	
-	public UpdateExecutionFactoryPrefix(UpdateExecutionFactory delegate, PrefixMapping prefixMapping) {
-		super();
-		this.delegate = delegate;
-		this.prefixMapping = prefixMapping;
-	}
+    private UpdateExecutionFactory delegate;
+    private PrefixMapping prefixMapping;
 
-	public UpdateExecutionFactory getDelegate() {
-		return delegate;
-	}
+    public UpdateExecutionFactoryPrefix(UpdateExecutionFactory delegate, PrefixMapping prefixMapping) {
+        super();
+        this.delegate = delegate;
+        this.prefixMapping = prefixMapping;
+    }
 
-	public PrefixMapping getPrefixMapping() {
-		return prefixMapping;
-	}
+    public UpdateExecutionFactory getDelegate() {
+        return delegate;
+    }
 
-	@Override
-	public UpdateProcessor createUpdateProcessor(UpdateRequest updateRequest) {
-		// TODO We should clone the request first
-		updateRequest.getPrefixMapping().setNsPrefixes(prefixMapping);
-		
-		UpdateProcessor result = delegate.createUpdateProcessor(updateRequest);
-		return result;
-	}
-	
-	
-	
+    public PrefixMapping getPrefixMapping() {
+        return prefixMapping;
+    }
+
+    @Override
+    public UpdateProcessor createUpdateProcessor(UpdateRequest updateRequest) {
+        // TODO We should clone the request first
+        updateRequest.getPrefixMapping().setNsPrefixes(prefixMapping);
+
+        UpdateProcessor result = delegate.createUpdateProcessor(updateRequest);
+        return result;
+    }
 }

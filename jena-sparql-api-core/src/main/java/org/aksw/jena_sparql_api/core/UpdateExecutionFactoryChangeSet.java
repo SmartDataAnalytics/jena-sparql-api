@@ -11,7 +11,7 @@ import com.hp.hpl.jena.update.UpdateRequest;
  *
  */
 public class UpdateExecutionFactoryChangeSet
-    implements UpdateExecutionFactory
+    extends UpdateExecutionFactoryParsingBase
 {
     private UpdateExecutionFactory uef;
 

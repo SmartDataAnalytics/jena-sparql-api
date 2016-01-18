@@ -1,7 +1,6 @@
 package org.aksw.jena_sparql_api.stmt;
 
 import com.google.common.base.Supplier;
-import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.query.Syntax;
 import com.hp.hpl.jena.sparql.core.Prologue;
 import com.hp.hpl.jena.update.UpdateFactory;

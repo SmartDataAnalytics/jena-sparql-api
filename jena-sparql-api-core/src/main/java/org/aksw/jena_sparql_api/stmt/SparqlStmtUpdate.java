@@ -5,15 +5,35 @@ import com.hp.hpl.jena.update.UpdateRequest;
 public class SparqlStmtUpdate
     extends SparqlStmtBase
 {
-    private UpdateRequest updateRequest;
+    protected UpdateRequest updateRequest;
 
     public SparqlStmtUpdate(UpdateRequest updateRequest) {
-        super();
+        this(updateRequest, updateRequest.toString());
+    }
+
+    public SparqlStmtUpdate(String updateRequestStr) {
+        this(null, updateRequestStr);
+    }
+
+    public SparqlStmtUpdate(UpdateRequest updateRequest, String updateRequestStr) {
+        this(updateRequest, updateRequestStr, null);
+    }
+
+    public SparqlStmtUpdate(String updateRequestStr, Exception parseException) {
+        this(null, updateRequestStr, parseException);
+    }
+
+    public SparqlStmtUpdate(UpdateRequest updateRequest, String updateRequestStr, Exception parseException) {
+        super(updateRequestStr, parseException);
         this.updateRequest = updateRequest;
     }
 
     public UpdateRequest getUpdateRequest() {
         return updateRequest;
+    }
+
+    public boolean isParsed() {
+        return updateRequest != null;
     }
 
     @Override
@@ -29,7 +49,7 @@ public class SparqlStmtUpdate
     @Override
     public int hashCode() {
         final int prime = 31;
-        int result = 1;
+        int result = super.hashCode();
         result = prime * result
                 + ((updateRequest == null) ? 0 : updateRequest.hashCode());
         return result;
@@ -39,7 +59,7 @@ public class SparqlStmtUpdate
     public boolean equals(Object obj) {
         if (this == obj)
             return true;
-        if (obj == null)
+        if (!super.equals(obj))
             return false;
         if (getClass() != obj.getClass())
             return false;
@@ -54,7 +74,6 @@ public class SparqlStmtUpdate
 
     @Override
     public String toString() {
-        return "SparqlStatementUpdateRequest [updateRequest=" + updateRequest
-                + "]";
+        return "SparqlStmtUpdate [updateRequest=" + updateRequest + "]";
     }
 }
