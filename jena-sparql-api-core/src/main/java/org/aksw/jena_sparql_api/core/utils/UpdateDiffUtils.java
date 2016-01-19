@@ -112,6 +112,7 @@ public class UpdateDiffUtils {
         return result;
     }
 
+
     public static Iterator<Diff<Set<Quad>>> createIteratorDiff(QueryExecutionFactory qef, UpdateDeleteWhere update, int batchSize) {
 
         UpdateModify tmp = new UpdateModify();

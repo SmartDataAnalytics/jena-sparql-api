@@ -30,8 +30,8 @@ public class DatasetDescriptionRequestUtils {
 
     public static DatasetDescription extractDatasetDescriptionCommon(HttpServletRequest req, String dguParamName, String nguParamName) {
         DatasetDescription result = new DatasetDescription();
-        result.addAllDefaultGraphURIs(Arrays.asList(ServletRequestUtils.getStringParameters(req, "default-graph-uri")));
-        result.addAllNamedGraphURIs(Arrays.asList(ServletRequestUtils.getStringParameters(req, "named-graph-uri")));
+        result.addAllDefaultGraphURIs(Arrays.asList(ServletRequestUtils.getStringParameters(req, dguParamName)));
+        result.addAllNamedGraphURIs(Arrays.asList(ServletRequestUtils.getStringParameters(req, nguParamName)));
         return result;
     }
 }

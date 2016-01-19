@@ -108,7 +108,8 @@ public class ResultSetPaginated
             // doing a binary partitioning of the current query range, and try to locate the bindings causing the error
             currentResultSet = qe.execSelect();
 
-            currentResultVars = new ArrayList<String>(currentResultSet.getResultVars());
+            //currentResultVars = new ArrayList<String>(currentResultSet.getResultVars());
+            currentResultVars = currentResultSet.getResultVars();
 
 
             currentResultSet = new ResultSetCloseable(currentResultSet, new CloseableQueryExecution(qe));

@@ -24,7 +24,7 @@ public class UpdateSupplierImpl
         UpdateRequest result = new UpdateRequest();
 
         if(prologue != null) {
-            result.setBaseURI(prologue.getBaseURI());
+            result.setBaseURI(prologue.getResolver());
             result.setPrefixMapping(prologue.getPrefixMapping());
         }
 

@@ -215,6 +215,24 @@ public class ElementUtils {
         }
     }
 
+    public static void mergeElements(ElementGroup target, ElementTriplesBlock etb, Element source) {
+        if(source instanceof ElementTriplesBlock) {
+            ElementTriplesBlock e = (ElementTriplesBlock)source;
+            for(Triple t : e.getPattern()) {
+                etb.addTriple(t);
+            }
+        } else if(source instanceof ElementGroup) {
+            ElementGroup es = (ElementGroup)source;
+
+            for(Element e : es.getElements()) {
+                mergeElements(target, etb, e);
+                //target.addElement(e);
+            }
+        } else {
+            target.addElement(source);
+        }
+    }
+
     /**
      * Creates a new ElementGroup that contains the elements of the given arguments.
      * Argument ElementGroups are flattened. ElementTriplesBlocks however are not combined.
@@ -224,10 +242,23 @@ public class ElementUtils {
      * @return
      */
     public static Element mergeElements(Element first, Element second) {
-        ElementGroup result = new ElementGroup();
+        ElementGroup tmp = new ElementGroup();
+        ElementTriplesBlock etb = new ElementTriplesBlock();
+        tmp.addElement(etb);
 
-        copyElements(result, first);
-        copyElements(result, second);
+
+        mergeElements(tmp, etb, first);
+        mergeElements(tmp, etb, second);
+
+        // Remove empty element triple blocks
+        ElementGroup result = new ElementGroup();
+        for(Element e : tmp.getElements()) {
+            if((e instanceof ElementTriplesBlock) && ((ElementTriplesBlock)e).isEmpty()) {
+                // Skip
+            } else {
+                result.addElement(e);
+            }
+        }
 
         return result;
     }

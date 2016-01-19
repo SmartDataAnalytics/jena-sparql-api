@@ -1,8 +1,10 @@
 package org.aksw.jena_sparql_api.core.utils;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.aksw.commons.collections.diff.Diff;
@@ -13,9 +15,11 @@ import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.UpdateContext;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
 import org.aksw.jena_sparql_api.http.HttpExceptionUtils;
+import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
 import org.aksw.jena_sparql_api.utils.DatasetGraphDiffUtils;
-import org.apache.jena.atlas.web.HttpException;
-import org.apache.jena.web.JenaHttpException;
+import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
+import org.aksw.jena_sparql_api.utils.NodeUtils;
+import org.aksw.jena_sparql_api.utils.QuadUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,8 +35,10 @@ import com.hp.hpl.jena.query.QueryFactory;
 import com.hp.hpl.jena.query.Syntax;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.sparql.core.DatasetDescription;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import com.hp.hpl.jena.sparql.core.Quad;
+import com.hp.hpl.jena.sparql.graph.NodeTransform;
 import com.hp.hpl.jena.sparql.modify.request.UpdateDeleteInsert;
 import com.hp.hpl.jena.update.GraphStoreFactory;
 import com.hp.hpl.jena.update.Update;
@@ -121,6 +127,14 @@ public class UpdateExecutionUtils {
         }
     }
 
+    public static String extractWithIri(SparqlService sparqlService, Update update) {
+        String result = UpdateUtils.getWithIri(update);
+        if(result == null) {
+            DatasetDescription datasetDescription = sparqlService.getDatasetDescription();
+            result = DatasetDescriptionUtils.getSingleDefaultGraphUri(datasetDescription);
+        }
+        return result;
+    }
 
     public static void executeUpdateCore(
             SparqlService sparqlService,
@@ -132,9 +146,32 @@ public class UpdateExecutionUtils {
         QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
         UpdateExecutionFactory uef = sparqlService.getUpdateExecutionFactory();
 
-        //String withIri = UpdateUtils.getWithIri(update);
+        Node with = NodeUtils.asNullableNode(extractWithIri(sparqlService, update));
+        if(with == null) {
+            throw new RuntimeException("No target graph for updates could be identified; i.e. no with uri or single default graph specified. " + update);
+        }
 
-        Iterator<Diff<Set<Quad>>> itDiff = UpdateDiffUtils.createIteratorDiff(qef, update, batchSize);
+        Iterator<Diff<Set<Quad>>> itDiffRaw = UpdateDiffUtils.createIteratorDiff(qef, update, batchSize);
+
+        Map<Node, Node> map = new HashMap<Node, Node>();
+        map.put(Quad.defaultGraphIRI, with);
+        map.put(Quad.defaultGraphNodeGenerated, with);
+        final NodeTransform nodeTransform = new NodeTransformRenameMap(map);
+        Iterator<Diff<Set<Quad>>> itDiff = Iterators.transform(itDiffRaw, new Function<Diff<Set<Quad>>, Diff<Set<Quad>>>() {
+
+            @Override
+            public Diff<Set<Quad>> apply(Diff<Set<Quad>> input) {
+
+                Set<Quad> added = QuadUtils.applyNodeTransform(input.getAdded(), nodeTransform);
+                Set<Quad> removed = QuadUtils.applyNodeTransform(input.getAdded(), nodeTransform);
+
+                Diff<Set<Quad>> r = Diff.create(added, removed);
+                return r;
+            }
+        });
+
+
+
 
         while(itDiff.hasNext()) {
             Diff<Set<Quad>> diff = itDiff.next();

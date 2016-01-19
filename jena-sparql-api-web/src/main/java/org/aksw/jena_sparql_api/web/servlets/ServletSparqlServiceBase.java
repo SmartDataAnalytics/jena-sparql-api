@@ -5,6 +5,7 @@ import javax.ws.rs.core.Context;
 
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
+import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtUpdate;
 import org.aksw.jena_sparql_api.web.utils.AuthenticatorUtils;
 import org.aksw.jena_sparql_api.web.utils.DatasetDescriptionRequestUtils;
@@ -90,13 +91,14 @@ public abstract class ServletSparqlServiceBase
         HttpAuthenticator authenticator = getAuthenticator();
 
         SparqlService ss = ssf.createSparqlService(serviceUri, datasetDescription, authenticator);
+        UpdateExecutionFactory uef = ss.getUpdateExecutionFactory();
         UpdateProcessor result;
         if(stmt.isParsed()) {
             UpdateRequest updateRequest = stmt.getUpdateRequest();
-            result = ss.getUpdateExecutionFactory().createUpdateProcessor(updateRequest);
+            result = uef.createUpdateProcessor(updateRequest);
         } else {
             String updateRequestStr = stmt.getOriginalString();
-            result = ss.getUpdateExecutionFactory().createUpdateProcessor(updateRequestStr);
+            result = uef.createUpdateProcessor(updateRequestStr);
         }
         return result;
     }

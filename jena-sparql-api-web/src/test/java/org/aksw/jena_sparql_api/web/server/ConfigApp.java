@@ -4,14 +4,13 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import org.aksw.jena_sparql_api.changeset.ChangeSetMetadata;
-import org.aksw.jena_sparql_api.changeset.SinkChangeSetWriter;
+import org.aksw.jena_sparql_api.core.DatasetListener;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactoryHttp;
-import org.aksw.jena_sparql_api.update.DatasetListenerSink;
+import org.aksw.jena_sparql_api.update.DatasetListenerTrack;
 import org.aksw.jena_sparql_api.update.FluentSparqlServiceFactory;
 import org.aksw.jena_sparql_api.update.SparqlServiceFactoryEventSource;
-import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
 import org.apache.jena.atlas.web.auth.HttpAuthenticator;
 import org.apache.jena.atlas.web.auth.SimpleAuthenticator;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,13 +63,16 @@ public class ConfigApp {
 
         ChangeSetMetadata metadata = new ChangeSetMetadata("claus", "testing");
         SparqlServiceFactoryEventSource tmp = new SparqlServiceFactoryEventSource(ssf);
-        SinkChangeSetWriter sink = new SinkChangeSetWriter(metadata, ssfChangeSet);
+        //SinkChangeSetWriter sink = new SinkChangeSetWriter(metadata, ssfChangeSet);
+        DatasetListener datasetListener = new DatasetListenerTrack(ssfChangeSet, metadata);
+        tmp.getListeners().add(datasetListener);
         //tmp.getListeners().add(new DatasetListenerSink(sink));
 
         SparqlServiceFactory result = FluentSparqlServiceFactory
             .from(tmp)
             .configFactory()
-                .defaultServiceUri("http://akswnc3.informatik.uni-leipzig.de/data/jassa/sparql", Predicates.<String>alwaysFalse())
+                .defaultServiceUri("http://localhost:8890/sparql", Predicates.<String>alwaysFalse())
+                //.defaultServiceUri("http://akswnc3.informatik.uni-leipzig.de/data/jassa/sparql", Predicates.<String>alwaysFalse())
             .end()
             .create();
 

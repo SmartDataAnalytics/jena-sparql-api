@@ -74,7 +74,7 @@ public class TestServletSparqlUpdate {
 
     }
 
-    //@Test
+    @Test
     public void test2() throws InterruptedException {
         int port = 7533;
 

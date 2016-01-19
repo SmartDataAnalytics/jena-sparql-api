@@ -13,14 +13,19 @@ import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.sparql.core.Var;
 
 public class NodeUtils {
-	public static List<Node> fromUris(Iterable<String> uris) {
-		List<Node> result = new ArrayList<Node>(Iterables.size(uris));
-		for(String uri : uris) {
-			Node node = NodeFactory.createURI(uri);
-			result.add(node);
-		}
-		return result;
-	}
+    public static Node asNullableNode(String uri) {
+        Node result = uri == null ? null : NodeFactory.createURI(uri);
+        return result;
+    }
+
+    public static List<Node> fromUris(Iterable<String> uris) {
+        List<Node> result = new ArrayList<Node>(Iterables.size(uris));
+        for(String uri : uris) {
+            Node node = NodeFactory.createURI(uri);
+            result.add(node);
+        }
+        return result;
+    }
 
     public static Node createTypedLiteral(TypeMapper typeMapper, Object o) {
         Class<?> clazz = o.getClass();

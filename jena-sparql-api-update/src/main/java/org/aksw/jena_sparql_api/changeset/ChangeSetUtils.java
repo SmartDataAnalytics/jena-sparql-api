@@ -16,7 +16,10 @@ import org.aksw.jena_sparql_api.lookup.LookupServiceSparqlQuery;
 import org.aksw.jena_sparql_api.lookup.LookupServiceTransformValue;
 import org.aksw.jena_sparql_api.mapper.BindingMapperProjectVar;
 import org.aksw.jena_sparql_api.mapper.FunctionBindingMapper;
+import org.aksw.jena_sparql_api.update.DiffQuadUtils;
 import org.aksw.jena_sparql_api.utils.GraphUtils;
+import org.aksw.jena_sparql_api.utils.NodeUtils;
+import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.ResultSetPart;
 import org.aksw.jena_sparql_api.utils.SetGraph;
 import org.aksw.jena_sparql_api.utils.Vars;
@@ -41,6 +44,9 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.sparql.core.Quad;
+import com.hp.hpl.jena.sparql.expr.E_Equals;
+import com.hp.hpl.jena.sparql.expr.ExprVar;
+import com.hp.hpl.jena.sparql.expr.NodeValue;
 import com.hp.hpl.jena.sparql.graph.GraphFactory;
 import com.hp.hpl.jena.sparql.util.ModelUtils;
 import com.hp.hpl.jena.update.UpdateRequest;
@@ -75,7 +81,7 @@ class ResourceUtils {
 
 public class ChangeSetUtils {
 
-    public static final Query queryMostRecentChangeSet = QueryFactory.parse(new Query(), "Prefix cs: <http://purl.org/vocab/changeset/schema#> Select ?s ?o { ?s cs:subjectOfChange ?o . Optional { ?x cs:precedingChangeSet ?s } . Filter(!Bound(?x)) }", "http://example.org/", Syntax.syntaxSPARQL_11);
+    public static final Query queryMostRecentChangeSet = QueryFactory.parse(new Query(), "Prefix cs: <http://purl.org/vocab/changeset/schema#> Select ?s ?o ?y ?z { ?s cs:subjectOfChange ?o . Optional { ?x cs:precedingChangeSet ?s } . Optional { ?s cs:service ?y } . Optional { ?s cs:graph ?z } .  Filter(!Bound(?x)) }", "http://example.org/", Syntax.syntaxARQ);
 
 
 
@@ -110,9 +116,26 @@ public class ChangeSetUtils {
         }
     }
 
-    public static LookupService<Node, Node> createLookupServiceMostRecentChangeSet(QueryExecutionFactory qef) {
+    public static LookupService<Node, Node> createLookupServiceMostRecentChangeSet(QueryExecutionFactory qef, Node service, Node graph) {
 
-        LookupService<Node, ResultSetPart> ls = new LookupServiceSparqlQuery(qef, queryMostRecentChangeSet, Vars.o);
+        Query query = queryMostRecentChangeSet;
+        if(service != null || graph != null) {
+            query = query.cloneQuery();
+        }
+
+        if(service != null) {
+            QueryUtils.injectFilter(query, new E_Equals(new ExprVar(Vars.y), NodeValue.makeNode(service)));
+            //QueryUtils.injectElement(query, ElementUtils.createElement(new Triple(Vars.s, NodeFactory.createURI("http://purl.org/vocab/changeset/schema#service"), Vars.y)));
+                    //query.getProject().add(Vars.y);
+                    // new E_Equals(new ExprVar(Vars.y), new ExprVar(graph)));
+        }
+
+        if(graph != null) {
+            QueryUtils.injectFilter(query, new E_Equals(new ExprVar(Vars.z), NodeValue.makeNode(graph)));
+            //QueryUtils.injectElement(query, ElementUtils.createElement(new Triple(Vars.s, NodeFactory.createURI("http://purl.org/vocab/changeset/schema#graph"), Vars.z)));
+        }
+
+        LookupService<Node, ResultSetPart> ls = new LookupServiceSparqlQuery(qef, query, Vars.o);
 
         // We filter by o, but project by s
         LookupService<Node, Node> result =
@@ -233,6 +256,14 @@ public class ChangeSetUtils {
 
         model.add(s, CS.subjectOfChange, model.createResource(cs.getSubjectOfChange()));
 
+        if(cs.getService() != null) {
+            model.add(s, CS.service, model.createResource(cs.getService()));
+        }
+
+        if(cs.getGraph() != null) {
+            model.add(s, CS.graph, model.createResource(cs.getGraph()));
+        }
+
         //model.add(s, CS.datasetSet);
 
 
@@ -282,17 +313,26 @@ public class ChangeSetUtils {
 
     public static UpdateRequest createUpdateRequest(ChangeSetMetadata metadata,
             QueryExecutionFactory qef,
-            Diff<? extends Iterable<Quad>> diff,
+            Diff<? extends Iterable<Quad>> quadDiff,
             String prefix) {
+
+        Map<Node, Diff<Set<Triple>>> diff = DiffQuadUtils.partitionQuads(quadDiff);
+
+
+        //createUpdateRequest(metadata, qef, diff, prefix, serviceUri, graphUri);
+
+
         throw new UnsupportedOperationException();
     }
 
     public static UpdateRequest createUpdateRequestGraph(ChangeSetMetadata metadata,
             QueryExecutionFactory qef,
             Diff<Set<Triple>> diff,
-            String prefix) {
+            String prefix,
+            String serviceUri,
+            String graphUri) {
 
-        Map<Node, ChangeSet> subjectToChangeSet = createChangeSets(qef, metadata, diff, prefix);
+        Map<Node, ChangeSet> subjectToChangeSet = createChangeSets(qef, serviceUri, graphUri, metadata, diff, prefix);
 
         Model model = ModelFactory.createDefaultModel();
 
@@ -311,8 +351,11 @@ public class ChangeSetUtils {
 
 //    public Map<Node, ChangeSet> apply(Diff<Graph> diff) {
 
-    public static Map<Node, ChangeSet> createChangeSets(QueryExecutionFactory qef, ChangeSetMetadata metadata, Diff<Set<Triple>> diff, String prefix) {
-        LookupService<Node, Node> precedingChangeSetLs = ChangeSetUtils.createLookupServiceMostRecentChangeSet(qef);
+    public static Map<Node, ChangeSet> createChangeSets(QueryExecutionFactory qef, String serviceUri, String graphUri, ChangeSetMetadata metadata, Diff<Set<Triple>> diff, String prefix) {
+        Node service = NodeUtils.asNullableNode(serviceUri);
+        Node graph = NodeUtils.asNullableNode(graphUri);
+
+        LookupService<Node, Node> precedingChangeSetLs = ChangeSetUtils.createLookupServiceMostRecentChangeSet(qef, service, graph);
 
         Set<Triple> added = diff.getAdded();
         Set<Triple> removed = diff.getRemoved();
@@ -336,7 +379,8 @@ public class ChangeSetUtils {
             Node precedingId = subjectToRecentChangeSet.get(s);
             String precedingChangeSet = precedingId == null ? null : precedingId.getURI();
 
-            String localName = StringUtils.md5Hash(subjectOfChange + " " + precedingId);
+            //" " + service + " " + graph + " " +
+            String localName = StringUtils.urlEncode(subjectOfChange) + "-" + StringUtils.md5Hash("" + precedingId);
             String uri = prefix + localName;
 
             // Update the preceding changeset
@@ -350,7 +394,7 @@ public class ChangeSetUtils {
             addedGraph = addedGraph == null ? GraphFactory.createGraphMem() : addedGraph;
             removedGraph = removedGraph == null ? GraphFactory.createGraphMem() : removedGraph;
 
-            ChangeSet cs = new ChangeSet(metadata, uri, precedingChangeSet, subjectOfChange, addedGraph, removedGraph);
+            ChangeSet cs = new ChangeSet(metadata, uri, precedingChangeSet, subjectOfChange, addedGraph, removedGraph, serviceUri, graphUri);
 
             result.put(s, cs);
         }

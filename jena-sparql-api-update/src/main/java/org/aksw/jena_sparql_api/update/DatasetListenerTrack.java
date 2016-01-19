@@ -14,7 +14,8 @@ import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.SparqlServiceReference;
 import org.aksw.jena_sparql_api.core.UpdateContext;
-import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
+import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
+import org.aksw.jena_sparql_api.core.utils.UpdateExecutionUtils;
 
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
@@ -33,8 +34,13 @@ public class DatasetListenerTrack
     private String prefix;
 
     public DatasetListenerTrack(SparqlService trackerService) {
+        this(trackerService, new ChangeSetMetadata());
+    }
+
+    public DatasetListenerTrack(SparqlService trackerService, ChangeSetMetadata changesetMetadata) {
+        super();
         this.trackerService = trackerService;
-        this.changesetMetadata = new ChangeSetMetadata();
+        this.changesetMetadata = changesetMetadata;
     }
 
     @Override
@@ -48,31 +54,36 @@ public class DatasetListenerTrack
         Map<Node, Diff<Set<Triple>>> tripleDiff = DiffQuadUtils.partitionQuads(quadDiff);
 
         // Note the prefix must include service and target graph information
+        String serviceUri = ssr.getServiceURL();
+
         prefix = "http://example.org/changeset-";
 
         for(Entry<Node, Diff<Set<Triple>>> entry : tripleDiff.entrySet()) {
             Node g = entry.getKey();
+            String graphUri = g.getURI();
 
             if(Quad.defaultGraphIRI.equals(g) || Quad.defaultGraphNodeGenerated.equals(g)) {
-                g = DatasetDescriptionUtils.getSingleDefaultGraph(datasetDescription);
-                if(g == null) {
-                    throw new RuntimeException("A single default graph was expected, got: " + DatasetDescriptionUtils.toString(datasetDescription));
-                }
+//                g = DatasetDescriptionUtils.getSingleDefaultGraph(datasetDescription);
+//                if(g == null) {
+//                    throw new RuntimeException("A single default graph was expected, got: " + DatasetDescriptionUtils.toString(datasetDescription));
+//                }
+                throw new RuntimeException("Should not happen - default graph uris are assumed to have been replaced");
             }
 
-            String p = prefix + StringUtils.md5Hash(ssr.getServiceURL() + "-" + g.getURI()) + "-";
+            String p = prefix + StringUtils.urlEncode(serviceUri) + "-" + StringUtils.urlEncode(graphUri) + "-";
 
             Diff<Set<Triple>> diff = entry.getValue();
 
             QueryExecutionFactory qef = trackerService.getQueryExecutionFactory();
-            Map<Node, ChangeSet> changesets = ChangeSetUtils.createChangeSets(qef, changesetMetadata, diff, p);
+            Map<Node, ChangeSet> changesets = ChangeSetUtils.createChangeSets(qef, serviceUri, graphUri, changesetMetadata, diff, p);
 
             for(ChangeSet changeset : changesets.values()) {
                 Model model = ModelFactory.createDefaultModel();
                 ChangeSetUtils.write(model, changeset);
 
                 ChangeSetUtils.enrichWithSource(model, g, ssr);
-
+                UpdateExecutionFactory uef = trackerService.getUpdateExecutionFactory();
+                UpdateExecutionUtils.executeInsert(uef, model);
             }
         }
 
