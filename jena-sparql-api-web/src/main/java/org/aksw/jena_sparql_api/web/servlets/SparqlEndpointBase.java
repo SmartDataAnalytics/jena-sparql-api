@@ -176,8 +176,14 @@ public abstract class SparqlEndpointBase {
 
     @POST
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    public void executeQueryXmlPostAsync(@Suspended final AsyncResponse asyncResponse, @FormParam("query") String queryString) {
+    @Produces(MediaType.APPLICATION_XML)
+    public void executeQueryXmlPostAsync(@Suspended final AsyncResponse asyncResponse, @FormParam("query") String queryString, @FormParam("update") String updateString) {
             //throws Exception {
+
+        if(queryString == null) {
+            queryString = updateString;
+        }
+
 
         if(queryString == null) {
             StreamingOutput so = StreamingOutputString.create("<error>No query specified. Append '?query=&lt;your SPARQL query&gt;'</error>");
@@ -200,8 +206,8 @@ public abstract class SparqlEndpointBase {
 //    }
 
 
-  @GET
-  @Produces({MediaType.APPLICATION_JSON, "application/sparql-results+json"})
+    @GET
+    @Produces({MediaType.APPLICATION_JSON, "application/sparql-results+json"})
     public void executeQueryJson(@Suspended final AsyncResponse asyncResponse, @QueryParam("query") String queryString) {
         processStmtAsync(asyncResponse, queryString, SparqlFormatterUtils.FORMAT_Json);
     }
@@ -228,7 +234,10 @@ public abstract class SparqlEndpointBase {
     @POST
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces({MediaType.APPLICATION_JSON, "application/sparql-results+json"})
-    public void executeQueryXmlPost(@Suspended final AsyncResponse asyncResponse, @FormParam("query") String queryString) {
+    public void executeQueryXmlPost(@Suspended final AsyncResponse asyncResponse, @FormParam("query") String queryString, @FormParam("update") String updateStr) {
+        if(queryString == null) {
+            queryString = updateStr;
+        }
         processStmtAsync(asyncResponse, queryString, SparqlFormatterUtils.FORMAT_Json);
     }
 
@@ -458,14 +467,15 @@ public abstract class SparqlEndpointBase {
 //    }
 
 
-    @POST
-    @Produces(MediaType.APPLICATION_JSON)
-    public void executeUpdatePost(@Suspended final AsyncResponse asyncResponse,
-            @FormParam("update") String updateRequestStr)
-        throws Exception
-    {
-        processUpdateAsync(asyncResponse, new SparqlStmtUpdate(updateRequestStr));
-    }
+//    @POST
+//    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+//    @Produces(MediaType.APPLICATION_JSON)
+//    public void executeUpdatePost(@Suspended final AsyncResponse asyncResponse,
+//            @FormParam("update") String updateRequestStr)
+//        throws Exception
+//    {
+//        processUpdateAsync(asyncResponse, new SparqlStmtUpdate(updateRequestStr));
+//    }
 
 //    public void executeUpdateAny(@Suspended final AsyncResponse asyncResponse,
 //            String serviceUri,

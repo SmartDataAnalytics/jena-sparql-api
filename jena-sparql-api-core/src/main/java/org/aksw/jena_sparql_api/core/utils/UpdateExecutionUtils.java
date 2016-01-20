@@ -163,7 +163,7 @@ public class UpdateExecutionUtils {
             public Diff<Set<Quad>> apply(Diff<Set<Quad>> input) {
 
                 Set<Quad> added = QuadUtils.applyNodeTransform(input.getAdded(), nodeTransform);
-                Set<Quad> removed = QuadUtils.applyNodeTransform(input.getAdded(), nodeTransform);
+                Set<Quad> removed = QuadUtils.applyNodeTransform(input.getRemoved(), nodeTransform);
 
                 Diff<Set<Quad>> r = Diff.create(added, removed);
                 return r;

@@ -41,6 +41,7 @@ public class CS {
     /**
      * The graph on which the change was carried out
      */
+    //public static final Property sequence = createProperty("sequenceId");
     public static final Property service = createProperty("service");
     public static final Property graph = createProperty("graph");
     public static final Property transaction = createProperty("transaction");
