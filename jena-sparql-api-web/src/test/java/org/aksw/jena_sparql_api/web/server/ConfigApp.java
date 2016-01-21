@@ -61,6 +61,7 @@ public class ConfigApp {
     @Primary
     public SparqlServiceFactory sparqlServiceFactory(@Qualifier("init") SparqlServiceFactory ssf, @Qualifier("init") SparqlService ssfChangeSet) {
 
+        // TODO: The metadata must be injected on a per-request base because it holds a timestamp
         ChangeSetMetadata metadata = new ChangeSetMetadata("claus", "testing");
         SparqlServiceFactoryEventSource tmp = new SparqlServiceFactoryEventSource(ssf);
         //SinkChangeSetWriter sink = new SinkChangeSetWriter(metadata, ssfChangeSet);

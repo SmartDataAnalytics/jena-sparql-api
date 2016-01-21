@@ -138,8 +138,8 @@ public class QuadContainmentUtils {
         elTriples.addTriple(new Triple(Vars.s, Vars.p, Vars.o));
 
         ElementGroup result = new ElementGroup();
-        result.addElement(elTriples);
         result.addElement(elData);
+        result.addElement(elTriples);
 
         return result;
     }
@@ -151,8 +151,8 @@ public class QuadContainmentUtils {
         elTriples.addTriple(new Triple(Vars.s, Vars.p, Vars.o));
 
         ElementGroup result = new ElementGroup();
-        result.addElement(new ElementNamedGraph(Vars.g, elTriples));
         result.addElement(elData);
+        result.addElement(new ElementNamedGraph(Vars.g, elTriples));
 
         return result;
     }
