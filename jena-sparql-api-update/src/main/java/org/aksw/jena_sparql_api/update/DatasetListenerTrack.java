@@ -58,6 +58,7 @@ public class DatasetListenerTrack
 
         prefix = "http://example.org/changeset-";
 
+        Model finalModel = ModelFactory.createDefaultModel();
         for(Entry<Node, Diff<Set<Triple>>> entry : tripleDiff.entrySet()) {
             Node g = entry.getKey();
             String graphUri = g.getURI();
@@ -82,10 +83,12 @@ public class DatasetListenerTrack
                 ChangeSetUtils.write(model, changeset);
 
                 ChangeSetUtils.enrichWithSource(model, g, ssr);
-                UpdateExecutionFactory uef = trackerService.getUpdateExecutionFactory();
-                UpdateExecutionUtils.executeInsert(uef, model);
+                finalModel.add(model);
             }
         }
+
+        UpdateExecutionFactory uef = trackerService.getUpdateExecutionFactory();
+        UpdateExecutionUtils.executeInsert(uef, finalModel);
 
         //sink.send(diff);
     }
