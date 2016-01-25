@@ -1,24 +1,77 @@
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.aksw.jena_sparql_api.utils.ExprListUtils;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
 
 import com.hp.hpl.jena.sparql.core.Quad;
+import com.hp.hpl.jena.sparql.core.Var;
 import com.hp.hpl.jena.sparql.expr.E_Equals;
 import com.hp.hpl.jena.sparql.expr.E_Function;
 import com.hp.hpl.jena.sparql.expr.Expr;
+import com.hp.hpl.jena.sparql.expr.ExprFunction;
 import com.hp.hpl.jena.sparql.expr.ExprList;
+
+class UnificationResult {
+    protected Map<Var, Var> varMap;
+
+}
 
 public class UnificationImpl {
     public static final String QUAD_IRI = "http://example.org/quad";
 
-    public void unify(Set<Set<Expr>> aCnf, Set<Set<Expr>> bCnf) {
+    /**
+     *
+     * @param aCnf
+     * @param bCnf
+     */
+    public UnificationResult tryUnifyWithEquivalences(Expr a, Expr b) {
+        Set<Expr> as = generateEquivalences(a);
+        Set<Expr> bs = generateEquivalences(b);
+
+        return null;
+
 
     }
 
+    public UnificationResult tryUnify(Expr a, Expr b) {
+        if(a.isFunction() && b.isFunction()) {
+        }
+        return null;
 
+    }
 
+    public UnificationResult tryUnify(Var a, Var b, Map<Var, Var> base) {
+        return null;
+    }
+
+    public UnificationResult tryUnify(ExprFunction a, ExprFunction b, Map<Var, Var> base) {
+        Map<Var, Var> map = new HashMap<Var, Var>(base);
+
+        UnificationResult result;
+        boolean examine = a.getFunctionSymbol().equals(b.getFunctionSymbol());
+        List<Expr> as = a.getArgs();
+        List<Expr> bs = b.getArgs();
+        examine = examine && as.size() == bs.size();
+        if(examine) {
+            int n = as.size();
+            for(int i = 0; i < n; ++i) {
+                Expr ai = as.get(i);
+                Expr bi = bs.get(i);
+
+                // Now we need to try to unify these expressions again
+            }
+
+            result = null;
+        } else {
+            result = null;
+        }
+
+        return result;
+    }
 
     /**
      * For the sake of a uniform representation, we convert quads to exprs:
