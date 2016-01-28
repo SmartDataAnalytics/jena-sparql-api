@@ -100,7 +100,7 @@ public class TestSparqlUpdate {
 //    }
 
 
-    @Test
+    //@Test
     public void test3() throws Exception
     {
         // Define the listeners
