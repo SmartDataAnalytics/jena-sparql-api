@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.core;
 
-import com.hp.hpl.jena.sparql.core.DatasetDescription;
+import org.apache.jena.sparql.core.DatasetDescription;
 
 /**
  * Interface for creating QueryExecutionFactories, based on service and default graph URIs.

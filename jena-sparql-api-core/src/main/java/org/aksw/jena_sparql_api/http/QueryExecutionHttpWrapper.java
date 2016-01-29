@@ -6,12 +6,12 @@ import java.util.Iterator;
 import org.aksw.jena_sparql_api.core.QueryExecutionDecorator;
 
 import com.google.common.base.Supplier;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.query.ResultSetFactory;
-import com.hp.hpl.jena.sparql.engine.iterator.QueryIterNullIterator;
-import com.hp.hpl.jena.sparql.resultset.ResultSetException;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.ResultSetFactory;
+import org.apache.jena.sparql.engine.iterator.QueryIterNullIterator;
+import org.apache.jena.sparql.resultset.ResultSetException;
 
 public class QueryExecutionHttpWrapper
     extends QueryExecutionDecorator

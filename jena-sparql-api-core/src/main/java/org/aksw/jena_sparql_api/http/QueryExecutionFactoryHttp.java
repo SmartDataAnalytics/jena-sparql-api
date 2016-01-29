@@ -10,9 +10,9 @@ import org.apache.jena.atlas.web.ContentType;
 import org.apache.jena.atlas.web.auth.HttpAuthenticator;
 import org.apache.jena.riot.WebContent;
 
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.sparql.core.DatasetDescription;
-import com.hp.hpl.jena.sparql.engine.http.QueryEngineHTTP;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.sparql.core.DatasetDescription;
+import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
 
 /**
  * @author Claus Stadler

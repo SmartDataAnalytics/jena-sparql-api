@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api_sparql_path2;
 
 import java.util.List;
 
-import com.hp.hpl.jena.graph.Node;
+import org.apache.jena.graph.Node;
 
 class PropertyStep {
     Node property;

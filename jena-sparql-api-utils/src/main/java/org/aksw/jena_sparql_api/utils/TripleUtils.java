@@ -8,10 +8,10 @@ import java.util.Set;
 import org.aksw.commons.util.strings.StringUtils;
 import org.apache.jena.riot.writer.NTriplesWriter;
 
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.sparql.core.Quad;
-import com.hp.hpl.jena.sparql.engine.binding.Binding;
-import com.hp.hpl.jena.sparql.engine.binding.BindingHashMap;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.engine.binding.BindingHashMap;
 
 public class TripleUtils {
 

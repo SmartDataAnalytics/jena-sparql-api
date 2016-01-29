@@ -2,9 +2,9 @@ package org.aksw.jena_sparql_api.core;
 
 import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
 
-import com.hp.hpl.jena.sparql.core.DatasetDescription;
-import com.hp.hpl.jena.update.UpdateProcessor;
-import com.hp.hpl.jena.update.UpdateRequest;
+import org.apache.jena.sparql.core.DatasetDescription;
+import org.apache.jena.update.UpdateProcessor;
+import org.apache.jena.update.UpdateRequest;
 
 public class UpdateExecutionFactoryDatasetDescription
 	extends UpdateExecutionFactoryDelegate

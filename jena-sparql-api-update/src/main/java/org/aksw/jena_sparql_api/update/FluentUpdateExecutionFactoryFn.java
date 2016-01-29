@@ -6,7 +6,7 @@ import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryDatasetDescription;
 
 import com.google.common.base.Function;
-import com.hp.hpl.jena.sparql.core.DatasetDescription;
+import org.apache.jena.sparql.core.DatasetDescription;
 
 public class FluentUpdateExecutionFactoryFn<P>
     extends FluentFnBase<UpdateExecutionFactory, P>

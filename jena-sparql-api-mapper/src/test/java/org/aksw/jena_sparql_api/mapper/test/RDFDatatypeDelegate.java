@@ -1,8 +1,8 @@
 package org.aksw.jena_sparql_api.mapper.test;
 
-import com.hp.hpl.jena.datatypes.DatatypeFormatException;
-import com.hp.hpl.jena.datatypes.RDFDatatype;
-import com.hp.hpl.jena.graph.impl.LiteralLabel;
+import org.apache.jena.datatypes.DatatypeFormatException;
+import org.apache.jena.datatypes.RDFDatatype;
+import org.apache.jena.graph.impl.LiteralLabel;
 
 public class RDFDatatypeDelegate
 	implements RDFDatatype

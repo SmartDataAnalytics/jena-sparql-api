@@ -5,9 +5,9 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import com.hp.hpl.jena.graph.Graph;
-import com.hp.hpl.jena.graph.GraphListener;
-import com.hp.hpl.jena.graph.Triple;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.GraphListener;
+import org.apache.jena.graph.Triple;
 
 
 public abstract class GraphListenerBatchBase

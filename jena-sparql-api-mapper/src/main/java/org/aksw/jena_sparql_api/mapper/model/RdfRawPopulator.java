@@ -5,8 +5,8 @@ import java.util.Set;
 
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 
-import com.hp.hpl.jena.graph.Graph;
-import com.hp.hpl.jena.graph.Node;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Node;
 
 /**
  * An attempt at a populator interface that maps between key-value pairs

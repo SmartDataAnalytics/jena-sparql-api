@@ -3,12 +3,12 @@ package org.aksw.jena_sparql_api.concept_cache.op;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.apache.jena.atlas.io.IndentedWriter;
 
-import com.hp.hpl.jena.sparql.algebra.Op;
-import com.hp.hpl.jena.sparql.algebra.op.OpExt;
-import com.hp.hpl.jena.sparql.engine.ExecutionContext;
-import com.hp.hpl.jena.sparql.engine.QueryIterator;
-import com.hp.hpl.jena.sparql.serializer.SerializationContext;
-import com.hp.hpl.jena.sparql.util.NodeIsomorphismMap;
+import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.op.OpExt;
+import org.apache.jena.sparql.engine.ExecutionContext;
+import org.apache.jena.sparql.engine.QueryIterator;
+import org.apache.jena.sparql.serializer.SerializationContext;
+import org.apache.jena.sparql.util.NodeIsomorphismMap;
 
 public class OpQuadFilterPatternCanonical
     extends OpExt

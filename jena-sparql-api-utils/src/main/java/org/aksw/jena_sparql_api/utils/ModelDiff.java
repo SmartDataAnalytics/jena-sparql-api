@@ -2,9 +2,9 @@ package org.aksw.jena_sparql_api.utils;
 
 import org.aksw.commons.collections.diff.Diff;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Statement;
 
 /**
  * @author Claus Stadler

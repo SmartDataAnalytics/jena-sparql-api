@@ -7,7 +7,7 @@ import java.util.Map;
 import org.aksw.jena_sparql_api.concept_cache.dirty.ConceptMap;
 
 import com.google.common.collect.AbstractIterator;
-import com.hp.hpl.jena.sparql.core.Var;
+import org.apache.jena.sparql.core.Var;
 
 class IteratorVarMapQuadGroups
     extends AbstractIterator<Map<Var, Var>>

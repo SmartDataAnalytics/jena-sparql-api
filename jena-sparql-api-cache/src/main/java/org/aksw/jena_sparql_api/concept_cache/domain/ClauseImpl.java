@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api.concept_cache.domain;
 import java.util.HashSet;
 
-import com.hp.hpl.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.Expr;
 
 
 public class ClauseImpl

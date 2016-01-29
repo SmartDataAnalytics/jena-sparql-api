@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.concept_cache.combinatorics;
 
 import java.util.Collection;
 
-import com.hp.hpl.jena.sparql.core.Quad;
+import org.apache.jena.sparql.core.Quad;
 
 public class QuadGroup {
     private Collection<Quad> candQuads;

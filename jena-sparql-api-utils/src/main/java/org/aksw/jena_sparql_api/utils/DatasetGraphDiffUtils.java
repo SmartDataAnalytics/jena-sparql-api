@@ -4,8 +4,8 @@ import java.util.Set;
 
 import org.aksw.commons.collections.diff.Diff;
 
-import com.hp.hpl.jena.sparql.core.DatasetGraph;
-import com.hp.hpl.jena.sparql.core.Quad;
+import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.core.Quad;
 
 public class DatasetGraphDiffUtils {
 	public static Diff<Set<Quad>> wrapDatasetGraph(Diff<? extends DatasetGraph> diff) {

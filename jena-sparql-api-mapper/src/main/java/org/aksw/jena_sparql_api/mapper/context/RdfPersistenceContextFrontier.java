@@ -5,7 +5,7 @@ import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.util.frontier.Frontier;
 import org.aksw.jena_sparql_api.util.frontier.FrontierStatus;
 
-import com.hp.hpl.jena.graph.Node;
+import org.apache.jena.graph.Node;
 
 public class RdfPersistenceContextFrontier
     implements RdfPersistenceContext

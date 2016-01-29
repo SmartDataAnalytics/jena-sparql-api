@@ -2,9 +2,9 @@ package org.aksw.jena_sparql_api.mapper.test;
 
 import java.util.Calendar;
 
-import com.hp.hpl.jena.datatypes.xsd.XSDDateTime;
-import com.hp.hpl.jena.datatypes.xsd.impl.XSDAbstractDateTimeType;
-import com.hp.hpl.jena.datatypes.xsd.impl.XSDDateTimeType;
+import org.apache.jena.datatypes.xsd.XSDDateTime;
+import org.apache.jena.datatypes.xsd.impl.XSDAbstractDateTimeType;
+import org.apache.jena.datatypes.xsd.impl.XSDDateTimeType;
 
 public class RDFDatatypeCalendar
 	extends RDFDatatypeDelegate

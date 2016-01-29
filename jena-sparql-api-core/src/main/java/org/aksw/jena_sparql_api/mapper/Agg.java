@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.mapper;
 
 import java.util.Set;
 
-import com.hp.hpl.jena.sparql.core.Var;
+import org.apache.jena.sparql.core.Var;
 
 public interface Agg<T> {
     Acc<T> createAccumulator();

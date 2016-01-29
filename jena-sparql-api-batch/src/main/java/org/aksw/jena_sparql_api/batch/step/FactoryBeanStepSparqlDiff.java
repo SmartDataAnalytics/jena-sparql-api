@@ -28,8 +28,8 @@ import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.AbstractFactoryBean;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.sparql.core.DatasetGraph;
+import org.apache.jena.graph.Node;
+import org.apache.jena.sparql.core.DatasetGraph;
 
 
 public class FactoryBeanStepSparqlDiff

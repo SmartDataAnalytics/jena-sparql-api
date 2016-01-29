@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.core.utils;
 
-import com.hp.hpl.jena.query.QueryExecution;
+import org.apache.jena.query.QueryExecution;
 
 /**
  * TODO Figure out whether we can replace with a Jena internal class

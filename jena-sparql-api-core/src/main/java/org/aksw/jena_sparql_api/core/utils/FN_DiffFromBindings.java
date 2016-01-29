@@ -5,8 +5,8 @@ import java.util.Set;
 import org.aksw.commons.collections.diff.Diff;
 
 import com.google.common.base.Function;
-import com.hp.hpl.jena.sparql.core.Quad;
-import com.hp.hpl.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.engine.binding.Binding;
 
 public class FN_DiffFromBindings
     implements Function<Iterable<? extends Binding>, Diff<Set<Quad>>>

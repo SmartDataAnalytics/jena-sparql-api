@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.concept_cache.domain;
 import java.util.Map;
 import java.util.Set;
 
-import com.hp.hpl.jena.sparql.core.Var;
+import org.apache.jena.sparql.core.Var;
 
 public class CacheSummary<V> {
     private PatternSummary patternSummary;

@@ -5,7 +5,7 @@ import java.util.HashSet;
 
 import org.apache.jena.atlas.lib.Sink;
 
-import com.hp.hpl.jena.sparql.core.Quad;
+import org.apache.jena.sparql.core.Quad;
 
 
 public class SinkQuadsToCollection<C extends Collection<? super Quad>>

@@ -4,7 +4,7 @@ package org.aksw.jena_sparql_api.compare;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactoryBackQuery;
 
-import com.hp.hpl.jena.query.Query;
+import org.apache.jena.query.Query;
 
 /**
  * A query execution factory, which generates query executions

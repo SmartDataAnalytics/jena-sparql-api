@@ -5,8 +5,8 @@ import java.util.Map.Entry;
 import org.aksw.jena_sparql_api.modifier.Modifier;
 import org.springframework.batch.item.ItemProcessor;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.sparql.core.DatasetGraph;
+import org.apache.jena.graph.Node;
+import org.apache.jena.sparql.core.DatasetGraph;
 
 public class ItemProcessorModifierDatasetGraph
     implements ItemProcessor<Entry<Node, DatasetGraph>, Entry<Node, DatasetGraph>>

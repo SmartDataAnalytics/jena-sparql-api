@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.utils.transform;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 
 import com.google.common.base.Function;
-import com.hp.hpl.jena.query.Query;
+import org.apache.jena.query.Query;
 
 public class F_QueryTransformLimit
 	implements Function<Query, Query>

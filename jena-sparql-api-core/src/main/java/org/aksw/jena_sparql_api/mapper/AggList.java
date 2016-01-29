@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.mapper;
 import java.util.List;
 import java.util.Set;
 
-import com.hp.hpl.jena.sparql.core.Var;
+import org.apache.jena.sparql.core.Var;
 
 public class AggList<T>
     implements Agg<List<T>>

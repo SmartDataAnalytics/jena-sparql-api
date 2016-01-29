@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.spring.conversion;
 
 import org.springframework.core.convert.converter.Converter;
 
-import com.hp.hpl.jena.sparql.core.DatasetDescription;
+import org.apache.jena.sparql.core.DatasetDescription;
 
 
 @AutoRegistered

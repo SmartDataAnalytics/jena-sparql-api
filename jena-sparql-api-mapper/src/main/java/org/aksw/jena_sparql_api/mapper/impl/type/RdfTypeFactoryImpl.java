@@ -42,13 +42,13 @@ import org.springframework.util.Assert;
 import org.springframework.util.ReflectionUtils;
 
 import com.google.common.base.Function;
-import com.hp.hpl.jena.datatypes.RDFDatatype;
-import com.hp.hpl.jena.datatypes.TypeMapper;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.NodeFactory;
-import com.hp.hpl.jena.query.Syntax;
-import com.hp.hpl.jena.shared.PrefixMapping;
-import com.hp.hpl.jena.sparql.core.Prologue;
+import org.apache.jena.datatypes.RDFDatatype;
+import org.apache.jena.datatypes.TypeMapper;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.query.Syntax;
+import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.sparql.core.Prologue;
 
 public class RdfTypeFactoryImpl
     implements RdfTypeFactory

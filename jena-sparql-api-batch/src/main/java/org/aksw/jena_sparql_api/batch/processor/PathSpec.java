@@ -11,17 +11,17 @@ import org.aksw.jena_sparql_api.concepts.Step;
 import org.aksw.jena_sparql_api.geo.GeoMapSupplierUtils;
 import org.aksw.jena_sparql_api.utils.ElementTreeAnalyser;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Property;
-import com.hp.hpl.jena.rdf.model.RDFNode;
-import com.hp.hpl.jena.sparql.algebra.optimize.Optimize;
-import com.hp.hpl.jena.sparql.expr.ExprTransformCopy;
-import com.hp.hpl.jena.sparql.graph.NodeTransform;
-import com.hp.hpl.jena.sparql.syntax.ElementSubQuery;
-import com.hp.hpl.jena.sparql.syntax.ElementUnion;
-import com.hp.hpl.jena.sparql.syntax.ElementVisitor;
-import com.hp.hpl.jena.sparql.syntax.ElementVisitorBase;
-import com.hp.hpl.jena.update.Update;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.sparql.algebra.optimize.Optimize;
+import org.apache.jena.sparql.expr.ExprTransformCopy;
+import org.apache.jena.sparql.graph.NodeTransform;
+import org.apache.jena.sparql.syntax.ElementSubQuery;
+import org.apache.jena.sparql.syntax.ElementUnion;
+import org.apache.jena.sparql.syntax.ElementVisitor;
+import org.apache.jena.sparql.syntax.ElementVisitorBase;
+import org.apache.jena.update.Update;
 
 class ModelUtils {
     

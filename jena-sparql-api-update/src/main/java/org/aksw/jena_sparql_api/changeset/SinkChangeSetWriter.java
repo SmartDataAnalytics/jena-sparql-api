@@ -6,9 +6,9 @@ import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
 import org.apache.jena.atlas.lib.Sink;
 
-import com.hp.hpl.jena.sparql.core.Quad;
-import com.hp.hpl.jena.update.UpdateProcessor;
-import com.hp.hpl.jena.update.UpdateRequest;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.update.UpdateProcessor;
+import org.apache.jena.update.UpdateRequest;
 
 public class SinkChangeSetWriter
     implements Sink<Diff<? extends Iterable<Quad>>>

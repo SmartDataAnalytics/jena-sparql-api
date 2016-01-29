@@ -10,7 +10,7 @@ import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 
-import com.hp.hpl.jena.query.Query;
+import org.apache.jena.query.Query;
 
 public class TaskletSparqlCountData
     extends StepExecutionListenerSupport implements Tasklet, InitializingBean

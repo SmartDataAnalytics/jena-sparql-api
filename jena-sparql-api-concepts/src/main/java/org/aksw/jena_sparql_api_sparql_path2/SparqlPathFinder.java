@@ -4,8 +4,8 @@ import java.util.List;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.sparql.path.Path;
+import org.apache.jena.graph.Node;
+import org.apache.jena.sparql.path.Path;
 
 
 public interface SparqlPathFinder {

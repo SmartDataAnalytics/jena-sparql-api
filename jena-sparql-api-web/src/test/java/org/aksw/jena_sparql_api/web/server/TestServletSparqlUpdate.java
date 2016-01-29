@@ -21,7 +21,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
-import com.hp.hpl.jena.sparql.core.DatasetDescription;
+import org.apache.jena.sparql.core.DatasetDescription;
 
 public class TestServletSparqlUpdate {
     // TODO Make this test work in offline mode

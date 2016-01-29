@@ -4,14 +4,14 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.hp.hpl.jena.sparql.algebra.optimize.ExprTransformConstantFold;
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.engine.binding.BindingRoot;
-import com.hp.hpl.jena.sparql.expr.E_LogicalNot;
-import com.hp.hpl.jena.sparql.expr.Expr;
-import com.hp.hpl.jena.sparql.expr.ExprTransformer;
-import com.hp.hpl.jena.sparql.expr.NodeValue;
-import com.hp.hpl.jena.sparql.graph.NodeTransform;
+import org.apache.jena.sparql.algebra.optimize.ExprTransformConstantFold;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.engine.binding.BindingRoot;
+import org.apache.jena.sparql.expr.E_LogicalNot;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprTransformer;
+import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.graph.NodeTransform;
 
 public class ClauseUtils
 {

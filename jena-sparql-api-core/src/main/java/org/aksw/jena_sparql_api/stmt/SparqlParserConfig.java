@@ -2,8 +2,8 @@ package org.aksw.jena_sparql_api.stmt;
 
 import org.apache.jena.riot.system.IRIResolver;
 
-import com.hp.hpl.jena.query.Syntax;
-import com.hp.hpl.jena.sparql.core.Prologue;
+import org.apache.jena.query.Syntax;
+import org.apache.jena.sparql.core.Prologue;
 
 public class SparqlParserConfig {
     protected Syntax syntax;

@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.mapper;
 import java.util.Map;
 import java.util.Set;
 
-import com.hp.hpl.jena.sparql.core.Var;
+import org.apache.jena.sparql.core.Var;
 
 public class AggMap<K, V>
     implements Agg<Map<K,V>>

@@ -2,8 +2,8 @@ package org.aksw.jena_sparql_api.update;
 
 import org.aksw.jena_sparql_api.utils.Vars;
 
-import com.hp.hpl.jena.sparql.algebra.Table;
-import com.hp.hpl.jena.sparql.algebra.TableFactory;
+import org.apache.jena.sparql.algebra.Table;
+import org.apache.jena.sparql.algebra.TableFactory;
 
 public class Tables {
     private Table defaultGraphTable;

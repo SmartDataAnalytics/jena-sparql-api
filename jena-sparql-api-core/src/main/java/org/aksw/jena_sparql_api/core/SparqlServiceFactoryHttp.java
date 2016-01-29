@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.core;
 
-import com.hp.hpl.jena.sparql.core.DatasetDescription;
+import org.apache.jena.sparql.core.DatasetDescription;
 
 /**
  * TODO Find a concept where we create an initial qef, and then support wrapping it

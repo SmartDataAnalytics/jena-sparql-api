@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.mapper.context;
 import org.aksw.jena_sparql_api.mapper.impl.engine.EntityGraphMap;
 import org.aksw.jena_sparql_api.util.frontier.Frontier;
 
-import com.hp.hpl.jena.graph.Node;
+import org.apache.jena.graph.Node;
 
 /**
  * TODO Maybe this could subclass from BeanFactory?

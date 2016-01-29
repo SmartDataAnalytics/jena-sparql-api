@@ -18,15 +18,15 @@
 
 package org.aksw.jena_sparql_api.backports.syntaxtransform;
 
-import com.hp.hpl.jena.sparql.ARQInternalErrorException;
-import com.hp.hpl.jena.sparql.algebra.Op;
-import com.hp.hpl.jena.sparql.expr.E_Exists;
-import com.hp.hpl.jena.sparql.expr.E_NotExists;
-import com.hp.hpl.jena.sparql.expr.Expr;
-import com.hp.hpl.jena.sparql.expr.ExprFunctionOp;
-import com.hp.hpl.jena.sparql.expr.ExprList;
-import com.hp.hpl.jena.sparql.expr.ExprTransformCopy;
-import com.hp.hpl.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.ARQInternalErrorException;
+import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.expr.E_Exists;
+import org.apache.jena.sparql.expr.E_NotExists;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprFunctionOp;
+import org.apache.jena.sparql.expr.ExprList;
+import org.apache.jena.sparql.expr.ExprTransformCopy;
+import org.apache.jena.sparql.syntax.Element;
 
 /**
  * A copying transform that applies an ElementTransform syntax pattern of

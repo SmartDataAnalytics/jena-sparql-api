@@ -7,7 +7,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
 import org.springframework.web.bind.ServletRequestUtils;
 
-import com.hp.hpl.jena.sparql.core.DatasetDescription;
+import org.apache.jena.sparql.core.DatasetDescription;
 
 public class DatasetDescriptionRequestUtils {
     public static DatasetDescription extractDatasetDescriptionAny(HttpServletRequest req) {

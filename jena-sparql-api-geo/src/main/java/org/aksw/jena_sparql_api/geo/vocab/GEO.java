@@ -1,8 +1,8 @@
 package org.aksw.jena_sparql_api.geo.vocab;
 
-import com.hp.hpl.jena.rdf.model.Property;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
 
 public class GEO {
     public static final String ns = "http://www.w3.org/2003/01/geo/wgs84_pos#";

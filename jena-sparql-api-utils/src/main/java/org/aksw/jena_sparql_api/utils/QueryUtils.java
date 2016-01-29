@@ -5,16 +5,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.sparql.core.DatasetDescription;
-import com.hp.hpl.jena.sparql.core.Quad;
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.engine.binding.Binding;
-import com.hp.hpl.jena.sparql.expr.Expr;
-import com.hp.hpl.jena.sparql.syntax.Element;
-import com.hp.hpl.jena.sparql.syntax.ElementFilter;
-import com.hp.hpl.jena.sparql.util.ExprUtils;
+import org.apache.jena.graph.Node;
+import org.apache.jena.query.Query;
+import org.apache.jena.sparql.core.DatasetDescription;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementFilter;
+import org.apache.jena.sparql.util.ExprUtils;
 
 public class QueryUtils {
     public static void injectFilter(Query query, String exprStr) {
@@ -144,7 +144,7 @@ public class QueryUtils {
 
     /**
      * This method does basically the same as
-     *     com.hp.hpl.jena.sparql.engine.QueryExecutionBase.execConstruct
+     *     org.apache.jena.sparql.engine.QueryExecutionBase.execConstruct
      *     and SparqlerBaseSelect
      * note sure if it is redundant
      *

@@ -2,16 +2,16 @@ package org.aksw.jena_sparql_api.core.utils;
 
 import java.util.List;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.NodeFactory;
-import com.hp.hpl.jena.sparql.core.DatasetDescription;
-import com.hp.hpl.jena.sparql.core.Quad;
-import com.hp.hpl.jena.sparql.modify.request.QuadDataAcc;
-import com.hp.hpl.jena.sparql.modify.request.UpdateDataDelete;
-import com.hp.hpl.jena.sparql.modify.request.UpdateDataInsert;
-import com.hp.hpl.jena.sparql.modify.request.UpdateDeleteInsert;
-import com.hp.hpl.jena.sparql.modify.request.UpdateWithUsing;
-import com.hp.hpl.jena.update.Update;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.sparql.core.DatasetDescription;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.modify.request.QuadDataAcc;
+import org.apache.jena.sparql.modify.request.UpdateDataDelete;
+import org.apache.jena.sparql.modify.request.UpdateDataInsert;
+import org.apache.jena.sparql.modify.request.UpdateDeleteInsert;
+import org.apache.jena.sparql.modify.request.UpdateWithUsing;
+import org.apache.jena.update.Update;
 
 public class UpdateUtils {
 

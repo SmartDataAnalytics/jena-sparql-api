@@ -8,7 +8,7 @@ import org.aksw.jena_sparql_api.core.utils.QueryExecutionUtils;
 import org.springframework.batch.core.partition.support.Partitioner;
 import org.springframework.batch.item.ExecutionContext;
 
-import com.hp.hpl.jena.query.Query;
+import org.apache.jena.query.Query;
 
 public class PartitionerSparqlSlice
     implements Partitioner

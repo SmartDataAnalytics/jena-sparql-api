@@ -7,7 +7,7 @@ import org.aksw.jena_sparql_api.core.DatasetListener;
 import org.aksw.jena_sparql_api.core.SparqlServiceReference;
 import org.aksw.jena_sparql_api.core.UpdateContext;
 
-import com.hp.hpl.jena.sparql.core.Quad;
+import org.apache.jena.sparql.core.Quad;
 
 public class DatasetListenerUtils {
     public static void notifyListeners(Iterable<DatasetListener> listeners, Diff<Set<Quad>> diff, UpdateContext updateContext) {

@@ -6,8 +6,8 @@ import org.aksw.jena_sparql_api.mapper.annotation.DefaultIri;
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
 import org.apache.jena.riot.RDFDataMgr;
 
-import com.hp.hpl.jena.graph.Graph;
-import com.hp.hpl.jena.sparql.graph.GraphFactory;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.sparql.graph.GraphFactory;
 
 @DefaultIri("o:#{firstName}-#{lastName}-#{birthPlace}-#{birthDate.toString()}")
 public class Person {

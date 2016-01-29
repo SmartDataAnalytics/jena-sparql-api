@@ -20,20 +20,20 @@ package org.aksw.jena_sparql_api.backports.syntaxtransform;
 
 import java.util.Map ;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Node_Variable;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.sparql.core.TriplePath;
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.expr.Expr;
-import com.hp.hpl.jena.sparql.graph.NodeTransform;
-import com.hp.hpl.jena.sparql.graph.NodeTransformLib;
-import com.hp.hpl.jena.sparql.syntax.Element;
-import com.hp.hpl.jena.sparql.syntax.ElementFilter;
-import com.hp.hpl.jena.sparql.syntax.ElementPathBlock;
-import com.hp.hpl.jena.sparql.syntax.ElementTriplesBlock;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Node_Variable;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.sparql.core.TriplePath;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.graph.NodeTransform;
+import org.apache.jena.sparql.graph.NodeTransformLib;
+import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementFilter;
+import org.apache.jena.sparql.syntax.ElementPathBlock;
+import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 
-/** An {@link ElementTransform} which replaces occurences of a variable with a Node value. 
+/** An {@link ElementTransform} which replaces occurences of a variable with a Node value.
  * Because a {@link Var} is a subclass of {@link Node_Variable} which is a {@link Node},
  * this includes variable renaming.
  * <p>
@@ -58,10 +58,10 @@ public class ElementTransformSubst extends ElementTransformCopyBase {
         Element result = expr.equals(expr2)
             ? el
             : new ElementFilter(expr) ;
-        
+
         return result;
     }
-    
+
 
     @Override
     public Element transform(ElementTriplesBlock el) {
@@ -123,6 +123,6 @@ public class ElementTransformSubst extends ElementTransformCopyBase {
     }
 
     private Node transform(Node n) {
-        return nodeTransform.convert(n) ;
+        return nodeTransform.apply(n) ;
     }
 }

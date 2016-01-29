@@ -9,7 +9,7 @@ import org.springframework.beans.factory.config.AbstractFactoryBean;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.reflect.TypeToken;
-import com.hp.hpl.jena.sparql.core.Prologue;
+import org.apache.jena.sparql.core.Prologue;
 
 
 public class FactoryBeanPrefixes

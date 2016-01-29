@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api.mapper;
 
-import com.hp.hpl.jena.sparql.engine.binding.Binding;
-import com.hp.hpl.jena.sparql.function.FunctionEnv;
+import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.function.FunctionEnv;
 
 public class AccLiteral<T>
     implements Acc<T>

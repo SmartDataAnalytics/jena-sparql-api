@@ -8,7 +8,7 @@ import org.aksw.commons.collections.CartesianProductIterator;
 import org.aksw.commons.collections.PrefetchIterator;
 
 import com.google.common.collect.Multimap;
-import com.hp.hpl.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.engine.binding.Binding;
 
 public class IteratorJoin<K>
     extends PrefetchIterator<Binding>

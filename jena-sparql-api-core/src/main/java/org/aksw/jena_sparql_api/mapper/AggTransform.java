@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.mapper;
 import java.util.Set;
 
 import com.google.common.base.Function;
-import com.hp.hpl.jena.sparql.core.Var;
+import org.apache.jena.sparql.core.Var;
 
 public class AggTransform<I, O>
     implements Agg<O>

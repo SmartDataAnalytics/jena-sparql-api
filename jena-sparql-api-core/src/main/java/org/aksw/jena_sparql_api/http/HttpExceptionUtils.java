@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.http;
 
 import org.apache.jena.atlas.web.HttpException;
 
-import com.hp.hpl.jena.sparql.engine.http.QueryExceptionHTTP;
+import org.apache.jena.sparql.engine.http.QueryExceptionHTTP;
 
 public class HttpExceptionUtils {
     public static RuntimeException makeHumanFriendly(Exception e) {

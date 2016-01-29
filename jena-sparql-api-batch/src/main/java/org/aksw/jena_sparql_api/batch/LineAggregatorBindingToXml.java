@@ -4,7 +4,7 @@ import java.util.Collection;
 
 import org.springframework.batch.item.file.transform.LineAggregator;
 
-import com.hp.hpl.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.engine.binding.Binding;
 
 public class LineAggregatorBindingToXml
     implements LineAggregator<Binding> {

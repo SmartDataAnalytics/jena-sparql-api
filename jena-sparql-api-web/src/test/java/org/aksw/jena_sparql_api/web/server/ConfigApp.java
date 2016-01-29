@@ -20,7 +20,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
 import com.google.common.base.Predicates;
-import com.hp.hpl.jena.sparql.core.DatasetDescription;
+import org.apache.jena.sparql.core.DatasetDescription;
 
 @Configuration
 //@ComponentScan({"org.aksw.jassa.web", "org.aksw.facete2.web"}) // TODO I think we can drop jassa.web from scannig by now

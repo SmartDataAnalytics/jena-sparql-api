@@ -1,8 +1,8 @@
 package org.aksw.jena_sparql_api.stmt;
 
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryParseException;
-import com.hp.hpl.jena.update.UpdateRequest;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryParseException;
+import org.apache.jena.update.UpdateRequest;
 
 
 

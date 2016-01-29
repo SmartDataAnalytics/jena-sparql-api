@@ -4,11 +4,11 @@ import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.core.VarExprList;
-import com.hp.hpl.jena.sparql.expr.Expr;
-import com.hp.hpl.jena.sparql.expr.ExprVars;
-import com.hp.hpl.jena.sparql.syntax.PatternVars;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.core.VarExprList;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprVars;
+import org.apache.jena.sparql.syntax.PatternVars;
 
 public class VarExprListUtils {
     /**

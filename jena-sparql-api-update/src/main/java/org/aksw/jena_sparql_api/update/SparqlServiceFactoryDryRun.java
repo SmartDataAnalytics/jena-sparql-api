@@ -6,7 +6,7 @@ import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
 import org.aksw.jena_sparql_api.core.SparqlServiceImpl;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
 
-import com.hp.hpl.jena.sparql.core.DatasetDescription;
+import org.apache.jena.sparql.core.DatasetDescription;
 
 /**
  * A SPARQL service factory that intercepts update request and keeps track

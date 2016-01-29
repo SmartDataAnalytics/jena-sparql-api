@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api.mapper;
 
 import com.google.common.base.Function;
-import com.hp.hpl.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.engine.binding.Binding;
 
 public class AccTransform<I, O>
     implements Acc<O>

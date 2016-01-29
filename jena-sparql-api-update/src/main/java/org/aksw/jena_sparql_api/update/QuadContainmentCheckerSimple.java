@@ -5,7 +5,7 @@ import java.util.Set;
 import org.aksw.jena_sparql_api.core.QuadContainmentChecker;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 
-import com.hp.hpl.jena.sparql.core.Quad;
+import org.apache.jena.sparql.core.Quad;
 
 public class QuadContainmentCheckerSimple
     implements QuadContainmentChecker

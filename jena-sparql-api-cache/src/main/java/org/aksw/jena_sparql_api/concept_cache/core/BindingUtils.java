@@ -2,11 +2,11 @@ package org.aksw.jena_sparql_api.concept_cache.core;
 
 import java.util.Iterator;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.engine.binding.Binding;
-import com.hp.hpl.jena.sparql.engine.binding.BindingHashMap;
-import com.hp.hpl.jena.sparql.graph.NodeTransform;
+import org.apache.jena.graph.Node;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.engine.binding.BindingHashMap;
+import org.apache.jena.sparql.graph.NodeTransform;
 
 public class BindingUtils {
     public static Binding transformKeys(Binding binding, NodeTransform transform) {
@@ -17,7 +17,7 @@ public class BindingUtils {
             Var o = it.next();
             Node node = binding.get(o);
 
-            Var n = (Var)transform.convert(o);
+            Var n = (Var)transform.apply(o);
 
             result.add(n, node);
         }

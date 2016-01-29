@@ -20,9 +20,9 @@ package org.aksw.jena_sparql_api.backports.syntaxtransform;
 
 import java.util.Map ;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.graph.NodeTransform;
+import org.apache.jena.graph.Node;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.graph.NodeTransform;
 
 /** A {@link NodeTransform} substituting variables for {@link Node}s. */
 public class NodeTransformSubst implements NodeTransform {
@@ -33,7 +33,7 @@ public class NodeTransformSubst implements NodeTransform {
     }
 
     @Override
-    public Node convert(Node node) {
+    public Node apply(Node node) {
         Node n = map.get(node) ;
         if ( n == null )
             return node ;

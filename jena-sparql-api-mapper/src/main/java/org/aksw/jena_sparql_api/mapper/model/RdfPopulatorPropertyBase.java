@@ -5,7 +5,7 @@ import java.util.Set;
 
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 
-import com.hp.hpl.jena.graph.Node;
+import org.apache.jena.graph.Node;
 
 public abstract class RdfPopulatorPropertyBase
     implements RdfPopulatorProperty

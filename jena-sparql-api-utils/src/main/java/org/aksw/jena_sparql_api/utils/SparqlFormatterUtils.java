@@ -14,12 +14,12 @@ import org.apache.jena.riot.out.SinkTripleOutput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.query.ResultSetFormatter;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.rdf.model.Statement;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.ResultSetFormatter;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Statement;
 import com.talis.rdfwriters.json.JSONJenaWriter;
 
 /**
@@ -36,7 +36,7 @@ public class SparqlFormatterUtils {
 		
 		while(iterator.hasNext()) {
 			Triple triple = iterator.next();
-			Statement stmt = com.hp.hpl.jena.sparql.util.ModelUtils.tripleToStatement(model, triple);
+			Statement stmt = org.apache.jena.sparql.util.ModelUtils.tripleToStatement(model, triple);
 			if(stmt == null) {
 				logger.warn("Invalid triple detected: " + triple);
 				continue;

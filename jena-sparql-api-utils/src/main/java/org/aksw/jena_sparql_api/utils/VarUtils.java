@@ -8,9 +8,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.hp.hpl.jena.sdb.core.Gensym;
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.graph.NodeTransform;
+import org.apache.jena.sdb.core.Gensym;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.graph.NodeTransform;
 
 public class VarUtils {
 
@@ -105,7 +105,7 @@ public class VarUtils {
     }
 
     public static Var applyNodeTransform(Var var, NodeTransform nodeTransform, Var defaultVar) {
-        Var tmp = (Var)nodeTransform.convert(var);
+        Var tmp = (Var)nodeTransform.apply(var);
         Var result = tmp == null ? defaultVar : tmp;
         return result;
     }

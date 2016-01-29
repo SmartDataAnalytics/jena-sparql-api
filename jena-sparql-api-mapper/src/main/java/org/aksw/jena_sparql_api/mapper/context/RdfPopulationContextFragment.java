@@ -13,8 +13,8 @@ import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 
-import com.hp.hpl.jena.graph.Graph;
-import com.hp.hpl.jena.graph.Node;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Node;
 
 /**
  * Work in progress

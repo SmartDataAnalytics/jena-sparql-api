@@ -4,8 +4,8 @@ import java.util.Map;
 
 import org.aksw.commons.collections.MapUtils;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.sparql.graph.NodeTransform;
+import org.apache.jena.graph.Node;
+import org.apache.jena.sparql.graph.NodeTransform;
 
 public class NodeTransformRenameMap
     implements NodeTransform {
@@ -17,7 +17,7 @@ public class NodeTransformRenameMap
         this.map = map;
     }
 
-    public final Node convert(Node node)
+    public final Node apply(Node node)
     {
         Node result = MapUtils.getOrElse(map, node, node);
         return result;

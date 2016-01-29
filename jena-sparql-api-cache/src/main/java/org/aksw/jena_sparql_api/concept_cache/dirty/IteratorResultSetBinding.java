@@ -2,8 +2,8 @@ package org.aksw.jena_sparql_api.concept_cache.dirty;
 
 import java.util.Iterator;
 
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.sparql.engine.binding.Binding;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.sparql.engine.binding.Binding;
 
 public class IteratorResultSetBinding
     implements Iterator<Binding>

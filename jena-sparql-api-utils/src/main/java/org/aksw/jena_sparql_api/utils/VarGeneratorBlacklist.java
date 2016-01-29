@@ -2,8 +2,8 @@ package org.aksw.jena_sparql_api.utils;
 
 import java.util.Collection;
 
-import com.hp.hpl.jena.sdb.core.Gensym;
-import com.hp.hpl.jena.sparql.core.Var;
+import org.apache.jena.sdb.core.Gensym;
+import org.apache.jena.sparql.core.Var;
 
 public class VarGeneratorBlacklist
     implements Generator<Var> 

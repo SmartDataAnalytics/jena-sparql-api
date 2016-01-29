@@ -4,7 +4,7 @@ import java.util.Set;
 
 import org.aksw.commons.collections.diff.Diff;
 
-import com.hp.hpl.jena.sparql.core.Quad;
+import org.apache.jena.sparql.core.Quad;
 
 public interface DatasetListener {
     /**

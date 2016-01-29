@@ -6,8 +6,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.graph.NodeTransform;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.graph.NodeTransform;
 
 class VarUtils {
     public static List<Var> toList(Collection<String> varNames) {

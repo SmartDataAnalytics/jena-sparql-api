@@ -6,8 +6,8 @@ import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactoryBackQuery;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryExecution;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
 
 /**
  * @author Claus Stadler

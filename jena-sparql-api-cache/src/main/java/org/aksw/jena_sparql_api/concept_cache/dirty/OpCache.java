@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.concept_cache.dirty;
 
-import com.hp.hpl.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.Op;
 
 public class OpCache
 //    extends TransformCopy

@@ -4,7 +4,7 @@ import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
 
 import com.google.common.base.Function;
-import com.hp.hpl.jena.sparql.core.DatasetDescription;
+import org.apache.jena.sparql.core.DatasetDescription;
 
 public class SparqlServiceFactoryTransform
     implements SparqlServiceFactory

@@ -5,7 +5,7 @@ import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.AbstractFactoryBean;
 
-import com.hp.hpl.jena.sparql.core.DatasetDescription;
+import org.apache.jena.sparql.core.DatasetDescription;
 
 public class FactoryBeanSparqlService
     extends AbstractFactoryBean<SparqlService>

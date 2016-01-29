@@ -7,8 +7,8 @@ import org.aksw.commons.collections.multimaps.IBiSetMultimap;
 import org.aksw.jena_sparql_api.concept_cache.domain.PatternSummary;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 
-import com.hp.hpl.jena.sparql.algebra.Op;
-import com.hp.hpl.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.expr.Expr;
 
 public class QueryIndex {
     private Op rootOp;

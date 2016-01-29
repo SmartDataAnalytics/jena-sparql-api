@@ -4,8 +4,8 @@ import java.util.Map;
 
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 
-import com.hp.hpl.jena.sparql.algebra.Table;
-import com.hp.hpl.jena.sparql.core.Var;
+import org.apache.jena.sparql.algebra.Table;
+import org.apache.jena.sparql.core.Var;
 
 public class QfpcMatch {
     private QuadFilterPatternCanonical replacementPattern;

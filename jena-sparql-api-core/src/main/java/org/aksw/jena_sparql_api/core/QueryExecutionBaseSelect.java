@@ -5,20 +5,19 @@ import java.util.Iterator;
 import org.aksw.commons.collections.SinglePrefetchIterator;
 import org.aksw.jena_sparql_api.utils.CloseableQueryExecution;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QueryFactory;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.sparql.syntax.Template;
+import org.apache.jena.update.UpdateRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.query.QueryFactory;
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.rdf.model.Statement;
-import com.hp.hpl.jena.sparql.syntax.Template;
-import com.hp.hpl.jena.update.UpdateRequest;
 
 
 class IteratorWrapperClose<T>
@@ -74,7 +73,7 @@ class TestQueryExecutionBaseSelect
  * Also, works on String and Query level.
  *
  * Some of the code has been taken from
- * com.hp.hpl.jena.sparql.engine.QueryExecutionBase, which is a
+ * org.apache.jena.sparql.engine.QueryExecutionBase, which is a
  * class with a similar purpose but not as reusable as this one
  * (This class reduces all operations to a single executeCoreSelect call)
  *
@@ -109,7 +108,7 @@ public abstract class QueryExecutionBaseSelect
 
         while(it.hasNext()) {
             Triple t = it.next();
-            Statement stmt = com.hp.hpl.jena.sparql.util.ModelUtils.tripleToStatement(result, t);
+            Statement stmt = org.apache.jena.sparql.util.ModelUtils.tripleToStatement(result, t);
             if (stmt != null) {
                 result.add(stmt);
             }

@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.pagination.core;
 
 import org.aksw.jena_sparql_api.pagination.extra.PaginationQueryIterator;
 
-import com.hp.hpl.jena.query.Query;
+import org.apache.jena.query.Query;
 
 public class PagingQuery {
     private Query proto;

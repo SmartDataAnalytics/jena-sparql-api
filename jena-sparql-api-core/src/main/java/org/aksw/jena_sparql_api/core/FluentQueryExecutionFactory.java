@@ -14,10 +14,10 @@ import org.aksw.jena_sparql_api.model.QueryExecutionFactoryModel;
 
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.sparql.core.DatasetGraph;
-import com.hp.hpl.jena.sparql.core.DatasetGraphFactory;
+import org.apache.jena.query.Dataset;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.core.DatasetGraphFactory;
 
 /**
  * @author Lorenz Buehmann

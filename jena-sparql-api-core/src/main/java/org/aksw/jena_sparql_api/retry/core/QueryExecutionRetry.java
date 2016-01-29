@@ -15,10 +15,10 @@ import com.nurkiewicz.asyncretry.backoff.Backoff;
 import com.nurkiewicz.asyncretry.policy.RetryPolicy;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.rdf.model.Model;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.rdf.model.Model;
 
 public class QueryExecutionRetry
 	extends QueryExecutionDecorator

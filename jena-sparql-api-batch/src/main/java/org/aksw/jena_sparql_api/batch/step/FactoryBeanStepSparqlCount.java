@@ -6,7 +6,7 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 
-import com.hp.hpl.jena.query.Query;
+import org.apache.jena.query.Query;
 
 public class FactoryBeanStepSparqlCount
     extends FactoryBeanStepBase

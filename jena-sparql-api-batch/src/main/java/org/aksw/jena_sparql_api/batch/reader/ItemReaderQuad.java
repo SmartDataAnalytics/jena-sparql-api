@@ -13,10 +13,10 @@ import org.springframework.batch.item.data.AbstractPaginatedDataItemReader;
 import org.springframework.beans.factory.InitializingBean;
 
 import com.google.common.collect.Iterators;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.sparql.core.Quad;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.sparql.core.Quad;
 
 /**
  * Item reader that reads a SPARQL SELECT query using pagination

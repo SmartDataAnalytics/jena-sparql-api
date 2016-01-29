@@ -1,9 +1,9 @@
 package org.aksw.jena_sparql_api.batch.functions;
 
 import com.google.common.base.Function;
-import com.hp.hpl.jena.graph.Graph;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 
 class F_GraphToModel
     implements Function<Graph, Model>

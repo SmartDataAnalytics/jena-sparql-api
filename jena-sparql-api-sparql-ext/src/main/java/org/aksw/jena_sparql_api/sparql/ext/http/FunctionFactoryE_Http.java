@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.sparql.ext.http;
 import org.apache.http.client.HttpClient;
 
 import com.google.common.base.Supplier;
-import com.hp.hpl.jena.sparql.function.FunctionFactory;
+import org.apache.jena.sparql.function.FunctionFactory;
 
 public class FunctionFactoryE_Http
     implements FunctionFactory

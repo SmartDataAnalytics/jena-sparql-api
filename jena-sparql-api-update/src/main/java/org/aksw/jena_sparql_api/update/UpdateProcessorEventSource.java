@@ -6,18 +6,14 @@ import java.util.Set;
 import org.aksw.jena_sparql_api.core.DatasetListener;
 import org.aksw.jena_sparql_api.core.QuadContainmentChecker;
 import org.aksw.jena_sparql_api.core.SparqlService;
-import org.aksw.jena_sparql_api.core.SparqlServiceReference;
 import org.aksw.jena_sparql_api.core.UpdateContext;
 import org.aksw.jena_sparql_api.core.utils.UpdateExecutionUtils;
+import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.util.Context;
+import org.apache.jena.update.UpdateProcessor;
+import org.apache.jena.update.UpdateRequest;
 
 import com.google.common.collect.Iterables;
-import com.hp.hpl.jena.sparql.modify.request.UpdateDataInsert;
-import com.hp.hpl.jena.sparql.modify.request.UpdateDeleteInsert;
-import com.hp.hpl.jena.sparql.modify.request.UpdateModify;
-import com.hp.hpl.jena.sparql.util.Context;
-import com.hp.hpl.jena.update.GraphStore;
-import com.hp.hpl.jena.update.UpdateProcessor;
-import com.hp.hpl.jena.update.UpdateRequest;
 
 public class UpdateProcessorEventSource
     implements UpdateProcessor
@@ -43,9 +39,16 @@ public class UpdateProcessorEventSource
     }
 
     @Override
-    public GraphStore getGraphStore() {
+    public DatasetGraph getGraphStore() {
         return null;
     }
+
+    @Override
+    public DatasetGraph getDatasetGraph() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
 
     @Override
     public void execute() {
@@ -61,5 +64,4 @@ public class UpdateProcessorEventSource
         QuadContainmentChecker containmentChecker = context.getContainmentChecker();
         UpdateExecutionUtils.executeUpdate(sparqlService, updateRequest, batchSize, containmentChecker, allListeners);
     }
-
 }

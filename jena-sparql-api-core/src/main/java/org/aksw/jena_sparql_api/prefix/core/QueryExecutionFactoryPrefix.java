@@ -3,9 +3,9 @@ package org.aksw.jena_sparql_api.prefix.core;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactoryDecorator;
 
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.shared.PrefixMapping;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.shared.PrefixMapping;
 
 public class QueryExecutionFactoryPrefix
 	extends QueryExecutionFactoryDecorator

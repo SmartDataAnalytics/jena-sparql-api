@@ -6,7 +6,7 @@ import org.springframework.batch.core.step.builder.AbstractTaskletStepBuilder;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 
-import com.hp.hpl.jena.update.UpdateRequest;
+import org.apache.jena.update.UpdateRequest;
 
 public class FactoryBeanStepSparqlUpdate
     extends FactoryBeanStepBase

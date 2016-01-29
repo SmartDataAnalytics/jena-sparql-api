@@ -3,8 +3,8 @@ package org.aksw.jena_sparql_api.utils;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.expr.Expr;
 
 
 public class NfUtils {

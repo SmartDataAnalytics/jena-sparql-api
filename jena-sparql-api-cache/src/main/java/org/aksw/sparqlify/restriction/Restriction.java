@@ -2,7 +2,7 @@ package org.aksw.sparqlify.restriction;
 
 import java.util.EnumSet;
 
-import com.hp.hpl.jena.graph.Node;
+import org.apache.jena.graph.Node;
 
 
 public interface Restriction

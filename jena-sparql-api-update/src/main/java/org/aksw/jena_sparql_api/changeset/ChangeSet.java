@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.changeset;
 
-import com.hp.hpl.jena.graph.Graph;
+import org.apache.jena.graph.Graph;
 
 public class ChangeSet {
     private ChangeSetMetadata metadata;

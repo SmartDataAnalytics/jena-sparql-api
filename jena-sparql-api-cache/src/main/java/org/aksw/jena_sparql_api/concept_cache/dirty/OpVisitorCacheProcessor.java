@@ -1,8 +1,8 @@
 package org.aksw.jena_sparql_api.concept_cache.dirty;
 //package org.aksw.jena_sparql_api.concept_cache;
 //
-//import com.hp.hpl.jena.sparql.algebra.OpVisitorByTypeBase;
-//import com.hp.hpl.jena.sparql.algebra.OpWalker;
+//import org.apache.jena.sparql.algebra.OpVisitorByTypeBase;
+//import org.apache.jena.sparql.algebra.OpWalker;
 //
 ///**
 // * Traverse a query's algebra expression and insert distinct and

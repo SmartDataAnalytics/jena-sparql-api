@@ -12,9 +12,9 @@ import org.springframework.beans.BeanWrapperImpl;
 
 import com.google.common.base.Defaults;
 import com.google.common.collect.Iterables;
-import com.hp.hpl.jena.graph.Graph;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Triple;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
 
 public class RdfPopulatorPropertySingle
     extends RdfPopulatorPropertyBase

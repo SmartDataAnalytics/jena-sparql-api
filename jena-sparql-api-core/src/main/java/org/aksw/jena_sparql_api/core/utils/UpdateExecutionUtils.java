@@ -26,25 +26,25 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
-import com.hp.hpl.jena.graph.Graph;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.query.QueryFactory;
-import com.hp.hpl.jena.query.Syntax;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.sparql.core.DatasetDescription;
-import com.hp.hpl.jena.sparql.core.DatasetGraph;
-import com.hp.hpl.jena.sparql.core.Quad;
-import com.hp.hpl.jena.sparql.graph.NodeTransform;
-import com.hp.hpl.jena.sparql.modify.request.UpdateDeleteInsert;
-import com.hp.hpl.jena.update.GraphStoreFactory;
-import com.hp.hpl.jena.update.Update;
-import com.hp.hpl.jena.update.UpdateFactory;
-import com.hp.hpl.jena.update.UpdateProcessor;
-import com.hp.hpl.jena.update.UpdateRequest;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QueryFactory;
+import org.apache.jena.query.Syntax;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.sparql.core.DatasetDescription;
+import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.graph.NodeTransform;
+import org.apache.jena.sparql.modify.request.UpdateDeleteInsert;
+import org.apache.jena.update.GraphStoreFactory;
+import org.apache.jena.update.Update;
+import org.apache.jena.update.UpdateFactory;
+import org.apache.jena.update.UpdateProcessor;
+import org.apache.jena.update.UpdateRequest;
 
 public class UpdateExecutionUtils {
 
@@ -240,7 +240,7 @@ public class UpdateExecutionUtils {
         if(updateRequest.getOperations().isEmpty()) {
             // Create a fake update request
             UpdateRequest update = UpdateFactory.create("PREFIX ex: <http://example.org/> INSERT { ex:_s ex:_p ex:_o } WHERE { ex:_s ex:_p ex:_o }");
-            result = com.hp.hpl.jena.update.UpdateExecutionFactory.create(update, GraphStoreFactory.create(ModelFactory.createDefaultModel()));
+            result = org.apache.jena.update.UpdateExecutionFactory.create(update, GraphStoreFactory.create(ModelFactory.createDefaultModel()));
             result.execute();
         } else {
             result = uef.createUpdateProcessor(updateRequest);

@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.mapper;
 
 import java.util.Set;
 
-import com.hp.hpl.jena.sparql.core.Var;
+import org.apache.jena.sparql.core.Var;
 
 public class AggLiteral<T>
     implements Agg<T>

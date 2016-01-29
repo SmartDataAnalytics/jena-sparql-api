@@ -8,9 +8,9 @@ import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.aksw.jena_sparql_api.util.frontier.Frontier;
 import org.apache.jena.atlas.lib.Sink;
 
-import com.hp.hpl.jena.graph.Graph;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Triple;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
 
 /**
  * RdfPopulators map bean properties to triples and vice versa.

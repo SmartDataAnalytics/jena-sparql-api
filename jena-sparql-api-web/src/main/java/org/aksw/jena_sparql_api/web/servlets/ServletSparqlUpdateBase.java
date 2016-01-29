@@ -28,9 +28,9 @@ import org.apache.jena.atlas.web.auth.HttpAuthenticator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hp.hpl.jena.sparql.core.DatasetDescription;
-import com.hp.hpl.jena.update.UpdateProcessor;
-import com.hp.hpl.jena.update.UpdateRequest;
+import org.apache.jena.sparql.core.DatasetDescription;
+import org.apache.jena.update.UpdateProcessor;
+import org.apache.jena.update.UpdateRequest;
 
 
 public abstract class ServletSparqlUpdateBase {

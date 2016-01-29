@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api.mapper;
 
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.sparql.core.Var;
+import org.apache.jena.query.Query;
+import org.apache.jena.sparql.core.Var;
 
 public class PartitionedQuery {
     protected Query query;

@@ -10,9 +10,9 @@ import org.aksw.jena_sparql_api.mapper.jpa.core.EntityManagerJena;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
 import org.junit.Test;
 
-import com.hp.hpl.jena.datatypes.RDFDatatype;
-import com.hp.hpl.jena.datatypes.TypeMapper;
-import com.hp.hpl.jena.rdf.model.Model;
+import org.apache.jena.datatypes.RDFDatatype;
+import org.apache.jena.datatypes.TypeMapper;
+import org.apache.jena.rdf.model.Model;
 
 public class TestMapperSimple {
 

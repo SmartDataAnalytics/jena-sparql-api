@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.stmt;
 
-import com.hp.hpl.jena.update.UpdateRequest;
+import org.apache.jena.update.UpdateRequest;
 
 public class SparqlStmtUpdate
     extends SparqlStmtBase

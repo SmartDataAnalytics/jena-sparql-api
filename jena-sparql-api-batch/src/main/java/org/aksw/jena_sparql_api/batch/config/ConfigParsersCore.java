@@ -34,9 +34,9 @@ import org.springframework.core.convert.support.ConfigurableConversionService;
 import org.springframework.core.convert.support.DefaultConversionService;
 
 import com.google.gson.Gson;
-import com.hp.hpl.jena.query.Syntax;
-import com.hp.hpl.jena.shared.PrefixMapping;
-import com.hp.hpl.jena.sparql.core.Prologue;
+import org.apache.jena.query.Syntax;
+import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.sparql.core.Prologue;
 
 @Configuration
 @ComponentScan({"org.aksw.jena_sparql_api.spring.conversion"})

@@ -8,7 +8,7 @@ import org.aksw.jena_sparql_api.core.SparqlServiceReference;
 import org.aksw.jena_sparql_api.core.UpdateContext;
 import org.apache.jena.atlas.lib.Sink;
 
-import com.hp.hpl.jena.sparql.core.Quad;
+import org.apache.jena.sparql.core.Quad;
 
 public class DatasetListenerSink
     implements DatasetListener

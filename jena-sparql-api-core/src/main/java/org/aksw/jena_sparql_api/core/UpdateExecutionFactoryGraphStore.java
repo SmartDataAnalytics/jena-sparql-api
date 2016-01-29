@@ -1,8 +1,8 @@
 package org.aksw.jena_sparql_api.core;
 
-import com.hp.hpl.jena.update.GraphStore;
-import com.hp.hpl.jena.update.UpdateProcessor;
-import com.hp.hpl.jena.update.UpdateRequest;
+import org.apache.jena.update.GraphStore;
+import org.apache.jena.update.UpdateProcessor;
+import org.apache.jena.update.UpdateRequest;
 
 public class UpdateExecutionFactoryGraphStore
         extends UpdateExecutionFactoryParsingBase
@@ -16,7 +16,7 @@ public class UpdateExecutionFactoryGraphStore
 
     @Override
     public UpdateProcessor createUpdateProcessor(UpdateRequest updateRequest) {
-        UpdateProcessor result = com.hp.hpl.jena.update.UpdateExecutionFactory.create(updateRequest, graphStore);
+        UpdateProcessor result = org.apache.jena.update.UpdateExecutionFactory.create(updateRequest, graphStore);
         return result;
     }
 }

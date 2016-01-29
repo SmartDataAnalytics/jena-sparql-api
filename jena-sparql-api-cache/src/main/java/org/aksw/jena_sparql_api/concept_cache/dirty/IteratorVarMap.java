@@ -10,8 +10,8 @@ import org.aksw.jena_sparql_api.concept_cache.domain.PatternSummary;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 
 import com.google.common.collect.AbstractIterator;
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.graph.NodeTransform;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.graph.NodeTransform;
 
 class IteratorVarMap
     extends AbstractIterator<Map<Var, Var>>

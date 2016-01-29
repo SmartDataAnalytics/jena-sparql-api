@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api.core;
 
 import com.google.common.base.Predicate;
-import com.hp.hpl.jena.sparql.core.DatasetDescription;
+import org.apache.jena.sparql.core.DatasetDescription;
 
 public class SparqlServiceFactoryDefaults
     implements SparqlServiceFactory

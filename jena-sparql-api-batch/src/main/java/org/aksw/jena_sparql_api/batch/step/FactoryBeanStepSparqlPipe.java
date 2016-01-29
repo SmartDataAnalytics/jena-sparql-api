@@ -21,9 +21,9 @@ import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.context.ConfigurableApplicationContext;
 
 import com.google.common.base.Predicate;
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.sparql.core.Quad;
-import com.hp.hpl.jena.sparql.expr.Expr;
+import org.apache.jena.query.Query;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.expr.Expr;
 
 
 public class FactoryBeanStepSparqlPipe

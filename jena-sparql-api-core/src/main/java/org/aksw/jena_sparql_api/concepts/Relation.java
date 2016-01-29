@@ -7,12 +7,12 @@ import org.aksw.commons.collections.SetUtils;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.graph.NodeTransform;
-import com.hp.hpl.jena.sparql.lang.ParserSPARQL10;
-import com.hp.hpl.jena.sparql.syntax.Element;
-import com.hp.hpl.jena.sparql.syntax.ElementGroup;
-import com.hp.hpl.jena.sparql.syntax.PatternVars;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.graph.NodeTransform;
+import org.apache.jena.sparql.lang.ParserSPARQL10;
+import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementGroup;
+import org.apache.jena.sparql.syntax.PatternVars;
 
 /**
  * This is a binary relation used to relate two concepts to each other

@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.core;
 
-import com.hp.hpl.jena.sparql.core.DatasetDescription;
+import org.apache.jena.sparql.core.DatasetDescription;
 
 /**
  * A SparqlService is an object that bundles together related sparql features

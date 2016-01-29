@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import com.hp.hpl.jena.rdf.model.impl.Util;
+import org.apache.jena.rdf.model.impl.Util;
 
 /**
  * This class does not really belong to the SPARQL api,
@@ -29,7 +29,7 @@ public class UriUtils {
      * @return
      */
     public static String getNameSpace(String s) {
-        return s.substring( 0, Util.splitNamespace( s ) );
+        return s.substring( 0, Util.splitNamespaceXML( s ) );
     }
 
     /**
@@ -38,7 +38,7 @@ public class UriUtils {
      * @return
      */
     public static String getLocalName(String s) {
-        return s.substring( Util.splitNamespace( s ) );
+        return s.substring( Util.splitNamespaceXML( s ) );
     }
 
     /**

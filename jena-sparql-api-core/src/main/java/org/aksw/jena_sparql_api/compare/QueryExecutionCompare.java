@@ -13,17 +13,18 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Multisets;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.query.QuerySolution;
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.query.ResultSetFactory;
-import com.hp.hpl.jena.query.ResultSetRewindable;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.sparql.util.Context;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.query.Dataset;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QuerySolution;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.ResultSetFactory;
+import org.apache.jena.query.ResultSetRewindable;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.util.Context;
 
 
 /**
@@ -476,11 +477,26 @@ public class QueryExecutionCompare
     }
 
     /* (non-Javadoc)
-     * @see com.hp.hpl.jena.query.QueryExecution#isClosed()
+     * @see org.apache.jena.query.QueryExecution#isClosed()
      */
     @Override
     public boolean isClosed() {
         return a.isClosed() && b.isClosed();
+    }
+
+    @Override
+    public Iterator<Quad> execConstructQuads() {
+        throw new RuntimeException("Not implemented yet");
+    }
+
+    @Override
+    public Dataset execConstructDataset() {
+        throw new RuntimeException("Not implemented yet");
+    }
+
+    @Override
+    public Dataset execConstructDataset(Dataset dataset) {
+        throw new RuntimeException("Not implemented yet");
     }
 
     /*

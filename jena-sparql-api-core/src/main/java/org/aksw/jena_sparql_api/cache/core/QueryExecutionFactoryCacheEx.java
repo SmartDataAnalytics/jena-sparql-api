@@ -4,8 +4,8 @@ import org.aksw.jena_sparql_api.cache.extra.CacheFrontend;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactoryDecorator;
 
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryExecution;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
 
 /**
  * @author Claus Stadler

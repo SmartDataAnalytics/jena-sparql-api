@@ -15,10 +15,10 @@ import org.springframework.util.StreamUtils;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.net.MediaType;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.NodeFactory;
-import com.hp.hpl.jena.sparql.expr.NodeValue;
-import com.hp.hpl.jena.sparql.function.FunctionBase1;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.function.FunctionBase1;
 
 /**
  * jsonLiteral jsonp(jsonLiteral, queryString)

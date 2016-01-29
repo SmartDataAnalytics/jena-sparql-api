@@ -4,8 +4,8 @@ import java.util.List;
 
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 
-import com.hp.hpl.jena.sparql.algebra.Op;
-import com.hp.hpl.jena.sparql.algebra.op.OpQuadPattern;
+import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.op.OpQuadPattern;
 
 class Containment {
     public static void traverse(Op query, Op cache) {

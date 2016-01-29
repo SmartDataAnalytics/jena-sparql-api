@@ -1,10 +1,10 @@
 package org.aksw.jena_sparql_api.mapper;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.sparql.engine.binding.Binding;
-import com.hp.hpl.jena.sparql.expr.Expr;
-import com.hp.hpl.jena.sparql.expr.NodeValue;
-import com.hp.hpl.jena.sparql.util.ExprUtils;
+import org.apache.jena.graph.Node;
+import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.util.ExprUtils;
 
 public class BindingMapperExpr
     implements BindingMapper<Node> {

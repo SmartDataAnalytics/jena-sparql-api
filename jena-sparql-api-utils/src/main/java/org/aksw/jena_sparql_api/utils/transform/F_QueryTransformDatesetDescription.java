@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api.utils.transform;
 
 import com.google.common.base.Function;
-import com.hp.hpl.jena.query.Query;
+import org.apache.jena.query.Query;
 
 public class F_QueryTransformDatesetDescription
 	implements Function<Query, Query>

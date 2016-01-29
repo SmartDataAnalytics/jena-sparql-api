@@ -21,11 +21,11 @@ import org.springframework.cglib.proxy.Enhancer;
 import org.springframework.cglib.proxy.Factory;
 
 import com.google.common.base.Function;
-import com.hp.hpl.jena.graph.Graph;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.NodeFactory;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.sparql.core.DatasetGraph;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.sparql.core.DatasetGraph;
 
 /**
  * An RdfClass is one type of implementation that can map Java objects to and from RDF graphs.

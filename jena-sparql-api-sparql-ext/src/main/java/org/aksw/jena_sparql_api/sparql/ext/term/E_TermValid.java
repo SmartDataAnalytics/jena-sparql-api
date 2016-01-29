@@ -3,9 +3,9 @@ package org.aksw.jena_sparql_api.sparql.ext.term;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.jena.riot.system.IRIResolver;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.sparql.expr.NodeValue;
-import com.hp.hpl.jena.sparql.function.FunctionBase1;
+import org.apache.jena.graph.Node;
+import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.function.FunctionBase1;
 
 /**
  *

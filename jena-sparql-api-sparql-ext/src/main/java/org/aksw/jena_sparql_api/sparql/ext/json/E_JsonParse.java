@@ -2,8 +2,8 @@ package org.aksw.jena_sparql_api.sparql.ext.json;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
-import com.hp.hpl.jena.sparql.expr.NodeValue;
-import com.hp.hpl.jena.sparql.function.FunctionBase1;
+import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.function.FunctionBase1;
 
 public class E_JsonParse
     extends FunctionBase1

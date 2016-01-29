@@ -4,7 +4,7 @@ import org.aksw.jena_sparql_api.utils.ResultSetPart;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
-import com.hp.hpl.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.engine.binding.Binding;
 
 public class FunctionResultSetPartFirstRow
     implements Function<ResultSetPart, Binding>

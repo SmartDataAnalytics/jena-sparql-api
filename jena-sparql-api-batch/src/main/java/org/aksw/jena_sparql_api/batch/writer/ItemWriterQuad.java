@@ -7,7 +7,7 @@ import org.aksw.jena_sparql_api.core.utils.UpdateExecutionUtils;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.util.Assert;
 
-import com.hp.hpl.jena.sparql.core.Quad;
+import org.apache.jena.sparql.core.Quad;
 
 public class ItemWriterQuad
     implements ItemWriter<Quad>

@@ -3,10 +3,10 @@ package org.aksw.jena_sparql_api.utils;
 import java.util.List;
 
 import com.google.common.base.Joiner;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.NodeFactory;
-import com.hp.hpl.jena.sparql.core.DatasetDescription;
-import com.hp.hpl.jena.sparql.core.Quad;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.sparql.core.DatasetDescription;
+import org.apache.jena.sparql.core.Quad;
 
 public class DatasetDescriptionUtils {
 

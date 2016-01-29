@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.changeset;
 import org.aksw.jena_sparql_api.utils.TripleUtils;
 
 import com.google.common.base.Function;
-import com.hp.hpl.jena.graph.Triple;
+import org.apache.jena.graph.Triple;
 
 public class FN_TripleToMd5
     implements Function<Triple, String>

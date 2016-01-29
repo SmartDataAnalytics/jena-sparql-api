@@ -2,10 +2,10 @@ package org.aksw.jena_sparql_api.utils;
 
 import java.util.List;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.sparql.expr.Expr;
-import com.hp.hpl.jena.sparql.expr.ExprList;
-import com.hp.hpl.jena.sparql.util.ExprUtils;
+import org.apache.jena.graph.Node;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprList;
+import org.apache.jena.sparql.util.ExprUtils;
 
 public class ExprListUtils {
 	public static boolean contains(ExprList exprList, Expr expr) {

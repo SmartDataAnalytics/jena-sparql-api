@@ -4,7 +4,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.Iterator;
 
-import com.hp.hpl.jena.util.iterator.ClosableIterator;
+import org.apache.jena.util.iterator.ClosableIterator;
 
 
 public class IteratorClosable<T>

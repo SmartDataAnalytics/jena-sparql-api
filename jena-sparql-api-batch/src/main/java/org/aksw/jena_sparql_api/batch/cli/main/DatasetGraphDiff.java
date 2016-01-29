@@ -4,11 +4,11 @@ import java.util.Iterator;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
-import com.hp.hpl.jena.graph.Graph;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.sparql.core.DatasetGraph;
-import com.hp.hpl.jena.sparql.core.DatasetGraphBase;
-import com.hp.hpl.jena.sparql.core.Quad;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Node;
+import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.core.DatasetGraphBase;
+import org.apache.jena.sparql.core.Quad;
 
 class PredicateIfQuadExists
     implements Predicate<Quad>

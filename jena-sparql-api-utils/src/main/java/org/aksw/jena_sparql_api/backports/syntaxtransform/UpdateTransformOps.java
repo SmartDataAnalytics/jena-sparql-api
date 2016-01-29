@@ -24,27 +24,27 @@ import java.util.Map ;
 
 import org.apache.jena.atlas.lib.Sink ;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.sparql.core.Quad;
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.expr.ExprTransform;
-import com.hp.hpl.jena.sparql.graph.NodeTransform;
-import com.hp.hpl.jena.sparql.modify.request.QuadAcc;
-import com.hp.hpl.jena.sparql.modify.request.UpdateAdd;
-import com.hp.hpl.jena.sparql.modify.request.UpdateClear;
-import com.hp.hpl.jena.sparql.modify.request.UpdateCopy;
-import com.hp.hpl.jena.sparql.modify.request.UpdateCreate;
-import com.hp.hpl.jena.sparql.modify.request.UpdateDataDelete;
-import com.hp.hpl.jena.sparql.modify.request.UpdateDataInsert;
-import com.hp.hpl.jena.sparql.modify.request.UpdateDeleteWhere;
-import com.hp.hpl.jena.sparql.modify.request.UpdateDrop;
-import com.hp.hpl.jena.sparql.modify.request.UpdateLoad;
-import com.hp.hpl.jena.sparql.modify.request.UpdateModify;
-import com.hp.hpl.jena.sparql.modify.request.UpdateMove;
-import com.hp.hpl.jena.sparql.modify.request.UpdateVisitor;
-import com.hp.hpl.jena.sparql.syntax.Element;
-import com.hp.hpl.jena.update.Update;
-import com.hp.hpl.jena.update.UpdateRequest;
+import org.apache.jena.graph.Node;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.expr.ExprTransform;
+import org.apache.jena.sparql.graph.NodeTransform;
+import org.apache.jena.sparql.modify.request.QuadAcc;
+import org.apache.jena.sparql.modify.request.UpdateAdd;
+import org.apache.jena.sparql.modify.request.UpdateClear;
+import org.apache.jena.sparql.modify.request.UpdateCopy;
+import org.apache.jena.sparql.modify.request.UpdateCreate;
+import org.apache.jena.sparql.modify.request.UpdateDataDelete;
+import org.apache.jena.sparql.modify.request.UpdateDataInsert;
+import org.apache.jena.sparql.modify.request.UpdateDeleteWhere;
+import org.apache.jena.sparql.modify.request.UpdateDrop;
+import org.apache.jena.sparql.modify.request.UpdateLoad;
+import org.apache.jena.sparql.modify.request.UpdateModify;
+import org.apache.jena.sparql.modify.request.UpdateMove;
+import org.apache.jena.sparql.modify.request.UpdateVisitor;
+import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.update.Update;
+import org.apache.jena.update.UpdateRequest;
 
 /** Support for transformation of update abstract syntax. */ 
 public class UpdateTransformOps {

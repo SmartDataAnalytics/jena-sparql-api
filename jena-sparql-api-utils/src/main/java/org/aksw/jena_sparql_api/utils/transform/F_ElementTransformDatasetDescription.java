@@ -1,8 +1,8 @@
 package org.aksw.jena_sparql_api.utils.transform;
 
 import com.google.common.base.Function;
-import com.hp.hpl.jena.sparql.core.DatasetDescription;
-import com.hp.hpl.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.core.DatasetDescription;
+import org.apache.jena.sparql.syntax.Element;
 
 public class F_ElementTransformDatasetDescription
 	implements Function<Element, Element>

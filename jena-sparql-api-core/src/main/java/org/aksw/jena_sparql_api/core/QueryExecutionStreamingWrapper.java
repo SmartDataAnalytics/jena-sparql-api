@@ -3,9 +3,9 @@ package org.aksw.jena_sparql_api.core;
 import java.util.Iterator;
 import java.util.Set;
 
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.rdf.model.Model;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.rdf.model.Model;
 
 //public class QueryExecutionWrapper
 //	extends QueryExecutionDecorator

@@ -12,18 +12,18 @@ import java.util.Set;
 
 import org.aksw.commons.collections.MapUtils;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.sparql.core.Quad;
-import com.hp.hpl.jena.sparql.core.QuadPattern;
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.engine.binding.Binding;
-import com.hp.hpl.jena.sparql.engine.binding.BindingHashMap;
-import com.hp.hpl.jena.sparql.graph.NodeTransform;
-import com.hp.hpl.jena.sparql.syntax.Element;
-import com.hp.hpl.jena.sparql.syntax.ElementGroup;
-import com.hp.hpl.jena.sparql.syntax.ElementNamedGraph;
-import com.hp.hpl.jena.sparql.syntax.ElementTriplesBlock;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.core.QuadPattern;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.engine.binding.BindingHashMap;
+import org.apache.jena.sparql.graph.NodeTransform;
+import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementGroup;
+import org.apache.jena.sparql.syntax.ElementNamedGraph;
+import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 
 public class QuadUtils {
 
@@ -148,10 +148,10 @@ public class QuadUtils {
 
     public static Quad applyNodeTransform(Quad quad,
             NodeTransform nodeTransform) {
-        Node g = nodeTransform.convert(quad.getGraph());
-        Node s = nodeTransform.convert(quad.getSubject());
-        Node p = nodeTransform.convert(quad.getPredicate());
-        Node o = nodeTransform.convert(quad.getObject());
+        Node g = nodeTransform.apply(quad.getGraph());
+        Node s = nodeTransform.apply(quad.getSubject());
+        Node p = nodeTransform.apply(quad.getPredicate());
+        Node o = nodeTransform.apply(quad.getObject());
 
         g = g != null ? g : quad.getGraph();
         s = s != null ? s : quad.getSubject();

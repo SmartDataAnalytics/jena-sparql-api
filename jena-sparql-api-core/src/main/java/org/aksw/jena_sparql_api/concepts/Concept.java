@@ -11,23 +11,23 @@ import org.aksw.jena_sparql_api.utils.GeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 
 import com.google.common.collect.Sets;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.sdb.core.Gensym;
-import com.hp.hpl.jena.shared.PrefixMapping;
-import com.hp.hpl.jena.sparql.algebra.Algebra;
-import com.hp.hpl.jena.sparql.algebra.Op;
-import com.hp.hpl.jena.sparql.algebra.OpAsQuery;
-import com.hp.hpl.jena.sparql.core.Substitute;
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.engine.binding.BindingHashMap;
-import com.hp.hpl.jena.sparql.graph.NodeTransform;
-import com.hp.hpl.jena.sparql.lang.ParserSPARQL11;
-import com.hp.hpl.jena.sparql.lang.SPARQLParser;
-import com.hp.hpl.jena.sparql.syntax.Element;
-import com.hp.hpl.jena.sparql.syntax.ElementGroup;
-import com.hp.hpl.jena.sparql.syntax.ElementTriplesBlock;
-import com.hp.hpl.jena.sparql.syntax.PatternVars;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.query.Query;
+import org.apache.jena.sdb.core.Gensym;
+import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.sparql.algebra.Algebra;
+import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.OpAsQuery;
+import org.apache.jena.sparql.core.Substitute;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.engine.binding.BindingHashMap;
+import org.apache.jena.sparql.graph.NodeTransform;
+import org.apache.jena.sparql.lang.ParserSPARQL11;
+import org.apache.jena.sparql.lang.SPARQLParser;
+import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementGroup;
+import org.apache.jena.sparql.syntax.ElementTriplesBlock;
+import org.apache.jena.sparql.syntax.PatternVars;
 
 /**
  * A concept combines a SPARQL graph pattern (element) with a variable.
@@ -143,7 +143,7 @@ public class Concept {
     }
 
     public Concept applyNodeTransform(NodeTransform nodeTransform) {
-        Var tmpVar = (Var)nodeTransform.convert(var);
+        Var tmpVar = (Var)nodeTransform.apply(var);
 
         Element e = ElementUtils.applyNodeTransform(element, nodeTransform);
         Var v = tmpVar == null ? var : tmpVar;

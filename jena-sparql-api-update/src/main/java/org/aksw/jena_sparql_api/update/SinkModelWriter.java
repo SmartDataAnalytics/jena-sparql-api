@@ -6,8 +6,8 @@ import org.aksw.jena_sparql_api.core.utils.UpdateExecutionUtils;
 import org.aksw.jena_sparql_api.core.utils.UpdateUtils;
 import org.apache.jena.atlas.lib.Sink;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
 
 public class SinkModelWriter
     implements Sink<Model>

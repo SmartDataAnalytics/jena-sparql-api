@@ -2,10 +2,10 @@ package org.aksw.jena_sparql_api.concept_cache.core;
 
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 
-import com.hp.hpl.jena.sparql.algebra.Op;
-import com.hp.hpl.jena.sparql.algebra.TransformCopy;
-import com.hp.hpl.jena.sparql.algebra.op.OpFilter;
-import com.hp.hpl.jena.sparql.algebra.op.OpQuadPattern;
+import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.TransformCopy;
+import org.apache.jena.sparql.algebra.op.OpFilter;
+import org.apache.jena.sparql.algebra.op.OpQuadPattern;
 
 
 public class TransformCopyQfpc

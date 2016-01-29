@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api.convert;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
 
 /**
  * Reads a value from a given resource that is stored in a certain vocabulary.

@@ -2,8 +2,8 @@ package org.aksw.jena_sparql_api.shape;
 
 import java.util.Map;
 
-import com.hp.hpl.jena.shared.PrefixMapping;
-import com.hp.hpl.jena.shared.impl.PrefixMappingImpl;
+import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.shared.impl.PrefixMappingImpl;
 
 public class ParserJsonPrefixes {
     public static PrefixMapping parse(Object json) {

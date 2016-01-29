@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.batch.jobrepo;
 
-import com.hp.hpl.jena.graph.Graph;
+import org.apache.jena.graph.Graph;
 
 /**
  * Implementation of a job repo backed by an RDF graph

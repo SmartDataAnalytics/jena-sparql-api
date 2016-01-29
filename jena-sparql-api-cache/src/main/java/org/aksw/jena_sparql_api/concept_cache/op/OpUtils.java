@@ -8,16 +8,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.hp.hpl.jena.sparql.algebra.Op;
-import com.hp.hpl.jena.sparql.algebra.Table;
-import com.hp.hpl.jena.sparql.algebra.op.Op0;
-import com.hp.hpl.jena.sparql.algebra.op.Op1;
-import com.hp.hpl.jena.sparql.algebra.op.Op2;
-import com.hp.hpl.jena.sparql.algebra.op.OpBGP;
-import com.hp.hpl.jena.sparql.algebra.op.OpN;
-import com.hp.hpl.jena.sparql.algebra.op.OpQuadBlock;
-import com.hp.hpl.jena.sparql.algebra.op.OpQuadPattern;
-import com.hp.hpl.jena.sparql.algebra.op.OpTriple;
+import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.Table;
+import org.apache.jena.sparql.algebra.op.Op0;
+import org.apache.jena.sparql.algebra.op.Op1;
+import org.apache.jena.sparql.algebra.op.Op2;
+import org.apache.jena.sparql.algebra.op.OpBGP;
+import org.apache.jena.sparql.algebra.op.OpN;
+import org.apache.jena.sparql.algebra.op.OpQuadBlock;
+import org.apache.jena.sparql.algebra.op.OpQuadPattern;
+import org.apache.jena.sparql.algebra.op.OpTriple;
 
 
 

@@ -11,7 +11,7 @@ import org.aksw.jena_sparql_api.core.SparqlServiceReference;
 import org.aksw.jena_sparql_api.core.UpdateContext;
 import org.apache.jena.atlas.web.auth.HttpAuthenticator;
 
-import com.hp.hpl.jena.sparql.core.DatasetDescription;
+import org.apache.jena.sparql.core.DatasetDescription;
 
 public class SparqlServiceFactoryEventSource
     implements SparqlServiceFactory

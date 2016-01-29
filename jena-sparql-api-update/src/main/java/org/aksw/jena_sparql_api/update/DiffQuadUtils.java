@@ -8,9 +8,9 @@ import java.util.Set;
 import org.aksw.commons.collections.diff.Diff;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.sparql.core.Quad;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.sparql.core.Quad;
 
 public class DiffQuadUtils {
 

@@ -15,12 +15,12 @@ import org.apache.jena.riot.RiotReader;
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
 import com.google.common.collect.Iterators;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.query.ResultSetFactory;
-import com.hp.hpl.jena.sparql.engine.binding.Binding;
-import com.hp.hpl.jena.sparql.engine.iterator.QueryIter;
-import com.hp.hpl.jena.sparql.engine.iterator.QueryIterPlainWrapper;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.ResultSetFactory;
+import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.engine.iterator.QueryIter;
+import org.apache.jena.sparql.engine.iterator.QueryIterPlainWrapper;
 
 public class QueryExecutionResourceCore
     extends QueryExecutionAdapter

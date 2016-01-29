@@ -13,8 +13,8 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 
 import com.google.common.collect.Lists;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.sparql.core.DatasetGraph;
+import org.apache.jena.graph.Node;
+import org.apache.jena.sparql.core.DatasetGraph;
 
 public class ItemWriterSparqlDiff
     implements ItemWriter<Entry<? extends Node, ? extends Diff<? extends DatasetGraph>>>, InitializingBean

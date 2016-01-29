@@ -7,7 +7,7 @@ import org.aksw.jena_sparql_api.core.DatasetListener;
 import org.aksw.jena_sparql_api.core.UpdateContext;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryParsingBase;
 
-import com.hp.hpl.jena.update.UpdateRequest;
+import org.apache.jena.update.UpdateRequest;
 
 /**
  * A wrapper for an update execution that supports

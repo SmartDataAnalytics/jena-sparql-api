@@ -3,14 +3,15 @@ package org.aksw.jena_sparql_api.core;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.query.QuerySolution;
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.sparql.util.Context;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.query.Dataset;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QuerySolution;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.util.Context;
 
 
 /**
@@ -25,17 +26,17 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
     protected T decoratee;
 
     public QueryExecutionDecoratorBase(T decoratee) {
-    	//this.decoratee = new QueryExecutionWrapper(decoratee);
-    	this.setDecoratee(decoratee);
+        //this.decoratee = new QueryExecutionWrapper(decoratee);
+        this.setDecoratee(decoratee);
     }
 
     /*
     public QueryExecutionDecoratorBase(QueryExecution decoratee)
     {
-    	this.setDecoratee(decoratee);
+        this.setDecoratee(decoratee);
         //this.decoratee = decoratee;
     }*/
-    
+
     protected QueryExecution getDecoratee()
     {
         return decoratee;
@@ -107,9 +108,9 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
 
     @Override
     public void close() {
-    	if(decoratee != null) {
-    		decoratee.close();
-    	}
+        if(decoratee != null) {
+            decoratee.close();
+        }
     }
 
     @Override
@@ -132,31 +133,46 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
         decoratee.setTimeout(timeout1, timeout2);
     }
 
-	@Override
-	public Iterator<Triple> execConstructTriples() {
-		return decoratee.execConstructTriples();
-	}
+    @Override
+    public Iterator<Triple> execConstructTriples() {
+        return decoratee.execConstructTriples();
+    }
 
-	@Override
-	public Iterator<Triple> execDescribeTriples() {
-		return decoratee.execDescribeTriples();
-	}
+    @Override
+    public Iterator<Triple> execDescribeTriples() {
+        return decoratee.execDescribeTriples();
+    }
 
-	@Override
-	public long getTimeout1() {
-		return decoratee.getTimeout1();
-	}
+    @Override
+    public long getTimeout1() {
+        return decoratee.getTimeout1();
+    }
 
-	@Override
-	public long getTimeout2() {
-		return decoratee.getTimeout2();
-	}
+    @Override
+    public long getTimeout2() {
+        return decoratee.getTimeout2();
+    }
 
-	/* (non-Javadoc)
-	 * @see com.hp.hpl.jena.query.QueryExecution#isClosed()
-	 */
-	@Override
-	public boolean isClosed() {
-		return decoratee.isClosed();
-	}
+    /* (non-Javadoc)
+     * @see org.apache.jena.query.QueryExecution#isClosed()
+     */
+    @Override
+    public boolean isClosed() {
+        return decoratee.isClosed();
+    }
+
+    @Override
+    public Iterator<Quad> execConstructQuads() {
+        return decoratee.execConstructQuads();
+    }
+
+    @Override
+    public Dataset execConstructDataset() {
+        return decoratee.execConstructDataset();
+    }
+
+    @Override
+    public Dataset execConstructDataset(Dataset dataset) {
+        return decoratee.execConstructDataset(dataset);
+    }
 }

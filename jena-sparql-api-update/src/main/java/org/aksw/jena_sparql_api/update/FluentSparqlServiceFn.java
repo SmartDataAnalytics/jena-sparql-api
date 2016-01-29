@@ -13,7 +13,7 @@ import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
 
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
-import com.hp.hpl.jena.sparql.core.DatasetDescription;
+import org.apache.jena.sparql.core.DatasetDescription;
 
 public class FluentSparqlServiceFn<P>
     extends FluentFnBase<SparqlService, P>

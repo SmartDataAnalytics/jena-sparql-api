@@ -1,8 +1,8 @@
 package org.aksw.jena_sparql_api.mapper;
 
 import com.google.common.base.Function;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.sparql.expr.NodeValue;
+import org.apache.jena.graph.Node;
+import org.apache.jena.sparql.expr.NodeValue;
 
 public class FunctionNodeValueToString
     implements Function<NodeValue, String>

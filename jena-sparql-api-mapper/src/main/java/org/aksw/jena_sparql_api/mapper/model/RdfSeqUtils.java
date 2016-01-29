@@ -14,12 +14,12 @@ import org.slf4j.LoggerFactory;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.sparql.core.DatasetGraph;
-import com.hp.hpl.jena.sparql.core.Quad;
-import com.hp.hpl.jena.sparql.expr.Expr;
-import com.hp.hpl.jena.sparql.util.ExprUtils;
-import com.hp.hpl.jena.vocabulary.RDF;
+import org.apache.jena.graph.Node;
+import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.util.ExprUtils;
+import org.apache.jena.vocabulary.RDF;
 
 public class RdfSeqUtils {
     public static final PropertyRelation seqRelation = PropertyRelation.create("?s ?p ?o . Filter(regex(?p, 'http://www.w3.org/1999/02/22-rdf-syntax-ns#_[0-9]+'))", "s", "p", "o");

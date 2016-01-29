@@ -5,7 +5,7 @@ import org.springframework.batch.item.validator.ValidationException;
 import org.springframework.batch.item.validator.Validator;
 
 import com.google.common.base.Predicate;
-import com.hp.hpl.jena.sparql.core.Quad;
+import org.apache.jena.sparql.core.Quad;
 
 public class ValidatorQuadByPredicate
     implements Validator<Quad>

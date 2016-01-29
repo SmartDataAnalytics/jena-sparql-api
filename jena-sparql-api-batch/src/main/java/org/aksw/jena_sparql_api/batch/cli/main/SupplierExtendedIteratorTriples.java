@@ -8,9 +8,9 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RiotReader;
 
 import com.google.common.base.Supplier;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.util.iterator.ExtendedIterator;
-import com.hp.hpl.jena.util.iterator.WrappedIterator;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.util.iterator.ExtendedIterator;
+import org.apache.jena.util.iterator.WrappedIterator;
 
 public class SupplierExtendedIteratorTriples
     implements Supplier<ExtendedIterator<Triple>>

@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.stmt;
 
-import com.hp.hpl.jena.query.Query;
+import org.apache.jena.query.Query;
 
 public class SparqlStmtQuery
     extends SparqlStmtBase

@@ -8,9 +8,9 @@ import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.convert.converter.Converter;
 
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.sparql.core.DatasetGraph;
-import com.hp.hpl.jena.sparql.core.Var;
+import org.apache.jena.query.Query;
+import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.core.Var;
 
 
 @AutoRegistered

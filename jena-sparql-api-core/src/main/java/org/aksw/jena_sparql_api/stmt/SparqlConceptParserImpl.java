@@ -5,9 +5,9 @@ import java.util.List;
 import org.aksw.jena_sparql_api.concepts.Concept;
 
 import com.google.common.base.Function;
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.syntax.Element;
-import com.hp.hpl.jena.sparql.syntax.ElementGroup;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementGroup;
 
 public class SparqlConceptParserImpl
     implements SparqlConceptParser

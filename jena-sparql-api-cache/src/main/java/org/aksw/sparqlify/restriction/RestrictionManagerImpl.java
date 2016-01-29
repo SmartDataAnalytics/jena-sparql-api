@@ -16,19 +16,19 @@ import org.aksw.jena_sparql_api.normal_form.Clause;
 import org.aksw.jena_sparql_api.normal_form.NestedNormalForm;
 import org.aksw.jena_sparql_api.utils.CnfUtils;
 import org.apache.commons.lang.NotImplementedException;
-
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.engine.binding.BindingHashMap;
-import com.hp.hpl.jena.sparql.engine.binding.BindingMap;
-import com.hp.hpl.jena.sparql.expr.E_Equals;
-import com.hp.hpl.jena.sparql.expr.E_LogicalNot;
-import com.hp.hpl.jena.sparql.expr.E_StrConcat;
-import com.hp.hpl.jena.sparql.expr.Expr;
-import com.hp.hpl.jena.sparql.expr.ExprFunction;
-import com.hp.hpl.jena.sparql.expr.ExprList;
-import com.hp.hpl.jena.sparql.expr.NodeValue;
-import com.hp.hpl.jena.sparql.util.ExprUtils;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.engine.binding.BindingHashMap;
+import org.apache.jena.sparql.engine.binding.BindingMap;
+import org.apache.jena.sparql.expr.E_Equals;
+import org.apache.jena.sparql.expr.E_LogicalNot;
+import org.apache.jena.sparql.expr.E_StrConcat;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprFunction;
+import org.apache.jena.sparql.expr.ExprList;
+import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.util.ExprUtils;
 
 
 
@@ -231,7 +231,7 @@ public class RestrictionManagerImpl implements RestrictionManager {
     }
 
     /* (non-Javadoc)
-     * @see org.aksw.sparqlify.database.IRestrictionManager#check(com.hp.hpl.jena.sparql.core.Var)
+     * @see org.aksw.sparqlify.database.IRestrictionManager#check(org.apache.jena.sparql.core.Var)
      */
     /*
     public void check(Var var) {
@@ -357,7 +357,7 @@ public class RestrictionManagerImpl implements RestrictionManager {
 
 
     /* (non-Javadoc)
-     * @see org.aksw.sparqlify.database.IRestrictionManager#isUnsatisfiable(com.hp.hpl.jena.sparql.expr.Expr)
+     * @see org.aksw.sparqlify.database.IRestrictionManager#isUnsatisfiable(org.apache.jena.sparql.expr.Expr)
      */
     @Override
     public Boolean determineSatisfiability(Expr expr) {
@@ -412,7 +412,7 @@ public class RestrictionManagerImpl implements RestrictionManager {
     }
 
     /* (non-Javadoc)
-     * @see org.aksw.sparqlify.database.IRestrictionManager#getRestriction(com.hp.hpl.jena.sparql.expr.Expr)
+     * @see org.aksw.sparqlify.database.IRestrictionManager#getRestriction(org.apache.jena.sparql.expr.Expr)
      */
     @Override
     public RestrictionImpl getRestriction(Expr expr) {
@@ -467,7 +467,7 @@ public class RestrictionManagerImpl implements RestrictionManager {
     }*/
 
     /* (non-Javadoc)
-     * @see org.aksw.sparqlify.database.IRestrictionManager#stateEqual(com.hp.hpl.jena.sparql.core.Var, com.hp.hpl.jena.sparql.core.Var)
+     * @see org.aksw.sparqlify.database.IRestrictionManager#stateEqual(org.apache.jena.sparql.core.Var, org.apache.jena.sparql.core.Var)
      */
     /*
     @Override
@@ -518,7 +518,7 @@ public class RestrictionManagerImpl implements RestrictionManager {
     */
 
     /* (non-Javadoc)
-     * @see org.aksw.sparqlify.database.IRestrictionManager#getRestriction(com.hp.hpl.jena.sparql.core.Var)
+     * @see org.aksw.sparqlify.database.IRestrictionManager#getRestriction(org.apache.jena.sparql.core.Var)
      */
     @Override
     public RestrictionImpl getRestriction(Var a) {
@@ -531,7 +531,7 @@ public class RestrictionManagerImpl implements RestrictionManager {
     }
 
     /* (non-Javadoc)
-     * @see org.aksw.sparqlify.database.IRestrictionManager#getOrCreateRestriction(com.hp.hpl.jena.sparql.core.Var)
+     * @see org.aksw.sparqlify.database.IRestrictionManager#getOrCreateRestriction(org.apache.jena.sparql.core.Var)
      */
     @Override
     public RestrictionImpl getOrCreateLocalRestriction(Var a) {
@@ -553,7 +553,7 @@ public class RestrictionManagerImpl implements RestrictionManager {
     }
 
     /* (non-Javadoc)
-     * @see org.aksw.sparqlify.database.IRestrictionManager#stateType(com.hp.hpl.jena.sparql.core.Var, org.aksw.sparqlify.database.Type)
+     * @see org.aksw.sparqlify.database.IRestrictionManager#stateType(org.apache.jena.sparql.core.Var, org.aksw.sparqlify.database.Type)
      */
     @Override
     public void stateType(Var a, RdfTermType type) {
@@ -568,7 +568,7 @@ public class RestrictionManagerImpl implements RestrictionManager {
     }
 
     /* (non-Javadoc)
-     * @see org.aksw.sparqlify.database.IRestrictionManager#stateNode(com.hp.hpl.jena.sparql.core.Var, com.hp.hpl.jena.graph.Node)
+     * @see org.aksw.sparqlify.database.IRestrictionManager#stateNode(org.apache.jena.sparql.core.Var, org.apache.jena.graph.Node)
      */
     @Override
     public void stateNode(Var a, Node b) {
@@ -590,15 +590,15 @@ public class RestrictionManagerImpl implements RestrictionManager {
     }
 
     /* (non-Javadoc)
-     * @see org.aksw.sparqlify.database.IRestrictionManager#stateUri(com.hp.hpl.jena.sparql.core.Var, java.lang.String)
+     * @see org.aksw.sparqlify.database.IRestrictionManager#stateUri(org.apache.jena.sparql.core.Var, java.lang.String)
      */
     @Override
     public void stateUri(Var a, String uri) {
-        stateNode(a, Node.createURI(uri));
+        stateNode(a, NodeFactory.createURI(uri));
     }
 
     /* (non-Javadoc)
-     * @see org.aksw.sparqlify.database.IRestrictionManager#stateLiteral(com.hp.hpl.jena.sparql.core.Var, com.hp.hpl.jena.sparql.expr.NodeValue)
+     * @see org.aksw.sparqlify.database.IRestrictionManager#stateLiteral(org.apache.jena.sparql.core.Var, org.apache.jena.sparql.expr.NodeValue)
      */
     @Override
     public void stateLiteral(Var a, NodeValue b) {
@@ -606,7 +606,7 @@ public class RestrictionManagerImpl implements RestrictionManager {
     }
 
     /* (non-Javadoc)
-     * @see org.aksw.sparqlify.database.IRestrictionManager#stateLexicalValuePrefixes(com.hp.hpl.jena.sparql.core.Var, org.aksw.sparqlify.config.lang.PrefixSet)
+     * @see org.aksw.sparqlify.database.IRestrictionManager#stateLexicalValuePrefixes(org.apache.jena.sparql.core.Var, org.aksw.sparqlify.config.lang.PrefixSet)
      */
     /*
     @Override
@@ -667,7 +667,7 @@ public class RestrictionManagerImpl implements RestrictionManager {
 
 
     /* (non-Javadoc)
-     * @see org.aksw.sparqlify.database.IRestrictionManager#stateNonEqual(com.hp.hpl.jena.sparql.core.Var, com.hp.hpl.jena.sparql.core.Var)
+     * @see org.aksw.sparqlify.database.IRestrictionManager#stateNonEqual(org.apache.jena.sparql.core.Var, org.apache.jena.sparql.core.Var)
      */
     @Override
     public void stateNonEqual(Var a, Var b) {

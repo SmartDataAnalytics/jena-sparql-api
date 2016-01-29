@@ -12,9 +12,9 @@ import org.aksw.jena_sparql_api.utils.transform.F_QueryTransformDatesetDescripti
 import org.aksw.jena_sparql_api.utils.transform.F_QueryTransformLimit;
 import org.junit.Before;
 
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.query.DatasetFactory;
-import com.hp.hpl.jena.sparql.core.DatasetDescription;
+import org.apache.jena.query.Dataset;
+import org.apache.jena.query.DatasetFactory;
+import org.apache.jena.sparql.core.DatasetDescription;
 
 public class TestMapperBase {
     protected String graphName;

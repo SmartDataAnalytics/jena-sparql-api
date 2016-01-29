@@ -3,9 +3,9 @@ package org.aksw.jena_sparql_api.core;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.sparql.core.DatasetDescription;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.sparql.core.DatasetDescription;
 
 /**
  * QueryExecutionFactory that injects dataset description into queries

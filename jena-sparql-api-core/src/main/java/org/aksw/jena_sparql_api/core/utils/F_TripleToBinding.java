@@ -3,8 +3,8 @@ package org.aksw.jena_sparql_api.core.utils;
 import org.aksw.jena_sparql_api.utils.TripleUtils;
 
 import com.google.common.base.Function;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.sparql.engine.binding.Binding;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.sparql.engine.binding.Binding;
 
 public class F_TripleToBinding
     implements Function<Triple, Binding>

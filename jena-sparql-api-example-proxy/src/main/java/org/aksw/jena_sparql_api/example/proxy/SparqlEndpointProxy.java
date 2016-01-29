@@ -14,9 +14,9 @@ import org.aksw.jena_sparql_api.utils.UriUtils;
 import org.aksw.jena_sparql_api.web.servlets.SparqlEndpointBase;
 
 import com.google.common.collect.Multimap;
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.update.UpdateProcessor;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.update.UpdateProcessor;
 
 
 

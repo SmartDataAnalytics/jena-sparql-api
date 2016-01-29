@@ -6,12 +6,12 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
-import com.hp.hpl.jena.graph.Graph;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.sparql.graph.GraphFactory;
-import com.hp.hpl.jena.sparql.util.graph.GraphUtils;
-import com.hp.hpl.jena.util.iterator.ExtendedIterator;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.sparql.graph.GraphFactory;
+import org.apache.jena.sparql.util.graph.GraphUtils;
+import org.apache.jena.util.iterator.ExtendedIterator;
 
 /**
  * Keeps track of associations between objects and triples

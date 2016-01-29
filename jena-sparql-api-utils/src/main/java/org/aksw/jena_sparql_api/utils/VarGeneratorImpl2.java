@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.utils;
 
-import com.hp.hpl.jena.sparql.core.Var;
+import org.apache.jena.sparql.core.Var;
 
 /**
  * Wrap Jena SDB's Generator to yield objects of type Var

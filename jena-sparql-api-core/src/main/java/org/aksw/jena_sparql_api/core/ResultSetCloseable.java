@@ -6,8 +6,8 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.query.ResultSetFactory;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.ResultSetFactory;
 
 /**
  * @author Claus Stadler

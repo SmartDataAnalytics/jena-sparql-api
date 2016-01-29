@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.utils;
 import java.util.Arrays;
 import java.util.List;
 
-import com.hp.hpl.jena.sparql.core.Var;
+import org.apache.jena.sparql.core.Var;
 
 public class Vars {
     public static final Var g = Var.alloc("g");
