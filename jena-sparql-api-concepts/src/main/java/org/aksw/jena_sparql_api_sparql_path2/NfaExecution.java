@@ -3,29 +3,22 @@ package org.aksw.jena_sparql_api_sparql_path2;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
+import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.lookup.ListService;
+import org.aksw.jena_sparql_api.lookup.ListServiceUtils;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.aksw.jena_sparql_api.util.frontier.Frontier;
 import org.aksw.jena_sparql_api.util.frontier.FrontierImpl;
-import org.aksw.jena_sparql_api.utils.ExprListUtils;
-import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
-import org.apache.jena.graph.Triple;
-import org.apache.jena.sparql.core.PathBlock;
-import org.apache.jena.sparql.core.TriplePath;
-import org.apache.jena.sparql.expr.E_Equals;
-import org.apache.jena.sparql.expr.E_NotOneOf;
-import org.apache.jena.sparql.expr.ExprVar;
-import org.apache.jena.sparql.path.P_Link;
-import org.apache.jena.sparql.path.P_NegPropSet;
-import org.apache.jena.sparql.path.P_ReverseLink;
 import org.apache.jena.sparql.path.Path;
-import org.apache.jena.sparql.path.PathCompiler;
 import org.jgrapht.DirectedGraph;
 
 import com.google.common.collect.ArrayListMultimap;
@@ -71,6 +64,13 @@ public class NfaExecution<V> {
 
             Frontier<Node> frontier = seen.get(state);
 
+            Set<Node> nodes = new HashSet<Node>();
+            while(!frontier.isEmpty()) {
+                nodes.add(frontier.next());
+            }
+
+            Concept filter = ConceptUtils.createFilterConcept(nodes);
+
             // Check if the state is an accepting state, if so, yield all paths
             // that made it to this node
             boolean isFinal = isFinalState(state);
@@ -88,8 +88,18 @@ public class NfaExecution<V> {
                 path.visit(visitor);
 
                 ResourceShapeBuilder rsb = visitor.getResourceShapeBuilder();
-                MappedConcept<Graph> mc = ResourceShape.createMappedConcept(rsb.getResourceShape(), null);
+                MappedConcept<Graph> mc = ResourceShape.createMappedConcept(rsb.getResourceShape(), filter);
                 System.out.println("MC: " + mc);
+
+                ListService<Concept, Node, Graph> ls = ListServiceUtils.createListServiceAcc(qef, mc, false);
+
+                Map<Node, Graph> nodeToGraph = ls.fetchData(null, null, null);
+                //System.out.println(nodeToGraph);
+
+                for(Entry<Node, Graph> entry : nodeToGraph.entrySet()) {
+
+                }
+
             }
 
         }

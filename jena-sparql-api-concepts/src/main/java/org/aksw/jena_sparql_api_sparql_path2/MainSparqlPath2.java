@@ -26,10 +26,6 @@ public class MainSparqlPath2 {
         System.out.println("Rewritten path: " + path);
 
 
-        if(true) {
-            return;
-        }
-
         //Path path = PathParser.parse("!(<p>|(<p>|<p>))", PrefixMapping.Extended);
 
         /*

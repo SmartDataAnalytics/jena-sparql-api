@@ -13,6 +13,7 @@ import org.aksw.commons.collections.SetUtils;
 import org.aksw.jena_sparql_api.core.utils.QueryGenerationUtils;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprListUtils;
+import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.Triples;
 import org.aksw.jena_sparql_api.utils.VarExprListUtils;
@@ -46,6 +47,14 @@ public class ConceptUtils {
     public static Concept listAllPredicates = Concept.create("?s ?p ?o", "p");
     public static Concept listAllGraphs = Concept.create("Graph ?g { ?s ?p ?o }", "g");
 
+
+    public static Concept createFilterConcept(Collection<Node> nodes) {
+
+        Element el = new ElementFilter(new E_OneOf(new ExprVar(Vars.s), ExprListUtils.nodesToExprs(nodes)));
+
+        Concept result = new Concept(el, Vars.s);
+        return result;
+    }
 
     public static Concept createRelatedConcept(Collection<Node> nodes, Relation relation) {
         Var sourceVar = relation.getSourceVar();

@@ -35,7 +35,7 @@ public class PathVisitorResourceShapeBuilder
         }
 
         if(!path.getBwdNodes().isEmpty()) {
-            rsb.outgoing(new E_NotOneOf(new ExprVar(Vars.p), ExprListUtils.nodesToExprs(path.getBwdNodes())));
+            rsb.incoming(new E_NotOneOf(new ExprVar(Vars.p), ExprListUtils.nodesToExprs(path.getBwdNodes())));
         }
     }
 
