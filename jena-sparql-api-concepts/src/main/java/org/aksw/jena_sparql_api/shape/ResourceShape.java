@@ -50,6 +50,7 @@ import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.function.FunctionEnv;
 import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementBind;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.ElementNamedGraph;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
@@ -389,12 +390,14 @@ public class ResourceShape {
 
 
     public static MappedConcept<Graph> createMappedConcept(Query query) {
+        // TODO We need to include the triple direction in var ?z
+
         BasicPattern bgp = new BasicPattern();
         bgp.add(new Triple(Vars.s, Vars.p, Vars.o));
         Template template = new Template(bgp);
 
         //Agg<Map<Node, Graph>> agg = AggMap.create(new BindingMapperExpr(new ExprVar(Vars.g)), new AggGraph(template));
-        Agg<Graph> agg = new AggGraph(template);
+        Agg<Graph> agg = new AggGraph(template, Vars.z);
 
         Concept concept = new Concept(new ElementSubQuery(query), Vars.x);
 
@@ -424,6 +427,7 @@ public class ResourceShape {
                 q.getProject().add(Vars.s);
                 q.getProject().add(Vars.p);
                 q.getProject().add(Vars.o);
+                q.getProject().add(Vars.z);
                 q.setQueryPattern(e);
 
                 e = new ElementSubQuery(q);
@@ -443,6 +447,7 @@ public class ResourceShape {
         result.getProject().add(Vars.s);
         result.getProject().add(Vars.p);
         result.getProject().add(Vars.o);
+        result.getProject().add(Vars.z);
         result.setQueryPattern(element);
 
 
@@ -484,6 +489,7 @@ public class ResourceShape {
             Map<Var, Var> rename = new HashMap<Var, Var>();
             rename.put(Vars.s, vargen.next());
             rename.put(Vars.p, vargen.next());
+            rename.put(Vars.z, vargen.next());
             rename.put(Vars.o, Vars.s);
 
             rename.put(baseVar, Vars.x);
@@ -510,6 +516,9 @@ public class ResourceShape {
 
         Element e3 = ElementUtils.createRenamedElement(predicateRelation.getElement(), pc);
         Element newElement = ElementUtils.mergeElements(e, e3);
+
+        Element e4 = new ElementBind(Vars.z, NodeValue.makeBoolean(isInverse));
+        newElement = ElementUtils.mergeElements(newElement, e4);
 
 
         Concept result = new Concept(newElement, sourceVar);

@@ -18,7 +18,8 @@ public class MainSparqlPath2 {
     public static void main(String[] args) {
 //        Prologue prologue = new Prologue();
 
-        Path path = PathParser.parse("^((!(<a>|<b>)/<z>)|^<x>)*", PrefixMapping.Extended);
+        //Path path = PathParser.parse("^((!(<a>|<b>)/<z>)|^<x>)*", PrefixMapping.Extended);
+        Path path = PathParser.parse("^<http://dbpedia.org/ontology/leaderName>/<http://dbpedia.org/property/successor>", PrefixMapping.Extended);
         System.out.println("Original path: " + path);
 
         path = PathVisitorTopDown.apply(path, new PathVisitorRewriteInvert());
@@ -61,7 +62,7 @@ public class MainSparqlPath2 {
 
         Multimap<Integer, LabeledEdge<Integer, Path>> transitions = exec.getTransitions();
 
-        System.out.println("Is final?" + exec.isFinalState(3));
+        //System.out.println("Is final?" + exec.isFinalState(3));
 
         System.out.println("Transitions: " + transitions);
 
