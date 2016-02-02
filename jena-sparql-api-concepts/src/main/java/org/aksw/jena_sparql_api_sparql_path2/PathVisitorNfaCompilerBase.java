@@ -69,10 +69,6 @@ abstract class PathVisitorNfaCompilerBase<V, E, T>
         stack.push(next);
     }
 
-    @Override
-    public void visit(P_Inverse arg0) {
-        throw new UnsupportedOperationException();
-    }
 
     @Override
     public void visit(P_Mod arg0) {

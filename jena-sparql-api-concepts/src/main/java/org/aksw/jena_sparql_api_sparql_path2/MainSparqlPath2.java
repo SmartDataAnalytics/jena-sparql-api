@@ -1,7 +1,9 @@
 package org.aksw.jena_sparql_api_sparql_path2;
 
+import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.shared.PrefixMapping;
-import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.path.PathParser;
 import org.jgrapht.VertexFactory;
@@ -16,7 +18,18 @@ public class MainSparqlPath2 {
     public static void main(String[] args) {
 //        Prologue prologue = new Prologue();
 
-        Path path = PathParser.parse("((<p>/<z>)|<x>)*", PrefixMapping.Extended);
+        Path path = PathParser.parse("^((!(<a>|<b>)/<z>)|^<x>)*", PrefixMapping.Extended);
+        System.out.println("Original path: " + path);
+
+        path = PathVisitorTopDown.apply(path, new PathVisitorRewriteInvert());
+        //path = PathTransformer.transform(path, new PathTransformPushDownInvert());
+        System.out.println("Rewritten path: " + path);
+
+
+        if(true) {
+            return;
+        }
+
         //Path path = PathParser.parse("!(<p>|(<p>|<p>))", PrefixMapping.Extended);
 
         /*
@@ -28,7 +41,6 @@ public class MainSparqlPath2 {
         VertexFactory<Integer> vertexFactory = new VertexFactoryInteger(graph);
 
         PathVisitorNfaCompilerImpl<Integer> nfaCompiler = new PathVisitorNfaCompilerImpl<Integer>(graph, vertexFactory, edgeLabelAccessor);
-
 
         /*
          * The actual nfa conversion step
@@ -45,7 +57,12 @@ public class MainSparqlPath2 {
 
 //        PartialNfa<Integer, Path> peek = nfaCompiler.peek();
 
-        NfaExecution<Integer> exec = new NfaExecution<Integer>(nfa);
+        QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://dbpedia.org/sparql", "http://dbpedia.org").config().selectOnly().end().create();
+
+        NfaExecution<Integer> exec = new NfaExecution<Integer>(nfa, qef);
+        exec.add(NodeFactory.createURI("http://dbpedia.org/resource/Leipzig"));
+        exec.advance();
+
         Multimap<Integer, LabeledEdge<Integer, Path>> transitions = exec.getTransitions();
 
         System.out.println("Is final?" + exec.isFinalState(3));

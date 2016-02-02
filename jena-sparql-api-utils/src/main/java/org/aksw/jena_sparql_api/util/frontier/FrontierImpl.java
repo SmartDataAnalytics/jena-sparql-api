@@ -4,8 +4,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 
-import org.springframework.util.Assert;
-
 import com.google.common.collect.Sets;
 
 public class FrontierImpl<T>
@@ -26,7 +24,7 @@ public class FrontierImpl<T>
 
     @Override
     public void add(T item) {
-        Assert.notNull(item, "Cannot add a null item to frontier");
+        //Assert.notNull(item, "Cannot add a null item to frontier");
 
         boolean isAlreadyDone = done.contains(item);
         if(!isAlreadyDone) {

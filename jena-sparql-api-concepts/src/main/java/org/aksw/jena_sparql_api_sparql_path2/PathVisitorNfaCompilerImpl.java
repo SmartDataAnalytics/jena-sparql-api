@@ -3,10 +3,12 @@ package org.aksw.jena_sparql_api_sparql_path2;
 import java.util.Collections;
 import java.util.Set;
 
+import org.apache.jena.sparql.path.P_Inverse;
 import org.apache.jena.sparql.path.P_Link;
 import org.apache.jena.sparql.path.P_NegPropSet;
 import org.apache.jena.sparql.path.P_ReverseLink;
 import org.apache.jena.sparql.path.Path;
+import org.apache.jena.sparql.path.PathLib;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.VertexFactory;
 
@@ -42,6 +44,14 @@ public class PathVisitorNfaCompilerImpl<V>
     public void visit(P_NegPropSet path) {
         processPrimitivePath(path);
     }
+
+    @Override
+    public void visit(P_Inverse path) {
+
+
+        //processPrimitivePath(path);
+    }
+
 
 
     public Nfa<V, LabeledEdge<V, Path>> complete() {
