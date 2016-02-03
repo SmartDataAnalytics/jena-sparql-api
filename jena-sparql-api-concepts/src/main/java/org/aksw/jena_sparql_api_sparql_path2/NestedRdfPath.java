@@ -46,8 +46,12 @@ public class NestedRdfPath {
     }
 
     public boolean isCycleFree() {
-        RdfPath rdfPath = asSimplePath();
-        boolean result = rdfPath.isCycleFree();
+        boolean result = asSimplePath().isCycleFree();
+        return result;
+    }
+
+    public int getLength() {
+        int result = asSimplePath().getLength();
         return result;
     }
 

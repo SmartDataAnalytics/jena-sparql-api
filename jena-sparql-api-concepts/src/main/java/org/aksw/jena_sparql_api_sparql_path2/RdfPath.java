@@ -37,6 +37,11 @@ public class RdfPath {
         return end;
     }
 
+    public int getLength() {
+        int result = triples.size();
+        return result;
+    }
+
     public List<Triple> getTriples() {
         return triples;
     }

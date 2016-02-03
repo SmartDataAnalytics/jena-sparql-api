@@ -14,7 +14,6 @@ import org.aksw.jena_sparql_api.lookup.ListServiceUtils;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
-import org.aksw.jena_sparql_api.util.frontier.FrontierImpl;
 import org.aksw.jena_sparql_api.utils.TripleUtils;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
@@ -26,6 +25,7 @@ import org.apache.jena.sparql.path.Path;
 import org.jgrapht.DirectedGraph;
 
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
 public class NfaExecution<V> {
@@ -41,6 +41,9 @@ public class NfaExecution<V> {
     // for each state, for each node, store all paths that end with that node
     // i.e.: for every path keep track at which state and node it is in
     protected Map<V, Multimap<Node, NestedRdfPath>> paths = new HashMap<V, Multimap<Node, NestedRdfPath>>();
+
+    protected Set<NestedRdfPath> accepted = new HashSet<NestedRdfPath>();
+
 
     //protected Map<List<RdfPath> frontier = new ArrayList<RdfPath>();
 
@@ -84,7 +87,13 @@ public class NfaExecution<V> {
             if(isFinal) {
                 Multimap<Node, NestedRdfPath> ps = paths.get(state);
                 for(NestedRdfPath path : ps.values()) {
-                    System.out.println("ACCEPTED: " + path);
+                    // skip paths that have already been accepted
+                    if(!accepted.contains(path)) {
+                        accepted.add(path);
+                        //System.out.println("ACCEPTED: " + path.asSimplePath().getLength() + ": " + path.asSimplePath().getEnd());
+                        System.out.println("ACCEPTED" + path.asSimplePath());
+                    }
+
                 }
             }
         }
@@ -117,6 +126,8 @@ public class NfaExecution<V> {
             }
 
 
+            Multimap<Node, NestedRdfPath> mm = HashMultimap.create();
+
             for(LabeledEdge<V, Path> transition : transitions) {
 
                 Path path = transition.getLabel();
@@ -146,17 +157,21 @@ public class NfaExecution<V> {
                     for(Triple t : g.find(Node.ANY, Node.ANY, Node.ANY).toSet()) {
                         Node p = t.getPredicate();
                         P_Path0 p0;
+
+                        Node o;
                         if(t.getSubject().equals(node)) {
                             p0 = new P_Link(p);
+                            o = t.getObject();
                         } else if(t.getObject().equals(node)) {
                             p0 = new P_ReverseLink(p);
-                            t = TripleUtils.swap(t);
+                            //t = TripleUtils.swap(t);
+                            o = t.getSubject();
                         } else {
                             throw new RuntimeException("Should not happen");
                         }
 
                         for(NestedRdfPath parentPath : ps.values()) {
-                            NestedRdfPath next = new NestedRdfPath(parentPath, p0, t.getObject());
+                            NestedRdfPath next = new NestedRdfPath(parentPath, p0, o);
 
                             if(next.isCycleFree()) {
                                 result = true;
@@ -164,15 +179,22 @@ public class NfaExecution<V> {
 
                                 // Get the set of successor states for the given predicates
                                 V targetState = transition.getTarget();
-                                paths.get(targetState).put(next.getCurrent(), next);
+                                mm.put(next.getCurrent(), next);
                                 nextCurrentStates.add(targetState);
                             }
                         }
+
+                        //ps.clear();
+                        //paths.get(targetState).put(next.getCurrent(), next);
+
                     }
                 }
             }
 
+            //ps = paths.get(state);
+
             ps.clear();
+            ps.putAll(mm);
         }
 
         currentStates = nextCurrentStates;

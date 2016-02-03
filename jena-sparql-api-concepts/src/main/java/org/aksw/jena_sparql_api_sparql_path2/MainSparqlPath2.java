@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api_sparql_path2;
 
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.path.Path;
@@ -16,10 +17,16 @@ public class MainSparqlPath2 {
 
 
     public static void main(String[] args) {
-//        Prologue prologue = new Prologue();
 
-        //Path path = PathParser.parse("^((!(<a>|<b>)/<z>)|^<x>)*", PrefixMapping.Extended);
-        Path path = PathParser.parse("<http://dbpedia.org/ontology/leaderName>/^<http://dbpedia.org/property/successor>", PrefixMapping.Extended);
+//        Node startNode = NodeFactory.createURI("http://dbpedia.org/resource/Leipzig");
+//        Path path = PathParser.parse("<http://dbpedia.org/ontology/leaderName>/^<http://dbpedia.org/property/successor>", PrefixMapping.Extended);
+
+
+        //Node startNode = NodeFactory.createURI("http://www.w3.org/2002/07/owl#Thing");
+        Node startNode = NodeFactory.createURI("http://dbpedia.org/ontology/Person");
+        Path path = PathParser.parse("(^rdfs:subClassOf)*", PrefixMapping.Extended);
+
+
         System.out.println("Original path: " + path);
 
         path = PathVisitorTopDown.apply(path, new PathVisitorRewriteInvert());
@@ -57,7 +64,7 @@ public class MainSparqlPath2 {
         QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://dbpedia.org/sparql", "http://dbpedia.org").config().selectOnly().end().create();
 
         NfaExecution<Integer> exec = new NfaExecution<Integer>(nfa, qef);
-        exec.add(NodeFactory.createURI("http://dbpedia.org/resource/Leipzig"));
+        exec.add(startNode);
         while(exec.advance()) {
             System.out.println("advancing...");
         }
