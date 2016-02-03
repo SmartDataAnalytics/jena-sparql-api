@@ -107,7 +107,11 @@ public class NfaExecution<V> {
             //Set success
             //JGraphTUtils.transitiveGet(graph, startVertex, 1, edge -> edge.getLabel() == null);
 
-            Multimap<Node, NestedRdfPath> ps = paths.get(state);
+            Multimap<Node, NestedRdfPath> tmp = paths.get(state);
+            Multimap<Node, NestedRdfPath> ps = HashMultimap.create(tmp);
+            tmp.clear();
+
+
             Set<Node> nodes = ps.keySet();
             //Frontier<Node> frontier = seen.get(state);
 
@@ -178,14 +182,18 @@ public class NfaExecution<V> {
                                 // TODO Properly remove paths from the old state
 
                                 // Get the set of successor states for the given predicates
+//                                V targetState = transition.getTarget();
+//                                mm.put(next.getCurrent(), next);
+//                                nextCurrentStates.add(targetState);
+
                                 V targetState = transition.getTarget();
-                                mm.put(next.getCurrent(), next);
+                                paths.get(targetState).put(next.getCurrent(), next);
                                 nextCurrentStates.add(targetState);
+
                             }
                         }
 
                         //ps.clear();
-                        //paths.get(targetState).put(next.getCurrent(), next);
 
                     }
                 }
@@ -193,8 +201,8 @@ public class NfaExecution<V> {
 
             //ps = paths.get(state);
 
-            ps.clear();
-            ps.putAll(mm);
+            //ps.clear();
+            //ps.putAll(mm);
         }
 
         currentStates = nextCurrentStates;

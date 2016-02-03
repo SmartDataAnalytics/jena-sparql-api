@@ -18,13 +18,13 @@ public class MainSparqlPath2 {
 
     public static void main(String[] args) {
 
-//        Node startNode = NodeFactory.createURI("http://dbpedia.org/resource/Leipzig");
-//        Path path = PathParser.parse("<http://dbpedia.org/ontology/leaderName>/^<http://dbpedia.org/property/successor>", PrefixMapping.Extended);
+        Node startNode = NodeFactory.createURI("http://dbpedia.org/resource/Leipzig");
+        Path path = PathParser.parse("<http://dbpedia.org/ontology/leaderName>/(^<http://dbpedia.org/property/successor>)*/<http://dbpedia.org/property/nationality>", PrefixMapping.Extended);
 
 
         //Node startNode = NodeFactory.createURI("http://www.w3.org/2002/07/owl#Thing");
-        Node startNode = NodeFactory.createURI("http://dbpedia.org/ontology/Person");
-        Path path = PathParser.parse("(^rdfs:subClassOf)*", PrefixMapping.Extended);
+        //Node startNode = NodeFactory.createURI("http://dbpedia.org/ontology/Person");
+        //Path path = PathParser.parse("(^rdfs:subClassOf)*", PrefixMapping.Extended);
 
 
         System.out.println("Original path: " + path);
