@@ -14,10 +14,14 @@ import org.aksw.jena_sparql_api.lookup.ListServiceUtils;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
-import org.aksw.jena_sparql_api.util.frontier.Frontier;
 import org.aksw.jena_sparql_api.util.frontier.FrontierImpl;
+import org.aksw.jena_sparql_api.utils.TripleUtils;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.sparql.path.P_Link;
+import org.apache.jena.sparql.path.P_Path0;
+import org.apache.jena.sparql.path.P_ReverseLink;
 import org.apache.jena.sparql.path.Path;
 import org.jgrapht.DirectedGraph;
 
@@ -30,10 +34,13 @@ public class NfaExecution<V> {
     protected QueryExecutionFactory qef;
 
     // Mapping from state to each vertex encountered at that node
-    protected Map<V, Frontier<Node>> seen = new HashMap<V, Frontier<Node>>();
+    //protected Map<V, Frontier<Node>> seen = new HashMap<V, Frontier<Node>>();
 
-    protected Multimap<V, RdfPath> paths = ArrayListMultimap.create();
+    //protected Multimap<V, RdfPath> paths = ArrayListMultimap.create();
 
+    // for each state, for each node, store all paths that end with that node
+    // i.e.: for every path keep track at which state and node it is in
+    protected Map<V, Multimap<Node, NestedRdfPath>> paths = new HashMap<V, Multimap<Node, NestedRdfPath>>();
 
     //protected Map<List<RdfPath> frontier = new ArrayList<RdfPath>();
 
@@ -41,9 +48,11 @@ public class NfaExecution<V> {
         this.nfa = nfa;
         this.qef = qef;
 
+        //Predicate
 
         for(V v :nfa.getGraph().vertexSet()) {
-            seen.put(v, new FrontierImpl<Node>());
+            //seen.put(v, new FrontierImpl<Node>());
+            paths.put(v, ArrayListMultimap.create());
         }
 
         this.currentStates = new HashSet<V>(nfa.getStartStates());
@@ -51,23 +60,52 @@ public class NfaExecution<V> {
 
     public void add(Node node) {
         for(V state : currentStates) {
-            Frontier<Node> frontier = seen.get(state);
-            frontier.add(node);
+//            Frontier<Node> frontier = seen.get(state);
+//            frontier.add(node);
+
+            NestedRdfPath rdfPath = new NestedRdfPath(node);
+            paths.get(state).put(node, rdfPath);
         }
     }
 
 
-    public void advance() {
+    /**
+     * advances the state of the execution. returns false to indicate finished execution
+     * @return
+     *
+     * TODO: We should detect dead states, as to prevent potential cycling in them indefinitely
+     */
+    public boolean advance() {
+        boolean result = false;
+
+        // Check for all paths that
+        for(V state : currentStates) {
+            boolean isFinal = isFinalState(state);
+            if(isFinal) {
+                Multimap<Node, NestedRdfPath> ps = paths.get(state);
+                for(NestedRdfPath path : ps.values()) {
+                    System.out.println("ACCEPTED: " + path);
+                }
+            }
+        }
+
+        Set<V> nextCurrentStates = new HashSet<V>();
+
         for(V state : currentStates) {
             DirectedGraph<V, LabeledEdge<V, Path>> graph = nfa.getGraph();
             Set<LabeledEdge<V, Path>> transitions = JGraphTUtils.resolveTransitions(graph, state);
 
-            Frontier<Node> frontier = seen.get(state);
+            //Set success
+            //JGraphTUtils.transitiveGet(graph, startVertex, 1, edge -> edge.getLabel() == null);
 
-            Set<Node> nodes = new HashSet<Node>();
-            while(!frontier.isEmpty()) {
-                nodes.add(frontier.next());
-            }
+            Multimap<Node, NestedRdfPath> ps = paths.get(state);
+            Set<Node> nodes = ps.keySet();
+            //Frontier<Node> frontier = seen.get(state);
+
+//            Set<Node> nodes = new HashSet<Node>();
+//            while(!frontier.isEmpty()) {
+//                nodes.add(frontier.next());
+//            }
 
             Concept filter = ConceptUtils.createFilterConcept(nodes);
 
@@ -81,13 +119,18 @@ public class NfaExecution<V> {
 
             for(LabeledEdge<V, Path> transition : transitions) {
 
-                PathVisitorResourceShapeBuilder visitor = new PathVisitorResourceShapeBuilder();
-
                 Path path = transition.getLabel();
 
-                path.visit(visitor);
+//                PathVisitorPredicateClass predicateClassVisitor = new PathVisitorPredicateClass();
+//                path.visit(predicateClassVisitor);
+//                PredicateClass predicateClass = predicateClassVisitor.getResult();
 
+
+                PathVisitorResourceShapeBuilder visitor = new PathVisitorResourceShapeBuilder();
+                path.visit(visitor);
                 ResourceShapeBuilder rsb = visitor.getResourceShapeBuilder();
+
+
                 MappedConcept<Graph> mc = ResourceShape.createMappedConcept(rsb.getResourceShape(), filter);
                 System.out.println("MC: " + mc);
 
@@ -97,12 +140,43 @@ public class NfaExecution<V> {
                 //System.out.println(nodeToGraph);
 
                 for(Entry<Node, Graph> entry : nodeToGraph.entrySet()) {
+                    Node node = entry.getKey();
+                    Graph g = entry.getValue();
 
+                    for(Triple t : g.find(Node.ANY, Node.ANY, Node.ANY).toSet()) {
+                        Node p = t.getPredicate();
+                        P_Path0 p0;
+                        if(t.getSubject().equals(node)) {
+                            p0 = new P_Link(p);
+                        } else if(t.getObject().equals(node)) {
+                            p0 = new P_ReverseLink(p);
+                            t = TripleUtils.swap(t);
+                        } else {
+                            throw new RuntimeException("Should not happen");
+                        }
+
+                        for(NestedRdfPath parentPath : ps.values()) {
+                            NestedRdfPath next = new NestedRdfPath(parentPath, p0, t.getObject());
+
+                            if(next.isCycleFree()) {
+                                result = true;
+                                // TODO Properly remove paths from the old state
+
+                                // Get the set of successor states for the given predicates
+                                V targetState = transition.getTarget();
+                                paths.get(targetState).put(next.getCurrent(), next);
+                                nextCurrentStates.add(targetState);
+                            }
+                        }
+                    }
                 }
-
             }
 
+            ps.clear();
         }
+
+        currentStates = nextCurrentStates;
+        return result;
     }
 
     /**

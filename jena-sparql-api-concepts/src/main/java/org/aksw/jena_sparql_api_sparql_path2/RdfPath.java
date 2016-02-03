@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api_sparql_path2;
 
+import java.util.HashSet;
 import java.util.List;
 
 import org.apache.jena.graph.Node;
@@ -15,6 +16,17 @@ public class RdfPath {
         this.start = start;
         this.end = end;
         this.triples = triples;
+    }
+
+    /**
+     * An rdf path is cycle free, if it contains each triple at most once
+     * @return
+     */
+    public boolean isCycleFree() {
+        int n = triples.size();
+        int m = (new HashSet<Triple>(triples)).size();
+        boolean result = n == m;
+        return result;
     }
 
     public Node getStart() {

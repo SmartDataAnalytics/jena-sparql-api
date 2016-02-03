@@ -19,7 +19,7 @@ public class MainSparqlPath2 {
 //        Prologue prologue = new Prologue();
 
         //Path path = PathParser.parse("^((!(<a>|<b>)/<z>)|^<x>)*", PrefixMapping.Extended);
-        Path path = PathParser.parse("^<http://dbpedia.org/ontology/leaderName>/<http://dbpedia.org/property/successor>", PrefixMapping.Extended);
+        Path path = PathParser.parse("<http://dbpedia.org/ontology/leaderName>/^<http://dbpedia.org/property/successor>", PrefixMapping.Extended);
         System.out.println("Original path: " + path);
 
         path = PathVisitorTopDown.apply(path, new PathVisitorRewriteInvert());
@@ -58,7 +58,10 @@ public class MainSparqlPath2 {
 
         NfaExecution<Integer> exec = new NfaExecution<Integer>(nfa, qef);
         exec.add(NodeFactory.createURI("http://dbpedia.org/resource/Leipzig"));
-        exec.advance();
+        while(exec.advance()) {
+            System.out.println("advancing...");
+        }
+        System.out.println("done!");
 
         Multimap<Integer, LabeledEdge<Integer, Path>> transitions = exec.getTransitions();
 

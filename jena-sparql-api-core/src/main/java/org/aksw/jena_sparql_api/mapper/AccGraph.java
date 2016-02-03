@@ -37,17 +37,29 @@ public class AccGraph
         this.reverse = reverse;
     }
 
+    public static boolean isTrue(Object o) {
+        boolean result = Boolean.TRUE.equals(o) || (o instanceof Number && ((Number)o).intValue() == 1);
+        return result;
+    }
+
     @Override
     public void accumulate(Binding binding) {
         Set<Triple> triples = new HashSet<Triple>();
         Map<Node, Node> bNodeMap = new HashMap<Node, Node>();
         template.subst(triples, bNodeMap, binding);
 
-        Node TRUE = NodeValue.TRUE.asNode();
-        boolean doReverse = reverse.isVariable()
-            ? TRUE.equals(binding.get((Var)reverse))
-            : TRUE.equals(reverse)
-            ;
+        //Node TRUE = NodeValue.TRUE.asNode();
+
+        Node node = reverse.isVariable()
+                ? binding.get((Var)reverse)
+                : reverse
+                ;
+
+        boolean doReverse = node.isLiteral()
+                ? isTrue(node.getLiteralValue())
+                : false
+                ;
+
 
         for(Triple triple : triples) {
             if(doReverse) {
