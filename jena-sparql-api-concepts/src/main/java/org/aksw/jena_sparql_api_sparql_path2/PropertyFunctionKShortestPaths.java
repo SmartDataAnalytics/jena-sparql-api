@@ -92,7 +92,7 @@ public class PropertyFunctionKShortestPaths
         System.out.println(argSubject.getArg());
         System.out.println("Symbol" + execCxt.getContext().get(Name.create("test")));
         Node sv = argSubject.getArg();
-        Node s = sv.isVariable() ? binding.get((Var)sv) : null;
+        Node s = sv.isVariable() ? binding.get((Var)sv) : sv;
 
         final List<RdfPath> rdfPaths = new ArrayList<RdfPath>();
 
@@ -100,7 +100,7 @@ public class PropertyFunctionKShortestPaths
 
         Path path = PathParser.parse(pathStr, prologue);
         int k = 10;
-        PathExecutionUtils.executePath(path, sv, targetNode, qef, p -> { rdfPaths.add(p); return rdfPaths.size() >= k; });
+        PathExecutionUtils.executePath(path, s, targetNode, qef, p -> { rdfPaths.add(p); return rdfPaths.size() >= k; });
 
         List<Binding> bindings = new ArrayList<Binding>();
 

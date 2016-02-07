@@ -29,6 +29,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
 public class NfaExecution<V> {
+
     protected Nfa<V, LabeledEdge<V, Path>> nfa;
     protected Set<V> currentStates;
     protected QueryExecutionFactory qef;
@@ -49,9 +50,10 @@ public class NfaExecution<V> {
 
     //protected Map<List<RdfPath> frontier = new ArrayList<RdfPath>();
 
-    public NfaExecution(Nfa<V, LabeledEdge<V, Path>> nfa, QueryExecutionFactory qef) {
+    public NfaExecution(Nfa<V, LabeledEdge<V, Path>> nfa, QueryExecutionFactory qef, Function<RdfPath, Boolean> pathCallback) {
         this.nfa = nfa;
         this.qef = qef;
+        this.pathCallback = pathCallback;
 
         //Predicate
 

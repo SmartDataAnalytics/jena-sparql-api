@@ -47,7 +47,7 @@ public class PathExecutionUtils {
 
         //QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://dbpedia.org/sparql", "http://dbpedia.org").config().selectOnly().end().create();
 
-        NfaExecution<Integer> exec = new NfaExecution<Integer>(nfa, qef);
+        NfaExecution<Integer> exec = new NfaExecution<Integer>(nfa, qef, pathCallback);
         exec.add(startNode);
         while(exec.advance()) {
             System.out.println("advancing...");

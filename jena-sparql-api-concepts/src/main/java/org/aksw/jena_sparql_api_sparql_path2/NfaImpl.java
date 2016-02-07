@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api_sparql_path2;
 import java.util.Set;
 
 import org.jgrapht.DirectedGraph;
+import org.jgrapht.graph.EdgeReversedGraph;
 
 public class NfaImpl<V, E>
     implements Nfa<V, E>
@@ -75,6 +76,39 @@ public class NfaImpl<V, E>
         return "NfaImpl [graph=" + graph + ", startStates=" + startStates
                 + ", endStates=" + endStates + "]";
     }
+
+    /**
+     * IMPORTANT: Only provides an edge reverse view, does not change the edges themselves
+     * @param nfa
+     * @return
+     */
+    public static <V, E> Nfa<V, E> reverse(Nfa<V, E> nfa) {
+        EdgeReversedGraph<V, E> g = new EdgeReversedGraph<>(nfa.getGraph());
+        NfaImpl<V, E> result = new NfaImpl<>(g, nfa.getEndStates(), nfa.getStartStates());
+        return result;
+    }
+
+//    public static <V, E, I> Nfa<V, I> invert(DirectedGraph<V, I> invGraph, DirectedGraph<V, E> graph, Function<E, I> edgeInvertFn) {
+//        //DirectedGraph<V, E> graph = nfa.getGraph();
+//
+//        //Graph<V, I> invGraph = new SimpleDirectedGraph<V, I>();
+//
+//
+//        for(V sourceVertex : graph.vertexSet()) {
+//            invGraph.addVertex(sourceVertex);
+//        }
+//
+//        Set<E> edges = graph.edgeSet();
+//        for(E edge : edges) {
+//            V sourceVertex = graph.getEdgeSource(edge);
+//            V targetVertex = graph.getEdgeTarget(edge);
+//            I invEdge = edgeInvertFn.apply(edge);
+//
+//            invGraph.addEdge(targetVertex, sourceVertex, invEdge);
+//        }
+//
+//        return null;
+//    }
 
 
 }
