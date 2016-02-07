@@ -11,13 +11,14 @@ import java.util.List;
 import org.aksw.jena_sparql_api.fallback.QueryExecutionFactoryFallback;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.model.QueryExecutionFactoryModel;
-
-import com.google.common.base.Function;
-import com.google.common.base.Supplier;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
+import org.apache.jena.sparql.util.Context;
+
+import com.google.common.base.Function;
+import com.google.common.base.Supplier;
 
 /**
  * @author Lorenz Buehmann
@@ -35,8 +36,16 @@ public class FluentQueryExecutionFactory<P>
 
     public static FluentQueryExecutionFactory<?> model(Model model) {
         return new FluentQueryExecutionFactory<Object>(new QueryExecutionFactoryModel(model));
-
     }
+
+    public static FluentQueryExecutionFactory<?> dataset(Dataset dataset) {
+        return new FluentQueryExecutionFactory<Object>(new QueryExecutionFactoryDataset(dataset));
+    }
+
+    public static FluentQueryExecutionFactory<?> dataset(Dataset dataset, Context context) {
+        return new FluentQueryExecutionFactory<Object>(new QueryExecutionFactoryDataset(dataset, context));
+    }
+
 
     public static FluentQueryExecutionFactory<?> from(Dataset dataset) {
         return new FluentQueryExecutionFactory<Object>(new QueryExecutionFactoryDataset(dataset));

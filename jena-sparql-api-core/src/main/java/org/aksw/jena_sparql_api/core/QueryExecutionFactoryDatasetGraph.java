@@ -37,9 +37,9 @@ public class QueryExecutionFactoryDatasetGraph
 
     @Override
     public QueryExecution createQueryExecution(Query query) {
-    	Dataset dataset = DatasetFactory.create(datasetGraph);
+        Dataset dataset = DatasetFactory.create(datasetGraph);
 
-    	//QueryExecution result = QueryEngineRegistry.get().find(query, datasetGraph, ARQ.getContext());
+        //QueryExecution result = QueryEngineRegistry.get().find(query, datasetGraph, ARQ.getContext());
         //GraphStore graphStore = GraphStoreFactory.create(datasetGraph);
         QueryExecution result = org.apache.jena.query.QueryExecutionFactory.create(query, dataset);
         return result;
@@ -47,8 +47,8 @@ public class QueryExecutionFactoryDatasetGraph
 
     @Override
     public void close() {
-    	if(doClose) {
-    		datasetGraph.close();
-    	}
+        if(doClose) {
+            datasetGraph.close();
+        }
     }
 }

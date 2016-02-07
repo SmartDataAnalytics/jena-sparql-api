@@ -1,13 +1,13 @@
 package org.aksw.jena_sparql_api.model;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactoryBackQuery;
-
 import org.apache.jena.graph.Graph;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.sparql.engine.Plan;
 
 /**
  * @author Claus Stadler
@@ -50,6 +50,9 @@ public class QueryExecutionFactoryModel
 
     @Override
     public QueryExecution createQueryExecution(Query query) {
+        //Plan plan = QueryExecutionFactory.createPlan(query, dataset, input, context);
+        //plan.
+
         QueryExecution result = QueryExecutionFactory.create(query, model);
         //QueryExecution result = QueryExecutionWrapper.wrap(tmp);
         return result;

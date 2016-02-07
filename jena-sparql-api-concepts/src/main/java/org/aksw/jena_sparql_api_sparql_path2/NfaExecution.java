@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
@@ -14,7 +15,6 @@ import org.aksw.jena_sparql_api.lookup.ListServiceUtils;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
-import org.aksw.jena_sparql_api.utils.TripleUtils;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -44,6 +44,8 @@ public class NfaExecution<V> {
 
     protected Set<NestedRdfPath> accepted = new HashSet<NestedRdfPath>();
 
+    protected Function<RdfPath, Boolean> pathCallback;
+
 
     //protected Map<List<RdfPath> frontier = new ArrayList<RdfPath>();
 
@@ -71,6 +73,36 @@ public class NfaExecution<V> {
         }
     }
 
+    public boolean collectPaths() {
+        boolean isFinished = false;
+        try {
+            // Check for all paths that
+            for(V state : currentStates) {
+                boolean isFinal = isFinalState(state);
+                if(isFinal) {
+                    Multimap<Node, NestedRdfPath> ps = paths.get(state);
+                    for(NestedRdfPath path : ps.values()) {
+                        // skip paths that have already been accepted
+                        if(!accepted.contains(path)) {
+                            accepted.add(path);
+
+                            isFinished = pathCallback.apply(path.asSimplePath());
+                            if(isFinished) {
+                                throw new InterruptedException();
+                            }
+
+                            //System.out.println("ACCEPTED: " + path.asSimplePath().getLength() + ": " + path.asSimplePath().getEnd());
+                            //System.out.println("ACCEPTED" + path.asSimplePath());
+                        }
+                    }
+                }
+            }
+        } catch(InterruptedException e) {
+
+        }
+        return isFinished;
+    }
+
 
     /**
      * advances the state of the execution. returns false to indicate finished execution
@@ -79,25 +111,17 @@ public class NfaExecution<V> {
      * TODO: We should detect dead states, as to prevent potential cycling in them indefinitely
      */
     public boolean advance() {
+        boolean isFinished = collectPaths();
+        boolean result = isFinished
+                ? true
+                : progress()
+                ;
+
+        return result;
+    }
+
+    private boolean progress() {
         boolean result = false;
-
-        // Check for all paths that
-        for(V state : currentStates) {
-            boolean isFinal = isFinalState(state);
-            if(isFinal) {
-                Multimap<Node, NestedRdfPath> ps = paths.get(state);
-                for(NestedRdfPath path : ps.values()) {
-                    // skip paths that have already been accepted
-                    if(!accepted.contains(path)) {
-                        accepted.add(path);
-                        //System.out.println("ACCEPTED: " + path.asSimplePath().getLength() + ": " + path.asSimplePath().getEnd());
-                        System.out.println("ACCEPTED" + path.asSimplePath());
-                    }
-
-                }
-            }
-        }
-
         Set<V> nextCurrentStates = new HashSet<V>();
 
         for(V state : currentStates) {
