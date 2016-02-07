@@ -14,9 +14,6 @@ import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.apache.jena.atlas.web.auth.HttpAuthenticator;
-
-import com.google.common.base.Function;
-import com.google.common.base.Supplier;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
@@ -24,6 +21,10 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
+import org.apache.jena.sparql.util.Context;
+
+import com.google.common.base.Function;
+import com.google.common.base.Supplier;
 
 public class FluentSparqlService<P>
     extends FluentBase<SparqlService, P>
@@ -103,9 +104,9 @@ public class FluentSparqlService<P>
     }
 
     public static FluentSparqlService<?> forDataset() {
-    	Dataset dataset = DatasetFactory.createMem();
-    	FluentSparqlService<?> result = from(dataset);
-    	return result;
+        Dataset dataset = DatasetFactory.createMem();
+        FluentSparqlService<?> result = from(dataset);
+        return result;
     }
 
     public static FluentSparqlService<?> from(Dataset dataset) {
@@ -118,14 +119,19 @@ public class FluentSparqlService<P>
     }
 
     public static FluentSparqlService<?> forDatasetGraph() {
-    	DatasetGraph datasetGraph = DatasetGraphFactory.createMem();
-    	FluentSparqlService<?> result = from(datasetGraph);
-    	return result;
+        DatasetGraph datasetGraph = DatasetGraphFactory.createMem();
+        FluentSparqlService<?> result = from(datasetGraph);
+        return result;
     }
 
     public static FluentSparqlService<?> from(DatasetGraph datasetGraph) {
-        QueryExecutionFactory qef = FluentQueryExecutionFactory.from(datasetGraph).create();
-        UpdateExecutionFactory uef = FluentUpdateExecutionFactory.from(datasetGraph).create();
+        FluentSparqlService<?> result = from(datasetGraph, null);
+        return result;
+    }
+
+    public static FluentSparqlService<?> from(DatasetGraph datasetGraph, Context context) {
+        QueryExecutionFactory qef = FluentQueryExecutionFactory.from(datasetGraph, context).create();
+        UpdateExecutionFactory uef = FluentUpdateExecutionFactory.from(datasetGraph, context).create();
 
         FluentSparqlService<?> result = from(qef, uef);
 

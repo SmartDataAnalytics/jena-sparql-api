@@ -6,7 +6,7 @@ import org.apache.jena.update.GraphStoreFactory;
 import org.apache.jena.update.UpdateProcessor;
 import org.apache.jena.update.UpdateRequest;
 
-@Deprecated // Use UpdateExecutionFactoryGraphStore instead
+//@Deprecated // Use UpdateExecutionFactoryGraphStore instead
 public class UpdateExecutionFactoryDatasetGraph
     extends UpdateExecutionFactoryParsingBase
 {

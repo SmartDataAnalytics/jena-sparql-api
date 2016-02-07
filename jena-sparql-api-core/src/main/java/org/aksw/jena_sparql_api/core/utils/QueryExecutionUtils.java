@@ -7,16 +7,14 @@ import java.util.Set;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.ResultSetCloseable;
+import org.aksw.jena_sparql_api.mapper.BindingMapper;
 import org.aksw.jena_sparql_api.mapper.BindingMapperProjectVar;
+import org.aksw.jena_sparql_api.mapper.BindingMapperQuad;
+import org.aksw.jena_sparql_api.mapper.BindingMapperUtils;
 import org.aksw.jena_sparql_api.mapper.FunctionBindingMapper;
 import org.aksw.jena_sparql_api.utils.CloseableQueryExecution;
 import org.aksw.jena_sparql_api.utils.IteratorResultSetBinding;
 import org.apache.jena.atlas.lib.Sink;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Function;
-import com.google.common.collect.Iterators;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
@@ -29,6 +27,13 @@ import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.util.iterator.ExtendedIterator;
+import org.apache.jena.util.iterator.WrappedIterator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Function;
+import com.google.common.collect.Iterators;
 
 
 public class QueryExecutionUtils {
@@ -39,6 +44,27 @@ public class QueryExecutionUtils {
     public static final Var vp = Var.alloc("p");
     public static final Var vo = Var.alloc("o");
 
+    public static Iterator<Quad> findQuads(QueryExecutionFactory qef, Node g, Node s, Node p, Node o) {
+        Quad quad = new Quad(g, s, p, o);
+        Query query = QueryGenerationUtils.createQueryQuad(new Quad(g, s, p, o));
+        BindingMapper<Quad> mapper = new BindingMapperQuad(quad);
+        Iterator<Quad> result = BindingMapperUtils.execMapped(qef, query, mapper);
+        return result;
+    }
+
+
+    /**
+     * Exec construct with wrapper to extended iterator
+     * @param qef
+     * @param query
+     * @return
+     */
+    public static ExtendedIterator<Triple> execConstruct(QueryExecutionFactory qef, Query query) {
+        QueryExecution qe = qef.createQueryExecution(query);
+        Iterator<Triple> it = qe.execConstructTriples();
+        WrappedIterator<Triple> result = WrappedIterator.<Triple>createNoRemove(it);
+        return result;
+    }
 
     public static boolean validate(QueryExecutionFactory qef, boolean suppressException) {
 

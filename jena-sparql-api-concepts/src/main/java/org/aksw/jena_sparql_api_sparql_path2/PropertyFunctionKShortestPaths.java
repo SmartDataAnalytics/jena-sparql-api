@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Objects;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.utils.ListUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -49,7 +50,7 @@ public class PropertyFunctionKShortestPaths
     public static final String DEFAULT_IRI = "http://jsa.aksw.org/fn/kShortestPaths";
 
     public static final Symbol PROLOGUE = Name.create("prologue");
-    public static final Symbol QEF = Name.create("queryExecutionFactory");
+    public static final Symbol SPARQL_SERVICE = Name.create("sparqlService");
 
     protected PropertyFunctionKShortestPaths() {
         super(PropFuncArgType.PF_ARG_SINGLE, PropFuncArgType.PF_ARG_EITHER);
@@ -65,7 +66,9 @@ public class PropertyFunctionKShortestPaths
         System.out.println("CONTEXT" + ctx);
 
         Prologue prologue = (Prologue)ctx.get(PROLOGUE);
-        QueryExecutionFactory qef = (QueryExecutionFactory)ctx.get(QEF);
+        SparqlService ss = (SparqlService)ctx.get(SPARQL_SERVICE);
+        Objects.requireNonNull(ss);
+        QueryExecutionFactory qef = ss.getQueryExecutionFactory();
         Objects.requireNonNull(qef);
 
         List<Node> argList = argObject.getArgList();

@@ -2,15 +2,15 @@ package org.aksw.jena_sparql_api.update;
 
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryDataset;
-import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryDatasetGraph;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryModel;
 import org.apache.jena.atlas.web.auth.HttpAuthenticator;
-
 import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.core.DatasetImpl;
+import org.apache.jena.sparql.util.Context;
 
 public class FluentUpdateExecutionFactory {
     private UpdateExecutionFactory uef;
@@ -37,16 +37,27 @@ public class FluentUpdateExecutionFactory {
     }
 
     public static FluentUpdateExecutionFactory from(Dataset dataset) {
-    	UpdateExecutionFactory uef = new UpdateExecutionFactoryDataset(dataset);
+        FluentUpdateExecutionFactory result = from(dataset, null);
+        return result;
+    }
+
+    public static FluentUpdateExecutionFactory from(Dataset dataset, Context context) {
+        UpdateExecutionFactory uef = new UpdateExecutionFactoryDataset(dataset, context);
         FluentUpdateExecutionFactory result = FluentUpdateExecutionFactory.from(uef);
         return result;
     }
 
     public static FluentUpdateExecutionFactory from(DatasetGraph datasetGraph) {
-    	UpdateExecutionFactory uef = new UpdateExecutionFactoryDatasetGraph(datasetGraph);
-        FluentUpdateExecutionFactory result = FluentUpdateExecutionFactory.from(uef);
+        FluentUpdateExecutionFactory result = from(datasetGraph, null);
         return result;
     }
+
+    public static FluentUpdateExecutionFactory from(DatasetGraph datasetGraph, Context context) {
+        Dataset dataset = DatasetImpl.wrap(datasetGraph);
+        FluentUpdateExecutionFactory result = from(dataset, context);
+        return result;
+    }
+
 
     public static FluentUpdateExecutionFactory http(String endpointUrl, DatasetDescription datasetDescription, HttpAuthenticator authenticator) {
         UpdateExecutionFactory uef = new UpdateExecutionFactoryHttp(endpointUrl, datasetDescription, authenticator);

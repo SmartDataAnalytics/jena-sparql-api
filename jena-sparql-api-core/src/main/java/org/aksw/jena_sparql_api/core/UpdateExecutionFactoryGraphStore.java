@@ -4,6 +4,13 @@ import org.apache.jena.update.GraphStore;
 import org.apache.jena.update.UpdateProcessor;
 import org.apache.jena.update.UpdateRequest;
 
+/**
+ * Use UpdateExecutionFactoryDataset instead
+ *
+ * @author raven
+ *
+ */
+@Deprecated
 public class UpdateExecutionFactoryGraphStore
         extends UpdateExecutionFactoryParsingBase
 {
