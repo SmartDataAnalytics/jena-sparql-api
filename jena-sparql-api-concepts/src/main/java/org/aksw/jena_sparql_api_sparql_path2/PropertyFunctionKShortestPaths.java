@@ -7,8 +7,8 @@ import java.util.Objects;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.utils.ListUtils;
+import org.aksw.jena_sparql_api.utils.NodeUtils;
 import org.apache.jena.graph.Node;
-import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sdb.store.Feature.Name;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.core.Var;
@@ -18,6 +18,9 @@ import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingFactory;
 import org.apache.jena.sparql.engine.iterator.QueryIter;
 import org.apache.jena.sparql.engine.iterator.QueryIterPlainWrapper;
+import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.expr.nodevalue.NodeValueInteger;
+import org.apache.jena.sparql.expr.nodevalue.NodeValueNode;
 import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.path.PathParser;
 import org.apache.jena.sparql.pfunction.PropFuncArg;
@@ -25,6 +28,10 @@ import org.apache.jena.sparql.pfunction.PropFuncArgType;
 import org.apache.jena.sparql.pfunction.PropertyFunctionEval;
 import org.apache.jena.sparql.util.Context;
 import org.apache.jena.sparql.util.Symbol;
+import org.aksw.jena_sparql_api.sparql.ext.json.NodeValueJson;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 
 /**
  * Select ?path {
@@ -78,6 +85,16 @@ public class PropertyFunctionKShortestPaths
         Node targetNode = ListUtils.safeGet(argList, 2);
         Node kNode = ListUtils.safeGet(argList, 3);
 
+
+        Integer tmpK = null;;
+        if(kNode != null && kNode.isLiteral()) {
+            Object o = kNode.getLiteralValue();
+            if(o instanceof Number) {
+                tmpK = ((Number)o).intValue();
+            }
+        }
+        final Integer k = tmpK;
+
         // pathNode and outNode are mandatory, the other arguments are optional
         Objects.requireNonNull(pathNode);
         Objects.requireNonNull(outNode);
@@ -91,9 +108,9 @@ public class PropertyFunctionKShortestPaths
         //if(!pathNode.isLiteral() || !pathN
 
 
-        System.out.println("so far so good");
-        System.out.println(argSubject.getArg());
-        System.out.println("Symbol" + execCxt.getContext().get(Name.create("test")));
+//        System.out.println("so far so good");
+//        System.out.println(argSubject.getArg());
+//        System.out.println("Symbol" + execCxt.getContext().get(Name.create("test")));
         Node sv = argSubject.getArg();
         Node s = sv.isVariable() ? binding.get((Var)sv) : sv;
 
@@ -102,13 +119,19 @@ public class PropertyFunctionKShortestPaths
         String pathStr = pathNode.getLiteralLexicalForm();
 
         Path path = PathParser.parse(pathStr, prologue);
-        int k = 10;
-        PathExecutionUtils.executePath(path, s, targetNode, qef, p -> { rdfPaths.add(p); return rdfPaths.size() >= k; });
 
+
+        PathExecutionUtils.executePath(path, s, targetNode, qef, p -> { rdfPaths.add(p); return k == null ? false : rdfPaths.size() >= k; });
+
+        Gson gson = new Gson();
         List<Binding> bindings = new ArrayList<Binding>();
 
         for(RdfPath rdfPath : rdfPaths) {
-            Node rdfPathNode = NodeFactory.createLiteral(rdfPath.toString());
+            JsonElement json = gson.toJsonTree(rdfPath);
+            NodeValue rdfPathNodeValue = new NodeValueJson(json);
+            Node rdfPathNode = rdfPathNodeValue.asNode();
+
+            //Node rdfPathNode = NodeFactory.createLiteral(rdfPath.toString());
             Binding b = BindingFactory.binding(binding, outVar, rdfPathNode);
 
             bindings.add(b);

@@ -11,6 +11,10 @@ public class UpdateExecutionFactoryDataset
     protected Dataset dataset;
     protected Context context;
 
+    public UpdateExecutionFactoryDataset(Dataset dataset) {
+        this(dataset, null);
+    }
+
     public UpdateExecutionFactoryDataset(Dataset dataset, Context context) {
         this.dataset = dataset;
         this.context = context;

@@ -60,7 +60,7 @@ public class MainSparqlPath2 {
         //GraphQueryExecutionFactory
 
 
-        String queryStr = "SELECT ?path { <http://dbpedia.org/resource/Leipzig> jsafn:kShortestPaths ('(rdf:type)*' ?path) }";
+        String queryStr = "SELECT ?path { <http://dbpedia.org/resource/Leipzig> jsafn:kShortestPaths ('(rdf:type)*' ?path owl:Thing) }";
         //QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://dbpedia.org/sparql", "http://dbpedia.org").create();
 
         for(int i = 0; i < 1; ++i) {
