@@ -47,9 +47,7 @@ public class PathVisitorNfaCompilerImpl<V>
 
     @Override
     public void visit(P_Inverse path) {
-
-
-        //processPrimitivePath(path);
+        processPrimitivePath(path);
     }
 
 

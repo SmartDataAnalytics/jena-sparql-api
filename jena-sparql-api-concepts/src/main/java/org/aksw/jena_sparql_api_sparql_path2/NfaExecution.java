@@ -1,6 +1,5 @@
 package org.aksw.jena_sparql_api_sparql_path2;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -24,27 +23,20 @@ import org.apache.jena.sparql.path.P_ReverseLink;
 import org.apache.jena.sparql.path.Path;
 import org.jgrapht.DirectedGraph;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
-public class NfaExecution<V> {
 
+
+public class NfaExecution<V> {
     protected Nfa<V, LabeledEdge<V, Path>> nfa;
-    protected Set<V> currentStates;
     protected QueryExecutionFactory qef;
 
-    // Mapping from state to each vertex encountered at that node
-    //protected Map<V, Frontier<Node>> seen = new HashMap<V, Frontier<Node>>();
-
-    //protected Multimap<V, RdfPath> paths = ArrayListMultimap.create();
-
-    // for each state, for each node, store all paths that end with that node
-    // i.e.: for every path keep track at which state and node it is in
-    protected Map<V, Multimap<Node, NestedRdfPath>> paths = new HashMap<V, Multimap<Node, NestedRdfPath>>();
+    /**
+     * The frontier keeps track of the current paths being traced
+     */
+    protected Frontier<V> frontier;
 
     protected Set<NestedRdfPath> accepted = new HashSet<NestedRdfPath>();
-
     protected Function<RdfPath, Boolean> pathCallback;
 
     /**
@@ -54,60 +46,50 @@ public class NfaExecution<V> {
     protected boolean reversePropertyDirection = false;
 
 
-    //protected Map<List<RdfPath> frontier = new ArrayList<RdfPath>();
-
-    public NfaExecution(Nfa<V, LabeledEdge<V, Path>> nfa, QueryExecutionFactory qef, Function<RdfPath, Boolean> pathCallback) {
+    public NfaExecution(Nfa<V, LabeledEdge<V, Path>> nfa, QueryExecutionFactory qef, boolean reversePropertyDirection, Function<RdfPath, Boolean> pathCallback) {
         this.nfa = nfa;
         this.qef = qef;
+        this.reversePropertyDirection = reversePropertyDirection;
         this.pathCallback = pathCallback;
 
-        //Predicate
-
-        for(V v :nfa.getGraph().vertexSet()) {
-            //seen.put(v, new FrontierImpl<Node>());
-            paths.put(v, ArrayListMultimap.create());
-        }
-
-        this.currentStates = new HashSet<V>(nfa.getStartStates());
+        this.frontier = new Frontier<V>();
     }
 
-    public void add(Node node) {
-        for(V state : currentStates) {
-//            Frontier<Node> frontier = seen.get(state);
-//            frontier.add(node);
-
+    /**
+     * Adds a node to the frontier under the given states
+     *
+     * @param states
+     * @param node
+     */
+    public void add(Set<V> states, Node node) {
+        for(V state : states) {
             NestedRdfPath rdfPath = new NestedRdfPath(node);
-            paths.get(state).put(node, rdfPath);
+            frontier.add(state, rdfPath);
         }
     }
 
-    public boolean collectPaths() {
+
+    public static <V> boolean collectPaths(Nfa<V, LabeledEdge<V, Path>> nfa, Frontier<V> frontier, Function<RdfPath, Boolean> pathCallback) {
         boolean isFinished = false;
-        try {
-            // Check for all paths that
-            for(V state : currentStates) {
-                boolean isFinal = isFinalState(state);
-                if(isFinal) {
-                    Multimap<Node, NestedRdfPath> ps = paths.get(state);
-                    for(NestedRdfPath path : ps.values()) {
-                        // skip paths that have already been accepted
-                        if(!accepted.contains(path)) {
-                            accepted.add(path);
+        Set<V> currentStates = frontier.getCurrentStates();
+        for(V state : currentStates) {
 
-                            isFinished = pathCallback.apply(path.asSimplePath());
-                            if(isFinished) {
-                                throw new InterruptedException();
-                            }
-
-                            //System.out.println("ACCEPTED: " + path.asSimplePath().getLength() + ": " + path.asSimplePath().getEnd());
-                            //System.out.println("ACCEPTED" + path.asSimplePath());
-                        }
+            boolean isFinal = isFinalState(nfa, state);
+            if(isFinal) {
+                Multimap<Node, NestedRdfPath> ps = frontier.getPaths(state);
+                for(NestedRdfPath path : ps.values()) {
+                    isFinished = pathCallback.apply(path.asSimplePath());
+                    if(isFinished) {
+                        break;
                     }
                 }
             }
-        } catch(InterruptedException e) {
 
+            if(isFinished) {
+                break;
+            }
         }
+
         return isFinished;
     }
 
@@ -119,59 +101,38 @@ public class NfaExecution<V> {
      * TODO: We should detect dead states, as to prevent potential cycling in them indefinitely
      */
     public boolean advance() {
-        boolean isFinished = collectPaths();
-        boolean result = isFinished
-                ? true
-                : progress()
-                ;
+        boolean isFinished = collectPaths(nfa, frontier, pathCallback);
+        boolean result;
+
+        if(isFinished) {
+            result = false;
+        } else {
+            frontier = advanceFrontier(frontier, nfa, qef, reversePropertyDirection);
+            result = !frontier.isEmpty();
+        }
 
         return result;
     }
 
-    private boolean progress() {
-        boolean result = false;
-        Set<V> nextCurrentStates = new HashSet<V>();
 
+    public static <V> Frontier<V> advanceFrontier(Frontier<V> frontier, Nfa<V, LabeledEdge<V, Path>> nfa, QueryExecutionFactory qef, boolean reversePropertyDirection) {
+        // Prepare the next frontier
+        Frontier<V> result = new Frontier<V>();
+
+        Set<V> currentStates = frontier.getCurrentStates();
         for(V state : currentStates) {
+            Multimap<Node, NestedRdfPath> ps = frontier.getPaths(state);
+
             DirectedGraph<V, LabeledEdge<V, Path>> graph = nfa.getGraph();
             Set<LabeledEdge<V, Path>> transitions = JGraphTUtils.resolveTransitions(graph, state);
 
-            //Set success
-            //JGraphTUtils.transitiveGet(graph, startVertex, 1, edge -> edge.getLabel() == null);
-
-            Multimap<Node, NestedRdfPath> tmp = paths.get(state);
-            Multimap<Node, NestedRdfPath> ps = HashMultimap.create(tmp);
-            tmp.clear();
-
 
             Set<Node> nodes = ps.keySet();
-            //Frontier<Node> frontier = seen.get(state);
-
-//            Set<Node> nodes = new HashSet<Node>();
-//            while(!frontier.isEmpty()) {
-//                nodes.add(frontier.next());
-//            }
-
             Concept filter = ConceptUtils.createFilterConcept(nodes);
-
-            // Check if the state is an accepting state, if so, yield all paths
-            // that made it to this node
-            boolean isFinal = isFinalState(state);
-            if(isFinal) {
-                System.out.println("GOT " + paths.get(state));
-            }
-
-
-            Multimap<Node, NestedRdfPath> mm = HashMultimap.create();
 
             for(LabeledEdge<V, Path> transition : transitions) {
 
                 Path path = transition.getLabel();
-
-//                PathVisitorPredicateClass predicateClassVisitor = new PathVisitorPredicateClass();
-//                path.visit(predicateClassVisitor);
-//                PredicateClass predicateClass = predicateClassVisitor.getResult();
-
 
                 PathVisitorResourceShapeBuilder visitor = new PathVisitorResourceShapeBuilder(reversePropertyDirection);
                 path.visit(visitor);
@@ -179,12 +140,10 @@ public class NfaExecution<V> {
 
 
                 MappedConcept<Graph> mc = ResourceShape.createMappedConcept(rsb.getResourceShape(), filter);
-                System.out.println("MC: " + mc);
-
+                //System.out.println("MC: " + mc);
                 ListService<Concept, Node, Graph> ls = ListServiceUtils.createListServiceAcc(qef, mc, false);
 
                 Map<Node, Graph> nodeToGraph = ls.fetchData(null, null, null);
-                //System.out.println(nodeToGraph);
 
                 for(Entry<Node, Graph> entry : nodeToGraph.entrySet()) {
                     Node node = entry.getKey();
@@ -210,34 +169,15 @@ public class NfaExecution<V> {
                             NestedRdfPath next = new NestedRdfPath(parentPath, p0, o);
 
                             if(next.isCycleFree()) {
-                                result = true;
-                                // TODO Properly remove paths from the old state
-
-                                // Get the set of successor states for the given predicates
-//                                V targetState = transition.getTarget();
-//                                mm.put(next.getCurrent(), next);
-//                                nextCurrentStates.add(targetState);
-
                                 V targetState = transition.getTarget();
-                                paths.get(targetState).put(next.getCurrent(), next);
-                                nextCurrentStates.add(targetState);
-
+                                result.add(targetState, next);
                             }
                         }
-
-                        //ps.clear();
-
                     }
                 }
             }
-
-            //ps = paths.get(state);
-
-            //ps.clear();
-            //ps.putAll(mm);
         }
 
-        currentStates = nextCurrentStates;
         return result;
     }
 
@@ -248,7 +188,7 @@ public class NfaExecution<V> {
      * @param state
      * @return
      */
-    public boolean isFinalState(V state) {
+    public static <V> boolean isFinalState(Nfa<V, LabeledEdge<V, Path>> nfa, V state) {
         DirectedGraph<V, LabeledEdge<V, Path>> graph = nfa.getGraph();
         Set<V> endStates = nfa.getEndStates();
         Set<V> reachableStates = JGraphTUtils.transitiveGet(graph, state, 1, x -> x.getLabel() == null);
@@ -256,33 +196,4 @@ public class NfaExecution<V> {
         return result;
     }
 
-    /**
-     * Get transitions, thereby resolve epsilon edges
-     *
-     * TODO Shoud we return a Multimap<V, E> or a Graph<V, E> ???
-     *
-     */
-    public Multimap<V, LabeledEdge<V, Path>> getTransitions() {
-        Multimap<V, LabeledEdge<V, Path>> result = ArrayListMultimap.<V, LabeledEdge<V,Path>>create();
-
-        DirectedGraph<V, LabeledEdge<V, Path>> graph = nfa.getGraph();
-
-        for(V state : currentStates) {
-            Set<LabeledEdge<V, Path>> edges = JGraphTUtils.resolveTransitions(graph, state);
-            result.putAll(state, edges);
-
-        }
-        return result;
-    }
-
-
-    /**
-     * Map each current state to the set of corresponding transitions
-     * This method resolves epsilon edges.
-     *
-     * @return
-     */
-//    protected Graph<V, E> getTransitions() {
-//
-//    }
 }

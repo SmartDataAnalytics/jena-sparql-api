@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.script.Invocable;
+import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 
@@ -70,41 +71,6 @@ import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.spring.json.ContextProcessorJsonUtils;
 import org.apache.http.client.HttpClient;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.batch.core.Job;
-import org.springframework.batch.core.JobExecution;
-import org.springframework.batch.core.JobParameters;
-import org.springframework.batch.core.JobParametersInvalidException;
-import org.springframework.batch.core.configuration.xml.BeanDefinitionUtils;
-import org.springframework.batch.core.job.SimpleJob;
-import org.springframework.batch.core.jsr.configuration.xml.StepFactoryBean;
-import org.springframework.batch.core.launch.JobOperator;
-import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
-import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
-import org.springframework.batch.core.repository.JobRestartException;
-import org.springframework.batch.core.scope.StepScope;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.BeanFactoryUtils;
-import org.springframework.beans.factory.FactoryBean;
-import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.beans.factory.config.Scope;
-import org.springframework.beans.factory.support.BeanDefinitionRegistry;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.context.annotation.AnnotationConfigUtils;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
-import org.springframework.context.support.GenericApplicationContext;
-import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
-
-import com.google.common.base.Supplier;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.stream.JsonReader;
-import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -125,9 +91,33 @@ import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.apache.jena.vocabulary.XSD;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.batch.core.Job;
+import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.JobParameters;
+import org.springframework.batch.core.JobParametersInvalidException;
+import org.springframework.batch.core.job.SimpleJob;
+import org.springframework.batch.core.launch.JobOperator;
+import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
+import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
+import org.springframework.batch.core.repository.JobRestartException;
+import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.config.Scope;
+import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.springframework.context.support.GenericApplicationContext;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
-import fr.dudie.nominatim.client.JsonNominatimClient;
-import fr.dudie.nominatim.client.NominatimClient;
+import com.google.common.base.Supplier;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.stream.JsonReader;
 
 public class MainBatchWorkflow {
 
@@ -156,7 +146,70 @@ public class MainBatchWorkflow {
 
 
     public static void main(String[] args) throws Exception {
+        String str = readResource("workflow.js");
 
+        Reader reader = new StringReader(str); //new InputStreamReader(in);
+        JsonReader jsonReader = new JsonReader(reader);
+        jsonReader.setLenient(true);
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+        JsonElement o = gson.fromJson(jsonReader, JsonElement.class);
+        String canon = gson.toJson(o);
+
+
+        ScriptEngineManager factory = new ScriptEngineManager();
+        ScriptEngine engine = factory.getEngineByName("JavaScript");
+
+        Logger scriptLogger = LoggerFactory.getLogger(MainBatchWorkflow.class.getName() + "-ScriptEngine");
+        engine.put("logger", logger);
+        ScriptContext ctx  = engine.getContext();
+        //Bindings bindings = ctx.getBindings(ScriptContext.GLOBAL_SCOPE);
+
+        engine.eval(readResource("js/lib/lodash/4.3.0/lodash.js"));//, bindings);
+        engine.eval(readResource("js/src/rewrite-master.js"));//, bindings);
+
+        List<String> rewriterResourceNames = Arrays.asList(
+            "js/src/rewriters/RewriterPrefixes.js",
+            "js/src/rewriters/RewriterSparqlFile.js",
+            "js/src/rewriters/RewriterSparqlCount.js",
+            "js/src/rewriters/RewriterBeanClassName.js",
+            "js/src/rewriters/RewriterBeanDefinition.js"
+        );
+        String base = "src/main/resources/";
+        for(String name : rewriterResourceNames) {
+            engine.eval("load('" + base + "/" + name + "')");
+            //engine.eval(readResource(name));
+        }
+
+
+//        new JsonVisitorRewriteSparqlService(),
+//        new JsonVisitorRewriteShape(),
+//        new JsonVisitorRewriteJson(),
+//        new JsonVisitorRewriteSparqlStep(),
+//        new JsonVisitorRewriteSimpleJob(),
+//        new JsonVisitorRewriteSparqlFile(),
+//        new JsonVisitorRewriteSparqlPipe(),
+//        new JsonVisitorRewriteSparqlUpdate(),
+//        new JsonVisitorRewritePrefixes(),
+//        new JsonVisitorRewriteHop(),
+//        new JsonVisitorRewriteClass("$dataSource", DriverManagerDataSource.class.getName()),
+//        new JsonVisitorRewriteClass("$log", FactoryBeanStepLog.class.getName()),
+//        new JsonVisitorRewriteClass("$sparqlCount", FactoryBeanStepSparqlCount.class.getName()),
+//        new JsonVisitorRewriteBeanClassName(),
+//        new JsonVisitorRewriteBeanDefinition()
+
+        Invocable inv = (Invocable)engine;
+        Object tmpJsonStr = inv.invokeFunction("performRewrite", canon);
+        String jsonStr = (String)tmpJsonStr;
+        String prettyJsonStr = gson.toJson(gson.fromJson(jsonStr, Object.class));
+
+        System.out.println("RESULT\n--------------------------------------------");
+        System.out.println(prettyJsonStr);
+        //engine.eval("var foo = JSON.parse(data); print(_(Object.keys(foo)).map(function(x) { return 'yay' + x; }));");
+
+        if(true) {
+            System.exit(0);
+        }
 
 //        String queryStr = "INSERT { ?s tmp:location ?l } WHERE { ?s o:address [ o:country [ rdfs:label ?col ] ; o:city [ rdfs:label ?cil ]  ] BIND(concat(?cil, ' ', ?col) As ?l) }";
 //

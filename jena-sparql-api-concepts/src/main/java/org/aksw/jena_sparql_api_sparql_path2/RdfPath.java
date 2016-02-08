@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api_sparql_path2;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
@@ -44,6 +46,13 @@ public class RdfPath {
 
     public List<Triple> getTriples() {
         return triples;
+    }
+
+    public RdfPath reverse() {
+        List<Triple> tmp = new ArrayList<>(triples);
+        Collections.reverse(tmp);
+        RdfPath result = new RdfPath(end, start, triples);
+        return result;
     }
 
     @Override
