@@ -47,6 +47,12 @@ public class NfaExecution<V> {
 
     protected Function<RdfPath, Boolean> pathCallback;
 
+    /**
+     * If an nfa is reversed only be reversing the edges of the automaton, the edge labels themselves
+     * are not reversed. This flag is used to treat edge labels (i.e. property directions) reversed.
+     */
+    protected boolean reversePropertyDirection = false;
+
 
     //protected Map<List<RdfPath> frontier = new ArrayList<RdfPath>();
 
@@ -167,7 +173,7 @@ public class NfaExecution<V> {
 //                PredicateClass predicateClass = predicateClassVisitor.getResult();
 
 
-                PathVisitorResourceShapeBuilder visitor = new PathVisitorResourceShapeBuilder();
+                PathVisitorResourceShapeBuilder visitor = new PathVisitorResourceShapeBuilder(reversePropertyDirection);
                 path.visit(visitor);
                 ResourceShapeBuilder rsb = visitor.getResourceShapeBuilder();
 

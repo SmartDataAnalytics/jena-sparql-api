@@ -4,6 +4,7 @@ import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.aksw.jena_sparql_api.utils.ExprListUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.sparql.expr.E_NotOneOf;
+import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.path.P_Link;
 import org.apache.jena.sparql.path.P_NegPropSet;
@@ -14,39 +15,46 @@ public class PathVisitorResourceShapeBuilder
     extends PathVisitorBase
 {
     protected ResourceShapeBuilder rsb;
+    protected boolean reverse;
 
     public PathVisitorResourceShapeBuilder() {
-        this(new ResourceShapeBuilder());
+        this(new ResourceShapeBuilder(), false);
+    }
+
+    public PathVisitorResourceShapeBuilder(boolean reverse) {
+        this(new ResourceShapeBuilder(), reverse);
+    }
+
+    public PathVisitorResourceShapeBuilder(ResourceShapeBuilder rsb, boolean reverse) {
+        super();
+        this.rsb = rsb;
+        this.reverse = reverse;
     }
 
     public ResourceShapeBuilder getResourceShapeBuilder() {
         return rsb;
     }
 
-    public PathVisitorResourceShapeBuilder(ResourceShapeBuilder rsb) {
-        super();
-        this.rsb = rsb;
+    @Override
+    public void visit(P_ReverseLink path) {
+        rsb.nav(path.getNode(), !reverse);
+    }
+
+    @Override
+    public void visit(P_Link path) {
+        rsb.nav(path.getNode(), reverse);
     }
 
     @Override
     public void visit(P_NegPropSet path) {
         if(!path.getFwdNodes().isEmpty()) {
-            rsb.outgoing(new E_NotOneOf(new ExprVar(Vars.p), ExprListUtils.nodesToExprs(path.getFwdNodes())));
+            Expr expr = new E_NotOneOf(new ExprVar(Vars.p), ExprListUtils.nodesToExprs(path.getFwdNodes()));
+            rsb.nav(expr, reverse);
         }
 
         if(!path.getBwdNodes().isEmpty()) {
-            rsb.incoming(new E_NotOneOf(new ExprVar(Vars.p), ExprListUtils.nodesToExprs(path.getBwdNodes())));
+            Expr expr = new E_NotOneOf(new ExprVar(Vars.p), ExprListUtils.nodesToExprs(path.getBwdNodes()));
+            rsb.nav(expr, !reverse);
         }
     }
-
-    @Override
-    public void visit(P_ReverseLink path) {
-        rsb.incoming(path.getNode());
-    }
-
-    @Override
-    public void visit(P_Link path) {
-        rsb.outgoing(path.getNode());
-    }
-
 }
