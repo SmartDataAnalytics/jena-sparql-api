@@ -2,22 +2,56 @@ rewriters.push(function(json) {
   var result = json;
   var e = json.$sparqlStep;
   if(e) {
-    result = {
-      type: '',
-      reader: {
-        type: 'org.aksw.jena_sparql_api.batch.reader.ItemReaderDatasetGraph',
-        scope: 'step'
+    var result = {
+      type: 'org.aksw.jena_sparql_api.batch.step.FactoryBeanStepChunk',
+      name: e.name + 'slave',
+      chunkSize: e.chunk,
+      itemReader: {
+        type: 'org.aksw.jena_sparql_api.batch.reader.ItemReaderQuad',
+        scope: 'step',
+        'currentItemCount': '#{ stepExecutionContext[minValue] }',
+        'maxItemCount': '#{ stepExecutionContext[maxValue] }',
+        'pageSize': e.readSize || e.chunk,
+        'qef': e.source,
+        'query': e.query
       },
-      processor: {
+      itemProcessor: {
+          type: 'org.springframework.batch.item.validator.ValidatingItemProcessor',
+          scope: 'step',
+          filter: true,
+          validator: {
+            type: 'org.aksw.jena_sparql_api.batch.step.ValidatorQuadByPredicate',
+            ctor: [{
+              type: 'org.aksw.jena_sparql_api.batch.reader.PredicateQuadExpr',
+              ctor: ['<http://jsa.aksw.org/fn/term/valid>(?g) && <http://jsa.aksw.org/fn/term/valid>(?s) && <http://jsa.aksw.org/fn/term/valid>(?p) && <http://jsa.aksw.org/fn/term/valid>(?o)']
+            }]
+          }
       },
-      writer: {
-        type: 'org.aksw.jena_sparql_api.batch.writer.ItemWriterSparqlDiff',
-        uef: e.target
+      itemWriter: {
+          type: 'org.aksw.jena_sparql_api.batch.writer.ItemWriterQuad',
+          scope: 'step',
+          target: e.target,
+          isDelete: e.isDelete
       }
-
     };
-  }
 
+    // Add the partitioner
+    result = {
+      type: 'org.aksw.jena_sparql_api.batch.step.FactoryBeanStepPartitioner',
+      name: e.name + '-master',
+      throttle: e.throttle,
+      taskExecutor: e.taskExecutor,
+      partitioner: {
+        type: 'org.aksw.jena_sparql_api.batch.step.PartitionerSparqlSlice',
+        source: e.source,
+        query: e.query
+      },
+      slaveStep: result
+    };
+
+    //_(result).extend(e);
+    //result['type'] = 'org.aksw.jena_sparql_api.batch.step.FactoryBeanStepSparqlPipe';
+  }
   return result;
 });
 //

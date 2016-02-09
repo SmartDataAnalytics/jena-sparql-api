@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -13,13 +14,18 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 
 public class BidirectionalSearch<V> {
-    protected NfaExecution<V> forwards;
-    protected NfaExecution<V> backwards;
+//    protected NfaExecution<V> forwards;
+//    protected NfaExecution<V> backwards;
+    protected Frontier<V> fwdFrontier;
+    protected Frontier<V> bwdFrontier;
 
-    public BidirectionalSearch(NfaExecution<V> forwards, NfaExecution<V> backwards) {
-        this.forwards = forwards;
-        this.backwards = backwards;
-    }
+    protected Set<NestedRdfPath> accepted = new HashSet<NestedRdfPath>();
+    protected Function<RdfPath, Boolean> pathCallback;
+
+//    public BidirectionalSearch(NfaExecution<V> forwards, NfaExecution<V> backwards) {
+//        this.forwards = forwards;
+//        this.backwards = backwards;
+//    }
 
 
     public static <V> Set<RdfPath> intersect(Frontier<V> fwd, Frontier<V> bwd) {

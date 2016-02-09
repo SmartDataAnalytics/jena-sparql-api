@@ -179,7 +179,8 @@ public class MainBatchWorkflow {
             "js/src/rewriters/RewriterBeanClassName.js",
             "js/src/rewriters/RewriterBeanDefinition.js",
             "js/src/rewriters/RewriterSparqlPipe.js",
-            "js/src/rewriters/RewriterSimpleJob.js"
+            "js/src/rewriters/RewriterSimpleJob.js",
+            "js/src/rewriters/RewriterSparqlHop.js"
         );
         String base = "src/main/resources/";
         for(String name : rewriterResourceNames) {
