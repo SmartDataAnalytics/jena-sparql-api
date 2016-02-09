@@ -25,7 +25,8 @@ public class MainSparqlPath2 {
         PropertyFunctionRegistry.get().put(PropertyFunctionKShortestPaths.DEFAULT_IRI, new PropertyFunctionFactoryKShortestPaths());
 
         // Create a SPARQL service backed by DBpedia
-        SparqlService coreSparqlService = FluentSparqlService.http("http://fp7-pp.publicdata.eu/sparql", "http://fp7-pp.publicdata.eu/").create();
+        //SparqlService coreSparqlService = FluentSparqlService.http("http://fp7-pp.publicdata.eu/sparql", "http://fp7-pp.publicdata.eu/").create();
+        SparqlService coreSparqlService = FluentSparqlService.http("http://localhost:8890/sparql", "http://fp7-pp.publicdata.eu/").create();
 
         // Create a datasetGraph backed by the SPARQL service to DBpedia
         DatasetGraphSparqlService datasetGraph = new DatasetGraphSparqlService(coreSparqlService);
@@ -60,7 +61,7 @@ public class MainSparqlPath2 {
         //GraphQueryExecutionFactory
 
 
-        String queryStr = "SELECT ?path { <http://fp7-pp.publicdata.eu/resource/project/257943> jsafn:kShortestPaths ('(rdf:type|^rdf:type)*' ?path <http://fp7-pp.publicdata.eu/ontology/City>) }";
+        String queryStr = "SELECT ?path { <http://fp7-pp.publicdata.eu/resource/project/257943> jsafn:kShortestPaths ('(rdf:type|!rdf:type)*' ?path <http://fp7-pp.publicdata.eu/resource/city/France-PARIS>) }";
         //QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://dbpedia.org/sparql", "http://dbpedia.org").create();
 
         for(int i = 0; i < 1; ++i) {

@@ -13,6 +13,8 @@ public class PathExecutionUtils {
     public static Nfa<Integer, LabeledEdge<Integer, Path>> compileToNfa(Path path) {
         //Path path = PathParser.parse("!(<p>|(<p>|<p>))", PrefixMapping.Extended);
 
+        path = PathVisitorTopDown.apply(path, new PathVisitorRewriteInvert());
+
         /*
          * Some ugly set up of graph related stuff
          */
