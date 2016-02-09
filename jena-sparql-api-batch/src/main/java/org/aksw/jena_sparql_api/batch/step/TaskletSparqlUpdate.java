@@ -21,11 +21,30 @@ public class TaskletSparqlUpdate
     private UpdateExecutionFactory uef;
     private UpdateRequest updateRequest;
 
+    public TaskletSparqlUpdate() {
+        super();
+    }
+
     public TaskletSparqlUpdate(UpdateExecutionFactory uef, UpdateRequest updateRequest) {
         this.uef = uef;
         this.updateRequest = updateRequest;
     }
 
+    public UpdateExecutionFactory getTarget() {
+        return uef;
+    }
+
+    public void setTarget(UpdateExecutionFactory uef) {
+        this.uef = uef;
+    }
+
+    public UpdateRequest getUpdate() {
+        return updateRequest;
+    }
+
+    public void setUpdate(UpdateRequest updateRequest) {
+        this.updateRequest = updateRequest;
+    }
 
     @Override
     public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {

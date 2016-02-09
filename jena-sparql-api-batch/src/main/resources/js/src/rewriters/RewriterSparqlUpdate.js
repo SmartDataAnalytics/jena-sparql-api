@@ -3,11 +3,11 @@ rewriters.push(function(json) {
   var e = json.$sparqlUpdate;
   if(e) {
     result = {
-      type: 'org.springframework.batch.core.step.tasklet.TaskletStep',
-      scope: 'step',
+      type: 'org.aksw.jena_sparql_api.batch.step.FactoryBeanStepTasklet',
       name: e.name,
       tasklet: {
         type: 'org.aksw.jena_sparql_api.batch.step.TaskletSparqlUpdate',
+        scope: 'step',
         target: e.target,
         update: e.update
       }

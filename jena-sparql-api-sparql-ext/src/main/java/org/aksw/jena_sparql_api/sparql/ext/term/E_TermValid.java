@@ -1,9 +1,7 @@
 package org.aksw.jena_sparql_api.sparql.ext.term;
 
-import org.apache.commons.validator.routines.UrlValidator;
-import org.apache.jena.riot.system.IRIResolver;
-
 import org.apache.jena.graph.Node;
+import org.apache.jena.riot.system.IRIResolver;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.function.FunctionBase1;
 
@@ -18,16 +16,17 @@ import org.apache.jena.sparql.function.FunctionBase1;
 public class E_TermValid
     extends FunctionBase1
 {
-    protected UrlValidator urlValidator;
+//    protected UrlValidator urlValidator;
 
     public E_TermValid() {
-        this(new UrlValidator());
+        super();
+//        this(new UrlValidator());
     }
 
-    public E_TermValid(UrlValidator urlValidator) {
-        super();
-        this.urlValidator = urlValidator;
-    }
+//    public E_TermValid(UrlValidator urlValidator) {
+//        super();
+//        this.urlValidator = urlValidator;
+//    }
 
 
 

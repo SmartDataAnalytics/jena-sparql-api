@@ -11,17 +11,25 @@ rewriters.push(function(json) {
         scope: 'step',
         'currentItemCount': '#{ stepExecutionContext[minValue] }',
         'maxItemCount': '#{ stepExecutionContext[maxValue] }',
-        'pageSize': e.readSize,
+        'pageSize': e.readSize || e.chunk,
         'qef': e.source,
         'query': e.query
       },
       itemProcessor: {
-          type: 'org.springframework.batch.item.support.PassThroughItemProcessor'
-//          scope: 'step'
+          type: 'org.springframework.batch.item.validator.ValidatingItemProcessor',
+          scope: 'step',
+          filter: true,
+          validator: {
+            type: 'org.aksw.jena_sparql_api.batch.step.ValidatorQuadByPredicate',
+            ctor: [{
+              type: 'org.aksw.jena_sparql_api.batch.reader.PredicateQuadExpr',
+              ctor: ['<http://jsa.aksw.org/fn/term/valid>(?g) && <http://jsa.aksw.org/fn/term/valid>(?s) && <http://jsa.aksw.org/fn/term/valid>(?p) && <http://jsa.aksw.org/fn/term/valid>(?o)']
+            }]
+          }
       },
       itemWriter: {
           type: 'org.aksw.jena_sparql_api.batch.writer.ItemWriterQuad',
-//          scope: 'step',
+          scope: 'step',
           target: e.target,
           isDelete: e.isDelete
       }

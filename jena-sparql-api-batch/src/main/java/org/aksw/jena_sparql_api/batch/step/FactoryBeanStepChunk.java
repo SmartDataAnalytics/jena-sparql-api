@@ -55,7 +55,7 @@ public class FactoryBeanStepChunk
         int c = chunkSize == null ? 1000 : chunkSize;
 
         Step result = stepBuilder
-                .chunk(chunkSize)
+                .chunk(c)
                 .reader(itemReader)
                 .processor(itemProcessor)
                 .writer(itemWriter)
