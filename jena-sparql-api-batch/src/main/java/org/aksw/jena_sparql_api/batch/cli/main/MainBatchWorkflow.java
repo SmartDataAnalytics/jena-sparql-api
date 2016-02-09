@@ -169,6 +169,7 @@ public class MainBatchWorkflow {
         engine.eval(readResource("js/src/rewrite-master.js"));//, bindings);
 
         List<String> rewriterResourceNames = Arrays.asList(
+            "js/src/rewriters/RewriterSparqlHop.js",
             "js/src/rewriters/RewriterJson.js",
             "js/src/rewriters/RewriterPrefixes.js",
             "js/src/rewriters/RewriterSparqlFile.js",
@@ -179,8 +180,7 @@ public class MainBatchWorkflow {
             "js/src/rewriters/RewriterBeanClassName.js",
             "js/src/rewriters/RewriterBeanDefinition.js",
             "js/src/rewriters/RewriterSparqlPipe.js",
-            "js/src/rewriters/RewriterSimpleJob.js",
-            "js/src/rewriters/RewriterSparqlHop.js"
+            "js/src/rewriters/RewriterSimpleJob.js"
         );
         String base = "src/main/resources/";
         for(String name : rewriterResourceNames) {
@@ -530,9 +530,13 @@ public class MainBatchWorkflow {
                     continue;
                 }
                 c = fb.getObjectType();
+                // Just skip these kind of factories - e.g. ScopedProxyFactoryBean does not yield an object type
+//                if(c == null) {
+//                    throw new RuntimeException("Bean factory that does not declare an object type encountered: " + fb.getClass() + " - " + fb);
+//                }
             }
 
-            if(clazz.isAssignableFrom(c)) {
+            if(c != null && clazz.isAssignableFrom(c)) {
                 result = bd;
                 break;
             }
@@ -569,6 +573,7 @@ public class MainBatchWorkflow {
             "js/src/rewriters/RewriterSparqlCount.js",
             "js/src/rewriters/RewriterSparqlService.js",
             "js/src/rewriters/RewriterSparqlStep.js",
+            "js/src/rewriters/RewriterSparqlHop.js",
             "js/src/rewriters/RewriterSparqlUpdate.js",
             "js/src/rewriters/RewriterBeanClassName.js",
             "js/src/rewriters/RewriterBeanDefinition.js",

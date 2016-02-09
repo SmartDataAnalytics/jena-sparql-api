@@ -4,7 +4,7 @@ rewriters.push(function(json) {
   if(e) {
     var result = {
       type: 'org.aksw.jena_sparql_api.batch.step.FactoryBeanStepChunk',
-      name: e.name + 'slave',
+      name: e.name + '-slave',
       chunkSize: e.chunk,
       itemReader: {
         type: 'org.aksw.jena_sparql_api.batch.reader.ItemReaderQuad',
@@ -13,7 +13,9 @@ rewriters.push(function(json) {
         'maxItemCount': '#{ stepExecutionContext[maxValue] }',
         'pageSize': e.readSize || e.chunk,
         'qef': e.source,
-        'query': e.query
+        'query': e.query,
+        'modifiers': e.modifiers,
+        'hop': e.hop
       },
       itemProcessor: {
           type: 'org.springframework.batch.item.validator.ValidatingItemProcessor',

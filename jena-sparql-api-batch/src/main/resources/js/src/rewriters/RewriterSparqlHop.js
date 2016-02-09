@@ -17,11 +17,11 @@ var processHops = function(json) {
 
   // Wrap a non-array as an array containing it as an item
   var hops = _(json).isArray() ? json : [json];
-  var result = _(hop).map(function(hop) {
+  var result = hops.map(function(hop) {
     var r = processHop(hop);
     return r;
   });
-  return reuslt;
+  return result;
 };
 
 /**
@@ -33,7 +33,7 @@ var processHops = function(json) {
  * @param json
  * @return
  */
-var processHopCore = function(json) {
+var processHop = function(json) {
   var result = json;
 
   if(_(json).isPlainObject()) {
@@ -41,7 +41,7 @@ var processHopCore = function(json) {
     var relations = processRelations(json.relations);
 
     result = {
-      type: '',
+      type: 'org.aksw.jena_sparql_api.hop.Hop',
       ctor: [ queries, relations ]
     };
   }
@@ -73,7 +73,7 @@ var processQueries = function(json) {
     var isShortcut = isQueryShortcut(json);
     var queries = isShortcut ? [json] : (json ? json : []);
 
-    var result = querItems.map(function(queries) {
+    var result = queries.map(function(query) {
         var r = processQuery(query);
         return r;
     });
@@ -117,7 +117,7 @@ var isRelationShortcut = function(json) {
       var a = json[0];
       var b = json[1];
 
-      if(!_(a).Object() && !_(b).Object()) {
+      if(!_(a).isObject() && !_(b).isObject()) {
         result = true;
       }
     }
@@ -178,7 +178,7 @@ var expandRelationShortuct = function(arr) {
     on: on,
     hops: hops
   };
-  return reuslt;
+  return result;
 };
 
 var processRelations = function(json) {
@@ -192,12 +192,12 @@ var processRelations = function(json) {
 };
 
 
-
-var processRelations = function(json) {
+var processRelation = function(json) {
   var tmp = _(json).isArray() ? expandRelationShortuct(json) : json;
   var result = processRelationCore(tmp);
   return result;
 };
+
 
 var processRelationCore = function(json) {
   var hops = processHop(json.hops);
@@ -211,8 +211,13 @@ var processRelationCore = function(json) {
 };
 
 rewriters.push(function(json) {
-var e = json.$hop;
-  var result = e ? processHopCore(e) : json;
+  var result = json;
+  var e = json.$hop;
+  if(e) {
+      result = processHop(e);
+      print("JUP: " + JSON.stringify(result));
+  }
+
   return result;
 });
 

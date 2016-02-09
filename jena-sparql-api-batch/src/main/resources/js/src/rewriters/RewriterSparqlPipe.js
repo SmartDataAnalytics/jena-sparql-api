@@ -4,7 +4,7 @@ rewriters.push(function(json) {
   if(e) {
     var result = {
       type: 'org.aksw.jena_sparql_api.batch.step.FactoryBeanStepChunk',
-      name: e.name + 'slave',
+      name: e.name + '-slave',
       chunkSize: e.chunk,
       itemReader: {
         type: 'org.aksw.jena_sparql_api.batch.reader.ItemReaderQuad',
