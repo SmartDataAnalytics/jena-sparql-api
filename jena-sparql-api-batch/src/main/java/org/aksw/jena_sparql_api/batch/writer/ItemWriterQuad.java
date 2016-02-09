@@ -15,11 +15,26 @@ public class ItemWriterQuad
     private UpdateExecutionFactory uef;
     private boolean isDelete;
 
+    public ItemWriterQuad() {
+    }
+
     public ItemWriterQuad(UpdateExecutionFactory uef, boolean isDelete) {
         this.uef = uef;
         this.isDelete = isDelete;
 
         Assert.notNull(uef);
+    }
+
+    public UpdateExecutionFactory getTarget() {
+        return uef;
+    }
+
+    public void setTarget(UpdateExecutionFactory uef) {
+        this.uef = uef;
+    }
+
+    public void setDelete(boolean isDelete) {
+        this.isDelete = isDelete;
     }
 
     public UpdateExecutionFactory getUpdateExecutionFactory() {

@@ -16,11 +16,33 @@ public class PartitionerSparqlSlice
     protected QueryExecutionFactory qef;
     protected Query query;
 
+    public PartitionerSparqlSlice() {
+        super();
+    }
+
     public PartitionerSparqlSlice(QueryExecutionFactory qef, Query query) {
         super();
         this.qef = qef;
         this.query = query;
     }
+
+    public QueryExecutionFactory getSource() {
+        return qef;
+    }
+
+    public void setSource(QueryExecutionFactory qef) {
+        this.qef = qef;
+    }
+
+    public Query getQuery() {
+        return query;
+    }
+
+    public void setQuery(Query query) {
+        this.query = query;
+    }
+
+
 
     @Override
     public Map<String, ExecutionContext> partition(int gridSize) {

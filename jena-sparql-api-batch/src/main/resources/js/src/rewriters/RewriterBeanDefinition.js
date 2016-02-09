@@ -22,8 +22,8 @@ rewriters.push(function(json) {
 
   var subDocKey = 'properties';
   var isTransferNeeded = function(item) {
-      var arr = [];
-      var r = _(arr).includes(item);
+      var arr = ['properties', 'beanClassName', 'scope', 'ctor'];
+      var r = !_(arr).includes(item);
       return r;
   };
 
@@ -33,7 +33,7 @@ rewriters.push(function(json) {
       result = {};
       var tmp = {};
       _(json).forEach(function(v, k) {
-          var move = isTransferNeeded.apply(k);
+          var move = isTransferNeeded(k);
           if(move) {
             tmp[k] = v;
           } else {

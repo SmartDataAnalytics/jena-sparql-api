@@ -882,7 +882,7 @@
             <dependency>
                 <groupId>org.aksw.spring</groupId>
                 <artifactId>spring-json-core</artifactId>
-                <version>1.0.1</version>
+                <version>1.0.2-SNAPSHOT</version>
             </dependency>
 
             <dependency>

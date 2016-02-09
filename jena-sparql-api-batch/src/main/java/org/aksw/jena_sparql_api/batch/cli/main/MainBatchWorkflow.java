@@ -146,7 +146,7 @@ public class MainBatchWorkflow {
 
 
     public static void main(String[] args) throws Exception {
-        String str = readResource("workflow.js");
+        String str = readResource("job-fetch-data-4-threads.js");
 
         Reader reader = new StringReader(str); //new InputStreamReader(in);
         JsonReader jsonReader = new JsonReader(reader);
@@ -169,11 +169,17 @@ public class MainBatchWorkflow {
         engine.eval(readResource("js/src/rewrite-master.js"));//, bindings);
 
         List<String> rewriterResourceNames = Arrays.asList(
+            "js/src/rewriters/RewriterJson.js",
             "js/src/rewriters/RewriterPrefixes.js",
             "js/src/rewriters/RewriterSparqlFile.js",
             "js/src/rewriters/RewriterSparqlCount.js",
+            "js/src/rewriters/RewriterSparqlService.js",
+            "js/src/rewriters/RewriterSparqlStep.js",
+            "js/src/rewriters/RewriterSparqlUpdate.js",
             "js/src/rewriters/RewriterBeanClassName.js",
-            "js/src/rewriters/RewriterBeanDefinition.js"
+            "js/src/rewriters/RewriterBeanDefinition.js",
+            "js/src/rewriters/RewriterSparqlPipe.js",
+            "js/src/rewriters/RewriterSimpleJob.js"
         );
         String base = "src/main/resources/";
         for(String name : rewriterResourceNames) {
@@ -536,7 +542,85 @@ public class MainBatchWorkflow {
         return result;
     }
 
-    public static JsonElement rewrite(JsonElement json) {
+    public static JsonElement rewrite(JsonElement json) throws Exception{
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+        String jsonStr = gson.toJson(json);
+//        JsonElement o = gson.fromJson(jsonReader, JsonElement.class);
+//        String canon = gson.toJson(o);
+
+
+        ScriptEngineManager factory = new ScriptEngineManager();
+        ScriptEngine engine = factory.getEngineByName("JavaScript");
+
+        Logger scriptLogger = LoggerFactory.getLogger(MainBatchWorkflow.class.getName() + "-ScriptEngine");
+        engine.put("logger", logger);
+        ScriptContext ctx  = engine.getContext();
+        //Bindings bindings = ctx.getBindings(ScriptContext.GLOBAL_SCOPE);
+
+        engine.eval(readResource("js/lib/lodash/4.3.0/lodash.js"));//, bindings);
+        engine.eval(readResource("js/src/rewrite-master.js"));//, bindings);
+
+        List<String> rewriterResourceNames = Arrays.asList(
+            "js/src/rewriters/RewriterJson.js",
+            "js/src/rewriters/RewriterPrefixes.js",
+            "js/src/rewriters/RewriterSparqlFile.js",
+            "js/src/rewriters/RewriterSparqlCount.js",
+            "js/src/rewriters/RewriterSparqlService.js",
+            "js/src/rewriters/RewriterSparqlStep.js",
+            "js/src/rewriters/RewriterSparqlUpdate.js",
+            "js/src/rewriters/RewriterBeanClassName.js",
+            "js/src/rewriters/RewriterBeanDefinition.js",
+            "js/src/rewriters/RewriterSparqlPipe.js",
+            "js/src/rewriters/RewriterSimpleJob.js"
+        );
+        //String base = "src/main/resources/";
+        String base = "/home/raven/Projects/Eclipse/jena-sparql-api-parent/jena-sparql-api-batch/src/main/resources/";
+        for(String name : rewriterResourceNames) {
+            engine.eval("load('" + base + "/" + name + "')");
+            //engine.eval(readResource(name));
+        }
+
+
+//        new JsonVisitorRewriteSparqlService(),
+//        new JsonVisitorRewriteShape(),
+//        new JsonVisitorRewriteJson(),
+//        new JsonVisitorRewriteSparqlStep(),
+//        new JsonVisitorRewriteSimpleJob(),
+//        new JsonVisitorRewriteSparqlFile(),
+//        new JsonVisitorRewriteSparqlPipe(),
+//        new JsonVisitorRewriteSparqlUpdate(),
+//        new JsonVisitorRewritePrefixes(),
+//        new JsonVisitorRewriteHop(),
+//        new JsonVisitorRewriteClass("$dataSource", DriverManagerDataSource.class.getName()),
+//        new JsonVisitorRewriteClass("$log", FactoryBeanStepLog.class.getName()),
+//        new JsonVisitorRewriteClass("$sparqlCount", FactoryBeanStepSparqlCount.class.getName()),
+//        new JsonVisitorRewriteBeanClassName(),
+//        new JsonVisitorRewriteBeanDefinition()
+
+        Invocable inv = (Invocable)engine;
+        Object tmpJsonOutStr = inv.invokeFunction("performRewrite", jsonStr);
+        String jsonOutStr = (String)tmpJsonOutStr;
+
+        Reader reader = new StringReader(jsonOutStr); //new InputStreamReader(in);
+        JsonReader jsonReader = new JsonReader(reader);
+        jsonReader.setLenient(true);
+        JsonElement result = gson.fromJson(jsonReader, JsonElement.class);
+
+        String canon = gson.toJson(result);
+        System.out.println(canon);
+
+        return result;
+
+
+        //String prettyJsonOutStr = gson.toJson(gson.fromJson(jsonOutStr, Object.class));
+
+        //System.out.println("RESULT\n--------------------------------------------");
+        //System.out.println(prettyJsonStr);
+
+    }
+
+    public static JsonElement rewriteOld(JsonElement json) {
         List<JsonVisitorRewrite> rewriters = Arrays.<JsonVisitorRewrite>asList(
                 new JsonVisitorRewriteSparqlService(),
                 new JsonVisitorRewriteShape(),

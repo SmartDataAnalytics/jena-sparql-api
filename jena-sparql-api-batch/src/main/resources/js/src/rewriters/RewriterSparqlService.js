@@ -15,10 +15,10 @@ rewriters.push(function(json) {
     zipped.forEach(function(entry) {
       var k = entry[0];
       var v = entry[1];
-      if(v != nul) {
+      if(v != null) {
         result[k] = v;
       }
     });
   }
-
+  return result;
 });
