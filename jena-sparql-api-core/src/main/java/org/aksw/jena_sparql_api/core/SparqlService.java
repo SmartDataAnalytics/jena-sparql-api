@@ -10,7 +10,9 @@ import org.apache.jena.sparql.core.DatasetDescription;
  * @author raven
  *
  */
-public interface SparqlService {
+public interface SparqlService
+//    extends AutoCloseable
+{
     /**
      * Returns the default dataset description associated with this service.
      * May be null.

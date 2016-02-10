@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.update;
 
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryDataset;
+import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryDatasetGraph;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryModel;
 import org.apache.jena.atlas.web.auth.HttpAuthenticator;
@@ -9,6 +10,7 @@ import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.core.DatasetImpl;
 import org.apache.jena.sparql.util.Context;
 
@@ -35,6 +37,13 @@ public class FluentUpdateExecutionFactory {
         FluentUpdateExecutionFactory result = FluentUpdateExecutionFactory.from(uef);
         return result;
     }
+
+    public static FluentUpdateExecutionFactory from(Model model, Context context) {
+        DatasetGraph datasetGraph = DatasetGraphFactory.create(model.getGraph());
+        FluentUpdateExecutionFactory result = from(datasetGraph, context);
+        return result;
+    }
+
 
     public static FluentUpdateExecutionFactory from(Dataset dataset) {
         FluentUpdateExecutionFactory result = from(dataset, null);

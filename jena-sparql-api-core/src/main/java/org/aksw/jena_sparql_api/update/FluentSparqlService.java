@@ -95,13 +95,20 @@ public class FluentSparqlService<P>
     }
 
     public static FluentSparqlService<?> from(Model model) {
-        QueryExecutionFactory qef = FluentQueryExecutionFactory.model(model).create();
-        UpdateExecutionFactory uef = FluentUpdateExecutionFactory.from(model).create();
+        FluentSparqlService<?> result = from(model, null);
+
+        return result;
+    }
+
+    public static FluentSparqlService<?> from(Model model, Context context) {
+        QueryExecutionFactory qef = FluentQueryExecutionFactory.model(model, context).create();
+        UpdateExecutionFactory uef = FluentUpdateExecutionFactory.from(model, context).create();
 
         FluentSparqlService<?> result = from(qef, uef);
 
         return result;
     }
+
 
     public static FluentSparqlService<?> forDataset() {
         Dataset dataset = DatasetFactory.createMem();

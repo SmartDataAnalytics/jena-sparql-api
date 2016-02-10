@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.batch.cli.main;
 
 import java.util.Iterator;
 
+import org.aksw.jena_sparql_api.utils.ExtendedIteratorClosable;
 import org.apache.jena.atlas.web.TypedInputStream;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;

@@ -46,4 +46,10 @@ public class SparqlServiceImpl
         SparqlServiceImpl result = new SparqlServiceImpl(qef, uef);
         return result;
     }
+
+//    @Override
+//    public void close() throws Exception {
+//        qef.close();
+//        //uef.close();
+//    }
 }

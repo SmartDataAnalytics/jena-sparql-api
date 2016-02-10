@@ -1,6 +1,5 @@
-package org.aksw.jena_sparql_api.batch.cli.main;
+package org.aksw.jena_sparql_api.utils;
 
-import java.io.Closeable;
 import java.util.Iterator;
 
 import org.apache.jena.util.iterator.WrappedIterator;
@@ -8,9 +7,9 @@ import org.apache.jena.util.iterator.WrappedIterator;
 public class ExtendedIteratorClosable<T>
     extends WrappedIterator<T>
 {
-    protected Closeable closable;
+    protected AutoCloseable closable;
 
-    public ExtendedIteratorClosable(Iterator<? extends T> base, Closeable closable) {
+    public ExtendedIteratorClosable(Iterator<? extends T> base, AutoCloseable closable) {
         super(base);
         this.closable = closable;
     }
@@ -27,7 +26,7 @@ public class ExtendedIteratorClosable<T>
         }
     }
 
-    public static <T> ExtendedIteratorClosable<T> create(Iterator<? extends T> base, Closeable closable) {
+    public static <T> ExtendedIteratorClosable<T> create(Iterator<? extends T> base, AutoCloseable closable) {
         ExtendedIteratorClosable<T> result = new ExtendedIteratorClosable<>(base, closable);
         return result;
     }

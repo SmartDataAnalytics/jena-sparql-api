@@ -20,7 +20,7 @@ public class QueryExecutionFactoryDataset
     protected Context context;
 
     public QueryExecutionFactoryDataset() {
-        this(DatasetFactory.createMem());
+        this(DatasetFactory.create());
     }
 
     public QueryExecutionFactoryDataset(Dataset dataset) {

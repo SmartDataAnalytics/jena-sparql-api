@@ -12,6 +12,7 @@ import org.aksw.jena_sparql_api.fallback.QueryExecutionFactoryFallback;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.model.QueryExecutionFactoryModel;
 import org.apache.jena.query.Dataset;
+import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
@@ -39,6 +40,11 @@ public class FluentQueryExecutionFactory<P>
         return new FluentQueryExecutionFactory<Object>(new QueryExecutionFactoryModel(model));
     }
 
+    public static FluentQueryExecutionFactory<?> model(Model model, Context context) {
+        Dataset dataset = DatasetFactory.create(model);
+        return from(dataset, context);
+    }
+
 //    public static FluentQueryExecutionFactory<?> dataset(Dataset dataset) {
 //        return new FluentQueryExecutionFactory<Object>(new QueryExecutionFactoryDataset(dataset));
 //    }
@@ -48,12 +54,16 @@ public class FluentQueryExecutionFactory<P>
 //    }
 
     public static FluentQueryExecutionFactory<?> from(Dataset dataset) {
-        return new FluentQueryExecutionFactory<Object>(new QueryExecutionFactoryDataset(dataset));
+        return from(dataset, null);
+    }
+
+    public static FluentQueryExecutionFactory<?> from(Dataset dataset, Context context) {
+        return new FluentQueryExecutionFactory<Object>(new QueryExecutionFactoryDataset(dataset, context));
     }
 
     public static FluentQueryExecutionFactory<?> from(DatasetGraph datasetGraph, Context context) {
         Dataset dataset = DatasetImpl.wrap(datasetGraph);
-        return new FluentQueryExecutionFactory<Object>(new QueryExecutionFactoryDataset(dataset, context));
+        return from(dataset, context);
     }
 
     public static FluentQueryExecutionFactory<?> defaultDatasetGraph() {

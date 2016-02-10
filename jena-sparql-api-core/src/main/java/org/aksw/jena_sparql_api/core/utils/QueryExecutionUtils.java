@@ -13,7 +13,10 @@ import org.aksw.jena_sparql_api.mapper.BindingMapperQuad;
 import org.aksw.jena_sparql_api.mapper.BindingMapperUtils;
 import org.aksw.jena_sparql_api.mapper.FunctionBindingMapper;
 import org.aksw.jena_sparql_api.utils.CloseableQueryExecution;
+import org.aksw.jena_sparql_api.utils.ExtendedIteratorClosable;
 import org.aksw.jena_sparql_api.utils.IteratorResultSetBinding;
+import org.apache.jena.atlas.iterator.WrapperIterator;
+import org.apache.jena.atlas.lib.Closeable;
 import org.apache.jena.atlas.lib.Sink;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -52,6 +55,17 @@ public class QueryExecutionUtils {
         return result;
     }
 
+    public static void tryClose(Object obj) {
+        if(obj instanceof AutoCloseable) {
+            try {
+                ((AutoCloseable) obj).close();
+            } catch (Exception e) {
+                logger.warn("Exception while closing", e);
+            }
+        } else if(obj instanceof Closeable) {
+            ((Closeable) obj).close();
+        }
+    }
 
     /**
      * Exec construct with wrapper to extended iterator
@@ -62,7 +76,9 @@ public class QueryExecutionUtils {
     public static ExtendedIterator<Triple> execConstruct(QueryExecutionFactory qef, Query query) {
         QueryExecution qe = qef.createQueryExecution(query);
         Iterator<Triple> it = qe.execConstructTriples();
-        WrappedIterator<Triple> result = WrappedIterator.<Triple>createNoRemove(it);
+
+        ExtendedIteratorClosable<Triple> result = ExtendedIteratorClosable.create(it, () -> { tryClose(it); qe.close();});
+        //WrappedIterator<Triple> result = WrappedIterator.<Triple>createNoRemove(it);
         return result;
     }
 
