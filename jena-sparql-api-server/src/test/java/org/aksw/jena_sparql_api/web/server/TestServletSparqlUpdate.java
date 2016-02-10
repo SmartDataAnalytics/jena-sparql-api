@@ -16,12 +16,13 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
+import org.apache.jena.sparql.core.DatasetDescription;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.ResourceHandler;
+import org.eclipse.jetty.util.resource.Resource;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-
-import org.apache.jena.sparql.core.DatasetDescription;
 
 public class TestServletSparqlUpdate {
     // TODO Make this test work in offline mode
@@ -41,7 +42,7 @@ public class TestServletSparqlUpdate {
         UpdateExecutionUtils.copyByConstruct(ssLocal, ssDBpedia, s, 1000);
 
 
-        Server server = ServerUtils.startServer(port, new WebAppInitializer());
+        Server server = ServerUtils.startServer(port, WebAppInitializerSparqlService.create(ConfigApp.class));
 
 
 
@@ -75,11 +76,18 @@ public class TestServletSparqlUpdate {
     }
 
     //@Test
-    public void test2() throws InterruptedException {
+    public void test2() throws Exception {
         int port = 7533;
-
-        Server server = ServerUtils.startServer(port, new WebAppInitializer());
+        Server server = ServerUtils.startServer(port, WebAppInitializerSparqlService.create(ConfigApp.class));
         server.join();
+
+//      ResourceHandler resHandler = new ResourceHandler();
+//      resHandler.setBaseResource(Resource.newClassPathResource("/snorql/"));
+//      server.setHandler(resHandler);
+
+
+        //http://stackoverflow.com/questions/29658240/spring-boot-jersey-allow-jersey-to-serve-static-content
+        //SpringApplication.run(MySpringBootServletInitializer.class);
 
 //        AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext(ConfigApp.class);
 //        SparqlServiceFactory ssf = (SparqlServiceFactory) ctx.getBean("sparqlServiceFactory");

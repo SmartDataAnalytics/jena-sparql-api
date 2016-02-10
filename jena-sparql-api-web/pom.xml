@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -78,12 +79,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.aksw.jena-sparql-api</groupId>
-            <artifactId>jena-sparql-api-server</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-beans</artifactId>
         </dependency>
@@ -104,10 +99,10 @@
         </dependency>
 
 
-<!-- 		<dependency> -->
-<!-- 			<groupId>org.atmosphere</groupId> -->
-<!-- 			<artifactId>atmosphere-jersey</artifactId> -->
-<!-- 		</dependency> -->
+        <!-- <dependency> -->
+        <!-- <groupId>org.atmosphere</groupId> -->
+        <!-- <artifactId>atmosphere-jersey</artifactId> -->
+        <!-- </dependency> -->
 
 
         <dependency>
@@ -130,7 +125,10 @@
             <artifactId>junit</artifactId>
         </dependency>
 
-
+        <dependency>
+            <groupId>org.tuckey</groupId>
+            <artifactId>urlrewritefilter</artifactId>
+        </dependency>
 
         <!-- <dependency> -->
         <!-- <groupId>javax.servlet</groupId> -->

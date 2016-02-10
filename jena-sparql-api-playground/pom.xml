@@ -2,11 +2,10 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>jena-sparql-api-concepts</artifactId>
+    <artifactId>jena-sparql-api-playground</artifactId>
     <packaging>jar</packaging>
 
-    <name>Jena SPARQL API - Concepts</name>
-    <url>http://github.org/AKSW/jena-sparql-api</url>
+    <name>Jena SPARQL API - Playground</name>
 
     <parent>
         <groupId>org.aksw.jena-sparql-api</groupId>
@@ -18,24 +17,13 @@
         <!-- Self Dependencies -->
         <dependency>
             <groupId>org.aksw.jena-sparql-api</groupId>
-            <artifactId>jena-sparql-api-core</artifactId>
+            <artifactId>jena-sparql-api-concepts</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>org.jgrapht</groupId>
-            <artifactId>jgrapht-core</artifactId>
+            <groupId>org.aksw.jena-sparql-api</groupId>
+            <artifactId>jena-sparql-api-server</artifactId>
         </dependency>
-
-        <dependency>
-            <groupId>org.aksw.gson</groupId>
-            <artifactId>gson-utils-core</artifactId>
-        </dependency>
-
-<!--         <dependency> -->
-<!--             <groupId>org.aksw.jena-sparql-api</groupId> -->
-<!--             <artifactId>jena-sparql-api-web</artifactId> -->
-<!--             <scope>test</scope> -->
-<!--         </dependency> -->
 
     </dependencies>
 </project>

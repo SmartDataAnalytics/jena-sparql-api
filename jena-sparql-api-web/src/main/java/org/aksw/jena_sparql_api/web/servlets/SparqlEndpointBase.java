@@ -242,6 +242,10 @@ public abstract class SparqlEndpointBase {
     }
 
     public void processStmtAsync(final AsyncResponse response, String stmtStr, final String format) {
+        if(stmtStr == null) {
+            throw new RuntimeException("No query/update statement provided");
+        }
+
         SparqlStmt stmt = classifyStmt(stmtStr);
 
         if(stmt.isQuery()) {

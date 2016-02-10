@@ -6,6 +6,7 @@ import java.security.ProtectionDomain;
 
 import javax.servlet.ServletException;
 
+import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandler.Context;
 import org.eclipse.jetty.util.component.AbstractLifeCycle.AbstractLifeCycleListener;
@@ -14,6 +15,7 @@ import org.eclipse.jetty.webapp.WebAppContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.WebApplicationInitializer;
+import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 
 /**
  *
@@ -31,6 +33,15 @@ public class ServerUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(ServerUtils.class);
 
+    public static Server startSparqlEndpoint(SparqlServiceFactory ssf, int port) {
+        AnnotationConfigWebApplicationContext rootContext = new AnnotationConfigWebApplicationContext();
+        rootContext.refresh();
+        rootContext.getBeanFactory().registerSingleton("sparqlServiceFactory", ssf);
+
+        Server result = startServer(port, new WebAppInitializerSparqlService(rootContext));
+        return result;
+    }
+
     public static Server startServer(int port,
             WebApplicationInitializer initializer) {
         // Not sure if using this class always works as expected
@@ -39,8 +50,33 @@ public class ServerUtils {
     }
 
     public static Server startServer(Class<?> clazz, int port,
-            WebApplicationInitializer initializer) {
+            WebApplicationInitializer initializer)
+    {
+        String externalForm = getExternalForm(clazz);
+        Server result = startServer(port, externalForm, initializer);
+        return result;
+    }
 
+    public static Server startServer(int port, String externalForm,
+            final WebApplicationInitializer initializer) {
+        Server server = prepareServer(port, externalForm, initializer);
+        try {
+            server.start();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        return server;
+    }
+
+    public static Server prepareServer(int port,
+            WebApplicationInitializer initializer) {
+        // Not sure if using this class always works as expected
+        Server result = prepareServer(ServerUtils.class, port, initializer);
+        return result;
+    }
+
+    public static String getExternalForm(Class<?> clazz) {
         ProtectionDomain protectionDomain = clazz.getProtectionDomain();
         URL location = protectionDomain.getCodeSource().getLocation();
         String externalForm = location.toExternalForm();
@@ -57,14 +93,21 @@ public class ServerUtils {
                 externalForm = test;
             }
         }
+        return externalForm;
+    }
+
+    public static Server prepareServer(Class<?> clazz, int port,
+            WebApplicationInitializer initializer) {
+
+        String externalForm = getExternalForm(clazz);
 
         logger.debug("Loading webAppContext from " + externalForm);
 
-        Server result = startServer(port, externalForm, initializer);
+        Server result = prepareServer(port, externalForm, initializer);
         return result;
     }
 
-    public static Server startServer(int port, String externalForm,
+    public static Server prepareServer(int port, String externalForm,
             final WebApplicationInitializer initializer) {
         Server server = new Server(port);
         // server.setHandler(getServletContextHandler(getContext()));
@@ -112,12 +155,6 @@ public class ServerUtils {
         webAppContext.setWar(externalForm);
 
         server.setHandler(webAppContext);
-        try {
-            server.start();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
         return server;
     }
 

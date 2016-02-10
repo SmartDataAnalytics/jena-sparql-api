@@ -13,17 +13,20 @@ import org.aksw.jena_sparql_api.update.FluentSparqlServiceFactory;
 import org.aksw.jena_sparql_api.update.SparqlServiceFactoryEventSource;
 import org.apache.jena.atlas.web.auth.HttpAuthenticator;
 import org.apache.jena.atlas.web.auth.SimpleAuthenticator;
+import org.apache.jena.sparql.core.DatasetDescription;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 
 import com.google.common.base.Predicates;
-import org.apache.jena.sparql.core.DatasetDescription;
 
 @Configuration
 //@ComponentScan({"org.aksw.jassa.web", "org.aksw.facete2.web"}) // TODO I think we can drop jassa.web from scannig by now
+//@ComponentScan({"org.aksw.jena_sparql_api.web.utils.wip"})
+//@Import(WebMvcConfigSnorql.class)
 public class ConfigApp {
 
     @Bean
