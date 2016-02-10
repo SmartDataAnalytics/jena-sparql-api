@@ -86,7 +86,7 @@ public class PropertyFunctionKShortestPaths
         Node kNode = ListUtils.safeGet(argList, 3);
 
 
-        Integer tmpK = null;;
+        Integer tmpK = null;
         if(kNode != null && kNode.isLiteral()) {
             Object o = kNode.getLiteralValue();
             if(o instanceof Number) {
@@ -121,7 +121,10 @@ public class PropertyFunctionKShortestPaths
         Path path = PathParser.parse(pathStr, prologue);
 
 
-        PathExecutionUtils.executePath(path, s, targetNode, qef, p -> { rdfPaths.add(p); return k == null ? false : rdfPaths.size() >= k; });
+        PathExecutionUtils.executePath(path, s, targetNode, qef, p -> {
+            rdfPaths.add(p);
+            boolean r = k == null ? false : rdfPaths.size() >= k;
+            return r; });
 
         Gson gson = new Gson();
         List<Binding> bindings = new ArrayList<Binding>();

@@ -49,7 +49,7 @@ public class PathExecutionUtils {
 
         //QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://dbpedia.org/sparql", "http://dbpedia.org").config().selectOnly().end().create();
 
-        NfaExecution<Integer> exec = new NfaExecution<Integer>(nfa, qef, false, p -> targetNode != null && p.getEnd().equals(targetNode) ? pathCallback.apply(p) : false);
+        NfaExecution<Integer> exec = new NfaExecution<Integer>(nfa, qef, false, p -> targetNode == null || p.getEnd().equals(targetNode) ? pathCallback.apply(p) : false);
         exec.add(nfa.getStartStates(), startNode);
         while(exec.advance()) {
             System.out.println("advancing...");

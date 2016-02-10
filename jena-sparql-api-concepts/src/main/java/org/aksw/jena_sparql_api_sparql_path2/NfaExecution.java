@@ -78,7 +78,8 @@ public class NfaExecution<V> {
             if(isFinal) {
                 Multimap<Node, NestedRdfPath> ps = frontier.getPaths(state);
                 for(NestedRdfPath path : ps.values()) {
-                    isFinished = pathCallback.apply(path.asSimplePath());
+                    RdfPath rdfPath = path.asSimplePath();
+                    isFinished = pathCallback.apply(rdfPath);
                     if(isFinished) {
                         break;
                     }

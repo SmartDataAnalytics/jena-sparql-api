@@ -8,8 +8,6 @@ public class PropertyFunctionFactoryKShortestPaths
 {
     @Override
     public PropertyFunction create(String uri) {
-        System.out.println("created property function");
-
         PropertyFunctionKShortestPaths result = PropertyFunctionKShortestPaths.DEFAULT_IRI.equals(uri)
                 ? new PropertyFunctionKShortestPaths()
                 : null

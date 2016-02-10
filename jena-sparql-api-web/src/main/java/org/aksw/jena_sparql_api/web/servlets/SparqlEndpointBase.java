@@ -83,6 +83,7 @@ public abstract class SparqlEndpointBase {
         //query.setPrefix("bif", "http://www.openlinksw.com/schemas/bif#");
 
         //QueryFactory.parse(query, queryString, "http://example.org/base-uri/", Syntax.syntaxSPARQL_11);
+        // TODO We should not have to parse the query string here, as this is the parser's job
         Query query = QueryFactory.create(queryString, Syntax.syntaxSPARQL_11);
 
 
