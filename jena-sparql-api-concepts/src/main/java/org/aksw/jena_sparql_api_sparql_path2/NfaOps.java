@@ -7,6 +7,7 @@ import org.jgrapht.VertexFactory;
 
 import com.google.common.collect.FluentIterable;
 
+//https://swtch.com/~rsc/regexp/regexp1.html
 public class NfaOps {
 
     /**
@@ -113,18 +114,18 @@ public class NfaOps {
      * @return
      */
     public static <V, E, T> PartialNfa<V, T> oneOrMore(DirectedGraph<V, E> graph, VertexFactory<V> vertexFactory, PartialNfa<V, T> a, EdgeLabelAccessor<E, T> edgeLabelAccessor) {
-        V tmpVertex = vertexFactory.createVertex();
-        graph.addVertex(tmpVertex);
+        V newStartVertex = vertexFactory.createVertex();
+        graph.addVertex(newStartVertex);
 
         for(HalfEdge<V, T> looseEnd : a.getLooseEnds()) {
-            E edge = graph.addEdge(looseEnd.getStartVertex(), tmpVertex);
+            E edge = graph.addEdge(looseEnd.getStartVertex(), newStartVertex);
             edgeLabelAccessor.setLabel(edge, looseEnd.getEdgeLabel());
         }
 
-        V newStartVertex = a.getStartVertex();
-        graph.addEdge(tmpVertex, newStartVertex, null);
+        V oldStartVertex = a.getStartVertex();
+        graph.addEdge(newStartVertex, oldStartVertex);
 
-        Iterable<HalfEdge<V, T>> newLooseEnds = Collections.singletonList(new HalfEdge<V, T>(tmpVertex, null));
+        Iterable<HalfEdge<V, T>> newLooseEnds = Collections.singletonList(new HalfEdge<V, T>(newStartVertex, null));
         PartialNfa<V, T> result = PartialNfa.create(newStartVertex, newLooseEnds);
         return result;
     }

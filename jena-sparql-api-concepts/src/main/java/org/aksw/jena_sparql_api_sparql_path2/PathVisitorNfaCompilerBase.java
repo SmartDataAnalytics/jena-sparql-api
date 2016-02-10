@@ -114,8 +114,11 @@ abstract class PathVisitorNfaCompilerBase<V, E, T>
     }
 
     @Override
-    public void visit(P_OneOrMore1 arg0) {
-        throw new UnsupportedOperationException();
+    public void visit(P_OneOrMore1 path) {
+        PartialNfa<V, T> left = process(path.getSubPath());
+
+        PartialNfa<V, T> next = NfaOps.oneOrMore(graph, vertexFactory, left, edgeLabelAccessor);
+        stack.push(next);
     }
 
     @Override

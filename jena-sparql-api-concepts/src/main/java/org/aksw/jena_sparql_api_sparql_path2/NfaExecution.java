@@ -36,7 +36,7 @@ public class NfaExecution<V> {
      */
     protected Frontier<V> frontier;
 
-    protected Set<NestedRdfPath> accepted = new HashSet<NestedRdfPath>();
+    //protected Set<NestedRdfPath> accepted = new HashSet<NestedRdfPath>();
     protected Function<RdfPath, Boolean> pathCallback;
 
     /**

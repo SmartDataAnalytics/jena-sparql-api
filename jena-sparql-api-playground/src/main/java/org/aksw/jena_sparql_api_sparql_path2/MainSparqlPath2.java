@@ -30,9 +30,9 @@ public class MainSparqlPath2 {
 
         PropertyFunctionRegistry.get().put(PropertyFunctionKShortestPaths.DEFAULT_IRI, new PropertyFunctionFactoryKShortestPaths());
 
-        // Create a SPARQL service backed by DBpedia
         //SparqlService coreSparqlService = FluentSparqlService.http("http://fp7-pp.publicdata.eu/sparql", "http://fp7-pp.publicdata.eu/").create();
-        SparqlService coreSparqlService = FluentSparqlService.http("http://localhost:8890/sparql", "http://fp7-pp.publicdata.eu/").create();
+        //SparqlService coreSparqlService = FluentSparqlService.http("http://localhost:8890/sparql", "http://fp7-pp.publicdata.eu/").create();
+        SparqlService coreSparqlService = FluentSparqlService.http("http://dbpedia.org/sparql", "http://dbpedia.org").create();
 
         // Create a datasetGraph backed by the SPARQL service to DBpedia
 //        DatasetGraphSparqlService datasetGraph = new DatasetGraphSparqlService(coreSparqlService);
