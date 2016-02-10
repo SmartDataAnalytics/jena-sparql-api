@@ -58,6 +58,9 @@ public class FluentQueryExecutionFactoryFn<P>
     }
 
     public FluentQueryExecutionFactoryFn<P> withPrefixes(final PrefixMapping pm, final boolean doClone) {
+        /**
+         * TODO: Convert to use of a Query transformation (Query -> Query)
+         */
         compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
             @Override
             public QueryExecutionFactory apply(QueryExecutionFactory qef) {

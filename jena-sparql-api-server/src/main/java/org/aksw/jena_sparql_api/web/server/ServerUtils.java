@@ -7,6 +7,7 @@ import java.security.ProtectionDomain;
 import javax.servlet.ServletException;
 
 import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
+import org.aksw.jena_sparql_api.stmt.SparqlStmtParser;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandler.Context;
 import org.eclipse.jetty.util.component.AbstractLifeCycle.AbstractLifeCycleListener;
@@ -15,7 +16,6 @@ import org.eclipse.jetty.webapp.WebAppContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.WebApplicationInitializer;
-import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 import org.springframework.web.context.support.GenericWebApplicationContext;
 
 /**
@@ -34,11 +34,12 @@ public class ServerUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(ServerUtils.class);
 
-    public static Server startSparqlEndpoint(SparqlServiceFactory ssf, int port) {
+    public static Server startSparqlEndpoint(SparqlServiceFactory ssf, SparqlStmtParser sparqlStmtParser, int port) {
 //        AnnotationConfigWebApplicationContext rootContext = new AnnotationConfigWebApplicationContext();
 //        rootContext.refresh();
         GenericWebApplicationContext rootContext = new GenericWebApplicationContext();
         rootContext.getBeanFactory().registerSingleton("sparqlServiceFactory", ssf);
+        rootContext.getBeanFactory().registerSingleton("sparqlStmtParser", sparqlStmtParser);
 
         Server result = startServer(port, new WebAppInitializerSparqlService(rootContext));
         return result;

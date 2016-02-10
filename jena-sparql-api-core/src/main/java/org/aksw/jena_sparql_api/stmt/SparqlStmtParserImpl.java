@@ -38,6 +38,17 @@ public class SparqlStmtParserImpl
         this.actAsClassifier = actAsClassifier;
     }
 
+    public SparqlQueryParser getQueryParser() {
+        return queryParser;
+    }
+
+    public SparqlUpdateParser getUpdateParser() {
+        return updateParser;
+    }
+
+    public boolean isActAsClassifier() {
+        return actAsClassifier;
+    }
 
     @Override
     public SparqlStmt apply(String stmtStr) {

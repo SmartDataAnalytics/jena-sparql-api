@@ -7,9 +7,9 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 
 import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
+import org.aksw.jena_sparql_api.stmt.SparqlStmtParser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
@@ -23,6 +23,9 @@ public class ServletSparqlServiceImpl
     @Autowired
     protected SparqlServiceFactory ssf;
 
+    @Autowired
+    protected SparqlStmtParser sparqlStmtParser;
+
     public ServletSparqlServiceImpl() {
         ssf = null;
     }
@@ -31,6 +34,12 @@ public class ServletSparqlServiceImpl
     protected SparqlServiceFactory getSparqlServiceFactory() {
         return ssf;
     }
+
+    @Override
+    protected SparqlStmtParser getSparqlStmtParser() {
+        SparqlStmtParser result = sparqlStmtParser != null ? sparqlStmtParser : super.getSparqlStmtParser();
+        return result;
+    };
 
     @GET
     @Produces(MediaType.TEXT_HTML)
