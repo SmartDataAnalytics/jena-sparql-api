@@ -61,7 +61,7 @@ public abstract class SparqlEndpointBase {
 
     @Deprecated
     public QueryExecution createQueryExecution(Query query, @Context HttpServletRequest req) {
-        QueryExecutionAndType tmp = createQueryExecution(query.toString());
+        QueryExecutionAndType tmp = createQueryExecutionAndType(query.toString());
         QueryExecution result = tmp.getQueryExecution();
         return result;
     }
@@ -78,19 +78,25 @@ public abstract class SparqlEndpointBase {
      * @param queryString
      * @return
      */
-    public QueryExecutionAndType createQueryExecution(String queryString) {
+    public QueryExecutionAndType createQueryExecutionAndType(String queryString) {
         //Query query = new Query();
         //query.setPrefix("bif", "http://www.openlinksw.com/schemas/bif#");
 
         //QueryFactory.parse(query, queryString, "http://example.org/base-uri/", Syntax.syntaxSPARQL_11);
         // TODO We should not have to parse the query string here, as this is the parser's job
-        Query query = QueryFactory.create(queryString, Syntax.syntaxSPARQL_11);
+        Query query = QueryFactory.create(queryString, Syntax.syntaxARQ);
 
 
         QueryExecution qe = createQueryExecution(query);
 
         QueryExecutionAndType result = new QueryExecutionAndType(qe, query.getQueryType());
 
+        return result;
+    }
+
+    public QueryExecutionAndType createQueryExecutionAndType(Query query) {
+        QueryExecution qe = createQueryExecution(query);
+        QueryExecutionAndType result = new QueryExecutionAndType(qe, query.getQueryType());
         return result;
     }
 
@@ -123,7 +129,7 @@ public abstract class SparqlEndpointBase {
     public StreamingOutput processQueryToStreaming(String queryString, String format)
             throws Exception
     {
-        QueryExecutionAndType qeAndType = createQueryExecution(queryString);
+        QueryExecutionAndType qeAndType = createQueryExecutionAndType(queryString);
 
         StreamingOutput result = ProcessQuery.processQuery(qeAndType, format);
         return result;
@@ -274,8 +280,15 @@ public abstract class SparqlEndpointBase {
 //            throw new RuntimeException(e);
 //        }
 
-//        final QueryExecutionAndType qeAndType = tmp;
-      final QueryExecutionAndType qeAndType = createQueryExecution(stmt.getOriginalString());
+        final QueryExecutionAndType qeAndType = stmt.isParsed()
+                ? createQueryExecutionAndType(stmt.getQuery())
+                : createQueryExecutionAndType(stmt.getOriginalString())
+                ;
+//        if(stmt.isParsed()) {
+//
+//        }
+//
+//      final QueryExecutionAndType qeAndType = createQueryExecution(stmt.getOriginalString());
 
 
 

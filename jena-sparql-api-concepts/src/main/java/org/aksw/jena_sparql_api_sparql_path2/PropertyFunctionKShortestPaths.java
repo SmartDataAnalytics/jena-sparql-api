@@ -85,6 +85,16 @@ public class PropertyFunctionKShortestPaths
         Node targetNode = ListUtils.safeGet(argList, 2);
         Node kNode = ListUtils.safeGet(argList, 3);
 
+        if(targetNode != null) {
+            if(targetNode.isVariable()) {
+                targetNode = binding.get((Var)targetNode);
+            }
+
+            // Note: Target node may be a blank from the binding
+            if(targetNode != null && targetNode.isBlank()) {
+                targetNode = null;
+            }
+        }
 
         Integer tmpK = null;
         if(kNode != null && kNode.isLiteral()) {

@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api_sparql_path2;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -154,19 +155,23 @@ public class NfaExecution<V> {
                         Node p = t.getPredicate();
                         P_Path0 p0;
 
+                        //Node s;
                         Node o;
                         if(t.getSubject().equals(node)) {
                             p0 = new P_Link(p);
+                            //s = t.getSubject();
                             o = t.getObject();
                         } else if(t.getObject().equals(node)) {
                             p0 = new P_ReverseLink(p);
                             //t = TripleUtils.swap(t);
+                            //s = t.getObject();
                             o = t.getSubject();
                         } else {
                             throw new RuntimeException("Should not happen");
                         }
 
-                        for(NestedRdfPath parentPath : ps.values()) {
+                        Collection<NestedRdfPath> parentPaths = ps.get(node);
+                        for(NestedRdfPath parentPath : parentPaths) {
                             NestedRdfPath next = new NestedRdfPath(parentPath, p0, o);
 
                             if(next.isCycleFree()) {

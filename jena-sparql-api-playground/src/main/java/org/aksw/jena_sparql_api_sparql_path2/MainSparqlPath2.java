@@ -6,6 +6,8 @@ import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
+import org.aksw.jena_sparql_api.update.FluentSparqlServiceFactory;
+import org.aksw.jena_sparql_api.update.FluentSparqlServiceFactoryFn;
 import org.aksw.jena_sparql_api.web.server.ServerUtils;
 import org.apache.jena.query.ARQ;
 import org.apache.jena.query.QueryExecution;
@@ -32,6 +34,8 @@ public class MainSparqlPath2 {
 
         //SparqlService coreSparqlService = FluentSparqlService.http("http://fp7-pp.publicdata.eu/sparql", "http://fp7-pp.publicdata.eu/").create();
         //SparqlService coreSparqlService = FluentSparqlService.http("http://localhost:8890/sparql", "http://fp7-pp.publicdata.eu/").create();
+        //FluentSparqlServiceFactoryFn.start().configService().
+
         SparqlService coreSparqlService = FluentSparqlService.http("http://dbpedia.org/sparql", "http://dbpedia.org").create();
 
         // Create a datasetGraph backed by the SPARQL service to DBpedia
