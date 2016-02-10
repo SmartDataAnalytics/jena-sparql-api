@@ -6,6 +6,7 @@ import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
+import org.aksw.jena_sparql_api.web.server.ServerUtils;
 import org.apache.jena.query.ARQ;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
@@ -19,6 +20,7 @@ import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.pfunction.PropertyFunctionRegistry;
 import org.apache.jena.sparql.util.Context;
+import org.eclipse.jetty.server.Server;
 
 
 public class MainSparqlPath2 {
@@ -70,17 +72,17 @@ public class MainSparqlPath2 {
 
         };
 
-//        Server server = ServerUtils.startSparqlEndpoint(ssf, 7533);
-//        server.join();
+        Server server = ServerUtils.startSparqlEndpoint(ssf, 7533);
+        server.join();
 
 
         //Model model = ModelFactory.createDefaultModel();
         //GraphQueryExecutionFactory
 
-        String queryStr = "SELECT * { ?s ?p ?o } LIMIT 10";
+        //String queryStr = "SELECT * { ?s ?p ?o } LIMIT 10";
 //
         //String queryStr = "SELECT ?path { <http://fp7-pp.publicdata.eu/resource/project/257943> jsafn:kShortestPaths ('(rdf:type|!rdf:type)*' ?path <http://fp7-pp.publicdata.eu/resource/city/France-PARIS>) }";
-        //String queryStr = "SELECT ?path { <http://fp7-pp.publicdata.eu/resource/project/257943> jsafn:kShortestPaths ('rdf:type*' ?path) }";
+        String queryStr = "SELECT ?path { <http://fp7-pp.publicdata.eu/resource/project/257943> jsafn:kShortestPaths ('rdf:type*' ?path) }";
 //        //QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://dbpedia.org/sparql", "http://dbpedia.org").create();
 //
 //        for(int i = 0; i < 1; ++i) {

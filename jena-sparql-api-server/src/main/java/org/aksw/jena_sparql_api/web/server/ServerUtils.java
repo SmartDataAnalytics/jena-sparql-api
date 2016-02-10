@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.WebApplicationInitializer;
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
+import org.springframework.web.context.support.GenericWebApplicationContext;
 
 /**
  *
@@ -34,8 +35,9 @@ public class ServerUtils {
     private static final Logger logger = LoggerFactory.getLogger(ServerUtils.class);
 
     public static Server startSparqlEndpoint(SparqlServiceFactory ssf, int port) {
-        AnnotationConfigWebApplicationContext rootContext = new AnnotationConfigWebApplicationContext();
-        rootContext.refresh();
+//        AnnotationConfigWebApplicationContext rootContext = new AnnotationConfigWebApplicationContext();
+//        rootContext.refresh();
+        GenericWebApplicationContext rootContext = new GenericWebApplicationContext();
         rootContext.getBeanFactory().registerSingleton("sparqlServiceFactory", ssf);
 
         Server result = startServer(port, new WebAppInitializerSparqlService(rootContext));
