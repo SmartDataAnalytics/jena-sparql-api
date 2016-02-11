@@ -3,7 +3,6 @@ package org.aksw.jena_sparql_api_sparql_path2;
 import org.aksw.jena_sparql_api.core.GraphSparqlService;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
-import org.aksw.jena_sparql_api.core.SparqlServiceFactoryHttp;
 import org.aksw.jena_sparql_api.stmt.SparqlParserConfig;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
@@ -21,6 +20,8 @@ import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.pfunction.PropertyFunctionRegistry;
 import org.apache.jena.sparql.util.Context;
 import org.eclipse.jetty.server.Server;
+
+import rx.Observable;
 
 
 public class MainSparqlPath2 {
@@ -52,6 +53,23 @@ public class MainSparqlPath2 {
 
     public static void main(String[] args) throws InterruptedException {
 
+        //Observable.from(args).subscribe()
+        Observable<Object> obs = Observable.create(subscriber -> {
+            for(int i = 0; i < 50; ++i) {
+                if(!subscriber.isUnsubscribed()) {
+                    subscriber.onNext("yay" + i);
+                }
+            }
+            if(!subscriber.isUnsubscribed()) {
+                subscriber.onCompleted();
+            }
+        });
+        obs.subscribe(x -> System.out.println(x));
+
+        if(true) {
+            return;
+        }
+
         PropertyFunctionRegistry.get().put(PropertyFunctionKShortestPaths.DEFAULT_IRI, new PropertyFunctionFactoryKShortestPaths());
 
         //SparqlService coreSparqlService = FluentSparqlService.http("http://fp7-pp.publicdata.eu/sparql", "http://fp7-pp.publicdata.eu/").create();
@@ -81,7 +99,13 @@ public class MainSparqlPath2 {
 
         ssf = FluentSparqlServiceFactory.from(ssf)
                 .configFactory()
-                    .defaultServiceUri("http://dbpedia.org/sparql")
+                    //.defaultServiceUri("http://dbpedia.org/sparql")
+                    .defaultServiceUri("http://localhost:8890/sparql")
+                    .configService()
+                        .configQuery()
+                            .withPagination(1000)
+                        .end()
+                    .end()
                 .end()
                 .create();
 

@@ -12,6 +12,9 @@ import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.lookup.ListService;
 import org.aksw.jena_sparql_api.lookup.ListServiceUtils;
+import org.aksw.jena_sparql_api.lookup.LookupService;
+import org.aksw.jena_sparql_api.lookup.LookupServiceListService;
+import org.aksw.jena_sparql_api.lookup.LookupServicePartition;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
@@ -141,11 +144,14 @@ public class NfaExecution<V> {
                 ResourceShapeBuilder rsb = visitor.getResourceShapeBuilder();
 
 
-                MappedConcept<Graph> mc = ResourceShape.createMappedConcept(rsb.getResourceShape(), filter);
-                //System.out.println("MC: " + mc);
+                //MappedConcept<Graph> mc = ResourceShape.createMappedConcept(rsb.getResourceShape(), filter);
+                MappedConcept<Graph> mc = ResourceShape.createMappedConcept(rsb.getResourceShape(), null);
                 ListService<Concept, Node, Graph> ls = ListServiceUtils.createListServiceAcc(qef, mc, false);
+                //Map<Node, Graph> nodeToGraph = ls.fetchData(null, null, null);
 
-                Map<Node, Graph> nodeToGraph = ls.fetchData(null, null, null);
+                LookupService<Node, Graph> lsls = LookupServiceListService.create(ls);
+                lsls = LookupServicePartition.create(lsls, 100);
+                Map<Node, Graph> nodeToGraph = lsls.apply(nodes);
 
                 for(Entry<Node, Graph> entry : nodeToGraph.entrySet()) {
                     Node node = entry.getKey();
