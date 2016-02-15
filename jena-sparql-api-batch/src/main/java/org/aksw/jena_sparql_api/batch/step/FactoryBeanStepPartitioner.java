@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.batch.step;
 
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.partition.support.Partitioner;
+import org.springframework.batch.core.step.builder.PartitionStepBuilder;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.core.task.TaskExecutor;
 
@@ -58,7 +59,7 @@ public class FactoryBeanStepPartitioner
             .partitioner(slaveStep)
             .partitioner(name, partitioner)
             .taskExecutor(taskExecutor)
-            .gridSize(throttle)
+            .gridSize(throttle != null ? throttle : 6) // PartitionStepBuilder.DEFAULT_GRID_SIZE is private, but value is 6
             .build()
             ;
 

@@ -50,9 +50,7 @@ public class MainSparqlPath2 {
         return result;
     }
 
-
-    public static void main(String[] args) throws InterruptedException {
-
+    public static void rxJavaTest() {
         //Observable.from(args).subscribe()
         Observable<Object> obs = Observable.create(subscriber -> {
             for(int i = 0; i < 50; ++i) {
@@ -69,6 +67,10 @@ public class MainSparqlPath2 {
         if(true) {
             return;
         }
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+
 
         PropertyFunctionRegistry.get().put(PropertyFunctionKShortestPaths.DEFAULT_IRI, new PropertyFunctionFactoryKShortestPaths());
 

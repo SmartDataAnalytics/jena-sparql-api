@@ -1,6 +1,12 @@
 {
     todoTRim: "BIND('^\\s*(.*)\\s*$' AS ?trimPattern)",
 
+    taskExecutor: {
+      type: 'org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor',
+      corePoolSize: 8,
+      maxPoolSize: 8
+    },
+
     prefixes: { $prefixes: {
        'foo': 'http://bar',
        'geo':'http://www.w3.org/2003/01/geo/wgs84_pos#',
