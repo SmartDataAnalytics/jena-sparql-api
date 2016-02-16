@@ -160,8 +160,7 @@ var performRewrite = function(jsonStr) {
     var json = JSON.parse(jsonStr);
     var finalJson = rewriteUntilNoChange(json, rewriters);
 
-
-    finalJson = pullOutScopedInnerBeans(finalJson);
+    //finalJson = pullOutScopedInnerBeans(finalJson);
 
     var result = JSON.stringify(finalJson);
     return result;

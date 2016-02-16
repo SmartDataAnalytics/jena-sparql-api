@@ -1,12 +1,13 @@
 package org.aksw.jena_sparql_api.update;
 
 import org.aksw.jena_sparql_api.core.FluentFnBase;
-import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactoryFn;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryDatasetDescription;
+import org.aksw.jena_sparql_api.parse.UpdateExecutionFactoryParse;
+import org.apache.jena.sparql.core.DatasetDescription;
+import org.apache.jena.update.UpdateRequest;
 
 import com.google.common.base.Function;
-import org.apache.jena.sparql.core.DatasetDescription;
 
 public class FluentUpdateExecutionFactoryFn<P>
     extends FluentFnBase<UpdateExecutionFactory, P>
@@ -16,10 +17,22 @@ public class FluentUpdateExecutionFactoryFn<P>
         compose(new Function<UpdateExecutionFactory, UpdateExecutionFactory>() {
             @Override
             public UpdateExecutionFactory apply(UpdateExecutionFactory uef) {
-            	UpdateExecutionFactory r = new UpdateExecutionFactoryDatasetDescription(uef, withIri, datasetDescription);
+                UpdateExecutionFactory r = new UpdateExecutionFactoryDatasetDescription(uef, withIri, datasetDescription);
                 return r;
             }
         });
+        return this;
+    }
+
+    public FluentUpdateExecutionFactoryFn<P> withParser(final Function<String, UpdateRequest> parser) {
+        compose(new Function<UpdateExecutionFactory, UpdateExecutionFactory>() {
+            @Override
+            public UpdateExecutionFactory apply(UpdateExecutionFactory uef) {
+                UpdateExecutionFactory r = new UpdateExecutionFactoryParse(uef, parser);
+                return r;
+            }
+        });
+
         return this;
     }
 

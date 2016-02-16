@@ -14,4 +14,15 @@ public abstract class UpdateExecutionFactoryParsingBase
         UpdateProcessor result = this.createUpdateProcessor(updateRequest);
         return result;
     }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T> T unwrap(Class<T> clazz) {
+        T result = getClass().isAssignableFrom(clazz) ? (T)this : null;
+        return result;
+    }
+
+    @Override
+    public void close() throws Exception {
+    }
 }

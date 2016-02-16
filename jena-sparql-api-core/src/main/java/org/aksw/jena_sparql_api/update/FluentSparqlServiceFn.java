@@ -9,11 +9,14 @@ import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.SparqlServiceImpl;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
+import org.aksw.jena_sparql_api.stmt.SparqlQueryParserStmt;
+import org.aksw.jena_sparql_api.stmt.SparqlStmt;
+import org.aksw.jena_sparql_api.stmt.SparqlUpdateParserStmt;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
+import org.apache.jena.sparql.core.DatasetDescription;
 
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
-import org.apache.jena.sparql.core.DatasetDescription;
 
 public class FluentSparqlServiceFn<P>
     extends FluentFnBase<SparqlService, P>
@@ -129,6 +132,17 @@ public class FluentSparqlServiceFn<P>
 
         FluentSparqlServiceFn<P> result = withDatasetDescription(datasetDescription, withIri);
         return result;
+    }
+
+    public FluentSparqlServiceFn<P> withParser(final Function<String, SparqlStmt> parser) {
+        configQuery()
+            .withParser(SparqlQueryParserStmt.wrap(parser))
+        .end()
+        .configUpdate()
+            .withParser(SparqlUpdateParserStmt.wrap(parser))
+        .end();
+
+        return this;
     }
 
     public FluentSparqlServiceFn<P> withDatasetDescription(final DatasetDescription datasetDescription, final String withIri) {

@@ -66,7 +66,7 @@ public class ItemReaderQuad
     @Override
     public void afterPropertiesSet() throws Exception {
         // TODO Assert that properties are valid
-        System.out.println("TODO validate settings");
+        //System.out.println("TODO validate settings");
     }
 
 
@@ -85,8 +85,19 @@ public class ItemReaderQuad
         logger.info("[START] ItemReader " + id + " on page " + this.page);
 
         PagingQuery pagingQuery = new PagingQuery(this.pageSize, this.query);
-        Iterator<Query> itQuery = pagingQuery.createQueryIterator(offset);
+        Iterator<Query> itQuery = pagingQuery.createQueryIterator(offset, null);
         Query query = itQuery.next();
+
+
+//        logger.info("[START] ItemReader " + id + " on page " + this.page);
+//
+//        long offset = this.getCurrentItemCount();
+//        Long limit = maxItemCount != null ? (long)maxItemCount - this.getCurrentItemCount() : null;
+//
+//        PagingQuery pagingQuery = new PagingQuery(this.pageSize, this.query);
+//        Iterator<Query> itQuery = pagingQuery.createQueryIterator(offset, limit);
+//        Query query = itQuery.next();
+
 
         Iterator<Quad> result;
 

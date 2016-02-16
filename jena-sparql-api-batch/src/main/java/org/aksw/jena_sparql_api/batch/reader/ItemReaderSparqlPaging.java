@@ -118,7 +118,7 @@ public class ItemReaderSparqlPaging<T>
 
         //if(itQuery == null) {
             PagingQuery pagingQuery = new PagingQuery(this.pageSize, this.query);
-            Iterator<Query> itQuery = pagingQuery.createQueryIterator(this.page * this.pageSize);
+            Iterator<Query> itQuery = pagingQuery.createQueryIterator((long)(this.page * this.pageSize), null);
         //}
 
         Query query = itQuery.next();

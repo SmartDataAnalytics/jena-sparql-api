@@ -7,6 +7,7 @@ import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.query.ReadWrite;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.engine.QueryEngineFactory;
 import org.apache.jena.sparql.engine.QueryEngineRegistry;
@@ -61,6 +62,7 @@ public class QueryExecutionFactoryDataset
             Log.warn(QueryExecutionFactory.class, "Failed to find a QueryEngineFactory for query: "+query) ;
             return null ;
         }
+        //dataset.begin(ReadWrite.WRITE);
         return new QueryExecutionBase(query, dataset, context, f) ;
     }
 

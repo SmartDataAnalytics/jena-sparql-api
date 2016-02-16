@@ -7,6 +7,12 @@ import org.springframework.beans.factory.config.AbstractFactoryBean;
 
 import org.apache.jena.sparql.core.DatasetDescription;
 
+/**
+ * A singleton factory bean for creating {@link SparqlService} instances.
+ *
+ * @author raven
+ *
+ */
 public class FactoryBeanSparqlService
     extends AbstractFactoryBean<SparqlService>
 {
@@ -18,7 +24,7 @@ public class FactoryBeanSparqlService
 
     public FactoryBeanSparqlService() {
         super();
-        setSingleton(false);
+        setSingleton(true);
     }
 
     public SparqlServiceFactory getFactory() {
