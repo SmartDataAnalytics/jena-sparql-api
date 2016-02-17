@@ -44,7 +44,8 @@ rewriters.push(function(json) {
       partitioner: {
         type: 'org.aksw.jena_sparql_api.batch.step.PartitionerSparqlSlice',
         source: e.source,
-        query: e.query
+        query: e.query,
+        pageSize: e.chunk
       },
       slaveStep: result
     };

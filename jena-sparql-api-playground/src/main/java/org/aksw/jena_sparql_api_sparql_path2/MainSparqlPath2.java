@@ -39,8 +39,8 @@ public class MainSparqlPath2 {
                     .configQuery()
                         .withParser(sparqlStmtParser.getQueryParser())
                         .withPrefixes(prologue.getPrefixMapping(), true) // If a query object is without prefixes, inject them
-                        .end()
                     .end()
+                .end()
                 .create();
 
 

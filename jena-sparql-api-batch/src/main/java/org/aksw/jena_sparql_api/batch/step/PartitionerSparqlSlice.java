@@ -16,6 +16,13 @@ public class PartitionerSparqlSlice
     protected QueryExecutionFactory qef;
     protected Query query;
 
+    // If we know that the slave steps use a certain page size, we
+    // can use this information to adjust the grid size.
+    // It does not make sense for the grid size to be larger than the amount of pages there are to process.
+    // gridSize = Math.min(requestedGridSize, numItemsToProcess / numItemsPerPage)
+    protected Long pageSize;
+
+
     public PartitionerSparqlSlice() {
         super();
     }
@@ -42,12 +49,22 @@ public class PartitionerSparqlSlice
         this.query = query;
     }
 
+    public Long getPageSize() {
+        return pageSize;
+    }
 
+    public void setPageSize(Long pageSize) {
+        this.pageSize = pageSize;
+    }
 
     @Override
-    public Map<String, ExecutionContext> partition(int gridSize) {
+    public Map<String, ExecutionContext> partition(int requestedGridSize) {
+
         long min = 0;
         long max = QueryExecutionUtils.countQuery(query, qef);
+
+        // last part is equivalent to (long)Math.ceil(max / pageSize)
+        long gridSize = pageSize == null ? requestedGridSize : Math.min(requestedGridSize, (max + pageSize - 1) / pageSize);
 
         long targetSize = (max - min) / gridSize + 1;
 
