@@ -98,7 +98,7 @@ public class PathExecutionUtils {
 //        };
 
         while(!frontier.isEmpty()) {
-            Frontier<Integer, Node, Node> nextFrontier = NfaExecution.advanceFrontier(frontier, nfa, qef, false);
+            Frontier<Integer, Node, Node> nextFrontier = NfaExecution.advanceFrontier(frontier, nfa, false, LabeledEdgeImpl::isEpsilon, transitionToNodesToGraphlets);
             //System.out.println("advancing...");
             frontier = nextFrontier;
         }
