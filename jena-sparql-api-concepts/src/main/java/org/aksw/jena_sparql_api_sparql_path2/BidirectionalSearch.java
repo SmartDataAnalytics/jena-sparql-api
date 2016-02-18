@@ -13,14 +13,14 @@ import org.apache.jena.graph.Triple;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 
-public class BidirectionalSearch<V> {
+public class BidirectionalSearch<S, V, E> {
 //    protected NfaExecution<V> forwards;
 //    protected NfaExecution<V> backwards;
-    protected Frontier<V> fwdFrontier;
-    protected Frontier<V> bwdFrontier;
+    protected Frontier<S, V, E> fwdFrontier;
+    protected Frontier<S, V, E> bwdFrontier;
 
-    protected Set<NestedRdfPath> accepted = new HashSet<NestedRdfPath>();
-    protected Function<RdfPath, Boolean> pathCallback;
+    protected Set<NestedPath<V, E>> accepted = new HashSet<>();
+    protected Function<MyPath<V, E>, Boolean> pathCallback;
 
 //    public BidirectionalSearch(NfaExecution<V> forwards, NfaExecution<V> backwards) {
 //        this.forwards = forwards;
@@ -28,37 +28,37 @@ public class BidirectionalSearch<V> {
 //    }
 
 
-    public static <V> Set<RdfPath> intersect(Frontier<V> fwd, Frontier<V> bwd) {
-        Set<RdfPath> result = new HashSet<>();
+    public static <S, V, E> Set<MyPath<V, E>> intersect(Frontier<S, V, E> fwd, Frontier<S, V, E> bwd) {
+        Set<MyPath<V, E>> result = new HashSet<>();
 
         // Get the sets of states where the frontiers meet
-        Set<V> fwdStates = fwd.getCurrentStates();
-        Set<V> bwdStates = bwd.getCurrentStates();
-        Set<V> commonStates = Sets.intersection(fwdStates, bwdStates);
+        Set<S> fwdStates = fwd.getCurrentStates();
+        Set<S> bwdStates = bwd.getCurrentStates();
+        Set<S> commonStates = Sets.intersection(fwdStates, bwdStates);
 
-        for(V state : commonStates) {
-            Multimap<Node, NestedRdfPath> fwdNodeToPaths = fwd.getPaths(state);
-            Multimap<Node, NestedRdfPath> bwdNodeToPaths = bwd.getPaths(state);
+        for(S state : commonStates) {
+            Multimap<V, NestedPath<V, E>> fwdNodeToPaths = fwd.getPaths(state);
+            Multimap<V, NestedPath<V, E>> bwdNodeToPaths = bwd.getPaths(state);
 
-            Set<Node> fwdNodes = fwdNodeToPaths.keySet();
-            Set<Node> bwdNodes = bwdNodeToPaths.keySet();
-            Set<Node> commonNodes = Sets.union(fwdNodes, bwdNodes);
+            Set<V> fwdNodes = fwdNodeToPaths.keySet();
+            Set<V> bwdNodes = bwdNodeToPaths.keySet();
+            Set<V> commonNodes = Sets.union(fwdNodes, bwdNodes);
 
-            for(Node node : commonNodes) {
-                Collection<NestedRdfPath> fwdPaths = fwdNodeToPaths.get(node);
-                Collection<NestedRdfPath> bwdPaths = bwdNodeToPaths.get(node);
-                for(NestedRdfPath fwdPath : fwdPaths) {
-                    for(NestedRdfPath bwdPath : bwdPaths) {
-                        RdfPath fwdPart = fwdPath.asSimplePath();
-                        RdfPath bwdPart = bwdPath.asSimplePath().reverse();
+            for(V node : commonNodes) {
+                Collection<NestedPath<V, E>> fwdPaths = fwdNodeToPaths.get(node);
+                Collection<NestedPath<V, E>> bwdPaths = bwdNodeToPaths.get(node);
+                for(NestedPath<V, E> fwdPath : fwdPaths) {
+                    for(NestedPath<V, E> bwdPath : bwdPaths) {
+                        MyPath<V, E> fwdPart = fwdPath.asSimplePath();
+                        MyPath<V, E> bwdPart = bwdPath.asSimplePath().reverse();
 
-                        Node start = fwdPart.getStart();
-                        Node end = fwdPart.getEnd();
-                        List<Triple> triples = new ArrayList<>();
+                        V start = fwdPart.getStart();
+                        V end = fwdPart.getEnd();
+                        List<Triplet<V, E>> triples = new ArrayList<>();
                         triples.addAll(fwdPart.getTriples());
                         triples.addAll(bwdPart.getTriples());
 
-                        RdfPath path = new RdfPath(start, end, triples);
+                        MyPath<V, E> path = new MyPath<>(start, end, triples);
                         result.add(path);
                     }
                 }

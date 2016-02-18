@@ -16,8 +16,6 @@ import com.google.common.collect.Multimap;
 
 public class JGraphTUtils {
 
-
-
     /**
      * Simple transitive get function that retrieves all nodes reachable via
      * edges for which the predicate evaluates to true
@@ -28,7 +26,7 @@ public class JGraphTUtils {
      * @param edgeFilter
      * @return
      */
-    public static <V, T, E extends LabeledEdge<V, T>> Set<V> transitiveGet(DirectedGraph<V, E> graph, V startVertex, int mode, Predicate<E> edgeFilter) {
+    public static <V, E> Set<V> transitiveGet(DirectedGraph<V, E> graph, V startVertex, int mode, Predicate<E> edgeFilter) {
         Set<V> result = new HashSet<V>();
         Set<V> open = new HashSet<V>(Collections.singleton(startVertex));
 
@@ -48,7 +46,7 @@ public class JGraphTUtils {
                 Collection<V> incoming =
                 graph.incomingEdgesOf(current).stream()
                     .filter(edgeFilter)
-                    .map(e -> e.getSource())
+                    .map(e -> graph.getEdgeSource(e))
                     .collect(Collectors.toList());
 
                 open.addAll(incoming);
@@ -58,7 +56,7 @@ public class JGraphTUtils {
                 Collection<V> outgoing =
                 graph.outgoingEdgesOf(current).stream()
                     .filter(edgeFilter)
-                    .map(e -> e.getTarget())
+                    .map(e -> graph.getEdgeTarget(e))
                     .collect(Collectors.toList());
 
                 open.addAll(outgoing);
@@ -69,19 +67,19 @@ public class JGraphTUtils {
     }
 
     /**
-     * Check if a state is implicitly final if it has an epsilon transition to a final state
-     *
+     * Returns the set of non-epsilon edges reachable via epsilon transitions from the given vertex
+     *  // Check if a state is implicitly final if it has an epsilon transition to a final state
      */
-    public static <V> Set<LabeledEdge<V, Path>> resolveTransitions(DirectedGraph<V, LabeledEdge<V, Path>> graph, V vertex) {
+    public static <V, E> Set<E> resolveTransitions(DirectedGraph<V, E> graph, V vertex, Predicate<E> isEpsilon) {
 
-        Set<LabeledEdge<V, Path>> result = new HashSet<LabeledEdge<V, Path>>();
+        Set<E> result = new HashSet<>();
 
-        Set<LabeledEdge<V, Path>> visited = new HashSet<LabeledEdge<V, Path>>();
-        Set<LabeledEdge<V, Path>> open = new HashSet<LabeledEdge<V, Path>>(graph.outgoingEdgesOf(vertex));
+        Set<E> visited = new HashSet<>();
+        Set<E> open = new HashSet<>(graph.outgoingEdgesOf(vertex));
 
         while(!open.isEmpty()) {
-            Iterator<LabeledEdge<V, Path>> it = open.iterator();
-            LabeledEdge<V, Path> edge = it.next();
+            Iterator<E> it = open.iterator();
+            E edge = it.next();
             it.remove();
 
             boolean isVisited = visited.contains(edge);
@@ -90,11 +88,11 @@ public class JGraphTUtils {
             }
             visited.add(edge);
 
-            Path label = edge.getLabel();
-            V target = edge.getTarget();
+            boolean isEps = isEpsilon.test(edge);
+            V target = graph.getEdgeTarget(edge);
 
-            if(label == null) {
-                Set<LabeledEdge<V, Path>> nextEdges = graph.outgoingEdgesOf(target);
+            if(isEps) {
+                Set<E> nextEdges = graph.outgoingEdgesOf(target);
                 open.addAll(nextEdges);
             } else {
                 result.add(edge);

@@ -8,12 +8,12 @@ import java.util.List;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 
-public class RdfPath {
-    protected Node start;
-    protected Node end;
-    protected List<Triple> triples;
+public class MyPath<V, E> {
+    protected V start;
+    protected V end;
+    protected List<Triplet<V, E>> triples;
 
-    public RdfPath(Node start, Node end, List<Triple> triples) {
+    public MyPath(V start, V end, List<Triplet<V, E>> triples) {
         super();
         this.start = start;
         this.end = end;
@@ -26,16 +26,16 @@ public class RdfPath {
      */
     public boolean isCycleFree() {
         int n = triples.size();
-        int m = (new HashSet<Triple>(triples)).size();
+        int m = (new HashSet<Triplet<V, E>>(triples)).size();
         boolean result = n == m;
         return result;
     }
 
-    public Node getStart() {
+    public V getStart() {
         return start;
     }
 
-    public Node getEnd() {
+    public V getEnd() {
         return end;
     }
 
@@ -44,14 +44,14 @@ public class RdfPath {
         return result;
     }
 
-    public List<Triple> getTriples() {
+    public List<Triplet<V, E>> getTriples() {
         return triples;
     }
 
-    public RdfPath reverse() {
-        List<Triple> tmp = new ArrayList<>(triples);
+    public MyPath<V, E> reverse() {
+        List<Triplet<V, E>> tmp = new ArrayList<>(triples);
         Collections.reverse(tmp);
-        RdfPath result = new RdfPath(end, start, triples);
+        MyPath<V, E> result = new MyPath<>(end, start, triples);
         return result;
     }
 
@@ -73,7 +73,7 @@ public class RdfPath {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        RdfPath other = (RdfPath) obj;
+        MyPath other = (MyPath) obj;
         if (end == null) {
             if (other.end != null)
                 return false;

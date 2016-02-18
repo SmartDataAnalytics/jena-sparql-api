@@ -40,4 +40,9 @@ public class LabeledEdgeImpl<V, T>
         return "LabeledEdgeImpl [source=" + source + ", target=" + target
                 + ", label=" + label + "]";
     }
+
+    public static <V, T> boolean isEpsilon(LabeledEdge<V, T> edge) {
+        boolean result = edge.getLabel() == null;
+        return result;
+    }
 }

@@ -124,7 +124,7 @@ public class PropertyFunctionKShortestPaths
         Node sv = argSubject.getArg();
         Node s = sv.isVariable() ? binding.get((Var)sv) : sv;
 
-        final List<RdfPath> rdfPaths = new ArrayList<RdfPath>();
+        final List<MyPath<Node, Node>> rdfPaths = new ArrayList<>();
 
         String pathStr = pathNode.getLiteralLexicalForm();
 
@@ -139,7 +139,7 @@ public class PropertyFunctionKShortestPaths
         Gson gson = new Gson();
         List<Binding> bindings = new ArrayList<Binding>();
 
-        for(RdfPath rdfPath : rdfPaths) {
+        for(MyPath<Node, Node> rdfPath : rdfPaths) {
             JsonElement json = gson.toJsonTree(rdfPath);
             NodeValue rdfPathNodeValue = new NodeValueJson(json);
             Node rdfPathNode = rdfPathNodeValue.asNode();

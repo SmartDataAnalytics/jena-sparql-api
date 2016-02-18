@@ -8,4 +8,6 @@ public interface Nfa<V, E> {
     DirectedGraph<V, E> getGraph();
     Set<V> getStartStates();
     Set<V> getEndStates();
+
+    //boolean isEpsilon(E edge);
 }
