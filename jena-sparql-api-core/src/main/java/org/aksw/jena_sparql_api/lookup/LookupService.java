@@ -1,8 +1,7 @@
 package org.aksw.jena_sparql_api.lookup;
 
 import java.util.Map;
-
-import com.google.common.base.Function;
+import java.util.function.Function;
 
 public interface LookupService<K, V>
     extends Function<Iterable<K>, Map<K, V>>

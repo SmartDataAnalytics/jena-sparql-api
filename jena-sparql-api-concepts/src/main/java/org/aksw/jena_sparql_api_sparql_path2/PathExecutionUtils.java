@@ -1,8 +1,9 @@
 package org.aksw.jena_sparql_api_sparql_path2;
 
-import java.util.Collection;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
@@ -69,7 +70,7 @@ public class PathExecutionUtils {
         Frontier.addAll(frontier, nfa.getStartStates(), startNode);
 
 
-        Function<DirectedProperty<LabeledEdge<Integer, Path>>, LookupService<Node, Graphlet<Node, Node>>> createLookupService = (DirectedProperty<LabeledEdge<Integer, Path>> diTransition) -> {
+        Function<DirectedProperty<LabeledEdge<Integer, Path>>, Function<Iterable<Node>, Map<Node, Graphlet<Node, Node>>>> createLookupService = (DirectedProperty<LabeledEdge<Integer, Path>> diTransition) -> {
             Path pathx = diTransition.getProperty().getLabel();
             boolean assumeReversed = diTransition.isReverse();
 
@@ -85,8 +86,18 @@ public class PathExecutionUtils {
 
             LookupService<Node, Graph> lsls = LookupServiceListService.create(ls);
             lsls = LookupServicePartition.create(lsls, 100);
-            return lsls;
+
+            Function<Iterable<Node>, Map<Node, Graphlet<Node, Node>>> s = lsls.andThen(map -> {
+                Map<Node, Graphlet<Node, Node>> r = map.entrySet().stream().collect(Collectors.toMap(Entry::getKey, e -> new GraphletGraph(e.getValue())));
+                return r;
+            });
+
+            return s;
         };
+
+        // TODO: How to wrap a LookupService, such that we can chain transformations?
+        // Ok, java8 supports this natively
+        // In essence, a lookupservice is a Function<K, Map<K, V>>
 //
 //        Function<Collection<Node>, Map<Node, Graphlet<Node, Node>>> nodeToGraphlets = (LabeledEdge<Integer, Path> transition, boolean assumeReversed) -> {
 //
@@ -98,7 +109,7 @@ public class PathExecutionUtils {
 //        };
 
         while(!frontier.isEmpty()) {
-            Frontier<Integer, Node, Node> nextFrontier = NfaExecution.advanceFrontier(frontier, nfa, false, LabeledEdgeImpl::isEpsilon, transitionToNodesToGraphlets);
+            Frontier<Integer, Node, Node> nextFrontier = NfaExecution.<Integer, LabeledEdge<Integer, Path>, Node, Node>advanceFrontier(frontier, nfa, false, LabeledEdgeImpl::isEpsilon, createLookupService);
             //System.out.println("advancing...");
             frontier = nextFrontier;
         }

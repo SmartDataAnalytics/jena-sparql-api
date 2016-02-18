@@ -42,6 +42,7 @@ public class LabeledEdgeImpl<V, T>
     }
 
     public static <V, T> boolean isEpsilon(LabeledEdge<V, T> edge) {
+    //public static boolean isEpsilon(LabeledEdge<?, ?> edge) {
         boolean result = edge.getLabel() == null;
         return result;
     }

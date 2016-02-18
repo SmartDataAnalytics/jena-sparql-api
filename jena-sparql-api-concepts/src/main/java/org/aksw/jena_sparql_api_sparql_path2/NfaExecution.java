@@ -134,7 +134,7 @@ public class NfaExecution<S, T, V, E> {
             //QueryExecutionFactory qef,
             boolean reversePropertyDirection,
             Predicate<T> isEpsilon,
-            Function<DirectedProperty<T>, Function<Collection<V>, Map<V, Graphlet<V, E>>>> transitionToNodesToGraphlets
+            Function<DirectedProperty<T>, Function<Iterable<V>, Map<V, Graphlet<V, E>>>> transitionToNodesToGraphlets
             ) {
         // Prepare the next frontier
         Frontier<S, V, E> result = new Frontier<S, V, E>();
@@ -157,7 +157,7 @@ public class NfaExecution<S, T, V, E> {
             for(T transition : transitions) {
 
                 DirectedProperty<T> tmp = new DirectedProperty<T>(transition, reversePropertyDirection);
-                Function<Collection<V>, Map<V, Graphlet<V, E>>> nodesToGraphlets = transitionToNodesToGraphlets.apply(tmp);
+                Function<Iterable<V>, Map<V, Graphlet<V, E>>> nodesToGraphlets = transitionToNodesToGraphlets.apply(tmp);
                 Map<V, Graphlet<V, E>> nodeToGraphlet = nodesToGraphlets.apply(nodes);
 
 
