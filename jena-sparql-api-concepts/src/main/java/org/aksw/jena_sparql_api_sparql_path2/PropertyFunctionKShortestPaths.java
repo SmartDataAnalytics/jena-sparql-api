@@ -9,6 +9,7 @@ import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.utils.ListUtils;
 import org.aksw.jena_sparql_api.utils.NodeUtils;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sdb.store.Feature.Name;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.core.Var;
@@ -59,8 +60,11 @@ public class PropertyFunctionKShortestPaths
     public static final Symbol PROLOGUE = Name.create("prologue");
     public static final Symbol SPARQL_SERVICE = Name.create("sparqlService");
 
-    protected PropertyFunctionKShortestPaths() {
+    //protected Gson gson;
+
+    protected PropertyFunctionKShortestPaths() { //Gson gson) {
         super(PropFuncArgType.PF_ARG_SINGLE, PropFuncArgType.PF_ARG_EITHER);
+//        this.gson = gson;
     }
 
     @Override
@@ -140,15 +144,17 @@ public class PropertyFunctionKShortestPaths
         List<Binding> bindings = new ArrayList<Binding>();
 
         for(MyPath<Node, Node> rdfPath : rdfPaths) {
-            JsonElement json = gson.toJsonTree(rdfPath);
-            NodeValue rdfPathNodeValue = new NodeValueJson(json);
-            Node rdfPathNode = rdfPathNodeValue.asNode();
+//            JsonElement json = gson.toJsonTree(rdfPath);
+//            NodeValue rdfPathNodeValue = new NodeValueJson(json);
+//            Node rdfPathNode = rdfPathNodeValue.asNode();
+            Node rdfPathNode = NodeFactory.createLiteral("" + rdfPath);
 
             //Node rdfPathNode = NodeFactory.createLiteral(rdfPath.toString());
             Binding b = BindingFactory.binding(binding, outVar, rdfPathNode);
 
             bindings.add(b);
         }
+
         QueryIter result = new QueryIterPlainWrapper(bindings.iterator());
         return result;
     }

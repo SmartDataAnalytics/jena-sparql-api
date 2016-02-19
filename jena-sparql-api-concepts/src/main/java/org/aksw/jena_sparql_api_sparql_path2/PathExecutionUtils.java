@@ -62,9 +62,9 @@ public class PathExecutionUtils {
 
         //QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://dbpedia.org/sparql", "http://dbpedia.org").config().selectOnly().end().create();
 
-        NfaExecution<Integer, LabeledEdge<Integer, Path>, Node, Node> exec = new NfaExecution<>(nfa, qef, false, p -> targetNode == null || p.getEnd().equals(targetNode) ? pathCallback.apply(p) : false);
+        //NfaExecution<Integer, LabeledEdge<Integer, Path>, Node, Node> exec = new NfaExecution<>(nfa, qef, false, p -> targetNode == null || p.getEnd().equals(targetNode) ? pathCallback.apply(p) : false);
 
-        Function<LabeledEdge<Integer, Path>, Path> edgeToPath = e -> e.getLabel();
+        //Function<LabeledEdge<Integer, Path>, Path> edgeToPath = e -> e.getLabel();
 
         Frontier<Integer, Node, Node> frontier = new Frontier<>();
         Frontier.addAll(frontier, nfa.getStartStates(), startNode);
@@ -109,7 +109,14 @@ public class PathExecutionUtils {
 //        };
 
         while(!frontier.isEmpty()) {
-            Frontier<Integer, Node, Node> nextFrontier = NfaExecution.<Integer, LabeledEdge<Integer, Path>, Node, Node>advanceFrontier(frontier, nfa, false, LabeledEdgeImpl::isEpsilon, createLookupService);
+
+            boolean abort = NfaExecution.collectPaths(nfa, frontier, LabeledEdgeImpl::isEpsilon, pathCallback);
+            if(abort) {
+                break;
+            }
+
+            //<Integer, LabeledEdge<Integer, Path>, Node, Node>
+            Frontier<Integer, Node, Node> nextFrontier = NfaExecution.advanceFrontier(frontier, nfa, false, LabeledEdgeImpl::isEpsilon, createLookupService);
             //System.out.println("advancing...");
             frontier = nextFrontier;
         }

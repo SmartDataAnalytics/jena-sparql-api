@@ -74,10 +74,13 @@ public class ResultSetClose
         if(!isClosed) {
             boolean hasNext;
 
+            // If an exception occurs, still try to close first
+            Exception tmp = null;
             try {
                 hasNext = decoratee.hasNext();
             } catch(Exception e) {
                 hasNext = false;
+                tmp = e;
             }
 
             if(!hasNext) {
@@ -88,6 +91,10 @@ public class ResultSetClose
                 catch(Exception e) {
                     logger.error("Error closing an object supposedly underlying a Jena ResultSet", e);
                 }
+            }
+
+            if(tmp != null) {
+                throw new RuntimeException(tmp);
             }
         }
         return isClosed;

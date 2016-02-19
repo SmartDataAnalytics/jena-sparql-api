@@ -10,6 +10,7 @@ public class ParentLink<V, E> {
 
     public ParentLink(NestedPath<V, E> target, DirectedProperty<E> diProperty) {
         super();
+        this.target = target;
         this.diProperty = diProperty;
     }
 
@@ -21,5 +22,42 @@ public class ParentLink<V, E> {
         return diProperty;
     }
 
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result
+                + ((diProperty == null) ? 0 : diProperty.hashCode());
+        result = prime * result + ((target == null) ? 0 : target.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        ParentLink other = (ParentLink) obj;
+        if (diProperty == null) {
+            if (other.diProperty != null)
+                return false;
+        } else if (!diProperty.equals(other.diProperty))
+            return false;
+        if (target == null) {
+            if (other.target != null)
+                return false;
+        } else if (!target.equals(other.target))
+            return false;
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        return "ParentLink [target=" + target + ", diProperty=" + diProperty
+                + "]";
+    }
 
 }

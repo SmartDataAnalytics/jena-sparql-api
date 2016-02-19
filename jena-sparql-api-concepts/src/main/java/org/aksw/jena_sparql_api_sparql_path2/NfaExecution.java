@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -192,7 +193,7 @@ public class NfaExecution<S, T, V, E> {
 
                         Collection<NestedPath<V, E>> parentPaths = ps.get(node);
                         for(NestedPath<V, E> parentPath : parentPaths) {
-                            NestedPath<V, E> next = new NestedPath<V, E>(new ParentLink<V, E>(parentPath, p0), o);
+                            NestedPath<V, E> next = new NestedPath<V, E>(Optional.of(new ParentLink<V, E>(parentPath, p0)), o);
 
                             if(next.isCycleFree()) {
                                 S targetState = graph.getEdgeTarget(transition);
