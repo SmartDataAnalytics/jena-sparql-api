@@ -1,17 +1,19 @@
 package org.aksw.jena_sparql_api_sparql_path2;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import org.aksw.jena_sparql_api.utils.TripleUtils;
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.Triple;
-import org.apache.jena.sparql.path.P_Path0;
+public class NestedPath<V, E>
+    implements Serializable
+{
+    private static final long serialVersionUID = 8761194530191829164L;
 
-public class NestedPath<V, E> {
-    protected Optional<ParentLink<V, E>> parentLink;
+
+    //protected Optional<ParentLink<V, E>> parentLink;
+    protected ParentLink<V, E> parentLink;
     protected V current; // the node reached by this path
 
 
@@ -20,13 +22,18 @@ public class NestedPath<V, E> {
     }
 
     public NestedPath(Optional<ParentLink<V, E>> parentLink, V current) {
+        this(parentLink.isPresent() ? parentLink.get() : null, current);
+    }
+
+    public NestedPath(ParentLink<V, E> parentLink, V current) {
         super();
         this.parentLink = parentLink;
         this.current = current;
     }
 
+
     public Optional<ParentLink<V, E>> getParentLink() {
-        return parentLink;
+        return Optional.ofNullable(parentLink);
     }
 
     public V getCurrent() {
@@ -97,7 +104,7 @@ public class NestedPath<V, E> {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        NestedPath other = (NestedPath) obj;
+        NestedPath<?, ?> other = (NestedPath<?, ?>) obj;
         if (current == null) {
             if (other.current != null)
                 return false;

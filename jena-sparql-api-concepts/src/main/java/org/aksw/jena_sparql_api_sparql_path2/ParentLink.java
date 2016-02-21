@@ -1,6 +1,15 @@
 package org.aksw.jena_sparql_api_sparql_path2;
 
-public class ParentLink<V, E> {
+import java.io.Serializable;
+
+public class ParentLink<V, E>
+    implements Serializable
+{
+    /**
+     *
+     */
+    private static final long serialVersionUID = -8669731014620534012L;
+
     protected NestedPath<V, E> target;
     protected DirectedProperty<E> diProperty;
 

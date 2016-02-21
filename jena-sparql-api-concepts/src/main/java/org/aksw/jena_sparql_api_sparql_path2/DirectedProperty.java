@@ -1,8 +1,21 @@
 package org.aksw.jena_sparql_api_sparql_path2;
 
-public class DirectedProperty<E> {
+import java.io.Serializable;
+
+public class DirectedProperty<E>
+    implements Serializable
+{
+    /**
+     *
+     */
+    private static final long serialVersionUID = 4826688961505056387L;
+
     protected E property;
     protected boolean isReverse;
+
+    public DirectedProperty(E property) {
+        this(property, false);
+    }
 
     public DirectedProperty(E property, boolean isReverse) {
         super();
@@ -36,7 +49,7 @@ public class DirectedProperty<E> {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        DirectedProperty other = (DirectedProperty) obj;
+        DirectedProperty<?> other = (DirectedProperty<?>) obj;
         if (isReverse != other.isReverse)
             return false;
         if (property == null) {
