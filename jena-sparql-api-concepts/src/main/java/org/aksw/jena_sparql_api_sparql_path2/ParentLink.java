@@ -11,6 +11,8 @@ public class ParentLink<V, E>
     private static final long serialVersionUID = -8669731014620534012L;
 
     protected NestedPath<V, E> target;
+
+    // TODO Maybe replace with E directly - however, when creating triplets from a path, we need to know the direction anyway
     protected DirectedProperty<E> diProperty;
 
     public ParentLink(DirectedProperty<E> diProperty) {
@@ -49,7 +51,7 @@ public class ParentLink<V, E>
             return false;
         if (getClass() != obj.getClass())
             return false;
-        ParentLink other = (ParentLink) obj;
+        ParentLink<?, ?> other = (ParentLink<?, ?>) obj;
         if (diProperty == null) {
             if (other.diProperty != null)
                 return false;
