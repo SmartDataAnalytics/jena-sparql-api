@@ -5,6 +5,7 @@ import org.apache.jena.sparql.path.P_Link;
 import org.apache.jena.sparql.path.P_NegPropSet;
 import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.path.P_ReverseLink;
+import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.path.PathVisitorBase;
 
 public class PathVisitorPredicateClass
@@ -56,5 +57,12 @@ public class PathVisitorPredicateClass
     @Override
     public void visit(P_Link path) {
         result = toPredicateClass(path);
+    }
+
+    public static PredicateClass transform(Path path) {
+        PathVisitorPredicateClass visitor = new PathVisitorPredicateClass();
+        path.visit(visitor);
+        PredicateClass result = visitor.getResult();
+        return result;
     }
 }

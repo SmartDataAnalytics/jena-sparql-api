@@ -2,33 +2,40 @@ package org.aksw.jena_sparql_api_sparql_path2;
 
 import java.util.Collections;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.apache.jena.sparql.path.P_Inverse;
 import org.apache.jena.sparql.path.P_Link;
 import org.apache.jena.sparql.path.P_NegPropSet;
 import org.apache.jena.sparql.path.P_ReverseLink;
 import org.apache.jena.sparql.path.Path;
-import org.apache.jena.sparql.path.PathLib;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.VertexFactory;
 
-public class PathVisitorNfaCompilerImpl<V>
-    extends PathVisitorNfaCompilerBase<V, LabeledEdge<V, Path>, Path>
+public class PathVisitorNfaCompilerImpl<V, E, D>
+    extends PathVisitorNfaCompilerBase<V, E, D>
 {
+    protected Function<Path, D> primitivePathMapper;
+
     public PathVisitorNfaCompilerImpl(
-            DirectedGraph<V, LabeledEdge<V, Path>> graph,
+            DirectedGraph<V, E> graph,
             VertexFactory<V> vertexFactory,
-            EdgeLabelAccessor<LabeledEdge<V, Path>, Path> edgeLabelAccessor) {
+            EdgeLabelAccessor<E, D> edgeLabelAccessor,
+            Function<Path, D> primitivePathMapper) {
         super(graph, vertexFactory, edgeLabelAccessor);
+        this.primitivePathMapper = primitivePathMapper;
     }
 
+
     public void processPrimitivePath(Path path) {
+        D edgeLabel = primitivePathMapper.apply(path);
         V s = vertexFactory.createVertex();
         graph.addVertex(s);
-        PartialNfa<V, Path> partialNfa = PartialNfa.create(s, Collections.singletonList(new HalfEdge<V, Path>(s, path)));
+        PartialNfa<V, D> partialNfa = PartialNfa.create(s, Collections.singletonList(new HalfEdge<V, D>(s, edgeLabel)));
 
         stack.push(partialNfa);
     }
+
 
     @Override
     public void visit(P_Link path) {
@@ -52,24 +59,24 @@ public class PathVisitorNfaCompilerImpl<V>
 
 
 
-    public Nfa<V, LabeledEdge<V, Path>> complete() {
-        PartialNfa<V, Path> partialNfa = this.peek();
+    public Nfa<V, E> complete() {
+        PartialNfa<V, D> partialNfa = this.peek();
 
         V finalVertex = vertexFactory.createVertex();
         graph.addVertex(finalVertex);
 
-        for(HalfEdge<V, Path> looseEnd : partialNfa.getLooseEnds()) {
+        for(HalfEdge<V, D> looseEnd : partialNfa.getLooseEnds()) {
             V v = looseEnd.getStartVertex();
-            Path label = looseEnd.getEdgeLabel();
+            D label = looseEnd.getEdgeLabel();
 
-            LabeledEdge<V, Path> edge = graph.addEdge(v, finalVertex);
+            E edge = graph.addEdge(v, finalVertex);
             edgeLabelAccessor.setLabel(edge, label);
         }
 
         Set<V> startStates = Collections.singleton(partialNfa.getStartVertex());
         Set<V> finalStates = Collections.singleton(finalVertex);
 
-        NfaImpl<V, LabeledEdge<V, Path>> result = new NfaImpl<V, LabeledEdge<V, Path>>(graph, startStates, finalStates);
+        NfaImpl<V, E> result = new NfaImpl<V, E>(graph, startStates, finalStates);
         return result;
     }
 

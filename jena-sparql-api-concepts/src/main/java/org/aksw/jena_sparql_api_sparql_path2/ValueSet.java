@@ -30,8 +30,22 @@ public class ValueSet<T>
         this.values = new HashSet<T>(Arrays.asList(values));
     }*/
 
+    public Set<T> getValues() {
+        return values;
+    }
+
+    public boolean isPositive() {
+        return isPositive;
+    }
+
     public static <T> ValueSet<T> create() {
         ValueSet<T> result = create(true);
+
+        return result;
+    }
+
+    public static <T> ValueSet<T> createEmpty() {
+        ValueSet<T> result = create(false);
 
         return result;
     }

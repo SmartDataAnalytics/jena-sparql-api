@@ -9,20 +9,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.concepts.ConceptUtils;
+import org.aksw.commons.util.Pair;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.lookup.ListService;
-import org.aksw.jena_sparql_api.lookup.ListServiceUtils;
-import org.aksw.jena_sparql_api.lookup.LookupService;
-import org.aksw.jena_sparql_api.lookup.LookupServiceListService;
-import org.aksw.jena_sparql_api.lookup.LookupServicePartition;
-import org.aksw.jena_sparql_api.mapper.MappedConcept;
-import org.aksw.jena_sparql_api.shape.ResourceShape;
-import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
-import org.apache.jena.graph.Graph;
-import org.apache.jena.graph.Node;
-import org.apache.jena.sparql.path.Path;
 import org.jgrapht.DirectedGraph;
 
 import com.google.common.collect.Multimap;
@@ -105,6 +93,34 @@ public class NfaExecution<S, T, V, E> {
         return isFinished;
     }
 
+
+    public static <S, D, T extends LabeledEdge<S, ? extends DirectedProperty<? extends ValueSet<D>>>> Pair<ValueSet<D>, ValueSet<D>> extractNextPropertyClasses(DirectedGraph<S, T> nfaGraph, Predicate<T> isEpsilon, Set<S> states, boolean reverse) {
+        Set<T> transitions = JGraphTUtils.resolveTransitions(nfaGraph, states, isEpsilon);
+
+        ValueSet<D> fwd = ValueSet.createEmpty();
+        ValueSet<D> bwd = ValueSet.createEmpty();
+
+
+        for(T transition : transitions) {
+            DirectedProperty<? extends ValueSet<D>> label = transition.getLabel();
+            boolean isReverse = label.isReverse();
+
+            // invert direction if reverse is true
+            isReverse = reverse ? !isReverse : isReverse;
+
+
+            ValueSet<D> valueSet = label.getProperty();
+
+            if(isReverse) {
+                bwd = bwd.union(valueSet);
+            } else {
+                fwd = fwd.union(valueSet);
+            }
+        }
+
+        Pair<ValueSet<D>, ValueSet<D>> result = Pair.create(fwd, bwd);
+        return result;
+    }
 
     /**
      * advances the state of the execution. returns false to indicate finished execution

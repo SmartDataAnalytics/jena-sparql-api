@@ -6,13 +6,11 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import org.apache.jena.sparql.path.Path;
 import org.jgrapht.DirectedGraph;
-
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
 
 public class JGraphTUtils {
 
@@ -62,6 +60,15 @@ public class JGraphTUtils {
                 open.addAll(outgoing);
             }
         }
+
+        return result;
+    }
+
+    public static <V, E> Set<E> resolveTransitions(DirectedGraph<V, E> graph, Set<V> vertices, Predicate<E> isEpsilon) {
+        Set<E> result = vertices
+                .stream()
+                .flatMap(v -> resolveTransitions(graph, v, isEpsilon).stream())
+                .collect(Collectors.toSet());
 
         return result;
     }

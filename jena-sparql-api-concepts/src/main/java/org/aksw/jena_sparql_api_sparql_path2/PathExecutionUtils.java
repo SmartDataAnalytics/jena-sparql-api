@@ -23,7 +23,7 @@ import org.jgrapht.graph.DefaultDirectedGraph;
 
 public class PathExecutionUtils {
 
-    public static Nfa<Integer, LabeledEdge<Integer, Path>> compileToNfa(Path path) {
+    public static Nfa<Integer, LabeledEdge<Integer, PredicateClass>> compileToNfa(Path path) {
         //Path path = PathParser.parse("!(<p>|(<p>|<p>))", PrefixMapping.Extended);
 
         path = PathVisitorTopDown.apply(path, new PathVisitorRewriteInvert());
@@ -31,30 +31,30 @@ public class PathExecutionUtils {
         /*
          * Some ugly set up of graph related stuff
          */
-        EdgeFactoryLabeledEdge<Integer, Path> edgeFactory = new EdgeFactoryLabeledEdge<Integer, Path>();
-        EdgeLabelAccessorImpl<Integer, LabeledEdge<Integer, Path>, Path> edgeLabelAccessor = new EdgeLabelAccessorImpl<Integer, LabeledEdge<Integer, Path>, Path>();
-        DefaultDirectedGraph<Integer, LabeledEdge<Integer, Path>> graph = new DefaultDirectedGraph<Integer, LabeledEdge<Integer, Path>>(edgeFactory);
+        EdgeFactoryLabeledEdge<Integer, PredicateClass> edgeFactory = new EdgeFactoryLabeledEdge<Integer, PredicateClass>();
+        EdgeLabelAccessor<LabeledEdge<Integer, PredicateClass>, PredicateClass> edgeLabelAccessor = new EdgeLabelAccessorImpl<Integer, LabeledEdge<Integer, PredicateClass>, PredicateClass>();
+        DefaultDirectedGraph<Integer, LabeledEdge<Integer, PredicateClass>> graph = new DefaultDirectedGraph<Integer, LabeledEdge<Integer, PredicateClass>>(edgeFactory);
         VertexFactory<Integer> vertexFactory = new VertexFactoryInteger(graph);
 
-        PathVisitorNfaCompilerImpl<Integer> nfaCompiler = new PathVisitorNfaCompilerImpl<Integer>(graph, vertexFactory, edgeLabelAccessor);
+        PathVisitorNfaCompilerImpl<Integer, LabeledEdge<Integer, PredicateClass>, PredicateClass> nfaCompiler = new PathVisitorNfaCompilerImpl<Integer, LabeledEdge<Integer, PredicateClass>, PredicateClass>(graph, vertexFactory, edgeLabelAccessor, x -> PathVisitorPredicateClass.transform(x));
 
         /*
          * The actual nfa conversion step
          */
         path.visit(nfaCompiler);
-        Nfa<Integer, LabeledEdge<Integer, Path>> result = nfaCompiler.complete();
+        Nfa<Integer, LabeledEdge<Integer, PredicateClass>> result = nfaCompiler.complete();
 
         return result;
     }
 
     public static void executePath(Path path, Node startNode, Node targetNode, QueryExecutionFactory qef, Function<MyPath<Node, Node>, Boolean> pathCallback) {
 
-        Nfa<Integer, LabeledEdge<Integer, Path>> nfa = compileToNfa(path);
+        Nfa<Integer, LabeledEdge<Integer, PredicateClass>> nfa = compileToNfa(path);
 
 
         System.out.println("NFA");
         System.out.println(nfa);
-        for(LabeledEdge<Integer, Path> edge : nfa.getGraph().edgeSet()) {
+        for(LabeledEdge<Integer, PredicateClass> edge : nfa.getGraph().edgeSet()) {
             System.out.println(edge);
         }
 
@@ -70,13 +70,17 @@ public class PathExecutionUtils {
         Frontier.addAll(frontier, nfa.getStartStates(), startNode);
 
 
-        Function<DirectedProperty<LabeledEdge<Integer, Path>>, Function<Iterable<Node>, Map<Node, Graphlet<Node, Node>>>> createLookupService = (DirectedProperty<LabeledEdge<Integer, Path>> diTransition) -> {
-            Path pathx = diTransition.getProperty().getLabel();
+        Function<DirectedProperty<LabeledEdge<Integer, PredicateClass>>, Function<Iterable<Node>, Map<Node, Graphlet<Node, Node>>>> createLookupService = (DirectedProperty<LabeledEdge<Integer, PredicateClass>> diTransition) -> {
+            //Path pathx = diTransition.getProperty().getLabel();
+            PredicateClass pathx = diTransition.getProperty().getLabel();
             boolean assumeReversed = diTransition.isReverse();
 
-            PathVisitorResourceShapeBuilder visitor = new PathVisitorResourceShapeBuilder(assumeReversed);
-            pathx.visit(visitor);
-            ResourceShapeBuilder rsb = visitor.getResourceShapeBuilder();
+            ResourceShapeBuilder rsb = new ResourceShapeBuilder();
+            PathVisitorResourceShapeBuilder.apply(rsb, pathx, assumeReversed);
+
+            //PathVisitorResourceShapeBuilder visitor = new PathVisitorResourceShapeBuilder(assumeReversed);
+            //pathx.visit(visitor);
+            //ResourceShapeBuilder rsb = visitor.getResourceShapeBuilder();
 
 
             //MappedConcept<Graph> mc = ResourceShape.createMappedConcept(rsb.getResourceShape(), filter);
@@ -115,7 +119,6 @@ public class PathExecutionUtils {
                 break;
             }
 
-            //<Integer, LabeledEdge<Integer, Path>, Node, Node>
             Frontier<Integer, Node, Node> nextFrontier = NfaExecution.advanceFrontier(frontier, nfa, false, LabeledEdgeImpl::isEpsilon, createLookupService);
             //System.out.println("advancing...");
             frontier = nextFrontier;

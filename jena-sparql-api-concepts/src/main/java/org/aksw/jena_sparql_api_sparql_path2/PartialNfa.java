@@ -46,7 +46,7 @@ public class PartialNfa<V, T> {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        PartialNfa other = (PartialNfa) obj;
+        PartialNfa<?, ?> other = (PartialNfa<?, ?>) obj;
         if (looseEnds == null) {
             if (other.looseEnds != null)
                 return false;
