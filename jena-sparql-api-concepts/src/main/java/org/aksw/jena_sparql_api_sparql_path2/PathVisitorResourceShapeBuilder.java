@@ -70,8 +70,10 @@ public class PathVisitorResourceShapeBuilder
                 rsb.nav(value, reverse);
             }
         } else {
-            Expr expr = new E_NotOneOf(new ExprVar(Vars.p), ExprListUtils.nodesToExprs(nodes));
-            rsb.nav(expr, !reverse);
+            if(!nodes.isEmpty()) {
+                Expr expr = new E_NotOneOf(new ExprVar(Vars.p), ExprListUtils.nodesToExprs(nodes));
+                rsb.nav(expr, !reverse);
+            }
         }
     }
 
