@@ -1,13 +1,11 @@
 package org.aksw.jena_sparql_api_sparql_path.spark;
 
-import java.util.Map;
-import java.util.function.Function;
 import java.util.function.Predicate;
 
-import org.aksw.jena_sparql_api_sparql_path2.DirectedProperty;
-import org.aksw.jena_sparql_api_sparql_path2.Graphlet;
+import org.aksw.jena_sparql_api_sparql_path2.FrontierItem;
 import org.aksw.jena_sparql_api_sparql_path2.NestedPath;
 import org.aksw.jena_sparql_api_sparql_path2.Nfa;
+import org.apache.jena.graph.Node;
 import org.apache.spark.api.java.JavaPairRDD;
 
 import scala.Tuple2;
@@ -52,15 +50,31 @@ public class NfaExecutionSpark {
      * @param <E> data edge type
      */
     public static <S, T, V, E> JavaPairRDD<V, Tuple2<S, NestedPath<V, E>>> advanceFrontier(
+            int frontierId, // the id of the frontier which to advance
             JavaPairRDD<V, Tuple2<S, NestedPath<V, E>>> frontier,
             Nfa<V, E> nfa,
+            JavaPairRDD<Node, FrontierItem<S, Node, Node>> frontierRdd,
+            JavaPairRDD<Node, Tuple2<Node, Node>> fwdRdd,
+            JavaPairRDD<Node, Tuple2<Node, Node>> bwdRdd,
             boolean reversePropertyDirection,
             Predicate<T> isEpsilon,
             Object edgeRdd) {
 
-        // algo sketch:
+        //frontierRdd.mapPartitions(f)
+
+        //frontierRdd.agg
+
+
+        // This join associates each frontier item with the set of edges
+        JavaPairRDD<Node, Tuple2<FrontierItem<S, Node, Node>, Tuple2<Node, Node>>> joinedRdd = frontierRdd.join(fwdRdd);
+
+
+
+
+
         //
-        //
+        //joinedRdd.mapToPair(f)
+
 
 
         //frontier.j

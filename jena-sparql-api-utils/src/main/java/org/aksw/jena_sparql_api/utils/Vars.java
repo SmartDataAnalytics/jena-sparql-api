@@ -15,6 +15,8 @@ public class Vars {
     public static final Var y = Var.alloc("y");
     public static final Var z = Var.alloc("z");
 
+
+
     public static final List<Var> spo = Arrays.asList(s, p, o);
     public static final List<Var> gspo = Arrays.asList(g, s, p, o);
 }

@@ -1,7 +1,10 @@
 package org.aksw.jena_sparql_api_sparql_path2;
 
 import java.io.ByteArrayInputStream;
+import java.util.Collections;
+import java.util.Map;
 
+import org.aksw.commons.collections.multimaps.BiHashMultimap;
 import org.aksw.jena_sparql_api.core.GraphSparqlService;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
@@ -9,9 +12,11 @@ import org.aksw.jena_sparql_api.stmt.SparqlParserConfig;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
 import org.aksw.jena_sparql_api.update.FluentSparqlServiceFactory;
+import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
 import org.aksw.jena_sparql_api.web.server.ServerUtils;
 import org.apache.jena.atlas.web.auth.HttpAuthenticator;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.ARQ;
 import org.apache.jena.query.Syntax;
@@ -37,6 +42,7 @@ import org.slf4j.LoggerFactory;
 
 import rx.Observable;
 import scala.Tuple2;
+
 
 
 public class MainSparqlPath2 {
@@ -101,6 +107,9 @@ public class MainSparqlPath2 {
 
         //SparqlService coreSparqlService = FluentSparqlService.http("http://dbpedia.org/sparql", "http://dbpedia.org").create();
 
+
+
+
         if (args.length < 1) {
             logger.error("=> wrong parameters number");
             System.err.println("Usage: FileName <path-to-files> <output-path>");
@@ -136,6 +145,7 @@ public class MainSparqlPath2 {
                     }
                 });
 
+
         JavaPairRDD<Node, Tuple2<Node, Node>> bwdRdd = fwdRdd.mapToPair(new PairFunction<Tuple2<Node, Tuple2<Node, Node>>, Node, Tuple2<Node, Node>>() {
             private static final long serialVersionUID = -1567531441301230743L;
             @Override
@@ -145,6 +155,14 @@ public class MainSparqlPath2 {
             }
         });
 
+
+        Node startNode = NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/funding/258888-996094068");
+        //FrontierItem<Integer, Node, Node> start = new FrontierItem<Integer, Node, Node>(startNode, new DirectedProperty<>(new NestedPath<Node, Node>(startNode)));
+
+
+        // Vertex -> (Tuple2<Directed<NestedPath<>>)
+
+        //JavaPairRDD<Node, FrontierItem<Node, Node>> frontierRdd = sparkContext.parallelizePairs(Collections.singletonList(new Tuple2<>(startNode, start)));
 
 
 
@@ -165,7 +183,7 @@ public class MainSparqlPath2 {
             private static final long serialVersionUID = -2954655113824728223L;
             @Override
             public void call(Tuple2<Node, Tuple2<Node, Node>> t) throws Exception {
-                System.out.println("GOT: " + t);
+                //System.out.println("GOT: " + t);
             }
         });
 
@@ -242,11 +260,45 @@ public class MainSparqlPath2 {
                     .defaultServiceUri("http://localhost:8890/sparql")
                     .configService()
                         .configQuery()
-                            .withPagination(1000)
+                            //.withPagination(1000)
                         .end()
                     .end()
                 .end()
                 .create();
+
+
+
+
+        SparqlServiceFactory ssf2 = new SparqlServiceFactory() {
+            @Override
+            public SparqlService createSparqlService(String serviceUri,
+                    DatasetDescription datasetDescription, Object authenticator) {
+
+                SparqlService r = FluentSparqlService.http(serviceUri, datasetDescription, (HttpAuthenticator)authenticator).create();
+                //SparqlService r = wrapSparqlService(coreSparqlService, sparqlStmtParser, prologue);
+                return r;
+            }
+        };
+        ssf2 = FluentSparqlServiceFactory.from(ssf2)
+                .configFactory()
+                    .defaultServiceUri("http://localhost:8890/sparql")
+                .end()
+                .create();
+
+
+
+        SparqlService ssps = ssf2.createSparqlService(null, DatasetDescriptionUtils.createDefaultGraph("http://2016.eswc-conferences.org/top-k-shortest-path-large-typed-rdf-graphs-challenge/training_dataset.nt/summary/predicate/"), null);
+        SparqlService sspjs = ssf2.createSparqlService(null, DatasetDescriptionUtils.createDefaultGraph("http://2016.eswc-conferences.org/top-k-shortest-path-large-typed-rdf-graphs-challenge/training_dataset.nt/summary/predicate-join/"), null);
+
+        System.out.println("Loading predicate summary");
+        Map<Node, Long> ps = EdgeReducer.loadPredicateSummary(ssps.getQueryExecutionFactory());
+        System.out.println("Predicate summary is: " + ps);
+
+        System.out.println("Loading join summary");
+        BiHashMultimap<Node, Node> pjs = EdgeReducer.loadJoinSummary(sspjs.getQueryExecutionFactory());
+        System.out.println("Done: join summary is " + pjs);
+
+
 
         Server server = ServerUtils.startSparqlEndpoint(ssf, sparqlStmtParser, 7533);
         server.join();

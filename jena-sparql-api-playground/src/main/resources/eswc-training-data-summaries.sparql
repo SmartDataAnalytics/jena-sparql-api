@@ -54,7 +54,7 @@ INSERT INTO <http://2016.eswc-conferences.org/top-k-shortest-path-large-typed-rd
 
 #Time taken (simultaneously executed with the er one): Done. -- 281154 msec.
 #Total triples: 1923173
-#Size of the raw join table: 274739
+#Size of the raw join table: 274739 (this is 0.16 percent of the worst case possible predicate summary of size 171mio)
 #  PREFIX o: <http://example.org/ontology/> SELECT Count(*) { ?s o:sourcePredicate ?x ; o:targetPredicate ?y }
 
 #    o:dataset ?d ;
