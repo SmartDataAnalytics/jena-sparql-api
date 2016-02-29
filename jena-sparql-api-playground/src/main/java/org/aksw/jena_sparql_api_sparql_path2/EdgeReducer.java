@@ -20,11 +20,88 @@ import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.jgrapht.DirectedGraph;
+import org.jgrapht.Graph;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
 public class EdgeReducer {
+
+    /**
+     * - Vertices: are mapped to the estimated set of predicates with their estimated (maximum) frequency
+     * - Edge: Their property classes are resolved to explicit sets of predicates.
+     *         Based on the predicates present on their start vertex, an estimate is made
+     *
+     *
+     * The problem is, how to sum up the statistics reaching a vertex from different paths?
+     *
+     *
+     * Duplicates: What if the frontiers reaching a vertex overlap because of duplicates?
+     * For example:
+     * (a|b)|(a|c)d
+     *
+     * Maybe this is a problem of rephrasing the automaton
+     *
+     *
+     *
+     *
+     * @param nfa
+     * @param isEpsilon
+     * @return
+     */
+    public static <S, T> Map<T, Double> estimateFrontierCost(Nfa<S, T> nfa, Predicate<T> isEpsilon) {
+        Map<T, Double> result = new HashMap<>();
+
+        DirectedGraph<S, T> graph = nfa.getGraph();
+
+        Set<S> current = nfa.getStartStates();
+        while(!current.isEmpty()) {
+            JGraphTUtils.resolveTransitions(graph, current, isEpsilon);
+
+        }
+
+
+        return result;
+    }
+
+
+    /**
+     * 0: no predicates (occurrs e.g. on accepting states that do not lie on cyclic paths)
+     * 1: outbound
+     * 2: inbound
+     * 3: both
+     *
+     * @param graph
+     * @param state
+     * @param toPredicateClass
+     * @return
+     */
+    public static <S, T> int determineRequiredPredicateDirectionsForRetrieval(DirectedGraph<S, T> graph, S state, Function<T, PredicateClass> toPredicateClass) {
+        Collection<T> edges = graph.outgoingEdgesOf(state);
+
+        int result = 0;
+        for(T edge : edges) {
+            PredicateClass pc = toPredicateClass.apply(edge);
+            result |= !pc.getFwdNodes().isEmpty() ? 1 : 0;
+            result |= !pc.getBwdNodes().isEmpty() ? 2 : 0;
+        }
+
+        return result;
+    }
+/*
+    public static <S, T> int mergePredicateClasses(DirectedGraph<S, T> graph, S state, Function<T, PredicateClass> toPredicateClass) {
+        Collection<T> edges = graph.outgoingEdgesOf(state);
+
+        int result = 0;
+        for(T edge : edges) {
+            PredicateClass pc = toPredicateClass.apply(edge);
+            result |= !pc.getFwdNodes().isEmpty() ? 1 : 0;
+            result |= !pc.getBwdNodes().isEmpty() ? 2 : 0;
+        }
+
+        return result;
+    }
+*/
 
     public static BiHashMultimap<Node, Node> loadJoinSummary(QueryExecutionFactory qef) {
         BiHashMultimap<Node, Node> result = new BiHashMultimap<>();

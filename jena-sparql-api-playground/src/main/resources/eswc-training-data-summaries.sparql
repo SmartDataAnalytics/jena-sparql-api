@@ -5,6 +5,28 @@ Sparql
 DEFINE input:default-graph-uri <http://2016.eswc-conferences.org/top-k-shortest-path-large-typed-rdf-graphs-challenge/training_dataset.nt>
 PREFIX r: <http://example.org/resource/>
 PREFIX o: <http://example.org/ontology/>
+INSERT INTO <http://2016.eswc-conferences.org/top-k-shortest-path-large-typed-rdf-graphs-challenge/training_dataset.nt/predicate-cooccurrence-outbound/> {
+  ?x o:coOccursOutboundWith ?y
+}
+{
+  { SELECT DISTINCT ?x ?y {
+    ?s ?x ?xo .
+    ?s ?y ?yo
+    FILTER(str(?x) < str(?y))
+  } }
+}
+;
+
+
+
+
+
+
+
+Sparql
+DEFINE input:default-graph-uri <http://2016.eswc-conferences.org/top-k-shortest-path-large-typed-rdf-graphs-challenge/training_dataset.nt>
+PREFIX r: <http://example.org/resource/>
+PREFIX o: <http://example.org/ontology/>
 INSERT INTO <http://2016.eswc-conferences.org/top-k-shortest-path-large-typed-rdf-graphs-challenge/training_dataset.nt/summary/predicate/> {
   ?s
     a o:PredicateSummary ;

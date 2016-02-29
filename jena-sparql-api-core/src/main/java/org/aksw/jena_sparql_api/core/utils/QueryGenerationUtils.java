@@ -104,7 +104,7 @@ public class QueryGenerationUtils {
      *
      * @return
      */
-    public static Concept createPropertyQuery(Concept concept) {
+    public static Concept createPredicateQuery(Concept concept) {
         Collection<Var> vars = PatternVars.vars(concept.getElement());
         List<String> varNames = VarUtils.getVarNames(vars);
 

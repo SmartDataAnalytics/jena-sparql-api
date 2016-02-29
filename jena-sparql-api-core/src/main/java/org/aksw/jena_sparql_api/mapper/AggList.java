@@ -25,8 +25,8 @@ public class AggList<T>
 
     @Override
     public Set<Var> getDeclaredVars() {
-        // TODO Auto-generated method stub
-        return null;
+        Set<Var> result = subAgg.getDeclaredVars();
+        return result;
     }
 
     public static <T> AggList<T> create(Agg<T> subAgg) {

@@ -192,7 +192,7 @@ public class ConceptPathFinder {
             propertyConcept = new Concept(newElements, s);
 
         } else {
-            propertyConcept = QueryGenerationUtils.createPropertyQuery(sourceConcept);
+            propertyConcept = QueryGenerationUtils.createPredicateQuery(sourceConcept);
         }
 
         Query propertyQuery = propertyConcept.asQuery();

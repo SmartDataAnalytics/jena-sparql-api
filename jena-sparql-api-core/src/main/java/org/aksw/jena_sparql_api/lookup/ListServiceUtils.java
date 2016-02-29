@@ -41,8 +41,12 @@ public class ListServiceUtils {
         // TODO Set up a projection using the grouping variable and the variables referenced by the aggregator
         if(query.isSelectType()) {
             Set<Var> vars = agg.getDeclaredVars();
-            for(Var var : vars) {
-                query.getProject().add(var);
+            if(vars == null) {
+                query.setQueryResultStar(true);
+            } else {
+                for(Var var : vars) {
+                    query.getProject().add(var);
+                }
             }
         }
         //query.setQueryResultStar(true);

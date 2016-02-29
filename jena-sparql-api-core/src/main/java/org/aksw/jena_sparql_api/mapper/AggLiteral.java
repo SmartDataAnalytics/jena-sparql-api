@@ -21,8 +21,12 @@ public class AggLiteral<T>
 
     @Override
     public Set<Var> getDeclaredVars() {
-        // TODO Auto-generated method stub
-        return null;
+        Set<Var> result = mapper instanceof BindingMapperVarAware<?>
+            ? ((BindingMapperVarAware<?>)mapper).getVarsMentioned()
+            : null // Collections.emptySet()
+            ;
+
+        return result;
     }
 
     public static <T> AggLiteral<T> create(BindingMapper<T> mapper) {

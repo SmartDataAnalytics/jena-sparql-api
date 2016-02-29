@@ -1,47 +1,53 @@
 package org.aksw.jena_sparql_api_sparql_path2;
 
-import java.io.ByteArrayInputStream;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
-import org.aksw.commons.collections.multimaps.BiHashMultimap;
+import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.GraphSparqlService;
+import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
+import org.aksw.jena_sparql_api.lookup.ListService;
+import org.aksw.jena_sparql_api.lookup.ListServiceUtils;
+import org.aksw.jena_sparql_api.lookup.LookupService;
+import org.aksw.jena_sparql_api.lookup.LookupServiceListService;
+import org.aksw.jena_sparql_api.mapper.Agg;
+import org.aksw.jena_sparql_api.mapper.AggList;
+import org.aksw.jena_sparql_api.mapper.AggLiteral;
+import org.aksw.jena_sparql_api.mapper.BindingMapperProjectVar;
+import org.aksw.jena_sparql_api.mapper.MappedQuery;
 import org.aksw.jena_sparql_api.stmt.SparqlParserConfig;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
 import org.aksw.jena_sparql_api.update.FluentSparqlServiceFactory;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
+import org.aksw.jena_sparql_api.utils.ElementUtils;
+import org.aksw.jena_sparql_api.utils.TripleUtils;
+import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.web.server.ServerUtils;
 import org.apache.jena.atlas.web.auth.HttpAuthenticator;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.ARQ;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.riot.Lang;
-import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.pfunction.PropertyFunctionRegistry;
 import org.apache.jena.sparql.util.Context;
-import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.api.java.function.PairFunction;
-import org.apache.spark.api.java.function.VoidFunction;
-import org.apache.spark.broadcast.Broadcast;
 import org.eclipse.jetty.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import rx.Observable;
-import scala.Tuple2;
 
 
 
@@ -73,33 +79,53 @@ public class MainSparqlPath2 {
         return result;
     }
 
-    public static void rxJavaTest() {
-        //Observable.from(args).subscribe()
-        Observable<Object> obs = Observable.create(subscriber -> {
-            for(int i = 0; i < 50; ++i) {
-                if(!subscriber.isUnsubscribed()) {
-                    subscriber.onNext("yay" + i);
-                }
-            }
-            if(!subscriber.isUnsubscribed()) {
-                subscriber.onCompleted();
-            }
-        });
-        obs.subscribe(x -> System.out.println(x));
-
-        if(true) {
-            return;
-        }
+    public static String createPathExprStr(String predicate) {
+        String result = "(<" + predicate + ">/(!<http://foo>)*)|(!<http://foo>)*/<" + predicate + ">";
+        return result;
     }
 
 
-    //public static FrontierRDD advanceFrontier(FrontierRDD, NFA;, )
+    //ListService<Concept, Node, List<Node>>
+    public static LookupService<Node, List<Node>> createListServicePredicates(QueryExecutionFactory qef, boolean reverse) {
+        Query query = new Query();
+        query.setQuerySelectType();
+        query.setDistinct(true);
+        query.getProject().add(Vars.s);
+        query.getProject().add(Vars.p);
+
+        Triple t = new Triple(Vars.s, Vars.p, Vars.o);
+        if(reverse) {
+            t = TripleUtils.swap(t);
+        }
+
+        query.setQueryPattern(
+                ElementUtils.createElement(t));
+
+        System.out.println(query);
+
+        Agg<List<Node>> agg = AggList.create(AggLiteral.create(BindingMapperProjectVar.create(Vars.p)));
+        MappedQuery<List<Node>> mappedQuery = MappedQuery.create(query, Vars.s, agg);
+
+        ListService<Concept, Node, List<Node>> lsx = ListServiceUtils.createListServiceMappedQuery(qef, mappedQuery, false);
+        LookupService<Node, List<Node>> result = LookupServiceListService.create(lsx);
+
+
+        return result;
+    }
 
 
     public static void main(String[] args) throws InterruptedException {
 
 
         PropertyFunctionRegistry.get().put(PropertyFunctionKShortestPaths.DEFAULT_IRI, new PropertyFunctionFactoryKShortestPaths());
+
+        String pathExprStr = createPathExprStr("http://dbpedia.org/ontology/president");
+        Node s = NodeFactory.createURI("http://dbpedia.org/resource/James_K._Polk");
+
+        String queryStr = "SELECT ?path { <" + s + "> jsafn:kShortestPaths ('" + pathExprStr + "' ?path <http://dbpedia.org/resource/Felix_Grundy> 471199) }";
+
+
+        System.out.println("Query string: " + queryStr);
 
         //SparqlService coreSparqlService = FluentSparqlService.http("http://fp7-pp.publicdata.eu/sparql", "http://fp7-pp.publicdata.eu/").create();
         //SparqlService coreSparqlService = FluentSparqlService.http("http://localhost:8890/sparql", "http://fp7-pp.publicdata.eu/").create();
@@ -109,96 +135,6 @@ public class MainSparqlPath2 {
 
 
 
-
-        if (args.length < 1) {
-            logger.error("=> wrong parameters number");
-            System.err.println("Usage: FileName <path-to-files> <output-path>");
-            System.exit(1);
-        }
-
-        String fileName = args[0];
-        String sparkMasterHost = args.length >= 2 ? args[1] : "local[2]";
-
-        SparkConf sparkConf = new SparkConf()
-                .setAppName("BDE-readRDF")
-                .setMaster(sparkMasterHost);
-                //.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
-
-        JavaSparkContext sparkContext = new JavaSparkContext(sparkConf);
-
-        // TODO Replace with the regex automaton
-        Broadcast<int[]> broadcastVar = sparkContext.broadcast(new int[] {1, 2, 3});
-
-//new SimpleEntry<>(1, "test");
-
-        // Map each subject to corresponding predicate/object pairs
-        JavaPairRDD<Node, Tuple2<Node, Node>> fwdRdd = sparkContext
-                .textFile(fileName, 5)
-                .filter(line -> !line.trim().isEmpty() & !line.startsWith("#"))
-                .map(line -> RDFDataMgr.createIteratorTriples(new ByteArrayInputStream(line.getBytes()), Lang.NTRIPLES, "http://example/base").next())
-                .mapToPair(new PairFunction<Triple, Node, Tuple2<Node, Node>>() {
-                    private static final long serialVersionUID = -4757627441301230743L;
-                    @Override
-                    public Tuple2<Node, Tuple2<Node, Node>> call(Triple t)
-                            throws Exception {
-                        return new Tuple2<>(t.getSubject(), new Tuple2<>(t.getPredicate(), t.getObject()));
-                    }
-                });
-
-
-        JavaPairRDD<Node, Tuple2<Node, Node>> bwdRdd = fwdRdd.mapToPair(new PairFunction<Tuple2<Node, Tuple2<Node, Node>>, Node, Tuple2<Node, Node>>() {
-            private static final long serialVersionUID = -1567531441301230743L;
-            @Override
-            public Tuple2<Node, Tuple2<Node, Node>> call(
-                    Tuple2<Node, Tuple2<Node, Node>> t) throws Exception {
-                return new Tuple2<>(t._2._2, new Tuple2<>(t._2._1, t._1));
-            }
-        });
-
-
-        Node startNode = NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/funding/258888-996094068");
-        //FrontierItem<Integer, Node, Node> start = new FrontierItem<Integer, Node, Node>(startNode, new DirectedProperty<>(new NestedPath<Node, Node>(startNode)));
-
-
-        // Vertex -> (Tuple2<Directed<NestedPath<>>)
-
-        //JavaPairRDD<Node, FrontierItem<Node, Node>> frontierRdd = sparkContext.parallelizePairs(Collections.singletonList(new Tuple2<>(startNode, start)));
-
-
-
-
-
-//        JavaPairRDD<Node, Tuple2<Node, Node>> bwdRdd = tripleRdd.mapToPair(new PairFunction<Triple, Node, Tuple2<Node, Node>>() {
-//            private static final long serialVersionUID = -4757627441301230743L;
-//            @Override
-//            public Tuple2<Node, Tuple2<Node, Node>> call(Triple t)
-//                    throws Exception {
-//                return new Tuple2<>(t.getSubject(), new Tuple2<>(t.getPredicate(), t.getObject()));
-//            }
-//        });
-
-
-
-        fwdRdd.foreach(new VoidFunction<Tuple2<Node, Tuple2<Node, Node>>>() {
-            private static final long serialVersionUID = -2954655113824728223L;
-            @Override
-            public void call(Tuple2<Node, Tuple2<Node, Node>> t) throws Exception {
-                //System.out.println("GOT: " + t);
-            }
-        });
-
-
-
-
-        //tripleRdd.
-        //JavaPairRDD<String, String> x;
-        //x.cogroup(other)
-//        JavaRDD
-
-
-        //tripleRdd.saveAsObjectFile("my-triple-rdd.dat");
-
-        sparkContext.close();
 
 //        tripleRdd.mapToPair(new PairFunction<Triple, K2, V2>() {
 //            @Override
@@ -230,8 +166,6 @@ public class MainSparqlPath2 {
 //                val graph = Graph(vertices, edges)
 //                val iriToId = _iriToId
 //              }
-
-
 
 
 
@@ -290,18 +224,46 @@ public class MainSparqlPath2 {
         SparqlService ssps = ssf2.createSparqlService(null, DatasetDescriptionUtils.createDefaultGraph("http://2016.eswc-conferences.org/top-k-shortest-path-large-typed-rdf-graphs-challenge/training_dataset.nt/summary/predicate/"), null);
         SparqlService sspjs = ssf2.createSparqlService(null, DatasetDescriptionUtils.createDefaultGraph("http://2016.eswc-conferences.org/top-k-shortest-path-large-typed-rdf-graphs-challenge/training_dataset.nt/summary/predicate-join/"), null);
 
-        System.out.println("Loading predicate summary");
-        Map<Node, Long> ps = EdgeReducer.loadPredicateSummary(ssps.getQueryExecutionFactory());
-        System.out.println("Predicate summary is: " + ps);
+//        System.out.println("Loading predicate summary");
+//        Map<Node, Long> ps = EdgeReducer.loadPredicateSummary(ssps.getQueryExecutionFactory());
+//        System.out.println("Predicate summary is: " + ps.size());
+//
+//        System.out.println("Loading join summary");
+//        BiHashMultimap<Node, Node> pjs = EdgeReducer.loadJoinSummary(sspjs.getQueryExecutionFactory());
+//        System.out.println("Done: join summary is " + pjs.size());
 
-        System.out.println("Loading join summary");
-        BiHashMultimap<Node, Node> pjs = EdgeReducer.loadJoinSummary(sspjs.getQueryExecutionFactory());
-        System.out.println("Done: join summary is " + pjs);
+
+        if(true) {
+            //ssf.createSparqlService("http://, datasetDescription, authenticator)
+            SparqlService ss = ssf.createSparqlService(null, DatasetDescriptionUtils.createDefaultGraph("http://2016.eswc-conferences.org/top-k-shortest-path-large-typed-rdf-graphs-challenge/training_dataset.nt"), null);
+            QueryExecutionFactory qef = ss.getQueryExecutionFactory();
+            //ListService<Concept, Node, List<Node>> lsx =
+            //LookupService<Node, List<Node>> ls = LookupServiceListService.create(lsx);
+            LookupService<Node, List<Node>> fwdLs = createListServicePredicates(qef, false);
+            LookupService<Node, List<Node>> bwdLs = createListServicePredicates(qef, true);
+
+            {
+                Map<Node, List<Node>> map = fwdLs.apply(Collections.singleton(s));
+                System.out.println("Fwd: " + map);
+            }
+
+            {
+                Map<Node, List<Node>> map = bwdLs.apply(Collections.singleton(s));
+                System.out.println("Bwd: " + map);
+            }
 
 
+            QueryExecution qe = qef.createQueryExecution(queryStr);
+            ResultSet rs = qe.execSelect();
+            ResultSetFormatter.outputAsJSON(System.out, rs);
 
-        Server server = ServerUtils.startSparqlEndpoint(ssf, sparqlStmtParser, 7533);
-        server.join();
+
+        } else {
+            Server server = ServerUtils.startSparqlEndpoint(ssf, sparqlStmtParser, 7533);
+            server.join();
+        }
+
+
 
 
         // Create a datasetGraph backed by the SPARQL service to DBpedia
