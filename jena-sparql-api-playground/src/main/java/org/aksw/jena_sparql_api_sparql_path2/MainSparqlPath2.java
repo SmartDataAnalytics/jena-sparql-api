@@ -1,8 +1,10 @@
 package org.aksw.jena_sparql_api_sparql_path2;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.GraphSparqlService;
@@ -16,6 +18,8 @@ import org.aksw.jena_sparql_api.lookup.LookupServiceListService;
 import org.aksw.jena_sparql_api.mapper.Agg;
 import org.aksw.jena_sparql_api.mapper.AggList;
 import org.aksw.jena_sparql_api.mapper.AggLiteral;
+import org.aksw.jena_sparql_api.mapper.AggMap;
+import org.aksw.jena_sparql_api.mapper.AggTransform;
 import org.aksw.jena_sparql_api.mapper.BindingMapperProjectVar;
 import org.aksw.jena_sparql_api.mapper.MappedQuery;
 import org.aksw.jena_sparql_api.stmt.SparqlParserConfig;
@@ -43,6 +47,9 @@ import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.core.Prologue;
+import org.apache.jena.sparql.expr.ExprAggregator;
+import org.apache.jena.sparql.expr.ExprVar;
+import org.apache.jena.sparql.expr.aggregate.AggCountVarDistinct;
 import org.apache.jena.sparql.pfunction.PropertyFunctionRegistry;
 import org.apache.jena.sparql.util.Context;
 import org.eclipse.jetty.server.Server;
@@ -86,13 +93,22 @@ public class MainSparqlPath2 {
 
 
     //ListService<Concept, Node, List<Node>>
-    public static LookupService<Node, List<Node>> createListServicePredicates(QueryExecutionFactory qef, boolean reverse) {
+    /**
+     * Maps nodes to their predicates and their count of distinct values
+     *
+     * @param qef
+     * @param reverse
+     * @return
+     */
+    public static LookupService<Node, Map<Node, Number>> createListServicePredicates(QueryExecutionFactory qef, boolean reverse) {
         Query query = new Query();
         query.setQuerySelectType();
         query.setDistinct(true);
         query.getProject().add(Vars.s);
         query.getProject().add(Vars.p);
-
+        query.getProject().add(Vars.x, new ExprAggregator(Vars.y, new AggCountVarDistinct(new ExprVar(Vars.o))));
+        query.getGroupBy().add(Vars.s);
+        query.getGroupBy().add(Vars.p);
         Triple t = new Triple(Vars.s, Vars.p, Vars.o);
         if(reverse) {
             t = TripleUtils.swap(t);
@@ -101,13 +117,14 @@ public class MainSparqlPath2 {
         query.setQueryPattern(
                 ElementUtils.createElement(t));
 
-        System.out.println(query);
 
-        Agg<List<Node>> agg = AggList.create(AggLiteral.create(BindingMapperProjectVar.create(Vars.p)));
-        MappedQuery<List<Node>> mappedQuery = MappedQuery.create(query, Vars.s, agg);
+        Agg<Map<Node, Number>> agg = AggMap.create(
+                BindingMapperProjectVar.create(Vars.p),
+                AggTransform.create(AggLiteral.create(BindingMapperProjectVar.create(Vars.x)), (node) -> (Number)node.getLiteralValue()));
+        MappedQuery<Map<Node, Number>> mappedQuery = MappedQuery.create(query, Vars.s, agg);
 
-        ListService<Concept, Node, List<Node>> lsx = ListServiceUtils.createListServiceMappedQuery(qef, mappedQuery, false);
-        LookupService<Node, List<Node>> result = LookupServiceListService.create(lsx);
+        ListService<Concept, Node, Map<Node, Number>> lsx = ListServiceUtils.createListServiceMappedQuery(qef, mappedQuery, false);
+        LookupService<Node, Map<Node, Number>> result = LookupServiceListService.create(lsx);
 
 
         return result;
@@ -239,18 +256,25 @@ public class MainSparqlPath2 {
             QueryExecutionFactory qef = ss.getQueryExecutionFactory();
             //ListService<Concept, Node, List<Node>> lsx =
             //LookupService<Node, List<Node>> ls = LookupServiceListService.create(lsx);
-            LookupService<Node, List<Node>> fwdLs = createListServicePredicates(qef, false);
-            LookupService<Node, List<Node>> bwdLs = createListServicePredicates(qef, true);
+            LookupService<Node, Map<Node, Number>> fwdLs = createListServicePredicates(qef, false);
+            LookupService<Node, Map<Node, Number>> bwdLs = createListServicePredicates(qef, true);
 
-            {
-                Map<Node, List<Node>> map = fwdLs.apply(Collections.singleton(s));
-                System.out.println("Fwd: " + map);
-            }
+            // Fetch the properties for the source and and states
+            Map<Node, Map<Node, Number>> fwdPreds = fwdLs.apply(Collections.singleton(s));
+            Map<Node, Map<Node, Number>> bwdPreds = bwdLs.apply(Collections.singleton(s));
 
-            {
-                Map<Node, List<Node>> map = bwdLs.apply(Collections.singleton(s));
-                System.out.println("Bwd: " + map);
-            }
+            System.out.println(fwdPreds);
+            System.out.println(bwdPreds);
+
+//            Map<Node, Number> fwdNodes = new HashSet<>(fwdPreds.get(s));
+//            Map<Node, Number> bwdNodes = new HashSet<>(bwdPreds.get(s));
+//
+//            PredicateClass pc = new PredicateClass(
+//                    new ValueSet<Node>(true, fwdNodes),
+//                    new ValueSet<Node>(true, bwdNodes));
+
+
+
 
 
             QueryExecution qe = qef.createQueryExecution(queryStr);

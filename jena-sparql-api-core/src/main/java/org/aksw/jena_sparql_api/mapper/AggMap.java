@@ -5,6 +5,8 @@ import java.util.Set;
 
 import org.apache.jena.sparql.core.Var;
 
+import com.google.common.collect.Sets;
+
 public class AggMap<K, V>
     implements Agg<Map<K,V>>
 {
@@ -24,8 +26,17 @@ public class AggMap<K, V>
 
     @Override
     public Set<Var> getDeclaredVars() {
-        // TODO Auto-generated method stub
-        return null;
+        Set<Var> a = mapper instanceof BindingMapperVarAware<?>
+        ? ((BindingMapperVarAware<?>)mapper).getVarsMentioned()
+        : null // Collections.emptySet()
+        ;
+
+        Set<Var> b = subAgg.getDeclaredVars();
+        Set<Var> result = a == null || b == null
+            ? null
+            : Sets.union(a, b);
+
+        return result;
     }
 
     public static <K, V> AggMap<K, V> create(BindingMapper<K> mapper, Agg<V> subAgg) {

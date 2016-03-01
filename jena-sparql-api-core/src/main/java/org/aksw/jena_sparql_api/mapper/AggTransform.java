@@ -1,8 +1,8 @@
 package org.aksw.jena_sparql_api.mapper;
 
 import java.util.Set;
+import java.util.function.Function;
 
-import com.google.common.base.Function;
 import org.apache.jena.sparql.core.Var;
 
 public class AggTransform<I, O>
@@ -10,6 +10,11 @@ public class AggTransform<I, O>
 {
     private Agg<I> subAgg;
     private Function<I, O> transform;
+
+    public AggTransform(Agg<I> subAgg, com.google.common.base.Function<I, O> transform) {
+        this.subAgg = subAgg;
+        this.transform = (arg) -> transform.apply(arg);
+    }
 
     public AggTransform(Agg<I> subAgg, Function<I, O> transform) {
         this.subAgg = subAgg;
@@ -29,9 +34,14 @@ public class AggTransform<I, O>
         return result;
     }
 
-    public static <I, O> AggTransform<I, O> create(Agg<I> subAgg, Function<I, O> transform) {
+    public static <I, O> AggTransform<I, O> create(Agg<I> subAgg, com.google.common.base.Function<I, O> transform) {
         AggTransform<I, O> result = new AggTransform<I, O>(subAgg, transform);
         return result;
     }
+
+//    public static <I, O> AggTransform<I, O> create(Agg<I> subAgg, Function<I, O> transform) {
+//        AggTransform<I, O> result = new AggTransform<I, O>(subAgg, transform);
+//        return result;
+//    }
 
 }

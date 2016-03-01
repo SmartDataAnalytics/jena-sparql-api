@@ -45,7 +45,9 @@ public class ListServiceUtils {
                 query.setQueryResultStar(true);
             } else {
                 for(Var var : vars) {
-                    query.getProject().add(var);
+                    if(!query.getProject().contains(var)) {
+                        query.getProject().add(var);
+                    }
                 }
             }
         }

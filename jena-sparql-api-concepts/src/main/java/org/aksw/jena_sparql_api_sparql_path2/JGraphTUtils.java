@@ -6,13 +6,19 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.jgrapht.DirectedGraph;
+import org.jgrapht.Graph;
 
 public class JGraphTUtils {
+
+    public static <V, E> Set<V> targets(Graph<V, E> graph, Collection<E> edges) {
+        Set<V> result = edges.stream()
+                .map(e -> graph.getEdgeTarget(e))
+                .collect(Collectors.toSet());
+        return result;
+    }
 
     /**
      * Simple transitive get function that retrieves all nodes reachable via

@@ -20,7 +20,6 @@ import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.jgrapht.DirectedGraph;
-import org.jgrapht.Graph;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -49,14 +48,27 @@ public class EdgeReducer {
      * @param isEpsilon
      * @return
      */
-    public static <S, T> Map<T, Double> estimateFrontierCost(Nfa<S, T> nfa, Predicate<T> isEpsilon) {
+    public static <S, T> Map<T, Double> estimateFrontierCost(
+            Nfa<S, T> nfa,
+            Predicate<T> isEpsilon,
+            //Map<S, PredicateClass> stateToPredicates,
+            Map<S, Map<Node, Double>> stateToPredicateFreq, //
+            Map<Node, Map<Node, Double>> joinSummary// join summary
+            ) {
         Map<T, Double> result = new HashMap<>();
 
         DirectedGraph<S, T> graph = nfa.getGraph();
 
         Set<S> current = nfa.getStartStates();
         while(!current.isEmpty()) {
-            JGraphTUtils.resolveTransitions(graph, current, isEpsilon);
+
+
+
+            Set<T> transitions = JGraphTUtils.resolveTransitions(graph, current, isEpsilon);
+
+            Set<S> successorStates = JGraphTUtils.targets(graph, transitions);
+
+
 
         }
 

@@ -5,16 +5,15 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.jena.sparql.engine.binding.Binding;
-import org.apache.jena.sparql.function.FunctionEnv;
 
 
 public class AccMap<K, V>
-    implements Acc<Map<K, V>> 
+    implements Acc<Map<K, V>>
 {
     private BindingMapper<K> mapper;
     private Agg<V> subAgg;
 
-    private Map<K, Acc<V>> state;
+    private Map<K, Acc<V>> state = new HashMap<>();
 
     public AccMap(BindingMapper<K> mapper, Agg<V> subAgg) {
         this.mapper = mapper;
@@ -40,10 +39,10 @@ public class AccMap<K, V>
         for(Entry<K, Acc<V>> entry : state.entrySet()) {
             K k = entry.getKey();
             V v = entry.getValue().getValue();
-            
+
             result.put(k, v);
         }
-        
+
         return result;
     }
 
