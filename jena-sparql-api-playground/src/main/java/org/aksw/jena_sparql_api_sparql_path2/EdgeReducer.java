@@ -8,9 +8,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
@@ -25,6 +27,23 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
 public class EdgeReducer {
+
+
+    public static <K, V, W> Map<K, Map<V, W>> mergeNestedMap(Map<K, Map<V, W>> a, Map<K, Map<V, W>> b, BinaryOperator<W> mergeFn) {
+        Map<K, Map<V, W>> result = mergeMaps(a, b, (x, y) -> mergeMaps(x, y, mergeFn));
+        return result;
+    }
+
+    public static <K, V> Map<K, V> mergeMaps(Map<K, V> a, Map<K, V> b, BinaryOperator<V> mergeFn) {
+        Map<K, V> result = Stream.of(a, b)
+                .map(Map::entrySet)
+                .flatMap(Collection::stream)
+                .collect(Collectors.toMap(
+                        Entry::getKey,
+                        Entry::getValue,
+                        mergeFn));
+        return result;
+    }
 
     /**
      * - Vertices: are mapped to the estimated set of predicates with their estimated (maximum) frequency
@@ -51,31 +70,156 @@ public class EdgeReducer {
     public static <S, T> Map<T, Double> estimateFrontierCost(
             Nfa<S, T> nfa,
             Predicate<T> isEpsilon,
-            //Map<S, PredicateClass> stateToPredicates,
-            Map<S, Map<Node, Double>> stateToPredicateFreq, //
-            Map<Node, Map<Node, Double>> joinSummary// join summary
+            Function<T, PredicateClass> transitionToPredicateClass,
+            Pair<Map<Node, Number>> initPredFreqs,
+            JoinSummaryService joinSummaryService
             ) {
-        Map<T, Double> result = new HashMap<>();
+        // For every transition, we keep track of the possible set of predicates and their estimated frequency (distinct value count)
+        // This means, that negative predicate sets are resolved to positive ones via the stateToPredicateFreq map
+        Map<S, Pair<Map<Node, Number>>> stateToDiPredToCost = new HashMap<>();
 
-        DirectedGraph<S, T> graph = nfa.getGraph();
+        for(S state : nfa.getGraph().vertexSet()) {
+            stateToDiPredToCost.put(state, new Pair<>(new HashMap<Node, Number>(), new HashMap<Node, Number>()));
+        }
 
-        Set<S> current = nfa.getStartStates();
-        while(!current.isEmpty()) {
+        for(S state : nfa.getStartStates()) {
+            Pair<Map<Node, Number>> diPredToCost = stateToDiPredToCost.get(state);
 
+            for(int i = 0; i < 2; ++i) {
+                Map<Node, Number> predToCost = diPredToCost.get(i);
 
+                Map<Node, Number> initPredToCost = initPredFreqs.get(i);
 
-            Set<T> transitions = JGraphTUtils.resolveTransitions(graph, current, isEpsilon);
-
-            Set<S> successorStates = JGraphTUtils.targets(graph, transitions);
-
-
-
+                // TODO Do an in-place merge
+                Map<Node, Number> tmp = mergeMaps(predToCost, initPredToCost, (a, b) -> a.doubleValue() + b.doubleValue());
+                predToCost.putAll(tmp);
+            }
         }
 
 
-        return result;
+        DirectedGraph<S, T> graph = nfa.getGraph();
+
+        Multimap<T, Node> transitionToPreds = HashMultimap.create();
+
+
+        Set<S> current = nfa.getStartStates();
+
+        // Maximum number of iterations to perform
+        int remainingSteps = 100;
+
+        // The next set of states to consider
+        Set<S> next = new HashSet<>();
+        while(!current.isEmpty()) {
+            for(S state : current) {
+                Set<T> transitions = JGraphTUtils.resolveTransitions(graph, state, isEpsilon);
+                Pair<Map<Node, Number>> diPredToCost = stateToDiPredToCost.get(state);
+
+                // For every transition, resolve the property class, and intersect it with the successors of the join summary
+
+                // Once all transitions are iterated, remove all unneeded predicates from the source vertex
+
+                // The set of the source state's referenced predicates
+                Set<Node> sourcePredicates = new HashSet<Node>();
+
+                //Map<Node, Map<Node, Number>> targetProdCost = new HashMap<>();
+
+
+
+                for(T transition : transitions) {
+                    PredicateClass transitionPredClass = transitionToPredicateClass.apply(transition);
+
+                    // for forward and backward direction - 0: forwards, 1: backwards
+                    S targetState = graph.getEdgeTarget(transition);
+                    Pair<Map<Node, Number>> targetDiPredToCost = stateToDiPredToCost.get(targetState);
+
+
+                    for(int i = 0; i < 2; ++i) {
+                        boolean isChange = false;
+
+                        Map<Node, Number> targetPredToCost = targetDiPredToCost.get(i);
+                        Set<Node> targetPreds = targetPredToCost.keySet();
+
+                        boolean reverse = i == 1;
+
+                        //ValueSet<Node> transitionPredicates = pc.get(i);
+
+                        Map<Node, Number> predToCost = diPredToCost.get(i);
+
+                        Set<Node> preds = predToCost.keySet();
+
+                        // for every predicate (that corresponds to the source state), check the join summary for
+                        // join candidates
+                        Map<Node, Map<Node, Number>> joinSummaryFragment = joinSummaryService.fetch(preds, reverse);
+
+                        for(Entry<Node, Number> predCost : predToCost.entrySet()) {
+                            // TODO This join summary lookup is flawed
+                            Node pred = predCost.getKey();
+                            Number baseCost = predCost.getValue();
+
+                            Map<Node, Number> joinSummary = joinSummaryFragment.get(pred);
+
+                            Map<Node, Number> targetPredCostContrib =
+                                    joinSummary.entrySet().stream()
+                                    .collect(Collectors.toMap(
+                                            Entry::getKey,
+                                            costEntry -> baseCost.doubleValue() * costEntry.getValue().doubleValue()));
+
+                            Set<Node> contribPreds = targetPredCostContrib.keySet();
+
+
+                            isChange = !targetPreds.containsAll(contribPreds);
+                            if(isChange) {
+                                next.add(targetState);
+                            }
+
+                            // Compute the costs of the target vertex
+                            Map<Node, Number> totalCost = mergeMaps(targetPredToCost, targetPredCostContrib, (a, b) -> a.doubleValue() + b.doubleValue());
+                            targetPredToCost.putAll(totalCost);
+
+
+                            // Compute the set of joinable predicates that matches the transition
+                            // joinPreds is the set of predicates that joins with preds
+                            Set<Node> joinPreds = joinSummary.keySet();
+
+                            //
+                            Set<Node> actualPreds = joinPreds.stream()
+                                    .filter(p -> transitionPredClass.contains(p))
+                                    .collect(Collectors.toSet());
+
+                            transitionToPreds.putAll(transition, actualPreds);
+
+                            // TODO we may have to iteratively relabel the actual predicates
+                            // i.e. if there are cycles, this set gets iteratively refined
+
+                        }
+
+
+    //
+    //                    ValueSet<Node> resolvedPredicates = resolvePredicates(transitionPredicates,)
+    //                    if(!transitionPredicates.isEmpty()) {
+    //
+                        }
+
+
+
+
+                }
+
+
+            }
+
+            current = next;
+            next = new HashSet<>();
+        }
+
+        System.out.println(stateToDiPredToCost);
+
+
+        return null;
     }
 
+    // TODO Create a function that removes all transitions of an nfa
+    // that do not contribute to finding paths between source and target
 
     /**
      * 0: no predicates (occurrs e.g. on accepting states that do not lie on cyclic paths)
@@ -115,6 +259,8 @@ public class EdgeReducer {
     }
 */
 
+    // TODO Turn this into a service, that does not have to preload all data into memory
+    // TODO Include cardinalities
     public static BiHashMultimap<Node, Node> loadJoinSummary(QueryExecutionFactory qef) {
         BiHashMultimap<Node, Node> result = new BiHashMultimap<>();
 

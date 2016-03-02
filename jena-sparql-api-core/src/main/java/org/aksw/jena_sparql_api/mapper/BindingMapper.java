@@ -7,6 +7,7 @@ import org.apache.jena.sparql.engine.binding.Binding;
  * @author raven
  *
  */
+@FunctionalInterface
 public interface BindingMapper<T> {
     T map(Binding binding, long rowNum);
 }

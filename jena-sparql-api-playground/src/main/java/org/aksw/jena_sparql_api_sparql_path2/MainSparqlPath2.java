@@ -1,10 +1,7 @@
 package org.aksw.jena_sparql_api_sparql_path2;
 
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.GraphSparqlService;
@@ -14,9 +11,10 @@ import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
 import org.aksw.jena_sparql_api.lookup.ListService;
 import org.aksw.jena_sparql_api.lookup.ListServiceUtils;
 import org.aksw.jena_sparql_api.lookup.LookupService;
+import org.aksw.jena_sparql_api.lookup.LookupServiceCacheMem;
 import org.aksw.jena_sparql_api.lookup.LookupServiceListService;
+import org.aksw.jena_sparql_api.lookup.LookupServicePartition;
 import org.aksw.jena_sparql_api.mapper.Agg;
-import org.aksw.jena_sparql_api.mapper.AggList;
 import org.aksw.jena_sparql_api.mapper.AggLiteral;
 import org.aksw.jena_sparql_api.mapper.AggMap;
 import org.aksw.jena_sparql_api.mapper.AggTransform;
@@ -38,6 +36,7 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.query.ARQ;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.query.Syntax;
@@ -47,9 +46,12 @@ import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.core.Prologue;
+import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.ExprAggregator;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.aggregate.AggCountVarDistinct;
+import org.apache.jena.sparql.path.Path;
+import org.apache.jena.sparql.path.PathParser;
 import org.apache.jena.sparql.pfunction.PropertyFunctionRegistry;
 import org.apache.jena.sparql.util.Context;
 import org.eclipse.jetty.server.Server;
@@ -88,6 +90,43 @@ public class MainSparqlPath2 {
 
     public static String createPathExprStr(String predicate) {
         String result = "(<" + predicate + ">/(!<http://foo>)*)|(!<http://foo>)*/<" + predicate + ">";
+        return result;
+    }
+
+
+    public static LookupService<Node, Map<Node, Number>> createJoinSummaryLookupService(QueryExecutionFactory qef, boolean reverse) {
+
+        Query query = new Query();
+        QueryFactory.parse(query, "PREFIX o: <http://example.org/ontology/> SELECT ?x ?y (?fy / ?fx As ?z) { ?s ex:sourcePredicate ?x ; ex:targetPrediacte ?y ; ex:freqSource ?fx ; ex:freqTarget ?fy)", "http://example.org/base/", Syntax.syntaxARQ);
+
+        Var source = !reverse ? Vars.x : Vars.y;
+        Var target = !reverse ? Vars.y : Vars.x;
+        Var freq = Vars.z;
+
+
+
+        Agg<Map<Node, Number>> agg = AggMap.create(
+                BindingMapperProjectVar.create(target),
+                AggTransform.create(AggLiteral.create(BindingMapperProjectVar.create(freq)), (node) -> {
+                    Number n = (Number)node.getLiteralValue();
+                    return reverse ? 1.0 / n.doubleValue() : n;
+                }));
+        MappedQuery<Map<Node, Number>> mappedQuery = MappedQuery.create(query, source, agg);
+
+        ListService<Concept, Node, Map<Node, Number>> lsx = ListServiceUtils.createListServiceMappedQuery(qef, mappedQuery, false);
+        LookupService<Node, Map<Node, Number>> result = LookupServiceListService.create(lsx);
+
+        result = LookupServicePartition.create(result, 50);
+        result = LookupServiceCacheMem.create(result);
+
+        return result;
+    }
+
+    public static JoinSummaryService createJoinSummaryService(QueryExecutionFactory qef) {
+        JoinSummaryServiceImpl result = new JoinSummaryServiceImpl(
+                createJoinSummaryLookupService(qef, false),
+                createJoinSummaryLookupService(qef, true));
+
         return result;
     }
 
@@ -263,8 +302,30 @@ public class MainSparqlPath2 {
             Map<Node, Map<Node, Number>> fwdPreds = fwdLs.apply(Collections.singleton(s));
             Map<Node, Map<Node, Number>> bwdPreds = bwdLs.apply(Collections.singleton(s));
 
+            Pair<Map<Node, Number>> initPredFreqs =
+                    new Pair<>(fwdPreds.get(s), bwdPreds.get(s));
+
             System.out.println(fwdPreds);
             System.out.println(bwdPreds);
+
+            Path path = PathParser.parse(pathExprStr, PrefixMapping.Extended);
+            Nfa<Integer, LabeledEdge<Integer, PredicateClass>> nfa = PathExecutionUtils.compileToNfa(path);
+
+            JoinSummaryService joinSummmaryService = createJoinSummaryService(sspjs.getQueryExecutionFactory());
+
+            EdgeReducer.<Integer, LabeledEdge<Integer, PredicateClass>>estimateFrontierCost(
+                    nfa,
+                    LabeledEdgeImpl::isEpsilon,
+                    e -> e.getLabel(),
+                    initPredFreqs,
+                    joinSummmaryService);
+
+            // 2. Label the nfa by iterating the nfa backwards
+
+            // 3. For every path in the nfa,
+
+
+//
 
 //            Map<Node, Number> fwdNodes = new HashSet<>(fwdPreds.get(s));
 //            Map<Node, Number> bwdNodes = new HashSet<>(bwdPreds.get(s));

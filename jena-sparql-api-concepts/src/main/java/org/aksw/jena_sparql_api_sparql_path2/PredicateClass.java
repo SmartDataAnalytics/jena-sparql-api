@@ -3,30 +3,35 @@ package org.aksw.jena_sparql_api_sparql_path2;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.path.P_Path0;
 
+/**
+ * The main reason this class extends pair is to have the list interface
+ * which allows iterating the directions with get(0) and get(1)
+ *
+ * @author raven
+ *
+ */
 public class PredicateClass
+    extends Pair<ValueSet<Node>>
 {
-    protected ValueSet<Node> fwdNodes;
-    protected ValueSet<Node> bwdNodes;
+    private static final long serialVersionUID = -3939204124201128789L;
 
-    public PredicateClass(ValueSet<Node> fwdNodes, ValueSet<Node> bwdNodes) {
-        super();
-        this.fwdNodes = fwdNodes;
-        this.bwdNodes = bwdNodes;
+    public PredicateClass(ValueSet<Node> key, ValueSet<Node> value) {
+        super(key, value);
     }
 
     public ValueSet<Node> getFwdNodes() {
-        return fwdNodes;
+        return key;
     }
 
     public ValueSet<Node> getBwdNodes() {
-        return bwdNodes;
+        return value;
     }
 
     public boolean contains(P_Path0 path) {
         Node node = path.getNode();
         boolean result = path.isForward()
-            ? fwdNodes.contains(node)
-            : bwdNodes.contains(node)
+            ? key.contains(node)
+            : value.contains(node)
             ;
        return result;
     }
@@ -36,9 +41,9 @@ public class PredicateClass
         final int prime = 31;
         int result = 1;
         result = prime * result
-                + ((bwdNodes == null) ? 0 : bwdNodes.hashCode());
+                + ((value == null) ? 0 : value.hashCode());
         result = prime * result
-                + ((fwdNodes == null) ? 0 : fwdNodes.hashCode());
+                + ((key == null) ? 0 : key.hashCode());
         return result;
     }
 
@@ -51,22 +56,22 @@ public class PredicateClass
         if (getClass() != obj.getClass())
             return false;
         PredicateClass other = (PredicateClass) obj;
-        if (bwdNodes == null) {
-            if (other.bwdNodes != null)
+        if (value == null) {
+            if (other.value != null)
                 return false;
-        } else if (!bwdNodes.equals(other.bwdNodes))
+        } else if (!value.equals(other.value))
             return false;
-        if (fwdNodes == null) {
-            if (other.fwdNodes != null)
+        if (key == null) {
+            if (other.key != null)
                 return false;
-        } else if (!fwdNodes.equals(other.fwdNodes))
+        } else if (!key.equals(other.key))
             return false;
         return true;
     }
 
     @Override
     public String toString() {
-        return "PredicateClass [fwdNodes=" + fwdNodes + ", bwdNodes=" + bwdNodes
+        return "PredicateClass [key=" + key + ", value=" + value
                 + "]";
     }
 
