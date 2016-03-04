@@ -2,49 +2,6 @@ log_enable(2);
 
 
 Sparql
-DEFINE input:default-graph-uri <http://fp7-pp.publicdata.eu/>
-PREFIX r: <http://example.org/resource/>
-PREFIX o: <http://example.org/ontology/>
-INSERT INTO <http://fp7-pp.publicdata.eu/summary/predicate-join/> {
-  ?s
-    a o:PredicateJoinSummary ;
-    o:sourcePredicate ?x ;
-    o:targetPredicate ?y ;
-    o:freqTotal ?ct ;
-    o:freqSource ?ca ;
-    o:freqIntermediary ?cb ;
-    o:freqTarget ?cc
-}
-{
-  { SELECT ?x ?y (Count(*) As ?ct) (Count(Distinct ?a) As ?ca) (Count(Distinct ?b) As ?cb) (Count(Distinct ?c) As ?cc) {
-      ?a ?x ?b .
-      ?b ?y ?c .
-  } GROUP BY ?x ?y }
-  BIND(r:training_dataset As ?d)
-  BIND(uri(concat(str(r:join), '-', encode_for_uri(?d), '-', md5(concat(str(?x), str(?y))))) As ?s)
-}
-;
-
-Done. -- 1041 msec.
-
-
-
-
------------
-
-
-
-
-
-
-
-
-
-
-
-
-
-Sparql
 DEFINE input:default-graph-uri <http://2016.eswc-conferences.org/top-k-shortest-path-large-typed-rdf-graphs-challenge/training_dataset.nt>
 PREFIX r: <http://example.org/resource/>
 PREFIX o: <http://example.org/ontology/>

@@ -187,11 +187,33 @@ public class MainSparqlPath2 {
 
         PropertyFunctionRegistry.get().put(PropertyFunctionKShortestPaths.DEFAULT_IRI, new PropertyFunctionFactoryKShortestPaths());
 
-        String pathExprStr = createPathExprStr("http://dbpedia.org/ontology/president");
-        Node s = NodeFactory.createURI("http://dbpedia.org/resource/James_K._Polk");
+        String queryStr;
 
-        String queryStr = "SELECT ?path { <" + s + "> jsafn:kShortestPaths ('" + pathExprStr + "' ?path <http://dbpedia.org/resource/Felix_Grundy> 471199) }";
+        DatasetDescription dataset;
+        DatasetDescription predDataset;
+        DatasetDescription predJoinDataset;
+        String pathExprStr;
+        Node s;
 
+        if(true) {
+            dataset = DatasetDescriptionUtils.createDefaultGraph("http://fp7-pp.publicdata.eu/");
+            predDataset = DatasetDescriptionUtils.createDefaultGraph("http://fp7-pp.publicdata.eu/summary/predicate/");
+            predJoinDataset = DatasetDescriptionUtils.createDefaultGraph("http://fp7-pp.publicdata.eu/summary/predicate-join/");
+
+            pathExprStr = createPathExprStr("http://fp7-pp.publicdata.eu/ontology/funding");
+            s = NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/project/257943");
+
+            queryStr = "SELECT ?path { <" + s + "> jsafn:kShortestPaths ('" + pathExprStr + "' ?path <http://fp7-pp.publicdata.eu/resource/city/France-PARIS> 471199) }";
+
+        } else {
+            dataset = DatasetDescriptionUtils.createDefaultGraph("http://2016.eswc-conferences.org/top-k-shortest-path-large-typed-rdf-graphs-challenge/training_dataset.nt");
+            predDataset = DatasetDescriptionUtils.createDefaultGraph("http://2016.eswc-conferences.org/top-k-shortest-path-large-typed-rdf-graphs-challenge/training_dataset.nt/summary/predicate/");
+            predJoinDataset = DatasetDescriptionUtils.createDefaultGraph("http://2016.eswc-conferences.org/top-k-shortest-path-large-typed-rdf-graphs-challenge/training_dataset.nt/summary/predicate-join/");
+
+            pathExprStr = createPathExprStr("http://dbpedia.org/ontology/president");
+            s = NodeFactory.createURI("http://dbpedia.org/resource/James_K._Polk");
+            queryStr = "SELECT ?path { <" + s + "> jsafn:kShortestPaths ('" + pathExprStr + "' ?path <http://dbpedia.org/resource/Felix_Grundy> 471199) }";
+        }
 
         System.out.println("Query string: " + queryStr);
 
@@ -289,8 +311,8 @@ public class MainSparqlPath2 {
 
 
 
-        SparqlService ssps = ssf2.createSparqlService(null, DatasetDescriptionUtils.createDefaultGraph("http://2016.eswc-conferences.org/top-k-shortest-path-large-typed-rdf-graphs-challenge/training_dataset.nt/summary/predicate/"), null);
-        SparqlService sspjs = ssf2.createSparqlService(null, DatasetDescriptionUtils.createDefaultGraph("http://2016.eswc-conferences.org/top-k-shortest-path-large-typed-rdf-graphs-challenge/training_dataset.nt/summary/predicate-join/"), null);
+        SparqlService ssps = ssf2.createSparqlService(null, predDataset, null);
+        SparqlService sspjs = ssf2.createSparqlService(null, predJoinDataset, null);
 
 //        System.out.println("Loading predicate summary");
 //        Map<Node, Long> ps = EdgeReducer.loadPredicateSummary(ssps.getQueryExecutionFactory());
@@ -303,7 +325,7 @@ public class MainSparqlPath2 {
 
         if(true) {
             //ssf.createSparqlService("http://, datasetDescription, authenticator)
-            SparqlService ss = ssf.createSparqlService(null, DatasetDescriptionUtils.createDefaultGraph("http://2016.eswc-conferences.org/top-k-shortest-path-large-typed-rdf-graphs-challenge/training_dataset.nt"), null);
+            SparqlService ss = ssf.createSparqlService(null, dataset, null);
             QueryExecutionFactory qef = ss.getQueryExecutionFactory();
             //ListService<Concept, Node, List<Node>> lsx =
             //LookupService<Node, List<Node>> ls = LookupServiceListService.create(lsx);
@@ -315,7 +337,7 @@ public class MainSparqlPath2 {
             Map<Node, Map<Node, Number>> bwdPreds = bwdLs.apply(Collections.singleton(s));
 
             Pair<Map<Node, Number>> initPredFreqs =
-                    new Pair<>(fwdPreds.get(s), bwdPreds.get(s));
+                    new Pair<>(fwdPreds.getOrDefault(s, Collections.emptyMap()), bwdPreds.getOrDefault(s, Collections.emptyMap()));
 
             System.out.println(fwdPreds);
             System.out.println(bwdPreds);
@@ -333,9 +355,9 @@ public class MainSparqlPath2 {
 
             JoinSummaryService2 jss2 = new JoinSummaryService2Impl(sspjs.getQueryExecutionFactory());
 //            Map<Node, Number> test = jss2.fetchPredicates(Arrays.<Node>asList(NodeFactory.createURI("http://dbpedia.org/property/owner")), false);
-            Map<Node, Number> test = jss2.fetchPredicates(Arrays.<Node>asList(NodeFactory.createURI("http://dbpedia.org/property/novPrecipInch")), true);
+//            Map<Node, Number> test = jss2.fetchPredicates(Arrays.<Node>asList(NodeFactory.createURI("http://dbpedia.org/property/novPrecipInch")), true);
 
-            System.out.println("join summary 2: " + test);
+//            System.out.println("join summary 2: " + test);
 
 //            Node issue = NodeFactory.createURI("http://dbpedia.org/ontology/owner");
 //            Map<Node, Map<Node, Number>> test = joinSummaryService.fetch(Collections.singleton(issue), false);
