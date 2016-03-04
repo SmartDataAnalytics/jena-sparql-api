@@ -27,14 +27,14 @@ public class PredicateClass
         return value;
     }
 
-    public boolean contains(P_Path0 path) {
-        Node node = path.getNode();
-        boolean result = path.isForward()
-            ? key.contains(node)
-            : value.contains(node)
-            ;
-       return result;
-    }
+//    public boolean contains(P_Path0 path) {
+//        Node node = path.getNode();
+//        boolean result = path.isForward()
+//            ? key.contains(node)
+//            : value.contains(node)
+//            ;
+//       return result;
+//    }
 
     @Override
     public int hashCode() {

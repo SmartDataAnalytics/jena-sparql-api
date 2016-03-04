@@ -13,7 +13,6 @@ import org.aksw.commons.collections.SetUtils;
 import org.aksw.jena_sparql_api.core.utils.QueryGenerationUtils;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprListUtils;
-import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.Triples;
 import org.aksw.jena_sparql_api.utils.VarExprListUtils;
@@ -21,7 +20,6 @@ import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
-
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.core.Var;
@@ -560,6 +558,19 @@ public class ConceptUtils {
 
         Generator<Var> varGen = VarUtils.createVarGen(baseVarName, varsMentioned);
         Var result = varGen.next();
+
+        return result;
+    }
+
+    public static Concept createRenamedConcept(Concept concept, Var attrVar) {
+        Var newVar = freshVar(concept);
+        Map<Var, Var> varMap = new HashMap<>();
+        varMap.put(attrVar, newVar);
+        varMap.put(concept.getVar(), attrVar);
+        Concept result = ConceptUtils.createRenamedConcept(concept, varMap);
+
+//        Concept tmp = createRenamedConcept(concept, Collections.singletonMap(attrVar, newVar));
+//        Concept result = ConceptUtils.createRenamedConcept(tmp, Collections.singletonMap(tmp.getVar(), attrVar));
 
         return result;
     }

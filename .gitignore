@@ -15,6 +15,7 @@ cache
 #Idea files
 .idea/*
 *.iml
+*.log
 
 pom.xml.releaseBackup
 pom.xml.versionsBackup

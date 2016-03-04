@@ -70,10 +70,10 @@ public class JGraphTUtils {
         return result;
     }
 
-    public static <V, E> Set<E> resolveTransitions(DirectedGraph<V, E> graph, Set<V> vertices, Predicate<E> isEpsilon) {
+    public static <V, E> Set<E> resolveTransitions(DirectedGraph<V, E> graph, Set<V> vertices, Predicate<E> isEpsilon, boolean reverse) {
         Set<E> result = vertices
                 .stream()
-                .flatMap(v -> resolveTransitions(graph, v, isEpsilon).stream())
+                .flatMap(v -> resolveTransitions(graph, v, isEpsilon, reverse).stream())
                 .collect(Collectors.toSet());
 
         return result;
@@ -83,12 +83,11 @@ public class JGraphTUtils {
      * Returns the set of non-epsilon edges reachable via epsilon transitions from the given vertex
      *  // Check if a state is implicitly final if it has an epsilon transition to a final state
      */
-    public static <V, E> Set<E> resolveTransitions(DirectedGraph<V, E> graph, V vertex, Predicate<E> isEpsilon) {
+    public static <V, E> Set<E> resolveTransitions(DirectedGraph<V, E> graph, V vertex, Predicate<E> isEpsilon, boolean reverse) {
 
         Set<E> result = new HashSet<>();
-
         Set<E> visited = new HashSet<>();
-        Set<E> open = new HashSet<>(graph.outgoingEdgesOf(vertex));
+        Set<E> open = new HashSet<>(reverse ? graph.incomingEdgesOf(vertex) : graph.outgoingEdgesOf(vertex));
 
         while(!open.isEmpty()) {
             Iterator<E> it = open.iterator();
@@ -102,10 +101,10 @@ public class JGraphTUtils {
             visited.add(edge);
 
             boolean isEps = isEpsilon.test(edge);
-            V target = graph.getEdgeTarget(edge);
+            V target = reverse ? graph.getEdgeSource(edge) : graph.getEdgeTarget(edge);
 
             if(isEps) {
-                Set<E> nextEdges = graph.outgoingEdgesOf(target);
+                Set<E> nextEdges = reverse ? graph.incomingEdgesOf(vertex) : graph.outgoingEdgesOf(target);
                 open.addAll(nextEdges);
             } else {
                 result.add(edge);

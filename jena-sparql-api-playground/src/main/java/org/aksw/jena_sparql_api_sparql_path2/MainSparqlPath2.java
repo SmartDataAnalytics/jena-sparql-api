@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api_sparql_path2;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 
@@ -54,6 +55,8 @@ import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.path.PathParser;
 import org.apache.jena.sparql.pfunction.PropertyFunctionRegistry;
 import org.apache.jena.sparql.util.Context;
+import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.vocabulary.RDFS;
 import org.eclipse.jetty.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,7 +100,7 @@ public class MainSparqlPath2 {
     public static LookupService<Node, Map<Node, Number>> createJoinSummaryLookupService(QueryExecutionFactory qef, boolean reverse) {
 
         Query query = new Query();
-        QueryFactory.parse(query, "PREFIX o: <http://example.org/ontology/> SELECT ?x ?y (?fy / ?fx As ?z) { ?s ex:sourcePredicate ?x ; ex:targetPrediacte ?y ; ex:freqSource ?fx ; ex:freqTarget ?fy)", "http://example.org/base/", Syntax.syntaxARQ);
+        QueryFactory.parse(query, "PREFIX o: <http://example.org/ontology/> SELECT ?x ?y ((<http://www.w3.org/2001/XMLSchema#double>(?fy) / <http://www.w3.org/2001/XMLSchema#double>(?fx)) As ?z) { ?s o:sourcePredicate ?x ; o:targetPredicate ?y ; o:freqSource ?fx ; o:freqTarget ?fy }", "http://example.org/base/", Syntax.syntaxARQ);
 
         Var source = !reverse ? Vars.x : Vars.y;
         Var target = !reverse ? Vars.y : Vars.x;
@@ -108,15 +111,23 @@ public class MainSparqlPath2 {
         Agg<Map<Node, Number>> agg = AggMap.create(
                 BindingMapperProjectVar.create(target),
                 AggTransform.create(AggLiteral.create(BindingMapperProjectVar.create(freq)), (node) -> {
-                    Number n = (Number)node.getLiteralValue();
-                    return reverse ? 1.0 / n.doubleValue() : n;
+                    Number result;
+                    // TODO Make a bug report that sometimes double rdf terms in json serialization in virtuoso 7.2.2 turn up as NAN
+                    try {
+                        Number n = (Number)node.getLiteralValue();
+                        result = reverse ? 1.0 / n.doubleValue() : n;
+                    } catch(Exception e) {
+                        logger.warn("Not a numeric literal: " + node);
+                        result = 1.0;
+                    }
+                    return result;
                 }));
         MappedQuery<Map<Node, Number>> mappedQuery = MappedQuery.create(query, source, agg);
 
         ListService<Concept, Node, Map<Node, Number>> lsx = ListServiceUtils.createListServiceMappedQuery(qef, mappedQuery, false);
         LookupService<Node, Map<Node, Number>> result = LookupServiceListService.create(lsx);
 
-        result = LookupServicePartition.create(result, 50);
+        result = LookupServicePartition.create(result, 100, 4);
         result = LookupServiceCacheMem.create(result);
 
         return result;
@@ -171,6 +182,7 @@ public class MainSparqlPath2 {
 
 
     public static void main(String[] args) throws InterruptedException {
+
 
 
         PropertyFunctionRegistry.get().put(PropertyFunctionKShortestPaths.DEFAULT_IRI, new PropertyFunctionFactoryKShortestPaths());
@@ -311,14 +323,25 @@ public class MainSparqlPath2 {
             Path path = PathParser.parse(pathExprStr, PrefixMapping.Extended);
             Nfa<Integer, LabeledEdge<Integer, PredicateClass>> nfa = PathExecutionUtils.compileToNfa(path);
 
-            JoinSummaryService joinSummmaryService = createJoinSummaryService(sspjs.getQueryExecutionFactory());
+            JoinSummaryService joinSummaryService = createJoinSummaryService(sspjs.getQueryExecutionFactory());
+
+
+            JoinSummaryService2 jss2 = new JoinSummaryService2Impl(sspjs.getQueryExecutionFactory());
+//            Map<Node, Number> test = jss2.fetchPredicates(Arrays.<Node>asList(NodeFactory.createURI("http://dbpedia.org/property/owner")), false);
+            Map<Node, Number> test = jss2.fetchPredicates(Arrays.<Node>asList(NodeFactory.createURI("http://dbpedia.org/property/novPrecipInch")), true);
+
+            System.out.println("join summary 2: " + test);
+
+//            Node issue = NodeFactory.createURI("http://dbpedia.org/ontology/owner");
+//            Map<Node, Map<Node, Number>> test = joinSummaryService.fetch(Collections.singleton(issue), false);
+//            System.out.println("Test: " + test);
 
             EdgeReducer.<Integer, LabeledEdge<Integer, PredicateClass>>estimateFrontierCost(
                     nfa,
                     LabeledEdgeImpl::isEpsilon,
                     e -> e.getLabel(),
                     initPredFreqs,
-                    joinSummmaryService);
+                    joinSummaryService);
 
             // 2. Label the nfa by iterating the nfa backwards
 
@@ -336,11 +359,12 @@ public class MainSparqlPath2 {
 
 
 
-
-
-            QueryExecution qe = qef.createQueryExecution(queryStr);
-            ResultSet rs = qe.execSelect();
-            ResultSetFormatter.outputAsJSON(System.out, rs);
+            boolean execQuery = false;
+            if(execQuery) {
+                QueryExecution qe = qef.createQueryExecution(queryStr);
+                ResultSet rs = qe.execSelect();
+                ResultSetFormatter.outputAsJSON(System.out, rs);
+            }
 
 
         } else {

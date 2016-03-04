@@ -7,6 +7,7 @@ import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -24,15 +25,17 @@ public class LookupServicePartition<K, V>
     private int nThreads;
 
     //private ExecutorService executorService;
+    //private ExecutorService executorService;
 
     public LookupServicePartition(LookupService<K, V> base, int partitionSize) {
         this(base, partitionSize, 1);
     }
 
-    public LookupServicePartition(LookupService<K, V> base, int partitionSize, int nThreads) {
+    public LookupServicePartition(LookupService<K, V> base, int partitionSize, int nThreads) { //ExecutorService executorService) {
         this.base = base;
         this.partitionSize = partitionSize;
         this.nThreads = nThreads;
+        //this.executorService = executorService;
     }
 
     @Override
@@ -53,20 +56,28 @@ public class LookupServicePartition<K, V>
 
         //ExecutorService executorService = Executors.newFixedThreadPool(nThreads);
 
-        ExecutorService executorService = MoreExecutors.newDirectExecutorService();
+        //ExecutorService executorService = MoreExecutors.newDirectExecutorService();
+        ExecutorService executorService = nThreads > 1
+                ? Executors.newFixedThreadPool(nThreads)
+                : MoreExecutors.newDirectExecutorService()
+                ;
 
-        CompletionService<Map<K, V>> completionService = new ExecutorCompletionService<Map<K, V>>(executorService);
+        CompletionService<Map<K, V>> completionService;
+        int n;
+        try {
+            completionService = new ExecutorCompletionService<Map<K, V>>(executorService);
 
-        int n = 0;
-        for(List<K> list : lists) {
-            LookupTask<K, V> task = new LookupTask<K, V>(base, list);
-            completionService.submit(task);
-            ++n;
+            n = 0;
+            for(List<K> list : lists) {
+                LookupTask<K, V> task = new LookupTask<K, V>(base, list);
+                completionService.submit(task);
+                ++n;
+            }
+        } finally {
+            executorService.shutdown();
+            executorService.awaitTermination(60, TimeUnit.SECONDS);
         }
 
-        executorService.shutdown();
-
-        executorService.awaitTermination(60, TimeUnit.SECONDS);
 
         Map<K, V> result = new HashMap<K, V>();
 
