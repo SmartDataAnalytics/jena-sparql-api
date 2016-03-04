@@ -323,6 +323,11 @@ public class MainSparqlPath2 {
             Path path = PathParser.parse(pathExprStr, PrefixMapping.Extended);
             Nfa<Integer, LabeledEdge<Integer, PredicateClass>> nfa = PathExecutionUtils.compileToNfa(path);
 
+            System.out.println("NFA: " + nfa);
+            System.out.println(nfa.getStartStates());
+            System.out.println(nfa.getEndStates());
+            nfa.getGraph().edgeSet().forEach(x -> System.out.println(x));
+
             JoinSummaryService joinSummaryService = createJoinSummaryService(sspjs.getQueryExecutionFactory());
 
 

@@ -144,6 +144,7 @@ public class EdgeReducer {
                         Pair<Map<Node, Number>> tgtDiPredToCost = stateToDiPredToCost.get(tgtState);
 
                         for(int i = 0; i < 2; ++i) {
+
                             Map<Node, Number> srcPredToCost = srcDiPredToCost.get(0);
                             Map<Node, Number> tgtPredToCost = tgtDiPredToCost.get(i);
 
@@ -180,6 +181,10 @@ public class EdgeReducer {
                             boolean reverse = i == 1;
 
                             ValueSet<Node> transPredSet = transPredClass.get(i);
+
+                            if(transPredSet.isEmpty()) {
+                                continue;
+                            }
 
                             Map<Node, Number> srcPredToCost = srcDiPredToCost.get(i);
 
