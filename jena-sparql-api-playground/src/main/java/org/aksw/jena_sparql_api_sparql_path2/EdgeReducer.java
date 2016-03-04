@@ -145,7 +145,7 @@ public class EdgeReducer {
 
                         for(int i = 0; i < 2; ++i) {
 
-                            Map<Node, Number> srcPredToCost = srcDiPredToCost.get(0);
+                            Map<Node, Number> srcPredToCost = srcDiPredToCost.get(i);
                             Map<Node, Number> tgtPredToCost = tgtDiPredToCost.get(i);
 
                             Map<Node, Number> newTgtPredToCost = mergeMaps(tgtPredToCost, srcPredToCost, (a, b) -> Math.max(a.doubleValue(), b.doubleValue()));
@@ -248,7 +248,7 @@ public class EdgeReducer {
             next = new HashSet<>();
         }
 
-        System.out.println(stateToDiPredToCost);
+        stateToDiPredToCost.entrySet().stream().forEach(e -> System.out.println(e));
 
 
         return null;

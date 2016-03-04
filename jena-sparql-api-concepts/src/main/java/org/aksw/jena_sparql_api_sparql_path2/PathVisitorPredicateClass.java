@@ -22,8 +22,9 @@ public class PathVisitorPredicateClass
     }
 
     public static PredicateClass toPredicateClass(P_NegPropSet path) {
-        ValueSet<Node> f = ValueSet.create(false, path.getFwdNodes());
-        ValueSet<Node> b = ValueSet.create(false, path.getBwdNodes());
+        // If the set of nodes is empty, the valueset gets positive polarity, otherwise its negative
+        ValueSet<Node> f = ValueSet.create(path.getFwdNodes().isEmpty(), path.getFwdNodes());
+        ValueSet<Node> b = ValueSet.create(path.getBwdNodes().isEmpty(), path.getBwdNodes());
 
         PredicateClass result = new PredicateClass(f, b);
         return result;

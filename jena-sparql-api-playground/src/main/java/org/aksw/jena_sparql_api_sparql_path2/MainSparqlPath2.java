@@ -128,7 +128,7 @@ public class MainSparqlPath2 {
         LookupService<Node, Map<Node, Number>> result = LookupServiceListService.create(lsx);
 
         result = LookupServicePartition.create(result, 100, 4);
-        result = LookupServiceCacheMem.create(result);
+        result = LookupServiceCacheMem.create(result, 20000);
 
         return result;
     }
@@ -195,7 +195,7 @@ public class MainSparqlPath2 {
         String pathExprStr;
         Node s;
 
-        if(true) {
+        if(false) {
             dataset = DatasetDescriptionUtils.createDefaultGraph("http://fp7-pp.publicdata.eu/");
             predDataset = DatasetDescriptionUtils.createDefaultGraph("http://fp7-pp.publicdata.eu/summary/predicate/");
             predJoinDataset = DatasetDescriptionUtils.createDefaultGraph("http://fp7-pp.publicdata.eu/summary/predicate-join/");
