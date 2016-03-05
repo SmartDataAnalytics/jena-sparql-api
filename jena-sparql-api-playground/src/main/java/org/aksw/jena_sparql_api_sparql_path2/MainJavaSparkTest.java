@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.aksw.jena_sparql_api_sparql_path.spark.NfaExecutionSpark;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
@@ -102,62 +103,29 @@ public class MainJavaSparkTest {
 //            }
 //        });
 //
+        JavaPairRDD<Node, FrontierData<Integer, Integer, Node, Node>> fwdFrontierRdd = frontierRdd;
 
-        JavaRDD<FrontierItem<Integer, Integer, Node, Node>> fwdFrontierRdd = frontierRdd
-            .join(fwdRdd)
-            .filter(new org.apache.spark.api.java.function.Function<Tuple2<Node,Tuple2<FrontierData<Integer,Integer,Node,Node>,Tuple2<Node,Node>>>, Boolean>() {
-                private static final long serialVersionUID = 12351375937L;
-                @Override
-                public Boolean call(
-                        Tuple2<Node, Tuple2<FrontierData<Integer, Integer, Node, Node>, Tuple2<Node, Node>>> t)
-                                throws Exception {
-                    Map<Integer, Nfa<Integer, LabeledEdge<Integer, PredicateClass>>> idToNfa = broadcastVar.getValue();
+        for(int i = 0; i < 2; ++i) {
+        fwdFrontierRdd = NfaExecutionSpark.advanceFrontier(
+                1,
+                fwdFrontierRdd,
+                fwdRdd,
+                bwdRdd,
+                false,
+                broadcastVar);
+                //LabeledEdgeImpl::<Node>isEpsilon);
+        }
 
-                    FrontierData<Integer, Integer, Node, Node> frontierData = t._2._1;
-                    Integer nfaId = frontierData.getFrontierId();
-                    Node p = t._2._2._1;
-                    Node o = t._2._2._2;
 
-                    Nfa<Integer, LabeledEdge<Integer, PredicateClass>> nfa = idToNfa.get(nfaId);
-
-                    // Check whether the current p and o are acceptable according to the nfa
-                    return true;
-                }
-            })
-            .map(new org.apache.spark.api.java.function.Function<Tuple2<Node,Tuple2<FrontierData<Integer,Integer,Node,Node>,Tuple2<Node,Node>>>, FrontierItem<Integer, Integer, Node, Node>>() {
-                private static final long serialVersionUID = 1312323951L;
-
-                @Override
-                public FrontierItem<Integer, Integer, Node, Node> call(
-                        Tuple2<Node, Tuple2<FrontierData<Integer, Integer, Node, Node>, Tuple2<Node, Node>>> t)
-                                throws Exception {
-
-                    FrontierData<Integer, Integer, Node, Node> frontierData = t._2._1;
-                    Integer nfaId = frontierData.getFrontierId();
-                    Node p = t._2._2._1;
-                    Node o = t._2._2._2;
-
-                    Set<Integer> nextStates = Collections.singleton(123);
-
-                    Directed<NestedPath<Node, Node>> pathHead = frontierData.getPathHead();
-                    NestedPath<Node, Node> nestedPath = frontierData.getPathHead().getValue();
-
-                    NestedPath<Node, Node> nextPath = new NestedPath<>(new ParentLink<>(nestedPath, new Directed<>(p, false)), o);
-                    Directed<NestedPath<Node, Node>> nextPathHead = new Directed<>(nextPath, pathHead.isReverse());
-
-                    FrontierItem<Integer, Integer, Node, Node> result = new FrontierItem<>(nfaId, nextStates, nextPathHead);
-
-                    return result;
-                }
-            });
-
-        fwdFrontierRdd.foreach(new VoidFunction<FrontierItem<Integer,Integer,Node,Node>>() {
-            private static final long serialVersionUID = 3867507043330385911L;
+        System.out.println("GOT THESE PATHS:");
+        fwdFrontierRdd.foreach(new VoidFunction<Tuple2<Node,FrontierData<Integer,Integer,Node,Node>>>() {
+            private static final long serialVersionUID = -6067391295525007638L;
 
             @Override
-            public void call(FrontierItem<Integer, Integer, Node, Node> t)
-                    throws Exception {
-                System.out.println(t);
+            public void call(
+                    Tuple2<Node, FrontierData<Integer, Integer, Node, Node>> t)
+                            throws Exception {
+                System.out.println("GOT PATH: " + t._2.getPathHead().getValue().asSimplePath());
             }
         });
 
