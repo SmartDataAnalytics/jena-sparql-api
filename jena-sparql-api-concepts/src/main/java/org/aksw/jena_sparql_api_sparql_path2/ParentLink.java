@@ -13,13 +13,13 @@ public class ParentLink<V, E>
     protected NestedPath<V, E> target;
 
     // TODO Maybe replace with E directly - however, when creating triplets from a path, we need to know the direction anyway
-    protected DirectedProperty<E> diProperty;
+    protected Directed<E> diProperty;
 
-    public ParentLink(DirectedProperty<E> diProperty) {
+    public ParentLink(Directed<E> diProperty) {
         this(null, diProperty);
     }
 
-    public ParentLink(NestedPath<V, E> target, DirectedProperty<E> diProperty) {
+    public ParentLink(NestedPath<V, E> target, Directed<E> diProperty) {
         super();
         this.target = target;
         this.diProperty = diProperty;
@@ -29,7 +29,7 @@ public class ParentLink<V, E>
         return target;
     }
 
-    public DirectedProperty<E> getDiProperty() {
+    public Directed<E> getDiProperty() {
         return diProperty;
     }
 

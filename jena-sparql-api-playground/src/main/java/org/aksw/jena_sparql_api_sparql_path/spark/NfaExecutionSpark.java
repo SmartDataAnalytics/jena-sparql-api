@@ -49,11 +49,11 @@ public class NfaExecutionSpark {
      * @param <V> data vertex type
      * @param <E> data edge type
      */
-    public static <S, T, V, E> JavaPairRDD<V, Tuple2<S, NestedPath<V, E>>> advanceFrontier(
-            int frontierId, // the id of the frontier which to advance
+    public static <I, S, T, V, E> JavaPairRDD<V, Tuple2<S, NestedPath<V, E>>> advanceFrontier(
+            I frontierId, // the id of the frontier which to advance
             JavaPairRDD<V, Tuple2<S, NestedPath<V, E>>> frontier,
             Nfa<V, E> nfa,
-            JavaPairRDD<Node, FrontierItem<S, Node, Node>> frontierRdd,
+            JavaPairRDD<Node, FrontierItem<I, S, Node, Node>> frontierRdd,
             JavaPairRDD<Node, Tuple2<Node, Node>> fwdRdd,
             JavaPairRDD<Node, Tuple2<Node, Node>> bwdRdd,
             boolean reversePropertyDirection,
@@ -66,7 +66,7 @@ public class NfaExecutionSpark {
 
 
         // This join associates each frontier item with the set of edges
-        JavaPairRDD<Node, Tuple2<FrontierItem<S, Node, Node>, Tuple2<Node, Node>>> joinedRdd = frontierRdd.join(fwdRdd);
+        JavaPairRDD<Node, Tuple2<FrontierItem<I, S, Node, Node>, Tuple2<Node, Node>>> joinedRdd = frontierRdd.join(fwdRdd);
 
 
 

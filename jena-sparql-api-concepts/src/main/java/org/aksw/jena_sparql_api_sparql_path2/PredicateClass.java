@@ -15,8 +15,8 @@ public class PredicateClass
 {
     private static final long serialVersionUID = -3939204124201128789L;
 
-    public PredicateClass(ValueSet<Node> key, ValueSet<Node> value) {
-        super(key, value);
+    public PredicateClass(ValueSet<Node> fwdNodes, ValueSet<Node> bwdNodes) {
+        super(fwdNodes, bwdNodes);
     }
 
     public ValueSet<Node> getFwdNodes() {
@@ -25,6 +25,17 @@ public class PredicateClass
 
     public ValueSet<Node> getBwdNodes() {
         return value;
+    }
+
+    /**
+     * Reverse the direction of a predicate class
+     *
+     * @param pc
+     * @return
+     */
+    public static PredicateClass reverse(PredicateClass pc) {
+        PredicateClass result = new PredicateClass(pc.getBwdNodes(), pc.getFwdNodes());
+        return result;
     }
 
 //    public boolean contains(P_Path0 path) {

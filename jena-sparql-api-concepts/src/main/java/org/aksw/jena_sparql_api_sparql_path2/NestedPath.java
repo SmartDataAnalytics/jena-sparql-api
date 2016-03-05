@@ -66,9 +66,9 @@ public class NestedPath<V, E>
                 c = null;
             } else {
                 ParentLink<V, E> parentLink = opl.get();
-                DirectedProperty<E> diProperty = parentLink.getDiProperty();
+                Directed<E> diProperty = parentLink.getDiProperty();
 
-                E p = diProperty.getProperty();
+                E p = diProperty.getValue();
                 V s = parentLink.getTarget().getCurrent();
 
                 Triplet<V, E> triple = new Triplet<>(s, p, o);

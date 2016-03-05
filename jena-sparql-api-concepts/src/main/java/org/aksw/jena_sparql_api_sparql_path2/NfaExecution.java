@@ -94,7 +94,7 @@ public class NfaExecution<S, T, V, E> {
     }
 
 
-    public static <S, D, T extends LabeledEdge<S, ? extends DirectedProperty<? extends ValueSet<D>>>> Pair<ValueSet<D>, ValueSet<D>> extractNextPropertyClasses(DirectedGraph<S, T> nfaGraph, Predicate<T> isEpsilon, Set<S> states, boolean reverse) {
+    public static <S, D, T extends LabeledEdge<S, ? extends Directed<? extends ValueSet<D>>>> Pair<ValueSet<D>, ValueSet<D>> extractNextPropertyClasses(DirectedGraph<S, T> nfaGraph, Predicate<T> isEpsilon, Set<S> states, boolean reverse) {
         Set<T> transitions = JGraphTUtils.resolveTransitions(nfaGraph, states, isEpsilon, false);
 
         ValueSet<D> fwd = ValueSet.createEmpty();
@@ -102,14 +102,14 @@ public class NfaExecution<S, T, V, E> {
 
 
         for(T transition : transitions) {
-            DirectedProperty<? extends ValueSet<D>> label = transition.getLabel();
+            Directed<? extends ValueSet<D>> label = transition.getLabel();
             boolean isReverse = label.isReverse();
 
             // invert direction if reverse is true
             isReverse = reverse ? !isReverse : isReverse;
 
 
-            ValueSet<D> valueSet = label.getProperty();
+            ValueSet<D> valueSet = label.getValue();
 
             if(isReverse) {
                 bwd = bwd.union(valueSet);
@@ -151,7 +151,7 @@ public class NfaExecution<S, T, V, E> {
             //QueryExecutionFactory qef,
             boolean reversePropertyDirection,
             Predicate<T> isEpsilon,
-            Function<DirectedProperty<T>, Function<Iterable<V>, Map<V, Graphlet<V, E>>>> transitionToNodesToGraphlets
+            Function<Directed<T>, Function<Iterable<V>, Map<V, Graphlet<V, E>>>> transitionToNodesToGraphlets
             ) {
         // Prepare the next frontier
         Frontier<S, V, E> result = new Frontier<S, V, E>();
@@ -173,7 +173,7 @@ public class NfaExecution<S, T, V, E> {
 
             for(T transition : transitions) {
 
-                DirectedProperty<T> tmp = new DirectedProperty<T>(transition, reversePropertyDirection);
+                Directed<T> tmp = new Directed<T>(transition, reversePropertyDirection);
                 Function<Iterable<V>, Map<V, Graphlet<V, E>>> nodesToGraphlets = transitionToNodesToGraphlets.apply(tmp);
                 Map<V, Graphlet<V, E>> nodeToGraphlet = nodesToGraphlets.apply(nodes);
 
@@ -189,17 +189,17 @@ public class NfaExecution<S, T, V, E> {
                         Triplet<V, E> t = it.next();
                         E p = t.getPredicate();
                         //P_Path0 p0;
-                        DirectedProperty<E> p0;
+                        Directed<E> p0;
 
                         //Node s;
                         V o;
                         if(t.getSubject().equals(node)) {
                             //p0 = new P_Link(p);
-                            p0 = new DirectedProperty<E>(p, false);
+                            p0 = new Directed<E>(p, false);
                             //s = t.getSubject();
                             o = t.getObject();
                         } else if(t.getObject().equals(node)) {
-                            p0 = new DirectedProperty<E>(p, true);
+                            p0 = new Directed<E>(p, true);
                             //t = TripleUtils.swap(t);
                             //s = t.getObject();
                             o = t.getSubject();

@@ -70,9 +70,9 @@ public class PathExecutionUtils {
         Frontier.addAll(frontier, nfa.getStartStates(), startNode);
 
 
-        Function<DirectedProperty<LabeledEdge<Integer, PredicateClass>>, Function<Iterable<Node>, Map<Node, Graphlet<Node, Node>>>> createLookupService = (DirectedProperty<LabeledEdge<Integer, PredicateClass>> diTransition) -> {
+        Function<Directed<LabeledEdge<Integer, PredicateClass>>, Function<Iterable<Node>, Map<Node, Graphlet<Node, Node>>>> createLookupService = (Directed<LabeledEdge<Integer, PredicateClass>> diTransition) -> {
             //Path pathx = diTransition.getProperty().getLabel();
-            PredicateClass pathx = diTransition.getProperty().getLabel();
+            PredicateClass pathx = diTransition.getValue().getLabel();
             boolean assumeReversed = diTransition.isReverse();
 
             ResourceShapeBuilder rsb = new ResourceShapeBuilder();

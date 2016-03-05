@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api_sparql_path2;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.GraphSparqlService;
@@ -55,9 +56,12 @@ import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.path.PathParser;
 import org.apache.jena.sparql.pfunction.PropertyFunctionRegistry;
 import org.apache.jena.sparql.util.Context;
-import org.apache.jena.vocabulary.RDF;
-import org.apache.jena.vocabulary.RDFS;
 import org.eclipse.jetty.server.Server;
+import org.jgrapht.DirectedGraph;
+import org.jgrapht.Graph;
+import org.jgrapht.VertexFactory;
+import org.jgrapht.alg.MinSourceSinkCut;
+import org.jgrapht.graph.SimpleDirectedGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -142,6 +146,23 @@ public class MainSparqlPath2 {
     }
 
 
+    public static <S> Nfa<S, LabeledEdge<S, PredicateClass>> reverseNfa(Nfa<S, LabeledEdge<S, PredicateClass>> nfa) {
+        DirectedGraph<S, LabeledEdge<S, PredicateClass>> bwdGraph = new SimpleDirectedGraph<>(LabeledEdge.class);
+
+        DirectedGraph<S, LabeledEdge<S, PredicateClass>> fwdGraph = nfa.getGraph();
+
+        fwdGraph.vertexSet().stream().forEach(v -> bwdGraph.addVertex(v));
+        fwdGraph.edgeSet().stream().forEach(
+                e -> bwdGraph.addEdge(fwdGraph.getEdgeTarget(e), fwdGraph.getEdgeSource(e), new LabeledEdgeImpl<>(
+                        fwdGraph.getEdgeTarget(e),
+                        fwdGraph.getEdgeSource(e),
+                        e.getLabel() == null ? null : PredicateClass.reverse(e.getLabel()))));
+
+        Nfa<S, LabeledEdge<S, PredicateClass>> result = new NfaImpl<>(bwdGraph, nfa.getEndStates(), nfa.getStartStates());
+        return result;
+    }
+
+
     //ListService<Concept, Node, List<Node>>
     /**
      * Maps nodes to their predicates and their count of distinct values
@@ -181,6 +202,53 @@ public class MainSparqlPath2 {
     }
 
 
+    public static void printNfa(Nfa<?, ?> nfa) {
+        System.out.println("NFA: " + nfa);
+        System.out.println(nfa.getStartStates());
+        System.out.println(nfa.getEndStates());
+        nfa.getGraph().edgeSet().forEach(x -> System.out.println(x));
+
+    }
+
+    public static <V, E> void makeConsolidated(Graph<V, E> graph, V superVertex, Set<V> vertices, boolean reverse) {
+        graph.addVertex(superVertex);
+        if(!reverse) {
+            vertices.stream().forEach(v -> graph.addEdge(superVertex, v));
+        } else {
+            vertices.stream().forEach(v -> graph.addEdge(v, superVertex));
+        }
+    }
+
+    public static <V, E> void makeConsolidated(Graph<V, E> graph, Set<V> vertices, VertexFactory<V> vertexFactory, boolean reverse) {
+        if(vertices.size() > 1) {
+            V newVertex = vertexFactory.createVertex();
+            makeConsolidated(graph, newVertex, vertices, reverse);
+        }
+    }
+
+    /**
+     * If the nfa has multiple start and end nodes, add a sinle super start/end nodes
+     *
+     * https://en.wikipedia.org/wiki/Maximum_flow_problem#Multi-source_multi-sink_maximum_flow_problem
+     */
+    public static <S, T> void makeConsolidated(Nfa<S, T> nfa, VertexFactory<S> vertexFactory) {
+        DirectedGraph<S, T> graph = nfa.getGraph();
+
+        makeConsolidated(graph, nfa.getStartStates(), vertexFactory, false);
+        makeConsolidated(graph, nfa.getEndStates(), vertexFactory, true);
+    }
+
+
+
+    /**
+     * Label the edges
+     *
+     * @param nfa
+     */
+    public static <S, T> void labelWithPredicateCosts(Nfa<S, T> nfa) {
+
+    }
+
     public static void main(String[] args) throws InterruptedException {
 
 
@@ -193,17 +261,20 @@ public class MainSparqlPath2 {
         DatasetDescription predDataset;
         DatasetDescription predJoinDataset;
         String pathExprStr;
-        Node s;
+        Node startNode;
+        Node endNode;
 
-        if(false) {
+
+        if(true) {
             dataset = DatasetDescriptionUtils.createDefaultGraph("http://fp7-pp.publicdata.eu/");
             predDataset = DatasetDescriptionUtils.createDefaultGraph("http://fp7-pp.publicdata.eu/summary/predicate/");
             predJoinDataset = DatasetDescriptionUtils.createDefaultGraph("http://fp7-pp.publicdata.eu/summary/predicate-join/");
 
             pathExprStr = createPathExprStr("http://fp7-pp.publicdata.eu/ontology/funding");
-            s = NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/project/257943");
+            startNode = NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/project/257943");
+            endNode = NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/city/France-PARIS");
 
-            queryStr = "SELECT ?path { <" + s + "> jsafn:kShortestPaths ('" + pathExprStr + "' ?path <http://fp7-pp.publicdata.eu/resource/city/France-PARIS> 471199) }";
+            queryStr = "SELECT ?path { <" + startNode.getURI() + "> jsafn:kShortestPaths ('" + pathExprStr + "' ?path <" + endNode.getURI() + "> 471199) }";
 
         } else {
             dataset = DatasetDescriptionUtils.createDefaultGraph("http://2016.eswc-conferences.org/top-k-shortest-path-large-typed-rdf-graphs-challenge/training_dataset.nt");
@@ -211,8 +282,9 @@ public class MainSparqlPath2 {
             predJoinDataset = DatasetDescriptionUtils.createDefaultGraph("http://2016.eswc-conferences.org/top-k-shortest-path-large-typed-rdf-graphs-challenge/training_dataset.nt/summary/predicate-join/");
 
             pathExprStr = createPathExprStr("http://dbpedia.org/ontology/president");
-            s = NodeFactory.createURI("http://dbpedia.org/resource/James_K._Polk");
-            queryStr = "SELECT ?path { <" + s + "> jsafn:kShortestPaths ('" + pathExprStr + "' ?path <http://dbpedia.org/resource/Felix_Grundy> 471199) }";
+            startNode = NodeFactory.createURI("http://dbpedia.org/resource/James_K._Polk");
+            endNode = NodeFactory.createURI("http://dbpedia.org/resource/Felix_Grundy");
+            queryStr = "SELECT ?path { <" + startNode.getURI() + "> jsafn:kShortestPaths ('" + pathExprStr + "' ?path <" + endNode.getURI() + "> 471199) }";
         }
 
         System.out.println("Query string: " + queryStr);
@@ -332,12 +404,16 @@ public class MainSparqlPath2 {
             LookupService<Node, Map<Node, Number>> fwdLs = createListServicePredicates(qef, false);
             LookupService<Node, Map<Node, Number>> bwdLs = createListServicePredicates(qef, true);
 
-            // Fetch the properties for the source and and states
-            Map<Node, Map<Node, Number>> fwdPreds = fwdLs.apply(Collections.singleton(s));
-            Map<Node, Map<Node, Number>> bwdPreds = bwdLs.apply(Collections.singleton(s));
+            // Fetch the properties for the source and end states
+            Map<Node, Map<Node, Number>> fwdPreds = fwdLs.apply(Arrays.asList(startNode, endNode));
+            Map<Node, Map<Node, Number>> bwdPreds = bwdLs.apply(Arrays.asList(startNode, endNode));
 
-            Pair<Map<Node, Number>> initPredFreqs =
-                    new Pair<>(fwdPreds.getOrDefault(s, Collections.emptyMap()), bwdPreds.getOrDefault(s, Collections.emptyMap()));
+            Pair<Map<Node, Number>> startPredFreqs =
+                    new Pair<>(fwdPreds.getOrDefault(startNode, Collections.emptyMap()), bwdPreds.getOrDefault(startNode, Collections.emptyMap()));
+
+            Pair<Map<Node, Number>> endPredFreqs =
+                    new Pair<>(fwdPreds.getOrDefault(endNode, Collections.emptyMap()), bwdPreds.getOrDefault(endNode, Collections.emptyMap()));
+
 
             System.out.println(fwdPreds);
             System.out.println(bwdPreds);
@@ -345,10 +421,13 @@ public class MainSparqlPath2 {
             Path path = PathParser.parse(pathExprStr, PrefixMapping.Extended);
             Nfa<Integer, LabeledEdge<Integer, PredicateClass>> nfa = PathExecutionUtils.compileToNfa(path);
 
-            System.out.println("NFA: " + nfa);
-            System.out.println(nfa.getStartStates());
-            System.out.println(nfa.getEndStates());
-            nfa.getGraph().edgeSet().forEach(x -> System.out.println(x));
+            MinSourceSinkCut<Integer, LabeledEdge<Integer, PredicateClass>> x = new MinSourceSinkCut<Integer, LabeledEdge<Integer, PredicateClass>>(nfa.getGraph());
+            //x.computeMinCut(source, sink);
+
+            //nfa.getGraph().getE
+
+            Set<?> cut = x.getCutEdges();
+            System.out.println("CUT: " + cut);
 
             JoinSummaryService joinSummaryService = createJoinSummaryService(sspjs.getQueryExecutionFactory());
 
@@ -363,12 +442,26 @@ public class MainSparqlPath2 {
 //            Map<Node, Map<Node, Number>> test = joinSummaryService.fetch(Collections.singleton(issue), false);
 //            System.out.println("Test: " + test);
 
-            EdgeReducer.<Integer, LabeledEdge<Integer, PredicateClass>>estimateFrontierCost(
-                    nfa,
+//            Map<Integer, Pair<Map<Node, Number>>> fwdCosts = EdgeReducer.<Integer, LabeledEdge<Integer, PredicateClass>>estimateFrontierCost(
+//                    nfa,
+//                    LabeledEdgeImpl::isEpsilon,
+//                    e -> e.getLabel(),
+//                    startPredFreqs,
+//                    joinSummaryService);
+
+//            NfaUtils
+
+            Nfa<Integer, LabeledEdge<Integer, PredicateClass>> reverseNfa = reverseNfa(nfa);
+            printNfa(reverseNfa);
+
+
+            Map<Integer, Pair<Map<Node, Number>>> bwdCosts = EdgeReducer.<Integer, LabeledEdge<Integer, PredicateClass>>estimateFrontierCost(
+                    reverseNfa,
                     LabeledEdgeImpl::isEpsilon,
                     e -> e.getLabel(),
-                    initPredFreqs,
+                    endPredFreqs,
                     joinSummaryService);
+
 
             // 2. Label the nfa by iterating the nfa backwards
 

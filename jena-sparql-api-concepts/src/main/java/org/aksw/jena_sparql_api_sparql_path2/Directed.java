@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api_sparql_path2;
 
 import java.io.Serializable;
 
-public class DirectedProperty<E>
+public class Directed<E>
     implements Serializable
 {
     /**
@@ -10,21 +10,25 @@ public class DirectedProperty<E>
      */
     private static final long serialVersionUID = 4826688961505056387L;
 
-    protected E property;
+    protected E value;
     protected boolean isReverse;
 
-    public DirectedProperty(E property) {
-        this(property, false);
+    public Directed(E value) {
+        this(value, false);
     }
 
-    public DirectedProperty(E property, boolean isReverse) {
+    public Directed(E value, boolean isReverse) {
         super();
-        this.property = property;
+        this.value = value;
         this.isReverse = isReverse;
     }
 
-    public E getProperty() {
-        return property;
+    public E getValue() {
+        return value;
+    }
+
+    public boolean isForward() {
+        return !isReverse;
     }
 
     public boolean isReverse() {
@@ -37,7 +41,7 @@ public class DirectedProperty<E>
         int result = 1;
         result = prime * result + (isReverse ? 1231 : 1237);
         result = prime * result
-                + ((property == null) ? 0 : property.hashCode());
+                + ((value == null) ? 0 : value.hashCode());
         return result;
     }
 
@@ -49,20 +53,20 @@ public class DirectedProperty<E>
             return false;
         if (getClass() != obj.getClass())
             return false;
-        DirectedProperty<?> other = (DirectedProperty<?>) obj;
+        Directed<?> other = (Directed<?>) obj;
         if (isReverse != other.isReverse)
             return false;
-        if (property == null) {
-            if (other.property != null)
+        if (value == null) {
+            if (other.value != null)
                 return false;
-        } else if (!property.equals(other.property))
+        } else if (!value.equals(other.value))
             return false;
         return true;
     }
 
     @Override
     public String toString() {
-        return "DirectedProperty [property=" + property + ", isReverse="
+        return "Directed [value=" + value + ", isReverse="
                 + isReverse + "]";
     }
 

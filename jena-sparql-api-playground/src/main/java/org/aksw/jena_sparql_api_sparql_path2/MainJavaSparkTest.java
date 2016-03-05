@@ -1,6 +1,10 @@
 package org.aksw.jena_sparql_api_sparql_path2;
 
 import java.io.ByteArrayInputStream;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -9,6 +13,7 @@ import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.PairFunction;
 import org.apache.spark.api.java.function.VoidFunction;
@@ -36,13 +41,17 @@ public class MainJavaSparkTest {
 
         SparkConf sparkConf = new SparkConf()
                 .setAppName("BDE-readRDF")
-                .setMaster(sparkMasterHost);
-                //.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
+                .setMaster(sparkMasterHost)
+                .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
 
         JavaSparkContext sparkContext = new JavaSparkContext(sparkConf);
 
         // TODO Replace with the regex automaton
-        Broadcast<int[]> broadcastVar = sparkContext.broadcast(new int[] {1, 2, 3});
+
+        Map<Integer, Nfa<Integer, LabeledEdge<Integer, PredicateClass>>> frontierIdToAutomaton = new HashMap<>();
+
+        // TODO Initialize the frontierIdToAutomaton map
+        Broadcast<Map<Integer, Nfa<Integer, LabeledEdge<Integer, PredicateClass>>>> broadcastVar = sparkContext.broadcast(frontierIdToAutomaton);
 
 //new SimpleEntry<>(1, "test");
 
@@ -72,7 +81,121 @@ public class MainJavaSparkTest {
 
 
         Node startNode = NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/funding/258888-996094068");
-        //FrontierItem<Integer, Node, Node> start = new FrontierItem<Integer, Node, Node>(startNode, new DirectedProperty<>(new NestedPath<Node, Node>(startNode)));
+        //FrontierData<Integer, Node, Node, Integer> start = new Frontier
+
+        FrontierItem<Integer, Integer, Node, Node> frontier = new FrontierItem<Integer, Integer, Node, Node>(
+                1,
+                Collections.singleton(1),
+                startNode,
+                false,
+                Node.class);
+
+
+        JavaPairRDD<Node, FrontierData<Integer, Integer, Node, Node>> frontierRdd = sparkContext.parallelizePairs(Collections.singletonList(frontier));
+
+
+//        frontierRdd.filter(new Function<Tuple2<Node, FrontierData<Integer, Integer, Node, Node>>, Boolean>() {
+//            @Override
+//            public Boolean apply(
+//                    Tuple2<Node, FrontierData<Integer, Integer, Node, Node>> t) {
+//                return t._2.getPathHead().isForward();
+//            }
+//        });
+//
+
+        JavaRDD<FrontierItem<Integer, Integer, Node, Node>> fwdFrontierRdd = frontierRdd
+            .join(fwdRdd)
+            .filter(new org.apache.spark.api.java.function.Function<Tuple2<Node,Tuple2<FrontierData<Integer,Integer,Node,Node>,Tuple2<Node,Node>>>, Boolean>() {
+                private static final long serialVersionUID = 12351375937L;
+                @Override
+                public Boolean call(
+                        Tuple2<Node, Tuple2<FrontierData<Integer, Integer, Node, Node>, Tuple2<Node, Node>>> t)
+                                throws Exception {
+                    Map<Integer, Nfa<Integer, LabeledEdge<Integer, PredicateClass>>> idToNfa = broadcastVar.getValue();
+
+                    FrontierData<Integer, Integer, Node, Node> frontierData = t._2._1;
+                    Integer nfaId = frontierData.getFrontierId();
+                    Node p = t._2._2._1;
+                    Node o = t._2._2._2;
+
+                    Nfa<Integer, LabeledEdge<Integer, PredicateClass>> nfa = idToNfa.get(nfaId);
+
+                    // Check whether the current p and o are acceptable according to the nfa
+                    return true;
+                }
+            })
+            .map(new org.apache.spark.api.java.function.Function<Tuple2<Node,Tuple2<FrontierData<Integer,Integer,Node,Node>,Tuple2<Node,Node>>>, FrontierItem<Integer, Integer, Node, Node>>() {
+                private static final long serialVersionUID = 1312323951L;
+
+                @Override
+                public FrontierItem<Integer, Integer, Node, Node> call(
+                        Tuple2<Node, Tuple2<FrontierData<Integer, Integer, Node, Node>, Tuple2<Node, Node>>> t)
+                                throws Exception {
+
+                    FrontierData<Integer, Integer, Node, Node> frontierData = t._2._1;
+                    Integer nfaId = frontierData.getFrontierId();
+                    Node p = t._2._2._1;
+                    Node o = t._2._2._2;
+
+                    Set<Integer> nextStates = Collections.singleton(123);
+
+                    Directed<NestedPath<Node, Node>> pathHead = frontierData.getPathHead();
+                    NestedPath<Node, Node> nestedPath = frontierData.getPathHead().getValue();
+
+                    NestedPath<Node, Node> nextPath = new NestedPath<>(new ParentLink<>(nestedPath, new Directed<>(p, false)), o);
+                    Directed<NestedPath<Node, Node>> nextPathHead = new Directed<>(nextPath, pathHead.isReverse());
+
+                    FrontierItem<Integer, Integer, Node, Node> result = new FrontierItem<>(nfaId, nextStates, nextPathHead);
+
+                    return result;
+                }
+            });
+
+        fwdFrontierRdd.foreach(new VoidFunction<FrontierItem<Integer,Integer,Node,Node>>() {
+            private static final long serialVersionUID = 3867507043330385911L;
+
+            @Override
+            public void call(FrontierItem<Integer, Integer, Node, Node> t)
+                    throws Exception {
+                System.out.println(t);
+            }
+        });
+
+        // Once we are done with the step, check the frontier for any completed paths
+
+
+
+
+
+
+        // We can create two frontiers: one that has to be joined with the fwdRdd and one for the bwdRdd.
+        // The downside is, that after the join, we need to repartition again... oh well...
+//
+//        frontierRdd.partitionBy(new Partitioner() {
+//
+//            @Override
+//            public int getPartition(Object arg0) {
+//                // TODO Auto-generated method stub
+//                return 0;
+//            }
+//
+//            @Override
+//            public int numPartitions() {
+//                // TODO Auto-generated method stub
+//                return 0;
+//            }
+//
+//        });
+
+        // Advancing the frontier:
+        // TODO: the directed in the frontier is meant to indicate whether the path is running backwards
+        // For every key (node) in the frontier, we perform a join with the edge rdd
+
+
+
+
+
+
 
 
         // Vertex -> (Tuple2<Directed<NestedPath<>>)
@@ -94,14 +217,14 @@ public class MainJavaSparkTest {
 
 
 
-        fwdRdd.foreach(new VoidFunction<Tuple2<Node, Tuple2<Node, Node>>>() {
-            private static final long serialVersionUID = -2954655113824728223L;
-            @Override
-            public void call(Tuple2<Node, Tuple2<Node, Node>> t) throws Exception {
-                //System.out.println("GOT: " + t);
-            }
-        });
-
+//        fwdRdd.foreach(new VoidFunction<Tuple2<Node, Tuple2<Node, Node>>>() {
+//            private static final long serialVersionUID = -2954655113824728223L;
+//            @Override
+//            public void call(Tuple2<Node, Tuple2<Node, Node>> t) throws Exception {
+//                //System.out.println("GOT: " + t);
+//            }
+//        });
+//
 
 
 
