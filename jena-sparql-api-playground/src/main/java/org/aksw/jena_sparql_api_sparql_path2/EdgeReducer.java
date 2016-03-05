@@ -8,11 +8,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
@@ -28,22 +26,6 @@ import com.google.common.collect.Multimap;
 
 public class EdgeReducer {
 
-
-    public static <K, V, W> Map<K, Map<V, W>> mergeNestedMap(Map<K, Map<V, W>> a, Map<K, Map<V, W>> b, BinaryOperator<W> mergeFn) {
-        Map<K, Map<V, W>> result = mergeMaps(a, b, (x, y) -> mergeMaps(x, y, mergeFn));
-        return result;
-    }
-
-    public static <K, V> Map<K, V> mergeMaps(Map<K, V> a, Map<K, V> b, BinaryOperator<V> mergeFn) {
-        Map<K, V> result = Stream.of(a, b)
-                .map(Map::entrySet)
-                .flatMap(Collection::stream)
-                .collect(Collectors.toMap(
-                        Entry::getKey,
-                        Entry::getValue,
-                        mergeFn));
-        return result;
-    }
 
     /**
      * - Vertices: are mapped to the estimated set of predicates with their estimated (maximum) frequency
@@ -334,7 +316,7 @@ public class EdgeReducer {
                 Map<Node, Number> initPredToCost = initPredFreqs.get(i);
 
                 // TODO Do an in-place merge
-                Map<Node, Number> tmp = mergeMaps(predToCost, initPredToCost, (a, b) -> a.doubleValue() + b.doubleValue());
+                Map<Node, Number> tmp = MapUtils.mergeMaps(predToCost, initPredToCost, (a, b) -> a.doubleValue() + b.doubleValue());
                 predToCost.putAll(tmp);
 
                 //BiHashMultimap<Node, S> openPredToStates = openDiPredToStates.get(i);
@@ -410,7 +392,7 @@ public class EdgeReducer {
 
                             Set<Node> tgtContribPreds = srcPreds.stream().filter(p -> !tgtPreds.contains(p)).collect(Collectors.toSet());
 
-                            Map<Node, Number> newTgtPredToCost = mergeMaps(tgtPredToCost, srcPredToCost, (a, b) -> Math.max(a.doubleValue(), b.doubleValue()));
+                            Map<Node, Number> newTgtPredToCost = MapUtils.mergeMaps(tgtPredToCost, srcPredToCost, (a, b) -> Math.max(a.doubleValue(), b.doubleValue()));
                             tgtPredToCost.putAll(newTgtPredToCost);
 
                             nextOpenPreds.addAll(tgtContribPreds);
@@ -481,7 +463,7 @@ public class EdgeReducer {
 
 
                                     // Compute the costs of the target vertex
-                                    Map<Node, Number> totalCost = mergeMaps(newTgtPredToCost, tgtPredCostContrib, (a, b) -> a.doubleValue() + b.doubleValue());
+                                    Map<Node, Number> totalCost = MapUtils.mergeMaps(newTgtPredToCost, tgtPredCostContrib, (a, b) -> a.doubleValue() + b.doubleValue());
                                     newTgtPredToCost.putAll(totalCost);
 
 

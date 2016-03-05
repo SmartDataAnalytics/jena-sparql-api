@@ -129,6 +129,10 @@ public class MainJavaSparkTest {
             }
         });
 
+
+        Map<Integer, Pair<Number>> dirs = NfaExecutionSpark.analyzeFrontierDir(frontierRdd, broadcastVar);
+        System.out.println("DIRS: " + dirs);
+
         // Once we are done with the step, check the frontier for any completed paths
 
 

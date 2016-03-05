@@ -1,24 +1,22 @@
 package org.aksw.jena_sparql_api_sparql_path.spark;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Predicate;
 
 import org.aksw.jena_sparql_api_sparql_path2.Directed;
 import org.aksw.jena_sparql_api_sparql_path2.FrontierData;
 import org.aksw.jena_sparql_api_sparql_path2.FrontierItem;
-import org.aksw.jena_sparql_api_sparql_path2.LabeledEdge;
+import org.aksw.jena_sparql_api_sparql_path2.MapUtils;
 import org.aksw.jena_sparql_api_sparql_path2.NestedPath;
 import org.aksw.jena_sparql_api_sparql_path2.Nfa;
+import org.aksw.jena_sparql_api_sparql_path2.Pair;
 import org.aksw.jena_sparql_api_sparql_path2.ParentLink;
-import org.aksw.jena_sparql_api_sparql_path2.PredicateClass;
-import org.apache.jena.graph.Node;
 import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
+import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFunction;
-import org.apache.spark.api.java.function.VoidFunction;
 import org.apache.spark.broadcast.Broadcast;
 
 import scala.Tuple2;
@@ -37,6 +35,54 @@ public class NfaExecutionSpark {
 
 
     }
+
+
+    /**
+     * Analyse the frontier for whether a join with the fwd or bwd rdss is necessary
+     *
+     * Returns a map for each nfa to the number of inbound / outbound frontier items
+     *
+     * @return
+     */
+    public  static <I, S, T, V, E> Map<I, Pair<Number>> analyzeFrontierDir(JavaPairRDD<V, FrontierData<I, S, V, E>> frontierRdd, Broadcast<Map<I, Nfa<S, T>>> idToNfa) {
+        Map<I, Pair<Number>> result = frontierRdd.aggregate(
+                (Map<I, Pair<Number>>)new HashMap<I, Pair<Number>>(),
+                new Function2<Map<I, Pair<Number>>, Tuple2<V, FrontierData<I, S, V, E>>, Map<I, Pair<Number>>>() {
+                    private static final long serialVersionUID = -6994126765252908625L;
+
+                    @Override
+                    public Map<I, Pair<Number>> call(Map<I, Pair<Number>> v1,
+                            Tuple2<V, FrontierData<I, S, V, E>> v2) throws Exception {
+
+                        I nfaId = v2._2.getFrontierId();
+                        Nfa<S, T> nfa = idToNfa.getValue().get(nfaId);
+
+                        // check the transitions
+                        //Map<I, Pair<Number>> result = new HashMap<>();
+                        Map<I, Pair<Number>> r = Collections.singletonMap(nfaId, new Pair<>(1, 1));
+
+                        return r;
+                    }
+                },
+                new Function2<Map<I, Pair<Number>>, Map<I, Pair<Number>>, Map<I, Pair<Number>>>() {
+                    private static final long serialVersionUID = 4578518485699245971L;
+
+                    @Override
+                    public Map<I, Pair<Number>> call(Map<I, Pair<Number>> v1,
+                            Map<I, Pair<Number>> v2) throws Exception {
+
+                        Map<I, Pair<Number>> r = MapUtils.mergeMaps(
+                                v1, v2, (a, b) -> new Pair<Number>(
+                                        a.getKey().longValue() + b.getKey().longValue(),
+                                        a.getValue().longValue() + b.getValue().longValue()));
+                        return r;
+                    }
+                });
+
+        return result;
+    }
+
+
 
     /**
      *

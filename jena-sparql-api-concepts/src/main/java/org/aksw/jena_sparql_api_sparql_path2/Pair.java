@@ -1,7 +1,6 @@
 package org.aksw.jena_sparql_api_sparql_path2;
 
 import java.io.Serializable;
-import java.util.AbstractList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -16,8 +15,8 @@ import java.util.Map.Entry;
  * @param <T>
  */
 public class Pair<T>
-    extends AbstractList<T>
-    implements Entry<T, T>, Serializable
+    //extends AbstractList<T>
+    implements Entry<T, T>, Iterable<T>, Serializable
 {
     private static final long serialVersionUID = 7898871427844686243L;
 
@@ -43,18 +42,33 @@ public class Pair<T>
         return tmp.iterator();
     }
 
-    @Override
+//    @Override
+//    public void add(int index, T element) {
+//        set(index, element);
+//    }
+
+    //@Override
+    public T set(int index, T element) {
+        switch(index) {
+        case 0: key = element; break;
+        case 1: value = element; break;
+        default: throw new IndexOutOfBoundsException("Requested index: " + index);
+        }
+        return element;
+    }
+
+    //@Override
     public T get(int index) {
         T result;
         switch(index) {
         case 0: result = key; break;
         case 1: result = value; break;
-        default: throw new IndexOutOfBoundsException();
+        default: throw new IndexOutOfBoundsException("Requested index: " + index);
         }
         return result;
     }
 
-    @Override
+    //@Override
     public int size() {
         return 2;
     }
@@ -73,4 +87,43 @@ public class Pair<T>
     public T setValue(T value) {
         throw new UnsupportedOperationException();
     }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((key == null) ? 0 : key.hashCode());
+        result = prime * result + ((value == null) ? 0 : value.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        Pair<?> other = (Pair<?>) obj;
+        if (key == null) {
+            if (other.key != null)
+                return false;
+        } else if (!key.equals(other.key))
+            return false;
+        if (value == null) {
+            if (other.value != null)
+                return false;
+        } else if (!value.equals(other.value))
+            return false;
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        return "Pair [key=" + key + ", value=" + value + "]";
+    }
+
+
+
 }
