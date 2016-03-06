@@ -3,8 +3,8 @@ package org.aksw.jena_sparql_api_sparql_path2;
 import java.io.ByteArrayInputStream;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 
 import org.aksw.jena_sparql_api_sparql_path.spark.NfaExecutionSpark;
 import org.apache.jena.graph.Node;
@@ -14,7 +14,6 @@ import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.PairFunction;
 import org.apache.spark.api.java.function.VoidFunction;
@@ -80,8 +79,17 @@ public class MainJavaSparkTest {
             }
         });
 
-
         Node startNode = NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/funding/258888-996094068");
+
+        SparqlKShortestPathFinder pathFinder = new SparqlKShortestPathFinderFactorySpark(sparkContext, fwdRdd, bwdRdd);
+        Iterator<NestedPath<Node, Node>> itPaths = pathFinder.findPaths(startNode, Node.ANY, null, 10);
+        while(itPaths.hasNext()) {
+            NestedPath<Node, Node> path = itPaths.next();
+            System.out.println("GOT PATH: " + path.asSimplePath());
+        }
+
+        if(false) {
+
         //FrontierData<Integer, Node, Node, Integer> start = new Frontier
 
         FrontierItem<Integer, Integer, Node, Node> frontier = new FrontierItem<Integer, Integer, Node, Node>(
@@ -132,7 +140,7 @@ public class MainJavaSparkTest {
 
         Map<Integer, Pair<Number>> dirs = NfaExecutionSpark.analyzeFrontierDir(frontierRdd, broadcastVar);
         System.out.println("DIRS: " + dirs);
-
+        }
         // Once we are done with the step, check the frontier for any completed paths
 
 

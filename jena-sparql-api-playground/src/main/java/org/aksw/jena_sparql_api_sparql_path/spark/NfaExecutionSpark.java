@@ -22,6 +22,16 @@ import org.apache.spark.broadcast.Broadcast;
 import jersey.repackaged.com.google.common.collect.Sets;
 import scala.Tuple2;
 
+class JoinStats<V, E> {
+    protected E predicate;
+    protected V target;
+
+    protected Number totalCount;
+    protected Number sourceCount;
+    protected Number targetCount;
+
+}
+
 /**
  *
  * @author raven
@@ -35,6 +45,11 @@ public class NfaExecutionSpark {
         // handleClashes
 
 
+    }
+
+    public static <V, E> JavaPairRDD<V, JoinStats<V, E>> createJoinSummary(JavaPairRDD<V, Tuple2<E, V>> rdd) {
+        //rdd.
+        return null;
     }
 
 
@@ -56,11 +71,12 @@ public class NfaExecutionSpark {
                 NestedPath<V, E> nestedPath = frontierData.getPathHead().getValue();
                 Nfa<S, T> nfa = idToNfa.getValue().get(nfaId);
 
-                Set<S> states = frontierData.getStates();
+//                Set<S> states = frontierData.getStates();
+//
+//                Set<S> tmp = Sets.intersection(nfa.getEndStates(), states);
+//                boolean isAccepting = !tmp.isEmpty();
 
-                Set<S> tmp = Sets.intersection(nfa.getEndStates(), states);
-                boolean isAccepting = !tmp.isEmpty();
-
+                boolean isAccepting = true;
 
                 // TODO Check if the path's target is accepted
                 //nestedPath.getCurrent().equals(target);

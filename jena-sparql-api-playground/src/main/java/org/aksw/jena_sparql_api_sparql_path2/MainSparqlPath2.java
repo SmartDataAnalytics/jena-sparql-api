@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api_sparql_path2;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
@@ -44,6 +45,10 @@ import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.core.DatasetDescription;
@@ -64,6 +69,7 @@ import org.jgrapht.alg.MinSourceSinkCut;
 import org.jgrapht.graph.SimpleDirectedGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ClassPathResource;
 
 
 
@@ -249,7 +255,7 @@ public class MainSparqlPath2 {
 
     }
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException, IOException {
 
 
 
@@ -264,8 +270,16 @@ public class MainSparqlPath2 {
         Node startNode;
         Node endNode;
 
-
         if(true) {
+            Model model = ModelFactory.createDefaultModel();
+            //RDFDataMgr.read(model, "classpath://dataset-fp7.ttl");
+            RDFDataMgr.read(model, (new ClassPathResource("dataset-fp7.ttl").getInputStream()), Lang.TTL);
+
+            Resource ds = ResourceFactory.createResource("http://example.org/resource/data-fp7");
+
+            //String q = "Select ?service ?graph"
+
+
             dataset = DatasetDescriptionUtils.createDefaultGraph("http://fp7-pp.publicdata.eu/");
             predDataset = DatasetDescriptionUtils.createDefaultGraph("http://fp7-pp.publicdata.eu/summary/predicate/");
             predJoinDataset = DatasetDescriptionUtils.createDefaultGraph("http://fp7-pp.publicdata.eu/summary/predicate-join/");
