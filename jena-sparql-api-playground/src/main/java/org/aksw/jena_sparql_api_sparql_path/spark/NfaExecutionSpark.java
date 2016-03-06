@@ -19,6 +19,7 @@ import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFunction;
 import org.apache.spark.broadcast.Broadcast;
 
+import jersey.repackaged.com.google.common.collect.Sets;
 import scala.Tuple2;
 
 /**
@@ -38,6 +39,55 @@ public class NfaExecutionSpark {
 
 
     /**
+     * Iterate the frontier and collect all matching paths into a new RDD
+     * This is a filter operation for matching paths + a map to yield the path + unique
+     *
+     */
+    public static <I, S, T, V, E> JavaPairRDD<I, NestedPath<V, E>> collectPaths(JavaPairRDD<V, FrontierData<I, S, V, E>> frontierRdd, Broadcast<Map<I, Nfa<S, T>>> idToNfa) {
+        JavaPairRDD<I, NestedPath<V, E>> result = frontierRdd.filter(new Function<Tuple2<V,FrontierData<I,S,V,E>>, Boolean>() {
+            private static final long serialVersionUID = 7576754196298849489L;
+
+            @Override
+            public Boolean call(Tuple2<V, FrontierData<I, S, V, E>> v1)
+                    throws Exception {
+                // yield all paths that have reached the corresponding nfa's accepting states
+                FrontierData<I, S, V, E> frontierData = v1._2;
+                I nfaId = frontierData.getFrontierId();
+                NestedPath<V, E> nestedPath = frontierData.getPathHead().getValue();
+                Nfa<S, T> nfa = idToNfa.getValue().get(nfaId);
+
+                Set<S> states = frontierData.getStates();
+
+                Set<S> tmp = Sets.intersection(nfa.getEndStates(), states);
+                boolean isAccepting = !tmp.isEmpty();
+
+
+                // TODO Check if the path's target is accepted
+                //nestedPath.getCurrent().equals(target);
+
+
+                return isAccepting;
+            }
+        }).mapToPair(new PairFunction<Tuple2<V, FrontierData<I, S, V, E>>, I, NestedPath<V, E>>() {
+            private static final long serialVersionUID = 94392315173L;
+            @Override
+            public Tuple2<I, NestedPath<V, E>> call(
+                    Tuple2<V, FrontierData<I, S, V, E>> t) throws Exception {
+                FrontierData<I, S, V, E> frontierData = t._2;
+                I frontierId = frontierData.getFrontierId();
+                NestedPath<V, E> nestedPath = frontierData.getPathHead().getValue();
+
+                Tuple2<I, NestedPath<V, E>> r = new Tuple2<>(frontierId, nestedPath);
+                return r;
+            }
+        }).distinct();
+
+        return result;
+    }
+
+
+
+    /**
      * Analyse the frontier for whether a join with the fwd or bwd rdss is necessary
      *
      * Returns a map for each nfa to the number of inbound / outbound frontier items
@@ -45,6 +95,9 @@ public class NfaExecutionSpark {
      * @return
      */
     public  static <I, S, T, V, E> Map<I, Pair<Number>> analyzeFrontierDir(JavaPairRDD<V, FrontierData<I, S, V, E>> frontierRdd, Broadcast<Map<I, Nfa<S, T>>> idToNfa) {
+
+        //frontierRdd.toLocalIterator();
+        //frontierRdd.collect()
         Map<I, Pair<Number>> result = frontierRdd.aggregate(
                 (Map<I, Pair<Number>>)new HashMap<I, Pair<Number>>(),
                 new Function2<Map<I, Pair<Number>>, Tuple2<V, FrontierData<I, S, V, E>>, Map<I, Pair<Number>>>() {
@@ -54,7 +107,9 @@ public class NfaExecutionSpark {
                     public Map<I, Pair<Number>> call(Map<I, Pair<Number>> v1,
                             Tuple2<V, FrontierData<I, S, V, E>> v2) throws Exception {
 
-                        I nfaId = v2._2.getFrontierId();
+                        FrontierData<I, S, V, E> frontierData = v2._2;
+                        I nfaId = frontierData.getFrontierId();
+                        Set<S> states = frontierData.getStates();
                         Nfa<S, T> nfa = idToNfa.getValue().get(nfaId);
 
                         // check the transitions
