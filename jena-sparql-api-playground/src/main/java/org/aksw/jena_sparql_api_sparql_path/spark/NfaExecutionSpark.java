@@ -183,16 +183,17 @@ public class NfaExecutionSpark {
             I frontierId, // the id of the frontier which to advance
             //Nfa<V, E> nfa,
             JavaPairRDD<V, FrontierData<I, S, V, E>> frontierRdd,
-            JavaPairRDD<V, Tuple2<E, V>> fwdRdd,
-            JavaPairRDD<V, Tuple2<E, V>> bwdRdd,
-            boolean reversePropertyDirection,
+            JavaPairRDD<V, Tuple2<E, V>> rdd,
+//            JavaPairRDD<V, Tuple2<E, V>> bwdRdd,
+            //boolean reversePropertyDirection,
+            boolean isReverseRdd,
             Broadcast<Map<I, Nfa<S, T>>> idToNfa
             )
      //       Predicate<T> isEpsilon)
     {
 
         JavaPairRDD<V, FrontierData<I, S, V, E>> result = frontierRdd
-            .join(fwdRdd)
+            .join(rdd)
             .filter(new Function<Tuple2<V, Tuple2<FrontierData<I, S, V, E>,Tuple2<E,V>>>, Boolean>() {
                 private static final long serialVersionUID = 12351375937L;
                 @Override

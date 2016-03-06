@@ -118,7 +118,6 @@ public class MainJavaSparkTest {
                 1,
                 fwdFrontierRdd,
                 fwdRdd,
-                bwdRdd,
                 false,
                 broadcastVar);
                 //LabeledEdgeImpl::<Node>isEpsilon);
