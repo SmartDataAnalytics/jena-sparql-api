@@ -258,8 +258,7 @@ public class MainSparqlPath2 {
     public static void main(String[] args) throws InterruptedException, IOException {
 
 
-
-        PropertyFunctionRegistry.get().put(PropertyFunctionKShortestPaths.DEFAULT_IRI, new PropertyFunctionFactoryKShortestPaths());
+        PropertyFunctionRegistry.get().put(PropertyFunctionKShortestPaths.DEFAULT_IRI, new PropertyFunctionFactoryKShortestPaths(ss -> null));
 
         String queryStr;
 
@@ -456,16 +455,21 @@ public class MainSparqlPath2 {
 //            Map<Node, Map<Node, Number>> test = joinSummaryService.fetch(Collections.singleton(issue), false);
 //            System.out.println("Test: " + test);
 
-//            Map<Integer, Pair<Map<Node, Number>>> fwdCosts = EdgeReducer.<Integer, LabeledEdge<Integer, PredicateClass>>estimateFrontierCost(
-//                    nfa,
-//                    LabeledEdgeImpl::isEpsilon,
-//                    e -> e.getLabel(),
-//                    startPredFreqs,
-//                    joinSummaryService);
+            System.out.println("FORWARD NFA");
+            printNfa(nfa);
+            Map<Integer, Pair<Map<Node, Number>>> fwdCosts = EdgeReducer.<Integer, LabeledEdge<Integer, PredicateClass>>estimateFrontierCost(
+                    nfa,
+                    LabeledEdgeImpl::isEpsilon,
+                    e -> e.getLabel(),
+                    startPredFreqs,
+                    joinSummaryService);
 
 //            NfaUtils
 
+            System.out.println("------------");
+
             Nfa<Integer, LabeledEdge<Integer, PredicateClass>> reverseNfa = reverseNfa(nfa);
+            System.out.println("BACKWARD NFA");
             printNfa(reverseNfa);
 
 

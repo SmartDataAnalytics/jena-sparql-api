@@ -1,13 +1,15 @@
 package org.aksw.jena_sparql_api_sparql_path2;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.StreamSupport;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.utils.ListUtils;
-import org.aksw.jena_sparql_api.utils.NodeUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sdb.store.Feature.Name;
@@ -19,9 +21,6 @@ import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingFactory;
 import org.apache.jena.sparql.engine.iterator.QueryIter;
 import org.apache.jena.sparql.engine.iterator.QueryIterPlainWrapper;
-import org.apache.jena.sparql.expr.NodeValue;
-import org.apache.jena.sparql.expr.nodevalue.NodeValueInteger;
-import org.apache.jena.sparql.expr.nodevalue.NodeValueNode;
 import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.path.PathParser;
 import org.apache.jena.sparql.pfunction.PropFuncArg;
@@ -29,10 +28,8 @@ import org.apache.jena.sparql.pfunction.PropFuncArgType;
 import org.apache.jena.sparql.pfunction.PropertyFunctionEval;
 import org.apache.jena.sparql.util.Context;
 import org.apache.jena.sparql.util.Symbol;
-import org.aksw.jena_sparql_api.sparql.ext.json.NodeValueJson;
-
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 
@@ -57,16 +54,20 @@ import com.google.gson.JsonElement;
 public class PropertyFunctionKShortestPaths
     extends PropertyFunctionEval
 {
+    private static final Logger logger = LoggerFactory.getLogger(PropertyFunctionKShortestPaths.class);
+
     public static final String DEFAULT_IRI = "http://jsa.aksw.org/fn/kShortestPaths";
 
     public static final Symbol PROLOGUE = Name.create("prologue");
     public static final Symbol SPARQL_SERVICE = Name.create("sparqlService");
 
+    protected Function<SparqlService, SparqlKShortestPathFinder> serviceToPathFinder;
     //protected Gson gson;
 
-    protected PropertyFunctionKShortestPaths() { //Gson gson) {
+    public PropertyFunctionKShortestPaths(Function<SparqlService, SparqlKShortestPathFinder> serviceToPathFinder) { //Gson gson) {
         super(PropFuncArgType.PF_ARG_SINGLE, PropFuncArgType.PF_ARG_EITHER);
 //        this.gson = gson;
+        this.serviceToPathFinder = serviceToPathFinder;
     }
 
     @Override
@@ -102,14 +103,14 @@ public class PropertyFunctionKShortestPaths
             }
         }
 
-        Integer tmpK = null;
+        Long tmpK = null;
         if(kNode != null && kNode.isLiteral()) {
             Object o = kNode.getLiteralValue();
             if(o instanceof Number) {
-                tmpK = ((Number)o).intValue();
+                tmpK = ((Number)o).longValue();
             }
         }
-        final Integer k = tmpK;
+        final Long k = tmpK;
 
         // pathNode and outNode are mandatory, the other arguments are optional
         Objects.requireNonNull(pathNode);
@@ -136,28 +137,43 @@ public class PropertyFunctionKShortestPaths
 
         Path path = PathParser.parse(pathStr, prologue);
 
-
-        PathExecutionUtils.executePath(path, s, targetNode, qef, p -> {
-            rdfPaths.add(p);
-            boolean r = k == null ? false : rdfPaths.size() >= k;
-            return r; });
-
-        Gson gson = new Gson();
-        List<Binding> bindings = new ArrayList<Binding>();
-
-        for(MyPath<Node, Node> rdfPath : rdfPaths) {
-//            JsonElement json = gson.toJsonTree(rdfPath);
-//            NodeValue rdfPathNodeValue = new NodeValueJson(json);
-//            Node rdfPathNode = rdfPathNodeValue.asNode();
-            Node rdfPathNode = NodeFactory.createLiteral("" + rdfPath);
-
-            //Node rdfPathNode = NodeFactory.createLiteral(rdfPath.toString());
-            Binding b = BindingFactory.binding(binding, outVar, rdfPathNode);
-
-            bindings.add(b);
+        SparqlKShortestPathFinder pathFinder = serviceToPathFinder.apply(ss);
+        if(pathFinder == null) {
+            logger.info("Falling back on default k shortest path finder service");
+            pathFinder = new SparqlKShortestPathFinderMem(ss.getQueryExecutionFactory());
         }
 
-        QueryIter result = new QueryIterPlainWrapper(bindings.iterator());
+        Iterator<NestedPath<Node, Node>> itPaths = pathFinder.findPaths(s, targetNode,path, k);
+
+//
+//        PathExecutionUtils.executePath(path, s, targetNode, qef, p -> {
+//            rdfPaths.add(p);
+//            boolean r = k == null ? false : rdfPaths.size() >= k;
+//            return r; });
+//
+//        Gson gson = new Gson();
+//        List<Binding> bindings = new ArrayList<Binding>();
+//
+//        for(MyPath<Node, Node> rdfPath : rdfPaths) {
+////            JsonElement json = gson.toJsonTree(rdfPath);
+////            NodeValue rdfPathNodeValue = new NodeValueJson(json);
+////            Node rdfPathNode = rdfPathNodeValue.asNode();
+//            Node rdfPathNode = NodeFactory.createLiteral("" + rdfPath);
+//
+//            //Node rdfPathNode = NodeFactory.createLiteral(rdfPath.toString());
+//            Binding b = BindingFactory.binding(binding, outVar, rdfPathNode);
+//
+//            bindings.add(b);
+//        }
+
+        Iterable<NestedPath<Node, Node>> tmp = () -> itPaths;
+        Iterator<Binding> itBindings = StreamSupport.stream(tmp.spliterator(), false).map(p -> {
+          Node pNode = NodeFactory.createLiteral("" + p);
+          Binding r = BindingFactory.binding(binding, outVar, pNode);
+          return r;
+        }).iterator();
+
+        QueryIter result = new QueryIterPlainWrapper(itBindings);
         return result;
     }
 

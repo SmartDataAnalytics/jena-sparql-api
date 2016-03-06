@@ -8,7 +8,6 @@ import java.util.Map;
 import org.aksw.jena_sparql_api_sparql_path.spark.NfaExecutionSpark;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.path.Path;
-import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -38,7 +37,7 @@ public class SparqlKShortestPathFinderFactorySpark
             Node start,
             Node end,
             Path pathExpr,
-            int k) {
+            Long k) {
 
         Map<Integer, Nfa<Integer, LabeledEdge<Integer, PredicateClass>>> frontierIdToAutomaton = new HashMap<>();
 
@@ -89,7 +88,7 @@ public class SparqlKShortestPathFinderFactorySpark
 
     @Override
     public Iterator<NestedPath<Node, Node>> findPaths(Node start,
-            Node end, Path pathExpr, int k) {
+            Node end, Path pathExpr, Long k) {
 
         JavaRDD<NestedPath<Node, Node>> finalPathRdd = exec(sparkContext, fwdRdd, bwdRdd, start, end, pathExpr, k);
 

@@ -68,7 +68,7 @@ public class NfaExecution<S, T, V, E> {
     }
 
 
-    public static <S, T, V, E> boolean collectPaths(Nfa<S, T> nfa, Frontier<S, V, E> frontier, Predicate<T> isEpsilon, Function<MyPath<V, E>, Boolean> pathCallback) {
+    public static <S, T, V, E> boolean collectPaths(Nfa<S, T> nfa, Frontier<S, V, E> frontier, Predicate<T> isEpsilon, Function<NestedPath<V, E>, Boolean> pathCallback) {
         boolean isFinished = false;
         Set<S> currentStates = frontier.getCurrentStates();
         for(S state : currentStates) {
@@ -77,8 +77,8 @@ public class NfaExecution<S, T, V, E> {
             if(isFinal) {
                 Multimap<V, NestedPath<V, E>> ps = frontier.getPaths(state);
                 for(NestedPath<V, E> path : ps.values()) {
-                    MyPath<V, E> rdfPath = path.asSimplePath();
-                    isFinished = pathCallback.apply(rdfPath);
+                    //MyPath<V, E> rdfPath = path.asSimplePath();
+                    isFinished = pathCallback.apply(path);
                     if(isFinished) {
                         break;
                     }

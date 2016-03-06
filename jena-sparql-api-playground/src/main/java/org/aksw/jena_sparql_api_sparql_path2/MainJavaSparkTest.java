@@ -82,7 +82,7 @@ public class MainJavaSparkTest {
         Node startNode = NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/funding/258888-996094068");
 
         SparqlKShortestPathFinder pathFinder = new SparqlKShortestPathFinderFactorySpark(sparkContext, fwdRdd, bwdRdd);
-        Iterator<NestedPath<Node, Node>> itPaths = pathFinder.findPaths(startNode, Node.ANY, null, 10);
+        Iterator<NestedPath<Node, Node>> itPaths = pathFinder.findPaths(startNode, Node.ANY, null, 10l);
         while(itPaths.hasNext()) {
             NestedPath<Node, Node> path = itPaths.next();
             System.out.println("GOT PATH: " + path.asSimplePath());
