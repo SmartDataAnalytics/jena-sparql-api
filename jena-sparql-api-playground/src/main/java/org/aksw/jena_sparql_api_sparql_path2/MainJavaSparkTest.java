@@ -12,9 +12,13 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.sparql.path.Path;
+import org.apache.jena.sparql.path.PathParser;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.PairFunction;
 import org.apache.spark.api.java.function.VoidFunction;
 import org.apache.spark.broadcast.Broadcast;
@@ -82,10 +86,15 @@ public class MainJavaSparkTest {
         Node startNode = NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/funding/258888-996094068");
 
         SparqlKShortestPathFinder pathFinder = new SparqlKShortestPathFinderFactorySpark(sparkContext, fwdRdd, bwdRdd);
-        Iterator<NestedPath<Node, Node>> itPaths = pathFinder.findPaths(startNode, Node.ANY, null, 10l);
+
+        //Path path = PathParser.parse("(!<http://foo>)*", PrefixMapping.Extended);
+        Path path = PathParser.parse("<http://fp7-pp.publicdata.eu/ontology/funding>", PrefixMapping.Extended);
+
+
+        Iterator<NestedPath<Node, Node>> itPaths = pathFinder.findPaths(startNode, Node.ANY, path, 10l);
         while(itPaths.hasNext()) {
-            NestedPath<Node, Node> path = itPaths.next();
-            System.out.println("GOT PATH: " + path.asSimplePath());
+            NestedPath<Node, Node> p = itPaths.next();
+            System.out.println("GOT PATH: " + p.asSimplePath());
         }
 
         if(false) {
@@ -113,14 +122,24 @@ public class MainJavaSparkTest {
 //
         JavaPairRDD<Node, FrontierData<Integer, Integer, Node, Node>> fwdFrontierRdd = frontierRdd;
 
+        Function<LabeledEdge<Integer, PredicateClass>, PredicateClass> transToPredicateClass = new Function<LabeledEdge<Integer, PredicateClass>, PredicateClass>() {
+            @Override
+            public PredicateClass call(
+                    LabeledEdge<Integer, PredicateClass> v1)
+                            throws Exception {
+                return v1.getLabel();
+            }
+        };
+
+
         for(int i = 0; i < 2; ++i) {
         fwdFrontierRdd = NfaExecutionSpark.advanceFrontier(
                 1,
                 fwdFrontierRdd,
                 fwdRdd,
                 false,
-                broadcastVar);
-                //LabeledEdgeImpl::<Node>isEpsilon);
+                broadcastVar,
+                transToPredicateClass);
         }
 
 
@@ -137,7 +156,7 @@ public class MainJavaSparkTest {
         });
 
 
-        Map<Integer, Pair<Number>> dirs = NfaExecutionSpark.analyzeFrontierDir(frontierRdd, broadcastVar);
+        Map<Integer, Pair<Number>> dirs = NfaExecutionSpark.analyzeFrontierDir(frontierRdd, broadcastVar, transToPredicateClass);
         System.out.println("DIRS: " + dirs);
         }
         // Once we are done with the step, check the frontier for any completed paths

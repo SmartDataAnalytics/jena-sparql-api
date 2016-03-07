@@ -4,22 +4,29 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api_sparql_path2.Directed;
 import org.aksw.jena_sparql_api_sparql_path2.FrontierData;
 import org.aksw.jena_sparql_api_sparql_path2.FrontierItem;
+import org.aksw.jena_sparql_api_sparql_path2.JGraphTUtils;
 import org.aksw.jena_sparql_api_sparql_path2.MapUtils;
 import org.aksw.jena_sparql_api_sparql_path2.NestedPath;
 import org.aksw.jena_sparql_api_sparql_path2.Nfa;
 import org.aksw.jena_sparql_api_sparql_path2.Pair;
 import org.aksw.jena_sparql_api_sparql_path2.ParentLink;
+import org.aksw.jena_sparql_api_sparql_path2.PredicateClass;
+import org.aksw.jena_sparql_api_sparql_path2.ValueSet;
+import org.apache.jena.graph.Node;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFunction;
 import org.apache.spark.broadcast.Broadcast;
+import org.jgrapht.DirectedGraph;
 
-import jersey.repackaged.com.google.common.collect.Sets;
+import com.google.common.collect.Sets;
+
 import scala.Tuple2;
 
 class JoinStats<V, E> {
@@ -53,6 +60,16 @@ public class NfaExecutionSpark {
     }
 
 
+    public static <T> PredicateClass getPredicateClass(Function<T, PredicateClass> transToPredicateClass, T trans) {
+        PredicateClass result;
+        try {
+            result = transToPredicateClass.call(trans);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return result;
+    }
+
     /**
      * Iterate the frontier and collect all matching paths into a new RDD
      * This is a filter operation for matching paths + a map to yield the path + unique
@@ -68,15 +85,15 @@ public class NfaExecutionSpark {
                 // yield all paths that have reached the corresponding nfa's accepting states
                 FrontierData<I, S, V, E> frontierData = v1._2;
                 I nfaId = frontierData.getFrontierId();
-                NestedPath<V, E> nestedPath = frontierData.getPathHead().getValue();
+                //NestedPath<V, E> nestedPath = frontierData.getPathHead().getValue();
                 Nfa<S, T> nfa = idToNfa.getValue().get(nfaId);
 
-//                Set<S> states = frontierData.getStates();
+                Set<S> states = frontierData.getStates();
 //
-//                Set<S> tmp = Sets.intersection(nfa.getEndStates(), states);
-//                boolean isAccepting = !tmp.isEmpty();
+                Set<S> tmp = Sets.intersection(nfa.getEndStates(), states);
+                boolean isAccepting = !tmp.isEmpty();
 
-                boolean isAccepting = true;
+//                boolean isAccepting = true;
 
                 // TODO Check if the path's target is accepted
                 //nestedPath.getCurrent().equals(target);
@@ -110,7 +127,11 @@ public class NfaExecutionSpark {
      *
      * @return
      */
-    public  static <I, S, T, V, E> Map<I, Pair<Number>> analyzeFrontierDir(JavaPairRDD<V, FrontierData<I, S, V, E>> frontierRdd, Broadcast<Map<I, Nfa<S, T>>> idToNfa) {
+    public  static <I, S, T, V, E> Map<I, Pair<Number>> analyzeFrontierDir(
+            JavaPairRDD<V, FrontierData<I, S, V, E>> frontierRdd,
+            Broadcast<Map<I, Nfa<S, T>>> idToNfa,
+            Function<T, PredicateClass> transToPredicateClass // null implies epsilon transition
+            ) {
 
         //frontierRdd.toLocalIterator();
         //frontierRdd.collect()
@@ -125,12 +146,17 @@ public class NfaExecutionSpark {
 
                         FrontierData<I, S, V, E> frontierData = v2._2;
                         I nfaId = frontierData.getFrontierId();
-                        Set<S> states = frontierData.getStates();
                         Nfa<S, T> nfa = idToNfa.getValue().get(nfaId);
+                        DirectedGraph<S, T> graph = nfa.getGraph();
 
-                        // check the transitions
-                        //Map<I, Pair<Number>> result = new HashMap<>();
-                        Map<I, Pair<Number>> r = Collections.singletonMap(nfaId, new Pair<>(1, 1));
+                        Set<S> states = frontierData.getStates();
+
+                        Set<T> transitions = JGraphTUtils.resolveTransitions(graph, states, trans -> getPredicateClass(transToPredicateClass, trans) == null, false);
+
+                        boolean requiresFwdJoin = transitions.stream().anyMatch(trans -> !getPredicateClass(transToPredicateClass, trans).getFwdNodes().isEmpty());
+                        boolean requiresBwdJoin = transitions.stream().anyMatch(trans -> !getPredicateClass(transToPredicateClass, trans).getBwdNodes().isEmpty());
+
+                        Map<I, Pair<Number>> r = Collections.singletonMap(nfaId, new Pair<>(requiresFwdJoin ? 1 : 0, requiresBwdJoin ? 1 : 0));
 
                         return r;
                     }
@@ -187,7 +213,10 @@ public class NfaExecutionSpark {
 //            JavaPairRDD<V, Tuple2<E, V>> bwdRdd,
             //boolean reversePropertyDirection,
             boolean isReverseRdd,
-            Broadcast<Map<I, Nfa<S, T>>> idToNfa
+            Broadcast<Map<I, Nfa<S, T>>> idToNfa,
+            Function<T, PredicateClass> transToPredicateClass // null implies epsilon transition
+            //Predicate<T> isEpsilon,
+            //java.util.function.Function<T, PredicateClass> transToPredicateClass
             )
      //       Predicate<T> isEpsilon)
     {
@@ -200,17 +229,26 @@ public class NfaExecutionSpark {
                 public Boolean call(
                         Tuple2<V, Tuple2<FrontierData<I, S, V, E>, Tuple2<E, V>>> t)
                                 throws Exception {
-                    //Map<I, Nfa<S, LabeledEdge<S, PredicateClass>>> idToNfa = null;// (Map<I, Nfa<S, LabeledEdge<S, PredicateClass>>>)broadcastVar.getValue();
-
                     FrontierData<I, S, V, E> frontierData = t._2._1;
                     I nfaId = frontierData.getFrontierId();
                     E p = t._2._2._1;
-                    V o = t._2._2._2;
+                    //V o = t._2._2._2;
 
                     Nfa<S, T> nfa = idToNfa.getValue().get(nfaId);
+                    Set<S> states = frontierData.getStates();
+                    DirectedGraph<S, T> graph = nfa.getGraph();
 
-                    // Check whether the current p and o are acceptable according to the nfa
-                    return true;
+                    // Check if any of the transitions accepts the predicate
+                    Set<T> transitions = JGraphTUtils.resolveTransitions(graph, states, trans -> getPredicateClass(transToPredicateClass, trans) == null, false);
+
+                    boolean result = transitions.stream().anyMatch(trans -> {
+                            PredicateClass pc = getPredicateClass(transToPredicateClass, trans);
+                            ValueSet<Node> valueSet = !isReverseRdd ? pc.getFwdNodes() : pc.getBwdNodes();
+                            boolean r = valueSet.contains(p);
+                            return r;
+                    });
+
+                    return result;
                 }
             })
             .mapToPair(new PairFunction<Tuple2<V, Tuple2<FrontierData<I, S, V, E>, Tuple2<E, V>>>, V, FrontierData<I, S, V, E>>() {
@@ -224,12 +262,29 @@ public class NfaExecutionSpark {
 
                     FrontierData<I, S, V, E> frontierData = t._2._1;
                     I nfaId = frontierData.getFrontierId();
+                    Nfa<S, T> nfa = idToNfa.getValue().get(nfaId);
+                    Set<S> states = frontierData.getStates();
                     E p = t._2._2._1;
                     V o = t._2._2._2;
 
-                    //hack
-                    Object tmp = 123;
-                    Set<S> nextStates = Collections.singleton((S)tmp);
+
+                    DirectedGraph<S, T> graph = nfa.getGraph();
+
+                    // Check if any of the transitions accepts the predicate
+                    Set<T> transitions = JGraphTUtils.resolveTransitions(graph, states, trans -> getPredicateClass(transToPredicateClass, trans) == null, false);
+
+                    Set<S> nextStates = transitions.stream()
+                            .filter(trans -> {
+                                PredicateClass pc = getPredicateClass(transToPredicateClass, trans);
+                                ValueSet<Node> valueSet = !isReverseRdd ? pc.getFwdNodes() : pc.getBwdNodes();
+                                boolean r = valueSet.contains(p);
+                                return r;
+                            })
+                            .map(trans -> {
+                                S r = graph.getEdgeTarget(trans);
+                                return r;
+                            })
+                            .collect(Collectors.toSet());
 
                     Directed<NestedPath<V, E>> pathHead = frontierData.getPathHead();
                     NestedPath<V, E> nestedPath = frontierData.getPathHead().getValue();

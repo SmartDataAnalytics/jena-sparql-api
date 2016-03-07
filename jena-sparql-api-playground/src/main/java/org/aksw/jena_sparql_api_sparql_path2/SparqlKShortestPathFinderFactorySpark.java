@@ -31,32 +31,52 @@ public class SparqlKShortestPathFinderFactorySpark
 
 
     public static JavaRDD<NestedPath<Node, Node>> exec(
-            JavaSparkContext sparkContext2,
+            JavaSparkContext sparkContext,
             JavaPairRDD<Node, Tuple2<Node, Node>> fwdRdd,
             JavaPairRDD<Node, Tuple2<Node, Node>> bwdRdd,
             Node start,
             Node end,
-            Path pathExpr,
+            Path path,
             Long k) {
 
         Map<Integer, Nfa<Integer, LabeledEdge<Integer, PredicateClass>>> frontierIdToAutomaton = new HashMap<>();
 
+
+        Integer nfaId = 1;
+        Nfa<Integer, LabeledEdge<Integer, PredicateClass>> nfa = PathExecutionUtils.compileToNfa(path);
+
+
+        frontierIdToAutomaton.put(nfaId, nfa);
+
         // TODO Initialize the frontierIdToAutomaton map
-        Broadcast<Map<Integer, Nfa<Integer, LabeledEdge<Integer, PredicateClass>>>> idToNfa = sparkContext2.broadcast(frontierIdToAutomaton);
+        Broadcast<Map<Integer, Nfa<Integer, LabeledEdge<Integer, PredicateClass>>>> idToNfa = sparkContext.broadcast(frontierIdToAutomaton);
+
 
         // Set up the frontier
         FrontierItem<Integer, Integer, Node, Node> frontier = new FrontierItem<Integer, Integer, Node, Node>(
                 1,
-                Collections.singleton(1),
+                nfa.getStartStates(),
                 start,
                 false,
                 Node.class);
 
 
-        JavaPairRDD<Node, FrontierData<Integer, Integer, Node, Node>> frontierRdd = sparkContext2.parallelizePairs(Collections.singletonList(frontier));
+        JavaPairRDD<Node, FrontierData<Integer, Integer, Node, Node>> frontierRdd = sparkContext.parallelizePairs(Collections.singletonList(frontier));
 
         JavaPairRDD<Integer, NestedPath<Node, Node>> foundPathsRdd = null;
 
+
+        Function<LabeledEdge<Integer, PredicateClass>, PredicateClass> transToPredicateClass = new Function<LabeledEdge<Integer, PredicateClass>, PredicateClass>() {
+            private static final long serialVersionUID = 23901355501L;
+            @Override
+            public PredicateClass call(
+                    LabeledEdge<Integer, PredicateClass> v1)
+                            throws Exception {
+                return v1.getLabel();
+            }
+        };
+
+        long foundPathCount;
         do {
             JavaPairRDD<Integer, NestedPath<Node, Node>> nextPathRdd = NfaExecutionSpark.collectPaths(frontierRdd, idToNfa);
 
@@ -64,7 +84,7 @@ public class SparqlKShortestPathFinderFactorySpark
             foundPathsRdd = foundPathsRdd == null ? nextPathRdd : foundPathsRdd.union(nextPathRdd).cache();
 
 
-            Map<Integer, Pair<Number>> stats = NfaExecutionSpark.analyzeFrontierDir(frontierRdd, idToNfa);
+            Map<Integer, Pair<Number>> stats = NfaExecutionSpark.analyzeFrontierDir(frontierRdd, idToNfa, transToPredicateClass);
 
             Pair<Number> agg = stats.values().stream().reduce(
                     new Pair<Number>(0, 0),
@@ -80,7 +100,9 @@ public class SparqlKShortestPathFinderFactorySpark
                         frontierRdd,
                         fwdRdd,
                         false,
-                        idToNfa);
+                        idToNfa,
+                        transToPredicateClass
+                        );
             }
 
             JavaPairRDD<Node, FrontierData<Integer, Integer, Node, Node>> bwdFrontierRdd = null;
@@ -90,7 +112,9 @@ public class SparqlKShortestPathFinderFactorySpark
                         frontierRdd,
                         bwdRdd,
                         true,
-                        idToNfa);
+                        idToNfa,
+                        transToPredicateClass
+                        );
             }
 
             frontierRdd = fwdFrontierRdd == null
@@ -99,8 +123,8 @@ public class SparqlKShortestPathFinderFactorySpark
                         ? fwdFrontierRdd
                         : fwdFrontierRdd.union(bwdFrontierRdd));
 
-
-        } while (foundPathsRdd.count() <= k || frontierRdd == null);
+            foundPathCount = foundPathsRdd.count();
+        } while (foundPathCount <= k && frontierRdd != null);
 
 
         //JavaPairRDD<Integer, NestedPath<Node, Node>> segmentPathRdd = NfaExecutionSpark.collectPaths(fwdFrontierRdd, idToNfa);
