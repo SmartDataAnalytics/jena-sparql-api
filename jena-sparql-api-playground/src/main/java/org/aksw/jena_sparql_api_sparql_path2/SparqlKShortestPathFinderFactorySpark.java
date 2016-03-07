@@ -159,7 +159,7 @@ public class SparqlKShortestPathFinderFactorySpark
                 public Integer call(NestedPath<Node, Node> v1) throws Exception {
                     return v1.getLength();
                 }
-            }, true, 10)
+            }, true, 10) // TODO What is a good number of partitions?
             .zipWithIndex()
             .filter(new Function<Tuple2<NestedPath<Node,Node>,Long>, Boolean>() {
                 private static final long serialVersionUID = 47129253090252L;

@@ -16,6 +16,7 @@ import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.path.PathParser;
 import org.apache.spark.SparkConf;
+import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
@@ -25,6 +26,7 @@ import org.apache.spark.broadcast.Broadcast;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import scala.Option;
 import scala.Tuple2;
 
 public class MainJavaSparkTest {
@@ -43,9 +45,16 @@ public class MainJavaSparkTest {
         String fileName = args[0];
         String sparkMasterHost = args.length >= 2 ? args[1] : "local[2]";
 
+//        Option<String> tmp = SparkContext.jarOfClass(MainJavaSparkTest.class);
+//        String jar = tmp.get();
+//        logger.info("Jar: " + jar);
+
         SparkConf sparkConf = new SparkConf()
                 .setAppName("BDE-readRDF")
                 .setMaster(sparkMasterHost)
+                //.setJars(new String[] { jar })
+                .setJars(new String[] {"http://cstadler.aksw.org/files/spark/jena-sparql-api-playground-3.0.1-2-SNAPSHOT-jar-with-dependencies.jar"})
+                //.set("spark.local.ip", "localhost") //"139.18.8.88")
                 .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
 
         JavaSparkContext sparkContext = new JavaSparkContext(sparkConf);

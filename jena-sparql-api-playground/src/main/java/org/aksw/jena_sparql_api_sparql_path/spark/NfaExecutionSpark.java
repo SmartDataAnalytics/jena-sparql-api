@@ -80,7 +80,8 @@ public class NfaExecutionSpark {
             Broadcast<Map<I, Nfa<S, T>>> idToNfa,
             Function<T, PredicateClass> transToPredicateClass) {
 
-        JavaPairRDD<I, NestedPath<V, E>> result = frontierRdd.filter(new Function<Tuple2<V,FrontierData<I,S,V,E>>, Boolean>() {
+        JavaPairRDD<I, NestedPath<V, E>> result = frontierRdd
+                .filter(new Function<Tuple2<V,FrontierData<I,S,V,E>>, Boolean>() {
             private static final long serialVersionUID = 7576754196298849489L;
 
             @Override

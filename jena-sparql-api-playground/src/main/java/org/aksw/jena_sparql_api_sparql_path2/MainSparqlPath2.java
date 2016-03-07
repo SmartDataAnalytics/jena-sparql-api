@@ -66,6 +66,7 @@ import org.jgrapht.DirectedGraph;
 import org.jgrapht.Graph;
 import org.jgrapht.VertexFactory;
 import org.jgrapht.alg.MinSourceSinkCut;
+import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.SimpleDirectedGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -153,7 +154,11 @@ public class MainSparqlPath2 {
 
 
     public static <S> Nfa<S, LabeledEdge<S, PredicateClass>> reverseNfa(Nfa<S, LabeledEdge<S, PredicateClass>> nfa) {
-        DirectedGraph<S, LabeledEdge<S, PredicateClass>> bwdGraph = new SimpleDirectedGraph<>(LabeledEdge.class);
+        EdgeFactoryLabeledEdge<S, PredicateClass> edgeFactory = new EdgeFactoryLabeledEdge<S, PredicateClass>();
+        DirectedGraph<S, LabeledEdge<S, PredicateClass>> bwdGraph = new DefaultDirectedGraph<S, LabeledEdge<S, PredicateClass>>(edgeFactory);
+
+
+        //DirectedGraph<S, LabeledEdge<S, PredicateClass>> bwdGraph = new SimpleDirectedGraph<>(new LabeledEdgeFactoryImpl<S, PredicateClass>());
 
         DirectedGraph<S, LabeledEdge<S, PredicateClass>> fwdGraph = nfa.getGraph();
 
