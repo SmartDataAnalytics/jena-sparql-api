@@ -4,19 +4,20 @@ import java.io.ByteArrayInputStream;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import org.aksw.jena_sparql_api_sparql_path.spark.NfaExecutionSpark;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.path.PathParser;
 import org.apache.spark.SparkConf;
-import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
@@ -26,7 +27,6 @@ import org.apache.spark.broadcast.Broadcast;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import scala.Option;
 import scala.Tuple2;
 
 public class MainJavaSparkTest {
@@ -68,11 +68,17 @@ public class MainJavaSparkTest {
 
 //new SimpleEntry<>(1, "test");
 
+        Model m = RDFDataMgr.loadModel("http://cstadler.aksw.org/files/spark/fp7_ict_project_partners_database_2007_2011.nt");
+        List<Triple> triples = m.getGraph().find(Node.ANY, Node.ANY, Node.ANY).toList();
+
+        System.out.println("FOOOOO" + fileName);
         // Map each subject to corresponding predicate/object pairs
-        JavaPairRDD<Node, Tuple2<Node, Node>> fwdRdd = sparkContext
-                .textFile(fileName, 5)
-                .filter(line -> !line.trim().isEmpty() & !line.startsWith("#"))
-                .map(line -> RDFDataMgr.createIteratorTriples(new ByteArrayInputStream(line.getBytes()), Lang.NTRIPLES, "http://example/base").next())
+        JavaPairRDD<Node, Tuple2<Node, Node>> fwdRdd =
+                sparkContext
+                //.textFile(fileName, 5)
+                .parallelize(triples)
+                //.filter(line -> !line.trim().isEmpty() & !line.startsWith("#"))
+                //.map(line -> RDFDataMgr.createIteratorTriples(new ByteArrayInputStream(line.getBytes()), Lang.NTRIPLES, "http://example/base").next())
                 .mapToPair(new PairFunction<Triple, Node, Tuple2<Node, Node>>() {
                     private static final long serialVersionUID = -4757627441301230743L;
                     @Override
