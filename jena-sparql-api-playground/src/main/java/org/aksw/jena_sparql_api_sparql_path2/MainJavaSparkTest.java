@@ -83,7 +83,8 @@ public class MainJavaSparkTest {
             }
         });
 
-        Node startNode = NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/funding/258888-996094068");
+        //Node startNode = NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/funding/258888-996094068");
+        Node startNode = NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/project/258888");
 
         SparqlKShortestPathFinder pathFinder = new SparqlKShortestPathFinderFactorySpark(sparkContext, fwdRdd, bwdRdd);
 
