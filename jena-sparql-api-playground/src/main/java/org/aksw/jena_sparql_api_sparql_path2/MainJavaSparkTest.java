@@ -71,7 +71,7 @@ public class MainJavaSparkTest {
                             throws Exception {
                         return new Tuple2<>(t.getSubject(), new Tuple2<>(t.getPredicate(), t.getObject()));
                     }
-                });
+                }).cache();
 
 
         JavaPairRDD<Node, Tuple2<Node, Node>> bwdRdd = fwdRdd.mapToPair(new PairFunction<Tuple2<Node, Tuple2<Node, Node>>, Node, Tuple2<Node, Node>>() {
@@ -81,15 +81,15 @@ public class MainJavaSparkTest {
                     Tuple2<Node, Tuple2<Node, Node>> t) throws Exception {
                 return new Tuple2<>(t._2._2, new Tuple2<>(t._2._1, t._1));
             }
-        });
+        }).cache();
 
         //Node startNode = NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/funding/258888-996094068");
         Node startNode = NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/project/258888");
 
         SparqlKShortestPathFinder pathFinder = new SparqlKShortestPathFinderFactorySpark(sparkContext, fwdRdd, bwdRdd);
 
-        //Path path = PathParser.parse("(!<http://foo>)*", PrefixMapping.Extended);
-        Path path = PathParser.parse("<http://fp7-pp.publicdata.eu/ontology/funding>", PrefixMapping.Extended);
+        Path path = PathParser.parse("(!<http://foo>)*", PrefixMapping.Extended);
+        //Path path = PathParser.parse("<http://fp7-pp.publicdata.eu/ontology/funding>", PrefixMapping.Extended);
 
 
         Iterator<NestedPath<Node, Node>> itPaths = pathFinder.findPaths(startNode, Node.ANY, path, 10l);

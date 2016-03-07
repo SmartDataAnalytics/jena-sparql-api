@@ -20,6 +20,21 @@ public class JGraphTUtils {
         return result;
     }
 
+    public static <V, E> Set<V> sources(Graph<V, E> graph, Collection<E> edges) {
+        Set<V> result = edges.stream()
+                .map(e -> graph.getEdgeSource(e))
+                .collect(Collectors.toSet());
+        return result;
+    }
+
+
+    public static <V, E> Set<V> transitiveGet(DirectedGraph<V, E> graph, Set<V> startVertices, int mode, Predicate<E> isEpsilon) {
+        Set<V> result = startVertices.stream()
+                .flatMap(v -> transitiveGet(graph, v, mode, isEpsilon).stream())
+                .collect(Collectors.toSet());
+        return result;
+    }
+
     /**
      * Simple transitive get function that retrieves all nodes reachable via
      * edges for which the predicate evaluates to true

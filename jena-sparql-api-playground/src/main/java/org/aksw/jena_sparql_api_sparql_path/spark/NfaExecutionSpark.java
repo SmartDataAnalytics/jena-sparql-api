@@ -75,7 +75,11 @@ public class NfaExecutionSpark {
      * This is a filter operation for matching paths + a map to yield the path + unique
      *
      */
-    public static <I, S, T, V, E> JavaPairRDD<I, NestedPath<V, E>> collectPaths(JavaPairRDD<V, FrontierData<I, S, V, E>> frontierRdd, Broadcast<Map<I, Nfa<S, T>>> idToNfa) {
+    public static <I, S, T, V, E> JavaPairRDD<I, NestedPath<V, E>> collectPaths(
+            JavaPairRDD<V, FrontierData<I, S, V, E>> frontierRdd,
+            Broadcast<Map<I, Nfa<S, T>>> idToNfa,
+            Function<T, PredicateClass> transToPredicateClass) {
+
         JavaPairRDD<I, NestedPath<V, E>> result = frontierRdd.filter(new Function<Tuple2<V,FrontierData<I,S,V,E>>, Boolean>() {
             private static final long serialVersionUID = 7576754196298849489L;
 
@@ -87,10 +91,14 @@ public class NfaExecutionSpark {
                 I nfaId = frontierData.getFrontierId();
                 //NestedPath<V, E> nestedPath = frontierData.getPathHead().getValue();
                 Nfa<S, T> nfa = idToNfa.getValue().get(nfaId);
+                Set<S> endStates = nfa.getEndStates();
+                DirectedGraph<S, T> graph = nfa.getGraph();
 
-                Set<S> states = frontierData.getStates();
+                Set<S> rawStates = frontierData.getStates();
+
+                Set<S> states = JGraphTUtils.transitiveGet(graph, rawStates, 1, trans -> getPredicateClass(transToPredicateClass, trans) == null);
 //
-                Set<S> tmp = Sets.intersection(nfa.getEndStates(), states);
+                Set<S> tmp = Sets.intersection(endStates, states);
                 boolean isAccepting = !tmp.isEmpty();
 
 //                boolean isAccepting = true;

@@ -61,7 +61,7 @@ public class SparqlKShortestPathFinderFactorySpark
                 Node.class);
 
 
-        JavaPairRDD<Node, FrontierData<Integer, Integer, Node, Node>> frontierRdd = sparkContext.parallelizePairs(Collections.singletonList(frontier));
+        JavaPairRDD<Node, FrontierData<Integer, Integer, Node, Node>> frontierRdd = sparkContext.parallelizePairs(Collections.singletonList(frontier)).cache();
 
         JavaPairRDD<Integer, NestedPath<Node, Node>> foundPathsRdd = null;
 
@@ -78,7 +78,7 @@ public class SparqlKShortestPathFinderFactorySpark
 
         long foundPathCount;
         do {
-            JavaPairRDD<Integer, NestedPath<Node, Node>> nextPathRdd = NfaExecutionSpark.collectPaths(frontierRdd, idToNfa);
+            JavaPairRDD<Integer, NestedPath<Node, Node>> nextPathRdd = NfaExecutionSpark.collectPaths(frontierRdd, idToNfa, transToPredicateClass);
 
             // merge the paths
             foundPathsRdd = foundPathsRdd == null ? nextPathRdd : foundPathsRdd.union(nextPathRdd).cache();
@@ -117,28 +117,63 @@ public class SparqlKShortestPathFinderFactorySpark
                         );
             }
 
-            frontierRdd = fwdFrontierRdd == null
+            JavaPairRDD<Node, FrontierData<Integer, Integer, Node, Node>> nextFrontierRdd = fwdFrontierRdd == null
                     ? bwdFrontierRdd
                     : (bwdFrontierRdd == null
                         ? fwdFrontierRdd
                         : fwdFrontierRdd.union(bwdFrontierRdd));
 
+            if(nextFrontierRdd != null) {
+                nextFrontierRdd.cache();
+            }
+
+            frontierRdd = nextFrontierRdd;
             foundPathCount = foundPathsRdd.count();
+
         } while (foundPathCount <= k && frontierRdd != null);
+
+
+//        rdd
+//        .sortBy(_.createDate.getTime)
+//        .zipWithIndex
+//        .filter{case (_, idx) => idx < n}
+//        .keys
 
 
         //JavaPairRDD<Integer, NestedPath<Node, Node>> segmentPathRdd = NfaExecutionSpark.collectPaths(fwdFrontierRdd, idToNfa);
 
-        JavaRDD<NestedPath<Node, Node>> finalPathRdd = foundPathsRdd.map(new Function<Tuple2<Integer,NestedPath<Node,Node>>, NestedPath<Node, Node>>() {
-            private static final long serialVersionUID = 234902531915L;
-            @Override
-            public NestedPath<Node, Node> call(
-                    Tuple2<Integer, NestedPath<Node, Node>> v1)
-                            throws Exception {
-                NestedPath<Node, Node> r = v1._2;
-                return r;
-            }
-        });
+        JavaRDD<NestedPath<Node, Node>> finalPathRdd = foundPathsRdd
+            .map(new Function<Tuple2<Integer,NestedPath<Node,Node>>, NestedPath<Node, Node>>() {
+                private static final long serialVersionUID = 234902531915L;
+                @Override
+                public NestedPath<Node, Node> call(
+                        Tuple2<Integer, NestedPath<Node, Node>> v1)
+                                throws Exception {
+                    NestedPath<Node, Node> r = v1._2;
+                    return r;
+                }
+            })
+            .sortBy(new Function<NestedPath<Node,Node>, Integer>() {
+                private static final long serialVersionUID = 331039331952L;
+                @Override
+                public Integer call(NestedPath<Node, Node> v1) throws Exception {
+                    return v1.getLength();
+                }
+            }, true, 10)
+            .zipWithIndex()
+            .filter(new Function<Tuple2<NestedPath<Node,Node>,Long>, Boolean>() {
+                private static final long serialVersionUID = 47129253090252L;
+                @Override
+                public Boolean call(Tuple2<NestedPath<Node, Node>, Long> v1)
+                        throws Exception {
+                    long index = v1._2();
+                    return index < k;
+                }
+            })
+            .keys()
+            .cache();
+
+        idToNfa.destroy();
 
         return finalPathRdd;
     }
