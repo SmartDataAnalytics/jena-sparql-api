@@ -53,7 +53,7 @@ public class MainJavaSparkTest {
                 .setAppName("BDE-readRDF")
                 .setMaster(sparkMasterHost)
                 //.setJars(new String[] { jar })
-                .setJars(new String[] {"http://cstadler.aksw.org/files/spark/jena-sparql-api-playground-3.0.1-2-SNAPSHOT-jar-with-dependencies.jar"})
+                //.setJars(new String[] {"http://cstadler.aksw.org/files/spark/jena-sparql-api-playground-3.0.1-2-SNAPSHOT-jar-with-dependencies.jar"})
                 //.set("spark.local.ip", "localhost") //"139.18.8.88")
                 .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
 
@@ -68,17 +68,17 @@ public class MainJavaSparkTest {
 
 //new SimpleEntry<>(1, "test");
 
-        Model m = RDFDataMgr.loadModel("http://cstadler.aksw.org/files/spark/fp7_ict_project_partners_database_2007_2011.nt");
-        List<Triple> triples = m.getGraph().find(Node.ANY, Node.ANY, Node.ANY).toList();
+        //Model m = RDFDataMgr.loadModel("http://cstadler.aksw.org/files/spark/fp7_ict_project_partners_database_2007_2011.nt");
+        //List<Triple> triples = m.getGraph().find(Node.ANY, Node.ANY, Node.ANY).toList();
 
-        System.out.println("FOOOOO" + fileName);
+        //System.out.println("FOOOOO" + fileName);
         // Map each subject to corresponding predicate/object pairs
         JavaPairRDD<Node, Tuple2<Node, Node>> fwdRdd =
                 sparkContext
-                //.textFile(fileName, 5)
-                .parallelize(triples)
-                //.filter(line -> !line.trim().isEmpty() & !line.startsWith("#"))
-                //.map(line -> RDFDataMgr.createIteratorTriples(new ByteArrayInputStream(line.getBytes()), Lang.NTRIPLES, "http://example/base").next())
+                .textFile(fileName, 5)
+                //.parallelize(triples)
+                .filter(line -> !line.trim().isEmpty() & !line.startsWith("#"))
+                .map(line -> RDFDataMgr.createIteratorTriples(new ByteArrayInputStream(line.getBytes()), Lang.NTRIPLES, "http://example/base").next())
                 .mapToPair(new PairFunction<Triple, Node, Tuple2<Node, Node>>() {
                     private static final long serialVersionUID = -4757627441301230743L;
                     @Override

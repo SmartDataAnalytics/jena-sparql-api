@@ -1,9 +1,11 @@
 package org.aksw.jena_sparql_api_sparql_path2;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -12,6 +14,13 @@ import org.jgrapht.DirectedGraph;
 import org.jgrapht.Graph;
 
 public class JGraphTUtils {
+
+    public static <V, E> List<NestedPath<V, E>> getAllPaths(DirectedGraph<V, E> graph, V start, V end) {
+        SimplePathBfsIterator<V, E> it = new SimplePathBfsIterator<>(graph, start, nestedPath -> nestedPath.getCurrent().equals(end));
+        List<NestedPath<V, E>> result = new ArrayList<>();
+        it.forEachRemaining(path -> result.addAll(path));
+        return result;
+    }
 
     public static <V, E> Set<V> targets(Graph<V, E> graph, Collection<E> edges) {
         Set<V> result = edges.stream()

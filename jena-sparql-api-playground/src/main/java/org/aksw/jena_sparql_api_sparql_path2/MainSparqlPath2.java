@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.GraphSparqlService;
@@ -71,6 +72,8 @@ import org.jgrapht.graph.SimpleDirectedGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
+
+import com.google.common.base.Stopwatch;
 
 
 
@@ -262,6 +265,13 @@ public class MainSparqlPath2 {
 
     public static void main(String[] args) throws InterruptedException, IOException {
 
+
+        if(false) {
+            Stopwatch sw = Stopwatch.createStarted();
+            Model joinSummary = RDFDataMgr.loadModel("/home/raven/Projects/Eclipse/Spark-RDF/tmp/eswc-summary-predicate-join.nt");
+            System.out.println("Join Summary Read took: " + sw.stop().elapsed(TimeUnit.SECONDS) + " for " + joinSummary.size() + " triples");
+            // takes 19 seconds to read
+        }
 
         PropertyFunctionRegistry.get().put(PropertyFunctionKShortestPaths.DEFAULT_IRI, new PropertyFunctionFactoryKShortestPaths(ss -> null));
 
@@ -462,6 +472,12 @@ public class MainSparqlPath2 {
 
             System.out.println("FORWARD NFA");
             printNfa(nfa);
+
+            System.out.println("PATHS IN THE NFA:");
+            JGraphTUtils.getAllPaths(nfa.getGraph(), nfa.getStartStates().iterator().next(), nfa.getEndStates().iterator().next()).forEach(item -> System.out.println(item.asSimplePath()));
+
+
+
             Map<Integer, Pair<Map<Node, Number>>> fwdCosts = EdgeReducer.<Integer, LabeledEdge<Integer, PredicateClass>>estimateFrontierCost(
                     nfa,
                     LabeledEdgeImpl::isEpsilon,

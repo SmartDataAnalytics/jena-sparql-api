@@ -21,6 +21,19 @@ public class NestedPath<V, E>
         this(Optional.empty(), current);
     }
 
+    public boolean containsEdge(Object edge, boolean reverse) {
+        boolean result;
+        if(parentLink != null) {
+            Directed<E> pred = parentLink.getDiProperty();
+            result = reverse == pred.isReverse() && edge.equals(pred.getValue())
+                    ? true
+                    : parentLink.getTarget().containsEdge(edge, reverse);
+        } else {
+            result = false;
+        }
+        return result;
+    }
+
     public NestedPath(Optional<ParentLink<V, E>> parentLink, V current) {
         this(parentLink.isPresent() ? parentLink.get() : null, current);
     }
