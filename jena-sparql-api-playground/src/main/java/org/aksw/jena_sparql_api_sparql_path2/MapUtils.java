@@ -24,4 +24,12 @@ public class MapUtils {
                         mergeFn));
         return result;
     }
+
+    public static <K, V> void mergeMapsInPlace(Map<K, V> tgt, Map<K, V> src, BinaryOperator<V> mergeFn) {
+        src.forEach((k, v) -> {
+           V existing = tgt.get(k);
+           V newV = existing == null ? v : mergeFn.apply(existing, v);
+           tgt.put(k, newV);
+        });
+    }
 }

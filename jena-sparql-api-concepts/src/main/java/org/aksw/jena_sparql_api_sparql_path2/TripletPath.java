@@ -123,7 +123,5 @@ public class TripletPath<V, E> {
         result += "]";
 
         return result;
-//        return "RdfPath [start=" + start + ", end=" + end + ", triplets="
-//                + triplets + "]";
     }
 }

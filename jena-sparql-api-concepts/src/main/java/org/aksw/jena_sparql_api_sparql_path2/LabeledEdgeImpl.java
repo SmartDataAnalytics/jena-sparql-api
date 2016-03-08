@@ -38,8 +38,6 @@ public class LabeledEdgeImpl<V, T>
     @Override
     public String toString() {
         return "(" + source + ", " + target + ", " + label + ")";
-//        return "LabeledEdgeImpl [source=" + source + ", target=" + target
-//                + ", label=" + label + "]";
     }
 
     public static <V, T> boolean isEpsilon(LabeledEdge<V, T> edge) {

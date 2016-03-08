@@ -284,7 +284,7 @@ public class MainSparqlPath2 {
         Node endNode;
         Model joinSummaryModel;
 
-        if(true) {
+        if(false) {
             Stopwatch sw = Stopwatch.createStarted();
 
             joinSummaryModel = RDFDataMgr.loadModel("/home/raven/Projects/Eclipse/Spark-RDF/tmp/fp7-summary-predicate-join.nt");
@@ -312,8 +312,8 @@ public class MainSparqlPath2 {
         } else {
             Stopwatch sw = Stopwatch.createStarted();
 
-            joinSummaryModel = RDFDataMgr.loadModel("/home/raven/Projects/Eclipse/Spark-RDF/tmp/eswc-summary-predicate-join.nt");
-            System.out.println("Join Summary Read took: " + sw.stop().elapsed(TimeUnit.SECONDS) + " for " + joinSummaryModel.size() + " triples");
+            //joinSummaryModel = RDFDataMgr.loadModel("/home/raven/Projects/Eclipse/Spark-RDF/tmp/eswc-summary-predicate-join.nt");
+            //System.out.println("Join Summary Read took: " + sw.stop().elapsed(TimeUnit.SECONDS) + " for " + joinSummaryModel.size() + " triples");
 
             dataset = DatasetDescriptionUtils.createDefaultGraph("http://2016.eswc-conferences.org/top-k-shortest-path-large-typed-rdf-graphs-challenge/training_dataset.nt");
             predDataset = DatasetDescriptionUtils.createDefaultGraph("http://2016.eswc-conferences.org/top-k-shortest-path-large-typed-rdf-graphs-challenge/training_dataset.nt/summary/predicate/");
@@ -488,7 +488,17 @@ public class MainSparqlPath2 {
             List<TripletPath<Integer, LabeledEdge<Integer, PredicateClass>>> nfaPaths = JGraphTUtils.getAllPaths(nfa.getGraph(), nfa.getStartStates().iterator().next(), nfa.getEndStates().iterator().next())
                     .stream().map(p -> p.asSimplePath()).collect(Collectors.toList());
 
+
+            // for each nfa path, decide its direction
+            //
+
+
             //nfaPaths.forEach(item -> System.out.println(item.asSimplePath()));
+
+            // TODO Create a sub-nfa for each path, then check for isomorphy
+            // http://stackoverflow.com/questions/9448754/is-there-an-efficient-algorithm-to-decide-whether-the-language-accepted-by-one-n
+
+
 
             Map<Object, TripletPath<Integer, LabeledEdge<Integer, PredicateClass>>> map = new HashMap<>();
             for(TripletPath<Integer, LabeledEdge<Integer, PredicateClass>> nfaPath : nfaPaths) {

@@ -20,6 +20,8 @@ import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.jgrapht.DirectedGraph;
+import org.jgrapht.graph.DefaultDirectedGraph;
+import org.jgrapht.graph.DefaultEdge;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -287,6 +289,28 @@ public class EdgeReducer {
 //            Pair<Map<Node, Number>> initPredFreqs,
 //            JoinSummaryService joinSummaryService) {
 //
+//        // Map to keep track which predicates were reached in the state in which iteration
+//        // The iteration corresponds to the minimum path length that may reach the predicate
+//        Map<S, NavigableMap<Integer, Pair<Map<Node, Number>>>> stateToIterToDiPredToCost = new HashMap<>();
+//
+//        for(S state : nfa.getGraph().vertexSet()) {
+//            stateToIterToDiPredToCost.put(state, new TreeMap<>());
+//        }
+//
+//        int iter = 0;
+//
+//        // Initiale the zero'th iteration
+//        for(S state : nfa.getStartStates()) {
+//            NavigableMap<Integer, Pair<Map<Node, Number>>> iterToDiPredToCost = stateToIterToDiPredToCost.get(state);
+//            iterToDiPredToCost.get(iter);
+//
+//        }
+//
+//
+//
+//        DirectedGraph<Integer, DefaultEdge> joinGraph = new DefaultDirectedGraph<>(DefaultEdge.class);
+//
+//
 //
 //
 //
@@ -316,6 +340,9 @@ public class EdgeReducer {
         //Pair<BiHashMultimap<Node, S>> openDiPredToStates = new Pair<>(new BiHashMultimap<>(), new BiHashMultimap<>());
         //Pair</Se>
 
+        // Excerpt of the join summary used for reachability
+        DirectedGraph<Node, DefaultEdge> joinGraph = new DefaultDirectedGraph<>(DefaultEdge.class);
+
 
 
         //Map<S, Pair<Set<Node>>> openStateToDiPred = new HashMap<>();
@@ -328,9 +355,9 @@ public class EdgeReducer {
 
                 Map<Node, Number> initPredToCost = initPredFreqs.get(i);
 
-                // TODO Do an in-place merge
-                Map<Node, Number> tmp = MapUtils.mergeMaps(predToCost, initPredToCost, (a, b) -> a.doubleValue() + b.doubleValue());
-                predToCost.putAll(tmp);
+                //Map<Node, Number> tmp =
+                MapUtils.mergeMapsInPlace(predToCost, initPredToCost, (a, b) -> a.doubleValue() + b.doubleValue());
+                //predToCost.putAll(tmp);
 
                 //BiHashMultimap<Node, S> openPredToStates = openDiPredToStates.get(i);
                 Set<Node> openPreds = currOpenDiPreds.get(i);
@@ -383,13 +410,12 @@ public class EdgeReducer {
 
                 for(T trans : transitions) {
                     S tgtState = graph.getEdgeTarget(trans);
+                    Pair<Map<Node, Number>> tgtDiPredToCost = stateToDiPredToCost.get(tgtState);
+
                     nextOpenStates.add(tgtState);
 
                     if(isEpsilon.test(trans)) {
                         // If this is an eps transition, just contribute the predicate costs of the source state to the target state
-
-                        Pair<Map<Node, Number>> tgtDiPredToCost = stateToDiPredToCost.get(tgtState);
-
                         for(int i = 0; i < 2; ++i) {
 
                             Set<Node> nextOpenPreds = nextOpenDiPreds.get(i);
@@ -399,41 +425,37 @@ public class EdgeReducer {
 
                             // Contribute all predicates to the transition's target vertex
                             // that are not yet associated with the target
-
                             Set<Node> srcPreds = srcPredToCost.keySet();
                             Set<Node> tgtPreds = tgtPredToCost.keySet();
 
-                            Set<Node> tgtContribPreds = srcPreds.stream().filter(p -> !tgtPreds.contains(p)).collect(Collectors.toSet());
+                            Set<Node> tgtContribPreds = srcPreds.stream()
+                                    .filter(p -> !tgtPreds.contains(p))
+                                    .collect(Collectors.toSet());
 
-                            Map<Node, Number> newTgtPredToCost = MapUtils.mergeMaps(tgtPredToCost, srcPredToCost, (a, b) -> Math.max(a.doubleValue(), b.doubleValue()));
-                            tgtPredToCost.putAll(newTgtPredToCost);
+                            MapUtils.mergeMapsInPlace(tgtPredToCost, srcPredToCost, (a, b) -> Math.max(a.doubleValue(), b.doubleValue()));
 
                             nextOpenPreds.addAll(tgtContribPreds);
                         }
                     } else {
                         PredicateClass transPredClass = transToPredicateClass.apply(trans);
-                        Pair<Map<Node, Number>> tgtDiPredToCost = stateToDiPredToCost.get(tgtState);
 
                         // Determine whether the transitition's predicate class is makes use of predicates that are outbound, inbound or both
                         //transPredClass.get(0).isEmpty()
 
                         for(int i = 0; i < 2; ++i) {
+                            boolean reverse = i == 1;
+
                             ValueSet<Node> transPredSet = transPredClass.get(i);
 
+                            Set<Node> currOpenPreds = currOpenDiPreds.get(i);
                             Set<Node> nextOpenPreds = nextOpenDiPreds.get(i);
 
                             // If the predicate class is empty for a direction, there is nothing to do for this direction
                             if(!transPredSet.isEmpty()) {
 
-                                //boolean isChange = false;
-
+                                Map<Node, Number> srcPredToCost = srcDiPredToCost.get(i);
                                 Map<Node, Number> tgtPredToCost = tgtDiPredToCost.get(i);
                                 Set<Node> tgtPreds = tgtPredToCost.keySet();
-
-                                boolean reverse = i == 1;
-
-
-                                Map<Node, Number> srcPredToCost = srcDiPredToCost.get(i);
 
 
                                 // srcPredToCost may be null if the predicates are not known - this happens if there is a direction change in the predicates
@@ -445,26 +467,37 @@ public class EdgeReducer {
                                 }
 
                                 // Get the source predicates, and filter them by the current transitions' predicate class
-                                Set<Node> srcPreds = srcPredToCost.keySet();
+                                //Set<Node> srcPreds = srcPredToCost.keySet();
+                                //Set<Node> srcPassPreds = srcPreds.stream().filter(p -> transPredSet.contains(p)).collect(Collectors.toSet());
 
-                                Set<Node> srcPassPreds = srcPreds.stream().filter(p -> transPredSet.contains(p)).collect(Collectors.toSet());
+                                Set<Node> openPassPreds = currOpenPreds.stream()
+                                        .filter(p -> transPredSet.contains(p))
+                                        .collect(Collectors.toSet());
 
                                 // Now, for the predicates that passed through the transition,
                                 // label the target vertex with the potentially joining predicates of the join summary
-                                Map<Node, Map<Node, Number>> joinSummaryFragment = joinSummaryService.fetch(srcPassPreds, reverse);
+                                Map<Node, Map<Node, Number>> joinSummaryFragment = joinSummaryService.fetch(openPassPreds, reverse);
 
-                                Map<Node, Number> newTgtPredToCost = new HashMap<>(tgtPredToCost);
-                                for(Node srcPassPred : srcPassPreds) {
-                                    Number baseCost = srcPredToCost.get(srcPassPred);
+                                if(joinSummaryFragment == null) {
+                                    throw new RuntimeException("Join summary fragment was null - should not happen");
+                                }
 
-                                    Map<Node, Number> joinPredToCost = joinSummaryFragment.getOrDefault(srcPassPred, Collections.emptyMap());
+                                //Map<Node, Number> newTgtPredToCost = new HashMap<>(tgtPredToCost);
+                                for(Node openPassPred : openPassPreds) {
+                                    //Number baseCost = srcPredToCost.get(openPassPred);
+                                    Number baseCost = srcPredToCost.getOrDefault(openPassPred, 0);
 
+                                    if(baseCost == null) {
+                                        throw new RuntimeException("No base cost for " + openPassPred + " - should not happen");
+                                    }
+
+                                    Map<Node, Number> joinPredToCost = joinSummaryFragment.getOrDefault(openPassPred, Collections.emptyMap());
                                     Set<Node> joinPreds = joinPredToCost.keySet();
 
                                     // find out, which of the joining predicates are newly contributed
-                                    Set<Node> tgtContribPreds = joinPreds.stream().filter(p -> !tgtPreds.contains(p)).collect(Collectors.toSet());
-
-                                    nextOpenPreds.addAll(tgtContribPreds);
+                                    Set<Node> tgtContribPreds = joinPreds.stream()
+                                            .filter(p -> !tgtPreds.contains(p))
+                                            .collect(Collectors.toSet());
 
 
                                     // for those, compute the cost
@@ -476,10 +509,18 @@ public class EdgeReducer {
 
 
                                     // Compute the costs of the target vertex
-                                    Map<Node, Number> totalCost = MapUtils.mergeMaps(newTgtPredToCost, tgtPredCostContrib, (a, b) -> a.doubleValue() + b.doubleValue());
-                                    newTgtPredToCost.putAll(totalCost);
+                                    MapUtils.mergeMapsInPlace(tgtPredToCost, tgtPredCostContrib, (a, b) -> a.doubleValue() + b.doubleValue());
+//                                    Map<Node, Number> totalCost =
+//                                    tgtPredToCost.putAll(totalCost);
 
+                                    // Update the join graph
+                                    joinGraph.addVertex(openPassPred);
+                                    tgtContribPreds.stream().forEach(tgtPred -> {
+                                        joinGraph.addVertex(tgtPred);
+                                        joinGraph.addEdge(openPassPred, tgtPred);
+                                    });
 
+                                    nextOpenPreds.addAll(tgtContribPreds);
                                     // Compute the set of joinable predicates that matches the transition
                                     // joinPreds is the set of predicates that joins with preds
                                     //Set<Node> joinPreds = joinPredToCost.keySet();
@@ -495,8 +536,10 @@ public class EdgeReducer {
                                     // i.e. if there are cycles, this set gets iteratively refined
 
                                 }
-                                tgtPredToCost.putAll(newTgtPredToCost);
+                                System.out.println("Join graph size now: " + joinGraph.edgeSet().size() + " after " + openPassPreds.size() + " predicates passing transition " + trans);
+                                //tgtPredToCost.putAll(newTgtPredToCost);
                             }
+
                         }
                     }
                 }
