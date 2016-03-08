@@ -35,7 +35,7 @@ public class NfaExecution<S, T, V, E> {
     protected Frontier<S, V, E> frontier;
 
     //protected Set<NestedRdfPath> accepted = new HashSet<NestedRdfPath>();
-    protected Function<MyPath<V, E>, Boolean> pathCallback;
+    protected Function<TripletPath<V, E>, Boolean> pathCallback;
 
     /**
      * If an nfa is reversed only be reversing the edges of the automaton, the edge labels themselves
@@ -45,7 +45,7 @@ public class NfaExecution<S, T, V, E> {
 
 
     // Nfa<S, LabeledEdge<V, Path>> nfa
-    public NfaExecution(Nfa<S, T> nfa, QueryExecutionFactory qef, boolean reversePropertyDirection, Function<MyPath<V, E>, Boolean> pathCallback) {
+    public NfaExecution(Nfa<S, T> nfa, QueryExecutionFactory qef, boolean reversePropertyDirection, Function<TripletPath<V, E>, Boolean> pathCallback) {
         this.nfa = nfa;
         this.qef = qef;
         this.reversePropertyDirection = reversePropertyDirection;
@@ -223,6 +223,25 @@ public class NfaExecution<S, T, V, E> {
 
         return result;
     }
+
+
+    /**
+     * Convenience method.
+     *
+     * Returns true if the given path can reach any of the target vertices
+     * under a given edge.
+     *
+     * TODO We need to create a join summary excerpt
+     *
+     */
+//    public static boolean <V, E> isReachableUnder(Graph<V, E> graph, NestedPath<V, E> path, E underEdge, Set<V> targets) {
+//        JGraphTUtils.getAllPaths(graph, start, end)
+//    }
+//
+//    public static <V, E> isReachable(Set<V> startVertices, Set<V> targetVertices) {
+//    //    JGraphTUtils.
+//    }
+
 
     /**
      * Tests if a state is final. This includes if there is a transitive

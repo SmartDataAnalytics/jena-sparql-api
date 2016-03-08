@@ -20,7 +20,7 @@ public class BidirectionalSearch<S, V, E> {
     protected Frontier<S, V, E> bwdFrontier;
 
     protected Set<NestedPath<V, E>> accepted = new HashSet<>();
-    protected Function<MyPath<V, E>, Boolean> pathCallback;
+    protected Function<TripletPath<V, E>, Boolean> pathCallback;
 
 //    public BidirectionalSearch(NfaExecution<V> forwards, NfaExecution<V> backwards) {
 //        this.forwards = forwards;
@@ -28,8 +28,8 @@ public class BidirectionalSearch<S, V, E> {
 //    }
 
 
-    public static <S, V, E> Set<MyPath<V, E>> intersect(Frontier<S, V, E> fwd, Frontier<S, V, E> bwd) {
-        Set<MyPath<V, E>> result = new HashSet<>();
+    public static <S, V, E> Set<TripletPath<V, E>> intersect(Frontier<S, V, E> fwd, Frontier<S, V, E> bwd) {
+        Set<TripletPath<V, E>> result = new HashSet<>();
 
         // Get the sets of states where the frontiers meet
         Set<S> fwdStates = fwd.getCurrentStates();
@@ -49,16 +49,16 @@ public class BidirectionalSearch<S, V, E> {
                 Collection<NestedPath<V, E>> bwdPaths = bwdNodeToPaths.get(node);
                 for(NestedPath<V, E> fwdPath : fwdPaths) {
                     for(NestedPath<V, E> bwdPath : bwdPaths) {
-                        MyPath<V, E> fwdPart = fwdPath.asSimplePath();
-                        MyPath<V, E> bwdPart = bwdPath.asSimplePath().reverse();
+                        TripletPath<V, E> fwdPart = fwdPath.asSimplePath();
+                        TripletPath<V, E> bwdPart = bwdPath.asSimplePath().reverse();
 
                         V start = fwdPart.getStart();
                         V end = fwdPart.getEnd();
                         List<Triplet<V, E>> triples = new ArrayList<>();
-                        triples.addAll(fwdPart.getTriples());
-                        triples.addAll(bwdPart.getTriples());
+                        triples.addAll(fwdPart.getTriplets());
+                        triples.addAll(bwdPart.getTriplets());
 
-                        MyPath<V, E> path = new MyPath<>(start, end, triples);
+                        TripletPath<V, E> path = new TripletPath<>(start, end, triples);
                         result.add(path);
                     }
                 }

@@ -280,6 +280,19 @@ public class EdgeReducer {
 
 
 
+//    public static <S, T, V, E> Graph<V, E> createJoinSummaryExcerpt(
+//            Nfa<S, T> nfa,
+//            Predicate<T> isEpsilon,
+//            Function<T, PredicateClass> transToPredicateClass,
+//            Pair<Map<Node, Number>> initPredFreqs,
+//            JoinSummaryService joinSummaryService) {
+//
+//
+//
+//
+//    }
+
+
     public static <S, T> Map<S, Pair<Map<Node, Number>>> estimateFrontierCost(
             Nfa<S, T> nfa,
             Predicate<T> isEpsilon,

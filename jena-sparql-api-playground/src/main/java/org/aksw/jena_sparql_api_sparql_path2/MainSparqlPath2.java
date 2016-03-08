@@ -3,9 +3,12 @@ package org.aksw.jena_sparql_api_sparql_path2;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.GraphSparqlService;
@@ -68,7 +71,6 @@ import org.jgrapht.Graph;
 import org.jgrapht.VertexFactory;
 import org.jgrapht.alg.MinSourceSinkCut;
 import org.jgrapht.graph.DefaultDirectedGraph;
-import org.jgrapht.graph.SimpleDirectedGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
@@ -263,15 +265,12 @@ public class MainSparqlPath2 {
 
     }
 
+
+//    public static NestedPath<V, E> removeEpsEdges(NestedPath<V, E>) {
+//
+//    }
+
     public static void main(String[] args) throws InterruptedException, IOException {
-
-
-        if(false) {
-            Stopwatch sw = Stopwatch.createStarted();
-            Model joinSummary = RDFDataMgr.loadModel("/home/raven/Projects/Eclipse/Spark-RDF/tmp/eswc-summary-predicate-join.nt");
-            System.out.println("Join Summary Read took: " + sw.stop().elapsed(TimeUnit.SECONDS) + " for " + joinSummary.size() + " triples");
-            // takes 19 seconds to read
-        }
 
         PropertyFunctionRegistry.get().put(PropertyFunctionKShortestPaths.DEFAULT_IRI, new PropertyFunctionFactoryKShortestPaths(ss -> null));
 
@@ -283,8 +282,14 @@ public class MainSparqlPath2 {
         String pathExprStr;
         Node startNode;
         Node endNode;
+        Model joinSummaryModel;
 
         if(true) {
+            Stopwatch sw = Stopwatch.createStarted();
+
+            joinSummaryModel = RDFDataMgr.loadModel("/home/raven/Projects/Eclipse/Spark-RDF/tmp/fp7-summary-predicate-join.nt");
+            System.out.println("Join Summary Read took: " + sw.stop().elapsed(TimeUnit.SECONDS) + " for " + joinSummaryModel.size() + " triples");
+
             Model model = ModelFactory.createDefaultModel();
             //RDFDataMgr.read(model, "classpath://dataset-fp7.ttl");
             RDFDataMgr.read(model, (new ClassPathResource("dataset-fp7.ttl").getInputStream()), Lang.TTL);
@@ -305,6 +310,11 @@ public class MainSparqlPath2 {
             queryStr = "SELECT ?path { <" + startNode.getURI() + "> jsafn:kShortestPaths ('" + pathExprStr + "' ?path <" + endNode.getURI() + "> 471199) }";
 
         } else {
+            Stopwatch sw = Stopwatch.createStarted();
+
+            joinSummaryModel = RDFDataMgr.loadModel("/home/raven/Projects/Eclipse/Spark-RDF/tmp/eswc-summary-predicate-join.nt");
+            System.out.println("Join Summary Read took: " + sw.stop().elapsed(TimeUnit.SECONDS) + " for " + joinSummaryModel.size() + " triples");
+
             dataset = DatasetDescriptionUtils.createDefaultGraph("http://2016.eswc-conferences.org/top-k-shortest-path-large-typed-rdf-graphs-challenge/training_dataset.nt");
             predDataset = DatasetDescriptionUtils.createDefaultGraph("http://2016.eswc-conferences.org/top-k-shortest-path-large-typed-rdf-graphs-challenge/training_dataset.nt/summary/predicate/");
             predJoinDataset = DatasetDescriptionUtils.createDefaultGraph("http://2016.eswc-conferences.org/top-k-shortest-path-large-typed-rdf-graphs-challenge/training_dataset.nt/summary/predicate-join/");
@@ -474,7 +484,30 @@ public class MainSparqlPath2 {
             printNfa(nfa);
 
             System.out.println("PATHS IN THE NFA:");
-            JGraphTUtils.getAllPaths(nfa.getGraph(), nfa.getStartStates().iterator().next(), nfa.getEndStates().iterator().next()).forEach(item -> System.out.println(item.asSimplePath()));
+            //List<NestedPath<Integer, LabeledEdge<Integer, PredicateClass>>>
+            List<TripletPath<Integer, LabeledEdge<Integer, PredicateClass>>> nfaPaths = JGraphTUtils.getAllPaths(nfa.getGraph(), nfa.getStartStates().iterator().next(), nfa.getEndStates().iterator().next())
+                    .stream().map(p -> p.asSimplePath()).collect(Collectors.toList());
+
+            //nfaPaths.forEach(item -> System.out.println(item.asSimplePath()));
+
+            Map<Object, TripletPath<Integer, LabeledEdge<Integer, PredicateClass>>> map = new HashMap<>();
+            for(TripletPath<Integer, LabeledEdge<Integer, PredicateClass>> nfaPath : nfaPaths) {
+                List<Triplet<Integer, LabeledEdge<Integer, PredicateClass>>> key = nfaPath.getTriplets().stream()
+                    .filter(t -> LabeledEdgeImpl.isEpsilon(t.getPredicate()))
+                    .collect(Collectors.toList());
+
+                map.put(key, nfaPath);
+            }
+
+            map.entrySet().stream().forEach(entry -> System.out.println("REDUCED: " + entry.getValue()));
+
+            // Cluster the paths by removing the epsilon edges
+            //Map<Set<Tripl>>
+//            nfaPaths.stream()
+//                .map(item -> item.asSimplePath().getTriples())
+//                .filter(triplets -> triplets.stream().filter(t -> LabeledEdgeImpl.isEpsilon(t.getPredicate())))
+//                .collect(Collectors.toList());
+
 
 
 

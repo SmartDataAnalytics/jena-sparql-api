@@ -63,7 +63,7 @@ public class NestedPath<V, E>
         return result;
     }
 
-    public MyPath<V, E> asSimplePath() {
+    public TripletPath<V, E> asSimplePath() {
         V end = current;
 
         NestedPath<V, E> c = this;
@@ -95,7 +95,7 @@ public class NestedPath<V, E>
         }
 
         Collections.reverse(triples);
-        MyPath<V, E> result = new MyPath<>(start, end, triples);
+        TripletPath<V, E> result = new TripletPath<>(start, end, triples);
         return result;
     }
 

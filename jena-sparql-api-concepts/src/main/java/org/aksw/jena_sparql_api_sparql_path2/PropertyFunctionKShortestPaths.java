@@ -131,7 +131,7 @@ public class PropertyFunctionKShortestPaths
         Node sv = argSubject.getArg();
         Node s = sv.isVariable() ? binding.get((Var)sv) : sv;
 
-        final List<MyPath<Node, Node>> rdfPaths = new ArrayList<>();
+        final List<TripletPath<Node, Node>> rdfPaths = new ArrayList<>();
 
         String pathStr = pathNode.getLiteralLexicalForm();
 
