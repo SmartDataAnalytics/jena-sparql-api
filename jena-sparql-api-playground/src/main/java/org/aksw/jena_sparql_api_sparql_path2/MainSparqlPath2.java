@@ -288,7 +288,7 @@ public class MainSparqlPath2 {
         Model joinSummaryModel;
         Node desiredPred;
 
-        if(false) {
+        if(true) {
             Stopwatch sw = Stopwatch.createStarted();
 
             joinSummaryModel = RDFDataMgr.loadModel("/home/raven/Projects/Eclipse/Spark-RDF/tmp/fp7-summary-predicate-join.nt");
@@ -542,25 +542,29 @@ public class MainSparqlPath2 {
 
             // Given the join graph and the nfa, determine for a given nestedPath in a given set of nfa states of whether it can reach the set of predicates leading to the target states.
 
+            DirectedGraph<Node, DefaultEdge> joinGraph = fwdCosts.joinGraph;
+
+            joinGraph.edgeSet().stream().map(e -> JGraphTUtils.toTriplet(joinGraph, e)).forEach(xxx -> System.out.println("join: " + xxx));
+
             List<NestedPath<Node, DefaultEdge>> reachabilityPaths = NfaExecution.findPathsInJoinSummary(
                     nfa,
                     LabeledEdgeImpl::isEpsilon,
                     nfa.getStartStates(),
-                    fwdCosts.joinGraph,
+                    joinGraph,
                     desiredPred,
                     endPreds,
                     (trans, pred) -> { // for the nfa transition and a set data nodes, return matching triplets per node
                         PredicateClass pc = trans.getLabel();
 
-                        Set<Triplet<Node, DefaultEdge>> fwdTriplets = fwdCosts.joinGraph
+                        Set<Triplet<Node, DefaultEdge>> fwdTriplets = joinGraph
                             .outgoingEdgesOf(pred).stream()
-                            .map(e -> JGraphTUtils.toTriplet(fwdCosts.joinGraph, e))
+                            .map(e -> JGraphTUtils.toTriplet(joinGraph, e))
                             .filter(triplet -> pc.getFwdNodes().contains(triplet.getObject()))
                             .collect(Collectors.toSet());
 
-                        Set<Triplet<Node, DefaultEdge>> bwdTriplets = fwdCosts.joinGraph
+                        Set<Triplet<Node, DefaultEdge>> bwdTriplets = joinGraph
                                 .incomingEdgesOf(pred).stream()
-                                .map(e -> JGraphTUtils.toTriplet(fwdCosts.joinGraph, e))
+                                .map(e -> JGraphTUtils.toTriplet(joinGraph, e))
                                 .filter(triplet -> pc.getBwdNodes().contains(triplet.getObject()))
                                 .collect(Collectors.toSet());
 
