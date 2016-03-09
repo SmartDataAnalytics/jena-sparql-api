@@ -15,10 +15,32 @@ import org.jgrapht.Graph;
 
 public class JGraphTUtils {
 
-    public static <V, E> List<NestedPath<V, E>> getAllPaths(DirectedGraph<V, E> graph, V start, V end) {
-        SimplePathBfsIterator<V, E> it = new SimplePathBfsIterator<>(graph, start, nestedPath -> nestedPath.getCurrent().equals(end));
+//    public static <V, E> DirectedGraph<V, E> createReachabilityGraph(DirectedGraph<V, E> graph, Collection<V> start, Collection<V> end) {
+//        List<NestedPath<V, E>> paths = getAllPaths(graph, start, end);
+//
+//
+//
+//
+//    }
+
+    public static <V, E> Triplet<V, E> toTriplet(Graph<V, E> graph, E edge) {
+        V s = graph.getEdgeSource(edge);
+        V t = graph.getEdgeTarget(edge);
+        Triplet<V, E> result = new Triplet<>(s, edge, t);
+        return result;
+    }
+
+    public static <V, E> List<NestedPath<V, E>> getAllPaths(DirectedGraph<V, E> graph, Collection<V> starts, Collection<V> ends) {
+        SimplePathBfsIterator<V, E> it = new SimplePathBfsIterator<>(graph, starts,
+                nestedPath -> ends.contains(nestedPath.getCurrent()));
+
         List<NestedPath<V, E>> result = new ArrayList<>();
         it.forEachRemaining(path -> result.addAll(path));
+        return result;
+    }
+
+    public static <V, E> List<NestedPath<V, E>> getAllPaths(DirectedGraph<V, E> graph, V start, V end) {
+        List<NestedPath<V, E>> result = getAllPaths(graph, Collections.singleton(start), Collections.singleton(end));
         return result;
     }
 

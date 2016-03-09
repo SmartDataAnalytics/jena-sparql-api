@@ -1,15 +1,19 @@
 package org.aksw.jena_sparql_api_sparql_path2;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import org.aksw.commons.util.Pair;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.jgrapht.DirectedGraph;
 
@@ -32,7 +36,7 @@ public class NfaExecution<S, T, V, E> {
     /**
      * The frontier keeps track of the current paths being traced
      */
-    protected Frontier<S, V, E> frontier;
+    protected NfaFrontier<S, V, E> frontier;
 
     //protected Set<NestedRdfPath> accepted = new HashSet<NestedRdfPath>();
     protected Function<TripletPath<V, E>, Boolean> pathCallback;
@@ -51,7 +55,7 @@ public class NfaExecution<S, T, V, E> {
         this.reversePropertyDirection = reversePropertyDirection;
         this.pathCallback = pathCallback;
 
-        this.frontier = new Frontier<S, V, E>();
+        this.frontier = new NfaFrontier<S, V, E>();
     }
 
     /**
@@ -68,7 +72,7 @@ public class NfaExecution<S, T, V, E> {
     }
 
 
-    public static <S, T, V, E> boolean collectPaths(Nfa<S, T> nfa, Frontier<S, V, E> frontier, Predicate<T> isEpsilon, Function<NestedPath<V, E>, Boolean> pathCallback) {
+    public static <S, T, V, E> boolean collectPaths(Nfa<S, T> nfa, NfaFrontier<S, V, E> frontier, Predicate<T> isEpsilon, Function<NestedPath<V, E>, Boolean> pathCallback) {
         boolean isFinished = false;
         Set<S> currentStates = frontier.getCurrentStates();
         for(S state : currentStates) {
@@ -94,7 +98,7 @@ public class NfaExecution<S, T, V, E> {
     }
 
 
-    public static <S, D, T extends LabeledEdge<S, ? extends Directed<? extends ValueSet<D>>>> Pair<ValueSet<D>, ValueSet<D>> extractNextPropertyClasses(DirectedGraph<S, T> nfaGraph, Predicate<T> isEpsilon, Set<S> states, boolean reverse) {
+    public static <S, D, T extends LabeledEdge<S, ? extends Directed<? extends ValueSet<D>>>> Pair<ValueSet<D>> extractNextPropertyClasses(DirectedGraph<S, T> nfaGraph, Predicate<T> isEpsilon, Set<S> states, boolean reverse) {
         Set<T> transitions = JGraphTUtils.resolveTransitions(nfaGraph, states, isEpsilon, false);
 
         ValueSet<D> fwd = ValueSet.createEmpty();
@@ -118,7 +122,7 @@ public class NfaExecution<S, T, V, E> {
             }
         }
 
-        Pair<ValueSet<D>, ValueSet<D>> result = Pair.create(fwd, bwd);
+        Pair<ValueSet<D>> result = new Pair<>(fwd, bwd);
         return result;
     }
 
@@ -145,63 +149,46 @@ public class NfaExecution<S, T, V, E> {
     //Function<T, Path> transitionToPath,
 
 
-    public static <S, T, V, E> Frontier<S, V, E> advanceFrontier(
-            Frontier<S, V, E> frontier,
-            Nfa<S, T> nfa,
-            //QueryExecutionFactory qef,
-            boolean reversePropertyDirection,
+    public static <S, T, V, E> NfaFrontier<S, V, E> advanceFrontier(
+            NfaFrontier<S, V, E> frontier,
+            DirectedGraph<S, T> nfaGraph,
             Predicate<T> isEpsilon,
-            Function<Directed<T>, Function<Iterable<V>, Map<V, Graphlet<V, E>>>> transitionToNodesToGraphlets
+            BiFunction<T, Set<V>, Map<V, Set<Triplet<V, E>>>> getMatchingTriplets, // This is essentially the successor function
+            Predicate<NestedPath<V, E>> earlyPathReject // Function that can reject paths before they are added to the frontier, such as by consulting a join summary or performing a reachability test to the target
             ) {
         // Prepare the next frontier
-        Frontier<S, V, E> result = new Frontier<S, V, E>();
+        NfaFrontier<S, V, E> result = new NfaFrontier<S, V, E>();
 
         Set<S> currentStates = frontier.getCurrentStates();
         for(S state : currentStates) {
             Multimap<V, NestedPath<V, E>> ps = frontier.getPaths(state);
 
-            DirectedGraph<S, T> graph = nfa.getGraph();
+            //DirectedGraph<S, T> graph = nfa.getGraph();
 
-            Set<T> transitions = JGraphTUtils.resolveTransitions(graph, state, isEpsilon, false);
+            Set<T> transitions = JGraphTUtils.resolveTransitions(nfaGraph, state, isEpsilon, false);
 
 
             Set<V> nodes = ps.keySet();
 
-            // TODO frontierToFilter
-            // V nodes -> Triples
-            //Concept filter = ConceptUtils.createFilterConcept(nodes);
+            for(T trans : transitions) {
 
-            for(T transition : transitions) {
+                //Directed<T> diTrans = new Directed<T>(transition, reversePropertyDirection);
+                Map<V, Set<Triplet<V, E>>> vToTriplets = getMatchingTriplets.apply(trans, nodes);
 
-                Directed<T> tmp = new Directed<T>(transition, reversePropertyDirection);
-                Function<Iterable<V>, Map<V, Graphlet<V, E>>> nodesToGraphlets = transitionToNodesToGraphlets.apply(tmp);
-                Map<V, Graphlet<V, E>> nodeToGraphlet = nodesToGraphlets.apply(nodes);
-
-
-                for(Entry<V, Graphlet<V, E>> entry : nodeToGraphlet.entrySet()) {
+                for(Entry<V, Set<Triplet<V, E>>> entry : vToTriplets.entrySet()) {
                     V node = entry.getKey();
-                    Graphlet<V, E> g = entry.getValue();
 
-                    //Node.ANY, Node.ANY, Node.ANY
-                    //for(Triplet<V, E> t : g.find(null, null, null)) {
-                    Iterator<Triplet<V, E>> it = g.find(null, null, null);
-                    while(it.hasNext()) {
-                        Triplet<V, E> t = it.next();
+                    Set<Triplet<V, E>> triplets = entry.getValue();
+                    for(Triplet<V, E> t : triplets) {
                         E p = t.getPredicate();
-                        //P_Path0 p0;
                         Directed<E> p0;
 
-                        //Node s;
                         V o;
                         if(t.getSubject().equals(node)) {
-                            //p0 = new P_Link(p);
                             p0 = new Directed<E>(p, false);
-                            //s = t.getSubject();
                             o = t.getObject();
                         } else if(t.getObject().equals(node)) {
                             p0 = new Directed<E>(p, true);
-                            //t = TripleUtils.swap(t);
-                            //s = t.getObject();
                             o = t.getSubject();
                         } else {
                             throw new RuntimeException("Should not happen");
@@ -211,9 +198,13 @@ public class NfaExecution<S, T, V, E> {
                         for(NestedPath<V, E> parentPath : parentPaths) {
                             NestedPath<V, E> next = new NestedPath<V, E>(Optional.of(new ParentLink<V, E>(parentPath, p0)), o);
 
+
                             if(next.isCycleFree()) {
-                                S targetState = graph.getEdgeTarget(transition);
-                                result.add(targetState, next);
+                                boolean reject = earlyPathReject.test(next);
+                                if(!reject) {
+                                    S targetState = nfaGraph.getEdgeTarget(trans);
+                                    result.add(targetState, next);
+                                }
                             }
                         }
                     }
@@ -258,4 +249,99 @@ public class NfaExecution<S, T, V, E> {
         return result;
     }
 
+
+    /**
+     * Given
+     * - an nfa and
+     * - join graph, determine for a given
+     * - predicate (pointing either forwards or backwards) in a certain set of     //nestedPath in a certain set of
+     * - nfa states of whether it can reach the
+     * - set of predicates leading to the target states.
+     *
+     * Execution works as follows:
+     * It is assumed that the given predicate is reachable, so no further checks are performed.
+     *
+     *
+     * BiFunction<Set<V>, Directed<T>, Map<V, Set<Triplet<V, E>>>> getMatchingTriplets
+     */
+
+    public static <S, T, P, Q> boolean isTargetReachable(Nfa<S, T> nfa, Predicate<T> isEpsilon, Set<S> states, BiPredicate<Directed<T>, Q> matcher, DirectedGraph<P, Q> joinGraph, Directed<P> diPredicate, Pair<Set<P>> targetPreds) {
+        // Return true if there is at least 1 path
+        return false;
+    }
+
+
+    /**
+     * matcher(Directed<T>, joinGraph, vertex)
+     *
+     * @param nfa
+     * @param isEpsilon
+     * @param states
+     * @param matcher
+     * @param joinGraph
+     * @param diPredicate
+     * @param targetPreds
+     * @return
+     */
+//T extends Pair<ValueSet<V>>
+    public static <S, T, P, Q> List<NestedPath<P, Q>> findPathsInJoinSummary(
+            Nfa<S, T> nfa,
+            Predicate<T> isEpsilon,
+            Set<S> states,
+            DirectedGraph<P, Q> joinGraph,
+            P predicate,
+            Pair<Set<P>> targetPreds,
+            BiFunction<T, P, Set<Triplet<P, Q>>> transAndNodesToTriplets,
+            Function<NestedPath<P, Q>, Boolean> pathCallback,
+            int k) {
+
+
+        List<NestedPath<P, Q>> result = new ArrayList<>();
+        PathExecutionUtils.execNfa(
+                nfa,
+                states,
+                isEpsilon,
+                Collections.singleton(predicate),
+                (trans, preds) -> {
+                    // there is a transition, an there is our initial predicate,
+                    // and we now need to determine successor triplet of this predicate in regard to the transition
+
+                    Map<P, Set<Triplet<P, Q>>> r = new HashMap<>();
+
+                    for(P pred : preds) {
+                        ///Set<Q> joinEdges = joinGraph.outgoingEdgesOf(pred);
+                        Set<Triplet<P, Q>> triplets = transAndNodesToTriplets.apply(trans, pred);
+                        // Check which join edges are accepted by the transition
+//                        Set<Triplet<P, Q>> triplets = joinEdges.stream()
+//                                .filter(e -> matcher.test(diTrans, e))
+//                                .map(e -> new Triplet<>(joinGraph.getEdgeSource(e), e, joinGraph.getEdgeTarget(e)))
+//                                .collect(Collectors.toSet());
+
+                        r.put(pred, triplets);
+                    }
+
+                    return r;
+                }, nestedPath -> {
+                    boolean accept = pathCallback.apply(nestedPath);
+                    if(accept) {
+                        result.add(nestedPath);
+                    }
+
+                    boolean abort = result.size() >= k;
+                    return abort;
+                });
+
+
+
+//        JGraphTUtils.getAllPaths(graph, starts, ends)
+//
+        return result;
+    }
 }
+
+//
+@FunctionalInterface
+interface NfaDataGraphMatcher<T, V, E> {
+    boolean matches(Directed<T> trans, DirectedGraph<V, E> graph, V vertex);
+}
+

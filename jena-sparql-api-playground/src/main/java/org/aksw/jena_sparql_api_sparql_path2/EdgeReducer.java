@@ -316,8 +316,8 @@ public class EdgeReducer {
 //
 //    }
 
-
-    public static <S, T> Map<S, Pair<Map<Node, Number>>> estimateFrontierCost(
+    //Map<S, Pair<Map<Node, Number>>>
+    public static <S, T> NfaAnalysisResult<S> estimateFrontierCost(
             Nfa<S, T> nfa,
             Predicate<T> isEpsilon,
             Function<T, PredicateClass> transToPredicateClass,
@@ -553,7 +553,8 @@ public class EdgeReducer {
         stateToDiPredToCost.entrySet().stream().forEach(e -> System.out.println(e));
 
 
-        return stateToDiPredToCost;
+        return new NfaAnalysisResult<>(stateToDiPredToCost, joinGraph);
+        //return stateToDiPredToCost;
     }
 
 

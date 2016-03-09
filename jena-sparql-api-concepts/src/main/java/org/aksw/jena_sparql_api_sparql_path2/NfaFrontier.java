@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api_sparql_path2;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -7,7 +9,7 @@ import java.util.Set;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
-class Frontier<S, V, E> {
+public class NfaFrontier<S, V, E> {
     protected Map<S, Multimap<V, NestedPath<V, E>>> paths = new HashMap<>();
 
     public Set<S> getCurrentStates() {
@@ -41,12 +43,19 @@ class Frontier<S, V, E> {
         return result;
     }
 
-    public static <S, V, E> void addAll(Frontier<S, V, E> frontier, Set<S> states, V node) {
-        for(S state : states) {
-            NestedPath<V, E> rdfPath = new NestedPath<V, E>(node);
-            frontier.add(state, rdfPath);
-        }
+    public static <S, V, E> void addAll(NfaFrontier<S, V, E> frontier, Set<S> states, V node) {
+        addAll(frontier, states, Collections.singleton(node));
     }
+
+    public static <S, V, E> void addAll(NfaFrontier<S, V, E> frontier, Set<S> states, Collection<V> nodes) {
+        states.forEach(state -> {
+            nodes.forEach(node -> {
+                NestedPath<V, E> rdfPath = new NestedPath<V, E>(node);
+                frontier.add(state, rdfPath);
+            });
+        });
+    }
+
 
     @Override
     public int hashCode() {
@@ -64,7 +73,7 @@ class Frontier<S, V, E> {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        Frontier other = (Frontier) obj;
+        NfaFrontier<?, ?, ?> other = (NfaFrontier<?, ?, ?>) obj;
         if (paths == null) {
             if (other.paths != null)
                 return false;

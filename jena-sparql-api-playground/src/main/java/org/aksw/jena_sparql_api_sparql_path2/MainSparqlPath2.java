@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -37,6 +38,7 @@ import org.aksw.jena_sparql_api.utils.TripleUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.web.server.ServerUtils;
 import org.apache.jena.atlas.web.auth.HttpAuthenticator;
+import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
@@ -71,6 +73,7 @@ import org.jgrapht.Graph;
 import org.jgrapht.VertexFactory;
 import org.jgrapht.alg.MinSourceSinkCut;
 import org.jgrapht.graph.DefaultDirectedGraph;
+import org.jgrapht.graph.DefaultEdge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
@@ -283,6 +286,7 @@ public class MainSparqlPath2 {
         Node startNode;
         Node endNode;
         Model joinSummaryModel;
+        Node desiredPred;
 
         if(false) {
             Stopwatch sw = Stopwatch.createStarted();
@@ -303,6 +307,7 @@ public class MainSparqlPath2 {
             predDataset = DatasetDescriptionUtils.createDefaultGraph("http://fp7-pp.publicdata.eu/summary/predicate/");
             predJoinDataset = DatasetDescriptionUtils.createDefaultGraph("http://fp7-pp.publicdata.eu/summary/predicate-join/");
 
+            desiredPred = NodeFactory.createURI("http://fp7-pp.publicdata.eu/ontology/funding");
             pathExprStr = createPathExprStr("http://fp7-pp.publicdata.eu/ontology/funding");
             startNode = NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/project/257943");
             endNode = NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/city/France-PARIS");
@@ -319,6 +324,7 @@ public class MainSparqlPath2 {
             predDataset = DatasetDescriptionUtils.createDefaultGraph("http://2016.eswc-conferences.org/top-k-shortest-path-large-typed-rdf-graphs-challenge/training_dataset.nt/summary/predicate/");
             predJoinDataset = DatasetDescriptionUtils.createDefaultGraph("http://2016.eswc-conferences.org/top-k-shortest-path-large-typed-rdf-graphs-challenge/training_dataset.nt/summary/predicate-join/");
 
+            desiredPred = NodeFactory.createURI("http://dbpedia.org/ontology/president");
             pathExprStr = createPathExprStr("http://dbpedia.org/ontology/president");
             startNode = NodeFactory.createURI("http://dbpedia.org/resource/James_K._Polk");
             endNode = NodeFactory.createURI("http://dbpedia.org/resource/Felix_Grundy");
@@ -452,6 +458,8 @@ public class MainSparqlPath2 {
             Pair<Map<Node, Number>> endPredFreqs =
                     new Pair<>(fwdPreds.getOrDefault(endNode, Collections.emptyMap()), bwdPreds.getOrDefault(endNode, Collections.emptyMap()));
 
+            Pair<Set<Node>> endPreds = new Pair<>(endPredFreqs.get(0).keySet(), endPredFreqs.get(1).keySet());
+
 
             System.out.println(fwdPreds);
             System.out.println(bwdPreds);
@@ -520,15 +528,67 @@ public class MainSparqlPath2 {
 
 
 
-
-            Map<Integer, Pair<Map<Node, Number>>> fwdCosts = EdgeReducer.<Integer, LabeledEdge<Integer, PredicateClass>>estimateFrontierCost(
+            Stopwatch swFwd = Stopwatch.createStarted();
+            NfaAnalysisResult<Integer> fwdCosts = EdgeReducer.<Integer, LabeledEdge<Integer, PredicateClass>>estimateFrontierCost(
                     nfa,
                     LabeledEdgeImpl::isEpsilon,
                     e -> e.getLabel(),
                     startPredFreqs,
                     joinSummaryService);
 
+            System.out.println("Cost estimation took" + swFwd.elapsed(TimeUnit.SECONDS));
 //            NfaUtils
+
+
+            // Given the join graph and the nfa, determine for a given nestedPath in a given set of nfa states of whether it can reach the set of predicates leading to the target states.
+
+            List<NestedPath<Node, DefaultEdge>> reachabilityPaths = NfaExecution.findPathsInJoinSummary(
+                    nfa,
+                    LabeledEdgeImpl::isEpsilon,
+                    nfa.getStartStates(),
+                    fwdCosts.joinGraph,
+                    desiredPred,
+                    endPreds,
+                    (trans, pred) -> { // for the nfa transition and a set data nodes, return matching triplets per node
+                        PredicateClass pc = trans.getLabel();
+
+                        Set<Triplet<Node, DefaultEdge>> fwdTriplets = fwdCosts.joinGraph
+                            .outgoingEdgesOf(pred).stream()
+                            .map(e -> JGraphTUtils.toTriplet(fwdCosts.joinGraph, e))
+                            .filter(triplet -> pc.getFwdNodes().contains(triplet.getObject()))
+                            .collect(Collectors.toSet());
+
+                        Set<Triplet<Node, DefaultEdge>> bwdTriplets = fwdCosts.joinGraph
+                                .incomingEdgesOf(pred).stream()
+                                .map(e -> JGraphTUtils.toTriplet(fwdCosts.joinGraph, e))
+                                .filter(triplet -> pc.getBwdNodes().contains(triplet.getObject()))
+                                .collect(Collectors.toSet());
+
+                        Set<Triplet<Node, DefaultEdge>> result = Sets.union(fwdTriplets, bwdTriplets);
+                        return result;
+                    },
+                    nestedPath -> {
+                        boolean r = nestedPath.getParentLink().map(pl -> {
+                            Directed<?> diPred = pl.getDiProperty();
+                            Node pred = nestedPath.getCurrent();
+                            boolean reverse = diPred.isReverse();
+                            //Node pred = diPred.getValue();
+
+                            boolean s = !reverse
+                                ? endPreds.get(0).contains(pred)
+                                : endPreds.get(1).contains(pred)
+                                ;
+                            return s;
+
+                        }).orElse(false);
+
+                        return r;
+
+                    }, 1);
+                    //x-> true);
+
+            System.out.println("Reachability: " + reachabilityPaths);
+
 
             System.out.println("------------");
 
@@ -537,7 +597,7 @@ public class MainSparqlPath2 {
             printNfa(reverseNfa);
 
 
-            Map<Integer, Pair<Map<Node, Number>>> bwdCosts = EdgeReducer.<Integer, LabeledEdge<Integer, PredicateClass>>estimateFrontierCost(
+            NfaAnalysisResult<Integer> bwdCosts = EdgeReducer.<Integer, LabeledEdge<Integer, PredicateClass>>estimateFrontierCost(
                     reverseNfa,
                     LabeledEdgeImpl::isEpsilon,
                     e -> e.getLabel(),

@@ -16,8 +16,8 @@ import com.google.common.collect.Sets;
 public class BidirectionalSearch<S, V, E> {
 //    protected NfaExecution<V> forwards;
 //    protected NfaExecution<V> backwards;
-    protected Frontier<S, V, E> fwdFrontier;
-    protected Frontier<S, V, E> bwdFrontier;
+    protected NfaFrontier<S, V, E> fwdFrontier;
+    protected NfaFrontier<S, V, E> bwdFrontier;
 
     protected Set<NestedPath<V, E>> accepted = new HashSet<>();
     protected Function<TripletPath<V, E>, Boolean> pathCallback;
@@ -28,7 +28,7 @@ public class BidirectionalSearch<S, V, E> {
 //    }
 
 
-    public static <S, V, E> Set<TripletPath<V, E>> intersect(Frontier<S, V, E> fwd, Frontier<S, V, E> bwd) {
+    public static <S, V, E> Set<TripletPath<V, E>> intersect(NfaFrontier<S, V, E> fwd, NfaFrontier<S, V, E> bwd) {
         Set<TripletPath<V, E>> result = new HashSet<>();
 
         // Get the sets of states where the frontiers meet

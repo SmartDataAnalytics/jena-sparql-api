@@ -2,7 +2,10 @@ package org.aksw.jena_sparql_api_sparql_path2;
 
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
@@ -18,6 +21,7 @@ import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.path.Path;
+import org.jgrapht.DirectedGraph;
 import org.jgrapht.VertexFactory;
 import org.jgrapht.graph.DefaultDirectedGraph;
 
@@ -47,6 +51,14 @@ public class PathExecutionUtils {
         return result;
     }
 
+    public static Set<Triplet<Node, Node>> graphToTriplets(Graph graph) {
+        Set<Triplet<Node, Node>> result = graph
+            .find(Node.ANY, Node.ANY, Node.ANY)
+            .mapWith(t -> new Triplet<Node, Node>(t.getSubject(), t.getPredicate(), t.getObject()))
+            .toSet();
+        return result;
+    }
+
     public static void executePath(Path path, Node startNode, Node targetNode, QueryExecutionFactory qef, Function<NestedPath<Node, Node>, Boolean> pathCallback) {
 
         Nfa<Integer, LabeledEdge<Integer, PredicateClass>> nfa = compileToNfa(path);
@@ -66,11 +78,11 @@ public class PathExecutionUtils {
 
         //Function<LabeledEdge<Integer, Path>, Path> edgeToPath = e -> e.getLabel();
 
-        Frontier<Integer, Node, Node> frontier = new Frontier<>();
-        Frontier.addAll(frontier, nfa.getStartStates(), startNode);
+        NfaFrontier<Integer, Node, Node> frontier = new NfaFrontier<>();
+        NfaFrontier.addAll(frontier, nfa.getStartStates(), startNode);
 
 
-        Function<Directed<LabeledEdge<Integer, PredicateClass>>, Function<Iterable<Node>, Map<Node, Graphlet<Node, Node>>>> createLookupService = (Directed<LabeledEdge<Integer, PredicateClass>> diTransition) -> {
+        Function<Directed<LabeledEdge<Integer, PredicateClass>>, Function<Iterable<Node>, Map<Node, Set<Triplet<Node, Node>>>>> createLookupService = (Directed<LabeledEdge<Integer, PredicateClass>> diTransition) -> {
             //Path pathx = diTransition.getProperty().getLabel();
             PredicateClass pathx = diTransition.getValue().getLabel();
             boolean assumeReversed = diTransition.isReverse();
@@ -91,8 +103,11 @@ public class PathExecutionUtils {
             LookupService<Node, Graph> lsls = LookupServiceListService.create(ls);
             lsls = LookupServicePartition.create(lsls, 100);
 
-            Function<Iterable<Node>, Map<Node, Graphlet<Node, Node>>> s = lsls.andThen(map -> {
-                Map<Node, Graphlet<Node, Node>> r = map.entrySet().stream().collect(Collectors.toMap(Entry::getKey, e -> new GraphletGraph(e.getValue())));
+            Function<Iterable<Node>, Map<Node, Set<Triplet<Node, Node>>>> s = lsls.andThen(map -> {
+                Map<Node, Set<Triplet<Node, Node>>> r =
+                  map.entrySet().stream()
+                  .collect(Collectors.toMap(Entry::getKey, e -> graphToTriplets(e.getValue())));
+                //Map<Node, Graphlet<Node, Node>> r = map.entrySet().stream().collect(Collectors.toMap(Entry::getKey, e -> new GraphletGraph(e.getValue())));
                 return r;
             });
 
@@ -119,10 +134,73 @@ public class PathExecutionUtils {
                 break;
             }
 
-            Frontier<Integer, Node, Node> nextFrontier = NfaExecution.advanceFrontier(frontier, nfa, false, LabeledEdgeImpl::isEpsilon, createLookupService);
+            if(true) {
+                throw new RuntimeException("Adjust the code");
+            }
+            NfaFrontier<Integer, Node, Node> nextFrontier = null; //NfaExecution.advanceFrontier(frontier, nfa, false, LabeledEdgeImpl::isEpsilon, createLookupService);
             //System.out.println("advancing...");
             frontier = nextFrontier;
         }
 
     }
+
+
+    /**
+     * Generic nfa execution
+     *
+     * BiFunction<Set<V>, T, Map<V, Set<Triplet<V, E>>>> getMatchingTriplets
+     *
+     * This function resolves a single transition of the nfa to a set of triplets
+     * The Directed<T> is used to execute the automaton in reverse direction
+     *
+     *
+     * @param nfa
+     * @param vertices
+     */
+    public static <S, T, V, E> void execNfa(
+            Nfa<S, T> nfa,
+            Predicate<T> isEpsilon,
+            Set<V> startVertices,
+            BiFunction<T, Set<V>, Map<V, Set<Triplet<V, E>>>> getMatchingTriplets,
+            Function<NestedPath<V, E>, Boolean> pathCallback) {
+        execNfa(
+                nfa,
+                nfa.getStartStates(),
+                isEpsilon,
+                startVertices,
+                getMatchingTriplets,
+                pathCallback);
+    }
+
+    public static <S, T, V, E> void execNfa(
+            Nfa<S, T> nfa,
+            Set<S> startStates,
+            Predicate<T> isEpsilon,
+            Set<V> startVertices,
+            BiFunction<T, Set<V>, Map<V, Set<Triplet<V, E>>>> getMatchingTriplets,
+            Function<NestedPath<V, E>, Boolean> pathCallback) {
+        NfaFrontier<S, V, E> frontier = new NfaFrontier<>();
+        NfaFrontier.addAll(frontier, startStates, startVertices);
+
+        while(!frontier.isEmpty()) {
+
+            boolean abort = NfaExecution.collectPaths(nfa, frontier, isEpsilon, pathCallback);
+            if(abort) {
+                break;
+            }
+
+            DirectedGraph<S, T> nfaGraph = nfa.getGraph();
+
+            NfaFrontier<S, V, E> nextFrontier = NfaExecution.advanceFrontier(
+                    frontier,
+                    nfaGraph,
+                    //false,
+                    isEpsilon,
+                    getMatchingTriplets,
+                    x -> false);
+
+            frontier = nextFrontier;
+        }
+    }
+
 }

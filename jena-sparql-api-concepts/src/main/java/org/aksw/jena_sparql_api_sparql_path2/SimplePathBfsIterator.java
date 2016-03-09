@@ -2,7 +2,6 @@ package org.aksw.jena_sparql_api_sparql_path2;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -19,10 +18,12 @@ public class SimplePathBfsIterator<V, E>
     protected List<NestedPath<V, E>> frontier;
     protected Predicate<NestedPath<V, E>> isAccepted;
 
-    public SimplePathBfsIterator(DirectedGraph<V, E> graph, V start, Predicate<NestedPath<V, E>> isAccepted) {
+    public SimplePathBfsIterator(DirectedGraph<V, E> graph, Collection<V> start, Predicate<NestedPath<V, E>> isAccepted) {
         super();
         this.graph = graph;
-        this.frontier = Collections.singletonList(new NestedPath<V, E>(start));
+        this.frontier = start.stream()
+                .map(item -> new NestedPath<V, E>(item))
+                .collect(Collectors.toList());
         this.isAccepted = isAccepted;
     }
 
