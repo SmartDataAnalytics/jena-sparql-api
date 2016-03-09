@@ -179,6 +179,7 @@ public class PathExecutionUtils {
             Set<V> startVertices,
             BiFunction<T, Set<V>, Map<V, Set<Triplet<V, E>>>> getMatchingTriplets,
             Function<NestedPath<V, E>, Boolean> pathCallback) {
+
         NfaFrontier<S, V, E> frontier = new NfaFrontier<>();
         NfaFrontier.addAll(frontier, startStates, startVertices);
 

@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -71,9 +70,9 @@ import org.eclipse.jetty.server.Server;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.Graph;
 import org.jgrapht.VertexFactory;
-import org.jgrapht.alg.MinSourceSinkCut;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DirectedGraphUnion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
@@ -458,7 +457,8 @@ public class MainSparqlPath2 {
             Pair<Map<Node, Number>> endPredFreqs =
                     new Pair<>(fwdPreds.getOrDefault(endNode, Collections.emptyMap()), bwdPreds.getOrDefault(endNode, Collections.emptyMap()));
 
-            Pair<Set<Node>> endPreds = new Pair<>(endPredFreqs.get(0).keySet(), endPredFreqs.get(1).keySet());
+            //Pair<Set<Node>> startPreds = new Pair<>(startPredFreqs.get(0).keySet(), startPredFreqs.get(1).keySet());
+            //Pair<Set<Node>> endPreds = new Pair<>(endPredFreqs.get(0).keySet(), endPredFreqs.get(1).keySet());
 
 
             System.out.println(fwdPreds);
@@ -466,14 +466,16 @@ public class MainSparqlPath2 {
 
             Path path = PathParser.parse(pathExprStr, PrefixMapping.Extended);
             Nfa<Integer, LabeledEdge<Integer, PredicateClass>> nfa = PathExecutionUtils.compileToNfa(path);
+            System.out.println("FORWARD NFA for " + path);
+            printNfa(nfa);
 
-            MinSourceSinkCut<Integer, LabeledEdge<Integer, PredicateClass>> x = new MinSourceSinkCut<Integer, LabeledEdge<Integer, PredicateClass>>(nfa.getGraph());
+            //MinSourceSinkCut<Integer, LabeledEdge<Integer, PredicateClass>> x = new MinSourceSinkCut<Integer, LabeledEdge<Integer, PredicateClass>>(nfa.getGraph());
             //x.computeMinCut(source, sink);
 
             //nfa.getGraph().getE
 
-            Set<?> cut = x.getCutEdges();
-            System.out.println("CUT: " + cut);
+            //Set<?> cut = x.getCutEdges();
+            //System.out.println("CUT: " + cut);
 
             JoinSummaryService joinSummaryService = createJoinSummaryService(sspjs.getQueryExecutionFactory());
 
@@ -488,8 +490,6 @@ public class MainSparqlPath2 {
 //            Map<Node, Map<Node, Number>> test = joinSummaryService.fetch(Collections.singleton(issue), false);
 //            System.out.println("Test: " + test);
 
-            System.out.println("FORWARD NFA");
-            printNfa(nfa);
 
             System.out.println("PATHS IN THE NFA:");
             //List<NestedPath<Integer, LabeledEdge<Integer, PredicateClass>>>
@@ -542,51 +542,90 @@ public class MainSparqlPath2 {
 
             // Given the join graph and the nfa, determine for a given nestedPath in a given set of nfa states of whether it can reach the set of predicates leading to the target states.
 
-            DirectedGraph<Node, DefaultEdge> joinGraph = fwdCosts.joinGraph;
+            DirectedGraph<Node, DefaultEdge> rawJoinGraph = fwdCosts.joinGraph;
 
-            joinGraph.edgeSet().stream().map(e -> JGraphTUtils.toTriplet(joinGraph, e)).forEach(xxx -> System.out.println("join: " + xxx));
+
+            DirectedGraph<Node, DefaultEdge> augJoinGraph = new DefaultDirectedGraph<>(DefaultEdge.class);
+            Node augStart = NodeFactory.createURI("http://start.org");
+            Node augEnd = NodeFactory.createURI("http://end.org");
+
+            augJoinGraph.addVertex(augStart);
+            augJoinGraph.addVertex(augEnd);
+
+            for(int i = 0; i < 2; ++i) {
+                boolean reverse = i == 1;
+                startPredFreqs.get(i).keySet().forEach(pred -> {
+                    augJoinGraph.addVertex(pred);
+                    if(!reverse) {
+                        augJoinGraph.addEdge(augStart, pred);
+                    } else {
+                        augJoinGraph.addEdge(pred, augStart);
+                    }
+                });
+                endPredFreqs.get(i).keySet().forEach(pred -> {
+                    augJoinGraph.addVertex(pred);
+                    if(!reverse) {
+                        augJoinGraph.addEdge(augEnd, pred);
+                    } else {
+                        augJoinGraph.addEdge(pred, augEnd);
+                    }
+                });
+            }
+
+
+
+            DirectedGraph<Node, DefaultEdge> joinGraph = new DirectedGraphUnion<Node, DefaultEdge>(rawJoinGraph, augJoinGraph);
+
+
+            joinGraph.edgeSet().stream()
+                .map(e -> JGraphTUtils.toTriplet(joinGraph, e))
+                .forEach(xxx -> System.out.println("join: " + xxx));
 
             List<NestedPath<Node, DefaultEdge>> reachabilityPaths = NfaExecution.findPathsInJoinSummary(
                     nfa,
                     LabeledEdgeImpl::isEpsilon,
                     nfa.getStartStates(),
                     joinGraph,
-                    desiredPred,
-                    endPreds,
+                    augStart,
                     (trans, pred) -> { // for the nfa transition and a set data nodes, return matching triplets per node
                         PredicateClass pc = trans.getLabel();
 
-                        Set<Triplet<Node, DefaultEdge>> fwdTriplets = joinGraph
-                            .outgoingEdgesOf(pred).stream()
+                        Set<DefaultEdge> out = joinGraph.outgoingEdgesOf(pred);
+                        Set<Triplet<Node, DefaultEdge>> fwdTriplets = out
+                            .stream()
                             .map(e -> JGraphTUtils.toTriplet(joinGraph, e))
                             .filter(triplet -> pc.getFwdNodes().contains(triplet.getObject()))
                             .collect(Collectors.toSet());
 
-                        Set<Triplet<Node, DefaultEdge>> bwdTriplets = joinGraph
-                                .incomingEdgesOf(pred).stream()
+                        Set<DefaultEdge> in = joinGraph.incomingEdgesOf(pred);
+                        Set<Triplet<Node, DefaultEdge>> bwdTriplets = in.stream()
                                 .map(e -> JGraphTUtils.toTriplet(joinGraph, e))
                                 .filter(triplet -> pc.getBwdNodes().contains(triplet.getObject()))
                                 .collect(Collectors.toSet());
 
-                        Set<Triplet<Node, DefaultEdge>> result = Sets.union(fwdTriplets, bwdTriplets);
-                        return result;
+                        //System.out.println("Matching " + pred + " against "+ pc);
+                        Set<Triplet<Node, DefaultEdge>> r = Sets.union(fwdTriplets, bwdTriplets);
+                        //result.forEach(foo -> System.out.println(foo));
+                        return r;
                     },
                     nestedPath -> {
-                        boolean r = nestedPath.getParentLink().map(pl -> {
-                            Directed<?> diPred = pl.getDiProperty();
-                            Node pred = nestedPath.getCurrent();
-                            boolean reverse = diPred.isReverse();
-                            //Node pred = diPred.getValue();
-
-                            boolean s = !reverse
-                                ? endPreds.get(0).contains(pred)
-                                : endPreds.get(1).contains(pred)
-                                ;
-                            return s;
-
-                        }).orElse(false);
-
+                        boolean r = nestedPath.getCurrent().equals(augEnd);
                         return r;
+//                        boolean r = nestedPath.getParentLink().map(pl -> {
+//                            Directed<?> diPred = pl.getDiProperty();
+//                            Node pred = nestedPath.getCurrent();
+//                            boolean reverse = diPred.isReverse();
+//                            //Node pred = diPred.getValue();
+//
+//                            boolean s = !reverse
+//                                ? endPreds.get(0).contains(pred)
+//                                : endPreds.get(1).contains(pred)
+//                                ;
+//                            return s;
+//
+//                        }).orElse(false);
+//
+//                        return r;
 
                     }, 1);
                     //x-> true);

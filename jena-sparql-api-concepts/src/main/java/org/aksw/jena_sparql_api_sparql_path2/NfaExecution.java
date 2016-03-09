@@ -289,8 +289,9 @@ public class NfaExecution<S, T, V, E> {
             Predicate<T> isEpsilon,
             Set<S> states,
             DirectedGraph<P, Q> joinGraph,
-            P predicate,
-            Pair<Set<P>> targetPreds,
+            //P predicate,
+            P startVertex, // the start vertex
+            //Pair<Set<P>> targetPreds,
             BiFunction<T, P, Set<Triplet<P, Q>>> transAndNodesToTriplets,
             Function<NestedPath<P, Q>, Boolean> pathCallback,
             int k) {
@@ -301,7 +302,8 @@ public class NfaExecution<S, T, V, E> {
                 nfa,
                 states,
                 isEpsilon,
-                Collections.singleton(predicate),
+//                Collections.<P>emptySet(),
+                Collections.singleton(startVertex),
                 (trans, preds) -> {
                     // there is a transition, an there is our initial predicate,
                     // and we now need to determine successor triplet of this predicate in regard to the transition
