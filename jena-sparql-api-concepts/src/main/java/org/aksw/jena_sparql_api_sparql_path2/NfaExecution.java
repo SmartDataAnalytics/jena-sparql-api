@@ -196,7 +196,7 @@ public class NfaExecution<S, T, V, E> {
 
                         Collection<NestedPath<V, E>> parentPaths = ps.get(node);
                         for(NestedPath<V, E> parentPath : parentPaths) {
-                            NestedPath<V, E> next = new NestedPath<V, E>(Optional.of(new ParentLink<V, E>(parentPath, p0)), o);
+                            NestedPath<V, E> next = new NestedPath<V, E>(new ParentLink<V, E>(parentPath, p0), o);
 
 
                             if(next.isCycleFree()) {
@@ -294,7 +294,7 @@ public class NfaExecution<S, T, V, E> {
             //Pair<Set<P>> targetPreds,
             BiFunction<T, P, Set<Triplet<P, Q>>> transAndNodesToTriplets,
             Function<NestedPath<P, Q>, Boolean> pathCallback,
-            int k) {
+            Long k) {
 
 
         List<NestedPath<P, Q>> result = new ArrayList<>();
@@ -329,7 +329,7 @@ public class NfaExecution<S, T, V, E> {
                         result.add(nestedPath);
                     }
 
-                    boolean abort = result.size() >= k;
+                    boolean abort = k != null && result.size() >= k;
                     return abort;
                 });
 

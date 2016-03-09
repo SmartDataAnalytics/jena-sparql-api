@@ -549,8 +549,8 @@ public class EdgeReducer {
             currOpenDiPreds = nextOpenDiPreds;
         }
 
-        System.out.println("COSTS:");
-        stateToDiPredToCost.entrySet().stream().forEach(e -> System.out.println(e));
+//        System.out.println("COSTS:");
+//        stateToDiPredToCost.entrySet().stream().forEach(e -> System.out.println(e));
 
 
         return new NfaAnalysisResult<>(stateToDiPredToCost, joinGraph);
