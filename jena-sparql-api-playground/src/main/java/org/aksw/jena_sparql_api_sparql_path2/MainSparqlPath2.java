@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.GraphSparqlService;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
@@ -59,6 +60,7 @@ import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.expr.ExprAggregator;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.aggregate.AggCountVarDistinct;
@@ -272,6 +274,31 @@ public class MainSparqlPath2 {
 //
 //    }
 
+    public static DirectedGraph<Node, DefaultEdge> createJoinSummaryGraph(QueryExecutionFactory qef) { //Model model) {
+        //QueryExecutionFactory qef = FluentQueryExecutionFactory.model(model).create();
+
+        String queryStr = "PREFIX o: <http://example.org/ontology/> \n"
+                        + "SELECT ?x ?y { \n"
+                        + " ?s a o:PredicateJoinSummary ;\n"
+                        + "    o:sourcePredicate ?x ;\n"
+                        + "    o:targetPredicate ?y \n"
+                        + "}\n"
+                        ;
+        System.out.println(queryStr);
+        ResultSet rs = qef.createQueryExecution(queryStr).execSelect();
+
+        DirectedGraph<Node, DefaultEdge> result = new DefaultDirectedGraph<>(DefaultEdge.class);
+        while(rs.hasNext()) {
+            Binding binding = rs.nextBinding();
+            Node x = binding.get(Vars.x);
+            Node y = binding.get(Vars.y);
+            result.addVertex(x);
+            result.addVertex(y);
+            result.addEdge(x, y);
+        }
+        return result;
+    }
+
     public static void main(String[] args) throws InterruptedException, IOException {
 
         PropertyFunctionRegistry.get().put(PropertyFunctionKShortestPaths.DEFAULT_IRI, new PropertyFunctionFactoryKShortestPaths(ss -> null));
@@ -286,6 +313,8 @@ public class MainSparqlPath2 {
         Node endNode;
         Model joinSummaryModel;
         Node desiredPred;
+
+        DirectedGraph<Node, DefaultEdge> fullJoinSummaryBaseGraph;
 
         if(true) {
             Stopwatch sw = Stopwatch.createStarted();
@@ -307,7 +336,8 @@ public class MainSparqlPath2 {
             predJoinDataset = DatasetDescriptionUtils.createDefaultGraph("http://fp7-pp.publicdata.eu/summary/predicate-join/");
 
             desiredPred = NodeFactory.createURI("http://fp7-pp.publicdata.eu/ontology/funding");
-            pathExprStr = createPathExprStr("http://fp7-pp.publicdata.eu/ontology/funding");
+            //pathExprStr = createPathExprStr("http://fp7-pp.publicdata.eu/ontology/funding");
+            pathExprStr = "<http://fp7-pp.publicdata.eu/ontology/funding>/^<http://foo>/<http://fp7-pp.publicdata.eu/ontology/funding>/<http://fp7-pp.publicdata.eu/ontology/partner>/!<http://foobar>*";
             startNode = NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/project/257943");
             endNode = NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/city/France-PARIS");
 
@@ -479,6 +509,8 @@ public class MainSparqlPath2 {
 
             JoinSummaryService joinSummaryService = createJoinSummaryService(sspjs.getQueryExecutionFactory());
 
+            fullJoinSummaryBaseGraph = createJoinSummaryGraph(sspjs.getQueryExecutionFactory());//joinSummaryModel);
+
 
             JoinSummaryService2 jss2 = new JoinSummaryService2Impl(sspjs.getQueryExecutionFactory());
 //            Map<Node, Number> test = jss2.fetchPredicates(Arrays.<Node>asList(NodeFactory.createURI("http://dbpedia.org/property/owner")), false);
@@ -542,9 +574,10 @@ public class MainSparqlPath2 {
 
             // Given the join graph and the nfa, determine for a given nestedPath in a given set of nfa states of whether it can reach the set of predicates leading to the target states.
 
-            DirectedGraph<Node, DefaultEdge> rawJoinGraph = fwdCosts.joinGraph;
+//            DirectedGraph<Node, DefaultaEdge> rawJoinGraph = fwdCosts.joinGraph;
 
 
+            DirectedGraph<Node, DefaultEdge> rawJoinGraph = fullJoinSummaryBaseGraph;
 
             DirectedGraph<Node, DefaultEdge> tmpEndAugJoinGraph = new DefaultDirectedGraph<>(DefaultEdge.class);
             Node augStart = NodeFactory.createURI("http://start.org");
@@ -853,14 +886,19 @@ public class MainSparqlPath2 {
                     return r;
                 },
                 (trans, diPred) -> { // for the nfa transition and a set data nodes, return matching triplets per node
+
+                    // TODO: if the diPred is any, we assume that every predicate of the transition may match
+                    // This is ugly if the transition allows any predicate
+
+
                     //Set<Triplet<Node, DefaultEdge>> r;
                     Node pred = diPred == null ? null : diPred.getValue();
                     PredicateClass pc = trans.getLabel();
 
                     Set<Directed<Node>> r = new HashSet<>();
 
-                    Directed<Node> anyFwd = new Directed<>(NodeFactory.createURI("http://any.org"), false);
-                    Directed<Node> anyBwd = new Directed<>(NodeFactory.createURI("http://any.org"), true);
+                    Directed<Node> anyFwd = new Directed<>(Node.ANY, false);
+                    Directed<Node> anyBwd = new Directed<>(Node.ANY, true);
 
                     if(diPred == null) {
                         r = Collections.singleton(anyFwd);
@@ -890,24 +928,42 @@ public class MainSparqlPath2 {
                                             //.collect(Collectors.toSet());
                                 } else {
                                     if(!preds.isEmpty()) {
-                                        throw new RuntimeException("not implemented yet");
+                                        r.add(anyFwd);
                                     }
                                 }
                             } else {
                                 if(reverse) {
                                     if(!preds.isEmpty()) {
-                                        throw new RuntimeException("not implemented yet");
+                                        r.add(anyBwd);
                                     }
                                 } else {
-                                    Set<DefaultEdge> out = joinGraph.outgoingEdgesOf(pred);
-                                    //System.out.println("Inbound joins of " + pred + ": " + out);
-                                    //Set<Directed<Node>> bwdPreds =
-                                            out.stream()
-                                            .map(edge -> joinGraph.getEdgeTarget(edge))
-                                            .filter(p -> preds.contains(p))
-                                            .map(p -> new Directed<>(p, false))
-                                            .forEach(r::add);
-                                            //.collect(Collectors.toSet());
+                                    //Set<Node> tmpPreds;
+                                    if(pred.equals(Node.ANY)) {
+                                        // If we had a lookahead of the succeeding transition, we could
+                                        // reduce the set of predicates to
+                                        // actually, if the predicate set is negated, just return any again
+                                        if(preds.isPositive()) {
+                                            preds.getValues().stream().map(p -> new Directed<>(p, false)).forEach(r::add);
+                                            //tmpPreds = preds.getValues();
+                                        } else {
+                                            //tmpPreds = Collections.emptySet();
+                                            r.add(anyFwd);
+                                        }
+                                    } else {
+                                    //    tmpPreds = Collections.singleton(pred);
+                                    //}
+
+                                    //for(Node tmpPred : tmpPreds) {
+                                        Set<DefaultEdge> out = joinGraph.outgoingEdgesOf(pred);
+                                        //System.out.println("Inbound joins of " + pred + ": " + out);
+                                        //Set<Directed<Node>> bwdPreds =
+                                                out.stream()
+                                                .map(edge -> joinGraph.getEdgeTarget(edge))
+                                                .filter(p -> preds.contains(p))
+                                                .map(p -> new Directed<>(p, false))
+                                                .forEach(r::add);
+                                                //.collect(Collectors.toSet());
+                                    }
 
                                 }
 
@@ -941,7 +997,8 @@ public class MainSparqlPath2 {
                     return r;
                 },
                 nestedPath -> {
-                    boolean r = nestedPath.getCurrent().equals(augEnd);
+                    Node current = nestedPath.getCurrent();
+                    boolean r = current.equals(Node.ANY) || nestedPath.getCurrent().equals(augEnd);
                     return r;
 //                        boolean r = nestedPath.getParentLink().map(pl -> {
 //                            Directed<?> diPred = pl.getDiProperty();
@@ -960,6 +1017,8 @@ public class MainSparqlPath2 {
 //                        return r;
 
                 });
+
+        reachabilityPaths.forEach(o -> System.out.println("REACHPATH: " + o.asSimplePath()));
         return reachabilityPaths;
     }
 
