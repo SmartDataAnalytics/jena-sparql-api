@@ -25,7 +25,8 @@ INSERT INTO <http://fp7-pp.publicdata.eu/summary/predicate-join/> {
 }
 ;
 
-Done. -- 1041 msec.
+Done. -- 1041 msec. - on nyu i7
+Done. -- 1161 msec. - on drake i5
 
 
 

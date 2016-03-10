@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -37,7 +38,6 @@ import org.aksw.jena_sparql_api.utils.TripleUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.web.server.ServerUtils;
 import org.apache.jena.atlas.web.auth.HttpAuthenticator;
-import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
@@ -287,11 +287,11 @@ public class MainSparqlPath2 {
         Model joinSummaryModel;
         Node desiredPred;
 
-        if(false) {
+        if(true) {
             Stopwatch sw = Stopwatch.createStarted();
 
-            joinSummaryModel = RDFDataMgr.loadModel("/home/raven/Projects/Eclipse/Spark-RDF/tmp/fp7-summary-predicate-join.nt");
-            System.out.println("Join Summary Read took: " + sw.stop().elapsed(TimeUnit.SECONDS) + " for " + joinSummaryModel.size() + " triples");
+            //joinSummaryModel = RDFDataMgr.loadModel("/home/raven/Projects/Eclipse/Spark-RDF/tmp/fp7-summary-predicate-join.nt");
+            //System.out.println("Join Summary Read took: " + sw.stop().elapsed(TimeUnit.SECONDS) + " for " + joinSummaryModel.size() + " triples");
 
             Model model = ModelFactory.createDefaultModel();
             //RDFDataMgr.read(model, "classpath://dataset-fp7.ttl");
@@ -824,32 +824,87 @@ public class MainSparqlPath2 {
                 augStart,
                 1l,
                 (trans, diPred) -> { // for the nfa transition and a set data nodes, return matching triplets per node
-                    if(diPred == null) {
-                        // not sure if this can happen here
-                    }
-
-                    Node pred = diPred.getValue();
-
+                    //Set<Triplet<Node, DefaultEdge>> r;
+                    Node pred = diPred == null ? null : diPred.getValue();
                     PredicateClass pc = trans.getLabel();
 
-                    Set<DefaultEdge> out = joinGraph.outgoingEdgesOf(pred);
-                    //System.out.println("Outbound joins of " + pred + ": " + out);
-                    Set<Triplet<Node, DefaultEdge>> fwdTriplets = out
-                        .stream()
-                        .map(e -> JGraphTUtils.toTriplet(joinGraph, e))
-                        .filter(triplet -> pc.getFwdNodes().contains(triplet.getObject()))
-                        .collect(Collectors.toSet());
+                    Set<Directed<Node>> r = new HashSet<>();
 
-                    Set<DefaultEdge> in = joinGraph.incomingEdgesOf(pred);
-                    //System.out.println("Inbound joins of " + pred + ": " + out);
-                    Set<Triplet<Node, DefaultEdge>> bwdTriplets = in.stream()
-                            .map(e -> JGraphTUtils.toTriplet(joinGraph, e))
-                            .filter(triplet -> pc.getBwdNodes().contains(triplet.getSubject()))
-                            .collect(Collectors.toSet());
+                    if(diPred == null) {
+                        r = Collections.emptySet();
+                        // not sure if this can happen here
+                    } else {
 
-                    //System.out.println("Matching " + pred + " against "+ pc);
-                    Set<Triplet<Node, DefaultEdge>> r = Sets.union(fwdTriplets, bwdTriplets);
-                    //result.forEach(foo -> System.out.println(foo));
+                        boolean isPredReverse = diPred.isReverse();
+                        // Check the transition - if it is opposite to the current predicate,
+                        // we cannot consult the join summary - so we return a pseudo-triplet indicating that it will join with any further predicate
+
+
+                        Directed<Node> anyFwd = new Directed<>(NodeFactory.createURI("http://any.org"), false);
+                        Directed<Node> anyBwd = new Directed<>(NodeFactory.createURI("http://any.org"), true);
+                            //Triplet<Node, DefaultEdge> anyTriplet = new Triplet<>(anyPred, new DefaultEdge());
+
+                        for(int i = 0; i < 2; ++i) {
+                            boolean reverse = i == 1;
+                            ValueSet<Node> preds = pc.get(i);
+
+                            if(isPredReverse) {
+                                if(reverse) {
+                                    Set<DefaultEdge> in = joinGraph.incomingEdgesOf(pred);
+                                    //System.out.println("Inbound joins of " + pred + ": " + out);
+                                    //Set<Directed<Node>> bwdPreds =
+                                            in.stream()
+                                            .map(edge -> joinGraph.getEdgeSource(edge))
+                                            .filter(p -> preds.contains(p))
+                                            .map(p -> new Directed<>(p, true))
+                                            .forEach(r::add);
+                                            //.collect(Collectors.toSet());
+                                } else {
+                                    throw new RuntimeException("not implemented yet");
+                                }
+                            } else {
+                                if(reverse) {
+                                    throw new RuntimeException("not implemented yet");
+                                } else {
+                                    Set<DefaultEdge> out = joinGraph.outgoingEdgesOf(pred);
+                                    //System.out.println("Inbound joins of " + pred + ": " + out);
+                                    //Set<Directed<Node>> bwdPreds =
+                                            out.stream()
+                                            .map(edge -> joinGraph.getEdgeTarget(edge))
+                                            .filter(p -> preds.contains(p))
+                                            .map(p -> new Directed<>(p, true))
+                                            .forEach(r::add);
+                                            //.collect(Collectors.toSet());
+
+                                }
+
+                            }
+
+
+                        }
+
+//
+//                        Node pred = diPred.getValue();
+//
+//                        Set<Triplet<Node, DefaultEdge>> bwdTriplets = in.stream()
+//                                .map(e -> JGraphTUtils.toTriplet(joinGraph, e))
+//                                .filter(triplet -> pc.getBwdNodes().contains(triplet.getSubject()))
+//                                .collect(Collectors.toSet());
+//
+//                        Set<DefaultEdge> out = joinGraph.outgoingEdgesOf(pred);
+//                        //System.out.println("Outbound joins of " + pred + ": " + out);
+//                        Set<Triplet<Node, DefaultEdge>> fwdTriplets = out
+//                            .stream()
+//                            .map(e -> JGraphTUtils.toTriplet(joinGraph, e))
+//                            .filter(triplet -> pc.getFwdNodes().contains(triplet.getObject()))
+//                            .collect(Collectors.toSet());
+//
+//
+//                        //System.out.println("Matching " + pred + " against "+ pc);
+//                        r = Sets.union(fwdTriplets, bwdTriplets);
+//                        //result.forEach(foo -> System.out.println(foo));
+                    }
+
                     return r;
                 },
                 nestedPath -> {

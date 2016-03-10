@@ -6,13 +6,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.jgrapht.DirectedGraph;
@@ -186,7 +185,7 @@ public class NfaExecution<S, T, V, E> {
                 for(NestedPath<V, E> parentPath : allPaths) {
                     V node = parentPath.getCurrent();
 
-                    Set<Triplet<V, E>> triplets = vToTriplets.get(node);
+                    Set<Triplet<V, E>> triplets = vToTriplets.getOrDefault(node, Collections.emptySet());
 
                     for(Triplet<V, E> t : triplets) {
                         E p = t.getPredicate();
@@ -297,7 +296,7 @@ public class NfaExecution<S, T, V, E> {
             DirectedGraph<P, Q> joinGraph,
             P startVertex, // the start vertex
             Long k,
-            BiFunction<T, Directed<P>, Set<Triplet<P, Q>>> transAndNodesToTriplets,
+            BiFunction<T, Directed<P>, Set<Directed<P>>> transAndNodesToTriplets,  //Triplet<P, Q>>
             Function<NestedPath<P, Q>, Boolean> pathCallback) {
 
 
@@ -321,9 +320,17 @@ public class NfaExecution<S, T, V, E> {
 
                     Set<Directed<P>> diPreds = diPredToPaths.keySet();
                     for(Directed<P> diPred : diPreds) {
-                        P pred = diPred.getValue();
+                        P pred = diPred == null ? null : diPred.getValue();
                         ///Set<Q> joinEdges = joinGraph.outgoingEdgesOf(pred);
-                        Set<Triplet<P, Q>> triplets = transAndNodesToTriplets.apply(trans, diPred);
+                        //Set<Triplet<P, Q>> triplets = transAndNodesToTriplets.apply(trans, diPred);
+                        Set<Directed<P>> nextDiPreds = transAndNodesToTriplets.apply(trans, diPred);
+
+                        Set<Triplet<P, Q>> triplets = nextDiPreds.stream()
+                                .map(dp -> Triplet.create(pred, (Q)null, dp.getValue(), dp.isReverse())) // TODO get rid of the null - maybe: joinGraph.getEdge(pred, ...)
+                                .collect(Collectors.toSet());
+
+
+
                         // Check which join edges are accepted by the transition
 //                        Set<Triplet<P, Q>> triplets = joinEdges.stream()
 //                                .filter(e -> matcher.test(diTrans, e))

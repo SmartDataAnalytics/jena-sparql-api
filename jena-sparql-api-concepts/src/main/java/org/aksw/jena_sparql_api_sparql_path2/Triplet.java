@@ -17,6 +17,15 @@ public class Triplet<V, E> {
         this.object = object;
     }
 
+    public static <V, E> Triplet<V, E> create(V s, E e, V o, boolean reverse) {
+        Triplet<V, E> result = !reverse
+                ? new Triplet<>(s, e, o)
+                : new Triplet<>(o, e, s)
+                ;
+
+        return result;
+    }
+
     public V getSubject() {
         return subject;
     }
@@ -48,7 +57,7 @@ public class Triplet<V, E> {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        Triplet other = (Triplet) obj;
+        Triplet<?, ?> other = (Triplet<?, ?>) obj;
         if (object == null) {
             if (other.object != null)
                 return false;
