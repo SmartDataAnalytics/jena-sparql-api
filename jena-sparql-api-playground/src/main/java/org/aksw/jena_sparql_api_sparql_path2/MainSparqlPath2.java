@@ -822,7 +822,14 @@ public class MainSparqlPath2 {
                 states,
                 joinGraph,
                 augStart,
-                (trans, pred) -> { // for the nfa transition and a set data nodes, return matching triplets per node
+                1l,
+                (trans, diPred) -> { // for the nfa transition and a set data nodes, return matching triplets per node
+                    if(diPred == null) {
+                        // not sure if this can happen here
+                    }
+
+                    Node pred = diPred.getValue();
+
                     PredicateClass pc = trans.getLabel();
 
                     Set<DefaultEdge> out = joinGraph.outgoingEdgesOf(pred);
@@ -864,8 +871,7 @@ public class MainSparqlPath2 {
 //
 //                        return r;
 
-                },
-                k);
+                });
         return reachabilityPaths;
     }
 

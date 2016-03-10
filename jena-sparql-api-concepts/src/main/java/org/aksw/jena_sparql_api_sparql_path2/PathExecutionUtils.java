@@ -25,6 +25,8 @@ import org.jgrapht.DirectedGraph;
 import org.jgrapht.VertexFactory;
 import org.jgrapht.graph.DefaultDirectedGraph;
 
+import com.google.common.collect.Multimap;
+
 public class PathExecutionUtils {
 
     public static Nfa<Integer, LabeledEdge<Integer, PredicateClass>> compileToNfa(Path path) {
@@ -78,8 +80,10 @@ public class PathExecutionUtils {
 
         //Function<LabeledEdge<Integer, Path>, Path> edgeToPath = e -> e.getLabel();
 
-        NfaFrontier<Integer, Node, Node> frontier = new NfaFrontier<>();
-        NfaFrontier.addAll(frontier, nfa.getStartStates(), startNode);
+        NfaFrontier<Integer, Node, Node, Node> frontier = new NfaFrontier<>();
+        Function<NestedPath<Node, Node>, Node> nodeGrouper = nestedPath -> nestedPath.getCurrent();
+
+        NfaFrontier.addAll(frontier, nfa.getStartStates(), nodeGrouper, startNode);
 
 
         Function<Directed<LabeledEdge<Integer, PredicateClass>>, Function<Iterable<Node>, Map<Node, Set<Triplet<Node, Node>>>>> createLookupService = (Directed<LabeledEdge<Integer, PredicateClass>> diTransition) -> {
@@ -137,7 +141,7 @@ public class PathExecutionUtils {
             if(true) {
                 throw new RuntimeException("Adjust the code");
             }
-            NfaFrontier<Integer, Node, Node> nextFrontier = null; //NfaExecution.advanceFrontier(frontier, nfa, false, LabeledEdgeImpl::isEpsilon, createLookupService);
+            NfaFrontier<Integer, Node, Node, Node> nextFrontier = null; //NfaExecution.advanceFrontier(frontier, nfa, false, LabeledEdgeImpl::isEpsilon, createLookupService);
             //System.out.println("advancing...");
             frontier = nextFrontier;
         }
@@ -157,31 +161,48 @@ public class PathExecutionUtils {
      * @param nfa
      * @param vertices
      */
-    public static <S, T, V, E> void execNfa(
-            Nfa<S, T> nfa,
-            Predicate<T> isEpsilon,
-            Set<V> startVertices,
-            BiFunction<T, Set<V>, Map<V, Set<Triplet<V, E>>>> getMatchingTriplets,
-            Function<NestedPath<V, E>, Boolean> pathCallback) {
-        execNfa(
-                nfa,
-                nfa.getStartStates(),
-                isEpsilon,
-                startVertices,
-                getMatchingTriplets,
-                pathCallback);
-    }
+//    public static <S, T, V, E> void execNfa(
+//            Nfa<S, T> nfa,
+//            Predicate<T> isEpsilon,
+//            Set<V> startVertices,
+//            BiFunction<T, NestedPath<V, E>, Map<V, Set<Triplet<V, E>>>> getMatchingTriplets,
+//            Function<NestedPath<V, E>, Boolean> pathCallback) {
+//        execNfa(
+//                nfa,
+//                nfa.getStartStates(),
+//                isEpsilon,
+//                startVertices,
+//                //getMatchingTriplets,
+//                (trans, vToNestedPaths) ->
+//                    vToNestedPaths.values().stream()
+//                    .map(nestedPath -> getMatchingTriplets.apply(trans, nestedPath))
+//                    .collect(Collectors.toSet()),
+//                pathCallback);
+//    }
 
-    public static <S, T, V, E> void execNfa(
+
+    /**
+     * Generic Nfa execution
+     *
+     * @param nfa
+     * @param startStates
+     * @param isEpsilon
+     * @param startVertices
+     * @param pathGrouper
+     * @param getMatchingTriplets
+     * @param pathCallback
+     */
+    public static <S, T, G, V, E> void execNfa(
             Nfa<S, T> nfa,
             Set<S> startStates,
             Predicate<T> isEpsilon,
             Set<V> startVertices,
-            BiFunction<T, Set<V>, Map<V, Set<Triplet<V, E>>>> getMatchingTriplets,
+            Function<NestedPath<V, E>, G> pathGrouper,
+            BiFunction<T, Multimap<G, NestedPath<V, E>>, Map<V, Set<Triplet<V, E>>>> getMatchingTriplets,
             Function<NestedPath<V, E>, Boolean> pathCallback) {
 
-        NfaFrontier<S, V, E> frontier = new NfaFrontier<>();
-        NfaFrontier.addAll(frontier, startStates, startVertices);
+        NfaFrontier<S, G, V, E> frontier = new NfaFrontier<>();
+        NfaFrontier.addAll(frontier, startStates, pathGrouper, startVertices);
 
         while(!frontier.isEmpty()) {
 
@@ -192,12 +213,12 @@ public class PathExecutionUtils {
 
             DirectedGraph<S, T> nfaGraph = nfa.getGraph();
 
-            NfaFrontier<S, V, E> nextFrontier = NfaExecution.advanceFrontier(
+            NfaFrontier<S, G, V, E> nextFrontier = NfaExecution.advanceFrontier(
                     frontier,
                     nfaGraph,
-                    //false,
                     isEpsilon,
                     getMatchingTriplets,
+                    pathGrouper,
                     x -> false);
 
             frontier = nextFrontier;

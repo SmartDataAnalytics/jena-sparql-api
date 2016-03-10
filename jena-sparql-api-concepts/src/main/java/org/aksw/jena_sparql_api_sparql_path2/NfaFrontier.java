@@ -5,24 +5,55 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
-public class NfaFrontier<S, V, E> {
-    protected Map<S, Multimap<V, NestedPath<V, E>>> paths = new HashMap<>();
+/**
+ * A nfa frontier maps states to the corresponding paths.
+ * These paths are grouped by a key that is needed to advance the frontier.
+ * Common group keys are either the target node of the path, or the direction of the predicate
+ *
+ *
+ *
+ * @author raven
+ *
+ * @param <S>
+ * @param <V>
+ * @param <E>
+ */
+public class NfaFrontier<S, G, V, E> {
+    protected Map<S, Multimap<G, NestedPath<V, E>>> paths = new HashMap<>();
+
+
+    //protected Function<NestedPath<V, E>, G> groupFn;
+
+//    public NfaFrontier() {
+//        groupFn = (Function<NestedPath<V, E>, G> & Serializable) nestedPath -> nestedPath.getCurrent();
+//    }
+
+//    public NfaFrontier(Function<NestedPath<V, E>, G> groupFn) {
+//        this.groupFn = groupFn;
+//    }
+//
+//
+//    public static <S, V, E> NfaFrontier<S, V, V, E> createVertexGroupedFrontier() {
+//        NfaFrontier<S, V, V, E> result = new NfaFrontier<S, V, V, E>((Function<NestedPath<V, E>, V> & Serializable) nestedPath -> nestedPath.getCurrent());
+//        return result;
+//    }
 
     public Set<S> getCurrentStates() {
         return paths.keySet();
     }
 
-    public Multimap<V, NestedPath<V, E>> getPaths(S state) {
-        Multimap<V, NestedPath<V, E>> result = paths.get(state);
+    public Multimap<G, NestedPath<V, E>> getPaths(S state) {
+        Multimap<G, NestedPath<V, E>> result = paths.get(state);
         return result;
     }
 
-    protected Multimap<V, NestedPath<V, E>> getOrCreateStateInfo(S state) {
-        Multimap<V, NestedPath<V, E>> result = paths.get(state);
+    protected Multimap<G, NestedPath<V, E>> getOrCreateStateInfo(S state) {
+        Multimap<G, NestedPath<V, E>> result = paths.get(state);
         if(result == null) {
             result = HashMultimap.create();
             paths.put(state, result);
@@ -31,10 +62,11 @@ public class NfaFrontier<S, V, E> {
         return result;
     }
 
-    public void add(S state, NestedPath<V, E> path) {
-        V node = path.getCurrent();
-        Multimap<V, NestedPath<V, E>> nodeToPath = getOrCreateStateInfo(state);
-        nodeToPath.put(node, path);
+    public void add(S state, G groupKey, NestedPath<V, E> path) {
+        //V node = path.getCurrent();
+        Multimap<G, NestedPath<V, E>> nodeToPath = getOrCreateStateInfo(state);
+        //G groupKey = groupFn.apply(path);
+        nodeToPath.put(groupKey, path);
     }
 
 
@@ -43,15 +75,16 @@ public class NfaFrontier<S, V, E> {
         return result;
     }
 
-    public static <S, V, E> void addAll(NfaFrontier<S, V, E> frontier, Set<S> states, V node) {
-        addAll(frontier, states, Collections.singleton(node));
+    public static <S, G, V, E> void addAll(NfaFrontier<S, G, V, E> frontier, Set<S> states, Function<NestedPath<V, E>, G> pathGrouper, V node) {
+        addAll(frontier, states, pathGrouper, Collections.singleton(node));
     }
 
-    public static <S, V, E> void addAll(NfaFrontier<S, V, E> frontier, Set<S> states, Collection<V> nodes) {
+    public static <S, G, V, E> void addAll(NfaFrontier<S, G, V, E> frontier, Set<S> states, Function<NestedPath<V, E>, G> pathGrouper, Collection<V> nodes) {
         states.forEach(state -> {
             nodes.forEach(node -> {
                 NestedPath<V, E> rdfPath = new NestedPath<V, E>(node);
-                frontier.add(state, rdfPath);
+                G groupKey = pathGrouper.apply(rdfPath);
+                frontier.add(state, groupKey, rdfPath);
             });
         });
     }
@@ -73,7 +106,7 @@ public class NfaFrontier<S, V, E> {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        NfaFrontier<?, ?, ?> other = (NfaFrontier<?, ?, ?>) obj;
+        NfaFrontier<?, ?, ?, ?> other = (NfaFrontier<?, ?, ?, ?>) obj;
         if (paths == null) {
             if (other.paths != null)
                 return false;
