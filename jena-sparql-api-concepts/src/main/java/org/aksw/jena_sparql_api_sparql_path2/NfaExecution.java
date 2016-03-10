@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
@@ -14,6 +15,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.apache.jena.graph.Node;
 import org.jgrapht.DirectedGraph;
 
 import com.google.common.collect.Multimap;
@@ -296,6 +298,7 @@ public class NfaExecution<S, T, V, E> {
             DirectedGraph<P, Q> joinGraph,
             P startVertex, // the start vertex
             Long k,
+            BiFunction<T, P, Set<Directed<P>>> initPred,  //Triplet<P, Q>>
             BiFunction<T, Directed<P>, Set<Directed<P>>> transAndNodesToTriplets,  //Triplet<P, Q>>
             Function<NestedPath<P, Q>, Boolean> pathCallback) {
 
@@ -318,26 +321,34 @@ public class NfaExecution<S, T, V, E> {
                     // and we now need to determine successor triplet of this predicate in regard to the transition
                     Map<P, Set<Triplet<P, Q>>> r = new HashMap<>();
 
-                    Set<Directed<P>> diPreds = diPredToPaths.keySet();
-                    for(Directed<P> diPred : diPreds) {
-                        P pred = diPred == null ? null : diPred.getValue();
-                        ///Set<Q> joinEdges = joinGraph.outgoingEdgesOf(pred);
-                        //Set<Triplet<P, Q>> triplets = transAndNodesToTriplets.apply(trans, diPred);
-                        Set<Directed<P>> nextDiPreds = transAndNodesToTriplets.apply(trans, diPred);
+                    //Set<Directed<P>> diPreds = diPredToPaths.keySet();
+                    //for(Directed<P> diPred : diPreds) {
+                    for(Entry<Directed<P>, Collection<NestedPath<P, Q>>> entry : diPredToPaths.asMap().entrySet()) {
+                        Directed<P> diPred = entry.getKey();
 
-                        Set<Triplet<P, Q>> triplets = nextDiPreds.stream()
-                                .map(dp -> Triplet.create(pred, (Q)null, dp.getValue(), dp.isReverse())) // TODO get rid of the null - maybe: joinGraph.getEdge(pred, ...)
-                                .collect(Collectors.toSet());
+                        if(diPred == null) {
+                            Collection<NestedPath<P, Q>> paths = entry.getValue();
+                            paths.stream().forEach(path -> {
+                                P n = path.getCurrent();
+                                Set<Directed<P>> succ = initPred.apply(trans, path.getCurrent());
 
+                                Set<Triplet<P, Q>> triplets = succ.stream()
+                                        .map(dp -> Triplet.create(n, (Q)null, dp.getValue(), dp.isReverse()))
+                                        .collect(Collectors.toSet());
 
+                                r.put(n, triplets);
+                            });
+                        } else {
+                            P pred = diPred.getValue();
 
-                        // Check which join edges are accepted by the transition
-//                        Set<Triplet<P, Q>> triplets = joinEdges.stream()
-//                                .filter(e -> matcher.test(diTrans, e))
-//                                .map(e -> new Triplet<>(joinGraph.getEdgeSource(e), e, joinGraph.getEdgeTarget(e)))
-//                                .collect(Collectors.toSet());
+                            Set<Directed<P>> nextDiPreds = transAndNodesToTriplets.apply(trans, diPred);
 
-                        r.put(pred, triplets);
+                            Set<Triplet<P, Q>> triplets = nextDiPreds.stream()
+                                    .map(dp -> Triplet.create(pred, (Q)null, dp.getValue(), dp.isReverse())) // TODO get rid of the null - maybe: joinGraph.getEdge(pred, ...)
+                                    .collect(Collectors.toSet());
+
+                            r.put(pred, triplets);
+                        }
                     }
 
                     return r;

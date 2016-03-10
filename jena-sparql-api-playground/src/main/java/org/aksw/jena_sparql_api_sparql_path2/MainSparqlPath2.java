@@ -823,6 +823,35 @@ public class MainSparqlPath2 {
                 joinGraph,
                 augStart,
                 1l,
+                (trans, node) -> { // function for dealing with a predicate without known preceeding predicate
+                    Set<Directed<Node>> r = new HashSet<>();
+
+                    PredicateClass pc = trans.getLabel();
+                    ValueSet<Node> fwdPreds = pc.getFwdNodes();
+                    ValueSet<Node> bwdPreds = pc.getBwdNodes();
+
+                    Set<DefaultEdge> in = joinGraph.incomingEdgesOf(node);
+
+                    in.stream()
+                        .map(edge -> joinGraph.getEdgeSource(edge))
+                        .filter(p -> bwdPreds.contains(p))
+                        .map(p -> new Directed<>(p, true))
+                        .forEach(r::add);
+
+                    if(!in.isEmpty()) {
+                        System.out.println("in edges: " + in);
+                    }
+
+                    Set<DefaultEdge> out = joinGraph.outgoingEdgesOf(node);
+                        out.stream()
+                        .map(edge -> joinGraph.getEdgeTarget(edge))
+                        .filter(p -> fwdPreds.contains(p))
+                        .map(p -> new Directed<>(p, false))
+                        .forEach(r::add);
+
+
+                    return r;
+                },
                 (trans, diPred) -> { // for the nfa transition and a set data nodes, return matching triplets per node
                     //Set<Triplet<Node, DefaultEdge>> r;
                     Node pred = diPred == null ? null : diPred.getValue();
@@ -830,8 +859,11 @@ public class MainSparqlPath2 {
 
                     Set<Directed<Node>> r = new HashSet<>();
 
+                    Directed<Node> anyFwd = new Directed<>(NodeFactory.createURI("http://any.org"), false);
+                    Directed<Node> anyBwd = new Directed<>(NodeFactory.createURI("http://any.org"), true);
+
                     if(diPred == null) {
-                        r = Collections.emptySet();
+                        r = Collections.singleton(anyFwd);
                         // not sure if this can happen here
                     } else {
 
@@ -839,9 +871,6 @@ public class MainSparqlPath2 {
                         // Check the transition - if it is opposite to the current predicate,
                         // we cannot consult the join summary - so we return a pseudo-triplet indicating that it will join with any further predicate
 
-
-                        Directed<Node> anyFwd = new Directed<>(NodeFactory.createURI("http://any.org"), false);
-                        Directed<Node> anyBwd = new Directed<>(NodeFactory.createURI("http://any.org"), true);
                             //Triplet<Node, DefaultEdge> anyTriplet = new Triplet<>(anyPred, new DefaultEdge());
 
                         for(int i = 0; i < 2; ++i) {
@@ -860,11 +889,15 @@ public class MainSparqlPath2 {
                                             .forEach(r::add);
                                             //.collect(Collectors.toSet());
                                 } else {
-                                    throw new RuntimeException("not implemented yet");
+                                    if(!preds.isEmpty()) {
+                                        throw new RuntimeException("not implemented yet");
+                                    }
                                 }
                             } else {
                                 if(reverse) {
-                                    throw new RuntimeException("not implemented yet");
+                                    if(!preds.isEmpty()) {
+                                        throw new RuntimeException("not implemented yet");
+                                    }
                                 } else {
                                     Set<DefaultEdge> out = joinGraph.outgoingEdgesOf(pred);
                                     //System.out.println("Inbound joins of " + pred + ": " + out);
@@ -872,7 +905,7 @@ public class MainSparqlPath2 {
                                             out.stream()
                                             .map(edge -> joinGraph.getEdgeTarget(edge))
                                             .filter(p -> preds.contains(p))
-                                            .map(p -> new Directed<>(p, true))
+                                            .map(p -> new Directed<>(p, false))
                                             .forEach(r::add);
                                             //.collect(Collectors.toSet());
 
