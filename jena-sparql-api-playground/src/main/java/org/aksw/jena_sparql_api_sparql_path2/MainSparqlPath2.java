@@ -860,28 +860,21 @@ public class MainSparqlPath2 {
                     Set<Directed<Node>> r = new HashSet<>();
 
                     PredicateClass pc = trans.getLabel();
-                    ValueSet<Node> fwdPreds = pc.getFwdNodes();
-                    ValueSet<Node> bwdPreds = pc.getBwdNodes();
+                    for(int i = 0; i < 2; ++i) {
+                        boolean transReverse = i == 1;
+                        ValueSet<Node> preds = pc.get(i);
 
-                    Set<DefaultEdge> in = joinGraph.incomingEdgesOf(node);
+                        Set<DefaultEdge> edges = transReverse
+                                ? joinGraph.incomingEdgesOf(node)
+                                : joinGraph.outgoingEdgesOf(node)
+                                ;
 
-                    in.stream()
-                        .map(edge -> joinGraph.getEdgeSource(edge))
-                        .filter(p -> bwdPreds.contains(p))
-                        .map(p -> new Directed<>(p, true))
-                        .forEach(r::add);
-
-                    if(!in.isEmpty()) {
-                        System.out.println("in edges: " + in);
+                        edges.stream()
+                            .map(edge -> transReverse ? joinGraph.getEdgeSource(edge) : joinGraph.getEdgeTarget(edge))
+                            .filter(p -> preds.contains(p))
+                            .map(p -> new Directed<>(p, transReverse))
+                            .forEach(r::add);
                     }
-
-                    Set<DefaultEdge> out = joinGraph.outgoingEdgesOf(node);
-                        out.stream()
-                        .map(edge -> joinGraph.getEdgeTarget(edge))
-                        .filter(p -> fwdPreds.contains(p))
-                        .map(p -> new Directed<>(p, false))
-                        .forEach(r::add);
-
 
                     return r;
                 },
