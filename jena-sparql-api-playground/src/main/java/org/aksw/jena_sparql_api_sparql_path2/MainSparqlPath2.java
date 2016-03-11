@@ -897,101 +897,42 @@ public class MainSparqlPath2 {
 
                     Set<Directed<Node>> r = new HashSet<>();
 
-                    Directed<Node> anyFwd = new Directed<>(Node.ANY, false);
-                    Directed<Node> anyBwd = new Directed<>(Node.ANY, true);
+                    boolean predReverse = diPred.isReverse();
+                    // Check the transition - if it is opposite to the current predicate,
+                    // we cannot consult the join summary - so we return a pseudo-triplet indicating that it will join with any further predicate
+                    for(int i = 0; i < 2; ++i) {
+                        boolean transReverse = i == 1;
+                        ValueSet<Node> transPolPreds = pc.get(i); // polarity set
+                        Set<Node> transPreds = transPolPreds.getValues();
 
-                    if(diPred == null) {
-                        r = Collections.singleton(anyFwd);
-                        // not sure if this can happen here
-                    } else {
-
-                        boolean isPredReverse = diPred.isReverse();
-                        // Check the transition - if it is opposite to the current predicate,
-                        // we cannot consult the join summary - so we return a pseudo-triplet indicating that it will join with any further predicate
-
-                            //Triplet<Node, DefaultEdge> anyTriplet = new Triplet<>(anyPred, new DefaultEdge());
-
-                        for(int i = 0; i < 2; ++i) {
-                            boolean reverse = i == 1;
-                            ValueSet<Node> preds = pc.get(i);
-
-                            if(isPredReverse) {
-                                if(reverse) {
-                                    Set<DefaultEdge> in = joinGraph.incomingEdgesOf(pred);
-                                    //System.out.println("Inbound joins of " + pred + ": " + out);
-                                    //Set<Directed<Node>> bwdPreds =
-                                            in.stream()
-                                            .map(edge -> joinGraph.getEdgeSource(edge))
-                                            .filter(p -> preds.contains(p))
-                                            .map(p -> new Directed<>(p, true))
-                                            .forEach(r::add);
-                                            //.collect(Collectors.toSet());
+                        // If transition and path predicate face in the same direction, we can consult the join summary
+                        // If the point in opposing directions, we return the ANY token
+                        if(predReverse == transReverse) {
+                            if(pred.equals(Node.ANY)) {
+                                if(transPolPreds.isPositive()) {
+                                    transPreds.stream()
+                                        .map(p -> new Directed<>(p, transReverse))
+                                        .forEach(r::add);
                                 } else {
-                                    if(!preds.isEmpty()) {
-                                        r.add(anyFwd);
-                                    }
+                                    r.add(new Directed<>(Node.ANY, transReverse));
                                 }
                             } else {
-                                if(reverse) {
-                                    if(!preds.isEmpty()) {
-                                        r.add(anyBwd);
-                                    }
-                                } else {
-                                    //Set<Node> tmpPreds;
-                                    if(pred.equals(Node.ANY)) {
-                                        // If we had a lookahead of the succeeding transition, we could
-                                        // reduce the set of predicates to
-                                        // actually, if the predicate set is negated, just return any again
-                                        if(preds.isPositive()) {
-                                            preds.getValues().stream().map(p -> new Directed<>(p, false)).forEach(r::add);
-                                            //tmpPreds = preds.getValues();
-                                        } else {
-                                            //tmpPreds = Collections.emptySet();
-                                            r.add(anyFwd);
-                                        }
-                                    } else {
-                                    //    tmpPreds = Collections.singleton(pred);
-                                    //}
+                                Set<DefaultEdge> edges = transReverse
+                                        ? joinGraph.incomingEdgesOf(pred)
+                                        : joinGraph.outgoingEdgesOf(pred)
+                                        ;
 
-                                    //for(Node tmpPred : tmpPreds) {
-                                        Set<DefaultEdge> out = joinGraph.outgoingEdgesOf(pred);
-                                        //System.out.println("Inbound joins of " + pred + ": " + out);
-                                        //Set<Directed<Node>> bwdPreds =
-                                                out.stream()
-                                                .map(edge -> joinGraph.getEdgeTarget(edge))
-                                                .filter(p -> preds.contains(p))
-                                                .map(p -> new Directed<>(p, false))
-                                                .forEach(r::add);
-                                                //.collect(Collectors.toSet());
-                                    }
-
-                                }
-
+                                edges.stream()
+                                    .map(edge -> transReverse ? joinGraph.getEdgeSource(edge) : joinGraph.getEdgeTarget(edge))
+                                    .filter(p -> transPolPreds.contains(p))
+                                    .map(p -> new Directed<>(p, transReverse))
+                                    .forEach(r::add);
                             }
-
-
+                        } else {
+                            if(!transPolPreds.isEmpty()) {
+                                r.add(new Directed<>(Node.ANY, transReverse));
+                            }
                         }
-
-//
-//                        Node pred = diPred.getValue();
-//
-//                        Set<Triplet<Node, DefaultEdge>> bwdTriplets = in.stream()
-//                                .map(e -> JGraphTUtils.toTriplet(joinGraph, e))
-//                                .filter(triplet -> pc.getBwdNodes().contains(triplet.getSubject()))
-//                                .collect(Collectors.toSet());
-//
-//                        Set<DefaultEdge> out = joinGraph.outgoingEdgesOf(pred);
-//                        //System.out.println("Outbound joins of " + pred + ": " + out);
-//                        Set<Triplet<Node, DefaultEdge>> fwdTriplets = out
-//                            .stream()
-//                            .map(e -> JGraphTUtils.toTriplet(joinGraph, e))
-//                            .filter(triplet -> pc.getFwdNodes().contains(triplet.getObject()))
-//                            .collect(Collectors.toSet());
-//
-//
-//                        //System.out.println("Matching " + pred + " against "+ pc);
-//                        r = Sets.union(fwdTriplets, bwdTriplets);
-//                        //result.forEach(foo -> System.out.println(foo));
                     }
 
                     return r;
@@ -1000,22 +941,6 @@ public class MainSparqlPath2 {
                     Node current = nestedPath.getCurrent();
                     boolean r = current.equals(Node.ANY) || nestedPath.getCurrent().equals(augEnd);
                     return r;
-//                        boolean r = nestedPath.getParentLink().map(pl -> {
-//                            Directed<?> diPred = pl.getDiProperty();
-//                            Node pred = nestedPath.getCurrent();
-//                            boolean reverse = diPred.isReverse();
-//                            //Node pred = diPred.getValue();
-//
-//                            boolean s = !reverse
-//                                ? endPreds.get(0).contains(pred)
-//                                : endPreds.get(1).contains(pred)
-//                                ;
-//                            return s;
-//
-//                        }).orElse(false);
-//
-//                        return r;
-
                 });
 
         reachabilityPaths.forEach(o -> System.out.println("REACHPATH: " + o.asSimplePath()));
