@@ -160,5 +160,41 @@ public class JGraphTUtils {
         return result;
     }
 
+    /**
+     * Given a set of predicates and a direction,
+     * return the set of predicates that can reach the target
+     *
+     */
+
+    public static <V, E> void addSuperVertex(DirectedGraph<V, E> graph, V vertex, Set<V> fwdConns, Set<V> bwdConns) {
+        addSuperVertex(graph, vertex, fwdConns, false);
+        addSuperVertex(graph, vertex, fwdConns, true);
+    }
+
+    /**
+     * Given a pair of predicates for fwd and backwards direction create
+     * a new pair of those that can reach the target
+     *
+     */
+
+    public static <V, E> void addSuperVertex(DirectedGraph<V, E> graph, V vertex, Set<V> conns, boolean reverse) {
+        graph.addVertex(vertex);
+        if(!reverse) {
+            conns.forEach(conn -> {
+                graph.addVertex(conn);
+                graph.addEdge(vertex, conn);
+            });
+        } else {
+            conns.forEach(conn -> {
+                graph.addVertex(conn);
+                graph.addEdge(conn, vertex);
+            });
+        }
+    }
+
+    public static <V, E> void addSuperVertex(DirectedGraph<V, E> graph, V vertex, V conn, boolean reverse) {
+        addSuperVertex(graph, vertex, Collections.singleton(conn), reverse);
+    }
+
 
 }

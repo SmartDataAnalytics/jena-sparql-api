@@ -1,7 +1,6 @@
 package org.aksw.jena_sparql_api_sparql_path2;
 
 import org.apache.jena.graph.Node;
-import org.apache.jena.sparql.path.P_Path0;
 
 /**
  * The main reason this class extends pair is to have the list interface
@@ -11,73 +10,12 @@ import org.apache.jena.sparql.path.P_Path0;
  *
  */
 public class PredicateClass
-    extends Pair<ValueSet<Node>>
+    extends VertexClass<Node>
 {
-    private static final long serialVersionUID = -3939204124201128789L;
+    private static final long serialVersionUID = -393920412450119L;
 
     public PredicateClass(ValueSet<Node> fwdNodes, ValueSet<Node> bwdNodes) {
         super(fwdNodes, bwdNodes);
-    }
-
-    public ValueSet<Node> getFwdNodes() {
-        return key;
-    }
-
-    public ValueSet<Node> getBwdNodes() {
-        return value;
-    }
-
-    /**
-     * Reverse the direction of a predicate class
-     *
-     * @param pc
-     * @return
-     */
-    public static PredicateClass reverse(PredicateClass pc) {
-        PredicateClass result = new PredicateClass(pc.getBwdNodes(), pc.getFwdNodes());
-        return result;
-    }
-
-//    public boolean contains(P_Path0 path) {
-//        Node node = path.getNode();
-//        boolean result = path.isForward()
-//            ? key.contains(node)
-//            : value.contains(node)
-//            ;
-//       return result;
-//    }
-
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result
-                + ((value == null) ? 0 : value.hashCode());
-        result = prime * result
-                + ((key == null) ? 0 : key.hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        PredicateClass other = (PredicateClass) obj;
-        if (value == null) {
-            if (other.value != null)
-                return false;
-        } else if (!value.equals(other.value))
-            return false;
-        if (key == null) {
-            if (other.key != null)
-                return false;
-        } else if (!key.equals(other.key))
-            return false;
-        return true;
     }
 
     @Override
@@ -85,5 +23,4 @@ public class PredicateClass
         return "PredicateClass [key=" + key + ", value=" + value
                 + "]";
     }
-
 }

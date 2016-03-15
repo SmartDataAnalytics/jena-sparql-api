@@ -14,8 +14,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.apache.jena.graph.Node;
 import org.jgrapht.DirectedGraph;
 
 import com.google.common.collect.Multimap;
@@ -30,48 +28,7 @@ import com.google.common.collect.Multimap;
  * @param <V> Data Vertex Type (e.g. jena's Node or RDFNode)
  * @param <E> Data Property Edge Type (e.g. jena's Node or Property)
  */
-public class NfaExecution<S, T, V, E> {
-    protected Nfa<S, T> nfa;
-    protected QueryExecutionFactory qef;
-
-    /**
-     * The frontier keeps track of the current paths being traced
-     */
-    protected NfaFrontier<S, V, V, E> frontier;
-
-    //protected Set<NestedRdfPath> accepted = new HashSet<NestedRdfPath>();
-    protected Function<TripletPath<V, E>, Boolean> pathCallback;
-
-    /**
-     * If an nfa is reversed only be reversing the edges of the automaton, the edge labels themselves
-     * are not reversed. This flag is used to treat edge labels (i.e. property directions) reversed.
-     */
-    protected boolean reversePropertyDirection = false;
-
-
-    // Nfa<S, LabeledEdge<V, Path>> nfa
-    public NfaExecution(Nfa<S, T> nfa, QueryExecutionFactory qef, boolean reversePropertyDirection, Function<TripletPath<V, E>, Boolean> pathCallback) {
-        this.nfa = nfa;
-        this.qef = qef;
-        this.reversePropertyDirection = reversePropertyDirection;
-        this.pathCallback = pathCallback;
-
-        this.frontier = new NfaFrontier<S, V, V, E>();
-    }
-
-    /**
-     * Adds a node to the frontier under the given states
-     *
-     * @param states
-     * @param node
-     */
-    public void add(Set<S> states, V node) {
-        for(S state : states) {
-            NestedPath<V, E> rdfPath = new NestedPath<V, E>(node);
-            frontier.add(state, node, rdfPath);
-        }
-    }
-
+public class NfaExecutionUtils {
 
     public static <S, T, G, V, E> boolean collectPaths(Nfa<S, T> nfa, NfaFrontier<S, G, V, E> frontier, Predicate<T> isEpsilon, Function<NestedPath<V, E>, Boolean> pathCallback) {
         boolean isFinished = false;
@@ -310,7 +267,7 @@ public class NfaExecution<S, T, V, E> {
             ).orElse(null);
 
         List<NestedPath<P, Q>> result = new ArrayList<>();
-        PathExecutionUtils.execNfa(
+        NfaExecutionUtils.executeNfa(
                 nfa,
                 states,
                 isEpsilon,
@@ -368,11 +325,56 @@ public class NfaExecution<S, T, V, E> {
 //
         return result;
     }
+
+
+    /**
+     * Generic Nfa execution
+     *
+     * @param nfa
+     * @param startStates
+     * @param isEpsilon
+     * @param startVertices
+     * @param pathGrouper
+     * @param getMatchingTriplets
+     * @param pathCallback
+     */
+    public static <S, T, G, V, E> void executeNfa(
+            Nfa<S, T> nfa,
+            Set<S> startStates,
+            Predicate<T> isEpsilon,
+            Set<V> startVertices,
+            Function<NestedPath<V, E>, G> pathGrouper,
+            BiFunction<T, Multimap<G, NestedPath<V, E>>, Map<V, Set<Triplet<V, E>>>> getMatchingTriplets,
+            Function<NestedPath<V, E>, Boolean> pathCallback) {
+
+        NfaFrontier<S, G, V, E> frontier = new NfaFrontier<>();
+        NfaFrontier.addAll(frontier, startStates, pathGrouper, startVertices);
+
+        while(!frontier.isEmpty()) {
+
+            boolean abort = collectPaths(nfa, frontier, isEpsilon, pathCallback);
+            if(abort) {
+                break;
+            }
+
+            DirectedGraph<S, T> nfaGraph = nfa.getGraph();
+
+            NfaFrontier<S, G, V, E> nextFrontier = advanceFrontier(
+                    frontier,
+                    nfaGraph,
+                    isEpsilon,
+                    getMatchingTriplets,
+                    pathGrouper,
+                    x -> false);
+
+            frontier = nextFrontier;
+        }
+    }
 }
 
 //
-@FunctionalInterface
-interface NfaDataGraphMatcher<T, V, E> {
-    boolean matches(Directed<T> trans, DirectedGraph<V, E> graph, V vertex);
-}
+//@FunctionalInterface
+//interface NfaDataGraphMatcher<T, V, E> {
+//    boolean matches(Directed<T> trans, DirectedGraph<V, E> graph, V vertex);
+//}
 

@@ -3,9 +3,7 @@ package org.aksw.jena_sparql_api_sparql_path2;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
@@ -21,37 +19,38 @@ import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.path.Path;
-import org.jgrapht.DirectedGraph;
-import org.jgrapht.VertexFactory;
-import org.jgrapht.graph.DefaultDirectedGraph;
-
-import com.google.common.collect.Multimap;
 
 public class PathExecutionUtils {
 
-    public static Nfa<Integer, LabeledEdge<Integer, PredicateClass>> compileToNfa(Path path) {
-        //Path path = PathParser.parse("!(<p>|(<p>|<p>))", PrefixMapping.Extended);
+    /**
+     * A function that creates a lookup service for a given qef and predicate class
+     *
+     */
+    public static <S, T> LookupService<Node, Set<Triplet<Node, Node>>> createLookupService(QueryExecutionFactory qef, PredicateClass predicateClass) {
+        ResourceShapeBuilder rsb = new ResourceShapeBuilder();
+        PathVisitorResourceShapeBuilder.apply(rsb, predicateClass, false);
 
-        path = PathVisitorTopDown.apply(path, new PathVisitorRewriteInvert());
+        //MappedConcept<Graph> mc = ResourceShape.createMappedConcept(rsb.getResourceShape(), filter);
+        MappedConcept<Graph> mc = ResourceShape.createMappedConcept(rsb.getResourceShape(), null);
+        ListService<Concept, Node, Graph> ls = ListServiceUtils.createListServiceAcc(qef, mc, false);
+        //Map<Node, Graph> nodeToGraph = ls.fetchData(null, null, null);
 
-        /*
-         * Some ugly set up of graph related stuff
-         */
-        EdgeFactoryLabeledEdge<Integer, PredicateClass> edgeFactory = new EdgeFactoryLabeledEdge<Integer, PredicateClass>();
-        EdgeLabelAccessor<LabeledEdge<Integer, PredicateClass>, PredicateClass> edgeLabelAccessor = new EdgeLabelAccessorImpl<Integer, LabeledEdge<Integer, PredicateClass>, PredicateClass>();
-        DefaultDirectedGraph<Integer, LabeledEdge<Integer, PredicateClass>> graph = new DefaultDirectedGraph<Integer, LabeledEdge<Integer, PredicateClass>>(edgeFactory);
-        VertexFactory<Integer> vertexFactory = new VertexFactoryInteger(graph);
+        // TODO Add a default fluent API
+        LookupService<Node, Graph> lsls = LookupServiceListService.create(ls);
+        lsls.partition(100);
+        //lsls = LookupServicePartition.create(lsls, 100);
 
-        PathVisitorNfaCompilerImpl<Integer, LabeledEdge<Integer, PredicateClass>, PredicateClass> nfaCompiler = new PathVisitorNfaCompilerImpl<Integer, LabeledEdge<Integer, PredicateClass>, PredicateClass>(graph, vertexFactory, edgeLabelAccessor, x -> PathVisitorPredicateClass.transform(x));
+        LookupService<Node, Set<Triplet<Node, Node>>> s = lsls.mapValues(e -> {
+//            Map<Node, Set<Triplet<Node, Node>>> r =
+//              map.entrySet().stream()
+//              .collect(Collectors.toMap(Entry::getKey, e -> graphToTriplets(e.getValue())));
+            Set<Triplet<Node, Node>> r = graphToTriplets(e);
+            return r;
+        });
 
-        /*
-         * The actual nfa conversion step
-         */
-        path.visit(nfaCompiler);
-        Nfa<Integer, LabeledEdge<Integer, PredicateClass>> result = nfaCompiler.complete();
+        return s;
+    };
 
-        return result;
-    }
 
     public static Set<Triplet<Node, Node>> graphToTriplets(Graph graph) {
         Set<Triplet<Node, Node>> result = graph
@@ -63,7 +62,7 @@ public class PathExecutionUtils {
 
     public static void executePath(Path path, Node startNode, Node targetNode, QueryExecutionFactory qef, Function<NestedPath<Node, Node>, Boolean> pathCallback) {
 
-        Nfa<Integer, LabeledEdge<Integer, PredicateClass>> nfa = compileToNfa(path);
+        Nfa<Integer, LabeledEdge<Integer, PredicateClass>> nfa = PathCompiler.compileToNfa(path);
 
 
         System.out.println("NFA");
@@ -86,37 +85,8 @@ public class PathExecutionUtils {
         NfaFrontier.addAll(frontier, nfa.getStartStates(), nodeGrouper, startNode);
 
 
-        Function<Directed<LabeledEdge<Integer, PredicateClass>>, Function<Iterable<Node>, Map<Node, Set<Triplet<Node, Node>>>>> createLookupService = (Directed<LabeledEdge<Integer, PredicateClass>> diTransition) -> {
-            //Path pathx = diTransition.getProperty().getLabel();
-            PredicateClass pathx = diTransition.getValue().getLabel();
-            boolean assumeReversed = diTransition.isReverse();
-
-            ResourceShapeBuilder rsb = new ResourceShapeBuilder();
-            PathVisitorResourceShapeBuilder.apply(rsb, pathx, assumeReversed);
-
-            //PathVisitorResourceShapeBuilder visitor = new PathVisitorResourceShapeBuilder(assumeReversed);
-            //pathx.visit(visitor);
-            //ResourceShapeBuilder rsb = visitor.getResourceShapeBuilder();
 
 
-            //MappedConcept<Graph> mc = ResourceShape.createMappedConcept(rsb.getResourceShape(), filter);
-            MappedConcept<Graph> mc = ResourceShape.createMappedConcept(rsb.getResourceShape(), null);
-            ListService<Concept, Node, Graph> ls = ListServiceUtils.createListServiceAcc(qef, mc, false);
-            //Map<Node, Graph> nodeToGraph = ls.fetchData(null, null, null);
-
-            LookupService<Node, Graph> lsls = LookupServiceListService.create(ls);
-            lsls = LookupServicePartition.create(lsls, 100);
-
-            Function<Iterable<Node>, Map<Node, Set<Triplet<Node, Node>>>> s = lsls.andThen(map -> {
-                Map<Node, Set<Triplet<Node, Node>>> r =
-                  map.entrySet().stream()
-                  .collect(Collectors.toMap(Entry::getKey, e -> graphToTriplets(e.getValue())));
-                //Map<Node, Graphlet<Node, Node>> r = map.entrySet().stream().collect(Collectors.toMap(Entry::getKey, e -> new GraphletGraph(e.getValue())));
-                return r;
-            });
-
-            return s;
-        };
 
         // TODO: How to wrap a LookupService, such that we can chain transformations?
         // Ok, java8 supports this natively
@@ -133,7 +103,7 @@ public class PathExecutionUtils {
 
         while(!frontier.isEmpty()) {
 
-            boolean abort = NfaExecution.collectPaths(nfa, frontier, LabeledEdgeImpl::isEpsilon, pathCallback);
+            boolean abort = NfaExecutionUtils.collectPaths(nfa, frontier, LabeledEdgeImpl::isEpsilon, pathCallback);
             if(abort) {
                 break;
             }
@@ -141,9 +111,17 @@ public class PathExecutionUtils {
             if(true) {
                 throw new RuntimeException("Adjust the code");
             }
-            NfaFrontier<Integer, Node, Node, Node> nextFrontier = null; //NfaExecution.advanceFrontier(frontier, nfa, false, LabeledEdgeImpl::isEpsilon, createLookupService);
-            //System.out.println("advancing...");
-            frontier = nextFrontier;
+            //NfaFrontier<Integer, Node, Node, Node> nextFrontier = null; //
+//            NfaFrontier<Integer, Node, Node, Node> nextFrontier = NfaExecutionUtils.advanceFrontier(
+//                    frontier,
+//                    nfa,
+//                    LabeledEdgeImpl::isEpsilon,
+//                    createLookupService, // getTriplets
+//                    nestedPath -> nestedPath.getCurrent(),
+//                    false
+//                    );
+//            //System.out.println("advancing...");
+//            frontier = nextFrontier;
         }
 
     }
@@ -180,49 +158,5 @@ public class PathExecutionUtils {
 //                pathCallback);
 //    }
 
-
-    /**
-     * Generic Nfa execution
-     *
-     * @param nfa
-     * @param startStates
-     * @param isEpsilon
-     * @param startVertices
-     * @param pathGrouper
-     * @param getMatchingTriplets
-     * @param pathCallback
-     */
-    public static <S, T, G, V, E> void execNfa(
-            Nfa<S, T> nfa,
-            Set<S> startStates,
-            Predicate<T> isEpsilon,
-            Set<V> startVertices,
-            Function<NestedPath<V, E>, G> pathGrouper,
-            BiFunction<T, Multimap<G, NestedPath<V, E>>, Map<V, Set<Triplet<V, E>>>> getMatchingTriplets,
-            Function<NestedPath<V, E>, Boolean> pathCallback) {
-
-        NfaFrontier<S, G, V, E> frontier = new NfaFrontier<>();
-        NfaFrontier.addAll(frontier, startStates, pathGrouper, startVertices);
-
-        while(!frontier.isEmpty()) {
-
-            boolean abort = NfaExecution.collectPaths(nfa, frontier, isEpsilon, pathCallback);
-            if(abort) {
-                break;
-            }
-
-            DirectedGraph<S, T> nfaGraph = nfa.getGraph();
-
-            NfaFrontier<S, G, V, E> nextFrontier = NfaExecution.advanceFrontier(
-                    frontier,
-                    nfaGraph,
-                    isEpsilon,
-                    getMatchingTriplets,
-                    pathGrouper,
-                    x -> false);
-
-            frontier = nextFrontier;
-        }
-    }
 
 }

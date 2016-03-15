@@ -43,7 +43,7 @@ public class SparqlKShortestPathFinderFactorySpark
 
 
         Integer nfaId = 1;
-        Nfa<Integer, LabeledEdge<Integer, PredicateClass>> nfa = PathExecutionUtils.compileToNfa(path);
+        Nfa<Integer, LabeledEdge<Integer, PredicateClass>> nfa = PathCompiler.compileToNfa(path);
 
 
         frontierIdToAutomaton.put(nfaId, nfa);
