@@ -7,13 +7,10 @@ import java.util.Set;
 
 import org.aksw.jena_sparql_api.concept_cache.dirty.ConceptMap;
 import org.aksw.jena_sparql_api.concept_cache.dirty.IteratorResultSetBinding;
+import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
 import org.aksw.jena_sparql_api.core.QueryExecutionDecoratorBase;
 import org.aksw.jena_sparql_api.utils.ResultSetUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.collect.Iterators;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
@@ -22,20 +19,24 @@ import org.apache.jena.query.ResultSetRewindable;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.ResultSetStream;
 import org.apache.jena.sparql.engine.binding.Binding;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class QueryExecutionViewMatcher
+import com.google.common.collect.Iterators;
+
+public class QueryExecutionViewCache
     extends QueryExecutionDecoratorBase<QueryExecution>
 {
 
     private static final Logger logger = LoggerFactory
-            .getLogger(QueryExecutionViewMatcher.class);
+            .getLogger(QueryExecutionViewCache.class);
 
     private ConceptMap conceptMap;
     private Query query;
     private Set<Var> indexVars;
     private long indexResultSetSizeThreshold = 20000;
 
-    public QueryExecutionViewMatcher(QueryExecution decoratee, ConceptMap conceptMap, Query query, Set<Var> indexVars) {
+    public QueryExecutionViewCache(QueryExecution decoratee, ConceptMap conceptMap, Query query, Set<Var> indexVars) {
         super(decoratee);
 
         this.conceptMap = conceptMap;
@@ -43,7 +44,7 @@ public class QueryExecutionViewMatcher
         this.indexVars = indexVars;
     }
 
-    public static boolean canIndexQuery(Query query, long rsSize) {
+    public static boolean canCacheQuery(Query query, long rsSize) {
         long limit = query.getLimit();
         long offset = query.getOffset();
 
@@ -55,16 +56,17 @@ public class QueryExecutionViewMatcher
         return result;
     }
 
-    public ResultSet tryIndex(ResultSet rs) {
+    public ResultSet tryToCacheResultSet(ResultSet rs) {
         ResultSetRewindable result = ResultSetFactory.copyResults(rs);
         long rsSize = result.size();
 
-        boolean canIndex = canIndexQuery(query, rsSize);
+        boolean canIndex = canCacheQuery(query, rsSize);
 
         if(canIndex) {
-            QuadFilterPattern qfp = SparqlCacheUtils.transform(query);
+            ProjectedQuadFilterPattern pqfp = SparqlCacheUtils.transform(query);
 
-            if(qfp != null) {
+            if(pqfp != null) {
+                QuadFilterPattern qfp = pqfp.getQuadFilterPattern();
 
                 ResultSet cacheRs = ResultSetUtils.project(result, indexVars, true);
 
@@ -102,7 +104,7 @@ public class QueryExecutionViewMatcher
             //it = bindings.iterator();
             ResultSet tmp = new ResultSetStream(varNames, null, bindings.iterator());
 
-            result = tryIndex(tmp);
+            result = tryToCacheResultSet(tmp);
         }
 
         return result;

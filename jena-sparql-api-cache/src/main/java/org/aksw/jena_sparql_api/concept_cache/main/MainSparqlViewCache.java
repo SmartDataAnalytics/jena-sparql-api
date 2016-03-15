@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.aksw.commons.util.StreamUtils;
-import org.aksw.jena_sparql_api.concept_cache.core.QueryExecutionFactorySparqlViewCache;
+import org.aksw.jena_sparql_api.concept_cache.core.QueryExecutionFactoryViewCache;
 import org.aksw.jena_sparql_api.concept_cache.dirty.CombinatoricsVector;
 import org.aksw.jena_sparql_api.concept_cache.dirty.ConceptMap;
 import org.aksw.jena_sparql_api.concepts.Concept;
@@ -38,7 +38,7 @@ import org.apache.jena.sparql.engine.binding.BindingHashMap;
 import org.apache.jena.sparql.engine.iterator.QueryIterPlainWrapper;
 import org.apache.jena.vocabulary.RDF;
 
-public class MainSparqlCache {
+public class MainSparqlViewCache {
 
     private ConceptMap conceptMap = new ConceptMap();
 
@@ -47,7 +47,7 @@ public class MainSparqlCache {
     private Map<Concept, List<Resource>> extension = new HashMap<Concept, List<Resource>>();
     private QueryExecutionFactory sparqlService;
 
-    public MainSparqlCache(QueryExecutionFactory sparqlService) {
+    public MainSparqlViewCache(QueryExecutionFactory sparqlService) {
         this.sparqlService = sparqlService;
     }
 
@@ -130,10 +130,10 @@ public class MainSparqlCache {
 //                .withPagination(100000)
 //                .create();
 
-        MainSparqlCache cache = new MainSparqlCache(sparqlService);
+        MainSparqlViewCache cache = new MainSparqlViewCache(sparqlService);
 
 
-        sparqlService = new QueryExecutionFactorySparqlViewCache(sparqlService);
+        sparqlService = new QueryExecutionFactoryViewCache(sparqlService);
 
 
         if(false) {

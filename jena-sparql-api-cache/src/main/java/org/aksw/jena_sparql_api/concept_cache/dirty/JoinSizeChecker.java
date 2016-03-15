@@ -199,10 +199,9 @@ public class JoinSizeChecker {
         c.addElement(a);
         c.addElement(b);
 
-
-        QuadFilterPattern qfp = SparqlCacheUtils.transform(c);
-        Map<Quad, CountInfo> map = analyze(qef, qfp, 1000l);
-        System.out.println(map);
+//        QuadFilterPattern qfp = SparqlCacheUtils.transform(c);
+//        Map<Quad, CountInfo> map = analyze(qef, qfp, 1000l);
+//        System.out.println(map);
 
         /*
         CountInfo cia = fetchCount(qef, a, null);

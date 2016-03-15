@@ -26,12 +26,12 @@ import org.apache.jena.sparql.algebra.op.OpTable;
 import org.apache.jena.sparql.core.Var;
 
 
-public class QueryExecutionFactorySparqlViewCache
+public class QueryExecutionFactoryViewCache
     extends QueryExecutionFactoryDecorator
 {
     private ConceptMap conceptMap;
 
-    public QueryExecutionFactorySparqlViewCache(QueryExecutionFactory decoratee) {
+    public QueryExecutionFactoryViewCache(QueryExecutionFactory decoratee) {
         super(decoratee);
 
         this.conceptMap = new ConceptMap();
@@ -144,7 +144,7 @@ public class QueryExecutionFactorySparqlViewCache
             if(isIndexable && !vars.isEmpty() && !queryEqualedCache) {
                 Set<Var> indexVars = Collections.singleton(vars.iterator().next());
 
-                result = new QueryExecutionViewMatcher(qe, conceptMap, query, indexVars);
+                result = new QueryExecutionViewCache(qe, conceptMap, query, indexVars);
             } else {
                 result = qe;
             }
