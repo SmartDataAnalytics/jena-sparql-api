@@ -15,6 +15,7 @@ import org.aksw.commons.collections.MapUtils;
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
 import org.aksw.jena_sparql_api.concept_cache.domain.PatternSummary;
+import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.domain.VarOccurrence;
@@ -30,6 +31,7 @@ import org.apache.jena.query.Query;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.TableFactory;
 import org.apache.jena.sparql.algebra.op.OpDistinct;
@@ -103,17 +105,17 @@ public class SparqlCacheUtils {
         return result;
     }
 
-    public static QuadFilterPattern transform(Query query) {
+    public static ProjectedQuadFilterPattern transform(Query query) {
 
         Op op = Algebra.compile(query);
-        QuadFilterPattern result = transform(op);
+        ProjectedQuadFilterPattern result = transform(op);
         return result;
     }
 
-    public static QuadFilterPattern transform(Element element) {
+    public static ProjectedQuadFilterPattern transform(Element element) {
 
         Op op = Algebra.compile(element);
-        QuadFilterPattern result = transform(op);
+        ProjectedQuadFilterPattern result = transform(op);
         return result;
     }
 
@@ -124,9 +126,13 @@ public class SparqlCacheUtils {
      * @param op
      * @return
      */
-    public static QuadFilterPattern transform(Op op) {
+    public static ProjectedQuadFilterPattern transform(Op op) {
 
-        QuadFilterPattern result = null;
+        ProjectedQuadFilterPattern result = null;
+
+        Set<Var> projectVars = null;
+
+        //QuadFilterPattern result = null;
 
         //op = Algebra.optimize(op);
         op = Algebra.toQuadForm(op);
@@ -138,7 +144,10 @@ public class SparqlCacheUtils {
 
         //OpProject opProject;
         if(op instanceof OpProject) {
-            op = ((OpProject)op).getSubOp();
+            OpProject tmp = (OpProject)op;
+            projectVars = new HashSet<>(tmp.getVars());
+
+            op = tmp.getSubOp();
         }
 
         OpFilter opFilter;
@@ -159,7 +168,12 @@ public class SparqlCacheUtils {
             ExprList exprs = opFilter.getExprs();
             Expr expr = ExprUtils.andifyBalanced(exprs);
 
-            result = new QuadFilterPattern(quads, expr);
+            if(projectVars == null) {
+                projectVars = new HashSet<>(OpVars.mentionedVars(opQuadPattern));
+            }
+
+            QuadFilterPattern qfp = new QuadFilterPattern(quads, expr);
+            result = new ProjectedQuadFilterPattern(projectVars, qfp);
         }
 
 

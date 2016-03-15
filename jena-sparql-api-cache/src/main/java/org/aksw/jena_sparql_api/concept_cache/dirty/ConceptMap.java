@@ -20,6 +20,7 @@ import org.aksw.jena_sparql_api.concept_cache.core.SetUtils;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
 import org.aksw.jena_sparql_api.concept_cache.core.TableUtils;
 import org.aksw.jena_sparql_api.concept_cache.domain.PatternSummary;
+import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.domain.VarOccurrence;
@@ -42,7 +43,8 @@ public class ConceptMap
 
     public void lookup(Query query) {
         //System.out.println("LOOKUP: " + query);
-        QuadFilterPattern qfp = SparqlCacheUtils.transform(query);
+        ProjectedQuadFilterPattern pqfp = SparqlCacheUtils.transform(query);
+        QuadFilterPattern qfp = pqfp.getQuadFilterPattern();
 
         lookup(qfp);
     }
@@ -337,8 +339,8 @@ public class ConceptMap
     public void index(Query query, ResultSet rs) {
 
         //Table table = createTable(rs);
-
-        QuadFilterPattern qfp = SparqlCacheUtils.transform(query);
+        ProjectedQuadFilterPattern pqfp = SparqlCacheUtils.transform(query);
+        QuadFilterPattern qfp = pqfp.getQuadFilterPattern();
 
         index(qfp, rs);
     }

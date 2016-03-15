@@ -7,13 +7,10 @@ import java.util.Set;
 
 import org.aksw.jena_sparql_api.concept_cache.dirty.ConceptMap;
 import org.aksw.jena_sparql_api.concept_cache.dirty.IteratorResultSetBinding;
+import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
 import org.aksw.jena_sparql_api.core.QueryExecutionDecoratorBase;
 import org.aksw.jena_sparql_api.utils.ResultSetUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.collect.Iterators;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
@@ -22,6 +19,10 @@ import org.apache.jena.query.ResultSetRewindable;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.ResultSetStream;
 import org.apache.jena.sparql.engine.binding.Binding;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.Iterators;
 
 public class QueryExecutionConceptCache
     extends QueryExecutionDecoratorBase<QueryExecution>
@@ -43,7 +44,7 @@ public class QueryExecutionConceptCache
         this.indexVars = indexVars;
     }
 
-    public static boolean canIndexQuery(Query query, long rsSize) {
+    public static boolean canCacheQuery(Query query, long rsSize) {
         long limit = query.getLimit();
         long offset = query.getOffset();
 
@@ -55,16 +56,24 @@ public class QueryExecutionConceptCache
         return result;
     }
 
-    public ResultSet tryIndex(ResultSet rs) {
+
+    /**
+     * Attemts to create a new cache entry from the query's result set
+     *
+     * @param rs
+     * @return
+     */
+    public ResultSet tryToCacheResultSet(ResultSet rs) {
         ResultSetRewindable result = ResultSetFactory.copyResults(rs);
         long rsSize = result.size();
 
-        boolean canIndex = canIndexQuery(query, rsSize);
+        boolean canIndex = canCacheQuery(query, rsSize);
 
         if(canIndex) {
-            QuadFilterPattern qfp = SparqlCacheUtils.transform(query);
+            ProjectedQuadFilterPattern pqfp = SparqlCacheUtils.transform(query);
 
-            if(qfp != null) {
+            if(pqfp != null) {
+                QuadFilterPattern qfp = pqfp.getQuadFilterPattern();
 
                 ResultSet cacheRs = ResultSetUtils.project(result, indexVars, true);
 
@@ -84,6 +93,7 @@ public class QueryExecutionConceptCache
         ResultSet physicalRs = decoratee.execSelect();
         List<String> varNames = physicalRs.getResultVars();
 
+        // TODO This loads all bindings into memory until a threshold has been reached
         List<Binding> bindings = new ArrayList<Binding>();
 
         int i;
@@ -102,7 +112,7 @@ public class QueryExecutionConceptCache
             //it = bindings.iterator();
             ResultSet tmp = new ResultSetStream(varNames, null, bindings.iterator());
 
-            result = tryIndex(tmp);
+            result = tryToCacheResultSet(tmp);
         }
 
         return result;

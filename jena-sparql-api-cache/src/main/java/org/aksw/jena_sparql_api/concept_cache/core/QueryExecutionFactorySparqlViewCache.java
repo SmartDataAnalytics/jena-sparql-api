@@ -7,13 +7,13 @@ import java.util.Set;
 
 import org.aksw.jena_sparql_api.concept_cache.dirty.CacheResult;
 import org.aksw.jena_sparql_api.concept_cache.dirty.ConceptMap;
+import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactoryDecorator;
 import org.aksw.jena_sparql_api.model.QueryExecutionFactoryModel;
-
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryFactory;
@@ -51,10 +51,12 @@ public class QueryExecutionFactorySparqlViewCache
 
         // Step 1: Decide whether the query itself is suitable for caching
         // Conditions: The query must by comprised of: quad pattern, filter and projection
+        ProjectedQuadFilterPattern pqfp = SparqlCacheUtils.transform(query);
+        QuadFilterPattern qfp = pqfp.getQuadFilterPattern();
 
-
-
-        QuadFilterPattern qfp = SparqlCacheUtils.transform(query);
+        if(pqfp != null) {
+            qfp = pqfp.getQuadFilterPattern();
+        }
 
         CacheResult cacheResult;
 
