@@ -26,12 +26,12 @@ import org.apache.jena.sparql.algebra.op.OpTable;
 import org.apache.jena.sparql.core.Var;
 
 
-public class QueryExecutionFactoryViewMatcher
+public class QueryExecutionFactorySparqlViewCache
     extends QueryExecutionFactoryDecorator
 {
     private ConceptMap conceptMap;
 
-    public QueryExecutionFactoryViewMatcher(QueryExecutionFactory decoratee) {
+    public QueryExecutionFactorySparqlViewCache(QueryExecutionFactory decoratee) {
         super(decoratee);
 
         this.conceptMap = new ConceptMap();
@@ -49,8 +49,12 @@ public class QueryExecutionFactoryViewMatcher
 
         QueryExecution result;
 
+        // Step 1: Decide whether the query itself is suitable for caching
+        // Conditions: The query must by comprised of: quad pattern, filter and projection
 
-        QuadFilterPattern qfp = ConceptMap.transform(query);
+
+
+        QuadFilterPattern qfp = SparqlCacheUtils.transform(query);
 
         CacheResult cacheResult;
 

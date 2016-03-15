@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.concept_cache.dirty;
+package org.aksw.jena_sparql_api.concept_cache.main;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -9,7 +9,9 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.aksw.commons.util.StreamUtils;
-import org.aksw.jena_sparql_api.concept_cache.core.QueryExecutionFactoryViewMatcher;
+import org.aksw.jena_sparql_api.concept_cache.core.QueryExecutionFactorySparqlViewCache;
+import org.aksw.jena_sparql_api.concept_cache.dirty.CombinatoricsVector;
+import org.aksw.jena_sparql_api.concept_cache.dirty.ConceptMap;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
@@ -36,7 +38,7 @@ import org.apache.jena.sparql.engine.binding.BindingHashMap;
 import org.apache.jena.sparql.engine.iterator.QueryIterPlainWrapper;
 import org.apache.jena.vocabulary.RDF;
 
-public class ConceptCache {
+public class MainSparqlCache {
 
     private ConceptMap conceptMap = new ConceptMap();
 
@@ -45,7 +47,7 @@ public class ConceptCache {
     private Map<Concept, List<Resource>> extension = new HashMap<Concept, List<Resource>>();
     private QueryExecutionFactory sparqlService;
 
-    public ConceptCache(QueryExecutionFactory sparqlService) {
+    public MainSparqlCache(QueryExecutionFactory sparqlService) {
         this.sparqlService = sparqlService;
     }
 
@@ -107,7 +109,7 @@ public class ConceptCache {
 
 
 
-    public static void main2(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException {
 
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         Resource resource = resolver.getResource("data-lorenz.nt");
@@ -128,10 +130,10 @@ public class ConceptCache {
 //                .withPagination(100000)
 //                .create();
 
-        ConceptCache cache = new ConceptCache(sparqlService);
+        MainSparqlCache cache = new MainSparqlCache(sparqlService);
 
 
-        sparqlService = new QueryExecutionFactoryViewMatcher(sparqlService);
+        sparqlService = new QueryExecutionFactorySparqlViewCache(sparqlService);
 
 
         if(false) {

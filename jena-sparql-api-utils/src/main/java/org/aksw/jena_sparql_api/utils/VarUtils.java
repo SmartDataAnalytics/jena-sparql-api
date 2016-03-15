@@ -14,6 +14,7 @@ import org.apache.jena.sparql.graph.NodeTransform;
 
 public class VarUtils {
 
+
     public static Var parseVar(String str) {
         // Remove leading ? of the varName
         String varName = str.trim();

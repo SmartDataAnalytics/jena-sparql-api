@@ -7,13 +7,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
-import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.utils.QueryExecutionUtils;
 import org.aksw.jena_sparql_api.lookup.CountInfo;
 import org.aksw.jena_sparql_api.utils.CnfUtils;
-
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.algebra.Op;
@@ -128,7 +128,7 @@ public class JoinSizeChecker {
      * @param qfp
      */
     public static Map<Quad, CountInfo> analyze(QueryExecutionFactory qef, QuadFilterPattern qfp, Long limit) {
-        Map<Quad, Set<Set<Expr>>> quadToCnf = ConceptMap.quadToCnf(qfp);
+        Map<Quad, Set<Set<Expr>>> quadToCnf = SparqlCacheUtils.quadToCnf(qfp);
 
         Map<Quad, CountInfo> result = analyze(qef, quadToCnf, limit);
 
@@ -200,7 +200,7 @@ public class JoinSizeChecker {
         c.addElement(b);
 
 
-        QuadFilterPattern qfp = ConceptMap.transform(c);
+        QuadFilterPattern qfp = SparqlCacheUtils.transform(c);
         Map<Quad, CountInfo> map = analyze(qef, qfp, 1000l);
         System.out.println(map);
 

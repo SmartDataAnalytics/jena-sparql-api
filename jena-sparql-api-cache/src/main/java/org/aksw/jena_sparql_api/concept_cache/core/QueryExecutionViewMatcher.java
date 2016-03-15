@@ -62,7 +62,7 @@ public class QueryExecutionViewMatcher
         boolean canIndex = canIndexQuery(query, rsSize);
 
         if(canIndex) {
-            QuadFilterPattern qfp = ConceptMap.transform(query);
+            QuadFilterPattern qfp = SparqlCacheUtils.transform(query);
 
             if(qfp != null) {
 

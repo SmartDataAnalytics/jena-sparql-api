@@ -50,7 +50,7 @@ public class QueryExecutionFactoryConceptCache
         QueryExecution result;
 
 
-        QuadFilterPattern qfp = ConceptMap.transform(query);
+        QuadFilterPattern qfp = SparqlCacheUtils.transform(query);
 
         CacheResult cacheResult;
 

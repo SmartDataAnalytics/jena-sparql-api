@@ -4,10 +4,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.aksw.jena_sparql_api.concept_cache.dirty.ConceptMap;
+import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
+import org.apache.jena.sparql.core.Var;
 
 import com.google.common.collect.AbstractIterator;
-import org.apache.jena.sparql.core.Var;
 
 class IteratorVarMapQuadGroups
     extends AbstractIterator<Map<Var, Var>>
@@ -24,7 +24,7 @@ class IteratorVarMapQuadGroups
 
         while(itSolutionParts.hasNext()) {
             List<Map<Var, Var>> cand = itSolutionParts.next();
-            result = ConceptMap.mergeCompatible(cand);
+            result = SparqlCacheUtils.mergeCompatible(cand);
 
             if(result != null) {
                 break;
