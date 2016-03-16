@@ -213,6 +213,14 @@ public class NfaExecutionUtils {
         return result;
     }
 
+    public static <S, T> boolean isStartState(Nfa<S, T> nfa, S state, Predicate<T> isEpsilon) {
+        DirectedGraph<S, T> graph = nfa.getGraph();
+        Set<S> startStates = nfa.getStartStates();
+        Set<S> reachableStates = JGraphTUtils.transitiveGet(graph, state, -1, x -> isEpsilon.test(x));
+        boolean result = reachableStates.stream().anyMatch(s -> startStates.contains(s));
+        return result;
+    }
+
 
     /**
      * Given

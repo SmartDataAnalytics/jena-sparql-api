@@ -117,6 +117,9 @@ public class NfaDijkstra {
             Function<Pair<ValueSet<V>>, LookupService<V, Set<Triplet<V,E>>>> createTripletLookupService,
             V source,
             V target) {
+
+        //Set<S> endStates = NfaExecutionUtils.
+
         // We assign a cost to the vertex, but we not only need to track the preceeding vertex but also which edge was used
         Map<Entry<S, V>, Integer> vertexToCost = new HashMap<>();
         Map<Entry<S, V>, Triplet<Entry<S, V>, E>> vertexToMinCostPredecessor = new HashMap<>();
@@ -208,8 +211,9 @@ public class NfaDijkstra {
 
                 if(targetMinCost == null || thisCost < targetMinCost) {
                     vertexToCost.put(succ, thisCost);
+                    vertexToMinCostPredecessor.put(succ, Triplet.makeUndirected(entry.getValue()));
 
-                    boolean isAcceptingState = nfa.getEndStates().contains(state);
+                    boolean isAcceptingState = NfaExecutionUtils.isFinalState(nfa, state, isEpsilon);//nfa.getEndStates().contains(state);
                     boolean isTargetVertex = target.equals(vertex);
 
                     if(isAcceptingState && isTargetVertex) {
@@ -233,7 +237,20 @@ public class NfaDijkstra {
             List<Triplet<V, E>> path = new ArrayList<>();
             Entry<S, V> eo = reachedTargetVertex;
             while(eo != null) {
-                Triplet<Entry<S, V>, E> predecessor = vertexToMinCostPredecessor.get(reachedTargetVertex);
+                V start = eo.getValue();
+                // TODO Check whether we reached the start state
+                S state = eo.getKey();
+
+                boolean isStartState = NfaExecutionUtils.isStartState(nfa, state, isEpsilon);
+                boolean isStartVertex = source.equals(start);
+                if(isStartVertex && isStartState) {
+                    break;
+                }
+
+                Triplet<Entry<S, V>, E> predecessor = vertexToMinCostPredecessor.get(eo);
+                if(predecessor == null) {
+                    System.out.println("should not happen");
+                }
                 Entry<S, V> es = predecessor.getSubject();
                 V s = es.getValue();
                 E p = predecessor.getPredicate();
