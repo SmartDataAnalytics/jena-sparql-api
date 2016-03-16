@@ -1,10 +1,7 @@
 package org.aksw.jena_sparql_api_sparql_path2;
 
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
@@ -12,7 +9,6 @@ import org.aksw.jena_sparql_api.lookup.ListService;
 import org.aksw.jena_sparql_api.lookup.ListServiceUtils;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceListService;
-import org.aksw.jena_sparql_api.lookup.LookupServicePartition;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
@@ -26,7 +22,7 @@ public class PathExecutionUtils {
      * A function that creates a lookup service for a given qef and predicate class
      *
      */
-    public static <S, T> LookupService<Node, Set<Triplet<Node, Node>>> createLookupService(QueryExecutionFactory qef, PredicateClass predicateClass) {
+    public static <S, T> LookupService<Node, Set<Triplet<Node, Node>>> createLookupService(QueryExecutionFactory qef, Pair<ValueSet<Node>> predicateClass) {
         ResourceShapeBuilder rsb = new ResourceShapeBuilder();
         PathVisitorResourceShapeBuilder.apply(rsb, predicateClass, false);
 

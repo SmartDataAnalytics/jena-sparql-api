@@ -18,6 +18,7 @@ import org.apache.jena.sparql.algebra.op.OpN;
 import org.apache.jena.sparql.algebra.op.OpQuadBlock;
 import org.apache.jena.sparql.algebra.op.OpQuadPattern;
 import org.apache.jena.sparql.algebra.op.OpTriple;
+import org.springframework.util.Assert;
 
 
 
@@ -197,6 +198,32 @@ public class OpUtils {
         }
     }
 
+
+    public static Op copy(Op op, List<Op> subOps) {
+        Op result;
+        int l = subOps.size();
+        if(op instanceof Op0) {
+            Assert.state(l == 0);
+            Op0 o = (Op0)op;
+            result = o.copy();
+        } else if (op instanceof Op1) {
+            Assert.state(l == 1);
+            Op1 o = (Op1)op;
+            result = o.copy(subOps.get(0));
+        } else if (op instanceof Op2) {
+            Assert.state(l == 2);
+            Op2 o = (Op2)op;
+            result = o.copy(subOps.get(0), subOps.get(1));
+        } else if (op instanceof OpN) {
+            //Assert.state(subOps.size() == 0);
+            OpN o = (OpN)op;
+            result = o.copy(subOps);
+        } else {
+            throw new RuntimeException("Should not happen");
+        }
+
+        return result;
+    }
 
     public static List<Op> getSubOps(Op op) {
         List<Op> result;

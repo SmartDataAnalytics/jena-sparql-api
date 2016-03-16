@@ -78,8 +78,8 @@ public class PathVisitorResourceShapeBuilder
     }
 
 
-    public static void apply(ResourceShapeBuilder rsb, PredicateClass predicateClass, boolean reverse) {
-       apply(rsb, predicateClass.getFwdNodes(), reverse);
-       apply(rsb, predicateClass.getBwdNodes(), !reverse);
+    public static void apply(ResourceShapeBuilder rsb, Pair<ValueSet<Node>> predicateClass, boolean reverse) {
+       apply(rsb, predicateClass.getKey(), reverse);
+       apply(rsb, predicateClass.getValue(), !reverse);
     }
 }

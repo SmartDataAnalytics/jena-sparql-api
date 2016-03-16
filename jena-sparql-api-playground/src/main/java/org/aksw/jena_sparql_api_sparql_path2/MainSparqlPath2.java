@@ -1,17 +1,20 @@
 package org.aksw.jena_sparql_api_sparql_path2;
 
 import java.io.IOException;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.GraphSparqlService;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
@@ -79,6 +82,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
 
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.Multimap;
 
 
 
@@ -497,6 +501,20 @@ public class MainSparqlPath2 {
             Nfa<Integer, LabeledEdge<Integer, PredicateClass>> nfa = PathCompiler.compileToNfa(path);
             System.out.println("FORWARD NFA for " + path);
             printNfa(nfa);
+
+
+            Function<Pair<ValueSet<Node>>, LookupService<Node, Set<Triplet<Node, Node>>>> createTripletLookupService =
+                    pc -> PathExecutionUtils.createLookupService(qef, pc);
+
+            Set<Entry<Integer, Node>> starts = new HashSet<>();
+            nfa.getStartStates().forEach(s -> starts.add(new SimpleEntry<>(s, startNode)));
+
+            Multimap<Entry<Integer, Node>, Triplet<Entry<Integer, Node>, Node>> succs = NfaDijkstra.getSuccessors(
+                    nfa,
+                    e -> e.getLabel(),
+                    createTripletLookupService,
+                    starts);
+            System.out.println("Successors: " + succs);
 
             //MinSourceSinkCut<Integer, LabeledEdge<Integer, PredicateClass>> x = new MinSourceSinkCut<Integer, LabeledEdge<Integer, PredicateClass>>(nfa.getGraph());
             //x.computeMinCut(source, sink);

@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api_sparql_path2;
 
+import java.util.AbstractMap.SimpleEntry;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -9,8 +9,9 @@ import java.util.Set;
 import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.lookup.LookupService;
+import org.aksw.jena_sparql_api.util.frontier.Frontier;
+import org.aksw.jena_sparql_api.util.frontier.FrontierImpl;
 import org.jgrapht.DirectedGraph;
-import org.jgrapht.graph.DefaultDirectedGraph;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -69,11 +70,27 @@ public class NfaDijkstra {
         return result;
     }
 
-    public static <S, T, V, E> void run(
+
+//    public static void main(String[] args) {
+//        QueryExecutionFactory qef = FluentQueryExecutionFactory.model(
+//                RDFDataMgr.loadModel("")).create();
+//
+//        Function<Pair<ValueSet<Node>>, LookupService<Node, Set<Triplet<Node,Node>>>> fn =
+//                pc -> PathExecutionUtils.createLookupService(qef, pc);
+//
+//        Nfa<Integer, PredicateClass> nfa;
+//
+//        run(nfa, t -> t.)
+//
+//    }
+
+
+    public static <S, T, V, E>  Multimap<Entry<S, V>, Triplet<Entry<S, V>, E>> getSuccessors(
             Nfa<S, T> nfa,
             Function<T, Pair<ValueSet<V>>> transToVertexClass,
             Function<Pair<ValueSet<V>>, LookupService<V, Set<Triplet<V,E>>>> createTripletLookupService,
-            V start)
+            Collection<Entry<S, V>> stateVertexPairs
+            )
     {
         // A graph for the data loaded so far
         //DirectedGraph<Entry<S, V>, Triplet<Entry<S, V>, E>> dynamicGraph = new DefaultDirectedGraph<>(Triplet.class);
@@ -82,56 +99,68 @@ public class NfaDijkstra {
 
         //Set<Entry<S, V>> open = new HashSet<>();
         Multimap<S, V> open = HashMultimap.create();
-        Multimap<S, V> next = HashMultimap.create();
+        Multimap<Entry<S, V>, Triplet<Entry<S, V>, E>> result = HashMultimap.create();
 
-        nfa.getStartStates().forEach(s -> open.put(s, start));
+        stateVertexPairs.forEach(e -> open.put(e.getKey(), e.getValue()));
+
+        //fa.getStartStates().forEach(s -> open.put(s, start));
+//        Frontier<Entry<S, V>> open = new FrontierImpl<>();
+//        stateVertexPairs.forEach(e -> open.add(e));
+
 
         DirectedGraph<S, T> nfaGraph = nfa.getGraph();
-        while(!open.isEmpty()) {
-            open.asMap().entrySet().forEach(e -> {
-                // Get all successor states and
-                S state = e.getKey();
-                Collection<V> vertices = e.getValue();
-                Set<T> transitions = nfaGraph.outgoingEdgesOf(state);
+//        while(!open.isEmpty()) {
+        //open.asMap().entrySet().forEach(e -> {
+        for(Entry<S, Collection<V>> e : open.asMap().entrySet()) {
+            // Get all successor states and
+            S state = e.getKey();
+            Collection<V> vertices = e.getValue();
+            Set<T> transitions = nfaGraph.outgoingEdgesOf(state);
 
-                Pair<ValueSet<V>> vertexClass = transitions.stream().reduce(
-                        (Pair<ValueSet<V>>)new VertexClass<V>(),
-                        (a, b) -> transToVertexClass.apply(b),
-                        (a, b) -> VertexClass.union(a, b));
+            Pair<ValueSet<V>> vertexClass = transitions.stream().reduce(
+                    (Pair<ValueSet<V>>)new VertexClass<V>(),
+                    (a, b) -> transToVertexClass.apply(b),
+                    (a, b) -> VertexClass.union(a, b));
 
-                // TODO reduce the vertex classes to a final one
-                //LookupService<V, Triplet<V, E>> tripletService = createTripletLookupService.apply(vertexClass);
-                    //return r;
+            // TODO reduce the vertex classes to a final one
+            //LookupService<V, Triplet<V, E>> tripletService = createTripletLookupService.apply(vertexClass);
+                //return r;
 
-                LookupService<V, Set<Triplet<V, E>>> tripletService = createTripletLookupService.apply(vertexClass);
+            LookupService<V, Set<Triplet<V, E>>> tripletService = createTripletLookupService.apply(vertexClass);
 
-                // For all nodes in the state
-                Map<V, Set<Triplet<V, E>>> vToTriplets = tripletService.apply(vertices);
+            // For all nodes in the state
+            Map<V, Set<Triplet<V, E>>> vToTriplets = tripletService.apply(vertices);
 
-                // We now need to check which triplet matched which transition so that we associate the right successor state
-                vToTriplets.entrySet().forEach(vToTriplet -> {
-                    V v = vToTriplet.getKey();
-                    // for every individual transition
-                    transitions.stream().forEach(t -> {
-                        Pair<ValueSet<V>> vc = transToVertexClass.apply(t);
+            // We now need to check which triplet matched which transition so that we associate the right successor state
+            vToTriplets.entrySet().forEach(vToTriplet -> {
+                V v = vToTriplet.getKey();
+                Entry<S, V> source = new SimpleEntry<>(state, v);
 
-                        // for every triplet check for its origin
-                        vToTriplet.getValue().stream().forEach(triplet -> {
-                            V targetVertex = Triplet.getTarget(triplet, v);
-                            //V targetVertex = Triplet.getTarget(triplet, reverse);
-                            boolean isOrig = isOrigin(vc, v, triplet);
-                            if(isOrig) {
-                                // Get the transitions target state
-                                S targetState = nfaGraph.getEdgeTarget(t);
-                                next.put(targetState, targetVertex);
-                            }
-                        });
+                // for every individual transition
+                transitions.stream().forEach(t -> {
+                    Pair<ValueSet<V>> vc = transToVertexClass.apply(t);
 
+                    // for every triplet check for its origin
+                    vToTriplet.getValue().stream().forEach(triplet -> {
+                        V targetVertex = Triplet.getTarget(triplet, v);
+                        //V targetVertex = Triplet.getTarget(triplet, reverse);
+                        boolean isOrig = isOrigin(vc, v, triplet);
+                        if(isOrig) {
+                            // Get the transitions target state
+                            S targetState = nfaGraph.getEdgeTarget(t);
+                            Entry<S, V> target = new SimpleEntry<>(targetState, targetVertex);
+                            Triplet<Entry<S, V>, E> trip = new Triplet<>(source, triplet.getPredicate(), target);
+                            result.put(source, trip);
+                            //result.put(target, arg1);
+                            //result.put(targetState, targetVertex);
+                        }
                     });
+
                 });
             });
         }
 
+        return result;
         //Map<Entry<S, V>, <S, V>> vertextToPredecessor;
 
 
