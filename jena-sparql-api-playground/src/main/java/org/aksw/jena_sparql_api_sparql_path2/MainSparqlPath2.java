@@ -90,7 +90,7 @@ public class MainSparqlPath2 {
 
     private static final Logger logger = LoggerFactory.getLogger(MainSparqlPath2.class);
 
-    public static SparqlService wrapSparqlService(SparqlService coreSparqlService, SparqlStmtParserImpl sparqlStmtParser, Prologue prologue) {
+    public static SparqlService proxySparqlService(SparqlService coreSparqlService, SparqlStmtParserImpl sparqlStmtParser, Prologue prologue) {
 
         GraphSparqlService graph = new GraphSparqlService(coreSparqlService);
         Model model = ModelFactory.createModelForGraph(graph);
@@ -421,7 +421,7 @@ public class MainSparqlPath2 {
                     DatasetDescription datasetDescription, Object authenticator) {
 
                 SparqlService coreSparqlService = FluentSparqlService.http(serviceUri, datasetDescription, (HttpAuthenticator)authenticator).create();
-                SparqlService r = wrapSparqlService(coreSparqlService, sparqlStmtParser, prologue);
+                SparqlService r = proxySparqlService(coreSparqlService, sparqlStmtParser, prologue);
                 return r;
             }
         };
@@ -474,6 +474,7 @@ public class MainSparqlPath2 {
         if(true) {
             //ssf.createSparqlService("http://, datasetDescription, authenticator)
             SparqlService ss = ssf.createSparqlService(null, dataset, null);
+
             QueryExecutionFactory qef = ss.getQueryExecutionFactory();
             //ListService<Concept, Node, List<Node>> lsx =
             //LookupService<Node, List<Node>> ls = LookupServiceListService.create(lsx);
@@ -503,8 +504,10 @@ public class MainSparqlPath2 {
             printNfa(nfa);
 
 
+            QueryExecutionFactory rawQef = ssf2.createSparqlService(null, dataset, null).getQueryExecutionFactory();
+
             Function<Pair<ValueSet<Node>>, LookupService<Node, Set<Triplet<Node, Node>>>> createTripletLookupService =
-                    pc -> PathExecutionUtils.createLookupService(qef, pc);
+                    pc -> PathExecutionUtils.createLookupService(rawQef, pc);
 
             Set<Entry<Integer, Node>> starts = new HashSet<>();
             nfa.getStartStates().forEach(s -> starts.add(new SimpleEntry<>(s, startNode)));

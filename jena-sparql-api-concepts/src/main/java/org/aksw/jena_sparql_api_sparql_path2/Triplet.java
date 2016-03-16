@@ -109,7 +109,7 @@ public class Triplet<V, E> {
      */
     public static int getDirection(Triplet<?, ?> triplet, Object node) {
         int result =
-                (triplet.getSubject().equals(node) ? 1 : 0) &
+                (triplet.getSubject().equals(node) ? 1 : 0) |
                 (triplet.getObject().equals(node) ? 2 : 0);
 
         return result;
@@ -168,7 +168,7 @@ public class Triplet<V, E> {
 
     @Override
     public String toString() {
-        return "PathTriple [subject=" + subject + ", predicate=" + predicate
+        return "Triplet [subject=" + subject + ", predicate=" + predicate
                 + ", object=" + object + "]";
     }
 }
