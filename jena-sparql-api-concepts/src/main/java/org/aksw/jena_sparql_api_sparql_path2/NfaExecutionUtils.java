@@ -57,7 +57,7 @@ public class NfaExecutionUtils {
 
 
     public static <S, D, T extends LabeledEdge<S, ? extends Directed<? extends ValueSet<D>>>> Pair<ValueSet<D>> extractNextPropertyClasses(DirectedGraph<S, T> nfaGraph, Predicate<T> isEpsilon, Set<S> states, boolean reverse) {
-        Set<T> transitions = JGraphTUtils.resolveTransitions(nfaGraph, states, isEpsilon, false);
+        Set<T> transitions = JGraphTUtils.resolveTransitions(nfaGraph, isEpsilon, states, false);
 
         ValueSet<D> fwd = ValueSet.createEmpty();
         ValueSet<D> bwd = ValueSet.createEmpty();
@@ -134,7 +134,7 @@ public class NfaExecutionUtils {
         Set<S> currentStates = frontier.getCurrentStates();
         for(S state : currentStates) {
             Multimap<G, NestedPath<V, E>> ps = frontier.getPaths(state);
-            Set<T> transitions = JGraphTUtils.resolveTransitions(nfaGraph, state, isEpsilon, false);
+            Set<T> transitions = JGraphTUtils.resolveTransitions(nfaGraph, isEpsilon, state, false);
 
             for(T trans : transitions) {
 

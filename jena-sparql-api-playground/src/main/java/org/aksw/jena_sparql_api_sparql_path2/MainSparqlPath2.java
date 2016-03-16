@@ -512,8 +512,9 @@ public class MainSparqlPath2 {
             Set<Entry<Integer, Node>> starts = new HashSet<>();
             nfa.getStartStates().forEach(s -> starts.add(new SimpleEntry<>(s, startNode)));
 
-            Multimap<Entry<Integer, Node>, Triplet<Entry<Integer, Node>, Node>> succs = NfaDijkstra.getSuccessors(
+            Multimap<Entry<Integer, Node>, Triplet<Entry<Integer, Node>, Directed<Node>>> succs = NfaDijkstra.getSuccessors(
                     nfa,
+                    LabeledEdgeImpl::isEpsilon,
                     e -> e.getLabel(),
                     createTripletLookupService,
                     starts);

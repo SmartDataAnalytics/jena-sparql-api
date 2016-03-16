@@ -160,7 +160,7 @@ public class NfaExecutionSpark {
 
                         Set<S> states = frontierData.getStates();
 
-                        Set<T> transitions = JGraphTUtils.resolveTransitions(graph, states, trans -> getPredicateClass(transToPredicateClass, trans) == null, false);
+                        Set<T> transitions = JGraphTUtils.resolveTransitions(graph, trans -> getPredicateClass(transToPredicateClass, trans) == null, states, false);
 
                         boolean requiresFwdJoin = transitions.stream().anyMatch(trans -> !getPredicateClass(transToPredicateClass, trans).getFwdNodes().isEmpty());
                         boolean requiresBwdJoin = transitions.stream().anyMatch(trans -> !getPredicateClass(transToPredicateClass, trans).getBwdNodes().isEmpty());
@@ -248,7 +248,7 @@ public class NfaExecutionSpark {
                     DirectedGraph<S, T> graph = nfa.getGraph();
 
                     // Check if any of the transitions accepts the predicate
-                    Set<T> transitions = JGraphTUtils.resolveTransitions(graph, states, trans -> getPredicateClass(transToPredicateClass, trans) == null, false);
+                    Set<T> transitions = JGraphTUtils.resolveTransitions(graph, trans -> getPredicateClass(transToPredicateClass, trans) == null, states, false);
 
                     boolean result = transitions.stream().anyMatch(trans -> {
                             PredicateClass pc = getPredicateClass(transToPredicateClass, trans);
@@ -280,7 +280,7 @@ public class NfaExecutionSpark {
                     DirectedGraph<S, T> graph = nfa.getGraph();
 
                     // Check if any of the transitions accepts the predicate
-                    Set<T> transitions = JGraphTUtils.resolveTransitions(graph, states, trans -> getPredicateClass(transToPredicateClass, trans) == null, false);
+                    Set<T> transitions = JGraphTUtils.resolveTransitions(graph, trans -> getPredicateClass(transToPredicateClass, trans) == null, states, false);
 
                     Set<S> nextStates = transitions.stream()
                             .filter(trans -> {

@@ -21,6 +21,34 @@ public class Triplet<V, E> {
         this.object = object;
     }
 
+    public static <V, E> Triplet<V, Directed<E>> makeDirected(Triplet<V, E> in, V source) {
+        int dir = getDirection(in, source);
+        Triplet<V, Directed<E>> result = (dir & 1) != 0
+                ? new Triplet<>(in.getSubject(), new Directed<>(in.getPredicate(), false), in.getObject())
+                : (dir & 2) != 0
+                    ? new Triplet<>(in.getObject(), new Directed<>(in.getPredicate(), true), in.getSubject())
+                    : null
+                ;
+
+        if(result == null) {
+            throw new RuntimeException("Should not happen");
+        }
+
+        return result;
+    }
+
+    public static <V, E> Triplet<V, E> makeUndirected(Triplet<V, Directed<E>> in) {
+        Directed<E> dp = in.getPredicate();
+        Triplet<V, E> result = dp.isReverse()
+                ? new Triplet<>(in.getObject(), dp.getValue(), in.getSubject())
+                : new Triplet<>(in.getSubject(), dp.getValue(), in.getObject())
+                ;
+
+        return result;
+    }
+
+
+
     public static <V, E> Triplet<V, E> create(V s, E e, V o, boolean reverse) {
         Triplet<V, E> result = !reverse
                 ? new Triplet<>(s, e, o)

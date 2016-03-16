@@ -754,7 +754,7 @@ public class EdgeReducer {
             Set<S> nextStates = new HashSet<S>();
             Multimap<S, P> nextTransitions = HashMultimap.create();
 
-            Set<T> transitions = JGraphTUtils.resolveTransitions(graph, states, isEpsilon, false);
+            Set<T> transitions = JGraphTUtils.resolveTransitions(graph, isEpsilon, states, false);
 
             for(T t : transitions) {
                 S state = graph.getEdgeTarget(t);

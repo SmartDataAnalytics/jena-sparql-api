@@ -116,10 +116,10 @@ public class JGraphTUtils {
         return result;
     }
 
-    public static <V, E> Set<E> resolveTransitions(DirectedGraph<V, E> graph, Set<V> vertices, Predicate<E> isEpsilon, boolean reverse) {
+    public static <V, E> Set<E> resolveTransitions(DirectedGraph<V, E> graph, Predicate<E> isEpsilon, Collection<V> vertices, boolean reverse) {
         Set<E> result = vertices
                 .stream()
-                .flatMap(v -> resolveTransitions(graph, v, isEpsilon, reverse).stream())
+                .flatMap(v -> resolveTransitions(graph, isEpsilon, v, reverse).stream())
                 .collect(Collectors.toSet());
 
         return result;
@@ -129,7 +129,7 @@ public class JGraphTUtils {
      * Returns the set of non-epsilon edges reachable via epsilon transitions from the given vertex
      *  // Check if a state is implicitly final if it has an epsilon transition to a final state
      */
-    public static <V, E> Set<E> resolveTransitions(DirectedGraph<V, E> graph, V vertex, Predicate<E> isEpsilon, boolean reverse) {
+    public static <V, E> Set<E> resolveTransitions(DirectedGraph<V, E> graph, Predicate<E> isEpsilon, V vertex, boolean reverse) {
 
         Set<E> result = new HashSet<>();
         Set<E> visited = new HashSet<>();
