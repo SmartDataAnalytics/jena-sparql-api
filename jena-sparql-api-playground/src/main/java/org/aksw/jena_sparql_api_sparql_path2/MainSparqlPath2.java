@@ -339,8 +339,8 @@ public class MainSparqlPath2 {
             predJoinDataset = DatasetDescriptionUtils.createDefaultGraph("http://fp7-pp.publicdata.eu/summary/predicate-join/");
 
             desiredPred = NodeFactory.createURI("http://fp7-pp.publicdata.eu/ontology/funding");
-            //pathExprStr = createPathExprStr("http://fp7-pp.publicdata.eu/ontology/funding");
-            pathExprStr = "<http://fp7-pp.publicdata.eu/ontology/funding>/^<http://foo>/<http://fp7-pp.publicdata.eu/ontology/funding>/<http://fp7-pp.publicdata.eu/ontology/partner>/!<http://foobar>*";
+            pathExprStr = createPathExprStr("http://fp7-pp.publicdata.eu/ontology/funding");
+            //pathExprStr = "<http://fp7-pp.publicdata.eu/ontology/funding>/^<http://foo>/<http://fp7-pp.publicdata.eu/ontology/funding>/<http://fp7-pp.publicdata.eu/ontology/partner>/!<http://foobar>*";
             startNode = NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/project/257943");
             endNode = NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/city/France-PARIS");
 
@@ -454,9 +454,13 @@ public class MainSparqlPath2 {
         ssf2 = FluentSparqlServiceFactory.from(ssf2)
                 .configFactory()
                     .defaultServiceUri("http://localhost:8890/sparql")
+                    .configService()
+                        .configQuery()
+                            .withPagination(1000)
+                        .end()
+                    .end()
                 .end()
                 .create();
-
 
 
         SparqlService ssps = ssf2.createSparqlService(null, predDataset, null);
@@ -512,13 +516,23 @@ public class MainSparqlPath2 {
             Set<Entry<Integer, Node>> starts = new HashSet<>();
             nfa.getStartStates().forEach(s -> starts.add(new SimpleEntry<>(s, startNode)));
 
-            Multimap<Entry<Integer, Node>, Triplet<Entry<Integer, Node>, Directed<Node>>> succs = NfaDijkstra.getSuccessors(
+//            Multimap<Entry<Integer, Node>, Triplet<Entry<Integer, Node>, Directed<Node>>> succs = NfaDijkstra.getSuccessors(
+//                    nfa,
+//                    LabeledEdgeImpl::isEpsilon,
+//                    e -> e.getLabel(),
+//                    createTripletLookupService,
+//                    starts);
+//            System.out.println("Successors: " + succs);
+
+            TripletPath<Node, Node> shortestPath = NfaDijkstra.dijkstra(
                     nfa,
                     LabeledEdgeImpl::isEpsilon,
                     e -> e.getLabel(),
                     createTripletLookupService,
-                    starts);
-            System.out.println("Successors: " + succs);
+                    startNode,
+                    endNode);
+            System.out.println("Shortest Path: " + shortestPath);
+
 
             //MinSourceSinkCut<Integer, LabeledEdge<Integer, PredicateClass>> x = new MinSourceSinkCut<Integer, LabeledEdge<Integer, PredicateClass>>(nfa.getGraph());
             //x.computeMinCut(source, sink);

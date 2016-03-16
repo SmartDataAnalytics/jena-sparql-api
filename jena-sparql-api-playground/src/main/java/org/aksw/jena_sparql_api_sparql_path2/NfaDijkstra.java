@@ -5,16 +5,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
 import org.aksw.jena_sparql_api.lookup.LookupService;
-import org.aksw.jena_sparql_api.util.frontier.Frontier;
-import org.aksw.jena_sparql_api.util.frontier.FrontierImpl;
 import org.jgrapht.DirectedGraph;
 
 import com.google.common.collect.HashMultimap;
@@ -63,6 +63,10 @@ public class NfaDijkstra {
      * @param triplet
      * @return
      */
+//    public static <T, V, E> boolean isOrigin(Pair<ValueSet<V>> vertexClass, Triplet<V, Directed<E>> triplet) {
+//        //ValueSet<V> valueSet
+//    }
+
     public static <T, V, E> boolean isOrigin(Pair<ValueSet<V>> vertexClass, V vertex, Triplet<V, E> triplet) { //T transition, Function<T, Pair<ValueSet<V>>> transToVertexClass,
         List<Boolean> dirs = Triplet.getDirections(triplet, vertex);
         //Pair<ValueSet<V>> vertexClass = transToVertexClass.apply(transition);
@@ -93,6 +97,8 @@ public class NfaDijkstra {
 //
 //    }
 
+
+
     /**
      * Finds the shortest path connecting the source and target nodes
      * in accordance with an nfa
@@ -116,29 +122,58 @@ public class NfaDijkstra {
         Map<Entry<S, V>, Triplet<Entry<S, V>, E>> vertexToMinCostPredecessor = new HashMap<>();
 
 
-        Multimap<S, V> open = HashMultimap.create();
+        //Multimap<S, V> open = HashMultimap.create();
+
+        //TreeMultimap<Integer, Entry<S, V>> costToVertices = TreeMultimap.create();
+
+        //TreeMap<Integer, Multimap<S, V>> costToStateToVertices = new TreeMap<>();
+        PriorityQueue<Entry<Integer, Entry<S, V>>> queue = new PriorityQueue<>((a, b) -> b.getKey() - a.getKey());
 
 
-        //Set<Entry<S, V>> seen = new HashSet<>();
+        Set<Entry<S, V>> open = new HashSet<>();
+        Set<Entry<S, V>> seen = new HashSet<>();
 
 
         //Multimap<Entry<S, V>, Triplet<Entry<S, V>, E>> result = HashMultimap.create();
 
-        Frontier<Entry<S, V>> frontier = new FrontierImpl<>();
-        nfa.getStartStates().forEach(s -> {
-                Entry<S, V> e = new SimpleEntry<>(s, source);
-                frontier.add(e);
-                vertexToCost.put(e, 0);
-        });
+        //Frontier<Entry<S, V>> frontier = new FrontierImpl<>();
+        for(S s : nfa.getStartStates()) {
+            Entry<S, V> e = new SimpleEntry<>(s, source);
+            open.add(e);
+            vertexToCost.put(e, 0);
+        }
+                //open.put(e.getKey(), e.getValue());
+                //frontier.add(e);
+//                vertexToCost.put(e, 0);
+//                Multimap<S, V> mm = costToStateToVertices.get(0);
+//                if(mm == null) {
+//                    mm = HashMultimap.create();
+//                    costToStateToVertices.put(0, mm);
+//                }
+//                mm.put(s, source);
+//                queue.add(new SimpleEntry<>(0, e));
+
 
         //stateVertexPairs.forEach(e -> open.put(e.getKey(), e.getValue()));
 
         Entry<S, V> reachedTargetVertex = null;
 
-        while(frontier.isEmpty()) { // TODO Pick vertex with lowest cost first
-            Entry<S, V> currentVertex = frontier.next();
-            int baseCost = vertexToCost.get(currentVertex);
-            int thisCost = baseCost + 1;
+        while(!open.isEmpty()) { // TODO Pick vertex with lowest cost first
+            seen.addAll(open);
+            //queue.poll()
+            // If a target vertex was reached, skip all vertices whose cost is already higher
+            //Multimap<S, V> next = HashMultimap.create();
+            Set<Entry<S, V>> next = new HashSet<>();
+
+
+
+            //Entry<Integer, Entry<S, V>> x = queue.poll();
+
+
+            //int baseCost = x.getKey();
+            //Entry<S, V> currentVertex = x.getValue();
+            //int baseCost = vertexToCost.get(currentVertex);
+            //int thisCost = baseCost + 1;
 
             // Fetch the successors
             Multimap<Entry<S, V>, Triplet<Entry<S, V>, Directed<E>>> succs = getSuccessors(
@@ -146,34 +181,51 @@ public class NfaDijkstra {
                     isEpsilon,
                     transToVertexClass,
                     createTripletLookupService,
-                    open.entries());
+                    open);
 
             // For every successor check whether it can now be reached with a lower cost than before
             for(Entry<Entry<S, V>, Triplet<Entry<S, V>, Directed<E>>> entry : succs.entries()) {
+
+
                 Entry<S, V> v = entry.getKey();
+                int baseCost = vertexToCost.get(v);
+                int thisCost = baseCost + 1;
+
+
                 Triplet<Entry<S, V>, Directed<E>> triplet = entry.getValue();
 
                 Entry<S, V> succ = triplet.getObject();
 
-                Number _targetMinCost = vertexToCost.getOrDefault(succ, null);
+                //next.put(succ.getKey(), succ.getValue());
+                next.add(succ);
 
-                int targetMinCost = _targetMinCost.intValue();
+                S state = succ.getKey();
+                V vertex = succ.getValue();
 
-                if(thisCost < targetMinCost) {
+                Integer targetMinCost = vertexToCost.getOrDefault(succ, null);
+
+                //int targetMinCost = _targetMinCost.intValue();
+
+                if(targetMinCost == null || thisCost < targetMinCost) {
                     vertexToCost.put(succ, thisCost);
 
+                    boolean isAcceptingState = nfa.getEndStates().contains(state);
+                    boolean isTargetVertex = target.equals(vertex);
+
+                    if(isAcceptingState && isTargetVertex) {
+                        reachedTargetVertex = succ;
+                    }
                 }
-
-                // TODO Check if the desired target vertex was reached in an accepting state
-
             }
 
 
-
+            next.removeAll(seen);
+            open = next;
             //int alt
 
         }
 
+        System.out.println("Backtracking for: " + reachedTargetVertex);
         // Create the path by backtracking from the reached target vertex
         TripletPath<V, E> result;
 
@@ -266,7 +318,7 @@ public class NfaDijkstra {
                         V targetVertex = triplet.getObject();
                         //V targetVertex = Triplet.getTarget(triplet, v);
                         //V targetVertex = Triplet.getTarget(triplet, reverse);
-                        boolean isOrig = isOrigin(vc, v, triplet);
+                        boolean isOrig = isOrigin(vc, v, rawTriplet);
                         if(isOrig) {
                             // Get the transitions target state
                             S targetState = nfaGraph.getEdgeTarget(t);
