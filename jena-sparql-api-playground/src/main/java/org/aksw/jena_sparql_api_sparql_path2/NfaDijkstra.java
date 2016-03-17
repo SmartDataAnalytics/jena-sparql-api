@@ -98,6 +98,14 @@ public class NfaDijkstra {
 //    }
 
 
+    public static <S, T, V, E> TripletPath<V, Directed<E>> dijkstra(
+            Function<Iterable<V>, Map<V, Set<Triplet<V, E>>>> successors,
+            V source,
+            V target)
+    {
+        return null;
+    }
+
 
     /**
      * Finds the shortest path connecting the source and target nodes
@@ -130,7 +138,7 @@ public class NfaDijkstra {
         //TreeMultimap<Integer, Entry<S, V>> costToVertices = TreeMultimap.create();
 
         //TreeMap<Integer, Multimap<S, V>> costToStateToVertices = new TreeMap<>();
-        PriorityQueue<Entry<Integer, Entry<S, V>>> queue = new PriorityQueue<>((a, b) -> b.getKey() - a.getKey());
+        //PriorityQueue<Entry<Integer, Entry<S, V>>> queue = new PriorityQueue<>((a, b) -> b.getKey() - a.getKey());
 
 
         Set<Entry<S, V>> open = new HashSet<>();

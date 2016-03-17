@@ -4,10 +4,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.Triple;
-
+/**
+ * A path from triplets. A path is expected to be connected.
+ *
+ * @author raven
+ *
+ * @param <V>
+ * @param <E>
+ */
 public class TripletPath<V, E> {
     protected V start;
     protected V end;
@@ -18,6 +24,35 @@ public class TripletPath<V, E> {
         this.start = start;
         this.end = end;
         this.triplets = triples;
+    }
+
+    public Set<V> getNodeSet() {
+        Set<V> result = new HashSet<>();
+        result.add(start);
+        for(Triplet<V, E> t : triplets) {
+            result.add(t.getSubject());
+            result.add(t.getObject());
+        }
+        result.add(end);
+        return result;
+    }
+
+    //a [t1] b [t2] c
+    public V getNode(int i) {
+        V result;
+        int n = triplets.size();
+        if(i == 0) {
+            result = start;
+        } else if(i == n) { // note: if there are no triplets, start and end are expected to be equal
+            result = end;
+        } else if(i < n) {
+            Triplet<V, E> tmp = triplets.get(i);
+            result = tmp.getSubject();
+        } else {
+            throw new IndexOutOfBoundsException(i + " must not exceed " + n);
+        }
+
+        return result;
     }
 
     /**
@@ -31,6 +66,14 @@ public class TripletPath<V, E> {
         return result;
     }
 
+    public TripletPath<V, E> subPath(int fromIndex, int toIndex) {
+        List<Triplet<V, E>> ts = triplets.subList(fromIndex, toIndex);
+
+        // TODO We need to get thet start and end nodes right
+        TripletPath<V, E> result = new TripletPath<>(start, end, ts);
+        return result;
+    }
+
     public V getStart() {
         return start;
     }
@@ -39,19 +82,69 @@ public class TripletPath<V, E> {
         return end;
     }
 
+    /**
+     * Returns the number of triplets - NOT nodes
+     *
+     * @return
+     */
     public int getLength() {
         int result = triplets.size();
         return result;
     }
 
+    // maybe: get node list
+//    public int getNodeLength() {
+//        int n = triplets.size();
+//        int result = triple
+//    }
+
     public List<Triplet<V, E>> getTriplets() {
         return triplets;
     }
+
+    public static <V, E> TripletPath<V, Directed<E>> makeDirected(TripletPath<V, E> path) {
+        V s = path.getStart();
+        List<Triplet<V, E>> triplets = path.getTriplets();
+        List<Triplet<V, Directed<E>>> newTriplets = new ArrayList<>(triplets.size());
+
+        for(Triplet<V, E> t : triplets) {
+            V o;
+            boolean reverse;
+            if(t.getSubject().equals(s)) {
+                reverse = false;
+                o = t.getObject();
+            } else if(t.getObject().equals(s)) {
+                o = t.getSubject();
+                reverse = true;
+            } else {
+                // disconnected triplet in the path, print out the new subject
+                o = t.getObject();
+                //dir = "; " + t.getSubject() + " ";
+                reverse = false;
+            }
+
+            Directed<E> p = new Directed<>(t.getPredicate(), reverse);
+            newTriplets.add(new Triplet<>(s, p, o));
+        }
+
+        TripletPath<V, Directed<E>> result = new TripletPath<>(path.getStart(), path.getEnd(), newTriplets);
+        return result;
+    }
+
 
     public TripletPath<V, E> reverse() {
         List<Triplet<V, E>> tmp = new ArrayList<>(triplets);
         Collections.reverse(tmp);
         TripletPath<V, E> result = new TripletPath<>(end, start, triplets);
+        return result;
+    }
+
+
+    public TripletPath<V, E> concat(TripletPath<V, E> that) {
+        List<Triplet<V, E>> triplets = new ArrayList<>(this.triplets.size() + that.triplets.size());
+        triplets.addAll(this.triplets);
+        triplets.addAll(that.triplets);
+        TripletPath<V, E> result = new TripletPath<V, E>(start, that.end, triplets);
         return result;
     }
 
