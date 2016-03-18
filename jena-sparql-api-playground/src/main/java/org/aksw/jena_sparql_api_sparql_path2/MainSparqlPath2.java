@@ -542,7 +542,7 @@ public class MainSparqlPath2 {
                           endNode,
                           10);
 
-            System.out.println("kPaths: " + kPaths);
+            kPaths.forEach(x -> System.out.println("kPaths: " + x));
 
 
             //MinSourceSinkCut<Integer, LabeledEdge<Integer, PredicateClass>> x = new MinSourceSinkCut<Integer, LabeledEdge<Integer, PredicateClass>>(nfa.getGraph());

@@ -101,7 +101,7 @@ public class YensKShortestPaths {
         List<TripletPath<V, Directed<E>>> A = new ArrayList<>();
         List<TripletPath<V, Directed<E>>> B = new ArrayList<>();
 
-        Set<Triplet<V, E>> removedTriplets = new HashSet<>();
+        Set<Triplet<V, Directed<E>>> removedTriplets = new HashSet<>();
         Set<V> removedNodes = new HashSet<V>();
 
 
@@ -114,7 +114,23 @@ public class YensKShortestPaths {
                     .filter(x -> !removedNodes.contains(x))
                     .collect(Collectors.toSet());
 
+
             Map<V, Set<Triplet<V, Directed<E>>>> tmp = successors.apply(nodes);
+            tmp.entrySet().removeIf(removedNodes::contains);
+
+
+            tmp.entrySet().forEach(e -> {
+                Set<Triplet<V, Directed<E>>> ts = e.getValue();
+                ts.removeIf(triplet -> {
+                    boolean skip =
+                            removedTriplets.contains(triplet) ||
+                            removedNodes.contains(triplet.getSubject()) ||
+                            removedNodes.contains(triplet.getObject());
+                    return skip;
+                });
+            });
+
+
             return tmp;
             // TODO remove all removed edges from the successors
         };
@@ -140,7 +156,8 @@ public class YensKShortestPaths {
                     if(rootPath.equals(subPath))  { //p.nodes(0, i):
                         // Remove the links that are part of the previous shortest paths which share the same root path.
                         Triplet<V, Directed<E>> triplet = a.getTriplets().get(i); //get the triplet (i, i + 1)
-                        removedTriplets.add(Triplet.makeUndirected(triplet));
+                        //removedTriplets.add(Triplet.makeUndirected(triplet));
+                        removedTriplets.add(triplet);
                     }
                 }
 
