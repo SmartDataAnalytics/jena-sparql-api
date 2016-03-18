@@ -1,20 +1,94 @@
 package org.aksw.jena_sparql_api_sparql_path2;
 
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.apache.jena.ext.com.google.common.collect.Lists;
+import org.apache.jena.graph.Node;
 
 public class YensKShortestPaths {
+//
+//    public static List<TripletPath<Node, Node>> findPaths(
+//            Nfa<Integer, LabeledEdge<Integer, PredicateClass>> nfa,
+//            Object isEpsilon,
+//            Function<T, ? extends Pair<ValueSet<V>>> transToVertexClass,
+//            Function<Pair<ValueSet<Node>>, LookupService<Node, Set<Triplet<Node, Node>>>> createTripletLookupService,
+//            Node startNode, Node endNode, int maxK) {
+//        // TODO Auto-generated method stub
+//        return null;
+//    }
+//
+//
+
+//    public static List<TripletPath<Node, Node>> findPaths(
+//            Nfa<Integer, LabeledEdge<Integer, PredicateClass>> nfa,
+//            Predicate<T> isEpsilon,
+//            Function<T, ? extends Pair<ValueSet<V>>> transToVertexClass,
+//            Function<Pair<ValueSet<Node>>, LookupService<Node, Set<Triplet<Node, Node>>>> createTripletLookupService,
+//            Node startNode, Node endNode, int maxK) {
+//        // TODO Auto-generated method stub
+//        return null;
+//    }
+
+    public static <S, T, V, E> List<TripletPath<Entry<S, V>, Directed<E>>> findPaths(
+            Nfa<S, T> nfa,
+            Predicate<T> isEpsilon,
+            Function<T, ? extends Pair<ValueSet<V>>> transToVertexClass,
+            Function<Pair<ValueSet<V>>, ? extends Function<? super Iterable<V>, Map<V, Set<Triplet<V,E>>>>> createTripletLookupService,
+            V source,
+            V target,
+            int maxK)
+    {
+        //BiFunction<Iterable<Entry<S, V>>, Integer, Map<Entry<S, V>, Set<Triplet<Entry<S, V>, Directed<E>>>>> successors =
+        //NfaSuccessor<S, T, V, E> successors =
+        Function<Iterable<Entry<S, V>>, Map<Entry<S, V>, Set<Triplet<Entry<S, V>, Directed<E>>>>> successors = new NfaSuccessor<S,T,V,E>(nfa, isEpsilon, transToVertexClass, createTripletLookupService);
+
+        Set<Entry<S, V>> starts = new HashSet<>();
+        nfa.getStartStates().forEach(s -> starts.add(new SimpleEntry<>(s, source)));
+
+        List<TripletPath<Entry<S, V>, Directed<E>>> result = findPaths(
+                successors,
+                starts,
+                x -> true,
+                maxK);
+
+        return result;
+
+    }
 
     // Adapted from https://en.wikipedia.org/wiki/Yen's_algorithm
     //Graph<V, E> graph,
-    public static <V, E> List<TripletPath<V, Directed<E>>> findPaths(Function<Iterable<V>, Map<V, Set<Triplet<V, E>>>> successors, V source, V target, int maxK) {
+    /**
+     * The successor function maps each vertex to a set of triplets.
+     * The triplets must have the vertex either as the subject or the object
+     *
+     *
+     *
+     * @param successors
+     * @param source
+     * @param target
+     * @param maxK
+     * @return
+     */
+    public static <V, E> List<TripletPath<V, Directed<E>>> findPaths(
+            Function<? super Iterable<V>, Map<V, Set<Triplet<V, Directed<E>>>>> successors,
+                    //Function<Iterable<Entry<S, V>>, Map<Entry<S, V>, Set<Triplet<Entry<S, V>, Directed<E>>>>>
+            //BiFunction<Collection<Entry<S, V>>, Integer, Multimap<Entry<S, V>, Triplet<Entry<S, V>, Directed<E>>>>
+            Collection<V> sources,
+            Predicate<V> isTarget,
+            int maxK)
+    {
         List<TripletPath<V, Directed<E>>> A = new ArrayList<>();
         List<TripletPath<V, Directed<E>>> B = new ArrayList<>();
 
@@ -26,19 +100,22 @@ public class YensKShortestPaths {
          * Adapted successor function
          *
          */
-        Function<Iterable<V>, Map<V, Set<Triplet<V, E>>>> succ = rawNodes -> {
+        Function<Iterable<V>, Map<V, Set<Triplet<V, Directed<E>>>>> succ = rawNodes -> {
             Set<V> nodes = Lists.newArrayList(rawNodes).stream()
                     .filter(x -> !removedNodes.contains(x))
                     .collect(Collectors.toSet());
 
-            Map<V, Set<Triplet<V, E>>> tmp = successors.apply(nodes);
+            Map<V, Set<Triplet<V, Directed<E>>>> tmp = successors.apply(nodes);
             return tmp;
             // TODO remove all removed edges from the successors
         };
 
 
         // Determine the shortest path from the source to the sink.
-        TripletPath<V, Directed<E>> path = NfaDijkstra.dijkstra(successors, source, target);
+        TripletPath<V, Directed<E>> path = NfaDijkstra.dijkstra(successors, sources, isTarget);
+        if(path != null) {
+            A.add(path);
+        }
 
 
         for(int k = 1; k < maxK; ++k) {
@@ -65,7 +142,7 @@ public class YensKShortestPaths {
                 removedNodes.addAll(rootPathNodes);
 
                 // Calculate the spur path from the spur node to the sink.
-                TripletPath<V, Directed<E>> spurPath = NfaDijkstra.dijkstra(succ, spurNode, target);
+                TripletPath<V, Directed<E>> spurPath = NfaDijkstra.dijkstra(succ, Collections.singleton(spurNode), isTarget);
 
                 if(spurPath != null) {
                     // Entire path is made up of the root path and spur path.
@@ -100,8 +177,6 @@ public class YensKShortestPaths {
 
         return A;
     }
-
-
 
 
 }

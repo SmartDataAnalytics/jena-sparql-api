@@ -82,7 +82,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
 
 import com.google.common.base.Stopwatch;
-import com.google.common.collect.Multimap;
 
 
 
@@ -524,14 +523,26 @@ public class MainSparqlPath2 {
 //                    starts);
 //            System.out.println("Successors: " + succs);
 
-            TripletPath<Node, Node> shortestPath = NfaDijkstra.dijkstra(
-                    nfa,
-                    LabeledEdgeImpl::isEpsilon,
-                    e -> e.getLabel(),
-                    createTripletLookupService,
-                    startNode,
-                    endNode);
-            System.out.println("Shortest Path: " + shortestPath);
+//            TripletPath<Node, Node> shortestPath = NfaDijkstra.dijkstra(
+//                    nfa,
+//                    LabeledEdgeImpl::isEpsilon,
+//                    e -> e.getLabel(),
+//                    createTripletLookupService,
+//                    startNode,
+//                    endNode);
+
+//            successors, source, target, maxK);
+            List<TripletPath<Entry<Integer, Node>, Directed<Node>>> kPaths =
+                    YensKShortestPaths.findPaths(
+                          nfa,
+                          x -> x.getLabel() == null, //LabeledEdgeImpl::isEpsilon,
+                          e -> e.getLabel(),
+                          createTripletLookupService,
+                          startNode,
+                          endNode,
+                          10);
+
+            System.out.println("kPaths: " + kPaths);
 
 
             //MinSourceSinkCut<Integer, LabeledEdge<Integer, PredicateClass>> x = new MinSourceSinkCut<Integer, LabeledEdge<Integer, PredicateClass>>(nfa.getGraph());
@@ -572,8 +583,6 @@ public class MainSparqlPath2 {
 
             // TODO Create a sub-nfa for each path, then check for isomorphy
             // http://stackoverflow.com/questions/9448754/is-there-an-efficient-algorithm-to-decide-whether-the-language-accepted-by-one-n
-
-
 
             Map<Object, TripletPath<Integer, LabeledEdge<Integer, PredicateClass>>> map = new HashMap<>();
             for(TripletPath<Integer, LabeledEdge<Integer, PredicateClass>> nfaPath : nfaPaths) {

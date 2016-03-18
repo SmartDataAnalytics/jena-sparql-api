@@ -2,6 +2,14 @@ package org.aksw.jena_sparql_api_sparql_path2;
 
 import org.jgrapht.graph.DefaultEdge;
 
+/**
+ * TODO This class could make use of Triplet (although Triplet should probably not be tied to jGraphT and thus should not inherit from DefaultEdge)
+ *
+ * @author raven
+ *
+ * @param <V>
+ * @param <T>
+ */
 public class LabeledEdgeImpl<V, T>
     extends DefaultEdge
     implements LabeledEdge<V, T>
