@@ -27,7 +27,7 @@ public class PathExecutionUtils {
         PathVisitorResourceShapeBuilder.apply(rsb, predicateClass, false);
 
         //MappedConcept<Graph> mc = ResourceShape.createMappedConcept(rsb.getResourceShape(), filter);
-        MappedConcept<Graph> mc = ResourceShape.createMappedConcept(rsb.getResourceShape(), null);
+        MappedConcept<Graph> mc = ResourceShape.createMappedConcept(rsb.getResourceShape(), null, false);
         ListService<Concept, Node, Graph> ls = ListServiceUtils.createListServiceAcc(qef, mc, false);
         //Map<Node, Graph> nodeToGraph = ls.fetchData(null, null, null);
 

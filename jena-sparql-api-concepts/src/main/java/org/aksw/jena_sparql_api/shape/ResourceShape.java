@@ -27,11 +27,6 @@ import org.aksw.jena_sparql_api.utils.Triples;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -57,6 +52,11 @@ import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.PatternVars;
 import org.apache.jena.sparql.syntax.Template;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 
 
 /**
@@ -155,35 +155,35 @@ public class ResourceShape {
     }
 
 
-    public static List<Concept> collectConcepts(ResourceShape source) {
+    public static List<Concept> collectConcepts(ResourceShape source, boolean includeGraph) {
         List<Concept> result = new ArrayList<Concept>();
-        collectConcepts(result, source);
+        collectConcepts(result, source, includeGraph);
         return result;
     }
 
-    public static void collectConcepts(Collection<Concept> result, ResourceShape source) {
+    public static void collectConcepts(Collection<Concept> result, ResourceShape source, boolean includeGraph) {
         Generator<Var> vargen = VarGeneratorImpl.create("v");
 
-        collectConcepts(result, source, vargen);
+        collectConcepts(result, source, vargen, includeGraph);
     }
 
-    public static void collectConcepts(Collection<Concept> result, ResourceShape source, Generator<Var> vargen) {
+    public static void collectConcepts(Collection<Concept> result, ResourceShape source, Generator<Var> vargen, boolean includeGraph) {
         Concept baseConcept = new Concept((Element)null, Vars.x);
-        collectConcepts(result, baseConcept, source, vargen);
+        collectConcepts(result, baseConcept, source, vargen, includeGraph);
     }
 
-    public static void collectConcepts(Collection<Concept> result, Concept baseConcept, ResourceShape source, Generator<Var> vargen) {
+    public static void collectConcepts(Collection<Concept> result, Concept baseConcept, ResourceShape source, Generator<Var> vargen, boolean includeGraph) {
 
         Map<Relation, ResourceShape> outgoing = source.getOutgoing();
         Map<Relation, ResourceShape> ingoing = source.getIngoing();
 
-        collectConcepts(result, baseConcept, outgoing, false, vargen);
-        collectConcepts(result, baseConcept, ingoing, true, vargen);
+        collectConcepts(result, baseConcept, outgoing, false, vargen, includeGraph);
+        collectConcepts(result, baseConcept, ingoing, true, vargen, includeGraph);
 
         //collectConcepts(result, null, source,);
     }
 
-    public static void collectConcepts(Collection<Concept> result, Concept baseConcept, Map<Relation, ResourceShape> map, boolean isInverse, Generator<Var> vargen) {
+    public static void collectConcepts(Collection<Concept> result, Concept baseConcept, Map<Relation, ResourceShape> map, boolean isInverse, Generator<Var> vargen, boolean includeGraph) {
 
 //        Var baseVar = baseConcept.getVar();
 
@@ -194,7 +194,7 @@ public class ResourceShape {
             for(Relation relation : opt) {
                 //Concept sc = new Concept(relation.getElement(), baseVar);
                 Concept sc = baseConcept;
-                Concept item = createConcept(sc, vargen, relation, isInverse);
+                Concept item = createConcept(sc, vargen, relation, isInverse, includeGraph);
                 result.add(item);
             }
         }
@@ -217,14 +217,14 @@ public class ResourceShape {
                 //Concept sc = new Concept(relation.getElement(), baseVar);
                 Concept sc = baseConcept;
 
-                Concept item = createConcept(sc, vargen, relation, isInverse);
+                Concept item = createConcept(sc, vargen, relation, isInverse, includeGraph);
 
                 //result.add(item);
 
                 // Map the
 
                 // Now use the concept as a base for its children
-                collectConcepts(result, item, target, vargen);
+                collectConcepts(result, item, target, vargen, includeGraph);
             }
 
 
@@ -300,8 +300,8 @@ public class ResourceShape {
         return null;
     }
 
-    public static Query createQuery(ResourceShape resourceShape, Concept filter) {
-        List<Concept> concepts = ResourceShape.collectConcepts(resourceShape);
+    public static Query createQuery(ResourceShape resourceShape, Concept filter, boolean includeGraph) {
+        List<Concept> concepts = ResourceShape.collectConcepts(resourceShape, includeGraph);
 
         Query result = createQuery(concepts, filter);
         return result;
@@ -362,15 +362,15 @@ public class ResourceShape {
 //        return result;
 //    }
 
-    public static MappedConcept<DatasetGraph> createMappedConcept2(ResourceShape resourceShape, Concept filter) {
-        Query query = createQuery(resourceShape, filter);
+    public static MappedConcept<DatasetGraph> createMappedConcept2(ResourceShape resourceShape, Concept filter, boolean includeGraph) {
+        Query query = createQuery(resourceShape, filter, includeGraph);
         logger.debug("Created query from resource shape: " + query);
         MappedConcept<DatasetGraph> result = createMappedConcept2(query);
         return result;
     }
 
-    public static MappedConcept<Graph> createMappedConcept(ResourceShape resourceShape, Concept filter) {
-        Query query = createQuery(resourceShape, filter);
+    public static MappedConcept<Graph> createMappedConcept(ResourceShape resourceShape, Concept filter, boolean includeGraph) {
+        Query query = createQuery(resourceShape, filter, includeGraph);
         logger.debug("Created query from resource shape: " + query);
         MappedConcept<Graph> result = createMappedConcept(query);
         return result;
@@ -423,7 +423,10 @@ public class ResourceShape {
                 Query q = new Query();
                 q.setQuerySelectType();
                 q.getProject().add(Vars.x, new ExprVar(Vars.s));
-                q.getProject().add(Vars.g);
+
+                if(vs.contains(Vars.g)) {
+                    q.getProject().add(Vars.g);
+                }
                 q.getProject().add(Vars.s);
                 q.getProject().add(Vars.p);
                 q.getProject().add(Vars.o);
@@ -440,16 +443,21 @@ public class ResourceShape {
 
         Element element = ElementUtils.union(elements);
 
-        Query result = new Query();
-        result.setQuerySelectType();
-        result.getProject().add(Vars.x);
-        result.getProject().add(Vars.g);
-        result.getProject().add(Vars.s);
-        result.getProject().add(Vars.p);
-        result.getProject().add(Vars.o);
-        result.getProject().add(Vars.z);
-        result.setQueryPattern(element);
+        Query result;
+        if(elements.size() > 1) {
 
+            result = new Query();
+            result.setQuerySelectType();
+            result.getProject().add(Vars.x);
+            result.getProject().add(Vars.g);
+            result.getProject().add(Vars.s);
+            result.getProject().add(Vars.p);
+            result.getProject().add(Vars.o);
+            result.getProject().add(Vars.z);
+            result.setQueryPattern(element);
+        } else{
+            result = ((ElementSubQuery)element).getQuery();
+        }
 
         return result;
     }
@@ -462,7 +470,7 @@ public class ResourceShape {
      * @param isInverse
      * @return
      */
-    public static Concept createConcept(Concept baseConcept, Generator<Var> vargen, Relation predicateRelation, boolean isInverse) {
+    public static Concept createConcept(Concept baseConcept, Generator<Var> vargen, Relation predicateRelation, boolean isInverse, boolean includeGraph) {
         Var sourceVar;
 
         Var baseVar = baseConcept.getVar();
@@ -477,7 +485,11 @@ public class ResourceShape {
         bp.add(triple);
 
         Element etmp = new ElementTriplesBlock(bp);
-        Element e2 = new ElementNamedGraph(Vars.g, etmp);
+
+        Element e2 = includeGraph
+                ? new ElementNamedGraph(Vars.g, etmp)
+                : etmp;
+
 
         Element e;
         if(baseElement != null) {

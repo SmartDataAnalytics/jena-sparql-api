@@ -52,9 +52,20 @@ public class TaskRunner {
         Model baseDataModel = ModelFactory.createDefaultModel();
         RDFDataMgr.read(baseDataModel, in, Lang.TURTLE);
 
+
+
         SparqlService baseDataService = FluentSparqlService
                 .from(baseDataModel)
                 .create();
+
+
+        if(true) {
+            String str = "SELECT DISTINCT  ?x ?z ?s ?p ?o WHERE { { { SELECT  (?s AS ?x) ?s ?p ?o ?z WHERE { ?s  ?p  ?o FILTER ( ?p NOT IN (<http://foo>) ) BIND(false AS ?z) } } } FILTER ( ?x IN (<http://ex.org/r/y3>) ) }";
+            ResultSet rs = baseDataService.getQueryExecutionFactory().createQueryExecution(str).execSelect();
+            while(rs.hasNext()) {
+                System.out.println("GOT: " + rs.nextBinding());
+            }
+        }
 
         SparqlService predicateJoinSummaryService = FluentSparqlService
                 .from(JoinSummaryUtils.createPredicateJoinSummary(baseDataService.getQueryExecutionFactory()))

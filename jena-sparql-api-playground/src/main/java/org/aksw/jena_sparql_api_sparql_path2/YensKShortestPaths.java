@@ -140,65 +140,65 @@ public class YensKShortestPaths {
         TripletPath<V, Directed<E>> path = NfaDijkstra.dijkstra(successors, sources, isTarget);
         if(path != null) {
             A.add(path);
-        }
 
 
-        for(int k = 1; k < maxK; ++k) {
-            TripletPath<V, Directed<E>> ak_1 = A.get(k - 1);
-            int akl = ak_1.getLength(); // TODO getLength returns only counts the triplets but not the vertices
+            for(int k = 1; k < maxK; ++k) {
+                TripletPath<V, Directed<E>> ak_1 = A.get(k - 1);
+                int akl = ak_1.getLength(); // TODO getLength returns only counts the triplets but not the vertices
 
-            for(int i = 0; i < akl; ++i) {
-                V spurNode = ak_1.getNode(i);
-                TripletPath<V, Directed<E>> rootPath = ak_1.subPath(0, i);
+                for(int i = 0; i < akl; ++i) {
+                    V spurNode = ak_1.getNode(i);
+                    TripletPath<V, Directed<E>> rootPath = ak_1.subPath(0, i);
 
-                for(TripletPath<V, Directed<E>> a : A) {
-                    TripletPath<V, Directed<E>> subPath = a.subPath(0, i);
-                    if(rootPath.equals(subPath))  { //p.nodes(0, i):
-                        // Remove the links that are part of the previous shortest paths which share the same root path.
-                        Triplet<V, Directed<E>> triplet = a.getTriplets().get(i); //get the triplet (i, i + 1)
-                        //removedTriplets.add(Triplet.makeUndirected(triplet));
-                        removedTriplets.add(triplet);
+                    for(TripletPath<V, Directed<E>> a : A) {
+                        TripletPath<V, Directed<E>> subPath = a.subPath(0, i);
+                        if(rootPath.equals(subPath))  { //p.nodes(0, i):
+                            // Remove the links that are part of the previous shortest paths which share the same root path.
+                            Triplet<V, Directed<E>> triplet = a.getTriplets().get(i); //get the triplet (i, i + 1)
+                            //removedTriplets.add(Triplet.makeUndirected(triplet));
+                            removedTriplets.add(triplet);
+                        }
                     }
+
+                    //for each node rootPathNode in rootPath except spurNode:
+                    //    remove rootPathNode from Graph;
+                    Set<V> rootPathNodes = rootPath.getNodeSet();
+                    rootPathNodes.remove(spurNode);
+                    removedNodes.addAll(rootPathNodes);
+
+                    // Calculate the spur path from the spur node to the sink.
+                    TripletPath<V, Directed<E>> spurPath = NfaDijkstra.dijkstra(succ, Collections.singleton(spurNode), isTarget);
+
+                    if(spurPath != null) {
+                        // Entire path is made up of the root path and spur path.
+                        TripletPath<V, Directed<E>> totalPath = rootPath.concat(spurPath);
+                        // Add the potential k-shortest path to the heap.
+                        B.add(totalPath);
+                    }
+
+                    // Add back the edges and nodes that were removed from the graph.
+                    removedNodes.clear();
+                    removedTriplets.clear();
                 }
 
-                //for each node rootPathNode in rootPath except spurNode:
-                //    remove rootPathNode from Graph;
-                Set<V> rootPathNodes = rootPath.getNodeSet();
-                rootPathNodes.remove(spurNode);
-                removedNodes.addAll(rootPathNodes);
-
-                // Calculate the spur path from the spur node to the sink.
-                TripletPath<V, Directed<E>> spurPath = NfaDijkstra.dijkstra(succ, Collections.singleton(spurNode), isTarget);
-
-                if(spurPath != null) {
-                    // Entire path is made up of the root path and spur path.
-                    TripletPath<V, Directed<E>> totalPath = rootPath.concat(spurPath);
-                    // Add the potential k-shortest path to the heap.
-                    B.add(totalPath);
+                if(B.isEmpty()) {
+                    // This handles the case of there being no spur paths, or no spur paths left.
+                    // This could happen if the spur paths have already been exhausted (added to A),
+                    // or there are no spur paths at all - such as when both the source and sink vertices
+                    // lie along a "dead end".
+                    break;
                 }
 
-                // Add back the edges and nodes that were removed from the graph.
-                removedNodes.clear();
-                removedTriplets.clear();
+                // Sort the potential k-shortest paths by cost.
+                //B.sort();
+                // (all costs are equal in our use case)
+
+                // Add the lowest cost path becomes the k-shortest path.
+                int l = B.size() - 1;
+                A.add(B.get(l));
+                B.remove(l);
+
             }
-
-            if(B.isEmpty()) {
-                // This handles the case of there being no spur paths, or no spur paths left.
-                // This could happen if the spur paths have already been exhausted (added to A),
-                // or there are no spur paths at all - such as when both the source and sink vertices
-                // lie along a "dead end".
-                break;
-            }
-
-            // Sort the potential k-shortest paths by cost.
-            //B.sort();
-            // (all costs are equal in our use case)
-
-            // Add the lowest cost path becomes the k-shortest path.
-            int l = B.size() - 1;
-            A.add(B.get(l));
-            B.remove(l);
-
         }
 
         return A;
