@@ -25,6 +25,7 @@ public class NestedPath<V, E>
         boolean result;
         if(parentLink != null) {
             Directed<E> pred = parentLink.getDiProperty();
+            //E pred = parentLink.getDiProperty();
             result = reverse == pred.isReverse() && edge.equals(pred.getValue())
                     ? true
                     : parentLink.getTarget().containsEdge(edge, reverse);
@@ -63,6 +64,38 @@ public class NestedPath<V, E>
         return result;
     }
 
+
+    public TripletPath<V, Directed<E>> asSimpleDirectedPath() {
+        V end = current;
+
+        NestedPath<V, E> c = this;
+        V start = end;
+        List<Triplet<V, Directed<E>>> triplets = new ArrayList<>();
+        while(c != null) {
+            V o = c.getCurrent();
+            //NestedRdfPath<V, E> pr = c.getParent();
+            Optional<ParentLink<V, E>> opl = c.getParentLink();
+
+            if(!opl.isPresent()) {
+                start = o;
+                c = null;
+            } else {
+                ParentLink<V, E> parentLink = opl.get();
+                Directed<E> p = parentLink.getDiProperty();
+                V s = parentLink.getTarget().getCurrent();
+
+                Triplet<V, Directed<E>> triplet = new Triplet<>(s, p, o);
+
+                triplets.add(triplet);
+                c = parentLink.getTarget();
+            }
+        }
+
+        Collections.reverse(triplets);
+        TripletPath<V, Directed<E>> result = new TripletPath<>(start, end, triplets);
+        return result;
+    }
+
     public TripletPath<V, E> asSimplePath() {
         V end = current;
 
@@ -80,14 +113,15 @@ public class NestedPath<V, E>
             } else {
                 ParentLink<V, E> parentLink = opl.get();
                 Directed<E> diProperty = parentLink.getDiProperty();
+                //E p = parentLink.getDiProperty();
 
                 E p = diProperty.getValue();
                 V s = parentLink.getTarget().getCurrent();
 
                 Triplet<V, E> triple = new Triplet<>(s, p, o);
-                if(diProperty.isReverse()) {
-                    triple = Triplet.swap(triple);
-                }
+//                if(diProperty.isReverse()) {
+//                    triple = Triplet.swap(triple);
+//                }
 
                 triples.add(triple);
                 c = parentLink.getTarget();

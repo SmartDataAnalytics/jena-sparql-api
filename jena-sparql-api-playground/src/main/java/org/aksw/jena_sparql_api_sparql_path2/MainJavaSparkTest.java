@@ -107,10 +107,10 @@ public class MainJavaSparkTest {
         //Path path = PathParser.parse("<http://fp7-pp.publicdata.eu/ontology/funding>", PrefixMapping.Extended);
 
 
-        Iterator<NestedPath<Node, Node>> itPaths = pathFinder.findPaths(startNode, Node.ANY, path, 10l);
+        Iterator<TripletPath<Node, Directed<Node>>> itPaths = pathFinder.findPaths(startNode, Node.ANY, path, 10l);
         while(itPaths.hasNext()) {
-            NestedPath<Node, Node> p = itPaths.next();
-            System.out.println("GOT PATH: " + p.asSimplePath());
+            TripletPath<Node, Directed<Node>> p = itPaths.next();
+            System.out.println("GOT PATH: " + p);
         }
 
         if(false) {

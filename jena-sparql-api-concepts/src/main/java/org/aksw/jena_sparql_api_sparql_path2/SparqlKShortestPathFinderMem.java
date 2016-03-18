@@ -18,7 +18,7 @@ public class SparqlKShortestPathFinderMem
     }
 
     @Override
-    public Iterator<NestedPath<Node, Node>> findPaths(Node start, Node end, Path path, Long k) {
+    public Iterator<TripletPath<Node, Directed<Node>>> findPaths(Node start, Node end, Path path, Long k) {
 
         final List<NestedPath<Node, Node>> rdfPaths = new ArrayList<>();
 
@@ -28,6 +28,7 @@ public class SparqlKShortestPathFinderMem
             return r; });
 
         Iterator<NestedPath<Node, Node>> result = rdfPaths.iterator();
-        return result;
+        //return result;
+        return null;
     }
 }

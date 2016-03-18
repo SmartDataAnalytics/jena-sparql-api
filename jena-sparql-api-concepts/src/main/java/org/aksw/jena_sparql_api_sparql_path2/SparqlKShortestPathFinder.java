@@ -17,5 +17,5 @@ import org.apache.jena.sparql.path.Path;
  *
  */
 public interface SparqlKShortestPathFinder {
-    Iterator<NestedPath<Node, Node>> findPaths(Node start, Node end, Path pathExpr, Long k);
+    Iterator<TripletPath<Node, Directed<Node>>> findPaths(Node start, Node end, Path pathExpr, Long k);
 }

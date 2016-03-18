@@ -23,4 +23,3 @@ r:s o:y1 r:y1 .
 r:y1 o:y2 r:y2 .
 r:y2 o:y3 r:y3 .
 r:y3 o:y4 r:t .
-

@@ -1,1 +1,1 @@
-classpath://custom/data.nt	http://ex.org/r/s	http://ex.org/r/t	10		custom1.json
+classpath:custom/data.ttl	http://ex.org/r/s	http://ex.org/r/t	10	(!<http://foo>)*	custom1.json

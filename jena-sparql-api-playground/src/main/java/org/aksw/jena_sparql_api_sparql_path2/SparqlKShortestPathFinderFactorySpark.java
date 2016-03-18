@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.stream.StreamSupport;
 
 import org.aksw.jena_sparql_api_sparql_path.spark.NfaExecutionSpark;
 import org.apache.jena.graph.Node;
@@ -179,12 +180,19 @@ public class SparqlKShortestPathFinderFactorySpark
     }
 
     @Override
-    public Iterator<NestedPath<Node, Node>> findPaths(Node start,
+    public Iterator<TripletPath<Node, Directed<Node>>> findPaths(Node start,
             Node end, Path pathExpr, Long k) {
 
         JavaRDD<NestedPath<Node, Node>> finalPathRdd = exec(sparkContext, fwdRdd, bwdRdd, start, end, pathExpr, k);
 
-        Iterator<NestedPath<Node, Node>> result = finalPathRdd.toLocalIterator();
+        Iterator<NestedPath<Node, Node>> tmp = finalPathRdd.toLocalIterator();
+
+        Iterable<NestedPath<Node, Node>> i = () -> tmp;
+        Iterator<TripletPath<Node, Directed<Node>>> result = StreamSupport.stream(i.spliterator(), false)
+                .map(e -> e.asSimpleDirectedPath()).iterator();
+
+
+        //Stream.of
         return result;
     }
 }

@@ -143,7 +143,7 @@ public class PropertyFunctionKShortestPaths
             pathFinder = new SparqlKShortestPathFinderMem(ss.getQueryExecutionFactory());
         }
 
-        Iterator<NestedPath<Node, Node>> itPaths = pathFinder.findPaths(s, targetNode,path, k);
+        Iterator<TripletPath<Node, Directed<Node>>> itPaths = pathFinder.findPaths(s, targetNode,path, k);
 
 //
 //        PathExecutionUtils.executePath(path, s, targetNode, qef, p -> {
@@ -166,7 +166,8 @@ public class PropertyFunctionKShortestPaths
 //            bindings.add(b);
 //        }
 
-        Iterable<NestedPath<Node, Node>> tmp = () -> itPaths;
+        //Iterable<NestedPath<Node, Node>> tmp = () -> itPaths;
+        Iterable<TripletPath<Node, Directed<Node>>> tmp = () -> itPaths;
         Iterator<Binding> itBindings = StreamSupport.stream(tmp.spliterator(), false).map(p -> {
           Node pNode = NodeFactory.createLiteral("" + p);
           Binding r = BindingFactory.binding(binding, outVar, pNode);
