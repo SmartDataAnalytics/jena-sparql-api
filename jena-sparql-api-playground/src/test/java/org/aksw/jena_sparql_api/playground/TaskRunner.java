@@ -18,8 +18,11 @@ import org.aksw.jena_sparql_api_sparql_path2.JoinSummaryUtils;
 import org.aksw.jena_sparql_api_sparql_path2.MainSparqlPath2;
 import org.aksw.jena_sparql_api_sparql_path2.PropertyFunctionFactoryKShortestPaths;
 import org.aksw.jena_sparql_api_sparql_path2.PropertyFunctionKShortestPaths;
+import org.aksw.jena_sparql_api_sparql_path2.SparqlKShortestPathFinderYen;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -28,6 +31,7 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.core.Prologue;
+import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.path.PathParser;
 import org.apache.jena.sparql.pfunction.PropertyFunctionRegistry;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -71,7 +75,11 @@ public class TaskRunner {
 
 
     public static TaskContext createTaskContext(List<String> cols, ResourceLoader resourceLoader, String basePath) throws IOException {
-        PropertyFunctionRegistry.get().put(PropertyFunctionKShortestPaths.DEFAULT_IRI, new PropertyFunctionFactoryKShortestPaths(ss -> null));
+
+        // TODO: The mapping from sparql service to path finder must be made configurable
+        PropertyFunctionRegistry.get().put(PropertyFunctionKShortestPaths.DEFAULT_IRI, new PropertyFunctionFactoryKShortestPaths(ss ->
+            new SparqlKShortestPathFinderYen(ss.getQueryExecutionFactory())
+        ));
 
 
         PrefixMappingImpl pm = new PrefixMappingImpl();
@@ -146,6 +154,22 @@ public class TaskRunner {
 
     }
 
+
+    public static void runTask(TaskContext taskContext) {
+        String pathExprStr = "" +  taskContext.getPath();
+        Node startNode = taskContext.getStartNode();
+        Node endNode = taskContext.getEndNode();
+        String queryStr = "SELECT ?path { <" + startNode.getURI() + "> jsafn:kShortestPaths ('" + pathExprStr + "' ?path <" + endNode.getURI() + "> 471199) }";
+
+        QueryExecutionFactory qef = taskContext.getSparqlService().getQueryExecutionFactory();
+        QueryExecution qe = qef.createQueryExecution(queryStr);
+        ResultSet rs = qe.execSelect();
+        while(rs.hasNext()) {
+            Binding binding = rs.nextBinding();
+            System.out.println("Binding: " + binding);
+        }
+    }
+
     public static void main(String[] args) throws IOException {
 
         ResourceLoader resourceLoader = new AnnotationConfigApplicationContext();
@@ -172,6 +196,7 @@ public class TaskRunner {
 
         // run the tasks
         for(TaskContext taskContext : taskContexts) {
+            runTask(taskContext);
             //taskContext.get
         }
 
