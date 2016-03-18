@@ -941,13 +941,6 @@
                 <artifactId>rxjava</artifactId>
                 <version>1.1.0</version>
             </dependency>
-
-	<dependency>
-		<groupId>net.sf.opencsv</groupId>
-		<artifactId>opencsv</artifactId>
-		<version>2.3</version>
-	</dependency>
-
         </dependencies>
     </dependencyManagement>
 

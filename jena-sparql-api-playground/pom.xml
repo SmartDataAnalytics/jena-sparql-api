@@ -47,5 +47,11 @@
             <artifactId>spark-core_2.10</artifactId>
             <version>1.6.0</version>
         </dependency>
+
+        <dependency>
+            <groupId>net.sf.opencsv</groupId>
+            <artifactId>opencsv</artifactId>
+        </dependency>
+
     </dependencies>
 </project>
