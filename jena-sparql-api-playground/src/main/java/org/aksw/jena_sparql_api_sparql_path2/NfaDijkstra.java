@@ -128,6 +128,8 @@ public class NfaDijkstra {
         for(V source : sources) {
             vertexToCost.put(source, 0);
         }
+
+        open.addAll(sources);
                 //open.put(e.getKey(), e.getValue());
                 //frontier.add(e);
 //                vertexToCost.put(e, 0);
