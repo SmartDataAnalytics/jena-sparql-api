@@ -60,7 +60,16 @@ public class YensKShortestPaths {
         List<TripletPath<Entry<S, V>, Directed<E>>> result = findPaths(
                 successors,
                 starts,
-                x -> true,
+                e -> {
+                    S state = e.getKey();
+                    V vertex = e.getValue();
+
+                    boolean isAcceptingState = NfaExecutionUtils.isFinalState(nfa, state, isEpsilon);//nfa.getEndStates().contains(state);
+                    boolean isTargetVertex = target.equals(vertex);
+
+                    boolean r = isAcceptingState && isTargetVertex;
+                    return r;
+                },
                 maxK);
 
         return result;
