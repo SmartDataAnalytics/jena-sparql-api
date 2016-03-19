@@ -145,6 +145,7 @@ public class TripletPath<V, E> {
 
             Directed<E> p = new Directed<>(t.getPredicate(), reverse);
             newTriplets.add(new Triplet<>(s, p, o));
+            s = o;
         }
 
         TripletPath<V, Directed<E>> result = new TripletPath<>(path.getStart(), path.getEnd(), newTriplets);

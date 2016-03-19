@@ -147,6 +147,10 @@ public class YensKShortestPaths {
                 int akl = ak_1.getLength(); // TODO getLength returns only counts the triplets but not the vertices
 
                 for(int i = 0; i < akl; ++i) {
+                    if(k == 3 && i == 2) {
+                        System.out.println("DEBUG condition");
+                    }
+
                     V spurNode = ak_1.getNode(i);
                     TripletPath<V, Directed<E>> rootPath = ak_1.subPath(0, i);
 
@@ -174,6 +178,7 @@ public class YensKShortestPaths {
                     if(spurPath != null) {
                         // Entire path is made up of the root path and spur path.
                         TripletPath<V, Directed<E>> totalPath = rootPath.concat(spurPath);
+                        System.out.println("GOT TOTAL PATH: " + totalPath);
                         // Add the potential k-shortest path to the heap.
                         B.add(totalPath);
                     }
