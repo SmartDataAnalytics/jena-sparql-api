@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * A path from triplets. A path is expected to be connected.
@@ -67,10 +68,14 @@ public class TripletPath<V, E> {
     }
 
     public TripletPath<V, E> subPath(int fromIndex, int toIndex) {
-        List<Triplet<V, E>> ts = triplets.subList(fromIndex, toIndex);
+        TripletPath<V, Directed<E>> tmp = TripletPath.makeDirected(this);
+        V s = tmp.getNode(fromIndex);
+        List<Triplet<V, Directed<E>>> ts = tmp.getTriplets().subList(fromIndex, toIndex);
+        V e = ts.isEmpty() ? s : ts.get(ts.size() - 1).getObject();
 
-        // TODO We need to get thet start and end nodes right
-        TripletPath<V, E> result = new TripletPath<>(start, end, ts);
+
+        List<Triplet<V, E>> newTriplets = makeUndirected(ts);
+        TripletPath<V, E> result = new TripletPath<>(s, e, newTriplets);
         return result;
     }
 
@@ -100,6 +105,21 @@ public class TripletPath<V, E> {
 
     public List<Triplet<V, E>> getTriplets() {
         return triplets;
+    }
+
+    public static <V, E> List<Triplet<V, E>> makeUndirected(List<Triplet<V, Directed<E>>> triplets) {
+        List<Triplet<V, E>> result = triplets.stream()
+                .map(Triplet::makeUndirected)
+                .collect(Collectors.toList());
+
+        return result;
+    }
+
+    public static <V, E> TripletPath<V, E> makeUndirected(TripletPath<V, Directed<E>> path) {
+        List<Triplet<V, E>> tmp = makeUndirected(path.getTriplets());
+
+        TripletPath<V, E> result = new TripletPath<>(path.getStart(), path.getEnd(), tmp);
+        return result;
     }
 
     public static <V, E> TripletPath<V, Directed<E>> makeDirected(TripletPath<V, E> path) {
