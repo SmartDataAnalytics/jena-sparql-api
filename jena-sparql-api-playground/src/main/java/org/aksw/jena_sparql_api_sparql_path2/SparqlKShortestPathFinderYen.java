@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.lookup.LookupService;
@@ -21,7 +22,16 @@ public class SparqlKShortestPathFinderYen
     }
 
     public static <S, V, E> TripletPath<V, Directed<E>> convertPath(TripletPath<? extends Entry<S, V>, Directed<E>> path) {
-        return null;
+        List<Triplet<V, Directed<E>>> triplets = path.getTriplets().stream()
+                .map(t -> new Triplet<>(t.getSubject().getValue(), t.getPredicate(), t.getObject().getValue()))
+                .collect(Collectors.toList());
+
+        TripletPath<V, Directed<E>> result = new TripletPath<>(
+                path.getStart().getValue(),
+                path.getEnd().getValue(),
+                triplets);
+
+        return result;
     }
 
     @Override

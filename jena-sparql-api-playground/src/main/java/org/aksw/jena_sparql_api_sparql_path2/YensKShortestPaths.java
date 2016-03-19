@@ -151,12 +151,14 @@ public class YensKShortestPaths {
                     TripletPath<V, Directed<E>> rootPath = ak_1.subPath(0, i);
 
                     for(TripletPath<V, Directed<E>> a : A) {
-                        TripletPath<V, Directed<E>> subPath = a.subPath(0, i);
-                        if(rootPath.equals(subPath))  { //p.nodes(0, i):
+                        if(a.getLength() >= rootPath.getLength()) {
+                            TripletPath<V, Directed<E>> subPath = a.subPath(0, i);
+                            if(rootPath.equals(subPath))  { //p.nodes(0, i):
                             // Remove the links that are part of the previous shortest paths which share the same root path.
                             Triplet<V, Directed<E>> triplet = a.getTriplets().get(i); //get the triplet (i, i + 1)
                             //removedTriplets.add(Triplet.makeUndirected(triplet));
-                            removedTriplets.add(triplet);
+                                removedTriplets.add(triplet);
+                            }
                         }
                     }
 
@@ -195,9 +197,9 @@ public class YensKShortestPaths {
 
                 // Add the lowest cost path becomes the k-shortest path.
                 int l = B.size() - 1;
-                A.add(B.get(l));
-                B.remove(l);
-
+                TripletPath<V, Directed<E>> chosenPath = B.remove(l);
+                        //B.get(l);
+                A.add(chosenPath);
             }
         }
 
