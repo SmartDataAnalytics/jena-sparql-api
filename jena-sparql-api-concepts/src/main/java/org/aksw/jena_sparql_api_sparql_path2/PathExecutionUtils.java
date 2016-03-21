@@ -8,6 +8,7 @@ import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.lookup.ListService;
 import org.aksw.jena_sparql_api.lookup.ListServiceUtils;
 import org.aksw.jena_sparql_api.lookup.LookupService;
+import org.aksw.jena_sparql_api.lookup.LookupServiceFilterKey;
 import org.aksw.jena_sparql_api.lookup.LookupServiceListService;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
@@ -33,7 +34,9 @@ public class PathExecutionUtils {
 
         // TODO Add a default fluent API
         LookupService<Node, Graph> lsls = LookupServiceListService.create(ls);
-        lsls.partition(100);
+        lsls = new LookupServiceFilterKey<Node, Graph>(lsls, k -> k.isURI());
+
+        //lsls.partition(100);
         //lsls = LookupServicePartition.create(lsls, 100);
 
         LookupService<Node, Set<Triplet<Node, Node>>> s = lsls.mapValues(e -> {

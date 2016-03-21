@@ -16,9 +16,11 @@ public class SparqlKShortestPathFinderYen
     implements SparqlKShortestPathFinder
 {
     protected QueryExecutionFactory qef;
+    protected int resourceBatchSize;
 
-    public SparqlKShortestPathFinderYen(QueryExecutionFactory qef) {
+    public SparqlKShortestPathFinderYen(QueryExecutionFactory qef, int resourceBatchSize) {
         this.qef = qef;
+        this.resourceBatchSize = resourceBatchSize;
     }
 
     public static <S, V, E> TripletPath<V, Directed<E>> convertPath(TripletPath<? extends Entry<S, V>, Directed<E>> path) {
@@ -39,7 +41,7 @@ public class SparqlKShortestPathFinderYen
         Nfa<Integer, LabeledEdge<Integer, PredicateClass>> nfa = PathCompiler.compileToNfa(path);
 
         Function<Pair<ValueSet<Node>>, LookupService<Node, Set<Triplet<Node, Node>>>> createTripletLookupService =
-                pc -> PathExecutionUtils.createLookupService(qef, pc);
+                pc -> PathExecutionUtils.createLookupService(qef, pc).partition(resourceBatchSize);
 
 
         List<TripletPath<Entry<Integer, Node>, Directed<Node>>> kPaths =

@@ -111,7 +111,7 @@ public class MainKShortestPathsTaskRunner {
 
         // TODO: The mapping from sparql service to path finder must be made configurable
         PropertyFunctionRegistry.get().put(PropertyFunctionKShortestPaths.DEFAULT_IRI, new PropertyFunctionFactoryKShortestPaths(ss ->
-            new SparqlKShortestPathFinderYen(ss.getQueryExecutionFactory())
+            new SparqlKShortestPathFinderYen(ss.getQueryExecutionFactory(), 50)
         ));
 
 
@@ -205,11 +205,12 @@ public class MainKShortestPathsTaskRunner {
     }
 
 
-    public static void runTask(TaskContext taskContext) {
+    public static void runTask(TaskContext taskContext) throws IOException {
         String pathExprStr = "" +  taskContext.getPath();
         Node startNode = taskContext.getStartNode();
         Node endNode = taskContext.getEndNode();
-        String queryStr = "SELECT ?path { <" + startNode.getURI() + "> jsafn:kShortestPaths ('" + pathExprStr + "' ?path <" + endNode.getURI() + "> 471199) }";
+        String queryStr = "SELECT ?path { <" + startNode.getURI() + "> jsafn:kShortestPaths ('" + pathExprStr + "' ?path <" + endNode.getURI() + "> " + taskContext.getK() + ") }";
+
 
         QueryExecutionFactory qef = taskContext.getSparqlService().getQueryExecutionFactory();
         QueryExecution qe = qef.createQueryExecution(queryStr);
