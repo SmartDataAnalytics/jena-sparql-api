@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
@@ -47,6 +48,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.core.io.ResourceLoader;
+
+import com.google.common.base.Stopwatch;
 
 import scala.Tuple2;
 
@@ -91,6 +94,39 @@ public class MainJavaSparkTest {
 
         JavaSparkContext sparkContext = new JavaSparkContext(sparkConf);
 
+        Stopwatch sw = Stopwatch.createStarted();
+
+        JavaPairRDD<Node, Tuple2<Node, Node>> fwdRdd = sparkContext
+            .textFile(fileName, 5)
+            //.parallelize(triples)
+            .filter(line -> !line.trim().isEmpty() & !line.startsWith("#"))
+            .map(line -> RDFDataMgr.createIteratorTriples(new ByteArrayInputStream(line.getBytes()), Lang.NTRIPLES, "http://example/base").next())
+            .mapToPair(new PairFunction<Triple, Node, Tuple2<Node, Node>>() {
+                private static final long serialVersionUID = -4757627441301230743L;
+                @Override
+                public Tuple2<Node, Tuple2<Node, Node>> call(Triple t)
+                        throws Exception {
+                    return new Tuple2<>(t.getSubject(), new Tuple2<>(t.getPredicate(), t.getObject()));
+                }
+            })
+            .cache();
+
+        System.out.println("Loaded FWD RDD:" + sw.elapsed(TimeUnit.SECONDS));
+
+        JavaPairRDD<Node, Tuple2<Node, Node>> bwdRdd = fwdRdd
+            .mapToPair(new PairFunction<Tuple2<Node, Tuple2<Node, Node>>, Node, Tuple2<Node, Node>>() {
+                private static final long serialVersionUID = -1567531441301230743L;
+                @Override
+                public Tuple2<Node, Tuple2<Node, Node>> call(
+                        Tuple2<Node, Tuple2<Node, Node>> t) throws Exception {
+                    return new Tuple2<>(t._2._2, new Tuple2<>(t._2._1, t._1));
+                }
+            })
+            .cache();
+
+        System.out.println("Loaded BWD RDD:" + sw.elapsed(TimeUnit.SECONDS));
+        sw.stop();
+
 
         ResourceLoader resourceLoader = new AnnotationConfigApplicationContext();
 
@@ -131,33 +167,6 @@ public class MainJavaSparkTest {
                 .end()
                 .create();
 
-
-      JavaPairRDD<Node, Tuple2<Node, Node>> fwdRdd = sparkContext
-          .textFile(fileName, 5)
-          //.parallelize(triples)
-          .filter(line -> !line.trim().isEmpty() & !line.startsWith("#"))
-          .map(line -> RDFDataMgr.createIteratorTriples(new ByteArrayInputStream(line.getBytes()), Lang.NTRIPLES, "http://example/base").next())
-          .mapToPair(new PairFunction<Triple, Node, Tuple2<Node, Node>>() {
-              private static final long serialVersionUID = -4757627441301230743L;
-              @Override
-              public Tuple2<Node, Tuple2<Node, Node>> call(Triple t)
-                      throws Exception {
-                  return new Tuple2<>(t.getSubject(), new Tuple2<>(t.getPredicate(), t.getObject()));
-              }
-          })
-          .cache();
-
-
-      JavaPairRDD<Node, Tuple2<Node, Node>> bwdRdd = fwdRdd
-          .mapToPair(new PairFunction<Tuple2<Node, Tuple2<Node, Node>>, Node, Tuple2<Node, Node>>() {
-              private static final long serialVersionUID = -1567531441301230743L;
-              @Override
-              public Tuple2<Node, Tuple2<Node, Node>> call(
-                      Tuple2<Node, Tuple2<Node, Node>> t) throws Exception {
-                  return new Tuple2<>(t._2._2, new Tuple2<>(t._2._1, t._1));
-              }
-          })
-          .cache();
 
         PropertyFunctionRegistry.get().put(PropertyFunctionKShortestPaths.DEFAULT_IRI, new PropertyFunctionFactoryKShortestPaths(sps ->
             new SparqlKShortestPathFinderSpark(sparkContext, fwdRdd, bwdRdd)));

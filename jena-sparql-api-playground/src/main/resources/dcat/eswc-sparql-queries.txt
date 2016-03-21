@@ -1,0 +1,3 @@
+SELECT ?path {
+  <http://dbpedia.org/resource/Felipe_Massa> jsafn:kShortestPaths('(!<http://ex.org/tmp>)*' ?path <http://dbpedia.org/resource/Red_Bull> 8)
+}
