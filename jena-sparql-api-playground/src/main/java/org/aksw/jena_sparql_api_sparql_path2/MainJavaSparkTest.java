@@ -2,27 +2,20 @@ package org.aksw.jena_sparql_api_sparql_path2;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
-import org.aksw.jena_sparql_api.core.SparqlServiceUtils;
 import org.aksw.jena_sparql_api.stmt.SparqlParserConfig;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
 import org.aksw.jena_sparql_api.update.FluentSparqlServiceFactory;
 import org.aksw.jena_sparql_api.web.server.ServerUtils;
-import org.aksw.jena_sparql_api_sparql_path.spark.NfaExecutionSpark;
 import org.apache.jena.atlas.web.auth.HttpAuthenticator;
 import org.apache.jena.graph.Node;
-import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Model;
@@ -33,16 +26,11 @@ import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.core.Prologue;
-import org.apache.jena.sparql.path.Path;
-import org.apache.jena.sparql.path.PathParser;
 import org.apache.jena.sparql.pfunction.PropertyFunctionRegistry;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.PairFunction;
-import org.apache.spark.api.java.function.VoidFunction;
-import org.apache.spark.broadcast.Broadcast;
 import org.eclipse.jetty.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,7 +88,27 @@ public class MainJavaSparkTest {
             .textFile(fileName, 5)
             //.parallelize(triples)
             .filter(line -> !line.trim().isEmpty() & !line.startsWith("#"))
-            .map(line -> RDFDataMgr.createIteratorTriples(new ByteArrayInputStream(line.getBytes()), Lang.NTRIPLES, "http://example/base").next())
+            .map(line -> {
+                Triple r;
+                try {
+                    r = RDFDataMgr.createIteratorTriples(new ByteArrayInputStream(line.getBytes()), Lang.NTRIPLES, "http://example/base").next();
+                } catch(Exception e) {
+                    logger.warn("Errornous line: " + line, e);
+                    // Hack
+                    //Node en = NodeFactory.createURI("http://ex.org/error");
+                    //r = new Triple(en, en, en);
+                    r = null;
+                }
+                return r;
+            })
+            .filter(new org.apache.spark.api.java.function.Function<Triple, Boolean>() {
+                private static final long serialVersionUID = 1;
+
+                @Override
+                public Boolean call(Triple t) throws Exception {
+                    return t != null;
+                }
+            })
             .mapToPair(new PairFunction<Triple, Node, Tuple2<Node, Node>>() {
                 private static final long serialVersionUID = -4757627441301230743L;
                 @Override
