@@ -13,19 +13,14 @@ import java.util.Map;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
-import org.aksw.jena_sparql_api.core.SparqlServiceReference;
-import org.aksw.jena_sparql_api.stmt.SparqlParserConfig;
-import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
-import org.aksw.jena_sparql_api.update.FluentSparqlService;
-import org.aksw.jena_sparql_api_sparql_path2.MainSparqlPath2;
 import org.aksw.jena_sparql_api_sparql_path2.PropertyFunctionFactoryKShortestPaths;
 import org.aksw.jena_sparql_api_sparql_path2.PropertyFunctionKShortestPaths;
 import org.aksw.jena_sparql_api_sparql_path2.SparqlKShortestPathFinderYen;
+import org.aksw.jena_sparql_api_sparql_path2.SparqlPathUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
-import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.riot.Lang;
@@ -46,64 +41,6 @@ import au.com.bytecode.opencsv.CSVReader;
 
 public class MainKShortestPathsTaskRunner {
 
-    public static void readModel(Model model, ResourceLoader resourceLoader, String uri, Lang lang) throws IOException {
-        Resource resource = resourceLoader.getResource(uri);
-        InputStream in = resource.getInputStream();
-        RDFDataMgr.read(model, in, lang);
-    }
-
-
-    public static SparqlService createSparqlService(String datasetUri, ResourceLoader resourceLoader, Prologue prologue, QueryExecutionFactory dcatQef) throws IOException {
-//        Resource resource = resourceLoader.getResource(datasetUri);
-//        InputStream in = resource.getInputStream();
-//        Model baseDataModel = ModelFactory.createDefaultModel();
-//        RDFDataMgr.read(baseDataModel, in, Lang.TURTLE);
-//
-//        SparqlService baseDataService = FluentSparqlService
-//                .from(baseDataModel)
-//                .create();
-
-
-
-
-        SparqlServiceReference ssr = DatasetMapUtils.getSparqlDistribution(dcatQef, datasetUri);
-        if(ssr == null) {
-            throw new RuntimeException("Could not find information needed to create a sparql service for " + datasetUri);
-        }
-        SparqlService baseDataService = FluentSparqlService.http(ssr).create();
-
-
-        SparqlServiceReference pjsSsr = DatasetMapUtils.getPjsDistribution(dcatQef, datasetUri);
-        if(pjsSsr == null) {
-            throw new RuntimeException("Could not find information needed to create a predicate join summary service for " + pjsSsr);
-        }
-        SparqlService pjsSummaryService = FluentSparqlService.http(ssr).create();
-
-
-        if(true) {
-            String str = "SELECT DISTINCT  ?x ?z ?s ?p ?o WHERE { { { SELECT  (?s AS ?x) ?s ?p ?o ?z WHERE { ?s  ?p  ?o FILTER ( ?p NOT IN (<http://foo>) ) BIND(false AS ?z) } } } FILTER ( ?x IN (<http://ex.org/r/y3>) ) }";
-            ResultSet rs = baseDataService.getQueryExecutionFactory().createQueryExecution(str).execSelect();
-            while(rs.hasNext()) {
-                System.out.println("GOT: " + rs.nextBinding());
-            }
-        }
-//
-//        SparqlService predicateJoinSummaryService = FluentSparqlService
-//                .from(JoinSummaryUtils.createPredicateJoinSummary(baseDataService.getQueryExecutionFactory()))
-//                .create();
-//
-//        SparqlService predicateSummaryService = FluentSparqlService
-//                .from(JoinSummaryUtils.createPredicateSummary(baseDataService.getQueryExecutionFactory()))
-//                .create();
-
-
-        SparqlStmtParserImpl sparqlStmtParser = SparqlStmtParserImpl.create(SparqlParserConfig.create(Syntax.syntaxARQ, prologue));
-
-
-        SparqlService result = MainSparqlPath2.proxySparqlService(baseDataService, sparqlStmtParser, prologue);
-
-        return result;
-    }
 
 
 
@@ -131,7 +68,7 @@ public class MainKShortestPathsTaskRunner {
         }
 
         String dataset = cols.get(0);
-        SparqlService ss = createSparqlService(dataset, resourceLoader, prologue, dcatQef);
+        SparqlService ss = SparqlPathUtils.createSparqlService(dataset, resourceLoader, prologue, dcatQef);
         result.setSparqlService(ss);
 
         Node start = NodeFactory.createURI(cols.get(1));
@@ -161,7 +98,7 @@ public class MainKShortestPathsTaskRunner {
 
         result.setPath(PathParser.parse(pathStr, prologue.getPrefixMapping()));
 
-        System.out.println("GOT PATH: " + result.getPath());
+        //System.out.println("GOT PATH: " + result.getPath());
 
         String refFile = cols.get(5);
         Resource cp = resourceLoader.getResource(basePath + "/" + refFile);
@@ -206,6 +143,7 @@ public class MainKShortestPathsTaskRunner {
 
 
     public static void runTask(TaskContext taskContext) throws IOException {
+        System.out.println("Running task " + taskContext.getStartNode() + " " + taskContext.getEndNode() + " " + taskContext.getK());
         String pathExprStr = "" +  taskContext.getPath();
         Node startNode = taskContext.getStartNode();
         Node endNode = taskContext.getEndNode();
@@ -221,6 +159,8 @@ public class MainKShortestPathsTaskRunner {
             Binding binding = rs.nextBinding();
             System.out.println("Binding: " + binding);
         }
+
+        //throw new RuntimeException("done");
     }
 
     public static void main(String[] args) throws IOException {
@@ -230,7 +170,7 @@ public class MainKShortestPathsTaskRunner {
 
         Model datasetModel = ModelFactory.createDefaultModel();
         QueryExecutionFactory dcatQef = FluentQueryExecutionFactory.model(datasetModel).create();
-        readModel(datasetModel, resourceLoader, "classpath:dcat-eswc-training.ttl", Lang.TURTLE);
+        SparqlPathUtils.readModel(datasetModel, resourceLoader, "classpath:dcat-eswc-training.ttl", Lang.TURTLE);
 
 
         //datasetModel.write(System.out, "TTL");
@@ -272,7 +212,7 @@ public class MainKShortestPathsTaskRunner {
         for(TaskContext taskContext : taskContexts) {
             runTask(taskContext);
 
-            break;
+            //break;
             //taskContext.get
         }
 

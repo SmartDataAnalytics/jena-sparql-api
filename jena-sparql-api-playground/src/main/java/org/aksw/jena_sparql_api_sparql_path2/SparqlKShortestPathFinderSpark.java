@@ -17,14 +17,14 @@ import org.apache.spark.broadcast.Broadcast;
 
 import scala.Tuple2;
 
-public class SparqlKShortestPathFinderFactorySpark
+public class SparqlKShortestPathFinderSpark
     implements SparqlKShortestPathFinder
 {
     protected JavaSparkContext sparkContext;
     protected JavaPairRDD<Node, Tuple2<Node, Node>> fwdRdd;
     protected JavaPairRDD<Node, Tuple2<Node, Node>> bwdRdd;
 
-    public SparqlKShortestPathFinderFactorySpark(JavaSparkContext sparkContext, JavaPairRDD<Node, Tuple2<Node, Node>> fwdRdd, JavaPairRDD<Node, Tuple2<Node, Node>> bwdRdd) {
+    public SparqlKShortestPathFinderSpark(JavaSparkContext sparkContext, JavaPairRDD<Node, Tuple2<Node, Node>> fwdRdd, JavaPairRDD<Node, Tuple2<Node, Node>> bwdRdd) {
         this.sparkContext = sparkContext;
         this.fwdRdd = fwdRdd;
         this.bwdRdd = bwdRdd;
