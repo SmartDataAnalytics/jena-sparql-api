@@ -68,7 +68,9 @@ public class DatasetMapUtils {
         }
 
 
-        SparqlServiceReference result = new SparqlServiceReference(serviceUri, dd);
+        SparqlServiceReference result = serviceUri != null
+                ? new SparqlServiceReference(serviceUri, dd)
+                : null;
         return result;
     }
 

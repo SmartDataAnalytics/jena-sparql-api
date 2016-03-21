@@ -16,7 +16,6 @@ import org.aksw.jena_sparql_api.core.SparqlServiceReference;
 import org.aksw.jena_sparql_api.stmt.SparqlParserConfig;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
-import org.aksw.jena_sparql_api_sparql_path2.JoinSummaryUtils;
 import org.aksw.jena_sparql_api_sparql_path2.MainSparqlPath2;
 import org.aksw.jena_sparql_api_sparql_path2.PropertyFunctionFactoryKShortestPaths;
 import org.aksw.jena_sparql_api_sparql_path2.PropertyFunctionKShortestPaths;
@@ -53,15 +52,31 @@ public class MainKShortestPathsTaskRunner {
     }
 
 
-    public static SparqlService createSparqlService(String datasetUri, ResourceLoader resourceLoader, Prologue prologue) throws IOException {
-        Resource resource = resourceLoader.getResource(datasetUri);
-        InputStream in = resource.getInputStream();
-        Model baseDataModel = ModelFactory.createDefaultModel();
-        RDFDataMgr.read(baseDataModel, in, Lang.TURTLE);
+    public static SparqlService createSparqlService(String datasetUri, ResourceLoader resourceLoader, Prologue prologue, QueryExecutionFactory dcatQef) throws IOException {
+//        Resource resource = resourceLoader.getResource(datasetUri);
+//        InputStream in = resource.getInputStream();
+//        Model baseDataModel = ModelFactory.createDefaultModel();
+//        RDFDataMgr.read(baseDataModel, in, Lang.TURTLE);
+//
+//        SparqlService baseDataService = FluentSparqlService
+//                .from(baseDataModel)
+//                .create();
 
-        SparqlService baseDataService = FluentSparqlService
-                .from(baseDataModel)
-                .create();
+
+
+
+        SparqlServiceReference ssr = DatasetMapUtils.getSparqlDistribution(dcatQef, datasetUri);
+        if(ssr == null) {
+            throw new RuntimeException("Could not find information needed to create a sparql service for " + datasetUri);
+        }
+        SparqlService baseDataService = FluentSparqlService.http(ssr).create();
+
+
+        SparqlServiceReference pjsSsr = DatasetMapUtils.getPjsDistribution(dcatQef, datasetUri);
+        if(pjsSsr == null) {
+            throw new RuntimeException("Could not find information needed to create a predicate join summary service for " + pjsSsr);
+        }
+        SparqlService pjsSummaryService = FluentSparqlService.http(ssr).create();
 
 
         if(true) {
@@ -71,14 +86,14 @@ public class MainKShortestPathsTaskRunner {
                 System.out.println("GOT: " + rs.nextBinding());
             }
         }
-
-        SparqlService predicateJoinSummaryService = FluentSparqlService
-                .from(JoinSummaryUtils.createPredicateJoinSummary(baseDataService.getQueryExecutionFactory()))
-                .create();
-
-        SparqlService predicateSummaryService = FluentSparqlService
-                .from(JoinSummaryUtils.createPredicateSummary(baseDataService.getQueryExecutionFactory()))
-                .create();
+//
+//        SparqlService predicateJoinSummaryService = FluentSparqlService
+//                .from(JoinSummaryUtils.createPredicateJoinSummary(baseDataService.getQueryExecutionFactory()))
+//                .create();
+//
+//        SparqlService predicateSummaryService = FluentSparqlService
+//                .from(JoinSummaryUtils.createPredicateSummary(baseDataService.getQueryExecutionFactory()))
+//                .create();
 
 
         SparqlStmtParserImpl sparqlStmtParser = SparqlStmtParserImpl.create(SparqlParserConfig.create(Syntax.syntaxARQ, prologue));
@@ -91,7 +106,7 @@ public class MainKShortestPathsTaskRunner {
 
 
 
-    public static TaskContext createTaskContext(List<String> cols, ResourceLoader resourceLoader, String basePath) throws IOException {
+    public static TaskContext createTaskContext(List<String> cols, ResourceLoader resourceLoader, String basePath, QueryExecutionFactory dcatQef) throws IOException {
 
         // TODO: The mapping from sparql service to path finder must be made configurable
         PropertyFunctionRegistry.get().put(PropertyFunctionKShortestPaths.DEFAULT_IRI, new PropertyFunctionFactoryKShortestPaths(ss ->
@@ -115,7 +130,7 @@ public class MainKShortestPathsTaskRunner {
         }
 
         String dataset = cols.get(0);
-        SparqlService ss = createSparqlService(dataset, resourceLoader, prologue);
+        SparqlService ss = createSparqlService(dataset, resourceLoader, prologue, dcatQef);
         result.setSparqlService(ss);
 
         Node start = NodeFactory.createURI(cols.get(1));
@@ -128,10 +143,27 @@ public class MainKShortestPathsTaskRunner {
         result.setK(k);
 
 
-        result.setPath(PathParser.parse(cols.get(4), prologue.getPrefixMapping()));
+        String rawPathStr = cols.get(4).trim();
+        String pathStr;
+        if(rawPathStr.isEmpty()) {
+            //pathStr = "(<http://ex.org/p>|!<http://ex.org/p>)*";
+            pathStr = "(!<http://ex.org/tmp>)*";
+        }
+        else if(rawPathStr.startsWith("http://")) {
+            pathStr
+                = "<" + rawPathStr + ">/(!<http://ex.org/tmp>)*|"
+                + "(!<http://ex.org/tmp>)/<" + rawPathStr + ">" ;
+        }
+        else {
+            pathStr = rawPathStr;
+        }
+
+        result.setPath(PathParser.parse(pathStr, prologue.getPrefixMapping()));
+
+        System.out.println("GOT PATH: " + result.getPath());
 
         String refFile = cols.get(5);
-        ClassPathResource cp = new ClassPathResource(basePath + "/" + refFile);
+        Resource cp = resourceLoader.getResource(basePath + "/" + refFile);
         if(!cp.exists()) {
             throw new RuntimeException("Reference file does not exist: " + cp);
         }
@@ -199,10 +231,6 @@ public class MainKShortestPathsTaskRunner {
 
         //datasetModel.write(System.out, "TTL");
 
-        //SparqlServiceReference ssr = DatasetMapUtils.getSparqlDistribution(dcatQef, "training-dataset");
-        SparqlServiceReference ssr = DatasetMapUtils.getPjsDistribution(dcatQef, "training-dataset");
-        System.out.println(ssr);
-
 
 //        URL url = new URL("classpath:custom/data.nt");
 //        System.out.println(StreamUtils.toString(url.openStream()));
@@ -210,9 +238,11 @@ public class MainKShortestPathsTaskRunner {
         Map<String, QueryExecutionFactory> datasetToQef = new HashMap<>();
 
         List<TaskContext> taskContexts = new ArrayList<>();
-        String basePath = "/home/raven/Downloads/eswc/";
+        String basePath = "file:///home/raven/Downloads/eswc";
         String taskResource = "eswc-training-task1.tsv";
 
+
+        String refPath = basePath + "/challenge_training_result_sets";
 
         //String basePath = "custom";
         //String taskFile = "tasks.tsv";
@@ -224,8 +254,12 @@ public class MainKShortestPathsTaskRunner {
             String[] row;
             while((row = reader.readNext()) != null) {
                 List<String> cols = Arrays.asList(row);
-                TaskContext taskContext = createTaskContext(cols, resourceLoader, basePath);
-                taskContexts.add(taskContext);
+
+                boolean isRowEmpty = cols.size() == 1 && cols.get(0).trim().equals("");
+                if(!isRowEmpty) {
+                    TaskContext taskContext = createTaskContext(cols, resourceLoader, refPath, dcatQef);
+                    taskContexts.add(taskContext);
+                }
 
             }
         }

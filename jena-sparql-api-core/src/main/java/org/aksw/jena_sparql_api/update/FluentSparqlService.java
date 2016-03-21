@@ -165,7 +165,7 @@ public class FluentSparqlService<P>
     }
 
     public static FluentSparqlService<?> http(String service, DatasetDescription datasetDescription) {
-        return http(service, datasetDescription);
+        return http(service, datasetDescription, null);
     }
 
     public static FluentSparqlService<?> http(String service, DatasetDescription datasetDescription, HttpAuthenticator authenticator) {
