@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.playground;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -213,6 +214,8 @@ public class MainKShortestPathsTaskRunner {
         QueryExecutionFactory qef = taskContext.getSparqlService().getQueryExecutionFactory();
         QueryExecution qe = qef.createQueryExecution(queryStr);
         ResultSet rs = qe.execSelect();
+
+        File tmpFile = File.createTempFile("path", "txt");
         while(rs.hasNext()) {
             Binding binding = rs.nextBinding();
             System.out.println("Binding: " + binding);
@@ -267,6 +270,8 @@ public class MainKShortestPathsTaskRunner {
         // run the tasks
         for(TaskContext taskContext : taskContexts) {
             runTask(taskContext);
+
+            break;
             //taskContext.get
         }
 
