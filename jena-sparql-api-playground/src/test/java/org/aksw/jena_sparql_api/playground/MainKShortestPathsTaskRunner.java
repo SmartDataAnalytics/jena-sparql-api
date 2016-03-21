@@ -9,8 +9,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
+import org.aksw.jena_sparql_api.core.SparqlServiceReference;
 import org.aksw.jena_sparql_api.stmt.SparqlParserConfig;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
@@ -42,8 +44,13 @@ import org.springframework.core.io.ResourceLoader;
 import au.com.bytecode.opencsv.CSVReader;
 
 
-public class TaskRunner {
+public class MainKShortestPathsTaskRunner {
 
+    public static void readModel(Model model, ResourceLoader resourceLoader, String uri, Lang lang) throws IOException {
+        Resource resource = resourceLoader.getResource(uri);
+        InputStream in = resource.getInputStream();
+        RDFDataMgr.read(model, in, lang);
+    }
 
 
     public static SparqlService createSparqlService(String datasetUri, ResourceLoader resourceLoader, Prologue prologue) throws IOException {
@@ -51,8 +58,6 @@ public class TaskRunner {
         InputStream in = resource.getInputStream();
         Model baseDataModel = ModelFactory.createDefaultModel();
         RDFDataMgr.read(baseDataModel, in, Lang.TURTLE);
-
-
 
         SparqlService baseDataService = FluentSparqlService
                 .from(baseDataModel)
@@ -83,6 +88,7 @@ public class TaskRunner {
 
         return result;
     }
+
 
 
     public static TaskContext createTaskContext(List<String> cols, ResourceLoader resourceLoader, String basePath) throws IOException {
@@ -185,15 +191,34 @@ public class TaskRunner {
 
         ResourceLoader resourceLoader = new AnnotationConfigApplicationContext();
 
+
+        Model datasetModel = ModelFactory.createDefaultModel();
+        QueryExecutionFactory dcatQef = FluentQueryExecutionFactory.model(datasetModel).create();
+        readModel(datasetModel, resourceLoader, "classpath:dcat-eswc-training.ttl", Lang.TURTLE);
+
+
+        //datasetModel.write(System.out, "TTL");
+
+        //SparqlServiceReference ssr = DatasetMapUtils.getSparqlDistribution(dcatQef, "training-dataset");
+        SparqlServiceReference ssr = DatasetMapUtils.getPjsDistribution(dcatQef, "training-dataset");
+        System.out.println(ssr);
+
+
 //        URL url = new URL("classpath:custom/data.nt");
 //        System.out.println(StreamUtils.toString(url.openStream()));
 
         Map<String, QueryExecutionFactory> datasetToQef = new HashMap<>();
 
         List<TaskContext> taskContexts = new ArrayList<>();
+        String basePath = "/home/raven/Downloads/eswc/";
+        String taskResource = "eswc-training-task1.tsv";
 
-        String basePath = "custom";
-        try(CSVReader reader = new CSVReader(new InputStreamReader(new ClassPathResource(basePath + "/tasks.tsv").getInputStream()), '\t')) {
+
+        //String basePath = "custom";
+        //String taskFile = "tasks.tsv";
+
+        //ClassPathResource
+        try(CSVReader reader = new CSVReader(new InputStreamReader(new ClassPathResource(taskResource).getInputStream()), '\t')) {
 
             // First path: Validate referenecd resources and set up services
             String[] row;

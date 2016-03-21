@@ -1,0 +1,18 @@
+training-dataset	http://dbpedia.org/resource/Felipe_Massa	http://dbpedia.org/resource/Red_Bull	8		task1_q1_8.txt
+training-dataset	http://dbpedia.org/resource/Felipe_Massa	http://dbpedia.org/resource/Red_Bull	344		task1_q1_344.txt
+training-dataset	http://dbpedia.org/resource/Felipe_Massa	http://dbpedia.org/resource/Red_Bull	1068		task1_q1_1068.txt
+training-dataset	http://dbpedia.org/resource/Felipe_Massa	http://dbpedia.org/resource/Red_Bull	20152		task1_q1_20152.txt
+training-dataset	http://dbpedia.org/resource/1952_Winter_Olympics	http://dbpedia.org/resource/Elliot_Richardson	3		task1_q2_3.txt
+training-dataset	http://dbpedia.org/resource/1952_Winter_Olympics	http://dbpedia.org/resource/Elliot_Richardson	4		task1_q2_4.txt
+training-dataset	http://dbpedia.org/resource/1952_Winter_Olympics	http://dbpedia.org/resource/Elliot_Richardson	79		task1_q2_79.txt
+training-dataset	http://dbpedia.org/resource/1952_Winter_Olympics	http://dbpedia.org/resource/Elliot_Richardson	154		task1_q2_154.txt
+training-dataset	http://dbpedia.org/resource/Karl_W._Hofmann	http://dbpedia.org/resource/Elliot_Richardson	36		task1_q3_36.txt
+training-dataset	http://dbpedia.org/resource/Karl_W._Hofmann	http://dbpedia.org/resource/Elliot_Richardson	336		task1_q3_336.txt
+training-dataset	http://dbpedia.org/resource/Karl_W._Hofmann	http://dbpedia.org/resource/Elliot_Richardson	4866		task1_q3_4866.txt
+training-dataset	http://dbpedia.org/resource/James_K._Polk	http://dbpedia.org/resource/Felix_Grundy	2		task1_q4_2.txt
+training-dataset	http://dbpedia.org/resource/James_K._Polk	http://dbpedia.org/resource/Felix_Grundy	16		task1_q4_16.txt
+training-dataset	http://dbpedia.org/resource/James_K._Polk	http://dbpedia.org/resource/Felix_Grundy	250		task1_q4_250.txt
+training-dataset	http://dbpedia.org/resource/James_K._Polk	http://dbpedia.org/resource/Felix_Grundy	1906		task1_q4_1906.txt
+training-dataset	http://dbpedia.org/resource/James_K._Polk	http://dbpedia.org/resource/Felix_Grundy	20224		task1_q4_20224.txt
+training-dataset	http://dbpedia.org/resource/James_K._Polk	http://dbpedia.org/resource/Felix_Grundy	175560		task1_q4_175560.txt
+

@@ -46,10 +46,10 @@ Done. -- 1161 msec. - on drake i5
 
 
 Sparql
-DEFINE input:default-graph-uri <http://2016.eswc-conferences.org/top-k-shortest-path-large-typed-rdf-graphs-challenge/training_dataset.nt>
+DEFINE input:default-graph-uri <http://2016.eswc-conferences.org/training_dataset.nt>
 PREFIX r: <http://example.org/resource/>
 PREFIX o: <http://example.org/ontology/>
-INSERT INTO <http://2016.eswc-conferences.org/top-k-shortest-path-large-typed-rdf-graphs-challenge/training_dataset.nt/predicate-cooccurrence-outbound/> {
+INSERT INTO <http://2016.eswc-conferences.org/training_dataset.nt/predicate-cooccurrence-outbound/> {
   ?x o:coOccursOutboundWith ?y
 }
 {
@@ -68,10 +68,10 @@ INSERT INTO <http://2016.eswc-conferences.org/top-k-shortest-path-large-typed-rd
 
 
 Sparql
-DEFINE input:default-graph-uri <http://2016.eswc-conferences.org/top-k-shortest-path-large-typed-rdf-graphs-challenge/training_dataset.nt>
+DEFINE input:default-graph-uri <http://2016.eswc-conferences.org/training_dataset.nt>
 PREFIX r: <http://example.org/resource/>
 PREFIX o: <http://example.org/ontology/>
-INSERT INTO <http://2016.eswc-conferences.org/top-k-shortest-path-large-typed-rdf-graphs-challenge/training_dataset.nt/summary/predicate/> {
+INSERT INTO <http://2016.eswc-conferences.org/training_dataset.nt/summary/predicate/> {
   ?s
     a o:PredicateSummary ;
     o:predicate ?x ;
@@ -95,10 +95,10 @@ INSERT INTO <http://2016.eswc-conferences.org/top-k-shortest-path-large-typed-rd
 
 
 Sparql
-DEFINE input:default-graph-uri <http://2016.eswc-conferences.org/top-k-shortest-path-large-typed-rdf-graphs-challenge/training_dataset.nt>
+DEFINE input:default-graph-uri <http://2016.eswc-conferences.org/training_dataset.nt>
 PREFIX r: <http://example.org/resource/>
 PREFIX o: <http://example.org/ontology/>
-INSERT INTO <http://2016.eswc-conferences.org/top-k-shortest-path-large-typed-rdf-graphs-challenge/training_dataset.nt/summary/predicate-join/> {
+INSERT INTO <http://2016.eswc-conferences.org/training_dataset.nt/summary/predicate-join/> {
   ?s
     a o:PredicateJoinSummary ;
     o:sourcePredicate ?x ;
@@ -128,10 +128,10 @@ INSERT INTO <http://2016.eswc-conferences.org/top-k-shortest-path-large-typed-rd
 
 
 Sparql
-DEFINE input:default-graph-uri <http://2016.eswc-conferences.org/top-k-shortest-path-large-typed-rdf-graphs-challenge/training_dataset.nt>
+DEFINE input:default-graph-uri <http://2016.eswc-conferences.org/training_dataset.nt>
 PREFIX r: <http://example.org/resource/>
 PREFIX o: <http://example.org/ontology/>
-INSERT INTO <http://2016.eswc-conferences.org/top-k-shortest-path-large-typed-rdf-graphs-challenge/training_dataset.nt/summary/entity-relationship/> {
+INSERT INTO <http://2016.eswc-conferences.org/training_dataset.nt/summary/entity-relationship/> {
   ?s
     a o:EntityRelationshipSummary ;
     o:sourceType ?at ;
