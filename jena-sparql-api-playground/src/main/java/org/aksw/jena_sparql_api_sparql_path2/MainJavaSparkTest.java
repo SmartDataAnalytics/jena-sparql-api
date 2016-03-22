@@ -101,7 +101,7 @@ public class MainJavaSparkTest {
 
         JavaSparkContext sparkContext = new JavaSparkContext(sparkConf);
 
-        Partitioner nodePartitioner = new HashPartitioner(100);
+        Partitioner nodePartitioner = new HashPartitioner(10);
 
         Stopwatch sw = Stopwatch.createStarted();
 

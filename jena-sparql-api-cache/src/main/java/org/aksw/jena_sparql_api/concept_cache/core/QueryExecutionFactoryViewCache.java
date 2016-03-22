@@ -79,52 +79,55 @@ public class QueryExecutionFactoryViewCache
         if(cacheResult != null) {
             //CacheHit cacheHit = cacheHits.iterator().next();
             //CacheResult cacheResult = cacheHits;
-            QuadFilterPatternCanonical qfpc = cacheResult.getReplacementPattern();
 
-            queryEqualedCache = qfpc.isEmpty();
-            //QuadFilterPatternCanonical remainder = qfpc.diff(queryQfpc);
-            //queryEqualedCache = remainder.isEmpty();
+            query = OpVisitorViewCacheApplier.apply(query, conceptMap);
+//
+//            QuadFilterPatternCanonical qfpc = cacheResult.getReplacementPattern();
+//
+//            queryEqualedCache = qfpc.isEmpty();
+//            //QuadFilterPatternCanonical remainder = qfpc.diff(queryQfpc);
+//            //queryEqualedCache = remainder.isEmpty();
+//
+//            Op op = qfpc.toOp();
+//
+//            Collection<Table> tables = cacheResult.getTables();
+//            Op opTable = null;
+//            for(Table table : tables) {
+//                Op tmp = OpTable.create(table);
+//
+//                if(opTable == null) {
+//                    opTable = tmp;
+//                } else {
+//                    opTable = OpJoin.create(opTable, tmp);
+//                }
+//            }
+//
+//
+//            //System.out.println("Table size: " + table.size());
+//
+//            if(op instanceof OpNull) {
+//                op = opTable;
+//            } else {
+//                op = OpJoin.create(opTable, op);
+//            }
+//
+//            //System.out.println("Op: " + op.toString().substring(0, Math.min(2000, op.toString().length())));
+//
+//            isPatternFree = OpUtils.isPatternFree(op);
+//            //System.out.println("isPatternFree: " + isPatternFree);
+//
+//            Query yay = OpAsQuery.asQuery(op);
 
-            Op op = qfpc.toOp();
-
-            Collection<Table> tables = cacheResult.getTables();
-            Op opTable = null;
-            for(Table table : tables) {
-                Op tmp = OpTable.create(table);
-
-                if(opTable == null) {
-                    opTable = tmp;
-                } else {
-                    opTable = OpJoin.create(opTable, tmp);
-                }
-            }
 
 
-            //System.out.println("Table size: " + table.size());
-
-            if(op instanceof OpNull) {
-                op = opTable;
-            } else {
-                op = OpJoin.create(opTable, op);
-            }
-
-            //System.out.println("Op: " + op.toString().substring(0, Math.min(2000, op.toString().length())));
-
-            isPatternFree = OpUtils.isPatternFree(op);
-            //System.out.println("isPatternFree: " + isPatternFree);
-
-            Query yay = OpAsQuery.asQuery(op);
-
-
-
-            yay.setQueryResultStar(false);
-            yay.getProjectVars().clear();
-            for(Var x : query.getProjectVars()) {
-                yay.getProject().add(x);
-            }
-
-            //TODO We need to reset the projection...
-            query = yay;
+//            yay.setQueryResultStar(false);
+//            yay.getProjectVars().clear();
+//            for(Var x : query.getProjectVars()) {
+//                yay.getProject().add(x);
+//            }
+//
+//            //TODO We need to reset the projection...
+//            query = yay;
         }
         System.out.println("Running query: " + query.toString().substring(0, Math.min(2000, query.toString().length())));
 

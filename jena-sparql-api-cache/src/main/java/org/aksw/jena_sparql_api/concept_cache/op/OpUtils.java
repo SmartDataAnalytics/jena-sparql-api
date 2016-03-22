@@ -199,6 +199,17 @@ public class OpUtils {
     }
 
 
+    public static Op copyOnChange(Op op, List<Op> subOps) {
+        List<Op> origSubOps = getSubOps(op);
+
+        Op result = origSubOps.equals(subOps)
+                ? op
+                : copy(op, subOps)
+                ;
+
+        return result;
+    }
+
     public static Op copy(Op op, List<Op> subOps) {
         Op result;
         int l = subOps.size();

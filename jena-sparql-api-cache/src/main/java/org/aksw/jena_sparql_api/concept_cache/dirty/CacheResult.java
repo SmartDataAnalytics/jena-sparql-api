@@ -7,8 +7,8 @@ import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.apache.jena.sparql.algebra.Table;
 
 public class CacheResult {
-    private QuadFilterPatternCanonical replacementPattern;
-    private Collection<Table> tables;
+    protected QuadFilterPatternCanonical replacementPattern;
+    protected Collection<Table> tables;
 
     public CacheResult(QuadFilterPatternCanonical replacementPattern, Collection<Table> tables) {
         super();
