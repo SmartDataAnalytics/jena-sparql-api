@@ -1,9 +1,11 @@
 package org.aksw.jena_sparql_api_sparql_path2;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
@@ -27,10 +29,13 @@ import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.pfunction.PropertyFunctionRegistry;
+import org.apache.spark.HashPartitioner;
+import org.apache.spark.Partitioner;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.PairFunction;
+import org.apache.spark.storage.StorageLevel;
 import org.eclipse.jetty.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,60 +83,126 @@ public class MainJavaSparkTest {
                 //.setJars(new String[] { jar })
                 //.setJars(new String[] {"http://cstadler.aksw.org/files/spark/jena-sparql-api-playground-3.0.1-2-SNAPSHOT-jar-with-dependencies.jar"})
                 //.set("spark.local.ip", "localhost") //"139.18.8.88")
-                .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
+                .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+                .set("spark.sql.autoBroadcastJoinThreshold", "300000000");
+
+
+        String dataset = "training-dataset";
+
+        Path rddCachePath = FileSystems.getDefault().getPath("target");
+
+        File fwdRddCacheFileTmp = rddCachePath.resolve(dataset + "-fwd.ser").toFile();
+        File bwdRddCacheFileTmp = rddCachePath.resolve(dataset + "-bwd.ser").toFile();
+
+        String fwdRddPath = fwdRddCacheFileTmp.getAbsolutePath();
+        String bwdRddPath = bwdRddCacheFileTmp.getAbsolutePath();
+
+        System.out.println("Cache paths: " + fwdRddPath + " - " + bwdRddPath);
 
         JavaSparkContext sparkContext = new JavaSparkContext(sparkConf);
 
+        Partitioner nodePartitioner = new HashPartitioner(100);
+
         Stopwatch sw = Stopwatch.createStarted();
 
-        JavaPairRDD<Node, Tuple2<Node, Node>> fwdRdd = sparkContext
-            .textFile(fileName, 5)
-            //.parallelize(triples)
-            .filter(line -> !line.trim().isEmpty() & !line.startsWith("#"))
-            .map(line -> {
-                Triple r;
-                try {
-                    r = RDFDataMgr.createIteratorTriples(new ByteArrayInputStream(line.getBytes()), Lang.NTRIPLES, "http://example/base").next();
-                } catch(Exception e) {
-                    logger.warn("Errornous line: " + line, e);
-                    // Hack
-                    //Node en = NodeFactory.createURI("http://ex.org/error");
-                    //r = new Triple(en, en, en);
-                    r = null;
-                }
-                return r;
-            })
-            .filter(new org.apache.spark.api.java.function.Function<Triple, Boolean>() {
-                private static final long serialVersionUID = 1;
+        JavaPairRDD<Node, Tuple2<Node, Node>> tmpFwdRdd;
+
+        if(fwdRddCacheFileTmp.exists()) {
+            //JavaRDD<Tuple2<Node, Tuple2<Node, Node>>> tmp = sparkContext.objectFile(fwdRddPath);
+            //TypeToken<Tuple2<Node, Node>> typeToken = new TypeToken<Tuple2<Node, Node>>() {};
+
+            //fwdRdd = (JavaPairRDD<Node, Tuple2<Node, Node>>) sparkContext.sequenceFile(fwdRddPath, Node.class, typeToken.getRawType());
+            //fwdRdd = tmp.mapToPair(f)//new JavaPairRDD<Node, Tuple2<Node, Node>>(tmp.rdd());
+            tmpFwdRdd = sparkContext.objectFile(fwdRddPath).mapToPair(new PairFunction<Object, Node, Tuple2<Node, Node>>() {
+                private static final long serialVersionUID = 1L;
 
                 @Override
-                public Boolean call(Triple t) throws Exception {
-                    return t != null;
-                }
-            })
-            .mapToPair(new PairFunction<Triple, Node, Tuple2<Node, Node>>() {
-                private static final long serialVersionUID = -4757627441301230743L;
-                @Override
-                public Tuple2<Node, Tuple2<Node, Node>> call(Triple t)
+                public Tuple2<Node, Tuple2<Node, Node>> call(Object t)
                         throws Exception {
-                    return new Tuple2<>(t.getSubject(), new Tuple2<>(t.getPredicate(), t.getObject()));
+                    return (Tuple2<Node, Tuple2<Node, Node>>)t;
                 }
-            })
-            .cache();
+            });
+        } else {
 
+            tmpFwdRdd = sparkContext
+                .textFile(fileName, 5)
+                //.parallelize(triples)
+                .filter(line -> !line.trim().isEmpty() & !line.startsWith("#"))
+                .map(line -> {
+                    Triple r;
+                    try {
+                        r = RDFDataMgr.createIteratorTriples(new ByteArrayInputStream(line.getBytes()), Lang.NTRIPLES, "http://example/base").next();
+                    } catch(Exception e) {
+                        logger.warn("Errornous line: " + line, e);
+                        // Hack
+                        //Node en = NodeFactory.createURI("http://ex.org/error");
+                        //r = new Triple(en, en, en);
+                        r = null;
+                    }
+                    return r;
+                })
+                .filter(new org.apache.spark.api.java.function.Function<Triple, Boolean>() {
+                    private static final long serialVersionUID = 1;
+
+                    @Override
+                    public Boolean call(Triple t) throws Exception {
+                        return t != null;
+                    }
+                })
+                .mapToPair(new PairFunction<Triple, Node, Tuple2<Node, Node>>() {
+                    private static final long serialVersionUID = -4757627441301230743L;
+                    @Override
+                    public Tuple2<Node, Tuple2<Node, Node>> call(Triple t)
+                            throws Exception {
+                        return new Tuple2<>(t.getSubject(), new Tuple2<>(t.getPredicate(), t.getObject()));
+                    }
+                });
+
+            //fwdRdd.saveAsObjectFile(fwdRddCacheFileTmp.getAbsolutePath());
+        }
+
+        JavaPairRDD<Node, Tuple2<Node, Node>> fwdRdd = tmpFwdRdd
+            .partitionBy(nodePartitioner)
+            .persist(StorageLevel.MEMORY_AND_DISK_SER());
+
+
+        fwdRdd.count();
         System.out.println("Loaded FWD RDD:" + sw.elapsed(TimeUnit.SECONDS));
 
-        JavaPairRDD<Node, Tuple2<Node, Node>> bwdRdd = fwdRdd
-            .mapToPair(new PairFunction<Tuple2<Node, Tuple2<Node, Node>>, Node, Tuple2<Node, Node>>() {
-                private static final long serialVersionUID = -1567531441301230743L;
-                @Override
-                public Tuple2<Node, Tuple2<Node, Node>> call(
-                        Tuple2<Node, Tuple2<Node, Node>> t) throws Exception {
-                    return new Tuple2<>(t._2._2, new Tuple2<>(t._2._1, t._1));
-                }
-            })
-            .cache();
+        JavaPairRDD<Node, Tuple2<Node, Node>> tmpBwdRdd;
+        if(bwdRddCacheFileTmp.exists()) {
+            tmpBwdRdd = sparkContext.objectFile(bwdRddPath)
+                    .mapToPair(new PairFunction<Object, Node, Tuple2<Node, Node>>() {
+                        private static final long serialVersionUID = 1L;
+                        @Override
+                        public Tuple2<Node, Tuple2<Node, Node>> call(Object t)
+                                throws Exception {
+                            return (Tuple2<Node, Tuple2<Node, Node>>)t;
+                        }
+                    })
+                    ;
+        } else {
 
+            tmpBwdRdd = tmpFwdRdd
+                .mapToPair(new PairFunction<Tuple2<Node, Tuple2<Node, Node>>, Node, Tuple2<Node, Node>>() {
+                    private static final long serialVersionUID = -1567531441301230743L;
+                    @Override
+                    public Tuple2<Node, Tuple2<Node, Node>> call(
+                            Tuple2<Node, Tuple2<Node, Node>> t) throws Exception {
+                        return new Tuple2<>(t._2._2, new Tuple2<>(t._2._1, t._1));
+                    }
+                });
+
+            //bwdRdd.saveAsObjectFile(bwdRddPath);;
+        }
+
+        JavaPairRDD<Node, Tuple2<Node, Node>> bwdRdd = tmpBwdRdd
+            .partitionBy(nodePartitioner)
+            .persist(StorageLevel.MEMORY_AND_DISK_SER())
+            ;
+
+
+        bwdRdd.count();
         System.out.println("Loaded BWD RDD:" + sw.elapsed(TimeUnit.SECONDS));
         sw.stop();
 
@@ -177,7 +248,7 @@ public class MainJavaSparkTest {
 
 
         PropertyFunctionRegistry.get().put(PropertyFunctionKShortestPaths.DEFAULT_IRI, new PropertyFunctionFactoryKShortestPaths(sps ->
-            new SparqlKShortestPathFinderSpark(sparkContext, fwdRdd, bwdRdd)));
+            new SparqlKShortestPathFinderSpark(sparkContext, fwdRdd, bwdRdd))); // nodePartitioner
 
 
         Server server = ServerUtils.startSparqlEndpoint(ssf, sparqlStmtParser, 7533);

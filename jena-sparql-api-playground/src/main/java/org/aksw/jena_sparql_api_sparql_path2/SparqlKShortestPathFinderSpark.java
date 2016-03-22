@@ -9,25 +9,34 @@ import java.util.stream.StreamSupport;
 import org.aksw.jena_sparql_api_sparql_path.spark.NfaExecutionSpark;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.path.Path;
+import org.apache.spark.Partitioner;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.broadcast.Broadcast;
+import org.apache.spark.storage.StorageLevel;
 
 import scala.Tuple2;
 
 public class SparqlKShortestPathFinderSpark
     implements SparqlKShortestPathFinder
 {
-    protected JavaSparkContext sparkContext;
-    protected JavaPairRDD<Node, Tuple2<Node, Node>> fwdRdd;
-    protected JavaPairRDD<Node, Tuple2<Node, Node>> bwdRdd;
+    protected final JavaSparkContext sparkContext;
+    protected final JavaPairRDD<Node, Tuple2<Node, Node>> fwdRdd;
+    protected final JavaPairRDD<Node, Tuple2<Node, Node>> bwdRdd;
+    //protected final Partitioner nodePartitioner;
 
-    public SparqlKShortestPathFinderSpark(JavaSparkContext sparkContext, JavaPairRDD<Node, Tuple2<Node, Node>> fwdRdd, JavaPairRDD<Node, Tuple2<Node, Node>> bwdRdd) {
+    public SparqlKShortestPathFinderSpark(
+            JavaSparkContext sparkContext,
+            JavaPairRDD<Node, Tuple2<Node, Node>> fwdRdd,
+            JavaPairRDD<Node, Tuple2<Node, Node>> bwdRdd
+            //Partitioner nodePartitioner
+            ) {
         this.sparkContext = sparkContext;
         this.fwdRdd = fwdRdd;
         this.bwdRdd = bwdRdd;
+        //this.nodePartitioner = nodePartitioner;
     }
 
 
@@ -35,6 +44,7 @@ public class SparqlKShortestPathFinderSpark
             JavaSparkContext sparkContext,
             JavaPairRDD<Node, Tuple2<Node, Node>> fwdRdd,
             JavaPairRDD<Node, Tuple2<Node, Node>> bwdRdd,
+            //Partitioner nodePartitioner,
             Node start,
             Node end,
             Path path,
@@ -52,6 +62,12 @@ public class SparqlKShortestPathFinderSpark
         // TODO Initialize the frontierIdToAutomaton map
         Broadcast<Map<Integer, Nfa<Integer, LabeledEdge<Integer, PredicateClass>>>> idToNfa = sparkContext.broadcast(frontierIdToAutomaton);
 
+        Map<Integer, Node> frontierIdToTarget = new HashMap<>();
+        frontierIdToTarget.put(nfaId, end);
+        Broadcast<Map<Integer, Node>> idToTarget = sparkContext.broadcast(frontierIdToTarget);
+
+
+
 
         // Set up the frontier
         FrontierItem<Integer, Integer, Node, Node> frontier = new FrontierItem<Integer, Integer, Node, Node>(
@@ -61,10 +77,14 @@ public class SparqlKShortestPathFinderSpark
                 false,
                 Node.class);
 
+        Partitioner nodePartitioner = fwdRdd.partitioner().get();
 
-        JavaPairRDD<Node, FrontierData<Integer, Integer, Node, Node>> frontierRdd = sparkContext.parallelizePairs(Collections.singletonList(frontier)).cache();
+        JavaPairRDD<Node, FrontierData<Integer, Integer, Node, Node>> frontierRdd = sparkContext
+                .parallelizePairs(Collections.singletonList(frontier))
+                .partitionBy(nodePartitioner)
+                .persist(StorageLevel.MEMORY_AND_DISK_SER());
 
-        JavaPairRDD<Integer, NestedPath<Node, Node>> foundPathsRdd = null;
+        JavaPairRDD<Integer, NestedPath<Node, Node>> currentPathRdd = null;
 
 
         Function<LabeledEdge<Integer, PredicateClass>, PredicateClass> transToPredicateClass = new Function<LabeledEdge<Integer, PredicateClass>, PredicateClass>() {
@@ -79,13 +99,39 @@ public class SparqlKShortestPathFinderSpark
 
         long foundPathCount;
         do {
-            JavaPairRDD<Integer, NestedPath<Node, Node>> nextPathRdd = NfaExecutionSpark.collectPaths(frontierRdd, idToNfa, transToPredicateClass);
+            frontierRdd.count();
+
+            JavaPairRDD<Integer, NestedPath<Node, Node>> pathContribRdd = NfaExecutionSpark
+                    .collectPaths(frontierRdd, idToNfa, idToTarget, transToPredicateClass);
+                    //.persist(StorageLevel.MEMORY_AND_DISK_SER());
+
+            //System.out.println("FRONTIER SIZE: " + frontierRdd.count());
 
             // merge the paths
-            foundPathsRdd = foundPathsRdd == null ? nextPathRdd : foundPathsRdd.union(nextPathRdd).cache();
+            //JavaPairRDD<Integer, NestedPath<Node, Node>> nextFoundPathsRdd;
+            JavaPairRDD<Integer, NestedPath<Node, Node>> nextPathRdd;
+            if(currentPathRdd == null) {
+                nextPathRdd = pathContribRdd;
+                        //.persist(StorageLevel.MEMORY_AND_DISK_SER());
+            } else {
+                nextPathRdd = pathContribRdd
+                        .union(currentPathRdd)
+                        .persist(StorageLevel.MEMORY_AND_DISK_SER());
+
+            }
+
+            foundPathCount = nextPathRdd.count();
+
+            if(currentPathRdd != null)
+            {
+                currentPathRdd.unpersist(false);
+            }
+            currentPathRdd = nextPathRdd;
 
 
             Map<Integer, Pair<Number>> stats = NfaExecutionSpark.analyzeFrontierDir(frontierRdd, idToNfa, transToPredicateClass);
+
+            //System.out.println("Frontier analysis: " + stats);
 
             Pair<Number> agg = stats.values().stream().reduce(
                     new Pair<Number>(0, 0),
@@ -94,44 +140,97 @@ public class SparqlKShortestPathFinderSpark
             boolean requiresFwdJoin = agg.getKey().longValue() > 0l;
             boolean requiresBwdJoin = agg.getValue().longValue() > 0l;
 
+            //System.out.println("Joins: " + requiresFwdJoin + " " + requiresBwdJoin);
+
             JavaPairRDD<Node, FrontierData<Integer, Integer, Node, Node>> fwdFrontierRdd = null;
             if(requiresFwdJoin) {
-                fwdFrontierRdd = NfaExecutionSpark.advanceFrontier(
-                        1,
-                        frontierRdd,
-                        fwdRdd,
-                        false,
-                        idToNfa,
-                        transToPredicateClass
+                fwdFrontierRdd = NfaExecutionSpark
+                        .advanceFrontier(
+                            sparkContext,
+                            1,
+                            frontierRdd,
+                            fwdRdd,
+                            false,
+                            idToNfa,
+                            transToPredicateClass
                         );
+                        //.persist(StorageLevel.MEMORY_AND_DISK_SER());
+                //System.out.println("FWD FRONTIER SIZE: " + fwdFrontierRdd.cou);
             }
 
             JavaPairRDD<Node, FrontierData<Integer, Integer, Node, Node>> bwdFrontierRdd = null;
             if(requiresBwdJoin) {
-                bwdFrontierRdd = NfaExecutionSpark.advanceFrontier(
-                        1,
-                        frontierRdd,
-                        bwdRdd,
-                        true,
-                        idToNfa,
-                        transToPredicateClass
+                bwdFrontierRdd = NfaExecutionSpark
+                        .advanceFrontier(
+                            sparkContext,
+                            1,
+                            frontierRdd,
+                            bwdRdd,
+                            true,
+                            idToNfa,
+                            transToPredicateClass
                         );
+                        //.persist(StorageLevel.MEMORY_AND_DISK_SER());
+                //bwdFrontierRdd.count();
             }
 
-            JavaPairRDD<Node, FrontierData<Integer, Integer, Node, Node>> nextFrontierRdd = fwdFrontierRdd == null
-                    ? bwdFrontierRdd
-                    : (bwdFrontierRdd == null
-                        ? fwdFrontierRdd
-                        : fwdFrontierRdd.union(bwdFrontierRdd));
+            JavaPairRDD<Node, FrontierData<Integer, Integer, Node, Node>> nextFrontierRdd;
+            boolean doUnpersist = false;
+            if(fwdFrontierRdd == null) {
+                nextFrontierRdd = bwdFrontierRdd;
+            } else {
+                if(bwdFrontierRdd == null) {
+                    nextFrontierRdd = fwdFrontierRdd;
+                } else {
+                    nextFrontierRdd = fwdFrontierRdd
+                            .union(bwdFrontierRdd)
+                            .persist(StorageLevel.MEMORY_AND_DISK_SER());
 
-            if(nextFrontierRdd != null) {
-                nextFrontierRdd.cache();
+                    //if(true) { throw new RuntimeException("not expected"); }
+                    doUnpersist = true;
+                }
+            }
+
+//            if(nextFrontierRdd != null) {
+//                nextFrontierRdd = nextFrontierRdd
+//                  //.partitionBy(nodePartitioner)
+//                  .persist(StorageLevel.MEMORY_AND_DISK_SER());
+//            }
+//
+//                    ? bwdFrontierRdd
+//                    : (bwdFrontierRdd == null
+//                        ? fwdFrontierRdd
+//                        : fwdFrontierRdd
+//                            .union(bwdFrontierRdd));
+//                            //.persist(StorageLevel.MEMORY_AND_DISK());
+//
+//            nextFrontierRdd = nextFrontierRdd
+////                .partitionBy(nodePartitioner)
+//                .persist(StorageLevel.MEMORY_AND_DISK_SER());
+
+//            if(nextFrontierRdd != null) {
+//                nextFrontierRdd.persist(StorageLevel.MEMORY_AND_DISK());
+//            }
+
+
+//            long frontierSize = nextFrontierRdd != null
+//                    ? nextFrontierRdd.isE
+//            if() {
+                //nextFrontierRdd.first();
+                //long frontierSize = nextFrontierRdd.count();
+                //System.out.println("Next Frontier size: " + frontierSize);
+//            }
+
+            frontierRdd.unpersist(false);
+
+            if(doUnpersist) {
+                fwdFrontierRdd.unpersist(false);
+                bwdFrontierRdd.unpersist(false);
             }
 
             frontierRdd = nextFrontierRdd;
-            foundPathCount = foundPathsRdd.count();
 
-        } while (foundPathCount <= k && frontierRdd != null);
+        } while (foundPathCount <= k && frontierRdd != null && !frontierRdd.isEmpty());
 
 
 //        rdd
@@ -143,7 +242,7 @@ public class SparqlKShortestPathFinderSpark
 
         //JavaPairRDD<Integer, NestedPath<Node, Node>> segmentPathRdd = NfaExecutionSpark.collectPaths(fwdFrontierRdd, idToNfa);
 
-        JavaRDD<NestedPath<Node, Node>> finalPathRdd = foundPathsRdd
+        JavaRDD<NestedPath<Node, Node>> finalPathRdd = currentPathRdd
             .map(new Function<Tuple2<Integer,NestedPath<Node,Node>>, NestedPath<Node, Node>>() {
                 private static final long serialVersionUID = 234902531915L;
                 @Override
@@ -172,9 +271,10 @@ public class SparqlKShortestPathFinderSpark
                 }
             })
             .keys()
-            .cache();
+            .persist(StorageLevel.MEMORY_AND_DISK_SER());
 
         idToNfa.destroy();
+        idToTarget.destroy();
 
         return finalPathRdd;
     }

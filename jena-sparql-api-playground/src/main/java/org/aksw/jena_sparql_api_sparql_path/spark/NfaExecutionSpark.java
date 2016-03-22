@@ -19,15 +19,19 @@ import org.aksw.jena_sparql_api_sparql_path2.PredicateClass;
 import org.aksw.jena_sparql_api_sparql_path2.ValueSet;
 import org.apache.jena.graph.Node;
 import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
+import org.apache.spark.api.java.function.PairFlatMapFunction;
 import org.apache.spark.api.java.function.PairFunction;
 import org.apache.spark.broadcast.Broadcast;
+import org.apache.spark.storage.StorageLevel;
 import org.jgrapht.DirectedGraph;
 
 import com.google.common.collect.Sets;
 
 import scala.Tuple2;
+import scala.tools.nsc.settings.AdvancedScalaSettings.X;
 
 class JoinStats<V, E> {
     protected E predicate;
@@ -77,52 +81,65 @@ public class NfaExecutionSpark {
      */
     public static <I, S, T, V, E> JavaPairRDD<I, NestedPath<V, E>> collectPaths(
             JavaPairRDD<V, FrontierData<I, S, V, E>> frontierRdd,
-            Broadcast<Map<I, Nfa<S, T>>> idToNfa,
+            Broadcast<Map<I, Nfa<S, T>>> idToNfaBc,
+            Broadcast<Map<I, V>> idToTargetBc,
             Function<T, PredicateClass> transToPredicateClass) {
 
+
         JavaPairRDD<I, NestedPath<V, E>> result = frontierRdd
-                .filter(new Function<Tuple2<V,FrontierData<I,S,V,E>>, Boolean>() {
-            private static final long serialVersionUID = 7576754196298849489L;
+            .filter(new Function<Tuple2<V,FrontierData<I,S,V,E>>, Boolean>() {
+                private static final long serialVersionUID = 7576754196298849489L;
 
-            @Override
-            public Boolean call(Tuple2<V, FrontierData<I, S, V, E>> v1)
-                    throws Exception {
-                // yield all paths that have reached the corresponding nfa's accepting states
-                FrontierData<I, S, V, E> frontierData = v1._2;
-                I nfaId = frontierData.getFrontierId();
-                //NestedPath<V, E> nestedPath = frontierData.getPathHead().getValue();
-                Nfa<S, T> nfa = idToNfa.getValue().get(nfaId);
-                Set<S> endStates = nfa.getEndStates();
-                DirectedGraph<S, T> graph = nfa.getGraph();
+                @Override
+                public Boolean call(Tuple2<V, FrontierData<I, S, V, E>> v1)
+                        throws Exception {
 
-                Set<S> rawStates = frontierData.getStates();
+                    Map<I, Nfa<S, T>> idToNfa = idToNfaBc.getValue();
+                    Map<I, V> idToTarget = idToTargetBc.getValue();
 
-                Set<S> states = JGraphTUtils.transitiveGet(graph, rawStates, 1, trans -> getPredicateClass(transToPredicateClass, trans) == null);
-//
-                Set<S> tmp = Sets.intersection(endStates, states);
-                boolean isAccepting = !tmp.isEmpty();
+                    // yield all paths that have reached the corresponding nfa's accepting states
+                    FrontierData<I, S, V, E> frontierData = v1._2;
+                    I nfaId = frontierData.getFrontierId();
+                    //NestedPath<V, E> nestedPath = frontierData.getPathHead().getValue();
+                    V targetNode = idToTarget.get(nfaId);
 
-//                boolean isAccepting = true;
+                    Nfa<S, T> nfa = idToNfa.get(nfaId);//idToNfa.getValue().get(nfaId);
+                    Set<S> endStates = nfa.getEndStates();
+                    DirectedGraph<S, T> graph = nfa.getGraph();
 
-                // TODO Check if the path's target is accepted
-                //nestedPath.getCurrent().equals(target);
+                    Set<S> rawStates = frontierData.getStates();
+
+                    Set<S> states = JGraphTUtils.transitiveGet(graph, rawStates, 1, trans -> getPredicateClass(transToPredicateClass, trans) == null);
+    //
+                    Set<S> tmp = Sets.intersection(endStates, states);
+                    boolean isAccepting = !tmp.isEmpty();
+
+                    boolean isTarget = targetNode != null ? frontierData.getPathHead().getValue().getCurrent().equals(targetNode) : true;
+                    boolean r = isAccepting && isTarget;
+
+    //                boolean isAccepting = true;
+
+                    // TODO Check if the path's target is accepted
 
 
-                return isAccepting;
-            }
-        }).mapToPair(new PairFunction<Tuple2<V, FrontierData<I, S, V, E>>, I, NestedPath<V, E>>() {
-            private static final long serialVersionUID = 94392315173L;
-            @Override
-            public Tuple2<I, NestedPath<V, E>> call(
-                    Tuple2<V, FrontierData<I, S, V, E>> t) throws Exception {
-                FrontierData<I, S, V, E> frontierData = t._2;
-                I frontierId = frontierData.getFrontierId();
-                NestedPath<V, E> nestedPath = frontierData.getPathHead().getValue();
+                    return r;
+                }
+            })
+            .mapToPair(new PairFunction<Tuple2<V, FrontierData<I, S, V, E>>, I, NestedPath<V, E>>() {
+                private static final long serialVersionUID = 94392315173L;
+                @Override
+                public Tuple2<I, NestedPath<V, E>> call(
+                        Tuple2<V, FrontierData<I, S, V, E>> t) throws Exception {
+                    FrontierData<I, S, V, E> frontierData = t._2;
+                    I frontierId = frontierData.getFrontierId();
+                    NestedPath<V, E> nestedPath = frontierData.getPathHead().getValue();
 
-                Tuple2<I, NestedPath<V, E>> r = new Tuple2<>(frontierId, nestedPath);
-                return r;
-            }
-        }).distinct();
+                    Tuple2<I, NestedPath<V, E>> r = new Tuple2<>(frontierId, nestedPath);
+                    return r;
+                }
+            })
+            .distinct()
+            .persist(StorageLevel.MEMORY_AND_DISK_SER());
 
         return result;
     }
@@ -189,6 +206,53 @@ public class NfaExecutionSpark {
     }
 
 
+    public static <K, V, W> JavaPairRDD<K, Tuple2<V, W>> autoJoin(JavaSparkContext sc, JavaPairRDD<K, V> a, JavaPairRDD<K, W> b) {
+
+
+        JavaPairRDD<K, Tuple2<V, W>> result; // = a.join(b);
+        Map<K, V> map = a.collectAsMap();
+        Broadcast<Map<K, V>> bv = sc.broadcast(map);
+
+//        b.mapPartitionsToPair(new PairFlatMapFunction<Iterator<Tuple2<K,W>>, K, V>() {
+//
+//            @Override
+//            public Iterable<Tuple2<K, V>> call(Iterator<Tuple2<K, W>> t)
+//                    throws Exception {
+//                // TODO Auto-generated method stub
+//                return null;
+//            }
+//        });
+
+
+        result = b.mapToPair(new PairFunction<Tuple2<K, W>, K, Tuple2<V, W>>() {
+            private static final long serialVersionUID = 1L;
+            @Override
+            public Tuple2<K, Tuple2<V, W>> call(Tuple2<K, W> t)
+                    throws Exception {
+                K k = t._1;
+                W w = t._2;
+                V v = bv.getValue().get(k);
+
+                Tuple2<K, Tuple2<V, W>> r = v == null
+                        ? null
+                        : new Tuple2<>(k, new Tuple2<>(v, w));
+
+                return r;
+            }
+        }).filter(new Function<Tuple2<K,Tuple2<V,W>>, Boolean>() {
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public Boolean call(Tuple2<K, Tuple2<V, W>> t) throws Exception {
+                return t != null;
+            }
+        });
+
+//        bv.destroy(false);
+
+        return result;
+    }
+
 
     /**
      *
@@ -215,6 +279,7 @@ public class NfaExecutionSpark {
      * @param <E> data edge type
      */
     public static <I, S, T, V, E> JavaPairRDD<V, FrontierData<I, S, V, E>> advanceFrontier(
+            JavaSparkContext sc,
             I frontierId, // the id of the frontier which to advance
             //Nfa<V, E> nfa,
             JavaPairRDD<V, FrontierData<I, S, V, E>> frontierRdd,
@@ -230,10 +295,19 @@ public class NfaExecutionSpark {
      //       Predicate<T> isEpsilon)
     {
 
-        JavaPairRDD<V, FrontierData<I, S, V, E>> result = frontierRdd
-            .join(rdd)
+
+
+
+        JavaPairRDD<V, FrontierData<I, S, V, E>> result =
+            autoJoin(sc, frontierRdd, rdd)
+
+            //.partitionBy(rdd.partitioner().get())
+            //.join(rdd, rdd.partitioner().get())
+            //.persist(StorageLevel.MEMORY_AND_DISK_SER())
+            // TODO Maybe first do map to pair and then filter
+            //.join(rdd)
             .filter(new Function<Tuple2<V, Tuple2<FrontierData<I, S, V, E>,Tuple2<E,V>>>, Boolean>() {
-                private static final long serialVersionUID = 12351375937L;
+                private static final long serialVersionUID = 123513475937L;
                 @Override
                 public Boolean call(
                         Tuple2<V, Tuple2<FrontierData<I, S, V, E>, Tuple2<E, V>>> t)
@@ -265,8 +339,7 @@ public class NfaExecutionSpark {
                 private static final long serialVersionUID = 1312323951L;
 
                 @Override
-                public Tuple2<V, FrontierData<I, S, V, E>> call(
-                        Tuple2<V, Tuple2<FrontierData<I, S, V, E>, Tuple2<E, V>>> t)
+                public Tuple2<V, FrontierData<I, S, V, E>> call(Tuple2<V, Tuple2<FrontierData<I, S, V, E>, Tuple2<E, V>>> t)
                                 throws Exception {
 
                     FrontierData<I, S, V, E> frontierData = t._2._1;
@@ -305,7 +378,25 @@ public class NfaExecutionSpark {
 
                     return result;
                 }
-            });
+            })
+//            .filter(new Function<Tuple2<V, FrontierData<I,S,V,E>>, Boolean>() {
+//                private static final long serialVersionUID = 1L;
+//
+//                @Override
+//                public Boolean call(Tuple2<V, FrontierData<I, S, V, E>> v1)
+//                        throws Exception {
+//                    return true;
+//                }
+//            })
+//            .partitionBy(rdd.partitioner().get())
+            .persist(StorageLevel.MEMORY_AND_DISK_SER());
+
+        // FIXME Interestingly, Sparks execution plan looks ok when using .first() here
+        // But why? If .count() is used, the join appears twice in the plan
+        //result.first();
+
+        result.count();
+        //result.ta
 
         return result;
     }
