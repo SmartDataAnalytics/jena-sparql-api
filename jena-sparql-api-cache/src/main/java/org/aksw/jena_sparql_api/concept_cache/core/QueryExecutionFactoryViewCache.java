@@ -1,28 +1,18 @@
 package org.aksw.jena_sparql_api.concept_cache.core;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import org.aksw.jena_sparql_api.concept_cache.dirty.CacheResult;
 import org.aksw.jena_sparql_api.concept_cache.dirty.ConceptMap;
 import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
-import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
-import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactoryDecorator;
 import org.aksw.jena_sparql_api.model.QueryExecutionFactoryModel;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryFactory;
-import org.apache.jena.sparql.algebra.Op;
-import org.apache.jena.sparql.algebra.OpAsQuery;
-import org.apache.jena.sparql.algebra.Table;
-import org.apache.jena.sparql.algebra.op.OpJoin;
-import org.apache.jena.sparql.algebra.op.OpNull;
-import org.apache.jena.sparql.algebra.op.OpTable;
 import org.apache.jena.sparql.core.Var;
 
 
@@ -39,48 +29,48 @@ public class QueryExecutionFactoryViewCache
 
     @Override
     public QueryExecution createQueryExecution(String queryString) {
-        Query query = QueryFactory.create(queryString);
-        QueryExecution result = createQueryExecution(query);
+        Query rawQuery = QueryFactory.create(queryString);
+        QueryExecution result = createQueryExecution(rawQuery);
         return result;
     }
 
     @Override
-    public QueryExecution createQueryExecution(Query query) {
+    public QueryExecution createQueryExecution(Query rawQuery) {
 
         QueryExecution result;
 
         // Step 1: Decide whether the query itself is suitable for caching
         // Conditions: The query must by comprised of: quad pattern, filter and projection
-        ProjectedQuadFilterPattern pqfp = SparqlCacheUtils.transform(query);
-        QuadFilterPattern qfp = pqfp.getQuadFilterPattern();
-
-        if(pqfp != null) {
-            qfp = pqfp.getQuadFilterPattern();
-        }
-
-        CacheResult cacheResult;
-
-        if(qfp == null) {
-            cacheResult = null;
-            //cacheHits = Collections.emptyList();
-        } else {
-            cacheResult = conceptMap.lookup(qfp);
-        }
-
-
-        //System.out.println("CacheHits: " + cacheHits.size());
-
-        boolean isPatternFree = false;
-
-        // Whether the query was exactly the same entry in the cache, so
-        // that there is no need cache again
-        boolean queryEqualedCache = false;
-
-        if(cacheResult != null) {
-            //CacheHit cacheHit = cacheHits.iterator().next();
-            //CacheResult cacheResult = cacheHits;
-
-            query = OpVisitorViewCacheApplier.apply(query, conceptMap);
+//        ProjectedQuadFilterPattern pqfp = SparqlCacheUtils.transform(query);
+//        QuadFilterPattern qfp = pqfp.getQuadFilterPattern();
+//
+//        if(pqfp != null) {
+//            qfp = pqfp.getQuadFilterPattern();
+//        }
+//
+//        CacheResult cacheResult;
+//
+//        if(qfp == null) {
+//            cacheResult = null;
+//            //cacheHits = Collections.emptyList();
+//        } else {
+//            cacheResult = conceptMap.lookup(qfp);
+//        }
+//
+//
+//        //System.out.println("CacheHits: " + cacheHits.size());
+//
+//        boolean isPatternFree = false;
+//
+//        // Whether the query was exactly the same entry in the cache, so
+//        // that there is no need cache again
+//        boolean queryEqualedCache = false;
+//
+//        if(cacheResult != null) {
+//            //CacheHit cacheHit = cacheHits.iterator().next();
+//            //CacheResult cacheResult = cacheHits;
+//
+//            query = OpVisitorViewCacheApplier.apply(query, conceptMap);
 //
 //            QuadFilterPatternCanonical qfpc = cacheResult.getReplacementPattern();
 //
@@ -128,13 +118,21 @@ public class QueryExecutionFactoryViewCache
 //
 //            //TODO We need to reset the projection...
 //            query = yay;
-        }
+//        }
+
+        RewriteResult rewriteResult = OpVisitorViewCacheApplier.apply(rawQuery, conceptMap);
+        Query query = rewriteResult.getRewrittenQuery();
+        boolean isPatternFree = rewriteResult.isPatternFree();
+        boolean isCachingAllowed = rewriteResult.isCachingAllowed();
+
         System.out.println("Running query: " + query.toString().substring(0, Math.min(2000, query.toString().length())));
 
         //System.out.println("Running query: " + query);
 
-
+        ProjectedQuadFilterPattern pqfp = SparqlCacheUtils.transform(query);
+        QuadFilterPattern qfp = pqfp == null ? null : pqfp.getQuadFilterPattern();
         boolean isIndexable = qfp != null;
+
         List<Var> vars = query.getProjectVars();
 
         if(isPatternFree) {
@@ -144,7 +142,7 @@ public class QueryExecutionFactoryViewCache
         else {
             QueryExecution qe = decoratee.createQueryExecution(query);
 
-            if(isIndexable && !vars.isEmpty() && !queryEqualedCache) {
+            if(isIndexable && !vars.isEmpty() && isCachingAllowed) {
                 Set<Var> indexVars = Collections.singleton(vars.iterator().next());
 
                 result = new QueryExecutionViewCache(qe, conceptMap, query, indexVars);

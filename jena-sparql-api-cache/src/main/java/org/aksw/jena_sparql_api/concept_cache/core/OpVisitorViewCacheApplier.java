@@ -1,7 +1,11 @@
 package org.aksw.jena_sparql_api.concept_cache.core;
 
+import java.util.AbstractMap.SimpleEntry;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.concept_cache.dirty.CacheResult;
@@ -23,88 +27,140 @@ import org.apache.jena.sparql.core.Var;
 public class OpVisitorViewCacheApplier
 // extends OpVisitorByType
 {
-    public static Query apply(Query query, ConceptMap conceptMap) {
-        // Query yay = OpAsQuery.asQuery(op);
+    /**
+     *
+     * @param query
+     * @param conceptMap
+     * @return
+     */
+    public static RewriteResult apply(Query query, ConceptMap conceptMap) {
         Op originalOp = Algebra.compile(query);
 
-        Op rewrittenOp = apply(originalOp, conceptMap);
+        Map<Op, CacheResult> opToCover = detectCovers(originalOp, conceptMap);
+
+        // Check if the whole query originates from the cache
+        // if so, prevent re-caching it.
+        CacheResult rootCover = opToCover.get(originalOp);
+        boolean allowCaching = true;
+        if(rootCover != null) {
+            QuadFilterPatternCanonical qfpc = rootCover.getReplacementPattern();
+
+            allowCaching = !qfpc.isEmpty();
+        }
+
+        Op rewrittenOp = applyCovers(originalOp, conceptMap, opToCover);
         boolean isPatternFree = OpUtils.isPatternFree(rewrittenOp);
 
 
-        Query result = OpAsQuery.asQuery(rewrittenOp);
+        Query rewrittenQuery = OpAsQuery.asQuery(rewrittenOp);
 
-        result.setQueryResultStar(false);
-        result.getProjectVars().clear();
+        rewrittenQuery.setQueryResultStar(false);
+        rewrittenQuery.getProjectVars().clear();
         for (Var x : query.getProjectVars()) {
-            result.getProject().add(x);
+            rewrittenQuery.getProject().add(x);
         }
 
         // TODO We need to reset the projection...
+        // TODO Is above TODO still valid? (Oh the irony)
+
+        RewriteResult result = new RewriteResult(rewrittenQuery, rewrittenOp, allowCaching, isPatternFree);
+
         return result;
     }
 
-    public static Op apply(Op parentOp, ConceptMap conceptMap) {
 
-        Op result;
+    /**
+     * Second argument is true if the cache completely
+     *
+     * @param parentOp
+     * @param conceptMap
+     * @return
+     */
+    public static Entry<Op, Boolean> applyX(Op parentOp, ConceptMap conceptMap) {
+        return null;
+    }
+
+    /**
+     * TODO This should be separated into three phases:
+     * 1. Detect covers
+     * 2. Chose covers
+     * 3. Apply covers
+     *
+     * Performs a depth first traversal of the op tree and replaces nodes
+     * with cache hits.
+     *
+     *
+     * @param parentOp
+     * @param conceptMap
+     * @return
+     */
+    public static Map<Op, CacheResult> detectCovers(Op parentOp, ConceptMap conceptMap) {
+        Map<Op, CacheResult> result = new HashMap<>(); // TODO We might consider using an IdentityHashMap
+        detectCovers(parentOp, conceptMap, result);
+        return result;
+    }
+
+    public static void detectCovers(Op parentOp, ConceptMap conceptMap, Map<Op, CacheResult> result) {
 
         ProjectedQuadFilterPattern pqfp = SparqlCacheUtils.transform(parentOp);
 
         if (pqfp == null) {
             // Recursively descend to the children
             List<Op> subOps = OpUtils.getSubOps(parentOp);
-            List<Op> newSubOps = subOps.stream()
-                    .map(child -> apply(child, conceptMap))
-                    .collect(Collectors.toList());
-
-            result = OpUtils.copy(parentOp, newSubOps);
-
+            for(Op subOp : subOps) {
+                detectCovers(subOp, conceptMap, result);
+            }
         } else {
             QuadFilterPattern qfp = pqfp.getQuadFilterPattern();
 
             CacheResult cacheResult = conceptMap.lookup(qfp);
 
-            // Whether the query was exactly the same entry in the cache, so
-            // that there is no need cache again
-            boolean queryEqualedCache = false;
+            if(cacheResult != null) {
+                result.put(parentOp, cacheResult);
+            }
+        }
+    }
 
-            if (cacheResult != null) {
-                // CacheHit cacheHit = cacheHits.iterator().next();
-                // CacheResult cacheResult = cacheHits;
-                QuadFilterPatternCanonical qfpc = cacheResult
-                        .getReplacementPattern();
 
-                queryEqualedCache = qfpc.isEmpty();
+    public static Op applyCovers(Op parentOp, ConceptMap conceptMap, Map<Op, CacheResult> opToCover) {
 
-                System.out.println("Is same: " + queryEqualedCache);
-                // QuadFilterPatternCanonical remainder = qfpc.diff(queryQfpc);
-                // queryEqualedCache = remainder.isEmpty();
+        Op result;
 
-                Op o = qfpc.toOp();
+        CacheResult cacheResult = opToCover.get(parentOp);
+        if(cacheResult == null) {
+            // Recursively descend to the children
+            List<Op> subOps = OpUtils.getSubOps(parentOp);
+            List<Op> newSubOps = subOps.stream()
+                    .map(child -> applyCovers(child, conceptMap, opToCover))
+                    .collect(Collectors.toList());
 
-                Collection<Table> tables = cacheResult.getTables();
-                Op opTable = null;
-                for (Table table : tables) {
-                    Op tmp = OpTable.create(table);
+            result = OpUtils.copy(parentOp, newSubOps);
+        } else {
+            // CacheHit cacheHit = cacheHits.iterator().next();
+            // CacheResult cacheResult = cacheHits;
+            QuadFilterPatternCanonical qfpc = cacheResult.getReplacementPattern();
 
-                    if (opTable == null) {
-                        opTable = tmp;
-                    } else {
-                        opTable = OpJoin.create(opTable, tmp);
-                    }
-                }
+            Op o = qfpc.toOp();
 
-                // System.out.println("Table size: " + table.size());
+            Collection<Table> tables = cacheResult.getTables();
+            Op opTable = null;
+            for (Table table : tables) {
+                Op tmp = OpTable.create(table);
 
-                if (o instanceof OpNull) {
-                    result = opTable;
+                if (opTable == null) {
+                    opTable = tmp;
                 } else {
-                    result = OpJoin.create(opTable, o);
+                    opTable = OpJoin.create(opTable, tmp);
                 }
-            } else {
-                // There was no cache hit, just return the op
-                result = parentOp;
             }
 
+            // System.out.println("Table size: " + table.size());
+
+            if (o instanceof OpNull) {
+                result = opTable;
+            } else {
+                result = OpJoin.create(opTable, o);
+            }
         }
         return result;
     }
