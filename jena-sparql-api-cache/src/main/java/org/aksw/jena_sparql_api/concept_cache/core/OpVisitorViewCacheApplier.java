@@ -1,6 +1,5 @@
 package org.aksw.jena_sparql_api.concept_cache.core;
 
-import java.util.AbstractMap.SimpleEntry;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -14,6 +13,7 @@ import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
+import org.aksw.jena_sparql_api.utils.ReplaceConstants;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
@@ -33,40 +33,40 @@ public class OpVisitorViewCacheApplier
      * @param conceptMap
      * @return
      */
-    public static RewriteResult apply(Query query, ConceptMap conceptMap) {
-        Op originalOp = Algebra.compile(query);
-
-        Map<Op, CacheResult> opToCover = detectCovers(originalOp, conceptMap);
-
-        // Check if the whole query originates from the cache
-        // if so, prevent re-caching it.
-        CacheResult rootCover = opToCover.get(originalOp);
-        boolean allowCaching = true;
-        if(rootCover != null) {
-            QuadFilterPatternCanonical qfpc = rootCover.getReplacementPattern();
-
-            allowCaching = !qfpc.isEmpty();
-        }
-
-        Op rewrittenOp = applyCovers(originalOp, conceptMap, opToCover);
-        boolean isPatternFree = OpUtils.isPatternFree(rewrittenOp);
-
-
-        Query rewrittenQuery = OpAsQuery.asQuery(rewrittenOp);
-
-        rewrittenQuery.setQueryResultStar(false);
-        rewrittenQuery.getProjectVars().clear();
-        for (Var x : query.getProjectVars()) {
-            rewrittenQuery.getProject().add(x);
-        }
-
-        // TODO We need to reset the projection...
-        // TODO Is above TODO still valid? (Oh the irony)
-
-        RewriteResult result = new RewriteResult(rewrittenQuery, rewrittenOp, allowCaching, isPatternFree);
-
-        return result;
-    }
+//    public static RewriteResult apply(Query query, ConceptMap conceptMap) {
+//
+//
+//        Map<Op, CacheResult> opToCover = detectCovers(originalOp, conceptMap);
+//
+//        // Check if the whole query originates from the cache
+//        // if so, prevent re-caching it.
+//        CacheResult rootCover = opToCover.get(originalOp);
+//        boolean allowCaching = true;
+//        if(rootCover != null) {
+//            QuadFilterPatternCanonical qfpc = rootCover.getReplacementPattern();
+//
+//            allowCaching = !qfpc.isEmpty();
+//        }
+//
+//        Op rewrittenOp = applyCovers(originalOp, conceptMap, opToCover);
+//        boolean isPatternFree = OpUtils.isPatternFree(rewrittenOp);
+//
+//
+//        Query rewrittenQuery = OpAsQuery.asQuery(rewrittenOp);
+//
+//        rewrittenQuery.setQueryResultStar(false);
+//        rewrittenQuery.getProjectVars().clear();
+//        for (Var x : query.getProjectVars()) {
+//            rewrittenQuery.getProject().add(x);
+//        }
+//
+//        // TODO We need to reset the projection...
+//        // TODO Is above TODO still valid? (Oh the irony)
+//
+//        RewriteResult result = new RewriteResult(rewrittenQuery, rewrittenOp, allowCaching, isPatternFree);
+//
+//        return result;
+//    }
 
 
     /**
@@ -99,6 +99,36 @@ public class OpVisitorViewCacheApplier
         detectCovers(parentOp, conceptMap, result);
         return result;
     }
+
+
+    public static Map<Op, ProjectedQuadFilterPattern> detectPrimitiveCachableOps(Op parentOp) {
+        Map<Op, ProjectedQuadFilterPattern> result = new HashMap<>();
+        detectPrimitiveCachableOps(parentOp, result);
+        return result;
+    }
+
+    /**
+     * Check the query for ops that can be cached - that is
+     * projected quad filter patterns
+     *
+     * @param parentOp
+     * @param result
+     */
+    public static void detectPrimitiveCachableOps(Op parentOp, Map<Op, ProjectedQuadFilterPattern> result) {
+        ProjectedQuadFilterPattern pqfp = SparqlCacheUtils.transform(parentOp);
+
+        if (pqfp == null) {
+            // Recursively descend to the children
+            List<Op> subOps = OpUtils.getSubOps(parentOp);
+            for(Op subOp : subOps) {
+                detectPrimitiveCachableOps(subOp, result);
+            }
+        } else {
+            result.put(parentOp, pqfp);
+        }
+
+    }
+
 
     public static void detectCovers(Op parentOp, ConceptMap conceptMap, Map<Op, CacheResult> result) {
 

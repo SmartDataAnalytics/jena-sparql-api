@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.aksw.commons.util.StreamUtils;
+import org.aksw.jena_sparql_api.concept_cache.core.OpExecutionFactoryCache;
 import org.aksw.jena_sparql_api.concept_cache.core.QueryExecutionFactoryViewCache;
 import org.aksw.jena_sparql_api.concept_cache.dirty.CombinatoricsVector;
 import org.aksw.jena_sparql_api.concept_cache.dirty.ConceptMap;
@@ -16,11 +17,7 @@ import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.model.QueryExecutionFactoryModel;
-import org.apache.jena.riot.RDFDataMgr;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-
-import com.google.common.base.Stopwatch;
+import org.apache.jena.query.ARQ;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryFactory;
@@ -28,6 +25,7 @@ import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpAsQuery;
@@ -36,7 +34,12 @@ import org.apache.jena.sparql.engine.QueryIterator;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingHashMap;
 import org.apache.jena.sparql.engine.iterator.QueryIterPlainWrapper;
+import org.apache.jena.sparql.engine.main.QC;
 import org.apache.jena.vocabulary.RDF;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+
+import com.google.common.base.Stopwatch;
 
 public class MainSparqlViewCache {
 
@@ -110,6 +113,8 @@ public class MainSparqlViewCache {
 
 
     public static void main(String[] args) throws IOException {
+
+        QC.setFactory(ARQ.getContext(), new OpExecutionFactoryCache());
 
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         Resource resource = resolver.getResource("data-lorenz.nt");

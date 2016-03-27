@@ -7,6 +7,8 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.Table;
@@ -100,6 +102,29 @@ class OpSummaryImpl
 
 public class OpUtils {
 
+    public static Op substitute(Op op, boolean descendIntoSubst, Function<Op, Op> opToSubst) {
+        Op tmp = opToSubst.apply(op);
+
+        // Descend into op if tmp was null (assigned in statement after this)
+        // or descend into the replacement op
+        boolean descend = tmp == null || descendIntoSubst;
+
+        // Use op if tmp is null
+        tmp = tmp == null ? op : tmp;
+
+        Op result;
+        if(descend) {
+            List<Op> newSubOps = OpUtils.getSubOps(tmp).stream()
+                .map(subOp -> substitute(subOp, descendIntoSubst, opToSubst))
+                .collect(Collectors.toList());
+
+            result = OpUtils.copy(op, newSubOps);
+        } else {
+            result = tmp;
+        }
+
+        return result;
+    }
 
 
     public static OpSummary createSummary(Op op) {

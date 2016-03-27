@@ -89,12 +89,12 @@ public abstract class QueryExecutionBaseSelect
     private static final Logger logger = LoggerFactory
             .getLogger(QueryExecutionBaseSelect.class);
 
-    private Query query;
+    protected Query query;
 
 
     // Describe queries are sent as multiple individual queries, therefore we require a
     // back reference to the corresponding QueryExecutionFactory
-    private QueryExecutionFactory parentFactory;
+    protected QueryExecutionFactory parentFactory;
 
 
     // TODO Move these two utility methods to a utility class
