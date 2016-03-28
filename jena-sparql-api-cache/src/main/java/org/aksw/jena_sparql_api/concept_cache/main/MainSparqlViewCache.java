@@ -131,7 +131,8 @@ public class MainSparqlViewCache {
         Model model = RDFDataMgr.loadModel(fileName);
         QueryExecutionFactory sparqlService = FluentQueryExecutionFactory
             //.model(model)
-            .http("http://akswnc3.informatik.uni-leipzig.de/data/dbpedia/sparql", "http://dbpedia.org")
+            //.http("http://akswnc3.informatik.uni-leipzig.de/data/dbpedia/sparql", "http://dbpedia.org")
+            .http("http://localhost:8890/sparql", "http://dbpedia.org")
             .config()
                 .withPagination(100000)
             .end()
