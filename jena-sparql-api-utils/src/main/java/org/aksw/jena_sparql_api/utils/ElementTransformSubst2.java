@@ -26,6 +26,7 @@ import org.apache.jena.sparql.core.TriplePath ;
 import org.apache.jena.sparql.core.Var ;
 import org.apache.jena.sparql.graph.NodeTransform ;
 import org.apache.jena.sparql.syntax.Element ;
+import org.apache.jena.sparql.syntax.ElementNamedGraph;
 import org.apache.jena.sparql.syntax.ElementPathBlock ;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock ;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
@@ -45,6 +46,7 @@ public class ElementTransformSubst2 extends ElementTransformCopyBase {
         this.nodeTransform = nodeTransform;
     }
 
+
     @Override
     public Element transform(ElementTriplesBlock el) {
         ElementTriplesBlock etb = new ElementTriplesBlock() ;
@@ -58,6 +60,7 @@ public class ElementTransformSubst2 extends ElementTransformCopyBase {
             return etb ;
         return el ;
     }
+
 
     @Override
     public Element transform(ElementPathBlock el) {

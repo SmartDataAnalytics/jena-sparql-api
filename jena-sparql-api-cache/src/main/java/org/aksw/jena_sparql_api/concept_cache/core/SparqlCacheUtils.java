@@ -46,6 +46,7 @@ import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.TableFactory;
 import org.apache.jena.sparql.algebra.op.OpFilter;
+import org.apache.jena.sparql.algebra.op.OpGraph;
 import org.apache.jena.sparql.algebra.op.OpProject;
 import org.apache.jena.sparql.algebra.op.OpQuadPattern;
 import org.apache.jena.sparql.algebra.op.OpService;
@@ -58,6 +59,7 @@ import org.apache.jena.sparql.expr.E_OneOf;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprList;
 import org.apache.jena.sparql.expr.ExprVar;
+import org.apache.jena.sparql.expr.ExprVars;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementService;
@@ -65,6 +67,13 @@ import org.apache.jena.sparql.syntax.ElementSubQuery;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
+
+/*
+class QueryRewrite {
+    protected Query masterQuery;
+    protected Map<Node, Query>
+}
+*/
 
 public class SparqlCacheUtils {
 
@@ -90,19 +99,29 @@ public class SparqlCacheUtils {
      */
     public static QueryExecution prepareQueryExecution(
             QueryExecutionFactory qef,
+            Map<Node, QueryExecutionFactory> serviceMap,
             //Node serviceNode,
             Query rawQuery,
             ConceptMap conceptMap,
             long indexResultSetSizeThreshold)
     {
         Node serviceNode = NodeFactory.createURI("cache://" + qef.getId());
+
         Query query = rewriteQuery(serviceNode, rawQuery, conceptMap, indexResultSetSizeThreshold);
 
 
+        serviceMap.put(serviceNode, new QueryExecutionFactoryViewCacheFragment(qef, conceptMap, indexResultSetSizeThreshold));
+        // Temporarily register query execution factories for the parts that need to be cached
+        //QueryExecutionViewCachePartial qefPartial = new QueryExecutionViewCachePartial(query, pqfp, qef, conceptMap, indexVars, indexResultSetSizeThreshold)
 
 
-        boolean isPatternFree = true;
-        boolean isCachingAllowed = true;
+
+
+        // TODO Get this right:
+
+        //boolean isPatternFree = true;
+        boolean performLocalExecution = true;
+        //boolean isCachingAllowed = true;
 //        RewriteResult rewriteResult = OpVisitorViewCacheApplier.apply(rawQuery, conceptMap);
         //Query query = rewriteResult.getRewrittenQuery();
         //boolean isPatternFree = rewriteResult.isPatternFree();
@@ -120,7 +139,7 @@ public class SparqlCacheUtils {
 
         // If the query is pattern free, we can execute it against an empty model instead of performing a remote request
         QueryExecution result;
-        if(isPatternFree) {
+        if(performLocalExecution) {
             QueryExecutionFactory ss = new QueryExecutionFactoryModel();
             result = ss.createQueryExecution(query);
         }
@@ -149,8 +168,6 @@ public class SparqlCacheUtils {
             ConceptMap conceptMap,
             long indexResultSetSizeThreshold)
     {
-        QueryExecution result;
-
         Op rawOp = Algebra.compile(rawQuery);
         rawOp = Algebra.toQuadForm(rawOp);
         rawOp = ReplaceConstants.replace(rawOp);
@@ -217,21 +234,11 @@ public class SparqlCacheUtils {
         // Perform the substitution
         Op rootOp = OpUtils.substitute(rawOp, false, x -> opToCachingOp.get(x));
 
+        Query result = OpAsQuery.asQuery(rootOp);
 
+        //System.out.println("Rewritten query: " + query);
 
-        // FUCK! We cannot convert the op back to the query, as there is no mapping from our custom op to an element
-        Query query = OpAsQuery.asQuery(rootOp);
-        //QueryEngineMain.getFactory().create(op, dataset, inputBinding, context).;
-
-        // Check if the query is pattern free
-
-
-        // Better: Perform the caching and querying as part of the query execution.
-        // is that a jena stage?
-
-
-
-        return query;
+        return result;
     }
 
 
@@ -287,6 +294,7 @@ public class SparqlCacheUtils {
     public static ProjectedQuadFilterPattern transform(Query query) {
 
         Op op = Algebra.compile(query);
+        op = Algebra.toQuadForm(op);
         ProjectedQuadFilterPattern result = transform(op);
         return result;
     }
@@ -339,6 +347,22 @@ public class SparqlCacheUtils {
         }
 
         Op subOp = opFilter.getSubOp();
+
+
+
+        if(subOp instanceof OpGraph) {
+            OpGraph opGraph = (OpGraph)subOp;
+            Node graphNode = opGraph.getNode();
+
+            // The graphNode must be a variable which is not constrained by the filter
+
+            Set<Var> filterVars = ExprVars.getVarsMentioned(opFilter.getExprs());
+            if(graphNode.isVariable() && !filterVars.contains(graphNode)) {
+                subOp = opGraph.getSubOp();
+            } else {
+                subOp = null;
+            }
+        }
 
         if(subOp instanceof OpQuadPattern) {
             OpQuadPattern opQuadPattern = (OpQuadPattern)opFilter.getSubOp();
@@ -749,6 +773,7 @@ public class SparqlCacheUtils {
         //query.getProjectVars();
         return null;
     }
+
 
 
 }

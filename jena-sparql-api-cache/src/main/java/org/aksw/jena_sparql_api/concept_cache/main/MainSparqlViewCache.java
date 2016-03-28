@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.aksw.commons.util.StreamUtils;
 import org.aksw.jena_sparql_api.concept_cache.core.OpExecutionFactoryCache;
-import org.aksw.jena_sparql_api.concept_cache.core.QueryExecutionFactoryViewCache;
+import org.aksw.jena_sparql_api.concept_cache.core.QueryExecutionFactoryViewCacheMaster;
 import org.aksw.jena_sparql_api.concept_cache.dirty.CombinatoricsVector;
 import org.aksw.jena_sparql_api.concept_cache.dirty.ConceptMap;
 import org.aksw.jena_sparql_api.concepts.Concept;
@@ -114,7 +114,14 @@ public class MainSparqlViewCache {
 
     public static void main(String[] args) throws IOException {
 
-        QC.setFactory(ARQ.getContext(), new OpExecutionFactoryCache());
+        OpExecutionFactoryCache opExecutionFactory = new OpExecutionFactoryCache();
+
+        QC.setFactory(ARQ.getContext(), opExecutionFactory);
+
+
+
+
+
 
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         Resource resource = resolver.getResource("data-lorenz.nt");
@@ -139,7 +146,7 @@ public class MainSparqlViewCache {
         MainSparqlViewCache cache = new MainSparqlViewCache(sparqlService);
 
 
-        sparqlService = new QueryExecutionFactoryViewCache(sparqlService);
+        sparqlService = new QueryExecutionFactoryViewCacheMaster(sparqlService, opExecutionFactory.getServiceMap());
 
 
         if(false) {

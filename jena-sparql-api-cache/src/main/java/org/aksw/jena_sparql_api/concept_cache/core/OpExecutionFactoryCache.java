@@ -25,10 +25,14 @@ public class OpExecutionFactoryCache
         this.serviceToQef = new HashMap<>();
     }
 
+    public Map<Node, QueryExecutionFactory> getServiceMap() {
+        return serviceToQef;
+    }
+
 
     @Override
     public OpExecutor create(ExecutionContext execCxt) {
-        return new OpExecutorCache(execCxt, serviceToQef);
+        return new OpExecutorViewCache(execCxt, serviceToQef);
     }
 
 }

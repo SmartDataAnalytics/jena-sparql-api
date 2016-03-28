@@ -1,38 +1,35 @@
 package org.aksw.jena_sparql_api.concept_cache.core;
 
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.aksw.jena_sparql_api.concept_cache.dirty.ConceptMap;
+import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.core.QueryExecutionAdapter;
-import org.aksw.jena_sparql_api.core.QueryExecutionBaseSelect;
-import org.aksw.jena_sparql_api.core.QueryExecutionDecoratorBase;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.core.QueryExecutionSelect;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.engine.QueryExecutionBase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class QueryExecutionViewCachePartial
+public class QueryExecutionViewCacheFragment
     extends QueryExecutionAdapter
-//    extends QueryExect
-//extends QueryExecutionSelect
 {
 
-    private static final Logger logger = LoggerFactory
-            .getLogger(QueryExecutionViewCachePartial.class);
+    private static final Logger logger = LoggerFactory.getLogger(QueryExecutionViewCacheFragment.class);
 
     protected QueryExecutionFactory qef;
+    protected ProjectedQuadFilterPattern pqfp;
     private Query query;
     private ConceptMap conceptMap;
     private Set<Var> indexVars;
     private long indexResultSetSizeThreshold;
 
-    public QueryExecutionViewCachePartial(Query query, QueryExecutionFactory qef, ConceptMap conceptMap, Set<Var> indexVars, long indexResultSetSizeThreshold) {
+    public QueryExecutionViewCacheFragment(Query query, ProjectedQuadFilterPattern pqfp, QueryExecutionFactory qef, ConceptMap conceptMap, Set<Var> indexVars, long indexResultSetSizeThreshold) {
         this.query = query;
+        this.pqfp = pqfp;
         this.qef = qef;
         this.conceptMap = conceptMap;
         this.indexVars = indexVars;
@@ -41,12 +38,12 @@ public class QueryExecutionViewCachePartial
 
     @Override
     public ResultSet execSelect() {
-        QueryExecution qe = SparqlCacheUtils.prepareQueryExecution(qef, query, conceptMap, indexResultSetSizeThreshold);
-        ResultSet result = qe.execSelect();
-
+        QueryExecution qe = qef.createQueryExecution(query);
+        ResultSet physicalRs = qe.execSelect();
+        Entry<ResultSet, Boolean> entry = ResultSetViewCache.cacheResultSet(physicalRs, indexVars, indexResultSetSizeThreshold, conceptMap, pqfp);
+        ResultSet result = entry.getKey();
         return result;
     }
-
 
 
     //@Override

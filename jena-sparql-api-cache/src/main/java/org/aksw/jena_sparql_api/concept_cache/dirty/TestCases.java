@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api.concept_cache.dirty;
 
 import org.aksw.jena_sparql_api.compare.QueryExecutionFactoryCompare;
-import org.aksw.jena_sparql_api.concept_cache.core.QueryExecutionFactoryViewCache;
+import org.aksw.jena_sparql_api.concept_cache.core.QueryExecutionFactoryViewCacheMaster;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
@@ -47,7 +47,7 @@ public class TestCases {
                 .end()
                 .create();
 
-        QueryExecutionFactory cachedService = new QueryExecutionFactoryViewCache(rawService);
+        QueryExecutionFactory cachedService = new QueryExecutionFactoryViewCacheMaster(rawService, null);
 
         boolean forceCompareFailures = false;
         if(forceCompareFailures) {

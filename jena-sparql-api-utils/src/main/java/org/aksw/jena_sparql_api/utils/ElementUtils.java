@@ -28,6 +28,7 @@ import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.ElementUnion;
 import org.apache.jena.sparql.syntax.PatternVars;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
+import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformSubst;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformer;
 import org.apache.jena.sparql.syntax.syntaxtransform.ExprTransformNodeElement;
 
@@ -100,6 +101,13 @@ public class ElementUtils {
 
     public static Map<Node, Var> createMapFixVarNames(Element element) {
         Collection<Var> vars = PatternVars.vars(element);
+        Map<Node, Var> result = createMapFixVarNames(vars);
+
+        return result;
+    }
+
+
+    public static Map<Node, Var> createMapFixVarNames(Collection<Var> vars) {
         //Set<Var> vars = NodeUtils.getVarsMentioned(nodes);
         //Set<Node> bnodes = NodeUtils.getBnodesMentioned(vars);
         Generator<Var> gen = VarGeneratorBlacklist.create("v", vars);
@@ -109,7 +117,7 @@ public class ElementUtils {
 //            result.put(node, gen.next());
 //        }
         for(Var var : vars) {
-            if(var.getName().startsWith("?")) {
+            if(var.getName().startsWith("?") || var.getName().startsWith("/")) {
                 result.put(var, gen.next());
             }
             //System.out.println(var);
@@ -117,6 +125,7 @@ public class ElementUtils {
 
         return result;
     }
+
 
     public static Element fixVarNames(Element element) {
         Map<Node, Var> nodeMap = createMapFixVarNames(element);
