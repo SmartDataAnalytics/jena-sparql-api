@@ -113,6 +113,7 @@ public class MainSparqlViewCache {
 
 
     public static void main(String[] args) throws IOException {
+        //AnnotationConfigApplicationContext
 
         OpExecutionFactoryCache opExecutionFactory = new OpExecutionFactoryCache();
 
@@ -120,19 +121,22 @@ public class MainSparqlViewCache {
 
 
 
+        String data = "simple";
 
 
 
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-        Resource resource = resolver.getResource("data-lorenz.nt");
+        Resource resource = resolver.getResource("data-" + data + ".nt");
+
 
         String fileName = resource.getFilename();
+        System.out.println("Trying to load data from " + fileName);
 
         Model model = RDFDataMgr.loadModel(fileName);
         QueryExecutionFactory sparqlService = FluentQueryExecutionFactory
-            //.model(model)
+            .model(model)
             //.http("http://akswnc3.informatik.uni-leipzig.de/data/dbpedia/sparql", "http://dbpedia.org")
-            .http("http://localhost:8890/sparql", "http://dbpedia.org")
+            //.http("http://localhost:8890/sparql", "http://dbpedia.org")
             .config()
                 .withPagination(100000)
             .end()
@@ -270,7 +274,7 @@ public class MainSparqlViewCache {
         //PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver(); //TestBundleReader.class.getClass().getClassLoader());
 
         if(true) {
-            Resource r = resolver.getResource("query-lorenz-1a.sparql");
+            Resource r = resolver.getResource("query-" + data + "-1a.sparql");
             String queryString = StreamUtils.toString(r.getInputStream());
             Query query = QueryFactory.create(queryString);
 
@@ -298,7 +302,7 @@ public class MainSparqlViewCache {
 
             long a = sw.elapsed(TimeUnit.MILLISECONDS);
 
-            r = resolver.getResource("query-lorenz-1a.sparql");
+            r = resolver.getResource("query-" + data + "-1a.sparql");
             queryString = StreamUtils.toString(r.getInputStream());
             query = QueryFactory.create(queryString);
             qe = sparqlService.createQueryExecution(query);
@@ -309,7 +313,7 @@ public class MainSparqlViewCache {
             System.out.println("Time taken: " + (b - a));
 
 
-            r = resolver.getResource("query-lorenz-1b.sparql");
+            r = resolver.getResource("query-" + data + "-1b.sparql");
             queryString = StreamUtils.toString(r.getInputStream());
             query = QueryFactory.create(queryString);
             qe = sparqlService.createQueryExecution(query);
