@@ -35,7 +35,14 @@ import org.apache.jena.sparql.graph.NodeTransform;
 
 import com.google.common.collect.Sets;
 
-public class ConceptMap
+/**
+ * TODO Extract an interface from this class in order to support
+ * different (possibly non-in-memory) backends
+ *
+ * @author raven
+ *
+ */
+public class SparqlViewCache
 {
     //private Multimap<Set<Set<Expr>>, PatternSummary> quadCnfToSummary = HashMultimap.create();
     private IBiSetMultimap<Set<Set<Expr>>, PatternSummary> quadCnfToSummary = new BiHashMultimap<Set<Set<Expr>>, PatternSummary>();

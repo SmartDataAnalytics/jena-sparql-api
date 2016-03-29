@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.aksw.jena_sparql_api.concept_cache.dirty.ConceptMap;
+import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCache;
 import org.aksw.jena_sparql_api.concept_cache.dirty.IteratorResultSetBinding;
 import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
@@ -37,7 +37,7 @@ public class ResultSetViewCache {
      * @param pqfp
      * @return
      */
-    public static Entry<ResultSet, Boolean> cacheResultSet(ResultSet physicalRs, Set<Var> indexVars, long indexResultSetSizeThreshold, ConceptMap conceptMap, ProjectedQuadFilterPattern pqfp) {
+    public static Entry<ResultSet, Boolean> cacheResultSet(ResultSet physicalRs, Set<Var> indexVars, long indexResultSetSizeThreshold, SparqlViewCache conceptMap, ProjectedQuadFilterPattern pqfp) {
 
         ResultSet resultRs;
         //ResultSet physicalRs = decoratee.execSelect();
@@ -55,10 +55,6 @@ public class ResultSetViewCache {
         boolean isCacheable = i <= indexResultSetSizeThreshold;
 
         if(isCacheable) {
-            // TODO Resource leak if the physicalRs is not consumed - fix that somehow!
-            Iterator<Binding> it = Iterators.concat(bindings.iterator(), new IteratorResultSetBinding(physicalRs));
-            resultRs = new ResultSetStream(varNames, null, it);
-        } else {
             //it = bindings.iterator();
             ResultSet tmp = new ResultSetStream(varNames, null, bindings.iterator());
 
@@ -67,6 +63,10 @@ public class ResultSetViewCache {
             QuadFilterPattern qfp = pqfp.getQuadFilterPattern();
             ResultSet cacheRs = ResultSetUtils.project(resultRs, indexVars, true);
             conceptMap.index(qfp, cacheRs);
+        } else {
+            // TODO Resource leak if the physicalRs is not consumed - fix that somehow!
+            Iterator<Binding> it = Iterators.concat(bindings.iterator(), new IteratorResultSetBinding(physicalRs));
+            resultRs = new ResultSetStream(varNames, null, it);
         }
 
         Entry<ResultSet, Boolean> result = new SimpleEntry<>(resultRs, isCacheable);

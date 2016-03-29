@@ -36,14 +36,39 @@ public class FluentQueryExecutionFactory<P>
         this.fn = qef;
     }
 
+    /**
+     * Use from instead
+     *
+     * @param model
+     * @return
+     */
+    @Deprecated
     public static FluentQueryExecutionFactory<?> model(Model model) {
         return new FluentQueryExecutionFactory<Object>(new QueryExecutionFactoryModel(model));
     }
 
+    /**
+     * Use from instead
+     *
+     * @param model
+     * @return
+     */
+    @Deprecated
     public static FluentQueryExecutionFactory<?> model(Model model, Context context) {
         Dataset dataset = DatasetFactory.create(model);
         return from(dataset, context);
     }
+
+
+    public static FluentQueryExecutionFactory<?> from(Model model) {
+        return new FluentQueryExecutionFactory<Object>(new QueryExecutionFactoryModel(model));
+    }
+
+    public static FluentQueryExecutionFactory<?> from(Model model, Context context) {
+        Dataset dataset = DatasetFactory.create(model);
+        return from(dataset, context);
+    }
+
 
 //    public static FluentQueryExecutionFactory<?> dataset(Dataset dataset) {
 //        return new FluentQueryExecutionFactory<Object>(new QueryExecutionFactoryDataset(dataset));
@@ -67,10 +92,10 @@ public class FluentQueryExecutionFactory<P>
     }
 
     public static FluentQueryExecutionFactory<?> defaultDatasetGraph() {
-        return FluentQueryExecutionFactory.start(DatasetGraphFactory.createMem());
+        return FluentQueryExecutionFactory.from(DatasetGraphFactory.createMem());
     }
 
-    public static FluentQueryExecutionFactory<?> start(DatasetGraph datasetGraph){
+    public static FluentQueryExecutionFactory<?> from(DatasetGraph datasetGraph){
         return new FluentQueryExecutionFactory<Object>(new QueryExecutionFactoryDatasetGraph(datasetGraph, false));
     }
 

@@ -8,7 +8,7 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.concept_cache.dirty.CacheResult;
-import org.aksw.jena_sparql_api.concept_cache.dirty.ConceptMap;
+import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCache;
 import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
@@ -76,7 +76,7 @@ public class OpVisitorViewCacheApplier
      * @param conceptMap
      * @return
      */
-    public static Entry<Op, Boolean> applyX(Op parentOp, ConceptMap conceptMap) {
+    public static Entry<Op, Boolean> applyX(Op parentOp, SparqlViewCache conceptMap) {
         return null;
     }
 
@@ -94,7 +94,7 @@ public class OpVisitorViewCacheApplier
      * @param conceptMap
      * @return
      */
-    public static Map<Op, CacheResult> detectCovers(Op parentOp, ConceptMap conceptMap) {
+    public static Map<Op, CacheResult> detectCovers(Op parentOp, SparqlViewCache conceptMap) {
         Map<Op, CacheResult> result = new HashMap<>(); // TODO We might consider using an IdentityHashMap
         detectCovers(parentOp, conceptMap, result);
         return result;
@@ -130,7 +130,7 @@ public class OpVisitorViewCacheApplier
     }
 
 
-    public static void detectCovers(Op parentOp, ConceptMap conceptMap, Map<Op, CacheResult> result) {
+    public static void detectCovers(Op parentOp, SparqlViewCache conceptMap, Map<Op, CacheResult> result) {
 
         ProjectedQuadFilterPattern pqfp = SparqlCacheUtils.transform(parentOp);
 
@@ -152,7 +152,7 @@ public class OpVisitorViewCacheApplier
     }
 
 
-    public static Op applyCovers(Op parentOp, ConceptMap conceptMap, Map<Op, CacheResult> opToCover) {
+    public static Op applyCovers(Op parentOp, SparqlViewCache conceptMap, Map<Op, CacheResult> opToCover) {
 
         Op result;
 

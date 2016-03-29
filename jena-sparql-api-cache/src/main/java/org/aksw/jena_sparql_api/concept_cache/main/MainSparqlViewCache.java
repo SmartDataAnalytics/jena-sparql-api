@@ -12,19 +12,22 @@ import org.aksw.commons.util.StreamUtils;
 import org.aksw.jena_sparql_api.concept_cache.core.OpExecutionFactoryCache;
 import org.aksw.jena_sparql_api.concept_cache.core.QueryExecutionFactoryViewCacheMaster;
 import org.aksw.jena_sparql_api.concept_cache.dirty.CombinatoricsVector;
-import org.aksw.jena_sparql_api.concept_cache.dirty.ConceptMap;
+import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCache;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.model.QueryExecutionFactoryModel;
+import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
+import org.aksw.jena_sparql_api.utils.transform.F_QueryTransformDatesetDescription;
 import org.apache.jena.query.ARQ;
+import org.apache.jena.query.Dataset;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.query.ResultSetFormatter;
-import org.apache.jena.rdf.model.Model;
+import org.apache.jena.query.Syntax;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
@@ -43,7 +46,7 @@ import com.google.common.base.Stopwatch;
 
 public class MainSparqlViewCache {
 
-    private ConceptMap conceptMap = new ConceptMap();
+    private SparqlViewCache conceptMap = new SparqlViewCache();
 
 
 
@@ -129,19 +132,27 @@ public class MainSparqlViewCache {
         Resource resource = resolver.getResource("data-" + data + ".nt");
 
 
+
         String fileName = resource.getFilename();
         System.out.println("Trying to load data from " + fileName);
 
-        Model model = RDFDataMgr.loadModel(fileName);
+        Dataset model = RDFDataMgr.loadDataset(fileName);
         QueryExecutionFactory sparqlService = FluentQueryExecutionFactory
-            .model(model)
+            .from(model)
             //.http("http://akswnc3.informatik.uni-leipzig.de/data/dbpedia/sparql", "http://dbpedia.org")
             //.http("http://localhost:8890/sparql", "http://dbpedia.org")
             .config()
+                .withParser(SparqlQueryParserImpl.create(Syntax.syntaxARQ))
+                .withQueryTransform(F_QueryTransformDatesetDescription.fn)
                 .withPagination(100000)
             .end()
             .create();
 
+
+
+        System.out.println(ResultSetFormatter.asText(sparqlService.createQueryExecution(
+          "SELECT * { GRAPH ?g {  ?s <http://ex.org/p1> ?o1 ; <http://ex.org/p2> ?o2 } }").execSelect()));
+        System.out.println("End of test query");
 
 //        QueryExecutionFactory sparqlService = SparqlServiceBuilder
 //                .http("http://akswnc3.informatik.uni-leipzig.de:8860/sparql", "http://dbpedia.org")

@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.concept_cache.core;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.aksw.jena_sparql_api.concept_cache.dirty.ConceptMap;
+import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCache;
 import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactoryDecorator;
@@ -22,10 +22,10 @@ import org.apache.jena.sparql.core.Var;
 public class QueryExecutionFactoryViewCacheFragment
     extends QueryExecutionFactoryDecorator
 {
-    protected ConceptMap conceptMap;
+    protected SparqlViewCache conceptMap;
     protected long indexResultSetSizeThreshold;
 
-    public QueryExecutionFactoryViewCacheFragment(QueryExecutionFactory decoratee, ConceptMap conceptMap, long indexResultSetSizeThreshold) {
+    public QueryExecutionFactoryViewCacheFragment(QueryExecutionFactory decoratee, SparqlViewCache conceptMap, long indexResultSetSizeThreshold) {
         super(decoratee);
         this.conceptMap = conceptMap;
         this.indexResultSetSizeThreshold = indexResultSetSizeThreshold;

@@ -17,7 +17,7 @@ import org.aksw.commons.collections.MapUtils;
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
 import org.aksw.jena_sparql_api.concept_cache.dirty.CacheResult;
-import org.aksw.jena_sparql_api.concept_cache.dirty.ConceptMap;
+import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCache;
 import org.aksw.jena_sparql_api.concept_cache.domain.PatternSummary;
 import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
@@ -47,9 +47,12 @@ import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.TableFactory;
 import org.apache.jena.sparql.algebra.op.OpFilter;
 import org.apache.jena.sparql.algebra.op.OpGraph;
+import org.apache.jena.sparql.algebra.op.OpJoin;
+import org.apache.jena.sparql.algebra.op.OpNull;
 import org.apache.jena.sparql.algebra.op.OpProject;
 import org.apache.jena.sparql.algebra.op.OpQuadPattern;
 import org.apache.jena.sparql.algebra.op.OpService;
+import org.apache.jena.sparql.algebra.op.OpTable;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.QuadPattern;
 import org.apache.jena.sparql.core.Var;
@@ -102,7 +105,7 @@ public class SparqlCacheUtils {
             Map<Node, QueryExecutionFactory> serviceMap,
             //Node serviceNode,
             Query rawQuery,
-            ConceptMap conceptMap,
+            SparqlViewCache conceptMap,
             long indexResultSetSizeThreshold)
     {
         Node serviceNode = NodeFactory.createURI("cache://" + qef.getId());
@@ -165,7 +168,7 @@ public class SparqlCacheUtils {
             //QueryExecutionFactory qef,
             Node serviceNode,
             Query rawQuery,
-            ConceptMap conceptMap,
+            SparqlViewCache conceptMap,
             long indexResultSetSizeThreshold)
     {
         Op rawOp = Algebra.compile(rawQuery);
@@ -204,6 +207,12 @@ public class SparqlCacheUtils {
             Op op = entry.getKey();
             CacheResult cacheResult = entry.getValue();
             Op newOp = cacheResult.getReplacementPattern().toOp();
+            Collection<Table> tables = cacheResult.getTables();
+            for(Table table : tables) {
+                OpTable opTable = OpTable.create(table);
+                // If the replacement pattern is empty, OpNull is returned which we need to eliminate
+                newOp = newOp instanceof OpNull ? opTable : OpJoin.create(opTable, newOp);
+            }
 
             opToCachingOp.put(op, newOp);
         }
