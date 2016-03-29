@@ -113,3 +113,39 @@ System.out.printn(str);
 ```
 
 
+#### Example with SparqlServiceFactory
+```java
+
+
+
+SparqlServiceFactory ssf = new SparqlServiceFactory() {
+    @Override
+    public SparqlService createSparqlService(String serviceUri,
+            DatasetDescription datasetDescription, Object authenticator) {
+
+        SparqlService coreSparqlService = FluentSparqlService
+            .http(serviceUri, datasetDescription, (HttpAuthenticator)authenticator)
+                // Perform additional configuration via the fluent API
+            .create();
+        
+        
+        SparqlService r = ... // Add custom decorators not covered by the fluent
+        return r;
+    }
+};
+
+ssf = FluentSparqlServiceFactory.from(ssf)
+        .configFactory()
+            .defaultServiceUri("http://localhost:8890/sparql") // If createSparqlService is called with a null argument, this URI is passed on instead
+            .configService()
+                .configQuery()
+                    .withPagination(1000) // Add pagination, delay, to your liking
+                .end()
+            .end()
+        .end()
+        .create();
+
+SparqlService ss = ssf.createSparqlService(null, null, null); // Obtain a SPARQL service factory (making use of the defaultServiceUri).
+```
+
+
