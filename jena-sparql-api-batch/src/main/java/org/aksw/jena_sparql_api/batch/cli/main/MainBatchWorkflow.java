@@ -841,9 +841,9 @@ we can then use an automaton representation and minimize the states, and convert
 
 
         //Query query = ResourceShape.createQuery(rs, concept);
-        MappedConcept<DatasetGraph> mappedConcept = ResourceShape.createMappedConcept2(rs, concept);
+        MappedConcept<DatasetGraph> mappedConcept = ResourceShape.createMappedConcept2(rs, concept, false);
         System.out.println(mappedConcept);
-        MappedConcept<DatasetGraph> mcLgdShape = ResourceShape.createMappedConcept2(lgdShape, null);
+        MappedConcept<DatasetGraph> mcLgdShape = ResourceShape.createMappedConcept2(lgdShape, null, false);
 
         //LookupServiceTransformKey.create(LookupServiceTransformValue.create(base, fn), keyMapper)
         //LookupServiceListService

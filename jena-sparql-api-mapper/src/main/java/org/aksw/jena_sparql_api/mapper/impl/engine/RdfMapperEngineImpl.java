@@ -134,7 +134,7 @@ public class RdfMapperEngineImpl
     //            Map<Node, DatasetGraph> map = ls.apply(Collections.singleton(node));
 
 
-                MappedConcept<Graph> mc = ResourceShape.createMappedConcept(shape, null);
+                MappedConcept<Graph> mc = ResourceShape.createMappedConcept(shape, null, false);
                 LookupService<Node, Graph> ls = LookupServiceUtils.createLookupService(qef, mc);
                 Map<Node, Graph> map = ls.apply(Collections.singleton(node));
 

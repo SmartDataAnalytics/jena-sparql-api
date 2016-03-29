@@ -32,7 +32,7 @@ public class ListServiceResourceShape
 
     @Override
     public Map<Node, DatasetGraph> fetchData(Concept concept, Long limit, Long offset) {
-        MappedConcept<DatasetGraph> mappedConcept = ResourceShape.createMappedConcept2(resourceShape, concept);
+        MappedConcept<DatasetGraph> mappedConcept = ResourceShape.createMappedConcept2(resourceShape, concept, false);
         ListService<Concept, Node, DatasetGraph> ls = ListServiceUtils.createListServiceMappedConcept(qef, mappedConcept, isLeftJoin);
         Map<Node, DatasetGraph> result = ls.fetchData(concept, limit, offset);
         return result;

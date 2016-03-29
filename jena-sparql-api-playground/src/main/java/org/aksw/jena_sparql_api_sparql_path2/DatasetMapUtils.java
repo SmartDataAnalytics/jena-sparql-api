@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.playground;
+package org.aksw.jena_sparql_api_sparql_path2;
 
 import java.nio.charset.StandardCharsets;
 
