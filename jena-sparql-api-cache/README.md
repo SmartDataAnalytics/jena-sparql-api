@@ -24,6 +24,14 @@ Use this snipped to add the AKSW maven repository:
     </repositories>
 ```
 
+The artifact; please pick the latest version for the above repositories.
+```xml
+            <dependency>
+                <groupId>org.aksw.jena-sparql-api</groupId>
+                <artifactId>jena-sparql-api-cache</artifactId>
+                <version>...</version>
+            </dependency>
+```
 
 ### Background
 
