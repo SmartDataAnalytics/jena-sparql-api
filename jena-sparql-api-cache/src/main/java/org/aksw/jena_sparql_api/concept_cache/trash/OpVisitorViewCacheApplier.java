@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.concept_cache.core;
+package org.aksw.jena_sparql_api.concept_cache.trash;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
+import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
 import org.aksw.jena_sparql_api.concept_cache.dirty.CacheResult;
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCache;
 import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;

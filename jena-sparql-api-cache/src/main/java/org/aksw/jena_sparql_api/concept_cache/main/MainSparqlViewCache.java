@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.aksw.commons.util.StreamUtils;
-import org.aksw.jena_sparql_api.concept_cache.core.OpExecutionFactoryCache;
+import org.aksw.jena_sparql_api.concept_cache.core.OpExecutionFactoryViewCache;
 import org.aksw.jena_sparql_api.concept_cache.core.QueryExecutionFactoryViewCacheMaster;
 import org.aksw.jena_sparql_api.concept_cache.dirty.CombinatoricsVector;
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCache;
@@ -118,7 +118,7 @@ public class MainSparqlViewCache {
     public static void main(String[] args) throws IOException {
         //AnnotationConfigApplicationContext
 
-        OpExecutionFactoryCache opExecutionFactory = new OpExecutionFactoryCache();
+        OpExecutionFactoryViewCache opExecutionFactory = new OpExecutionFactoryViewCache();
 
         QC.setFactory(ARQ.getContext(), opExecutionFactory);
 

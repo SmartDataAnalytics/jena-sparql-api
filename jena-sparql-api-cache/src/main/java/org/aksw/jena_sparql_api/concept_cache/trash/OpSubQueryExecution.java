@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.concept_cache.core;
+package org.aksw.jena_sparql_api.concept_cache.trash;
 
 import org.aksw.jena_sparql_api.concept_cache.dirty.OpCache;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;

@@ -24,6 +24,7 @@ import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.domain.VarOccurrence;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
+import org.aksw.jena_sparql_api.concept_cache.trash.OpVisitorViewCacheApplier;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.model.QueryExecutionFactoryModel;
 import org.aksw.jena_sparql_api.utils.ClauseUtils;
@@ -130,7 +131,7 @@ public class SparqlCacheUtils {
         //boolean isPatternFree = rewriteResult.isPatternFree();
         //boolean isCachingAllowed = rewriteResult.isCachingAllowed();
 
-        System.out.println("Running query: " + query.toString().substring(0, Math.min(2000, query.toString().length())));
+        System.out.println("Preparing query: " + query.toString().substring(0, Math.min(2000, query.toString().length())));
 
         //System.out.println("Running query: " + query);
 //
@@ -264,7 +265,12 @@ public class SparqlCacheUtils {
         Map<Var, Var> renameMap = new HashMap<Var, Var>();
         Set<Set<Expr>> extra = new HashSet<Set<Expr>>();
         for(int i = 0; i < 4; ++i) {
-            Var quadVar = (Var)QuadUtils.getNode(quad, i);
+            Node tmp = QuadUtils.getNode(quad, i);
+            if(!tmp.isVariable()) {
+                throw new RuntimeException("Expected variable normalized quad");
+            }
+
+            Var quadVar = (Var)tmp;
             Var componentVar = componentVars.get(i);
 
             Var priorComponentVar = renameMap.get(quadVar);
@@ -304,6 +310,7 @@ public class SparqlCacheUtils {
 
         Op op = Algebra.compile(query);
         op = Algebra.toQuadForm(op);
+        op = ReplaceConstants.replace(op);
         ProjectedQuadFilterPattern result = transform(op);
         return result;
     }

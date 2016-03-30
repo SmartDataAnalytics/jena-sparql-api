@@ -9,18 +9,18 @@ import org.apache.jena.sparql.engine.ExecutionContext;
 import org.apache.jena.sparql.engine.main.OpExecutor;
 import org.apache.jena.sparql.engine.main.OpExecutorFactory;
 
-public class OpExecutionFactoryCache
+public class OpExecutionFactoryViewCache
     implements OpExecutorFactory
 {
     protected Map<Node, QueryExecutionFactory> serviceToQef;
 
-    public OpExecutionFactoryCache(
+    public OpExecutionFactoryViewCache(
             Map<Node, QueryExecutionFactory> serviceToQef) {
         super();
         this.serviceToQef = serviceToQef;
     }
 
-    public OpExecutionFactoryCache() {
+    public OpExecutionFactoryViewCache() {
         super();
         this.serviceToQef = new HashMap<>();
     }

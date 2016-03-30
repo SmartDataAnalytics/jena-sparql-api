@@ -13,6 +13,8 @@ import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpAsQuery;
 import org.apache.jena.sparql.algebra.OpVars;
+import org.apache.jena.sparql.algebra.Transform;
+import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.op.OpService;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.ExecutionContext;
@@ -67,6 +69,12 @@ public class OpExecutorViewCache
             NodeTransform nodeTransform = new NodeTransformRenameMap(nodeMap);
 
             op = NodeTransformLib.transform(nodeTransform, op);
+
+            // Get rid of unneccessary GRAPH ?x { ... } elements
+            op = Transformer.transform(new TransformRemoveGraph(x -> false), op);
+
+            System.out.println("Op is " + op);
+            //Optimize.optimize(op, context)
 
             Query query = OpAsQuery.asQuery(op);
 
