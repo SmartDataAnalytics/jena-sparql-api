@@ -6,9 +6,9 @@ import java.util.Set;
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCache;
 import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.core.QueryExecutionFactoryDecorator;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
+import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.core.Var;
 
 /**
@@ -20,21 +20,23 @@ import org.apache.jena.sparql.core.Var;
  *
  */
 public class QueryExecutionFactoryViewCacheFragment
-    extends QueryExecutionFactoryDecorator
+//    extends QueryExecutionFactoryDecorator
 {
+    protected QueryExecutionFactory decoratee;
     protected SparqlViewCache conceptMap;
     protected long indexResultSetSizeThreshold;
 
     public QueryExecutionFactoryViewCacheFragment(QueryExecutionFactory decoratee, SparqlViewCache conceptMap, long indexResultSetSizeThreshold) {
-        super(decoratee);
+        //super(decoratee);
+        this.decoratee = decoratee;
         this.conceptMap = conceptMap;
         this.indexResultSetSizeThreshold = indexResultSetSizeThreshold;
     }
 
 
-    @Override
-    public QueryExecution createQueryExecution(Query query) {
-        ProjectedQuadFilterPattern pqfp = SparqlCacheUtils.transform(query);
+    //@Override
+    public QueryExecution createQueryExecution(Op indexPattern, Query query) {
+        ProjectedQuadFilterPattern pqfp = SparqlCacheUtils.transform(indexPattern);
         if(pqfp == null) {
             throw new RuntimeException("Query is not indexable: " + query);
         }

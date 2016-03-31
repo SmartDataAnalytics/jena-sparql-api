@@ -46,6 +46,7 @@ import org.apache.jena.sparql.algebra.OpAsQuery;
 import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.TableFactory;
+import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.op.OpFilter;
 import org.apache.jena.sparql.algebra.op.OpGraph;
 import org.apache.jena.sparql.algebra.op.OpJoin;
@@ -54,6 +55,7 @@ import org.apache.jena.sparql.algebra.op.OpProject;
 import org.apache.jena.sparql.algebra.op.OpQuadPattern;
 import org.apache.jena.sparql.algebra.op.OpService;
 import org.apache.jena.sparql.algebra.op.OpTable;
+import org.apache.jena.sparql.algebra.op.OpUnion;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.QuadPattern;
 import org.apache.jena.sparql.core.Var;
@@ -81,6 +83,20 @@ class QueryRewrite {
 
 public class SparqlCacheUtils {
 
+
+    public static ResultSet executeCached(QueryExecutionFactory qef, Query query, ProjectedQuadFilterPattern pqfp, SparqlViewCache sparqlViewCache, long indexResultSetSizeThreshold) {
+        if(pqfp == null) {
+            throw new RuntimeException("Query is not indexable: " + query);
+        }
+
+        Set<Var> indexVars = new HashSet<>(query.getProjectVars());
+
+        QueryExecution qe = new QueryExecutionViewCacheFragment(query, pqfp, qef, sparqlViewCache, indexVars, indexResultSetSizeThreshold);
+        ResultSet result = qe.execSelect();
+        return result;
+    }
+
+
     /**
      * Prepares the execution of a query in regard to a query cache.
      *
@@ -103,7 +119,7 @@ public class SparqlCacheUtils {
      */
     public static QueryExecution prepareQueryExecution(
             QueryExecutionFactory qef,
-            Map<Node, QueryExecutionFactory> serviceMap,
+            Map<Node, QueryExecutionFactoryViewCacheFragment> serviceMap,
             //Node serviceNode,
             Query rawQuery,
             SparqlViewCache conceptMap,
@@ -165,6 +181,31 @@ public class SparqlCacheUtils {
         return result;
     }
 
+
+    /**
+     * Create a service node with a union where the first member is to be interpreted as the
+     * pattern that should be used for caching, and the second argument is the pattern to be
+     * executed.
+     *
+     * @param patternOp
+     * @param serviceNode
+     * @param executionOp
+     * @return
+     */
+    public static OpService wrapWithService(Op patternOp, Node serviceNode, Op executionOp) {
+        boolean silent = false;
+        OpUnion union = new OpUnion(patternOp, executionOp);
+
+        Query subQuery = OpAsQuery.asQuery(union);
+        Element subElement = new ElementSubQuery(subQuery);
+
+        ElementService elt = new ElementService(serviceNode, subElement, silent);
+        OpService result = new OpService(serviceNode, union, elt, silent);
+
+        return result;
+    }
+
+
     public static Query rewriteQuery(
             //QueryExecutionFactory qef,
             Node serviceNode,
@@ -194,8 +235,9 @@ public class SparqlCacheUtils {
         // Determine the cacheable parts which do not yet have cache hits
         Set<Op> nonCachedCacheableOps = Sets.difference(cacheableOps.keySet(), opToCacheHit.keySet());
 
-        //ElementService
-        //OpService
+
+        // TODO There may be ops for which there exist partial covers via cache hits.
+        // These ops are again subject to caching.
 
         // Execute the cacheable parts, and cache them, if possible.
         // Note: We might find out that some result sets are too large to cache them.
@@ -206,13 +248,20 @@ public class SparqlCacheUtils {
 
         for(Entry<Op, CacheResult> entry : opToCacheHit.entrySet()) {
             Op op = entry.getKey();
+
             CacheResult cacheResult = entry.getValue();
             Op newOp = cacheResult.getReplacementPattern().toOp();
+            boolean isFullCover = newOp instanceof OpNull;
             Collection<Table> tables = cacheResult.getTables();
             for(Table table : tables) {
                 OpTable opTable = OpTable.create(table);
                 // If the replacement pattern is empty, OpNull is returned which we need to eliminate
                 newOp = newOp instanceof OpNull ? opTable : OpJoin.create(opTable, newOp);
+            }
+
+            // TODO The new op may be cachable again
+            if(!isFullCover) {
+                newOp = wrapWithService(op, serviceNode, newOp);
             }
 
             opToCachingOp.put(op, newOp);
@@ -225,24 +274,18 @@ public class SparqlCacheUtils {
                 throw new RuntimeException("Should not happen");
             }
 
-            boolean silent = true;
-            Query subQuery = OpAsQuery.asQuery(op);
-            Element subElement = new ElementSubQuery(subQuery);
-            //Op newOp = new OpSubQueryExecution(qef, subQuery);
-            //Node serviceNode = NodeFactory.createURI("cache://");
-
-            // TODO Chose the index vars
-            //Set<Var> indexVars = OpVars.mentionedVars(op);
-
-
-            ElementService elt = new ElementService(serviceNode, subElement, silent);
-            Op newOp = new OpService(serviceNode, op, elt, silent);
+            Op newOp = wrapWithService(op, serviceNode, op);
 
             opToCachingOp.put(op, newOp);
         }
 
         // Perform the substitution
         Op rootOp = OpUtils.substitute(rawOp, false, x -> opToCachingOp.get(x));
+
+        Query tmp = OpAsQuery.asQuery(rootOp);
+        rootOp = Algebra.compile(tmp);
+
+        rootOp = Transformer.transform(new TransformRemoveGraph(x -> false), rootOp);
 
         Query result = OpAsQuery.asQuery(rootOp);
 

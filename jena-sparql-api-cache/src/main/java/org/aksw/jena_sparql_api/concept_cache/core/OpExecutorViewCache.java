@@ -6,16 +6,18 @@ import java.util.Map;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
+import org.aksw.jena_sparql_api.utils.ReplaceConstants;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
+import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpAsQuery;
 import org.apache.jena.sparql.algebra.OpVars;
-import org.apache.jena.sparql.algebra.Transform;
 import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.op.OpService;
+import org.apache.jena.sparql.algebra.op.OpUnion;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.ExecutionContext;
 import org.apache.jena.sparql.engine.QueryIterator;
@@ -34,10 +36,10 @@ import org.apache.jena.sparql.graph.NodeTransformLib;
 public class OpExecutorViewCache
     extends OpExecutor
 {
-    protected Map<Node, QueryExecutionFactory> serviceToQef;
+    protected Map<Node, QueryExecutionFactoryViewCacheFragment> serviceToQef;
 
 
-    protected OpExecutorViewCache(ExecutionContext execCxt, Map<Node, QueryExecutionFactory> serviceToQef) {
+    protected OpExecutorViewCache(ExecutionContext execCxt, Map<Node, QueryExecutionFactoryViewCacheFragment> serviceToQef) {
         super(execCxt);
         this.serviceToQef = serviceToQef;
     }
@@ -51,43 +53,61 @@ public class OpExecutorViewCache
         QueryIterator result;
         if(serviceUri.startsWith("cache://")) {
             //SparqlCacheUtils.
-            QueryExecutionFactory qef = serviceToQef.get(serviceNode);
+            QueryExecutionFactoryViewCacheFragment qef = serviceToQef.get(serviceNode);
             if(qef == null) {
                 throw new RuntimeException("Could not find a query execution factory for " + serviceUri);
             }
+            Op tmpOp = opService.getSubOp();
 
-            //ElementService rootElt = opService.getServiceElement();
-            // By convention, the subElement must be a sub query
-            //ElementSubQuery subQueryElt = (ElementSubQuery)rootElt.getElement();
-
-            //TransformCopy
-            //ElementUtils.fixVarNames(element)
-            Op op = opService.getSubOp();
-
-            Collection<Var> vars = OpVars.mentionedVars(op);
+            Collection<Var> vars = OpVars.mentionedVars(tmpOp);
             Map<Node, Var> nodeMap = ElementUtils.createMapFixVarNames(vars);
             NodeTransform nodeTransform = new NodeTransformRenameMap(nodeMap);
 
-            op = NodeTransformLib.transform(nodeTransform, op);
+            tmpOp = NodeTransformLib.transform(nodeTransform, tmpOp);
+
+            tmpOp = Transformer.transform(new TransformRemoveGraph(x -> false), tmpOp);
+            OpUnion unionOp = (OpUnion)tmpOp;
+
+
+//            Query tmpQuery = OpAsQuery.asQuery(tmpOp);
+//            ElementGroup tmpGroup = (ElementGroup)tmpQuery.getQueryPattern();
+//            ElementUnion union = (ElementUnion)tmpGroup.getElements().get(0);//tmpQuery.getQueryPattern();
+//
+//            Query indexQuery = ((ElementSubQuery)((ElementGroup)union.getElements().get(0)).getElements().get(0)).getQuery();
+//            Query executionQuery = ((ElementSubQuery)((ElementGroup)union.getElements().get(1)).getElements().get(0)).getQuery();
+
+            //System.out.println(test);
+
+
+
+            Op patternOp = unionOp.getLeft();
+            patternOp = Algebra.toQuadForm(patternOp);
+            patternOp = ReplaceConstants.replace(patternOp);
+
+            Op executionOp = unionOp.getRight();
+
+
+            //Query indexQuery = OpAsQuery.asQuery(patternOp);
+            Query executionQuery = OpAsQuery.asQuery(executionOp);
 
             // Get rid of unneccessary GRAPH ?x { ... } elements
-            op = Transformer.transform(new TransformRemoveGraph(x -> false), op);
+            //executionOp = Transformer.transform(new TransformRemoveGraph(x -> false), executionOp);
 
-            System.out.println("Op is " + op);
+            //System.out.println("Op is " + executionOp);
             //Optimize.optimize(op, context)
 
-            Query query = OpAsQuery.asQuery(op);
+            //Query query = OpAsQuery.asQuery(executionOp);
 
             //Rename.renameNode(op, oldName, newName)
             // TODO Why is this hack / fix of variable names starting with a '/' necessary? Can we get rid of it?
-            query.setQueryPattern(ElementUtils.fixVarNames(query.getQueryPattern()));
+            executionQuery.setQueryPattern(ElementUtils.fixVarNames(executionQuery.getQueryPattern()));
 
 
             //Query query = subQueryElt.getQuery();
 
-            System.out.println("Executing: " + query);
+            System.out.println("Executing: " + executionQuery);
 
-            QueryExecution qe = qef.createQueryExecution(query);
+            QueryExecution qe = qef.createQueryExecution(patternOp, executionQuery);
             ResultSet rs = qe.execSelect();
 
 
