@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.aksw.commons.util.StreamUtils;
+import org.aksw.jena_sparql_api.compare.QueryExecutionFactoryCompare;
 import org.aksw.jena_sparql_api.concept_cache.core.OpExecutionFactoryViewCache;
 import org.aksw.jena_sparql_api.concept_cache.core.QueryExecutionFactoryViewCacheMaster;
 import org.aksw.jena_sparql_api.concept_cache.dirty.CombinatoricsVector;
@@ -39,12 +40,17 @@ import org.apache.jena.sparql.engine.binding.BindingHashMap;
 import org.apache.jena.sparql.engine.iterator.QueryIterPlainWrapper;
 import org.apache.jena.sparql.engine.main.QC;
 import org.apache.jena.vocabulary.RDF;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import com.google.common.base.Stopwatch;
 
 public class MainSparqlViewCache {
+
+    private static final Logger logger = LoggerFactory.getLogger(MainSparqlViewCache.class);
+
 
     private SparqlViewCache conceptMap = new SparqlViewCache();
 
@@ -137,7 +143,7 @@ public class MainSparqlViewCache {
         System.out.println("Trying to load data from " + fileName);
 
         Dataset model = RDFDataMgr.loadDataset(fileName);
-        QueryExecutionFactory sparqlService = FluentQueryExecutionFactory
+        QueryExecutionFactory rawQef = FluentQueryExecutionFactory
             .from(model)
             //.http("http://akswnc3.informatik.uni-leipzig.de/data/dbpedia/sparql", "http://dbpedia.org")
             //.http("http://localhost:8890/sparql", "http://dbpedia.org")
@@ -150,20 +156,22 @@ public class MainSparqlViewCache {
 
 
 
-        System.out.println(ResultSetFormatter.asText(sparqlService.createQueryExecution(
-          "SELECT * { GRAPH ?g {  ?s <http://ex.org/p1> ?o1 ; <http://ex.org/p2> ?o2 } }").execSelect()));
-        System.out.println("End of test query");
+//        System.out.println(ResultSetFormatter.asText(rawQef.createQueryExecution(
+//          "SELECT * { GRAPH ?g {  ?s <http://ex.org/p1> ?o1 ; <http://ex.org/p2> ?o2 } }").execSelect()));
+//        System.out.println("End of test query");
 
 //        QueryExecutionFactory sparqlService = SparqlServiceBuilder
 //                .http("http://akswnc3.informatik.uni-leipzig.de:8860/sparql", "http://dbpedia.org")
 //                .withPagination(100000)
 //                .create();
 
-        MainSparqlViewCache cache = new MainSparqlViewCache(sparqlService);
+        MainSparqlViewCache cache = new MainSparqlViewCache(rawQef);
 
 
-        sparqlService = new QueryExecutionFactoryViewCacheMaster(sparqlService, opExecutionFactory.getServiceMap());
+        QueryExecutionFactory cachedQef = new QueryExecutionFactoryViewCacheMaster(rawQef, opExecutionFactory.getServiceMap());
 
+
+        QueryExecutionFactory mainQef = new QueryExecutionFactoryCompare(rawQef, cachedQef);
 
         if(false) {
             CombinatoricsVector it = new CombinatoricsVector(5, 3);
@@ -221,7 +229,7 @@ public class MainSparqlViewCache {
             //Query query = QueryFactory.create("Select * { ?a ?b ?c . ?c ?d ?e }");
             query = QueryFactory.create("Select * { ?a a <http://dbpedia.org/ontology/Airport> }");
 
-            qe = sparqlService.createQueryExecution(query);
+            qe = mainQef.createQueryExecution(query);
             rs = qe.execSelect();
             ResultSetFormatter.consume(rs);
 
@@ -229,7 +237,7 @@ public class MainSparqlViewCache {
             //Query query = QueryFactory.create("Select * { ?a ?b ?c . ?c ?d ?e }");
             query = QueryFactory.create("Select * { ?a a <http://dbpedia.org/ontology/Airport> }");
 
-            qe = sparqlService.createQueryExecution(query);
+            qe = mainQef.createQueryExecution(query);
             rs = qe.execSelect();
             ResultSetFormatter.consume(rs);
 
@@ -241,7 +249,7 @@ public class MainSparqlViewCache {
 
             //query = QueryFactory.create("Prefix ex: <http://example.com/> Select * { ?s a ex:Airport . Filter(regex(str(?s), 'dbpedia')) .}");
             query = QueryFactory.create("Select * { ?x a <http://dbpedia.org/ontology/Airport> . ?x a <http://dbpedia.org/ontology/Place>  }");
-            qe = sparqlService.createQueryExecution(query);
+            qe = mainQef.createQueryExecution(query);
             rs = qe.execSelect();
             ResultSetFormatter.consume(rs);
 
@@ -316,23 +324,23 @@ public class MainSparqlViewCache {
             r = resolver.getResource("query-" + data + "-1a.sparql");
             queryString = StreamUtils.toString(r.getInputStream());
             query = QueryFactory.create(queryString);
-            qe = sparqlService.createQueryExecution(query);
+            qe = mainQef.createQueryExecution(query);
             rs = qe.execSelect();
             ResultSetFormatter.consume(rs);
 
             long b = sw.elapsed(TimeUnit.MILLISECONDS);
-            System.out.println("Time taken: " + (b - a));
+            logger.info("Time taken: " + (b - a));
 
 
             r = resolver.getResource("query-" + data + "-1b.sparql");
             queryString = StreamUtils.toString(r.getInputStream());
             query = QueryFactory.create(queryString);
-            qe = sparqlService.createQueryExecution(query);
+            qe = mainQef.createQueryExecution(query);
             rs = qe.execSelect();
             ResultSetFormatter.consume(rs);
 
             long c = sw.elapsed(TimeUnit.MILLISECONDS);
-            System.out.println("Time taken: " + (c - b));
+            logger.info("Time taken: " + (c - b));
 
             }
         }

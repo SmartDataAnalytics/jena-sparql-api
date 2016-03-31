@@ -34,6 +34,8 @@ import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.graph.NodeTransform;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Sets;
 
@@ -46,6 +48,8 @@ import com.google.common.collect.Sets;
  */
 public class SparqlViewCache
 {
+    private static final Logger logger = LoggerFactory.getLogger(SparqlViewCache.class);
+
     //private Multimap<Set<Set<Expr>>, PatternSummary> quadCnfToSummary = HashMultimap.create();
     private IBiSetMultimap<Set<Set<Expr>>, PatternSummary> quadCnfToSummary = new BiHashMultimap<Set<Set<Expr>>, PatternSummary>();
     private Map<PatternSummary, Map<Set<Var>, Table>> cacheData = new HashMap<PatternSummary, Map<Set<Var>, Table>>();
@@ -200,7 +204,7 @@ public class SparqlViewCache
 
 
 
-        System.out.println("CacheHits: " + result.size());
+       logger.debug("CacheHits: " + result.size());
 
 
         // TODO This has square complexity - maybe we could do better
@@ -212,7 +216,7 @@ public class SparqlViewCache
                 !argh.stream().anyMatch(b -> a != b && b.getDiffPattern().isSubsumedBy(a.getDiffPattern())))
             .collect(Collectors.toList());
 
-        System.out.println("CacheHits after subsumtion: " + result.size());
+        logger.debug("CacheHits after subsumtion: " + result.size());
 
 
         //List<CacheHit> c = new ArrayList<CacheHit>();

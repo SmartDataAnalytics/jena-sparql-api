@@ -69,6 +69,8 @@ import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementService;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
@@ -81,6 +83,9 @@ class QueryRewrite {
 */
 
 public class SparqlCacheUtils {
+
+
+    private static final Logger logger = LoggerFactory.getLogger(SparqlCacheUtils.class);
 
 
     // TODO Not used, can probably be removed
@@ -147,7 +152,7 @@ public class SparqlCacheUtils {
         //boolean isPatternFree = rewriteResult.isPatternFree();
         //boolean isCachingAllowed = rewriteResult.isCachingAllowed();
 
-        System.out.println("Preparing query: " + query.toString().substring(0, Math.min(2000, query.toString().length())));
+        logger.debug("Preparing query: " + query.toString().substring(0, Math.min(2000, query.toString().length())));
 
         //System.out.println("Running query: " + query);
 //
@@ -233,8 +238,10 @@ public class SparqlCacheUtils {
             .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 
 
-        System.out.println("Cache hits:");
-        opToCacheHit.entrySet().forEach(e -> System.out.println(e));
+        //System.out.println("Cache hits:");
+        //opToCacheHit.entrySet().forEach(e -> System.out.println(e));
+        logger.debug("Cache hits:");
+        opToCacheHit.entrySet().forEach(e -> logger.debug("" + e));
 
         // Determine the cacheable parts which do not yet have cache hits
         Set<Op> nonCachedCacheableOps = Sets.difference(cacheableOps.keySet(), opToCacheHit.keySet());
