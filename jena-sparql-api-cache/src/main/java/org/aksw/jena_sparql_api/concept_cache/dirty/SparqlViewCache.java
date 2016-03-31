@@ -10,12 +10,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import java.util.Set;
 
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.CombinatoricsUtils;
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.Utils2;
+import org.aksw.jena_sparql_api.concept_cache.core.CacheResult;
 import org.aksw.jena_sparql_api.concept_cache.core.SetUtils;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
 import org.aksw.jena_sparql_api.concept_cache.core.TableUtils;
@@ -199,6 +201,19 @@ public class SparqlViewCache
 
 
         System.out.println("CacheHits: " + result.size());
+
+
+        // TODO This has square complexity - maybe we could do better
+        List<QfpcMatch> argh = result;
+
+        result =
+            argh.stream()
+            .filter(a ->
+                !argh.stream().anyMatch(b -> a != b && b.getDiffPattern().isSubsumedBy(a.getDiffPattern())))
+            .collect(Collectors.toList());
+
+        System.out.println("CacheHits after subsumtion: " + result.size());
+
 
         //List<CacheHit> c = new ArrayList<CacheHit>();
         //CacheHit r = null;

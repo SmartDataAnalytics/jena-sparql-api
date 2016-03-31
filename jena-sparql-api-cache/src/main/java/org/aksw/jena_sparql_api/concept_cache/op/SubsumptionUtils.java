@@ -14,8 +14,8 @@ import java.util.Set;
 import java.util.Map.Entry;
 
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.Utils2;
+import org.aksw.jena_sparql_api.concept_cache.core.CacheResult;
 import org.aksw.jena_sparql_api.concept_cache.dirty.QfpcMatch;
-import org.aksw.jena_sparql_api.concept_cache.dirty.CacheResult;
 import org.aksw.jena_sparql_api.concept_cache.domain.PatternSummary;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;

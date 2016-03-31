@@ -16,7 +16,6 @@ import java.util.stream.Collectors;
 import org.aksw.commons.collections.MapUtils;
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
-import org.aksw.jena_sparql_api.concept_cache.dirty.CacheResult;
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCache;
 import org.aksw.jena_sparql_api.concept_cache.domain.PatternSummary;
 import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
@@ -84,6 +83,7 @@ class QueryRewrite {
 public class SparqlCacheUtils {
 
 
+    // TODO Not used, can probably be removed
     public static ResultSet executeCached(QueryExecutionFactory qef, Query query, ProjectedQuadFilterPattern pqfp, SparqlViewCache sparqlViewCache, long indexResultSetSizeThreshold) {
         if(pqfp == null) {
             throw new RuntimeException("Query is not indexable: " + query);
@@ -231,6 +231,10 @@ public class SparqlCacheUtils {
             })
             .filter(e -> e != null)
             .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+
+
+        System.out.println("Cache hits:");
+        opToCacheHit.entrySet().forEach(e -> System.out.println(e));
 
         // Determine the cacheable parts which do not yet have cache hits
         Set<Op> nonCachedCacheableOps = Sets.difference(cacheableOps.keySet(), opToCacheHit.keySet());

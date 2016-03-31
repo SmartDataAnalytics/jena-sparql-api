@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.concept_cache.dirty;
+package org.aksw.jena_sparql_api.concept_cache.core;
 
 import java.util.Collection;
 
@@ -22,5 +22,11 @@ public class CacheResult {
 
     public Collection<Table> getTables() {
         return tables;
+    }
+
+    @Override
+    public String toString() {
+        return "CacheResult [replacementPattern=" + replacementPattern
+                + ", tables=" + tables + "]";
     }
 }

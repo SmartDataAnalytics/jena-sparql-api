@@ -12,6 +12,8 @@ import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.core.Var;
 
 /**
+ * TODO This is not a usual qef, because it also needs an op with which the result set is associated
+ *
  * QueryExecutionFactory for executing and caching fragments of a query.
  *
  * Do not use this class directly, instead use QueryExecutionFactoryViewCacheMaster.
@@ -32,7 +34,6 @@ public class QueryExecutionFactoryViewCacheFragment
         this.conceptMap = conceptMap;
         this.indexResultSetSizeThreshold = indexResultSetSizeThreshold;
     }
-
 
     //@Override
     public QueryExecution createQueryExecution(Op indexPattern, Query query) {
