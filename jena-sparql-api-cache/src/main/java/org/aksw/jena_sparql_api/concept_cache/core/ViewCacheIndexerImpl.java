@@ -12,30 +12,34 @@ import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.core.Var;
 
 /**
- * TODO This is not a usual qef, because it also needs an op with which the result set is associated
+ * This class' purpose is to execute queries and index the result set
+ * by associating it with a given algebra expression.
  *
- * QueryExecutionFactory for executing and caching fragments of a query.
+ * Because of the need of the algebra expression, this class is not a QueryExecutionFactory directly, but it aggregates it.
  *
- * Do not use this class directly, instead use QueryExecutionFactoryViewCacheMaster.
+ * This class is not intended to be used directly. Instead,
  *
  * @author raven
  *
  */
-public class QueryExecutionFactoryViewCacheFragment
-//    extends QueryExecutionFactoryDecorator
+public class ViewCacheIndexerImpl
+    implements ViewCacheIndexer
 {
     protected QueryExecutionFactory decoratee;
     protected SparqlViewCache conceptMap;
     protected long indexResultSetSizeThreshold;
 
-    public QueryExecutionFactoryViewCacheFragment(QueryExecutionFactory decoratee, SparqlViewCache conceptMap, long indexResultSetSizeThreshold) {
+    public ViewCacheIndexerImpl(QueryExecutionFactory decoratee, SparqlViewCache conceptMap, long indexResultSetSizeThreshold) {
         //super(decoratee);
         this.decoratee = decoratee;
         this.conceptMap = conceptMap;
         this.indexResultSetSizeThreshold = indexResultSetSizeThreshold;
     }
 
-    //@Override
+    /* (non-Javadoc)
+     * @see org.aksw.jena_sparql_api.concept_cache.core.ViewCacheIndexer#createQueryExecution(org.apache.jena.sparql.algebra.Op, org.apache.jena.query.Query)
+     */
+    @Override
     public QueryExecution createQueryExecution(Op indexPattern, Query query) {
         ProjectedQuadFilterPattern pqfp = SparqlCacheUtils.transform(indexPattern);
         if(pqfp == null) {

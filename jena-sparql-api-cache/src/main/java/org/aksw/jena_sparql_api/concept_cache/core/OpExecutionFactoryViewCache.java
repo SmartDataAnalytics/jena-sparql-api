@@ -11,10 +11,10 @@ import org.apache.jena.sparql.engine.main.OpExecutorFactory;
 public class OpExecutionFactoryViewCache
     implements OpExecutorFactory
 {
-    protected Map<Node, QueryExecutionFactoryViewCacheFragment> serviceToQef;
+    protected Map<Node, ViewCacheIndexer> serviceToQef;
 
     public OpExecutionFactoryViewCache(
-            Map<Node, QueryExecutionFactoryViewCacheFragment> serviceToQef) {
+            Map<Node, ViewCacheIndexer> serviceToQef) {
         super();
         this.serviceToQef = serviceToQef;
     }
@@ -24,7 +24,7 @@ public class OpExecutionFactoryViewCache
         this.serviceToQef = new HashMap<>();
     }
 
-    public Map<Node, QueryExecutionFactoryViewCacheFragment> getServiceMap() {
+    public Map<Node, ViewCacheIndexer> getServiceMap() {
         return serviceToQef;
     }
 

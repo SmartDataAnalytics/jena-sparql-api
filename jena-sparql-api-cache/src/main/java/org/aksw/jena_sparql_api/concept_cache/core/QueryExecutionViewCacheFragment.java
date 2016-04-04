@@ -14,12 +14,19 @@ import org.apache.jena.sparql.core.Var;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * A query execution wrapper that performs caching of a query.
+ * Hence, upon calling exec* (TODO derive from a base class that maps all requests to select queries),
+ * the specified query is executed with the given query execution factory,
+ * and the result set is associated with a configured key (the pqfp) and added to an index.
+ *
+ *
+ * @author raven
+ *
+ */
 public class QueryExecutionViewCacheFragment
     extends QueryExecutionAdapter
 {
-
-    private static final Logger logger = LoggerFactory.getLogger(QueryExecutionViewCacheFragment.class);
-
     protected QueryExecutionFactory qef;
     protected ProjectedQuadFilterPattern pqfp;
     private Query query;
@@ -44,76 +51,5 @@ public class QueryExecutionViewCacheFragment
         ResultSet result = entry.getKey();
         return result;
     }
-
-
-    //@Override
-//    protected QueryExecution executeCoreSelectX(Query query) {
-//        QueryExecution qe = SparqlCacheUtils.prepareQueryExecution(qef, query, conceptMap, indexResultSetSizeThreshold);
-//        return qe;
-//    }
 }
 
-//
-//public static boolean canCacheQuery(Query query, long rsSize) {
-//    long limit = query.getLimit();
-//    long offset = query.getOffset();
-//
-//    boolean isZeroOffset = offset == Query.NOLIMIT || offset == 0;
-//    boolean isCompleteResult = limit == Query.NOLIMIT || rsSize < limit;
-//
-//    boolean result = isZeroOffset && isCompleteResult;
-//
-//    return result;
-//}
-//
-//public ResultSet tryToCacheResultSet(ResultSet rs) {
-//    ResultSetRewindable result = ResultSetFactory.copyResults(rs);
-//    long rsSize = result.size();
-//
-//    boolean canIndex = canCacheQuery(query, rsSize);
-//
-//    if(canIndex) {
-//        ProjectedQuadFilterPattern pqfp = SparqlCacheUtils.transform(query);
-//
-//        if(pqfp != null) {
-//            QuadFilterPattern qfp = pqfp.getQuadFilterPattern();
-//
-//            ResultSet cacheRs = ResultSetUtils.project(result, indexVars, true);
-//
-//            conceptMap.index(qfp, cacheRs);
-//        } else {
-//            logger.warn("Could not index: " + query);
-//        }
-//    }
-//
-//    return result;
-//}
-
-//
-//
-//ResultSet result;
-//ResultSet physicalRs = decoratee.execSelect();
-//List<String> varNames = physicalRs.getResultVars();
-//
-//List<Binding> bindings = new ArrayList<Binding>();
-//
-//int i;
-//for(i = 0; i < indexResultSetSizeThreshold && physicalRs.hasNext(); ++i) {
-//    Binding binding = physicalRs.nextBinding();
-//    bindings.add(binding);
-//}
-//
-//boolean exceededThreshold = i >= indexResultSetSizeThreshold;
-//
-//if(exceededThreshold) {
-//    // TODO Resource leak if the physicalRs is not consumed - fix that somehow!
-//    Iterator<Binding> it = Iterators.concat(bindings.iterator(), new IteratorResultSetBinding(physicalRs));
-//    result = new ResultSetStream(varNames, null, it);
-//} else {
-//    //it = bindings.iterator();
-//    ResultSet tmp = new ResultSetStream(varNames, null, bindings.iterator());
-//
-//    result = tryToCacheResultSet(tmp);
-//}
-//
-//return result;

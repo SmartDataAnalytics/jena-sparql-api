@@ -124,7 +124,7 @@ public class SparqlCacheUtils {
      */
     public static QueryExecution prepareQueryExecution(
             QueryExecutionFactory qef,
-            Map<Node, QueryExecutionFactoryViewCacheFragment> serviceMap,
+            Map<Node, ? super ViewCacheIndexer> serviceMap,
             //Node serviceNode,
             Query rawQuery,
             SparqlViewCache conceptMap,
@@ -135,7 +135,7 @@ public class SparqlCacheUtils {
         Query query = rewriteQuery(serviceNode, rawQuery, conceptMap, indexResultSetSizeThreshold);
 
 
-        serviceMap.put(serviceNode, new QueryExecutionFactoryViewCacheFragment(qef, conceptMap, indexResultSetSizeThreshold));
+        serviceMap.put(serviceNode, new ViewCacheIndexerImpl(qef, conceptMap, indexResultSetSizeThreshold));
         // Temporarily register query execution factories for the parts that need to be cached
         //QueryExecutionViewCachePartial qefPartial = new QueryExecutionViewCachePartial(query, pqfp, qef, conceptMap, indexVars, indexResultSetSizeThreshold)
 

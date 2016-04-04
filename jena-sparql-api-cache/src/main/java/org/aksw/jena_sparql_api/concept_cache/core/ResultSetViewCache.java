@@ -22,7 +22,6 @@ import com.google.common.collect.Iterators;
 
 public class ResultSetViewCache {
 
-
     /**
      * Reads the first threshold bindings from the given result set, and attempts to cache them,
      * unless the result set turns out to be too large.

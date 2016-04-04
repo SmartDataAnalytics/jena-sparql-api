@@ -24,14 +24,14 @@ public class QueryExecutionFactoryViewCacheMaster
     protected SparqlViewCache conceptMap;
     protected long indexResultSetSizeThreshold;
 
-    protected Map<Node, QueryExecutionFactoryViewCacheFragment> serviceMap;
+    protected Map<Node, ? super ViewCacheIndexer> serviceMap;
 
 
-    public QueryExecutionFactoryViewCacheMaster(QueryExecutionFactory decoratee, Map<Node, QueryExecutionFactoryViewCacheFragment> serviceMap) {
+    public QueryExecutionFactoryViewCacheMaster(QueryExecutionFactory decoratee, Map<Node, ? super ViewCacheIndexer> serviceMap) {
         this(decoratee, serviceMap, new SparqlViewCache(), 10000);
     }
 
-    public QueryExecutionFactoryViewCacheMaster(QueryExecutionFactory decoratee, Map<Node, QueryExecutionFactoryViewCacheFragment> serviceMap, SparqlViewCache conceptMap, long indexResultSetSizeThreshold) {
+    public QueryExecutionFactoryViewCacheMaster(QueryExecutionFactory decoratee, Map<Node, ? super ViewCacheIndexer> serviceMap, SparqlViewCache conceptMap, long indexResultSetSizeThreshold) {
         super(decoratee);
         this.conceptMap = conceptMap;
         this.indexResultSetSizeThreshold = indexResultSetSizeThreshold;

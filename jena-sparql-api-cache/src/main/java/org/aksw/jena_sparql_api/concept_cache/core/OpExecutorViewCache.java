@@ -36,10 +36,10 @@ import org.apache.jena.sparql.graph.NodeTransformLib;
 public class OpExecutorViewCache
     extends OpExecutor
 {
-    protected Map<Node, QueryExecutionFactoryViewCacheFragment> serviceToQef;
+    protected Map<Node, ViewCacheIndexer> serviceToQef;
 
 
-    protected OpExecutorViewCache(ExecutionContext execCxt, Map<Node, QueryExecutionFactoryViewCacheFragment> serviceToQef) {
+    protected OpExecutorViewCache(ExecutionContext execCxt, Map<Node, ViewCacheIndexer> serviceToQef) {
         super(execCxt);
         this.serviceToQef = serviceToQef;
     }
@@ -53,7 +53,7 @@ public class OpExecutorViewCache
         QueryIterator result;
         if(serviceUri.startsWith("cache://")) {
             //SparqlCacheUtils.
-            QueryExecutionFactoryViewCacheFragment qef = serviceToQef.get(serviceNode);
+            ViewCacheIndexer qef = serviceToQef.get(serviceNode);
             if(qef == null) {
                 throw new RuntimeException("Could not find a query execution factory for " + serviceUri);
             }

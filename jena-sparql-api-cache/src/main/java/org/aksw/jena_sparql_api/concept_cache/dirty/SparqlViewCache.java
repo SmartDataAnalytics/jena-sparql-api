@@ -225,7 +225,7 @@ public class SparqlViewCache
         List<Table> tables = new ArrayList<Table>();
         for(QfpcMatch ch : result) {
 
-            System.out.println("VarMap: Cache to Query: " + ch.getVarMap());
+            logger.debug("VarMap: Cache to Query: " + ch.getVarMap());
             //ch.get
             if(replacementPattern == null) {
                  replacementPattern = ch.getDiffPattern();
@@ -239,7 +239,7 @@ public class SparqlViewCache
             }
         }
 
-        System.out.println("Tables: " + tables.size());
+        logger.debug("Tables: " + tables.size());
 
         //result =
         CacheResult cr;
