@@ -25,6 +25,8 @@ import org.apache.jena.sparql.engine.iterator.QueryIteratorResultSet;
 import org.apache.jena.sparql.engine.main.OpExecutor;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.graph.NodeTransformLib;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 //class CacheConfig {
@@ -36,6 +38,8 @@ import org.apache.jena.sparql.graph.NodeTransformLib;
 public class OpExecutorViewCache
     extends OpExecutor
 {
+    private static final Logger logger = LoggerFactory.getLogger(OpExecutorViewCache.class);
+
     protected Map<Node, ViewCacheIndexer> serviceToQef;
 
 
@@ -105,7 +109,7 @@ public class OpExecutorViewCache
 
             //Query query = subQueryElt.getQuery();
 
-            System.out.println("Executing: " + executionQuery);
+            logger.debug("Executing: " + executionQuery);
 
             QueryExecution qe = qef.createQueryExecution(patternOp, executionQuery);
             ResultSet rs = qe.execSelect();

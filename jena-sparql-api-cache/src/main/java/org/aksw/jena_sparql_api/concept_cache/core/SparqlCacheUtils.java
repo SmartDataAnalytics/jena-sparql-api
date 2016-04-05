@@ -89,17 +89,17 @@ public class SparqlCacheUtils {
 
 
     // TODO Not used, can probably be removed
-    public static ResultSet executeCached(QueryExecutionFactory qef, Query query, ProjectedQuadFilterPattern pqfp, SparqlViewCache sparqlViewCache, long indexResultSetSizeThreshold) {
-        if(pqfp == null) {
-            throw new RuntimeException("Query is not indexable: " + query);
-        }
-
-        Set<Var> indexVars = new HashSet<>(query.getProjectVars());
-
-        QueryExecution qe = new QueryExecutionViewCacheFragment(query, pqfp, qef, sparqlViewCache, indexVars, indexResultSetSizeThreshold);
-        ResultSet result = qe.execSelect();
-        return result;
-    }
+//    public static ResultSet executeCached(QueryExecutionFactory qef, Query query, ProjectedQuadFilterPattern pqfp, SparqlViewCache sparqlViewCache, long indexResultSetSizeThreshold) {
+//        if(pqfp == null) {
+//            throw new RuntimeException("Query is not indexable: " + query);
+//        }
+//
+//        Set<Var> indexVars = new HashSet<>(query.getProjectVars());
+//
+//        QueryExecution qe = new QueryExecutionViewCacheFragment(query, pqfp, qef, sparqlViewCache, indexVars, indexResultSetSizeThreshold);
+//        ResultSet result = qe.execSelect();
+//        return result;
+//    }
 
 
     /**
@@ -132,8 +132,10 @@ public class SparqlCacheUtils {
     {
         Node serviceNode = NodeFactory.createURI("cache://" + qef.getId());
 
-        Query query = rewriteQuery(serviceNode, rawQuery, conceptMap, indexResultSetSizeThreshold);
+        logger.debug("Rewriting query: " + rawQuery);
 
+        Query query = rewriteQuery(serviceNode, rawQuery, conceptMap, indexResultSetSizeThreshold);
+        logger.debug("Rewritten query: " + query);
 
         serviceMap.put(serviceNode, new ViewCacheIndexerImpl(qef, conceptMap, indexResultSetSizeThreshold));
         // Temporarily register query execution factories for the parts that need to be cached
@@ -223,7 +225,16 @@ public class SparqlCacheUtils {
         rawOp = ReplaceConstants.replace(rawOp);
 
         // Determine which parts of the query are cacheable
-        Map<Op, ProjectedQuadFilterPattern> cacheableOps = OpVisitorViewCacheApplier.detectPrimitiveCachableOps(rawOp);
+        Map<Op, ProjectedQuadFilterPattern> tmpCacheableOps = OpVisitorViewCacheApplier.detectPrimitiveCachableOps(rawOp);
+
+        // TODO: If the op is a projection, associate the pqfp with the sub op in order to retain the projection
+        Map<Op, ProjectedQuadFilterPattern> cacheableOps = tmpCacheableOps.entrySet().stream()
+            .collect(Collectors.toMap(e -> {
+                Op op = e.getKey();
+                Op r = op instanceof OpProject ? ((OpProject)op).getSubOp() : op;
+                return r;
+            }, Entry::getValue));
+
 
         // Determine for which of the cachable parts we have cache hits
         Map<Op, CacheResult> opToCacheHit = cacheableOps.entrySet().stream()
