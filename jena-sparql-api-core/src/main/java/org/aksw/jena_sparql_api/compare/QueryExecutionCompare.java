@@ -254,7 +254,7 @@ public class QueryExecutionCompare
         } catch(RuntimeException e) {
             // Set diff in order to indicate that the execution was performed
             resultSetDiff = Diff.<ResultSetPart>create(new ResultSetPart(), new ResultSetPart()); //new ListDiff<>();
-            throw e;
+            throw new RuntimeException(e);
         }
 
         ListDiff<Binding> tmp = (isOrdered)

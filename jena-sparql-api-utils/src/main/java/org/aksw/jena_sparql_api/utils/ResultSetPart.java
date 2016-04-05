@@ -8,6 +8,9 @@ import java.util.List;
 
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFactory;
+import org.apache.jena.sparql.algebra.Table;
+import org.apache.jena.sparql.algebra.TableFactory;
+import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.iterator.QueryIter;
 import org.apache.jena.sparql.engine.iterator.QueryIterPlainWrapper;
@@ -83,5 +86,18 @@ public class ResultSetPart {
         return result;
         //ResultSetCloseable result = new ResultSetCloseable(baseRs, closeable);
 
+    }
+
+
+    public static Table toTable(ResultSetPart rsp) {
+        //List<Var> vars = VarUtils.toList(rs.getResultVars());
+        List<Var> vars = VarUtils.toList(rsp.getVarNames());
+        Table result = TableFactory.create(vars);
+
+        for(Binding binding : rsp.getBindings()) {
+            result.addBinding(binding);
+        }
+
+        return result;
     }
 }

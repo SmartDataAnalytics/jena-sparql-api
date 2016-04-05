@@ -27,6 +27,7 @@ import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.domain.VarOccurrence;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
+import org.aksw.jena_sparql_api.utils.ResultSetPart;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.ResultSet;
@@ -368,14 +369,21 @@ public class SparqlViewCache
         ProjectedQuadFilterPattern pqfp = SparqlCacheUtils.transform(query);
         QuadFilterPattern qfp = pqfp.getQuadFilterPattern();
 
-        index(qfp, rs);
+        Table table = SparqlCacheUtils.createTable(rs);
+        index(qfp, table);
     }
 
 
+    public void index(QuadFilterPattern qfp, ResultSetPart rsp) {
+        Table table = ResultSetPart.toTable(rsp);
+        index(qfp, table);
+    }
 
-    public void index(QuadFilterPattern qfp, ResultSet rs) {
+    public void index(QuadFilterPattern qfp, Table table) {
 
-        Table table = SparqlCacheUtils.createTable(rs);
+
+        //Table table = SparqlCacheUtils.createTable(rs);
+        //Table table = ResultSetPart.toTable(rs);
 
         //QuadFilterPattern qfp = transform(query);
 //        if(qfp == null) {
@@ -384,7 +392,7 @@ public class SparqlViewCache
 
         PatternSummary ps = SparqlCacheUtils.summarize(qfp);
 
-        Set<Var> vars = VarUtils.toSet(rs.getResultVars());
+        Set<Var> vars = VarUtils.toSet(table.getVarNames()); //.getResultVars());
 
         Map<Set<Var>, Table> map = cacheData.get(qfp);
         if(map == null) {

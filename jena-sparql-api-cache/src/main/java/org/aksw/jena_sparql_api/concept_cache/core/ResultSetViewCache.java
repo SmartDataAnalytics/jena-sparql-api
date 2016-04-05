@@ -11,6 +11,7 @@ import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCache;
 import org.aksw.jena_sparql_api.concept_cache.dirty.IteratorResultSetBinding;
 import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
+import org.aksw.jena_sparql_api.utils.ResultSetPart;
 import org.aksw.jena_sparql_api.utils.ResultSetUtils;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFactory;
@@ -44,24 +45,30 @@ public class ResultSetViewCache {
 
         List<Binding> bindings = new ArrayList<Binding>();
 
+        // Start collecting bindings from the result set until we reach the threshold
         int i;
         for(i = 0; i < indexResultSetSizeThreshold && physicalRs.hasNext(); ++i) {
             Binding binding = physicalRs.nextBinding();
             bindings.add(binding);
         }
 
-        //boolean exceededThreshold = i >= indexResultSetSizeThreshold;
         boolean isCacheable = i <= indexResultSetSizeThreshold;
 
         if(isCacheable) {
-            //it = bindings.iterator();
-            ResultSet tmp = new ResultSetStream(varNames, null, bindings.iterator());
+            ResultSetPart tmp = new ResultSetPart(varNames, bindings);
 
-            resultRs = ResultSetFactory.copyResults(tmp);
+
+            //it = bindings.iterator();
+            //ResultSet tmp = new ResultSetStream(varNames, null, bindings.iterator());
+
+            //resultRs = ResultSetFactory.copyResults(tmp);
 
             QuadFilterPattern qfp = pqfp.getQuadFilterPattern();
-            ResultSet cacheRs = ResultSetUtils.project(resultRs, indexVars, true);
-            conceptMap.index(qfp, cacheRs);
+            //ResultSet cacheRs = ResultSetUtils.project(resultRs, indexVars, true);
+            conceptMap.index(qfp, tmp); //cacheRs);
+
+            resultRs = ResultSetPart.toResultSet(tmp);
+
         } else {
             // TODO Resource leak if the physicalRs is not consumed - fix that somehow!
             Iterator<Binding> it = Iterators.concat(bindings.iterator(), new IteratorResultSetBinding(physicalRs));
