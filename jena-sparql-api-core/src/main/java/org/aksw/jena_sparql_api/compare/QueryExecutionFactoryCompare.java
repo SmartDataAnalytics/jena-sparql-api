@@ -5,6 +5,7 @@ import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactoryBackQuery;
 
 import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
 
 /**
  * A query execution factory, which generates query executions
@@ -43,11 +44,13 @@ public class QueryExecutionFactoryCompare
 
 
             query.setLimit(Query.NOLIMIT);
-            query.setOffset(0);
+            query.setOffset(Query.NOLIMIT);
         }
 
         //boolean isOrdered = !query.getOrderBy().isEmpty();
-        QueryExecutionCompare result = new QueryExecutionCompare(query, a.createQueryExecution(query), b.createQueryExecution(query), false);
+        QueryExecution qea = a.createQueryExecution(query);
+        QueryExecution qeb = b.createQueryExecution(query);
+        QueryExecutionCompare result = new QueryExecutionCompare(query, qea, qeb, false);
         //QueryExecution result = QueryExecutionWrapper.wrap(tmp);
         return result;
     }

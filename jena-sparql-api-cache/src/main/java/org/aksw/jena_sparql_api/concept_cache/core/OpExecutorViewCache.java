@@ -57,8 +57,8 @@ public class OpExecutorViewCache
         QueryIterator result;
         if(serviceUri.startsWith("cache://")) {
             //SparqlCacheUtils.
-            ViewCacheIndexer qef = serviceToQef.get(serviceNode);
-            if(qef == null) {
+            ViewCacheIndexer vci = serviceToQef.get(serviceNode);
+            if(vci == null) {
                 throw new RuntimeException("Could not find a query execution factory for " + serviceUri);
             }
             Op tmpOp = opService.getSubOp();
@@ -111,7 +111,7 @@ public class OpExecutorViewCache
 
             logger.debug("Executing: " + executionQuery);
 
-            QueryExecution qe = qef.createQueryExecution(patternOp, executionQuery);
+            QueryExecution qe = vci.createQueryExecution(patternOp, executionQuery);
             ResultSet rs = qe.execSelect();
 
 
