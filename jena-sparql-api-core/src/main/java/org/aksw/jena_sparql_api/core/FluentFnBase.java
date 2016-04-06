@@ -28,7 +28,7 @@ public abstract class FluentFnBase<T, P>
             fn = nextFn;
         } else {
             //fn = Functions.compose(nextFn, fn);
-            fn = fn.andThen(nextFn);//Functions.compose(fn, nextFn);
+            fn = nextFn.andThen(fn);//Functions.compose(fn, nextFn);
         }
 
         return this;
