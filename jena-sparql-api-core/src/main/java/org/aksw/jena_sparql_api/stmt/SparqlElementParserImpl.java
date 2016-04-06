@@ -1,7 +1,8 @@
 package org.aksw.jena_sparql_api.stmt;
 
-import org.aksw.jena_sparql_api.utils.ElementUtils;
+import java.util.function.Function;
 
+import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.sparql.core.Prologue;
@@ -10,13 +11,13 @@ import org.apache.jena.sparql.syntax.Element;
 public class SparqlElementParserImpl
     implements SparqlElementParser
 {
-    protected SparqlQueryParser queryParser;
+    protected Function<String, Query> queryParser;
 
     public SparqlElementParserImpl() {
         this(new SparqlQueryParserImpl());
     }
 
-    public SparqlElementParserImpl(SparqlQueryParser queryParser) {
+    public SparqlElementParserImpl(Function<String, Query> queryParser) {
         this.queryParser = queryParser;
     }
 

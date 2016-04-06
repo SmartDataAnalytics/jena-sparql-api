@@ -3,21 +3,25 @@ package org.aksw.jena_sparql_api.concepts;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.aksw.commons.collections.SetUtils;
-import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformCopyBase;
+import org.aksw.jena_sparql_api.stmt.SparqlPrologueParser;
+import org.aksw.jena_sparql_api.stmt.SparqlPrologueParserImpl;
+import org.aksw.jena_sparql_api.stmt.SparqlQueryParser;
+import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.GeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.VarUtils;
-
-import com.google.common.collect.Sets;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
+import org.apache.jena.query.Syntax;
 import org.apache.jena.sdb.core.Gensym;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpAsQuery;
+import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.core.Substitute;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.BindingHashMap;
@@ -28,6 +32,8 @@ import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.PatternVars;
+
+import com.google.common.collect.Sets;
 
 /**
  * A concept combines a SPARQL graph pattern (element) with a variable.
@@ -72,11 +78,34 @@ public class Concept {
         return result;
     }
 
-    public static Concept create(String elementStr, String varName) {
-        Concept result = create(elementStr, varName, null);
+
+    public static Concept create(String prologueStr, String varName, String elementStr) {
+        SparqlQueryParser queryParser = SparqlQueryParserImpl.create(Syntax.syntaxSPARQL_10);
+
+        Concept result = create(prologueStr, varName, elementStr, queryParser);
         return result;
     }
 
+    public static Concept create(String prologueStr, String varName, String elementStr, Function<String, Query> queryParser) {
+        //SparqlElementParser elementParser = new SparqlElementParserImpl(queryParser);
+        SparqlPrologueParser prologueParser = new SparqlPrologueParserImpl(queryParser);
+
+        Prologue prologue = prologueParser.apply(prologueStr);
+        PrefixMapping prefixMapping = prologue.getPrefixMapping();
+
+        Concept result = create(elementStr, varName, prefixMapping);
+
+        return result;
+    }
+
+
+    // TODO Var first
+    public static Concept create(String elementStr, String varName) {
+        Concept result = create(elementStr, varName, (PrefixMapping)null);
+        return result;
+    }
+
+    // TODO Var first
     public static Concept create(String elementStr, String varName, PrefixMapping prefixMapping) {
         Var var = Var.alloc(varName);
 

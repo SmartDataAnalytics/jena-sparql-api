@@ -95,6 +95,8 @@ public class NodeUtils {
         }
         else if(node.isBlank()) {
             result = node.getBlankNodeLabel();
+        } else if(node.isVariable()) {
+            result = "?" + ((Var)node).getVarName();
         } else {
             throw new RuntimeException("Cannot serialize [" + node + "] as N-Triples");
         }
