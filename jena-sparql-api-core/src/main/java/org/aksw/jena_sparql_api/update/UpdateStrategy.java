@@ -1,9 +1,9 @@
 package org.aksw.jena_sparql_api.update;
 
+import java.util.function.Function;
+
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
-
-import com.google.common.base.Function;
 
 /**
  * An update strategy is a function that yields an UpdateExecutionFactory
