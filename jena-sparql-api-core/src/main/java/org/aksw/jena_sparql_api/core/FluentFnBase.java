@@ -1,7 +1,6 @@
 package org.aksw.jena_sparql_api.core;
 
-import com.google.common.base.Function;
-import com.google.common.base.Functions;
+import java.util.function.Function;
 
 /**
  * Abstract class upon Fluent APIs for functions can be built.
@@ -29,7 +28,7 @@ public abstract class FluentFnBase<T, P>
             fn = nextFn;
         } else {
             //fn = Functions.compose(nextFn, fn);
-        	fn = Functions.compose(fn, nextFn);
+            fn = fn.andThen(nextFn);//Functions.compose(fn, nextFn);
         }
 
         return this;
@@ -39,7 +38,7 @@ public abstract class FluentFnBase<T, P>
     public Function<T, T> value() {
         Function<T, T> result = super.value();
         if(result == null) {
-            result = Functions.<T>identity();
+            result = Function.identity();//Functions.<T>identity();
         }
 
         return result;

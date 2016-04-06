@@ -1,8 +1,9 @@
 package org.aksw.jena_sparql_api.stmt;
 
+import java.util.function.Function;
+
 import org.apache.jena.update.UpdateRequest;
 
-import com.google.common.base.Function;
 
 /**
  * Wraps a generic statement parser as a specific update request parser

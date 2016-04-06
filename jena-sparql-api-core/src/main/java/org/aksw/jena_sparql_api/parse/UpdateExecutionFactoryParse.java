@@ -1,11 +1,12 @@
 package org.aksw.jena_sparql_api.parse;
 
+import java.util.function.Function;
+
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryDelegate;
 import org.apache.jena.update.UpdateProcessor;
 import org.apache.jena.update.UpdateRequest;
 
-import com.google.common.base.Function;
 
 public class UpdateExecutionFactoryParse
     extends UpdateExecutionFactoryDelegate

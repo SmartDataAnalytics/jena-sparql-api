@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.update;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.core.FluentBase;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
@@ -23,7 +24,6 @@ import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.util.Context;
 
-import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 
 public class FluentSparqlService<P>

@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.fallback.QueryExecutionFactoryFallback;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
@@ -19,7 +20,6 @@ import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.core.DatasetImpl;
 import org.apache.jena.sparql.util.Context;
 
-import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 
 /**

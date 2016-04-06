@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.update;
 
 import java.util.Collection;
+import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.core.DatasetListener;
 import org.aksw.jena_sparql_api.core.FluentFnBase;
@@ -15,7 +16,6 @@ import org.aksw.jena_sparql_api.stmt.SparqlUpdateParserStmt;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
 import org.apache.jena.sparql.core.DatasetDescription;
 
-import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 
 public class FluentSparqlServiceFn<P>

@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.core;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.cache.core.QueryExecutionFactoryCacheEx;
 import org.aksw.jena_sparql_api.cache.extra.CacheFrontend;
@@ -11,12 +12,11 @@ import org.aksw.jena_sparql_api.parse.QueryExecutionFactoryParse;
 import org.aksw.jena_sparql_api.prefix.core.QueryExecutionFactoryPrefix;
 import org.aksw.jena_sparql_api.retry.core.QueryExecutionFactoryRetry;
 import org.aksw.jena_sparql_api.transform.QueryExecutionFactoryQueryTransform;
-
-import com.google.common.base.Function;
-import com.google.common.base.Supplier;
 import org.apache.jena.query.Query;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.DatasetDescription;
+
+import com.google.common.base.Supplier;
 
 /**
  * A fluent API for conveniently building 'recipes' of transformations to apply to any QueryExecutionFactory.

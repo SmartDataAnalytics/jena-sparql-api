@@ -1,11 +1,12 @@
 package org.aksw.jena_sparql_api.update;
 
+import java.util.function.Function;
+
 import org.aksw.jena_sparql_api.core.FluentFnBase;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactoryDefaults;
 
-import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.base.Supplier;
 

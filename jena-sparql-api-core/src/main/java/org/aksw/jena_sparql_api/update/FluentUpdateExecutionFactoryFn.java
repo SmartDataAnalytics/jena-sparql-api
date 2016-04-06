@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.update;
 
+import java.util.function.Function;
+
 import org.aksw.jena_sparql_api.core.FluentFnBase;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryDatasetDescription;
@@ -7,7 +9,6 @@ import org.aksw.jena_sparql_api.parse.UpdateExecutionFactoryParse;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.update.UpdateRequest;
 
-import com.google.common.base.Function;
 
 public class FluentUpdateExecutionFactoryFn<P>
     extends FluentFnBase<UpdateExecutionFactory, P>
