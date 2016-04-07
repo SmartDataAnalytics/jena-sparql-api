@@ -24,6 +24,7 @@ import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.domain.VarOccurrence;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 import org.aksw.jena_sparql_api.concept_cache.trash.OpVisitorViewCacheApplier;
+import org.aksw.jena_sparql_api.core.QueryExecutionExecWrapper;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.model.QueryExecutionFactoryModel;
 import org.aksw.jena_sparql_api.utils.ClauseUtils;
@@ -102,6 +103,8 @@ public class SparqlCacheUtils {
 //    }
 
 
+    public static long preparationId = 0;
+
     /**
      * Prepares the execution of a query in regard to a query cache.
      *
@@ -130,14 +133,20 @@ public class SparqlCacheUtils {
             SparqlViewCache conceptMap,
             long indexResultSetSizeThreshold)
     {
-        Node serviceNode = NodeFactory.createURI("cache://" + qef.getId());
+        Node serviceNode = NodeFactory.createURI("cache://" + qef.getId() + "-" + (preparationId++));
 
         logger.debug("Rewriting query: " + rawQuery);
 
         Query query = rewriteQuery(serviceNode, rawQuery, conceptMap, indexResultSetSizeThreshold);
         logger.debug("Rewritten query: " + query);
 
-        serviceMap.put(serviceNode, new ViewCacheIndexerImpl(qef, conceptMap, indexResultSetSizeThreshold));
+
+        ViewCacheIndexer vci = new ViewCacheIndexerImpl(qef, conceptMap, indexResultSetSizeThreshold);
+
+
+        //serviceMap.put(serviceNode, new ViewCacheIndexerImpl(qef, conceptMap, indexResultSetSizeThreshold));
+
+
         // Temporarily register query execution factories for the parts that need to be cached
         //QueryExecutionViewCachePartial qefPartial = new QueryExecutionViewCachePartial(query, pqfp, qef, conceptMap, indexVars, indexResultSetSizeThreshold)
 
@@ -183,6 +192,11 @@ public class SparqlCacheUtils {
             result = qef.createQueryExecution(query);
 
         }
+
+
+        result = new QueryExecutionExecWrapper(result,
+                () -> serviceMap.put(serviceNode, vci),
+                () -> serviceMap.remove(serviceNode));
 
 
         return result;
