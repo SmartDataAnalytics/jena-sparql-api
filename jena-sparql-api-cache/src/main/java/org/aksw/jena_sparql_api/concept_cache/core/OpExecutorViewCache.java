@@ -59,7 +59,7 @@ public class OpExecutorViewCache
             //SparqlCacheUtils.
             ViewCacheIndexer vci = serviceToQef.get(serviceNode);
             if(vci == null) {
-                throw new RuntimeException("Could not find a query execution factory for " + serviceUri);
+                throw new RuntimeException("Could not find a " + ViewCacheIndexer.class.getSimpleName() + " instance for " + serviceUri);
             }
             Op tmpOp = opService.getSubOp();
 

@@ -72,6 +72,7 @@ import org.apache.jena.sparql.syntax.ElementService;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.Assert;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
@@ -195,8 +196,9 @@ public class SparqlCacheUtils {
 
 
         result = new QueryExecutionExecWrapper(result,
-                () -> serviceMap.put(serviceNode, vci),
-                () -> serviceMap.remove(serviceNode));
+                    () -> { Assert.isTrue(!serviceMap.containsKey(serviceNode)); serviceMap.put(serviceNode, vci); },
+                    () -> { Assert.isTrue(serviceMap.containsKey(serviceNode)); serviceMap.remove(serviceNode); }
+                 );
 
 
         return result;
