@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.web.servlets;
 
+import javax.naming.OperationNotSupportedException;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.FormParam;
@@ -26,15 +27,13 @@ import org.aksw.jena_sparql_api.stmt.SparqlStmtQuery;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtUpdate;
 import org.aksw.jena_sparql_api.utils.SparqlFormatterUtils;
 import org.aksw.jena_sparql_api.web.utils.ThreadUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.update.UpdateProcessor;
-import org.apache.jena.update.UpdateRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -539,8 +538,9 @@ public abstract class SparqlEndpointBase {
 //        UpdateProcessor result = uef.createUpdateProcessor(updateRequest);
 //        return result;
 //    }
-    public abstract UpdateProcessor createUpdateProcessor(SparqlStmtUpdate stmt); //UpdateRequest updateRequest);
-
+    public UpdateProcessor createUpdateProcessor(SparqlStmtUpdate stmt) { //UpdateRequest updateRequest);
+        throw new UnsupportedOperationException("The method for handling SPARQL update requests has not been overridden");
+    }
 
     public void processUpdateAsync(final AsyncResponse response, SparqlStmtUpdate stmt) { //String serviceUri, String requestStr, List<String> usingGraphUris, List<String> usingNamedGraphUris) {
         UpdateProcessor updateProcessor = createUpdateProcessor(stmt.getAsUpdateStmt()); //serviceUri, requestStr, usingGraphUris, usingNamedGraphUris);

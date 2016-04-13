@@ -23,7 +23,7 @@ public class ServletSparqlServiceImpl
     @Autowired
     protected SparqlServiceFactory ssf;
 
-    @Autowired
+    @Autowired(required=false)
     protected SparqlStmtParser sparqlStmtParser;
 
     public ServletSparqlServiceImpl() {
