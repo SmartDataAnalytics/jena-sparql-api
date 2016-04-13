@@ -30,9 +30,9 @@ public class ResultSetCloseable extends ResultSetClose {
 
     public ResultSetCloseable(ResultSet decoratee, Closeable closeable) {
         super(decoratee, true);
-        if (closeable == null) {
-            throw new NullPointerException();
-        }
+//        if (closeable == null) {
+//            throw new NullPointerException();
+//        }
         this.closeable = closeable;
 
         resultVars = new ArrayList<String>(decoratee.getResultVars());
