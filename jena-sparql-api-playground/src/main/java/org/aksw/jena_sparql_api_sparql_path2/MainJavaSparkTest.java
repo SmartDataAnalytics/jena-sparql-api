@@ -11,11 +11,11 @@ import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
+import org.aksw.jena_sparql_api.server.utils.SparqlServerUtils;
 import org.aksw.jena_sparql_api.stmt.SparqlParserConfig;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
 import org.aksw.jena_sparql_api.update.FluentSparqlServiceFactory;
-import org.aksw.jena_sparql_api.web.server.ServerUtils;
 import org.apache.jena.atlas.web.auth.HttpAuthenticator;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -251,7 +251,7 @@ public class MainJavaSparkTest {
             new SparqlKShortestPathFinderSpark(sparkContext, fwdRdd, bwdRdd))); // nodePartitioner
 
 
-        Server server = ServerUtils.startSparqlEndpoint(ssf, sparqlStmtParser, 7533);
+        Server server = SparqlServerUtils.startSparqlEndpoint(ssf, sparqlStmtParser, 7533);
         server.join();
 
 

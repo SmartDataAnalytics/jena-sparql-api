@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.web.server;
+package org.aksw.jena_sparql_api.web.server.utils;
 
 import java.util.Arrays;
 import java.util.Collections;

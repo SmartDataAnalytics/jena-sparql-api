@@ -22,7 +22,8 @@
         <module>jena-sparql-api-cache-h2</module>
         <module>jena-sparql-api-utils</module>
         <module>jena-sparql-api-web</module>
-        <module>jena-sparql-api-server</module>
+        <module>jena-sparql-api-server-utils</module>
+        <module>jena-sparql-api-server-standalone</module>
         <module>jena-sparql-api-example-proxy</module>
 
         <module>jena-sparql-api-concepts</module>
@@ -338,7 +339,13 @@
 
             <dependency>
                 <groupId>org.aksw.jena-sparql-api</groupId>
-                <artifactId>jena-sparql-api-server</artifactId>
+                <artifactId>jena-sparql-api-server-utils</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.aksw.jena-sparql-api</groupId>
+                <artifactId>jena-sparql-api-server-standalone</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

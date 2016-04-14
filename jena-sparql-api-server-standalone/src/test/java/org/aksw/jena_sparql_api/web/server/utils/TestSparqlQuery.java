@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.web.server;
+package org.aksw.jena_sparql_api.web.server.utils;
 
 
 //Source: http://stackoverflow.com/questions/22434181/jersey-server-side-async-api-not-working-as-expected

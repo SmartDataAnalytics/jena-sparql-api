@@ -20,33 +20,12 @@ import org.springframework.web.servlet.DispatcherServlet;
  * because servlets environments may wrongly pick up this class as an entry point
  * to the application.
  *
+ * OK, IT DOES NOT WORK BECAUSE ANONYMOUS CLASSES ARE ALSO DETECTED FFS
+ *
  * @author raven
  *
  */
 public class WebAppInitializerSparqlServiceUtils {
-
-    public static WebApplicationInitializer create(Class<?> config) {
-         AnnotationConfigWebApplicationContext rootContext = new AnnotationConfigWebApplicationContext();
-         rootContext.register(config);
-
-         WebApplicationInitializer result = create(rootContext);
-
-        return result;
-    }
-
-
-    public static WebApplicationInitializer create(WebApplicationContext rootContext) {
-        WebApplicationInitializer result = new WebApplicationInitializer() {
-
-            @Override
-            public void onStartup(ServletContext servletContext)
-                    throws ServletException {
-                init(servletContext, rootContext);
-            }
-        };
-
-        return result;
-    }
 
 
     public static void init(ServletContext servletContext, WebApplicationContext rootContext) {

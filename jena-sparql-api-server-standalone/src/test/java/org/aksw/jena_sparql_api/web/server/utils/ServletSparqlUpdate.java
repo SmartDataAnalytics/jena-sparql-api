@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.web.server;
+package org.aksw.jena_sparql_api.web.server.utils;
 
 import javax.ws.rs.Path;
 

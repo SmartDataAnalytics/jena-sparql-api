@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.web.server;
+package org.aksw.jena_sparql_api.web.server.utils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -7,6 +7,8 @@ import java.util.List;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
 import org.aksw.jena_sparql_api.core.utils.UpdateExecutionUtils;
+import org.aksw.jena_sparql_api.server.utils.WebAppInitializerSparqlService;
+import org.aksw.jena_sparql_api.web.server.ServerUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -18,10 +20,7 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.ResourceHandler;
-import org.eclipse.jetty.util.resource.Resource;
 import org.junit.Assert;
-import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 public class TestServletSparqlUpdate {
@@ -42,7 +41,7 @@ public class TestServletSparqlUpdate {
         UpdateExecutionUtils.copyByConstruct(ssLocal, ssDBpedia, s, 1000);
 
 
-        Server server = ServerUtils.startServer(port, WebAppInitializerSparqlServiceUtils.create(ConfigApp.class));
+        Server server = ServerUtils.startServer(port, WebAppInitializerSparqlService.create(ConfigApp.class));
 
 
 
@@ -78,7 +77,7 @@ public class TestServletSparqlUpdate {
     //@Test
     public void test2() throws Exception {
         int port = 7533;
-        Server server = ServerUtils.startServer(port, WebAppInitializerSparqlServiceUtils.create(ConfigApp.class));
+        Server server = ServerUtils.startServer(port, WebAppInitializerSparqlService.create(ConfigApp.class));
         server.join();
 
 //      ResourceHandler resHandler = new ResourceHandler();

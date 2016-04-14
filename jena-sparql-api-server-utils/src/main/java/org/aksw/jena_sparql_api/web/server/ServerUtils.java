@@ -34,17 +34,6 @@ public class ServerUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(ServerUtils.class);
 
-    public static Server startSparqlEndpoint(SparqlServiceFactory ssf, SparqlStmtParser sparqlStmtParser, int port) {
-//        AnnotationConfigWebApplicationContext rootContext = new AnnotationConfigWebApplicationContext();
-//        rootContext.refresh();
-        GenericWebApplicationContext rootContext = new GenericWebApplicationContext();
-        rootContext.getBeanFactory().registerSingleton("sparqlServiceFactory", ssf);
-        rootContext.getBeanFactory().registerSingleton("sparqlStmtParser", sparqlStmtParser);
-
-        Server result = startServer(port, WebAppInitializerSparqlServiceUtils.create(rootContext));
-        return result;
-    }
-
     public static Server startServer(int port,
             WebApplicationInitializer initializer) {
         // Not sure if using this class always works as expected

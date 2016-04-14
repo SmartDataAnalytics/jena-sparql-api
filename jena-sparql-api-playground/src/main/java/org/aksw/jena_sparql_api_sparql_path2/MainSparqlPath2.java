@@ -31,6 +31,7 @@ import org.aksw.jena_sparql_api.mapper.AggMap;
 import org.aksw.jena_sparql_api.mapper.AggTransform;
 import org.aksw.jena_sparql_api.mapper.BindingMapperProjectVar;
 import org.aksw.jena_sparql_api.mapper.MappedQuery;
+import org.aksw.jena_sparql_api.server.utils.SparqlServerUtils;
 import org.aksw.jena_sparql_api.stmt.SparqlParserConfig;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
@@ -39,7 +40,6 @@ import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.TripleUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
-import org.aksw.jena_sparql_api.web.server.ServerUtils;
 import org.apache.jena.atlas.web.auth.HttpAuthenticator;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -725,7 +725,7 @@ public class MainSparqlPath2 {
 
 
         } else {
-            Server server = ServerUtils.startSparqlEndpoint(ssf, sparqlStmtParser, 7533);
+            Server server = SparqlServerUtils.startSparqlEndpoint(ssf, sparqlStmtParser, 7533);
             server.join();
         }
 
