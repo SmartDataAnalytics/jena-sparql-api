@@ -27,7 +27,7 @@ public class WebAppInitializerSparqlServiceUtils {
 
     public static WebApplicationInitializer create(Class<?> config) {
          AnnotationConfigWebApplicationContext rootContext = new AnnotationConfigWebApplicationContext();
-         rootContext.register(ConfigApp.class);
+         rootContext.register(config);
 
          WebApplicationInitializer result = create(rootContext);
 
