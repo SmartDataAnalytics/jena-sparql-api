@@ -41,7 +41,7 @@ public class ServerUtils {
         rootContext.getBeanFactory().registerSingleton("sparqlServiceFactory", ssf);
         rootContext.getBeanFactory().registerSingleton("sparqlStmtParser", sparqlStmtParser);
 
-        Server result = startServer(port, new WebAppInitializerSparqlService(rootContext));
+        Server result = startServer(port, WebAppInitializerSparqlServiceUtils.create(rootContext));
         return result;
     }
 

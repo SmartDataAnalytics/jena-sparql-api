@@ -7,10 +7,6 @@ import javax.servlet.ServletRegistration;
 import org.aksw.jena_sparql_api.web.utils.WebAppInitUtils;
 import org.glassfish.jersey.server.ServerProperties;
 import org.glassfish.jersey.servlet.ServletContainer;
-import org.springframework.beans.BeansException;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-import org.springframework.util.Assert;
 import org.springframework.web.WebApplicationInitializer;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
@@ -20,28 +16,40 @@ import org.springframework.web.servlet.DispatcherServlet;
 /**
  * Convenience WebAppInitializer for setting up a SPARQL service
  *
+ * Note this class (with the utils suffix) no longer inherits from WebApplicationInitializer,
+ * because servlets environments may wrongly pick up this class as an entry point
+ * to the application.
+ *
  * @author raven
  *
  */
-public class WebAppInitializerSparqlService
-    implements WebApplicationInitializer, ApplicationContextAware
-{
-    protected WebApplicationContext rootContext;
+public class WebAppInitializerSparqlServiceUtils {
 
-    public WebAppInitializerSparqlService() {
-        this(null);
+    public static WebApplicationInitializer create(Class<?> config) {
+         AnnotationConfigWebApplicationContext rootContext = new AnnotationConfigWebApplicationContext();
+         rootContext.register(ConfigApp.class);
+
+         WebApplicationInitializer result = create(rootContext);
+
+        return result;
     }
 
-    public WebAppInitializerSparqlService(WebApplicationContext rootContext) {
-        super();
-        this.rootContext = rootContext;
+
+    public static WebApplicationInitializer create(WebApplicationContext rootContext) {
+        WebApplicationInitializer result = new WebApplicationInitializer() {
+
+            @Override
+            public void onStartup(ServletContext servletContext)
+                    throws ServletException {
+                init(servletContext, rootContext);
+            }
+        };
+
+        return result;
     }
 
-    @Override
-    public void onStartup(ServletContext servletContext)
-        throws ServletException
-    {
-        Assert.isTrue(this.rootContext != null);
+
+    public static void init(ServletContext servletContext, WebApplicationContext rootContext) {
 
         WebAppInitUtils.defaultSetup(servletContext, rootContext);
 
@@ -64,24 +72,5 @@ public class WebAppInitializerSparqlService
             servlet.setAsyncSupported(true);
             servlet.setLoadOnStartup(1);
         }
-
     }
-
-    @Override
-    public void setApplicationContext(ApplicationContext rootContext)
-            throws BeansException {
-        Assert.isNull(this.rootContext, "root context was already set");
-
-        this.rootContext = (WebApplicationContext)rootContext;
-    }
-
-
-    public static WebAppInitializerSparqlService create(Class<?> appConfig) {
-        AnnotationConfigWebApplicationContext rootContext = new AnnotationConfigWebApplicationContext();
-        rootContext.register(appConfig);
-
-        WebAppInitializerSparqlService result = new WebAppInitializerSparqlService(rootContext);
-        return result;
-    }
-
 }

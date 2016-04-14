@@ -42,7 +42,7 @@ public class TestServletSparqlUpdate {
         UpdateExecutionUtils.copyByConstruct(ssLocal, ssDBpedia, s, 1000);
 
 
-        Server server = ServerUtils.startServer(port, WebAppInitializerSparqlService.create(ConfigApp.class));
+        Server server = ServerUtils.startServer(port, WebAppInitializerSparqlServiceUtils.create(ConfigApp.class));
 
 
 
@@ -78,7 +78,7 @@ public class TestServletSparqlUpdate {
     //@Test
     public void test2() throws Exception {
         int port = 7533;
-        Server server = ServerUtils.startServer(port, WebAppInitializerSparqlService.create(ConfigApp.class));
+        Server server = ServerUtils.startServer(port, WebAppInitializerSparqlServiceUtils.create(ConfigApp.class));
         server.join();
 
 //      ResourceHandler resHandler = new ResourceHandler();
