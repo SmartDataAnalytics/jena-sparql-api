@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.core;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.cache.core.QueryExecutionFactoryCacheEx;
@@ -9,10 +10,12 @@ import org.aksw.jena_sparql_api.delay.core.QueryExecutionFactoryDelay;
 import org.aksw.jena_sparql_api.limit.QueryExecutionFactoryLimit;
 import org.aksw.jena_sparql_api.pagination.core.QueryExecutionFactoryPaginated;
 import org.aksw.jena_sparql_api.parse.QueryExecutionFactoryParse;
+import org.aksw.jena_sparql_api.post_process.QueryExecutionFactoryPostProcess;
 import org.aksw.jena_sparql_api.prefix.core.QueryExecutionFactoryPrefix;
 import org.aksw.jena_sparql_api.retry.core.QueryExecutionFactoryRetry;
 import org.aksw.jena_sparql_api.transform.QueryExecutionFactoryQueryTransform;
 import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.DatasetDescription;
 
@@ -137,6 +140,26 @@ public class FluentQueryExecutionFactoryFn<P>
             @Override
             public QueryExecutionFactory apply(QueryExecutionFactory qef) {
                 QueryExecutionFactory r = new QueryExecutionFactoryQueryTransform(qef, queryTransform);
+                return r;
+            }
+        });
+
+        return this;
+    }
+
+    /**
+     * Configure a function for post processing QueryExecution instances before returning them to the application.
+     *
+     * Note: consumer is probably not the semantically appropriate interface
+     *
+     * @param postProcessor
+     * @return
+     */
+    public FluentQueryExecutionFactoryFn<P> withPostProcessor(final Consumer<QueryExecution> postProcessor) {
+        compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
+            @Override
+            public QueryExecutionFactory apply(QueryExecutionFactory qef) {
+                QueryExecutionFactory r = new QueryExecutionFactoryPostProcess(qef, postProcessor);
                 return r;
             }
         });

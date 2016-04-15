@@ -124,9 +124,8 @@ public class MainSparqlViewCache {
     public static void main(String[] args) throws IOException {
         //AnnotationConfigApplicationContext
 
-        OpExecutorFactoryViewCache opExecutionFactory = new OpExecutorFactoryViewCache();
-
-        QC.setFactory(ARQ.getContext(), opExecutionFactory);
+        OpExecutorFactoryViewCache.registerGlobally();
+        //QC.setFactory(ARQ.getContext(), OpExecutorFactoryViewCache.get());
 
 
 
@@ -168,7 +167,7 @@ public class MainSparqlViewCache {
         MainSparqlViewCache cache = new MainSparqlViewCache(rawQef);
 
 
-        QueryExecutionFactory cachedQef = new QueryExecutionFactoryViewCacheMaster(rawQef, opExecutionFactory.getServiceMap());
+        QueryExecutionFactory cachedQef = new QueryExecutionFactoryViewCacheMaster(rawQef, OpExecutorFactoryViewCache.get().getServiceMap());
 
 
         QueryExecutionFactory mainQef = new QueryExecutionFactoryCompare(rawQef, cachedQef);

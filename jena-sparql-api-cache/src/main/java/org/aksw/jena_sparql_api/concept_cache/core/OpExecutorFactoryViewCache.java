@@ -4,9 +4,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.jena.graph.Node;
+import org.apache.jena.query.ARQ;
 import org.apache.jena.sparql.engine.ExecutionContext;
 import org.apache.jena.sparql.engine.main.OpExecutor;
 import org.apache.jena.sparql.engine.main.OpExecutorFactory;
+import org.apache.jena.sparql.engine.main.QC;
 
 public class OpExecutorFactoryViewCache
     implements OpExecutorFactory
@@ -45,4 +47,8 @@ public class OpExecutorFactoryViewCache
         return new OpExecutorViewCache(execCxt, serviceToQef);
     }
 
+
+    public static void registerGlobally() {
+        QC.setFactory(ARQ.getContext(), OpExecutorFactoryViewCache.get());
+    }
 }
