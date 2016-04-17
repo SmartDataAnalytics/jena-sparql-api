@@ -2,10 +2,10 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>jena-sparql-api-geo</artifactId>
+    <artifactId>jena-sparql-api-connection</artifactId>
     <packaging>jar</packaging>
 
-    <name>Jena SPARQL API - Geo</name>
+    <name>Jena SPARQL API - Connection</name>
     <url>http://github.org/AKSW/jena-sparql-api</url>
 
     <parent>
@@ -19,26 +19,6 @@
         <dependency>
             <groupId>org.aksw.jena-sparql-api</groupId>
             <artifactId>jena-sparql-api-core</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.aksw.jena-sparql-api</groupId>
-            <artifactId>jena-sparql-api-concepts</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.vividsolutions</groupId>
-            <artifactId>jts</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>fr.dudie</groupId>
-            <artifactId>nominatim-api</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-beans</artifactId>
         </dependency>
     </dependencies>
 </project>
