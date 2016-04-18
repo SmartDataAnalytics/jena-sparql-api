@@ -27,7 +27,8 @@ import org.apache.jena.sparql.pfunction.PropertyFunctionFactory;
  * @author raven
  *
  */
-public class PropertyFunctionFactoryJsonUnnest implements PropertyFunctionFactory {
+public class PropertyFunctionFactoryJsonUnnest
+    implements PropertyFunctionFactory {
 
     protected Gson gson;
 

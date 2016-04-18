@@ -23,6 +23,7 @@ import org.aksw.gson.utils.JsonTransformerRewrite;
 import org.aksw.gson.utils.JsonVisitorRewrite;
 import org.aksw.gson.utils.JsonWalker;
 import org.aksw.jena_sparql_api.batch.BatchWorkflowManager;
+import org.aksw.jena_sparql_api.batch.JenaExtensionBatch;
 import org.aksw.jena_sparql_api.batch.ListServiceResourceShape;
 import org.aksw.jena_sparql_api.batch.QueryTransformConstructGroupedGraph;
 import org.aksw.jena_sparql_api.batch.config.ConfigBatchJobDynamic;
@@ -70,7 +71,6 @@ import org.aksw.jena_sparql_api.sparql.ext.term.E_TermValid;
 import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.spring.json.ContextProcessorJsonUtils;
-import org.apache.http.client.HttpClient;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -113,7 +113,6 @@ import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
-import com.google.common.base.Supplier;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -259,7 +258,7 @@ public class MainBatchWorkflow {
 //    	mainXml();
         ApplicationContext baseContext = initBaseContext(null);
 
-        initJenaExtensions(baseContext);
+        JenaExtensionBatch.initJenaExtensions(baseContext);
         mainContext(baseContext);
     }
 
@@ -289,73 +288,6 @@ public class MainBatchWorkflow {
         pm.setNsPrefix("term", termFn);
         pm.setNsPrefix("tmp", tmpNs);
 
-    }
-
-    public static void initJenaExtensions(ApplicationContext context) {
-        //ApplicationContext baseContext = initBaseContext();
-        @SuppressWarnings("unchecked")
-        Supplier<HttpClient> httpClientSupplier = (Supplier<HttpClient>)context.getBean("httpClientSupplier");
-
-
-        TypeMapper.getInstance().registerDatatype(new RDFDatatypeJson());
-
-        //NominatimClient nominatimClient = new JsonNominatimClient(new DefaultHttpClient(), "cstadler@informatik.uni-leipzig.de");
-        //FunctionRegistry.get().put("http://jsa.aksw.org/fn/nominatim/geocode", FunctionFactoryCache.create(FunctionFactoryGeocodeNominatim.create(nominatimClient)));
-
-        FunctionRegistry.get().put(jsonFn + "parse", E_JsonParse.class);
-        FunctionRegistry.get().put(jsonFn + "path", E_JsonPath.class);
-
-        //Context.
-
-        FunctionRegistry.get().put(httpFn + "get", new FunctionFactoryE_Http(httpClientSupplier));
-        FunctionRegistry.get().put(httpFn + "encode_for_qsa", E_EncodeForQsa.class);
-
-        FunctionRegistry.get().put(termFn + "valid", E_TermValid.class);
-
-        //FunctionRegistry.get().put
-        //UserDefinedFunctionFactory.getFactory().add(httpFn + "getJson", "", args);
-
-        PropertyFunctionRegistry.get().put(jsonFn + "unnest", new PropertyFunctionFactoryJsonUnnest());
-
-        PrefixMapping pm = getDefaultPrefixMapping();
-
-        QueryExecutionFactory qef = FluentQueryExecutionFactory
-            .defaultDatasetGraph()
-            .config()
-                .withPrefixes(pm, true)
-            .end()
-            .create();
-
-        Query query = new Query();
-        query.setPrefixMapping(pm);
-
-        if(false) {
-        QueryFactory.parse(query, "Select * {"
-                + "  Bind(\"['foo', ['bar', 'baz']]\"^^xsd:json As ?json)\n"
-                + "  ?json json:unnest ?lvl1.\n"
-                + "  Optional { ?lvl1 json:unnest ?lvl2. }\n"
-                + "}", "http://example.org/base/", Syntax.syntaxARQ);
-        }
-
-        if(false) {
-            QueryFactory.parse(query, "Select ?osmType ?osmId ?x ?y {"
-                    + "  VALUES(?s) { (<http://nominatim.openstreetmap.org/search/?format=json&q=Leipzig>) }\n"
-                    + "  BIND(http:get(?s) As ?json).\n"
-                    + "  ?json json:unnest ?item.\n"
-                    + "  BIND(json:path(?item, '$.osm_type') As ?osmType)\n"
-                    + "  BIND(json:path(?item, '$.osm_id') As ?osmId)\n"
-                    + "  BIND(xsd:decimal(json:path(?item, '$.lon')) As ?x)\n"
-                    + "  BIND(xsd:decimal(json:path(?item, '$.lat')) As ?y)\n"
-                    + "}", "http://example.org/base/", Syntax.syntaxARQ);
-
-            Prologue prologue = new Prologue(pm);
-
-            QueryExecution qe = qef.createQueryExecution(query);
-            System.out.println(ResultSetFormatter.asText(qe.execSelect(), prologue));
-        }
-
-
-        //System.exit(0);
     }
 
     public static ApplicationContext initBaseContext(ApplicationContext appContext) {

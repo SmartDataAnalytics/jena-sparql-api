@@ -7,7 +7,6 @@ import java.util.concurrent.TimeUnit;
 import org.aksw.commons.collections.diff.Diff;
 import org.aksw.commons.collections.diff.ListDiff;
 import org.aksw.commons.util.strings.StringUtils;
-import org.aksw.jena_sparql_api.core.utils.ResultSetUtils;
 import org.aksw.jena_sparql_api.utils.ModelDiff;
 import org.aksw.jena_sparql_api.utils.ResultSetPart;
 import org.apache.jena.graph.Triple;
@@ -27,6 +26,7 @@ import org.apache.jena.sparql.util.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Multisets;
@@ -238,25 +238,32 @@ public class QueryExecutionCompare
     public ResultSet execSelect() {
         ResultSetRewindable x;
         ResultSetRewindable y;
+        long timeA = -1;
+        long timeB = -1;
         try {
+            Stopwatch asw = Stopwatch.createStarted();
             ResultSet r = a.execSelect();
             x = ResultSetFactory.makeRewindable(r);
             //System.out.println("ResultSet [A]");
             //ResultSetFormatter.out(System.out, x);
             x.reset();
+            timeA = asw.stop().elapsed(TimeUnit.MILLISECONDS);
 
+            Stopwatch bsw = Stopwatch.createStarted();
             ResultSet s = b.execSelect();
             y = ResultSetFactory.makeRewindable(s);
             //System.out.println("ResultSet [B]");
             //ResultSetFormatter.out(System.out, y);
             y.reset();
-
+            timeB = bsw.stop().elapsed(TimeUnit.MILLISECONDS);
         } catch(RuntimeException e) {
             // Set diff in order to indicate that the execution was performed
             resultSetDiff = Diff.<ResultSetPart>create(new ResultSetPart(), new ResultSetPart()); //new ListDiff<>();
             throw new RuntimeException(e);
         }
 
+        
+        
         ListDiff<Binding> tmp = (isOrdered)
                 ? compareOrdered(x, y)
                 : compareUnordered(x, y);
@@ -268,6 +275,8 @@ public class QueryExecutionCompare
         x.reset();
 
         logResultSet();
+        String relation = timeA == timeB ? "=" : (timeA > timeB ? ">" : "<");
+        logger.debug("Execution time relation: [" + timeA + " " + relation + " " + timeB + "]");
 
         return x;
     }

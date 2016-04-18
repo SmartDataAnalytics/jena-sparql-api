@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.sparql.ext.http;
 
 import java.nio.charset.Charset;
+import java.util.function.Supplier;
 
 import org.aksw.jena_sparql_api.sparql.ext.json.NodeValueJson;
 import org.apache.http.Header;
@@ -10,15 +11,12 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
-import org.springframework.util.StreamUtils;
-
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
-import com.google.common.net.MediaType;
 import org.apache.jena.graph.Node;
-import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.function.FunctionBase1;
+import org.springframework.util.StreamUtils;
+
+import com.google.common.net.MediaType;
 
 /**
  * jsonLiteral jsonp(jsonLiteral, queryString)
@@ -40,11 +38,11 @@ public class E_Http
     private Supplier<HttpClient> httpClientSupplier;
 
     public E_Http() {
-        this(new DefaultHttpClient());
+        this(() -> new DefaultHttpClient());
     }
 
     public E_Http(HttpClient httpClient) {
-        this(Suppliers.ofInstance(httpClient));
+        this(() -> httpClient);
     }
 
     public E_Http(Supplier<HttpClient> httpClientSupplier) {
