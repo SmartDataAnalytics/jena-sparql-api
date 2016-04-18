@@ -13,7 +13,7 @@ import org.aksw.jena_sparql_api.mapper.BindingMapperProjectVar;
 import org.aksw.jena_sparql_api.mapper.FunctionResultSetAggregate;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.aksw.jena_sparql_api.mapper.MappedQuery;
-import org.aksw.jena_sparql_api.mapper.PartitionedQuery;
+import org.aksw.jena_sparql_api.mapper.PartitionedQuery1;
 import org.aksw.jena_sparql_api.utils.ResultSetPart;
 
 import org.apache.jena.graph.Node;
@@ -59,9 +59,9 @@ public class LookupServiceUtils {
     }
 
     public static <T> LookupService<Node, T> createLookupService(QueryExecutionFactory sparqlService, MappedQuery<T> mappedQuery) {
-        PartitionedQuery partQuery = mappedQuery.getPartQuery();
+        PartitionedQuery1 partQuery = mappedQuery.getPartQuery();
         Query query = partQuery.getQuery();
-        Var partVar = partQuery.getVar();
+        Var partVar = partQuery.getPartitionVar();
         Agg<T> agg = mappedQuery.getAgg();
 
         LookupService<Node, ResultSetPart> base = new LookupServiceSparqlQuery(sparqlService, query, partVar);

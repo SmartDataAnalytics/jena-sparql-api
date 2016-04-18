@@ -16,12 +16,12 @@ import org.apache.jena.sparql.syntax.Template;
 public class MappedQueryUtils {
 
     public static MappedQuery<DatasetGraph> fromConstructQuery(Query query, Var partitionVar) {
-        PartitionedQuery partQuery = new PartitionedQuery(query, partitionVar);
+        PartitionedQuery1 partQuery = new PartitionedQuery1(query, partitionVar);
         MappedQuery<DatasetGraph> result = fromConstructQuery(partQuery);
         return result;
     }
 
-    public static MappedQuery<DatasetGraph> fromConstructQuery(PartitionedQuery partQuery) {
+    public static MappedQuery<DatasetGraph> fromConstructQuery(PartitionedQuery1 partQuery) {
         MappedQuery<DatasetGraph> result;
 
         Query query = partQuery.getQuery().cloneQuery();
@@ -40,7 +40,7 @@ public class MappedQueryUtils {
 
             Set<Var> vars = agg.getDeclaredVars();
 
-            Var partVar = partQuery.getVar();
+            Var partVar = partQuery.getPartitionVar();
             if(!vars.contains(partVar)) {
                 project.add(partVar);
             }
@@ -53,7 +53,7 @@ public class MappedQueryUtils {
 //            qp.add(new Quad(Quad.defaultGraphNodeGenerated, Vars.s, Vars.p, Vars.o));
 //            Agg<DatasetGraph> agg = AggDatasetGraph.create(qp);
 
-            PartitionedQuery pq = new PartitionedQuery(query, partVar);
+            PartitionedQuery1 pq = new PartitionedQuery1(query, partVar);
 
             result = new MappedQuery<DatasetGraph>(pq, agg);
 

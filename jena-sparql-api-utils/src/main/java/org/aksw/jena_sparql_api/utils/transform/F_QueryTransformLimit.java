@@ -18,7 +18,7 @@ public class F_QueryTransformLimit
 
     @Override
     public Query apply(Query query) {
-        Query result = QueryUtils.applyLimit(query, limit, true);
+        Query result = QueryUtils.applySlice(query, null, limit, true);
         return result;
     }
 

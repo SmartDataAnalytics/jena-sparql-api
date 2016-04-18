@@ -9,7 +9,7 @@ import org.aksw.jena_sparql_api.mapper.Agg;
 import org.aksw.jena_sparql_api.mapper.FunctionResultSetAggregate;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.aksw.jena_sparql_api.mapper.MappedQuery;
-import org.aksw.jena_sparql_api.mapper.PartitionedQuery;
+import org.aksw.jena_sparql_api.mapper.PartitionedQuery1;
 import org.aksw.jena_sparql_api.utils.ResultSetPart;
 
 import org.apache.jena.graph.Node;
@@ -24,9 +24,9 @@ public class ListServiceUtils {
 
     public static <T> ListService<Concept, Node, T> createListServiceAcc(QueryExecutionFactory qef, MappedQuery<T> mappedQuery, boolean isLeftJoin) {
 
-        PartitionedQuery partQuery = mappedQuery.getPartQuery();
+        PartitionedQuery1 partQuery = mappedQuery.getPartQuery();
         Query query = partQuery.getQuery();
-        Var partVar = partQuery.getVar();
+        Var partVar = partQuery.getPartitionVar();
 
 //        System.out.println(query);
 //        if(true) { throw new RuntimeException("foo"); }
