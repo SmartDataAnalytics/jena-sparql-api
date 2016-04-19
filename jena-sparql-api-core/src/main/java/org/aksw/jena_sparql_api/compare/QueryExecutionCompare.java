@@ -262,8 +262,8 @@ public class QueryExecutionCompare
             throw new RuntimeException(e);
         }
 
-        
-        
+
+
         ListDiff<Binding> tmp = (isOrdered)
                 ? compareOrdered(x, y)
                 : compareUnordered(x, y);
