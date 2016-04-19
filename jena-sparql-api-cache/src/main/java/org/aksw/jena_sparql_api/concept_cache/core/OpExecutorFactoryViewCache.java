@@ -48,7 +48,11 @@ public class OpExecutorFactoryViewCache
     }
 
 
+    /**
+     * Use JenaExtensionViewCache.register() instead
+     */
+    @Deprecated
     public static void registerGlobally() {
-        QC.setFactory(ARQ.getContext(), OpExecutorFactoryViewCache.get());
+        JenaExtensionViewCache.register();
     }
 }
