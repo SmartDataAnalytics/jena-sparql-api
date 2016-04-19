@@ -32,6 +32,7 @@ public class QueryUtils {
     // ElementUtils.pa
     // }
 
+
     public static void injectElement(Query query, Element element) {
         Element queryPattern = query.getQueryPattern();
         Element replacement = ElementUtils.mergeElements(queryPattern, element);

@@ -43,17 +43,18 @@ public class QueryExecutionIterated
 
     //private ResultSetPaginated currentSelectExecution;
 
-    private QueryExecutionFactory factory;
-    private Iterator<Query> queryIterator;
+    protected QueryExecutionFactory factory;
+    protected Iterator<Query> queryIterator;
     //private Query query;
     //private long pageSize;
 
     // If false, the whole query iterator will be consumed
     // (query iterators may be endless)
-    private boolean stopOnEmptyResult = true;
+    protected boolean stopOnEmptyResult;
 
-    private IClosable currentCloseAction = null;
+    protected IClosable currentCloseAction = null;
 
+    protected Query originalQuery;
     //private QueryExecution current;
 
 
@@ -61,17 +62,21 @@ public class QueryExecutionIterated
 //        super.setDecoratee(decoratee);
 //    }
 
-    public QueryExecutionIterated(QueryExecutionFactory factory, Iterator<Query> queryIterator) {
-        //super(null);
-        this.queryIterator = queryIterator;
-        this.factory = factory;
+    public QueryExecutionIterated(Query originalQuery, QueryExecutionFactory factory, Iterator<Query> queryIterator) {
+        this(originalQuery, factory, queryIterator, true);
     }
 
-    public QueryExecutionIterated(QueryExecutionFactory factory, Iterator<Query> queryIterator, boolean stopOnEmptyResult) {
-        //super(null);
+    public QueryExecutionIterated(Query originalQuery, QueryExecutionFactory factory, Iterator<Query> queryIterator, boolean stopOnEmptyResult) {
+        super();
+        this.originalQuery = originalQuery;
         this.queryIterator = queryIterator;
         this.factory = factory;
         this.stopOnEmptyResult = stopOnEmptyResult;
+    }
+
+    @Override
+    public Query getQuery() {
+        return originalQuery;
     }
 
     @Override

@@ -15,7 +15,6 @@ import org.aksw.jena_sparql_api.mapper.FunctionBindingMapper;
 import org.aksw.jena_sparql_api.utils.CloseableQueryExecution;
 import org.aksw.jena_sparql_api.utils.ExtendedIteratorClosable;
 import org.aksw.jena_sparql_api.utils.IteratorResultSetBinding;
-import org.apache.jena.atlas.iterator.WrapperIterator;
 import org.apache.jena.atlas.lib.Closeable;
 import org.apache.jena.atlas.lib.Sink;
 import org.apache.jena.graph.Node;
@@ -31,9 +30,9 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.util.iterator.ExtendedIterator;
-import org.apache.jena.util.iterator.WrappedIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.Assert;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
@@ -46,6 +45,71 @@ public class QueryExecutionUtils {
     public static final Var vs = Var.alloc("s");
     public static final Var vp = Var.alloc("p");
     public static final Var vo = Var.alloc("o");
+
+
+    public static void abortAfterFirstRow(QueryExecution qe) {
+        Query query = qe.getQuery();
+        Assert.notNull(query, "QueryExecution did not tell us which query it is bound to - query was null");
+        int queryType = query.getQueryType();
+
+        try {
+            switch (queryType) {
+            case Query.QueryTypeAsk:
+                qe.execAsk();
+                break;
+            case Query.QueryTypeConstruct:
+                Iterator<Triple> itC = qe.execConstructTriples();
+                itC.hasNext();
+                break;
+            case Query.QueryTypeDescribe:
+                Iterator<Triple> itD = qe.execDescribeTriples();
+                itD.hasNext();
+                break;
+            case Query.QueryTypeSelect:
+                ResultSet rs = qe.execSelect();
+                rs.hasNext();
+                break;
+            default:
+                throw new RuntimeException("Unknown query type - should not happen: queryType = " + queryType);
+            }
+        } finally {
+            qe.abort();
+        }
+    }
+
+    /**
+     * Consumes the full response (result set or triples) of a QueryExecution
+     * Only uses the iterator-based methods to avoid cluttering up the heap
+     *
+     * @param qe
+     */
+    public static void consume(QueryExecution qe) {
+        Query query = qe.getQuery();
+        Assert.notNull(query, "QueryExecution did not tell us which query it is bound to - query was null");
+        int queryType = query.getQueryType();
+
+        switch (queryType) {
+        case Query.QueryTypeAsk:
+            qe.execAsk();
+            break;
+        case Query.QueryTypeConstruct:
+            Iterator<Triple> itC = qe.execConstructTriples();
+            Iterators.size(itC);
+            break;
+        case Query.QueryTypeDescribe:
+            Iterator<Triple> itD = qe.execDescribeTriples();
+            Iterators.size(itD);
+            break;
+        case Query.QueryTypeSelect:
+            ResultSet rs = qe.execSelect();
+            ResultSetFormatter.consume(rs);
+            break;
+        default:
+            throw new RuntimeException("Unknown query type - should not happen: queryType = " + queryType);
+        }
+    }
+
+
 
     public static Iterator<Quad> findQuads(QueryExecutionFactory qef, Node g, Node s, Node p, Node o) {
         Quad quad = new Quad(g, s, p, o);

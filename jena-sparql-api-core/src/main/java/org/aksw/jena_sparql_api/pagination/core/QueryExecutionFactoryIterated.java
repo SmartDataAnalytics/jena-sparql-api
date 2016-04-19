@@ -31,8 +31,8 @@ public class QueryExecutionFactoryIterated
     @Override
     public QueryExecution createQueryExecution(Query query) {
         Iterator<Query> queryIterator = queryTransformer.transform(query);
-        
-        return new QueryExecutionIterated(decoratee, queryIterator, breakOnEmptyResult);
+
+        return new QueryExecutionIterated(query, decoratee, queryIterator, breakOnEmptyResult);
     }
 
 

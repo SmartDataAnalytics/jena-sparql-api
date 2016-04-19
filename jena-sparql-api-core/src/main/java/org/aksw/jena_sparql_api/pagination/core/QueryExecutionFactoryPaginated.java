@@ -39,7 +39,7 @@ public class QueryExecutionFactoryPaginated
         query = query.cloneQuery();
         PaginationQueryIterator queryIterator = new PaginationQueryIterator(query, pageSize);
 
-        return new QueryExecutionIterated(decoratee, queryIterator);
+        return new QueryExecutionIterated(query, decoratee, queryIterator);
     }
 
     /*
