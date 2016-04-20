@@ -65,15 +65,15 @@ public class CnfUtils {
                 }
             }
         }
-        
+
         return result;
     }
-    
+
     /**
      * Extract from the CNF all mappings from a variable to constant, i.e.
      * if there is ?x = foo, then the result will contain the mapping ?x -> foo.
-     * 
-     * 
+     *
+     *
      * @param cnf
      * @return
      */
@@ -85,16 +85,22 @@ public class CnfUtils {
             if(entry != null) {
                 Var v = entry.getKey();
                 Node c = entry.getKey();
-                
+
                 Node o = result.get(v);
                 if(o != null && !o.equals(c)) {
                     c = NodeValue.FALSE.getNode();
                 }
-    
+
                 result.put(v, c);
             }
         }
 
+        return result;
+    }
+
+    public static Expr toExpr(Iterable<Set<Expr>> cnf) {
+        ExprList exprList = toExprList(cnf);
+        Expr result = ExprUtils.andifyBalanced(exprList);
         return result;
     }
 

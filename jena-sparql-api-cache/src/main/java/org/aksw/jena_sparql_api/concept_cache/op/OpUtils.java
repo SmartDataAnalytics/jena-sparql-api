@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.concept_cache.op;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
@@ -10,7 +11,11 @@ import java.util.Map.Entry;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.aksw.jena_sparql_api.utils.Generator;
+import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
+import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.op.Op0;
 import org.apache.jena.sparql.algebra.op.Op1;
@@ -20,6 +25,7 @@ import org.apache.jena.sparql.algebra.op.OpN;
 import org.apache.jena.sparql.algebra.op.OpQuadBlock;
 import org.apache.jena.sparql.algebra.op.OpQuadPattern;
 import org.apache.jena.sparql.algebra.op.OpTriple;
+import org.apache.jena.sparql.core.Var;
 import org.springframework.util.Assert;
 
 
@@ -101,6 +107,16 @@ class OpSummaryImpl
 }
 
 public class OpUtils {
+
+
+    public static Generator<Var> freshVars(Op op){
+        Collection<Var> blacklistVars = OpVars.mentionedVars(op);
+
+        Generator<Var> gen = VarGeneratorImpl2.create("v");
+        Generator<Var> result = new VarGeneratorBlacklist(gen, blacklistVars);
+
+        return result;
+    }
 
     public static Op substitute(Op op, boolean descendIntoSubst, Function<Op, Op> opToSubst) {
         Op tmp = opToSubst.apply(op);

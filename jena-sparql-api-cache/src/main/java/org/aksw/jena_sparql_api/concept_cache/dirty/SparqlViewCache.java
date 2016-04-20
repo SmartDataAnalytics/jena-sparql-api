@@ -27,6 +27,7 @@ import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.domain.VarOccurrence;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
+import org.aksw.jena_sparql_api.utils.ReplaceConstants;
 import org.aksw.jena_sparql_api.utils.ResultSetPart;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.apache.jena.query.Query;
@@ -64,6 +65,8 @@ public class SparqlViewCache
     }
 
     public CacheResult lookup(QuadFilterPattern queryQfp) {
+
+        //ReplaceConstants.replace(op)
 
         List<QfpcMatch> result = new ArrayList<QfpcMatch>();
 

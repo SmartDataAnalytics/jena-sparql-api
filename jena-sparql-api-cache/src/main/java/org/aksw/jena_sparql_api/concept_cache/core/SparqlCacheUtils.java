@@ -2,12 +2,12 @@ package org.aksw.jena_sparql_api.concept_cache.core;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -31,10 +31,12 @@ import org.aksw.jena_sparql_api.model.QueryExecutionFactoryModel;
 import org.aksw.jena_sparql_api.utils.ClauseUtils;
 import org.aksw.jena_sparql_api.utils.CnfUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
+import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
 import org.aksw.jena_sparql_api.utils.ReplaceConstants;
 import org.aksw.jena_sparql_api.utils.VarUtils;
+import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -57,8 +59,6 @@ import org.apache.jena.sparql.algebra.op.OpQuadPattern;
 import org.apache.jena.sparql.algebra.op.OpService;
 import org.apache.jena.sparql.algebra.op.OpTable;
 import org.apache.jena.sparql.algebra.op.OpUnion;
-import org.apache.jena.sparql.algebra.optimize.Optimize;
-import org.apache.jena.sparql.algebra.optimize.TransformFilterPlacement;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.QuadPattern;
 import org.apache.jena.sparql.core.Var;
@@ -93,17 +93,28 @@ public class SparqlCacheUtils {
     private static final Logger logger = LoggerFactory.getLogger(SparqlCacheUtils.class);
 
 
+    public static ProjectedQuadFilterPattern optimizeFilters(ProjectedQuadFilterPattern pqfp) {
+        PatternSummary summary = summarize(pqfp.getQuadFilterPattern());
+        QuadFilterPatternCanonical qfpc = summary.getCanonicalPattern();
+        QuadFilterPatternCanonical optimized = optimizeFilters(qfpc.getQuads(), qfpc.getFilterCnf(), pqfp.getProjectVars());
+
+        QuadFilterPattern qfp = optimized.toQfp();
+        ProjectedQuadFilterPattern result = new ProjectedQuadFilterPattern(pqfp.getProjectVars(), qfp);
+
+        return result;
+    }
+
 
     public static QuadFilterPatternCanonical optimizeFilters(Collection<Quad> quads, Set<Set<Expr>> cnf, Set<Var> projection) {
-         
-        Map<Var, Node> varToNode = CnfUtils.getConstants(cnf);
-        
-        // A view on the set of variables subject the optimization
-        Set<Var> optVars = varToNode.keySet(); 
 
-        // Remove all equalities for projected variables        
+        Map<Var, Node> varToNode = CnfUtils.getConstants(cnf);
+
+        // A view on the set of variables subject the optimization
+        Set<Var> optVars = varToNode.keySet();
+
+        // Remove all equalities for projected variables
         optVars.remove(projection);
-        
+
         Set<Quad> newQuads = new HashSet<Quad>();
         for(Quad quad : quads) {
             Node[] nodes = QuadUtils.quadToArray(quad);
@@ -112,13 +123,13 @@ public class SparqlCacheUtils {
                 Node subst = varToNode.get(node);
 
                 // Update in place, because the array is a copy anyway
-                nodes[i] = subst == null ? node : subst;                
+                nodes[i] = subst == null ? node : subst;
             }
-        
+
             Quad newQuad = QuadUtils.arrayToQuad(nodes);
             newQuads.add(newQuad);
         }
-        
+
         // Remove the clauses from which the mapping was obtained
         Set<Set<Expr>> newCnf = new HashSet<>();
         for(Set<Expr> clause : cnf) {
@@ -127,15 +138,15 @@ public class SparqlCacheUtils {
 
             if(retainClause) {
                 newCnf.add(clause);
-            }            
+            }
         }
-        
+
         QuadFilterPatternCanonical result = new QuadFilterPatternCanonical(newQuads, newCnf);
         return result;
     }
-    
-    
-    
+
+
+
     // TODO Not used, can probably be removed
 //    public static ResultSet executeCached(QueryExecutionFactory qef, Query query, ProjectedQuadFilterPattern pqfp, SparqlViewCache sparqlViewCache, long indexResultSetSizeThreshold) {
 //        if(pqfp == null) {
@@ -277,11 +288,11 @@ public class SparqlCacheUtils {
 
     /**
      * Rewrites a query to make use of the cache
-     * 
-     * 
+     *
+     *
      * @param serviceNode
      * @param rawQuery
-     * @param conceptMap
+     * @param sparqlViewCache
      * @param indexResultSetSizeThreshold
      * @return
      */
@@ -289,14 +300,18 @@ public class SparqlCacheUtils {
             //QueryExecutionFactory qef,
             Node serviceNode,
             Query rawQuery,
-            SparqlViewCache conceptMap,
+            SparqlViewCache sparqlViewCache,
             long indexResultSetSizeThreshold)
     {
         Op rawOp = Algebra.compile(rawQuery);
         rawOp = Algebra.toQuadForm(rawOp);
-        rawOp = ReplaceConstants.replace(rawOp);
+
+        // TODO We could create a mapping from (op) -> (op with replaced constants)
+        // rawOp = ReplaceConstants.replace(rawOp);
+        Generator<Var> generator = OpUtils.freshVars(rawOp);
 
         // Determine which parts of the query are cacheable
+        // (i.e. those parts that correspond to projected quad filter patterns)
         Map<Op, ProjectedQuadFilterPattern> tmpCacheableOps = OpVisitorViewCacheApplier.detectPrimitiveCachableOps(rawOp);
 
         // TODO: If the op is a projection, associate the pqfp with the sub op in order to retain the projection
@@ -313,7 +328,14 @@ public class SparqlCacheUtils {
             .map(e -> {
                 ProjectedQuadFilterPattern pqfp = e.getValue();
                 QuadFilterPattern qfp = pqfp.getQuadFilterPattern();
-                CacheResult cacheResult = conceptMap.lookup(qfp);
+                //QuadFilterPattern SparqlCacheUtils.no
+
+
+                //qfp = summarize(qfp).getCanonicalPattern();
+
+                qfp = canonicalize(qfp, generator);
+
+                CacheResult cacheResult = sparqlViewCache.lookup(qfp);
                 Entry<Op, CacheResult> r = cacheResult == null ? null : new SimpleEntry<>(e.getKey(), cacheResult);
                 return r;
             })
@@ -345,14 +367,14 @@ public class SparqlCacheUtils {
 
 // TODO Inject projection
 //            ProjectedQuadFilterPattern pqfp = cacheableOps.get(op);
-//            List<Var> projectVars = new ArrayList<Var>(pqfp.getProjectVars()); 
-            
-            
+//            List<Var> projectVars = new ArrayList<Var>(pqfp.getProjectVars());
+
+
             //cacheableOps.get(key)
             //= new OpProject(op, new ArrayList<Var>(pqfp.getProjectVars()));
             //entry.getValue().getTables().
 
-            
+
             CacheResult cacheResult = entry.getValue();
             Op executionOp = cacheResult.getReplacementPattern().toOp();
             boolean isFullCover = executionOp instanceof OpNull;
@@ -366,11 +388,11 @@ public class SparqlCacheUtils {
             // TODO IMPORTANT Try to optimize filter placement
 // TODO Inject projection
 // executionOp = new OpProject(executionOp, projectVars);
-            
 
-            executionOp = Optimize.apply(new TransformFilterPlacement(true), executionOp);
-            
-            
+
+            //executionOp = Optimize.apply(new TransformFilterPlacement(true), executionOp);
+
+
             // TODO The new op may be cachable again
             Op newOp = isFullCover
                     ? executionOp
@@ -381,19 +403,23 @@ public class SparqlCacheUtils {
 
         for(Op op : nonCachedCacheableOps) {
             ProjectedQuadFilterPattern pqfp = cacheableOps.get(op);
-            
+            ProjectedQuadFilterPattern executionPqfp = SparqlCacheUtils.optimizeFilters(pqfp);
+            //executionPqfp.to
+
             if(pqfp == null) { // TODO Turn into an assertion
                 throw new RuntimeException("Should not happen");
             }
-            
-            
+
+            //pqfp.getQuadFilterPattern();
+
             List<Var> projectVars = new ArrayList<Var>(pqfp.getProjectVars());
             op = new OpProject(op, projectVars);
-            
-            
-            Op executionOp = Optimize.apply(new TransformFilterPlacement(true), op);
 
-            
+
+            //Op executionOp = Optimize.apply(new TransformFilterPlacement(true), op);
+            Op executionOp = op;
+
+
             Op newOp = wrapWithService(op, serviceNode, executionOp);
 
             opToCachingOp.put(op, newOp);
@@ -423,7 +449,7 @@ public class SparqlCacheUtils {
      * @param expr
      */
     public static Set<Set<Expr>> normalize(Quad quad, Set<Set<Expr>> cnf) {
-        List<Var> componentVars = Arrays.asList(Var.alloc("g"), Var.alloc("s"), Var.alloc("p"), Var.alloc("o"));
+        List<Var> componentVars = Vars.gspo;
 
         Map<Var, Var> renameMap = new HashMap<Var, Var>();
         Set<Set<Expr>> extra = new HashSet<Set<Expr>>();
@@ -600,10 +626,66 @@ public class SparqlCacheUtils {
         return result;
     }
 
+
+
+    public static QuadFilterPattern canonicalize(QuadFilterPattern qfp, Generator<Var> generator) {
+        QuadFilterPatternCanonical qfpc = summarize(qfp).getCanonicalPattern();
+
+        QuadFilterPatternCanonical tmp = canonicalize(qfpc, generator);
+        QuadFilterPattern result = tmp.toQfp();
+
+        return result;
+    }
+
+    public static QuadFilterPatternCanonical canonicalize(QuadFilterPatternCanonical qfpc, Generator<Var> generator) {
+        QuadFilterPatternCanonical tmp = replaceConstants(qfpc.getQuads(), generator);
+
+        Set<Set<Expr>> newCnf = new HashSet<>();
+        newCnf.addAll(qfpc.getFilterCnf());
+        newCnf.addAll(tmp.getFilterCnf());
+
+        QuadFilterPatternCanonical result = new QuadFilterPatternCanonical(tmp.getQuads(), newCnf);
+        return result;
+    }
+
+    public static QuadFilterPatternCanonical replaceConstants(Iterable<Quad> quads, Generator<Var> generator) {
+        Set<Set<Expr>> cnf = new HashSet<>();
+
+        Map<Node, Var> constantToVar = new HashMap<>();
+
+        Set<Quad> newQuads = new LinkedHashSet<>();
+        for(Quad quad : quads) {
+            Node[] nodes = QuadUtils.quadToArray(quad);
+            for(int i = 0; i < 4; ++i) {
+                Node node = nodes[i];
+
+                if(!node.isVariable()) {
+                    Var v = constantToVar.get(node);
+                    if(v == null) {
+                        v = generator.next();
+                        constantToVar.put(node, v);
+
+                        Expr expr = new E_Equals(new ExprVar(v), NodeValue.makeNode(node));
+                        cnf.add(Collections.singleton(expr));
+
+                        nodes[i] = v;
+                    }
+                }
+            }
+
+            Quad newQuad = QuadUtils.arrayToQuad(nodes);
+            newQuads.add(newQuad);
+        }
+
+        QuadFilterPatternCanonical result = new QuadFilterPatternCanonical(newQuads, cnf);
+        return result;
+    }
+
+
     public static PatternSummary summarize(QuadFilterPattern originalPattern) {
 
         Expr expr = originalPattern.getExpr();
-        Set<Quad> quads = new HashSet<Quad>(originalPattern.getQuads());
+        Set<Quad> quads = new LinkedHashSet<Quad>(originalPattern.getQuads());
 
 
         Set<Set<Expr>> filterCnf = CnfUtils.toSetCnf(expr);
@@ -679,14 +761,16 @@ public class SparqlCacheUtils {
         //Set<Set<Set<Expr>>> quadCnfs = new HashSet<Set<Set<Expr>>>(quadCnfList);
 
         QuadFilterPatternCanonical canonicalPattern = new QuadFilterPatternCanonical(quads, filterCnf);
+        //canonicalPattern = canonicalize(canonicalPattern, generator);
+
 
         PatternSummary result = new PatternSummary(originalPattern, canonicalPattern, quadToCnf, varOccurrences);
 
 
-        for(Entry<Var, Collection<VarOccurrence>> entry : varOccurrences.asMap().entrySet()) {
+        //for(Entry<Var, Collection<VarOccurrence>> entry : varOccurrences.asMap().entrySet()) {
             //System.out.println("Summary: " + entry.getKey() + ": " + entry.getValue().size());
             //System.out.println(entry);
-        }
+        //}
 
         return result;
     }

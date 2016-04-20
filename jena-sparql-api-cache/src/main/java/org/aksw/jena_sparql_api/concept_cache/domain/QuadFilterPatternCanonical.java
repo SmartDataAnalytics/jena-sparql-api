@@ -7,15 +7,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.aksw.commons.collections.multimaps.BiHashMultimap;
-import org.aksw.commons.collections.multimaps.IBiSetMultimap;
 import org.aksw.jena_sparql_api.utils.ClauseUtils;
 import org.aksw.jena_sparql_api.utils.CnfUtils;
 import org.aksw.jena_sparql_api.utils.NfUtils;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
-
-import com.google.common.collect.Sets;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.op.OpFilter;
@@ -29,6 +25,8 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprList;
 import org.apache.jena.sparql.graph.NodeTransform;
+
+import com.google.common.collect.Sets;
 
 public class QuadFilterPatternCanonical {
     private Set<Quad> quads;
@@ -45,41 +43,19 @@ public class QuadFilterPatternCanonical {
         return result;
     }
 
+    public QuadFilterPattern toQfp() {
+        Expr expr = CnfUtils.toExpr(filterCnf);
+        QuadFilterPattern result = new QuadFilterPattern(new ArrayList<>(quads), expr);
+        return result;
+    }
+
+    @Deprecated // Use OpUtils.toOp(...) instead
     public Op toOp() {
 
         ExprList exprs = CnfUtils.toExprList(filterCnf);
-        QuadPattern qp = QuadPatternUtils.create(quads);
+        //QuadPattern qp = QuadPatternUtils.create(quads);
 
-        Map<Node, BasicPattern> index = QuadPatternUtils.indexBasicPattern(qp);
-
-        List<OpQuadPattern> opqs = new ArrayList<OpQuadPattern>();
-
-        for(Entry<Node, BasicPattern> entry : index.entrySet()) {
-            OpQuadPattern oqp = new OpQuadPattern(entry.getKey(), entry.getValue());
-            opqs.add(oqp);
-        }
-
-
-        Op result;
-
-        if(opqs.isEmpty()) {
-            result = OpNull.create();
-        } else if(opqs.size() == 1) {
-            result = opqs.iterator().next();
-        } else {
-            OpSequence op = OpSequence.create();
-
-            for(OpQuadPattern item : opqs) {
-                op.add(item);
-            }
-
-            result = op;
-        }
-
-        if(!exprs.isEmpty()) {
-            result = OpFilter.filter(exprs, result);
-        }
-
+        Op result = OpUtils.toOp(quads, exprs);
         return result;
     }
 
