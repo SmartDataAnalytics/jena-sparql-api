@@ -1,10 +1,12 @@
 package org.aksw.jena_sparql_api.utils;
 
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.jena.graph.Node;
@@ -41,33 +43,55 @@ public class CnfUtils {
         return (T)result;
     }
 
+    public static Entry<Var, Node> extractEquality(Set<Expr> clause) {
+        Entry<Var, Node> result = null;
+
+        if(clause.size() == 1) {
+            Expr expr = clause.iterator().next();
+
+            if(expr instanceof E_Equals) {
+                E_Equals eq = (E_Equals)expr;
+
+                eq = normalize(eq);
+
+                Expr a = eq.getArg1();
+                Expr b = eq.getArg2();
+
+                if(a.isVariable() && b.isConstant()) {
+                    Var v = a.asVar();
+                    Node c = b.getConstant().getNode();
+
+                    result = new SimpleEntry<>(v, c);
+                }
+            }
+        }
+        
+        return result;
+    }
+    
+    /**
+     * Extract from the CNF all mappings from a variable to constant, i.e.
+     * if there is ?x = foo, then the result will contain the mapping ?x -> foo.
+     * 
+     * 
+     * @param cnf
+     * @return
+     */
     public static Map<Var, Node> getConstants(Iterable<Set<Expr>> cnf) {
         Map<Var, Node> result = new HashMap<Var, Node>();
 
         for(Set<Expr> clause : cnf) {
-            if(clause.size() == 1) {
-                Expr expr = clause.iterator().next();
-
-                if(expr instanceof E_Equals) {
-                    E_Equals eq = (E_Equals)expr;
-
-                    eq = normalize(eq);
-
-                    Expr a = eq.getArg1();
-                    Expr b = eq.getArg2();
-
-                    if(a.isVariable() && b.isConstant()) {
-                        Var v = a.asVar();
-                        Node c = b.getConstant().getNode();
-
-                        Node o = result.get(v);
-                        if(o != null && !o.equals(c)) {
-                            c = NodeValue.FALSE.getNode();
-                        }
-
-                        result.put(v, c);
-                    }
+            Entry<Var, Node> entry = extractEquality(clause);
+            if(entry != null) {
+                Var v = entry.getKey();
+                Node c = entry.getKey();
+                
+                Node o = result.get(v);
+                if(o != null && !o.equals(c)) {
+                    c = NodeValue.FALSE.getNode();
                 }
+    
+                result.put(v, c);
             }
         }
 

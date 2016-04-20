@@ -237,6 +237,14 @@ public class QuadUtils {
         return new Quad(nodes.get(0), nodes.get(1), nodes.get(2), nodes.get(3));
     }
 
+    public static Quad arrayToQuad(Node[] nodes) {
+        return new Quad(nodes[0], nodes[1], nodes[2], nodes[3]);
+    }
+    
+    public static Node[] quadToArray(Quad quad) {
+       return new Node[] { quad.getGraph(), quad.getSubject(), quad.getPredicate(), quad.getObject() };
+    }
+
     public static List<Node> quadToList(Quad quad) {
         List<Node> result = new ArrayList<Node>();
         result.add(quad.getGraph());

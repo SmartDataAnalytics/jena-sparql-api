@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.concept_cache.core;
 
 import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -56,6 +57,8 @@ import org.apache.jena.sparql.algebra.op.OpQuadPattern;
 import org.apache.jena.sparql.algebra.op.OpService;
 import org.apache.jena.sparql.algebra.op.OpTable;
 import org.apache.jena.sparql.algebra.op.OpUnion;
+import org.apache.jena.sparql.algebra.optimize.Optimize;
+import org.apache.jena.sparql.algebra.optimize.TransformFilterPlacement;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.QuadPattern;
 import org.apache.jena.sparql.core.Var;
@@ -90,6 +93,49 @@ public class SparqlCacheUtils {
     private static final Logger logger = LoggerFactory.getLogger(SparqlCacheUtils.class);
 
 
+
+    public static QuadFilterPatternCanonical optimizeFilters(Collection<Quad> quads, Set<Set<Expr>> cnf, Set<Var> projection) {
+         
+        Map<Var, Node> varToNode = CnfUtils.getConstants(cnf);
+        
+        // A view on the set of variables subject the optimization
+        Set<Var> optVars = varToNode.keySet(); 
+
+        // Remove all equalities for projected variables        
+        optVars.remove(projection);
+        
+        Set<Quad> newQuads = new HashSet<Quad>();
+        for(Quad quad : quads) {
+            Node[] nodes = QuadUtils.quadToArray(quad);
+            for(int i = 0; i < 4; ++i) {
+                Node node = nodes[i];
+                Node subst = varToNode.get(node);
+
+                // Update in place, because the array is a copy anyway
+                nodes[i] = subst == null ? node : subst;                
+            }
+        
+            Quad newQuad = QuadUtils.arrayToQuad(nodes);
+            newQuads.add(newQuad);
+        }
+        
+        // Remove the clauses from which the mapping was obtained
+        Set<Set<Expr>> newCnf = new HashSet<>();
+        for(Set<Expr> clause : cnf) {
+            Entry<Var, Node> equality = CnfUtils.extractEquality(clause);
+            boolean retainClause = equality == null || !optVars.contains(equality.getKey());
+
+            if(retainClause) {
+                newCnf.add(clause);
+            }            
+        }
+        
+        QuadFilterPatternCanonical result = new QuadFilterPatternCanonical(newQuads, newCnf);
+        return result;
+    }
+    
+    
+    
     // TODO Not used, can probably be removed
 //    public static ResultSet executeCached(QueryExecutionFactory qef, Query query, ProjectedQuadFilterPattern pqfp, SparqlViewCache sparqlViewCache, long indexResultSetSizeThreshold) {
 //        if(pqfp == null) {
@@ -229,6 +275,16 @@ public class SparqlCacheUtils {
     }
 
 
+    /**
+     * Rewrites a query to make use of the cache
+     * 
+     * 
+     * @param serviceNode
+     * @param rawQuery
+     * @param conceptMap
+     * @param indexResultSetSizeThreshold
+     * @return
+     */
     public static Query rewriteQuery(
             //QueryExecutionFactory qef,
             Node serviceNode,
@@ -287,32 +343,58 @@ public class SparqlCacheUtils {
         for(Entry<Op, CacheResult> entry : opToCacheHit.entrySet()) {
             Op op = entry.getKey();
 
+// TODO Inject projection
+//            ProjectedQuadFilterPattern pqfp = cacheableOps.get(op);
+//            List<Var> projectVars = new ArrayList<Var>(pqfp.getProjectVars()); 
+            
+            
+            //cacheableOps.get(key)
+            //= new OpProject(op, new ArrayList<Var>(pqfp.getProjectVars()));
+            //entry.getValue().getTables().
+
+            
             CacheResult cacheResult = entry.getValue();
-            Op newOp = cacheResult.getReplacementPattern().toOp();
-            boolean isFullCover = newOp instanceof OpNull;
+            Op executionOp = cacheResult.getReplacementPattern().toOp();
+            boolean isFullCover = executionOp instanceof OpNull;
             Collection<Table> tables = cacheResult.getTables();
             for(Table table : tables) {
                 OpTable opTable = OpTable.create(table);
                 // If the replacement pattern is empty, OpNull is returned which we need to eliminate
-                newOp = newOp instanceof OpNull ? opTable : OpJoin.create(opTable, newOp);
+                executionOp = executionOp instanceof OpNull ? opTable : OpJoin.create(opTable, executionOp);
             }
 
+            // TODO IMPORTANT Try to optimize filter placement
+// TODO Inject projection
+// executionOp = new OpProject(executionOp, projectVars);
+            
+
+            executionOp = Optimize.apply(new TransformFilterPlacement(true), executionOp);
+            
+            
             // TODO The new op may be cachable again
-            if(!isFullCover) {
-                newOp = wrapWithService(op, serviceNode, newOp);
-            }
+            Op newOp = isFullCover
+                    ? executionOp
+                    : wrapWithService(op, serviceNode, executionOp);
 
             opToCachingOp.put(op, newOp);
         }
 
         for(Op op : nonCachedCacheableOps) {
             ProjectedQuadFilterPattern pqfp = cacheableOps.get(op);
-
+            
             if(pqfp == null) { // TODO Turn into an assertion
                 throw new RuntimeException("Should not happen");
             }
+            
+            
+            List<Var> projectVars = new ArrayList<Var>(pqfp.getProjectVars());
+            op = new OpProject(op, projectVars);
+            
+            
+            Op executionOp = Optimize.apply(new TransformFilterPlacement(true), op);
 
-            Op newOp = wrapWithService(op, serviceNode, op);
+            
+            Op newOp = wrapWithService(op, serviceNode, executionOp);
 
             opToCachingOp.put(op, newOp);
         }
