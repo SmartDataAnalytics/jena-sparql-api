@@ -331,8 +331,8 @@ public class SparqlCacheUtils {
                 QuadFilterPatternCanonical r = canonicalize2(qfp, generator);
                 return r;
             }));
-        
-                
+
+
         // Determine for which of the cachable parts we have cache hits
         Map<Op, CacheResult> opToCacheHit = cacheableOps.entrySet().stream()
             .map(e -> {
@@ -344,9 +344,11 @@ public class SparqlCacheUtils {
                 //qfp = summarize(qfp).getCanonicalPattern();
 
                 //qfp = canonicalize(qfp, generator);
+                Op op = e.getKey();
+                QuadFilterPatternCanonical qfpc = summarizedCacheableOps.get(op);
 
-                CacheResult cacheResult = sparqlViewCache.lookup(qfp);
-                Entry<Op, CacheResult> r = cacheResult == null ? null : new SimpleEntry<>(e.getKey(), cacheResult);
+                CacheResult cacheResult = sparqlViewCache.lookup(qfpc);
+                Entry<Op, CacheResult> r = cacheResult == null ? null : new SimpleEntry<>(op, cacheResult);
                 return r;
             })
             .filter(e -> e != null)
@@ -716,47 +718,9 @@ public class SparqlCacheUtils {
 
         Set<Set<Expr>> filterCnf = CnfUtils.toSetCnf(expr);
 
-        // This is part of the result
-        //List<Set<Set<Expr>>> quadCnfList = new ArrayList<Set<Set<Expr>>>(quads.size());
-        IBiSetMultimap<Quad, Set<Set<Expr>>> quadToCnf = new BiHashMultimap<Quad, Set<Set<Expr>>>();
+        IBiSetMultimap<Quad, Set<Set<Expr>>> quadToCnf = createMapQuadsToFilters(quads, filterCnf);
 
-
-
-        for(Quad quad : quads) {
-            Set<Var> quadVars = QuadUtils.getVarsMentioned(quad);
-
-            Set<Set<Expr>> cnf = new HashSet<Set<Expr>>(); //new HashSet<Clause>();
-
-            for(Set<Expr> clause : filterCnf) {
-                Set<Var> clauseVars = ClauseUtils.getVarsMentioned(clause);
-
-                boolean containsAll = quadVars.containsAll(clauseVars);
-                if(containsAll) {
-                    cnf.add(clause);
-                }
-            }
-
-
-            Set<Set<Expr>> quadCnf = normalize(quad, cnf);
-            //quadCnfList.add(quadCnf);
-            quadToCnf.put(quad, quadCnf);
-        }
-
-        // Iterate the quads again, and for each variable map it to where it to the component where it occurs in
-        IBiSetMultimap<Var, VarOccurrence> varOccurrences = new BiHashMultimap<Var, VarOccurrence>();
-        //for(int i = 0; i < quads.size(); ++i) {
-            //Quad quad = quads.get(i);
-        for(Quad quad : quads) {
-            Set<Set<Expr>> quadCnf = quadToCnf.get(quad).iterator().next(); //quadCnfList.get(i);
-
-            for(int j = 0; j < 4; ++j) {
-                Var var = (Var)QuadUtils.getNode(quad, j);
-
-                VarOccurrence varOccurence = new VarOccurrence(quadCnf, j);
-
-                varOccurrences.put(var, varOccurence);
-            }
-        }
+        IBiSetMultimap<Var, VarOccurrence> varOccurrences = createMapVarOccurrences(quadToCnf);
 
         //System.out.println("varOccurrences: " + varOccurrences);
 
@@ -799,6 +763,66 @@ public class SparqlCacheUtils {
         //}
 
         return result;
+    }
+
+
+    private static IBiSetMultimap<Var, VarOccurrence> createMapVarOccurrences(
+            IBiSetMultimap<Quad, Set<Set<Expr>>> quadToCnf) {
+        Set<Quad> quads = quadToCnf.keySet();
+
+        // Iterate the quads again, and for each variable map it to where it to the component where it occurs in
+        IBiSetMultimap<Var, VarOccurrence> varOccurrences = new BiHashMultimap<Var, VarOccurrence>();
+        //for(int i = 0; i < quads.size(); ++i) {
+            //Quad quad = quads.get(i);
+        for(Quad quad : quads) {
+            Set<Set<Expr>> quadCnf = quadToCnf.get(quad).iterator().next(); //quadCnfList.get(i);
+
+            for(int j = 0; j < 4; ++j) {
+                Var var = (Var)QuadUtils.getNode(quad, j);
+
+                VarOccurrence varOccurence = new VarOccurrence(quadCnf, j);
+
+                varOccurrences.put(var, varOccurence);
+            }
+        }
+        return varOccurrences;
+    }
+
+
+    /**
+     * Note: the result map contains all quads - quads without constraints map to an empty set
+     * @param quads
+     * @param filterCnf
+     * @return
+     */
+    public static IBiSetMultimap<Quad, Set<Set<Expr>>> createMapQuadsToFilters(
+            Set<Quad> quads, Set<Set<Expr>> filterCnf) {
+        // This is part of the result
+        //List<Set<Set<Expr>>> quadCnfList = new ArrayList<Set<Set<Expr>>>(quads.size());
+        IBiSetMultimap<Quad, Set<Set<Expr>>> quadToCnf = new BiHashMultimap<Quad, Set<Set<Expr>>>();
+
+
+
+        for(Quad quad : quads) {
+            Set<Var> quadVars = QuadUtils.getVarsMentioned(quad);
+
+            Set<Set<Expr>> cnf = new HashSet<Set<Expr>>(); //new HashSet<Clause>();
+
+            for(Set<Expr> clause : filterCnf) {
+                Set<Var> clauseVars = ClauseUtils.getVarsMentioned(clause);
+
+                boolean containsAll = quadVars.containsAll(clauseVars);
+                if(containsAll) {
+                    cnf.add(clause);
+                }
+            }
+
+
+            Set<Set<Expr>> quadCnf = normalize(quad, cnf);
+            //quadCnfList.add(quadCnf);
+            quadToCnf.put(quad, quadCnf);
+        }
+        return quadToCnf;
     }
 
 
