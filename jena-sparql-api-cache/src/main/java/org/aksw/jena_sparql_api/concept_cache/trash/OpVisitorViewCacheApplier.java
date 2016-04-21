@@ -14,16 +14,11 @@ import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
-import org.aksw.jena_sparql_api.utils.ReplaceConstants;
-import org.apache.jena.query.Query;
-import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
-import org.apache.jena.sparql.algebra.OpAsQuery;
 import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.op.OpJoin;
 import org.apache.jena.sparql.algebra.op.OpNull;
 import org.apache.jena.sparql.algebra.op.OpTable;
-import org.apache.jena.sparql.core.Var;
 
 public class OpVisitorViewCacheApplier
 // extends OpVisitorByType
@@ -144,7 +139,8 @@ public class OpVisitorViewCacheApplier
         } else {
             QuadFilterPattern qfp = pqfp.getQuadFilterPattern();
 
-            CacheResult cacheResult = conceptMap.lookup(qfp);
+            if(true) { throw new RuntimeException("need to fex the lookup"); }
+            CacheResult cacheResult = null;//conceptMap.lookup(qfp);
 
             if(cacheResult != null) {
                 result.put(parentOp, cacheResult);

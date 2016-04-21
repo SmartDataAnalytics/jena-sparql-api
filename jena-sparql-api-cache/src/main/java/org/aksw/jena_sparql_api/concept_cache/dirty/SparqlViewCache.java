@@ -33,6 +33,7 @@ import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.algebra.Table;
+import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.graph.NodeTransform;
@@ -56,33 +57,41 @@ public class SparqlViewCache
     private IBiSetMultimap<Set<Set<Expr>>, PatternSummary> quadCnfToSummary = new BiHashMultimap<Set<Set<Expr>>, PatternSummary>();
     private Map<PatternSummary, Map<Set<Var>, Table>> cacheData = new HashMap<PatternSummary, Map<Set<Var>, Table>>();
 
-    public void lookup(Query query) {
-        //System.out.println("LOOKUP: " + query);
-        ProjectedQuadFilterPattern pqfp = SparqlCacheUtils.transform(query);
-        QuadFilterPattern qfp = pqfp.getQuadFilterPattern();
+//    public void lookup(Query query) {
+//        //System.out.println("LOOKUP: " + query);
+//        ProjectedQuadFilterPattern pqfp = SparqlCacheUtils.transform(query);
+//        QuadFilterPattern qfp = pqfp.getQuadFilterPattern();
+//
+//        lookup(qfp);
+//    }
 
-        lookup(qfp);
-    }
-
-    public CacheResult lookup(QuadFilterPattern queryQfp) {
-        PatternSummary queryPs = SparqlCacheUtils.summarize(queryQfp);
-        
-        CacheResult result = lookup(queryPs);
-        return result;
-    }
+//    public CacheResult lookup(QuadFilterPattern queryQfp) {
+//        PatternSummary queryPs = SparqlCacheUtils.summarize(queryQfp);
+//        
+//        CacheResult result = lookup(queryPs);
+//        return result;
+//    }
     
-    public CacheResult lookup(PatternSummary queryPs) {
+    public CacheResult lookup(QuadFilterPatternCanonical queryQfpc) { //PatternSummary queryPs) {
         List<QfpcMatch> result = new ArrayList<QfpcMatch>();
         
+        // TODO: We need the quadToCnf map for the queryPs
+        IBiSetMultimap<Quad, Set<Set<Expr>>> queryQuadToCnf = SparqlCacheUtils.createMapQuadsToFilters(queryQfpc.getQuads(), queryQfpc.getFilterCnf());
         
-        QuadFilterPattern queryQfp = queryPs.getOriginalPattern();
         
-        Set<Set<Set<Expr>>> quadCnfs = queryPs.getQuadToCnf().getInverse().keySet();
-
+        
+        //QuadFilterPattern queryQfp = queryPs.getOriginalPattern();
+        
+        //Set<Set<Set<Expr>>> quadCnfs = queryPs.getQuadToCnf().getInverse().keySet();
+        //int querySize = queryPs.getCanonicalPattern().getQuads().size();
+        Set<Set<Set<Expr>>> quadCnfs = queryQuadToCnf.getInverse().keySet();
+        int querySize = queryQfpc.getQuads().size();
+        
+        
 
         Set<PatternSummary> rawCandsSet = new HashSet<PatternSummary>();
 
-        int querySize = queryQfp.getQuads().size();
+        //int querySize = queryQfp.getQuads().size();
 
         for(Set<Set<Expr>> quadCnf : quadCnfs) {
             Collection<PatternSummary> cands = quadCnfToSummary.get(quadCnf);
@@ -134,7 +143,7 @@ public class SparqlViewCache
 
             // For a pattern there might be multiple candidate variable mappings
             // Filter expressions are not considered at this stage
-            Iterator<Map<Var, Var>> varMaps = CombinatoricsUtils.computeVarMapQuadBased(queryPs, cand, candVarCombos);
+            Iterator<Map<Var, Var>> varMaps = CombinatoricsUtils.computeVarMapQuadBased(queryQuadToCnf, cand.getQuadToCnf(), candVarCombos);
 
             while(varMaps.hasNext()) {
                 Map<Var, Var> varMap = varMaps.next();
@@ -147,7 +156,7 @@ public class SparqlViewCache
 //                System.out.println(candRename);
 //                System.out.println(ps.getCanonicalPattern());
 
-                boolean isSubsumed = candRename.isSubsumedBy(queryPs.getCanonicalPattern());
+                boolean isSubsumed = candRename.isSubsumedBy(queryQfpc);
 //                System.out.println("isSubsumed: " + isSubsumed);
 
 
@@ -174,7 +183,7 @@ public class SparqlViewCache
                         Set<Var> disallowedVars = Sets.difference(candVars, queryCandVarCombo);
 
 
-                        QuadFilterPatternCanonical diffPattern = candRename.diff(queryPs.getCanonicalPattern());
+                        QuadFilterPatternCanonical diffPattern = candRename.diff(queryQfpc);
                         Set<Var> testVars = diffPattern.getVarsMentioned();
 
                         Set<Var> cooccurs = Utils2.getCooccurrentVars(queryCandVarCombo, diffPattern.getQuads());
