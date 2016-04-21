@@ -63,69 +63,7 @@ public class OpExecutorViewCache
             }
             Op tmpOp = opService.getSubOp();
 
-            Collection<Var> vars = OpVars.mentionedVars(tmpOp);
-            Map<Node, Var> nodeMap = ElementUtils.createMapFixVarNames(vars);
-            NodeTransform nodeTransform = new NodeTransformRenameMap(nodeMap);
-
-            tmpOp = NodeTransformLib.transform(nodeTransform, tmpOp);
-
-            tmpOp = Transformer.transform(new TransformRemoveGraph(x -> false), tmpOp);
-            OpUnion unionOp = (OpUnion)tmpOp;
-
-
-//            Query tmpQuery = OpAsQuery.asQuery(tmpOp);
-//            ElementGroup tmpGroup = (ElementGroup)tmpQuery.getQueryPattern();
-//            ElementUnion union = (ElementUnion)tmpGroup.getElements().get(0);//tmpQuery.getQueryPattern();
-//
-//            Query indexQuery = ((ElementSubQuery)((ElementGroup)union.getElements().get(0)).getElements().get(0)).getQuery();
-//            Query executionQuery = ((ElementSubQuery)((ElementGroup)union.getElements().get(1)).getElements().get(0)).getQuery();
-
-            //System.out.println(test);
-
-
-
-            Op patternOp = unionOp.getLeft();
-            patternOp = Algebra.toQuadForm(patternOp);
-            patternOp = ReplaceConstants.replace(patternOp);
-
-            Op executionOp = unionOp.getRight();
-
-
-            //Query indexQuery = OpAsQuery.asQuery(patternOp);
-            Query executionQuery = OpAsQuery.asQuery(executionOp);
-
-            // Get rid of unneccessary GRAPH ?x { ... } elements
-            //executionOp = Transformer.transform(new TransformRemoveGraph(x -> false), executionOp);
-
-            //System.out.println("Op is " + executionOp);
-            //Optimize.optimize(op, context)
-
-            //Query query = OpAsQuery.asQuery(executionOp);
-
-            //Rename.renameNode(op, oldName, newName)
-            // TODO Why is this hack / fix of variable names starting with a '/' necessary? Can we get rid of it?
-            executionQuery.setQueryPattern(ElementUtils.fixVarNames(executionQuery.getQueryPattern()));
-
-
-            //Query query = subQueryElt.getQuery();
-
-            logger.debug("Executing: " + executionQuery);
-
-            QueryExecution qe = vci.createQueryExecution(patternOp, executionQuery);
-            ResultSet rs = qe.execSelect();
-
-
-//            ResultSetViewCache.cacheResultSet(physicalRs, indexVars, indexResultSetSizeThreshold, conceptMap, pqfp);
-//
-//            QueryExecution qe = qef.createQueryExecution(query);
-//            ResultSet rs = qe.execSelect();
-//            QueryIterator result = new QueryIteratorResultSet(rs);
-//
-//            //QueryExecutionFactory
-//
-//            System.out.println("here");
-
-            result = new QueryIteratorResultSet(rs);
+            result = executeWithIndexing(tmpOp, vci);
 
         } else {
             result = super.exec(opService, input);
@@ -134,5 +72,72 @@ public class OpExecutorViewCache
         return result;
     }
 
+    
+    public static QueryIterator executeWithIndexing(Op tmpOp, ViewCacheIndexer vci) {
 
+        Collection<Var> vars = OpVars.mentionedVars(tmpOp);
+        Map<Node, Var> nodeMap = ElementUtils.createMapFixVarNames(vars);
+        NodeTransform nodeTransform = new NodeTransformRenameMap(nodeMap);
+
+        tmpOp = NodeTransformLib.transform(nodeTransform, tmpOp);
+
+        tmpOp = Transformer.transform(new TransformRemoveGraph(x -> false), tmpOp);
+        OpUnion unionOp = (OpUnion)tmpOp;
+
+
+//        Query tmpQuery = OpAsQuery.asQuery(tmpOp);
+//        ElementGroup tmpGroup = (ElementGroup)tmpQuery.getQueryPattern();
+//        ElementUnion union = (ElementUnion)tmpGroup.getElements().get(0);//tmpQuery.getQueryPattern();
+//
+//        Query indexQuery = ((ElementSubQuery)((ElementGroup)union.getElements().get(0)).getElements().get(0)).getQuery();
+//        Query executionQuery = ((ElementSubQuery)((ElementGroup)union.getElements().get(1)).getElements().get(0)).getQuery();
+
+        //System.out.println(test);
+
+
+
+        Op patternOp = unionOp.getLeft();
+        patternOp = Algebra.toQuadForm(patternOp);
+        patternOp = ReplaceConstants.replace(patternOp);
+
+        Op executionOp = unionOp.getRight();
+
+
+        //Query indexQuery = OpAsQuery.asQuery(patternOp);
+        Query executionQuery = OpAsQuery.asQuery(executionOp);
+
+        // Get rid of unneccessary GRAPH ?x { ... } elements
+        //executionOp = Transformer.transform(new TransformRemoveGraph(x -> false), executionOp);
+
+        //System.out.println("Op is " + executionOp);
+        //Optimize.optimize(op, context)
+
+        //Query query = OpAsQuery.asQuery(executionOp);
+
+        //Rename.renameNode(op, oldName, newName)
+        // TODO Why is this hack / fix of variable names starting with a '/' necessary? Can we get rid of it?
+        executionQuery.setQueryPattern(ElementUtils.fixVarNames(executionQuery.getQueryPattern()));
+
+
+        //Query query = subQueryElt.getQuery();
+
+        logger.debug("Executing: " + executionQuery);
+
+        QueryExecution qe = vci.createQueryExecution(patternOp, executionQuery);
+        ResultSet rs = qe.execSelect();
+
+
+//        ResultSetViewCache.cacheResultSet(physicalRs, indexVars, indexResultSetSizeThreshold, conceptMap, pqfp);
+//
+//        QueryExecution qe = qef.createQueryExecution(query);
+//        ResultSet rs = qe.execSelect();
+//        QueryIterator result = new QueryIteratorResultSet(rs);
+//
+//        //QueryExecutionFactory
+//
+//        System.out.println("here");
+
+        QueryIterator result = new QueryIteratorResultSet(rs);
+        return result;
+    }
 }

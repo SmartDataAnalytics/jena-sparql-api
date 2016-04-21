@@ -314,7 +314,8 @@ public class SparqlCacheUtils {
         // (i.e. those parts that correspond to projected quad filter patterns)
         Map<Op, ProjectedQuadFilterPattern> tmpCacheableOps = OpVisitorViewCacheApplier.detectPrimitiveCachableOps(rawOp);
 
-        // TODO: If the op is a projection, associate the pqfp with the sub op in order to retain the projection
+        // If the op is a projection, associate the pqfp with the sub op in order to retain the projection
+        // TODO This is necessary, if we later expand the graph pattern; yet, I am not sure this is the best way to retain the projection
         Map<Op, ProjectedQuadFilterPattern> cacheableOps = tmpCacheableOps.entrySet().stream()
             .collect(Collectors.toMap(e -> {
                 Op op = e.getKey();
@@ -323,6 +324,15 @@ public class SparqlCacheUtils {
             }, Entry::getValue));
 
 
+        Map<Op, QuadFilterPatternCanonical> summarizedCacheableOps = cacheableOps.entrySet().stream()
+            .collect(Collectors.toMap(Entry::getKey, e -> {
+                ProjectedQuadFilterPattern pqfp = e.getValue();
+                QuadFilterPattern qfp = pqfp.getQuadFilterPattern();
+                QuadFilterPatternCanonical r = canonicalize2(qfp, generator);
+                return r;
+            }));
+        
+                
         // Determine for which of the cachable parts we have cache hits
         Map<Op, CacheResult> opToCacheHit = cacheableOps.entrySet().stream()
             .map(e -> {
@@ -333,7 +343,7 @@ public class SparqlCacheUtils {
 
                 //qfp = summarize(qfp).getCanonicalPattern();
 
-                qfp = canonicalize(qfp, generator);
+                //qfp = canonicalize(qfp, generator);
 
                 CacheResult cacheResult = sparqlViewCache.lookup(qfp);
                 Entry<Op, CacheResult> r = cacheResult == null ? null : new SimpleEntry<>(e.getKey(), cacheResult);
@@ -640,6 +650,15 @@ public class SparqlCacheUtils {
 
 //        QuadFilterPatternCanonical tmp = canonicalize(qfpc, generator);
         QuadFilterPattern result = canonical.toQfp();
+
+        return result;
+    }
+
+    public static QuadFilterPatternCanonical canonicalize2(QuadFilterPattern qfp, Generator<Var> generator) {
+        QuadFilterPatternCanonical tmp = replaceConstants(qfp.getQuads(), generator);
+        Set<Set<Expr>> cnf = CnfUtils.toSetCnf(qfp.getExpr());
+        cnf.addAll(tmp.getFilterCnf());
+        QuadFilterPatternCanonical result = new QuadFilterPatternCanonical(tmp.getQuads(), cnf);
 
         return result;
     }
