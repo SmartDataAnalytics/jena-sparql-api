@@ -5,6 +5,8 @@ import java.util.Set;
 import org.apache.jena.sparql.core.Var;
 
 public class ProjectedQuadFilterPattern {
+    
+    // TODO Maybe add a distinct flag
     protected Set<Var> projectVars;
     protected QuadFilterPattern quadFilterPattern;
 
