@@ -413,6 +413,9 @@ public class SparqlCacheUtils {
             opToCachingOp.put(op, newOp);
         }
 
+        
+        // Notes: indexOp is the op that encodes the canonical projected quad filter pattern used for indexing
+        // executionOp is the op used to actually execute the pattern and may make use of caching parts
         for(Op op : nonCachedCacheableOps) {
             ProjectedQuadFilterPattern pqfp = cacheableOps.get(op);
             ProjectedQuadFilterPattern executionPqfp = pqfp;
@@ -433,7 +436,7 @@ public class SparqlCacheUtils {
             Op executionOp = op;
 
 
-            Op newOp = wrapWithService(op, serviceNode, executionOp);
+            Op newOp = wrapWithService(indexOp, serviceNode, executionOp);
 
             opToCachingOp.put(op, newOp);
         }

@@ -106,7 +106,7 @@ public class MainSparqlViewCache {
 
     public ResultSet execSelect(Query query) {
 
-        conceptMap.lookup(query);
+        //conceptMap.lookup(query);
         //RestrictionManagerI
 
 
