@@ -85,7 +85,7 @@ public class CnfUtils {
             Entry<Var, Node> entry = extractEquality(clause);
             if(entry != null) {
                 Var v = entry.getKey();
-                Node c = entry.getKey();
+                Node c = entry.getValue();
 
                 Node o = result.get(v);
                 if(o != null && !o.equals(c)) {

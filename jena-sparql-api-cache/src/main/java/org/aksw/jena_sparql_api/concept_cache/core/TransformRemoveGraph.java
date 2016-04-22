@@ -1,24 +1,14 @@
 package org.aksw.jena_sparql_api.concept_cache.core;
 
-import java.util.Stack;
 import java.util.function.Predicate;
 
-import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransform;
-import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformer;
-import org.aksw.jena_sparql_api.utils.transform.ElementTransformDatasetDescription;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.algebra.Op;
-import org.apache.jena.sparql.algebra.OpWalker;
 import org.apache.jena.sparql.algebra.TransformCopy;
-import org.apache.jena.sparql.algebra.Transformer;
-import org.apache.jena.sparql.algebra.op.OpFilter;
 import org.apache.jena.sparql.algebra.op.OpGraph;
+import org.apache.jena.sparql.algebra.op.OpQuadBlock;
+import org.apache.jena.sparql.algebra.op.OpQuadPattern;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.expr.ExprList;
-import org.apache.jena.sparql.syntax.Element;
-import org.apache.jena.sparql.syntax.ElementNamedGraph;
-import org.apache.jena.sparql.syntax.ElementVisitor;
-import org.apache.jena.sparql.syntax.ElementVisitorBase;
 
 public class TransformRemoveGraph
     extends TransformCopy
@@ -44,6 +34,16 @@ public class TransformRemoveGraph
 //
 //        return result;
 //    }
+
+    @Override
+    public Op transform(OpQuadPattern opQuadPattern) {
+        throw new RuntimeException("Transformation on quad form not supported");
+    }
+
+    @Override
+    public Op transform(OpQuadBlock opQuadPattern) {
+        throw new RuntimeException("Transformation on quad form not supported");
+    }
 
     @Override
     public Op transform(OpGraph op, Op subOp) {

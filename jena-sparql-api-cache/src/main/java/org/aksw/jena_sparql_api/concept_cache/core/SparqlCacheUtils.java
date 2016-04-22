@@ -49,7 +49,6 @@ import org.apache.jena.sparql.algebra.OpAsQuery;
 import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.TableFactory;
-import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.op.OpFilter;
 import org.apache.jena.sparql.algebra.op.OpGraph;
 import org.apache.jena.sparql.algebra.op.OpJoin;
@@ -91,6 +90,37 @@ public class SparqlCacheUtils {
 
 
     private static final Logger logger = LoggerFactory.getLogger(SparqlCacheUtils.class);
+
+    public static QuadFilterPatternCanonical removeDefaultGraphFilter(QuadFilterPatternCanonical qfpc) {
+        Set<Quad> quads = qfpc.getQuads();
+        Set<Set<Expr>> cnf = qfpc.getFilterCnf();
+
+        Map<Var, Node> varToNode = CnfUtils.getConstants(cnf);
+        Map<Var, Node> candMap = varToNode.entrySet().stream().filter(
+                e -> (Quad.defaultGraphIRI.equals(e.getValue())
+                    || Quad.defaultGraphNodeGenerated.equals(e.getValue())))
+                .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+
+        Set<Var> candVars = candMap.keySet();
+
+        // Remove all vars that occurr in positions other than the graph
+        for(Quad quad : quads) {
+            Node[] nodes = QuadUtils.quadToArray(quad);
+            for(int i = 1; i < 4; ++i) {
+                Node node = nodes[i];
+                candVars.remove(node);
+            }
+        }
+
+        Set<Set<Expr>> newCnf = cnf.stream().filter(clause -> {
+            Entry<Var, Node> e = CnfUtils.extractEquality(clause);
+            boolean r = !candMap.entrySet().contains(e);
+            return r;
+        }).collect(Collectors.toSet());
+
+        QuadFilterPatternCanonical result = new QuadFilterPatternCanonical(quads, newCnf);
+        return result;
+    }
 
 
     public static ProjectedQuadFilterPattern optimizeFilters(ProjectedQuadFilterPattern pqfp) {
@@ -417,9 +447,14 @@ public class SparqlCacheUtils {
         // Notes: indexOp is the op that encodes the canonical projected quad filter pattern used for indexing
         // executionOp is the op used to actually execute the pattern and may make use of caching parts
         for(Op op : nonCachedCacheableOps) {
+            //op = Algebra.toQuadForm(op);
+
             ProjectedQuadFilterPattern pqfp = cacheableOps.get(op);
             QuadFilterPattern qfp = pqfp.getQuadFilterPattern();
             QuadFilterPatternCanonical indexQfpc = qfpToCanonical.get(qfp);
+
+            // TODO Remove clause for default graph constraint
+
             //ProjectedQuadFilterPattern executionPqfp = SparqlCacheUtils.optimizeFilters(pqfp);
             //executionPqfp.to
 
@@ -449,7 +484,7 @@ public class SparqlCacheUtils {
         Query tmp = OpAsQuery.asQuery(rootOp);
         rootOp = Algebra.compile(tmp);
 
-        rootOp = Transformer.transform(new TransformRemoveGraph(x -> false), rootOp);
+        //rootOp = Transformer.transform(new TransformRemoveGraph(x -> false), rootOp);
 
         Query result = OpAsQuery.asQuery(rootOp);
 
@@ -663,6 +698,7 @@ public class SparqlCacheUtils {
 
     public static QuadFilterPatternCanonical canonicalize2(QuadFilterPattern qfp, Generator<Var> generator) {
         QuadFilterPatternCanonical tmp = replaceConstants(qfp.getQuads(), generator);
+        tmp = removeDefaultGraphFilter(tmp);
         Set<Set<Expr>> cnf = CnfUtils.toSetCnf(qfp.getExpr());
         cnf.addAll(tmp.getFilterCnf());
         QuadFilterPatternCanonical result = new QuadFilterPatternCanonical(tmp.getQuads(), cnf);
