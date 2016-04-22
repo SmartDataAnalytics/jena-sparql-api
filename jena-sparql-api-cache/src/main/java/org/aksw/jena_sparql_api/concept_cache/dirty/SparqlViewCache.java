@@ -66,17 +66,22 @@ public class SparqlViewCache
 
     public CacheResult lookup(QuadFilterPattern queryQfp) {
         PatternSummary queryPs = SparqlCacheUtils.summarize(queryQfp);
-        
+
         CacheResult result = lookup(queryPs);
         return result;
     }
-    
+
+
+    public CacheResult lookup(QuadFilterPatternCanonical queryPs) {
+
+    }
+
     public CacheResult lookup(PatternSummary queryPs) {
         List<QfpcMatch> result = new ArrayList<QfpcMatch>();
-        
-        
+
+
         QuadFilterPattern queryQfp = queryPs.getOriginalPattern();
-        
+
         Set<Set<Set<Expr>>> quadCnfs = queryPs.getQuadToCnf().getInverse().keySet();
 
 
@@ -118,10 +123,6 @@ public class SparqlViewCache
                 return r;
             }
         });
-
-
-
-
 
 
         // Iterate all candidate pattern summaries and

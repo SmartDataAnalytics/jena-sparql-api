@@ -719,13 +719,49 @@ public class SparqlCacheUtils {
         Set<Set<Expr>> filterCnf = CnfUtils.toSetCnf(expr);
 
         IBiSetMultimap<Quad, Set<Set<Expr>>> quadToCnf = createMapQuadsToFilters(quads, filterCnf);
-
-        IBiSetMultimap<Var, VarOccurrence> varOccurrences = createMapVarOccurrences(quadToCnf);
+        IBiSetMultimap<Var, VarOccurrence> varOccurrences = createMapVarOccurrences(quadToCnf, false);
 
         //System.out.println("varOccurrences: " + varOccurrences);
+        //Set<Set<Set<Expr>>> quadCnfs = new HashSet<Set<Set<Expr>>>(quadCnfList);
+
+        QuadFilterPatternCanonical canonicalPattern = new QuadFilterPatternCanonical(quads, filterCnf);
+        //canonicalPattern = canonicalize(canonicalPattern, generator);
+
+
+        PatternSummary result = new PatternSummary(originalPattern, canonicalPattern, quadToCnf, varOccurrences);
+
+
+        //for(Entry<Var, Collection<VarOccurrence>> entry : varOccurrences.asMap().entrySet()) {
+            //System.out.println("Summary: " + entry.getKey() + ": " + entry.getValue().size());
+            //System.out.println(entry);
+        //}
+
+        return result;
+    }
+
+
+    private static IBiSetMultimap<Var, VarOccurrence> createMapVarOccurrences(
+            IBiSetMultimap<Quad, Set<Set<Expr>>> quadToCnf, boolean pruneVarOccs) {
+        Set<Quad> quads = quadToCnf.keySet();
+
+        // Iterate the quads again, and for each variable map it to where it to the component where it occurs in
+        IBiSetMultimap<Var, VarOccurrence> varOccurrences = new BiHashMultimap<Var, VarOccurrence>();
+        //for(int i = 0; i < quads.size(); ++i) {
+            //Quad quad = quads.get(i);
+        for(Quad quad : quads) {
+            Set<Set<Expr>> quadCnf = quadToCnf.get(quad).iterator().next(); //quadCnfList.get(i);
+
+            for(int j = 0; j < 4; ++j) {
+                Var var = (Var)QuadUtils.getNode(quad, j);
+
+                VarOccurrence varOccurence = new VarOccurrence(quadCnf, j);
+
+                varOccurrences.put(var, varOccurence);
+            }
+        }
 
         // Remove all variables that only occur in the same quad
-        boolean pruneVarOccs = false;
+        //boolean pruneVarOccs = false;
         if(pruneVarOccs) {
             Iterator<Entry<Var, Collection<VarOccurrence>>> it = varOccurrences.asMap().entrySet().iterator();
 
@@ -748,43 +784,6 @@ public class SparqlCacheUtils {
             }
         }
 
-        //Set<Set<Set<Expr>>> quadCnfs = new HashSet<Set<Set<Expr>>>(quadCnfList);
-
-        QuadFilterPatternCanonical canonicalPattern = new QuadFilterPatternCanonical(quads, filterCnf);
-        //canonicalPattern = canonicalize(canonicalPattern, generator);
-
-
-        PatternSummary result = new PatternSummary(originalPattern, canonicalPattern, quadToCnf, varOccurrences);
-
-
-        //for(Entry<Var, Collection<VarOccurrence>> entry : varOccurrences.asMap().entrySet()) {
-            //System.out.println("Summary: " + entry.getKey() + ": " + entry.getValue().size());
-            //System.out.println(entry);
-        //}
-
-        return result;
-    }
-
-
-    private static IBiSetMultimap<Var, VarOccurrence> createMapVarOccurrences(
-            IBiSetMultimap<Quad, Set<Set<Expr>>> quadToCnf) {
-        Set<Quad> quads = quadToCnf.keySet();
-
-        // Iterate the quads again, and for each variable map it to where it to the component where it occurs in
-        IBiSetMultimap<Var, VarOccurrence> varOccurrences = new BiHashMultimap<Var, VarOccurrence>();
-        //for(int i = 0; i < quads.size(); ++i) {
-            //Quad quad = quads.get(i);
-        for(Quad quad : quads) {
-            Set<Set<Expr>> quadCnf = quadToCnf.get(quad).iterator().next(); //quadCnfList.get(i);
-
-            for(int j = 0; j < 4; ++j) {
-                Var var = (Var)QuadUtils.getNode(quad, j);
-
-                VarOccurrence varOccurence = new VarOccurrence(quadCnf, j);
-
-                varOccurrences.put(var, varOccurence);
-            }
-        }
         return varOccurrences;
     }
 
