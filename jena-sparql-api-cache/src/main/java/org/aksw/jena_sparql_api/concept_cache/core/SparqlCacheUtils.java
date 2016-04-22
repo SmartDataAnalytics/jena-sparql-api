@@ -736,10 +736,10 @@ public class SparqlCacheUtils {
 
                         Expr expr = new E_Equals(new ExprVar(v), NodeValue.makeNode(node));
                         cnf.add(Collections.singleton(expr));
-
-                        nodes[i] = v;
                     }
+                    nodes[i] = v;
                 }
+                // If it is a variable, just retain it
             }
 
             Quad newQuad = QuadUtils.arrayToQuad(nodes);
