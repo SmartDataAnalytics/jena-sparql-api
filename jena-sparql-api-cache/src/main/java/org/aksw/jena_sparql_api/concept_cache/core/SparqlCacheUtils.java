@@ -324,8 +324,8 @@ public class SparqlCacheUtils {
             }, Entry::getValue));
 
 
-        Map<Op, QuadFilterPatternCanonical> summarizedCacheableOps = cacheableOps.entrySet().stream()
-            .collect(Collectors.toMap(Entry::getKey, e -> {
+        Map<QuadFilterPattern, QuadFilterPatternCanonical> qfpToCanonical = cacheableOps.entrySet().stream()
+            .collect(Collectors.toMap(e -> e.getValue().getQuadFilterPattern(), e -> {
                 ProjectedQuadFilterPattern pqfp = e.getValue();
                 QuadFilterPattern qfp = pqfp.getQuadFilterPattern();
                 QuadFilterPatternCanonical r = canonicalize2(qfp, generator);
@@ -345,7 +345,7 @@ public class SparqlCacheUtils {
 
                 //qfp = canonicalize(qfp, generator);
                 Op op = e.getKey();
-                QuadFilterPatternCanonical qfpc = summarizedCacheableOps.get(op);
+                QuadFilterPatternCanonical qfpc = qfpToCanonical.get(qfp);
 
                 CacheResult cacheResult = sparqlViewCache.lookup(qfpc);
                 Entry<Op, CacheResult> r = cacheResult == null ? null : new SimpleEntry<>(op, cacheResult);
@@ -413,12 +413,13 @@ public class SparqlCacheUtils {
             opToCachingOp.put(op, newOp);
         }
 
-        
+
         // Notes: indexOp is the op that encodes the canonical projected quad filter pattern used for indexing
         // executionOp is the op used to actually execute the pattern and may make use of caching parts
         for(Op op : nonCachedCacheableOps) {
             ProjectedQuadFilterPattern pqfp = cacheableOps.get(op);
-            ProjectedQuadFilterPattern executionPqfp = pqfp;
+            QuadFilterPattern qfp = pqfp.getQuadFilterPattern();
+            QuadFilterPatternCanonical indexQfpc = qfpToCanonical.get(qfp);
             //ProjectedQuadFilterPattern executionPqfp = SparqlCacheUtils.optimizeFilters(pqfp);
             //executionPqfp.to
 
@@ -429,7 +430,8 @@ public class SparqlCacheUtils {
             //pqfp.getQuadFilterPattern();
 
             List<Var> projectVars = new ArrayList<Var>(pqfp.getProjectVars());
-            op = new OpProject(op, projectVars);
+            Op indexOp = indexQfpc.toOp();
+            indexOp = new OpProject(op, projectVars);
 
 
             //Op executionOp = Optimize.apply(new TransformFilterPlacement(true), op);
