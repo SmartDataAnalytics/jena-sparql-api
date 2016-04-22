@@ -4,6 +4,7 @@ import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -233,10 +234,15 @@ public class CnfUtils {
 
     public static Set<Set<Expr>> toSetCnf(Expr expr)
     {
-        List<ExprList> clauses = toClauses(expr);
-        Set<Set<Expr>> cnf = FilterUtils.toSets(clauses);
+        Set<Set<Expr>> result;
+        if(NodeValue.TRUE.equals(expr)) {
+            result = new HashSet<>(); // Return a new set, as callers may want to extend the set//Collections.emptySet();
+        } else {
+            List<ExprList> clauses = toClauses(expr);
+            result = FilterUtils.toSets(clauses);
+        }
 
-        return cnf;
+        return result;
     }
 
     public static List<ExprList> toClauses(Expr expr)

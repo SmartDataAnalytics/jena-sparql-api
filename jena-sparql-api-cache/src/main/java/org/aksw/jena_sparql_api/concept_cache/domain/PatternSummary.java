@@ -111,7 +111,10 @@ public class PatternSummary
         return true;
     }
 
-
-
-
+    @Override
+    public String toString() {
+        return "PatternSummary [originalPattern=" + originalPattern
+                + ", canonicalPattern=" + canonicalPattern + ", quadToCnf="
+                + quadToCnf + ", varOccurrences=" + varOccurrences + "]";
+    }
 }
