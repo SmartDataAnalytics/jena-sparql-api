@@ -431,12 +431,12 @@ public class SparqlCacheUtils {
 
             List<Var> projectVars = new ArrayList<Var>(pqfp.getProjectVars());
             Op indexOp = indexQfpc.toOp();
-            indexOp = new OpProject(op, projectVars);
+            indexOp = new OpProject(indexOp, projectVars);
 
 
             //Op executionOp = Optimize.apply(new TransformFilterPlacement(true), op);
             Op executionOp = op;
-
+            // TODO: Maybe we should wrap the executionOp with the projection again
 
             Op newOp = wrapWithService(indexOp, serviceNode, executionOp);
 
