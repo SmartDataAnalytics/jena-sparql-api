@@ -10,7 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.aksw.jena_sparql_api.concept_cache.core.CacheResult;
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCache;
+import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcReader;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParser;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
@@ -82,9 +84,15 @@ public class TestSparqlViewCacheVariableRenaming {
 
         Query renamedQuery = QueryTransformOps.transform(baseQuery, varMap);
 
+        
+        SparqlViewCache.
+        
+//        SparqlV
+//        public CacheResult lookup(QuadFilterPatternCanonical queryQfpc) { //PatternSummary queryPs) {
+
         SparqlViewCache x;
-
-
+        //x.lookup(queryQfpc);
+        x.index(qfp, rsp);
 
         //query.
     }
