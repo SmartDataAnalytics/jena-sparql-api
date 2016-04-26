@@ -1,0 +1,12 @@
+{
+  (maleHeadOf,sp,headOf ),
+  (femaleHeadOf,sp,headOf), 
+  (leaderOf,dom,UnionOf(MaleProfessor,FemaleProfessor)), 
+  disjoint(MaleProfessor,FemaleProfessor), 
+  equivalent(leaderOf,headOf ), 
+  (UndergradCourse,sc,Course), 
+  (teacherOf,range,Course), 
+  (teacherOf,dom,Professor), 
+  (MaleProfessor,sc,Professor), 
+  (FemaleProfessor,sc,Professor)
+}

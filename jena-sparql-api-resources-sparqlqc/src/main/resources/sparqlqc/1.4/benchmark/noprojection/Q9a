@@ -1,0 +1,9 @@
+PREFIX : <http://www.example.org/>
+
+SELECT * WHERE {
+	?x a :GraduateStudent .
+	?y a :Department .
+	?x :memberOf ?y .
+	?y :subOrganizationOf :UniversityO .
+	?x :email ?z .
+}

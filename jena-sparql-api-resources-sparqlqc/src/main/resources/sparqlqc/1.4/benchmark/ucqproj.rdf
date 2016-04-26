@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE rdf:RDF [
+  <!ENTITY rdf		"http://www.w3.org/1999/02/22-rdf-syntax-ns#" >
+  <!ENTITY rdfs		"http://www.w3.org/2000/01/rdf-schema#" >
+  <!ENTITY xsd		"http://www.w3.org/2001/XMLSchema#" >
+  <!ENTITY dc		"http://purl.org/dc/elements/1.1/" >
+  <!ENTITY dcterms      "http://purl.org/dc/terms/" > 
+  <!ENTITY owl		"http://www.w3.org/2002/07/owl#" > ]>
+
+<rdf:RDF
+ xmlns="http://sparql-qc-bench.inrialpes.fr/testsuite#"
+ xml:base="http://sparql-qc-bench.inrialpes.fr/UCQProj"
+ xmlns:rdf	="&rdf;"
+ xmlns:rdfs	="&rdfs;"
+ xmlns:xsd	="&xsd;"
+ xmlns:dc	="&dc;"
+ xmlns:dcterms	="&dcterms;">
+
+  <TestSuite rdf:about="#UCQProj">
+    <sourceDir>projection</sourceDir>
+    <rdfs:label xml:lang="EN">Containment of Union of Conjunctive Quries with Projection benchmark testcases</rdfs:label>
+    <rdfs:comment>This benchmark testcase comprises 28 queries which have variables in the SELECT clause (aka distinguished variables) hence the name projection. In addition to the projection, the queries are chosen according to selectivity, number of conjunction and unions, and size (in terms of the number of connectives). This test suite assesses containment solvers that support projection and union of conjunctive queries.  </rdfs:comment>
+    <hasTest rdf:parseType="Collection">
+      <WarmupContainmentTest rdf:about="#p0">
+        <sourceQuery>Q0a</sourceQuery>
+	<targetQuery>Q0b</targetQuery>
+	<result>true</result>
+      </WarmupContainmentTest>
+      <ContainmentTest rdf:about="#p1">
+        <sourceQuery>Q11a</sourceQuery>
+	<targetQuery>Q11b</targetQuery>
+	<result>true</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#p2">
+        <sourceQuery>Q11b</sourceQuery>
+	<targetQuery>Q11a</targetQuery>
+	<result>false</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#p3">
+        <sourceQuery>Q12a</sourceQuery>
+	<targetQuery>Q12b</targetQuery>
+	<result>true</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#p4">
+        <sourceQuery>Q12b</sourceQuery>
+	<targetQuery>Q12a</targetQuery>
+	<result>true</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#p5">
+        <sourceQuery>Q13a</sourceQuery>
+	<targetQuery>Q13b</targetQuery>
+	<result>true</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#p6">
+        <sourceQuery>Q13b</sourceQuery>
+	<targetQuery>Q13a</targetQuery>
+	<result>false</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#p7">
+        <sourceQuery>Q14c</sourceQuery>
+	<targetQuery>Q14b</targetQuery>
+	<result>true</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#p8">
+        <sourceQuery>Q14b</sourceQuery>
+	<targetQuery>Q14c</targetQuery>
+	<result>false</result>
+      </ContainmentTest>
+    <ContainmentTest rdf:about="#p9">
+        <sourceQuery>Q15a</sourceQuery>
+	<targetQuery>Q15b</targetQuery>
+	<result>false</result>
+      </ContainmentTest>
+    <ContainmentTest rdf:about="#p10">
+        <sourceQuery>Q15b</sourceQuery>
+	<targetQuery>Q15a</targetQuery>
+	<result>true</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#p11">
+        <sourceQuery>Q16a</sourceQuery>
+	<targetQuery>Q16b</targetQuery>
+	<result>false</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#p12">
+        <sourceQuery>Q16b</sourceQuery>
+	<targetQuery>Q16a</targetQuery>
+	<result>false</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#p13">
+        <sourceQuery>Q16a</sourceQuery>
+	<targetQuery>Q16c</targetQuery>
+	<result>true</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#p14">
+        <sourceQuery>Q16c</sourceQuery>
+	<targetQuery>Q16a</targetQuery>
+	<result>false</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#p15">
+        <sourceQuery>Q17a</sourceQuery>
+	<targetQuery>Q17b</targetQuery>
+	<result>false</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#p16">
+        <sourceQuery>Q17b</sourceQuery>
+	<targetQuery>Q17a</targetQuery>
+	<result>true</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#p17">
+        <sourceQuery>Q18a</sourceQuery>
+	<targetQuery>Q18b</targetQuery>
+	<result>true</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#p18">
+        <sourceQuery>Q18b</sourceQuery>
+	<targetQuery>Q18a</targetQuery>
+	<result>false</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#p19">
+        <sourceQuery>Q19a</sourceQuery>
+	<targetQuery>Q19b</targetQuery>
+	<result>false</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#p20">
+        <sourceQuery>Q19b</sourceQuery>
+	<targetQuery>Q19a</targetQuery>
+	<result>false</result>
+      </ContainmentTest>
+    <ContainmentTest rdf:about="#p21">
+        <sourceQuery>Q19c</sourceQuery>
+	<targetQuery>Q19b</targetQuery>
+	<result>false</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#p22">
+        <sourceQuery>Q19b</sourceQuery>
+	<targetQuery>Q19c</targetQuery>
+	<result>true</result>
+      </ContainmentTest>
+        <ContainmentTest rdf:about="#p23">
+        <sourceQuery>Q20a</sourceQuery>
+	<targetQuery>Q20b</targetQuery>
+	<result>false</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#p24">
+        <sourceQuery>Q20b</sourceQuery>
+	<targetQuery>Q20a</targetQuery>
+	<result>true</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#p25">
+        <sourceQuery>Q21a</sourceQuery>
+	<targetQuery>Q21b</targetQuery>
+	<result>false</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#p26">
+        <sourceQuery>Q21b</sourceQuery>
+	<targetQuery>Q21a</targetQuery>
+	<result>false</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#p27">
+        <sourceQuery>Q22a</sourceQuery>
+	<targetQuery>Q22b</targetQuery>
+	<result>true</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#p28">
+        <sourceQuery>Q22b</sourceQuery>
+	<targetQuery>Q22a</targetQuery>
+	<result>false</result>
+      </ContainmentTest>
+
+    </hasTest>
+  </TestSuite>
+</rdf:RDF>

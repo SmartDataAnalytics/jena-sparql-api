@@ -1,0 +1,14 @@
+PREFIX : <http://www.example.org/>
+
+
+
+
+
+SELECT * WHERE {
+	?x a :Student .
+	?x :registeredAt ?y .
+	?x :placeOfBirth ?z .
+	?y a :University .
+	?y :locatedAt ?z .	
+	?z a :City .
+}

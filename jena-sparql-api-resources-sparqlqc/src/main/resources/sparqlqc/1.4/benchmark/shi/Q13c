@@ -1,0 +1,17 @@
+PREFIX : <http://www.lehigh.edu//univ-bench.owl#>
+
+SELECT ?x ?y WHERE 
+{ 
+  {
+    { 
+      ?x a :UndergradStudent . 
+      ?x :takesCourse ?y 
+    }
+     UNION 
+    { 
+      ?x a :GraduateStudent .
+      ?x :takesCourse ?y 
+    } 
+   }
+   ?y a :Course .
+}

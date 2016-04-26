@@ -5,14 +5,25 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCache;
+import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcReader;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParser;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
+import org.aksw.jena_sparql_api.utils.Generator;
+import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
+import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
+import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.Syntax;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.syntax.PatternVars;
+import org.apache.jena.sparql.syntax.syntaxtransform.QueryTransformOps;
 import org.junit.Test;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
@@ -23,6 +34,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonReader;
 
 public class TestSparqlViewCacheVariableRenaming {
+
 
     /**
      * Take a set of queries comprised of quads and filters,
@@ -51,10 +63,29 @@ public class TestSparqlViewCacheVariableRenaming {
             System.out.println(queryStr);
         }
 
+        Model model = SparqlQcReader.readResources("sparqlqc/1.4/benchmark/noprojection/*");
+
+        model.write(System.out);
 
     }
 
-    public static void testVariableRenaming(Query query) {
+    public static void testVariableRenaming(Query baseQuery) throws IOException {
+
+        Collection<Var> vars = PatternVars.vars(baseQuery.getQueryPattern());
+
+        Generator<Var> gen = new VarGeneratorBlacklist(VarGeneratorImpl2.create("v"), vars);
+
+        Map<Var, Node> varMap = vars.stream()
+                .collect(Collectors.toMap(
+                        v -> v,
+                        v -> (Node)gen.next()));
+
+        Query renamedQuery = QueryTransformOps.transform(baseQuery, varMap);
+
+        SparqlViewCache x;
+
+
+
         //query.
     }
 
