@@ -9,16 +9,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformCopyBase;
-import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformer;
 import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.collect.Iterables;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
@@ -26,11 +20,18 @@ import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.PathBlock;
 import org.apache.jena.sparql.core.TriplePath;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.expr.ExprTransformCopy;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementBind;
 import org.apache.jena.sparql.syntax.ElementPathBlock;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
+import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformCopyBase;
+import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.Iterables;
 
 /**
  * Virtual properties map to SPARQL binary relations
@@ -285,7 +286,7 @@ public class ElementTransformVirtualPredicates
 
     public static Element transform(Element element, Map<Node, Relation> virtualPredicates) {
         ElementTransformVirtualPredicates elementTransform = new ElementTransformVirtualPredicates(virtualPredicates);
-        Element result = ElementTransformer.transform(element, elementTransform);
+        Element result = ElementTransformer.transform(element, elementTransform, new ExprTransformCopy(false));
         return result;
     }
 

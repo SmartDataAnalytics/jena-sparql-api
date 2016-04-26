@@ -1,1 +1,0 @@
-classpath:custom/data.ttl	http://ex.org/r/s	http://ex.org/r/t	10	(!<http://foo>)*/<http://ex.org/o/y2>/(!<http://foo>)*	custom1.json

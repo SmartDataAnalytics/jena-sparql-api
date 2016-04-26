@@ -47,62 +47,36 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import com.google.common.base.Stopwatch;
 
-public class MainSparqlViewCache {
+public class MainTestSparqlViewCache {
 
-    private static final Logger logger = LoggerFactory.getLogger(MainSparqlViewCache.class);
-
-
-    private SparqlViewCache conceptMap = new SparqlViewCache();
+    private static final Logger logger = LoggerFactory.getLogger(MainTestSparqlViewCache.class);
 
 
-
-    private Map<Concept, List<Resource>> extension = new HashMap<Concept, List<Resource>>();
-    private QueryExecutionFactory sparqlService;
-
-    public MainSparqlViewCache(QueryExecutionFactory sparqlService) {
-        this.sparqlService = sparqlService;
-    }
-
-    public static void applyCache() {
-        // We can iterate the triple patterns (based on selectivity)
-        // and make lookups of which triple patterns match
-
-
-    }
-
-
-
-
-    public void index(Query query, ResultSet rs) {
-
-        conceptMap.index(query, rs);
-    }
-
-    public void index(Query query) {
-
-        String varName = "a";
-        Var v = Var.alloc(varName);
-        List<String> varList = Arrays.asList(varName);
-        List<Binding> bindings = new ArrayList<Binding>();
-
-        BindingHashMap binding = new BindingHashMap();
-        binding.add(v, RDF.type.asNode());
-
-        bindings.add(binding);
-
-        QueryIterator queryIter = new QueryIterPlainWrapper(bindings.iterator());
-
-        ResultSet rs = ResultSetFactory.create(queryIter, varList);
-        rs = ResultSetFactory.copyResults(rs);
-
-
-
-        //VarUtils.
-
-        //Set<Var> v
-
-        conceptMap.index(query, rs);
-    }
+//    public void index(Query query) {
+//
+//        String varName = "a";
+//        Var v = Var.alloc(varName);
+//        List<String> varList = Arrays.asList(varName);
+//        List<Binding> bindings = new ArrayList<Binding>();
+//
+//        BindingHashMap binding = new BindingHashMap();
+//        binding.add(v, RDF.type.asNode());
+//
+//        bindings.add(binding);
+//
+//        QueryIterator queryIter = new QueryIterPlainWrapper(bindings.iterator());
+//
+//        ResultSet rs = ResultSetFactory.create(queryIter, varList);
+//        rs = ResultSetFactory.copyResults(rs);
+//
+//
+//
+//        //VarUtils.
+//
+//        //Set<Var> v
+//
+//        conceptMap.index(query, rs);
+//    }
 
     public ResultSet execSelect(Query query) {
 
@@ -164,8 +138,6 @@ public class MainSparqlViewCache {
 //                .withPagination(100000)
 //                .create();
 
-        MainSparqlViewCache cache = new MainSparqlViewCache(rawQef);
-
 
         QueryExecutionFactory cachedQef = new QueryExecutionFactoryViewCacheMaster(rawQef, OpExecutorFactoryViewCache.get().getServiceMap());
 
@@ -188,36 +160,36 @@ public class MainSparqlViewCache {
             System.exit(0);
         }
 
-        if(false) {
-            Query query = QueryFactory.create("Prefix ex: <http://example.com/> Select * { ?s a ex:Airport . Filter(regex(str(?s), 'dbpedia')) .}");
-            cache.index(query);
-
-            query = QueryFactory.create("Prefix ex: <http://example.com/> Select * { ?s a ex:Airport ; ex:foo ex:bar ; ?s ?s . Filter(regex(str(?s), 'dbpedia')) .}");
-            cache.index(query);
-
-            query = QueryFactory.create("Prefix ex: <http://example.com/> Select * { ?s a ex:Airport ; ex:foo ?o .}");
-            cache.index(query);
-
-
-            //query = QueryFactory.create("Prefix ex: <http://example.com/> Select * { ?s a ex:Airport . Filter(regex(str(?s), 'dbpedia')) .}");
-            query = QueryFactory.create("Prefix ex: <http://example.com/> Select * { ?s a ex:Airport ; ex:foo ?o; ex:bar ?z . }");
-            cache.execSelect(query);
-        }
-
-
-        // Ambiguous case:
-        if(false) {
-            //Query query = QueryFactory.create("Select * { ?a ?b ?c . ?c ?d ?e }");
-            Query query = QueryFactory.create("Select * { ?a ?b ?c . ?a ?d ?e }");
-            cache.index(query);
-
-//            query = QueryFactory.create("Select * { ?a ?b ?c . ?d ?e ?f }");
+//        if(false) {
+//            Query query = QueryFactory.create("Prefix ex: <http://example.com/> Select * { ?s a ex:Airport . Filter(regex(str(?s), 'dbpedia')) .}");
 //            cache.index(query);
-
-            //query = QueryFactory.create("Prefix ex: <http://example.com/> Select * { ?s a ex:Airport . Filter(regex(str(?s), 'dbpedia')) .}");
-            query = QueryFactory.create("Select * { ?a ?b ?c . ?a ?d ?e . ?a ?f ?g . ?g ?h ?i . ?k ?l ?m . ?m ?n ?o }");
-            cache.execSelect(query);
-        }
+//
+//            query = QueryFactory.create("Prefix ex: <http://example.com/> Select * { ?s a ex:Airport ; ex:foo ex:bar ; ?s ?s . Filter(regex(str(?s), 'dbpedia')) .}");
+//            cache.index(query);
+//
+//            query = QueryFactory.create("Prefix ex: <http://example.com/> Select * { ?s a ex:Airport ; ex:foo ?o .}");
+//            cache.index(query);
+//
+//
+//            //query = QueryFactory.create("Prefix ex: <http://example.com/> Select * { ?s a ex:Airport . Filter(regex(str(?s), 'dbpedia')) .}");
+//            query = QueryFactory.create("Prefix ex: <http://example.com/> Select * { ?s a ex:Airport ; ex:foo ?o; ex:bar ?z . }");
+//            cache.execSelect(query);
+//        }
+//
+//
+//        // Ambiguous case:
+//        if(false) {
+//            //Query query = QueryFactory.create("Select * { ?a ?b ?c . ?c ?d ?e }");
+//            Query query = QueryFactory.create("Select * { ?a ?b ?c . ?a ?d ?e }");
+//            cache.index(query);
+//
+////            query = QueryFactory.create("Select * { ?a ?b ?c . ?d ?e ?f }");
+////            cache.index(query);
+//
+//            //query = QueryFactory.create("Prefix ex: <http://example.com/> Select * { ?s a ex:Airport . Filter(regex(str(?s), 'dbpedia')) .}");
+//            query = QueryFactory.create("Select * { ?a ?b ?c . ?a ?d ?e . ?a ?f ?g . ?g ?h ?i . ?k ?l ?m . ?m ?n ?o }");
+//            cache.execSelect(query);
+//        }
 
         if(false) {
             Query query;
