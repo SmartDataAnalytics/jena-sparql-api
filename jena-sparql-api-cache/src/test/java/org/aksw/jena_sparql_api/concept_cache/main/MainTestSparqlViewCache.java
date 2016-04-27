@@ -152,8 +152,8 @@ public class MainTestSparqlViewCache {
             //it.inc(0);
             //it.inc(1);
 
-            while(it.vector() != null) {
-                System.out.println(Arrays.toString(it.vector()));
+            while(it.getVector() != null) {
+                System.out.println(Arrays.toString(it.getVector()));
                 it.inc();
             }
 

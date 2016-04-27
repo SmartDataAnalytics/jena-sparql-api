@@ -60,7 +60,7 @@ public class CombinatoricsVector
         return result;
     }
 
-    public int[] vector() {
+    public int[] getVector() {
         return vector;
     }
 

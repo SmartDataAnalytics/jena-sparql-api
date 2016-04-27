@@ -33,9 +33,6 @@ class IteratorVarMapQuadGroup
         this.baseSolution = baseSolution;
 
         this.combi = new CombinatoricsVector(targetQuads.size(), sourceQuads.size());
-
-        combi.inc();
-        
         this.partialSolutions = new ArrayList<Map<Var, Var>>(sourceQuads.size());
 
         update(0);
@@ -43,7 +40,7 @@ class IteratorVarMapQuadGroup
 
     // Returns true if a solution was generated
     private boolean update(int i) {
-        int[] vector = combi.vector();
+        int[] vector = combi.getVector();
 
         for(; i < vector.length; ++i) {
 
@@ -103,12 +100,12 @@ class IteratorVarMapQuadGroup
     @Override
     protected Map<Var, Var> computeNext() {
         // Check if we are at a solution
-        while(combi.vector() != null && partialSolutions.size() != sourceQuads.size()) {
+        while(combi.getVector() != null && partialSolutions.size() != sourceQuads.size()) {
             inc();
         }
 
         Map<Var, Var> result;
-        if(combi.vector() == null) {
+        if(combi.getVector() == null) {
             result = this.endOfData();
         } else {
 
