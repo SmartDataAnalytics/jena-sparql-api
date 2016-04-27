@@ -1,9 +1,6 @@
 package org.aksw.jena_sparql_api.concept_cache.main;
 
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.lang.reflect.Type;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -16,6 +13,8 @@ import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCache;
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCacheImpl;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
+import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcReader;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParser;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
@@ -24,6 +23,7 @@ import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
+import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.sparql.algebra.table.TableData;
@@ -33,11 +33,6 @@ import org.apache.jena.sparql.syntax.syntaxtransform.QueryTransformOps;
 import org.junit.Test;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
-
-import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.stream.JsonReader;
 
 public class TestSparqlViewCacheVariableRenaming {
 
@@ -55,26 +50,32 @@ public class TestSparqlViewCacheVariableRenaming {
         //List<String> lines = Files.readAllLines(Paths.get(""), encoding);
         Resource r = new ClassPathResource("bgp-queries.json");
 
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        JsonReader jsonReader = new JsonReader(new InputStreamReader(r.getInputStream(), StandardCharsets.UTF_8));
-        jsonReader.setLenient(true);
-
-        Type listType = new TypeToken<ArrayList<String>>() {}.getType();
-        List<String> queryStrs = gson.fromJson(jsonReader, listType);
-
-        SparqlQueryParser sparqlParser = SparqlQueryParserImpl.create(Syntax.syntaxARQ);
-        List<Query> query = queryStrs.stream().map(sparqlParser).collect(Collectors.toList());
-
-
-        for(String queryStr : queryStrs) {
-            System.out.println(queryStr);
-            Query testQuery = sparqlParser.apply(queryStr);
-            testVariableRenaming(testQuery);
-        }
+//        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+//        JsonReader jsonReader = new JsonReader(new InputStreamReader(r.getInputStream(), StandardCharsets.UTF_8));
+//        jsonReader.setLenient(true);
+//
+//        Type listType = new TypeToken<ArrayList<String>>() {}.getType();
+//        List<String> queryStrs = gson.fromJson(jsonReader, listType);
 
         Model model = SparqlQcReader.readResources("sparqlqc/1.4/benchmark/noprojection/*");
+        QueryExecutionFactory qef = FluentQueryExecutionFactory.from(model).create();
+        ResultSet rs = qef.createQueryExecution("SELECT ?c { ?s <http://ex.org/ontology/content> ?c }").execSelect();
 
-        model.write(System.out);
+        List<String> queryStrs = new ArrayList<>();
+        rs.forEachRemaining(b -> queryStrs.add(b.get("c").asLiteral().getString()));
+
+        model.write(System.out, "TURTLE");
+
+
+        SparqlQueryParser sparqlParser = SparqlQueryParserImpl.create(Syntax.syntaxARQ);
+        List<Query> queries = queryStrs.stream().map(sparqlParser).collect(Collectors.toList());
+
+
+        for(Query query : queries) {
+            System.out.println(query);
+            testVariableRenaming(query);
+        }
+
 
     }
 
