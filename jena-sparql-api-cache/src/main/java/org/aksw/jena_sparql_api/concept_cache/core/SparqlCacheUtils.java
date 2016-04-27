@@ -35,6 +35,7 @@ import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
 import org.aksw.jena_sparql_api.utils.ReplaceConstants;
+import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.ext.com.google.common.collect.Sets;
@@ -549,13 +550,23 @@ public class SparqlCacheUtils {
     }
 
     public static ProjectedQuadFilterPattern transform(Query query) {
-
         Op op = Algebra.compile(query);
         op = Algebra.toQuadForm(op);
         op = ReplaceConstants.replace(op);
         ProjectedQuadFilterPattern result = transform(op);
         return result;
     }
+
+    public static QuadFilterPatternCanonical transform2(Query query) {
+        Op op = Algebra.compile(query);
+        op = Algebra.toQuadForm(op);
+        op = ReplaceConstants.replace(op);
+        ProjectedQuadFilterPattern pqfp = transform(op);
+        QuadFilterPatternCanonical result = pqfp == null ? null : canonicalize2(pqfp.getQuadFilterPattern(), VarGeneratorImpl2.create("v"));
+
+        return result;
+    }
+
 
     public static ProjectedQuadFilterPattern transform(Element element) {
 
