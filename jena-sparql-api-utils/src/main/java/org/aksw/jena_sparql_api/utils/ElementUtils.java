@@ -207,6 +207,7 @@ public class ElementUtils {
         return result;
     }
 
+    @Deprecated // Use TransformElementLib.transform instead
     public static Element applyNodeTransform(Element element, NodeTransform nodeTransform) {
         ElementTransform elementTransform = new ElementTransformSubst2(nodeTransform);
         ExprTransform exprTransform = new ExprTransformNodeElement(nodeTransform, elementTransform);

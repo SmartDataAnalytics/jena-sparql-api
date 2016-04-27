@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.aksw.jena_sparql_api.backports.syntaxtransform.QueryTransformOps;
 import org.aksw.jena_sparql_api.concept_cache.core.CacheResult;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCache;
@@ -29,7 +30,6 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.sparql.algebra.table.TableData;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.syntax.PatternVars;
-import org.apache.jena.sparql.syntax.syntaxtransform.QueryTransformOps;
 import org.junit.Test;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
