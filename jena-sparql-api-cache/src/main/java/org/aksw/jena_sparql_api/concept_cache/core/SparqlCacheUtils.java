@@ -497,7 +497,10 @@ public class SparqlCacheUtils {
 
 
     /**
-     * ([?s ?s ?s ?o], (fn(?s, ?o))
+     * Rename all variables to ?g ?s ?p ?o based on the given quad and the cnf
+     * This is used for looking up triples having a certain expression over its components 
+     * 
+     * ([?g ?s ?s ?o], (fn(?s, ?o))
      *
      * @param quad
      * @param expr

@@ -55,7 +55,7 @@ public class SparqlQcReader {
         inout.add(result, inout.createProperty("http://ex.org/ontology/content"), inout.createLiteral(content));
         inout.add(result, inout.createProperty("http://ex.org/ontology/variant"), inout.createLiteral(variant));
 
-        System.out.println("" + id + variant);
+        //System.out.println("" + id + variant);
 
         return result;
     }

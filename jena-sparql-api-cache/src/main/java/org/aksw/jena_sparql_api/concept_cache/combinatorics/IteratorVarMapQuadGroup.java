@@ -34,6 +34,8 @@ class IteratorVarMapQuadGroup
 
         this.combi = new CombinatoricsVector(targetQuads.size(), sourceQuads.size());
 
+        combi.inc();
+        
         this.partialSolutions = new ArrayList<Map<Var, Var>>(sourceQuads.size());
 
         update(0);

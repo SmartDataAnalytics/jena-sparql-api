@@ -26,6 +26,9 @@ public class CombinatoricsUtils {
     }
 
     /**
+     * TODO the quad groups are equivalent classes - this seems to be in essence what JgraphT isomorphims tooling does 
+     * http://jgrapht.org/javadoc/org/jgrapht/alg/isomorphism/VF2GraphIsomorphismInspector.html (and SubGraphIsomorphism) variant
+     * 
      * Find a mapping of variables from cand to query, such that the pattern of
      * cand becomes a subset of that of query
      *
@@ -42,6 +45,9 @@ public class CombinatoricsUtils {
 
         //IBiSetMultimap<Quad, Quad> candToQuery = new BiHashMultimap<Quad, Quad>();
 //        Map<Set<Set<Expr>>, QuadGroup> cnfToQuadGroup = new HashMap<Set<Set<Expr>>, QuadGroup>();
+
+        
+        // TODO Replace quad group by a pair object
         List<QuadGroup> quadGroups = new ArrayList<QuadGroup>();
         for(Entry<Set<Set<Expr>>, Collection<Quad>> entry : cnfToCandQuad.asMap().entrySet()) {
 
@@ -91,7 +97,7 @@ public class CombinatoricsUtils {
             public int compare(QuadGroup a, QuadGroup b) {
                 int i = Utils2.getNumMatches(a);
                 int j = Utils2.getNumMatches(b);
-                int r = j - i;
+                int r = i - j;
                 return r;
             }
         });
@@ -110,7 +116,7 @@ public class CombinatoricsUtils {
         CartesianProduct<Map<Var, Var>> cart = new CartesianProduct<Map<Var,Var>>(cartesian);
 
         Iterator<Map<Var, Var>> result = new IteratorVarMapQuadGroups(cart.iterator());
-
+        
         return result;
     }
 }
