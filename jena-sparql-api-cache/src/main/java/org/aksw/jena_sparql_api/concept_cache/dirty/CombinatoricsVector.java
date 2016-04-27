@@ -34,6 +34,7 @@ public class CombinatoricsVector
 
     /**
      * Request to increment the value at a given index.
+     * Can be used to skip all combinations with a certain prefix.
      *
      * @param i
      * @return
