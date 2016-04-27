@@ -24,6 +24,7 @@ import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Model;
@@ -64,7 +65,7 @@ public class TestSparqlViewCacheVariableRenaming {
         List<String> queryStrs = new ArrayList<>();
         rs.forEachRemaining(b -> queryStrs.add(b.get("c").asLiteral().getString()));
 
-        model.write(System.out, "TURTLE");
+//        model.write(System.out, "TURTLE");
 
 
         SparqlQueryParser sparqlParser = SparqlQueryParserImpl.create(Syntax.syntaxARQ);
@@ -83,7 +84,7 @@ public class TestSparqlViewCacheVariableRenaming {
 
         Collection<Var> vars = PatternVars.vars(baseQuery.getQueryPattern());
 
-        QuadFilterPatternCanonical qfpc = SparqlCacheUtils.transform2(baseQuery);
+        QuadFilterPatternCanonical baseQfpc = SparqlCacheUtils.transform2(baseQuery);
         List<Var> baseVars = baseQuery.getProjectVars();
 
         Generator<Var> gen = new VarGeneratorBlacklist(VarGeneratorImpl2.create("v"), vars);
@@ -100,13 +101,17 @@ public class TestSparqlViewCacheVariableRenaming {
 
         SparqlViewCache sparqlViewCache = new SparqlViewCacheImpl();
 
+        System.out.println("base: " + baseQfpc);
+        System.out.println("renamed: " + renamedQfpc);
 
 
-        sparqlViewCache.index(qfpc, new TableData(baseVars, Collections.emptyList()));
+        sparqlViewCache.index(baseQfpc, new TableData(baseVars, Collections.emptyList()));
         CacheResult cr = sparqlViewCache.lookup(renamedQfpc);
-
-        System.out.println("Cache lookup - got " + cr.getTables().size() + " candidate tables");
-
+        if(cr == null) {
+            System.out.println("FAIL");
+        } else {
+            System.out.println("Cache lookup - got " + cr.getTables().size() + " candidate tables");
+        }
 
         //SparqlViewCache.
 
