@@ -42,20 +42,24 @@ public class SparqlQcReader {
     public static org.apache.jena.rdf.model.Resource processResource(Resource resource, Model inout) throws IOException {
         String fileName = resource.getFilename();
         Matcher m = queryNamePattern.matcher(fileName);
-        m.find();
-        Long id = Long.parseLong(m.group("id"));
-        String variant = m.group("variant");
+        boolean hasMatches = m.find();
+        org.apache.jena.rdf.model.Resource result;
+        if(hasMatches) {
+            Long id = Long.parseLong(m.group("id"));
+            String variant = m.group("variant");
 
-        org.apache.jena.rdf.model.Resource result = inout.createResource("http://ex.org/query/" + id + "-" + variant);
+            result = inout.createResource("http://ex.org/query/" + id + "-" + variant);
 
-        String content = StreamUtils.toString(resource.getInputStream());
+            String content = StreamUtils.toString(resource.getInputStream());
 
-        inout.add(result, RDF.type, inout.createResource("http://ex.org/ontology/Query"));
-        inout.add(result, inout.createProperty("http://ex.org/ontology/id"), inout.createTypedLiteral(id));
-        inout.add(result, inout.createProperty("http://ex.org/ontology/content"), inout.createLiteral(content));
-        inout.add(result, inout.createProperty("http://ex.org/ontology/variant"), inout.createLiteral(variant));
-
-        System.out.println("" + id + variant);
+            inout.add(result, RDF.type, inout.createResource("http://ex.org/ontology/Query"));
+            inout.add(result, inout.createProperty("http://ex.org/ontology/id"), inout.createTypedLiteral(id));
+            inout.add(result, inout.createProperty("http://ex.org/ontology/content"), inout.createLiteral(content));
+            inout.add(result, inout.createProperty("http://ex.org/ontology/variant"), inout.createLiteral(variant));
+        } else {
+            result = null;
+        }
+        //System.out.println("" + id + variant);
 
         return result;
     }
