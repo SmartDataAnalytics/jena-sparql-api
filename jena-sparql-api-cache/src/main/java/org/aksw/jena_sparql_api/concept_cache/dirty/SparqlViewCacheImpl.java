@@ -28,6 +28,7 @@ import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.domain.VarOccurrence;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.aksw.jena_sparql_api.utils.ResultSetPart;
+import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.ResultSet;
@@ -54,8 +55,10 @@ public class SparqlViewCacheImpl
     private static final Logger logger = LoggerFactory.getLogger(SparqlViewCacheImpl.class);
 
     //private Multimap<Set<Set<Expr>>, PatternSummary> quadCnfToSummary = HashMultimap.create();
-    private IBiSetMultimap<Set<Set<Expr>>, PatternSummary> quadCnfToSummary = new BiHashMultimap<Set<Set<Expr>>, PatternSummary>();
-    private Map<PatternSummary, Map<Set<Var>, Table>> cacheData = new HashMap<PatternSummary, Map<Set<Var>, Table>>();
+    private IBiSetMultimap<Set<Set<Expr>>, QuadFilterPatternCanonical> quadCnfToSummary = new BiHashMultimap<Set<Set<Expr>>, QuadFilterPatternCanonical>();
+    private Map<QuadFilterPatternCanonical, Map<Set<Var>, Table>> cacheData = new HashMap<QuadFilterPatternCanonical, Map<Set<Var>, Table>>();
+
+    private Map<QuadFilterPatternCanonical, IBiSetMultimap<Quad, Set<Set<Expr>>>> qfpcToQuadToCnf = new HashMap<>();
 
 
 //    public void lookup(Query query) {
@@ -77,7 +80,7 @@ public class SparqlViewCacheImpl
         List<QfpcMatch> result = new ArrayList<QfpcMatch>();
 
         // TODO: We need the quadToCnf map for the queryPs
-        IBiSetMultimap<Quad, Set<Set<Expr>>> queryQuadToCnf = SparqlCacheUtils.createMapQuadsToFilters(queryQfpc.getQuads(), queryQfpc.getFilterCnf());
+        IBiSetMultimap<Quad, Set<Set<Expr>>> queryQuadToCnf = SparqlCacheUtils.createMapQuadsToFilters(queryQfpc);
 
 
 
@@ -89,19 +92,19 @@ public class SparqlViewCacheImpl
         int querySize = queryQfpc.getQuads().size();
 
 
-        Set<PatternSummary> rawCandsSet = new HashSet<PatternSummary>();
+        Set<QuadFilterPatternCanonical> rawCandsSet = new HashSet<>();
 
         //int querySize = queryQfp.getQuads().size();
 
         for(Set<Set<Expr>> quadCnf : quadCnfs) {
-            Collection<PatternSummary> cands = quadCnfToSummary.get(quadCnf);
+            Collection<QuadFilterPatternCanonical> cands = quadCnfToSummary.get(quadCnf);
 
             // TODO: Keep track of which variables are candidates -
             // e.g. variables that have only a single varOcc (i.e. appear only once in the query) cannot be used for caching
 
             // Only retain candidates having fewer quads than the query
-            for(PatternSummary cand : cands) {
-                int candSize = cand.getCanonicalPattern().getQuads().size();
+            for(QuadFilterPatternCanonical cand : cands) {
+                int candSize = cand.getQuads().size();
 
                 if(candSize <= querySize) {
                     rawCandsSet.add(cand);
@@ -116,12 +119,12 @@ public class SparqlViewCacheImpl
         //System.out.println("#cands: " + rawCands.size());
 
         // Try candidates with largest potential overlap first
-        List<PatternSummary> rawCands = new ArrayList<PatternSummary>(rawCandsSet);
-        Collections.sort(rawCands, new Comparator<PatternSummary>() {
+        List<QuadFilterPatternCanonical> rawCands = new ArrayList<QuadFilterPatternCanonical>(rawCandsSet);
+        Collections.sort(rawCands, new Comparator<QuadFilterPatternCanonical>() {
             @Override
-            public int compare(PatternSummary a, PatternSummary b) {
-                int x = a.getCanonicalPattern().getQuads().size();
-                int y = b.getCanonicalPattern().getQuads().size();
+            public int compare(QuadFilterPatternCanonical a, QuadFilterPatternCanonical b) {
+                int x = a.getQuads().size();
+                int y = b.getQuads().size();
 
                 int r = x - y;
                 return r;
@@ -131,7 +134,7 @@ public class SparqlViewCacheImpl
 
         // Iterate all candidate pattern summaries and
         // check for their containment in the query
-        for(PatternSummary cand : rawCands) {
+        for(QuadFilterPatternCanonical cand : rawCands) {
             // Get the variable-combinations for which cache entries exist
             Map<Set<Var>, Table> tmp = cacheData.get(cand);
             Set<Set<Var>> candVarCombos = tmp.keySet();
@@ -139,14 +142,15 @@ public class SparqlViewCacheImpl
 
             // For a pattern there might be multiple candidate variable mappings
             // Filter expressions are not considered at this stage
-            Iterator<Map<Var, Var>> varMaps = CombinatoricsUtils.computeVarMapQuadBased(queryQuadToCnf, cand.getQuadToCnf(), candVarCombos);
+            IBiSetMultimap<Quad, Set<Set<Expr>>> cacheQuadToCnf = qfpcToQuadToCnf.get(cand);
+            Iterator<Map<Var, Var>> varMaps = CombinatoricsUtils.computeVarMapQuadBased(queryQuadToCnf, cacheQuadToCnf, candVarCombos);
 
             while(varMaps.hasNext()) {
                 Map<Var, Var> varMap = varMaps.next();
 
                 NodeTransform rename = new NodeTransformRenameMap(varMap);
 
-                QuadFilterPatternCanonical candRename = cand.getCanonicalPattern().applyNodeTransform(rename);
+                QuadFilterPatternCanonical candRename = cand.applyNodeTransform(rename);
 
 //                System.out.println(varMap);
 //                System.out.println(candRename);
@@ -395,29 +399,25 @@ public class SparqlViewCacheImpl
 
 
     public void index(QuadFilterPatternCanonical qfpc, Table table) {
+        //PatternSummary ps = SparqlCacheUtils.summarize(qfp);
 
-    }
-
-    public void index(QuadFilterPattern qfp, Table table) {
-
-
-        //Table table = SparqlCacheUtils.createTable(rs);
-        //Table table = ResultSetPart.toTable(rs);
-
-        //QuadFilterPattern qfp = transform(query);
-//        if(qfp == null) {
-//            throw new RuntimeException("Could not index " + query);
-//        }
-
-        PatternSummary ps = SparqlCacheUtils.summarize(qfp);
 
         Set<Var> vars = VarUtils.toSet(table.getVarNames()); //.getResultVars());
 
-        Map<Set<Var>, Table> map = cacheData.get(qfp);
+        Map<Set<Var>, Table> map = cacheData.get(qfpc);
         if(map == null) {
             map = new HashMap<Set<Var>, Table>();
-            cacheData.put(ps, map);
+            cacheData.put(qfpc, map);
+
+            IBiSetMultimap<Quad, Set<Set<Expr>>> quadToCnf = SparqlCacheUtils.createMapQuadsToFilters(qfpc);
+            qfpcToQuadToCnf.put(qfpc, quadToCnf);
+
+            Set<Set<Set<Expr>>> quadCnfs = quadToCnf.getInverse().keySet();
+            for(Set<Set<Expr>> quadCnf : quadCnfs) {
+                quadCnfToSummary.put(quadCnf, qfpc);
+            }
         }
+
 
         Table tmp = map.get(vars);
         if(tmp != null) {
@@ -425,55 +425,12 @@ public class SparqlViewCacheImpl
         }
 
         map.put(vars, table);
+    }
 
+    public void index(QuadFilterPattern qfp, Table table) {
 
-        // Index the pattern summary
-
-        //CacheSummary<ResultSet> cacheEntry = new CacheSummary<ResultSet>(ps, );
-
-
-        Set<Set<Set<Expr>>> quadCnfs = ps.getQuadToCnf().getInverse().keySet();
-        for(Set<Set<Expr>> quadCnf : quadCnfs) {
-            quadCnfToSummary.put(quadCnf, ps);
-        }
-
-
-
-
-        //ps.get
-
-        //ElementTreeAnalyser eta = new ElementTreeAnalyser(
-        //ElementTreeAnalyser.
-
-
-        // Index the constraints
-//        RestrictionManagerImpl rm = new RestrictionManagerImpl();
-//        Set<Clause> clauses = new HashSet<Clause>();
-//        for(Set<Expr> set : cnf) {
-//            clauses.add(new Clause(set));
-//        }
-//
-//        NestedNormalForm nnf = new NestedNormalForm(clauses);
-//        rm.stateCnf(nnf);
-
-
-        // For each quad determine the clauses that only affect the quad
-
-        // {?s ?s ?s ?s . Filter(?s In (...)} }
-        // ?s => { 0, 1, 2, 3} // could use bit set
-
-//        System.out.println("----------------------------");
-//        for(Entry<Set<Set<Expr>>, Collection<PatternSummary>> entry : quadCnfToSummary.asMap().entrySet()) {
-//            System.out.println(entry.getKey());
-//
-//            for(PatternSummary q : entry.getValue()) {
-//                System.out.println("- " + q.getCanonicalPattern());
-//            }
-//
-//            System.out.println("----------------------------");
-//        }
-
-        //System.out.println(conditionsToQuery);
+        QuadFilterPatternCanonical qfpc = SparqlCacheUtils.canonicalize2(qfp, VarGeneratorImpl2.create("v"));
+        index(qfpc, table);
     }
 
 }

@@ -11,7 +11,7 @@ import com.google.common.collect.Multimap;
 /**
  * Map a set of features to a single value.
  *
- * In 
+ * In
  *
  * @author raven
  *
@@ -25,7 +25,7 @@ public class ContainmentMapImpl<K, V>
     @Override
     public void put(Set<K> key, V value) {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override

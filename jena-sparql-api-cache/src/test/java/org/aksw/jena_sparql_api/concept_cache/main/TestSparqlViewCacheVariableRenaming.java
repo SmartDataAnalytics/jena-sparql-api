@@ -84,15 +84,15 @@ public class TestSparqlViewCacheVariableRenaming {
 
         Query renamedQuery = QueryTransformOps.transform(baseQuery, varMap);
 
-        
-        SparqlViewCache.
-        
+
+        //SparqlViewCache.
+
 //        SparqlV
 //        public CacheResult lookup(QuadFilterPatternCanonical queryQfpc) { //PatternSummary queryPs) {
 
-        SparqlViewCache x;
+        //SparqlViewCache x;
         //x.lookup(queryQfpc);
-        x.index(qfp, rsp);
+        //x.index(qfp, rsp);
 
         //query.
     }

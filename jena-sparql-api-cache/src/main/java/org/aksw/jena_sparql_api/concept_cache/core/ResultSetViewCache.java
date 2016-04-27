@@ -7,14 +7,15 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCache;
 import org.aksw.jena_sparql_api.concept_cache.dirty.IteratorResultSetBinding;
+import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCache;
 import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
+import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.utils.ResultSetPart;
-import org.aksw.jena_sparql_api.utils.ResultSetUtils;
+import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.apache.jena.query.ResultSet;
-import org.apache.jena.query.ResultSetFactory;
+import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.ResultSetStream;
 import org.apache.jena.sparql.engine.binding.Binding;
@@ -33,11 +34,11 @@ public class ResultSetViewCache {
      * @param physicalRs
      * @param indexVars
      * @param indexResultSetSizeThreshold
-     * @param conceptMap
+     * @param sparqlViewCache
      * @param pqfp
      * @return
      */
-    public static Entry<ResultSet, Boolean> cacheResultSet(ResultSet physicalRs, Set<Var> indexVars, long indexResultSetSizeThreshold, SparqlViewCache conceptMap, ProjectedQuadFilterPattern pqfp) {
+    public static Entry<ResultSet, Boolean> cacheResultSet(ResultSet physicalRs, Set<Var> indexVars, long indexResultSetSizeThreshold, SparqlViewCache sparqlViewCache, ProjectedQuadFilterPattern pqfp) {
 
         ResultSet resultRs;
         //ResultSet physicalRs = decoratee.execSelect();
@@ -64,8 +65,11 @@ public class ResultSetViewCache {
             //resultRs = ResultSetFactory.copyResults(tmp);
 
             QuadFilterPattern qfp = pqfp.getQuadFilterPattern();
+            QuadFilterPatternCanonical qfpc = SparqlCacheUtils.canonicalize2(qfp, VarGeneratorImpl2.create("v"));
+
             //ResultSet cacheRs = ResultSetUtils.project(resultRs, indexVars, true);
-            conceptMap.index(qfp, tmp); //cacheRs);
+            Table table = ResultSetPart.toTable(tmp);
+            sparqlViewCache.index(qfpc, table); //cacheRs);
 
             resultRs = ResultSetPart.toResultSet(tmp);
 
