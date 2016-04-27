@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.concept_cache.core;
 import java.util.Map;
 
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCache;
+import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCacheImpl;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactoryDecorator;
 import org.apache.jena.graph.Node;
@@ -28,7 +29,7 @@ public class QueryExecutionFactoryViewCacheMaster
 
 
     public QueryExecutionFactoryViewCacheMaster(QueryExecutionFactory decoratee, Map<Node, ? super ViewCacheIndexer> serviceMap) {
-        this(decoratee, serviceMap, new SparqlViewCache(), 10000);
+        this(decoratee, serviceMap, new SparqlViewCacheImpl(), 10000);
     }
 
     public QueryExecutionFactoryViewCacheMaster(QueryExecutionFactory decoratee, Map<Node, ? super ViewCacheIndexer> serviceMap, SparqlViewCache conceptMap, long indexResultSetSizeThreshold) {

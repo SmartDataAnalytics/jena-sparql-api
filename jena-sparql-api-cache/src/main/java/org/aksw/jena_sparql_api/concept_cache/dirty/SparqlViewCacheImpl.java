@@ -10,8 +10,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
@@ -27,7 +27,6 @@ import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.domain.VarOccurrence;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
-import org.aksw.jena_sparql_api.utils.ReplaceConstants;
 import org.aksw.jena_sparql_api.utils.ResultSetPart;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.apache.jena.query.Query;
@@ -50,6 +49,7 @@ import com.google.common.collect.Sets;
  *
  */
 public class SparqlViewCacheImpl
+    implements SparqlViewCache
 {
     private static final Logger logger = LoggerFactory.getLogger(SparqlViewCacheImpl.class);
 
