@@ -114,8 +114,12 @@ public class CombinatoricsUtils {
         return result;
     }
 
+    public static Iterable<Map<Var, Var>> createSolutions(Entry<? extends Collection<Quad>, ? extends Collection<Quad>> quadGroup, Map<Var, Var> baseSolution) {
+        Iterable<Map<Var, Var>> result = () -> createSolutionStream(quadGroup, baseSolution).iterator();
+        return result;
+    }
 
-    public static Stream<Map<Var, Var>> createSolutions(Entry<? extends Collection<Quad>, ? extends Collection<Quad>> quadGroup, Map<Var, Var> baseSolution) {
+    public static Stream<Map<Var, Var>> createSolutionStream(Entry<? extends Collection<Quad>, ? extends Collection<Quad>> quadGroup, Map<Var, Var> baseSolution) {
         Collection<Quad> candQuads = quadGroup.getKey();
         Collection<Quad> queryQuads = quadGroup.getValue();
 
