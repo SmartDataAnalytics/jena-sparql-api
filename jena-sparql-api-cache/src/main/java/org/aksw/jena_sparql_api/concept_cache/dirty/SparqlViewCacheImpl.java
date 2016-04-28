@@ -6,12 +6,12 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
@@ -143,10 +143,11 @@ public class SparqlViewCacheImpl
             // For a pattern there might be multiple candidate variable mappings
             // Filter expressions are not considered at this stage
             IBiSetMultimap<Quad, Set<Set<Expr>>> cacheQuadToCnf = qfpcToQuadToCnf.get(cand);
-            Iterator<Map<Var, Var>> varMaps = CombinatoricsUtils.computeVarMapQuadBased(queryQuadToCnf, cacheQuadToCnf, candVarCombos);
+            Stream<Map<Var, Var>> varMaps = CombinatoricsUtils.computeVarMapQuadBased(queryQuadToCnf, cacheQuadToCnf, candVarCombos);
 
-            while(varMaps.hasNext()) {
-                Map<Var, Var> varMap = varMaps.next();
+            //while(varMaps.hasNext()) {
+            varMaps.forEach(varMap -> {
+
 
                 NodeTransform rename = new NodeTransformRenameMap(varMap);
 
@@ -214,7 +215,7 @@ public class SparqlViewCacheImpl
                 }
                 // We do not have to iterate additional var mappings if we found a subsumption
                 //break;
-            }
+            });
         }
 
 
@@ -229,20 +230,20 @@ public class SparqlViewCacheImpl
         // TODO This has square complexity - maybe we could do better
         List<QfpcMatch> argh = result;
 
-        result =
+        List<QfpcMatch> actualResult =
             argh.stream()
             .filter(a ->
                 !argh.stream().anyMatch(b -> a != b && b.getDiffPattern().isSubsumedBy(a.getDiffPattern())))
             .collect(Collectors.toList());
 
-        logger.debug("CacheHits after subsumtion: " + result.size());
+        logger.debug("CacheHits after subsumtion: " + actualResult.size());
 
 
         //List<CacheHit> c = new ArrayList<CacheHit>();
         //CacheHit r = null;
         QuadFilterPatternCanonical replacementPattern = null;
         List<Table> tables = new ArrayList<Table>();
-        for(QfpcMatch ch : result) {
+        for(QfpcMatch ch : actualResult) {
 
             logger.debug("VarMap: Cache to Query: " + ch.getVarMap());
             //ch.get

@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.aksw.jena_sparql_api.utils.Pair;
 import org.aksw.jena_sparql_api_sparql_path2.Directed;
 import org.aksw.jena_sparql_api_sparql_path2.FrontierData;
 import org.aksw.jena_sparql_api_sparql_path2.FrontierItem;
@@ -13,7 +14,6 @@ import org.aksw.jena_sparql_api_sparql_path2.JGraphTUtils;
 import org.aksw.jena_sparql_api_sparql_path2.MapUtils;
 import org.aksw.jena_sparql_api_sparql_path2.NestedPath;
 import org.aksw.jena_sparql_api_sparql_path2.Nfa;
-import org.aksw.jena_sparql_api_sparql_path2.Pair;
 import org.aksw.jena_sparql_api_sparql_path2.ParentLink;
 import org.aksw.jena_sparql_api_sparql_path2.PredicateClass;
 import org.aksw.jena_sparql_api_sparql_path2.ValueSet;

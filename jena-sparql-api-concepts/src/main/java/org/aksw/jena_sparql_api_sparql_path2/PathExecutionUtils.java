@@ -13,6 +13,7 @@ import org.aksw.jena_sparql_api.lookup.LookupServiceListService;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
+import org.aksw.jena_sparql_api.utils.Pair;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.path.Path;

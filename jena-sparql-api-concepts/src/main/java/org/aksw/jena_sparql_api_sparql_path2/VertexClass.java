@@ -5,6 +5,8 @@ import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.aksw.jena_sparql_api.utils.Pair;
+
 /**
  * The main reason this class extends pair is to have the list interface
  * which allows iterating the directions with get(0) and get(1)

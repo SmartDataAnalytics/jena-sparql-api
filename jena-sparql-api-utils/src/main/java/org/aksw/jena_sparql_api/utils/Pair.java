@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api_sparql_path2;
+package org.aksw.jena_sparql_api.utils;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -9,6 +9,8 @@ import java.util.Map.Entry;
 
 /**
  * A pair is a collection having 2 entries of same type
+ *
+ * Note: For a pair with two different types, use Map.SimpleEntry
  *
  * @author raven
  *

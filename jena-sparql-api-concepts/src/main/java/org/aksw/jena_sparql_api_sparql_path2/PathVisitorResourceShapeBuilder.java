@@ -4,6 +4,7 @@ import java.util.Set;
 
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.aksw.jena_sparql_api.utils.ExprListUtils;
+import org.aksw.jena_sparql_api.utils.Pair;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.expr.E_NotOneOf;

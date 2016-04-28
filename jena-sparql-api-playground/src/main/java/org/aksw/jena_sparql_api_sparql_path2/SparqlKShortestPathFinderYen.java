@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.lookup.LookupService;
+import org.aksw.jena_sparql_api.utils.Pair;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.path.Path;
 

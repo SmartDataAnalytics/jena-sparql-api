@@ -177,15 +177,15 @@ public class DiffUtils {
 
 
 
-    public Iterator<Map<Var, Var>> getCandidateVarMaps(IBiSetMultimap<Quad, Set<Set<Expr>>> queryQuadToCnf, IBiSetMultimap<Quad, Set<Set<Expr>>> candQuadToCnf, Set<Set<Var>> candVarCombos) {
-        Set<Set<Set<Expr>>> quadCnfs = queryQuadToCnf.getInverse().keySet();  //queryPs.getQuadToCnf().getInverse().keySet();
-
-        // For a pattern there might be multiple candidate variable mappings
-        // Filter expressions are not considered at this stage
-        Iterator<Map<Var, Var>> result = CombinatoricsUtils.computeVarMapQuadBased(queryQuadToCnf, candQuadToCnf, candVarCombos);
-
-        return result;
-    }
+//    public Iterator<Map<Var, Var>> getCandidateVarMaps(IBiSetMultimap<Quad, Set<Set<Expr>>> queryQuadToCnf, IBiSetMultimap<Quad, Set<Set<Expr>>> candQuadToCnf, Set<Set<Var>> candVarCombos) {
+//        Set<Set<Set<Expr>>> quadCnfs = queryQuadToCnf.getInverse().keySet();  //queryPs.getQuadToCnf().getInverse().keySet();
+//
+//        // For a pattern there might be multiple candidate variable mappings
+//        // Filter expressions are not considered at this stage
+//        Iterator<Map<Var, Var>> result = CombinatoricsUtils.computeVarMapQuadBased(queryQuadToCnf, candQuadToCnf, candVarCombos);
+//
+//        return result;
+//    }
 
 
 

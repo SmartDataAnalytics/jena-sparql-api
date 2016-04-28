@@ -14,6 +14,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import org.aksw.jena_sparql_api.utils.Pair;
 import org.jgrapht.DirectedGraph;
 
 import com.google.common.collect.Multimap;

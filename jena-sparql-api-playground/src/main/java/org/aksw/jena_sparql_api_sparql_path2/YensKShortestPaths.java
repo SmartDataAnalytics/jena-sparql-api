@@ -14,6 +14,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.lookup.LookupService;
+import org.aksw.jena_sparql_api.utils.Pair;
 import org.apache.jena.ext.com.google.common.collect.Lists;
 import org.apache.jena.graph.Node;
 

@@ -1,37 +1,30 @@
 package org.aksw.jena_sparql_api.concept_cache.combinatorics;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.aksw.commons.collections.MapUtils;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
 import org.apache.commons.math3.util.CombinatoricsUtils;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.core.Var;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
-import org.apache.jena.graph.Node;
-import org.apache.jena.sparql.algebra.Table;
-import org.apache.jena.sparql.algebra.table.TableN;
-import org.apache.jena.sparql.core.Quad;
-import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.engine.binding.Binding;
-import org.apache.jena.sparql.engine.binding.BindingHashMap;
-import org.apache.jena.sparql.graph.NodeTransform;
 
 public class Utils2 {
 
-    public static int getNumMatches(QuadGroup quadGroup) {
+    public static int getNumMatches(Entry<? extends Collection<?>, ? extends Collection<?>> quadGroup) {
         int result;
 
-        int c = quadGroup.getCandQuads().size();
-        int q = quadGroup.getQueryQuads().size();
+        int c = quadGroup.getKey().size();
+        int q = quadGroup.getValue().size();
 
         if(c > q) { // If there are more candidates quads than query quads, we can't map all of them
             result = 0;

@@ -38,6 +38,7 @@ import org.aksw.jena_sparql_api.update.FluentSparqlService;
 import org.aksw.jena_sparql_api.update.FluentSparqlServiceFactory;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
+import org.aksw.jena_sparql_api.utils.Pair;
 import org.aksw.jena_sparql_api.utils.TripleUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.atlas.web.auth.HttpAuthenticator;

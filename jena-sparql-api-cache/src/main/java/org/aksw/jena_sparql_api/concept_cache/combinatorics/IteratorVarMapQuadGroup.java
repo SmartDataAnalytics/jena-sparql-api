@@ -1,16 +1,18 @@
 package org.aksw.jena_sparql_api.concept_cache.combinatorics;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.aksw.commons.collections.MapUtils;
 import org.aksw.jena_sparql_api.concept_cache.dirty.CombinatoricsVector;
-
-import com.google.common.collect.AbstractIterator;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
+
+import com.google.common.collect.AbstractIterator;
 
 class IteratorVarMapQuadGroup
     extends AbstractIterator<Map<Var, Var>>
@@ -117,8 +119,9 @@ class IteratorVarMapQuadGroup
     }
 
 
-    public static Iterator<Map<Var, Var>> create(QuadGroup quadGroup, Map<Var, Var> baseSolution) {
-        Iterator<Map<Var, Var>> result = new IteratorVarMapQuadGroup(new ArrayList<Quad>(quadGroup.getCandQuads()), new ArrayList<Quad>(quadGroup.getQueryQuads()), baseSolution);
+    public static Iterator<Map<Var, Var>> create(Entry<? extends Collection<Quad>, ? extends Collection<Quad>> quadGroup, Map<Var, Var> baseSolution) {
+        // key = candQuads, value = queryQuads
+        Iterator<Map<Var, Var>> result = new IteratorVarMapQuadGroup(new ArrayList<Quad>(quadGroup.getKey()), new ArrayList<Quad>(quadGroup.getValue()), baseSolution);
         return result;
     }
 }
