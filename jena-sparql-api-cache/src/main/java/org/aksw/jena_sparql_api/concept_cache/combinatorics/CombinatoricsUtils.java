@@ -104,6 +104,7 @@ public class CombinatoricsUtils {
         // Create the cartesian product over the partial solutions
         CartesianProduct<Map<Var, Var>> cart = new CartesianProduct<Map<Var,Var>>(partialSolutions);
 
+        //cart.stream().forEach(i -> System.out.println("Cart: " + i));
 
         // Combine the solutions of each equivalence class into an overall solution,
         // thereby filter out incompatible bindings (indicated by null)
@@ -120,6 +121,9 @@ public class CombinatoricsUtils {
     }
 
     public static Stream<Map<Var, Var>> createSolutionStream(Entry<? extends Collection<Quad>, ? extends Collection<Quad>> quadGroup, Map<Var, Var> baseSolution) {
+        // Reminder: We need to find a mapping from candidate vars to those of the query
+        // The cache must have fewer quads than the query to be applicable
+        // so we take all combinations and permutations of the *query*'s quads and match them with the cache quads
         Collection<Quad> candQuads = quadGroup.getKey();
         Collection<Quad> queryQuads = quadGroup.getValue();
 
@@ -128,18 +132,25 @@ public class CombinatoricsUtils {
 
         Stream<Map<Var, Var>> result = StreamSupport
             .stream(queryQuadCombis.spliterator(), false)
-            .flatMap(queryQuadCombi -> {
+            .flatMap(tmp -> {
+                // Not sure if we need a copy here
+                ICombinatoricsVector<Quad> queryQuadCombi = Factory.createVector(tmp);
                 Generator<Quad> permutations = Factory.createPermutationGenerator(queryQuadCombi);
                 Stream<ICombinatoricsVector<Quad>> perm = StreamSupport.stream(permutations.spliterator(), false);
 
                 Stream<Map<Var, Var>> r = perm
-                        .map(tmpCandQuads -> reduceToVarMap(tmpCandQuads, queryQuads));
+                        .map(tmpQueryQuads -> reduceToVarMap(candQuads, tmpQueryQuads));
+
+                //perm.peek(test -> System.out.println("PEEKABOO: " + test));
 
                 return r;
             })
             .filter(Objects::nonNull);
 
 
+        Collection<Map<Var, Var>> r = result.collect(Collectors.toList());
+        //System.out.println("solutions: " + r);
+        result = r.stream();
 
 
         return result;
@@ -151,23 +162,23 @@ public class CombinatoricsUtils {
                     StreamSupport.stream(candQuads.spliterator(), false),
                     StreamSupport.stream(queryQuads.spliterator(), false),
                     (a, b) -> new Pair<Quad>(a, b))
-            .reduce(
-                    new HashMap<Var, Var>(),
-                    (map, pair) -> Utils2.createVarMap(pair.getKey(), pair.getValue()),
-                    CombinatoricsUtils::mergeIntoIfCompatible);
+            .map(pair -> Utils2.createVarMap(pair.getKey(), pair.getValue()))
+            .reduce(new HashMap<Var, Var>(), CombinatoricsUtils::mergeIntoIfCompatible);
 
         return result;
     }
 
     public static Map<Var, Var> mergeIntoIfCompatible(Map<Var, Var> inout, Map<Var, Var> addition) {
+        Map<Var, Var> result = null;
         if(inout != null && addition != null) {
             boolean isCompatible = MapUtils.isPartiallyCompatible(inout, addition);
             if(isCompatible) {
                 inout.putAll(addition);
+                result = inout;
             }
         }
 
-        return inout;
+        return result;
     }
 
 }

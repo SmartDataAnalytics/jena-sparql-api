@@ -76,6 +76,7 @@ public class ReplaceConstants {
 
     public static Op replace(Op op)
     {
+        System.out.println("TODO Get rid of reflection for replacement - its slow!");
         return MultiMethod.invokeStatic(ReplaceConstants.class, "_replace", op);
     }
 
