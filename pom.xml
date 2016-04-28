@@ -437,6 +437,12 @@
                 <version>0.9.0</version>
             </dependency>
 
+            <!-- Java8 stream utilities, such as zip -->
+            <dependency>
+                <groupId>com.codepoetics</groupId>
+                <artifactId>protonpack</artifactId>
+                <version>1.8</version>
+            </dependency>
 
             <dependency>
                 <groupId>org.glassfish.jersey.containers</groupId>

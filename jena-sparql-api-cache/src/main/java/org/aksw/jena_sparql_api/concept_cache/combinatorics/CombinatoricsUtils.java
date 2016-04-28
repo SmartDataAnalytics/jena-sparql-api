@@ -4,20 +4,30 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import org.aksw.commons.collections.CartesianProduct;
+import org.aksw.commons.collections.MapUtils;
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
 import org.aksw.jena_sparql_api.concept_cache.domain.PatternSummary;
+import org.aksw.jena_sparql_api.utils.Pair;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
+import org.paukov.combinatorics.Factory;
+import org.paukov.combinatorics.Generator;
+import org.paukov.combinatorics.ICombinatoricsVector;
+
+import com.codepoetics.protonpack.StreamUtils;
 
 public class CombinatoricsUtils {
 
@@ -82,19 +92,17 @@ public class CombinatoricsUtils {
             }
         });
 
-
-        List<Iterable<Map<Var, Var>>> cartesian = new ArrayList<Iterable<Map<Var, Var>>>(quadGroups.size());
-
         // TODO Somehow obtain a base mapping (is that even possible?)
         Map<Var, Var> baseMapping = Collections.<Var, Var>emptyMap();
 
-        // Create a cartesian product over all solutions of the equivalence classes
-        for(QuadGroup quadGroup : quadGroups) {
-            Iterable<Map<Var, Var>> it = IterableVarMapQuadGroup.create(quadGroup, baseMapping);
-            cartesian.add(it);
-        }
 
-        CartesianProduct<Map<Var, Var>> cart = new CartesianProduct<Map<Var,Var>>(cartesian);
+        List<Iterable<Map<Var, Var>>> partialSolutions = quadGroups.stream()
+                .map(x -> createSolutions(x, baseMapping))
+                .collect(Collectors.toList())
+                ;
+
+        // Create the cartesian product over the partial solutions
+        CartesianProduct<Map<Var, Var>> cart = new CartesianProduct<Map<Var,Var>>(partialSolutions);
 
 
         // Combine the solutions of each equivalence class into an overall solution,
@@ -105,6 +113,59 @@ public class CombinatoricsUtils {
 
         return result;
     }
+
+
+    public static Stream<Map<Var, Var>> createSolutions(Entry<? extends Collection<Quad>, ? extends Collection<Quad>> quadGroup, Map<Var, Var> baseSolution) {
+        Collection<Quad> candQuads = quadGroup.getKey();
+        Collection<Quad> queryQuads = quadGroup.getValue();
+
+        ICombinatoricsVector<Quad> queryQuadVector = Factory.createVector(queryQuads);
+        Generator<Quad> queryQuadCombis = Factory.createSimpleCombinationGenerator(queryQuadVector, candQuads.size());
+
+        Stream<Map<Var, Var>> result = StreamSupport
+            .stream(queryQuadCombis.spliterator(), false)
+            .flatMap(queryQuadCombi -> {
+                Generator<Quad> permutations = Factory.createPermutationGenerator(queryQuadCombi);
+                Stream<ICombinatoricsVector<Quad>> perm = StreamSupport.stream(permutations.spliterator(), false);
+
+                Stream<Map<Var, Var>> r = perm
+                        .map(tmpCandQuads -> reduceToVarMap(tmpCandQuads, queryQuads));
+
+                return r;
+            })
+            .filter(Objects::nonNull);
+
+
+
+
+        return result;
+    }
+
+    public static Map<Var, Var> reduceToVarMap(Iterable<Quad> candQuads, Iterable<Quad> queryQuads) {
+        Map<Var, Var> result = StreamUtils
+            .zip(
+                    StreamSupport.stream(candQuads.spliterator(), false),
+                    StreamSupport.stream(queryQuads.spliterator(), false),
+                    (a, b) -> new Pair<Quad>(a, b))
+            .reduce(
+                    new HashMap<Var, Var>(),
+                    (map, pair) -> Utils2.createVarMap(pair.getKey(), pair.getValue()),
+                    CombinatoricsUtils::mergeIntoIfCompatible);
+
+        return result;
+    }
+
+    public static Map<Var, Var> mergeIntoIfCompatible(Map<Var, Var> inout, Map<Var, Var> addition) {
+        if(inout != null && addition != null) {
+            boolean isCompatible = MapUtils.isPartiallyCompatible(inout, addition);
+            if(isCompatible) {
+                inout.putAll(addition);
+            }
+        }
+
+        return inout;
+    }
+
 }
 
 

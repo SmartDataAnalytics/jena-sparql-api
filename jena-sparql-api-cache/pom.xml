@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>jena-sparql-api-cache</artifactId>
@@ -15,27 +16,11 @@
 
     <build>
         <plugins>
-<!--
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-remote-resources-plugin</artifactId>
-                <version>1.5</version>
-                <configuration>
-                    <outputDirectory>${project.build.directory}/classes</outputDirectory>
-                    <resourceBundles>
-                        <resourceBundle>org.aksw.jena-sparql-api:jena-sparql-api-resources:${project.version}</resourceBundle>
-                    </resourceBundles>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>process-remote-resources</id>
-                        <goals>
-                            <goal>process</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
--->
+            <!-- <plugin> <groupId>org.apache.maven.plugins</groupId> <artifactId>maven-remote-resources-plugin</artifactId>
+                <version>1.5</version> <configuration> <outputDirectory>${project.build.directory}/classes</outputDirectory>
+                <resourceBundles> <resourceBundle>org.aksw.jena-sparql-api:jena-sparql-api-resources:${project.version}</resourceBundle>
+                </resourceBundles> </configuration> <executions> <execution> <id>process-remote-resources</id>
+                <goals> <goal>process</goal> </goals> </execution> </executions> </plugin> -->
         </plugins>
     </build>
     <dependencies>
@@ -76,6 +61,11 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-core</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.codepoetics</groupId>
+            <artifactId>protonpack</artifactId>
         </dependency>
 
         <!-- Database - used for SPARQL caching, Runtime dep, as the DB is started
