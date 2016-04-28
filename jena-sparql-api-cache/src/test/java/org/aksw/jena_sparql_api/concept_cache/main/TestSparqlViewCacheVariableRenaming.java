@@ -62,8 +62,8 @@ public class TestSparqlViewCacheVariableRenaming {
         SparqlQueryParser sparqlParser = SparqlQueryParserImpl.create(Syntax.syntaxARQ);
 
         Query testSuiteQuery = sparqlParser.apply("SELECT ?s ?c { ?s <http://ex.org/ontology/content> ?c }");
-        QueryUtils.injectFilter(testSuiteQuery, "?s = <http://ex.org/query/4-b>");
-        
+        //QueryUtils.injectFilter(testSuiteQuery, "?s = <http://ex.org/query/4-b>");
+
         QueryExecutionFactory qef = FluentQueryExecutionFactory.from(model).create();
         ResultSet rs = qef.createQueryExecution(testSuiteQuery).execSelect();
 
