@@ -1,6 +1,8 @@
 package org.aksw.jena_sparql_api.concept_cache.main;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -21,7 +23,6 @@ import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcReader;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParser;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.utils.Generator;
-import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.apache.jena.graph.Node;
@@ -34,6 +35,7 @@ import org.apache.jena.sparql.algebra.table.TableData;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.syntax.PatternVars;
 import org.junit.Test;
+
 
 public class TestSparqlViewCacheVariableRenaming {
 
@@ -72,7 +74,6 @@ public class TestSparqlViewCacheVariableRenaming {
         rs.forEachRemaining(b -> idToQuery.put(b.get("s").asResource().getURI(), sparqlParser.apply(b.get("c").asLiteral().getString())));
 
 //        model.write(System.out, "TURTLE");
-
 
         for(Entry<String, Query> entry : idToQuery.entrySet()) {
             String id = entry.getKey();
