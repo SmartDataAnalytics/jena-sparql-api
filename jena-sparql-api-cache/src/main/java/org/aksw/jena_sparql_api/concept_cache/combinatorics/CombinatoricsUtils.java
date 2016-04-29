@@ -184,70 +184,70 @@ public class CombinatoricsUtils {
      * @param baseSolution
      * @return
      */
-    public static Iterable<Map<Var, Var>> splitQuadGroupsIndexed(Entry<? extends Collection<Quad>, ? extends Collection<Quad>> quadGroup, Map<Var, Var> partialSolution) {
-        Collection<Quad> candQuads = quadGroup.getKey();
-        Collection<Quad> queryQuads = quadGroup.getValue();
-
-        Map<Var, Var> safeVarMap = createSafeVarMap(quadGroup, partialSolution);
-        NodeTransform nodeTransform = new NodeTransformRenameMap(partialSolution);
-
-
-        QuadUtils.applyNodeTransform(quad, nodeTransform)
-
-        NodeTransform nodeTransform = new NodeTransformRenameMap(partialSolution);
-
-        Collection<Quad> candQuads = quadGroup.getKey();
-
-        // We need to rename all variables of the cand quads that are not renamed and yet appear in the query
-        //Set<Var> queryVars = QuadPatternUtils.getVarsMentioned(queryQuads);
-        //Set<Var> renamedCandVars = partialSolution.keySet();
-
-
-        //Map<Var, Var> varMap = new HashMap<Var, Var>();
-        //varMap.putAll(partialSolution);
-
-        //Set<Var> unmappedVars = Sets.difference(queryVars, partialSolution.keySet());
-
-        VarGeneratorBlacklist gen = VarGeneratorBlacklist.create("v", queryVars);
-
-
-        // index the query quads by node (variable)
-        Multimap<Node, Quad> nodeToQueryQuad = indexQuadsByNode(queryQuads);
-
-
-        for(Quad candQuad : candQuads) {
-            Quad renamedCandQuad = QuadUtils.applyNodeTransform(candQuad, nodeTransform);
-            Node[] nodes = QuadUtils.quadToArray(renamedCandQuad);
-
-            // Find the smallest set for the nodes of the candQuad
-            Collection<Quad> smallestSet = null;
-            for(int i = 0; i < 4; ++i) {
-                Node node = nodes[i];
-                boolean isNodeMapped = partialSolution.containsKey(node);
-                if(isNodeMapped) {
-                    Collection<Quad> tmp = nodeToQueryQuad.get(node);
-                    if(tmp == null) {
-                        smallestSet = Collections.emptySet();
-                        break;
-                    } else {
-                        smallestSet = smallestSet == null
-                                ? tmp
-                                : (tmp.size() < smallestSet.size() ? tmp : smallestSet);
-                    }
-                }
-            }
-
-            if(smallestSet == null) {
-                smallestSet = queryQuads;
-            }
-
-            // For each item in the set, check whether it could potentially match with the given quad
-
-
-        }
-
-        return null;
-    }
+//    public static Iterable<Map<Var, Var>> splitQuadGroupsIndexed(Entry<? extends Collection<Quad>, ? extends Collection<Quad>> quadGroup, Map<Var, Var> partialSolution) {
+//        Collection<Quad> candQuads = quadGroup.getKey();
+//        Collection<Quad> queryQuads = quadGroup.getValue();
+//
+//        Map<Var, Var> safeVarMap = createSafeVarMap(quadGroup, partialSolution);
+//        NodeTransform nodeTransform = new NodeTransformRenameMap(partialSolution);
+//
+//
+//        QuadUtils.applyNodeTransform(quad, nodeTransform)
+//
+//        NodeTransform nodeTransform = new NodeTransformRenameMap(partialSolution);
+//
+//        Collection<Quad> candQuads = quadGroup.getKey();
+//
+//        // We need to rename all variables of the cand quads that are not renamed and yet appear in the query
+//        //Set<Var> queryVars = QuadPatternUtils.getVarsMentioned(queryQuads);
+//        //Set<Var> renamedCandVars = partialSolution.keySet();
+//
+//
+//        //Map<Var, Var> varMap = new HashMap<Var, Var>();
+//        //varMap.putAll(partialSolution);
+//
+//        //Set<Var> unmappedVars = Sets.difference(queryVars, partialSolution.keySet());
+//
+//        VarGeneratorBlacklist gen = VarGeneratorBlacklist.create("v", queryVars);
+//
+//
+//        // index the query quads by node (variable)
+//        Multimap<Node, Quad> nodeToQueryQuad = indexQuadsByNode(queryQuads);
+//
+//
+//        for(Quad candQuad : candQuads) {
+//            Quad renamedCandQuad = QuadUtils.applyNodeTransform(candQuad, nodeTransform);
+//            Node[] nodes = QuadUtils.quadToArray(renamedCandQuad);
+//
+//            // Find the smallest set for the nodes of the candQuad
+//            Collection<Quad> smallestSet = null;
+//            for(int i = 0; i < 4; ++i) {
+//                Node node = nodes[i];
+//                boolean isNodeMapped = partialSolution.containsKey(node);
+//                if(isNodeMapped) {
+//                    Collection<Quad> tmp = nodeToQueryQuad.get(node);
+//                    if(tmp == null) {
+//                        smallestSet = Collections.emptySet();
+//                        break;
+//                    } else {
+//                        smallestSet = smallestSet == null
+//                                ? tmp
+//                                : (tmp.size() < smallestSet.size() ? tmp : smallestSet);
+//                    }
+//                }
+//            }
+//
+//            if(smallestSet == null) {
+//                smallestSet = queryQuads;
+//            }
+//
+//            // For each item in the set, check whether it could potentially match with the given quad
+//
+//
+//        }
+//
+//        return null;
+//    }
 
     public static Multimap<Node, Quad> indexQuadsByNode(Collection<Quad> quads) {
         Multimap<Node, Quad> result = HashMultimap.create();
