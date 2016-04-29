@@ -26,7 +26,7 @@ public class IsoUtils {
             TreeMultimap<Long, Problem<S>> result = TreeMultimap.create();
     
             for(Problem<S> solutionGenerator : solGens) {
-                long size = solutionGenerator.estimateCost();
+                long size = solutionGenerator.getEstimatedCost();
                 result.put(size, solutionGenerator);
             }
     

@@ -20,6 +20,14 @@ import com.google.common.collect.Sets;
 
 public class Utils2 {
 
+//    public static int getCombinationCount(long n, long k) {
+//        if(k > n) {
+//            result = 0;
+//        } else {
+//            result = (int)(CombinatoricsUtils.factorial(n) / CombinatoricsUtils.factorial(n - k));
+//        }        
+//    }
+    
     public static int getNumMatches(Entry<? extends Collection<?>, ? extends Collection<?>> quadGroup) {
         int result;
 

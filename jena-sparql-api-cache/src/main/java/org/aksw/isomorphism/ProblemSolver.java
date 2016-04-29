@@ -31,7 +31,8 @@ public class ProblemSolver<S> {
         Problem<S> picked = pick.getPicked();
         ProblemContainerImpl<S> remaining = pick.getRemaining();
 
-        Stream<S> result = picked.generateSolutions()
+        Stream<S> result = picked
+            .generateSolutions(baseSolution)
             .flatMap(solutionContribution -> {
                 S partialSolution = solutionCombiner.apply(baseSolution, solutionContribution);
 

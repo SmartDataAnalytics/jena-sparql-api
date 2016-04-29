@@ -3,12 +3,6 @@ package org.aksw.isomorphism;
 import java.util.Collection;
 import java.util.stream.Stream;
 
-
-
-//interface SolutionGeneratorGraph {
-//    Stream<S> generateSolution();
-//}
-
 /**
  * A problem is an abstract entity that supports generation of (partial) solutions together with an estimated cost of doing so.
  * The cost should thereby be proportional to the number of solutions returned, because:
@@ -25,8 +19,26 @@ import java.util.stream.Stream;
 public interface Problem<S>
     extends Comparable<Problem<S>>
 {
-    long estimateCost();
-    Stream<S> generateSolutions();
+    /**
+     * Report an estimate cost for solving the problem with its current setup.
+     * Note, that the cost computation should be cheap.
+     * @return
+     */
+    long getEstimatedCost();
+    
+    /**
+     * Return a stream of solutions
+     * 
+     * @return
+     */
+    Stream<S> generateSolutions(S baseSolution);
+    
+    /**
+     * Refine the problem by a partial solution
+     * 
+     * @param partialSolution
+     * @return
+     */
     Collection<Problem<S>> refine(S partialSolution);
     
     /**
@@ -34,50 +46,11 @@ public interface Problem<S>
      */
     @Override
     default int compareTo(Problem<S> o) {
-        long a = this.estimateCost();
-        long b = o.estimateCost();
+        long a = this.getEstimatedCost();
+        long b = o.getEstimatedCost();
         int result = Long.compare(a, b);
         return result;
     }
 }
 
-
-
-
-
-
-interface EquivClassGenerator<A, B, S> {
-    Collection<Problem<S>> create(Collection<A> a, Collection<B> b);
-}
-//
-//class EquivClassGeneratorImpl<A, B, X, Y, E>
-//    implements EquivClassGenerator<A, B, X, Y>
-//{
-//    protected Function<A, E> aToEquivClass;
-//    protected Function<B, E> bToEquivClass;
-//
-//    @Override
-//    public Collection<SolutionGenerator<X, Y>> create(Collection<A> a, Collection<B> b) {
-//        Multimap<E, A> aEquivClasses = Iso.indexItemsByEquivClass(a, aToEquivClass);        
-//        Multimap<E, B> bEquivClasses = Iso.indexItemsByEquivClass(b, bToEquivClass);
-//        
-//        Set<E> equivClasses = Sets.union(aEquivClasses.keySet(), bEquivClasses.keySet());
-//        equivClasses.parallelStream()
-//            .map(e -> {
-//                Collection<A> subA = aEquivClasses.get(e);
-//                Collection<B> subB = bEquivClasses.get(e);
-//                
-//            })
-//        
-//        for(E equivClass : equivClasses) {
-//            Collection<M> srcItems = srcEquivClasses.get(equivClass);
-//            Collection<N> tgtItems = tgtEquivClasses.get(equivClass);
-//
-//
-//        }
-//        
-//        // TODO Auto-generated method stub
-//        return null;
-//    }    
-//}
 

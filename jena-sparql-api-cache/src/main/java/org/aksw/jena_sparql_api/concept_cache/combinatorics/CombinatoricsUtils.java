@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -12,17 +11,13 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import org.aksw.commons.collections.CartesianProduct;
-import org.aksw.commons.collections.MapUtils;
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
-import org.aksw.isomorphism.IsoUtils;
+import org.aksw.isomorphism.IsoMapUtils;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
 import org.aksw.jena_sparql_api.concept_cache.domain.PatternSummary;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
-import org.aksw.jena_sparql_api.utils.Pair;
-import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.apache.jena.graph.Node;
@@ -30,14 +25,9 @@ import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.graph.NodeTransform;
-import org.paukov.combinatorics.Factory;
-import org.paukov.combinatorics.Generator;
-import org.paukov.combinatorics.ICombinatoricsVector;
 
-import com.codepoetics.protonpack.StreamUtils;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
 
 public class CombinatoricsUtils {
 
@@ -124,26 +114,26 @@ public class CombinatoricsUtils {
 
         return result;
     }
-
-    public static Iterable<Map<Var, Var>> splitQuadGroupsSimple(Entry<? extends Collection<Quad>, ? extends Collection<Quad>> quadGroup, Map<Var, Var> partialSolution) {
-        List<QuadGroup> result = new ArrayList<QuadGroup>();
-
-        Collection<Quad> candQuads = quadGroup.getKey();
-        Collection<Quad> queryQuads = quadGroup.getValue();
-
-
-
-        Map<Var, Var> safeVarMap = createSafeVarMap(quadGroup, partialSolution);
-        NodeTransform nodeTransform = new NodeTransformRenameMap(partialSolution);
-
-
-        QuadUtils.applyNodeTransform(quad, nodeTransform)
-
-        NodeTransform nodeTransform = new NodeTransformRenameMap(partialSolution);
-
-        Collection<Quad> candQuads = quadGroup.getKey();
-
-    }
+//
+//    public static Iterable<Map<Var, Var>> splitQuadGroupsSimple(Entry<? extends Collection<Quad>, ? extends Collection<Quad>> quadGroup, Map<Var, Var> partialSolution) {
+//        List<QuadGroup> result = new ArrayList<QuadGroup>();
+//
+//        Collection<Quad> candQuads = quadGroup.getKey();
+//        Collection<Quad> queryQuads = quadGroup.getValue();
+//
+//
+//
+//        Map<Var, Var> safeVarMap = createSafeVarMap(quadGroup, partialSolution);
+//        NodeTransform nodeTransform = new NodeTransformRenameMap(partialSolution);
+//
+//
+//        QuadUtils.applyNodeTransform(quad, nodeTransform)
+//
+//        NodeTransform nodeTransform = new NodeTransformRenameMap(partialSolution);
+//
+//        Collection<Quad> candQuads = quadGroup.getKey();
+//
+//    }
 
     /**
      * Create a safe mapping, such that variables of a cand quad that are not mapped via a partial solution are made distinct from those of the query's variables
@@ -295,10 +285,19 @@ public class CombinatoricsUtils {
 
 
     public static Iterable<Map<Var, Var>> createSolutions(Entry<? extends Collection<Quad>, ? extends Collection<Quad>> quadGroup, Map<Var, Var> baseSolution) {
-        Iterable<Map<Var, Var>> result =
-                () -> IsoUtils.createSolutionStream(
+        Iterable<Map<Var, Var>> result = createSolutions(
                     quadGroup.getKey(),
                     quadGroup.getValue(),
+                    baseSolution);
+
+        return result;
+    }
+
+    public static Iterable<Map<Var, Var>> createSolutions(Collection<Quad> cacheQuads, Collection<Quad> queryQuads, Map<Var, Var> baseSolution) {
+        Iterable<Map<Var, Var>> result =
+                () -> IsoMapUtils.createSolutionStream(
+                    cacheQuads,
+                    queryQuads,
                     Utils2::createVarMap,
                     baseSolution).iterator();
 

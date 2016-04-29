@@ -3,6 +3,8 @@ package org.aksw.jena_sparql_api.utils;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.apache.jena.sparql.algebra.optimize.ExprTransformConstantFold;
 import org.apache.jena.sparql.core.Var;
@@ -38,6 +40,15 @@ public class ClauseUtils
         return result;
     }*/
 
+    //Iterable<? extends Iterable<? extends Expr> 
+    public static Set<Expr> canonicalize(Iterable<? extends Expr> clause) {
+        Set<Expr> result = StreamSupport.stream(clause.spliterator(), false)
+            .map(e -> ExprUtils.canonicalize(e))
+            .collect(Collectors.toSet());
+        
+        return result;
+    }
+    
 
     public static Set<Set<Expr>> filterByVars(Set<Set<Expr>> clauses, Set<Var> requiredVars) {
 
