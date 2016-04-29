@@ -1,7 +1,6 @@
 package org.aksw.isomorphism;
 
 import java.util.Collection;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -11,9 +10,9 @@ import com.google.common.collect.Sets;
 
 
 
-interface SolutionGeneratorGraph {
-    generateSolution();
-}
+//interface SolutionGeneratorGraph {
+//    Stream<S> generateSolution();
+//}
 
 /**
  * An equivalence class.
@@ -24,15 +23,15 @@ interface SolutionGeneratorGraph {
  * @param <X>
  * @param <Y>
  */
-interface SolutionGenerator<X, Y>
-    extends Comparable<SolutionGenerator<X, Y>> // compare by estimated sizes
+interface SolutionGenerator<S>
+    extends Comparable<SolutionGenerator<S>> // compare by estimated sizes
 {
     //Collection<?> exposeLeft(); // Expose the items on the left hand side being matched
     //Collection<?> exposeRight(); // Expose the items on the right hand side being matched
     
     long estimateSize();
-    Stream<Map<X, Y>> generateSolutions();
-    Collection<SolutionGenerator<X, Y>> partition(Map<X, Y> partialSolution);
+    Stream<S> generateSolutions();
+    Collection<SolutionGenerator<S>> partition(S partialSolution);
 }
 
 
@@ -40,8 +39,8 @@ interface SolutionGenerator<X, Y>
 
 
 
-interface EquivClassGenerator<A, B, X, Y> {
-    Collection<SolutionGenerator<X, Y>> create(Collection<A> a, Collection<B> b);
+interface EquivClassGenerator<A, B, S> {
+    Collection<SolutionGenerator<S>> create(Collection<A> a, Collection<B> b);
 }
 
 class EquivClassGeneratorImpl<A, B, X, Y, E>

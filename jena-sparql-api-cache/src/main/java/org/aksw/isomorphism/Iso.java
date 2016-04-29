@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -22,9 +23,10 @@ class Triplet<S, T> {
 
 
 
-interface SolutionGeneratorCollection<X, Y> {
-    SolutionGeneratorCollection<X, Y> partition(Map<X, Y> partialSolution);
-    Foo<X, Y> pick();
+interface SolutionGeneratorCollection<S> {
+    SolutionGeneratorCollection<S> partition(S partialSolution);
+    Foo<S> pick();
+    boolean isEmpty();
 }
 
 /***
@@ -38,49 +40,49 @@ interface SolutionGeneratorCollection<X, Y> {
  * @param <X>
  * @param <Y>
  */
-class Foo<X, Y>
-    implements Entry<SolutionGenerator<X, Y>, SolutionGeneratorCollectionImpl<X, Y>>
+class Foo<S>
+    implements Entry<SolutionGenerator<S>, SolutionGeneratorCollectionImpl<S>>
 {
-    protected SolutionGenerator<X, Y> picked;
-    protected SolutionGeneratorCollectionImpl<X, Y> remaining;
+    protected SolutionGenerator<S> picked;
+    protected SolutionGeneratorCollectionImpl<S> remaining;
     
-    public Foo(SolutionGenerator<X, Y> picked,
-            SolutionGeneratorCollectionImpl<X, Y> remaining) {
+    public Foo(SolutionGenerator<S> picked,
+            SolutionGeneratorCollectionImpl<S> remaining) {
         super();
         this.picked = picked;
         this.remaining = remaining;
     }
-    public SolutionGenerator<X, Y> getPicked() {
+    public SolutionGenerator<S> getPicked() {
         return picked;
     }
-    public SolutionGeneratorCollectionImpl<X, Y> getRemaining() {
+    public SolutionGeneratorCollectionImpl<S> getRemaining() {
         return remaining;
     }
     
     @Override
-    public SolutionGenerator<X, Y> getKey() {
+    public SolutionGenerator<S> getKey() {
         return picked;
     }
     @Override
-    public SolutionGeneratorCollectionImpl<X, Y> getValue() {
+    public SolutionGeneratorCollectionImpl<S> getValue() {
         return remaining;
     }
     @Override
-    public SolutionGeneratorCollectionImpl<X, Y> setValue(
-            SolutionGeneratorCollectionImpl<X, Y> value) {
+    public SolutionGeneratorCollectionImpl<S> setValue(
+            SolutionGeneratorCollectionImpl<S> value) {
         throw new UnsupportedOperationException();
     }
     
     
 }
 
-class SolutionGeneratorCollectionImpl<X, Y>
-    implements SolutionGeneratorCollection<X, Y>
+class SolutionGeneratorCollectionImpl<S>
+    implements SolutionGeneratorCollection<S>
 {
-    protected TreeMultimap<? extends Comparable<?>, SolutionGenerator<X, Y>> sizeToSolGen;
+    protected TreeMultimap<? extends Comparable<?>, SolutionGenerator<S>> sizeToSolGen;
     
     public SolutionGeneratorCollectionImpl(
-            TreeMultimap<? extends Comparable<?>, SolutionGenerator<X, Y>> sizeToSolGen) {
+            TreeMultimap<? extends Comparable<?>, SolutionGenerator<S>> sizeToSolGen) {
         super();
         this.sizeToSolGen = sizeToSolGen;
     }
@@ -91,17 +93,17 @@ class SolutionGeneratorCollectionImpl<X, Y>
      * 
      * @return
      */
-    public Foo<X, Y> pick() {
-        Entry<? extends Comparable<?>, Collection<SolutionGenerator<X, Y>>> currEntry = sizeToSolGen.asMap().firstEntry();
+    public Foo<S> pick() {
+        Entry<? extends Comparable<?>, Collection<SolutionGenerator<S>>> currEntry = sizeToSolGen.asMap().firstEntry();
         Comparable<?> currKey = currEntry.getKey();
-        SolutionGenerator<X, Y> currSolGen = Iterables.getFirst(currEntry.getValue(), null);      
+        SolutionGenerator<S> currSolGen = Iterables.getFirst(currEntry.getValue(), null);      
     
-        TreeMultimap<Comparable<?>, SolutionGenerator<X, Y>> remaining = TreeMultimap.create(sizeToSolGen);
+        TreeMultimap<Comparable<?>, SolutionGenerator<S>> remaining = TreeMultimap.create(sizeToSolGen);
         remaining.remove(currKey, currSolGen);
         
-        SolutionGeneratorCollectionImpl<X, Y> r = new SolutionGeneratorCollectionImpl<>(remaining);
+        SolutionGeneratorCollectionImpl<S> r = new SolutionGeneratorCollectionImpl<>(remaining);
         
-        Foo<X, Y> result = new Foo<>(currSolGen, r);
+        Foo<S> result = new Foo<>(currSolGen, r);
         return result;
     }
     
@@ -111,15 +113,21 @@ class SolutionGeneratorCollectionImpl<X, Y>
      * 
      * @param partialSolution
      */
-    public SolutionGeneratorCollectionImpl<X, Y> partition(Map<X, Y> partialSolution) {
-        Collection<SolutionGenerator<X, Y>> tmp = sizeToSolGen.values().stream()
+    public SolutionGeneratorCollectionImpl<S> partition(S partialSolution) {
+        Collection<SolutionGenerator<S>> tmp = sizeToSolGen.values().stream()
             .map(solGen -> solGen.partition(partialSolution))
             .flatMap(x -> x.stream())
             .collect(Collectors.toList());
         
-        TreeMultimap<Long, SolutionGenerator<X, Y>> sizeToSolGen = Iso.indexSolutionGenerators(tmp);
-        SolutionGeneratorCollectionImpl<X, Y> result = new SolutionGeneratorCollectionImpl<X, Y>(sizeToSolGen);
+        TreeMultimap<Long, SolutionGenerator<S>> sizeToSolGen = Iso.indexSolutionGenerators(tmp);
+        SolutionGeneratorCollectionImpl<S> result = new SolutionGeneratorCollectionImpl<S>(sizeToSolGen);
         
+        return result;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        boolean result = sizeToSolGen.isEmpty();
         return result;
     }
 }
@@ -133,36 +141,57 @@ class SolutionGeneratorCollectionImpl<X, Y>
  * @param <X>
  * @param <Y>
  */
-class State<X, Y> {
-   protected SolutionGeneratorCollection<X, Y> solGenCol;
-   protected Map<X, Y> partialSolution;
+class State<S> {
+   protected SolutionGeneratorCollection<S> solGenCol;
+   protected S baseSolution;
+   protected BinaryOperator<S> solutionCombiner;
    
-   public Stream<Map<X, Y>> streamSolutions() {  
-
-       // Make sure there are solution generators
-       if(!sizeToSolGen.isEmpty()) {
-           // Pick the smallest estimated solution generator and prepare the stream for sub-states
-           
-           
-           // For every solution, create a sub state
-           currSolGen
-               .generateSolutions()
-               .flatMap(partialSolution -> {
-                   // TODO Somehow get a hold of dependent solutionGenerators such that they can be processed with priority                   
-                   Collection<SolutionGenerator<X, Y>> successors = null;
-
-                   Collection<SolutionGenerator<X, Y>> tmp = successors.stream()
-                       .map(succ -> succ.partition(partialSolution))
-                       .flatMap(x -> x.stream())
-                       .collect(Collectors.toList());
-                   
-                   // Now descend into the next solution generators
-                   
-                   
-                   return null;                    
-               });
-       }       
+   public State(SolutionGeneratorCollection<S> solGenCol, S baseSolution,
+        BinaryOperator<S> solutionCombiner) {
+    super();
+    this.solGenCol = solGenCol;
+    this.baseSolution = baseSolution;
+    this.solutionCombiner = solutionCombiner;
    }
+
+
+    public Stream<S> streamSolutions() {
+
+        Foo<S> pick = solGenCol.pick();
+
+        SolutionGenerator<S> picked = pick.getPicked();
+        SolutionGeneratorCollectionImpl<S> remaining = pick.getRemaining();
+
+        Stream<S> result = picked
+            .generateSolutions()
+            .flatMap(solutionContribution -> {
+                S partialSolution = solutionCombiner.apply(baseSolution, solutionContribution);
+
+                Stream<S> r;
+                // If the partial solution is null, then indicate the
+                // absence of a solution by returning a stream that yields
+                // null as a 'solution'
+                if (partialSolution == null) {
+                    r = Collections.<S> singleton(null).stream();
+                } else {
+                    // This step is optional: it refines solution generators
+                    // based on the current partial solution
+                    // Depending on your setting, this can give a
+                    // performance boost or penalty
+                    SolutionGeneratorCollectionImpl<S> repartition = remaining.partition(partialSolution);
+
+                    if (repartition.isEmpty()) {
+                        r = Collections.<S> emptySet().stream();
+                    } else {
+                        State<S> nextState = new State<S>(repartition, baseSolution, solutionCombiner);
+                        r = nextState.streamSolutions();
+                    }
+                }
+                return r;
+            });
+
+        return result;
+    }
 }
 
 public class Iso {
@@ -183,10 +212,10 @@ public class Iso {
 //
 
     
-    public static <X, Y> TreeMultimap<Long, SolutionGenerator<X, Y>> indexSolutionGenerators(Collection<SolutionGenerator<X, Y>> solGens) {
-        TreeMultimap<Long, SolutionGenerator<X, Y>> result = TreeMultimap.create();
+    public static <S> TreeMultimap<Long, SolutionGenerator<S>> indexSolutionGenerators(Collection<SolutionGenerator<S>> solGens) {
+        TreeMultimap<Long, SolutionGenerator<S>> result = TreeMultimap.create();
 
-        for(SolutionGenerator<X, Y> solutionGenerator : solGens) {
+        for(SolutionGenerator<S> solutionGenerator : solGens) {
             long size = solutionGenerator.estimateSize();
             result.put(size, solutionGenerator);
         }
@@ -194,49 +223,7 @@ public class Iso {
         return result;
     }
 
-    public static <X, Y> Stream<Map<X, Y>> vf2(Collection<SolutionGenerator<X, Y>> solutionGenerators, Function<SolutionGenerator<X, Y>, Collection<SolutionGenerator<X, Y>>> selector) {
-        // Order solution generators by their estimated sizes
 
-        TreeMultimap<Long, SolutionGenerator<X, Y>> sizeToSolutionGenerator = TreeMultimap.create();
-
-        for(SolutionGenerator<X, Y> solutionGenerator : solutionGenerators) {
-            long size = solutionGenerator.estimateSize();
-            sizeToSolutionGenerator.put(size, solutionGenerator);
-        }
-        
-        //Multimaps.
-        // If there are a zero sized equiv classes, there can be no solution mappings
-        // If there are no solution generators return the empty solution (which is different from null - which indicates the absence of a solution)
-        if(sizeToSolutionGenerator.isEmpty()) {
-        
-            // Take the smallest estimated solution generator and start generating solutions
-            SolutionGenerator<X, Y> solutionGenerator = sizeToSolutionGenerator.asMap().firstEntry().getValue().iterator().next();
-            
-            solutionGenerator
-                .generateSolutions()
-                .flatMap(partialSolution -> {
-                    // TODO Somehow get a hold of dependent solutionGenerators such that they can be processed with priority
-
-                    Collection<SolutionGenerator<X, Y>> successors = null;
-                    
-                    Collection<SolutionGenerator<X, Y>> tmp = successors.stream()
-                        .map(succ -> succ.partition(partialSolution))
-                        .flatMap(x -> x.stream())
-                        .collect(Collectors.toList());
-                    
-                    // Now descend into the next solution generators
-                    
-                    
-                    return null;                    
-                });
-        }
-        
-        
-        return null;
-    }
-
-    
-    public static partition()
 
     /**
      * This is a generalized version of VF2:
