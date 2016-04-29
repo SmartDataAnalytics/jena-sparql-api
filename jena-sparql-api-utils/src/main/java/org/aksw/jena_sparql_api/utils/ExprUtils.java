@@ -5,19 +5,25 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.aksw.commons.collections.IterableCollection;
 import org.aksw.commons.util.Pair;
 import org.aksw.commons.util.factory.Factory2;
-
+import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.E_LogicalAnd;
 import org.apache.jena.sparql.expr.E_LogicalOr;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprFunction;
+import org.apache.jena.sparql.expr.ExprTransform;
+import org.apache.jena.sparql.expr.ExprTransformer;
 import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.graph.NodeTransform;
+import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
+import org.apache.jena.sparql.syntax.syntaxtransform.ExprTransformNodeElement;
 
 
 /**
@@ -27,6 +33,35 @@ import org.apache.jena.sparql.expr.NodeValue;
  *         Time: 6:18 PM
  */
 public class ExprUtils {
+    
+    /**
+     * Replace all variable names with the same variable (?a in this case).
+     * Useful for checking whether two expressions are structurally equivalent.
+     * 
+     * @param expr
+     */
+    public static Expr canonicalize(Expr expr) {
+        NodeTransform nodeTransform = (node) -> node.isVariable() ? Vars.a : node;
+        Expr result = transform(expr, nodeTransform);
+        return result;
+    }
+    
+    public static Expr transform(Expr expr, Map<? extends Node, ? extends Node> nodeMap) {
+        NodeTransform nodeTransform = new NodeTransformRenameMap(nodeMap);
+        Expr result = transform(expr, nodeTransform);
+        return result;
+    }
+
+    public static Expr transform(Expr expr, NodeTransform nodeTransform) {
+        ElementTransform elementTransform = new ElementTransformSubst2(nodeTransform);
+        ExprTransform exprTransform = new ExprTransformNodeElement(nodeTransform, elementTransform);
+
+        Expr result = ExprTransformer.transform(exprTransform, expr);
+        return result;                        
+    }
+    
+    
+    
 	public static Expr andifyBalanced(Expr ... exprs) {
 		return andifyBalanced(Arrays.asList(exprs));
 	}
@@ -55,7 +90,7 @@ public class ExprUtils {
 	}
 
 	/**
-	 * Concatenates the sub exressions using Logical_And
+	 * Concatenates the sub exressions using a binary operator
 	 *
 	 * and(and(0, 1), and(2, 3))
 	 *

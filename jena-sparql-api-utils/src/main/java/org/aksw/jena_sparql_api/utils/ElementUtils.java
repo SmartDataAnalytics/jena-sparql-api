@@ -28,7 +28,6 @@ import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.ElementUnion;
 import org.apache.jena.sparql.syntax.PatternVars;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
-import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformSubst;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformer;
 import org.apache.jena.sparql.syntax.syntaxtransform.ExprTransformNodeElement;
 

@@ -17,6 +17,7 @@ import java.util.stream.StreamSupport;
 import org.aksw.commons.collections.CartesianProduct;
 import org.aksw.commons.collections.MapUtils;
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
+import org.aksw.isomorphism.IsoUtils;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
 import org.aksw.jena_sparql_api.concept_cache.domain.PatternSummary;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
@@ -294,86 +295,14 @@ public class CombinatoricsUtils {
 
 
     public static Iterable<Map<Var, Var>> createSolutions(Entry<? extends Collection<Quad>, ? extends Collection<Quad>> quadGroup, Map<Var, Var> baseSolution) {
-        Iterable<Map<Var, Var>> result = () -> createSolutionStream(quadGroup, baseSolution).iterator();
-        return result;
-    }
-
-    public static Stream<Map<Var, Var>> createSolutionStream(Entry<? extends Collection<Quad>, ? extends Collection<Quad>> quadGroup, Map<Var, Var> baseSolution) {
-        // Reminder: We need to find a mapping from candidate vars to those of the query
-        // The cache must have fewer quads than the query to be applicable
-        // so we take all combinations and permutations of the *query*'s quads and match them with the cache quads
-        Collection<Quad> candQuads = quadGroup.getKey();
-        Collection<Quad> queryQuads = quadGroup.getValue();
-
-        ICombinatoricsVector<Quad> queryQuadVector = Factory.createVector(queryQuads);
-        Generator<Quad> queryQuadCombis = Factory.createSimpleCombinationGenerator(queryQuadVector, candQuads.size());
-
-        Stream<Map<Var, Var>> result = StreamSupport
-            .stream(queryQuadCombis.spliterator(), false)
-            .flatMap(tmp -> {
-                // Not sure if we need a copy here
-                ICombinatoricsVector<Quad> queryQuadCombi = Factory.createVector(tmp);
-                Generator<Quad> permutations = Factory.createPermutationGenerator(queryQuadCombi);
-                Stream<ICombinatoricsVector<Quad>> perm = StreamSupport.stream(permutations.spliterator(), false);
-
-                Stream<Map<Var, Var>> r = perm
-                        .map(tmpQueryQuads -> reduceToVarMap(candQuads, tmpQueryQuads));
-
-                //perm.peek(test -> System.out.println("PEEKABOO: " + test));
-
-                return r;
-            })
-            .filter(Objects::nonNull);
-
-
-        Collection<Map<Var, Var>> r = result.collect(Collectors.toList());
-        //System.out.println("solutions: " + r);
-        result = r.stream();
-
-
-        return result;
-    }
-
-    public static Map<Var, Var> reduceToVarMap(Iterable<Quad> candQuads, Iterable<Quad> queryQuads) {
-        Map<Var, Var> result = StreamUtils
-            .zip(
-                    StreamSupport.stream(candQuads.spliterator(), false),
-                    StreamSupport.stream(queryQuads.spliterator(), false),
-                    (a, b) -> new Pair<Quad>(a, b))
-            .map(pair -> Utils2.createVarMap(pair.getKey(), pair.getValue()))
-            .reduce(new HashMap<Var, Var>(), CombinatoricsUtils::mergeIntoIfCompatible);
-
-        return result;
-    }
-
-    public static Map<Var, Var> mergeIntoIfCompatible(Map<Var, Var> inout, Map<Var, Var> addition) {
-        Map<Var, Var> result = null;
-        if(inout != null && addition != null) {
-            boolean isCompatible = MapUtils.isPartiallyCompatible(inout, addition);
-            if(isCompatible) {
-                inout.putAll(addition);
-                result = inout;
-            }
-        }
+        Iterable<Map<Var, Var>> result =
+                () -> IsoUtils.createSolutionStream(
+                    quadGroup.getKey(),
+                    quadGroup.getValue(),
+                    Utils2::createVarMap,
+                    baseSolution).iterator();
 
         return result;
     }
 
 }
-
-
-
-//SetMultimap<Quad, Quad> summaryToQuadsCand = quadJoinSummary(new ArrayList<Quad>(candQuads));
-//System.out.println("JoinSummaryCand: " + summaryToQuadsCand);
-//
-//SetMultimap<Quad, Quad> summaryToQuadsQuery = quadJoinSummary(new ArrayList<Quad>(queryQuads));
-//System.out.println("JoinSummaryQuery: " + summaryToQuadsQuery);
-//
-//for(Entry<Quad, Collection<Quad>> candEntry : summaryToQuadsCand.asMap().entrySet()) {
-//  queryQuads = summaryToQuadsQuery.get(candEntry.getKey());
-//
-//  // TODO What if the mapping is empty?
-//  QuadGroup group = new QuadGroup(candEntry.getValue(), queryQuads);
-//
-//  cnfToQuadGroup.put(cnf, group);
-//}
