@@ -20,7 +20,7 @@ import com.google.common.collect.TreeMultimap;
  * 
  * @author Claus Stadler
  *
- * @param <S>
+ * @param <S> The solution type
  */
 public class ProblemContainerImpl<S>
     implements ProblemContainer<S>

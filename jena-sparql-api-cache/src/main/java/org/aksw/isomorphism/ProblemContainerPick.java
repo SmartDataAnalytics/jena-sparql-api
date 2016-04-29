@@ -16,7 +16,7 @@ import java.util.Map.Entry;
  * 
  * @author raven
  *
- * @param <S>
+ * @param <S> The solution type
  */
 public class ProblemContainerPick<S>
     implements Entry<Problem<S>, ProblemContainerImpl<S>>

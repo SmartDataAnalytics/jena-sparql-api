@@ -34,7 +34,7 @@ public interface Problem<S>
      */
     @Override
     default int compareTo(Problem<S> o) {
-        long a = o.estimateCost();
+        long a = this.estimateCost();
         long b = o.estimateCost();
         int result = Long.compare(a, b);
         return result;

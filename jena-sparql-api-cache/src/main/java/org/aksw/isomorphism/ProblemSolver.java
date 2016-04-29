@@ -10,7 +10,7 @@ import java.util.stream.Stream;
  * 
  * @author Claus Stadler
  *
- * @param <S>
+ * @param <S> The solution type
  */
 public class ProblemSolver<S> {
     protected ProblemContainer<S> problemContainer;
