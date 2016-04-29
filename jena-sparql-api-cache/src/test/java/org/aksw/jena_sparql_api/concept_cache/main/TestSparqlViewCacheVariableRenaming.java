@@ -87,12 +87,11 @@ public class TestSparqlViewCacheVariableRenaming {
 
     public static void testVariableRenaming(Query baseQuery) throws IOException {
 
-        Collection<Var> vars = PatternVars.vars(baseQuery.getQueryPattern());
-
         QuadFilterPatternCanonical baseQfpc = SparqlCacheUtils.transform2(baseQuery);
         List<Var> baseVars = baseQuery.getProjectVars();
 
-        Generator<Var> gen = new VarGeneratorBlacklist(VarGeneratorImpl2.create("v"), vars);
+        Collection<Var> vars = PatternVars.vars(baseQuery.getQueryPattern());
+        Generator<Var> gen = VarGeneratorBlacklist.create("v", vars);
 
         Map<Var, Node> varMap = vars.stream()
                 .collect(Collectors.toMap(

@@ -19,15 +19,24 @@ import org.aksw.commons.collections.MapUtils;
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
 import org.aksw.jena_sparql_api.concept_cache.domain.PatternSummary;
+import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.aksw.jena_sparql_api.utils.Pair;
+import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
+import org.aksw.jena_sparql_api.utils.QuadUtils;
+import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
+import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.graph.NodeTransform;
 import org.paukov.combinatorics.Factory;
 import org.paukov.combinatorics.Generator;
 import org.paukov.combinatorics.ICombinatoricsVector;
 
 import com.codepoetics.protonpack.StreamUtils;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 
 public class CombinatoricsUtils {
 
@@ -113,8 +122,127 @@ public class CombinatoricsUtils {
             .filter(Objects::nonNull);
 
         return result;
+    }    
+
+    public static Iterable<Map<Var, Var>> splitQuadGroupsSimple(Entry<? extends Collection<Quad>, ? extends Collection<Quad>> quadGroup, Map<Var, Var> partialSolution) {
+        
     }
 
+    /**
+     * Create a safe mapping, such that variables of a cand quad that are not mapped via a partial solution are made distinct from those of the query's variables
+     * 
+     * @param quadGroup
+     * @param partialSolution
+     * @return
+     */
+    public static Iterable<Map<Var, Var>> createVarMapSplitQuadGroups(Entry<? extends Collection<Quad>, ? extends Collection<Quad>> quadGroup, Map<Var, Var> partialSolution) {
+    }
+    
+    
+    /**
+     * Take a quad group and split it accounding to a variable mapping:
+     * 
+     * (1) replace the variables of all candQuads according to the partialSolution
+     * (2) for every candQuad, check which query quad it may match to.
+     *     a match is found if   
+     * 
+     * 
+     * @param quadGroup
+     * @param baseSolution
+     * @return
+     */
+    public static Iterable<Map<Var, Var>> splitQuadGroupsIndexed(Entry<? extends Collection<Quad>, ? extends Collection<Quad>> quadGroup, Map<Var, Var> partialSolution) {
+        NodeTransform nodeTransform = new NodeTransformRenameMap(partialSolution);
+
+        Collection<Quad> candQuads = quadGroup.getKey();
+        Collection<Quad> queryQuads = quadGroup.getValue();
+        
+        // We need to rename all variables of the cand quads that are not renamed and yet appear in the query
+        //Set<Var> queryVars = QuadPatternUtils.getVarsMentioned(queryQuads);
+        //Set<Var> renamedCandVars = partialSolution.keySet();
+        
+
+        //Map<Var, Var> varMap = new HashMap<Var, Var>();
+        //varMap.putAll(partialSolution);
+        
+        //Set<Var> unmappedVars = Sets.difference(queryVars, partialSolution.keySet());
+        
+        VarGeneratorBlacklist gen = VarGeneratorBlacklist.create("v", queryVars);
+
+        
+        // index the query quads by node (variable)
+        Multimap<Node, Quad> nodeToQueryQuad = indexQuadsByNode(queryQuads);
+        
+        
+        for(Quad candQuad : candQuads) {
+            Quad renamedCandQuad = QuadUtils.applyNodeTransform(candQuad, nodeTransform);
+            Node[] nodes = QuadUtils.quadToArray(renamedCandQuad);            
+            
+            // Find the smallest set for the nodes of the candQuad
+            Collection<Quad> smallestSet = null; 
+            for(int i = 0; i < 4; ++i) {
+                Node node = nodes[i];
+                boolean isNodeMapped = partialSolution.containsKey(node);
+                if(isNodeMapped) {
+                    Collection<Quad> tmp = nodeToQueryQuad.get(node);
+                    if(tmp == null) {
+                        smallestSet = Collections.emptySet();
+                        break;
+                    } else {
+                        smallestSet = smallestSet == null
+                                ? tmp
+                                : (tmp.size() < smallestSet.size() ? tmp : smallestSet);
+                    }
+                }
+            }
+                
+            if(smallestSet == null) {
+                smallestSet = queryQuads;
+            }
+            
+            // For each item in the set, check whether it could potentially match with the given quad
+            
+            
+        }
+
+        return null;
+    }
+    
+    public static Multimap<Node, Quad> indexQuadsByNode(Collection<Quad> quads) {
+        Multimap<Node, Quad> result = HashMultimap.create();
+        for(Quad quad : quads) {
+            Node[] nodes = QuadUtils.quadToArray(quad);
+            for(Node node : nodes) {
+                result.put(node, quad);
+            }
+        }
+        return result;
+    }
+    
+    
+    
+    public static boolean isPotentialMatchUnderMapping(Quad candQuad, Quad queryQuad, Map<Var, Var> partialSolution) {
+        Node[] candNodes = QuadUtils.quadToArray(candQuad);
+        Node[] queryNodes = QuadUtils.quadToArray(queryQuad);
+        
+        boolean result = true;
+        for(int i = 0; i < 4 && result; ++i) {
+            Node candNode = candNodes[i];
+            Node queryNode = queryNodes[i];
+            
+            Node candMap = partialSolution.get(candNode);
+            Node queryMap = partialSolution.get(queryNode);
+            
+            result =
+                    result && (
+                    candMap != null && queryMap != null && candMap.equals(queryMap) ||
+                    candMap == null && queryMap == null);
+        }
+        
+        return result;
+    }
+    
+    
     public static Iterable<Map<Var, Var>> createSolutions(Entry<? extends Collection<Quad>, ? extends Collection<Quad>> quadGroup, Map<Var, Var> baseSolution) {
         Iterable<Map<Var, Var>> result = () -> createSolutionStream(quadGroup, baseSolution).iterator();
         return result;
