@@ -23,7 +23,7 @@ public class ProblemVarMappingExpr
     }
 
     @Override
-    public Stream<Map<Var, Var>> generateSolutions(Map<Var, Var> baseSolution) {
+    public Stream<Map<Var, Var>> generateSolutions() {
         // TODO Auto-generated method stub
         return null;
     }

@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.concept_cache.combinatorics;
 
 import java.util.Collection;
+import java.util.Map;
 
 import org.aksw.isomorphism.Problem;
 
@@ -16,13 +17,14 @@ import com.google.common.math.LongMath;
  * @param <A>
  * @param <B>
  */
-public abstract class ProblemMappingEquivBase<S, A, B>
-    implements Problem<S>
+public abstract class ProblemMappingEquivBase<A, B, X, Y>
+    implements Problem<Map<X, Y>>
 {
     protected Collection<A> as;
     protected Collection<B> bs;
+    protected Map<X, Y> baseSolution;
 
-    public ProblemMappingEquivBase(Collection<A> as, Collection<B> bs) {
+    public ProblemMappingEquivBase(Collection<A> as, Collection<B> bs, Map<X, Y> baseSolution) {
         super();
         this.as = as;
         this.bs = bs;

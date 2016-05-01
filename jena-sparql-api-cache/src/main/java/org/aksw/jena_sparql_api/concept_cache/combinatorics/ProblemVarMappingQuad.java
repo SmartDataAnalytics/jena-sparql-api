@@ -11,15 +11,15 @@ import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 
 public class ProblemVarMappingQuad
-    extends ProblemMappingEquivBase<Map<Var, Var>, Quad, Quad>
+    extends ProblemMappingEquivBase<Quad, Quad, Var, Var>
 {
-    public ProblemVarMappingQuad(Collection<Quad> as, Collection<Quad> bs) {
-        super(as, bs);
+    public ProblemVarMappingQuad(Collection<Quad> as, Collection<Quad> bs, Map<Var, Var> baseSolution) {
+        super(as, bs, baseSolution);
     }
 
     @Override
-    public Stream<Map<Var, Var>> generateSolutions(Map<Var, Var> baseVarMap) {
-        Iterable<Map<Var, Var>> tmp = CombinatoricsUtils.createSolutions(as, bs, baseVarMap);
+    public Stream<Map<Var, Var>> generateSolutions() {
+        Iterable<Map<Var, Var>> tmp = CombinatoricsUtils.createSolutions(as, bs, baseSolution);
         Stream<Map<Var, Var>> result = StreamSupport.stream(tmp.spliterator(), false);
         return result;
     }

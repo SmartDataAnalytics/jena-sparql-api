@@ -29,9 +29,11 @@ public interface Problem<S>
     /**
      * Return a stream of solutions
      * 
+     * Note: if generate solutions should operate on a partial solution, use refine first
+     * 
      * @return
      */
-    Stream<S> generateSolutions(S baseSolution);
+    Stream<S> generateSolutions();
     
     /**
      * Refine the problem by a partial solution
