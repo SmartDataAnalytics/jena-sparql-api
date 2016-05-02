@@ -7,16 +7,20 @@ import java.util.stream.Stream;
 import org.aksw.isomorphism.Problem;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprLib;
+import org.apache.jena.sparql.expr.ExprSystem;
 
 /**
  * Match two clauses of expressions against each other
- * 
+ *
  * @author raven
  *
  */
 public class ProblemVarMappingExpr
     extends ProblemMappingEquivBase<Map<Var, Var>, Collection<Expr>, Collection<Expr>>
 {
+
+
     public ProblemVarMappingExpr(Collection<Collection<Expr>> as,
             Collection<Collection<Expr>> bs) {
         super(as, bs);
@@ -34,6 +38,6 @@ public class ProblemVarMappingExpr
         // TODO Auto-generated method stub
         return null;
     }
-    
-    
+
+
 }

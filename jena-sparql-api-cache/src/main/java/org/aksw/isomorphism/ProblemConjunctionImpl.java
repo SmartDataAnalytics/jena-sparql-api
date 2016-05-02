@@ -22,12 +22,12 @@ import com.google.common.collect.TreeMultimap;
  *
  * @param <S> The solution type
  */
-public class ProblemContainerImpl<S>
+public class ProblemConjunctionImpl<S>
     implements ProblemContainer<S>
 {
     protected TreeMultimap<? extends Comparable<?>, Problem<S>> sizeToProblem;
     
-    public ProblemContainerImpl(
+    public ProblemConjunctionImpl(
             TreeMultimap<? extends Comparable<?>, Problem<S>> sizeToProblem) {
         super();
         this.sizeToProblem = sizeToProblem;
@@ -47,7 +47,7 @@ public class ProblemContainerImpl<S>
         TreeMultimap<Comparable<?>, Problem<S>> remaining = TreeMultimap.create(sizeToProblem);
         remaining.remove(pickedKey, pickedProblem);
         
-        ProblemContainerImpl<S> r = new ProblemContainerImpl<>(remaining);
+        ProblemConjunctionImpl<S> r = new ProblemConjunctionImpl<>(remaining);
         
         ProblemContainerPick<S> result = new ProblemContainerPick<>(pickedProblem, r);
         return result;
@@ -59,14 +59,14 @@ public class ProblemContainerImpl<S>
      * 
      * @param partialSolution
      */
-    public ProblemContainerImpl<S> refine(S partialSolution) {
+    public ProblemConjunctionImpl<S> refine(S partialSolution) {
         Collection<Problem<S>> tmp = sizeToProblem.values().stream()
             .map(problem -> problem.refine(partialSolution))
             .flatMap(x -> x.stream())
             .collect(Collectors.toList());
         
         TreeMultimap<Long, Problem<S>> sizeToProblem = IsoUtils.indexSolutionGenerators(tmp);
-        ProblemContainerImpl<S> result = new ProblemContainerImpl<S>(sizeToProblem);
+        ProblemConjunctionImpl<S> result = new ProblemConjunctionImpl<S>(sizeToProblem);
         
         return result;
     }

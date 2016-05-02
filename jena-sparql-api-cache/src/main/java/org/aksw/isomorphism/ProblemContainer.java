@@ -6,7 +6,14 @@ package org.aksw.isomorphism;
  * problems, which *should* be the cheapest one (in regard to
  * some estimate). Also, the pick method must return the remaining workload
  * again abstracted as a problem collection.
- * 
+ *
+ * Essentially, the problem container represents a state, and the pick method
+ * performs the transition to a new state.
+ *
+ * The {@link ProblemSolver} is the class that actively invokes the the pick
+ * and refine methods.
+ *
+ *
  * @author Claus Stadler
  *
  * @param <S> The solution type

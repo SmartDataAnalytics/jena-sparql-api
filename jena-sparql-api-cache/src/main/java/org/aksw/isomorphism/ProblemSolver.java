@@ -29,7 +29,7 @@ public class ProblemSolver<S> {
         ProblemContainerPick<S> pick = problemContainer.pick();
 
         Problem<S> picked = pick.getPicked();
-        ProblemContainerImpl<S> remaining = pick.getRemaining();
+        ProblemConjunctionImpl<S> remaining = pick.getRemaining();
 
         Stream<S> result = picked
             .generateSolutions()
@@ -48,7 +48,7 @@ public class ProblemSolver<S> {
                     // Depending on your setting, this can give a
                     // performance boost or penalty
                     //ProblemContainerImpl<S> openProblems = remaining;
-                    ProblemContainerImpl<S> openProblems = remaining.refine(partialSolution);
+                    ProblemConjunctionImpl<S> openProblems = remaining.refine(partialSolution);
 
                     if (openProblems.isEmpty()) {
                         r = Collections.<S> emptySet().stream();
