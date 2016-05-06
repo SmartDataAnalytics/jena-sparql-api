@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.stmt;
 
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryParseException;
+import org.apache.jena.query.Syntax;
 import org.apache.jena.update.UpdateRequest;
 
 
@@ -89,6 +90,10 @@ public class SparqlStmtParserImpl
 //    public static SparqlStmtParserImpl create() {
 //        SparqlStmtParserImpl result
 //    }
+    public static SparqlStmtParserImpl create(Syntax syntax, boolean actAsClassifier) {
+        SparqlStmtParserImpl result = create(SparqlParserConfig.create(syntax), actAsClassifier);
+        return result;
+    }
 
     public static SparqlStmtParserImpl create(SparqlParserConfig config) {
         SparqlStmtParserImpl result = create(config, false);

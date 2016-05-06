@@ -8,8 +8,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import org.aksw.commons.collections.IterableCollection;
 import org.aksw.commons.util.Pair;
@@ -37,6 +39,31 @@ import org.apache.jena.sparql.syntax.syntaxtransform.ExprTransformNodeElement;
  */
 public class ExprUtils {
 
+    /**
+     * linearize any structure into a flat list
+     *
+     * @param op
+     * @param stopMarker
+     * @param getChildren
+     * @return
+     */
+    public static <T> Stream<T> linearizePrefix(T op, T stopMarker, Function<? super T, Iterable<? extends T>> getChildren) {
+        boolean isIdentity = op == stopMarker || (stopMarker != null && stopMarker.equals(op));
+        Stream<T> tmp;
+        if(isIdentity) {
+            tmp = Stream.empty();
+        } else {
+            Iterable<?extends T> children = getChildren.apply(op);
+            Stream<? extends T> x = StreamSupport.stream(children.spliterator(), false);
+            tmp = Stream.concat(x, Stream.of(stopMarker));
+        }
+
+        Stream<T> result = Stream.concat(
+                Stream.of(op), // Emit parent
+                tmp.flatMap(e -> linearizePrefix(e, stopMarker, getChildren)));
+
+        return result;
+    }
 
 
     /**
@@ -45,7 +72,7 @@ public class ExprUtils {
      * @param expr
      * @return
      */
-    public static Stream<Expr> prefix(Expr expr, Expr identity) {
+    public static Stream<Expr> linearizePrefix(Expr expr, Expr identity) {
         boolean isIdentity = expr == identity || (identity != null && identity.equals(expr));
         Stream<Expr> tmp;
         if(isIdentity) {
@@ -57,7 +84,7 @@ public class ExprUtils {
 
         Stream<Expr> result = Stream.concat(
                 Stream.of(expr), // Emit parent
-                tmp.flatMap(e -> prefix(e, identity)));
+                tmp.flatMap(e -> linearizePrefix(e, identity)));
 
         return result;
     }
@@ -65,7 +92,7 @@ public class ExprUtils {
 
     public static void main(String[] args) {
         // + ( +(?a ?b) (?c) )
-        System.out.println(prefix(org.apache.jena.sparql.util.ExprUtils.parse("?a + ?b + ?c"), null).collect(Collectors.toList()));
+        System.out.println(linearizePrefix(org.apache.jena.sparql.util.ExprUtils.parse("?a + ?b + ?c"), null).collect(Collectors.toList()));
     }
 
     /**
