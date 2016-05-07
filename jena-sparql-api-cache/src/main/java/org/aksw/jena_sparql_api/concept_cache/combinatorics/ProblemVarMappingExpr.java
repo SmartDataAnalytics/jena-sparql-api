@@ -7,8 +7,6 @@ import java.util.stream.Stream;
 import org.aksw.isomorphism.Problem;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
-import org.apache.jena.sparql.expr.ExprLib;
-import org.apache.jena.sparql.expr.ExprSystem;
 
 /**
  * Match two clauses of expressions against each other
@@ -17,13 +15,13 @@ import org.apache.jena.sparql.expr.ExprSystem;
  *
  */
 public class ProblemVarMappingExpr
-    extends ProblemMappingEquivBase<Map<Var, Var>, Collection<Expr>, Collection<Expr>>
+    extends ProblemMappingEquivBase<Collection<Expr>, Collection<Expr>, Var, Var>
 {
 
 
     public ProblemVarMappingExpr(Collection<Collection<Expr>> as,
-            Collection<Collection<Expr>> bs) {
-        super(as, bs);
+            Collection<Collection<Expr>> bs, Map<Var, Var> baseSolution) {
+        super(as, bs, baseSolution);
     }
 
     @Override
