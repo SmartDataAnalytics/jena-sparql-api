@@ -47,12 +47,4 @@ public class OpExecutorFactoryViewCache
         return new OpExecutorViewCache(execCxt, serviceToQef);
     }
 
-
-    /**
-     * Use JenaExtensionViewCache.register() instead
-     */
-    @Deprecated
-    public static void registerGlobally() {
-        JenaExtensionViewCache.register();
-    }
 }

@@ -7,5 +7,4 @@ public class JenaExtensionViewCache {
     public static void register() {
         QC.setFactory(ARQ.getContext(), OpExecutorFactoryViewCache.get());
     }
-
 }

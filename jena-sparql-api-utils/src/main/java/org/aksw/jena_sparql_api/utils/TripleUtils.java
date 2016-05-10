@@ -6,10 +6,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.aksw.commons.util.strings.StringUtils;
-import org.apache.jena.riot.writer.NTriplesWriter;
-
+import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.riot.writer.NTriplesWriter;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingHashMap;
 
@@ -33,14 +32,27 @@ public class TripleUtils {
 //        return result;
 //    }
 
+    public static Node[] toArray(Triple t) {
+        Node[] result = new Node[] { t.getSubject(), t.getPredicate(), t.getObject() };
+        return result;
+    }
+
+    public static Triple fromArray(Node[] nodes) {
+        Node s = nodes[0];
+        Node p = nodes[1];
+        Node o = nodes[2];
+        Triple result = new Triple(s, p, o);
+        return result;
+    }
+
     public static Binding tripleToBinding(Triple triple) {
         BindingHashMap result = new BindingHashMap();
-        
+
         tripleToBinding(triple, result);
-        
-        return result;        
+
+        return result;
     }
-    
+
     public static Binding tripleToBinding(Triple triple, BindingHashMap result) {
         result.add(Vars.s, triple.getSubject());
         result.add(Vars.p, triple.getPredicate());
