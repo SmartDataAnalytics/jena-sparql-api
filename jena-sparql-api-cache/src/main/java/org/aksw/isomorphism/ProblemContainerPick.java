@@ -19,13 +19,13 @@ import java.util.Map.Entry;
  * @param <S> The solution type
  */
 public class ProblemContainerPick<S>
-    implements Entry<Problem<S>, ProblemConjunctionImpl<S>>
+    implements Entry<Problem<S>, ProblemContainerImpl<S>>
 {
     protected Problem<S> picked;
-    protected ProblemConjunctionImpl<S> remaining;
+    protected ProblemContainerImpl<S> remaining;
     
     public ProblemContainerPick(Problem<S> picked,
-            ProblemConjunctionImpl<S> remaining) {
+            ProblemContainerImpl<S> remaining) {
         super();
         this.picked = picked;
         this.remaining = remaining;
@@ -33,7 +33,7 @@ public class ProblemContainerPick<S>
     public Problem<S> getPicked() {
         return picked;
     }
-    public ProblemConjunctionImpl<S> getRemaining() {
+    public ProblemContainerImpl<S> getRemaining() {
         return remaining;
     }
     
@@ -42,12 +42,12 @@ public class ProblemContainerPick<S>
         return picked;
     }
     @Override
-    public ProblemConjunctionImpl<S> getValue() {
+    public ProblemContainerImpl<S> getValue() {
         return remaining;
     }
     @Override
-    public ProblemConjunctionImpl<S> setValue(
-            ProblemConjunctionImpl<S> value) {
+    public ProblemContainerImpl<S> setValue(
+            ProblemContainerImpl<S> value) {
         throw new UnsupportedOperationException();
     }
     

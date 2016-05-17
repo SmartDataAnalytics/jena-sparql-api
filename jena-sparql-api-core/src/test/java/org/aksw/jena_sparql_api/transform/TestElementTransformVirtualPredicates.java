@@ -19,6 +19,7 @@ import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.optimize.Optimize;
 import org.apache.jena.sparql.algebra.optimize.TransformFilterPlacement;
 import org.apache.jena.sparql.util.Context;
+import org.apache.jena.vocabulary.RDFS;
 
 public class TestElementTransformVirtualPredicates {
 
@@ -33,9 +34,11 @@ public class TestElementTransformVirtualPredicates {
         Map<Node, Relation> virtualPredicates = new HashMap<Node, Relation>();
 
         //virtualPredicates.put(NodeFactory.createURI("http://ex.org/label"), Relation.create("GRAPH ?g { ?s ?p ?o } . ?g <http://owner> ?o", "s", "o"));
-        virtualPredicates.put(NodeFactory.createURI("http://ex.org/label"), Relation.create("?s <test> ?g . ?g <http://owner> ?o", "s", "o"));
+        //virtualPredicates.put(NodeFactory.createURI("http://ex.org/label"), Relation.create("?s <test> ?g . ?g <http://owner> ?o", "s", "o"));
 
-        //virtualPredicates.put(NodeFactory.createURI("http://ex.org/label"), Relation.create("?s <skos:label> [ <skos:value> ?l]", "s", "l"));
+
+
+        virtualPredicates.put(NodeFactory.createURI(RDFS.label.getURI()), Relation.create("?s <skos:label> [ <skos:value> ?l]", "s", "l"));
 
 
         //Query query = QueryFactory.create("Select * { ?s <http://ex.org/label> ?o }");

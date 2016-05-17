@@ -4,28 +4,47 @@ import java.util.Collections;
 import java.util.function.BinaryOperator;
 import java.util.stream.Stream;
 
+import org.aksw.state_space_search.core.Action;
+import org.aksw.state_space_search.core.State;
+
 /**
- * Default implementation of the core algorithm for solving problems.
- * TODO Give it some fancy name
+ * Class that wraps a {@link Problem} with the {@link State} interface.
  *
- * @author Claus Stadler
+ * @author raven
  *
- * @param <S> The solution type
+ * @param <S>
  */
-public class ProblemSolver<S> {
+public class StateProblemContainer<S>
+    implements State<S>
+{
     protected ProblemContainer<S> problemContainer;
+
     protected S baseSolution;
     protected BinaryOperator<S> solutionCombiner;
 
-    public ProblemSolver(ProblemContainer<S> problemContainer, S baseSolution, BinaryOperator<S> solutionCombiner) {
+    protected S result;
+    protected boolean isFinal;
+
+
+    public StateProblemContainer(ProblemContainer<S> problemContainer, S result, boolean isFinal) {
         super();
         this.problemContainer = problemContainer;
-        this.baseSolution = baseSolution;
-        this.solutionCombiner = solutionCombiner;
+        this.result = result;
+        this.isFinal = isFinal;
     }
 
-    public Stream<S> streamSolutions() {
+    @Override
+    public boolean isFinal() {
+        return isFinal;
+    }
 
+    @Override
+    public S getResult() {
+        return result;
+    }
+
+    @Override
+    public Stream<Action<S>> getActions() {
         ProblemContainerPick<S> pick = problemContainer.pick();
 
         Problem<S> picked = pick.getPicked();
@@ -59,13 +78,6 @@ public class ProblemSolver<S> {
                 }
                 return r;
             });
-
-        return result;
-    }
-
-    public static <S> Stream<S> solve(ProblemContainer<S> problemContainer, S baseSolution, BinaryOperator<S> solutionCombiner) {
-        ProblemSolver<S> problemSolver = new ProblemSolver<S>(problemContainer, baseSolution, solutionCombiner);
-        Stream<S> result = problemSolver.streamSolutions();
 
         return result;
     }

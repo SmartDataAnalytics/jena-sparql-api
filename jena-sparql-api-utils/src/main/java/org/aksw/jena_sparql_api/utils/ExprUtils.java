@@ -39,6 +39,22 @@ import org.apache.jena.sparql.syntax.syntaxtransform.ExprTransformNodeElement;
  */
 public class ExprUtils {
 
+    public static <T> int countLeafs(T parent, Function<T, Collection<T>> nodeToChildren) {
+        Collection<T> children = nodeToChildren.apply(parent);
+
+        int result = children.isEmpty()
+                ? 1
+                : children.stream()
+                    .mapToInt(c -> countLeafs(c, nodeToChildren)).sum();
+
+        return result;
+    }
+
+    public static int countLeafs(Expr expr) {
+        int result = countLeafs(expr, ExprUtils::getSubExprs);
+        return result;
+    }
+
     /**
      * linearize any structure into a flat list
      *
