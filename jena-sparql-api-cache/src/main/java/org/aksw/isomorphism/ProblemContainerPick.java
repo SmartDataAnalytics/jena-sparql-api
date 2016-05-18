@@ -10,22 +10,22 @@ import java.util.Map.Entry;
  *   <li>the remaining workload</li>
  * </ol>
  * This is what this class represents.
- * 
+ *
  * Note, that this class inherits from Entry as it is essentially a Tuple2 and
  * can thus be used as such should that ever be needed
- * 
+ *
  * @author raven
  *
  * @param <S> The solution type
  */
 public class ProblemContainerPick<S>
-    implements Entry<Problem<S>, ProblemContainerImpl<S>>
+    implements Entry<Problem<S>, ProblemContainer<S>>
 {
     protected Problem<S> picked;
-    protected ProblemContainerImpl<S> remaining;
-    
+    protected ProblemContainer<S> remaining;
+
     public ProblemContainerPick(Problem<S> picked,
-            ProblemContainerImpl<S> remaining) {
+            ProblemContainer<S> remaining) {
         super();
         this.picked = picked;
         this.remaining = remaining;
@@ -33,23 +33,23 @@ public class ProblemContainerPick<S>
     public Problem<S> getPicked() {
         return picked;
     }
-    public ProblemContainerImpl<S> getRemaining() {
+    public ProblemContainer<S> getRemaining() {
         return remaining;
     }
-    
+
     @Override
     public Problem<S> getKey() {
         return picked;
     }
     @Override
-    public ProblemContainerImpl<S> getValue() {
+    public ProblemContainer<S> getValue() {
         return remaining;
     }
     @Override
-    public ProblemContainerImpl<S> setValue(
-            ProblemContainerImpl<S> value) {
+    public ProblemContainer<S> setValue(
+            ProblemContainer<S> value) {
         throw new UnsupportedOperationException();
     }
-    
-    
+
+
 }

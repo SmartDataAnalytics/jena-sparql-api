@@ -13,7 +13,7 @@ public class StateSearchUtils
         Stream<S> result = SearchUtils.<State<S>, Action<S>, S>breadthFirstSearch(
             state,
             State::isFinal,
-            State::getResult,
+            State::getSolution,
             State::getActions,
             Action::apply,
             depth,

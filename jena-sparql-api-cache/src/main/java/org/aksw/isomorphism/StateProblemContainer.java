@@ -22,27 +22,31 @@ public class StateProblemContainer<S>
     protected S baseSolution;
     protected BinaryOperator<S> solutionCombiner;
 
-    protected S result;
-    protected boolean isFinal;
-
-
-    public StateProblemContainer(ProblemContainer<S> problemContainer, S result, boolean isFinal) {
+    public StateProblemContainer(S baseSolution, ProblemContainer<S> problemContainer, BinaryOperator<S> solutionCombiner) {
         super();
+        this.baseSolution = baseSolution;
         this.problemContainer = problemContainer;
-        this.result = result;
-        this.isFinal = isFinal;
+        this.solutionCombiner = solutionCombiner;
     }
 
     @Override
     public boolean isFinal() {
-        return isFinal;
-    }
-
-    @Override
-    public S getResult() {
+        boolean result = problemContainer.isEmpty();
         return result;
     }
 
+    @Override
+    public S getSolution() {
+        return baseSolution;
+    }
+
+    /**
+     * Actions are created by means of first solving the cheapest open problem
+     * generating an action for each obtained solution.
+     * (assumes a non-final state)
+     *
+     *
+     */
     @Override
     public Stream<Action<S>> getActions() {
         ProblemContainerPick<S> pick = problemContainer.pick();
@@ -50,17 +54,19 @@ public class StateProblemContainer<S>
         Problem<S> picked = pick.getPicked();
         ProblemContainer<S> remaining = pick.getRemaining();
 
-        Stream<S> result = picked
+        Stream<Action<S>> result = picked
             .generateSolutions()
-            .flatMap(solutionContribution -> {
+            .map(solutionContribution -> {
                 S partialSolution = solutionCombiner.apply(baseSolution, solutionContribution);
 
-                Stream<S> r;
+                Action<S> r;
+                //Stream<Action<S>> r;
                 // If the partial solution is null, then indicate the
                 // absence of a solution by returning a stream that yields
                 // null as a 'solution'
                 if (partialSolution == null) {
-                    r = Collections.<S> singleton(null).stream();
+                    //r = Collections.<S> singleton(null).stream();
+                    r = null;
                 } else {
                     // This step is optional: it refines problems
                     // based on the current partial solution
@@ -68,16 +74,22 @@ public class StateProblemContainer<S>
                     // performance boost or penalty
                     //ProblemContainerImpl<S> openProblems = remaining;
                     ProblemContainer<S> openProblems = remaining.refine(partialSolution);
-
-                    if (openProblems.isEmpty()) {
-                        r = Collections.<S> emptySet().stream();
-                    } else {
-                        ProblemSolver<S> nextState = new ProblemSolver<S>(openProblems, baseSolution, solutionCombiner);
-                        r = nextState.streamSolutions();
-                    }
+                    r = new ActionProblemContainer<S>(partialSolution, openProblems, solutionCombiner);
+//
+//                    if (openProblems.isEmpty()) {
+//                        r = Collections.<S> emptySet().stream();
+//                    } else {
+//                        r =
+//                        //ProblemSolver<S> nextState = new ProblemSolver<S>(openProblems, baseSolution, solutionCombiner);
+//                        //r = nextState.streamSolutions();
+//                    }
                 }
+
+//                Stream<Action<S>> s = r.map(x -> ); //<S>(partialSolution, partialSolution));
+
                 return r;
-            });
+            })
+            ;
 
         return result;
     }

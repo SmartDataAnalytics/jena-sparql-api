@@ -4,6 +4,6 @@ import java.util.stream.Stream;
 
 public interface State<S> {
     boolean isFinal();
-    S getResult();
+    S getSolution();
     Stream<Action<S>> getActions();
 }

@@ -40,16 +40,23 @@ public class ProblemContainerImpl<S>
      * @return
      */
     public ProblemContainerPick<S> pick() {
+        ProblemContainerPick<S> result;
+
         Entry<? extends Comparable<?>, Collection<Problem<S>>> currEntry = sizeToProblem.asMap().firstEntry();
-        Comparable<?> pickedKey = currEntry.getKey();
-        Problem<S> pickedProblem = Iterables.getFirst(currEntry.getValue(), null);
+        if(currEntry != null) {
+            Comparable<?> pickedKey = currEntry.getKey();
+            Problem<S> pickedProblem = Iterables.getFirst(currEntry.getValue(), null);
 
-        TreeMultimap<Comparable<?>, Problem<S>> remaining = TreeMultimap.create(sizeToProblem);
-        remaining.remove(pickedKey, pickedProblem);
+            TreeMultimap<Comparable<?>, Problem<S>> remaining = TreeMultimap.create(sizeToProblem);
+            remaining.remove(pickedKey, pickedProblem);
 
-        ProblemContainerImpl<S> r = new ProblemContainerImpl<>(remaining);
+            ProblemContainerImpl<S> r = new ProblemContainerImpl<>(remaining);
 
-        ProblemContainerPick<S> result = new ProblemContainerPick<>(pickedProblem, r);
+            result = new ProblemContainerPick<>(pickedProblem, r);
+        } else {
+            throw new IllegalStateException();
+        }
+
         return result;
     }
 
