@@ -99,8 +99,8 @@ public class ExprUtils {
         }
 
         Stream<Expr> result = Stream.concat(
-                Stream.of(expr), // Emit parent
-                tmp.flatMap(e -> linearizePrefix(e, identity)));
+                tmp.flatMap(e -> linearizePrefix(e, identity)),
+                Stream.of(expr)); // Emit parent);
 
         return result;
     }

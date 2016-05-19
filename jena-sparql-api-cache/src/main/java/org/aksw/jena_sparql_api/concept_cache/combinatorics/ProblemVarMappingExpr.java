@@ -75,12 +75,18 @@ public class ProblemVarMappingExpr
 //      });
 
         for(int i = 0; i < n - m + 1; ++i) {
-            Expr ae = as.get(i);
             Map<Var, Var> varMap = new HashMap<Var, Var>();
             for(int j = 0; j < m; ++j) {
+                Expr ae = as.get(i + j);
                 Expr be = bs.get(j);
                 boolean isCompatible;
-                if(ae.isVariable() && be.isVariable()) {
+                if(ae == null && be == null) {
+                    isCompatible = true;
+                }
+                else if(ae == null || be == null) {
+                    isCompatible = false;
+                }
+                else if(ae.isVariable() && be.isVariable()) {
                     Var av = ae.getExprVar().asVar();
                     Var bv = be.getExprVar().asVar();
                     // Add a mapping to varMap if it is compatible
