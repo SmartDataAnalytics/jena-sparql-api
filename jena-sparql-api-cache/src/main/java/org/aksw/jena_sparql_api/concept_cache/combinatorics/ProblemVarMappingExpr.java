@@ -29,8 +29,8 @@ public class ProblemVarMappingExpr
 {
 
 
-    public ProblemVarMappingExpr(Collection<Collection<Expr>> as,
-            Collection<Collection<Expr>> bs, Map<Var, Var> baseSolution) {
+    public ProblemVarMappingExpr(Collection<? extends Collection<Expr>> as,
+            Collection<? extends Collection<Expr>> bs, Map<Var, Var> baseSolution) {
         super(as, bs, baseSolution);
     }
 
