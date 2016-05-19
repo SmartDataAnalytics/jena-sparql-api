@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.aksw.commons.collections.MapUtils;
+import org.aksw.isomorphism.IsoMapUtils;
 import org.aksw.isomorphism.Problem;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.apache.jena.sparql.core.Var;
@@ -20,6 +21,8 @@ import org.apache.jena.sparql.expr.NodeValue;
 
 /**
  * Match two clauses of expressions against each other
+ *
+ * All expressions of the first set must match to expressions of the second set
  *
  * @author raven
  *
@@ -36,16 +39,35 @@ public class ProblemVarMappingExpr
 
     @Override
     public Stream<Map<Var, Var>> generateSolutions() {
-        // TODO Auto-generated method stub
-        return null;
+
+        Map<Var, Var> baseSolution = Collections.emptyMap();
+        Stream<Map<Var, Var>> result = IsoMapUtils.createSolutionStream(
+                as,
+                bs,
+                (x, y) -> createVarMap(x, y),
+                baseSolution);
+
+        return result;
     }
 
     @Override
-    public Collection<Problem<Map<Var, Var>>> refine(
-            Map<Var, Var> partialSolution) {
+    public Collection<Problem<Map<Var, Var>>> refine(Map<Var, Var> partialSolution) {
+        return Collections.singleton(this);
+    }
 
-        // TODO Auto-generated method stub
-        return null;
+
+    public static Map<Var, Var> createVarMap(Collection<Expr> as, Collection<Expr> bs) {
+        Map<Var, Var> baseVarMap = Collections.emptyMap();
+    }
+
+    public static Map<Var, Var> createSingleVarMap(Expr a, Expr b) {
+        Map<Var, Var> result = createVarMap(a, b).findFirst().orElse(null);
+        return result;
+    }
+
+    public static Stream<Map<Var, Var>> createVarMap(Expr a, Expr b) {
+        Stream<Map<Var, Var>> result = createVarMap(a, b, Collections.emptyMap());
+        return result;
     }
 
     /**
@@ -58,7 +80,7 @@ public class ProblemVarMappingExpr
      * @param b
      * @return
      */
-    public static Stream<Map<Var, Var>> createVarMap(Expr a, Expr b) {
+    public static Stream<Map<Var, Var>> createVarMap(Expr a, Expr b, Map<Var, Var> baseSolution) {
         List<Expr> as = ExprUtils.linearizePrefix(a, null).collect(Collectors.toList());
         List<Expr> bs = ExprUtils.linearizePrefix(b, null).collect(Collectors.toList());
 
@@ -75,7 +97,7 @@ public class ProblemVarMappingExpr
 //      });
 
         for(int i = 0; i < n - m + 1; ++i) {
-            Map<Var, Var> varMap = new HashMap<Var, Var>();
+            Map<Var, Var> varMap = new HashMap<Var, Var>(baseSolution);
             for(int j = 0; j < m; ++j) {
                 Expr ae = as.get(i + j);
                 Expr be = bs.get(j);

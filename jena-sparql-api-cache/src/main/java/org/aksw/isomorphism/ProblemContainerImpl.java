@@ -1,5 +1,6 @@
 package org.aksw.isomorphism;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
@@ -32,6 +33,16 @@ public class ProblemContainerImpl<S>
         super();
         this.sizeToProblem = sizeToProblem;
     }
+
+//    public void add(Problem<S> problem) {
+//        double cost = problem.getEstimatedCost();
+//        sizeToProblem.put(cost, problem);
+//    }
+//
+//    public void addAll(Iterable<Problem<S>> problems) {
+//        problems.forEach(x -> add(x));
+//    }
+//
 
     /**
      * Pick the estimated cheapest problem,
@@ -81,6 +92,14 @@ public class ProblemContainerImpl<S>
     @Override
     public boolean isEmpty() {
         boolean result = sizeToProblem.isEmpty();
+        return result;
+    }
+
+
+    public static <S> ProblemContainerImpl<S> create(Problem<S> ... problems) {
+        Collection<Problem<S>> tmp = Arrays.asList(problems);
+        TreeMultimap<Long, Problem<S>> sizeToProblem = IsoUtils.indexSolutionGenerators(tmp);
+        ProblemContainerImpl<S> result = new ProblemContainerImpl<>(sizeToProblem);
         return result;
     }
 }

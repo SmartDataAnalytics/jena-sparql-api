@@ -21,7 +21,13 @@ public class TestStateSpaceSearch {
 
         Problem<Map<Var, Var>> p = new ProblemVarMappingExpr(ac, bc, Collections.emptyMap());
 
+
+
+        ProblemContainer<Map<Var, Var>> pc = ProblemContainerImpl.create();
+
         Stream<Map<Var, Var>> r = ProblemVarMappingExpr.createVarMap(a, b);
+
+
 
         r.forEach(x -> System.out.println(x));
 
