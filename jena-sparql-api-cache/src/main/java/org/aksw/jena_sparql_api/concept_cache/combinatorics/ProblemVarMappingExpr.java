@@ -55,7 +55,6 @@ public class ProblemVarMappingExpr
         return Collections.singleton(this);
     }
 
-
     public static Map<Var, Var> createVarMap(Collection<Expr> as, Collection<Expr> bs) {
         Map<Var, Var> baseVarMap = Collections.emptyMap();
     }
