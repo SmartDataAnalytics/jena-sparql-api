@@ -3,6 +3,7 @@ package org.aksw.isomorphism;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.ProblemVarMappingExpr;
 import org.aksw.jena_sparql_api.utils.CnfUtils;
@@ -20,6 +21,10 @@ public class TestStateSpaceSearch {
 
         Problem<Map<Var, Var>> p = new ProblemVarMappingExpr(ac, bc, Collections.emptyMap());
 
-        p.generateSolutions().forEach(x -> System.out.println(x));
+        Stream<Map<Var, Var>> r = ProblemVarMappingExpr.createVarMap(a, b);
+
+        r.forEach(x -> System.out.println(x));
+
+        //p.generateSolutions().forEach(x -> System.out.println(x));
     }
 }

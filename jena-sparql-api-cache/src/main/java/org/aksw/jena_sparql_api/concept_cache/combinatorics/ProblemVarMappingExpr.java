@@ -58,7 +58,7 @@ public class ProblemVarMappingExpr
      * @param b
      * @return
      */
-    public Stream<Map<Var, Var>> createVarMap(Expr a, Expr b) {
+    public static Stream<Map<Var, Var>> createVarMap(Expr a, Expr b) {
         List<Expr> as = ExprUtils.linearizePrefix(a, null).collect(Collectors.toList());
         List<Expr> bs = ExprUtils.linearizePrefix(b, null).collect(Collectors.toList());
 
@@ -74,7 +74,7 @@ public class ProblemVarMappingExpr
 //      IntStream.range(0, n - m).forEach(i -> {
 //      });
 
-        for(int i = 0; i < n - m; ++i) {
+        for(int i = 0; i < n - m + 1; ++i) {
             Expr ae = as.get(i);
             Map<Var, Var> varMap = new HashMap<Var, Var>();
             for(int j = 0; j < m; ++j) {
