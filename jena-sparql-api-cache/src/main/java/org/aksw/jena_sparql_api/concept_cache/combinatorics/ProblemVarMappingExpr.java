@@ -1,19 +1,19 @@
 package org.aksw.jena_sparql_api.concept_cache.combinatorics;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.aksw.commons.collections.MapUtils;
 import org.aksw.isomorphism.IsoMapUtils;
 import org.aksw.isomorphism.Problem;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
-import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprFunction;
@@ -77,15 +77,13 @@ public class ProblemVarMappingExpr
     }
 
     public static Map<Var, Var> createSingleVarMap(Expr a, Expr b) {
-        Map<Var, Var> result = createVarMap(a, b).findFirst().orElse(null);
+        Map<Var, Var> result = createVarMap(a, b).findFirst().map(x -> x.getVarMap()).orElse(null);
         return result;
     }
 
-    public static Stream<Map<Var, Var>> createVarMap(Expr a, Expr b) {
-        // TODO Implement me
-        //Stream<Map<Var, Var>> result = createVarMap(a, b, Collections.emptyMap());
-        //return result;
-        return null;
+    public static Stream<ExprMapSolution> createVarMap(Expr a, Expr b) {
+        Stream<ExprMapSolution> result = createVarMap(a, b, Collections.emptyMap());
+        return result;
     }
 
     /**
@@ -99,8 +97,8 @@ public class ProblemVarMappingExpr
      * @return
      */
     public static Stream<ExprMapSolution> createVarMap(Expr a, Expr b, Map<Var, Var> baseSolution) {
-        List<Expr> as = ExprUtils.linearizePrefix(a, null).collect(Collectors.toList());
-        List<Expr> bs = ExprUtils.linearizePrefix(b, null).collect(Collectors.toList());
+        List<Expr> as = ExprUtils.linearizePrefix(a, Collections.singleton(null)).collect(Collectors.toList());
+        List<Expr> bs = ExprUtils.linearizePrefix(b, Collections.singleton(null)).collect(Collectors.toList());
 
         // Get the number of leafs of b
         //int n = ExprUtils.countLeafs(a);
@@ -109,67 +107,73 @@ public class ProblemVarMappingExpr
         int m = bs.size();
 
         // If there is a match, we can continue by the size of m, as there cannot be another overlap
-        Collection<ExprMapSolution> result = new ArrayList<>();
+        //Collection<ExprMapSolution> result = new ArrayList<>();
 
 //      IntStream.range(0, n - m).forEach(i -> {
 //      });
 
-        for(int i = 0; i < n - m + 1; ++i) {
-            Map<Var, Var> varMap = new HashMap<Var, Var>(baseSolution);
-            Expr ae = null;
-            for(int j = 0; j < m; ++j) {
-                ae = as.get(i + j);
-                Expr be = bs.get(j);
-                boolean isCompatible;
-                if(ae == null && be == null) {
-                    isCompatible = true;
-                }
-                else if(ae == null || be == null) {
-                    isCompatible = false;
-                }
-                else if(ae.isVariable() && be.isVariable()) {
-                    Var av = ae.getExprVar().asVar();
-                    Var bv = be.getExprVar().asVar();
-                    // Add a mapping to varMap if it is compatible
-                    Map<Var, Var> tmp = Collections.singletonMap(av, bv);
-                    isCompatible = MapUtils.isCompatible(tmp, varMap);
+        //for(int i = 0; i < n - m + 1; ++i) {
+        Stream<ExprMapSolution> result = IntStream.range(0, n - m + 1)
+            .mapToObj(i -> {
+                Map<Var, Var> varMap = new HashMap<Var, Var>(baseSolution);
+                Expr ae = null;
+                for(int j = 0; j < m; ++j) {
+                //Stream<ExprMapSolution> r = IntStream.range(0, m).map(j -> {
+                    ae = as.get(i + j);
+                    Expr be = bs.get(j);
+                    boolean isCompatible;
+                    if(ae == null && be == null) {
+                        isCompatible = true;
+                    }
+                    else if(ae == null || be == null) {
+                        isCompatible = false;
+                    }
+                    else if(ae.isVariable() && be.isVariable()) {
+                        Var av = ae.getExprVar().asVar();
+                        Var bv = be.getExprVar().asVar();
+                        // Add a mapping to varMap if it is compatible
+                        Map<Var, Var> tmp = Collections.singletonMap(av, bv);
+                        isCompatible = MapUtils.isCompatible(tmp, varMap);
 
-                    varMap.putAll(tmp);
+                        varMap.putAll(tmp);
+                    }
+                    else if(ae.isConstant() && be.isConstant()) {
+                        NodeValue ac = ae.getConstant();
+                        NodeValue bc = be.getConstant();
+
+                        isCompatible = ac.equals(bc);
+                    }
+                    else if(ae.isFunction() && be.isFunction()) {
+                        // The function symbols must match - the sub-expressions were already matched
+                        // TODO Deal with sparql EXIST
+                        ExprFunction af = ae.getFunction();
+                        ExprFunction bf = be.getFunction();
+
+                        FunctionLabel al = af.getFunctionSymbol();
+                        FunctionLabel bl = bf.getFunctionSymbol();
+
+                        isCompatible = al.equals(bl);
+                    }
+                    else {
+                        isCompatible = false;
+                    }
+
+                    if(!isCompatible) {
+                        varMap = null;
+                        break;
+                    }
                 }
-                else if(ae.isConstant() && be.isConstant()) {
-                    NodeValue ac = ae.getConstant();
-                    NodeValue bc = be.getConstant();
 
-                    isCompatible = ac.equals(bc);
-                }
-                else if(ae.isFunction() && be.isFunction()) {
-                    // The function symbols must match - the sub-expressions were already matched
-                    // TODO Deal with sparql EXIST
-                    ExprFunction af = ae.getFunction();
-                    ExprFunction bf = be.getFunction();
+                ExprMapSolution r = varMap == null
+                        ? null
+                        : new ExprMapSolution(varMap, b, a, ae);
 
-                    FunctionLabel al = af.getFunctionSymbol();
-                    FunctionLabel bl = bf.getFunctionSymbol();
+                return r;
+            })
+            .filter(x -> !Objects.isNull(x))
+            ;
 
-                    isCompatible = al.equals(bl);
-                }
-                else {
-                    isCompatible = false;
-                }
-
-                if(!isCompatible) {
-                    varMap = null;
-                    break;
-                }
-            }
-
-            if(varMap != null) {
-                ExprMapSolution tmp = new ExprMapSolution(varMap, b, a, ae);
-                result.add(tmp);
-            }
-        }
-
-        return result.stream();
+        return result;
     }
 
 

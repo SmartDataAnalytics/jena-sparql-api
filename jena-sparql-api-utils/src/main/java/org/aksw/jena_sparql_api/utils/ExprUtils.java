@@ -64,20 +64,27 @@ public class ExprUtils {
      * @return
      */
     public static <T> Stream<T> linearizePrefix(T op, Collection<T> stopMarker, Function<? super T, Iterable<? extends T>> getChildren) {
+
 //        boolean isIdentity = op == stopMarker || (stopMarker != null && stopMarker.equals(op));
-//        Stream<T> tmp;
-//        if(isIdentity) {
-//            tmp = Stream.empty();
-//        } else {
-            Stream<T> tmp;
+        Stream<T> result;
+        if(op == null) {
+            result = Stream.empty();
+        } else {
             Iterable<?extends T> children = getChildren.apply(op);
             Stream<? extends T> x = StreamSupport.stream(children.spliterator(), false);
-            tmp = Stream.concat(x, stopMarker.stream()); // Stream.of(stopMarker)
-//        }
+            //tmp = Stream.concat(x, stopMarker.stream()); // Stream.of(stopMarker)
+//            tmp = Stream.concat(tmp, Stream.of(op));
 
-        Stream<T> result = Stream.concat(
-                Stream.of(op), // Emit parent
-                tmp.flatMap(e -> linearizePrefix(e, stopMarker, getChildren)));
+            result =
+                Stream.concat(
+                    Stream.concat(
+                        StreamSupport.stream(children.spliterator(), false).flatMap(e -> linearizePrefix(e, stopMarker, getChildren)),
+                        stopMarker.stream()
+                    ),
+                    Stream.of(op) // Emit parent
+                );
+        }
+
 
         return result;
     }

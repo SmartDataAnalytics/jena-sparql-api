@@ -36,4 +36,12 @@ public class ExprMapSolution {
     public Expr getTargetMatchExpr() {
         return targetMatchExpr;
     }
+
+    @Override
+    public String toString() {
+        return "ExprMapSolution [varMap=" + varMap + ", sourceExpr="
+                + sourceExpr + ", targetExpr=" + targetExpr
+                + ", targetMatchExpr=" + targetMatchExpr + "]";
+    }
+
 }

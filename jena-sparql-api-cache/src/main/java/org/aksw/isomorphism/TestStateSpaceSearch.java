@@ -14,22 +14,18 @@ import org.apache.jena.sparql.util.ExprUtils;
 public class TestStateSpaceSearch {
     public static void main(String[] args) {
         Expr a = ExprUtils.parse("?a = ?b || (?c = ?a + 1)");
-        Expr b = ExprUtils.parse("?x = ?y || (?z = ?x + 1)");
+        //Expr b = ExprUtils.parse("?x = ?y || (?z = ?x + 1)");
+        Expr b = ExprUtils.parse("(?z = ?x + 1)");
 
         Set<Set<Expr>> ac = CnfUtils.toSetCnf(a);
         Set<Set<Expr>> bc = CnfUtils.toSetCnf(b);
 
         Problem<Map<Var, Var>> p = new ProblemVarMappingExpr(ac, bc, Collections.emptyMap());
 
-
-
         ProblemContainer<Map<Var, Var>> pc = ProblemContainerImpl.create();
 
-        Stream<Map<Var, Var>> r = ProblemVarMappingExpr.createVarMap(a, b);
-
-
-
-        r.forEach(x -> System.out.println(x));
+        ProblemVarMappingExpr.createVarMap(a, b)
+            .forEach(x -> System.out.println(x));
 
         //p.generateSolutions().forEach(x -> System.out.println(x));
     }
