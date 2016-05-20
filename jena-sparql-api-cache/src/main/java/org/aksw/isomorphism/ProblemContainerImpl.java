@@ -96,6 +96,7 @@ public class ProblemContainerImpl<S>
     }
 
 
+    @SafeVarargs
     public static <S> ProblemContainerImpl<S> create(Problem<S> ... problems) {
         Collection<Problem<S>> tmp = Arrays.asList(problems);
         TreeMultimap<Long, Problem<S>> sizeToProblem = IsoUtils.indexSolutionGenerators(tmp);

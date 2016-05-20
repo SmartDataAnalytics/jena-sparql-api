@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.concept_cache.core;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -498,8 +499,8 @@ public class SparqlCacheUtils {
 
     /**
      * Rename all variables to ?g ?s ?p ?o based on the given quad and the cnf
-     * This is used for looking up triples having a certain expression over its components 
-     * 
+     * This is used for looking up triples having a certain expression over its components
+     *
      * ([?g ?s ?s ?o], (fn(?s, ?o))
      *
      * @param quad
@@ -1105,6 +1106,11 @@ public class SparqlCacheUtils {
             }
         }
 
+        return result;
+    }
+
+    public static <K, V> Map<K, V> mergeCompatible(Map<K, V> a, Map<K, V> b) {
+        Map<K, V> result = mergeCompatible(Arrays.asList(a, b));
         return result;
     }
 

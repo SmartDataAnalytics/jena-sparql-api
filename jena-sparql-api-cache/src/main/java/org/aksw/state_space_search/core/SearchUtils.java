@@ -11,7 +11,7 @@ public class SearchUtils {
             V vertex,
             Predicate<V> isFinal,
             Function<V, S> vertexToResult,
-            Function<V, ? extends Collection<E>> vertexToEdges,
+            Function<V, Stream<E>> vertexToEdges,
             Comparator<E> edgeCostComparator,
             //Function<E, Comparable<?>> edgeToCost,
             Function<E, V> edgeToTargetVertex,
@@ -28,10 +28,10 @@ public class SearchUtils {
             result = Stream.empty();
         }
         else {
-            Collection<E> edges = vertexToEdges.apply(vertex);
+            Stream<E> edges = vertexToEdges.apply(vertex);
 
             int nextDepth = depth + 1;
-            result = edges.stream()
+            result = edges
                 .sorted(edgeCostComparator)
                 .flatMap(e -> {
                     V targetVertex = edgeToTargetVertex.apply(e);
