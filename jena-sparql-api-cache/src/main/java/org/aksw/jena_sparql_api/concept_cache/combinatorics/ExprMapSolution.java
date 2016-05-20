@@ -7,41 +7,41 @@ import org.apache.jena.sparql.expr.Expr;
 
 public class ExprMapSolution {
     protected Map<Var, Var> varMap;
-    protected Expr sourceExpr;
-    protected Expr targetExpr;
+    protected Expr needleExpr;
+    protected Expr haystackExpr;
 
-    protected Expr targetMatchExpr;
+    protected Expr haystackMatchExpr;
 
-    public ExprMapSolution(Map<Var, Var> varMap, Expr sourceExpr,
-            Expr targetExpr, Expr targetMatchExpr) {
+    public ExprMapSolution(Map<Var, Var> varMap, Expr needleExpr,
+            Expr haystackExpr, Expr haystackMatchExpr) {
         super();
         this.varMap = varMap;
-        this.sourceExpr = sourceExpr;
-        this.targetExpr = targetExpr;
-        this.targetMatchExpr = targetMatchExpr;
+        this.needleExpr = needleExpr;
+        this.haystackExpr = haystackExpr;
+        this.haystackMatchExpr = haystackMatchExpr;
     }
 
     public Map<Var, Var> getVarMap() {
         return varMap;
     }
 
-    public Expr getSourceExpr() {
-        return sourceExpr;
+    public Expr getNeedleExpr() {
+        return needleExpr;
     }
 
-    public Expr getTargetExpr() {
-        return targetExpr;
+    public Expr getHaystackExpr() {
+        return haystackExpr;
     }
 
-    public Expr getTargetMatchExpr() {
-        return targetMatchExpr;
+    public Expr getHaystackMatchExpr() {
+        return haystackMatchExpr;
     }
 
     @Override
     public String toString() {
-        return "ExprMapSolution [varMap=" + varMap + ", sourceExpr="
-                + sourceExpr + ", targetExpr=" + targetExpr
-                + ", targetMatchExpr=" + targetMatchExpr + "]";
+        return "ExprMapSolution [varMap=" + varMap + ", needleExpr="
+                + needleExpr + ", haystackExpr=" + haystackExpr
+                + ", haystackMatchExpr=" + haystackMatchExpr + "]";
     }
 
 }

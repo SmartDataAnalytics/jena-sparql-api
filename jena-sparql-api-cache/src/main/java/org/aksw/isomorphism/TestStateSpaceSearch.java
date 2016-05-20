@@ -13,9 +13,9 @@ import org.apache.jena.sparql.util.ExprUtils;
 
 public class TestStateSpaceSearch {
     public static void main(String[] args) {
-        Expr a = ExprUtils.parse("?a = ?b || (?c = ?a + 1)");
+        Expr a = ExprUtils.parse("(?z = ?x + 1)");
+        Expr b = ExprUtils.parse("?a = ?b || (?c = ?a + 1) && (?k = ?i + 1)");
         //Expr b = ExprUtils.parse("?x = ?y || (?z = ?x + 1)");
-        Expr b = ExprUtils.parse("(?z = ?x + 1)");
 
         Set<Set<Expr>> ac = CnfUtils.toSetCnf(a);
         Set<Set<Expr>> bc = CnfUtils.toSetCnf(b);

@@ -92,19 +92,19 @@ public class ProblemVarMappingExpr
      * matched first. Hence, inner nodes are only processed once variable mappings
      * have been obtained from the map.
      *
-     * @param a
+     * @param needle
      * @param b
      * @return
      */
-    public static Stream<ExprMapSolution> createVarMap(Expr a, Expr b, Map<Var, Var> baseSolution) {
-        List<Expr> as = ExprUtils.linearizePrefix(a, Collections.singleton(null)).collect(Collectors.toList());
-        List<Expr> bs = ExprUtils.linearizePrefix(b, Collections.singleton(null)).collect(Collectors.toList());
+    public static Stream<ExprMapSolution> createVarMap(Expr needleA, Expr haystackB, Map<Var, Var> baseSolution) {
+        List<Expr> as = ExprUtils.linearizePrefix(needleA, Collections.singleton(null)).collect(Collectors.toList());
+        List<Expr> bs = ExprUtils.linearizePrefix(haystackB, Collections.singleton(null)).collect(Collectors.toList());
 
         // Get the number of leafs of b
         //int n = ExprUtils.countLeafs(a);
         //int m = ExprUtils.countLeafs(b);
-        int n = as.size();
-        int m = bs.size();
+        int m = as.size();
+        int n = bs.size();
 
         // If there is a match, we can continue by the size of m, as there cannot be another overlap
         //Collection<ExprMapSolution> result = new ArrayList<>();
@@ -116,11 +116,11 @@ public class ProblemVarMappingExpr
         Stream<ExprMapSolution> result = IntStream.range(0, n - m + 1)
             .mapToObj(i -> {
                 Map<Var, Var> varMap = new HashMap<Var, Var>(baseSolution);
-                Expr ae = null;
+                Expr be = null;
                 for(int j = 0; j < m; ++j) {
                 //Stream<ExprMapSolution> r = IntStream.range(0, m).map(j -> {
-                    ae = as.get(i + j);
-                    Expr be = bs.get(j);
+                    Expr ae = as.get(j);
+                    be = bs.get(i + j);
                     boolean isCompatible;
                     if(ae == null && be == null) {
                         isCompatible = true;
@@ -166,7 +166,7 @@ public class ProblemVarMappingExpr
 
                 ExprMapSolution r = varMap == null
                         ? null
-                        : new ExprMapSolution(varMap, b, a, ae);
+                        : new ExprMapSolution(varMap, needleA, haystackB, be);
 
                 return r;
             })
