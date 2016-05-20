@@ -57,6 +57,7 @@ public class ProblemVarMappingExpr
 
     public static Map<Var, Var> createVarMap(Collection<Expr> as, Collection<Expr> bs) {
         Map<Var, Var> baseVarMap = Collections.emptyMap();
+        ;
     }
 
     public static Map<Var, Var> createSingleVarMap(Expr a, Expr b) {
@@ -129,7 +130,7 @@ public class ProblemVarMappingExpr
                     ExprFunction bf = be.getFunction();
 
                     FunctionLabel al = af.getFunctionSymbol();
-                    FunctionLabel bl = af.getFunctionSymbol();
+                    FunctionLabel bl = bf.getFunctionSymbol();
 
                     isCompatible = al.equals(bl);
                 }
