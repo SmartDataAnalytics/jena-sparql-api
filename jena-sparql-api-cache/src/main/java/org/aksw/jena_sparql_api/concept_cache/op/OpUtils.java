@@ -10,7 +10,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
@@ -26,6 +28,7 @@ import org.apache.jena.sparql.algebra.op.OpQuadBlock;
 import org.apache.jena.sparql.algebra.op.OpQuadPattern;
 import org.apache.jena.sparql.algebra.op.OpTriple;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.expr.Expr;
 import org.springframework.util.Assert;
 
 
@@ -107,6 +110,11 @@ class OpSummaryImpl
 }
 
 public class OpUtils {
+
+    public static Stream<Op> linearizePrefix(Op op, Collection<Op> subOps) {
+        Stream<Op> result = ExprUtils.linearizePrefix(op, Collections.singleton(null), OpUtils::getSubOps);
+        return result;
+    }
 
 
     public static Generator<Var> freshVars(Op op){

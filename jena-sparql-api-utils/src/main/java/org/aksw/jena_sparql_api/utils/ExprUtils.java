@@ -63,16 +63,17 @@ public class ExprUtils {
      * @param getChildren
      * @return
      */
-    public static <T> Stream<T> linearizePrefix(T op, T stopMarker, Function<? super T, Iterable<? extends T>> getChildren) {
-        boolean isIdentity = op == stopMarker || (stopMarker != null && stopMarker.equals(op));
-        Stream<T> tmp;
-        if(isIdentity) {
-            tmp = Stream.empty();
-        } else {
+    public static <T> Stream<T> linearizePrefix(T op, Collection<T> stopMarker, Function<? super T, Iterable<? extends T>> getChildren) {
+//        boolean isIdentity = op == stopMarker || (stopMarker != null && stopMarker.equals(op));
+//        Stream<T> tmp;
+//        if(isIdentity) {
+//            tmp = Stream.empty();
+//        } else {
+            Stream<T> tmp;
             Iterable<?extends T> children = getChildren.apply(op);
             Stream<? extends T> x = StreamSupport.stream(children.spliterator(), false);
-            tmp = Stream.concat(x, Stream.of(stopMarker));
-        }
+            tmp = Stream.concat(x, stopMarker.stream()); // Stream.of(stopMarker)
+//        }
 
         Stream<T> result = Stream.concat(
                 Stream.of(op), // Emit parent
@@ -83,26 +84,29 @@ public class ExprUtils {
 
 
     /**
-     * Traverse the expe
+     * Traverse the expr
      *
      * @param expr
      * @return
      */
-    public static Stream<Expr> linearizePrefix(Expr expr, Expr identity) {
-        boolean isIdentity = expr == identity || (identity != null && identity.equals(expr));
-        Stream<Expr> tmp;
-        if(isIdentity) {
-            tmp = Stream.empty();
-        } else {
-            List<Expr> children = getSubExprs(expr);
-            tmp = Stream.concat(children.stream(), Stream.of(identity));
-        }
-
-        Stream<Expr> result = Stream.concat(
-                tmp.flatMap(e -> linearizePrefix(e, identity)),
-                Stream.of(expr)); // Emit parent);
-
+    public static Stream<Expr> linearizePrefix(Expr expr, Collection<Expr> stopMarkers) {
+        Stream<Expr> result = linearizePrefix(expr, stopMarkers, ExprUtils::getSubExprs);
         return result;
+
+//        boolean isIdentity = expr == identity || (identity != null && identity.equals(expr));
+//        Stream<Expr> tmp;
+//        if(isIdentity) {
+//            tmp = Stream.empty();
+//        } else {
+//            List<Expr> children = getSubExprs(expr);
+//            tmp = Stream.concat(children.stream(), Stream.of(identity));
+//        }
+//
+//        Stream<Expr> result = Stream.concat(
+//                tmp.flatMap(e -> linearizePrefix(e, identity)),
+//                Stream.of(expr)); // Emit parent);
+//
+//        return result;
     }
 
 
