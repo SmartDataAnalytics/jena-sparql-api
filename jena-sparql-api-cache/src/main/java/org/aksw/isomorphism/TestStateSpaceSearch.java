@@ -25,11 +25,10 @@ public class TestStateSpaceSearch {
         Expr b = ExprUtils.parse("?a = ?b || (?c = ?a + 1) && (?k = ?i + 1)");
         //Expr b = ExprUtils.parse("?x = ?y || (?z = ?x + 1)");
 
-        Set<Set<Expr>> ac = CnfUtils.toSetCnf(a);
-        Set<Set<Expr>> bc = CnfUtils.toSetCnf(b);
+        Set<Set<Expr>> ac = CnfUtils.toSetCnf(b);
+        Set<Set<Expr>> bc = CnfUtils.toSetCnf(a);
 
         Problem<Map<Var, Var>> p = new ProblemVarMappingExpr(ac, bc, Collections.emptyMap());
-
 
         System.out.println("p");
         System.out.println(p.getEstimatedCost());

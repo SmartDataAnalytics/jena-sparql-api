@@ -36,9 +36,14 @@ public abstract class ProblemMappingEquivBase<A, B, X, Y>
         int k = as.size();
         int n = bs.size();
 
-        long combinationCount = LongMath.binomial(n, k);
-        long permutationCount = LongMath.factorial(k);
-        long result = combinationCount * permutationCount;
+        long result;
+        if(k > n) {
+            result = 0;
+        } else {
+            long combinationCount = LongMath.binomial(n, k);
+            long permutationCount = LongMath.factorial(k);
+            result = combinationCount * permutationCount;
+        }
 
         return result;
     }
