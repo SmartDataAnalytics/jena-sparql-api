@@ -15,5 +15,7 @@ public interface ContainmentMap<K, V>
      * @param prototye
      * @return
      */
-    Collection<Entry<Set<K>, V>> getAllEntriesThatAreSubsetsOf(Set<K> prototye);
+    Collection<Entry<Set<K>, V>> getAllEntriesThatAreSupersetOf(Set<K> prototye);
+
+    Collection<Entry<Set<K>, V>> getAllEntriesThatAreSubsetOf(Set<K> prototye);
 }

@@ -75,19 +75,8 @@ public class ContainmentMapImpl<K, V>
 
     }
 
-
-//    @Override
-//    public Collection<Entry<K, V>> getAllEntriesThatAreSubsetsOf(
-//            Set<K> prototye) {
-        // TODO Auto-generated method stub
-//        return null;
-//    }
-    // Map from a tag to all sets containing it
-
-
-
     @Override
-    public Collection<Entry<Set<K>, V>> getAllEntriesThatAreSubsetsOf(Set<K> prototype) {
+    public Collection<Entry<Set<K>, V>> getAllEntriesThatAreSupersetOf(Set<K> prototype) {
         //Set<Entry<Set<K>, Set<V>>> result;
 
         K leastUsedTag = prototype
@@ -97,49 +86,56 @@ public class ContainmentMapImpl<K, V>
             .map(Entry::getKey)
             .orElse(null);
 
-        Collection<Set<K>> rawTagSets = tagToTagSets.get(leastUsedTag);
+        //Stream<Set<K>> baseStream;
+        Stream<Entry<Set<K>, V>> baseStream;
+        if(leastUsedTag != null) {
+            Collection<Set<K>> rawTagSets = tagToTagSets.get(leastUsedTag);
+            baseStream = rawTagSets
+                    .stream()
+                    .filter(tagSet -> tagSet.containsAll(prototype))
+                    .flatMap(tagSet -> {
+                        Collection<V> v = tagSetToValues.get(tagSet);
 
-        Stream<Entry<Set<K>, V>> taggedStream = rawTagSets
-                .stream()
-                .filter(tagSet -> prototype.containsAll(tagSet))
-                .flatMap(tagSet -> {
-                    Collection<V> v = tagSetToValues.get(tagSet);
+                        Stream<Entry<Set<K>, V>> r = v.stream()
+                            .map(w -> new SimpleEntry<>(tagSet, w));
 
-                    Stream<Entry<Set<K>, V>> r = v.stream()
-                        .map(w -> new SimpleEntry<>(tagSet, w));
+                        return r;
+                    });
 
-                    return r;
-                });
+        } else {
+            //baseStream = tagToTagSets.values().stream();
+            baseStream = tagSetToValues.entries().stream();
+                    //.map(v -> new SimpleEntry<>(Collections.<K>emptySet(), v));
+            //baseStream = Stream.of(Collections.emptySet());
+        }
 
-//        Collection<V> untagged = tagSetToValues.get(Collections.emptySet());
-
-//        Stream<Entry<Set<K>, V>> untaggedStream = untagged.stream()
-//            .map(v -> new SimpleEntry<>(Collections.<K>emptySet(), v));
+//        Stream<Entry<Set<K>, V>> taggedStream = baseStream
+//                .flatMap(tagSet -> {
+//                    Collection<V> v = tagSetToValues.get(tagSet);
 //
-//        Stream<Entry<Set<K>, V>> resultStream = Stream.concat(taggedStream, untaggedStream);
-        //Stream<Entry<Set<K>, V>> resultStream = taggedStream;
+//                    Stream<Entry<Set<K>, V>> r = v.stream()
+//                        .map(w -> new SimpleEntry<>(tagSet, w));
+//
+//                    return r;
+//                });
 
-        Collection<Entry<Set<K>, V>> result = taggedStream.collect(Collectors.toList());
+        Collection<Entry<Set<K>, V>> result = baseStream.collect(Collectors.toList());
         return result;
-
-//        Stream<V> stream = smallestTagSets.stream()
-//                .flatMap(tags -> tagSetToValues.get(tags));
-//
-//        stream = Stream.concat(stream, emptyTagValues.stream());
-//
-        //Collection<V> result = .collect(Collectors.asList());
-
-
     }
 
+
+    @Override
+    public Collection<Entry<Set<K>, V>> getAllEntriesThatAreSubsetOf(Set<K> prototype) {
+        Collection<Entry<Set<K>, V>> result = prototype.stream()
+            .flatMap(tag -> tagToTagSets.get(tag).stream())
+            .flatMap(tagSet -> {
+                Collection<V> values = tagSetToValues.get(tagSet);
+                Stream<Entry<Set<K>, V>> r = values.stream()
+                        .map(w -> new SimpleEntry<>(tagSet, w));
+                return r;
+            })
+            .collect(Collectors.toSet());
+
+        return result;
+    }
 }
-
-
-//// Find out the least frequest key
-//
-//Map<K, Collection<V>> map = tagToValues.asMap();
-//
-//// Map each key to its size and take the smallest one
-//Entry<Set<K>, Set<V>> prototype.stream()
-//    .map(k -> new SimpleEntry<>(map.get(k).size()))
-//    .min((a, b) -> b.getValue() - a.getValue());
