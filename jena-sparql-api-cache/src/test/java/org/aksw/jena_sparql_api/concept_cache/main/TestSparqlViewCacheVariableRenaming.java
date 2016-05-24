@@ -1,8 +1,6 @@
 package org.aksw.jena_sparql_api.concept_cache.main;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -24,7 +22,6 @@ import org.aksw.jena_sparql_api.stmt.SparqlQueryParser;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
-import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.ResultSet;
@@ -35,6 +32,11 @@ import org.apache.jena.sparql.algebra.table.TableData;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.syntax.PatternVars;
 import org.junit.Test;
+
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
 
 
 public class TestSparqlViewCacheVariableRenaming {
@@ -101,6 +103,19 @@ public class TestSparqlViewCacheVariableRenaming {
         Query renamedQuery = QueryTransformOps.transform(baseQuery, varMap);
         //List<Var> renamedVars = renamedQuery.getProjectVars();
         QuadFilterPatternCanonical renamedQfpc = SparqlCacheUtils.transform2(renamedQuery);
+
+
+        Cache<Integer, String> cache = CacheBuilder
+            .newBuilder()
+            .removalListener(new RemovalListener<Integer, String>() {
+                @Override
+                public void onRemoval(RemovalNotification<Integer, String> notification) {
+
+                }
+            })
+            .maximumSize(1000)
+            .build();
+
 
 
         SparqlViewCache sparqlViewCache = new SparqlViewCacheImpl();

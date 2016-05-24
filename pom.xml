@@ -37,6 +37,10 @@
 
         <module>jena-sparql-api-resources-sparqlqc</module>
         <module>jena-sparql-api-playground</module>
+
+        <module>jena-sparql-api-views</module>
+        <module>jena-sparql-api-example-views</module>
+
     </modules>
 
     <issueManagement>
@@ -373,6 +377,12 @@
             <dependency>
                 <groupId>org.aksw.jena-sparql-api</groupId>
                 <artifactId>jena-sparql-api-resources-sparqlqc</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.aksw.jena-sparql-api</groupId>
+                <artifactId>jena-sparql-api-views</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

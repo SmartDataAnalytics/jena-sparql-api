@@ -4,13 +4,16 @@ import java.util.Collection;
 import java.util.Map.Entry;
 import java.util.Set;
 
-public interface ContainmentMap<K, V> {
-    void put(Set<K> key, V value);
+public interface ContainmentMap<K, V>
+    //extends Map<Set<K>, V>
+{
+    void put(Set<K> tagSet, V value);
+    void remove(Object tagSet);
 
     /**
      *
      * @param prototye
      * @return
      */
-    Collection<Entry<K, V>> getAllEntriesThatAreSubsetsOf(Set<K> prototye);
+    Collection<Entry<Set<K>, V>> getAllEntriesThatAreSubsetsOf(Set<K> prototye);
 }
