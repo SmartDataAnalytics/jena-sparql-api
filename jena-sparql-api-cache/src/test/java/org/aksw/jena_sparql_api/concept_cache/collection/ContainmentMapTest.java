@@ -4,9 +4,8 @@ import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.junit.Assert;
 import org.junit.Test;
 
+
 public class ContainmentMapTest {
-
-
     @Test
     public void test() {
         ContainmentMap<Integer, String> map = new ContainmentMapImpl<>();
@@ -26,3 +25,4 @@ public class ContainmentMapTest {
         Assert.assertEquals(map.getAllEntriesThatAreSupersetOf(Sets.newHashSet()).size(), 4);
     }
 }
+

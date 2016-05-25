@@ -25,6 +25,7 @@ import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprFunction;
 import org.apache.jena.sparql.expr.ExprTransform;
 import org.apache.jena.sparql.expr.ExprTransformer;
+import org.apache.jena.sparql.expr.FunctionLabel;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
@@ -39,6 +40,33 @@ import org.apache.jena.sparql.syntax.syntaxtransform.ExprTransformNodeElement;
  */
 public class ExprUtils {
 
+    public static String getFunctionId(ExprFunction fn) {
+
+        String result = null;
+
+        result = fn.getOpName();
+        if(result != null) {
+            return result;
+        }
+
+
+
+        result = fn.getFunctionIRI();
+        if(result != null) {
+            return result;
+        }
+
+
+        FunctionLabel label = fn.getFunctionSymbol();
+        result = label == null ? null : label.getSymbol();
+
+        /*
+        if(result != null) {
+            return result;
+        }*/
+
+        return result;
+    }
     public static <T> int countLeafs(T parent, Function<T, Collection<T>> nodeToChildren) {
         Collection<T> children = nodeToChildren.apply(parent);
 

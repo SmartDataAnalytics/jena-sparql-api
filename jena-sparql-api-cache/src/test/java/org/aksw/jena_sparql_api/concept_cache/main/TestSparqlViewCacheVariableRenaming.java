@@ -61,6 +61,13 @@ public class TestSparqlViewCacheVariableRenaming {
 //
 //        Type listType = new TypeToken<ArrayList<String>>() {}.getType();
 //        List<String> queryStrs = gson.fromJson(jsonReader, listType);
+//        CacheFrontend cacheFrontend = null;
+//        QueryExecutionFactory qef = FluentQueryExecutionFactory
+//            .http("http://dbpedia.org/sparql")
+//            .config()
+//                .withCache(cacheFrontend)
+//            .end()
+//            .create();
 
         Model model = SparqlQcReader.readResources("sparqlqc/1.4/benchmark/noprojection/*");
         SparqlQueryParser sparqlParser = SparqlQueryParserImpl.create(Syntax.syntaxARQ);
