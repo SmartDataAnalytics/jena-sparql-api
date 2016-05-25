@@ -2,9 +2,9 @@ package org.aksw.jena_sparql_api.views;
 
 
 import org.aksw.commons.util.reflect.MultiMethod;
-import org.aksw.jena_sparql_api.exprs_ext.E_GenericSqlExpr;
 import org.aksw.jena_sparql_api.exprs_ext.E_GeomFromText;
 import org.aksw.jena_sparql_api.exprs_ext.E_Intersects;
+import org.aksw.sparqlify.algebra.sparql.expr.old.E_GenericSqlExpr;
 import org.apache.jena.sparql.expr.E_LangMatches;
 import org.apache.jena.sparql.expr.E_OneOf;
 import org.apache.jena.sparql.expr.E_Regex;

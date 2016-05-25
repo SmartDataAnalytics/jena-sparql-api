@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprFunction1;
 import org.apache.jena.sparql.expr.NodeValue;
+import org.postgis.PGgeometry;
 
 
 public class E_GeomFromText

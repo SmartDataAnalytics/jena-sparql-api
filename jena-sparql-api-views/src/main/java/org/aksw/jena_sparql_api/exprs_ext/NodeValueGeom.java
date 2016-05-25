@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.exprs_ext;
 
-import org.aksw.sparqlify.core.OgcVocab;
+import org.aksw.jena_sparql_api.views.OgcVocab;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;

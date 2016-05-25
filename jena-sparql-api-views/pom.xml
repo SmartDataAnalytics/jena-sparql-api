@@ -19,9 +19,19 @@
             <artifactId>jena-sparql-api-core</artifactId>
         </dependency>
 
+        <!-- <dependency> -->
+        <!-- <groupId>com.vividsolutions</groupId> -->
+        <!-- <artifactId>jts</artifactId> -->
+        <!-- </dependency> -->
+
         <dependency>
-            <groupId>com.vividsolutions</groupId>
-            <artifactId>jts</artifactId>
+            <groupId>org.postgis</groupId>
+            <artifactId>postgis-jdbc</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>code.google.com</groupId>
+            <artifactId>patricia-trie</artifactId>
         </dependency>
 
     </dependencies>
