@@ -1736,7 +1736,7 @@ public abstract class CandidateViewSelectorBase<T extends IViewDef, C>
     }
 
 
-    public static RestrictionManagerImpl getRestrictions2(Op op) {
+    public RestrictionManagerImpl getRestrictions2(Op op) {
         if(op instanceof OpFilterIndexed) {
 
             OpFilterIndexed opFilter = (OpFilterIndexed)op;
@@ -1768,9 +1768,6 @@ public abstract class CandidateViewSelectorBase<T extends IViewDef, C>
         } else if(op instanceof OpViewInstanceJoin) {
             OpViewInstanceJoin opPattern = (OpViewInstanceJoin)op;
             return opPattern.getJoin().getRestrictions();
-        } else if(op instanceof OpMapping) {
-            OpMapping opMapping = (OpMapping)op;
-            return opMapping.getRestrictions();
         } else {
             throw new RuntimeException("Should not happen: Unhandled Op: " + op.getClass() + " --- "+ op);
         }
@@ -1778,7 +1775,7 @@ public abstract class CandidateViewSelectorBase<T extends IViewDef, C>
 
 
 
-    public static List<RestrictionManagerImpl> getRestrictions(Op op) {
+    public List<RestrictionManagerImpl> getRestrictions(Op op) {
         List<RestrictionManagerImpl> result = new ArrayList<RestrictionManagerImpl>();
 
         getRestrictions(op, result);
@@ -1791,7 +1788,7 @@ public abstract class CandidateViewSelectorBase<T extends IViewDef, C>
      *
      * Returns a disjunction (list) of restrictions that apply for a given node
      */
-    public static void getRestrictions(Op op, Collection<RestrictionManagerImpl> result) {
+    public void getRestrictions(Op op, Collection<RestrictionManagerImpl> result) {
         if(op instanceof Op1) {
             getRestrictions(((Op1) op).getSubOp(), result);
         } else if(op instanceof OpJoin) {
@@ -1803,9 +1800,6 @@ public abstract class CandidateViewSelectorBase<T extends IViewDef, C>
             for(Op subOp : o.getElements()) {
                 getRestrictions(subOp, result);
             }
-        } else if(op instanceof OpRdfViewPattern) {
-            OpRdfViewPattern o = (OpRdfViewPattern)op;
-            result.add(o.getConjunction().getRestrictions());
         } else {
             throw new RuntimeException("Should not happen");
         }

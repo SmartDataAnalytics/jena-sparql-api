@@ -4,7 +4,6 @@ package org.aksw.jena_sparql_api.views;
 import org.aksw.commons.util.reflect.MultiMethod;
 import org.aksw.jena_sparql_api.exprs_ext.E_GeomFromText;
 import org.aksw.jena_sparql_api.exprs_ext.E_Intersects;
-import org.aksw.sparqlify.algebra.sparql.expr.old.E_GenericSqlExpr;
 import org.apache.jena.sparql.expr.E_LangMatches;
 import org.apache.jena.sparql.expr.E_OneOf;
 import org.apache.jena.sparql.expr.E_Regex;
@@ -141,13 +140,13 @@ public class SqlPrePusher
         return new E_Intersects(getLexicalValueOrExpr(expr.getArg1()), getLexicalValueOrExpr(expr.getArg2()));
     }
 
-    public static Expr _prePush(E_GenericSqlExpr expr) {
-        ExprList newArgs = new ExprList();
-        for(Expr arg : expr.getArgs()) {
-            newArgs.add(getLexicalValueOrExpr(arg));
-        }
-        return ExprCopy.getInstance().copy(expr, newArgs);
-    }
+//    public static Expr _prePush(E_GenericSqlExpr expr) {
+//        ExprList newArgs = new ExprList();
+//        for(Expr arg : expr.getArgs()) {
+//            newArgs.add(getLexicalValueOrExpr(arg));
+//        }
+//        return ExprCopy.getInstance().copy(expr, newArgs);
+//    }
 
 
     public static Expr _prePush(E_GeomFromText expr) {

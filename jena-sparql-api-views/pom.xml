@@ -29,10 +29,10 @@
             <artifactId>postgis-jdbc</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>code.google.com</groupId>
-            <artifactId>patricia-trie</artifactId>
-        </dependency>
+<!--         <dependency> -->
+<!--             <groupId>code.google.com</groupId> -->
+<!--             <artifactId>patricia-trie</artifactId> -->
+<!--         </dependency> -->
 
     </dependencies>
 </project>

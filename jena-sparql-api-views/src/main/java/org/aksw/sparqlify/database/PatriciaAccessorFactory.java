@@ -6,29 +6,33 @@ import java.util.Set;
 import org.apache.commons.collections15.Transformer;
 
 public class PatriciaAccessorFactory
-	implements MetaIndexFactory
+    implements MetaIndexFactory
 {
-	private Transformer<Object, Set<String>> prefixExtractor;
+    private Transformer<Object, Set<String>> prefixExtractor;
 
-	
-	public PatriciaAccessorFactory(Transformer<Object, Set<String>> prefixExtractor) {
-		this.prefixExtractor = prefixExtractor;
-	}
 
-	
-	@Override
-	public MapStoreAccessor create(Table table, List<String> columnNames) {
-		
-		int[] indexColumns = new int[columnNames.size()];
-		
-		for(int i = 0; i < indexColumns.length; ++i) {
-			String columnName = columnNames.get(i);
-			indexColumns[i] = table.getColumns().getIndex(columnName);
-		}
+    public PatriciaAccessorFactory(Transformer<Object, Set<String>> prefixExtractor) {
+        this.prefixExtractor = prefixExtractor;
+    }
 
-		PatriciaPrefixMapStoreAccessor accessor = new PatriciaPrefixMapStoreAccessor(indexColumns, prefixExtractor);
-		
-		return accessor;
-	}
-	
+
+    @Override
+    public MapStoreAccessor create(Table table, List<String> columnNames) {
+
+        int[] indexColumns = new int[columnNames.size()];
+
+        for(int i = 0; i < indexColumns.length; ++i) {
+            String columnName = columnNames.get(i);
+            indexColumns[i] = table.getColumns().getIndex(columnName);
+        }
+
+        MapStoreAccessor accessor = null;
+        if(true) {
+            throw new RuntimeException("PatriciaTree support disabled");
+        //PatriciaPrefixMapStoreAccessor accessor = new PatriciaPrefixMapStoreAccessor(indexColumns, prefixExtractor);
+        }
+
+        return accessor;
+    }
+
 }

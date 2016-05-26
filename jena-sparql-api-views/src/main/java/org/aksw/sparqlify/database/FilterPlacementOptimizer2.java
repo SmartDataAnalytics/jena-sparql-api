@@ -14,6 +14,7 @@ import org.aksw.jena_sparql_api.normal_form.Clause;
 import org.aksw.jena_sparql_api.normal_form.NestedNormalForm;
 import org.aksw.jena_sparql_api.restriction.RestrictionImpl;
 import org.aksw.jena_sparql_api.restriction.RestrictionManagerImpl;
+import org.aksw.jena_sparql_api.views.OpViewInstanceJoin;
 import org.aksw.sparqlify.sparqlview.OpSparqlViewPattern;
 import org.apache.commons.collections15.Predicate;
 import org.apache.jena.sparql.algebra.Op;
@@ -76,6 +77,15 @@ class PredicateInstanceOf<T>
  * TODO: Inconsistent filters disappear
  */
 public class FilterPlacementOptimizer2 {
+    private static FilterPlacementOptimizer2 instance;
+
+    public static FilterPlacementOptimizer2 get() {
+        if(instance == null) {
+            instance = new FilterPlacementOptimizer2();
+        }
+        return instance;
+    }
+
     private static final Logger logger = LoggerFactory.getLogger(FilterPlacementOptimizer2.class);
 
     public static Factory2<Op> joinFactory = new Factory2<Op>() {
@@ -90,12 +100,14 @@ public class FilterPlacementOptimizer2 {
 
     public static Op optimize(Op op) {
         RestrictionManagerImpl cnf = new RestrictionManagerImpl();
-        Op result = MultiMethod.invokeStatic(FilterPlacementOptimizer2.class, "_optimize", op, cnf);
+        //Op result = MultiMethod.invokeStatic(FilterPlacementOptimizer2.class, "_optimize", op, cnf);
+        FilterPlacementOptimizer2 x = get();
+        Op result = MultiMethod.invoke(x, "_optimize", op, cnf);
         return result;
     }
 
 
-    public static Op optimize(Op op, RestrictionManagerImpl cnf) {
+    public Op optimize(Op op, RestrictionManagerImpl cnf) {
 //		if(op instanceof OpNull) {
 //			return op;
 //		}
@@ -106,30 +118,30 @@ public class FilterPlacementOptimizer2 {
     }
 
 
-    public static RestrictionManagerImpl filterByVars(RestrictionManagerImpl cnf, Op op) {
+    public RestrictionManagerImpl filterByVars(RestrictionManagerImpl cnf, Op op) {
         Set<Var> vars = SetUtils.asSet(OpVars.mentionedVars(op));
         Set<Clause> clauses = cnf.getClausesForVars(vars);
         return new RestrictionManagerImpl(new NestedNormalForm(clauses));
     }
 
-    public static Op _optimize(OpOrder op, RestrictionManagerImpl cnf) {
+    public Op _optimize(OpOrder op, RestrictionManagerImpl cnf) {
         return new OpOrder(optimize(op.getSubOp(), cnf), op.getConditions());
     }
 
-    public static Op _optimize(OpTopN op, RestrictionManagerImpl cnf) {
+    public Op _optimize(OpTopN op, RestrictionManagerImpl cnf) {
         return new OpTopN(optimize(op.getSubOp(), cnf), op.getLimit(), op.getConditions());
     }
 
 
 
-    public static Op _optimize(OpJoin op, RestrictionManagerImpl cnf) {
+    public Op _optimize(OpJoin op, RestrictionManagerImpl cnf) {
 
         Op result = handleLeftJoin(op.getLeft(), op.getRight(), cnf, joinFactory);
         return result;
 
     }
 
-    public static Op _optimizeBreaking(OpJoin op, RestrictionManagerImpl cnf) {
+    public Op _optimizeBreaking(OpJoin op, RestrictionManagerImpl cnf) {
 
         RestrictionManagerImpl leftCnf = filterByVars(cnf, op.getLeft());
         RestrictionManagerImpl rightCnf = filterByVars(cnf, op.getRight());
@@ -165,7 +177,7 @@ public class FilterPlacementOptimizer2 {
 //		return result;
 //	}
 
-    public static Op _optimize(OpSequence op, RestrictionManagerImpl cnf) {
+    public Op _optimize(OpSequence op, RestrictionManagerImpl cnf) {
         List<Op> members = op.getElements();
 
         List<Op> newMembers = new ArrayList<Op>(members.size());
@@ -194,7 +206,7 @@ public class FilterPlacementOptimizer2 {
 
     // TODO This method looks wrong
     // For each element of the union push all appropriate clauses
-    public static Op _optimize(OpDisjunction op, RestrictionManagerImpl cnf)
+    public Op _optimize(OpDisjunction op, RestrictionManagerImpl cnf)
     {
         List<Op> args = new ArrayList<Op>();
         for(Op element : op.getElements()) {
@@ -227,22 +239,22 @@ public class FilterPlacementOptimizer2 {
     }
 
 
-    public static Op _optimize(OpDistinct op, RestrictionManagerImpl cnf) {
+    public Op _optimize(OpDistinct op, RestrictionManagerImpl cnf) {
         return new OpDistinct(optimize(op.getSubOp(), cnf));
     }
 
-    public static Op _optimize(OpProject op, RestrictionManagerImpl cnf) {
+    public  Op _optimize(OpProject op, RestrictionManagerImpl cnf) {
         Op subOp = optimize(op.getSubOp(), cnf);
         Op result = new OpProject(subOp, op.getVars());
         return result;
     }
 
-    public static Op _optimize(OpExtend op, RestrictionManagerImpl cnf) {
+    public Op _optimize(OpExtend op, RestrictionManagerImpl cnf) {
         logger.warn("OpExtend probably not optimally implemented");
         return op.copy(optimize(op.getSubOp(), cnf));
     }
 
-    public static Op _optimize(OpGroup op, RestrictionManagerImpl cnf) {
+    public Op _optimize(OpGroup op, RestrictionManagerImpl cnf) {
         return new OpGroup(optimize(op.getSubOp(), cnf), op.getGroupVars(), op.getAggregators());
     }
 
@@ -263,7 +275,7 @@ public class FilterPlacementOptimizer2 {
     }
     */
 
-    public static Op _optimizeNewButNotSureIfWeNeedSplitsHere(OpFilterIndexed op, RestrictionManagerImpl cnf) {
+    public Op _optimizeNewButNotSureIfWeNeedSplitsHere(OpFilterIndexed op, RestrictionManagerImpl cnf) {
 
         RestrictionManagerImpl child = new RestrictionManagerImpl(cnf);
         child.stateRestriction(op.getRestrictions());
@@ -293,7 +305,7 @@ public class FilterPlacementOptimizer2 {
     }
 
 
-    public static Op _optimize(OpFilterIndexed op, RestrictionManagerImpl cnf) {
+    public Op _optimize(OpFilterIndexed op, RestrictionManagerImpl cnf) {
 
 
 
@@ -313,12 +325,12 @@ public class FilterPlacementOptimizer2 {
         return result;
     }
 
-    public static Op _optimize(OpNull op, RestrictionManagerImpl cnf)
+    public Op _optimize(OpNull op, RestrictionManagerImpl cnf)
     {
         return op;
     }
 
-    public static Op _optimize(OpSlice op, RestrictionManagerImpl cnf)
+    public Op _optimize(OpSlice op, RestrictionManagerImpl cnf)
     {
         return op.copy(optimize(op.getSubOp(), cnf));
     }
@@ -360,7 +372,7 @@ public class FilterPlacementOptimizer2 {
 
 
 
-    public static Op _optimize(final OpLeftJoin op, RestrictionManagerImpl cnf) {
+    public Op _optimize(final OpLeftJoin op, RestrictionManagerImpl cnf) {
 
         Factory2<Op> factory = new Factory2<Op>() {
             @Override
@@ -375,7 +387,7 @@ public class FilterPlacementOptimizer2 {
         return result;
     }
 
-    public static Op _optimize(OpConditional op, RestrictionManagerImpl cnf) {
+    public Op _optimize(OpConditional op, RestrictionManagerImpl cnf) {
         Factory2<Op> factory = new Factory2<Op>() {
             @Override
             public Op create(Op a, Op b) {
@@ -455,7 +467,7 @@ public class FilterPlacementOptimizer2 {
      * Even the old version only considered restrictions on the left hand side
      *
      */
-    public static Op handleLeftJoin(Op left, Op right, RestrictionManagerImpl cnf, Factory2<Op> factory) {
+    public Op handleLeftJoin(Op left, Op right, RestrictionManagerImpl cnf, Factory2<Op> factory) {
         // Only push those expression on the, that do not contain any
         // variables of the right side
 
@@ -480,7 +492,7 @@ public class FilterPlacementOptimizer2 {
     }
 
 
-    public static Op handleLeftJoinOld(Op left, Op right, RestrictionManagerImpl cnf, Factory2<Op> factory) {
+    public Op handleLeftJoinOld(Op left, Op right, RestrictionManagerImpl cnf, Factory2<Op> factory) {
         // Only push those expression on the, that do not contain any
         // variables of the right side
 
@@ -535,7 +547,7 @@ public class FilterPlacementOptimizer2 {
         return result;
     }*/
 
-    public static Op surroundWithFilterIfNeccessary(Op op, RestrictionManagerImpl cnf)
+    public Op surroundWithFilterIfNeccessary(Op op, RestrictionManagerImpl cnf)
     {
         Op result;
 
@@ -557,21 +569,18 @@ public class FilterPlacementOptimizer2 {
         return result;
     }
 
-    @Deprecated
-    public static Op _optimize(OpRdfViewPattern op, RestrictionManagerImpl cnf) {
-        return surroundWithFilterIfNeccessary(op, cnf);
-    }
+//    @Deprecated
+//    public static Op _optimize(OpRdfViewPattern op, RestrictionManagerImpl cnf) {
+//        return surroundWithFilterIfNeccessary(op, cnf);
+//    }
 
-    public static Op _optimize(OpViewInstanceJoin op, RestrictionManagerImpl cnf) {
-        return surroundWithFilterIfNeccessary(op, cnf);
-    }
-
-    public static Op _optimize(OpMapping op, RestrictionManagerImpl cnf) {
+    public Op _optimize(OpViewInstanceJoin op, RestrictionManagerImpl cnf) {
         return surroundWithFilterIfNeccessary(op, cnf);
     }
 
 
-    public static Op _optimize(OpSparqlViewPattern op, RestrictionManagerImpl cnf) {
+
+    public Op _optimize(OpSparqlViewPattern op, RestrictionManagerImpl cnf) {
         return surroundWithFilterIfNeccessary(op, cnf);
     }
 
