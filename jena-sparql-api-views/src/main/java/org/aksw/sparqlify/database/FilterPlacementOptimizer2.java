@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.aksw.commons.collections.SetUtils;
 import org.aksw.commons.util.factory.Factory2;
 import org.aksw.commons.util.reflect.MultiMethod;
 import org.aksw.jena_sparql_api.normal_form.Clause;
@@ -18,7 +17,6 @@ import org.aksw.jena_sparql_api.views.OpViewInstanceJoin;
 import org.aksw.sparqlify.sparqlview.OpSparqlViewPattern;
 import org.apache.commons.collections15.Predicate;
 import org.apache.jena.sparql.algebra.Op;
-import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.algebra.op.OpConditional;
 import org.apache.jena.sparql.algebra.op.OpDisjunction;
 import org.apache.jena.sparql.algebra.op.OpDistinct;
@@ -121,7 +119,7 @@ public class FilterPlacementOptimizer2 {
 
 
     public RestrictionManagerImpl filterByVars(RestrictionManagerImpl cnf, Op op) {
-        Set<Var> vars = SetUtils.asSet(OpVars.mentionedVars(op));
+        Set<Var> vars = GetVarsMentioned.getVarsMentioned(op);
         Set<Clause> clauses = cnf.getClausesForVars(vars);
         return new RestrictionManagerImpl(new NestedNormalForm(clauses));
     }
@@ -212,7 +210,7 @@ public class FilterPlacementOptimizer2 {
     {
         List<Op> args = new ArrayList<Op>();
         for(Op element : op.getElements()) {
-            Set<Var> elementVars = SetUtils.asSet(OpVars.mentionedVars(element)); //GetVarsMentioned.getVarsMentioned(element);
+            Set<Var> elementVars = GetVarsMentioned.getVarsMentioned(element);
 
             //Set<Clause> clauses = new HashSet<Clause>();
 
@@ -407,7 +405,7 @@ public class FilterPlacementOptimizer2 {
     public static FilterSplit splitFilter(Op op, RestrictionManagerImpl cnf) {
         //Set<Var> rightVars = GetVarsMentioned.getVarsMentioned(right);
 
-        Set<Var> opVars = SetUtils.asSet(OpVars.mentionedVars(op));
+        Set<Var> opVars = GetVarsMentioned.getVarsMentioned(op);
 
         Set<Clause> leftClauses = new HashSet<Clause>();
         Set<Clause> nonPushable = new HashSet<Clause>();
@@ -498,7 +496,7 @@ public class FilterPlacementOptimizer2 {
         // Only push those expression on the, that do not contain any
         // variables of the right side
 
-        Set<Var> rightVars = SetUtils.asSet(OpVars.mentionedVars(right));
+        Set<Var> rightVars = GetVarsMentioned.getVarsMentioned(right);
 
 
         Set<Clause> leftClauses = new HashSet<Clause>();

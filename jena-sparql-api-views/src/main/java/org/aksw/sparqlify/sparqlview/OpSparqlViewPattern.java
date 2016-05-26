@@ -11,7 +11,9 @@ import java.util.Set;
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
 import org.aksw.jena_sparql_api.views.SparqlView;
 import org.aksw.jena_sparql_api.views.VarBinding;
+import org.aksw.jena_sparql_api.views.VarsMentioned;
 import org.aksw.jena_sparql_api.views.ViewInstance;
+import org.aksw.sparqlify.database.GetVarsMentioned;
 import org.apache.jena.atlas.io.IndentedWriter;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.algebra.Op;
@@ -34,6 +36,7 @@ import com.google.common.collect.SetMultimap;
 
 public class OpSparqlViewPattern
     extends OpExt
+    implements VarsMentioned
 {
     private ViewInstanceJoin<SparqlView> conjunction;
 
@@ -188,6 +191,11 @@ public class OpSparqlViewPattern
         } else if (!conjunction.equals(other.conjunction))
             return false;
         return true;
+    }
+
+    @Override
+    public Set<Var> varsMentioned() {
+        return GetVarsMentioned.getVarsMentioned(effectiveOp());
     }
 
 }
