@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.views;
 
 public enum Ops {
 	OpQuadPattern,
-    OpQuadPattern2,
+    OpQuadBlock,
 	OpFilter,
 	OpFilterIndexed,
 	OpUnion,

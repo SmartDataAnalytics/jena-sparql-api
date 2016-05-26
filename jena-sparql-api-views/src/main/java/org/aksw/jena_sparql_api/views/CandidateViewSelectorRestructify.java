@@ -6,6 +6,7 @@ import org.aksw.sparqlify.sparqlview.OpSparqlViewPattern;
 import org.aksw.sparqlify.sparqlview.ViewInstanceJoin;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.op.OpDisjunction;
+import org.apache.jena.sparql.algebra.op.OpQuadBlock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +20,7 @@ public class CandidateViewSelectorRestructify
     }
 
     @Override
-    public Op createOp(OpQuadPattern2 qpQuadPattern, List<RecursionResult<SparqlView, Void>> conjunctions) {
+    public Op createOp(OpQuadBlock op, List<RecursionResult<SparqlView, Void>> conjunctions) {
 
         //ViewInstanceJoin<SparqlView> conjunctions = item.get
 

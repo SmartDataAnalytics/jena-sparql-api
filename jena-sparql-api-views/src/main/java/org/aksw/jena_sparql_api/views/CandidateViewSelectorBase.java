@@ -47,6 +47,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.TransformCopy;
 import org.apache.jena.sparql.algebra.op.Op1;
 import org.apache.jena.sparql.algebra.op.OpAssign;
 import org.apache.jena.sparql.algebra.op.OpConditional;
@@ -59,10 +60,13 @@ import org.apache.jena.sparql.algebra.op.OpJoin;
 import org.apache.jena.sparql.algebra.op.OpLeftJoin;
 import org.apache.jena.sparql.algebra.op.OpOrder;
 import org.apache.jena.sparql.algebra.op.OpProject;
+import org.apache.jena.sparql.algebra.op.OpQuadBlock;
+import org.apache.jena.sparql.algebra.op.OpQuadPattern;
 import org.apache.jena.sparql.algebra.op.OpSequence;
 import org.apache.jena.sparql.algebra.op.OpSlice;
 import org.apache.jena.sparql.algebra.op.OpTopN;
 import org.apache.jena.sparql.algebra.op.OpUnion;
+import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.QuadPattern;
 import org.apache.jena.sparql.core.Var;
@@ -73,6 +77,21 @@ import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+
+class TransformOpQuadBlock
+    extends TransformCopy
+{
+    @Override
+    public Op transform(OpQuadPattern opQuadPattern) {
+        BasicPattern bp = opQuadPattern.getBasicPattern();
+        Node graphNode = opQuadPattern.getGraphNode();
+        OpQuadBlock result = OpQuadBlock.create(graphNode, bp);
+        return result;
+    }
+}
+
+
 
 /**
  *
@@ -153,7 +172,7 @@ public abstract class CandidateViewSelectorBase<T extends IViewDef, C>
      * Abstract methods
      */
     //public abstract I createUnionItem(List<ViewInstance<T>> list, RestrictionManagerImpl restrictions);
-    public abstract Op createOp(OpQuadPattern2 opQuadPattern, List<RecursionResult<T, C>> viewInstances);
+    public abstract Op createOp(OpQuadBlock opQuadBlock, List<RecursionResult<T, C>> viewInstances);
 
 
     /**
@@ -446,7 +465,16 @@ public abstract class CandidateViewSelectorBase<T extends IViewDef, C>
 //		op = Algebra.optimize(op);
 //		logger.debug("[Algebra] Jena Optimized: " + op);
 
+
+// TODO Replace OpQuadPattern with OpQuadPattern2
+        //org.apache.jena.sparql.algebra.Transformer
+
+
+
         op = ReplaceConstants.replace(op);
+
+
+
         //logger.debug("[Algebra] ConstantsEleminated: " + op);
 
         // Note:
@@ -555,7 +583,7 @@ public abstract class CandidateViewSelectorBase<T extends IViewDef, C>
      * such as 'aaaa' = prefix
      * 'aaaaa$' = constant
      */
-    public List<RecursionResult<T, C>> getApplicableViewsBase(OpQuadPattern2 op, RestrictionManagerImpl restrictions)
+    public List<RecursionResult<T, C>> getApplicableViewsBase(OpQuadBlock op, RestrictionManagerImpl restrictions)
     {
         //List<ViewInstanceJoin<T>> result = new ArrayList<ViewInstanceJoin<T>>();
         List<RecursionResult<T, C>> result = new ArrayList<RecursionResult<T, C>>();
@@ -1228,7 +1256,7 @@ public abstract class CandidateViewSelectorBase<T extends IViewDef, C>
         // Hm, but actually: If I pick those quads with the least view candidates first, then I will quickly
         // Get to those quads causing contradictions
 
-    public Op getApplicableViews(OpQuadPattern2 op, RestrictionManagerImpl restrictions)
+    public Op getApplicableViews(OpQuadBlock op, RestrictionManagerImpl restrictions)
     {
         //List<ViewInstanceJoin<T>> conjunctions =
         List<RecursionResult<T, C>> conjuncions = getApplicableViewsBase(op, restrictions);
@@ -1329,8 +1357,8 @@ public abstract class CandidateViewSelectorBase<T extends IViewDef, C>
             result = getApplicableViews((OpExtend)op, restrictions);
             break;
 
-        case OpQuadPattern2:
-            result = getApplicableViews((OpQuadPattern2)op, restrictions);
+        case OpQuadBlock:
+            result = getApplicableViews((OpQuadBlock)op, restrictions);
             break;
 
         case OpSlice:

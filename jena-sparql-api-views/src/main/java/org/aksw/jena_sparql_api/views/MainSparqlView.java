@@ -9,7 +9,7 @@ import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.query.Syntax;
 
 
-public class SparqlViewMain {
+public class MainSparqlView {
 
 
     public static void main(String[] args) {

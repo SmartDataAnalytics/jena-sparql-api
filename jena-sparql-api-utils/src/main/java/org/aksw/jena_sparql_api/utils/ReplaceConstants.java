@@ -221,4 +221,63 @@ public class ReplaceConstants {
         return result;
     }
 
+
+//  public static Op _replace(OpQuadPattern op) {
+//
+//      ExprList filters = new ExprList();
+//
+//      //BasicPattern triples = new BasicPattern();
+//        QuadPattern quadPattern = new QuadPattern();
+//
+//      Node rawGraphNode = op.getGraphNode();
+//
+//      Node commonGraphNode = null;
+//      if(rawGraphNode.isConcrete()) {
+//          // If the graph node is a concrete value - except for the default graph,
+//          // replace it with a variable that is constrained to that value
+//          if(!rawGraphNode.equals(Quad.defaultGraphNodeGenerated)) {
+//              commonGraphNode = transform(rawGraphNode, generator, filters);
+//          }
+//      }
+//      else {
+//          // If the graph node is a variable, use it.
+//          commonGraphNode = rawGraphNode;
+//      }
+//
+//
+//      List<Node> nodes = new ArrayList<Node>(4);
+//      for(Triple triple : op.getBasicPattern().getList()) {
+//
+//            Node graphNode;
+//            if(commonGraphNode != null) {
+//                graphNode = commonGraphNode;
+//            } else {
+//                graphNode = Var.alloc(generator.next());
+//            }
+//            nodes.add(graphNode);
+//
+//
+//          for(Node node : tripleToList(triple)) {
+//
+//              Node n = transform(node, generator, filters);
+//              nodes.add(n);
+//          }
+//
+//          //Triple t = listToTriple(nodes);
+//
+//          //triples.add(t);
+//          Quad q = listToQuad(nodes);
+//          quadPattern.add(q);
+//          nodes.clear();
+//      }
+//
+//      Op result = new OpQuadPattern2(quadPattern);
+//
+//      if(!filters.isEmpty()) {
+//          result = OpFilter.filter(filters, result);
+//      }
+//
+//      return result;
+//  }
+
 }
