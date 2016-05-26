@@ -7,8 +7,6 @@ import java.util.Set;
 import org.aksw.jena_sparql_api.views.PrefixSet;
 import org.aksw.jena_sparql_api.views.RdfTermType;
 import org.aksw.jena_sparql_api.views.TernaryLogic;
-import org.apache.commons.lang.NotImplementedException;
-
 import org.apache.jena.graph.Node;
 
 

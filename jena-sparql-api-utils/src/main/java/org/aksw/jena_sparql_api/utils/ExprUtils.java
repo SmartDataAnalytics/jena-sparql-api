@@ -40,6 +40,33 @@ import org.apache.jena.sparql.syntax.syntaxtransform.ExprTransformNodeElement;
  */
 public class ExprUtils {
 
+    public static boolean isConstantsOnly(Iterable<Expr> exprs) {
+        for(Expr expr : exprs) {
+            if(!expr.isConstant()) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Checks wtherer all arguments of the given function are constants (non-recursive).
+     *
+     * @param fn The function to test
+     * @return True if all arguments are constants, false otherwise.
+     */
+    public static boolean isConstantArgsOnly(ExprFunction fn) {
+
+        if(fn == null) {
+            throw new RuntimeException("Null argument should not happen here");
+        }
+
+        boolean result = isConstantsOnly(fn.getArgs());
+
+        return result;
+    }
+
     public static String getFunctionId(ExprFunction fn) {
 
         String result = null;

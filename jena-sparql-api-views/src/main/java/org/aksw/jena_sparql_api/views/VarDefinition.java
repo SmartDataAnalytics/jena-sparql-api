@@ -52,7 +52,7 @@ public class VarDefinition
     }
 
 
-    boolean isEmpty() {
+    public boolean isEmpty() {
         return varToExprs.isEmpty();
     }
 
