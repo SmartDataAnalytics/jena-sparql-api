@@ -25,7 +25,7 @@ public class MainSparqlView {
         //system.addView(SparqlView.create("MyView", QueryFactory.create("Prefix ft:<http://fintrans.publicdata.eu/ec/ontology/> Construct { ?s a ft:LabeledThing . } { ?s <"  + RDFS.label + "> ?x }", Syntax.syntaxSPARQL_11)));
 
         //TypeSystem typeSystem = SparqlifyCoreInit.createDefaultDatatypeSystem();
-        CandidateViewSelector<SparqlView> candidateViewSelector = new CandidateViewSelectorRestructify();
+        CandidateViewSelector<SparqlView> candidateViewSelector = new CandidateViewSelectorSparqlView();
 
         SparqlView sparqlView = SparqlView.create("MyView", QueryFactory.create("Construct { ?s a <http://fp7-pp.publicdata.eu/ontology/Project> ; <skos:prefLabel> ?x } { ?s a <http://fp7-pp.publicdata.eu/ontology/Project> ; <http://www.w3.org/2000/01/rdf-schema#label> ?o . Bind(concat('hello', ?o) As ?x) }", Syntax.syntaxSPARQL_11)); //?s ?p ?o . Filter(?p != <http://fp7-pp.publicdata.eu/ontology/call>) }", Syntax.syntaxSPARQL_11));
         //SparqlView sparqlView = SparqlView.create("MyView", "Construct { Graph ?g { ?s ?p ?o } } { ?s a <http://fp7-pp.publicdata.eu/ontology/Project> . ?s ?p ?o . Filter(?g != <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>) }");

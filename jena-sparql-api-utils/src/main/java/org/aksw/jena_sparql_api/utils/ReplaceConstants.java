@@ -20,6 +20,7 @@ import org.apache.jena.sparql.algebra.op.OpJoin;
 import org.apache.jena.sparql.algebra.op.OpLeftJoin;
 import org.apache.jena.sparql.algebra.op.OpOrder;
 import org.apache.jena.sparql.algebra.op.OpProject;
+import org.apache.jena.sparql.algebra.op.OpQuadBlock;
 import org.apache.jena.sparql.algebra.op.OpQuadPattern;
 import org.apache.jena.sparql.algebra.op.OpSequence;
 import org.apache.jena.sparql.algebra.op.OpSlice;
@@ -187,6 +188,42 @@ public class ReplaceConstants {
         return OpFilter.filter(op.getExprs(), replace(op.getSubOp()));
     }
 
+//    public static Op _replace(OpQuadPattern op) {
+//
+//        ExprList filters = new ExprList();
+//
+//        BasicPattern triples = new BasicPattern();
+//
+//        Node graphNode = transform(op.getGraphNode(), true, generator, filters);
+//
+//
+//        List<Node> nodes = new ArrayList<Node>();
+//        for(Triple triple : op.getBasicPattern().getList()) {
+//
+//
+//            for(Node node : tripleToList(triple)) {
+//                Node n = transform(node, false, generator, filters);
+//                nodes.add(n);
+//            }
+//
+//            Triple t = listToTriple(nodes);
+//
+//            triples.add(t);
+//
+//            nodes.clear();
+//        }
+//
+//        Op result = new OpQuadPattern(graphNode, triples);
+//
+//        if(!filters.isEmpty()) {
+//            result = OpFilter.filter(filters, result);
+//        }
+//
+//        return result;
+//    }
+
+
+
     public static Op _replace(OpQuadPattern op) {
 
         ExprList filters = new ExprList();
@@ -222,31 +259,32 @@ public class ReplaceConstants {
     }
 
 
-//  public static Op _replace(OpQuadPattern op) {
-//
+  public static Op _replace(OpQuadBlock op) {
+      throw new RuntimeException("Not implemented yet");
 //      ExprList filters = new ExprList();
 //
+//
 //      //BasicPattern triples = new BasicPattern();
-//        QuadPattern quadPattern = new QuadPattern();
+//      QuadPattern quadPattern = new QuadPattern();
 //
-//      Node rawGraphNode = op.getGraphNode();
+//      //Node rawGraphNode = op.getGraphNode();
 //
-//      Node commonGraphNode = null;
-//      if(rawGraphNode.isConcrete()) {
-//          // If the graph node is a concrete value - except for the default graph,
-//          // replace it with a variable that is constrained to that value
-//          if(!rawGraphNode.equals(Quad.defaultGraphNodeGenerated)) {
-//              commonGraphNode = transform(rawGraphNode, generator, filters);
-//          }
-//      }
-//      else {
-//          // If the graph node is a variable, use it.
-//          commonGraphNode = rawGraphNode;
-//      }
+////      Node commonGraphNode = null;
+////      if(rawGraphNode.isConcrete()) {
+////          // If the graph node is a concrete value - except for the default graph,
+////          // replace it with a variable that is constrained to that value
+////          if(!rawGraphNode.equals(Quad.defaultGraphNodeGenerated)) {
+////              commonGraphNode = transform(rawGraphNode, false, generator, filters);
+////          }
+////      }
+////      else {
+////          // If the graph node is a variable, use it.
+////          commonGraphNode = rawGraphNode;
+////      }
 //
 //
 //      List<Node> nodes = new ArrayList<Node>(4);
-//      for(Triple triple : op.getBasicPattern().getList()) {
+//      for(Quad quad : op.getPattern()) {
 //
 //            Node graphNode;
 //            if(commonGraphNode != null) {
@@ -266,18 +304,18 @@ public class ReplaceConstants {
 //          //Triple t = listToTriple(nodes);
 //
 //          //triples.add(t);
-//          Quad q = listToQuad(nodes);
+//          Quad q = QuadUtils.listToQuad(nodes);
 //          quadPattern.add(q);
 //          nodes.clear();
 //      }
 //
-//      Op result = new OpQuadPattern2(quadPattern);
+//      Op result = new OpQuadBlock(quadPattern);
 //
 //      if(!filters.isEmpty()) {
 //          result = OpFilter.filter(filters, result);
 //      }
 //
 //      return result;
-//  }
+  }
 
 }

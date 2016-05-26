@@ -10,13 +10,13 @@ import org.apache.jena.sparql.algebra.op.OpQuadBlock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CandidateViewSelectorRestructify
+public class CandidateViewSelectorSparqlView
     extends CandidateViewSelectorBase<SparqlView, Void>
 {
-    private static final Logger logger = LoggerFactory.getLogger(CandidateViewSelectorRestructify.class);
+    private static final Logger logger = LoggerFactory.getLogger(CandidateViewSelectorSparqlView.class);
 
 
-    public CandidateViewSelectorRestructify() {
+    public CandidateViewSelectorSparqlView() {
     }
 
     @Override

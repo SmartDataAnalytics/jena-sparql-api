@@ -468,12 +468,12 @@ public abstract class CandidateViewSelectorBase<T extends IViewDef, C>
 
 // TODO Replace OpQuadPattern with OpQuadPattern2
         //OpTransf
-        op = org.apache.jena.sparql.algebra.Transformer.transform(new TransformOpQuadBlock(), op);
         //org.apache.jena.sparql.algebra.Transformer
 
 
 
         op = ReplaceConstants.replace(op);
+        op = org.apache.jena.sparql.algebra.Transformer.transform(new TransformOpQuadBlock(), op);
 
 
 
