@@ -107,13 +107,15 @@ public class FilterPlacementOptimizer2 {
     }
 
 
-    public Op optimize(Op op, RestrictionManagerImpl cnf) {
+    public static Op optimize(Op op, RestrictionManagerImpl cnf) {
 //		if(op instanceof OpNull) {
 //			return op;
 //		}
 
 
-        Op result = MultiMethod.invokeStatic(FilterPlacementOptimizer2.class, "_optimize", op, cnf);
+//        Op result = MultiMethod.invokeStatic(FilterPlacementOptimizer2.class, "_optimize", op, cnf);
+        FilterPlacementOptimizer2 x = get();
+        Op result = MultiMethod.invoke(x, "_optimize", op, cnf);
         return result;
     }
 
