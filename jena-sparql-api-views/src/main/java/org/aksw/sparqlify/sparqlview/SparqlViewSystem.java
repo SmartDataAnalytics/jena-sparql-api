@@ -25,6 +25,7 @@ import org.aksw.jena_sparql_api.utils.ReplaceConstants;
 import org.aksw.jena_sparql_api.utils.expr.NodeValueUtils;
 import org.aksw.jena_sparql_api.views.Dialect;
 import org.aksw.jena_sparql_api.views.MyOpAsQuery;
+import org.aksw.jena_sparql_api.views.NestedStack;
 import org.aksw.jena_sparql_api.views.PrefixSet;
 import org.aksw.jena_sparql_api.views.RdfTermType;
 import org.aksw.jena_sparql_api.views.SparqlView;
@@ -145,40 +146,40 @@ class Context {
 }
 
 
-class NestedStack<T>
-{
-    private NestedStack<T> parent;
-    private T value;
-
-    public NestedStack(NestedStack<T> parent, T value) {
-        super();
-        this.parent = parent;
-        this.value = value;
-    }
-
-    public NestedStack<T> getParent() {
-        return parent;
-    }
-
-    public T getValue() {
-        return value;
-    }
-
-
-    public List<T> asList() {
-        List<T> result = new ArrayList<T>();
-
-        NestedStack<T> current = this;
-        while(current != null) {
-            result.add(current.getValue());
-            current = current.parent;
-        }
-
-        Collections.reverse(result);
-
-        return result;
-    }
-}
+//class NestedStack<T>
+//{
+//    private NestedStack<T> parent;
+//    private T value;
+//
+//    public NestedStack(NestedStack<T> parent, T value) {
+//        super();
+//        this.parent = parent;
+//        this.value = value;
+//    }
+//
+//    public NestedStack<T> getParent() {
+//        return parent;
+//    }
+//
+//    public T getValue() {
+//        return value;
+//    }
+//
+//
+//    public List<T> asList() {
+//        List<T> result = new ArrayList<T>();
+//
+//        NestedStack<T> current = this;
+//        while(current != null) {
+//            result.add(current.getValue());
+//            current = current.parent;
+//        }
+//
+//        Collections.reverse(result);
+//
+//        return result;
+//    }
+//}
 
 
 interface ISparqlViewSystem {

@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.function.BiFunction;
 
 import org.aksw.commons.collections.CartesianProduct;
 import org.aksw.commons.util.Pair;
@@ -115,6 +116,7 @@ public abstract class CandidateViewSelectorBase<T extends IViewDef, C>
 
     //private ViewDefinitionNormalizer<T> viewDefinitionNormalizer;
 
+    protected BiFunction<Op, RestrictionManagerImpl, Op> filterPlacementOptimizer;
 
 
     /**
@@ -122,7 +124,8 @@ public abstract class CandidateViewSelectorBase<T extends IViewDef, C>
      *
      * @param opMappingRewriter May be null. If given, we can do rewrites during the SQL generation to prune empty result mappings early.
      */
-    public CandidateViewSelectorBase() {
+    public CandidateViewSelectorBase(BiFunction<Op, RestrictionManagerImpl, Op> filterPlacementOptimizer) {
+        this.filterPlacementOptimizer = filterPlacementOptimizer;
 
         TableBuilder<Object> builder = new TableBuilder<Object>();
         builder.addColumn("g_prefix", String.class);
@@ -466,7 +469,6 @@ public abstract class CandidateViewSelectorBase<T extends IViewDef, C>
 //		logger.debug("[Algebra] Jena Optimized: " + op);
 
 
-// TODO Replace OpQuadPattern with OpQuadPattern2
         //OpTransf
         //org.apache.jena.sparql.algebra.Transformer
 
@@ -489,7 +491,7 @@ public abstract class CandidateViewSelectorBase<T extends IViewDef, C>
         //logger.debug("[Algebra] View Candidates: " + augmented);
 
 
-        Op optimizedFilters = FilterPlacementOptimizer2.optimize(augmented);
+        Op optimizedFilters = filterPlacementOptimizer.apply(augmented, null);
 
         //logger.debug("[Algebra] Filter Placement Optimized: " + optimizedFilters);
         //System.out.println(optimizedFilters);
@@ -1601,7 +1603,8 @@ public abstract class CandidateViewSelectorBase<T extends IViewDef, C>
 
         //System.out.println("so far so good\n" + newLeft);
 
-        newLeft = FilterPlacementOptimizer2.optimize(newLeft, leftRestrictions);
+        //newLeft = FilterPlacementOptimizer2.optimize(newLeft, leftRestrictions);
+        newLeft = filterPlacementOptimizer.apply(newLeft, leftRestrictions);
 
 
         //System.out.println("so far so good\n" + newLeft);

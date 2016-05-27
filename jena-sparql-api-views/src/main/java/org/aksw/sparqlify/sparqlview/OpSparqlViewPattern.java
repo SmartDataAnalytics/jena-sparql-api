@@ -163,7 +163,7 @@ public class OpSparqlViewPattern
         /*
          * out.print("'''") ; sqlNode.output(out) ; out.print("'''") ;
          */
-        out.print(conjunction.getViewNames() + " " + conjunction.getRestrictions());
+        out.print(conjunction.getViewNames() + " " + conjunction.getRestrictions() + " " + conjunction);
     }
 
     @Override

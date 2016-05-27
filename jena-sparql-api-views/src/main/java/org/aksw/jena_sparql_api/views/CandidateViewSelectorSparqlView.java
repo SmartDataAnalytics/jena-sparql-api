@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.views;
 
 import java.util.List;
 
+import org.aksw.sparqlify.database.FilterPlacementOptimizer2;
 import org.aksw.sparqlify.sparqlview.OpSparqlViewPattern;
 import org.aksw.sparqlify.sparqlview.ViewInstanceJoin;
 import org.apache.jena.sparql.algebra.Op;
@@ -17,6 +18,7 @@ public class CandidateViewSelectorSparqlView
 
 
     public CandidateViewSelectorSparqlView() {
+        super((op, rm) -> FilterPlacementOptimizer2.optimizeStatic(op, rm));
     }
 
     @Override

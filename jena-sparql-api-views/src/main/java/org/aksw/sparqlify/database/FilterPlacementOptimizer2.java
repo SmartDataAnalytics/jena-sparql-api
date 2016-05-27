@@ -96,24 +96,36 @@ public class FilterPlacementOptimizer2 {
     };
 
 
-    public static Op optimize(Op op) {
-        RestrictionManagerImpl cnf = new RestrictionManagerImpl();
-        //Op result = MultiMethod.invokeStatic(FilterPlacementOptimizer2.class, "_optimize", op, cnf);
-        FilterPlacementOptimizer2 x = get();
-        Op result = MultiMethod.invoke(x, "_optimize", op, cnf);
+    public static Op optimizeStatic(Op op) {
+        Op result = optimizeStatic(op, null);
         return result;
+//        RestrictionManagerImpl cnf = new RestrictionManagerImpl();
+//        //Op result = MultiMethod.invokeStatic(FilterPlacementOptimizer2.class, "_optimize", op, cnf);
+//        FilterPlacementOptimizer2 x = get();
+//        Op result = MultiMethod.invoke(x, "_optimize", op, cnf);
+//        return result;
     }
 
 
-    public static Op optimize(Op op, RestrictionManagerImpl cnf) {
-//		if(op instanceof OpNull) {
-//			return op;
-//		}
+    public static Op optimizeStatic(Op op, RestrictionManagerImpl cnf) {
+        FilterPlacementOptimizer2 inst = get();
+        Op result = inst.optimize(op, cnf);
+        return result;
+    }
 
+    public Op optimize(Op op) {
+        Op result = optimize(op, null);
+        return result;
+    }
+
+    public Op optimize(Op op, RestrictionManagerImpl cnf) {
+        if(cnf == null) {
+            cnf = new RestrictionManagerImpl();
+        }
 
 //        Op result = MultiMethod.invokeStatic(FilterPlacementOptimizer2.class, "_optimize", op, cnf);
-        FilterPlacementOptimizer2 x = get();
-        Op result = MultiMethod.invoke(x, "_optimize", op, cnf);
+        //FilterPlacementOptimizer2 x = get();
+        Op result = MultiMethod.invoke(this, "_optimize", op, cnf);
         return result;
     }
 
