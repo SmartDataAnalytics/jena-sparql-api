@@ -64,11 +64,7 @@ public class MainSparqlView {
 
         System.out.println(ResultSetFormatter.asText(sv.createQueryExecution("select * { ?s ?p ?o }").execSelect()));
 
-        if(true) {
-            return;
-        }
-
-//        ResultSetFormatter.out(System.out, rs);
+//        if(true) { return; }
 
         SparqlStmtParser sparqlStmtParser = SparqlStmtParserImpl.create(Syntax.syntaxARQ, true);
 
