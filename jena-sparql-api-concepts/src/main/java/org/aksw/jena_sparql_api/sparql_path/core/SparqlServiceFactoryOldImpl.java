@@ -13,14 +13,14 @@ import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.pagination.core.QueryExecutionFactoryPaginated;
 import org.aksw.jena_sparql_api.retry.core.QueryExecutionFactoryRetry;
 
-public class SparqlServiceFactoryImpl
-    implements SparqlServiceFactory
+public class SparqlServiceFactoryOldImpl
+    implements SparqlServiceFactoryOld
 {
     private Map<String, QueryExecutionFactory> keyToSparqlService = new HashMap<String, QueryExecutionFactory>();
     
     private CacheFrontend cacheFrontend = null;
     
-    public SparqlServiceFactoryImpl(CacheFrontend cacheFrontend) {
+    public SparqlServiceFactoryOldImpl(CacheFrontend cacheFrontend) {
         this.cacheFrontend = cacheFrontend;
     }
     

@@ -10,6 +10,6 @@ import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
  * @author raven
  *
  */
-public interface SparqlServiceFactory {
+public interface SparqlServiceFactoryOld {
     QueryExecutionFactory createSparqlService(String serviceUri, Collection<String> defaultGraphUris);
 }
