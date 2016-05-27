@@ -200,7 +200,8 @@ public abstract class CandidateViewSelectorBase<T extends IViewDef, C>
 
         ++viewId;
 
-        Set<Var> vars = QuadPatternUtils.getVarsMentioned(viewDef.getTemplate());
+        //Set<Var> vars = QuadPatternUtils.getVarsMentioned(viewDef.getTemplate());
+        Set<Var> vars = viewDef.getVarsMentioned();
         Map<Var, Var> oldToNew = new HashMap<Var, Var>();
         for(Var var : vars) {
             oldToNew.put(var, Var.alloc("view" + viewId + "_" + var.getName()));

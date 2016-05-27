@@ -33,10 +33,6 @@ import org.apache.jena.sparql.modify.request.UpdateModify;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
-import org.apache.jena.vocabulary.OWL;
-import org.apache.jena.vocabulary.RDF;
-import org.apache.jena.vocabulary.RDFS;
-import org.apache.jena.vocabulary.XSD;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,6 +62,7 @@ public class SparqlView
     private RestrictionManagerImpl restrictions;
 
 
+
     public RestrictionManagerImpl getRestrictions() {
         return restrictions;
     }
@@ -77,6 +74,7 @@ public class SparqlView
     private Op op; // The operation this view corresponds to
 
 
+    @Override
     public Set<Var> getVarsMentioned()
     {
         Set<Var> result = new HashSet<Var>();
