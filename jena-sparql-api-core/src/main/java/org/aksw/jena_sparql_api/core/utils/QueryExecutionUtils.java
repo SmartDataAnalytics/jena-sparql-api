@@ -15,6 +15,7 @@ import org.aksw.jena_sparql_api.mapper.FunctionBindingMapper;
 import org.aksw.jena_sparql_api.utils.CloseableQueryExecution;
 import org.aksw.jena_sparql_api.utils.ExtendedIteratorClosable;
 import org.aksw.jena_sparql_api.utils.IteratorResultSetBinding;
+import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.atlas.lib.Closeable;
 import org.apache.jena.atlas.lib.Sink;
 import org.apache.jena.graph.Node;
@@ -25,10 +26,14 @@ import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.query.Syntax;
+import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.expr.ExprAggregator;
+import org.apache.jena.sparql.expr.aggregate.AggCount;
 import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -202,7 +207,36 @@ public class QueryExecutionUtils {
         return result;
     }
 
+    
+    
     public static long countQuery(Query query, QueryExecutionFactory qef) {
+        
+        Query cQuery = new Query();
+        cQuery.setQuerySelectType();
+        cQuery.setPrefixMapping(query.getPrefixMapping());
+        cQuery.getProject().add(Vars.c, new ExprAggregator(Vars.x, new AggCount()));
+
+        boolean needsWrapping = !query.getGroupBy().isEmpty() || !query.getAggregators().isEmpty();
+        Element queryPattern;
+        if(needsWrapping) {
+            Query q = query.cloneQuery();
+            q.setPrefixMapping(new PrefixMappingImpl());
+            queryPattern = new ElementSubQuery(q);
+        } else {
+            queryPattern = query.getQueryPattern();
+        }
+
+
+        cQuery.setQueryPattern(queryPattern);
+//System.out.println("CQUERY: " + cQuery);        
+        QueryExecution qe = qef.createQueryExecution(cQuery);
+        long result = ServiceUtils.fetchInteger(qe, Vars.c);
+
+        return result;
+    }
+    
+    @Deprecated // Remove once countQuery works as espected
+    public static long countQueryOld(Query query, QueryExecutionFactory qef) {
         Var outputVar = Var.alloc("_c_");
 
         if(query.isConstructType()) {

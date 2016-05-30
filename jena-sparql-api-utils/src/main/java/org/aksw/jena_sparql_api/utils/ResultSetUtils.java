@@ -49,6 +49,23 @@ public class ResultSetUtils {
         return result;
     }
 
+//    public static Long resultSetToInt(ResultSet rs, Var v) {
+//        Integer result = null;
+//
+//        if (rs.hasNext()) {
+//            Binding binding = rs.nextBinding();
+//
+//            Node node = binding.get(v);
+//            NodeValue nv = NodeValue.makeNode(node);
+//            result = nv.getInteger().longValue();
+//
+//            // TODO Validate that the result actually is int.
+//            //result = node.getLiteral().
+//        }
+//
+//        return result;
+//    }
+
 
     public static List<Node> resultSetToList(ResultSet rs, Var v) {
         List<Node> result = new ArrayList<Node>();

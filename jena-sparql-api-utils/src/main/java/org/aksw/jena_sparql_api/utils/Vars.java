@@ -7,7 +7,8 @@ import org.apache.jena.sparql.core.Var;
 
 public class Vars {
     public static final Var a = Var.alloc("a");
-    
+    public static final Var c = Var.alloc("c");
+
     public static final Var g = Var.alloc("g");
     public static final Var s = Var.alloc("s");
     public static final Var p = Var.alloc("p");
