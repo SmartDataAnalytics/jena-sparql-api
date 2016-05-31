@@ -41,7 +41,7 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
         //this.decoratee = decoratee;
     }*/
 
-    protected QueryExecution getDecoratee()
+    public QueryExecution getDecoratee()
     {
         return decoratee;
     }

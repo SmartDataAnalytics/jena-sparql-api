@@ -13,6 +13,10 @@ import com.google.common.base.Supplier;
 public class FluentSparqlServiceFactoryFn<P>
     extends FluentFnBase<SparqlServiceFactory, P>
 {
+    public FluentSparqlServiceFactoryFn() {
+        super(true);
+    }
+
     public static FluentSparqlServiceFactoryFn<?> start() {
         return new FluentSparqlServiceFactoryFn<Object>();
     }

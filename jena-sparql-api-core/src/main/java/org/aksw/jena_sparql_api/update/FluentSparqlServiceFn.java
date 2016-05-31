@@ -21,6 +21,10 @@ import com.google.common.base.Supplier;
 public class FluentSparqlServiceFn<P>
     extends FluentFnBase<SparqlService, P>
 {
+    public FluentSparqlServiceFn() {
+        super(false);
+    }
+
     public FluentQueryExecutionFactoryFn<FluentSparqlServiceFn<P>> configQuery() {
         final FluentSparqlServiceFn<P> self = this;
         final FluentQueryExecutionFactoryFn<FluentSparqlServiceFn<P>> result = new FluentQueryExecutionFactoryFn<FluentSparqlServiceFn<P>>();

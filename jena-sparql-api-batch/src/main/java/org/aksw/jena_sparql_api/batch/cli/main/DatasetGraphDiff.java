@@ -6,6 +6,7 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
+import org.apache.jena.query.ReadWrite;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphBase;
 import org.apache.jena.sparql.core.Quad;
@@ -90,6 +91,42 @@ public class DatasetGraphDiff
     public void removeGraph(Node arg0) {
         // TODO Auto-generated method stub
 
+    }
+
+    @Override
+    public boolean supportsTransactions() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public void abort() {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void begin(ReadWrite arg0) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void commit() {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void end() {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public boolean isInTransaction() {
+        // TODO Auto-generated method stub
+        return false;
     }
 
 }

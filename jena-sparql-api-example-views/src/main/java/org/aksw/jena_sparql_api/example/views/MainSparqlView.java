@@ -5,7 +5,9 @@ import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
 import org.aksw.jena_sparql_api.core.SparqlServiceImpl;
+import org.aksw.jena_sparql_api.http.QueryExecutionHttpWrapper;
 import org.aksw.jena_sparql_api.server.utils.SparqlServerUtils;
+import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParser;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.aksw.jena_sparql_api.views.CandidateViewSelector;
@@ -18,13 +20,39 @@ import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.query.Syntax;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.riot.WebContent;
 import org.apache.jena.sparql.core.DatasetDescription;
+import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
 
 
 public class MainSparqlView {
 
 
     public static void main(String[] args) {
+
+        QueryExecutionFactory xxx = FluentQueryExecutionFactory.http("http://dbpedia.org/sparql", "http://dbpedia.org")
+                .config()
+                    .withPostProcessor(qe ->
+                            ((QueryEngineHTTP)((QueryExecutionHttpWrapper)qe).getDecoratee())
+                            .setModelContentType(WebContent.contentTypeRDFXML))
+                    .withPostProcessor(aoeu -> System.out.println("a" + aoeu))
+                    .withParser(SparqlQueryParserImpl.create(Syntax.syntaxARQ))
+                    .withDefaultLimit(10, true)
+                    .withPostProcessor(aoeu -> System.out.println("b" + aoeu))
+                    .withPagination(1000)
+                    .withPostProcessor(aoeu -> System.out.println("c" + aoeu))
+                .end()
+                .create();
+
+            Model foo = xxx.createQueryExecution("CONSTRUCT WHERE { <http://dbpedia.org/ontology/author> ?p ?o }").execConstruct();
+            foo.write(System.out, "TURTLE");
+
+            if(true) {
+                System.exit(0);
+            }
+
+
         //SparqlViewSystem system = new SparqlViewSystem();
 
         //system.addView(SparqlView.create("MyView", QueryFactory.create("Prefix ex:<http://ex.org> Construct { ?s a ex:BigProject . ex:BigProject a ex:Type . } { ?s ex:funding ?o . Filter(?o > 1000) . }", Syntax.syntaxSPARQL_11)));

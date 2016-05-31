@@ -13,6 +13,10 @@ import org.apache.jena.update.UpdateRequest;
 public class FluentUpdateExecutionFactoryFn<P>
     extends FluentFnBase<UpdateExecutionFactory, P>
 {
+    public FluentUpdateExecutionFactoryFn() {
+        super(true);
+    }
+
 
     public FluentUpdateExecutionFactoryFn<P> withDatasetDescription(final String withIri, final DatasetDescription datasetDescription) {
         compose(new Function<UpdateExecutionFactory, UpdateExecutionFactory>() {

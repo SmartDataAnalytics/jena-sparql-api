@@ -34,6 +34,7 @@ public class FluentQueryExecutionFactoryFn<P>
     extends FluentFnBase<QueryExecutionFactory, P>
 {
     public FluentQueryExecutionFactoryFn() {
+        this(null, null);
     }
 
     @Override
@@ -44,6 +45,7 @@ public class FluentQueryExecutionFactoryFn<P>
 
 
     public FluentQueryExecutionFactoryFn(Supplier<P> parentSupplier, Function<QueryExecutionFactory, QueryExecutionFactory> fn) {
+        super(true);
         this.parentSupplier = parentSupplier;
         this.fn = fn;
     }
