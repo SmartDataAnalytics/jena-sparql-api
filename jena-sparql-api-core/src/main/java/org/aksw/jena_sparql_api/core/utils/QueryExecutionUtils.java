@@ -247,7 +247,7 @@ public class QueryExecutionUtils {
 
 
         cQuery.setQueryPattern(queryPattern);
-System.out.println("CQUERY: " + cQuery);
+//System.out.println("CQUERY: " + cQuery);
         QueryExecution qe = qef.createQueryExecution(cQuery);
         long result = ServiceUtils.fetchInteger(qe, Vars.c);
 
