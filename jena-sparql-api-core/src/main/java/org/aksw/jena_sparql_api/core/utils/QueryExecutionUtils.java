@@ -29,9 +29,15 @@ import org.apache.jena.query.Syntax;
 import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.core.VarExprList;
 import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprAggregator;
+import org.apache.jena.sparql.expr.ExprList;
 import org.apache.jena.sparql.expr.aggregate.AggCount;
+import org.apache.jena.sparql.expr.aggregate.AggCountDistinct;
+import org.apache.jena.sparql.expr.aggregate.AggCountVarDistinct;
+import org.apache.jena.sparql.expr.aggregate.Aggregator;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.util.iterator.ExtendedIterator;
@@ -88,30 +94,34 @@ public class QueryExecutionUtils {
      *
      * @param qe
      */
-    public static void consume(QueryExecution qe) {
+    public static long consume(QueryExecution qe) {
         Query query = qe.getQuery();
         Assert.notNull(query, "QueryExecution did not tell us which query it is bound to - query was null");
         int queryType = query.getQueryType();
 
+        long result;
         switch (queryType) {
         case Query.QueryTypeAsk:
             qe.execAsk();
+            result = 1;
             break;
         case Query.QueryTypeConstruct:
             Iterator<Triple> itC = qe.execConstructTriples();
-            Iterators.size(itC);
+            result = Iterators.size(itC);
             break;
         case Query.QueryTypeDescribe:
             Iterator<Triple> itD = qe.execDescribeTriples();
-            Iterators.size(itD);
+            result = Iterators.size(itD);
             break;
         case Query.QueryTypeSelect:
             ResultSet rs = qe.execSelect();
-            ResultSetFormatter.consume(rs);
+            result = ResultSetFormatter.consume(rs);
             break;
         default:
             throw new RuntimeException("Unknown query type - should not happen: queryType = " + queryType);
         }
+
+        return result;
     }
 
 
@@ -210,13 +220,22 @@ public class QueryExecutionUtils {
 
 
     public static long countQuery(Query query, QueryExecutionFactory qef) {
+        boolean needsWrapping = !query.getGroupBy().isEmpty() || !query.getAggregators().isEmpty();
+
+        boolean useCountDistinct = !needsWrapping && query.isDistinct() && query.isQueryResultStar();
+
+        //boolean isDistinct = query.isDistinct();
+
+
+        Aggregator agg = useCountDistinct
+                ? new AggCountDistinct()
+                : new AggCount();
 
         Query cQuery = new Query();
         cQuery.setQuerySelectType();
         cQuery.setPrefixMapping(query.getPrefixMapping());
-        cQuery.getProject().add(Vars.c, new ExprAggregator(Vars.x, new AggCount()));
+        cQuery.getProject().add(Vars.c, new ExprAggregator(Vars.x, agg));
 
-        boolean needsWrapping = !query.getGroupBy().isEmpty() || !query.getAggregators().isEmpty();
         Element queryPattern;
         if(needsWrapping) {
             Query q = query.cloneQuery();
@@ -228,7 +247,7 @@ public class QueryExecutionUtils {
 
 
         cQuery.setQueryPattern(queryPattern);
-//System.out.println("CQUERY: " + cQuery);
+System.out.println("CQUERY: " + cQuery);
         QueryExecution qe = qef.createQueryExecution(cQuery);
         long result = ServiceUtils.fetchInteger(qe, Vars.c);
 

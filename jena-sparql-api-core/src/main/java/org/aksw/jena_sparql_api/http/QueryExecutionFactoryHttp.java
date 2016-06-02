@@ -4,12 +4,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-import org.aksw.jena_sparql_api.core.QueryExecutionFactoryBackString;
+import org.aksw.jena_sparql_api.core.QueryExecutionFactoryBase;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
-import org.apache.jena.atlas.web.ContentType;
 import org.apache.jena.atlas.web.auth.HttpAuthenticator;
-import org.apache.jena.riot.WebContent;
-
+import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
@@ -21,7 +19,7 @@ import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
  *         Time: 9:47 PM
  */
 public class QueryExecutionFactoryHttp
-    extends QueryExecutionFactoryBackString
+    extends QueryExecutionFactoryBase
 {
     private String service;
     private DatasetDescription datasetDescription;
@@ -60,17 +58,28 @@ public class QueryExecutionFactoryHttp
         return result;
     }
 
-    @Override
-    public QueryExecution createQueryExecution(String queryString) {
-        QueryEngineHTTP qe = new QueryEngineHTTP(service, queryString, httpAuthenticator);
-
+    public QueryExecution postProcesss(QueryEngineHTTP qe) {
         qe.setDefaultGraphURIs(datasetDescription.getDefaultGraphURIs());
         qe.setNamedGraphURIs(datasetDescription.getNamedGraphURIs());
 
-
         QueryExecution result = new QueryExecutionHttpWrapper(qe);
-        //QueryExecution result = qe;
+        return result;
+    }
+
+    @Override
+    public QueryExecution createQueryExecution(String queryString) {
+        QueryEngineHTTP qe = new QueryEngineHTTP(service, queryString, httpAuthenticator);
+        QueryExecution result = postProcesss(qe);
 
         return result;
     }
+
+    @Override
+    public QueryExecution createQueryExecution(Query query) {
+        QueryEngineHTTP qe = new QueryEngineHTTP(service, query, httpAuthenticator);
+        QueryExecution result = postProcesss(qe);
+
+        return result;
+    }
+
 }
