@@ -207,10 +207,10 @@ public class QueryExecutionUtils {
         return result;
     }
 
-    
-    
+
+
     public static long countQuery(Query query, QueryExecutionFactory qef) {
-        
+
         Query cQuery = new Query();
         cQuery.setQuerySelectType();
         cQuery.setPrefixMapping(query.getPrefixMapping());
@@ -228,13 +228,13 @@ public class QueryExecutionUtils {
 
 
         cQuery.setQueryPattern(queryPattern);
-//System.out.println("CQUERY: " + cQuery);        
+//System.out.println("CQUERY: " + cQuery);
         QueryExecution qe = qef.createQueryExecution(cQuery);
         long result = ServiceUtils.fetchInteger(qe, Vars.c);
 
         return result;
     }
-    
+
     @Deprecated // Remove once countQuery works as espected
     public static long countQueryOld(Query query, QueryExecutionFactory qef) {
         Var outputVar = Var.alloc("_c_");

@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.stmt;
 
+import org.apache.jena.query.QueryParseException;
 import org.apache.jena.update.UpdateRequest;
 
 public class SparqlStmtUpdate
@@ -19,11 +20,11 @@ public class SparqlStmtUpdate
         this(updateRequest, updateRequestStr, null);
     }
 
-    public SparqlStmtUpdate(String updateRequestStr, Exception parseException) {
+    public SparqlStmtUpdate(String updateRequestStr, QueryParseException parseException) {
         this(null, updateRequestStr, parseException);
     }
 
-    public SparqlStmtUpdate(UpdateRequest updateRequest, String updateRequestStr, Exception parseException) {
+    public SparqlStmtUpdate(UpdateRequest updateRequest, String updateRequestStr, QueryParseException parseException) {
         super(updateRequestStr, parseException);
         this.updateRequest = updateRequest;
     }

@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.stmt;
 
+import org.apache.jena.query.QueryParseException;
+
 public interface SparqlStmt {
     boolean isQuery();
     boolean isUpdateRequest();
@@ -7,6 +9,6 @@ public interface SparqlStmt {
     SparqlStmtUpdate getAsUpdateStmt();
     SparqlStmtQuery getAsQueryStmt();
 
-    Exception getParseException();
+    QueryParseException getParseException();
     String getOriginalString();
 }

@@ -1,16 +1,18 @@
 package org.aksw.jena_sparql_api.stmt;
 
+import org.apache.jena.query.QueryParseException;
+
 public abstract class SparqlStmtBase
     implements SparqlStmt
 {
     protected String originalString;
-    protected Exception parseException;
+    protected QueryParseException parseException;
 
     public SparqlStmtBase(String originalString) {
         this(originalString, null);
     }
 
-    public SparqlStmtBase(String originalString, Exception parseException) {
+    public SparqlStmtBase(String originalString, QueryParseException parseException) {
         super();
         this.originalString = originalString;
         this.parseException = parseException;
@@ -23,7 +25,7 @@ public abstract class SparqlStmtBase
 
 
     @Override
-    public Exception getParseException() {
+    public QueryParseException getParseException() {
         return parseException;
     }
 

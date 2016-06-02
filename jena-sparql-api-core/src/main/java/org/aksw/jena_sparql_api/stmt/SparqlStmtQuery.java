@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.stmt;
 
 import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryParseException;
 
 public class SparqlStmtQuery
     extends SparqlStmtBase
@@ -19,11 +20,11 @@ public class SparqlStmtQuery
         this(query, queryString, null);
     }
 
-    public SparqlStmtQuery(String queryString, Exception parseException) {
+    public SparqlStmtQuery(String queryString, QueryParseException parseException) {
         this(null, queryString, parseException);
     }
 
-    public SparqlStmtQuery(Query query, String queryString, Exception parseException) {
+    public SparqlStmtQuery(Query query, String queryString, QueryParseException parseException) {
         super(queryString, parseException);
         this.query = query;
     }
