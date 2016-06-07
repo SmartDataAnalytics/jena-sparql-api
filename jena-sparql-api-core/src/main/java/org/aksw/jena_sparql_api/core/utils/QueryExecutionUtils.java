@@ -43,7 +43,6 @@ import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.Assert;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
@@ -60,7 +59,7 @@ public class QueryExecutionUtils {
 
     public static void abortAfterFirstRow(QueryExecution qe) {
         Query query = qe.getQuery();
-        Assert.notNull(query, "QueryExecution did not tell us which query it is bound to - query was null");
+        assert query != null : "QueryExecution did not tell us which query it is bound to - query was null";
         int queryType = query.getQueryType();
 
         try {
@@ -96,7 +95,7 @@ public class QueryExecutionUtils {
      */
     public static long consume(QueryExecution qe) {
         Query query = qe.getQuery();
-        Assert.notNull(query, "QueryExecution did not tell us which query it is bound to - query was null");
+        assert query != null : "QueryExecution did not tell us which query it is bound to - query was null";
         int queryType = query.getQueryType();
 
         long result;

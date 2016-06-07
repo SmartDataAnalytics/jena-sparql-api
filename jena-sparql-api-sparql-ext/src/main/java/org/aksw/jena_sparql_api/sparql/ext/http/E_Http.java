@@ -1,9 +1,10 @@
 package org.aksw.jena_sparql_api.sparql.ext.http;
 
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.function.Supplier;
 
 import org.aksw.jena_sparql_api.sparql.ext.json.NodeValueJson;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -14,7 +15,6 @@ import org.apache.http.util.EntityUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.function.FunctionBase1;
-import org.springframework.util.StreamUtils;
 
 import com.google.common.net.MediaType;
 
@@ -96,7 +96,8 @@ public class E_Http
 
                 if(statusCode == 200) {
                     //String str = StreamUtils.toString(entity.getContent());
-                    String str = StreamUtils.copyToString(entity.getContent(), Charset.forName("UTF-8"));
+
+                    String str = IOUtils.toString(entity.getContent(), StandardCharsets.UTF_8); //, Charset.forName("UTF-8"));
 
                     Header contentType = entity.getContentType();
                     String contentTypeValue = contentType.getValue();

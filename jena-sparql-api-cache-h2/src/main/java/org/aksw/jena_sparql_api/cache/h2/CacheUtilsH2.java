@@ -1,5 +1,12 @@
 package org.aksw.jena_sparql_api.cache.h2;
 
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.sql.Connection;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.aksw.jena_sparql_api.cache.core.QueryExecutionFactoryCacheEx;
 import org.aksw.jena_sparql_api.cache.extra.CacheBackend;
 import org.aksw.jena_sparql_api.cache.extra.CacheFrontend;
@@ -8,12 +15,9 @@ import org.aksw.jena_sparql_api.cache.staging.CacheBackendDao;
 import org.aksw.jena_sparql_api.cache.staging.CacheBackendDaoPostgres;
 import org.aksw.jena_sparql_api.cache.staging.CacheBackendDataSource;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.apache.commons.lang3.StringUtils;
 import org.h2.jdbcx.JdbcDataSource;
 import org.h2.tools.RunScript;
-
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.sql.Connection;
 
 /**
  * Utils for generating a cache
@@ -33,17 +37,33 @@ public class CacheUtilsH2 {
      * @throws RuntimeException in case of error
      */
     public static CacheFrontend createCacheFrontend(String dbName, boolean dbInMemory, long cacheTTL) {
+        CacheFrontend result = createCacheFrontend(null, dbName, dbInMemory, cacheTTL);
+        return result;
+    }
+
+    public static CacheFrontend createCacheFrontend(String dbDir, String dbName, boolean dbInMemory, long cacheTTL) {
 
         String dbType = "file";
         if (dbInMemory) {
             dbType = "mem:";
         }
 
+        String dbd = StringUtils.isEmpty(dbDir) ? "" : dbDir + "/";
+
+        List<String> options = new ArrayList<String>();
+
+        options.add("AUTO_SERVER=TRUE");
+        options.add("AUTO_RECONNECT=TRUE");
+        options.add("DB_CLOSE_DELAY=-1");
+
+        String optionsStr = options.stream().collect(Collectors.joining(";"));
+
         try {
             Class.forName("org.h2.Driver");
+            //jdbc:h2:" + dbDir + "/"
 
             JdbcDataSource dataSource = new JdbcDataSource();
-            dataSource.setURL("jdbc:h2:" + dbType + ":"+ dbName + ";DB_CLOSE_DELAY=-1");
+            dataSource.setURL("jdbc:h2:" + dbType + ":" + dbd + dbName + ";" + optionsStr);
             dataSource.setUser("sa");
             dataSource.setPassword("sa");
 

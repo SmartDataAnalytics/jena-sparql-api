@@ -766,6 +766,7 @@
                 <version>${aksw.commons.version}</version>
                 <scope>compile</scope>
 
+                <!-- Jena pulls in jcl-over-slf4j, so we don't need to add it ourselves -->
                 <exclusions>
                     <exclusion>
                         <groupId>commons-logging</groupId>
@@ -895,6 +896,14 @@
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-core</artifactId>
                 <version>${spring.version}</version>
+
+                <!-- Jena pulls in jcl-over-slf4j, so we don't need to add it ourselves -->
+                <exclusions>
+                    <exclusion>
+                        <groupId>commons-logging</groupId>
+                        <artifactId>commons-logging</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
 
 <!--             <dependency> -->
@@ -980,6 +989,12 @@
                 <groupId>commons-validator</groupId>
                 <artifactId>commons-validator</artifactId>
                 <version>1.4.1</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>commons-logging</groupId>
+                        <artifactId>commons-logging</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
 
             <!-- URL Rewriting -->
