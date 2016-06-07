@@ -236,8 +236,6 @@ public class QueryExecutionCompare
      */
     @Override
     public ResultSet execSelect() {
-        logger.debug("fuck");
-
         ResultSetRewindable x;
         ResultSetRewindable y;
         long timeA = -1;
