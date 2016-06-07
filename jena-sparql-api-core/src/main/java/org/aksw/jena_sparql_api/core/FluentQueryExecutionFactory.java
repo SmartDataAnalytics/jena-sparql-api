@@ -64,6 +64,10 @@ public class FluentQueryExecutionFactory<P>
         return new FluentQueryExecutionFactory<Object>(new QueryExecutionFactoryModel(model));
     }
 
+    public static FluentQueryExecutionFactory<?> from(QueryExecutionFactory qef) {
+        return new FluentQueryExecutionFactory<Object>(qef);
+    }
+
     public static FluentQueryExecutionFactory<?> from(Model model, Context context) {
         Dataset dataset = DatasetFactory.create(model);
         return from(dataset, context);

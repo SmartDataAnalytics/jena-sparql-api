@@ -6,14 +6,17 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URL;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.aksw.jena_sparql_api.cache.core.QueryExecutionFactoryCache;
@@ -36,13 +39,6 @@ import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.model.QueryExecutionFactoryModel;
 import org.aksw.jena_sparql_api.pagination.core.QueryExecutionFactoryPaginated;
 import org.aksw.jena_sparql_api.retry.core.QueryExecutionFactoryRetry;
-import org.apache.log4j.PropertyConfigurator;
-import org.h2.jdbcx.JdbcDataSource;
-import org.h2.tools.RunScript;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryFactory;
@@ -54,28 +50,33 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
+import org.h2.jdbcx.JdbcDataSource;
+import org.h2.tools.RunScript;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
-class QueryRunnable
-    implements Runnable
+class QueryCallable
+    implements Callable<Integer>
 {
     private static final Logger logger = LoggerFactory
-            .getLogger(QueryRunnable.class);
-    
+            .getLogger(QueryCallable.class);
+
     private int nLoops;
-    private int nResources; 
+    private int nResources;
     private Random rand;
     private QueryExecutionFactoryCompare qef;
-    
-    public QueryRunnable(int nLoops, Random rand, int nResources, QueryExecutionFactoryCompare qef) {
+
+    public QueryCallable(int nLoops, Random rand, int nResources, QueryExecutionFactoryCompare qef) {
         this.nLoops = nLoops;
         this.rand = rand;
         this.nResources = nResources;
         this.qef = qef;
     }
-    
+
     @Override
-    public void run() {
+    public Integer call() {
         logger.debug("Starting query runner");
         for(int i = 0; i < nLoops; ++i) {
             int id = rand.nextInt(nResources);
@@ -85,10 +86,12 @@ class QueryRunnable
             if(qe.isDifference()) {
                 throw new RuntimeException("Dammit - difference in output");
             }
-            ResultSetFormatter.consume(rs);            
+            ResultSetFormatter.consume(rs);
         }
         logger.debug("Stopping query runner");
-    }   
+
+        return 0;
+    }
 }
 
 /**
@@ -99,57 +102,61 @@ class QueryRunnable
  */
 public class SparqlTest {
 
+
+    private static final Logger logger = LoggerFactory
+            .getLogger(SparqlTest.class);
+
 //    @BeforeClass
 //    public static void setUp() {
 //        PropertyConfigurator.configure("log4j.properties");
 //    }
 
     public static final String prefix = "http://example.org/resource/item";
-    
+
     public static Model createTestModel(int n) {
         Model result = ModelFactory.createDefaultModel();
-        
+
         for(int i = 0; i < n; ++i) {
             Resource s = result.createResource(prefix + i);
             result.add(s, RDF.type, OWL.Thing);
         }
-        
+
         return result;
     }
-    
-    
+
+
     public static String createTestQueryString(int i) {
         String result = "SELECT * { <" + prefix + i + "> ?p ?o }"; //a <http://www.w3.org/2002/07/owl#Thing> }";
         return result;
     }
-    
-    
-    
+
+
+
     @Test
     public void testMultiThreaded() throws InterruptedException, ClassNotFoundException, SQLException, IOException {
         int nThreads = 4;
         int nResources = 50;
         int nLoops = 100;
 
-        
+
         Model model = createTestModel(nResources);
         QueryExecutionFactory qefBase = new QueryExecutionFactoryModel(model);
-        
+
         QueryExecutionFactory qef = qefBase;
 
 //        QueryExecutionFactory qef2 = new QueryExecutionFactoryModel(model);
 //        QueryExecutionFactory qef3 = new QueryExecutionFactoryModel(model);
 
-        
+
         qef = new QueryExecutionFactoryRetry(qef, 5, 1);
-        
+
         // Add delay in order to be nice to the remote server (delay in milli seconds)
         //qef = new QueryExecutionFactoryDelay(qef, 1);
 
         // Set up a cache
         // Cache entries are valid for 1 day
-        long timeToLive = 24l * 60l * 60l * 1000l; 
-        
+        long timeToLive = 24l * 60l * 60l * 1000l;
+
         // This creates a 'cache' folder, with a database file named 'sparql.db'
         // Technical note: the cacheBackend's purpose is to only deal with streams,
         // whereas the frontend interfaces with higher level classes - i.e. ResultSet and Model
@@ -167,11 +174,11 @@ public class SparqlTest {
 
         String schemaResourceName = "/org/aksw/jena_sparql_api/cache/cache-schema-pgsql.sql";
         InputStream in = SparqlTest.class.getResourceAsStream(schemaResourceName);
-        
+
         if(in == null) {
             throw new RuntimeException("Failed to load resource: " + schemaResourceName);
         }
-        
+
         InputStreamReader reader = new InputStreamReader(in);
         Connection conn = dataSource.getConnection();
         try {
@@ -182,33 +189,43 @@ public class SparqlTest {
 
 
         CacheBackendDao dao = new CacheBackendDaoPostgres();
-        CacheBackend cacheBackend = new CacheBackendDataSource(dataSource, dao); 
-        CacheFrontend cacheFrontend = new CacheFrontendImpl(cacheBackend);      
+        CacheBackend cacheBackend = new CacheBackendDataSource(dataSource, dao);
+        CacheFrontend cacheFrontend = new CacheFrontendImpl(cacheBackend);
         qef = new QueryExecutionFactoryCacheEx(qef, cacheFrontend);
- 
-//        
+
+//
 //        // Add pagination
-        qef = new QueryExecutionFactoryPaginated(qef, 900);        
- 
-        
+        qef = new QueryExecutionFactoryPaginated(qef, 900);
+
+
         QueryExecutionFactoryCompare qefCompare = new QueryExecutionFactoryCompare(qef, qefBase);
-        
-        
-        
+
+
+
         ExecutorService executors = Executors.newFixedThreadPool(nThreads);
-        
+
         Random rand = new Random();
-        
+
+        Collection<Callable<Integer>> callables = new ArrayList<>();
         for(int i = 0; i < nThreads; ++i) {
-            Runnable runnable = new QueryRunnable(nLoops, rand, nResources, qefCompare);
-            //runnable.run();
-            executors.submit(runnable);
+            Callable<Integer> callable = new QueryCallable(nLoops, rand, nResources, qefCompare);
+            callables.add(callable);
         }
+
+        List<Future<Integer>> futures = executors.invokeAll(callables);
         executors.shutdown();
         executors.awaitTermination(20, TimeUnit.SECONDS);
+
+        for(Future<Integer> future : futures) {
+            try {
+                future.get();
+            } catch(Exception e) {
+                logger.error("Test case failed: ", e);
+            }
+        }
     }
 
-    
+
     public QueryExecutionFactory createService() {
         String service = "http://dbpedia.org/sparql";
         List<String> defaultGraphNames = Arrays.asList("http://dbpedia.org");
@@ -228,7 +245,7 @@ public class SparqlTest {
 
         QueryExecution qe = f.createQueryExecution("Select * {?s ?p ?o .} limit 3");
         ResultSet rs = qe.execSelect();
-        System.out.println(ResultSetFormatter.asText(rs));
+        //System.out.println(ResultSetFormatter.asText(rs));
     }
 
     //@Test
@@ -251,14 +268,14 @@ public class SparqlTest {
 
     //@Test
     public void testPagination() {
-        System.out.println("Starting testPagination");
+        //System.out.println("Starting testPagination");
 
         Model model = ModelFactory.createDefaultModel();
         model.add(RDF.type, RDF.type, RDF.type);
         model.add(RDF.List, RDF.type, RDF.List);
 
         QueryExecutionFactory f = new QueryExecutionFactoryModel(model);
-        
+
 
         //QueryExecutionFactory f = createService();
         f = new QueryExecutionFactoryDelay(f, 5000);
@@ -268,10 +285,11 @@ public class SparqlTest {
 
         QueryExecution q = f.createQueryExecution("Select * {?s ?p ?o}");
         ResultSet rs = q.execSelect();
-        while(rs.hasNext()) {
-            System.out.println("Here");
-            System.out.println(rs.next());
-        }
+        ResultSetFormatter.consume(rs);
+//        while(rs.hasNext()) {
+            //System.out.println("Here");
+            //System.out.println(rs.next());
+//        }
 
     }
 
@@ -279,7 +297,7 @@ public class SparqlTest {
     @Test
     public void testPaginationSelectConstruct() {
 
-        System.out.println("Starting testPagination");
+        //System.out.println("Starting testPagination");
 
         Model model = ModelFactory.createDefaultModel();
         model.add(RDF.type, RDF.type, RDF.type);
@@ -302,9 +320,9 @@ public class SparqlTest {
         QueryExecution q = f.createQueryExecution(queryString);
         Model result = q.execConstruct();
 
-        model.write(System.out, "N-TRIPLES");
-        System.out.println("Blah");
-        result.write(System.out, "N-TRIPLES");
+//        model.write(System.out, "N-TRIPLES");
+//        System.out.println("Blah");
+//        result.write(System.out, "N-TRIPLES");
         //assertEquals(model, result);
     }
 
@@ -370,7 +388,7 @@ qs.getLiteral("count").getInt();
     public void testHttpDelayCache()
         throws Exception
     {
-        PropertyConfigurator.configure("log4j.properties");
+        //PropertyConfigurator.configure("log4j.properties");
 
         /*
         System.out.println(Integer.toHexString(0));

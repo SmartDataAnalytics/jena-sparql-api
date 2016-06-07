@@ -2,25 +2,17 @@ package org.aksw.jena_sparql_api.concept_cache.domain;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import org.aksw.jena_sparql_api.utils.ClauseUtils;
 import org.aksw.jena_sparql_api.utils.CnfUtils;
 import org.aksw.jena_sparql_api.utils.NfUtils;
+import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
-import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.algebra.Op;
-import org.apache.jena.sparql.algebra.op.OpFilter;
-import org.apache.jena.sparql.algebra.op.OpNull;
-import org.apache.jena.sparql.algebra.op.OpQuadPattern;
-import org.apache.jena.sparql.algebra.op.OpSequence;
-import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Quad;
-import org.apache.jena.sparql.core.QuadPattern;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprList;
@@ -77,6 +69,13 @@ public class QuadFilterPatternCanonical {
 
         return result;
     }
+
+    public static QuadFilterPatternCanonical applyVarMapping(QuadFilterPatternCanonical qfpc, Map<Var, Var> varMap) {
+        NodeTransform nodeTransform = new NodeTransformRenameMap(varMap);
+        QuadFilterPatternCanonical result = qfpc.applyNodeTransform(nodeTransform);
+        return result;
+    }
+
 
     public QuadFilterPatternCanonical applyNodeTransform(NodeTransform nodeTransform) {
         Set<Quad> newQuads = QuadUtils.applyNodeTransform(quads, nodeTransform);

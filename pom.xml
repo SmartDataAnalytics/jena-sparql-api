@@ -292,10 +292,42 @@
         </pluginManagement>
     </build>
 
+    <dependencies>
+            <dependency>
+                <groupId>log4j</groupId>
+                <artifactId>log4j</artifactId>
+                <version>1.2.17</version>
+                <scope>test</scope>
+                <!-- <type>jar</type> -->
+                <!-- <scope>compile</scope> -->
+            </dependency>
+
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-log4j12</artifactId>
+                <version>1.7.10</version>
+                <scope>test</scope>
+            </dependency>
+
+    </dependencies>
 
 
     <dependencyManagement>
         <dependencies>
+
+
+            <!-- Never depend on the logging implementations unless in test cases or test modules -->
+            <dependency>
+                <groupId>log4j</groupId>
+                <artifactId>log4j</artifactId>
+                <version>1.2.17</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-log4j12</artifactId>
+                <version>1.7.10</version>
+            </dependency>
+
 
             <!-- Modules -->
             <dependency>
@@ -436,6 +468,15 @@
                         <groupId>junit</groupId>
                         <artifactId>junit</artifactId>
                     </exclusion>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-log4j12</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>log4j</groupId>
+                        <artifactId>log4j</artifactId>
+                    </exclusion>
+
                 </exclusions>
             </dependency>
 
@@ -690,38 +731,34 @@
             </dependency>
 
             <!-- Logging -->
+
+<!--
             <dependency>
                 <groupId>log4j</groupId>
                 <artifactId>log4j</artifactId>
                 <version>1.2.17</version>
-                <!-- <type>jar</type> -->
-                <!-- <scope>compile</scope> -->
+                <scope>test</scope>
             </dependency>
+-->
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
                 <version>1.7.10</version>
-                <!-- <scope>test</scope> -->
-                <!-- <type>jar</type> -->
-                <!-- <scope>compile</scope> -->
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-ext</artifactId>
                 <version>1.7.10</version>
-                <!-- <type>jar</type> -->
-                <!-- <scope>compile</scope> -->
                 <scope>test</scope>
             </dependency>
+<!--
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-log4j12</artifactId>
                 <version>1.7.10</version>
-                <!-- <type>jar</type> -->
-                <!-- <scope>runtime</scope> -->
                 <scope>test</scope>
             </dependency>
-
+-->
             <!-- AKSW Commons -->
             <dependency>
                 <groupId>org.aksw.commons</groupId>
