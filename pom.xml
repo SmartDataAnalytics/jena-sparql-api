@@ -20,6 +20,8 @@
         <module>jena-sparql-api-core</module>
         <module>jena-sparql-api-connection</module>
 
+        <module>jena-sparql-api-data-client</module>
+
         <module>jena-sparql-api-cache</module>
         <module>jena-sparql-api-cache-h2</module>
         <module>jena-sparql-api-utils</module>
