@@ -93,7 +93,7 @@
         <jersey.version>2.18</jersey.version>
 
         <spring.version>4.1.4.RELEASE</spring.version>
-        <spring.batch.version>3.0.3.RELEASE</spring.batch.version>
+        <spring.batch.version>3.0.7.RELEASE</spring.batch.version>
         <aksw.commons.version>0.7.9</aksw.commons.version>
 
         <atmosphere.version>2.0.0.RC3</atmosphere.version>
