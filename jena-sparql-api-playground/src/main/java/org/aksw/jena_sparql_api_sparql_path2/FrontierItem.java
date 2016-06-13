@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api_sparql_path2;
 
 import java.util.Set;
 
+import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.apache.jena.graph.Node;
 
 import scala.Tuple2;

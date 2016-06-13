@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
+import org.aksw.jena_sparql_api.utils.model.Triplet;
+
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 

@@ -15,6 +15,8 @@ import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.utils.Pair;
+import org.aksw.jena_sparql_api.utils.model.Directed;
+import org.aksw.jena_sparql_api.utils.model.Triplet;
 import org.apache.jena.ext.com.google.common.collect.Lists;
 import org.apache.jena.graph.Node;
 

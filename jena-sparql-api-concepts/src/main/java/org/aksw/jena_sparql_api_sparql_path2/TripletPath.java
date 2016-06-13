@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.aksw.jena_sparql_api.utils.model.Directed;
+import org.aksw.jena_sparql_api.utils.model.Triplet;
+
 /**
  * A path from triplets. A path is expected to be connected.
  *

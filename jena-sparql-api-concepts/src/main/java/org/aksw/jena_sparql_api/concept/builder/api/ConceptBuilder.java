@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import org.aksw.jena_sparql_api.concept.builder.impl.ConceptBuilderUnion;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.expr.Expr;
@@ -60,6 +61,12 @@ public interface ConceptBuilder
 
     void isNegated();
 
+
+    /**
+     *
+     * @return
+     */
+    ConceptBuilderUnion toDnf();
 
 
     /**

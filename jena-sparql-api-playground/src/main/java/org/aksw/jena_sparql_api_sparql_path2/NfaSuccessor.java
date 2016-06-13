@@ -7,6 +7,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import org.aksw.jena_sparql_api.utils.Pair;
+import org.aksw.jena_sparql_api.utils.model.Directed;
+import org.aksw.jena_sparql_api.utils.model.Triplet;
 
 class NfaSuccessor<S, T, V, E>
     implements Function<Iterable<Entry<S, V>>, Map<Entry<S, V>, Set<Triplet<Entry<S, V>, Directed<E>>>>>

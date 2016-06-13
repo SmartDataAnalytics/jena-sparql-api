@@ -1,20 +1,17 @@
-package org.aksw.jena_sparql_api_sparql_path2;
+package org.aksw.jena_sparql_api.utils.model;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class Triplet<V, E> {
+public class TripletImpl<V, E>
+    implements Triplet<V, E>
+{
     protected V subject;
     protected E predicate;
     protected V object;
 
-    public static <V, E> Triplet<V, E> swap(Triplet<V, E> t) {
-        Triplet<V, E> result = new Triplet<>(t.getObject(), t.getPredicate(), t.getSubject());
-        return result;
-    }
-
-    public Triplet(V subject, E predicate, V object) {
+    public TripletImpl(V subject, E predicate, V object) {
         super();
         this.subject = subject;
         this.predicate = predicate;
@@ -24,9 +21,9 @@ public class Triplet<V, E> {
     public static <V, E> Triplet<V, Directed<E>> makeDirected(Triplet<V, E> in, V source) {
         int dir = getDirection(in, source);
         Triplet<V, Directed<E>> result = (dir & 1) != 0
-                ? new Triplet<>(in.getSubject(), new Directed<>(in.getPredicate(), false), in.getObject())
+                ? new TripletImpl<>(in.getSubject(), new Directed<>(in.getPredicate(), false), in.getObject())
                 : (dir & 2) != 0
-                    ? new Triplet<>(in.getObject(), new Directed<>(in.getPredicate(), true), in.getSubject())
+                    ? new TripletImpl<>(in.getObject(), new Directed<>(in.getPredicate(), true), in.getSubject())
                     : null
                 ;
 
@@ -40,8 +37,8 @@ public class Triplet<V, E> {
     public static <V, E> Triplet<V, E> makeUndirected(Triplet<V, Directed<E>> in) {
         Directed<E> dp = in.getPredicate();
         Triplet<V, E> result = dp.isReverse()
-                ? new Triplet<>(in.getObject(), dp.getValue(), in.getSubject())
-                : new Triplet<>(in.getSubject(), dp.getValue(), in.getObject())
+                ? new TripletImpl<>(in.getObject(), dp.getValue(), in.getSubject())
+                : new TripletImpl<>(in.getSubject(), dp.getValue(), in.getObject())
                 ;
 
         return result;
@@ -51,8 +48,8 @@ public class Triplet<V, E> {
 
     public static <V, E> Triplet<V, E> create(V s, E e, V o, boolean reverse) {
         Triplet<V, E> result = !reverse
-                ? new Triplet<>(s, e, o)
-                : new Triplet<>(o, e, s)
+                ? new TripletImpl<>(s, e, o)
+                : new TripletImpl<>(o, e, s)
                 ;
 
         return result;
@@ -175,7 +172,7 @@ public class Triplet<V, E> {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        Triplet<?, ?> other = (Triplet<?, ?>) obj;
+        TripletImpl<?, ?> other = (TripletImpl<?, ?>) obj;
         if (object == null) {
             if (other.object != null)
                 return false;

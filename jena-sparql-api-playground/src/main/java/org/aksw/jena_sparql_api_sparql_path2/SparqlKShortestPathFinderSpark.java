@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.stream.StreamSupport;
 
 import org.aksw.jena_sparql_api.utils.Pair;
+import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.aksw.jena_sparql_api_sparql_path.spark.NfaExecutionSpark;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.path.Path;

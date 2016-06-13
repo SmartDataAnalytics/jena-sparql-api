@@ -15,6 +15,8 @@ import java.util.function.Predicate;
 
 import org.aksw.commons.collections.MultiMaps;
 import org.aksw.jena_sparql_api.utils.Pair;
+import org.aksw.jena_sparql_api.utils.model.Directed;
+import org.aksw.jena_sparql_api.utils.model.Triplet;
 import org.jgrapht.DirectedGraph;
 
 import com.google.common.collect.HashMultimap;

@@ -10,6 +10,7 @@ import java.util.stream.StreamSupport;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.utils.ListUtils;
+import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sdb.store.Feature.Name;

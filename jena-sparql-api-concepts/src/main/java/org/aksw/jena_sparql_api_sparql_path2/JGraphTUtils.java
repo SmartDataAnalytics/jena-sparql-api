@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import org.aksw.jena_sparql_api.utils.model.Triplet;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.Graph;
 

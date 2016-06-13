@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.path.Path;
 

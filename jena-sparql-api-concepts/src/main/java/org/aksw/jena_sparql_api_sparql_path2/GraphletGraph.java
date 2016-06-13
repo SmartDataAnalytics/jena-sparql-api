@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api_sparql_path2;
 
 import java.util.Iterator;
 
+import org.aksw.jena_sparql_api.utils.model.Triplet;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 
