@@ -328,6 +328,11 @@
     <dependencyManagement>
         <dependencies>
 
+            <dependency>
+                <groupId>net.sourceforge.owlapi</groupId>
+                <artifactId>owlapi-distribution</artifactId>
+                <version>5.0.2</version>
+            </dependency>
 
             <!-- Never depend on the logging implementations unless in test cases or test modules -->
             <dependency>
