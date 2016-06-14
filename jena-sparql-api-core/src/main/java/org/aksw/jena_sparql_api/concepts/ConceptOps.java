@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.concepts;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
@@ -30,8 +31,10 @@ public class ConceptOps {
         return result;
     }
 
-    public static Concept union(Iterable<Concept> concepts) {
+    public static Concept union(Stream<Concept> concepts) {
+        // Empty union results in false
 
+        //concepts.reduce(
     }
 
     public static Concept intersect(Iterable<Concept> concepts) {
