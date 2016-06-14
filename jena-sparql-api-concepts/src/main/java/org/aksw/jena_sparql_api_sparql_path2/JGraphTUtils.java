@@ -11,6 +11,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.utils.model.Triplet;
+import org.aksw.jena_sparql_api.utils.model.TripletImpl;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.Graph;
 
@@ -27,7 +28,7 @@ public class JGraphTUtils {
     public static <V, E> Triplet<V, E> toTriplet(Graph<V, E> graph, E edge) {
         V s = graph.getEdgeSource(edge);
         V t = graph.getEdgeTarget(edge);
-        Triplet<V, E> result = new Triplet<>(s, edge, t);
+        Triplet<V, E> result = new TripletImpl<>(s, edge, t);
         return result;
     }
 

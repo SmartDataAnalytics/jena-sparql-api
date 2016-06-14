@@ -18,6 +18,9 @@ public interface NodeBuilder {
     //TreeBuilder in(Path path);
     TreeBuilder in(Node node);
 
+    // ref
+    //TreeBuilder attachOut(QueryBuilder queryBuilder);
+
     Set<Expr> getExprs();
     NodeBuilder addExpr(Expr expr); // add an expression over this sub-tree
 

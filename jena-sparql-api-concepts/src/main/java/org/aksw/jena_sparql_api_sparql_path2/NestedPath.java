@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.aksw.jena_sparql_api.utils.model.Triplet;
+import org.aksw.jena_sparql_api.utils.model.TripletImpl;
 
 public class NestedPath<V, E>
     implements Serializable
@@ -87,7 +88,7 @@ public class NestedPath<V, E>
                 Directed<E> p = parentLink.getDiProperty();
                 V s = parentLink.getTarget().getCurrent();
 
-                Triplet<V, Directed<E>> triplet = new Triplet<>(s, p, o);
+                Triplet<V, Directed<E>> triplet = new TripletImpl<>(s, p, o);
 
                 triplets.add(triplet);
                 c = parentLink.getTarget();
@@ -121,7 +122,7 @@ public class NestedPath<V, E>
                 E p = diProperty.getValue();
                 V s = parentLink.getTarget().getCurrent();
 
-                Triplet<V, E> triple = new Triplet<>(s, p, o);
+                Triplet<V, E> triple = new TripletImpl<>(s, p, o);
 //                if(diProperty.isReverse()) {
 //                    triple = Triplet.swap(triple);
 //                }

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.aksw.jena_sparql_api.concept.builder.api.ConceptBuilder;
+import org.aksw.jena_sparql_api.concept.builder.api.ConceptSupplier;
 import org.aksw.jena_sparql_api.concept.builder.api.RestrictionBuilder;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.apache.jena.graph.Node;
@@ -18,9 +19,13 @@ public abstract class ConceptBuilderBase
     protected ListMultimap<Node, RestrictionBuilder> nodeToRestrictionBuilder;
     //protected List<RestrictionBuilde>
 
-    protected ConceptBuilder baseConceptBuilder;
+    protected ConceptSupplier baseConceptBuilder;
 
 
+    /**
+     * An optional SPARQL concept
+     */
+    protected Concept sparqlConcept;
     protected Set<Expr> exprs;
 
 

@@ -11,6 +11,12 @@ public abstract class ConceptBuilderListBase
     extends ConceptBuilderBase
     implements ConceptBuilderList
 {
+    /**
+     * if false, members will be interpreted as forming an intersection
+     * if true, the will form a disjunction
+     *
+     */
+    protected boolean isUnionMode;
     protected List<ConceptBuilder> members;
 
     public ConceptBuilderListBase(RestrictionBuilder parent) {

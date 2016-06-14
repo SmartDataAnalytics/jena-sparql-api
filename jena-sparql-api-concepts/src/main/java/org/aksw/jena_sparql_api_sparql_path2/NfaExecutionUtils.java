@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import org.aksw.jena_sparql_api.utils.Pair;
 import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.aksw.jena_sparql_api.utils.model.Triplet;
+import org.aksw.jena_sparql_api.utils.model.TripletImpl;
 import org.jgrapht.DirectedGraph;
 
 import com.google.common.collect.Multimap;
@@ -301,7 +302,7 @@ public class NfaExecutionUtils {
                                 Set<Directed<P>> succ = initPred.apply(trans, path.getCurrent());
 
                                 Set<Triplet<P, Q>> triplets = succ.stream()
-                                        .map(dp -> Triplet.create(n, (Q)null, dp.getValue(), dp.isReverse()))
+                                        .map(dp -> TripletImpl.create(n, (Q)null, dp.getValue(), dp.isReverse()))
                                         .collect(Collectors.toSet());
 
                                 r.put(n, triplets);
@@ -312,7 +313,7 @@ public class NfaExecutionUtils {
                             Set<Directed<P>> nextDiPreds = transAndNodesToTriplets.apply(trans, diPred);
 
                             Set<Triplet<P, Q>> triplets = nextDiPreds.stream()
-                                    .map(dp -> Triplet.create(pred, (Q)null, dp.getValue(), dp.isReverse())) // TODO get rid of the null - maybe: joinGraph.getEdge(pred, ...)
+                                    .map(dp -> TripletImpl.create(pred, (Q)null, dp.getValue(), dp.isReverse())) // TODO get rid of the null - maybe: joinGraph.getEdge(pred, ...)
                                     .collect(Collectors.toSet());
 
                             r.put(pred, triplets);
