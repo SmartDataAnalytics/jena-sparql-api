@@ -6,16 +6,19 @@ public interface ConceptExpr
 {
     public static final String BUILDER = "builder";
     public static final String CONCEPT = "concept";
+    public static final String LIST = "list";
     public static final String UNKNOWN = "unknown";
 
     Object getType();
 
     boolean isConcept();
     boolean isBuilder();
+    boolean isList();
 
-    Concept asConcept();
-    ConceptBuilder asBuilder();
-    
+    Concept asConcept(); // TODO Maybe only cast as sub type rather than reaching into the object
+    ConceptBuilder asBuilder(); // TODO Maybe only cast as sub type rather than reaching into the object
+    ConceptExprList asList();
+
 
     /**
      * Custom extension point

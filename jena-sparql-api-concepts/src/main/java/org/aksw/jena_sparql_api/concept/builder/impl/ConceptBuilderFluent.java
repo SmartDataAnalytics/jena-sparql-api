@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.concept.builder.impl;
 
 import org.aksw.jena_sparql_api.concept.builder.api.ConceptBuilder;
+import org.aksw.jena_sparql_api.concept.builder.api.ConceptExprList;
 
 public class ConceptBuilderFluent {
     public static ConceptBuilder start() {
@@ -11,13 +12,13 @@ public class ConceptBuilderFluent {
         return new ConceptBuilderImpl();
     }
 
-    public static ConceptBuilderUnion union() {
-        return new ConceptBuilderUnion();
+    public static ConceptExprList union() {
+        return new ConceptExprListImpl();
     }
 
 
-    public static ConceptBuilderAnd and() {
-        return new ConceptBuilderAnd();
+    public static ConceptExprList and() {
+        return new ConceptExprListImpl();
     }
 
 //    public static ConceptBuilder not(ConceptBuilder base) {

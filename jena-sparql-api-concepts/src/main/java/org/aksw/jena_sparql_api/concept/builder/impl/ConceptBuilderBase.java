@@ -101,18 +101,4 @@ public abstract class ConceptBuilderBase
         return this;
     }
 
-    @Override
-    public Concept get() {
-        Concept baseConcept = baseConceptExpr == null
-                ? null
-                : baseConceptExpr.get();
-
-        // Create a concept from the restrictions and merge them
-
-
-        Concept result = baseConcept;
-        return result;
-    }
-
-
 }

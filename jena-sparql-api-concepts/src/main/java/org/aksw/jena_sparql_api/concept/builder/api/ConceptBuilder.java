@@ -2,15 +2,13 @@ package org.aksw.jena_sparql_api.concept.builder.api;
 
 import java.util.List;
 import java.util.Set;
-import java.util.function.Supplier;
 
 import org.aksw.jena_sparql_api.concept.builder.impl.ConceptBuilderUnion;
-import org.aksw.jena_sparql_api.concepts.Concept;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.expr.Expr;
 
 public interface ConceptBuilder
-    extends Supplier<Concept>, Cloneable
+    //extends Cloneable
 {
     ConceptBuilder getParent();
 
@@ -23,7 +21,8 @@ public interface ConceptBuilder
         return result;
     }
 
-    ConceptBuilder clone();
+    //@Override
+    ConceptBuilder clone() throws CloneNotSupportedException;
 
 //    public void addExists(Node node);
 //    public void addForAll(Node node);
@@ -73,5 +72,5 @@ public interface ConceptBuilder
      *
      */
 
-    <T> T accept(ConceptBuilderVisitor<T> visitor);
+    <T> T accept(ConceptExprVisitor<T> visitor);
 }

@@ -21,12 +21,22 @@ public abstract class ConceptExprBase
     }
 
     @Override
+    public boolean isList() {
+        return false;
+    }
+
+    @Override
     public Concept asConcept() {
         throw new IllegalStateException();
     }
 
     @Override
     public ConceptBuilder asBuilder() {
+        throw new IllegalStateException();
+    }
+
+    @Override
+    public ConceptExprList asList() {
         throw new IllegalStateException();
     }
 

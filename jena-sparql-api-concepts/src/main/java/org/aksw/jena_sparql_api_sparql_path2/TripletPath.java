@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.aksw.jena_sparql_api.utils.model.Triplet;
+import org.aksw.jena_sparql_api.utils.model.TripletImpl;
 
 /**
  * A path from triplets. A path is expected to be connected.
@@ -112,7 +113,7 @@ public class TripletPath<V, E> {
 
     public static <V, E> List<Triplet<V, E>> makeUndirected(List<Triplet<V, Directed<E>>> triplets) {
         List<Triplet<V, E>> result = triplets.stream()
-                .map(Triplet::makeUndirected)
+                .map(TripletImpl::makeUndirected)
                 .collect(Collectors.toList());
 
         return result;
@@ -147,7 +148,7 @@ public class TripletPath<V, E> {
             }
 
             Directed<E> p = new Directed<>(t.getPredicate(), reverse);
-            newTriplets.add(new Triplet<>(s, p, o));
+            newTriplets.add(new TripletImpl<>(s, p, o));
             s = o;
         }
 
