@@ -34,7 +34,7 @@ public interface ConceptBuilder
      * @param conceptBuilder
      * @return
      */
-    ConceptBuilder setBaseConceptBuilder(ConceptBuilder conceptBuilder);
+    ConceptBuilder setBaseConceptExpr(ConceptExpr conceptExpr);
 
 
     /**
@@ -43,7 +43,7 @@ public interface ConceptBuilder
      *
      * @return
      */
-    ConceptBuilder getBaseConceptBuilder();
+    ConceptExpr getBaseConceptExpr();
 
 
     RestrictionBuilder newRestriction();

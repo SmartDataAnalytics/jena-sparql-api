@@ -2,12 +2,12 @@ package org.aksw.jena_sparql_api.concept.builder.api;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 
-public class ConceptSupplierConcept
-    extends ConceptSupplierBase
+public class ConceptExprConcept
+    extends ConceptExprBase
 {
     protected Concept concept;
 
-    public ConceptSupplierConcept(Concept concept) {
+    public ConceptExprConcept(Concept concept) {
         super();
         this.concept = concept;
     }
@@ -18,7 +18,7 @@ public class ConceptSupplierConcept
 
     @Override
     public Object getType() {
-        return ConceptSupplier.CONCEPT;
+        return ConceptExpr.CONCEPT;
     }
 
     @Override
@@ -34,5 +34,11 @@ public class ConceptSupplierConcept
     @Override
     public Concept asObject() {
         return concept;
+    }
+
+    @Override
+    public <T> T accept(ConceptExprVisitor<T> visitor) {
+        T result = visitor.visit(this);
+        return result;
     }
 }

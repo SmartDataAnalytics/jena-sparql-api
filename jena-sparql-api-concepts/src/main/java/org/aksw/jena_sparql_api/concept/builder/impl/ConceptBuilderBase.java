@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.aksw.jena_sparql_api.concept.builder.api.ConceptBuilder;
-import org.aksw.jena_sparql_api.concept.builder.api.ConceptSupplier;
+import org.aksw.jena_sparql_api.concept.builder.api.ConceptExpr;
 import org.aksw.jena_sparql_api.concept.builder.api.RestrictionBuilder;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.apache.jena.graph.Node;
@@ -19,7 +19,11 @@ public abstract class ConceptBuilderBase
     protected ListMultimap<Node, RestrictionBuilder> nodeToRestrictionBuilder;
     //protected List<RestrictionBuilde>
 
-    protected ConceptSupplier baseConceptBuilder;
+    /**
+     * null if there is no base concept expr
+     *
+     */
+    protected ConceptExpr baseConceptExpr;
 
 
     /**
@@ -40,8 +44,8 @@ public abstract class ConceptBuilderBase
 
 
 
-    public ConceptBuilder getBaseConceptBuilder() {
-        return baseConceptBuilder;
+    public ConceptExpr getBaseConceptExpr() {
+        return baseConceptExpr;
     }
 
 
@@ -53,8 +57,8 @@ public abstract class ConceptBuilderBase
      * @return
      */
     @Override
-    public ConceptBuilder setBaseConceptBuilder(ConceptBuilder baseConceptBuilder) {
-        this.baseConceptBuilder = baseConceptBuilder;
+    public ConceptBuilder setBaseConceptExpr(ConceptExpr baseConceptExpr) {
+        this.baseConceptExpr = baseConceptExpr;
         return this;
     }
 
@@ -99,9 +103,9 @@ public abstract class ConceptBuilderBase
 
     @Override
     public Concept get() {
-        Concept baseConcept = baseConceptBuilder == null
+        Concept baseConcept = baseConceptExpr == null
                 ? null
-                : baseConceptBuilder.get();
+                : baseConceptExpr.get();
 
         // Create a concept from the restrictions and merge them
 

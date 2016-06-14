@@ -2,12 +2,12 @@ package org.aksw.jena_sparql_api.concept.builder.api;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 
-public class ConceptSupplierBase
-    implements ConceptSupplier
+public abstract class ConceptExprBase
+    implements ConceptExpr
 {
     @Override
     public Object getType() {
-        return ConceptSupplier.UNKNOWN;
+        return ConceptExpr.UNKNOWN;
     }
 
     @Override

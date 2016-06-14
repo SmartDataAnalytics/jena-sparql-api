@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.concept.builder.api;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 
-public interface ConceptSupplier
+public interface ConceptExpr
 {
     public static final String BUILDER = "builder";
     public static final String CONCEPT = "concept";
@@ -15,6 +15,7 @@ public interface ConceptSupplier
 
     Concept asConcept();
     ConceptBuilder asBuilder();
+    
 
     /**
      * Custom extension point
@@ -22,4 +23,6 @@ public interface ConceptSupplier
      * @return
      */
     Object asObject();
+
+    <T> T accept(ConceptExprVisitor<T> visitor);
 }
