@@ -8,11 +8,9 @@ import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl;
 import org.aksw.jena_sparql_api.utils.VarUtils;
-
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.syntax.Element;
-import org.apache.jena.sparql.syntax.ElementUnion;
 
 public class ConceptOps {
 
@@ -30,6 +28,14 @@ public class ConceptOps {
 
         Concept result = modifyee.applyNodeTransform(nodeTransform);
         return result;
+    }
+
+    public static Concept union(Iterable<Concept> concepts) {
+
+    }
+
+    public static Concept intersect(Iterable<Concept> concepts) {
+
     }
 
     public static Concept intersect(Concept concept, Concept filter) {

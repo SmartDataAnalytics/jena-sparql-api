@@ -1,10 +1,14 @@
 package org.aksw.jena_sparql_api.concept.builder.impl;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.aksw.jena_sparql_api.concept.builder.api.ConceptBuilder;
 import org.aksw.jena_sparql_api.concept.builder.api.ConceptExpr;
 import org.aksw.jena_sparql_api.concept.builder.api.ConceptExprConcept;
 import org.aksw.jena_sparql_api.concept.builder.api.ConceptExprConceptBuilder;
 import org.aksw.jena_sparql_api.concept.builder.api.ConceptExprExt;
+import org.aksw.jena_sparql_api.concept.builder.api.ConceptExprList;
 import org.aksw.jena_sparql_api.concept.builder.api.ConceptExprVisitor;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptOps;
@@ -46,6 +50,17 @@ public class ConceptExprVisitorSparql
     @Override
     public Concept visit(ConceptExprExt cse) {
         throw new UnsupportedOperationException("subclass the visitor to handle custom types");
+    }
+
+    @Override
+    public Concept visit(ConceptExprList ce) {
+        List<Concept> concepts = ce.getMembers().stream().map(x -> x.accept(this)).collect(Collectors.toList());
+
+        Concept result = ce.isUnionMode()
+                ? ConceptOps.union(concepts)
+                : ConceptOps.intersect(concepts);
+
+        return result;
     }
 
 }

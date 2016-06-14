@@ -1,30 +1,129 @@
 package org.aksw.jena_sparql_api.concept.builder.impl;
 
-import org.aksw.jena_sparql_api.concept.builder.api.ConceptBuilderVisitor;
-import org.aksw.jena_sparql_api.concepts.Concept;
+import java.util.List;
+import java.util.Set;
+
+import org.aksw.jena_sparql_api.concept.builder.api.ConceptBuilder;
+import org.aksw.jena_sparql_api.concept.builder.api.ConceptExpr;
+import org.aksw.jena_sparql_api.concept.builder.api.RestrictionBuilder;
+import org.apache.jena.graph.Node;
+import org.apache.jena.sparql.expr.Expr;
+
+import com.google.common.collect.ListMultimap;
 
 public class ConceptBuilderImpl
-    extends ConceptBuilderBase
+    implements ConceptBuilder
 {
-    protected Concept concept;
+    protected RestrictionBuilder parent;
+
+    protected boolean isNegated = false;
+
+    protected ListMultimap<Node, RestrictionBuilder> nodeToRestrictionBuilder;
+    //protected List<RestrictionBuilde>
+
+    /**
+     * null if there is no base concept expr
+     *
+     */
+    protected ConceptExpr baseConceptExpr;
+
+
+    protected Set<Expr> exprs;
 
 
     public ConceptBuilderImpl() {
-        super(null);
+        this(null);
     }
 
-    public Concept getConcept() {
-        return concept;
+
+    public ConceptBuilderImpl(RestrictionBuilder parent) {
+        super();
+        this.parent = parent;
     }
 
-    public ConceptBuilderImpl setConcept(Concept concept) {
-        this.concept = concept;
+
+
+    public ConceptExpr getBaseConceptExpr() {
+        return baseConceptExpr;
+    }
+
+
+
+    /**
+     * Sets a baseConceptBuilder and returns this (i.e. NOT the argument)
+     *
+     * @param baseConceptBuilder
+     * @return
+     */
+    @Override
+    public ConceptBuilder setBaseConceptExpr(ConceptExpr baseConceptExpr) {
+        this.baseConceptExpr = baseConceptExpr;
         return this;
     }
 
+
+
     @Override
-    public <T> T accept(ConceptBuilderVisitor<T> visitor) {
-        visitor.visit(this);
+    public RestrictionBuilder newRestriction() {
+        RestrictionBuilder result = new RestrictionBuilderImpl(this);
+        return result;
+    }
+
+
+
+    @Override
+    public List<RestrictionBuilder> findRestrictions(Node node) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+
+
+    @Override
+    public ConceptBuilderImpl setNegated(boolean status) {
+        this.isNegated = true;
+        return this;
+    }
+
+
+
+    @Override
+    public void isNegated() {
+        // TODO Auto-generated method stub
+
+    }
+
+
+    @Override
+    public ConceptBuilder addExpr(Expr expr) {
+        this.exprs.add(expr);
+        return this;
+    }
+
+
+    @Override
+    public RestrictionBuilder getParent() {
+        return parent;
+    }
+
+
+    @Override
+    public ConceptBuilderImpl clone() throws CloneNotSupportedException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+
+    @Override
+    public ConceptBuilder removeExpr(Expr expr) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+
+    @Override
+    public Set<Expr> getExprs() {
+        return exprs;
     }
 
 }

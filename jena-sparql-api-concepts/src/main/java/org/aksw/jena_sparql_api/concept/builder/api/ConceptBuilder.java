@@ -3,19 +3,18 @@ package org.aksw.jena_sparql_api.concept.builder.api;
 import java.util.List;
 import java.util.Set;
 
-import org.aksw.jena_sparql_api.concept.builder.impl.ConceptBuilderUnion;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.expr.Expr;
 
 public interface ConceptBuilder
     //extends Cloneable
 {
-    ConceptBuilder getParent();
+    RestrictionBuilder getParent();
 
     default ConceptBuilder getRoot() {
-        ConceptBuilder parent = getParent();
+        RestrictionBuilder parent = getParent();
         ConceptBuilder result = parent != null
-                ? parent.getRoot()
+                ? parent.getParent().getRoot()
                 : null;
 
         return result;
@@ -56,21 +55,7 @@ public interface ConceptBuilder
 
     Set<Expr> getExprs();
 
-    void setNegated(boolean status);
+    ConceptBuilder setNegated(boolean status);
 
     void isNegated();
-
-
-    /**
-     *
-     * @return
-     */
-    ConceptBuilderUnion toDnf();
-
-
-    /**
-     *
-     */
-
-    <T> T accept(ConceptExprVisitor<T> visitor);
 }

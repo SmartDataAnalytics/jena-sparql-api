@@ -8,14 +8,14 @@ import org.apache.jena.sparql.core.Var;
 public class RestrictionBuilderImpl
     implements RestrictionBuilder
 {
-    protected ConceptBuilderBase parent;
+    protected ConceptBuilderImpl parent;
 
     protected Node on = null;
     //protected Set<>
     protected Var alias; // In the future we could allow a sets of aliases
     protected ConceptBuilder conceptBuilder;
 
-    public RestrictionBuilderImpl(ConceptBuilderBase parent) {
+    public RestrictionBuilderImpl(ConceptBuilderImpl parent) {
         this.parent = parent;
     }
 
@@ -29,14 +29,14 @@ public class RestrictionBuilderImpl
 
     @Override
     public ConceptBuilder forAll() {
-        ConceptBuilder result = new ConceptBuilderBase(this);
+        ConceptBuilder result = new ConceptBuilderImpl(this);
         return result;
     }
 
 
     @Override
     public ConceptBuilder exists() {
-        ConceptBuilder result = new ConceptBuilderBase(this);
+        ConceptBuilder result = new ConceptBuilderImpl(this);
         return result;
     }
 
@@ -58,5 +58,11 @@ public class RestrictionBuilderImpl
             parent.nodeToRestrictionBuilder.remove(on, this);
             this.parent = null;
         }
+    }
+
+
+    @Override
+    public ConceptBuilder getParent() {
+        return parent;
     }
 }

@@ -6,6 +6,8 @@ import org.apache.jena.sparql.core.Var;
 
 public interface RestrictionBuilder {
 
+    ConceptBuilder getParent();
+
     /**
      * The predicate the restriction applies to
      */
