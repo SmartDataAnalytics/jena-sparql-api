@@ -2,15 +2,14 @@ package org.aksw.jena_sparql_api.utils;
 
 import java.util.Collection;
 
-import org.apache.jena.sdb.core.Gensym;
 import org.apache.jena.sparql.core.Var;
 
 public class VarGeneratorBlacklist
-    implements Generator<Var> 
+    implements Generator<Var>
 {
     private Generator<Var> generator;
     private Collection<Var> blacklist;
-    
+
     public VarGeneratorBlacklist(Generator<Var> generator, Collection<Var> blacklist) {
         this.generator = generator;
         this.blacklist = blacklist;
@@ -22,16 +21,16 @@ public class VarGeneratorBlacklist
         VarGeneratorBlacklist result = new VarGeneratorBlacklist(clone, blacklist);
         return result;
     }
-    
+
     @Override
     public Var next() {
         Var result;
         do {
-            
+
             result = generator.next();
-            
+
         } while(blacklist.contains(result));
-        
+
         return result;
     }
 
@@ -40,15 +39,20 @@ public class VarGeneratorBlacklist
         Var result = generator.current();
         return result;
     }
-    
-    
+
+    public static VarGeneratorBlacklist create(Collection<Var> blacklist) {
+        VarGeneratorBlacklist result = create("v", blacklist);
+        return result;
+    }
+
     public static VarGeneratorBlacklist create(String base, Collection<Var> blacklist) {
-        Generator<Var> generator = new VarGeneratorImpl(Gensym.create(base));
+        Generator<Var> generator = VarGeneratorImpl2.create(base);
         VarGeneratorBlacklist result = create(generator, blacklist);
         return result;
     }
-    
+
     public static VarGeneratorBlacklist create(Generator<Var> generator, Collection<Var> blacklist) {
+        generator = generator == null ? VarGeneratorImpl2.create() : generator;
         VarGeneratorBlacklist result = new VarGeneratorBlacklist(generator, blacklist);
         return result;
     }

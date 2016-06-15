@@ -8,7 +8,6 @@ import org.aksw.jena_sparql_api.concept.builder.api.NodeBuilder;
 import org.aksw.jena_sparql_api.concept.builder.impl.ConceptBuilderFluent;
 import org.aksw.jena_sparql_api.concept.builder.impl.NodeBuilderFluent;
 import org.aksw.jena_sparql_api.concept.builder.utils.Exprs;
-import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.Relation;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -66,7 +65,7 @@ public class MainTestConceptBuilder {
 
 
 
-        Concept concept = cb.get();
-        System.out.println("CONCEPT: " + concept);
+//        Concept concept = cb.get();
+//        System.out.println("CONCEPT: " + concept);
     }
 }

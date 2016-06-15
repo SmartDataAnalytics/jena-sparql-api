@@ -103,4 +103,10 @@ public class NodeBuilderImpl
         this.alias = var;
         return this;
     }
+
+    @Override
+    public NodeBuilder getParent() {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }

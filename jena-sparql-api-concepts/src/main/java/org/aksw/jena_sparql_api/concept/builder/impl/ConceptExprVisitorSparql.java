@@ -18,12 +18,6 @@ import org.aksw.jena_sparql_api.concept.builder.api.RestrictionExprForAll;
 import org.aksw.jena_sparql_api.concept.builder.api.RestrictionExprVisitor;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptOps;
-import org.aksw.jena_sparql_api.utils.Generator;
-import org.apache.jena.sparql.core.Var;
-import org.semanticweb.owlapi.model.OWLClassExpression;
-import org.semanticweb.owlapi.model.OWLObjectComplementOf;
-import org.semanticweb.owlapi.model.OWLObjectProperty;
-import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 
 
 /**
@@ -75,10 +69,10 @@ public class ConceptExprVisitorSparql
         return result;
     }
 
-    
+
     public Concept createConceptFromRestrictions(ConceptBuilder cb) {
         Collection<RestrictionBuilder> rbs = cb.listRestrictions();
-        
+
         Concept result = rbs.stream()
             .map(rb -> rb.get())
             .map(re -> re.accept(this))
@@ -88,75 +82,21 @@ public class ConceptExprVisitorSparql
     }
 
     @Override
-    public Concept visit(RestrictionExprExists re) {        
-        String objectVariable = mapping.newIndividualVariable();
-        OWLObjectPropertyExpression propertyExpression = ce.getProperty();
-        if(propertyExpression.isAnonymous()){
-            //property expression is inverse of a property
-            sparql += asTriplePattern(objectVariable, propertyExpression.getNamedProperty(), variables.peek());
-        } else {
-            sparql += asTriplePattern(variables.peek(), propertyExpression.getNamedProperty(), objectVariable);
-        }
-        OWLClassExpression filler = ce.getFiller();
-        variables.push(objectVariable);
-        filler.accept(this);
-        variables.pop();
+    public Concept visit(RestrictionExprExists re) {
+        Concept r = re.getRole().accept(this);
+
+        ConceptExpr fillerCe = re.getFiller();
+        Concept filler = fillerCe.accept(this);
+
+        //ConceptOps.intersect(concept, filter)
+        Concept result = null;
+        return result;
     }
 
     @Override
     public Concept visit(RestrictionExprForAll re) {
-        Generator<Var> varGen = null;
-        ConceptExpr filler = re.getFiller();
-        
-        
-        Var subject = varGen.current();
-        Var object = varGen.next();
-        
-        if(isTrivialConcept(filler)) { 
-            // \forall r.\top is trivial, as everything belongs to that concept
-            // thus, we can omit it if it's used in a conjunction or as complex filler
-            if(!inIntersection()) {
-                sparql += asTriplePattern(subject, mapping.newPropertyVariable(), objectVariable);
-            }
-        } else {
-            if(!inIntersection()) {
-                sparql += asTriplePattern(subject, mapping.newPropertyVariable(), objectVariable);
-            }
-            // we can either use double negation on \forall r.A such that we have a logically
-            // equivalent expression \neg \exists r.\neg A
-            // or we use subselects get the individuals whose r successors are only of type A
-            if(allQuantorTranslation == AllQuantorTranslation.DOUBLE_NEGATION){
-                OWLObjectComplementOf doubleNegatedExpression = df.getOWLObjectComplementOf(
-                        df.getOWLObjectSomeValuesFrom(
-                                ce.getProperty(), 
-                                df.getOWLObjectComplementOf(ce.getFiller())));
-                doubleNegatedExpression.accept(this);
-            } else {
-                OWLObjectPropertyExpression propertyExpression = ce.getProperty();
-                OWLObjectProperty predicate = propertyExpression.getNamedProperty();
-                if(propertyExpression.isAnonymous()){
-                    //property expression is inverse of a property
-                    sparql += asTriplePattern(objectVariable, predicate, variables.peek());
-                } else {
-                    sparql += asTriplePattern(variables.peek(), predicate, objectVariable);
-                }
-                
-                String var = mapping.newIndividualVariable();
-                sparql += "{SELECT " + subject + " (COUNT(" + var + ") AS ?cnt1) WHERE {";
-                sparql += asTriplePattern(subject, predicate, var);
-                variables.push(var);
-                filler.accept(this);
-                variables.pop();
-                sparql += "} GROUP BY " + subject + "}";
-                
-                var = mapping.newIndividualVariable();
-                sparql += "{SELECT " + subject + " (COUNT(" + var + ") AS ?cnt2) WHERE {";
-                sparql += asTriplePattern(subject, predicate, var);
-                sparql += "} GROUP BY " + subject + "}";
-                
-                sparql += filter("?cnt1=?cnt2");
-            }
-        }    }
+        return null;
+    }
 
     @Override
     public Concept visit(RestrictionExprExt re) {

@@ -120,7 +120,8 @@ public class VarUtils {
             //var vans = vas.map(VarUtils.getVarName);
 
         if (generator == null) {
-            generator = new VarGeneratorBlacklist(new VarGeneratorImpl(Gensym.create("v")), vas);
+            generator = VarGeneratorBlacklist.create(vas);
+                    //new VarGeneratorBlacklist(new VarGeneratorImpl(Gensym.create("v")), vas);
         }
 
         // Rename all variables that are in common

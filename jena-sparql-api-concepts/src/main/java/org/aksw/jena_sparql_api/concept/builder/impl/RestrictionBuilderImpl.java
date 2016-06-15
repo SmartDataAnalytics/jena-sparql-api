@@ -2,6 +2,8 @@ package org.aksw.jena_sparql_api.concept.builder.impl;
 
 import org.aksw.jena_sparql_api.concept.builder.api.ConceptBuilder;
 import org.aksw.jena_sparql_api.concept.builder.api.RestrictionBuilder;
+import org.aksw.jena_sparql_api.concept.builder.api.RestrictionExpr;
+import org.aksw.jena_sparql_api.concept.builder.api.RestrictionExprQuantor;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Var;
 
@@ -66,5 +68,19 @@ public class RestrictionBuilderImpl
     @Override
     public ConceptBuilder getParent() {
         return parent;
+    }
+
+
+    @Override
+    public RestrictionExpr get() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+
+    @Override
+    public RestrictionExprQuantor build() {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

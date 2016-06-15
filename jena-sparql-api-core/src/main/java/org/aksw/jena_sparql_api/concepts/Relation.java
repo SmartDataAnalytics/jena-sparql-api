@@ -6,7 +6,6 @@ import java.util.Set;
 import org.aksw.commons.collections.SetUtils;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.VarUtils;
-
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.lang.ParserSPARQL10;
@@ -41,6 +40,22 @@ public class Relation {
 
     public Element getElement() {
         return element;
+    }
+
+    public Relation reverse()
+    {
+        Relation result = new Relation(element, targetVar, sourceVar);
+        return result;
+    }
+
+    public Concept getSourceConcept() {
+        Concept result = new Concept(element, sourceVar);
+        return result;
+    }
+
+    public Concept getTargetConcept() {
+        Concept result = new Concept(element, targetVar);
+        return result;
     }
 
     public static Relation create(String elementStr, String sourceVarName,

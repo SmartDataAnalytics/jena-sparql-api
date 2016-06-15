@@ -40,6 +40,10 @@ public class VarGeneratorImpl2
     public Var current() {
         return current;
     }
+    public static VarGeneratorImpl2 create() {
+        VarGeneratorImpl2 result = create("v");
+        return result;
+    }
 
     public static VarGeneratorImpl2 create(String base) {
         VarGeneratorImpl2 result = new VarGeneratorImpl2(base, 1);
