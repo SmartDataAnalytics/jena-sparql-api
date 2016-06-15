@@ -5,6 +5,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.sparql_path2.Nfa;
 
 public class QefNfaSuccessor<S, T, V>
 //	implements Function<Pa>

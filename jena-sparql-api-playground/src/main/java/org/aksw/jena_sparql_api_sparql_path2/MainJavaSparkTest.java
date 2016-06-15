@@ -12,6 +12,8 @@ import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
 import org.aksw.jena_sparql_api.server.utils.SparqlServerUtils;
+import org.aksw.jena_sparql_api.sparql_path2.PropertyFunctionFactoryKShortestPaths;
+import org.aksw.jena_sparql_api.sparql_path2.PropertyFunctionKShortestPaths;
 import org.aksw.jena_sparql_api.stmt.SparqlParserConfig;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;

@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api_sparql_path2;
 import java.io.Serializable;
 import java.util.Set;
 
+import org.aksw.jena_sparql_api.sparql_path2.NestedPath;
 import org.aksw.jena_sparql_api.utils.model.Directed;
 
 public class FrontierData<I, S, V, E>

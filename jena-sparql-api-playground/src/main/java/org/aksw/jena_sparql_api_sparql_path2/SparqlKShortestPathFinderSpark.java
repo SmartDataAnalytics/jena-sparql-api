@@ -6,6 +6,13 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.stream.StreamSupport;
 
+import org.aksw.jena_sparql_api.sparql_path2.LabeledEdge;
+import org.aksw.jena_sparql_api.sparql_path2.NestedPath;
+import org.aksw.jena_sparql_api.sparql_path2.Nfa;
+import org.aksw.jena_sparql_api.sparql_path2.PathCompiler;
+import org.aksw.jena_sparql_api.sparql_path2.PredicateClass;
+import org.aksw.jena_sparql_api.sparql_path2.SparqlKShortestPathFinder;
+import org.aksw.jena_sparql_api.sparql_path2.TripletPath;
 import org.aksw.jena_sparql_api.utils.Pair;
 import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.aksw.jena_sparql_api_sparql_path.spark.NfaExecutionSpark;

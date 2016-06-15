@@ -14,6 +14,10 @@ import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.sparql_path2.JGraphTUtils;
+import org.aksw.jena_sparql_api.sparql_path2.Nfa;
+import org.aksw.jena_sparql_api.sparql_path2.PredicateClass;
+import org.aksw.jena_sparql_api.sparql_path2.ValueSet;
 import org.aksw.jena_sparql_api.utils.Pair;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Node;

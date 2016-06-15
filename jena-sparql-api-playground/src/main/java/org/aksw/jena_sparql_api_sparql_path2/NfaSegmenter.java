@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api_sparql_path2;
 import java.util.List;
 import java.util.Set;
 
+import org.aksw.jena_sparql_api.sparql_path2.Nfa;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.alg.ConnectivityInspector;
 

@@ -9,6 +9,14 @@ import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.lookup.LookupService;
+import org.aksw.jena_sparql_api.sparql_path2.LabeledEdge;
+import org.aksw.jena_sparql_api.sparql_path2.Nfa;
+import org.aksw.jena_sparql_api.sparql_path2.PathCompiler;
+import org.aksw.jena_sparql_api.sparql_path2.PathExecutionUtils;
+import org.aksw.jena_sparql_api.sparql_path2.PredicateClass;
+import org.aksw.jena_sparql_api.sparql_path2.SparqlKShortestPathFinder;
+import org.aksw.jena_sparql_api.sparql_path2.TripletPath;
+import org.aksw.jena_sparql_api.sparql_path2.ValueSet;
 import org.aksw.jena_sparql_api.utils.Pair;
 import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.aksw.jena_sparql_api.utils.model.Triplet;

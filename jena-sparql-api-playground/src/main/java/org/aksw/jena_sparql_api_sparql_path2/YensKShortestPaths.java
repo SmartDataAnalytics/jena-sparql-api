@@ -14,6 +14,10 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.lookup.LookupService;
+import org.aksw.jena_sparql_api.sparql_path2.Nfa;
+import org.aksw.jena_sparql_api.sparql_path2.NfaExecutionUtils;
+import org.aksw.jena_sparql_api.sparql_path2.TripletPath;
+import org.aksw.jena_sparql_api.sparql_path2.ValueSet;
 import org.aksw.jena_sparql_api.utils.Pair;
 import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.aksw.jena_sparql_api.utils.model.Triplet;

@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api_sparql_path2;
 
+import org.aksw.jena_sparql_api.sparql_path2.Nfa;
+import org.aksw.jena_sparql_api.sparql_path2.NfaImpl;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.EdgeReversedGraph;
 
