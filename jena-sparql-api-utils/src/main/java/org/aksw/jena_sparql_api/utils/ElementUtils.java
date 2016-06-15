@@ -274,6 +274,26 @@ public class ElementUtils {
         return result;
     }
 
+    public static Element unionElements(Element first, Element second) {
+        ElementUnion result = new ElementUnion();
+
+        addUnionElements(result, first);
+        addUnionElements(result, second);
+
+        return result;
+    }
+    
+    public static void addUnionElements(ElementUnion out, Element e) {
+        if(e instanceof ElementUnion) {
+            ElementUnion u = (ElementUnion)e;
+            for(Element m : u.getElements()) {
+                out.addElement(m);
+            }
+        } else {
+            out.addElement(e);
+        }
+    }
+    
     public static List<Element> toElementList(Element element) {
         List<Element> result;
 

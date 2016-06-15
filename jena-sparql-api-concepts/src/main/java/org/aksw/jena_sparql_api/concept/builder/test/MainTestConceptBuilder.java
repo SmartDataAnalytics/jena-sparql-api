@@ -23,10 +23,8 @@ public class MainTestConceptBuilder {
 
 
         ConceptBuilder cb = ConceptBuilderFluent
-             .from(
-                ConceptBuilderFluent.union()
-                    .addMember(null)
-             )
+             .from(ConceptBuilderFluent.union()
+                     .addMember(null))
              //.unionMode() // whether multiple restrictions are interpreted as dis - or conjunctive - if disjunctive, the base concept is conjunctive which each restriction
             .newRestriction().on(RDFS.label).as("x").forAll()
             .getRoot();

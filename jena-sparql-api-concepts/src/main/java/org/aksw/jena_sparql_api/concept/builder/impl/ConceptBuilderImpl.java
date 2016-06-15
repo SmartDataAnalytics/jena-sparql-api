@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.concept.builder.impl;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -125,5 +126,13 @@ public class ConceptBuilderImpl
     public Set<Expr> getExprs() {
         return exprs;
     }
+
+
+    @Override
+    public Collection<RestrictionBuilder> listRestrictions() {
+        Collection<RestrictionBuilder> result = nodeToRestrictionBuilder.values();
+        return result;
+    }
+    
 
 }
