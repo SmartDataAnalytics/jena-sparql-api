@@ -20,6 +20,7 @@ import org.aksw.jena_sparql_api.sparql_path2.ValueSet;
 import org.aksw.jena_sparql_api.utils.Pair;
 import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.aksw.jena_sparql_api.utils.model.Triplet;
+import org.aksw.jena_sparql_api.utils.model.TripletImpl;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.path.Path;
 
@@ -36,7 +37,7 @@ public class SparqlKShortestPathFinderYen
 
     public static <S, V, E> TripletPath<V, Directed<E>> convertPath(TripletPath<? extends Entry<S, V>, Directed<E>> path) {
         List<Triplet<V, Directed<E>>> triplets = path.getTriplets().stream()
-                .map(t -> new Triplet<>(t.getSubject().getValue(), t.getPredicate(), t.getObject().getValue()))
+                .map(t -> (Triplet<V, Directed<E>>)new TripletImpl<>(t.getSubject().getValue(), t.getPredicate(), t.getObject().getValue()))
                 .collect(Collectors.toList());
 
         TripletPath<V, Directed<E>> result = new TripletPath<>(

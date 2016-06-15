@@ -23,6 +23,7 @@ import org.aksw.jena_sparql_api.sparql_path2.VertexClass;
 import org.aksw.jena_sparql_api.utils.Pair;
 import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.aksw.jena_sparql_api.utils.model.Triplet;
+import org.aksw.jena_sparql_api.utils.model.TripletImpl;
 import org.jgrapht.DirectedGraph;
 
 import com.google.common.collect.HashMultimap;
@@ -78,7 +79,7 @@ public class NfaDijkstra {
 //    }
 
     public static <T, V, E> boolean isOrigin(Pair<ValueSet<V>> vertexClass, V vertex, Triplet<V, E> triplet) { //T transition, Function<T, Pair<ValueSet<V>>> transToVertexClass,
-        List<Boolean> dirs = Triplet.getDirections(triplet, vertex);
+        List<Boolean> dirs = TripletImpl.getDirections(triplet, vertex);
         //Pair<ValueSet<V>> vertexClass = transToVertexClass.apply(transition);
 
         boolean result = dirs.stream().anyMatch(dir -> {
@@ -259,7 +260,7 @@ public class NfaDijkstra {
                 Directed<E> dp = predecessor.getPredicate();
                 //V o = eo.getValue();
 
-                path.add(new Triplet<V, Directed<E>>(s, dp, o));
+                path.add(new TripletImpl<V, Directed<E>>(s, dp, o));
                 o = s;
             }
 
@@ -397,7 +398,7 @@ public class NfaDijkstra {
 
                     if(targetMinCost == null || thisCost < targetMinCost) {
                         vertexToCost.put(succ, thisCost);
-                        vertexToMinCostPredecessor.put(succ, Triplet.makeUndirected(triplet)); //entry.getValue()));
+                        vertexToMinCostPredecessor.put(succ, TripletImpl.makeUndirected(triplet)); //entry.getValue()));
 
                         boolean isAcceptingState = NfaExecutionUtils.isFinalState(nfa, state, isEpsilon);//nfa.getEndStates().contains(state);
                         boolean isTargetVertex = target.equals(vertex);
@@ -442,7 +443,7 @@ public class NfaDijkstra {
                 E p = predecessor.getPredicate();
                 V o = eo.getValue();
 
-                path.add(new Triplet<V, E>(s, p, o));
+                path.add(new TripletImpl<V, E>(s, p, o));
                 eo = es;
             }
 
@@ -536,7 +537,7 @@ public class NfaDijkstra {
 
                     // for every triplet check for its origin
                     vToTriplet.getValue().stream().forEach(rawTriplet -> {
-                        Triplet<V, Directed<E>> triplet = Triplet.makeDirected(rawTriplet, v);
+                        Triplet<V, Directed<E>> triplet = TripletImpl.makeDirected(rawTriplet, v);
                         V targetVertex = triplet.getObject();
                         //V targetVertex = Triplet.getTarget(triplet, v);
                         //V targetVertex = Triplet.getTarget(triplet, reverse);
@@ -545,7 +546,7 @@ public class NfaDijkstra {
                             // Get the transitions target state
                             S targetState = nfaGraph.getEdgeTarget(t);
                             Entry<S, V> target = new SimpleEntry<>(targetState, targetVertex);
-                            Triplet<Entry<S, V>, Directed<E>> trip = new Triplet<>(source, triplet.getPredicate(), target);
+                            Triplet<Entry<S, V>, Directed<E>> trip = new TripletImpl<>(source, triplet.getPredicate(), target);
                             MultiMaps.put(result, source, trip);
                             //result.put(source, trip);
                             //result.put(target, arg1);
