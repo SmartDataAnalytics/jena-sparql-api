@@ -49,15 +49,17 @@ public class RestrictionBuilderImpl
 
 
     /**
-     * Remove this restriction from the concept
+     * Remove this restriction from its owning concept.
+     * Returns the parent concept
      *
      */
     @Override
-    public void destroy() {
+    public ConceptBuilder destroy() {
         if(on != null) {
             parent.nodeToRestrictionBuilder.remove(on, this);
             this.parent = null;
         }
+        return parent;
     }
 
 

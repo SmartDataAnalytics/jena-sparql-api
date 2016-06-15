@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.concept.builder.api;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Set;
 
 import org.apache.jena.graph.Node;
@@ -47,8 +47,8 @@ public interface ConceptBuilder
     RestrictionBuilder newRestriction();
 
 
-    List<RestrictionBuilder> findRestrictions(Node node);
-
+    Collection<RestrictionBuilder> findRestrictions(Node node);
+    Collection<RestrictionBuilder> listRestrictions();
 
     ConceptBuilder addExpr(Expr expr);
     ConceptBuilder removeExpr(Expr expr);

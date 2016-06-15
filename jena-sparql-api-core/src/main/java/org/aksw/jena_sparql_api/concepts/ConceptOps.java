@@ -31,13 +31,28 @@ public class ConceptOps {
         return result;
     }
 
-    public static Concept union(Stream<Concept> concepts) {
-        // Empty union results in false
-
-        //concepts.reduce(
+    public static Concept union(Stream<Concept> conceptStream) {
+        Concept result = conceptStream.reduce(Concept.BOTTOM, (x, y) -> ConceptOps.union(x, y));
+        return result;
     }
 
-    public static Concept intersect(Iterable<Concept> concepts) {
+    public static Concept intersect(Stream<Concept> conceptStream) {
+        Concept result = conceptStream.reduce(Concept.TOP, (x, y) -> ConceptOps.union(x, y));
+        return result;
+    }
+
+    public static Concept union(Concept concept, Concept filter) {
+        Concept result;
+
+        if(filter != null && filter != Concept.BOTTOM) {
+            Concept tmp = align(concept, filter);
+            Element e = ElementUtils.unionElements(concept.getElement(), tmp.getElement());
+            result = new Concept(e, concept.getVar());
+      } else {
+          result = concept;
+      }
+
+      return result;
 
     }
 
@@ -45,7 +60,7 @@ public class ConceptOps {
 
         Concept result;
 
-        if(filter != null && !filter.isSubjectConcept()) {
+        if(filter != null && !filter.isSubjectConcept() && filter != Concept.TOP) {
 //            Set<Var> vas = concept.getVarsMentioned();
 //            Set<Var> vbs = filter.getVarsMentioned();
 //            Generator<Var> generator = VarGeneratorImpl.create("v");
