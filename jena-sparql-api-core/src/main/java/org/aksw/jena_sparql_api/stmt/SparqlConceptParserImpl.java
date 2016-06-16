@@ -1,10 +1,9 @@
 package org.aksw.jena_sparql_api.stmt;
 
 import java.util.List;
+import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
-
-import com.google.common.base.Function;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementGroup;
