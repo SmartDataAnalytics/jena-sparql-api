@@ -25,7 +25,7 @@ public class QueryParseExceptionComparator
     public static int doCompare(QueryParseException a, QueryParseException b) {
         int result = b.getLine() - a.getLine();
 
-        result = result == 0 ? result : b.getColumn() - a.getColumn();
+        result = result == 0 ? b.getColumn() - a.getColumn() :  result;
         return result;
     }
 }
