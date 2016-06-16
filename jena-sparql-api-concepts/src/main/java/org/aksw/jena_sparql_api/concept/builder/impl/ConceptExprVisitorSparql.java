@@ -48,7 +48,7 @@ public class ConceptExprVisitorSparql
 
         Concept result = baseConcept == null
                 ? concept
-                : ConceptOps.intersect(baseConcept, concept);
+                : ConceptOps.intersect(baseConcept, concept, null);
 
         return result;
     }
@@ -76,7 +76,7 @@ public class ConceptExprVisitorSparql
         Concept result = rbs.stream()
             .map(rb -> rb.get())
             .map(re -> re.accept(this))
-            .reduce(Concept.TOP, (a, b) -> ConceptOps.intersect(a, b));
+            .reduce(Concept.TOP, (a, b) -> ConceptOps.intersect(a, b, null));
 
         return result;
     }
@@ -88,8 +88,7 @@ public class ConceptExprVisitorSparql
         ConceptExpr fillerCe = re.getFiller();
         Concept filler = fillerCe.accept(this);
 
-        //ConceptOps.intersect(concept, filter)
-        Concept result = null;
+        Concept result = ConceptOps.intersect(r, filler, null);
         return result;
     }
 

@@ -321,7 +321,7 @@ public class ResourceShape {
 
         List<Concept> tmps = new ArrayList<Concept>();
         for(Concept concept : concepts) {
-            Concept tmp = ConceptOps.intersect(concept, filter);
+            Concept tmp = ConceptOps.intersect(concept, filter, null);
             tmps.add(tmp);
         }
 
@@ -409,7 +409,7 @@ public class ResourceShape {
 
         List<Concept> tmps = new ArrayList<Concept>();
         for(Concept concept : concepts) {
-            Concept tmp = ConceptOps.intersect(concept, filter);
+            Concept tmp = ConceptOps.intersect(concept, filter, null);
             tmps.add(tmp);
         }
 

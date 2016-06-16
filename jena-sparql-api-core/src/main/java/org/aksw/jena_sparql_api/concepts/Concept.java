@@ -52,14 +52,14 @@ public class Concept {
      * Clients attempting to indicate top/bottom should attempt to ensure
      * reference equality with these constants
      */
-    public static final Concept TOP = Concept.create("FILTER(TRUE)", "s");
+    public static final Concept TOP = Concept.create("", "s");
 
     /**
      * There are several ways how top/bottom could be represented.
      * Clients attempting to indicate top/bottom should attempt to ensure
      * reference equality with these constants
      */
-    public static final Concept BOTTOM = Concept.create("FILTER(FALSE)", "s");
+    public static final Concept BOTTOM = Concept.create("", "s");
 
     /**
      * Util method to parse strings that use a pipe as a separator between variable and sparql string

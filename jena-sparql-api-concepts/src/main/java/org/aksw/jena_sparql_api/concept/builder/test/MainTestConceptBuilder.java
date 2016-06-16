@@ -41,11 +41,7 @@ public class MainTestConceptBuilder {
         Map<Node, Relation> virtualPredicates = new HashMap<>();
         Node mypred = NodeFactory.createURI("http://transitive");
         virtualPredicates.put(mypred, Relation.create("?s foaf:knows+ ?o", "s", "o", elementParser));
-
-
         //pm.getLocalPrefixMapping().
-
-
 
         Node allInTheSameCountry = NodeFactory.createURI("http://sameCountry");
         virtualPredicates.put(mypred, RelationOps.forAllHavingTheSameValue(
@@ -57,7 +53,7 @@ public class MainTestConceptBuilder {
              .from(ConceptBuilderFluent.union()
                      .addMember(new ConceptExprConcept(Concept.create("?s a o:Project", "s", pm))))
              //.unionMode() // whether multiple restrictions are interpreted as dis - or conjunctive - if disjunctive, the base concept is conjunctive which each restriction
-            //.newRestriction().on(RDFS.label).as("x").forAll()
+            .newRestriction().on(RDFS.label).as("x").forAll()
             .getRoot();
 
 

@@ -282,18 +282,21 @@ public class ElementUtils {
 
         return result;
     }
-    
+
     public static void addUnionElements(ElementUnion out, Element e) {
         if(e instanceof ElementUnion) {
             ElementUnion u = (ElementUnion)e;
             for(Element m : u.getElements()) {
                 out.addElement(m);
             }
+        }
+        else if(e instanceof ElementGroup && ((ElementGroup)e).isEmpty()) {
+            // nothing todo
         } else {
             out.addElement(e);
         }
     }
-    
+
     public static List<Element> toElementList(Element element) {
         List<Element> result;
 

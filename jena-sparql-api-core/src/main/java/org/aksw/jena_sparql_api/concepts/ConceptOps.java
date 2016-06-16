@@ -107,12 +107,14 @@ public class ConceptOps {
     }
 
     public static Concept union(Stream<Concept> conceptStream) {
-        Concept result = conceptStream.reduce(Concept.BOTTOM, (x, y) -> ConceptOps.union(x, y, null));
+        // Note: x,y in order to pass in the identity as second arg, and rename its variables
+        // rather than that of the provided concept
+        Concept result = conceptStream.reduce(Concept.BOTTOM, (x, y) -> ConceptOps.union(y, x, null));
         return result;
     }
 
     public static Concept intersect(Stream<Concept> conceptStream) {
-        Concept result = conceptStream.reduce(Concept.TOP, (x, y) -> ConceptOps.union(x, y, null));
+        Concept result = conceptStream.reduce(Concept.TOP, (x, y) -> ConceptOps.intersect(y, x, null));
         return result;
     }
 
@@ -131,11 +133,11 @@ public class ConceptOps {
 
     }
 
-    public static Concept intersect(Concept concept, Concept filter) {
+    public static Concept intersect(Concept concept, Concept filter, Generator<Var> generator) {
 
         Concept result;
 
-        if(filter != null && !filter.isSubjectConcept() && filter != Concept.TOP) {
+        //if(filter != null && !filter.isSubjectConcept() && filter != Concept.TOP) {
 //            Set<Var> vas = concept.getVarsMentioned();
 //            Set<Var> vbs = filter.getVarsMentioned();
 //            Generator<Var> generator = VarGeneratorImpl.create("v");
@@ -149,12 +151,12 @@ public class ConceptOps {
 //
 //            Concept tmp = filter.applyNodeTransform(nodeTransform);
 
-            Concept tmp = align(concept, filter, null);
+            Concept tmp = align(filter, concept, generator);
             Element e = ElementUtils.mergeElements(concept.getElement(), tmp.getElement());
             result = new Concept(e, concept.getVar());
-        } else {
-            result = concept;
-        }
+//        } else {
+//            result = concept;
+//        }
 
         return result;
     }
