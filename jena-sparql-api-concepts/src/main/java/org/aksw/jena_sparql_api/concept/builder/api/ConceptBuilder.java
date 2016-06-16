@@ -15,7 +15,7 @@ public interface ConceptBuilder
         RestrictionBuilder parent = getParent();
         ConceptBuilder result = parent != null
                 ? parent.getParent().getRoot()
-                : null;
+                : this;
 
         return result;
     }

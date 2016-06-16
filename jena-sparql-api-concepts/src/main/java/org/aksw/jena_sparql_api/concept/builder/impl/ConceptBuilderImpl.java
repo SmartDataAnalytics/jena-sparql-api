@@ -1,7 +1,9 @@
 package org.aksw.jena_sparql_api.concept.builder.impl;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.aksw.jena_sparql_api.concept.builder.api.ConceptBuilder;
@@ -10,8 +12,6 @@ import org.aksw.jena_sparql_api.concept.builder.api.RestrictionBuilder;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.expr.Expr;
 
-import com.google.common.collect.ListMultimap;
-
 public class ConceptBuilderImpl
     implements ConceptBuilder
 {
@@ -19,7 +19,7 @@ public class ConceptBuilderImpl
 
     protected boolean isNegated = false;
 
-    protected ListMultimap<Node, RestrictionBuilder> nodeToRestrictionBuilder;
+    protected Map<Node, RestrictionBuilder> nodeToRestrictionBuilder = new HashMap<>();
     //protected List<RestrictionBuilde>
 
     /**
@@ -133,6 +133,6 @@ public class ConceptBuilderImpl
         Collection<RestrictionBuilder> result = nodeToRestrictionBuilder.values();
         return result;
     }
-    
+
 
 }

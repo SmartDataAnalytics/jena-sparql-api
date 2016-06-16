@@ -2,13 +2,16 @@ package org.aksw.jena_sparql_api.concepts;
 
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.aksw.commons.collections.SetUtils;
+import org.aksw.jena_sparql_api.stmt.SparqlElementParser;
+import org.aksw.jena_sparql_api.stmt.SparqlElementParserImpl;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.VarUtils;
+import org.apache.jena.query.Syntax;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.graph.NodeTransform;
-import org.apache.jena.sparql.lang.ParserSPARQL10;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.PatternVars;
@@ -57,9 +60,15 @@ public class Relation {
         Concept result = new Concept(element, targetVar);
         return result;
     }
-
     public static Relation create(String elementStr, String sourceVarName,
             String targetVarName) {
+        SparqlElementParser parser = SparqlElementParserImpl.create(Syntax.syntaxARQ, null);
+        Relation result = create(elementStr, sourceVarName, targetVarName, parser);
+        return result;
+    }
+
+    public static Relation create(String elementStr, String sourceVarName,
+            String targetVarName, Function<String, ? extends Element> elementParser) {
         Var sourceVar = Var.alloc(sourceVarName);
         Var targetVar = Var.alloc(targetVarName);
 
@@ -69,7 +78,7 @@ public class Relation {
             tmp = "{" + tmp + "}";
         }
 
-        Element element = ParserSPARQL10.parseElement(tmp);
+        Element element = elementParser.apply(tmp);//ParserSPARQL10.parseElement(tmp);
 
         // TODO Find a generic flatten routine
         if (element instanceof ElementGroup) {

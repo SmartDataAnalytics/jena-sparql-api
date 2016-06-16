@@ -21,7 +21,7 @@ import org.apache.jena.sparql.syntax.ElementSubQuery;
 
 public class RelationOps {
 
-    public static Relation from(org.apache.jena.sparql.path.Path path, boolean simplify) {
+    public static Relation from(org.apache.jena.sparql.path.Path path) {
         TriplePath tp = new TriplePath(Vars.s, path, Vars.o);
         ElementPathBlock e = new ElementPathBlock();
         e.addTriplePath(tp);
@@ -66,6 +66,7 @@ public class RelationOps {
         qa.addGroupBy(sourceVar);
 
         Query qb = new Query();
+        qb.setQuerySelectType();
         VarExprList pb = qb.getProject();
         pb.add(sourceVar);
         pb.add(targetVar);

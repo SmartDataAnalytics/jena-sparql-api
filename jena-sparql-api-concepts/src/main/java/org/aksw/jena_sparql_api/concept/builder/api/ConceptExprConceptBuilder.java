@@ -6,7 +6,6 @@ public class ConceptExprConceptBuilder
     protected ConceptBuilder conceptBuilder;
 
     public ConceptExprConceptBuilder(ConceptBuilder conceptBuilder) {
-
         super();
         this.conceptBuilder = conceptBuilder;
     }
