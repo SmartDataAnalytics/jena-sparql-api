@@ -151,12 +151,13 @@ public class ConceptOps {
 //
 //            Concept tmp = filter.applyNodeTransform(nodeTransform);
 
+        if(filter != null) {
             Concept tmp = align(filter, concept, generator);
             Element e = ElementUtils.mergeElements(concept.getElement(), tmp.getElement());
             result = new Concept(e, concept.getVar());
-//        } else {
-//            result = concept;
-//        }
+        } else {
+            result = concept;
+        }
 
         return result;
     }
