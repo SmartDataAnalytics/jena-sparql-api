@@ -13,7 +13,7 @@ public class ShapeQueryExecutionFactoryImpl
 
     @Override
     public ShapeQueryExecution createShapeExecution(ShapeQuery query) {
-        ShapeQueryExecution result = ShapeQueryExecutionImpl();
+        ShapeQueryExecution result = new ShapeQueryExecutionImpl();
 
         return result;
     }
