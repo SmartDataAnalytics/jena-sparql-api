@@ -8,12 +8,13 @@ import org.apache.jena.sparql.path.Path;
  *
  */
 public class ElementFocus
-    extends Element1
+    extends Element0
 {
     protected Path path;
 
-    public ElementFocus(Element subElement, Path path) {
-        super(subElement);
+    public ElementFocus(Path path) {
+        //super(subElement);
+        super();
         this.path = path;
     }
 

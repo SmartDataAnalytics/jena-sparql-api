@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.shape.algebra.op;
 public interface OpVisitor<T> {
     T visit(OpTop op);
     T visit(OpType op);
+    T visit(OpFocus op);
     T visit(OpConcept op);
     T visit(OpFilter op);
     T visit(OpSparqlConcept op);

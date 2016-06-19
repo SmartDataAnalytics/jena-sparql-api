@@ -15,6 +15,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.vocabulary.RDF;
@@ -79,7 +80,7 @@ public class OpVisitorSparql
 
     @Override
     public Concept visit(OpTop op) {
-        Concept result = ConceptUtils.createSubjectConcept();
+        Concept result = Concept.TOP;//ConceptUtils.createSubjectConcept();
         return result;
     }
 
@@ -100,6 +101,15 @@ public class OpVisitorSparql
         Element newElement = ElementUtils.mergeElements(concept.getElement(), new ElementFilter(newExpr));
 
         Concept result = new Concept(newElement, conceptVar);
+        return result;
+    }
+
+    @Override
+    public Concept visit(OpFocus op) {
+        Concept concept = op.getSubOp().accept(this);
+        Path path = op.getPath();
+        Relation relation = Relation.create(path);
+        Concept result = ConceptUtils.getRelatedConcept(concept, relation);
         return result;
     }
 
