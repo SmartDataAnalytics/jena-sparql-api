@@ -1,14 +1,14 @@
-package org.aksw.jena_sparql_api.shape.syntax;
+package org.aksw.jena_sparql_api.shape.algebra.op;
 
 import org.apache.jena.sparql.expr.Expr;
 
-public class ElementFilter
-    extends Element0
+public class OpFilter
+    extends Op1
 {
     protected Expr expr;
 
-    public ElementFilter(Expr expr) {
-        super();
+    public OpFilter(Op subOp, Expr expr) {
+        super(subOp);
         this.expr = expr;
     }
 
@@ -17,7 +17,7 @@ public class ElementFilter
     }
 
     @Override
-    public <T> T accept(ElementVisitor<T> visitor) {
+    public <T> T accept(OpVisitor<T> visitor) {
         T result = visitor.visit(this);
         return result;
     }

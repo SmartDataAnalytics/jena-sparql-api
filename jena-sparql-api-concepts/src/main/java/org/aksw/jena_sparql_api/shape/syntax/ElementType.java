@@ -24,4 +24,10 @@ public class ElementType
     public Node getType() {
         return type;
     }
+
+    @Override
+    public <T> T accept(ElementVisitor<T> visitor) {
+        T result = visitor.visit(this);
+        return result;
+    }
 }

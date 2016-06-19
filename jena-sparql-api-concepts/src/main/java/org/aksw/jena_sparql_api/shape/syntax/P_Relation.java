@@ -16,7 +16,7 @@ public class P_Relation
     protected Relation relation;
 
     @Override
-    public void visit(PathVisitorEx visitor) {
+    public void visit(PathExVisitor visitor) {
         visitor.visit(this);
     }
 

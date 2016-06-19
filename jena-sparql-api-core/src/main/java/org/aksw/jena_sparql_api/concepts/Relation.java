@@ -9,7 +9,9 @@ import org.aksw.jena_sparql_api.stmt.SparqlElementParser;
 import org.aksw.jena_sparql_api.stmt.SparqlElementParserImpl;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.VarUtils;
+import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.query.Syntax;
+import org.apache.jena.sparql.core.TriplePath;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.syntax.Element;
@@ -110,6 +112,12 @@ public class Relation {
         Relation result = new Relation(e, s, t);
         return result;
     }
+
+    public static Relation create(org.apache.jena.sparql.path.Path path) {
+        Relation result = new Relation(ElementUtils.createElement(new TriplePath(Vars.s, path, Vars.o)), Vars.s, Vars.o);
+        return result;
+    }
+
 
     @Override
     public int hashCode() {

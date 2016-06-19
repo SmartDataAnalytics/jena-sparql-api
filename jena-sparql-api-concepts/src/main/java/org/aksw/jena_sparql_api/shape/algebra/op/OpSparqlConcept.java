@@ -1,13 +1,13 @@
-package org.aksw.jena_sparql_api.shape.syntax;
+package org.aksw.jena_sparql_api.shape.algebra.op;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 
-public class ElementSparqlConcept
-    extends Element0
+public class OpSparqlConcept
+    extends Op0
 {
     protected Concept concept;
 
-    public ElementSparqlConcept(Concept concept) {
+    public OpSparqlConcept(Concept concept) {
         super();
         this.concept = concept;
     }
@@ -17,8 +17,9 @@ public class ElementSparqlConcept
     }
 
     @Override
-    public <T> T accept(ElementVisitor<T> visitor) {
+    public <T> T accept(OpVisitor<T> visitor) {
         T result = visitor.visit(this);
         return result;
     }
+
 }

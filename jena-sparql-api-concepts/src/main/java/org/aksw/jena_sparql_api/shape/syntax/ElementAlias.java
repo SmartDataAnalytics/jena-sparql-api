@@ -21,4 +21,10 @@ public class ElementAlias
     public Var getVar() {
         return var;
     }
+
+    @Override
+    public <T> T accept(ElementVisitor<T> visitor) {
+        T result = visitor.visit(this);
+        return result;
+    }
 }

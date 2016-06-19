@@ -8,5 +8,5 @@ package org.aksw.jena_sparql_api.shape.syntax;
  *
  */
 public interface Element {
-
+    <T> T accept(ElementVisitor<T> visitor);
 }

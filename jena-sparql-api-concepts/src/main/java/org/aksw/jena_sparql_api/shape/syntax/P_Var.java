@@ -19,7 +19,7 @@ public class P_Var
     }
 
     @Override
-    public void visit(PathVisitorEx visitor) {
+    public void visit(PathExVisitor visitor) {
         visitor.visit(this);
     }
 

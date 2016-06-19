@@ -20,4 +20,11 @@ public class ElementFocus
     public Path getPath() {
         return path;
     }
+
+    @Override
+    public <T> T accept(ElementVisitor<T> visitor) {
+        T result = visitor.visit(this);
+        return result;
+    }
+
 }

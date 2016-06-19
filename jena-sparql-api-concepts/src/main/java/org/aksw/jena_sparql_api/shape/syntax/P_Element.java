@@ -1,21 +1,19 @@
 package org.aksw.jena_sparql_api.shape.syntax;
 
-import org.aksw.jena_sparql_api.core.SparqlServiceReference;
 import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.util.NodeIsomorphismMap;
 
-public class P_Service
+public class P_Element
     extends PathBaseEx
 {
-    protected SparqlServiceReference service;
+    protected Element element;
 
-    public P_Service(SparqlServiceReference service) {
-        super();
-        this.service = service;
+    public P_Element(Element element) {
+        this.element = element;
     }
 
-    public SparqlServiceReference getService() {
-        return service;
+    public Element getElement() {
+        return element;
     }
 
     @Override
@@ -25,6 +23,7 @@ public class P_Service
 
     @Override
     public int hashCode() {
+        // TODO Auto-generated method stub
         return 0;
     }
 
@@ -33,4 +32,5 @@ public class P_Service
         // TODO Auto-generated method stub
         return false;
     }
+
 }

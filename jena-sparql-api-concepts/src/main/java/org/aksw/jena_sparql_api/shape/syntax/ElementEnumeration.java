@@ -19,4 +19,10 @@ public class ElementEnumeration
         return values;
     }
 
+    @Override
+    public <T> T accept(ElementVisitor<T> visitor) {
+        T result = visitor.visit(this);
+        return result;
+    }
+
 }

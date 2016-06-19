@@ -2,27 +2,24 @@ package org.aksw.jena_sparql_api.concept.builder.test;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Function;
 
-import org.aksw.jena_sparql_api.concept.builder.api.ConceptBuilder;
-import org.aksw.jena_sparql_api.concept.builder.api.ConceptExprConcept;
-import org.aksw.jena_sparql_api.concept.builder.api.ConceptExprConceptBuilder;
 import org.aksw.jena_sparql_api.concept.builder.api.NodeBuilder;
-import org.aksw.jena_sparql_api.concept.builder.impl.ConceptBuilderFluent;
-import org.aksw.jena_sparql_api.concept.builder.impl.ConceptExprVisitorSparql;
 import org.aksw.jena_sparql_api.concept.builder.impl.NodeBuilderFluent;
 import org.aksw.jena_sparql_api.concept.builder.utils.Exprs;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.concepts.RelationOps;
-import org.aksw.jena_sparql_api.stmt.SparqlElementParserImpl;
+import org.aksw.jena_sparql_api.shape.algebra.op.Algebra;
+import org.aksw.jena_sparql_api.shape.syntax.Element;
+import org.aksw.jena_sparql_api.shape.syntax.ElementFilter;
+import org.aksw.jena_sparql_api.shape.syntax.ElementGroup;
+import org.aksw.jena_sparql_api.shape.syntax.ElementType;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
-import org.apache.jena.query.Syntax;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.path.PathParser;
-import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.util.ExprUtils;
 import org.apache.jena.sparql.util.PrefixMapping2;
 import org.apache.jena.sparql.vocabulary.FOAF;
 import org.apache.jena.vocabulary.RDFS;
@@ -35,12 +32,12 @@ public class MainTestConceptBuilder {
         pm.setNsPrefix("foaf", FOAF.NS);
         Prologue prologue = new Prologue(pm);
 
-        Function<String, Element> elementParser = SparqlElementParserImpl.create(Syntax.syntaxARQ, prologue);
+        //Function<String, Element> elementParser = SparqlElementParserImpl.create(Syntax.syntaxARQ, prologue);
 
 
         Map<Node, Relation> virtualPredicates = new HashMap<>();
         Node mypred = NodeFactory.createURI("http://transitive");
-        virtualPredicates.put(mypred, Relation.create("?s foaf:knows+ ?o", "s", "o", elementParser));
+        //virtualPredicates.put(mypred, Relation.create("?s foaf:knows+ ?o", "s", "o", elementParser));
         //pm.getLocalPrefixMapping().
 
         Node allInTheSameCountry = NodeFactory.createURI("http://sameCountry");
@@ -49,18 +46,31 @@ public class MainTestConceptBuilder {
 
         virtualPredicates.forEach((k, v) -> System.out.println(v.getSourceConcept().asQuery()));
 
-        ConceptBuilder cb = ConceptBuilderFluent
-             .from(ConceptBuilderFluent.union()
-                     .addMember(new ConceptExprConcept(Concept.create("?s a o:Project", "s", pm))))
-             //.unionMode() // whether multiple restrictions are interpreted as dis - or conjunctive - if disjunctive, the base concept is conjunctive which each restriction
-            .newRestriction().on(RDFS.label).as("x").forAll()
-            .getRoot();
+//        ConceptBuilder cb = ConceptBuilderFluent
+//             .from(ConceptBuilderFluent.union()
+//                     .addMember(new ConceptExprConcept(Concept.create("?s a o:Project", "s", pm))))
+//             //.unionMode() // whether multiple restrictions are interpreted as dis - or conjunctive - if disjunctive, the base concept is conjunctive which each restriction
+//            .newRestriction().on(RDFS.label).as("x").forAll()
+//            .getRoot();
+//
+//
+//        ConceptExprConceptBuilder ce = new ConceptExprConceptBuilder(cb);
+//        ConceptExprVisitorSparql visitor = new ConceptExprVisitorSparql();
+//        Concept c = ce.accept(visitor);
+//        System.out.println(c);
 
 
-        ConceptExprConceptBuilder ce = new ConceptExprConceptBuilder(cb);
-        ConceptExprVisitorSparql visitor = new ConceptExprVisitorSparql();
-        Concept c = ce.accept(visitor);
-        System.out.println(c);
+        Element e = new ElementGroup(
+                new ElementType(NodeFactory.createURI("http://Airport")),
+                new ElementFilter(ExprUtils.parse("regex('?_', 'dbpedia')"))
+                );
+
+
+
+        Concept c = Algebra.toConcept(Algebra.compile(e));
+
+        System.out.println("CONCEPT: " + c);
+
 
 
         //cb.isUnion();

@@ -9,4 +9,11 @@ public class ElementExists
     public ElementExists(Path path, Element filler) {
         super(path, filler);
     }
+
+    @Override
+    public <T> T accept(ElementVisitor<T> visitor) {
+        T result = visitor.visit(this);
+        return result;
+    }
+
 }

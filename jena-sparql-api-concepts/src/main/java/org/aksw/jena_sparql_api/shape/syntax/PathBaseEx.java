@@ -8,12 +8,12 @@ public abstract class PathBaseEx
 {
     @Override
     public void visit(PathVisitor visitor) {
-        if(visitor instanceof PathVisitorEx) {
-            visit((PathVisitorEx)visitor);
+        if(visitor instanceof PathExVisitor) {
+            visit((PathExVisitor)visitor);
         } else {
-            throw new RuntimeException("Unsuitable path visitor; required " + PathVisitorEx.class.getName() + " but got " + (visitor == null ? "null" : visitor.getClass().getName()) + " instead");
+            throw new RuntimeException("Unsuitable path visitor; required " + PathExVisitor.class.getName() + " but got " + (visitor == null ? "null" : visitor.getClass().getName()) + " instead");
         }
     }
 
-    public abstract void visit(PathVisitorEx visitor);
+    public abstract void visit(PathExVisitor visitor);
 }
