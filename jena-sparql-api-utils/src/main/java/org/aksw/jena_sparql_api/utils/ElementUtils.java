@@ -9,9 +9,10 @@ import java.util.Map;
 import java.util.Set;
 
 import org.aksw.commons.collections.MapUtils;
-//import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformSubst;
-//import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformer;
-//import org.aksw.jena_sparql_api.backports.syntaxtransform.ExprTransformNodeElement;
+import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransform;
+import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformSubst;
+import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformer;
+import org.aksw.jena_sparql_api.backports.syntaxtransform.ExprTransformNodeElement;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.core.BasicPattern;
@@ -27,10 +28,13 @@ import org.apache.jena.sparql.syntax.ElementPathBlock;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.ElementUnion;
 import org.apache.jena.sparql.syntax.PatternVars;
-import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
-import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformer;
-import org.apache.jena.sparql.syntax.syntaxtransform.ExprTransformNodeElement;
+//import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
+//import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformer;
+//import org.apache.jena.sparql.syntax.syntaxtransform.ExprTransformNodeElement;
 
+//import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
+//import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformer;
+//import org.apache.jena.sparql.syntax.syntaxtransform.ExprTransformNodeElement;
 
 
 public class ElementUtils {
@@ -208,7 +212,7 @@ public class ElementUtils {
 
     @Deprecated // Use TransformElementLib.transform instead
     public static Element applyNodeTransform(Element element, NodeTransform nodeTransform) {
-        ElementTransform elementTransform = new ElementTransformSubst2(nodeTransform);
+        ElementTransform elementTransform = new ElementTransformSubst(nodeTransform);//new ElementTransformSubst2(nodeTransform);
         ExprTransform exprTransform = new ExprTransformNodeElement(nodeTransform, elementTransform);
         Element result = ElementTransformer.transform(element, elementTransform, exprTransform);
         return result;

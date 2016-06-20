@@ -66,9 +66,9 @@ public class MainTestConceptBuilder {
 
         Element e = new ElementGroup(
                 new ElementType(NodeFactory.createURI("http://Airport")),
+                new ElementForAll(PathParser.parse("o:partner/o:address/o:country", pm), new ElementEnumeration(RDF.subject.asNode())), // new ElementGroup()),
                 new ElementFocus(PathParser.parse("rdfs:label", PrefixMapping.Extended)),
                 //new ElementExists(path, filler)
-                new ElementForAll(PathParser.parse("o:partner/o:address/o:country", pm), new ElementEnumeration(RDF.subject.asNode())), // new ElementGroup()),
                 new ElementFilter(ExprUtils.parse("regex(?_, 'dbpedia')"))
                 );
 
