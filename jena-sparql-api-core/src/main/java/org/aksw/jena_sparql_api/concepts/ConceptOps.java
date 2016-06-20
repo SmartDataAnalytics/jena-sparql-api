@@ -41,6 +41,7 @@ public class ConceptOps {
             ExprVar targetEv = new ExprVar(targetVar);
 
             Query qa = new Query();
+            qa.setQuerySelectType();
             VarExprList pa = qa.getProject();
             pa.add(sourceVar);
             pa.add(cnta, new ExprAggregator(Vars.x, new AggCountVar(targetEv)));
@@ -48,12 +49,13 @@ public class ConceptOps {
             qa.addGroupBy(sourceVar);
 
             Query qb = new Query();
+            qb.setQuerySelectType();
             VarExprList pb = qb.getProject();
             pb.add(sourceVar);
             pb.add(cntb, new ExprAggregator(Vars.y, new AggCountVar(targetEv)));
 
             // rename variables of the concept to make them different from the role
-            Concept aligned = align(role.getTargetConcept(), filler, generator);
+            Concept aligned = align(filler, role.getTargetConcept(), generator);
             Element x = ElementUtils.mergeElements(roleElement, aligned.getElement());
 
             qb.setQueryPattern(x);

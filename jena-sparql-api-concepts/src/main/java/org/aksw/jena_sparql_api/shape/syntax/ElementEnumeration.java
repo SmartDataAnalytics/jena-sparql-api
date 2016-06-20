@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.shape.syntax;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.jena.graph.Node;
@@ -10,9 +10,14 @@ public class ElementEnumeration
 {
     protected List<Node> values;
 
-    public ElementEnumeration() {
+    public ElementEnumeration(Node ...nodes) {
         super();
-        this.values = new ArrayList<Node>();
+        this.values = Arrays.asList(nodes);//new ArrayList<Node>();
+    }
+
+    public ElementEnumeration(List<Node> nodes) {
+        super();
+        this.values = nodes; //Arrays.asList(nodes);//new ArrayList<Node>();
     }
 
     public List<Node> getValues() {

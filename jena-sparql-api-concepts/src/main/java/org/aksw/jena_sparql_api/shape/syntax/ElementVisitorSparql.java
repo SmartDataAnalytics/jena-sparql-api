@@ -6,6 +6,7 @@ import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.shape.algebra.op.Op;
 import org.aksw.jena_sparql_api.shape.algebra.op.OpAnd;
 import org.aksw.jena_sparql_api.shape.algebra.op.OpConcept;
+import org.aksw.jena_sparql_api.shape.algebra.op.OpEnumeration;
 import org.aksw.jena_sparql_api.shape.algebra.op.OpExists;
 import org.aksw.jena_sparql_api.shape.algebra.op.OpFilter;
 import org.aksw.jena_sparql_api.shape.algebra.op.OpFocus;
@@ -48,8 +49,8 @@ public class ElementVisitorSparql
 
     @Override
     public Op visit(ElementEnumeration el) {
-        // TODO Auto-generated method stub
-        return null;
+        Op result = new OpEnumeration(el.getValues());
+        return result;
     }
 
     @Override

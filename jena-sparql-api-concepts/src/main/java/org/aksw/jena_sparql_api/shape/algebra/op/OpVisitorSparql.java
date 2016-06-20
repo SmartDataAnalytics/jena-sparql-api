@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.shape.algebra.op;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
@@ -14,9 +15,11 @@ import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.engine.binding.BindingHashMap;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementData;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.vocabulary.RDF;
 
@@ -25,6 +28,10 @@ public class OpVisitorSparql
 {
     protected PathExVisitorSparql pathVisitor;
     protected Generator<Var> generator;
+
+    public OpVisitorSparql(Generator<Var> generator) {
+        this.generator = generator;
+    }
 
     @Override
     public Concept visit(OpAssign op) {
@@ -110,6 +117,22 @@ public class OpVisitorSparql
         Path path = op.getPath();
         Relation relation = Relation.create(path);
         Concept result = ConceptUtils.getRelatedConcept(concept, relation);
+        return result;
+    }
+
+    @Override
+    public Concept visit(OpEnumeration op) {
+        List<Node> nodes = op.getNodes();
+
+        ElementData data = new ElementData();
+        data.add(Vars.s);
+        for(Node node : nodes) {
+            BindingHashMap binding = new BindingHashMap();
+            binding.add(Vars.s, node);
+            data.add(binding);
+        }
+
+        Concept result = new Concept(data, Vars.s);
         return result;
     }
 
