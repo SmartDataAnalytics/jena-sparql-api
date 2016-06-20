@@ -81,7 +81,8 @@ public class ConceptOps {
 //    }
 
     public static Concept exists(Relation relation, Concept filler, Generator<Var> generator) {
-        Concept aligned = align(relation.getTargetConcept(), filler, generator);
+        Concept targetConcept = relation.getTargetConcept();
+        Concept aligned = align(filler, targetConcept, generator);
         Element x = ElementUtils.mergeElements(relation.getElement(), aligned.getElement());
         Concept result = new Concept(x, relation.getSourceVar());
         return result;
@@ -95,16 +96,17 @@ public class ConceptOps {
         Set<Var> vas = concept.getVarsMentioned();
         Map<Var, Var> varMap = VarUtils.createDistinctVarMap(vas, vbs, true, generator);
 
-        varMap.put(vbJoinVar, concept.getVar());
+        //varMap.put(vbJoinVar, concept.getVar());
+        varMap.put(concept.getVar(), vbJoinVar);
         NodeTransform nodeTransform = new NodeTransformRenameMap(varMap);
 
         Concept result = concept.applyNodeTransform(nodeTransform);
         return result;
     }
 
-    public static Concept align(Concept base, Concept modifyee, Generator<Var> generator) {
-        Set<Var> vbs = modifyee.getVarsMentioned();
-        Concept result = align(base, vbs, modifyee.getVar(), generator);
+    public static Concept align(Concept alignee, Concept forbiddenVars, Generator<Var> generator) {
+        Set<Var> vbs = forbiddenVars.getVarsMentioned();
+        Concept result = align(alignee, vbs, forbiddenVars.getVar(), generator);
         return result;
     }
 

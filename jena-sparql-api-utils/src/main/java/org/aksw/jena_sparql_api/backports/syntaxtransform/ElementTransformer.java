@@ -111,7 +111,7 @@ public class ElementTransformer {
         beforeVisitor = beforeVisitor == null ? new ElementVisitorBase() : beforeVisitor;
         afterVisitor = afterVisitor == null ? new ElementVisitorBase() : afterVisitor;
 
-    	ElementWalker.walk(element, transformApply, beforeVisitor, afterVisitor);
+        ElementWalker.walk(element, transformApply, beforeVisitor, afterVisitor);
         Element r = transformApply.result() ;
         return r ;
     }
@@ -187,8 +187,8 @@ public class ElementTransformer {
 
         @Override
         public void visit(ElementData el) {
-            transform.transform(el) ;
-            push(el) ;
+            Element el2 = transform.transform(el) ;
+            push(el2) ;
         }
 
         @Override

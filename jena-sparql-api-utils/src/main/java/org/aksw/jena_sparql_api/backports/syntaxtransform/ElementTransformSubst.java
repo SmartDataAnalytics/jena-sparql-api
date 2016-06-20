@@ -18,6 +18,7 @@
 
 package org.aksw.jena_sparql_api.backports.syntaxtransform;
 
+import java.util.List;
 import java.util.Map ;
 
 import org.apache.jena.graph.Node;
@@ -25,10 +26,12 @@ import org.apache.jena.graph.Node_Variable;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.core.TriplePath;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.graph.NodeTransformLib;
 import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementData;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.ElementPathBlock;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
@@ -49,6 +52,20 @@ public class ElementTransformSubst extends ElementTransformCopyBase {
 
     public ElementTransformSubst(NodeTransform nodeTransform) {
         this.nodeTransform = nodeTransform ;
+    }
+
+    @Override
+    public Element transform(ElementData el) {
+        List<Var> vars = el.getVars();
+        List<Binding> bindings = el.getRows();
+        List<Var> newVars = NodeTransformLib.transformVars(nodeTransform, vars);
+
+        ElementData result = new ElementData();
+        newVars.forEach(v -> result.add(v));
+
+        bindings.forEach(b -> result.add(NodeTransformLib.transform(b, nodeTransform)));
+
+        return result;
     }
 
     @Override

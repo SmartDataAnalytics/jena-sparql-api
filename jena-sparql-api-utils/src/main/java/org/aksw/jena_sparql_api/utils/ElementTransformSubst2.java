@@ -32,6 +32,8 @@ import org.apache.jena.sparql.syntax.ElementTriplesBlock ;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformCopyBase;
 
+// The only difference to jena's ElementTransformSubst is that this class accepts a NodeTransformer for the ctor-arg.
+
 /** An {@link ElementTransform} which replaces occurences of a variable with a Node value.
  * Because a {@link Var} is a subclass of {@link Node_Variable} which is a {@link Node},
  * this includes variable renaming.

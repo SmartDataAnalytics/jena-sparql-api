@@ -12,6 +12,7 @@ import org.aksw.jena_sparql_api.concepts.RelationOps;
 import org.aksw.jena_sparql_api.shape.algebra.op.Algebra;
 import org.aksw.jena_sparql_api.shape.syntax.Element;
 import org.aksw.jena_sparql_api.shape.syntax.ElementEnumeration;
+import org.aksw.jena_sparql_api.shape.syntax.ElementExists;
 import org.aksw.jena_sparql_api.shape.syntax.ElementFilter;
 import org.aksw.jena_sparql_api.shape.syntax.ElementFocus;
 import org.aksw.jena_sparql_api.shape.syntax.ElementForAll;
@@ -66,7 +67,8 @@ public class MainTestConceptBuilder {
 
         Element e = new ElementGroup(
                 new ElementType(NodeFactory.createURI("http://Airport")),
-                new ElementForAll(PathParser.parse("o:partner/o:address/o:country", pm), new ElementEnumeration(RDF.subject.asNode())), // new ElementGroup()),
+                new ElementForAll(PathParser.parse("o:operator/o:address/o:country", pm), new ElementEnumeration(RDF.subject.asNode())), // new ElementGroup()),
+                new ElementExists(PathParser.parse("o:openingDate", pm), new ElementEnumeration(RDF.predicate.asNode())), // new ElementGroup()),
                 new ElementFocus(PathParser.parse("rdfs:label", PrefixMapping.Extended)),
                 //new ElementExists(path, filler)
                 new ElementFilter(ExprUtils.parse("regex(?_, 'dbpedia')"))
