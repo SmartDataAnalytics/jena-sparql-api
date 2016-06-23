@@ -48,10 +48,6 @@ public class MainSparqlView {
             Model foo = xxx.createQueryExecution("CONSTRUCT WHERE { <http://dbpedia.org/ontology/author> ?p ?o }").execConstruct();
             foo.write(System.out, "TURTLE");
 
-            if(true) {
-                System.exit(0);
-            }
-
 
         //SparqlViewSystem system = new SparqlViewSystem();
 
@@ -71,7 +67,7 @@ public class MainSparqlView {
         SparqlView sparqlView = SparqlView.create("MyView", QueryFactory.create("Construct { ?s a <http://fp7-pp.publicdata.eu/ontology/Project> ; <skos:prefLabel> ?x } { ?s a <http://fp7-pp.publicdata.eu/ontology/Project> ; <http://www.w3.org/2000/01/rdf-schema#label> ?o . }", Syntax.syntaxSPARQL_11));
         //SparqlView sparqlView = SparqlView.create("MyView", "Construct { Graph ?g { ?s ?p ?o } } { ?s a <http://fp7-pp.publicdata.eu/ontology/Project> . ?s ?p ?o . Filter(?g != <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>) }");
         candidateViewSelector.addView(sparqlView);
-        //system.addView(SparqlView.create("MyView", QueryFactory.create("Construct { ?s ?p ?o . } { Graph ?g { ?s ?p ?o } Filter(?g != <http://ns.ontowiki.net/SysBase/> ) }", Syntax.syntaxSPARQL_11)));
+        candidateViewSelector.addView(SparqlView.create("MyView", QueryFactory.create("Construct { ?s ?p ?o . } { ?s ?p ?o . FILTER(?s = <http://fp7-pp.publicdata.eu/resource/project/288819>) }", Syntax.syntaxSPARQL_11)));
 
         //QueryExecutionFactoryHttp qef = new QueryExecutionFactoryHttp("http://localhost:8890/sparql");
         QueryExecutionFactory qef = FluentQueryExecutionFactory
@@ -90,7 +86,8 @@ public class MainSparqlView {
         //QueryExecution qe = sv.createQueryExecution("Prefix ft:<http://fintrans.publicdata.eu/ec/ontology/> Select Distinct ?t { ?s a ?t . }");
         //QueryExecution qe = sv.createQueryExecution("select * { ?s a <http://fp7-pp.publicdata.eu/ontology/Project> . ?s ?p ?o . }");
 
-        System.out.println(ResultSetFormatter.asText(sv.createQueryExecution("select * { ?s ?p ?o }").execSelect()));
+        System.out.println("Result");
+        System.out.println(ResultSetFormatter.asText(sv.createQueryExecution("select * { ?s ?p ?o . FILTER(?s = <http://fp7-pp.publicdata.eu/resource/project/288819>)}").execSelect()));
 
 //        if(true) { return; }
 

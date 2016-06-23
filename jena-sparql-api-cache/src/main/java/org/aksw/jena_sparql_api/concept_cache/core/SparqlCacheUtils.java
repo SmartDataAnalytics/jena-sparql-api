@@ -575,6 +575,7 @@ public class SparqlCacheUtils {
     public static ProjectedQuadFilterPattern transform(Element element) {
 
         Op op = Algebra.compile(element);
+        op = Algebra.toQuadForm(op);
         ProjectedQuadFilterPattern result = transform(op);
         return result;
     }

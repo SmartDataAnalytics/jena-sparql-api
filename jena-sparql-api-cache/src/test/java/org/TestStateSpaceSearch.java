@@ -1,34 +1,37 @@
 package org;
 
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
+import org.aksw.commons.collections.multimaps.IBiSetMultimap;
 import org.aksw.isomorphism.Problem;
 import org.aksw.isomorphism.ProblemContainerImpl;
 import org.aksw.isomorphism.StateProblemContainer;
+import org.aksw.jena_sparql_api.concept_cache.collection.ContainmentMap;
+import org.aksw.jena_sparql_api.concept_cache.collection.ContainmentMapImpl;
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.ProblemVarMappingExpr;
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.ProblemVarMappingQuad;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
-import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
-import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
+import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
+import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
+import org.aksw.jena_sparql_api.stmt.SparqlElementParser;
+import org.aksw.jena_sparql_api.stmt.SparqlElementParserImpl;
 import org.aksw.jena_sparql_api.utils.CnfUtils;
-import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
+import org.aksw.jena_sparql_api.utils.Generator;
+import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.aksw.jena_sparql_api.utils.Vars;
-import org.aksw.jena_sparql_api.utils.transform.F_QueryTransformDatesetDescription;
 import org.aksw.state_space_search.core.StateSearchUtils;
-import org.apache.jena.query.ResultSetFormatter;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.sparql.core.DatasetDescription;
+import org.apache.jena.query.Syntax;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.util.ExprUtils;
 
 public class TestStateSpaceSearch {
@@ -48,6 +51,60 @@ public class TestStateSpaceSearch {
 //            model.write(new FileOutputStream(new File("/tmp/ne.nt")), "NTRIPLES");
             //model.write(System.out);
         }
+
+        // We could create a graph over quads and expressions that variables
+
+        SparqlElementParser elementParser = SparqlElementParserImpl.create(Syntax.syntaxSPARQL_10, null);
+        Element queryElement = elementParser.apply("?x <my://type> <my://Airport> ; <my://label> ?l . FILTER(langMatches(lang(?l), 'en'))");
+
+        Element cacheElement = elementParser.apply("?s <my://type> <my://Airport> ; ?p ?l . FILTER(?p = <my://label> || ?p = <my://name>)");
+
+
+        ProjectedQuadFilterPattern cachePqfp = SparqlCacheUtils.transform(cacheElement);
+        System.out.println("ProjectedQuadFilterPattern: " + cachePqfp);
+
+        Generator<Var> generator = VarGeneratorImpl2.create();
+        QuadFilterPatternCanonical canonical = SparqlCacheUtils.canonicalize2(cachePqfp.getQuadFilterPattern(), generator);
+        System.out.println("QuadFilterPatternCanonical: " + canonical);
+
+
+        IBiSetMultimap<Quad, Set<Set<Expr>>> index = SparqlCacheUtils.createMapQuadsToFilters(canonical);
+        System.out.println("Index: " + index);
+
+        // Features are objects that describe view
+        // A query needs to cover all features of view
+        // so it must hold that |featuresOf(query)| >= |featuresOf(cache)|
+        Set<Object> features = new HashSet<Object>();
+        index.asMap().values().stream().flatMap(cnfs -> cnfs.stream())
+        .flatMap(cnf -> cnf.stream())
+        .filter(clause -> clause.size() == 1)
+        .flatMap(clause -> clause.stream())
+        .forEach(feature -> features.add(feature));
+
+
+        ContainmentMap<Object, Object> featuresToCache = new ContainmentMapImpl<>();
+        featuresToCache.put(features, canonical);
+
+        Collection<Entry<Set<Object>, Object>> candidates = featuresToCache.getAllEntriesThatAreSubsetOf(
+                new HashSet<>(Arrays.asList(
+                        ExprUtils.parse("?o = <my://Airport>"),
+                        ExprUtils.parse("?p = <my://type>")
+              )));
+        System.out.println("Candidates: " + candidates);
+
+//        ContainmentMap<Set<Expr>, Quad> clauseToQuads = new ContainmentMapImpl<>();
+//        for(Entry<Quad, Set<Set<Expr>>> entry : index.entries()) {
+//            clauseToQuads.put(entry.getValue(), entry.getKey());
+//        }
+//
+        // given a query, we need to conver at least all constraints of the cache
+        //clauseToQuads.getAllEntriesThatAreSubsetOf(prototye)
+
+
+//        SparqlViewCacheImpl x;
+//        x.lookup(queryQfpc)
+
+        //QuadFilterPatternCanonical
 
 
         Expr a = ExprUtils.parse("(?z = ?x + 1)");

@@ -75,6 +75,7 @@ public class ResultSetViewCache {
 
         } else {
             // TODO Resource leak if the physicalRs is not consumed - fix that somehow!
+            // TODO Change to stream api because these can be closed!
             Iterator<Binding> it = Iterators.concat(bindings.iterator(), new IteratorResultSetBinding(physicalRs));
             resultRs = new ResultSetStream(varNames, null, it);
         }

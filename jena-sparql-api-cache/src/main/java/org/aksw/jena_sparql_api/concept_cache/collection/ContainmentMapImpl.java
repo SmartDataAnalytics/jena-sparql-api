@@ -2,7 +2,6 @@ package org.aksw.jena_sparql_api.concept_cache.collection;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -54,12 +53,14 @@ public class ContainmentMapImpl<K, V>
     }
 
     @Override
-    public void put(Set<K> tags, V value) {
-        tagSetToValues.put(tags, value);
-        tags.forEach(tag -> {
-            tagToTagSets.put(tag, tags);
+    public void put(Set<K> tagSet, V value) {
+        tagSetToValues.put(tagSet, value);
+        tagSet.forEach(tag -> {
+            tagToTagSets.put(tag, tagSet);
             tagToCount.merge(tag, 1, Integer::sum);
         });
+
+        valueToTagSets.put(value, tagSet);
 
         //return value;
     }
@@ -126,8 +127,23 @@ public class ContainmentMapImpl<K, V>
 
     @Override
     public Collection<Entry<Set<K>, V>> getAllEntriesThatAreSubsetOf(Set<K> prototype) {
-        Collection<Entry<Set<K>, V>> result = prototype.stream()
-            .flatMap(tag -> tagToTagSets.get(tag).stream())
+        // get the count if we used index lookup
+        int indexCount = prototype.stream().mapToInt(tag -> tagToCount.getOrDefault(tag, 0)).sum();
+        int totalCount = valueToTagSets.size();
+
+        Stream<Set<K>> tagSetStream;
+        float scanThreshold = 0.3f;
+        float val = scanThreshold * totalCount;
+        if(indexCount > val) {
+            tagSetStream = tagSetToValues.keySet().stream();
+        } else {
+            tagSetStream = prototype.stream()
+                    .flatMap(tag -> tagToTagSets.get(tag).stream())
+                    .distinct();
+        }
+
+        Collection<Entry<Set<K>, V>> result = tagSetStream
+            .filter(tagSet -> prototype.containsAll(tagSet))
             .flatMap(tagSet -> {
                 Collection<V> values = tagSetToValues.get(tagSet);
                 Stream<Entry<Set<K>, V>> r = values.stream()
