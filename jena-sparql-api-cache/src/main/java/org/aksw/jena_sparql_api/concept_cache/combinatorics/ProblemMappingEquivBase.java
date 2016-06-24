@@ -30,6 +30,10 @@ public abstract class ProblemMappingEquivBase<A, B, X, Y>
         this.as = as;
         this.bs = bs;
         this.baseSolution = baseSolution;
+
+        if(this.baseSolution == null) {
+            throw new NullPointerException();
+        }
     }
 
     @Override

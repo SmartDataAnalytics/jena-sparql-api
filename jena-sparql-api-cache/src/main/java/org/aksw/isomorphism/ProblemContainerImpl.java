@@ -65,7 +65,7 @@ public class ProblemContainerImpl<S>
 
             NavigableMap<Comparable<?>, Collection<Problem<S>>> remaining = new TreeMap<>();
             sizeToProblem.forEach((k, v) -> {
-                Collection<Problem<S>> ps = v.stream().filter(i -> i == pickedProblem).collect(Collectors.toList());
+                Collection<Problem<S>> ps = v.stream().filter(i -> i != pickedProblem).collect(Collectors.toList());
                 remaining.computeIfAbsent(k, (x) -> new ArrayList<Problem<S>>()).addAll(ps);
             });
                     //ArrayListMultimap.create(sizeToProblem);

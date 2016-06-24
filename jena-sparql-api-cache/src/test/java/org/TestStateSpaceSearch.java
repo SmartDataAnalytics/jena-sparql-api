@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -38,6 +39,7 @@ import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.util.ExprUtils;
 
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
@@ -114,7 +116,7 @@ public class TestStateSpaceSearch {
                         .map(x -> {
                             Set<Expr> cacheExprs = x.getKey();
                             Set<Expr> queryExprs = x.getValue();
-                            Problem<Map<Var, Var>> p = new ProblemVarMappingExpr(cacheExprs, queryExprs, null);
+                            Problem<Map<Var, Var>> p = new ProblemVarMappingExpr(cacheExprs, queryExprs, Collections.emptyMap());
 
                             //System.out.println("cacheExprs: " + cacheExprs);
                             //System.out.println("queryExprs: " + queryExprs);
@@ -140,12 +142,18 @@ public class TestStateSpaceSearch {
             //cands.forEach(x -> System.out.println("CAND: " + x.getValue()));
         }
 
-        ProblemContainer<Map<Var, Var>> container = ProblemContainerImpl.create(problems);
-        State<Map<Var, Var>> state = new StateProblemContainer<Map<Var, Var>>(Collections.emptyMap(), container, (a, b) -> IsoMapUtils.mergeInPlaceIfCompatible(a, b));
-        Stream<Map<Var, Var>> xxx = StateSearchUtils.depthFirstSearch(state, 10000);
+        for(int i = 0; i < 100; ++i) {
+            Stopwatch sw = Stopwatch.createStarted();
 
-        xxx.forEach(x -> System.out.println("SOLUTION: " + x));
+            ProblemContainer<Map<Var, Var>> container = ProblemContainerImpl.create(problems);
+            State<Map<Var, Var>> state = new StateProblemContainer<Map<Var, Var>>(Collections.emptyMap(), container, (a, b) -> IsoMapUtils.mergeIfCompatible(a, b));
+            Stream<Map<Var, Var>> xxx = StateSearchUtils.depthFirstSearch(state, 10000);
 
+            xxx.forEach(x -> System.out.println("SOLUTION: " + x));
+
+
+            System.out.println("TIME TAKEN: " + sw.stop().elapsed(TimeUnit.MILLISECONDS));
+        }
         System.out.println("PROBLEMS: " + problems.size());
 
 
