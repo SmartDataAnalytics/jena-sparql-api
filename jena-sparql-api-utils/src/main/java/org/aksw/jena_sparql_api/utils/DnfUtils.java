@@ -25,6 +25,8 @@ import org.apache.jena.sparql.expr.ExprFunction;
 import org.apache.jena.sparql.expr.ExprList;
 import org.apache.jena.sparql.expr.NodeValue;
 
+import com.google.common.collect.Iterables;
+
 
 //TODO There is already org.apache.jena.sparql.algebra.optimize.TransformFilterDisjunction
 public class DnfUtils
@@ -67,15 +69,15 @@ public class DnfUtils
     }
 
 
-    public static Expr toExpr(List<List<Expr>> ors) {
+    public static Expr toExpr(Iterable<? extends Iterable<Expr>> ors) {
         List<Expr> tmpOrs = new ArrayList<Expr>();
-        for(List<Expr> ands : ors) {
+        for(Iterable<Expr> ands : ors) {
             Expr and = ExprUtils.andifyBalanced(ands);
 
             tmpOrs.add(and);
         }
 
-        if(ors.size() == 0) {
+        if(Iterables.isEmpty(ors)) {
             return NodeValue.FALSE;
         }
 

@@ -93,7 +93,7 @@ public class ProblemVarMappingQuad
     public static Multimap<Set<Expr>, Set<Expr>> signatureToClauses(Iterable<? extends Iterable<Expr>> clauses) {
         Multimap<Set<Expr>, Set<Expr>> result = HashMultimap.create();
         for(Iterable<Expr> clause : clauses) {
-            Set<Expr> signature = ClauseUtils.canonicalize(clause);
+            Set<Expr> signature = ClauseUtils.signaturize(clause);
             Set<Expr> c = SetUtils.asSet(clause);
             result.put(signature, c);
         }
@@ -162,7 +162,7 @@ public class ProblemVarMappingQuad
         for(Entry<Set<Set<Expr>>, Set<Set<Expr>>> entry : exprGroups.values()) {
             Set<Set<Expr>> as = entry.getKey();
             Set<Set<Expr>> bs = entry.getValue();
-            Problem<Map<Var, Var>> x = new ProblemVarMappingExpr(as, bs, varMap);
+            Problem<Map<Var, Var>> x = null; //new ProblemVarMappingExpr(as, bs, varMap);
             problems.add(x);
         }
 
@@ -204,8 +204,10 @@ public class ProblemVarMappingQuad
         Set<K> keys = Sets.union(a.keySet(), b.keySet());
         keys.forEach(
                 k -> {
-                    Set<V> av = SetUtils.asSet(a.get(k));
-                    Set<V> bv = SetUtils.asSet(b.get(k));
+                    Iterable<V> ax = a.get(k);
+                    Iterable<V> bx = b.get(k);
+                    Set<V> av = ax == null ? Collections.emptySet() : SetUtils.asSet(ax);
+                    Set<V> bv = bx == null ? Collections.emptySet() : SetUtils.asSet(bx);
 
                     Entry<Set<V>, Set<V>> e = new SimpleEntry<>(av, bv);
                     result.put(k, e);
@@ -214,5 +216,22 @@ public class ProblemVarMappingQuad
 
         return result;
     }
+
+//    public static <K, V> Map<K, Entry<Set<V>, Set<V>>> groupByKey(Multimap<K, V> a, Map<K, V> b) {
+//        Map<K, Entry<V, V>> result = new HashMap<>();
+//
+//        Set<K> keys = Sets.union(a.keySet(), b.keySet());
+//        keys.forEach(
+//                k -> {
+//                    Set<V> av = SetUtils.asSet(a.get(k));
+//                    Set<V> bv = SetUtils.asSet(b.get(k));
+//
+//                    Entry<Set<V>, Set<V>> e = new SimpleEntry<>(av, bv);
+//                    result.put(k, e);
+//                }
+//            );
+//
+//        return result;
+//    }
 
 }

@@ -183,7 +183,7 @@ public class ExprUtils {
      *
      * @param expr
      */
-    public static Expr canonicalize(Expr expr) {
+    public static Expr signaturize(Expr expr) {
         NodeTransform nodeTransform = (node) -> node.isVariable() ? Vars.a : node;
         Expr result = transform(expr, nodeTransform);
         return result;

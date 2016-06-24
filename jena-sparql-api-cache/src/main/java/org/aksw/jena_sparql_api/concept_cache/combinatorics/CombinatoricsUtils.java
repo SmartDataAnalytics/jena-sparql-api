@@ -295,7 +295,7 @@ public class CombinatoricsUtils {
                 () -> IsoMapUtils.createSolutionStream(
                     cacheQuads,
                     queryQuads,
-                    Utils2::createVarMap,
+                    (a, b, c) -> Stream.of(Utils2.createVarMap(a, b)),
                     baseSolution).iterator();
 
         return result;

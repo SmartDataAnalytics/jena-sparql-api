@@ -10,6 +10,11 @@ public interface ContainmentMap<K, V>
     void put(Set<K> tagSet, V value);
     void remove(Object tagSet);
 
+    Set<Set<K>> keySet();
+    Collection<V> values();
+
+    Set<Entry<Set<K>, Collection<V>>> entrySet();
+
     /**
      *
      * @param prototye

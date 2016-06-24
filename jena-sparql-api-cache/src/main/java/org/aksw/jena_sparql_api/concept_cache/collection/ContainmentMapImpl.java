@@ -26,12 +26,14 @@ public class ContainmentMapImpl<K, V>
     //extends AbstractMap<Set<K>, V>
     implements ContainmentMap<K, V>
 {
+    // This map contains the actual data, the other fields contain helper structures
+    protected Multimap<Set<K>, V> tagSetToValues; // rename to tagSetToValues
+
     protected Map<K, Integer> tagToCount;
 
     protected Multimap<K, Set<K>> tagToTagSets;
-    protected Multimap<Set<K>, V> tagSetToValues; // rename to tagSetToValues
-
     protected Multimap<V, Set<K>> valueToTagSets;
+
 
 
 //    public ContainmentMapImpl(Map<K, Integer> tagToCount,
@@ -53,7 +55,26 @@ public class ContainmentMapImpl<K, V>
     }
 
     @Override
+    public Set<Set<K>> keySet() {
+        Set<Set<K>> result = tagSetToValues.keySet();
+        return result;
+    }
+
+    @Override
+    public Collection<V> values() {
+        Collection<V> result = tagSetToValues.values();
+        return result;
+    }
+
+    @Override
+    public Set<Entry<Set<K>,Collection<V>>> entrySet() {
+        Set<Entry<Set<K>, Collection<V>>> result = tagSetToValues.asMap().entrySet();
+        return result;
+    };
+
+    @Override
     public void put(Set<K> tagSet, V value) {
+        //tagSetToValues.asMap().
         tagSetToValues.put(tagSet, value);
         tagSet.forEach(tag -> {
             tagToTagSets.put(tag, tagSet);
@@ -154,4 +175,13 @@ public class ContainmentMapImpl<K, V>
 
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "ContainmentMapImpl [tagToCount=" + tagToCount
+                + ", tagToTagSets=" + tagToTagSets + ", tagSetToValues="
+                + tagSetToValues + ", valueToTagSets=" + valueToTagSets + "]";
+    }
+
+
 }

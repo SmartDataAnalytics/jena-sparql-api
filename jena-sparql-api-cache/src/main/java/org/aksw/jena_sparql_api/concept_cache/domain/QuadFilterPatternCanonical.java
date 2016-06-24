@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.aksw.jena_sparql_api.utils.ClauseUtils;
 import org.aksw.jena_sparql_api.utils.CnfUtils;
+import org.aksw.jena_sparql_api.utils.DnfUtils;
 import org.aksw.jena_sparql_api.utils.NfUtils;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
@@ -22,12 +23,16 @@ import com.google.common.collect.Sets;
 
 public class QuadFilterPatternCanonical {
     private Set<Quad> quads;
+
     private Set<Set<Expr>> filterCnf;
+    private Set<Set<Expr>> filterDnf;
 
     public QuadFilterPatternCanonical(Set<Quad> quads, Set<Set<Expr>> filterCnf) {
         super();
         this.quads = quads;
         this.filterCnf = filterCnf;
+        this.filterDnf = DnfUtils.toSetDnf(CnfUtils.toExpr(filterCnf));
+
     }
 
     public boolean isEmpty() {
@@ -35,8 +40,9 @@ public class QuadFilterPatternCanonical {
         return result;
     }
 
-    public QuadFilterPattern toQfp() {
-        Expr expr = CnfUtils.toExpr(filterCnf);
+    public QuadFilterPattern toQfp()
+    {
+        Expr expr = DnfUtils.toExpr(filterCnf); //CnfUtils.toExpr(filterDnf);
         QuadFilterPattern result = new QuadFilterPattern(new ArrayList<>(quads), expr);
         return result;
     }
@@ -57,6 +63,10 @@ public class QuadFilterPatternCanonical {
 
     public Set<Set<Expr>> getFilterCnf() {
         return filterCnf;
+    }
+
+    public Set<Set<Expr>> getFilterDnf() {
+        return filterDnf;
     }
 
     public Set<Var> getVarsMentioned() {
@@ -103,11 +113,13 @@ public class QuadFilterPatternCanonical {
         return result;
     }
 
-    @Override
-    public String toString() {
-        return "QuadFilterPatternNorm [quads=" + quads + ", filterCnf="
-                + filterCnf + "]";
-    }
+//    @Override
+//    public String toString() {
+//        return "QuadFilterPatternNorm [quads=" + quads + ", filterCnf="
+//                + filterCnf + "]";
+//    }
+
+
 
     @Override
     public int hashCode() {
@@ -117,6 +129,12 @@ public class QuadFilterPatternCanonical {
                 + ((filterCnf == null) ? 0 : filterCnf.hashCode());
         result = prime * result + ((quads == null) ? 0 : quads.hashCode());
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "QuadFilterPatternCanonical [quads=" + quads + ", filterCnf="
+                + filterCnf + ", filterDnf=" + filterDnf + "]";
     }
 
     @Override

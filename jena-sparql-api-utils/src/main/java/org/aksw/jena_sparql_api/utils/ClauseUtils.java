@@ -40,15 +40,15 @@ public class ClauseUtils
         return result;
     }*/
 
-    //Iterable<? extends Iterable<? extends Expr> 
-    public static Set<Expr> canonicalize(Iterable<? extends Expr> clause) {
+    //Iterable<? extends Iterable<? extends Expr>
+    public static Set<Expr> signaturize(Iterable<? extends Expr> clause) {
         Set<Expr> result = StreamSupport.stream(clause.spliterator(), false)
-            .map(e -> ExprUtils.canonicalize(e))
+            .map(e -> ExprUtils.signaturize(e))
             .collect(Collectors.toSet());
-        
+
         return result;
     }
-    
+
 
     public static Set<Set<Expr>> filterByVars(Set<Set<Expr>> clauses, Set<Var> requiredVars) {
 
@@ -102,9 +102,9 @@ public class ClauseUtils
     public static boolean isSatisfiable(Expr expr)
     {
         // NOTE Folding does not detect cases such as E_LogicalAnd(E_Equals(x = y), false)
-    	Expr exprCopy = expr.copySubstitute(BindingRoot.create());
-    	Expr folded = ExprTransformer.transform(new ExprTransformConstantFold(), exprCopy) ;
-        
+        Expr exprCopy = expr.copySubstitute(BindingRoot.create());
+        Expr folded = ExprTransformer.transform(new ExprTransformConstantFold(), exprCopy) ;
+
         return !folded.equals(NodeValue.FALSE);
     }
 

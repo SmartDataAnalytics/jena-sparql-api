@@ -20,9 +20,33 @@ import org.apache.jena.sparql.expr.ExprFunction;
 import org.apache.jena.sparql.expr.FunctionLabel;
 import org.apache.jena.sparql.expr.NodeValue;
 
+// Multimap<Set<Set<>>>
+// ContainmentMap
 
 /**
- * Match two clauses of expressions against each other
+ * Match two sets of clauses (a clause is treated as a conjunction) of expressions against each other
+ *
+ * In general: the query must be more specific than the cache, hence, the query may apply additional filters to the cache
+ *
+ * Query: DNF = { {?a = <foo>, ?b = <bar>, ?c = <boo>}, {?a = <foo>, ?b = <bar>, ?d = <boo>} }
+ * Cache: DNF = { {?a = <foo>, ?b = <bar>}, {?a = <foo>, ?b = <baz>} }
+ *
+ * At least one cache clause must be fully contained in one of the query's DNF clauses.
+ *
+ *
+ *
+ * Query: CNF = { {?a = <foo>}, {?b = <bar>}, {?c = <boo>, ?d = <boo>} }
+ * Cache: CNF = { {?a = <foo>}, {?b = <bar>, ?b = <baz>} }
+ *
+ *
+ *
+ *
+ *
+ * Each DNF clause of the query must contain a clause of the cache.
+ *
+ * For over CNF clause of the cache, for at least one literal there must exist a clause of the query that contains it
+ *
+ *
  *
  * All expressions of the first set must match to expressions of the second set
  *
@@ -30,12 +54,16 @@ import org.apache.jena.sparql.expr.NodeValue;
  *
  */
 public class ProblemVarMappingExpr
-    extends ProblemMappingEquivBase<Collection<Expr>, Collection<Expr>, Var, Var>
+    extends ProblemMappingEquivBase<Expr, Expr, Var, Var>
 {
 
 
-    public ProblemVarMappingExpr(Collection<? extends Collection<Expr>> as,
-            Collection<? extends Collection<Expr>> bs, Map<Var, Var> baseSolution) {
+//    public ProblemVarMappingExpr(Collection<? extends Collection<Expr>> as,
+//            Collection<? extends Collection<Expr>> bs, Map<Var, Var> baseSolution) {
+//        super(as, bs, baseSolution);
+//    }
+
+    public ProblemVarMappingExpr(Collection<? extends Expr> as, Collection<? extends Expr> bs, Map<Var, Var> baseSolution) {
         super(as, bs, baseSolution);
     }
 
@@ -43,10 +71,15 @@ public class ProblemVarMappingExpr
     public Stream<Map<Var, Var>> generateSolutions() {
 
         Map<Var, Var> baseSolution = Collections.emptyMap();
+//        Stream<Map<Var, Var>> result = IsoMapUtils.createSolutionStream(
+//                as,
+//                bs,
+//                (x, y) -> createVarMap(x, y),
+//                baseSolution);
         Stream<Map<Var, Var>> result = IsoMapUtils.createSolutionStream(
                 as,
                 bs,
-                (x, y) -> createVarMap(x, y),
+                (x, y, bs) -> { return createVarMap(x, y, bs).map(z -> z.getVarMap()); },
                 baseSolution);
 
         return result;
@@ -57,34 +90,34 @@ public class ProblemVarMappingExpr
         return Collections.singleton(this);
     }
 
-    public static Iterable<Map<Var, Var>> createSolutions(Collection<Expr> as, Collection<Expr> bs) {
-        Map<Var, Var> baseSolution = Collections.emptyMap();
-        Iterable<Map<Var, Var>> result =
-                () -> IsoMapUtils.createSolutionStream(
-                    as,
-                    bs,
-                    ProblemVarMappingExpr::createSingleVarMap,
-                    baseSolution).iterator();
+//    public static Iterable<Map<Var, Var>> createSolutions(Collection<Expr> as, Collection<Expr> bs, Map<Var, Var> baseSolution) {
+//        //Map<Var, Var> baseSolution = Collections.emptyMap();
+//        Iterable<Map<Var, Var>> result =
+//                () -> IsoMapUtils.createSolutionStream(
+//                    as,
+//                    bs,
+//                    ProblemVarMappingExpr::createSingleVarMap,
+//                    baseSolution);.iterator();
+//
+//        return result;
+//    }
 
-        return result;
-    }
+//    public static Map<Var, Var> createVarMap(Collection<Expr> as, Collection<Expr> bs) {
+//        Map<Var, Var> baseVarMap = Collections.emptyMap();
+//
+//        // TODO Not finished
+//        return baseVarMap;
+//    }
 
-    public static Map<Var, Var> createVarMap(Collection<Expr> as, Collection<Expr> bs) {
-        Map<Var, Var> baseVarMap = Collections.emptyMap();
-
-        // TODO Not finished
-        return baseVarMap;
-    }
-
-    public static Map<Var, Var> createSingleVarMap(Expr a, Expr b) {
-        Map<Var, Var> result = createVarMap(a, b).findFirst().map(x -> x.getVarMap()).orElse(null);
-        return result;
-    }
-
-    public static Stream<ExprMapSolution> createVarMap(Expr a, Expr b) {
-        Stream<ExprMapSolution> result = createVarMap(a, b, Collections.emptyMap());
-        return result;
-    }
+//    public static Map<Var, Var> createSingleVarMap(Expr a, Expr b) {
+//        Map<Var, Var> result = createVarMap(a, b).findFirst().map(x -> x.getVarMap()).orElse(null);
+//        return result;
+//    }
+//
+//    public static Stream<ExprMapSolution> createVarMap(Expr a, Expr b) {
+//        Stream<ExprMapSolution> result = createVarMap(a, b, Collections.emptyMap());
+//        return result;
+//    }
 
     /**
      *

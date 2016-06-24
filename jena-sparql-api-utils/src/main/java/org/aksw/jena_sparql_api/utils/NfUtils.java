@@ -27,7 +27,7 @@ public class NfUtils {
     
     public static Set<Set<Expr>> canonicalize(Iterable<? extends Iterable<? extends Expr>> clauses) {
         Set<Set<Expr>> result = StreamSupport.stream(clauses.spliterator(), false)
-            .map(clause -> ClauseUtils.canonicalize(clause))
+            .map(clause -> ClauseUtils.signaturize(clause))
             .collect(Collectors.toSet());
         
         return result;
@@ -42,7 +42,7 @@ public class NfUtils {
         Multimap<Set<Expr>, Set<Expr>> result = HashMultimap.create();
 
         for(Iterable<? extends Expr> clause : clauses) {
-            Set<Expr> clazz = ClauseUtils.canonicalize(clause);
+            Set<Expr> clazz = ClauseUtils.signaturize(clause);
             result.put(clazz, SetUtils.asSet((Set<Expr>)clause));
         }
 

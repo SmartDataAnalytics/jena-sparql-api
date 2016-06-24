@@ -34,15 +34,15 @@ public class ProblemFactoryOpMapping
         return result;
     }
 
-    public static Problem<Map<Var, Var>> create(OpFilter a, OpFilter b, Map<Var, Var> baseSolution) {
-        Set<Set<Expr>> acnf = CnfUtils.toSetCnf(a.getExprs());
-        Set<Set<Expr>> bcnf = CnfUtils.toSetCnf(b.getExprs());
-        //List<Quad> aqp = a.getPattern().getList();
-        //List<Quad> bqp = b.getPattern().getList();
-        Problem<Map<Var, Var>> result = new ProblemVarMappingExpr(acnf, bcnf, baseSolution);
-        return result;
-    }
-
+//    public static Problem<Map<Var, Var>> create(OpFilter a, OpFilter b, Map<Var, Var> baseSolution) {
+//        Set<Set<Expr>> acnf = CnfUtils.toSetCnf(a.getExprs());
+//        Set<Set<Expr>> bcnf = CnfUtils.toSetCnf(b.getExprs());
+//        //List<Quad> aqp = a.getPattern().getList();
+//        //List<Quad> bqp = b.getPattern().getList();
+//        Problem<Map<Var, Var>> result = new ProblemVarMappingExpr(acnf, bcnf, baseSolution);
+//        return result;
+//    }
+//
 
 
 

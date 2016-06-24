@@ -697,20 +697,20 @@ public class SparqlCacheUtils {
 
 
 
-    public static QuadFilterPattern canonicalize(QuadFilterPattern qfp, Generator<Var> generator) {
-        QuadFilterPatternCanonical tmp = replaceConstants(qfp.getQuads(), generator);
-        Set<Set<Expr>> cnf = CnfUtils.toSetCnf(qfp.getExpr());
-        cnf.addAll(tmp.getFilterCnf());
-        QuadFilterPatternCanonical canonical = new QuadFilterPatternCanonical(tmp.getQuads(), cnf);
-
-
-        //QuadFilterPatternCanonical qfpc = summarize(qfp).getCanonicalPattern();
-
-//        QuadFilterPatternCanonical tmp = canonicalize(qfpc, generator);
-        QuadFilterPattern result = canonical.toQfp();
-
-        return result;
-    }
+//    public static QuadFilterPattern canonicalize(QuadFilterPattern qfp, Generator<Var> generator) {
+//        QuadFilterPatternCanonical tmp = replaceConstants(qfp.getQuads(), generator);
+//        Set<Set<Expr>> cnf = CnfUtils.toSetCnf(qfp.getExpr());
+//        cnf.addAll(tmp.getFilterCnf());
+//        QuadFilterPatternCanonical canonical = new QuadFilterPatternCanonical(tmp.getQuads(), cnf);
+//
+//
+//        //QuadFilterPatternCanonical qfpc = summarize(qfp).getCanonicalPattern();
+//
+////        QuadFilterPatternCanonical tmp = canonicalize(qfpc, generator);
+//        QuadFilterPattern result = canonical.toQfp();
+//
+//        return result;
+//    }
 
     public static QuadFilterPatternCanonical canonicalize2(QuadFilterPattern qfp, Generator<Var> generator) {
         QuadFilterPatternCanonical tmp = replaceConstants(qfp.getQuads(), generator);
