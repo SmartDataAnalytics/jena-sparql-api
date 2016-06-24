@@ -1,17 +1,22 @@
 package org;
 
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
+import org.aksw.isomorphism.IsoMapUtils;
 import org.aksw.isomorphism.Problem;
+import org.aksw.isomorphism.ProblemContainer;
+import org.aksw.isomorphism.ProblemContainerImpl;
+import org.aksw.isomorphism.StateProblemContainer;
 import org.aksw.jena_sparql_api.concept_cache.collection.ContainmentMap;
 import org.aksw.jena_sparql_api.concept_cache.collection.ContainmentMapImpl;
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.ProblemVarMappingExpr;
@@ -21,10 +26,10 @@ import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.stmt.SparqlElementParser;
 import org.aksw.jena_sparql_api.stmt.SparqlElementParserImpl;
-import org.aksw.jena_sparql_api.utils.CnfUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
-import org.aksw.jena_sparql_api.utils.Vars;
+import org.aksw.state_space_search.core.State;
+import org.aksw.state_space_search.core.StateSearchUtils;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
@@ -89,6 +94,8 @@ public class TestStateSpaceSearch {
         ContainmentMap<Expr, Multimap<Expr, Expr>> cacheIndex = indexDnf(cacheQfpc.getFilterDnf());
         ContainmentMap<Expr, Multimap<Expr, Expr>> queryIndex = indexDnf(queryQfpc.getFilterDnf());
 
+
+        Collection<Problem<Map<Var, Var>>> problems = new ArrayList<>();
         for(Entry<Set<Expr>, Collection<Multimap<Expr, Expr>>> entry : queryIndex.entrySet()) {
             Set<Expr> querySig = entry.getKey();
             Collection<Multimap<Expr, Expr>> queryMaps = entry.getValue();
@@ -102,30 +109,45 @@ public class TestStateSpaceSearch {
                 for(Multimap<Expr, Expr> queryMap : queryMaps) {
                     Map<Expr, Entry<Set<Expr>, Set<Expr>>> group = ProblemVarMappingQuad.groupByKey(cacheMap.asMap(), queryMap.asMap());
 
-                    Stream<Map<Var, Var>> varMapStream = group.values().stream()
-                        .flatMap(x -> {
+                    Collection<Problem<Map<Var, Var>>> localProblems = group.values().stream()
+                        .map(x -> {
                             Set<Expr> cacheExprs = x.getKey();
                             Set<Expr> queryExprs = x.getValue();
                             Problem<Map<Var, Var>> p = new ProblemVarMappingExpr(cacheExprs, queryExprs, null);
 
-                            System.out.println("cacheExprs: " + cacheExprs);
-                            System.out.println("queryExprs: " + queryExprs);
+                            //System.out.println("cacheExprs: " + cacheExprs);
+                            //System.out.println("queryExprs: " + queryExprs);
 
-                            Stream<Map<Var, Var>> r = p.generateSolutions();
+                            //Stream<Map<Var, Var>> r = p.generateSolutions();
 
-                            return r;
-                        });
+                            return p;
+                        })
+                        .collect(Collectors.toList());
 
-                    varMapStream.forEach(y -> System.out.println("GOT SOLUTION: " + y));
+                    problems.addAll(localProblems);
+                    //problems.stream().forEach(p -> System.out.println("COMPLEX: " + p.getEstimatedCost()));
+
+
+                    //problemStream.forEach(y -> System.out.println("GOT SOLUTION: " + y));
 
 
 
-                    System.out.println("    QUERY MAP: " + queryMap);
+                    //System.out.println("    QUERY MAP: " + queryMap);
                 }
             }
 
             //cands.forEach(x -> System.out.println("CAND: " + x.getValue()));
         }
+
+        ProblemContainer<Map<Var, Var>> container = ProblemContainerImpl.create(problems);
+        State<Map<Var, Var>> state = new StateProblemContainer<Map<Var, Var>>(null, container, (a, b) -> IsoMapUtils.mergeInPlaceIfCompatible(a, b));
+        Stream<Map<Var, Var>> xxx = StateSearchUtils.depthFirstSearch(state, 10000);
+
+        xxx.forEach(x -> System.out.println("SOLUTION: " + x));
+
+        System.out.println("PROBLEMS: " + problems.size());
+
+
 
 
 //        System.out.println(cacheSigToExprs);
@@ -182,6 +204,13 @@ public class TestStateSpaceSearch {
 
         System.out.println("Candidates: " + candidates);
 
+
+        problems.forEach(p -> System.out.println("SOLUTIONS for " + p + " " + p.generateSolutions().collect(Collectors.toList())));
+
+
+        //ProblemContainerImpl<Map<Var, Var>> container = ProblemContainerImpl.create(problems);
+        //container.
+
 //        ContainmentMap<Set<Expr>, Quad> clauseToQuads = new ContainmentMapImpl<>();
 //        for(Entry<Quad, Set<Set<Expr>>> entry : index.entries()) {
 //            clauseToQuads.put(entry.getValue(), entry.getKey());
@@ -197,12 +226,12 @@ public class TestStateSpaceSearch {
         //QuadFilterPatternCanonical
 
 
-        Expr a = ExprUtils.parse("(?z = ?x + 1)");
-        Expr b = ExprUtils.parse("?a = ?b || (?c = ?a + 1) && (?k = ?i + 1)");
+//        Expr a = ExprUtils.parse("(?z = ?x + 1)");
+//        Expr b = ExprUtils.parse("?a = ?b || (?c = ?a + 1) && (?k = ?i + 1)");
         //Expr b = ExprUtils.parse("?x = ?y || (?z = ?x + 1)");
-
-        Set<Set<Expr>> ac = CnfUtils.toSetCnf(b);
-        Set<Set<Expr>> bc = CnfUtils.toSetCnf(a);
+//
+//        Set<Set<Expr>> ac = CnfUtils.toSetCnf(b);
+//        Set<Set<Expr>> bc = CnfUtils.toSetCnf(a);
 
 //        Problem<Map<Var, Var>> p = new ProblemVarMappingExpr(ac, bc, Collections.emptyMap());
 //
@@ -210,16 +239,16 @@ public class TestStateSpaceSearch {
 //        System.out.println(p.getEstimatedCost());
 //        ProblemVarMappingExpr.createVarMap(a, b).forEach(x -> System.out.println(x));
 
-        Collection<Quad> as = Arrays.asList(new Quad(Vars.g, Vars.s, Vars.p, Vars.o));
-        Collection<Quad> bs = Arrays.asList(new Quad(Vars.l, Vars.x, Vars.y, Vars.z));
-
-
-        //Collection<Quad> cq =
-        System.out.println("q");
-        Problem<Map<Var, Var>> q = new ProblemVarMappingQuad(as, bs, Collections.emptyMap());
-        System.out.println(q.getEstimatedCost());
-
-        q.generateSolutions().forEach(x -> System.out.println(x));
+//        Collection<Quad> as = Arrays.asList(new Quad(Vars.g, Vars.s, Vars.p, Vars.o));
+//        Collection<Quad> bs = Arrays.asList(new Quad(Vars.l, Vars.x, Vars.y, Vars.z));
+//
+//
+//        //Collection<Quad> cq =
+//        System.out.println("q");
+//        Problem<Map<Var, Var>> q = new ProblemVarMappingQuad(as, bs, Collections.emptyMap());
+//        System.out.println(q.getEstimatedCost());
+//
+//        q.generateSolutions().forEach(x -> System.out.println(x));
 
 
         //Maps.com

@@ -6,6 +6,8 @@ import java.util.List;
 import org.apache.jena.sparql.core.Var;
 
 public class Vars {
+    public static final Var signaturePlaceholder = Var.alloc("__signature_placeholder__");
+
     public static final Var a = Var.alloc("a");
     public static final Var b = Var.alloc("b");
     public static final Var c = Var.alloc("c");

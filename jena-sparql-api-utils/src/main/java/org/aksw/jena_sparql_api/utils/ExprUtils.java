@@ -184,7 +184,20 @@ public class ExprUtils {
      * @param expr
      */
     public static Expr signaturize(Expr expr) {
-        NodeTransform nodeTransform = (node) -> node.isVariable() ? Vars.a : node;
+        NodeTransform nodeTransform = (node) -> node.isVariable() ? Vars.signaturePlaceholder : node;
+        Expr result = transform(expr, nodeTransform);
+        return result;
+    }
+
+    public static Expr signaturize(Expr expr, Map<? extends Node, ? extends Node> nodeMap) {
+        NodeTransform nodeTransform = (node) -> {
+            Node remap = nodeMap.get(node);
+            Node r = remap == null
+                    ? (node.isVariable() ? Vars.signaturePlaceholder : node)
+                    : remap
+                    ;
+            return r;
+        };
         Expr result = transform(expr, nodeTransform);
         return result;
     }

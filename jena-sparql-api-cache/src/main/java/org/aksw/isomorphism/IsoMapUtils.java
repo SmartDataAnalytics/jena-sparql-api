@@ -105,4 +105,24 @@ public class IsoMapUtils {
         }
         return result;
     }
+
+    /**
+    *
+    *
+    * @param base the map being changed in place - may be null
+    * @param addition the mappings about to be added
+    * @return the provided map or null if the merge was incompatible
+    */
+   public static <X, Y> Map<X, Y> mergeIfCompatible(Map<X, Y> base, Map<X, Y> addition) {
+       Map<X, Y> result = null;
+       if(base != null && addition != null) {
+           boolean isCompatible = MapUtils.isPartiallyCompatible(base, addition);
+           if(isCompatible) {
+               result = new HashMap<X, Y>();
+               result.putAll(base);
+               result.putAll(addition);
+           }
+       }
+       return result;
+   }
 }

@@ -5,7 +5,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -13,12 +15,16 @@ import java.util.stream.Stream;
 import org.aksw.commons.collections.MapUtils;
 import org.aksw.isomorphism.IsoMapUtils;
 import org.aksw.isomorphism.Problem;
+import org.aksw.isomorphism.ProblemUnsolvable;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprFunction;
 import org.apache.jena.sparql.expr.FunctionLabel;
 import org.apache.jena.sparql.expr.NodeValue;
+
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 
 // Multimap<Set<Set<>>>
 // ContainmentMap
@@ -85,9 +91,50 @@ public class ProblemVarMappingExpr
         return result;
     }
 
+    /**
+     *
+     * { (?a = ?b) } vs { (?x = ?y) }
+     *
+     * if partialSolution contained ?a -> ?z, then
+     *
+     *
+     *
+     */
     @Override
     public Collection<Problem<Map<Var, Var>>> refine(Map<Var, Var> partialSolution) {
-        return Collections.singleton(this);
+
+        Collection<Problem<Map<Var, Var>>> result;
+
+        boolean isCompatible = MapUtils.isPartiallyCompatible(baseSolution, partialSolution);
+        if(!isCompatible) {
+            result = Collections.emptySet(); //Collections.singleton(new ProblemUnsolvable<>());
+        } else {
+
+            Map<Var, Var> newBase = new HashMap<>();
+            newBase.putAll(baseSolution);
+            newBase.putAll(partialSolution);
+
+            Multimap<Expr, Expr> sigToAs = HashMultimap.create();
+            as.forEach(e -> {
+                Expr sig = ExprUtils.signaturize(e, partialSolution);
+                sigToAs.put(sig, e);
+            });
+
+            Map<Var, Var> identity = partialSolution.values().stream().collect(Collectors.toMap(x -> x, x -> x));
+            Multimap<Expr, Expr> sigToBs = HashMultimap.create();
+            bs.forEach(e -> {
+                Expr sig = ExprUtils.signaturize(e, identity);
+                sigToBs.put(sig, e);
+            });
+
+            Map<Expr, Entry<Set<Expr>, Set<Expr>>> group = ProblemVarMappingQuad.groupByKey(sigToAs.asMap(), sigToBs.asMap());
+
+            result = group.values().stream()
+                    .map(e -> new ProblemVarMappingExpr(e.getKey(), e.getValue(), newBase))
+                    .collect(Collectors.toList());
+        }
+
+        return result;
     }
 
 //    public static Iterable<Map<Var, Var>> createSolutions(Collection<Expr> as, Collection<Expr> bs, Map<Var, Var> baseSolution) {
@@ -208,6 +255,12 @@ public class ProblemVarMappingExpr
 
         return result;
     }
+
+    @Override
+    public String toString() {
+        return super.toString();
+    }
+
 
 
 }

@@ -99,7 +99,12 @@ public class ProblemContainerImpl<S>
     @SafeVarargs
     public static <S> ProblemContainerImpl<S> create(Problem<S> ... problems) {
         Collection<Problem<S>> tmp = Arrays.asList(problems);
-        TreeMultimap<Long, Problem<S>> sizeToProblem = IsoUtils.indexSolutionGenerators(tmp);
+        ProblemContainerImpl<S> result = create(tmp);
+        return result;
+    }
+
+    public static <S> ProblemContainerImpl<S> create(Collection<Problem<S>> problems) {
+        TreeMultimap<Long, Problem<S>> sizeToProblem = IsoUtils.indexSolutionGenerators(problems);
         ProblemContainerImpl<S> result = new ProblemContainerImpl<>(sizeToProblem);
         return result;
     }

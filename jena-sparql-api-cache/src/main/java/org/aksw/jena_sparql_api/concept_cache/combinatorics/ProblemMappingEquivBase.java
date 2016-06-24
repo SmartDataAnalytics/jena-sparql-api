@@ -53,6 +53,13 @@ public abstract class ProblemMappingEquivBase<A, B, X, Y>
         return Collections.singleton(this);
     }
 
+    @Override
+    public String toString() {
+        return "ProblemMappingEquivBase [as=" + as + ", bs=" + bs
+                + ", baseSolution=" + baseSolution + "]";
+    }
+
+
 //  public static Collection<Problem<Map<Var, Var>>> createProblems(    protected Entry<? extends Collection<Quad>, ? extends Collection<Quad>> quadGroup;
 //) {
 //
