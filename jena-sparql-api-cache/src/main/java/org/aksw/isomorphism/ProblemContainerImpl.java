@@ -1,12 +1,15 @@
 package org.aksw.isomorphism;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map.Entry;
+import java.util.NavigableMap;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.TreeMultimap;
 
 /**
  * A simple cost based problem container implementation.
@@ -26,10 +29,9 @@ import com.google.common.collect.TreeMultimap;
 public class ProblemContainerImpl<S>
     implements ProblemContainer<S>
 {
-    protected TreeMultimap<? extends Comparable<?>, Problem<S>> sizeToProblem;
+    protected NavigableMap<? extends Comparable<?>, Collection<Problem<S>>> sizeToProblem;
 
-    public ProblemContainerImpl(
-            TreeMultimap<? extends Comparable<?>, Problem<S>> sizeToProblem) {
+    public ProblemContainerImpl(NavigableMap<? extends Comparable<?>, Collection<Problem<S>>> sizeToProblem) {
         super();
         this.sizeToProblem = sizeToProblem;
     }
@@ -53,13 +55,21 @@ public class ProblemContainerImpl<S>
     public ProblemContainerPick<S> pick() {
         ProblemContainerPick<S> result;
 
-        Entry<? extends Comparable<?>, Collection<Problem<S>>> currEntry = sizeToProblem.asMap().firstEntry();
+        Entry<? extends Comparable<?>, Collection<Problem<S>>> currEntry = sizeToProblem.firstEntry();
         if(currEntry != null) {
             Comparable<?> pickedKey = currEntry.getKey();
             Problem<S> pickedProblem = Iterables.getFirst(currEntry.getValue(), null);
 
-            TreeMultimap<Comparable<?>, Problem<S>> remaining = TreeMultimap.create(sizeToProblem);
-            remaining.remove(pickedKey, pickedProblem);
+
+
+
+            NavigableMap<Comparable<?>, Collection<Problem<S>>> remaining = new TreeMap<>();
+            sizeToProblem.forEach((k, v) -> {
+                Collection<Problem<S>> ps = v.stream().filter(i -> i == pickedProblem).collect(Collectors.toList());
+                remaining.computeIfAbsent(k, (x) -> new ArrayList<Problem<S>>()).addAll(ps);
+            });
+                    //ArrayListMultimap.create(sizeToProblem);
+            //remaining.remove(pickedKey, pickedProblem);
 
             ProblemContainerImpl<S> r = new ProblemContainerImpl<>(remaining);
 
@@ -79,11 +89,12 @@ public class ProblemContainerImpl<S>
      */
     public ProblemContainerImpl<S> refine(S partialSolution) {
         Collection<Problem<S>> tmp = sizeToProblem.values().stream()
+            .flatMap(x -> x.stream())
             .map(problem -> problem.refine(partialSolution))
             .flatMap(x -> x.stream())
             .collect(Collectors.toList());
 
-        TreeMultimap<Long, Problem<S>> sizeToProblem = IsoUtils.indexSolutionGenerators(tmp);
+        NavigableMap<Long, Collection<Problem<S>>> sizeToProblem = IsoUtils.indexSolutionGenerators(tmp);
         ProblemContainerImpl<S> result = new ProblemContainerImpl<S>(sizeToProblem);
 
         return result;
@@ -104,7 +115,7 @@ public class ProblemContainerImpl<S>
     }
 
     public static <S> ProblemContainerImpl<S> create(Collection<Problem<S>> problems) {
-        TreeMultimap<Long, Problem<S>> sizeToProblem = IsoUtils.indexSolutionGenerators(problems);
+        NavigableMap<Long, Collection<Problem<S>>> sizeToProblem = IsoUtils.indexSolutionGenerators(problems);
         ProblemContainerImpl<S> result = new ProblemContainerImpl<>(sizeToProblem);
         return result;
     }

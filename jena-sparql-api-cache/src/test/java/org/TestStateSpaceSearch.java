@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -140,7 +141,7 @@ public class TestStateSpaceSearch {
         }
 
         ProblemContainer<Map<Var, Var>> container = ProblemContainerImpl.create(problems);
-        State<Map<Var, Var>> state = new StateProblemContainer<Map<Var, Var>>(null, container, (a, b) -> IsoMapUtils.mergeInPlaceIfCompatible(a, b));
+        State<Map<Var, Var>> state = new StateProblemContainer<Map<Var, Var>>(Collections.emptyMap(), container, (a, b) -> IsoMapUtils.mergeInPlaceIfCompatible(a, b));
         Stream<Map<Var, Var>> xxx = StateSearchUtils.depthFirstSearch(state, 10000);
 
         xxx.forEach(x -> System.out.println("SOLUTION: " + x));

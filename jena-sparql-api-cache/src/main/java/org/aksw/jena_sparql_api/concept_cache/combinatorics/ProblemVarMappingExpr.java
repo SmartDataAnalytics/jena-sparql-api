@@ -88,6 +88,15 @@ public class ProblemVarMappingExpr
                 (x, y, bs) -> { return createVarMap(x, y, bs).map(z -> z.getVarMap()); },
                 baseSolution);
 
+        Collection<Map<Var, Var>> tmp = result.collect(Collectors.toList());
+        System.out.println("VARMAP: " + tmp);
+        result = tmp.stream();
+
+        if(tmp.isEmpty()) {
+            result = Stream.of(Collections.emptyMap());
+        }
+
+
         return result;
     }
 

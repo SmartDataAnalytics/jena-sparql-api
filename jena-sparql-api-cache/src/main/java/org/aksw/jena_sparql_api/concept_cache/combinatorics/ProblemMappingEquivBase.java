@@ -29,6 +29,7 @@ public abstract class ProblemMappingEquivBase<A, B, X, Y>
         super();
         this.as = as;
         this.bs = bs;
+        this.baseSolution = baseSolution;
     }
 
     @Override
