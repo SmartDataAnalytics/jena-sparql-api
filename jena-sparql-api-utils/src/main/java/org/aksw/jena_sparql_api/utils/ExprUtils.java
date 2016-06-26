@@ -28,6 +28,7 @@ import org.apache.jena.sparql.expr.ExprTransformer;
 import org.apache.jena.sparql.expr.FunctionLabel;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.graph.NodeTransform;
+import org.apache.jena.sparql.graph.NodeTransformLib;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
 import org.apache.jena.sparql.syntax.syntaxtransform.ExprTransformNodeElement;
 
@@ -184,37 +185,32 @@ public class ExprUtils {
      * @param expr
      */
     public static Expr signaturize(Expr expr) {
-        NodeTransform nodeTransform = (node) -> node.isVariable() ? Vars.signaturePlaceholder : node;
-        Expr result = transform(expr, nodeTransform);
+        NodeTransform nodeTransform = new NodeTransformSignaturize();
+        Expr result = NodeTransformLib.transform(nodeTransform, expr);
         return result;
     }
 
     public static Expr signaturize(Expr expr, Map<? extends Node, ? extends Node> nodeMap) {
-        NodeTransform nodeTransform = (node) -> {
-            Node remap = nodeMap.get(node);
-            Node r = remap == null
-                    ? (node.isVariable() ? Vars.signaturePlaceholder : node)
-                    : remap
-                    ;
-            return r;
-        };
-        Expr result = transform(expr, nodeTransform);
+        NodeTransform baseTransform = new NodeTransformRenameMap(nodeMap);
+        NodeTransform nodeTransform = new NodeTransformSignaturize(baseTransform);
+        Expr result = NodeTransformLib.transform(nodeTransform, expr);
         return result;
     }
 
-    public static Expr transform(Expr expr, Map<? extends Node, ? extends Node> nodeMap) {
-        NodeTransform nodeTransform = new NodeTransformRenameMap(nodeMap);
-        Expr result = transform(expr, nodeTransform);
-        return result;
-    }
+//    public static Expr applyNodeTransform(Expr expr, Map<? extends Node, ? extends Node> nodeMap) {
+//        NodeTransform nodeTransform = new NodeTransformRenameMap(nodeMap);
+//        Expr result = NodeTransformLib.transform(nodeTransform, expr);
+//        //Expr result = applyNodeTransform(expr, nodeTransform);
+//        return result;
+//    }
 
-    public static Expr transform(Expr expr, NodeTransform nodeTransform) {
-        ElementTransform elementTransform = new ElementTransformSubst2(nodeTransform);
-        ExprTransform exprTransform = new ExprTransformNodeElement(nodeTransform, elementTransform);
-
-        Expr result = ExprTransformer.transform(exprTransform, expr);
-        return result;
-    }
+//    public static Expr applyNodeTransform(Expr expr, NodeTransform nodeTransform) {
+//        ElementTransform elementTransform = new ElementTransformSubst2(nodeTransform);
+//        ExprTransform exprTransform = new ExprTransformNodeElement(nodeTransform, elementTransform);
+//
+//        Expr result = ExprTransformer.transform(exprTransform, expr);
+//        return result;
+//    }
 
 
 

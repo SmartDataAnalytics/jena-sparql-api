@@ -9,19 +9,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import org.aksw.commons.collections.MapUtils;
 import org.aksw.commons.collections.SetUtils;
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
 import org.aksw.isomorphism.Problem;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.utils.ClauseUtils;
-import org.aksw.jena_sparql_api.utils.MapUtils;
+import org.aksw.jena_sparql_api.utils.NodeTransformSignaturize;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.graph.NodeTransform;
+import org.apache.jena.sparql.graph.NodeTransformLib;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -63,12 +67,51 @@ public class ProblemVarMappingQuad
 
     @Override
     public Collection<Problem<Map<Var, Var>>> refine(Map<Var, Var> partialSolution) {
-        Map<Var, Var> map = MapUtils.mergeIfCompatible(baseSolution, partialSolution);
 
         Collection<Problem<Map<Var, Var>>> result;
-        if(map == null) {
-            result = Collections.emptySet();
+
+        boolean isCompatible = MapUtils.isPartiallyCompatible(baseSolution, partialSolution);
+        if(!isCompatible) {
+            result = Collections.emptySet(); //Collections.singleton(new ProblemUnsolvable<>());
         } else {
+
+            Map<Var, Var> newBase = new HashMap<>();
+            newBase.putAll(baseSolution);
+            newBase.putAll(partialSolution);
+
+            NodeTransform signaturizer = NodeTransformSignaturize.create(partialSolution);
+
+            Multimap<Quad, Quad> sigToAs = HashMultimap.create();
+            as.forEach(q -> {
+                Quad sig = NodeTransformLib.transform(signaturizer, q);
+                sigToAs.put(sig, q);
+            });
+
+            Map<Var, Var> identity = partialSolution.values().stream().collect(Collectors.toMap(x -> x, x -> x));
+            NodeTransform s2 = NodeTransformSignaturize.create(identity);
+            Multimap<Quad, Quad> sigToBs = HashMultimap.create();
+            bs.forEach(q -> {
+                Quad sig = NodeTransformLib.transform(s2, q);
+                sigToBs.put(sig, q);
+            });
+
+            Map<Quad, Entry<Set<Quad>, Set<Quad>>> group = ProblemVarMappingQuad.groupByKey(sigToAs.asMap(), sigToBs.asMap());
+
+            result = group.values().stream()
+                    .map(e -> new ProblemVarMappingQuad(e.getKey(), e.getValue(), newBase))
+                    .collect(Collectors.toList());
+        }
+
+        return result;
+
+
+
+//        Map<Var, Var> map = MapUtils.mergeIfCompatible(baseSolution, partialSolution);
+//
+//        Collection<Problem<Map<Var, Var>>> result;
+//        if(map == null) {
+//            result = Collections.emptySet();
+//        } else {
             // TODO: Split the quads into equivalent classes
 
 // From SparqlViewCache
@@ -78,15 +121,13 @@ public class ProblemVarMappingQuad
 //                // TODO: We need the quadToCnf map for the queryPs
 //                IBiSetMultimap<Quad, Set<Set<Expr>>> queryQuadToCnf = SparqlCacheUtils.createMapQuadsToFilters(queryQfpc);
 
-            result = null;
-        }
+//            result = null;
+//        }
 
 //         = map == null
 //                ? Collections.emptySet()
 //                : Collections.singleton(new ProblemVarMappingQuad(as, bs, map))
 //                ;
-
-        return result;
     }
 
 

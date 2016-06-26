@@ -142,6 +142,9 @@ public class TestStateSpaceSearch {
             //cands.forEach(x -> System.out.println("CAND: " + x.getValue()));
         }
 
+        ProblemVarMappingQuad quadProblem = new ProblemVarMappingQuad(cacheQfpc.getQuads(), queryQfpc.getQuads(), Collections.emptyMap());
+        problems.add(quadProblem);
+
         for(int i = 0; i < 100; ++i) {
             Stopwatch sw = Stopwatch.createStarted();
 
@@ -175,15 +178,16 @@ public class TestStateSpaceSearch {
 
 
         //ClauseUtils.signaturize(clause)
+        IBiSetMultimap<Quad, Set<Set<Expr>>> queryQuadIndex = SparqlCacheUtils.createMapQuadsToFilters(queryQfpc);
 
-        IBiSetMultimap<Quad, Set<Set<Expr>>> index = SparqlCacheUtils.createMapQuadsToFilters(cacheQfpc);
-        System.out.println("Index: " + index);
+        IBiSetMultimap<Quad, Set<Set<Expr>>> cacheQuadIndex = SparqlCacheUtils.createMapQuadsToFilters(cacheQfpc);
+        System.out.println("Index: " + cacheIndex);
 
         // Features are objects that describe view
         // A query needs to cover all features of view
         // so it must hold that |featuresOf(query)| >= |featuresOf(cache)|
         Set<Object> features = new HashSet<Object>();
-        index.asMap().values().stream().flatMap(cnfs -> cnfs.stream())
+        cacheQuadIndex.asMap().values().stream().flatMap(cnfs -> cnfs.stream())
             .flatMap(cnf -> cnf.stream())
             .filter(clause -> clause.size() == 1)
             .flatMap(clause -> clause.stream())
@@ -282,6 +286,29 @@ public class TestStateSpaceSearch {
 
         //p.generateSolutions().forEach(x -> System.out.println(x));
     }
+
+
+//    public static ContainmentMap<Int, Multimap<Expr, Expr>> indexDnf(QuadFilterPatternCanonical qfpc) {
+//        IBiSetMultimap<Quad, Set<Set<Expr>>> index = SparqlCacheUtils.createMapQuadsToFilters(qfpc);
+//
+//        IBiSetMultimap<Set<Set<Expr>>, Quad> map = index.getInverse();
+//
+//        ContainmentMap<Expr, Multimap<Expr, Expr>> result = new ContainmentMapImpl<>();
+//        for(Set<Expr> clause : dnf) {
+//            Multimap<Expr, Expr> exprSigToExpr = HashMultimap.create();
+//            Set<Expr> clauseSig = new HashSet<>();
+//            for(Expr expr : clause) {
+//                Expr exprSig = org.aksw.jena_sparql_api.utils.ExprUtils.signaturize(expr);
+//                exprSigToExpr.put(exprSig, expr);
+//                clauseSig.add(exprSig);
+//            }
+//
+//            //Set<Expr> clauseSig = ClauseUtils.signaturize(clause);
+//            result.put(clauseSig, exprSigToExpr);
+//        }
+//
+//        return result;
+//    }
 
 
     public static ContainmentMap<Expr, Multimap<Expr, Expr>> indexDnf(Set<Set<Expr>> dnf) {

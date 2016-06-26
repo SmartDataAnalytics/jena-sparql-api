@@ -853,7 +853,7 @@ public class SparqlCacheUtils {
      */
     public static IBiSetMultimap<Quad, Set<Set<Expr>>> createMapQuadsToFilters(QuadFilterPatternCanonical qfpc) {
         Set<Quad> quads = qfpc.getQuads();
-        Set<Set<Expr>> filterCnf = qfpc.getFilterCnf();
+        Set<Set<Expr>> filterCnf = qfpc.getFilterDnf();
 
         IBiSetMultimap<Quad, Set<Set<Expr>>> result = createMapQuadsToFilters(quads, filterCnf);
         return result;

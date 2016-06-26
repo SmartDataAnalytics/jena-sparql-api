@@ -11,7 +11,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.aksw.commons.collections.MapUtils;
-
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.core.Quad;
@@ -20,12 +19,32 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingHashMap;
 import org.apache.jena.sparql.graph.NodeTransform;
+import org.apache.jena.sparql.graph.NodeTransformLib;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementNamedGraph;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 
 public class QuadUtils {
+
+    /**
+     * Replace all variable names with the same variable (?a in this case).
+     * Useful for checking whether two expressions are structurally equivalent.
+     *
+     * @param expr
+     */
+//    public static QuadPattern signaturize(Quad quad) {
+//        NodeTransform nodeTransform = new NodeTransformSignaturize();
+//        QuadPattern result = NodeTransformLib.transform(nodeTransform, quad);
+//        return result;
+//    }
+//
+//    public static QuadPattern signaturize(QuadPattern quadPattern, Map<? extends Node, ? extends Node> nodeMap) {
+//        NodeTransform baseTransform = new NodeTransformRenameMap(nodeMap);
+//        NodeTransform nodeTransform = new NodeTransformSignaturize(baseTransform);
+//        QuadPattern result = NodeTransformLib.transform(nodeTransform, quadPattern);
+//        return result;
+//    }
 
 
     public static Map<Node, Set<Quad>> partitionByGraph(Iterable<Quad> quads) {
@@ -240,7 +259,7 @@ public class QuadUtils {
     public static Quad arrayToQuad(Node[] nodes) {
         return new Quad(nodes[0], nodes[1], nodes[2], nodes[3]);
     }
-    
+
     public static Node[] quadToArray(Quad quad) {
        return new Node[] { quad.getGraph(), quad.getSubject(), quad.getPredicate(), quad.getObject() };
     }
