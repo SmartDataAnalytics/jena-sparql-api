@@ -159,7 +159,7 @@ public class TestStateSpaceSearch {
                 NodeTransform nodeTransform = new NodeTransformRenameMap(m);
                 QuadFilterPatternCanonical foo = cacheQfpc.applyNodeTransform(nodeTransform);
                 QuadFilterPatternCanonical diff = queryQfpc.diff(foo);
-                System.out.println("DIFF: " + diff);
+                System.out.println("DIFF: " + diff + "\nfrom cache " + foo + "\nand query " + queryQfpc);
             }
 
             //xxx.forEach(x -> System.out.println("SOLUTION: " + x));

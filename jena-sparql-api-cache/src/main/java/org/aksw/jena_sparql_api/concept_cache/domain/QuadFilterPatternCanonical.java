@@ -96,8 +96,8 @@ public class QuadFilterPatternCanonical {
     }
 
     public QuadFilterPatternCanonical diff(QuadFilterPatternCanonical other) {
-        Set<Quad> newQuads = new HashSet<Quad>(Sets.difference(other.quads, quads));
-        Set<Set<Expr>> newCnf = new HashSet<Set<Expr>>(Sets.difference(other.filterCnf, filterCnf));
+        Set<Quad> newQuads = new HashSet<Quad>(Sets.difference(quads, other.quads));
+        Set<Set<Expr>> newCnf = new HashSet<Set<Expr>>(Sets.difference(filterCnf, other.filterCnf));
 
         QuadFilterPatternCanonical result = new QuadFilterPatternCanonical(newQuads, newCnf);
         return result;
