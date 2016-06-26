@@ -40,7 +40,7 @@ public class ProblemVarMappingQuad
 
     // The canonical cnf common to both sets of quads (essentially this is the key by which the quads were grouped)
     // This is obtained by remapping all variables of aCnf and bCnf with the same specific constant
-    protected Set<Set<Expr>> canonicalCnf;
+    //protected Set<Set<Expr>> canonicalCnf;
 
     /**
      * The constraints that apply to the given quads
@@ -49,14 +49,14 @@ public class ProblemVarMappingQuad
 
     public ProblemVarMappingQuad(Collection<? extends Quad> as, Collection<? extends Quad> bs, Map<Var, Var> baseSolution) {
         super(as, bs, baseSolution);
-        throw new RuntimeException("Should not be used anymore");
+        //throw new RuntimeException("Should not be used anymore");
     }
 
-    public ProblemVarMappingQuad(Collection<? extends Quad> as, Set<Set<Expr>> aCnf, Collection<? extends Quad> bs, Set<Set<Expr>> bCnf, Map<Var, Var> baseSolution) {
-        super(as, bs, baseSolution);
-        this.aCnf = aCnf;
-        this.bCnf = bCnf;
-    }
+//    public ProblemVarMappingQuad(Collection<? extends Quad> as, Set<Set<Expr>> aCnf, Collection<? extends Quad> bs, Set<Set<Expr>> bCnf, Map<Var, Var> baseSolution) {
+//        super(as, bs, baseSolution);
+//        this.aCnf = aCnf;
+//        this.bCnf = bCnf;
+//    }
 
     @Override
     public Stream<Map<Var, Var>> generateSolutions() {
