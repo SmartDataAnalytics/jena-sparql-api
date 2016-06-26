@@ -121,7 +121,6 @@ public class ProblemVarMappingExpr
         if(!isCompatible) {
             result = Collections.emptySet(); //Collections.singleton(new ProblemUnsolvable<>());
         } else {
-
             Map<Var, Var> newBase = new HashMap<>();
             newBase.putAll(baseSolution);
             newBase.putAll(partialSolution);

@@ -34,8 +34,17 @@ public class ActionProblemContainer<S>
         return result;
     }
 
+    @Override
+    public String toString() {
+        return "ActionProblemContainer [problemContainer=" + problemContainer
+                + ", partialSolution=" + partialSolution + ", solutionCombiner="
+                + solutionCombiner + ", cost=" + cost + "]";
+    }
+
 
 //    public static <S> ActionProblemContainer<S> create(S partialSolution, ProblemContainer<S> problemContainer) {
 //        ActionProblemContainer<S> result = new ActionProblemContainer<S>(problemContainer, partialSolution, solu);
 //    }
+
+
 }

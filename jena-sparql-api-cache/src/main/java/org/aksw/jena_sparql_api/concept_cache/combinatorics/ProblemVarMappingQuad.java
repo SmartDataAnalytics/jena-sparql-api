@@ -65,10 +65,23 @@ public class ProblemVarMappingQuad
         return result;
     }
 
+    /**
+     * Signature construction:
+     * - Variables that were already renamed must not be remapped again
+     * - Variables of the 'as' that clash with the renaming (ps.values()) must be renamed first
+     *
+     *
+     */
     @Override
     public Collection<Problem<Map<Var, Var>>> refine(Map<Var, Var> partialSolution) {
 
+//        Set<Var> targetVars = SetUtils.asSet(partialSolution.values());
+//        Set<Var> sourceVars = partialSolution.keySet();
+
+
         Collection<Problem<Map<Var, Var>>> result;
+
+        System.out.println("Refining " + as + " - " + bs + " via " + partialSolution);
 
         boolean isCompatible = MapUtils.isPartiallyCompatible(baseSolution, partialSolution);
         if(!isCompatible) {
@@ -79,7 +92,7 @@ public class ProblemVarMappingQuad
             newBase.putAll(baseSolution);
             newBase.putAll(partialSolution);
 
-            NodeTransform signaturizer = NodeTransformSignaturize.create(partialSolution);
+            NodeTransform signaturizer = NodeTransformSignaturize.create(newBase);//partialSolution);
 
             Multimap<Quad, Quad> sigToAs = HashMultimap.create();
             as.forEach(q -> {
@@ -96,6 +109,11 @@ public class ProblemVarMappingQuad
             });
 
             Map<Quad, Entry<Set<Quad>, Set<Quad>>> group = ProblemVarMappingQuad.groupByKey(sigToAs.asMap(), sigToBs.asMap());
+
+            System.out.println("sigToAs: " + sigToAs);
+            System.out.println("sigToBs: " + sigToBs);
+            group.values().stream().forEach(e ->
+            System.out.println("  Refined to " + e + " from " + as + " - " + bs + " via " + partialSolution));
 
             result = group.values().stream()
                     .map(e -> new ProblemVarMappingQuad(e.getKey(), e.getValue(), newBase))

@@ -29,6 +29,7 @@ import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.stmt.SparqlElementParser;
 import org.aksw.jena_sparql_api.stmt.SparqlElementParserImpl;
 import org.aksw.jena_sparql_api.utils.Generator;
+import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.aksw.state_space_search.core.State;
 import org.aksw.state_space_search.core.StateSearchUtils;
@@ -36,6 +37,7 @@ import org.apache.jena.query.Syntax;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.util.ExprUtils;
 
@@ -143,7 +145,7 @@ public class TestStateSpaceSearch {
         }
 
         ProblemVarMappingQuad quadProblem = new ProblemVarMappingQuad(cacheQfpc.getQuads(), queryQfpc.getQuads(), Collections.emptyMap());
-        //problems.add(quadProblem);
+        problems.add(quadProblem);
 
         for(int i = 0; i < 1; ++i) {
             Stopwatch sw = Stopwatch.createStarted();
@@ -152,7 +154,15 @@ public class TestStateSpaceSearch {
             State<Map<Var, Var>> state = new StateProblemContainer<Map<Var, Var>>(Collections.emptyMap(), container, (a, b) -> IsoMapUtils.mergeIfCompatible(a, b));
             Stream<Map<Var, Var>> xxx = StateSearchUtils.depthFirstSearch(state, 10000);
 
-            xxx.forEach(x -> System.out.println("SOLUTION: " + x));
+            for(Map<Var, Var> m : xxx.collect(Collectors.toList())) {
+                System.out.println("SOLUTION: " + m);
+                NodeTransform nodeTransform = new NodeTransformRenameMap(m);
+                QuadFilterPatternCanonical foo = cacheQfpc.applyNodeTransform(nodeTransform);
+                QuadFilterPatternCanonical diff = queryQfpc.diff(foo);
+                System.out.println("DIFF: " + diff);
+            }
+
+            //xxx.forEach(x -> System.out.println("SOLUTION: " + x));
 
 
             System.out.println("TIME TAKEN: " + sw.stop().elapsed(TimeUnit.MILLISECONDS));

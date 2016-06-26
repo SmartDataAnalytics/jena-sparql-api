@@ -33,7 +33,7 @@ public class NodeTransformSignaturize
     public Node apply(Node node) {
         Node remap = baseTransform.apply(node);
 
-        Node result = remap == null || remap == node
+        Node result = remap == null// || remap == node
                         ? (node.isVariable() ? placeholder : node)
                         : remap
                         ;
@@ -42,7 +42,7 @@ public class NodeTransformSignaturize
     }
 
     public static NodeTransform create(Map<? extends Node, ? extends Node> nodeMap) {
-        NodeTransform baseTransform = new NodeTransformRenameMap(nodeMap);
+        NodeTransform baseTransform = (node) -> nodeMap.get(node);//new NodeTransformRenameMap(nodeMap);
         NodeTransform result = new NodeTransformSignaturize(baseTransform);
         return result;
     }
