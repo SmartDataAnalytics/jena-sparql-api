@@ -33,7 +33,7 @@ public class NodeTransformSignaturize
     public Node apply(Node node) {
         Node remap = baseTransform.apply(node);
 
-        Node result = remap == null
+        Node result = remap == null || remap == node
                         ? (node.isVariable() ? placeholder : node)
                         : remap
                         ;

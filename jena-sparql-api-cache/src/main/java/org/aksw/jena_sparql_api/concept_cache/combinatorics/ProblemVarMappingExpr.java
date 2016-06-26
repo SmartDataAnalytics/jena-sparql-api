@@ -71,6 +71,7 @@ public class ProblemVarMappingExpr
 
     public ProblemVarMappingExpr(Collection<? extends Expr> as, Collection<? extends Expr> bs, Map<Var, Var> baseSolution) {
         super(as, bs, baseSolution);
+        //System.out.println("Created: " + as + " - " + bs);
     }
 
     @Override
@@ -85,11 +86,11 @@ public class ProblemVarMappingExpr
         Stream<Map<Var, Var>> result = IsoMapUtils.createSolutionStream(
                 as,
                 bs,
-                (x, y, bs) -> { return createVarMap(x, y, bs).map(z -> z.getVarMap()); },
+                (x, y, baseSol) -> { return createVarMap(x, y, baseSol).map(z -> z.getVarMap()); },
                 baseSolution);
 
         Collection<Map<Var, Var>> tmp = result.collect(Collectors.toList());
-        System.out.println("VARMAP: " + tmp);
+        System.out.println("Solution contributions: " + tmp + " for " + as + " - " + bs);
         result = tmp.stream();
 
         if(tmp.isEmpty()) {
@@ -114,6 +115,8 @@ public class ProblemVarMappingExpr
 
         Collection<Problem<Map<Var, Var>>> result;
 
+        System.out.println("Refining " + as + " - " + bs + " via " + partialSolution);
+
         boolean isCompatible = MapUtils.isPartiallyCompatible(baseSolution, partialSolution);
         if(!isCompatible) {
             result = Collections.emptySet(); //Collections.singleton(new ProblemUnsolvable<>());
@@ -137,6 +140,9 @@ public class ProblemVarMappingExpr
             });
 
             Map<Expr, Entry<Set<Expr>, Set<Expr>>> group = ProblemVarMappingQuad.groupByKey(sigToAs.asMap(), sigToBs.asMap());
+
+            group.values().stream().forEach(e ->
+                System.out.println("  Refined to " + e + " from " + as + " - " + bs + " via " + partialSolution));
 
             result = group.values().stream()
                     .map(e -> new ProblemVarMappingExpr(e.getKey(), e.getValue(), newBase))

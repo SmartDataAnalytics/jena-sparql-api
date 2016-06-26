@@ -143,9 +143,9 @@ public class TestStateSpaceSearch {
         }
 
         ProblemVarMappingQuad quadProblem = new ProblemVarMappingQuad(cacheQfpc.getQuads(), queryQfpc.getQuads(), Collections.emptyMap());
-        problems.add(quadProblem);
+        //problems.add(quadProblem);
 
-        for(int i = 0; i < 100; ++i) {
+        for(int i = 0; i < 1; ++i) {
             Stopwatch sw = Stopwatch.createStarted();
 
             ProblemContainer<Map<Var, Var>> container = ProblemContainerImpl.create(problems);
@@ -176,7 +176,7 @@ public class TestStateSpaceSearch {
 //            cands.forEach(x -> System.out.println("CAND: " + x));
 //        }
 
-
+if(false) {
         //ClauseUtils.signaturize(clause)
         IBiSetMultimap<Quad, Set<Set<Expr>>> queryQuadIndex = SparqlCacheUtils.createMapQuadsToFilters(queryQfpc);
 
@@ -208,7 +208,6 @@ public class TestStateSpaceSearch {
         // Probably cache entries should be indexed using DNFs and the table system,
         // whereas lookups could be made using CNFs
 
-
         Collection<Entry<Set<Object>, Object>> candidates = featuresToCache.getAllEntriesThatAreSubsetOf(
                 new HashSet<>(Arrays.asList(
                         ExprUtils.parse("?o = <my://Airport>"),
@@ -219,7 +218,7 @@ public class TestStateSpaceSearch {
 
 
         problems.forEach(p -> System.out.println("SOLUTIONS for " + p + " " + p.generateSolutions().collect(Collectors.toList())));
-
+}
 
         //ProblemContainerImpl<Map<Var, Var>> container = ProblemContainerImpl.create(problems);
         //container.
