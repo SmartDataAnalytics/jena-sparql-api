@@ -100,7 +100,7 @@ public class ProblemVarMappingQuad
                 sigToAs.put(sig, q);
             });
 
-            Map<Var, Var> identity = partialSolution.values().stream().collect(Collectors.toMap(x -> x, x -> x));
+            Map<Var, Var> identity = newBase.values().stream().collect(Collectors.toMap(x -> x, x -> x));
             NodeTransform s2 = NodeTransformSignaturize.create(identity);
             Multimap<Quad, Quad> sigToBs = HashMultimap.create();
             bs.forEach(q -> {

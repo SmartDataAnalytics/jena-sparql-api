@@ -17,11 +17,15 @@ import org.aksw.isomorphism.IsoMapUtils;
 import org.aksw.isomorphism.Problem;
 import org.aksw.isomorphism.ProblemUnsolvable;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
+import org.aksw.jena_sparql_api.utils.NodeTransformSignaturize;
+import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprFunction;
 import org.apache.jena.sparql.expr.FunctionLabel;
 import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.graph.NodeTransform;
+import org.apache.jena.sparql.graph.NodeTransformLib;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -125,23 +129,28 @@ public class ProblemVarMappingExpr
             newBase.putAll(baseSolution);
             newBase.putAll(partialSolution);
 
+            NodeTransform signaturizer = NodeTransformSignaturize.create(newBase);//partialSolution);
+
             Multimap<Expr, Expr> sigToAs = HashMultimap.create();
             as.forEach(e -> {
-                Expr sig = ExprUtils.signaturize(e, partialSolution);
+                Expr sig = NodeTransformLib.transform(signaturizer, e);
                 sigToAs.put(sig, e);
             });
 
-            Map<Var, Var> identity = partialSolution.values().stream().collect(Collectors.toMap(x -> x, x -> x));
+
+            //partialSolution
+            Map<Var, Var> identity = newBase.values().stream().collect(Collectors.toMap(x -> x, x -> x));
+            NodeTransform s2 = NodeTransformSignaturize.create(identity);//partialSolution);
             Multimap<Expr, Expr> sigToBs = HashMultimap.create();
             bs.forEach(e -> {
-                Expr sig = ExprUtils.signaturize(e, identity);
+                Expr sig = NodeTransformLib.transform(s2, e);
                 sigToBs.put(sig, e);
             });
 
             Map<Expr, Entry<Set<Expr>, Set<Expr>>> group = ProblemVarMappingQuad.groupByKey(sigToAs.asMap(), sigToBs.asMap());
 
             group.values().stream().forEach(e ->
-                System.out.println("  Refined to " + e + " from " + as + " - " + bs + " via " + partialSolution));
+                System.out.println("  Refined to " + e + " from " + as + " - " + bs + " via " + newBase));
 
             result = group.values().stream()
                     .map(e -> new ProblemVarMappingExpr(e.getKey(), e.getValue(), newBase))
