@@ -29,6 +29,7 @@ import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.stmt.SparqlElementParser;
 import org.aksw.jena_sparql_api.stmt.SparqlElementParserImpl;
 import org.aksw.jena_sparql_api.utils.Generator;
+import org.aksw.jena_sparql_api.utils.MapUtils;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.aksw.state_space_search.core.State;
@@ -94,6 +95,8 @@ public class TestStateSpaceSearch {
         System.out.println("QuadFilterPatternCanonical[query]: " + queryQfpc);
 
 
+        //ContainmentMap<Expr, CacheEntry> featuresToCache = indexDnf(queryQfpc.getFilterDnf());
+
 
         // Index the clauses of the cache
         ContainmentMap<Expr, Multimap<Expr, Expr>> cacheIndex = indexDnf(cacheQfpc.getFilterDnf());
@@ -112,7 +115,7 @@ public class TestStateSpaceSearch {
                 Multimap<Expr, Expr> cacheMap = e.getValue();
                 System.out.println("  CACHE MAP: " + cacheMap);
                 for(Multimap<Expr, Expr> queryMap : queryMaps) {
-                    Map<Expr, Entry<Set<Expr>, Set<Expr>>> group = ProblemVarMappingQuad.groupByKey(cacheMap.asMap(), queryMap.asMap());
+                    Map<Expr, Entry<Set<Expr>, Set<Expr>>> group = MapUtils.groupByKey(cacheMap.asMap(), queryMap.asMap());
 
                     Collection<Problem<Map<Var, Var>>> localProblems = group.values().stream()
                         .map(x -> {
@@ -145,9 +148,9 @@ public class TestStateSpaceSearch {
         }
 
         ProblemVarMappingQuad quadProblem = new ProblemVarMappingQuad(cacheQfpc.getQuads(), queryQfpc.getQuads(), Collections.emptyMap());
-        //problems.add(quadProblem);
+        problems.add(quadProblem);
 
-        for(int i = 0; i < 1; ++i) {
+        for(int i = 0; i < 100; ++i) {
             Stopwatch sw = Stopwatch.createStarted();
 
             ProblemContainer<Map<Var, Var>> container = ProblemContainerImpl.create(problems);

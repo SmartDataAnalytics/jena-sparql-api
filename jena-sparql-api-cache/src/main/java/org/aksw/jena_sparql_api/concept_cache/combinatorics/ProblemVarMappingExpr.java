@@ -116,49 +116,57 @@ public class ProblemVarMappingExpr
      */
     @Override
     public Collection<Problem<Map<Var, Var>>> refine(Map<Var, Var> partialSolution) {
-
-        Collection<Problem<Map<Var, Var>>> result;
-
-        System.out.println("Refining " + as + " - " + bs + " via " + partialSolution);
-
-        boolean isCompatible = MapUtils.isPartiallyCompatible(baseSolution, partialSolution);
-        if(!isCompatible) {
-            result = Collections.emptySet(); //Collections.singleton(new ProblemUnsolvable<>());
-        } else {
-            Map<Var, Var> newBase = new HashMap<>();
-            newBase.putAll(baseSolution);
-            newBase.putAll(partialSolution);
-
-            NodeTransform signaturizer = NodeTransformSignaturize.create(newBase);//partialSolution);
-
-            Multimap<Expr, Expr> sigToAs = HashMultimap.create();
-            as.forEach(e -> {
-                Expr sig = NodeTransformLib.transform(signaturizer, e);
-                sigToAs.put(sig, e);
-            });
-
-
-            //partialSolution
-            Map<Var, Var> identity = newBase.values().stream().collect(Collectors.toMap(x -> x, x -> x));
-            NodeTransform s2 = NodeTransformSignaturize.create(identity);//partialSolution);
-            Multimap<Expr, Expr> sigToBs = HashMultimap.create();
-            bs.forEach(e -> {
-                Expr sig = NodeTransformLib.transform(s2, e);
-                sigToBs.put(sig, e);
-            });
-
-            Map<Expr, Entry<Set<Expr>, Set<Expr>>> group = ProblemVarMappingQuad.groupByKey(sigToAs.asMap(), sigToBs.asMap());
-
-            group.values().stream().forEach(e ->
-                System.out.println("  Refined to " + e + " from " + as + " - " + bs + " via " + newBase));
-
-            result = group.values().stream()
-                    .map(e -> new ProblemVarMappingExpr(e.getKey(), e.getValue(), newBase))
-                    .collect(Collectors.toList());
-        }
+        Collection<Problem<Map<Var, Var>>> result = Refinement.refineExprs(
+                as,
+                bs,
+                baseSolution,
+                partialSolution);
 
         return result;
     }
+//
+//        Collection<Problem<Map<Var, Var>>> result;
+//
+//        System.out.println("Refining " + as + " - " + bs + " via " + partialSolution);
+//
+//        boolean isCompatible = MapUtils.isPartiallyCompatible(baseSolution, partialSolution);
+//        if(!isCompatible) {
+//            result = Collections.emptySet(); //Collections.singleton(new ProblemUnsolvable<>());
+//        } else {
+//            Map<Var, Var> newBase = new HashMap<>();
+//            newBase.putAll(baseSolution);
+//            newBase.putAll(partialSolution);
+//
+//            NodeTransform signaturizer = NodeTransformSignaturize.create(newBase);//partialSolution);
+//
+//            Multimap<Expr, Expr> sigToAs = HashMultimap.create();
+//            as.forEach(e -> {
+//                Expr sig = NodeTransformLib.transform(signaturizer, e);
+//                sigToAs.put(sig, e);
+//            });
+//
+//
+//            //partialSolution
+//            Map<Var, Var> identity = newBase.values().stream().collect(Collectors.toMap(x -> x, x -> x));
+//            NodeTransform s2 = NodeTransformSignaturize.create(identity);//partialSolution);
+//            Multimap<Expr, Expr> sigToBs = HashMultimap.create();
+//            bs.forEach(e -> {
+//                Expr sig = NodeTransformLib.transform(s2, e);
+//                sigToBs.put(sig, e);
+//            });
+//
+//            Map<Expr, Entry<Set<Expr>, Set<Expr>>> group = org.aksw.jena_sparql_api.utils.MapUtils.groupByKey(sigToAs.asMap(), sigToBs.asMap());
+//
+//            group.values().stream().forEach(e ->
+//                System.out.println("  Refined to " + e + " from " + as + " - " + bs + " via " + newBase));
+//
+//            result = group.values().stream()
+//                    .map(e -> new ProblemVarMappingExpr(e.getKey(), e.getValue(), newBase))
+//                    .collect(Collectors.toList());
+//        }
+//
+//        return result;
+//    }
 
 //    public static Iterable<Map<Var, Var>> createSolutions(Collection<Expr> as, Collection<Expr> bs, Map<Var, Var> baseSolution) {
 //        //Map<Var, Var> baseSolution = Collections.emptyMap();

@@ -94,7 +94,7 @@ public class CombinatoricsUtils {
 
 
         List<Iterable<Map<Var, Var>>> partialSolutions = quadGroups.stream()
-                .map(x -> createSolutions(x, baseMapping))
+                .map(x -> createSolutions(x, baseMapping).collect(Collectors.toList()))
                 .collect(Collectors.toList())
                 ;
 
@@ -281,8 +281,8 @@ public class CombinatoricsUtils {
     }
 
 
-    public static Iterable<Map<Var, Var>> createSolutions(Entry<? extends Collection<Quad>, ? extends Collection<Quad>> quadGroup, Map<Var, Var> baseSolution) {
-        Iterable<Map<Var, Var>> result = createSolutions(
+    public static Stream<Map<Var, Var>> createSolutions(Entry<? extends Collection<Quad>, ? extends Collection<Quad>> quadGroup, Map<Var, Var> baseSolution) {
+        Stream<Map<Var, Var>> result = createSolutions(
                     quadGroup.getKey(),
                     quadGroup.getValue(),
                     baseSolution);
@@ -290,13 +290,12 @@ public class CombinatoricsUtils {
         return result;
     }
 
-    public static Iterable<Map<Var, Var>> createSolutions(Collection<? extends Quad> cacheQuads, Collection<? extends Quad> queryQuads, Map<Var, Var> baseSolution) {
-        Iterable<Map<Var, Var>> result =
-                () -> IsoMapUtils.createSolutionStream(
+    public static Stream<Map<Var, Var>> createSolutions(Collection<? extends Quad> cacheQuads, Collection<? extends Quad> queryQuads, Map<Var, Var> baseSolution) {
+        Stream<Map<Var, Var>> result = IsoMapUtils.createSolutionStream(
                     cacheQuads,
                     queryQuads,
                     (a, b, c) -> Stream.of(Utils2.createVarMap(a, b)),
-                    baseSolution).iterator();
+                    baseSolution);
 
         return result;
     }
