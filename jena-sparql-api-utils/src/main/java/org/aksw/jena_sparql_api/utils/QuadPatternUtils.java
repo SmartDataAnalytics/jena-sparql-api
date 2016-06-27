@@ -169,7 +169,7 @@ public class QuadPatternUtils {
         return result;
     }
 
-    public static Set<Var> getVarsMentioned(Iterable<Quad> quadPattern) {
+    public static Set<Var> getVarsMentioned(Iterable<? extends Quad> quadPattern) {
         Set<Var> result = new HashSet<Var>();
         for (Quad quad : quadPattern) {
             Set<Var> tmp = QuadUtils.getVarsMentioned(quad);

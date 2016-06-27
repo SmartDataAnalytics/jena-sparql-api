@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -15,20 +14,13 @@ import java.util.stream.Stream;
 import org.aksw.commons.collections.MapUtils;
 import org.aksw.isomorphism.IsoMapUtils;
 import org.aksw.isomorphism.Problem;
-import org.aksw.isomorphism.ProblemUnsolvable;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
-import org.aksw.jena_sparql_api.utils.NodeTransformSignaturize;
-import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprFunction;
+import org.apache.jena.sparql.expr.ExprVars;
 import org.apache.jena.sparql.expr.FunctionLabel;
 import org.apache.jena.sparql.expr.NodeValue;
-import org.apache.jena.sparql.graph.NodeTransform;
-import org.apache.jena.sparql.graph.NodeTransformLib;
-
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
 
 // Multimap<Set<Set<>>>
 // ContainmentMap
@@ -64,7 +56,7 @@ import com.google.common.collect.Multimap;
  *
  */
 public class ProblemVarMappingExpr
-    extends ProblemMappingEquivBase<Expr, Expr, Var, Var>
+    extends ProblemMappingVarsBase<Expr, Expr, Var, Var>
 {
 
 
@@ -290,6 +282,30 @@ public class ProblemVarMappingExpr
     @Override
     public String toString() {
         return super.toString();
+    }
+
+    @Override
+    public Collection<Var> exposeSourceNeighbourhood() {
+        Set<Var> result = as.stream()
+                .flatMap(expr -> ExprVars.getVarsMentioned(expr).stream())
+                .collect(Collectors.toSet());
+
+        return result;
+    }
+
+    @Override
+    public Collection<Var> exposeTargetNeighbourhood() {
+        Set<Var> result = bs.stream()
+                .flatMap(expr -> ExprVars.getVarsMentioned(expr).stream())
+                .collect(Collectors.toSet());
+
+        return result;
+    }
+
+    @Override
+    public int compareTo(Problem<Map<Var, Var>> o) {
+        // TODO Auto-generated method stub
+        return 0;
     }
 
 

@@ -2,15 +2,17 @@ package org.aksw.jena_sparql_api.concept_cache.combinatorics;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import org.aksw.isomorphism.Problem;
+import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 
 
 public class ProblemVarMappingQuad
-    extends ProblemMappingEquivBase<Quad, Quad, Var, Var>
+    extends ProblemMappingVarsBase<Quad, Quad, Var, Var>
 {
     /**
      * The constraints that apply to the given quads
@@ -34,6 +36,24 @@ public class ProblemVarMappingQuad
                 partialSolution);
 
         return result;
+    }
+
+    @Override
+    public Collection<Var> exposeSourceNeighbourhood() {
+        Set<Var> result = QuadPatternUtils.getVarsMentioned(as);
+        return result;
+    }
+
+    @Override
+    public Collection<Var> exposeTargetNeighbourhood() {
+        Set<Var> result = QuadPatternUtils.getVarsMentioned(bs);
+        return result;
+    }
+
+    @Override
+    public int compareTo(Problem<Map<Var, Var>> o) {
+        // TODO Auto-generated method stub
+        return 0;
     }
 
 
