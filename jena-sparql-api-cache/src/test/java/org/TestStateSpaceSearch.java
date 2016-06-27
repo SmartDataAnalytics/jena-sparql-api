@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
-import org.aksw.isomorphism.IsoMapUtils;
 import org.aksw.isomorphism.Problem;
 import org.aksw.isomorphism.ProblemContainer;
 import org.aksw.isomorphism.ProblemContainerImpl;
@@ -75,7 +74,7 @@ public class TestStateSpaceSearch {
         // We could create a graph over quads and expressions that variables
 
         SparqlElementParser elementParser = SparqlElementParserImpl.create(Syntax.syntaxSPARQL_10, null);
-        Element queryElement = elementParser.apply("?x <my://type> <my://Airport> ; <my://label> ?n . FILTER(langMatches(lang(?n), 'en')) . FILTER(<mp://fn>(?x, ?n))");
+        Element queryElement = elementParser.apply("?x <my://type> <my://Airport> ; <my://label> ?n ; ?h ?i . FILTER(langMatches(lang(?n), 'en')) . FILTER(<mp://fn>(?x, ?n))");
 
         Element cacheElement = elementParser.apply("?s <my://type> <my://Airport> ; ?p ?l . FILTER(?p = <my://label> || ?p = <my://name>)");
 
@@ -150,14 +149,14 @@ public class TestStateSpaceSearch {
         ProblemVarMappingQuad quadProblem = new ProblemVarMappingQuad(cacheQfpc.getQuads(), queryQfpc.getQuads(), Collections.emptyMap());
         problems.add(quadProblem);
 
-        for(int i = 0; i < 100; ++i) {
+        for(int i = 0; i < 1; ++i) {
             Stopwatch sw = Stopwatch.createStarted();
 
             ProblemContainer<Map<Var, Var>> container = ProblemContainerImpl.create(problems);
 
             State<Map<Var, Var>> state = container.isEmpty()
-                    ? new StateProblemContainer<Map<Var, Var>>(null, container, (a, b) -> IsoMapUtils.mergeIfCompatible(a, b))
-                    : new StateProblemContainer<Map<Var, Var>>(Collections.emptyMap(), container, (a, b) -> IsoMapUtils.mergeIfCompatible(a, b));
+                    ? new StateProblemContainer<Map<Var, Var>>(null, container, (a, b) -> MapUtils.mergeIfCompatible(a, b))
+                    : new StateProblemContainer<Map<Var, Var>>(Collections.emptyMap(), container, (a, b) -> MapUtils.mergeIfCompatible(a, b));
             Stream<Map<Var, Var>> xxx = StateSearchUtils.depthFirstSearch(state, 10000);
 
             for(Map<Var, Var> m : xxx.collect(Collectors.toList())) {
@@ -165,6 +164,7 @@ public class TestStateSpaceSearch {
                     System.out.println("SOLUTION: " + m);
                     NodeTransform nodeTransform = new NodeTransformRenameMap(m);
                     QuadFilterPatternCanonical foo = cacheQfpc.applyNodeTransform(nodeTransform);
+                    System.out.println("Cache after var mapping: " + foo);
                     QuadFilterPatternCanonical diff = queryQfpc.diff(foo);
                     System.out.println("DIFF: " + diff + "\nfrom cache " + foo + "\nand query " + queryQfpc);
                 }

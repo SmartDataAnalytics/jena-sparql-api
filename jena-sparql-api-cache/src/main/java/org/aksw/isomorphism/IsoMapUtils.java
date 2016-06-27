@@ -2,6 +2,7 @@ package org.aksw.isomorphism;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -9,7 +10,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import org.aksw.commons.collections.MapUtils;
+import org.aksw.jena_sparql_api.utils.MapUtils;
 import org.paukov.combinatorics.Factory;
 import org.paukov.combinatorics.Generator;
 import org.paukov.combinatorics.ICombinatoricsVector;
@@ -61,6 +62,9 @@ public class IsoMapUtils {
 
 
         Collection<Map<X, Y>> r = result.collect(Collectors.toList());
+        if(r.isEmpty()) {
+            r = Collections.singleton(Collections.emptyMap());
+        }
         //System.out.println("solutions: " + r);
         result = r.stream();
 
@@ -81,48 +85,8 @@ public class IsoMapUtils {
                     StreamSupport.stream(queryQuads.spliterator(), false),
                     (a, b) -> new SimpleEntry<A, B>(a, b))
             .flatMap(e -> createPartialSolution.apply(e.getKey(), e.getValue(), baseSolution))
-            .reduce(new HashMap<X, Y>(), IsoMapUtils::mergeInPlaceIfCompatible);
+            .reduce(new HashMap<X, Y>(), MapUtils::mergeInPlaceIfCompatible);
 
         return result;
     }
-
-
-    /**
-     *
-     *
-     * @param inout the map being changed in place - may be null
-     * @param addition the mappings about to be added
-     * @return the provided map or null if the merge was incompatible
-     */
-    public static <X, Y> Map<X, Y> mergeInPlaceIfCompatible(Map<X, Y> inout, Map<X, Y> addition) {
-        Map<X, Y> result = null;
-        if(inout != null && addition != null) {
-            boolean isCompatible = MapUtils.isPartiallyCompatible(inout, addition);
-            if(isCompatible) {
-                inout.putAll(addition);
-                result = inout;
-            }
-        }
-        return result;
-    }
-
-    /**
-    *
-    *
-    * @param base the map being changed in place - may be null
-    * @param addition the mappings about to be added
-    * @return the provided map or null if the merge was incompatible
-    */
-   public static <X, Y> Map<X, Y> mergeIfCompatible(Map<X, Y> base, Map<X, Y> addition) {
-       Map<X, Y> result = null;
-       if(base != null && addition != null) {
-           boolean isCompatible = MapUtils.isPartiallyCompatible(base, addition);
-           if(isCompatible) {
-               result = new HashMap<X, Y>();
-               result.putAll(base);
-               result.putAll(addition);
-           }
-       }
-       return result;
-   }
 }

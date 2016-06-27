@@ -7,7 +7,6 @@ import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
-import org.aksw.isomorphism.IsoMapUtils;
 import org.aksw.isomorphism.Problem;
 import org.aksw.jena_sparql_api.utils.MapUtils;
 import org.aksw.jena_sparql_api.utils.NodeTransformSignaturize;
@@ -55,7 +54,7 @@ public class Refinement {
             TriFunction<Set<T>, Set<T>, Map<Var, Var>, Problem<Map<Var, Var>>> groupToProblem
             )
     {
-        Map<Var, Var> newBase = IsoMapUtils.mergeIfCompatible(baseSolution, partialSolution);
+        Map<Var, Var> newBase = MapUtils.mergeIfCompatible(baseSolution, partialSolution);
         Map<T, Entry<Set<T>, Set<T>>> groups = Refinement.refineGeneric(as, bs, newBase, transformer);
         Collection<Problem<Map<Var, Var>>> result = groupsToProblems(groups, newBase, groupToProblem);
 

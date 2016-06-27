@@ -31,35 +31,35 @@ public class MapUtils {
         return result;
     }
 
-    public static <K, V> Map<K, V> mergeIfCompatible(Map<K, V> a, Map<K, V> b) {
-//        Set<K> diff = Sets.symmetricDifference(a.keySet(), b.keySet());
-        boolean isCompatible = org.aksw.commons.collections.MapUtils.isCompatible(a, b);
-        Map<K, V> result = isCompatible
-                ? merge(a, b)
-                : null;
-        return result;
-    }
+//    public static <K, V> Map<K, V> mergeIfCompatible(Map<K, V> a, Map<K, V> b) {
+////        Set<K> diff = Sets.symmetricDifference(a.keySet(), b.keySet());
+//        boolean isCompatible = org.aksw.commons.collections.MapUtils.isCompatible(a, b);
+//        Map<K, V> result = isCompatible
+//                ? merge(a, b)
+//                : null;
+//        return result;
+//    }
 
     public static <K, V> Map<K, Entry<Set<V>, Set<V>>> groupByKey(IBiSetMultimap<K, V> a, IBiSetMultimap<K, V> b) {
         Map<K, Entry<Set<V>, Set<V>>> result = new HashMap<>();
-    
+
         Set<K> keys = Sets.union(a.keySet(), b.keySet());
         keys.forEach(
                 k -> {
                     Set<V> av = SetUtils.asSet(a.get(k));
                     Set<V> bv = SetUtils.asSet(b.get(k));
-    
+
                     Entry<Set<V>, Set<V>> e = new SimpleEntry<>(av, bv);
                     result.put(k, e);
                 }
             );
-    
+
         return result;
     }
 
     public static <K, V> Map<K, Entry<Set<V>, Set<V>>> groupByKey(Map<K, ? extends Iterable<V>> a, Map<K, ? extends Iterable<V>> b) {
         Map<K, Entry<Set<V>, Set<V>>> result = new HashMap<>();
-    
+
         Set<K> keys = Sets.union(a.keySet(), b.keySet());
         keys.forEach(
                 k -> {
@@ -67,12 +67,51 @@ public class MapUtils {
                     Iterable<V> bx = b.get(k);
                     Set<V> av = ax == null ? Collections.emptySet() : SetUtils.asSet(ax);
                     Set<V> bv = bx == null ? Collections.emptySet() : SetUtils.asSet(bx);
-    
+
                     Entry<Set<V>, Set<V>> e = new SimpleEntry<>(av, bv);
                     result.put(k, e);
                 }
             );
-    
+
+        return result;
+    }
+
+    /**
+        *
+        *
+        * @param base the map being changed in place - may be null
+        * @param addition the mappings about to be added
+        * @return the provided map or null if the merge was incompatible
+        */
+       public static <X, Y> Map<X, Y> mergeIfCompatible(Map<X, Y> base, Map<X, Y> addition) {
+           Map<X, Y> result = null;
+           if(base != null && addition != null) {
+               boolean isCompatible = org.aksw.commons.collections.MapUtils.isPartiallyCompatible(base, addition);
+               if(isCompatible) {
+                   result = new HashMap<X, Y>();
+                   result.putAll(base);
+                   result.putAll(addition);
+               }
+           }
+           return result;
+       }
+
+    /**
+     *
+     *
+     * @param inout the map being changed in place - may be null
+     * @param addition the mappings about to be added
+     * @return the provided map or null if the merge was incompatible
+     */
+    public static <X, Y> Map<X, Y> mergeInPlaceIfCompatible(Map<X, Y> inout, Map<X, Y> addition) {
+        Map<X, Y> result = null;
+        if(inout != null && addition != null) {
+            boolean isCompatible = org.aksw.commons.collections.MapUtils.isPartiallyCompatible(inout, addition);
+            if(isCompatible) {
+                inout.putAll(addition);
+                result = inout;
+            }
+        }
         return result;
     }
 
