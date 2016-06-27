@@ -5,10 +5,10 @@ import org.junit.Assert;
 import org.junit.Test;
 
 
-public class ContainmentMapTest {
+public class FeatureMapTest {
     @Test
     public void test() {
-        ContainmentMap<Integer, String> map = new ContainmentMapImpl<>();
+        FeatureMap<Integer, String> map = new FeatureMapImpl<>();
 
         map.put(Sets.newHashSet(), "hello");
         map.put(Sets.newHashSet(1), "world");
@@ -20,9 +20,9 @@ public class ContainmentMapTest {
         //map.remove(Sets.newHashSet(1, 2, 3));
         // System.out.println(map.getAllEntriesThatAreSupersetOf(Sets.newHashSet(1, 2)));
 
-        Assert.assertEquals(map.getAllEntriesThatAreSupersetOf(Sets.newHashSet(1, 2, 3)).size(), 1);
-        Assert.assertEquals(map.getAllEntriesThatAreSupersetOf(Sets.newHashSet(1, 2)).size(), 2);
-        Assert.assertEquals(map.getAllEntriesThatAreSupersetOf(Sets.newHashSet()).size(), 4);
+        Assert.assertEquals(map.getIfSupersetOf(Sets.newHashSet(1, 2, 3)).size(), 1);
+        Assert.assertEquals(map.getIfSupersetOf(Sets.newHashSet(1, 2)).size(), 2);
+        Assert.assertEquals(map.getIfSupersetOf(Sets.newHashSet()).size(), 4);
     }
 }
 

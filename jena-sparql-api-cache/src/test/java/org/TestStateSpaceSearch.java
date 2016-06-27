@@ -18,8 +18,8 @@ import org.aksw.isomorphism.Problem;
 import org.aksw.isomorphism.ProblemContainer;
 import org.aksw.isomorphism.ProblemContainerImpl;
 import org.aksw.isomorphism.StateProblemContainer;
-import org.aksw.jena_sparql_api.concept_cache.collection.ContainmentMap;
-import org.aksw.jena_sparql_api.concept_cache.collection.ContainmentMapImpl;
+import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
+import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMapImpl;
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.ProblemVarMappingExpr;
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.ProblemVarMappingQuad;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
@@ -34,6 +34,8 @@ import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.aksw.state_space_search.core.State;
 import org.aksw.state_space_search.core.StateSearchUtils;
 import org.apache.jena.query.Syntax;
+import org.apache.jena.sparql.algebra.Algebra;
+import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
@@ -71,12 +73,34 @@ public class TestStateSpaceSearch {
             //model.write(System.out);
         }
 
+
+        // TODO How could we combine the state space
+
+
+
         // We could create a graph over quads and expressions that variables
 
         SparqlElementParser elementParser = SparqlElementParserImpl.create(Syntax.syntaxSPARQL_10, null);
         Element queryElement = elementParser.apply("?x <my://type> <my://Airport> ; <my://label> ?n ; ?h ?i . FILTER(langMatches(lang(?n), 'en')) . FILTER(<mp://fn>(?x, ?n))");
 
         Element cacheElement = elementParser.apply("?s <my://type> <my://Airport> ; ?p ?l . FILTER(?p = <my://label> || ?p = <my://name>)");
+
+
+        FeatureMap<String, String> tagsToCache = new FeatureMapImpl<>();
+        Op cacheOp = Algebra.compile(cacheElement);
+        Set<String> cacheFeatures = OpVisitorFeatureExtractor.getFeatures(cacheOp, (op) -> op.getClass().getSimpleName());
+
+        tagsToCache.put(cacheFeatures, "cache1");
+
+
+        Op queryOp = Algebra.compile(queryElement);
+        Set<String> queryFeatures = OpVisitorFeatureExtractor.getFeatures(queryOp, (op) -> op.getClass().getSimpleName());
+
+        Collection<Entry<Set<String>, String>> cacheCandidates = tagsToCache.getIfSubsetOf(queryFeatures);
+
+        cacheCandidates.forEach(x -> {
+           System.out.println("cache candidate: " + x.getValue());
+        });
 
 
         ProjectedQuadFilterPattern cachePqfp = SparqlCacheUtils.transform(cacheElement);
@@ -98,8 +122,8 @@ public class TestStateSpaceSearch {
 
 
         // Index the clauses of the cache
-        ContainmentMap<Expr, Multimap<Expr, Expr>> cacheIndex = indexDnf(cacheQfpc.getFilterDnf());
-        ContainmentMap<Expr, Multimap<Expr, Expr>> queryIndex = indexDnf(queryQfpc.getFilterDnf());
+        FeatureMap<Expr, Multimap<Expr, Expr>> cacheIndex = indexDnf(cacheQfpc.getFilterDnf());
+        FeatureMap<Expr, Multimap<Expr, Expr>> queryIndex = indexDnf(queryQfpc.getFilterDnf());
 
 
         Collection<Problem<Map<Var, Var>>> problems = new ArrayList<>();
@@ -108,7 +132,7 @@ public class TestStateSpaceSearch {
             Collection<Multimap<Expr, Expr>> queryMaps = entry.getValue();
 
             System.out.println("CAND LOOKUP with " + querySig);
-            Collection<Entry<Set<Expr>, Multimap<Expr, Expr>>> cands = cacheIndex.getAllEntriesThatAreSubsetOf(querySig);
+            Collection<Entry<Set<Expr>, Multimap<Expr, Expr>>> cands = cacheIndex.getIfSubsetOf(querySig);
 
             for(Entry<Set<Expr>, Multimap<Expr, Expr>> e : cands) {
                 Multimap<Expr, Expr> cacheMap = e.getValue();
@@ -212,7 +236,7 @@ if(false) {
             .forEach(feature -> features.add(feature));
 
 
-        ContainmentMap<Object, Object> featuresToCache = new ContainmentMapImpl<>();
+        FeatureMap<Object, Object> featuresToCache = new FeatureMapImpl<>();
         featuresToCache.put(features, cacheQfpc);
 
 
@@ -226,7 +250,7 @@ if(false) {
         // Probably cache entries should be indexed using DNFs and the table system,
         // whereas lookups could be made using CNFs
 
-        Collection<Entry<Set<Object>, Object>> candidates = featuresToCache.getAllEntriesThatAreSubsetOf(
+        Collection<Entry<Set<Object>, Object>> candidates = featuresToCache.getIfSubsetOf(
                 new HashSet<>(Arrays.asList(
                         ExprUtils.parse("?o = <my://Airport>"),
                         ExprUtils.parse("?p = <my://type>")
@@ -328,8 +352,8 @@ if(false) {
 //    }
 
 
-    public static ContainmentMap<Expr, Multimap<Expr, Expr>> indexDnf(Set<Set<Expr>> dnf) {
-        ContainmentMap<Expr, Multimap<Expr, Expr>> result = new ContainmentMapImpl<>();
+    public static FeatureMap<Expr, Multimap<Expr, Expr>> indexDnf(Set<Set<Expr>> dnf) {
+        FeatureMap<Expr, Multimap<Expr, Expr>> result = new FeatureMapImpl<>();
         for(Set<Expr> clause : dnf) {
             Multimap<Expr, Expr> exprSigToExpr = HashMultimap.create();
             Set<Expr> clauseSig = new HashSet<>();

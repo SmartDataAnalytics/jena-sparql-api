@@ -1,8 +1,10 @@
 package org.aksw.jena_sparql_api.concept_cache.collection;
 
+import java.util.AbstractCollection;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -22,16 +24,21 @@ import com.google.common.collect.Multimap;
  * @param <K>
  * @param <V>
  */
-public class ContainmentMapImpl<K, V>
-    //extends AbstractMap<Set<K>, V>
-    implements ContainmentMap<K, V>
+public class FeatureMapImpl<K, V>
+    extends AbstractCollection<Entry<Set<K>, V>>
+    //extends AbstractMultimap
+    implements FeatureMap<K, V>
 {
     // This map contains the actual data, the other fields contain helper structures
-    protected Multimap<Set<K>, V> tagSetToValues; // rename to tagSetToValues
 
     protected Map<K, Integer> tagToCount;
 
     protected Multimap<K, Set<K>> tagToTagSets;
+
+
+    // Maybe the following two maps could be replaced with BiHashMultimap<K, V>
+
+    protected Multimap<Set<K>, V> tagSetToValues; // rename to tagSetToValues
     protected Multimap<V, Set<K>> valueToTagSets;
 
 
@@ -46,7 +53,7 @@ public class ContainmentMapImpl<K, V>
 //        this.tagSetToValues = tagSetToValues;
 //        this.valueToTagSets = valueToTagSets;
 //    }
-    public ContainmentMapImpl() {
+    public FeatureMapImpl() {
         super();
         this.tagToCount = new HashMap<>();
         this.tagToTagSets = HashMultimap.create();
@@ -87,7 +94,7 @@ public class ContainmentMapImpl<K, V>
     }
 
     @Override
-    public void remove(Object value) {
+    public boolean remove(Object value) {
         @SuppressWarnings("unchecked")
         Collection<Set<K>> tagSets = valueToTagSets.get((V)value);
 
@@ -95,10 +102,11 @@ public class ContainmentMapImpl<K, V>
             tagSet.forEach(tag -> tagToCount.merge(tag, 1, (a, b) -> a - b));
         });
 
+        return true;
     }
 
     @Override
-    public Collection<Entry<Set<K>, V>> getAllEntriesThatAreSupersetOf(Set<K> prototype) {
+    public Collection<Entry<Set<K>, V>> getIfSupersetOf(Set<K> prototype) {
         //Set<Entry<Set<K>, Set<V>>> result;
 
         K leastUsedTag = prototype
@@ -147,7 +155,7 @@ public class ContainmentMapImpl<K, V>
 
 
     @Override
-    public Collection<Entry<Set<K>, V>> getAllEntriesThatAreSubsetOf(Set<K> prototype) {
+    public Collection<Entry<Set<K>, V>> getIfSubsetOf(Set<K> prototype) {
         // get the count if we used index lookup
         int indexCount = prototype.stream().mapToInt(tag -> tagToCount.getOrDefault(tag, 0)).sum();
         int totalCount = valueToTagSets.size();
@@ -183,5 +191,16 @@ public class ContainmentMapImpl<K, V>
                 + tagSetToValues + ", valueToTagSets=" + valueToTagSets + "]";
     }
 
+    @Override
+    public Iterator<Entry<Set<K>, V>> iterator() {
+        Iterator<Entry<Set<K>, V>> result = tagSetToValues.entries().iterator();
+        return result;
+    }
+
+    @Override
+    public int size() {
+        int result = tagSetToValues.size();
+        return result;
+    }
 
 }

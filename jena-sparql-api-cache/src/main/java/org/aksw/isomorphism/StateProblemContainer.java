@@ -1,6 +1,5 @@
 package org.aksw.isomorphism;
 
-import java.util.Collections;
 import java.util.function.BinaryOperator;
 import java.util.stream.Stream;
 

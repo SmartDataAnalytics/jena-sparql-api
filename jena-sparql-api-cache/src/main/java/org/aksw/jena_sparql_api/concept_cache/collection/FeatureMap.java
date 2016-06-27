@@ -4,11 +4,13 @@ import java.util.Collection;
 import java.util.Map.Entry;
 import java.util.Set;
 
-public interface ContainmentMap<K, V>
-    //extends Map<Set<K>, V>
+public interface FeatureMap<K, V>
+    extends Collection<Entry<Set<K>, V>>
+    //extends Map<Set<K>, Collection<V>>
+    //extends Multimap<Set<K>, V>
 {
     void put(Set<K> tagSet, V value);
-    void remove(Object tagSet);
+    boolean remove(Object tagSet);
 
     Set<Set<K>> keySet();
     Collection<V> values();
@@ -20,7 +22,7 @@ public interface ContainmentMap<K, V>
      * @param prototye
      * @return
      */
-    Collection<Entry<Set<K>, V>> getAllEntriesThatAreSupersetOf(Set<K> prototype);
+    Collection<Entry<Set<K>, V>> getIfSupersetOf(Set<K> prototype);
 
-    Collection<Entry<Set<K>, V>> getAllEntriesThatAreSubsetOf(Set<K> prototype);
+    Collection<Entry<Set<K>, V>> getIfSubsetOf(Set<K> prototype);
 }

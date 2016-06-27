@@ -50,6 +50,5 @@ public class ProblemContainerPick<S>
             ProblemContainer<S> value) {
         throw new UnsupportedOperationException();
     }
-
-
 }
+
