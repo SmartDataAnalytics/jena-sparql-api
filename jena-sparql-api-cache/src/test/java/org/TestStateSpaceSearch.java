@@ -145,21 +145,26 @@ public class TestStateSpaceSearch {
         }
 
         ProblemVarMappingQuad quadProblem = new ProblemVarMappingQuad(cacheQfpc.getQuads(), queryQfpc.getQuads(), Collections.emptyMap());
-        problems.add(quadProblem);
+        //problems.add(quadProblem);
 
         for(int i = 0; i < 1; ++i) {
             Stopwatch sw = Stopwatch.createStarted();
 
             ProblemContainer<Map<Var, Var>> container = ProblemContainerImpl.create(problems);
-            State<Map<Var, Var>> state = new StateProblemContainer<Map<Var, Var>>(Collections.emptyMap(), container, (a, b) -> IsoMapUtils.mergeIfCompatible(a, b));
+
+            State<Map<Var, Var>> state = container.isEmpty()
+                    ? new StateProblemContainer<Map<Var, Var>>(null, container, (a, b) -> IsoMapUtils.mergeIfCompatible(a, b))
+                    : new StateProblemContainer<Map<Var, Var>>(Collections.emptyMap(), container, (a, b) -> IsoMapUtils.mergeIfCompatible(a, b));
             Stream<Map<Var, Var>> xxx = StateSearchUtils.depthFirstSearch(state, 10000);
 
             for(Map<Var, Var> m : xxx.collect(Collectors.toList())) {
-                System.out.println("SOLUTION: " + m);
-                NodeTransform nodeTransform = new NodeTransformRenameMap(m);
-                QuadFilterPatternCanonical foo = cacheQfpc.applyNodeTransform(nodeTransform);
-                QuadFilterPatternCanonical diff = queryQfpc.diff(foo);
-                System.out.println("DIFF: " + diff + "\nfrom cache " + foo + "\nand query " + queryQfpc);
+                if(m != null) {
+                    System.out.println("SOLUTION: " + m);
+                    NodeTransform nodeTransform = new NodeTransformRenameMap(m);
+                    QuadFilterPatternCanonical foo = cacheQfpc.applyNodeTransform(nodeTransform);
+                    QuadFilterPatternCanonical diff = queryQfpc.diff(foo);
+                    System.out.println("DIFF: " + diff + "\nfrom cache " + foo + "\nand query " + queryQfpc);
+                }
             }
 
             //xxx.forEach(x -> System.out.println("SOLUTION: " + x));

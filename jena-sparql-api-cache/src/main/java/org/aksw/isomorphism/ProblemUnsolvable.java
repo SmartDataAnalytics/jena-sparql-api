@@ -19,7 +19,7 @@ public class ProblemUnsolvable<S>
 
     @Override
     public Stream<S> generateSolutions() {
-        return Stream.empty();
+        return Stream.of(null);
     }
 
     @Override
