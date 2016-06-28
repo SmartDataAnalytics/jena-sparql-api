@@ -4,6 +4,18 @@ import java.util.Collection;
 import java.util.Map.Entry;
 import java.util.Set;
 
+/**
+ * A feature map associates a set of features with
+ * items. Multiple items may have exactly the same features.
+ *
+ * Hence, this class coud be considered a FeatureMultimap.
+ *
+ *
+ * @author raven
+ *
+ * @param <K>
+ * @param <V>
+ */
 public interface FeatureMap<K, V>
     extends Collection<Entry<Set<K>, V>>
     //extends Map<Set<K>, Collection<V>>

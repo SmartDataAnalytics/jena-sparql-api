@@ -44,7 +44,6 @@ import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.util.ExprUtils;
 
 import com.google.common.base.Stopwatch;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
 
@@ -122,8 +121,8 @@ public class TestStateSpaceSearch {
 
 
         // Index the clauses of the cache
-        FeatureMap<Expr, Multimap<Expr, Expr>> cacheIndex = indexDnf(cacheQfpc.getFilterDnf());
-        FeatureMap<Expr, Multimap<Expr, Expr>> queryIndex = indexDnf(queryQfpc.getFilterDnf());
+        FeatureMap<Expr, Multimap<Expr, Expr>> cacheIndex = SparqlCacheUtils.indexDnf(cacheQfpc.getFilterDnf());
+        FeatureMap<Expr, Multimap<Expr, Expr>> queryIndex = SparqlCacheUtils.indexDnf(queryQfpc.getFilterDnf());
 
 
         Collection<Problem<Map<Var, Var>>> problems = new ArrayList<>();
@@ -351,22 +350,4 @@ if(false) {
 //        return result;
 //    }
 
-
-    public static FeatureMap<Expr, Multimap<Expr, Expr>> indexDnf(Set<Set<Expr>> dnf) {
-        FeatureMap<Expr, Multimap<Expr, Expr>> result = new FeatureMapImpl<>();
-        for(Set<Expr> clause : dnf) {
-            Multimap<Expr, Expr> exprSigToExpr = HashMultimap.create();
-            Set<Expr> clauseSig = new HashSet<>();
-            for(Expr expr : clause) {
-                Expr exprSig = org.aksw.jena_sparql_api.utils.ExprUtils.signaturize(expr);
-                exprSigToExpr.put(exprSig, expr);
-                clauseSig.add(exprSig);
-            }
-
-            //Set<Expr> clauseSig = ClauseUtils.signaturize(clause);
-            result.put(clauseSig, exprSigToExpr);
-        }
-
-        return result;
-    }
 }

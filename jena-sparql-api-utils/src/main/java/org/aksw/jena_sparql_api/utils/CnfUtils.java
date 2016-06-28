@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.utils;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -44,7 +45,7 @@ public class CnfUtils {
         return (T)result;
     }
 
-    public static Entry<Var, Node> extractEquality(Set<Expr> clause) {
+    public static Entry<Var, Node> extractEquality(Collection< ? extends Expr> clause) {
         Entry<Var, Node> result = null;
 
         if(clause.size() == 1) {
@@ -78,10 +79,10 @@ public class CnfUtils {
      * @param cnf
      * @return
      */
-    public static Map<Var, Node> getConstants(Iterable<Set<Expr>> cnf) {
+    public static Map<Var, Node> getConstants(Iterable<? extends Collection <? extends Expr>> cnf) {
         Map<Var, Node> result = new HashMap<Var, Node>();
 
-        for(Set<Expr> clause : cnf) {
+        for(Collection<? extends Expr> clause : cnf) {
             Entry<Var, Node> entry = extractEquality(clause);
             if(entry != null) {
                 Var v = entry.getKey();

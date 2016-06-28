@@ -18,6 +18,8 @@ import java.util.stream.Collectors;
 import org.aksw.commons.collections.MapUtils;
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
+import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
+import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMapImpl;
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCache;
 import org.aksw.jena_sparql_api.concept_cache.domain.PatternSummary;
 import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
@@ -79,6 +81,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
 
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.SetMultimap;
 
 /*
@@ -1154,6 +1157,25 @@ public class SparqlCacheUtils {
     public static Set<Var> getRefVars(Query query) {
         //query.getProjectVars();
         return null;
+    }
+
+
+    public static FeatureMap<Expr, Multimap<Expr, Expr>> indexDnf(Set<Set<Expr>> dnf) {
+        FeatureMap<Expr, Multimap<Expr, Expr>> result = new FeatureMapImpl<>();
+        for(Set<Expr> clause : dnf) {
+            Multimap<Expr, Expr> exprSigToExpr = HashMultimap.create();
+            Set<Expr> clauseSig = new HashSet<>();
+            for(Expr expr : clause) {
+                Expr exprSig = org.aksw.jena_sparql_api.utils.ExprUtils.signaturize(expr);
+                exprSigToExpr.put(exprSig, expr);
+                clauseSig.add(exprSig);
+            }
+    
+            //Set<Expr> clauseSig = ClauseUtils.signaturize(clause);
+            result.put(clauseSig, exprSigToExpr);
+        }
+    
+        return result;
     }
 
 
