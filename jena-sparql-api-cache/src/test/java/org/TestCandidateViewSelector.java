@@ -41,4 +41,30 @@ public class TestCandidateViewSelector {
         }
 
     }
+
+    @Test
+    public void testPredicatePartition() {
+        CandidateViewSelectorImpl<String> cws = new CandidateViewSelectorImpl<>();
+
+        for(int i = 0; i < 100; ++i) {
+            QuadPrefixes qp1 = new QuadPrefixes(new Quadlet<Collection<String>>(
+                    Arrays.asList(""),
+                    Arrays.asList("http://dbpedia.org/resource/"),
+                    Arrays.asList("http://foobar.org/pred-" + i),
+                    Arrays.asList("http://linkedgeodata.org/triplify/")
+                    ), true, false);
+
+            cws.put(qp1, "pred" + i);
+        }
+
+
+        {
+            // Note: right now the lookup also matches pred-5 - should this behavior be changed, update the assertion
+            Expr expr = ExprUtils.parse("?p = <http://foobar.org/pred-50>");
+            Collection<String> rs = cws.apply(expr);
+            Assert.assertEquals(rs.size(), 2);
+        }
+
+    }
+
 }
