@@ -197,12 +197,12 @@ public class ExprUtils {
         return result;
     }
 
-//    public static Expr applyNodeTransform(Expr expr, Map<? extends Node, ? extends Node> nodeMap) {
-//        NodeTransform nodeTransform = new NodeTransformRenameMap(nodeMap);
-//        Expr result = NodeTransformLib.transform(nodeTransform, expr);
-//        //Expr result = applyNodeTransform(expr, nodeTransform);
-//        return result;
-//    }
+    public static Expr applyNodeTransform(Expr expr, Map<? extends Node, ? extends Node> nodeMap) {
+        NodeTransform nodeTransform = new NodeTransformRenameMap(nodeMap);
+        Expr result = NodeTransformLib.transform(nodeTransform, expr);
+        //Expr result = applyNodeTransform(expr, nodeTransform);
+        return result;
+    }
 
 //    public static Expr applyNodeTransform(Expr expr, NodeTransform nodeTransform) {
 //        ElementTransform elementTransform = new ElementTransformSubst2(nodeTransform);

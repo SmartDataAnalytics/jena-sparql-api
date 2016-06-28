@@ -1,4 +1,5 @@
 package org;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -7,13 +8,16 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.NavigableSet;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.aksw.commons.collections.CartesianProduct;
 import org.aksw.commons.util.Pair;
+import org.aksw.commons.util.strings.StringUtils;
 import org.aksw.jena_sparql_api.utils.DnfUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
@@ -36,8 +40,8 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 
-public class CandidateViewSelectorImpl<T>
-    implements CandidateViewSelector<T>
+public class CandidateViewSelectorImpl<V>
+    implements CandidateViewSelector<Entry<QuadPrefixes, V>>
 {
     public static final String[] COLUMN_NAMES = new String[]{"g_prefix", "s_prefix", "p_prefix", "o_prefix"};
 
@@ -127,21 +131,21 @@ public class CandidateViewSelectorImpl<T>
     }
 
     public static NavigableSet<String> intersectPrefixes(NavigableSet<String> as, NavigableSet<String> bs) {
-        NavigableSet<String> result = as.stream()
-            .flatMap(a ->
-                bs.stream().map(b -> mostSpecificSubstring(a, b)))
-        .filter(x -> x != null)
-        .collect(Collectors.toCollection(TreeSet::new));
+        NavigableSet<String> result = Stream
+            .concat(
+                as.stream().filter(a -> StringUtils.longestPrefixLookup(a, bs) != null),
+                bs.stream().filter(b -> StringUtils.longestPrefixLookup(b, as) != null))
+            .collect(Collectors.toCollection(TreeSet::new));
 
          return result;
     }
 
     public static NavigableSet<String> unionPrefixes(NavigableSet<String> as, NavigableSet<String> bs) {
-        NavigableSet<String> result = as.stream()
-            .flatMap(a ->
-                bs.stream().map(b -> lessSpecificSubstring(a, b)))
-        .filter(x -> x != null)
-        .collect(Collectors.toCollection(TreeSet::new));
+        NavigableSet<String> result = Stream
+                .concat(
+                    as.stream().filter(a -> StringUtils.longestPrefixLookup(a, bs) == null),
+                    bs.stream().filter(b -> StringUtils.longestPrefixLookup(b, as) == null))
+                .collect(Collectors.toCollection(TreeSet::new));
 
          return result;
     }
@@ -236,7 +240,9 @@ public class CandidateViewSelectorImpl<T>
      * @param decl
      * @param view
      */
-    public void put(QuadPrefixes decl, T value) {
+    public void put(QuadPrefixes decl, V value) {
+        Entry<QuadPrefixes, V> entry = new SimpleEntry<>(decl, value);
+
         List<Collection<?>> columnValues = new ArrayList<Collection<?>>(6);
 
         for(int i = 0; i < 4; ++i) {
@@ -259,7 +265,7 @@ public class CandidateViewSelectorImpl<T>
         CartesianProduct<Object> cartesian = new CartesianProduct<Object>(columnValues);
         for(List<Object> item : cartesian) {
             List<Object> row = new ArrayList<Object>(item);
-            row.add(value);
+            row.add(entry);
             table.add(row);
         }
     }
@@ -286,7 +292,7 @@ public class CandidateViewSelectorImpl<T>
 
         Multimap<Var, Expr> varToExprs = indexExprsByVar(dnfClause);
 
-        Map<Var, Set<String>> varToPrefixes = new HashMap<>();
+        //Map<Var, Set<String>> varToPrefixes = new HashMap<>();
         for(int i = 0; i < 4; ++i) {
 
             Var var = Vars.gspo.get(i);
@@ -356,10 +362,10 @@ public class CandidateViewSelectorImpl<T>
 
 
     @Override
-    public Collection<T> apply(Expr expr) {
+    public Collection<Entry<QuadPrefixes, V>> apply(Expr expr) {
         Set<Set<Expr>> dnf = DnfUtils.toSetDnf(expr);
 
-        Set<T> result = new LinkedHashSet<T>();
+        Set<Entry<QuadPrefixes, V>> result = new LinkedHashSet<Entry<QuadPrefixes, V>>();
         for(Set<Expr> clause : dnf) {
             Map<String, Constraint> columnConstraints = inferColumnConstraints(clause);
 
@@ -373,8 +379,8 @@ public class CandidateViewSelectorImpl<T>
             Collection<List<Object>> rows = table.select(columnConstraints);
 
             @SuppressWarnings("unchecked")
-            List<T> matches = rows.stream()
-                    .map(row -> (T)row.get(valueIndex))
+            List<Entry<QuadPrefixes, V>> matches = rows.stream()
+                    .map(row -> (Entry<QuadPrefixes, V>)row.get(valueIndex))
                     .collect(Collectors.toList());
 
             result.addAll(matches);

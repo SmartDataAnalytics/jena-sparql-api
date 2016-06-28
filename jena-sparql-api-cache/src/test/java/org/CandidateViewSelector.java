@@ -1,5 +1,6 @@
 package org;
 import java.util.Collection;
+import java.util.Map.Entry;
 import java.util.function.Function;
 
 import org.apache.jena.sparql.expr.Expr;

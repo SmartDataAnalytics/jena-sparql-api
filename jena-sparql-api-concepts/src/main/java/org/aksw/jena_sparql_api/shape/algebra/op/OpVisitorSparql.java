@@ -104,7 +104,7 @@ public class OpVisitorSparql
         Var conceptVar = concept.getVar();
         Map<Var, Var> varMap = Collections.singletonMap(Vars._, conceptVar);
 
-        Expr newExpr = ExprUtils.transform(expr, varMap);
+        Expr newExpr = ExprUtils.applyNodeTransform(expr, varMap);
         Element newElement = ElementUtils.mergeElements(concept.getElement(), new ElementFilter(newExpr));
 
         Concept result = new Concept(newElement, conceptVar);

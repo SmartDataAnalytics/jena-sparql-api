@@ -1,18 +1,22 @@
 package org;
 
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+import java.util.NavigableSet;
+import java.util.TreeSet;
+import java.util.function.BinaryOperator;
 
 public class QuadPrefixes
 {
     public static final QuadPrefixes ALWAYS_MATCHING = createAlwaysMatching();
 
-    protected Quadlet<? extends Collection<String>> prefixes;
+    protected Quadlet<? extends NavigableSet<String>> prefixes;
 
     protected boolean mayBeObjectLiteral;
     protected boolean mayBeObjectResource;
 
-    public QuadPrefixes(Quadlet<? extends Collection<String>> prefixes,
+    public QuadPrefixes(Quadlet<? extends NavigableSet<String>> prefixes,
             boolean mayBeObjectResource, boolean mayBeObjectLiteral) {
         super();
         this.prefixes = prefixes;
@@ -20,7 +24,7 @@ public class QuadPrefixes
         this.mayBeObjectResource = mayBeObjectResource;
     }
 
-    public Quadlet<? extends Collection<String>> getPrefixes() {
+    public Quadlet<? extends NavigableSet<String>> getPrefixes() {
         return prefixes;
     }
 
@@ -73,13 +77,42 @@ public class QuadPrefixes
 
 
     public static QuadPrefixes createAlwaysMatching() {
-        QuadPrefixes result = new QuadPrefixes(
-                new Quadlet<>(
-                        Collections.singleton(""),
-                        Collections.singleton(""),
-                        Collections.singleton(""),
-                        Collections.singleton("")),
-                true, true);
+        NavigableSet<String> x = new TreeSet<String>(Collections.singleton(""));
+
+        QuadPrefixes result = new QuadPrefixes(new Quadlet<>(x, x, x, x), true, true);
         return result;
     }
+
+    public static QuadPrefixes intersect(QuadPrefixes a, QuadPrefixes b) {
+        QuadPrefixes result = applyOp(a, b, CandidateViewSelectorImpl::intersectPrefixes, Boolean::logicalAnd);
+        return result;
+    }
+
+    public static QuadPrefixes union(QuadPrefixes a, QuadPrefixes b) {
+        QuadPrefixes result = applyOp(a, b, CandidateViewSelectorImpl::unionPrefixes, Boolean::logicalOr);
+        return result;
+    }
+
+    public static QuadPrefixes applyOp(QuadPrefixes a, QuadPrefixes b, BinaryOperator<NavigableSet<String>> prefixOp, BinaryOperator<Boolean> booleanOp) {
+        Quadlet<? extends NavigableSet<String>> pa = a.getPrefixes();
+        Quadlet<? extends NavigableSet<String>> pb = b.getPrefixes();
+
+        int n = pa.size();
+        List<NavigableSet<String>> components = new ArrayList<>(4);
+        for(int i = 0; i < n; ++i) {
+            NavigableSet<String> pas = pa.get(i);
+            NavigableSet<String> pbs = pb.get(i);
+
+            NavigableSet<String> c = prefixOp.apply(pas, pbs);
+            components.add(c);
+        }
+        Quadlet<NavigableSet<String>> quadlet = new Quadlet<>(components);
+
+        boolean mayBeResource = booleanOp.apply(a.isMayBeObjectResource(), b.isMayBeObjectResource());
+        boolean mayBeLiteral = booleanOp.apply(a.isMayBeObjectLiteral(), b.isMayBeObjectLiteral());
+
+        QuadPrefixes result = new QuadPrefixes(quadlet, mayBeResource, mayBeLiteral);
+        return result;
+    }
+
 }

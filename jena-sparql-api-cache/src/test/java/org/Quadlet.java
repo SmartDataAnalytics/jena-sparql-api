@@ -1,6 +1,7 @@
 package org;
 
 import java.util.AbstractList;
+import java.util.List;
 
 public class Quadlet<V>
     extends AbstractList<V>
@@ -9,6 +10,15 @@ public class Quadlet<V>
     protected V s;
     protected V p;
     protected V o;
+
+    public Quadlet(List<V> components) {
+        super();
+        assert components.size() == 4 : "there must be exactly 4 components";
+        this.g = components.get(0);
+        this.s = components.get(1);
+        this.p = components.get(2);
+        this.o = components.get(3);
+    }
 
     public Quadlet(V g, V s, V p, V o) {
         super();
