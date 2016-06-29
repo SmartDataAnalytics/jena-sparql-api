@@ -91,10 +91,10 @@ public class Refinement {
 
             result = MapUtils.groupByKey(sigToAs.asMap(), sigToBs.asMap());
 
-            System.out.println("sigToAs: " + sigToAs);
-            System.out.println("sigToBs: " + sigToBs);
-            result.values().stream().forEach(e ->
-            System.out.println("  Refined to " + e + " from " + as + " - " + bs + " via " + newBase));
+//            System.out.println("sigToAs: " + sigToAs);
+//            System.out.println("sigToBs: " + sigToBs);
+//            result.values().stream().forEach(e ->
+//            System.out.println("  Refined to " + e + " from " + as + " - " + bs + " via " + newBase));
         }
         return result;
     }
