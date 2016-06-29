@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import org.aksw.isomorphism.Problem;
+import org.aksw.isomorphism.ProblemNeighborhoodAware;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
@@ -28,8 +29,8 @@ public class ProblemVarMappingQuad
     }
 
     @Override
-    public Collection<Problem<Map<Var, Var>>> refine(Map<Var, Var> partialSolution) {
-        Collection<Problem<Map<Var, Var>>> result = Refinement.refineQuads(
+    public Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> refine(Map<Var, Var> partialSolution) {
+        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result = Refinement.refineQuads(
                 as,
                 bs,
                 baseSolution,
@@ -49,12 +50,6 @@ public class ProblemVarMappingQuad
 //        Set<Var> result = QuadPatternUtils.getVarsMentioned(bs);
 //        return result;
 //    }
-
-    @Override
-    public int compareTo(Problem<Map<Var, Var>> o) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
 
 
 

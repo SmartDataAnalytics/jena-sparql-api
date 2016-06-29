@@ -235,7 +235,7 @@ public class ProblemContainerNeighbourhoodAware<S, T>
             Entry<? super Comparable<?>, ProblemNeighborhoodAware<S, T>> entry = pollFirstEntry(refinementQueue);
 
             ProblemNeighborhoodAware<S, T> refinee = entry.getValue();
-            Collection<ProblemNeighborhoodAware<S, T>> newProblems = refinee.refine(solution);
+            Collection<? extends ProblemNeighborhoodAware<S, T>> newProblems = refinee.refine(solution);
             for(ProblemNeighborhoodAware<S, T> newProblem : newProblems) {
                 addToRegularQueue(newProblem);
             }

@@ -41,7 +41,7 @@ public interface GenericProblem<S, P extends GenericProblem<S, P>>
      * @param partialSolution
      * @return
      */
-    Collection<P> refine(S partialSolution);
+    Collection<? extends P> refine(S partialSolution);
 
     /**
      * By default, compares the estimated costs

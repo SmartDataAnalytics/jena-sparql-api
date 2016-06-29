@@ -7,7 +7,7 @@ import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
-import org.aksw.isomorphism.Problem;
+import org.aksw.isomorphism.ProblemNeighborhoodAware;
 import org.aksw.jena_sparql_api.utils.MapUtils;
 import org.aksw.jena_sparql_api.utils.NodeTransformSignaturize;
 import org.apache.jena.sparql.core.Quad;
@@ -22,16 +22,16 @@ import com.google.common.collect.Multimap;
 
 public class Refinement {
 
-    public static Problem<Map<Var, Var>> groupToProblem(Entry<Set<Quad>, Set<Quad>> group, Map<Var, Var> newBase) {
-        Problem<Map<Var, Var>> result = new ProblemVarMappingQuad(group.getKey(), group.getValue(), newBase);
+    public static ProblemNeighborhoodAware<Map<Var, Var>, Var> groupToProblem(Entry<Set<Quad>, Set<Quad>> group, Map<Var, Var> newBase) {
+        ProblemNeighborhoodAware<Map<Var, Var>, Var> result = new ProblemVarMappingQuad(group.getKey(), group.getValue(), newBase);
         return result;
     }
 
-    public static <T> Collection<Problem<Map<Var, Var>>> groupsToProblems(
+    public static <T> Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> groupsToProblems(
             Map<?, Entry<Set<T>, Set<T>>> groups,
             Map<Var, Var> newBase,
-            TriFunction<Set<T>, Set<T>, Map<Var, Var>, Problem<Map<Var, Var>>> groupToProblem) {
-        Collection<Problem<Map<Var, Var>>> result = groups.values().stream()
+            TriFunction<Set<T>, Set<T>, Map<Var, Var>, ProblemNeighborhoodAware<Map<Var, Var>, Var>> groupToProblem) {
+        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result = groups.values().stream()
                 .map(e -> groupToProblem.apply(e.getKey(), e.getValue(), newBase)) //new ProblemVarMappingQuad(e.getKey(), e.getValue(), newBase))
                 .collect(Collectors.toList());
 
@@ -45,18 +45,18 @@ public class Refinement {
      *
      *
      */
-    public static <T> Collection<Problem<Map<Var, Var>>> refineGeneric(
+    public static <T> Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> refineGeneric(
             Collection<? extends T> as,
             Collection<? extends T> bs,
             Map<Var, Var> baseSolution,
             Map<Var, Var> partialSolution,
             BiFunction<NodeTransform, T, T> transformer,
-            TriFunction<Set<T>, Set<T>, Map<Var, Var>, Problem<Map<Var, Var>>> groupToProblem
+            TriFunction<Set<T>, Set<T>, Map<Var, Var>, ProblemNeighborhoodAware<Map<Var, Var>, Var>> groupToProblem
             )
     {
         Map<Var, Var> newBase = MapUtils.mergeIfCompatible(baseSolution, partialSolution);
         Map<T, Entry<Set<T>, Set<T>>> groups = Refinement.refineGeneric(as, bs, newBase, transformer);
-        Collection<Problem<Map<Var, Var>>> result = groupsToProblems(groups, newBase, groupToProblem);
+        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result = groupsToProblems(groups, newBase, groupToProblem);
 
         return result;
     }
@@ -141,20 +141,20 @@ public class Refinement {
         */
     }
 
-    public static Collection<Problem<Map<Var, Var>>> groupsToProblems(Map<Quad, Entry<Set<Quad>, Set<Quad>>> group, Map<Var, Var> newBase) {
-        Collection<Problem<Map<Var, Var>>> result = group.values().stream()
+    public static Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> groupsToProblems(Map<Quad, Entry<Set<Quad>, Set<Quad>>> group, Map<Var, Var> newBase) {
+        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result = group.values().stream()
                 .map(e -> new ProblemVarMappingQuad(e.getKey(), e.getValue(), newBase))
                 .collect(Collectors.toList());
 
         return result;
     }
 
-    public static Collection<Problem<Map<Var, Var>>> refineQuads(
+    public static Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> refineQuads(
             Collection<? extends Quad> as,
             Collection<? extends Quad> bs,
             Map<Var, Var> baseSolution,
             Map<Var, Var> partialSolution) {
-        Collection<Problem<Map<Var, Var>>> result = refineGeneric(
+        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result = refineGeneric(
                 as,
                 bs,
                 baseSolution,
@@ -166,12 +166,12 @@ public class Refinement {
         return result;
     }
 
-    public static Collection<Problem<Map<Var, Var>>> refineExprs(
+    public static Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> refineExprs(
             Collection<? extends Expr> as,
             Collection<? extends Expr> bs,
             Map<Var, Var> baseSolution,
             Map<Var, Var> partialSolution) {
-        Collection<Problem<Map<Var, Var>>> result = refineGeneric(
+        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result = refineGeneric(
                 as,
                 bs,
                 baseSolution,

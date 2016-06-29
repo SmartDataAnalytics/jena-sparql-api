@@ -15,9 +15,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
-import org.aksw.isomorphism.Problem;
 import org.aksw.isomorphism.ProblemContainer;
 import org.aksw.isomorphism.ProblemContainerImpl;
+import org.aksw.isomorphism.ProblemContainerNeighbourhoodAware;
+import org.aksw.isomorphism.ProblemNeighborhoodAware;
 import org.aksw.isomorphism.StateProblemContainer;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMapImpl;
@@ -126,7 +127,7 @@ public class TestStateSpaceSearch {
         FeatureMap<Expr, Multimap<Expr, Expr>> queryIndex = SparqlCacheUtils.indexDnf(queryQfpc.getFilterDnf());
 
 
-        Collection<Problem<Map<Var, Var>>> problems = new ArrayList<>();
+        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> problems = new ArrayList<>();
         for(Entry<Set<Expr>, Collection<Multimap<Expr, Expr>>> entry : queryIndex.entrySet()) {
             Set<Expr> querySig = entry.getKey();
             Collection<Multimap<Expr, Expr>> queryMaps = entry.getValue();
@@ -140,11 +141,11 @@ public class TestStateSpaceSearch {
                 for(Multimap<Expr, Expr> queryMap : queryMaps) {
                     Map<Expr, Entry<Set<Expr>, Set<Expr>>> group = MapUtils.groupByKey(cacheMap.asMap(), queryMap.asMap());
 
-                    Collection<Problem<Map<Var, Var>>> localProblems = group.values().stream()
+                    Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> localProblems = group.values().stream()
                         .map(x -> {
                             Set<Expr> cacheExprs = x.getKey();
                             Set<Expr> queryExprs = x.getValue();
-                            Problem<Map<Var, Var>> p = new ProblemVarMappingExpr(cacheExprs, queryExprs, Collections.emptyMap());
+                            ProblemNeighborhoodAware<Map<Var, Var>, Var> p = new ProblemVarMappingExpr(cacheExprs, queryExprs, Collections.emptyMap());
 
                             //System.out.println("cacheExprs: " + cacheExprs);
                             //System.out.println("queryExprs: " + queryExprs);
@@ -171,28 +172,35 @@ public class TestStateSpaceSearch {
         }
 
         ProblemVarMappingQuad quadProblem = new ProblemVarMappingQuad(cacheQfpc.getQuads(), queryQfpc.getQuads(), Collections.emptyMap());
-        problems.addToRegularQueue(quadProblem);
+        problems.add(quadProblem);
 
         for(int i = 0; i < 1; ++i) {
             Stopwatch sw = Stopwatch.createStarted();
 
-            ProblemContainer<Map<Var, Var>> container = ProblemContainerImpl.create(problems);
+            ProblemContainerNeighbourhoodAware.solve(
+                    problems,
+                    Map::keySet,
+                    MapUtils::mergeIfCompatible,
+                    Objects::isNull,
+                    (s) -> { System.out.println("solution: " + s); });
 
-            State<Map<Var, Var>> state = container.isEmpty()
-                    ? new StateProblemContainer<Map<Var, Var>>(null, Objects::isNull, container, (a, b) -> MapUtils.mergeIfCompatible(a, b))
-                    : new StateProblemContainer<Map<Var, Var>>(Collections.emptyMap(), Objects::isNull, container, (a, b) -> MapUtils.mergeIfCompatible(a, b));
-            Stream<Map<Var, Var>> xxx = StateSearchUtils.depthFirstSearch(state, 10000);
-
-            for(Map<Var, Var> m : xxx.collect(Collectors.toList())) {
-                if(m != null) {
-                    System.out.println("SOLUTION: " + m);
-                    NodeTransform nodeTransform = new NodeTransformRenameMap(m);
-                    QuadFilterPatternCanonical foo = cacheQfpc.applyNodeTransform(nodeTransform);
-                    System.out.println("Cache after var mapping: " + foo);
-                    QuadFilterPatternCanonical diff = queryQfpc.diff(foo);
-                    System.out.println("DIFF: " + diff + "\nfrom cache " + foo + "\nand query " + queryQfpc);
-                }
-            }
+//            ProblemContainer<Map<Var, Var>> container = ProblemContainerImpl.create(problems);
+//
+//            State<Map<Var, Var>> state = container.isEmpty()
+//                    ? new StateProblemContainer<Map<Var, Var>>(null, Objects::isNull, container, (a, b) -> MapUtils.mergeIfCompatible(a, b))
+//                    : new StateProblemContainer<Map<Var, Var>>(Collections.emptyMap(), Objects::isNull, container, (a, b) -> MapUtils.mergeIfCompatible(a, b));
+//            Stream<Map<Var, Var>> xxx = StateSearchUtils.depthFirstSearch(state, 10000);
+//
+//            for(Map<Var, Var> m : xxx.collect(Collectors.toList())) {
+//                if(m != null) {
+//                    System.out.println("SOLUTION: " + m);
+//                    NodeTransform nodeTransform = new NodeTransformRenameMap(m);
+//                    QuadFilterPatternCanonical foo = cacheQfpc.applyNodeTransform(nodeTransform);
+//                    System.out.println("Cache after var mapping: " + foo);
+//                    QuadFilterPatternCanonical diff = queryQfpc.diff(foo);
+//                    System.out.println("DIFF: " + diff + "\nfrom cache " + foo + "\nand query " + queryQfpc);
+//                }
+//            }
 
             //xxx.forEach(x -> System.out.println("SOLUTION: " + x));
 

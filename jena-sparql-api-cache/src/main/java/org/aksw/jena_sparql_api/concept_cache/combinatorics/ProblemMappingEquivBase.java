@@ -4,7 +4,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-import org.aksw.isomorphism.Problem;
+import org.aksw.isomorphism.ProblemNeighborhoodAware;
 
 import com.google.common.math.LongMath;
 
@@ -19,7 +19,7 @@ import com.google.common.math.LongMath;
  * @param <B>
  */
 public abstract class ProblemMappingEquivBase<A, B, X, Y>
-    implements Problem<Map<X, Y>>
+    implements ProblemNeighborhoodAware<Map<X, Y>, X>
 {
     protected Collection<? extends A> as;
     protected Collection<? extends B> bs;
@@ -54,7 +54,7 @@ public abstract class ProblemMappingEquivBase<A, B, X, Y>
     }
 
     @Override
-    public Collection<Problem<Map<X, Y>>> refine(Map<X, Y> partialSolution) {
+    public Collection<ProblemNeighborhoodAware<Map<X, Y>, X>> refine(Map<X, Y> partialSolution) {
         return Collections.singleton(this);
     }
 

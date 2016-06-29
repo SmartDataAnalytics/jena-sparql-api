@@ -2,16 +2,13 @@ package org.aksw.jena_sparql_api.concept_cache.combinatorics;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.aksw.isomorphism.Problem;
-import org.aksw.jena_sparql_api.utils.CnfUtils;
+import org.aksw.isomorphism.ProblemNeighborhoodAware;
 import org.apache.jena.sparql.algebra.Op;
-import org.apache.jena.sparql.algebra.op.OpFilter;
 import org.apache.jena.sparql.algebra.op.OpQuadPattern;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.expr.Expr;
 
 public class ProblemFactoryOpMapping
 //    implements Problem<Map<Var, Var>>
@@ -27,10 +24,10 @@ public class ProblemFactoryOpMapping
         return null;
     }
 
-    public static Problem<Map<Var, Var>> create(OpQuadPattern a, OpQuadPattern b, Map<Var, Var> baseSolution) {
+    public static ProblemNeighborhoodAware<Map<Var, Var>, Var> create(OpQuadPattern a, OpQuadPattern b, Map<Var, Var> baseSolution) {
         List<Quad> aqp = a.getPattern().getList();
         List<Quad> bqp = b.getPattern().getList();
-        Problem<Map<Var, Var>> result = new ProblemVarMappingQuad(aqp, bqp, baseSolution);
+        ProblemNeighborhoodAware<Map<Var, Var>, Var> result = new ProblemVarMappingQuad(aqp, bqp, baseSolution);
         return result;
     }
 

@@ -7,7 +7,6 @@ import org.aksw.isomorphism.ProblemNeighborhoodAware;
 
 public abstract class ProblemMappingVarsBase<A, B, X, Y>
     extends ProblemMappingEquivBase<A, B, X, Y>
-    implements ProblemNeighborhoodAware<Map<X, Y>, X>
 {
 
     public ProblemMappingVarsBase(Collection<? extends A> as,

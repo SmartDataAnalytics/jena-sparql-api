@@ -13,7 +13,7 @@ import java.util.stream.Stream;
 
 import org.aksw.commons.collections.MapUtils;
 import org.aksw.isomorphism.IsoMapUtils;
-import org.aksw.isomorphism.Problem;
+import org.aksw.isomorphism.ProblemNeighborhoodAware;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
@@ -107,8 +107,8 @@ public class ProblemVarMappingExpr
      *
      */
     @Override
-    public Collection<Problem<Map<Var, Var>>> refine(Map<Var, Var> partialSolution) {
-        Collection<Problem<Map<Var, Var>>> result = Refinement.refineExprs(
+    public Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> refine(Map<Var, Var> partialSolution) {
+        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result = Refinement.refineExprs(
                 as,
                 bs,
                 baseSolution,
@@ -279,10 +279,10 @@ public class ProblemVarMappingExpr
         return result;
     }
 
-    @Override
-    public String toString() {
-        return super.toString();
-    }
+//    @Override
+//    public String toString() {
+//        return super.toString();
+//    }
 
     @Override
     public Collection<Var> getSourceNeighbourhood() {
@@ -301,12 +301,6 @@ public class ProblemVarMappingExpr
 //
 //        return result;
 //    }
-
-    @Override
-    public int compareTo(Problem<Map<Var, Var>> o) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
 
 
 
