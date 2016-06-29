@@ -24,8 +24,6 @@ public class StateCombinatoricCallback<A, B, S> {
     protected BiConsumer<Stack<Entry<A, B>>, S> completeMatch;
 
     public StateCombinatoricCallback(
-            //Collection<A> remainingA,
-            //Collection<B> remainingB,
             LinkedListNode<A> remainingA,
             LinkedListNode<B> remainingB,
             BiFunction<A, B, S> computeSolutionContribution,
@@ -50,7 +48,7 @@ public class StateCombinatoricCallback<A, B, S> {
      * @param as
      * @param bs
      */
-    public static <A, B> void doInPlace(Collection<A> as, Collection<B> bs) {
+    public static <A, B> void createKPermutationsOfN(Collection<A> as, Collection<B> bs) {
         LinkedListNode<A> nas = LinkedListNode.create(as);
         LinkedListNode<B> nbs = LinkedListNode.create(bs);
         int[] i = new int[]{0};
@@ -61,9 +59,10 @@ public class StateCombinatoricCallback<A, B, S> {
                         (a, b) -> 0,
                         (a, b) -> 0,
                         (s) -> false,
-                        (stack, s) -> { System.out.println("MATCH: " + (++i[0]) + stack); });
+                        (stack, s) -> { ++i[0]; }); //System.out.println("MATCH: " + (++i[0]) + stack));
 
         runner.nextA(0);
+        System.out.println("permutions: " + i[0]);
     }
 
 
@@ -73,7 +72,6 @@ public class StateCombinatoricCallback<A, B, S> {
 
         // pick
         LinkedListNode<A> curr = remainingA.successor;
-//        System.out.println("as: " + curr);
         if(!curr.isTail()) {
             LinkedListNode<A> pick = curr;
             A a = pick.data;
@@ -81,23 +79,19 @@ public class StateCombinatoricCallback<A, B, S> {
             pick.unlink();
 
             curr = pick.successor;
-            //System.out.println("as unlink: " + remainingA + "; " + a);
 
             // recurse
             nextB(baseSolution, a);
-            //System.out.println("picked " + a);
 
             // restore
             pick.relink();
-            //System.out.println("as relink: " + remainingA + "; " + a);
         } else {
             completeMatch.accept(stack, baseSolution);
-            //System.out.println(stack);
         }
     }
 
     public void nextB(S baseSolution, A a) {
-            LinkedListNode<B> curr = remainingB.successor;
+        LinkedListNode<B> curr = remainingB.successor;
 
         while(!curr.isTail()) {
             LinkedListNode<B> pick = curr;
@@ -130,8 +124,13 @@ public class StateCombinatoricCallback<A, B, S> {
         }
     }
 
+    public static void main(String[] args) {
+        List<String> as = new ArrayList<String>(Arrays.asList("a", "b", "c"));
+        List<Integer> bs = new ArrayList<Integer>(Arrays.asList(1, 2, 3, 4, 5));
+        createKPermutationsOfN(as, bs);
+    }
 
-    // This is too excessive ;)
+    // This is too excessive - kept for reference;)
     public void nextAWithAllPermutationsOfA(S baseSolution) {
 
         // pick
@@ -159,9 +158,4 @@ public class StateCombinatoricCallback<A, B, S> {
         }
     }
 
-    public static void main(String[] args) {
-        List<String> as = new ArrayList<String>(Arrays.asList("a", "b", "c"));
-        List<Integer> bs = new ArrayList<Integer>(Arrays.asList(1, 2, 3, 4, 5));
-        doInPlace(as, bs);
-    }
 }

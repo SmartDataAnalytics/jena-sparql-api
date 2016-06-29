@@ -8,11 +8,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Stack;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+
+import com.google.common.base.Stopwatch;
 
 public class StateCombinatoric<A, B, S> {
     protected Stack<Entry<A, B>> stack = new Stack<Entry<A, B>>();
@@ -33,7 +36,6 @@ public class StateCombinatoric<A, B, S> {
             BiFunction<A, B, S> computeSolutionContribution,
             BinaryOperator<S> solutionCombiner,
             Predicate<S> isUnsatisfiable)
-            //BiConsumer<Stack<Entry<A, B>>, S> completeMatch)
     {
         super();
         this.remainingA = remainingA;
@@ -41,20 +43,12 @@ public class StateCombinatoric<A, B, S> {
         this.computeSolutionContribution = computeSolutionContribution;
         this.solutionCombiner = solutionCombiner;
         this.isUnsatisfiable = isUnsatisfiable;
-        //this.completeMatch = completeMatch;
     }
 
 
-    /**
-     * This function will modify the collections.
-     * The collections will eventually contain the original items.
-     *
-     * @param as
-     * @param bs
-     */
-    public static <A, B> void doInPlace(Collection<A> as, Collection<B> bs) {
-        LinkedListNode<A> nas = LinkedListNode.create(as);
-        LinkedListNode<B> nbs = LinkedListNode.create(bs);
+    public static <A, B> Stream<Combination<A, B, Integer>> createKPermutationsOfN(Collection<A> ks, Collection<B> ns) {
+        LinkedListNode<A> nas = LinkedListNode.create(ks);
+        LinkedListNode<B> nbs = LinkedListNode.create(ns);
         //int[] i = new int[]{0};
         StateCombinatoric<A, B, Integer> runner =
                 new StateCombinatoric<A, B, Integer>(
@@ -63,19 +57,17 @@ public class StateCombinatoric<A, B, S> {
                         (a, b) -> 0,
                         (a, b) -> 0,
                         (s) -> false);
-                        //(stack, s) -> { System.out.println("MATCH: " + (++i[0]) + stack); });
 
-        Stream<Stack<Entry<A, B>>> x = runner.nextA(0);
-        com.codepoetics.protonpack.StreamUtils.zipWithIndex(x).forEach(y -> System.out.println(y.getIndex()));
-        //x.forEach(y -> System.out.println("will this work? " + y));
+        Stream<Combination<A, B, Integer>> result = runner.stream(0);
+        return result;
     }
 
 
     // [a b c] [1 2 3 4 5] -> [1, 2, 3], [1, 2, 4], [1, 2, 5], [1, 3, 4], ...
     //Stream<Stack<Entry<A, B>>>
-    public Stream<Stack<Entry<A, B>>> nextA(S baseSolution) {
+    public Stream<Combination<A, B, S>> stream(S baseSolution) {
 
-        Iterator<Stream<Stack<Entry<A, B>>>> it = new Iterator<Stream<Stack<Entry<A, B>>>>() {
+        Iterator<Stream<Combination<A, B, S>>> it = new Iterator<Stream<Combination<A, B, S>>>() {
             LinkedListNode<A> curr = remainingA.successor;
             boolean next = true;
 
@@ -85,11 +77,11 @@ public class StateCombinatoric<A, B, S> {
             }
 
             @Override
-            public Stream<Stack<Entry<A, B>>> next() {
+            public Stream<Combination<A, B, S>> next() {
                 next = false;
-                Stream<Stack<Entry<A, B>>> r;
+                Stream<Combination<A, B, S>> r;
 
-               if(!curr.isTail()) {
+                if(!curr.isTail()) {
                     LinkedListNode<A> pick = curr;
                     A a = pick.data;
 
@@ -105,7 +97,9 @@ public class StateCombinatoric<A, B, S> {
                         pick.relink();
                     });
                } else {
-                   r = Stream.of(stack);
+                   @SuppressWarnings("unchecked")
+                   Stack<Entry<A, B>> copy = (Stack<Entry<A, B>>)stack.clone();
+                   r = Stream.of(new Combination<A, B, S>(copy, baseSolution));
                }
                return r;
                 //System.out.println("picked " + a);
@@ -113,46 +107,18 @@ public class StateCombinatoric<A, B, S> {
 
         };
 
-        Iterable<Stream<Stack<Entry<A, B>>>> iterable = () -> it;
-        Stream<Stack<Entry<A, B>>> result = StreamSupport.stream(iterable.spliterator(), false).flatMap(x -> x);
-
-
-//        System.out.println("stack: " + stack);
-//        // pick
-//        Node<A> curr = remainingA.successor;
-////        System.out.println("as: " + curr);
-//        if(!curr.isTail()) {
-//            Node<A> pick = curr;
-//            A a = pick.data;
-//
-//            pick.unlink();
-//
-//            curr = pick.successor;
-//            //System.out.println("as unlink: " + remainingA + "; " + a);
-//
-//            // recurse
-//            result = nextB(baseSolution, a);
-//            //System.out.println("picked " + a);
-//
-//            // restore
-//            pick.relink();
-//            //System.out.println("as relink: " + remainingA + "; " + a);
-//        } else {
-//            //completeMatch.accept(stack, baseSolution);
-//            result = Stream.of(stack);
-//            //System.out.println(stack);
-//        }
+        Iterable<Stream<Combination<A, B, S>>> iterable = () -> it;
+        Stream<Combination<A, B, S>> result = StreamSupport
+                .stream(iterable.spliterator(), false)
+                .flatMap(x -> x);
 
         return result;
     }
 
-    public Stream<Stack<Entry<A, B>>> nextB(S baseSolution, A a) {
-        Stream<Stack<Entry<A, B>>> result;
+    public Stream<Combination<A, B, S>> nextB(S baseSolution, A a) {
+        Stream<Combination<A, B, S>> result;
 
-        //Node<B> curr = remainingB.successor;
-        //System.out.println("bs: " + curr);
-
-        Iterator<Stream<Stack<Entry<A, B>>>> it = new Iterator<Stream<Stack<Entry<A, B>>>>() {
+        Iterator<Stream<Combination<A, B, S>>> it = new Iterator<Stream<Combination<A, B, S>>>() {
             LinkedListNode<B> curr = remainingB.successor;
 
             @Override
@@ -162,115 +128,73 @@ public class StateCombinatoric<A, B, S> {
             }
 
             @Override
-            public Stream<Stack<Entry<A, B>>> next() {
-                Stream<Stack<Entry<A, B>>> r = null;
+            public Stream<Combination<A, B, S>> next() {
+                Stream<Combination<A, B, S>> r = null;
 
-//                if(!curr.isTail()) {
-                    LinkedListNode<B> pick = curr;
-                    B b = pick.data;
+                LinkedListNode<B> pick = curr;
+                B b = pick.data;
 
-                    pick.unlink();
-                    curr = pick.successor;
+                pick.unlink();
+                curr = pick.successor;
 
-                    S solutionContribution = computeSolutionContribution.apply(a, b);
-                    S combined = null;
-                    boolean unsatisfiable;
+                S solutionContribution = computeSolutionContribution.apply(a, b);
+                S combined = null;
+                boolean unsatisfiable;
 
-                    unsatisfiable = isUnsatisfiable.test(solutionContribution);
-                    if(!unsatisfiable) {
-                        combined = solutionCombiner.apply(baseSolution, solutionContribution);
-                        unsatisfiable = isUnsatisfiable.test(combined);
-                    }
+                unsatisfiable = isUnsatisfiable.test(solutionContribution);
+                if(!unsatisfiable) {
+                    combined = solutionCombiner.apply(baseSolution, solutionContribution);
+                    unsatisfiable = isUnsatisfiable.test(combined);
+                }
 
-                    if(!unsatisfiable) {
+                if(!unsatisfiable) {
 
-                        stack.push(new SimpleEntry<>(a, b));
+                    stack.push(new SimpleEntry<>(a, b));
 //System.out.println("push: " + stack);
-                        // recurse
-                        r = nextA(combined);
-                        r = StreamUtils.appendAction(r, () -> {
-                            stack.pop();
-                            // restore
-                            pick.relink();
+                    // recurse
+                    r = stream(combined);
+                    r = StreamUtils.appendAction(r, () -> {
+                        stack.pop();
+                        // restore
+                        pick.relink();
 
-                        });
-                    } else {
-                        r = Stream.empty();
-                    }
+                    });
+                } else {
+                    r = Stream.empty();
+                }
 
                 return r;
             }
-
         };
 
-        Iterable<Stream<Stack<Entry<A, B>>>> iterable = () -> it;
+        Iterable<Stream<Combination<A, B, S>>> iterable = () -> it;
         result = StreamSupport.stream(iterable.spliterator(), false).flatMap(x -> x);
-
-//        while(!curr.isTail()) {
-//            Node<B> pick = curr;
-//            B b = pick.data;
-//
-//            pick.unlink();
-//            curr = pick.successor;
-//
-//            S solutionContribution = computeSolutionContribution.apply(a, b);
-//            S combined;
-//            boolean unsatisfiable;
-//            unsatisfiable = isUnsatisfiable.test(solutionContribution);
-//            if(!unsatisfiable) {
-//                combined = solutionCombiner.apply(baseSolution, solutionContribution);
-//                unsatisfiable = isUnsatisfiable.test(combined);
-//
-//                if(!unsatisfiable) {
-//
-//                    stack.push(new SimpleEntry<>(a, b));
-//
-//                    // recurse
-//                    nextA(combined);
-//
-//                    stack.pop();
-//                }
-//            }
-//
-//            // restore
-//            pick.relink();
-//        }
 
         return result;
     }
 
 
-    // This is too excessive ;)
-    public void nextAWithAllPermutationsOfA(S baseSolution) {
-
-        // pick
-        LinkedListNode<A> curr = remainingA.successor;
-//        System.out.println("as: " + curr);
-        while(!curr.isTail()) {
-            LinkedListNode<A> pick = curr;
-            A a = pick.data;
-
-            pick.unlink();
-
-            curr = pick.successor;
-            //System.out.println("as unlink: " + remainingA + "; " + a);
-
-            // recurse
-            nextB(baseSolution, a);
-
-            // restore
-            pick.relink();
-            //System.out.println("as relink: " + remainingA + "; " + a);
-        }
-
-        if(remainingA.successor.isTail()) {
-             //completeMatch.accept(stack, baseSolution);
-        }
-    }
-
     public static void main(String[] args) {
-        List<String> as = new ArrayList<String>(Arrays.asList("a", "b", "c"));
-        List<Integer> bs = new ArrayList<Integer>(Arrays.asList(1, 2, 3, 4, 5));
-        doInPlace(as, bs);
+        List<String> as = new ArrayList<String>(Arrays.asList("a", "b", "c", "d", "e", "f", "g"));
+        List<Integer> bs = new ArrayList<Integer>(Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9));
+
+
+//        Collection<String> strs = new ArrayList<String>();
+
+
+        for(int i = 0; i < 1000; ++i) {
+            Stopwatch sw = Stopwatch.createStarted();
+            Stream<?> stream = null;
+            //StateCombinatoricCallback.createKPermutationsOfN(as, bs);
+            //System.out.println("huh");
+            stream = createKPermutationsOfN(as, bs);
+            //IntStream stream = IntStream.range(0, 181440000);
+            //stream = IntStream.range(0, 181440).mapToObj(x -> "mystr" + x);
+            long count = stream != null ? stream.count() : 0;
+            System.out.println("Time taken for " + count + " items: " + sw.stop().elapsed(TimeUnit.MILLISECONDS));
+        }
+//        com.codepoetics.protonpack.StreamUtils.zipWithIndex(stream).forEach(
+//                y -> System.out.println(y.getIndex() + " - " + y.getValue()));
+
     }
 }
