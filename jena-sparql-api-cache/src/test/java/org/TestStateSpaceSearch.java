@@ -171,7 +171,7 @@ public class TestStateSpaceSearch {
         }
 
         ProblemVarMappingQuad quadProblem = new ProblemVarMappingQuad(cacheQfpc.getQuads(), queryQfpc.getQuads(), Collections.emptyMap());
-        problems.add(quadProblem);
+        problems.addToRegularQueue(quadProblem);
 
         for(int i = 0; i < 1; ++i) {
             Stopwatch sw = Stopwatch.createStarted();
