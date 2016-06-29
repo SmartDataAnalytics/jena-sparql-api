@@ -16,49 +16,9 @@ import java.util.stream.Stream;
  *
  * @param <S> The solution type
  */
-public interface Problem<S, P extends Problem<S, P>>
-    extends Comparable<Problem<S, P>>, CostAware
+public interface Problem<S>
+    extends GenericProblem<S, Problem<S>>
 {
-    /**
-     * Report an estimate cost for solving the problem with its current setup.
-     * Note, that the cost computation should be cheap.
-     * @return
-     */
-    //long getEstimatedCost();
-
-    /**
-     * Return a stream of solutions
-     *
-     * Note: if generate solutions should operate on a partial solution, use refine first
-     *
-     * @return
-     */
-    Stream<S> generateSolutions();
-
-    /**
-     * Refine the problem by a partial solution
-     *
-     * @param partialSolution
-     * @return
-     */
-    Collection<P> refine(S partialSolution);
-
-    /**
-     * By default, compares the estimated costs
-     */
-    @Override
-    default int compareTo(Problem<S, P> o) {
-        int result;
-
-        if(o == null) {
-            result = 1; // Sort nulls first
-        } else {
-            long a = this.getEstimatedCost();
-            long b = o.getEstimatedCost();
-            result = Long.compare(a, b);
-        }
-        return result;
-    }
 }
 
 
