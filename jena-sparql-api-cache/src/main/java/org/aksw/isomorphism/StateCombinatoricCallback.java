@@ -4,11 +4,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.function.BiFunction;
-import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
+
+import com.codepoetics.protonpack.functions.TriFunction;
 
 /**
  * kPermutationsOfN implementation with support for solution computation and early bailout should a solution
@@ -28,30 +28,33 @@ import java.util.stream.Stream;
  * @param <S>
  */
 public class StateCombinatoricCallback<A, B, S> {
-    //protected Stack<Entry<A, B>> stack = new Stack<Entry<A, B>>();
-
     protected LinkedListNode<A> remainingA;
     protected LinkedListNode<B> remainingB;
 
-    protected BiFunction<A, B, S> computeSolutionContribution;
-    protected BinaryOperator<S> solutionCombiner;
-    protected Predicate<S> isUnsatisfiable;
+    /**
+     * Function which takes the base solution, a and b and returns a new solution
+     *
+     */
+    protected TriFunction<S, A, B, Stream<S>> solutionCombiner;
+
+
+    /**
+     * Callback for complete solutions
+     *
+     */
     protected Consumer<CombinationStack<A, B, S>> completeMatch;
+
 
     public StateCombinatoricCallback(
             LinkedListNode<A> remainingA,
             LinkedListNode<B> remainingB,
-            BiFunction<A, B, S> computeSolutionContribution,
-            BinaryOperator<S> solutionCombiner,
-            Predicate<S> isUnsatisfiable,
+            TriFunction<S, A, B, Stream<S>> solutionCombiner,
             Consumer<CombinationStack<A, B, S>> completeMatch)
     {
         super();
         this.remainingA = remainingA;
         this.remainingB = remainingB;
-        this.computeSolutionContribution = computeSolutionContribution;
         this.solutionCombiner = solutionCombiner;
-        this.isUnsatisfiable = isUnsatisfiable;
         this.completeMatch = completeMatch;
     }
 
@@ -60,7 +63,7 @@ public class StateCombinatoricCallback<A, B, S> {
             Collection<A> as,
             Collection<B> bs) {
         Void nil = null;
-        Stream<CombinationStack<A, B, Void>> result = createKPermutationsOfN(as, bs, nil, (k, n) -> nil, (sa, sb) -> nil, (s) -> false);
+        Stream<CombinationStack<A, B, Void>> result = createKPermutationsOfN(as, bs, nil, (s, a, b) -> Stream.of(nil));
         return result;
     }
 
@@ -75,13 +78,10 @@ public class StateCombinatoricCallback<A, B, S> {
             Collection<A> as,
             Collection<B> bs,
             S baseSolution,
-            BiFunction<A, B, S> computeSolutionContribution,
-            BinaryOperator<S> solutionCombiner,
-            Predicate<S> isUnsatisfiable
+            TriFunction<S, A, B, Stream<S>> solutionCombiner
             ) {
         LinkedListNode<A> nas = LinkedListNode.create(as);
         LinkedListNode<B> nbs = LinkedListNode.create(bs);
-        //int[] i = new int[]{0};
 
         List<CombinationStack<A, B, S>> list = new ArrayList<>();
 
@@ -89,15 +89,10 @@ public class StateCombinatoricCallback<A, B, S> {
                 new StateCombinatoricCallback<A, B, S>(
                         nas,
                         nbs,
-                        computeSolutionContribution,
                         solutionCombiner,
-                        isUnsatisfiable,
                         (stack) -> {
-//                            @SuppressWarnings("unchecked")
-//                            Stack<Entry<A, B>> clone = (Stack<Entry<A, B>>)stack.clone();
-//                            CombinationStack<A, B, S> c = new CombinationStack<>(stack, s);
                             list.add(stack);
-                        }); //System.out.println("MATCH: " + (++i[0]) + stack));
+                        });
 
         runner.run(baseSolution);
 
@@ -106,11 +101,13 @@ public class StateCombinatoricCallback<A, B, S> {
     }
 
     public void run(S baseSolution) {
-        nextA(baseSolution, null);
+        boolean isEmpty = remainingA.successor.isTail();
+        if(!isEmpty) {
+            nextA(baseSolution, null);
+        }
     }
 
     // [a b c] [1 2 3 4 5] -> [1, 2, 3], [1, 2, 4], [1, 2, 5], [1, 3, 4], ...
-    //Stream<Stack<Entry<A, B>>>
     public void nextA(S baseSolution, CombinationStack<A, B, S> stack) {
 
         // pick
@@ -143,26 +140,14 @@ public class StateCombinatoricCallback<A, B, S> {
             pick.unlink();
             curr = pick.successor;
 
-            S solutionContribution = computeSolutionContribution.apply(a, b);
-            S combined;
-            boolean unsatisfiable;
-            unsatisfiable = isUnsatisfiable.test(solutionContribution);
-            if(!unsatisfiable) {
-                combined = solutionCombiner.apply(baseSolution, solutionContribution);
-                unsatisfiable = isUnsatisfiable.test(combined);
+            Stream<S> partialSolutions = solutionCombiner.apply(baseSolution, a, b);
+            partialSolutions.forEach(partialSolution -> {
+                Combination<A, B, S> c = new Combination<>(a, b, partialSolution);
+                CombinationStack<A, B, S> newStack = new CombinationStack<>(stack, c);
 
-                if(!unsatisfiable) {
-
-                    Combination<A, B, S> c = new Combination<>(a, b, combined);
-                    CombinationStack<A, B, S> newStack = new CombinationStack<>(stack, c);
-                    //stack.push(new SimpleEntry<>(a, b));
-
-                    // recurse
-                    nextA(combined, newStack);
-
-                    //stack.pop();
-                }
-            }
+                // recurse
+                nextA(partialSolution, newStack);
+            });
 
             // restore
             pick.relink();

@@ -14,6 +14,7 @@ import java.util.stream.Stream;
 import org.aksw.commons.collections.MapUtils;
 import org.aksw.isomorphism.IsoMapUtils;
 import org.aksw.isomorphism.ProblemNeighborhoodAware;
+import org.aksw.isomorphism.StateCombinatoricCallback;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
@@ -21,6 +22,8 @@ import org.apache.jena.sparql.expr.ExprFunction;
 import org.apache.jena.sparql.expr.ExprVars;
 import org.apache.jena.sparql.expr.FunctionLabel;
 import org.apache.jena.sparql.expr.NodeValue;
+
+import com.codepoetics.protonpack.StreamUtils;
 
 // Multimap<Set<Set<>>>
 // ContainmentMap
@@ -73,25 +76,32 @@ public class ProblemVarMappingExpr
     @Override
     public Stream<Map<Var, Var>> generateSolutions() {
 
-        Map<Var, Var> baseSolution = Collections.emptyMap();
-//        Stream<Map<Var, Var>> result = IsoMapUtils.createSolutionStream(
-//                as,
-//                bs,
-//                (x, y) -> createVarMap(x, y),
-//                baseSolution);
-        Stream<Map<Var, Var>> result = IsoMapUtils.createSolutionStream(
-                as,
-                bs,
-                (x, y, baseSol) -> { return createVarMap(x, y, baseSol).map(z -> z.getVarMap()); },
-                baseSolution);
-
-        Collection<Map<Var, Var>> tmp = result.collect(Collectors.toList());
-        System.out.println("Solution contributions: " + tmp + " for " + as + " - " + bs);
-        result = tmp.stream();
-
-        if(tmp.isEmpty()) {
+        Stream<Map<Var, Var>> result;
+        if(as.isEmpty()) {
             result = Stream.of(Collections.emptyMap());
+        } else {
+
+            result = StateCombinatoricCallback
+                    .createKPermutationsOfN(
+                        as,
+                        bs,
+                        Collections.<Var, Var>emptyMap(),
+                        (baseSol, x, y) -> {
+                            Stream<Map<Var, Var>> r = createVarMap(x, y, baseSol).map(z -> z.getVarMap());
+                            //r.map(i -> { System.out.println("map: " + i); return i; });
+                            return r;
+                        })
+                    .map(stack -> stack.getValue().getSolution());
+                    //.map(stack -> { System.out.println(stack ); return stack.getValue().getSolution(); });
         }
+
+//        Collection<Map<Var, Var>> tmp = result.collect(Collectors.toList());
+//        System.out.println("Solution contributions: " + tmp + " for " + as + " - " + bs);
+//        result = tmp.stream();
+
+//        if(result..isEmpty()) {
+//            result = Stream.of(Collections.emptyMap());
+//        }
 
 
         return result;
