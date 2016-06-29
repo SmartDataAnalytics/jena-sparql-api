@@ -185,9 +185,9 @@ public class StateCombinatoric<A, B, S> {
         for(int i = 0; i < 1000; ++i) {
             Stopwatch sw = Stopwatch.createStarted();
             Stream<?> stream = null;
-            //StateCombinatoricCallback.createKPermutationsOfN(as, bs);
+            stream = StateCombinatoricCallback.createKPermutationsOfN(as, bs);
             //System.out.println("huh");
-            stream = createKPermutationsOfN(as, bs);
+            //stream = createKPermutationsOfN(as, bs);
             //IntStream stream = IntStream.range(0, 181440000);
             //stream = IntStream.range(0, 181440).mapToObj(x -> "mystr" + x);
             long count = stream != null ? stream.count() : 0;

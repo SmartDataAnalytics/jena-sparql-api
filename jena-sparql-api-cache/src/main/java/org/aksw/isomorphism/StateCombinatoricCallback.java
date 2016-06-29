@@ -11,6 +11,7 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 public class StateCombinatoricCallback<A, B, S> {
     protected Stack<Entry<A, B>> stack = new Stack<Entry<A, B>>();
@@ -41,6 +42,14 @@ public class StateCombinatoricCallback<A, B, S> {
     }
 
 
+    public static <A, B> Stream<Combination<A, B, Void>> createKPermutationsOfN(
+            Collection<A> as,
+            Collection<B> bs) {
+        Void nil = null;
+        Stream<Combination<A, B, Void>> result = createKPermutationsOfN(as, bs, nil, (k, n) -> nil, (sa, sb) -> nil, (s) -> false);
+        return result;
+    }
+
     /**
      * This function will modify the collections.
      * The collections will eventually contain the original items.
@@ -48,21 +57,38 @@ public class StateCombinatoricCallback<A, B, S> {
      * @param as
      * @param bs
      */
-    public static <A, B> void createKPermutationsOfN(Collection<A> as, Collection<B> bs) {
+    public static <A, B, S> Stream<Combination<A, B, S>> createKPermutationsOfN(
+            Collection<A> as,
+            Collection<B> bs,
+            S baseSolution,
+            BiFunction<A, B, S> computeSolutionContribution,
+            BinaryOperator<S> solutionCombiner,
+            Predicate<S> isUnsatisfiable
+            ) {
         LinkedListNode<A> nas = LinkedListNode.create(as);
         LinkedListNode<B> nbs = LinkedListNode.create(bs);
-        int[] i = new int[]{0};
-        StateCombinatoricCallback<A, B, Integer> runner =
-                new StateCombinatoricCallback<A, B, Integer>(
+        //int[] i = new int[]{0};
+
+        List<Combination<A, B, S>> list = new ArrayList<>();
+
+        StateCombinatoricCallback<A, B, S> runner =
+                new StateCombinatoricCallback<A, B, S>(
                         nas,
                         nbs,
-                        (a, b) -> 0,
-                        (a, b) -> 0,
-                        (s) -> false,
-                        (stack, s) -> { ++i[0]; }); //System.out.println("MATCH: " + (++i[0]) + stack));
+                        computeSolutionContribution,
+                        solutionCombiner,
+                        isUnsatisfiable,
+                        (stack, s) -> {
+                            @SuppressWarnings("unchecked")
+                            Stack<Entry<A, B>> clone = (Stack<Entry<A, B>>)stack.clone();
+                            Combination<A, B, S> c = new Combination<>(stack, s);
+                            list.add(c);
+                        }); //System.out.println("MATCH: " + (++i[0]) + stack));
 
-        runner.nextA(0);
-        System.out.println("permutions: " + i[0]);
+        runner.nextA(baseSolution);
+
+        Stream<Combination<A, B, S>> result = list.stream();
+        return result;
     }
 
 
