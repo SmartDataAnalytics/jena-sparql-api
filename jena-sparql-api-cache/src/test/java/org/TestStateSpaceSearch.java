@@ -179,6 +179,7 @@ public class TestStateSpaceSearch {
 
             ProblemContainerNeighbourhoodAware.solve(
                     problems,
+                    Collections.emptyMap(),
                     Map::keySet,
                     MapUtils::mergeIfCompatible,
                     Objects::isNull,

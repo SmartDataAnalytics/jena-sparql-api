@@ -45,6 +45,9 @@ public class ProblemVarMappingQuad
         return result;
     }
 
+    
+    
+    
 //    @Override
 //    public Collection<Var> exposeTargetNeighbourhood() {
 //        Set<Var> result = QuadPatternUtils.getVarsMentioned(bs);

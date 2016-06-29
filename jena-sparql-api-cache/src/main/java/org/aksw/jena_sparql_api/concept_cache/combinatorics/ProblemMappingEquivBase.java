@@ -54,6 +54,43 @@ public abstract class ProblemMappingEquivBase<A, B, X, Y>
     }
 
     @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((as == null) ? 0 : as.hashCode());
+        result = prime * result + ((baseSolution == null) ? 0 : baseSolution.hashCode());
+        result = prime * result + ((bs == null) ? 0 : bs.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        ProblemMappingEquivBase other = (ProblemMappingEquivBase) obj;
+        if (as == null) {
+            if (other.as != null)
+                return false;
+        } else if (!as.equals(other.as))
+            return false;
+        if (baseSolution == null) {
+            if (other.baseSolution != null)
+                return false;
+        } else if (!baseSolution.equals(other.baseSolution))
+            return false;
+        if (bs == null) {
+            if (other.bs != null)
+                return false;
+        } else if (!bs.equals(other.bs))
+            return false;
+        return true;
+    }
+
+    @Override
     public Collection<ProblemNeighborhoodAware<Map<X, Y>, X>> refine(Map<X, Y> partialSolution) {
         return Collections.singleton(this);
     }

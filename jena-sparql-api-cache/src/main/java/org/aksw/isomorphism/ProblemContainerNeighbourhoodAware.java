@@ -17,11 +17,15 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
 
 /**
+ *
  * A simple cost based problem container implementation.
  *
  * Note: At present it does not handle dependencies between problems.
@@ -39,6 +43,8 @@ import com.google.common.collect.Multimap;
 public class ProblemContainerNeighbourhoodAware<S, T>
     //implements ProblemContainer<S>
 {
+    private static final Logger logger = LoggerFactory.getLogger(ProblemContainerNeighbourhoodAware.class);
+
     /**
      * The queue of open problems.
      * Referred to as the regularQueue
@@ -113,6 +119,11 @@ public class ProblemContainerNeighbourhoodAware<S, T>
         refinementQueue.computeIfAbsent(cost, (x) -> new HashSet<>()).add(problem);
     }
 
+    public void removeFromRefinementQueue(ProblemNeighborhoodAware<S, T> problem) {
+        Comparable<?> cost = problem.getEstimatedCost();
+        remove(refinementQueue, cost, problem);
+    }
+
     public void moveFromRefinementToRegularQueue(ProblemNeighborhoodAware<S, T> problem) {
         Comparable<?> cost = problem.getEstimatedCost();
 
@@ -140,7 +151,7 @@ public class ProblemContainerNeighbourhoodAware<S, T>
 
     public void remove(ProblemNeighborhoodAware<S, T> problem) {
         removeFromRegularQueue(problem);
-        moveFromRefinementToRegularQueue(problem);
+        removeFromRefinementQueue(problem);
     }
 
     public void removeFromRegularQueue(ProblemNeighborhoodAware<S, T> problem) {
@@ -203,6 +214,25 @@ public class ProblemContainerNeighbourhoodAware<S, T>
         return result;
     }
 
+    public static boolean isEmpty(Map<?, ? extends Collection<?>> mm) {
+        boolean result = true;
+        for(Collection<?> c : mm.values()) {
+            result = c.isEmpty();
+            if(!result) {
+                break;
+            }
+        }
+        return result;
+    }
+
+    public static int size(Map<?, ? extends Collection<?>> mm) {
+        int result = 0;
+        for(Collection<?> c : mm.values()) {
+            result += c.size();
+        }
+        return result;
+    }
+
     public static <K, V, W extends Iterable<V>> Entry<K, V> firstEntry(NavigableMap<K, W> map) {
         Entry<K, V> result = null;
 
@@ -229,13 +259,33 @@ public class ProblemContainerNeighbourhoodAware<S, T>
         return result;
     }
 
+
+    // Refine the current problem in an attempt to make it even cheaper
+//    public void processRefinementQueue2(S solution) {
+//        Entry<? super Comparable<?>, ProblemNeighborhoodAware<S, T>> currEntry = firstEntry(regularQueue);
+//
+//        ProblemNeighborhoodAware<S, T> p = currEntry.getValue();
+//        remove(p);
+//
+//        Collection<? extends ProblemNeighborhoodAware<S, T>> newProblems = p.refine(solution);
+//        for(ProblemNeighborhoodAware<S, T> newP : newProblems) {
+//            addToRegularQueue(newP);
+//        }
+//    }
+
     public void processRefinementQueue(S solution) {
+
+        logger.debug("Processing " + size(refinementQueue) + " items in the refinement queue");
+
         // Simple approach: Always process the whole queue
         while(!refinementQueue.isEmpty()) {
             Entry<? super Comparable<?>, ProblemNeighborhoodAware<S, T>> entry = pollFirstEntry(refinementQueue);
 
             ProblemNeighborhoodAware<S, T> refinee = entry.getValue();
             Collection<? extends ProblemNeighborhoodAware<S, T>> newProblems = refinee.refine(solution);
+
+            logger.debug("  Refined a problem into " + newProblems.size() + " further problems");
+
             for(ProblemNeighborhoodAware<S, T> newProblem : newProblems) {
                 addToRegularQueue(newProblem);
             }
@@ -273,59 +323,111 @@ public class ProblemContainerNeighbourhoodAware<S, T>
      */
     public void run(S baseSolution) {
         // If there are no open problems, we found a complete solution
-        if(regularQueue.isEmpty()) {
+        if(isEmpty(regularQueue)) {
             solutionCallback.accept(baseSolution);
         } else {
+            logger.debug("Next Iteration with regular queue size: " + size(regularQueue) + " and base solution " + baseSolution);
 
-            processRefinementQueue(baseSolution);
+            // TODO We need to consider the costs of whether processing the refinement queue makes sense
+            // As long as there are cheap problems in the regular queue, it does not make sense to refine
+            // Also, if a cheap problem mas an expensive related problem, the expensive problem's refinement should be
+            // delayed for as long as possible
+            //processRefinementQueue2(baseSolution);
+
+            Entry<? super Comparable<?>, ProblemNeighborhoodAware<S, T>> firstEntry = firstEntry(regularQueue);
 
             // NOTE The refinement queue could also be ordered by the number of neighbourhood items
             //Entry<? super Comparable<?>, ProblemNeighborhoodAware<S, T>> refinementEntry = firstEntry(refinementQueue); //.firstEntry();
-            Entry<? super Comparable<?>, ProblemNeighborhoodAware<S, T>> currEntry = firstEntry(regularQueue);
+            //Entry<? super Comparable<?>, ProblemNeighborhoodAware<S, T>> currEntry = pollFirstEntry(regularQueue);
 
-            if(currEntry != null) {
-                // if the cost is high, consider refining (some of) the problems in the refinement queue
-                // add the refined problems to the sizeToProblem queue
+            //logger.debug("  After pick: Regular queue size: " + size(regularQueue));
 
-                Object pickedKey = currEntry.getKey();
-                ProblemNeighborhoodAware<S, T> pickedProblem = currEntry.getValue();
+            // if the cost is high, consider refining (some of) the problems in the refinement queue
+            // add the refined problems to the sizeToProblem queue
 
-                // Remove the pick from the datastructures...
+            Object firstCost = firstEntry.getKey();
+            ProblemNeighborhoodAware<S, T> firstProblem = firstEntry.getValue();
 
-                // Remove the picked problem from the refinement queue if it is in it
-                remove(pickedProblem);
+            remove(firstProblem);
+
+            Collection<? extends ProblemNeighborhoodAware<S, T>> newProblems = firstProblem.refine(baseSolution);
+            for(ProblemNeighborhoodAware<S, T> newP : newProblems) {
+                addToRegularQueue(newP);
+            }
+
+            logger.debug("  First problem in regular queue with cost " + firstCost + " was refined into " + newProblems.size() + " sub Problems; problem was: "+ firstProblem);
+
+
+            Entry<? super Comparable<?>, ProblemNeighborhoodAware<S, T>> pickedEntry = firstEntry(regularQueue);
+            Object cost = pickedEntry.getKey();
+            ProblemNeighborhoodAware<S, T> pickedProblem = pickedEntry.getValue();
+
+            logger.debug("  Picked problem with cost " + cost + "; " + pickedProblem);
+
+
+            // Remove the pick from the datastructures...
+
+            // Remove the picked problem completely
+            remove(pickedProblem);
+            logger.debug("  Picked problem " + pickedProblem + " with cost " + cost + "; regular queue size is now: " + size(regularQueue));
+
 //                remove(refinementQueue, pickedKey, pickedProblem);
 //                remove(costToProblems, pickedKey, pickedProblem);
 
-                // Remove the problem from the neigbourhood index
-                Collection<T> sourceNeigbourhood = pickedProblem.getSourceNeighbourhood();
-                sourceNeigbourhood.forEach(neighbour -> sourceMapping.remove(neighbour, pickedProblem));
+            // Remove the problem from the neigbourhood index
+//            Collection<T> sourceNeigbourhood = pickedProblem.getSourceNeighbourhood();
+//            sourceNeigbourhood.forEach(neighbour -> sourceMapping.remove(neighbour, pickedProblem));
 
-                // recurse
-                Stream<S> solutions = pickedProblem.generateSolutions();
+            // recurse
+            Stream<S> solutions = pickedProblem.generateSolutions();
 
-                solutions.forEach(solutionContribution -> {
+            solutions.forEach(solutionContribution -> {
+
+                S combinedSolution = null;
+                boolean unsatisfiable = isUnsatisfiable.test(solutionContribution);
+                if(!unsatisfiable) {
+                    combinedSolution = solutionCombiner.apply(baseSolution, solutionContribution);
+                    unsatisfiable = isUnsatisfiable.test(combinedSolution);
+                }
+
+                if(!unsatisfiable) {
+                    logger.debug("    Satisfiable solution contribution: " + solutionContribution + "; regular queue size now: " + size(regularQueue));
 
                     Collection<T> rs = getRelatedSources.apply(solutionContribution);
 
                     // Get the related problems and add them to the refinement queue
-                    Set<ProblemNeighborhoodAware<S, T>> neighbours = rs
+                    Set<ProblemNeighborhoodAware<S, T>> neighbors = rs
                             .stream()
                             .flatMap(s -> sourceMapping.get(s).stream())
                             .collect(Collectors.toSet());
 
-                    neighbours.forEach(n -> moveFromRegularToRefinementQueue(n));
-
-                    S combinedSolution = solutionCombiner.apply(baseSolution, solutionContribution);
-
+                    if(false) {
+                    for(ProblemNeighborhoodAware<S, T> neighbor : neighbors) {
+                        moveFromRegularToRefinementQueue(neighbor);
+                    }
+                    }
 
                     // Recurse
                     run(combinedSolution);
 
                     // Restore state (for processing the next solution)
-                    neighbours.forEach(n -> moveFromRefinementToRegularQueue(n));
-                });
+                    if(false) {
+                    for(ProblemNeighborhoodAware<S, T> neighbor : neighbors) {
+                        moveFromRefinementToRegularQueue(neighbor);
+                    }
+                    }
+                } else {
+                    logger.debug("    Skipping unatisfiable solution contribution: " + solutionContribution + "; regular queue size now: " + size(regularQueue));
+                }
+            });
+
+            addToRegularQueue(pickedProblem);
+
+            for(ProblemNeighborhoodAware<S, T> newP : newProblems) {
+                removeFromRegularQueue(newP);
             }
+            addToRegularQueue(firstProblem);
+
         }
     }
 //
@@ -350,17 +452,19 @@ public class ProblemContainerNeighbourhoodAware<S, T>
 
     @SafeVarargs
     public static <S, T> void solve(
+            S baseSolution,
             Function<? super S, ? extends Collection<T>> getRelatedSources,
             BinaryOperator<S> solutionCombiner,
             Predicate<S> isUnsatisfiable,
             Consumer<S> solutionCallback,
             ProblemNeighborhoodAware<S, T> ... problems) {
         Collection<ProblemNeighborhoodAware<S, T>> tmp = Arrays.asList(problems);
-        solve(tmp, getRelatedSources, solutionCombiner, isUnsatisfiable, solutionCallback);
+        solve(tmp, baseSolution, getRelatedSources, solutionCombiner, isUnsatisfiable, solutionCallback);
     }
 
     public static <S, T> void solve(
             Collection<ProblemNeighborhoodAware<S, T>> problems,
+            S baseSolution,
             Function<? super S, ? extends Collection<T>> getRelatedSources,
             BinaryOperator<S> solutionCombiner,
             Predicate<S> isUnsatisfiable,
@@ -376,6 +480,8 @@ public class ProblemContainerNeighbourhoodAware<S, T>
         for(ProblemNeighborhoodAware<S, T> problem : problems) {
             result.addToRegularQueue(problem);
         }
+
+        result.run(baseSolution);
 
         //return result;
     }
