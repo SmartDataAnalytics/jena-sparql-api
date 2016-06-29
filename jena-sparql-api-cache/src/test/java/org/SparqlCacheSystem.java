@@ -32,6 +32,7 @@ public class SparqlCacheSystem<D> {
                     (op, value) -> value == null) // descend while the value is null
             .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 
+        // Make the qfp canonical, extract their features, and index them
 
 
         // TODO We could create a mapping from (op) -> (op with replaced constants)
