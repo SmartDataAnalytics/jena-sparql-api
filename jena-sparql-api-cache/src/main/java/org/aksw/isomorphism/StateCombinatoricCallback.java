@@ -13,6 +13,23 @@ import java.util.function.BinaryOperator;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+/**
+ * kPermutationsOfN implementation with support for solution computation and early bailout should a solution
+ * turn out to be unsatisfiable.
+ * At the core, this implementation notifies clients about results via a callback during a recursion.
+ *
+ * A static utility method is available which collects results into a list and returns a stream.
+ * Hence, all valid permutations will be computed regardless of the number of items consumed from the stream.
+ * However, as this approach is about 5-10 times faster than the recursive stream solution,
+ * this approach is recommended.
+ *
+ *
+ * @author raven
+ *
+ * @param <A>
+ * @param <B>
+ * @param <S>
+ */
 public class StateCombinatoricCallback<A, B, S> {
     protected Stack<Entry<A, B>> stack = new Stack<Entry<A, B>>();
 

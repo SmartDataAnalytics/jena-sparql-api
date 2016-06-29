@@ -29,8 +29,6 @@ public class StateCombinatoric<A, B, S> {
     //protected BiConsumer<Stack<Entry<A, B>>, S> completeMatch;
 
     public StateCombinatoric(
-            //Collection<A> remainingA,
-            //Collection<B> remainingB,
             LinkedListNode<A> remainingA,
             LinkedListNode<B> remainingB,
             BiFunction<A, B, S> computeSolutionContribution,
