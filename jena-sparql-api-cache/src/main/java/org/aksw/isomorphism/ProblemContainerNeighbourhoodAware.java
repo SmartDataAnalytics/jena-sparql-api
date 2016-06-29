@@ -359,17 +359,17 @@ public class ProblemContainerNeighbourhoodAware<S, T>
 
 
             Entry<? super Comparable<?>, ProblemNeighborhoodAware<S, T>> pickedEntry = firstEntry(regularQueue);
-            Object cost = pickedEntry.getKey();
+            Object pickedCost = pickedEntry.getKey();
             ProblemNeighborhoodAware<S, T> pickedProblem = pickedEntry.getValue();
 
-            logger.debug("  Picked problem with cost " + cost + "; " + pickedProblem);
+            logger.debug("  Picked problem with cost " + pickedCost + "; " + pickedProblem);
 
 
             // Remove the pick from the datastructures...
 
             // Remove the picked problem completely
             remove(pickedProblem);
-            logger.debug("  Picked problem " + pickedProblem + " with cost " + cost + "; regular queue size is now: " + size(regularQueue));
+            logger.debug("  Picked problem " + pickedProblem + " with cost " + pickedCost + "; regular queue size is now: " + size(regularQueue));
 
 //                remove(refinementQueue, pickedKey, pickedProblem);
 //                remove(costToProblems, pickedKey, pickedProblem);
