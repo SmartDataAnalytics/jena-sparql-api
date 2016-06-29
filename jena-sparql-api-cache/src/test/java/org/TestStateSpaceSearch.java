@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -178,8 +179,8 @@ public class TestStateSpaceSearch {
             ProblemContainer<Map<Var, Var>> container = ProblemContainerImpl.create(problems);
 
             State<Map<Var, Var>> state = container.isEmpty()
-                    ? new StateProblemContainer<Map<Var, Var>>(null, container, (a, b) -> MapUtils.mergeIfCompatible(a, b))
-                    : new StateProblemContainer<Map<Var, Var>>(Collections.emptyMap(), container, (a, b) -> MapUtils.mergeIfCompatible(a, b));
+                    ? new StateProblemContainer<Map<Var, Var>>(null, Objects::isNull, container, (a, b) -> MapUtils.mergeIfCompatible(a, b))
+                    : new StateProblemContainer<Map<Var, Var>>(Collections.emptyMap(), Objects::isNull, container, (a, b) -> MapUtils.mergeIfCompatible(a, b));
             Stream<Map<Var, Var>> xxx = StateSearchUtils.depthFirstSearch(state, 10000);
 
             for(Map<Var, Var> m : xxx.collect(Collectors.toList())) {

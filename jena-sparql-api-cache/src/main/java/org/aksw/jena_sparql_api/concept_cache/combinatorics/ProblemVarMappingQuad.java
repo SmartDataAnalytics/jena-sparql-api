@@ -39,16 +39,16 @@ public class ProblemVarMappingQuad
     }
 
     @Override
-    public Collection<Var> exposeSourceNeighbourhood() {
+    public Collection<Var> getSourceNeighbourhood() {
         Set<Var> result = QuadPatternUtils.getVarsMentioned(as);
         return result;
     }
 
-    @Override
-    public Collection<Var> exposeTargetNeighbourhood() {
-        Set<Var> result = QuadPatternUtils.getVarsMentioned(bs);
-        return result;
-    }
+//    @Override
+//    public Collection<Var> exposeTargetNeighbourhood() {
+//        Set<Var> result = QuadPatternUtils.getVarsMentioned(bs);
+//        return result;
+//    }
 
     @Override
     public int compareTo(Problem<Map<Var, Var>> o) {

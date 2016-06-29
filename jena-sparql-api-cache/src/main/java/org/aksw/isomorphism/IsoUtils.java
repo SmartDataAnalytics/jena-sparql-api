@@ -36,10 +36,10 @@ public class IsoUtils {
             return result;
         }
 
-        public static <S> NavigableMap<Long, Collection<Problem<S>>> indexSolutionGenerators(Collection<Problem<S>> solGens) {
-            NavigableMap<Long, Collection<Problem<S>>> result = new TreeMap<>();
+        public static <P extends CostAware> NavigableMap<Long, Collection<P>> indexSolutionGenerators(Collection<P> solGens) {
+            NavigableMap<Long, Collection<P>> result = new TreeMap<>();
 
-            for(Problem<S> solutionGenerator : solGens) {
+            for(P solutionGenerator : solGens) {
                 long size = solutionGenerator.getEstimatedCost();
 
                 result.computeIfAbsent(size, (x) -> new ArrayList<>()).add(solutionGenerator);

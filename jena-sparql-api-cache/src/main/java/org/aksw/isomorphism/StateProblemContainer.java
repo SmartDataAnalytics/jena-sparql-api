@@ -1,6 +1,7 @@
 package org.aksw.isomorphism;
 
 import java.util.function.BinaryOperator;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.aksw.state_space_search.core.Action;
@@ -17,11 +18,12 @@ public class StateProblemContainer<S>
     implements State<S>
 {
     protected ProblemContainer<S> problemContainer;
+    protected Predicate<S> isUnsolveable;
 
     protected S baseSolution;
     protected BinaryOperator<S> solutionCombiner;
 
-    public StateProblemContainer(S baseSolution, ProblemContainer<S> problemContainer, BinaryOperator<S> solutionCombiner) {
+    public StateProblemContainer(S baseSolution, Predicate<S> isUnsolveable, ProblemContainer<S> problemContainer, BinaryOperator<S> solutionCombiner) {
         super();
         this.baseSolution = baseSolution;
         this.problemContainer = problemContainer;
@@ -30,7 +32,7 @@ public class StateProblemContainer<S>
 
     @Override
     public boolean isFinal() {
-        boolean result = problemContainer.isEmpty();
+        boolean result = problemContainer.isEmpty() || isUnsolveable.test(baseSolution);
         return result;
     }
 
@@ -73,7 +75,7 @@ public class StateProblemContainer<S>
                     // performance boost or penalty
                     //ProblemContainerImpl<S> openProblems = remaining;
                     ProblemContainer<S> openProblems = remaining.refine(partialSolution);
-                    r = new ActionProblemContainer<S>(partialSolution, openProblems, solutionCombiner);
+                    r = new ActionProblemContainer<S>(partialSolution, isUnsolveable, openProblems, solutionCombiner);
 //
 //                    if (openProblems.isEmpty()) {
 //                        r = Collections.<S> emptySet().stream();

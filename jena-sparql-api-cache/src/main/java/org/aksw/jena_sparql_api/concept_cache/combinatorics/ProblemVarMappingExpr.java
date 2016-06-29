@@ -285,7 +285,7 @@ public class ProblemVarMappingExpr
     }
 
     @Override
-    public Collection<Var> exposeSourceNeighbourhood() {
+    public Collection<Var> getSourceNeighbourhood() {
         Set<Var> result = as.stream()
                 .flatMap(expr -> ExprVars.getVarsMentioned(expr).stream())
                 .collect(Collectors.toSet());
@@ -293,14 +293,14 @@ public class ProblemVarMappingExpr
         return result;
     }
 
-    @Override
-    public Collection<Var> exposeTargetNeighbourhood() {
-        Set<Var> result = bs.stream()
-                .flatMap(expr -> ExprVars.getVarsMentioned(expr).stream())
-                .collect(Collectors.toSet());
-
-        return result;
-    }
+//    @Override
+//    public Collection<Var> exposeTargetNeighbourhood() {
+//        Set<Var> result = bs.stream()
+//                .flatMap(expr -> ExprVars.getVarsMentioned(expr).stream())
+//                .collect(Collectors.toSet());
+//
+//        return result;
+//    }
 
     @Override
     public int compareTo(Problem<Map<Var, Var>> o) {

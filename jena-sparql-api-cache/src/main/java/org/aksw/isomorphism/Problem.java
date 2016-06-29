@@ -17,14 +17,14 @@ import java.util.stream.Stream;
  * @param <S> The solution type
  */
 public interface Problem<S>
-    extends Comparable<Problem<S>>
+    extends Comparable<Problem<S>>, CostAware
 {
     /**
      * Report an estimate cost for solving the problem with its current setup.
      * Note, that the cost computation should be cheap.
      * @return
      */
-    long getEstimatedCost();
+    //long getEstimatedCost();
 
     /**
      * Return a stream of solutions
