@@ -175,9 +175,11 @@ public class StateCombinatoric<A, B, S> {
 
 
     public static void main(String[] args) {
-        List<String> as = new ArrayList<String>(Arrays.asList("a", "b", "c", "d", "e", "f", "g"));
-        List<Integer> bs = new ArrayList<Integer>(Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9));
+//        List<String> as = new ArrayList<String>(Arrays.asList("a", "b", "c", "d", "e", "f", "g"));
+//        List<Integer> bs = new ArrayList<Integer>(Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9));
 
+        List<String> as = new ArrayList<String>(Arrays.asList("a", "b", "c", "d", "e", "f"));
+        List<Integer> bs = new ArrayList<Integer>(Arrays.asList(1, 2, 3, 4, 5, 6));
 
 //        Collection<String> strs = new ArrayList<String>();
 
