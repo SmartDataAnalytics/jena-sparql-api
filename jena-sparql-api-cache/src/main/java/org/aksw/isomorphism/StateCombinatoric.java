@@ -199,11 +199,13 @@ public class StateCombinatoric<A, B, S> {
             //stream = createKPermutationsOfN(as, bs);
             //IntStream stream = IntStream.range(0, 181440000);
             //stream = IntStream.range(0, 181440).mapToObj(x -> "mystr" + x);
-            long count = stream != null ? stream.count() : 0;
-            System.out.println("Time taken for " + count + " items: " + sw.stop().elapsed(TimeUnit.MILLISECONDS));
+            if(true) {
+                com.codepoetics.protonpack.StreamUtils.zipWithIndex(stream).forEach(y -> System.out.println(y.getIndex() + " - " + y.getValue()));
+            } else {
+                long count = stream != null ? stream.count() : 0;
+                System.out.println("Time taken for " + count + " items: " + sw.stop().elapsed(TimeUnit.MILLISECONDS));
+            }
         }
-//        com.codepoetics.protonpack.StreamUtils.zipWithIndex(stream).forEach(
-//                y -> System.out.println(y.getIndex() + " - " + y.getValue()));
 
     }
 }

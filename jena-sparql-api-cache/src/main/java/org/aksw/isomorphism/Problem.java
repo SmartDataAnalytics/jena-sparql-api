@@ -16,8 +16,8 @@ import java.util.stream.Stream;
  *
  * @param <S> The solution type
  */
-public interface Problem<S>
-    extends Comparable<Problem<S>>, CostAware
+public interface Problem<S, P extends Problem<S, P>>
+    extends Comparable<Problem<S, P>>, CostAware
 {
     /**
      * Report an estimate cost for solving the problem with its current setup.
@@ -41,13 +41,13 @@ public interface Problem<S>
      * @param partialSolution
      * @return
      */
-    Collection<Problem<S>> refine(S partialSolution);
+    Collection<P> refine(S partialSolution);
 
     /**
      * By default, compares the estimated costs
      */
     @Override
-    default int compareTo(Problem<S> o) {
+    default int compareTo(Problem<S, P> o) {
         int result;
 
         if(o == null) {

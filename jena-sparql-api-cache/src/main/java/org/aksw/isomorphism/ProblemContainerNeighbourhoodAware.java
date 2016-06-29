@@ -1,17 +1,22 @@
 package org.aksw.isomorphism;
 
-import java.util.ArrayList;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.Set;
-import java.util.Stack;
 import java.util.TreeMap;
+import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
@@ -34,47 +39,120 @@ import com.google.common.collect.Multimap;
  * @param <S> The solution type
  */
 public class ProblemContainerNeighbourhoodAware<S, T>
-    implements ProblemContainer<S>
+    //implements ProblemContainer<S>
 {
-    protected Stack<Entry<? extends Comparable<?>, ProblemNeighbourhoodAware<S, T>>> stack = new Stack<>();
+    /**
+     * The queue of open problems.
+     * Referred to as the regularQueue
+     *
+     */
+    protected NavigableMap<? super Comparable<?>, Collection<ProblemNeighborhoodAware<S, T>>> costToProblems;
 
+    /**
+     * The refinement queue is a subset of costToProblems.
+     * It contains problems which are related (based on their neighbourhood) on already solved ones.
+     * Hence, if the cost of the cheapest problem in costToProblems exceeds a certain threshold, problems in
+     * the refining problems in the refinementQueue have a chance of yielding lower-cost problems.
+     *
+     */
+    protected NavigableMap<? super Comparable<?>, Collection<ProblemNeighborhoodAware<S, T>>> refinementQueue = new TreeMap<>();
 
-    protected NavigableMap<? extends Comparable<?>, Collection<ProblemNeighbourhoodAware<S, T>>> sizeToProblem;
+    /**
+     * Map from neighborhood item (such as SPARQL variables) to problems which make use of them.
+     * This data structure is used to populate the refinementQueue.
+     *
+     */
+    protected Multimap<T, ProblemNeighborhoodAware<S, T>> sourceMapping = HashMultimap.create();
 
-    // Problems which are reachable via relatedness
-    protected NavigableMap<? super Comparable<?>, Collection<ProblemNeighbourhoodAware<S, T>>> refinementQueue = new TreeMap<>();
-
-    protected Multimap<T, ProblemNeighbourhoodAware<S, T>> sourceMapping = HashMultimap.create();
-//    protected Multimap<T, ProblemNeighbourhoodAware<S, T>> targetMapping = HashMultimap.create();
-
-    // Functions to extract source and target set
+    /**
+     * Function to extract neighborhood items from a solution object
+     */
     protected Function<? super S, ? extends Collection<T>> getRelatedSources;
-//    protected Function<? super S, ? extends Collection<T>> getRelatedTargets;
 
+
+    protected BinaryOperator<S> solutionCombiner;
+    protected Predicate<S> isUnsatisfiable;
+
+
+    /**
+     * Callback for reporting solutions
+     *
+     */
+    protected Consumer<S> solutionCallback;
 
 
     public ProblemContainerNeighbourhoodAware(
-            NavigableMap<? extends Comparable<?>, Collection<ProblemNeighbourhoodAware<S, T>>> sizeToProblem,
-            Multimap<T, ProblemNeighbourhoodAware<S, T>> sourceMapping
+            NavigableMap<? super Comparable<?>, Collection<ProblemNeighborhoodAware<S, T>>> costToProblem,
+            Multimap<T, ProblemNeighborhoodAware<S, T>> sourceMapping
 //            Multimap<T, ProblemNeighbourhoodAware<S, T>> targetMapping
      ) {
         super();
-        this.sizeToProblem = sizeToProblem;
+        this.costToProblems = costToProblem;
         this.sourceMapping = sourceMapping;
 //        this.targetMapping = targetMapping;
     }
 
-//    public void add(Problem<S> problem) {
-//        double cost = problem.getEstimatedCost();
-//        sizeToProblem.put(cost, problem);
-//    }
-//
-//    public void addAll(Iterable<Problem<S>> problems) {
-//        problems.forEach(x -> add(x));
-//    }
-//
 
-    // Move to multimap utils
+    public void add(ProblemNeighborhoodAware<S, T> problem) {
+        Comparable<?> cost = problem.getEstimatedCost();
+        costToProblems.computeIfAbsent(cost, (x) -> new HashSet<>()).add(problem);
+
+        Collection<T> sourceNeigbourhood = problem.getSourceNeighbourhood();
+        sourceNeigbourhood.forEach(neighbour -> sourceMapping.put(neighbour, problem));
+    }
+
+
+    // A problem in the refinement queue is removed from the regularQueue
+    public void addToRefinementQueue(ProblemNeighborhoodAware<S, T> problem) {
+        removeFromRegularQueue(problem);
+
+        Comparable<?> cost = problem.getEstimatedCost();
+        refinementQueue.computeIfAbsent(cost, (x) -> new HashSet<>()).add(problem);
+    }
+
+    public void removeFromRefinementQueue(ProblemNeighborhoodAware<S, T> problem) {
+        Comparable<?> cost = problem.getEstimatedCost();
+
+        remove(refinementQueue, cost, problem);
+
+        add(problem);
+    }
+
+    // Does this take the partialSolution or the solutionContribution???
+
+    public void index(S solutionContribution) {
+        Collection<T> solutionNeighborhood = getRelatedSources.apply(solutionContribution);
+
+        solutionNeighborhood.forEach(neighbor -> {
+            Collection<ProblemNeighborhoodAware<S, T>> relatedProblems = sourceMapping.get(neighbor);
+
+            relatedProblems.forEach(p -> {
+                removeFromRegularQueue(p);
+            });
+
+
+        });
+
+    }
+
+    public void remove(ProblemNeighborhoodAware<S, T> problem) {
+        removeFromRegularQueue(problem);
+        removeFromRefinementQueue(problem);
+    }
+
+    public void removeFromRegularQueue(ProblemNeighborhoodAware<S, T> problem) {
+        Comparable<?> cost = problem.getEstimatedCost();
+
+        // Remove the problem from the refinement queue if it is in it
+        //remove(refinementQueue, cost, problem);
+        remove(costToProblems, cost, problem);
+
+        // Remove the problem from the neigbourhood index
+        Collection<T> sourceNeigborhood = problem.getSourceNeighbourhood();
+        sourceNeigborhood.forEach(neighbor -> sourceMapping.remove(neighbor, problem));
+    }
+
+    // TODO Move to multimap utils
     public static boolean remove(Map<?, ? extends Collection<?>> map, Object key, Object value) {
         boolean result = false;
 
@@ -90,6 +168,99 @@ public class ProblemContainerNeighbourhoodAware<S, T>
         return result;
     }
 
+    public static <K, V, W extends Iterable<V>> Entry<K, V> pollFirstEntry(NavigableMap<K, W> map) {
+        Entry<K, V> result = null;
+
+        Iterator<Entry<K, W>> itE = map.entrySet().iterator();
+
+        // For robustness, remove entry valueX sets
+        while(itE.hasNext()) {
+            Entry<K, W> e = itE.next();
+
+            K k = e.getKey();
+            Iterable<V> vs = e.getValue();
+
+            Iterator<V> itV = vs.iterator();
+            if(itV.hasNext()) {
+                V v = itV.next();
+                itV.remove();
+
+                if(!itV.hasNext()) {
+                    itE.remove();
+                }
+
+                result = new SimpleEntry<>(k, v);
+                break;
+            } else {
+                itE.remove();
+                continue;
+            }
+        }
+
+        return result;
+    }
+
+    public static <K, V, W extends Iterable<V>> Entry<K, V> firstEntry(NavigableMap<K, W> map) {
+        Entry<K, V> result = null;
+
+        Iterator<Entry<K, W>> itE = map.entrySet().iterator();
+
+        // For robustness, remove entry valueX sets
+        while(itE.hasNext()) {
+            Entry<K, W> e = itE.next();
+
+            K k = e.getKey();
+            Iterable<V> vs = e.getValue();
+
+            Iterator<V> itV = vs.iterator();
+            if(itV.hasNext()) {
+                V v = itV.next();
+
+                result = new SimpleEntry<>(k, v);
+                break;
+            } else {
+                continue;
+            }
+        }
+
+        return result;
+    }
+
+    public void processRefinementQueue(S solution) {
+        // Simple approach: Always process the whole queue
+        while(!refinementQueue.isEmpty()) {
+            Entry<? super Comparable<?>, ProblemNeighborhoodAware<S, T>> entry = pollFirstEntry(refinementQueue);
+
+            ProblemNeighborhoodAware<S, T> refinee = entry.getValue();
+            Collection<ProblemNeighborhoodAware<S, T>> newProblems = refinee.refine(solution);
+            for(ProblemNeighborhoodAware<S, T> newProblem : newProblems) {
+                add(newProblem);
+            }
+        }
+
+
+        //
+//      long refinementConsiderationThreshold = 2;
+//      long refinementAcceptanceThreshold = 1; // currEntry.cost
+//
+//      if(currEntry != null) {
+//          long cost = currEntry.getKey();
+//
+//          // refine in the hope of
+//          if(cost > refinementConsiderationThreshold) {
+//              Collection<ProblemNeighborhoodAware<S, T>> problems = refinementEntry.getValue();
+//
+//              for(ProblemNeighborhoodAware<S, T> problem : problems) {
+//                  problem.refine(baseSolution);
+//              }
+//
+//
+//          }
+//
+//      }
+
+    }
+
 
     /**
      * Pick the estimated cheapest problem,
@@ -97,77 +268,62 @@ public class ProblemContainerNeighbourhoodAware<S, T>
      *
      * @return
      */
-    public ProblemContainerPick<S> pick() {
-        ProblemContainerPick<S> result;
-
-        Entry<? extends Comparable<?>, Collection<ProblemNeighbourhoodAware<S, T>>> currEntry = sizeToProblem.firstEntry();
-        if(currEntry != null) {
-            Comparable<?> pickedKey = currEntry.getKey();
-            ProblemNeighbourhoodAware<S, T> pickedProblem = Iterables.getFirst(currEntry.getValue(), null);
-
-            // remove the picked problem from the refinement queue if it is in it
-            remove(refinementQueue, pickedKey, pickedProblem);
-            remove(sizeToProblem, pickedKey, pickedProblem);
-
-            Collection<T> sourceNeigbourhood = pickedProblem.getSourceNeighbourhood();
-            sourceNeigbourhood.forEach(neighbour -> sourceMapping.remove(neighbour, pickedProblem));
-
-            // recurse
-
-            // restore state
-
-//            Collection<T> tt = pickedProblem.exposeTargetNeighbourhood();
-//            tt.forEach(t -> targetMapping.remove(t, pickedProblem));
-
-            pickedProblem.generateSolutions().forEach(sol -> {
-                Collection<T> rs = getRelatedSources.apply(sol);
-                //Collection<T> rt = getRelatedTargets.apply(sol);
-                Set<ProblemNeighbourhoodAware<S, T>> neighbours = rs
-                        .stream()
-                        .flatMap(s -> sourceMapping.get(s).stream())
-                        .collect(Collectors.toSet());
-
-                // add the neighbours to the queue
-                neighbours.forEach(n -> {
-                    long cost = n.getEstimatedCost();
-                    refinementQueue.computeIfAbsent(cost, (x) -> new HashSet<>()).add(n);
-                });
-
-
-                // start refining unless there are open problems with a cost < 1
-
-
-
-                // Add the neighbours to the queue
-
-
-//                Stream.concat(
-//                        rs.stream().flatMap(s -> sourceMapping.get(s).stream()),
-//                        rt.stream().flatMap(t -> targetMapping.get(t).stream())
-//                );
-                //sourceMapping.get(key)
-
-
-            });
-
-
-            NavigableMap<Comparable<?>, Collection<Problem<S>>> remaining = new TreeMap<>();
-            sizeToProblem.forEach((k, v) -> {
-                Collection<Problem<S>> ps = v.stream().filter(i -> i != pickedProblem).collect(Collectors.toList());
-                remaining.computeIfAbsent(k, (x) -> new ArrayList<Problem<S>>()).addAll(ps);
-            });
-                    //ArrayListMultimap.create(sizeToProblem);
-            //remaining.remove(pickedKey, pickedProblem);
-
-            //ProblemContainerNeighbourhoodAware<S> r = new ProblemContainerNeighbourhoodAware<>(remaining);
-            ProblemContainerNeighbourhoodAware<S, T> r = null;
-
-            result = new ProblemContainerPick<>(pickedProblem, r);
+    public void run(S baseSolution) {
+        // If there are no open problems, we found a complete solution
+        if(costToProblems.isEmpty()) {
+            solutionCallback.accept(baseSolution);
         } else {
-            throw new IllegalStateException();
-        }
 
-        return result;
+            processRefinementQueue(baseSolution);
+
+            // NOTE The refinement queue could also be ordered by the number of neighbourhood items
+            //Entry<? super Comparable<?>, ProblemNeighborhoodAware<S, T>> refinementEntry = firstEntry(refinementQueue); //.firstEntry();
+            Entry<? super Comparable<?>, ProblemNeighborhoodAware<S, T>> currEntry = firstEntry(costToProblems);
+
+            if(currEntry != null) {
+                // if the cost is high, consider refining (some of) the problems in the refinement queue
+                // add the refined problems to the sizeToProblem queue
+
+                Object pickedKey = currEntry.getKey();
+                ProblemNeighborhoodAware<S, T> pickedProblem = currEntry.getValue();
+
+                // Remove the pick from the datastructures...
+
+                // Remove the picked problem from the refinement queue if it is in it
+                remove(pickedProblem);
+//                remove(refinementQueue, pickedKey, pickedProblem);
+//                remove(costToProblems, pickedKey, pickedProblem);
+
+                // Remove the problem from the neigbourhood index
+                Collection<T> sourceNeigbourhood = pickedProblem.getSourceNeighbourhood();
+                sourceNeigbourhood.forEach(neighbour -> sourceMapping.remove(neighbour, pickedProblem));
+
+                // recurse
+                Stream<S> solutions = pickedProblem.generateSolutions();
+
+                solutions.forEach(solutionContribution -> {
+
+                    Collection<T> rs = getRelatedSources.apply(sol);
+
+                    // Get the related problems and add them to the refinement queue
+                    Set<ProblemNeighborhoodAware<S, T>> neighbours = rs
+                            .stream()
+                            .flatMap(s -> sourceMapping.get(s).stream())
+                            .collect(Collectors.toSet());
+
+                    neighbours.forEach(n -> addToRefinementQueue(n));
+
+                    S combinedSolution = solutionCombiner.apply(baseSolution, solutionContribution);
+
+
+                    // Recurse
+                    run(combinedSolution);
+
+                    // Restore state (for processing the next solution)
+                    neighbours.forEach(n -> removeFromRefinementQueue(n));
+                });
+            }
+        }
     }
 
     /**
@@ -177,7 +333,7 @@ public class ProblemContainerNeighbourhoodAware<S, T>
      * @param partialSolution
      */
     public ProblemContainerNeighbourhoodAware<S, T> refine(S partialSolution) {
-        Collection<Problem<S>> tmp = sizeToProblem.values().stream()
+        Collection<Problem<S>> tmp = costToProblems.values().stream()
             .flatMap(x -> x.stream())
             .map(problem -> problem.refine(partialSolution))
             .flatMap(x -> x.stream())
@@ -189,26 +345,19 @@ public class ProblemContainerNeighbourhoodAware<S, T>
         return result;
     }
 
-    @Override
-    public boolean isEmpty() {
-        boolean result = sizeToProblem.isEmpty();
-        return result;
-    }
-
-
     @SafeVarargs
-    public static <S, T> ProblemContainerNeighbourhoodAware<S, T> create(ProblemNeighbourhoodAware<S, T> ... problems) {
-        Collection<ProblemNeighbourhoodAware<S, T>> tmp = Arrays.asList(problems);
+    public static <S, T> ProblemContainerNeighbourhoodAware<S, T> create(ProblemNeighborhoodAware<S, T> ... problems) {
+        Collection<ProblemNeighborhoodAware<S, T>> tmp = Arrays.asList(problems);
         ProblemContainerNeighbourhoodAware<S, T> result = create(tmp);
         return result;
     }
 
-    public static <S, T> ProblemContainerNeighbourhoodAware<S, T> create(Collection<ProblemNeighbourhoodAware<S, T>> problems) {
-        NavigableMap<Long, Collection<ProblemNeighbourhoodAware<S, T>>> sizeToProblem = IsoUtils.indexSolutionGenerators(problems);
+    public static <S, T> ProblemContainerNeighbourhoodAware<S, T> create(Collection<ProblemNeighborhoodAware<S, T>> problems) {
+        NavigableMap<Long, Collection<ProblemNeighborhoodAware<S, T>>> sizeToProblem = IsoUtils.indexSolutionGenerators(problems);
 
-        Multimap<T, ProblemNeighbourhoodAware<S, T>> sourceMapping = HashMultimap.create();
-        Multimap<T, ProblemNeighbourhoodAware<S, T>> targetMapping = HashMultimap.create();
-        for(ProblemNeighbourhoodAware<S, T> p : problems) {
+        Multimap<T, ProblemNeighborhoodAware<S, T>> sourceMapping = HashMultimap.create();
+        //Multimap<T, ProblemNeighbourhoodAware<S, T>> targetMapping = HashMultimap.create();
+        for(ProblemNeighborhoodAware<S, T> p : problems) {
             Collection<T> sn = p.getSourceNeighbourhood();
             sn.forEach(v -> sourceMapping.put(v, p));
 

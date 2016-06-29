@@ -9,8 +9,8 @@ import java.util.Collection;
  * @author raven
  *
  */
-public interface ProblemNeighbourhoodAware<S, T>
-    extends Problem<S>
+public interface ProblemNeighborhoodAware<S, T>
+    extends Problem<S, ProblemNeighborhoodAware<S, T>>
 {
     Collection<T> getSourceNeighbourhood();
     //Collection<T> exposeTargetNeighbourhood();
