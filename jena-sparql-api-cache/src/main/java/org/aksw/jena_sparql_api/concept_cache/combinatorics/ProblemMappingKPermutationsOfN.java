@@ -18,14 +18,14 @@ import com.google.common.math.LongMath;
  * @param <A>
  * @param <B>
  */
-public abstract class ProblemMappingEquivBase<A, B, X, Y>
+public abstract class ProblemMappingKPermutationsOfN<A, B, X, Y>
     implements ProblemNeighborhoodAware<Map<X, Y>, X>
 {
     protected Collection<? extends A> as;
     protected Collection<? extends B> bs;
     protected Map<X, Y> baseSolution;
 
-    public ProblemMappingEquivBase(Collection<? extends A> as, Collection<? extends B> bs, Map<X, Y> baseSolution) {
+    public ProblemMappingKPermutationsOfN(Collection<? extends A> as, Collection<? extends B> bs, Map<X, Y> baseSolution) {
         super();
         this.as = as;
         this.bs = bs;
@@ -45,9 +45,12 @@ public abstract class ProblemMappingEquivBase<A, B, X, Y>
         if(k > n) {
             result = 0;
         } else {
-            long combinationCount = LongMath.binomial(n, k);
-            long permutationCount = LongMath.factorial(k);
-            result = combinationCount * permutationCount;
+          result = LongMath.factorial(n) / LongMath.factorial(n - k);
+
+//	The formula below should be equal to the one above
+//            long combinationCount = LongMath.binomial(n, k);
+//            long permutationCount = LongMath.factorial(k);
+//            result = combinationCount * permutationCount;
         }
 
         return result;
@@ -71,7 +74,7 @@ public abstract class ProblemMappingEquivBase<A, B, X, Y>
             return false;
         if (getClass() != obj.getClass())
             return false;
-        ProblemMappingEquivBase other = (ProblemMappingEquivBase) obj;
+        ProblemMappingKPermutationsOfN<?, ?, ?, ?> other = (ProblemMappingKPermutationsOfN<?, ?, ?, ?>) obj;
         if (as == null) {
             if (other.as != null)
                 return false;
