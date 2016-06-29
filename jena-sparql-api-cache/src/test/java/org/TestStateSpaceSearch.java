@@ -89,6 +89,9 @@ public class TestStateSpaceSearch {
 
         FeatureMap<String, String> tagsToCache = new FeatureMapImpl<>();
         Op cacheOp = Algebra.compile(cacheElement);
+
+        //IndexSystem<Op, Op, ?> indexSystem = IndexSystem.create();
+
         Set<String> cacheFeatures = OpVisitorFeatureExtractor.getFeatures(cacheOp, (op) -> op.getClass().getSimpleName());
 
         tagsToCache.put(cacheFeatures, "cache1");
@@ -174,7 +177,7 @@ public class TestStateSpaceSearch {
         ProblemVarMappingQuad quadProblem = new ProblemVarMappingQuad(cacheQfpc.getQuads(), queryQfpc.getQuads(), Collections.emptyMap());
         problems.add(quadProblem);
 
-        for(int i = 0; i < 100; ++i) {
+        for(int i = 0; i < 1000; ++i) {
             Stopwatch sw = Stopwatch.createStarted();
 
             ProblemContainerNeighbourhoodAware.solve(

@@ -584,39 +584,11 @@ public class SparqlCacheUtils {
     }
 
 
-    /**
-     * Note assumes that this has been applied so far:
-     *  op = Algebra.toQuadForm(op);
-     * op = ReplaceConstants.replace(op);
-     *
-     * @param op
-     * @return
-     */
-    public static ProjectedQuadFilterPattern transform(Op op) {
-
-        ProjectedQuadFilterPattern result = null;
-
-        Set<Var> projectVars = null;
-
-        //QuadFilterPattern result = null;
-
-        //op = Algebra.optimize(op);
-//        op = Algebra.toQuadForm(op);
-//        op = ReplaceConstants.replace(op);
-
-//        if(op instanceof OpDistinct) {
-//            op = ((OpDistinct)op).getSubOp();
-//        }
-
-        //OpProject opProject;
-        if(op instanceof OpProject) {
-            OpProject tmp = (OpProject)op;
-            projectVars = new HashSet<>(tmp.getVars());
-
-            op = tmp.getSubOp();
-        }
+    public static QuadFilterPattern extractQuadFilterPattern(Op op) {
+        QuadFilterPattern result = null;
 
         OpFilter opFilter;
+        // TODO allow nested filters
         if(op instanceof OpFilter) {
             opFilter = (OpFilter)op;
         } else {
@@ -624,8 +596,6 @@ public class SparqlCacheUtils {
         }
 
         Op subOp = opFilter.getSubOp();
-
-
 
         if(subOp instanceof OpGraph) {
             OpGraph opGraph = (OpGraph)subOp;
@@ -650,11 +620,40 @@ public class SparqlCacheUtils {
             ExprList exprs = opFilter.getExprs();
             Expr expr = ExprUtils.andifyBalanced(exprs);
 
+            result = new QuadFilterPattern(quads, expr);
+        }
+
+        return result;
+    }
+
+    /**
+     * Note assumes that this has been applied so far:
+     *  op = Algebra.toQuadForm(op);
+     * op = ReplaceConstants.replace(op);
+     *
+     * @param op
+     * @return
+     */
+    public static ProjectedQuadFilterPattern transform(Op op) {
+
+        ProjectedQuadFilterPattern result = null;
+
+        Set<Var> projectVars = null;
+
+        if(op instanceof OpProject) {
+            OpProject tmp = (OpProject)op;
+            projectVars = new HashSet<>(tmp.getVars());
+
+            op = tmp.getSubOp();
+        }
+
+        QuadFilterPattern qfp = extractQuadFilterPattern(op);
+
+        if(qfp != null) {
             if(projectVars == null) {
-                projectVars = new HashSet<>(OpVars.mentionedVars(opQuadPattern));
+                projectVars = new HashSet<>(OpVars.mentionedVars(op));
             }
 
-            QuadFilterPattern qfp = new QuadFilterPattern(quads, expr);
             result = new ProjectedQuadFilterPattern(projectVars, qfp);
         }
 
@@ -1170,11 +1169,11 @@ public class SparqlCacheUtils {
                 exprSigToExpr.put(exprSig, expr);
                 clauseSig.add(exprSig);
             }
-    
+
             //Set<Expr> clauseSig = ClauseUtils.signaturize(clause);
             result.put(clauseSig, exprSigToExpr);
         }
-    
+
         return result;
     }
 

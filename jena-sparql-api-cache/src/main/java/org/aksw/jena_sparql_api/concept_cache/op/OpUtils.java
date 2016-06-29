@@ -4,7 +4,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -12,6 +11,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.aksw.jena_sparql_api.concept_cache.dirty.Tree;
+import org.aksw.jena_sparql_api.concept_cache.dirty.TreeImpl;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
@@ -28,7 +29,6 @@ import org.apache.jena.sparql.algebra.op.OpQuadBlock;
 import org.apache.jena.sparql.algebra.op.OpQuadPattern;
 import org.apache.jena.sparql.algebra.op.OpTriple;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.expr.Expr;
 import org.springframework.util.Assert;
 
 
@@ -229,23 +229,24 @@ public class OpUtils {
      * @return
      */
     public static Map<Op, Op> parentMap(Op rootOp) {
-        Map<Op, Op> result = new IdentityHashMap<Op, Op>();
-
-        result.put(rootOp, null);
-
-        parentMap(rootOp, result);
+        Map<Op, Op> result = TreeUtils.parentMap(rootOp, OpUtils::getSubOps);
         return result;
     }
 
-    public static void parentMap(Op op, Map<Op, Op> result) {
-        List<Op> subOps = getSubOps(op);
-
-        for(Op subOp : subOps) {
-            result.put(subOp, op);
-
-            parentMap(subOp, result);
-        }
+    public static Tree<Op> createTree(Op rootOp) {
+        Tree<Op> result = TreeImpl.create(rootOp, OpUtils::getSubOps);
+        return result;
     }
+
+//    public static void parentMap(Op op, Map<Op, Op> result) {
+//        List<Op> subOps = getSubOps(op);
+//
+//        for(Op subOp : subOps) {
+//            result.put(subOp, op);
+//
+//            parentMap(subOp, result);
+//        }
+//    }
 
 
     public static Op copyOnChange(Op op, List<Op> subOps) {
