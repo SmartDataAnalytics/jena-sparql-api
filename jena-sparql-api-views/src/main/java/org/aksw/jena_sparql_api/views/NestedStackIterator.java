@@ -2,12 +2,12 @@ package org.aksw.jena_sparql_api.views;
 
 import java.util.Iterator;
 
-public class NestedStackIterator<T>
+public class NestedStackIterator<T, P extends GenericNestedStack<T, P>>
     implements Iterator<T>
 {
-    protected NestedStack<T> current;
+    protected GenericNestedStack<T, P> current;
 
-    public NestedStackIterator(NestedStack<T> current) {
+    public NestedStackIterator(GenericNestedStack<T, P> current) {
         super();
         this.current = current;
     }

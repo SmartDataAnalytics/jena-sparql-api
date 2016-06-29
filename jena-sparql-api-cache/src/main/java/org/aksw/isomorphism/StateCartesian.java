@@ -11,8 +11,6 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import org.aksw.jena_sparql_api.views.NestedStack;
-
 import com.codepoetics.protonpack.functions.TriFunction;
 
 /**
@@ -37,25 +35,29 @@ public class StateCartesian<A, B, S> {
     //protected Iterator<A> itA;
     protected List<A> as;
 
+
     // cached size of as
     protected int asSize;
 
-    protected TriFunction<A, S, NestedStack<Combination2<A, B, S>>, Iterator<B>> lookupB;
+    // TODO We could add a function which allows reordering the items of as
+    // after choosing an item b (returned by the lookup function)
+
+    protected TriFunction<A, S, CombinationStack<A, B, S>, Iterator<B>> lookupB;
 
 
     protected BiFunction<A, B, S> computeSolutionContribution;
     protected BinaryOperator<S> solutionCombiner;
     protected Predicate<S> isUnsatisfiable;
-    protected Consumer<NestedStack<Combination2<A, B, S>>> completeMatch;
+    protected Consumer<CombinationStack<A, B, S>> completeMatch;
 
     public StateCartesian(
             List<A> as,
-            TriFunction<A, S, NestedStack<Combination2<A, B, S>>, Iterator<B>> lookupB,
+            TriFunction<A, S, CombinationStack<A, B, S>, Iterator<B>> lookupB,
 
             BiFunction<A, B, S> computeSolutionContribution,
             BinaryOperator<S> solutionCombiner,
             Predicate<S> isUnsatisfiable,
-            Consumer<NestedStack<Combination2<A, B, S>>> completeMatch)
+            Consumer<CombinationStack<A, B, S>> completeMatch)
     {
         super();
         this.as = as;
@@ -72,7 +74,7 @@ public class StateCartesian<A, B, S> {
         nextA(baseSolution, 0, null);
     }
 
-    public void nextA(S baseSolution, int ia, NestedStack<Combination2<A, B, S>> stack) {
+    public void nextA(S baseSolution, int ia, CombinationStack<A, B, S> stack) {
 
         if(ia >= asSize) {
             completeMatch.accept(stack);
@@ -89,8 +91,8 @@ public class StateCartesian<A, B, S> {
 
                 if(!unsatisfiable) {
 
-                    Combination2<A, B, S> c = new Combination2<>(a, b, combination);
-                    NestedStack<Combination2<A, B, S>> newStack = new NestedStack<>(stack, c);
+                    Combination<A, B, S> c = new Combination<>(a, b, combination);
+                    CombinationStack<A, B, S> newStack = new CombinationStack<>(stack, c);
 
                     nextA(combination, ia + 1, newStack);
                 }
@@ -108,11 +110,11 @@ public class StateCartesian<A, B, S> {
 
     }
 
-    public static <A, B> Stream<NestedStack<Combination2<A, B, Void>>> createCartesian(
+    public static <A, B> Stream<CombinationStack<A, B, Void>> createCartesian(
             Collection<A> as,
             Collection<B> bs) {
         Void nil = null;
-        Stream<NestedStack<Combination2<A, B, Void>>> result = createCartesian(as, bs, nil, (k, n) -> nil, (sa, sb) -> nil, (s) -> false);
+        Stream<CombinationStack<A, B, Void>> result = createCartesian(as, bs, nil, (k, n) -> nil, (sa, sb) -> nil, (s) -> false);
         return result;
     }
 
@@ -123,7 +125,7 @@ public class StateCartesian<A, B, S> {
      * @param as
      * @param bs
      */
-    public static <A, B, S> Stream<NestedStack<Combination2<A, B, S>>> createCartesian(
+    public static <A, B, S> Stream<CombinationStack<A, B, S>> createCartesian(
             Collection<A> as,
             Collection<B> bs,
             S baseSolution,
@@ -142,9 +144,9 @@ public class StateCartesian<A, B, S> {
 //        Collections.reverse(las);
 
 
-        TriFunction<A, S, NestedStack<Combination2<A, B, S>>, Iterator<B>> lookupB = (a, s, stack) -> bs.iterator();
+        TriFunction<A, S, CombinationStack<A, B, S>, Iterator<B>> lookupB = (a, s, stack) -> bs.iterator();
 
-        List<NestedStack<Combination2<A, B, S>>> list = new ArrayList<>();
+        List<CombinationStack<A, B, S>> list = new ArrayList<>();
 
         StateCartesian<A, B, S> runner =
                 new StateCartesian<A, B, S>(
@@ -159,7 +161,7 @@ public class StateCartesian<A, B, S> {
 
         runner.run(baseSolution);
 
-        Stream<NestedStack<Combination2<A, B, S>>> result = list.stream();
+        Stream<CombinationStack<A, B, S>> result = list.stream();
         return result;
     }
 

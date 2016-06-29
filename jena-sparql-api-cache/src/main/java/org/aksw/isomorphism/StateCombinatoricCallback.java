@@ -1,15 +1,12 @@
 package org.aksw.isomorphism;
 
-import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map.Entry;
-import java.util.Stack;
-import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -31,7 +28,7 @@ import java.util.stream.Stream;
  * @param <S>
  */
 public class StateCombinatoricCallback<A, B, S> {
-    protected Stack<Entry<A, B>> stack = new Stack<Entry<A, B>>();
+    //protected Stack<Entry<A, B>> stack = new Stack<Entry<A, B>>();
 
     protected LinkedListNode<A> remainingA;
     protected LinkedListNode<B> remainingB;
@@ -39,7 +36,7 @@ public class StateCombinatoricCallback<A, B, S> {
     protected BiFunction<A, B, S> computeSolutionContribution;
     protected BinaryOperator<S> solutionCombiner;
     protected Predicate<S> isUnsatisfiable;
-    protected BiConsumer<Stack<Entry<A, B>>, S> completeMatch;
+    protected Consumer<CombinationStack<A, B, S>> completeMatch;
 
     public StateCombinatoricCallback(
             LinkedListNode<A> remainingA,
@@ -47,7 +44,7 @@ public class StateCombinatoricCallback<A, B, S> {
             BiFunction<A, B, S> computeSolutionContribution,
             BinaryOperator<S> solutionCombiner,
             Predicate<S> isUnsatisfiable,
-            BiConsumer<Stack<Entry<A, B>>, S> completeMatch)
+            Consumer<CombinationStack<A, B, S>> completeMatch)
     {
         super();
         this.remainingA = remainingA;
@@ -59,11 +56,11 @@ public class StateCombinatoricCallback<A, B, S> {
     }
 
 
-    public static <A, B> Stream<Combination<A, B, Void>> createKPermutationsOfN(
+    public static <A, B> Stream<CombinationStack<A, B, Void>> createKPermutationsOfN(
             Collection<A> as,
             Collection<B> bs) {
         Void nil = null;
-        Stream<Combination<A, B, Void>> result = createKPermutationsOfN(as, bs, nil, (k, n) -> nil, (sa, sb) -> nil, (s) -> false);
+        Stream<CombinationStack<A, B, Void>> result = createKPermutationsOfN(as, bs, nil, (k, n) -> nil, (sa, sb) -> nil, (s) -> false);
         return result;
     }
 
@@ -74,7 +71,7 @@ public class StateCombinatoricCallback<A, B, S> {
      * @param as
      * @param bs
      */
-    public static <A, B, S> Stream<Combination<A, B, S>> createKPermutationsOfN(
+    public static <A, B, S> Stream<CombinationStack<A, B, S>> createKPermutationsOfN(
             Collection<A> as,
             Collection<B> bs,
             S baseSolution,
@@ -86,7 +83,7 @@ public class StateCombinatoricCallback<A, B, S> {
         LinkedListNode<B> nbs = LinkedListNode.create(bs);
         //int[] i = new int[]{0};
 
-        List<Combination<A, B, S>> list = new ArrayList<>();
+        List<CombinationStack<A, B, S>> list = new ArrayList<>();
 
         StateCombinatoricCallback<A, B, S> runner =
                 new StateCombinatoricCallback<A, B, S>(
@@ -95,23 +92,26 @@ public class StateCombinatoricCallback<A, B, S> {
                         computeSolutionContribution,
                         solutionCombiner,
                         isUnsatisfiable,
-                        (stack, s) -> {
-                            @SuppressWarnings("unchecked")
-                            Stack<Entry<A, B>> clone = (Stack<Entry<A, B>>)stack.clone();
-                            Combination<A, B, S> c = new Combination<>(stack, s);
-                            list.add(c);
+                        (stack) -> {
+//                            @SuppressWarnings("unchecked")
+//                            Stack<Entry<A, B>> clone = (Stack<Entry<A, B>>)stack.clone();
+//                            CombinationStack<A, B, S> c = new CombinationStack<>(stack, s);
+                            list.add(stack);
                         }); //System.out.println("MATCH: " + (++i[0]) + stack));
 
-        runner.nextA(baseSolution);
+        runner.run(baseSolution);
 
-        Stream<Combination<A, B, S>> result = list.stream();
+        Stream<CombinationStack<A, B, S>> result = list.stream();
         return result;
     }
 
+    public void run(S baseSolution) {
+        nextA(baseSolution, null);
+    }
 
     // [a b c] [1 2 3 4 5] -> [1, 2, 3], [1, 2, 4], [1, 2, 5], [1, 3, 4], ...
     //Stream<Stack<Entry<A, B>>>
-    public void nextA(S baseSolution) {
+    public void nextA(S baseSolution, CombinationStack<A, B, S> stack) {
 
         // pick
         LinkedListNode<A> curr = remainingA.successor;
@@ -124,16 +124,16 @@ public class StateCombinatoricCallback<A, B, S> {
             curr = pick.successor;
 
             // recurse
-            nextB(baseSolution, a);
+            nextB(baseSolution, a, stack);
 
             // restore
             pick.relink();
         } else {
-            completeMatch.accept(stack, baseSolution);
+            completeMatch.accept(stack);
         }
     }
 
-    public void nextB(S baseSolution, A a) {
+    public void nextB(S baseSolution, A a, CombinationStack<A, B, S> stack) {
         LinkedListNode<B> curr = remainingB.successor;
 
         while(!curr.isTail()) {
@@ -153,12 +153,14 @@ public class StateCombinatoricCallback<A, B, S> {
 
                 if(!unsatisfiable) {
 
-                    stack.push(new SimpleEntry<>(a, b));
+                    Combination<A, B, S> c = new Combination<>(a, b, combined);
+                    CombinationStack<A, B, S> newStack = new CombinationStack<>(stack, c);
+                    //stack.push(new SimpleEntry<>(a, b));
 
                     // recurse
-                    nextA(combined);
+                    nextA(combined, newStack);
 
-                    stack.pop();
+                    //stack.pop();
                 }
             }
 
@@ -174,31 +176,31 @@ public class StateCombinatoricCallback<A, B, S> {
     }
 
     // This is too excessive - kept for reference;)
-    public void nextAWithAllPermutationsOfA(S baseSolution) {
-
-        // pick
-        LinkedListNode<A> curr = remainingA.successor;
-//        System.out.println("as: " + curr);
-        while(!curr.isTail()) {
-            LinkedListNode<A> pick = curr;
-            A a = pick.data;
-
-            pick.unlink();
-
-            curr = pick.successor;
-            //System.out.println("as unlink: " + remainingA + "; " + a);
-
-            // recurse
-            nextB(baseSolution, a);
-
-            // restore
-            pick.relink();
-            //System.out.println("as relink: " + remainingA + "; " + a);
-        }
-
-        if(remainingA.successor.isTail()) {
-             //completeMatch.accept(stack, baseSolution);
-        }
-    }
+//    public void nextAWithAllPermutationsOfA(S baseSolution) {
+//
+//        // pick
+//        LinkedListNode<A> curr = remainingA.successor;
+////        System.out.println("as: " + curr);
+//        while(!curr.isTail()) {
+//            LinkedListNode<A> pick = curr;
+//            A a = pick.data;
+//
+//            pick.unlink();
+//
+//            curr = pick.successor;
+//            //System.out.println("as unlink: " + remainingA + "; " + a);
+//
+//            // recurse
+//            nextB(baseSolution, a, stack);
+//
+//            // restore
+//            pick.relink();
+//            //System.out.println("as relink: " + remainingA + "; " + a);
+//        }
+//
+//        if(remainingA.successor.isTail()) {
+//             //completeMatch.accept(stack, baseSolution);
+//        }
+//    }
 
 }
