@@ -93,6 +93,48 @@ public class PrefixAggregator {
         return result;
     }
 
+    /**
+     * It sucks that lcp is not part of the public trie api ...
+     * @param trie
+     * @return
+     */
+    public static String longestCommonPrefix(PatriciaTrie<?> trie) {
+        // for every prefix, find its predecessor - and merge those that yield the longest prefix
+
+        // TODO Bail out early if stri
+
+        String result = null;
+        int bestLength = 0;
+        OrderedMapIterator<String, ?> it = trie.mapIterator();
+
+        // HACK Move iterator to the end
+        // Would be much better if the Trie API provided a way to iterate the map in reverse
+        while(it.hasNext()) {
+            it.next();
+        }
+
+        if(it.hasPrevious()) {
+            String higher = it.previous();
+
+            while(it.hasPrevious()) {
+                String lower = it.previous();
+                if(higher.length() <= bestLength) {
+                    continue;
+                }
+
+                String commonPrefix = commonPrefix(higher, lower, false);
+                if(result == null || result.length() < commonPrefix.length()) {
+                    result = commonPrefix;
+                    bestLength = result.length();
+                }
+
+                higher = lower;
+            }
+        }
+
+        return result;
+    }
+
     public void removeSuperseded(String prefix) {
         // Remove items that are more specific than the current prefix
         SortedMap<String, ?> map = prefixes.prefixMap(prefix);
@@ -108,7 +150,6 @@ public class PrefixAggregator {
         String bestMatch = longestPrefixLookup(prefix, true, prefixes);
 
 //        System.out.println("longest prefix of: " + prefix + ": " + bestMatch);
-
         removeSuperseded(prefix);
 
         // If there is a best match, there is nothing to do, otherwise we need to add the prefix
@@ -119,40 +160,10 @@ public class PrefixAggregator {
 
         // Check if the prefix set exceeds its maximum size
         if(prefixes.size() > targetSize) {
-            // for every prefix, find its predecessor - and merge those that yield the longest prefix
-
-            // TODO Bail out early if stri
-
-            String bestCand = null;
-            int bestLength = 0;
-            OrderedMapIterator<String, Void> it = prefixes.mapIterator();
-
-            // HACK Move iterator to the end
-            // Would be much better if the Trie API provided a way to iterate the map in reverse
-            while(it.hasNext()) {
-                it.next();
-            }
-
-            if(it.hasPrevious()) {
-                String higher = it.previous();
-
-                while(it.hasPrevious()) {
-                    String lower = it.previous();
-                    if(higher.length() <= bestLength) {
-                        continue;
-                    }
-
-                    String commonPrefix = commonPrefix(higher, lower, false);
-                    if(bestCand == null || bestCand.length() < commonPrefix.length()) {
-                        bestCand = commonPrefix;
-                        bestLength = bestCand.length();
-                    }
-
-                    higher = lower;
-                }
-
-                removeSuperseded(bestCand);
-                prefixes.put(bestCand, null);
+            String lcp = longestCommonPrefix(prefixes);
+            if(lcp != null) {
+                removeSuperseded(lcp);
+                prefixes.put(lcp, null);
             }
         }
     }
