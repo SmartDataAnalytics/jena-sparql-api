@@ -9,6 +9,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import org.aksw.commons.collections.CartesianProduct;
+import org.apache.jena.ext.com.google.common.collect.Iterables;
 
 
 
@@ -76,7 +77,7 @@ class CachingIterable<T>
             List<T> cacheData = cache.data;
 
             // Check if item at index i is already cached
-            if(i <= cacheData.size()) {
+            if(i < cacheData.size()) {
                 result = cacheData.get(i);
             } else {
                 result = delegate.next();
@@ -93,6 +94,13 @@ class CachingIterable<T>
         Iterator<T> result = new CachingIterator<T>(cache, delegate);
         return result;
     }
+
+    @Override
+    public String toString() {
+        String result = Iterables.toString(this);
+        return result;
+    }
+
 }
 
 /**
@@ -138,6 +146,8 @@ public class CartesianProductUtils<A, B, S> {
         List<Iterable<Combination<A, B, S>>> mappings = new ArrayList<>(as.size());
         for(A a : as) {
             Iterable<Combination<A, B, S>> foo = new CachingIterable<>(fn.apply(a));
+
+            System.out.println(foo);
 
             mappings.add(foo);
         }

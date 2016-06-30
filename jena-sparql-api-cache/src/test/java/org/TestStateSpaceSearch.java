@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -13,7 +14,9 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import org.aksw.commons.collections.CartesianProduct;
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
+import org.aksw.isomorphism.Combination;
 import org.aksw.isomorphism.ProblemContainerNeighbourhoodAware;
 import org.aksw.isomorphism.ProblemNeighborhoodAware;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
@@ -25,6 +28,7 @@ import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.stmt.SparqlElementParser;
 import org.aksw.jena_sparql_api.stmt.SparqlElementParserImpl;
+import org.aksw.jena_sparql_api.utils.DnfUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.MapUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
@@ -69,7 +73,20 @@ public class TestStateSpaceSearch {
 
         // TODO How could we combine the state space
 
+        {
+            Set<Expr> a = DnfUtils.toSetDnf(ExprUtils.parse("?a = <http://foo> && strStarts(?b, 'foo')")).iterator().next();
+            Set<Expr> b = DnfUtils.toSetDnf(ExprUtils.parse("?a = <http://foo> && strStarts(?b, 'foobar') && ?x = ?y")).iterator().next();
 
+            System.out.println("a: " + a);
+            System.out.println("b: " + b);
+
+            CartesianProduct<Combination<Expr, Expr, Expr>> c = ExprMatcher.match(a, b);
+
+            for(List<Combination<Expr, Expr, Expr>> com : c) {
+                System.out.println("GOT COMBINATION:" + com);
+            }
+
+        }
 
         // We could create a graph over quads and expressions that variables
 
@@ -102,9 +119,9 @@ public class TestStateSpaceSearch {
 
         SparqlCacheSystem cacheSystem = new SparqlCacheSystem();
         cacheSystem.registerCache("test", cacheOp);
-        
+
         cacheSystem.rewriteQuery(queryOp);
-        
+
         if(true) {
             System.out.println("weee");
             System.exit(0);

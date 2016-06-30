@@ -67,7 +67,7 @@ public class ExprMatcher {
                 cacheConjection,
                 queryConjunction,
                 ExprMatcher::match,
-                x -> !x.equals(NodeValue.FALSE));
+                x -> x.equals(NodeValue.FALSE));
 
         return result;
     }
