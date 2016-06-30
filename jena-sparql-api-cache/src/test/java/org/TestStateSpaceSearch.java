@@ -91,8 +91,8 @@ public class TestStateSpaceSearch {
 
 
         Op queryOp = Algebra.compile(queryElement);
-        queryOp = Algebra.toQuadForm(cacheOp);
-        Set<String> queryFeatures = OpVisitorFeatureExtractor.getFeatures(queryOp, (op) -> op.getClass().getSimpleName());
+        queryOp = Algebra.toQuadForm(queryOp);
+        //Set<String> queryFeatures = OpVisitorFeatureExtractor.getFeatures(queryOp, (op) -> op.getClass().getSimpleName());
 
 //        Collection<Entry<Set<String>, String>> cacheCandidates = tagsToCache.getIfSubsetOf(queryFeatures);
 //

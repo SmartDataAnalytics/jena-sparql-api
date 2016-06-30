@@ -105,6 +105,11 @@ public class FeatureMapImpl<K, V>
         return true;
     }
 
+    /**
+     * Return every entry of this featureMap whose associated feature set
+     * is a super set of the given one.
+     * 
+     */
     @Override
     public Collection<Entry<Set<K>, V>> getIfSupersetOf(Set<K> prototype) {
         //Set<Entry<Set<K>, Set<V>>> result;

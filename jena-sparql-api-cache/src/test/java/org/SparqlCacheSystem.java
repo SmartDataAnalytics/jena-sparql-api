@@ -65,8 +65,8 @@ public class SparqlCacheSystem {
                     for(Entry<Set<Expr>, QuadPatternIndex> g : cacheQpiCandidates) {
                         QuadPatternIndex cacheQp = g.getValue();
                         
-                        System.out.println("QueryQP: " + queryQp);
                         System.out.println("CacheQP: " + cacheQp);
+                        System.out.println("QueryQP: " + queryQp);
                         
                         generateVarMappings(cacheQp, queryQp)
                             .forEach(x -> System.out.println("solution: " +x));
