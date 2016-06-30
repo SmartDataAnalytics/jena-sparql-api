@@ -5,8 +5,15 @@ import java.util.List;
 import java.util.Set;
 import java.util.SortedMap;
 
+import org.apache.commons.collections4.OrderedMapIterator;
 import org.apache.commons.collections4.trie.PatriciaTrie;
 
+/**
+ * Class for aggregating a set of prefixes with a specified target size from a set of strings
+ *
+ * @author raven
+ *
+ */
 public class PrefixAggregator {
     //public NavigableSet<String> prefixes = new TreeSet<>();
     protected PatriciaTrie<Void> prefixes = new PatriciaTrie<>();
@@ -114,22 +121,39 @@ public class PrefixAggregator {
         if(prefixes.size() > targetSize) {
             // for every prefix, find its predecessor - and merge those that yield the longest prefix
 
+            // TODO Bail out early if stri
+
             String bestCand = null;
-            for(String higher : prefixes.keySet()) {
-                String lower = prefixes.previousKey(higher);
+            int bestLength = 0;
+            OrderedMapIterator<String, Void> it = prefixes.mapIterator();
 
-//                System.out.println("prev of  " + higher + " is " + lower);
+            // HACK Move iterator to the end
+            // Would be much better if the Trie API provided a way to iterate the map in reverse
+            while(it.hasNext()) {
+                it.next();
+            }
 
-                if(lower != null) {
+            if(it.hasPrevious()) {
+                String higher = it.previous();
+
+                while(it.hasPrevious()) {
+                    String lower = it.previous();
+                    if(higher.length() <= bestLength) {
+                        continue;
+                    }
+
                     String commonPrefix = commonPrefix(higher, lower, false);
                     if(bestCand == null || bestCand.length() < commonPrefix.length()) {
                         bestCand = commonPrefix;
+                        bestLength = bestCand.length();
                     }
-                }
-            }
 
-            removeSuperseded(bestCand);
-            prefixes.put(bestCand, null);
+                    higher = lower;
+                }
+
+                removeSuperseded(bestCand);
+                prefixes.put(bestCand, null);
+            }
         }
     }
 
