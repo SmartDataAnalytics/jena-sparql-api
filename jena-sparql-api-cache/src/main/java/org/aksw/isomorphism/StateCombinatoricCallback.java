@@ -28,7 +28,8 @@ import com.codepoetics.protonpack.functions.TriFunction;
  * @param <S>
  */
 public class StateCombinatoricCallback<A, B, S> {
-    protected LinkedListNode<A> remainingA;
+    //protected LinkedListNode<A> remainingA;
+    protected List<A> as;
     protected LinkedListNode<B> remainingB;
 
     /**
@@ -46,13 +47,15 @@ public class StateCombinatoricCallback<A, B, S> {
 
 
     public StateCombinatoricCallback(
-            LinkedListNode<A> remainingA,
+//            LinkedListNode<A> remainingA,
+            List<A> as,
             LinkedListNode<B> remainingB,
             TriFunction<S, A, B, Stream<S>> solutionCombiner,
             Consumer<CombinationStack<A, B, S>> completeMatch)
     {
         super();
-        this.remainingA = remainingA;
+//        this.remainingA = remainingA;
+        this.as = as;
         this.remainingB = remainingB;
         this.solutionCombiner = solutionCombiner;
         this.completeMatch = completeMatch;
@@ -80,14 +83,15 @@ public class StateCombinatoricCallback<A, B, S> {
             S baseSolution,
             TriFunction<S, A, B, Stream<S>> solutionCombiner
             ) {
-        LinkedListNode<A> nas = LinkedListNode.create(as);
+//        LinkedListNode<A> nas = LinkedListNode.create(as);
+        List<A> xas = as instanceof List ? (List<A>)as : new ArrayList<>(as);
         LinkedListNode<B> nbs = LinkedListNode.create(bs);
 
         List<CombinationStack<A, B, S>> list = new ArrayList<>();
 
         StateCombinatoricCallback<A, B, S> runner =
                 new StateCombinatoricCallback<A, B, S>(
-                        nas,
+                        xas,
                         nbs,
                         solutionCombiner,
                         (stack) -> {
@@ -101,57 +105,63 @@ public class StateCombinatoricCallback<A, B, S> {
     }
 
     public void run(S baseSolution) {
-        boolean isEmpty = remainingA.successor.isTail();
+        boolean isEmpty = as.isEmpty(); //remainingA.successor.isTail();
         if(!isEmpty) {
-            nextA(baseSolution, null);
+            nextB(0, baseSolution, null);
         }
     }
 
     // [a b c] [1 2 3 4 5] -> [1, 2, 3], [1, 2, 4], [1, 2, 5], [1, 3, 4], ...
-    public void nextA(S baseSolution, CombinationStack<A, B, S> stack) {
+//    public void nextA(S baseSolution, CombinationStack<A, B, S> stack) {
+//
+//        // pick
+//        LinkedListNode<A> curr = remainingA.successor;
+//        if(!curr.isTail()) {
+//            LinkedListNode<A> pick = curr;
+//            A a = pick.data;
+//
+//            pick.unlink();
+//
+//            curr = pick.successor;
+//
+//            // recurse
+//            nextB(i + 1, baseSolution, a, stack);
+//
+//            // restore
+//            pick.relink();
+//        } else {
+//            completeMatch.accept(stack);
+//        }
+//    }
 
-        // pick
-        LinkedListNode<A> curr = remainingA.successor;
-        if(!curr.isTail()) {
-            LinkedListNode<A> pick = curr;
-            A a = pick.data;
+    public void nextB(int i, S baseSolution, CombinationStack<A, B, S> stack) {
+        if(i < as.size()) {
+            A a = as.get(i);
+            LinkedListNode<B> curr = remainingB.successor;
 
-            pick.unlink();
+            while(!curr.isTail()) {
+                LinkedListNode<B> pick = curr;
+                B b = pick.data;
 
-            curr = pick.successor;
+                pick.unlink();
+                curr = pick.successor;
 
-            // recurse
-            nextB(baseSolution, a, stack);
+                Stream<S> partialSolutions = solutionCombiner.apply(baseSolution, a, b);
+                partialSolutions.forEach(partialSolution -> {
+                    Combination<A, B, S> c = new Combination<>(a, b, partialSolution);
+                    CombinationStack<A, B, S> newStack = new CombinationStack<>(stack, c);
 
-            // restore
-            pick.relink();
+                    // recurse
+                    nextB(i + 1, partialSolution, newStack);
+                });
+
+                // restore
+                pick.relink();
+            }
         } else {
             completeMatch.accept(stack);
         }
-    }
 
-    public void nextB(S baseSolution, A a, CombinationStack<A, B, S> stack) {
-        LinkedListNode<B> curr = remainingB.successor;
-
-        while(!curr.isTail()) {
-            LinkedListNode<B> pick = curr;
-            B b = pick.data;
-
-            pick.unlink();
-            curr = pick.successor;
-
-            Stream<S> partialSolutions = solutionCombiner.apply(baseSolution, a, b);
-            partialSolutions.forEach(partialSolution -> {
-                Combination<A, B, S> c = new Combination<>(a, b, partialSolution);
-                CombinationStack<A, B, S> newStack = new CombinationStack<>(stack, c);
-
-                // recurse
-                nextA(partialSolution, newStack);
-            });
-
-            // restore
-            pick.relink();
-        }
     }
 
     public static void main(String[] args) {

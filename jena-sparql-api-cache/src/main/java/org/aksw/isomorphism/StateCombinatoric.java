@@ -185,8 +185,8 @@ public class StateCombinatoric<A, B, S> {
         List<String> as = new ArrayList<String>(Arrays.asList("a", "b", "c", "d", "e", "f", "g"));
         List<Integer> bs = new ArrayList<Integer>(Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9));
 
-//        List<String> as = new ArrayList<String>(Arrays.asList("a", "b", "c", "d", "e", "f"));
-//        List<Integer> bs = new ArrayList<Integer>(Arrays.asList(1, 2, 3, 4, 5, 6));
+//        List<String> as = new ArrayList<String>(Arrays.asList("a", "b", "c"));
+//        List<Integer> bs = new ArrayList<Integer>(Arrays.asList(1, 2, 3, 4, 5));
 
 //        Collection<String> strs = new ArrayList<String>();
 
@@ -199,7 +199,7 @@ public class StateCombinatoric<A, B, S> {
             //stream = createKPermutationsOfN(as, bs);
             //IntStream stream = IntStream.range(0, 181440000);
             //stream = IntStream.range(0, 181440).mapToObj(x -> "mystr" + x);
-            if(true) {
+            if(false) {
                 com.codepoetics.protonpack.StreamUtils.zipWithIndex(stream).forEach(y -> System.out.println(y.getIndex() + " - " + y.getValue()));
             } else {
                 long count = stream != null ? stream.count() : 0;
