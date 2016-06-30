@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -23,14 +24,10 @@ import org.apache.jena.sparql.expr.E_LogicalAnd;
 import org.apache.jena.sparql.expr.E_LogicalOr;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprFunction;
-import org.apache.jena.sparql.expr.ExprTransform;
-import org.apache.jena.sparql.expr.ExprTransformer;
 import org.apache.jena.sparql.expr.FunctionLabel;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.graph.NodeTransformLib;
-import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
-import org.apache.jena.sparql.syntax.syntaxtransform.ExprTransformNodeElement;
 
 
 /**
@@ -300,16 +297,32 @@ public class ExprUtils {
     public static Pair<Var, NodeValue> extractConstantConstraint(Expr expr) {
         if(expr instanceof E_Equals) {
             E_Equals e = (E_Equals)expr;
-            return extractConstantConstraint(e.getArg1(), e.getArg2());
+            return extractVarConstant(e.getArg1(), e.getArg2());
         }
 
         return null;
     }
 
-    public static Pair<Var, NodeValue> extractConstantConstraint(Expr a, Expr b) {
-        Pair<Var, NodeValue> result = extractConstantConstraintDirected(a, b);
+    public static Entry<Var, NodeValue> extractVarConstant(Expr expr) {
+        Entry<Var, NodeValue> result = null;
+
+        if(expr instanceof ExprFunction) {
+            ExprFunction f = expr.getFunction();
+            if(f.numArgs() == 2) {
+                Expr a = f.getArg(1);
+                Expr b = f.getArg(2);
+                
+                result = extractVarConstant(a, b);
+            }
+        }
+        
+        return result;
+    }
+    
+    public static Pair<Var, NodeValue> extractVarConstant(Expr a, Expr b) {
+        Pair<Var, NodeValue> result = extractVarConstantDirected(a, b);
         if(result == null) {
-            result = extractConstantConstraintDirected(b, a);
+            result = extractVarConstantDirected(b, a);
         }
 
         return result;
@@ -333,7 +346,7 @@ public class ExprUtils {
      * @param b
      * @return
      */
-    public static Pair<Var, NodeValue> extractConstantConstraintDirected(Expr a, Expr b) {
+    public static Pair<Var, NodeValue> extractVarConstantDirected(Expr a, Expr b) {
         if(!(a.isVariable() && b.isConstant())) {
             return null;
         }
