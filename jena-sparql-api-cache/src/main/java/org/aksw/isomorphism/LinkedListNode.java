@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.jena.ext.com.google.common.collect.Iterables;
+
 
 /**
  * A linked list node used in the combinatoric stream
@@ -19,7 +21,7 @@ public class LinkedListNode<T>
         implements Iterator<T>
     {
         protected LinkedListNode<T> current;
-        
+
         public LinkedListNodeIterator(LinkedListNode<T> current) {
             super();
             this.current = current;
@@ -27,18 +29,42 @@ public class LinkedListNode<T>
 
         @Override
         public boolean hasNext() {
-            boolean result = current.isTail();
+            boolean result = !current.isTail();
             return result;
         }
-    
+
         @Override
         public T next() {
             T result = current.data;
             current = current.successor;
             return result;
         }
-    }    
-        
+    }
+
+    public static class MetaIterator<T>
+        implements Iterator<LinkedListNode<T>>
+    {
+        protected LinkedListNode<T> current;
+
+        public MetaIterator(LinkedListNode<T> current) {
+            super();
+            this.current = current;
+        }
+
+        @Override
+        public boolean hasNext() {
+            boolean result = !current.isTail();
+            return result;
+        }
+
+        @Override
+        public LinkedListNode<T> next() {
+            LinkedListNode<T> result = current;
+            current = current.successor;
+            return result;
+        }
+    }
+
     public T data;
     public LinkedListNode<T> predecessor;
     public LinkedListNode<T> successor;
@@ -94,7 +120,7 @@ public class LinkedListNode<T>
 
     @Override
     public String toString() {
-        String result = toList().toString();
+        String result = Iterables.toString(this);
         return result;
     }
 
@@ -124,4 +150,14 @@ public class LinkedListNode<T>
 
         return result;
     }
+
+    public Iterator<LinkedListNode<T>> metaIterator() {
+        MetaIterator<T> result = isHead()
+                ? new MetaIterator<>(this.successor)
+                : new MetaIterator<>(this);
+
+        return result;
+    }
+
+
 }

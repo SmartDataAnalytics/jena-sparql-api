@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
+import org.apache.jena.ext.com.google.common.collect.Iterables;
 
 import com.codepoetics.protonpack.functions.TriFunction;
 
@@ -162,6 +165,87 @@ public class StateCombinatoricCallback<A, B, S> {
             completeMatch.accept(stack);
         }
 
+    }
+
+    public Stream<CombinationStack<A, B, S>> stream(S baseSolution) {
+        Stream<CombinationStack<A, B, S>> result = as.isEmpty()
+                ? Stream.empty()
+                : stream(0, baseSolution, null);
+
+        return result;
+    }
+
+    public static <A, B> Stream<CombinationStack<A, B, Void>> createKPermutationsOfN2(
+            Collection<A> as,
+            Collection<B> bs) {
+        Void nil = null;
+        Stream<CombinationStack<A, B, Void>> result = createKPermutationsOfN2(as, bs, nil, (s, a, b) -> Stream.of(nil));
+        return result;
+    }
+
+    public static <A, B, S> Stream<CombinationStack<A, B, S>> createKPermutationsOfN2(
+            Collection<A> as,
+            Collection<B> bs,
+            S baseSolution,
+            TriFunction<S, A, B, Stream<S>> solutionCombiner
+            ) {
+        List<A> xas = as instanceof List ? (List<A>)as : new ArrayList<>(as);
+        LinkedListNode<B> nbs = LinkedListNode.create(bs);
+
+        List<CombinationStack<A, B, S>> list = new ArrayList<>();
+
+        StateCombinatoricCallback<A, B, S> runner =
+                new StateCombinatoricCallback<A, B, S>(
+                        xas,
+                        nbs,
+                        solutionCombiner,
+                        (stack) -> {
+                            list.add(stack);
+                        });
+
+        Stream<CombinationStack<A, B, S>> result = runner.stream(baseSolution);
+        return result;
+    }
+
+    public Stream<CombinationStack<A, B, S>> stream(int i, S baseSolution, CombinationStack<A, B, S> stack) {
+
+
+        Stream<CombinationStack<A, B, S>> result;
+
+        if(i < as.size()) {
+            A a = as.get(i);
+
+            Iterable<LinkedListNode<B>> curr = () -> remainingB.metaIterator();
+
+            result = StreamSupport.stream(curr.spliterator(), false)
+                .flatMap(pick -> {
+
+                    B b = pick.data;
+                    System.out.println(i + ": " + a + " - " + b);
+                    pick.unlink();
+
+                    Stream<S> partialSolutions = solutionCombiner.apply(baseSolution, a, b);
+                    Stream<CombinationStack<A, B, S>> s = partialSolutions.flatMap(partialSolution -> {
+                        Combination<A, B, S> c = new Combination<>(a, b, partialSolution);
+                        CombinationStack<A, B, S> newStack = new CombinationStack<>(stack, c);
+
+                        // recurse
+                        Stream<CombinationStack<A, B, S>> t = stream(i + 1, partialSolution, newStack);
+
+                        t = StreamUtils.appendAction(t, () -> pick.relink());
+
+                        return t;
+                    });
+                return s;
+            });
+        } else {
+            System.out.println("Done - with stack " + stack);
+            result = Stream.of(stack);
+        }
+
+//        closeAction.run();
+
+        return result;
     }
 
     public static void main(String[] args) {

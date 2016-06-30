@@ -191,15 +191,16 @@ public class StateCombinatoric<A, B, S> {
 //        Collection<String> strs = new ArrayList<String>();
 
 
-        for(int i = 0; i < 1000; ++i) {
+        for(int i = 0; i < 1; ++i) {
             Stopwatch sw = Stopwatch.createStarted();
             Stream<?> stream = null;
-            stream = StateCombinatoricCallback.createKPermutationsOfN(as, bs);
+            stream = StateCombinatoricCallback.createKPermutationsOfN2(as, bs);
             //System.out.println("huh");
             //stream = createKPermutationsOfN(as, bs);
             //IntStream stream = IntStream.range(0, 181440000);
             //stream = IntStream.range(0, 181440).mapToObj(x -> "mystr" + x);
-            if(false) {
+            if(true) {
+                stream = stream.limit(1);
                 com.codepoetics.protonpack.StreamUtils.zipWithIndex(stream).forEach(y -> System.out.println(y.getIndex() + " - " + y.getValue()));
             } else {
                 long count = stream != null ? stream.count() : 0;
