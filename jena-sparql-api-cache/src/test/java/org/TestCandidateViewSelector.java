@@ -88,7 +88,7 @@ public class TestCandidateViewSelector {
             // Note: right now the lookup also matches pred-5 - should this behavior be changed, update the assertion
             Expr expr = ExprUtils.parse("?p = <http://foobar.org/pred-50>");
             Collection<Entry<QuadPrefixes, String>> rs = cvs.apply(expr);
-            //System.out.println("GOT: " + rs);
+            System.out.println("GOT: " + rs);
             Assert.assertEquals(rs.size(), 2);
         }
 
