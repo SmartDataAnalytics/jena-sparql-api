@@ -1,7 +1,7 @@
 package org;
 
+import java.util.AbstractMap.SimpleEntry;
 import java.util.Collection;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Function;
 
@@ -9,7 +9,7 @@ import org.apache.jena.sparql.algebra.Op;
 
 public class SparqlCacheSystem<D> {
 
-    protected IndexSystem<Op, Op, QueryIndex> indexSystem;
+    protected IndexSystem<Entry<Op, QueryIndex>, Op> indexSystem;
     protected Function<Op, QueryIndex> queryIndexer;    
     //protected Map<Op, D> opToCacheData;
     
@@ -17,7 +17,7 @@ public class SparqlCacheSystem<D> {
         QueryIndex queryIndex = queryIndexer.apply(cacheOp);
 
         // This is the op level indexing of cache
-        indexSystem.put(cacheOp, queryIndex);
+        indexSystem.add(new SimpleEntry<>(cacheOp, queryIndex));
         //opToCacheData.put(cacheOp, cacheData);
     }
 

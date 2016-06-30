@@ -22,7 +22,7 @@ import org.apache.jena.sparql.algebra.Op;
  * @param <F> (F)eature type
  */
 public class IndexSystemImpl<C, Q, D, F>
-    implements IndexSystem<C, Q, D>
+    implements IndexSystem<Entry<C, D>, Q>
 {
 
     /**
@@ -59,6 +59,12 @@ public class IndexSystemImpl<C, Q, D, F>
         this.queryFeatureExtractor = queryFeatureExtractor;
         this.featuresToItems = new FeatureMapImpl<F, Entry<C, D>>();
 //        this.featuresToItems = featuresToItems;
+    }
+    
+    @Override
+    public void add(Entry<C, D> item) {
+        //featuresToItems.put(featureSet, new SimpleEntry<>(item, data));
+        put(item.getKey(), item.getValue());
     }
 
     public void put(C item, D data) {

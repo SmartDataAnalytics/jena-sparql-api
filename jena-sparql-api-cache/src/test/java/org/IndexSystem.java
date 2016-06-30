@@ -1,9 +1,12 @@
 package org;
 
 import java.util.Collection;
-import java.util.Map.Entry;
 
 /**
+ * A datastructure which allows putting data of a type C into it,
+ * and enables querying candidates with type Q.
+ * 
+ * Abstracts e.g. feature based indexing and retrieval of items
  *
  * @author raven
  *
@@ -12,7 +15,7 @@ import java.util.Map.Entry;
  * @param <D> Type of the (D)ata associated with cache objects
  * @param <F> (F)eature type
  */
-public interface IndexSystem<C, Q, D> {
-    void put(C item, D data);
-    Collection<Entry<C, D>> lookup(Q query);
+public interface IndexSystem<C, Q> {
+    void add(C item);
+    Collection<C> lookup(Q query);
 }
