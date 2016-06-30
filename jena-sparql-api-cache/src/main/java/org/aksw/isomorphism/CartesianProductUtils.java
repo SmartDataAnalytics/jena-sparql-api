@@ -147,8 +147,6 @@ public class CartesianProductUtils<A, B, S> {
         for(A a : as) {
             Iterable<Combination<A, B, S>> foo = new CachingIterable<>(fn.apply(a));
 
-            System.out.println(foo);
-
             mappings.add(foo);
         }
 

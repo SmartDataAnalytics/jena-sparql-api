@@ -22,6 +22,7 @@ public class ExprMatcher {
      * @return
      */
     public static Expr match(Expr cache, Expr query) {
+        System.out.println("MATCHING " + cache + " WITH " + query);
         Expr result = NodeValue.FALSE;
 
         if(cache.equals(query)) {
