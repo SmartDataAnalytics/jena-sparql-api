@@ -43,4 +43,51 @@ public class TreeImpl<T>
         TreeImpl<T> result = new TreeImpl<>(root, parentToChildren, childToParent);
         return result;
     }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result
+                + ((childToParent == null) ? 0 : childToParent.hashCode());
+        result = prime * result
+                + ((parentToChild == null) ? 0 : parentToChild.hashCode());
+        result = prime * result + ((root == null) ? 0 : root.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        TreeImpl<?> other = (TreeImpl<?>) obj;
+        if (childToParent == null) {
+            if (other.childToParent != null)
+                return false;
+        } else if (!childToParent.equals(other.childToParent))
+            return false;
+        if (parentToChild == null) {
+            if (other.parentToChild != null)
+                return false;
+        } else if (!parentToChild.equals(other.parentToChild))
+            return false;
+        if (root == null) {
+            if (other.root != null)
+                return false;
+        } else if (!root.equals(other.root))
+            return false;
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        return "TreeImpl [root=" + root + ", parentToChild=" + parentToChild
+                + ", childToParent=" + childToParent + "]";
+    }
+    
+    
 }

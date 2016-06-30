@@ -27,7 +27,7 @@ import org.apache.jena.sparql.expr.Expr;
 
 import com.google.common.collect.Multimap;
 
-public class QueryIndexer
+public class QueryIndexerImpl
     implements Function<Op, QueryIndex>
 {
     public static Stream<Entry<Set<Expr>, QuadPatternIndex>> createQuadPatternIndex(Tree<Op> treeOp, Op qfpOp, QuadFilterPattern qfp) {
@@ -79,6 +79,7 @@ public class QueryIndexer
                     OpUtils::getSubOps,
                     SparqlCacheUtils::extractQuadFilterPattern,
                     (opNode, value) -> value == null) // descend while the value is null
+            .filter(e -> e.getValue() != null)
             .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
  
         FeatureMap<Expr, QuadPatternIndex> quadPatternIndex = new FeatureMapImpl<>();

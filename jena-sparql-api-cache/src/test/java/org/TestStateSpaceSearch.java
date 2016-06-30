@@ -12,14 +12,10 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
-import org.aksw.isomorphism.ProblemContainer;
-import org.aksw.isomorphism.ProblemContainerImpl;
 import org.aksw.isomorphism.ProblemContainerNeighbourhoodAware;
 import org.aksw.isomorphism.ProblemNeighborhoodAware;
-import org.aksw.isomorphism.StateProblemContainer;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMapImpl;
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.ProblemVarMappingExpr;
@@ -31,17 +27,13 @@ import org.aksw.jena_sparql_api.stmt.SparqlElementParser;
 import org.aksw.jena_sparql_api.stmt.SparqlElementParserImpl;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.MapUtils;
-import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
-import org.aksw.state_space_search.core.State;
-import org.aksw.state_space_search.core.StateSearchUtils;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
-import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.util.ExprUtils;
 
@@ -89,23 +81,34 @@ public class TestStateSpaceSearch {
 
         FeatureMap<String, String> tagsToCache = new FeatureMapImpl<>();
         Op cacheOp = Algebra.compile(cacheElement);
+        cacheOp = Algebra.toQuadForm(cacheOp);
 
         //IndexSystem<Op, Op, ?> indexSystem = IndexSystem.create();
 
-        Set<String> cacheFeatures = OpVisitorFeatureExtractor.getFeatures(cacheOp, (op) -> op.getClass().getSimpleName());
-
-        tagsToCache.put(cacheFeatures, "cache1");
+//        Set<String> cacheFeatures = OpVisitorFeatureExtractor.getFeatures(cacheOp, (op) -> op.getClass().getSimpleName());
+//
+//        tagsToCache.put(cacheFeatures, "cache1");
 
 
         Op queryOp = Algebra.compile(queryElement);
+        queryOp = Algebra.toQuadForm(cacheOp);
         Set<String> queryFeatures = OpVisitorFeatureExtractor.getFeatures(queryOp, (op) -> op.getClass().getSimpleName());
 
-        Collection<Entry<Set<String>, String>> cacheCandidates = tagsToCache.getIfSubsetOf(queryFeatures);
+//        Collection<Entry<Set<String>, String>> cacheCandidates = tagsToCache.getIfSubsetOf(queryFeatures);
+//
+//        cacheCandidates.forEach(x -> {
+//           System.out.println("cache candidate: " + x.getValue());
+//        });
 
-        cacheCandidates.forEach(x -> {
-           System.out.println("cache candidate: " + x.getValue());
-        });
-
+        SparqlCacheSystem cacheSystem = new SparqlCacheSystem();
+        cacheSystem.registerCache("test", cacheOp);
+        
+        cacheSystem.rewriteQuery(queryOp);
+        
+        if(true) {
+            System.out.println("weee");
+            System.exit(0);
+        }
 
         ProjectedQuadFilterPattern cachePqfp = SparqlCacheUtils.transform(cacheElement);
         System.out.println("ProjectedQuadFilterPattern[cache]: " + cachePqfp);
