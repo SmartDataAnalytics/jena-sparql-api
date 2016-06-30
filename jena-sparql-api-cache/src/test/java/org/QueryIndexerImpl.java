@@ -34,7 +34,7 @@ public class QueryIndexerImpl
         TreeNode<Op> opRef = new TreeNodeImpl<>(treeOp, qfpOp);
         
         Generator<Var> generator = VarGeneratorImpl2.create();
-        QuadFilterPatternCanonical qfpc = SparqlCacheUtils.replaceConstants(qfp.getQuads(), generator);
+        QuadFilterPatternCanonical qfpc = SparqlCacheUtils.canonicalize2(qfp, generator);
         
         Set<Set<Expr>> dnf = qfpc.getFilterDnf();
         

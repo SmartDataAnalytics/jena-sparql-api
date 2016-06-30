@@ -166,9 +166,12 @@ public class FeatureMapImpl<K, V>
         int totalCount = valueToTagSets.size();
 
         Stream<Set<K>> tagSetStream;
-        float scanThreshold = 0.3f;
-        float val = scanThreshold * totalCount;
-        if(indexCount > val) {
+//        float scanThreshold = 0.3f;
+//        float val = scanThreshold * totalCount;
+//        if(indexCount > val) {
+        boolean useScan = indexCount >= totalCount; 
+        if(useScan) {
+            // perform a scan
             tagSetStream = tagSetToValues.keySet().stream();
         } else {
             tagSetStream = prototype.stream()

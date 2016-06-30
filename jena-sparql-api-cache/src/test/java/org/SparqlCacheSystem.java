@@ -59,7 +59,8 @@ public class SparqlCacheSystem {
                 Set<Expr> queryFeatureSet = f.getKey();
                 Collection<QuadPatternIndex> queryQps = f.getValue();
 
-                Collection<Entry<Set<Expr>, QuadPatternIndex>> cacheQpiCandidates = cacheQpi.getIfSupersetOf(queryFeatureSet);
+                //Collection<Entry<Set<Expr>, QuadPatternIndex>> cacheQpiCandidates = cacheQpi.getIfSupersetOf(queryFeatureSet);
+                Collection<Entry<Set<Expr>, QuadPatternIndex>> cacheQpiCandidates = cacheQpi.getIfSubsetOf(queryFeatureSet);
 
                 for(QuadPatternIndex queryQp : queryQps) {                
                     for(Entry<Set<Expr>, QuadPatternIndex> g : cacheQpiCandidates) {
