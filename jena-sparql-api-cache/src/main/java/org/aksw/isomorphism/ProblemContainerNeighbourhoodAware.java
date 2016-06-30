@@ -1,10 +1,12 @@
 package org.aksw.isomorphism;
 
 import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
@@ -462,6 +464,26 @@ public class ProblemContainerNeighbourhoodAware<S, T>
         solve(tmp, baseSolution, getRelatedSources, solutionCombiner, isUnsatisfiable, solutionCallback);
     }
 
+    public static <S, T> Stream<S> solve(
+            Collection<ProblemNeighborhoodAware<S, T>> problems,
+            S baseSolution,
+            Function<? super S, ? extends Collection<T>> getRelatedSources,
+            BinaryOperator<S> solutionCombiner,
+            Predicate<S> isUnsatisfiable) {
+        List<S> tmp = new ArrayList<S>();
+        
+        solve(problems,
+                baseSolution,
+                getRelatedSources,
+                solutionCombiner,
+                isUnsatisfiable,
+                tmp::add);
+        
+        Stream<S> result = tmp.stream();
+        return result;        
+    }
+
+    
     public static <S, T> void solve(
             Collection<ProblemNeighborhoodAware<S, T>> problems,
             S baseSolution,
