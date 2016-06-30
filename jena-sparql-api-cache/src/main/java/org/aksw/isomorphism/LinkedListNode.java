@@ -1,7 +1,9 @@
 package org.aksw.isomorphism;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+
 
 /**
  * A linked list node used in the combinatoric stream
@@ -10,7 +12,33 @@ import java.util.List;
  *
  * @param <T>
  */
-public class LinkedListNode<T> {
+public class LinkedListNode<T>
+    implements Iterable<T>
+{
+    public static class LinkedListNodeIterator<T>
+        implements Iterator<T>
+    {
+        protected LinkedListNode<T> current;
+        
+        public LinkedListNodeIterator(LinkedListNode<T> current) {
+            super();
+            this.current = current;
+        }
+
+        @Override
+        public boolean hasNext() {
+            boolean result = current.isTail();
+            return result;
+        }
+    
+        @Override
+        public T next() {
+            T result = current.data;
+            current = current.successor;
+            return result;
+        }
+    }    
+        
     public T data;
     public LinkedListNode<T> predecessor;
     public LinkedListNode<T> successor;
@@ -86,5 +114,14 @@ public class LinkedListNode<T> {
         curr.append(tail);
 
         return head;
+    }
+
+    @Override
+    public Iterator<T> iterator() {
+        Iterator<T> result = isHead()
+                ? new LinkedListNodeIterator<>(this.successor)
+                : new LinkedListNodeIterator<>(this);
+
+        return result;
     }
 }
