@@ -1,43 +1,33 @@
 package org;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
-import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
-import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
-import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
-import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
-import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
-import org.aksw.jena_sparql_api.concept_cache.trash.OpVisitorViewCacheApplier;
-import org.aksw.jena_sparql_api.utils.Generator;
 import org.apache.jena.sparql.algebra.Op;
-import org.apache.jena.sparql.algebra.op.OpProject;
-import org.apache.jena.sparql.core.Var;
 
 public class SparqlCacheSystem<D> {
 
-    protected IndexSystem<Op, Op, D, String> indexSystem;
-
-    protected Function<Op, QueryIndex> queryIndexer;
+    protected IndexSystem<Op, Op, QueryIndex> indexSystem;
+    protected Function<Op, QueryIndex> queryIndexer;    
+    //protected Map<Op, D> opToCacheData;
     
-    public void registerCache(String name, Op cacheOp, D cacheData) {
-
+    public void registerCache(String name, Op cacheOp) { //, D cacheData) {
         QueryIndex queryIndex = queryIndexer.apply(cacheOp);
 
-        // Make the qfp canonical, extract their features, and index them
-
-
         // This is the op level indexing of cache
-        indexSystem.put(cacheOp, cacheData);
+        indexSystem.put(cacheOp, queryIndex);
+        //opToCacheData.put(cacheOp, cacheData);
     }
 
 
     public void rewriteQuery(Op queryOp) {
-        Set<Entry<Op, T>> candidates = indexSystem.lookup(queryOp);
+        QueryIndex queryIndex = queryIndexer.apply(queryOp);
+        
+        Collection<Entry<Op, QueryIndex>> candidates = indexSystem.lookup(queryOp);
 
+        
 
 
     }
