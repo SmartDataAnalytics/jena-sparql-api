@@ -26,7 +26,7 @@ public class FunctionBindingMapper<T>
 
     @Override
     public T apply(Binding binding) {
-        T result = bindingMapper.map(binding, offset);
+        T result = bindingMapper.apply(binding, offset);
         return result;
     }
     

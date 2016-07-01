@@ -22,7 +22,7 @@ public class BindingMapperProjectVar
     }
 
     @Override
-    public Node map(Binding binding, long rowNum) {
+    public Node apply(Binding binding, Long rowNum) {
         Node result = binding.get(var);
         return result;
     }

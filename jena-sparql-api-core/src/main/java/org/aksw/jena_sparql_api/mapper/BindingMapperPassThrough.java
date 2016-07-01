@@ -5,7 +5,7 @@ import org.apache.jena.sparql.engine.binding.Binding;
 public class BindingMapperPassThrough
     implements BindingMapper<Binding>
 {
-    public Binding map(Binding binding, long rowNum) {
+    public Binding apply(Binding binding, Long rowNum) {
         return binding;
     }
 }

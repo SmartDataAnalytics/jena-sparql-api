@@ -20,7 +20,7 @@ public class BindingMapperExpr
     }
 
     @Override
-    public Node map(Binding binding, long rowNum) {
+    public Node apply(Binding binding, Long rowNum) {
         NodeValue nv = ExprUtils.eval(expr, binding);
         Node result = nv.asNode();
         return result;

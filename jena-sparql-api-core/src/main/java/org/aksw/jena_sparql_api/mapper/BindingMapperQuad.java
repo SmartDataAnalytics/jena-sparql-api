@@ -14,7 +14,7 @@ public class BindingMapperQuad
     }
 
     @Override
-    public Quad map(Binding binding, long rowNum) {
+    public Quad apply(Binding binding, Long rowNum) {
         Quad result = QuadUtils.copySubstitute(quad, binding);
         return result;
     }
