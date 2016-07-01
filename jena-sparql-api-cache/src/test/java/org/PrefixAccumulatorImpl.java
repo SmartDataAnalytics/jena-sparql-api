@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
@@ -14,6 +15,7 @@ import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.mapper.Accumulator;
 import org.aksw.jena_sparql_api.mapper.AggMap2;
+import org.aksw.jena_sparql_api.mapper.AggObject;
 import org.aksw.jena_sparql_api.mapper.AggTransform2;
 import org.aksw.jena_sparql_api.mapper.Aggregator;
 import org.apache.commons.collections4.OrderedMapIterator;
@@ -275,6 +277,16 @@ public class PrefixAccumulatorImpl
             .wrapWithTransform(PrefixAccumulatorImpl::flatMapMapValues)
             .get();
 
+
+
+        // Next step: given a sparql result set,
+
+        // Accumulator that maps each binding
+
+        // Create an aggregator that accumulates every variable's prefix set.
+        //Aggregator<Binding, Map<Var, Set<String>>>
+
+
         Accumulator<String, Set<String>> x = agg.createAccumulator();
 
         //PrefixAggregator x = new PrefixAggregatorGrouping(3);
@@ -320,4 +332,13 @@ class AggregatorBuilder<B, T> {
 
         return new AggregatorBuilder<>(agg);
     }
+
+
+    // combine: BiFunction<I, I> -> T
+//    public static <B, T> AggregatorBuilder<B, T> from(Aggregator<B, ? extends T> a, Aggregator<B, ? extends T> b, BiFunction<? super T, ? super T, T> combiner) {
+//    	Aggregator<B, T> agg = () -> {
+//    		a.createAccumulator();
+//    		b.createAccumulator();
+//    	}
+//    }
 }
