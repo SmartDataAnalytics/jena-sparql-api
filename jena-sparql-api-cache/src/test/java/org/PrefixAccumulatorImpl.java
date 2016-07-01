@@ -1,17 +1,20 @@
 package org;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import org.aksw.jena_sparql_api.mapper.AccMap2;
-import org.aksw.jena_sparql_api.mapper.AccTransform2;
 import org.aksw.jena_sparql_api.mapper.Accumulator;
+import org.aksw.jena_sparql_api.mapper.AggMap2;
+import org.aksw.jena_sparql_api.mapper.AggTransform2;
 import org.aksw.jena_sparql_api.mapper.Aggregator;
 import org.apache.commons.collections4.OrderedMapIterator;
 import org.apache.commons.collections4.trie.PatriciaTrie;
@@ -87,14 +90,14 @@ interface PrefixAggregator
  * @author raven
  *
  */
-public class PrefixAggregatorImpl
+public class PrefixAccumulatorImpl
     implements Accumulator<String, Set<String>>
 {
     //public NavigableSet<String> prefixes = new TreeSet<>();
     protected PatriciaTrie<Void> prefixes = new PatriciaTrie<>();
     protected int targetSize;
 
-    public PrefixAggregatorImpl(int targetSize) {
+    public PrefixAccumulatorImpl(int targetSize) {
         this.targetSize = targetSize;
     }
 
@@ -115,6 +118,14 @@ public class PrefixAggregatorImpl
       return result;
   }
 
+  // TODO: Add to SetUtils (or map utils???)
+  public static <T> Set<T> flatMapMapValues(Map<?, ? extends Collection<T>> map) {
+      Set<T> result = map.values().stream()
+              .flatMap(v -> v.stream())
+              .collect(Collectors.toSet());
+
+     return result;
+  }
 
     /**
      * Returns the common prefix of the given strings
@@ -255,18 +266,16 @@ public class PrefixAggregatorImpl
         }
     }
 
+
     public static void main(String[] args) {
-        Aggregator<String, Set<String>> agg = () -> new PrefixAggregatorImpl(3);
 
-        Aggregator<String, Set<String>> x = () -> AccMap2.create((p, i) -> PrefixAggregatorImpl.defaultGrouper(p), agg);
+        Aggregator<String, Set<String>> agg = AggregatorBuilder
+            .from(() -> new PrefixAccumulatorImpl(3))
+            .wrapWithMap(PrefixAccumulatorImpl::defaultGrouper)
+            .wrapWithTransform(PrefixAccumulatorImpl::flatMapMapValues)
+            .get();
 
-        //Aggregator<String, Set<String>> x = AggTransform2.create(
-        Accumulator<String, Set<String>> x =
-            new AccTransform2<>(
-                new AccMap2<String, String, Map<String, Set<String>>, ?>((p, i) -> PrefixAggregatorImpl.defaultGrouper(p), agg),
-                (map) -> map.values().stream()
-                    .flatMap(v -> v.getPrefixes().stream())
-                    .collect(Collectors.toSet()));
+        Accumulator<String, Set<String>> x = agg.createAccumulator();
 
         //PrefixAggregator x = new PrefixAggregatorGrouping(3);
         x.accumulate("http://dbpedia.org/resource/Leipzig");
@@ -277,5 +286,38 @@ public class PrefixAggregatorImpl
         x.accumulate("http://linkedgeodata.org/foo");
 
         System.out.println(x.getValue());
+    }
+}
+
+
+class AggregatorBuilder<B, T> {
+
+    protected Aggregator<B, T> state;
+
+    public AggregatorBuilder(Aggregator<B, T> state) {
+        super();
+        this.state = state;
+    }
+
+    public Aggregator<B, T> get() {
+        return state;
+    }
+
+    public <K> AggregatorBuilder<B, Map<K, T>> wrapWithMap(Function<B, K> bindingToKey) {
+        Aggregator<B, Map<K, T>> agg = AggMap2.create(bindingToKey, state);
+
+        return new AggregatorBuilder<>(agg);
+    }
+
+    public <O> AggregatorBuilder<B, O> wrapWithTransform(Function<? super T, O> transform) {
+        Aggregator<B, O> agg = AggTransform2.create(state, transform);
+
+        return new AggregatorBuilder<>(agg);
+    }
+
+    public static <B, T> AggregatorBuilder<B, T> from(Supplier<Accumulator<B, T>> accSupplier) {
+        Aggregator<B, T> agg = () -> accSupplier.get();
+
+        return new AggregatorBuilder<>(agg);
     }
 }

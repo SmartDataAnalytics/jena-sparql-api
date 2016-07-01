@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.mapper;
 
 import java.util.Map;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 public class AggMap2<B, K, V, C extends Aggregator<B, V>>
     implements Aggregator<B, Map<K,V>>
@@ -20,9 +21,14 @@ public class AggMap2<B, K, V, C extends Aggregator<B, V>>
         return result;
     }
 
+    public static <B, K, V, C extends Aggregator<B, V>> AggMap2<B, K, V, C> create(Function<B, K> mapper, C subAgg) {
+        BiFunction<B, Long, K> fn = (binding, rowNum) -> mapper.apply(binding);
+        AggMap2<B, K, V, C> result = create(fn, subAgg);
+        return result;
+    }
+
     public static <B, K, V, C extends Aggregator<B, V>> AggMap2<B, K, V, C> create(BiFunction<B, Long, K> mapper, C subAgg) {
         AggMap2<B, K, V, C> result = new AggMap2<B, K, V, C>(mapper, subAgg);
         return result;
     }
-
 }

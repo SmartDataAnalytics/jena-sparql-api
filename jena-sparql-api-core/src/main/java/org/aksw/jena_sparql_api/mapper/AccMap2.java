@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 
 public class AccMap2<B, K, V, C extends Aggregator<B, V>>
@@ -13,6 +14,10 @@ public class AccMap2<B, K, V, C extends Aggregator<B, V>>
     protected C subAgg;
 
     protected Map<K, Accumulator<B, V>> state = new HashMap<>();
+
+    public AccMap2(Function<B, K> mapper, C subAgg) {
+        this((binding, rowNum) -> mapper.apply(binding), subAgg);
+    }
 
     public AccMap2(BiFunction<B, Long, K> mapper, C subAgg) {
         this.mapper = mapper;
@@ -45,8 +50,14 @@ public class AccMap2<B, K, V, C extends Aggregator<B, V>>
         return result;
     }
 
+    public static <B, K, V, C extends Aggregator<B, V>> AccMap2<B, K, V, C> create(Function<B, K> mapper, C subAgg) {
+        BiFunction<B, Long, K> fn = (binding, rowNum) -> mapper.apply(binding);
+        AccMap2<B, K, V, C> result = new AccMap2<>(fn, subAgg);
+        return result;
+    }
+
     public static <B, K, V, C extends Aggregator<B, V>> AccMap2<B, K, V, C> create(BiFunction<B, Long, K> mapper, C subAgg) {
-        AccMap2<B, K, V, C> result = new AccMap2<B, K, V, C>(mapper, subAgg);
+        AccMap2<B, K, V, C> result = new AccMap2<>(mapper, subAgg);
         return result;
     }
 
