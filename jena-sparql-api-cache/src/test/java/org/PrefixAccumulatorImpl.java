@@ -9,7 +9,6 @@ import java.util.SortedMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -279,22 +278,45 @@ public class PrefixAccumulatorImpl
 
 
 
-    public Map<Var, Set<String>> analyzePrefixes(ResultSet rs) {
+    public Map<Var, Set<String>> analyzePrefixes(ResultSet rs, int targetSize) {
+        List<Var> vars = ResultSetUtils.getVars(rs);
+        Aggregator<Binding, Map<Var, Set<String>>> agg = createAggregatorResultSetPrefixesPerVar(vars, targetSize);
+        Map<Var, Set<String>> result = aggregate(rs, agg);
 
-        Accumulator<Binding, Map<Var, Set<String>>> acc;
-
-        while(rs.hasNext()) {
-            Binding b = rs.nextBinding();
-            acc.accumulate(b);
-        }
-
-        Map<Var, Set<String>> result = acc.getValue();
         return result;
     }
 
-    public static <V> Aggregator<Binding, Map<Var, V>> analyzeNodesPerVar(ResultSet rs, Aggregator<Node, V> subAgg) {
+    // TODO Move to resultset utils
+    public static <V> V aggregate(ResultSet rs, Aggregator<? super Binding, V> agg) {
+        Accumulator<? super Binding, V> acc = agg.createAccumulator();
+        V result = aggregate(rs, acc);
+        return result;
+    }
 
-        List<Var> vars = ResultSetUtils.getVars(rs);
+    public static <V> V aggregate(ResultSet rs, Accumulator<? super Binding, V> acc) {
+        while(rs.hasNext()) {
+            Binding binding = rs.nextBinding();
+            acc.accumulate(binding);
+        }
+
+        V result = acc.getValue();
+        return result;
+    }
+
+
+    public static Aggregator<Binding, Map<Var, Set<String>>> createAggregatorResultSetPrefixesPerVar(List<Var> vars, int targetSize) {
+        Aggregator<Binding, Map<Var, Set<String>>> result =
+            createAggregatorNodesPerVar(
+                vars,
+                createAggregatorNodeToUris(
+                    createAggregatorStringPrefixes(targetSize)));
+
+        return result;
+    }
+
+    public static <V> Aggregator<Binding, Map<Var, V>> createAggregatorNodesPerVar(List<Var> vars, Aggregator<Node, V> subAgg) {
+
+        //List<Var> vars = ResultSetUtils.getVars(rs);
         Map<Var, Accumulator<Node, V>> accMap = vars.stream()
                 .collect(Collectors.toMap(v -> v, v -> subAgg.createAccumulator()));
 
@@ -303,13 +325,30 @@ public class PrefixAccumulatorImpl
         return result;
     }
 
+    public static <V> Aggregator<Node, V> createAggregatorNodeToUris(Aggregator<String, V> subAgg) {
+        //Aggregator<String, Set<String>> subAgg = createAggregatorStringPrefixes();
+
+        Aggregator<Node, V> result = AggregatorBuilder
+                .from(subAgg)
+                .wrapWithBindingTransform((Function<Node, String>)(node) -> node.getURI())
+                .wrapWithCondition((node) -> node.isURI())
+                .get();
+
+        return result;
+    }
+
+    public static Aggregator<String, Set<String>> createAggregatorStringPrefixes(int targetSize) {
+        Aggregator<String, Set<String>> result = AggregatorBuilder
+                .from(() -> new PrefixAccumulatorImpl(targetSize))
+                .wrapWithMap(PrefixAccumulatorImpl::defaultGrouper)
+                .wrapWithTransform(PrefixAccumulatorImpl::flatMapMapValues)
+                .get();
+
+        return result;
+    }
+
     public static void main(String[] args) {
 
-        Aggregator<String, Set<String>> agg = AggregatorBuilder
-            .from(() -> new PrefixAccumulatorImpl(3))
-            .wrapWithMap(PrefixAccumulatorImpl::defaultGrouper)
-            .wrapWithTransform(PrefixAccumulatorImpl::flatMapMapValues)
-            .get();
 
 
 
@@ -321,7 +360,7 @@ public class PrefixAccumulatorImpl
         //Aggregator<Binding, Map<Var, Set<String>>>
 
 
-        Accumulator<String, Set<String>> x = agg.createAccumulator();
+        Accumulator<String, Set<String>> x = createAggregatorStringPrefixes(3).createAccumulator();
 
         //PrefixAggregator x = new PrefixAggregatorGrouping(3);
         x.accumulate("http://dbpedia.org/resource/Leipzig");
@@ -376,12 +415,15 @@ class AggregatorBuilder<B, T> {
         return new AggregatorBuilder<>(agg);
     }
 
-    public static <B, T> AggregatorBuilder<B, T> from(Supplier<Accumulator<B, T>> accSupplier) {
-        Aggregator<B, T> agg = () -> accSupplier.get();
+//    public static <B, T> AggregatorBuilder<B, T> from(Supplier<Accumulator<B, T>> accSupplier) {
+//        Aggregator<B, T> agg = () -> accSupplier.get();
+//
+//        return new AggregatorBuilder<>(agg);
+//    }
 
+    public static <B, T> AggregatorBuilder<B, T> from(Aggregator<B, T> agg) {
         return new AggregatorBuilder<>(agg);
     }
-
 
     // combine: BiFunction<I, I> -> T
 //    public static <B, T> AggregatorBuilder<B, T> from(Aggregator<B, ? extends T> a, Aggregator<B, ? extends T> b, BiFunction<? super T, ? super T, T> combiner) {
