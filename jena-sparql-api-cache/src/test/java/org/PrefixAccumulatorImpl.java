@@ -13,6 +13,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.mapper.AccBindingTransform;
 import org.aksw.jena_sparql_api.mapper.AccCondition;
 import org.aksw.jena_sparql_api.mapper.AccStaticMultiplex;
@@ -278,7 +280,7 @@ public class PrefixAccumulatorImpl
 
 
 
-    public Map<Var, Set<String>> analyzePrefixes(ResultSet rs, int targetSize) {
+    public static Map<Var, Set<String>> analyzePrefixes(ResultSet rs, int targetSize) {
         List<Var> vars = ResultSetUtils.getVars(rs);
         Aggregator<Binding, Map<Var, Set<String>>> agg = createAggregatorResultSetPrefixesPerVar(vars, targetSize);
         Map<Var, Set<String>> result = aggregate(rs, agg);
@@ -349,7 +351,12 @@ public class PrefixAccumulatorImpl
 
     public static void main(String[] args) {
 
+        QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://dbpedia.org/sparql", "http://dbpedia.org").create();
 
+        ResultSet rs = qef.createQueryExecution("Select * { ?s a <http://dbpedia.org/ontology/Airport> } Limit 100").execSelect();
+
+        Map<Var, Set<String>> ps = analyzePrefixes(rs, 3);
+        System.out.println("Prefixes: " + ps);
 
 
         // Next step: given a sparql result set,
