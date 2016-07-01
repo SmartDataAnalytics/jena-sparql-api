@@ -1,12 +1,82 @@
 package org;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.OrderedMapIterator;
 import org.apache.commons.collections4.trie.PatriciaTrie;
+
+// TODO Maybe we can use the aggregator / accumulator infrastructure
+// These classes are actually the accumulators
+interface PrefixAggregator
+{
+    Set<String> getPrefixes();
+    void add(String prefix);
+}
+
+class PrefixAggregatorGrouping
+    implements PrefixAggregator
+{
+    protected Function<String, String> prefixToGroup;
+    protected BiFunction<String, String, PrefixAggregator> aggregatorFactory;
+    protected Map<String, PrefixAggregator> groupToAggregator;
+
+
+    // pattern for matching up to the third slash
+    public static final Pattern pattern = Pattern.compile("(^([^/]*/){3})");
+    public static String defaultGrouper(String prefix) {
+        Matcher m = pattern.matcher(prefix);
+
+        String result = m.find() ? m.group(1) : null;
+
+        System.out.println("group " + result + " for " + prefix);
+        return result;
+    }
+
+    public PrefixAggregatorGrouping(int targetSize) {
+        this(
+            PrefixAggregatorGrouping::defaultGrouper,
+            (prefix, group) -> new PrefixAggregatorImpl(targetSize)
+        );
+    }
+
+
+    public PrefixAggregatorGrouping(Function<String, String> prefixToGroup,
+            BiFunction<String, String, PrefixAggregator> aggregatorFactory) {
+        super();
+        this.prefixToGroup = prefixToGroup;
+        this.aggregatorFactory = aggregatorFactory;
+        this.groupToAggregator = new HashMap<>();
+    }
+
+    @Override
+    public Set<String> getPrefixes() {
+        Set<String> result = groupToAggregator.values().stream()
+        .flatMap(v -> v.getPrefixes().stream())
+        .collect(Collectors.toSet());
+
+        return result;
+    }
+
+    @Override
+    public void add(String prefix) {
+        String group = prefixToGroup.apply(prefix);
+
+        PrefixAggregator agg = groupToAggregator
+            .computeIfAbsent(group, (g) -> aggregatorFactory.apply(prefix, g));
+
+        agg.add(prefix);
+    }
+}
 
 /**
  * Class for aggregating a set of prefixes with a specified target size from a set of strings
@@ -14,12 +84,14 @@ import org.apache.commons.collections4.trie.PatriciaTrie;
  * @author raven
  *
  */
-public class PrefixAggregator {
+public class PrefixAggregatorImpl
+    implements PrefixAggregator
+{
     //public NavigableSet<String> prefixes = new TreeSet<>();
     protected PatriciaTrie<Void> prefixes = new PatriciaTrie<>();
     protected int targetSize;
 
-    public PrefixAggregator(int targetSize) {
+    public PrefixAggregatorImpl(int targetSize) {
         this.targetSize = targetSize;
     }
 
@@ -169,12 +241,14 @@ public class PrefixAggregator {
     }
 
     public static void main(String[] args) {
-        PrefixAggregator x = new PrefixAggregator(2);
+//        PrefixAggregatorImpl x = new PrefixAggregatorImpl(2);
+        PrefixAggregator x = new PrefixAggregatorGrouping(3);
         x.add("http://dbpedia.org/resource/Leipzig");
 //        x.add("http://dbpedia.org/resource/");
         x.add("http://dbpedia.org/resource/London");
         x.add("http://dbpedia.org/ontology/City");
-        x.add("http://dbpedia.org/resource/Litauen");
+//        x.add("http://dbpedia.org/resource/Litauen");
+        x.add("http://linkedgeodata.org/foo");
 
         System.out.println(x.getPrefixes());
     }
