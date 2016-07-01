@@ -8,18 +8,26 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.aksw.jena_sparql_api.mapper.AccBindingTransform;
+import org.aksw.jena_sparql_api.mapper.AccCondition;
+import org.aksw.jena_sparql_api.mapper.AccStaticMultiplex;
 import org.aksw.jena_sparql_api.mapper.Accumulator;
 import org.aksw.jena_sparql_api.mapper.AggMap2;
-import org.aksw.jena_sparql_api.mapper.AggObject;
 import org.aksw.jena_sparql_api.mapper.AggTransform2;
 import org.aksw.jena_sparql_api.mapper.Aggregator;
+import org.aksw.jena_sparql_api.utils.ResultSetUtils;
 import org.apache.commons.collections4.OrderedMapIterator;
 import org.apache.commons.collections4.trie.PatriciaTrie;
+import org.apache.jena.graph.Node;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.engine.binding.Binding;
 
 // TODO Maybe we can use the aggregator / accumulator infrastructure
 // These classes are actually the accumulators
@@ -269,6 +277,32 @@ public class PrefixAccumulatorImpl
     }
 
 
+
+
+    public Map<Var, Set<String>> analyzePrefixes(ResultSet rs) {
+
+        Accumulator<Binding, Map<Var, Set<String>>> acc;
+
+        while(rs.hasNext()) {
+            Binding b = rs.nextBinding();
+            acc.accumulate(b);
+        }
+
+        Map<Var, Set<String>> result = acc.getValue();
+        return result;
+    }
+
+    public static <V> Aggregator<Binding, Map<Var, V>> analyzeNodesPerVar(ResultSet rs, Aggregator<Node, V> subAgg) {
+
+        List<Var> vars = ResultSetUtils.getVars(rs);
+        Map<Var, Accumulator<Node, V>> accMap = vars.stream()
+                .collect(Collectors.toMap(v -> v, v -> subAgg.createAccumulator()));
+
+        BiFunction<Binding, Var, Node> fn = (binding, var) -> binding.get(var);
+        Aggregator<Binding, Map<Var, V>> result = () -> AccStaticMultiplex.create(fn, accMap);
+        return result;
+    }
+
     public static void main(String[] args) {
 
         Aggregator<String, Set<String>> agg = AggregatorBuilder
@@ -323,6 +357,21 @@ class AggregatorBuilder<B, T> {
 
     public <O> AggregatorBuilder<B, O> wrapWithTransform(Function<? super T, O> transform) {
         Aggregator<B, O> agg = AggTransform2.create(state, transform);
+
+        return new AggregatorBuilder<>(agg);
+    }
+
+    public AggregatorBuilder<B, T> wrapWithCondition(Predicate<B> predicate) {
+        // TODO Is this correct??? i.e. calling createAccumulator here
+        Aggregator<B, T> local = state;
+        Aggregator<B, T> agg = () -> AccCondition.create(predicate, local.createAccumulator());
+
+        return new AggregatorBuilder<>(agg);
+    }
+
+    public <U> AggregatorBuilder<U, T> wrapWithBindingTransform(Function<? super U, B> transform) {
+        Aggregator<B, T> local = state;
+        Aggregator<U, T> agg = () -> AccBindingTransform.create(transform, local.createAccumulator());
 
         return new AggregatorBuilder<>(agg);
     }

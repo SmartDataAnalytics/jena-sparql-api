@@ -25,19 +25,19 @@ public class AccStaticMultiplex<B, K, U, V>
     /**
      * Obtain the childBinding based on the current binding and the current key of the map
      */
-    protected BiFunction<? super B, ? super K, U> childBinding;
-    protected Map<K, Accumulator<? super U, ? extends V>> keyToSubAcc;
+    protected BiFunction<B, K, ? extends U> childBinding;
+    protected Map<K, Accumulator<U, V>> keyToSubAcc;
 
-    public AccStaticMultiplex(BiFunction<? super B, ? super K, U> childBinding, Map<K, Accumulator<? super U, ? extends V>> keyToSubAcc) {
+    public AccStaticMultiplex(BiFunction<B, K, ? extends U> childBinding, Map<K, Accumulator<U, V>> keyToSubAcc) {
         this.childBinding = childBinding;
         this.keyToSubAcc = keyToSubAcc;
     }
 
     @Override
     public void accumulate(B binding) {
-        for(Entry<K, Accumulator<? super U, ? extends V>> e : keyToSubAcc.entrySet()) {
+        for(Entry<K, Accumulator<U, V>> e : keyToSubAcc.entrySet()) {
             K k = e.getKey();
-            Accumulator<? super U, ? extends V> subAcc = e.getValue();
+            Accumulator<? super U, V> subAcc = e.getValue();
 
             U u = childBinding.apply(binding, k);
 
@@ -48,9 +48,9 @@ public class AccStaticMultiplex<B, K, U, V>
     @Override
     public Map<K, V> getValue() {
         Map<K, V> result = new HashMap<>(keyToSubAcc.size());
-        for(Entry<K, Accumulator<? super U, ? extends V>> e : keyToSubAcc.entrySet()) {
+        for(Entry<K, Accumulator<U, V>> e : keyToSubAcc.entrySet()) {
             K k = e.getKey();
-            Accumulator<? super U, ? extends V> subAcc = e.getValue();
+            Accumulator<U, V> subAcc = e.getValue();
             V v = subAcc.getValue();
 
             result.put(k, v);
@@ -59,7 +59,7 @@ public class AccStaticMultiplex<B, K, U, V>
         return result;
     }
 
-    public static <B, K, U, V> Accumulator<B, Map<K, V>> create(BiFunction<? super B, ? super K, U> childBinding, Map<K, Accumulator<? super U, ? extends V>> keyToSubAcc) {
+    public static <B, K, U, V> Accumulator<B, Map<K, V>> create(BiFunction<B, K, ? extends U> childBinding, Map<K, Accumulator<U, V>> keyToSubAcc) {
         AccStaticMultiplex<B, K, U, V> result = new AccStaticMultiplex<>(childBinding, keyToSubAcc);
         return result;
     }

@@ -32,6 +32,11 @@ import org.apache.jena.util.iterator.WrappedIterator;
 
 public class ResultSetUtils {
 
+    public static List<Var> getVars(ResultSet rs) {
+        List<Var> result = VarUtils.toList(rs.getResultVars());
+        return result;
+    }
+
     public static Integer resultSetToInt(ResultSet rs, Var v) {
         Integer result = null;
 
