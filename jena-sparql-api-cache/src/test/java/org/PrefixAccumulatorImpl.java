@@ -281,9 +281,17 @@ public class PrefixAccumulatorImpl
 
 
     public static Map<Var, Set<String>> analyzePrefixes(ResultSet rs, int targetSize) {
+        Aggregator<String, Set<String>> subAgg = createAggregatorStringPrefixes(targetSize);
+
+        Map<Var, Set<String>> result = analyzeResultSetUrisPerVar(rs, subAgg);
+
+        return result;
+    }
+
+    public static <V> Map<Var, V> analyzeResultSetUrisPerVar(ResultSet rs, Aggregator<String, V> subAgg) {
         List<Var> vars = ResultSetUtils.getVars(rs);
-        Aggregator<Binding, Map<Var, Set<String>>> agg = createAggregatorResultSetPrefixesPerVar(vars, targetSize);
-        Map<Var, Set<String>> result = aggregate(rs, agg);
+        Aggregator<Binding, Map<Var, V>> agg = createAggregatorResultSetUrisPerVar(vars, subAgg);
+        Map<Var, V> result = aggregate(rs, agg);
 
         return result;
     }
@@ -306,12 +314,21 @@ public class PrefixAccumulatorImpl
     }
 
 
-    public static Aggregator<Binding, Map<Var, Set<String>>> createAggregatorResultSetPrefixesPerVar(List<Var> vars, int targetSize) {
-        Aggregator<Binding, Map<Var, Set<String>>> result =
+//    public static Aggregator<Binding, Map<Var, Set<String>>> createAggregatorResultSetPrefixesPerVar(List<Var> vars, int targetSize) {
+//        Aggregator<Binding, Map<Var, Set<String>>> result =
+//            createAggregatorNodesPerVar(
+//                vars,
+//                createAggregatorNodeToUris(
+//                    createAggregatorStringPrefixes(targetSize)));
+//
+//        return result;
+//    }
+
+    public static <V> Aggregator<Binding, Map<Var, V>> createAggregatorResultSetUrisPerVar(List<Var> vars, Aggregator<String, V> subAgg) {
+        Aggregator<Binding, Map<Var, V>> result =
             createAggregatorNodesPerVar(
                 vars,
-                createAggregatorNodeToUris(
-                    createAggregatorStringPrefixes(targetSize)));
+                createAggregatorNodeToUris(subAgg));
 
         return result;
     }
@@ -355,7 +372,7 @@ public class PrefixAccumulatorImpl
 
         ResultSet rs = qef.createQueryExecution("Select * { ?s a <http://dbpedia.org/ontology/Airport> } Limit 100").execSelect();
 
-        Map<Var, Set<String>> ps = analyzePrefixes(rs, 3);
+        Map<Var, Set<String>> ps = analyzePrefixes(rs, 50);
         System.out.println("Prefixes: " + ps);
 
 
