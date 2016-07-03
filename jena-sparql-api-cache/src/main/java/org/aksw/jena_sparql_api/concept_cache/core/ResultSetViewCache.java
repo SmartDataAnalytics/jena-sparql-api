@@ -59,9 +59,8 @@ public class ResultSetViewCache {
 
     public static Entry<ResultSet, Boolean> cacheResultSetParallel(ResultSet physicalRs, Set<Var> indexVars)
     {
-        ArrayBlockingQueue<Binding> deque = new ArrayBlockingQueue<>(100);
-deque.
-
+        //ArrayBlockingQueue<Binding> deque = new ArrayBlockingQueue<>(100);
+        return null;
     }
 
     /**

@@ -7,24 +7,28 @@ import com.google.common.collect.AbstractIterator;
 public class BlockingCacheIterator<T>
     extends AbstractIterator<T>
 {
-    protected Cache<T> cache;
+    protected Cache<? extends List<? extends T>> cache;
     protected int offset;
 
     @Override
     public T computeNext() {
-        List<T> data = cache.getData();
+        List<? extends T> data = cache.getData();
 
         T result;
         for(;;) {
             if(offset < data.size()) {
                 result = data.get(offset);
                 ++offset;
+                break;
             } else if(cache.isComplete()) {
                 result = endOfData();
+                break;
                 //throw new IndexOutOfBoundsException();
             } else {
-                // Wait for data to become available
-                cache.wait();
+                try {
+                    cache.wait();
+                } catch (InterruptedException e) {
+                }
             }
         }
 

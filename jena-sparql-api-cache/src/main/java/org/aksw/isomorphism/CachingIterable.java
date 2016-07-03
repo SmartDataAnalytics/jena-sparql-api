@@ -1,5 +1,6 @@
 package org.aksw.isomorphism;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -17,6 +18,12 @@ public class CachingIterable<T>
 {
     protected Iterator<T> delegate;
     protected Cache<? extends List<T>> cache; // = new Cache<T, C>();
+
+    public CachingIterable(Iterator<T> delegate) {
+        super();
+        this.delegate = delegate;
+        this.cache = new Cache<>(new ArrayList<>());
+    }
 
     public CachingIterable(Iterator<T> delegate, Cache<? extends List<T>> cache) {
         super();
