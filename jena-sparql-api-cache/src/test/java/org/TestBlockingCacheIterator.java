@@ -22,7 +22,13 @@ public class TestBlockingCacheIterator {
         BlockingCacheIterator<String> it = new BlockingCacheIterator<>(cache);
 
         new Thread(() -> {
+            int i = 0;
             for(String item : driver) {
+                ++i;
+//                if(i == 100) {
+//                    cache.setAbanoned(true);
+//                    break;
+//                }
                 System.out.println("Driver: " + item);
             }
         }).start();

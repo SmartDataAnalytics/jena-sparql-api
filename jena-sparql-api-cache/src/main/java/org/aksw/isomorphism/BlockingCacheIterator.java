@@ -4,6 +4,13 @@ import java.util.List;
 
 import com.google.common.collect.AbstractIterator;
 
+/**
+ * An iterator that reads data from a cache, and waits for more data to become available
+ *
+ * @author raven
+ *
+ * @param <T>
+ */
 public class BlockingCacheIterator<T>
     extends AbstractIterator<T>
 {
@@ -34,6 +41,8 @@ public class BlockingCacheIterator<T>
                 result = endOfData();
                 break;
                 //throw new IndexOutOfBoundsException();
+            } else if(cache.isAbanoned()) {
+                throw new RuntimeException("Cache was abandoned");
             } else {
                 try {
                     synchronized(cache) {
