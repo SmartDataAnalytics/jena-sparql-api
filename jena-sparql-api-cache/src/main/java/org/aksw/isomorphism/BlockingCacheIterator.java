@@ -10,6 +10,16 @@ public class BlockingCacheIterator<T>
     protected Cache<? extends List<? extends T>> cache;
     protected int offset;
 
+    public BlockingCacheIterator(Cache<? extends List<? extends T>> cache) {
+        this(cache, 0);
+    }
+
+    public BlockingCacheIterator(Cache<? extends List<? extends T>> cache, int offset) {
+        super();
+        this.cache = cache;
+        this.offset = offset;
+    }
+
     @Override
     public T computeNext() {
         List<? extends T> data = cache.getData();
@@ -26,7 +36,9 @@ public class BlockingCacheIterator<T>
                 //throw new IndexOutOfBoundsException();
             } else {
                 try {
-                    cache.wait();
+                    synchronized(cache) {
+                        cache.wait();
+                    }
                 } catch (InterruptedException e) {
                 }
             }
@@ -34,5 +46,4 @@ public class BlockingCacheIterator<T>
 
         return result;
     }
-
 }

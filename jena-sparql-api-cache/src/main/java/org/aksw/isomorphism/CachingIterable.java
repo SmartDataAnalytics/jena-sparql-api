@@ -93,7 +93,9 @@ public class CachingIterable<T>
 
                 // Inform all possibly waiting client on the cache
                 // that data has been added so that they can commence
-                cache.notifyAll();
+                synchronized(cache) {
+                    cache.notifyAll();
+                }
             }
 
             ++offset;
