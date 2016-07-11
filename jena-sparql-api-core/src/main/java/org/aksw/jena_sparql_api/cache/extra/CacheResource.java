@@ -17,6 +17,10 @@ public interface CacheResource
 {
     boolean isOutdated();
 
+    // isCachingInProgress()
+    // void abort();
+    // isModel() isResultSet() isBoolean()
+
     //InputStream open();
 
     Model asModel(Model result);
