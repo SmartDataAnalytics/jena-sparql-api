@@ -11,6 +11,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.aksw.isomorphism.ProblemContainerNeighbourhoodAware;
@@ -19,12 +20,16 @@ import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.ProblemVarMappingExpr;
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.ProblemVarMappingQuad;
 import org.aksw.jena_sparql_api.concept_cache.dirty.Tree;
+import org.aksw.jena_sparql_api.concept_cache.dirty.TreeImpl;
+import org.aksw.jena_sparql_api.concept_cache.op.TreeUtils;
 import org.aksw.jena_sparql_api.utils.MapUtils;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
 
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimap;
 
 public class SparqlCacheSystem {
@@ -153,6 +158,41 @@ public class SparqlCacheSystem {
             }
             current = parent;
         }
+        return result;
+    }
+    
+        
+    public static <T> Tree<T> removeUnaryNodes(Tree<T> tree) {
+
+        Predicate<T> isMultiary = (node) -> tree.getChildren(node).size() > 1;
+        
+        //Map<T, T> childToParent = new HashMap<>();
+        ListMultimap<T, T> parentToChildren = ArrayListMultimap.create();
+        
+        // for every leaf get the first non-unary parent
+        List<T> children = TreeUtils.getLeafs(tree);
+        List<T> parents = Collections.emptyList();
+        while(!children.isEmpty()) {
+            parents = new ArrayList<>();
+            for(T child : children) {
+                T parent = TreeUtils.findAncestor(tree, child, isMultiary);
+                if(parent != null) {
+                    parents.add(parent);
+                    parentToChildren.put(parent, child);
+                }
+            }
+        
+            children = parents;
+        }
+        
+        // There can be at most 1 root
+        T root = parents.isEmpty() ? null : parents.iterator().next(); 
+
+        
+        Tree<T> result = root == null
+                ? null
+                : TreeImpl.create(root, (node) -> parentToChildren.get(node));
+                
         return result;
     }
 

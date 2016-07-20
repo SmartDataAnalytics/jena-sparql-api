@@ -11,9 +11,9 @@ public class TreeImpl<T>
 {
     protected T root;
     protected Function<T, List<T>> parentToChild;
-    protected Map<T, T> childToParent;
+    protected Function<T, T> childToParent;
 
-    public TreeImpl(T root, Function<T, List<T>> parentToChildren, Map<T, T> childToParent) {
+    public TreeImpl(T root, Function<T, List<T>> parentToChildren, Function<T, T> childToParent) {
         super();
         this.root = root;
         this.parentToChild = parentToChildren;
@@ -33,14 +33,14 @@ public class TreeImpl<T>
 
     @Override
     public T getParent(T node) {
-        T result = childToParent.get(node);
+        T result = childToParent.apply(node);
         return result;
     }
 
     public static <T> TreeImpl<T> create(T root, Function<T, List<T>> parentToChildren) {
         Map<T, T> childToParent = TreeUtils.parentMap(root, parentToChildren);
 
-        TreeImpl<T> result = new TreeImpl<>(root, parentToChildren, childToParent);
+        TreeImpl<T> result = new TreeImpl<>(root, parentToChildren, (node) -> childToParent.get(node));
         return result;
     }
 
@@ -88,6 +88,4 @@ public class TreeImpl<T>
         return "TreeImpl [root=" + root + ", parentToChild=" + parentToChild
                 + ", childToParent=" + childToParent + "]";
     }
-    
-    
 }

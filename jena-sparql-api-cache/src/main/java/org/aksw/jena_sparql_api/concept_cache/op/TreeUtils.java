@@ -12,10 +12,29 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import org.Predicate;
 import org.aksw.jena_sparql_api.concept_cache.dirty.Tree;
 
 public class TreeUtils {
 
+    /**
+     * Find the first ancestor for which the predicate evaluates to true
+     * @param tree
+     * @param node
+     * @param predicate
+     * 
+     * @return
+     */
+    public static <T> T findAncestor(Tree<T> tree, T node, java.util.function.Predicate<T> predicate) {
+        T current = node;
+        do {
+            current = tree.getParent(current);
+        } while(!predicate.test(current));
+
+        return current;
+    }
+
+    
     /**
      * In-order-search starting from the given node and descending into the tree.
      * Each node may be mapped to a value.
