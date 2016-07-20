@@ -24,14 +24,18 @@ import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMapImpl;
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.ProblemVarMappingExpr;
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.ProblemVarMappingQuad;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
+import org.aksw.jena_sparql_api.concept_cache.dirty.Tree;
+import org.aksw.jena_sparql_api.concept_cache.dirty.TreeImpl;
 import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
+import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 import org.aksw.jena_sparql_api.stmt.SparqlElementParser;
 import org.aksw.jena_sparql_api.stmt.SparqlElementParserImpl;
 import org.aksw.jena_sparql_api.utils.DnfUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.MapUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
+import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
@@ -53,7 +57,23 @@ interface ExprQuadPattern {
 
 
 public class TestStateSpaceSearch {
-    public static void main(String[] args) throws FileNotFoundException {
+    
+    public static void main(String[] args) {
+        Op op = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { ?s ?p ?o } UNION { ?x ?y ?z } } LIMIT 10")));
+        
+        Tree<Op> tree = TreeImpl.create(op, (o) -> OpUtils.getSubOps(o));
+        //System.out.println(tree);
+        
+//        System.out.println("root:" + tree.getRoot());
+//        System.out.println("root:" + tree.getChildren(tree.getRoot()));
+        
+        Tree<Op> multiaryTree = SparqlCacheSystem.removeUnaryNodes(tree);
+        System.out.println("Multiary tree: " + multiaryTree);
+        
+        
+    }
+    
+    public static void main2(String[] args) throws FileNotFoundException {
         {
 //            QueryExecutionFactory qef = FluentQueryExecutionFactory
 //                    .http("http://linkedgeodata.org/test/vsparql")

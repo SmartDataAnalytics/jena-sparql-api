@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -170,23 +171,23 @@ public class SparqlCacheSystem {
         ListMultimap<T, T> parentToChildren = ArrayListMultimap.create();
         
         // for every leaf get the first non-unary parent
-        List<T> children = TreeUtils.getLeafs(tree);
-        List<T> parents = Collections.emptyList();
-        while(!children.isEmpty()) {
-            parents = new ArrayList<>();
+        Collection<T> parents = TreeUtils.getLeafs(tree);
+        Collection<T> children = null;
+        while(!parents.isEmpty()) {
+            children = parents;
+
+            parents = new LinkedHashSet<T>();
             for(T child : children) {
                 T parent = TreeUtils.findAncestor(tree, child, isMultiary);
                 if(parent != null) {
                     parents.add(parent);
                     parentToChildren.put(parent, child);
                 }
-            }
-        
-            children = parents;
+            }        
         }
         
         // There can be at most 1 root
-        T root = parents.isEmpty() ? null : parents.iterator().next(); 
+        T root = children.iterator().next(); //parents.isEmpty() ? null : parents.iterator().next(); 
 
         
         Tree<T> result = root == null

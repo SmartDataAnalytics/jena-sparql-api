@@ -29,7 +29,7 @@ public class TreeUtils {
         T current = node;
         do {
             current = tree.getParent(current);
-        } while(!predicate.test(current));
+        } while(current != null && !predicate.test(current));
 
         return current;
     }
