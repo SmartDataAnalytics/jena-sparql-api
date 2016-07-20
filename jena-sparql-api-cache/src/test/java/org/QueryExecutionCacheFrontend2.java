@@ -57,7 +57,7 @@ public class QueryExecutionCacheFrontend2<K>
 
         this.cacheFrontend = cacheFrontend;
         this.key = key;
-        this.executorService = executor;
+        this.executorService = executorService;
     }
 
     private void setResource(CacheResource resource) {

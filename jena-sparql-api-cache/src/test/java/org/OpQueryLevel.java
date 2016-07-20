@@ -2,6 +2,7 @@ package org;
 
 import java.util.List;
 
+import org.apache.jena.atlas.io.IndentedWriter;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpVisitor;
 import org.apache.jena.sparql.algebra.Table;
@@ -22,6 +23,7 @@ import org.apache.jena.sparql.core.VarExprList;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprAggregator;
 import org.apache.jena.sparql.expr.ExprList;
+import org.apache.jena.sparql.serializer.SerializationContext;
 import org.apache.jena.sparql.util.NodeIsomorphismMap;
 
 import com.google.common.collect.Range;
@@ -51,7 +53,8 @@ import com.google.common.collect.Range;
 class QueryLevelToOp {
 
     public Op process(QueryLevel ql) {
-        Op = process(ql.getSubgetSubLevel());
+        //Op = process(ql.getSubgetSubLevel());
+        //Op 
 
         Op result = null;
 
@@ -182,6 +185,7 @@ class QueryLevel {
         this.tables = tables;
     }
 
+    
     @Override
     public String toString() {
         return "QueryLevel [solutionModifiers=" + solutionModifiers + ", groupExprs=" + groupExprs + ", aggregators="
@@ -278,6 +282,33 @@ public class OpQueryLevel
     public boolean equalTo(Op other, NodeIsomorphismMap labelMap) {
         // TODO Auto-generated method stub
         return false;
+    }
+
+    @Override
+    public void output(IndentedWriter out, SerializationContext sCxt) {
+        out.println("( QueryLevel:");
+        out.incIndent();
+
+        SolutionModifiers sm = data.getSolutionModifiers();
+        
+        out.println("DeduplicationLevel: " + sm.getDeduplicationLevel());
+        out.println("Projection: " + sm.getProjection());
+        out.println("Extend: " + sm.getExtend());
+        out.println("Slice: " + sm.getSlice());
+        out.println("Sort Conditions: " + sm.getSortConditions());
+        out.println("Aggregators: " + data.getAggregators());
+        out.println("Group Exprs: " + data.getGroupExprs());
+        out.println("Filters: " + data.getFilters());
+        out.println("QuadPattern: " + data.getQuadPattern());
+        out.println("SubOp:");
+//        data.get
+        
+        
+        out.decIndent();
+        out.println(")");
+
+        // TODO Auto-generated method stub
+        super.output(out, sCxt);
     }
 
 //    return "QueryLevel [" + "impliedSolutionModifiers=" + impliedSolutionModifiers

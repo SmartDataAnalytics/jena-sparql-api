@@ -4,12 +4,13 @@ import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.aksw.isomorphism.ProblemContainerNeighbourhoodAware;
@@ -17,13 +18,13 @@ import org.aksw.isomorphism.ProblemNeighborhoodAware;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.ProblemVarMappingExpr;
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.ProblemVarMappingQuad;
-import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
+import org.aksw.jena_sparql_api.concept_cache.dirty.Tree;
 import org.aksw.jena_sparql_api.utils.MapUtils;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
 
-import com.google.common.base.Stopwatch;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
 public class SparqlCacheSystem {
@@ -49,6 +50,7 @@ public class SparqlCacheSystem {
     public void rewriteQuery(Op queryOp) {
         QueryIndex queryIndex = queryIndexer.apply(queryOp);
 
+        // Create the initial set of cache candidates based on the query's algebra
         Collection<Entry<Op, QueryIndex>> candidates = indexSystem.lookup(queryOp);
 
         for(Entry<Op, QueryIndex> e : candidates) {
@@ -126,5 +128,89 @@ public class SparqlCacheSystem {
                 Objects::isNull);
 //        }
         return result;
+    }
+    
+    
+    
+    /**
+     * Return a node's first ancestor having an arity > 1
+     * null if there is none.
+     * 
+     * @param tree
+     * @param node
+     * @return
+     */
+    public static <T> T firstMultiaryAncestor(Tree<T> tree, T node) {
+        T result = null;
+        T current = node;
+        while(current != null) {
+            T parent = tree.getParent(result);
+            List<T> children = tree.getChildren(parent);
+            int arity = children.size();
+            if(arity > 1) {
+                result = parent;
+                break;
+            }
+            current = parent;
+        }
+        return result;
+    }
+
+
+    // TODO: Another output format: Map<Entry<T, T>, Multimap<T, T>>
+    /**
+     * Input: A mapping from cache nodes to candidate query nodes represented as a Multimap<T, T>.
+     * Output: The mapping partitioned by each node's first multiary ancestor.
+     * 
+     * Output could also be: Multimap<Op, Op> - fmaToNodesCache
+     * 
+     * 
+     * For every cacheFma, map to the corresponding queryFmas - and for
+     * each of these mappings yield the candidate node mappings of the children
+     * Multimap<OpCacheFma, Map<OpQueryFma, Multimap<OpCache, OpQuery>>>
+     * 
+     * Q: What if cache nodes do not have a fma?
+     * A: In this case the fma would be null, which means that there can only be a single cache node
+     * which would be grouped with a null fma.
+     * In the query, we can then check whether we are pairing a union with another union or null.
+     * 
+     * We always map from cache to query.
+     * 
+     * Map<CacheFma, QueryFma>
+     * 
+     * So the challenge is now again how to represent all the facts and how to perform
+     * the permutations / combinations...
+     * 
+     * 
+     * @param cacheTree
+     * @param queryTree
+     * @param cacheToQueryCands
+     * @return
+     */
+    public static <T> Map<T, Multimap<T, T>> clusterNodesByFirstMultiaryAncestor(Tree<T> cacheTree, Tree<T> queryTree, Multimap<T, T> cacheToQueryCands) { //Collection<T> nodes) {
+        Map<T, Multimap<T, T>> result = new HashMap<>();
+        
+        Set<Entry<T, Collection<T>>> entries = cacheToQueryCands.asMap().entrySet();
+        for(Entry<T, Collection<T>> entry : entries) {
+            T cacheNode = entry.getKey();
+            T multiaryAncestor = firstMultiaryAncestor(cacheTree, cacheNode);
+            Collection<T> queryNodes = entry.getValue();
+            
+            for(T queryNode : queryNodes) {
+                Multimap<T, T> mm = result.computeIfAbsent(multiaryAncestor, (k) -> HashMultimap.<T, T>create());
+                mm.put(cacheNode, queryNode);
+            }
+        }
+        
+        return result;
+    }
+    
+    /**
+     * 
+     * @param cacheParentToNodeMaps: Mapping from a cache parent, to the candidate op-mappings from cache op to query op. Example: { 5: { A: {1}, B: {1} } }
+     * 
+     */
+    public static void matchOpTrees(Map<Op, Multimap<Op, Op>> cacheParentToNodeMaps, Tree<Op> cacheTree, Tree<Op> queryTree) {
+        
     }
 }
