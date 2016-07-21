@@ -2,7 +2,9 @@ package org.aksw.isomorphism;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -141,9 +143,10 @@ public class KPermutationsOfNCandidateLists<A, B, S>
                     BiMap<B, A> nextBToOnlyA = HashBiMap.create();
 
                     Collection<B> bRemovals = bToOnlyA.keySet();
-                    for(Entry<A, Collection<B>> e : clusterCandidateMapping.asMap().entrySet()) {
-                        A ax = e.getKey();
-                        Collection<B> bxs = e.getValue();
+                    //for(Entry<A, Collection<B>> e : clusterCandidateMapping.asMap().entrySet()) {
+                    Map<A, Collection<B>> m = clusterCandidateMapping.asMap();
+                    for(A ax : new HashSet<>(m.keySet())) {
+                        Collection<B> bxs = m.get(ax);
                         int sizeBefore = bxs.size();
                     
                         // remove all bs that only map to a single a
