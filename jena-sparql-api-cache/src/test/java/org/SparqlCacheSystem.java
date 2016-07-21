@@ -223,23 +223,27 @@ public class SparqlCacheSystem {
      * the permutations / combinations...
      * 
      * 
+     * 
+     * 
+     * 
      * @param cacheTree
-     * @param queryTree
+     * @param tree
      * @param cacheToQueryCands
      * @return
      */
-    public static <T> Map<T, Multimap<T, T>> clusterNodesByFirstMultiaryAncestor(Tree<T> cacheTree, Tree<T> queryTree, Multimap<T, T> cacheToQueryCands) { //Collection<T> nodes) {
+    public static <T> Map<T, Multimap<T, T>> clusterNodesByFirstMultiaryAncestor(Tree<T> tree, Multimap<T, T> mapping) { //Collection<T> nodes) {
         Map<T, Multimap<T, T>> result = new HashMap<>();
         
-        Set<Entry<T, Collection<T>>> entries = cacheToQueryCands.asMap().entrySet();
+        Set<Entry<T, Collection<T>>> entries = mapping.asMap().entrySet();
         for(Entry<T, Collection<T>> entry : entries) {
-            T cacheNode = entry.getKey();
-            T multiaryAncestor = firstMultiaryAncestor(cacheTree, cacheNode);
+            T node = entry.getKey();
+            //T multiaryAncestor = firstMultiaryAncestor(tree, cacheNode);
+            T multiaryAncestor = tree.getParent(node);
             Collection<T> queryNodes = entry.getValue();
             
-            for(T queryNode : queryNodes) {
+            for(T targetNode : queryNodes) {
                 Multimap<T, T> mm = result.computeIfAbsent(multiaryAncestor, (k) -> HashMultimap.<T, T>create());
-                mm.put(cacheNode, queryNode);
+                mm.put(node, targetNode);
             }
         }
         

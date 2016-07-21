@@ -11,7 +11,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.CartesianProduct;
@@ -29,6 +31,7 @@ import org.aksw.jena_sparql_api.concept_cache.dirty.TreeImpl;
 import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
+import org.aksw.jena_sparql_api.concept_cache.op.TreeUtils;
 import org.aksw.jena_sparql_api.stmt.SparqlElementParser;
 import org.aksw.jena_sparql_api.stmt.SparqlElementParserImpl;
 import org.aksw.jena_sparql_api.utils.DnfUtils;
@@ -46,6 +49,7 @@ import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.util.ExprUtils;
 
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
 
@@ -54,24 +58,82 @@ interface ExprQuadPattern {
 
 }
 
+interface TreeMatcher {
+    
+}
 
 
 public class TestStateSpaceSearch {
     
     public static void main(String[] args) {
-        Op op = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { ?s ?p ?o } UNION { ?x ?y ?z } } LIMIT 10")));
+        Op opCache = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { ?s ?p ?o } UNION { ?x ?y ?z } } LIMIT 10")));
         
-        Tree<Op> tree = TreeImpl.create(op, (o) -> OpUtils.getSubOps(o));
+        Op opQuery = opCache;
+        
+        Tree<Op> cacheTree = TreeImpl.create(opCache, (o) -> OpUtils.getSubOps(o));
+        Tree<Op> queryTree = TreeImpl.create(opQuery, (o) -> OpUtils.getSubOps(o));
+
         //System.out.println(tree);
         
 //        System.out.println("root:" + tree.getRoot());
 //        System.out.println("root:" + tree.getChildren(tree.getRoot()));
         
-        Tree<Op> multiaryTree = SparqlCacheSystem.removeUnaryNodes(tree);
-        System.out.println("Multiary tree: " + multiaryTree);
+        Tree<Op> cacheMultiaryTree = SparqlCacheSystem.removeUnaryNodes(cacheTree);
+        System.out.println("Multiary tree: " + cacheMultiaryTree);
         
+        
+        // The candidate multimapping from cache to query
+        Multimap<Op, Op> candOpMapping = HashMultimap.create();
+        List<Op> cacheLeafs = TreeUtils.getLeafs(cacheTree);        
+        List<Op> queryLeafs = TreeUtils.getLeafs(queryTree);
+        
+        
+        candOpMapping.put(cacheLeafs.get(0), queryLeafs.get(0));
+        candOpMapping.put(cacheLeafs.get(0), queryLeafs.get(1));
+        candOpMapping.put(cacheLeafs.get(1), queryLeafs.get(0));
+        candOpMapping.put(cacheLeafs.get(1), queryLeafs.get(1));
+
+        // we need a mapping from leaf op to problem instance in order to determine which of the candidates to pick first
+        //Map<Op, Problem<?>> cacheOpToProblem = new HashMap<>();
+        Function<Entry<Op, Op>, Long> opMappingToCost = (e) -> 1l;
+        
+        //TreeMultimap<Long, Entry<Op, Op>> costToOpMapping = TreeMultimap.create();
+        TreeMap<Long, Set<Entry<Op, Op>>> costToOpMappings = new TreeMap<>();
+        
+        // pick the cheapest mapping candidate
+        // actually, this is again a problem instance - right?
+        Entry<Long, Entry<Op, Op>> pick = ProblemContainerNeighbourhoodAware.firstEntry(costToOpMappings);
+
+        SparqlCacheSystem.clusterNodesByFirstMultiaryAncestor(queryTree, candOpMapping);
+        
+        
+        
+        
+        /*
+         * 
+         * We now need to pick one of the mappings, and update the remaining ones.
+         *
+         * 1. pick a mapping
+         *   
+         * 2. cluster mapping by the query's parent node
+         * 3. 
+         *  
+         */
+                
+    }
+    
+    //public static void pick(})
+    
+    
+    public static void matchSequence(Tree<Op> cacheTree, Tree<Op> queryTree, Op cacheNode, Op queryNode) {
         
     }
+    
+    public static void matchAnyComination() {
+        
+    }
+    
+    
     
     public static void main2(String[] args) throws FileNotFoundException {
         {

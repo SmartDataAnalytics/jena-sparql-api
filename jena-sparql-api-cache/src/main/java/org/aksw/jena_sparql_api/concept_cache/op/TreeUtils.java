@@ -12,7 +12,6 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import org.Predicate;
 import org.aksw.jena_sparql_api.concept_cache.dirty.Tree;
 
 public class TreeUtils {
