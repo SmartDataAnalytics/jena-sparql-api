@@ -87,7 +87,7 @@ public class TestStateSpaceSearch {
     
     public static void main(String[] args) {
         Op opCache = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { ?a ?a ?a } UNION { ?b ?b ?b } } LIMIT 10")));        
-        Op opQuery = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { { ?1 ?1 ?1 } UNION { ?2 ?2 ?2 } } { { ?3 ?3 ?3 } UNION { ?4 ?4 ?4 } } } LIMIT 10")));
+        Op opQuery = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { { ?0 ?0 ?0 } UNION { ?1 ?1 ?1 } } { { ?2 ?2 ?2 } UNION { ?3 ?3 ?3 } } } LIMIT 10")));
 
         
         TransformUnionToDisjunction transform = new TransformUnionToDisjunction();
@@ -126,7 +126,7 @@ public class TestStateSpaceSearch {
                 (op) -> queryMultiaryTree.getParent(op),
                 (x) -> queryMultiaryTree.getChildren(x));
         
-        stream.forEach(x -> System.out.println("Candidate Solution: " + x));
+        stream.forEach(x -> System.out.println("Candidate Solution: " + x.asList().iterator().next()));
         
         
         // we need a mapping from leaf op to problem instance in order to determine which of the candidates to pick first
