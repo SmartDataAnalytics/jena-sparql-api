@@ -45,12 +45,12 @@ public abstract class ProblemMappingKPermutationsOfN<A, B, X, Y>
         if(k > n) {
             result = 0;
         } else {
-          result = LongMath.factorial(n) / LongMath.factorial(n - k);
+          //result = LongMath.factorial(n) / LongMath.factorial(n - k);
 
 //	The formula below should be equal to the one above
-//            long combinationCount = LongMath.binomial(n, k);
-//            long permutationCount = LongMath.factorial(k);
-//            result = combinationCount * permutationCount;
+            long combinationCount = LongMath.binomial(n, k);
+            long permutationCount = LongMath.factorial(k);
+            result = combinationCount * permutationCount;
         }
 
         return result;

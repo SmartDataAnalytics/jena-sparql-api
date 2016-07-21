@@ -5,11 +5,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-
-import org.apache.jena.ext.com.google.common.collect.Iterables;
 
 import com.codepoetics.protonpack.functions.TriFunction;
 
@@ -30,38 +27,21 @@ import com.codepoetics.protonpack.functions.TriFunction;
  * @param <B>
  * @param <S>
  */
-public class StateCombinatoricCallback<A, B, S> {
-    //protected LinkedListNode<A> remainingA;
-    protected List<A> as;
+public class StateCombinatoricCallback<A, B, S>
+    extends KPermutationsOfNCallbackBase<A, B, S>
+{
     protected LinkedListNode<B> remainingB;
-
-    /**
-     * Function which takes the base solution, a and b and returns a new solution
-     *
-     */
-    protected TriFunction<S, A, B, Stream<S>> solutionCombiner;
-
-
-    /**
-     * Callback for complete solutions
-     *
-     */
-    protected Consumer<CombinationStack<A, B, S>> completeMatch;
 
 
     public StateCombinatoricCallback(
 //            LinkedListNode<A> remainingA,
             List<A> as,
             LinkedListNode<B> remainingB,
-            TriFunction<S, A, B, Stream<S>> solutionCombiner,
-            Consumer<CombinationStack<A, B, S>> completeMatch)
+            TriFunction<S, A, B, Stream<S>> solutionCombiner)
     {
-        super();
-//        this.remainingA = remainingA;
-        this.as = as;
+        super(as, solutionCombiner);
         this.remainingB = remainingB;
         this.solutionCombiner = solutionCombiner;
-        this.completeMatch = completeMatch;
     }
 
 
@@ -90,28 +70,14 @@ public class StateCombinatoricCallback<A, B, S> {
         List<A> xas = as instanceof List ? (List<A>)as : new ArrayList<>(as);
         LinkedListNode<B> nbs = LinkedListNode.create(bs);
 
-        List<CombinationStack<A, B, S>> list = new ArrayList<>();
-
-        StateCombinatoricCallback<A, B, S> runner =
+        StateCombinatoricCallback<A, B, S> engine =
                 new StateCombinatoricCallback<A, B, S>(
                         xas,
                         nbs,
-                        solutionCombiner,
-                        (stack) -> {
-                            list.add(stack);
-                        });
+                        solutionCombiner);
 
-        runner.run(baseSolution);
-
-        Stream<CombinationStack<A, B, S>> result = list.stream();
+        Stream<CombinationStack<A, B, S>> result = engine.stream(baseSolution);
         return result;
-    }
-
-    public void run(S baseSolution) {
-        boolean isEmpty = as.isEmpty(); //remainingA.successor.isTail();
-        if(!isEmpty) {
-            nextB(0, baseSolution, null);
-        }
     }
 
     // [a b c] [1 2 3 4 5] -> [1, 2, 3], [1, 2, 4], [1, 2, 5], [1, 3, 4], ...
@@ -137,7 +103,8 @@ public class StateCombinatoricCallback<A, B, S> {
 //        }
 //    }
 
-    public void nextB(int i, S baseSolution, CombinationStack<A, B, S> stack) {
+    @Override
+    public void nextB(int i, S baseSolution, CombinationStack<A, B, S> stack, Consumer<CombinationStack<A, B, S>> completeMatch) {
         if(i < as.size()) {
             A a = as.get(i);
             LinkedListNode<B> curr = remainingB.successor;
@@ -155,7 +122,7 @@ public class StateCombinatoricCallback<A, B, S> {
                     CombinationStack<A, B, S> newStack = new CombinationStack<>(stack, c);
 
                     // recurse
-                    nextB(i + 1, partialSolution, newStack);
+                    nextB(i + 1, partialSolution, newStack, completeMatch);
                 });
 
                 // restore
@@ -194,16 +161,13 @@ public class StateCombinatoricCallback<A, B, S> {
 
         List<CombinationStack<A, B, S>> list = new ArrayList<>();
 
-        StateCombinatoricCallback<A, B, S> runner =
+        StateCombinatoricCallback<A, B, S> engine =
                 new StateCombinatoricCallback<A, B, S>(
                         xas,
                         nbs,
-                        solutionCombiner,
-                        (stack) -> {
-                            list.add(stack);
-                        });
+                        solutionCombiner);
 
-        Stream<CombinationStack<A, B, S>> result = runner.stream(baseSolution);
+        Stream<CombinationStack<A, B, S>> result = engine.stream(baseSolution);
         return result;
     }
 

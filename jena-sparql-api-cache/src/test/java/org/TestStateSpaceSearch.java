@@ -15,10 +15,14 @@ import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.aksw.commons.collections.CartesianProduct;
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
 import org.aksw.isomorphism.Combination;
+import org.aksw.isomorphism.CombinationStack;
+import org.aksw.isomorphism.KPermutationsOfNCallbackBase;
+import org.aksw.isomorphism.KPermutationsOfNUtils;
 import org.aksw.isomorphism.ProblemContainerNeighbourhoodAware;
 import org.aksw.isomorphism.ProblemNeighborhoodAware;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
@@ -66,6 +70,22 @@ interface TreeMatcher {
 public class TestStateSpaceSearch {
     
     public static void main(String[] args) {
+        Multimap<String, Integer> m = HashMultimap.create();
+        
+        m.put("a", 1);
+        m.put("a", 3);
+        
+        m.put("b", 1);
+        m.put("b", 3);
+        m.put("b", 4);
+        
+        Stream<CombinationStack<String, Integer, Object>> s = KPermutationsOfNUtils.kPermutationsOfN(m);
+        
+        s.forEach(i -> System.out.println(i.asList()));
+    }
+    
+    
+    public static void mainFoo(String[] args) {
         Op opCache = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { ?s ?p ?o } UNION { ?x ?y ?z } } LIMIT 10")));
         
         Op opQuery = opCache;
