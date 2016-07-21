@@ -4,14 +4,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.NavigableMap;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
 
-import com.codepoetics.protonpack.functions.TriFunction;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
@@ -122,7 +123,42 @@ public class KPermutationsOfNCandidateLists<A, B, S>
                     remaining.remove(e.getKey(), e.getValue());
                 }
                
-                Cluster<A, B, S> cluster = new Cluster<>(clusterKey, clusterCandidateMapping);
+                BiHashMultimap<A, B> mm = KPermutationsOfNUtils.create(clusterCandidateMapping);
+                boolean abort = false;
+                while(abort == false) {
+
+                    boolean change = false;
+                    for(Entry<A, Collection<B>> e : mm.asMap().entrySet()) {
+                        A keepA = e.getKey();
+                        if(e.getValue().size() == 1) {
+                            B removeB = e.getValue().iterator().next();
+
+                            Set<A> removeAs = mm.getInverse().get(removeB);
+                            for(A removeA : removeAs) {
+                                if(removeA != keepA) {
+                                    mm.remove(removeA, removeB);
+                                    change = true;
+                                }
+                            }
+                        }
+                        
+                        if(change) {
+                            break;
+                        }
+                    }
+                    abort = true;                    
+                }
+
+                Multimap<A, B> argh = HashMultimap.create();
+                for(Entry<A, B> xxx : mm.entries()) {
+                    argh.put(xxx.getKey(), xxx.getValue());
+                }
+                
+                
+                Cluster<A, B, S> cluster = new Cluster<>(clusterKey, argh);
+                                
+                
+                
                 ClusterStack<A, B, S> newStack = new ClusterStack<>(stack, cluster);
                 nextB(i + 1, baseSolution, newStack, completeMatch);
                 

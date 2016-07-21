@@ -126,7 +126,7 @@ public class TestStateSpaceSearch {
                 (op) -> queryMultiaryTree.getParent(op),
                 (x) -> queryMultiaryTree.getChildren(x));
         
-        stream.forEach(x -> System.out.println("Cluster: " + x));
+        stream.forEach(x -> System.out.println("Candidate Solution: " + x));
         
         
         // we need a mapping from leaf op to problem instance in order to determine which of the candidates to pick first

@@ -17,17 +17,23 @@ public class KPermutationsOfNUtils {
 //    public static <A, B, S> Stream<CombinationStack<A, B, S>> kPermutationsOfN(Multimap<A, B> mapping) {
 //    }
     
+    public static <K, V> BiHashMultimap<K, V> create(Multimap<K, V> multimap) {
+        
+        BiHashMultimap<K, V> result = new BiHashMultimap<>();
+        // TODO Create a putAll method on the bi-multimap
+        for(Entry<K, V> entry : multimap.entries()) {
+            result.put(entry.getKey(), entry.getValue());
+        }
+        
+        return result;
+    }
+    
     public static <A, B, S> Stream<ClusterStack<A, B, S>> kPermutationsOfN(
             Multimap<A, B> mapping,
             Function<B, S> bToClusterKey,
             Function<S, ? extends Collection<B>> clusterKeyToBs
             ) {
-        BiHashMultimap<A, B> map = new BiHashMultimap<>();
-        
-        // TODO Create a putAll method on the bi-multimap
-        for(Entry<A, B> entry : mapping.entries()) {
-            map.put(entry.getKey(), entry.getValue());
-        }
+        BiHashMultimap<A, B> map = create(mapping);
         
         List<A> as = new ArrayList<A>(mapping.keySet());
         
