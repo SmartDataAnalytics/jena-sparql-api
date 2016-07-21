@@ -86,8 +86,8 @@ public class TestStateSpaceSearch {
     
     
     public static void main(String[] args) {
-        Op opCache = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { ?s ?p ?o } UNION { ?x ?y ?z } } LIMIT 10")));        
-        Op opQuery = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { { ?s ?p ?o } UNION { ?x ?y ?z } } { { ?h ?i ?q } UNION { ?a ?b ?c } } } LIMIT 10")));
+        Op opCache = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { ?a ?a ?a } UNION { ?b ?b ?b } } LIMIT 10")));        
+        Op opQuery = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { { ?1 ?1 ?1 } UNION { ?2 ?2 ?2 } } { { ?3 ?3 ?3 } UNION { ?4 ?4 ?4 } } } LIMIT 10")));
 
         
         TransformUnionToDisjunction transform = new TransformUnionToDisjunction();
@@ -103,7 +103,8 @@ public class TestStateSpaceSearch {
 //        System.out.println("root:" + tree.getChildren(tree.getRoot()));
         
         Tree<Op> cacheMultiaryTree = SparqlCacheSystem.removeUnaryNodes(cacheTree);
-        System.out.println("Multiary tree: " + cacheMultiaryTree);
+        Tree<Op> queryMultiaryTree = SparqlCacheSystem.removeUnaryNodes(queryTree);
+        //System.out.println("Multiary tree: " + cacheMultiaryTree);
         
         
         // The candidate multimapping from cache to query
@@ -122,8 +123,8 @@ public class TestStateSpaceSearch {
 
         Stream<ClusterStack<Op, Op, Op>> stream = KPermutationsOfNUtils.<Op, Op, Op>kPermutationsOfN(
                 candOpMapping,
-                (op) -> queryTree.getParent(op),
-                (x) -> queryTree.getChildren(x));
+                (op) -> queryMultiaryTree.getParent(op),
+                (x) -> queryMultiaryTree.getChildren(x));
         
         stream.forEach(x -> System.out.println("Cluster: " + x));
         
