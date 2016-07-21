@@ -4,15 +4,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.NavigableMap;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
@@ -92,9 +92,8 @@ public class KPermutationsOfNCandidateLists<A, B, S>
             // TODO Maybe with more clever data structures we can get rid of having to create a copy
             List<B> bs = new ArrayList<>(remaining.get(a));
 
+            // Pick a 'b'
             for(B b : bs) {
-                // Now we picked a 'b'
-                
                 
                 // Get the clusterKey for b
                 // (for tree-children that would usually be their parent)
@@ -117,64 +116,72 @@ public class KPermutationsOfNCandidateLists<A, B, S>
                         clusterCandidateMapping.put(affectedA, candidateB);
                     }
                 }
+                               
+                //BiHashMultimap<A, B> mm = KPermutationsOfNUtils.create(clusterCandidateMapping);
+                // Collect all single-mappings
+                BiMap<B, A> bToOnlyA = HashBiMap.create();
                 
-                // Remove the clusterCandidateMapping from the remaining set
-                for(Entry<A, B> e : clusterCandidateMapping.entries()) {
-                    remaining.remove(e.getKey(), e.getValue());
-                }
-               
-                BiHashMultimap<A, B> mm = KPermutationsOfNUtils.create(clusterCandidateMapping);
-                boolean abort = false;
-                while(abort == false) {
+                boolean unsatisfiable = false;
+                for(Entry<A, Collection<B>> e : clusterCandidateMapping.asMap().entrySet()) {
+                    A ax = e.getKey();
+                    if(e.getValue().size() == 1) {
+                        B bx = e.getValue().iterator().next();
 
-                    boolean change = false;
-                    for(Entry<A, Collection<B>> e : mm.asMap().entrySet()) {
-                        A keepA = e.getKey();
-                        if(e.getValue().size() == 1) {
-                            B removeB = e.getValue().iterator().next();
-
-                            Set<A> removeAs = mm.getInverse().get(removeB);
-                            for(A removeA : removeAs) {
-                                if(removeA != keepA) {
-                                    mm.remove(removeA, removeB);
-                                    change = true;
-                                }
-                            }
-                        }
-                        
-                        if(change) {
+                        if(bToOnlyA.containsKey(bx)) {
+                            unsatisfiable = true;
                             break;
+                        } else {                        
+                            bToOnlyA.put(bx, ax);
                         }
                     }
-                    abort = true;                    
                 }
 
-                Multimap<A, B> argh = HashMultimap.create();
-                for(Entry<A, B> xxx : mm.entries()) {
-                    argh.put(xxx.getKey(), xxx.getValue());
-                }
-                
-                
-                Cluster<A, B, S> cluster = new Cluster<>(clusterKey, argh);
-                                
-                
-                
-                ClusterStack<A, B, S> newStack = new ClusterStack<>(stack, cluster);
-                nextB(i + 1, baseSolution, newStack, completeMatch);
-                
-//                Stream<S> partialSolutions = solutionCombiner.apply(baseSolution, a, b);
-//                partialSolutions.forEach(partialSolution -> {
-//                    Combination<A, B, S> c = new Combination<>(a, b, partialSolution);
-//                    CombinationStack<A, B, S> newStack = new CombinationStack<>(stack, c);
-//
-//                    // recurse
-//                    nextB(i + 1, partialSolution, newStack, completeMatch);
-//                });
+                //if(!unsatisifable) {
+                while(!bToOnlyA.isEmpty()) {
+                    BiMap<B, A> nextBToOnlyA = HashBiMap.create();
 
-                // restore
-                for(Entry<A, B> e : clusterCandidateMapping.entries()) {
-                    remaining.put(e.getKey(), e.getValue());
-                }                
+                    Collection<B> bRemovals = bToOnlyA.keySet();
+                    for(Entry<A, Collection<B>> e : clusterCandidateMapping.asMap().entrySet()) {
+                        A ax = e.getKey();
+                        Collection<B> bxs = e.getValue();
+                        int sizeBefore = bxs.size();
+                    
+                        // remove all bs that only map to a single a
+                        bxs.removeAll(bRemovals);
+                        
+                        B restoreB = bToOnlyA.inverse().get(ax);
+                        if(restoreB != null) {
+                            bxs.add(restoreB);
+                        }
+                        
+                        int sizeAfter = bxs.size();
+                        
+                        if(sizeAfter == 1 && sizeBefore != sizeAfter) {
+                            B newB = bxs.iterator().next();
+                            nextBToOnlyA.put(newB, ax);
+                        }                        
+                    }
+                    
+                    bToOnlyA = nextBToOnlyA;
+                }
+                // Recurse if still satisfiable
+                if(!unsatisfiable) {
+                                                        
+                    // Update state: Remove the clusterCandidateMapping from the remaining set
+                    for(Entry<A, B> e : clusterCandidateMapping.entries()) {
+                        remaining.remove(e.getKey(), e.getValue());
+                    }
+    
+                    Cluster<A, B, S> cluster = new Cluster<>(clusterKey, clusterCandidateMapping);
+                    ClusterStack<A, B, S> newStack = new ClusterStack<>(stack, cluster);
+                    
+                    nextB(i + 1, baseSolution, newStack, completeMatch);
+                    
+                    // Restore state
+                    for(Entry<A, B> e : clusterCandidateMapping.entries()) {
+                        remaining.put(e.getKey(), e.getValue());
+                    }
+                }
             }
         } else {
             completeMatch.accept(stack);
