@@ -19,9 +19,8 @@ import java.util.stream.Stream;
 
 import org.aksw.commons.collections.CartesianProduct;
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
+import org.aksw.isomorphism.ClusterStack;
 import org.aksw.isomorphism.Combination;
-import org.aksw.isomorphism.CombinationStack;
-import org.aksw.isomorphism.KPermutationsOfNCallbackBase;
 import org.aksw.isomorphism.KPermutationsOfNUtils;
 import org.aksw.isomorphism.ProblemContainerNeighbourhoodAware;
 import org.aksw.isomorphism.ProblemNeighborhoodAware;
@@ -46,6 +45,7 @@ import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
@@ -69,31 +69,35 @@ interface TreeMatcher {
 
 public class TestStateSpaceSearch {
     
+//    public static void main(String[] args) {
+//        Multimap<String, Integer> m = HashMultimap.create();
+//        
+//        m.put("a", 1);
+//        m.put("a", 3);
+//        
+//        m.put("b", 1);
+//        m.put("b", 3);
+//        m.put("b", 4);
+//        
+//        Stream<CombinationStack<String, Integer, Object>> s = KPermutationsOfNUtils.kPermutationsOfN(m);
+//        
+//        s.forEach(i -> System.out.println(i.asList()));
+//    }
+    
+    
     public static void main(String[] args) {
-        Multimap<String, Integer> m = HashMultimap.create();
+        Op opCache = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { ?s ?p ?o } UNION { ?x ?y ?z } } LIMIT 10")));        
+        Op opQuery = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { { ?s ?p ?o } UNION { ?x ?y ?z } } { { ?h ?i ?q } UNION { ?a ?b ?c } } } LIMIT 10")));
+
         
-        m.put("a", 1);
-        m.put("a", 3);
-        
-        m.put("b", 1);
-        m.put("b", 3);
-        m.put("b", 4);
-        
-        Stream<CombinationStack<String, Integer, Object>> s = KPermutationsOfNUtils.kPermutationsOfN(m);
-        
-        s.forEach(i -> System.out.println(i.asList()));
-    }
-    
-    
-    public static void mainFoo(String[] args) {
-        Op opCache = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { ?s ?p ?o } UNION { ?x ?y ?z } } LIMIT 10")));
-        
-        Op opQuery = opCache;
-        
+        TransformUnionToDisjunction transform = new TransformUnionToDisjunction();
+        opCache = Transformer.transform(transform, opCache);
+        opQuery = Transformer.transform(transform, opQuery);
+                
         Tree<Op> cacheTree = TreeImpl.create(opCache, (o) -> OpUtils.getSubOps(o));
         Tree<Op> queryTree = TreeImpl.create(opQuery, (o) -> OpUtils.getSubOps(o));
 
-        //System.out.println(tree);
+        System.out.println(queryTree);
         
 //        System.out.println("root:" + tree.getRoot());
 //        System.out.println("root:" + tree.getChildren(tree.getRoot()));
@@ -109,10 +113,21 @@ public class TestStateSpaceSearch {
         
         
         candOpMapping.put(cacheLeafs.get(0), queryLeafs.get(0));
-        candOpMapping.put(cacheLeafs.get(0), queryLeafs.get(1));
-        candOpMapping.put(cacheLeafs.get(1), queryLeafs.get(0));
-        candOpMapping.put(cacheLeafs.get(1), queryLeafs.get(1));
+        candOpMapping.put(cacheLeafs.get(0), queryLeafs.get(2));
 
+        candOpMapping.put(cacheLeafs.get(1), queryLeafs.get(0));
+        candOpMapping.put(cacheLeafs.get(1), queryLeafs.get(2));
+        candOpMapping.put(cacheLeafs.get(1), queryLeafs.get(3));
+
+
+        Stream<ClusterStack<Op, Op, Op>> stream = KPermutationsOfNUtils.<Op, Op, Op>kPermutationsOfN(
+                candOpMapping,
+                (op) -> queryTree.getParent(op),
+                (x) -> queryTree.getChildren(x));
+        
+        stream.forEach(x -> System.out.println("Cluster: " + x));
+        
+        
         // we need a mapping from leaf op to problem instance in order to determine which of the candidates to pick first
         //Map<Op, Problem<?>> cacheOpToProblem = new HashMap<>();
         Function<Entry<Op, Op>, Long> opMappingToCost = (e) -> 1l;
