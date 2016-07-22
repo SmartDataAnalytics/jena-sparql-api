@@ -112,9 +112,11 @@ public class TestStateSpaceSearch {
         List<Op> cacheLeafs = TreeUtils.getLeafs(cacheTree);        
         List<Op> queryLeafs = TreeUtils.getLeafs(queryTree);
         
+
         
+        // Expected: a:1 - b:0
         candOpMapping.put(cacheLeafs.get(0), queryLeafs.get(0));
-        candOpMapping.put(cacheLeafs.get(0), queryLeafs.get(2));
+        candOpMapping.put(cacheLeafs.get(0), queryLeafs.get(1));
 
         candOpMapping.put(cacheLeafs.get(1), queryLeafs.get(0));
         candOpMapping.put(cacheLeafs.get(1), queryLeafs.get(2));

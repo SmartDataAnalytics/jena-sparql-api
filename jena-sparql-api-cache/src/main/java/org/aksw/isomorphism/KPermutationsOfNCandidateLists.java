@@ -88,6 +88,20 @@ public class KPermutationsOfNCandidateLists<A, B, S>
     
     //@Override
     public void nextB(int i, S baseSolution, ClusterStack<A, B, S> stack, Consumer<ClusterStack<A, B, S>> completeMatch) {
+        
+        // Instead of iterating all as, we iterate over the parents of the bs that they map to
+        // Find out to which parents of B the items of a can map.
+        // Then, pick 
+        /*
+        Set<S> parents = new HashSet<S>();
+        for(A a : as) {
+            Set<B> bs = remaining.get(a);
+            for(B b : bs) {
+                S clusterKey = bToClusterKey.apply(b);
+                parents.add(clusterKey);
+            }
+        }
+        */
         if(i < as.size()) {
             A a = as.get(i);
             
@@ -145,6 +159,9 @@ public class KPermutationsOfNCandidateLists<A, B, S>
                     Collection<B> bRemovals = bToOnlyA.keySet();
                     //for(Entry<A, Collection<B>> e : clusterCandidateMapping.asMap().entrySet()) {
                     Map<A, Collection<B>> m = clusterCandidateMapping.asMap();
+                    
+                    // Note: We have to copy the keyset because changing collection of the entries' value
+                    // causes a cme.
                     for(A ax : new HashSet<>(m.keySet())) {
                         Collection<B> bxs = m.get(ax);
                         int sizeBefore = bxs.size();
