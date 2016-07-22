@@ -1,5 +1,6 @@
 package org.aksw.isomorphism;
 
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -8,10 +9,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
+import org.aksw.jena_sparql_api.concept_cache.dirty.Tree;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
@@ -34,7 +35,7 @@ import com.google.common.collect.Multimap;
  * @author raven
  *
  */
-public class KPermutationsOfNCandidateLists<A, B, S>
+public class KPermutationsOfNCandidateLists<A, B>
     //extends KPermutationsOfNCallbackBase<A, B, S>
 {
     protected List<A> as;
@@ -45,94 +46,103 @@ public class KPermutationsOfNCandidateLists<A, B, S>
      * further mappings of 'a'. 
      * 
      */
-    protected BiHashMultimap<A, B> remaining;
-    
-    //protected Map<B, BiHashMultimap<A, B>> clustersToRemaining;
-    
-    protected Function<B, S> bToClusterKey;
-    protected Function<S, ? extends Collection<B>> clusterKeyToBs;
-    
-    
-    public KPermutationsOfNCandidateLists(List<A> as,
-            //TriFunction<S, A, B, Stream<S>> solutionCombiner,
-            BiHashMultimap<A, B> remaining,
-            Function<B, S> bToClusterKey,
-            Function<S, ? extends Collection<B>> clusterKeyToBs
+    //protected BiHashMultimap<A, B> remaining;
+        
+    protected Tree<A> aTree;
+    protected Tree<B> bTree;
+    protected Multimap<A, B> childMapping;
 
+    protected Multimap<A, B> remainingParentMapping;
+    
+    
+    
+    public KPermutationsOfNCandidateLists(
+            Tree<A> aTree,
+            Tree<B> bTree,
+            List<A> as,
+            Multimap<A, B> childMapping,
+            Multimap<A, B> parentMapping
         ) {
-        //super(as, null); //solutionCombiner);
         this.as = as;
-        this.remaining = remaining;
-        this.bToClusterKey = bToClusterKey;
-        this.clusterKeyToBs = clusterKeyToBs;
+        this.childMapping = childMapping;
+        this.aTree = aTree;
+        this.bTree = bTree;
+        this.remainingParentMapping = parentMapping;
     }
     
     
 
-    public Stream<ClusterStack<A, B, S>> stream(S baseSolution) {
-        List<ClusterStack<A, B, S>> list = new ArrayList<>();
+    public Stream<ClusterStack<A, B, Entry<A, B>>> stream() {//S baseSolution) {
+        List<ClusterStack<A, B, Entry<A, B>>> list = new ArrayList<>();
         
-        run(baseSolution, (stack) -> list.add(stack));
+        run((stack) -> list.add(stack));
 
-        Stream<ClusterStack<A, B, S>> result = list.stream();
+        Stream<ClusterStack<A, B, Entry<A, B>>> result = list.stream();
         return result;
 
     }
 
-    public void run(S baseSolution, Consumer<ClusterStack<A, B, S>> completeMatch) {
+    public void run(Consumer<ClusterStack<A, B, Entry<A, B>>> completeMatch) {
         boolean isEmpty = as.isEmpty(); //remainingA.successor.isTail();
         if(!isEmpty) {
-            nextB(0, baseSolution, null, completeMatch);
+            nextB(0, null, completeMatch);
         }
     }
     
     //@Override
-    public void nextB(int i, S baseSolution, ClusterStack<A, B, S> stack, Consumer<ClusterStack<A, B, S>> completeMatch) {
+    public void nextB(int i, ClusterStack<A, B, Entry<A, B>> stack, Consumer<ClusterStack<A, B, Entry<A, B>>> completeMatch) {
+        
         
         // Instead of iterating all as, we iterate over the parents of the bs that they map to
         // Find out to which parents of B the items of a can map.
         // Then, pick 
-        /*
-        Set<S> parents = new HashSet<S>();
-        for(A a : as) {
-            Set<B> bs = remaining.get(a);
-            for(B b : bs) {
-                S clusterKey = bToClusterKey.apply(b);
-                parents.add(clusterKey);
-            }
-        }
-        */
         if(i < as.size()) {
             A a = as.get(i);
             
             // TODO Maybe with more clever data structures we can get rid of having to create a copy
-            List<B> bs = new ArrayList<>(remaining.get(a));
+            List<B> bs = new ArrayList<>(remainingParentMapping.get(a));
 
             // Pick a 'b'
             for(B b : bs) {
                 
-                // Get the clusterKey for b
-                // (for tree-children that would usually be their parent)
-                S clusterKey = bToClusterKey.apply(b);
+                Entry<A, B> clusterKey = new SimpleEntry<>(a, b);
+//                
+//                // Get the clusterKey for b
+//                // (for tree-children that would usually be their parent)
+//                S clusterKey = bToClusterKey.apply(b);
+//                
+//                // Get all b's that are valid within the cluster
+//                // (Note: This assumes that this set is known beforehand) 
+//                // (for a tree, that would be the children of the parent)
+//                Collection<B> candidateBsInCluster = clusterKeyToBs.apply(clusterKey);
+//                
+//                // Get all a's in relation to the candidate b's
+//                //List<A> affectedAs = new ArrayList<>();
+//                //Map<B, List<A>> bToAffectedAs;
+//                //List<A> affectedAs = new ArrayList<>();
+//                Multimap<A, B> clusterCandidateMapping = HashMultimap.create();
+//                for(B candidateB : candidateBsInCluster) {
+//                    Set<A> affectedAs = remaining.getInverse().get(candidateB);
+//
+//                    for(A affectedA : affectedAs) {
+//                        clusterCandidateMapping.put(affectedA, candidateB);
+//                    }
+//                }
                 
-                // Get all b's that are valid within the cluster
-                // (Note: This assumes that this set is known beforehand) 
-                // (for a tree, that would be the children of the parent)
-                Collection<B> candidateBsInCluster = clusterKeyToBs.apply(clusterKey);
-                
-                // Get all a's in relation to the candidate b's
-                //List<A> affectedAs = new ArrayList<>();
-                //Map<B, List<A>> bToAffectedAs;
-                //List<A> affectedAs = new ArrayList<>();
+                // The candidate mapping is the mapping of all children of the matched parents
+                // in accordance with child candidate mapping
+                List<A> aChildren = aTree.getChildren(a);
+                List<B> bChildren = bTree.getChildren(b);
+                                
                 Multimap<A, B> clusterCandidateMapping = HashMultimap.create();
-                for(B candidateB : candidateBsInCluster) {
-                    Set<A> affectedAs = remaining.getInverse().get(candidateB);
-
-                    for(A affectedA : affectedAs) {
-                        clusterCandidateMapping.put(affectedA, candidateB);
-                    }
+                for(A aChild : aChildren) {
+                    Collection<B> bCands = childMapping.get(aChild);
+                    // intersect the bCands with the b children
+                    Set<B> bRemaining = new HashSet<>(bCands);
+                    bRemaining.retainAll(bChildren);
+                    clusterCandidateMapping.putAll(aChild, bRemaining);
                 }
-                               
+
                 //BiHashMultimap<A, B> mm = KPermutationsOfNUtils.create(clusterCandidateMapping);
                 // Collect all single-mappings
                 BiMap<B, A> bToOnlyA = HashBiMap.create();
@@ -188,19 +198,21 @@ public class KPermutationsOfNCandidateLists<A, B, S>
                 if(!unsatisfiable) {
                                                         
                     // Update state: Remove the clusterCandidateMapping from the remaining set
-                    for(Entry<A, B> e : clusterCandidateMapping.entries()) {
-                        remaining.remove(e.getKey(), e.getValue());
-                    }
+                    remainingParentMapping.remove(a, b);
+//                    for(Entry<A, B> e : clusterCandidateMapping.entries()) {
+//                        remainingParentMapping.remove(e.getKey(), e.getValue());
+//                    }
     
-                    Cluster<A, B, S> cluster = new Cluster<>(clusterKey, clusterCandidateMapping);
-                    ClusterStack<A, B, S> newStack = new ClusterStack<>(stack, cluster);
+                    Cluster<A, B, Entry<A, B>> cluster = new Cluster<>(clusterKey, clusterCandidateMapping);
+                    ClusterStack<A, B, Entry<A, B>> newStack = new ClusterStack<>(stack, cluster);
                     
-                    nextB(i + 1, baseSolution, newStack, completeMatch);
+                    nextB(i + 1, newStack, completeMatch);
                     
                     // Restore state
-                    for(Entry<A, B> e : clusterCandidateMapping.entries()) {
-                        remaining.put(e.getKey(), e.getValue());
-                    }
+                    remainingParentMapping.put(a, b);
+//                    for(Entry<A, B> e : clusterCandidateMapping.entries()) {
+//                        remainingParentMapping.put(e.getKey(), e.getValue());
+//                    }
                 }
             }
         } else {

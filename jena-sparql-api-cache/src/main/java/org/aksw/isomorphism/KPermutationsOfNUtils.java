@@ -2,15 +2,16 @@ package org.aksw.isomorphism;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.function.Function;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
+import org.aksw.jena_sparql_api.concept_cache.dirty.Tree;
+import org.aksw.jena_sparql_api.concept_cache.op.TreeUtils;
 
-import com.codepoetics.protonpack.functions.TriFunction;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
 public class KPermutationsOfNUtils {
@@ -28,21 +29,36 @@ public class KPermutationsOfNUtils {
         return result;
     }
     
-    public static <A, B, S> Stream<ClusterStack<A, B, S>> kPermutationsOfN(
-            Multimap<A, B> mapping,
-            Function<B, S> bToClusterKey,
-            Function<S, ? extends Collection<B>> clusterKeyToBs
-            ) {
-        BiHashMultimap<A, B> map = create(mapping);
+    // TODO How to handle root nodes / null values?
+    public static <A, B> Multimap<A, B> deriveParentMapping(Tree<A> aTree, Tree<B> bTree, Multimap<A, B> childMapping) {
+        Multimap<A, B> result = HashMultimap.create();
+        Set<A> as = childMapping.keySet();
+        for(A a : as) {
+            A aParent = aTree.getParent(a);
+            Collection<B> bs = childMapping.get(a);
+            Set<B> bParents = TreeUtils.getParentsOf(bTree, bs);
+
+            result.putAll(aParent, bParents);
+        }
+
+        return result;
+    }
+    
+    
+    public static <A, B> Stream<ClusterStack<A, B, Entry<A, B>>> kPermutationsOfN(
+            Multimap<A, B> childMapping,
+            Tree<A> aTree,
+            Tree<B> bTree) {
+
+        Multimap<A, B> parentMapping = deriveParentMapping(aTree, bTree, childMapping);
+        List<A> as = new ArrayList<>(parentMapping.keySet());
+
+        //TriFunction<S, A, B, Stream<S>> solutionCombiner = (s, a, b) -> Collections.<S>singleton(null).stream();
         
-        List<A> as = new ArrayList<A>(mapping.keySet());
+        KPermutationsOfNCandidateLists<A, B> engine =
+            new KPermutationsOfNCandidateLists<>(aTree, bTree, as, childMapping, parentMapping);
         
-        TriFunction<S, A, B, Stream<S>> solutionCombiner = (s, a, b) -> Collections.<S>singleton(null).stream();
-        
-        KPermutationsOfNCandidateLists<A, B, S> engine =
-            new KPermutationsOfNCandidateLists<>(as, map, bToClusterKey, clusterKeyToBs);
-        
-        Stream<ClusterStack<A, B, S>> result = engine.stream(null);
+        Stream<ClusterStack<A, B, Entry<A, B>>> result = engine.stream();
         return result; 
     }
         

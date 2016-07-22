@@ -3,10 +3,12 @@ package org.aksw.jena_sparql_api.concept_cache.op;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -90,6 +92,23 @@ public class TreeUtils {
                 getLeafs(result, tree, child);
             }
         }
+    }
+    
+    /**
+     * Get the set of immediate parents for a given set of children
+     * 
+     * @param tree
+     * @param children
+     * @return
+     */
+    public static <T> Set<T> getParentsOf(Tree<T> tree, Iterable<T> children) {
+        Set<T> result = new HashSet<T>();
+        for(T child: children) {
+            T parent = tree.getParent(child);
+            result.add(parent);
+        }
+        
+        return result;
     }
 
     /**

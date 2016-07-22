@@ -123,10 +123,10 @@ public class TestStateSpaceSearch {
         candOpMapping.put(cacheLeafs.get(1), queryLeafs.get(3));
 
 
-        Stream<ClusterStack<Op, Op, Op>> stream = KPermutationsOfNUtils.<Op, Op, Op>kPermutationsOfN(
+        Stream<ClusterStack<Op, Op, Entry<Op, Op>>> stream = KPermutationsOfNUtils.<Op, Op>kPermutationsOfN(
                 candOpMapping,
-                (op) -> queryMultiaryTree.getParent(op),
-                (x) -> queryMultiaryTree.getChildren(x));
+                cacheMultiaryTree,
+                queryMultiaryTree);
         
         stream.forEach(x -> System.out.println("Candidate Solution: " + x.asList().iterator().next()));
         
