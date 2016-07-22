@@ -113,15 +113,27 @@ public class TestStateSpaceSearch {
         List<Op> queryLeafs = TreeUtils.getLeafs(queryTree);
         
 
+        int test = 0;
         
-        // Expected: a:1 - b:0
-        candOpMapping.put(cacheLeafs.get(0), queryLeafs.get(0));
-        candOpMapping.put(cacheLeafs.get(0), queryLeafs.get(1));
-
-        candOpMapping.put(cacheLeafs.get(1), queryLeafs.get(0));
-        candOpMapping.put(cacheLeafs.get(1), queryLeafs.get(2));
-        candOpMapping.put(cacheLeafs.get(1), queryLeafs.get(3));
-
+        if(test == 0) {
+            // Expected: a:1 - b:2
+            candOpMapping.put(cacheLeafs.get(0), queryLeafs.get(0));
+            candOpMapping.put(cacheLeafs.get(0), queryLeafs.get(2));
+    
+            candOpMapping.put(cacheLeafs.get(1), queryLeafs.get(0));
+            candOpMapping.put(cacheLeafs.get(1), queryLeafs.get(2));
+            candOpMapping.put(cacheLeafs.get(1), queryLeafs.get(3));
+        }
+        
+        if(test == 1) {
+            // Expected: a:1 - b:0
+            candOpMapping.put(cacheLeafs.get(0), queryLeafs.get(0));
+            candOpMapping.put(cacheLeafs.get(0), queryLeafs.get(1));
+    
+            candOpMapping.put(cacheLeafs.get(1), queryLeafs.get(0));
+            candOpMapping.put(cacheLeafs.get(1), queryLeafs.get(2));
+            candOpMapping.put(cacheLeafs.get(1), queryLeafs.get(3));
+        }
 
         Stream<ClusterStack<Op, Op, Entry<Op, Op>>> stream = KPermutationsOfNUtils.<Op, Op>kPermutationsOfN(
                 candOpMapping,

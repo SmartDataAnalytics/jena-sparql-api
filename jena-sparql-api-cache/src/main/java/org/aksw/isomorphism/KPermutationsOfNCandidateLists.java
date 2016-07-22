@@ -134,66 +134,77 @@ public class KPermutationsOfNCandidateLists<A, B>
                 List<A> aChildren = aTree.getChildren(a);
                 List<B> bChildren = bTree.getChildren(b);
                                 
+                boolean unsatisfiable = false;
+
                 Multimap<A, B> clusterCandidateMapping = HashMultimap.create();
                 for(A aChild : aChildren) {
                     Collection<B> bCands = childMapping.get(aChild);
                     // intersect the bCands with the b children
                     Set<B> bRemaining = new HashSet<>(bCands);
                     bRemaining.retainAll(bChildren);
+                    
+                    if(bRemaining.isEmpty()) {
+                        unsatisfiable = true;
+                        break;
+                    }
+                    
                     clusterCandidateMapping.putAll(aChild, bRemaining);
+                    // All children of A must have candidates
                 }
 
-                //BiHashMultimap<A, B> mm = KPermutationsOfNUtils.create(clusterCandidateMapping);
-                // Collect all single-mappings
-                BiMap<B, A> bToOnlyA = HashBiMap.create();
-                
-                boolean unsatisfiable = false;
-                for(Entry<A, Collection<B>> e : clusterCandidateMapping.asMap().entrySet()) {
-                    A ax = e.getKey();
-                    if(e.getValue().size() == 1) {
-                        B bx = e.getValue().iterator().next();
-
-                        if(bToOnlyA.containsKey(bx)) {
-                            unsatisfiable = true;
-                            break;
-                        } else {                        
-                            bToOnlyA.put(bx, ax);
+                if(!unsatisfiable) {
+                    //BiHashMultimap<A, B> mm = KPermutationsOfNUtils.create(clusterCandidateMapping);
+                    // Collect all single-mappings
+                    BiMap<B, A> bToOnlyA = HashBiMap.create();
+                    
+                    for(Entry<A, Collection<B>> e : clusterCandidateMapping.asMap().entrySet()) {
+                        A ax = e.getKey();
+                        if(e.getValue().size() == 1) {
+                            B bx = e.getValue().iterator().next();
+    
+                            if(bToOnlyA.containsKey(bx)) {
+                                unsatisfiable = true;
+                                break;
+                            } else {                        
+                                bToOnlyA.put(bx, ax);
+                            }
                         }
+                    }
+    
+                    //if(!unsatisifable) {
+                    while(!bToOnlyA.isEmpty()) {
+                        BiMap<B, A> nextBToOnlyA = HashBiMap.create();
+    
+                        Collection<B> bRemovals = bToOnlyA.keySet();
+                        //for(Entry<A, Collection<B>> e : clusterCandidateMapping.asMap().entrySet()) {
+                        Map<A, Collection<B>> m = clusterCandidateMapping.asMap();
+                        
+                        // Note: We have to copy the keyset because changing collection of the entries' value
+                        // causes a cme.
+                        for(A ax : new HashSet<>(m.keySet())) {
+                            Collection<B> bxs = m.get(ax);
+                            int sizeBefore = bxs.size();
+                        
+                            // remove all bs that only map to a single a
+                            bxs.removeAll(bRemovals);
+                            
+                            B restoreB = bToOnlyA.inverse().get(ax);
+                            if(restoreB != null) {
+                                bxs.add(restoreB);
+                            }
+                            
+                            int sizeAfter = bxs.size();
+                            
+                            if(sizeAfter == 1 && sizeBefore != sizeAfter) {
+                                B newB = bxs.iterator().next();
+                                nextBToOnlyA.put(newB, ax);
+                            }                        
+                        }
+                        
+                        bToOnlyA = nextBToOnlyA;
                     }
                 }
 
-                //if(!unsatisifable) {
-                while(!bToOnlyA.isEmpty()) {
-                    BiMap<B, A> nextBToOnlyA = HashBiMap.create();
-
-                    Collection<B> bRemovals = bToOnlyA.keySet();
-                    //for(Entry<A, Collection<B>> e : clusterCandidateMapping.asMap().entrySet()) {
-                    Map<A, Collection<B>> m = clusterCandidateMapping.asMap();
-                    
-                    // Note: We have to copy the keyset because changing collection of the entries' value
-                    // causes a cme.
-                    for(A ax : new HashSet<>(m.keySet())) {
-                        Collection<B> bxs = m.get(ax);
-                        int sizeBefore = bxs.size();
-                    
-                        // remove all bs that only map to a single a
-                        bxs.removeAll(bRemovals);
-                        
-                        B restoreB = bToOnlyA.inverse().get(ax);
-                        if(restoreB != null) {
-                            bxs.add(restoreB);
-                        }
-                        
-                        int sizeAfter = bxs.size();
-                        
-                        if(sizeAfter == 1 && sizeBefore != sizeAfter) {
-                            B newB = bxs.iterator().next();
-                            nextBToOnlyA.put(newB, ax);
-                        }                        
-                    }
-                    
-                    bToOnlyA = nextBToOnlyA;
-                }
                 // Recurse if still satisfiable
                 if(!unsatisfiable) {
                                                         
