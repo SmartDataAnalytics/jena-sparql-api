@@ -2,6 +2,7 @@ package org.aksw.isomorphism;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -11,6 +12,7 @@ import org.aksw.commons.collections.multimaps.BiHashMultimap;
 import org.aksw.jena_sparql_api.concept_cache.dirty.Tree;
 import org.aksw.jena_sparql_api.concept_cache.op.TreeUtils;
 
+import com.codepoetics.protonpack.functions.TriFunction;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
@@ -55,10 +57,30 @@ public class KPermutationsOfNUtils {
 
         //TriFunction<S, A, B, Stream<S>> solutionCombiner = (s, a, b) -> Collections.<S>singleton(null).stream();
         
-        KPermutationsOfNCandidateLists<A, B> engine =
-            new KPermutationsOfNCandidateLists<>(aTree, bTree, as, childMapping, parentMapping);
+        TreeMapperCandidateList<A, B> engine =
+            new TreeMapperCandidateList<>(aTree, bTree, as, childMapping, parentMapping);
         
         Stream<ClusterStack<A, B, Entry<A, B>>> result = engine.stream();
+        return result; 
+    }
+    
+
+    public static <A, B, S> Stream<CombinationStack<A, B, S>> kPermutationsOfN(Multimap<A, B> mapping) {
+        BiHashMultimap<A, B> map = new BiHashMultimap<>();
+        
+        // TODO Create a putAll method on the bi-multimap
+        for(Entry<A, B> entry : mapping.entries()) {
+            map.put(entry.getKey(), entry.getValue());
+        }
+        
+        List<A> as = new ArrayList<A>(mapping.keySet());
+        
+        TriFunction<S, A, B, Stream<S>> solutionCombiner = (s, a, b) -> Collections.<S>singleton(null).stream();
+        
+        KPermutationsOfNCandidateLists<A, B, S> engine =
+            new KPermutationsOfNCandidateLists<>(as, map, solutionCombiner);
+        
+        Stream<CombinationStack<A, B, S>> result = engine.stream(null);
         return result; 
     }
         
