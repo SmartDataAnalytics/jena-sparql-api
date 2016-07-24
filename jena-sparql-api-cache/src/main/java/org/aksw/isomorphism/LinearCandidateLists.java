@@ -1,6 +1,8 @@
 package org.aksw.isomorphism;
 
-import org.aksw.commons.collections.multimaps.BiHashMultimap;
+import java.util.List;
+
+import com.google.common.collect.Multimap;
 
 /**
  * Given (1) a multimap of candidate mappings a and b and (2) two lists of x and y
@@ -11,7 +13,10 @@ import org.aksw.commons.collections.multimaps.BiHashMultimap;
  * @author raven
  *
  */
-public class LinearCandidateLists {
-    protected BiHashMultimap<A, B> remaining;
+public class LinearCandidateLists<A, B, S> {
+    //protected BiHashMultimap<A, B> remaining;
+    protected List<A> aOrder;
+    protected List<B> bOrder;
+    protected Multimap<A, B> mapping;
 
 }
