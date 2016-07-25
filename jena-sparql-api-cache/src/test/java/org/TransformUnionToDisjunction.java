@@ -7,7 +7,9 @@ import org.apache.jena.sparql.algebra.op.OpUnion;
 
 public class TransformUnionToDisjunction
     extends TransformCopy 
-{
+{    
+    public static final TransformUnionToDisjunction fn = new TransformUnionToDisjunction();
+
     @Override
     public Op transform(OpUnion opUnion, Op left, Op right) {
         OpDisjunction result = OpDisjunction.create();

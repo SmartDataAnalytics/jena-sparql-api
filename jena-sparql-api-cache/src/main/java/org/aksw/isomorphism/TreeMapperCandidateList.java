@@ -133,7 +133,7 @@ public class TreeMapperCandidateList<A, B>
                 // The candidate mapping is the mapping of all children of the matched parents
                 // in accordance with child candidate mapping
                 // If the parent is null, it means that the tree only consists of the root node
-                
+
                 List<A> aChildren = a == null ? Collections.singletonList(aTree.getRoot()) : aTree.getChildren(a);
                 List<B> bChildren = b == null ? Collections.singletonList(bTree.getRoot()) : bTree.getChildren(b);
                                 
@@ -145,7 +145,7 @@ public class TreeMapperCandidateList<A, B>
                     // intersect the bCands with the b children
                     Set<B> bRemaining = new HashSet<>(bCands);
                     bRemaining.retainAll(bChildren);
-                    
+
                     if(bRemaining.isEmpty()) {
                         unsatisfiable = true;
                         break;

@@ -105,22 +105,21 @@ public class TestStateSpaceSearch {
 
         
 
-        int test = 2;
+        int test = 0;
 
         
         Op opCache;
 
         if(test != 2) {
-            opCache = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { ?a ?a ?a } UNION { ?b ?b ?b } } LIMIT 10")));
+            opCache = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { { ?a ?a ?a } UNION { ?b ?b ?b } } ?c ?c ?c } LIMIT 10")));
         } else {
             opCache = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT * { ?a ?a ?a }")));
         }
-        Op opQuery = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { { ?0 ?0 ?0 } UNION { ?1 ?1 ?1 } } { { ?2 ?2 ?2 } UNION { ?3 ?3 ?3 } } } LIMIT 10")));
+        Op opQuery = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { { ?0 ?0 ?0 } UNION { ?1 ?1 ?1 } } { { ?2 ?2 ?2 } UNION { ?3 ?3 ?3 } } { ?4 ?4 ?4 } } LIMIT 10")));
 
-        
-        TransformUnionToDisjunction transform = new TransformUnionToDisjunction();
-        opCache = Transformer.transform(transform, opCache);
-        opQuery = Transformer.transform(transform, opQuery);
+                
+        opCache = Transformer.transform(TransformJoinToConjunction.fn, Transformer.transform(TransformUnionToDisjunction.fn, opCache));
+        opQuery = Transformer.transform(TransformJoinToConjunction.fn, Transformer.transform(TransformUnionToDisjunction.fn, opQuery));
                 
         Tree<Op> cacheTree = TreeImpl.create(opCache, (o) -> OpUtils.getSubOps(o));
         Tree<Op> queryTree = TreeImpl.create(opQuery, (o) -> OpUtils.getSubOps(o));
@@ -150,6 +149,8 @@ public class TestStateSpaceSearch {
             candOpMapping.put(cacheLeafs.get(1), queryLeafs.get(0));
             candOpMapping.put(cacheLeafs.get(1), queryLeafs.get(2));
             candOpMapping.put(cacheLeafs.get(1), queryLeafs.get(3));
+
+            candOpMapping.put(cacheLeafs.get(2), queryLeafs.get(4));
         }
         
         if(test == 1) {

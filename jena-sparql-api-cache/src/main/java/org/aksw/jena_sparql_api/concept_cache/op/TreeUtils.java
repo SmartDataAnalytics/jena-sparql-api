@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.concept_cache.op;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -73,6 +74,30 @@ public class TreeUtils {
                             doDescend)));
         }
 
+        return result;
+    }
+    
+    /**
+     * Returns the set of nodes in each level of the tree
+     * 
+     * @param tree
+     * @return
+     */
+    public static <T> List<Set<T>> nodesPerLevel(Tree<T> tree) {
+        List<Set<T>> result = new ArrayList<>();
+        
+        Set<T> current = Collections.singleton(tree.getRoot());
+        while(current.isEmpty()) {
+            Set<T> next = new HashSet<>();
+            for(T node : current) {            
+                List<T>children = tree.getChildren(node);
+                next.addAll(children);
+            }
+
+            result.add(next);
+            current = next;
+        }
+        
         return result;
     }
 
