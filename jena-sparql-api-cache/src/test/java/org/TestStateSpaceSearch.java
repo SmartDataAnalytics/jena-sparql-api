@@ -24,6 +24,7 @@ import org.aksw.isomorphism.Combination;
 import org.aksw.isomorphism.KPermutationsOfNUtils;
 import org.aksw.isomorphism.ProblemContainerNeighbourhoodAware;
 import org.aksw.isomorphism.ProblemNeighborhoodAware;
+import org.aksw.isomorphism.SequentialMatchIterator;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMapImpl;
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.ProblemVarMappingExpr;
@@ -86,6 +87,25 @@ public class TestStateSpaceSearch {
     
     
     public static void main(String[] args) {
+        List<String> as = Arrays.asList("a", "b", "c");
+        List<Integer> bs = Arrays.asList(1, 2, 3, 4);
+        
+        Multimap<String, Integer> ms = HashMultimap.create();
+        ms.put("a", 1);
+        ms.put("a", 2);
+        ms.put("b", 2);
+        ms.put("b", 3);
+        ms.put("c", 3);
+        ms.put("c", 4);
+        
+        //Iterator<Map<String, Integer>> it = new SequentialMatchIterator<>(as, bs, (a, b) -> ms.get(a).contains(b));
+        Iterable<Map<String, Integer>> it = () -> SequentialMatchIterator.create(as, bs, ms);
+
+        it.forEach(x -> System.out.println("seq match: " + x));
+
+        
+        
+        
         Op opCache = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { ?a ?a ?a } UNION { ?b ?b ?b } } LIMIT 10")));        
         Op opQuery = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { { ?0 ?0 ?0 } UNION { ?1 ?1 ?1 } } { { ?2 ?2 ?2 } UNION { ?3 ?3 ?3 } } } LIMIT 10")));
 
