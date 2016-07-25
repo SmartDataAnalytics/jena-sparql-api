@@ -3,6 +3,7 @@ package org.aksw.isomorphism;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -131,8 +132,10 @@ public class TreeMapperCandidateList<A, B>
                 
                 // The candidate mapping is the mapping of all children of the matched parents
                 // in accordance with child candidate mapping
-                List<A> aChildren = aTree.getChildren(a);
-                List<B> bChildren = bTree.getChildren(b);
+                // If the parent is null, it means that the tree only consists of the root node
+                
+                List<A> aChildren = a == null ? Collections.singletonList(aTree.getRoot()) : aTree.getChildren(a);
+                List<B> bChildren = b == null ? Collections.singletonList(bTree.getRoot()) : bTree.getChildren(b);
                                 
                 boolean unsatisfiable = false;
 

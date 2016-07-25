@@ -97,16 +97,24 @@ public class TestStateSpaceSearch {
         ms.put("b", 3);
         ms.put("c", 3);
         ms.put("c", 4);
-        
+
         //Iterator<Map<String, Integer>> it = new SequentialMatchIterator<>(as, bs, (a, b) -> ms.get(a).contains(b));
         Iterable<Map<String, Integer>> it = () -> SequentialMatchIterator.create(as, bs, ms);
 
         it.forEach(x -> System.out.println("seq match: " + x));
 
         
+
+        int test = 2;
+
         
-        
-        Op opCache = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { ?a ?a ?a } UNION { ?b ?b ?b } } LIMIT 10")));        
+        Op opCache;
+
+        if(test != 2) {
+            opCache = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { ?a ?a ?a } UNION { ?b ?b ?b } } LIMIT 10")));
+        } else {
+            opCache = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT * { ?a ?a ?a }")));
+        }
         Op opQuery = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { { ?0 ?0 ?0 } UNION { ?1 ?1 ?1 } } { { ?2 ?2 ?2 } UNION { ?3 ?3 ?3 } } } LIMIT 10")));
 
         
@@ -117,7 +125,8 @@ public class TestStateSpaceSearch {
         Tree<Op> cacheTree = TreeImpl.create(opCache, (o) -> OpUtils.getSubOps(o));
         Tree<Op> queryTree = TreeImpl.create(opQuery, (o) -> OpUtils.getSubOps(o));
 
-        System.out.println(queryTree);
+        System.out.println("Query Tree:\n" + queryTree);
+        System.out.println("Cache Tree:\n" + cacheTree);
         
 //        System.out.println("root:" + tree.getRoot());
 //        System.out.println("root:" + tree.getChildren(tree.getRoot()));
@@ -132,8 +141,6 @@ public class TestStateSpaceSearch {
         List<Op> cacheLeafs = TreeUtils.getLeafs(cacheTree);        
         List<Op> queryLeafs = TreeUtils.getLeafs(queryTree);
         
-
-        int test = 0;
         
         if(test == 0) {
             // Expected: a:1 - b:2
@@ -155,10 +162,22 @@ public class TestStateSpaceSearch {
             candOpMapping.put(cacheLeafs.get(1), queryLeafs.get(3));
         }
 
+        // test case where there the cache op is just a single node (i.e. there is no parent)
+        if(test == 2) {
+            // Expected: a:1 - b:0
+            candOpMapping.put(cacheLeafs.get(0), queryLeafs.get(0));
+   
+        }
+        
         Stream<ClusterStack<Op, Op, Entry<Op, Op>>> stream = KPermutationsOfNUtils.<Op, Op>kPermutationsOfN(
                 candOpMapping,
                 cacheMultiaryTree,
                 queryMultiaryTree);
+        
+        
+        // Now that we have the clusters, how to proceed?
+        
+        
         
         stream.forEach(x -> System.out.println("Candidate Solution: " + x.asList().iterator().next()));
         
