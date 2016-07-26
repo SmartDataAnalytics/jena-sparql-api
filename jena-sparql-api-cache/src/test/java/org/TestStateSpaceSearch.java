@@ -87,20 +87,18 @@ class TreeMatcherFull<A, B> {
     public TreeMatcherFull(Tree<A> aTree, Tree<B> bTree) {//, Multimap<A, B> baseMapping) {
         this.aTree = aTree;
         this.bTree = bTree;
+
         //this.baseMapping = baseMapping; 
+        this.aTreeLevels = TreeUtils.nodesPerLevel(aTree);
+        this.bTreeLevels = TreeUtils.nodesPerLevel(bTree);
         
+        Collections.reverse(aTreeLevels);
+        Collections.reverse(bTreeLevels);
+
         this.aTreeDepth = aTreeLevels.size();
-        this.bTreeDepth = bTreeLevels.size();
-        
+        this.bTreeDepth = bTreeLevels.size();        
     }
     
-    public static <A, B> void run(Tree<A> aTree, Tree<B> bTree) {
-        List<Set<A>> cacheTreeLevels = TreeUtils.nodesPerLevel(aTree);
-        List<Set<B>> queryTreeLevels = TreeUtils.nodesPerLevel(bTree);
-        
-        Collections.reverse(cacheTreeLevels);
-        Collections.reverse(queryTreeLevels);
-    }
     
     public void recurse(int i, Multimap<A, B> baseMapping) {
         
@@ -121,6 +119,9 @@ class TreeMatcherFull<A, B> {
                 bTree);
 
         stream.forEach(parentClusterStack -> {
+            System.out.println("GOT at level" + i + " " + parentClusterStack);
+            
+            
             Multimap<A, B> parentMapping = HashMultimap.create();
             for(Cluster<A, B, Entry<A, B>> cluster : parentClusterStack) {
                 Entry<A, B> e = cluster.getCluster();
