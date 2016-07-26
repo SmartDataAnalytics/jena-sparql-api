@@ -87,14 +87,14 @@ public class TreeUtils {
         List<Set<T>> result = new ArrayList<>();
         
         Set<T> current = Collections.singleton(tree.getRoot());
-        while(current.isEmpty()) {
+        while(!current.isEmpty()) {
+            result.add(current);
             Set<T> next = new HashSet<>();
             for(T node : current) {            
                 List<T>children = tree.getChildren(node);
                 next.addAll(children);
             }
 
-            result.add(next);
             current = next;
         }
         

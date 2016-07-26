@@ -235,14 +235,14 @@ public class ProblemContainerNeighbourhoodAware<S, T>
         return result;
     }
 
-    public static <K, V, W extends Iterable<V>> Entry<K, V> firstEntry(NavigableMap<K, W> map) {
+    public static <K, V> Entry<K, V> firstEntry(NavigableMap<K, ? extends Iterable<V>> map) {
         Entry<K, V> result = null;
 
-        Iterator<Entry<K, W>> itE = map.entrySet().iterator();
+        Iterator<? extends Entry<K, ? extends Iterable<V>>> itE = map.entrySet().iterator();
 
         // For robustness, remove entry valueX sets
         while(itE.hasNext()) {
-            Entry<K, W> e = itE.next();
+            Entry<K, ? extends Iterable<V>> e = itE.next();
 
             K k = e.getKey();
             Iterable<V> vs = e.getValue();

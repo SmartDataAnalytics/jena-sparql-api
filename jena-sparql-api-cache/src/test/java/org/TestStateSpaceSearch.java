@@ -53,9 +53,12 @@ import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.util.ExprUtils;
 
+import com.google.common.base.Predicate;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 
 
 
@@ -169,6 +172,27 @@ public class TestStateSpaceSearch {
             candOpMapping.put(cacheLeafs.get(0), queryLeafs.get(0));
    
         }
+        
+        List<Set<Op>> cacheTreeLevels = TreeUtils.nodesPerLevel(cacheMultiaryTree);
+        List<Set<Op>> queryTreeLevels = TreeUtils.nodesPerLevel(queryMultiaryTree);
+        
+        
+        Set<Op> keys = Iterables.getLast(cacheTreeLevels);
+        Set<Op> values = Iterables.getLast(queryTreeLevels);
+        candOpMapping = Multimaps.filterEntries(candOpMapping, new Predicate<Entry<Op, Op>>() {
+            @Override
+            public boolean apply(Entry<Op, Op> input) {
+                boolean result = keys.contains(input.getKey()) && values.contains(input.getValue());
+                return result;
+            }            
+        });
+        
+        //candOpMapping = HashMultimap.create(candOpMapping);
+        
+        
+        //Multimap<Op, Op> levelCandOpMapping = filterMapping(candOpMapping, );
+        // Filter the candOpMapping by the nodes in the level
+        
         
         Stream<ClusterStack<Op, Op, Entry<Op, Op>>> stream = KPermutationsOfNUtils.<Op, Op>kPermutationsOfN(
                 candOpMapping,
