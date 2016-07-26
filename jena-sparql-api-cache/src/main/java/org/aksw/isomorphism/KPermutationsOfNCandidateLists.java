@@ -69,12 +69,12 @@ public class KPermutationsOfNCandidateLists<A, B, S>
     public void run(S baseSolution, Consumer<CombinationStack<A, B, S>> completeMatch) {
         boolean isEmpty = as.isEmpty(); //remainingA.successor.isTail();
         if(!isEmpty) {
-            nextB(0, baseSolution, null, completeMatch);
+            recurse(0, baseSolution, null, completeMatch);
         }
     }
     
     //@Override
-    public void nextB(int i, S baseSolution, CombinationStack<A, B, S> stack, Consumer<CombinationStack<A, B, S>> completeMatch) {
+    public void recurse(int i, S baseSolution, CombinationStack<A, B, S> stack, Consumer<CombinationStack<A, B, S>> completeMatch) {
         if(i < as.size()) {
             A a = as.get(i);
             
@@ -102,7 +102,7 @@ public class KPermutationsOfNCandidateLists<A, B, S>
                     CombinationStack<A, B, S> newStack = new CombinationStack<>(stack, c);
 
                     // recurse
-                    nextB(i + 1, partialSolution, newStack, completeMatch);
+                    recurse(i + 1, partialSolution, newStack, completeMatch);
                 });
 
                 // restore

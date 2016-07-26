@@ -1,10 +1,11 @@
 package org.aksw.isomorphism;
 
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiPredicate;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Multimap;
@@ -36,6 +37,19 @@ public class SequentialMatchIterator<A, B, S>
     
     protected int i = 0;
 
+    /**
+     * The cost of iterating all possible solutions.
+     * The actual number of solutions may be significantly less.
+     * 
+     * @return
+     */
+    public int estimateCost() {
+        int m = aOrder.size();
+        int n = bOrder.size();
+        int result = m * n;
+        return result;
+    }
+    
     public SequentialMatchIterator(List<A> aOrder, List<B> bOrder, BiPredicate<A, B> isMatch) {
         super();
         this.aOrder = aOrder;
@@ -89,8 +103,10 @@ public class SequentialMatchIterator<A, B, S>
         return result;
     }
 
-    public static <A, B> Iterator<Map<A, B>> create(List<A> as, List<B> bs, Multimap<A, B> mapping) {
-        Iterator<Map<A, B>> result = new SequentialMatchIterator<>(as, bs, (a, b) -> mapping.get(a).contains(b));
+    public static <A, B> Stream<Map<A, B>> createStream(List<A> as, List<B> bs, Multimap<A, B> mapping) {
+        Iterable<Map<A, B>> it = () -> new SequentialMatchIterator<>(as, bs, (a, b) -> mapping.get(a).contains(b));
+        Stream<Map<A, B>> result = StreamSupport.stream(it.spliterator(), false);
+        
         return result;
     }
 }

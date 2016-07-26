@@ -4,8 +4,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
@@ -19,6 +21,11 @@ import com.google.common.collect.Multimap;
 public class KPermutationsOfNUtils {
 //    public static <A, B, S> Stream<CombinationStack<A, B, S>> kPermutationsOfN(Multimap<A, B> mapping) {
 //    }
+    
+//    public static <K, V> linearMapping() {
+//        Linear
+//    }
+//    
     
     public static <K, V> BiHashMultimap<K, V> create(Multimap<K, V> multimap) {
         
@@ -65,7 +72,8 @@ public class KPermutationsOfNUtils {
     }
     
 
-    public static <A, B, S> Stream<CombinationStack<A, B, S>> kPermutationsOfN(Multimap<A, B> mapping) {
+    //public static <A, B> Stream<CombinationStack<A, B, Object>> kPermutationsOfN(Multimap<A, B> mapping) {
+    public static <A, B> Stream<Map<A, B>> kPermutationsOfN(Multimap<A, B> mapping) {
         BiHashMultimap<A, B> map = new BiHashMultimap<>();
         
         // TODO Create a putAll method on the bi-multimap
@@ -75,13 +83,19 @@ public class KPermutationsOfNUtils {
         
         List<A> as = new ArrayList<A>(mapping.keySet());
         
-        TriFunction<S, A, B, Stream<S>> solutionCombiner = (s, a, b) -> Collections.<S>singleton(null).stream();
+        TriFunction<Object, A, B, Stream<Object>> solutionCombiner = (s, a, b) -> Collections.<Object>singleton(null).stream();
         
-        KPermutationsOfNCandidateLists<A, B, S> engine =
+        KPermutationsOfNCandidateLists<A, B, Object> engine =
             new KPermutationsOfNCandidateLists<>(as, map, solutionCombiner);
         
-        Stream<CombinationStack<A, B, S>> result = engine.stream(null);
-        return result; 
+        Stream<CombinationStack<A, B, Object>> result = engine.stream(null);
+        
+        Stream<Map<A, B>> res = result.map(stack -> { 
+            Map<A, B> r = stack.stream().collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+            return r;
+        });
+        
+        return res; 
     }
         
     

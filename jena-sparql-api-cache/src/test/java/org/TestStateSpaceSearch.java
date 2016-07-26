@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -49,12 +50,14 @@ import org.apache.jena.query.Syntax;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.Transformer;
+import org.apache.jena.sparql.algebra.op.OpDisjunction;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.util.ExprUtils;
 
+import com.codepoetics.protonpack.functions.TriFunction;
 import com.google.common.base.Predicate;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.HashMultimap;
@@ -82,9 +85,31 @@ class TreeMatcherFull<A, B> {
     protected int aTreeDepth;
     protected int bTreeDepth;
 
-    //protected Multimap<A, B> baseMapping;
+    protected Multimap<A, B> baseMapping;
     
-    public TreeMatcherFull(Tree<A> aTree, Tree<B> bTree) {//, Multimap<A, B> baseMapping) {
+    // Function that given a mapping of parent nodes returns the matching strategy for its children  
+//    protected Function<Entry<A, B>, TriFunction<
+//            ? extends Collection<A>,
+//            ? extends Collection<B>,
+//            Multimap<A, B>,
+//            Stream<Map<A, B>>>> matchingStrategy;
+      protected Function<Entry<A, B>, TriFunction<
+          ? super Collection<A>,
+          ? super Collection<B>,
+          ? super Multimap<A, B>,
+          Boolean>> isSatisfiable; //matchingStrategy;
+    
+
+    public TreeMatcherFull(
+            Tree<A> aTree,
+            Tree<B> bTree,
+            Multimap<A, B> baseMapping,
+            Function<Entry<A, B>, TriFunction<
+                ? super Collection<A>,
+                ? super Collection<B>,
+                ? super Multimap<A, B>,
+                Boolean>> isSatisfiable            
+            ) {//, Multimap<A, B> baseMapping) {
         this.aTree = aTree;
         this.bTree = bTree;
 
@@ -96,44 +121,86 @@ class TreeMatcherFull<A, B> {
         Collections.reverse(bTreeLevels);
 
         this.aTreeDepth = aTreeLevels.size();
-        this.bTreeDepth = bTreeLevels.size();        
+        this.bTreeDepth = bTreeLevels.size();
+        
+        //Multimap<A, B> baseMapping
+        this.baseMapping = baseMapping;
+        //this.matchingStrategy = matchingStrategy;
+        this.isSatisfiable = isSatisfiable;
     }
     
     
-    public void recurse(int i, Multimap<A, B> baseMapping) {
+    public void recurse(int i, Multimap<A, B> parentMapping) {
         
-        Set<A> keys = aTreeLevels.get(i);
-        Set<B> values = bTreeLevels.get(i);
-        
-        Multimap<A, B> effectiveMapping = Multimaps.filterEntries(baseMapping, new Predicate<Entry<A, B>>() {
-            @Override
-            public boolean apply(Entry<A, B> input) {
-                boolean result = keys.contains(input.getKey()) && values.contains(input.getValue());
-                return result;
-            }            
-        });
+        if(i < aTreeLevels.size()) {            
+            Set<A> keys = aTreeLevels.get(i);
+            Set<B> values = bTreeLevels.get(i);
+            
+            Multimap<A, B> effectiveMapping = HashMultimap.create();
+            
+            // Nodes of the current level mapped according to the base mapping
+            Multimap<A, B> levelMapping = Multimaps.filterEntries(baseMapping, new Predicate<Entry<A, B>>() {
+                @Override
+                public boolean apply(Entry<A, B> input) {
+                    boolean result = keys.contains(input.getKey()) && values.contains(input.getValue());
+                    return result;
+                }            
+            });
+            
+            effectiveMapping.putAll(levelMapping);
+            effectiveMapping.putAll(parentMapping);
+    
+            Stream<ClusterStack<A, B, Entry<A, B>>> stream = KPermutationsOfNUtils.<A, B>kPermutationsOfN(
+                    effectiveMapping,
+                    aTree,
+                    bTree);
+    
+            stream.forEach(parentClusterStack -> {
 
-        Stream<ClusterStack<A, B, Entry<A, B>>> stream = KPermutationsOfNUtils.<A, B>kPermutationsOfN(
-                effectiveMapping,
-                aTree,
-                bTree);
+                boolean satisfiability = true;
+                for(Cluster<A, B, Entry<A, B>> cluster : parentClusterStack) {
+                    Entry<A, B> parentMap = cluster.getCluster();
 
-        stream.forEach(parentClusterStack -> {
-            System.out.println("GOT at level" + i + " " + parentClusterStack);
-            
-            
-            Multimap<A, B> parentMapping = HashMultimap.create();
-            for(Cluster<A, B, Entry<A, B>> cluster : parentClusterStack) {
-                Entry<A, B> e = cluster.getCluster();
-                parentMapping.put(e.getKey(), e.getValue());
-            }            
-            
-            recurse(i + 1, parentMapping); 
-        });
+                    TriFunction<? super Collection<A>, ? super Collection<B>, ? super Multimap<A, B>, Boolean> predicate = isSatisfiable.apply(parentMap);
+                
+                    Multimap<A, B> mappings = cluster.getMappings();
+                    List<A> aChildren = aTree.getChildren(parentMap.getKey());
+                    List<B> bChildren = bTree.getChildren(parentMap.getValue());
+                                        
+                    Boolean r = predicate.apply(aChildren, bChildren, mappings);
+                    
+                    if(!r) {
+                        satisfiability = false;
+                        break;
+                    }
+                }
+                
+                if(satisfiability) {
+                    Multimap<A, B> nextParentMapping = HashMultimap.create();
+                    for(Cluster<A, B, Entry<A, B>> cluster : parentClusterStack) {
+                        Entry<A, B> e = cluster.getCluster();
+                        nextParentMapping.put(e.getKey(), e.getValue());
+                    }            
+                    
+                    // Based on the op-types, determine the matching strategy and check whether any of the clusters has a valid mapping
+    
+                    // If any cluster DOES NOT have a satisfiable mapping, we can stop the recursion
+                    
+                    System.out.println("GOT at level" + i + " " + nextParentMapping);
+                    System.out.println("GOT at level" + i + " " + parentClusterStack);
+                    
+                    
+                    recurse(i + 1, nextParentMapping);
+                }
+            });
+        }
     }
 }
 
 public class TestStateSpaceSearch {
+    
+   
+    
     
 //    public static void main(String[] args) {
 //        Multimap<String, Integer> m = HashMultimap.create();
@@ -174,8 +241,27 @@ public class TestStateSpaceSearch {
         
         return null;
     }
+
+    
     
     public static void main(String[] args) {
+        
+        Map<Class<?>, TriFunction<List<Op>, List<Op>, Multimap<Op, Op>, Boolean>> opToMatcherTest = new HashMap<>(); 
+        opToMatcherTest.put(OpDisjunction.class, (as, bs, mapping) -> true);
+
+        Function<Class<?>, TriFunction<List<Op>, List<Op>, Multimap<Op, Op>, Boolean>> fnOpToMatcherTest = (op) ->
+            opToMatcherTest.getOrDefault(op, (as, bs, mapping) -> SequentialMatchIterator.createStream(as, bs, mapping).findFirst().isPresent());
+
+        Map<Class<?>, TriFunction<List<Op>, List<Op>, Multimap<Op, Op>, Stream<Map<Op, Op>>>> opToMatcher = new HashMap<>(); 
+        
+        opToMatcher.put(OpDisjunction.class, (as, bs, mapping) -> KPermutationsOfNUtils.kPermutationsOfN(mapping));
+        //opToMatcher.put(OpLeftJoin.class, (as, bs, mapping) -> SequentialMatchIterator.createStream(as, bs, mapping));
+
+        // Function that maps an operator to the matching strategy
+        Function<Class<?>, TriFunction<List<Op>, List<Op>, Multimap<Op, Op>, Stream<Map<Op, Op>>>> fnOpToMatcher = (op) ->
+            opToMatcher.getOrDefault(op, (as, bs, mapping) -> SequentialMatchIterator.createStream(as, bs, mapping));
+
+        
         List<String> as = Arrays.asList("a", "b", "c");
         List<Integer> bs = Arrays.asList(1, 2, 3, 4);
         
@@ -188,7 +274,7 @@ public class TestStateSpaceSearch {
         ms.put("c", 4);
 
         //Iterator<Map<String, Integer>> it = new SequentialMatchIterator<>(as, bs, (a, b) -> ms.get(a).contains(b));
-        Iterable<Map<String, Integer>> it = () -> SequentialMatchIterator.create(as, bs, ms);
+        Stream<Map<String, Integer>> it = SequentialMatchIterator.createStream(as, bs, ms);
 
         it.forEach(x -> System.out.println("seq match: " + x));
 
@@ -263,8 +349,8 @@ public class TestStateSpaceSearch {
         List<Set<Op>> cacheTreeLevels = TreeUtils.nodesPerLevel(cacheMultiaryTree);
         List<Set<Op>> queryTreeLevels = TreeUtils.nodesPerLevel(queryMultiaryTree);
         
-        TreeMatcherFull<Op, Op> tm = new TreeMatcherFull<>(cacheMultiaryTree, queryMultiaryTree);
-        tm.recurse(0, candOpMapping);
+        TreeMatcherFull<Op, Op> tm = new TreeMatcherFull<>(cacheMultiaryTree, queryMultiaryTree, candOpMapping);
+        tm.recurse(0, HashMultimap.create());
         
         
         

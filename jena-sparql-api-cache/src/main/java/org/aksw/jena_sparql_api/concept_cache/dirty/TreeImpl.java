@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.concept_cache.dirty;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -27,7 +28,13 @@ public class TreeImpl<T>
 
     @Override
     public List<T> getChildren(T node) {
-        List<T> result = parentToChild.apply(node);
+        // TODO We could be default treate null as a super-root node whose only child is the root node.
+        // It would also be consistent in the sense that the parent of the root would be null and its child would be the root
+        List<T> result = node == null
+                ? (root == null ? Collections.emptyList() : Collections.singletonList(root))
+                : parentToChild.apply(node);
+
+//        List<T> result = parentToChild.apply(node);
         return result;
     }
 
