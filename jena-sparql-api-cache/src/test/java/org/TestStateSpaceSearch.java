@@ -13,12 +13,14 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.aksw.commons.collections.CartesianProduct;
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
+import org.aksw.isomorphism.Cluster;
 import org.aksw.isomorphism.ClusterStack;
 import org.aksw.isomorphism.Combination;
 import org.aksw.isomorphism.KPermutationsOfNUtils;
@@ -56,7 +58,6 @@ import org.apache.jena.sparql.util.ExprUtils;
 import com.google.common.base.Predicate;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 
@@ -70,6 +71,66 @@ interface TreeMatcher {
     
 }
 
+
+class TreeMatcherFull<A, B> {
+    protected Tree<A> aTree;
+    protected Tree<B> bTree;
+    
+    protected List<Set<A>> aTreeLevels;
+    protected List<Set<B>> bTreeLevels;
+    
+    protected int aTreeDepth;
+    protected int bTreeDepth;
+
+    //protected Multimap<A, B> baseMapping;
+    
+    public TreeMatcherFull(Tree<A> aTree, Tree<B> bTree) {//, Multimap<A, B> baseMapping) {
+        this.aTree = aTree;
+        this.bTree = bTree;
+        //this.baseMapping = baseMapping; 
+        
+        this.aTreeDepth = aTreeLevels.size();
+        this.bTreeDepth = bTreeLevels.size();
+        
+    }
+    
+    public static <A, B> void run(Tree<A> aTree, Tree<B> bTree) {
+        List<Set<A>> cacheTreeLevels = TreeUtils.nodesPerLevel(aTree);
+        List<Set<B>> queryTreeLevels = TreeUtils.nodesPerLevel(bTree);
+        
+        Collections.reverse(cacheTreeLevels);
+        Collections.reverse(queryTreeLevels);
+    }
+    
+    public void recurse(int i, Multimap<A, B> baseMapping) {
+        
+        Set<A> keys = aTreeLevels.get(i);
+        Set<B> values = bTreeLevels.get(i);
+        
+        Multimap<A, B> effectiveMapping = Multimaps.filterEntries(baseMapping, new Predicate<Entry<A, B>>() {
+            @Override
+            public boolean apply(Entry<A, B> input) {
+                boolean result = keys.contains(input.getKey()) && values.contains(input.getValue());
+                return result;
+            }            
+        });
+
+        Stream<ClusterStack<A, B, Entry<A, B>>> stream = KPermutationsOfNUtils.<A, B>kPermutationsOfN(
+                effectiveMapping,
+                aTree,
+                bTree);
+
+        stream.forEach(parentClusterStack -> {
+            Multimap<A, B> parentMapping = HashMultimap.create();
+            for(Cluster<A, B, Entry<A, B>> cluster : parentClusterStack) {
+                Entry<A, B> e = cluster.getCluster();
+                parentMapping.put(e.getKey(), e.getValue());
+            }            
+            
+            recurse(i + 1, parentMapping); 
+        });
+    }
+}
 
 public class TestStateSpaceSearch {
     
@@ -88,6 +149,30 @@ public class TestStateSpaceSearch {
 //        s.forEach(i -> System.out.println(i.asList()));
 //    }
     
+    //public static void 
+    
+    /**
+     * 
+     * 
+     * @param cacheOp
+     * @param queryOp
+     * @return
+     */
+    public static <A, B> BiFunction<? extends Collection<A>, ? extends Collection<B>, Stream<Map<A, B>>> determineMatchingStrategy(Op cacheOp, Op queryOp) {
+        int c = (cacheOp == null ? 0 : 1) | (queryOp == null ? 0 : 2);
+        switch(c) {
+        case 0: // both null - nothing to do because the candidate mapping of the children is already the final solution
+            break;
+        case 1: // cacheOp null
+            break;
+        case 2: // queryOp null - no match because the cache tree has greater depth than the query
+            break;
+        case 3: // both non-null - by default, both ops must be of equal type - the type determines the matching enumeration strategy
+            break;
+        }
+        
+        return null;
+    }
     
     public static void main(String[] args) {
         List<String> as = Arrays.asList("a", "b", "c");
@@ -173,38 +258,49 @@ public class TestStateSpaceSearch {
    
         }
         
+
         List<Set<Op>> cacheTreeLevels = TreeUtils.nodesPerLevel(cacheMultiaryTree);
         List<Set<Op>> queryTreeLevels = TreeUtils.nodesPerLevel(queryMultiaryTree);
         
-        
-        Set<Op> keys = Iterables.getLast(cacheTreeLevels);
-        Set<Op> values = Iterables.getLast(queryTreeLevels);
-        candOpMapping = Multimaps.filterEntries(candOpMapping, new Predicate<Entry<Op, Op>>() {
-            @Override
-            public boolean apply(Entry<Op, Op> input) {
-                boolean result = keys.contains(input.getKey()) && values.contains(input.getValue());
-                return result;
-            }            
-        });
-        
-        //candOpMapping = HashMultimap.create(candOpMapping);
+        TreeMatcherFull<Op, Op> tm = new TreeMatcherFull<>(cacheMultiaryTree, queryMultiaryTree);
+        tm.recurse(0, candOpMapping);
         
         
-        //Multimap<Op, Op> levelCandOpMapping = filterMapping(candOpMapping, );
-        // Filter the candOpMapping by the nodes in the level
         
-        
-        Stream<ClusterStack<Op, Op, Entry<Op, Op>>> stream = KPermutationsOfNUtils.<Op, Op>kPermutationsOfN(
-                candOpMapping,
-                cacheMultiaryTree,
-                queryMultiaryTree);
+//        Collections.reverse(cacheTreeLevels);
+//        Collections.reverse(queryTreeLevels);
+//        
+//        int cacheMultiaryTreeDepth = cacheTreeLevels.size();
+//        int queryMultiaryTreeDepth = queryTreeLevels.size();
+//
+//        for(int i = 0; i < cacheMultiaryTreeDepth; ++i) {
+//            Set<Op> keys = cacheTreeLevels.get(cacheMultiaryTreeDepth - 1 - i);
+//            Set<Op> values = queryTreeLevels.get(queryMultiaryTreeDepth - 1 - i);
+//            
+//            candOpMapping = Multimaps.filterEntries(candOpMapping, new Predicate<Entry<Op, Op>>() {
+//                @Override
+//                public boolean apply(Entry<Op, Op> input) {
+//                    boolean result = keys.contains(input.getKey()) && values.contains(input.getValue());
+//                    return result;
+//                }            
+//            });
+//            
+//            Stream<ClusterStack<Op, Op, Entry<Op, Op>>> stream = KPermutationsOfNUtils.<Op, Op>kPermutationsOfN(
+//                    candOpMapping,
+//                    cacheMultiaryTree,
+//                    queryMultiaryTree);
+//            
+//            stream.forEach(parentMapping -> {
+//               recurse(depth + 1, parentMapping); 
+//            });
+//        }
         
         
         // Now that we have the clusters, how to proceed?
         
         
         
-        stream.forEach(x -> System.out.println("Candidate Solution: " + x.asList().iterator().next()));
+        //stream.forEach(x -> System.out.println("Candidate Solution: " + x.asList().iterator().next()));
         
         
         // we need a mapping from leaf op to problem instance in order to determine which of the candidates to pick first
@@ -219,6 +315,7 @@ public class TestStateSpaceSearch {
         Entry<Long, Entry<Op, Op>> pick = ProblemContainerNeighbourhoodAware.firstEntry(costToOpMappings);
 
         SparqlCacheSystem.clusterNodesByFirstMultiaryAncestor(queryTree, candOpMapping);
+        
         
         
         

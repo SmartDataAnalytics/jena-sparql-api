@@ -55,8 +55,6 @@ public class TreeMapperCandidateList<A, B>
 
     protected Multimap<A, B> remainingParentMapping;
     
-    
-    
     public TreeMapperCandidateList(
             Tree<A> aTree,
             Tree<B> bTree,
@@ -70,8 +68,6 @@ public class TreeMapperCandidateList<A, B>
         this.bTree = bTree;
         this.remainingParentMapping = parentMapping;
     }
-    
-    
 
     public Stream<ClusterStack<A, B, Entry<A, B>>> stream() {//S baseSolution) {
         List<ClusterStack<A, B, Entry<A, B>>> list = new ArrayList<>();
