@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -89,7 +90,7 @@ public class TreeUtils {
         Set<T> current = Collections.singleton(tree.getRoot());
         while(!current.isEmpty()) {
             result.add(current);
-            Set<T> next = new HashSet<>();
+            Set<T> next = new LinkedHashSet<>();
             for(T node : current) {            
                 List<T>children = tree.getChildren(node);
                 next.addAll(children);

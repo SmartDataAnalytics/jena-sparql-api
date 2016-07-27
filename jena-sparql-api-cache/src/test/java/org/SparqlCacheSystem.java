@@ -161,41 +161,77 @@ public class SparqlCacheSystem {
         }
         return result;
     }
-    
-        
+
     public static <T> Tree<T> removeUnaryNodes(Tree<T> tree) {
-
-        Predicate<T> isMultiary = (node) -> tree.getChildren(node).size() > 1;
-        
-        //Map<T, T> childToParent = new HashMap<>();
         ListMultimap<T, T> parentToChildren = ArrayListMultimap.create();
-        
-        // for every leaf get the first non-unary parent
-        Collection<T> parents = TreeUtils.getLeafs(tree);
-        Collection<T> children = null;
-        while(!parents.isEmpty()) {
-            children = parents;
-
-            parents = new LinkedHashSet<T>();
-            for(T child : children) {
-                T parent = TreeUtils.findAncestor(tree, child, isMultiary);
-                if(parent != null) {
-                    parents.add(parent);
-                    parentToChildren.put(parent, child);
-                }
-            }        
-        }
-        
-        // There can be at most 1 root
-        T root = children.iterator().next(); //parents.isEmpty() ? null : parents.iterator().next(); 
-
-        
-        Tree<T> result = root == null
-                ? null
-                : TreeImpl.create(root, (node) -> parentToChildren.get(node));
+        T newRoot = removeUnaryNodes(tree, tree.getRoot(), parentToChildren);
                 
+        Tree<T> result = newRoot == null
+                ? null
+                : TreeImpl.create(newRoot, (node) -> parentToChildren.get(node));
+        
         return result;
     }
+
+    public static <T> T removeUnaryNodes(Tree<T> tree, T node, ListMultimap<T, T> parentToChildren) {
+        List<T> children = tree.getChildren(node);
+        int childCount = children.size();
+        
+        T result;
+        switch(childCount) {
+        case 0:
+            result = node;
+            break;
+        case 1:
+            T child = children.get(0);
+            result = removeUnaryNodes(tree, child, parentToChildren);
+            break;
+        default:
+            result = node;
+            for(T c : children) {
+                T newChild = removeUnaryNodes(tree, c, parentToChildren);
+                parentToChildren.put(node,  newChild);
+            }
+            break;
+        }
+                    
+        return result;
+    }
+
+        
+//    public static <T> Tree<T> removeUnaryNodes(Tree<T> tree) {
+//
+//        Predicate<T> isMultiary = (node) -> tree.getChildren(node).size() > 1;
+//        
+//        //Map<T, T> childToParent = new HashMap<>();
+//        ListMultimap<T, T> parentToChildren = ArrayListMultimap.create();
+//        
+//        // for every leaf get the first non-unary parent
+//        Collection<T> parents = TreeUtils.getLeafs(tree);
+//        Collection<T> children = null;
+//        while(!parents.isEmpty()) {
+//            children = parents;
+//
+//            parents = new LinkedHashSet<T>();
+//            for(T child : children) {
+//                T parent = TreeUtils.findAncestor(tree, child, isMultiary);
+//                if(parent != null) {
+//                    parents.add(parent);
+//                    parentToChildren.put(parent, child);
+//                }
+//            }        
+//        }
+//        
+//        // There can be at most 1 root
+//        T root = children.iterator().next(); //parents.isEmpty() ? null : parents.iterator().next(); 
+//
+//        
+//        Tree<T> result = root == null
+//                ? null
+//                : TreeImpl.create(root, (node) -> parentToChildren.get(node));
+//                
+//        return result;
+//    }
 
 
     // TODO: Another output format: Map<Entry<T, T>, Multimap<T, T>>
