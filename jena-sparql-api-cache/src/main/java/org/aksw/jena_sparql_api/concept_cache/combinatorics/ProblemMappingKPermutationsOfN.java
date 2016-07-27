@@ -4,7 +4,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-import org.aksw.isomorphism.ProblemNeighborhoodAware;
+import org.aksw.combinatorics.solvers.ProblemNeighborhoodAware;
 
 import com.google.common.math.LongMath;
 

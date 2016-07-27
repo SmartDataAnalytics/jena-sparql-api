@@ -3,8 +3,8 @@ package org.aksw.jena_sparql_api.concept_cache.combinatorics;
 import java.util.List;
 import java.util.Map;
 
-import org.aksw.isomorphism.Problem;
-import org.aksw.isomorphism.ProblemNeighborhoodAware;
+import org.aksw.combinatorics.solvers.Problem;
+import org.aksw.combinatorics.solvers.ProblemNeighborhoodAware;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.op.OpQuadPattern;
 import org.apache.jena.sparql.core.Quad;

@@ -6,6 +6,7 @@ import java.util.Map.Entry;
 import java.util.NavigableSet;
 import java.util.TreeSet;
 
+import org.aksw.jena_sparql_api.utils.model.Quadlet;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.util.ExprUtils;
 import org.junit.Assert;

@@ -9,6 +9,7 @@ import java.util.Optional;
 import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.aksw.jena_sparql_api.utils.model.Triplet;
 import org.aksw.jena_sparql_api.utils.model.TripletImpl;
+import org.aksw.jena_sparql_api.utils.model.TripletPath;
 
 public class NestedPath<V, E>
     implements Serializable

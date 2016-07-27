@@ -5,8 +5,8 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
-import org.aksw.isomorphism.BlockingCacheIterator;
-import org.aksw.isomorphism.Cache;
+import org.aksw.commons.collections.cache.BlockingCacheIterator;
+import org.aksw.commons.collections.cache.Cache;
 import org.aksw.jena_sparql_api.cache.extra.CacheFrontend2;
 import org.aksw.jena_sparql_api.cache.extra.CacheResource;
 import org.apache.jena.query.ResultSet;

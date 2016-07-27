@@ -3,6 +3,7 @@ package org.aksw.isomorphism;
 import java.util.function.BinaryOperator;
 import java.util.function.Predicate;
 
+import org.aksw.combinatorics.algos.StateProblemContainer;
 import org.aksw.state_space_search.core.Action;
 import org.aksw.state_space_search.core.State;
 
