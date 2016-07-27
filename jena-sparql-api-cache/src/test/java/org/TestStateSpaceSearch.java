@@ -74,6 +74,10 @@ interface TreeMatcher {
     
 }
 
+@FunctionalInterface
+interface MatchingStrategy<A, B> {
+    boolean apply(List<A> as, List<B> bs, Multimap<A, B> mapping);
+}
 
 class TreeMatcherFull<A, B> {
     protected Tree<A> aTree;
@@ -93,22 +97,14 @@ class TreeMatcherFull<A, B> {
 //            ? extends Collection<B>,
 //            Multimap<A, B>,
 //            Stream<Map<A, B>>>> matchingStrategy;
-      protected Function<Entry<A, B>, TriFunction<
-          ? super Collection<A>,
-          ? super Collection<B>,
-          ? super Multimap<A, B>,
-          Boolean>> isSatisfiable; //matchingStrategy;
+      protected BiFunction<A, B, ? extends MatchingStrategy<A, B>> isSatisfiable; //matchingStrategy;
     
 
     public TreeMatcherFull(
             Tree<A> aTree,
             Tree<B> bTree,
             Multimap<A, B> baseMapping,
-            Function<Entry<A, B>, TriFunction<
-                ? super Collection<A>,
-                ? super Collection<B>,
-                ? super Multimap<A, B>,
-                Boolean>> isSatisfiable            
+            BiFunction<A, B, ? extends MatchingStrategy<A, B>> isSatisfiable 
             ) {//, Multimap<A, B> baseMapping) {
         this.aTree = aTree;
         this.bTree = bTree;
@@ -161,7 +157,7 @@ class TreeMatcherFull<A, B> {
                 for(Cluster<A, B, Entry<A, B>> cluster : parentClusterStack) {
                     Entry<A, B> parentMap = cluster.getCluster();
 
-                    TriFunction<? super Collection<A>, ? super Collection<B>, ? super Multimap<A, B>, Boolean> predicate = isSatisfiable.apply(parentMap);
+                    MatchingStrategy<A, B> predicate = isSatisfiable.apply(parentMap.getKey(), parentMap.getValue());
                 
                     Multimap<A, B> mappings = cluster.getMappings();
                     List<A> aChildren = aTree.getChildren(parentMap.getKey());
@@ -218,6 +214,8 @@ public class TestStateSpaceSearch {
 //    }
     
     //public static void 
+
+   
     
     /**
      * 
@@ -226,20 +224,45 @@ public class TestStateSpaceSearch {
      * @param queryOp
      * @return
      */
-    public static <A, B> BiFunction<? extends Collection<A>, ? extends Collection<B>, Stream<Map<A, B>>> determineMatchingStrategy(Op cacheOp, Op queryOp) {
+    public static <A, B> MatchingStrategy<A, B> determineMatchingStrategy(A cacheOp, B queryOp) {
+//        A cacheOp = nodeMapping.getKey();
+//        B queryOp = nodeMapping.getValue();
+
+        Map<Class<?>, MatchingStrategy<A, B>> opToMatcherTest = new HashMap<>(); 
+        opToMatcherTest.put(OpDisjunction.class, (as, bs, mapping) -> true);
+
+        Function<Class<?>, MatchingStrategy<A, B>> fnOpToMatcherTest = (nodeType) ->
+            opToMatcherTest.getOrDefault(nodeType, (as, bs, mapping) -> SequentialMatchIterator.createStream(as, bs, mapping).findFirst().isPresent());
+
+        
+        MatchingStrategy<A, B> result;
+        
         int c = (cacheOp == null ? 0 : 1) | (queryOp == null ? 0 : 2);
         switch(c) {
         case 0: // both null - nothing to do because the candidate mapping of the children is already the final solution
+            result = (as, bs, mapping) -> true;
             break;
-        case 1: // cacheOp null
+        case 1: // cacheOp null - 
+            result = (as, bs, mapping) -> true;
             break;
         case 2: // queryOp null - no match because the cache tree has greater depth than the query
+            result = (as, bs, mapping) -> false;
             break;
         case 3: // both non-null - by default, both ops must be of equal type - the type determines the matching enumeration strategy
+            Class<?> ac = cacheOp.getClass();
+            Class<?> bc = queryOp.getClass();
+         
+            if(ac.equals(bc)) {
+                result = fnOpToMatcherTest.apply(ac);
+            } else {
+                result = (as, bs, mapping) -> false;
+            }
             break;
+        default:
+            throw new IllegalStateException();
         }
         
-        return null;
+        return result;
     }
 
     
@@ -249,8 +272,9 @@ public class TestStateSpaceSearch {
         Map<Class<?>, TriFunction<List<Op>, List<Op>, Multimap<Op, Op>, Boolean>> opToMatcherTest = new HashMap<>(); 
         opToMatcherTest.put(OpDisjunction.class, (as, bs, mapping) -> true);
 
-        Function<Class<?>, TriFunction<List<Op>, List<Op>, Multimap<Op, Op>, Boolean>> fnOpToMatcherTest = (op) ->
-            opToMatcherTest.getOrDefault(op, (as, bs, mapping) -> SequentialMatchIterator.createStream(as, bs, mapping).findFirst().isPresent());
+//        Function<Entry<Op, Op>, TriFunction<List<Op>, List<Op>, Multimap<Op, Op>, Boolean>> fnOpToMatcherTest = (nodeMapping) ->
+//            determineMatchingStrategy(nodeMapping);
+            //opToMatcherTest.getOrDefault(op.getClass(), (as, bs, mapping) -> SequentialMatchIterator.createStream(as, bs, mapping).findFirst().isPresent());
 
         Map<Class<?>, TriFunction<List<Op>, List<Op>, Multimap<Op, Op>, Stream<Map<Op, Op>>>> opToMatcher = new HashMap<>(); 
         
@@ -349,7 +373,13 @@ public class TestStateSpaceSearch {
         List<Set<Op>> cacheTreeLevels = TreeUtils.nodesPerLevel(cacheMultiaryTree);
         List<Set<Op>> queryTreeLevels = TreeUtils.nodesPerLevel(queryMultiaryTree);
         
-        TreeMatcherFull<Op, Op> tm = new TreeMatcherFull<>(cacheMultiaryTree, queryMultiaryTree, candOpMapping);
+        
+        
+        TreeMatcherFull<Op, Op> tm = new TreeMatcherFull<Op, Op>(
+                cacheMultiaryTree,
+                queryMultiaryTree,
+                candOpMapping,
+                TestStateSpaceSearch::determineMatchingStrategy);
         tm.recurse(0, HashMultimap.create());
         
         
