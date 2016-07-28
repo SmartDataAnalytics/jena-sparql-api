@@ -41,10 +41,11 @@
             <artifactId>jena-sparql-api-resources-test-config</artifactId>
         </dependency>
 
+<!--
         <dependency>
             <groupId>net.sourceforge.owlapi</groupId>
             <artifactId>owlapi-distribution</artifactId>
         </dependency>
-
+-->
     </dependencies>
 </project>
