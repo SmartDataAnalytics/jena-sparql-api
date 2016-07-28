@@ -10,7 +10,7 @@ import java.util.stream.StreamSupport;
 
 import org.aksw.combinatorics.collections.Combination;
 import org.aksw.combinatorics.collections.CombinationStack;
-import org.aksw.commons.collections.LinkedListNode;
+import org.aksw.commons.collections.lists.LinkedListNode;
 import org.aksw.commons.collections.utils.StreamUtils;
 
 import com.codepoetics.protonpack.functions.TriFunction;
@@ -184,7 +184,7 @@ public class StateCombinatoricCallback<A, B, S>
         if(i < as.size()) {
             A a = as.get(i);
 
-            Iterable<LinkedListNode<B>> curr = () -> remainingB.metaIterator();
+            Iterable<LinkedListNode<B>> curr = () -> remainingB.nodeIterator();
 
             result = StreamSupport.stream(curr.spliterator(), false)
                 .flatMap(pick -> {

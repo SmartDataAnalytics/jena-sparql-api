@@ -15,7 +15,7 @@ import java.util.stream.StreamSupport;
 
 import org.aksw.combinatorics.collections.Combination;
 import org.aksw.combinatorics.collections.CombinationStack;
-import org.aksw.commons.collections.LinkedListNode;
+import org.aksw.commons.collections.lists.LinkedListNode;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Iterators;

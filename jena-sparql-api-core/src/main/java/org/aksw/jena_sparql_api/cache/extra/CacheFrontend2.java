@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.cache.extra;
 
+import java.util.concurrent.Future;
+
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
 
@@ -10,9 +12,9 @@ import org.apache.jena.rdf.model.Model;
  */
 public interface CacheFrontend2<K>
 {
-    void write(K key, ResultSet resultSet);
-    void write(K key, Model model);
-    void write(K key, boolean value);
+    Future<CacheResource> write(K key, ResultSet resultSet);
+    Future<CacheResource> write(K key, Model model);
+    Future<CacheResource> write(K key, boolean value);
 
     CacheResource lookup(K key);
 }
