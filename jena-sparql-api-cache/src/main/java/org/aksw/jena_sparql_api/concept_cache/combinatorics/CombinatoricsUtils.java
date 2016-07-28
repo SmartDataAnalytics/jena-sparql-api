@@ -12,9 +12,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.aksw.combinatorics.algos.StateCombinatoricCallback;
 import org.aksw.commons.collections.CartesianProduct;
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
-import org.aksw.isomorphism.IsoMapUtils;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
 import org.aksw.jena_sparql_api.concept_cache.domain.PatternSummary;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
@@ -23,6 +23,7 @@ import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
 
+import com.codepoetics.protonpack.functions.TriFunction;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
@@ -290,14 +291,22 @@ public class CombinatoricsUtils {
         return result;
     }
 
-    public static Stream<Map<Var, Var>> createSolutions(Collection<? extends Quad> cacheQuads, Collection<? extends Quad> queryQuads, Map<Var, Var> baseSolution) {
-        Stream<Map<Var, Var>> result = IsoMapUtils.createSolutionStream(
-                    cacheQuads,
-                    queryQuads,
-                    (a, b, c) -> Stream.of(Utils2.createVarMap(a, b)),
-                    baseSolution);
-
+    public static Stream<Map<Var, Var>> createSolutions(Collection<Quad> cacheQuads, Collection<Quad> queryQuads, Map<Var, Var> baseSolution) {
+        TriFunction<Map<Var, Var>, Quad, Quad, Stream<Map<Var, Var>>> solutionCombiner = (s, a, b) -> Stream.of(Utils2.createVarMap(a, b));
+                
+        Stream<Map<Var, Var>> result = StateCombinatoricCallback
+                .createKPermutationsOfN(cacheQuads, queryQuads, baseSolution, solutionCombiner)
+                .map(stack -> stack.getValue().getSolution())
+                ;
         return result;
+        
+//        Stream<Map<Var, Var>> result = IsoMapUtils.createSolutionStream(
+//                    cacheQuads,
+//                    queryQuads,
+//                    (a, b, c) -> Stream.of(Utils2.createVarMap(a, b)),
+//                    baseSolution);
+//
+//        return result;
     }
 
 

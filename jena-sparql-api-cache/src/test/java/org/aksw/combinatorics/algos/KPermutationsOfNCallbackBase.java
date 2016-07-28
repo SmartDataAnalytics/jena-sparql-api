@@ -10,7 +10,7 @@ import org.aksw.combinatorics.collections.CombinationStack;
 import com.codepoetics.protonpack.functions.TriFunction;
 
 public abstract class KPermutationsOfNCallbackBase<A, B, S> {
-    protected List<A> as;
+    protected List<? extends A> as;
     
     /**
      * Function which takes the base solution, a and b and returns a new solution
@@ -24,7 +24,7 @@ public abstract class KPermutationsOfNCallbackBase<A, B, S> {
      *
      */
 
-    public KPermutationsOfNCallbackBase(List<A> as,
+    public KPermutationsOfNCallbackBase(List<? extends A> as,
             TriFunction<S, A, B, Stream<S>> solutionCombiner) {
         super();
         this.as = as;
