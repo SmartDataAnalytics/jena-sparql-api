@@ -4,6 +4,7 @@ import java.util.Iterator;
 import java.util.concurrent.Future;
 
 import org.aksw.jena_sparql_api.utils.model.Directed;
+import org.aksw.jena_sparql_api.utils.model.TripletPath;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.path.Path;
 

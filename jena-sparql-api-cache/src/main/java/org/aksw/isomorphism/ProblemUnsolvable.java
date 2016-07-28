@@ -4,6 +4,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.stream.Stream;
 
+import org.aksw.combinatorics.solvers.Problem;
+
 public class ProblemUnsolvable<S>
     implements Problem<S>
 {

@@ -16,11 +16,11 @@ import java.util.stream.Collectors;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.sparql_path2.Nfa;
 import org.aksw.jena_sparql_api.sparql_path2.NfaExecutionUtils;
-import org.aksw.jena_sparql_api.sparql_path2.TripletPath;
 import org.aksw.jena_sparql_api.sparql_path2.ValueSet;
 import org.aksw.jena_sparql_api.utils.Pair;
 import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.aksw.jena_sparql_api.utils.model.Triplet;
+import org.aksw.jena_sparql_api.utils.model.TripletPath;
 import org.apache.jena.ext.com.google.common.collect.Lists;
 import org.apache.jena.graph.Node;
 

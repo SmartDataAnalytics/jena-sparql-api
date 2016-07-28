@@ -15,12 +15,12 @@ import org.aksw.jena_sparql_api.sparql_path2.PathCompiler;
 import org.aksw.jena_sparql_api.sparql_path2.PathExecutionUtils;
 import org.aksw.jena_sparql_api.sparql_path2.PredicateClass;
 import org.aksw.jena_sparql_api.sparql_path2.SparqlKShortestPathFinder;
-import org.aksw.jena_sparql_api.sparql_path2.TripletPath;
 import org.aksw.jena_sparql_api.sparql_path2.ValueSet;
 import org.aksw.jena_sparql_api.utils.Pair;
 import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.aksw.jena_sparql_api.utils.model.Triplet;
 import org.aksw.jena_sparql_api.utils.model.TripletImpl;
+import org.aksw.jena_sparql_api.utils.model.TripletPath;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.path.Path;
 

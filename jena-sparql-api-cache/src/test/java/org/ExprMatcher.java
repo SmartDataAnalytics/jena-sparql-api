@@ -4,9 +4,9 @@ import java.util.AbstractMap.SimpleEntry;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.aksw.combinatorics.algos.CartesianProductUtils;
+import org.aksw.combinatorics.collections.Combination;
 import org.aksw.commons.collections.CartesianProduct;
-import org.aksw.isomorphism.CartesianProductUtils;
-import org.aksw.isomorphism.Combination;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_StrStartsWith;

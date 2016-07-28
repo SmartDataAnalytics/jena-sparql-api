@@ -5,6 +5,8 @@ import java.util.Collection;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
+import org.aksw.combinatorics.solvers.Problem;
+
 import com.google.common.collect.TreeMultimap;
 
 public class IsoUtils {

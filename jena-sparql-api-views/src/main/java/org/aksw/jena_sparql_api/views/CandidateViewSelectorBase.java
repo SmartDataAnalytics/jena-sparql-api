@@ -15,6 +15,7 @@ import java.util.TreeMap;
 import java.util.function.BiFunction;
 
 import org.aksw.commons.collections.CartesianProduct;
+import org.aksw.commons.collections.stacks.NestedStack;
 import org.aksw.commons.util.Pair;
 import org.aksw.commons.util.strings.StringUtils;
 import org.aksw.jena_sparql_api.exprs_ext.E_StrConcatPermissive;

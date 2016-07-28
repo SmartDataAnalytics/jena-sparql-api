@@ -11,10 +11,10 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import org.aksw.combinatorics.algos.StateCombinatoricCallback;
+import org.aksw.combinatorics.solvers.ProblemNeighborhoodAware;
 import org.aksw.commons.collections.MapUtils;
 import org.aksw.isomorphism.IsoMapUtils;
-import org.aksw.isomorphism.ProblemNeighborhoodAware;
-import org.aksw.isomorphism.StateCombinatoricCallback;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;

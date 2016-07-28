@@ -7,6 +7,8 @@ import java.util.NavigableSet;
 import java.util.TreeSet;
 import java.util.function.BinaryOperator;
 
+import org.aksw.jena_sparql_api.utils.model.Quadlet;
+
 public class QuadPrefixes
 {
     public static final QuadPrefixes ALWAYS_MATCHING = createAlwaysMatching();

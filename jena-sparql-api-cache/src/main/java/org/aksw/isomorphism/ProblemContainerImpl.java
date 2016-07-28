@@ -8,6 +8,8 @@ import java.util.NavigableMap;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+import org.aksw.combinatorics.solvers.GenericProblem;
+
 import com.google.common.collect.Iterables;
 
 /**

@@ -5,8 +5,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import org.aksw.isomorphism.Problem;
-import org.aksw.isomorphism.ProblemNeighborhoodAware;
+import org.aksw.combinatorics.solvers.Problem;
+import org.aksw.combinatorics.solvers.ProblemNeighborhoodAware;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;

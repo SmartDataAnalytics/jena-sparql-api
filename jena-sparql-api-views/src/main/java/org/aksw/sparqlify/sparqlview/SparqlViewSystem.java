@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import org.aksw.commons.collections.CartesianProduct;
+import org.aksw.commons.collections.stacks.NestedStack;
 import org.aksw.commons.util.Pair;
 import org.aksw.commons.util.reflect.MultiMethod;
 import org.aksw.jena_sparql_api.exprs_ext.E_StrConcatPermissive;
@@ -25,7 +26,6 @@ import org.aksw.jena_sparql_api.utils.ReplaceConstants;
 import org.aksw.jena_sparql_api.utils.expr.NodeValueUtils;
 import org.aksw.jena_sparql_api.views.Dialect;
 import org.aksw.jena_sparql_api.views.MyOpAsQuery;
-import org.aksw.jena_sparql_api.views.NestedStack;
 import org.aksw.jena_sparql_api.views.PrefixSet;
 import org.aksw.jena_sparql_api.views.RdfTermType;
 import org.aksw.jena_sparql_api.views.SparqlView;

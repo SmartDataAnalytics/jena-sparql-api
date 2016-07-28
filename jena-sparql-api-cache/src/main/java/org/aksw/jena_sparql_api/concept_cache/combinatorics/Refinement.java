@@ -7,7 +7,7 @@ import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
-import org.aksw.isomorphism.ProblemNeighborhoodAware;
+import org.aksw.combinatorics.solvers.ProblemNeighborhoodAware;
 import org.aksw.jena_sparql_api.utils.MapUtils;
 import org.aksw.jena_sparql_api.utils.NodeTransformSignaturize;
 import org.apache.jena.sparql.core.Quad;

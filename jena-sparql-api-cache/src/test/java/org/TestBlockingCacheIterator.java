@@ -5,9 +5,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.aksw.isomorphism.BlockingCacheIterator;
-import org.aksw.isomorphism.Cache;
-import org.aksw.isomorphism.CachingIterable;
+import org.aksw.commons.collections.cache.BlockingCacheIterator;
+import org.aksw.commons.collections.cache.Cache;
+import org.aksw.commons.collections.cache.CachingIterable;
 import org.junit.Test;
 
 public class TestBlockingCacheIterator {

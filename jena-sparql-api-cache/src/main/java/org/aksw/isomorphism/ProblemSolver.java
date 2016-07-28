@@ -4,6 +4,8 @@ import java.util.Collections;
 import java.util.function.BinaryOperator;
 import java.util.stream.Stream;
 
+import org.aksw.combinatorics.solvers.Problem;
+
 /**
  * Default implementation of the core algorithm for solving problems.
  * TODO Give it some fancy name

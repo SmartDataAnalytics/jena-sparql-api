@@ -2,6 +2,8 @@ package org.aksw.isomorphism;
 
 import java.util.Map.Entry;
 
+import org.aksw.combinatorics.solvers.Problem;
+
 /***
  * A helper class used by ProblemContainer.
  * The pick method of a that class must return two result values:
