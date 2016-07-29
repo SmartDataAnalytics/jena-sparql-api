@@ -28,9 +28,19 @@ public class CacheFrontend2Mem<K>
 
 
 
+    /**
+     * Caches a given result set for the given key, and returns an (immediately resolved)
+     * future of a cache resource giving access to a result set.
+     * 
+     * 
+     * 
+     */
     @Override
     public Future<CacheResource> write(K key, ResultSet resultSet) {
 
+        
+        // If a result set is being cached for the same key, join with the prior one
+        
         //CacheBuilder.from("")
 
 
