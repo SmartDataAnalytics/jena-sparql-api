@@ -81,7 +81,8 @@ public class Refinement {
                 sigToAs.put(sig, q);
             });
 
-            Map<Var, Var> identity = newBase.values().stream().distinct().collect(Collectors.toMap(x -> x, x -> x));
+            // TODO - Is having a .distinct().collect... safe here?
+            Map<Var, Var> identity = newBase.values().stream().collect(Collectors.toMap(x -> x, x -> x));
             NodeTransform s2 = NodeTransformSignaturize.create(identity);
             Multimap<T, T> sigToBs = HashMultimap.create();
             bs.forEach(q -> {

@@ -151,7 +151,8 @@ public class SparqlViewCacheImpl
 
             //while(varMaps.hasNext()) {
             varMaps.forEach(varMap -> {
-
+                System.out.println("Processing candidate: " + varMap);
+                
 
                 NodeTransform rename = new NodeTransformRenameMap(varMap);
 

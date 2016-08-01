@@ -82,19 +82,23 @@ public class TestSparqlViewCacheVariableRenaming {
         for(Entry<String, Query> entry : idToQuery.entrySet()) {
             String id = entry.getKey();
             Query query = entry.getValue();
-            System.out.println("Testing " + id);
-            testVariableRenaming(query);
+            
+            //if(true) {
+            //if("http://ex.org/query/4-c".equals(id)) {
+            if("http://ex.org/query/8-b".equals(id)) {
+                System.out.println("Testing " + id);
+                testVariableRenaming(query);
+            }
         }
 
 
     }
 
-    public static void testVariableRenaming(Query baseQuery) throws IOException {
+    public static void testVariableRenaming(Query userQuery) throws IOException {
 
-        QuadFilterPatternCanonical baseQfpc = SparqlCacheUtils.transform2(baseQuery);
-        List<Var> baseVars = baseQuery.getProjectVars();
+        QuadFilterPatternCanonical userQfpc = SparqlCacheUtils.transform2(userQuery);
 
-        Collection<Var> vars = PatternVars.vars(baseQuery.getQueryPattern());
+        Collection<Var> vars = PatternVars.vars(userQuery.getQueryPattern());
         Generator<Var> gen = VarGeneratorBlacklist.create("v", vars);
 
         Map<Var, Node> varMap = vars.stream()
@@ -102,7 +106,9 @@ public class TestSparqlViewCacheVariableRenaming {
                         v -> v,
                         v -> (Node)gen.next()));
 
-        Query cacheQuery = QueryTransformOps.transform(baseQuery, varMap);
+        Query cacheQuery = QueryTransformOps.transform(userQuery, varMap);
+        List<Var> cacheResultVars = cacheQuery.getProjectVars();
+
         //List<Var> renamedVars = renamedQuery.getProjectVars();
         QuadFilterPatternCanonical cacheQfpc = SparqlCacheUtils.transform2(cacheQuery);
 
@@ -122,15 +128,16 @@ public class TestSparqlViewCacheVariableRenaming {
 
         SparqlViewCache sparqlViewCache = new SparqlViewCacheImpl();
 
-        System.out.println("base: " + baseQfpc);
-        System.out.println("renamed: " + cacheQfpc);
-        System.out.println("base: " + baseQuery);
-        System.out.println("renamed: " + cacheQuery);
+        System.out.println("cache: " + cacheQfpc);
+        System.out.println("user: " + userQfpc);
+        System.out.println("cache: " + cacheQuery);
+        System.out.println("user: " + userQuery);
+        System.out.println("cache result vars: " + cacheResultVars);
 
 
-        Table table = new TableData(baseVars, Collections.emptyList());
-        sparqlViewCache.index(baseQfpc, table);
-        CacheResult cr = sparqlViewCache.lookup(cacheQfpc);
+        Table table = new TableData(cacheResultVars, Collections.emptyList());
+        sparqlViewCache.index(cacheQfpc, table);
+        CacheResult cr = sparqlViewCache.lookup(userQfpc);
         if(cr == null) {
             System.out.println("FAIL: No cache candidates found where 1 expected");
         } else {

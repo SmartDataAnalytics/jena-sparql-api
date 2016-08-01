@@ -1161,6 +1161,7 @@ public class SparqlCacheUtils {
 
     public static FeatureMap<Expr, Multimap<Expr, Expr>> indexDnf(Set<Set<Expr>> dnf) {
         if(dnf == null) {
+            // An disjunction containing an empty conjunction (latter is generally treated as true - if i'm not mistaken)
             dnf = Collections.singleton(Collections.emptySet());
         }
         

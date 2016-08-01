@@ -17,6 +17,7 @@ import org.aksw.commons.collections.CartesianProduct;
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
 import org.aksw.jena_sparql_api.concept_cache.domain.PatternSummary;
+import org.aksw.jena_sparql_api.utils.MapUtils;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Quad;
@@ -306,7 +307,7 @@ public class CombinatoricsUtils {
         if(cacheQuads.isEmpty() && !queryQuads.isEmpty()) {
             result = Stream.of(baseSolution);
         } else {        
-            TriFunction<Map<Var, Var>, Quad, Quad, Stream<Map<Var, Var>>> solutionCombiner = (s, a, b) -> Stream.of(Utils2.createVarMap(a, b));
+            TriFunction<Map<Var, Var>, Quad, Quad, Stream<Map<Var, Var>>> solutionCombiner = (s, a, b) -> Stream.of(MapUtils.mergeIfCompatible(s, Utils2.createVarMap(a, b)));
                     
             result = StateCombinatoricCallback
                     .createKPermutationsOfN(cacheQuads, queryQuads, baseSolution, solutionCombiner)

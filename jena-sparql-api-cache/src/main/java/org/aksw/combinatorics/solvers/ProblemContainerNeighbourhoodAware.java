@@ -326,6 +326,7 @@ public class ProblemContainerNeighbourhoodAware<S, T>
     public void run(S baseSolution) {
         // If there are no open problems, we found a complete solution
         if(isEmpty(regularQueue)) {
+            logger.debug("      Yielding solution " + baseSolution);
             solutionCallback.accept(baseSolution);
         } else {
             logger.debug("Next Iteration with regular queue size: " + size(regularQueue) + " and base solution " + baseSolution);
@@ -357,7 +358,7 @@ public class ProblemContainerNeighbourhoodAware<S, T>
                 addToRegularQueue(newP);
             }
 
-            logger.debug("  First problem in regular queue with cost " + firstCost + " was refined into " + newProblems.size() + " sub Problems; problem was: "+ firstProblem);
+            logger.debug("  First problem in regular queue with cost " + firstCost + " was refined into " + newProblems.size() + " sub Problems with costs [" + (newProblems.stream().map(p -> "" + p.getEstimatedCost()).collect(Collectors.joining(", "))) + "] ; refined problem was: "+ firstProblem);
 
 
             Entry<? super Comparable<?>, ProblemNeighborhoodAware<S, T>> pickedEntry = firstEntry(regularQueue);
@@ -384,19 +385,24 @@ public class ProblemContainerNeighbourhoodAware<S, T>
             Stream<S> tmp = pickedProblem.generateSolutions();
             logger.debug("  Got " + tmp.count() + " solution candidates with " + pickedProblem);
 
+            
+            pickedProblem.generateSolutions().forEach(x-> System.out.println("      SC: " + x));
+            
             Stream<S> solutions = pickedProblem.generateSolutions();
 
             solutions.forEach(solutionContribution -> {
+                logger.debug("    Attempting solution contribution " + solutionContribution);
                 
                 S combinedSolution = null;
                 boolean unsatisfiable = isUnsatisfiable.test(solutionContribution);
                 if(!unsatisfiable) {
                     combinedSolution = solutionCombiner.apply(baseSolution, solutionContribution);
                     unsatisfiable = isUnsatisfiable.test(combinedSolution);
+                    logger.debug("      Combined solution: " + unsatisfiable + " - " + combinedSolution);
                 }
 
                 if(!unsatisfiable) {
-                    logger.debug("    Satisfiable solution contribution: " + solutionContribution + "; regular queue size now: " + size(regularQueue));
+                    logger.debug("      Satisfiable solution contribution: " + solutionContribution + "; regular queue size now: " + size(regularQueue));
 
 //                    Collection<T> rs = getRelatedSources.apply(solutionContribution);
 
@@ -422,7 +428,7 @@ public class ProblemContainerNeighbourhoodAware<S, T>
 //                    }
 //                    }
                 } else {
-                    logger.debug("    Skipping unatisfiable solution contribution: " + solutionContribution + "; regular queue size now: " + size(regularQueue));
+                    logger.debug("      Skipping unatisfiable solution contribution: " + solutionContribution + "; regular queue size now: " + size(regularQueue));
                 }
             });
 
