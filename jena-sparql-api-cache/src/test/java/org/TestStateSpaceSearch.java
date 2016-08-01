@@ -149,7 +149,7 @@ public class TestStateSpaceSearch {
 
     
     
-    public static void main(String[] args) {
+    public static void main2(String[] args) {
         
         Map<Class<?>, TriFunction<List<Op>, List<Op>, Multimap<Op, Op>, Boolean>> opToMatcherTest = new HashMap<>(); 
         opToMatcherTest.put(OpDisjunction.class, (as, bs, mapping) -> true);
@@ -345,7 +345,75 @@ public class TestStateSpaceSearch {
     
     
     
-    public static void main2(String[] args) throws FileNotFoundException {
+    public static Stream<Map<Var, Var>> createVarMapCandidates(QuadFilterPatternCanonical cachePattern, QuadFilterPatternCanonical queryPattern) {
+
+        FeatureMap<Expr, Multimap<Expr, Expr>> cacheIndex = SparqlCacheUtils.indexDnf(cachePattern.getFilterDnf());
+        FeatureMap<Expr, Multimap<Expr, Expr>> queryIndex = SparqlCacheUtils.indexDnf(queryPattern.getFilterDnf());
+
+        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> problems = new ArrayList<>();
+        for(Entry<Set<Expr>, Collection<Multimap<Expr, Expr>>> entry : queryIndex.entrySet()) {
+            Set<Expr> querySig = entry.getKey();
+            Collection<Multimap<Expr, Expr>> queryMaps = entry.getValue();
+
+            System.out.println("CAND LOOKUP with " + querySig);
+            Collection<Entry<Set<Expr>, Multimap<Expr, Expr>>> cands = cacheIndex.getIfSubsetOf(querySig);
+
+            for(Entry<Set<Expr>, Multimap<Expr, Expr>> e : cands) {
+                Multimap<Expr, Expr> cacheMap = e.getValue();
+                System.out.println("  CACHE MAP: " + cacheMap);
+                for(Multimap<Expr, Expr> queryMap : queryMaps) {
+                    Map<Expr, Entry<Set<Expr>, Set<Expr>>> group = MapUtils.groupByKey(cacheMap.asMap(), queryMap.asMap());
+
+                    Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> localProblems = group.values().stream()
+                        .map(x -> {
+                            Set<Expr> cacheExprs = x.getKey();
+                            Set<Expr> queryExprs = x.getValue();
+                            ProblemNeighborhoodAware<Map<Var, Var>, Var> p = new ProblemVarMappingExpr(cacheExprs, queryExprs, Collections.emptyMap());
+
+                            
+                            System.out.println("Registered problem instance " + p + " with " + p.generateSolutions().count() + " solutions: " + p.generateSolutions().collect(Collectors.toList()));
+                            //System.out.println("cacheExprs: " + cacheExprs);
+                            //System.out.println("queryExprs: " + queryExprs);
+
+                            //Stream<Map<Var, Var>> r = p.generateSolutions();
+
+                            return p;
+                        })
+                        .collect(Collectors.toList());
+
+                    problems.addAll(localProblems);
+                    //problems.stream().forEach(p -> System.out.println("COMPLEX: " + p.getEstimatedCost()));
+
+
+                    //problemStream.forEach(y -> System.out.println("GOT SOLUTION: " + y));
+
+
+
+                    //System.out.println("    QUERY MAP: " + queryMap);
+                }
+            }
+
+            //cands.forEach(x -> System.out.println("CAND: " + x.getValue()));
+        }
+
+        ProblemVarMappingQuad quadProblem = new ProblemVarMappingQuad(cachePattern.getQuads(), queryPattern.getQuads(), Collections.emptyMap());
+        problems.add(quadProblem);
+        
+        
+        System.out.println("Registered quad problem instance " + quadProblem + " with " + quadProblem.generateSolutions().count() + " solutions ");
+        
+        Stream<Map<Var, Var>> result = ProblemContainerNeighbourhoodAware.solve(
+                problems,
+                Collections.emptyMap(),
+                Map::keySet,
+                MapUtils::mergeIfCompatible,
+                Objects::isNull);
+
+        return result;
+    }
+    
+    
+    public static void main(String[] args) throws FileNotFoundException {
         {
 //            QueryExecutionFactory qef = FluentQueryExecutionFactory
 //                    .http("http://linkedgeodata.org/test/vsparql")
@@ -414,10 +482,10 @@ public class TestStateSpaceSearch {
 
         cacheSystem.rewriteQuery(queryOp);
 
-        if(true) {
-            System.out.println("weee");
-            System.exit(0);
-        }
+//        if(true) {
+//            System.out.println("weee");
+//            System.exit(0);
+//        }
 
         ProjectedQuadFilterPattern cachePqfp = SparqlCacheUtils.transform(cacheElement);
         System.out.println("ProjectedQuadFilterPattern[cache]: " + cachePqfp);
@@ -434,71 +502,78 @@ public class TestStateSpaceSearch {
         System.out.println("QuadFilterPatternCanonical[query]: " + queryQfpc);
 
 
+        Stream<Map<Var, Var>> candidateSolutions = createVarMapCandidates(cacheQfpc, queryQfpc);
+        candidateSolutions.forEach(cs -> System.out.println("Candidate solution: " + cs));
+        System.out.println("Done.");
+    }
+}
+
+
         //ContainmentMap<Expr, CacheEntry> featuresToCache = indexDnf(queryQfpc.getFilterDnf());
 
 
         // Index the clauses of the cache
-        FeatureMap<Expr, Multimap<Expr, Expr>> cacheIndex = SparqlCacheUtils.indexDnf(cacheQfpc.getFilterDnf());
-        FeatureMap<Expr, Multimap<Expr, Expr>> queryIndex = SparqlCacheUtils.indexDnf(queryQfpc.getFilterDnf());
+//        FeatureMap<Expr, Multimap<Expr, Expr>> cacheIndex = SparqlCacheUtils.indexDnf(cacheQfpc.getFilterDnf());
+//        FeatureMap<Expr, Multimap<Expr, Expr>> queryIndex = SparqlCacheUtils.indexDnf(queryQfpc.getFilterDnf());
 
-
-        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> problems = new ArrayList<>();
-        for(Entry<Set<Expr>, Collection<Multimap<Expr, Expr>>> entry : queryIndex.entrySet()) {
-            Set<Expr> querySig = entry.getKey();
-            Collection<Multimap<Expr, Expr>> queryMaps = entry.getValue();
-
-            System.out.println("CAND LOOKUP with " + querySig);
-            Collection<Entry<Set<Expr>, Multimap<Expr, Expr>>> cands = cacheIndex.getIfSubsetOf(querySig);
-
-            for(Entry<Set<Expr>, Multimap<Expr, Expr>> e : cands) {
-                Multimap<Expr, Expr> cacheMap = e.getValue();
-                System.out.println("  CACHE MAP: " + cacheMap);
-                for(Multimap<Expr, Expr> queryMap : queryMaps) {
-                    Map<Expr, Entry<Set<Expr>, Set<Expr>>> group = MapUtils.groupByKey(cacheMap.asMap(), queryMap.asMap());
-
-                    Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> localProblems = group.values().stream()
-                        .map(x -> {
-                            Set<Expr> cacheExprs = x.getKey();
-                            Set<Expr> queryExprs = x.getValue();
-                            ProblemNeighborhoodAware<Map<Var, Var>, Var> p = new ProblemVarMappingExpr(cacheExprs, queryExprs, Collections.emptyMap());
-
-                            //System.out.println("cacheExprs: " + cacheExprs);
-                            //System.out.println("queryExprs: " + queryExprs);
-
-                            //Stream<Map<Var, Var>> r = p.generateSolutions();
-
-                            return p;
-                        })
-                        .collect(Collectors.toList());
-
-                    problems.addAll(localProblems);
-                    //problems.stream().forEach(p -> System.out.println("COMPLEX: " + p.getEstimatedCost()));
-
-
-                    //problemStream.forEach(y -> System.out.println("GOT SOLUTION: " + y));
-
-
-
-                    //System.out.println("    QUERY MAP: " + queryMap);
-                }
-            }
-
-            //cands.forEach(x -> System.out.println("CAND: " + x.getValue()));
-        }
-
-        ProblemVarMappingQuad quadProblem = new ProblemVarMappingQuad(cacheQfpc.getQuads(), queryQfpc.getQuads(), Collections.emptyMap());
-        problems.add(quadProblem);
-
-        for(int i = 0; i < 1000; ++i) {
-            Stopwatch sw = Stopwatch.createStarted();
-
-            ProblemContainerNeighbourhoodAware.solve(
-                    problems,
-                    Collections.emptyMap(),
-                    Map::keySet,
-                    MapUtils::mergeIfCompatible,
-                    Objects::isNull,
-                    (s) -> { System.out.println("solution: " + s); });
+//
+//        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> problems = new ArrayList<>();
+//        for(Entry<Set<Expr>, Collection<Multimap<Expr, Expr>>> entry : queryIndex.entrySet()) {
+//            Set<Expr> querySig = entry.getKey();
+//            Collection<Multimap<Expr, Expr>> queryMaps = entry.getValue();
+//
+//            System.out.println("CAND LOOKUP with " + querySig);
+//            Collection<Entry<Set<Expr>, Multimap<Expr, Expr>>> cands = cacheIndex.getIfSubsetOf(querySig);
+//
+//            for(Entry<Set<Expr>, Multimap<Expr, Expr>> e : cands) {
+//                Multimap<Expr, Expr> cacheMap = e.getValue();
+//                System.out.println("  CACHE MAP: " + cacheMap);
+//                for(Multimap<Expr, Expr> queryMap : queryMaps) {
+//                    Map<Expr, Entry<Set<Expr>, Set<Expr>>> group = MapUtils.groupByKey(cacheMap.asMap(), queryMap.asMap());
+//
+//                    Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> localProblems = group.values().stream()
+//                        .map(x -> {
+//                            Set<Expr> cacheExprs = x.getKey();
+//                            Set<Expr> queryExprs = x.getValue();
+//                            ProblemNeighborhoodAware<Map<Var, Var>, Var> p = new ProblemVarMappingExpr(cacheExprs, queryExprs, Collections.emptyMap());
+//
+//                            //System.out.println("cacheExprs: " + cacheExprs);
+//                            //System.out.println("queryExprs: " + queryExprs);
+//
+//                            //Stream<Map<Var, Var>> r = p.generateSolutions();
+//
+//                            return p;
+//                        })
+//                        .collect(Collectors.toList());
+//
+//                    problems.addAll(localProblems);
+//                    //problems.stream().forEach(p -> System.out.println("COMPLEX: " + p.getEstimatedCost()));
+//
+//
+//                    //problemStream.forEach(y -> System.out.println("GOT SOLUTION: " + y));
+//
+//
+//
+//                    //System.out.println("    QUERY MAP: " + queryMap);
+//                }
+//            }
+//
+//            //cands.forEach(x -> System.out.println("CAND: " + x.getValue()));
+//        }
+//
+//        ProblemVarMappingQuad quadProblem = new ProblemVarMappingQuad(cacheQfpc.getQuads(), queryQfpc.getQuads(), Collections.emptyMap());
+//        problems.add(quadProblem);
+//
+//        for(int i = 0; i < 1000; ++i) {
+//            Stopwatch sw = Stopwatch.createStarted();
+//
+//            ProblemContainerNeighbourhoodAware.solve(
+//                    problems,
+//                    Collections.emptyMap(),
+//                    Map::keySet,
+//                    MapUtils::mergeIfCompatible,
+//                    Objects::isNull,
+//                    (s) -> { System.out.println("solution: " + s); });
 
 //            ProblemContainer<Map<Var, Var>> container = ProblemContainerImpl.create(problems);
 //
@@ -521,9 +596,9 @@ public class TestStateSpaceSearch {
             //xxx.forEach(x -> System.out.println("SOLUTION: " + x));
 
 
-            System.out.println("TIME TAKEN: " + sw.stop().elapsed(TimeUnit.MILLISECONDS));
-        }
-        System.out.println("PROBLEMS: " + problems.size());
+//            System.out.println("TIME TAKEN: " + sw.stop().elapsed(TimeUnit.MILLISECONDS));
+//        }
+//        System.out.println("PROBLEMS: " + problems.size());
 
 
 
@@ -542,49 +617,49 @@ public class TestStateSpaceSearch {
 //            cands.forEach(x -> System.out.println("CAND: " + x));
 //        }
 
-if(false) {
-        //ClauseUtils.signaturize(clause)
-        IBiSetMultimap<Quad, Set<Set<Expr>>> queryQuadIndex = SparqlCacheUtils.createMapQuadsToFilters(queryQfpc);
-
-        IBiSetMultimap<Quad, Set<Set<Expr>>> cacheQuadIndex = SparqlCacheUtils.createMapQuadsToFilters(cacheQfpc);
-        System.out.println("Index: " + cacheIndex);
-
-        // Features are objects that describe view
-        // A query needs to cover all features of view
-        // so it must hold that |featuresOf(query)| >= |featuresOf(cache)|
-        Set<Object> features = new HashSet<Object>();
-        cacheQuadIndex.asMap().values().stream().flatMap(cnfs -> cnfs.stream())
-            .flatMap(cnf -> cnf.stream())
-            .filter(clause -> clause.size() == 1)
-            .flatMap(clause -> clause.stream())
-            .forEach(feature -> features.add(feature));
-
-
-        FeatureMap<Object, Object> featuresToCache = new FeatureMapImpl<>();
-        featuresToCache.put(features, cacheQfpc);
-
-
-        // The problem graph
-        //Graph<Problem<Map<Var, Var>>, DefaultEdge> problemGraph = new SimpleGraph<>(DefaultEdge.class);
-
-
-
-
-
-        // Probably cache entries should be indexed using DNFs and the table system,
-        // whereas lookups could be made using CNFs
-
-        Collection<Entry<Set<Object>, Object>> candidates = featuresToCache.getIfSubsetOf(
-                new HashSet<>(Arrays.asList(
-                        ExprUtils.parse("?o = <my://Airport>"),
-                        ExprUtils.parse("?p = <my://type>")
-              )));
-
-        System.out.println("Candidates: " + candidates);
-
-
-        problems.forEach(p -> System.out.println("SOLUTIONS for " + p + " " + p.generateSolutions().collect(Collectors.toList())));
-}
+//if(false) {
+//        //ClauseUtils.signaturize(clause)
+//        IBiSetMultimap<Quad, Set<Set<Expr>>> queryQuadIndex = SparqlCacheUtils.createMapQuadsToFilters(queryQfpc);
+//
+//        IBiSetMultimap<Quad, Set<Set<Expr>>> cacheQuadIndex = SparqlCacheUtils.createMapQuadsToFilters(cacheQfpc);
+//        System.out.println("Index: " + cacheIndex);
+//
+//        // Features are objects that describe view
+//        // A query needs to cover all features of view
+//        // so it must hold that |featuresOf(query)| >= |featuresOf(cache)|
+//        Set<Object> features = new HashSet<Object>();
+//        cacheQuadIndex.asMap().values().stream().flatMap(cnfs -> cnfs.stream())
+//            .flatMap(cnf -> cnf.stream())
+//            .filter(clause -> clause.size() == 1)
+//            .flatMap(clause -> clause.stream())
+//            .forEach(feature -> features.add(feature));
+//
+//
+//        FeatureMap<Object, Object> featuresToCache = new FeatureMapImpl<>();
+//        featuresToCache.put(features, cacheQfpc);
+//
+//
+//        // The problem graph
+//        //Graph<Problem<Map<Var, Var>>, DefaultEdge> problemGraph = new SimpleGraph<>(DefaultEdge.class);
+//
+//
+//
+//
+//
+//        // Probably cache entries should be indexed using DNFs and the table system,
+//        // whereas lookups could be made using CNFs
+//
+//        Collection<Entry<Set<Object>, Object>> candidates = featuresToCache.getIfSubsetOf(
+//                new HashSet<>(Arrays.asList(
+//                        ExprUtils.parse("?o = <my://Airport>"),
+//                        ExprUtils.parse("?p = <my://type>")
+//              )));
+//
+//        System.out.println("Candidates: " + candidates);
+//
+//
+//        problems.forEach(p -> System.out.println("SOLUTIONS for " + p + " " + p.generateSolutions().collect(Collectors.toList())));
+//}
 
         //ProblemContainerImpl<Map<Var, Var>> container = ProblemContainerImpl.create(problems);
         //container.
@@ -650,7 +725,7 @@ if(false) {
 
 
         //p.generateSolutions().forEach(x -> System.out.println(x));
-    }
+//    }
 
 
 //    public static ContainmentMap<Int, Multimap<Expr, Expr>> indexDnf(QuadFilterPatternCanonical qfpc) {
@@ -675,4 +750,4 @@ if(false) {
 //        return result;
 //    }
 
-}
+//}
