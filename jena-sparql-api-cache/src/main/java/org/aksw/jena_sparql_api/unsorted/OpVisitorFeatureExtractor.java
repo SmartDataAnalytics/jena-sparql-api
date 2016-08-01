@@ -1,4 +1,4 @@
-package org;
+package org.aksw.jena_sparql_api.unsorted;
 
 import java.util.Collections;
 import java.util.HashSet;

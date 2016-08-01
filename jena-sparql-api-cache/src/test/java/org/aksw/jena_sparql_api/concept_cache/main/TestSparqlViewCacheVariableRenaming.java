@@ -112,16 +112,16 @@ public class TestSparqlViewCacheVariableRenaming {
         QuadFilterPatternCanonical renamedQfpc = SparqlCacheUtils.transform2(renamedQuery);
 
 
-        Cache<Integer, String> cache = CacheBuilder
-            .newBuilder()
-            .removalListener(new RemovalListener<Integer, String>() {
-                @Override
-                public void onRemoval(RemovalNotification<Integer, String> notification) {
-
-                }
-            })
-            .maximumSize(1000)
-            .build();
+//        Cache<Integer, String> cache = CacheBuilder
+//            .newBuilder()
+//            .removalListener(new RemovalListener<Integer, String>() {
+//                @Override
+//                public void onRemoval(RemovalNotification<Integer, String> notification) {
+//
+//                }
+//            })
+//            .maximumSize(1000)
+//            .build();
 
 
 

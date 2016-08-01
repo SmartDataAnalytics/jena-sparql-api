@@ -1,4 +1,4 @@
-package org;
+package org.aksw.jena_sparql_api.views.index;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
@@ -24,10 +24,6 @@ import org.aksw.jena_sparql_api.concept_cache.dirty.Tree;
 import org.aksw.jena_sparql_api.concept_cache.dirty.TreeImpl;
 import org.aksw.jena_sparql_api.concept_cache.op.TreeUtils;
 import org.aksw.jena_sparql_api.utils.MapUtils;
-import org.aksw.jena_sparql_api.views.index.IndexSystem;
-import org.aksw.jena_sparql_api.views.index.IndexSystemImpl;
-import org.aksw.jena_sparql_api.views.index.QuadPatternIndex;
-import org.aksw.jena_sparql_api.views.index.QueryIndex;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;

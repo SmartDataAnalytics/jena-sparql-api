@@ -1,4 +1,4 @@
-package org;
+package org.aksw.jena_sparql_api.views.index;
 
 import java.util.ArrayList;
 import java.util.Collections;

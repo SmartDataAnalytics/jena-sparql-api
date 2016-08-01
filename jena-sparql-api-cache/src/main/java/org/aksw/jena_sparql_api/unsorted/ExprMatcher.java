@@ -1,4 +1,4 @@
-package org;
+package org.aksw.jena_sparql_api.unsorted;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Map.Entry;

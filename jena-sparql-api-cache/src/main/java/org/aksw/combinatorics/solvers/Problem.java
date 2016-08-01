@@ -1,8 +1,5 @@
 package org.aksw.combinatorics.solvers;
 
-import java.util.Collection;
-import java.util.stream.Stream;
-
 /**
  * A problem is an abstract entity that supports generation of (partial) solutions together with an estimated cost of doing so.
  * The cost should thereby be proportional to the number of solutions returned, because:

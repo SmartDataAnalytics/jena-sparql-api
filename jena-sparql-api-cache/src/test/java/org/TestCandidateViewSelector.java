@@ -7,6 +7,8 @@ import java.util.NavigableSet;
 import java.util.TreeSet;
 
 import org.aksw.jena_sparql_api.utils.model.Quadlet;
+import org.aksw.jena_sparql_api.views.index.CandidateViewSelectorImpl;
+import org.aksw.jena_sparql_api.views.index.QuadPrefixes;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.util.ExprUtils;
 import org.junit.Assert;

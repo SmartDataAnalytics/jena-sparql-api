@@ -143,6 +143,8 @@ public class SparqlViewCacheImpl
             // For a pattern there might be multiple candidate variable mappings
             // Filter expressions are not considered at this stage
             IBiSetMultimap<Quad, Set<Set<Expr>>> cacheQuadToCnf = qfpcToQuadToCnf.get(cand);
+            
+            cacheQuadToCnf.asMap().entrySet().forEach(e -> System.out.println(e.getKey() + " -> " + e.getValue()));
             Stream<Map<Var, Var>> varMaps = CombinatoricsUtils.computeVarMapQuadBased(queryQuadToCnf, cacheQuadToCnf, candVarCombos);
 
             //while(varMaps.hasNext()) {

@@ -1,5 +1,7 @@
-package org.aksw.jena_sparql_api.concept_cache.collection;
+package org;
 
+import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
+import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMapImpl;
 import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.junit.Assert;
 import org.junit.Test;

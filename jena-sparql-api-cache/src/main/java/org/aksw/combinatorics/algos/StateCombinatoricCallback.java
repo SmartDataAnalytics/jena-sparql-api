@@ -139,13 +139,13 @@ public class StateCombinatoricCallback<A, B, S>
 
     }
 
-    public Stream<CombinationStack<A, B, S>> stream(S baseSolution) {
-        Stream<CombinationStack<A, B, S>> result = as.isEmpty()
-                ? Stream.empty()
-                : stream(0, baseSolution, null);
-
-        return result;
-    }
+//    public Stream<CombinationStack<A, B, S>> stream(S baseSolution) {
+//        Stream<CombinationStack<A, B, S>> result = as.isEmpty()
+//                ? Stream.empty()
+//                : streamNotWorking(0, baseSolution, null);
+//
+//        return result;
+//    }
 
     public static <A, B> Stream<CombinationStack<A, B, Void>> createKPermutationsOfN2(
             Collection<A> as,
@@ -176,8 +176,7 @@ public class StateCombinatoricCallback<A, B, S>
         return result;
     }
 
-    public Stream<CombinationStack<A, B, S>> stream(int i, S baseSolution, CombinationStack<A, B, S> stack) {
-
+    public Stream<CombinationStack<A, B, S>> streamNotWorking(int i, S baseSolution, CombinationStack<A, B, S> stack) {
 
         Stream<CombinationStack<A, B, S>> result;
 
@@ -190,7 +189,7 @@ public class StateCombinatoricCallback<A, B, S>
                 .flatMap(pick -> {
 
                     B b = pick.data;
-                    System.out.println(i + ": " + a + " - " + b);
+                    System.out.println("Depth: " + i + ": " + a + " - " + b + " - remaining bs: " + remainingB.size());
                     pick.unlink();
 
                     Stream<S> partialSolutions = solutionCombiner.apply(baseSolution, a, b);
@@ -199,7 +198,7 @@ public class StateCombinatoricCallback<A, B, S>
                         CombinationStack<A, B, S> newStack = new CombinationStack<>(stack, c);
 
                         // recurse
-                        Stream<CombinationStack<A, B, S>> t = stream(i + 1, partialSolution, newStack);
+                        Stream<CombinationStack<A, B, S>> t = streamNotWorking(i + 1, partialSolution, newStack);
 
                         t = StreamUtils.appendAction(t, () -> pick.relink());
 

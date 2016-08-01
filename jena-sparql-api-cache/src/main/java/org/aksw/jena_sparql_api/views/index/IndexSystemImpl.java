@@ -8,9 +8,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.OpVisitorFeatureExtractor;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMapImpl;
+import org.aksw.jena_sparql_api.unsorted.OpVisitorFeatureExtractor;
 import org.apache.jena.sparql.algebra.Op;
 
 /**
