@@ -2,10 +2,12 @@ package org.aksw.jena_sparql_api.pagination.core;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.utils.CannedQueryUtils;
-
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
+
+import com.google.common.collect.Range;
+
 
 
 
@@ -16,6 +18,8 @@ import org.apache.jena.query.ResultSet;
  *         Time: 12:36 AM
  */
 public class PaginationUtils {
+
+    
     public static long adjustPageSize(QueryExecutionFactory factory, long requestedPageSize) {
         Query query = CannedQueryUtils.spoTemplate();
         query.setLimit(requestedPageSize);

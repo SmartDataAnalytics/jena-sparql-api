@@ -14,7 +14,6 @@ import java.util.stream.Stream;
 import org.aksw.combinatorics.algos.StateCombinatoricCallback;
 import org.aksw.combinatorics.solvers.ProblemNeighborhoodAware;
 import org.aksw.commons.collections.MapUtils;
-import org.aksw.isomorphism.IsoMapUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
@@ -22,8 +21,6 @@ import org.apache.jena.sparql.expr.ExprFunction;
 import org.apache.jena.sparql.expr.ExprVars;
 import org.apache.jena.sparql.expr.FunctionLabel;
 import org.apache.jena.sparql.expr.NodeValue;
-
-import com.codepoetics.protonpack.StreamUtils;
 
 // Multimap<Set<Set<>>>
 // ContainmentMap
@@ -68,7 +65,7 @@ public class ProblemVarMappingExpr
 //        super(as, bs, baseSolution);
 //    }
 
-    public ProblemVarMappingExpr(Collection<? extends Expr> as, Collection<? extends Expr> bs, Map<Var, Var> baseSolution) {
+    public ProblemVarMappingExpr(Collection<Expr> as, Collection<Expr> bs, Map<Var, Var> baseSolution) {
         super(as, bs, baseSolution);
         //System.out.println("Created: " + as + " - " + bs);
     }

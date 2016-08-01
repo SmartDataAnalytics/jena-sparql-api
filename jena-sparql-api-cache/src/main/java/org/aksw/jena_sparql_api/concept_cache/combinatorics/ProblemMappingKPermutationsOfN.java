@@ -21,11 +21,11 @@ import com.google.common.math.LongMath;
 public abstract class ProblemMappingKPermutationsOfN<A, B, X, Y>
     implements ProblemNeighborhoodAware<Map<X, Y>, X>
 {
-    protected Collection<? extends A> as;
-    protected Collection<? extends B> bs;
+    protected Collection<A> as;
+    protected Collection<B> bs;
     protected Map<X, Y> baseSolution;
 
-    public ProblemMappingKPermutationsOfN(Collection<? extends A> as, Collection<? extends B> bs, Map<X, Y> baseSolution) {
+    public ProblemMappingKPermutationsOfN(Collection<A> as, Collection<B> bs, Map<X, Y> baseSolution) {
         super();
         this.as = as;
         this.bs = bs;

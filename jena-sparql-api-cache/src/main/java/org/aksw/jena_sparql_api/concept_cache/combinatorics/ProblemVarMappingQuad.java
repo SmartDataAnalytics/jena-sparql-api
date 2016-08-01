@@ -18,7 +18,7 @@ public class ProblemVarMappingQuad
     /**
      * The constraints that apply to the given quads
      */
-    public ProblemVarMappingQuad(Collection<? extends Quad> as, Collection<? extends Quad> bs, Map<Var, Var> baseSolution) {
+    public ProblemVarMappingQuad(Collection<Quad> as, Collection<Quad> bs, Map<Var, Var> baseSolution) {
         super(as, bs, baseSolution);
     }
 
