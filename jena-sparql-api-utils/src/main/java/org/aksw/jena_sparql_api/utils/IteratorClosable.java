@@ -13,7 +13,12 @@ public class IteratorClosable<T>
     private Iterator<T> delegate;
     private Closeable closable;
 
+    public IteratorClosable(Iterator<T> delegate) {
+        this(delegate, null);
+    }
+    
     public IteratorClosable(Iterator<T> delegate, Closeable closable) {
+        super();
         this.delegate = delegate;
         this.closable = closable;
     }

@@ -2,6 +2,8 @@ package org.aksw.jena_sparql_api.util.collection;
 
 import java.util.List;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -20,16 +22,37 @@ public class TestLazyLoadingCachingList {
                 .mapToObj(i -> "item-" + i)
                 .collect(Collectors.toList());
         
+        Function<Range<Long>, ClosableIterator<String>> tmp = new StaticListItemSupplier<>(items);
+        
+        // Add some delay
+        Function<Range<Long>, ClosableIterator<String>> itemSupplier = (range) -> {
+            System.out.println("Supplier: Requested range: " + range);
+            try {
+                TimeUnit.MILLISECONDS.sleep(50l);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            return tmp.apply(range);
+        };
+        
         LazyLoadingCachingList<String> llcl = new LazyLoadingCachingList<String>(
                 Executors.newFixedThreadPool(4),
-                new StaticListItemSupplier<>(items),
+                itemSupplier,
                 Range.closedOpen(10l, 50l),
-                new RangeCostModel());
+                new RangeCostModel());        
         
-        ClosableIterator<String> it = llcl.retrieve(Range.closedOpen(0l, 20l));
-        while(it.hasNext()) {
-            System.out.println("got item: " + it.next());
+        
+        ClosableIterator<String> itA = llcl.retrieve(Range.closedOpen(0l, 20l));
+        ClosableIterator<String> itB = llcl.retrieve(Range.closedOpen(10l, 30l));
+        while(itA.hasNext()) {
+            System.out.println("[A] got item: " + itA.next());
         }
+
+        while(itB.hasNext()) {
+            System.out.println("[B] got item: " + itB.next());
+        }
+        
+        
         
     }
 
