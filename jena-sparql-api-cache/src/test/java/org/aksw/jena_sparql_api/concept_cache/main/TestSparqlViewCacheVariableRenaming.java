@@ -31,12 +31,6 @@ import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.table.TableData;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.syntax.PatternVars;
-import org.junit.Test;
-
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.RemovalListener;
-import com.google.common.cache.RemovalNotification;
 
 
 public class TestSparqlViewCacheVariableRenaming {
@@ -49,7 +43,7 @@ public class TestSparqlViewCacheVariableRenaming {
      * @throws IOException
      *
      */
-    @Test
+    //@Test
     public void testSparqlViewCacheRenaming() throws IOException {
         //Reader reader = new InputStreamRnew FileInputStream(file) //new InputStreamReader(in);
         //List<String> lines = Files.readAllLines(Paths.get(""), encoding);

@@ -119,7 +119,7 @@ public class SparqlViewCacheImpl
         //System.out.println("#cands: " + rawCands.size());
 
         // Try candidates with largest potential overlap first
-        List<QuadFilterPatternCanonical> rawCands = new ArrayList<QuadFilterPatternCanonical>(rawCandsSet);
+        List<QuadFilterPatternCanonical> rawCands = new ArrayList<>(rawCandsSet);
         Collections.sort(rawCands, new Comparator<QuadFilterPatternCanonical>() {
             @Override
             public int compare(QuadFilterPatternCanonical a, QuadFilterPatternCanonical b) {
