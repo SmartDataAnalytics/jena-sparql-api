@@ -4,20 +4,22 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
-import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.aksw.combinatorics.solvers.ProblemContainerNeighbourhoodAware;
 import org.aksw.combinatorics.solvers.ProblemNeighborhoodAware;
+import org.aksw.commons.collections.multimaps.IBiSetMultimap;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.ProblemVarMappingExpr;
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.ProblemVarMappingQuad;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.utils.MapUtils;
+import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
 
@@ -76,13 +78,26 @@ public class VarMapper {
             //cands.forEach(x -> System.out.println("CAND: " + x.getValue()));
         }
 
-        ProblemVarMappingQuad quadProblem = new ProblemVarMappingQuad(cachePattern.getQuads(), queryPattern.getQuads(), Collections.emptyMap());
-        problems.add(quadProblem);
+        // Index the quads by the cnf (dnf)?
+        
+        IBiSetMultimap<Quad, Set<Set<Expr>>> cacheQuadIndex = SparqlCacheUtils.createMapQuadsToFilters(cachePattern);
+        IBiSetMultimap<Quad, Set<Set<Expr>>> queryQuadIndex = SparqlCacheUtils.createMapQuadsToFilters(queryPattern);
+        
+        Map<Set<Set<Expr>>, Entry<Set<Quad>, Set<Quad>>> quadGroups = MapUtils.groupByKey(cacheQuadIndex.getInverse(), queryQuadIndex.getInverse());
+        
+        for(Entry<Set<Quad>, Set<Quad>> quadGroup : quadGroups.values()) {
+        
+            ProblemVarMappingQuad quadProblem = new ProblemVarMappingQuad(quadGroup.getKey(), quadGroup.getValue(), Collections.emptyMap());
+
+            System.out.println("Registered quad problem instance " + quadProblem + " with an estimated cost of " + quadProblem.getEstimatedCost());
+            //System.out.println("  Enumerating its solutions yields " + quadProblem.generateSolutions().count());
+            //System.out.println("Registered quad problem instance " + quadProblem + " with " + quadProblem.generateSolutions().count() + " solutions ");
+            
+            
+            problems.add(quadProblem);
+        }
         
         
-        System.out.println("Registered quad problem instance " + quadProblem + " with an estimated cost of " + quadProblem.getEstimatedCost());
-        //System.out.println("  Enumerating its solutions yields " + quadProblem.generateSolutions().count());
-        //System.out.println("Registered quad problem instance " + quadProblem + " with " + quadProblem.generateSolutions().count() + " solutions ");
         
         Stream<Map<Var, Var>> result = ProblemContainerNeighbourhoodAware.solve(
                 problems,
