@@ -2,7 +2,6 @@ package org.aksw.jena_sparql_api.concept_cache.combinatorics;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -21,6 +20,8 @@ import org.apache.jena.sparql.expr.ExprFunction;
 import org.apache.jena.sparql.expr.ExprVars;
 import org.apache.jena.sparql.expr.FunctionLabel;
 import org.apache.jena.sparql.expr.NodeValue;
+
+import com.google.common.collect.HashBiMap;
 
 // Multimap<Set<Set<>>>
 // ContainmentMap
@@ -225,7 +226,7 @@ public class ProblemVarMappingExpr
         //for(int i = 0; i < n - m + 1; ++i) {
         Stream<ExprMapSolution> result = IntStream.range(0, n - m + 1)
             .mapToObj(i -> {
-                Map<Var, Var> varMap = new HashMap<Var, Var>(baseSolution);
+                Map<Var, Var> varMap = HashBiMap.create(baseSolution); //new HashMap<Var, Var>(baseSolution);
                 Expr be = null;
                 for(int j = 0; j < m; ++j) {
                 //Stream<ExprMapSolution> r = IntStream.range(0, m).map(j -> {

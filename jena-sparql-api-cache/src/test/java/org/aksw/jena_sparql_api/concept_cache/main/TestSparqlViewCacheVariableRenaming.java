@@ -85,10 +85,10 @@ public class TestSparqlViewCacheVariableRenaming {
             
             //if(true) {
             //if("http://ex.org/query/4-c".equals(id)) {
-            if("http://ex.org/query/8-b".equals(id)) {
+//            if("http://ex.org/query/8-b".equals(id)) {
                 System.out.println("Testing " + id);
                 testVariableRenaming(query);
-            }
+//            }
         }
 
 

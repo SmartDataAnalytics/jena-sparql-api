@@ -19,6 +19,7 @@ import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
 import org.aksw.jena_sparql_api.concept_cache.domain.PatternSummary;
 import org.aksw.jena_sparql_api.utils.MapUtils;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
+import org.apache.jena.ext.com.google.common.collect.HashBiMap;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
@@ -307,7 +308,23 @@ public class CombinatoricsUtils {
         if(cacheQuads.isEmpty() && !queryQuads.isEmpty()) {
             result = Stream.of(baseSolution);
         } else {        
-            TriFunction<Map<Var, Var>, Quad, Quad, Stream<Map<Var, Var>>> solutionCombiner = (s, a, b) -> Stream.of(MapUtils.mergeIfCompatible(s, Utils2.createVarMap(a, b)));
+            TriFunction<Map<Var, Var>, Quad, Quad, Stream<Map<Var, Var>>> solutionCombiner = (s, a, b) -> {
+                Stream<Map<Var, Var>> r;
+                try {
+                    HashBiMap<Var, Var> d = HashBiMap.create();
+                    Map<Var, Var> contib = Utils2.createVarMap(a, b);
+                    
+                    d.putAll(contib);
+                    d.putAll(s);
+                    
+                    r = Stream.of(d);
+                } catch(IllegalArgumentException e) {
+                    // Indicates inconsistent variable mapping
+                    r = Stream.empty();
+                }
+                
+                return r;
+            };
                     
             result = StateCombinatoricCallback
                     .createKPermutationsOfN(cacheQuads, queryQuads, baseSolution, solutionCombiner)
