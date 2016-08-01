@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.util.collection;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
@@ -188,54 +189,64 @@ public class LazyLoadingCachingList<T> {
     }
     
     
-    public ClosableIterator<T> retrieve(Range<Long> range) {
+    public ClosableIterator<T> retrieve(Range<Long> range) {        
         range = RangeUtils.startFromZero(range);
         range = range.canonical(DiscreteDomain.longs());
         
-        // Prevent changes to the map while we check its content
-        synchronized(rangesToData) {
-            RangeMap<Long, CacheEntry<T>> subMap = rangesToData.subRangeMap(range);
-                        
+        ClosableIterator<T> result;
+        if(range.isEmpty()) {
+            result = new IteratorClosable<>(Collections.emptyIterator());
+        } else {
             
-            List<RangeInfo<T>> rangeInfos = new ArrayList<>();
-            // Determine the first offset of the query
-            //Iterator<Entry<Range<Long>, CacheEntry<T>>> it = subMap.asMapOfRanges().entrySet().iterator();
-            
-            Long offset = range.lowerEndpoint();
-            for(Entry<Range<Long>, CacheEntry<T>> e : subMap.asMapOfRanges().entrySet()) {
-//                Entry<Range<Long>, CacheEntry<T>> e = it.next();
-                Range<Long> eRange = e.getKey();
-                Cache<List<T>> cache = e.getValue().cache;
-                long ele = eRange.lowerEndpoint();
+            // Prevent changes to the map while we check its content
+            synchronized(rangesToData) {
+                Range<Long> lookupRange = range.intersection(cacheRange);
 
-
-                if(ele > offset) {
-                    // We need to fetch a chunk at the beginning
-                    Range<Long> gap = Range.closedOpen(offset, ele);
+                RangeMap<Long, CacheEntry<T>> subMap = rangesToData.subRangeMap(lookupRange);
+                            
+                
+                List<RangeInfo<T>> rangeInfos = new ArrayList<>();
+                // Determine the first offset of the query
+                //Iterator<Entry<Range<Long>, CacheEntry<T>>> it = subMap.asMapOfRanges().entrySet().iterator();
+                
+                Long offset = range.lowerEndpoint();
+                for(Entry<Range<Long>, CacheEntry<T>> e : subMap.asMapOfRanges().entrySet()) {
+    //                Entry<Range<Long>, CacheEntry<T>> e = it.next();
+                    Range<Long> eRange = e.getKey();
+                    Cache<List<T>> cache = e.getValue().cache;
+                    long ele = eRange.lowerEndpoint();
+    
+    
+                    if(ele > offset) {
+                        // We need to fetch a chunk at the beginning
+                        Range<Long> gap = Range.closedOpen(offset, ele);
+                        if(!gap.isEmpty()) {
+                            rangeInfos.add(new RangeInfo<>(gap, true, null));
+                        }
+                        //Range<Long> r = Range.range(range.lowerEndpoint(), range.lowerBoundType(), eRange.lowerEndpoint(), )
+                    } else {
+                        rangeInfos.add(new RangeInfo<>(eRange, false, cache));
+                    }
                     
-                    rangeInfos.add(new RangeInfo<>(gap, true, null));
-                    //Range<Long> r = Range.range(range.lowerEndpoint(), range.lowerBoundType(), eRange.lowerEndpoint(), )
-                } else {
-                    rangeInfos.add(new RangeInfo<>(eRange, false, cache));
+                    offset = eRange.hasUpperBound()
+                            ? eRange.upperEndpoint()
+                            : null;
                 }
-                
-                offset = eRange.hasUpperBound()
-                        ? eRange.upperEndpoint() + 1
-                        : null;
-            }
-
-            if(offset != null && range.hasUpperBound()) {
-                Range<Long> lastGap = Range.closedOpen(offset, range.upperEndpoint());
-                
-                rangeInfos.add(new RangeInfo<>(lastGap, true, null));
-            }
-
-            // Prepare fetching of the gaps - this updates the map with additional entries
-            fetchGaps(subMap, rangeInfos);
-        } 
-        
-        ClosableIterator<T> result = new LazyLoadingCachingListIterator<>(range, rangesToData, itemSupplier);
-
+    
+                if(offset != null && range.hasUpperBound()) {
+                    Range<Long> lastGap = Range.closedOpen(offset, lookupRange.upperEndpoint());
+                    
+                    if(!lastGap.isEmpty()) {
+                        rangeInfos.add(new RangeInfo<>(lastGap, true, null));
+                    }
+                }
+    
+                // Prepare fetching of the gaps - this updates the map with additional entries
+                fetchGaps(subMap, rangeInfos);
+            } 
+            
+            result = new LazyLoadingCachingListIterator<>(range, rangesToData, itemSupplier);
+        }
         return result;
     }
     
@@ -248,6 +259,7 @@ public class LazyLoadingCachingList<T> {
     }
     
     public void fetchGap(RangeMap<Long, CacheEntry<T>> subMap, Range<Long> range) {
+        //System.out.println("GAP: " + range);
 //
 //        
 //        
@@ -285,7 +297,7 @@ public class LazyLoadingCachingList<T> {
                     ++i;
                                         
                     T binding = ci.next();
-                    System.out.println("Caching page " + range + " item " + i + ": " + binding);
+                    //System.out.println("Caching page " + range + " item " + i + ": " + binding);
                     cacheData.add(binding);
                 }
     

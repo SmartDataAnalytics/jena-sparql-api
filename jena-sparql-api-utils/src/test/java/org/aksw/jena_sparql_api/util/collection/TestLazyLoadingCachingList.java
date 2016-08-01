@@ -38,18 +38,34 @@ public class TestLazyLoadingCachingList {
         LazyLoadingCachingList<String> llcl = new LazyLoadingCachingList<String>(
                 Executors.newFixedThreadPool(4),
                 itemSupplier,
-                Range.closedOpen(10l, 50l),
+                Range.closedOpen(0l, 17l),
                 new RangeCostModel());        
         
         
-        ClosableIterator<String> itA = llcl.retrieve(Range.closedOpen(0l, 20l));
-        ClosableIterator<String> itB = llcl.retrieve(Range.closedOpen(10l, 30l));
+        ClosableIterator<String> itA = llcl.retrieve(Range.closedOpen(0l, 10l));
+        ClosableIterator<String> itB = llcl.retrieve(Range.closedOpen(5l, 15l));
+        ClosableIterator<String> itC = llcl.retrieve(Range.openClosed(3l, 13l));
+        ClosableIterator<String> itD = llcl.retrieve(Range.closedOpen(15l, 20l));
+        ClosableIterator<String> itE = llcl.retrieve(Range.closedOpen(15l, 20l));
+        
         while(itA.hasNext()) {
             System.out.println("[A] got item: " + itA.next());
         }
 
         while(itB.hasNext()) {
             System.out.println("[B] got item: " + itB.next());
+        }
+
+        while(itC.hasNext()) {
+            System.out.println("[C] got item: " + itC.next());
+        }
+
+        while(itD.hasNext()) {
+            System.out.println("[D] got item: " + itD.next());
+        }
+        
+        while(itE.hasNext()) {
+            System.out.println("[E] got item: " + itE.next());
         }
         
         
