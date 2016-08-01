@@ -44,7 +44,7 @@ import org.aksw.jena_sparql_api.utils.DnfUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.MapUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
-import org.aksw.jena_sparql_api.views.index.SparqlCacheSystem;
+import org.aksw.jena_sparql_api.views.index.SparqlCacheSystemImpl;
 import org.aksw.mapping.MatchingStrategy;
 import org.aksw.mapping.SequentialMatchIterator;
 import org.aksw.mapping.TreeMapperImpl;
@@ -211,8 +211,8 @@ public class TestStateSpaceSearch {
 //        System.out.println("root:" + tree.getRoot());
 //        System.out.println("root:" + tree.getChildren(tree.getRoot()));
         
-        Tree<Op> cacheMultiaryTree = SparqlCacheSystem.removeUnaryNodes(cacheTree);
-        Tree<Op> queryMultiaryTree = SparqlCacheSystem.removeUnaryNodes(queryTree);
+        Tree<Op> cacheMultiaryTree = SparqlCacheSystemImpl.removeUnaryNodes(cacheTree);
+        Tree<Op> queryMultiaryTree = SparqlCacheSystemImpl.removeUnaryNodes(queryTree);
         //System.out.println("Multiary tree: " + cacheMultiaryTree);
         
         
@@ -313,7 +313,7 @@ public class TestStateSpaceSearch {
         // actually, this is again a problem instance - right?
         Entry<Long, Entry<Op, Op>> pick = ProblemContainerNeighbourhoodAware.firstEntry(costToOpMappings);
 
-        SparqlCacheSystem.clusterNodesByFirstMultiaryAncestor(queryTree, candOpMapping);
+        SparqlCacheSystemImpl.clusterNodesByFirstMultiaryAncestor(queryTree, candOpMapping);
         
         
         
@@ -409,7 +409,7 @@ public class TestStateSpaceSearch {
 //           System.out.println("cache candidate: " + x.getValue());
 //        });
 
-        SparqlCacheSystem cacheSystem = new SparqlCacheSystem();
+        SparqlCacheSystemImpl cacheSystem = new SparqlCacheSystemImpl();
         cacheSystem.registerCache("test", cacheOp);
 
         cacheSystem.rewriteQuery(queryOp);
