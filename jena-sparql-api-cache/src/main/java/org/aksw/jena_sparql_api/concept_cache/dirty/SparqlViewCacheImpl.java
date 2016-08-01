@@ -145,7 +145,7 @@ public class SparqlViewCacheImpl
             IBiSetMultimap<Quad, Set<Set<Expr>>> cacheQuadToCnf = qfpcToQuadToCnf.get(cand);
             
             cacheQuadToCnf.asMap().entrySet().forEach(e -> System.out.println(e.getKey() + " -> " + e.getValue()));
-            Stream<Map<Var, Var>> varMaps = CombinatoricsUtils.computeVarMapQuadBased(queryQuadToCnf, cacheQuadToCnf, candVarCombos);
+            Stream<Map<Var, Var>> varMaps = CombinatoricsUtils.computeVarMapQuadBased(cacheQuadToCnf, queryQuadToCnf, candVarCombos);
 
             //while(varMaps.hasNext()) {
             varMaps.forEach(varMap -> {

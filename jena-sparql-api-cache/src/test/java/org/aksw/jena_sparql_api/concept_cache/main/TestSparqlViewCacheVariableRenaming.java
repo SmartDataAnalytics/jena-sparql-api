@@ -31,6 +31,7 @@ import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.table.TableData;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.syntax.PatternVars;
+import org.junit.Test;
 
 
 public class TestSparqlViewCacheVariableRenaming {
@@ -43,7 +44,7 @@ public class TestSparqlViewCacheVariableRenaming {
      * @throws IOException
      *
      */
-    //@Test
+    @Test
     public void testSparqlViewCacheRenaming() throws IOException {
         //Reader reader = new InputStreamRnew FileInputStream(file) //new InputStreamReader(in);
         //List<String> lines = Files.readAllLines(Paths.get(""), encoding);
@@ -101,9 +102,9 @@ public class TestSparqlViewCacheVariableRenaming {
                         v -> v,
                         v -> (Node)gen.next()));
 
-        Query renamedQuery = QueryTransformOps.transform(baseQuery, varMap);
+        Query cacheQuery = QueryTransformOps.transform(baseQuery, varMap);
         //List<Var> renamedVars = renamedQuery.getProjectVars();
-        QuadFilterPatternCanonical renamedQfpc = SparqlCacheUtils.transform2(renamedQuery);
+        QuadFilterPatternCanonical cacheQfpc = SparqlCacheUtils.transform2(cacheQuery);
 
 
 //        Cache<Integer, String> cache = CacheBuilder
@@ -122,14 +123,14 @@ public class TestSparqlViewCacheVariableRenaming {
         SparqlViewCache sparqlViewCache = new SparqlViewCacheImpl();
 
         System.out.println("base: " + baseQfpc);
-        System.out.println("renamed: " + renamedQfpc);
+        System.out.println("renamed: " + cacheQfpc);
         System.out.println("base: " + baseQuery);
-        System.out.println("renamed: " + renamedQuery);
+        System.out.println("renamed: " + cacheQuery);
 
 
         Table table = new TableData(baseVars, Collections.emptyList());
         sparqlViewCache.index(baseQfpc, table);
-        CacheResult cr = sparqlViewCache.lookup(renamedQfpc);
+        CacheResult cr = sparqlViewCache.lookup(cacheQfpc);
         if(cr == null) {
             System.out.println("FAIL");
         } else {

@@ -29,8 +29,8 @@ import com.google.common.collect.Multimap;
 
 public class CombinatoricsUtils {
 
-    public static Stream<Map<Var, Var>> computeVarMapQuadBased(PatternSummary needle, PatternSummary haystack, Set<Set<Var>> candVarCombos) {
-        Stream<Map<Var, Var>> result = computeVarMapQuadBased(needle.getQuadToCnf(), haystack.getQuadToCnf(), candVarCombos);
+    public static Stream<Map<Var, Var>> computeVarMapQuadBased(PatternSummary cachePattern, PatternSummary queryPattern, Set<Set<Var>> candVarCombos) {
+        Stream<Map<Var, Var>> result = computeVarMapQuadBased(cachePattern.getQuadToCnf(), queryPattern.getQuadToCnf(), candVarCombos);
         return result;
     }
 
@@ -47,7 +47,7 @@ public class CombinatoricsUtils {
      * @param cand
      * @return
      */
-    public static Stream<Map<Var, Var>> computeVarMapQuadBased(IBiSetMultimap<Quad, Set<Set<Expr>>> queryQuadToCnf, IBiSetMultimap<Quad, Set<Set<Expr>>> candQuadToCnf, Set<Set<Var>> candVarCombos) {
+    public static Stream<Map<Var, Var>> computeVarMapQuadBased(IBiSetMultimap<Quad, Set<Set<Expr>>> candQuadToCnf, IBiSetMultimap<Quad, Set<Set<Expr>>> queryQuadToCnf, Set<Set<Var>> candVarCombos) {
 
         IBiSetMultimap<Set<Set<Expr>>, Quad> cnfToCandQuad = candQuadToCnf.getInverse();
         IBiSetMultimap<Set<Set<Expr>>, Quad> cnfToQueryQuad = queryQuadToCnf.getInverse();
