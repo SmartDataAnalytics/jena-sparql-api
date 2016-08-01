@@ -1,4 +1,4 @@
-package org.aksw.mapping;
+package org.aksw.jena_sparql_api.sparql.algebra.mapping;
 
 import java.util.LinkedHashMap;
 import java.util.List;

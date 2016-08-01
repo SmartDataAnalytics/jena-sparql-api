@@ -81,7 +81,7 @@ public class Refinement {
                 sigToAs.put(sig, q);
             });
 
-            Map<Var, Var> identity = newBase.values().stream().collect(Collectors.toMap(x -> x, x -> x));
+            Map<Var, Var> identity = newBase.values().stream().distinct().collect(Collectors.toMap(x -> x, x -> x));
             NodeTransform s2 = NodeTransformSignaturize.create(identity);
             Multimap<T, T> sigToBs = HashMultimap.create();
             bs.forEach(q -> {
@@ -99,47 +99,47 @@ public class Refinement {
         return result;
     }
 
-    public static Map<Quad, Entry<Set<Quad>, Set<Quad>>> refine(
-            Collection<? extends Quad> as,
-            Collection<? extends Quad> bs,
-            Map<Var, Var> newBase)
-    {
-        Map<Quad, Entry<Set<Quad>, Set<Quad>>> result =
-                refineGeneric(as, bs, newBase, (nodeTransform, quad) -> NodeTransformLib.transform(nodeTransform, quad));
-        return result;
-
-        /*
-        Map<Quad, Entry<Set<Quad>, Set<Quad>>> result;
-
-        if(newBase == null) {
-            result = null;
-        } else {
-            NodeTransform signaturizer = NodeTransformSignaturize.create(newBase);
-
-            Multimap<Quad, Quad> sigToAs = HashMultimap.create();
-            as.forEach(q -> {
-                Quad sig = NodeTransformLib.transform(signaturizer, q);
-                sigToAs.put(sig, q);
-            });
-
-            Map<Var, Var> identity = newBase.values().stream().collect(Collectors.toMap(x -> x, x -> x));
-            NodeTransform s2 = NodeTransformSignaturize.create(identity);
-            Multimap<Quad, Quad> sigToBs = HashMultimap.create();
-            bs.forEach(q -> {
-                Quad sig = NodeTransformLib.transform(s2, q);
-                sigToBs.put(sig, q);
-            });
-
-            result = ProblemVarMappingQuad.groupByKey(sigToAs.asMap(), sigToBs.asMap());
-
-            System.out.println("sigToAs: " + sigToAs);
-            System.out.println("sigToBs: " + sigToBs);
-            result.values().stream().forEach(e ->
-            System.out.println("  Refined to " + e + " from " + as + " - " + bs + " via " + newBase));
-        }
-        return result;
-        */
-    }
+//    public static Map<Quad, Entry<Set<Quad>, Set<Quad>>> refine(
+//            Collection<? extends Quad> as,
+//            Collection<? extends Quad> bs,
+//            Map<Var, Var> newBase)
+//    {
+//        Map<Quad, Entry<Set<Quad>, Set<Quad>>> result =
+//                refineGeneric(as, bs, newBase, (nodeTransform, quad) -> NodeTransformLib.transform(nodeTransform, quad));
+//        return result;
+//
+//        /*
+//        Map<Quad, Entry<Set<Quad>, Set<Quad>>> result;
+//
+//        if(newBase == null) {
+//            result = null;
+//        } else {
+//            NodeTransform signaturizer = NodeTransformSignaturize.create(newBase);
+//
+//            Multimap<Quad, Quad> sigToAs = HashMultimap.create();
+//            as.forEach(q -> {
+//                Quad sig = NodeTransformLib.transform(signaturizer, q);
+//                sigToAs.put(sig, q);
+//            });
+//
+//            Map<Var, Var> identity = newBase.values().stream().collect(Collectors.toMap(x -> x, x -> x));
+//            NodeTransform s2 = NodeTransformSignaturize.create(identity);
+//            Multimap<Quad, Quad> sigToBs = HashMultimap.create();
+//            bs.forEach(q -> {
+//                Quad sig = NodeTransformLib.transform(s2, q);
+//                sigToBs.put(sig, q);
+//            });
+//
+//            result = ProblemVarMappingQuad.groupByKey(sigToAs.asMap(), sigToBs.asMap());
+//
+//            System.out.println("sigToAs: " + sigToAs);
+//            System.out.println("sigToBs: " + sigToBs);
+//            result.values().stream().forEach(e ->
+//            System.out.println("  Refined to " + e + " from " + as + " - " + bs + " via " + newBase));
+//        }
+//        return result;
+//        */
+//    }
 
     public static Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> groupsToProblems(Map<Quad, Entry<Set<Quad>, Set<Quad>>> group, Map<Var, Var> newBase) {
         Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result = group.values().stream()

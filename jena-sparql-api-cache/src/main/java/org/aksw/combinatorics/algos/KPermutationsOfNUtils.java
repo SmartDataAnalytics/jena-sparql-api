@@ -15,7 +15,7 @@ import org.aksw.combinatorics.collections.CombinationStack;
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
 import org.aksw.jena_sparql_api.concept_cache.dirty.Tree;
 import org.aksw.jena_sparql_api.concept_cache.op.TreeUtils;
-import org.aksw.mapping.TreeMapperCandidateList;
+import org.aksw.jena_sparql_api.sparql.algebra.mapping.TreeMapperCandidateList;
 
 import com.codepoetics.protonpack.functions.TriFunction;
 import com.google.common.collect.HashMultimap;

@@ -132,9 +132,9 @@ public class TestSparqlViewCacheVariableRenaming {
         sparqlViewCache.index(baseQfpc, table);
         CacheResult cr = sparqlViewCache.lookup(cacheQfpc);
         if(cr == null) {
-            System.out.println("FAIL");
+            System.out.println("FAIL: No cache candidates found where 1 expected");
         } else {
-            System.out.println("Cache lookup - got " + cr.getTables().size() + " candidate tables");
+            System.out.println("SUCCESS: Cache lookup - got " + cr.getTables().size() + " candidate tables");
         }
 
         //SparqlViewCache.

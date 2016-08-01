@@ -1160,6 +1160,10 @@ public class SparqlCacheUtils {
 
 
     public static FeatureMap<Expr, Multimap<Expr, Expr>> indexDnf(Set<Set<Expr>> dnf) {
+        if(dnf == null) {
+            dnf = Collections.singleton(Collections.emptySet());
+        }
+        
         FeatureMap<Expr, Multimap<Expr, Expr>> result = new FeatureMapImpl<>();
         for(Set<Expr> clause : dnf) {
             Multimap<Expr, Expr> exprSigToExpr = HashMultimap.create();

@@ -26,6 +26,7 @@ import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.domain.VarOccurrence;
+import org.aksw.jena_sparql_api.sparql.algebra.mapping.VarMapper;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.aksw.jena_sparql_api.utils.ResultSetPart;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
@@ -145,7 +146,8 @@ public class SparqlViewCacheImpl
             IBiSetMultimap<Quad, Set<Set<Expr>>> cacheQuadToCnf = qfpcToQuadToCnf.get(cand);
             
             cacheQuadToCnf.asMap().entrySet().forEach(e -> System.out.println(e.getKey() + " -> " + e.getValue()));
-            Stream<Map<Var, Var>> varMaps = CombinatoricsUtils.computeVarMapQuadBased(cacheQuadToCnf, queryQuadToCnf, candVarCombos);
+            //Stream<Map<Var, Var>> varMaps = CombinatoricsUtils.computeVarMapQuadBased(cacheQuadToCnf, queryQuadToCnf, candVarCombos);
+            Stream<Map<Var, Var>> varMaps = VarMapper.createVarMapCandidates(cand, queryQfpc);
 
             //while(varMaps.hasNext()) {
             varMaps.forEach(varMap -> {

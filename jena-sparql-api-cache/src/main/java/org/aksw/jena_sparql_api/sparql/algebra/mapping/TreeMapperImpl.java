@@ -1,4 +1,4 @@
-package org.aksw.mapping;
+package org.aksw.jena_sparql_api.sparql.algebra.mapping;
 
 import java.util.Collections;
 import java.util.List;
