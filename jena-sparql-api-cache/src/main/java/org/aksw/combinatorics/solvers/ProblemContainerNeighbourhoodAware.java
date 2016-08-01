@@ -381,10 +381,13 @@ public class ProblemContainerNeighbourhoodAware<S, T>
 //            sourceNeigbourhood.forEach(neighbour -> sourceMapping.remove(neighbour, pickedProblem));
 
             // recurse
+            Stream<S> tmp = pickedProblem.generateSolutions();
+            logger.debug("  Got " + tmp.count() + " solution candidates with " + pickedProblem);
+
             Stream<S> solutions = pickedProblem.generateSolutions();
 
             solutions.forEach(solutionContribution -> {
-
+                
                 S combinedSolution = null;
                 boolean unsatisfiable = isUnsatisfiable.test(solutionContribution);
                 if(!unsatisfiable) {
@@ -395,29 +398,29 @@ public class ProblemContainerNeighbourhoodAware<S, T>
                 if(!unsatisfiable) {
                     logger.debug("    Satisfiable solution contribution: " + solutionContribution + "; regular queue size now: " + size(regularQueue));
 
-                    Collection<T> rs = getRelatedSources.apply(solutionContribution);
+//                    Collection<T> rs = getRelatedSources.apply(solutionContribution);
 
-                    // Get the related problems and add them to the refinement queue
-                    Set<ProblemNeighborhoodAware<S, T>> neighbors = rs
-                            .stream()
-                            .flatMap(s -> sourceMapping.get(s).stream())
-                            .collect(Collectors.toSet());
-
-                    if(false) {
-                    for(ProblemNeighborhoodAware<S, T> neighbor : neighbors) {
-                        moveFromRegularToRefinementQueue(neighbor);
-                    }
-                    }
+//                    if(false) {
+//                    // Get the related problems and add them to the refinement queue
+//                    Set<ProblemNeighborhoodAware<S, T>> neighbors = rs
+//                            .stream()
+//                            .flatMap(s -> sourceMapping.get(s).stream())
+//                            .collect(Collectors.toSet());
+//
+//                    for(ProblemNeighborhoodAware<S, T> neighbor : neighbors) {
+//                        moveFromRegularToRefinementQueue(neighbor);
+//                    }
+//                    }
 
                     // Recurse
                     run(combinedSolution);
 
                     // Restore state (for processing the next solution)
-                    if(false) {
-                    for(ProblemNeighborhoodAware<S, T> neighbor : neighbors) {
-                        moveFromRefinementToRegularQueue(neighbor);
-                    }
-                    }
+//                    if(false) {
+//                    for(ProblemNeighborhoodAware<S, T> neighbor : neighbors) {
+//                        moveFromRefinementToRegularQueue(neighbor);
+//                    }
+//                    }
                 } else {
                     logger.debug("    Skipping unatisfiable solution contribution: " + solutionContribution + "; regular queue size now: " + size(regularQueue));
                 }

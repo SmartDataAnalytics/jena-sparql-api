@@ -291,13 +291,28 @@ public class CombinatoricsUtils {
         return result;
     }
 
+    /**
+     * Base solution is assumed to be satisfiable.
+     * if cacheQuads is empty and queryQuads is non-empty the baseSolution is returned
+     * 
+     * @param cacheQuads
+     * @param queryQuads
+     * @param baseSolution
+     * @return
+     */
     public static Stream<Map<Var, Var>> createSolutions(Collection<Quad> cacheQuads, Collection<Quad> queryQuads, Map<Var, Var> baseSolution) {
-        TriFunction<Map<Var, Var>, Quad, Quad, Stream<Map<Var, Var>>> solutionCombiner = (s, a, b) -> Stream.of(Utils2.createVarMap(a, b));
-                
-        Stream<Map<Var, Var>> result = StateCombinatoricCallback
-                .createKPermutationsOfN(cacheQuads, queryQuads, baseSolution, solutionCombiner)
-                .map(stack -> stack.getValue().getSolution())
-                ;
+        Stream<Map<Var, Var>> result;
+        
+        if(cacheQuads.isEmpty() && !queryQuads.isEmpty()) {
+            result = Stream.of(baseSolution);
+        } else {        
+            TriFunction<Map<Var, Var>, Quad, Quad, Stream<Map<Var, Var>>> solutionCombiner = (s, a, b) -> Stream.of(Utils2.createVarMap(a, b));
+                    
+            result = StateCombinatoricCallback
+                    .createKPermutationsOfN(cacheQuads, queryQuads, baseSolution, solutionCombiner)
+                    .map(stack -> stack.getValue().getSolution())
+                    ;
+        }
         return result;
         
 //        Stream<Map<Var, Var>> result = IsoMapUtils.createSolutionStream(
