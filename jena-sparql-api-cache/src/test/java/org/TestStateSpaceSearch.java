@@ -136,7 +136,7 @@ public class TestStateSpaceSearch {
 
     
     
-    public static void main2(String[] args) {
+    public static void main(String[] args) {
         
         Map<Class<?>, TriFunction<List<Op>, List<Op>, Multimap<Op, Op>, Boolean>> opToMatcherTest = new HashMap<>(); 
         opToMatcherTest.put(OpDisjunction.class, (as, bs, mapping) -> true);
@@ -334,7 +334,7 @@ public class TestStateSpaceSearch {
    
     
     
-    public static void main(String[] args) throws FileNotFoundException {
+    public static void main2(String[] args) throws FileNotFoundException {
         {
 //            QueryExecutionFactory qef = FluentQueryExecutionFactory
 //                    .http("http://linkedgeodata.org/test/vsparql")
