@@ -52,7 +52,10 @@ public class CacheUtilsH2 {
 
         List<String> options = new ArrayList<String>();
 
-        options.add("AUTO_SERVER=TRUE");
+        if(!dbInMemory) {
+            options.add("AUTO_SERVER=TRUE");
+        }
+
         options.add("AUTO_RECONNECT=TRUE");
         options.add("DB_CLOSE_DELAY=-1");
 
