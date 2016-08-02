@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import org.aksw.commons.collections.MapUtils;
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
+import org.aksw.jena_sparql_api.algebra.transform.TransformReplaceConstants;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMapImpl;
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCache;
@@ -37,7 +38,6 @@ import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
-import org.aksw.jena_sparql_api.utils.ReplaceConstants;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
@@ -559,7 +559,7 @@ public class SparqlCacheUtils {
     public static ProjectedQuadFilterPattern transform(Query query) {
         Op op = Algebra.compile(query);
         op = Algebra.toQuadForm(op);
-        op = ReplaceConstants.replace(op);
+        op = TransformReplaceConstants.transform(op);
         ProjectedQuadFilterPattern result = transform(op);
         return result;
     }
@@ -567,7 +567,7 @@ public class SparqlCacheUtils {
     public static QuadFilterPatternCanonical transform2(Query query) {
         Op op = Algebra.compile(query);
         op = Algebra.toQuadForm(op);
-        op = ReplaceConstants.replace(op);
+        op = TransformReplaceConstants.transform(op);
         ProjectedQuadFilterPattern pqfp = transform(op);
         QuadFilterPatternCanonical result = pqfp == null ? null : canonicalize2(pqfp.getQuadFilterPattern(), VarGeneratorImpl2.create("v"));
 

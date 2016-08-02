@@ -54,6 +54,7 @@ import org.apache.jena.sparql.expr.NodeValue;
  * @author raven
  *
  */
+@Deprecated // "Use TransformReplaceConstants instead"
 public class ReplaceConstants {
     private static Generator generator = Gensym.create("var", 0);
 

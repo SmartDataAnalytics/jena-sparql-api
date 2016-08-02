@@ -145,7 +145,7 @@ public class SparqlViewCacheImpl
             // Filter expressions are not considered at this stage
             IBiSetMultimap<Quad, Set<Set<Expr>>> cacheQuadToCnf = qfpcToQuadToCnf.get(cand);
             
-            cacheQuadToCnf.asMap().entrySet().forEach(e -> System.out.println(e.getKey() + " -> " + e.getValue()));
+            cacheQuadToCnf.asMap().entrySet().forEach(e -> System.out.println("qfpcToQUadToCnf: " + e.getKey() + " -> " + e.getValue()));
             //Stream<Map<Var, Var>> varMaps = CombinatoricsUtils.computeVarMapQuadBased(cacheQuadToCnf, queryQuadToCnf, candVarCombos);
             Stream<Map<Var, Var>> varMaps = VarMapper.createVarMapCandidates(cand, queryQfpc);
 

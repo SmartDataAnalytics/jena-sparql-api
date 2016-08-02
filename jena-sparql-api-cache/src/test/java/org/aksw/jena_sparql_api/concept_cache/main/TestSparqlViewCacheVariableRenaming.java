@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.backports.syntaxtransform.QueryTransformOps;
@@ -32,6 +33,8 @@ import org.apache.jena.sparql.algebra.table.TableData;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.syntax.PatternVars;
 import org.junit.Test;
+
+import com.google.common.base.Stopwatch;
 
 
 public class TestSparqlViewCacheVariableRenaming {
@@ -79,19 +82,23 @@ public class TestSparqlViewCacheVariableRenaming {
 
 //        model.write(System.out, "TURTLE");
 
-        for(Entry<String, Query> entry : idToQuery.entrySet()) {
-            String id = entry.getKey();
-            Query query = entry.getValue();
-            
-            //if(true) {
-//            if("http://ex.org/query/4-a".equals(id)) { // too many candidates - fixed by grouping quads by their filters
-            //if("http://ex.org/query/4-c".equals(id)) {
-//            if("http://ex.org/query/8-b".equals(id)) {
-                System.out.println("Testing " + id);
-                testVariableRenaming(query);
-//            }
-        }
+        for(int i = 0; i < 100; ++i) {
 
+            Stopwatch sw = Stopwatch.createStarted();
+            for(Entry<String, Query> entry : idToQuery.entrySet()) {
+                String id = entry.getKey();
+                Query query = entry.getValue();
+                
+                //if(true) {
+    //            if("http://ex.org/query/4-a".equals(id)) { // too many candidates - fixed by grouping quads by their filters
+                //if("http://ex.org/query/4-c".equals(id)) {
+    //            if("http://ex.org/query/8-b".equals(id)) {
+                    System.out.println("Testing " + id);
+                    testVariableRenaming(query);
+    //            }
+            }
+            System.out.println("Run [" + i + "] + took " + sw.stop().elapsed(TimeUnit.MILLISECONDS) + "ms");
+        }
 
     }
 
