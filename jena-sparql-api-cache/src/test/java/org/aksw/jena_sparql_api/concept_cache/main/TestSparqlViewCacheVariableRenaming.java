@@ -31,6 +31,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.table.TableData;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.pfunction.PropertyFunctionRegistry;
 import org.apache.jena.sparql.syntax.PatternVars;
 import org.junit.Test;
 
@@ -49,6 +50,8 @@ public class TestSparqlViewCacheVariableRenaming {
      */
     @Test
     public void testSparqlViewCacheRenaming() throws IOException {
+        PropertyFunctionRegistry.init();
+        
         //Reader reader = new InputStreamRnew FileInputStream(file) //new InputStreamReader(in);
         //List<String> lines = Files.readAllLines(Paths.get(""), encoding);
         //Resource r = new ClassPathResource("bgp-queries.json");
