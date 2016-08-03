@@ -137,7 +137,7 @@ public class TestStateSpaceSearch {
     }
 
     
-    public static <X> List<X> getUnaryParents(X x, Tree<X> multiaryTree, Tree<X> tree) {
+    public static <X> List<X> getUnaryParents(X x, Tree<X> tree, Tree<X> multiaryTree) {
         List<X> result = new ArrayList<>();
         
         X ancestor = multiaryTree.getParent(x);
@@ -277,7 +277,7 @@ public class TestStateSpaceSearch {
         
         
         Op testLeaf = queryLeafs.get(1);
-        List<Op> unaryParents = getUnaryParents(testLeaf, queryMultiaryTree, queryTree);
+        List<Op> unaryParents = getUnaryParents(testLeaf, queryTree, queryMultiaryTree);
         System.out.println("unary parents: " + unaryParents);
         
         // 
