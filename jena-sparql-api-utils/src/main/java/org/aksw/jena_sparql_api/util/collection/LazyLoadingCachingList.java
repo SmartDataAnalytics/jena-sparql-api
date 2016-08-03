@@ -28,11 +28,11 @@ class LazyLoadingCachingListIterator<T>
 {
     protected Range<Long> canonicalRequestRange;
     //protected long upperBound;
-    
+
     protected long offset;
     protected RangeMap<Long, LazyLoadingCachingList.CacheEntry<T>> rangeMap;
     protected Function<Range<Long>, ClosableIterator<T>> itemSupplier;
-    
+
     public LazyLoadingCachingListIterator(
             Range<Long> canonicalRequestRange,
             RangeMap<Long, CacheEntry<T>> rangeMap,
@@ -41,7 +41,7 @@ class LazyLoadingCachingListIterator<T>
         this.canonicalRequestRange = canonicalRequestRange;
         this.rangeMap = rangeMap;
         this.itemSupplier = itemSupplier;
-        
+
         this.offset = canonicalRequestRange.lowerEndpoint();
     }
 
@@ -57,46 +57,46 @@ class LazyLoadingCachingListIterator<T>
     @Override
     protected T computeNext() {
         T result;
-        
+
         for(;;) {
             if(!canonicalRequestRange.contains(offset)) {
                 // TODO Use a cheaper primitive int / long comparison instead of the range
-                // We hit the end of the requested iteration - exit                
+                // We hit the end of the requested iteration - exit
                 currentIterator.close();
 
                 result = endOfData();
                 break;
             } else if(currentIterator == null) {
-                
+
                 // Make sure the map is not modified during lookup
                 Entry<Range<Long>, CacheEntry<T>> e;
                 synchronized(rangeMap) {
                     e = rangeMap.getEntry(offset);
                 }
-                
+
                 // If there is no entry, consult the itemSupplier
                 if(e == null) {
                     Range<Long> r = Range.atLeast(offset).intersection(canonicalRequestRange);
                     currentIterator = itemSupplier.apply(r);
                 } else {
                     CacheEntry<T> ce = e.getValue();
-                    
+
                     // get the relative offset of
                     Range<Long> pageRange = ce.range;
                     long offsetWithinPage = offset - pageRange.lowerEndpoint();
-                    
+
                     Iterator<T> tmp = new BlockingCacheIterator<>(ce.cache, (int)offsetWithinPage);
                     currentIterator = new IteratorClosable<>(tmp);
                 }
             } else if(currentIterator.hasNext()) {
-                result = currentIterator.next();              
+                result = currentIterator.next();
                 ++offset;
                 break;
             } else {
                 // If the current iterator has no more items, we either
                 // (a) have reached the end of a page and we need to advance to the next one
-                // (b) there simple may not be any more data available 
-                
+                // (b) there simple may not be any more data available
+
                 currentIterator.close();
                 currentIterator = null;
             }
@@ -104,20 +104,20 @@ class LazyLoadingCachingListIterator<T>
 
         return result;
     }
-    
-    
+
+
 }
 
 
 /**
- * TODO Create an iterator that can trigger loading of further data once a certain amount has been consumed 
- * 
+ * TODO Create an iterator that can trigger loading of further data once a certain amount has been consumed
+ *
  * @author raven
  *
  * @param <T>
  */
 public class LazyLoadingCachingList<T> {
-    
+
     /**
      * RangeMap's .subRangeMap method may modify the first and last range due to
      * intersection with the requested range. Hence, we need to keep a copy
@@ -129,18 +129,18 @@ public class LazyLoadingCachingList<T> {
     static class CacheEntry<T> {
         Range<Long> range;
         Cache<List<T>> cache;
-        
+
         public CacheEntry(Range<Long> range, Cache<List<T>> cache) {
             super();
             this.range = range;
             this.cache = cache;
         }
     }
-    
+
     static class RangeInfo<T> {
         Range<Long> range;
         boolean isGap;
-        
+
         //CacheEntry<T> entry;
         Cache<List<T>> cache;
 
@@ -155,9 +155,9 @@ public class LazyLoadingCachingList<T> {
         @Override
         public String toString() {
             return "[" + range + ", " + (isGap ? "gap" : "data") + "]";
-        }        
+        }
     }
-    
+
     //protected ExecutorCompletionService<Object> executorService;
     protected ExecutorService executorService;
     protected Function<Range<Long>, ClosableIterator<T>> itemSupplier;
@@ -165,58 +165,58 @@ public class LazyLoadingCachingList<T> {
 
     /**
      * Only items within this range will be cached in rangesToData
-     * 
+     *
      */
     protected Range<Long> cacheRange;
-    
-    
+
+
     //protected RangeSet<Long> cacheRanges;
-    
+
     protected RangeCostModel costModel;
-    
+
     protected RangeMap<Long, CacheEntry<T>> rangesToData;
 
-    
+
     // We may dynamically discover that after certain offsets there is no more data
     protected Long dataThreshold = null;
-    
+
     public LazyLoadingCachingList(ExecutorService executorService, Function<Range<Long>, ClosableIterator<T>> itemSupplier, Range<Long> cacheRange, RangeCostModel costModel) {
         super();
         this.executorService = executorService;
         this.itemSupplier = itemSupplier;
         this.cacheRange = cacheRange;
-        this.rangesToData = TreeRangeMap.create(); 
+        this.rangesToData = TreeRangeMap.create();
     }
-    
-    
-    public ClosableIterator<T> retrieve(Range<Long> range) {        
+
+
+    public ClosableIterator<T> retrieve(Range<Long> range) {
         range = RangeUtils.startFromZero(range);
         range = range.canonical(DiscreteDomain.longs());
-        
+
         ClosableIterator<T> result;
         if(range.isEmpty()) {
             result = new IteratorClosable<>(Collections.emptyIterator());
         } else {
-            
+
             // Prevent changes to the map while we check its content
             synchronized(rangesToData) {
                 Range<Long> lookupRange = range.intersection(cacheRange);
 
                 RangeMap<Long, CacheEntry<T>> subMap = rangesToData.subRangeMap(lookupRange);
-                            
-                
+
+
                 List<RangeInfo<T>> rangeInfos = new ArrayList<>();
                 // Determine the first offset of the query
                 //Iterator<Entry<Range<Long>, CacheEntry<T>>> it = subMap.asMapOfRanges().entrySet().iterator();
-                
+
                 Long offset = range.lowerEndpoint();
                 for(Entry<Range<Long>, CacheEntry<T>> e : subMap.asMapOfRanges().entrySet()) {
     //                Entry<Range<Long>, CacheEntry<T>> e = it.next();
                     Range<Long> eRange = e.getKey();
                     Cache<List<T>> cache = e.getValue().cache;
                     long ele = eRange.lowerEndpoint();
-    
-    
+
+
                     if(ele > offset) {
                         // We need to fetch a chunk at the beginning
                         Range<Long> gap = Range.closedOpen(offset, ele);
@@ -227,29 +227,29 @@ public class LazyLoadingCachingList<T> {
                     } else {
                         rangeInfos.add(new RangeInfo<>(eRange, false, cache));
                     }
-                    
+
                     offset = eRange.hasUpperBound()
                             ? eRange.upperEndpoint()
                             : null;
                 }
-    
+
                 if(offset != null && range.hasUpperBound()) {
                     Range<Long> lastGap = Range.closedOpen(offset, lookupRange.upperEndpoint());
-                    
+
                     if(!lastGap.isEmpty()) {
                         rangeInfos.add(new RangeInfo<>(lastGap, true, null));
                     }
                 }
-    
+
                 // Prepare fetching of the gaps - this updates the map with additional entries
                 fetchGaps(subMap, rangeInfos);
-            } 
-            
+            }
+
             result = new LazyLoadingCachingListIterator<>(range, rangesToData, itemSupplier);
         }
         return result;
     }
-    
+
     public void fetchGaps(RangeMap<Long, CacheEntry<T>> subMap, List<RangeInfo<T>> rangeInfos) {
         for(RangeInfo<T> rangeInfo : rangeInfos) {
             if(rangeInfo.isGap) {
@@ -257,77 +257,80 @@ public class LazyLoadingCachingList<T> {
             }
         }
     }
-    
+
     public void fetchGap(RangeMap<Long, CacheEntry<T>> subMap, Range<Long> range) {
         //System.out.println("GAP: " + range);
 //
-//        
-//        
-//        Range<Long> requestRange =                    
+//
+//
+//        Range<Long> requestRange =
 //                Iterables.getFirst(rangeInfos, null).range.span(Iterables.getLast(rangeInfos, null).range);
-                
+
 //        subMap.subRangeMap(range).clear();
 
         List<T> cacheData = new ArrayList<>();
         Cache<List<T>> cache = new Cache<>(cacheData);
-        CacheEntry<T> cacheEntry = new CacheEntry<>(range, cache); 
+        CacheEntry<T> cacheEntry = new CacheEntry<>(range, cache);
         subMap.put(range, cacheEntry);
-        
-        
-        
+
+
+
         // Start a task to fill the cache
         ClosableIterator<T> ci = itemSupplier.apply(range);
-        
+
         // TODO Return an iterator that triggers caching
         long maxCacheSize = cacheRange.hasUpperBound() ? cacheRange.upperEndpoint() : Long.MAX_VALUE;
-        
+
         // Create an iterator for the given range
         Runnable task = () -> {
-            
+
             try {
                 long i = 0;
-                
+
                 boolean hasMoreData;
                 boolean isOk = true;
                 boolean isTooBig = false;
-                
+
                 while((hasMoreData = ci.hasNext()) &&
                         !(isTooBig = i >= maxCacheSize) &&
                         (isOk = !(cache.isAbanoned() || Thread.interrupted()))) {
                     ++i;
-                                        
+
                     T binding = ci.next();
                     //System.out.println("Caching page " + range + " item " + i + ": " + binding);
-                    cacheData.add(binding);
+                    synchronized(cache) {
+                        cacheData.add(binding);
+                        cache.notifyAll();
+                    }
                 }
-    
+
                 if(!hasMoreData) {
                     dataThreshold = dataThreshold == null || i < dataThreshold ? i : dataThreshold;
                 }
-                
+
                 if(isOk) {
                     cache.setComplete(true);
                 }
-                
+
                 if(isTooBig) {
                     // TODO Adjust the interval to the max cache size
                     // because for this interval the cache is complete
-                    
+
                     cache.setComplete(true);
                 }
-                
+
             } catch(Exception e) {
                 cache.setAbanoned(true);
                 throw new RuntimeException(e);
-            } finally {                    
+            } finally {
                 ci.close();
             }
         };
-               
+
         executorService.submit(task);
 
-        //BlockingCacheIterator<T> cacheIt = new BlockingCacheIterator<>(cache);        
+        //BlockingCacheIterator<T> cacheIt = new BlockingCacheIterator<>(cache);
     }
-           
-    
+
+
 }
