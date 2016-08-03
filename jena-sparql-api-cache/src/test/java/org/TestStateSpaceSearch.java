@@ -15,6 +15,7 @@ import org.aksw.combinatorics.algos.KPermutationsOfNUtils;
 import org.aksw.combinatorics.collections.Combination;
 import org.aksw.combinatorics.solvers.ProblemContainerNeighbourhoodAware;
 import org.aksw.commons.collections.CartesianProduct;
+import org.aksw.commons.collections.stacks.NestedStack;
 import org.aksw.jena_sparql_api.algebra.transform.TransformJoinToConjunction;
 import org.aksw.jena_sparql_api.algebra.transform.TransformUnionToDisjunction;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
@@ -111,11 +112,11 @@ public class TestStateSpaceSearch {
         case 0: // both null - nothing to do because the candidate mapping of the children is already the final solution
             result = (as, bs, mapping) -> true;
             break;
-        case 1: // cacheOp null - 
-            result = (as, bs, mapping) -> true;
-            break;
-        case 2: // queryOp null - no match because the cache tree has greater depth than the query
+        case 1: // queryOp null - no match because the cache tree has greater depth than the query 
             result = (as, bs, mapping) -> false;
+            break;
+        case 2: // cacheOp null - match because a cache tree's super root (i.e. null) matches any query node (including null)
+            result = (as, bs, mapping) -> true;
             break;
         case 3: // both non-null - by default, both ops must be of equal type - the type determines the matching enumeration strategy
             Class<?> ac = cacheOp.getClass();
@@ -183,7 +184,8 @@ public class TestStateSpaceSearch {
         } else {
             opCache = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT * { ?a ?a ?a }")));
         }
-        Op opQuery = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { { ?0 ?0 ?0 } UNION { ?1 ?1 ?1 } } { { ?2 ?2 ?2 } UNION { ?3 ?3 ?3 } } { ?4 ?4 ?4 } } LIMIT 10")));
+        //Op opQuery = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { { ?0 ?0 ?0 } UNION { ?1 ?1 ?1 } } { { ?2 ?2 ?2 } UNION { ?3 ?3 ?3 } } { ?4 ?4 ?4 } } LIMIT 10")));
+        Op opQuery = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("Select * { { SELECT DISTINCT ?s { { { ?0 ?0 ?0 } UNION { {   SELECT DISTINCT ?1 { ?1 ?1 ?1 } }   } } { { ?2 ?2 ?2 } UNION { ?3 ?3 ?3 } } { ?4 ?4 ?4 } } LIMIT 10 } { ?f ?c ?k } }")));
 
                 
         opCache = Transformer.transform(TransformJoinToConjunction.fn, Transformer.transform(TransformUnionToDisjunction.fn, opCache));
@@ -249,7 +251,11 @@ public class TestStateSpaceSearch {
                 queryMultiaryTree,
                 candOpMapping,
                 TestStateSpaceSearch::determineMatchingStrategy);
-        tm.recurse(0, HashMultimap.create());
+        
+        Stream<NestedStack<Multimap<Op, Op>>> mappingStream = TreeMapperImpl.<Multimap<Op, Op>, NestedStack<Multimap<Op, Op>>>stream(tm::recurse, HashMultimap.<Op, Op>create());
+        
+        mappingStream.forEach(m -> System.out.println("Tree mapping solution: " + m));
+        //tm.recurse(0, HashMultimap.create());
         
         
         

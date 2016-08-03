@@ -1,15 +1,19 @@
 package org.aksw.jena_sparql_api.sparql.algebra.mapping;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import org.aksw.combinatorics.algos.KPermutationsOfNUtils;
 import org.aksw.combinatorics.collections.Cluster;
 import org.aksw.combinatorics.collections.ClusterStack;
+import org.aksw.commons.collections.stacks.NestedStack;
 import org.aksw.jena_sparql_api.concept_cache.dirty.Tree;
 import org.aksw.jena_sparql_api.concept_cache.op.TreeUtils;
 
@@ -64,8 +68,21 @@ public class TreeMapperImpl<A, B> {
         this.isSatisfiable = isSatisfiable;
     }
     
+    public static <S, X> Stream<X> stream(BiConsumer<S, Consumer<X>> fn, S baseSolution) {
+        List<X> result = new ArrayList<>();
+        
+        fn.accept(baseSolution, (item) -> result.add(item));
+        
+        return result.stream();        
+    }
     
-    public void recurse(int i, Multimap<A, B> parentMapping) {
+    public void recurse(Multimap<A, B> parentMapping, Consumer<NestedStack<Multimap<A, B>>> consumer) {
+        NestedStack<Multimap<A, B>> parentMappingStack = new NestedStack<>(null, parentMapping);
+        recurse(0, parentMappingStack, consumer);
+    }
+    
+    public void recurse(int i, NestedStack<Multimap<A, B>> parentMappingStack, Consumer<NestedStack<Multimap<A, B>>> consumer) {
+        Multimap<A, B> parentMapping = parentMappingStack.getValue();
         
         if(i < aTreeLevels.size()) {            
             Set<A> keys = aTreeLevels.get(i);
@@ -117,17 +134,21 @@ public class TreeMapperImpl<A, B> {
                         nextParentMapping.put(e.getKey(), e.getValue());
                     }            
                     
+                    NestedStack<Multimap<A, B>> nextParentMappingStack = new NestedStack<>(parentMappingStack, nextParentMapping);
+                    
                     // Based on the op-types, determine the matching strategy and check whether any of the clusters has a valid mapping
     
                     // If any cluster DOES NOT have a satisfiable mapping, we can stop the recursion
                     
-                    System.out.println("GOT at level" + i + " " + nextParentMapping);
-                    System.out.println("GOT at level" + i + " " + parentClusterStack);
+//                    System.out.println("GOT at level" + i + " " + nextParentMapping);
+//                    System.out.println("GOT at level" + i + " " + parentClusterStack);
                     
                     
-                    recurse(i + 1, nextParentMapping);
+                    recurse(i + 1, nextParentMappingStack, consumer);
                 }
             });
+        } else {
+            consumer.accept(parentMappingStack);
         }
     }
 }

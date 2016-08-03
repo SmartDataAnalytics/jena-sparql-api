@@ -71,7 +71,7 @@ public class KPermutationsOfNUtils {
             new TreeMapperCandidateList<>(aTree, bTree, as, childMapping, parentMapping);
         
         Stream<ClusterStack<A, B, Entry<A, B>>> result = engine.stream();
-        return result; 
+        return result;
     }
     
 
