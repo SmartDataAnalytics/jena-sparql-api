@@ -1,6 +1,7 @@
 package org;
 
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -136,6 +137,24 @@ public class TestStateSpaceSearch {
     }
 
     
+    public static <X> List<X> getUnaryParents(X x, Tree<X> multiaryTree, Tree<X> tree) {
+        List<X> result = new ArrayList<>();
+        
+        X ancestor = multiaryTree.getParent(x);
+        
+        X currentNode = x;
+        while((currentNode = tree.getParent(currentNode)) != null && !currentNode.equals(ancestor)) {
+            result.add(currentNode);
+        }
+
+        
+        return result;
+    }
+    
+    public static <A, B> void checkNodeMapping(A a, B b, Tree<A> aMultiaryTree, Tree<B> bMultiaryTree, Tree<A> aTree, Tree<B> bTree) {
+        
+    }
+    
     
     public static void main(String[] args) {
         
@@ -255,7 +274,15 @@ public class TestStateSpaceSearch {
         Stream<NestedStack<Multimap<Op, Op>>> mappingStream = TreeMapperImpl.<Multimap<Op, Op>, NestedStack<Multimap<Op, Op>>>stream(tm::recurse, HashMultimap.<Op, Op>create());
         
         mappingStream.forEach(m -> System.out.println("Tree mapping solution: " + m));
-        //tm.recurse(0, HashMultimap.create());
+        
+        
+        Op testLeaf = queryLeafs.get(1);
+        List<Op> unaryParents = getUnaryParents(testLeaf, queryMultiaryTree, queryTree);
+        System.out.println("unary parents: " + unaryParents);
+        
+        // 
+        
+        // tm.recurse(0, HashMultimap.create());
         
         
         

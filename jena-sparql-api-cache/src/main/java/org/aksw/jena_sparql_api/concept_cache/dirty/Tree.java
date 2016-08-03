@@ -6,4 +6,7 @@ public interface Tree<T> {
     T getRoot();
     List<T> getChildren(T node);
     T getParent(T node);
+    
+    
+    //boolean contains(Object node);
 }
