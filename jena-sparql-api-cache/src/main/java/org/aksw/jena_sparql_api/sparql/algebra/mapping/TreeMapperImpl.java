@@ -141,7 +141,7 @@ public class TreeMapperImpl<A, B> {
                     // If any cluster DOES NOT have a satisfiable mapping, we can stop the recursion
                     
 //                    System.out.println("GOT at level" + i + " " + nextParentMapping);
-//                    System.out.println("GOT at level" + i + " " + parentClusterStack);
+                    //System.out.println("GOT at level" + i + " " + parentClusterStack);
                     
                     
                     recurse(i + 1, nextParentMappingStack, consumer);

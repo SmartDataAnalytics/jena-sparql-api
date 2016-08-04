@@ -37,6 +37,13 @@ public abstract class ProblemMappingKPermutationsOfN<A, B, X, Y>
     }
 
     @Override
+    public boolean isEmpty() {
+        long cost = getEstimatedCost();
+        boolean result = cost == 0l;
+        return result;
+    }
+    
+    @Override
     public long getEstimatedCost() {
         int k = as.size();
         int n = bs.size();

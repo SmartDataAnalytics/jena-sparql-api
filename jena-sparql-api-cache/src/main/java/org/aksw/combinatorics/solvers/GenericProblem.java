@@ -45,6 +45,8 @@ public interface GenericProblem<S, P extends GenericProblem<S, P>>
      */
     Collection<? extends P> refine(S partialSolution);
 
+    boolean isEmpty();
+    
     /**
      * By default, compares the estimated costs
      */

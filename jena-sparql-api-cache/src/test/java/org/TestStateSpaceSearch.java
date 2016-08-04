@@ -3,24 +3,32 @@ package org;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.aksw.combinatorics.algos.KPermutationsOfNUtils;
 import org.aksw.combinatorics.collections.Combination;
+import org.aksw.combinatorics.solvers.GenericProblem;
+import org.aksw.combinatorics.solvers.Problem;
 import org.aksw.combinatorics.solvers.ProblemContainerNeighbourhoodAware;
+import org.aksw.combinatorics.solvers.ProblemStaticSolutions;
 import org.aksw.commons.collections.CartesianProduct;
 import org.aksw.commons.collections.stacks.NestedStack;
 import org.aksw.jena_sparql_api.algebra.transform.TransformJoinToConjunction;
 import org.aksw.jena_sparql_api.algebra.transform.TransformUnionToDisjunction;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMapImpl;
+import org.aksw.jena_sparql_api.concept_cache.combinatorics.ProblemVarMappingExpr;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
 import org.aksw.jena_sparql_api.concept_cache.dirty.Tree;
 import org.aksw.jena_sparql_api.concept_cache.dirty.TreeImpl;
@@ -45,8 +53,11 @@ import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.op.OpDisjunction;
+import org.apache.jena.sparql.algebra.op.OpDistinct;
+import org.apache.jena.sparql.algebra.op.OpProject;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.util.ExprUtils;
 
@@ -86,7 +97,38 @@ public class TestStateSpaceSearch {
     
     //public static void 
 
-   
+
+    public static <A, B> Collection<GenericProblem<Map<Var, Var>, ?>> createProblems(A a, B b) {
+        
+        
+        Map<Class<?>, GenericBinaryOp<Collection<GenericProblem<Map<Var, Var>, ?>>>> map = new HashMap<>();
+        map.put(OpProject.class, GenericBinaryOpImpl.create(TestStateSpaceSearch::deriveProblemProject));
+        map.put(OpDistinct.class, (x, y) -> Collections.emptySet());
+        
+        Class<?> ac = a.getClass();
+        Class<?> bc = b.getClass();
+     
+        Collection<GenericProblem<Map<Var, Var>, ?>> result;
+        
+        if(ac.equals(bc)) {
+            GenericBinaryOp<Collection<GenericProblem<Map<Var, Var>, ?>>> problemFactory = map.get(ac);
+            result = problemFactory.apply(a, b);
+        } else {
+            result = Collections.singleton(new ProblemStaticSolutions<>(Collections.singleton(null)));
+        }
+
+        return result;
+        
+//        map.put(OpReduced.class, value);
+//        map.put(OpFilter.class, value);
+//        map.put(OpExtend.class, value);
+//        map.put(OpGraph.class, value);
+//        map.put(OpGroup.class, value);
+//        map.put(OpOrder.class, value);
+        
+        
+    }
+    
     
     /**
      * 
@@ -137,6 +179,8 @@ public class TestStateSpaceSearch {
     }
 
     
+  
+    
     public static <X> List<X> getUnaryParents(X x, Tree<X> tree, Tree<X> multiaryTree) {
         List<X> result = new ArrayList<>();
         
@@ -151,9 +195,42 @@ public class TestStateSpaceSearch {
         return result;
     }
     
-    public static <A, B> void checkNodeMapping(A a, B b, Tree<A> aMultiaryTree, Tree<B> bMultiaryTree, Tree<A> aTree, Tree<B> bTree) {
+    
+    public static <A, B, S> void deriveMappingsFromUnaryParents(List<A> aOps, List<B> bOps, Consumer<Problem<S>> consumer) {
+        // for now the sequences must match
+        int as = aOps.size();
+        int bs = bOps.size();
         
+        if(as == bs) {
+            for(int i = 0; i < as; ++i) {
+                A a = aOps.get(i);
+                B b = bOps.get(i);
+                
+                Collection<GenericProblem<Map<Var, Var>, ?>> problems = createProblems(a, b);
+            }
+            
+        }
+        
+            
     }
+    
+    public static GenericProblem<Map<Var, Var>, ?> deriveProblem(List<Var> cacheVars, List<Var> userVars) {
+        List<Expr> aExprs = cacheVars.stream().map(v -> new ExprVar(v)).collect(Collectors.toList());
+        List<Expr> bExprs = userVars.stream().map(v -> new ExprVar(v)).collect(Collectors.toList());
+        GenericProblem<Map<Var, Var>, ?> result = new ProblemVarMappingExpr(aExprs, bExprs, Collections.emptyMap());
+        return result;
+    }
+    
+    
+    
+    public static Collection<GenericProblem<Map<Var, Var>, ?>> deriveProblemProject(OpProject cacheOp, OpProject userOp) {
+        GenericProblem<Map<Var, Var>, ?> tmp = deriveProblem(cacheOp.getVars(), userOp.getVars());
+        Collection<GenericProblem<Map<Var, Var>, ?>> result = Collections.singleton(tmp);        
+        return result;        
+    }
+    
+    
+    
     
     
     public static void main(String[] args) {
@@ -260,8 +337,8 @@ public class TestStateSpaceSearch {
         }
         
 
-        List<Set<Op>> cacheTreeLevels = TreeUtils.nodesPerLevel(cacheMultiaryTree);
-        List<Set<Op>> queryTreeLevels = TreeUtils.nodesPerLevel(queryMultiaryTree);
+//        List<Set<Op>> cacheTreeLevels = TreeUtils.nodesPerLevel(cacheMultiaryTree);
+//        List<Set<Op>> queryTreeLevels = TreeUtils.nodesPerLevel(queryMultiaryTree);
         
         
         

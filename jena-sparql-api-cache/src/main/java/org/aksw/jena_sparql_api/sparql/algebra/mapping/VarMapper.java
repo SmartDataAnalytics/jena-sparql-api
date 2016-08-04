@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.sparql.algebra.mapping;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -10,6 +11,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.aksw.combinatorics.solvers.GenericProblem;
 import org.aksw.combinatorics.solvers.ProblemContainerNeighbourhoodAware;
 import org.aksw.combinatorics.solvers.ProblemNeighborhoodAware;
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
@@ -22,17 +24,33 @@ import org.aksw.jena_sparql_api.utils.MapUtils;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprVar;
 
 import com.google.common.collect.Multimap;
 
 public class VarMapper {
 
-    public static Stream<Map<Var, Var>> createVarMapCandidates(QuadFilterPatternCanonical cachePattern, QuadFilterPatternCanonical queryPattern) {
-
+    public static GenericProblem<Map<Var, Var>, ?> deriveProblem(List<Var> cacheVars, List<Var> userVars) {
+        List<Expr> aExprs = cacheVars.stream().map(v -> new ExprVar(v)).collect(Collectors.toList());
+        List<Expr> bExprs = userVars.stream().map(v -> new ExprVar(v)).collect(Collectors.toList());
+        GenericProblem<Map<Var, Var>, ?> result = new ProblemVarMappingExpr(aExprs, bExprs, Collections.emptyMap());
+        return result;
+    }
+    
+    
+    
+    /**
+     * TODO Return only the collection of problems at this stage
+     * 
+     * @param cachePattern
+     * @param queryPattern
+     * @return
+     */
+    public static Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> createProblems(QuadFilterPatternCanonical cachePattern, QuadFilterPatternCanonical queryPattern) {
         FeatureMap<Expr, Multimap<Expr, Expr>> cacheIndex = SparqlCacheUtils.indexDnf(cachePattern.getFilterDnf());
         FeatureMap<Expr, Multimap<Expr, Expr>> queryIndex = SparqlCacheUtils.indexDnf(queryPattern.getFilterDnf());
 
-        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> problems = new ArrayList<>();
+        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result = new ArrayList<>();
         for(Entry<Set<Expr>, Collection<Multimap<Expr, Expr>>> entry : queryIndex.entrySet()) {
             Set<Expr> querySig = entry.getKey();
             Collection<Multimap<Expr, Expr>> queryMaps = entry.getValue();
@@ -63,7 +81,7 @@ public class VarMapper {
                         })
                         .collect(Collectors.toList());
 
-                    problems.addAll(localProblems);
+                    result.addAll(localProblems);
                     //problems.stream().forEach(p -> System.out.println("COMPLEX: " + p.getEstimatedCost()));
 
 
@@ -94,10 +112,16 @@ public class VarMapper {
             //System.out.println("Registered quad problem instance " + quadProblem + " with " + quadProblem.generateSolutions().count() + " solutions ");
             
             
-            problems.add(quadProblem);
+            result.add(quadProblem);
         }
         
+
+        return result;
+    }
+    
+    public static Stream<Map<Var, Var>> createVarMapCandidates(QuadFilterPatternCanonical cachePattern, QuadFilterPatternCanonical queryPattern) {
         
+        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> problems = createProblems(cachePattern, queryPattern);        
         
         Stream<Map<Var, Var>> result = ProblemContainerNeighbourhoodAware.solve(
                 problems,
