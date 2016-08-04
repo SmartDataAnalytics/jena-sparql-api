@@ -119,9 +119,7 @@ public class VarMapper {
         return result;
     }
     
-    public static Stream<Map<Var, Var>> createVarMapCandidates(QuadFilterPatternCanonical cachePattern, QuadFilterPatternCanonical queryPattern) {
-        
-        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> problems = createProblems(cachePattern, queryPattern);        
+    public static Stream<Map<Var, Var>> solve(Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> problems) {
         
         Stream<Map<Var, Var>> result = ProblemContainerNeighbourhoodAware.solve(
                 problems,
@@ -129,6 +127,15 @@ public class VarMapper {
                 Map::keySet,
                 MapUtils::mergeIfCompatible,
                 Objects::isNull);
+
+        return result;
+    }
+
+    
+    public static Stream<Map<Var, Var>> createVarMapCandidates(QuadFilterPatternCanonical cachePattern, QuadFilterPatternCanonical queryPattern) {
+
+        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> problems = createProblems(cachePattern, queryPattern);        
+        Stream<Map<Var, Var>> result = solve(problems);
 
         return result;
     }

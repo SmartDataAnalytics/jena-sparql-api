@@ -196,23 +196,25 @@ public class TestStateSpaceSearch {
     }
     
     
-    public static <A, B, S> void deriveMappingsFromUnaryParents(List<A> aOps, List<B> bOps, Consumer<Problem<S>> consumer) {
+    public static <A, B, S> Collection<GenericProblem<Map<Var, Var>, ?>> deriveMappingsFromUnaryParents(List<A> aOps, List<B> bOps) {
         // for now the sequences must match
         int as = aOps.size();
         int bs = bOps.size();
         
+        Collection<GenericProblem<Map<Var, Var>, ?>> result = new ArrayList<>();
         if(as == bs) {
             for(int i = 0; i < as; ++i) {
                 A a = aOps.get(i);
                 B b = bOps.get(i);
                 
                 Collection<GenericProblem<Map<Var, Var>, ?>> problems = createProblems(a, b);
-            }
-            
+                result.addAll(problems);
+            }            
         }
         
-            
+        return result;            
     }
+    
     
     public static GenericProblem<Map<Var, Var>, ?> deriveProblem(List<Var> cacheVars, List<Var> userVars) {
         List<Expr> aExprs = cacheVars.stream().map(v -> new ExprVar(v)).collect(Collectors.toList());
