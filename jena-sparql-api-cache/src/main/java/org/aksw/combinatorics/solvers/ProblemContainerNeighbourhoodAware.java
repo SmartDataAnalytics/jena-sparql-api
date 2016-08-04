@@ -474,13 +474,13 @@ public class ProblemContainerNeighbourhoodAware<S, T>
     }
 
     public static <S, T> Stream<S> solve(
-            Collection<ProblemNeighborhoodAware<S, T>> problems,
+            Collection<? extends ProblemNeighborhoodAware<S, T>> problems,
             S baseSolution,
             Function<? super S, ? extends Collection<T>> getRelatedSources,
             BinaryOperator<S> solutionCombiner,
             Predicate<S> isUnsatisfiable) {
         List<S> tmp = new ArrayList<S>();
-        
+
         solve(problems,
                 baseSolution,
                 getRelatedSources,
@@ -494,7 +494,7 @@ public class ProblemContainerNeighbourhoodAware<S, T>
 
     
     public static <S, T> void solve(
-            Collection<ProblemNeighborhoodAware<S, T>> problems,
+            Collection<? extends ProblemNeighborhoodAware<S, T>> problems,
             S baseSolution,
             Function<? super S, ? extends Collection<T>> getRelatedSources,
             BinaryOperator<S> solutionCombiner,

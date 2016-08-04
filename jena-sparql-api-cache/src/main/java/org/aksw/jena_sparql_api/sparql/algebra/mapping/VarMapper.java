@@ -119,7 +119,7 @@ public class VarMapper {
         return result;
     }
     
-    public static Stream<Map<Var, Var>> solve(Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> problems) {
+    public static Stream<Map<Var, Var>> solve(Collection<? extends ProblemNeighborhoodAware<Map<Var, Var>, Var>> problems) {
         
         Stream<Map<Var, Var>> result = ProblemContainerNeighbourhoodAware.solve(
                 problems,

@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -19,8 +18,8 @@ import java.util.stream.Stream;
 import org.aksw.combinatorics.algos.KPermutationsOfNUtils;
 import org.aksw.combinatorics.collections.Combination;
 import org.aksw.combinatorics.solvers.GenericProblem;
-import org.aksw.combinatorics.solvers.Problem;
 import org.aksw.combinatorics.solvers.ProblemContainerNeighbourhoodAware;
+import org.aksw.combinatorics.solvers.ProblemNeighborhoodAware;
 import org.aksw.combinatorics.solvers.ProblemStaticSolutions;
 import org.aksw.commons.collections.CartesianProduct;
 import org.aksw.commons.collections.stacks.NestedStack;
@@ -98,20 +97,20 @@ public class TestStateSpaceSearch {
     //public static void 
 
 
-    public static <A, B> Collection<GenericProblem<Map<Var, Var>, ?>> createProblems(A a, B b) {
+    public static <A, B> Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> createProblems(A a, B b) {
         
         
-        Map<Class<?>, GenericBinaryOp<Collection<GenericProblem<Map<Var, Var>, ?>>>> map = new HashMap<>();
+        Map<Class<?>, GenericBinaryOp<Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>>>> map = new HashMap<>();
         map.put(OpProject.class, GenericBinaryOpImpl.create(TestStateSpaceSearch::deriveProblemProject));
         map.put(OpDistinct.class, (x, y) -> Collections.emptySet());
         
         Class<?> ac = a.getClass();
         Class<?> bc = b.getClass();
      
-        Collection<GenericProblem<Map<Var, Var>, ?>> result;
+        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result;
         
         if(ac.equals(bc)) {
-            GenericBinaryOp<Collection<GenericProblem<Map<Var, Var>, ?>>> problemFactory = map.get(ac);
+            GenericBinaryOp<Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>>> problemFactory = map.get(ac);
             result = problemFactory.apply(a, b);
         } else {
             result = Collections.singleton(new ProblemStaticSolutions<>(Collections.singleton(null)));
@@ -207,7 +206,7 @@ public class TestStateSpaceSearch {
                 A a = aOps.get(i);
                 B b = bOps.get(i);
                 
-                Collection<GenericProblem<Map<Var, Var>, ?>> problems = createProblems(a, b);
+                Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> problems = createProblems(a, b);
                 result.addAll(problems);
             }            
         }
@@ -216,18 +215,18 @@ public class TestStateSpaceSearch {
     }
     
     
-    public static GenericProblem<Map<Var, Var>, ?> deriveProblem(List<Var> cacheVars, List<Var> userVars) {
+    public static ProblemNeighborhoodAware<Map<Var, Var>, Var> deriveProblem(List<Var> cacheVars, List<Var> userVars) {
         List<Expr> aExprs = cacheVars.stream().map(v -> new ExprVar(v)).collect(Collectors.toList());
         List<Expr> bExprs = userVars.stream().map(v -> new ExprVar(v)).collect(Collectors.toList());
-        GenericProblem<Map<Var, Var>, ?> result = new ProblemVarMappingExpr(aExprs, bExprs, Collections.emptyMap());
+        ProblemNeighborhoodAware<Map<Var, Var>, Var> result = new ProblemVarMappingExpr(aExprs, bExprs, Collections.emptyMap());
         return result;
     }
     
     
     
-    public static Collection<GenericProblem<Map<Var, Var>, ?>> deriveProblemProject(OpProject cacheOp, OpProject userOp) {
-        GenericProblem<Map<Var, Var>, ?> tmp = deriveProblem(cacheOp.getVars(), userOp.getVars());
-        Collection<GenericProblem<Map<Var, Var>, ?>> result = Collections.singleton(tmp);        
+    public static Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> deriveProblemProject(OpProject cacheOp, OpProject userOp) {
+        ProblemNeighborhoodAware<Map<Var, Var>, Var> tmp = deriveProblem(cacheOp.getVars(), userOp.getVars());
+        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result = Collections.singleton(tmp);        
         return result;        
     }
     
@@ -354,10 +353,20 @@ public class TestStateSpaceSearch {
         
         mappingStream.forEach(m -> System.out.println("Tree mapping solution: " + m));
         
+
+        Op cacheLeaf = cacheLeafs.get(1);
+        List<Op> cacheUnaryAncestors = getUnaryParents(cacheLeaf, cacheTree, cacheMultiaryTree);
+
+        Op queryLeaf = queryLeafs.get(1);
+        List<Op> queryUnaryAncestors = getUnaryParents(queryLeaf, queryTree, queryMultiaryTree);
         
-        Op testLeaf = queryLeafs.get(1);
-        List<Op> unaryParents = getUnaryParents(testLeaf, queryTree, queryMultiaryTree);
-        System.out.println("unary parents: " + unaryParents);
+
+//        System.out.println("unary parents: " + unaryParents);
+        
+        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> problems = createProblems(cacheLeaf, queryLeaf);
+        Stream<Map<Var, Var>> solutions = VarMapper.solve(problems);
+        solutions.forEach(s -> System.out.println("found solution: " + s));
+        
         
         // 
         
