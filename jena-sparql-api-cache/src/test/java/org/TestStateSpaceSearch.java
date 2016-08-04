@@ -17,7 +17,6 @@ import java.util.stream.Stream;
 
 import org.aksw.combinatorics.algos.KPermutationsOfNUtils;
 import org.aksw.combinatorics.collections.Combination;
-import org.aksw.combinatorics.solvers.GenericProblem;
 import org.aksw.combinatorics.solvers.ProblemContainerNeighbourhoodAware;
 import org.aksw.combinatorics.solvers.ProblemNeighborhoodAware;
 import org.aksw.combinatorics.solvers.ProblemStaticSolutions;
@@ -180,7 +179,7 @@ public class TestStateSpaceSearch {
     
   
     
-    public static <X> List<X> getUnaryParents(X x, Tree<X> tree, Tree<X> multiaryTree) {
+    public static <X> List<X> getUnaryAncestors(X x, Tree<X> tree, Tree<X> multiaryTree) {
         List<X> result = new ArrayList<>();
         
         X ancestor = multiaryTree.getParent(x);
@@ -195,12 +194,12 @@ public class TestStateSpaceSearch {
     }
     
     
-    public static <A, B, S> Collection<GenericProblem<Map<Var, Var>, ?>> deriveMappingsFromUnaryParents(List<A> aOps, List<B> bOps) {
+    public static <A, B, S> Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> createProblemsFromUnaryAncestors(List<A> aOps, List<B> bOps) {
         // for now the sequences must match
         int as = aOps.size();
         int bs = bOps.size();
         
-        Collection<GenericProblem<Map<Var, Var>, ?>> result = new ArrayList<>();
+        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result = new ArrayList<>();
         if(as == bs) {
             for(int i = 0; i < as; ++i) {
                 A a = aOps.get(i);
@@ -355,15 +354,14 @@ public class TestStateSpaceSearch {
         
 
         Op cacheLeaf = cacheLeafs.get(1);
-        List<Op> cacheUnaryAncestors = getUnaryParents(cacheLeaf, cacheTree, cacheMultiaryTree);
+        List<Op> cacheUnaryAncestors = getUnaryAncestors(cacheLeaf, cacheTree, cacheMultiaryTree);
 
         Op queryLeaf = queryLeafs.get(1);
-        List<Op> queryUnaryAncestors = getUnaryParents(queryLeaf, queryTree, queryMultiaryTree);
+        List<Op> queryUnaryAncestors = getUnaryAncestors(queryLeaf, queryTree, queryMultiaryTree);
         
 
 //        System.out.println("unary parents: " + unaryParents);
-        
-        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> problems = createProblems(cacheLeaf, queryLeaf);
+        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> problems = createProblemsFromUnaryAncestors(cacheUnaryAncestors, queryUnaryAncestors); 
         Stream<Map<Var, Var>> solutions = VarMapper.solve(problems);
         solutions.forEach(s -> System.out.println("found solution: " + s));
         
