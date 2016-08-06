@@ -34,6 +34,8 @@ import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 import org.aksw.jena_sparql_api.concept_cache.op.TreeUtils;
+import org.aksw.jena_sparql_api.sparql.algebra.mapping.IterableUnknownSize;
+import org.aksw.jena_sparql_api.sparql.algebra.mapping.IterableUnknownSizeSimple;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.MatchingStrategyFactory;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.SequentialMatchIterator;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.TreeMapperImpl;
@@ -140,24 +142,24 @@ public class TestStateSpaceSearch {
 //        B queryOp = nodeMapping.getValue();
 
         Map<Class<?>, MatchingStrategyFactory<A, B>> opToMatcherTest = new HashMap<>(); 
-        opToMatcherTest.put(OpDisjunction.class, (as, bs, mapping) -> true);
+        opToMatcherTest.put(OpDisjunction.class, (as, bs, mapping) -> KPermutationsOfNUtils.createIterable(mapping));
 
         Function<Class<?>, MatchingStrategyFactory<A, B>> fnOpToMatcherTest = (nodeType) ->
-            opToMatcherTest.getOrDefault(nodeType, (as, bs, mapping) -> SequentialMatchIterator.createStream(as, bs, mapping).findFirst().isPresent());
+            opToMatcherTest.getOrDefault(nodeType, (as, bs, mapping) -> SequentialMatchIterator.createIterable(as, bs, mapping));
 
         
         MatchingStrategyFactory<A, B> result;
         
         int c = (cacheOp == null ? 0 : 1) | (queryOp == null ? 0 : 2);
         switch(c) {
-        case 0: // both null - nothing to do because the candidate mapping of the children is already the final solution
-            result = (as, bs, mapping) -> true;
+        case 0: // both null - nothing to do because the candidate mapping of the children (each tree's root node) is already the final solution
+            result = (as, bs, mapping) -> SequentialMatchIterator.createIterable(as, bs, mapping); // true
             break;
         case 1: // queryOp null - no match because the cache tree has greater depth than the query 
-            result = (as, bs, mapping) -> false;
+            result = (as, bs, mapping) -> IterableUnknownSizeSimple.createEmpty(); // false
             break;
         case 2: // cacheOp null - match because a cache tree's super root (i.e. null) matches any query node (including null)
-            result = (as, bs, mapping) -> true;
+            result = (as, bs, mapping) -> SequentialMatchIterator.createIterable(as, bs, mapping); // true
             break;
         case 3: // both non-null - by default, both ops must be of equal type - the type determines the matching enumeration strategy
             Class<?> ac = cacheOp.getClass();
@@ -166,7 +168,7 @@ public class TestStateSpaceSearch {
             if(ac.equals(bc)) {
                 result = fnOpToMatcherTest.apply(ac);
             } else {
-                result = (as, bs, mapping) -> false;
+                result = (as, bs, mapping) -> IterableUnknownSizeSimple.createEmpty();;
             }
             break;
         default:

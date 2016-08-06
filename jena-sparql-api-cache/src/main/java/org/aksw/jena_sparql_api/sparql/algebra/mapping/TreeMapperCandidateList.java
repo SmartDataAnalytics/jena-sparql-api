@@ -78,9 +78,11 @@ public class TreeMapperCandidateList<A, B>
 
         Stream<ClusterStack<A, B, Entry<A, B>>> result = list.stream();
         return result;
-
     }
 
+    
+    
+    
     public void run(Consumer<ClusterStack<A, B, Entry<A, B>>> completeMatch) {
         boolean isEmpty = as.isEmpty(); //remainingA.successor.isTail();
         if(!isEmpty) {

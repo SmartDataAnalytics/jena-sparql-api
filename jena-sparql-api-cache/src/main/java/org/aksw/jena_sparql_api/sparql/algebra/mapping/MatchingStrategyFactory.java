@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api.sparql.algebra.mapping;
 
-import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import com.google.common.collect.Multimap;
 
@@ -19,51 +19,7 @@ import com.google.common.collect.Multimap;
 public interface MatchingStrategyFactory<A, B>
     //extends BiFunction<List<A>, List<B>, Multimap<A, B>>
 {
-    boolean apply(List<A> as, List<B> bs, Multimap<A, B> mapping);
+    IterableUnknownSize<Map<A, B>> apply(List<A> as, List<B> bs, Multimap<A, B> mapping);
 }
 
 
-
-
-interface IterableUnknownSize<T>
-    extends Iterable<T>
-{
-    /**
-     * Function to indicate that there may be items in the stream.
-     * Avoids potential needless expensive computations by .stream() 
-     * @return
-     */
-    boolean mayHaveItems();
-}
-
-class IterableUnknowSimple<T>
-    implements IterableUnknownSize<T>
-{
-    protected Boolean mayHaveItems = null;
-    protected Iterable<T> delegate;
-    
-    public IterableUnknowSimple(Boolean mayHaveItems,
-            Iterable<T> delegate) {
-        super();
-        this.mayHaveItems = mayHaveItems;
-        this.delegate = delegate;
-    }
-
-    @Override
-    public Iterator<T> iterator() {
-        Iterator<T> result = delegate.iterator();
-        if(mayHaveItems == null) {
-            mayHaveItems = result.hasNext();
-        }
-        return result;
-    }
-
-    @Override
-    public boolean mayHaveItems() {
-        if(mayHaveItems == null) {
-            // This initializes the mayHaveItems field
-            iterator();
-        }        
-        return mayHaveItems;
-    }   
-}

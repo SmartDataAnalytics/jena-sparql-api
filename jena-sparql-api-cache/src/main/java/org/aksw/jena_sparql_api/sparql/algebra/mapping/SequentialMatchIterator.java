@@ -96,9 +96,24 @@ public class SequentialMatchIterator<A, B, S>
         ++i;
 
         if(!foundCompleteMatch) {
+
+            
+            
+            
+            
+            
+            
             result = endOfData();
         }
         
+        
+        return result;
+    }
+
+    public static <A, B> IterableUnknownSize<Map<A, B>> createIterable(List<A> as, List<B> bs, Multimap<A, B> mapping) {
+        Iterable<Map<A, B>> tmp = () -> new SequentialMatchIterator<>(as, bs, (a, b) -> mapping.get(a).contains(b));
+        IterableUnknownSize<Map<A, B>> result = new IterableUnknownSizeSimple<>(tmp);
+        //Stream<Map<A, B>> result = StreamSupport.stream(it.spliterator(), false);
         
         return result;
     }

@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.sparql.algebra.mapping;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.BiConsumer;
@@ -119,7 +120,8 @@ public class TreeMapperImpl<A, B> {
                     List<A> aChildren = aTree.getChildren(parentMap.getKey());
                     List<B> bChildren = bTree.getChildren(parentMap.getValue());
                                         
-                    Boolean r = predicate.apply(aChildren, bChildren, mappings);
+                    IterableUnknownSize<Map<A, B>> it = predicate.apply(aChildren, bChildren, mappings);
+                    boolean r = it.mayHaveItems();
                     
                     if(!r) {
                         satisfiability = false;

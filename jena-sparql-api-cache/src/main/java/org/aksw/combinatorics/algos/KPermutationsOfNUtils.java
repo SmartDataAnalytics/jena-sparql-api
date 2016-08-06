@@ -15,6 +15,8 @@ import org.aksw.combinatorics.collections.CombinationStack;
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
 import org.aksw.jena_sparql_api.concept_cache.dirty.Tree;
 import org.aksw.jena_sparql_api.concept_cache.op.TreeUtils;
+import org.aksw.jena_sparql_api.sparql.algebra.mapping.IterableUnknownSize;
+import org.aksw.jena_sparql_api.sparql.algebra.mapping.IterableUnknownSizeSimple;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.TreeMapperCandidateList;
 
 import com.codepoetics.protonpack.functions.TriFunction;
@@ -57,6 +59,12 @@ public class KPermutationsOfNUtils {
     }
     
     
+    public static <A, B> IterableUnknownSize<Map<A, B>> createIterable(Multimap<A, B> childMapping) {
+        Iterable<Map<A, B>> tmp = () -> kPermutationsOfN(childMapping).iterator();
+        IterableUnknownSize<Map<A, B>> result = new IterableUnknownSizeSimple<>(true, tmp);
+        return result;
+    }
+    
     public static <A, B> Stream<ClusterStack<A, B, Entry<A, B>>> kPermutationsOfN(
             Multimap<A, B> childMapping,
             Tree<A> aTree,
@@ -78,7 +86,7 @@ public class KPermutationsOfNUtils {
     //public static <A, B> Stream<CombinationStack<A, B, Object>> kPermutationsOfN(Multimap<A, B> mapping) {
     public static <A, B> Stream<Map<A, B>> kPermutationsOfN(Multimap<A, B> mapping) {
         BiHashMultimap<A, B> map = new BiHashMultimap<>();
-        
+
         // TODO Create a putAll method on the bi-multimap
         for(Entry<A, B> entry : mapping.entries()) {
             map.put(entry.getKey(), entry.getValue());
