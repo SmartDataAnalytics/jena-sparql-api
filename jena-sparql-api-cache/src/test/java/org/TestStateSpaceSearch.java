@@ -34,7 +34,7 @@ import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 import org.aksw.jena_sparql_api.concept_cache.op.TreeUtils;
-import org.aksw.jena_sparql_api.sparql.algebra.mapping.MatchingStrategy;
+import org.aksw.jena_sparql_api.sparql.algebra.mapping.MatchingStrategyFactory;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.SequentialMatchIterator;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.TreeMapperImpl;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.VarMapper;
@@ -135,18 +135,18 @@ public class TestStateSpaceSearch {
      * @param queryOp
      * @return
      */
-    public static <A, B> MatchingStrategy<A, B> determineMatchingStrategy(A cacheOp, B queryOp) {
+    public static <A, B> MatchingStrategyFactory<A, B> determineMatchingStrategy(A cacheOp, B queryOp) {
 //        A cacheOp = nodeMapping.getKey();
 //        B queryOp = nodeMapping.getValue();
 
-        Map<Class<?>, MatchingStrategy<A, B>> opToMatcherTest = new HashMap<>(); 
+        Map<Class<?>, MatchingStrategyFactory<A, B>> opToMatcherTest = new HashMap<>(); 
         opToMatcherTest.put(OpDisjunction.class, (as, bs, mapping) -> true);
 
-        Function<Class<?>, MatchingStrategy<A, B>> fnOpToMatcherTest = (nodeType) ->
+        Function<Class<?>, MatchingStrategyFactory<A, B>> fnOpToMatcherTest = (nodeType) ->
             opToMatcherTest.getOrDefault(nodeType, (as, bs, mapping) -> SequentialMatchIterator.createStream(as, bs, mapping).findFirst().isPresent());
 
         
-        MatchingStrategy<A, B> result;
+        MatchingStrategyFactory<A, B> result;
         
         int c = (cacheOp == null ? 0 : 1) | (queryOp == null ? 0 : 2);
         switch(c) {
@@ -350,7 +350,27 @@ public class TestStateSpaceSearch {
         
         Stream<NestedStack<Multimap<Op, Op>>> mappingStream = TreeMapperImpl.<Multimap<Op, Op>, NestedStack<Multimap<Op, Op>>>stream(tm::recurse, HashMultimap.<Op, Op>create());
         
-        mappingStream.forEach(m -> System.out.println("Tree mapping solution: " + m));
+        mappingStream.forEach(m -> { 
+            //Multimap<Op, Op> fullMap = mapping
+            for(Multimap<Op, Op> layer: m) {
+                
+                
+                // TODO We need the clusters together with the mapping strategy
+                
+                
+                
+                // From the candidate mapping we now need to create the concrete mappings
+                //KPermutationsOfNUtils.
+                //determineMatchingStrategy(cacheOp, queryOp)
+                
+                
+                
+            }
+            
+            System.out.println("Tree mapping solution: " + m);
+        });
+
+        
         
 
         Op cacheLeaf = cacheLeafs.get(1);
@@ -364,9 +384,12 @@ public class TestStateSpaceSearch {
         Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> problems = createProblemsFromUnaryAncestors(cacheUnaryAncestors, queryUnaryAncestors); 
         Stream<Map<Var, Var>> solutions = VarMapper.solve(problems);
         solutions.forEach(s -> System.out.println("found solution: " + s));
+
         
         
-        // 
+        
+        
+        //  
         
         // tm.recurse(0, HashMultimap.create());
         

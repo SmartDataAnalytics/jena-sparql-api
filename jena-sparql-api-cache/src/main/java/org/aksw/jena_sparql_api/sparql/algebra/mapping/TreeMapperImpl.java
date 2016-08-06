@@ -40,14 +40,14 @@ public class TreeMapperImpl<A, B> {
 //            ? extends Collection<B>,
 //            Multimap<A, B>,
 //            Stream<Map<A, B>>>> matchingStrategy;
-      protected BiFunction<A, B, ? extends MatchingStrategy<A, B>> isSatisfiable; //matchingStrategy;
+    protected BiFunction<A, B, ? extends MatchingStrategyFactory<A, B>> isSatisfiable; //matchingStrategy;
     
 
     public TreeMapperImpl(
             Tree<A> aTree,
             Tree<B> bTree,
             Multimap<A, B> baseMapping,
-            BiFunction<A, B, ? extends MatchingStrategy<A, B>> isSatisfiable 
+            BiFunction<A, B, ? extends MatchingStrategyFactory<A, B>> isSatisfiable 
             ) {//, Multimap<A, B> baseMapping) {
         this.aTree = aTree;
         this.bTree = bTree;
@@ -113,7 +113,7 @@ public class TreeMapperImpl<A, B> {
                 for(Cluster<A, B, Entry<A, B>> cluster : parentClusterStack) {
                     Entry<A, B> parentMap = cluster.getCluster();
 
-                    MatchingStrategy<A, B> predicate = isSatisfiable.apply(parentMap.getKey(), parentMap.getValue());
+                    MatchingStrategyFactory<A, B> predicate = isSatisfiable.apply(parentMap.getKey(), parentMap.getValue());
                 
                     Multimap<A, B> mappings = cluster.getMappings();
                     List<A> aChildren = aTree.getChildren(parentMap.getKey());
