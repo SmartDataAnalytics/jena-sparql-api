@@ -15,6 +15,7 @@ import java.util.stream.Stream;
 
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
+import org.aksw.commons.collections.multimaps.MultimapUtils;
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.CombinatoricsUtils;
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.Utils2;
 import org.aksw.jena_sparql_api.concept_cache.core.CacheResult;
@@ -378,7 +379,7 @@ public class SparqlViewCacheImpl
         if(abort) {
             result = null;
         } else {
-            result = SparqlCacheUtils.toMap(candToQuery.asMap());
+            result = MultimapUtils.toMap(candToQuery.asMap());
         }
 
 

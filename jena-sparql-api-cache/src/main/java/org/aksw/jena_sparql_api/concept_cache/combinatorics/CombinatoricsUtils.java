@@ -15,7 +15,6 @@ import java.util.stream.Stream;
 import org.aksw.combinatorics.algos.StateCombinatoricCallback;
 import org.aksw.commons.collections.CartesianProduct;
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
-import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
 import org.aksw.jena_sparql_api.concept_cache.domain.PatternSummary;
 import org.aksw.jena_sparql_api.utils.MapUtils;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
@@ -109,7 +108,7 @@ public class CombinatoricsUtils {
         // Combine the solutions of each equivalence class into an overall solution,
         // thereby filter out incompatible bindings (indicated by null)
         Stream<Map<Var, Var>> result = cart.stream()
-            .map(solutionParts -> SparqlCacheUtils.mergeCompatible(solutionParts))
+            .map(solutionParts -> org.aksw.commons.collections.MapUtils.mergeCompatible(solutionParts))
             .filter(Objects::nonNull);
 
         return result;

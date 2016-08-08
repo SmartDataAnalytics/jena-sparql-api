@@ -2,7 +2,6 @@ package org.aksw.jena_sparql_api.concept_cache.core;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -15,7 +14,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.aksw.commons.collections.MapUtils;
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
 import org.aksw.jena_sparql_api.algebra.transform.TransformReplaceConstants;
@@ -942,35 +940,6 @@ public class SparqlCacheUtils {
 
 
     /**
-     * Helper function to convert a multimap into a map.
-     * Each key may only have at most one corresponding value,
-     * otherwise an exception will be thrown.
-     *
-     * @param mm
-     * @return
-     */
-    public static <K, V> Map<K, V> toMap(Map<K, ? extends Collection<V>> mm) {
-        // Convert the multimap to an ordinate map
-        Map<K, V> result = new HashMap<K, V>();
-        for(Entry<K, ? extends Collection<V>> entry : mm.entrySet()) {
-            K k = entry.getKey();
-            Collection<V> vs = entry.getValue();
-
-            if(!vs.isEmpty()) {
-                if(vs.size() > 1) {
-                    throw new RuntimeException("Ambigous mapping for " + k + ": " + vs);
-                }
-
-                V v = vs.iterator().next();
-                result.put(k, v);
-            }
-        }
-
-        return result;
-    }
-
-
-    /**
      * TODO this has complexity O(n^2)
      * We can surely do better than that because joins are sparse and we
      * don't have to consider quads that do not join...
@@ -1006,117 +975,6 @@ public class SparqlCacheUtils {
 
         return result;
     }
-
-    /**
-     * Find a mapping of variables from cand to query, such that the pattern of
-     * cand becomes a subset of that of query
-     *
-     * null if no mapping can be established
-     *
-     * @param query
-     * @param cand
-     * @return
-     */
-//
-//    public Iterator<Map<Var, Var>> computeVarMapQuadBased(PatternSummary query, PatternSummary cand, Set<Set<Var>> candVarCombos) {
-//
-//        IBiSetMultimap<Set<Set<Expr>>, Quad> cnfToCandQuad = cand.getQuadToCnf().getInverse();
-//        IBiSetMultimap<Set<Set<Expr>>, Quad> cnfToQueryQuad = query.getQuadToCnf().getInverse();
-//
-//        //IBiSetMultimap<Quad, Quad> candToQuery = new BiHashMultimap<Quad, Quad>();
-////        Map<Set<Set<Expr>>, QuadGroup> cnfToQuadGroup = new HashMap<Set<Set<Expr>>, QuadGroup>();
-//        List<QuadGroup> quadGroups = new ArrayList<QuadGroup>();
-//        for(Entry<Set<Set<Expr>>, Collection<Quad>> entry : cnfToCandQuad.asMap().entrySet()) {
-//
-//            //Quad candQuad = entry.getKey();
-//            Set<Set<Expr>> cnf = entry.getKey();
-//
-//            Collection<Quad> candQuads = entry.getValue();
-//            Collection<Quad> queryQuads = cnfToQueryQuad.get(cnf);
-//
-//            if(queryQuads.isEmpty()) {
-//                return Collections.<Map<Var, Var>>emptySet().iterator();
-//            }
-//
-//            QuadGroup quadGroup = new QuadGroup(candQuads, queryQuads);
-//            quadGroups.add(quadGroup);
-//
-//            // TODO We now have grouped together quad having the same constraint summary
-//            // Can we derive some additional constraints form the var occurrences?
-//
-//
-////            SetMultimap<Quad, Quad> summaryToQuadsCand = quadJoinSummary(new ArrayList<Quad>(candQuads));
-////            System.out.println("JoinSummaryCand: " + summaryToQuadsCand);
-////
-////            SetMultimap<Quad, Quad> summaryToQuadsQuery = quadJoinSummary(new ArrayList<Quad>(queryQuads));
-////            System.out.println("JoinSummaryQuery: " + summaryToQuadsQuery);
-////
-////            for(Entry<Quad, Collection<Quad>> candEntry : summaryToQuadsCand.asMap().entrySet()) {
-////                queryQuads = summaryToQuadsQuery.get(candEntry.getKey());
-////
-////                // TODO What if the mapping is empty?
-////                QuadGroup group = new QuadGroup(candEntry.getValue(), queryQuads);
-////
-////                cnfToQuadGroup.put(cnf, group);
-////            }
-//        }
-//
-//        // Figure out which quads have ambiguous mappings
-//
-////        for(Entry<Set<Set<Expr>>, QuadGroup>entry : cnfToQuadGroup.entrySet()) {
-////            System.out.println(entry.getKey() + ": " + entry.getValue());
-////        }
-//
-//        // Order the quad groups by number of candidates - least number of candidates first
-////        List<QuadGroup> quadGroups = new ArrayList<QuadGroup>(cnfToQuadGroup.values());
-//        Collections.sort(quadGroups, new Comparator<QuadGroup>() {
-//            @Override
-//            public int compare(QuadGroup a, QuadGroup b) {
-//                int i = getNumMatches(a);
-//                int j = getNumMatches(b);
-//                int r = j - i;
-//                return r;
-//            }
-//        });
-//
-//
-//        List<Iterable<Map<Var, Var>>> cartesian = new ArrayList<Iterable<Map<Var, Var>>>(quadGroups.size());
-//
-//        // TODO Somehow obtain a base mapping
-//        Map<Var, Var> baseMapping = Collections.<Var, Var>emptyMap();
-//
-//        for(QuadGroup quadGroup : quadGroups) {
-//            Iterable<Map<Var, Var>> it = IterableVarMapQuadGroup.create(quadGroup, baseMapping);
-//            cartesian.add(it);
-//        }
-//
-//        CartesianProduct<Map<Var, Var>> cart = new CartesianProduct<Map<Var,Var>>(cartesian);
-//
-//        Iterator<Map<Var, Var>> result = new IteratorVarMapQuadGroups(cart.iterator());
-//
-//        return result;
-//    }
-
-    public static <K, V> Map<K, V> mergeCompatible(Iterable<Map<K, V>> maps) {
-        Map<K, V> result = new HashMap<K, V>();
-
-        for(Map<K, V> map : maps) {
-            if(MapUtils.isPartiallyCompatible(map, result)) {
-                result.putAll(map);
-            } else {
-                result = null;
-                break;
-            }
-        }
-
-        return result;
-    }
-
-    public static <K, V> Map<K, V> mergeCompatible(Map<K, V> a, Map<K, V> b) {
-        Map<K, V> result = mergeCompatible(Arrays.asList(a, b));
-        return result;
-    }
-
 
     public static void backtrackMeh(PatternSummary query, PatternSummary cand, Map<Var, Set<Var>> candToQuery, List<Var> varOrder, int index) {
         Var var = varOrder.get(index);

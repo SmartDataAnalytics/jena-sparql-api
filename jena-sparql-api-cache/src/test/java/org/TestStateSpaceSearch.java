@@ -58,6 +58,8 @@ import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.op.OpDisjunction;
 import org.apache.jena.sparql.algebra.op.OpDistinct;
 import org.apache.jena.sparql.algebra.op.OpProject;
+import org.apache.jena.sparql.algebra.op.OpSequence;
+import org.apache.jena.sparql.algebra.op.OpUnion;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprVar;
@@ -106,6 +108,8 @@ public class TestStateSpaceSearch {
         
         Map<Class<?>, GenericBinaryOp<Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>>>> map = new HashMap<>();
         map.put(OpProject.class, GenericBinaryOpImpl.create(TestStateSpaceSearch::deriveProblemProject));
+        map.put(OpSequence.class, GenericBinaryOpImpl.create(TestStateSpaceSearch::deriveProblemSequence));
+        map.put(OpDisjunction.class, GenericBinaryOpImpl.create(TestStateSpaceSearch::deriveProblemDisjunction));
         map.put(OpDistinct.class, (x, y) -> Collections.emptySet());
         
         Class<?> ac = a.getClass();
@@ -237,12 +241,31 @@ public class TestStateSpaceSearch {
         Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result = Collections.singleton(tmp);        
         return result;        
     }
+
     
+    public static Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> deriveProblemSequence(OpSequence cacheOp, OpSequence userOp) {
+        return Collections.emptySet();
+        //ProblemNeighborhoodAware<Map<Var, Var>, Var> tmp = deriveProblem(cacheOp.getVars(), userOp.getVars());
+        //Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result = Collections.singleton(tmp);        
+        //return result;        
+    }
+    
+    public static Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> deriveProblemDisjunction(OpDisjunction cacheOp, OpDisjunction userOp) {
+        return Collections.emptySet();
+        //ProblemNeighborhoodAware<Map<Var, Var>, Var> tmp = deriveProblem(cacheOp.getVars(), userOp.getVars());
+        //Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result = Collections.singleton(tmp);        
+        //return result;        
+    }
     
     
     
     
     public static void main(String[] args) {
+        
+        // TODO We now need to rewrite the query using the canonical quad filter patterns
+        // for this purpose, we could create a map that maps original ops to qfpcs
+//        SparqlCacheUtils.toMap(mm)
+        
         
         Map<Class<?>, TriFunction<List<Op>, List<Op>, Multimap<Op, Op>, Boolean>> opToMatcherTest = new HashMap<>(); 
         opToMatcherTest.put(OpDisjunction.class, (as, bs, mapping) -> true);
