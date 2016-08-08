@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.batch.config;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.function.Supplier;
 
 import org.aksw.jena_sparql_api.core.DatasetListener;
 import org.aksw.jena_sparql_api.core.SparqlService;
@@ -24,8 +25,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 
 @Configuration
 public class ConfigSparqlServicesCore {
@@ -105,7 +104,7 @@ public class ConfigSparqlServicesCore {
         HttpOp.setDefaultHttpClient(httpClient);
         HttpOp.setUseDefaultClientWithAuthentication(true);
 
-        Supplier<HttpClient> result = Suppliers.<HttpClient>ofInstance(httpClient);
+        Supplier<HttpClient> result = () -> httpClient;
 
         return result;
     }
