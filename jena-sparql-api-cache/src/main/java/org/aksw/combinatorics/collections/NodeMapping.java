@@ -22,6 +22,26 @@ public class NodeMapping<A, B, S> {
         this.childMapping = childMapping;
         this.value = value;
     }
+    
+    public Tree<A> getaTree() {
+        return aTree;
+    }
+
+    public Tree<B> getbTree() {
+        return bTree;
+    }
+
+    public Entry<A, B> getParentMapping() {
+        return parentMapping;
+    }
+
+    public Multimap<A, B> getChildMapping() {
+        return childMapping;
+    }
+
+    public S getValue() {
+        return value;
+    }
 
     @Override
     public String toString() {

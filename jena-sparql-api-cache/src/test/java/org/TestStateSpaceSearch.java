@@ -115,6 +115,10 @@ public class TestStateSpaceSearch {
         
         if(ac.equals(bc)) {
             GenericBinaryOp<Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>>> problemFactory = map.get(ac);
+            if(problemFactory == null) {
+                throw new RuntimeException("No factory found for type: " + ac);
+            }
+            
             result = problemFactory.apply(a, b);
         } else {
             result = Collections.singleton(new ProblemStaticSolutions<>(Collections.singleton(null)));
@@ -368,6 +372,8 @@ public class TestStateSpaceSearch {
         
         
         mappingStream.forEach(stack -> {
+
+            List<Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>>> problems = new ArrayList<>();
             
             //Multimap<Op, Op> fullMap = mapping
             //Iterables.concat(m.getV
@@ -375,8 +381,28 @@ public class TestStateSpaceSearch {
             for(LayerMapping<Op, Op, IterableUnknownSize<Map<Op, Op>>> layer : stack) {
                 for(NodeMapping<Op, Op, IterableUnknownSize<Map<Op, Op>>> nodeMapping : layer.getNodeMappings()) {
                     System.out.println("nodeMapping: " + nodeMapping);
+
+                    List<ProblemNeighborhoodAware<Map<Var, Var>, Var>> ps = 
+                                nodeMapping.getValue().stream()
+                                .flatMap(x -> x.entrySet().stream())
+                                .flatMap(e -> createProblems(e.getKey(), e.getValue()).stream())
+                                .collect(Collectors.toList());
+                    problems.add(ps);
+                    
+                    
+//                    for(Map<Op, Op> cand : nodeMapping.getValue()) {
+//                    
+//                        createProblems(
+//                    }
                 }
-               
+            }
+            
+            CartesianProduct<ProblemNeighborhoodAware<Map<Var, Var>, Var>> cart = new CartesianProduct<>(problems);
+            for(List<ProblemNeighborhoodAware<Map<Var, Var>, Var>> item : cart) {
+                VarMapper.solve(item).forEach(vm -> System.out.println("VAR MAPPING: " + vm));
+            }
+            
+                
                 //System.out.println("  Mapping candidate: " + layer.getNodeMappings());
 //                for(Entry<Op, Op> mapping : layer.entrySet()) {
 //                
@@ -394,10 +420,6 @@ public class TestStateSpaceSearch {
                 //KPermutationsOfNUtils.
                 //determineMatchingStrategy(cacheOp, queryOp)
                 
-                
-                
-            }
-            
             //System.out.println("Tree mapping solution: " + m);
         });
 
