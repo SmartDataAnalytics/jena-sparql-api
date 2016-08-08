@@ -343,7 +343,9 @@ public class TestStateSpaceSearch {
 //        List<Set<Op>> queryTreeLevels = TreeUtils.nodesPerLevel(queryMultiaryTree);
         
         
-        
+
+        // The tree mapper only determines sets of candidate mappings for each tree level
+        // 
         TreeMapperImpl<Op, Op> tm = new TreeMapperImpl<Op, Op>(
                 cacheMultiaryTree,
                 queryMultiaryTree,

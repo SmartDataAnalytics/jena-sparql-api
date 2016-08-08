@@ -82,6 +82,7 @@ public class TreeMapperImpl<A, B> {
         recurse(0, parentMappingStack, consumer);
     }
     
+    
     public void recurse(int i, NestedStack<Multimap<A, B>> parentMappingStack, Consumer<NestedStack<Multimap<A, B>>> consumer) {
         Multimap<A, B> parentMapping = parentMappingStack.getValue();
         
@@ -91,7 +92,7 @@ public class TreeMapperImpl<A, B> {
             
             Multimap<A, B> effectiveMapping = HashMultimap.create();
             
-            // Nodes of the current level mapped according to the base mapping
+            // *Only* use the nodes of the current level mapped according to the base mapping
             Multimap<A, B> levelMapping = Multimaps.filterEntries(baseMapping, new Predicate<Entry<A, B>>() {
                 @Override
                 public boolean apply(Entry<A, B> input) {
@@ -103,6 +104,7 @@ public class TreeMapperImpl<A, B> {
             effectiveMapping.putAll(levelMapping);
             effectiveMapping.putAll(parentMapping);
     
+            // Each cluster stack represents potential mappings of all of this level's parent nodes 
             Stream<ClusterStack<A, B, Entry<A, B>>> stream = KPermutationsOfNUtils.<A, B>kPermutationsOfN(
                     effectiveMapping,
                     aTree,
@@ -134,7 +136,11 @@ public class TreeMapperImpl<A, B> {
                     for(Cluster<A, B, Entry<A, B>> cluster : parentClusterStack) {
                         Entry<A, B> e = cluster.getCluster();
                         nextParentMapping.put(e.getKey(), e.getValue());
-                    }            
+                    }
+
+                    
+                    //MultiClusterStack<A, B, Entry<A, B>> nextMcs = new MultiClusterStack<>(null, parentClusterStack);
+                    
                     
                     NestedStack<Multimap<A, B>> nextParentMappingStack = new NestedStack<>(parentMappingStack, nextParentMapping);
                     

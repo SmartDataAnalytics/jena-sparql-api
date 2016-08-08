@@ -86,12 +86,12 @@ public class TreeMapperCandidateList<A, B>
     public void run(Consumer<ClusterStack<A, B, Entry<A, B>>> completeMatch) {
         boolean isEmpty = as.isEmpty(); //remainingA.successor.isTail();
         if(!isEmpty) {
-            nextB(0, null, completeMatch);
+            recurse(0, null, completeMatch);
         }
     }
     
     //@Override
-    public void nextB(int i, ClusterStack<A, B, Entry<A, B>> stack, Consumer<ClusterStack<A, B, Entry<A, B>>> completeMatch) {
+    public void recurse(int i, ClusterStack<A, B, Entry<A, B>> stack, Consumer<ClusterStack<A, B, Entry<A, B>>> completeMatch) {
         
         
         // Instead of iterating all as, we iterate over the parents of the bs that they map to
@@ -220,7 +220,7 @@ public class TreeMapperCandidateList<A, B>
                     Cluster<A, B, Entry<A, B>> cluster = new Cluster<>(clusterKey, clusterCandidateMapping);
                     ClusterStack<A, B, Entry<A, B>> newStack = new ClusterStack<>(stack, cluster);
                     
-                    nextB(i + 1, newStack, completeMatch);
+                    recurse(i + 1, newStack, completeMatch);
                     
                     // Restore state
                     remainingParentMapping.put(a, b);
