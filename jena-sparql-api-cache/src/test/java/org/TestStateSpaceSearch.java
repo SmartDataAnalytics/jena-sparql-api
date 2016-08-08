@@ -17,11 +17,13 @@ import java.util.stream.Stream;
 
 import org.aksw.combinatorics.algos.KPermutationsOfNUtils;
 import org.aksw.combinatorics.collections.Combination;
+import org.aksw.combinatorics.collections.NodeMapping;
 import org.aksw.combinatorics.solvers.ProblemContainerNeighbourhoodAware;
 import org.aksw.combinatorics.solvers.ProblemNeighborhoodAware;
 import org.aksw.combinatorics.solvers.ProblemStaticSolutions;
 import org.aksw.commons.collections.CartesianProduct;
 import org.aksw.commons.collections.stacks.NestedStack;
+import org.aksw.commons.collections.utils.StreamUtils;
 import org.aksw.jena_sparql_api.algebra.transform.TransformJoinToConjunction;
 import org.aksw.jena_sparql_api.algebra.transform.TransformUnionToDisjunction;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
@@ -36,6 +38,7 @@ import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 import org.aksw.jena_sparql_api.concept_cache.op.TreeUtils;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.IterableUnknownSize;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.IterableUnknownSizeSimple;
+import org.aksw.jena_sparql_api.sparql.algebra.mapping.LayerMapping;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.MatchingStrategyFactory;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.SequentialMatchIterator;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.TreeMapperImpl;
@@ -346,21 +349,45 @@ public class TestStateSpaceSearch {
 
         // The tree mapper only determines sets of candidate mappings for each tree level
         // 
-        TreeMapperImpl<Op, Op> tm = new TreeMapperImpl<Op, Op>(
+        TreeMapperImpl<Op, Op, IterableUnknownSize<Map<Op, Op>>> tm = new TreeMapperImpl<Op, Op, IterableUnknownSize<Map<Op, Op>>>(
                 cacheMultiaryTree,
                 queryMultiaryTree,
                 candOpMapping,
-                TestStateSpaceSearch::determineMatchingStrategy);
+                TestStateSpaceSearch::determineMatchingStrategy,
+                (iterable) -> iterable.mayHaveItems()
+                );
+
+        //Stream<NestedStack<Multimap<Op, Op>>> mappingStream = TreeMapperImpl.<Multimap<Op, Op>, NestedStack<Multimap<Op, Op>>>stream(tm::recurse, HashMultimap.<Op, Op>create());
+        Stream<NestedStack<LayerMapping<Op, Op, IterableUnknownSize<Map<Op, Op>>>>> mappingStream =
+                StreamUtils.<Map<Op, Op>, NestedStack<LayerMapping<Op, Op, IterableUnknownSize<Map<Op, Op>>>>>
+                    stream(tm::recurse, Collections.emptyMap());
         
-        Stream<NestedStack<Multimap<Op, Op>>> mappingStream = TreeMapperImpl.<Multimap<Op, Op>, NestedStack<Multimap<Op, Op>>>stream(tm::recurse, HashMultimap.<Op, Op>create());
+        // Turn each stack into stream of entries
+//        Stream<Stream<Entry<Op, Op>>> entryStream =
+//                mappingStream.map(stack -> stack.stream().flatMap(m -> m.entrySet().stream()));
         
-        mappingStream.forEach(m -> { 
+        
+        mappingStream.forEach(stack -> {
+            
             //Multimap<Op, Op> fullMap = mapping
-            for(Multimap<Op, Op> layer: m) {
-                
-                
-                // TODO We need the clusters together with the mapping strategy
-                
+            //Iterables.concat(m.getV
+            System.out.println("foo " + stack);
+            for(LayerMapping<Op, Op, IterableUnknownSize<Map<Op, Op>>> layer : stack) {
+                for(NodeMapping<Op, Op, IterableUnknownSize<Map<Op, Op>>> nodeMapping : layer.getNodeMappings()) {
+                    System.out.println("nodeMapping: " + nodeMapping);
+                }
+               
+                //System.out.println("  Mapping candidate: " + layer.getNodeMappings());
+//                for(Entry<Op, Op> mapping : layer.entrySet()) {
+//                
+//                    MatchingStrategyFactory<Op, Op> f = determineMatchingStrategy(mapping.getKey(), mapping.getValue());
+//                    f.apply(cacheMultiaryTree.getChildren(mapping.getKey()), bs, queryMultiaryTree.getChildren(mapping.getValue()));
+//                    
+//                    
+//                    System.out.println("layer mapping: " + layer);
+//                    
+//                    // TODO We need the clusters together with the mapping strategy
+//                }                
                 
                 
                 // From the candidate mapping we now need to create the concrete mappings
@@ -371,7 +398,7 @@ public class TestStateSpaceSearch {
                 
             }
             
-            System.out.println("Tree mapping solution: " + m);
+            //System.out.println("Tree mapping solution: " + m);
         });
 
         

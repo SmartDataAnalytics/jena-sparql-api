@@ -2,28 +2,30 @@ package org.aksw.jena_sparql_api.sparql.algebra.mapping;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.aksw.combinatorics.algos.KPermutationsOfNUtils;
 import org.aksw.combinatorics.collections.Cluster;
 import org.aksw.combinatorics.collections.ClusterStack;
+import org.aksw.combinatorics.collections.NodeMapping;
 import org.aksw.commons.collections.stacks.NestedStack;
 import org.aksw.jena_sparql_api.concept_cache.dirty.Tree;
 import org.aksw.jena_sparql_api.concept_cache.op.TreeUtils;
 
-import com.google.common.base.Predicate;
+import com.codepoetics.protonpack.functions.TriFunction;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 
-public class TreeMapperImpl<A, B> {
+public class TreeMapperImpl<A, B, S> {
     protected Tree<A> aTree;
     protected Tree<B> bTree;
     
@@ -41,14 +43,29 @@ public class TreeMapperImpl<A, B> {
 //            ? extends Collection<B>,
 //            Multimap<A, B>,
 //            Stream<Map<A, B>>>> matchingStrategy;
-    protected BiFunction<A, B, ? extends MatchingStrategyFactory<A, B>> isSatisfiable; //matchingStrategy;
+    //protected BiFunction<A, B, ? extends MatchingStrategyFactory<A, B>> isSatisfiable; //matchingStrategy;
     
+    
+    // TODO Maybe use a triFunction with the current stack
+    //protected BiFunction<A, B, S> makeCluster;
+    /**
+     * Function that for a given mapping of parent nodes returns a function for
+     * dealing with its children
+     * 
+     */
+    protected BiFunction<A, B, ? extends TriFunction<List<A>, List<B>, Multimap<A, B>, S>> matchingStrategyFactory;
+    
+    protected Predicate<S> isSatisfiable;
 
     public TreeMapperImpl(
             Tree<A> aTree,
             Tree<B> bTree,
             Multimap<A, B> baseMapping,
-            BiFunction<A, B, ? extends MatchingStrategyFactory<A, B>> isSatisfiable 
+            //BiFunction<A, B, ? extends MatchingStrategyFactory<A, B>> isSatisfiable
+            //BiFunction<A, B, S> makeCluster,
+            BiFunction<A, B, ? extends TriFunction<List<A>, List<B>, Multimap<A, B>, S>> matchingStrategyFactory,
+            Predicate<S> isSatisfiable
+            
             ) {//, Multimap<A, B> baseMapping) {
         this.aTree = aTree;
         this.bTree = bTree;
@@ -66,43 +83,57 @@ public class TreeMapperImpl<A, B> {
         //Multimap<A, B> baseMapping
         this.baseMapping = baseMapping;
         //this.matchingStrategy = matchingStrategy;
+        this.matchingStrategyFactory = matchingStrategyFactory;
         this.isSatisfiable = isSatisfiable;
     }
     
-    public static <S, X> Stream<X> stream(BiConsumer<S, Consumer<X>> fn, S baseSolution) {
-        List<X> result = new ArrayList<>();
-        
-        fn.accept(baseSolution, (item) -> result.add(item));
-        
-        return result.stream();        
-    }
     
-    public void recurse(Multimap<A, B> parentMapping, Consumer<NestedStack<Multimap<A, B>>> consumer) {
-        NestedStack<Multimap<A, B>> parentMappingStack = new NestedStack<>(null, parentMapping);
+
+//    public static <S, X> Stream<X> stream(Consumer<Consumer<X>> fn, S ) {
+//        List<X> result = new ArrayList<>();
+//        
+//        fn.accept(baseSolution, (item) -> result.add(item));
+//        
+//        return result.stream();        
+//    }
+
+    
+    public void recurse(Map<A, B> parentMapping, Consumer<NestedStack<LayerMapping<A, B, S>>> consumer) {
+        LayerMapping<A, B, S> layerMapping = new LayerMapping<>(Collections.emptyList(), parentMapping); 
+        
+        //NestedStack<LayerMapping<A, B, S>> parentMappingStack = new NestedStack<>(null, parentMapping);
+        NestedStack<LayerMapping<A, B, S>> parentMappingStack = new NestedStack<>(null, layerMapping);
         recurse(0, parentMappingStack, consumer);
     }
     
     
-    public void recurse(int i, NestedStack<Multimap<A, B>> parentMappingStack, Consumer<NestedStack<Multimap<A, B>>> consumer) {
-        Multimap<A, B> parentMapping = parentMappingStack.getValue();
+    public void recurse(int i, NestedStack<LayerMapping<A, B, S>> parentLayerMappingStack, Consumer<NestedStack<LayerMapping<A, B, S>>> consumer) {
+        //Map<A, B> parentMapping = parentMappingStack.getValue();
+        Map<A, B> parentMapping = parentLayerMappingStack.getValue().getParentMap();
         
         if(i < aTreeLevels.size()) {            
             Set<A> keys = aTreeLevels.get(i);
             Set<B> values = bTreeLevels.get(i);
             
             Multimap<A, B> effectiveMapping = HashMultimap.create();
-            
+
             // *Only* use the nodes of the current level mapped according to the base mapping
-            Multimap<A, B> levelMapping = Multimaps.filterEntries(baseMapping, new Predicate<Entry<A, B>>() {
+            Multimap<A, B> levelMapping = Multimaps.filterEntries(baseMapping, new com.google.common.base.Predicate<Entry<A, B>>() {
                 @Override
                 public boolean apply(Entry<A, B> input) {
                     boolean result = keys.contains(input.getKey()) && values.contains(input.getValue());
                     return result;
                 }            
             });
+
+            // In addition to the candidate mappings of the current level, also add those that may have been introduced
+            // by the parent mapping
             
             effectiveMapping.putAll(levelMapping);
-            effectiveMapping.putAll(parentMapping);
+            //effectiveMapping.putAll(parentMapping);
+            //effectiveMapping.entries().addAll(parentMapping.entrySet());
+            parentMapping.entrySet().forEach(e -> effectiveMapping.put(e.getKey(), e.getValue()));
+            
     
             // Each cluster stack represents potential mappings of all of this level's parent nodes 
             Stream<ClusterStack<A, B, Entry<A, B>>> stream = KPermutationsOfNUtils.<A, B>kPermutationsOfN(
@@ -113,17 +144,33 @@ public class TreeMapperImpl<A, B> {
             stream.forEach(parentClusterStack -> {
 
                 boolean satisfiability = true;
+                //LayerMapping<A, B, S> layerMapping = new LayerMapping<>();
+                List<NodeMapping<A, B, S>> nodeMappings = new ArrayList<>();
+
                 for(Cluster<A, B, Entry<A, B>> cluster : parentClusterStack) {
                     Entry<A, B> parentMap = cluster.getCluster();
 
-                    MatchingStrategyFactory<A, B> predicate = isSatisfiable.apply(parentMap.getKey(), parentMap.getValue());
-                
+                    A aParent = parentMap.getKey();
+                    B bParent = parentMap.getValue();
+                    
+                    // Obtain the matching strategy function for the given parents
+                    TriFunction<List<A>, List<B>, Multimap<A, B>, S> matchingStrategy = matchingStrategyFactory.apply(aParent, bParent);
+                    //boolean r = isSatisfiable.apply(clusterX);
+                    //MatchingStrategyFactory<A, B> predicate = isSatisfiable.apply(parentMap.getKey(), parentMap.getValue());
+
                     Multimap<A, B> mappings = cluster.getMappings();
                     List<A> aChildren = aTree.getChildren(parentMap.getKey());
                     List<B> bChildren = bTree.getChildren(parentMap.getValue());
-                                        
-                    IterableUnknownSize<Map<A, B>> it = predicate.apply(aChildren, bChildren, mappings);
-                    boolean r = it.mayHaveItems();
+                    
+                    S clusterX = matchingStrategy.apply(aChildren, bChildren, mappings);
+                    boolean r = isSatisfiable.test(clusterX);
+                    
+                    NodeMapping<A, B, S> nodeMapping = new NodeMapping<>(aTree, bTree, parentMap, effectiveMapping, clusterX);
+                    nodeMappings.add(nodeMapping);
+                    
+//                                        
+//                    IterableUnknownSize<Map<A, B>> it = predicate.apply(aChildren, bChildren, mappings);
+//                    boolean r = it.mayHaveItems();
                     
                     if(!r) {
                         satisfiability = false;
@@ -132,17 +179,22 @@ public class TreeMapperImpl<A, B> {
                 }
                 
                 if(satisfiability) {
-                    Multimap<A, B> nextParentMapping = HashMultimap.create();
+                    //Multimap<A, B> nextParentMapping = HashMultimap.create();
+                    Map<A, B> nextParentMapping = new HashMap<>();
                     for(Cluster<A, B, Entry<A, B>> cluster : parentClusterStack) {
                         Entry<A, B> e = cluster.getCluster();
                         nextParentMapping.put(e.getKey(), e.getValue());
                     }
 
+                    LayerMapping<A, B, S> layerMapping = new LayerMapping<>(nodeMappings, nextParentMapping);
                     
                     //MultiClusterStack<A, B, Entry<A, B>> nextMcs = new MultiClusterStack<>(null, parentClusterStack);
                     
                     
-                    NestedStack<Multimap<A, B>> nextParentMappingStack = new NestedStack<>(parentMappingStack, nextParentMapping);
+                    //NestedStack<Map<A, B>> nextParentMappingStack = new NestedStack<>(parentMappingStack, nextParentMapping);
+                    
+                    
+                    NestedStack<LayerMapping<A, B, S>> nextLayerMappingStack = new NestedStack<>(parentLayerMappingStack, layerMapping);
                     
                     // Based on the op-types, determine the matching strategy and check whether any of the clusters has a valid mapping
     
@@ -152,11 +204,11 @@ public class TreeMapperImpl<A, B> {
                     //System.out.println("GOT at level" + i + " " + parentClusterStack);
                     
                     
-                    recurse(i + 1, nextParentMappingStack, consumer);
+                    recurse(i + 1, nextLayerMappingStack, consumer);
                 }
             });
         } else {
-            consumer.accept(parentMappingStack);
+            consumer.accept(parentLayerMappingStack);
         }
     }
 }

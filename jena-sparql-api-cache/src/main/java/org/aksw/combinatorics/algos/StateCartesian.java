@@ -45,6 +45,10 @@ public class StateCartesian<A, B, S> {
     // TODO We could add a function which allows reordering the items of as
     // after choosing an item b (returned by the lookup function)
 
+    /**
+     * Lookup function that for a given item of A, the partial solution (the stack)
+     * yields the candidate items of B for the given solution contribution S.
+     */
     protected TriFunction<A, S, CombinationStack<A, B, S>, Iterator<B>> lookupB;
 
 
