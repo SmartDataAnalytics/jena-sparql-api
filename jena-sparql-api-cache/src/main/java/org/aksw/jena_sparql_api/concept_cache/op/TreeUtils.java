@@ -13,10 +13,14 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
 import org.aksw.jena_sparql_api.concept_cache.dirty.Tree;
+import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
+import org.apache.jena.sparql.algebra.Op;
 
 public class TreeUtils {
 
@@ -165,4 +169,18 @@ public class TreeUtils {
             parentMap(result, child, parentToChildren);
         }
     }
+    
+    
+    public static <T> Tree<T> create(Tree<T> tree, Function<T, T> replaceFn) {
+        Map<Op, QuadFilterPatternCanonical> opToQfp = TreeUtils
+                .inOrderSearch(
+                        op,
+                        OpUtils::getSubOps,
+                        SparqlCacheUtils::extractQuadFilterPattern,
+                        (opNode, value) -> value == null) // descend while the value is null
+                .filter(e -> e.getValue() != null)
+                .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+    	
+    }
+
 }

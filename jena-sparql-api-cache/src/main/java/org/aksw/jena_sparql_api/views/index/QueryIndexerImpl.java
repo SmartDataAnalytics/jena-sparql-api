@@ -60,6 +60,24 @@ public class QueryIndexerImpl
         
         return result;
     }
+
+    public static Stream<Entry<Op, QuadFilterPattern>> streamQuadFilterPatterns(Op op) {
+    	Tree<Op> tree = OpUtils.createTree(op);
+    	Stream<Entry<Op, QuadFilterPattern>> result = streamQuadFilterPatterns(tree);
+    	return result;
+    }
+    
+    public static Stream<Entry<Op, QuadFilterPattern>> streamQuadFilterPatterns(Tree<Op> tree) {
+        Stream<Entry<Op, QuadFilterPattern>> result = TreeUtils
+                .inOrderSearch(
+                        tree.getRoot(),
+                        tree::getChildren,
+                        SparqlCacheUtils::extractQuadFilterPattern,
+                        (opNode, value) -> value == null) // descend while the value is null
+                .filter(e -> e.getValue() != null);
+
+        return result;
+    }
     
     @Override
     public QueryIndex apply(Op op) {
@@ -73,15 +91,9 @@ public class QueryIndexerImpl
         Tree<Op> treeOp = OpUtils.createTree(op);
         
         // Traverse the cache op and create a mapping from op to QuadFilterPatternCanonical
-        Map<Op, QuadFilterPattern> opToQfp = TreeUtils
-            .inOrderSearch(
-                    op,
-                    OpUtils::getSubOps,
-                    SparqlCacheUtils::extractQuadFilterPattern,
-                    (opNode, value) -> value == null) // descend while the value is null
-            .filter(e -> e.getValue() != null)
-            .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
- 
+        Map<Op, QuadFilterPattern> opToQfp = streamQuadFilterPatterns(op)
+        		.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+
         FeatureMap<Expr, QuadPatternIndex> quadPatternIndex = new FeatureMapImpl<>();
 
         opToQfp.forEach((xop, qfp) -> {
