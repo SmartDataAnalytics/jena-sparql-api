@@ -165,7 +165,7 @@ public class TestStateSpaceSearch {
         Map<Class<?>, MatchingStrategyFactory<A, B>> opToMatcherTest = new HashMap<>(); 
         opToMatcherTest.put(OpDisjunction.class, (as, bs, mapping) -> KPermutationsOfNUtils.createIterable(mapping));
 
-        Function<Class<?>, MatchingStrategyFactory<A, B>> fnOpToMatcherTest = (nodeType) ->
+        Function<Class<?>, MatchingStrategyFactory<A, B>> fnOpToMatchingStrategyFactory = (nodeType) ->
             opToMatcherTest.getOrDefault(nodeType, (as, bs, mapping) -> SequentialMatchIterator.createIterable(as, bs, mapping));
 
         
@@ -187,9 +187,18 @@ public class TestStateSpaceSearch {
             Class<?> bc = queryOp.getClass();
          
             if(ac.equals(bc)) {
-                result = fnOpToMatcherTest.apply(ac);
+                MatchingStrategyFactory<A, B> tmp = fnOpToMatchingStrategyFactory.apply(ac);
+                // True if *all* of the two parents' children must have correspondences 
+                boolean requireCompleteCover = false;
+                if(requireCompleteCover) {
+	                result = (as, bs, mapping) -> 
+	                	(as.size() == bs.size() ? tmp.apply(as, bs, mapping) : IterableUnknownSizeSimple.createEmpty());
+                } else {
+                	result = tmp;
+                }
+                
             } else {
-                result = (as, bs, mapping) -> IterableUnknownSizeSimple.createEmpty();;
+                result = (as, bs, mapping) -> IterableUnknownSizeSimple.createEmpty();
             }
             break;
         default:
