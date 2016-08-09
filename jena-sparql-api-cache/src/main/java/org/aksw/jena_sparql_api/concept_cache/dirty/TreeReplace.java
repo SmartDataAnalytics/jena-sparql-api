@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.concept_cache.dirty;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,10 +35,16 @@ public class TreeReplace<T>
 
     @Override
     public List<T> getChildren(T b) {
-        T a = delegateToReplacement.inverse().getOrDefault(b, b);
-        List<T> bs = delegate.getChildren(b);
-        List<T> result = bs.stream().map(bx -> delegateToReplacement.getOrDefault(bx, bx)).collect(Collectors.toList());
-        
+    	List<T> result;
+    	
+    	if(delegateToReplacement.inverse().containsKey(b)) {
+    		result = Collections.emptyList();
+    	} else {
+	        //T a = delegateToReplacement.inverse().getOrDefault(b, b);
+	        List<T> bs = delegate.getChildren(b);
+	        result = bs.stream().map(bx -> delegateToReplacement.getOrDefault(bx, bx)).collect(Collectors.toList());
+    	}
+    	
         return result;
     }
 

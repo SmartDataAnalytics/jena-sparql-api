@@ -17,10 +17,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
 import org.aksw.jena_sparql_api.concept_cache.dirty.Tree;
-import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
-import org.apache.jena.sparql.algebra.Op;
+import org.aksw.jena_sparql_api.concept_cache.dirty.TreeReplace;
+
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 
 public class TreeUtils {
 
@@ -57,7 +58,7 @@ public class TreeUtils {
     public static <T, V> Stream<Entry<T, V>> inOrderSearch(
             T node,
             Function<T, ? extends Iterable<T>> parentToChildren,
-            Function<T, V> nodeToValue,
+            Function<? super T, V> nodeToValue,
             BiPredicate<T, V> doDescend
             ) {
 
@@ -160,6 +161,7 @@ public class TreeUtils {
         return result;
     }
 
+    
     public static <T> void parentMap(Map<T, T> result, T parent, Function<T, List<T>> parentToChildren) {
         List<T> children = parentToChildren.apply(parent);
 
@@ -171,16 +173,25 @@ public class TreeUtils {
     }
     
     
-    public static <T> Tree<T> create(Tree<T> tree, Function<T, T> replaceFn) {
-        Map<Op, QuadFilterPatternCanonical> opToQfp = TreeUtils
+    /**
+     * Create a new tree object which has certain nodes remapped with *leaf* nodes
+     * 
+     * @param tree
+     * @param remapFn
+     * @return
+     */
+    public static <T> Tree<T> remapSubTreesToLeafs(Tree<T> tree, Function<? super T, ? extends T> remapFn) {
+        BiMap<T, T> bimap = TreeUtils
                 .inOrderSearch(
-                        op,
-                        OpUtils::getSubOps,
-                        SparqlCacheUtils::extractQuadFilterPattern,
+                        tree.getRoot(),
+                        tree::getChildren,
+                        remapFn,
                         (opNode, value) -> value == null) // descend while the value is null
                 .filter(e -> e.getValue() != null)
-                .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+                .collect(Collectors.toMap(Entry::getKey, Entry::getValue, (a, b) -> b, HashBiMap::create));
     	
+        Tree<T> result = new TreeReplace<>(tree, bimap);
+        return result;        
     }
 
 }

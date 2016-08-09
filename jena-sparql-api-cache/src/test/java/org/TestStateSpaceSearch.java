@@ -34,6 +34,7 @@ import org.aksw.jena_sparql_api.concept_cache.dirty.Tree;
 import org.aksw.jena_sparql_api.concept_cache.dirty.TreeImpl;
 import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
+import org.aksw.jena_sparql_api.concept_cache.op.OpQuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 import org.aksw.jena_sparql_api.concept_cache.op.TreeUtils;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.IterableUnknownSize;
@@ -291,6 +292,7 @@ public class TestStateSpaceSearch {
     
     public static void main(String[] args) {
         
+    	
         // TODO We now need to rewrite the query using the canonical quad filter patterns
         // for this purpose, we could create a map that maps original ops to qfpcs
 //        SparqlCacheUtils.toMap(mm)
@@ -360,6 +362,16 @@ public class TestStateSpaceSearch {
         Tree<Op> cacheMultiaryTree = SparqlCacheSystemImpl.removeUnaryNodes(cacheTree);
         Tree<Op> queryMultiaryTree = SparqlCacheSystemImpl.removeUnaryNodes(queryTree);
         //System.out.println("Multiary tree: " + cacheMultiaryTree);
+
+        
+        Generator<Var> generator = VarGeneratorImpl2.create(); 
+        Function<Op, Op> remapFn = (op) -> SparqlCacheUtils.tryCreateCqfp(op, generator);
+        
+    	Tree<Op> remappedTree = TreeUtils.remapSubTreesToLeafs(cacheTree, remapFn);
+    	System.out.println("Remapped: " + remappedTree);
+    			
+    	
+
         
         
         // The candidate multimapping from cache to query
