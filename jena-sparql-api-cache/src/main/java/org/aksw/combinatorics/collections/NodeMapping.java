@@ -2,7 +2,7 @@ package org.aksw.combinatorics.collections;
 
 import java.util.Map.Entry;
 
-import org.aksw.jena_sparql_api.concept_cache.dirty.Tree;
+import org.aksw.commons.collections.trees.Tree;
 
 import com.google.common.collect.Multimap;
 

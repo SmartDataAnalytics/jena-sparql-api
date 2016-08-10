@@ -11,8 +11,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.aksw.jena_sparql_api.concept_cache.dirty.Tree;
-import org.aksw.jena_sparql_api.concept_cache.dirty.TreeImpl;
+import org.aksw.commons.collections.trees.Tree;
+import org.aksw.commons.collections.trees.TreeImpl;
+import org.aksw.commons.collections.trees.TreeUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
@@ -126,7 +127,15 @@ public class OpUtils {
         return result;
     }
 
-    public static Op substitute(Op op, boolean descendIntoSubst, Function<Op, Op> opToSubst) {
+    /**
+     * Perform a top-down substitution
+     * 
+     * @param op
+     * @param descendIntoSubst
+     * @param opToSubst
+     * @return
+     */
+    public static Op substitute(Op op, boolean descendIntoSubst, Function<? super Op, ? extends Op> opToSubst) {
         Op tmp = opToSubst.apply(op);
 
         // Descend into op if tmp was null (assigned in statement after this)
@@ -276,7 +285,6 @@ public class OpUtils {
             Op2 o = (Op2)op;
             result = o.copy(subOps.get(0), subOps.get(1));
         } else if (op instanceof OpN) {
-            //Assert.state(subOps.size() == 0);
             OpN o = (OpN)op;
             result = o.copy(subOps);
         } else {

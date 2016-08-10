@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.views.index;
 
-import org.aksw.jena_sparql_api.concept_cache.dirty.TreeNode;
+import org.aksw.commons.collections.trees.TreeNode;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.expr.Expr;

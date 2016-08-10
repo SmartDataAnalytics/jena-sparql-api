@@ -594,23 +594,23 @@ public class SparqlCacheUtils {
             opFilter = (OpFilter)OpFilter.filter(NodeValue.TRUE, op);
         }
 
-        Op subOp = opFilter.getSubOp();
+        op = opFilter.getSubOp();
 
-        if(subOp instanceof OpGraph) {
-            OpGraph opGraph = (OpGraph)subOp;
+        if(op instanceof OpGraph) {
+            OpGraph opGraph = (OpGraph)op;
             Node graphNode = opGraph.getNode();
 
             // The graphNode must be a variable which is not constrained by the filter
 
             Set<Var> filterVars = ExprVars.getVarsMentioned(opFilter.getExprs());
             if(graphNode.isVariable() && !filterVars.contains(graphNode)) {
-                subOp = opGraph.getSubOp();
+                op = opGraph.getSubOp();
             } else {
-                subOp = null;
+                op = null;
             }
         }
 
-        if(subOp instanceof OpQuadPattern) {
+        if(op instanceof OpQuadPattern) {
             OpQuadPattern opQuadPattern = (OpQuadPattern)opFilter.getSubOp();
 
             QuadPattern quadPattern = opQuadPattern.getPattern();

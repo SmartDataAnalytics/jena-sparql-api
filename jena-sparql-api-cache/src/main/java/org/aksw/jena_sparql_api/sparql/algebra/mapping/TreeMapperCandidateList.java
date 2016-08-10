@@ -15,7 +15,7 @@ import java.util.stream.Stream;
 import org.aksw.combinatorics.collections.Cluster;
 import org.aksw.combinatorics.collections.ClusterStack;
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
-import org.aksw.jena_sparql_api.concept_cache.dirty.Tree;
+import org.aksw.commons.collections.trees.Tree;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;

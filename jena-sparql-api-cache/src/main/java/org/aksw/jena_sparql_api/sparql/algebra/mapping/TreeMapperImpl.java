@@ -17,8 +17,8 @@ import org.aksw.combinatorics.collections.Cluster;
 import org.aksw.combinatorics.collections.ClusterStack;
 import org.aksw.combinatorics.collections.NodeMapping;
 import org.aksw.commons.collections.stacks.NestedStack;
-import org.aksw.jena_sparql_api.concept_cache.dirty.Tree;
-import org.aksw.jena_sparql_api.concept_cache.op.TreeUtils;
+import org.aksw.commons.collections.trees.Tree;
+import org.aksw.commons.collections.trees.TreeUtils;
 
 import com.codepoetics.protonpack.functions.TriFunction;
 import com.google.common.collect.HashMultimap;

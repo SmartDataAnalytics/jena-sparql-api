@@ -23,6 +23,9 @@ import org.aksw.combinatorics.solvers.ProblemNeighborhoodAware;
 import org.aksw.combinatorics.solvers.ProblemStaticSolutions;
 import org.aksw.commons.collections.CartesianProduct;
 import org.aksw.commons.collections.stacks.NestedStack;
+import org.aksw.commons.collections.trees.Tree;
+import org.aksw.commons.collections.trees.TreeImpl;
+import org.aksw.commons.collections.trees.TreeUtils;
 import org.aksw.commons.collections.utils.StreamUtils;
 import org.aksw.jena_sparql_api.algebra.transform.TransformJoinToConjunction;
 import org.aksw.jena_sparql_api.algebra.transform.TransformUnionToDisjunction;
@@ -30,13 +33,10 @@ import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMapImpl;
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.ProblemVarMappingExpr;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
-import org.aksw.jena_sparql_api.concept_cache.dirty.Tree;
-import org.aksw.jena_sparql_api.concept_cache.dirty.TreeImpl;
 import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpQuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
-import org.aksw.jena_sparql_api.concept_cache.op.TreeUtils;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.IterableUnknownSize;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.IterableUnknownSizeSimple;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.LayerMapping;
@@ -366,10 +366,7 @@ public class TestStateSpaceSearch {
         
         Generator<Var> generator = VarGeneratorImpl2.create(); 
         Function<Op, Op> remapFn = (op) -> SparqlCacheUtils.tryCreateCqfp(op, generator);
-        
-    	Tree<Op> remappedTree = TreeUtils.remapSubTreesToLeafs(cacheTree, remapFn);
-    	System.out.println("Remapped: " + remappedTree);
-    			
+            			
     	
 
         

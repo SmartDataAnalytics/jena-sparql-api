@@ -15,11 +15,11 @@ import java.util.stream.Stream;
 
 import org.aksw.combinatorics.solvers.ProblemContainerNeighbourhoodAware;
 import org.aksw.combinatorics.solvers.ProblemNeighborhoodAware;
+import org.aksw.commons.collections.trees.Tree;
+import org.aksw.commons.collections.trees.TreeImpl;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.ProblemVarMappingExpr;
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.ProblemVarMappingQuad;
-import org.aksw.jena_sparql_api.concept_cache.dirty.Tree;
-import org.aksw.jena_sparql_api.concept_cache.dirty.TreeImpl;
 import org.aksw.jena_sparql_api.utils.MapUtils;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.core.Var;
