@@ -151,12 +151,15 @@ public class TestStateSpaceSearch {
 //        A cacheOp = nodeMapping.getKey();
 //        B queryOp = nodeMapping.getValue();
 
+        
+        // TODO Aggregate collections of problem instances with the node mapping and
+        // discard candidates which yield problem instances without solutions. 
+        
         Map<Class<?>, MatchingStrategyFactory<A, B>> opToMatcherTest = new HashMap<>(); 
         opToMatcherTest.put(OpDisjunction.class, (as, bs, mapping) -> KPermutationsOfNUtils.createIterable(mapping));
 
         Function<Class<?>, MatchingStrategyFactory<A, B>> fnOpToMatchingStrategyFactory = (nodeType) ->
             opToMatcherTest.getOrDefault(nodeType, (as, bs, mapping) -> SequentialMatchIterator.createIterable(as, bs, mapping));
-
         
         MatchingStrategyFactory<A, B> result;
         
@@ -471,6 +474,8 @@ public class TestStateSpaceSearch {
 //                    }
                 }
             }
+
+            System.out.println("# problems found: " + problems.size());
             
             CartesianProduct<ProblemNeighborhoodAware<Map<Var, Var>, Var>> cart = new CartesianProduct<>(problems);
             for(List<ProblemNeighborhoodAware<Map<Var, Var>, Var>> item : cart) {
