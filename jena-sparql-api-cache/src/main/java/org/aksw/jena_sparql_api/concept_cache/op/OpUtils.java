@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.aksw.commons.collections.trees.Tree;
@@ -25,6 +24,7 @@ import org.apache.jena.sparql.algebra.op.Op0;
 import org.apache.jena.sparql.algebra.op.Op1;
 import org.apache.jena.sparql.algebra.op.Op2;
 import org.apache.jena.sparql.algebra.op.OpBGP;
+import org.apache.jena.sparql.algebra.op.OpExt;
 import org.apache.jena.sparql.algebra.op.OpN;
 import org.apache.jena.sparql.algebra.op.OpQuadBlock;
 import org.apache.jena.sparql.algebra.op.OpQuadPattern;
@@ -135,29 +135,33 @@ public class OpUtils {
      * @param opToSubst
      * @return
      */
-    public static Op substitute(Op op, boolean descendIntoSubst, Function<? super Op, ? extends Op> opToSubst) {
-        Op tmp = opToSubst.apply(op);
-
-        // Descend into op if tmp was null (assigned in statement after this)
-        // or descend into the replacement op
-        boolean descend = tmp == null || descendIntoSubst;
-
-        // Use op if tmp is null
-        tmp = tmp == null ? op : tmp;
-
-        Op result;
-        if(descend) {
-            List<Op> newSubOps = OpUtils.getSubOps(tmp).stream()
-                .map(subOp -> substitute(subOp, descendIntoSubst, opToSubst))
-                .collect(Collectors.toList());
-
-            result = OpUtils.copy(op, newSubOps);
-        } else {
-            result = tmp;
-        }
-
-        return result;
-    }
+  public static Op substitute(Op op, boolean descendIntoSubst, Function<? super Op, ? extends Op> transformFn) {
+	  Op result = TreeUtils.substitute(op, descendIntoSubst, OpTreeOps.get(), transformFn);
+	  return result;
+  }
+//    public static Op substitute(Op op, boolean descendIntoSubst, Function<? super Op, ? extends Op> opToSubst) {
+//        Op tmp = opToSubst.apply(op);
+//
+//        // Descend into op if tmp was null (assigned in statement after this)
+//        // or descend into the replacement op
+//        boolean descend = tmp == null || descendIntoSubst;
+//
+//        // Use op if tmp is null
+//        tmp = tmp == null ? op : tmp;
+//
+//        Op result;
+//        if(descend) {
+//            List<Op> newSubOps = OpUtils.getSubOps(tmp).stream()
+//                .map(subOp -> substitute(subOp, descendIntoSubst, opToSubst))
+//                .collect(Collectors.toList());
+//
+//            result = OpUtils.copy(op, newSubOps);
+//        } else {
+//            result = tmp;
+//        }
+//
+//        return result;
+//    }
 
 
     public static OpSummary createSummary(Op op) {
@@ -306,8 +310,11 @@ public class OpUtils {
             result = Arrays.asList(tmp.getLeft(), tmp.getRight());
         } else if (op instanceof OpN) {
             result = ((OpN)op).getElements();
+        } else if (op instanceof OpExt) {
+        	// TODO We probably should support descending into children of an OpExt
+        	result = Collections.emptyList();
         } else {
-            throw new RuntimeException("Should not happen");
+            throw new RuntimeException("Should not happen: " + op);
         }
 
         return result;

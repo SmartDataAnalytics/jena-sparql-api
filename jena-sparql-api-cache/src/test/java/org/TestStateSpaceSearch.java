@@ -106,9 +106,10 @@ public class TestStateSpaceSearch {
         
         Map<Class<?>, GenericBinaryOp<Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>>>> map = new HashMap<>();
         map.put(OpProject.class, GenericBinaryOpImpl.create(TestStateSpaceSearch::deriveProblemProject));
-        map.put(OpSequence.class, GenericBinaryOpImpl.create(TestStateSpaceSearch::deriveProblemSequence));
-        map.put(OpDisjunction.class, GenericBinaryOpImpl.create(TestStateSpaceSearch::deriveProblemDisjunction));
+        map.put(OpSequence.class, GenericBinaryOpImpl.create(TestStateSpaceSearch::deriveProblemsSequence));
+        map.put(OpDisjunction.class, GenericBinaryOpImpl.create(TestStateSpaceSearch::deriveProblemsDisjunction));
         map.put(OpDistinct.class, (x, y) -> Collections.emptySet());
+        map.put(OpQuadFilterPatternCanonical.class, GenericBinaryOpImpl.create(TestStateSpaceSearch::deriveProblemsQfpc));
         
         Class<?> ac = a.getClass();
         Class<?> bc = b.getClass();
@@ -250,20 +251,28 @@ public class TestStateSpaceSearch {
     }
 
     
-    public static Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> deriveProblemSequence(OpSequence cacheOp, OpSequence userOp) {
+    public static Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> deriveProblemsSequence(OpSequence cacheOp, OpSequence userOp) {
         return Collections.emptySet();
         //ProblemNeighborhoodAware<Map<Var, Var>, Var> tmp = deriveProblem(cacheOp.getVars(), userOp.getVars());
         //Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result = Collections.singleton(tmp);        
         //return result;        
     }
     
-    public static Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> deriveProblemDisjunction(OpDisjunction cacheOp, OpDisjunction userOp) {
+    public static Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> deriveProblemsDisjunction(OpDisjunction cacheOp, OpDisjunction userOp) {
         return Collections.emptySet();
         //ProblemNeighborhoodAware<Map<Var, Var>, Var> tmp = deriveProblem(cacheOp.getVars(), userOp.getVars());
         //Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result = Collections.singleton(tmp);        
         //return result;        
     }
-    
+
+    public static Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> deriveProblemsQfpc(OpQuadFilterPatternCanonical cacheOp, OpQuadFilterPatternCanonical userOp) {
+    	QuadFilterPatternCanonical cacheQfpc = cacheOp.getQfpc();
+    	QuadFilterPatternCanonical queryQfpc = userOp.getQfpc();
+    	
+    	Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result = VarMapper.createProblems(cacheQfpc, queryQfpc);
+    	return result;
+    }
+
     
 //    public static void foo() {
 //        Dataset ds = DatasetFactory.create();
@@ -349,7 +358,14 @@ public class TestStateSpaceSearch {
                 
         opCache = Transformer.transform(TransformJoinToConjunction.fn, Transformer.transform(TransformUnionToDisjunction.fn, opCache));
         opQuery = Transformer.transform(TransformJoinToConjunction.fn, Transformer.transform(TransformUnionToDisjunction.fn, opQuery));
-                
+
+        Generator<Var> generatorCache = VarGeneratorImpl2.create(); 
+        opCache = OpUtils.substitute(opCache, false, (op) -> SparqlCacheUtils.tryCreateCqfp(op, generatorCache));
+
+        Generator<Var> generatorQuery = VarGeneratorImpl2.create(); 
+        opQuery = OpUtils.substitute(opQuery, false, (op) -> SparqlCacheUtils.tryCreateCqfp(op, generatorQuery));
+
+        
         Tree<Op> cacheTree = TreeImpl.create(opCache, (o) -> OpUtils.getSubOps(o));
         Tree<Op> queryTree = TreeImpl.create(opQuery, (o) -> OpUtils.getSubOps(o));
 
@@ -364,8 +380,6 @@ public class TestStateSpaceSearch {
         //System.out.println("Multiary tree: " + cacheMultiaryTree);
 
         
-        Generator<Var> generator = VarGeneratorImpl2.create(); 
-        Function<Op, Op> remapFn = (op) -> SparqlCacheUtils.tryCreateCqfp(op, generator);
             			
     	
 
