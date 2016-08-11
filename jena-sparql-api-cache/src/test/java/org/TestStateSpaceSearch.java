@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.StringJoiner;
 import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -287,11 +286,18 @@ public class TestStateSpaceSearch {
         //return result;        
     }
 
-    public static Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> deriveProblemsQfpc(OpQuadFilterPatternCanonical cacheOp, OpQuadFilterPatternCanonical userOp) {
-    	QuadFilterPatternCanonical cacheQfpc = cacheOp.getQfpc();
+    public static Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> deriveProblemsQfpc(OpQuadFilterPatternCanonical cacheOp, OpQuadFilterPatternCanonical userOp) {        
+        QuadFilterPatternCanonical cacheQfpc = cacheOp.getQfpc();
     	QuadFilterPatternCanonical queryQfpc = userOp.getQfpc();
     	
+        System.out.println("Deriving problems for:");
+        System.out.println("  " + cacheQfpc);
+        System.out.println("  " + queryQfpc);
+    	
     	Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result = VarMapper.createProblems(cacheQfpc, queryQfpc);
+    	for(ProblemNeighborhoodAware<Map<Var, Var>, Var> x : result) {
+    	    System.out.println("  Size: " + x.generateSolutions().count());
+    	}
     	return result;
     }
 
@@ -364,7 +370,7 @@ public class TestStateSpaceSearch {
 
         
 
-        int test = 0;
+        int test = 3;
 
         
         Op opCache;
@@ -376,8 +382,17 @@ public class TestStateSpaceSearch {
             opCache = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT * { ?a ?a ?a }")));
         }
         //Op opQuery = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { { ?0 ?0 ?0 } UNION { ?1 ?1 ?1 } } { { ?2 ?2 ?2 } UNION { ?3 ?3 ?3 } } { ?4 ?4 ?4 } } LIMIT 10")));
-        Op opQuery = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("Select * { { SELECT DISTINCT ?s { { { ?0 ?0 ?0 } UNION { {   SELECT DISTINCT ?1 { ?1 ?1 ?1 } }   } } { { ?2 ?2 ?2 } UNION { ?3 ?3 ?3 } } { ?4 ?4 ?4 } } LIMIT 10 } { ?f ?c ?k } }")));
 
+        // Multiple cache matches
+        
+        Op opQuery;
+        if(test == 3) {
+        // Single cache match
+            opQuery = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?0 { { { ?0 ?0 ?0 } UNION {   { SELECT DISTINCT ?1 { ?1 ?1 ?1} }   } } ?2 ?2 ?2 } LIMIT 10")));
+        } else {
+            opQuery = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("Select * { { SELECT DISTINCT ?s { { { ?0 ?0 ?0 } UNION { {   SELECT DISTINCT ?1 { ?1 ?1 ?1 } }   } } { { ?2 ?2 ?2 } UNION { ?3 ?3 ?3 } } { ?4 ?4 ?4 } } LIMIT 10 } { ?f ?c ?k } }")));
+            
+        }
                 
         opCache = Transformer.transform(TransformJoinToConjunction.fn, Transformer.transform(TransformUnionToDisjunction.fn, opCache));
         opQuery = Transformer.transform(TransformJoinToConjunction.fn, Transformer.transform(TransformUnionToDisjunction.fn, opQuery));
@@ -442,7 +457,15 @@ public class TestStateSpaceSearch {
             candOpMapping.put(cacheLeafs.get(0), queryLeafs.get(0));
    
         }
-        
+
+        if(test == 3) {
+            // Expected: a:1 - b:0
+            candOpMapping.put(cacheLeafs.get(0), queryLeafs.get(0));
+            candOpMapping.put(cacheLeafs.get(1), queryLeafs.get(1));
+            candOpMapping.put(cacheLeafs.get(2), queryLeafs.get(2));
+   
+        }
+
 
 //        List<Set<Op>> cacheTreeLevels = TreeUtils.nodesPerLevel(cacheMultiaryTree);
 //        List<Set<Op>> queryTreeLevels = TreeUtils.nodesPerLevel(queryMultiaryTree);
@@ -478,45 +501,70 @@ public class TestStateSpaceSearch {
         // Turn each stack into stream of entries
 //        Stream<Stream<Entry<Op, Op>>> entryStream =
 //                mappingStream.map(stack -> stack.stream().flatMap(m -> m.entrySet().stream()));
-        
-        
+                
         mappingStream.forEach(stack -> {
-
-            List<Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>>> problems = new ArrayList<>();
+            // Create the iterators for the node mappings
+            List<Iterable<Map<Op, Op>>> childNodeMappingCandidates = stack.stream()
+                .flatMap(layerMapping -> layerMapping.getNodeMappings().stream()
+                    .map(nodeMapping -> nodeMapping.getValue()))
+                    .collect(Collectors.toList());
+           
+            CartesianProduct<Map<Op, Op>> cartX = new CartesianProduct<>(childNodeMappingCandidates);
+            
+            Stream<List<ProblemNeighborhoodAware<Map<Var, Var>, Var>>> problemsStream = cartX.stream().map(listOfMaps -> {
+                List<ProblemNeighborhoodAware<Map<Var, Var>, Var>> ps = 
+                        listOfMaps.stream()
+                        .flatMap(x -> x.entrySet().stream())
+                        .flatMap(e -> createProblems(e.getKey(), e.getValue()).stream())
+                        .collect(Collectors.toList());
+                
+                return ps;
+            });
+            
+            // For every 
+            //childNodeMappingCandidates.
+                
+            
+            // TODO Go through the stack, somehow obtain all the node mappings, and create the problem instances
             
             //Multimap<Op, Op> fullMap = mapping
             //Iterables.concat(m.getV
-            System.out.println("Tree Mapping stack size: " + stack.size());
-            for(LayerMapping<Op, Op, IterableUnknownSize<Map<Op, Op>>> layer : stack) {
-                for(NodeMapping<Op, Op, IterableUnknownSize<Map<Op, Op>>> nodeMapping : layer.getNodeMappings()) {
-                    System.out.println("nodeMapping: " + nodeMapping);
-
-                    List<ProblemNeighborhoodAware<Map<Var, Var>, Var>> ps = 
-                                nodeMapping.getValue().stream()
-                                .flatMap(x -> x.entrySet().stream())
-                                .flatMap(e -> createProblems(e.getKey(), e.getValue()).stream())
-                                .collect(Collectors.toList());
-
-                    if(!ps.isEmpty()) {
-                        problems.add(ps);
-                    }
-                    
-                    
-//                    for(Map<Op, Op> cand : nodeMapping.getValue()) {
+            
+//            
+//            System.out.println("Tree Mapping stack size: " + stack.size());
+//            for(LayerMapping<Op, Op, IterableUnknownSize<Map<Op, Op>>> layer : stack) {
+//                System.out.println("layerMapping: #nodeMappings: " + layer.getNodeMappings().size());
+//                for(NodeMapping<Op, Op, IterableUnknownSize<Map<Op, Op>>> nodeMapping : layer.getNodeMappings()) {
+//                    Op cp = nodeMapping.getParentMapping().getKey();
+//                    Op qp = nodeMapping.getParentMapping().getValue();
 //                    
-//                        createProblems(
+//                    System.out.println("nodeMapping: " + (cp == null ? null : cp.getClass()) + " - " + (qp == null ? null : qp.getClass()));
+//                    System.out.println("childMapping: " + nodeMapping.getChildMapping());
+//
+//                    List<ProblemNeighborhoodAware<Map<Var, Var>, Var>> ps = 
+//                                nodeMapping.getValue().stream()
+//                                .flatMap(x -> x.entrySet().stream())
+//                                .flatMap(e -> createProblems(e.getKey(), e.getValue()).stream())
+//                                .collect(Collectors.toList());
+//
+//                    if(!ps.isEmpty()) {
+//                        problems.add(ps);
+//                    } else {
+//                        System.out.println("Skipping empty problem");
 //                    }
-                }
-            }
+//                    
+//                    
+////                    for(Map<Op, Op> cand : nodeMapping.getValue()) {
+////                    
+////                        createProblems(
+////                    }
+//                }
+//            }
 
-            System.out.println("# problems found: " + problems.size() + " with sizes: " +  problems.stream().map(p -> "" + p.size()).collect(Collectors.joining(", ")));
-            
-            CartesianProduct<ProblemNeighborhoodAware<Map<Var, Var>, Var>> cart = new CartesianProduct<>(problems);
-            for(List<ProblemNeighborhoodAware<Map<Var, Var>, Var>> item : cart) {
-                System.out.println("Cartesian product: " + item);
-                VarMapper.solve(item).forEach(vm -> System.out.println("VAR MAPPING: " + vm));
-            }
-            
+            problemsStream.forEach(problems -> {
+                System.out.println("# problems found: " + problems.size());                
+                VarMapper.solve(problems).forEach(vm -> System.out.println("VAR MAPPING: " + vm));
+            });            
                 
                 //System.out.println("  Mapping candidate: " + layer.getNodeMappings());
 //                for(Entry<Op, Op> mapping : layer.entrySet()) {

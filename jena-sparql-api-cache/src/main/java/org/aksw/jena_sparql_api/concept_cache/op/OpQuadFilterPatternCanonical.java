@@ -26,7 +26,7 @@ public class OpQuadFilterPatternCanonical
     }
 
     @Override
-    public Op effectiveOp() {
+    public Op effectiveOp() {http://www.welt.de/
         // TODO Auto-generated method stub
         return null;
     }
@@ -39,6 +39,7 @@ public class OpQuadFilterPatternCanonical
 
     @Override
     public void outputArgs(IndentedWriter out, SerializationContext sCxt) {
+        out.println("" + qfpc);
         // TODO Auto-generated method stub
 
     }
