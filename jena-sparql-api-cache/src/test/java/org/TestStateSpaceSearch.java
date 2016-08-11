@@ -1,6 +1,7 @@
 package org;
 
 import java.io.FileNotFoundException;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -17,7 +18,6 @@ import java.util.stream.Stream;
 
 import org.aksw.combinatorics.algos.KPermutationsOfNUtils;
 import org.aksw.combinatorics.collections.Combination;
-import org.aksw.combinatorics.collections.NodeMapping;
 import org.aksw.combinatorics.solvers.ProblemContainerNeighbourhoodAware;
 import org.aksw.combinatorics.solvers.ProblemNeighborhoodAware;
 import org.aksw.combinatorics.solvers.ProblemStaticSolutions;
@@ -51,6 +51,8 @@ import org.aksw.jena_sparql_api.utils.DnfUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.aksw.jena_sparql_api.views.index.SparqlCacheSystemImpl;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.sparql.algebra.Algebra;
@@ -59,7 +61,10 @@ import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.op.OpDisjunction;
 import org.apache.jena.sparql.algebra.op.OpDistinct;
 import org.apache.jena.sparql.algebra.op.OpProject;
+import org.apache.jena.sparql.algebra.op.OpQuadBlock;
 import org.apache.jena.sparql.algebra.op.OpSequence;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.core.QuadPattern;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprVar;
@@ -502,7 +507,7 @@ public class TestStateSpaceSearch {
 //        Stream<Stream<Entry<Op, Op>>> entryStream =
 //                mappingStream.map(stack -> stack.stream().flatMap(m -> m.entrySet().stream()));
                 
-        mappingStream.forEach(stack -> {
+        Stream<Entry<Map<Op, Op>, List<ProblemNeighborhoodAware<Map<Var, Var>, Var>>>> nodeMappingToProblems = mappingStream.flatMap(stack -> {
             // Create the iterators for the node mappings
             List<Iterable<Map<Op, Op>>> childNodeMappingCandidates = stack.stream()
                 .flatMap(layerMapping -> layerMapping.getNodeMappings().stream()
@@ -511,15 +516,75 @@ public class TestStateSpaceSearch {
            
             CartesianProduct<Map<Op, Op>> cartX = new CartesianProduct<>(childNodeMappingCandidates);
             
-            Stream<List<ProblemNeighborhoodAware<Map<Var, Var>, Var>>> problemsStream = cartX.stream().map(listOfMaps -> {
-                List<ProblemNeighborhoodAware<Map<Var, Var>, Var>> ps = 
-                        listOfMaps.stream()
-                        .flatMap(x -> x.entrySet().stream())
-                        .flatMap(e -> createProblems(e.getKey(), e.getValue()).stream())
-                        .collect(Collectors.toList());
+            Stream<Map<Op, Op>> completeNodeMapStream = cartX.stream()
+                .map(listOfMaps -> {
+                    Map<Op, Op> completeNodeMap = listOfMaps.stream()
+                            .flatMap(map -> map.entrySet().stream())
+                            .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+                    
+                    return completeNodeMap;
+                });
+
+
+            Function<Map<Op, Op>, List<ProblemNeighborhoodAware<Map<Var, Var>, Var>> > mapToProblems = (nodeMap) -> 
+                    nodeMap.entrySet().stream()
+                    .flatMap(e -> createProblems(e.getKey(), e.getValue()).stream())
+                    .collect(Collectors.toList());
+
+            
+            // For each complete node mapping, associate the possible variable mappings
+            Stream<Entry<Map<Op, Op>, List<ProblemNeighborhoodAware<Map<Var, Var>, Var>>>> nodeMappingProblemStream = completeNodeMapStream.map(completeNodeMap -> {
+                List<ProblemNeighborhoodAware<Map<Var, Var>, Var>> ps = mapToProblems.apply(completeNodeMap);
                 
-                return ps;
+                Entry<Map<Op, Op>, List<ProblemNeighborhoodAware<Map<Var, Var>, Var>>> r =
+                        new SimpleEntry<>(completeNodeMap, ps);
+                return r;                
             });
+            
+            return nodeMappingProblemStream;
+        });
+        
+        
+        System.out.println("foo");
+        
+//        Stream<Entry<Map<Op, Op>,>>nodeMappingToSolutions = nodeMappingToProblems.map(e ->
+//            new SimpleEntry<>(e.getKey(), VarMapper.solve(e.getValue()));
+        
+        nodeMappingToProblems.forEach(e -> {
+            Map<Op, Op> nodeMapping = e.getKey();
+            Stream<Map<Var, Var>> varMappings = VarMapper.solve(e.getValue());
+            
+            Op sourceRoot = cacheMultiaryTree.getRoot();
+            Op targetNode = nodeMapping.get(sourceRoot);
+            
+            if(targetNode == null) {
+                throw new RuntimeException("Could not match root node of a source tree to a node in the target tree - Should not happen.");
+            }
+            
+            QuadPattern yay = new QuadPattern();
+            Node n = NodeFactory.createURI("yay");
+            yay.add(new Quad(n, n, n, n));
+            Op repl = OpUtils.substitute(queryTree.getRoot(), false, op -> {
+               return op == targetNode ? new OpQuadBlock(yay) : null; 
+            });
+            
+            
+            System.out.println("YAY: " + repl);
+            varMappings.forEach(vm -> System.out.println("  with mapping: " + vm));
+            
+        });
+        
+        
+            
+//            Stream<List<ProblemNeighborhoodAware<Map<Var, Var>, Var>>> problemsStream = cartX.stream().map(listOfMaps -> {
+//                List<ProblemNeighborhoodAware<Map<Var, Var>, Var>> ps = 
+//                        listOfMaps.stream()
+//                        .flatMap(x -> x.entrySet().stream())
+//                        .flatMap(e -> createProblems(e.getKey(), e.getValue()).stream())
+//                        .collect(Collectors.toList());
+//                
+//                return ps;
+//            });
             
             // For every 
             //childNodeMappingCandidates.
@@ -561,10 +626,10 @@ public class TestStateSpaceSearch {
 //                }
 //            }
 
-            problemsStream.forEach(problems -> {
-                System.out.println("# problems found: " + problems.size());                
-                VarMapper.solve(problems).forEach(vm -> System.out.println("VAR MAPPING: " + vm));
-            });            
+//            problemsStream.forEach(problems -> {
+//                System.out.println("# problems found: " + problems.size());                
+//                VarMapper.solve(problems).forEach(vm -> System.out.println("VAR MAPPING: " + vm));
+//            });            
                 
                 //System.out.println("  Mapping candidate: " + layer.getNodeMappings());
 //                for(Entry<Op, Op> mapping : layer.entrySet()) {
@@ -584,7 +649,7 @@ public class TestStateSpaceSearch {
                 //determineMatchingStrategy(cacheOp, queryOp)
                 
             //System.out.println("Tree mapping solution: " + m);
-        });
+//        });
 
         
         
