@@ -107,8 +107,8 @@ public class TestStateSpaceSearch {
         
         Map<Class<?>, GenericBinaryOp<Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>>>> map = new HashMap<>();
         map.put(OpProject.class, GenericBinaryOpImpl.create(TestStateSpaceSearch::deriveProblemProject));
-        map.put(OpSequence.class, GenericBinaryOpImpl.create(TestStateSpaceSearch::deriveProblemsSequence));
-        map.put(OpDisjunction.class, GenericBinaryOpImpl.create(TestStateSpaceSearch::deriveProblemsDisjunction));
+        map.put(OpSequence.class, (x, y) -> Collections.emptySet()); //GenericBinaryOpImpl.create(TestStateSpaceSearch::deriveProblemsSequence));
+        map.put(OpDisjunction.class, (x, y) -> Collections.emptySet()); //GenericBinaryOpImpl.create(TestStateSpaceSearch::deriveProblemsDisjunction));
         map.put(OpDistinct.class, (x, y) -> Collections.emptySet());
         map.put(OpQuadFilterPatternCanonical.class, GenericBinaryOpImpl.create(TestStateSpaceSearch::deriveProblemsQfpc));
         
@@ -172,6 +172,7 @@ public class TestStateSpaceSearch {
         
         Map<Class<?>, MatchingStrategyFactory<A, B>> opToMatcherTest = new HashMap<>(); 
         opToMatcherTest.put(OpDisjunction.class, (as, bs, mapping) -> KPermutationsOfNUtils.createIterable(mapping));
+        opToMatcherTest.put(OpSequence.class, (as, bs, mapping) -> KPermutationsOfNUtils.createIterable(mapping));
 
         Function<Class<?>, MatchingStrategyFactory<A, B>> fnOpToMatchingStrategyFactory = (nodeType) ->
             opToMatcherTest.getOrDefault(nodeType, (as, bs, mapping) -> SequentialMatchIterator.createIterable(as, bs, mapping));
@@ -369,8 +370,8 @@ public class TestStateSpaceSearch {
         Op opCache;
 
         if(test != 2) {
-            //opCache = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { { ?a ?a ?a } UNION {   { SELECT DISTINCT ?b { ?b ?b ?b} }   } } ?c ?c ?c } LIMIT 10")));
-            opCache = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT * { { { ?a ?a ?a } UNION {   { SELECT DISTINCT ?b { ?b ?b ?b} }   } } ?c ?c ?c }")));
+            opCache = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { { ?a ?a ?a } UNION {   { SELECT DISTINCT ?b { ?b ?b ?b} }   } } ?c ?c ?c } LIMIT 10")));
+            //opCache = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT * { { { ?a ?a ?a } UNION {   { SELECT DISTINCT ?b { ?b ?b ?b} }   } } ?c ?c ?c }")));
         } else {
             opCache = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT * { ?a ?a ?a }")));
         }
@@ -495,7 +496,10 @@ public class TestStateSpaceSearch {
                                 .flatMap(x -> x.entrySet().stream())
                                 .flatMap(e -> createProblems(e.getKey(), e.getValue()).stream())
                                 .collect(Collectors.toList());
-                    problems.add(ps);
+
+                    if(!ps.isEmpty()) {
+                        problems.add(ps);
+                    }
                     
                     
 //                    for(Map<Op, Op> cand : nodeMapping.getValue()) {
@@ -509,7 +513,7 @@ public class TestStateSpaceSearch {
             
             CartesianProduct<ProblemNeighborhoodAware<Map<Var, Var>, Var>> cart = new CartesianProduct<>(problems);
             for(List<ProblemNeighborhoodAware<Map<Var, Var>, Var>> item : cart) {
-                System.out.println("Cartesian product: " + item.size());
+                System.out.println("Cartesian product: " + item);
                 VarMapper.solve(item).forEach(vm -> System.out.println("VAR MAPPING: " + vm));
             }
             
