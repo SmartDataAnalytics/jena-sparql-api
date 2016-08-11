@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -141,13 +142,27 @@ public class TestStateSpaceSearch {
     
     
     /**
+     * Notes:
      * 
+     * (x) Matching any cache op with a query sequence could introduce a dummy sequence node
+     * on the cache side. 
+     * 
+     * This means, that insead of matching cacheOp with queryOp, we would generate a
+     * dummy sequence node with parent parentOf(cacheOp) and child cacheOp.  
+     * 
+     * (x) Matching unions:
+     * matching a cache DISJ(1, 2) with a query DISJ(a, b, c) with a model mapping of 1:a, 2:b could be rewritten as
+     * DISJ(DISJ(a, b), c) - hence all children of DISJ(1, 2) would match with DISJ(a, b).
+     *  
+     * (x) If the cacheOp is a root node, partial matches are usually acceptable -
+     *     e.g. matching a cache sequence of size 2 and a query sequence of size 3
+     *  
      * 
      * @param cacheOp
      * @param queryOp
      * @return
      */
-    public static <A, B> MatchingStrategyFactory<A, B> determineMatchingStrategy(A cacheOp, B queryOp) {
+    public static <A, B> MatchingStrategyFactory<A, B> determineMatchingStrategy(Tree<A> aTree, Tree<B> treeB, A cacheOp, B queryOp) {
 //        A cacheOp = nodeMapping.getKey();
 //        B queryOp = nodeMapping.getValue();
 
@@ -181,10 +196,13 @@ public class TestStateSpaceSearch {
             if(ac.equals(bc)) {
                 MatchingStrategyFactory<A, B> tmp = fnOpToMatchingStrategyFactory.apply(ac);
                 // True if *all* of the two parents' children must have correspondences 
-                boolean requireCompleteCover = false;
+                boolean requireCompleteCover = true;
                 if(requireCompleteCover) {
-	                result = (as, bs, mapping) -> 
-	                	(as.size() == bs.size() ? tmp.apply(as, bs, mapping) : IterableUnknownSizeSimple.createEmpty());
+                    //System.out.println("Rejecting incomplete cover");
+                    
+	                result = (as, bs, mapping) -> (aTree.getParent(cacheOp) != null && as.size() != bs.size()
+	                        ? IterableUnknownSizeSimple.createEmpty()
+	                        : tmp.apply(as, bs, mapping));
                 } else {
                 	result = tmp;
                 }
@@ -351,7 +369,8 @@ public class TestStateSpaceSearch {
         Op opCache;
 
         if(test != 2) {
-            opCache = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { { ?a ?a ?a } UNION {   { SELECT DISTINCT ?b { ?b ?b ?b} }   } } ?c ?c ?c } LIMIT 10")));
+            //opCache = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { { ?a ?a ?a } UNION {   { SELECT DISTINCT ?b { ?b ?b ?b} }   } } ?c ?c ?c } LIMIT 10")));
+            opCache = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT * { { { ?a ?a ?a } UNION {   { SELECT DISTINCT ?b { ?b ?b ?b} }   } } ?c ?c ?c }")));
         } else {
             opCache = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT * { ?a ?a ?a }")));
         }
@@ -435,10 +454,21 @@ public class TestStateSpaceSearch {
                 cacheMultiaryTree,
                 queryMultiaryTree,
                 candOpMapping,
-                TestStateSpaceSearch::determineMatchingStrategy,
+                (a, b) -> TestStateSpaceSearch.determineMatchingStrategy(cacheMultiaryTree, queryMultiaryTree, a, b),
                 (iterable) -> iterable.mayHaveItems()
                 );
 
+        // TODO Ultimately, we want
+        // (x) a stream of node mappings of which each is associated with the possible var mappings
+        //   Var mappings are obtained from problem instances
+        // (x) However, instead of generating the full op-mappings, we could create the
+        
+        
+        
+        //Stream<Entry<Map<Op, Op>, Collection<ProbemWithNeighborhood<Map<Var, Var>, Var>> expected;
+        
+        
+        
         //Stream<NestedStack<Multimap<Op, Op>>> mappingStream = TreeMapperImpl.<Multimap<Op, Op>, NestedStack<Multimap<Op, Op>>>stream(tm::recurse, HashMultimap.<Op, Op>create());
         Stream<NestedStack<LayerMapping<Op, Op, IterableUnknownSize<Map<Op, Op>>>>> mappingStream =
                 StreamUtils.<Map<Op, Op>, NestedStack<LayerMapping<Op, Op, IterableUnknownSize<Map<Op, Op>>>>>
@@ -455,7 +485,7 @@ public class TestStateSpaceSearch {
             
             //Multimap<Op, Op> fullMap = mapping
             //Iterables.concat(m.getV
-            System.out.println("foo " + stack);
+            System.out.println("Tree Mapping stack size: " + stack.size());
             for(LayerMapping<Op, Op, IterableUnknownSize<Map<Op, Op>>> layer : stack) {
                 for(NodeMapping<Op, Op, IterableUnknownSize<Map<Op, Op>>> nodeMapping : layer.getNodeMappings()) {
                     System.out.println("nodeMapping: " + nodeMapping);
@@ -475,10 +505,11 @@ public class TestStateSpaceSearch {
                 }
             }
 
-            System.out.println("# problems found: " + problems.size());
+            System.out.println("# problems found: " + problems.size() + " with sizes: " +  problems.stream().map(p -> "" + p.size()).collect(Collectors.joining(", ")));
             
             CartesianProduct<ProblemNeighborhoodAware<Map<Var, Var>, Var>> cart = new CartesianProduct<>(problems);
             for(List<ProblemNeighborhoodAware<Map<Var, Var>, Var>> item : cart) {
+                System.out.println("Cartesian product: " + item.size());
                 VarMapper.solve(item).forEach(vm -> System.out.println("VAR MAPPING: " + vm));
             }
             
