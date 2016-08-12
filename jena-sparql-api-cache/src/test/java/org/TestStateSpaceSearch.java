@@ -600,9 +600,34 @@ public class TestStateSpaceSearch {
         
         
 
-        generateTreeVarMapping(candOpMapping, cacheTree, queryTree, cacheMultiaryTree,
+        Stream<Entry<Map<Op, Op>, Iterable<Map<Var, Var>>>> mappingSolutions = generateTreeVarMapping(candOpMapping, cacheTree, queryTree, cacheMultiaryTree,
                 queryMultiaryTree);
         
+
+        mappingSolutions.forEach(e -> {
+            Map<Op, Op> nodeMapping = e.getKey();
+            
+            Op sourceRoot = cacheMultiaryTree.getRoot();
+            Op targetNode = nodeMapping.get(sourceRoot);
+            
+            if(targetNode == null) {
+                throw new RuntimeException("Could not match root node of a source tree to a node in the target tree - Should not happen.");
+            }
+            
+            QuadPattern yay = new QuadPattern();
+            Node n = NodeFactory.createURI("yay");
+            yay.add(new Quad(n, n, n, n));
+            Op repl = OpUtils.substitute(queryTree.getRoot(), false, op -> {
+               return op == targetNode ? new OpQuadBlock(yay) : null; 
+            });        
+            
+            
+            System.out.println("yay: " + repl);
+        });
+        
+//        
+//        
+
         
             
 //            Stream<List<ProblemNeighborhoodAware<Map<Var, Var>, Var>>> problemsStream = cartX.stream().map(listOfMaps -> {
@@ -890,8 +915,8 @@ public class TestStateSpaceSearch {
             Map<Op, Op> nodeMapping = e.getKey();
             Stream<Map<Var, Var>> varMappings = VarMapper.solve(e.getValue());
             
-            Op sourceRoot = cacheMultiaryTree.getRoot();
-            Op targetNode = nodeMapping.get(sourceRoot);
+//            Op sourceRoot = cacheMultiaryTree.getRoot();
+//            Op targetNode = nodeMapping.get(sourceRoot);
             
 //            if(targetNode == null) {
 //                throw new RuntimeException("Could not match root node of a source tree to a node in the target tree - Should not happen.");
