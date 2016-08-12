@@ -333,7 +333,7 @@ public class TestStateSpaceSearch {
 //    }
     
     
-    public static Entry<Map<Op, Op>, List<ProblemNeighborhoodAware<Map<Var, Var>, Var>>> agumentUnaryOpMappings(
+    public static Entry<Map<Op, Op>, List<ProblemNeighborhoodAware<Map<Var, Var>, Var>>> augmentUnaryOpMappings(
             Op sourceNode,
             Op targetNode,
             Tree<Op> sourceTree,
@@ -342,7 +342,7 @@ public class TestStateSpaceSearch {
             Tree<Op> targetMultiaryTree,
             BiFunction<Op, Op, List<ProblemNeighborhoodAware<Map<Var, Var>, Var>>> valueComputation
     ) {
-        Stream<Combination<Op, Op, List<ProblemNeighborhoodAware<Map<Var, Var>, Var>>>> stream = agumentUnaryMappings(
+        Stream<Combination<Op, Op, List<ProblemNeighborhoodAware<Map<Var, Var>, Var>>>> stream = augmentUnaryMappings(
             sourceNode, targetNode,
             sourceTree, targetTree,
             sourceMultiaryTree, targetMultiaryTree,
@@ -367,7 +367,45 @@ public class TestStateSpaceSearch {
     }
     
     
-    public static <A, B, X> Stream<Combination<A, B, X>> agumentUnaryMappings(
+    
+    public static <A, B> Stream<Entry<A, B>> augmentUnaryMappings2(
+            A sourceNode,
+            B targetNode,
+            Tree<A> sourceTree,
+            Tree<B> targetTree,
+            Tree<A> sourceMultiaryTree,
+            Tree<B> targetMultiaryTree) {
+        //Op cacheLeaf = cacheLeafs.get(1);
+        List<A> sourceUnaryAncestors = getUnaryAncestors(sourceNode, sourceTree, sourceMultiaryTree);
+
+        //Op queryLeaf = queryLeafs.get(1);
+        List<B> targetUnaryAncestors = getUnaryAncestors(targetNode, targetTree, targetMultiaryTree);
+
+        int n = sourceUnaryAncestors.size();
+        int m = targetUnaryAncestors.size();
+        
+        boolean sameSize = n == m;
+
+        //List<Entry<Map<T, T>, Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>>>> result = new ArrayList<>(n);
+        
+        Stream<Entry<A, B>> result;
+        if(sameSize) {
+            result = IntStream.range(0, n)
+                .mapToObj(i -> {            
+                    A sourceAncestor = sourceUnaryAncestors.get(i);
+                    B targetAncestor = targetUnaryAncestors.get(i);
+    
+                    Entry<A, B> r = new SimpleEntry<A, B>(sourceAncestor, targetAncestor);
+                    return r;
+                });
+        } else {
+            result = Stream.empty();
+        }
+        
+        return result;        
+    }
+    
+    public static <A, B, X> Stream<Combination<A, B, X>> augmentUnaryMappings(
             A sourceNode,
             B targetNode,
             Tree<A> sourceTree,
@@ -601,7 +639,7 @@ public class TestStateSpaceSearch {
                     .map(nodeMapping -> nodeMapping.getValue()))
                     .collect(Collectors.toList());
            
-            // For each mutliary node mapping also add the mappings of the unary operators
+            // For each multiary node mapping also add the mappings of the unary operators
             
             
             
@@ -610,8 +648,32 @@ public class TestStateSpaceSearch {
             Stream<Map<Op, Op>> completeNodeMapStream = cartX.stream()
                 .map(listOfMaps -> {
                     Map<Op, Op> completeNodeMap = listOfMaps.stream()
-                            .flatMap(map -> map.entrySet().stream())
+                            .flatMap(map -> {
+                                Set<Entry<Op, Op>> entrySet = map.entrySet();
+                                // For each entry, add the mapping of the unary ancestors
+                                entrySet.stream().flatMap(e -> {
+                                    Op cacheOp = e.getKey();
+                                    Op queryOp = e.getValue();
+                                    
+                                  Stream<Entry<Op, Op>> unaryMappingStream = augmentUnaryMappings2(
+                                          cacheOp, queryOp,
+                                          cacheTree, queryTree,
+                                          cacheMultiaryTree, queryMultiaryTree);
+
+                                    
+                                    Stream<Entry<Op, Op>> s = Stream.concat(
+                                        Stream.of(e),
+                                        unaryMappingStream);
+                                    
+                                    return s;    
+                                });
+                                
+                                    //Stream
+                                return entrySet.stream();
+                             })
                             .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+                                        
+                    
                     
                     return completeNodeMap;
                 });
