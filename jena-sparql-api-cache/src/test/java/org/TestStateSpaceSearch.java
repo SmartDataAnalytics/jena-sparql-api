@@ -12,8 +12,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.aksw.combinatorics.algos.KPermutationsOfNUtils;
@@ -331,6 +333,89 @@ public class TestStateSpaceSearch {
 //    }
     
     
+    public static Entry<Map<Op, Op>, List<ProblemNeighborhoodAware<Map<Var, Var>, Var>>> agumentUnaryOpMappings(
+            Op sourceNode,
+            Op targetNode,
+            Tree<Op> sourceTree,
+            Tree<Op> targetTree,
+            Tree<Op> sourceMultiaryTree,
+            Tree<Op> targetMultiaryTree,
+            BiFunction<Op, Op, List<ProblemNeighborhoodAware<Map<Var, Var>, Var>>> valueComputation
+    ) {
+        Stream<Combination<Op, Op, List<ProblemNeighborhoodAware<Map<Var, Var>, Var>>>> stream = agumentUnaryMappings(
+            sourceNode, targetNode,
+            sourceTree, targetTree,
+            sourceMultiaryTree, targetMultiaryTree,
+            valueComputation);
+        
+        Map<Op, Op> varMapping = new HashMap<Op, Op>();
+        List<ProblemNeighborhoodAware<Map<Var, Var>, Var>> problems = new ArrayList<>();
+        
+        stream.forEach(e -> {
+            Op sourceOp = e.getKey();
+            Op targetOp = e.getValue();
+            List<ProblemNeighborhoodAware<Map<Var, Var>, Var>> ps = e.getSolution();
+            
+            varMapping.put(sourceOp, targetOp);
+            problems.addAll(ps);
+        });
+
+        Entry<Map<Op, Op>, List<ProblemNeighborhoodAware<Map<Var, Var>, Var>>> result =
+                new SimpleEntry<>(varMapping, problems);
+        
+        return result;
+    }
+    
+    
+    public static <A, B, X> Stream<Combination<A, B, X>> agumentUnaryMappings(
+            A sourceNode,
+            B targetNode,
+            Tree<A> sourceTree,
+            Tree<B> targetTree,
+            Tree<A> sourceMultiaryTree,
+            Tree<B> targetMultiaryTree,
+            BiFunction<A, B, X> valueComputation
+            )
+    {
+        //Op cacheLeaf = cacheLeafs.get(1);
+        List<A> sourceUnaryAncestors = getUnaryAncestors(sourceNode, sourceTree, sourceMultiaryTree);
+
+        //Op queryLeaf = queryLeafs.get(1);
+        List<B> targetUnaryAncestors = getUnaryAncestors(targetNode, targetTree, targetMultiaryTree);
+
+        int n = sourceUnaryAncestors.size();
+        int m = targetUnaryAncestors.size();
+        
+        boolean sameSize = n == m;
+
+        //List<Entry<Map<T, T>, Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>>>> result = new ArrayList<>(n);
+        
+        Stream<Combination<A, B, X>> result;
+        if(sameSize) {
+            result = IntStream.range(0, n)
+                .mapToObj(i -> {            
+                    A sourceAncestor = sourceUnaryAncestors.get(i);
+                    B targetAncestor = targetUnaryAncestors.get(i);
+                    //Entry<T, T> e = new SimpleEntry<>(sourceAncestor, targetAncestor);
+                                    
+                    X value = valueComputation.apply(sourceAncestor, targetAncestor);
+    
+                    Combination<A, B, X> r = new Combination<A, B, X>(sourceAncestor, targetAncestor, value);
+                    return r;
+                });
+        } else {
+            result = Stream.empty();
+        }
+        
+        return result;
+    }        
+        
+//        System.out.println("unary parents: " + unaryParents);
+        //Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> problems = createProblemsFromUnaryAncestors(cacheUnaryAncestors, queryUnaryAncestors); 
+//        Stream<Map<Var, Var>> solutions = VarMapper.solve(problems);
+//        solutions.forEach(s -> System.out.println("found solution: " + s));
+        
+    
     
     public static void main(String[] args) {
         
@@ -508,12 +593,18 @@ public class TestStateSpaceSearch {
 //                mappingStream.map(stack -> stack.stream().flatMap(m -> m.entrySet().stream()));
                 
         Stream<Entry<Map<Op, Op>, List<ProblemNeighborhoodAware<Map<Var, Var>, Var>>>> nodeMappingToProblems = mappingStream.flatMap(stack -> {
+
+            
             // Create the iterators for the node mappings
             List<Iterable<Map<Op, Op>>> childNodeMappingCandidates = stack.stream()
                 .flatMap(layerMapping -> layerMapping.getNodeMappings().stream()
                     .map(nodeMapping -> nodeMapping.getValue()))
                     .collect(Collectors.toList());
            
+            // For each mutliary node mapping also add the mappings of the unary operators
+            
+            
+            
             CartesianProduct<Map<Op, Op>> cartX = new CartesianProduct<>(childNodeMappingCandidates);
             
             Stream<Map<Op, Op>> completeNodeMapStream = cartX.stream()
@@ -525,8 +616,11 @@ public class TestStateSpaceSearch {
                     return completeNodeMap;
                 });
 
+            // Next step: Now that we have a node mapping on the multiary tree,
+            // we need to add the node mappings of the unary ops unary ops  
 
-            Function<Map<Op, Op>, List<ProblemNeighborhoodAware<Map<Var, Var>, Var>> > mapToProblems = (nodeMap) -> 
+
+            Function<Map<Op, Op>, List<ProblemNeighborhoodAware<Map<Var, Var>, Var>>> mapToProblems = (nodeMap) -> 
                     nodeMap.entrySet().stream()
                     .flatMap(e -> createProblems(e.getKey(), e.getValue()).stream())
                     .collect(Collectors.toList());
@@ -549,7 +643,7 @@ public class TestStateSpaceSearch {
         
 //        Stream<Entry<Map<Op, Op>,>>nodeMappingToSolutions = nodeMappingToProblems.map(e ->
 //            new SimpleEntry<>(e.getKey(), VarMapper.solve(e.getValue()));
-        
+                
         nodeMappingToProblems.forEach(e -> {
             Map<Op, Op> nodeMapping = e.getKey();
             Stream<Map<Var, Var>> varMappings = VarMapper.solve(e.getValue());
@@ -652,14 +746,11 @@ public class TestStateSpaceSearch {
 //        });
 
         
-        
-
         Op cacheLeaf = cacheLeafs.get(1);
         List<Op> cacheUnaryAncestors = getUnaryAncestors(cacheLeaf, cacheTree, cacheMultiaryTree);
 
         Op queryLeaf = queryLeafs.get(1);
         List<Op> queryUnaryAncestors = getUnaryAncestors(queryLeaf, queryTree, queryMultiaryTree);
-        
 
 //        System.out.println("unary parents: " + unaryParents);
         Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> problems = createProblemsFromUnaryAncestors(cacheUnaryAncestors, queryUnaryAncestors); 
