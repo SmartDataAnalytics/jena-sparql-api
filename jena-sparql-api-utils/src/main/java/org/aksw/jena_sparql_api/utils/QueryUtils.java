@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
+import org.apache.jena.sparql.algebra.op.OpSlice;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
@@ -37,6 +38,12 @@ public class QueryUtils {
         Element queryPattern = query.getQueryPattern();
         Element replacement = ElementUtils.mergeElements(queryPattern, element);
         query.setQueryPattern(replacement);
+    }
+    
+    
+    public static Range<Long> toRange(OpSlice op) {
+        Range<Long> result = toRange(op.getStart(), op.getLength());
+        return result;
     }
 
     /**

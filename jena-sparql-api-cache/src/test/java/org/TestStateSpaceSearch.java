@@ -51,6 +51,7 @@ import org.aksw.jena_sparql_api.stmt.SparqlElementParserImpl;
 import org.aksw.jena_sparql_api.unsorted.ExprMatcher;
 import org.aksw.jena_sparql_api.utils.DnfUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
+import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.aksw.jena_sparql_api.views.index.SparqlCacheSystemImpl;
 import org.apache.jena.graph.Node;
@@ -65,6 +66,7 @@ import org.apache.jena.sparql.algebra.op.OpDistinct;
 import org.apache.jena.sparql.algebra.op.OpProject;
 import org.apache.jena.sparql.algebra.op.OpQuadBlock;
 import org.apache.jena.sparql.algebra.op.OpSequence;
+import org.apache.jena.sparql.algebra.op.OpSlice;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.QuadPattern;
 import org.apache.jena.sparql.core.Var;
@@ -76,6 +78,7 @@ import org.apache.jena.sparql.util.ExprUtils;
 import com.codepoetics.protonpack.functions.TriFunction;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Range;
 
 
 
@@ -112,10 +115,12 @@ public class TestStateSpaceSearch {
         
         
         Map<Class<?>, GenericBinaryOp<Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>>>> map = new HashMap<>();
-        map.put(OpProject.class, GenericBinaryOpImpl.create(TestStateSpaceSearch::deriveProblemProject));
+        map.put(OpProject.class, GenericBinaryOpImpl.create(TestStateSpaceSearch::deriveProblemsProject));
         map.put(OpSequence.class, (x, y) -> Collections.emptySet()); //GenericBinaryOpImpl.create(TestStateSpaceSearch::deriveProblemsSequence));
         map.put(OpDisjunction.class, (x, y) -> Collections.emptySet()); //GenericBinaryOpImpl.create(TestStateSpaceSearch::deriveProblemsDisjunction));
         map.put(OpDistinct.class, (x, y) -> Collections.emptySet());
+        map.put(OpSlice.class, GenericBinaryOpImpl.create(TestStateSpaceSearch::deriveProblemsSlice));
+        
         map.put(OpQuadFilterPatternCanonical.class, GenericBinaryOpImpl.create(TestStateSpaceSearch::deriveProblemsQfpc));
         
         Class<?> ac = a.getClass();
@@ -272,7 +277,18 @@ public class TestStateSpaceSearch {
     
     
     
-    public static Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> deriveProblemProject(OpProject cacheOp, OpProject userOp) {
+    public static Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> deriveProblemsSlice(OpSlice cacheOp, OpSlice userOp) {
+        Range<Long> cacheRange = QueryUtils.toRange(cacheOp);
+        Range<Long> queryRange = QueryUtils.toRange(userOp);
+
+        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result = cacheRange.equals(queryRange)
+                ? Collections.emptySet()
+                : Collections.singleton(new ProblemStaticSolutions<>(Collections.singleton(null)));
+
+        return result;
+    }
+    
+    public static Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> deriveProblemsProject(OpProject cacheOp, OpProject userOp) {
         ProblemNeighborhoodAware<Map<Var, Var>, Var> tmp = deriveProblem(cacheOp.getVars(), userOp.getVars());
         Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result = Collections.singleton(tmp);        
         return result;        
@@ -607,7 +623,7 @@ public class TestStateSpaceSearch {
         mappingSolutions.forEach(e -> {
             Map<Op, Op> nodeMapping = e.getKey();
             
-            Op sourceRoot = cacheMultiaryTree.getRoot();
+            Op sourceRoot = cacheTree.getRoot();
             Op targetNode = nodeMapping.get(sourceRoot);
             
             if(targetNode == null) {
@@ -852,11 +868,13 @@ public class TestStateSpaceSearch {
                                 // The entry set here corresponds to mappings of nodes in the multiary tree
 
                                 Set<Entry<Op, Op>> entrySet = map.entrySet();
+                                
                                 // For each entry, add the mapping of the unary ancestors
-                                entrySet.stream().flatMap(e -> {
+                                Stream<Entry<Op, Op>> augmented = entrySet.stream().flatMap(e -> {
                                     Op cacheOp = e.getKey();
                                     Op queryOp = e.getValue();
                                     
+                                  // TODO Is possible that an unary mapping is unsatisfiable
                                   Stream<Entry<Op, Op>> unaryMappingStream = augmentUnaryMappings2(
                                           cacheOp, queryOp,
                                           cacheTree, queryTree,
@@ -871,7 +889,7 @@ public class TestStateSpaceSearch {
                                 });
                                 
                                     //Stream
-                                return entrySet.stream();
+                                return augmented;
                              })
                             .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
                                         
