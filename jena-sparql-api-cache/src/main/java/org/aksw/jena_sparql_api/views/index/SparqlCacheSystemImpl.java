@@ -58,41 +58,59 @@ public class SparqlCacheSystemImpl {
 
         for(Entry<Op, QueryIndex> e : candidates) {
             QueryIndex cacheIndex = e.getValue();
-            FeatureMap<Expr, QuadPatternIndex> cacheQpi = cacheIndex.getQuadPatternIndex();
+                    
 
-            for(Entry<Set<Expr>, Collection<QuadPatternIndex>> f : queryIndex.getQuadPatternIndex().entrySet()) {
-                Set<Expr> queryFeatureSet = f.getKey();
-                Collection<QuadPatternIndex> queryQps = f.getValue();
-
-                //Collection<Entry<Set<Expr>, QuadPatternIndex>> cacheQpiCandidates = cacheQpi.getIfSupersetOf(queryFeatureSet);
-                Collection<Entry<Set<Expr>, QuadPatternIndex>> cacheQpiCandidates = cacheQpi.getIfSubsetOf(queryFeatureSet);
-
-                for(QuadPatternIndex queryQp : queryQps) {
-                    for(Entry<Set<Expr>, QuadPatternIndex> g : cacheQpiCandidates) {
-                        QuadPatternIndex cacheQp = g.getValue();
-
-                        System.out.println("CacheQP: " + cacheQp);
-                        System.out.println("QueryQP: " + queryQp);
-
-                        generateVarMappings(cacheQp, queryQp)
-                            .forEach(x -> {
-                                System.out.println("solution: " + x);
-                                //cacheQp.getGroupedConjunction()
-
-                            });
-                        System.out.println("-----");
-
-                    }
-                }
-
-
-
-            }
-
-
-        }
+            Multimap<Op, Op> candidateLeafMapping = getCandidateLeafMapping(cacheIndex, queryIndex);
+            
+            System.out.println("Leaf Mapping: " + candidateLeafMapping);
+        }   
     }
 
+    
+    public static Multimap<Op, Op> getCandidateLeafMapping(QueryIndex cacheIndex, QueryIndex queryIndex) {
+
+        Multimap<Op, Op> result = HashMultimap.create();
+        
+        //QueryIndex cacheIndex = e.getValue();
+        FeatureMap<Expr, QuadPatternIndex> cacheQpi = cacheIndex.getQuadPatternIndex();
+
+        for(Entry<Set<Expr>, Collection<QuadPatternIndex>> f : queryIndex.getQuadPatternIndex().entrySet()) {
+            Set<Expr> queryFeatureSet = f.getKey();
+            Collection<QuadPatternIndex> queryQps = f.getValue();
+
+            //Collection<Entry<Set<Expr>, QuadPatternIndex>> cacheQpiCandidates = cacheQpi.getIfSupersetOf(queryFeatureSet);
+            Collection<Entry<Set<Expr>, QuadPatternIndex>> cacheQpiCandidates = cacheQpi.getIfSubsetOf(queryFeatureSet);
+
+            for(QuadPatternIndex queryQp : queryQps) {
+                Op queryLeaf = queryQp.getOpRef().getNode();
+                
+                
+                
+                for(Entry<Set<Expr>, QuadPatternIndex> g : cacheQpiCandidates) {
+                    QuadPatternIndex cacheQp = g.getValue();
+
+                    Op cacheLeaf = cacheQp.getOpRef().getNode();
+                    
+                    result.put(cacheLeaf, queryLeaf);                    
+//                        
+//                        System.out.println("CacheQP: " + cacheQp);
+//                        System.out.println("QueryQP: " + queryQp);
+//
+//                        generateVarMappings(cacheQp, queryQp)
+//                            .forEach(x -> {
+//                                System.out.println("solution: " + x);
+//                                //cacheQp.getGroupedConjunction()
+//
+//                            });
+//                        System.out.println("-----");
+
+                }
+            }
+        }
+
+
+        return result;
+    }
 
     public static Stream<Map<Var, Var>> generateVarMappings(QuadPatternIndex cache, QuadPatternIndex query) {
         Multimap<Expr, Expr> cacheMap = cache.getGroupedConjunction();
@@ -102,6 +120,7 @@ public class SparqlCacheSystemImpl {
 
         Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> problems = new ArrayList<>();
 
+        
         group.values().stream()
             .map(x -> {
                 Set<Expr> cacheExprs = x.getKey();
