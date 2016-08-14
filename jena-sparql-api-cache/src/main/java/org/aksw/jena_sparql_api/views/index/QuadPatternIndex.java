@@ -15,7 +15,7 @@ import com.google.common.collect.Multimap;
  */
 public class QuadPatternIndex {
     /**
-     * Index of an individual DNF clause (i.e. this is not an index over the whole DNF)
+     * Index of an individual DNF clauses (i.e. this is not an index over the whole DNF)
      * Each key of the map corresponds to a blocking key, whereas an entry's set of values
      * is a subset of this clause's conjunction according to the blocking key
      */
