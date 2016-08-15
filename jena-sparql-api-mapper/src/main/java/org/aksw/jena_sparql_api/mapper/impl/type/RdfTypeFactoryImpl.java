@@ -281,7 +281,8 @@ public class RdfTypeFactoryImpl
         boolean isMappedBy = mappedBy != null;
 
 
-        System.out.println("MappedBy " + mappedBy);
+        //System.out.println("MappedBy " + mappedBy);
+        //logger.debug("MappedBy " + mappedBy)
 
 
         if(isCandidate && (hasIri || isMappedBy)) {

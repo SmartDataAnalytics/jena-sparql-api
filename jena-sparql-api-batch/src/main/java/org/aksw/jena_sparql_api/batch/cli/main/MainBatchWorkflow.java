@@ -549,7 +549,7 @@ public class MainBatchWorkflow {
         JsonElement result = gson.fromJson(jsonReader, JsonElement.class);
 
         String canon = gson.toJson(result);
-        System.out.println(canon);
+        logger.info("Using configuration: " + canon);
 
         return result;
 

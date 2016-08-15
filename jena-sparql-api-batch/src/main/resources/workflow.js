@@ -28,7 +28,7 @@
     target: { $sparqlService: ['http://localhost:8890/sparql', 'http://fp7-pp.publicdata.eu/'] },
 
     job: { $simpleJob: {
-        name: 'testJob',
+        name: 'testJob5',
 
         steps: [
 //            { $sparqlUpdate: {
@@ -48,7 +48,7 @@
 
             { $shell: {
                 name: 'say hello',
-                command: '/bin/sh -c "echo hello"'
+                command: 'echo hello world'
             } }
         ]
     } } // end of job

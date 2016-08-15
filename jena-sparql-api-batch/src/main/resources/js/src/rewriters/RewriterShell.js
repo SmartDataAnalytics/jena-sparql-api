@@ -8,7 +8,13 @@ rewriters.push(function(json) {
       tasklet: {
         type: 'org.aksw.jena_sparql_api.batch.tasklet.TaskletExecuteShellCommand',
         scope: 'step',
-        ctor: [e.command]
+        //ctor: _(e.command).isArray() ? e.command : ['/bin/sh', '-c', e.command]
+        ctor: e.command
+//        ctor: [{
+//            beanClassName: 'java.util.ArrayList',
+//            type: 'java.lang.String',
+//            ctor: _(e.command).isArray() ? e.command : ['/bin/sh', '-c', e.command]
+//        }]
       }
     }
   }

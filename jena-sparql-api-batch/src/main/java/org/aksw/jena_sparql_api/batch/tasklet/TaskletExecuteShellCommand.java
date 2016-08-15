@@ -2,6 +2,8 @@ package org.aksw.jena_sparql_api.batch.tasklet;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,28 +16,35 @@ public class TaskletExecuteShellCommand
     implements Tasklet
 {    
     private static final Logger logger = LoggerFactory.getLogger(TaskletExecuteShellCommand.class);
-    protected String command;
+    protected List<String> command;
     
     public TaskletExecuteShellCommand(String command) {
         super();
-        this.command = command;
+        this.command = Arrays.asList("/bin/sh", "-c", command);
     }
+
+//    public TaskletExecuteShellCommand(List<String> command) {
+//        super();
+//        this.command = command;
+//    }
 
     @Override
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext)
             throws Exception { 
             
+        // TODO Make shell configurable
         ProcessBuilder builder = new ProcessBuilder(command);
         builder.redirectErrorStream(true);
         Process process = builder.start();
         
         // TODO Store process output in the step context
         StringBuilder out = new StringBuilder();
+        logger.info("Executing shell command: " + command);
         try(BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
             String line;
             while ((line = reader.readLine ()) != null) {
                 out.append(out);
-                logger.debug(line);
+                logger.info("  " + line);
             }
         }
 

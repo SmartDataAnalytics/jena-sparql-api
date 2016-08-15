@@ -3,6 +3,8 @@ package org.aksw.jena_sparql_api.batch.config;
 import java.util.Arrays;
 
 import org.aksw.jena_sparql_api.batch.BatchWorkflowManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.configuration.ListableJobLocator;
 import org.springframework.batch.core.configuration.annotation.AbstractBatchConfiguration;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
@@ -66,6 +68,8 @@ class ItemProcessorSparqlResultSet
 public class ConfigBatchJobDynamic
     implements ApplicationContextAware
 {
+    
+    private static final Logger logger = LoggerFactory.getLogger(ConfigBatchJobDynamic.class);
 
 //    @Configuration
 //    @Import(ConfigServicesCore.class)
@@ -96,7 +100,7 @@ public class ConfigBatchJobDynamic
     @Override
     public void setApplicationContext(ApplicationContext ctx) throws BeansException {
         DefaultListableBeanFactory beanFactory = (DefaultListableBeanFactory)((ConfigurableApplicationContext)ctx).getBeanFactory();
-        System.out.println(Arrays.toString(beanFactory.getRegisteredScopeNames()));
+        logger.info("Application context contains: " + Arrays.toString(beanFactory.getRegisteredScopeNames()));
     }
 
 //    @Bean
