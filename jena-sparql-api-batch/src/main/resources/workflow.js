@@ -48,7 +48,7 @@
 
             { $shell: {
                 name: 'say hello',
-                command: 'sh -c "echo hello'
+                command: '/bin/sh -c "echo hello"'
             } }
         ]
     } } // end of job
