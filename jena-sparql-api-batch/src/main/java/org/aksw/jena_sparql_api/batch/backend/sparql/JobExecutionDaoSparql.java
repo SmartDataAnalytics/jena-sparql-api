@@ -108,6 +108,34 @@ public class JobExecutionDaoSparql extends AbstractJdbcBatchMetadataDao implemen
         Assert.notNull(job, "Job cannot be null.");
         Assert.notNull(job.getId(), "Job Id cannot be null.");
 
+/*
+ *         private static final String FIND_JOB_EXECUTIONS = "SELECT
+ *         JOB_EXECUTION_ID,
+ *         START_TIME,
+ *         END_TIME,
+ *         STATUS,
+ *         EXIT_CODE, EXIT_MESSAGE, CREATE_TIME, LAST_UPDATED, VERSION, JOB_CONFIGURATION_LOCATION"
+ */
+//                + " from %PREFIX%JOB_EXECUTION where JOB_INSTANCE_ID = ? order by JOB_EXECUTION_ID desc";
+        
+        ResourceShapeBuilder b = new ResourceShapeBuilder();
+        b.outgoing(BATCH.jobExecutionId);
+        b.outgoing(BATCH.startTime);
+        b.outgoing(BATCH.status);
+        b.outgoing(BATCH.stopTime);
+        b.outgoing(BATCH.exitCode);
+        b.outgoing(BATCH.exitDescription);
+        b.outgoing(DCTerms.created);
+        b.outgoing(DCTerms.modified);
+        b.outgoing(BATCH.version);
+        b.outgoing(BATCH.jobConfigurationLocation);
+
+        ResourceShape s = b.getResourceShape();
+        MappedConcept<Graph> mc = ResourceShape.createMappedConcept(s, null, false);
+      
+        // TODO: Add filter and order
+        
+        
         return getJdbcTemplate().query(getQuery(FIND_JOB_EXECUTIONS), new JobExecutionRowMapper(job), job.getId());
     }
 

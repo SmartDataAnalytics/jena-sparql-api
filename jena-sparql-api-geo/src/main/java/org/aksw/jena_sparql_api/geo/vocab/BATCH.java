@@ -16,6 +16,7 @@ public class BATCH {
 
     public static final Property locationString = property("locationString");
 
+    public static final Property jobExecutionId = property("jobExecutionId");
 
 
     public static final Property startTime = property("startTime");
@@ -36,5 +37,6 @@ public class BATCH {
 
     public static final Property hasParam = property("hasParam");
     public static final Property jobConfigurationName = property("jobConfigurationName");
+    public static final Property jobConfigurationLocation = property("jobConfigurationLocation");
 
 }
