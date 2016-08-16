@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 import org.aksw.commons.util.strings.StringUtils;
+import org.aksw.jena_sparql_api.beans.model.EntityModel;
 import org.aksw.jena_sparql_api.beans.model.EntityOps;
 import org.aksw.jena_sparql_api.mapper.annotation.DefaultIri;
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
@@ -66,12 +67,20 @@ public class RdfTypeFactoryImpl
     protected Prologue prologue;
     protected SparqlRelationParser relationParser;
 
-    protected Function<Class<?>, EntityOps> classToOps;
+    protected Function<Class<?>, EntityOps> entityOpsFactory;
+    //protected Map<Class<?>, EntityOps> entityOpsCache;
     
     protected Map<Class<?>, RdfType> classToMapping = new HashMap<Class<?>, RdfType>();
     protected TypeMapper typeMapper;
 
-    public RdfTypeFactoryImpl(ExpressionParser parser, ParserContext parserContext, EvaluationContext evalContext, TypeMapper typeMapper, Prologue prologue, SparqlRelationParser relationParser) {
+    public RdfTypeFactoryImpl(
+            ExpressionParser parser, 
+            ParserContext parserContext, 
+            EvaluationContext evalContext, 
+            TypeMapper typeMapper, 
+            Prologue prologue, 
+            SparqlRelationParser relationParser,
+            Function<Class<?>, EntityOps> entityOpsFactory) {
         super();
         this.parser = parser;
         this.evalContext = evalContext;
@@ -79,6 +88,7 @@ public class RdfTypeFactoryImpl
         this.typeMapper = typeMapper;
         this.prologue = prologue;
         this.relationParser = relationParser;
+        this.entityOpsFactory = entityOpsFactory;
     }
 
     public Prologue getPrologue() {
@@ -158,7 +168,7 @@ public class RdfTypeFactoryImpl
         if(isPrimitive) {
             result = new RdfTypeLiteralTyped(this, dtype);
         } else {
-            EntityOps entityOps = classToOps.apply(clazz);
+            EntityOps entityOps = entityOpsFactory.apply(clazz);
             result = allocateClass(entityOps);
         }
 
@@ -484,6 +494,8 @@ public class RdfTypeFactoryImpl
     }
 
     public static RdfTypeFactoryImpl createDefault(Prologue prologue) {
+        Function<Class<?>, EntityOps> entityOpsFactory = (clazz) -> EntityModel.createDefaultModel(clazz);
+        
         StandardEvaluationContext evalContext = new StandardEvaluationContext();
         TemplateParserContext parserContext = new TemplateParserContext();
 
@@ -499,7 +511,7 @@ public class RdfTypeFactoryImpl
         SparqlRelationParser relationParser = SparqlRelationParserImpl.create(Syntax.syntaxARQ, prologue);
 
         TypeMapper typeMapper = TypeMapper.getInstance();
-        RdfTypeFactoryImpl result = new RdfTypeFactoryImpl(parser, parserContext, evalContext, typeMapper, prologue, relationParser);
+        RdfTypeFactoryImpl result = new RdfTypeFactoryImpl(parser, parserContext, evalContext, typeMapper, prologue, relationParser, entityOpsFactory);
         return result;
     }
 }
