@@ -1,9 +1,10 @@
 package org.aksw.jena_sparql_api.mapper.model;
 
+import java.util.function.Function;
+
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.Expression;
 
-import com.google.common.base.Function;
 
 public class F_GetValue<T>
     implements Function<Object, T>

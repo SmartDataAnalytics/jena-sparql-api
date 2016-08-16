@@ -50,7 +50,7 @@ public interface RdfType
 
     /**
      * Return the Java class corresponding to this type
-     * (maybe it should be Type instead of Type)
+     * (maybe it should be Type instead of Class)
      * @return
      */
     Class<?> getEntityClass();

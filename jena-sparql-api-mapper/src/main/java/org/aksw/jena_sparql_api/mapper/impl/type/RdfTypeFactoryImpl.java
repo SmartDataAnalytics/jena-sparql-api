@@ -8,6 +8,7 @@ import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 import org.aksw.commons.util.strings.StringUtils;
 import org.aksw.jena_sparql_api.mapper.annotation.DefaultIri;
@@ -26,6 +27,13 @@ import org.aksw.jena_sparql_api.stmt.SparqlRelationParserImpl;
 import org.aksw.jena_sparql_api.util.frontier.Frontier;
 import org.aksw.jena_sparql_api.util.frontier.FrontierImpl;
 import org.aksw.jena_sparql_api.utils.UriUtils;
+import org.apache.jena.datatypes.RDFDatatype;
+import org.apache.jena.datatypes.TypeMapper;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.query.Syntax;
+import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.sparql.core.Prologue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanWrapper;
@@ -40,15 +48,6 @@ import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.util.Assert;
 import org.springframework.util.ReflectionUtils;
-
-import com.google.common.base.Function;
-import org.apache.jena.datatypes.RDFDatatype;
-import org.apache.jena.datatypes.TypeMapper;
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.NodeFactory;
-import org.apache.jena.query.Syntax;
-import org.apache.jena.shared.PrefixMapping;
-import org.apache.jena.sparql.core.Prologue;
 
 public class RdfTypeFactoryImpl
     implements RdfTypeFactory
@@ -66,6 +65,8 @@ public class RdfTypeFactoryImpl
     protected Prologue prologue;
     protected SparqlRelationParser relationParser;
 
+    protected Function<Class<?>, EntityOps> classToOps;
+    
     protected Map<Class<?>, RdfType> classToMapping = new HashMap<Class<?>, RdfType>();
     protected TypeMapper typeMapper;
 
@@ -156,7 +157,8 @@ public class RdfTypeFactoryImpl
         if(isPrimitive) {
             result = new RdfTypeLiteralTyped(this, dtype);
         } else {
-            result = allocateClass(clazz);
+            EntityOps entityOps = classToOps.apply(clazz);
+            result = allocateClass(entityOps);
         }
 
         return result;
@@ -170,10 +172,12 @@ public class RdfTypeFactoryImpl
      * @param clazz
      * @return
      */
-    protected RdfClass allocateClass(Class<?> clazz) {
-        org.aksw.jena_sparql_api.mapper.annotation.RdfType rdfType = AnnotationUtils.findAnnotation(clazz, org.aksw.jena_sparql_api.mapper.annotation.RdfType.class);
-
-        DefaultIri defaultIri = AnnotationUtils.findAnnotation(clazz, DefaultIri.class);
+    protected RdfClass allocateClass(EntityOps entityOps) {
+        //org.aksw.jena_sparql_api.mapper.annotation.RdfType rdfType = AnnotationUtils.findAnnotation(clazz, org.aksw.jena_sparql_api.mapper.annotation.RdfType.class);
+        org.aksw.jena_sparql_api.mapper.annotation.RdfType rdfType = entityOps.findAnnotation(org.aksw.jena_sparql_api.mapper.annotation.RdfType.class);
+                
+        //DefaultIri defaultIri = AnnotationUtils.findAnnotation(clazz, DefaultIri.class);
+        DefaultIri defaultIri = entityOps.findAnnotation(DefaultIri.class);
 
         Function<Object, String> defaultIriFn = null;
         if (defaultIri != null) {
@@ -184,7 +188,7 @@ public class RdfTypeFactoryImpl
                     evalContext);
         }
 
-        RdfClass result = new RdfClass(this, clazz, defaultIriFn);
+        RdfClass result = new RdfClass(this, entityOps, defaultIriFn);
 
         return result;
     }

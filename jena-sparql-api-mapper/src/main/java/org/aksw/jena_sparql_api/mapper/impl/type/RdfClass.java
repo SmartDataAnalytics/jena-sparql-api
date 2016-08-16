@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
@@ -14,18 +15,14 @@ import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.aksw.jena_sparql_api.mapper.proxy.MethodInterceptorRdf;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.apache.jena.atlas.lib.Sink;
-import org.springframework.beans.BeanWrapper;
-import org.springframework.beans.BeanWrapperImpl;
-import org.springframework.cglib.proxy.Callback;
-import org.springframework.cglib.proxy.Enhancer;
-import org.springframework.cglib.proxy.Factory;
-
-import com.google.common.base.Function;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.core.DatasetGraph;
+import org.springframework.cglib.proxy.Callback;
+import org.springframework.cglib.proxy.Enhancer;
+import org.springframework.cglib.proxy.Factory;
 
 /**
  * An RdfClass is one type of implementation that can map Java objects to and from RDF graphs.
@@ -39,7 +36,9 @@ public class RdfClass
     /**
      * The affected class (maybe we should use the fully qualified class name instead?)
      */
-    protected Class<?> beanClass;
+    //protected Class<?> beanClass;
+    EntityOps entityOps;
+    
 
     /**
      * The concept that captures rdf terms that are instances of this class.
@@ -158,9 +157,9 @@ public class RdfClass
 
     // Map<String, RdfProperty> propertyToMapping
     // Prologue prologue
-    public RdfClass(RdfTypeFactory typeFactory, Class<?> targetClass, Function<Object, String> defaultIriFn) {
+    public RdfClass(RdfTypeFactory typeFactory, EntityOps targetClass, Function<Object, String> defaultIriFn) {
         super(typeFactory);
-        this.beanClass = targetClass;
+        this.entityOps = targetClass;
         this.defaultIriFn = defaultIriFn;
         //this.prologue = prologue;
         //this.propertyToMapping = propertyToMapping;
@@ -168,7 +167,7 @@ public class RdfClass
 
     @Override
     public Class<?> getEntityClass() {
-        return beanClass;
+        return entityOps.getAssociatedClass();
     }
 
     @Override
@@ -316,7 +315,7 @@ public class RdfClass
 
         Object o;
         try {
-            o = beanClass.newInstance();
+            o = entityOps.newInstance();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -324,6 +323,7 @@ public class RdfClass
         MethodInterceptorRdf interceptor = new MethodInterceptorRdf(o, this, subject, datasetGraph);
         //new Class<?>[] { ProxiedRdf.class }
 //        Object result = Enhancer.create(targetClass, null, interceptor);
+        Class<?> beanClass = entityOps.getAssociatedClass();
         Object result = Enhancer.create(beanClass, null, interceptor);
 
         return result;
@@ -333,7 +333,7 @@ public class RdfClass
     public Object createJavaObject(Node subject) {
         Object result;
         try {
-            result = beanClass.newInstance();
+            result = entityOps.newInstance();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

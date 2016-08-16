@@ -8,43 +8,32 @@
     },
 
     prefixes: { $prefixes: {
-       'foo': 'http://bar',
-       'geo':'http://www.w3.org/2003/01/geo/wgs84_pos#',
-       'o': 'http://fp7-pp.publicdata.eu/ontology/'
+        'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+        'rdfs': 'http://www.w3.org/2000/01/rdf-schema#',
+        'dbo': 'http://dbpedia.org/ontology/',
+        'dbr': 'http://dbpedia.org/resource/'
     } },
 
     // TODO Configure user-agent for http requests
     httpUserAgent: 'enter@email.here',
 
-    source: { $sparqlService: ['http://fp7-pp.publicdata.eu/sparql', 'http://fp7-pp.publicdata.eu/'] },
+    dbpedia: { $sparqlService: ['http://dbpedia.org/sparql', 'http://dbpedia.org'] },
 
-    //source: { $sparqlService: ['http://fp7-pp.publicdata.eu/sparql', 'http://fp7-pp.publicdata.eu/'] },
+    target: { $sparqlService: ['http://localhost:8890/sparql', 'http://aksw.org/people'] },
 
-    // Intermediate stores that also act as caches:
-    resloc: { $sparqlService: ['http://localhost:8890/sparql', 'http://fp7-pp.publicdata.eu/resloc/'] },
-    geocoderCache: { $sparqlService: ['http://localhost:8890/sparql', 'http://fp7-pp.publicdata.eu/locjson/'] },
-
-
-    target: { $sparqlService: ['http://localhost:8890/sparql', 'http://fp7-pp.publicdata.eu/'] },
 
     job: { $simpleJob: {
-        name: 'testJob5',
+        name: 'testJob12',
 
         steps: [
-//            { $sparqlUpdate: {
-//                name: 'clearData',
-//                target: '#{ target }',
-//                update: 'DELETE WHERE { ?s ?p ?o }'
-//            } },
-//
-//            { $sparqlPipe: {
-//              name: 'loadData',
-//              chunk: 1000,
-//              source: '#{ source }',
-//              target: '#{ target }',
-//              query: 'CONSTRUCT WHERE { ?s ?p ?o }',
-//              filter: 'term:valid(?s) && term:valid(?p) && term:valid(?o)'
-//            } },
+
+            { $sparqlPipe: {
+              name: 'fetchDataFromDBpedia',
+              chunk: 1000,
+              source: '#{ dbpedia }',
+              target: '#{ target }',
+              query: 'CONSTRUCT { ?s ?p ?o } { ?s a dbo:Person ; dbo:birthPlace dbr:Leipzig ; ?p ?o . Filter(?p In (rdf:type, rdfs:label, dbo:birthPlace)) }'
+            } },
 
             { $shell: {
                 name: 'say hello',
