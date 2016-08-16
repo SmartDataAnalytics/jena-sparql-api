@@ -20,7 +20,7 @@ public class BATCH {
 
     public static final Property startTime = property("startTime");
     public static final Property stopTime = property("stopTime");
-    public static final Property exitDescription = property("exitDescription");
+    public static final Property exitMessage = property("exitMessage");
     public static final Property version = property("version");
     public static final Property endTime = property("endtime");
     public static final Property exitCode = property("exitCode");
@@ -29,12 +29,12 @@ public class BATCH {
     public static final Property id = property("id");
     public static final Property jobId = property("jobId");
 
-    public static final Property executionId = property("executionId");
+    public static final Property jobExecutionId = property("jobExecutionId");
     public static final Property key = property("key");
     public static final Property value = property("value");
     public static final Property identifying = property("identifying");
 
     public static final Property hasParam = property("hasParam");
-    public static final Property jobConfigurationName = property("jobConfigurationName");
+    public static final Property jobConfigurationLocation = property("jobConfigurationLocation");
 
 }

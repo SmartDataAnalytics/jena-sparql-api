@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.batch.backend.sparql;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -11,13 +12,13 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.aksw.jena_sparql_api.geo.vocab.BATCH;
-import org.aksw.jena_sparql_api.lookup.ListServiceUtils;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.jena.graph.Graph;
+import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.DCTerms;
 import org.springframework.batch.core.BatchStatus;
@@ -43,6 +44,28 @@ public class JobExecutionDaoSparql extends AbstractJdbcBatchMetadataDao implemen
 
     private static final Log logger = LogFactory.getLog(JdbcJobExecutionDao.class);
 
+    // TODO Essentially these are all the properties we have to deal with
+    public static List<Property> properties = Arrays.asList(BATCH.jobExecutionId, BATCH.startTime, BATCH.endTime, BATCH.status, BATCH.exitCode, BATCH.exitMessage, DCTerms.created, DCTerms.modified, BATCH.version, BATCH.jobConfigurationLocation);
+
+    
+    public void createQuerySimpleInsert(List<Property> properties) {
+        
+    }
+    
+    //"INSERT INTO <%GRAPH%> { ? batch:jobExecutionId ? ; batch:jobInstanceId ? ; batch:startTime ? ; batch:endTime ? ; batch:status ? ; batch:exitCode ? ; batch:exitMessage ? ; batch:version ? ; dcterm:created ?   "
+//    private static final String SAVE_JOB_EXECUTION = createQuerySimpleInsert()
+//            + ""
+//            + "%JOB_EXECUTION% (JOB_EXECUTION_ID, JOB_INSTANCE_ID, START_TIME, "
+//            + "END_TIME, STATUS, EXIT_CODE, EXIT_MESSAGE, VERSION, CREATE_TIME, LAST_UPDATED, JOB_CONFIGURATION_LOCATION) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+    private static final String UPDATE_JOB_EXECUTION = "MODIFY ...";
+//            + ""
+//            + ""
+//            + "UPDATE %PREFIX%JOB_EXECUTION set START_TIME = ?, END_TIME = ?, "
+//            + " STATUS = ?, EXIT_CODE = ?, EXIT_MESSAGE = ?, VERSION = ?, CREATE_TIME = ?, LAST_UPDATED = ? where JOB_EXECUTION_ID = ? and VERSION = ?";
+
+    
+    
     private static final String SAVE_JOB_EXECUTION = "INSERT into %PREFIX%JOB_EXECUTION(JOB_EXECUTION_ID, JOB_INSTANCE_ID, START_TIME, "
             + "END_TIME, STATUS, EXIT_CODE, EXIT_MESSAGE, VERSION, CREATE_TIME, LAST_UPDATED, JOB_CONFIGURATION_LOCATION) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
@@ -50,9 +73,11 @@ public class JobExecutionDaoSparql extends AbstractJdbcBatchMetadataDao implemen
 
     private static final String GET_STATUS = "SELECT STATUS from %PREFIX%JOB_EXECUTION where JOB_EXECUTION_ID = ?";
 
-    private static final String UPDATE_JOB_EXECUTION = "UPDATE %PREFIX%JOB_EXECUTION set START_TIME = ?, END_TIME = ?, "
-            + " STATUS = ?, EXIT_CODE = ?, EXIT_MESSAGE = ?, VERSION = ?, CREATE_TIME = ?, LAST_UPDATED = ? where JOB_EXECUTION_ID = ? and VERSION = ?";
+//    private static final String UPDATE_JOB_EXECUTION = "UPDATE %PREFIX%JOB_EXECUTION set START_TIME = ?, END_TIME = ?, "
+//            + " STATUS = ?, EXIT_CODE = ?, EXIT_MESSAGE = ?, VERSION = ?, CREATE_TIME = ?, LAST_UPDATED = ? where JOB_EXECUTION_ID = ? and VERSION = ?";
 
+    
+    
     private static final String FIND_JOB_EXECUTIONS = "SELECT JOB_EXECUTION_ID, START_TIME, END_TIME, STATUS, EXIT_CODE, EXIT_MESSAGE, CREATE_TIME, LAST_UPDATED, VERSION, JOB_CONFIGURATION_LOCATION"
             + " from %PREFIX%JOB_EXECUTION where JOB_INSTANCE_ID = ? order by JOB_EXECUTION_ID desc";
 
@@ -134,13 +159,13 @@ public class JobExecutionDaoSparql extends AbstractJdbcBatchMetadataDao implemen
             .addLiteral(BATCH.jobId, jobExecution.getJobId())
             .addLiteral(BATCH.startTime, jobExecution.getStartTime())
             .addLiteral(BATCH.stopTime, jobExecution.getEndTime())
-            .addLiteral(BATCH.exitCode, jobExecution.getStatus())
-            .addLiteral(BATCH.exitDescription, jobExecution.getExitStatus().getExitCode())
-            .addLiteral(BATCH.exitDescription, jobExecution.getExitStatus().getExitDescription())
+            .addLiteral(BATCH.status, jobExecution.getStatus())
+            .addLiteral(BATCH.exitCode, jobExecution.getExitStatus().getExitCode())
+            .addLiteral(BATCH.exitMessage, jobExecution.getExitStatus().getExitDescription())
             .addLiteral(BATCH.version, jobExecution.getVersion())
             .addLiteral(DCTerms.created, jobExecution.getCreateTime())
             .addLiteral(DCTerms.modified, jobExecution.getLastUpdated())
-            .addLiteral(BATCH.jobConfigurationName, jobExecution.getJobConfigurationName());
+            .addLiteral(BATCH.jobConfigurationLocation, jobExecution.getJobConfigurationName());
 
             //updateResource(jobRes);
 
@@ -313,7 +338,7 @@ public class JobExecutionDaoSparql extends AbstractJdbcBatchMetadataDao implemen
      */
     private void insertJobParameters(Resource jobParamsRes, Long executionId, JobParameters jobParameters) {
 
-        jobParamsRes.addLiteral(BATCH.executionId, executionId);
+        jobParamsRes.addLiteral(BATCH.jobExecutionId, executionId);
 
         for (Entry<String, JobParameter> entry : jobParameters.getParameters().entrySet()) {
             Resource jobParamRes = jobParamsRes.getModel().createResource();
@@ -344,7 +369,7 @@ public class JobExecutionDaoSparql extends AbstractJdbcBatchMetadataDao implemen
             Object value, boolean identifying) {
 
         jobParamRes
-            .addLiteral(BATCH.executionId, executionId)
+            .addLiteral(BATCH.jobExecutionId, executionId)
             .addLiteral(BATCH.key, key)
             .addLiteral(BATCH.value, value)
             .addLiteral(BATCH.identifying, identifying);
@@ -416,12 +441,12 @@ public class JobExecutionDaoSparql extends AbstractJdbcBatchMetadataDao implemen
         b.outgoing(BATCH.startTime);
         b.outgoing(BATCH.stopTime);
         b.outgoing(BATCH.exitCode);
-        b.outgoing(BATCH.exitDescription);
-        b.outgoing(BATCH.exitDescription);
+        b.outgoing(BATCH.status);
+        b.outgoing(BATCH.exitMessage);
         b.outgoing(BATCH.version);
         b.outgoing(DCTerms.created);
         b.outgoing(DCTerms.modified);
-        b.outgoing(BATCH.jobConfigurationName);
+        b.outgoing(BATCH.jobConfigurationLocation);
 
         ResourceShape s = b.getResourceShape();
         MappedConcept<Graph> mc = ResourceShape.createMappedConcept(s, null, false);
