@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.batch.step;
 
+import org.aksw.jena_sparql_api.batch.tasklet.TaskletLog;
 import org.aksw.spring.bean.util.BeanDefinitionProxyUtils;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.step.builder.StepBuilder;

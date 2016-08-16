@@ -124,7 +124,7 @@ public class ConfigParsersCore
     }
 
     @Bean
-    public BeanFactoryPostProcessor beanFactoryPostProcessor() {
+    public static BeanFactoryPostProcessor beanFactoryPostProcessor() {
         BeanFactoryPostProcessor result = new ConverterRegistryPostProcessor();
         return result;
     }

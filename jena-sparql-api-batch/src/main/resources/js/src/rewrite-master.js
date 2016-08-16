@@ -27,24 +27,6 @@ var createSimpleClassRewriter = function(jsonKey, className, scope)
 
 //rewriters.push(createSimpleClassRewriter('$log', 'org.aksw.jena_sparql_api.batch.step.FactoryBeanStepLog'));
 
-rewriters.push(function(json) {
-  var result = json;
-  var e = json.$logStep;
-
-  if(e) {
-    result = {
-      type: 'org.aksw.jena_sparql_api.batch.step.FactoryBeanStepTasklet',
-      name: e.name,
-      tasklet: {
-        type: 'org.aksw.jena_sparql_api.batch.step.TaskletLog',
-        scope: 'step',
-        text: e.text
-      }
-    };
-  }
-  return result;
-});
-
 rewriters.push(createSimpleClassRewriter('$dataSource', 'org.springframework.jdbc.datasource.DriverManagerDataSource'));
 rewriters.push(createSimpleClassRewriter('$simpleJob', 'org.aksw.jena_sparql_api.batch.step.FactoryBeanSimpleJob'));
 //rewriters.push(createSimpleClassRewriter('$sparqlCount', 'org.aksw.jena_sparql_api.batch.step.FactoryBeanStepSparqlCount', 'step'));

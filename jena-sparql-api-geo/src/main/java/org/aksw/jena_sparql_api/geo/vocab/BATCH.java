@@ -16,8 +16,6 @@ public class BATCH {
 
     public static final Property locationString = property("locationString");
 
-
-
     public static final Property startTime = property("startTime");
     public static final Property stopTime = property("stopTime");
     public static final Property exitMessage = property("exitMessage");

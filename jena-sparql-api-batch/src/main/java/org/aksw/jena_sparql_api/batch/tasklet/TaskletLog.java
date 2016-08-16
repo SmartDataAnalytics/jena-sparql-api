@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.batch.step;
+package org.aksw.jena_sparql_api.batch.tasklet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

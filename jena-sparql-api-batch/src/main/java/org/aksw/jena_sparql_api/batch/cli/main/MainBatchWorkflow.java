@@ -179,7 +179,9 @@ public class MainBatchWorkflow {
             "js/src/rewriters/RewriterBeanClassName.js",
             "js/src/rewriters/RewriterBeanDefinition.js",
             "js/src/rewriters/RewriterSparqlPipe.js",
-            "js/src/rewriters/RewriterSimpleJob.js"
+            "js/src/rewriters/RewriterSimpleJob.js",
+            "js/src/rewriters/RewriterShell.js",
+            "js/src/rewriters/RewriterLog.js"
         );
         String base = "src/main/resources/";
         for(String name : rewriterResourceNames) {
@@ -509,7 +511,9 @@ public class MainBatchWorkflow {
             "js/src/rewriters/RewriterSparqlUpdate.js",
             "js/src/rewriters/RewriterBeanClassName.js",
             "js/src/rewriters/RewriterBeanDefinition.js",
-            "js/src/rewriters/RewriterSparqlPipe.js"
+            "js/src/rewriters/RewriterSparqlPipe.js",
+            "js/src/rewriters/RewriterLog.js",
+            "js/src/rewriters/RewriterShell.js"
         );
         //String base = "src/main/resources/";
         String base = "/home/raven/Projects/Eclipse/jena-sparql-api-parent/jena-sparql-api-batch/src/main/resources/";
@@ -545,7 +549,7 @@ public class MainBatchWorkflow {
         JsonElement result = gson.fromJson(jsonReader, JsonElement.class);
 
         String canon = gson.toJson(result);
-        System.out.println(canon);
+        logger.info("Using configuration: " + canon);
 
         return result;
 
