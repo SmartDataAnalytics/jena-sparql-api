@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.aksw.jena_sparql_api.mapper.impl.type.EntityModel;
+import org.aksw.jena_sparql_api.beans.model.EntityModel;
 import org.springframework.batch.core.JobExecution;
 
 public class SpringBatchMappings {

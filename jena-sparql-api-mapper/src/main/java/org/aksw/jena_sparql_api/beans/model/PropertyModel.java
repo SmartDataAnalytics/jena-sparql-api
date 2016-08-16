@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.mapper.impl.type;
+package org.aksw.jena_sparql_api.beans.model;
 
 import java.util.function.BiConsumer;
 import java.util.function.Function;

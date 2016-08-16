@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 import org.aksw.commons.util.strings.StringUtils;
+import org.aksw.jena_sparql_api.beans.model.EntityOps;
 import org.aksw.jena_sparql_api.mapper.annotation.DefaultIri;
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
 import org.aksw.jena_sparql_api.mapper.annotation.IriType;
