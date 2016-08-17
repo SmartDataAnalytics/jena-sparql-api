@@ -116,6 +116,10 @@ public class RdfClass
 //    	beanWrapper.getPropertyDescriptors()
 //    }
 
+    public EntityOps getEntityOps() {
+        return entityOps;
+    }
+    
     public Concept getConcept() {
         return concept;
     }

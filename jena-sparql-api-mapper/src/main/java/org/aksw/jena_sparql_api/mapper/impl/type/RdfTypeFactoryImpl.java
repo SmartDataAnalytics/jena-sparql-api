@@ -13,6 +13,7 @@ import java.util.function.Function;
 import org.aksw.commons.util.strings.StringUtils;
 import org.aksw.jena_sparql_api.beans.model.EntityModel;
 import org.aksw.jena_sparql_api.beans.model.EntityOps;
+import org.aksw.jena_sparql_api.beans.model.PropertyOps;
 import org.aksw.jena_sparql_api.mapper.annotation.DefaultIri;
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
 import org.aksw.jena_sparql_api.mapper.annotation.IriType;
@@ -38,8 +39,6 @@ import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.Prologue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeanWrapper;
-import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.Expression;
@@ -241,8 +240,8 @@ public class RdfTypeFactoryImpl
         if(!rdfClass.isPopulated()) {
             //Map<String, RdfPopulatorProperty> rdfProperties = new LinkedHashMap<String, RdfPopulatorProperty>();
 
-            Class<?> clazz = rdfClass.getEntityClass();
-            logger.debug("Initializing RdfClass for [" + clazz.getName() + "]");
+            //Class<?> clazz = rdfClass.getEntityClass();
+            logger.debug("Initializing RdfClass for [" + rdfClass.getEntityOps().getAssociatedClass().getName() + "]");
 
 //            if(Iterable.class.isAssignableFrom(clazz)) {
 //                System.out.println("Collection type detected");
@@ -250,13 +249,15 @@ public class RdfTypeFactoryImpl
 //            }
 
 
-            BeanWrapper beanInfo = new BeanWrapperImpl(clazz);
+            //BeanWrapper beanInfo = new BeanWrapperImpl(clazz);
             //BeanInfo beanInfo = Introspector.getBeanInfo(clazz);
 
-            PropertyDescriptor[] pds = beanInfo.getPropertyDescriptors();
-            for(PropertyDescriptor pd : pds) {
+            EntityOps entityOps = rdfClass.getEntityOps();
+            //PropertyDescriptor[] pds = beanInfo.getPropertyDescriptors();
+ 
+            for(PropertyOps pd : entityOps.getProperties()) {
                 //String propertyName = pd.getName();
-                processProperty(rdfClass, beanInfo, pd, frontier);
+                processProperty(rdfClass, entityOps, pd, frontier);
 //                RdfPopulatorProperty rdfPopulator = processProperty(rdfClass, beanInfo, pd, open);
 //
 //                if(rdfPopulator != null) {
@@ -273,27 +274,32 @@ public class RdfTypeFactoryImpl
 
 
     //RdfPopulatorProperty
-    protected void processProperty(RdfClass rdfClass, BeanWrapper beanInfo, PropertyDescriptor pd, Frontier<RdfClass> frontier) {
+    protected void processProperty(RdfClass rdfClass, EntityOps entityOps, PropertyOps pd, Frontier<RdfClass> frontier) {
         RdfPopulatorProperty result = null;
 
         //processProperty(beanInfo, pd, predicate, targetRdfType, open);
-        Class<?> clazz = beanInfo.getWrappedClass();
+//        Class<?> clazz = beanInfo.getWrappedClass();
+//
+//        String propertyName = pd.getName();
+//        boolean isReadable = beanInfo.isReadableProperty(propertyName);
+//        boolean isWritable = beanInfo.isWritableProperty(propertyName);
 
+        Class<?> clazz = entityOps.getAssociatedClass();
         String propertyName = pd.getName();
-        boolean isReadable = beanInfo.isReadableProperty(propertyName);
-        boolean isWritable = beanInfo.isWritableProperty(propertyName);
+        boolean isReadable = pd.isReadable();
+        boolean isWritable = pd.isWritable();
 
 
 //        RDFDatatype dtype = typeMapper.getTypeByClass(propertyType);
         boolean isCandidate = isReadable && isWritable;
 
 
-        Iri iriAnn = findPropertyAnnotation(clazz, pd, Iri.class);
+        Iri iriAnn = pd.findAnnotation(Iri.class); //findPropertyAnnotation(clazz, pd, Iri.class);
         String iriExprStr = iriAnn == null ? null : iriAnn.value();
         String iriStr = iriExprStr == null ? null : resolveIriExpr(iriExprStr);
         boolean hasIri = iriStr != null && !iriStr.isEmpty();
 
-        String mappedBy = (String)AnnotationUtils.getValue(findPropertyAnnotation(clazz, pd, MappedBy.class));
+        String mappedBy = (String)AnnotationUtils.getValue(pd.findAnnotation(MappedBy.class)); //findPropertyAnnotation(clazz, pd, MappedBy.class));
         boolean isMappedBy = mappedBy != null;
 
 
@@ -306,7 +312,7 @@ public class RdfTypeFactoryImpl
 
             Node predicate = iriStr != null ? NodeFactory.createURI(iriStr) : null;
 
-            processProperty(rdfClass, beanInfo, pd, predicate, frontier);
+            processProperty(rdfClass, entityOps, pd, predicate, frontier);
 
 //            result = isClass
 //                ? processDatatypeProperty(beanInfo, pd, predicate, dtype)
@@ -339,19 +345,19 @@ public class RdfTypeFactoryImpl
 //
 //    }
 
-    protected void processProperty(RdfClass rdfClass, BeanWrapper beanInfo, PropertyDescriptor pd, Node predicate, Frontier<RdfClass> frontier) {
-        Class<?> entityClazz = beanInfo.getWrappedClass();
+    protected void processProperty(RdfClass rdfClass, EntityOps beanInfo, PropertyOps pd, Node predicate, Frontier<RdfClass> frontier) {
+        Class<?> entityClass = beanInfo.getAssociatedClass();
 
         String propertyName = pd.getName();
 
-        Class<?> propertyType = pd.getPropertyType();
+        Class<?> propertyType = pd.getType();
 
 
         boolean isCollectionProperty = Collection.class.isAssignableFrom(propertyType);
-        boolean isMultiValued = findPropertyAnnotation(entityClazz, pd, MultiValued.class) != null;
+        boolean isMultiValued = pd.findAnnotation(MultiValued.class) != null; //findPropertyAnnotation(entityClazz, pd, MultiValued.class) != null;
 
         if(isMultiValued && !isCollectionProperty) {
-            throw new RuntimeException("Invalid annotation: " + beanInfo.getWrappedClass() + "." + pd.getName() + ": " + " is declared MultiValued however is not a Collection");
+            throw new RuntimeException("Invalid annotation: " + entityClass + "." + pd.getName() + ": " + " is declared MultiValued however is not a Collection");
         }
 
         if(isCollectionProperty) {
@@ -365,7 +371,7 @@ public class RdfTypeFactoryImpl
         RDFDatatype dtype = typeMapper.getTypeByClass(propertyType);
         boolean isLiteral = dtype != null;
 
-        IriType iriType = findPropertyAnnotation(entityClazz, pd, IriType.class);
+        IriType iriType = pd.findAnnotation(IriType.class);
         RdfType targetRdfType;
         if(iriType == null) {
             if(isLiteral) {
@@ -495,6 +501,8 @@ public class RdfTypeFactoryImpl
     }
 
     public static RdfTypeFactoryImpl createDefault(Prologue prologue, Function<Class<?>, EntityOps> entityOpsFactory) {
+        prologue = prologue != null ? prologue : new Prologue();
+
         entityOpsFactory = entityOpsFactory != null
                 ? entityOpsFactory
                 : (clazz) -> EntityModel.createDefaultModel(clazz);

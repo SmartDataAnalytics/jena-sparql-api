@@ -12,6 +12,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
 import org.springframework.core.annotation.AnnotationUtils;
 
 public class EntityModel
@@ -22,7 +23,7 @@ public class EntityModel
     protected Supplier<?> newInstance;
     protected Map<String, PropertyModel> propertyOps;
     
-    protected Function<Class<?>, Object> findAnnotation;
+    protected Function<Class<?>, Object> annotationFinder;
     
     public EntityModel() {
         this(null, null, null);
@@ -36,7 +37,15 @@ public class EntityModel
         this.propertyOps = propertyOps;
         
 //        @SuppressWarnings("unchecked")
-        this.findAnnotation = (annotationClass) -> AnnotationUtils.findAnnotation(this.associatedClass, (Class)annotationClass);
+        this.annotationFinder = (annotationClass) -> AnnotationUtils.findAnnotation(this.associatedClass, (Class)annotationClass);
+    }
+
+    public Function<Class<?>, Object> getAnnotationFinder() {
+        return annotationFinder;
+    }
+
+    public void setAnnotationFinder(Function<Class<?>, Object> annotationFinder) {
+        this.annotationFinder = annotationFinder;
     }
 
     public Object newInstance() {
@@ -97,8 +106,13 @@ public class EntityModel
                     }
                 };
             }
+
+            Function<Class<?>, Object> annotationFinder = (annotationClass) -> RdfTypeFactoryImpl.findPropertyAnnotation(clazz, pd, (Class)annotationClass);
             
-            PropertyModel p = new PropertyModel(propertyName, getter, setter);
+            PropertyModel p = new PropertyModel(propertyName, clazz, getter, setter, annotationFinder);
+            p.setReadMethod(readMethod);
+            p.setWriteMethod(writeMethod);
+
             propertyOps.put(propertyName, p);     
         }
      
@@ -123,8 +137,8 @@ public class EntityModel
     }
 
     @Override
-    public Collection<? extends PropertyOps> getProperties() {
-        Collection<? extends PropertyOps> result = propertyOps.values();
+    public Collection<? extends PropertyModel> getProperties() {
+        Collection<? extends PropertyModel> result = propertyOps.values();
         return result;
     }
 
@@ -145,7 +159,7 @@ public class EntityModel
 
     @Override
     public <A> A findAnnotation(Class<A> annotationClass) {
-        Object o = findAnnotation.apply(annotationClass);
+        Object o = annotationFinder.apply(annotationClass);
         @SuppressWarnings("unchecked")
         A result = (A)o;
         return result;

@@ -1,17 +1,22 @@
 package org.aksw.jena_sparql_api.batch.backend.sparql;
 
+import java.lang.annotation.Annotation;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.beans.model.EntityModel;
 import org.aksw.jena_sparql_api.beans.model.EntityOps;
+import org.aksw.jena_sparql_api.beans.model.PropertyModel;
 import org.aksw.jena_sparql_api.core.SparqlService;
+import org.aksw.jena_sparql_api.mapper.annotation.Iri;
 import org.aksw.jena_sparql_api.mapper.impl.engine.RdfMapperEngine;
 import org.aksw.jena_sparql_api.mapper.impl.engine.RdfMapperEngineImpl;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
+import org.aksw.jena_sparql_api.mapper.util.BeanUtils;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.rdf.model.Model;
@@ -32,8 +37,35 @@ public class SpringBatchMappings {
         Map<Class<?>, EntityOps> customOps = new HashMap<>();
         
         {
+            Map<String, String> pmap = BeanUtils.getPropertyNames(new JobExecution(0l)).stream()
+                .collect(Collectors.toMap(e -> e, e -> "http://batch.aksw.org/ontology/" + e));
+            
             EntityModel entityModel = EntityModel.createDefaultModel(JobExecution.class);
             entityModel.setNewInstance(() -> new JobExecution(0l));
+            
+            for(PropertyModel pm : entityModel.getProperties()) {
+                pm.setAnnotationFinder((clazz) -> {
+                    if(clazz.equals(Iri.class)) {
+                        String str = pmap.get(pm.getName());
+                        if(str != null) {
+                            Iri x = new Iri() {
+                                @Override
+                                public Class<? extends Annotation> annotationType() {
+                                    return null;
+                                }
+    
+                                @Override
+                                public String value() {
+                                    return str;
+                                }
+                            };
+                            return x;
+                        }
+                    };
+                    return null;
+                });
+            }
+            
             
             Object inst = entityModel.newInstance();
             entityModel.getProperty("id").setValue(inst, 12l);
@@ -59,12 +91,13 @@ public class SpringBatchMappings {
         
         SparqlService sparqlService = FluentSparqlService.forModel().create();
         
-        RdfMapperEngine engine = new RdfMapperEngineImpl(sparqlService);
+        RdfMapperEngine engine = new RdfMapperEngineImpl(sparqlService, typeFactory);
         
         Graph graph = GraphFactory.createDefaultGraph();
         engine.emitTriples(graph, new JobExecution(0l));
         
         Model model = ModelFactory.createModelForGraph(graph);
+        System.out.println("Graph:");
         model.write(System.out, "TTL");
         
         

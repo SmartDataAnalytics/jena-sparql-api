@@ -1,24 +1,38 @@
 package org.aksw.jena_sparql_api.beans.model;
 
+import java.lang.reflect.Method;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
+/**
+ * PropertyOps implementation that delegates most calls 
+ * 
+ * @author raven
+ *
+ */
 public class PropertyModel
     implements PropertyOps
 {
     protected String name;
+    protected Class<?> type;
     protected Function<Object, ?> getter;
     protected BiConsumer<Object, Object> setter;
+    protected Function<Class<?>, Object> annotationFinder;
+    protected Method readMethod;
+    protected Method writeMethod;
 
     public PropertyModel() {
     }
 
-    public PropertyModel(String name, Function<Object, ?> getter,
-            BiConsumer<Object, Object> setter) {
+    public PropertyModel(String name, Class<?> clazz, Function<Object, ?> getter,
+            BiConsumer<Object, Object> setter,
+            Function<Class<?>, Object> annotationFinder) {
         super();
         this.name = name;
+        this.type = clazz;
         this.getter = getter;
         this.setter = setter;
+        this.annotationFinder = annotationFinder;
     }
     
     @Override
@@ -26,6 +40,11 @@ public class PropertyModel
         return name;
     }
 
+    @Override
+    public Class<?> getType() {
+        return type;
+    }
+    
     public Function<Object, ?> getGetter() {
         return getter;
     }
@@ -41,7 +60,7 @@ public class PropertyModel
     public void setSetter(BiConsumer<Object, Object> setter) {
         this.setter = setter;
     }
-
+   
     @Override
     public Object getValue(Object entity) {
         Object result = getter.apply(entity);
@@ -58,4 +77,54 @@ public class PropertyModel
         return "PropertyModel [name=" + name + ", getter=" + getter
                 + ", setter=" + setter + "]";
     }
+
+    @Override
+    public boolean isWritable() {
+        boolean result = setter != null;;
+        return result;
+    }
+
+    @Override
+    public boolean isReadable() {
+        boolean result = getter != null;;
+        return result;
+    }    
+    
+    public Method getReadMethod() {
+        return readMethod;
+    }
+
+    public void setReadMethod(Method readMethod) {
+        this.readMethod = readMethod;
+    }
+
+    public Method getWriteMethod() {
+        return writeMethod;
+    }
+
+    public void setWriteMethod(Method writeMethod) {
+        this.writeMethod = writeMethod;
+    }
+
+    @Override
+    public <A> A findAnnotation(Class<A> annotationClass) {
+        Object tmp = annotationFinder.apply(annotationClass);
+        @SuppressWarnings("unchecked")
+        A result = (A)tmp;
+        return result;
+    }
+
+    public Function<Class<?>, Object> getAnnotationFinder() {
+        return annotationFinder;
+    }
+
+    public void setAnnotationFinder(Function<Class<?>, Object> annotationFinder) {
+        this.annotationFinder = annotationFinder;
+    }
+
+    public void setType(Class<?> type) {
+        this.type = type;
+    }
+    
+    
 }
