@@ -168,8 +168,7 @@ public class RdfTypeFactoryImpl
         if(isPrimitive) {
             result = new RdfTypeLiteralTyped(this, dtype);
         } else {
-            EntityOps entityOps = entityOpsFactory.apply(clazz);
-            result = allocateClass(entityOps);
+            result = allocateClass(clazz);
         }
 
         return result;
@@ -183,7 +182,9 @@ public class RdfTypeFactoryImpl
      * @param clazz
      * @return
      */
-    protected RdfClass allocateClass(EntityOps entityOps) {
+    protected RdfClass allocateClass(Class<?> clazz) {
+        EntityOps entityOps = entityOpsFactory.apply(clazz);
+
         //org.aksw.jena_sparql_api.mapper.annotation.RdfType rdfType = AnnotationUtils.findAnnotation(clazz, org.aksw.jena_sparql_api.mapper.annotation.RdfType.class);
         org.aksw.jena_sparql_api.mapper.annotation.RdfType rdfType = entityOps.findAnnotation(org.aksw.jena_sparql_api.mapper.annotation.RdfType.class);
                 
@@ -489,12 +490,14 @@ public class RdfTypeFactoryImpl
 
     public static RdfTypeFactoryImpl createDefault() {
         Prologue prologue = new Prologue();
-        RdfTypeFactoryImpl result = createDefault(prologue);
+        RdfTypeFactoryImpl result = createDefault(prologue, null);
         return result;
     }
 
-    public static RdfTypeFactoryImpl createDefault(Prologue prologue) {
-        Function<Class<?>, EntityOps> entityOpsFactory = (clazz) -> EntityModel.createDefaultModel(clazz);
+    public static RdfTypeFactoryImpl createDefault(Prologue prologue, Function<Class<?>, EntityOps> entityOpsFactory) {
+        entityOpsFactory = entityOpsFactory != null
+                ? entityOpsFactory
+                : (clazz) -> EntityModel.createDefaultModel(clazz);
         
         StandardEvaluationContext evalContext = new StandardEvaluationContext();
         TemplateParserContext parserContext = new TemplateParserContext();

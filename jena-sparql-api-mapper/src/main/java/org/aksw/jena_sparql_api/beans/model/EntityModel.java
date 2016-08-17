@@ -36,7 +36,7 @@ public class EntityModel
         this.propertyOps = propertyOps;
         
 //        @SuppressWarnings("unchecked")
-        this.findAnnotation = (annotationClass) -> AnnotationUtils.findAnnotation(associatedClass, (Class)annotationClass);
+        this.findAnnotation = (annotationClass) -> AnnotationUtils.findAnnotation(this.associatedClass, (Class)annotationClass);
     }
 
     public Object newInstance() {

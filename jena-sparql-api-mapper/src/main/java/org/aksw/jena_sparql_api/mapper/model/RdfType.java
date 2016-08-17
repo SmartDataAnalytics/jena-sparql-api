@@ -10,8 +10,9 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 
 /**
- * Base class for RDF based types.
- * A type is used to
+ * Base class for operations for mapping java objects of *a specific* class to and from sets of triples.
+ * 
+ * 
  * <ul>
  *   <li>fetch data from a remote store</li>
  *   <li>instanciate a corresponding java class (can be a proxy implementing appropriate interfaces)</li>
@@ -67,7 +68,7 @@ public interface RdfType
      * @param obj
      * @return
      */
-    Node getRootNode(Object obj);
+    Node getRootNode(Object obj); // TODO May need to add entity manager context argument
 
     /**
      * Create an empty java object (i.e. no properties set) based on the given
@@ -82,7 +83,7 @@ public interface RdfType
      * @param node
      * @return
      */
-    Object createJavaObject(Node node);
+    Object createJavaObject(Node node); // TODO May need to add entity manager context argument
 
 
     // boolean isHydrated(Object bean)

@@ -38,7 +38,7 @@ public class RdfClass
      * The affected class (maybe we should use the fully qualified class name instead?)
      */
     //protected Class<?> beanClass;
-    EntityOps entityOps;
+    protected EntityOps entityOps;
     
 
     /**
