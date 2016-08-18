@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.mapper.test;
+package org.aksw.jena_sparql_api.sparql.ext.datatypes;
 
 import org.apache.jena.datatypes.DatatypeFormatException;
 import org.apache.jena.datatypes.RDFDatatype;

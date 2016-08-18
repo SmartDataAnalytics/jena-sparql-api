@@ -80,6 +80,7 @@ public class EntityModel
         
         Map<String, PropertyModel> propertyOps = new HashMap<String, PropertyModel>();
         for(PropertyDescriptor pd : beanInfo.getPropertyDescriptors()) {
+            Class<?> propertyType = pd.getPropertyType();
             String propertyName = pd.getName();
 
             Function<Object, Object> getter = null;
@@ -109,7 +110,7 @@ public class EntityModel
 
             Function<Class<?>, Object> annotationFinder = (annotationClass) -> RdfTypeFactoryImpl.findPropertyAnnotation(clazz, pd, (Class)annotationClass);
             
-            PropertyModel p = new PropertyModel(propertyName, clazz, getter, setter, annotationFinder);
+            PropertyModel p = new PropertyModel(propertyName, propertyType, getter, setter, annotationFinder);
             p.setReadMethod(readMethod);
             p.setWriteMethod(writeMethod);
 

@@ -31,7 +31,11 @@ public class RdfPopulatorPropertySingle
         if(value != null) {
 
             Node o = targetRdfType.getRootNode(value);
-
+            if(o == null) {
+                throw new RuntimeException("Failed RDF node conversion for " + value.getClass() + ": " + value);
+            }
+            
+            
     //        Triple tmp = RelationUtils.extractTriple(relation);
     //        Node p = tmp.getPredicate();
 

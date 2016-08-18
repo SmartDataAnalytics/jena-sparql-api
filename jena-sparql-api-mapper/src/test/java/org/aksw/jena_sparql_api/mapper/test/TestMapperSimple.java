@@ -7,6 +7,7 @@ import java.util.GregorianCalendar;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.mapper.impl.engine.RdfMapperEngineImpl;
 import org.aksw.jena_sparql_api.mapper.jpa.core.EntityManagerJena;
+import org.aksw.jena_sparql_api.sparql.ext.datatypes.RDFDatatypeCalendar;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
 import org.junit.Test;
 

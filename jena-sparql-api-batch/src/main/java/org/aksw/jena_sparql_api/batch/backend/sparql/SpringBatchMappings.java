@@ -1,8 +1,11 @@
 package org.aksw.jena_sparql_api.batch.backend.sparql;
 
 import java.lang.annotation.Annotation;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -10,6 +13,7 @@ import org.aksw.jena_sparql_api.beans.model.EntityModel;
 import org.aksw.jena_sparql_api.beans.model.EntityOps;
 import org.aksw.jena_sparql_api.beans.model.PropertyModel;
 import org.aksw.jena_sparql_api.core.SparqlService;
+import org.aksw.jena_sparql_api.mapper.annotation.DefaultIri;
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
 import org.aksw.jena_sparql_api.mapper.impl.engine.RdfMapperEngine;
 import org.aksw.jena_sparql_api.mapper.impl.engine.RdfMapperEngineImpl;
@@ -17,11 +21,10 @@ import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.aksw.jena_sparql_api.mapper.util.BeanUtils;
+import org.aksw.jena_sparql_api.sparql.ext.datatypes.RDFDatatypeDate;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
-import org.apache.jena.graph.Graph;
+import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.sparql.graph.GraphFactory;
 import org.springframework.batch.core.JobExecution;
 
 public class SpringBatchMappings {
@@ -34,14 +37,39 @@ public class SpringBatchMappings {
         // TODO: Add support to provide a setter for read only property
         // createForcedFieldSetter(Class, fieldName).setValue(obj, foo);
         
+        TypeMapper tm = TypeMapper.getInstance();
+        
+        tm.registerDatatype(new RDFDatatypeDate());
+        
         Map<Class<?>, EntityOps> customOps = new HashMap<>();
         
         {
+            Set<String> excludeProperties = new HashSet<>(Arrays.asList("executionContext", "exitStatus", "status"));
+            
             Map<String, String> pmap = BeanUtils.getPropertyNames(new JobExecution(0l)).stream()
+                    .filter(p -> !excludeProperties.contains(p))
                 .collect(Collectors.toMap(e -> e, e -> "http://batch.aksw.org/ontology/" + e));
             
             EntityModel entityModel = EntityModel.createDefaultModel(JobExecution.class);
             entityModel.setNewInstance(() -> new JobExecution(0l));
+            
+            entityModel.setAnnotationFinder((clazz) -> {
+                if(clazz.equals(DefaultIri.class)) {
+                    DefaultIri x = new DefaultIri() {
+                        @Override
+                        public Class<? extends Annotation> annotationType() {
+                            return null;
+                        }
+
+                        @Override
+                        public String value() {
+                            return "http://ex.org/#{id}";
+                        }
+                    };
+                    return x;
+                };
+                return null;                
+            });
             
             for(PropertyModel pm : entityModel.getProperties()) {
                 pm.setAnnotationFinder((clazz) -> {
@@ -67,7 +95,8 @@ public class SpringBatchMappings {
             }
             
             
-            Object inst = entityModel.newInstance();
+            JobExecution inst = (JobExecution)entityModel.newInstance();
+            //inst.
             entityModel.getProperty("id").setValue(inst, 12l);
             customOps.put(JobExecution.class, entityModel);
         }
@@ -88,15 +117,16 @@ public class SpringBatchMappings {
         RdfTypeFactory typeFactory =  RdfTypeFactoryImpl.createDefault(null, classToOps);
         RdfType t = typeFactory.forJavaType(JobExecution.class);
         //t.emitTriples(persistenceContext, emitterContext, out, obj);
-        
+
         SparqlService sparqlService = FluentSparqlService.forModel().create();
         
         RdfMapperEngine engine = new RdfMapperEngineImpl(sparqlService, typeFactory);
         
-        Graph graph = GraphFactory.createDefaultGraph();
-        engine.emitTriples(graph, new JobExecution(0l));
+        JobExecution entity = new JobExecution(0l);
+        engine.merge(entity);
+        //engine.emitTriples(graph, entity);
         
-        Model model = ModelFactory.createModelForGraph(graph);
+        Model model = sparqlService.getQueryExecutionFactory().createQueryExecution("CONSTRUCT WHERE { ?s ?p ?o }").execConstruct();
         System.out.println("Graph:");
         model.write(System.out, "TTL");
         

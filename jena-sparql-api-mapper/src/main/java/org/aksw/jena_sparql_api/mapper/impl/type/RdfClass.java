@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
+import org.aksw.commons.util.reflect.ClassUtils;
 import org.aksw.jena_sparql_api.beans.model.EntityOps;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
@@ -282,7 +283,10 @@ public class RdfClass
     public void emitTriples(RdfPersistenceContext persistenceContext, RdfEmitterContext emitterContext, Graph out, Object entity) {
         //Node s = getRootNode(obj);
         Node s = persistenceContext.getRootNode(entity);
-
+        if(s == null) {
+            throw new RuntimeException("Could not determine (iri-)node of entity " + (entity == null ? " null " : entity.getClass().getName()) + " - " + entity);
+        }
+        
         /*
          * Run the emitters of all of this class' populators
          */
