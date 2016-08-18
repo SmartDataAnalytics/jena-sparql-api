@@ -27,13 +27,13 @@ class Person {
 
 ## Annotations
 
-| Annotation  | Target  | Value  | Description  |
-|-------------|-----------|-----------------------|
-| DefaultIri  | Class     | String | Assigns a default rule to generate IRIs for instances of the class. It is valid for RDF resources corresponding to this class (which may e.g. be stored in a triple store) to have IRIs that do not follow this pattern.
-| RdfType     | Class     | This annotation work in two ways: On the one hand, each resource corresponding to this class is associated with the provided type. On the other hand, all resources of that type define the set of class instances which can be created from the RDF data. |
-| Iri         | Property  | Assigns an IRI to a property |
+| Annotation  | Target    | Value  | Description  |
+|-------------|-----------|--------|--------------|
+| DefaultIri  | Class     | String | Assigns a default rule to generate IRIs for instances of the class. It is valid for RDF resources corresponding to this class (which may e.g. be stored in a triple store) to have IRIs that do not follow this pattern. |
+| RdfType     | Class     | -      | This annotation work in two ways: On the one hand, each resource corresponding to this class is associated with the provided type. On the other hand, all resources of that type define the set of class instances which can be created from the RDF data. |
+| Iri         | Property  | String | Assigns an IRI to a property |
 | MultiValued | Property (of type Collection)  | -      | Controls the RDF mapping strategy of Java collections. MultiValued creates for each item of the collection a triple with the property's corresponding IRI |
-| | |
+
 
 
 ## Registering Java-RDF mappings for primitive types
