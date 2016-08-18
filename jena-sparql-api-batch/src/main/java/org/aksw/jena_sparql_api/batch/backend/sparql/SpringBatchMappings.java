@@ -24,6 +24,7 @@ import org.aksw.jena_sparql_api.mapper.util.BeanUtils;
 import org.aksw.jena_sparql_api.sparql.ext.datatypes.RDFDatatypeDate;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
 import org.apache.jena.datatypes.TypeMapper;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Model;
 import org.springframework.batch.core.JobExecution;
 
@@ -122,14 +123,17 @@ public class SpringBatchMappings {
         
         RdfMapperEngine engine = new RdfMapperEngineImpl(sparqlService, typeFactory);
         
-        JobExecution entity = new JobExecution(0l);
+        JobExecution entity = new JobExecution(11l);
         engine.merge(entity);
         //engine.emitTriples(graph, entity);
+        
         
         Model model = sparqlService.getQueryExecutionFactory().createQueryExecution("CONSTRUCT WHERE { ?s ?p ?o }").execConstruct();
         System.out.println("Graph:");
         model.write(System.out, "TTL");
         
+        JobExecution lr = engine.find(JobExecution.class, NodeFactory.createURI("http://ex.org/11"));
+        System.out.println("Lookup result: " + lr);
         
         
         //EntityManagerJena em = new EntityManagerJena(engine)
