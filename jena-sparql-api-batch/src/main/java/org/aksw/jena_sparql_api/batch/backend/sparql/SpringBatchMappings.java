@@ -122,7 +122,7 @@ public class SpringBatchMappings {
         SparqlService sparqlService = FluentSparqlService.forModel().create();
         
         RdfMapperEngine engine = new RdfMapperEngineImpl(sparqlService, typeFactory);
-        
+        //engine.find(clazz, rootNode);
         JobExecution entity = new JobExecution(11l);
         engine.merge(entity);
         //engine.emitTriples(graph, entity);

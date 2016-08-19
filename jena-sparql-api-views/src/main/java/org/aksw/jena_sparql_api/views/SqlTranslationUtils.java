@@ -4,8 +4,8 @@ import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BinaryOperator;
 
-import org.aksw.commons.util.factory.Factory2;
 import org.aksw.jena_sparql_api.exprs_ext.E_StrConcatPermissive;
 import org.aksw.jena_sparql_api.utils.DnfUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
@@ -545,7 +545,7 @@ public class SqlTranslationUtils {
                 result = optimizeEqualsConcat(ta, tb);
             } else {
 
-                Factory2<Expr> exprFactory = ExprFactoryUtils.getFactory2(fnId);
+                BinaryOperator<Expr> exprFactory = ExprFactoryUtils.getFactory2(fnId);
                 assert exprFactory != null : "No expr factory for " + fnId;
 
                 result = optimizeOpConcat(ta, tb, exprFactory);
@@ -583,7 +583,7 @@ public class SqlTranslationUtils {
         return result;
     }
 
-    public static Expr optimizeOpConcat(Expr ta, Expr tb, Factory2<Expr> exprFactory) {
+    public static Expr optimizeOpConcat(Expr ta, Expr tb, BinaryOperator<Expr> exprFactory) {
 
         List<Expr> ors = splitOpConcat(ta, tb, exprFactory);
 
@@ -637,7 +637,7 @@ public class SqlTranslationUtils {
         return result;
     }
 
-    public static List<Expr> splitOpConcat(Expr ta, Expr tb, Factory2<Expr> exprFactory) {
+    public static List<Expr> splitOpConcat(Expr ta, Expr tb, BinaryOperator<Expr> exprFactory) {
 
         // Create a list of concat-arguments (if not a concat, treat the expression
         // as an argument
@@ -658,7 +658,7 @@ public class SqlTranslationUtils {
      * @param lb
      * @return
      */
-    public static List<Expr> splitOpConcat(List<Expr> la, List<Expr> lb, Factory2<Expr> exprFactory) {
+    public static List<Expr> splitOpConcat(List<Expr> la, List<Expr> lb, BinaryOperator<Expr> exprFactory) {
         List<Alignment> cs = SqlExprOptimizer.align(la, lb);
 
         List<Expr> ors = new ArrayList<Expr>();
@@ -678,7 +678,7 @@ public class SqlTranslationUtils {
                     }
 
                     // Create the inequality expression (e.g. a > b)
-                    Expr tmpExpr = exprFactory.create(ea, eb);
+                    Expr tmpExpr = exprFactory.apply(ea, eb);
 
                     // Prepend all 'head' conditions (e.g. ?x = ?y)
                     Expr expr;
@@ -908,19 +908,17 @@ public class SqlTranslationUtils {
     }
 
     public static Expr translateCompare(Expr a, Expr b, final Class<?> clazz) {
-        Factory2<Expr> factory = new Factory2<Expr>() {
-            @Override
-            public Expr create(final Expr a, final Expr b) {
+        BinaryOperator<Expr> factory = (x, y) -> {
                 try {
                     // FIXME We assume that jena's first constructor for
                     // E_LessThan, E_LessThanOrEqual, etc. classes is
                     // the one that takes two arguments of type Expr
                     Constructor<?> ctor = clazz.getConstructors()[0]; //getConstructor(a.getClass(), b.getClass());
-                    return (Expr)ctor.newInstance(a, b);
+                    return (Expr)ctor.newInstance(x, y);
                 } catch(Exception e) {
                     throw new RuntimeException(e);
                 }
-            }};
+            };
 
         return translateCompare(a, b, factory);
     }
@@ -944,7 +942,7 @@ public class SqlTranslationUtils {
      * @return
      */
 
-    public static Expr translateCompare(Expr ea, Expr eb, Factory2<Expr> factory) {
+    public static Expr translateCompare(Expr ea, Expr eb, BinaryOperator<Expr> factory) {
 
         E_RdfTerm a = SqlPrePusher.asRdfTerm(ea);
         E_RdfTerm b = SqlPrePusher.asRdfTerm(eb);
@@ -952,7 +950,7 @@ public class SqlTranslationUtils {
         if(a == null || b == null) {
             //throw new RuntimeException("Arguments are no ExprRdfTerms");
             logger.warn("Arguments are no ExprRdfTerms");
-            return factory.create(ea, eb);
+            return factory.apply(ea, eb);
         }
 
         NodeValue zero = NodeValue.makeInteger(0);
@@ -974,7 +972,7 @@ public class SqlTranslationUtils {
                     ExprUtils.andifyBalanced(new E_Equals(a.getType(), b.getType()), factory.create(a.getLexicalValue(), b.getLexicalValue()));
         */
         Expr result =
-            ExprUtils.andifyBalanced(factory.create(a.getLexicalValue(), b.getLexicalValue()));
+            ExprUtils.andifyBalanced(factory.apply(a.getLexicalValue(), b.getLexicalValue()));
 
         return result;
     }

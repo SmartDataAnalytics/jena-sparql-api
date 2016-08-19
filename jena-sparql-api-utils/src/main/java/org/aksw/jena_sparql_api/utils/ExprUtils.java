@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -16,7 +17,6 @@ import java.util.stream.StreamSupport;
 
 import org.aksw.commons.collections.IterableCollection;
 import org.aksw.commons.util.Pair;
-import org.aksw.commons.util.factory.Factory2;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_Equals;
@@ -229,13 +229,8 @@ public class ExprUtils {
     }
 
     public static Expr andifyBalanced(Iterable<Expr> exprs) {
-        return opifyBalanced(exprs, new Factory2<Expr>() {
-            @Override
-            public Expr create(Expr a, Expr b)
-            {
-                return new E_LogicalAnd(a, b);
-            }
-        });
+        Expr result = opifyBalanced(exprs, (a, b) -> new E_LogicalAnd(a, b));
+        return result;
     }
 
     /**
@@ -246,7 +241,7 @@ public class ExprUtils {
      * @param exprs
      * @return
      */
-    public static <T> T opifyBalanced(Iterable<T> exprs, Factory2<T> exprFactory) {
+    public static <T> T opifyBalanced(Iterable<T> exprs, BinaryOperator<T> exprFactory) {
         if(exprs.iterator().hasNext() == false) { //isEmpty()) {
             return null;
         }
@@ -261,7 +256,7 @@ public class ExprUtils {
                 if(left == null) {
                     left = expr;
                 } else {
-                    T newExpr = exprFactory.create(left, expr);
+                    T newExpr = exprFactory.apply(left, expr);
                     next.add(newExpr);
                     left = null;
                 }
@@ -282,15 +277,9 @@ public class ExprUtils {
     }
 
     public static Expr orifyBalanced(Iterable<Expr> exprs) {
-        return opifyBalanced(exprs, new Factory2<Expr>() {
-            @Override
-            public Expr create(Expr a, Expr b)
-            {
-                return new E_LogicalOr(a, b);
-            }
-        });
+        Expr result = opifyBalanced(exprs, (a, b) -> new E_LogicalOr(a, b));
+        return result;
     }
-
 
 
 

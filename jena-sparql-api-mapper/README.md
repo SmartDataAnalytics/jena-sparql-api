@@ -9,7 +9,7 @@ Hence, it is possible to e.g. annotate a class with a default expression in orde
 ## A simple example
 
 
-```
+```java
 // A simple class with annotations
 @RdfType("ex:Person")
 @DefaultIri("ex:#{id}")
@@ -33,6 +33,47 @@ class Person {
 | RdfType     | Class     | -      | This annotation work in two ways: On the one hand, each resource corresponding to this class is associated with the provided type. On the other hand, all resources of that type define the set of class instances which can be created from the RDF data. |
 | Iri         | Property  | String | Assigns an IRI to a property |
 | MultiValued | Property (of type Collection)  | -      | Controls the RDF mapping strategy of Java collections. MultiValued creates for each item of the collection a triple with the property's corresponding IRI |
+
+
+## Usage
+
+
+```java
+SparqlService sparqlService = FluentSparqlService.forModel().create();
+
+Prologue prologue = new Prologue();
+// Add prefix declarations to prologue
+
+RdfTypeFactory typeFactory =  RdfTypeFactoryImpl.createDefault(prologue);
+RdfMapperEngine engine = new RdfMapperEngineImpl(sparqlService);
+
+Person entity = new Person(1);
+engine.merge(entity);
+
+
+// Write out the triples
+Model model = sparqlService.getQueryExecutionFactory().createQueryExecution("CONSTRUCT WHERE { ?s ?p ?o }").execConstruct();
+model.write(System.out, "TTL");
+
+// Look up a class with a certain ID
+Person p = engine.find(Person.class, "ex:0");
+System.out.println("Found: " + p);
+
+```
+
+### Constraints
+
+#### Filtering by SPARQL constraints.
+It is possible to retrict the set of resources for which to obtain their corresponding Java instances by a SPARQL concept:
+
+```java
+Concept concept = Concept.parse("?s ex:id ?id . FILTER(?id < 10)", "s", prologue);
+List<Person> people = engine.list(Person.class, concept);
+
+```
+
+#### Filtering using criteria
+TODO: Implement parts of JPA's criteria API and create SPARQL concepts from the API calls.
 
 
 
@@ -72,42 +113,10 @@ Whereas EntityOps provides a newInstance() method, EntityModel allows setting a 
 ```java
 EntityModel entityModel = EntityModel.createDefaultModel(Person.class);
 // Note: Person does not have a default constructor
-entityModel.setNewInstance(() -> new JobExecution(1, "John Doe"));
+entityModel.setNewInstance(() -> new Person(1, "John Doe"));
 ```
 
 ### Mocking
 TODO: We could extend the createDefaultModel function to automatically mock constructor arguments - e.g. Mockito
-
-
-```java
-// A simple class with annotations
-@DefaultIri("ex:#{id}")
-class Person {
-  @Iri("ex:id")
-  private int id;
-
-  @Iri("ex:name")
-  private String name;
-
-  // getters and setters omitted for brevity
-}
-
-SparqlService sparqlService = FluentSparqlService.forModel().create();a
-
-Prologue prologue = new Prologue();
-// Add prefix declarations to prologue
-
-RdfTypeFactory typeFactory =  RdfTypeFactoryImpl.createDefault(prologue);
-RdfMapperEngine engine = new RdfMapperEngineImpl(sparqlService);
-
-Person entity = new Person(1);
-engine.merge(entity);
-
-
-// Write out the triples
-Model model = sparqlService.getQueryExecutionFactory().createQueryExecution("CONSTRUCT WHERE { ?s ?p ?o }").execConstruct();
-model.write(System.out, "TTL");
-
-```
 
 

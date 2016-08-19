@@ -6,8 +6,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.BinaryOperator;
 
-import org.aksw.commons.util.factory.Factory2;
 import org.aksw.commons.util.reflect.MultiMethod;
 import org.aksw.jena_sparql_api.normal_form.Clause;
 import org.aksw.jena_sparql_api.normal_form.NestedNormalForm;
@@ -86,14 +86,14 @@ public class FilterPlacementOptimizer2 {
 
     private static final Logger logger = LoggerFactory.getLogger(FilterPlacementOptimizer2.class);
 
-    public static Factory2<Op> joinFactory = new Factory2<Op>() {
-        @Override
-        public Op create(Op a, Op b) {
-            Op result = OpJoin.create(a, b);
-            return result;
-        }
-
-    };
+//    public static Factory2<Op> joinFactory = new Factory2<Op>() {
+//        @Override
+//        public Op create(Op a, Op b) {
+//            Op result = OpJoin.create(a, b);
+//            return result;
+//        }
+//
+//    };
 
 
     public static Op optimizeStatic(Op op) {
@@ -148,7 +148,7 @@ public class FilterPlacementOptimizer2 {
 
     public Op _optimize(OpJoin op, RestrictionManagerImpl cnf) {
 
-        Op result = handleLeftJoin(op.getLeft(), op.getRight(), cnf, joinFactory);
+        Op result = handleLeftJoin(op.getLeft(), op.getRight(), cnf, OpJoin::create);
         return result;
 
     }
@@ -385,31 +385,12 @@ public class FilterPlacementOptimizer2 {
 
 
     public Op _optimize(final OpLeftJoin op, RestrictionManagerImpl cnf) {
-
-        Factory2<Op> factory = new Factory2<Op>() {
-            @Override
-            public Op create(Op a, Op b) {
-                Op result = OpLeftJoin.create(a, b, op.getExprs());
-                return result;
-            }
-
-        };
-
-        Op result = handleLeftJoin(op.getLeft(), op.getRight(), cnf, factory);
+        Op result = handleLeftJoin(op.getLeft(), op.getRight(), cnf, (a, b) -> OpLeftJoin.create(a, b, op.getExprs()));
         return result;
     }
 
     public Op _optimize(OpConditional op, RestrictionManagerImpl cnf) {
-        Factory2<Op> factory = new Factory2<Op>() {
-            @Override
-            public Op create(Op a, Op b) {
-                Op result = new OpConditional(a, b);
-                return result;
-            }
-
-        };
-
-        Op result = handleLeftJoin(op.getLeft(), op.getRight(), cnf, factory);
+        Op result = handleLeftJoin(op.getLeft(), op.getRight(), cnf, OpConditional::new);
         return result;
     }
 
@@ -479,7 +460,7 @@ public class FilterPlacementOptimizer2 {
      * Even the old version only considered restrictions on the left hand side
      *
      */
-    public Op handleLeftJoin(Op left, Op right, RestrictionManagerImpl cnf, Factory2<Op> factory) {
+    public Op handleLeftJoin(Op left, Op right, RestrictionManagerImpl cnf, BinaryOperator<Op> factory) {
         // Only push those expression on the, that do not contain any
         // variables of the right side
 
@@ -497,14 +478,14 @@ public class FilterPlacementOptimizer2 {
         Op newRight = optimize(right, rightRm);
 
         //Op leftJoin = OpLeftJoin.create(newLeft, newRight, new ExprList());
-        Op leftJoin = factory.create(newLeft, newRight);
+        Op leftJoin = factory.apply(newLeft, newRight);
 
         Op result = surroundWithFilterIfNeccessary(leftJoin, np);
         return result;
     }
 
 
-    public Op handleLeftJoinOld(Op left, Op right, RestrictionManagerImpl cnf, Factory2<Op> factory) {
+    public Op handleLeftJoinOld(Op left, Op right, RestrictionManagerImpl cnf, BinaryOperator<Op> factory) {
         // Only push those expression on the, that do not contain any
         // variables of the right side
 
@@ -541,7 +522,7 @@ public class FilterPlacementOptimizer2 {
         Op newRight = optimize(right, leftRm);
 
         //Op leftJoin = OpLeftJoin.create(newLeft, newRight, new ExprList());
-        Op leftJoin = factory.create(newLeft, newRight);
+        Op leftJoin = factory.apply(newLeft, newRight);
 
         Op result = surroundWithFilterIfNeccessary(leftJoin, np);
         return result;

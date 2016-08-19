@@ -7,10 +7,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BinaryOperator;
+import java.util.function.UnaryOperator;
 
 import org.aksw.commons.util.Pair;
-import org.aksw.commons.util.factory.Factory1;
-import org.aksw.commons.util.factory.Factory2;
 import org.aksw.commons.util.reflect.MultiMethod;
 import org.aksw.jena_sparql_api.utils.DnfUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
  */
 interface InverseFunctionManager<T>
 {
-    public Factory1<Expr> getInverse(String functionIri);
+    public UnaryOperator<Expr> getInverse(String functionIri);
 }
 
 
@@ -58,30 +58,22 @@ class InverseFunctionManagerImpl
     }
 
     // Maps a function label to a factory for creating its inverse
-    private Map<String, Factory1<Expr>> inverseFactory = new HashMap<String, Factory1<Expr>>();
+    private Map<String, UnaryOperator<Expr>> inverseFactory = new HashMap<String, UnaryOperator<Expr>>();
 
     public InverseFunctionManagerImpl() {
 
         // urlEncode^-1 = urlDecode
-        inverseFactory.put(SparqlifyConstants.urlEncode, new Factory1<Expr>() {
-            @Override
-            public Expr create(Expr arg) {
-                return new E_Function(SparqlifyConstants.urlDecode, new ExprList(arg));
-            }
-        });
+        inverseFactory.put(SparqlifyConstants.urlEncode,
+                (arg) -> new E_Function(SparqlifyConstants.urlDecode, new ExprList(arg))); 
 
 
         // urlDecode^-1 = urlEncode
-        inverseFactory.put(SparqlifyConstants.urlDecode, new Factory1<Expr>() {
-            @Override
-            public Expr create(Expr arg) {
-                return new E_Function(SparqlifyConstants.urlEncode, new ExprList(arg));
-            }
-        });
+        inverseFactory.put(SparqlifyConstants.urlDecode,
+                (arg) -> new E_Function(SparqlifyConstants.urlEncode, new ExprList(arg)));
 
     }
 
-    public Factory1<Expr> getInverse(String functionIri) {
+    public UnaryOperator<Expr> getInverse(String functionIri) {
         return inverseFactory.get(functionIri);
     }
 }
@@ -217,19 +209,17 @@ public class SqlExprOptimizer {
     }
 
     public static Expr optimizeCompare(Expr a, Expr b, final Class<?> clazz) {
-        Factory2<Expr> factory = new Factory2<Expr>() {
-            @Override
-            public Expr create(final Expr a, final Expr b) {
+        BinaryOperator<Expr> factory = (x, y) -> {
                 try {
                     // FIXME We assume that jena's first constructor for
                     // E_LessThan, E_LessThanOrEqual, etc. classes is
                     // the one that takes two arguments of type Expr
                     Constructor<?> ctor = clazz.getConstructors()[0]; //getConstructor(a.getClass(), b.getClass());
-                    return (Expr)ctor.newInstance(a, b);
+                    return (Expr)ctor.newInstance(x, y);
                 } catch(Exception e) {
                     throw new RuntimeException(e);
                 }
-            }};
+            };
 
         return optimizeCompare(a, b, factory);
     }
@@ -252,7 +242,7 @@ public class SqlExprOptimizer {
      * @param exprFactory Factory for creating a comparision expression
      * @return
      */
-    public static Expr optimizeCompare(Expr ea, Expr eb, Factory2<Expr> factory) {
+    public static Expr optimizeCompare(Expr ea, Expr eb, BinaryOperator<Expr> factory) {
 
         Expr oa = optimizeMM(ea);
         Expr ob = optimizeMM(eb);
@@ -264,7 +254,7 @@ public class SqlExprOptimizer {
         if(a == null || b == null) {
             //throw new RuntimeException("Arguments are no ExprRdfTerms");
             logger.warn("Arguments are no ExprRdfTerms");
-            return factory.create(oa, ob);
+            return factory.apply(oa, ob);
         }
 
         NodeValue zero = NodeValue.makeInteger(0);
@@ -286,7 +276,7 @@ public class SqlExprOptimizer {
                     ExprUtils.andifyBalanced(new E_Equals(a.getType(), b.getType()), factory.create(a.getLexicalValue(), b.getLexicalValue()));
         */
         Expr result =
-            ExprUtils.andifyBalanced(factory.create(a.getLexicalValue(), b.getLexicalValue()));
+            ExprUtils.andifyBalanced(factory.apply(a.getLexicalValue(), b.getLexicalValue()));
 
         return result;
     }
@@ -306,7 +296,7 @@ public class SqlExprOptimizer {
         ExprFunction function = null;
         boolean swapArgs = false;
 
-        Factory1<Expr> factory;
+        UnaryOperator<Expr> factory;
 
         if(a.isConstant() && b.isFunction()) {
             constant = a.getConstant();
@@ -325,7 +315,7 @@ public class SqlExprOptimizer {
             return Pair.create(a, b);
         }
 
-        Expr invConst = factory.create(constant);
+        Expr invConst = factory.apply(constant);
         Expr resultConst = org.apache.jena.sparql.util.ExprUtils.eval(invConst);
 
         Expr resultFunc = function.getArg(1);
