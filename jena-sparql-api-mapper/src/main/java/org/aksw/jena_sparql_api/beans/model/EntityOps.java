@@ -19,4 +19,14 @@ public interface EntityOps {
         Set<String> result = getProperties().stream().map(p -> p.getName()).collect(Collectors.toSet());
         return result;
     }
+    
+    public static void copy(EntityOps sourceOps, EntityOps targetOps, Object fromEntity, Object toEntity) {
+        for(PropertyOps toOps : targetOps.getProperties()) {
+            String name = toOps.getName();
+            PropertyOps fromOps = sourceOps.getProperty(name);
+            
+            Object value = fromOps.getValue(fromEntity);
+            toOps.setValue(toEntity, value);
+        }
+    }
 }

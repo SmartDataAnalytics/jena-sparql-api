@@ -46,4 +46,11 @@ public class RdfTypeLiteralTyped
         Object result = node.getLiteralValue();
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "RdfTypeLiteralTyped [rdfDatatype=" + rdfDatatype + "]";
+    }
+    
+    
 }

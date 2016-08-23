@@ -1,6 +1,5 @@
 package org.aksw.jena_sparql_api.batch.backend.sparql;
 
-import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -56,17 +55,7 @@ public class SpringBatchMappings {
             
             entityModel.setAnnotationFinder((clazz) -> {
                 if(clazz.equals(DefaultIri.class)) {
-                    DefaultIri x = new DefaultIri() {
-                        @Override
-                        public Class<? extends Annotation> annotationType() {
-                            return null;
-                        }
-
-                        @Override
-                        public String value() {
-                            return "http://ex.org/#{id}";
-                        }
-                    };
+                    DefaultIri x = new DefaultIriAnnotation("http://ex.org/#{id}");
                     return x;
                 };
                 return null;                
@@ -77,17 +66,7 @@ public class SpringBatchMappings {
                     if(clazz.equals(Iri.class)) {
                         String str = pmap.get(pm.getName());
                         if(str != null) {
-                            Iri x = new Iri() {
-                                @Override
-                                public Class<? extends Annotation> annotationType() {
-                                    return null;
-                                }
-    
-                                @Override
-                                public String value() {
-                                    return str;
-                                }
-                            };
+                            Iri x = new IriAnnotation(str);
                             return x;
                         }
                     };
@@ -134,6 +113,12 @@ public class SpringBatchMappings {
         
         JobExecution lr = engine.find(JobExecution.class, NodeFactory.createURI("http://ex.org/11"));
         System.out.println("Lookup result: " + lr);
+        
+        lr.setVersion(111);
+        engine.merge(lr);
+
+        System.out.println("Graph:");
+        sparqlService.getQueryExecutionFactory().createQueryExecution("CONSTRUCT WHERE { ?s ?p ?o }").execConstruct().write(System.out, "TTL");
         
         
         //EntityManagerJena em = new EntityManagerJena(engine)

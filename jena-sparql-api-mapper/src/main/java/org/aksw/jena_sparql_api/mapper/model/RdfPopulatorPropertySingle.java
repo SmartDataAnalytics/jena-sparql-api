@@ -99,9 +99,18 @@ public class RdfPopulatorPropertySingle
 //		}
     }
 
+    @Override
+    public String toString() {
+        return "RdfPopulatorPropertySingle [propertyName=" + propertyName
+                + ", predicate=" + predicate + ", targetRdfType="
+                + targetRdfType + "]";
+    }
+
 //	@Override
 //	public Object readPropertyValue(Graph graph, Node subject) {
 //		// TODO Auto-generated method stub
 //		return null;
 //	}
+    
+    
 }

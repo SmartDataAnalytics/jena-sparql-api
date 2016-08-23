@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.aksw.commons.collections.diff.Diff;
+import org.aksw.jena_sparql_api.beans.model.EntityOps;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
@@ -244,6 +245,7 @@ public class RdfMapperEngineImpl
         Object entity = persistenceContext.entityFor(new TypedNode(rootRdfType, rootNode));
 
         if(entity != tmpEntity) {
+            //EntityOps.copy()
             BeanUtils.copyProperties(tmpEntity, entity);
         }
 
