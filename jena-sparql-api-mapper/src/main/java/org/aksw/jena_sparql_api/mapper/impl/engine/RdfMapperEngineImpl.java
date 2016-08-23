@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.mapper.impl.engine;
 
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +11,7 @@ import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
+import org.aksw.jena_sparql_api.core.utils.ServiceUtils;
 import org.aksw.jena_sparql_api.core.utils.UpdateDiffUtils;
 import org.aksw.jena_sparql_api.core.utils.UpdateExecutionUtils;
 import org.aksw.jena_sparql_api.lookup.LookupService;
@@ -32,7 +33,6 @@ import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.aksw.jena_sparql_api.util.frontier.Frontier;
 import org.aksw.jena_sparql_api.util.frontier.FrontierImpl;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
-import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.atlas.lib.Sink;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.GraphUtil;
@@ -45,11 +45,7 @@ import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.core.Quad;
-import org.apache.jena.sparql.expr.E_Equals;
-import org.apache.jena.sparql.expr.ExprVar;
-import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.graph.GraphFactory;
-import org.apache.jena.sparql.syntax.ElementFilter;
 import org.springframework.beans.BeanUtils;
 
 public class RdfMapperEngineImpl
@@ -106,12 +102,30 @@ public class RdfMapperEngineImpl
 //Collection<TypedNode> typedNodes
     @Override
     public <T> List<T> list(Class<T> clazz, Concept filterConcept) {
+        QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
 
+        List<Node> nodes = ServiceUtils.fetchList(qef, filterConcept);
+        
+        List<T> result = list(clazz, nodes);
+        return result;
+    }
+    
+    public <T> List<T> list(Class<T> clazz, List<Node> nodes) {
+        List<T> result = new ArrayList<T>(nodes.size());
+        for(Node node : nodes) {
+            T entity = find( clazz, node);
+            result.add(entity);
+        }
+        return result;
+    }
+    
+    public <T> T find(Class<T> clazz, Node rootNode) {        
+        
         // TODO Cluster nodes by type for efficiency
         
         //for(TypedNode typeNode : typedNodes) {
            RdfType rootRdfType = typeFactory.forJavaType(clazz);
-           Node rootNode = null;
+//           Node rootNode = null;
 //            Node rootNode = typeNode.getNode();
     
             //Frontier<TypedNode> frontier = new FrontierImpl<TypedNode>();
@@ -145,7 +159,7 @@ public class RdfMapperEngineImpl
         //            Map<Node, DatasetGraph> map = ls.apply(Collections.singleton(node));
     
     
-                    MappedConcept<Graph> mc = ResourceShape.createMappedConcept(shape, filterConcept, false);
+                    MappedConcept<Graph> mc = ResourceShape.createMappedConcept(shape, null, false);
                     LookupService<Node, Graph> ls = LookupServiceUtils.createLookupService(qef, mc);
                     Map<Node, Graph> map = ls.apply(Collections.singleton(node));
     
@@ -178,27 +192,26 @@ public class RdfMapperEngineImpl
         @SuppressWarnings("unchecked")
         T result = (T)persistenceContext.getEntity(first);
 
-        //return result;
-        return null;
-    }
-    
-    
-    @Override
-    public <T> T find(Class<T> clazz, Node rootNode) {
-        Concept c = new Concept(new ElementFilter(new E_Equals(new ExprVar(Vars.s), NodeValue.makeNode(rootNode))), Vars.s);
-        List<T> tmp = list(clazz, c);
-        
-        T result;
-
-        int n = tmp.size();
-        switch(n) {
-        case 0: result = null; break;
-        case 1: result = tmp.get(0); break;
-        default: throw new RuntimeException("Only a single entity expected - got " + n + ": " + tmp);
-        }
-        
         return result;
     }
+    
+//    
+//    @Override
+//    public <T> T find(Class<T> clazz, Node rootNode) {
+//        Concept c = new Concept(new ElementFilter(new E_Equals(new ExprVar(Vars.s), NodeValue.makeNode(rootNode))), Vars.s);
+//        List<T> tmp = list(clazz, c);
+//        
+//        T result;
+//
+//        int n = tmp.size();
+//        switch(n) {
+//        case 0: result = null; break;
+//        case 1: result = tmp.get(0); break;
+//        default: throw new RuntimeException("Only a single entity expected - got " + n + ": " + tmp);
+//        }
+//        
+//        return result;
+//    }
 
 
 //    public MappedConcept<DatasetGraph> getMappedQuery(ResourceShapeBuilder builder, RdfClass rdfClass) {
