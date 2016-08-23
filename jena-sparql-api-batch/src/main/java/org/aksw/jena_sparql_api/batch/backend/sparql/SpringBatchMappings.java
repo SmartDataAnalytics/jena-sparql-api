@@ -26,6 +26,7 @@ import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Model;
 import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.item.ExecutionContext;
 
 public class SpringBatchMappings {
     public static void main(String[] args) {
@@ -45,6 +46,38 @@ public class SpringBatchMappings {
         
         {
             Set<String> excludeProperties = new HashSet<>(Arrays.asList("executionContext", "exitStatus", "status"));
+
+            Map<String, String> pmap = BeanUtils.getPropertyNames(new ExecutionContext()).stream()
+                    .filter(p -> !excludeProperties.contains(p))
+                .collect(Collectors.toMap(e -> e, e -> "http://batch.aksw.org/ontology/" + e));
+            
+            EntityModel entityModel = EntityModel.createDefaultModel(ExecutionContext.class);
+            
+            entityModel.setAnnotationFinder((clazz) -> {
+                if(clazz.equals(DefaultIri.class)) {
+                    DefaultIri x = new DefaultIriAnnotation("http://ex.org/#{id}");
+                    return x;
+                };
+                return null;                
+            });
+            
+            for(PropertyModel pm : entityModel.getProperties()) {
+                pm.setAnnotationFinder((clazz) -> {
+                    if(clazz.equals(Iri.class)) {
+                        String str = pmap.get(pm.getName());
+                        if(str != null) {
+                            Iri x = new IriAnnotation(str);
+                            return x;
+                        }
+                    };
+                    return null;
+                });
+            }
+                        
+        }
+        
+        {
+            Set<String> excludeProperties = new HashSet<>(Arrays.asList("exitStatus", "status"));
             
             Map<String, String> pmap = BeanUtils.getPropertyNames(new JobExecution(0l)).stream()
                     .filter(p -> !excludeProperties.contains(p))
@@ -103,6 +136,12 @@ public class SpringBatchMappings {
         RdfMapperEngine engine = new RdfMapperEngineImpl(sparqlService, typeFactory);
         //engine.find(clazz, rootNode);
         JobExecution entity = new JobExecution(11l);
+        ExecutionContext ec = new ExecutionContext();
+        ec.put("hello", "world");
+        
+        entity.setExecutionContext(ec);
+        
+        
         engine.merge(entity);
         //engine.emitTriples(graph, entity);
         

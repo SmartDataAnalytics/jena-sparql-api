@@ -3,8 +3,7 @@ package org.aksw.jena_sparql_api.mapper.model;
 import java.util.Collections;
 import java.util.Set;
 
-import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
-
+import org.aksw.jena_sparql_api.beans.model.PropertyOps;
 import org.apache.jena.graph.Node;
 
 public abstract class RdfPopulatorPropertyBase
@@ -18,7 +17,9 @@ public abstract class RdfPopulatorPropertyBase
     /**
      * The (java) name of the attribute
      */
-    protected String propertyName;
+    //protected EntityOps entityOps;
+    //protected String propertyName;
+    protected PropertyOps propertyOps;
     protected Node predicate;
     //protected BeanWrapper owningBean;
 
@@ -29,6 +30,7 @@ public abstract class RdfPopulatorPropertyBase
 
     protected RdfType targetRdfType;
 
+    transient protected Set<String> propertyNames;
 //    protected String fetchMode;
 
 //    /**
@@ -39,17 +41,20 @@ public abstract class RdfPopulatorPropertyBase
 //    protected RdfType rdfType;
 
 
-    public RdfPopulatorPropertyBase(String propertyName, Node predicate, RdfType targetRdfType) { //, String fetchMode) {
+    public RdfPopulatorPropertyBase(PropertyOps propertyOps, Node predicate, RdfType targetRdfType) { //, String fetchMode) {
         super();
-        this.propertyName = propertyName;
+        //this.propertyName = propertyName;
+        this.propertyOps = propertyOps;
         this.predicate = predicate;
         this.targetRdfType = targetRdfType;
+        
+        this.propertyNames = Collections.singleton(propertyOps.getName());
 //        this.fetchMode = fetchMode;
     }
 
-    public String getPropertyName() {
-        return propertyName;
-    }
+//    public String getPropertyName() {
+//        return propertyOps.getName();
+//    }
 
 //    public Relation getRelation() {
 //        return relation;
@@ -59,11 +64,14 @@ public abstract class RdfPopulatorPropertyBase
 //        return targetRdfType;
 //    }
 
+    @Override
+    public PropertyOps getPropertyOps() {
+        return propertyOps;
+    }
 
 	@Override
-	public Set<String> getPropertyNames() {
-		Set<String> result = Collections.singleton(propertyName);
-		return result;
+	public Set<String> getPropertyNames() {		
+		return propertyNames;
 	}
 
 

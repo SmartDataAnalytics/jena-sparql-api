@@ -1,16 +1,13 @@
 package org.aksw.jena_sparql_api.mapper.model;
 
-import java.beans.PropertyDescriptor;
 import java.util.Collection;
 
+import org.aksw.jena_sparql_api.beans.model.PropertyOps;
 import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.mapper.context.TypedNode;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.apache.jena.atlas.lib.Sink;
-import org.springframework.beans.BeanWrapper;
-import org.springframework.beans.BeanWrapperImpl;
-
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -42,16 +39,16 @@ import org.apache.jena.graph.Triple;
 public class RdfPopulatorPropertyMulti
     extends RdfPopulatorPropertyBase
 {
-    public RdfPopulatorPropertyMulti(String propertyName, Node predicate, RdfType targetRdfType) {
-        super(propertyName, predicate, targetRdfType);
+    public RdfPopulatorPropertyMulti(PropertyOps propertyOps, Node predicate, RdfType targetRdfType) {
+        super(propertyOps, predicate, targetRdfType);
     }
 
 
     @Override
     public void emitTriples(RdfPersistenceContext persistenceContext, RdfEmitterContext emitterContext, Graph out, Object entity, Node subject) {
 
-        BeanWrapper beanWrapper = new BeanWrapperImpl(entity);
-        Collection<?> items = (Collection<?>)beanWrapper.getPropertyValue(propertyName);
+        //BeanWrapper beanWrapper = new BeanWrapperImpl(entity);
+        Collection<?> items = (Collection<?>)propertyOps.getValue(entity);//beanWrapper.getPropertyValue(propertyName);
 
         for(Object item : items) {
             Node o = targetRdfType.getRootNode(item);
@@ -60,7 +57,7 @@ public class RdfPopulatorPropertyMulti
             out.add(t);
 
 
-            emitterContext.add(item, entity, propertyName);
+            emitterContext.add(item, entity, propertyOps.getName());
 
 //	        if(!out.contains(t)) {
 //
@@ -75,14 +72,14 @@ public class RdfPopulatorPropertyMulti
      * @param propertyName
      * @return
      */
-    public static Object getOrCreateBean(Object entity, String propertyName) {
-        BeanWrapper beanWrapper = new BeanWrapperImpl(entity);
-        Object result = beanWrapper.getPropertyValue(propertyName);
+    public static Object getOrCreateBean(Object entity, PropertyOps propertyOps) {
+        //BeanWrapper beanWrapper = new BeanWrapperImpl(entity);
+        Object result = propertyOps.getValue(entity); //beanWrapper.getPropertyValue(propertyName);
 
         if(result == null) {
 
-            PropertyDescriptor pd = beanWrapper.getPropertyDescriptor(propertyName);
-            Class<?> collectionType = pd.getPropertyType();
+            //PropertyDescriptor pd = beanWrapper.getPropertyDescriptor(propertyName);
+            Class<?> collectionType = propertyOps.getType(); //pd.getPropertyType();
 
             try {
                 result = collectionType.newInstance();
@@ -90,7 +87,8 @@ public class RdfPopulatorPropertyMulti
                 throw new RuntimeException(e);
             }
 
-            beanWrapper.setPropertyValue(propertyName, result);
+            //beanWrapper.setPropertyValue(propertyName, result);
+            propertyOps.setValue(entity, result);
         }
         return result;
     }
@@ -99,7 +97,7 @@ public class RdfPopulatorPropertyMulti
     @Override
     public void populateEntity(RdfPersistenceContext populationContext, Object bean, Graph graph, Node subject, Sink<Triple> outSink) {
         // Creates a collection under the given property
-        Collection<? super Object> collection = (Collection<? super Object>)getOrCreateBean(bean, propertyName);
+        Collection<? super Object> collection = (Collection<? super Object>)getOrCreateBean(bean, propertyOps);
 
         for(Triple t : graph.find(subject, predicate, Node.ANY).toSet()) {
             outSink.send(t);
@@ -125,4 +123,5 @@ public class RdfPopulatorPropertyMulti
 //			targetRdfType.build(targetShape);
 //		}
     }
+
 }

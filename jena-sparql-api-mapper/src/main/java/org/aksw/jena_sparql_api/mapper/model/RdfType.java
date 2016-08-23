@@ -1,10 +1,10 @@
 package org.aksw.jena_sparql_api.mapper.model;
 
+import org.aksw.jena_sparql_api.beans.model.EntityOps;
 import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.apache.jena.atlas.lib.Sink;
-
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -56,6 +56,8 @@ public interface RdfType
      */
     Class<?> getEntityClass();
 
+    //EntityOps getEntityOps();
+    
     /**
      * Return the root node that corresponds to the given object in regard to this RdfType.
      * In the case of classes, this is an IRI node, whereas for literals this is

@@ -2,31 +2,34 @@ package org.aksw.jena_sparql_api.mapper.model;
 
 import java.util.List;
 
+import org.aksw.jena_sparql_api.beans.model.PropertyOps;
 import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.mapper.context.TypedNode;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.apache.jena.atlas.lib.Sink;
-import org.springframework.beans.BeanWrapper;
-import org.springframework.beans.BeanWrapperImpl;
-
-import com.google.common.base.Defaults;
-import com.google.common.collect.Iterables;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 
+import com.google.common.base.Defaults;
+import com.google.common.collect.Iterables;
+
 public class RdfPopulatorPropertySingle
     extends RdfPopulatorPropertyBase
 {
-    public RdfPopulatorPropertySingle(String propertyName, Node predicate, RdfType targetRdfType) { // String fetchMode) {
-        super(propertyName, predicate, targetRdfType);
+    public RdfPopulatorPropertySingle(PropertyOps propertyOps, Node predicate, RdfType targetRdfType) { // String fetchMode) {
+        super(propertyOps, predicate, targetRdfType);
     }
 
     @Override
     public void emitTriples(RdfPersistenceContext persistenceContext, RdfEmitterContext emitterContext, Graph out, Object entity, Node subject) {
-        BeanWrapper beanWrapper = new BeanWrapperImpl(entity);
-        Object value = beanWrapper.getPropertyValue(propertyName);
+        //targetRdfType.getTypeFactory().forJavaType(targetRdfType.getEntityClass()).get
+        Object value = propertyOps.getValue(entity);
+        
+        //Object value = targetRdfType.get
+        //        BeanWrapper beanWrapper = new BeanWrapperImpl(entity);
+//        Object value = beanWrapper.getPropertyValue(propertyName);
 
         if(value != null) {
 
@@ -78,15 +81,12 @@ public class RdfPopulatorPropertySingle
                 ;//rdfType.createJavaObject(node);
 
 
-
-        BeanWrapper beanWrapper = new BeanWrapperImpl(bean);
-
         // We cannot set property values of primitive types to null
-        Class<?> valueType = beanWrapper.getPropertyType(propertyName);
+        Class<?> valueType = propertyOps.getType();
         if(value == null && valueType.isPrimitive()) {
             value = Defaults.defaultValue(valueType);
         }
-        beanWrapper.setPropertyValue(propertyName, value);
+        propertyOps.setValue(bean, value);
     }
 
     @Override
@@ -101,9 +101,14 @@ public class RdfPopulatorPropertySingle
 
     @Override
     public String toString() {
-        return "RdfPopulatorPropertySingle [propertyName=" + propertyName
+        return "RdfPopulatorPropertySingle [propertyName=" + propertyOps.getName()
                 + ", predicate=" + predicate + ", targetRdfType="
                 + targetRdfType + "]";
+    }
+
+    @Override
+    public PropertyOps getPropertyOps() {
+        return propertyOps;
     }
 
 //	@Override

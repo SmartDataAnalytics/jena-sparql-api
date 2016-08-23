@@ -8,6 +8,7 @@ import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -24,6 +25,7 @@ public class EntityModel
     protected Map<String, PropertyModel> propertyOps;
     
     protected Function<Class<?>, Object> annotationFinder;
+    //protected Set<Class<?>> annotationOverrides;
     
     public EntityModel() {
         this(null, null, null);

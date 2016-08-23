@@ -395,8 +395,8 @@ public class RdfTypeFactoryImpl
         //RdfProperty result = new RdfPropertyDatatypeOld(beanInfo, pd, null, predicate, rdfValueMapper);
         RdfPropertyDescriptor descriptor = new RdfPropertyDescriptor(propertyName, targetRdfType, "");
         RdfPopulatorProperty populator = isCollectionProperty
-                ? new RdfPopulatorPropertyMulti(propertyName, predicate, targetRdfType)
-                : new RdfPopulatorPropertySingle(propertyName, predicate, targetRdfType)
+                ? new RdfPopulatorPropertyMulti(pd, predicate, targetRdfType)
+                : new RdfPopulatorPropertySingle(pd, predicate, targetRdfType)
                 ;
 
         rdfClass.addPropertyDescriptor(descriptor);
