@@ -1,10 +1,10 @@
 package org.aksw.jena_sparql_api.mapper.model;
 
-import org.aksw.jena_sparql_api.beans.model.EntityOps;
+import java.util.function.Consumer;
+
 import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
-import org.apache.jena.atlas.lib.Sink;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -103,12 +103,12 @@ public interface RdfType
 
 
     // TODO It seems it should be this way: persistenceContext.populateEntity(entity, graph, rdfType),
-    void populateEntity(RdfPersistenceContext persistenceContext, Object entity, Graph inGraph, Sink<Triple> outSink); //, Node g, Node s);
+    void populateEntity(RdfPersistenceContext persistenceContext, Object entity, Node subject, Graph inGraph, Consumer<Triple> sink); //, Node g, Node s);
 
     // These two methods only make sense on classes; but not on primitive types ; maybe move down in the type hierarchy.
 //    void populateEntity(RdfPopulationContext populationContext, Object bean, DatasetGraph datasetGraph); //, Node g, Node s);
 
 
     //DatasetGraph createDatasetGraph(Object obj, Node g);
-    void emitTriples(RdfPersistenceContext persistenceContext, RdfEmitterContext emitterContext, Graph out, Object obj);
+    void emitTriples(RdfPersistenceContext persistenceContext, RdfEmitterContext emitterContext, Object entity, Node subject, Consumer<Triple> sink);
 }

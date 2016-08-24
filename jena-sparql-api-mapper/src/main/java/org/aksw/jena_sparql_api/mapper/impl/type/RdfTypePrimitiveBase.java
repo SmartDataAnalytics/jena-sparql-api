@@ -1,12 +1,13 @@
 package org.aksw.jena_sparql_api.mapper.impl.type;
 
+import java.util.function.Consumer;
+
 import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
-import org.apache.jena.atlas.lib.Sink;
-
 import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 
 public abstract class RdfTypePrimitiveBase
@@ -21,9 +22,6 @@ public abstract class RdfTypePrimitiveBase
         return true;
     }
 
-    @Override
-    public void emitTriples(RdfPersistenceContext persistenceContext, RdfEmitterContext emitterContext, Graph out, Object obj) {
-    }
 
     @Override
     public void exposeShape(ResourceShapeBuilder rsb) {
@@ -31,11 +29,9 @@ public abstract class RdfTypePrimitiveBase
 
     }
 
-  @Override
-  public void populateEntity(RdfPersistenceContext persistenceContext, Object targetObj, Graph graph, Sink<Triple> outSink) {
-  }
+    public void populateEntity(RdfPersistenceContext persistenceContext, Object entity, Node subject, Graph inGraph, Consumer<Triple> sink) {
+    }
 
-//	@Override
-//	public void populateBean(RdfPopulationContext populationContext, Object targetObj, DatasetGraph datasetGraph) {
-//	}
+    public void emitTriples(RdfPersistenceContext persistenceContext, RdfEmitterContext emitterContext, Object entity, Node subject, Consumer<Triple> sink) {        
+    }
 }

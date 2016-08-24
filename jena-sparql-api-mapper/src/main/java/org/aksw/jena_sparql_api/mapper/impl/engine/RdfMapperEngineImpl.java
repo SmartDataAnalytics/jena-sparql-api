@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.aksw.commons.collections.diff.Diff;
-import org.aksw.jena_sparql_api.beans.model.EntityOps;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
@@ -34,13 +33,10 @@ import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.aksw.jena_sparql_api.util.frontier.Frontier;
 import org.aksw.jena_sparql_api.util.frontier.FrontierImpl;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
-import org.apache.jena.atlas.lib.Sink;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.GraphUtil;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
-import org.apache.jena.graph.Triple;
-import org.apache.jena.riot.lang.SinkTriplesToGraph;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
@@ -179,9 +175,11 @@ public class RdfMapperEngineImpl
                         entityGraphMap.clearGraph(entity);
     
                         Graph refs = GraphFactory.createDefaultGraph();
-                        Sink<Triple> refSink = new SinkTriplesToGraph(false, refs);
-                        rdfType.populateEntity(persistenceContext, entity, graph, refSink);
-                        refSink.close();
+                        //Sink<Triple> refSink = new SinkTriplesToGraph(false, refs);
+                        //Node subject = rdfType.getRootNode(entity);
+                        Node subject = persistenceContext.getRootNode(entity);
+                        rdfType.populateEntity(persistenceContext, entity, subject, graph, refs::add);
+                        //refSink.close();
     
                         entityGraphMap.putAll(refs, entity);
                     }
@@ -331,7 +329,9 @@ public class RdfMapperEngineImpl
 
             // TODO We now need to know which additional
             // (property) values also need to be emitted
-            rdfType.emitTriples(persistenceContext, emitterContext, outGraph, entity);
+            //Consumer<Triple> sink = outGraph::add;
+            Node subject = rdfType.getRootNode(entity);
+            rdfType.emitTriples(persistenceContext, emitterContext, entity, subject, outGraph::add);
         }
     }
 

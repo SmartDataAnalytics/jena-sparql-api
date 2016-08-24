@@ -1,13 +1,13 @@
 package org.aksw.jena_sparql_api.mapper.model;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 import org.aksw.jena_sparql_api.beans.model.PropertyOps;
 import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.mapper.context.TypedNode;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
-import org.apache.jena.atlas.lib.Sink;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -23,7 +23,7 @@ public class RdfPopulatorPropertySingle
     }
 
     @Override
-    public void emitTriples(RdfPersistenceContext persistenceContext, RdfEmitterContext emitterContext, Graph out, Object entity, Node subject) {
+    public void emitTriples(RdfPersistenceContext persistenceContext, RdfEmitterContext emitterContext, Object entity, Node subject, Consumer<Triple> outSink) {
         //targetRdfType.getTypeFactory().forJavaType(targetRdfType.getEntityClass()).get
         Object value = propertyOps.getValue(entity);
         
@@ -44,7 +44,7 @@ public class RdfPopulatorPropertySingle
 
             //Quad t = new Quad(Quad.defaultGraphIRI, subject, p, o);
             Triple t = new Triple(subject, predicate, o);
-            out.add(t);
+            outSink.accept(t);
         }
 
         //RdfPopulationContext emitterContext;
@@ -57,20 +57,20 @@ public class RdfPopulatorPropertySingle
     }
 
     @Override
-    public void populateEntity(RdfPersistenceContext persistenceContext, Object bean, Graph graph, Node subject, Sink<Triple> outSink) {
+    public void populateEntity(RdfPersistenceContext persistenceContext, Object entity, Graph inGraph, Node subject, Consumer<Triple> outSink) {
 //		Class<?> beanClass = bean.getClass();
 //		RdfType rdfType = populationContext.forJavaType(beanClass);
 //		RdfClass rdfClass = (RdfClass)rdfType;
 //		RdfPropertyDescriptor propertyDescriptor = rdfClass.getPropertyDescriptors(propertyName);
 //		RdfType targetRdfType = propertyDescriptor.getRdfType();
-        List<Triple> triples = graph.find(subject, predicate, Node.ANY).toList();
+        List<Triple> triples = inGraph.find(subject, predicate, Node.ANY).toList();
 
         Triple t = Iterables.getFirst(triples, null);
 
         Node node;
         if(t != null) {
             node = t.getObject();
-            outSink.send(t);
+            outSink.accept(t);
         } else {
             node = null;
         }
@@ -86,7 +86,7 @@ public class RdfPopulatorPropertySingle
         if(value == null && valueType.isPrimitive()) {
             value = Defaults.defaultValue(valueType);
         }
-        propertyOps.setValue(bean, value);
+        propertyOps.setValue(entity, value);
     }
 
     @Override

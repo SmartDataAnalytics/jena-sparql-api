@@ -5,9 +5,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
-import org.aksw.commons.util.reflect.ClassUtils;
 import org.aksw.jena_sparql_api.beans.model.EntityOps;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
@@ -16,7 +16,6 @@ import org.aksw.jena_sparql_api.mapper.model.RdfPopulator;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.aksw.jena_sparql_api.mapper.proxy.MethodInterceptorRdf;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
-import org.apache.jena.atlas.lib.Sink;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -252,21 +251,21 @@ public class RdfClass
     /**
      * Set property values of the given target object based a DatasetGraph.
      *
-     * @param bean
+     * @param entity
      * @param datasetGraph
      */
     @Override
-    public void populateEntity(RdfPersistenceContext persistenceContext, Object bean, Graph inGraph, Sink<Triple> outSink) {
+    public void populateEntity(RdfPersistenceContext persistenceContext, Object entity, Node s, Graph inGraph, Consumer<Triple> outSink) {
         //DatasetGraph result = DatasetGraphFactory.createMem();
 
         //Graph graph = result.getDefaultGraph();
-        Node s = persistenceContext.getRootNode(bean);
+        //Node s = persistenceContext.getRootNode(bean);
 
         /*
          *  Run all of this class' populators
          */
         for(RdfPopulator pd : populators) {
-            pd.populateEntity(persistenceContext, bean, inGraph, s, outSink);
+            pd.populateEntity(persistenceContext, entity, inGraph, s, outSink);
         }
     }
 
@@ -280,9 +279,9 @@ public class RdfClass
      * @return
      */
     @Override
-    public void emitTriples(RdfPersistenceContext persistenceContext, RdfEmitterContext emitterContext, Graph out, Object entity) {
+    public void emitTriples(RdfPersistenceContext persistenceContext, RdfEmitterContext emitterContext, Object entity, Node s, Consumer<Triple> out) {
         //Node s = getRootNode(obj);
-        Node s = persistenceContext.getRootNode(entity);
+        //Node s = persistenceContext.getRootNode(entity);
         if(s == null) {
             throw new RuntimeException("Could not determine (iri-)node of entity " + (entity == null ? " null " : entity.getClass().getName()) + " - " + entity);
         }
@@ -291,7 +290,7 @@ public class RdfClass
          * Run the emitters of all of this class' populators
          */
         for(RdfPopulator populator : populators) {
-            populator.emitTriples(persistenceContext, emitterContext, out, entity, s);
+            populator.emitTriples(persistenceContext, emitterContext, entity, s, out);
         }
 
         /*

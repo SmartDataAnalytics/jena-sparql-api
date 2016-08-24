@@ -1,13 +1,13 @@
 package org.aksw.jena_sparql_api.mapper.model;
 
 import java.util.Collection;
+import java.util.function.Consumer;
 
 import org.aksw.jena_sparql_api.beans.model.PropertyOps;
 import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.mapper.context.TypedNode;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
-import org.apache.jena.atlas.lib.Sink;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -45,7 +45,7 @@ public class RdfPopulatorPropertyMulti
 
 
     @Override
-    public void emitTriples(RdfPersistenceContext persistenceContext, RdfEmitterContext emitterContext, Graph out, Object entity, Node subject) {
+    public void emitTriples(RdfPersistenceContext persistenceContext, RdfEmitterContext emitterContext, Object entity, Node subject, Consumer<Triple> out) {
 
         //BeanWrapper beanWrapper = new BeanWrapperImpl(entity);
         Collection<?> items = (Collection<?>)propertyOps.getValue(entity);//beanWrapper.getPropertyValue(propertyName);
@@ -54,7 +54,7 @@ public class RdfPopulatorPropertyMulti
             Node o = targetRdfType.getRootNode(item);
             Triple t = new Triple(subject, predicate, o);
 
-            out.add(t);
+            out.accept(t);
 
 
             emitterContext.add(item, entity, propertyOps.getName());
@@ -95,12 +95,12 @@ public class RdfPopulatorPropertyMulti
 
     @SuppressWarnings("unchecked")
     @Override
-    public void populateEntity(RdfPersistenceContext populationContext, Object bean, Graph graph, Node subject, Sink<Triple> outSink) {
+    public void populateEntity(RdfPersistenceContext populationContext, Object bean, Graph graph, Node subject, Consumer<Triple> outSink) {
         // Creates a collection under the given property
         Collection<? super Object> collection = (Collection<? super Object>)getOrCreateBean(bean, propertyOps);
 
         for(Triple t : graph.find(subject, predicate, Node.ANY).toSet()) {
-            outSink.send(t);
+            outSink.accept(t);
 
             Node o = t.getObject();
         //List<Node> os = GraphUtil.listObjects(graph, subject, predicate).toList();

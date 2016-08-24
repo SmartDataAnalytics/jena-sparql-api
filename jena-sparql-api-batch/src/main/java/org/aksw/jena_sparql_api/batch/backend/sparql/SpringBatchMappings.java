@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.beans.model.EntityModel;
 import org.aksw.jena_sparql_api.beans.model.EntityOps;
+import org.aksw.jena_sparql_api.beans.model.MapOps;
 import org.aksw.jena_sparql_api.beans.model.PropertyModel;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.mapper.annotation.DefaultIri;
@@ -30,6 +31,14 @@ import org.springframework.batch.item.ExecutionContext;
 
 public class SpringBatchMappings {
     public static void main(String[] args) {
+        ExecutionContext ecx = new ExecutionContext();
+        MapOps o = new MapOpsExecutionContext();
+        o.put(ecx, "test", "hello");
+        System.out.println("execution context size: " + o.size(ecx));
+        
+        
+        
+        
         // TODO: For each java class, set a white / blacklist of properties which to process
         //Map<Class<?>, Map<String, String>> defs = new HashMap<>();
         
@@ -43,6 +52,9 @@ public class SpringBatchMappings {
         tm.registerDatatype(new RDFDatatypeDate());
         
         Map<Class<?>, EntityOps> customOps = new HashMap<>();
+
+        
+        
         
         {
             Set<String> excludeProperties = new HashSet<>(Arrays.asList("executionContext", "exitStatus", "status"));
@@ -127,6 +139,11 @@ public class SpringBatchMappings {
             return result;
         };
 
+        //typeFactory.registerTypeAdator(Class<?>, );
+//        GsonBuilder x;
+//        TypeAdapterFactory
+        
+        
         RdfTypeFactory typeFactory =  RdfTypeFactoryImpl.createDefault(null, classToOps);
         RdfType t = typeFactory.forJavaType(JobExecution.class);
         //t.emitTriples(persistenceContext, emitterContext, out, obj);

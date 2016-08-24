@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.mapper.impl.type;
 
+import java.util.function.Consumer;
+
 import org.aksw.jena_sparql_api.concepts.PropertyRelation;
 import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
@@ -57,17 +59,19 @@ public class RdfTypeSeq
         return null;
     }
 
-
     @Override
-    public void emitTriples(RdfPersistenceContext persistenceContext, RdfEmitterContext emitterContext, Graph out, Object obj) {
+    public void populateEntity(RdfPersistenceContext persistenceContext,
+            Object entity, Node subject, Graph inGraph, Consumer<Triple> sink) {
         // TODO Auto-generated method stub
-
+        
     }
 
     @Override
-    public void populateEntity(RdfPersistenceContext persistenceContext, Object targetObj, Graph graph, Sink<Triple> outSink) {
+    public void emitTriples(RdfPersistenceContext persistenceContext,
+            RdfEmitterContext emitterContext, Object entity, Node subject,
+            Consumer<Triple> sink) {
         // TODO Auto-generated method stub
-
+        
     }
-
+    
 }

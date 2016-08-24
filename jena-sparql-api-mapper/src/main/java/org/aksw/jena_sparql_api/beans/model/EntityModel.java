@@ -8,7 +8,6 @@ import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -26,6 +25,9 @@ public class EntityModel
     
     protected Function<Class<?>, Object> annotationFinder;
     //protected Set<Class<?>> annotationOverrides;
+    
+    protected Map<Class<?>, Object> classToInstance;
+    //protected ClassToInstanceMap<Objcet
     
     public EntityModel() {
         this(null, null, null);
@@ -165,6 +167,15 @@ public class EntityModel
         Object o = annotationFinder.apply(annotationClass);
         @SuppressWarnings("unchecked")
         A result = (A)o;
+        return result;
+    }
+
+    @Override
+    public <T> T getOps(Class<T> opsClass) {
+        Object tmp = classToInstance.get(opsClass);
+        
+        T result = tmp == null ? null : (T)tmp;
+ 
         return result;
     }
     
