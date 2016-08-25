@@ -288,7 +288,7 @@ public class RdfMapperEngineImpl
         //RdfClass rdfClass = (RdfClass)typeFactory.forJavaType(clazz);
 
 
-        DatasetGraph newState = DatasetGraphFactory.createMem();
+        DatasetGraph newState = DatasetGraphFactory.create();
         Graph outGraph = Quad.defaultGraphIRI.equals(g) ? newState.getDefaultGraph() : newState.getGraph(g);
         //rdfClass.emitTriples(out, entity);
         emitTriples(outGraph, entity);

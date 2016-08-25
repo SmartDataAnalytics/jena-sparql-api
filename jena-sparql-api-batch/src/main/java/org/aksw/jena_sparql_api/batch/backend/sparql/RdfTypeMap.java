@@ -62,6 +62,7 @@ public class RdfTypeMap
             RdfEmitterContext emitterContext, Object entity, Node subject,
             Consumer<Triple> sink) {
         
+        @SuppressWarnings("unchecked")
         Map<? super Object, ? super Object> map = createMapView.apply(entity);
         
         

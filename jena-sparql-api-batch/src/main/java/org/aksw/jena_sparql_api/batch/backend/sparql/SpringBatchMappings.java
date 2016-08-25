@@ -30,10 +30,10 @@ import org.springframework.batch.item.ExecutionContext;
 
 public class SpringBatchMappings {
     public static void main(String[] args) {
-        ExecutionContext ecx = new ExecutionContext();
-        MapOps o = new MapOpsExecutionContext();
-        o.put(ecx, "test", "hello");
-        System.out.println("execution context size: " + o.size(ecx));
+//        ExecutionContext ecx = new ExecutionContext();
+//        MapOps o = new MapOpsExecutionContext();
+//        o.put(ecx, "test", "hello");
+//        System.out.println("execution context size: " + o.size(ecx));
         
         
         

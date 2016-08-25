@@ -35,7 +35,9 @@ public class RdfPopulatorPropertySingle
 
             Node o = targetRdfType.getRootNode(value);
             if(o == null) {
-                throw new RuntimeException("Failed RDF node conversion for " + value.getClass() + ": " + value);
+                System.out.println("HACK for testing - remove it! should throw exception instead");
+                //throw new RuntimeException("Failed RDF node conversion for " + value.getClass() + ": " + value);
+                o = subject;
             }
             
             
@@ -45,6 +47,9 @@ public class RdfPopulatorPropertySingle
             //Quad t = new Quad(Quad.defaultGraphIRI, subject, p, o);
             Triple t = new Triple(subject, predicate, o);
             outSink.accept(t);
+            
+            //persistenceContext.entityFor(new TypedNode(targetRdfType, o))
+            emitterContext.add(value, entity, propertyOps.getName());
         }
 
         //RdfPopulationContext emitterContext;

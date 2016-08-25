@@ -106,7 +106,7 @@ public class EntityModel
                     try {
                         writeMethod.invoke(entity, value);
                     } catch (Exception e) {
-                        throw new RuntimeException(e);
+                        throw new RuntimeException("Failed to invoke " + writeMethod + " with " + (value == null ? null : value.getClass()) + " (" + value + ")", e);
                     }
                 };
             }
