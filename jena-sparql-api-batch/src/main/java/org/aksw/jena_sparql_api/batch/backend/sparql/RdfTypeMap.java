@@ -1,9 +1,10 @@
 package org.aksw.jena_sparql_api.batch.backend.sparql;
 
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
-import org.aksw.jena_sparql_api.beans.model.MapOps;
 import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.mapper.context.TypedNode;
@@ -24,7 +25,7 @@ import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.sparql.util.ModelUtils;
 
-public class RdfPopulatorPropertyMap
+public class RdfTypeMap
     //extends RdfPopulatorPropertyBase
     extends RdfTypeComplexBase
 {
@@ -35,13 +36,13 @@ public class RdfPopulatorPropertyMap
     public static final Property keyClass = ResourceFactory.createProperty("http://jsa.aksw.org/ontology/keyClass");
     public static final Property valueClass = ResourceFactory.createProperty("http://jsa.aksw.org/ontology/valueClass");
     
-    protected MapOps mapOps;
+    //protected MapOps mapOps;
+    protected Function<Object, Map> createMapView; 
     
     // , PropertyOps propertyOps, Node predicate, RdfType targetRdfType
-    public RdfPopulatorPropertyMap(RdfTypeFactory typeFactory, MapOps mapOps) {
+    public RdfTypeMap(RdfTypeFactory typeFactory, Function<Object, Map> createMapView) {
         super(typeFactory);
-        this.mapOps = mapOps;
-        //super(propertyOps, predicate, targetRdfType);
+        this.createMapView = createMapView;
     }
     
     
@@ -60,9 +61,12 @@ public class RdfPopulatorPropertyMap
     public void emitTriples(RdfPersistenceContext persistenceContext,
             RdfEmitterContext emitterContext, Object entity, Node subject,
             Consumer<Triple> sink) {
-        MapOps mapOps = null;
+        
+        Map<? super Object, ? super Object> map = createMapView.apply(entity);
+        
+        
         int i = 1;
-        for(Entry<?, ?> e : mapOps.entrySet(entity)) {
+        for(Entry<?, ?> e : map.entrySet()) {
             Object k = e.getKey();
             Object v = e.getValue();
             
@@ -90,6 +94,8 @@ public class RdfPopulatorPropertyMap
         Model model = ModelFactory.createModelForGraph(graph);
         RDFNode root = ModelUtils.convertGraphNodeToRDFNode(subject, model);
 
+        Map<Object, Object> map = createMapView.apply(entity);            
+
         
         for(Statement stmt : root.asResource().listProperties(entry).toList()) {
             Resource e = stmt.getObject().asResource();
@@ -102,7 +108,7 @@ public class RdfPopulatorPropertyMap
             Object k = persistenceContext.entityFor(new TypedNode(rdfType, kNode));
             Object v = persistenceContext.entityFor(new TypedNode(rdfType, vNode));
             
-            mapOps.put(entity, k, v);            
+            map.put(k, v);            
         }        
     }
 

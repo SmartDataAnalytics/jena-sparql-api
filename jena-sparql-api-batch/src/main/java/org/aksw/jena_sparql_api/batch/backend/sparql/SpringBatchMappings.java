@@ -19,7 +19,6 @@ import org.aksw.jena_sparql_api.mapper.impl.engine.RdfMapperEngine;
 import org.aksw.jena_sparql_api.mapper.impl.engine.RdfMapperEngineImpl;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
-import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.aksw.jena_sparql_api.mapper.util.BeanUtils;
 import org.aksw.jena_sparql_api.sparql.ext.datatypes.RDFDatatypeDate;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
@@ -144,7 +143,11 @@ public class SpringBatchMappings {
 //        TypeAdapterFactory
         
         
-        RdfTypeFactory typeFactory =  RdfTypeFactoryImpl.createDefault(null, classToOps);
+        RdfTypeFactoryImpl typeFactory =  RdfTypeFactoryImpl.createDefault(null, classToOps);
+        
+        typeFactory.getClassToRdfType().put(ExecutionContext.class, new RdfTypeMap(typeFactory, MapExecutionContext::createMapView));
+        
+        
         RdfType t = typeFactory.forJavaType(JobExecution.class);
         //t.emitTriples(persistenceContext, emitterContext, out, obj);
 

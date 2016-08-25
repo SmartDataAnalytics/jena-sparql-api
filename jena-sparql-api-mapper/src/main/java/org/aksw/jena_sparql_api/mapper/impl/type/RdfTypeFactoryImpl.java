@@ -69,7 +69,7 @@ public class RdfTypeFactoryImpl
     protected Function<Class<?>, EntityOps> entityOpsFactory;
     //protected Map<Class<?>, EntityOps> entityOpsCache;
     
-    protected Map<Class<?>, RdfType> classToMapping = new HashMap<Class<?>, RdfType>();
+    protected Map<Class<?>, RdfType> classToRdfType = new HashMap<Class<?>, RdfType>();
     protected TypeMapper typeMapper;
 
     public RdfTypeFactoryImpl(
@@ -94,10 +94,14 @@ public class RdfTypeFactoryImpl
         return prologue;
     }
 
+    public Map<Class<?>, RdfType> getClassToRdfType() {
+        return classToRdfType;
+    }
+    
 
     @Override
     public RdfType forJavaType(Class<?> clazz) {
-        RdfType result = getOrAllocate(clazz);
+        RdfType result = getOrAllocateRdfType(clazz);
 
         if(result instanceof RdfClass) {
             RdfClass tmp = (RdfClass)result;
@@ -107,42 +111,6 @@ public class RdfTypeFactoryImpl
         return result;
     }
 
-//    public RdfClass create(Class<?> clazz) {
-//        RdfClass result;
-//        try {
-//            result = _create(clazz);
-//        } catch (IntrospectionException e) {
-//            throw new RuntimeException(e);
-//        }
-//        return result;
-//    }
-
-    //public static <A extends Annotation> A findClassAnnotation(Class<>)
-
-    public static <A extends Annotation> A findPropertyAnnotation(Class<?> clazz, PropertyDescriptor pd, Class<A> annotation) {
-        A result;
-
-        String propertyName = pd.getName();
-        Field f = ReflectionUtils.findField(clazz, propertyName);
-        result = f != null
-                ? f.getAnnotation(annotation)
-                : null
-                ;
-
-        result = result == null && pd.getReadMethod() != null
-                ? AnnotationUtils.findAnnotation(pd.getReadMethod(), annotation)
-                : result
-                ;
-
-        result = result == null && pd.getWriteMethod() != null
-                ? AnnotationUtils.findAnnotation(pd.getWriteMethod(), annotation)
-                : result
-                ;
-
-        return result;
-    }
-
-
     /**
      * Allocates a new RdfClass object for a given java class or returns an
      * existing one. Does not populate property descriptors.
@@ -150,16 +118,16 @@ public class RdfTypeFactoryImpl
      * @param clazz
      * @return
      */
-    protected RdfType getOrAllocate(Class<?> clazz) {
-        RdfType result = classToMapping.get(clazz);
+    protected RdfType getOrAllocateRdfType(Class<?> clazz) {
+        RdfType result = classToRdfType.get(clazz);
         if(result == null) {
-            result = allocate(clazz);
-            classToMapping.put(clazz, result);
+            result = allocateRdfType(clazz);
+            classToRdfType.put(clazz, result);
         }
         return result;
     }
 
-    protected RdfType allocate(Class<?> clazz) {
+    protected RdfType allocateRdfType(Class<?> clazz) {
         RDFDatatype dtype = typeMapper.getTypeByClass(clazz);
         boolean isPrimitive = dtype != null;
 
@@ -167,7 +135,7 @@ public class RdfTypeFactoryImpl
         if(isPrimitive) {
             result = new RdfTypeLiteralTyped(this, dtype);
         } else {
-            result = allocateClass(clazz);
+            result = allocateRdfClass(clazz);
         }
 
         return result;
@@ -181,8 +149,13 @@ public class RdfTypeFactoryImpl
      * @param clazz
      * @return
      */
-    protected RdfClass allocateClass(Class<?> clazz) {
+    protected RdfClass allocateRdfClass(Class<?> clazz) {
         EntityOps entityOps = entityOpsFactory.apply(clazz);
+        RdfClass result = allocateRdfClass(entityOps);
+        return result;
+    }
+    
+    protected RdfClass allocateRdfClass(EntityOps entityOps) {
 
         //org.aksw.jena_sparql_api.mapper.annotation.RdfType rdfType = AnnotationUtils.findAnnotation(clazz, org.aksw.jena_sparql_api.mapper.annotation.RdfType.class);
         org.aksw.jena_sparql_api.mapper.annotation.RdfType rdfType = entityOps.findAnnotation(org.aksw.jena_sparql_api.mapper.annotation.RdfType.class);
@@ -214,16 +187,6 @@ public class RdfTypeFactoryImpl
         return result;
     }
 
-
-//    protected RdfClass _create(Class<?> clazz) throws IntrospectionException {
-//        RdfClass result = allocate(clazz);
-//        populateClasses(result);
-//        //Map<String, RdfProperty> rdfProperties = processProperties(clazz);
-//
-//        //RdfClassImpl result = new RdfClassImpl(clazz, defaultIriFn, rdfProperties, prologue);
-//        return result;
-//    }
-
     private void populateClasses(RdfClass rootRdfClass) {
         Frontier<RdfClass> frontier = FrontierImpl.createIdentityFrontier();
 
@@ -234,7 +197,6 @@ public class RdfTypeFactoryImpl
         }
 
     }
-
 
     private void initProperties(RdfClass rdfClass, Frontier<RdfClass> frontier) {
         if(!rdfClass.isPopulated()) {
@@ -277,13 +239,6 @@ public class RdfTypeFactoryImpl
     protected void processProperty(RdfClass rdfClass, EntityOps entityOps, PropertyOps pd, Frontier<RdfClass> frontier) {
         RdfPopulatorProperty result = null;
 
-        //processProperty(beanInfo, pd, predicate, targetRdfType, open);
-//        Class<?> clazz = beanInfo.getWrappedClass();
-//
-//        String propertyName = pd.getName();
-//        boolean isReadable = beanInfo.isReadableProperty(propertyName);
-//        boolean isWritable = beanInfo.isWritableProperty(propertyName);
-
         Class<?> clazz = entityOps.getAssociatedClass();
         String propertyName = pd.getName();
         boolean isReadable = pd.isReadable();
@@ -323,8 +278,6 @@ public class RdfTypeFactoryImpl
             logger.debug("Ignoring property " + propertyName);
         }
 
-
-        //return result;
     }
 
     public static Class<?> extractItemType(Type genericType) {
@@ -340,10 +293,6 @@ public class RdfTypeFactoryImpl
 
         return result;
     }
-
-//    public static <@Test T> void foobar() {
-//
-//    }
 
     protected void processProperty(RdfClass rdfClass, EntityOps beanInfo, PropertyOps pd, Node predicate, Frontier<RdfClass> frontier) {
         Class<?> entityClass = beanInfo.getAssociatedClass();
@@ -377,7 +326,7 @@ public class RdfTypeFactoryImpl
             if(isLiteral) {
                 targetRdfType = new RdfTypeLiteralTyped(this, dtype);
             } else {
-              targetRdfType = getOrAllocate(propertyType);
+              targetRdfType = getOrAllocateRdfType(propertyType);
               if(targetRdfType instanceof RdfClass) {
                   RdfClass tmp = (RdfClass)targetRdfType;
                   if(!tmp.isPopulated()) {
@@ -405,94 +354,6 @@ public class RdfTypeFactoryImpl
         //return result;
 
     }
-//
-//    /**
-//     *
-//     *
-//     * @param beanInfo
-//     * @param pd
-//     * @param dtype
-//     * @return
-//     */
-//    protected RdfProperty processDatatypeProperty(BeanWrapper beanInfo, PropertyDescriptor pd, Node predicate, RDFDatatype dtype) {
-//        PrefixMapping prefixMapping = prologue.getPrefixMapping();
-//
-//        Class<?> beanClass = beanInfo.getWrappedClass();
-//        Class<?> propertyType = pd.getPropertyType();
-//        String propertyName = pd.getName();
-//
-//        IriType iriType = getAnnotation(beanClass, pd, IriType.class);
-//
-//
-//        //RdfValueMapper rdfValueMapper;
-//        org.aksw.jena_sparql_api.mapper.model.RdfType targetType;
-//        if(iriType == null) {
-//            //RDFDatatype dtype = typeMapper.getTypeByClass(propertyType);
-//            //rdfValueMapper = new RdfValueMapperSimple(propertyType, dtype, null);
-//            targetType = new RdfTypeLiteralTyped(dtype);
-//        } else {
-//            //rdfValueMapper = new RdfValueMapperStringIri();
-//            targetType = new RdfTypeIriStr();
-//        }
-//
-//
-//        Relation relation = RelationUtils.createRelation(predicate.getURI(), false, prefixMapping);
-//
-//
-//        //RdfProperty result = new RdfPropertyDatatypeOld(beanInfo, pd, null, predicate, rdfValueMapper);
-//        RdfProperty result = new RdfPropertyImpl(propertyName, relation, targetType);
-//        return result;
-//    }
-
-    /**
-     * Process a property with a complex value
-     *
-     * @param beanInfo
-     * @param pd
-     * @param open
-     * @return
-     */
-//    protected RdfProperty processObjectProperty(BeanWrapper beanInfo, PropertyDescriptor pd, Node predicate, Collection<RdfClass> open) {
-//        PrefixMapping prefixMapping = prologue.getPrefixMapping();
-//
-//        RdfProperty result;
-//
-//        String propertyName = pd.getName();
-//        //System.out.println("PropertyName: " + propertyName);
-//
-//
-//        // If necessary, add the target class to the set of classes that yet
-//        // need to be populated
-//        Class<?> targetClass = pd.getPropertyType();
-//        RdfType trc = getOrAllocate(targetClass);
-//        if(trc instanceof RdfClass) {
-//            RdfClass tmp = (RdfClass)trc;
-//            if(!tmp.isPopulated()) {
-//                open.add(tmp);
-//            }
-//        }
-//
-//        Relation relation = RelationUtils.createRelation(predicate.getURI(), false, prefixMapping);
-//        result = new RdfPropertyImpl(propertyName, relation, trc);
-//
-//
-////        Iri iri = getAnnotation(sourceClass, pd, Iri.class);
-////        if(iri != null) {
-////            String iriStr = iri.value();
-////
-////            //Relation relation = relationParser.apply(iriStr);
-////            Relation relation = RelationUtils.createRelation(iriStr, false, prefixMapping);
-////            result = new RdfProperyObject(propertyName, relation, trc);
-////
-////            logger.debug("Annotation on property " + propertyName + " detected: " + iri.value());
-////        } else {
-////            result = null;
-////            logger.debug("Ignoring property " + propertyName);
-////            //throw new RuntimeException("should not happen");
-////        }
-//
-//        return result;
-//    }
 
     public static RdfTypeFactoryImpl createDefault() {
         Prologue prologue = new Prologue();
@@ -526,3 +387,92 @@ public class RdfTypeFactoryImpl
         return result;
     }
 }
+
+//
+///**
+//*
+//*
+//* @param beanInfo
+//* @param pd
+//* @param dtype
+//* @return
+//*/
+//protected RdfProperty processDatatypeProperty(BeanWrapper beanInfo, PropertyDescriptor pd, Node predicate, RDFDatatype dtype) {
+//  PrefixMapping prefixMapping = prologue.getPrefixMapping();
+//
+//  Class<?> beanClass = beanInfo.getWrappedClass();
+//  Class<?> propertyType = pd.getPropertyType();
+//  String propertyName = pd.getName();
+//
+//  IriType iriType = getAnnotation(beanClass, pd, IriType.class);
+//
+//
+//  //RdfValueMapper rdfValueMapper;
+//  org.aksw.jena_sparql_api.mapper.model.RdfType targetType;
+//  if(iriType == null) {
+//      //RDFDatatype dtype = typeMapper.getTypeByClass(propertyType);
+//      //rdfValueMapper = new RdfValueMapperSimple(propertyType, dtype, null);
+//      targetType = new RdfTypeLiteralTyped(dtype);
+//  } else {
+//      //rdfValueMapper = new RdfValueMapperStringIri();
+//      targetType = new RdfTypeIriStr();
+//  }
+//
+//
+//  Relation relation = RelationUtils.createRelation(predicate.getURI(), false, prefixMapping);
+//
+//
+//  //RdfProperty result = new RdfPropertyDatatypeOld(beanInfo, pd, null, predicate, rdfValueMapper);
+//  RdfProperty result = new RdfPropertyImpl(propertyName, relation, targetType);
+//  return result;
+//}
+
+/**
+* Process a property with a complex value
+*
+* @param beanInfo
+* @param pd
+* @param open
+* @return
+*/
+//protected RdfProperty processObjectProperty(BeanWrapper beanInfo, PropertyDescriptor pd, Node predicate, Collection<RdfClass> open) {
+//  PrefixMapping prefixMapping = prologue.getPrefixMapping();
+//
+//  RdfProperty result;
+//
+//  String propertyName = pd.getName();
+//  //System.out.println("PropertyName: " + propertyName);
+//
+//
+//  // If necessary, add the target class to the set of classes that yet
+//  // need to be populated
+//  Class<?> targetClass = pd.getPropertyType();
+//  RdfType trc = getOrAllocate(targetClass);
+//  if(trc instanceof RdfClass) {
+//      RdfClass tmp = (RdfClass)trc;
+//      if(!tmp.isPopulated()) {
+//          open.add(tmp);
+//      }
+//  }
+//
+//  Relation relation = RelationUtils.createRelation(predicate.getURI(), false, prefixMapping);
+//  result = new RdfPropertyImpl(propertyName, relation, trc);
+//
+//
+////  Iri iri = getAnnotation(sourceClass, pd, Iri.class);
+////  if(iri != null) {
+////      String iriStr = iri.value();
+////
+////      //Relation relation = relationParser.apply(iriStr);
+////      Relation relation = RelationUtils.createRelation(iriStr, false, prefixMapping);
+////      result = new RdfProperyObject(propertyName, relation, trc);
+////
+////      logger.debug("Annotation on property " + propertyName + " detected: " + iri.value());
+////  } else {
+////      result = null;
+////      logger.debug("Ignoring property " + propertyName);
+////      //throw new RuntimeException("should not happen");
+////  }
+//
+//  return result;
+//}

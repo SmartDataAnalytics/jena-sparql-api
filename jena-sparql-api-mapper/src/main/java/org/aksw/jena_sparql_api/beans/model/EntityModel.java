@@ -12,7 +12,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
 import org.springframework.core.annotation.AnnotationUtils;
 
 public class EntityModel
@@ -112,7 +111,7 @@ public class EntityModel
                 };
             }
 
-            Function<Class<?>, Object> annotationFinder = (annotationClass) -> RdfTypeFactoryImpl.findPropertyAnnotation(clazz, pd, (Class)annotationClass);
+            Function<Class<?>, Object> annotationFinder = (annotationClass) -> MyAnnotationUtils.findPropertyAnnotation(clazz, pd, (Class)annotationClass);
             
             PropertyModel p = new PropertyModel(propertyName, propertyType, getter, setter, annotationFinder);
             p.setReadMethod(readMethod);
