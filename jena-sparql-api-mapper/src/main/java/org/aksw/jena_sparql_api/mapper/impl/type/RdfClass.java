@@ -352,4 +352,14 @@ public class RdfClass
 
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "RdfClass [entityOps=" + entityOps + ", concept=" + concept
+                + ", defaultIriFn=" + defaultIriFn + ", populators="
+                + populators + ", propertyDescriptors=" + propertyDescriptors
+                + ", isPopulated=" + isPopulated + "]";
+    }
+    
+    
 }

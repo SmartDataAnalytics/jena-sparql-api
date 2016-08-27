@@ -95,7 +95,8 @@ public class RdfTypeMap
         Model model = ModelFactory.createModelForGraph(graph);
         RDFNode root = ModelUtils.convertGraphNodeToRDFNode(subject, model);
 
-        Map<Object, Object> map = createMapView.apply(entity);            
+        // <Object, Object>
+        Map map = createMapView.apply(entity);            
 
         
         for(Statement stmt : root.asResource().listProperties(entry).toList()) {

@@ -330,8 +330,8 @@ public class RdfMapperEngineImpl
             // TODO We now need to know which additional
             // (property) values also need to be emitted
             //Consumer<Triple> sink = outGraph::add;
-            Node subject = rdfType.getRootNode(entity);
-            rdfType.emitTriples(persistenceContext, emitterContext, entity, subject, outGraph::add);
+            Node subject = rdfType.getRootNode(current);
+            rdfType.emitTriples(persistenceContext, emitterContext, current, subject, outGraph::add);
         }
     }
 
