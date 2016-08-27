@@ -331,6 +331,10 @@ public class RdfMapperEngineImpl
             // (property) values also need to be emitted
             //Consumer<Triple> sink = outGraph::add;
             Node subject = rdfType.getRootNode(current);
+            if(subject == null) {
+                subject = NodeFactory.createURI("http://foobar.foobar");
+            }
+
             rdfType.emitTriples(persistenceContext, emitterContext, current, subject, outGraph::add);
         }
     }
