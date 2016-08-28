@@ -73,11 +73,14 @@ public class RdfTypeMap
             
             Node eNode = NodeFactory.createURI(subject.getURI() + "-" + i);
             
+            //persistenceContext.
+            //persistenceContext.entityFor(new TypedNode(rdfType, node));
+            
             Node kNode = persistenceContext.getRootNode(k);
             Node vNode = persistenceContext.getRootNode(v);
             
             emitterContext.add(k, entity, "key" + i);
-            emitterContext.add(k, entity, "value" + i);
+            emitterContext.add(v, entity, "value" + i);
             
             //Node keyNode = emitterContext.
             
