@@ -185,6 +185,7 @@ public class SpringBatchMappings {
         JobExecution entity = new JobExecution(11l);
         ExecutionContext ec = new ExecutionContext();
         ec.put("hello", "world");
+        ec.put("foo", 666);
         
         entity.setExecutionContext(ec);
         
