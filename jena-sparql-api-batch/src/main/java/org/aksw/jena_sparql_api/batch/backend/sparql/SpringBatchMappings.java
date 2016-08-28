@@ -28,10 +28,19 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Model;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.item.ExecutionContext;
+import org.springframework.context.support.ConversionServiceFactoryBean;
+import org.springframework.core.convert.ConversionService;
 
 public class SpringBatchMappings {
 
 	public static void test() {
+		ConversionServiceFactoryBean bean = new ConversionServiceFactoryBean();
+		bean.afterPropertiesSet();
+
+		ConversionService cs = bean.getObject();		
+		
+//		cs.convert(source, targetType);
+		
     	Long value = 1l;
     	
     	TypeMapper tm = TypeMapper.getInstance();
@@ -55,6 +64,10 @@ public class SpringBatchMappings {
 	public static void main(String[] args) {
 		test();
     	
+		ConversionServiceFactoryBean bean = new ConversionServiceFactoryBean();
+		bean.afterPropertiesSet();
+
+		ConversionService conversionService = bean.getObject();		
     	
     	
 //        ExecutionContext ecx = new ExecutionContext();
@@ -89,7 +102,7 @@ public class SpringBatchMappings {
                     .filter(p -> !excludeProperties.contains(p))
                 .collect(Collectors.toMap(e -> e, e -> "http://batch.aksw.org/ontology/" + e));
             
-            EntityModel entityModel = EntityModel.createDefaultModel(ExecutionContext.class);
+            EntityModel entityModel = EntityModel.createDefaultModel(ExecutionContext.class, conversionService);
             
             entityModel.setAnnotationFinder((clazz) -> {
                 if(clazz.equals(DefaultIri.class)) {
@@ -121,7 +134,7 @@ public class SpringBatchMappings {
                     .filter(p -> !excludeProperties.contains(p))
                 .collect(Collectors.toMap(e -> e, e -> "http://batch.aksw.org/ontology/" + e));
             
-            EntityModel entityModel = EntityModel.createDefaultModel(JobExecution.class);
+            EntityModel entityModel = EntityModel.createDefaultModel(JobExecution.class, conversionService);
             entityModel.setNewInstance(() -> new JobExecution(0l));
             
             entityModel.setAnnotationFinder((clazz) -> {
@@ -160,7 +173,7 @@ public class SpringBatchMappings {
             
             result = cops != null
                     ? cops
-                    : EntityModel.createDefaultModel(clazz);
+                    : EntityModel.createDefaultModel(clazz, conversionService);
             
             return result;
         };
@@ -170,7 +183,7 @@ public class SpringBatchMappings {
 //        TypeAdapterFactory
         
         
-        RdfTypeFactoryImpl typeFactory =  RdfTypeFactoryImpl.createDefault(null, classToOps);
+        RdfTypeFactoryImpl typeFactory =  RdfTypeFactoryImpl.createDefault(null, classToOps, conversionService);
         
         typeFactory.getClassToRdfType().put(ExecutionContext.class, new RdfTypeMap(typeFactory, MapExecutionContext::createMapView));
         

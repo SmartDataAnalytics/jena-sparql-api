@@ -6,6 +6,7 @@ import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.convert.ConversionService;
 
 /**
  * PropertyOps implementation that delegates most calls 
@@ -26,17 +27,21 @@ public class PropertyModel
     protected Method readMethod;
     protected Method writeMethod;
 
+    protected ConversionService conversionService;
+    
     public PropertyModel() {
     }
 
     public PropertyModel(String name, Class<?> clazz, Function<Object, ?> getter,
             BiConsumer<Object, Object> setter,
+            ConversionService conversionService,
             Function<Class<?>, Object> annotationFinder) {
         super();
         this.name = name;
         this.type = clazz;
         this.getter = getter;
         this.setter = setter;
+        this.conversionService = conversionService;
         this.annotationFinder = annotationFinder;
     }
     
@@ -74,12 +79,17 @@ public class PropertyModel
 
     @Override
     public void setValue(Object entity, Object value) {
-    	
-    	if(type.equals(Long.class)) {
-    		logger.warn("HACK for casting to long");
-    		value = ((Number)value).longValue();
+    	if(value != null) {
+    		Class<?> valueClass = value.getClass();
+    		if(!type.equals(valueClass) && conversionService != null) {
+    			boolean canConvert = conversionService.canConvert(valueClass, type);
+    			if(canConvert) {
+    				value = conversionService.convert(value, type);
+    			}
+    		}
     	}
-        setter.accept(entity, value);
+
+    	setter.accept(entity, value);
     }
 
     @Override

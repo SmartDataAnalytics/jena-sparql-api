@@ -1,8 +1,5 @@
 package org.aksw.jena_sparql_api.mapper.impl.type;
 
-import java.beans.PropertyDescriptor;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Collection;
@@ -39,7 +36,9 @@ import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.Prologue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.support.ConversionServiceFactoryBean;
 import org.springframework.core.annotation.AnnotationUtils;
+import org.springframework.core.convert.ConversionService;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;
@@ -48,7 +47,6 @@ import org.springframework.expression.common.TemplateParserContext;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.util.Assert;
-import org.springframework.util.ReflectionUtils;
 
 public class RdfTypeFactoryImpl
     implements RdfTypeFactory
@@ -71,6 +69,7 @@ public class RdfTypeFactoryImpl
     
     protected Map<Class<?>, RdfType> classToRdfType = new HashMap<Class<?>, RdfType>();
     protected TypeMapper typeMapper;
+    protected ConversionService conversionService;
 
     public RdfTypeFactoryImpl(
             ExpressionParser parser, 
@@ -79,7 +78,8 @@ public class RdfTypeFactoryImpl
             TypeMapper typeMapper, 
             Prologue prologue, 
             SparqlRelationParser relationParser,
-            Function<Class<?>, EntityOps> entityOpsFactory) {
+            Function<Class<?>, EntityOps> entityOpsFactory,
+            ConversionService conversionService) {
         super();
         this.parser = parser;
         this.evalContext = evalContext;
@@ -88,6 +88,7 @@ public class RdfTypeFactoryImpl
         this.prologue = prologue;
         this.relationParser = relationParser;
         this.entityOpsFactory = entityOpsFactory;
+        this.conversionService = conversionService;
     }
 
     public Prologue getPrologue() {
@@ -356,17 +357,21 @@ public class RdfTypeFactoryImpl
     }
 
     public static RdfTypeFactoryImpl createDefault() {
+		ConversionServiceFactoryBean bean = new ConversionServiceFactoryBean();
+		bean.afterPropertiesSet();
+		ConversionService conversionService = bean.getObject();		
+
         Prologue prologue = new Prologue();
-        RdfTypeFactoryImpl result = createDefault(prologue, null);
+        RdfTypeFactoryImpl result = createDefault(prologue, null, conversionService);
         return result;
     }
 
-    public static RdfTypeFactoryImpl createDefault(Prologue prologue, Function<Class<?>, EntityOps> entityOpsFactory) {
+    public static RdfTypeFactoryImpl createDefault(Prologue prologue, Function<Class<?>, EntityOps> entityOpsFactory, ConversionService conversionService) {
         prologue = prologue != null ? prologue : new Prologue();
 
         entityOpsFactory = entityOpsFactory != null
                 ? entityOpsFactory
-                : (clazz) -> EntityModel.createDefaultModel(clazz);
+                : (clazz) -> EntityModel.createDefaultModel(clazz, conversionService);
         
         StandardEvaluationContext evalContext = new StandardEvaluationContext();
         TemplateParserContext parserContext = new TemplateParserContext();
@@ -383,7 +388,7 @@ public class RdfTypeFactoryImpl
         SparqlRelationParser relationParser = SparqlRelationParserImpl.create(Syntax.syntaxARQ, prologue);
 
         TypeMapper typeMapper = TypeMapper.getInstance();
-        RdfTypeFactoryImpl result = new RdfTypeFactoryImpl(parser, parserContext, evalContext, typeMapper, prologue, relationParser, entityOpsFactory);
+        RdfTypeFactoryImpl result = new RdfTypeFactoryImpl(parser, parserContext, evalContext, typeMapper, prologue, relationParser, entityOpsFactory, conversionService);
         return result;
     }
 }

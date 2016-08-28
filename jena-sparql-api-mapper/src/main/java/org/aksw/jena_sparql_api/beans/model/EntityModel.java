@@ -13,6 +13,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.springframework.core.annotation.AnnotationUtils;
+import org.springframework.core.convert.ConversionService;
 
 public class EntityModel
     implements EntityOps
@@ -26,6 +27,8 @@ public class EntityModel
     //protected Set<Class<?>> annotationOverrides;
     
     protected Map<Class<?>, Object> classToInstance;
+    
+    protected ConversionService conversionService;
     //protected ClassToInstanceMap<Objcet
     
     public EntityModel() {
@@ -42,8 +45,16 @@ public class EntityModel
 //        @SuppressWarnings("unchecked")
         this.annotationFinder = (annotationClass) -> AnnotationUtils.findAnnotation(this.associatedClass, (Class)annotationClass);
     }
+    
+    public ConversionService getConversionService() {
+		return conversionService;
+	}
 
-    public Function<Class<?>, Object> getAnnotationFinder() {
+	public void setConversionService(ConversionService conversionService) {
+		this.conversionService = conversionService;
+	}
+
+	public Function<Class<?>, Object> getAnnotationFinder() {
         return annotationFinder;
     }
 
@@ -73,7 +84,7 @@ public class EntityModel
     }
 
     
-    public static EntityModel createDefaultModel(Class<?> clazz) {
+    public static EntityModel createDefaultModel(Class<?> clazz, ConversionService conversionService) {
         BeanInfo beanInfo;
         try {
             beanInfo = Introspector.getBeanInfo(clazz);
@@ -113,7 +124,7 @@ public class EntityModel
 
             Function<Class<?>, Object> annotationFinder = (annotationClass) -> MyAnnotationUtils.findPropertyAnnotation(clazz, pd, (Class)annotationClass);
             
-            PropertyModel p = new PropertyModel(propertyName, propertyType, getter, setter, annotationFinder);
+            PropertyModel p = new PropertyModel(propertyName, propertyType, getter, setter, conversionService, annotationFinder);
             p.setReadMethod(readMethod);
             p.setWriteMethod(writeMethod);
 
