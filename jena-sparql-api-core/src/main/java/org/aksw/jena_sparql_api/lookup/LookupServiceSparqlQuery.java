@@ -53,6 +53,8 @@ public class LookupServiceSparqlQuery
             E_OneOf expr = new E_OneOf(new ExprVar(var), exprs);
             Element filterElement = new ElementFilter(expr);
 
+            System.out.println("Looking up: " + query);
+            
             Query q = query.cloneQuery();
             Element newElement = ElementUtils.mergeElements(q.getQueryPattern(), filterElement);
             q.setQueryPattern(newElement);

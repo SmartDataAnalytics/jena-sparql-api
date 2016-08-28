@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.beans.model.EntityModel;
 import org.aksw.jena_sparql_api.beans.model.EntityOps;
-import org.aksw.jena_sparql_api.beans.model.MapOps;
 import org.aksw.jena_sparql_api.beans.model.PropertyModel;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.mapper.annotation.DefaultIri;
@@ -22,14 +21,42 @@ import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.mapper.util.BeanUtils;
 import org.aksw.jena_sparql_api.sparql.ext.datatypes.RDFDatatypeDate;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
+import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
+import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Model;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.item.ExecutionContext;
 
 public class SpringBatchMappings {
-    public static void main(String[] args) {
+
+	public static void test() {
+    	Long value = 1l;
+    	
+    	TypeMapper tm = TypeMapper.getInstance();
+    	RDFDatatype dt = tm.getTypeByClass(value.getClass());
+    	
+    	//Object y = dt.cannonicalise(value);
+    	//dt.getJavaClass()
+    	
+    	
+    	String lex = dt.unparse(value);
+    	Node node = NodeFactory.createLiteral(lex, dt);
+    	Object o = dt.parse(lex);
+    	System.out.println(o.getClass());
+    	
+    	Object x = node.getLiteralValue();
+    	System.out.println("Got value: " + x.getClass() + " " + node);
+    	
+	}
+
+	
+	public static void main(String[] args) {
+		test();
+    	
+    	
+    	
 //        ExecutionContext ecx = new ExecutionContext();
 //        MapOps o = new MapOpsExecutionContext();
 //        o.put(ecx, "test", "hello");

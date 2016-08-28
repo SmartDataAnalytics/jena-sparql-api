@@ -4,6 +4,9 @@ import java.lang.reflect.Method;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * PropertyOps implementation that delegates most calls 
  * 
@@ -13,6 +16,8 @@ import java.util.function.Function;
 public class PropertyModel
     implements PropertyOps
 {
+	private static final Logger logger = LoggerFactory.getLogger(PropertyModel.class);
+	
     protected String name;
     protected Class<?> type;
     protected Function<Object, ?> getter;
@@ -69,7 +74,12 @@ public class PropertyModel
 
     @Override
     public void setValue(Object entity, Object value) {
-        setter.accept(entity, value);        
+    	
+    	if(type.equals(Long.class)) {
+    		logger.warn("HACK for casting to long");
+    		value = ((Number)value).longValue();
+    	}
+        setter.accept(entity, value);
     }
 
     @Override

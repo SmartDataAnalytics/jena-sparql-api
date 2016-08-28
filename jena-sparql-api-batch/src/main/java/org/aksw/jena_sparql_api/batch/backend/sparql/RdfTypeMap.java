@@ -57,6 +57,18 @@ public class RdfTypeMap
     }
 
     
+    public static Node getOrCreateRootNode(RdfPersistenceContext persistenceContext, RdfTypeFactory typeFactory, Object entity) {
+    	Node result = persistenceContext.getRootNode(entity);
+    	if(result == null) {
+        	
+        	Class<?> clazz = entity.getClass();
+        	RdfType rdfType = typeFactory.forJavaType(clazz);
+        	result = rdfType.getRootNode(entity);
+        	persistenceContext.getFrontier().add(new TypedNode(rdfType, result));
+    	}
+    	return result;
+    }
+    
     @Override
     public void emitTriples(RdfPersistenceContext persistenceContext,
             RdfEmitterContext emitterContext, Object entity, Node subject,
@@ -76,8 +88,9 @@ public class RdfTypeMap
             //persistenceContext.
             //persistenceContext.entityFor(new TypedNode(rdfType, node));
             
-            Node kNode = persistenceContext.getRootNode(k);
-            Node vNode = persistenceContext.getRootNode(v);
+
+            Node kNode = getOrCreateRootNode(persistenceContext, typeFactory, k);
+            Node vNode = getOrCreateRootNode(persistenceContext, typeFactory, v);
             
             emitterContext.add(k, entity, "key" + i);
             emitterContext.add(v, entity, "value" + i);

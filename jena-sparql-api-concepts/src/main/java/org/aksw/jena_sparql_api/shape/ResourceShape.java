@@ -44,6 +44,7 @@ import org.apache.jena.sparql.expr.ExprList;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.function.FunctionEnv;
+import org.apache.jena.sparql.graph.NodeTransformLib;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementBind;
 import org.apache.jena.sparql.syntax.ElementFilter;
@@ -52,6 +53,7 @@ import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.PatternVars;
 import org.apache.jena.sparql.syntax.Template;
+import org.apache.jena.sparql.syntax.syntaxtransform.TransformElementLib;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -507,6 +509,7 @@ public class ResourceShape {
             rename.put(baseVar, Vars.x);
 
             sourceVar = MapUtils.getOrElse(rename, baseVar, baseVar);
+            //Element e1 = Element
             Element e1 = ElementUtils.createRenamedElement(baseElement, rename);
             e = ElementUtils.mergeElements(e1, e2);
 
