@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.mapper.context;
 
 import org.aksw.jena_sparql_api.mapper.impl.engine.EntityGraphMap;
+import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.aksw.jena_sparql_api.util.frontier.Frontier;
 
 import org.apache.jena.graph.Node;
@@ -62,8 +63,15 @@ public interface RdfPersistenceContext
     Object getEntity(TypedNode typedNode);
 
 
-    Node getRootNode(Object entity);
+    @Deprecated
+    Node getRawRootNode(Object entity);
 
+    // TODO: Not sure if the typeFactory should be a field of the persistence context
+    // RdfTypeFactory typeFactory, 
+    Node getRootNode(Object entity);
+    
+    Object put(Node node, Object entity);
+    
     /**
      * Whether the given bean is managed by this context; i.e.
      * whether the bean has bean created with .objectFor()
@@ -93,6 +101,8 @@ public interface RdfPersistenceContext
 
     //boolean setPopulated(O)
 
+    
+    
     /**
      * Whether according to the context the bean has been populated
      *

@@ -2,14 +2,16 @@ package org.aksw.jena_sparql_api.mapper.context;
 
 import org.aksw.jena_sparql_api.mapper.impl.engine.EntityGraphMap;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
+import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.aksw.jena_sparql_api.util.frontier.Frontier;
 import org.aksw.jena_sparql_api.util.frontier.FrontierStatus;
-
 import org.apache.jena.graph.Node;
 
-public class RdfPersistenceContextFrontier
+public class RdfPersistenceContextImpl
     implements RdfPersistenceContext
 {
+    protected RdfTypeFactory typeFactory;
+    
     protected EntityContext<Object> entityContext = EntityContextImpl.createIdentityContext(Object.class);
     protected EntityContext<TypedNode> typedNodeContext = new EntityContextImpl<TypedNode>();
 
@@ -17,8 +19,10 @@ public class RdfPersistenceContextFrontier
 
     protected Frontier<TypedNode> frontier;
 
-    public RdfPersistenceContextFrontier(Frontier<TypedNode> frontier) {
+
+    public RdfPersistenceContextImpl(Frontier<TypedNode> frontier, RdfTypeFactory typeFactory) {
         super();
+        this.typeFactory = typeFactory;
         this.frontier = frontier;
     }
 
@@ -73,7 +77,7 @@ public class RdfPersistenceContextFrontier
 
         return result;
     }
-
+    
 
     /**
      * TODO It could happen that multiple typedNodes map to the same entity
@@ -81,7 +85,7 @@ public class RdfPersistenceContextFrontier
      * an entity
      */
     @Override
-    public Node getRootNode(Object entity) {
+    public Node getRawRootNode(Object entity) {
         Node result = entityContext.getAttribute(entity, "rootNode", null);
         return result;
     }
@@ -111,6 +115,29 @@ public class RdfPersistenceContextFrontier
         boolean result = FrontierStatus.DONE.equals(frontier.getStatus(populationRequest));
 
         return result;
+    }
+
+    public static Node getOrCreateRootNode(RdfPersistenceContext persistenceContext, RdfTypeFactory typeFactory, Object entity) {
+        Node result = persistenceContext.getRawRootNode(entity);
+        if(result == null) {
+            
+            Class<?> clazz = entity.getClass();
+            RdfType rdfType = typeFactory.forJavaType(clazz);
+            result = rdfType.getRootNode(entity);
+            persistenceContext.getFrontier().add(new TypedNode(rdfType, result));
+        }
+        return result;
+    }
+
+    @Override
+    public Node getRootNode(Object entity) {
+        Node result = getOrCreateRootNode(this, typeFactory, entity);
+
+        return result;
+    }
+
+    @Override
+    public Object put(Node node, Object entity) {
     }
 
 }

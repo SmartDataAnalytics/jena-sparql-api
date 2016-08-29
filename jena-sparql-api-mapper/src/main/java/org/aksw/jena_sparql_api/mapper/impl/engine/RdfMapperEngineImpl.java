@@ -20,7 +20,7 @@ import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContextFrontier;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
-import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContextFrontier;
+import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContextImpl;
 import org.aksw.jena_sparql_api.mapper.context.TypedNode;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfClass;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
@@ -74,7 +74,7 @@ public class RdfMapperEngineImpl
         this.sparqlService = sparqlService;
         this.typeFactory = typeFactory;
         this.prologue = prologue;
-        this.persistenceContext = persistenceContext != null ? persistenceContext : new RdfPersistenceContextFrontier(new FrontierImpl<TypedNode>());
+        this.persistenceContext = persistenceContext != null ? persistenceContext : new RdfPersistenceContextImpl(new FrontierImpl<TypedNode>());
     }
 
     @Override
@@ -177,7 +177,7 @@ public class RdfMapperEngineImpl
                         Graph refs = GraphFactory.createDefaultGraph();
                         //Sink<Triple> refSink = new SinkTriplesToGraph(false, refs);
                         //Node subject = rdfType.getRootNode(entity);
-                        Node subject = persistenceContext.getRootNode(entity);
+                        Node subject = persistenceContext.getRawRootNode(entity);
                         rdfType.populateEntity(persistenceContext, entity, subject, graph, refs::add);
                         //refSink.close();
     
@@ -332,7 +332,7 @@ public class RdfMapperEngineImpl
             //Consumer<Triple> sink = outGraph::add;
             //emitterContext.ge
             
-            Node subject = getOrCreateRootNode(persistenceContext, typeFactory, current);
+            Node subject = RdfPersistenceContextImpl.getOrCreateRootNode(persistenceContext, typeFactory, current);
             //Node subject = rdfType.getRootNode(current);
             
             if(subject == null) {
@@ -342,19 +342,6 @@ public class RdfMapperEngineImpl
 
             rdfType.emitTriples(persistenceContext, emitterContext, current, subject, outGraph::add);
         }
-    }
-
-    
-    public static Node getOrCreateRootNode(RdfPersistenceContext persistenceContext, RdfTypeFactory typeFactory, Object entity) {
-        Node result = persistenceContext.getRootNode(entity);
-        if(result == null) {
-            
-            Class<?> clazz = entity.getClass();
-            RdfType rdfType = typeFactory.forJavaType(clazz);
-            result = rdfType.getRootNode(entity);
-            persistenceContext.getFrontier().add(new TypedNode(rdfType, result));
-        }
-        return result;
     }
 
 

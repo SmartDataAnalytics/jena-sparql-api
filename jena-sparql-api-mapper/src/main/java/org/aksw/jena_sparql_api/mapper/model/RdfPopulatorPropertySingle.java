@@ -67,6 +67,9 @@ public class RdfPopulatorPropertySingle
             Triple t = new Triple(subject, predicate, o);
             outSink.accept(t);
             
+            // TODO If we allocated a URI for an entity, we need to notify the persistenceContext about it
+            // or conversely, we need to request an entity's node from the peristenceContext
+            
             //persistenceContext.entityFor(new TypedNode(targetRdfType, o))
             emitterContext.add(value, entity, propertyOps.getName());
         }
