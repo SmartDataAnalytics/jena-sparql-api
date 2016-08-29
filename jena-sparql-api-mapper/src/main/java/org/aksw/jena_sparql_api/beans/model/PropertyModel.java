@@ -26,7 +26,6 @@ public class PropertyModel
     protected Function<Class<?>, Object> annotationFinder;
     protected Method readMethod;
     protected Method writeMethod;
-
     protected ConversionService conversionService;
     
     public PropertyModel() {
