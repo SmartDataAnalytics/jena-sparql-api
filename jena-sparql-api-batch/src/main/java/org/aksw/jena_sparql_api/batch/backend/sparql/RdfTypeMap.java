@@ -8,6 +8,7 @@ import java.util.function.Function;
 import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.mapper.context.TypedNode;
+import org.aksw.jena_sparql_api.mapper.impl.engine.RdfMapperEngineImpl;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeComplexBase;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
@@ -44,8 +45,6 @@ public class RdfTypeMap
         super(typeFactory);
         this.createMapView = createMapView;
     }
-    
-    
 
 
     @Override
@@ -56,19 +55,6 @@ public class RdfTypeMap
         tmp.outgoing(value.asNode());
     }
 
-    
-    public static Node getOrCreateRootNode(RdfPersistenceContext persistenceContext, RdfTypeFactory typeFactory, Object entity) {
-    	Node result = persistenceContext.getRootNode(entity);
-    	if(result == null) {
-        	
-        	Class<?> clazz = entity.getClass();
-        	RdfType rdfType = typeFactory.forJavaType(clazz);
-        	result = rdfType.getRootNode(entity);
-        	persistenceContext.getFrontier().add(new TypedNode(rdfType, result));
-    	}
-    	return result;
-    }
-    
     @Override
     public void emitTriples(RdfPersistenceContext persistenceContext,
             RdfEmitterContext emitterContext, Object entity, Node subject,
@@ -89,8 +75,8 @@ public class RdfTypeMap
             //persistenceContext.entityFor(new TypedNode(rdfType, node));
             
 
-            Node kNode = getOrCreateRootNode(persistenceContext, typeFactory, k);
-            Node vNode = getOrCreateRootNode(persistenceContext, typeFactory, v);
+            Node kNode = RdfMapperEngineImpl.getOrCreateRootNode(persistenceContext, typeFactory, k);
+            Node vNode = RdfMapperEngineImpl.getOrCreateRootNode(persistenceContext, typeFactory, v);
             
             emitterContext.add(k, entity, "key" + i);
             emitterContext.add(v, entity, "value" + i);

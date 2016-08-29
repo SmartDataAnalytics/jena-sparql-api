@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.mapper.model;
 
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 import org.aksw.jena_sparql_api.beans.model.PropertyOps;
@@ -18,8 +19,20 @@ import com.google.common.collect.Iterables;
 public class RdfPopulatorPropertySingle
     extends RdfPopulatorPropertyBase
 {
-    public RdfPopulatorPropertySingle(PropertyOps propertyOps, Node predicate, RdfType targetRdfType) { // String fetchMode) {
-        super(propertyOps, predicate, targetRdfType);
+    public RdfPopulatorPropertySingle(
+            PropertyOps propertyOps,
+            Node predicate,
+            RdfType targetRdfType,
+            BiFunction<Object, Object, Node> createTargetIri) { // String fetchMode) {
+        super(propertyOps, predicate, targetRdfType, createTargetIri);
+    }
+
+    class PropertyValueContext {
+        Node subject;
+        Object entity;
+        Object value;
+        
+        
     }
 
     @Override
@@ -33,11 +46,17 @@ public class RdfPopulatorPropertySingle
 
         if(value != null) {
 
-            Node o = targetRdfType.getRootNode(value);
+            //Note: By default, createTargetNode delegates to targetRdfType.getRootNode Node o = targetRdfType.getRootNode(value);
+            Node o = createTargetNode.apply(entity, value);
+            
+            //emitterContext.add(value, entity, propertyOps.getName());
+            //persistenceContext.getFrontier().add(item);
+
+            
             if(o == null) {
-                System.out.println("HACK for testing - remove it! should throw exception instead");
-                //throw new RuntimeException("Failed RDF node conversion for " + value.getClass() + ": " + value);
-                o = subject;
+                //System.out.println("HACK for testing - remove it! should throw exception instead");
+                throw new RuntimeException("Failed RDF node conversion for " + value.getClass() + ": " + value);
+                //o = subject;
             }
             
             

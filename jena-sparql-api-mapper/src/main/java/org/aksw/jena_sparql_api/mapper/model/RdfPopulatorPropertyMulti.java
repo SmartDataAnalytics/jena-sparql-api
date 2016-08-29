@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.mapper.model;
 
 import java.util.Collection;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 import org.aksw.jena_sparql_api.beans.model.PropertyOps;
@@ -39,8 +40,8 @@ import org.apache.jena.graph.Triple;
 public class RdfPopulatorPropertyMulti
     extends RdfPopulatorPropertyBase
 {
-    public RdfPopulatorPropertyMulti(PropertyOps propertyOps, Node predicate, RdfType targetRdfType) {
-        super(propertyOps, predicate, targetRdfType);
+    public RdfPopulatorPropertyMulti(PropertyOps propertyOps, Node predicate, RdfType targetRdfType, BiFunction<Object, Object, Node> createTargetNode) {
+        super(propertyOps, predicate, targetRdfType, createTargetNode);
     }
 
 

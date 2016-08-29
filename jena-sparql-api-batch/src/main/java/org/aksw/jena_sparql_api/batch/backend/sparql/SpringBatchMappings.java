@@ -26,7 +26,7 @@ import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Model;
-import org.springframework.batch.core.JobExecution;
+//import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.context.support.ConversionServiceFactoryBean;
 import org.springframework.core.convert.ConversionService;
@@ -37,12 +37,12 @@ public class SpringBatchMappings {
 		ConversionServiceFactoryBean bean = new ConversionServiceFactoryBean();
 		bean.afterPropertiesSet();
 
-		ConversionService cs = bean.getObject();		
-		
+		ConversionService cs = bean.getObject();
+
 //		cs.convert(source, targetType);
-		
+
     	Long value = 1l;
-    	
+
     	TypeMapper tm = TypeMapper.getInstance();
     	RDFDatatype dt = tm.getTypeByClass(value.getClass());
     	
@@ -147,6 +147,11 @@ public class SpringBatchMappings {
             
             for(PropertyModel pm : entityModel.getProperties()) {
                 pm.setAnnotationFinder((clazz) -> {
+                    if(pm.getName().equals("executionContext") && clazz.equals(DefaultIri.class)) {
+                        return new DefaultIriAnnotation("http://ex.org/foobar/#{id}");
+                    }
+                    
+                    
                     if(clazz.equals(Iri.class)) {
                         String str = pmap.get(pm.getName());
                         if(str != null) {
@@ -214,12 +219,14 @@ public class SpringBatchMappings {
         JobExecution lr = engine.find(JobExecution.class, NodeFactory.createURI("http://ex.org/11"));
         System.out.println("Lookup result: " + lr);
         
-        lr.setVersion(111);
+        //lr.setVersion(111);
         engine.merge(lr);
 
         System.out.println("Graph:");
         sparqlService.getQueryExecutionFactory().createQueryExecution("CONSTRUCT WHERE { ?s ?p ?o }").execConstruct().write(System.out, "TTL");
         
+        System.out.println("Lookup result: " + engine.find(JobExecution.class, NodeFactory.createURI("http://ex.org/11")));
+
         
         //EntityManagerJena em = new EntityManagerJena(engine)
         

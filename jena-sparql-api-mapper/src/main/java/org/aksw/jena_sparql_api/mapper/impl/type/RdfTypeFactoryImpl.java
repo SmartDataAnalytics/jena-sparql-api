@@ -5,6 +5,7 @@ import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import org.aksw.commons.util.strings.StringUtils;
@@ -340,13 +341,30 @@ public class RdfTypeFactoryImpl
             targetRdfType = new RdfTypeIriStr(this);
         }
 
+        
+        DefaultIri defaultIri = pd.findAnnotation(DefaultIri.class);
+        BiFunction<Object, Object, Node> defaultIriFn;
+        if(defaultIri == null) {
+             defaultIriFn = (entity, value) -> targetRdfType.getRootNode(value);
+        } else {
+            String defaultIriStr = defaultIri.value();
+            Expression expression = parser.parseExpression(defaultIriStr,
+                    parserContext);
+
+            Function<Object, Node> defaultIriFnTmp = new F_GetValue<String>(String.class, expression,
+                    evalContext).andThen(iri -> NodeFactory.createURI(iri));
+            
+            defaultIriFn = (entity, value) -> defaultIriFnTmp.apply(entity);
+                        
+        }
+        
         //Relation relation = RelationUtils.createRelation(predicate.getURI(), false, prefixMapping);
 
         //RdfProperty result = new RdfPropertyDatatypeOld(beanInfo, pd, null, predicate, rdfValueMapper);
         RdfPropertyDescriptor descriptor = new RdfPropertyDescriptor(propertyName, targetRdfType, "");
         RdfPopulatorProperty populator = isCollectionProperty
-                ? new RdfPopulatorPropertyMulti(pd, predicate, targetRdfType)
-                : new RdfPopulatorPropertySingle(pd, predicate, targetRdfType)
+                ? new RdfPopulatorPropertyMulti(pd, predicate, targetRdfType, defaultIriFn)
+                : new RdfPopulatorPropertySingle(pd, predicate, targetRdfType, defaultIriFn)
                 ;
 
         rdfClass.addPropertyDescriptor(descriptor);

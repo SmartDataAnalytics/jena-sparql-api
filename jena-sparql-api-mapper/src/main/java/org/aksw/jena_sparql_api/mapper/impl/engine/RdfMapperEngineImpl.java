@@ -330,14 +330,33 @@ public class RdfMapperEngineImpl
             // TODO We now need to know which additional
             // (property) values also need to be emitted
             //Consumer<Triple> sink = outGraph::add;
-            Node subject = rdfType.getRootNode(current);
+            //emitterContext.ge
+            
+            Node subject = getOrCreateRootNode(persistenceContext, typeFactory, current);
+            //Node subject = rdfType.getRootNode(current);
+            
             if(subject == null) {
-                subject = NodeFactory.createURI("http://foobar.foobar");
+                throw new RuntimeException("Could not obtain a root node for " + current);
+                //subject = NodeFactory.createURI("http://foobar.foobar");
             }
 
             rdfType.emitTriples(persistenceContext, emitterContext, current, subject, outGraph::add);
         }
     }
+
+    
+    public static Node getOrCreateRootNode(RdfPersistenceContext persistenceContext, RdfTypeFactory typeFactory, Object entity) {
+        Node result = persistenceContext.getRootNode(entity);
+        if(result == null) {
+            
+            Class<?> clazz = entity.getClass();
+            RdfType rdfType = typeFactory.forJavaType(clazz);
+            result = rdfType.getRootNode(entity);
+            persistenceContext.getFrontier().add(new TypedNode(rdfType, result));
+        }
+        return result;
+    }
+
 
 
 }

@@ -13,10 +13,10 @@ public class F_GetValue<T>
     protected Expression expression;
     protected EvaluationContext evalContext;
 
-    public F_GetValue(Class<T> clazz, Expression expression,
+    public F_GetValue(Class<T> valueClazz, Expression expression,
             EvaluationContext evalContext) {
         super();
-        this.clazz = clazz;
+        this.clazz = valueClazz;
         this.expression = expression;
         this.evalContext = evalContext;
     }
