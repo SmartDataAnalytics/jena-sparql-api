@@ -27,18 +27,17 @@ public class RdfPopulatorPropertySingle
         super(propertyOps, predicate, targetRdfType, createTargetIri);
     }
 
-    class PropertyValueContext {
-        Node subject;
-        Object entity;
-        Object value;
-        
-        
-    }
+//    class PropertyValueContext {
+//        Node subject;
+//        Object entity;
+//        Object value;
+//    }
 
     @Override
     public void emitTriples(RdfPersistenceContext persistenceContext, RdfEmitterContext emitterContext, Object entity, Node subject, Consumer<Triple> outSink) {
         //targetRdfType.getTypeFactory().forJavaType(targetRdfType.getEntityClass()).get
         Object value = propertyOps.getValue(entity);
+                
         
         //Object value = targetRdfType.get
         //        BeanWrapper beanWrapper = new BeanWrapperImpl(entity);
@@ -46,7 +45,12 @@ public class RdfPopulatorPropertySingle
 
         if(value != null) {
 
-            //Note: By default, createTargetNode delegates to targetRdfType.getRootNode Node o = targetRdfType.getRootNode(value);
+            // createTargetNode would have to consult the persistence context
+            // for whether there is any target node for the given entity
+            
+            
+            //Note: By default, createTargetNode delegates to targetRdfType.getRootNode
+            // SNode o = targetRdfType.getRootNode(value);
             Node o = createTargetNode.apply(entity, value);
             
             //emitterContext.add(value, entity, propertyOps.getName());
@@ -58,7 +62,7 @@ public class RdfPopulatorPropertySingle
                 throw new RuntimeException("Failed RDF node conversion for " + value.getClass() + ": " + value);
                 //o = subject;
             }
-            
+       
             
     //        Triple tmp = RelationUtils.extractTriple(relation);
     //        Node p = tmp.getPredicate();
@@ -72,6 +76,7 @@ public class RdfPopulatorPropertySingle
             
             //persistenceContext.entityFor(new TypedNode(targetRdfType, o))
             emitterContext.add(value, entity, propertyOps.getName());
+            //emitterContext.add(o, entity);
         }
 
         //RdfPopulationContext emitterContext;

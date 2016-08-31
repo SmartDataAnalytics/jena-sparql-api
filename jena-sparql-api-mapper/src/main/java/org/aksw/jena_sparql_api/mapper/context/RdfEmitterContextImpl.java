@@ -1,18 +1,27 @@
 package org.aksw.jena_sparql_api.mapper.context;
 
+import org.aksw.jena_sparql_api.util.frontier.Frontier;
+import org.aksw.jena_sparql_api.util.frontier.FrontierImpl;
+import org.aksw.jena_sparql_api.util.frontier.FrontierStatus;
 
 public class RdfEmitterContextImpl
 	implements RdfEmitterContext
 {
-	protected EntityContext<? super Object> entityContext;
+    protected Frontier<Object> frontier = FrontierImpl.createIdentityFrontier();
+    
+	//protected EntityContext<? super Object> entityContext;
+    //protected Frontier<>
+    //protected Map<Object, Node> entityToNode = new IdentityHashMap<>();
+    //protected Map<Node,>
 
 	public RdfEmitterContextImpl() {
-		this(EntityContextImpl.createIdentityContext(Object.class));
+		//this(EntityContextImpl.createIdentityContext(Object.class));
+	    
 	}
 
-	public RdfEmitterContextImpl(EntityContext<? super Object> entityContext) {
-		this.entityContext = entityContext;
-	}
+//	public RdfEmitterContextImpl(EntityContext<? super Object> entityContext) {
+//		this.entityContext = entityContext;
+//	}
 
 	@Override
 	public void add(Object bean, Object parentBean, String propertyName) {
@@ -22,17 +31,45 @@ public class RdfEmitterContextImpl
 		}
 
 		// TODO We could keep track of who referenced the bean
-
-
 	}
 
-	public boolean isEmitted(Object entity) {
-		boolean result = entityContext.getAttribute(entity, "isEmitted", false);
-		return result;
-	}
+	//
+  public boolean isEmitted(Object entity) {
+      return FrontierStatus.DONE.equals(frontier.getStatus(entity));
+      //boolean result = entityContext.getAttribute(entity, "isEmitted", false);
+      //return result;
+  }
 
-	public void setEmitted(Object entity, boolean status) {
-		entityContext.setAttribute(entity, "isEmitted", status);
-	}
+  public void setEmitted(Object entity, boolean status) {
+      frontier.setStatus(entity, status ? FrontierStatus.DONE : FrontierStatus.OPEN);
+      //return FrontierStatus.DONE.equals(frontier.getStatus(entity));
+      //entityContext.setAttribute(entity, "isEmitted", status);
+  }
+//
+//	public boolean isEmitted(Object entity) {
+//		boolean result = entityContext.getAttribute(entity, "isEmitted", false);
+//		return result;
+//	}
+//
+//	public void setEmitted(Object entity, boolean status) {
+//		entityContext.setAttribute(entity, "isEmitted", status);
+//	}
+
+//    @Override
+//    public void add(Node node, Object entity) {
+//        entityToNode.put(entity, node);
+//    }
+//    
+//    public Node get(Object entity, RdfType rdfType) {
+//        Node result = entityToNode.get(entity);
+//        if(result == null) {
+//            result = rdfType.getRootNode(entity);
+//            if(result == null) {
+//                throw new RuntimeException("Could not obtain a node for: " + entity);
+//            }
+//        }
+//        
+//        return result;
+//    }
 
 }

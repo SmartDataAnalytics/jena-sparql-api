@@ -70,7 +70,7 @@ public interface RdfPersistenceContext
     // RdfTypeFactory typeFactory, 
     Node getRootNode(Object entity);
     
-    Object put(Node node, Object entity);
+    void put(Node node, Object entity);
     
     /**
      * Whether the given bean is managed by this context; i.e.

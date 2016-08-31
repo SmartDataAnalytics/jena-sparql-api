@@ -18,7 +18,7 @@ import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
-import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContextFrontier;
+import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContextImpl;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContextImpl;
 import org.aksw.jena_sparql_api.mapper.context.TypedNode;
@@ -74,7 +74,7 @@ public class RdfMapperEngineImpl
         this.sparqlService = sparqlService;
         this.typeFactory = typeFactory;
         this.prologue = prologue;
-        this.persistenceContext = persistenceContext != null ? persistenceContext : new RdfPersistenceContextImpl(new FrontierImpl<TypedNode>());
+        this.persistenceContext = persistenceContext != null ? persistenceContext : new RdfPersistenceContextImpl(new FrontierImpl<TypedNode>(), typeFactory);
     }
 
     @Override
@@ -316,8 +316,8 @@ public class RdfMapperEngineImpl
 
     @Override
     public void emitTriples(Graph outGraph, Object entity) {
-        Frontier<Object> frontier = FrontierImpl.createIdentityFrontier();
-        RdfEmitterContext emitterContext = new RdfEmitterContextFrontier(frontier);
+        //Frontier<Object> frontier = FrontierImpl.createIdentityFrontier();
+        RdfEmitterContext emitterContext = new RdfEmitterContextImpl(); //frontier);
 
         frontier.add(entity);
 
@@ -332,6 +332,7 @@ public class RdfMapperEngineImpl
             //Consumer<Triple> sink = outGraph::add;
             //emitterContext.ge
             
+            //Node subject = persistenceContext.getEntity(
             Node subject = RdfPersistenceContextImpl.getOrCreateRootNode(persistenceContext, typeFactory, current);
             //Node subject = rdfType.getRootNode(current);
             

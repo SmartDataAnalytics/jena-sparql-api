@@ -137,7 +137,12 @@ public class RdfPersistenceContextImpl
     }
 
     @Override
-    public Object put(Node node, Object entity) {
+    public void put(Node node, Object entity) {
+        RdfType rdfType = typeFactory.forJavaType(entity.getClass());
+        TypedNode typedNode = new TypedNode(rdfType, node);        
+
+        typedNodeContext.setAttribute(typedNode, "entity", entity);
+        entityContext.setAttribute(entity, "rootNode", node);        
     }
 
 }
