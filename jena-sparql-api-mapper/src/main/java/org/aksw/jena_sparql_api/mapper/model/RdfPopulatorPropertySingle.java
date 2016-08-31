@@ -44,9 +44,25 @@ public class RdfPopulatorPropertySingle
 //        Object value = beanWrapper.getPropertyValue(propertyName);
 
         if(value != null) {
-
+           
+            
             // createTargetNode would have to consult the persistence context
             // for whether there is any target node for the given entity
+ 
+            /**
+             * The main problem here is, how to obtain a node that corresponds to the value.
+             * If the entity being emitted here has been populated, we can obtain its value directly (we just look up the triple (subject, property, ?x))
+             * However, without population, we could e.g. obtain a placeholder resource (e.g. a blank node) and mark it for later resolution.
+             * At resolution, the blank nodes are replaced with their proper URIs.
+             * 
+             * 
+             * 
+             * Yet, this should not have to be done here, but this should be handled by the emitterContext.
+             * 
+             * The emitterContext can then be 'resolved' by the engine, which will update the persistenceContext accordingly.
+             * 
+             * 
+             */
             
             
             //Note: By default, createTargetNode delegates to targetRdfType.getRootNode

@@ -9,7 +9,23 @@ public interface RdfEmitterContext {
 	 */
     //void add(Node node, Object entity);
 
-    void add(Object bean, Object parentBean, String propertyName);
-	boolean isEmitted(Object bean);
-	void setEmitted(Object bean, boolean status);
+    
+    /**
+     * Return a corresponding node for the given entity
+     * 
+     * Note: The emitter context SPI does not enforce a particular strategy on how to obtain a node.
+     * One implementation could directly query the backend and return the final node,
+     * whereas other implementations could return placeholders which are resolved at a later stage.
+     * 
+     * 
+     * 
+     * @param entity
+     * @return
+     */
+    Node getValueNode(Object entity, String propertyName);
+
+    
+    void add(Object entity, Object parentBean, String propertyName);
+	boolean isEmitted(Object entity);
+	void setEmitted(Object entity, boolean status);
 }
