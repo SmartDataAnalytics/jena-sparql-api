@@ -33,8 +33,9 @@ public class RdfPopulatorPropertySingle
 //        Object value;
 //    }
 
+    // RdfPersistenceContext persistenceContext,
     @Override
-    public void emitTriples(RdfPersistenceContext persistenceContext, RdfEmitterContext emitterContext, Object entity, Node subject, Consumer<Triple> outSink) {
+    public void emitTriples(RdfEmitterContext emitterContext, Object entity, Node subject, Consumer<Triple> outSink) {
         //targetRdfType.getTypeFactory().forJavaType(targetRdfType.getEntityClass()).get
         Object value = propertyOps.getValue(entity);
                 
@@ -44,7 +45,7 @@ public class RdfPopulatorPropertySingle
 //        Object value = beanWrapper.getPropertyValue(propertyName);
 
         if(value != null) {
-           
+            Node o = emitterContext.getValueNode(entity, propertyOps.getName(), value);
             
             // createTargetNode would have to consult the persistence context
             // for whether there is any target node for the given entity
@@ -67,7 +68,7 @@ public class RdfPopulatorPropertySingle
             
             //Note: By default, createTargetNode delegates to targetRdfType.getRootNode
             // SNode o = targetRdfType.getRootNode(value);
-            Node o = createTargetNode.apply(entity, value);
+            //Node o = createTargetNode.apply(entity, value);
             
             //emitterContext.add(value, entity, propertyOps.getName());
             //persistenceContext.getFrontier().add(item);
@@ -91,7 +92,7 @@ public class RdfPopulatorPropertySingle
             // or conversely, we need to request an entity's node from the peristenceContext
             
             //persistenceContext.entityFor(new TypedNode(targetRdfType, o))
-            emitterContext.add(value, entity, propertyOps.getName());
+            //emitterContext.add(value, entity, propertyOps.getName());
             //emitterContext.add(o, entity);
         }
 

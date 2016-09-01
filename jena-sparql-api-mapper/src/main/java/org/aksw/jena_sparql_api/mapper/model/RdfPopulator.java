@@ -25,8 +25,8 @@ import org.apache.jena.graph.Triple;
 public interface RdfPopulator {
 
     /**
-     * Return the set of bean properties which this populator uses.
-     *
+     * Return the set of entity properties which are affected by this populator.
+     * For instance, an RDF wktLiteral may map to two properties 'lat' and 'long'
      *
      * @return
      */
@@ -35,7 +35,7 @@ public interface RdfPopulator {
 
     /**
      * Expose SPARQL patterns that identify the set of triples
-     * that are needed to populate the *immediate* properties
+     * that are needed to populate the *immediate* values of the affected entity properties.
      *
      *
      * @param shapeBuilder
@@ -50,10 +50,10 @@ public interface RdfPopulator {
      * @param bean
      * @param subject
      */
-    void emitTriples(RdfPersistenceContext persistenceContext, RdfEmitterContext emitterContext, Object entity, Node subject, Consumer<Triple> outSink);
+    void emitTriples(RdfEmitterContext emitterContext, Object entity, Node subject, Consumer<Triple> outSink);
 
     /**
-     * Set bean property values from a given subject's RDF graph
+     * Set entity property values from a given subject's RDF graph
      *
      * @param graph
      * @param subject

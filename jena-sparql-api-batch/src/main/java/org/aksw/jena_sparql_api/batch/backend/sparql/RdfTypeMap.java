@@ -56,8 +56,7 @@ public class RdfTypeMap
     }
 
     @Override
-    public void emitTriples(RdfPersistenceContext persistenceContext,
-            RdfEmitterContext emitterContext, Object entity, Node subject,
+    public void emitTriples(RdfEmitterContext emitterContext, Object entity, Node subject,
             Consumer<Triple> sink) {
         
         @SuppressWarnings("unchecked")
@@ -75,8 +74,8 @@ public class RdfTypeMap
             //persistenceContext.entityFor(new TypedNode(rdfType, node));
             
 
-            Node kNode = RdfPersistenceContextImpl.getOrCreateRootNode(persistenceContext, typeFactory, k);
-            Node vNode = RdfPersistenceContextImpl.getOrCreateRootNode(persistenceContext, typeFactory, v);
+            Node kNode = null; // emitterContext.getValueNode(entity, propertyName)//RdfPersistenceContextImpl.getOrCreateRootNode(persistenceContext, typeFactory, k);
+            Node vNode = null; //RdfPersistenceContextImpl.getOrCreateRootNode(persistenceContext, typeFactory, v);
             
             emitterContext.add(k, entity, "key" + i);
             emitterContext.add(v, entity, "value" + i);

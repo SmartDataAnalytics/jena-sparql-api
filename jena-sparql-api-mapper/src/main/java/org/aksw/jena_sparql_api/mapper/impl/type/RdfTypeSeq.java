@@ -67,7 +67,7 @@ public class RdfTypeSeq
     }
 
     @Override
-    public void emitTriples(RdfPersistenceContext persistenceContext,
+    public void emitTriples(
             RdfEmitterContext emitterContext, Object entity, Node subject,
             Consumer<Triple> sink) {
         // TODO Auto-generated method stub

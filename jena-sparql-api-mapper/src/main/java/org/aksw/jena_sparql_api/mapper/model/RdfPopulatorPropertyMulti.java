@@ -45,8 +45,9 @@ public class RdfPopulatorPropertyMulti
     }
 
 
+    //RdfPersistenceContext persistenceContext, 
     @Override
-    public void emitTriples(RdfPersistenceContext persistenceContext, RdfEmitterContext emitterContext, Object entity, Node subject, Consumer<Triple> out) {
+    public void emitTriples(RdfEmitterContext emitterContext, Object entity, Node subject, Consumer<Triple> out) {
 
         //BeanWrapper beanWrapper = new BeanWrapperImpl(entity);
         Collection<?> items = (Collection<?>)propertyOps.getValue(entity);//beanWrapper.getPropertyValue(propertyName);
@@ -58,7 +59,7 @@ public class RdfPopulatorPropertyMulti
             out.accept(t);
 
 
-            emitterContext.add(item, entity, propertyOps.getName());
+            //emitterContext.add(item, entity, propertyOps.getName());
 
 //	        if(!out.contains(t)) {
 //

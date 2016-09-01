@@ -279,7 +279,7 @@ public class RdfClass
      * @return
      */
     @Override
-    public void emitTriples(RdfPersistenceContext persistenceContext, RdfEmitterContext emitterContext, Object entity, Node s, Consumer<Triple> out) {
+    public void emitTriples(RdfEmitterContext emitterContext, Object entity, Node s, Consumer<Triple> out) {
         //Node s = getRootNode(obj);
         //Node s = persistenceContext.getRootNode(entity);
         if(s == null) {
@@ -290,7 +290,7 @@ public class RdfClass
          * Run the emitters of all of this class' populators
          */
         for(RdfPopulator populator : populators) {
-            populator.emitTriples(persistenceContext, emitterContext, entity, s, out);
+            populator.emitTriples(emitterContext, entity, s, out);
         }
 
         /*

@@ -318,8 +318,10 @@ public class RdfMapperEngineImpl
     public void emitTriples(Graph outGraph, Object entity) {
         //Frontier<Object> frontier = FrontierImpl.createIdentityFrontier();
         RdfEmitterContext emitterContext = new RdfEmitterContextImpl(); //frontier);
-
-        frontier.add(entity);
+        Frontier<Object> frontier = emitterContext.getFrontier();
+        
+        //emitterContext.setEmitted(entity, false);
+        //frontier.add(entity);
 
         while(!frontier.isEmpty()) {
             Object current = frontier.next();
@@ -341,7 +343,7 @@ public class RdfMapperEngineImpl
                 //subject = NodeFactory.createURI("http://foobar.foobar");
             }
 
-            rdfType.emitTriples(persistenceContext, emitterContext, current, subject, outGraph::add);
+            rdfType.emitTriples(emitterContext, current, subject, outGraph::add);
         }
     }
 

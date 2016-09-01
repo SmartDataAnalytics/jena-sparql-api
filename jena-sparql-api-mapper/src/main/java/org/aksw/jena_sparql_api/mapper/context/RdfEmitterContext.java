@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.mapper.context;
 
+import org.aksw.jena_sparql_api.util.frontier.Frontier;
 import org.apache.jena.graph.Node;
 
 public interface RdfEmitterContext {
@@ -22,10 +23,28 @@ public interface RdfEmitterContext {
      * @param entity
      * @return
      */
-    Node getValueNode(Object entity, String propertyName);
+    
+    /**
+     * Obtain a node that corresponds to the given entity
+     * 
+     * @param entity
+     * @return
+     */
+    //Node getEntityNode(Object entity);
+    
+    /**
+     * Obtain a node for a specific property value of an entity
+     * 
+     * @param entity
+     * @param propertyName
+     * @return
+     */
+    Node getValueNode(Object entity, String propertyName, Object value);
 
     
-    void add(Object entity, Object parentBean, String propertyName);
+    //void add(Object entity, Object parentBean, String propertyName);
 	boolean isEmitted(Object entity);
 	void setEmitted(Object entity, boolean status);
+	
+	Frontier<Object> getFrontier();
 }

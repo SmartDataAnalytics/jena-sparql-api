@@ -32,6 +32,6 @@ public abstract class RdfTypePrimitiveBase
     public void populateEntity(RdfPersistenceContext persistenceContext, Object entity, Node subject, Graph inGraph, Consumer<Triple> sink) {
     }
 
-    public void emitTriples(RdfPersistenceContext persistenceContext, RdfEmitterContext emitterContext, Object entity, Node subject, Consumer<Triple> sink) {        
+    public void emitTriples(RdfEmitterContext emitterContext, Object entity, Node subject, Consumer<Triple> sink) {        
     }
 }
