@@ -317,11 +317,11 @@ public class RdfMapperEngineImpl
     @Override
     public void emitTriples(Graph outGraph, Object entity) {
         //Frontier<Object> frontier = FrontierImpl.createIdentityFrontier();
-        RdfEmitterContext emitterContext = new RdfEmitterContextImpl(); //frontier);
+        RdfEmitterContext emitterContext = new RdfEmitterContextImpl(persistenceContext); //frontier);
         Frontier<Object> frontier = emitterContext.getFrontier();
         
         //emitterContext.setEmitted(entity, false);
-        //frontier.add(entity);
+        frontier.add(entity);
 
         while(!frontier.isEmpty()) {
             Object current = frontier.next();
@@ -338,6 +338,7 @@ public class RdfMapperEngineImpl
             Node subject = RdfPersistenceContextImpl.getOrCreateRootNode(persistenceContext, typeFactory, current);
             //Node subject = rdfType.getRootNode(current);
             
+            //Node subject = emitterContext.getValueN
             if(subject == null) {
                 throw new RuntimeException("Could not obtain a root node for " + current);
                 //subject = NodeFactory.createURI("http://foobar.foobar");
@@ -345,6 +346,8 @@ public class RdfMapperEngineImpl
 
             rdfType.emitTriples(emitterContext, current, subject, outGraph::add);
         }
+        
+        // We now need to check the emitterContext for all resources whose 
     }
 
 

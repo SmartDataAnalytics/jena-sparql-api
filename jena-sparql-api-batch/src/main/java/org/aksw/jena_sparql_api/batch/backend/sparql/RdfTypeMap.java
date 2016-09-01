@@ -74,13 +74,16 @@ public class RdfTypeMap
             //persistenceContext.entityFor(new TypedNode(rdfType, node));
             
 
-            Node kNode = null; // emitterContext.getValueNode(entity, propertyName)//RdfPersistenceContextImpl.getOrCreateRootNode(persistenceContext, typeFactory, k);
-            Node vNode = null; //RdfPersistenceContextImpl.getOrCreateRootNode(persistenceContext, typeFactory, v);
+//            Node kNode = null; // emitterContext.getValueNode(entity, propertyName)//RdfPersistenceContextImpl.getOrCreateRootNode(persistenceContext, typeFactory, k);
+//            Node vNode = null; //RdfPersistenceContextImpl.getOrCreateRootNode(persistenceContext, typeFactory, v);
             
-            emitterContext.add(k, entity, "key" + i);
-            emitterContext.add(v, entity, "value" + i);
+//            emitterContext.add(k, entity, "key" + i);
+//            emitterContext.add(v, entity, "value" + i);
             
             //Node keyNode = emitterContext.
+
+            Node kNode = emitterContext.getValueNode(entity, "key" + i, v);
+            Node vNode = emitterContext.getValueNode(entity, "value" + i, v);
             
             sink.accept(new Triple(subject, entry.asNode(), eNode));
             sink.accept(new Triple(eNode, key.asNode(), kNode));

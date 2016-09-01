@@ -67,6 +67,11 @@ public interface RdfType
      *
      * getRootNode(createJavaObject(node)).equals(node)
      *
+     * For types mapping to plain literals, this method should (must?) never return null.
+     * Note that certain Java types may not have capabilities assigned for returning a node for a given object.
+     * In this case, the result will be null.
+     * 
+     *
      * @param obj
      * @return
      */

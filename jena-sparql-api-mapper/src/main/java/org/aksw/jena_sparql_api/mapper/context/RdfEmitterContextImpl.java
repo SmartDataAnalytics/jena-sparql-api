@@ -1,21 +1,33 @@
 package org.aksw.jena_sparql_api.mapper.context;
 
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.Map;
+
 import org.aksw.jena_sparql_api.util.frontier.Frontier;
 import org.aksw.jena_sparql_api.util.frontier.FrontierImpl;
 import org.aksw.jena_sparql_api.util.frontier.FrontierStatus;
+import org.aksw.jena_sparql_api.utils.model.Triplet;
+import org.aksw.jena_sparql_api.utils.model.TripletImpl;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 
 public class RdfEmitterContextImpl
 	implements RdfEmitterContext
 {
     protected Frontier<Object> frontier = FrontierImpl.createIdentityFrontier();
+    protected RdfPersistenceContext persistenceContext;
+    
+    protected Map<Node, Triplet<Object, String>> unresolvedValues = new HashMap<>();
+    protected Map<Object, Node> entityToNode = new IdentityHashMap<>();
     
 	//protected EntityContext<? super Object> entityContext;
     //protected Frontier<>
     //protected Map<Object, Node> entityToNode = new IdentityHashMap<>();
     //protected Map<Node,>
 
-	public RdfEmitterContextImpl() {
+	public RdfEmitterContextImpl(RdfPersistenceContext persistenceContext) {
+	    this.persistenceContext = persistenceContext;
 		//this(EntityContextImpl.createIdentityContext(Object.class));
 	    
 	}
@@ -56,8 +68,25 @@ public class RdfEmitterContextImpl
 //		entityContext.setAttribute(entity, "isEmitted", status);
 //	}
 
+    public static int i = 1;
+
     @Override
     public Node getValueNode(Object entity, String propertyName, Object value) {
+        // Check if we know a mapping for the given value
+        // If not, ask the persistenceContext
+        // If we still have no node, generate one and mark it for future resolution.
+        Node result = entityToNode.get(value);
+        if(result == null) {
+            result = persistenceContext.getRootNode(value);
+            if(result == null) {
+                Triplet<Object, String> t = new TripletImpl<>(entity, propertyName, value);
+                result = NodeFactory.createURI("tmp://foobar" + (i++));
+                //result = NodeFactory.createBlankNode();
+                unresolvedValues.put(result, t);
+                entityToNode.put(entity, result);
+            }
+        }
+
         // Unless the value is a primitive object, we need to be able to determine
         // the value's corresponding node.
         // However, this can require lookups to the database
@@ -69,7 +98,7 @@ public class RdfEmitterContextImpl
         // Option 2: If the persistenceContext holds a node mapping for the value, use this 
         
         
-        return null;
+        return result;
     }
 
     @Override

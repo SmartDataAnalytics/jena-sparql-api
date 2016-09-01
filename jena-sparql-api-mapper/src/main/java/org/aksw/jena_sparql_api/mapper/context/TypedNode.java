@@ -52,4 +52,11 @@ public class TypedNode {
 			return false;
 		return true;
 	}
+
+    @Override
+    public String toString() {
+        return "TypedNode [rdfType=" + rdfType + ", node=" + node + "]";
+    }
+	
+	
 }
