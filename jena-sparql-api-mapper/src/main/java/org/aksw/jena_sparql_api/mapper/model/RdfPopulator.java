@@ -57,6 +57,7 @@ public interface RdfPopulator {
      *
      * @param graph
      * @param subject
+     * @param outSink the sub-set of triples in inGraph used to populate the entity
      * @return
      */
     void populateEntity(RdfPersistenceContext persistenceContext, Object entity, Graph inGraph, Node subject, Consumer<Triple> outSink);

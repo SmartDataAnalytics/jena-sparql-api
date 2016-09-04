@@ -129,7 +129,6 @@ public class RdfMapperEngineImpl
             //RdfPersistenceContext persistenceContext = new RdfPersistenceContextFrontier(frontier);
     
             EntityGraphMap entityGraphMap = persistenceContext.getEntityGraphMap();
-    
             TypedNode first = new TypedNode(rootRdfType, rootNode);
     
             Frontier<TypedNode> frontier = persistenceContext.getFrontier();
