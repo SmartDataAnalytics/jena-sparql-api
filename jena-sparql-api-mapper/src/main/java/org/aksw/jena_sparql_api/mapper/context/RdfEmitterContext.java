@@ -4,6 +4,7 @@ import java.util.function.Supplier;
 
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.util.frontier.Frontier;
+import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.apache.jena.graph.Node;
 
 public interface RdfEmitterContext {
@@ -59,6 +60,7 @@ public interface RdfEmitterContext {
      * @return
      */
     Node requestResolution(Object entity, RdfType rdfType, Supplier<Node> iriGenerator);
+    //public Node requestResolution(Node subject, Directed<Node> property, Object entity, RdfType rdfType, Supplier<Node> iriGenerator);
     
     
     //void add(Object entity, Object parentBean, String propertyName);

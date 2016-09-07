@@ -162,8 +162,9 @@ public class RdfClass
 
     // Map<String, RdfProperty> propertyToMapping
     // Prologue prologue
-    public RdfClass(RdfTypeFactory typeFactory, EntityOps targetClass, Function<Object, String> defaultIriFn) {
-        super(typeFactory);
+    public RdfClass(EntityOps targetClass, Function<Object, String> defaultIriFn) {
+        //super(typeFactory);
+        super();
         this.entityOps = targetClass;
         this.defaultIriFn = defaultIriFn;
         //this.prologue = prologue;

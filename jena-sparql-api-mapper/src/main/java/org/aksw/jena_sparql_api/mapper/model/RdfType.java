@@ -46,7 +46,7 @@ public interface RdfType
      * Get the type factory that was used to create this RdfType
      *
      */
-    RdfTypeFactory getTypeFactory();
+    //RdfTypeFactory getTypeFactory();
 
 
     /**

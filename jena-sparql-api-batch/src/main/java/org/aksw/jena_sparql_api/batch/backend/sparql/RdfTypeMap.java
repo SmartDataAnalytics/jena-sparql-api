@@ -41,8 +41,8 @@ public class RdfTypeMap
     protected Function<Object, Map> createMapView; 
     
     // , PropertyOps propertyOps, Node predicate, RdfType targetRdfType
-    public RdfTypeMap(RdfTypeFactory typeFactory, Function<Object, Map> createMapView) {
-        super(typeFactory);
+    public RdfTypeMap(Function<Object, Map> createMapView) {
+        ///super(typeFactory);
         this.createMapView = createMapView;
     }
 

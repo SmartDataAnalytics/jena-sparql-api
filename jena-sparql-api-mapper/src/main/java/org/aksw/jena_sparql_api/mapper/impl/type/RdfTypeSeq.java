@@ -25,9 +25,12 @@ public class RdfTypeSeq
     extends RdfTypeComplexBase
 {
     public RdfTypeSeq(RdfTypeFactory typeFactory, RdfType itemRdfType) {
-        super(typeFactory);
         this.itemRdfType = itemRdfType;
     }
+//    public RdfTypeSeq(RdfTypeFactory typeFactory, RdfType itemRdfType) {
+//        super(typeFactory);
+//        this.itemRdfType = itemRdfType;
+//    }
 
     private RdfType itemRdfType;
 

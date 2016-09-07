@@ -190,7 +190,7 @@ public class SpringBatchMappings {
         
         RdfTypeFactoryImpl typeFactory =  RdfTypeFactoryImpl.createDefault(null, classToOps, conversionService);
         
-        typeFactory.getClassToRdfType().put(ExecutionContext.class, new RdfTypeMap(typeFactory, MapExecutionContext::createMapView));
+        typeFactory.getClassToRdfType().put(ExecutionContext.class, new RdfTypeMap(MapExecutionContext::createMapView));
         
         
         RdfType t = typeFactory.forJavaType(JobExecution.class);

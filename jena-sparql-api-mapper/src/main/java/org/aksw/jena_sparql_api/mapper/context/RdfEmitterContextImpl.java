@@ -6,9 +6,11 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
+import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.aksw.jena_sparql_api.util.frontier.Frontier;
 import org.aksw.jena_sparql_api.util.frontier.FrontierImpl;
 import org.aksw.jena_sparql_api.util.frontier.FrontierStatus;
+import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.aksw.jena_sparql_api.utils.model.Triplet;
 import org.aksw.jena_sparql_api.utils.model.TripletImpl;
 import org.apache.jena.graph.Node;
@@ -84,16 +86,47 @@ public class RdfEmitterContextImpl
 
     @Override
     public Node requestResolution(Object entity) {
-        return null;
+        // Obtain the entity's rdfType
+        //persistenceContext.ge
+        RdfTypeFactory typeFactory = null;
+        Class<?> clazz = entity.getClass();
+        RdfType type = typeFactory.forJavaType(clazz);
+
+        Node rootNode = type.getRootNode(entity);
+        Node result = requestResolution(entity, type, () -> rootNode);        
+        
+        return result;
     }
     
     
     /**
-     * This method attempts to resolve to value of an entity to an RDF node.
-     * For this purpose, the persistence context is queried for an existing mapping.
-     * If such does not exist, the emitter context will allocate a placeholder node
-     * and associate it with the entity's identity (comparison with ==).
-     * The placeholder will be returned marked for the need of future resolution. 
+     * Generate a placeholder node for the value of the property 'property' of entity 'subject'.
+     * Resolution of placeholders yields a Map<Node, Node>, mapping placeholders to concrete nodes.
+     * 
+     * 
+     * 
+     * Note that subject may again be a placeholder; the engine will attempt to resolve nested placeholder.
+     * 
+     * @param subject
+     * @param property
+     */
+//    public Node requestPlaceholder(Node subject, Directed<Node> property) {
+//        
+//    }
+    
+    /**
+     * Request a placeholder node which corresponds to the (inverse) property of the given subject.
+     * 
+     * Making the strategy for what to do with an existing node configurable is work in progress.
+     * 
+     * Furthermore, the given java entity triple should be written using the given rdfType with the obtained placeholder node
+     * as the starting node.
+     * This means, that during writing, further requestResultion requests can be occurr.
+     * 
+     * 
+     * Note, that based on the triples written to the sink, existing iri values may be looked up and possibly reused.
+     * Node subject, Directed<Node> property, 
+     * 
      * 
      */
     @Override
@@ -111,13 +144,13 @@ public class RdfEmitterContextImpl
             result = persistenceContext.getRootNode(entity);
             if(result == null) {
                 //Triplet<Object, String> t = new TripletImpl<>(entity, propertyName, value);
-                Triplet<Object, String> t = new TripletImpl<>(entity, "todo", null);
-                result = NodeFactory.createURI("tmp://foobar" + (i++));
+//                Triplet<Object, String> t = new TripletImpl<>(entity, "todo", null);
+//                result = NodeFactory.createURI("tmp://foobar" + (i++));
                 //result = NodeFactory.createBlankNode();
 
                 unresolvedNodes.put(rdfType, result);
 
-                unresolvedValues.put(result, t);
+                //unresolvedValues.put(result, t);
                 entityToNode.put(entity, result);
             }
         }

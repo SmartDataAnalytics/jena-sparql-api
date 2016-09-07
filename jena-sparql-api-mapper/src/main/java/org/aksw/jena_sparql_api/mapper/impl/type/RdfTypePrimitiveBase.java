@@ -4,7 +4,6 @@ import java.util.function.Consumer;
 
 import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
-import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
@@ -13,9 +12,9 @@ import org.apache.jena.graph.Triple;
 public abstract class RdfTypePrimitiveBase
     extends RdfTypeBase
 {
-    public RdfTypePrimitiveBase(RdfTypeFactory typeFactory) {
-        super(typeFactory);
-    }
+//    public RdfTypePrimitiveBase(RdfTypeFactory typeFactory) {
+//        super(typeFactory);
+//    }
 
     @Override
     public boolean isSimpleType() {

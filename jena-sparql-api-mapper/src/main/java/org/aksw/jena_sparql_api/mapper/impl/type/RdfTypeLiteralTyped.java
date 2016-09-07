@@ -12,9 +12,14 @@ public class RdfTypeLiteralTyped
     protected RDFDatatype rdfDatatype;
 
     public RdfTypeLiteralTyped(RdfTypeFactory typeFactory, RDFDatatype rdfDatatype) {
-        super(typeFactory);
+        super();
         this.rdfDatatype = rdfDatatype;
     }
+
+//    public RdfTypeLiteralTyped(RdfTypeFactory typeFactory, RDFDatatype rdfDatatype) {
+//        super(typeFactory);
+//        this.rdfDatatype = rdfDatatype;
+//    }
 
     @Override
     public Class<?> getEntityClass() {

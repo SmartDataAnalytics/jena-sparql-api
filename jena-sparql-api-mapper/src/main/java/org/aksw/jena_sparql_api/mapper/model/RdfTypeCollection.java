@@ -6,8 +6,6 @@ import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeComplexBase;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
-import org.apache.jena.atlas.lib.Sink;
-
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -18,10 +16,15 @@ public class RdfTypeCollection
     protected Node predicate;
     protected Class<?> collectionClass;
 
-    public RdfTypeCollection(RdfTypeFactory typeFactory, Class<?> collectionClass, Node predicate) {
-        super(typeFactory);
+    public RdfTypeCollection(Class<?> collectionClass, Node predicate) {
+        super();
         this.predicate = predicate;
     }
+
+//    public RdfTypeCollection(RdfTypeFactory typeFactory, Class<?> collectionClass, Node predicate) {
+//        super(typeFactory);
+//        this.predicate = predicate;
+//    }
 
     @Override
     public Class<?> getEntityClass() {

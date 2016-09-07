@@ -14,18 +14,15 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.metamodel.Metamodel;
 
 import org.aksw.jena_sparql_api.core.SparqlService;
-import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
-import org.aksw.jena_sparql_api.mapper.impl.engine.PersistenceContextSupplier;
 import org.aksw.jena_sparql_api.mapper.impl.engine.RdfMapperEngine;
 import org.aksw.jena_sparql_api.mapper.jpa.criteria.CriteriaBuilderJena;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
-
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 
 
 public class EntityManagerJena
-    implements EntityManager, PersistenceContextSupplier
+    implements EntityManager
 {
 	protected RdfMapperEngine engine;
 
@@ -48,14 +45,14 @@ public class EntityManagerJena
         this.engine = engine;
     }
 
-    public RdfPersistenceContext getPersistenceContext() {
-    	RdfPersistenceContext result = engine instanceof PersistenceContextSupplier
-			? ((PersistenceContextSupplier)engine).getPersistenceContext()
-			: null
-			;
-
-		return result;
-    }
+//    public RdfPersistenceContext getPersistenceContext() {
+//    	RdfPersistenceContext result = engine instanceof PersistenceContextSupplier
+//			? ((PersistenceContextSupplier)engine).getPersistenceContext()
+//			: null
+//			;
+//
+//		return result;
+//    }
 
 
     public RdfTypeFactory getRdfTypeFactory() {

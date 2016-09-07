@@ -174,7 +174,7 @@ public class RdfTypeFactoryImpl
                     evalContext);
         }
 
-        RdfClass result = new RdfClass(this, entityOps, defaultIriFn);
+        RdfClass result = new RdfClass(entityOps, defaultIriFn);
 
         return result;
     }
@@ -338,7 +338,7 @@ public class RdfTypeFactoryImpl
             }
         } else {
             Assert.isTrue(String.class.isAssignableFrom(propertyType));
-            targetRdfType = new RdfTypeIriStr(this);
+            targetRdfType = new RdfTypeIriStr();
         }
 
         

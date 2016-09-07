@@ -13,9 +13,9 @@ import org.apache.jena.graph.NodeFactory;
 public class RdfTypeIriStr
     extends RdfTypePrimitiveBase
 {
-    public RdfTypeIriStr(RdfTypeFactory typeFactory) {
-        super(typeFactory);
-        // TODO Auto-generated constructor stub
+    public RdfTypeIriStr() { //RdfTypeFactory typeFactory) {
+//        super(typeFactory);
+      super();
     }
 
 

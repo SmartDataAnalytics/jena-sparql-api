@@ -24,6 +24,7 @@ import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContextImpl;
 import org.aksw.jena_sparql_api.mapper.context.TypedNode;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfClass;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
+import org.aksw.jena_sparql_api.mapper.model.RdfPopulator;
 import org.aksw.jena_sparql_api.mapper.model.RdfPopulatorProperty;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
@@ -37,7 +38,6 @@ import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.GraphUtil;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
-import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
@@ -46,8 +46,10 @@ import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.graph.GraphFactory;
 import org.springframework.beans.BeanUtils;
 
+import com.google.common.collect.Multimap;
+
 public class RdfMapperEngineImpl
-    implements RdfMapperEngine, PersistenceContextSupplier
+    implements RdfMapperEngine
 {
     protected Prologue prologue;
     //protected QueryExecutionFactory qef;
@@ -78,7 +80,7 @@ public class RdfMapperEngineImpl
         this.persistenceContext = persistenceContext != null ? persistenceContext : new RdfPersistenceContextImpl(new FrontierImpl<TypedNode>(), typeFactory);
     }
 
-    @Override
+    //@Override
     public RdfPersistenceContext getPersistenceContext() {
         return this.persistenceContext;
     };
@@ -312,6 +314,7 @@ public class RdfMapperEngineImpl
         return typeFactory;
     }
 
+    
 
     @Override
     public void emitTriples(Graph outGraph, Object entity) {
@@ -349,6 +352,10 @@ public class RdfMapperEngineImpl
         // We now need to check the emitterContext for all resources whose 
     }
 
+//    public static Map<Node, Multimap<Node, Node>> getPropertyValue(QueryExecutionFactory qef, RdfPopulator populator) {
+//        
+//        //populator.exposeShape(shapeBuilder);
+//    }
 
 
 }
