@@ -19,6 +19,10 @@ public interface EntityOps {
     
     <A> A findAnnotation(Class<A> annotationClass);
     
+    
+    // If false, newInstance() should not be called.
+    boolean isInstantiable();
+    
     Object newInstance();
     Collection<? extends PropertyOps> getProperties();
     

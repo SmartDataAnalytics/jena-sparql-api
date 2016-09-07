@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.batch.backend.sparql;
+package org.aksw.jena_sparql_api.batch.backend.sparql.trash;
 
 import java.util.Map;
 import java.util.Map.Entry;

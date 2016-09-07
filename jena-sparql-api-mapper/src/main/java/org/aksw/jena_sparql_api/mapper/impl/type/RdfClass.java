@@ -337,21 +337,21 @@ public class RdfClass
         return result;
     }
 
-    @Override
-    public Object createJavaObject(Node subject) {
-        Object result;
-        try {
-            result = entityOps.newInstance();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-// TODO The proxy mechanism is not controlled at type level, but at engine level
-//        MethodInterceptorRdf interceptor = new MethodInterceptorRdf(o, this, subject);
-//        Object result = Enhancer.create(beanClass, null, interceptor);
-
-        return result;
-    }
+//    @Override
+//    public Object createJavaObject(Node subject) {
+//        Object result;
+//        try {
+//            result = entityOps.newInstance();
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
+//
+//// TODO The proxy mechanism is not controlled at type level, but at engine level
+////        MethodInterceptorRdf interceptor = new MethodInterceptorRdf(o, this, subject);
+////        Object result = Enhancer.create(beanClass, null, interceptor);
+//
+//        return result;
+//    }
 
     @Override
     public String toString() {
@@ -359,6 +359,12 @@ public class RdfClass
                 + ", defaultIriFn=" + defaultIriFn + ", populators="
                 + populators + ", propertyDescriptors=" + propertyDescriptors
                 + ", isPopulated=" + isPopulated + "]";
+    }
+
+    @Override
+    public Object createJavaObject(Node node, Graph graph) {
+        Object result = entityOps.newInstance();
+        return result;
     }
     
     

@@ -54,7 +54,7 @@ public class RdfTypeSeq
     }
 
     @Override
-    public Object createJavaObject(Node node) {
+    public Object createJavaObject(Node node, Graph graph) {
         // TODO Auto-generated method stub
         return null;
     }

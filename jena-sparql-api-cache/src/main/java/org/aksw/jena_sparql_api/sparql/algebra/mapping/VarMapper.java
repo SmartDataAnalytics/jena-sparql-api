@@ -56,6 +56,9 @@ public class VarMapper {
             Collection<Multimap<Expr, Expr>> queryMaps = entry.getValue();
 
             System.out.println("CAND LOOKUP with " + querySig);
+            
+            
+            // Base on the signatures: For the current query clause, find cache clauses that are less restrictive            
             Collection<Entry<Set<Expr>, Multimap<Expr, Expr>>> cands = cacheIndex.getIfSubsetOf(querySig);
 
             for(Entry<Set<Expr>, Multimap<Expr, Expr>> e : cands) {

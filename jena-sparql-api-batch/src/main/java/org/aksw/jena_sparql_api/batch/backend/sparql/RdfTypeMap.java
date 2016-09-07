@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.batch.backend.sparql;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Consumer;
@@ -7,7 +8,6 @@ import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
-import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContextImpl;
 import org.aksw.jena_sparql_api.mapper.context.TypedNode;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeComplexBase;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
@@ -82,8 +82,11 @@ public class RdfTypeMap
             
             //Node keyNode = emitterContext.
 
-            Node kNode = emitterContext.getValueNode(entity, "key" + i, v);
-            Node vNode = emitterContext.getValueNode(entity, "value" + i, v);
+            //Node kNode = emitterContext.getValueNode(entity, "key" + i, v);
+            //Node vNode = emitterContext.getValueNode(entity, "value" + i, v);
+            
+            Node kNode = emitterContext.requestResolution(k);
+            Node vNode = emitterContext.requestResolution(v);
             
             sink.accept(new Triple(subject, entry.asNode(), eNode));
             sink.accept(new Triple(eNode, key.asNode(), kNode));
@@ -130,13 +133,19 @@ public class RdfTypeMap
         return null;
     }
 
+
     @Override
-    public Object createJavaObject(Node node) {
-        //entityOps.
-        // TODO Auto-generated method stub
-        return null;
+    public Object createJavaObject(Node node, Graph graph) {
+        @SuppressWarnings("rawtypes")
+        Map result = new HashMap();
+        return result;
     }
 
-
+//    @Override
+//    public Object createJavaObject(Node node) {
+//        //entityOps.
+//        // TODO Auto-generated method stub
+//        return null;
+//    }
 
 }

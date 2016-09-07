@@ -37,6 +37,7 @@ import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.GraphUtil;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
@@ -153,7 +154,6 @@ public class RdfMapperEngineImpl
         //            MappedConcept<DatasetGraph> mc = ResourceShape.createMappedConcept2(shape, null);
         //            LookupService<Node, DatasetGraph> ls = LookupServiceUtils.createLookupService(qef, mc);
         //            Map<Node, DatasetGraph> map = ls.apply(Collections.singleton(node));
-    
     
                     MappedConcept<Graph> mc = ResourceShape.createMappedConcept(shape, null, false);
                     LookupService<Node, Graph> ls = LookupServiceUtils.createLookupService(qef, mc);

@@ -29,10 +29,17 @@ public class RdfPersistenceContextImpl
     public Frontier<TypedNode> getFrontier() {
         return frontier;
     }
+    
+    
 
 //	public void setFrontier(Frontier<TypedNode> frontier) {
 //		this.frontier = frontier;
 //	}
+
+    @Override
+    public RdfTypeFactory getTypeFactory() {
+        return typeFactory;
+    }
 
     /**
      * TODO Exposing the entity graph map directly does not seem to be good encapsulation
@@ -65,8 +72,8 @@ public class RdfPersistenceContextImpl
 
         // Check if there is already a java object for the given class with the given id
         Object result = typedNodeContext.getAttribute(typedNode, "entity", null);
-        if(result == null) {
-            result = rdfType.createJavaObject(node);
+        if(result == null) {            
+            //result = rdfType.createJavaObject(node);
             typedNodeContext.setAttribute(typedNode, "entity", result);
         }
 
@@ -118,6 +125,10 @@ public class RdfPersistenceContextImpl
     }
 
     public static Node getOrCreateRootNode(RdfPersistenceContext persistenceContext, RdfTypeFactory typeFactory, Object entity) {
+        if(true) {
+            System.out.println("getOrCreateRootNodeX");
+            //throw new RuntimeException("Do not use this method at least for now");
+        }
         Node result = persistenceContext.getRawRootNode(entity);
         if(result == null) {
             
@@ -131,7 +142,7 @@ public class RdfPersistenceContextImpl
 
     @Override
     public Node getRootNode(Object entity) {
-        Node result = getOrCreateRootNode(this, typeFactory, entity);
+        Node result = getRawRootNode(entity); //getOrCreateRootNode(this, typeFactory, entity);
 
         return result;
     }
@@ -143,6 +154,13 @@ public class RdfPersistenceContextImpl
 
         typedNodeContext.setAttribute(typedNode, "entity", entity);
         entityContext.setAttribute(entity, "rootNode", node);        
+    }
+
+    @Override
+    public void requestResolution(Object entity, String propertyName,
+            Node subject, RdfType rdfType) {
+        // TODO Auto-generated method stub
+        
     }
 
 }

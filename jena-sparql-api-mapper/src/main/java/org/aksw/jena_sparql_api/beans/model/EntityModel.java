@@ -62,6 +62,12 @@ public class EntityModel
         this.annotationFinder = annotationFinder;
     }
 
+    @Override
+    public boolean isInstantiable() {
+        boolean result = newInstance != null;
+        return result;
+    }
+    
     public Object newInstance() {
         Object result = newInstance.get();
         return result;

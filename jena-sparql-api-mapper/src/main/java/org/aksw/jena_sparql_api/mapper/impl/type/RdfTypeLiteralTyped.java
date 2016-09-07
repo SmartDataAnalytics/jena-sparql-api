@@ -1,8 +1,8 @@
 package org.aksw.jena_sparql_api.mapper.impl.type;
 
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
-
 import org.apache.jena.datatypes.RDFDatatype;
+import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 
@@ -42,7 +42,7 @@ public class RdfTypeLiteralTyped
     }
 
     @Override
-    public Object createJavaObject(Node node) {
+    public Object createJavaObject(Node node, Graph graph) {
         Object result = node.getLiteralValue();
         return result;
     }

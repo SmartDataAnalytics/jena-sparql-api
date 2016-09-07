@@ -26,6 +26,8 @@ import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.riot.RDFDataMgr;
 //import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.context.support.ConversionServiceFactoryBean;
@@ -61,9 +63,7 @@ public class SpringBatchMappings {
 	}
 
 	
-	public static void main(String[] args) {
-		test();
-    	
+	public static void main(String[] args) {    	
 		ConversionServiceFactoryBean bean = new ConversionServiceFactoryBean();
 		bean.afterPropertiesSet();
 

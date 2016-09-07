@@ -3,7 +3,9 @@ package org.aksw.jena_sparql_api.mapper.context;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
+import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.util.frontier.Frontier;
 import org.aksw.jena_sparql_api.util.frontier.FrontierImpl;
 import org.aksw.jena_sparql_api.util.frontier.FrontierStatus;
@@ -12,14 +14,23 @@ import org.aksw.jena_sparql_api.utils.model.TripletImpl;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+
 public class RdfEmitterContextImpl
 	implements RdfEmitterContext
 {
     protected Frontier<Object> frontier = FrontierImpl.createIdentityFrontier();
     protected RdfPersistenceContext persistenceContext;
     
+    protected Multimap<RdfType, Node> unresolvedNodes = HashMultimap.create();
+    
     protected Map<Node, Triplet<Object, String>> unresolvedValues = new HashMap<>();
     protected Map<Object, Node> entityToNode = new IdentityHashMap<>();
+    
+    // Grouping:
+    //
+    
     
 	//protected EntityContext<? super Object> entityContext;
     //protected Frontier<>
@@ -70,18 +81,42 @@ public class RdfEmitterContextImpl
 
     public static int i = 1;
 
+
     @Override
-    public Node getValueNode(Object entity, String propertyName, Object value) {
+    public Node requestResolution(Object entity) {
+        return null;
+    }
+    
+    
+    /**
+     * This method attempts to resolve to value of an entity to an RDF node.
+     * For this purpose, the persistence context is queried for an existing mapping.
+     * If such does not exist, the emitter context will allocate a placeholder node
+     * and associate it with the entity's identity (comparison with ==).
+     * The placeholder will be returned marked for the need of future resolution. 
+     * 
+     */
+    @Override
+    public Node requestResolution(Object entity, RdfType rdfType, Supplier<Node> iriGenerator) {
         // Check if we know a mapping for the given value
         // If not, ask the persistenceContext
         // If we still have no node, generate one and mark it for future resolution.
-        Node result = entityToNode.get(value);
+        Node result = entityToNode.get(entity);
+        
+//        RdfTypeFactory typeFactory = persistenceContext.getTypeFactory();
+//        Class<?> entityClass = entity.getClass();
+//        RdfType rdfType = typeFactory.forJavaType(entityClass);
+        
         if(result == null) {
-            result = persistenceContext.getRootNode(value);
+            result = persistenceContext.getRootNode(entity);
             if(result == null) {
-                Triplet<Object, String> t = new TripletImpl<>(entity, propertyName, value);
+                //Triplet<Object, String> t = new TripletImpl<>(entity, propertyName, value);
+                Triplet<Object, String> t = new TripletImpl<>(entity, "todo", null);
                 result = NodeFactory.createURI("tmp://foobar" + (i++));
                 //result = NodeFactory.createBlankNode();
+
+                unresolvedNodes.put(rdfType, result);
+
                 unresolvedValues.put(result, t);
                 entityToNode.put(entity, result);
             }
@@ -98,6 +133,8 @@ public class RdfEmitterContextImpl
         // Option 2: If the persistenceContext holds a node mapping for the value, use this 
         
         
+        System.out.println("Unresolved nodes: " + unresolvedNodes.values());
+        
         return result;
     }
 
@@ -105,6 +142,7 @@ public class RdfEmitterContextImpl
     public Frontier<Object> getFrontier() {
         return frontier;
     }
+
 
 //    @Override
 //    public void add(Node node, Object entity) {

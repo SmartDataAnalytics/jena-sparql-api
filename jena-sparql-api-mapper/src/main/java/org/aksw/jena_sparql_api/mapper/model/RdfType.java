@@ -78,6 +78,17 @@ public interface RdfType
     Node getRootNode(Object obj); // TODO May need to add entity manager context argument
 
     /**
+     * Extract a Java (literal) object from a given node.
+     * 
+     * Note: Creating a *non-primitive* java object is not a concern of RdfType which only *MAPS*
+     * between a java object and its corresponding triples.
+     * The reason is, that via the RdfType's entity class the association to a newInstance method can be
+     * indirectly made on the outside, without RdfType having to be aware of it. 
+     * Also, an RdfType reading a collection may be capable of reading and writing to any collection type, regardless
+     * of the concrete sub-type (list, set, etc). 
+     *
+     * 
+     * 
      * Create an empty java object (i.e. no properties set) based on the given
      * node.
      * In the case of primitive types (e.g. String, Long, etc), the object will already carry the correct value.
@@ -90,8 +101,8 @@ public interface RdfType
      * @param node
      * @return
      */
-    Object createJavaObject(Node node); // TODO May need to add entity manager context argument
-
+    //Object createJavaObject(Node node); // TODO May need to add entity manager context argument
+    Object createJavaObject(Node node, Graph graph);
 
     // boolean isHydrated(Object bean)
 

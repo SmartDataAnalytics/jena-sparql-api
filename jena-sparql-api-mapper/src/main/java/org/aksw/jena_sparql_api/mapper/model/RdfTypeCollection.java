@@ -33,12 +33,18 @@ public class RdfTypeCollection
         throw new RuntimeException(this.getClass().getSimpleName() + " does not have an RDF identity of its own; as this is inherited from the owning entity");
     }
 
+//    @Override
+//    public Object createJavaObject(Node node) {
+//        // TODO Auto-generated method stub
+//        return null;
+//    }
+
     @Override
-    public Object createJavaObject(Node node) {
-        // TODO Auto-generated method stub
+    public Object createJavaObject(Node node, Graph graph) {
         return null;
     }
 
+    
     @Override
     public void exposeShape(ResourceShapeBuilder rsb) {
         // TODO Auto-generated method stub
