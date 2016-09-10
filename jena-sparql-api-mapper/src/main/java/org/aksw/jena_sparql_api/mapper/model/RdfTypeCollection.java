@@ -64,7 +64,7 @@ public class RdfTypeCollection
     @Override
     public void emitTriples(
             RdfEmitterContext emitterContext, Object entity, Node subject,
-            Consumer<Triple> sink) {
+            Graph shapeGraph, Consumer<Triple> sink) {
         // TODO Auto-generated method stub
         
     }

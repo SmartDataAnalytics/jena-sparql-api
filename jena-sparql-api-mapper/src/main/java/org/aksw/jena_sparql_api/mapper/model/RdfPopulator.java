@@ -73,7 +73,7 @@ public interface RdfPopulator {
      * @param bean
      * @param subject
      */
-    void emitTriples(RdfEmitterContext emitterContext, Object entity, Node subject, Consumer<Triple> outSink);
+    void emitTriples(RdfEmitterContext emitterContext, Object entity, Node subject, Graph shapeGraph, Consumer<Triple> outSink);
 
     /**
      * Set entity property values from a given subject's RDF graph

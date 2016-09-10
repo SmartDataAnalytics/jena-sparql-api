@@ -1,10 +1,6 @@
 package org.aksw.jena_sparql_api.mapper.context;
 
-import java.util.function.Supplier;
-
-import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.util.frontier.Frontier;
-import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.apache.jena.graph.Node;
 
 public interface RdfEmitterContext {
@@ -52,6 +48,15 @@ public interface RdfEmitterContext {
      * @return
      */
     Node requestResolution(Object entity);
+
+    /**
+     * Resolve an entity
+     * 
+     * @param entity
+     * @return
+     */
+//    Node requestResolution(Object entity, Node);
+
     
     /**
      * 
@@ -59,7 +64,7 @@ public interface RdfEmitterContext {
      * @param iriGenerator Used to generate an IRI if none allocated in the persistence context
      * @return
      */
-    Node requestResolution(Object entity, RdfType rdfType, Supplier<Node> iriGenerator);
+    //Node requestResolution(Object entity, RdfType rdfType, Supplier<Node> iriGenerator);
     //public Node requestResolution(Node subject, Directed<Node> property, Object entity, RdfType rdfType, Supplier<Node> iriGenerator);
     
     

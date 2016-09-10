@@ -127,5 +127,5 @@ public interface RdfType
 
     //DatasetGraph createDatasetGraph(Object obj, Node g);
     // RdfPersistenceContext persistenceContext, 
-    void emitTriples(RdfEmitterContext emitterContext, Object entity, Node subject, Consumer<Triple> sink);
+    void emitTriples(RdfEmitterContext emitterContext, Object entity, Node subject, Graph shapeGraph, Consumer<Triple> sink);
 }

@@ -22,6 +22,8 @@ public interface RdfMapperEngine {
     
     
     <T> T merge(T entity);
+    <T> T merge(T entity, Node node);
 
     void emitTriples(Graph outGraph, Object entity);
+    void emitTriples(Graph outGraph, Object entity, Node node);
 }

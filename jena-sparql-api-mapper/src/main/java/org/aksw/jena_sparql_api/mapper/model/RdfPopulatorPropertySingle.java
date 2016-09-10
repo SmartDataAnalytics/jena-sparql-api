@@ -29,7 +29,7 @@ public class RdfPopulatorPropertySingle
     }
 
     @Override
-    public void emitTriples(RdfEmitterContext emitterContext, Object entity, Node subject, Consumer<Triple> outSink) {
+    public void emitTriples(RdfEmitterContext emitterContext, Object entity, Node subject, Graph shapeGraph, Consumer<Triple> outSink) {
         Object value = propertyOps.getValue(entity);
 
         if(value != null) {
@@ -63,19 +63,21 @@ public class RdfPopulatorPropertySingle
 
         
         //persistenceContext.requestResolution(entity, propertyOps, subject, rdfType);
+
+        persistenceContext.requestResolution(entity, propertyOps.getName(), node);
         
-        Object value = node == null
-                ? null
-                : persistenceContext.entityFor(new TypedNode(targetRdfType, node))
-                ;//rdfType.createJavaObject(node);
-
-
-        // We cannot set property values of primitive types to null
-        Class<?> valueType = propertyOps.getType();
-        if(value == null && valueType.isPrimitive()) {
-            value = Defaults.defaultValue(valueType);
-        }
-        propertyOps.setValue(entity, value);
+//        Object value = node == null
+//                ? null
+//                : persistenceContext.entityFor(new TypedNode(targetRdfType, node))
+//                ;//rdfType.createJavaObject(node);
+//
+//
+//        // We cannot set property values of primitive types to null
+//        Class<?> valueType = propertyOps.getType();
+//        if(value == null && valueType.isPrimitive()) {
+//            value = Defaults.defaultValue(valueType);
+//        }
+//        propertyOps.setValue(entity, value);
     }
 
     @Override

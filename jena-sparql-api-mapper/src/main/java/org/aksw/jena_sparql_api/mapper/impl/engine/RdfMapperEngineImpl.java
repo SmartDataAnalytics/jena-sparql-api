@@ -2,11 +2,15 @@ package org.aksw.jena_sparql_api.mapper.impl.engine;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.aksw.commons.collections.diff.Diff;
+import org.aksw.jena_sparql_api.beans.model.EntityOps;
+import org.aksw.jena_sparql_api.beans.model.PropertyOps;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
@@ -17,22 +21,18 @@ import org.aksw.jena_sparql_api.core.utils.UpdateExecutionUtils;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
-import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContextImpl;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContextImpl;
-import org.aksw.jena_sparql_api.mapper.context.TypedNode;
+import org.aksw.jena_sparql_api.mapper.context.ResolutionRequest;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfClass;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
-import org.aksw.jena_sparql_api.mapper.model.RdfPopulator;
 import org.aksw.jena_sparql_api.mapper.model.RdfPopulatorProperty;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.aksw.jena_sparql_api.mapper.proxy.MethodInterceptorRdf;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
-import org.aksw.jena_sparql_api.util.frontier.Frontier;
-import org.aksw.jena_sparql_api.util.frontier.FrontierImpl;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.GraphUtil;
@@ -45,8 +45,6 @@ import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.graph.GraphFactory;
 import org.springframework.beans.BeanUtils;
-
-import com.google.common.collect.Multimap;
 
 public class RdfMapperEngineImpl
     implements RdfMapperEngine
@@ -77,13 +75,16 @@ public class RdfMapperEngineImpl
         this.sparqlService = sparqlService;
         this.typeFactory = typeFactory;
         this.prologue = prologue;
-        this.persistenceContext = persistenceContext != null ? persistenceContext : new RdfPersistenceContextImpl(new FrontierImpl<TypedNode>(), typeFactory);
+//        this.persistenceContext = persistenceContext != null ? persistenceContext : new RdfPersistenceContextImpl(new FrontierImpl<TypedNode>(), typeFactory);
+        this.persistenceContext = new RdfPersistenceContextImpl();
     }
+
 
     //@Override
     public RdfPersistenceContext getPersistenceContext() {
         return this.persistenceContext;
     };
+
 
     public Prologue getPrologue() {
         return prologue;
@@ -113,87 +114,150 @@ public class RdfMapperEngineImpl
     public <T> List<T> list(Class<T> clazz, List<Node> nodes) {
         List<T> result = new ArrayList<T>(nodes.size());
         for(Node node : nodes) {
-            T entity = find( clazz, node);
+            T entity = find(clazz, node);
             result.add(entity);
         }
         return result;
     }
     
-    public <T> T find(Class<T> clazz, Node rootNode) {        
-        
-        // TODO Cluster nodes by type for efficiency
-        
-        //for(TypedNode typeNode : typedNodes) {
-           RdfType rootRdfType = typeFactory.forJavaType(clazz);
-//           Node rootNode = null;
-//            Node rootNode = typeNode.getNode();
     
-            //Frontier<TypedNode> frontier = new FrontierImpl<TypedNode>();
-            //RdfPersistenceContext persistenceContext = new RdfPersistenceContextFrontier(frontier);
-    
-            EntityGraphMap entityGraphMap = persistenceContext.getEntityGraphMap();
-            TypedNode first = new TypedNode(rootRdfType, rootNode);
-    
-            Frontier<TypedNode> frontier = persistenceContext.getFrontier();
-            frontier.add(first);
-    
-            while(!frontier.isEmpty()) {
-                TypedNode typedNode = frontier.next();
-    
-                RdfType rdfType = typedNode.getRdfType();
-                Node node = typedNode.getNode();
-    
-                ResourceShapeBuilder builder = new ResourceShapeBuilder(prologue);
-                rdfType.exposeShape(builder);
-    
-    
-                // Fetch the graph
-                QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
-    
-                if(!rdfType.isSimpleType()) {
-                    ResourceShape shape = builder.getResourceShape();
-    
-        //            MappedConcept<DatasetGraph> mc = ResourceShape.createMappedConcept2(shape, null);
-        //            LookupService<Node, DatasetGraph> ls = LookupServiceUtils.createLookupService(qef, mc);
-        //            Map<Node, DatasetGraph> map = ls.apply(Collections.singleton(node));
-    
-                    MappedConcept<Graph> mc = ResourceShape.createMappedConcept(shape, null, false);
-                    LookupService<Node, Graph> ls = LookupServiceUtils.createLookupService(qef, mc);
-                    Map<Node, Graph> map = ls.apply(Collections.singleton(node));
-    
-                    //ListService<Concept, Node, Graph> ls = ListServiceUtils.createListServiceMappedConcept(qef, mc, true);
-    
-        //            MappedConcept<Graph> mc = ResourceShape.createMappedConcept(shape, null);
-        //            ListService<Concept, Node, Graph> ls = ListServiceUtils.createListServiceMappedConcept(qef, mc, true);
-    
-    
-                    Graph graph = map.get(node);
-    
-                    if(graph != null) {
-                        //DatasetGraph datasetGraph = map.get(node);
-    
-                        Object entity = persistenceContext.entityFor(typedNode);
-                        entityGraphMap.clearGraph(entity);
-    
-                        Graph refs = GraphFactory.createDefaultGraph();
-                        //Sink<Triple> refSink = new SinkTriplesToGraph(false, refs);
-                        //Node subject = rdfType.getRootNode(entity);
-                        Node subject = persistenceContext.getRawRootNode(entity);
-                        rdfType.populateEntity(persistenceContext, entity, subject, graph, refs::add);
-                        //refSink.close();
-    
-                        entityGraphMap.putAll(refs, entity);
-                    }
-                }
-            }
-        //}
-        
-        
-        @SuppressWarnings("unchecked")
-        T result = (T)persistenceContext.getEntity(first);
+    public Graph fetch(RdfType type, Node node) {
+        ResourceShapeBuilder builder = new ResourceShapeBuilder(prologue);
+        type.exposeShape(builder);
+        ResourceShape shape = builder.getResourceShape();
+        MappedConcept<Graph> mc = ResourceShape.createMappedConcept(shape, null, false);
+        QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
+        LookupService<Node, Graph> ls = LookupServiceUtils.createLookupService(qef, mc);
+        Map<Node, Graph> map = ls.apply(Collections.singleton(node));
+        Graph result = map.get(node);
 
         return result;
     }
+    
+    /**
+     * Perform a lookup in the persistence context for an entity with id 'node'
+     * of type 'clazz'.
+     * If no such entity exists, use clazz's corresponding rdfType to fetch
+     * triples and instanciate the entity
+     * 
+     */
+    public <T> T find(Class<T> clazz, Node node) {
+        Object entity = persistenceContext.entityFor(clazz, node, null);
+        
+        if(entity == null) {
+            RdfType type = typeFactory.forJavaType(clazz);
+            
+            Graph graph = fetch(type, node);
+            entity = type.createJavaObject(node, graph);
+            
+            Graph refGraph = GraphFactory.createDefaultGraph();
+            //Sink<Triple> sink =  new SinkTriplesToGraph(false, refGraph);
+            type.populateEntity(persistenceContext, entity, node, graph, refGraph::add);
+            
+            EntityGraphMap entityGraphMap = persistenceContext.getEntityGraphMap();
+            entityGraphMap.putAll(refGraph, entity);
+        }
+        
+        // The call to populateEntity may trigger requests to resolve further entities
+        // process them.
+        List<ResolutionRequest> requests = persistenceContext.getResolutionRequests();
+
+        // TODO Check for cycles 
+        while(!requests.isEmpty()) {
+            Iterator<ResolutionRequest> it = requests.iterator();
+            ResolutionRequest request = it.next();
+            it.remove();
+            
+            Object resolveEntity = request.getEntity();
+            Node resolveNode = request.getNode();
+            Class<?> resolveClass = request.getType().getClass();
+            Object childEntity = find(resolveClass, resolveNode);
+            String propertyName = request.getPropertyName();
+            
+            EntityOps childEntityOps = request.getEntityOps();
+            PropertyOps childPropertyOps = childEntityOps.getProperty(propertyName);
+            childPropertyOps.setValue(resolveEntity, childEntity);
+        }
+
+        @SuppressWarnings("unchecked")
+        T result = (T)entity;
+        return result;
+    }
+        
+//        RdfType type = typeFactory.forJavaType(clazz);
+//        
+//        // TODO Cluster nodes by type for efficiency
+//        
+//        //for(TypedNode typeNode : typedNodes) {
+////           Node rootNode = null;
+////            Node rootNode = typeNode.getNode();
+//    
+//            //Frontier<TypedNode> frontier = new FrontierImpl<TypedNode>();
+//            //RdfPersistenceContext persistenceContext = new RdfPersistenceContextFrontier(frontier);
+//    
+//            EntityGraphMap entityGraphMap = persistenceContext.getEntityGraphMap();
+//            //TypedNode first = new TypedNode(rootRdfType, rootNode);
+//    
+//            //Frontier<TypedNode> frontier = persistenceContext.getFrontier();
+//            //frontier.add(first);
+//    
+//            while(!frontier.isEmpty()) {
+//                TypedNode typedNode = frontier.next();
+//    
+//                RdfType rdfType = typedNode.getRdfType();
+//                Node node = typedNode.getNode();
+//    
+//                ResourceShapeBuilder builder = new ResourceShapeBuilder(prologue);
+//                rdfType.exposeShape(builder);
+//    
+//    
+//                // Fetch the graph
+//                QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
+//    
+//                if(!rdfType.isSimpleType()) {
+//                    ResourceShape shape = builder.getResourceShape();
+//    
+//        //            MappedConcept<DatasetGraph> mc = ResourceShape.createMappedConcept2(shape, null);
+//        //            LookupService<Node, DatasetGraph> ls = LookupServiceUtils.createLookupService(qef, mc);
+//        //            Map<Node, DatasetGraph> map = ls.apply(Collections.singleton(node));
+//    
+//                    MappedConcept<Graph> mc = ResourceShape.createMappedConcept(shape, null, false);
+//                    LookupService<Node, Graph> ls = LookupServiceUtils.createLookupService(qef, mc);
+//                    Map<Node, Graph> map = ls.apply(Collections.singleton(node));
+//    
+//                    //ListService<Concept, Node, Graph> ls = ListServiceUtils.createListServiceMappedConcept(qef, mc, true);
+//    
+//        //            MappedConcept<Graph> mc = ResourceShape.createMappedConcept(shape, null);
+//        //            ListService<Concept, Node, Graph> ls = ListServiceUtils.createListServiceMappedConcept(qef, mc, true);
+//    
+//    
+//                    Graph graph = map.get(node);
+//    
+//                    if(graph != null) {
+//                        //DatasetGraph datasetGraph = map.get(node);
+//    
+//                        Object entity = persistenceContext.entityFor(typedNode);
+//                        entityGraphMap.clearGraph(entity);
+//    
+//                        Graph refs = GraphFactory.createDefaultGraph();
+//                        //Sink<Triple> refSink = new SinkTriplesToGraph(false, refs);
+//                        //Node subject = rdfType.getRootNode(entity);
+//                        Node subject = persistenceContext.getRawRootNode(entity);
+//                        rdfType.populateEntity(persistenceContext, entity, subject, graph, refs::add);
+//                        //refSink.close();
+//    
+//                        entityGraphMap.putAll(refs, entity);
+//                    }
+//                }
+//            }
+//        //}
+//        
+//        
+//        @SuppressWarnings("unchecked")
+//        T result = (T)persistenceContext.getEntity(first);
+//
+//        return result;
+
     
 //    
 //    @Override
@@ -236,64 +300,88 @@ public class RdfMapperEngineImpl
         //rdfProperty.getTargetRdfClass()
     }
 
+    
+//    public Object getEntity(Node node, RdfType rdfType, Supplier<Object> newInstance) {
+//        //persistenceContext.getPrimaryNodeMap()
+//        Object result = persistenceContext.entityFor(node, rdfType);
+//        if(result == null) {
+//            result = newInstance.get();
+//        }
+//        
+//        return result;
+//    }
+//    
+    
 
     @Override
     public <T> T merge(T tmpEntity) {
         RdfType rootRdfType = typeFactory.forJavaType(tmpEntity.getClass());
-        Node rootNode = rootRdfType.getRootNode(tmpEntity);
-        Object entity = persistenceContext.entityFor(new TypedNode(rootRdfType, rootNode));
+        Node node = rootRdfType.getRootNode(tmpEntity);
 
+        T result = merge(tmpEntity, node);
+        return result;
+    }
+
+
+
+    /**
+     * Write a given entity as RDF starting with the given node.
+     * This will retrieve all triples related triples of the node,
+     * perform a diff with the current state and update the backend
+     *  
+     * 
+     */
+    @Override
+    public <T> T merge(T tmpEntity, Node node) {
+        Class<?> clazz = tmpEntity.getClass();
+        RdfType type = typeFactory.forJavaType(clazz);
+        Object entity = persistenceContext.entityFor(clazz, node, () -> type.createJavaObject(node, null));
+
+        /*
+         * TODO Copying the properties should make use of EntityOps.copy(...)
+         * We may even make use of maps instead of java entities.
+         * (Although entities are probably more efficient performance wise)
+         */
         if(entity != tmpEntity) {
             //EntityOps.copy()
             BeanUtils.copyProperties(tmpEntity, entity);
         }
 
-        @SuppressWarnings("unchecked")
-        T result = (T)entity;
+        
+        // If needed, fetch data corresponding to that entity
+        EntityGraphMap entityGraphMap = persistenceContext.getEntityGraphMap();
+        Graph graph = entityGraphMap.getGraphForEntity(entity);
+        if(graph == null) {
+            entity = find(type.getClass(), node);
+            // Request the data for the entity
+            //graph = fetch(type, node);
+            entityGraphMap.putAll(graph, entity);
+        }
 
-        //Node rootNode = persistenceContext.getRootNode(tmpEntity);
 
         DatasetDescription datasetDescription = sparqlService.getDatasetDescription();
-
         String gStr = DatasetDescriptionUtils.getSingleDefaultGraphUri(datasetDescription);
         if(gStr == null) {
             throw new RuntimeException("No target graph specified");
         }
         Node g = NodeFactory.createURI(gStr);
 
-
-        MethodInterceptorRdf interceptor = RdfClass.getMethodInterceptor(entity);
-
-        DatasetGraph oldState = interceptor == null
-                ? DatasetGraphFactory.createMem()
-                : interceptor.getDatasetGraph()
-                ;
-
-                {
-                    EntityGraphMap entityGraphMap = persistenceContext.getEntityGraphMap();
-                    Graph graph = entityGraphMap.getGraphForEntity(entity);
-                    Graph targetGraph = oldState.getGraph(g);
-                    if(targetGraph == null) {
-                        targetGraph = GraphFactory.createDefaultGraph();
-                        oldState.addGraph(g, targetGraph);
-                    }
-
-                    if(graph != null) {
-                        GraphUtil.addInto(targetGraph, graph);
-                    }
-                }
-
-
-        //Class<?> clazz = tmpEntity.getClass();
-        //RdfClass rdfClass = RdfClassFactory.createDefault(prologue).create(clazz);
-        //RdfClass rdfClass = (RdfClass)typeFactory.forJavaType(clazz);
-
-
         DatasetGraph newState = DatasetGraphFactory.create();
         Graph outGraph = Quad.defaultGraphIRI.equals(g) ? newState.getDefaultGraph() : newState.getGraph(g);
         //rdfClass.emitTriples(out, entity);
         emitTriples(outGraph, entity);
 
+        
+        DatasetGraph oldState = DatasetGraphFactory.create();
+
+        Graph targetGraph = oldState.getGraph(g);
+        if(targetGraph == null) {
+            targetGraph = GraphFactory.createDefaultGraph();
+            oldState.addGraph(g, targetGraph);
+        }
+        
+        
+        
 //        System.out.println("oldState");
 //        DatasetGraphUtils.write(System.out, oldState);
 //
@@ -305,6 +393,44 @@ public class RdfMapperEngineImpl
         UpdateExecutionFactory uef = sparqlService.getUpdateExecutionFactory();
         UpdateExecutionUtils.executeUpdate(uef, diff);
 
+
+//        @SuppressWarnings("unchecked")
+//        T result = (T)entity;
+//
+//        //Node rootNode = persistenceContext.getRootNode(tmpEntity);
+//
+//
+//
+//
+//        MethodInterceptorRdf interceptor = RdfClass.getMethodInterceptor(entity);
+//
+//        DatasetGraph oldState = interceptor == null
+//                ? DatasetGraphFactory.createMem()
+//                : interceptor.getDatasetGraph()
+//                ;
+//
+//                {
+//                    EntityGraphMap entityGraphMap = persistenceContext.getEntityGraphMap();
+//                    Graph graph = entityGraphMap.getGraphForEntity(entity);
+//                    Graph targetGraph = oldState.getGraph(g);
+//                    if(targetGraph == null) {
+//                        targetGraph = GraphFactory.createDefaultGraph();
+//                        oldState.addGraph(g, targetGraph);
+//                    }
+//
+//                    if(graph != null) {
+//                        GraphUtil.addInto(targetGraph, graph);
+//                    }
+//                }
+//
+//
+//        //Class<?> clazz = tmpEntity.getClass();
+//        //RdfClass rdfClass = RdfClassFactory.createDefault(prologue).create(clazz);
+//        //RdfClass rdfClass = (RdfClass)typeFactory.forJavaType(clazz);
+//
+
+        @SuppressWarnings("unchecked")
+        T result = (T)entity;
         return result;
     }
 
@@ -314,41 +440,64 @@ public class RdfMapperEngineImpl
         return typeFactory;
     }
 
-    
 
     @Override
     public void emitTriples(Graph outGraph, Object entity) {
+        
+    }
+    
+
+    @Override
+    public void emitTriples(Graph outGraph, Object entity, Node subject) {
+        // Check the persistence context for any prior mapping for the given entity
+        //persistenceContext.getRootNode(
+        
         //Frontier<Object> frontier = FrontierImpl.createIdentityFrontier();
-        RdfEmitterContext emitterContext = new RdfEmitterContextImpl(persistenceContext); //frontier);
-        Frontier<Object> frontier = emitterContext.getFrontier();
+        RdfEmitterContextImpl emitterContext = new RdfEmitterContextImpl(persistenceContext); //frontier);
+        //Frontier<Object> frontier = emitterContext.getFrontier();
         
-        //emitterContext.setEmitted(entity, false);
-        frontier.add(entity);
+        // Add the initial resolution request
+        Node rootNode = emitterContext.requestResolution(entity);
 
-        while(!frontier.isEmpty()) {
-            Object current = frontier.next();
-
-            Class<?> clazz = current.getClass();
-            RdfType rdfType = typeFactory.forJavaType(clazz);
-
-            // TODO We now need to know which additional
-            // (property) values also need to be emitted
-            //Consumer<Triple> sink = outGraph::add;
-            //emitterContext.ge
+        Map<Node, ResolutionRequest> nodeToResolutionRequest = emitterContext.getNodeToResolutionRequest();
+        while(!nodeToResolutionRequest.isEmpty()) {
+            // Get and remove first entry
+            Iterator<Entry<Node, ResolutionRequest>> it = nodeToResolutionRequest.entrySet().iterator();
+            Entry<Node, ResolutionRequest> e = it.next();
+            it.remove();
             
-            //Node subject = persistenceContext.getEntity(
-            Node subject = RdfPersistenceContextImpl.getOrCreateRootNode(persistenceContext, typeFactory, current);
-            //Node subject = rdfType.getRootNode(current);
             
-            //Node subject = emitterContext.getValueN
-            if(subject == null) {
-                throw new RuntimeException("Could not obtain a root node for " + current);
-                //subject = NodeFactory.createURI("http://foobar.foobar");
-            }
-
-            rdfType.emitTriples(emitterContext, current, subject, outGraph::add);
+            
+            
+            
         }
-        
+        //emitterContext.setEmitted(entity, false);
+        //frontier.add(entity);
+//
+//        while(!frontier.isEmpty()) {
+//            Object current = frontier.next();
+//
+//            Class<?> clazz = current.getClass();
+//            RdfType rdfType = typeFactory.forJavaType(clazz);
+//
+//            // TODO We now need to know which additional
+//            // (property) values also need to be emitted
+//            //Consumer<Triple> sink = outGraph::add;
+//            //emitterContext.ge
+//            
+//            //Node subject = persistenceContext.getEntity(
+//            Node subject = RdfPersistenceContextImpl.getOrCreateRootNode(persistenceContext, typeFactory, current);
+//            //Node subject = rdfType.getRootNode(current);
+//            
+//            //Node subject = emitterContext.getValueN
+//            if(subject == null) {
+//                throw new RuntimeException("Could not obtain a root node for " + current);
+//                //subject = NodeFactory.createURI("http://foobar.foobar");
+//            }
+//
+//            rdfType.emitTriples(emitterContext, current, subject, outGraph::add);
+//        }
+//        
         // We now need to check the emitterContext for all resources whose 
     }
 

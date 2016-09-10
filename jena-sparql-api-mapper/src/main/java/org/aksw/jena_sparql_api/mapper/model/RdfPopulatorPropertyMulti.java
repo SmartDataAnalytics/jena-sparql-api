@@ -47,7 +47,7 @@ public class RdfPopulatorPropertyMulti
 
     //RdfPersistenceContext persistenceContext, 
     @Override
-    public void emitTriples(RdfEmitterContext emitterContext, Object entity, Node subject, Consumer<Triple> out) {
+    public void emitTriples(RdfEmitterContext emitterContext, Object entity, Node subject, Graph shapeGraph, Consumer<Triple> out) {
 
         //BeanWrapper beanWrapper = new BeanWrapperImpl(entity);
         Collection<?> items = (Collection<?>)propertyOps.getValue(entity);//beanWrapper.getPropertyValue(propertyName);

@@ -33,6 +33,8 @@ public interface EntityOps {
         return result;
     }
     
+    
+
     public static void copy(EntityOps sourceOps, EntityOps targetOps, Object fromEntity, Object toEntity) {
         for(PropertyOps toOps : targetOps.getProperties()) {
             String name = toOps.getName();
