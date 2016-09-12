@@ -1,39 +1,44 @@
 package org.aksw.jena_sparql_api.mapper.context;
 
 import org.aksw.jena_sparql_api.beans.model.EntityOps;
+import org.aksw.jena_sparql_api.beans.model.PropertyOps;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.apache.jena.graph.Node;
 
 public class ResolutionRequest {
     //protected Map<String, Object> entity;
-    protected EntityOps entityOps;
+    //protected EntityOps entityOps;
+    protected PropertyOps propertyOps;
     protected Object entity;
-    protected String propertyName;
+    //protected String propertyName;
     protected Node node;
     
     // If no type is provided, the default mapping for the property's type will be used
     protected RdfType type;
     
-    public ResolutionRequest(EntityOps entityOps, Object entity, String propertyName, Node node, RdfType type) {
+    public ResolutionRequest(PropertyOps propertyOps, Object entity, Node node, RdfType type) {
         super();
-        this.entityOps = entityOps;
+        this.propertyOps = propertyOps;
         this.entity = entity;
-        this.propertyName = propertyName;
         this.node = node;
         this.type = type;
     }
 
-    public EntityOps getEntityOps() {
-        return entityOps;
+//    public EntityOps getEntityOps() {
+//        return entityOps;
+//    }
+
+    public PropertyOps getPropertyOps() {
+        return propertyOps;
     }
     
     public Object getEntity() {
         return entity;
     }
 
-    public String getPropertyName() {
-        return propertyName;
-    }
+//    public String getPropertyName() {
+//        return propertyName;
+//    }
 
     public Node getNode() {
         return node;
@@ -46,7 +51,7 @@ public class ResolutionRequest {
     @Override
     public String toString() {
         return "ResolutionRequest [entity=" + entity + ", propertyName="
-                + propertyName + ", node=" + node + ", type=" + type + "]";
+                + propertyOps + ", node=" + node + ", type=" + type + "]";
     }
     
     

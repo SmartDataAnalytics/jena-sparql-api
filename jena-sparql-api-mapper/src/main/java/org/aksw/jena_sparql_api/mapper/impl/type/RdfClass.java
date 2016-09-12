@@ -13,6 +13,7 @@ import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.mapper.model.RdfPopulator;
+import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.aksw.jena_sparql_api.mapper.proxy.MethodInterceptorRdf;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
@@ -20,6 +21,7 @@ import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.springframework.cglib.proxy.Callback;
 import org.springframework.cglib.proxy.Enhancer;
@@ -367,6 +369,18 @@ public class RdfClass
         Object result = entityOps.newInstance();
         return result;
     }
+
+//    @Override
+//    public void exposeTypeDeciderShape(ResourceShapeBuilder rsb) {
+//        // TODO Auto-generated method stub
+//        
+//    }
+//
+//    @Override
+//    public Collection<RdfType> getApplicableTypes(Resource resource) {
+//        // TODO Auto-generated method stub
+//        return null;
+//    }
     
     
 }

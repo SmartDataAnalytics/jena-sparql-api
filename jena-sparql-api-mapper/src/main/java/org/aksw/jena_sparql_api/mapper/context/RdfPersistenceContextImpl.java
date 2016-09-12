@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import org.aksw.jena_sparql_api.beans.model.EntityOps;
+import org.aksw.jena_sparql_api.beans.model.PropertyOps;
 import org.aksw.jena_sparql_api.mapper.impl.engine.EntityGraphMap;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.apache.jena.graph.Node;
@@ -39,9 +39,9 @@ public class RdfPersistenceContextImpl
     }
     
     @Override
-    public void requestResolution(EntityOps entityOps, Object entity, String propertyName,
+    public void requestResolution(PropertyOps propertyOps, Object entity,
             Node node) {
-        ResolutionRequest request = new ResolutionRequest(entityOps, entity, propertyName, node, null);
+        ResolutionRequest request = new ResolutionRequest(propertyOps, entity, node, null);
         resolutionRequests.add(request);
     }
 

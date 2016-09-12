@@ -1,13 +1,17 @@
 package org.aksw.jena_sparql_api.mapper.impl.type;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.function.Consumer;
 
 import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
+import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Resource;
 
 public abstract class RdfTypePrimitiveBase
     extends RdfTypeBase
@@ -33,4 +37,16 @@ public abstract class RdfTypePrimitiveBase
 
     public void emitTriples(RdfEmitterContext emitterContext, Object entity, Node subject, Graph shapeGraph, Consumer<Triple> sink) {        
     }
+    
+//    @Override
+//    public void exposeTypeDeciderShape(ResourceShapeBuilder rsb) {
+//    }
+//
+//    @Override
+//    public Collection<RdfType> getApplicableTypes(Resource resource) {
+//        //return Collections.singleton(getEntityClass());
+//        return Collections.emptySet();
+//    }
+
+
 }

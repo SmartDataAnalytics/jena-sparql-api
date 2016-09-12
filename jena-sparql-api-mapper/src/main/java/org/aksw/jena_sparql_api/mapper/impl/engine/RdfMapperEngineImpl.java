@@ -172,10 +172,11 @@ public class RdfMapperEngineImpl
             Node resolveNode = request.getNode();
             Class<?> resolveClass = request.getType().getClass();
             Object childEntity = find(resolveClass, resolveNode);
-            String propertyName = request.getPropertyName();
-            
-            EntityOps childEntityOps = request.getEntityOps();
-            PropertyOps childPropertyOps = childEntityOps.getProperty(propertyName);
+//            String propertyName = request.getPropertyName();
+//            
+//            EntityOps childEntityOps = request.getEntityOps();
+//            PropertyOps childPropertyOps = childEntityOps.getProperty(propertyName);
+            PropertyOps childPropertyOps = request.getPropertyOps();
             childPropertyOps.setValue(resolveEntity, childEntity);
         }
 
@@ -466,6 +467,10 @@ public class RdfMapperEngineImpl
             Entry<Node, ResolutionRequest> e = it.next();
             it.remove();
             
+            Node node = e.getKey();
+            ResolutionRequest request = e.getValue();
+            
+            Object resolvedEntity = find(request.getType().getClass(), node);
             
             
             

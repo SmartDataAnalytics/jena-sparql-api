@@ -102,9 +102,15 @@ public class RdfEmitterContextImpl
         RdfType type = typeFactory.forJavaType(clazz);
 
         Node rootNode = type.getRootNode(entity);
-        Node result = requestResolution(entity, type, () -> rootNode);        
+        //Node result = requestResolution(entity, type, () -> rootNode);
+        //Node result = persistenceContext.requestResolution(/propertyOps, entity, node);
         
-        return result;
+        if(true) {
+            throw new RuntimeException("not implemented yet");
+        }
+        
+        return null;
+        //return result;
     }
     
 //    @Override

@@ -37,7 +37,7 @@ public class RdfPopulatorPropertySingle
                     ? null
                     : () -> createTargetNode.apply(entity, value);
 
-            Node o = emitterContext.requestResolution(value, targetRdfType, defaultNodeGenerator);
+            Node o = emitterContext.requestResolution(value);//, targetRdfType, defaultNodeGenerator);
             Triple t = new Triple(subject, predicate, o);
             outSink.accept(t);
             
@@ -64,7 +64,8 @@ public class RdfPopulatorPropertySingle
         
         //persistenceContext.requestResolution(entity, propertyOps, subject, rdfType);
 
-        persistenceContext.requestResolution(entity, propertyOps.getName(), node);
+        
+        persistenceContext.requestResolution(propertyOps, entity, node);
         
 //        Object value = node == null
 //                ? null

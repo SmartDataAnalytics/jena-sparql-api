@@ -57,7 +57,7 @@ public class RdfTypeMap
 
     @Override
     public void emitTriples(RdfEmitterContext emitterContext, Object entity, Node subject,
-            Consumer<Triple> sink) {
+            Graph shapeGraph, Consumer<Triple> sink) {
         
         @SuppressWarnings("unchecked")
         Map<? super Object, ? super Object> map = createMapView.apply(entity);
@@ -113,9 +113,10 @@ public class RdfTypeMap
             Node vNode = e.getProperty(value).getObject().asNode();
             
 
+            // TODO: We need to dynamically figure out which entity the node could be
             RdfType rdfType = null;
-            Object k = persistenceContext.entityFor(new TypedNode(rdfType, kNode));
-            Object v = persistenceContext.entityFor(new TypedNode(rdfType, vNode));
+            Object k = persistenceContext.entityFor(Object.class, kNode, null);//new TypedNode(rdfType, kNode));
+            Object v = persistenceContext.entityFor(Object.class, vNode, null);//new TypedNode(rdfType, vNode));
             
             map.put(k, v);            
         }        

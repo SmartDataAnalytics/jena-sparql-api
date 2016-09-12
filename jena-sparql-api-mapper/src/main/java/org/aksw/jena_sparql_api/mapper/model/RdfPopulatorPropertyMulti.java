@@ -108,8 +108,9 @@ public class RdfPopulatorPropertyMulti
         //List<Node> os = GraphUtil.listObjects(graph, subject, predicate).toList();
 
         //for(Node o : os) {
-            TypedNode typedNode = new TypedNode(targetRdfType, o);
-            Object value = populationContext.entityFor(typedNode);
+            //TypedNode typedNode = new TypedNode(targetRdfType, o);
+            Class<?> valueClass = propertyOps.getClass();
+            Object value = populationContext.entityFor(valueClass, o, () -> targetRdfType.createJavaObject(o, graph));
             //Object value = rdfType.createJavaObject(o);
             collection.add(value);
         }
