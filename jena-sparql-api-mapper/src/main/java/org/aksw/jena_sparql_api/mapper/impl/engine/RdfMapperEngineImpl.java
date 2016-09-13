@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.aksw.commons.collections.diff.Diff;
 import org.aksw.jena_sparql_api.beans.model.EntityOps;
@@ -30,12 +31,10 @@ import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
 import org.aksw.jena_sparql_api.mapper.model.RdfPopulatorProperty;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
-import org.aksw.jena_sparql_api.mapper.proxy.MethodInterceptorRdf;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
 import org.apache.jena.graph.Graph;
-import org.apache.jena.graph.GraphUtil;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.core.DatasetDescription;
@@ -44,7 +43,6 @@ import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.graph.GraphFactory;
-import org.springframework.beans.BeanUtils;
 
 public class RdfMapperEngineImpl
     implements RdfMapperEngine
@@ -346,26 +344,53 @@ public class RdfMapperEngineImpl
      */
     @Override
     public <T> T merge(T tmpEntity, Node node) {
-        Class<?> clazz = tmpEntity.getClass();
-        RdfType type = typeFactory.forJavaType(clazz);
-        Object entity = persistenceContext.entityFor(clazz, node, () -> type.createJavaObject(node, null));
+        
+        //Class<?> entityClazz = type.getClass();
+        //Object entity = persistenceContext.entityFor(entityClass, node, () -> type.createJavaObject(node, null));
 
         /*
          * TODO Copying the properties should make use of EntityOps.copy(...)
          * We may even make use of maps instead of java entities.
          * (Although entities are probably more efficient performance wise)
          */
-        if(entity != tmpEntity) {
-            //EntityOps.copy()
-            BeanUtils.copyProperties(tmpEntity, entity);
-        }
+        
+    	Function<Class<?>, EntityOps> entityOpsFactory = ((RdfTypeFactoryImpl)typeFactory).getEntityOpsFactory();
+    	
+        // TODO We need to perform a recursive merge
+    	Object entity = EntityOps.deepCopy(
+    			tmpEntity,
+    			//clazz -> ((RdfClass)typeFactory.forJavaType(clazz)).getEntityOps(),
+    			entityOpsFactory,
+    			persistenceContext.getManagedEntities());
+
+        Class<?> entityClass = entity.getClass();
+        RdfType type = typeFactory.forJavaType(entityClass);
+
+//        if(entity != tmpEntity) {
+//            if(type instanceof RdfClass) {
+//            	RdfClass rdfClass = (RdfClass)type;
+//            	EntityOps entityOps = rdfClass.getEntityOps();
+//            	
+//            	for(PropertyOps propertyOps : entityOps.getProperties()) {
+//            		Object value = propertyOps.getValue(entity);
+//            		
+//            		
+//            	}
+//            	
+//            	//EntityOps.copy(entityOps, entityOps, tmpEntity, entity);
+//            }
+//
+//        	
+//            //EntityOps.copy()
+//            //BeanUtils.copyProperties(tmpEntity, entity);
+//        }
 
         
         // If needed, fetch data corresponding to that entity
         EntityGraphMap entityGraphMap = persistenceContext.getEntityGraphMap();
         Graph graph = entityGraphMap.getGraphForEntity(entity);
         if(graph == null) {
-            entity = find(type.getEntityClass(), node);
+            entity = find(entityClass, node);
             // Request the data for the entity
             graph = fetch(type, node);
             entityGraphMap.putAll(graph, entity);

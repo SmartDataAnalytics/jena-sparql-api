@@ -5,11 +5,13 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import org.aksw.jena_sparql_api.beans.model.PropertyOps;
 import org.aksw.jena_sparql_api.mapper.impl.engine.EntityGraphMap;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
+import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.graph.Node;
 
 import com.google.common.collect.ClassToInstanceMap;
@@ -18,6 +20,8 @@ import com.google.common.collect.MutableClassToInstanceMap;
 public class RdfPersistenceContextImpl
     implements RdfPersistenceContext
 {
+	protected Set<Object> managedEntities = Sets.newIdentityHashSet();
+	
     protected RdfTypeFactory typeFactory;
 
     protected Map<Object, Node> entityToPrimaryNode = new IdentityHashMap<>();
@@ -36,6 +40,11 @@ public class RdfPersistenceContextImpl
 
     public List<ResolutionRequest> getResolutionRequests() {
         return resolutionRequests;
+    }
+    
+    @Override
+    public Set<Object> getManagedEntities() {
+    	return managedEntities;
     }
     
     @Override

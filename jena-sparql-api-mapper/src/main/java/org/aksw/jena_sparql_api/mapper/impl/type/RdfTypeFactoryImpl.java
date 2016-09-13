@@ -91,8 +91,12 @@ public class RdfTypeFactoryImpl
         this.entityOpsFactory = entityOpsFactory;
         this.conversionService = conversionService;
     }
+    
+    public Function<Class<?>, EntityOps> getEntityOpsFactory() {
+		return entityOpsFactory;
+	}
 
-    public Prologue getPrologue() {
+	public Prologue getPrologue() {
         return prologue;
     }
 

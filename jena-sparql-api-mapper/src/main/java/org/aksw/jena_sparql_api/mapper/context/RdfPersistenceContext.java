@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.mapper.context;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import org.aksw.jena_sparql_api.beans.model.PropertyOps;
@@ -26,10 +27,17 @@ import org.apache.jena.graph.Node;
  */
 public interface RdfPersistenceContext
 {
+	/**
+	 * An identity Hashset of managed entities
+	 * 
+	 * @return
+	 */
+	Set<Object> getManagedEntities();
+	
     Map<Object, Node> getPrimaryNodeMap();
     
     void requestResolution(PropertyOps propertyOps, Object entity, Node node);
     List<ResolutionRequest> getResolutionRequests();
-    Object entityFor(Class<?> clazz, Node Node, Supplier<Object> newInstance);
+    Object entityFor(Class<?> clazz, Node node, Supplier<Object> newInstance);
     EntityGraphMap getEntityGraphMap();    
 }

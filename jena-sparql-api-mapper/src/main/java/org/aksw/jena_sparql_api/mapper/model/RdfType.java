@@ -1,15 +1,14 @@
 package org.aksw.jena_sparql_api.mapper.model;
 
-import java.util.Collection;
 import java.util.function.Consumer;
 
+import org.aksw.jena_sparql_api.beans.model.EntityOps;
 import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.rdf.model.Resource;
 
 /**
  * Base class for operations for mapping java objects of *a specific* class to and from sets of triples.
@@ -42,6 +41,8 @@ public interface RdfType
      * @param qef
      * @return
      */
+	
+	//EntityOps getEntityOps();
 
 
     /**
@@ -58,7 +59,6 @@ public interface RdfType
      */
     Class<?> getEntityClass();
 
-    //EntityOps getEntityOps();
     
     /**
      * Return the root node that corresponds to the given object in regard to this RdfType.

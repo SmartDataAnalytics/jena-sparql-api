@@ -8,6 +8,7 @@ import org.apache.jena.rdf.model.Resource;
 public interface RdfTypeFactory {
     RdfType forJavaType(Class<?> clazz);
     
+    
     /**
      * expose which properties to fetch in order to decide a node's corresponding
      * Java type(s)

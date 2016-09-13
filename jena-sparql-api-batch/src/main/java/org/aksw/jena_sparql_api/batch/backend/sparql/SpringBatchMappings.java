@@ -234,6 +234,7 @@ public class SpringBatchMappings {
         //lr.setVersion(111);
         engine.merge(lr);
 
+        
         System.out.println("Graph:");
         sparqlService.getQueryExecutionFactory().createQueryExecution("CONSTRUCT WHERE { ?s ?p ?o }").execConstruct().write(System.out, "TTL");
         
