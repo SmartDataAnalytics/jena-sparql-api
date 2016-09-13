@@ -19,9 +19,14 @@ import org.springframework.core.convert.ConversionService;
 public class EntityModel
     implements EntityOps
 {
+	// Simple implies that entities can only be initialized using clone
+	// TODO Use a better naming
+	protected boolean isSimple;
+
     protected Class<?> associatedClass;
     
     protected Supplier<?> newInstance;
+    protected Function<Object, ?> clone;
     protected Map<String, PropertyModel> propertyOps;
     
     protected Function<Class<?>, Object> annotationFinder;
@@ -69,12 +74,33 @@ public class EntityModel
         return result;
     }
     
+    @Override
     public Object newInstance() {
         Object result = newInstance == null ? null : newInstance.get();
         return result;
     }
 
-    public Map<String, PropertyModel> getPropertyOps() {
+    @Override
+    public boolean isClonable() {
+    	boolean result = clone != null;
+    	return result;
+    }
+    
+    public Object clone(Object o) {
+    	Object result = clone == null ? null : clone.apply(o);
+    	return result;
+    }
+    
+    
+    public Function<Object, ?> getClone() {
+		return clone;
+	}
+
+	public void setClone(Function<Object, ?> clone) {
+		this.clone = clone;
+	}
+
+	public Map<String, PropertyModel> getPropertyOps() {
         return propertyOps;
     }
     
@@ -91,6 +117,18 @@ public class EntityModel
     }
 
     
+    
+    
+    public static Constructor<?> tryGetCtor(Class<?> clazz, Class<?> ... args) {
+		Constructor<?> result;
+		try {
+			result = clazz.getConstructor(args);
+		} catch (NoSuchMethodException | SecurityException e) {
+			result = null;
+		}
+		return result;    	
+    }
+    
     public static EntityModel createDefaultModel(Class<?> clazz, ConversionService conversionService) {
         BeanInfo beanInfo;
         try {
@@ -98,6 +136,42 @@ public class EntityModel
         } catch (IntrospectionException e1) {
             throw new RuntimeException(e1);
         }
+
+        boolean isSimple = clazz.isPrimitive();
+        Function<Object, ?> copyCtorFn = null;
+		Constructor<?> tmpCopyCtor = tryGetCtor(clazz);
+		if(tmpCopyCtor == null) {
+			Class<?> primitiveClass;
+			try {
+				primitiveClass = (Class<?>)clazz.getField("TYPE").get(null);
+				isSimple = true;
+			} catch (IllegalArgumentException | IllegalAccessException | NoSuchFieldException | SecurityException e) {
+				primitiveClass = null;
+			}
+
+			if(primitiveClass != null) {
+				tmpCopyCtor = tryGetCtor(clazz, primitiveClass);
+			}				
+		}
+		
+		Constructor<?> copyCtor = tmpCopyCtor;
+		if(copyCtor != null) {
+			copyCtorFn = (x) -> {
+				try {
+					Object result = copyCtor.newInstance(x);
+					return result;
+				} catch (Exception e) {
+					throw new RuntimeException(e);
+				}
+			};
+		}
+        
+        
+        //long.class.
+        
+        
+        //clazz.getConstructor(//parameterTypes)
+        
         
         Map<String, PropertyModel> propertyOps = new HashMap<String, PropertyModel>();
         for(PropertyDescriptor pd : beanInfo.getPropertyDescriptors()) {
@@ -129,6 +203,7 @@ public class EntityModel
                 };
             }
 
+
             Function<Class<?>, Object> annotationFinder = (annotationClass) -> MyAnnotationUtils.findPropertyAnnotation(clazz, pd, (Class)annotationClass);
             
             PropertyModel p = new PropertyModel(propertyName, propertyType, getter, setter, conversionService, annotationFinder);
@@ -140,6 +215,7 @@ public class EntityModel
      
         EntityModel result = new EntityModel();
         result.setAssociatedClass(clazz);
+        result.setClone(copyCtorFn);
         
         try {
             // Check if there is a defaultCtor
@@ -160,6 +236,7 @@ public class EntityModel
         }
         
         result.setPropertyOps(propertyOps);
+        result.setSimple(isSimple);
         
         return result;
     }
@@ -207,5 +284,14 @@ public class EntityModel
  
         return result;
     }
+
+	@Override
+	public boolean isSimple() {
+		return isSimple;
+	}
+
+	public void setSimple(boolean isSimple) {
+		this.isSimple = isSimple;
+	}
     
 }

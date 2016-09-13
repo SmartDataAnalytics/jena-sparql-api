@@ -1,17 +1,13 @@
 package org.aksw.jena_sparql_api.mapper.impl.type;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.function.Consumer;
 
 import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
-import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.rdf.model.Resource;
 
 public abstract class RdfTypePrimitiveBase
     extends RdfTypeBase

@@ -18,10 +18,7 @@ import org.aksw.jena_sparql_api.mapper.impl.engine.RdfMapperEngine;
 import org.aksw.jena_sparql_api.mapper.impl.engine.RdfMapperEngineImpl;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
-import org.aksw.jena_sparql_api.mapper.model.TypeDeciderImpl;
 import org.aksw.jena_sparql_api.mapper.util.BeanUtils;
-import org.aksw.jena_sparql_api.shape.ResourceShape;
-import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.aksw.jena_sparql_api.sparql.ext.datatypes.RDFDatatypeDate;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
 import org.apache.jena.datatypes.RDFDatatype;
@@ -37,6 +34,13 @@ import org.springframework.core.convert.ConversionService;
 public class SpringBatchMappings {
 
     
+	public static <I, O> Function<I, O> memoize(Function<I, O> fn) {
+		Map<I, O> cache = new HashMap<>();
+		
+		Function<I, O> result = (i) -> cache.computeIfAbsent(i, fn);
+		return result;
+	}
+	
     
 	public static void test() {
 //	    TypeDeciderImpl typeDecider = new TypeDeciderImpl();
@@ -76,6 +80,9 @@ public class SpringBatchMappings {
 
 	
 	public static void main(String[] args) {    	
+		EntityModel.createDefaultModel(Boolean.class, null);
+		
+		
 		ConversionServiceFactoryBean bean = new ConversionServiceFactoryBean();
 		bean.afterPropertiesSet();
 
@@ -183,17 +190,20 @@ public class SpringBatchMappings {
         }
         
         
-        Function<Class<?>, EntityOps> classToOps = (clazz) -> {
-            EntityOps result;
-            
-            EntityOps cops = customOps.get(clazz);
-            
-            result = cops != null
-                    ? cops
-                    : EntityModel.createDefaultModel(clazz, conversionService);
-            
-            return result;
-        };
+        FunctionMemoize<Class<?>, EntityOps> classToOps = new FunctionMemoize<>((clazz) -> EntityModel.createDefaultModel(clazz, conversionService));
+        classToOps.getCache().putAll(customOps);
+        
+//        Function<Class<?>, EntityOps> classToOps = (clazz) -> {
+//            EntityOps result;
+//            
+//            EntityOps cops = customOps.computeIfAbsent(clazz);
+//            
+//            result = cops != null
+//                    ? cops
+//                    : EntityModel.createDefaultModel(clazz, conversionService);
+//            
+//            return result;
+//        };
 
         //typeFactory.registerTypeAdator(Class<?>, );
 //        GsonBuilder x;
@@ -222,7 +232,6 @@ public class SpringBatchMappings {
         
         engine.merge(entity);
         //engine.emitTriples(graph, entity);
-        
         
         Model model = sparqlService.getQueryExecutionFactory().createQueryExecution("CONSTRUCT WHERE { ?s ?p ?o }").execConstruct();
         System.out.println("Graph:");

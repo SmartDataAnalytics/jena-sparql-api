@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.beans.model;
 
 import java.util.Collection;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
@@ -12,7 +13,8 @@ import java.util.stream.Collectors;
 
 import com.google.common.collect.Sets;
 
-public interface EntityOps {
+public interface EntityOps {	
+	
     // Entity ops may but need to be derived from a java class
     Class<?> getAssociatedClass();
     
@@ -34,6 +36,25 @@ public interface EntityOps {
     Object newInstance();
     Collection<? extends PropertyOps> getProperties();
     
+    
+    boolean isClonable();
+    Object clone(Object Entity);
+
+    
+    boolean isSimple();
+    
+    /**
+     * Convenience method for getting read- and writable properties
+     * 
+     * @return
+     */
+    default Collection<? extends PropertyOps> getEditableProperties() {
+    	List<? extends PropertyOps> result = getProperties().stream()
+    			.filter(p -> p.isReadable() && p.isWritable())
+    			.collect(Collectors.toList());
+    	return result;
+    }
+    
     PropertyOps getProperty(String name);
     
     default Set<String> getPropertyNames() {
@@ -48,7 +69,18 @@ public interface EntityOps {
     	Object result = deepCopy(entity, classToOps, map::get, map::put);
     	return result;
     }
+    
+    
+    
 
+    // Entities may be container for items
+    // The main question is: should these items be part of entityOps, or should there be collection properties?
+//    boolean isCollection();
+//    Iterable<List<?>> getEntries(Object entity);
+//    void setItems(Object entity, Iterable<List<?>> items);
+
+    
+    
     /**
      * Deep copy, with any entity in managedEntities does NOT cause the creation of a clone
      * For all entities not in the set a clone will be created and added to the set
@@ -100,21 +132,31 @@ public interface EntityOps {
     	if(entity == null) {
     		result = null;
     	} else {
-    		result = getEntityToClone.apply(entity);
-    		if(result == null) {
-    			throw new RuntimeException("Could not obtain a clone for " + entity.getClass().getName() + ": " +  entity);
-    		}
-    		
 	    	Class<?> entityClass = entity.getClass();
 	    	EntityOps entityOps = classToOps.apply(entityClass);
+
+	    	result = getEntityToClone.apply(entity);
+    		if(result == null) {
+    			if(entityOps.isSimple()) {
+    				result = entityOps.clone(entity);
+    			} else {    			
+    				result = entityOps.newInstance();
+    			}
+    			
+        		if(result == null) {
+        			throw new RuntimeException("Could not obtain a clone for " + entity.getClass().getName() + ": " +  entity);
+        		}
+    			
+    			putEntityToClone.accept(entity, result);
+    		}
+    		
+    		
 	    	boolean needsCopy = result != entity && (result == null || !getIsCopied.test(entity));
 	
 	    	if(needsCopy) {
-	    		result = entityOps.newInstance();
-	    		putEntityToClone.accept(entity, result);
 	    		setIsCopied.accept(entity);
 	    		    		
-	        	for(PropertyOps propertyOps : entityOps.getProperties()) {
+	        	for(PropertyOps propertyOps : entityOps.getEditableProperties()) {
 	        		Object val = propertyOps.getValue(entity);
 	        		
 	        		Object newVal = deepCopy(val, classToOps, getEntityToClone, putEntityToClone, getIsCopied, setIsCopied);
