@@ -125,12 +125,24 @@ public class RdfMapperEngineImpl
         ResourceShapeBuilder builder = new ResourceShapeBuilder(prologue);
         type.exposeShape(builder);
         ResourceShape shape = builder.getResourceShape();
-        MappedConcept<Graph> mc = ResourceShape.createMappedConcept(shape, null, false);
-        QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
-        LookupService<Node, Graph> ls = LookupServiceUtils.createLookupService(qef, mc);
-        Map<Node, Graph> map = ls.apply(Collections.singleton(node));
-        Graph result = map.get(node);
-
+        
+        // TODO The lookup service should deal with empty concepts
+        Graph result;
+        if(!shape.isEmpty()) {
+            MappedConcept<Graph> mc = ResourceShape.createMappedConcept(shape, null, false);
+            QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
+            LookupService<Node, Graph> ls = LookupServiceUtils.createLookupService(qef, mc);
+            Map<Node, Graph> map = ls.apply(Collections.singleton(node));
+            result = map.get(node);
+        } else {
+            result = null;
+        }
+        
+        if(result == null) {
+            result = GraphFactory.createDefaultGraph();
+        }
+        
+        
         return result;
     }
     
@@ -353,9 +365,9 @@ public class RdfMapperEngineImpl
         EntityGraphMap entityGraphMap = persistenceContext.getEntityGraphMap();
         Graph graph = entityGraphMap.getGraphForEntity(entity);
         if(graph == null) {
-            entity = find(type.getClass(), node);
+            entity = find(type.getEntityClass(), node);
             // Request the data for the entity
-            //graph = fetch(type, node);
+            graph = fetch(type, node);
             entityGraphMap.putAll(graph, entity);
         }
 

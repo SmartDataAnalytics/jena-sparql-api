@@ -48,7 +48,10 @@ public class RdfPersistenceContextImpl
     @Override
     public Object entityFor(Class<?> clazz, Node node, Supplier<Object> newInstance) {
         ClassToInstanceMap<Object> typeToEntity = nodeToTypeToEntity.computeIfAbsent(node, (x) -> MutableClassToInstanceMap.create());
-        Object result = typeToEntity.computeIfAbsent(clazz, (type) -> newInstance.get());
+        
+        Object result = newInstance != null
+                ? typeToEntity.computeIfAbsent(clazz, (type) -> newInstance.get())
+                : typeToEntity.get(clazz);
         
         return result;
     }

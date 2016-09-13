@@ -366,6 +366,9 @@ public class RdfClass
 
     @Override
     public Object createJavaObject(Node node, Graph graph) {
+        if(!entityOps.isInstantiable()) {
+            throw new RuntimeException("EntityOps is not instantiable: " + entityOps);
+        }
         Object result = entityOps.newInstance();
         return result;
     }

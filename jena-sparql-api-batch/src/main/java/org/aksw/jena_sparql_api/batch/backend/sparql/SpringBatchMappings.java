@@ -18,7 +18,10 @@ import org.aksw.jena_sparql_api.mapper.impl.engine.RdfMapperEngine;
 import org.aksw.jena_sparql_api.mapper.impl.engine.RdfMapperEngineImpl;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
+import org.aksw.jena_sparql_api.mapper.model.TypeDeciderImpl;
 import org.aksw.jena_sparql_api.mapper.util.BeanUtils;
+import org.aksw.jena_sparql_api.shape.ResourceShape;
+import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.aksw.jena_sparql_api.sparql.ext.datatypes.RDFDatatypeDate;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
 import org.apache.jena.datatypes.RDFDatatype;
@@ -26,8 +29,6 @@ import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.riot.RDFDataMgr;
 //import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.context.support.ConversionServiceFactoryBean;
@@ -35,7 +36,18 @@ import org.springframework.core.convert.ConversionService;
 
 public class SpringBatchMappings {
 
+    
+    
 	public static void test() {
+//	    TypeDeciderImpl typeDecider = new TypeDeciderImpl();
+	    //typeDecider.addMapping(
+	    //typeDecider.exposeShape(rsb);
+//	    ResourceShapeBuilder rsb = new ResourceShapeBuilder();
+//	    typeDecider.exposeShape(rsb);
+//	    ResourceShape rs = rsb.getResourceShape();
+//	    ResourceShape.fetchData(qef, rs, NodeFactory.createURI("http://ex.org/11"));
+//	    
+	    
 		ConversionServiceFactoryBean bean = new ConversionServiceFactoryBean();
 		bean.afterPropertiesSet();
 

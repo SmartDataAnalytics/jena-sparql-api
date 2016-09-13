@@ -15,6 +15,10 @@ import org.aksw.commons.util.Pair;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptOps;
 import org.aksw.jena_sparql_api.concepts.Relation;
+import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.SparqlService;
+import org.aksw.jena_sparql_api.lookup.LookupService;
+import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
 import org.aksw.jena_sparql_api.mapper.Agg;
 import org.aksw.jena_sparql_api.mapper.AggDatasetGraph;
 import org.aksw.jena_sparql_api.mapper.AggGraph;
@@ -44,7 +48,6 @@ import org.apache.jena.sparql.expr.ExprList;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.function.FunctionEnv;
-import org.apache.jena.sparql.graph.NodeTransformLib;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementBind;
 import org.apache.jena.sparql.syntax.ElementFilter;
@@ -53,7 +56,6 @@ import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.PatternVars;
 import org.apache.jena.sparql.syntax.Template;
-import org.apache.jena.sparql.syntax.syntaxtransform.TransformElementLib;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -142,6 +144,11 @@ public class ResourceShape {
     private Map<Relation, ResourceShape> outgoing = new HashMap<Relation, ResourceShape>();
     private Map<Relation, ResourceShape> ingoing = new HashMap<Relation, ResourceShape>();
 
+    public boolean isEmpty() {
+        boolean result = outgoing.isEmpty() && ingoing.isEmpty();
+        return result;
+    }
+    
     public Map<Relation, ResourceShape> getOutgoing() {
         return outgoing;
     }
@@ -650,4 +657,24 @@ public class ResourceShape {
                 + "]";
     }
 
+    public static Graph fetchData(SparqlService sparqlService, ResourceShape shape, Node node) {
+        QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
+
+        Graph result = fetchData(qef, shape, node);
+        return result;
+    }
+
+    
+    public static Graph fetchData(QueryExecutionFactory qef, ResourceShape shape, Node node) {
+        MappedConcept<Graph> mc = ResourceShape.createMappedConcept(shape, null, false);
+        LookupService<Node, Graph> ls = LookupServiceUtils.createLookupService(qef, mc);
+        Map<Node, Graph> map = ls.apply(Collections.singleton(node));
+//        if(map.size() > 1) {
+//            throw new RuntimeException("Should not happen");
+//        }
+        
+        Graph result = map.isEmpty() ? null : map.values().iterator().next();
+        return result;
+        
+    }
 }

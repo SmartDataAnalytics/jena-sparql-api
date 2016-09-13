@@ -4,6 +4,7 @@ import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.HashMap;
@@ -69,7 +70,7 @@ public class EntityModel
     }
     
     public Object newInstance() {
-        Object result = newInstance.get();
+        Object result = newInstance == null ? null : newInstance.get();
         return result;
     }
 
@@ -139,13 +140,25 @@ public class EntityModel
      
         EntityModel result = new EntityModel();
         result.setAssociatedClass(clazz);
-        result.setNewInstance(() -> {
-            try {
-                return clazz.newInstance();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        });
+        
+        try {
+            // Check if there is a defaultCtor
+            Constructor<?> defaultCtor = clazz.getConstructor();
+
+            result.setNewInstance(() -> {
+                try {
+                    return clazz.newInstance();
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
+
+        } catch (NoSuchMethodException e) {
+            // Ignore
+        } catch (SecurityException e) {
+            throw new RuntimeException(e);
+        }
+        
         result.setPropertyOps(propertyOps);
         
         return result;

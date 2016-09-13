@@ -19,9 +19,15 @@ public class TypeDeciderImpl
     implements TypeDecider
 {
     protected Property typeProperty = RDF.type;
-    protected Map<Node, Class<?>> typeMap;
-    protected Map<Class<?>, Node> classToType;
+    protected Map<Node, Class<?>> nodeToClass;
+    protected Map<Class<?>, Node> classToNode;
 
+    
+    public void addMapping(Node node, Class<?> clazz) {
+        nodeToClass.put(node, clazz);
+        classToNode.put(clazz, node);
+    }
+    
     // TODO We may want to take the type hierarchy on the RDF level into account
     // However, we should not require to rely on it
     
@@ -35,7 +41,7 @@ public class TypeDeciderImpl
         Set<Class<?>> result = subject
             .listProperties(typeProperty).toSet().stream()
             .map(stmt -> stmt.getObject().asNode())
-            .map(o -> typeMap.get(o))
+            .map(o -> nodeToClass.get(o))
             .filter(o -> o != null)
             .collect(Collectors.toSet());
         
@@ -45,7 +51,7 @@ public class TypeDeciderImpl
     @Override
     public void writeTypeTriples(Resource outResource, Object entity) {
         Class<?> clazz = entity.getClass();
-        Node type = classToType.get(clazz);
+        Node type = classToNode.get(clazz);
         
         Model model = outResource.getModel();
         RDFNode rdfNode = ModelUtils.convertGraphNodeToRDFNode(type, model);
