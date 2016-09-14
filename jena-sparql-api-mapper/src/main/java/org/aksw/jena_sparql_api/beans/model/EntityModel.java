@@ -8,6 +8,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -21,8 +22,14 @@ public class EntityModel
 {
 	// Simple implies that entities can only be initialized using clone
 	// TODO Use a better naming
-	protected boolean isSimple;
+	protected boolean isPrimitive;
 
+//	protected boolean isCollection;
+//	protected Function<Object, Iterator<?>> getItemsFn;
+//	protected BiConsumer<Object, Iterator<?>> setItemsFn;
+
+	protected CollectionOps collectionOps = null;
+	
     protected Class<?> associatedClass;
     
     protected Supplier<?> newInstance;
@@ -136,6 +143,17 @@ public class EntityModel
         } catch (IntrospectionException e1) {
             throw new RuntimeException(e1);
         }
+        
+        
+        
+        // Check if the entity can act as a collection (TODO: Delegate this check to a separate module)
+        CollectionOps collectionOps = null;
+        if(Map.class.isAssignableFrom(clazz)) {
+        	collectionOps = new CollectionOpsMap();
+        } else if(Collection.class.isAssignableFrom(clazz)) {
+        	collectionOps = new CollectionOpsCollection();
+        }        
+        
 
         boolean isSimple = clazz.isPrimitive();
         Function<Object, ?> copyCtorFn = null;
@@ -236,7 +254,10 @@ public class EntityModel
         }
         
         result.setPropertyOps(propertyOps);
-        result.setSimple(isSimple);
+        result.setPrimitive(isSimple);
+        
+        result.setCollectionOps(collectionOps);
+        
         
         return result;
     }
@@ -286,12 +307,39 @@ public class EntityModel
     }
 
 	@Override
-	public boolean isSimple() {
-		return isSimple;
+	public boolean isPrimitive() {
+		return isPrimitive;
 	}
 
-	public void setSimple(boolean isSimple) {
-		this.isSimple = isSimple;
+	public void setPrimitive(boolean isSimple) {
+		this.isPrimitive = isSimple;
 	}
+
+	@Override
+	public boolean isCollection() {
+		boolean result = collectionOps != null;
+		return result;
+	}
+
+	public void setCollectionOps(CollectionOps collectionOps) {
+		this.collectionOps = collectionOps;
+	}
+
+	public CollectionOps getCollectionOps() {
+		return collectionOps;
+	}
+
+	@Override
+	public Iterator<?> getItems(Object entity) {
+		Iterator<?> result = collectionOps.getItems(entity);
+		return result;
+	}
+
+	@Override
+	public void setItems(Object entity, Iterator<?> items) {
+		collectionOps.setItems(entity, items);
+	}
+	
+
     
 }

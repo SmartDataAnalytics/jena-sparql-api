@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.beans.model;
 
 import java.util.Collection;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,7 +42,7 @@ public interface EntityOps {
     Object clone(Object Entity);
 
     
-    boolean isSimple();
+    boolean isPrimitive();
     
     /**
      * Convenience method for getting read- and writable properties
@@ -73,12 +74,19 @@ public interface EntityOps {
     
     
 
-    // Entities may be container for items
+    /**
+     * Entities may be container for items
+     * 
+     * One issue is the identity of the items:
+     * E.g. a map is a collection of entry objects, but the getEntries method may create a copy of the entry objects.
+     * So if we cloned a collection, we would also have to clone the entry objects - even thought they are only temporary.
+     * 
+     * 
+     */
     // The main question is: should these items be part of entityOps, or should there be collection properties?
-//    boolean isCollection();
-//    Iterable<List<?>> getEntries(Object entity);
-//    void setItems(Object entity, Iterable<List<?>> items);
-
+    boolean isCollection();
+    Iterator<?> getItems(Object entity);
+    void setItems(Object entity, Iterator<?> items);
     
     
     /**
@@ -137,7 +145,7 @@ public interface EntityOps {
 
 	    	result = getEntityToClone.apply(entity);
     		if(result == null) {
-    			if(entityOps.isSimple()) {
+    			if(entityOps.isPrimitive()) {
     				result = entityOps.clone(entity);
     			} else {    			
     				result = entityOps.newInstance();
@@ -164,7 +172,14 @@ public interface EntityOps {
 	        		System.out.println("Setting " + result + "." + propertyOps.getName() + " := " + newVal);
 	        		propertyOps.setValue(result, newVal);
 	        	}
+	        	
+	        	if(entityOps.isCollection()) {
+	        		Iterator<?> it = entityOps.getItems(entity);
+	        		entityOps.setItems(result, it);
+	        		
+	        	}
 	    	}
+	    	
     	}
     	
     	return result;
