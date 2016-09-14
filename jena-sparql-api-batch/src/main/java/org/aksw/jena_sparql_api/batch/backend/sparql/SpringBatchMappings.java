@@ -187,6 +187,11 @@ public class SpringBatchMappings {
             //inst.
             entityModel.getProperty("id").setValue(inst, 12l);
             customOps.put(JobExecution.class, entityModel);
+            
+            
+            EntityModel ecModel = EntityModel.createDefaultModel(ExecutionContext.class, conversionService);
+            ecModel.setCollectionOps(new CollectionOpsExecutionContext());
+            customOps.put(ExecutionContext.class, ecModel);
         }
         
         
