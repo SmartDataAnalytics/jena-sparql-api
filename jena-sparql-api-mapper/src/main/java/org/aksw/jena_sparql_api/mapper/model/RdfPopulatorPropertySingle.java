@@ -61,12 +61,22 @@ public class RdfPopulatorPropertySingle
             node = null;
         }
 
+        if(node == null) {
+        	if(createTargetNode != null) {
+	        	Object childEntity = propertyOps.getValue(entity);
+	        	if(childEntity != null) {
+	        		node = createTargetNode.apply(entity, childEntity);
+	        	}
+        	}
+        }
         
+        if(node != null) {
+        	persistenceContext.requestResolution(propertyOps, entity, node);
+        }
+ 
         //persistenceContext.requestResolution(entity, propertyOps, subject, rdfType);
 
-        
-        persistenceContext.requestResolution(propertyOps, entity, node);
-        
+               
 //        Object value = node == null
 //                ? null
 //                : persistenceContext.entityFor(new TypedNode(targetRdfType, node))

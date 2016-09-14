@@ -26,8 +26,8 @@ import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContextImpl;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContextImpl;
 import org.aksw.jena_sparql_api.mapper.context.ResolutionRequest;
-import org.aksw.jena_sparql_api.mapper.impl.type.RdfClass;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
+import org.aksw.jena_sparql_api.mapper.model.RdfPopulator;
 import org.aksw.jena_sparql_api.mapper.model.RdfPopulatorProperty;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
@@ -179,9 +179,33 @@ public class RdfMapperEngineImpl
             it.remove();
             
             Object resolveEntity = request.getEntity();
+            PropertyOps resolveProperty = request.getPropertyOps();
+            Object resolveValue = resolveProperty.getValue(resolveEntity);
+            
             Node resolveNode = request.getNode();
-            Class<?> resolveClass = request.getType().getClass();
+            RdfType resolveRdfClass = request.getType(); 
+            Class<?> resolveClass = resolveRdfClass == null ? (resolveValue == null ? null : resolveValue.getClass()) : resolveRdfClass.getEntityClass();
+
+            if(resolveNode == null) {
+            	Class<?> resolveEntityClass = resolveEntity.getClass();
+            	RdfType resolveEntityRdfType = typeFactory.forJavaType(resolveEntityClass);
+            	
+            	resolveNode = resolveEntityRdfType.getRootNode(resolveEntity);
+            	
+            	if(resolveClass == null) {
+            		resolveClass = resolveEntityClass;
+            	}
+            	
+            	// Create a node for the entity
+            	System.out.println("oops");
+            }            
+            
+            if(resolveClass == null || resolveNode == null) {
+            	throw new RuntimeException("Should not happen");
+            }
+            
             Object childEntity = find(resolveClass, resolveNode);
+                        
 //            String propertyName = request.getPropertyName();
 //            
 //            EntityOps childEntityOps = request.getEntityOps();
