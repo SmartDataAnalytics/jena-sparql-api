@@ -887,7 +887,7 @@ public class TestStateSpaceSearch {
             
             // If any of the optionals is empty, skip the whole candidate
             boolean skip = tmpChildNodeMappingCandidates.stream()
-            		.map(x -> x != null)
+            		.map(x -> x == null)
             		.findFirst()
             		.orElse(false);
             
