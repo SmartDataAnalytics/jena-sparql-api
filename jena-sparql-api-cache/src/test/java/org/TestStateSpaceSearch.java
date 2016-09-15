@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.BiFunction;
@@ -57,6 +56,11 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.Syntax;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.impl.NTripleReader;
+import org.apache.jena.riot.Lang;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.Transformer;
@@ -469,9 +473,22 @@ public class TestStateSpaceSearch {
 //        solutions.forEach(s -> System.out.println("found solution: " + s));
         
     
-    
     public static void main(String[] args) {
-        
+    	//JenaParameters.disableBNodeUIDGeneration = true;
+    	//Model m = RDFDataMgr.loadModel("/home/raven/Desktop/blanknode-test.nt");
+//    	Model m = ModelFactory.createDefaultModel();
+//    	
+//    	
+//    	n.add(m);
+//    	//Model n = RDFDataMgr.loadModel("/home/raven/Desktop/blanknode-test.nt");
+//    	m.add(n);
+//    	m.write(System.out, Lang.NTRIPLES.getName());
+//    	
+//    	System.out.println(m.size());
+//    	System.exit(0);
+    	
+    	
+    	
     	
         // TODO We now need to rewrite the query using the canonical quad filter patterns
         // for this purpose, we could create a map that maps original ops to qfpcs
@@ -587,7 +604,7 @@ public class TestStateSpaceSearch {
             candOpMapping.put(cacheLeafs.get(0), queryLeafs.get(0));
    
         }
-
+        
         if(test == 3) {
             // Expected: a:1 - b:0
             candOpMapping.put(cacheLeafs.get(0), queryLeafs.get(0));
@@ -596,9 +613,29 @@ public class TestStateSpaceSearch {
    
         }
 
-        
         Stream<Entry<Map<Op, Op>, Iterable<Map<Var, Var>>>> treeVarMappings = generateTreeVarMapping(candOpMapping, cacheTree, queryTree);
         
+        treeVarMappings.forEach(e -> {
+            Map<Op, Op> nodeMapping = e.getKey();
+            
+            Op sourceRoot = cacheTree.getRoot();
+            Op targetNode = nodeMapping.get(sourceRoot);
+            
+            if(targetNode == null) {
+                throw new RuntimeException("Could not match root node of a source tree to a node in the target tree - Should not happen.");
+            }
+            
+            QuadPattern yay = new QuadPattern();
+            Node n = NodeFactory.createURI("yay");
+            yay.add(new Quad(n, n, n, n));
+            Op repl = OpUtils.substitute(queryTree.getRoot(), false, op -> {
+               return op == targetNode ? new OpQuadBlock(yay) : null; 
+            });        
+            
+            
+            System.out.println("yay: " + repl);
+        });
+
         
 
 //        List<Set<Op>> cacheTreeLevels = TreeUtils.nodesPerLevel(cacheMultiaryTree);
@@ -765,8 +802,8 @@ public class TestStateSpaceSearch {
     public static Stream<Entry<Map<Op, Op>, Iterable<Map<Var, Var>>>> generateTreeVarMapping(Multimap<Op, Op> candOpMapping, Tree<Op> cacheTree,
             Tree<Op> queryTree) {
     	
-        List<Op> cacheLeafs = TreeUtils.getLeafs(cacheTree);        
-        List<Op> queryLeafs = TreeUtils.getLeafs(queryTree);
+//        List<Op> cacheLeafs = TreeUtils.getLeafs(cacheTree);        
+//        List<Op> queryLeafs = TreeUtils.getLeafs(queryTree);
 
         System.out.println("Query Tree:\n" + queryTree);
         System.out.println("Cache Tree:\n" + cacheTree);
@@ -784,43 +821,24 @@ public class TestStateSpaceSearch {
                 queryMultiaryTree);
         
 
-        mappingSolutions.forEach(e -> {
-            Map<Op, Op> nodeMapping = e.getKey();
-            
-            Op sourceRoot = cacheTree.getRoot();
-            Op targetNode = nodeMapping.get(sourceRoot);
-            
-            if(targetNode == null) {
-                throw new RuntimeException("Could not match root node of a source tree to a node in the target tree - Should not happen.");
-            }
-            
-            QuadPattern yay = new QuadPattern();
-            Node n = NodeFactory.createURI("yay");
-            yay.add(new Quad(n, n, n, n));
-            Op repl = OpUtils.substitute(queryTree.getRoot(), false, op -> {
-               return op == targetNode ? new OpQuadBlock(yay) : null; 
-            });        
-            
-            
-            System.out.println("yay: " + repl);
-        });
-            	
+        return mappingSolutions;
+        
 
         // 
         
-        Op cacheLeaf = cacheLeafs.get(1);
-        List<Op> cacheUnaryAncestors = getUnaryAncestors(cacheLeaf, cacheTree, cacheMultiaryTree);
+//        Op cacheLeaf = cacheLeafs.get(1);
+//        List<Op> cacheUnaryAncestors = getUnaryAncestors(cacheLeaf, cacheTree, cacheMultiaryTree);
+//
+//        Op queryLeaf = queryLeafs.get(1);
+//        List<Op> queryUnaryAncestors = getUnaryAncestors(queryLeaf, queryTree, queryMultiaryTree);
+//
+////        System.out.println("unary parents: " + unaryParents);
+//        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> problems = createProblemsFromUnaryAncestors(cacheUnaryAncestors, queryUnaryAncestors); 
+//        Stream<Map<Var, Var>> solutions = VarMapper.solve(problems);
+//        solutions.forEach(s -> System.out.println("found solution: " + s));
 
-        Op queryLeaf = queryLeafs.get(1);
-        List<Op> queryUnaryAncestors = getUnaryAncestors(queryLeaf, queryTree, queryMultiaryTree);
-
-//        System.out.println("unary parents: " + unaryParents);
-        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> problems = createProblemsFromUnaryAncestors(cacheUnaryAncestors, queryUnaryAncestors); 
-        Stream<Map<Var, Var>> solutions = VarMapper.solve(problems);
-        solutions.forEach(s -> System.out.println("found solution: " + s));
 
 
-        return null;
     }
 
 
