@@ -111,10 +111,10 @@ public class SequentialMatchIterator<A, B, S>
         return result;
     }
 
-    public static <A, B> Optional<Iterable<Map<A, B>>> createIterable(List<A> as, List<B> bs, Multimap<A, B> mapping) {
-        Iterable<Map<A, B>> tmp = () -> new SequentialMatchIterator<>(as, bs, (a, b) -> mapping.get(a).contains(b));
+    public static <A, B> Iterable<Map<A, B>> createIterable(List<A> as, List<B> bs, Multimap<A, B> mapping) {
+        Iterable<Map<A, B>> result = () -> new SequentialMatchIterator<>(as, bs, (a, b) -> mapping.get(a).contains(b));
         //IterableUnknownSize<Map<A, B>> result = new IterableUnknownSizeSimple<>(tmp);
-        Optional<Iterable<Map<A, B>>> result = Optional.of(tmp);
+        //Optional<Iterable<Map<A, B>>> result = Optional.of(tmp);
         //Stream<Map<A, B>> result = StreamSupport.stream(it.spliterator(), false);
         
         return result;

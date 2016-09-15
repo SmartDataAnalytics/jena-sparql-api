@@ -195,7 +195,7 @@ public class TestStateSpaceSearch {
             result = (as, bs, mapping) -> SequentialMatchIterator.createIterable(as, bs, mapping); // true
             break;
         case 1: // queryOp null - no match because the cache tree has greater depth than the query 
-            result = (as, bs, mapping) -> Optional.empty();
+            result = (as, bs, mapping) -> null;
             break;
         case 2: // cacheOp null - match because a cache tree's super root (i.e. null) matches any query node (including null)
             result = (as, bs, mapping) -> SequentialMatchIterator.createIterable(as, bs, mapping); // true
@@ -212,14 +212,14 @@ public class TestStateSpaceSearch {
                     //System.out.println("Rejecting incomplete cover");
                     
 	                result = (as, bs, mapping) -> (aTree.getParent(cacheOp) != null && as.size() != bs.size()
-	                        ? Optional.empty()//IterableUnknownSizeSimple.createEmpty()
+	                        ? null//IterableUnknownSizeSimple.createEmpty()
 	                        : tmp.apply(as, bs, mapping));
                 } else {
                 	result = tmp;
                 }
                 
             } else {
-                result = (as, bs, mapping) -> Optional.empty(); //IterableUnknownSizeSimple.createEmpty();
+                result = (as, bs, mapping) -> null; //IterableUnknownSizeSimple.createEmpty();
             }
             break;
         default:
@@ -549,21 +549,8 @@ public class TestStateSpaceSearch {
         
         Tree<Op> cacheTree = TreeImpl.create(opCache, (o) -> OpUtils.getSubOps(o));
         Tree<Op> queryTree = TreeImpl.create(opQuery, (o) -> OpUtils.getSubOps(o));
-
-        System.out.println("Query Tree:\n" + queryTree);
-        System.out.println("Cache Tree:\n" + cacheTree);
-        
-//        System.out.println("root:" + tree.getRoot());
-//        System.out.println("root:" + tree.getChildren(tree.getRoot()));
-        
-        Tree<Op> cacheMultiaryTree = TreeUtils.removeUnaryNodes(cacheTree);
-        Tree<Op> queryMultiaryTree = TreeUtils.removeUnaryNodes(queryTree);
-        //System.out.println("Multiary tree: " + cacheMultiaryTree);
-
-        
             			
     	
-
         
         
         // The candidate multimapping from cache to query
@@ -609,37 +596,16 @@ public class TestStateSpaceSearch {
    
         }
 
+        
+        Stream<Entry<Map<Op, Op>, Iterable<Map<Var, Var>>>> treeVarMappings = generateTreeVarMapping(candOpMapping, cacheTree, queryTree);
+        
+        
 
 //        List<Set<Op>> cacheTreeLevels = TreeUtils.nodesPerLevel(cacheMultiaryTree);
 //        List<Set<Op>> queryTreeLevels = TreeUtils.nodesPerLevel(queryMultiaryTree);
         
         
 
-        Stream<Entry<Map<Op, Op>, Iterable<Map<Var, Var>>>> mappingSolutions = generateTreeVarMapping(candOpMapping, cacheTree, queryTree, cacheMultiaryTree,
-                queryMultiaryTree);
-        
-
-        mappingSolutions.forEach(e -> {
-            Map<Op, Op> nodeMapping = e.getKey();
-            
-            Op sourceRoot = cacheTree.getRoot();
-            Op targetNode = nodeMapping.get(sourceRoot);
-            
-            if(targetNode == null) {
-                throw new RuntimeException("Could not match root node of a source tree to a node in the target tree - Should not happen.");
-            }
-            
-            QuadPattern yay = new QuadPattern();
-            Node n = NodeFactory.createURI("yay");
-            yay.add(new Quad(n, n, n, n));
-            Op repl = OpUtils.substitute(queryTree.getRoot(), false, op -> {
-               return op == targetNode ? new OpQuadBlock(yay) : null; 
-            });        
-            
-            
-            System.out.println("yay: " + repl);
-        });
-        
 //        
 //        
 
@@ -721,18 +687,6 @@ public class TestStateSpaceSearch {
 //        });
 
         
-        Op cacheLeaf = cacheLeafs.get(1);
-        List<Op> cacheUnaryAncestors = getUnaryAncestors(cacheLeaf, cacheTree, cacheMultiaryTree);
-
-        Op queryLeaf = queryLeafs.get(1);
-        List<Op> queryUnaryAncestors = getUnaryAncestors(queryLeaf, queryTree, queryMultiaryTree);
-
-//        System.out.println("unary parents: " + unaryParents);
-        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> problems = createProblemsFromUnaryAncestors(cacheUnaryAncestors, queryUnaryAncestors); 
-        Stream<Map<Var, Var>> solutions = VarMapper.solve(problems);
-        solutions.forEach(s -> System.out.println("found solution: " + s));
-
-        
         
         
         
@@ -808,22 +762,79 @@ public class TestStateSpaceSearch {
                 
     }
 
-    private static void generateTreeVarMapping(Multimap<Op, Op> candOpMapping, Tree<Op> cacheTree,
+    public static Stream<Entry<Map<Op, Op>, Iterable<Map<Var, Var>>>> generateTreeVarMapping(Multimap<Op, Op> candOpMapping, Tree<Op> cacheTree,
             Tree<Op> queryTree) {
     	
+        List<Op> cacheLeafs = TreeUtils.getLeafs(cacheTree);        
+        List<Op> queryLeafs = TreeUtils.getLeafs(queryTree);
+
+        System.out.println("Query Tree:\n" + queryTree);
+        System.out.println("Cache Tree:\n" + cacheTree);
+        
+//        System.out.println("root:" + tree.getRoot());
+//        System.out.println("root:" + tree.getChildren(tree.getRoot()));
+        
+        Tree<Op> cacheMultiaryTree = TreeUtils.removeUnaryNodes(cacheTree);
+        Tree<Op> queryMultiaryTree = TreeUtils.removeUnaryNodes(queryTree);
+        //System.out.println("Multiary tree: " + cacheMultiaryTree);
+
+        
+
+        Stream<Entry<Map<Op, Op>, Iterable<Map<Var, Var>>>> mappingSolutions = generateTreeVarMapping(candOpMapping, cacheTree, queryTree, cacheMultiaryTree,
+                queryMultiaryTree);
+        
+
+        mappingSolutions.forEach(e -> {
+            Map<Op, Op> nodeMapping = e.getKey();
+            
+            Op sourceRoot = cacheTree.getRoot();
+            Op targetNode = nodeMapping.get(sourceRoot);
+            
+            if(targetNode == null) {
+                throw new RuntimeException("Could not match root node of a source tree to a node in the target tree - Should not happen.");
+            }
+            
+            QuadPattern yay = new QuadPattern();
+            Node n = NodeFactory.createURI("yay");
+            yay.add(new Quad(n, n, n, n));
+            Op repl = OpUtils.substitute(queryTree.getRoot(), false, op -> {
+               return op == targetNode ? new OpQuadBlock(yay) : null; 
+            });        
+            
+            
+            System.out.println("yay: " + repl);
+        });
+            	
+
+        // 
+        
+        Op cacheLeaf = cacheLeafs.get(1);
+        List<Op> cacheUnaryAncestors = getUnaryAncestors(cacheLeaf, cacheTree, cacheMultiaryTree);
+
+        Op queryLeaf = queryLeafs.get(1);
+        List<Op> queryUnaryAncestors = getUnaryAncestors(queryLeaf, queryTree, queryMultiaryTree);
+
+//        System.out.println("unary parents: " + unaryParents);
+        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> problems = createProblemsFromUnaryAncestors(cacheUnaryAncestors, queryUnaryAncestors); 
+        Stream<Map<Var, Var>> solutions = VarMapper.solve(problems);
+        solutions.forEach(s -> System.out.println("found solution: " + s));
+
+
+        return null;
     }
-    
+
+
     public static Stream<Entry<Map<Op, Op>, Iterable<Map<Var, Var>>>> generateTreeVarMapping(Multimap<Op, Op> candOpMapping, Tree<Op> cacheTree,
             Tree<Op> queryTree, Tree<Op> cacheMultiaryTree,
             Tree<Op> queryMultiaryTree) {
         // The tree mapper only determines sets of candidate mappings for each tree level
         // 
-        TreeMapperImpl<Op, Op, Optional<Iterable<Map<Op, Op>>>> tm = new TreeMapperImpl<Op, Op, Optional<Iterable<Map<Op, Op>>>>(
+        TreeMapperImpl<Op, Op, Iterable<Map<Op, Op>>> tm = new TreeMapperImpl<Op, Op, Iterable<Map<Op, Op>>>(
                 cacheMultiaryTree,
                 queryMultiaryTree,
                 candOpMapping,
                 (a, b) -> TestStateSpaceSearch.determineMatchingStrategy(cacheMultiaryTree, queryMultiaryTree, a, b),
-                (iterable) -> iterable.isPresent()
+                (iterable) -> iterable != null
                 );
 
         // TODO Ultimately, we want
@@ -838,8 +849,8 @@ public class TestStateSpaceSearch {
         
         
         //Stream<NestedStack<Multimap<Op, Op>>> mappingStream = TreeMapperImpl.<Multimap<Op, Op>, NestedStack<Multimap<Op, Op>>>stream(tm::recurse, HashMultimap.<Op, Op>create());
-        Stream<NestedStack<LayerMapping<Op, Op, Optional<Iterable<Map<Op, Op>>>>>> mappingStream =
-                StreamUtils.<Map<Op, Op>, NestedStack<LayerMapping<Op, Op, Optional<Iterable<Map<Op, Op>>>>>>
+        Stream<NestedStack<LayerMapping<Op, Op, Iterable<Map<Op, Op>>>>> mappingStream =
+                StreamUtils.<Map<Op, Op>, NestedStack<LayerMapping<Op, Op, Iterable<Map<Op, Op>>>>>
                     stream(tm::recurse, Collections.emptyMap());
         
         // Turn each stack into stream of entries
@@ -849,7 +860,7 @@ public class TestStateSpaceSearch {
 
             
             // Create the iterators for the node mappings
-            List<Optional<Iterable<Map<Op, Op>>>> tmpChildNodeMappingCandidates = stack.stream()
+            List<Iterable<Map<Op, Op>>> tmpChildNodeMappingCandidates = stack.stream()
                 .flatMap(layerMapping -> layerMapping.getNodeMappings().stream()
                     .map(nodeMapping -> nodeMapping.getValue()))
                     .collect(Collectors.toList());
@@ -858,16 +869,17 @@ public class TestStateSpaceSearch {
             
             // If any of the optionals is empty, skip the whole candidate
             boolean skip = tmpChildNodeMappingCandidates.stream()
-            		.map(x -> !x.isPresent())
+            		.map(x -> x != null)
             		.findFirst()
             		.orElse(false);
             
             
             List<Iterable<Map<Op, Op>>> childNodeMappingCandidates = skip
             		? Collections.emptyList()
-            		:tmpChildNodeMappingCandidates.stream()
-            			.map(x -> x.get())
-            			.collect(Collectors.toList());
+            		: tmpChildNodeMappingCandidates;
+//            		.stream()
+//            			.map(x -> x.get())
+//            			.collect(Collectors.toList());
             
             CartesianProduct<Map<Op, Op>> cartX = new CartesianProduct<>(childNodeMappingCandidates);
             

@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -58,9 +57,9 @@ public class KPermutationsOfNUtils {
     }
     
     
-    public static <A, B> Optional<Iterable<Map<A, B>>> createIterable(Multimap<A, B> childMapping) {
-        Iterable<Map<A, B>> tmp = () -> kPermutationsOfN(childMapping).iterator();
-        Optional<Iterable<Map<A, B>>> result = Optional.of(tmp);
+    public static <A, B> Iterable<Map<A, B>> createIterable(Multimap<A, B> childMapping) {
+        Iterable<Map<A, B>> result = () -> kPermutationsOfN(childMapping).iterator();
+        //Optional<Iterable<Map<A, B>>> result = Optional.of(tmp);
         return result;
         //IterableUnknownSize<Map<A, B>> result = new IterableUnknownSizeSimple<>(true, tmp);
         //return result;
