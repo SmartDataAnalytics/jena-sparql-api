@@ -57,5 +57,10 @@ public class RdfTypeLiteralTyped
         return "RdfTypeLiteralTyped [rdfDatatype=" + rdfDatatype + "]";
     }
     
+	@Override
+	public boolean hasIdentity() {
+		return false;
+	}
+
     
 }

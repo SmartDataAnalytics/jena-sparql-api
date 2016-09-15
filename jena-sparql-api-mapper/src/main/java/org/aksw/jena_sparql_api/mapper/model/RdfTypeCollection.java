@@ -72,6 +72,11 @@ public class RdfTypeCollection
         
     }
 
+	@Override
+	public boolean hasIdentity() {
+		return false;
+	}
+
 //    @Override
 //    public void exposeTypeDeciderShape(ResourceShapeBuilder rsb) {
 //    }

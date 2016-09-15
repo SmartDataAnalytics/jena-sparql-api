@@ -22,12 +22,13 @@ import org.aksw.jena_sparql_api.core.utils.UpdateExecutionUtils;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
+import org.aksw.jena_sparql_api.mapper.context.EntityId;
 import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContextImpl;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContextImpl;
 import org.aksw.jena_sparql_api.mapper.context.ResolutionRequest;
+import org.aksw.jena_sparql_api.mapper.impl.type.RdfClass;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
-import org.aksw.jena_sparql_api.mapper.model.RdfPopulator;
 import org.aksw.jena_sparql_api.mapper.model.RdfPopulatorProperty;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
@@ -43,10 +44,14 @@ import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.graph.GraphFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RdfMapperEngineImpl
     implements RdfMapperEngine
 {
+	private static final Logger logger = LoggerFactory.getLogger(RdfMapperEngine.class);
+	
     protected Prologue prologue;
     //protected QueryExecutionFactory qef;
     protected SparqlService sparqlService;
@@ -119,7 +124,11 @@ public class RdfMapperEngineImpl
     }
     
     
+    //public Graph fetch(Class<?> clazz, Node node) {
     public Graph fetch(RdfType type, Node node) {
+        //RdfType type = typeFactory.forJavaType(clazz);
+
+    	
         ResourceShapeBuilder builder = new ResourceShapeBuilder(prologue);
         type.exposeShape(builder);
         ResourceShape shape = builder.getResourceShape();
@@ -144,6 +153,15 @@ public class RdfMapperEngineImpl
         return result;
     }
     
+//    public <T> T find(EntityId entityId) {
+//    	Class<?> clazz = entityId.getEntityClass();
+//    	Node node = entityId.getNode();
+//    	
+//    	Object tmp = find(clazz, node);
+//    	T result = (T)tmp;
+//    	return result;
+//    }
+    
     /**
      * Perform a lookup in the persistence context for an entity with id 'node'
      * of type 'clazz'.
@@ -152,6 +170,11 @@ public class RdfMapperEngineImpl
      * 
      */
     public <T> T find(Class<T> clazz, Node node) {
+    	EntityId entityId = new EntityId(clazz, node);
+
+    	logger.debug("Entity lookup with " + node + " " + clazz.getName());
+    	System.out.println("Entity lookup with " + node + " " + clazz.getName());
+    	
         Object entity = persistenceContext.entityFor(clazz, node, null);
         
         if(entity == null) {
@@ -164,8 +187,12 @@ public class RdfMapperEngineImpl
             //Sink<Triple> sink =  new SinkTriplesToGraph(false, refGraph);
             type.populateEntity(persistenceContext, entity, node, graph, refGraph::add);
             
-            EntityGraphMap entityGraphMap = persistenceContext.getEntityGraphMap();
-            entityGraphMap.putAll(refGraph, entity);
+            EntityGraphMap<EntityId> entityGraphMap = persistenceContext.getEntityGraphMap();
+            entityGraphMap.putAll(refGraph, entityId);
+            
+            persistenceContext.getIdToEntityMap().put(entityId, entity);
+            
+            persistenceContext.getEntityToIdMap().put(entity, entityId);
         }
         
         // The call to populateEntity may trigger requests to resolve further entities
@@ -360,6 +387,13 @@ public class RdfMapperEngineImpl
 
 
     /**
+     * From the given entity:
+     *   - use its Java Type and the node as an ID (view the node as carrying information about how to populate an instance of the given Java type)
+     *   - associate the ID with the graph
+     *     - if the triples have not been loaded yet, do so now 
+     *   - associate the ID with an entity
+     *     - 
+     * 
      * Write a given entity as RDF starting with the given node.
      * This will retrieve all triples related triples of the node,
      * perform a diff with the current state and update the backend
@@ -367,8 +401,69 @@ public class RdfMapperEngineImpl
      * 
      */
     @Override
-    public <T> T merge(T tmpEntity, Node node) {
+    public <T> T merge(T srcEntity, Node node) {
+    	Function<Class<?>, EntityOps> entityOpsFactory = ((RdfTypeFactoryImpl)typeFactory).getEntityOpsFactory();
+
+    	
+        Class<?> entityClass = srcEntity.getClass();
+        EntityId entityId = new EntityId(entityClass, node);
+
         
+//        Object tgtEntity = persistenceContext.getIdToEntityMap().get(entityId);
+//        if(tgtEntity == null) {
+//        
+//	        // If needed, fetch the graph corresponding to that entity
+////	        EntityGraphMap<EntityId> entityGraphMap = persistenceContext.getEntityGraphMap();	        
+////	        Graph graph = entityGraphMap.getGraphForKey(entityId);
+//            tgtEntity = find(entityClass, node);
+//        }        
+        Object tgtEntity = find(entityClass, node);
+        
+//        if(graph == null) {
+//            // Request the data for the entity
+//            tgtEntity = find(entityClass, node);
+//            
+//            
+////            RdfType type = typeFactory.forJavaType(entityClass);
+////            graph = fetch(type, node);
+////            entityGraphMap.putAll(graph, entityId);
+//            
+//            // Create a new entity
+//            //Object entity =  
+//            
+//            //Object entity = type.createJavaObject(node, graph);
+//            
+//            
+//        }
+
+//        RdfType type = typeFactory.forJavaType(entityClass);
+//        RdfClass rdfClass = (RdfClass)type;
+//        for(RdfPopulator populator : rdfClass.getPopulators()) {
+//        	populator.
+//        }
+
+        
+        // Merge the attribute values of the given entity into the fetched one
+        EntityOps entityOps = entityOpsFactory.apply(entityClass);
+        for(PropertyOps propertyOps : entityOps.getProperties()) {
+        	Object tgtValue = propertyOps.getValue(tgtEntity);
+
+        	// Ask the context for the target value's oned
+        	EntityId tgtId = persistenceContext.getEntityToIdMap().get(tgtValue);
+        	Node tgtNode = tgtId.getNode();
+        	
+        	
+        	Object srcValue = propertyOps.getValue(srcEntity);
+
+        	Object mergedValue = merge(srcValue, tgtNode);        	
+        	propertyOps.setValue(tgtEntity, mergedValue);
+        	
+        }
+
+         
+       
+        
+    	
         //Class<?> entityClazz = type.getClass();
         //Object entity = persistenceContext.entityFor(entityClass, node, () -> type.createJavaObject(node, null));
 
@@ -378,17 +473,19 @@ public class RdfMapperEngineImpl
          * (Although entities are probably more efficient performance wise)
          */
         
-    	Function<Class<?>, EntityOps> entityOpsFactory = ((RdfTypeFactoryImpl)typeFactory).getEntityOpsFactory();
     	
         // TODO We need to perform a recursive merge
-    	Object entity = EntityOps.deepCopy(
-    			tmpEntity,
-    			//clazz -> ((RdfClass)typeFactory.forJavaType(clazz)).getEntityOps(),
-    			entityOpsFactory,
-    			persistenceContext.getManagedEntities());
+    	//Set<Object> affectedEntities = Sets.newIdentityHashSet();
+    	// persistenceContext.getManagedEntities()
+//    	Object entity = EntityOps.deepCopy(
+//    			srcEntity,
+//    			//clazz -> ((RdfClass)typeFactory.forJavaType(clazz)).getEntityOps(),
+//    			entityOpsFactory,
+//    			//affectedEntities,
+//    	    	persistenceContext.getManagedEntities()
+//    			
+//    			);
 
-        Class<?> entityClass = entity.getClass();
-        RdfType type = typeFactory.forJavaType(entityClass);
 
 //        if(entity != tmpEntity) {
 //            if(type instanceof RdfClass) {
@@ -410,17 +507,6 @@ public class RdfMapperEngineImpl
 //        }
 
         
-        // If needed, fetch data corresponding to that entity
-        EntityGraphMap entityGraphMap = persistenceContext.getEntityGraphMap();
-        Graph graph = entityGraphMap.getGraphForEntity(entity);
-        if(graph == null) {
-            entity = find(entityClass, node);
-            // Request the data for the entity
-            graph = fetch(type, node);
-            entityGraphMap.putAll(graph, entity);
-        }
-
-
         DatasetDescription datasetDescription = sparqlService.getDatasetDescription();
         String gStr = DatasetDescriptionUtils.getSingleDefaultGraphUri(datasetDescription);
         if(gStr == null) {
@@ -431,7 +517,7 @@ public class RdfMapperEngineImpl
         DatasetGraph newState = DatasetGraphFactory.create();
         Graph outGraph = Quad.defaultGraphIRI.equals(g) ? newState.getDefaultGraph() : newState.getGraph(g);
         //rdfClass.emitTriples(out, entity);
-        emitTriples(outGraph, entity);
+        emitTriples(outGraph, tgtEntity);
 
         
         DatasetGraph oldState = DatasetGraphFactory.create();
@@ -492,7 +578,7 @@ public class RdfMapperEngineImpl
 //
 
         @SuppressWarnings("unchecked")
-        T result = (T)entity;
+        T result = (T)tgtEntity;
         return result;
     }
 

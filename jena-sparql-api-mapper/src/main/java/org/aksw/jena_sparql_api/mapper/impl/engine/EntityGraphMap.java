@@ -1,75 +1,74 @@
 package org.aksw.jena_sparql_api.mapper.impl.engine;
 
 import java.util.HashMap;
-import java.util.IdentityHashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.common.collect.Sets;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.graph.GraphFactory;
-import org.apache.jena.sparql.util.graph.GraphUtils;
-import org.apache.jena.util.iterator.ExtendedIterator;
 
 /**
  * Keeps track of associations between objects and triples
  *
  */
-public class EntityGraphMap {
+public class EntityGraphMap<K> {
     protected Graph graph;
 
-    protected Map<Object, Graph> entityToGraph = new IdentityHashMap<Object, Graph>();
-    protected Map<Triple, Set<Object>> tripleToEntities = new HashMap<Triple, Set<Object>>();
+    protected Map<K, Graph> keyToGraph = new HashMap<K, Graph>();
+    protected Map<Triple, Set<K>> tripleToKeys = new HashMap<Triple, Set<K>>();
 
-    public void putAll(Graph graph, Object entity) {
+    public void putAll(Graph graph, K key) {
         for(Triple triple : graph.find(Node.ANY, Node.ANY, Node.ANY).toSet()) {
-            put(triple, entity);
+            put(triple, key);
         }
     }
 
-    public void removeAll(Graph graph, Object entity) {
+    public void removeAll(Graph graph, K key) {
         for(Triple triple : graph.find(Node.ANY, Node.ANY, Node.ANY).toSet()) {
-            remove(triple, entity);
+            remove(triple, key);
         }
     }
 
-    public void clearGraph(Object entity) {
-        Graph graph = entityToGraph.get(entity);
+    public void clearGraph(K key) {
+        Graph graph = keyToGraph.get(key);
         if(graph != null) {
-            removeAll(graph, entity);
+            removeAll(graph, key);
         }
     }
 
-    public void put(Triple triple, Object entity) {
-        Set<Object> entities = tripleToEntities.get(triple);
-        if(entities == null) {
-            entities = Sets.newIdentityHashSet();
-            tripleToEntities.put(triple, entities);
-        }
-        entities.add(entity);
+    public void put(Triple triple, K key) {
+    	tripleToKeys.computeIfAbsent(triple, (t) -> new HashSet<>()).add(key);
+    	
+//        Set<Object> entities = tripleToKeys.get(triple);
+//        if(entities == null) {
+//            entities = Sets.newIdentityHashSet();
+//            tripleToKeys.put(triple, entities);
+//        }
+//        entities.add(key);
 
-        Graph graph = entityToGraph.get(entity);
+        Graph graph = keyToGraph.get(key);
         if(graph == null) {
             graph = GraphFactory.createDefaultGraph();
-            entityToGraph.put(entity, graph);
+            keyToGraph.put(key, graph);
         }
         graph.add(triple);
     }
 
-    public void remove(Triple triple, Object entity) {
-        Set<Object> entities = tripleToEntities.get(triple);
-        if(entities != null) {
-            entities.remove(entities);
+    public void remove(Triple triple, K key) {
+        Set<K> keys = tripleToKeys.get(key);
+        if(keys != null) {
+            keys.remove(keys);
         }
 
-        Graph g = entityToGraph.get(entity);
+        Graph g = keyToGraph.get(key);
         if(g != null) {
             g.remove(triple.getSubject(), triple.getPredicate(), triple.getObject());
 
             if(graph.isEmpty()) {
-                entityToGraph.remove(entity);
+                keyToGraph.remove(key);
             }
         }
     }
@@ -81,12 +80,12 @@ public class EntityGraphMap {
      * @param triple
      */
     public void removeTriple(Triple triple) {
-        Set<Object> entities = tripleToEntities.get(triple);
-        if(entities != null) {
-            entities.remove(triple);
+        Set<K> keys = tripleToKeys.get(triple);
+        if(keys != null) {
+            keys.remove(triple);
 
-            for(Object entity : entities) {
-                Graph graph = entityToGraph.get(entity);
+            for(Object entity : keys) {
+                Graph graph = keyToGraph.get(entity);
                 if(graph != null) {
                     graph.remove(triple.getSubject(), triple.getPredicate(), triple.getObject());
                 }
@@ -99,19 +98,19 @@ public class EntityGraphMap {
      * @param entity
      */
     public void removeEntity(Object entity) {
-        Graph graph = entityToGraph.get(entity);
-        entityToGraph.remove(entity);
+        Graph graph = keyToGraph.get(entity);
+        keyToGraph.remove(entity);
 
         if(graph != null) {
             for(Triple triple : graph.find(Node.ANY, Node.ANY, Node.ANY).toSet()) {
-                Set<Object> entities = tripleToEntities.get(triple);
-                entities.remove(entity);
+                Set<K> keys = tripleToKeys.get(triple);
+                keys.remove(entity);
             }
         }
     }
 
-    public Graph getGraphForEntity(Object entity) {
-        Graph result = entityToGraph.get(entity);
+    public Graph getGraphForKey(Object key) {
+        Graph result = keyToGraph.get(key);
         return result;
     }
 

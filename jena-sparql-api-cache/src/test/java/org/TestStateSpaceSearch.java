@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.BiFunction;
@@ -39,8 +40,6 @@ import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpQuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
-import org.aksw.jena_sparql_api.sparql.algebra.mapping.IterableUnknownSize;
-import org.aksw.jena_sparql_api.sparql.algebra.mapping.IterableUnknownSizeSimple;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.LayerMapping;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.MatchingStrategyFactory;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.SequentialMatchIterator;
@@ -53,7 +52,7 @@ import org.aksw.jena_sparql_api.utils.DnfUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
-import org.aksw.jena_sparql_api.views.index.SparqlCacheSystemImpl;
+import org.aksw.jena_sparql_api.views.index.SparqlViewMatcherSystemImpl;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.QueryFactory;
@@ -196,7 +195,7 @@ public class TestStateSpaceSearch {
             result = (as, bs, mapping) -> SequentialMatchIterator.createIterable(as, bs, mapping); // true
             break;
         case 1: // queryOp null - no match because the cache tree has greater depth than the query 
-            result = (as, bs, mapping) -> IterableUnknownSizeSimple.createEmpty(); // false
+            result = (as, bs, mapping) -> Optional.empty();
             break;
         case 2: // cacheOp null - match because a cache tree's super root (i.e. null) matches any query node (including null)
             result = (as, bs, mapping) -> SequentialMatchIterator.createIterable(as, bs, mapping); // true
@@ -213,14 +212,14 @@ public class TestStateSpaceSearch {
                     //System.out.println("Rejecting incomplete cover");
                     
 	                result = (as, bs, mapping) -> (aTree.getParent(cacheOp) != null && as.size() != bs.size()
-	                        ? IterableUnknownSizeSimple.createEmpty()
+	                        ? Optional.empty()//IterableUnknownSizeSimple.createEmpty()
 	                        : tmp.apply(as, bs, mapping));
                 } else {
                 	result = tmp;
                 }
                 
             } else {
-                result = (as, bs, mapping) -> IterableUnknownSizeSimple.createEmpty();
+                result = (as, bs, mapping) -> Optional.empty(); //IterableUnknownSizeSimple.createEmpty();
             }
             break;
         default:
@@ -557,8 +556,8 @@ public class TestStateSpaceSearch {
 //        System.out.println("root:" + tree.getRoot());
 //        System.out.println("root:" + tree.getChildren(tree.getRoot()));
         
-        Tree<Op> cacheMultiaryTree = SparqlCacheSystemImpl.removeUnaryNodes(cacheTree);
-        Tree<Op> queryMultiaryTree = SparqlCacheSystemImpl.removeUnaryNodes(queryTree);
+        Tree<Op> cacheMultiaryTree = TreeUtils.removeUnaryNodes(cacheTree);
+        Tree<Op> queryMultiaryTree = TreeUtils.removeUnaryNodes(queryTree);
         //System.out.println("Multiary tree: " + cacheMultiaryTree);
 
         
@@ -790,7 +789,7 @@ public class TestStateSpaceSearch {
         // actually, this is again a problem instance - right?
         Entry<Long, Entry<Op, Op>> pick = ProblemContainerNeighbourhoodAware.firstEntry(costToOpMappings);
 
-        SparqlCacheSystemImpl.clusterNodesByFirstMultiaryAncestor(queryTree, candOpMapping);
+        TreeUtils.clusterNodesByFirstMultiaryAncestor(queryTree, candOpMapping);
         
         
         
@@ -811,6 +810,7 @@ public class TestStateSpaceSearch {
 
     private static void generateTreeVarMapping(Multimap<Op, Op> candOpMapping, Tree<Op> cacheTree,
             Tree<Op> queryTree) {
+    	
     }
     
     public static Stream<Entry<Map<Op, Op>, Iterable<Map<Var, Var>>>> generateTreeVarMapping(Multimap<Op, Op> candOpMapping, Tree<Op> cacheTree,
@@ -818,12 +818,12 @@ public class TestStateSpaceSearch {
             Tree<Op> queryMultiaryTree) {
         // The tree mapper only determines sets of candidate mappings for each tree level
         // 
-        TreeMapperImpl<Op, Op, IterableUnknownSize<Map<Op, Op>>> tm = new TreeMapperImpl<Op, Op, IterableUnknownSize<Map<Op, Op>>>(
+        TreeMapperImpl<Op, Op, Optional<Iterable<Map<Op, Op>>>> tm = new TreeMapperImpl<Op, Op, Optional<Iterable<Map<Op, Op>>>>(
                 cacheMultiaryTree,
                 queryMultiaryTree,
                 candOpMapping,
                 (a, b) -> TestStateSpaceSearch.determineMatchingStrategy(cacheMultiaryTree, queryMultiaryTree, a, b),
-                (iterable) -> iterable.mayHaveItems()
+                (iterable) -> iterable.isPresent()
                 );
 
         // TODO Ultimately, we want
@@ -838,26 +838,36 @@ public class TestStateSpaceSearch {
         
         
         //Stream<NestedStack<Multimap<Op, Op>>> mappingStream = TreeMapperImpl.<Multimap<Op, Op>, NestedStack<Multimap<Op, Op>>>stream(tm::recurse, HashMultimap.<Op, Op>create());
-        Stream<NestedStack<LayerMapping<Op, Op, IterableUnknownSize<Map<Op, Op>>>>> mappingStream =
-                StreamUtils.<Map<Op, Op>, NestedStack<LayerMapping<Op, Op, IterableUnknownSize<Map<Op, Op>>>>>
+        Stream<NestedStack<LayerMapping<Op, Op, Optional<Iterable<Map<Op, Op>>>>>> mappingStream =
+                StreamUtils.<Map<Op, Op>, NestedStack<LayerMapping<Op, Op, Optional<Iterable<Map<Op, Op>>>>>>
                     stream(tm::recurse, Collections.emptyMap());
         
         // Turn each stack into stream of entries
 //        Stream<Stream<Entry<Op, Op>>> entryStream =
 //                mappingStream.map(stack -> stack.stream().flatMap(m -> m.entrySet().stream()));
-                
         Stream<Entry<Map<Op, Op>, List<ProblemNeighborhoodAware<Map<Var, Var>, Var>>>> nodeMappingToProblems = mappingStream.flatMap(stack -> {
 
             
             // Create the iterators for the node mappings
-            List<Iterable<Map<Op, Op>>> childNodeMappingCandidates = stack.stream()
+            List<Optional<Iterable<Map<Op, Op>>>> tmpChildNodeMappingCandidates = stack.stream()
                 .flatMap(layerMapping -> layerMapping.getNodeMappings().stream()
                     .map(nodeMapping -> nodeMapping.getValue()))
                     .collect(Collectors.toList());
            
             // For each multiary node mapping also add the mappings of the unary operators
             
+            // If any of the optionals is empty, skip the whole candidate
+            boolean skip = tmpChildNodeMappingCandidates.stream()
+            		.map(x -> !x.isPresent())
+            		.findFirst()
+            		.orElse(false);
             
+            
+            List<Iterable<Map<Op, Op>>> childNodeMappingCandidates = skip
+            		? Collections.emptyList()
+            		:tmpChildNodeMappingCandidates.stream()
+            			.map(x -> x.get())
+            			.collect(Collectors.toList());
             
             CartesianProduct<Map<Op, Op>> cartX = new CartesianProduct<>(childNodeMappingCandidates);
             
@@ -1039,8 +1049,8 @@ public class TestStateSpaceSearch {
 //           System.out.println("cache candidate: " + x.getValue());
 //        });
 
-        SparqlCacheSystemImpl cacheSystem = new SparqlCacheSystemImpl();
-        cacheSystem.registerCache("test", cacheOp);
+        SparqlViewMatcherSystemImpl cacheSystem = new SparqlViewMatcherSystemImpl();
+        cacheSystem.registerView("test", cacheOp);
 
         cacheSystem.rewriteQuery(queryOp);
 

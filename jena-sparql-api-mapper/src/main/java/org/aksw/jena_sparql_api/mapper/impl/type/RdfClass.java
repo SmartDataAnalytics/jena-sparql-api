@@ -370,6 +370,12 @@ public class RdfClass
         return result;
     }
 
+	@Override
+	public boolean hasIdentity() {
+		boolean result = defaultIriFn != null;
+		return result;
+	}
+
 //    @Override
 //    public void exposeTypeDeciderShape(ResourceShapeBuilder rsb) {
 //        // TODO Auto-generated method stub

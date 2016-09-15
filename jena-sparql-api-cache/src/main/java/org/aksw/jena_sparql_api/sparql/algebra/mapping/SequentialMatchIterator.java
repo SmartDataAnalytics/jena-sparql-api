@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.sparql.algebra.mapping;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.BiPredicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -110,9 +111,10 @@ public class SequentialMatchIterator<A, B, S>
         return result;
     }
 
-    public static <A, B> IterableUnknownSize<Map<A, B>> createIterable(List<A> as, List<B> bs, Multimap<A, B> mapping) {
+    public static <A, B> Optional<Iterable<Map<A, B>>> createIterable(List<A> as, List<B> bs, Multimap<A, B> mapping) {
         Iterable<Map<A, B>> tmp = () -> new SequentialMatchIterator<>(as, bs, (a, b) -> mapping.get(a).contains(b));
-        IterableUnknownSize<Map<A, B>> result = new IterableUnknownSizeSimple<>(tmp);
+        //IterableUnknownSize<Map<A, B>> result = new IterableUnknownSizeSimple<>(tmp);
+        Optional<Iterable<Map<A, B>>> result = Optional.of(tmp);
         //Stream<Map<A, B>> result = StreamSupport.stream(it.spliterator(), false);
         
         return result;

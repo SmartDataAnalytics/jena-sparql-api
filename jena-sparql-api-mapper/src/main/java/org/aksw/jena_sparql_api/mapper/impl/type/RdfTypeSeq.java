@@ -74,5 +74,10 @@ public class RdfTypeSeq
         // TODO Auto-generated method stub
         
     }
+
+	@Override
+	public boolean hasIdentity() {
+		return false;
+	}
     
 }

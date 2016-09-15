@@ -39,5 +39,9 @@ public interface RdfPersistenceContext
     void requestResolution(PropertyOps propertyOps, Object entity, Node node);
     List<ResolutionRequest> getResolutionRequests();
     Object entityFor(Class<?> clazz, Node node, Supplier<Object> newInstance);
-    EntityGraphMap getEntityGraphMap();    
+
+    
+    EntityGraphMap<EntityId> getEntityGraphMap();
+    Map<EntityId, Object> getIdToEntityMap();
+    Map<Object, EntityId> getEntityToIdMap();
 }

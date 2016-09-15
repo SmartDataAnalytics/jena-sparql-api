@@ -80,6 +80,14 @@ public interface RdfType
     Node getRootNode(Object obj); // TODO May need to add entity manager context argument
 
     /**
+     * Flag to indicate whether entities created from this mapping have their own identity.
+     * If not, ids are usually derived from the parent object
+     *  
+     * @return
+     */
+    boolean hasIdentity();
+    
+    /**
      * Extract a Java (literal) object from a given node.
      * 
      * Note: Creating a *non-primitive* java object is not a concern of RdfType which only *MAPS*

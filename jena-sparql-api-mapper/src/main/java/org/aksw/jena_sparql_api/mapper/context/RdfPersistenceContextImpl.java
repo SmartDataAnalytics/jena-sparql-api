@@ -32,7 +32,11 @@ public class RdfPersistenceContextImpl
     //protected Frontier<ResolutionRequest>
     protected List<ResolutionRequest> resolutionRequests = new ArrayList<>();
     
-    protected EntityGraphMap entityGraphMap = new EntityGraphMap();
+    
+    
+    protected Map<EntityId, Object> idToEntity = new HashMap<>();
+    protected Map<Object, EntityId> entityToId = new IdentityHashMap<>();
+    protected EntityGraphMap<EntityId> entityGraphMap = new EntityGraphMap<EntityId>();
     
     public Map<Object, Node> getPrimaryNodeMap() {
         return entityToPrimaryNode;
@@ -66,9 +70,19 @@ public class RdfPersistenceContextImpl
     }
 
     @Override
-    public EntityGraphMap getEntityGraphMap() {
+    public EntityGraphMap<EntityId> getEntityGraphMap() {
         return entityGraphMap;
     }
+
+	@Override
+	public Map<EntityId, Object> getIdToEntityMap() {
+		return idToEntity;
+	}
+
+	@Override
+	public Map<Object, EntityId> getEntityToIdMap() {
+		return entityToId;
+	}
     
 
     

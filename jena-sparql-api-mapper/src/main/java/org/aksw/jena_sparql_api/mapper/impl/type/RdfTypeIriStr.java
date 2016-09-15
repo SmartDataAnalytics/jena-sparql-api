@@ -35,5 +35,11 @@ public class RdfTypeIriStr
         String result = node.getURI();
         return result;
     }
+    
+	@Override
+	public boolean hasIdentity() {
+		return false;
+	}
+
 
 }

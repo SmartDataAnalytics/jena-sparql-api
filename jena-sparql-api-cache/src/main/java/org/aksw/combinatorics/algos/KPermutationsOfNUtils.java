@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -15,8 +16,6 @@ import org.aksw.combinatorics.collections.CombinationStack;
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeUtils;
-import org.aksw.jena_sparql_api.sparql.algebra.mapping.IterableUnknownSize;
-import org.aksw.jena_sparql_api.sparql.algebra.mapping.IterableUnknownSizeSimple;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.TreeMapperCandidateList;
 
 import com.codepoetics.protonpack.functions.TriFunction;
@@ -59,10 +58,12 @@ public class KPermutationsOfNUtils {
     }
     
     
-    public static <A, B> IterableUnknownSize<Map<A, B>> createIterable(Multimap<A, B> childMapping) {
+    public static <A, B> Optional<Iterable<Map<A, B>>> createIterable(Multimap<A, B> childMapping) {
         Iterable<Map<A, B>> tmp = () -> kPermutationsOfN(childMapping).iterator();
-        IterableUnknownSize<Map<A, B>> result = new IterableUnknownSizeSimple<>(true, tmp);
+        Optional<Iterable<Map<A, B>>> result = Optional.of(tmp);
         return result;
+        //IterableUnknownSize<Map<A, B>> result = new IterableUnknownSizeSimple<>(true, tmp);
+        //return result;
     }
     
     public static <A, B> Stream<ClusterStack<A, B, Entry<A, B>>> kPermutationsOfN(

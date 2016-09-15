@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.sparql.algebra.mapping;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import com.codepoetics.protonpack.functions.TriFunction;
 import com.google.common.collect.Multimap;
@@ -18,7 +19,7 @@ import com.google.common.collect.Multimap;
  */
 @FunctionalInterface
 public interface MatchingStrategyFactory<A, B>
-    extends TriFunction<List<A>, List<B>, Multimap<A, B>, IterableUnknownSize<Map<A, B>>>
+    extends TriFunction<List<A>, List<B>, Multimap<A, B>, Optional<Iterable<Map<A, B>>>>
 {
     //IterableUnknownSize<Map<A, B>> apply(List<A> as, List<B> bs, Multimap<A, B> mapping);
 }
