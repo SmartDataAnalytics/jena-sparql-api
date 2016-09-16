@@ -17,8 +17,12 @@ import org.aksw.commons.collections.trees.Tree;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.ProblemVarMappingExpr;
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.ProblemVarMappingQuad;
+import org.aksw.jena_sparql_api.update.FluentSparqlServiceFactory;
+import org.aksw.jena_sparql_api.update.FluentUpdateExecutionFactory;
 import org.aksw.jena_sparql_api.utils.MapUtils;
 import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
 
@@ -26,7 +30,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
 public class SparqlViewMatcherSystemImpl
-//	implements SparqlViewMatcher
+	implements SparqlViewMatcherSystem
 {
 
     protected IndexSystem<Entry<Op, QueryIndex>, Op> indexSystem;
@@ -47,7 +51,8 @@ public class SparqlViewMatcherSystemImpl
     }
 
 
-    public void rewriteQuery(Op queryOp) {
+    @Override
+    public Op rewriteQuery(Op queryOp) {
         QueryIndex queryIndex = queryIndexer.apply(queryOp);
 
         // Create the initial set of cache candidates based on the query's algebra
@@ -61,6 +66,8 @@ public class SparqlViewMatcherSystemImpl
             
             System.out.println("Leaf Mapping: " + candidateLeafMapping);
         }   
+        
+        return null;
     }
 
     

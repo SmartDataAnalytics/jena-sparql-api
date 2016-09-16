@@ -9,7 +9,8 @@ import java.util.function.BiConsumer;
  * A feature map associates a set of features with
  * items. Multiple items may have exactly the same features.
  *
- * Hence, this class coud be considered a FeatureMultimap.
+ * Hence, this class is called FeatureMap for brevity, but is actually as Feature*Multi*Map.
+ * Multimaps can be represented as Collections of entries; i.e. adding multiple entries with the same key is valid. 
  *
  *
  * @author raven
@@ -35,6 +36,9 @@ public interface FeatureMap<K, V>
 
     Set<Entry<Set<K>, Collection<V>>> entrySet();
 
+    // Get all items having exactly the specified feature set
+    Collection<V> get(Set<K> prototype);
+    
     /**
      *
      * @param prototye

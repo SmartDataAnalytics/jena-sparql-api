@@ -3,7 +3,6 @@ package org.aksw.jena_sparql_api.util.collection;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -22,10 +21,10 @@ public class TestLazyLoadingCachingList {
                 .mapToObj(i -> "item-" + i)
                 .collect(Collectors.toList());
         
-        Function<Range<Long>, ClosableIterator<String>> tmp = new StaticListItemSupplier<>(items);
+        RangedSupplier<Long, String> tmp = new RangedSupplierList<>(items);
         
         // Add some delay
-        Function<Range<Long>, ClosableIterator<String>> itemSupplier = (range) -> {
+        RangedSupplier<Long, String> itemSupplier = (range) -> {
             System.out.println("Supplier: Requested range: " + range);
             try {
                 TimeUnit.MILLISECONDS.sleep(50l);
@@ -35,18 +34,19 @@ public class TestLazyLoadingCachingList {
             return tmp.apply(range);
         };
         
-        LazyLoadingCachingList<String> llcl = new LazyLoadingCachingList<String>(
+        
+        RangedSupplier<Long, String> llcl = new RangedSupplierLazyLoadingListCache<String>(
                 Executors.newFixedThreadPool(4),
                 itemSupplier,
                 Range.closedOpen(0l, 17l),
                 new RangeCostModel());        
         
         
-        ClosableIterator<String> itA = llcl.retrieve(Range.closedOpen(0l, 10l));
-        ClosableIterator<String> itB = llcl.retrieve(Range.closedOpen(5l, 15l));
-        ClosableIterator<String> itC = llcl.retrieve(Range.openClosed(3l, 13l));
-        ClosableIterator<String> itD = llcl.retrieve(Range.closedOpen(15l, 20l));
-        ClosableIterator<String> itE = llcl.retrieve(Range.closedOpen(15l, 20l));
+        ClosableIterator<String> itA = llcl.apply(Range.closedOpen(0l, 10l));
+        ClosableIterator<String> itB = llcl.apply(Range.closedOpen(5l, 15l));
+        ClosableIterator<String> itC = llcl.apply(Range.openClosed(3l, 13l));
+        ClosableIterator<String> itD = llcl.apply(Range.closedOpen(15l, 20l));
+        ClosableIterator<String> itE = llcl.apply(Range.closedOpen(15l, 20l));
         
         while(itA.hasNext()) {
             System.out.println("[A] got item: " + itA.next());

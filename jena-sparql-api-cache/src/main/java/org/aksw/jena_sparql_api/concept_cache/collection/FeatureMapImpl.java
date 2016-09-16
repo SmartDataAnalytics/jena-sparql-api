@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.concept_cache.collection;
 import java.util.AbstractCollection;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -210,5 +211,12 @@ public class FeatureMapImpl<K, V>
         int result = tagSetToValues.size();
         return result;
     }
+
+	@Override
+	public Collection<V> get(Set<K> prototype) {
+		//Collection<V> result = Collections.unmodifiableCollection(tagSetToValues.get(prototype));
+		Collection<V> result = tagSetToValues.get(prototype);
+		return result;
+	}
 
 }

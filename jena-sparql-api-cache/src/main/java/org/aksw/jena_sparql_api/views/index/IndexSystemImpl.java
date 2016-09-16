@@ -77,8 +77,7 @@ public class IndexSystemImpl<C, Q, D, F>
     }
 
     public Set<Entry<C, D>> lookup(Q query) {
-        Set<Entry<C, D>> candidateEntries = queryFeatureExtractor
-            .apply(query)
+        Set<Entry<C, D>> candidateEntries = queryFeatureExtractor.apply(query)
             .flatMap(featureSet -> featuresToItems.getIfSubsetOf(featureSet).stream())
             .map(e -> e.getValue())
             .collect(Collectors.toSet());

@@ -2,7 +2,6 @@ package org.aksw.jena_sparql_api.util.collection;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.utils.IteratorClosable;
 import org.apache.jena.util.iterator.ClosableIterator;
@@ -10,12 +9,12 @@ import org.apache.jena.util.iterator.ClosableIterator;
 import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.Range;
 
-public class StaticListItemSupplier<T>
-    implements Function<Range<Long>, ClosableIterator<T>>
+public class RangedSupplierList<T>
+    implements RangedSupplier<Long, T>//Function<Range<Long>, ClosableIterator<T>>
 {
     protected List<T> items;
     
-    public StaticListItemSupplier(List<T> items) {
+    public RangedSupplierList(List<T> items) {
         super();
         this.items = items;
     }

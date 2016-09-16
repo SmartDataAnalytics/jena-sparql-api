@@ -10,7 +10,7 @@ import java.util.function.Function;
 
 import org.aksw.commons.collections.cache.BlockingCacheIterator;
 import org.aksw.commons.collections.cache.Cache;
-import org.aksw.jena_sparql_api.util.collection.LazyLoadingCachingList.CacheEntry;
+import org.aksw.jena_sparql_api.util.collection.RangedSupplierLazyLoadingListCache.CacheEntry;
 import org.aksw.jena_sparql_api.utils.IteratorClosable;
 import org.aksw.jena_sparql_api.utils.RangeUtils;
 import org.apache.jena.util.iterator.ClosableIterator;
@@ -30,7 +30,7 @@ class LazyLoadingCachingListIterator<T>
     //protected long upperBound;
 
     protected long offset;
-    protected RangeMap<Long, LazyLoadingCachingList.CacheEntry<T>> rangeMap;
+    protected RangeMap<Long, RangedSupplierLazyLoadingListCache.CacheEntry<T>> rangeMap;
     protected Function<Range<Long>, ClosableIterator<T>> itemSupplier;
 
     public LazyLoadingCachingListIterator(
@@ -116,7 +116,9 @@ class LazyLoadingCachingListIterator<T>
  *
  * @param <T>
  */
-public class LazyLoadingCachingList<T> {
+public class RangedSupplierLazyLoadingListCache<T>
+	implements RangedSupplier<Long, T>
+{
 
     /**
      * RangeMap's .subRangeMap method may modify the first and last range due to
@@ -180,7 +182,7 @@ public class LazyLoadingCachingList<T> {
     // We may dynamically discover that after certain offsets there is no more data
     protected Long dataThreshold = null;
 
-    public LazyLoadingCachingList(ExecutorService executorService, Function<Range<Long>, ClosableIterator<T>> itemSupplier, Range<Long> cacheRange, RangeCostModel costModel) {
+    public RangedSupplierLazyLoadingListCache(ExecutorService executorService, Function<Range<Long>, ClosableIterator<T>> itemSupplier, Range<Long> cacheRange, RangeCostModel costModel) {
         super();
         this.executorService = executorService;
         this.itemSupplier = itemSupplier;
@@ -189,7 +191,7 @@ public class LazyLoadingCachingList<T> {
     }
 
 
-    public ClosableIterator<T> retrieve(Range<Long> range) {
+    public ClosableIterator<T> apply(Range<Long> range) {
         range = RangeUtils.startFromZero(range);
         range = range.canonical(DiscreteDomain.longs());
 
@@ -197,13 +199,10 @@ public class LazyLoadingCachingList<T> {
         if(range.isEmpty()) {
             result = new IteratorClosable<>(Collections.emptyIterator());
         } else {
-
             // Prevent changes to the map while we check its content
             synchronized(rangesToData) {
                 Range<Long> lookupRange = range.intersection(cacheRange);
-
                 RangeMap<Long, CacheEntry<T>> subMap = rangesToData.subRangeMap(lookupRange);
-
 
                 List<RangeInfo<T>> rangeInfos = new ArrayList<>();
                 // Determine the first offset of the query

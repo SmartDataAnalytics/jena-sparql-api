@@ -40,6 +40,7 @@ import org.aksw.jena_sparql_api.utils.QuadUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
+import org.aksw.jena_sparql_api.views.index.SparqlViewMatcherSystem;
 import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -222,7 +223,8 @@ public class SparqlCacheUtils {
             Map<Node, ? super ViewCacheIndexer> serviceMap,
             //Node serviceNode,
             Query rawQuery,
-            SparqlViewCache conceptMap,
+            //SparqlViewCache conceptMap,
+            SparqlViewMatcherSystem viewMatcherSystem,
             long indexResultSetSizeThreshold)
     {
         Node serviceNode = NodeFactory.createURI("cache://" + qef.getId() + "-" + (preparationId++));

@@ -19,6 +19,35 @@ public class LazyLoadingCachingList<T> {
 
 ## Concepts and Components
 
+### Terminology
+Algebra expression and algebra tree are used interchangebly.
+
+### Sparql Algebra Extensions
+
+
+
+* BINDING-STORE-GET(<storeId>, filterExpr): Retrieve solutions bindings from the store with ID storeId using the provided filter expression
+* BINDING-STORE-PUT(<storeId>, executionQuery, indexAlgebraExpression): Execute the executionQuery and associate the result set with indexAlgebraExpression. The service on which to execute executionQuery is taken from this query execution's execution context.
+
+Implementation exploits the SERVICE keyword, to represent the GET and PUT operations.
+
+Store operations are:
+
+* putResultSet(<storeId, resultSet)
+* getResultSet(<storeId>)
+
+### Sparql Algebra Tagger
+Substitutes (sub-)expression of a given expression with references to GET or PUT operations.
+
+
+### View Matcher Lookups
+
+
+### Full query lookups
+Purpose: Check if the same query, except for slice and variable naming, is either already running or has been cached.
+So for the slice lookup, we need a complete match.
+
+
 ### SparqlCacheSystem
 ```java
 QueryExecutionFactoryViewCacheMaster

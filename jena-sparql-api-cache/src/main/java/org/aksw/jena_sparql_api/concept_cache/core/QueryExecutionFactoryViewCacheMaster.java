@@ -13,12 +13,15 @@ import org.apache.jena.query.QueryFactory;
 
 // https://jena.apache.org/documentation/query/arq-query-eval.html
 /**
+ * Use QueryExecutionFactoryViewMatcherMaster instead.
+ * 
  * QueryExecutionFactory that is capable of caching (fragments of) SPARQL queries.
  *
  *
  * @author raven
  *
  */
+@Deprecated
 public class QueryExecutionFactoryViewCacheMaster
     extends QueryExecutionFactoryDecorator
 {
