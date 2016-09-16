@@ -40,7 +40,6 @@ import org.aksw.jena_sparql_api.utils.QuadUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
-import org.aksw.jena_sparql_api.views.index.SparqlViewMatcherSystem;
 import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -588,6 +587,11 @@ public class SparqlCacheUtils {
     public static QuadFilterPattern extractQuadFilterPattern(Op op) {
         QuadFilterPattern result = null;
 
+//        // 
+//        if(op instanceof OpQuadFilterPatternCanonical) {
+//        	result = ((OpQuadFilterPatternCanonical)op).getQfpc().toQfp();
+//        }
+        
         OpFilter opFilter;
         // TODO allow nested filters
         if(op instanceof OpFilter) {

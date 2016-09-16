@@ -51,27 +51,28 @@ public class SparqlViewMatcherUtils {
     public static Stream<OpVarMap> generateTreeVarMapping(Multimap<Op, Op> candOpMapping, Tree<Op> cacheTree,
                 Tree<Op> queryTree) {
         	
-    //        List<Op> cacheLeafs = TreeUtils.getLeafs(cacheTree);        
-    //        List<Op> queryLeafs = TreeUtils.getLeafs(queryTree);
-    
-            System.out.println("Query Tree:\n" + queryTree);
-            System.out.println("Cache Tree:\n" + cacheTree);
-            
-    //        System.out.println("root:" + tree.getRoot());
-    //        System.out.println("root:" + tree.getChildren(tree.getRoot()));
-            
-            Tree<Op> cacheMultiaryTree = TreeUtils.removeUnaryNodes(cacheTree);
-            Tree<Op> queryMultiaryTree = TreeUtils.removeUnaryNodes(queryTree);
-            //System.out.println("Multiary tree: " + cacheMultiaryTree);
-    
-            
-    
+	        Tree<Op> cacheMultiaryTree = TreeUtils.removeUnaryNodes(cacheTree);
+	        Tree<Op> queryMultiaryTree = TreeUtils.removeUnaryNodes(queryTree);
+
+    	
             Stream<OpVarMap> mappingSolutions = SparqlViewMatcherUtils.generateTreeVarMapping(candOpMapping, cacheTree, queryTree, cacheMultiaryTree,
                     queryMultiaryTree);
             
     
             return mappingSolutions;
             
+            //        List<Op> cacheLeafs = TreeUtils.getLeafs(cacheTree);        
+            //        List<Op> queryLeafs = TreeUtils.getLeafs(queryTree);
+            
+//                    System.out.println("Query Tree:\n" + queryTree);
+//                    System.out.println("Cache Tree:\n" + cacheTree);
+                    
+            //        System.out.println("root:" + tree.getRoot());
+            //        System.out.println("root:" + tree.getChildren(tree.getRoot()));
+                    
+                    //System.out.println("Multiary tree: " + cacheMultiaryTree);
+            
+                    
     
             // 
             

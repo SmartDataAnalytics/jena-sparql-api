@@ -195,7 +195,7 @@ public class FeatureMapImpl<K, V>
 
     @Override
     public String toString() {
-        return "ContainmentMapImpl [tagToCount=" + tagToCount
+        return "FeatureMapImpl [tagToCount=" + tagToCount
                 + ", tagToTagSets=" + tagToTagSets + ", tagSetToValues="
                 + tagSetToValues + ", valueToTagSets=" + valueToTagSets + "]";
     }

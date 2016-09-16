@@ -18,6 +18,7 @@ import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMapImpl;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
+import org.aksw.jena_sparql_api.concept_cache.op.OpQuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
@@ -30,12 +31,12 @@ import com.google.common.collect.Multimap;
 public class QueryIndexerImpl
     implements Function<Op, QueryIndex>
 {
-    public static Stream<Entry<Set<Expr>, QuadPatternIndex>> createQuadPatternIndex(Tree<Op> treeOp, Op qfpOp, QuadFilterPattern qfp) {
+    public static Stream<Entry<Set<Expr>, QuadPatternIndex>> createQuadPatternIndex(Tree<Op> treeOp, Op qfpOp, QuadFilterPatternCanonical qfpc) {
         TreeNode<Op> opRef = new TreeNodeImpl<>(treeOp, qfpOp);
         
-        Generator<Var> generator = VarGeneratorImpl2.create();
-        QuadFilterPatternCanonical qfpc = SparqlCacheUtils.canonicalize2(qfp, generator);
-        
+//        Generator<Var> generator = VarGeneratorImpl2.create();
+//        QuadFilterPatternCanonical qfpc = SparqlCacheUtils.canonicalize2(qfp, generator);
+//        
         Set<Set<Expr>> dnf = qfpc.getFilterDnf();
         
         FeatureMap<Expr, Multimap<Expr, Expr>> dnfIndex = SparqlCacheUtils.indexDnf(dnf);
@@ -60,30 +61,44 @@ public class QueryIndexerImpl
         
         return result;
     }
+//
+//    public static Stream<Entry<Op, QuadFilterPattern>> streamQuadFilterPatterns(Op op) {
+//    	Tree<Op> tree = OpUtils.createTree(op);
+//    	Stream<Entry<Op, QuadFilterPattern>> result = streamQuadFilterPatterns(tree);
+//    	return result;
+//    }
+//    
+//    public static Stream<Entry<Op, QuadFilterPattern>> streamQuadFilterPatterns(Tree<Op> tree) {
+//        Stream<Entry<Op, QuadFilterPattern>> result = TreeUtils
+//                .inOrderSearch(
+//                        tree.getRoot(),
+//                        tree::getChildren,
+//                        SparqlCacheUtils::extractQuadFilterPattern,
+//                        (opNode, value) -> value == null) // descend while the value is null
+//                .filter(e -> e.getValue() != null);
+//
+//        return result;
+//    }
 
-    public static Stream<Entry<Op, QuadFilterPattern>> streamQuadFilterPatterns(Op op) {
-    	Tree<Op> tree = OpUtils.createTree(op);
-    	Stream<Entry<Op, QuadFilterPattern>> result = streamQuadFilterPatterns(tree);
-    	return result;
-    }
-    
-    public static Stream<Entry<Op, QuadFilterPattern>> streamQuadFilterPatterns(Tree<Op> tree) {
-        Stream<Entry<Op, QuadFilterPattern>> result = TreeUtils
-                .inOrderSearch(
-                        tree.getRoot(),
-                        tree::getChildren,
-                        SparqlCacheUtils::extractQuadFilterPattern,
-                        (opNode, value) -> value == null) // descend while the value is null
-                .filter(e -> e.getValue() != null);
+	  public static Stream<Entry<Op, QuadFilterPatternCanonical>> streamQuadFilterPatterns(Tree<Op> tree) {
+	  Stream<Entry<Op, QuadFilterPatternCanonical>> result = TreeUtils
+	          .inOrderSearch(
+	                  tree.getRoot(),
+	                  tree::getChildren,
+	                  o -> (o instanceof OpQuadFilterPatternCanonical) ? ((OpQuadFilterPatternCanonical)o).getQfpc() : null,
+	                  (opNode, value) -> value == null) // descend while the value is null
+	          .filter(e -> e.getValue() != null);
+	
+	  
+	  
+	  return result;
+	}
 
-        return result;
-    }
-    
     @Override
     public QueryIndex apply(Op op) {
         
         // Feature extractor for canonical quad filter pattern
-        Function<QuadFilterPatternCanonical, Stream<Set<Object>>> qfpcFeatureExtractor;
+        //Function<QuadFilterPatternCanonical, Stream<Set<Object>>> qfpcFeatureExtractor;
         
         
         // Set up the cache feature set based on its quad filter pattern 
@@ -91,7 +106,7 @@ public class QueryIndexerImpl
         Tree<Op> treeOp = OpUtils.createTree(op);
         
         // Traverse the cache op and create a mapping from op to QuadFilterPatternCanonical
-        Map<Op, QuadFilterPattern> opToQfp = streamQuadFilterPatterns(op)
+        Map<Op, QuadFilterPatternCanonical> opToQfp = streamQuadFilterPatterns(treeOp)
         		.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 
         FeatureMap<Expr, QuadPatternIndex> quadPatternIndex = new FeatureMapImpl<>();
