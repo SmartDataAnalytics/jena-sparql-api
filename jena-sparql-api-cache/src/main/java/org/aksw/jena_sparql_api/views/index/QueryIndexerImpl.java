@@ -102,7 +102,10 @@ public class QueryIndexerImpl
             });
         });
 
-        QueryIndex result = new QueryIndex(quadPatternIndex);
+        Tree<Op> tree = OpUtils.createTree(op);
+        
+        
+        QueryIndex result = new QueryIndex(op, tree, quadPatternIndex);
         
         return result;
     }

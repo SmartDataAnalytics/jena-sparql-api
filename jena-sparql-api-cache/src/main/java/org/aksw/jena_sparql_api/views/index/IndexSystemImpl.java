@@ -96,6 +96,7 @@ public class IndexSystemImpl<C, Q, D, F>
             featureExtractor,
             featureExtractor);
 
+        
         return result;
 
     }

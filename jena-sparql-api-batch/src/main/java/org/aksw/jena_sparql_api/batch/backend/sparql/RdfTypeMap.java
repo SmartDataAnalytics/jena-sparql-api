@@ -142,6 +142,13 @@ public class RdfTypeMap
         return result;
     }
 
+
+    @Override
+    public boolean hasIdentity() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
 //    @Override
 //    public Object createJavaObject(Node node) {
 //        //entityOps.

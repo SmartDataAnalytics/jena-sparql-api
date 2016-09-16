@@ -16,6 +16,8 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import org.aksw.commons.collections.IterableCollection;
+import org.aksw.commons.collections.trees.Tree;
+import org.aksw.commons.collections.trees.TreeImpl;
 import org.aksw.commons.util.Pair;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Var;
@@ -38,6 +40,12 @@ import org.apache.jena.sparql.graph.NodeTransformLib;
  */
 public class ExprUtils {
 
+    public static Tree<Expr> createTree(Expr root) {
+        Tree<Expr> result = TreeImpl.create(root, ExprUtils::getSubExprs);
+        return result;
+    }
+
+    
     public static boolean isConstantsOnly(Iterable<Expr> exprs) {
         for(Expr expr : exprs) {
             if(!expr.isConstant()) {

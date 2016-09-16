@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.views.index;
 import java.util.Collection;
 import java.util.Map.Entry;
 
+import org.aksw.jena_sparql_api.view_matcher.OpVarMap;
 import org.apache.jena.sparql.algebra.Op;
 
 public interface OpViewMatcher {

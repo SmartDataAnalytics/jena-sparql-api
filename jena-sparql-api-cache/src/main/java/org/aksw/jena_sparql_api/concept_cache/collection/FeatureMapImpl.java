@@ -163,7 +163,7 @@ public class FeatureMapImpl<K, V>
     @Override
     public Collection<Entry<Set<K>, V>> getIfSubsetOf(Set<K> prototype) {
         // get the count if we used index lookup
-        int indexCount = prototype.stream().mapToInt(tag -> tagToCount.getOrDefault(tag, 0)).sum();
+        int indexCount = prototype.isEmpty() ? Integer.MAX_VALUE : prototype.stream().mapToInt(tag -> tagToCount.getOrDefault(tag, 0)).sum();
         int totalCount = valueToTagSets.size();
 
         Stream<Set<K>> tagSetStream;

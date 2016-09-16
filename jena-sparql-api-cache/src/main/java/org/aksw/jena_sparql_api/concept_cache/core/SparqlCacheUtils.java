@@ -223,8 +223,8 @@ public class SparqlCacheUtils {
             Map<Node, ? super ViewCacheIndexer> serviceMap,
             //Node serviceNode,
             Query rawQuery,
-            //SparqlViewCache conceptMap,
-            SparqlViewMatcherSystem viewMatcherSystem,
+            SparqlViewCache conceptMap,
+            //SparqlViewMatcherSystem viewMatcherSystem,
             long indexResultSetSizeThreshold)
     {
         Node serviceNode = NodeFactory.createURI("cache://" + qef.getId() + "-" + (preparationId++));

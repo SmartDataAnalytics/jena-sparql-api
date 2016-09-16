@@ -32,7 +32,8 @@ public class QueryExecutionFactoryViewMatcherMaster
 
     @Override
     public QueryExecution createQueryExecution(Query query) {
-        QueryExecution result = SparqlCacheUtils.prepareQueryExecution(decoratee, serviceMap, query, viewMatcherSystem, indexResultSetSizeThreshold);
+        //QueryExecution result = SparqlCacheUtils.prepareQueryExecution(decoratee, serviceMap, query, viewMatcherSystem, indexResultSetSizeThreshold);
+        QueryExecution result = null;
         return result;
     }
 
