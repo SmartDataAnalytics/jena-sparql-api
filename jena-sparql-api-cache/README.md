@@ -45,7 +45,15 @@ Substitutes (sub-)expression of a given expression with references to GET or PUT
 
 ### Full query lookups
 Purpose: Check if the same query, except for slice and variable naming, is either already running or has been cached.
-So for the slice lookup, we need a complete match.
+So for the slice based caching, we need a complete match.
+
+```java
+class OpLookup {
+void add(Op);
+
+Collection<Entry<Op, OpVarMap>> lookup(Op op)
+}
+```
 
 
 ### SparqlCacheSystem

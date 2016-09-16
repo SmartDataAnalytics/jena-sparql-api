@@ -13,11 +13,16 @@ import org.aksw.jena_sparql_api.algebra.transform.TransformJoinToConjunction;
 import org.aksw.jena_sparql_api.algebra.transform.TransformUnionToDisjunction;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMapImpl;
+import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
+import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 import org.aksw.jena_sparql_api.unsorted.OpVisitorFeatureExtractor;
+import org.aksw.jena_sparql_api.utils.Generator;
+import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.aksw.jena_sparql_api.view_matcher.OpVarMap;
 import org.aksw.jena_sparql_api.view_matcher.SparqlViewMatcherUtils;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.Transformer;
+import org.apache.jena.sparql.core.Var;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,16 +96,26 @@ public class OpViewMatcherImpl
         
 		return null;
 	}
-	
+
+	public static Op normalizeOp(Op op) {
+        op = Transformer.transform(TransformJoinToConjunction.fn, Transformer.transform(TransformUnionToDisjunction.fn, op)); 
+        
+        Generator<Var> generatorCache = VarGeneratorImpl2.create(); 
+        Op result = OpUtils.substitute(op, false, (o) -> SparqlCacheUtils.tryCreateCqfp(o, generatorCache));
+        
+        return result;
+
+	}
 
 	
 	public static OpViewMatcher create() {
         Function<Op, Stream<Set<String>>> itemFeatureExtractor = (oop) -> Collections.singleton(OpVisitorFeatureExtractor.getFeatures(oop, (op) -> op.getClass().getSimpleName())).stream();
 
         OpViewMatcher result = new OpViewMatcherImpl(
-                op -> Transformer.transform(TransformJoinToConjunction.fn, Transformer.transform(TransformUnionToDisjunction.fn, op)), 
+        		OpViewMatcherImpl::normalizeOp,        		
                 itemFeatureExtractor,
                 new QueryIndexerImpl());
+
         return result;
 	}
 }

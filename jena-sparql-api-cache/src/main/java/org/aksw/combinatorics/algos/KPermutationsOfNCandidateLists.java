@@ -3,10 +3,7 @@ package org.aksw.combinatorics.algos;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map.Entry;
-import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.aksw.combinatorics.collections.Combination;
@@ -14,8 +11,6 @@ import org.aksw.combinatorics.collections.CombinationStack;
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
 
 import com.codepoetics.protonpack.functions.TriFunction;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
 
 
 /**
@@ -87,7 +82,9 @@ public class KPermutationsOfNCandidateLists<A, B, S>
                 // Now we picked a 'b'
 
                 // Get all as that map to the b and remove them
-                Set<A> affectedAs = remaining.getInverse().get(b);
+                //Set<A> affectedAs = remaining.getInverse().get(b);
+            	// TODO Can we avoid the copy?
+                Collection<A> affectedAs = new ArrayList<A>(remaining.getInverse().get(b));
                
                 // Remove the clusterCandidateMapping from the remaining set
                 for(A affectedA : affectedAs) {
