@@ -5,7 +5,7 @@
     <artifactId>jena-sparql-api-sparql-ext</artifactId>
     <packaging>jar</packaging>
 
-    <name>Jena SPARQL API - Utils</name>
+    <name>Jena SPARQL API - Sparql Extensions</name>
     <url>http://github.org/AKSW/jena-sparql-api</url>
 
     <parent>

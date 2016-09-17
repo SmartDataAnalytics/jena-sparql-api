@@ -7,10 +7,11 @@ import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.core.Var;
 
 public class OpVarMap
+	// extends Entry<Map<Op, Op>, Iterable<Map<Var, Var>>>
 {
     protected Map<Op, Op> opMapping;
     protected Iterable<Map<Var, Var>> varMapping;
-    
+
     public OpVarMap(Map<Op, Op> opMapping,
             Iterable<Map<Var, Var>> varMapping) {
         super();

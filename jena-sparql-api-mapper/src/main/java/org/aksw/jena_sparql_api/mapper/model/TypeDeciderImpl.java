@@ -33,7 +33,7 @@ public class TypeDeciderImpl
     
     @Override
     public void exposeShape(ResourceShapeBuilder rsb) {
-        rsb.outgoing(typeProperty);
+        rsb.out(typeProperty);
     }
 
     @Override

@@ -12,6 +12,7 @@ import java.util.Set;
 
 import org.aksw.commons.collections.MapUtils;
 import org.aksw.commons.util.Pair;
+import org.aksw.jena_sparql_api.concept.builder.api.ConceptExpr;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptOps;
 import org.aksw.jena_sparql_api.concepts.Relation;
@@ -141,26 +142,28 @@ public class ResourceShape {
 
     private static final Logger logger = LoggerFactory.getLogger(ResourceShape.class);
 
-    private Map<Relation, ResourceShape> outgoing = new HashMap<Relation, ResourceShape>();
-    private Map<Relation, ResourceShape> ingoing = new HashMap<Relation, ResourceShape>();
+    private Map<Relation, ResourceShape> out = new HashMap<Relation, ResourceShape>();
+    private Map<Relation, ResourceShape> in = new HashMap<Relation, ResourceShape>();
+
+    private ConceptExpr expr;
 
     public boolean isEmpty() {
-        boolean result = outgoing.isEmpty() && ingoing.isEmpty();
+        boolean result = out.isEmpty() && in.isEmpty();
         return result;
     }
-    
+
     public Map<Relation, ResourceShape> getOutgoing() {
-        return outgoing;
+        return out;
     }
 
     public Map<Relation, ResourceShape> getIngoing() {
-        return ingoing;
+        return in;
     }
 
     public void extend(ResourceShape that) {
         // TODO Maybe we should create a deep clone of 'that' first
-        this.outgoing.putAll(that.outgoing);
-        this.ingoing.putAll(that.ingoing);
+        this.out.putAll(that.out);
+        this.in.putAll(that.in);
     }
 
 
@@ -623,9 +626,9 @@ public class ResourceShape {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((ingoing == null) ? 0 : ingoing.hashCode());
+        result = prime * result + ((in == null) ? 0 : in.hashCode());
         result = prime * result
-                + ((outgoing == null) ? 0 : outgoing.hashCode());
+                + ((out == null) ? 0 : out.hashCode());
         return result;
     }
 
@@ -638,22 +641,22 @@ public class ResourceShape {
         if (getClass() != obj.getClass())
             return false;
         ResourceShape other = (ResourceShape) obj;
-        if (ingoing == null) {
-            if (other.ingoing != null)
+        if (in == null) {
+            if (other.in != null)
                 return false;
-        } else if (!ingoing.equals(other.ingoing))
+        } else if (!in.equals(other.in))
             return false;
-        if (outgoing == null) {
-            if (other.outgoing != null)
+        if (out == null) {
+            if (other.out != null)
                 return false;
-        } else if (!outgoing.equals(other.outgoing))
+        } else if (!out.equals(other.out))
             return false;
         return true;
     }
 
     @Override
     public String toString() {
-        return "ResourceShape [outgoing=" + outgoing + ", ingoing=" + ingoing
+        return "ResourceShape [outgoing=" + out + ", ingoing=" + in
                 + "]";
     }
 
@@ -664,7 +667,7 @@ public class ResourceShape {
         return result;
     }
 
-    
+
     public static Graph fetchData(QueryExecutionFactory qef, ResourceShape shape, Node node) {
         MappedConcept<Graph> mc = ResourceShape.createMappedConcept(shape, null, false);
         LookupService<Node, Graph> ls = LookupServiceUtils.createLookupService(qef, mc);
@@ -672,9 +675,9 @@ public class ResourceShape {
 //        if(map.size() > 1) {
 //            throw new RuntimeException("Should not happen");
 //        }
-        
+
         Graph result = map.isEmpty() ? null : map.values().iterator().next();
         return result;
-        
+
     }
 }

@@ -5,7 +5,6 @@ import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,7 +13,6 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -22,7 +20,6 @@ import org.aksw.combinatorics.algos.KPermutationsOfNUtils;
 import org.aksw.combinatorics.collections.Combination;
 import org.aksw.combinatorics.solvers.ProblemContainerNeighbourhoodAware;
 import org.aksw.combinatorics.solvers.ProblemNeighborhoodAware;
-import org.aksw.combinatorics.solvers.ProblemStaticSolutions;
 import org.aksw.commons.collections.CartesianProduct;
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeImpl;
@@ -31,11 +28,9 @@ import org.aksw.jena_sparql_api.algebra.transform.TransformJoinToConjunction;
 import org.aksw.jena_sparql_api.algebra.transform.TransformUnionToDisjunction;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMapImpl;
-import org.aksw.jena_sparql_api.concept_cache.combinatorics.ProblemVarMappingExpr;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
 import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
-import org.aksw.jena_sparql_api.concept_cache.op.OpQuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.SequentialMatchIterator;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.VarMapper;
@@ -44,7 +39,6 @@ import org.aksw.jena_sparql_api.stmt.SparqlElementParserImpl;
 import org.aksw.jena_sparql_api.unsorted.ExprMatcher;
 import org.aksw.jena_sparql_api.utils.DnfUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
-import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.aksw.jena_sparql_api.view_matcher.OpVarMap;
 import org.aksw.jena_sparql_api.view_matcher.SparqlViewMatcherUtils;
@@ -59,83 +53,92 @@ import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.op.OpDisjunction;
-import org.apache.jena.sparql.algebra.op.OpProject;
 import org.apache.jena.sparql.algebra.op.OpQuadBlock;
-import org.apache.jena.sparql.algebra.op.OpSequence;
-import org.apache.jena.sparql.algebra.op.OpSlice;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.QuadPattern;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
-import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.util.ExprUtils;
 
 import com.codepoetics.protonpack.functions.TriFunction;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Range;
 
 
 
-interface ExprQuadPattern {
-
-}
-
-interface TreeMatcher {
-    
-}
 
 public class TestStateSpaceSearch {
-       
-    
+
+	public static void main(String[] args) {
+
+		try {
+			IntStream
+				.range(0, 10)
+				.mapToObj(i -> { if(i == 5) { throw new RuntimeException("x"); } return i;})
+				.forEach(x -> System.out.println(x));
+		} catch(Exception e) {
+			System.out.println("early exit");
+		}
+
+        Op opCache = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { { ?a ?a ?a } UNION {   { SELECT DISTINCT ?b { ?b ?b ?b} }   } } ?c ?c ?c } LIMIT 10")));
+
+        OpViewMatcher viewMatcher = OpViewMatcherImpl.create();
+        viewMatcher.add(opCache);
+        viewMatcher.lookup(opCache);
+
+
+	}
+
+
+
 //    public static void main(String[] args) {
 //        Multimap<String, Integer> m = HashMultimap.create();
-//        
+//
 //        m.put("a", 1);
 //        m.put("a", 3);
-//        
+//
 //        m.put("b", 1);
 //        m.put("b", 3);
 //        m.put("b", 4);
 //        F
 //        Stream<CombinationStack<String, Integer, Object>> s = KPermutationsOfNUtils.kPermutationsOfN(m);
-//        
+//
 //        s.forEach(i -> System.out.println(i.asList()));
 //    }
-    
-    //public static void 
+
+    //public static void
 
 
     public static <A, B, S> Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> createProblemsFromUnaryAncestors(List<A> aOps, List<B> bOps) {
         // for now the sequences must match
         int as = aOps.size();
         int bs = bOps.size();
-        
+
         Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result = new ArrayList<>();
         if(as == bs) {
             for(int i = 0; i < as; ++i) {
                 A a = aOps.get(i);
                 B b = bOps.get(i);
-                
+
                 Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> problems = SparqlViewMatcherUtils.createProblems(a, b);
                 result.addAll(problems);
-            }            
+            }
         }
-        
-        return result;            
-    }
-    
-       
-    
-    
 
-    
+        return result;
+    }
+
+
+
+
+
+
 //    public static void foo() {
 //        Dataset ds = DatasetFactory.create();
-//        
+//
 //        Model evals = ModelFactory.createDefaultModel();
-//        
+//
 //        JsonObject jo = null;
 //        for(Entry<String, JsonElement> e : jo.entrySet()) {
 //            switch(e.getKey()) {
@@ -149,12 +152,12 @@ public class TestStateSpaceSearch {
 //                break;
 //            }
 //        }
-//        
+//
 //        ds.addNamedModel("http://myevals", evals);
 //        NQuadsWriter.write(System.out, ds.asDatasetGraph().find());
 //    }
-    
-    
+
+
     public static Entry<Map<Op, Op>, List<ProblemNeighborhoodAware<Map<Var, Var>, Var>>> augmentUnaryOpMappings(
             Op sourceNode,
             Op targetNode,
@@ -169,27 +172,27 @@ public class TestStateSpaceSearch {
             sourceTree, targetTree,
             sourceMultiaryTree, targetMultiaryTree,
             valueComputation);
-        
+
         Map<Op, Op> varMapping = new HashMap<Op, Op>();
         List<ProblemNeighborhoodAware<Map<Var, Var>, Var>> problems = new ArrayList<>();
-        
+
         stream.forEach(e -> {
             Op sourceOp = e.getKey();
             Op targetOp = e.getValue();
             List<ProblemNeighborhoodAware<Map<Var, Var>, Var>> ps = e.getSolution();
-            
+
             varMapping.put(sourceOp, targetOp);
             problems.addAll(ps);
         });
 
         Entry<Map<Op, Op>, List<ProblemNeighborhoodAware<Map<Var, Var>, Var>>> result =
                 new SimpleEntry<>(varMapping, problems);
-        
+
         return result;
     }
-    
-    
-    
+
+
+
     public static <A, B, X> Stream<Combination<A, B, X>> augmentUnaryMappings(
             A sourceNode,
             B targetNode,
@@ -208,68 +211,68 @@ public class TestStateSpaceSearch {
 
         int n = sourceUnaryAncestors.size();
         int m = targetUnaryAncestors.size();
-        
+
         boolean sameSize = n == m;
 
         //List<Entry<Map<T, T>, Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>>>> result = new ArrayList<>(n);
-        
+
         Stream<Combination<A, B, X>> result;
         if(sameSize) {
             result = IntStream.range(0, n)
-                .mapToObj(i -> {            
+                .mapToObj(i -> {
                     A sourceAncestor = sourceUnaryAncestors.get(i);
                     B targetAncestor = targetUnaryAncestors.get(i);
                     //Entry<T, T> e = new SimpleEntry<>(sourceAncestor, targetAncestor);
-                                    
+
                     X value = valueComputation.apply(sourceAncestor, targetAncestor);
-    
+
                     Combination<A, B, X> r = new Combination<A, B, X>(sourceAncestor, targetAncestor, value);
                     return r;
                 });
         } else {
             result = Stream.empty();
         }
-        
+
         return result;
-    }        
-        
+    }
+
 //        System.out.println("unary parents: " + unaryParents);
-        //Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> problems = createProblemsFromUnaryAncestors(cacheUnaryAncestors, queryUnaryAncestors); 
+        //Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> problems = createProblemsFromUnaryAncestors(cacheUnaryAncestors, queryUnaryAncestors);
 //        Stream<Map<Var, Var>> solutions = VarMapper.solve(problems);
 //        solutions.forEach(s -> System.out.println("found solution: " + s));
-        
-    
-    public static void main(String[] args) {
+
+
+    public static void main4(String[] args) {
     	//JenaParameters.disableBNodeUIDGeneration = true;
     	//Model m = RDFDataMgr.loadModel("/home/raven/Desktop/blanknode-test.nt");
 //    	Model m = ModelFactory.createDefaultModel();
-//    	
-//    	
+//
+//
 //    	n.add(m);
 //    	//Model n = RDFDataMgr.loadModel("/home/raven/Desktop/blanknode-test.nt");
 //    	m.add(n);
 //    	m.write(System.out, Lang.NTRIPLES.getName());
-//    	
+//
 //    	System.out.println(m.size());
 //    	System.exit(0);
-    	
-    	
-    	
-    	
+
+
+
+
         // TODO We now need to rewrite the query using the canonical quad filter patterns
         // for this purpose, we could create a map that maps original ops to qfpcs
 //        SparqlCacheUtils.toMap(mm)
-        
-        
-        Map<Class<?>, TriFunction<List<Op>, List<Op>, Multimap<Op, Op>, Boolean>> opToMatcherTest = new HashMap<>(); 
+
+
+        Map<Class<?>, TriFunction<List<Op>, List<Op>, Multimap<Op, Op>, Boolean>> opToMatcherTest = new HashMap<>();
         opToMatcherTest.put(OpDisjunction.class, (as, bs, mapping) -> true);
 
 //        Function<Entry<Op, Op>, TriFunction<List<Op>, List<Op>, Multimap<Op, Op>, Boolean>> fnOpToMatcherTest = (nodeMapping) ->
 //            determineMatchingStrategy(nodeMapping);
             //opToMatcherTest.getOrDefault(op.getClass(), (as, bs, mapping) -> SequentialMatchIterator.createStream(as, bs, mapping).findFirst().isPresent());
 
-        Map<Class<?>, TriFunction<List<Op>, List<Op>, Multimap<Op, Op>, Stream<Map<Op, Op>>>> opToMatcher = new HashMap<>(); 
-        
+        Map<Class<?>, TriFunction<List<Op>, List<Op>, Multimap<Op, Op>, Stream<Map<Op, Op>>>> opToMatcher = new HashMap<>();
+
         opToMatcher.put(OpDisjunction.class, (as, bs, mapping) -> KPermutationsOfNUtils.kPermutationsOfN(mapping));
         //opToMatcher.put(OpLeftJoin.class, (as, bs, mapping) -> SequentialMatchIterator.createStream(as, bs, mapping));
 
@@ -277,10 +280,10 @@ public class TestStateSpaceSearch {
         Function<Class<?>, TriFunction<List<Op>, List<Op>, Multimap<Op, Op>, Stream<Map<Op, Op>>>> fnOpToMatcher = (op) ->
             opToMatcher.getOrDefault(op, (as, bs, mapping) -> SequentialMatchIterator.createStream(as, bs, mapping));
 
-        
+
         List<String> as = Arrays.asList("a", "b", "c");
         List<Integer> bs = Arrays.asList(1, 2, 3, 4);
-        
+
         Multimap<String, Integer> ms = HashMultimap.create();
         ms.put("a", 1);
         ms.put("a", 2);
@@ -294,11 +297,11 @@ public class TestStateSpaceSearch {
 
         it.forEach(x -> System.out.println("seq match: " + x));
 
-        
+
 
         int test = 3;
 
-        
+
         Op opCache;
 
         if(test != 2) {
@@ -310,65 +313,65 @@ public class TestStateSpaceSearch {
         //Op opQuery = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { { ?0 ?0 ?0 } UNION { ?1 ?1 ?1 } } { { ?2 ?2 ?2 } UNION { ?3 ?3 ?3 } } { ?4 ?4 ?4 } } LIMIT 10")));
 
         // Multiple cache matches
-        
+
         Op opQuery;
         if(test == 3) {
         // Single cache match
             opQuery = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?0 { { { ?0 ?0 ?0 } UNION {   { SELECT DISTINCT ?1 { ?1 ?1 ?1} }   } } ?2 ?2 ?2 } LIMIT 10")));
         } else {
             opQuery = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("Select * { { SELECT DISTINCT ?s { { { ?0 ?0 ?0 } UNION { {   SELECT DISTINCT ?1 { ?1 ?1 ?1 } }   } } { { ?2 ?2 ?2 } UNION { ?3 ?3 ?3 } } { ?4 ?4 ?4 } } LIMIT 10 } { ?f ?c ?k } }")));
-            
+
         }
-                
+
         OpViewMatcher viewMatcher = OpViewMatcherImpl.create();
         viewMatcher.add(opCache);
         viewMatcher.lookup(opCache);
-        
-        
+
+
         if(true) {
             System.exit(0);
         }
-        
-        
+
+
         opCache = Transformer.transform(TransformJoinToConjunction.fn, Transformer.transform(TransformUnionToDisjunction.fn, opCache));
         opQuery = Transformer.transform(TransformJoinToConjunction.fn, Transformer.transform(TransformUnionToDisjunction.fn, opQuery));
 
-        Generator<Var> generatorCache = VarGeneratorImpl2.create(); 
+        Generator<Var> generatorCache = VarGeneratorImpl2.create();
         opCache = OpUtils.substitute(opCache, false, (op) -> SparqlCacheUtils.tryCreateCqfp(op, generatorCache));
 
-        Generator<Var> generatorQuery = VarGeneratorImpl2.create(); 
+        Generator<Var> generatorQuery = VarGeneratorImpl2.create();
         opQuery = OpUtils.substitute(opQuery, false, (op) -> SparqlCacheUtils.tryCreateCqfp(op, generatorQuery));
 
-        
+
         Tree<Op> cacheTree = TreeImpl.create(opCache, (o) -> OpUtils.getSubOps(o));
         Tree<Op> queryTree = TreeImpl.create(opQuery, (o) -> OpUtils.getSubOps(o));
-            			
-    	
-        
-        
+
+
+
+
         // The candidate multimapping from cache to query
         Multimap<Op, Op> candOpMapping = HashMultimap.create();
-        List<Op> cacheLeafs = TreeUtils.getLeafs(cacheTree);        
+        List<Op> cacheLeafs = TreeUtils.getLeafs(cacheTree);
         List<Op> queryLeafs = TreeUtils.getLeafs(queryTree);
-        
-        
+
+
         if(test == 0) {
             // Expected: a:1 - b:2
             candOpMapping.put(cacheLeafs.get(0), queryLeafs.get(0));
             candOpMapping.put(cacheLeafs.get(0), queryLeafs.get(2));
-    
+
             candOpMapping.put(cacheLeafs.get(1), queryLeafs.get(0));
             candOpMapping.put(cacheLeafs.get(1), queryLeafs.get(2));
             candOpMapping.put(cacheLeafs.get(1), queryLeafs.get(3));
 
             candOpMapping.put(cacheLeafs.get(2), queryLeafs.get(4));
         }
-        
+
         if(test == 1) {
             // Expected: a:1 - b:0
             candOpMapping.put(cacheLeafs.get(0), queryLeafs.get(0));
             candOpMapping.put(cacheLeafs.get(0), queryLeafs.get(1));
-    
+
             candOpMapping.put(cacheLeafs.get(1), queryLeafs.get(0));
             candOpMapping.put(cacheLeafs.get(1), queryLeafs.get(2));
             candOpMapping.put(cacheLeafs.get(1), queryLeafs.get(3));
@@ -378,83 +381,83 @@ public class TestStateSpaceSearch {
         if(test == 2) {
             // Expected: a:1 - b:0
             candOpMapping.put(cacheLeafs.get(0), queryLeafs.get(0));
-   
+
         }
-        
+
         if(test == 3) {
             // Expected: a:1 - b:0
             candOpMapping.put(cacheLeafs.get(0), queryLeafs.get(0));
             candOpMapping.put(cacheLeafs.get(1), queryLeafs.get(1));
             candOpMapping.put(cacheLeafs.get(2), queryLeafs.get(2));
-   
+
         }
 
         Stream<OpVarMap> treeVarMappings = SparqlViewMatcherUtils.generateTreeVarMapping(candOpMapping, cacheTree, queryTree);
-        
+
         treeVarMappings.forEach(e -> {
             Map<Op, Op> nodeMapping = e.getOpMapping();
-            
+
             Op sourceRoot = cacheTree.getRoot();
             Op targetNode = nodeMapping.get(sourceRoot);
-            
+
             if(targetNode == null) {
                 throw new RuntimeException("Could not match root node of a source tree to a node in the target tree - Should not happen.");
             }
-            
+
             QuadPattern yay = new QuadPattern();
             Node n = NodeFactory.createURI("yay");
             yay.add(new Quad(n, n, n, n));
             Op repl = OpUtils.substitute(queryTree.getRoot(), false, op -> {
-               return op == targetNode ? new OpQuadBlock(yay) : null; 
-            });        
-            
-            
+               return op == targetNode ? new OpQuadBlock(yay) : null;
+            });
+
+
             System.out.println("yay: " + repl);
         });
 
-        
+
 
 //        List<Set<Op>> cacheTreeLevels = TreeUtils.nodesPerLevel(cacheMultiaryTree);
 //        List<Set<Op>> queryTreeLevels = TreeUtils.nodesPerLevel(queryMultiaryTree);
-        
-        
 
-//        
-//        
 
-        
-            
+
+//
+//
+
+
+
 //            Stream<List<ProblemNeighborhoodAware<Map<Var, Var>, Var>>> problemsStream = cartX.stream().map(listOfMaps -> {
-//                List<ProblemNeighborhoodAware<Map<Var, Var>, Var>> ps = 
+//                List<ProblemNeighborhoodAware<Map<Var, Var>, Var>> ps =
 //                        listOfMaps.stream()
 //                        .flatMap(x -> x.entrySet().stream())
 //                        .flatMap(e -> createProblems(e.getKey(), e.getValue()).stream())
 //                        .collect(Collectors.toList());
-//                
+//
 //                return ps;
 //            });
-            
-            // For every 
+
+            // For every
             //childNodeMappingCandidates.
-                
-            
+
+
             // TODO Go through the stack, somehow obtain all the node mappings, and create the problem instances
-            
+
             //Multimap<Op, Op> fullMap = mapping
             //Iterables.concat(m.getV
-            
-//            
+
+//
 //            System.out.println("Tree Mapping stack size: " + stack.size());
 //            for(LayerMapping<Op, Op, IterableUnknownSize<Map<Op, Op>>> layer : stack) {
 //                System.out.println("layerMapping: #nodeMappings: " + layer.getNodeMappings().size());
 //                for(NodeMapping<Op, Op, IterableUnknownSize<Map<Op, Op>>> nodeMapping : layer.getNodeMappings()) {
 //                    Op cp = nodeMapping.getParentMapping().getKey();
 //                    Op qp = nodeMapping.getParentMapping().getValue();
-//                    
+//
 //                    System.out.println("nodeMapping: " + (cp == null ? null : cp.getClass()) + " - " + (qp == null ? null : qp.getClass()));
 //                    System.out.println("childMapping: " + nodeMapping.getChildMapping());
 //
-//                    List<ProblemNeighborhoodAware<Map<Var, Var>, Var>> ps = 
+//                    List<ProblemNeighborhoodAware<Map<Var, Var>, Var>> ps =
 //                                nodeMapping.getValue().stream()
 //                                .flatMap(x -> x.entrySet().stream())
 //                                .flatMap(e -> createProblems(e.getKey(), e.getValue()).stream())
@@ -465,133 +468,133 @@ public class TestStateSpaceSearch {
 //                    } else {
 //                        System.out.println("Skipping empty problem");
 //                    }
-//                    
-//                    
+//
+//
 ////                    for(Map<Op, Op> cand : nodeMapping.getValue()) {
-////                    
+////
 ////                        createProblems(
 ////                    }
 //                }
 //            }
 
 //            problemsStream.forEach(problems -> {
-//                System.out.println("# problems found: " + problems.size());                
+//                System.out.println("# problems found: " + problems.size());
 //                VarMapper.solve(problems).forEach(vm -> System.out.println("VAR MAPPING: " + vm));
-//            });            
-                
+//            });
+
                 //System.out.println("  Mapping candidate: " + layer.getNodeMappings());
 //                for(Entry<Op, Op> mapping : layer.entrySet()) {
-//                
+//
 //                    MatchingStrategyFactory<Op, Op> f = determineMatchingStrategy(mapping.getKey(), mapping.getValue());
 //                    f.apply(cacheMultiaryTree.getChildren(mapping.getKey()), bs, queryMultiaryTree.getChildren(mapping.getValue()));
-//                    
-//                    
+//
+//
 //                    System.out.println("layer mapping: " + layer);
-//                    
+//
 //                    // TODO We need the clusters together with the mapping strategy
-//                }                
-                
-                
+//                }
+
+
                 // From the candidate mapping we now need to create the concrete mappings
                 //KPermutationsOfNUtils.
                 //determineMatchingStrategy(cacheOp, queryOp)
-                
+
             //System.out.println("Tree mapping solution: " + m);
 //        });
 
-        
-        
-        
-        
-        //  
-        
+
+
+
+
+        //
+
         // tm.recurse(0, HashMultimap.create());
-        
-        
-        
+
+
+
 //        Collections.reverse(cacheTreeLevels);
 //        Collections.reverse(queryTreeLevels);
-//        
+//
 //        int cacheMultiaryTreeDepth = cacheTreeLevels.size();
 //        int queryMultiaryTreeDepth = queryTreeLevels.size();
 //
 //        for(int i = 0; i < cacheMultiaryTreeDepth; ++i) {
 //            Set<Op> keys = cacheTreeLevels.get(cacheMultiaryTreeDepth - 1 - i);
 //            Set<Op> values = queryTreeLevels.get(queryMultiaryTreeDepth - 1 - i);
-//            
+//
 //            candOpMapping = Multimaps.filterEntries(candOpMapping, new Predicate<Entry<Op, Op>>() {
 //                @Override
 //                public boolean apply(Entry<Op, Op> input) {
 //                    boolean result = keys.contains(input.getKey()) && values.contains(input.getValue());
 //                    return result;
-//                }            
+//                }
 //            });
-//            
+//
 //            Stream<ClusterStack<Op, Op, Entry<Op, Op>>> stream = KPermutationsOfNUtils.<Op, Op>kPermutationsOfN(
 //                    candOpMapping,
 //                    cacheMultiaryTree,
 //                    queryMultiaryTree);
-//            
+//
 //            stream.forEach(parentMapping -> {
-//               recurse(depth + 1, parentMapping); 
+//               recurse(depth + 1, parentMapping);
 //            });
 //        }
-        
-        
+
+
         // Now that we have the clusters, how to proceed?
-        
-        
-        
+
+
+
         //stream.forEach(x -> System.out.println("Candidate Solution: " + x.asList().iterator().next()));
-        
-        
+
+
         // we need a mapping from leaf op to problem instance in order to determine which of the candidates to pick first
         //Map<Op, Problem<?>> cacheOpToProblem = new HashMap<>();
         Function<Entry<Op, Op>, Long> opMappingToCost = (e) -> 1l;
-        
+
         //TreeMultimap<Long, Entry<Op, Op>> costToOpMapping = TreeMultimap.create();
         TreeMap<Long, Set<Entry<Op, Op>>> costToOpMappings = new TreeMap<>();
-        
+
         // pick the cheapest mapping candidate
         // actually, this is again a problem instance - right?
         Entry<Long, Entry<Op, Op>> pick = ProblemContainerNeighbourhoodAware.firstEntry(costToOpMappings);
 
         TreeUtils.clusterNodesByFirstMultiaryAncestor(queryTree, candOpMapping);
-        
-        
-        
-        
-        
+
+
+
+
+
         /*
-         * 
+         *
          * We now need to pick one of the mappings, and update the remaining ones.
          *
          * 1. pick a mapping
-         *   
+         *
          * 2. cluster mapping by the query's parent node
-         * 3. 
-         *  
+         * 3.
+         *
          */
-                
+
     }
 
-        
-    
+
+
     //public static void pick(})
-    
-    
+
+
     public static void matchSequence(Tree<Op> cacheTree, Tree<Op> queryTree, Op cacheNode, Op queryNode) {
-        
+
     }
-    
+
     public static void matchAnyComination() {
-        
+
     }
-    
-    
-   
-    
-    
+
+
+
+
+
     public static void main2(String[] args) throws FileNotFoundException {
         {
 //            QueryExecutionFactory qef = FluentQueryExecutionFactory

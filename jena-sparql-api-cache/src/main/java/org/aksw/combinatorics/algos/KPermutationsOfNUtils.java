@@ -1,12 +1,10 @@
 package org.aksw.combinatorics.algos;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -18,7 +16,6 @@ import org.aksw.commons.collections.trees.TreeUtils;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.TreeMapperCandidateList;
 
 import com.codepoetics.protonpack.functions.TriFunction;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
 public class KPermutationsOfNUtils {
@@ -41,22 +38,6 @@ public class KPermutationsOfNUtils {
         return result;
     }
     
-    // TODO How to handle root nodes / null values?
-    public static <A, B> Multimap<A, B> deriveParentMapping(Tree<A> aTree, Tree<B> bTree, Multimap<A, B> childMapping) {
-        Multimap<A, B> result = HashMultimap.create();
-        Set<A> as = childMapping.keySet();
-        for(A a : as) {
-            A aParent = aTree.getParent(a);
-            Collection<B> bs = childMapping.get(a);
-            Set<B> bParents = TreeUtils.getParentsOf(bTree, bs);
-
-            result.putAll(aParent, bParents);
-        }
-
-        return result;
-    }
-    
-    
     public static <A, B> Iterable<Map<A, B>> createIterable(Multimap<A, B> childMapping) {
         Iterable<Map<A, B>> result = () -> kPermutationsOfN(childMapping).iterator();
         //Optional<Iterable<Map<A, B>>> result = Optional.of(tmp);
@@ -70,7 +51,7 @@ public class KPermutationsOfNUtils {
             Tree<A> aTree,
             Tree<B> bTree) {
 
-        Multimap<A, B> parentMapping = deriveParentMapping(aTree, bTree, childMapping);
+        Multimap<A, B> parentMapping = TreeUtils.deriveParentMapping(aTree, bTree, childMapping);
         List<A> as = new ArrayList<>(parentMapping.keySet());
 
         //TriFunction<S, A, B, Stream<S>> solutionCombiner = (s, a, b) -> Collections.<S>singleton(null).stream();

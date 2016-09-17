@@ -119,7 +119,7 @@ public class RdfPopulatorPropertyMulti
 
     @Override
     public void exposeShape(ResourceShapeBuilder shapeBuilder) {
-        shapeBuilder.outgoing(predicate);
+        shapeBuilder.out(predicate);
 //		ResourceShapeBuilder targetShape = shapeBuilder.outgoing(predicate);
 //
 //		if("eager".equals(fetchMode)) {

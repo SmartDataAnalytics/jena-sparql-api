@@ -29,8 +29,9 @@ public interface GenericProblem<S, P extends GenericProblem<S, P>>
     //long getEstimatedCost();
 
     /**
-     * Return a stream of solutions
-     *
+     * Return a stream of solution *contributions*
+     * Contribution means, that it should not be necessary to repeat e.g. solution data injected via refine.
+     *#
      * Note: if generate solutions should operate on a partial solution, use refine first
      *
      * @return
@@ -46,7 +47,7 @@ public interface GenericProblem<S, P extends GenericProblem<S, P>>
     Collection<? extends P> refine(S partialSolution);
 
     boolean isEmpty();
-    
+
     /**
      * By default, compares the estimated costs
      */

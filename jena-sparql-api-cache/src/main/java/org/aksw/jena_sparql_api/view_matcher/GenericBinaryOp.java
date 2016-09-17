@@ -1,4 +1,4 @@
-package org;
+package org.aksw.jena_sparql_api.view_matcher;
 
 import java.util.function.BiFunction;
 

@@ -49,10 +49,10 @@ public class RdfTypeMap
 
     @Override
     public void exposeShape(ResourceShapeBuilder shapeBuilder) {
-        ResourceShapeBuilder tmp = shapeBuilder.outgoing(entry.asNode());
+        ResourceShapeBuilder tmp = shapeBuilder.out(entry.asNode());
         
-        tmp.outgoing(key.asNode());
-        tmp.outgoing(value.asNode());
+        tmp.out(key.asNode());
+        tmp.out(value.asNode());
     }
 
     @Override

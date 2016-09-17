@@ -144,16 +144,16 @@ public class JobExecutionDaoSparql extends AbstractJdbcBatchMetadataDao implemen
 //                + " from %PREFIX%JOB_EXECUTION where JOB_INSTANCE_ID = ? order by JOB_EXECUTION_ID desc";
         
         ResourceShapeBuilder b = new ResourceShapeBuilder();
-        b.outgoing(BATCH.jobExecutionId);
-        b.outgoing(BATCH.startTime);
-        b.outgoing(BATCH.status);
-        b.outgoing(BATCH.stopTime);
-        b.outgoing(BATCH.exitCode);
-        b.outgoing(BATCH.exitMessage);
-        b.outgoing(DCTerms.created);
-        b.outgoing(DCTerms.modified);
-        b.outgoing(BATCH.version);
-        b.outgoing(BATCH.jobConfigurationLocation);
+        b.out(BATCH.jobExecutionId);
+        b.out(BATCH.startTime);
+        b.out(BATCH.status);
+        b.out(BATCH.stopTime);
+        b.out(BATCH.exitCode);
+        b.out(BATCH.exitMessage);
+        b.out(DCTerms.created);
+        b.out(DCTerms.modified);
+        b.out(BATCH.version);
+        b.out(BATCH.jobConfigurationLocation);
 
         ResourceShape s = b.getResourceShape();
         MappedConcept<Graph> mc = ResourceShape.createMappedConcept(s, null, false);
@@ -464,17 +464,17 @@ public class JobExecutionDaoSparql extends AbstractJdbcBatchMetadataDao implemen
         //return getJdbcTemplate().query(getQuery(FIND_JOB_EXECUTIONS), new JobExecutionRowMapper(job), job.getId());
         // Create a shape for matching job executions
         ResourceShapeBuilder b = new ResourceShapeBuilder();
-        b.outgoing(BATCH.id);
-        b.outgoing(BATCH.jobId);
-        b.outgoing(BATCH.startTime);
-        b.outgoing(BATCH.stopTime);
-        b.outgoing(BATCH.exitCode);
-        b.outgoing(BATCH.status);
-        b.outgoing(BATCH.exitMessage);
-        b.outgoing(BATCH.version);
-        b.outgoing(DCTerms.created);
-        b.outgoing(DCTerms.modified);
-        b.outgoing(BATCH.jobConfigurationLocation);
+        b.out(BATCH.id);
+        b.out(BATCH.jobId);
+        b.out(BATCH.startTime);
+        b.out(BATCH.stopTime);
+        b.out(BATCH.exitCode);
+        b.out(BATCH.status);
+        b.out(BATCH.exitMessage);
+        b.out(BATCH.version);
+        b.out(DCTerms.created);
+        b.out(DCTerms.modified);
+        b.out(BATCH.jobConfigurationLocation);
 
         ResourceShape s = b.getResourceShape();
         MappedConcept<Graph> mc = ResourceShape.createMappedConcept(s, null, false);
