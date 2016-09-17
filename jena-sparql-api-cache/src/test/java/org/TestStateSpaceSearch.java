@@ -72,21 +72,21 @@ public class TestStateSpaceSearch {
 
 	public static void main(String[] args) {
 
-		try {
-			IntStream
-				.range(0, 10)
-				.mapToObj(i -> { if(i == 5) { throw new RuntimeException("x"); } return i;})
-				.forEach(x -> System.out.println(x));
-		} catch(Exception e) {
-			System.out.println("early exit");
-		}
-
         Op opCache = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { { ?a ?a ?a } UNION {   { SELECT DISTINCT ?b { ?b ?b ?b} }   } } ?c ?c ?c } LIMIT 10")));
 
         OpViewMatcher viewMatcher = OpViewMatcherImpl.create();
         viewMatcher.add(opCache);
         viewMatcher.lookup(opCache);
 
+
+//		try {
+//			IntStream
+//				.range(0, 10)
+//				.mapToObj(i -> { if(i == 5) { throw new RuntimeException("x"); } return i;})
+//				.forEach(x -> System.out.println(x));
+//		} catch(Exception e) {
+//			System.out.println("early exit");
+//		}
 
 	}
 

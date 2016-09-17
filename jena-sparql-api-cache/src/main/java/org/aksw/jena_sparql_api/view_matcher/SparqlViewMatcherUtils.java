@@ -62,6 +62,93 @@ public class SparqlViewMatcherUtils {
 	    return mappingSolutions;
     }
 
+    public static Stream<Entry<Map<Op, Op>, List<ProblemNeighborhoodAware<Map<Var, Var>, Var>>>> processStack(
+    		NestedStack<LayerMapping<Op, Op, Iterable<Map<Op, Op>>>> stack,
+    		Tree<Op> cacheTree, Tree<Op> queryTree,
+    		Tree<Op> cacheMultiaryTree, Tree<Op> queryMultiaryTree
+    ) {
+        // Create the iterators for the node mappings
+        // TODO Exit early if any iterable being collected is null
+        List<Iterable<Map<Op, Op>>> tmpChildNodeMappingCandidates = stack.stream()
+            .flatMap(layerMapping -> layerMapping.getNodeMappings().stream()
+                .map(nodeMapping -> nodeMapping.getValue()))
+                .collect(Collectors.toList());
+
+        // For each multiary node mapping also add the mappings of the unary operators
+
+        // If any of the optionals is empty, skip the whole candidate
+        boolean skip = tmpChildNodeMappingCandidates.stream()
+        		.map(x -> x == null)
+        		.findFirst()
+        		.orElse(false);
+
+
+        List<Iterable<Map<Op, Op>>> childNodeMappingCandidates = skip
+        		? Collections.emptyList()
+        		: tmpChildNodeMappingCandidates;
+
+        CartesianProduct<Map<Op, Op>> cartX = new CartesianProduct<>(childNodeMappingCandidates);
+
+        Stream<Map<Op, Op>> completeNodeMapStream = cartX.stream()
+            .map(listOfMaps -> {
+                Map<Op, Op> completeNodeMap = listOfMaps.stream()
+                        .flatMap(map -> {
+                            // The entry set here corresponds to mappings of nodes in the multiary tree
+
+                            Set<Entry<Op, Op>> entrySet = map.entrySet();
+
+                            // For each entry, add the mapping of the unary ancestors
+                            Stream<Entry<Op, Op>> augmented = entrySet.stream().flatMap(e -> {
+                                Op cacheOp = e.getKey();
+                                Op queryOp = e.getValue();
+
+                              // TODO If any of the unary mappings is unsatisfiable, the completeNodeMap is unsatisfiable
+                              Stream<Entry<Op, Op>> unaryMappingStream = SparqlViewMatcherUtils.augmentUnaryMappings2(
+                                      cacheOp, queryOp,
+                                      cacheTree, queryTree,
+                                      cacheMultiaryTree, queryMultiaryTree);
+
+                              //unaryMappingStream.isEmpty();
+
+                                Stream<Entry<Op, Op>> s = Stream.concat(
+                                    Stream.of(e),
+                                    unaryMappingStream);
+
+                                return s;
+                            });
+
+                                //Stream
+                            return augmented;
+                         })
+                        .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+
+
+
+                return completeNodeMap;
+            });
+
+        // Next step: Now that we have a node mapping on the multiary tree,
+        // we need to add the node mappings of the unary ops unary ops
+
+
+        Function<Map<Op, Op>, List<ProblemNeighborhoodAware<Map<Var, Var>, Var>>> mapToProblems = (nodeMap) ->
+                nodeMap.entrySet().stream()
+                .flatMap(e -> SparqlViewMatcherUtils.createProblems(e.getKey(), e.getValue()).stream())
+                .collect(Collectors.toList());
+
+
+        // For each complete node mapping, associate the possible variable mappings
+        Stream<Entry<Map<Op, Op>, List<ProblemNeighborhoodAware<Map<Var, Var>, Var>>>> nodeMappingProblemStream = completeNodeMapStream.map(completeNodeMap -> {
+            List<ProblemNeighborhoodAware<Map<Var, Var>, Var>> ps = mapToProblems.apply(completeNodeMap);
+
+            Entry<Map<Op, Op>, List<ProblemNeighborhoodAware<Map<Var, Var>, Var>>> r =
+                    new SimpleEntry<>(completeNodeMap, ps);
+            return r;
+        });
+
+        return nodeMappingProblemStream;
+    }
+
 
     public static Stream<OpVarMap> generateTreeVarMapping(
     		Multimap<Op, Op> candOpMapping,
@@ -70,7 +157,6 @@ public class SparqlViewMatcherUtils {
     {
 
         // The tree mapper only determines sets of candidate mappings for each tree level
-        //
         TreeMapperImpl<Op, Op, Iterable<Map<Op, Op>>> tm = new TreeMapperImpl<Op, Op, Iterable<Map<Op, Op>>>(
                 cacheMultiaryTree,
                 queryMultiaryTree,
@@ -84,141 +170,24 @@ public class SparqlViewMatcherUtils {
         //   Var mappings are obtained from problem instances
         // (x) However, instead of generating the full op-mappings, we could create the
 
-
-
-        //Stream<Entry<Map<Op, Op>, Collection<ProbemWithNeighborhood<Map<Var, Var>, Var>> expected;
-
-        //Stream<NestedStack<Multimap<Op, Op>>> mappingStream = TreeMapperImpl.<Multimap<Op, Op>, NestedStack<Multimap<Op, Op>>>stream(tm::recurse, HashMultimap.<Op, Op>create());
         Stream<NestedStack<LayerMapping<Op, Op, Iterable<Map<Op, Op>>>>> mappingStream =
                 StreamUtils.<Map<Op, Op>, NestedStack<LayerMapping<Op, Op, Iterable<Map<Op, Op>>>>>
                     stream(tm::recurse, Collections.emptyMap());
 
         // Turn each stack into stream of entries
-//        Stream<Stream<Entry<Op, Op>>> entryStream =
-//                mappingStream.map(stack -> stack.stream().flatMap(m -> m.entrySet().stream()));
         Stream<Entry<Map<Op, Op>, List<ProblemNeighborhoodAware<Map<Var, Var>, Var>>>> nodeMappingToProblems =
-        		mappingStream.flatMap(stack -> {
-
-
-            // Create the iterators for the node mappings
-            List<Iterable<Map<Op, Op>>> tmpChildNodeMappingCandidates = stack.stream()
-                .flatMap(layerMapping -> layerMapping.getNodeMappings().stream()
-                    .map(nodeMapping -> nodeMapping.getValue()))
-                    .collect(Collectors.toList());
-
-            // For each multiary node mapping also add the mappings of the unary operators
-
-            // If any of the optionals is empty, skip the whole candidate
-            boolean skip = tmpChildNodeMappingCandidates.stream()
-            		.map(x -> x == null)
-            		.findFirst()
-            		.orElse(false);
-
-
-            List<Iterable<Map<Op, Op>>> childNodeMappingCandidates = skip
-            		? Collections.emptyList()
-            		: tmpChildNodeMappingCandidates;
-//            		.stream()
-//            			.map(x -> x.get())
-//            			.collect(Collectors.toList());
-
-            CartesianProduct<Map<Op, Op>> cartX = new CartesianProduct<>(childNodeMappingCandidates);
-
-            Stream<Map<Op, Op>> completeNodeMapStream = cartX.stream()
-                .map(listOfMaps -> {
-                    Map<Op, Op> completeNodeMap = listOfMaps.stream()
-                            .flatMap(map -> {
-                                // The entry set here corresponds to mappings of nodes in the multiary tree
-
-                                Set<Entry<Op, Op>> entrySet = map.entrySet();
-
-                                // For each entry, add the mapping of the unary ancestors
-                                Stream<Entry<Op, Op>> augmented = entrySet.stream().flatMap(e -> {
-                                    Op cacheOp = e.getKey();
-                                    Op queryOp = e.getValue();
-
-                                  // TODO If any of the unary mappings is unsatisfiable, the completeNodeMap is unsatisfiable
-                                  Stream<Entry<Op, Op>> unaryMappingStream = SparqlViewMatcherUtils.augmentUnaryMappings2(
-                                          cacheOp, queryOp,
-                                          cacheTree, queryTree,
-                                          cacheMultiaryTree, queryMultiaryTree);
-
-                                  //unaryMappingStream.isEmpty();
-
-                                    Stream<Entry<Op, Op>> s = Stream.concat(
-                                        Stream.of(e),
-                                        unaryMappingStream);
-
-                                    return s;
-                                });
-
-                                    //Stream
-                                return augmented;
-                             })
-                            .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
-
-
-
-                    return completeNodeMap;
-                });
-
-            // Next step: Now that we have a node mapping on the multiary tree,
-            // we need to add the node mappings of the unary ops unary ops
-
-
-            Function<Map<Op, Op>, List<ProblemNeighborhoodAware<Map<Var, Var>, Var>>> mapToProblems = (nodeMap) ->
-                    nodeMap.entrySet().stream()
-                    .flatMap(e -> SparqlViewMatcherUtils.createProblems(e.getKey(), e.getValue()).stream())
-                    .collect(Collectors.toList());
-
-
-            // For each complete node mapping, associate the possible variable mappings
-            Stream<Entry<Map<Op, Op>, List<ProblemNeighborhoodAware<Map<Var, Var>, Var>>>> nodeMappingProblemStream = completeNodeMapStream.map(completeNodeMap -> {
-                List<ProblemNeighborhoodAware<Map<Var, Var>, Var>> ps = mapToProblems.apply(completeNodeMap);
-
-                Entry<Map<Op, Op>, List<ProblemNeighborhoodAware<Map<Var, Var>, Var>>> r =
-                        new SimpleEntry<>(completeNodeMap, ps);
-                return r;
-            });
-
-            return nodeMappingProblemStream;
-        });
-
-
-//        Stream<Entry<Map<Op, Op>,>>nodeMappingToSolutions = nodeMappingToProblems.map(e ->
-//            new SimpleEntry<>(e.getKey(), VarMapper.solve(e.getValue()));
-
-//        Function<List<ProblemWithNeighborhood<Map<Var, Var>, Var>>, Iterable<Map<Var, Var>>> iterableGenerator = (problems) -> {
-//
-//        };
+    		mappingStream.flatMap(stack -> {
+    			return processStack(stack, cacheTree, queryTree, cacheMultiaryTree, queryMultiaryTree);
+    		});
 
 
         Stream<OpVarMap> result = nodeMappingToProblems.map(e -> {
             Map<Op, Op> nodeMapping = e.getKey();
             Stream<Map<Var, Var>> varMappings = VarMapper.solve(e.getValue());
 
-//            Op sourceRoot = cacheMultiaryTree.getRoot();
-//            Op targetNode = nodeMapping.get(sourceRoot);
-
-//            if(targetNode == null) {
-//                throw new RuntimeException("Could not match root node of a source tree to a node in the target tree - Should not happen.");
-//            }
-//
-//            QuadPattern yay = new QuadPattern();
-//            Node n = NodeFactory.createURI("yay");
-//            yay.add(new Quad(n, n, n, n));
-//            Op repl = OpUtils.substitute(queryTree.getRoot(), false, op -> {
-//               return op == targetNode ? new OpQuadBlock(yay) : null;
-//            });
-//
-//
-//            System.out.println("YAY: " + repl);
-            //varMappings.forEach(vm -> System.out.println("  with mapping: " + vm));
             Iterable<Map<Var, Var>> it = () -> varMappings.iterator();
 
-            //Entry<Map<Op, Op>, Iterable<Map<Var, Var>>> r = new SimpleEntry<>(nodeMapping, it);
             OpVarMap r = new OpVarMap(nodeMapping, it);
-
             return r;
         });
 
