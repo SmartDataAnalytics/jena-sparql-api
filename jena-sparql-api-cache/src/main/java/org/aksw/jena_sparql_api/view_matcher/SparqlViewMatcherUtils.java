@@ -67,21 +67,17 @@ public class SparqlViewMatcherUtils {
     		Tree<Op> cacheTree, Tree<Op> queryTree,
     		Tree<Op> cacheMultiaryTree, Tree<Op> queryMultiaryTree
     ) {
+    	PredicateFail<Object> pred = new PredicateFail<>(x -> x != null);
+
         // Create the iterators for the node mappings
         // TODO Exit early if any iterable being collected is null
         List<Iterable<Map<Op, Op>>> tmpChildNodeMappingCandidates = stack.stream()
             .flatMap(layerMapping -> layerMapping.getNodeMappings().stream()
                 .map(nodeMapping -> nodeMapping.getValue()))
+            	.takeWhile(pred)
                 .collect(Collectors.toList());
 
-        // For each multiary node mapping also add the mappings of the unary operators
-
-        // If any of the optionals is empty, skip the whole candidate
-        boolean skip = tmpChildNodeMappingCandidates.stream()
-        		.map(x -> x == null)
-        		.findFirst()
-        		.orElse(false);
-
+        boolean skip = pred.isFailed();
 
         List<Iterable<Map<Op, Op>>> childNodeMappingCandidates = skip
         		? Collections.emptyList()
@@ -173,13 +169,14 @@ public class SparqlViewMatcherUtils {
                 StreamUtils.<Map<Op, Op>, NestedStack<LayerMapping<Op, Op, Iterable<Map<Op, Op>>>>>
                     stream(tm::recurse, Collections.emptyMap());
 
-        // Turn each stack into stream of entries
+        // Turn each stack into stream of candidate node mappings together with the problems to solve
         Stream<OpProblemVarMap> nodeMappingToProblems =
     		mappingStream.flatMap(stack -> {
     			return processStack(stack, cacheTree, queryTree, cacheMultiaryTree, queryMultiaryTree);
     		});
 
 
+        // Solve the problems for each node mapping
         Stream<OpVarMap> result = nodeMappingToProblems.map(e -> {
             Map<Op, Op> nodeMapping = e.getNodeMapping();
             Stream<Map<Var, Var>> varMappings = VarMapper.solve(e.getProblems());

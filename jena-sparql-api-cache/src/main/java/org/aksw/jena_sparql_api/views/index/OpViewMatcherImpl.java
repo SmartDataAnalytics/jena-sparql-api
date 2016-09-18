@@ -31,7 +31,7 @@ import com.google.common.collect.Multimap;
 public class OpViewMatcherImpl
 	implements OpViewMatcher
 {
-    
+
     private static final Logger logger = LoggerFactory
             .getLogger(OpViewMatcherImpl.class);
 
@@ -41,8 +41,8 @@ public class OpViewMatcherImpl
     protected Function<Op, Stream<Set<String>>> itemFeatureExtractor;
     protected Function<Op, QueryIndex> itemIndexer;
     protected FeatureMap<String, QueryIndex> featuresToIndexes;
-	
-    
+
+
 	public OpViewMatcherImpl(
 	        Function<Op, Op> opNormalizer,
             Function<Op, Stream<Set<String>>> itemFeatureExtractor,
@@ -58,61 +58,63 @@ public class OpViewMatcherImpl
 	public void add(Op item) {
         Op normalizedItem = opNormalizer.apply(item);
 	    QueryIndex index = itemIndexer.apply(normalizedItem);
-	    
+
         itemFeatureExtractor.apply(normalizedItem).forEach(featureSet -> {
             featuresToIndexes.put(featureSet, index); // new SimpleEntry<>(item, data)
         });
-		
+
 	}
 
 	@Override
 	public Collection<Entry<Op, OpVarMap>> lookup(Op item) {
-	    Op normalizedItem = opNormalizer.apply(item); 
+	    Op normalizedItem = opNormalizer.apply(item);
 	    Set<QueryIndex> cands = new HashSet<>();
-	    
+
         itemFeatureExtractor.apply(normalizedItem).forEach(featureSet -> {
             //featuresToIndexes.getIfSubsetOf(featureSet).stream()
             featuresToIndexes.get(featureSet).stream()
                 //.map(e -> e.getValue())
                 .forEach(x -> cands.add(x));
         });
-	    
+
         logger.debug("Phase 1: " + cands.size() + "/" + featuresToIndexes.size() + " passed");
-        
+
         //
         QueryIndex queryIndex = itemIndexer.apply(normalizedItem);
-	    
-        cands.stream().map(cacheIndex -> {
+
+        cands.stream().forEach(cacheIndex -> {
+        	System.out.println("WTF");
             Multimap<Op, Op> candOpMapping = SparqlViewMatcherSystemImpl.getCandidateLeafMapping(cacheIndex, queryIndex);
             Tree<Op> cacheTree = cacheIndex.getTree();
             Tree<Op> queryTree = queryIndex.getTree();
-            
+
             // TODO: Require a complete match of the tree - i.e. cache and query trees must have same number of nodes / same depth / some other criteria that can be checked quickly
             // In fact, we could use these features as an additional index
             Stream<OpVarMap> opVarMapping = SparqlViewMatcherUtils.generateTreeVarMapping(candOpMapping, cacheTree, queryTree);
             opVarMapping.forEach(x -> System.out.println("GOT: " + x));
-            return null;
-        }).count();
-        
+            //return null;
+        });
+        //System.out.println(xxx);
+
 		return null;
 	}
 
 	public static Op normalizeOp(Op op) {
-        op = Transformer.transform(TransformJoinToConjunction.fn, Transformer.transform(TransformUnionToDisjunction.fn, op)); 
-        
-        Generator<Var> generatorCache = VarGeneratorImpl2.create(); 
+        op = Transformer.transform(TransformJoinToConjunction.fn, Transformer.transform(TransformUnionToDisjunction.fn, op));
+
+        Generator<Var> generatorCache = VarGeneratorImpl2.create();
         Op result = OpUtils.substitute(op, false, (o) -> SparqlCacheUtils.tryCreateCqfp(o, generatorCache));
-        
+
         return result;
 
 	}
 
-	
+
 	public static OpViewMatcher create() {
         Function<Op, Stream<Set<String>>> itemFeatureExtractor = (oop) -> Collections.singleton(OpVisitorFeatureExtractor.getFeatures(oop, (op) -> op.getClass().getSimpleName())).stream();
 
         OpViewMatcher result = new OpViewMatcherImpl(
-        		OpViewMatcherImpl::normalizeOp,        		
+        		OpViewMatcherImpl::normalizeOp,
                 itemFeatureExtractor,
                 new QueryIndexerImpl());
 
