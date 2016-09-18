@@ -35,6 +35,10 @@ public class PredicateFail<T>
 		return result;
 	}
 
+	public void setFailed(boolean isFailed) {
+		this.isFailed = isFailed;
+	}
+
 	public boolean isFailed() {
 		return isFailed;
 	}

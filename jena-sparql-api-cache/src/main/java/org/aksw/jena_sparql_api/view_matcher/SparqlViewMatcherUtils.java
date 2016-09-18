@@ -85,6 +85,9 @@ public class SparqlViewMatcherUtils {
 
         CartesianProduct<Map<Op, Op>> cartX = new CartesianProduct<>(childNodeMappingCandidates);
 
+        // Reset the predicate
+        pred.setFailed(false);
+
         Stream<Map<Op, Op>> completeNodeMapStream = cartX.stream()
             .map(listOfMaps -> {
                 Map<Op, Op> completeNodeMap = listOfMaps.stream()
@@ -116,12 +119,17 @@ public class SparqlViewMatcherUtils {
                                 //Stream
                             return augmented;
                          })
+                        .takeWhile(pred)
                         .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 
+                if(pred.isFailed()) {
+                	completeNodeMap = null;
+                }
 
 
                 return completeNodeMap;
-            });
+            })
+            .filter(item -> item != null);
 
         // Next step: Now that we have a node mapping on the multiary tree,
         // we need to add the node mappings of the unary ops unary ops
@@ -296,7 +304,7 @@ public class SparqlViewMatcherUtils {
                     return r;
                 });
         } else {
-            result = Stream.empty();
+            result = Stream.of((Entry<A, B>)null);//Stream.empty();
         }
 
         return result;
