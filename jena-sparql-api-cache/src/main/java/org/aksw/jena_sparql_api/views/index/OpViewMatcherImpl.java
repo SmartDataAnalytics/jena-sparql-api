@@ -3,16 +3,16 @@ package org.aksw.jena_sparql_api.views.index;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.aksw.commons.collections.trees.Tree;
-import org.aksw.commons.collections.trees.TreeImpl;
+import org.aksw.commons.util.strings.StringUtils;
 import org.aksw.jena_sparql_api.algebra.transform.TransformJoinToConjunction;
 import org.aksw.jena_sparql_api.algebra.transform.TransformUnionToDisjunction;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
@@ -24,20 +24,19 @@ import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.aksw.jena_sparql_api.view_matcher.OpVarMap;
 import org.aksw.jena_sparql_api.view_matcher.SparqlViewMatcherUtils;
+import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.op.OpBGP;
-import org.apache.jena.sparql.algebra.op.OpQuadBlock;
 import org.apache.jena.sparql.algebra.op.OpService;
-import org.apache.jena.sparql.core.Quad;
-import org.apache.jena.sparql.core.QuadPattern;
 import org.apache.jena.sparql.core.Var;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Multimap;
+
 
 public class OpViewMatcherImpl
 	implements OpViewMatcher
@@ -47,39 +46,58 @@ public class OpViewMatcherImpl
             .getLogger(OpViewMatcherImpl.class);
 
     protected Function<Op, Op> opNormalizer;
-    //protected Function<Op, Op> opDenormalizer;
-
-    protected Function<Op, Stream<Set<String>>> itemFeatureExtractor;
+    protected Function<Op, Set<Set<String>>> itemFeatureExtractor;
     protected Function<Op, QueryIndex> itemIndexer;
-    protected FeatureMap<String, QueryIndex> featuresToIndexes;
-
+    protected FeatureMap<String, MyEntry> featuresToIndexes;
+    protected Map<Node, MyEntry> idToQueryIndex;
 
 	public OpViewMatcherImpl(
 	        Function<Op, Op> opNormalizer,
-            Function<Op, Stream<Set<String>>> itemFeatureExtractor,
+            Function<Op, Set<Set<String>>> itemFeatureExtractor,
             Function<Op, QueryIndex> itemIndexer) {
         super();
         this.opNormalizer = opNormalizer;
         this.itemFeatureExtractor = itemFeatureExtractor;
         this.itemIndexer = itemIndexer;
         this.featuresToIndexes = new FeatureMapImpl<>(); //featuresToIndexes;
+
+        idToQueryIndex = new HashMap<>();
     }
 
     @Override
-	public void add(Op item) {
+	public Node add(Op item) {
         Op normalizedItem = opNormalizer.apply(item);
-	    QueryIndex index = itemIndexer.apply(normalizedItem);
 
-        itemFeatureExtractor.apply(normalizedItem).forEach(featureSet -> {
-            featuresToIndexes.put(featureSet, index); // new SimpleEntry<>(item, data)
-        });
+    	Node id = NodeFactory.createURI("id://" + StringUtils.md5Hash("" + normalizedItem));
+        QueryIndex index = itemIndexer.apply(normalizedItem);
 
+        Set<Set<String>> featureSets = itemFeatureExtractor.apply(normalizedItem);
+        MyEntry entry = new MyEntry(id, featureSets, index);
+
+        for(Set<String> featureSet : featureSets) {
+            featuresToIndexes.put(featureSet, entry); // new SimpleEntry<>(item, data)
+        }
+
+        idToQueryIndex.put(id, entry);
+
+        return id;
 	}
 
+
+    /**
+     * Lookup a singe candidate
+     */
+    public LookupResult lookupSingle(Op item) {
+    	Collection<LookupResult> tmp = lookup(item);
+    	LookupResult result = Iterables.getFirst(tmp, null);
+    	return result;
+    }
+
+
 	@Override
-	public Collection<Entry<Op, OpVarMap>> lookup(Op item) {
+	public Collection<LookupResult> lookup(Op item) {
 	    Op normalizedItem = opNormalizer.apply(item);
-	    Set<QueryIndex> tmpCands = new HashSet<>();
+	    Set<MyEntry> tmpCands = new HashSet<>();
 
         itemFeatureExtractor.apply(normalizedItem).forEach(featureSet -> {
             //featuresToIndexes.getIfSubsetOf(featureSet).stream()
@@ -89,15 +107,16 @@ public class OpViewMatcherImpl
         });
 
         // Order candidates by their node count - largest node counts first
-        List<QueryIndex> cands = new ArrayList<>(tmpCands);
-        Collections.sort(cands, (a, b) -> ((int)(a.getTree().nodeCount() - b.getTree().nodeCount())));
+        List<MyEntry> cands = new ArrayList<>(tmpCands);
+        Collections.sort(cands, (a, b) -> ((int)(a.queryIndex.getTree().nodeCount() - b.queryIndex.getTree().nodeCount())));
 
         logger.debug("Phase 1: " + cands.size() + "/" + featuresToIndexes.size() + " passed");
         QueryIndex queryIndex = itemIndexer.apply(normalizedItem);
 
 
-        for(QueryIndex cacheIndex : cands) {
-
+        List<LookupResult> result = new ArrayList<>();
+        for(MyEntry cacheEntry : cands) {
+        	QueryIndex cacheIndex = cacheEntry.queryIndex;
 
             Multimap<Op, Op> candOpMapping = SparqlViewMatcherSystemImpl.getCandidateLeafMapping(cacheIndex, queryIndex);
             Tree<Op> cacheTree = cacheIndex.getTree();
@@ -109,21 +128,26 @@ public class OpViewMatcherImpl
 
             opVarMaps.forEach(opVarMap -> {
                 Op cacheRoot = cacheTree.getRoot();
-                Op queryRoot = opVarMap.getOpMapping().get(cacheRoot);
+                Op queryRoot = opVarMap.getOpMap().get(cacheRoot);
                 System.out.println("query root: " + queryRoot);
 
+
+                Node id = cacheEntry.id;
                 // We need to update the queryIndex (remove sub-trees that matched)
-                Tree<Op> r = applyMapping(cacheTree, queryTree, opVarMap);
+                Tree<Op> r = applyMapping(id, cacheTree, queryTree, opVarMap);
 
                 System.out.println("Result: " + r);
+                System.out.println("Varmap: " + Iterables.toString(opVarMap.getVarMaps()));
+
+                LookupResult lr = new LookupResult(cacheEntry, opVarMap);
             });
         }
 
-		return null;
+		return result;
 	}
 
-	public static Tree<Op> applyMapping(Tree<Op> cacheTree, Tree<Op> queryTree, OpVarMap opVarMap) {
-	    Map<Op, Op> nodeMapping = opVarMap.getOpMapping();
+	public static Tree<Op> applyMapping(Node id, Tree<Op> cacheTree, Tree<Op> queryTree, OpVarMap opVarMap) {
+	    Map<Op, Op> nodeMapping = opVarMap.getOpMap();
 
 	    Op sourceRoot = cacheTree.getRoot();
 	    Op targetNode = nodeMapping.get(sourceRoot);
@@ -133,8 +157,8 @@ public class OpViewMatcherImpl
 	    }
 
 	    //QuadPattern yay = new QuadPattern();
-	    Node serviceNode = NodeFactory.createURI("");
-	    OpService placeholderOp = new OpService(serviceNode, new OpBGP(), true);
+	    //Node serviceNode = NodeFactory.createURI("");
+	    OpService placeholderOp = new OpService(id, new OpBGP(), true);
 	    Op repl = OpUtils.substitute(queryTree.getRoot(), false, op -> {
 	       return op == targetNode ? placeholderOp : null;
 	    });
@@ -158,7 +182,8 @@ public class OpViewMatcherImpl
 
 
 	public static OpViewMatcher create() {
-        Function<Op, Stream<Set<String>>> itemFeatureExtractor = (oop) -> Collections.singleton(OpVisitorFeatureExtractor.getFeatures(oop, (op) -> op.getClass().getSimpleName())).stream();
+        Function<Op, Set<Set<String>>> itemFeatureExtractor = (oop) ->
+        	Collections.singleton(OpVisitorFeatureExtractor.getFeatures(oop, (op) -> op.getClass().getSimpleName()));
 
         OpViewMatcher result = new OpViewMatcherImpl(
         		OpViewMatcherImpl::normalizeOp,

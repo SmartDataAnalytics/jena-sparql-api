@@ -11,8 +11,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -62,7 +64,9 @@ import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.util.ExprUtils;
 
 import com.codepoetics.protonpack.functions.TriFunction;
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 
 
@@ -72,7 +76,7 @@ public class TestStateSpaceSearch {
 
 	public static void main(String[] args) {
 
-        Op opCache = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { { ?a ?a ?a } UNION {   { SELECT DISTINCT ?b { ?b ?b ?b} }   } } ?c ?c ?c } LIMIT 10")));
+		Op opCache = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { { ?a ?a ?a } UNION {   { SELECT DISTINCT ?b { ?b ?b ?b} }   } } ?c ?c ?c } LIMIT 10")));
 
         OpViewMatcher viewMatcher = OpViewMatcherImpl.create();
         viewMatcher.add(opCache);
@@ -91,6 +95,25 @@ public class TestStateSpaceSearch {
 	}
 
 
+
+//	Stopwatch sw = Stopwatch.createStarted();
+//	for(int y = 0; y < 20; ++y) {
+//		List<Integer> ints = IntStream.range(0, 100000).mapToObj(x -> x).collect(Collectors.toList());
+//		List<List<Integer>> list = new CartesianProduct<Integer>(Arrays.asList(ints, ints)).stream().collect(Collectors.toList());
+//
+//		System.out.println(list);
+//		List<List<Integer>> cart = Lists.cartesianProduct(Arrays.asList(ints, ints));
+//
+//
+////		int i = 0;
+////		for(List<Integer> x : cart) {
+////			//System.out.println(x);
+////			++i;
+////
+////		}
+////		System.out.println("done[" + y + "]: " + i);
+//	}
+//	System.out.println(sw.elapsed(TimeUnit.MILLISECONDS));
 
 //    public static void main(String[] args) {
 //        Multimap<String, Integer> m = HashMultimap.create();
@@ -395,7 +418,7 @@ public class TestStateSpaceSearch {
         Stream<OpVarMap> treeVarMappings = SparqlViewMatcherUtils.generateTreeVarMapping(candOpMapping, cacheTree, queryTree);
 
         treeVarMappings.forEach(e -> {
-            Map<Op, Op> nodeMapping = e.getOpMapping();
+            Map<Op, Op> nodeMapping = e.getOpMap();
 
             Op sourceRoot = cacheTree.getRoot();
             Op targetNode = nodeMapping.get(sourceRoot);
@@ -413,6 +436,7 @@ public class TestStateSpaceSearch {
 
 
             System.out.println("yay: " + repl);
+            System.out.println();
         });
 
 

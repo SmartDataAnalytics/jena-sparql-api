@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.views.index;
 
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
+import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.expr.Expr;
 
@@ -11,14 +12,16 @@ import org.apache.jena.sparql.expr.Expr;
  *
  */
 public class QueryIndex {
+	//protected Node id;
+
     protected Op op;
-    
+
     protected Tree<Op> tree;
-    
+
     /**
      * Index over all of a query's quad patterns
      * Allows retrieving any of a query's quad patterns using a given set of features
-     * 
+     *
      */
     protected FeatureMap<Expr, QuadPatternIndex> quadPatternIndex;
 
@@ -28,11 +31,15 @@ public class QueryIndex {
         this.op = op;
         this.tree = tree;
     }
-    
+
+//    public Node getId() {
+//    	return id;
+//    }
+
     public Op getOp() {
         return op;
     }
-    
+
     public Tree<Op> getTree() {
         return tree;
     }
