@@ -91,36 +91,36 @@ public class SparqlViewMatcherUtils {
         Stream<Map<Op, Op>> completeNodeMapStream = cartX.stream()
             .map(listOfMaps -> {
                 Map<Op, Op> completeNodeMap = listOfMaps.stream()
-                        .flatMap(map -> {
-                            // The entry set here corresponds to mappings of nodes in the multiary tree
+                    .flatMap(map -> {
+                        // The entry set here corresponds to mappings of nodes in the multiary tree
 
-                            Set<Entry<Op, Op>> entrySet = map.entrySet();
+                        Set<Entry<Op, Op>> entrySet = map.entrySet();
 
-                            // For each entry, add the mapping of the unary ancestors
-                            Stream<Entry<Op, Op>> augmented = entrySet.stream().flatMap(e -> {
-                                Op cacheOp = e.getKey();
-                                Op queryOp = e.getValue();
+                        // For each entry, add the mapping of the unary ancestors
+                        Stream<Entry<Op, Op>> augmented = entrySet.stream().flatMap(e -> {
+                            Op cacheOp = e.getKey();
+                            Op queryOp = e.getValue();
 
-                              // TODO If any of the unary mappings is unsatisfiable, the completeNodeMap is unsatisfiable
-                              Stream<Entry<Op, Op>> unaryMappingStream = SparqlViewMatcherUtils.augmentUnaryMappings2(
-                                      cacheOp, queryOp,
-                                      cacheTree, queryTree,
-                                      cacheMultiaryTree, queryMultiaryTree);
+                          // TODO If any of the unary mappings is unsatisfiable, the completeNodeMap is unsatisfiable
+                          Stream<Entry<Op, Op>> unaryMappingStream = SparqlViewMatcherUtils.augmentUnaryMappings2(
+                                  cacheOp, queryOp,
+                                  cacheTree, queryTree,
+                                  cacheMultiaryTree, queryMultiaryTree);
 
-                              //unaryMappingStream.isEmpty();
+                          //unaryMappingStream.isEmpty();
 
-                                Stream<Entry<Op, Op>> s = Stream.concat(
-                                    Stream.of(e),
-                                    unaryMappingStream);
+                            Stream<Entry<Op, Op>> s = Stream.concat(
+                                Stream.of(e),
+                                unaryMappingStream);
 
-                                return s;
-                            });
+                            return s;
+                        });
 
-                                //Stream
-                            return augmented;
-                         })
-                        .takeWhile(pred)
-                        .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+                            //Stream
+                        return augmented;
+                     })
+                    .takeWhile(pred)
+                    .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 
                 if(pred.isFailed()) {
                 	completeNodeMap = null;
