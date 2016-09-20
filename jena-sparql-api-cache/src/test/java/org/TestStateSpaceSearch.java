@@ -36,10 +36,12 @@ import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.parse.QueryExecutionFactoryParse;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.SequentialMatchIterator;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.VarMapper;
 import org.aksw.jena_sparql_api.stmt.SparqlElementParser;
 import org.aksw.jena_sparql_api.stmt.SparqlElementParserImpl;
+import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.unsorted.ExprMatcher;
 import org.aksw.jena_sparql_api.utils.DnfUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
@@ -94,6 +96,7 @@ public class TestStateSpaceSearch {
 //        QueryExecutionFactory core = FluentQueryExecutionFactory.http("http://dbpedia.org/sparql", "http://dbpedia.org").create();
         QueryExecutionFactory core = FluentQueryExecutionFactory.from(model).create();
         QueryExecutionFactory qef = new QueryExecutionFactoryViewMatcherMaster(core, viewMatcher, 200000l);
+        qef = new QueryExecutionFactoryParse(qef, SparqlQueryParserImpl.create());
 
         {
 	        QueryExecution qe = qef.createQueryExecution("select * { ?s a <http://dbpedia.org/ontology/Restaurant> } Limit 10");

@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.concept_cache.core;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionBaseSelect;
@@ -56,13 +57,15 @@ public class QueryExecutionViewMatcherMaster
     public ResultSetCloseable createResultSet(RangedSupplier<Long, Binding> rangedSupplier, Range<Long> range, Map<Var, Var> varMap) {
     	ClosableIterator<Binding> it = rangedSupplier.apply(range);
     	Iterable<Binding> tmp = () -> it;
-    	StreamSupport.stream(tmp.spliterator(), false)
-    		.map(b -> BindingUtils.rename(b, varMap))
-    		.onClose(() -> it.close());
+    	Stream<Binding> stream = StreamSupport.stream(tmp.spliterator(), false);
+    	if(varMap != null) {
+    		stream = stream.map(b -> BindingUtils.rename(b, varMap));
+    	}
+    	stream = stream.onClose(() -> it.close());
 
     	List<String> varNames = query.getResultVars();
     	//ResultSetCloseable result = ResultSetUtils.create(varNames, it);
-    	ResultSet rs = ResultSetUtils.create(varNames, tmp.iterator());
+    	ResultSet rs = ResultSetUtils.create(varNames, stream.iterator());
     	ResultSetCloseable result = new ResultSetCloseable(rs);
 
     	return result;
@@ -77,20 +80,21 @@ public class QueryExecutionViewMatcherMaster
         OpViewMatcher viewMatcher = OpViewMatcherImpl.create();
         Node id = viewMatcher.add(opCache);
         LookupResult lr = viewMatcher.lookupSingle(opCache);
-
-        Map<Var, Var> varMap = Iterables.getFirst(lr.getOpVarMap().getVarMaps(), null);
-
         RangedSupplier<Long, Binding> rangedSupplier;
+        Map<Var, Var> varMap;
         if(lr == null) {
         	// Obtain the supplier from a factory (the factory may e.g. manage the sharing of a thread pool)
         	rangedSupplier = new RangedSupplierQuery(parentFactory, query);
         	opToRangedSupplier.put(id, rangedSupplier);
+        	varMap = null;
         }
         else {
+
+            varMap = Iterables.getFirst(lr.getOpVarMap().getVarMaps(), null);
+
         	Node entryId = lr.getEntry().id;
         	rangedSupplier = opToRangedSupplier.get(entryId);
         }
-
 
         ResultSetCloseable result = createResultSet(rangedSupplier, range, varMap);
         return result;
