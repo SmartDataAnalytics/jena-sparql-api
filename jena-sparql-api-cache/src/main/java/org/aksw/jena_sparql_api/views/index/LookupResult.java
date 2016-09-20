@@ -19,4 +19,9 @@ public class LookupResult {
 	public OpVarMap getOpVarMap() {
 		return opVarMap;
 	}
+
+	@Override
+	public String toString() {
+		return "LookupResult [" + entry + ", " + opVarMap + "]";
+	}
 }

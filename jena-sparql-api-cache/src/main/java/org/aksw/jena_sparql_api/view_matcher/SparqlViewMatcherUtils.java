@@ -191,9 +191,9 @@ public class SparqlViewMatcherUtils {
         // Solve the problems for each node mapping
         Stream<OpVarMap> result = nodeMappingToProblems.map(e -> {
             Map<Op, Op> nodeMapping = e.getNodeMapping();
-            Stream<Map<Var, Var>> varMappings = VarMapper.solve(e.getProblems());
+            //Stream<Map<Var, Var>> varMappings = VarMapper.solve(e.getProblems());
 
-            Iterable<Map<Var, Var>> it = () -> varMappings.iterator();
+            Iterable<Map<Var, Var>> it = () -> VarMapper.solve(e.getProblems()).iterator();
 
             OpVarMap r = new OpVarMap(nodeMapping, it);
             return r;

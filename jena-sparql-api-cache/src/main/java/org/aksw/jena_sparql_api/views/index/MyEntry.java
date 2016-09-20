@@ -15,4 +15,9 @@ public class MyEntry {
 		this.featureSets = featureSets;
 		this.queryIndex = queryIndex;
 	}
+
+	@Override
+	public String toString() {
+		return "Entry [" + id + ", " + featureSets + ", " + queryIndex + "]";
+	}
 }

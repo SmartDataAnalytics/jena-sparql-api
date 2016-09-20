@@ -115,6 +115,7 @@ public class OpViewMatcherImpl
 
 
         List<LookupResult> result = new ArrayList<>();
+
         for(MyEntry cacheEntry : cands) {
         	QueryIndex cacheIndex = cacheEntry.queryIndex;
 
@@ -141,7 +142,9 @@ public class OpViewMatcherImpl
 
                 LookupResult lr = new LookupResult(cacheEntry, opVarMap);
                 result.add(lr);
+                //return lr;
             });
+
         }
 
 		return result;
