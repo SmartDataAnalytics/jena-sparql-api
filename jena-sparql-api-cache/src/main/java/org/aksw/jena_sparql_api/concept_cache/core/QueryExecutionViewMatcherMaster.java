@@ -2,22 +2,26 @@ package org.aksw.jena_sparql_api.concept_cache.core;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.StreamSupport;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionBaseSelect;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.ResultSetCloseable;
 import org.aksw.jena_sparql_api.util.collection.RangedSupplier;
+import org.aksw.jena_sparql_api.utils.BindingUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.ResultSetUtils;
 import org.aksw.jena_sparql_api.views.index.LookupResult;
 import org.aksw.jena_sparql_api.views.index.OpViewMatcher;
 import org.aksw.jena_sparql_api.views.index.OpViewMatcherImpl;
+import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.util.iterator.ClosableIterator;
 
@@ -32,8 +36,6 @@ public class QueryExecutionViewMatcherMaster
     protected long indexResultSetSizeThreshold;
 
     //protected Map<Node, ? super ViewCacheIndexer> serviceMap;
-
-
 
     public QueryExecutionViewMatcherMaster(
     		Query query,
@@ -51,11 +53,16 @@ public class QueryExecutionViewMatcherMaster
     }
 
 
-    public ResultSetCloseable createResultSet(RangedSupplier<Long, Binding> rangedSupplier, Range<Long> range) {
+    public ResultSetCloseable createResultSet(RangedSupplier<Long, Binding> rangedSupplier, Range<Long> range, Map<Var, Var> varMap) {
     	ClosableIterator<Binding> it = rangedSupplier.apply(range);
+    	Iterable<Binding> tmp = () -> it;
+    	StreamSupport.stream(tmp.spliterator(), false)
+    		.map(b -> BindingUtils.rename(b, varMap))
+    		.onClose(() -> it.close());
+
     	List<String> varNames = query.getResultVars();
     	//ResultSetCloseable result = ResultSetUtils.create(varNames, it);
-    	ResultSet rs = ResultSetUtils.create(varNames, it);
+    	ResultSet rs = ResultSetUtils.create(varNames, tmp.iterator());
     	ResultSetCloseable result = new ResultSetCloseable(rs);
 
     	return result;
@@ -63,18 +70,17 @@ public class QueryExecutionViewMatcherMaster
 
     @Override
     protected ResultSetCloseable executeCoreSelect(Query query) {
+
     	Range<Long> range = QueryUtils.toRange(query);
-
-
     	Op opCache = Algebra.toQuadForm(Algebra.compile(query));
 
         OpViewMatcher viewMatcher = OpViewMatcherImpl.create();
         Node id = viewMatcher.add(opCache);
         LookupResult lr = viewMatcher.lookupSingle(opCache);
 
+        Map<Var, Var> varMap = Iterables.getFirst(lr.getOpVarMap().getVarMaps(), null);
 
         RangedSupplier<Long, Binding> rangedSupplier;
-
         if(lr == null) {
         	// Obtain the supplier from a factory (the factory may e.g. manage the sharing of a thread pool)
         	rangedSupplier = new RangedSupplierQuery(parentFactory, query);
@@ -85,7 +91,8 @@ public class QueryExecutionViewMatcherMaster
         	rangedSupplier = opToRangedSupplier.get(entryId);
         }
 
-        ResultSetCloseable result = createResultSet(rangedSupplier, range);
+
+        ResultSetCloseable result = createResultSet(rangedSupplier, range, varMap);
         return result;
     }
 

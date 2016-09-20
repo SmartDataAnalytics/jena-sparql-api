@@ -11,6 +11,7 @@ import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.sparql.engine.binding.Binding;
 
+
 public class QueryExecutionFactoryViewMatcherMaster
     extends QueryExecutionFactoryDecorator
 {

@@ -11,10 +11,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -30,10 +28,13 @@ import org.aksw.jena_sparql_api.algebra.transform.TransformJoinToConjunction;
 import org.aksw.jena_sparql_api.algebra.transform.TransformUnionToDisjunction;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMapImpl;
+import org.aksw.jena_sparql_api.concept_cache.core.QueryExecutionFactoryViewMatcherMaster;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
 import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
+import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.SequentialMatchIterator;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.VarMapper;
 import org.aksw.jena_sparql_api.stmt.SparqlElementParser;
@@ -49,7 +50,9 @@ import org.aksw.jena_sparql_api.views.index.OpViewMatcherImpl;
 import org.aksw.jena_sparql_api.views.index.SparqlViewMatcherSystemImpl;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryFactory;
+import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
@@ -64,9 +67,7 @@ import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.util.ExprUtils;
 
 import com.codepoetics.protonpack.functions.TriFunction;
-import com.google.common.base.Stopwatch;
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 
 
@@ -81,6 +82,27 @@ public class TestStateSpaceSearch {
         OpViewMatcher viewMatcher = OpViewMatcherImpl.create();
         viewMatcher.add(opCache);
         viewMatcher.lookup(opCache);
+
+        QueryExecutionFactory core = FluentQueryExecutionFactory.http("http://dbpedia.org/sparql", "http://dbpedia.org").create();
+        QueryExecutionFactory qef = new QueryExecutionFactoryViewMatcherMaster(core, viewMatcher, 200000l);
+
+        {
+	        QueryExecution qe = qef.createQueryExecution("select * { ?s a <http://dbpedia.org/ontology/Restaurant> } Limit 10");
+
+	        ResultSet rs = qe.execSelect();
+	        while(rs.hasNext()) {
+	        	System.out.println(rs.next());
+	        }
+        }
+
+        {
+	        QueryExecution qe = qef.createQueryExecution("select * { ?s a <http://dbpedia.org/ontology/Restaurant> } Limit 10");
+
+	        ResultSet rs = qe.execSelect();
+	        while(rs.hasNext()) {
+	        	System.out.println(rs.next());
+	        }
+        }
 
 
 //		try {
