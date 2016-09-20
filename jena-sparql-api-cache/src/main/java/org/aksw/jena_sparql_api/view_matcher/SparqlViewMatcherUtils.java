@@ -39,11 +39,15 @@ import org.apache.jena.sparql.algebra.op.OpSlice;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprVar;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Range;
 
 public class SparqlViewMatcherUtils {
+
+	private static final Logger logger = LoggerFactory.getLogger(SparqlViewMatcherUtils.class);
 
     public static Stream<OpVarMap> generateTreeVarMapping(
 			Multimap<Op, Op> candOpMapping,
@@ -394,13 +398,16 @@ public class SparqlViewMatcherUtils {
         QuadFilterPatternCanonical cacheQfpc = cacheOp.getQfpc();
         QuadFilterPatternCanonical queryQfpc = userOp.getQfpc();
 
-        System.out.println("Deriving problems for:");
-        System.out.println("  " + cacheQfpc);
-        System.out.println("  " + queryQfpc);
+        if(logger.isDebugEnabled()) {
+        	logger.debug("Deriving problems for:");
+        	logger.debug("  " + cacheQfpc);
+        	logger.debug("  " + queryQfpc);
+        }
+
 
         Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result = VarMapper.createProblems(cacheQfpc, queryQfpc);
         for(ProblemNeighborhoodAware<Map<Var, Var>, Var> x : result) {
-            System.out.println("  Size: " + x.generateSolutions().count());
+            if(logger.isDebugEnabled()) { logger.debug(("  Size: " + x.generateSolutions().count())); }
         }
         return result;
     }

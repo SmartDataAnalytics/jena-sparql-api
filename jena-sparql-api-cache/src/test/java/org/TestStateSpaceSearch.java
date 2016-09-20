@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.IntStream;
@@ -54,6 +55,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryFactory;
+import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Model;
@@ -73,6 +75,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 
 import com.codepoetics.protonpack.functions.TriFunction;
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
@@ -93,21 +96,20 @@ public class TestStateSpaceSearch {
 
         OpViewMatcher viewMatcher = OpViewMatcherImpl.create();
 //        QueryExecutionFactory core = FluentQueryExecutionFactory.http("http://dbpedia.org/sparql", "http://dbpedia.org").create();
-        QueryExecutionFactory core = FluentQueryExecutionFactory.from(model).create();
-        QueryExecutionFactory qef = new QueryExecutionFactoryViewMatcherMaster(core, viewMatcher, 200000l);
+        QueryExecutionFactory qef = FluentQueryExecutionFactory.from(model).create();
+        qef = new QueryExecutionFactoryViewMatcherMaster(qef, viewMatcher, 200000l);
         qef = new QueryExecutionFactoryParse(qef, SparqlQueryParserImpl.create());
 
-        {
+
+        Stopwatch sw = Stopwatch.createStarted();
+
+        for(int i = 0; i < 1000; ++i) {
 	        QueryExecution qe = qef.createQueryExecution("select * { ?s a <http://dbpedia.org/ontology/MusicalArtist> } Limit 10");
-
-	        System.out.println(ResultSetFormatter.asText(qe.execSelect()));
+	        ResultSet rs = qe.execSelect();
+        	ResultSetFormatter.consume(rs);
         }
 
-        {
-	        QueryExecution qe = qef.createQueryExecution("select * { ?x a <http://dbpedia.org/ontology/MusicalArtist> } Limit 10");
-
-	        System.out.println(ResultSetFormatter.asText(qe.execSelect()));
-        }
+        System.out.println("" + sw.stop().elapsed(TimeUnit.MILLISECONDS));
 
         System.out.println("DONE.");
 

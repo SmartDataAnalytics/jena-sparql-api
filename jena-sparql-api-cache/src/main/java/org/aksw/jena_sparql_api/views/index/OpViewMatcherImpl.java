@@ -110,7 +110,7 @@ public class OpViewMatcherImpl
         List<MyEntry> cands = new ArrayList<>(tmpCands);
         Collections.sort(cands, (a, b) -> ((int)(a.queryIndex.getTree().nodeCount() - b.queryIndex.getTree().nodeCount())));
 
-        logger.debug("Phase 1: " + cands.size() + "/" + featuresToIndexes.size() + " passed");
+        if(logger.isDebugEnabled()) { logger.debug("Phase 1: " + cands.size() + "/" + featuresToIndexes.size() + " passed"); }
         QueryIndex queryIndex = itemIndexer.apply(normalizedItem);
 
 
@@ -129,17 +129,18 @@ public class OpViewMatcherImpl
             opVarMaps.forEach(opVarMap -> {
                 Op cacheRoot = cacheTree.getRoot();
                 Op queryRoot = opVarMap.getOpMap().get(cacheRoot);
-                System.out.println("query root: " + queryRoot);
+                if(logger.isDebugEnabled()) { logger.debug("query root: " + queryRoot); }
 
 
                 Node id = cacheEntry.id;
                 // We need to update the queryIndex (remove sub-trees that matched)
                 Tree<Op> r = applyMapping(id, cacheTree, queryTree, opVarMap);
 
-                System.out.println("Result: " + r);
-                System.out.println("Varmap: " + Iterables.toString(opVarMap.getVarMaps()));
+                if(logger.isDebugEnabled()) { logger.debug("Result: " + r); }
+                if(logger.isDebugEnabled()) { logger.debug("Varmap: " + Iterables.toString(opVarMap.getVarMaps())); }
 
                 LookupResult lr = new LookupResult(cacheEntry, opVarMap);
+                result.add(lr);
             });
         }
 

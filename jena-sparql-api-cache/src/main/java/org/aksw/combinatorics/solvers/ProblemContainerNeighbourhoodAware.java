@@ -326,10 +326,10 @@ public class ProblemContainerNeighbourhoodAware<S, T>
     public void run(S baseSolution) {
         // If there are no open problems, we found a complete solution
         if(isEmpty(regularQueue)) {
-            logger.debug("      Yielding solution " + baseSolution);
+        	if(logger.isDebugEnabled()) { logger.debug("      Yielding solution " + baseSolution); }
             solutionCallback.accept(baseSolution);
         } else {
-            logger.debug("Next Iteration with regular queue size: " + size(regularQueue) + " and base solution " + baseSolution);
+        	if(logger.isDebugEnabled()) { logger.debug("Next Iteration with regular queue size: " + size(regularQueue) + " and base solution " + baseSolution); }
 
             // TODO We need to consider the costs of whether processing the refinement queue makes sense
             // As long as there are cheap problems in the regular queue, it does not make sense to refine
@@ -358,21 +358,21 @@ public class ProblemContainerNeighbourhoodAware<S, T>
                 addToRegularQueue(newP);
             }
 
-            logger.debug("  First problem in regular queue with cost " + firstCost + " was refined into " + newProblems.size() + " sub Problems with costs [" + (newProblems.stream().map(p -> "" + p.getEstimatedCost()).collect(Collectors.joining(", "))) + "] ; refined problem was: "+ firstProblem);
+            if(logger.isDebugEnabled()) { logger.debug("  First problem in regular queue with cost " + firstCost + " was refined into " + newProblems.size() + " sub Problems with costs [" + (newProblems.stream().map(p -> "" + p.getEstimatedCost()).collect(Collectors.joining(", "))) + "] ; refined problem was: "+ firstProblem); }
 
 
             Entry<? super Comparable<?>, ProblemNeighborhoodAware<S, T>> pickedEntry = firstEntry(regularQueue);
             Object pickedCost = pickedEntry.getKey();
             ProblemNeighborhoodAware<S, T> pickedProblem = pickedEntry.getValue();
 
-            logger.debug("  Picked problem with cost " + pickedCost + "; " + pickedProblem);
+            if(logger.isDebugEnabled()) { logger.debug("  Picked problem with cost " + pickedCost + "; " + pickedProblem); }
 
 
             // Remove the pick from the datastructures...
 
             // Remove the picked problem completely
             remove(pickedProblem);
-            logger.debug("  Picked problem " + pickedProblem + " with cost " + pickedCost + "; regular queue size is now: " + size(regularQueue));
+            if(logger.isDebugEnabled()) { logger.debug("  Picked problem " + pickedProblem + " with cost " + pickedCost + "; regular queue size is now: " + size(regularQueue)); }
 
 //                remove(refinementQueue, pickedKey, pickedProblem);
 //                remove(costToProblems, pickedKey, pickedProblem);
@@ -383,26 +383,26 @@ public class ProblemContainerNeighbourhoodAware<S, T>
 
             // recurse
             Stream<S> tmp = pickedProblem.generateSolutions();
-            logger.debug("  Got " + tmp.count() + " solution candidates with " + pickedProblem);
+            if(logger.isDebugEnabled()) { logger.debug("  Got " + tmp.count() + " solution candidates with " + pickedProblem); }
 
-            
-            pickedProblem.generateSolutions().forEach(x-> System.out.println("      SC: " + x));
-            
+
+            if(logger.isDebugEnabled()) { pickedProblem.generateSolutions().forEach(x-> logger.debug("      SC: " + x)); }
+
             Stream<S> solutions = pickedProblem.generateSolutions();
 
             solutions.forEach(solutionContribution -> {
-                logger.debug("    Attempting solution contribution " + solutionContribution);
-                
+            	if(logger.isDebugEnabled()) { logger.debug("    Attempting solution contribution " + solutionContribution); }
+
                 S combinedSolution = null;
                 boolean unsatisfiable = isUnsatisfiable.test(solutionContribution);
                 if(!unsatisfiable) {
                     combinedSolution = solutionCombiner.apply(baseSolution, solutionContribution);
                     unsatisfiable = isUnsatisfiable.test(combinedSolution);
-                    logger.debug("      Combined solution: " + unsatisfiable + " - " + combinedSolution);
+                    if(logger.isDebugEnabled()) { logger.debug("      Combined solution: " + unsatisfiable + " - " + combinedSolution); }
                 }
 
                 if(!unsatisfiable) {
-                    logger.debug("      Satisfiable solution contribution: " + solutionContribution + "; regular queue size now: " + size(regularQueue));
+                	if(logger.isDebugEnabled()) { logger.debug("      Satisfiable solution contribution: " + solutionContribution + "; regular queue size now: " + size(regularQueue)); }
 
 //                    Collection<T> rs = getRelatedSources.apply(solutionContribution);
 
@@ -428,7 +428,7 @@ public class ProblemContainerNeighbourhoodAware<S, T>
 //                    }
 //                    }
                 } else {
-                    logger.debug("      Skipping unatisfiable solution contribution: " + solutionContribution + "; regular queue size now: " + size(regularQueue));
+                	if(logger.isDebugEnabled()) { logger.debug("      Skipping unatisfiable solution contribution: " + solutionContribution + "; regular queue size now: " + size(regularQueue)); }
                 }
             });
 
@@ -487,12 +487,12 @@ public class ProblemContainerNeighbourhoodAware<S, T>
                 solutionCombiner,
                 isUnsatisfiable,
                 tmp::add);
-        
+
         Stream<S> result = tmp.stream();
-        return result;        
+        return result;
     }
 
-    
+
     public static <S, T> void solve(
             Collection<? extends ProblemNeighborhoodAware<S, T>> problems,
             S baseSolution,

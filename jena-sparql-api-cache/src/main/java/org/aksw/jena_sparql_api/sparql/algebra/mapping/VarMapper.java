@@ -25,10 +25,14 @@ import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprVar;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Multimap;
 
 public class VarMapper {
+	private static final Logger logger = LoggerFactory.getLogger(VarMapper.class);
+
 
     public static GenericProblem<Map<Var, Var>, ?> deriveProblem(List<Var> cacheVars, List<Var> userVars) {
         List<Expr> aExprs = cacheVars.stream().map(v -> new ExprVar(v)).collect(Collectors.toList());
@@ -36,12 +40,12 @@ public class VarMapper {
         GenericProblem<Map<Var, Var>, ?> result = new ProblemVarMappingExpr(aExprs, bExprs, Collections.emptyMap());
         return result;
     }
-    
-    
-    
+
+
+
     /**
      * TODO Return only the collection of problems at this stage
-     * 
+     *
      * @param cachePattern
      * @param queryPattern
      * @return
@@ -55,15 +59,17 @@ public class VarMapper {
             Set<Expr> querySig = entry.getKey();
             Collection<Multimap<Expr, Expr>> queryMaps = entry.getValue();
 
-            System.out.println("CAND LOOKUP with " + querySig);
-            
-            
-            // Base on the signatures: For the current query clause, find cache clauses that are less restrictive            
+            if(logger.isTraceEnabled()) { logger.trace("CAND LOOKUP with " + querySig); }
+
+
+            // Base on the signatures: For the current query clause, find cache clauses that are less restrictive
             Collection<Entry<Set<Expr>, Multimap<Expr, Expr>>> cands = cacheIndex.getIfSubsetOf(querySig);
 
             for(Entry<Set<Expr>, Multimap<Expr, Expr>> e : cands) {
                 Multimap<Expr, Expr> cacheMap = e.getValue();
-                System.out.println("  CACHE MAP: " + cacheMap);
+                //System.out.println("  CACHE MAP: " + cacheMap);
+                if(logger.isTraceEnabled()) { logger.trace("  CACHE MAP: " + cacheMap); }
+
                 for(Multimap<Expr, Expr> queryMap : queryMaps) {
                     Map<Expr, Entry<Set<Expr>, Set<Expr>>> group = MapUtils.groupByKey(cacheMap.asMap(), queryMap.asMap());
 
@@ -73,26 +79,14 @@ public class VarMapper {
                             Set<Expr> queryExprs = x.getValue();
                             ProblemNeighborhoodAware<Map<Var, Var>, Var> p = new ProblemVarMappingExpr(cacheExprs, queryExprs, Collections.emptyMap());
 
-                            System.out.println("Registered problem instance " + p + " with an estimated cost of " + p.getEstimatedCost());
-                            System.out.println("  Enumerating its solutions yields " + p.generateSolutions().count() + " items: " + p.generateSolutions().collect(Collectors.toList()));
-                            //System.out.println("cacheExprs: " + cacheExprs);
-                            //System.out.println("queryExprs: " + queryExprs);
-
-                            //Stream<Map<Var, Var>> r = p.generateSolutions();
+                            if(logger.isTraceEnabled()) { logger.trace("Registered problem instance " + p + " with an estimated cost of " + p.getEstimatedCost()); }
+                            if(logger.isTraceEnabled()) { logger.trace("  Enumerating its solutions yields " + p.generateSolutions().count() + " items: " + p.generateSolutions().collect(Collectors.toList())); }
 
                             return p;
                         })
                         .collect(Collectors.toList());
 
                     result.addAll(localProblems);
-                    //problems.stream().forEach(p -> System.out.println("COMPLEX: " + p.getEstimatedCost()));
-
-
-                    //problemStream.forEach(y -> System.out.println("GOT SOLUTION: " + y));
-
-
-
-                    //System.out.println("    QUERY MAP: " + queryMap);
                 }
             }
 
@@ -100,30 +94,32 @@ public class VarMapper {
         }
 
         // Index the quads by the cnf (dnf)?
-        
+
         IBiSetMultimap<Quad, Set<Set<Expr>>> cacheQuadIndex = SparqlCacheUtils.createMapQuadsToFilters(cachePattern);
         IBiSetMultimap<Quad, Set<Set<Expr>>> queryQuadIndex = SparqlCacheUtils.createMapQuadsToFilters(queryPattern);
-        
+
         Map<Set<Set<Expr>>, Entry<Set<Quad>, Set<Quad>>> quadGroups = MapUtils.groupByKey(cacheQuadIndex.getInverse(), queryQuadIndex.getInverse());
-        
+
         for(Entry<Set<Quad>, Set<Quad>> quadGroup : quadGroups.values()) {
-        
+
             ProblemVarMappingQuad quadProblem = new ProblemVarMappingQuad(quadGroup.getKey(), quadGroup.getValue(), Collections.emptyMap());
 
-            System.out.println("Registered quad problem instance " + quadProblem + " with an estimated cost of " + quadProblem.getEstimatedCost());
+            if(logger.isTraceEnabled()) { logger.trace("Registered quad problem instance " + quadProblem + " with an estimated cost of " + quadProblem.getEstimatedCost()); }
+
+            //System.out.println("Registered quad problem instance " + quadProblem + " with an estimated cost of " + quadProblem.getEstimatedCost());
             //System.out.println("  Enumerating its solutions yields " + quadProblem.generateSolutions().count());
             //System.out.println("Registered quad problem instance " + quadProblem + " with " + quadProblem.generateSolutions().count() + " solutions ");
-            
-            
+
+
             result.add(quadProblem);
         }
-        
+
 
         return result;
     }
-    
+
     public static Stream<Map<Var, Var>> solve(Collection<? extends ProblemNeighborhoodAware<Map<Var, Var>, Var>> problems) {
-        
+
         Stream<Map<Var, Var>> result = ProblemContainerNeighbourhoodAware.solve(
                 problems,
                 Collections.emptyMap(),
@@ -134,10 +130,10 @@ public class VarMapper {
         return result;
     }
 
-    
+
     public static Stream<Map<Var, Var>> createVarMapCandidates(QuadFilterPatternCanonical cachePattern, QuadFilterPatternCanonical queryPattern) {
 
-        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> problems = createProblems(cachePattern, queryPattern);        
+        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> problems = createProblems(cachePattern, queryPattern);
         Stream<Map<Var, Var>> result = solve(problems);
 
         return result;
