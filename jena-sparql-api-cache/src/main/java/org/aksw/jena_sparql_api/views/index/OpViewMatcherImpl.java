@@ -85,7 +85,7 @@ public class OpViewMatcherImpl
 
 
     /**
-     * Lookup a singe candidate
+     * Lookup a single candidate
      */
     public LookupResult lookupSingle(Op item) {
     	Collection<LookupResult> tmp = lookup(item);

@@ -1,6 +1,7 @@
 package org;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -54,6 +55,8 @@ import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.Syntax;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.Transformer;
@@ -65,6 +68,8 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.util.ExprUtils;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 
 import com.codepoetics.protonpack.functions.TriFunction;
 import com.google.common.collect.HashMultimap;
@@ -75,15 +80,19 @@ import com.google.common.collect.Multimap;
 
 public class TestStateSpaceSearch {
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 
-		Op opCache = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { { ?a ?a ?a } UNION {   { SELECT DISTINCT ?b { ?b ?b ?b} }   } } ?c ?c ?c } LIMIT 10")));
+		//Op opCache = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { { ?a ?a ?a } UNION {   { SELECT DISTINCT ?b { ?b ?b ?b} }   } } ?c ?c ?c } LIMIT 10")));
+
+        //viewMatcher.add(opCache);
+        //viewMatcher.lookup(opCache);
+		Resource r = new ClassPathResource("data-lorenz.nt");
+		Model model = ModelFactory.createDefaultModel();
+		model.read(r.getInputStream(), "http://ex.org/", "NTRIPLES");
 
         OpViewMatcher viewMatcher = OpViewMatcherImpl.create();
-        viewMatcher.add(opCache);
-        viewMatcher.lookup(opCache);
-
-        QueryExecutionFactory core = FluentQueryExecutionFactory.http("http://dbpedia.org/sparql", "http://dbpedia.org").create();
+//        QueryExecutionFactory core = FluentQueryExecutionFactory.http("http://dbpedia.org/sparql", "http://dbpedia.org").create();
+        QueryExecutionFactory core = FluentQueryExecutionFactory.from(model).create();
         QueryExecutionFactory qef = new QueryExecutionFactoryViewMatcherMaster(core, viewMatcher, 200000l);
 
         {
@@ -103,6 +112,8 @@ public class TestStateSpaceSearch {
 	        	System.out.println(rs.next());
 	        }
         }
+
+        System.out.println("DONE.");
 
 
 //		try {
