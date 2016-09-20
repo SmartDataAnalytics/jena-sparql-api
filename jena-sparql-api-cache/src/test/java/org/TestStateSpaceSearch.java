@@ -1,7 +1,6 @@
 package org;
 
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -55,7 +54,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryFactory;
-import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -99,21 +98,15 @@ public class TestStateSpaceSearch {
         qef = new QueryExecutionFactoryParse(qef, SparqlQueryParserImpl.create());
 
         {
-	        QueryExecution qe = qef.createQueryExecution("select * { ?s a <http://dbpedia.org/ontology/Restaurant> } Limit 10");
+	        QueryExecution qe = qef.createQueryExecution("select * { ?s a <http://dbpedia.org/ontology/MusicalArtist> } Limit 10");
 
-	        ResultSet rs = qe.execSelect();
-	        while(rs.hasNext()) {
-	        	System.out.println(rs.next());
-	        }
+	        System.out.println(ResultSetFormatter.asText(qe.execSelect()));
         }
 
         {
-	        QueryExecution qe = qef.createQueryExecution("select * { ?s a <http://dbpedia.org/ontology/Restaurant> } Limit 10");
+	        QueryExecution qe = qef.createQueryExecution("select * { ?x a <http://dbpedia.org/ontology/MusicalArtist> } Limit 10");
 
-	        ResultSet rs = qe.execSelect();
-	        while(rs.hasNext()) {
-	        	System.out.println(rs.next());
-	        }
+	        System.out.println(ResultSetFormatter.asText(qe.execSelect()));
         }
 
         System.out.println("DONE.");

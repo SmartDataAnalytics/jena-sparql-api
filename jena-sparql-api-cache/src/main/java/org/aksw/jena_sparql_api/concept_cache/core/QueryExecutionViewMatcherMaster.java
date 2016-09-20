@@ -75,7 +75,11 @@ public class QueryExecutionViewMatcherMaster
     protected ResultSetCloseable executeCoreSelect(Query query) {
 
     	Range<Long> range = QueryUtils.toRange(query);
-    	Op opCache = Algebra.toQuadForm(Algebra.compile(query));
+    	Query q = query.cloneQuery();
+    	q.setLimit(Query.NOLIMIT);
+    	q.setOffset(Query.NOLIMIT);
+
+    	Op opCache = Algebra.toQuadForm(Algebra.compile(q));
 
         OpViewMatcher viewMatcher = OpViewMatcherImpl.create();
         Node id = viewMatcher.add(opCache);
@@ -84,7 +88,7 @@ public class QueryExecutionViewMatcherMaster
         Map<Var, Var> varMap;
         if(lr == null) {
         	// Obtain the supplier from a factory (the factory may e.g. manage the sharing of a thread pool)
-        	rangedSupplier = new RangedSupplierQuery(parentFactory, query);
+        	rangedSupplier = new RangedSupplierQuery(parentFactory, q);
         	opToRangedSupplier.put(id, rangedSupplier);
         	varMap = null;
         }

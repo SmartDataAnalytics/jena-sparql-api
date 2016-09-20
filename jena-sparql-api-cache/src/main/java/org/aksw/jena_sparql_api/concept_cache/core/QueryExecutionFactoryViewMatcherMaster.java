@@ -1,9 +1,9 @@
 package org.aksw.jena_sparql_api.concept_cache.core;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.core.QueryExecutionFactoryBackQuery;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactoryDecorator;
 import org.aksw.jena_sparql_api.util.collection.RangedSupplier;
 import org.aksw.jena_sparql_api.views.index.OpViewMatcher;
@@ -36,6 +36,7 @@ public class QueryExecutionFactoryViewMatcherMaster
     	//this.decoratee = decoratee;
         this.viewMatcher = viewMatcher;
         this.indexResultSetSizeThreshold = indexResultSetSizeThreshold;
+        this.opToRangedSupplier = new HashMap<>();
     }
 
     @Override
