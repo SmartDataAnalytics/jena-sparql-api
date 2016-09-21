@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -97,7 +99,8 @@ public class TestStateSpaceSearch {
         OpViewMatcher viewMatcher = OpViewMatcherImpl.create();
         QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://dbpedia.org/sparql", "http://dbpedia.org").create();
 //        QueryExecutionFactory qef = FluentQueryExecutionFactory.from(model).create();
-        qef = new QueryExecutionFactoryViewMatcherMaster(qef, viewMatcher, 200000l);
+        ExecutorService executorService = Executors.newCachedThreadPool();
+        qef = new QueryExecutionFactoryViewMatcherMaster(qef, viewMatcher, executorService, 200000l);
         qef = new QueryExecutionFactoryParse(qef, SparqlQueryParserImpl.create());
 
 

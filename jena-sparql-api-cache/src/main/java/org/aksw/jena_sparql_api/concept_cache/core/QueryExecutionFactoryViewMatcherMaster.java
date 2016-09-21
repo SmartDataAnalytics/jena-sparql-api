@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.concept_cache.core;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactoryDecorator;
@@ -19,6 +20,7 @@ public class QueryExecutionFactoryViewMatcherMaster
     //protected SparqlViewMatcherSystem viewMatcherSystem;
 	//protected QueryExecutionFactory decoratee;
 	protected OpViewMatcher viewMatcher;
+	protected ExecutorService executorService;
 	protected Map<Node, RangedSupplier<Long, Binding>> opToRangedSupplier;
 
     protected long indexResultSetSizeThreshold;
@@ -30,18 +32,19 @@ public class QueryExecutionFactoryViewMatcherMaster
 //        this(decoratee, serviceMap, new SparqlViewMatcherSystemImpl(), 10000);
 //    }
 
-    public QueryExecutionFactoryViewMatcherMaster(QueryExecutionFactory decoratee, OpViewMatcher viewMatcher, long indexResultSetSizeThreshold) {
+    public QueryExecutionFactoryViewMatcherMaster(QueryExecutionFactory decoratee, OpViewMatcher viewMatcher, ExecutorService executorService, long indexResultSetSizeThreshold) {
         super(decoratee);
         //this.viewMatcherSystem = viewMatcherSystem;
     	//this.decoratee = decoratee;
         this.viewMatcher = viewMatcher;
+        this.executorService = executorService;
         this.indexResultSetSizeThreshold = indexResultSetSizeThreshold;
         this.opToRangedSupplier = new HashMap<>();
     }
 
     @Override
     public QueryExecution createQueryExecution(Query query) {
-    	QueryExecution result = new QueryExecutionViewMatcherMaster(query, decoratee, viewMatcher, opToRangedSupplier);
+    	QueryExecution result = new QueryExecutionViewMatcherMaster(query, decoratee, viewMatcher, executorService, opToRangedSupplier);
     	return result;
     }
 

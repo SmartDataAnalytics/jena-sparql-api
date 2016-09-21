@@ -3,7 +3,6 @@ package org.aksw.jena_sparql_api.concept_cache.core;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -33,6 +32,7 @@ import com.google.common.collect.Range;
 public class QueryExecutionViewMatcherMaster
 	extends QueryExecutionBaseSelect
 {
+	protected ExecutorService executorService;
 	protected OpViewMatcher viewMatcher;
 	protected Map<Node, RangedSupplier<Long, Binding>> opToRangedSupplier;
 
@@ -42,8 +42,10 @@ public class QueryExecutionViewMatcherMaster
 
     public QueryExecutionViewMatcherMaster(
     		Query query,
+    		//Function<Query, RangedSupplier<Long, Binding>> rangedSupplierFactory,
     		QueryExecutionFactory subFactory,
     		OpViewMatcher viewMatcher,
+    		ExecutorService executorService,
     		Map<Node, RangedSupplier<Long, Binding>> opToRangedSupplier
     		//long indexResultSetSizeThreshold,
     		//Map<Node, ? super ViewCacheIndexer> serviceMap
@@ -51,6 +53,7 @@ public class QueryExecutionViewMatcherMaster
     	super(query, subFactory);
 
     	this.viewMatcher = viewMatcher;
+    	this.executorService = executorService;
     	this.opToRangedSupplier = opToRangedSupplier;
     	//this.serviceMap = serviceMap;
     }
@@ -89,9 +92,11 @@ public class QueryExecutionViewMatcherMaster
         if(lr == null) {
             Node id = viewMatcher.add(opCache);
         	// Obtain the supplier from a factory (the factory may e.g. manage the sharing of a thread pool)
-        	rangedSupplier = new RangedSupplierQuery(parentFactory, q);
-        	ExecutorService executorService = Executors.newSingleThreadExecutor();
+
+            rangedSupplier = new RangedSupplierQuery(parentFactory, query);
         	rangedSupplier = new RangedSupplierLazyLoadingListCache<>(executorService, rangedSupplier, Range.atMost(10000l), null);
+
+        	//rangedSupplier = new RangedSupplierQuery(parentFactory, q);
         	opToRangedSupplier.put(id, rangedSupplier);
         	varMap = null;
         }
