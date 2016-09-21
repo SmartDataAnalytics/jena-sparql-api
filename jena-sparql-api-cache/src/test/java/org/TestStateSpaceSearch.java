@@ -95,23 +95,21 @@ public class TestStateSpaceSearch {
 		model.read(r.getInputStream(), "http://ex.org/", "NTRIPLES");
 
         OpViewMatcher viewMatcher = OpViewMatcherImpl.create();
-//        QueryExecutionFactory core = FluentQueryExecutionFactory.http("http://dbpedia.org/sparql", "http://dbpedia.org").create();
-        QueryExecutionFactory qef = FluentQueryExecutionFactory.from(model).create();
+        QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://dbpedia.org/sparql", "http://dbpedia.org").create();
+//        QueryExecutionFactory qef = FluentQueryExecutionFactory.from(model).create();
         qef = new QueryExecutionFactoryViewMatcherMaster(qef, viewMatcher, 200000l);
         qef = new QueryExecutionFactoryParse(qef, SparqlQueryParserImpl.create());
 
 
         Stopwatch sw = Stopwatch.createStarted();
 
-        for(int i = 0; i < 1000; ++i) {
+        for(int i = 0; i < 10; ++i) {
 	        QueryExecution qe = qef.createQueryExecution("select * { ?s a <http://dbpedia.org/ontology/MusicalArtist> } Limit 10");
 	        ResultSet rs = qe.execSelect();
         	ResultSetFormatter.consume(rs);
         }
 
-        System.out.println("" + sw.stop().elapsed(TimeUnit.MILLISECONDS));
-
-        System.out.println("DONE.");
+        System.out.println("DONE. - " + + sw.stop().elapsed(TimeUnit.MILLISECONDS));
 
 
 //		try {

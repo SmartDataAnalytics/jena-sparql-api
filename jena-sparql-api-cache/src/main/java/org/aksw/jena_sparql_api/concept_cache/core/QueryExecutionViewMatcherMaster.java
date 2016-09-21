@@ -2,6 +2,8 @@ package org.aksw.jena_sparql_api.concept_cache.core;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -9,12 +11,12 @@ import org.aksw.jena_sparql_api.core.QueryExecutionBaseSelect;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.ResultSetCloseable;
 import org.aksw.jena_sparql_api.util.collection.RangedSupplier;
+import org.aksw.jena_sparql_api.util.collection.RangedSupplierLazyLoadingListCache;
 import org.aksw.jena_sparql_api.utils.BindingUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.ResultSetUtils;
 import org.aksw.jena_sparql_api.views.index.LookupResult;
 import org.aksw.jena_sparql_api.views.index.OpViewMatcher;
-import org.aksw.jena_sparql_api.views.index.OpViewMatcherImpl;
 import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
@@ -88,6 +90,8 @@ public class QueryExecutionViewMatcherMaster
             Node id = viewMatcher.add(opCache);
         	// Obtain the supplier from a factory (the factory may e.g. manage the sharing of a thread pool)
         	rangedSupplier = new RangedSupplierQuery(parentFactory, q);
+        	ExecutorService executorService = Executors.newSingleThreadExecutor();
+        	rangedSupplier = new RangedSupplierLazyLoadingListCache<>(executorService, rangedSupplier, Range.atMost(10000l), null);
         	opToRangedSupplier.put(id, rangedSupplier);
         	varMap = null;
         }
