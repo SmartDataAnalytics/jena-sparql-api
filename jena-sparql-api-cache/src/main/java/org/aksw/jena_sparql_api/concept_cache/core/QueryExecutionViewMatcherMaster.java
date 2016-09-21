@@ -81,12 +81,11 @@ public class QueryExecutionViewMatcherMaster
 
     	Op opCache = Algebra.toQuadForm(Algebra.compile(q));
 
-        OpViewMatcher viewMatcher = OpViewMatcherImpl.create();
-        Node id = viewMatcher.add(opCache);
         LookupResult lr = viewMatcher.lookupSingle(opCache);
         RangedSupplier<Long, Binding> rangedSupplier;
         Map<Var, Var> varMap;
         if(lr == null) {
+            Node id = viewMatcher.add(opCache);
         	// Obtain the supplier from a factory (the factory may e.g. manage the sharing of a thread pool)
         	rangedSupplier = new RangedSupplierQuery(parentFactory, q);
         	opToRangedSupplier.put(id, rangedSupplier);
