@@ -7,9 +7,9 @@ import org.apache.jena.graph.Node;
 public class MyEntry {
 	public Node id;
 	public Set<Set<String>> featureSets;
-	public QueryIndex queryIndex;
+	public OpIndex queryIndex;
 
-	public MyEntry(Node id, Set<Set<String>> featureSets, QueryIndex queryIndex) {
+	public MyEntry(Node id, Set<Set<String>> featureSets, OpIndex queryIndex) {
 		super();
 		this.id = id;
 		this.featureSets = featureSets;

@@ -16,6 +16,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -79,6 +80,7 @@ import org.springframework.core.io.Resource;
 import com.codepoetics.protonpack.functions.TriFunction;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 
 
@@ -86,7 +88,44 @@ import com.google.common.collect.Multimap;
 
 public class TestStateSpaceSearch {
 
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) {
+		Stopwatch sw = Stopwatch.createStarted();
+		for(int y = 0; y < 10; ++y) {
+			List<Integer> ints = IntStream.range(0, 250).mapToObj(x -> x).collect(Collectors.toList());
+
+			//List<List<Integer>> list = new CartesianProduct<Integer>(Arrays.asList(ints, ints)).stream().collect(Collectors.toList());
+
+			//Object wtf[] = Arrays.asList(ints, ints).toArray();
+			//System.out.println(wtf);
+
+			//Object arr[] = Arrays.asList(ints, ints).toArray((List<Integer>[])new Object[2]);
+			Iterable<Integer>[] arr = Arrays.asList(ints, ints, ints).toArray(new Iterable[0]);
+
+			//System.out.println(Arrays.toString(arr));
+			//System.out.println(list);
+			//List<List<Integer>> cart = Lists.cartesianProduct(Arrays.asList(ints, ints, ints));
+			Iterable<List<Integer>> cart = CartesianProduct.create(arr); //.stream().collect(Collectors.toList());
+			//Iterator<List<Integer>> it = new CartesianProductIterator<>(arr);
+
+			int i = 0;
+			for(List<Integer> x : cart) {
+				for(Integer xx : x) {
+					i += xx;
+				}
+
+//				System.out.println(x);
+//				System.out.println("-------");
+				//++i;
+
+			}
+
+			System.out.println("done[" + y + "]: " + i);
+		}
+		System.out.println(sw.elapsed(TimeUnit.MILLISECONDS));
+
+	}
+
+	public static void mainXX(String[] args) throws Exception {
 
 		//Op opCache = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { { ?a ?a ?a } UNION {   { SELECT DISTINCT ?b { ?b ?b ?b} }   } } ?c ?c ?c } LIMIT 10")));
 
@@ -97,19 +136,27 @@ public class TestStateSpaceSearch {
 		model.read(r.getInputStream(), "http://ex.org/", "NTRIPLES");
 
         OpViewMatcher viewMatcher = OpViewMatcherImpl.create();
-        QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://dbpedia.org/sparql", "http://dbpedia.org").create();
-//        QueryExecutionFactory qef = FluentQueryExecutionFactory.from(model).create();
+        //QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://dbpedia.org/sparql", "http://dbpedia.org").create();
+        QueryExecutionFactory qef = FluentQueryExecutionFactory.from(model).create();
         ExecutorService executorService = Executors.newCachedThreadPool();
         qef = new QueryExecutionFactoryViewMatcherMaster(qef, viewMatcher, executorService, 200000l);
         qef = new QueryExecutionFactoryParse(qef, SparqlQueryParserImpl.create());
 
-
         Stopwatch sw = Stopwatch.createStarted();
 
         for(int i = 0; i < 10; ++i) {
-	        QueryExecution qe = qef.createQueryExecution("select * { ?s a <http://dbpedia.org/ontology/MusicalArtist> } Limit 10");
-	        ResultSet rs = qe.execSelect();
-        	ResultSetFormatter.consume(rs);
+        	{
+		        QueryExecution qe = qef.createQueryExecution("select * { ?s a <http://dbpedia.org/ontology/MusicalArtist> } Limit 10");
+		        ResultSet rs = qe.execSelect();
+	        	ResultSetFormatter.consume(rs);
+        	}
+        	{
+    	        QueryExecution qe = qef.createQueryExecution("select * { ?s a <http://dbpedia.org/ontology/MusicalArtist> ; a <foo://bar> } Limit 10");
+    	        ResultSet rs = qe.execSelect();
+    	        System.out.println(ResultSetFormatter.asText(rs));
+    	        //System.out.println(t);
+            	//ResultSetFormatter.consume(rs);
+        	}
         }
 
         System.out.println("DONE. - " + + sw.stop().elapsed(TimeUnit.MILLISECONDS));
@@ -127,25 +174,6 @@ public class TestStateSpaceSearch {
 	}
 
 
-
-//	Stopwatch sw = Stopwatch.createStarted();
-//	for(int y = 0; y < 20; ++y) {
-//		List<Integer> ints = IntStream.range(0, 100000).mapToObj(x -> x).collect(Collectors.toList());
-//		List<List<Integer>> list = new CartesianProduct<Integer>(Arrays.asList(ints, ints)).stream().collect(Collectors.toList());
-//
-//		System.out.println(list);
-//		List<List<Integer>> cart = Lists.cartesianProduct(Arrays.asList(ints, ints));
-//
-//
-////		int i = 0;
-////		for(List<Integer> x : cart) {
-////			//System.out.println(x);
-////			++i;
-////
-////		}
-////		System.out.println("done[" + y + "]: " + i);
-//	}
-//	System.out.println(sw.elapsed(TimeUnit.MILLISECONDS));
 
 //    public static void main(String[] args) {
 //        Multimap<String, Integer> m = HashMultimap.create();

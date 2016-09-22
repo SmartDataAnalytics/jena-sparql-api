@@ -28,7 +28,7 @@ import org.apache.jena.sparql.expr.Expr;
 import com.google.common.collect.Multimap;
 
 public class QueryIndexerImpl
-    implements Function<Op, QueryIndex>
+    implements Function<Op, OpIndex>
 {
     public static Stream<Entry<Set<Expr>, QuadPatternIndex>> createQuadPatternIndex(Tree<Op> treeOp, Op qfpOp, QuadFilterPatternCanonical qfpc) {
         TreeNode<Op> opRef = new TreeNodeImpl<>(treeOp, qfpOp);
@@ -94,7 +94,7 @@ public class QueryIndexerImpl
 	}
 
     @Override
-    public QueryIndex apply(Op op) {
+    public OpIndex apply(Op op) {
 
         // Feature extractor for canonical quad filter pattern
         //Function<QuadFilterPatternCanonical, Stream<Set<Object>>> qfpcFeatureExtractor;
@@ -121,7 +121,7 @@ public class QueryIndexerImpl
 //        String id = StringUtils.md5Hash("" + op);
 //        Node idNode = NodeFactory.createLiteral(id);
 
-        QueryIndex result = new QueryIndex(op, tree, quadPatternIndex);
+        OpIndex result = new OpIndex(op, tree, quadPatternIndex);
 
         return result;
     }

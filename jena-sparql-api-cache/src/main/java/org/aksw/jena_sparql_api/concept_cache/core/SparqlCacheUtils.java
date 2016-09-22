@@ -16,6 +16,8 @@ import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
+import org.aksw.commons.collections.trees.Tree;
+import org.aksw.commons.collections.trees.TreeUtils;
 import org.aksw.jena_sparql_api.algebra.transform.TransformReplaceConstants;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMapImpl;
@@ -40,6 +42,8 @@ import org.aksw.jena_sparql_api.utils.QuadUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
+import org.aksw.jena_sparql_api.views.index.OpIndex;
+import org.aksw.jena_sparql_api.views.index.QuadPatternIndex;
 import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -52,6 +56,7 @@ import org.apache.jena.sparql.algebra.OpAsQuery;
 import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.TableFactory;
+import org.apache.jena.sparql.algebra.op.OpDistinct;
 import org.apache.jena.sparql.algebra.op.OpFilter;
 import org.apache.jena.sparql.algebra.op.OpGraph;
 import org.apache.jena.sparql.algebra.op.OpJoin;
@@ -133,7 +138,7 @@ public class SparqlCacheUtils {
         QuadFilterPatternCanonical optimized = optimizeFilters(qfpc.getQuads(), qfpc.getFilterCnf(), pqfp.getProjectVars());
 
         QuadFilterPattern qfp = optimized.toQfp();
-        ProjectedQuadFilterPattern result = new ProjectedQuadFilterPattern(pqfp.getProjectVars(), qfp);
+        ProjectedQuadFilterPattern result = new ProjectedQuadFilterPattern(pqfp.getProjectVars(), qfp, false);
 
         return result;
     }
@@ -587,11 +592,11 @@ public class SparqlCacheUtils {
     public static QuadFilterPattern extractQuadFilterPattern(Op op) {
         QuadFilterPattern result = null;
 
-//        // 
+//        //
 //        if(op instanceof OpQuadFilterPatternCanonical) {
 //        	result = ((OpQuadFilterPatternCanonical)op).getQfpc().toQfp();
 //        }
-        
+
         OpFilter opFilter;
         // TODO allow nested filters
         if(op instanceof OpFilter) {
@@ -645,6 +650,12 @@ public class SparqlCacheUtils {
 
         Set<Var> projectVars = null;
 
+        boolean isDistinct = false;
+        if(op instanceof OpDistinct) {
+        	isDistinct = true;
+        	op = ((OpDistinct)op).getSubOp();
+        }
+
         if(op instanceof OpProject) {
             OpProject tmp = (OpProject)op;
             projectVars = new HashSet<>(tmp.getVars());
@@ -659,7 +670,7 @@ public class SparqlCacheUtils {
                 projectVars = new HashSet<>(OpVars.mentionedVars(op));
             }
 
-            result = new ProjectedQuadFilterPattern(projectVars, qfp);
+            result = new ProjectedQuadFilterPattern(projectVars, qfp, isDistinct);
         }
 
 
@@ -718,7 +729,7 @@ public class SparqlCacheUtils {
 //
 //        return result;
 //    }
-    
+
     public static OpQuadFilterPatternCanonical tryCreateCqfp(Op op, Generator<Var> generator) {
     	QuadFilterPattern qfp = extractQuadFilterPattern(op);
     	OpQuadFilterPatternCanonical result;
@@ -1041,7 +1052,7 @@ public class SparqlCacheUtils {
             // An disjunction containing an empty conjunction (latter is generally treated as true - if i'm not mistaken)
             dnf = Collections.singleton(Collections.emptySet());
         }
-        
+
         FeatureMap<Expr, Multimap<Expr, Expr>> result = new FeatureMapImpl<>();
         for(Set<Expr> clause : dnf) {
             Multimap<Expr, Expr> exprSigToExpr = HashMultimap.create();
@@ -1059,6 +1070,24 @@ public class SparqlCacheUtils {
         return result;
     }
 
+
+
+
+    /**
+     * For each quad filter pattern of the given algebra expression determine which variables are projected and
+     * whether distinct applies.
+     *
+     *
+     *
+     *
+     * @param opIndex
+     */
+    public void analyzeQuadFilterPatterns(OpIndex opIndex) {
+    	List<Op> leafs = TreeUtils.getLeafs(opIndex.getTree());
+
+
+
+    }
 
 
 }

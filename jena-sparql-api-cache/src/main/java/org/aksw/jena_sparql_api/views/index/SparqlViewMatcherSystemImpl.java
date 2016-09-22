@@ -33,8 +33,8 @@ public class SparqlViewMatcherSystemImpl
 	implements SparqlViewMatcherSystem
 {
 
-    protected IndexSystem<Entry<Op, QueryIndex>, Op> indexSystem;
-    protected Function<Op, QueryIndex> queryIndexer;
+    protected IndexSystem<Entry<Op, OpIndex>, Op> indexSystem;
+    protected Function<Op, OpIndex> queryIndexer;
     //protected Map<Op, D> opToCacheData;
 
     public SparqlViewMatcherSystemImpl() {
@@ -43,7 +43,7 @@ public class SparqlViewMatcherSystemImpl
     }
 
     public void registerView(String name, Op cacheOp) { //, D cacheData) {
-        QueryIndex queryIndex = queryIndexer.apply(cacheOp);
+        OpIndex queryIndex = queryIndexer.apply(cacheOp);
 
         // This is the op level indexing of cache
         indexSystem.add(new SimpleEntry<>(cacheOp, queryIndex));
@@ -53,13 +53,13 @@ public class SparqlViewMatcherSystemImpl
 
     @Override
     public Op rewriteQuery(Op queryOp) {
-        QueryIndex queryIndex = queryIndexer.apply(queryOp);
+        OpIndex queryIndex = queryIndexer.apply(queryOp);
 
         // Create the initial set of cache candidates based on the query's algebra
-        Collection<Entry<Op, QueryIndex>> candidates = indexSystem.lookup(queryOp);
+        Collection<Entry<Op, OpIndex>> candidates = indexSystem.lookup(queryOp);
 
-        for(Entry<Op, QueryIndex> e : candidates) {
-            QueryIndex cacheIndex = e.getValue();
+        for(Entry<Op, OpIndex> e : candidates) {
+            OpIndex cacheIndex = e.getValue();
                     
 
             Multimap<Op, Op> candidateLeafMapping = getCandidateLeafMapping(cacheIndex, queryIndex);
@@ -71,7 +71,7 @@ public class SparqlViewMatcherSystemImpl
     }
 
     
-    public static Multimap<Op, Op> getCandidateLeafMapping(QueryIndex cacheIndex, QueryIndex queryIndex) {
+    public static Multimap<Op, Op> getCandidateLeafMapping(OpIndex cacheIndex, OpIndex queryIndex) {
 
         Multimap<Op, Op> result = HashMultimap.create();
         

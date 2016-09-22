@@ -86,13 +86,13 @@ public class IndexSystemImpl<C, Q, D, F>
     }
 
 
-    public static IndexSystemImpl<Op, Op, QueryIndex, String> create() {
+    public static IndexSystemImpl<Op, Op, OpIndex, String> create() {
         Function<Op, Stream<Set<String>>> featureExtractor = (oop) ->
             Collections.singleton(OpVisitorFeatureExtractor.getFeatures(oop, (op) -> op.getClass().getSimpleName())).stream();
 
         //FeatureMap<String, Op> featureMap = new FeatureMapImpl<>();
 
-        IndexSystemImpl<Op, Op, QueryIndex, String> result = new IndexSystemImpl<>(
+        IndexSystemImpl<Op, Op, OpIndex, String> result = new IndexSystemImpl<>(
             featureExtractor,
             featureExtractor);
 

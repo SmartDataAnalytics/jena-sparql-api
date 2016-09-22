@@ -11,7 +11,7 @@ import org.apache.jena.sparql.expr.Expr;
  * @author raven
  *
  */
-public class QueryIndex {
+public class OpIndex {
 	//protected Node id;
 
     protected Op op;
@@ -25,7 +25,7 @@ public class QueryIndex {
      */
     protected FeatureMap<Expr, QuadPatternIndex> quadPatternIndex;
 
-    public QueryIndex(Op op, Tree<Op> tree, FeatureMap<Expr, QuadPatternIndex> quadPatternIndex) {
+    public OpIndex(Op op, Tree<Op> tree, FeatureMap<Expr, QuadPatternIndex> quadPatternIndex) {
         super();
         this.quadPatternIndex = quadPatternIndex;
         this.op = op;
@@ -65,7 +65,7 @@ public class QueryIndex {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        QueryIndex other = (QueryIndex) obj;
+        OpIndex other = (OpIndex) obj;
         if (quadPatternIndex == null) {
             if (other.quadPatternIndex != null)
                 return false;
