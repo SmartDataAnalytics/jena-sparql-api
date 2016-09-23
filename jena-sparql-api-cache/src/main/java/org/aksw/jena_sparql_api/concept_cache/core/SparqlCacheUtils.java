@@ -15,6 +15,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.aksw.commons.collections.MultiMaps;
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
 import org.aksw.commons.collections.trees.Tree;
@@ -57,6 +58,7 @@ import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.TableFactory;
 import org.apache.jena.sparql.algebra.op.OpAssign;
+import org.apache.jena.sparql.algebra.op.OpBGP;
 import org.apache.jena.sparql.algebra.op.OpDisjunction;
 import org.apache.jena.sparql.algebra.op.OpDistinct;
 import org.apache.jena.sparql.algebra.op.OpExtend;
@@ -75,6 +77,7 @@ import org.apache.jena.sparql.algebra.op.OpUnion;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.QuadPattern;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.core.VarExprList;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.E_OneOf;
@@ -1118,6 +1121,22 @@ public class SparqlCacheUtils {
 
 
     /**
+     * Analyze a node of a tree for which of its variables are required for evaluation in other portions of the query.
+     *
+     * Also keep track of which set of variables is affected by the first parent distinct operation.
+     *
+     * Note: A projection does not imply reference of a variable:
+     *   A variable is only referenced if it is required for evaluating an expression or join, or if it is part of the final result.
+     *
+     * Scoping:
+     * If we have
+     * Extend(?x := ?o * 2, { ?s ?p ?o })
+     * Then a reference of ?x implies a use of ?o
+     *
+     * So we can do bookkeeping with a multimap that maps each (possibly newly introduced)
+     * variable to the set of referenced original variables
+     *
+     *
      * Goal:
      *   Given:
      *      View Query: Select Distinct ?s { ?s a Foo }
@@ -1132,6 +1151,98 @@ public class SparqlCacheUtils {
      * @return
      */
     public static ProjectionSummary analyzeQuadFilterPatterns(Tree<Op> tree, Op op) {
+    	Op current = op;
+    	Set<Var> availableVars = new HashSet<>(OpVars.mentionedVars(op));
+    	Set<Var> projectedVars = new HashSet<>(availableVars);
+    	Set<Var> referencedVars = new HashSet<>();
+
+    	// Maps variables to which other vars they depend on
+    	// E.g. Select (?x + 1 As ?y) { ... } will create the entry ?y -> { ?x } - i.e. ?y depends on ?x
+    	// Transitive dependencies are resolved immediately
+    	Multimap<Var, Var> varDeps = HashMultimap.create();
+
+    	// Map each var to itself
+    	for(Var v : availableVars) {
+    		varDeps.put(v, v);
+    	}
+
+
+    	Op placeholder = new OpBGP();
+    	while(current != null) {
+    		Class<?> opClass = current.getClass();
+
+    		Op parent = tree.getParent(current);
+
+
+    		if(parent != null) {
+        		boolean isDisjunction = parent instanceof OpUnion || parent instanceof OpDisjunction;
+    			if(!isDisjunction) {
+	    			List<Op> children = tree.getChildren(parent);
+	    			List<Op> tmp = new ArrayList<>(children);
+	    			for(int i = 0; i < tmp.size(); ++i) {
+	    				Op child = tmp.get(i);
+	    				if(child == current) {
+	    					tmp.set(i, placeholder);
+	    				}
+	    			}
+	    			Op checkOp = OpUtils.copy(parent, tmp);
+	    			Set<Var> visibleVars = OpVars.visibleVars(checkOp);
+
+	    			Set<Var> originalVars = MultiMaps.transitiveGetAll(varDeps.asMap(), visibleVars);
+
+
+
+	    			Set<Var> overlapVars = Sets.intersection(projectedVars, originalVars);
+	    			referencedVars.addAll(overlapVars);
+    			}
+    		}
+
+
+			if(current instanceof OpProject) {
+				OpProject o = (OpProject)current;
+				Collection<Var> vars = o.getVars();
+				projectedVars.retainAll(vars);
+				// All so far projected variables are intersected with those of the new projection
+				//referencedVars.addAll(Sets.intersection(projectedVars, vars));
+			} else if(current instanceof OpExtend) {
+				OpExtend o = (OpExtend)current;
+				VarExprList vel = o.getVarExprList();
+				vel.forEach((v, ex) -> {
+					Set<Var> vars = ExprVars.getVarsMentioned(ex);
+					Set<Var> origVars = MultiMaps.transitiveGetAll(varDeps.asMap(), vars);
+					varDeps.putAll(v, origVars);
+				});
+
+
+				projectedVars.remove(o.getVarExprList().getVars());
+			} else if(current instanceof OpAssign) {
+				OpAssign o = (OpAssign)current;
+				projectedVars.remove(o.getVarExprList().getVars());
+			} else {
+//				referencedVars.addAll(availableVars);
+////				isDistinct = false;
+//
+//
+//				System.out.println("Unknown Op type: " + opClass);
+//				projectedVars.clear();
+			}
+
+
+    		current = parent;
+
+    	}
+
+		///System.out.println("distinct: " + isDistinct);
+		System.out.println("proj:" + projectedVars);
+		System.out.println("refs: " + referencedVars);
+		System.out.println("deps: " + varDeps);
+		System.out.println("-----");
+
+		return null;
+    }
+
+
+    public static ProjectionSummary analyzeQuadFilterPatterns2(Tree<Op> tree, Op op) {
 		Op current = op;
 
 		boolean isDistinct = false;
@@ -1183,7 +1294,7 @@ public class SparqlCacheUtils {
 				Set<Var> vars = new HashSet<>(o.getVars());
 				projectedVars.retainAll(vars);
 				// All so far projected variables are intersected with those of the new projection
-				referencedVars.addAll(Sets.intersection(projectedVars, vars));
+				//referencedVars.addAll(Sets.intersection(projectedVars, vars));
 			} else if(current instanceof OpExtend) {
 				OpExtend o = (OpExtend)current;
 				projectedVars.remove(o.getVarExprList().getVars());
