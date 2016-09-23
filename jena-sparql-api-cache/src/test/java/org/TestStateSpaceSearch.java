@@ -16,7 +16,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -29,9 +28,12 @@ import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeImpl;
 import org.aksw.commons.collections.trees.TreeUtils;
 import org.aksw.jena_sparql_api.algebra.transform.TransformJoinToConjunction;
+import org.aksw.jena_sparql_api.algebra.transform.TransformLeftJoinToSet;
+import org.aksw.jena_sparql_api.algebra.transform.TransformSetToLeftJoin;
 import org.aksw.jena_sparql_api.algebra.transform.TransformUnionToDisjunction;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMapImpl;
+import org.aksw.jena_sparql_api.concept_cache.core.ProjectionSummary;
 import org.aksw.jena_sparql_api.concept_cache.core.QueryExecutionFactoryViewMatcherMaster;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
 import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
@@ -51,6 +53,8 @@ import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.aksw.jena_sparql_api.view_matcher.OpVarMap;
 import org.aksw.jena_sparql_api.view_matcher.SparqlViewMatcherUtils;
+import org.aksw.jena_sparql_api.views.index.OpIndex;
+import org.aksw.jena_sparql_api.views.index.OpIndexerImpl;
 import org.aksw.jena_sparql_api.views.index.OpViewMatcher;
 import org.aksw.jena_sparql_api.views.index.OpViewMatcherImpl;
 import org.aksw.jena_sparql_api.views.index.SparqlViewMatcherSystemImpl;
@@ -80,7 +84,6 @@ import org.springframework.core.io.Resource;
 import com.codepoetics.protonpack.functions.TriFunction;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 
 
@@ -88,44 +91,8 @@ import com.google.common.collect.Multimap;
 
 public class TestStateSpaceSearch {
 
-	public static void main(String[] args) {
-		Stopwatch sw = Stopwatch.createStarted();
-		for(int y = 0; y < 10; ++y) {
-			List<Integer> ints = IntStream.range(0, 250).mapToObj(x -> x).collect(Collectors.toList());
 
-			//List<List<Integer>> list = new CartesianProduct<Integer>(Arrays.asList(ints, ints)).stream().collect(Collectors.toList());
-
-			//Object wtf[] = Arrays.asList(ints, ints).toArray();
-			//System.out.println(wtf);
-
-			//Object arr[] = Arrays.asList(ints, ints).toArray((List<Integer>[])new Object[2]);
-			Iterable<Integer>[] arr = Arrays.asList(ints, ints, ints).toArray(new Iterable[0]);
-
-			//System.out.println(Arrays.toString(arr));
-			//System.out.println(list);
-			//List<List<Integer>> cart = Lists.cartesianProduct(Arrays.asList(ints, ints, ints));
-			Iterable<List<Integer>> cart = CartesianProduct.create(arr); //.stream().collect(Collectors.toList());
-			//Iterator<List<Integer>> it = new CartesianProductIterator<>(arr);
-
-			int i = 0;
-			for(List<Integer> x : cart) {
-				for(Integer xx : x) {
-					i += xx;
-				}
-
-//				System.out.println(x);
-//				System.out.println("-------");
-				//++i;
-
-			}
-
-			System.out.println("done[" + y + "]: " + i);
-		}
-		System.out.println(sw.elapsed(TimeUnit.MILLISECONDS));
-
-	}
-
-	public static void mainXX(String[] args) throws Exception {
+	public static void main(String[] args) throws Exception {
 
 		//Op opCache = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { { ?a ?a ?a } UNION {   { SELECT DISTINCT ?b { ?b ?b ?b} }   } } ?c ?c ?c } LIMIT 10")));
 
@@ -134,6 +101,22 @@ public class TestStateSpaceSearch {
 		Resource r = new ClassPathResource("data-lorenz.nt");
 		Model model = ModelFactory.createDefaultModel();
 		model.read(r.getInputStream(), "http://ex.org/", "NTRIPLES");
+
+
+
+		Op op = Algebra.compile(QueryFactory.create("Select Distinct * { { ?s a <http://dbpedia.org/ontology/MusicalArtist> } UNION { ?x ?p <foobar> } Optional { ?s <ex:mailbox> ?m } Optional { ?s <ex:label> ?l } Filter(?s = <foo>) } Limit 10"));
+		op = Transformer.transform(TransformLeftJoinToSet.fn, op);
+		//op = Transformer.transform(TransformSetToLeftJoin.fn, op);
+		System.out.println(op);
+		OpIndex opIndex = new OpIndexerImpl().apply(op);
+		ProjectionSummary ps = SparqlCacheUtils.analyzeQuadFilterPatterns(opIndex);
+		//System.out.println(ps);
+
+
+		if(true) {
+			System.exit(0);
+		}
+
 
         OpViewMatcher viewMatcher = OpViewMatcherImpl.create();
         //QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://dbpedia.org/sparql", "http://dbpedia.org").create();

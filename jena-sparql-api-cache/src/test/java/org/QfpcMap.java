@@ -22,23 +22,7 @@ import org.apache.jena.sparql.expr.Expr;
 import com.google.common.collect.Multimap;
 
 
-/**
- * Associates a
- *
- * @author raven
- *
- */
-class OpTree {
-    protected Op op;
-    protected Map<Op, Op> childToParent;
-}
 
-
-
-
-class OpIndex {
-
-}
 
 /**
  *
@@ -47,7 +31,7 @@ class OpIndex {
  *
  */
 public class QfpcMap {
-    protected FeatureMap<Expr, OpIndex> clauseSigTo;
+    protected FeatureMap<Expr, Void> clauseSigTo;
 
 
 

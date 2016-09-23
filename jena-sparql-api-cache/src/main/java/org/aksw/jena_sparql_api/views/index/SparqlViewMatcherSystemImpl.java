@@ -39,7 +39,7 @@ public class SparqlViewMatcherSystemImpl
 
     public SparqlViewMatcherSystemImpl() {
         indexSystem = IndexSystemImpl.create();
-        queryIndexer = new QueryIndexerImpl();
+        queryIndexer = new OpIndexerImpl();
     }
 
     public void registerView(String name, Op cacheOp) { //, D cacheData) {

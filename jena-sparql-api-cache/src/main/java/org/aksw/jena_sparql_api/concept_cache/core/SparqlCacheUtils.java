@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.concept_cache.core;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -43,7 +44,6 @@ import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.views.index.OpIndex;
-import org.aksw.jena_sparql_api.views.index.QuadPatternIndex;
 import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -56,14 +56,20 @@ import org.apache.jena.sparql.algebra.OpAsQuery;
 import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.TableFactory;
+import org.apache.jena.sparql.algebra.op.OpAssign;
+import org.apache.jena.sparql.algebra.op.OpDisjunction;
 import org.apache.jena.sparql.algebra.op.OpDistinct;
+import org.apache.jena.sparql.algebra.op.OpExtend;
 import org.apache.jena.sparql.algebra.op.OpFilter;
 import org.apache.jena.sparql.algebra.op.OpGraph;
 import org.apache.jena.sparql.algebra.op.OpJoin;
+import org.apache.jena.sparql.algebra.op.OpLeftJoin;
 import org.apache.jena.sparql.algebra.op.OpNull;
 import org.apache.jena.sparql.algebra.op.OpProject;
 import org.apache.jena.sparql.algebra.op.OpQuadPattern;
+import org.apache.jena.sparql.algebra.op.OpSequence;
 import org.apache.jena.sparql.algebra.op.OpService;
+import org.apache.jena.sparql.algebra.op.OpSlice;
 import org.apache.jena.sparql.algebra.op.OpTable;
 import org.apache.jena.sparql.algebra.op.OpUnion;
 import org.apache.jena.sparql.core.Quad;
@@ -1074,19 +1080,138 @@ public class SparqlCacheUtils {
 
 
     /**
+     * So we need to know which variables of a quad pattern are either projected or required for evaluation (e.g. filters, joins) of the overall query.
+     *
+     *
+     *
+     *
      * For each quad filter pattern of the given algebra expression determine which variables are projected and
      * whether distinct applies.
+     * So actually we want to push distinct down - but this also does not make sense, because distinct only applies to
+     * after a projection...
+     *
+     *
+     * The mean thing is, that variables are actually scoped:
+     * Select ?x {
+     *   { Select Distinct ?s As ?x{ // Within this subtree, unique(?x) applies
+     *     ?s a foaf:Person
+     *   } }
+     *   Union {
+     *     ?x a foaf:Agent
+     *   }
+     * }
      *
      *
      *
      *
      * @param opIndex
      */
-    public void analyzeQuadFilterPatterns(OpIndex opIndex) {
-    	List<Op> leafs = TreeUtils.getLeafs(opIndex.getTree());
+    public static ProjectionSummary analyzeQuadFilterPatterns(OpIndex opIndex) {
+    	Tree<Op> tree = opIndex.getTree();
+    	List<Op> leafs = TreeUtils.getLeafs(tree);
+    	for(Op leaf : leafs) {
+    		ProjectionSummary ps = analyzeQuadFilterPatterns(tree, leaf);
+    		System.out.println(ps);
+    	}
+    	return null;
+    }
 
 
+    /**
+     * Goal:
+     *   Given:
+     *      View Query: Select Distinct ?s { ?s a Foo }
+     *      User Query: Select Distinct ?s { { ?s a Foo } UNION { ?s a Bar } }
+     *   support injecting the view query into the user query:
+     *      Select Distinct ?s { viewRef(viewId, {?s}) UNION { ?s a Bar } }
+     *
+     * Note: If the User Query was without Distinct, there would be no match
+     *
+     * @param tree
+     * @param op
+     * @return
+     */
+    public static ProjectionSummary analyzeQuadFilterPatterns(Tree<Op> tree, Op op) {
+		Op current = op;
 
+		boolean isDistinct = false;
+		Set<Var> availableVars = OpVars.fixedVars(current);
+		Set<Var> projectedVars = new HashSet<>(availableVars);
+		Set<Var> referencedVars = new HashSet<>();
+
+		current = tree.getParent(current);
+
+		// At present, we do not handle OpExtend OpAssign
+		Set<Class<?>> passThrough = new HashSet<>(Arrays.asList(OpLeftJoin.class, OpSequence.class, OpDisjunction.class, OpUnion.class, OpJoin.class, OpSlice.class, OpFilter.class));
+
+		while(current != null) {
+			Op parent = tree.getParent(current);
+
+			if(parent != null) {
+				Set<Var> refs = new HashSet<>();
+
+				if(parent instanceof OpJoin || parent instanceof OpSequence || parent instanceof OpLeftJoin) {
+					List<Op> children = tree.getChildren(parent);
+					// Get the set of variables of all children except current
+					for(Op child : children) {
+						if(child == current) {
+							continue;
+						}
+						OpVars.visibleVars(child, refs);
+					}
+				} else if(parent instanceof OpFilter) {
+					OpFilter o = (OpFilter)parent;
+					ExprList exprs = o.getExprs();
+					Set<Var> tmp = ExprVars.getVarsMentioned(exprs);
+					refs.addAll(tmp);
+				}
+				referencedVars.addAll(Sets.intersection(availableVars, refs));
+			}
+
+			Class<?> opClass = current.getClass();
+			if(passThrough.contains(opClass)) {
+				// Nothing to do
+			} else if(current instanceof OpDistinct) {
+				isDistinct = true;
+			} else if(current instanceof OpFilter) {
+				OpFilter o = (OpFilter)current;
+				ExprList exprs = o.getExprs();
+				Set<Var> tmp = ExprVars.getVarsMentioned(exprs);
+				referencedVars.addAll(tmp);
+			} else if(current instanceof OpProject) {
+				OpProject o = (OpProject)current;
+				Set<Var> vars = new HashSet<>(o.getVars());
+				projectedVars.retainAll(vars);
+				// All so far projected variables are intersected with those of the new projection
+				referencedVars.addAll(Sets.intersection(projectedVars, vars));
+			} else if(current instanceof OpExtend) {
+				OpExtend o = (OpExtend)current;
+				projectedVars.remove(o.getVarExprList().getVars());
+			} else if(current instanceof OpAssign) {
+				OpAssign o = (OpAssign)current;
+				projectedVars.remove(o.getVarExprList().getVars());
+			} else {
+				// Gracefully assume that all variables are referenced, and none are projected
+				// (and non-distinct - though without projected variables there cannot be a match anyway)
+				referencedVars.addAll(availableVars);
+				isDistinct = false;
+
+
+				System.out.println("Unknown Op type: " + opClass);
+				projectedVars.clear();
+			}
+
+			current = parent;
+		}
+
+		System.out.println("distinct: " + isDistinct);
+		System.out.println("proj:" + projectedVars);
+		System.out.println("refs: " + referencedVars);
+		System.out.println("-----");
+
+		ProjectionSummary result = null;
+		//ProjectionSummary result = new ProjectionSummary(isDistinct, vars);
+		return result;
     }
 
 

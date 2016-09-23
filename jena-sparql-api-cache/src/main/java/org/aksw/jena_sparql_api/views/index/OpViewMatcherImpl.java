@@ -230,7 +230,7 @@ public class OpViewMatcherImpl
         OpViewMatcher result = new OpViewMatcherImpl(
         		OpViewMatcherImpl::normalizeOp,
                 itemFeatureExtractor,
-                new QueryIndexerImpl());
+                new OpIndexerImpl());
 
         return result;
 	}

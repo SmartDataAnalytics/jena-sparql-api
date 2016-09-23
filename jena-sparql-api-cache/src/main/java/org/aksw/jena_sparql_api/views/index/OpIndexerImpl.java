@@ -27,7 +27,7 @@ import org.apache.jena.sparql.expr.Expr;
 
 import com.google.common.collect.Multimap;
 
-public class QueryIndexerImpl
+public class OpIndexerImpl
     implements Function<Op, OpIndex>
 {
     public static Stream<Entry<Set<Expr>, QuadPatternIndex>> createQuadPatternIndex(Tree<Op> treeOp, Op qfpOp, QuadFilterPatternCanonical qfpc) {
