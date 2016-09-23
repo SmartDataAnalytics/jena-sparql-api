@@ -69,11 +69,16 @@ public class TransformLeftJoinToSet
 	        }
 	    } else if(op instanceof OpLeftJoin) {
 	    	OpLeftJoin o = (OpLeftJoin)op;
-	    	List<Op> elts = dest.getElements();
-	    	elts.listIterator(0).add(o.getLeft());
+	    	ExprList exprs = o.getExprs();
+	    	if(exprs == null) {
+		    	List<Op> elts = dest.getElements();
+		    	elts.listIterator(0).add(o.getLeft());
 
-	        //dest.add(o.getLeft());
-	        elts.listIterator(elts.size() - 1).add(o.getRight());
+		        //dest.add(o.getLeft());
+		        elts.listIterator(elts.size() - 1).add(o.getRight());
+	    	} else {
+	    		dest.add(op);
+	    	}
 	    } else {
 	        dest.add(op);
 	    }
