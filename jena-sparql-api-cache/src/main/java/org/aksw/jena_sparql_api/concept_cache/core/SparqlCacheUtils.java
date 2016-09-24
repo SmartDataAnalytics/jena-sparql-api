@@ -64,6 +64,7 @@ import org.apache.jena.sparql.algebra.op.OpDistinct;
 import org.apache.jena.sparql.algebra.op.OpExtend;
 import org.apache.jena.sparql.algebra.op.OpFilter;
 import org.apache.jena.sparql.algebra.op.OpGraph;
+import org.apache.jena.sparql.algebra.op.OpGroup;
 import org.apache.jena.sparql.algebra.op.OpJoin;
 import org.apache.jena.sparql.algebra.op.OpLeftJoin;
 import org.apache.jena.sparql.algebra.op.OpNull;
@@ -82,6 +83,7 @@ import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.E_OneOf;
 import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprAggregator;
 import org.apache.jena.sparql.expr.ExprList;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.ExprVars;
@@ -1121,6 +1123,9 @@ public class SparqlCacheUtils {
 
 
     /**
+     * Maybe we need to change the method to
+     * is compatible(Tree<Op> tree, Op op, Set<Var> vars, boolean distinct)
+     *
      * Analyze a node of a tree for which of its variables are required for evaluation in other portions of the query.
      *
      * Also keep track of which set of variables is affected by the first parent distinct operation.
@@ -1146,6 +1151,17 @@ public class SparqlCacheUtils {
      *
      * Note: If the User Query was without Distinct, there would be no match
      *
+     * Distinct (
+     *   Project(?s ?o,
+     *     Union (
+     *       BGP(?s a Foo), // As only ?s is projected and ?o is unbound, the distinct ?s trivially satisfies distinct ?s ?o
+     *       BGP(?s ?p ?o),
+     *     )
+     *   )
+     * )
+     *
+     * Variables that are used in aggregate expressions must not be distinct - unless there is an appropriate distinct sub op
+     *
      * @param tree
      * @param op
      * @return
@@ -1156,56 +1172,50 @@ public class SparqlCacheUtils {
     	Set<Var> projectedVars = new HashSet<>(availableVars);
     	Set<Var> referencedVars = new HashSet<>();
 
+    	// Any variable that is aggregated on must not be non-unique (otherwise it would distort the result)
+    	// Note that an overall query neither projects nor references a nonUnique variable
+    	Set<Var> nonUnique = new HashSet<>();
+
     	// Maps variables to which other vars they depend on
     	// E.g. Select (?x + 1 As ?y) { ... } will create the entry ?y -> { ?x } - i.e. ?y depends on ?x
     	// Transitive dependencies are resolved immediately
     	Multimap<Var, Var> varDeps = HashMultimap.create();
-
-    	// Map each var to itself
-    	for(Var v : availableVars) {
-    		varDeps.put(v, v);
-    	}
-
+    	availableVars.forEach(v -> varDeps.put(v, v));
 
     	Op placeholder = new OpBGP();
-    	while(current != null) {
-    		Class<?> opClass = current.getClass();
-
-    		Op parent = tree.getParent(current);
-
-
-    		if(parent != null) {
-        		boolean isDisjunction = parent instanceof OpUnion || parent instanceof OpDisjunction;
-    			if(!isDisjunction) {
-	    			List<Op> children = tree.getChildren(parent);
-	    			List<Op> tmp = new ArrayList<>(children);
-	    			for(int i = 0; i < tmp.size(); ++i) {
-	    				Op child = tmp.get(i);
-	    				if(child == current) {
-	    					tmp.set(i, placeholder);
-	    				}
-	    			}
-	    			Op checkOp = OpUtils.copy(parent, tmp);
-	    			Set<Var> visibleVars = OpVars.visibleVars(checkOp);
-
-	    			Set<Var> originalVars = MultiMaps.transitiveGetAll(varDeps.asMap(), visibleVars);
-
-
-
-	    			Set<Var> overlapVars = Sets.intersection(projectedVars, originalVars);
-	    			referencedVars.addAll(overlapVars);
+    	Op parent;
+    	while((parent = tree.getParent(current)) != null) {
+//    		Class<?> opClass = current.getClass();
+//System.out.println("Processing: " + parent);
+    		// Compute referenced vars for joins (non-disjunctive multi argument expressions)
+    		//boolean isDisjunction = parent instanceof OpUnion || parent instanceof OpDisjunction;
+    		//boolean isJoin = parent instanceof OpJoin || parent instanceof OpSequence;
+			if(parent instanceof OpJoin || parent instanceof OpSequence) {
+    			List<Op> children = tree.getChildren(parent);
+    			List<Op> tmp = new ArrayList<>(children);
+    			for(int i = 0; i < tmp.size(); ++i) {
+    				Op child = tmp.get(i);
+    				if(child == current) {
+    					tmp.set(i, placeholder);
+    				}
     			}
-    		}
+    			Op checkOp = OpUtils.copy(parent, tmp);
+    			Set<Var> visibleVars = OpVars.visibleVars(checkOp);
+
+    			Set<Var> originalVars = MultiMaps.transitiveGetAll(varDeps.asMap(), visibleVars);
 
 
-			if(current instanceof OpProject) {
-				OpProject o = (OpProject)current;
+
+    			Set<Var> overlapVars = Sets.intersection(projectedVars, originalVars);
+    			referencedVars.addAll(overlapVars);
+			} else if(parent instanceof OpProject) {
+				OpProject o = (OpProject)parent;
 				Collection<Var> vars = o.getVars();
 				projectedVars.retainAll(vars);
 				// All so far projected variables are intersected with those of the new projection
 				//referencedVars.addAll(Sets.intersection(projectedVars, vars));
-			} else if(current instanceof OpExtend) {
-				OpExtend o = (OpExtend)current;
+			} else if(parent instanceof OpExtend) {
+				OpExtend o = (OpExtend)parent;
 				VarExprList vel = o.getVarExprList();
 				vel.forEach((v, ex) -> {
 					Set<Var> vars = ExprVars.getVarsMentioned(ex);
@@ -1215,9 +1225,30 @@ public class SparqlCacheUtils {
 
 
 				projectedVars.remove(o.getVarExprList().getVars());
-			} else if(current instanceof OpAssign) {
-				OpAssign o = (OpAssign)current;
+			} else if(parent instanceof OpAssign) {
+				OpAssign o = (OpAssign)parent;
 				projectedVars.remove(o.getVarExprList().getVars());
+			} if(parent instanceof OpGroup) {
+				OpGroup o = (OpGroup)parent;
+				// Original variables used in the aggregators are declared as non-unique and referenced
+				List<ExprAggregator> exprAggs = o.getAggregators();
+				exprAggs.forEach(ea -> {
+					Var v = ea.getVar();
+					ExprList el = ea.getAggregator().getExprList();
+					Set<Var> vars = ExprVars.getVarsMentioned(el);
+					Set<Var> origVars = MultiMaps.transitiveGetAll(varDeps.asMap(), vars);
+					varDeps.putAll(v, origVars);
+					nonUnique.add(v);
+				});
+
+				// Original variables in the group by expressions are declared as referenced
+				VarExprList vel = o.getGroupVars();
+				vel.forEach((v, ex) -> {
+					Set<Var> vars = ExprVars.getVarsMentioned(ex);
+					Set<Var> origVars = MultiMaps.transitiveGetAll(varDeps.asMap(), vars);
+					varDeps.putAll(v, origVars);
+				});
+
 			} else {
 //				referencedVars.addAll(availableVars);
 ////				isDistinct = false;
@@ -1227,15 +1258,14 @@ public class SparqlCacheUtils {
 //				projectedVars.clear();
 			}
 
-
-    		current = parent;
-
+			current = parent;
     	}
 
 		///System.out.println("distinct: " + isDistinct);
 		System.out.println("proj:" + projectedVars);
 		System.out.println("refs: " + referencedVars);
 		System.out.println("deps: " + varDeps);
+		System.out.println("non-uniq: " + nonUnique);
 		System.out.println("-----");
 
 		return null;

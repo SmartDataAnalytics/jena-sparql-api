@@ -69,6 +69,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.op.OpDisjunction;
 import org.apache.jena.sparql.algebra.op.OpQuadBlock;
@@ -94,6 +95,9 @@ public class TestStateSpaceSearch {
 
 	public static void main(String[] args) throws Exception {
 
+		//System.out.println("VISIBLE: " + OpVars.mentionedVars(Algebra.compile(QueryFactory.create("SELECT * { {} Filter(?s = <Foo>) }"))));
+		//if(true) { System.exit(0); }
+
 		//Op opCache = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { { ?a ?a ?a } UNION {   { SELECT DISTINCT ?b { ?b ?b ?b} }   } } ?c ?c ?c } LIMIT 10")));
 
         //viewMatcher.add(opCache);
@@ -103,10 +107,9 @@ public class TestStateSpaceSearch {
 		model.read(r.getInputStream(), "http://ex.org/", "NTRIPLES");
 
 
-
 		//Op op = Algebra.compile(QueryFactory.create("Select Distinct * { { ?s a <http://dbpedia.org/ontology/MusicalArtist> } UNION { ?x ?p <foobar> } Optional { ?s <ex:mailbox> ?m } Optional { ?s <ex:label> ?l } Filter(?s = <foo>) } Limit 10"));
 		//Op op = Algebra.compile(QueryFactory.create("Select * { ?s a <ex:Person> Optional { ?s <ex:knows> ?o Optional { ?o <ex:label> ?s } } }"));
-		Op op = Algebra.compile(QueryFactory.create("Select ((?s + ?o) As ?z) { ?s a <ex:Person> Optional { ?s <ex:knows> ?o Optional { ?o <ex:knows> ?x . Filter(?x = ?s) } } }"));
+		Op op = Algebra.compile(QueryFactory.create("Select ((?s + ?y) As ?z) { { Select ?s (Sum(?x) As ?y) { ?s a <ex:Person> Optional { ?s <ex:knows> ?o Optional { ?o <ex:knows> ?x . Filter(?x = ?s) } } } Group By ?s } }", Syntax.syntaxARQ));
 		//op = Transformer.transform(TransformLeftJoinToSet.fn, op);
 		//op = Transformer.transform(TransformSetToLeftJoin.fn, op);
 		System.out.println(op);
@@ -114,10 +117,9 @@ public class TestStateSpaceSearch {
 		ProjectionSummary ps = SparqlCacheUtils.analyzeQuadFilterPatterns(opIndex);
 		//System.out.println(ps);
 
+		if(true) { System.exit(0); }
 
-		if(true) {
-			System.exit(0);
-		}
+
 
 
         OpViewMatcher viewMatcher = OpViewMatcherImpl.create();
