@@ -18,6 +18,8 @@ public class OpIndex {
 
     protected Tree<Op> tree;
 
+    // TODO Add leafs
+
     /**
      * Index over all of a query's quad patterns
      * Allows retrieving any of a query's quad patterns using a given set of features

@@ -1,6 +1,5 @@
 package org.aksw.jena_sparql_api.concept_cache.core;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -13,6 +12,7 @@ import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.algebra.OpVisitorBase;
 import org.apache.jena.sparql.algebra.op.OpAssign;
+import org.apache.jena.sparql.algebra.op.OpDistinct;
 import org.apache.jena.sparql.algebra.op.OpExtend;
 import org.apache.jena.sparql.algebra.op.OpFilter;
 import org.apache.jena.sparql.algebra.op.OpGroup;
@@ -20,6 +20,7 @@ import org.apache.jena.sparql.algebra.op.OpJoin;
 import org.apache.jena.sparql.algebra.op.OpLeftJoin;
 import org.apache.jena.sparql.algebra.op.OpOrder;
 import org.apache.jena.sparql.algebra.op.OpProject;
+import org.apache.jena.sparql.algebra.op.OpReduced;
 import org.apache.jena.sparql.algebra.op.OpSequence;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
@@ -30,38 +31,34 @@ import org.apache.jena.sparql.expr.ExprVars;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
 
-public class VarUsageVisitor
+public class VarUsageAnalyzerVisitor
 	extends OpVisitorBase
 {
 	protected Tree<Op> tree;
 	protected Op current;
 	protected Set<Var> availableVars;
+
 	protected Set<Var> referencedVars;
 	protected Set<Var> nonUnique;
 	protected Multimap<Var, Var> varDeps;
+	protected Set<Set<Var>> uniqueSets;
 
-	public VarUsageVisitor(Tree<Op> tree, Op current) {
+	public VarUsageAnalyzerVisitor(Tree<Op> tree, Op current) {
 		this.tree = tree;
 		this.current = current;
 		this.availableVars = OpVars.visibleVars(current);
 		this.referencedVars = new HashSet<>();
 		this.nonUnique = new HashSet<>();
 		this.varDeps = HashMultimap.create();
+		this.uniqueSets = new HashSet<>();
 
 		availableVars.forEach(v -> varDeps.put(v, v));
 	}
 
 	public VarUsage getResult() {
-		System.out.println("avail:" + availableVars);
-		System.out.println("proj:" + varDeps.keySet());
-		System.out.println("refs: " + referencedVars);
-		System.out.println("deps: " + varDeps);
-		System.out.println("non-uniq: " + nonUnique);
-		System.out.println("-----");
-
-		return null;
+		VarUsage result = new VarUsage(referencedVars, nonUnique, varDeps, uniqueSets);
+		return result;
 	}
 
 	public void setCurrent(Op current) {
@@ -113,6 +110,15 @@ public class VarUsageVisitor
 		Set<Var> originalVars = MultimapUtils.getAll(varDeps, visibleVars);
 		//Set<Var> overlapVars = Sets.intersection(projectedVars, originalVars);
 		referencedVars.addAll(originalVars);
+	}
+
+	public void processDistinct() {
+		Set<Var> vars = varDeps.keySet();
+
+		Set<Var> origVars = MultimapUtils.getAll(varDeps, vars);
+		nonUnique.forEach(origVars::remove);
+
+		uniqueSets.add(origVars);
 	}
 
 	@Override
@@ -191,6 +197,17 @@ public class VarUsageVisitor
 
 	@Override
 	public void visit(OpOrder op) {
+	}
+
+
+	@Override
+	public void visit(OpDistinct op) {
+		processDistinct();
+	}
+
+	@Override
+	public void visit(OpReduced op) {
+		processDistinct();
 	}
 
 }

@@ -1104,82 +1104,15 @@ public class SparqlCacheUtils {
      *
      * @param opIndex
      */
-    public static ProjectionSummary analyzeQuadFilterPatterns(OpIndex opIndex) {
-    	Tree<Op> tree = opIndex.getTree();
-    	List<Op> leafs = TreeUtils.getLeafs(tree);
-    	for(Op leaf : leafs) {
-    		ProjectionSummary ps = analyzeQuadFilterPatterns(tree, leaf);
-    		System.out.println(ps);
-    	}
-    	return null;
-    }
-
-
-    /**
-     * Maybe we need to change the method to
-     * is compatible(Tree<Op> tree, Op op, Set<Var> vars, boolean distinct)
-     *
-     * Analyze a node of a tree for which of its variables are required for evaluation in other portions of the query.
-     *
-     * Also keep track of which set of variables is affected by the first parent distinct operation.
-     *
-     * Note: A projection does not imply reference of a variable:
-     *   A variable is only referenced if it is required for evaluating an expression or join, or if it is part of the final result.
-     *
-     * Scoping:
-     * If we have
-     * Extend(?x := ?o * 2, { ?s ?p ?o })
-     * Then a reference of ?x implies a use of ?o
-     *
-     * So we can do bookkeeping with a multimap that maps each (possibly newly introduced)
-     * variable to the set of referenced original variables
-     *
-     *
-     * Goal:
-     *   Given:
-     *      View Query: Select Distinct ?s { ?s a Foo }
-     *      User Query: Select Distinct ?s { { ?s a Foo } UNION { ?s a Bar } }
-     *   support injecting the view query into the user query:
-     *      Select Distinct ?s { viewRef(viewId, {?s}) UNION { ?s a Bar } }
-     *
-     * Note: If the User Query was without Distinct, there would be no match
-     *
-     * Distinct (
-     *   Project(?s ?o,
-     *     Union (
-     *       BGP(?s a Foo), // As only ?s is projected and ?o is unbound, the distinct ?s trivially satisfies distinct ?s ?o
-     *       BGP(?s ?p ?o),
-     *     )
-     *   )
-     * )
-     *
-     * Variables that are used in aggregate expressions must not be distinct - unless there is an appropriate distinct sub op
-     *
-     * We could have:
-     * 	Select (?s as ?o) (?o As ?s) { ?s ?p ?o } (virtuoso 7.2 accepts this, but gets it wrong)
-     * In this case we would get the dependencies:
-     *   { ?o -> { ?s }, ?s -> { ?o } }
-     *
-     * The thing we have to take care of is, that the extend node may 'kill' prior variable definitions
-     *
-     * @param tree
-     * @param current
-     * @return
-     */
-    public static ProjectionSummary analyzeQuadFilterPatterns(Tree<Op> tree, Op current) {
-    	VarUsageVisitor visitor = new VarUsageVisitor(tree, current);
-
-    	Op parent;
-    	while((parent = tree.getParent(current)) != null) {
-    		visitor.setCurrent(current);
-    		parent.visit(visitor);
-    		current = parent;
-    	}
-
-    	visitor.getResult();
-
-		return null;
-    }
+//    public static VarUsage analyzeQuadFilterPatterns(OpIndex opIndex) {
+//    	Tree<Op> tree = opIndex.getTree();
+//    	List<Op> leafs = TreeUtils.getLeafs(tree);
+//    	for(Op leaf : leafs) {
+//    		VarUsage ps = OpUtils.analyzeVarUsage(tree, leaf);
+//    		System.out.println(ps);
+//    	}
+//    	return null;
+//    }
 }
 
 

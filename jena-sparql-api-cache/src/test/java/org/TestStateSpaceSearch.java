@@ -28,14 +28,12 @@ import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeImpl;
 import org.aksw.commons.collections.trees.TreeUtils;
 import org.aksw.jena_sparql_api.algebra.transform.TransformJoinToConjunction;
-import org.aksw.jena_sparql_api.algebra.transform.TransformLeftJoinToSet;
-import org.aksw.jena_sparql_api.algebra.transform.TransformSetToLeftJoin;
 import org.aksw.jena_sparql_api.algebra.transform.TransformUnionToDisjunction;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMapImpl;
-import org.aksw.jena_sparql_api.concept_cache.core.ProjectionSummary;
 import org.aksw.jena_sparql_api.concept_cache.core.QueryExecutionFactoryViewMatcherMaster;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
+import org.aksw.jena_sparql_api.concept_cache.core.VarUsage;
 import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
@@ -69,14 +67,12 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
-import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.op.OpDisjunction;
 import org.apache.jena.sparql.algebra.op.OpQuadBlock;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.QuadPattern;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.engine.main.VarFinder;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.util.ExprUtils;
@@ -111,7 +107,7 @@ public class TestStateSpaceSearch {
 		//Op op = Algebra.compile(QueryFactory.create("Select Distinct * { { ?s a <http://dbpedia.org/ontology/MusicalArtist> } UNION { ?x ?p <foobar> } Optional { ?s <ex:mailbox> ?m } Optional { ?s <ex:label> ?l } Filter(?s = <foo>) } Limit 10"));
 		//Op op = Algebra.compile(QueryFactory.create("Select * { ?s a <ex:Person> Optional { ?s <ex:knows> ?o Optional { ?o <ex:label> ?s } } }"));
 //		Op op = Algebra.compile(QueryFactory.create("Select ((?s + ?y) As ?z) { { Select ?s (Sum(?x) As ?y) { ?s a <ex:Person> Optional { ?s <ex:knows> ?o Optional { ?o <ex:knows> ?x . Filter(?x = ?s) } } } Group By ?s } }", Syntax.syntaxARQ));
-		Op op = Algebra.compile(QueryFactory.create("Select ((?s + ?y) As ?z) { { Select ?s (Sum(?x) As ?y) { ?s ?o ?x } Group By ?s } }", Syntax.syntaxARQ));
+		Op op = Algebra.compile(QueryFactory.create("Select DISTINCT ((?s + ?y) As ?z) { { Select ?s (Sum(?x) As ?y) { ?s ?o ?x } Group By ?s } }", Syntax.syntaxARQ));
 
 //		VarFinder varFinder = VarFinder.process(op);
 //		System.out.println("assign: " + varFinder.getAssign());
@@ -123,8 +119,9 @@ public class TestStateSpaceSearch {
 		//op = Transformer.transform(TransformSetToLeftJoin.fn, op);
 		System.out.println(op);
 		OpIndex opIndex = new OpIndexerImpl().apply(op);
-		ProjectionSummary ps = SparqlCacheUtils.analyzeQuadFilterPatterns(opIndex);
-		//System.out.println(ps);
+		List<Op> leafs = TreeUtils.getLeafs(opIndex.getTree());
+		VarUsage vu = OpUtils.analyzeVarUsage(opIndex.getTree(), leafs.get(0));
+		System.out.println(vu);
 
 		if(true) { System.exit(0); }
 
