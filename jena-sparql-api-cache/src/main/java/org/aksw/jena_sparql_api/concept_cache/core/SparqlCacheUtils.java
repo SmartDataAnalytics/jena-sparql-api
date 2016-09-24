@@ -57,20 +57,15 @@ import org.apache.jena.sparql.algebra.OpAsQuery;
 import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.TableFactory;
-import org.apache.jena.sparql.algebra.op.OpAssign;
 import org.apache.jena.sparql.algebra.op.OpBGP;
 import org.apache.jena.sparql.algebra.op.OpDisjunction;
 import org.apache.jena.sparql.algebra.op.OpDistinct;
-import org.apache.jena.sparql.algebra.op.OpExtend;
 import org.apache.jena.sparql.algebra.op.OpFilter;
 import org.apache.jena.sparql.algebra.op.OpGraph;
-import org.apache.jena.sparql.algebra.op.OpGroup;
 import org.apache.jena.sparql.algebra.op.OpJoin;
-import org.apache.jena.sparql.algebra.op.OpLeftJoin;
 import org.apache.jena.sparql.algebra.op.OpNull;
 import org.apache.jena.sparql.algebra.op.OpProject;
 import org.apache.jena.sparql.algebra.op.OpQuadPattern;
-import org.apache.jena.sparql.algebra.op.OpSequence;
 import org.apache.jena.sparql.algebra.op.OpService;
 import org.apache.jena.sparql.algebra.op.OpSlice;
 import org.apache.jena.sparql.algebra.op.OpTable;
@@ -78,12 +73,10 @@ import org.apache.jena.sparql.algebra.op.OpUnion;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.QuadPattern;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.core.VarExprList;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.E_OneOf;
 import org.apache.jena.sparql.expr.Expr;
-import org.apache.jena.sparql.expr.ExprAggregator;
 import org.apache.jena.sparql.expr.ExprList;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.ExprVars;
@@ -1122,13 +1115,6 @@ public class SparqlCacheUtils {
     }
 
 
-    public static <K, V> Set<V> getAll(Multimap<K, V> multiMap, Collection<K> keys) {
-    	Set<V> result = keys.stream()
-    			.flatMap(k -> multiMap.get(k).stream())
-    			.collect(Collectors.toSet());
-    	return result;
-    }
-
     /**
      * Maybe we need to change the method to
      * is compatible(Tree<Op> tree, Op op, Set<Var> vars, boolean distinct)
@@ -1177,219 +1163,134 @@ public class SparqlCacheUtils {
      * The thing we have to take care of is, that the extend node may 'kill' prior variable definitions
      *
      * @param tree
-     * @param op
+     * @param current
      * @return
      */
-    public static ProjectionSummary analyzeQuadFilterPatterns(Tree<Op> tree, Op op) {
-    	Op current = op;
-    	Set<Var> availableVars = new HashSet<>(OpVars.mentionedVars(op));
+    public static ProjectionSummary analyzeQuadFilterPatterns(Tree<Op> tree, Op current) {
+    	VarUsageVisitor visitor = new VarUsageVisitor(tree, current);
 
-    	// Variables that are projected in the current iteration
-    	//Set<Var> projectedVars = new HashSet<>(availableVars);
-
-    	// Variables that are referenced
-    	Set<Var> referencedVars = new HashSet<>();
-
-    	// Any variable that is aggregated on must not be non-unique (otherwise it would distort the result)
-    	// Note that an overall query neither projects nor references a nonUnique variable
-    	Set<Var> nonUnique = new HashSet<>();
-
-    	// Maps variables to which other vars they depend on
-    	// E.g. Select (?x + 1 As ?y) { ... } will create the entry ?y -> { ?x } - i.e. ?y depends on ?x
-    	// Transitive dependencies are resolved immediately
-    	Multimap<Var, Var> varDeps = HashMultimap.create();
-    	availableVars.forEach(v -> varDeps.put(v, v));
-
-    	Op placeholder = new OpBGP();
     	Op parent;
     	while((parent = tree.getParent(current)) != null) {
-    		// Class<?> opClass = current.getClass();
-    		// System.out.println("Processing: " + parent);
-    		// Compute referenced vars for joins (non-disjunctive multi argument expressions)
-    		// boolean isDisjunction = parent instanceof OpUnion || parent instanceof OpDisjunction;
-    		// boolean isJoin = parent instanceof OpJoin || parent instanceof OpSequence;
-			if(parent instanceof OpJoin || parent instanceof OpLeftJoin || parent instanceof OpSequence) {
-    			List<Op> children = tree.getChildren(parent);
-    			List<Op> tmp = new ArrayList<>(children);
-    			Set<Var> visibleVars = new HashSet<>();
-    			for(int i = 0; i < tmp.size(); ++i) {
-    				Op child = tmp.get(i);
-    				if(child != current) {
-    					OpVars.visibleVars(child, visibleVars);
-    				}
-    			}
-
-    			if(parent instanceof OpLeftJoin) {
-    				OpLeftJoin olj = (OpLeftJoin)parent;
-    				ExprList exprs = olj.getExprs();
-    				if(exprs != null) {
-    					Set<Var> vms = ExprVars.getVarsMentioned(exprs);
-    					visibleVars.addAll(vms);
-    				}
-    			}
-
-    			Set<Var> originalVars = getAll(varDeps, visibleVars);
-    			//Set<Var> overlapVars = Sets.intersection(projectedVars, originalVars);
-    			referencedVars.addAll(originalVars);
-
-			} else if(parent instanceof OpProject) {
-				OpProject o = (OpProject)parent;
-				Set<Var> vars = new HashSet<>(o.getVars());
-				Set<Var> removals = new HashSet<>(Sets.difference(varDeps.keySet(), vars));
-				varDeps.removeAll(removals);
-			} else if(parent instanceof OpExtend) { // TODO same for OpAssign
-				OpExtend o = (OpExtend)parent;
-				VarExprList vel = o.getVarExprList();
-
-				Multimap<Var, Var> updates = HashMultimap.create();
-				vel.forEach((v, ex) -> {
-					Set<Var> vars = ExprVars.getVarsMentioned(ex);
-					vars.forEach(w -> {
-						Collection<Var> deps = varDeps.get(w);
-						updates.putAll(w, deps);
-					});
-
-					updates.asMap().forEach((k, w) -> {
-						varDeps.replaceValues(k, w);
-					});
-				});
-
-//			} else if(parent instanceof OpAssign) {
-//				OpAssign o = (OpAssign)parent;
-//				projectedVars.remove(o.getVarExprList().getVars());
-			} else if(parent instanceof OpGroup) {
-				// TODO: This is similar to a projection
-
-				OpGroup o = (OpGroup)parent;
-				// Original variables used in the aggregators are declared as non-unique and referenced
-				List<ExprAggregator> exprAggs = o.getAggregators();
-				exprAggs.forEach(ea -> {
-					Var v = ea.getVar();
-					ExprList el = ea.getAggregator().getExprList();
-					Set<Var> vars = ExprVars.getVarsMentioned(el);
-					Set<Var> origVars = getAll(varDeps, vars);
-					//referencedVars.addAll(origVars);
-					varDeps.putAll(v, origVars);
-					nonUnique.addAll(origVars);
-				});
-
-				// Original variables in the group by expressions are declared as referenced
-				VarExprList vel = o.getGroupVars();
-				vel.forEach((v, ex) -> {
-					Set<Var> vars = ExprVars.getVarsMentioned(ex);
-					Set<Var> origVars = MultiMaps.transitiveGetAll(varDeps.asMap(), vars);
-					referencedVars.addAll(origVars);
-					varDeps.putAll(v, origVars);
-				});
-
-			} else {
-//				referencedVars.addAll(availableVars);
-////				isDistinct = false;
-//
-//
-//				System.out.println("Unknown Op type: " + opClass);
-//				projectedVars.clear();
-			}
-
-			current = parent;
+    		visitor.setCurrent(current);
+    		parent.visit(visitor);
+    		current = parent;
     	}
 
-    	//referencedVars.addAll(varDeps.values());
-
-		///System.out.println("distinct: " + isDistinct);
-		System.out.println("proj:" + varDeps.keySet());
-		System.out.println("refs: " + referencedVars);
-		System.out.println("deps: " + varDeps);
-		System.out.println("non-uniq: " + nonUnique);
-//		System.out.println(//"deps: " + );
-		System.out.println("-----");
+    	visitor.getResult();
 
 		return null;
     }
-
-
-    public static ProjectionSummary analyzeQuadFilterPatterns2(Tree<Op> tree, Op op) {
-		Op current = op;
-
-		boolean isDistinct = false;
-		Set<Var> availableVars = OpVars.fixedVars(current);
-		Set<Var> projectedVars = new HashSet<>(availableVars);
-		Set<Var> referencedVars = new HashSet<>();
-
-		current = tree.getParent(current);
-
-		// At present, we do not handle OpExtend OpAssign
-		Set<Class<?>> passThrough = new HashSet<>(Arrays.asList(OpLeftJoin.class, OpSequence.class, OpDisjunction.class, OpUnion.class, OpJoin.class, OpSlice.class, OpFilter.class));
-
-		while(current != null) {
-			Op parent = tree.getParent(current);
-
-			if(parent != null) {
-				Set<Var> refs = new HashSet<>();
-
-				if(parent instanceof OpJoin || parent instanceof OpSequence || parent instanceof OpLeftJoin) {
-					List<Op> children = tree.getChildren(parent);
-					// Get the set of variables of all children except current
-					for(Op child : children) {
-						if(child == current) {
-							continue;
-						}
-						OpVars.visibleVars(child, refs);
-					}
-				} else if(parent instanceof OpFilter) {
-					OpFilter o = (OpFilter)parent;
-					ExprList exprs = o.getExprs();
-					Set<Var> tmp = ExprVars.getVarsMentioned(exprs);
-					refs.addAll(tmp);
-				}
-				referencedVars.addAll(Sets.intersection(availableVars, refs));
-			}
-
-			Class<?> opClass = current.getClass();
-			if(passThrough.contains(opClass)) {
-				// Nothing to do
-			} else if(current instanceof OpDistinct) {
-				isDistinct = true;
-			} else if(current instanceof OpFilter) {
-				OpFilter o = (OpFilter)current;
-				ExprList exprs = o.getExprs();
-				Set<Var> tmp = ExprVars.getVarsMentioned(exprs);
-				referencedVars.addAll(tmp);
-			} else if(current instanceof OpProject) {
-				OpProject o = (OpProject)current;
-				Set<Var> vars = new HashSet<>(o.getVars());
-				projectedVars.retainAll(vars);
-				// All so far projected variables are intersected with those of the new projection
-				//referencedVars.addAll(Sets.intersection(projectedVars, vars));
-			} else if(current instanceof OpExtend) {
-				OpExtend o = (OpExtend)current;
-				projectedVars.remove(o.getVarExprList().getVars());
-			} else if(current instanceof OpAssign) {
-				OpAssign o = (OpAssign)current;
-				projectedVars.remove(o.getVarExprList().getVars());
-			} else {
-				// Gracefully assume that all variables are referenced, and none are projected
-				// (and non-distinct - though without projected variables there cannot be a match anyway)
-				referencedVars.addAll(availableVars);
-				isDistinct = false;
-
-
-				System.out.println("Unknown Op type: " + opClass);
-				projectedVars.clear();
-			}
-
-			current = parent;
-		}
-
-		System.out.println("distinct: " + isDistinct);
-		System.out.println("proj:" + projectedVars);
-		System.out.println("refs: " + referencedVars);
-		System.out.println("-----");
-
-		ProjectionSummary result = null;
-		//ProjectionSummary result = new ProjectionSummary(isDistinct, vars);
-		return result;
-    }
-
-
 }
+
+
+//// Variables that are projected in the current iteration
+////Set<Var> projectedVars = new HashSet<>(availableVars);
+//
+//// Variables that are referenced
+//Set<Var> referencedVars = new HashSet<>();
+//
+//// Any variable that is aggregated on must not be non-unique (otherwise it would distort the result)
+//// Note that an overall query neither projects nor references a nonUnique variable
+//Set<Var> nonUnique = new HashSet<>();
+//
+//// Maps variables to which other vars they depend on
+//// E.g. Select (?x + 1 As ?y) { ... } will create the entry ?y -> { ?x } - i.e. ?y depends on ?x
+//// Transitive dependencies are resolved immediately
+//Multimap<Var, Var> varDeps = HashMultimap.create();
+//availableVars.forEach(v -> varDeps.put(v, v));
+//
+//Op placeholder = new OpBGP();
+//Op parent;
+//while((parent = tree.getParent(current)) != null) {
+//	// Class<?> opClass = current.getClass();
+//	// System.out.println("Processing: " + parent);
+//	// Compute referenced vars for joins (non-disjunctive multi argument expressions)
+//	// boolean isDisjunction = parent instanceof OpUnion || parent instanceof OpDisjunction;
+//	// boolean isJoin = parent instanceof OpJoin || parent instanceof OpSequence;
+//	if(parent instanceof OpJoin || parent instanceof OpLeftJoin || parent instanceof OpSequence) {
+//		List<Op> children = tree.getChildren(parent);
+//		List<Op> tmp = new ArrayList<>(children);
+//		Set<Var> visibleVars = new HashSet<>();
+//		for(int i = 0; i < tmp.size(); ++i) {
+//			Op child = tmp.get(i);
+//			if(child != current) {
+//				OpVars.visibleVars(child, visibleVars);
+//			}
+//		}
+//
+//		if(parent instanceof OpLeftJoin) {
+//			OpLeftJoin olj = (OpLeftJoin)parent;
+//			ExprList exprs = olj.getExprs();
+//			if(exprs != null) {
+//				Set<Var> vms = ExprVars.getVarsMentioned(exprs);
+//				visibleVars.addAll(vms);
+//			}
+//		}
+//
+//		Set<Var> originalVars = getAll(varDeps, visibleVars);
+//		//Set<Var> overlapVars = Sets.intersection(projectedVars, originalVars);
+//		referencedVars.addAll(originalVars);
+//
+//	} else if(parent instanceof OpProject) {
+//		OpProject o = (OpProject)parent;
+//		Set<Var> vars = new HashSet<>(o.getVars());
+//		Set<Var> removals = new HashSet<>(Sets.difference(varDeps.keySet(), vars));
+//		varDeps.removeAll(removals);
+//	} else if(parent instanceof OpExtend) { // TODO same for OpAssign
+//		OpExtend o = (OpExtend)parent;
+//		VarExprList vel = o.getVarExprList();
+//
+//		Multimap<Var, Var> updates = HashMultimap.create();
+//		vel.forEach((v, ex) -> {
+//			Set<Var> vars = ExprVars.getVarsMentioned(ex);
+//			vars.forEach(w -> {
+//				Collection<Var> deps = varDeps.get(w);
+//				updates.putAll(w, deps);
+//			});
+//
+//			updates.asMap().forEach((k, w) -> {
+//				varDeps.replaceValues(k, w);
+//			});
+//		});
+//
+////	} else if(parent instanceof OpAssign) {
+////		OpAssign o = (OpAssign)parent;
+////		projectedVars.remove(o.getVarExprList().getVars());
+//	} else if(parent instanceof OpGroup) {
+//		// TODO: This is similar to a projection
+//
+//		OpGroup o = (OpGroup)parent;
+//		// Original variables used in the aggregators are declared as non-unique and referenced
+//		List<ExprAggregator> exprAggs = o.getAggregators();
+//		exprAggs.forEach(ea -> {
+//			Var v = ea.getVar();
+//			ExprList el = ea.getAggregator().getExprList();
+//			Set<Var> vars = ExprVars.getVarsMentioned(el);
+//			Set<Var> origVars = getAll(varDeps, vars);
+//			//referencedVars.addAll(origVars);
+//			varDeps.putAll(v, origVars);
+//			nonUnique.addAll(origVars);
+//		});
+//
+//		// Original variables in the group by expressions are declared as referenced
+//		VarExprList vel = o.getGroupVars();
+//		vel.forEach((v, ex) -> {
+//			Set<Var> vars = ExprVars.getVarsMentioned(ex);
+//			Set<Var> origVars = MultiMaps.transitiveGetAll(varDeps.asMap(), vars);
+//			referencedVars.addAll(origVars);
+//			varDeps.putAll(v, origVars);
+//		});
+//
+//	} else {
+////		referencedVars.addAll(availableVars);
+//////		isDistinct = false;
+////
+////
+////		System.out.println("Unknown Op type: " + opClass);
+////		projectedVars.clear();
+//	}
+//
+//	current = parent;
+//}
+//
+////referencedVars.addAll(varDeps.values());

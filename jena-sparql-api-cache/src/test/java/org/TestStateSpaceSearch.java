@@ -110,7 +110,8 @@ public class TestStateSpaceSearch {
 
 		//Op op = Algebra.compile(QueryFactory.create("Select Distinct * { { ?s a <http://dbpedia.org/ontology/MusicalArtist> } UNION { ?x ?p <foobar> } Optional { ?s <ex:mailbox> ?m } Optional { ?s <ex:label> ?l } Filter(?s = <foo>) } Limit 10"));
 		//Op op = Algebra.compile(QueryFactory.create("Select * { ?s a <ex:Person> Optional { ?s <ex:knows> ?o Optional { ?o <ex:label> ?s } } }"));
-		Op op = Algebra.compile(QueryFactory.create("Select ((?s + ?y) As ?z) { { Select ?s (Sum(?x) As ?y) { ?s a <ex:Person> Optional { ?s <ex:knows> ?o Optional { ?o <ex:knows> ?x . Filter(?x = ?s) } } } Group By ?s } }", Syntax.syntaxARQ));
+//		Op op = Algebra.compile(QueryFactory.create("Select ((?s + ?y) As ?z) { { Select ?s (Sum(?x) As ?y) { ?s a <ex:Person> Optional { ?s <ex:knows> ?o Optional { ?o <ex:knows> ?x . Filter(?x = ?s) } } } Group By ?s } }", Syntax.syntaxARQ));
+		Op op = Algebra.compile(QueryFactory.create("Select ((?s + ?y) As ?z) { { Select ?s (Sum(?x) As ?y) { ?s ?o ?x } Group By ?s } }", Syntax.syntaxARQ));
 
 //		VarFinder varFinder = VarFinder.process(op);
 //		System.out.println("assign: " + varFinder.getAssign());
