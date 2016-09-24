@@ -1122,6 +1122,13 @@ public class SparqlCacheUtils {
     }
 
 
+    public static <K, V> Set<V> getAll(Multimap<K, V> multiMap, Collection<K> keys) {
+    	Set<V> result = keys.stream()
+    			.flatMap(k -> multiMap.get(k).stream())
+    			.collect(Collectors.toSet());
+    	return result;
+    }
+
     /**
      * Maybe we need to change the method to
      * is compatible(Tree<Op> tree, Op op, Set<Var> vars, boolean distinct)
@@ -1162,6 +1169,13 @@ public class SparqlCacheUtils {
      *
      * Variables that are used in aggregate expressions must not be distinct - unless there is an appropriate distinct sub op
      *
+     * We could have:
+     * 	Select (?s as ?o) (?o As ?s) { ?s ?p ?o } (virtuoso 7.2 accepts this, but gets it wrong)
+     * In this case we would get the dependencies:
+     *   { ?o -> { ?s }, ?s -> { ?o } }
+     *
+     * The thing we have to take care of is, that the extend node may 'kill' prior variable definitions
+     *
      * @param tree
      * @param op
      * @return
@@ -1169,7 +1183,11 @@ public class SparqlCacheUtils {
     public static ProjectionSummary analyzeQuadFilterPatterns(Tree<Op> tree, Op op) {
     	Op current = op;
     	Set<Var> availableVars = new HashSet<>(OpVars.mentionedVars(op));
-    	Set<Var> projectedVars = new HashSet<>(availableVars);
+
+    	// Variables that are projected in the current iteration
+    	//Set<Var> projectedVars = new HashSet<>(availableVars);
+
+    	// Variables that are referenced
     	Set<Var> referencedVars = new HashSet<>();
 
     	// Any variable that is aggregated on must not be non-unique (otherwise it would distort the result)
@@ -1185,50 +1203,63 @@ public class SparqlCacheUtils {
     	Op placeholder = new OpBGP();
     	Op parent;
     	while((parent = tree.getParent(current)) != null) {
-//    		Class<?> opClass = current.getClass();
-//System.out.println("Processing: " + parent);
+    		// Class<?> opClass = current.getClass();
+    		// System.out.println("Processing: " + parent);
     		// Compute referenced vars for joins (non-disjunctive multi argument expressions)
-    		//boolean isDisjunction = parent instanceof OpUnion || parent instanceof OpDisjunction;
-    		//boolean isJoin = parent instanceof OpJoin || parent instanceof OpSequence;
-			if(parent instanceof OpJoin || parent instanceof OpSequence) {
+    		// boolean isDisjunction = parent instanceof OpUnion || parent instanceof OpDisjunction;
+    		// boolean isJoin = parent instanceof OpJoin || parent instanceof OpSequence;
+			if(parent instanceof OpJoin || parent instanceof OpLeftJoin || parent instanceof OpSequence) {
     			List<Op> children = tree.getChildren(parent);
     			List<Op> tmp = new ArrayList<>(children);
+    			Set<Var> visibleVars = new HashSet<>();
     			for(int i = 0; i < tmp.size(); ++i) {
     				Op child = tmp.get(i);
-    				if(child == current) {
-    					tmp.set(i, placeholder);
+    				if(child != current) {
+    					OpVars.visibleVars(child, visibleVars);
     				}
     			}
-    			Op checkOp = OpUtils.copy(parent, tmp);
-    			Set<Var> visibleVars = OpVars.visibleVars(checkOp);
 
-    			Set<Var> originalVars = MultiMaps.transitiveGetAll(varDeps.asMap(), visibleVars);
+    			if(parent instanceof OpLeftJoin) {
+    				OpLeftJoin olj = (OpLeftJoin)parent;
+    				ExprList exprs = olj.getExprs();
+    				if(exprs != null) {
+    					Set<Var> vms = ExprVars.getVarsMentioned(exprs);
+    					visibleVars.addAll(vms);
+    				}
+    			}
 
+    			Set<Var> originalVars = getAll(varDeps, visibleVars);
+    			//Set<Var> overlapVars = Sets.intersection(projectedVars, originalVars);
+    			referencedVars.addAll(originalVars);
 
-
-    			Set<Var> overlapVars = Sets.intersection(projectedVars, originalVars);
-    			referencedVars.addAll(overlapVars);
 			} else if(parent instanceof OpProject) {
 				OpProject o = (OpProject)parent;
-				Collection<Var> vars = o.getVars();
-				projectedVars.retainAll(vars);
-				// All so far projected variables are intersected with those of the new projection
-				//referencedVars.addAll(Sets.intersection(projectedVars, vars));
-			} else if(parent instanceof OpExtend) {
+				Set<Var> vars = new HashSet<>(o.getVars());
+				Set<Var> removals = new HashSet<>(Sets.difference(varDeps.keySet(), vars));
+				varDeps.removeAll(removals);
+			} else if(parent instanceof OpExtend) { // TODO same for OpAssign
 				OpExtend o = (OpExtend)parent;
 				VarExprList vel = o.getVarExprList();
+
+				Multimap<Var, Var> updates = HashMultimap.create();
 				vel.forEach((v, ex) -> {
 					Set<Var> vars = ExprVars.getVarsMentioned(ex);
-					Set<Var> origVars = MultiMaps.transitiveGetAll(varDeps.asMap(), vars);
-					varDeps.putAll(v, origVars);
+					vars.forEach(w -> {
+						Collection<Var> deps = varDeps.get(w);
+						updates.putAll(w, deps);
+					});
+
+					updates.asMap().forEach((k, w) -> {
+						varDeps.replaceValues(k, w);
+					});
 				});
 
+//			} else if(parent instanceof OpAssign) {
+//				OpAssign o = (OpAssign)parent;
+//				projectedVars.remove(o.getVarExprList().getVars());
+			} else if(parent instanceof OpGroup) {
+				// TODO: This is similar to a projection
 
-				projectedVars.remove(o.getVarExprList().getVars());
-			} else if(parent instanceof OpAssign) {
-				OpAssign o = (OpAssign)parent;
-				projectedVars.remove(o.getVarExprList().getVars());
-			} if(parent instanceof OpGroup) {
 				OpGroup o = (OpGroup)parent;
 				// Original variables used in the aggregators are declared as non-unique and referenced
 				List<ExprAggregator> exprAggs = o.getAggregators();
@@ -1236,9 +1267,10 @@ public class SparqlCacheUtils {
 					Var v = ea.getVar();
 					ExprList el = ea.getAggregator().getExprList();
 					Set<Var> vars = ExprVars.getVarsMentioned(el);
-					Set<Var> origVars = MultiMaps.transitiveGetAll(varDeps.asMap(), vars);
+					Set<Var> origVars = getAll(varDeps, vars);
+					//referencedVars.addAll(origVars);
 					varDeps.putAll(v, origVars);
-					nonUnique.add(v);
+					nonUnique.addAll(origVars);
 				});
 
 				// Original variables in the group by expressions are declared as referenced
@@ -1246,6 +1278,7 @@ public class SparqlCacheUtils {
 				vel.forEach((v, ex) -> {
 					Set<Var> vars = ExprVars.getVarsMentioned(ex);
 					Set<Var> origVars = MultiMaps.transitiveGetAll(varDeps.asMap(), vars);
+					referencedVars.addAll(origVars);
 					varDeps.putAll(v, origVars);
 				});
 
@@ -1261,11 +1294,14 @@ public class SparqlCacheUtils {
 			current = parent;
     	}
 
+    	//referencedVars.addAll(varDeps.values());
+
 		///System.out.println("distinct: " + isDistinct);
-		System.out.println("proj:" + projectedVars);
+		System.out.println("proj:" + varDeps.keySet());
 		System.out.println("refs: " + referencedVars);
 		System.out.println("deps: " + varDeps);
 		System.out.println("non-uniq: " + nonUnique);
+//		System.out.println(//"deps: " + );
 		System.out.println("-----");
 
 		return null;
