@@ -17,12 +17,10 @@ import org.aksw.commons.collections.trees.Tree;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.ProblemVarMappingExpr;
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.ProblemVarMappingQuad;
-import org.aksw.jena_sparql_api.update.FluentSparqlServiceFactory;
-import org.aksw.jena_sparql_api.update.FluentUpdateExecutionFactory;
+import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCache;
+import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCacheImpl;
 import org.aksw.jena_sparql_api.utils.MapUtils;
 import org.apache.jena.sparql.algebra.Op;
-import org.apache.jena.sparql.core.DatasetGraph;
-import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
 
@@ -32,14 +30,17 @@ import com.google.common.collect.Multimap;
 public class SparqlViewMatcherSystemImpl
 	implements SparqlViewMatcherSystem
 {
-
     protected IndexSystem<Entry<Op, OpIndex>, Op> indexSystem;
     protected Function<Op, OpIndex> queryIndexer;
+
+
+
+
     //protected Map<Op, D> opToCacheData;
 
     public SparqlViewMatcherSystemImpl() {
-        indexSystem = IndexSystemImpl.create();
-        queryIndexer = new OpIndexerImpl();
+        this.indexSystem = IndexSystemImpl.create();
+        this.queryIndexer = new OpIndexerImpl();
     }
 
     public void registerView(String name, Op cacheOp) { //, D cacheData) {
@@ -60,21 +61,21 @@ public class SparqlViewMatcherSystemImpl
 
         for(Entry<Op, OpIndex> e : candidates) {
             OpIndex cacheIndex = e.getValue();
-                    
+
 
             Multimap<Op, Op> candidateLeafMapping = getCandidateLeafMapping(cacheIndex, queryIndex);
-            
+
             System.out.println("Leaf Mapping: " + candidateLeafMapping);
-        }   
-        
+        }
+
         return null;
     }
 
-    
+
     public static Multimap<Op, Op> getCandidateLeafMapping(OpIndex cacheIndex, OpIndex queryIndex) {
 
         Multimap<Op, Op> result = HashMultimap.create();
-        
+
         //QueryIndex cacheIndex = e.getValue();
         FeatureMap<Expr, QuadPatternIndex> cacheQpi = cacheIndex.getQuadPatternIndex();
 
@@ -87,16 +88,16 @@ public class SparqlViewMatcherSystemImpl
 
             for(QuadPatternIndex queryQp : queryQps) {
                 Op queryLeaf = queryQp.getOpRef().getNode();
-                
-                
-                
+
+
+
                 for(Entry<Set<Expr>, QuadPatternIndex> g : cacheQpiCandidates) {
                     QuadPatternIndex cacheQp = g.getValue();
 
                     Op cacheLeaf = cacheQp.getOpRef().getNode();
-                    
-                    result.put(cacheLeaf, queryLeaf);                    
-//                        
+
+                    result.put(cacheLeaf, queryLeaf);
+//
 //                        System.out.println("CacheQP: " + cacheQp);
 //                        System.out.println("QueryQP: " + queryQp);
 //
@@ -124,7 +125,7 @@ public class SparqlViewMatcherSystemImpl
 
         Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> problems = new ArrayList<>();
 
-        
+
         group.values().stream()
             .map(x -> {
                 Set<Expr> cacheExprs = x.getKey();
@@ -155,55 +156,54 @@ public class SparqlViewMatcherSystemImpl
 //        }
         return result;
     }
-    
-    
-    
-    
 
-    
 
-        
-//    public static <T> Tree<T> removeUnaryNodes(Tree<T> tree) {
-//
-//        Predicate<T> isMultiary = (node) -> tree.getChildren(node).size() > 1;
-//        
-//        //Map<T, T> childToParent = new HashMap<>();
-//        ListMultimap<T, T> parentToChildren = ArrayListMultimap.create();
-//        
-//        // for every leaf get the first non-unary parent
-//        Collection<T> parents = TreeUtils.getLeafs(tree);
-//        Collection<T> children = null;
-//        while(!parents.isEmpty()) {
-//            children = parents;
-//
-//            parents = new LinkedHashSet<T>();
-//            for(T child : children) {
-//                T parent = TreeUtils.findAncestor(tree, child, isMultiary);
-//                if(parent != null) {
-//                    parents.add(parent);
-//                    parentToChildren.put(parent, child);
-//                }
-//            }        
-//        }
-//        
-//        // There can be at most 1 root
-//        T root = children.iterator().next(); //parents.isEmpty() ? null : parents.iterator().next(); 
-//
-//        
-//        Tree<T> result = root == null
-//                ? null
-//                : TreeImpl.create(root, (node) -> parentToChildren.get(node));
-//                
-//        return result;
-//    }
 
 
     /**
-     * 
+     *
      * @param cacheParentToNodeMaps: Mapping from a cache parent, to the candidate op-mappings from cache op to query op. Example: { 5: { A: {1}, B: {1} } }
-     * 
+     *
      */
     public static void matchOpTrees(Map<Op, Multimap<Op, Op>> cacheParentToNodeMaps, Tree<Op> cacheTree, Tree<Op> queryTree) {
-        
+
     }
 }
+
+
+
+
+
+//public static <T> Tree<T> removeUnaryNodes(Tree<T> tree) {
+//
+//  Predicate<T> isMultiary = (node) -> tree.getChildren(node).size() > 1;
+//
+//  //Map<T, T> childToParent = new HashMap<>();
+//  ListMultimap<T, T> parentToChildren = ArrayListMultimap.create();
+//
+//  // for every leaf get the first non-unary parent
+//  Collection<T> parents = TreeUtils.getLeafs(tree);
+//  Collection<T> children = null;
+//  while(!parents.isEmpty()) {
+//      children = parents;
+//
+//      parents = new LinkedHashSet<T>();
+//      for(T child : children) {
+//          T parent = TreeUtils.findAncestor(tree, child, isMultiary);
+//          if(parent != null) {
+//              parents.add(parent);
+//              parentToChildren.put(parent, child);
+//          }
+//      }
+//  }
+//
+//  // There can be at most 1 root
+//  T root = children.iterator().next(); //parents.isEmpty() ? null : parents.iterator().next();
+//
+//
+//  Tree<T> result = root == null
+//          ? null
+//          : TreeImpl.create(root, (node) -> parentToChildren.get(node));
+//
+//  return result;
+//}

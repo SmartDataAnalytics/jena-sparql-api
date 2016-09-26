@@ -131,7 +131,7 @@ public class OpUtils {
 
     /**
      * Perform a top-down substitution
-     * 
+     *
      * @param op
      * @param descendIntoSubst
      * @param opToSubst
@@ -413,16 +413,16 @@ public class OpUtils {
 	 */
 	public static VarUsage analyzeVarUsage(Tree<Op> tree, Op current) {
 		VarUsageAnalyzerVisitor visitor = new VarUsageAnalyzerVisitor(tree, current);
-	
+
 		Op parent;
 		while((parent = tree.getParent(current)) != null) {
 			visitor.setCurrent(current);
 			parent.visit(visitor);
 			current = parent;
 		}
-	
+
 		VarUsage result = visitor.getResult();
-	
+
 		return result;
 	}
 

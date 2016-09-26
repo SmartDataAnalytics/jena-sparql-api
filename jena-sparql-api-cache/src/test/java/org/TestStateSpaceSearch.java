@@ -54,7 +54,7 @@ import org.aksw.jena_sparql_api.view_matcher.SparqlViewMatcherUtils;
 import org.aksw.jena_sparql_api.views.index.OpIndex;
 import org.aksw.jena_sparql_api.views.index.OpIndexerImpl;
 import org.aksw.jena_sparql_api.views.index.OpViewMatcher;
-import org.aksw.jena_sparql_api.views.index.OpViewMatcherImpl;
+import org.aksw.jena_sparql_api.views.index.OpViewMatcherTreeBased;
 import org.aksw.jena_sparql_api.views.index.SparqlViewMatcherSystemImpl;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -117,18 +117,22 @@ public class TestStateSpaceSearch {
 
 		//op = Transformer.transform(TransformLeftJoinToSet.fn, op);
 		//op = Transformer.transform(TransformSetToLeftJoin.fn, op);
-		System.out.println(op);
+//		System.out.println(op);
 		OpIndex opIndex = new OpIndexerImpl().apply(op);
-		List<Op> leafs = TreeUtils.getLeafs(opIndex.getTree());
-		VarUsage vu = OpUtils.analyzeVarUsage(opIndex.getTree(), leafs.get(0));
-		System.out.println(vu);
+		Tree<Op> tree = opIndex.getTree();
+		System.out.println(op);
+		System.out.println("depth: " + TreeUtils.depth(tree));
+System.out.println("----- yay");
+//		List<Op> leafs = TreeUtils.getLeafs(opIndex.getTree());
+//		VarUsage vu = OpUtils.analyzeVarUsage(opIndex.getTree(), leafs.get(0));
+//		System.out.println(vu);
+//
+		//if(true) { System.exit(0); }
 
-		if(true) { System.exit(0); }
 
 
 
-
-        OpViewMatcher viewMatcher = OpViewMatcherImpl.create();
+        OpViewMatcher viewMatcher = OpViewMatcherTreeBased.create();
         //QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://dbpedia.org/sparql", "http://dbpedia.org").create();
         QueryExecutionFactory qef = FluentQueryExecutionFactory.from(model).create();
         ExecutorService executorService = Executors.newCachedThreadPool();
@@ -399,7 +403,7 @@ public class TestStateSpaceSearch {
 
         }
 
-        OpViewMatcher viewMatcher = OpViewMatcherImpl.create();
+        OpViewMatcher viewMatcher = OpViewMatcherTreeBased.create();
         viewMatcher.add(opCache);
         viewMatcher.lookup(opCache);
 

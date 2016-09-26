@@ -79,6 +79,17 @@ public class SparqlViewCacheImpl
 //    }
 
     public CacheResult lookup(QuadFilterPatternCanonical queryQfpc) { //PatternSummary queryPs) {
+    	CacheResult result = lookup(queryQfpc, quadCnfToSummary, cacheData, qfpcToQuadToCnf);
+    	return result;
+    }
+
+
+    public static CacheResult lookup(
+    		QuadFilterPatternCanonical queryQfpc,
+    		IBiSetMultimap<Set<Set<Expr>>, QuadFilterPatternCanonical> quadCnfToSummary,
+    		Map<QuadFilterPatternCanonical, Map<Set<Var>, Table>> cacheData,
+    		Map<QuadFilterPatternCanonical, IBiSetMultimap<Quad, Set<Set<Expr>>>> qfpcToQuadToCnf
+    ) {
         List<QfpcMatch> result = new ArrayList<QfpcMatch>();
 
         // TODO: We need the quadToCnf map for the queryPs
@@ -97,6 +108,7 @@ public class SparqlViewCacheImpl
         Set<QuadFilterPatternCanonical> rawCandsSet = new HashSet<>();
 
         //int querySize = queryQfp.getQuads().size();
+
 
         for(Set<Set<Expr>> quadCnf : quadCnfs) {
             Collection<QuadFilterPatternCanonical> cands = quadCnfToSummary.get(quadCnf);
@@ -122,15 +134,12 @@ public class SparqlViewCacheImpl
 
         // Try candidates with largest potential overlap first
         List<QuadFilterPatternCanonical> rawCands = new ArrayList<>(rawCandsSet);
-        Collections.sort(rawCands, new Comparator<QuadFilterPatternCanonical>() {
-            @Override
-            public int compare(QuadFilterPatternCanonical a, QuadFilterPatternCanonical b) {
-                int x = a.getQuads().size();
-                int y = b.getQuads().size();
+        Collections.sort(rawCands, (a, b) -> {
+        	int x = a.getQuads().size();
+            int y = b.getQuads().size();
 
-                int r = x - y;
-                return r;
-            }
+            int r = x - y;
+            return r;
         });
 
 
@@ -145,7 +154,7 @@ public class SparqlViewCacheImpl
             // For a pattern there might be multiple candidate variable mappings
             // Filter expressions are not considered at this stage
             IBiSetMultimap<Quad, Set<Set<Expr>>> cacheQuadToCnf = qfpcToQuadToCnf.get(cand);
-            
+
             cacheQuadToCnf.asMap().entrySet().forEach(e -> System.out.println("qfpcToQUadToCnf: " + e.getKey() + " -> " + e.getValue()));
             //Stream<Map<Var, Var>> varMaps = CombinatoricsUtils.computeVarMapQuadBased(cacheQuadToCnf, queryQuadToCnf, candVarCombos);
             Stream<Map<Var, Var>> varMaps = VarMapper.createVarMapCandidates(cand, queryQfpc);
@@ -153,7 +162,7 @@ public class SparqlViewCacheImpl
             //while(varMaps.hasNext()) {
             varMaps.forEach(varMap -> {
                 System.out.println("Processing candidate: " + varMap);
-                
+
 
                 NodeTransform rename = new NodeTransformRenameMap(varMap);
 

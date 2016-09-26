@@ -18,7 +18,10 @@ import org.aksw.jena_sparql_api.algebra.transform.TransformUnionToDisjunction;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMapImpl;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
+import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCache;
+import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCacheImpl;
 import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
+import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 import org.aksw.jena_sparql_api.unsorted.OpVisitorFeatureExtractor;
 import org.aksw.jena_sparql_api.utils.Generator;
@@ -39,12 +42,12 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.Multimap;
 
 
-public class OpViewMatcherImpl
+public class OpViewMatcherTreeBased
 	implements OpViewMatcher
 {
 
     private static final Logger logger = LoggerFactory
-            .getLogger(OpViewMatcherImpl.class);
+            .getLogger(OpViewMatcherTreeBased.class);
 
     protected Function<Op, Op> opNormalizer;
     protected Function<Op, Set<Set<String>>> itemFeatureExtractor;
@@ -52,7 +55,8 @@ public class OpViewMatcherImpl
     protected FeatureMap<String, MyEntry> featuresToIndexes;
     protected Map<Node, MyEntry> idToQueryIndex;
 
-	public OpViewMatcherImpl(
+
+	public OpViewMatcherTreeBased(
 	        Function<Op, Op> opNormalizer,
             Function<Op, Set<Set<String>>> itemFeatureExtractor,
             Function<Op, OpIndex> itemIndexer) {
@@ -63,31 +67,17 @@ public class OpViewMatcherImpl
         this.featuresToIndexes = new FeatureMapImpl<>(); //featuresToIndexes;
 
         idToQueryIndex = new HashMap<>();
-    }
 
-	public Node addConjunctiveQuery(Op item, ProjectedQuadFilterPattern conjunctiveQuery) {
-		return null;
+
+        //this.qfpcIndex = new SparqlViewCacheImpl();
 	}
-
-	public void lookupConjunctiveQuery() {
-		return;
-	}
-
-//	public Node addNonConjunctiveQuery(Op item) {
-//
-//	}
 
     @Override
 	public Node add(Op item) {
 
 
     	// Check whether the submitted op is an extended conjunctive query,
-    	//i.e. is only comprised of distinct, projection, filter and quad pattern in that order, whereas presence is obtional
-    	ProjectedQuadFilterPattern conjunctiveQuery = SparqlCacheUtils.transform(item);
-    	if(conjunctiveQuery != null) {
-    		//System.out.println("GOT ECQ");
-    		addConjunctiveQuery(item, conjunctiveQuery);
-    	}
+    	//i.e. is only comprised of distinct, projection, filter and quad pattern in that order, whereas presence is optional
 
 
     	Op normalizedItem = opNormalizer.apply(item);
@@ -103,6 +93,8 @@ public class OpViewMatcherImpl
         }
 
         idToQueryIndex.put(id, entry);
+
+
 
         return id;
 	}
@@ -227,8 +219,8 @@ public class OpViewMatcherImpl
         Function<Op, Set<Set<String>>> itemFeatureExtractor = (oop) ->
         	Collections.singleton(OpVisitorFeatureExtractor.getFeatures(oop, (op) -> op.getClass().getSimpleName()));
 
-        OpViewMatcher result = new OpViewMatcherImpl(
-        		OpViewMatcherImpl::normalizeOp,
+        OpViewMatcher result = new OpViewMatcherTreeBased(
+        		OpViewMatcherTreeBased::normalizeOp,
                 itemFeatureExtractor,
                 new OpIndexerImpl());
 
