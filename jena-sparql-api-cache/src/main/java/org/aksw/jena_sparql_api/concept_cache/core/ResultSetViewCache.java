@@ -108,7 +108,9 @@ public class ResultSetViewCache {
 
             //ResultSet cacheRs = ResultSetUtils.project(resultRs, indexVars, true);
             Table table = ResultSetPart.toTable(tmp);
-            sparqlViewCache.index(qfpc, table); //cacheRs);
+            if(false) {
+            	//sparqlViewCache.index(qfpc, table); //cacheRs);
+            }
 
             resultRs = ResultSetPart.toResultSet(tmp);
 

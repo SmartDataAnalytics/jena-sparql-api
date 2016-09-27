@@ -18,10 +18,6 @@ import org.aksw.jena_sparql_api.algebra.transform.TransformUnionToDisjunction;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMapImpl;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
-import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCache;
-import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCacheImpl;
-import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
-import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 import org.aksw.jena_sparql_api.unsorted.OpVisitorFeatureExtractor;
 import org.aksw.jena_sparql_api.utils.Generator;
@@ -35,6 +31,7 @@ import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.op.OpBGP;
 import org.apache.jena.sparql.algebra.op.OpService;
+import org.apache.jena.sparql.algebra.optimize.Rewrite;
 import org.apache.jena.sparql.core.Var;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +46,10 @@ public class OpViewMatcherTreeBased
     private static final Logger logger = LoggerFactory
             .getLogger(OpViewMatcherTreeBased.class);
 
-    protected Function<Op, Op> opNormalizer;
+    //protected Function<Op, Op> opNormalizer;
+    protected Rewrite opNormalizer;
+
+
     protected Function<Op, Set<Set<String>>> itemFeatureExtractor;
     protected Function<Op, OpIndex> itemIndexer;
     protected FeatureMap<String, MyEntry> featuresToIndexes;
@@ -57,7 +57,7 @@ public class OpViewMatcherTreeBased
 
 
 	public OpViewMatcherTreeBased(
-	        Function<Op, Op> opNormalizer,
+	        Rewrite opNormalizer,
             Function<Op, Set<Set<String>>> itemFeatureExtractor,
             Function<Op, OpIndex> itemIndexer) {
         super();
@@ -80,7 +80,7 @@ public class OpViewMatcherTreeBased
     	//i.e. is only comprised of distinct, projection, filter and quad pattern in that order, whereas presence is optional
 
 
-    	Op normalizedItem = opNormalizer.apply(item);
+    	Op normalizedItem = opNormalizer.rewrite(item);
 
     	Node id = NodeFactory.createURI("id://" + StringUtils.md5Hash("" + normalizedItem));
         OpIndex index = itemIndexer.apply(normalizedItem);
@@ -126,7 +126,7 @@ public class OpViewMatcherTreeBased
 
 	@Override
 	public Collection<LookupResult> lookup(Op item) {
-	    Op normalizedItem = opNormalizer.apply(item);
+	    Op normalizedItem = opNormalizer.rewrite(item);
 	    Set<MyEntry> tmpCands = new HashSet<>();
 
         itemFeatureExtractor.apply(normalizedItem).forEach(featureSet -> {

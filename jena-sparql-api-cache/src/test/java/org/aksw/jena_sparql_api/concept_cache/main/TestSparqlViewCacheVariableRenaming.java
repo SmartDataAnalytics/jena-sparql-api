@@ -49,11 +49,11 @@ public class TestSparqlViewCacheVariableRenaming {
      * @throws IOException
      *
      */
-    @Test
+    //@Test
     public void testSparqlViewCacheRenaming() throws IOException {
         JenaSystem.init();
         PropertyFunctionRegistry.init();
-        
+
         //Reader reader = new InputStreamRnew FileInputStream(file) //new InputStreamReader(in);
         //List<String> lines = Files.readAllLines(Paths.get(""), encoding);
         //Resource r = new ClassPathResource("bgp-queries.json");
@@ -93,7 +93,7 @@ public class TestSparqlViewCacheVariableRenaming {
             for(Entry<String, Query> entry : idToQuery.entrySet()) {
                 String id = entry.getKey();
                 Query query = entry.getValue();
-                
+
                 //if(true) {
     //            if("http://ex.org/query/4-a".equals(id)) { // too many candidates - fixed by grouping quads by their filters
                 //if("http://ex.org/query/4-c".equals(id)) {
@@ -149,7 +149,7 @@ public class TestSparqlViewCacheVariableRenaming {
 
 
         Table table = new TableData(cacheResultVars, Collections.emptyList());
-        sparqlViewCache.index(cacheQfpc, table);
+        //sparqlViewCache.index(cacheQfpc, table);
         CacheResult cr = sparqlViewCache.lookup(userQfpc);
         if(cr == null) {
             System.out.println("FAIL: No cache candidates found where 1 expected");

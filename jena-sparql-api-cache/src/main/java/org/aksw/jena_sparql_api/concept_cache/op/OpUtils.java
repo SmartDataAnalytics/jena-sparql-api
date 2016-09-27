@@ -141,6 +141,21 @@ public class OpUtils {
 	  Op result = TreeUtils.substitute(op, descendIntoSubst, OpTreeOps.get(), transformFn);
 	  return result;
   }
+
+  /**
+   * In the expression op, find the node searchNode and replace it with newNode
+   *
+   * @param op
+   * @param descendIntoSubst
+   * @param searchNode
+   * @return
+   */
+  public static Op substitute(Op op, Op searchNode, Op newNode) {
+	  Op result = TreeUtils.substitute(op, false, OpTreeOps.get(), o -> o == searchNode ? newNode : null);
+	  return result;
+  }
+
+
 //    public static Op substitute(Op op, boolean descendIntoSubst, Function<? super Op, ? extends Op> opToSubst) {
 //        Op tmp = opToSubst.apply(op);
 //

@@ -16,9 +16,9 @@ import java.util.stream.Stream;
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
 import org.aksw.commons.collections.multimaps.MultimapUtils;
-import org.aksw.jena_sparql_api.concept_cache.combinatorics.CombinatoricsUtils;
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.Utils2;
 import org.aksw.jena_sparql_api.concept_cache.core.CacheResult;
+import org.aksw.jena_sparql_api.concept_cache.core.CacheResult2;
 import org.aksw.jena_sparql_api.concept_cache.core.SetUtils;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
 import org.aksw.jena_sparql_api.concept_cache.core.TableUtils;
@@ -51,16 +51,18 @@ import com.google.common.collect.Sets;
  * @author raven
  *
  */
-public class SparqlViewCacheImpl
-    implements SparqlViewCache
+public class SparqlViewCacheImpl<V>
+    implements SparqlViewCache<V>
 {
     private static final Logger logger = LoggerFactory.getLogger(SparqlViewCacheImpl.class);
 
     //private Multimap<Set<Set<Expr>>, PatternSummary> quadCnfToSummary = HashMultimap.create();
     private IBiSetMultimap<Set<Set<Expr>>, QuadFilterPatternCanonical> quadCnfToSummary = new BiHashMultimap<Set<Set<Expr>>, QuadFilterPatternCanonical>();
-    private Map<QuadFilterPatternCanonical, Map<Set<Var>, Table>> cacheData = new HashMap<QuadFilterPatternCanonical, Map<Set<Var>, Table>>();
+    //private Map<QuadFilterPatternCanonical, Map<Set<Var>, Table>> cacheData = new HashMap<QuadFilterPatternCanonical, Map<Set<Var>, Table>>();
 
     private Map<QuadFilterPatternCanonical, IBiSetMultimap<Quad, Set<Set<Expr>>>> qfpcToQuadToCnf = new HashMap<>();
+
+    protected Map<V, QuadFilterPatternCanonical> valueToKey = new HashMap<>();
 
 
 //    public void lookup(Query query) {
@@ -79,15 +81,31 @@ public class SparqlViewCacheImpl
 //    }
 
     public CacheResult lookup(QuadFilterPatternCanonical queryQfpc) { //PatternSummary queryPs) {
-    	CacheResult result = lookup(queryQfpc, quadCnfToSummary, cacheData, qfpcToQuadToCnf);
+    	CacheResult result = lookup(queryQfpc, quadCnfToSummary, qfpcToQuadToCnf);
     	return result;
     }
 
 
-    public static CacheResult lookup(
+    /**
+     *
+     *
+     * @return
+     */
+    public Collection<CacheResult2<V>> lookup2(QuadFilterPatternCanonical queryQfpc) {
+    	List<QfpcMatch> tmp = lookupCore(queryQfpc, quadCnfToSummary, qfpcToQuadToCnf);
+
+//    	List<CacheResult2<V>> result = tmp.stream()
+//    		.map(qfpcMatch -> new CacheResult2<>())
+//    		.collect(Collectors.toList());
+//
+    	return null;
+    }
+
+
+    public static List<QfpcMatch> lookupCore(
     		QuadFilterPatternCanonical queryQfpc,
     		IBiSetMultimap<Set<Set<Expr>>, QuadFilterPatternCanonical> quadCnfToSummary,
-    		Map<QuadFilterPatternCanonical, Map<Set<Var>, Table>> cacheData,
+    		//Map<QuadFilterPatternCanonical, Map<Set<Var>, Table>> cacheData,
     		Map<QuadFilterPatternCanonical, IBiSetMultimap<Quad, Set<Set<Expr>>>> qfpcToQuadToCnf
     ) {
         List<QfpcMatch> result = new ArrayList<QfpcMatch>();
@@ -147,8 +165,8 @@ public class SparqlViewCacheImpl
         // check for their containment in the query
         for(QuadFilterPatternCanonical cand : rawCands) {
             // Get the variable-combinations for which cache entries exist
-            Map<Set<Var>, Table> tmp = cacheData.get(cand);
-            Set<Set<Var>> candVarCombos = tmp.keySet();
+//            Map<Set<Var>, Table> tmp = cacheData.get(cand);
+//            Set<Set<Var>> candVarCombos = tmp.keySet();
 
 
             // For a pattern there might be multiple candidate variable mappings
@@ -183,50 +201,14 @@ public class SparqlViewCacheImpl
 
 
                 if(isSubsumed) {
-                    Set<Var> candVars = candRename.getVarsMentioned();
-
-                    //for(Set<Var> candVarCombo : candVarCombos) {
-                    for(Entry<Set<Var>, Table> entry : tmp.entrySet()) {
-
-                        Set<Var> candVarCombo = entry.getKey();
-
-                        Set<Var> queryCandVarCombo = SetUtils.mapSet(candVarCombo, varMap);
-
-                        //ResultSet rs = ResultSetFactory.copyResults(entry.getValue());
-                        Table table = entry.getValue();
-                        //ResultSet rs = table.toResultSet();
-
-                        Set<Var> disallowedVars = Sets.difference(candVars, queryCandVarCombo);
+                    QuadFilterPatternCanonical diffPattern = candRename.diff(queryQfpc);
 
 
-                        QuadFilterPatternCanonical diffPattern = candRename.diff(queryQfpc);
-                        Set<Var> testVars = diffPattern.getVarsMentioned();
+                    //Set<Var> candVars = candRename.getVarsMentioned();
+                    QfpcMatch cacheHit = new QfpcMatch(candRename, diffPattern, null, varMap);
 
-                        Set<Var> cooccurs = Utils2.getCooccurrentVars(queryCandVarCombo, diffPattern.getQuads());
-
-                        disallowedVars = Sets.difference(disallowedVars, cooccurs);
-
-                        Set<Var> intersection = Sets.intersection(disallowedVars, testVars);
-
-
-                        if(intersection.isEmpty()) {
-
-
-
-                            table = TableUtils.transform(table, rename);
-
-                            QfpcMatch cacheHit = new QfpcMatch(candRename, diffPattern, table, varMap);
-                            //Expr expr = createExpr(rs, varMap);
-
-                            //test.getFilterCnf()
-                            //test.getFilterCnf().add(Collections.singleton(expr));
-
-                            // TODO Convert back into a quad filter pattern
-
-                            result.add(cacheHit);
-                        }
-
-                    }
+                    result.add(cacheHit);
+                    // validate the candidate
                 }
                 // We do not have to iterate additional var mappings if we found a subsumption
                 //break;
@@ -234,24 +216,50 @@ public class SparqlViewCacheImpl
         }
 
 
+        // Prune subsumed results
+        List<QfpcMatch> actualResult =
+                result.stream()
+                .filter(a ->
+                    !result.stream().anyMatch(b -> a != b && b.getDiffPattern().isSubsumedBy(a.getDiffPattern())))
+                .collect(Collectors.toList());
+
+            logger.debug("CacheHits after subsumtion: " + actualResult.size());
+
+
+
         // TODO We need to return all subsumed candidates so that we can
         // properly establish subsumption relations
 
 
 
-       logger.debug("CacheHits: " + result.size());
+       logger.debug("CacheHits: " + actualResult.size());
 
+       return actualResult;
+    }
 
+    public static CacheResult lookup(
+    		QuadFilterPatternCanonical queryQfpc,
+    		IBiSetMultimap<Set<Set<Expr>>, QuadFilterPatternCanonical> quadCnfToSummary,
+    		//Map<QuadFilterPatternCanonical, Map<Set<Var>, Table>> cacheData,
+    		Map<QuadFilterPatternCanonical, IBiSetMultimap<Quad, Set<Set<Expr>>>> qfpcToQuadToCnf
+    ) {
+    	List<QfpcMatch> actualResult = lookupCore(queryQfpc, quadCnfToSummary, qfpcToQuadToCnf);
+
+        CacheResult foo = postProcessResult(actualResult);
+        return foo;
+    }
+
+    public static CacheResult postProcessResult(List<QfpcMatch> actualResult) {
         // TODO This has square complexity - maybe we could do better
-        List<QfpcMatch> argh = result;
-
-        List<QfpcMatch> actualResult =
-            argh.stream()
-            .filter(a ->
-                !argh.stream().anyMatch(b -> a != b && b.getDiffPattern().isSubsumedBy(a.getDiffPattern())))
-            .collect(Collectors.toList());
-
-        logger.debug("CacheHits after subsumtion: " + actualResult.size());
+        //List<QfpcMatch> argh = result;
+//
+//        List<QfpcMatch> actualResult =
+//            argh.stream()
+//            .filter(a ->
+//                !argh.stream().anyMatch(b -> a != b && b.getDiffPattern().isSubsumedBy(a.getDiffPattern())))
+//            .collect(Collectors.toList());
+//
+//        logger.debug("CacheHits after subsumtion: " + actualResult.size());
 
 
         //List<CacheHit> c = new ArrayList<CacheHit>();
@@ -285,6 +293,59 @@ public class SparqlViewCacheImpl
         }
 
         return cr;
+    }
+
+
+    // TODO Turn into a predicate
+    public Set<Map<Var, Var>> validateCandidateByProjectedVars(Map<Set<Var>, Table> tmp, QuadFilterPatternCanonical queryQfpc, QuadFilterPatternCanonical candRename, NodeTransform rename, Map<Var, Var> varMap) {
+    	Set<Var> candVars = candRename.getVarsMentioned();
+
+    	Set<Map<Var, Var>> result = new HashSet<>();
+
+        //for(Set<Var> candVarCombo : candVarCombos) {
+        for(Entry<Set<Var>, Table> entry : tmp.entrySet()) {
+
+            Set<Var> candVarCombo = entry.getKey();
+
+            Set<Var> queryCandVarCombo = SetUtils.mapSet(candVarCombo, varMap);
+
+            //ResultSet rs = ResultSetFactory.copyResults(entry.getValue());
+            Table table = entry.getValue();
+            //ResultSet rs = table.toResultSet();
+
+            Set<Var> disallowedVars = Sets.difference(candVars, queryCandVarCombo);
+
+
+            QuadFilterPatternCanonical diffPattern = candRename.diff(queryQfpc);
+            Set<Var> testVars = diffPattern.getVarsMentioned();
+
+            Set<Var> cooccurs = Utils2.getCooccurrentVars(queryCandVarCombo, diffPattern.getQuads());
+
+            disallowedVars = Sets.difference(disallowedVars, cooccurs);
+
+            Set<Var> intersection = Sets.intersection(disallowedVars, testVars);
+
+
+            if(intersection.isEmpty()) {
+
+
+
+                table = TableUtils.transform(table, rename);
+
+                QfpcMatch cacheHit = new QfpcMatch(candRename, diffPattern, table, varMap);
+                //Expr expr = createExpr(rs, varMap);
+
+                //test.getFilterCnf()
+                //test.getFilterCnf().add(Collections.singleton(expr));
+
+                // TODO Convert back into a quad filter pattern
+
+                //result.add(cacheHit);
+                result.add(varMap);
+            }
+
+        }
+        return result;
     }
 
 
@@ -397,6 +458,49 @@ public class SparqlViewCacheImpl
     }
 
 
+    @Override
+    public void put(QuadFilterPatternCanonical qfpc, V value) {
+
+    	valueToKey.put(value, qfpc);
+
+        //map = new HashMap<Set<Var>, Table>();
+        //cacheData.put(qfpc, map);
+
+        IBiSetMultimap<Quad, Set<Set<Expr>>> quadToCnf = SparqlCacheUtils.createMapQuadsToFilters(qfpc);
+        qfpcToQuadToCnf.put(qfpc, quadToCnf);
+
+        Set<Set<Set<Expr>>> quadCnfs = quadToCnf.getInverse().keySet();
+        for(Set<Set<Expr>> quadCnf : quadCnfs) {
+            quadCnfToSummary.put(quadCnf, qfpc);
+        }
+
+
+//
+////        Set<Var> vars = VarUtils.toSet(table.getVarNames()); //.getResultVars());
+//
+//        Map<Set<Var>, Table> map = cacheData.get(qfpc);
+//        if(map == null) {
+//            map = new HashMap<Set<Var>, Table>();
+//            cacheData.put(qfpc, map);
+//
+//            IBiSetMultimap<Quad, Set<Set<Expr>>> quadToCnf = SparqlCacheUtils.createMapQuadsToFilters(qfpc);
+//            qfpcToQuadToCnf.put(qfpc, quadToCnf);
+//
+//            Set<Set<Set<Expr>>> quadCnfs = quadToCnf.getInverse().keySet();
+//            for(Set<Set<Expr>> quadCnf : quadCnfs) {
+//                quadCnfToSummary.put(quadCnf, qfpc);
+//            }
+//        }
+//
+//
+//        Table tmp = map.get(vars);
+//        if(tmp != null) {
+//            throw new RuntimeException("Already cached data for result set");
+//        }
+//
+//        map.put(vars, table);
+    }
+
     public void index(Query query, ResultSet rs) {
 
         //Table table = createTable(rs);
@@ -417,30 +521,31 @@ public class SparqlViewCacheImpl
     public void index(QuadFilterPatternCanonical qfpc, Table table) {
         //PatternSummary ps = SparqlCacheUtils.summarize(qfp);
 
-
-        Set<Var> vars = VarUtils.toSet(table.getVarNames()); //.getResultVars());
-
-        Map<Set<Var>, Table> map = cacheData.get(qfpc);
-        if(map == null) {
-            map = new HashMap<Set<Var>, Table>();
-            cacheData.put(qfpc, map);
-
-            IBiSetMultimap<Quad, Set<Set<Expr>>> quadToCnf = SparqlCacheUtils.createMapQuadsToFilters(qfpc);
-            qfpcToQuadToCnf.put(qfpc, quadToCnf);
-
-            Set<Set<Set<Expr>>> quadCnfs = quadToCnf.getInverse().keySet();
-            for(Set<Set<Expr>> quadCnf : quadCnfs) {
-                quadCnfToSummary.put(quadCnf, qfpc);
-            }
-        }
-
-
-        Table tmp = map.get(vars);
-        if(tmp != null) {
-            throw new RuntimeException("Already cached data for result set");
-        }
-
-        map.put(vars, table);
+    	throw new RuntimeException("don't use");
+//
+//        Set<Var> vars = VarUtils.toSet(table.getVarNames()); //.getResultVars());
+//
+//        Map<Set<Var>, Table> map = cacheData.get(qfpc);
+//        if(map == null) {
+//            map = new HashMap<Set<Var>, Table>();
+//            cacheData.put(qfpc, map);
+//
+//            IBiSetMultimap<Quad, Set<Set<Expr>>> quadToCnf = SparqlCacheUtils.createMapQuadsToFilters(qfpc);
+//            qfpcToQuadToCnf.put(qfpc, quadToCnf);
+//
+//            Set<Set<Set<Expr>>> quadCnfs = quadToCnf.getInverse().keySet();
+//            for(Set<Set<Expr>> quadCnf : quadCnfs) {
+//                quadCnfToSummary.put(quadCnf, qfpc);
+//            }
+//        }
+//
+//
+//        Table tmp = map.get(vars);
+//        if(tmp != null) {
+//            throw new RuntimeException("Already cached data for result set");
+//        }
+//
+//        map.put(vars, table);
     }
 
     public void index(QuadFilterPattern qfp, Table table) {
