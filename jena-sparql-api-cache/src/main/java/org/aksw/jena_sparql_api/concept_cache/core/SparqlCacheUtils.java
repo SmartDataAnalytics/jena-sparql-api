@@ -104,6 +104,27 @@ public class SparqlCacheUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(SparqlCacheUtils.class);
 
+
+    /**
+     * Wrap a node with a caching operation
+     *
+     * @param subOp
+     * @param cacheRef The cache entry to create and where the result set will be stored
+     *
+     * @return
+     */
+    public static Op createCachingOp(Op subOp, Node storageRef) {
+        boolean silent = false;
+
+        //Query subQuery = OpAsQuery.asQuery(subOp);
+        //Element subElement = new ElementSubQuery(subQuery);
+
+        //ElementService elt = new ElementService(storageRef, subElement, silent);
+        OpService result = new OpService(storageRef, subOp, silent);
+
+        return result;
+    }
+
     public static QuadFilterPatternCanonical removeDefaultGraphFilter(QuadFilterPatternCanonical qfpc) {
         Set<Quad> quads = qfpc.getQuads();
         Set<Set<Expr>> cnf = qfpc.getFilterCnf();
@@ -316,7 +337,7 @@ public class SparqlCacheUtils {
      * @param executionOp
      * @return
      */
-    public static OpService wrapWithService(Op patternOp, Node serviceNode, Op executionOp) {
+    public static OpService wrapWithServiceOld(Op patternOp, Node serviceNode, Op executionOp) {
         boolean silent = false;
         OpUnion union = new OpUnion(patternOp, executionOp);
 
@@ -452,7 +473,7 @@ public class SparqlCacheUtils {
             // TODO The new op may be cachable again
             Op newOp = isFullCover
                     ? executionOp
-                    : wrapWithService(op, serviceNode, executionOp);
+                    : wrapWithServiceOld(op, serviceNode, executionOp);
 
             opToCachingOp.put(op, newOp);
         }
@@ -487,7 +508,7 @@ public class SparqlCacheUtils {
             Op executionOp = op;
             // TODO: Maybe we should wrap the executionOp with the projection again
 
-            Op newOp = wrapWithService(indexOp, serviceNode, executionOp);
+            Op newOp = wrapWithServiceOld(indexOp, serviceNode, executionOp);
 
             opToCachingOp.put(op, newOp);
         }

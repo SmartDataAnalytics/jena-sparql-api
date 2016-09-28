@@ -1,9 +1,12 @@
 package org.aksw.jena_sparql_api.concept_cache.core;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeUtils;
@@ -12,6 +15,7 @@ import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCacheImpl;
 import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
+import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.util.collection.RangedSupplierLazyLoadingListCache;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.aksw.jena_sparql_api.view_matcher.OpVarMap;
@@ -21,11 +25,13 @@ import org.aksw.jena_sparql_api.views.index.OpViewMatcherTreeBased;
 import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.algebra.op.OpQuadBlock;
 import org.apache.jena.sparql.algebra.op.OpService;
 import org.apache.jena.sparql.algebra.optimize.Rewrite;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.engine.main.OpExecutor;
 
 import com.google.common.collect.Range;
 
@@ -37,6 +43,30 @@ class ViewMatcherData {
 	public Set<Var> getDefinedVars() {
 		return null;
 	}
+}
+
+class VarInfo {
+	public Set<Var> projectVars;
+	public Set<Var> distinctVars;
+
+	public VarInfo(Set<Var> projectVars, Set<Var> distinctVars) {
+		super();
+		this.projectVars = projectVars;
+		this.distinctVars = distinctVars;
+	}
+
+}
+
+
+class StorageEntry {
+	public StorageEntry(RangedSupplierLazyLoadingListCache<Binding> storage, VarInfo varInfo) {
+		super();
+		this.storage = storage;
+		this.varInfo = varInfo;
+	}
+
+	public RangedSupplierLazyLoadingListCache<Binding> storage;
+	public VarInfo varInfo;
 }
 
 
@@ -157,11 +187,39 @@ public class OpRewriteViewMatcher
 
     	}
 
+    	Map<Node, StorageEntry> storageMap = new HashMap<>();
+
+    	// Prepare a storage for the original rawOp
+    	QueryExecutionFactory qef = null;
+    	ExecutorService executorService = null;
+
+    	OpExecutor opExecutor = null;
+    	Op rootOp = null;
+    	Range<Long> cacheRange = Range.atMost(100000l);
+    	RangedSupplierLazyLoadingListCache<Binding> storage = new RangedSupplierLazyLoadingListCache<Binding>(executorService, new RangedSupplierOp(opExecutor, rootOp), cacheRange, null);
+
+    	Node storageRef = null;
+    	VarInfo varInfo = new VarInfo(OpVars.visibleVars(rootOp), Collections.emptySet());
+    	StorageEntry storageEntry = new StorageEntry(storage, varInfo);
+
+    	storageMap.put(storageRef, storageEntry);
+
+    	// Add an operation to cache the whole result
+    	Op superRootOp = new OpService(storageRef, rootOp, false);
+
+
+
+    	// TODO Inject values directly if the data is local and comparatively small
+//    	Range<Long> range;
+//    	storage.isCached(range);
+
 
 		// TODO Auto-generated method stub
 		return null;
 	}
 
+
+	//public static Op rewrite
 
 
 

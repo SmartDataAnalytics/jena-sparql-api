@@ -11,6 +11,10 @@ public class FunctionMemoize<I, O>
 	protected Function<I, O> delegate;
 
 	public FunctionMemoize(Function<I, O> delegate) {
+		this(delegate, new HashMap<>());
+	}
+
+	public FunctionMemoize(Function<I, O> delegate, Map<I, O> cache) {
 		super();
 		this.cache = new HashMap<>();
 		this.delegate = delegate;
@@ -55,7 +59,7 @@ public class FunctionMemoize<I, O>
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		FunctionMemoize other = (FunctionMemoize) obj;
+		FunctionMemoize<?, ?> other = (FunctionMemoize<?, ?>) obj;
 		if (cache == null) {
 			if (other.cache != null)
 				return false;

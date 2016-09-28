@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
@@ -182,6 +183,43 @@ public class RangedSupplierLazyLoadingListCache<T>
     // We may dynamically discover that after certain offsets there is no more data
     protected Long dataThreshold = null;
 
+
+    public static Range<Long> normalize(Range<Long> range) {
+        range = RangeUtils.startFromZero(range);
+        Range<Long> result = range.canonical(DiscreteDomain.longs());
+    	return result;
+    }
+
+    /**
+     * Expose whether a requested range can be answered only from the local storage - i.e. without a request to the underlying range supplier.
+     *
+     * @param range
+     * @return
+     */
+    public boolean isCached(Range<Long> range) {
+        range = normalize(range);
+
+        RangeMap<Long, CacheEntry<T>> subRangeMap = rangesToData.subRangeMap(range);
+    	Map<Range<Long>, CacheEntry<T>> x = subRangeMap.asMapOfRanges();
+
+    	boolean result;
+    	if(x.size() == 1) {
+    		// Check if the range is covered AND the cache data is complete
+    		Entry<Range<Long>, CacheEntry<T>> entry = x.entrySet().iterator().next();
+    		CacheEntry<T> ce = entry.getValue();
+
+    		boolean isEnclosing = ce.range.encloses(range);
+    		// TODO Actually we do not need the whole range to be complete, but only the requested section has to be loaded yet
+    		boolean isDataComplete = ce.cache.isComplete();
+
+    		result = isEnclosing && isDataComplete;
+    	} else {
+    		result = false;
+    	}
+
+    	return result;
+    }
+
     public RangedSupplierLazyLoadingListCache(ExecutorService executorService, Function<Range<Long>, ClosableIterator<T>> itemSupplier, Range<Long> cacheRange, RangeCostModel costModel) {
         super();
         this.executorService = executorService;
@@ -192,8 +230,7 @@ public class RangedSupplierLazyLoadingListCache<T>
 
 
     public ClosableIterator<T> apply(Range<Long> range) {
-        range = RangeUtils.startFromZero(range);
-        range = range.canonical(DiscreteDomain.longs());
+        range = normalize(range);
 
         ClosableIterator<T> result;
         if(range.isEmpty()) {
