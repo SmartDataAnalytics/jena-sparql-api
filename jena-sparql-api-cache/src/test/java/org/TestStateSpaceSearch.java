@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -31,9 +32,12 @@ import org.aksw.jena_sparql_api.algebra.transform.TransformJoinToConjunction;
 import org.aksw.jena_sparql_api.algebra.transform.TransformUnionToDisjunction;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMapImpl;
+import org.aksw.jena_sparql_api.concept_cache.core.JenaExtensionViewMatcher;
+import org.aksw.jena_sparql_api.concept_cache.core.OpExecutorFactoryViewMatcher;
+import org.aksw.jena_sparql_api.concept_cache.core.OpRewriteViewMatcher;
 import org.aksw.jena_sparql_api.concept_cache.core.QueryExecutionFactoryViewMatcherMaster;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
-import org.aksw.jena_sparql_api.concept_cache.core.VarUsage;
+import org.aksw.jena_sparql_api.concept_cache.core.ViewCacheIndexer;
 import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
@@ -46,6 +50,7 @@ import org.aksw.jena_sparql_api.stmt.SparqlElementParser;
 import org.aksw.jena_sparql_api.stmt.SparqlElementParserImpl;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.unsorted.ExprMatcher;
+import org.aksw.jena_sparql_api.util.collection.RangedSupplier;
 import org.aksw.jena_sparql_api.utils.DnfUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
@@ -73,6 +78,7 @@ import org.apache.jena.sparql.algebra.op.OpQuadBlock;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.QuadPattern;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.util.ExprUtils;
@@ -89,8 +95,141 @@ import com.google.common.collect.Multimap;
 
 public class TestStateSpaceSearch {
 
+	public static <T, C> Stream<T> exhaustiveRewrite(
+			T baseItem,
+			Function<T, Stream<C>> listCandidates,
+			BiFunction<T, C, T> applyCandidate,
+			Collection<C> usedCandidates
+	) {
+		// Terminal items are those that do not have (further) candidates
+		Stream<T> result = Stream.of(baseItem).flatMap(item -> {
+			Stream<C> candidates = listCandidates.apply(item);
+
+			boolean[] empty = new boolean[]{true};
+
+			// We perform conditional concatenation: If the stream turned out to be empty, we append our element
+			Stream<T> nestedItems = candidates
+					.filter(c -> ! usedCandidates.contains(c))
+					.peek(i -> empty[0] = false)
+					.flatMap(c -> {
+						usedCandidates.add(c);
+						T nextItem = applyCandidate.apply(item, c);
+
+						Stream<T> r = exhaustiveRewrite(nextItem, listCandidates, applyCandidate, usedCandidates);
+
+						return r;
+					});
+
+			Stream<T> s = Stream.concat(nestedItems,
+					Stream.of(item).filter(x -> empty[0] == true));
+
+			return s;
+		});
+
+		return result;
+	}
+
+	public static <T, C, X extends Comparable<X>> T exhaustiveRewrite(
+			T item,
+			Function<T, Stream<C>> listCandidates,
+			BiFunction<T, C, T> applyCandidate,
+			Function<T, X> cost
+			) {
+
+		Collection<C> usedCandidates = new HashSet<>();
+		Stream<T> stream = exhaustiveRewrite(item, listCandidates, applyCandidate, usedCandidates);
+		T result = stream
+				.min((a, b) -> {
+					X ca = cost.apply(a);
+					X cb = cost.apply(b);
+					int r = ca.compareTo(cb);
+					return r;
+				})
+				.orElse(null);
+		return result;
+	}
+
+	// enhance :- x = listCandidates.apply(item).findFirst().orElse(null); x != null ? applyCandidate(item, x) : null
+	public static <T, C> T greedyRewrite(
+			T item,
+			Function<T, Stream<C>> listCandidates,
+			BiFunction<T, C, T> applyCandidate
+	) {
+		Collection<C> usedCandidates = new HashSet<>();
+
+		T result = item;
+		for(;;) {
+            // TODO: enhance must be refactored into:
+			// - getCandidates -
+			// - applyCandidate
+			 C candidate = listCandidates.apply(item)
+					 .filter(c -> ! usedCandidates.contains(c))
+					 .findFirst()
+					 .orElse(null);
+			//T tmp = enhance.apply(item).findFirst().orElse(null);
+			if(candidate == null) {
+				break;
+			}
+
+			usedCandidates.add(candidate);
+			result = applyCandidate.apply(item, candidate);
+		}
+		return result;
+	}
+
 
 	public static void main(String[] args) throws Exception {
+		// Initialize the Jena extension which handles SERVICE <view://...> ops
+		JenaExtensionViewMatcher.register();
+
+
+		Resource r = new ClassPathResource("data-lorenz.nt");
+		Model model = ModelFactory.createDefaultModel();
+		model.read(r.getInputStream(), "http://ex.org/", "NTRIPLES");
+
+		//OpViewMatcher<Node> viewMatcher =
+
+
+		// Create an implemetation of the view matcher - i.e. an object that supports
+		// - registering (Op, value) entries
+		// - rewriting an Op using references to the registered ops
+		OpRewriteViewMatcher viewMatcherRewriter = new OpRewriteViewMatcher();
+
+		// Obtain the global service map for registering temporary handlers for <view://...> SERVICEs
+		// for the duration of a query execution
+		// Note: JenaExtensionViewMatcher.register(); already registered this object at ARQ's global query execution context
+		Map<Node, ViewCacheIndexer> serviceMap = OpExecutorFactoryViewMatcher.get().getServiceMap();
+
+		// A map which associates SERVICE ids with an interface for fetching slices of data.
+		Map<Node, RangedSupplier<Long, Binding>> dataSupplier;
+
+
+        QueryExecutionFactory qef = FluentQueryExecutionFactory.from(model).create();
+        ExecutorService executorService = Executors.newCachedThreadPool();
+        qef = new QueryExecutionFactoryViewMatcherMaster(qef, viewMatcherRewriter, executorService, 200000l);
+        qef = new QueryExecutionFactoryParse(qef, SparqlQueryParserImpl.create());
+
+        Stopwatch sw = Stopwatch.createStarted();
+
+        for(int i = 0; i < 10; ++i) {
+        	{
+		        QueryExecution qe = qef.createQueryExecution("select * { ?s a <http://dbpedia.org/ontology/MusicalArtist> } Limit 10");
+		        ResultSet rs = qe.execSelect();
+	        	ResultSetFormatter.consume(rs);
+        	}
+        	{
+    	        QueryExecution qe = qef.createQueryExecution("select * { ?s a <http://dbpedia.org/ontology/MusicalArtist> ; a <foo://bar> } Limit 10");
+    	        ResultSet rs = qe.execSelect();
+    	        System.out.println(ResultSetFormatter.asText(rs));
+    	        //System.out.println(t);
+            	//ResultSetFormatter.consume(rs);
+        	}
+        }
+
+	}
+
+
+	public static void mainYY(String[] args) throws Exception {
 
 		//System.out.println("VISIBLE: " + OpVars.mentionedVars(Algebra.compile(QueryFactory.create("SELECT * { {} Filter(?s = <Foo>) }"))));
 		//if(true) { System.exit(0); }
@@ -404,7 +543,7 @@ System.out.println("----- yay");
         }
 
         OpViewMatcher viewMatcher = OpViewMatcherTreeBased.create();
-        viewMatcher.add(opCache);
+        viewMatcher.put(opCache, NodeFactory.createURI("http://foo.bar"));
         viewMatcher.lookup(opCache);
 
 

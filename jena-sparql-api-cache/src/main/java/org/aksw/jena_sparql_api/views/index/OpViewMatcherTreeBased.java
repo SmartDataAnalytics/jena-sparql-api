@@ -39,8 +39,8 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.Multimap;
 
 
-public class OpViewMatcherTreeBased
-	implements OpViewMatcher
+public class OpViewMatcherTreeBased<V>
+	implements OpViewMatcher<V>
 {
 
     private static final Logger logger = LoggerFactory
@@ -52,8 +52,8 @@ public class OpViewMatcherTreeBased
 
     protected Function<Op, Set<Set<String>>> itemFeatureExtractor;
     protected Function<Op, OpIndex> itemIndexer;
-    protected FeatureMap<String, MyEntry> featuresToIndexes;
-    protected Map<Node, MyEntry> idToQueryIndex;
+    protected FeatureMap<String, MyEntry<V>> featuresToIndexes;
+    protected Map<V, MyEntry<V>> idToQueryIndex;
 
 
 	public OpViewMatcherTreeBased(
@@ -73,30 +73,27 @@ public class OpViewMatcherTreeBased
 	}
 
     @Override
-	public Node add(Op item) {
+	public void put(Op item, V value) {
 
 
     	// Check whether the submitted op is an extended conjunctive query,
     	//i.e. is only comprised of distinct, projection, filter and quad pattern in that order, whereas presence is optional
 
 
-    	Op normalizedItem = opNormalizer.rewrite(item);
+//    	Op normalizedItem = opNormalizer.rewrite(item);
+//
+//    	Node id = NodeFactory.createURI("id://" + StringUtils.md5Hash("" + normalizedItem));
+        OpIndex index = itemIndexer.apply(item);
 
-    	Node id = NodeFactory.createURI("id://" + StringUtils.md5Hash("" + normalizedItem));
-        OpIndex index = itemIndexer.apply(normalizedItem);
-
-        Set<Set<String>> featureSets = itemFeatureExtractor.apply(normalizedItem);
-        MyEntry entry = new MyEntry(id, featureSets, index);
+        Set<Set<String>> featureSets = itemFeatureExtractor.apply(item);
+        MyEntry<V> entry = new MyEntry<>(value, featureSets, index);
 
         for(Set<String> featureSet : featureSets) {
             featuresToIndexes.put(featureSet, entry); // new SimpleEntry<>(item, data)
         }
 
-        idToQueryIndex.put(id, entry);
+        idToQueryIndex.put(value, entry);
 
-
-
-        return id;
 	}
 
 
@@ -146,7 +143,7 @@ public class OpViewMatcherTreeBased
 
         List<LookupResult> result = new ArrayList<>();
 
-        for(MyEntry cacheEntry : cands) {
+        for(MyEntry<V> cacheEntry : cands) {
         	OpIndex cacheIndex = cacheEntry.queryIndex;
 
             Multimap<Op, Op> candOpMapping = SparqlViewMatcherSystemImpl.getCandidateLeafMapping(cacheIndex, queryIndex);
@@ -163,7 +160,7 @@ public class OpViewMatcherTreeBased
                 if(logger.isDebugEnabled()) { logger.debug("query root: " + queryRoot); }
 
 
-                Node id = cacheEntry.id;
+                V id = cacheEntry.id;
                 // We need to update the queryIndex (remove sub-trees that matched)
                 Tree<Op> r = applyMapping(id, cacheTree, queryTree, opVarMap);
 
@@ -180,7 +177,7 @@ public class OpViewMatcherTreeBased
 		return result;
 	}
 
-	public static Tree<Op> applyMapping(Node id, Tree<Op> cacheTree, Tree<Op> queryTree, OpVarMap opVarMap) {
+	public static <V> Tree<Op> applyMapping(V id, Tree<Op> cacheTree, Tree<Op> queryTree, OpVarMap opVarMap) {
 	    Map<Op, Op> nodeMapping = opVarMap.getOpMap();
 
 	    Op sourceRoot = cacheTree.getRoot();
@@ -192,7 +189,7 @@ public class OpViewMatcherTreeBased
 
 	    //QuadPattern yay = new QuadPattern();
 	    //Node serviceNode = NodeFactory.createURI("");
-	    OpService placeholderOp = new OpService(id, new OpBGP(), true);
+	    OpService placeholderOp = new OpService((Node)id, new OpBGP(), true);
 	    Op repl = OpUtils.substitute(queryTree.getRoot(), false, op -> {
 	       return op == targetNode ? placeholderOp : null;
 	    });

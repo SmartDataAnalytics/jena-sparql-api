@@ -10,8 +10,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.aksw.commons.util.StreamUtils;
 import org.aksw.jena_sparql_api.compare.QueryExecutionFactoryCompare;
-import org.aksw.jena_sparql_api.concept_cache.core.JenaExtensionViewCache;
-import org.aksw.jena_sparql_api.concept_cache.core.OpExecutorFactoryViewCache;
+import org.aksw.jena_sparql_api.concept_cache.core.JenaExtensionViewMatcher;
+import org.aksw.jena_sparql_api.concept_cache.core.OpExecutorFactoryViewMatcher;
 import org.aksw.jena_sparql_api.concept_cache.core.QueryExecutionFactoryViewCacheMaster;
 import org.aksw.jena_sparql_api.concept_cache.dirty.CombinatoricsVector;
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCache;
@@ -100,7 +100,7 @@ public class MainTestSparqlViewCache {
         //AnnotationConfigApplicationContext
 
         //OpExecutorFactoryViewCache.registerGlobally();
-        JenaExtensionViewCache.register();
+        JenaExtensionViewMatcher.register();
         //QC.setFactory(ARQ.getContext(), OpExecutorFactoryViewCache.get());
 
 
@@ -141,7 +141,7 @@ public class MainTestSparqlViewCache {
 //                .create();
 
 
-        QueryExecutionFactory cachedQef = new QueryExecutionFactoryViewCacheMaster(rawQef, OpExecutorFactoryViewCache.get().getServiceMap());
+        QueryExecutionFactory cachedQef = new QueryExecutionFactoryViewCacheMaster(rawQef, OpExecutorFactoryViewMatcher.get().getServiceMap());
 
 
         QueryExecutionFactory mainQef = new QueryExecutionFactoryCompare(rawQef, cachedQef);

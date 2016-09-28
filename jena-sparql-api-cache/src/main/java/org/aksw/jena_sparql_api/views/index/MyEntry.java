@@ -4,12 +4,12 @@ import java.util.Set;
 
 import org.apache.jena.graph.Node;
 
-public class MyEntry {
-	public Node id;
+public class MyEntry<V> {
+	public V id;
 	public Set<Set<String>> featureSets;
 	public OpIndex queryIndex;
 
-	public MyEntry(Node id, Set<Set<String>> featureSets, OpIndex queryIndex) {
+	public MyEntry(V id, Set<Set<String>> featureSets, OpIndex queryIndex) {
 		super();
 		this.id = id;
 		this.featureSets = featureSets;

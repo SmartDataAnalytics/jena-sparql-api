@@ -10,21 +10,28 @@ import org.aksw.jena_sparql_api.core.QueryExecutionBaseSelect;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.ResultSetCloseable;
 import org.aksw.jena_sparql_api.util.collection.RangedSupplier;
-import org.aksw.jena_sparql_api.util.collection.RangedSupplierLazyLoadingListCache;
 import org.aksw.jena_sparql_api.utils.BindingUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.ResultSetUtils;
-import org.aksw.jena_sparql_api.views.index.LookupResult;
-import org.aksw.jena_sparql_api.views.index.OpViewMatcher;
-import org.apache.jena.ext.com.google.common.collect.Iterables;
+import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.apache.jena.graph.Node;
+import org.apache.jena.query.ARQ;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.optimize.Rewrite;
+import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.engine.QueryIterator;
 import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.engine.binding.BindingRoot;
+import org.apache.jena.sparql.engine.iterator.QueryIter;
+import org.apache.jena.sparql.engine.iterator.QueryIterPlainWrapper;
+import org.apache.jena.sparql.engine.iterator.QueryIteratorWrapper;
+import org.apache.jena.sparql.engine.main.QueryEngineMain;
 import org.apache.jena.util.iterator.ClosableIterator;
 
 import com.google.common.collect.Range;
@@ -33,7 +40,8 @@ public class QueryExecutionViewMatcherMaster
 	extends QueryExecutionBaseSelect
 {
 	protected ExecutorService executorService;
-	protected OpViewMatcher viewMatcher;
+	//protected OpViewMatcher viewMatcher;
+	protected Rewrite opRewriter;
 	protected Map<Node, RangedSupplier<Long, Binding>> opToRangedSupplier;
 
     protected long indexResultSetSizeThreshold;
@@ -44,15 +52,16 @@ public class QueryExecutionViewMatcherMaster
     		Query query,
     		//Function<Query, RangedSupplier<Long, Binding>> rangedSupplierFactory,
     		QueryExecutionFactory subFactory,
-    		OpViewMatcher viewMatcher,
-    		ExecutorService executorService,
-    		Map<Node, RangedSupplier<Long, Binding>> opToRangedSupplier
+    		//OpViewMatcher viewMatcher,
+    		Rewrite opRewriter,
+    		ExecutorService executorService
+    		//Map<Node, RangedSupplier<Long, Binding>> opToRangedSupplier
     		//long indexResultSetSizeThreshold,
     		//Map<Node, ? super ViewCacheIndexer> serviceMap
     ) {
     	super(query, subFactory);
 
-    	this.viewMatcher = viewMatcher;
+    	this.opRewriter = opRewriter;
     	this.executorService = executorService;
     	this.opToRangedSupplier = opToRangedSupplier;
     	//this.serviceMap = serviceMap;
@@ -77,39 +86,74 @@ public class QueryExecutionViewMatcherMaster
     }
 
     @Override
-    protected ResultSetCloseable executeCoreSelect(Query query) {
+    protected ResultSetCloseable executeCoreSelect(Query rawQuery) {
 
+    	List<Var> projectVars = rawQuery.getProjectVars();
+    	List<String> projectVarNames = VarUtils.getVarNames(projectVars);
+
+    	// Store a present slice, but remove it from the query
     	Range<Long> range = QueryUtils.toRange(query);
     	Query q = query.cloneQuery();
     	q.setLimit(Query.NOLIMIT);
     	q.setOffset(Query.NOLIMIT);
 
-    	Op opCache = Algebra.toQuadForm(Algebra.compile(q));
+    	Op queryOp = Algebra.toQuadForm(Algebra.compile(q));
 
-        LookupResult lr = viewMatcher.lookupSingle(opCache);
-        RangedSupplier<Long, Binding> rangedSupplier;
-        Map<Var, Var> varMap;
-        if(lr == null) {
-            Node id = viewMatcher.add(opCache);
-        	// Obtain the supplier from a factory (the factory may e.g. manage the sharing of a thread pool)
+    	// The thing here is, that in general we need to
+    	// - Initialize the execution context / jena-wise global data
+    	// - Perform the rewrite (may affect execution context state)
+    	// - Clean up the execution context / jena-wise global data
+    	Op rewrittenOp = opRewriter.rewrite(queryOp);
 
-            rangedSupplier = new RangedSupplierQuery(parentFactory, query);
-        	rangedSupplier = new RangedSupplierLazyLoadingListCache<>(executorService, rangedSupplier, Range.atMost(10000l), null);
+    	// Note: We use Jena to execute the op.
+    	// The op itself may use SERVICE<> as the root node, which will cause jena to pass execution to the appropriate handler
 
-        	//rangedSupplier = new RangedSupplierQuery(parentFactory, q);
-        	opToRangedSupplier.put(id, rangedSupplier);
-        	varMap = null;
-        }
-        else {
+    	// TODO Pass the op to an op executor
+    	QueryEngineMain x = null; //QueryEngineMain.getFactory().
 
-            varMap = Iterables.getFirst(lr.getOpVarMap().getVarMaps(), null);
+    	QueryIterator queryIter = x.eval(rewrittenOp, DatasetGraphFactory.create(), BindingRoot.create(), ARQ.getContext());
+    	ResultSet result = ResultSetFactory.create(queryIter, projectVarNames);
 
-        	Node entryId = lr.getEntry().id;
-        	rangedSupplier = opToRangedSupplier.get(entryId);
-        }
+    	// TODO Not sure if we should really return a result set, or a QueryIter instead
 
-        ResultSetCloseable result = createResultSet(rangedSupplier, range, varMap);
-        return result;
+
+    	return null;
+
+    	//ResultSetUtils.create(varNames, bindingIt)
+
+    	//QueryEngineMain
+    	//QC.execute(rewrittenOp, BindingRoot.create(), ARQ.getContext());
+
+    	//org.apache.jena.query.QueryExecutionFactory.create(queryStr, syntax, model, initialBinding)
+//
+//
+//
+//    	LookupResult<Node> lr = viewMatcher.lookupSingle(opCache);
+//        RangedSupplier<Long, Binding> rangedSupplier;
+//        Map<Var, Var> varMap;
+//        if(lr == null) {
+//            Node id = viewMatcher.add(opCache);
+//        	// Obtain the supplier from a factory (the factory may e.g. manage the sharing of a thread pool)
+//
+//            rangedSupplier = new RangedSupplierQuery(parentFactory, query);
+//        	rangedSupplier = new RangedSupplierLazyLoadingListCache<>(executorService, rangedSupplier, Range.atMost(10000l), null);
+//
+//        	//rangedSupplier = new RangedSupplierQuery(parentFactory, q);
+//        	opToRangedSupplier.put(id, rangedSupplier);
+//        	varMap = null;
+//        }
+//        else {
+//
+//            varMap = Iterables.getFirst(lr.getOpVarMap().getVarMaps(), null);
+//
+//            assert varMap != null : "VarMap was not expected to be null at this point";
+//
+//        	Node entryId = lr.getEntry().id;
+//        	rangedSupplier = opToRangedSupplier.get(entryId);
+//        }
+//
+//        ResultSetCloseable result = createResultSet(rangedSupplier, range, varMap);
+//        return result;
     }
 
 

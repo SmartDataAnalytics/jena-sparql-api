@@ -10,29 +10,29 @@ import org.apache.jena.sparql.engine.main.OpExecutor;
 import org.apache.jena.sparql.engine.main.OpExecutorFactory;
 import org.apache.jena.sparql.engine.main.QC;
 
-public class OpExecutorFactoryViewCache
+public class OpExecutorFactoryViewMatcher
     implements OpExecutorFactory
 {
     protected Map<Node, ViewCacheIndexer> serviceToQef;
 
-    private static OpExecutorFactoryViewCache instance = null;
+    private static OpExecutorFactoryViewMatcher instance = null;
 
-    public static synchronized OpExecutorFactoryViewCache get() {
+    public static synchronized OpExecutorFactoryViewMatcher get() {
         if(instance == null) {
-            instance = new OpExecutorFactoryViewCache();
+            instance = new OpExecutorFactoryViewMatcher();
         }
 
         return instance;
     }
 
 
-    public OpExecutorFactoryViewCache(
+    public OpExecutorFactoryViewMatcher(
             Map<Node, ViewCacheIndexer> serviceToQef) {
         super();
         this.serviceToQef = serviceToQef;
     }
 
-    public OpExecutorFactoryViewCache() {
+    public OpExecutorFactoryViewMatcher() {
         super();
         this.serviceToQef = new HashMap<>();
     }

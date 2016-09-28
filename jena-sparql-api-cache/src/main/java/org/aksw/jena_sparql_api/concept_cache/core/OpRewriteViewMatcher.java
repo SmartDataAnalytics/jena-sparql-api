@@ -3,26 +3,42 @@ package org.aksw.jena_sparql_api.concept_cache.core;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeUtils;
-import org.aksw.commons.util.strings.StringUtils;
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCache;
+import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCacheImpl;
 import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
+import org.aksw.jena_sparql_api.util.collection.RangedSupplierLazyLoadingListCache;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.aksw.jena_sparql_api.view_matcher.OpVarMap;
 import org.aksw.jena_sparql_api.views.index.LookupResult;
 import org.aksw.jena_sparql_api.views.index.OpViewMatcher;
+import org.aksw.jena_sparql_api.views.index.OpViewMatcherTreeBased;
 import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.graph.Node;
-import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.op.OpQuadBlock;
 import org.apache.jena.sparql.algebra.op.OpService;
 import org.apache.jena.sparql.algebra.optimize.Rewrite;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.engine.binding.Binding;
+
+import com.google.common.collect.Range;
+
+class ViewMatcherData {
+	boolean isRangeCache(Range<Long> range) {
+		return true;
+	}
+
+	public Set<Var> getDefinedVars() {
+		return null;
+	}
+}
+
 
 /**
  * Rewrite an algebra expression under view matching
@@ -34,41 +50,57 @@ public class OpRewriteViewMatcher
 	implements Rewrite
 {
 	protected Rewrite opNormalizer;
-	protected OpViewMatcher viewMatcherTreeBased;
+	protected OpViewMatcher<Node> viewMatcherTreeBased;
 	protected SparqlViewCache<Node> viewMatcherQuadPatternBased;
 
+	// Mapping from cache entry id to the cache data
+	// - We need to be able to ask whether a certain range is completely in cache
+	// - Ask which variables are defined by the cache data
+	// -
+	protected Map<Node, ViewMatcherData> idToCacheData;
+
+
+	public OpRewriteViewMatcher() {
+		this.opNormalizer = OpViewMatcherTreeBased::normalizeOp;
+		this.viewMatcherTreeBased = OpViewMatcherTreeBased.create();
+		this.viewMatcherQuadPatternBased = new SparqlViewCacheImpl<>();
+	}
 
 	//@Override
-	public Node add(Op op) {
-		Node result;
+	// TODO Do we need a further argument for the variable information?
+	public void put(Op op, Node id) {
 
-		ProjectedQuadFilterPattern conjunctiveQuery = SparqlCacheUtils.transform(op);
+    	Op normalizedOp = opNormalizer.rewrite(op);
+
+    	// Allocate a new id entry of this op
+    	//Node result = NodeFactory.createURI("id://" + StringUtils.md5Hash("" + normalizedItem));
+
+    	// TODO:
+
+		ProjectedQuadFilterPattern conjunctiveQuery = SparqlCacheUtils.transform(normalizedOp);
 		if(conjunctiveQuery != null) {
 			QuadFilterPatternCanonical qfpc = SparqlCacheUtils.canonicalize2(conjunctiveQuery.getQuadFilterPattern(), VarGeneratorImpl2.create());
 
-
-			//result =
-			viewMatcherQuadPatternBased.put(qfpc, null);
-
-
-			//System.out.println("GOT ECQ");
-			//addConjunctiveQuery(item, conjunctiveQuery);
-
-			return null;
+			viewMatcherQuadPatternBased.put(qfpc, id);
 		} else {
-			result = viewMatcherTreeBased.add(op);
+			viewMatcherTreeBased.put(normalizedOp, id);
 		}
 
-		return result;
+		//return result;
 
 	}
 
 
+	/**
+	 * The rewrite creates a new algebra expression with view hits injected.
+	 * For convenience, we should also return a list of the hits themselves.
+	 *
+	 *
+	 *
+	 */
 	@Override
-	public Op rewrite(Op op) {
-    	Op normalizedItem = opNormalizer.rewrite(op);
-
-    	Node id = NodeFactory.createURI("id://" + StringUtils.md5Hash("" + normalizedItem));
+	public Op rewrite(Op rawOp) {
+    	Op op = opNormalizer.rewrite(rawOp);
 
 
     	Op current = op;
@@ -80,7 +112,7 @@ public class OpRewriteViewMatcher
 				break;
 			}
 
-			for(LookupResult lr : lookupResults) {
+			for(LookupResult<Node> lr : lookupResults) {
 				OpVarMap opVarMap = lr.getOpVarMap();
 
 				Map<Op, Op> opMap = opVarMap.getOpMap();
@@ -108,10 +140,15 @@ public class OpRewriteViewMatcher
 
 
     	for(Op leafOp : leafs) {
+    		VarUsage varUsage = OpUtils.analyzeVarUsage(tree, leafOp);
+
+
     		ProjectedQuadFilterPattern pqfp = SparqlCacheUtils.transform(op);
     		if(pqfp != null) {
 
     			QuadFilterPatternCanonical qfpc = SparqlCacheUtils.canonicalize2(pqfp.getQuadFilterPattern(), VarGeneratorImpl2.create());
+
+
 
     			//viewMatcherQuadPatternBased.
 
@@ -119,9 +156,6 @@ public class OpRewriteViewMatcher
 
 
     	}
-
-
-
 
 
 		// TODO Auto-generated method stub

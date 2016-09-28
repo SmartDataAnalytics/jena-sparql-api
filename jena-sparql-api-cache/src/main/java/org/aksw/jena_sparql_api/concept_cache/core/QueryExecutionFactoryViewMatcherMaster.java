@@ -19,9 +19,9 @@ public class QueryExecutionFactoryViewMatcherMaster
 {
     //protected SparqlViewMatcherSystem viewMatcherSystem;
 	//protected QueryExecutionFactory decoratee;
-	protected OpViewMatcher viewMatcher;
+	protected OpRewriteViewMatcher viewMatcher;
 	protected ExecutorService executorService;
-	protected Map<Node, RangedSupplier<Long, Binding>> opToRangedSupplier;
+	//protected Map<Node, RangedSupplier<Long, Binding>> opToRangedSupplier;
 
     protected long indexResultSetSizeThreshold;
 
@@ -32,14 +32,14 @@ public class QueryExecutionFactoryViewMatcherMaster
 //        this(decoratee, serviceMap, new SparqlViewMatcherSystemImpl(), 10000);
 //    }
 
-    public QueryExecutionFactoryViewMatcherMaster(QueryExecutionFactory decoratee, OpViewMatcher viewMatcher, ExecutorService executorService, long indexResultSetSizeThreshold) {
+    public QueryExecutionFactoryViewMatcherMaster(QueryExecutionFactory decoratee, OpRewriteViewMatcher viewMatcher, ExecutorService executorService, long indexResultSetSizeThreshold) {
         super(decoratee);
         //this.viewMatcherSystem = viewMatcherSystem;
     	//this.decoratee = decoratee;
         this.viewMatcher = viewMatcher;
         this.executorService = executorService;
         this.indexResultSetSizeThreshold = indexResultSetSizeThreshold;
-        this.opToRangedSupplier = new HashMap<>();
+        //this.opToRangedSupplier = new HashMap<>();
     }
 
     @Override
