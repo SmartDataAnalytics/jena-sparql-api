@@ -73,10 +73,17 @@ class StorageEntry {
 /**
  * Rewrite an algebra expression under view matching
  *
+ * This is a stateful rewriter: It rewrites expressions by injecting references to auxiliary data,
+ * and internally a map with further information about the auxiliary data is maintained.
+ *
+ * Probably the main point of the architecture is the unified handling of cache writes and reads using
+ * RangeSuppliers:
+ *
+ *
  * @author raven
  *
  */
-public class OpRewriteViewMatcher
+public class OpRewriteViewMatcherStateful
 	implements Rewrite
 {
 	protected Rewrite opNormalizer;
@@ -90,7 +97,7 @@ public class OpRewriteViewMatcher
 	protected Map<Node, ViewMatcherData> idToCacheData;
 
 
-	public OpRewriteViewMatcher() {
+	public OpRewriteViewMatcherStateful() {
 		this.opNormalizer = OpViewMatcherTreeBased::normalizeOp;
 		this.viewMatcherTreeBased = OpViewMatcherTreeBased.create();
 		this.viewMatcherQuadPatternBased = new SparqlViewCacheImpl<>();
@@ -123,7 +130,7 @@ public class OpRewriteViewMatcher
 
 	/**
 	 * The rewrite creates a new algebra expression with view hits injected.
-	 * For convenience, we should also return a list of the hits themselves.
+	 * TODO For convenience, it may be usefule if a a list of the hits themselves was returned
 	 *
 	 *
 	 *
@@ -187,6 +194,15 @@ public class OpRewriteViewMatcher
 
     	}
 
+
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	public Op finalizeRewrite(Op op) {
+    	// TODO Adding the overall caching op has to be done AFTER the complete rewrite - i.e. here is the WRONG place
+
     	Map<Node, StorageEntry> storageMap = new HashMap<>();
 
     	// Prepare a storage for the original rawOp
@@ -209,15 +225,13 @@ public class OpRewriteViewMatcher
 
 
 
+    	return superRootOp;
     	// TODO Inject values directly if the data is local and comparatively small
 //    	Range<Long> range;
 //    	storage.isCached(range);
 
 
-		// TODO Auto-generated method stub
-		return null;
 	}
-
 
 	//public static Op rewrite
 

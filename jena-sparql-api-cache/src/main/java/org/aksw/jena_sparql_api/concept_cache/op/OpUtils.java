@@ -114,7 +114,19 @@ class OpSummaryImpl
 
 public class OpUtils {
 
-    public static Stream<Op> linearizePrefix(Op op, Collection<Op> subOps) {
+	/**
+	 * Count the number of operators in an op expression
+	 * TODO Add versions that support a predicate on whether to descend into an op, such as SERVICE
+	 * @param op
+	 * @return
+	 */
+	public long size(Op op) {
+		// TODO
+		System.out.println("OpUtils::size: This is a hack; it does not return the exact number of nodes in an op expression");
+		return linearizePrefix(op).count();
+	}
+
+    public static Stream<Op> linearizePrefix(Op op) {
         Stream<Op> result = ExprUtils.linearizePrefix(op, Collections.singleton(null), OpUtils::getSubOps);
         return result;
     }

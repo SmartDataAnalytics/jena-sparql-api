@@ -35,7 +35,7 @@ import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMapImpl;
 import org.aksw.jena_sparql_api.concept_cache.core.JenaExtensionViewMatcher;
 import org.aksw.jena_sparql_api.concept_cache.core.OpExecutorFactoryViewMatcher;
-import org.aksw.jena_sparql_api.concept_cache.core.OpRewriteViewMatcher;
+import org.aksw.jena_sparql_api.concept_cache.core.OpRewriteViewMatcherStateful;
 import org.aksw.jena_sparql_api.concept_cache.core.QueryExecutionFactoryViewMatcherMaster;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
 import org.aksw.jena_sparql_api.concept_cache.core.ViewCacheIndexer;
@@ -96,8 +96,9 @@ public class TestStateSpaceSearch {
 
 
 
-
 	public static void main(String[] args) throws Exception {
+
+		//OpUtils.
 
 		// Initialize a global custom OpExecutor which handles SERVICE <view://...> ops
 		JenaExtensionViewMatcher.register();
@@ -113,7 +114,7 @@ public class TestStateSpaceSearch {
 		// Create an implemetation of the view matcher - i.e. an object that supports
 		// - registering (Op, value) entries
 		// - rewriting an Op using references to the registered ops
-		OpRewriteViewMatcher viewMatcherRewriter = new OpRewriteViewMatcher();
+		OpRewriteViewMatcherStateful viewMatcherRewriter = new OpRewriteViewMatcherStateful();
 
 		// Obtain the global service map for registering temporary handlers for <view://...> SERVICEs
 		// for the duration of a query execution
@@ -192,7 +193,7 @@ System.out.println("----- yay");
 
 
         //OpViewMatcher viewMatcher = OpViewMatcherTreeBased.create();
-		OpRewriteViewMatcher viewMatcher = new OpRewriteViewMatcher();
+		OpRewriteViewMatcherStateful viewMatcher = new OpRewriteViewMatcherStateful();
         //QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://dbpedia.org/sparql", "http://dbpedia.org").create();
         QueryExecutionFactory qef = FluentQueryExecutionFactory.from(model).create();
         ExecutorService executorService = Executors.newCachedThreadPool();
