@@ -20,7 +20,7 @@ public class RangedSupplierQuery
 {
 	protected QueryExecutionFactory qef;
 	protected Query query;
-	
+
 	public RangedSupplierQuery(QueryExecutionFactory qef, Query query) {
 		super();
 		this.qef = qef;
@@ -31,14 +31,24 @@ public class RangedSupplierQuery
 	public ClosableIterator<Binding> apply(Range<Long> range) {
 		Query clone = query.cloneQuery();
 		QueryUtils.applyRange(clone, range);
-		
+
 		QueryExecution qe = qef.createQueryExecution(clone);
 		ResultSet rs = qe.execSelect();
-		
+
 		Iterator<Binding> it = new IteratorResultSetBinding(rs);
-		
+
 		ClosableIterator<Binding> result = new IteratorClosable<>(it, () -> qe.close());
 		return result;
 	}
+
+	@Override
+    public <X> X unwrap(Class<X> clazz, boolean reflexive) {
+    	@SuppressWarnings("unchecked")
+		X result = reflexive && this.getClass().isAssignableFrom(clazz)
+    		? (X)this
+    		: null;
+
+    	return result;
+    }
 
 }

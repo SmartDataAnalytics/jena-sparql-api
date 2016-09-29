@@ -37,6 +37,17 @@ public class RangedSupplierSubRange<I extends Comparable<I>, O>
 		return result;
 	}
 
+	@Override
+    public <X> X unwrap(Class<X> clazz, boolean reflexive) {
+    	@SuppressWarnings("unchecked")
+		X result = reflexive && this.getClass().isAssignableFrom(clazz)
+    		? (X)this
+    		: subRangeSupplier.unwrap(clazz, true);
+
+    	return result;
+    }
+
+
 	public static <O> RangedSupplierSubRange<Long, O> create(RangedSupplier<Long, O> subRangeSupplier, Range<Long> subRange) {
 		RangedSupplierSubRange<Long, O> result = new RangedSupplierSubRange<>(
 				subRangeSupplier,
@@ -45,4 +56,5 @@ public class RangedSupplierSubRange<I extends Comparable<I>, O>
 				(a, b) -> a + b);
 		return result;
 	}
+
 }

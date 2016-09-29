@@ -48,4 +48,14 @@ public class RangedSupplierOp implements RangedSupplier<Long, Binding> {
 		return result;
 	}
 
+	@Override
+    public <X> X unwrap(Class<X> clazz, boolean reflexive) {
+    	@SuppressWarnings("unchecked")
+		X result = reflexive && this.getClass().isAssignableFrom(clazz)
+    		? (X)this
+    		: null;
+
+    	return result;
+    }
+
 }

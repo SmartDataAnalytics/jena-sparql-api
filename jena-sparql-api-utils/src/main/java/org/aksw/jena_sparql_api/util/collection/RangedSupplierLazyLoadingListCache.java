@@ -172,7 +172,8 @@ public class RangedSupplierLazyLoadingListCache<T>
 
     //protected ExecutorCompletionService<Object> executorService;
     protected ExecutorService executorService;
-    protected Function<Range<Long>, ClosableIterator<T>> itemSupplier;
+    //protected Function<Range<Long>, ClosableIterator<T>> itemSupplier;
+    protected RangedSupplier<Long, T> itemSupplier;
 
 
     /**
@@ -229,7 +230,7 @@ public class RangedSupplierLazyLoadingListCache<T>
     	return result;
     }
 
-    public RangedSupplierLazyLoadingListCache(ExecutorService executorService, Function<Range<Long>, ClosableIterator<T>> itemSupplier, Range<Long> cacheRange, RangeCostModel costModel) {
+    public RangedSupplierLazyLoadingListCache(ExecutorService executorService, RangedSupplier<Long, T> itemSupplier, Range<Long> cacheRange, RangeCostModel costModel) {
         super();
         this.executorService = executorService;
         this.itemSupplier = itemSupplier;
@@ -377,5 +378,14 @@ public class RangedSupplierLazyLoadingListCache<T>
         //BlockingCacheIterator<T> cacheIt = new BlockingCacheIterator<>(cache);
     }
 
+	@Override
+    public <X> X unwrap(Class<X> clazz, boolean reflexive) {
+    	@SuppressWarnings("unchecked")
+		X result = reflexive && this.getClass().isAssignableFrom(clazz)
+    		? (X)this
+    		: itemSupplier.unwrap(clazz, true);
+
+    	return result;
+    }
 
 }
