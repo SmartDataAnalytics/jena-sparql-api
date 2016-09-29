@@ -136,15 +136,16 @@ public class TestStateSpaceSearch {
         	{
 		        QueryExecution qe = qef.createQueryExecution("select * { ?s a <http://dbpedia.org/ontology/MusicalArtist> } Limit 10");
 		        ResultSet rs = qe.execSelect();
-	        	ResultSetFormatter.consume(rs);
-        	}
-        	{
-    	        QueryExecution qe = qef.createQueryExecution("select * { ?s a <http://dbpedia.org/ontology/MusicalArtist> ; a <foo://bar> } Limit 10");
-    	        ResultSet rs = qe.execSelect();
     	        System.out.println(ResultSetFormatter.asText(rs));
-    	        //System.out.println(t);
-            	//ResultSetFormatter.consume(rs);
+//	        	ResultSetFormatter.consume(rs);
         	}
+//        	{
+//    	        QueryExecution qe = qef.createQueryExecution("select * { ?s a <http://dbpedia.org/ontology/MusicalArtist> ; a <foo://bar> } Limit 10");
+//    	        ResultSet rs = qe.execSelect();
+//    	        System.out.println(ResultSetFormatter.asText(rs));
+//    	        //System.out.println(t);
+//            	//ResultSetFormatter.consume(rs);
+//        	}
         }
 
 	}

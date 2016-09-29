@@ -60,13 +60,17 @@ public class OpExecutorViewCache
         String serviceUri = serviceNode.getURI();
 
         QueryIterator result;
-        if(serviceUri.startsWith("cache://")) {
+        if(serviceUri.startsWith("view://")) {
         	StorageEntry storageEntry = storageMap.get(serviceNode);
         	if(storageEntry == null) {
         		throw new RuntimeException("Could not find a " + StorageEntry.class.getSimpleName() + " instance for " + serviceUri);
         	}
 
-        	ClosableIterator<Binding> it = storageEntry.storage.apply(Range.atLeast(0l));
+        	Range<Long> range = Range.atLeast(0l);
+        	ClosableIterator<Binding> it = storageEntry.storage.apply(range);
+//        	while(it.hasNext()) {
+//        		System.out.println("item: " + it.next());
+//        	}
         	result = new QueryIterPlainWrapper(it);
         } else {
         	result = super.exec(opService, input);

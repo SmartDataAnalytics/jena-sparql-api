@@ -1,7 +1,11 @@
 package org.aksw.jena_sparql_api.concept_cache.core;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -9,11 +13,13 @@ import org.aksw.jena_sparql_api.core.QueryExecutionBaseSelect;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.ResultSetCloseable;
 import org.aksw.jena_sparql_api.util.collection.RangedSupplier;
+import org.aksw.jena_sparql_api.util.collection.RangedSupplierLazyLoadingListCache;
 import org.aksw.jena_sparql_api.utils.BindingUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.ResultSetUtils;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.ARQ;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
@@ -21,6 +27,9 @@ import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.OpVars;
+import org.apache.jena.sparql.algebra.op.OpNull;
+import org.apache.jena.sparql.algebra.op.OpService;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.core.Var;
@@ -30,6 +39,7 @@ import org.apache.jena.sparql.engine.QueryEngineRegistry;
 import org.apache.jena.sparql.engine.QueryIterator;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingRoot;
+import org.apache.jena.sparql.engine.main.OpExecutor;
 import org.apache.jena.sparql.util.Context;
 import org.apache.jena.util.iterator.ClosableIterator;
 
@@ -66,6 +76,7 @@ public class QueryExecutionViewMatcherMaster
     	super(query, subFactory);
 
     	this.opRewriter = opRewriter;
+    	this.storageMap = OpExecutorFactoryViewMatcher.get().getStorageMap();
     	//this.storageMap = storageMap;
     	//this.executorService = executorService;
     	//this.opToRangedSupplier = opToRangedSupplier;
@@ -110,7 +121,24 @@ public class QueryExecutionViewMatcherMaster
     	// - Clean up the execution context / jena-wise global data
     	Op rewrittenOp = opRewriter.rewrite(queryOp);
 
+
+
+    	Node serviceNode = NodeFactory.createURI("view://test.org");
+    	rewrittenOp = new OpService(serviceNode, OpNull.create(), false);
+
+    	ExecutorService executorService = Executors.newCachedThreadPool();
+    	RangedSupplier<Long, Binding> backend = new RangedSupplierQuery(parentFactory, rawQuery);
+    	RangedSupplierLazyLoadingListCache<Binding> storage = new RangedSupplierLazyLoadingListCache<>(executorService, backend, Range.atMost(10000l), null);
+    	Set<Var> visibleVars = OpVars.visibleVars(rewrittenOp);
+    	VarInfo varInfo = new VarInfo(visibleVars, Collections.emptySet());
+
+    	StorageEntry se = new StorageEntry(storage, varInfo);
+    	storageMap.put(serviceNode, se);
+
+
+
     	System.out.println("Rewritten op being passed to execution:\n" + rewrittenOp);
+    	System.out.println("Rewritten op being passed to execution:\n" + rawQuery);
 
     	// Note: We use Jena to execute the op.
     	// The op itself may use SERVICE<> as the root node, which will cause jena to pass execution to the appropriate handler

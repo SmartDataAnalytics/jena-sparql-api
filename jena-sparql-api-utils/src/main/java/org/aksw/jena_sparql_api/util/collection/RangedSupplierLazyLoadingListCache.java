@@ -60,7 +60,8 @@ class LazyLoadingCachingListIterator<T>
         T result;
 
         for(;;) {
-            if(!canonicalRequestRange.contains(offset)) {
+        	boolean isOffsetInRequestRange = canonicalRequestRange.contains(offset);
+            if(!isOffsetInRequestRange) {
                 // TODO Use a cheaper primitive int / long comparison instead of the range
                 // We hit the end of the requested iteration - exit
                 currentIterator.close();
@@ -93,12 +94,20 @@ class LazyLoadingCachingListIterator<T>
                 result = currentIterator.next();
                 ++offset;
                 break;
-            } else {
+            } else { // if(!currentIterator.hasNext()) {
                 // If the current iterator has no more items, we either
                 // (a) have reached the end of a page and we need to advance to the next one
                 // (b) there simple may not be any more data available
 
+            	// In any case, close the current iterator
                 currentIterator.close();
+
+                if(isOffsetInRequestRange) {
+                	// (b) is the case if the offset was within the requested range, but there were no items
+                    result = endOfData();
+                    break;
+                }
+
                 currentIterator = null;
             }
         }
