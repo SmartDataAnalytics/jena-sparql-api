@@ -2,7 +2,6 @@ package org.aksw.jena_sparql_api.concept_cache.core;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -22,15 +21,11 @@ import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
-import org.apache.jena.sparql.algebra.optimize.Rewrite;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.QueryIterator;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingRoot;
-import org.apache.jena.sparql.engine.iterator.QueryIter;
-import org.apache.jena.sparql.engine.iterator.QueryIterPlainWrapper;
-import org.apache.jena.sparql.engine.iterator.QueryIteratorWrapper;
 import org.apache.jena.sparql.engine.main.QueryEngineMain;
 import org.apache.jena.util.iterator.ClosableIterator;
 
@@ -39,10 +34,13 @@ import com.google.common.collect.Range;
 public class QueryExecutionViewMatcherMaster
 	extends QueryExecutionBaseSelect
 {
-	protected ExecutorService executorService;
+	//protected ExecutorService executorService;
 	//protected OpViewMatcher viewMatcher;
-	protected Rewrite opRewriter;
-	protected Map<Node, RangedSupplier<Long, Binding>> opToRangedSupplier;
+	protected OpRewriteViewMatcherStateful opRewriter;
+	//protected Map<Node, RangedSupplier<Long, Binding>> opToRangedSupplier;
+	protected Map<Node, StorageEntry> storageMap;
+
+
 
     protected long indexResultSetSizeThreshold;
 
@@ -52,9 +50,11 @@ public class QueryExecutionViewMatcherMaster
     		Query query,
     		//Function<Query, RangedSupplier<Long, Binding>> rangedSupplierFactory,
     		QueryExecutionFactory subFactory,
+    		OpRewriteViewMatcherStateful opRewriter
+    		//Map<Node, StorageEntry> storageMap
     		//OpViewMatcher viewMatcher,
-    		Rewrite opRewriter,
-    		ExecutorService executorService
+    		//Rewrite opRewriter
+    		//ExecutorService executorService
     		//Map<Node, RangedSupplier<Long, Binding>> opToRangedSupplier
     		//long indexResultSetSizeThreshold,
     		//Map<Node, ? super ViewCacheIndexer> serviceMap
@@ -62,8 +62,9 @@ public class QueryExecutionViewMatcherMaster
     	super(query, subFactory);
 
     	this.opRewriter = opRewriter;
-    	this.executorService = executorService;
-    	this.opToRangedSupplier = opToRangedSupplier;
+    	//this.storageMap = storageMap;
+    	//this.executorService = executorService;
+    	//this.opToRangedSupplier = opToRangedSupplier;
     	//this.serviceMap = serviceMap;
     }
 

@@ -4,16 +4,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.jena.graph.Node;
-import org.apache.jena.query.ARQ;
 import org.apache.jena.sparql.engine.ExecutionContext;
 import org.apache.jena.sparql.engine.main.OpExecutor;
 import org.apache.jena.sparql.engine.main.OpExecutorFactory;
-import org.apache.jena.sparql.engine.main.QC;
 
 public class OpExecutorFactoryViewMatcher
     implements OpExecutorFactory
 {
-    protected Map<Node, ViewCacheIndexer> serviceToQef;
+    //protected Map<Node, ViewCacheIndexer> serviceToQef;
+	protected Map<Node, StorageEntry> storageMap;
 
     private static OpExecutorFactoryViewMatcher instance = null;
 
@@ -27,24 +26,29 @@ public class OpExecutorFactoryViewMatcher
 
 
     public OpExecutorFactoryViewMatcher(
-            Map<Node, ViewCacheIndexer> serviceToQef) {
+            Map<Node, StorageEntry> storageMap) {
         super();
-        this.serviceToQef = serviceToQef;
+        this.storageMap = storageMap;
     }
 
     public OpExecutorFactoryViewMatcher() {
         super();
-        this.serviceToQef = new HashMap<>();
+        this.storageMap = new HashMap<>();
     }
 
+    public Map<Node, StorageEntry> getStorageMap() {
+    	return storageMap;
+    }
+
+    @Deprecated
     public Map<Node, ViewCacheIndexer> getServiceMap() {
-        return serviceToQef;
+        return null;
     }
 
 
     @Override
     public OpExecutor create(ExecutionContext execCxt) {
-        return new OpExecutorViewCache(execCxt, serviceToQef);
+        return new OpExecutorViewCache(execCxt, storageMap);
     }
 
 }

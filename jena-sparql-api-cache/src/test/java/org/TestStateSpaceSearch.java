@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -17,7 +16,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -38,7 +36,7 @@ import org.aksw.jena_sparql_api.concept_cache.core.OpExecutorFactoryViewMatcher;
 import org.aksw.jena_sparql_api.concept_cache.core.OpRewriteViewMatcherStateful;
 import org.aksw.jena_sparql_api.concept_cache.core.QueryExecutionFactoryViewMatcherMaster;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
-import org.aksw.jena_sparql_api.concept_cache.core.ViewCacheIndexer;
+import org.aksw.jena_sparql_api.concept_cache.core.StorageEntry;
 import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
@@ -89,7 +87,6 @@ import org.springframework.core.io.Resource;
 import com.codepoetics.protonpack.functions.TriFunction;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 
 public class TestStateSpaceSearch {
@@ -114,12 +111,12 @@ public class TestStateSpaceSearch {
 		// Create an implemetation of the view matcher - i.e. an object that supports
 		// - registering (Op, value) entries
 		// - rewriting an Op using references to the registered ops
-		OpRewriteViewMatcherStateful viewMatcherRewriter = new OpRewriteViewMatcherStateful();
+		Map<Node, StorageEntry> storageMap = OpExecutorFactoryViewMatcher.get().getStorageMap();
+		OpRewriteViewMatcherStateful viewMatcherRewriter = new OpRewriteViewMatcherStateful(storageMap);
 
 		// Obtain the global service map for registering temporary handlers for <view://...> SERVICEs
 		// for the duration of a query execution
 		// Note: JenaExtensionViewMatcher.register(); already registered this object at ARQ's global query execution context
-		Map<Node, ViewCacheIndexer> serviceMap = OpExecutorFactoryViewMatcher.get().getServiceMap();
 
 		// A map which associates SERVICE ids with an interface for fetching slices of data.
 		Map<Node, RangedSupplier<Long, Binding>> dataSupplier;
@@ -127,7 +124,10 @@ public class TestStateSpaceSearch {
 
         QueryExecutionFactory qef = FluentQueryExecutionFactory.from(model).create();
         ExecutorService executorService = Executors.newCachedThreadPool();
-        qef = new QueryExecutionFactoryViewMatcherMaster(qef, viewMatcherRewriter, executorService, 200000l);
+        //200000l
+        //executorService
+
+        qef = new QueryExecutionFactoryViewMatcherMaster(qef, viewMatcherRewriter);
         qef = new QueryExecutionFactoryParse(qef, SparqlQueryParserImpl.create());
 
         Stopwatch sw = Stopwatch.createStarted();
@@ -193,31 +193,31 @@ System.out.println("----- yay");
 
 
         //OpViewMatcher viewMatcher = OpViewMatcherTreeBased.create();
-		OpRewriteViewMatcherStateful viewMatcher = new OpRewriteViewMatcherStateful();
-        //QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://dbpedia.org/sparql", "http://dbpedia.org").create();
-        QueryExecutionFactory qef = FluentQueryExecutionFactory.from(model).create();
-        ExecutorService executorService = Executors.newCachedThreadPool();
-        qef = new QueryExecutionFactoryViewMatcherMaster(qef, viewMatcher, executorService, 200000l);
-        qef = new QueryExecutionFactoryParse(qef, SparqlQueryParserImpl.create());
-
-        Stopwatch sw = Stopwatch.createStarted();
-
-        for(int i = 0; i < 10; ++i) {
-        	{
-		        QueryExecution qe = qef.createQueryExecution("select * { ?s a <http://dbpedia.org/ontology/MusicalArtist> } Limit 10");
-		        ResultSet rs = qe.execSelect();
-	        	ResultSetFormatter.consume(rs);
-        	}
-        	{
-    	        QueryExecution qe = qef.createQueryExecution("select * { ?s a <http://dbpedia.org/ontology/MusicalArtist> ; a <foo://bar> } Limit 10");
-    	        ResultSet rs = qe.execSelect();
-    	        System.out.println(ResultSetFormatter.asText(rs));
-    	        //System.out.println(t);
-            	//ResultSetFormatter.consume(rs);
-        	}
-        }
-
-        System.out.println("DONE. - " + + sw.stop().elapsed(TimeUnit.MILLISECONDS));
+//		OpRewriteViewMatcherStateful viewMatcher = new OpRewriteViewMatcherStateful();
+//        //QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://dbpedia.org/sparql", "http://dbpedia.org").create();
+//        QueryExecutionFactory qef = FluentQueryExecutionFactory.from(model).create();
+//        ExecutorService executorService = Executors.newCachedThreadPool();
+//        qef = new QueryExecutionFactoryViewMatcherMaster(qef, viewMatcher, executorService, 200000l);
+//        qef = new QueryExecutionFactoryParse(qef, SparqlQueryParserImpl.create());
+//
+//        Stopwatch sw = Stopwatch.createStarted();
+//
+//        for(int i = 0; i < 10; ++i) {
+//        	{
+//		        QueryExecution qe = qef.createQueryExecution("select * { ?s a <http://dbpedia.org/ontology/MusicalArtist> } Limit 10");
+//		        ResultSet rs = qe.execSelect();
+//	        	ResultSetFormatter.consume(rs);
+//        	}
+//        	{
+//    	        QueryExecution qe = qef.createQueryExecution("select * { ?s a <http://dbpedia.org/ontology/MusicalArtist> ; a <foo://bar> } Limit 10");
+//    	        ResultSet rs = qe.execSelect();
+//    	        System.out.println(ResultSetFormatter.asText(rs));
+//    	        //System.out.println(t);
+//            	//ResultSetFormatter.consume(rs);
+//        	}
+//        }
+//
+//        System.out.println("DONE. - " + + sw.stop().elapsed(TimeUnit.MILLISECONDS));
 
 
 //		try {

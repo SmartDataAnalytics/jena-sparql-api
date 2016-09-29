@@ -35,40 +35,6 @@ import org.apache.jena.sparql.engine.main.OpExecutor;
 
 import com.google.common.collect.Range;
 
-class ViewMatcherData {
-	boolean isRangeCache(Range<Long> range) {
-		return true;
-	}
-
-	public Set<Var> getDefinedVars() {
-		return null;
-	}
-}
-
-class VarInfo {
-	public Set<Var> projectVars;
-	public Set<Var> distinctVars;
-
-	public VarInfo(Set<Var> projectVars, Set<Var> distinctVars) {
-		super();
-		this.projectVars = projectVars;
-		this.distinctVars = distinctVars;
-	}
-
-}
-
-
-class StorageEntry {
-	public StorageEntry(RangedSupplierLazyLoadingListCache<Binding> storage, VarInfo varInfo) {
-		super();
-		this.storage = storage;
-		this.varInfo = varInfo;
-	}
-
-	public RangedSupplierLazyLoadingListCache<Binding> storage;
-	public VarInfo varInfo;
-}
-
 
 /**
  * Rewrite an algebra expression under view matching
@@ -90,17 +56,21 @@ public class OpRewriteViewMatcherStateful
 	protected OpViewMatcher<Node> viewMatcherTreeBased;
 	protected SparqlViewCache<Node> viewMatcherQuadPatternBased;
 
+	protected Map<Node, StorageEntry> storageMap = new HashMap<>();
+
+
 	// Mapping from cache entry id to the cache data
 	// - We need to be able to ask whether a certain range is completely in cache
 	// - Ask which variables are defined by the cache data
 	// -
-	protected Map<Node, ViewMatcherData> idToCacheData;
+	//protected Map<Node, ViewMatcherData> idToCacheData;
 
 
-	public OpRewriteViewMatcherStateful() {
+	public OpRewriteViewMatcherStateful(Map<Node, StorageEntry> storageMap) {
 		this.opNormalizer = OpViewMatcherTreeBased::normalizeOp;
 		this.viewMatcherTreeBased = OpViewMatcherTreeBased.create();
 		this.viewMatcherQuadPatternBased = new SparqlViewCacheImpl<>();
+		this.storageMap = storageMap;
 	}
 
 	//@Override

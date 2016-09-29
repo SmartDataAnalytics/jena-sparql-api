@@ -3,7 +3,6 @@ package org.aksw.jena_sparql_api.concept_cache.core;
 import java.util.Collection;
 import java.util.Map;
 
-import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.aksw.jena_sparql_api.utils.ReplaceConstants;
@@ -21,12 +20,17 @@ import org.apache.jena.sparql.algebra.op.OpUnion;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.ExecutionContext;
 import org.apache.jena.sparql.engine.QueryIterator;
+import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.engine.iterator.QueryIterPlainWrapper;
 import org.apache.jena.sparql.engine.iterator.QueryIteratorResultSet;
 import org.apache.jena.sparql.engine.main.OpExecutor;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.graph.NodeTransformLib;
+import org.apache.jena.util.iterator.ClosableIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.Range;
 
 
 //class CacheConfig {
@@ -40,12 +44,13 @@ public class OpExecutorViewCache
 {
     private static final Logger logger = LoggerFactory.getLogger(OpExecutorViewCache.class);
 
-    protected Map<Node, ViewCacheIndexer> serviceToQef;
+    protected Map<Node, StorageEntry> storageMap;
 
 
-    protected OpExecutorViewCache(ExecutionContext execCxt, Map<Node, ViewCacheIndexer> serviceToQef) {
+    protected OpExecutorViewCache(ExecutionContext execCxt, Map<Node, StorageEntry> storageMap) {
         super(execCxt);
-        this.serviceToQef = serviceToQef;
+        //this.serviceToQef = serviceToQef;
+        this.storageMap = storageMap;
     }
 
     @Override
@@ -56,23 +61,23 @@ public class OpExecutorViewCache
 
         QueryIterator result;
         if(serviceUri.startsWith("cache://")) {
-            //SparqlCacheUtils.
-            ViewCacheIndexer vci = serviceToQef.get(serviceNode);
-            if(vci == null) {
-                throw new RuntimeException("Could not find a " + ViewCacheIndexer.class.getSimpleName() + " instance for " + serviceUri);
-            }
-            Op tmpOp = opService.getSubOp();
+        	StorageEntry storageEntry = storageMap.get(serviceNode);
+        	if(storageEntry == null) {
+        		throw new RuntimeException("Could not find a " + StorageEntry.class.getSimpleName() + " instance for " + serviceUri);
+        	}
 
-            result = executeWithIndexing(tmpOp, vci);
-
+        	ClosableIterator<Binding> it = storageEntry.storage.apply(Range.atLeast(0l));
+        	result = new QueryIterPlainWrapper(it);
         } else {
-            result = super.exec(opService, input);
+        	result = super.exec(opService, input);
         }
 
         return result;
     }
 
-    
+
+    // Any indexing (if being performed at all) is handled by the storage
+    @Deprecated
     public static QueryIterator executeWithIndexing(Op tmpOp, ViewCacheIndexer vci) {
 
         Collection<Var> vars = OpVars.mentionedVars(tmpOp);
