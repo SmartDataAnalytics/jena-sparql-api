@@ -14,6 +14,7 @@ import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.ResultSetCloseable;
 import org.aksw.jena_sparql_api.util.collection.RangedSupplier;
 import org.aksw.jena_sparql_api.util.collection.RangedSupplierLazyLoadingListCache;
+import org.aksw.jena_sparql_api.util.collection.RangedSupplierSubRange;
 import org.aksw.jena_sparql_api.utils.BindingUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.ResultSetUtils;
@@ -39,7 +40,6 @@ import org.apache.jena.sparql.engine.QueryEngineRegistry;
 import org.apache.jena.sparql.engine.QueryIterator;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingRoot;
-import org.apache.jena.sparql.engine.main.OpExecutor;
 import org.apache.jena.sparql.util.Context;
 import org.apache.jena.util.iterator.ClosableIterator;
 
@@ -128,7 +128,12 @@ public class QueryExecutionViewMatcherMaster
 
     	ExecutorService executorService = Executors.newCachedThreadPool();
     	RangedSupplier<Long, Binding> backend = new RangedSupplierQuery(parentFactory, rawQuery);
-    	RangedSupplierLazyLoadingListCache<Binding> storage = new RangedSupplierLazyLoadingListCache<>(executorService, backend, Range.atMost(10000l), null);
+    	//RangedSupplierLazyLoadingListCache<Binding>
+    	RangedSupplier<Long, Binding> storage = new RangedSupplierLazyLoadingListCache<>(executorService, backend, Range.atMost(10000l), null);
+
+    	storage = RangedSupplierSubRange.create(storage, range);
+
+
     	Set<Var> visibleVars = OpVars.visibleVars(rewrittenOp);
     	VarInfo varInfo = new VarInfo(visibleVars, Collections.emptySet());
 
