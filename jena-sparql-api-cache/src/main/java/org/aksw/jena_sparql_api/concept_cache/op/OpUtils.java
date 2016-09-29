@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -321,7 +322,7 @@ public class OpUtils {
             OpN o = (OpN)op;
             result = o.copy(subOps);
         } else {
-            throw new RuntimeException("Should not happen");
+            throw new RuntimeException("Should not happen: Could not copy: " + op);
         }
 
         return result;
@@ -438,8 +439,7 @@ public class OpUtils {
 	 * @param current
 	 * @return
 	 */
-	public static VarUsage analyzeVarUsage(Tree<Op> tree, Op current) {
-		VarUsageAnalyzerVisitor visitor = new VarUsageAnalyzerVisitor(tree, current);
+	public static VarUsage analyzeVarUsage(Tree<Op> tree, Op current, VarUsageAnalyzerVisitor visitor) {
 
 		Op parent;
 		while((parent = tree.getParent(current)) != null) {
@@ -453,6 +453,17 @@ public class OpUtils {
 		return result;
 	}
 
+	public static VarUsage analyzeVarUsage(Tree<Op> tree, Op current) {
+		VarUsageAnalyzerVisitor visitor = new VarUsageAnalyzerVisitor(tree, current);
+		VarUsage result = analyzeVarUsage(tree, current, visitor);
+		return result;
+	}
+
+	public static VarUsage analyzeVarUsage(Tree<Op> tree, Op current, Set<Var> availableVars) {
+		VarUsageAnalyzerVisitor visitor = new VarUsageAnalyzerVisitor(tree, current, availableVars);
+		VarUsage result = analyzeVarUsage(tree, current, visitor);
+		return result;
+	}
 }
 
 

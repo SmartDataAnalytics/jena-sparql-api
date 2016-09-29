@@ -29,7 +29,7 @@ import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.domain.VarOccurrence;
-import org.aksw.jena_sparql_api.concept_cache.op.OpQuadFilterPatternCanonical;
+import org.aksw.jena_sparql_api.concept_cache.op.OpExtQuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 import org.aksw.jena_sparql_api.concept_cache.trash.OpVisitorViewCacheApplier;
 import org.aksw.jena_sparql_api.core.QueryExecutionExecWrapper;
@@ -755,14 +755,14 @@ public class SparqlCacheUtils {
 //        return result;
 //    }
 
-    public static OpQuadFilterPatternCanonical tryCreateCqfp(Op op, Generator<Var> generator) {
+    public static OpExtQuadFilterPatternCanonical tryCreateCqfp(Op op, Generator<Var> generator) {
     	QuadFilterPattern qfp = extractQuadFilterPattern(op);
-    	OpQuadFilterPatternCanonical result;
+    	OpExtQuadFilterPatternCanonical result;
     	if(qfp == null) {
     		result = null;
     	} else {
     		QuadFilterPatternCanonical tmp = canonicalize2(qfp, generator);
-    		result = new OpQuadFilterPatternCanonical(tmp);
+    		result = new OpExtQuadFilterPatternCanonical(tmp);
     	}
     	return result;
     }

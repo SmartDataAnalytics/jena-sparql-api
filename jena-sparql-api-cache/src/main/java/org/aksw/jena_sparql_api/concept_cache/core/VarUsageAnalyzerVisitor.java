@@ -45,9 +45,13 @@ public class VarUsageAnalyzerVisitor
 	protected Set<Set<Var>> uniqueSets;
 
 	public VarUsageAnalyzerVisitor(Tree<Op> tree, Op current) {
+		this(tree, current, OpVars.visibleVars(current));
+	}
+
+	public VarUsageAnalyzerVisitor(Tree<Op> tree, Op current, Set<Var> availableVars) {
 		this.tree = tree;
 		this.current = current;
-		this.availableVars = OpVars.visibleVars(current);
+		this.availableVars = availableVars;
 		this.referencedVars = new HashSet<>();
 		this.nonUnique = new HashSet<>();
 		this.varDeps = HashMultimap.create();
@@ -55,6 +59,7 @@ public class VarUsageAnalyzerVisitor
 
 		availableVars.forEach(v -> varDeps.put(v, v));
 	}
+
 
 	public VarUsage getResult() {
 		VarUsage result = new VarUsage(referencedVars, nonUnique, varDeps, uniqueSets);

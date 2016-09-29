@@ -249,8 +249,8 @@ public class OpVisitorCacheCandidateFinder
 
     @Override
     public void visit(OpExt op) {
-        if(op instanceof OpQuadFilterPatternCanonical) {
-            this.visit((OpQuadFilterPatternCanonical) op);
+        if(op instanceof OpExtQuadFilterPatternCanonical) {
+            this.visit((OpExtQuadFilterPatternCanonical) op);
         }
     }
 
@@ -269,7 +269,7 @@ public class OpVisitorCacheCandidateFinder
         op.visit(this);
     }
 
-    public void visit(OpQuadFilterPatternCanonical op) {
+    public void visit(OpExtQuadFilterPatternCanonical op) {
         //op.visit(opVisitor);
     }
 

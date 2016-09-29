@@ -47,7 +47,7 @@ public class QuadFilterPatternCanonical {
         return result;
     }
 
-    @Deprecated // Use OpUtils.toOp(...) instead
+    //@Deprecated // Use OpUtils.toOp(...) instead
     public Op toOp() {
 
         ExprList exprs = CnfUtils.toExprList(filterCnf);

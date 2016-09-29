@@ -10,11 +10,11 @@ import org.apache.jena.sparql.engine.QueryIterator;
 import org.apache.jena.sparql.serializer.SerializationContext;
 import org.apache.jena.sparql.util.NodeIsomorphismMap;
 
-public class OpQuadFilterPatternCanonical
+public class OpExtQuadFilterPatternCanonical
     extends OpExt
 {
-    public OpQuadFilterPatternCanonical(QuadFilterPatternCanonical qfpc) {
-        super(OpQuadFilterPatternCanonical.class.getSimpleName());
+    public OpExtQuadFilterPatternCanonical(QuadFilterPatternCanonical qfpc) {
+        super(OpExtQuadFilterPatternCanonical.class.getSimpleName());
 
         this.qfpc = qfpc;
     }
@@ -26,9 +26,11 @@ public class OpQuadFilterPatternCanonical
     }
 
     @Override
-    public Op effectiveOp() {http://www.welt.de/
+    public Op effectiveOp() {
+    	System.out.println("Not sure if it is a good idea for " + OpExtQuadFilterPatternCanonical.class.getName() + " getting called");
+    	Op result = qfpc.toOp();
         // TODO Auto-generated method stub
-        return null;
+        return result;
     }
 
     @Override

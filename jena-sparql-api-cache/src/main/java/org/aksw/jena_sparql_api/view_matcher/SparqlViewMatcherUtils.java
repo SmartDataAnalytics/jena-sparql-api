@@ -23,7 +23,7 @@ import org.aksw.commons.collections.trees.TreeUtils;
 import org.aksw.commons.collections.utils.StreamUtils;
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.ProblemVarMappingExpr;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
-import org.aksw.jena_sparql_api.concept_cache.op.OpQuadFilterPatternCanonical;
+import org.aksw.jena_sparql_api.concept_cache.op.OpExtQuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.LayerMapping;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.MatchingStrategyFactory;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.SequentialMatchIterator;
@@ -324,7 +324,7 @@ public class SparqlViewMatcherUtils {
             map.put(OpDistinct.class, (x, y) -> Collections.emptySet());
             map.put(OpSlice.class, GenericBinaryOpImpl.create(SparqlViewMatcherUtils::deriveProblemsSlice));
 
-            map.put(OpQuadFilterPatternCanonical.class, GenericBinaryOpImpl.create(SparqlViewMatcherUtils::deriveProblemsQfpc));
+            map.put(OpExtQuadFilterPatternCanonical.class, GenericBinaryOpImpl.create(SparqlViewMatcherUtils::deriveProblemsQfpc));
 
             Class<?> ac = a.getClass();
             Class<?> bc = b.getClass();
@@ -394,7 +394,7 @@ public class SparqlViewMatcherUtils {
         //return result;
     }
 
-    public static Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> deriveProblemsQfpc(OpQuadFilterPatternCanonical cacheOp, OpQuadFilterPatternCanonical userOp) {
+    public static Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> deriveProblemsQfpc(OpExtQuadFilterPatternCanonical cacheOp, OpExtQuadFilterPatternCanonical userOp) {
         QuadFilterPatternCanonical cacheQfpc = cacheOp.getQfpc();
         QuadFilterPatternCanonical queryQfpc = userOp.getQfpc();
 

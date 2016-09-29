@@ -14,6 +14,7 @@ import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCache;
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCacheImpl;
 import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
+import org.aksw.jena_sparql_api.concept_cache.op.OpExtQuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.util.collection.RangedSupplierLazyLoadingListCache;
@@ -26,6 +27,7 @@ import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpVars;
+import org.apache.jena.sparql.algebra.op.OpExt;
 import org.apache.jena.sparql.algebra.op.OpQuadBlock;
 import org.apache.jena.sparql.algebra.op.OpService;
 import org.apache.jena.sparql.algebra.optimize.Rewrite;
@@ -115,7 +117,7 @@ public class OpRewriteViewMatcherStateful
 			// Attempt to replace complete subtrees
 			Collection<LookupResult> lookupResults = viewMatcherTreeBased.lookup(op);
 
-			if(lookupResults == null) {
+			if(lookupResults.isEmpty()) {
 				break;
 			}
 
@@ -146,19 +148,27 @@ public class OpRewriteViewMatcherStateful
     	List<Op> leafs = TreeUtils.getLeafs(tree);
 
 
-    	for(Op leafOp : leafs) {
-    		VarUsage varUsage = OpUtils.analyzeVarUsage(tree, leafOp);
+    	for(Op rawLeafOp : leafs) {
+    		if(rawLeafOp instanceof OpExtQuadFilterPatternCanonical) {
+    		//Op effectiveOp = leafOp instanceof OpExtQuadFilterPatternCanonical ? ((OpExt)leafOp).effectiveOp() : leafOp;
+    			OpExtQuadFilterPatternCanonical leafOp = (OpExtQuadFilterPatternCanonical)rawLeafOp;
 
+    			Op effectiveOp = leafOp.effectiveOp();
 
-    		ProjectedQuadFilterPattern pqfp = SparqlCacheUtils.transform(op);
-    		if(pqfp != null) {
+	    		Set<Var> availableVars = OpVars.visibleVars(effectiveOp);
+	    		VarUsage varUsage = OpUtils.analyzeVarUsage(tree, leafOp, availableVars);
 
-    			QuadFilterPatternCanonical qfpc = SparqlCacheUtils.canonicalize2(pqfp.getQuadFilterPattern(), VarGeneratorImpl2.create());
+	    		System.out.println("VarUsage: " + varUsage);
 
-
-
-    			//viewMatcherQuadPatternBased.
-
+//	    		ProjectedQuadFilterPattern pqfp = SparqlCacheUtils.transform(op);
+//	    		if(pqfp != null) {
+//
+//	    			QuadFilterPatternCanonical qfpc = SparqlCacheUtils.canonicalize2(pqfp.getQuadFilterPattern(), VarGeneratorImpl2.create());
+//
+//
+//
+//	    			//viewMatcherQuadPatternBased.
+//
     		}
 
 
@@ -166,7 +176,7 @@ public class OpRewriteViewMatcherStateful
 
 
 		// TODO Auto-generated method stub
-		return null;
+		return rawOp;
 	}
 
 

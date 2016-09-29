@@ -18,7 +18,7 @@ import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMapImpl;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
-import org.aksw.jena_sparql_api.concept_cache.op.OpQuadFilterPatternCanonical;
+import org.aksw.jena_sparql_api.concept_cache.op.OpExtQuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -84,7 +84,7 @@ public class OpIndexerImpl
 	          .inOrderSearch(
 	                  tree.getRoot(),
 	                  tree::getChildren,
-	                  o -> (o instanceof OpQuadFilterPatternCanonical) ? ((OpQuadFilterPatternCanonical)o).getQfpc() : null,
+	                  o -> (o instanceof OpExtQuadFilterPatternCanonical) ? ((OpExtQuadFilterPatternCanonical)o).getQfpc() : null,
 	                  (opNode, value) -> value == null) // descend while the value is null
 	          .filter(e -> e.getValue() != null);
 

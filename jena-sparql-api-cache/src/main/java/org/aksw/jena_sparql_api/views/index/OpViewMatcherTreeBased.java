@@ -123,10 +123,10 @@ public class OpViewMatcherTreeBased<V>
 
 	@Override
 	public Collection<LookupResult> lookup(Op item) {
-	    Op normalizedItem = opNormalizer.rewrite(item);
+	    //Op normalizedItem = opNormalizer.rewrite(item);
 	    Set<MyEntry> tmpCands = new HashSet<>();
 
-        itemFeatureExtractor.apply(normalizedItem).forEach(featureSet -> {
+        itemFeatureExtractor.apply(item).forEach(featureSet -> {
             //featuresToIndexes.getIfSubsetOf(featureSet).stream()
             featuresToIndexes.get(featureSet).stream()
                 //.map(e -> e.getValue())
@@ -138,7 +138,7 @@ public class OpViewMatcherTreeBased<V>
         Collections.sort(cands, (a, b) -> ((int)(a.queryIndex.getTree().nodeCount() - b.queryIndex.getTree().nodeCount())));
 
         if(logger.isDebugEnabled()) { logger.debug("Phase 1: " + cands.size() + "/" + featuresToIndexes.size() + " passed"); }
-        OpIndex queryIndex = itemIndexer.apply(normalizedItem);
+        OpIndex queryIndex = itemIndexer.apply(item);
 
 
         List<LookupResult> result = new ArrayList<>();

@@ -21,12 +21,16 @@ import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.engine.Plan;
+import org.apache.jena.sparql.engine.QueryEngineFactory;
+import org.apache.jena.sparql.engine.QueryEngineRegistry;
 import org.apache.jena.sparql.engine.QueryIterator;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingRoot;
-import org.apache.jena.sparql.engine.main.QueryEngineMain;
+import org.apache.jena.sparql.util.Context;
 import org.apache.jena.util.iterator.ClosableIterator;
 
 import com.google.common.collect.Range;
@@ -106,19 +110,27 @@ public class QueryExecutionViewMatcherMaster
     	// - Clean up the execution context / jena-wise global data
     	Op rewrittenOp = opRewriter.rewrite(queryOp);
 
+    	System.out.println("Rewritten op being passed to execution:\n" + rewrittenOp);
+
     	// Note: We use Jena to execute the op.
     	// The op itself may use SERVICE<> as the root node, which will cause jena to pass execution to the appropriate handler
 
     	// TODO Pass the op to an op executor
-    	QueryEngineMain x = null; //QueryEngineMain.getFactory().
+    	//QueryEngineMainQuad
 
-    	QueryIterator queryIter = x.eval(rewrittenOp, DatasetGraphFactory.create(), BindingRoot.create(), ARQ.getContext());
-    	ResultSet result = ResultSetFactory.create(queryIter, projectVarNames);
+    	DatasetGraph dg = DatasetGraphFactory.create();
+    	Context context = ARQ.getContext();
+    	QueryEngineFactory qef = QueryEngineRegistry.get().find(rewrittenOp, dg, context);
+    	Plan plan = qef.create(rewrittenOp, dg, BindingRoot.create(), context);
+    	QueryIterator queryIter = plan.iterator();
+
+    	//QueryIterator queryIter = x.eval(rewrittenOp, dg, BindingRoot.create(), context);
+    	ResultSet tmpRs = ResultSetFactory.create(queryIter, projectVarNames);
 
     	// TODO Not sure if we should really return a result set, or a QueryIter instead
+    	ResultSetCloseable result = new ResultSetCloseable(tmpRs, () -> queryIter.close());
 
-
-    	return null;
+    	return result;
 
     	//ResultSetUtils.create(varNames, bindingIt)
 
