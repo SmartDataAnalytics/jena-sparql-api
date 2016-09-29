@@ -507,7 +507,7 @@ public class SparqlViewCacheImpl<V>
         ProjectedQuadFilterPattern pqfp = SparqlCacheUtils.transform(query);
         QuadFilterPattern qfp = pqfp.getQuadFilterPattern();
 
-        Table table = SparqlCacheUtils.createTable(rs);
+        Table table = TableUtils.createTable(rs);
         index(qfp, table);
     }
 

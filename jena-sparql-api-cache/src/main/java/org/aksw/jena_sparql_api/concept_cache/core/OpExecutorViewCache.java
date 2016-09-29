@@ -26,6 +26,7 @@ import org.apache.jena.sparql.engine.iterator.QueryIteratorResultSet;
 import org.apache.jena.sparql.engine.main.OpExecutor;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.graph.NodeTransformLib;
+import org.apache.jena.sparql.util.Symbol;
 import org.apache.jena.util.iterator.ClosableIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +43,8 @@ import com.google.common.collect.Range;
 public class OpExecutorViewCache
     extends OpExecutor
 {
+	public static final Symbol STORAGE_MAP = Symbol.create("storageMap");
+
     private static final Logger logger = LoggerFactory.getLogger(OpExecutorViewCache.class);
 
     protected Map<Node, StorageEntry> storageMap;
@@ -50,7 +53,8 @@ public class OpExecutorViewCache
     protected OpExecutorViewCache(ExecutionContext execCxt, Map<Node, StorageEntry> storageMap) {
         super(execCxt);
         //this.serviceToQef = serviceToQef;
-        this.storageMap = storageMap;
+        this.storageMap = (Map<Node, StorageEntry>) execCxt.getContext().get(STORAGE_MAP);
+
     }
 
     @Override

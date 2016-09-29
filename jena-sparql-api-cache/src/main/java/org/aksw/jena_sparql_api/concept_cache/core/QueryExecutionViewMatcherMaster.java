@@ -29,8 +29,10 @@ import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpVars;
+import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.op.OpNull;
 import org.apache.jena.sparql.algebra.op.OpService;
+import org.apache.jena.sparql.algebra.op.OpTable;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.core.Var;
@@ -43,6 +45,7 @@ import org.apache.jena.sparql.engine.binding.BindingRoot;
 import org.apache.jena.sparql.util.Context;
 import org.apache.jena.util.iterator.ClosableIterator;
 
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Range;
 
 public class QueryExecutionViewMatcherMaster
@@ -135,6 +138,19 @@ public class QueryExecutionViewMatcherMaster
 
 
     	Set<Var> visibleVars = OpVars.visibleVars(rewrittenOp);
+
+
+    	Iterators.size(storage.apply(range));
+
+    	RangedSupplierLazyLoadingListCache<Binding> test = storage.unwrap(RangedSupplierLazyLoadingListCache.class, true);
+    	System.out.println("Is range cached: " + test.isCached(range));
+
+    	ResultSet xxx = ResultSetUtils.create2(visibleVars, storage.apply(range));
+    	Table table = TableUtils.createTable(xxx);
+    	OpTable repl = OpTable.create(table);
+    	rewrittenOp = repl;
+
+
     	VarInfo varInfo = new VarInfo(visibleVars, Collections.emptySet());
 
     	StorageEntry se = new StorageEntry(storage, varInfo);
@@ -152,16 +168,22 @@ public class QueryExecutionViewMatcherMaster
     	//QueryEngineMainQuad
 
     	DatasetGraph dg = DatasetGraphFactory.create();
-    	Context context = ARQ.getContext();
+    	Context context = ARQ.getContext().copy();
+    	context.put(OpExecutorViewCache.STORAGE_MAP, storageMap);
     	QueryEngineFactory qef = QueryEngineRegistry.get().find(rewrittenOp, dg, context);
     	Plan plan = qef.create(rewrittenOp, dg, BindingRoot.create(), context);
     	QueryIterator queryIter = plan.iterator();
 
+
     	//QueryIterator queryIter = x.eval(rewrittenOp, dg, BindingRoot.create(), context);
     	ResultSet tmpRs = ResultSetFactory.create(queryIter, projectVarNames);
 
+
+
     	// TODO Not sure if we should really return a result set, or a QueryIter instead
     	ResultSetCloseable result = new ResultSetCloseable(tmpRs, () -> queryIter.close());
+
+
 
     	return result;
 

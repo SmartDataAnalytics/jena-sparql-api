@@ -42,7 +42,6 @@ import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
-import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.views.index.OpIndex;
 import org.apache.jena.ext.com.google.common.collect.Sets;
@@ -56,7 +55,6 @@ import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpAsQuery;
 import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.algebra.Table;
-import org.apache.jena.sparql.algebra.TableFactory;
 import org.apache.jena.sparql.algebra.op.OpBGP;
 import org.apache.jena.sparql.algebra.op.OpDisjunction;
 import org.apache.jena.sparql.algebra.op.OpDistinct;
@@ -1043,21 +1041,6 @@ public class SparqlCacheUtils {
 
         }
 
-    }
-
-
-    public static Table createTable(ResultSet rs) {
-
-        List<Var> vars = VarUtils.toList(rs.getResultVars());
-
-        Table result = TableFactory.create(vars);
-
-        while(rs.hasNext()) {
-            Binding binding = rs.nextBinding();
-            result.addBinding(binding);
-        }
-
-        return result;
     }
 
 
