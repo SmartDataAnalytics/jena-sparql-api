@@ -141,7 +141,7 @@ public class MainTestSparqlViewCache {
 //                .create();
 
 
-        QueryExecutionFactory cachedQef = new QueryExecutionFactoryViewCacheMaster(rawQef, OpExecutorFactoryViewMatcher.get().getServiceMap());
+        QueryExecutionFactory cachedQef = new QueryExecutionFactoryViewCacheMaster(rawQef, new HashMap<>()); //OpExecutorFactoryViewMatcher.get().getServiceMap());
 
 
         QueryExecutionFactory mainQef = new QueryExecutionFactoryCompare(rawQef, cachedQef);

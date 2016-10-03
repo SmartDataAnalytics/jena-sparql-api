@@ -51,8 +51,8 @@ import com.google.common.collect.Sets;
  * @author raven
  *
  */
-public class SparqlViewCacheImpl<V>
-    implements SparqlViewCache<V>
+public class SparqlViewCacheImpl<K>
+    implements SparqlViewCache<K>
 {
     private static final Logger logger = LoggerFactory.getLogger(SparqlViewCacheImpl.class);
 
@@ -62,7 +62,7 @@ public class SparqlViewCacheImpl<V>
 
     private Map<QuadFilterPatternCanonical, IBiSetMultimap<Quad, Set<Set<Expr>>>> qfpcToQuadToCnf = new HashMap<>();
 
-    protected Map<V, QuadFilterPatternCanonical> valueToKey = new HashMap<>();
+    protected Map<K, QuadFilterPatternCanonical> keyToPattern = new HashMap<>();
 
 
 //    public void lookup(Query query) {
@@ -91,7 +91,7 @@ public class SparqlViewCacheImpl<V>
      *
      * @return
      */
-    public Collection<CacheResult2<V>> lookup2(QuadFilterPatternCanonical queryQfpc) {
+    public Collection<CacheResult2<K>> lookup2(QuadFilterPatternCanonical queryQfpc) {
     	List<QfpcMatch> tmp = lookupCore(queryQfpc, quadCnfToSummary, qfpcToQuadToCnf);
 
 //    	List<CacheResult2<V>> result = tmp.stream()
@@ -459,9 +459,9 @@ public class SparqlViewCacheImpl<V>
 
 
     @Override
-    public void put(QuadFilterPatternCanonical qfpc, V value) {
+    public void put(K key, QuadFilterPatternCanonical qfpc) {
 
-    	valueToKey.put(value, qfpc);
+    	keyToPattern.put(key, qfpc);
 
         //map = new HashMap<Set<Var>, Table>();
         //cacheData.put(qfpc, map);
@@ -553,5 +553,15 @@ public class SparqlViewCacheImpl<V>
         QuadFilterPatternCanonical qfpc = SparqlCacheUtils.canonicalize2(qfp, VarGeneratorImpl2.create("v"));
         index(qfpc, table);
     }
+
+
+	@Override
+	public void removeKey(Object key) {
+		QuadFilterPatternCanonical qfpc = keyToPattern.get(key);
+		if(qfpc != null) {
+			qfpcToQuadToCnf.remove(qfpc);
+			quadCnfToSummary.getInverse().removeAll(qfpc);
+		}
+	}
 
 }

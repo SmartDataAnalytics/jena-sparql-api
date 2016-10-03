@@ -39,8 +39,8 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.Multimap;
 
 
-public class OpViewMatcherTreeBased<V>
-	implements OpViewMatcher<V>
+public class OpViewMatcherTreeBased<K>
+	implements OpViewMatcher<K>
 {
 
     private static final Logger logger = LoggerFactory
@@ -52,8 +52,8 @@ public class OpViewMatcherTreeBased<V>
 
     protected Function<Op, Set<Set<String>>> itemFeatureExtractor;
     protected Function<Op, OpIndex> itemIndexer;
-    protected FeatureMap<String, MyEntry<V>> featuresToIndexes;
-    protected Map<V, MyEntry<V>> idToQueryIndex;
+    protected FeatureMap<String, MyEntry<K>> featuresToIndexes;
+    protected Map<K, MyEntry<K>> idToQueryIndex;
 
 
 	public OpViewMatcherTreeBased(
@@ -73,7 +73,7 @@ public class OpViewMatcherTreeBased<V>
 	}
 
     @Override
-	public void put(Op item, V value) {
+	public void put(K key, Op item) {
 
 
     	// Check whether the submitted op is an extended conjunctive query,
@@ -86,13 +86,13 @@ public class OpViewMatcherTreeBased<V>
         OpIndex index = itemIndexer.apply(item);
 
         Set<Set<String>> featureSets = itemFeatureExtractor.apply(item);
-        MyEntry<V> entry = new MyEntry<>(value, featureSets, index);
+        MyEntry<K> entry = new MyEntry<>(key, featureSets, index);
 
         for(Set<String> featureSet : featureSets) {
             featuresToIndexes.put(featureSet, entry); // new SimpleEntry<>(item, data)
         }
 
-        idToQueryIndex.put(value, entry);
+        idToQueryIndex.put(key, entry);
 
 	}
 
@@ -100,9 +100,9 @@ public class OpViewMatcherTreeBased<V>
     /**
      * Lookup a single candidate
      */
-    public LookupResult lookupSingle(Op item) {
-    	Collection<LookupResult> tmp = lookup(item);
-    	LookupResult result = Iterables.getFirst(tmp, null);
+    public LookupResult<K> lookupSingle(Op item) {
+    	Collection<LookupResult<K>> tmp = lookup(item);
+    	LookupResult<K> result = Iterables.getFirst(tmp, null);
     	return result;
     }
 
@@ -122,9 +122,9 @@ public class OpViewMatcherTreeBased<V>
 	}
 
 	@Override
-	public Collection<LookupResult> lookup(Op item) {
+	public Collection<LookupResult<K>> lookup(Op item) {
 	    //Op normalizedItem = opNormalizer.rewrite(item);
-	    Set<MyEntry> tmpCands = new HashSet<>();
+	    Set<MyEntry<K>> tmpCands = new HashSet<>();
 
         itemFeatureExtractor.apply(item).forEach(featureSet -> {
             //featuresToIndexes.getIfSubsetOf(featureSet).stream()
@@ -141,9 +141,9 @@ public class OpViewMatcherTreeBased<V>
         OpIndex queryIndex = itemIndexer.apply(item);
 
 
-        List<LookupResult> result = new ArrayList<>();
+        List<LookupResult<K>> result = new ArrayList<>();
 
-        for(MyEntry<V> cacheEntry : cands) {
+        for(MyEntry<K> cacheEntry : cands) {
         	OpIndex cacheIndex = cacheEntry.queryIndex;
 
             Multimap<Op, Op> candOpMapping = SparqlViewMatcherSystemImpl.getCandidateLeafMapping(cacheIndex, queryIndex);
@@ -160,14 +160,14 @@ public class OpViewMatcherTreeBased<V>
                 if(logger.isDebugEnabled()) { logger.debug("query root: " + queryRoot); }
 
 
-                V id = cacheEntry.id;
+                K id = cacheEntry.id;
                 // We need to update the queryIndex (remove sub-trees that matched)
                 Tree<Op> r = applyMapping(id, cacheTree, queryTree, opVarMap);
 
                 if(logger.isDebugEnabled()) { logger.debug("Result: " + r); }
                 if(logger.isDebugEnabled()) { logger.debug("Varmap: " + Iterables.toString(opVarMap.getVarMaps())); }
 
-                LookupResult lr = new LookupResult(cacheEntry, opVarMap);
+                LookupResult<K> lr = new LookupResult<K>(cacheEntry, opVarMap);
                 result.add(lr);
                 //return lr;
             });
@@ -222,5 +222,15 @@ public class OpViewMatcherTreeBased<V>
                 new OpIndexerImpl());
 
         return result;
+	}
+
+	@Override
+	public void removeKey(Object key) {
+		MyEntry<K> e = idToQueryIndex.get(key);
+		if(e != null) {
+			Set<Set<String>> featureSets = e.featureSets;
+			featureSets.removeAll(featureSets);
+			idToQueryIndex.remove(key);
+		}
 	}
 }

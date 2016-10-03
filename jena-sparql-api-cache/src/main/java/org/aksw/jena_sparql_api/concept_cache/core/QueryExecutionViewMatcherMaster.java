@@ -79,7 +79,7 @@ public class QueryExecutionViewMatcherMaster
     	super(query, subFactory);
 
     	this.opRewriter = opRewriter;
-    	this.storageMap = OpExecutorFactoryViewMatcher.get().getStorageMap();
+    	//this.storageMap = //OpExecutorFactoryViewMatcher.get().getStorageMap();
     	//this.storageMap = storageMap;
     	//this.executorService = executorService;
     	//this.opToRangedSupplier = opToRangedSupplier;

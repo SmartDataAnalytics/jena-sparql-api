@@ -49,8 +49,8 @@ public class OpExecutorViewCache
 
     protected Map<Node, StorageEntry> storageMap;
 
-
-    protected OpExecutorViewCache(ExecutionContext execCxt, Map<Node, StorageEntry> storageMap) {
+    //Map<Node, StorageEntry> storageMap
+    protected OpExecutorViewCache(ExecutionContext execCxt) {
         super(execCxt);
         //this.serviceToQef = serviceToQef;
         this.storageMap = (Map<Node, StorageEntry>) execCxt.getContext().get(STORAGE_MAP);
@@ -64,7 +64,8 @@ public class OpExecutorViewCache
         String serviceUri = serviceNode.getURI();
 
         QueryIterator result;
-        if(serviceUri.startsWith("view://")) {
+        // If there is no storage map in the context, we do not handle view IRIs
+        if(serviceUri.startsWith("view://") && storageMap != null) {
         	StorageEntry storageEntry = storageMap.get(serviceNode);
         	if(storageEntry == null) {
         		throw new RuntimeException("Could not find a " + StorageEntry.class.getSimpleName() + " instance for " + serviceUri);

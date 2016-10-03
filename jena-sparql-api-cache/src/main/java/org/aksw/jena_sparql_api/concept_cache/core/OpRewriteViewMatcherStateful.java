@@ -35,6 +35,8 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.main.OpExecutor;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.RemovalListener;
 import com.google.common.collect.Range;
 
 
@@ -58,7 +60,8 @@ public class OpRewriteViewMatcherStateful
 	protected OpViewMatcher<Node> viewMatcherTreeBased;
 	protected SparqlViewCache<Node> viewMatcherQuadPatternBased;
 
-	protected Map<Node, StorageEntry> storageMap = new HashMap<>();
+	protected Cache<Node, StorageEntry> storageMap;
+	//protected Map<Node, StorageEntry> storageMap = new HashMap<>();
 
 
 	// Mapping from cache entry id to the cache data
@@ -68,11 +71,14 @@ public class OpRewriteViewMatcherStateful
 	//protected Map<Node, ViewMatcherData> idToCacheData;
 
 
-	public OpRewriteViewMatcherStateful(Map<Node, StorageEntry> storageMap) {
+	public OpRewriteViewMatcherStateful(Cache<Node, StorageEntry> storageMap, Set<RemovalListener<Node, StorageEntry>> removalListeners) {
 		this.opNormalizer = OpViewMatcherTreeBased::normalizeOp;
 		this.viewMatcherTreeBased = OpViewMatcherTreeBased.create();
 		this.viewMatcherQuadPatternBased = new SparqlViewCacheImpl<>();
 		this.storageMap = storageMap;
+
+		removalListeners.add((n) -> viewMatcherTreeBased.removeKey(n.getKey()));
+		removalListeners.add((n) -> viewMatcherQuadPatternBased.removeKey(n.getKey()));
 	}
 
 	//@Override
@@ -90,9 +96,9 @@ public class OpRewriteViewMatcherStateful
 		if(conjunctiveQuery != null) {
 			QuadFilterPatternCanonical qfpc = SparqlCacheUtils.canonicalize2(conjunctiveQuery.getQuadFilterPattern(), VarGeneratorImpl2.create());
 
-			viewMatcherQuadPatternBased.put(qfpc, id);
+			viewMatcherQuadPatternBased.put(id, qfpc);
 		} else {
-			viewMatcherTreeBased.put(normalizedOp, id);
+			viewMatcherTreeBased.put(id, normalizedOp);
 		}
 
 		//return result;
@@ -115,7 +121,7 @@ public class OpRewriteViewMatcherStateful
     	Op current = op;
     	for(;;) {
 			// Attempt to replace complete subtrees
-			Collection<LookupResult> lookupResults = viewMatcherTreeBased.lookup(op);
+			Collection<LookupResult<Node>> lookupResults = viewMatcherTreeBased.lookup(op);
 
 			if(lookupResults.isEmpty()) {
 				break;
@@ -159,6 +165,11 @@ public class OpRewriteViewMatcherStateful
 	    		VarUsage varUsage = OpUtils.analyzeVarUsage(tree, leafOp, availableVars);
 
 	    		System.out.println("VarUsage: " + varUsage);
+
+
+	    		// If we decide to cache the leaf as a whole, we just have to do
+	    		//viewMatcherQuadPatternBased.put(leafOp, cacheOp);
+
 
 //	    		ProjectedQuadFilterPattern pqfp = SparqlCacheUtils.transform(op);
 //	    		if(pqfp != null) {

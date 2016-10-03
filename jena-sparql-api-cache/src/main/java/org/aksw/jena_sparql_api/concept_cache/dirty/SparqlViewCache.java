@@ -11,8 +11,9 @@ import org.apache.jena.graph.Node;
  * @author raven
  *
  */
-public interface SparqlViewCache<V>
+public interface SparqlViewCache<K>
 {
     CacheResult lookup(QuadFilterPatternCanonical queryQfpc);
-    void put(QuadFilterPatternCanonical qfpc, V value);//QuadFilterPatternCanonical qfpc, Table table);
+    void put(K key, QuadFilterPatternCanonical qfpc);//QuadFilterPatternCanonical qfpc, Table table);
+    void removeKey(Object key);
 }
