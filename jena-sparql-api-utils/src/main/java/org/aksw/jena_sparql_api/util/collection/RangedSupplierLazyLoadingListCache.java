@@ -230,6 +230,14 @@ public class RangedSupplierLazyLoadingListCache<T>
     	return result;
     }
 
+    public RangedSupplierLazyLoadingListCache(ExecutorService executorService, RangedSupplier<Long, T> itemSupplier) {
+    	this(executorService, itemSupplier, Range.atLeast(0l));
+    }
+
+    public RangedSupplierLazyLoadingListCache(ExecutorService executorService, RangedSupplier<Long, T> itemSupplier, Range<Long> range) {
+    	this(executorService, itemSupplier, range, null);
+    }
+
     public RangedSupplierLazyLoadingListCache(ExecutorService executorService, RangedSupplier<Long, T> itemSupplier, Range<Long> cacheRange, RangeCostModel costModel) {
         super();
         this.executorService = executorService;

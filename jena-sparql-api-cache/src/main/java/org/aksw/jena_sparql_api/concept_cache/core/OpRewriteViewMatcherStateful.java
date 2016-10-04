@@ -27,13 +27,13 @@ import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpVars;
-import org.apache.jena.sparql.algebra.op.OpExt;
 import org.apache.jena.sparql.algebra.op.OpQuadBlock;
 import org.apache.jena.sparql.algebra.op.OpService;
 import org.apache.jena.sparql.algebra.optimize.Rewrite;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.main.OpExecutor;
+import org.apache.jena.sparql.util.Context;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.RemovalListener;
@@ -83,7 +83,7 @@ public class OpRewriteViewMatcherStateful
 
 	//@Override
 	// TODO Do we need a further argument for the variable information?
-	public void put(Op op, Node id) {
+	public void put(Node key, Op op) {
 
     	Op normalizedOp = opNormalizer.rewrite(op);
 
@@ -96,9 +96,9 @@ public class OpRewriteViewMatcherStateful
 		if(conjunctiveQuery != null) {
 			QuadFilterPatternCanonical qfpc = SparqlCacheUtils.canonicalize2(conjunctiveQuery.getQuadFilterPattern(), VarGeneratorImpl2.create());
 
-			viewMatcherQuadPatternBased.put(id, qfpc);
+			viewMatcherQuadPatternBased.put(key, qfpc);
 		} else {
-			viewMatcherTreeBased.put(id, normalizedOp);
+			viewMatcherTreeBased.put(key, normalizedOp);
 		}
 
 		//return result;
@@ -203,7 +203,8 @@ public class OpRewriteViewMatcherStateful
     	OpExecutor opExecutor = null;
     	Op rootOp = null;
     	Range<Long> cacheRange = Range.atMost(100000l);
-    	RangedSupplierLazyLoadingListCache<Binding> storage = new RangedSupplierLazyLoadingListCache<Binding>(executorService, new RangedSupplierOp(opExecutor, rootOp), cacheRange, null);
+    	Context context = null;
+    	RangedSupplierLazyLoadingListCache<Binding> storage = new RangedSupplierLazyLoadingListCache<Binding>(executorService, new RangedSupplierOp(rootOp, context), cacheRange, null);
 
     	Node storageRef = null;
     	VarInfo varInfo = new VarInfo(OpVars.visibleVars(rootOp), Collections.emptySet());

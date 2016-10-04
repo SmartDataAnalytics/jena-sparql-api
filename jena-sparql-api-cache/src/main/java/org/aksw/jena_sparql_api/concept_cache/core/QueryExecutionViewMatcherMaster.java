@@ -51,43 +51,35 @@ import com.google.common.collect.Range;
 public class QueryExecutionViewMatcherMaster
 	extends QueryExecutionBaseSelect
 {
+	protected OpRewriteViewMatcherStateful opRewriter;
+	protected Map<Node, StorageEntry> storageMap;
+
+	// The jena context - used for setting up cache entries
+	protected Context context;
+
+	// TODO Maybe add a decider which determines whether the result set of a query should be cached
+
+
+	//protected Map<Node, RangedSupplier<Long, Binding>> opToRangedSupplier;
 	//protected ExecutorService executorService;
 	//protected OpViewMatcher viewMatcher;
-	protected OpRewriteViewMatcherStateful opRewriter;
-	//protected Map<Node, RangedSupplier<Long, Binding>> opToRangedSupplier;
-	protected Map<Node, StorageEntry> storageMap;
 
 
 
     protected long indexResultSetSizeThreshold;
 
-    //protected Map<Node, ? super ViewCacheIndexer> serviceMap;
-
     public QueryExecutionViewMatcherMaster(
     		Query query,
-    		//Function<Query, RangedSupplier<Long, Binding>> rangedSupplierFactory,
     		QueryExecutionFactory subFactory,
     		OpRewriteViewMatcherStateful opRewriter
-    		//Map<Node, StorageEntry> storageMap
-    		//OpViewMatcher viewMatcher,
-    		//Rewrite opRewriter
-    		//ExecutorService executorService
-    		//Map<Node, RangedSupplier<Long, Binding>> opToRangedSupplier
-    		//long indexResultSetSizeThreshold,
-    		//Map<Node, ? super ViewCacheIndexer> serviceMap
     ) {
     	super(query, subFactory);
 
     	this.opRewriter = opRewriter;
-    	//this.storageMap = //OpExecutorFactoryViewMatcher.get().getStorageMap();
-    	//this.storageMap = storageMap;
-    	//this.executorService = executorService;
-    	//this.opToRangedSupplier = opToRangedSupplier;
-    	//this.serviceMap = serviceMap;
     }
 
 
-    public ResultSetCloseable createResultSet(RangedSupplier<Long, Binding> rangedSupplier, Range<Long> range, Map<Var, Var> varMap) {
+    public static ResultSetCloseable createResultSet(List<String> varNames, RangedSupplier<Long, Binding> rangedSupplier, Range<Long> range, Map<Var, Var> varMap) {
     	ClosableIterator<Binding> it = rangedSupplier.apply(range);
     	Iterable<Binding> tmp = () -> it;
     	Stream<Binding> stream = StreamSupport.stream(tmp.spliterator(), false);
@@ -96,7 +88,7 @@ public class QueryExecutionViewMatcherMaster
     	}
     	stream = stream.onClose(() -> it.close());
 
-    	List<String> varNames = query.getResultVars();
+    	//List<String> varNames = query.getResultVars();
     	//ResultSetCloseable result = ResultSetUtils.create(varNames, it);
     	ResultSet rs = ResultSetUtils.create(varNames, stream.iterator());
     	ResultSetCloseable result = new ResultSetCloseable(rs);
@@ -127,6 +119,7 @@ public class QueryExecutionViewMatcherMaster
 
 
     	Node serviceNode = NodeFactory.createURI("view://test.org");
+
     	rewrittenOp = new OpService(serviceNode, OpNull.create(), false);
 
     	ExecutorService executorService = Executors.newCachedThreadPool();
@@ -137,12 +130,15 @@ public class QueryExecutionViewMatcherMaster
     	storage = RangedSupplierSubRange.create(storage, range);
 
 
-    	Set<Var> visibleVars = OpVars.visibleVars(rewrittenOp);
 
 
     	Iterators.size(storage.apply(range));
 
-    	RangedSupplierLazyLoadingListCache<Binding> test = storage.unwrap(RangedSupplierLazyLoadingListCache.class, true);
+    	Set<Var> visibleVars = OpVars.visibleVars(rewrittenOp);
+    	VarInfo varInfo = new VarInfo(visibleVars, Collections.emptySet());
+
+    	@SuppressWarnings("unchecked")
+		RangedSupplierLazyLoadingListCache<Binding> test = storage.unwrap(RangedSupplierLazyLoadingListCache.class, true);
     	System.out.println("Is range cached: " + test.isCached(range));
 
     	ResultSet xxx = ResultSetUtils.create2(visibleVars, storage.apply(range));
@@ -151,7 +147,6 @@ public class QueryExecutionViewMatcherMaster
     	rewrittenOp = repl;
 
 
-    	VarInfo varInfo = new VarInfo(visibleVars, Collections.emptySet());
 
     	StorageEntry se = new StorageEntry(storage, varInfo);
     	storageMap.put(serviceNode, se);
@@ -167,25 +162,59 @@ public class QueryExecutionViewMatcherMaster
     	// TODO Pass the op to an op executor
     	//QueryEngineMainQuad
 
-    	DatasetGraph dg = DatasetGraphFactory.create();
-    	Context context = ARQ.getContext().copy();
-    	context.put(OpExecutorViewCache.STORAGE_MAP, storageMap);
-    	QueryEngineFactory qef = QueryEngineRegistry.get().find(rewrittenOp, dg, context);
-    	Plan plan = qef.create(rewrittenOp, dg, BindingRoot.create(), context);
-    	QueryIterator queryIter = plan.iterator();
+    	// TODO Decide whether to cache the overall query
+    	// Do NOT cache if:
+    	// - there is already a cache entry that only differs in the var map
+    	// - (if the new query is just linear post processing of an existing cache entry)
+
+    	// This means, that the query will be available for cache lookups
+    	boolean cacheWholeQuery = true;
+
+    	Context ctx = context.copy();
+//    	context.put(OpExecutorViewCache.STORAGE_MAP, storageMap);
+
+    	RangedSupplier<Long, Binding> s2 = new RangedSupplierOp(rewrittenOp, ctx);
+    	if(cacheWholeQuery) {
+    		// Caching the whole query requires the following actions:
+    		// (1) Allocate a new id for the query
+    		// (2) Create a storage entry for the rewritten entry
+    		// (3) Make the new id of the query together with its original (i.e. non-rewritten) op known to the rewriter
+    		Node id = NodeFactory.createURI("view://ex.org/view" + queryOp.hashCode());
+
+        	s2 = new RangedSupplierLazyLoadingListCache<Binding>(executorService, s2, Range.closedOpen(0l, 10000l));
+
+        	StorageEntry se2 = new StorageEntry(storage, varInfo);
+
+    		storageMap.put(id, se2);
+    		opRewriter.put(id, queryOp);
+    	} else {
+    		// Nothing todo - just create a result set from s2
+    	}
 
 
-    	//QueryIterator queryIter = x.eval(rewrittenOp, dg, BindingRoot.create(), context);
-    	ResultSet tmpRs = ResultSetFactory.create(queryIter, projectVarNames);
+    	List<String> visibleVarNames = VarUtils.getVarNames(visibleVars);
 
-
-
-    	// TODO Not sure if we should really return a result set, or a QueryIter instead
-    	ResultSetCloseable result = new ResultSetCloseable(tmpRs, () -> queryIter.close());
-
-
+    	ResultSetCloseable result = createResultSet(visibleVarNames, s2, range, null);
 
     	return result;
+
+
+//    	DatasetGraph dg = DatasetGraphFactory.create();
+//    	Context context = ARQ.getContext().copy();
+//    	context.put(OpExecutorViewCache.STORAGE_MAP, storageMap);
+//    	QueryEngineFactory qef = QueryEngineRegistry.get().find(rewrittenOp, dg, context);
+//    	Plan plan = qef.create(rewrittenOp, dg, BindingRoot.create(), context);
+//    	QueryIterator queryIter = plan.iterator();
+//
+//
+//    	//QueryIterator queryIter = x.eval(rewrittenOp, dg, BindingRoot.create(), context);
+//    	ResultSet tmpRs = ResultSetFactory.create(queryIter, projectVarNames);
+//
+//    	// TODO Not sure if we should really return a result set, or a QueryIter instead
+//    	ResultSetCloseable result = new ResultSetCloseable(tmpRs, () -> queryIter.close());
+
+
+
 
     	//ResultSetUtils.create(varNames, bindingIt)
 
@@ -224,7 +253,28 @@ public class QueryExecutionViewMatcherMaster
 //        return result;
     }
 
-
+//
+//    public static StorageEntry createStorageEntry(Op op, VarInfo varInfo, Context context) {
+//    	//Set<Var> visibleVars = OpVars.visibleVars(op);
+//    	VarInfo varInfo = new VarInfo(visibleVars, Collections.emptySet());
+//
+//    	RangedSupplier<Long, Binding> storage = new RangedSupplierOp(op, context);
+//
+//    	StorageEntry result = new StorageEntry(storage, varInfo);
+//    	return result;
+//
+////    	@SuppressWarnings("unchecked")
+////		RangedSupplierLazyLoadingListCache<Binding> test = storage.unwrap(RangedSupplierLazyLoadingListCache.class, true);
+////    	System.out.println("Is range cached: " + test.isCached(range));
+//
+////    	ResultSet xxx = ResultSetUtils.create2(visibleVars, storage.apply(range));
+////    	Table table = TableUtils.createTable(xxx);
+////    	OpTable repl = OpTable.create(table);
+////    	rewrittenOp = repl;
+//
+//
+//    }
+//
 	@Override
 	protected QueryExecution executeCoreSelectX(Query query) {
 		// TODO Fix bad design - this method is not needed

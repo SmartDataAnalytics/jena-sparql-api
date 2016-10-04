@@ -10,25 +10,25 @@ import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.engine.ExecutionContext;
 import org.apache.jena.sparql.engine.QueryIterator;
 import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.engine.iterator.QueryIter;
 import org.apache.jena.sparql.engine.iterator.QueryIterRoot;
 import org.apache.jena.sparql.engine.main.OpExecutor;
+import org.apache.jena.sparql.engine.main.OpExecutorFactory;
 import org.apache.jena.sparql.engine.main.QC;
 import org.apache.jena.sparql.util.Context;
 import org.apache.jena.util.iterator.ClosableIterator;
 
 import com.google.common.collect.Range;
 
-public class RangedSupplierOp implements RangedSupplier<Long, Binding> {
-	protected OpExecutor opExecutor;
+public class RangedSupplierOp
+	implements RangedSupplier<Long, Binding>
+{
 	protected Op op;
 	protected Context context;
 
-	public RangedSupplierOp(OpExecutor opExecutor, Op op) {
-	}
 
-	public RangedSupplierOp(OpExecutor opExecutor, Op op, Context context) {
+	public RangedSupplierOp(Op op, Context context) {
 		super();
-		this.opExecutor = opExecutor;
 		this.op = op;
 		this.context = context;
 	}
@@ -40,10 +40,7 @@ public class RangedSupplierOp implements RangedSupplier<Long, Binding> {
 
 		OpSlice effectiveOp = new OpSlice(op, offset, limit);
 
-		DatasetGraph dg = DatasetGraphFactory.create();
-		ExecutionContext execCxt = new ExecutionContext(context, dg.getDefaultGraph(), dg, QC.getFactory(context)) ;
-
-		QueryIterator it = opExecutor.executeOp(effectiveOp, QueryIterRoot.create(execCxt));
+		QueryIterator it = execute(effectiveOp, context);
 		ClosableIterator<Binding> result = new IteratorClosable<>(it, () -> it.close());
 		return result;
 	}
@@ -58,4 +55,20 @@ public class RangedSupplierOp implements RangedSupplier<Long, Binding> {
     	return result;
     }
 
+	/**
+	 * This is partly a repetition of private functions in QC
+	 * @param op
+	 * @param context
+	 * @return
+	 */
+	public static QueryIterator execute(Op op, Context context) {
+		DatasetGraph dg = DatasetGraphFactory.create();
+		OpExecutorFactory opExecutorFactory = QC.getFactory(context);
+		ExecutionContext execCxt = new ExecutionContext(context, dg.getDefaultGraph(), dg, opExecutorFactory);
+		QueryIter qIter = QueryIterRoot.create(execCxt);
+		OpExecutor opExecutor = opExecutorFactory.create(execCxt);
+		QueryIterator result = opExecutor.executeOp(op, qIter);
+
+		return result;
+	}
 }

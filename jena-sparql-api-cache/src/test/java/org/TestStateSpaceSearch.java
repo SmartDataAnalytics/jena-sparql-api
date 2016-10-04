@@ -91,8 +91,6 @@ import com.google.common.collect.Multimap;
 
 public class TestStateSpaceSearch {
 
-
-
 	public static void main(String[] args) throws Exception {
 
 		//OpUtils.
@@ -121,8 +119,6 @@ public class TestStateSpaceSearch {
 
 
 		//Map<Node, StorageEntry> storageMap = queryCache.asMap();//OpExecutorFactoryViewMatcher.get().getStorageMap();
-
-
 		OpRewriteViewMatcherStateful viewMatcherRewriter = new OpRewriteViewMatcherStateful(queryCache, removalListeners.getClients());
 
 		// Obtain the global service map for registering temporary handlers for <view://...> SERVICEs
@@ -130,7 +126,7 @@ public class TestStateSpaceSearch {
 		// Note: JenaExtensionViewMatcher.register(); already registered this object at ARQ's global query execution context
 
 		// A map which associates SERVICE ids with an interface for fetching slices of data.
-		Map<Node, RangedSupplier<Long, Binding>> dataSupplier;
+		// Map<Node, RangedSupplier<Long, Binding>> dataSupplier;
 
 
         QueryExecutionFactory qef = FluentQueryExecutionFactory.from(model).create();
