@@ -377,6 +377,11 @@ public class RangedSupplierLazyLoadingListCache<T>
                 cache.setAbanoned(true);
                 throw new RuntimeException(e);
             } finally {
+            	// Notify for a last time (if there is no data, this will actually also be the first notification for clients)
+                synchronized(cache) {
+                    cache.notifyAll();
+                }
+
                 ci.close();
             }
         };
