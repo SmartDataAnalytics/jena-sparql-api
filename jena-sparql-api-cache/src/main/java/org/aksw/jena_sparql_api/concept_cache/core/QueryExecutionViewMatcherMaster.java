@@ -45,6 +45,7 @@ import org.apache.jena.sparql.engine.binding.BindingRoot;
 import org.apache.jena.sparql.util.Context;
 import org.apache.jena.util.iterator.ClosableIterator;
 
+import com.google.common.cache.Cache;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Range;
 
@@ -52,9 +53,10 @@ public class QueryExecutionViewMatcherMaster
 	extends QueryExecutionBaseSelect
 {
 	protected OpRewriteViewMatcherStateful opRewriter;
-	protected Map<Node, StorageEntry> storageMap;
+	//protected Map<Node, StorageEntry> storageMap;
 
 	// The jena context - used for setting up cache entries
+	// TODO Not sure if this was better part of the rewriter - or even a rewriteContext object
 	protected Context context;
 
 	// TODO Maybe add a decider which determines whether the result set of a query should be cached
@@ -76,6 +78,7 @@ public class QueryExecutionViewMatcherMaster
     	super(query, subFactory);
 
     	this.opRewriter = opRewriter;
+    	this.context = ARQ.getContext();
     }
 
 
@@ -114,42 +117,45 @@ public class QueryExecutionViewMatcherMaster
     	// - Initialize the execution context / jena-wise global data
     	// - Perform the rewrite (may affect execution context state)
     	// - Clean up the execution context / jena-wise global data
-    	Op rewrittenOp = opRewriter.rewrite(queryOp);
+    	RewriteResult2 rr = opRewriter.rewrite(queryOp);
+    	Op rewrittenOp = rr.getOp();
+    	Map<Node, StorageEntry> storageMap = rr.getIdToStorageEntry();
 
 
 
-    	Node serviceNode = NodeFactory.createURI("view://test.org");
+//    	Node serviceNode = NodeFactory.createURI("view://test.org");
+//
+//    	rewrittenOp = new OpService(serviceNode, OpNull.create(), false);
+//
+//    	RangedSupplier<Long, Binding> backend = new RangedSupplierQuery(parentFactory, rawQuery);
+//    	//RangedSupplierLazyLoadingListCache<Binding>
+//    	RangedSupplier<Long, Binding> storage = new RangedSupplierLazyLoadingListCache<>(executorService, backend, Range.atMost(10000l), null);
+//
+//    	storage = RangedSupplierSubRange.create(storage, range);
 
-    	rewrittenOp = new OpService(serviceNode, OpNull.create(), false);
+
 
     	ExecutorService executorService = Executors.newCachedThreadPool();
-    	RangedSupplier<Long, Binding> backend = new RangedSupplierQuery(parentFactory, rawQuery);
-    	//RangedSupplierLazyLoadingListCache<Binding>
-    	RangedSupplier<Long, Binding> storage = new RangedSupplierLazyLoadingListCache<>(executorService, backend, Range.atMost(10000l), null);
-
-    	storage = RangedSupplierSubRange.create(storage, range);
-
-
-
-
-    	Iterators.size(storage.apply(range));
 
     	Set<Var> visibleVars = OpVars.visibleVars(rewrittenOp);
     	VarInfo varInfo = new VarInfo(visibleVars, Collections.emptySet());
 
-    	@SuppressWarnings("unchecked")
-		RangedSupplierLazyLoadingListCache<Binding> test = storage.unwrap(RangedSupplierLazyLoadingListCache.class, true);
-    	System.out.println("Is range cached: " + test.isCached(range));
+//    	if(false) {
+//	    	Iterators.size(storage.apply(range));
+//	    	@SuppressWarnings("unchecked")
+//			RangedSupplierLazyLoadingListCache<Binding> test = storage.unwrap(RangedSupplierLazyLoadingListCache.class, true);
+//	    	System.out.println("Is range cached: " + test.isCached(range));
+//
+//	    	ResultSet xxx = ResultSetUtils.create2(visibleVars, storage.apply(range));
+//	    	Table table = TableUtils.createTable(xxx);
+//	    	OpTable repl = OpTable.create(table);
+//	    	rewrittenOp = repl;
+//    	}
 
-    	ResultSet xxx = ResultSetUtils.create2(visibleVars, storage.apply(range));
-    	Table table = TableUtils.createTable(xxx);
-    	OpTable repl = OpTable.create(table);
-    	rewrittenOp = repl;
 
 
-
-    	StorageEntry se = new StorageEntry(storage, varInfo);
-    	storageMap.put(serviceNode, se);
+//    	StorageEntry se = new StorageEntry(storage, varInfo);
+//    	storageMap.put(serviceNode, se);
 
 
 
@@ -173,6 +179,9 @@ public class QueryExecutionViewMatcherMaster
     	Context ctx = context.copy();
 //    	context.put(OpExecutorViewCache.STORAGE_MAP, storageMap);
 
+
+    	Cache<Node, StorageEntry> cache = opRewriter.getCache();
+
     	RangedSupplier<Long, Binding> s2 = new RangedSupplierOp(rewrittenOp, ctx);
     	if(cacheWholeQuery) {
     		// Caching the whole query requires the following actions:
@@ -183,10 +192,15 @@ public class QueryExecutionViewMatcherMaster
 
         	s2 = new RangedSupplierLazyLoadingListCache<Binding>(executorService, s2, Range.closedOpen(0l, 10000l));
 
-        	StorageEntry se2 = new StorageEntry(storage, varInfo);
+        	StorageEntry se2 = new StorageEntry(s2, varInfo);
 
-    		storageMap.put(id, se2);
+    		//storageMap.put(id, se2);
+
+        	// TODO The registration at the cache and the rewriter should be atomic
+        	// At least we need to deal with the chance that the rewriter maps an op to an id for
+        	// which the storageEntry has not yet been registered at the cache
     		opRewriter.put(id, queryOp);
+        	cache.put(id, se2);
     	} else {
     		// Nothing todo - just create a result set from s2
     	}

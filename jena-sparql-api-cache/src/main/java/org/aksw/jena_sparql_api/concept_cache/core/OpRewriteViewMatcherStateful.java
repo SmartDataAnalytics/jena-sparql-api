@@ -54,13 +54,14 @@ import com.google.common.collect.Range;
  *
  */
 public class OpRewriteViewMatcherStateful
-	implements Rewrite
+	implements RewriterSparqlViewMatcher
+	//implements Rewrite
 {
 	protected Rewrite opNormalizer;
 	protected OpViewMatcher<Node> viewMatcherTreeBased;
 	protected SparqlViewCache<Node> viewMatcherQuadPatternBased;
 
-	protected Cache<Node, StorageEntry> storageMap;
+	protected Cache<Node, StorageEntry> cache;
 	//protected Map<Node, StorageEntry> storageMap = new HashMap<>();
 
 
@@ -71,15 +72,23 @@ public class OpRewriteViewMatcherStateful
 	//protected Map<Node, ViewMatcherData> idToCacheData;
 
 
-	public OpRewriteViewMatcherStateful(Cache<Node, StorageEntry> storageMap, Set<RemovalListener<Node, StorageEntry>> removalListeners) {
+	public OpRewriteViewMatcherStateful(Cache<Node, StorageEntry> cache, Set<RemovalListener<Node, StorageEntry>> removalListeners) {
 		this.opNormalizer = OpViewMatcherTreeBased::normalizeOp;
 		this.viewMatcherTreeBased = OpViewMatcherTreeBased.create();
 		this.viewMatcherQuadPatternBased = new SparqlViewCacheImpl<>();
-		this.storageMap = storageMap;
+		this.cache = cache;
 
 		removalListeners.add((n) -> viewMatcherTreeBased.removeKey(n.getKey()));
 		removalListeners.add((n) -> viewMatcherQuadPatternBased.removeKey(n.getKey()));
 	}
+
+
+
+	public Cache<Node, StorageEntry> getCache() {
+		return cache;
+	}
+
+
 
 	//@Override
 	// TODO Do we need a further argument for the variable information?
@@ -114,7 +123,7 @@ public class OpRewriteViewMatcherStateful
 	 *
 	 */
 	@Override
-	public Op rewrite(Op rawOp) {
+	public RewriteResult2 rewrite(Op rawOp) {
     	Op op = opNormalizer.rewrite(rawOp);
 
 
@@ -187,7 +196,10 @@ public class OpRewriteViewMatcherStateful
 
 
 		// TODO Auto-generated method stub
-		return rawOp;
+    	Map<Node, StorageEntry> storageMap = new HashMap<>();
+
+    	RewriteResult2 result = new RewriteResult2(rawOp, storageMap);
+		return result;
 	}
 
 
