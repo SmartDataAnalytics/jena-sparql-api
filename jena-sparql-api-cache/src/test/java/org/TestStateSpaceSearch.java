@@ -13,10 +13,13 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+
+import javax.xml.ws.handler.LogicalMessageContext;
 
 import org.aksw.combinatorics.algos.KPermutationsOfNUtils;
 import org.aksw.combinatorics.collections.Combination;
@@ -77,8 +80,11 @@ import org.apache.jena.sparql.core.QuadPattern;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.function.library.leviathan.log;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.util.ExprUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 
@@ -90,6 +96,8 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
 public class TestStateSpaceSearch {
+	private static final Logger logger = LoggerFactory.getLogger(TestStateSpaceSearch.class);
+
 
 	public static void main(String[] args) throws Exception {
 
@@ -134,7 +142,7 @@ public class TestStateSpaceSearch {
         //200000l
         //executorService
 
-        qef = new QueryExecutionFactoryViewMatcherMaster(qef, viewMatcherRewriter);
+        qef = new QueryExecutionFactoryViewMatcherMaster(qef, viewMatcherRewriter, executorService);
         qef = new QueryExecutionFactoryParse(qef, SparqlQueryParserImpl.create());
 
         Stopwatch sw = Stopwatch.createStarted();
@@ -155,6 +163,10 @@ public class TestStateSpaceSearch {
 //        	}
         }
 
+        logger.info("Awaiting termination of thread pool...");
+        executorService.shutdown();
+        executorService.awaitTermination(5, TimeUnit.SECONDS);
+        logger.info("done.");
 	}
 
 

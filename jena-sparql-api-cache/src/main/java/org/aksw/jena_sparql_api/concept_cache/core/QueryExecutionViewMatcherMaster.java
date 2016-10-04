@@ -53,6 +53,7 @@ public class QueryExecutionViewMatcherMaster
 	extends QueryExecutionBaseSelect
 {
 	protected OpRewriteViewMatcherStateful opRewriter;
+	protected ExecutorService executorService;
 	//protected Map<Node, StorageEntry> storageMap;
 
 	// The jena context - used for setting up cache entries
@@ -73,12 +74,14 @@ public class QueryExecutionViewMatcherMaster
     public QueryExecutionViewMatcherMaster(
     		Query query,
     		QueryExecutionFactory subFactory,
-    		OpRewriteViewMatcherStateful opRewriter
+    		OpRewriteViewMatcherStateful opRewriter,
+    		ExecutorService executorService
     ) {
     	super(query, subFactory);
 
     	this.opRewriter = opRewriter;
     	this.context = ARQ.getContext();
+    	this.executorService = executorService;
     }
 
 
@@ -134,8 +137,6 @@ public class QueryExecutionViewMatcherMaster
 //    	storage = RangedSupplierSubRange.create(storage, range);
 
 
-
-    	ExecutorService executorService = Executors.newCachedThreadPool();
 
     	Set<Var> visibleVars = OpVars.visibleVars(rewrittenOp);
     	VarInfo varInfo = new VarInfo(visibleVars, Collections.emptySet());

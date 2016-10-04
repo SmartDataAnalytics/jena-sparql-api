@@ -12,6 +12,7 @@ public class RemovalListenerMultiplexer<K, V>
 	implements RemovalListener<K, V>
 {
 	protected Set<RemovalListener<K, V>> clients = Sets.newIdentityHashSet();
+	//protected Consumer<? extends Throwable> exceptionHandler
 
 	public RemovalListenerMultiplexer() {
 		super();
@@ -34,7 +35,8 @@ public class RemovalListenerMultiplexer<K, V>
 
 		if(!exceptions.isEmpty()) {
 			// TODO Also throw the remaining the exceptions...
-			throw new RuntimeException(exceptions.iterator().next());
+			Throwable t = exceptions.iterator().next();
+			throw new RuntimeException(t);
 		}
 	}
 

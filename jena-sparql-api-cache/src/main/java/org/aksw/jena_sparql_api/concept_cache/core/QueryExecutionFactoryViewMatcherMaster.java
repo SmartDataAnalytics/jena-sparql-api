@@ -18,7 +18,7 @@ public class QueryExecutionFactoryViewMatcherMaster
 	protected OpRewriteViewMatcherStateful viewMatcher;
 	protected ExecutorService executorService;
 	//protected Map<Node, RangedSupplier<Long, Binding>> opToRangedSupplier;
-	protected Map<Node, StorageEntry> storageMap;
+	//protected Map<Node, StorageEntry> storageMap;
 
     protected long indexResultSetSizeThreshold;
 
@@ -29,25 +29,25 @@ public class QueryExecutionFactoryViewMatcherMaster
 //        this(decoratee, serviceMap, new SparqlViewMatcherSystemImpl(), 10000);
 //    }
 
-    public QueryExecutionFactoryViewMatcherMaster(QueryExecutionFactory decoratee, OpRewriteViewMatcherStateful viewMatcher) { //long indexResultSetSizeThreshold) {
-        super(decoratee);
-        this.viewMatcher = viewMatcher;
-    }
+//    public QueryExecutionFactoryViewMatcherMaster(QueryExecutionFactory decoratee, OpRewriteViewMatcherStateful viewMatcher) { //long indexResultSetSizeThreshold) {
+//        super(decoratee);
+//        this.viewMatcher = viewMatcher;
+//    }
 
-    public QueryExecutionFactoryViewMatcherMaster(QueryExecutionFactory decoratee, OpRewriteViewMatcherStateful viewMatcher, ExecutorService executorService, Map<Node, StorageEntry> storageMap) { //long indexResultSetSizeThreshold) {
+    public QueryExecutionFactoryViewMatcherMaster(QueryExecutionFactory decoratee, OpRewriteViewMatcherStateful viewMatcher, ExecutorService executorService) { //long indexResultSetSizeThreshold) {
         super(decoratee);
         //this.viewMatcherSystem = viewMatcherSystem;
     	//this.decoratee = decoratee;
         this.viewMatcher = viewMatcher;
         this.executorService = executorService;
         //this.indexResultSetSizeThreshold = indexResultSetSizeThreshold;
-        this.storageMap = storageMap;
+        //this.storageMap = storageMap;
         //this.opToRangedSupplier = new HashMap<>();
     }
 
     @Override
     public QueryExecution createQueryExecution(Query query) {
-    	QueryExecution result = new QueryExecutionViewMatcherMaster(query, decoratee, viewMatcher);//, viewMatcher, executorService, storageMap);
+    	QueryExecution result = new QueryExecutionViewMatcherMaster(query, decoratee, viewMatcher, executorService);//, viewMatcher, executorService, storageMap);
     	return result;
     }
 

@@ -130,7 +130,7 @@ public class OpRewriteViewMatcherStateful
     	Op current = op;
     	for(;;) {
 			// Attempt to replace complete subtrees
-			Collection<LookupResult<Node>> lookupResults = viewMatcherTreeBased.lookup(op);
+			Collection<LookupResult<Node>> lookupResults = viewMatcherTreeBased.lookup(current);
 
 			if(lookupResults.isEmpty()) {
 				break;
@@ -154,6 +154,7 @@ public class OpRewriteViewMatcherStateful
 				Op newNode = new OpService(viewId, new OpQuadBlock(), true);
 
 				current = OpUtils.substitute(current, userSubstOp, newNode);
+				System.out.println("Current: " + current);
 			}
     	}
 

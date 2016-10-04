@@ -229,7 +229,7 @@ public class OpViewMatcherTreeBased<K>
 		MyEntry<K> e = idToQueryIndex.get(key);
 		if(e != null) {
 			Set<Set<String>> featureSets = e.featureSets;
-			featureSets.removeAll(featureSets);
+			featuresToIndexes.removeAll(featureSets);
 			idToQueryIndex.remove(key);
 		}
 	}
