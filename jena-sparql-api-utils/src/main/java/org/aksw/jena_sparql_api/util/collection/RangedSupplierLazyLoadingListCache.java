@@ -405,4 +405,21 @@ public class RangedSupplierLazyLoadingListCache<T>
     	return result;
     }
 
+	/**
+	 * Static utility method to check whether a given range is cached by a ranged supplier by
+	 * attempting to unwrap an instance of this class.
+	 *
+	 * TODO: Deal with range transformations
+	 *
+	 *
+	 * @param rangedSupplier
+	 * @param range
+	 * @return
+	 */
+	public static <V> boolean isCached(RangedSupplier<Long, V> rangedSupplier, Range<Long> range) {
+		@SuppressWarnings("unchecked")
+		RangedSupplierLazyLoadingListCache<V> inst = rangedSupplier.unwrap(RangedSupplierLazyLoadingListCache.class, true);
+		boolean result = inst.isCached(range);
+		return result;
+	}
 }

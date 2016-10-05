@@ -14,7 +14,7 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 
 public class SparqlQcReader {
-    public static Pattern queryNamePattern = Pattern.compile("Q(?<id>\\d+)(?<variant>\\w+)");
+    public static final Pattern queryNamePattern = Pattern.compile("Q(?<id>\\d+)(?<variant>\\w+)");
 
     private static PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 

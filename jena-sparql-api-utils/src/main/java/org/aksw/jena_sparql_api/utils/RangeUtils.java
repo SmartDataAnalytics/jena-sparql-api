@@ -13,6 +13,24 @@ public class RangeUtils {
     public static final Range<Long> rangeStartingWithZero = Range.atLeast(0l);
 
 
+    /**
+     * Convert a range relative within another one to an absolute range
+     *
+     * @param outer
+     * @param relative
+     * @param domain
+     * @param addition
+     * @return
+     */
+    public static <C extends Comparable<C>> Range<C> makeAbsolute(Range<C> outer, Range<C> relative, DiscreteDomain<C> domain, BiFunction<C, Long, C> addition) {
+		long distance = domain.distance(outer.lowerEndpoint(), relative.lowerEndpoint());
+
+		Range<C> shifted = RangeUtils.shift(relative, distance, domain, addition);
+		Range<C> result = shifted.intersection(outer);
+    	return result;
+    }
+
+
     public static <C extends Comparable<C>> Range<C> shift(Range<C> range, long distance, DiscreteDomain<C> domain) {
     	BiFunction<C, Long, C> addition = (item, d) -> {
     		C result = item;

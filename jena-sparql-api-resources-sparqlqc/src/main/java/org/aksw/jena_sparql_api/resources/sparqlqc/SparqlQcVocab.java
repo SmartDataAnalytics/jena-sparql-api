@@ -1,0 +1,22 @@
+package org.aksw.jena_sparql_api.resources.sparqlqc;
+
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
+
+public class SparqlQcVocab {
+	public static final String ns = "http://sparql-qc-bench.inrialpes.fr/testsuite#";
+
+	public static Resource resource(String name) { return ResourceFactory.createResource(ns + name); }
+	public static Property property(String name) { return ResourceFactory.createProperty(ns + name); }
+
+	public static final Resource TestSuite = resource("TestSuite" );
+	public static final Resource ContainmentTest = resource("ContainmentTest" );
+	public static final Resource WarmupContainmentTest = resource("WarmupContainmentTest" );
+	public static final Property hasTest = property("hasTest" );
+	public static final Property sourceDir = property("sourceDir" );
+	public static final Property sourceQuery = property("sourceQuery" );
+	public static final Property targetQuery = property("targetQuery" );
+	public static final Property rdfSchema = property("rdfSchema" );
+	public static final Property result = property("result" );
+}

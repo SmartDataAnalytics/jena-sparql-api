@@ -28,12 +28,9 @@ public class RangedSupplierSubRange<I extends Comparable<I>, O>
 
 	@Override
 	public ClosableIterator<O> apply(Range<I> rawRequestRange) {
-		long distance = domain.distance(subRange.lowerEndpoint(), rawRequestRange.lowerEndpoint());
+		Range<I> effectiveRange = RangeUtils.makeAbsolute(subRange, rawRequestRange, domain, addition);
 
-		Range<I> shifted = RangeUtils.shift(rawRequestRange, distance, domain, addition);
-		Range<I> effective = shifted.intersection(subRange);
-
-		ClosableIterator<O> result = subRangeSupplier.apply(effective);
+		ClosableIterator<O> result = subRangeSupplier.apply(effectiveRange);
 		return result;
 	}
 
