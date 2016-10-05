@@ -73,9 +73,9 @@ public class OpExecutorViewCache
 
         	Range<Long> range = Range.atLeast(0l);
         	ClosableIterator<Binding> it = storageEntry.storage.apply(range);
-//        	while(it.hasNext()) {
-//        		System.out.println("item: " + it.next());
-//        	}
+
+//        	while(it.hasNext()) { System.out.println("item: " + it.next()); }
+
         	result = new QueryIterPlainWrapper(it);
         } else {
         	result = super.exec(opService, input);

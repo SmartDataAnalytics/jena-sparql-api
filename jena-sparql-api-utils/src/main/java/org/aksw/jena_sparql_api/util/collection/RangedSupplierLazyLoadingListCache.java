@@ -352,10 +352,11 @@ public class RangedSupplierLazyLoadingListCache<T>
                     ++i;
 
                     T binding = ci.next();
+                    cacheData.add(binding);
+
                     //System.out.println("Caching page " + range + " item " + i + ": " + binding);
                     if(i % notificationInterval == 0) {
 	                    synchronized(cache) {
-	                        cacheData.add(binding);
 	                        cache.notifyAll();
 	                    }
                     }

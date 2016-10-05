@@ -119,12 +119,10 @@ public class QueryExecutionViewMatcherMaster
     	// - Clean up the execution context / jena-wise global data
     	RewriteResult2 rr = opRewriter.rewrite(queryOp);
     	Op rewrittenOp = rr.getOp();
+
     	Map<Node, StorageEntry> storageMap = rr.getIdToStorageEntry();
 
 
-    	Context ctx = context.copy();
-    	RangedSupplier<Long, Binding> s2;
-    	s2 = new RangedSupplierOp(rewrittenOp, ctx);
 
     	// TODO: All subtrees that are to be executed on the original data source must be wrapped with
 		// a standard sparql service clause
@@ -187,6 +185,11 @@ System.out.println("taggedNodes: " + taggedNodes);
 
 		rewrittenOp = OpUtils.substitute(rewrittenOp, false, taggedToService::get);
 
+    	Context ctx = context.copy();
+    	ctx.put(OpExecutorViewCache.STORAGE_MAP, storageMap);
+
+    	RangedSupplier<Long, Binding> s2;
+    	s2 = new RangedSupplierOp(rewrittenOp, ctx);
 
 
 
