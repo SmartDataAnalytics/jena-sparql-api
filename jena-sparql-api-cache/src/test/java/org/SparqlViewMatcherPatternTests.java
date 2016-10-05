@@ -118,7 +118,7 @@ public class SparqlViewMatcherPatternTests {
 		RDFDataMgr.read(tests, new ClassPathResource("sparqlqc/1.4/benchmark/cqnoproj.rdf").getInputStream(), Lang.RDFXML);
 
         Model model = SparqlQcReader.readResources("sparqlqc/1.4/benchmark/noprojection/*");
-        model.write(System.out, "TURTLE");
+        //model.write(System.out, "TURTLE");
 
         List<Resource> ts = tests.listResourcesWithProperty(RDF.type, SparqlQcVocab.ContainmentTest).toList();
         for(Resource t : ts) {
@@ -134,6 +134,7 @@ public class SparqlViewMatcherPatternTests {
         	Element userEl = userQuery.getQueryPattern();
 
         	boolean actualVerdict = tryMatch(userEl, viewEl);
+        	//System.out.println(srcQueryId + " - " + tgtQueryId + " - " + actualVerdict + " expected: "+ expectedVerdict);
 
         	Assert.assertEquals(expectedVerdict, actualVerdict);
         }
