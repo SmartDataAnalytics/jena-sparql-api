@@ -147,7 +147,7 @@ public class TestStateSpaceSearch {
 
         Stopwatch sw = Stopwatch.createStarted();
 
-        for(int i = 0; i < 10; ++i) {
+        for(int i = 0; i < 3; ++i) {
         	{
 		        QueryExecution qe = qef.createQueryExecution("select * { ?s a <http://dbpedia.org/ontology/MusicalArtist> } Limit 10");
 		        ResultSet rs = qe.execSelect();

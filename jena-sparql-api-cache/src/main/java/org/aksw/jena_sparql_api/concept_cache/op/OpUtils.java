@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.aksw.commons.collections.trees.Tree;
@@ -31,6 +32,7 @@ import org.apache.jena.sparql.algebra.op.OpExt;
 import org.apache.jena.sparql.algebra.op.OpN;
 import org.apache.jena.sparql.algebra.op.OpQuadBlock;
 import org.apache.jena.sparql.algebra.op.OpQuadPattern;
+import org.apache.jena.sparql.algebra.op.OpService;
 import org.apache.jena.sparql.algebra.op.OpTriple;
 import org.apache.jena.sparql.core.Var;
 import org.springframework.util.Assert;
@@ -387,6 +389,19 @@ public class OpUtils {
         return result;
     }
 
+
+    // Find all nodes satisfying a predicate
+    public static Stream<Op> inOrderSearch(Op op, Predicate<Op> predicate) {
+    	Stream<Op> result = TreeUtils.<Op, Op>inOrderSearch(op, OpUtils::getSubOps, x -> x, (a, b) -> true)
+    			.map(e -> e.getKey())
+    			.filter(predicate);
+    	return result;
+    }
+
+    public static boolean isServiceFree(Op op) {
+    	boolean result = inOrderSearch(op, o -> !(o instanceof OpService)).count() == 0;
+    	return result;
+    }
 
 	/**
 	 * Maybe we need to change the method to

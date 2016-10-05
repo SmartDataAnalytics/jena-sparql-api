@@ -340,6 +340,7 @@ public class RangedSupplierLazyLoadingListCache<T>
 
             try {
                 long i = 0;
+                int notificationInterval = 100;
 
                 boolean hasMoreData;
                 boolean isOk = true;
@@ -352,9 +353,11 @@ public class RangedSupplierLazyLoadingListCache<T>
 
                     T binding = ci.next();
                     //System.out.println("Caching page " + range + " item " + i + ": " + binding);
-                    synchronized(cache) {
-                        cacheData.add(binding);
-                        cache.notifyAll();
+                    if(i % notificationInterval == 0) {
+	                    synchronized(cache) {
+	                        cacheData.add(binding);
+	                        cache.notifyAll();
+	                    }
                     }
                 }
 

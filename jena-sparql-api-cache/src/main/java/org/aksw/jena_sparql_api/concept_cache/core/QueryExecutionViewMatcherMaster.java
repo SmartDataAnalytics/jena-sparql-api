@@ -1,52 +1,49 @@
 package org.aksw.jena_sparql_api.concept_cache.core;
 
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import org.aksw.commons.collections.trees.Tree;
+import org.aksw.commons.collections.trees.TreeUtils;
+import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 import org.aksw.jena_sparql_api.core.QueryExecutionBaseSelect;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.ResultSetCloseable;
 import org.aksw.jena_sparql_api.util.collection.RangedSupplier;
 import org.aksw.jena_sparql_api.util.collection.RangedSupplierLazyLoadingListCache;
-import org.aksw.jena_sparql_api.util.collection.RangedSupplierSubRange;
 import org.aksw.jena_sparql_api.utils.BindingUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.ResultSetUtils;
 import org.aksw.jena_sparql_api.utils.VarUtils;
+import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.ARQ;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
-import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.OpAsQuery;
 import org.apache.jena.sparql.algebra.OpVars;
-import org.apache.jena.sparql.algebra.Table;
-import org.apache.jena.sparql.algebra.op.OpNull;
+import org.apache.jena.sparql.algebra.op.OpBGP;
 import org.apache.jena.sparql.algebra.op.OpService;
-import org.apache.jena.sparql.algebra.op.OpTable;
-import org.apache.jena.sparql.core.DatasetGraph;
-import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.engine.Plan;
-import org.apache.jena.sparql.engine.QueryEngineFactory;
-import org.apache.jena.sparql.engine.QueryEngineRegistry;
-import org.apache.jena.sparql.engine.QueryIterator;
 import org.apache.jena.sparql.engine.binding.Binding;
-import org.apache.jena.sparql.engine.binding.BindingRoot;
 import org.apache.jena.sparql.util.Context;
 import org.apache.jena.util.iterator.ClosableIterator;
 
 import com.google.common.cache.Cache;
-import com.google.common.collect.Iterators;
 import com.google.common.collect.Range;
 
 public class QueryExecutionViewMatcherMaster
@@ -125,6 +122,79 @@ public class QueryExecutionViewMatcherMaster
     	Map<Node, StorageEntry> storageMap = rr.getIdToStorageEntry();
 
 
+    	Context ctx = context.copy();
+    	RangedSupplier<Long, Binding> s2;
+    	s2 = new RangedSupplierOp(rewrittenOp, ctx);
+
+    	// TODO: All subtrees that are to be executed on the original data source must be wrapped with
+		// a standard sparql service clause
+
+		Tree<Op> tree = OpUtils.createTree(rewrittenOp);
+		List<List<Op>> levels = TreeUtils.nodesPerLevel(tree);
+
+		// Reverse the levels, so that we start with the leafs
+		Collections.reverse(levels);
+		Collection<Op> leafs = levels.get(0);
+
+		Predicate<Op> p = x -> !(x instanceof OpService);
+
+		Set<Op> taggedNodes = leafs.stream()
+				.filter(p)
+				.collect(Collectors.toCollection(Sets::newIdentityHashSet));
+System.out.println("taggedNodes: " + taggedNodes);
+		for(;;) {
+			//List<Op> parents = levels.get(i);
+			Set<Op> parents = taggedNodes.stream()
+					.map(tree::getParent)
+					.filter(x -> x != null)
+					.collect(Collectors.toCollection(Sets::newIdentityHashSet));
+
+			boolean anyMatch = false;
+			for(Op parent : parents) {
+				List<Op> children = tree.getChildren(parent);
+				boolean allChildrenTagged = children.stream().allMatch(taggedNodes::contains);
+
+				if(allChildrenTagged) {
+					anyMatch = true;
+					taggedNodes.removeAll(children);
+					taggedNodes.add(parent);
+				}
+			}
+
+			if(!anyMatch) {
+				break;
+			}
+		}
+
+		System.out.println("Tagged: " + taggedNodes);
+
+		int idX = 0;
+		// Remap all tagged nodes to be executed on the original service
+		Map<Op, Op> taggedToService = new IdentityHashMap<>();
+		for(Op tag : taggedNodes) {
+			Query query = OpAsQuery.asQuery(tag);
+
+			Node serviceNode = NodeFactory.createURI("view://service/" + idX++);
+			Op serviceOp = new OpService(serviceNode, new OpBGP(), false);
+
+			RangedSupplier<Long, Binding> s3 = new RangedSupplierQuery(parentFactory, query);
+			VarInfo varInfo = new VarInfo(new HashSet<>(query.getProjectVars()), Collections.emptySet());
+			StorageEntry se = new StorageEntry(s3, varInfo); // The var info is not used
+			storageMap.put(serviceNode, se);
+
+			taggedToService.put(tag, serviceOp);
+		}
+
+		rewrittenOp = OpUtils.substitute(rewrittenOp, false, taggedToService::get);
+
+
+
+
+    		// For each parents of which all children are in the set, remove the children from the set
+    		// and add the parent to the set instead
+
+
+
 
 //    	Node serviceNode = NodeFactory.createURI("view://test.org");
 //
@@ -138,7 +208,7 @@ public class QueryExecutionViewMatcherMaster
 
 
 
-    	Set<Var> visibleVars = OpVars.visibleVars(rewrittenOp);
+    	Set<Var> visibleVars = new HashSet<>(projectVars);//OpVars.visibleVars(rewrittenOp);
     	VarInfo varInfo = new VarInfo(visibleVars, Collections.emptySet());
 
 //    	if(false) {
@@ -177,13 +247,11 @@ public class QueryExecutionViewMatcherMaster
     	// This means, that the query will be available for cache lookups
     	boolean cacheWholeQuery = true;
 
-    	Context ctx = context.copy();
 //    	context.put(OpExecutorViewCache.STORAGE_MAP, storageMap);
 
 
     	Cache<Node, StorageEntry> cache = opRewriter.getCache();
 
-    	RangedSupplier<Long, Binding> s2 = new RangedSupplierOp(rewrittenOp, ctx);
     	if(cacheWholeQuery) {
     		// Caching the whole query requires the following actions:
     		// (1) Allocate a new id for the query
