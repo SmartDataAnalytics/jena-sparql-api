@@ -35,8 +35,7 @@ import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpAsQuery;
-import org.apache.jena.sparql.algebra.OpVars;
-import org.apache.jena.sparql.algebra.op.OpBGP;
+import org.apache.jena.sparql.algebra.op.OpNull;
 import org.apache.jena.sparql.algebra.op.OpService;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
@@ -103,7 +102,7 @@ public class QueryExecutionViewMatcherMaster
     protected ResultSetCloseable executeCoreSelect(Query rawQuery) {
 
     	List<Var> projectVars = rawQuery.getProjectVars();
-    	List<String> projectVarNames = VarUtils.getVarNames(projectVars);
+    	//List<String> projectVarNames = VarUtils.getVarNames(projectVars);
 
     	// Store a present slice, but remove it from the query
     	Range<Long> range = QueryUtils.toRange(query);
@@ -130,37 +129,9 @@ public class QueryExecutionViewMatcherMaster
 		Tree<Op> tree = OpUtils.createTree(rewrittenOp);
 
 		// Reverse the levels, so that we start with the leafs
-		Collection<Op> leafs = TreeUtils.getLeafs(tree);
+		Predicate<Op> predicate = x -> !(x instanceof OpService);
 
-		Predicate<Op> p = x -> !(x instanceof OpService);
-
-		Set<Op> taggedNodes = leafs.stream()
-				.filter(p)
-				.collect(Collectors.toCollection(Sets::newIdentityHashSet));
-System.out.println("taggedNodes: " + taggedNodes);
-		for(;;) {
-			//List<Op> parents = levels.get(i);
-			Set<Op> parents = taggedNodes.stream()
-					.map(tree::getParent)
-					.filter(x -> x != null)
-					.collect(Collectors.toCollection(Sets::newIdentityHashSet));
-
-			boolean anyMatch = false;
-			for(Op parent : parents) {
-				List<Op> children = tree.getChildren(parent);
-				boolean allChildrenTagged = children.stream().allMatch(taggedNodes::contains);
-
-				if(allChildrenTagged) {
-					anyMatch = true;
-					taggedNodes.removeAll(children);
-					taggedNodes.add(parent);
-				}
-			}
-
-			if(!anyMatch) {
-				break;
-			}
-		}
+		Set<Op> taggedNodes = TreeUtils.propagateBottomUpLabel(tree, predicate);
 
 		System.out.println("Tagged: " + taggedNodes);
 
@@ -171,7 +142,7 @@ System.out.println("taggedNodes: " + taggedNodes);
 			Query query = OpAsQuery.asQuery(tag);
 
 			Node serviceNode = NodeFactory.createURI("view://service/" + idX++);
-			Op serviceOp = new OpService(serviceNode, new OpBGP(), false);
+			Op serviceOp = new OpService(serviceNode, OpNull.create(), false);
 
 			RangedSupplier<Long, Binding> s3 = new RangedSupplierQuery(parentFactory, query);
 			VarInfo varInfo = new VarInfo(new HashSet<>(query.getProjectVars()), Collections.emptySet());

@@ -149,9 +149,13 @@ public class TestStateSpaceSearch {
 
         for(int i = 0; i < 3; ++i) {
         	{
-		        QueryExecution qe = qef.createQueryExecution("select * { ?s a <http://dbpedia.org/ontology/MusicalArtist> } Limit 10");
+    	        System.out.println("Cache size before: " + queryCache.size());
+
+    	        QueryExecution qe = qef.createQueryExecution("select * { ?s a <http://dbpedia.org/ontology/MusicalArtist> } Limit 10");
 		        ResultSet rs = qe.execSelect();
     	        System.out.println(ResultSetFormatter.asText(rs));
+
+    	        System.out.println("Cache size after: " + queryCache.size());
 //	        	ResultSetFormatter.consume(rs);
         	}
 //        	{
