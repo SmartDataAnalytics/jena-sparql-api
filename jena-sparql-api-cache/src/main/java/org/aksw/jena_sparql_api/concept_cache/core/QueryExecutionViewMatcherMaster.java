@@ -128,11 +128,9 @@ public class QueryExecutionViewMatcherMaster
 		// a standard sparql service clause
 
 		Tree<Op> tree = OpUtils.createTree(rewrittenOp);
-		List<List<Op>> levels = TreeUtils.nodesPerLevel(tree);
 
 		// Reverse the levels, so that we start with the leafs
-		Collections.reverse(levels);
-		Collection<Op> leafs = levels.get(0);
+		Collection<Op> leafs = TreeUtils.getLeafs(tree);
 
 		Predicate<Op> p = x -> !(x instanceof OpService);
 
