@@ -1,13 +1,17 @@
 package org.aksw.qcwrapper.jsa;
 
+import java.util.concurrent.TimeUnit;
+
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlQueryContainmentUtils;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
 
+import com.google.common.base.Stopwatch;
+
 import fr.inrialpes.tyrexmo.testqc.ContainmentSolver;
 import fr.inrialpes.tyrexmo.testqc.ContainmentTestException;
 
-public class JsaContainmentSolverWrapper
+public class ContainmentSolverWrapperJsa
 	implements ContainmentSolver
 {
 	@Override
@@ -28,7 +32,9 @@ public class JsaContainmentSolverWrapper
 
 	@Override
 	public boolean entailed(Query q1, Query q2) throws ContainmentTestException {
+		Stopwatch sw = Stopwatch.createStarted();
 		boolean result = SparqlQueryContainmentUtils.tryMatch(q1, q2);
+		System.out.println("time spent: " + sw.elapsed(TimeUnit.MILLISECONDS));
 		return result;
 	}
 

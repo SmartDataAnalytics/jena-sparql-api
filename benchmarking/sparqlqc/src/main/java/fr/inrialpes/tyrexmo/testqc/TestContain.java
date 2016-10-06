@@ -42,6 +42,7 @@ import java.lang.IllegalAccessException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
+import org.apache.jena.query.ARQ;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
 
@@ -69,12 +70,14 @@ import org.apache.jena.rdf.model.RDFList;
 import org.apache.jena.rdf.model.Container;
 import org.apache.jena.rdf.model.NodeIterator;
 import org.apache.jena.rdf.model.impl.RDFDefaultErrorHandler;
+import org.apache.jena.system.InitJenaCore;
+import org.apache.jena.system.JenaSystem;
 import org.apache.jena.vocabulary.RDF;
 
 public class TestContain {
     final static Logger logger = LoggerFactory.getLogger( TestContain.class );
 
-	private String axiom; 
+	private String axiom;
 	private Collection<String> axioms;
 	private boolean test_under_axioms = false;
 
@@ -125,13 +128,17 @@ public class TestContain {
      * TestContain SolverClass Q1 Q2
      */
     public static void main( String[] args ) throws Exception {
-	new TestContain().run( args );
+        JenaSystem.init();
+        InitJenaCore.init();
+        ARQ.init();
+
+        new TestContain().run( args );
     }
 
     public void run ( String [] args ) throws Exception, IOException {
 	// Read parameters
 	String[] argList = null;
-	try { 
+	try {
 	    CommandLineParser parser = new PosixParser();
 	    CommandLine line = parser.parse( options, args );
 	    if ( line.hasOption( 'h' ) ) { usage(); System.exit( 0 ); }
@@ -258,12 +265,12 @@ public class TestContain {
 		Resource coll = (Resource)o;
 		if ( coll != null ) {
 		    while ( !RDF.nil.getURI().equals( coll.getURI() ) ) {
-			// Do something with 
+			// Do something with
 			Resource rr = coll.getProperty( RDF.first ).getResource();
 			//System.err.println( rr );
-			if ( WARMTEST.equals(rr.getProperty(RDF.type).getResource()) 
-			     || testName == null 
-			     || rr.getURI().toString().endsWith( testName ) ) 
+			if ( WARMTEST.equals(rr.getProperty(RDF.type).getResource())
+			     || testName == null
+			     || rr.getURI().toString().endsWith( testName ) )
 			    try { //sourceQuery - targetQuery - result
 				Statement st = rr.getProperty((Property)SRQ);
 				if ( st == null ) throw new Exception("Test must contain a source query");
@@ -325,7 +332,7 @@ public class TestContain {
 		    // There is no way to shut down such a thread...
 		    //public void stop() { };
 		    public void interrupt() { return; }
-		    public Result call() { 
+		    public Result call() {
 			return testContainment( schema, q1, q2 );
 		    }
 		});
@@ -453,7 +460,7 @@ public class TestContain {
 		Resource coll = (Resource)o;
 		if ( coll != null ) {
 		    while ( !RDF.nil.getURI().equals( coll.getURI() ) ) {
-			// Do something with 
+			// Do something with
 			Resource rr = coll.getProperty( RDF.first ).getResource();
 			//System.err.println( rr );
 			if ( !WARMTEST.equals(rr.getProperty(RDF.type).getResource()) )

@@ -78,7 +78,7 @@ public class SparqlViewMatcherUtils {
         List<Iterable<Map<Op, Op>>> tmpChildNodeMappingCandidates = stack.stream()
             .flatMap(layerMapping -> layerMapping.getNodeMappings().stream()
                 .map(nodeMapping -> nodeMapping.getValue()))
-            	//.takeWhile(pred) // TODO Re-enable once java works 9
+            	//.takeWhile(pred) // TODO Re-enable once java 9 works
             	.peek(x -> pred.test(x))
                 .collect(Collectors.toList());
 
@@ -124,7 +124,7 @@ public class SparqlViewMatcherUtils {
                             //Stream
                         return augmented;
                      })
-                    //.takeWhile(pred)
+                    //.takeWhile(pred) // TODO Re-enable once java 9 works
                     .peek(x -> pred.test(x))
                     .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 
