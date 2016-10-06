@@ -78,7 +78,8 @@ public class SparqlViewMatcherUtils {
         List<Iterable<Map<Op, Op>>> tmpChildNodeMappingCandidates = stack.stream()
             .flatMap(layerMapping -> layerMapping.getNodeMappings().stream()
                 .map(nodeMapping -> nodeMapping.getValue()))
-            	.takeWhile(pred)
+            	//.takeWhile(pred) // TODO Re-enable once java works 9
+            	.peek(x -> pred.test(x))
                 .collect(Collectors.toList());
 
         boolean skip = pred.isFailed();
@@ -123,7 +124,8 @@ public class SparqlViewMatcherUtils {
                             //Stream
                         return augmented;
                      })
-                    .takeWhile(pred)
+                    //.takeWhile(pred)
+                    .peek(x -> pred.test(x))
                     .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 
                 if(pred.isFailed()) {
