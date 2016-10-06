@@ -1,0 +1,13 @@
+PREFIX : <http://www.lehigh.edu//univ-bench.owl#>
+
+SELECT ?x ?y ?z ?t ?s ?ag ?sx ?email ?dept ?course WHERE 
+{ 
+  ?x a :Student .
+  ?x :name ?y . 
+  ?x :nickName ?z . 
+  ?x :telephone ?t . 
+  ?x :sex ?sx . 
+  ?x :emailAddress ?email . 
+  ?x :memberOf ?dept . 
+  ?x :takesCourse ?course . 
+}

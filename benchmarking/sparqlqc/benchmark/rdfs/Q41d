@@ -1,0 +1,5 @@
+PREFIX : <http://www.lehigh.edu//univ-bench.owl#>
+
+SELECT ?x WHERE {
+  ?x :headOf ?y.
+}
