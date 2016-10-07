@@ -1,0 +1,17 @@
+:q1
+  content "SELECT DISTINCT ?s { { { ?a ?a ?a } UNION {   { SELECT DISTINCT ?b { ?b ?b ?b} }   } } ?c ?c ?c } LIMIT 10"
+
+:q2
+  content "SELECT * { ?a ?a ?a }"
+
+:q3
+  content "SELECT DISTINCT ?0 { { { ?0 ?0 ?0 } UNION {   { SELECT DISTINCT ?1 { ?1 ?1 ?1} }   } } ?2 ?2 ?2 } LIMIT 10"
+
+:q4
+   content "Select * { { SELECT DISTINCT ?s { { { ?0 ?0 ?0 } UNION { {   SELECT DISTINCT ?1 { ?1 ?1 ?1 } }   } } { { ?2 ?2 ?2 } UNION { ?3 ?3 ?3 } } { ?4 ?4 ?4 } } LIMIT 10 } { ?f ?c ?k } }"
+
+<http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop6>
+    :result "false" ;
+    :sourceQuery "Q3b" ;
+    :targetQuery "Q3a" ;
+    a :ContainmentTest .

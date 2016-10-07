@@ -23,6 +23,7 @@ import org.aksw.jena_sparql_api.stmt.SparqlQueryParser;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
+import org.aksw.simba.lsq.vocab.LSQ;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.ResultSet;
@@ -75,7 +76,7 @@ public class TestSparqlViewCacheVariableRenaming {
         Model model = SparqlQcReader.readResources("sparqlqc/1.4/benchmark/noprojection/*");
         SparqlQueryParser sparqlParser = SparqlQueryParserImpl.create(Syntax.syntaxARQ);
 
-        Query testSuiteQuery = sparqlParser.apply("SELECT ?s ?c { ?s <http://ex.org/ontology/content> ?c }");
+        Query testSuiteQuery = sparqlParser.apply("SELECT ?s ?c { ?s <" + LSQ.text + ">?c }");
         //QueryUtils.injectFilter(testSuiteQuery, "?s = <http://ex.org/query/4-b>");
 
         QueryExecutionFactory qef = FluentQueryExecutionFactory.from(model).create();

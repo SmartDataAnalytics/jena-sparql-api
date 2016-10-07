@@ -424,163 +424,6 @@ System.out.println("----- yay");
 
 
 
-        // TODO We now need to rewrite the query using the canonical quad filter patterns
-        // for this purpose, we could create a map that maps original ops to qfpcs
-//        SparqlCacheUtils.toMap(mm)
-
-
-        Map<Class<?>, TriFunction<List<Op>, List<Op>, Multimap<Op, Op>, Boolean>> opToMatcherTest = new HashMap<>();
-        opToMatcherTest.put(OpDisjunction.class, (as, bs, mapping) -> true);
-
-//        Function<Entry<Op, Op>, TriFunction<List<Op>, List<Op>, Multimap<Op, Op>, Boolean>> fnOpToMatcherTest = (nodeMapping) ->
-//            determineMatchingStrategy(nodeMapping);
-            //opToMatcherTest.getOrDefault(op.getClass(), (as, bs, mapping) -> SequentialMatchIterator.createStream(as, bs, mapping).findFirst().isPresent());
-
-        Map<Class<?>, TriFunction<List<Op>, List<Op>, Multimap<Op, Op>, Stream<Map<Op, Op>>>> opToMatcher = new HashMap<>();
-
-        opToMatcher.put(OpDisjunction.class, (as, bs, mapping) -> KPermutationsOfNUtils.kPermutationsOfN(mapping));
-        //opToMatcher.put(OpLeftJoin.class, (as, bs, mapping) -> SequentialMatchIterator.createStream(as, bs, mapping));
-
-        // Function that maps an operator to the matching strategy
-        Function<Class<?>, TriFunction<List<Op>, List<Op>, Multimap<Op, Op>, Stream<Map<Op, Op>>>> fnOpToMatcher = (op) ->
-            opToMatcher.getOrDefault(op, (as, bs, mapping) -> SequentialMatchIterator.createStream(as, bs, mapping));
-
-
-        List<String> as = Arrays.asList("a", "b", "c");
-        List<Integer> bs = Arrays.asList(1, 2, 3, 4);
-
-        Multimap<String, Integer> ms = HashMultimap.create();
-        ms.put("a", 1);
-        ms.put("a", 2);
-        ms.put("b", 2);
-        ms.put("b", 3);
-        ms.put("c", 3);
-        ms.put("c", 4);
-
-        //Iterator<Map<String, Integer>> it = new SequentialMatchIterator<>(as, bs, (a, b) -> ms.get(a).contains(b));
-        Stream<Map<String, Integer>> it = SequentialMatchIterator.createStream(as, bs, ms);
-
-        it.forEach(x -> System.out.println("seq match: " + x));
-
-
-
-        int test = 3;
-
-
-        Op opCache;
-
-        if(test != 2) {
-            opCache = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { { ?a ?a ?a } UNION {   { SELECT DISTINCT ?b { ?b ?b ?b} }   } } ?c ?c ?c } LIMIT 10")));
-            //opCache = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT * { { { ?a ?a ?a } UNION {   { SELECT DISTINCT ?b { ?b ?b ?b} }   } } ?c ?c ?c }")));
-        } else {
-            opCache = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT * { ?a ?a ?a }")));
-        }
-        //Op opQuery = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?s { { { ?0 ?0 ?0 } UNION { ?1 ?1 ?1 } } { { ?2 ?2 ?2 } UNION { ?3 ?3 ?3 } } { ?4 ?4 ?4 } } LIMIT 10")));
-
-        // Multiple cache matches
-
-        Op opQuery;
-        if(test == 3) {
-        // Single cache match
-            opQuery = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("SELECT DISTINCT ?0 { { { ?0 ?0 ?0 } UNION {   { SELECT DISTINCT ?1 { ?1 ?1 ?1} }   } } ?2 ?2 ?2 } LIMIT 10")));
-        } else {
-            opQuery = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("Select * { { SELECT DISTINCT ?s { { { ?0 ?0 ?0 } UNION { {   SELECT DISTINCT ?1 { ?1 ?1 ?1 } }   } } { { ?2 ?2 ?2 } UNION { ?3 ?3 ?3 } } { ?4 ?4 ?4 } } LIMIT 10 } { ?f ?c ?k } }")));
-
-        }
-
-        OpViewMatcher<Node> viewMatcher = OpViewMatcherTreeBased.create();
-        viewMatcher.put(NodeFactory.createURI("http://foo.bar"), opCache);
-        viewMatcher.lookup(opCache);
-
-
-        if(true) {
-            System.exit(0);
-        }
-
-
-        opCache = Transformer.transform(TransformJoinToConjunction.fn, Transformer.transform(TransformUnionToDisjunction.fn, opCache));
-        opQuery = Transformer.transform(TransformJoinToConjunction.fn, Transformer.transform(TransformUnionToDisjunction.fn, opQuery));
-
-        Generator<Var> generatorCache = VarGeneratorImpl2.create();
-        opCache = OpUtils.substitute(opCache, false, (op) -> SparqlCacheUtils.tryCreateCqfp(op, generatorCache));
-
-        Generator<Var> generatorQuery = VarGeneratorImpl2.create();
-        opQuery = OpUtils.substitute(opQuery, false, (op) -> SparqlCacheUtils.tryCreateCqfp(op, generatorQuery));
-
-
-        Tree<Op> cacheTree = TreeImpl.create(opCache, (o) -> OpUtils.getSubOps(o));
-        Tree<Op> queryTree = TreeImpl.create(opQuery, (o) -> OpUtils.getSubOps(o));
-
-
-
-
-        // The candidate multimapping from cache to query
-        Multimap<Op, Op> candOpMapping = HashMultimap.create();
-        List<Op> cacheLeafs = TreeUtils.getLeafs(cacheTree);
-        List<Op> queryLeafs = TreeUtils.getLeafs(queryTree);
-
-
-        if(test == 0) {
-            // Expected: a:1 - b:2
-            candOpMapping.put(cacheLeafs.get(0), queryLeafs.get(0));
-            candOpMapping.put(cacheLeafs.get(0), queryLeafs.get(2));
-
-            candOpMapping.put(cacheLeafs.get(1), queryLeafs.get(0));
-            candOpMapping.put(cacheLeafs.get(1), queryLeafs.get(2));
-            candOpMapping.put(cacheLeafs.get(1), queryLeafs.get(3));
-
-            candOpMapping.put(cacheLeafs.get(2), queryLeafs.get(4));
-        }
-
-        if(test == 1) {
-            // Expected: a:1 - b:0
-            candOpMapping.put(cacheLeafs.get(0), queryLeafs.get(0));
-            candOpMapping.put(cacheLeafs.get(0), queryLeafs.get(1));
-
-            candOpMapping.put(cacheLeafs.get(1), queryLeafs.get(0));
-            candOpMapping.put(cacheLeafs.get(1), queryLeafs.get(2));
-            candOpMapping.put(cacheLeafs.get(1), queryLeafs.get(3));
-        }
-
-        // test case where there the cache op is just a single node (i.e. there is no parent)
-        if(test == 2) {
-            // Expected: a:1 - b:0
-            candOpMapping.put(cacheLeafs.get(0), queryLeafs.get(0));
-
-        }
-
-        if(test == 3) {
-            // Expected: a:1 - b:0
-            candOpMapping.put(cacheLeafs.get(0), queryLeafs.get(0));
-            candOpMapping.put(cacheLeafs.get(1), queryLeafs.get(1));
-            candOpMapping.put(cacheLeafs.get(2), queryLeafs.get(2));
-
-        }
-
-        Stream<OpVarMap> treeVarMappings = SparqlViewMatcherUtils.generateTreeVarMapping(candOpMapping, cacheTree, queryTree);
-
-        treeVarMappings.forEach(e -> {
-            Map<Op, Op> nodeMapping = e.getOpMap();
-
-            Op sourceRoot = cacheTree.getRoot();
-            Op targetNode = nodeMapping.get(sourceRoot);
-
-            if(targetNode == null) {
-                throw new RuntimeException("Could not match root node of a source tree to a node in the target tree - Should not happen.");
-            }
-
-            QuadPattern yay = new QuadPattern();
-            Node n = NodeFactory.createURI("yay");
-            yay.add(new Quad(n, n, n, n));
-            Op repl = OpUtils.substitute(queryTree.getRoot(), false, op -> {
-               return op == targetNode ? new OpQuadBlock(yay) : null;
-            });
-
-
-            System.out.println("yay: " + repl);
-            System.out.println();
-        });
-
 
 
 //        List<Set<Op>> cacheTreeLevels = TreeUtils.nodesPerLevel(cacheMultiaryTree);
@@ -712,22 +555,22 @@ System.out.println("----- yay");
 
 
         //stream.forEach(x -> System.out.println("Candidate Solution: " + x.asList().iterator().next()));
-
-
-        // we need a mapping from leaf op to problem instance in order to determine which of the candidates to pick first
-        //Map<Op, Problem<?>> cacheOpToProblem = new HashMap<>();
-        Function<Entry<Op, Op>, Long> opMappingToCost = (e) -> 1l;
-
-        //TreeMultimap<Long, Entry<Op, Op>> costToOpMapping = TreeMultimap.create();
-        TreeMap<Long, Set<Entry<Op, Op>>> costToOpMappings = new TreeMap<>();
-
-        // pick the cheapest mapping candidate
-        // actually, this is again a problem instance - right?
-        Entry<Long, Entry<Op, Op>> pick = ProblemContainerNeighbourhoodAware.firstEntry(costToOpMappings);
-
-        TreeUtils.clusterNodesByFirstMultiaryAncestor(queryTree, candOpMapping);
-
-
+//
+//
+//        // we need a mapping from leaf op to problem instance in order to determine which of the candidates to pick first
+//        //Map<Op, Problem<?>> cacheOpToProblem = new HashMap<>();
+//        Function<Entry<Op, Op>, Long> opMappingToCost = (e) -> 1l;
+//
+//        //TreeMultimap<Long, Entry<Op, Op>> costToOpMapping = TreeMultimap.create();
+//        TreeMap<Long, Set<Entry<Op, Op>>> costToOpMappings = new TreeMap<>();
+//
+//        // pick the cheapest mapping candidate
+//        // actually, this is again a problem instance - right?
+//        Entry<Long, Entry<Op, Op>> pick = ProblemContainerNeighbourhoodAware.firstEntry(costToOpMappings);
+//
+//        TreeUtils.clusterNodesByFirstMultiaryAncestor(queryTree, candOpMapping);
+//
+//
 
 
 

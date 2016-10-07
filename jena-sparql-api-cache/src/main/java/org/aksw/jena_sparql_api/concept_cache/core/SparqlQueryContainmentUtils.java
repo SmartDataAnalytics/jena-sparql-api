@@ -39,28 +39,37 @@ public class SparqlQueryContainmentUtils {
 	}
 
 
-	public static void tryMatch(String viewStr, String queryStr) {
+	public static boolean tryMatch(String viewStr, String queryStr) {
+		Element viewEl = elementParser.apply(viewStr);
+		Element queryEl = elementParser.apply(queryStr);
 
-		QuadFilterPatternCanonical viewQfpc = canonicalize(viewStr);
-		QuadFilterPatternCanonical queryQpfc = canonicalize(queryStr);
+        boolean result = tryMatch(viewEl, queryEl);
+        return result;
 
-        Stream<Map<Var, Var>> candidateSolutions = VarMapper.createVarMapCandidates(viewQfpc, queryQpfc);
-        candidateSolutions.forEach(cs -> System.out.println("Candidate solution: " + cs));
-        System.out.println("Done.");
+        //Stream<Map<Var, Var>> candidateSolutions = VarMapper.createVarMapCandidates(viewQfpc, queryQpfc);
+        //candidateSolutions.forEach(cs -> System.out.println("Candidate solution: " + cs));
+        //System.out.println("Done.");
 	}
 
 	public static boolean tryMatch(Element viewEl, Element queryEl) {
 		QuadFilterPatternCanonical viewQfpc = canonicalize(viewEl);
-		QuadFilterPatternCanonical queryQpfc = canonicalize(queryEl);
+		QuadFilterPatternCanonical queryQfpc = canonicalize(queryEl);
 
-        Stream<Map<Var, Var>> candidateSolutions = VarMapper.createVarMapCandidates(viewQfpc, queryQpfc).peek(foo -> System.out.println(foo));
-        boolean result = candidateSolutions.count() > 0;
+        boolean result = tryMatch(viewQfpc, queryQfpc);
         return result;
 
 
         //candidateSolutions.forEach(cs -> System.out.println("Candidate solution: " + cs));
         //System.out.println("Done.");
 
+	}
+
+	public static boolean tryMatch(QuadFilterPatternCanonical viewQfpc, QuadFilterPatternCanonical queryQfpc) {
+        Stream<Map<Var, Var>> candidateSolutions = VarMapper.createVarMapCandidates(viewQfpc, queryQfpc)
+        		//.peek(foo -> System.out.println(foo))
+        		;
+        boolean result = candidateSolutions.count() > 0;
+        return result;
 	}
 
 	public static boolean tryMatch(Query viewQuery, Query userQuery) {

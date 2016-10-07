@@ -6,11 +6,15 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.aksw.commons.util.StreamUtils;
+import org.aksw.simba.lsq.vocab.LSQ;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.vocabulary.OWL2;
 import org.apache.jena.vocabulary.RDF;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.topbraid.spin.vocabulary.SP;
+import org.topbraid.spin.vocabulary.SPIN;
 
 
 public class SparqlQcReader {
@@ -50,10 +54,10 @@ public class SparqlQcReader {
 
         String content = StreamUtils.toString(resource.getInputStream());
 
-        inout.add(result, RDF.type, inout.createResource("http://ex.org/ontology/Query"));
-        inout.add(result, inout.createProperty("http://ex.org/ontology/id"), inout.createTypedLiteral(id));
-        inout.add(result, inout.createProperty("http://ex.org/ontology/content"), inout.createLiteral(content));
-        inout.add(result, inout.createProperty("http://ex.org/ontology/variant"), inout.createLiteral(variant));
+        inout.add(result, RDF.type, SP.Query);
+        inout.add(result, SparqlQcVocab.id, inout.createTypedLiteral(id));
+        inout.add(result, LSQ.text, inout.createLiteral(content));
+        inout.add(result, SparqlQcVocab.variant, inout.createLiteral(variant));
 
         //System.out.println("" + id + variant);
 

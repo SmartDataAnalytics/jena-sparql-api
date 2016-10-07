@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.resources.sparqlqc;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.vocabulary.RDF;
 
 public class SparqlQcVocab {
 	public static final String ns = "http://sparql-qc-bench.inrialpes.fr/testsuite#";
@@ -19,4 +20,10 @@ public class SparqlQcVocab {
 	public static final Property targetQuery = property("targetQuery" );
 	public static final Property rdfSchema = property("rdfSchema" );
 	public static final Property result = property("result" );
+
+
+	// TODO Replace with SPIN or LSQ Query
+	public static final Property id = property("http://ex.org/ontology/id");
+
+	public static final Property variant = property("http://ex.org/ontology/variant");
 }
