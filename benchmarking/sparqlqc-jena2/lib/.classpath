@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="lib" path="lib/hal/xpath20api.jar"/>
+	<classpathentry kind="lib" path="lib/hal/xalan.jar"/>
+	<classpathentry kind="lib" path="lib/jfreechart/gnujaxp.jar"/>
+	<classpathentry kind="lib" path="lib/jfreechart/junit.jar"/>
+	<classpathentry kind="lib" path="lib/jfreechart/servlet.jar"/>
+	<classpathentry kind="lib" path="lib/cup/java-cup-11a-runtime.jar"/>
+	<classpathentry kind="lib" path="lib/jfreechart/jcommon-1.0.0-pre2.jar"/>
+	<classpathentry kind="lib" path="lib/dtdparser/dtdparser121.jar"/>
+	<classpathentry kind="lib" path="lib/jgraph/jgraph.jar"/>
+	<classpathentry kind="lib" path="lib/jgrapht/jgrapht-0.6.0.jar"/>
+	<classpathentry kind="lib" path="lib/jfreechart/jfreechart-1.0.0-pre2.jar"/>
+	<classpathentry kind="lib" path="lib/msv-20080213/xercesImpl.jar"/>
+	<classpathentry kind="lib" path="lib/msv-20080213/relaxngDatatype.jar"/>
+	<classpathentry kind="lib" path="lib/msv-20080213/isorelax.jar"/>
+	<classpathentry kind="lib" path="lib/msv-20080213/xsdlib.jar"/>
+	<classpathentry kind="lib" path="lib/hal/xmltypes.jar"/>
+	<classpathentry kind="lib" path="lib/javaBDD/minijdd_103.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
