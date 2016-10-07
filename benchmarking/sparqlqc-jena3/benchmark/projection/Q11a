@@ -1,0 +1,5 @@
+PREFIX : <http://www.example.org/>
+
+SELECT ?x WHERE { 
+   ?x :takesCourse "Course10" . ?x :takesCourse "Course20" . 
+}
