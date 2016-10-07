@@ -12,7 +12,6 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.aksw.commons.collections.trees.Tree;
-import org.aksw.commons.util.strings.StringUtils;
 import org.aksw.jena_sparql_api.algebra.transform.TransformJoinToConjunction;
 import org.aksw.jena_sparql_api.algebra.transform.TransformUnionToDisjunction;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
@@ -26,7 +25,8 @@ import org.aksw.jena_sparql_api.view_matcher.OpVarMap;
 import org.aksw.jena_sparql_api.view_matcher.SparqlViewMatcherUtils;
 import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.graph.Node;
-import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.query.Query;
+import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.op.OpBGP;
@@ -199,6 +199,13 @@ public class OpViewMatcherTreeBased<K>
 	}
 
 
+
+	public static Op queryToNormalizedOp(Query query) {
+		Op result = Algebra.compile(query);
+		result = Algebra.toQuadForm(result);
+		result = normalizeOp(result);
+		return result;
+	}
 
 
 	public static Op normalizeOp(Op op) {

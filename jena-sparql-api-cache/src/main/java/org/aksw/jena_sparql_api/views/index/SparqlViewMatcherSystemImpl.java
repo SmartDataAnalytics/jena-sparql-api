@@ -17,9 +17,10 @@ import org.aksw.commons.collections.trees.Tree;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.ProblemVarMappingExpr;
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.ProblemVarMappingQuad;
-import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCache;
-import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCacheImpl;
 import org.aksw.jena_sparql_api.utils.MapUtils;
+import org.aksw.jena_sparql_api.view_matcher.OpVarMap;
+import org.aksw.jena_sparql_api.view_matcher.SparqlViewMatcherUtils;
+import org.apache.jena.query.Query;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
@@ -158,6 +159,24 @@ public class SparqlViewMatcherSystemImpl
     }
 
 
+
+    public static Stream<OpVarMap> match(Query a, Query b) {
+    	Function<Op, OpIndex> opIndexer = new OpIndexerImpl();
+
+    	OpIndex viewIndex = opIndexer.apply(OpViewMatcherTreeBased.queryToNormalizedOp(a));
+    	OpIndex queryIndex = opIndexer.apply(OpViewMatcherTreeBased.queryToNormalizedOp(b));
+
+
+        Multimap<Op, Op> candOpMapping = SparqlViewMatcherSystemImpl.getCandidateLeafMapping(viewIndex, queryIndex);
+        Tree<Op> cacheTree = viewIndex.getTree();
+        Tree<Op> queryTree = queryIndex.getTree();
+
+        // TODO: Require a complete match of the tree - i.e. cache and query trees must have same number of nodes / same depth / some other criteria that can be checked quickly
+        // In fact, we could use these features as an additional index
+        Stream<OpVarMap> result = SparqlViewMatcherUtils.generateTreeVarMapping(candOpMapping, cacheTree, queryTree);
+
+        return result;
+    }
 
 
     /**
