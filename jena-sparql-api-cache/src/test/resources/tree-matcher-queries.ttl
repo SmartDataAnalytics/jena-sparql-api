@@ -9,7 +9,7 @@ q:q1-u
   .
 
 q:q1-up
-  lsq:text "SELECT ?s { { ?a ?a ?a } UNION { ?b ?b ?b } }"
+  lsq:text "SELECT ?a { { ?a ?a ?a } UNION { ?b ?b ?b } ?c ?c ?c }"
   .
 
 q:q0-a
@@ -46,14 +46,14 @@ t:t-0
 
 #
 t:t-1
-  a qc:ContainmentTest ;
+#  a qc:ContainmentTest ;
   qc:sourceQuery q:q1-up ;
   qc:targetQuery q:q1-up ;
   qc:results "[{a: a}]"^^xsd:json ;
   .
 
 #
-t:t-1
+t:t-2
 #  a qc:ContainmentTest ;
   qc:sourceQuery q:q1-c ;
   qc:targetQuery q:q1-c ;
@@ -61,15 +61,15 @@ t:t-1
   .
 
 
-t:t-1
+t:t-3
 #  a qc:ContainmentTest ;
   qc:sourceQuery q:q1-b ;
   qc:targetQuery q:q1-a ;
   qc:results "[{a: a}]"^^xsd:json ;
   .
 
-t:t-2
-#  a qc:ContainmentTest ;
+t:t-4
+  a qc:ContainmentTest ;
   qc:sourceQuery q:q1-a ;
   qc:targetQuery q:q1-a ;
   qc:results "[{a: a}]"^^xsd:json ;
