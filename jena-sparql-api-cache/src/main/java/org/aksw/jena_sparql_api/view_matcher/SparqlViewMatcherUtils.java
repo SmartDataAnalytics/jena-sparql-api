@@ -80,6 +80,7 @@ public class SparqlViewMatcherUtils {
                 .map(nodeMapping -> nodeMapping.getValue()))
             	//.takeWhile(pred) // TODO Re-enable once java 9 works
             	.peek(x -> pred.test(x))
+            	.filter(x -> !pred.isFailed())
                 .collect(Collectors.toList());
 
         boolean skip = pred.isFailed();
@@ -126,6 +127,7 @@ public class SparqlViewMatcherUtils {
                      })
                     //.takeWhile(pred) // TODO Re-enable once java 9 works
                     .peek(x -> pred.test(x))
+                    .filter(x -> !pred.isFailed())
                     .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 
                 if(pred.isFailed()) {

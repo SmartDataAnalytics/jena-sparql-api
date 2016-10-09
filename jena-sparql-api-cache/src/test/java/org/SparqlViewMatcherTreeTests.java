@@ -34,12 +34,19 @@ public class SparqlViewMatcherTreeTests {
 			String qbs = test.getRequiredProperty(SparqlQcVocab.targetQuery).getObject().asResource().getRequiredProperty(LSQ.text).getObject().asLiteral().getString();
 
 			Query qa = queryParser.apply(qas);
-			Query qb = queryParser.apply(qas);
+			Query qb = queryParser.apply(qbs);
 
 			System.out.println(qa);
 			System.out.println(qb);
 
-			SparqlViewMatcherSystemImpl.match(qa, qb).forEach(x -> System.out.println(x));
+			System.out.println("mappings:");
+			SparqlViewMatcherSystemImpl.match(qa, qb).forEach(x -> {
+				x.getVarMaps().forEach(y -> {
+					System.out.println(y);
+				});
+			});
+
+			System.out.println("done.");
 		}
 
 

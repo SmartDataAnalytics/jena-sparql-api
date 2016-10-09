@@ -4,8 +4,23 @@
 @prefix qc: <http://sparql-qc-bench.inrialpes.fr/testsuite#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
+q:q1-u
+  lsq:text "SELECT * { { ?a ?a ?a } UNION { ?b ?b ?b } }"
+  .
+
+q:q1-up
+  lsq:text "SELECT ?s { { ?a ?a ?a } UNION { ?b ?b ?b } }"
+  .
+
+q:q0-a
+  lsq:text "SELECT DISTINCT ?b { ?b ?b ?b } LIMIT 10"
+  .
 
 q:q1-a
+  lsq:text "SELECT DISTINCT ?a { { { ?a ?a ?a } UNION {   { SELECT DISTINCT ?b { ?b ?b ?b } }   } } ?c ?c ?c } LIMIT 10"
+  .
+
+q:q1-c
   lsq:text "SELECT DISTINCT ?s { { { ?a ?a ?a } UNION {   { SELECT DISTINCT ?b { ?b ?b ?b } }   } } ?c ?c ?c } LIMIT 10"
   .
 
@@ -18,12 +33,44 @@ q:q-3
   .
 
 q:q-4
-	lsq:text "Select * { { SELECT DISTINCT ?s { { { ?0 ?0 ?0 } UNION { {   SELECT DISTINCT ?1 { ?1 ?1 ?1 } }   } } { { ?2 ?2 ?2 } UNION { ?3 ?3 ?3 } } { ?4 ?4 ?4 } } LIMIT 10 } { ?f ?c ?k } }"
+  lsq:text "Select * { { SELECT DISTINCT ?s { { { ?0 ?0 ?0 } UNION { {   SELECT DISTINCT ?1 { ?1 ?1 ?1 } }   } } { { ?2 ?2 ?2 } UNION { ?3 ?3 ?3 } } { ?4 ?4 ?4 } } LIMIT 10 } { ?f ?c ?k } }"
   .
 
+# works
+t:t-0
+#  a qc:ContainmentTest ;
+  qc:sourceQuery q:q0-a ;
+  qc:targetQuery q:q0-a ;
+  qc:results "[{a: a}]"^^xsd:json ;
+  .
+
+#
 t:t-1
   a qc:ContainmentTest ;
+  qc:sourceQuery q:q1-up ;
+  qc:targetQuery q:q1-up ;
   qc:results "[{a: a}]"^^xsd:json ;
+  .
+
+#
+t:t-1
+#  a qc:ContainmentTest ;
+  qc:sourceQuery q:q1-c ;
+  qc:targetQuery q:q1-c ;
+  qc:results "[{a: a}]"^^xsd:json ;
+  .
+
+
+t:t-1
+#  a qc:ContainmentTest ;
+  qc:sourceQuery q:q1-b ;
+  qc:targetQuery q:q1-a ;
+  qc:results "[{a: a}]"^^xsd:json ;
+  .
+
+t:t-2
+#  a qc:ContainmentTest ;
   qc:sourceQuery q:q1-a ;
-  qc:targetQuery q:q1-b
+  qc:targetQuery q:q1-a ;
+  qc:results "[{a: a}]"^^xsd:json ;
   .
