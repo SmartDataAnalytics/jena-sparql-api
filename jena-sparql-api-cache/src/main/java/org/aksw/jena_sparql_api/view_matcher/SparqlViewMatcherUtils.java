@@ -321,8 +321,8 @@ public class SparqlViewMatcherUtils {
                     Entry<A, B> r = new SimpleEntry<A, B>(sourceAncestor, targetAncestor);
                     return r;
                 });
-        } else if (m == 0) {
-            // If there are no ancestors in the target tree, the mapping is satisfiable
+        } else if (n == 0) {
+            // If there are no ancestors in the source tree, the mapping is satisfiable
 
         	result = Stream.empty();
         } else {

@@ -14,11 +14,37 @@ q:q1-b
 
 
 t:t1
-  a qc:ContainmentTest ;
+#  a qc:ContainmentTest ;
   qc:sourceQuery q:q1-b ;
   qc:targetQuery q:q1-a ;
   qc:result "{?v_2=?v_2, ?v_3=?v_3, ?c=?c, ?b=?b, ?v_1=?v_1, ?a=?a}" ;
   .
+
+q:q2-a
+  lsq:text "SELECT * { ?x a <http://foo> }" ;
+  .
+
+q:q2-b
+  lsq:text "SELECT ?s { { Select Distinct ?s { ?s a <http://foo> } } }" ;
+  .
+
+t:t2
+  a qc:ContainmentTest ;
+  qc:sourceQuery q:q2-a ;
+  qc:targetQuery q:q2-b ;
+  qc:result "{?v_2=?v_2, ?v_3=?v_3, ?s=?x, ?v_1=?v_1}" ;
+  .
+
+
+t:t1
+#  a qc:ContainmentTest ;
+  qc:sourceQuery q:q1-b ;
+  qc:targetQuery q:q1-a ;
+  qc:result "{?v_2=?v_2, ?v_3=?v_3, ?c=?c, ?b=?b, ?v_1=?v_1, ?a=?a}" ;
+  .
+
+
+
 
 
 q:qx1-u
