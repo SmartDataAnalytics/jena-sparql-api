@@ -4,40 +4,64 @@
 @prefix qc: <http://sparql-qc-bench.inrialpes.fr/testsuite#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-q:q1-u
-  lsq:text "SELECT * { { ?a ?a ?a } UNION { ?b ?b ?b } }"
-  .
-
-q:q1-up
-  lsq:text "SELECT ?a { { ?a ?a ?a } UNION { ?b ?b ?b } ?c ?c ?c }"
-  .
-
-q:q0-a
-  lsq:text "SELECT DISTINCT ?b { ?b ?b ?b } LIMIT 10"
-  .
-
 q:q1-a
-  lsq:text "SELECT DISTINCT ?a { { { ?a ?a ?a } UNION {   { SELECT DISTINCT ?b { ?b ?b ?b } }   } } ?c ?c ?c } LIMIT 10"
-  .
-
-q:q1-x
-  lsq:text "SELECT DISTINCT ?a { { { ?a ?a ?a } UNION { ?b ?b ?b } } ?c ?c ?c } LIMIT 10"
-  .
-
-
-q:q1-c
-  lsq:text "SELECT DISTINCT ?s { { { ?a ?a ?a } UNION {   { SELECT DISTINCT ?b { ?b ?b ?b } }   } } ?c ?c ?c } LIMIT 10"
+  lsq:text "SELECT * { ?s ?p ?o }" ;
   .
 
 q:q1-b
+  lsq:text "SELECT ?s { ?s ?p ?o }" ;
+  .
+
+
+t:t1
+  a qc:ContainmentTest ;
+  qc:sourceQuery q:q1-b ;
+  qc:targetQuery q:q1-a ;
+  qc:result "{?v_2=?v_2, ?v_3=?v_3, ?c=?c, ?b=?b, ?v_1=?v_1, ?a=?a}" ;
+  .
+
+
+q:qx1-u
+  lsq:text "SELECT * { { ?a ?a ?a } UNION { ?b ?b ?b } }"
+  .
+
+q:qx1-up
+  lsq:text "SELECT ?a { { ?a ?a ?a } UNION { ?b ?b ?b } ?c ?c ?c }"
+  .
+
+q:qx0-a
+  lsq:text "SELECT DISTINCT ?b { ?b ?b ?b } LIMIT 10"
+  .
+
+q:qx1-a
+  lsq:text "SELECT DISTINCT ?a { { { ?a ?a ?a } UNION {   { SELECT DISTINCT ?b { ?b ?b ?b } }   } } ?c ?c ?c } LIMIT 10"
+  .
+
+q:qx1-x
+  lsq:text "SELECT DISTINCT ?a { { { ?a ?a ?a } UNION { ?b ?b ?b } } ?c ?c ?c } LIMIT 10"
+  .
+
+t:tx1
+#  a qc:ContainmentTest ;
+  qc:sourceQuery q:qx1-a ;
+  qc:targetQuery q:qx1-a ;
+  qc:result "{?v_2=?v_2, ?v_3=?v_3, ?c=?c, ?b=?b, ?v_1=?v_1, ?a=?a}" ;
+  .
+
+
+q:qx1-c
+  lsq:text "SELECT DISTINCT ?s { { { ?a ?a ?a } UNION {   { SELECT DISTINCT ?b { ?b ?b ?b } }   } } ?c ?c ?c } LIMIT 10"
+  .
+
+q:qx1-b
   lsq:text "SELECT * { ?a ?a ?a }"
   .
 
-q:q-3
+q:qx-3
   lsq:text "SELECT DISTINCT ?0 { { { ?0 ?0 ?0 } UNION {   { SELECT DISTINCT ?1 { ?1 ?1 ?1} }   } } ?2 ?2 ?2 } LIMIT 10"
   .
 
-q:q-4
+q:qx-4
   lsq:text "Select * { { SELECT DISTINCT ?s { { { ?0 ?0 ?0 } UNION { {   SELECT DISTINCT ?1 { ?1 ?1 ?1 } }   } } { { ?2 ?2 ?2 } UNION { ?3 ?3 ?3 } } { ?4 ?4 ?4 } } LIMIT 10 } { ?f ?c ?k } }"
   .
 
@@ -73,9 +97,3 @@ t:t-3
   qc:results "[{a: a}]"^^xsd:json ;
   .
 
-t:t-4
-  a qc:ContainmentTest ;
-  qc:sourceQuery q:q1-a ;
-  qc:targetQuery q:q1-a ;
-  qc:result "{?v_2=?v_2, ?v_3=?v_3, ?c=?c, ?b=?b, ?v_1=?v_1, ?a=?a}" ;
-  .

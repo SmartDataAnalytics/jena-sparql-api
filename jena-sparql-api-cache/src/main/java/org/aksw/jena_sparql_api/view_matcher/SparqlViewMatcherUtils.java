@@ -308,6 +308,7 @@ public class SparqlViewMatcherUtils {
 
         boolean sameSize = n == m;
 
+
         //List<Entry<Map<T, T>, Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>>>> result = new ArrayList<>(n);
 
         Stream<Entry<A, B>> result;
@@ -320,6 +321,10 @@ public class SparqlViewMatcherUtils {
                     Entry<A, B> r = new SimpleEntry<A, B>(sourceAncestor, targetAncestor);
                     return r;
                 });
+        } else if (m == 0) {
+            // If there are no ancestors in the target tree, the mapping is satisfiable
+
+        	result = Stream.empty();
         } else {
             result = Stream.of((Entry<A, B>)null);//Stream.empty();
         }
