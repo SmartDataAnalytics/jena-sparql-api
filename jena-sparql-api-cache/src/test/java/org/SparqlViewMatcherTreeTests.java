@@ -19,8 +19,11 @@ import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.vocabulary.RDF;
+import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.core.io.ClassPathResource;
+
+import com.codepoetics.protonpack.StreamUtils;
 
 public class SparqlViewMatcherTreeTests {
 
@@ -42,7 +45,7 @@ public class SparqlViewMatcherTreeTests {
 					.mapWith(stmt -> stmt.getObject()).toSet().stream()
 					.map(o -> VarUtils.parseVarMap(o.asLiteral().getString()))
 					.collect(Collectors.toSet());
-			System.out.println("Expected: " + expected);
+//			System.out.println("Expected: " + expected);
 
 			Query qa = queryParser.apply(qas);
 			Query qb = queryParser.apply(qbs);
@@ -51,11 +54,14 @@ public class SparqlViewMatcherTreeTests {
 			System.out.println(qb);
 
 			System.out.println("mappings:");
-			SparqlViewMatcherSystemImpl.match(qa, qb).forEach(x -> {
-				x.getVarMaps().forEach(y -> {
-					System.out.println(y);
-				});
-			});
+			Set<Map<Var, Var>> actual = SparqlViewMatcherSystemImpl.match(qa, qb).flatMap(x -> {
+				return StreamUtils.stream(x.getVarMaps());
+			}).collect(Collectors.toSet());
+
+
+			System.out.println("Actual: " + actual);
+
+			Assert.assertEquals(expected, actual);
 
 			System.out.println("done.");
 		}
