@@ -1,10 +1,14 @@
 package org;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcVocab;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParser;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
+import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.views.index.SparqlViewMatcherSystemImpl;
 import org.aksw.simba.lsq.vocab.LSQ;
 import org.apache.jena.query.Query;
@@ -13,6 +17,7 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.sparql.core.Var;
 import org.apache.jena.vocabulary.RDF;
 import org.junit.Test;
 import org.springframework.core.io.ClassPathResource;
@@ -32,6 +37,12 @@ public class SparqlViewMatcherTreeTests {
 		for(Resource test : tests) {
 			String qas = test.getRequiredProperty(SparqlQcVocab.sourceQuery).getObject().asResource().getRequiredProperty(LSQ.text).getObject().asLiteral().getString();
 			String qbs = test.getRequiredProperty(SparqlQcVocab.targetQuery).getObject().asResource().getRequiredProperty(LSQ.text).getObject().asLiteral().getString();
+
+			Set<Map<Var, Var>> expected = test.listProperties(SparqlQcVocab.result)
+					.mapWith(stmt -> stmt.getObject()).toSet().stream()
+					.map(o -> VarUtils.parseVarMap(o.asLiteral().getString()))
+					.collect(Collectors.toSet());
+			System.out.println("Expected: " + expected);
 
 			Query qa = queryParser.apply(qas);
 			Query qb = queryParser.apply(qbs);

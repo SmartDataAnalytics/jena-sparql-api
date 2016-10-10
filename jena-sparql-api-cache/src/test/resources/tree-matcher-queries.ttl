@@ -77,5 +77,5 @@ t:t-4
   a qc:ContainmentTest ;
   qc:sourceQuery q:q1-a ;
   qc:targetQuery q:q1-a ;
-  qc:results "[{a: a}]"^^xsd:json ;
+  qc:result "{?v_2=?v_2, ?v_3=?v_3, ?c=?c, ?b=?b, ?v_1=?v_1, ?a=?a}" ;
   .

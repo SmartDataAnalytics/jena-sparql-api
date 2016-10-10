@@ -139,7 +139,7 @@ public class SparqlViewMatcherUtils {
 
                 return completeNodeMap;
             })
-            .peek(item -> System.out.println("peek: "+ item))
+            //.peek(item -> System.out.println("peek: "+ item))
             .filter(item -> item != null);
 
         // Next step: Now that we have a node mapping on the multiary tree,
