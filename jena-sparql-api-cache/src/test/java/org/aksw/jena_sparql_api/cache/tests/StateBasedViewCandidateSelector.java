@@ -1,4 +1,4 @@
-package org;
+package org.aksw.jena_sparql_api.cache.tests;
 import java.util.Collection;
 
 import org.apache.jena.sparql.expr.Expr;

@@ -1,4 +1,4 @@
-package org;
+package org.aksw.jena_sparql_api.cache.tests;
 
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;

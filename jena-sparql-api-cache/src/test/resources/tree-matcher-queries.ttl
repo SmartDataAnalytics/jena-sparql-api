@@ -28,11 +28,22 @@ q:q2-b
   lsq:text "SELECT ?s { { Select Distinct ?s { ?s a <http://foo> } } }" ;
   .
 
-t:t2
-  a qc:ContainmentTest ;
+q:q2-c
+  lsq:text "SELECT * { { ?a a <http://foo> } UNION { ?b a <http://bar> } }" ;
+  .
+
+t:t2-1
+#  a qc:ContainmentTest ;
   qc:sourceQuery q:q2-a ;
   qc:targetQuery q:q2-b ;
   qc:result "{?v_2=?v_2, ?v_3=?v_3, ?s=?x, ?v_1=?v_1}" ;
+  .
+
+t:t2-2
+  a qc:ContainmentTest ;
+  qc:sourceQuery q:q2-a ;
+  qc:targetQuery q:q2-c ;
+  qc:result "{?v_2=?v_2, ?x=?a, ?v_3=?v_3, ?v_1=?v_1}" ;
   .
 
 
@@ -42,9 +53,6 @@ t:t1
   qc:targetQuery q:q1-a ;
   qc:result "{?v_2=?v_2, ?v_3=?v_3, ?c=?c, ?b=?b, ?v_1=?v_1, ?a=?a}" ;
   .
-
-
-
 
 
 q:qx1-u

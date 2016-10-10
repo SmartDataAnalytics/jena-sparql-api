@@ -1,4 +1,4 @@
-package org;
+package org.aksw.jena_sparql_api.cache.tests;
 
 import java.util.Arrays;
 import java.util.HashSet;
