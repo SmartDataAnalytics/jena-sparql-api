@@ -89,13 +89,14 @@ public class SparqlViewMatcherUtils {
         		? Collections.emptyList()
         		: tmpChildNodeMappingCandidates;
 
-        CartesianProduct<Map<Op, Op>> cartX = new CartesianProduct<>(childNodeMappingCandidates);
-
-        // Reset the predicate
-        pred.setFailed(false);
+        CartesianProduct<Map<Op, Op>> cartX = CartesianProduct.create(childNodeMappingCandidates);
 
         Stream<Map<Op, Op>> completeNodeMapStream = cartX.stream()
             .map(listOfMaps -> {
+
+            	// Reset the predicate
+                pred.setFailed(false);
+
                 Map<Op, Op> completeNodeMap = listOfMaps.stream()
                     .flatMap(map -> {
                         // The entry set here corresponds to mappings of nodes in the multiary tree
@@ -113,6 +114,7 @@ public class SparqlViewMatcherUtils {
                                   cacheTree, queryTree,
                                   cacheMultiaryTree, queryMultiaryTree);
 
+                          //unaryMappingStream = Stream.empty();
                           //unaryMappingStream.isEmpty();
 
                             Stream<Entry<Op, Op>> s = Stream.concat(
@@ -137,6 +139,7 @@ public class SparqlViewMatcherUtils {
 
                 return completeNodeMap;
             })
+            .peek(item -> System.out.println("peek: "+ item))
             .filter(item -> item != null);
 
         // Next step: Now that we have a node mapping on the multiary tree,
@@ -153,6 +156,12 @@ public class SparqlViewMatcherUtils {
         Stream<OpProblemVarMap> nodeMappingProblemStream = completeNodeMapStream.map(completeNodeMap -> {
             List<ProblemNeighborhoodAware<Map<Var, Var>, Var>> ps = mapToProblems.apply(completeNodeMap);
 
+            if(logger.isDebugEnabled()) {
+            	for(ProblemNeighborhoodAware<Map<Var, Var>, Var> p : ps) {
+            		logger.debug("Solving problem: " + p);
+            	}
+            }
+
             OpProblemVarMap r = new OpProblemVarMap(completeNodeMap, ps);
             return r;
         });
@@ -166,7 +175,6 @@ public class SparqlViewMatcherUtils {
     		Tree<Op> cacheTree, Tree<Op> queryTree,
     		Tree<Op> cacheMultiaryTree, Tree<Op> queryMultiaryTree)
     {
-
         // The tree mapper only determines sets of candidate mappings for each tree level
         TreeMapperImpl<Op, Op, Iterable<Map<Op, Op>>> tm = new TreeMapperImpl<Op, Op, Iterable<Map<Op, Op>>>(
                 cacheMultiaryTree,
@@ -196,8 +204,9 @@ public class SparqlViewMatcherUtils {
         Stream<OpVarMap> result = nodeMappingToProblems.map(e -> {
             Map<Op, Op> nodeMapping = e.getNodeMapping();
             //Stream<Map<Var, Var>> varMappings = VarMapper.solve(e.getProblems());
+            List<ProblemNeighborhoodAware<Map<Var, Var>, Var>> problems = e.getProblems();
 
-            Iterable<Map<Var, Var>> it = () -> VarMapper.solve(e.getProblems()).iterator();
+            Iterable<Map<Var, Var>> it = () -> VarMapper.solve(problems).iterator();
 
             OpVarMap r = new OpVarMap(nodeMapping, it);
             return r;

@@ -262,7 +262,7 @@ public class CandidateViewSelectorImpl<V>
 
         columnValues.add(termTypes);
 
-        CartesianProduct<Object> cartesian = new CartesianProduct<Object>(columnValues);
+        CartesianProduct<Object> cartesian = CartesianProduct.<Object>create(columnValues);
         for(List<Object> item : cartesian) {
             List<Object> row = new ArrayList<Object>(item);
             row.add(entry);

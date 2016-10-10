@@ -24,6 +24,9 @@ import org.apache.jena.query.Query;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.function.library.e;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -31,6 +34,9 @@ import com.google.common.collect.Multimap;
 public class SparqlViewMatcherSystemImpl
 	implements SparqlViewMatcherSystem
 {
+	private static final Logger logger = LoggerFactory.getLogger(SparqlViewMatcherSystemImpl.class);
+
+
     protected IndexSystem<Entry<Op, OpIndex>, Op> indexSystem;
     protected Function<Op, OpIndex> queryIndexer;
 
@@ -168,6 +174,17 @@ public class SparqlViewMatcherSystemImpl
 
 
         Multimap<Op, Op> candOpMapping = SparqlViewMatcherSystemImpl.getCandidateLeafMapping(viewIndex, queryIndex);
+
+        if(logger.isDebugEnabled()) {
+        	for(Entry<Op, Collection<Op>> e : candOpMapping.asMap().entrySet()) {
+        		logger.debug("Candidate leaf mapping: " + e.getKey());
+        		for(Op f : e.getValue()) {
+        			logger.debug("  Target: " + f);
+        		}
+        	}
+        }
+
+
         Tree<Op> cacheTree = viewIndex.getTree();
         Tree<Op> queryTree = queryIndex.getTree();
 

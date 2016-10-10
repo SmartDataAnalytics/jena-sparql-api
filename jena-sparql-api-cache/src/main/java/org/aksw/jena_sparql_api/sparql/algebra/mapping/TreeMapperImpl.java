@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.sparql.algebra.mapping;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -20,6 +20,8 @@ import org.aksw.commons.collections.stacks.NestedStack;
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeUtils;
 import org.apache.jena.ext.com.google.common.collect.Sets;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.codepoetics.protonpack.functions.TriFunction;
 import com.google.common.collect.HashMultimap;
@@ -27,6 +29,8 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 
 public class TreeMapperImpl<A, B, S> {
+	private static final Logger logger = LoggerFactory.getLogger(TreeMapperImpl.class);
+
     protected Tree<A> aTree;
     protected Tree<B> bTree;
 
@@ -109,7 +113,12 @@ public class TreeMapperImpl<A, B, S> {
 
 
     public void recurse(int i, NestedStack<LayerMapping<A, B, S>> parentLayerMappingStack, Consumer<NestedStack<LayerMapping<A, B, S>>> consumer) {
-        //Map<A, B> parentMapping = parentMappingStack.getValue();
+    	if(logger.isDebugEnabled()) {
+    		logger.debug("Entering level " + i);
+    	}
+
+
+    	//Map<A, B> parentMapping = parentMappingStack.getValue();
         Map<A, B> parentMapping = parentLayerMappingStack.getValue().getParentMap();
 
         if(i < aTreeLevels.size()) {
@@ -158,6 +167,8 @@ public class TreeMapperImpl<A, B, S> {
                     A aParent = parentMap.getKey();
                     B bParent = parentMap.getValue();
 
+
+
                     // Obtain the matching strategy function for the given parents
                     TriFunction<List<A>, List<B>, Multimap<A, B>, S> matchingStrategy = matchingStrategyFactory.apply(aParent, bParent);
                     //boolean r = isSatisfiable.apply(clusterX);
@@ -177,7 +188,14 @@ public class TreeMapperImpl<A, B, S> {
 //                    IterableUnknownSize<Map<A, B>> it = predicate.apply(aChildren, bChildren, mappings);
 //                    boolean r = it.mayHaveItems();
 
-                    if(!r) {
+
+                	if(logger.isDebugEnabled()) {
+                		logger.debug("  Source: " + aParent);
+                		logger.debug("  Target: " + bParent);
+                		logger.debug(  "Satisfiable: " + satisfiability);
+                	}
+
+                	if(!r) {
                         satisfiability = false;
                         break;
                     }
@@ -185,7 +203,7 @@ public class TreeMapperImpl<A, B, S> {
 
                 if(satisfiability) {
                     //Multimap<A, B> nextParentMapping = HashMultimap.create();
-                    Map<A, B> nextParentMapping = new HashMap<>();
+                    Map<A, B> nextParentMapping = new IdentityHashMap<>();
                     for(Cluster<A, B, Entry<A, B>> cluster : parentClusterStack) {
                         Entry<A, B> e = cluster.getCluster();
                         nextParentMapping.put(e.getKey(), e.getValue());

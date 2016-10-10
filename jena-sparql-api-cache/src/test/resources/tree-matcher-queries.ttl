@@ -20,6 +20,11 @@ q:q1-a
   lsq:text "SELECT DISTINCT ?a { { { ?a ?a ?a } UNION {   { SELECT DISTINCT ?b { ?b ?b ?b } }   } } ?c ?c ?c } LIMIT 10"
   .
 
+q:q1-x
+  lsq:text "SELECT DISTINCT ?a { { { ?a ?a ?a } UNION { ?b ?b ?b } } ?c ?c ?c } LIMIT 10"
+  .
+
+
 q:q1-c
   lsq:text "SELECT DISTINCT ?s { { { ?a ?a ?a } UNION {   { SELECT DISTINCT ?b { ?b ?b ?b } }   } } ?c ?c ?c } LIMIT 10"
   .

@@ -101,7 +101,7 @@ public class CombinatoricsUtils {
                 ;
 
         // Create the cartesian product over the partial solutions
-        CartesianProduct<Map<Var, Var>> cart = new CartesianProduct<Map<Var,Var>>(partialSolutions);
+        CartesianProduct<Map<Var, Var>> cart = CartesianProduct.create(partialSolutions);
 
         //cart.stream().forEach(i -> System.out.println("Cart: " + i));
 
@@ -295,7 +295,7 @@ public class CombinatoricsUtils {
     /**
      * Base solution is assumed to be satisfiable.
      * if cacheQuads is empty and queryQuads is non-empty the baseSolution is returned
-     * 
+     *
      * @param cacheQuads
      * @param queryQuads
      * @param baseSolution
@@ -303,35 +303,35 @@ public class CombinatoricsUtils {
      */
     public static Stream<Map<Var, Var>> createSolutions(Collection<Quad> cacheQuads, Collection<Quad> queryQuads, Map<Var, Var> baseSolution) {
         Stream<Map<Var, Var>> result;
-        
+
         if(cacheQuads.isEmpty() && !queryQuads.isEmpty()) {
             result = Stream.of(baseSolution);
-        } else {        
+        } else {
             TriFunction<Map<Var, Var>, Quad, Quad, Stream<Map<Var, Var>>> solutionCombiner = (s, a, b) -> {
                 Stream<Map<Var, Var>> r;
                 try {
                     HashBiMap<Var, Var> d = HashBiMap.create();
                     Map<Var, Var> contib = Utils2.createVarMap(a, b);
-                    
+
                     d.putAll(contib);
                     d.putAll(s);
-                    
+
                     r = Stream.of(d);
                 } catch(IllegalArgumentException e) {
                     // Indicates inconsistent variable mapping
                     r = Stream.empty();
                 }
-                
+
                 return r;
             };
-                    
+
             result = StateCombinatoricCallback
                     .createKPermutationsOfN(cacheQuads, queryQuads, baseSolution, solutionCombiner)
                     .map(stack -> stack.getValue().getSolution())
                     ;
         }
         return result;
-        
+
 //        Stream<Map<Var, Var>> result = IsoMapUtils.createSolutionStream(
 //                    cacheQuads,
 //                    queryQuads,

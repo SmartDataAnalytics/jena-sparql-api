@@ -133,8 +133,8 @@ public class QuadFilterPatternCanonical {
 
     @Override
     public String toString() {
-        return "QuadFilterPatternCanonical [quads=" + quads + ", filterCnf="
-                + filterCnf + ", filterDnf=" + filterDnf + "]";
+        return "<quads=" + quads + ", filterCnf="
+                + filterCnf + ", filterDnf=" + filterDnf + ">";
     }
 
     @Override
