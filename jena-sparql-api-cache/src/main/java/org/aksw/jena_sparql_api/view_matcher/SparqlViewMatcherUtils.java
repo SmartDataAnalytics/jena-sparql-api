@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.view_matcher;
 
 import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -21,7 +22,9 @@ import org.aksw.commons.collections.stacks.NestedStack;
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeUtils;
 import org.aksw.commons.collections.utils.StreamUtils;
+import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.ProblemVarMappingExpr;
+import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpExtQuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.LayerMapping;
@@ -29,14 +32,19 @@ import org.aksw.jena_sparql_api.sparql.algebra.mapping.MatchingStrategyFactory;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.SequentialMatchIterator;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.TreeMapperImpl;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.VarMapper;
+import org.aksw.jena_sparql_api.utils.DnfUtils;
+import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.op.OpDisjunction;
 import org.apache.jena.sparql.algebra.op.OpDistinct;
+import org.apache.jena.sparql.algebra.op.OpExtend;
 import org.apache.jena.sparql.algebra.op.OpProject;
 import org.apache.jena.sparql.algebra.op.OpSequence;
 import org.apache.jena.sparql.algebra.op.OpSlice;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.core.VarExprList;
+import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.slf4j.Logger;
@@ -341,6 +349,7 @@ public class SparqlViewMatcherUtils {
             map.put(OpDisjunction.class, (x, y) -> Collections.emptySet()); //GenericBinaryOpImpl.create(TestStateSpaceSearch::deriveProblemsDisjunction));
             map.put(OpDistinct.class, (x, y) -> Collections.emptySet());
             map.put(OpSlice.class, GenericBinaryOpImpl.create(SparqlViewMatcherUtils::deriveProblemsSlice));
+            map.put(OpExtend.class, GenericBinaryOpImpl.create(SparqlViewMatcherUtils::deriveProblemsExtend));
 
             map.put(OpExtQuadFilterPatternCanonical.class, GenericBinaryOpImpl.create(SparqlViewMatcherUtils::deriveProblemsQfpc));
 
@@ -379,6 +388,33 @@ public class SparqlViewMatcherUtils {
         Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result = cacheRange.equals(queryRange)
                 ? Collections.emptySet()
                 : Collections.singleton(new ProblemStaticSolutions<>(Collections.singleton(null)));
+
+        return result;
+    }
+
+    // TODO We should use something like E_Assign instead of equals, as the latter is symmetric.
+    public static Expr varExprListToExpr(Var v, Expr e) {
+    	return new E_Equals(new ExprVar(v), e);
+    }
+
+    public static Set<Set<Expr>> toDnf(VarExprList vel) {
+    	Set<Set<Expr>> result = vel.getExprs().entrySet().stream()
+    			.map(e -> Collections.singleton(varExprListToExpr(e.getKey(), e.getValue())))
+    			.collect(Collectors.toSet());
+
+//    	Expr tmp = ExprUtils.andifyBalanced(exprs);
+//
+//    	Set<Set<Expr>> result = DnfUtils.toSetDnf(tmp);
+    	return result;
+    }
+
+    public static Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> deriveProblemsExtend(OpExtend cacheOp, OpExtend userOp) {
+    	Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result = new ArrayList<>();
+
+    	FeatureMap<Expr, Multimap<Expr, Expr>> cacheIndex = SparqlCacheUtils.indexDnf(toDnf(cacheOp.getVarExprList()));
+    	FeatureMap<Expr, Multimap<Expr, Expr>> queryIndex = SparqlCacheUtils.indexDnf(toDnf(userOp.getVarExprList()));
+
+        createProblems(cacheIndex, queryIndex).forEach(result::add);
 
         return result;
     }

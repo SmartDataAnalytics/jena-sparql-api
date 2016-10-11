@@ -43,27 +43,16 @@ public class SparqlViewMatcherCacheTests {
 		// Create an implemetation of the view matcher - i.e. an object that supports
 		// - registering (Op, value) entries
 		// - rewriting an Op using references to the registered ops
-		RemovalListenerMultiplexer<Node, StorageEntry> removalListeners = new RemovalListenerMultiplexer<>();
 
-		Cache<Node, StorageEntry> queryCache = CacheBuilder.newBuilder()
-				.maximumSize(10000)
-				.removalListener(removalListeners)
-				.build();
-
-		OpRewriteViewMatcherStateful viewMatcherRewriter = new OpRewriteViewMatcherStateful(queryCache, removalListeners.getClients());
-
-		// Obtain the global service map for registering temporary handlers for <view://...> SERVICEs
-		// for the duration of a query execution
-		// Note: JenaExtensionViewMatcher.register(); already registered this object at ARQ's global query execution context
-
-		// A map which associates SERVICE ids with an interface for fetching slices of data.
-		// Map<Node, RangedSupplier<Long, Binding>> dataSupplier;
+		CacheBuilder<Object, Object> queryCacheBuilder = CacheBuilder.newBuilder()
+				.maximumSize(10000);
 
         QueryExecutionFactory qef = FluentQueryExecutionFactory.from(model).create();
         ExecutorService executorService = Executors.newCachedThreadPool();
 
-        qef = new QueryExecutionFactoryViewMatcherMaster(qef, viewMatcherRewriter, executorService);
-        qef = new QueryExecutionFactoryParse(qef, SparqlQueryParserImpl.create());
+        QueryExecutionFactoryViewMatcherMaster tmp = QueryExecutionFactoryViewMatcherMaster.create(qef, queryCacheBuilder, executorService);
+        Cache<Node, StorageEntry> queryCache = tmp.getCache();
+        qef = new QueryExecutionFactoryParse(tmp, SparqlQueryParserImpl.create());
 
         Stopwatch sw = Stopwatch.createStarted();
 

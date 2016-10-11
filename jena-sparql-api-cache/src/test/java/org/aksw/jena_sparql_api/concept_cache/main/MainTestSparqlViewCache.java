@@ -20,7 +20,7 @@ import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.model.QueryExecutionFactoryModel;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
-import org.aksw.jena_sparql_api.utils.transform.F_QueryTransformDatesetDescription;
+import org.aksw.jena_sparql_api.utils.transform.F_QueryTransformDatasetDescription;
 import org.apache.jena.query.ARQ;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.Query;
@@ -124,7 +124,7 @@ public class MainTestSparqlViewCache {
             //.http("http://localhost:8890/sparql", "http://dbpedia.org")
             .config()
                 .withParser(SparqlQueryParserImpl.create(Syntax.syntaxARQ))
-                .withQueryTransform(F_QueryTransformDatesetDescription.fn)
+                .withQueryTransform(F_QueryTransformDatasetDescription.fn)
                 .withPagination(100000)
             .end()
             .create();

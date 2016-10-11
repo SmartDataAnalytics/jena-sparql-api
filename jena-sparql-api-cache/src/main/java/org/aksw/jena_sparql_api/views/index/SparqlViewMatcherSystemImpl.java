@@ -124,29 +124,43 @@ public class SparqlViewMatcherSystemImpl
         return result;
     }
 
-    public static Stream<Map<Var, Var>> generateVarMappings(QuadPatternIndex cache, QuadPatternIndex query) {
-        Multimap<Expr, Expr> cacheMap = cache.getGroupedConjunction();
-        Multimap<Expr, Expr> queryMap = query.getGroupedConjunction();
+    public static Stream<ProblemNeighborhoodAware<Map<Var, Var>, Var>> createProblems(Multimap<Expr, Expr> sigToCache, Multimap<Expr, Expr> sigToQuery) {
+        Map<Expr, Entry<Set<Expr>, Set<Expr>>> group = MapUtils.groupByKey(sigToCache.asMap(), sigToQuery.asMap());
 
-        Map<Expr, Entry<Set<Expr>, Set<Expr>>> group = MapUtils.groupByKey(cacheMap.asMap(), queryMap.asMap());
-
-        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> problems = new ArrayList<>();
-
-
-        group.values().stream()
+        Stream<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result = group.values().stream()
             .map(x -> {
                 Set<Expr> cacheExprs = x.getKey();
                 Set<Expr> queryExprs = x.getValue();
                 ProblemNeighborhoodAware<Map<Var, Var>, Var> p = new ProblemVarMappingExpr(cacheExprs, queryExprs, Collections.emptyMap());
-
-                //System.out.println("cacheExprs: " + cacheExprs);
-                //System.out.println("queryExprs: " + queryExprs);
-
-                //Stream<Map<Var, Var>> r = p.generateSolutions();
-
                 return p;
-            })
-            .forEach(problems::add);
+            });
+
+        return result;
+    }
+
+    public static Stream<Map<Var, Var>> generateVarMappings(QuadPatternIndex cache, QuadPatternIndex query) {
+        Multimap<Expr, Expr> cacheMap = cache.getGroupedConjunction();
+        Multimap<Expr, Expr> queryMap = query.getGroupedConjunction();
+
+        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> problems = new ArrayList<>();
+
+        createProblems(cacheMap, queryMap).forEach(problems::add);
+
+
+//        group.values().stream()
+//            .map(x -> {
+//                Set<Expr> cacheExprs = x.getKey();
+//                Set<Expr> queryExprs = x.getValue();
+//                ProblemNeighborhoodAware<Map<Var, Var>, Var> p = new ProblemVarMappingExpr(cacheExprs, queryExprs, Collections.emptyMap());
+//
+//                //System.out.println("cacheExprs: " + cacheExprs);
+//                //System.out.println("queryExprs: " + queryExprs);
+//
+//                //Stream<Map<Var, Var>> r = p.generateSolutions();
+//
+//                return p;
+//            })
+//            .forEach(problems::add);
 
         ProblemVarMappingQuad quadProblem = new ProblemVarMappingQuad(cache.getQfpc().getQuads(), query.getQfpc().getQuads(), Collections.emptyMap());
         problems.add(quadProblem);

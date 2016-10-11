@@ -1,8 +1,11 @@
 package org.aksw.jena_sparql_api.utils;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
@@ -14,12 +17,36 @@ import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
+import org.apache.jena.sparql.syntax.PatternVars;
 import org.apache.jena.sparql.util.ExprUtils;
 
 import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.Range;
 
 public class QueryUtils {
+	public static Map<Var, Var> createRandomVarMap(Query query, String base) {
+        Collection<Var> vars = PatternVars.vars(query.getQueryPattern());
+        Generator<Var> gen = VarGeneratorBlacklist.create(base, vars);
+
+        Map<Var, Var> varMap = vars.stream()
+                .collect(Collectors.toMap(
+                        v -> v,
+                        v -> gen.next()));
+
+        return varMap;
+	}
+
+//	public static Query applyVarMap(Query query, Map<Var, ? extends Node> varMap) {
+////		Map<Var, Node> tmp = varMap.entrySet().stream()
+////				.collect(Collectors.toMap(
+////						e -> e.getKey(),
+////						e -> (Node)e.getValue()));
+//
+//		Query result = QueryTransformOps.transform(query, varMap);
+//        return result;
+//	}
+
+
     public static void injectFilter(Query query, String exprStr) {
         Expr expr = ExprUtils.parse(exprStr);
         injectFilter(query, expr);
@@ -39,8 +66,8 @@ public class QueryUtils {
         Element replacement = ElementUtils.mergeElements(queryPattern, element);
         query.setQueryPattern(replacement);
     }
-    
-    
+
+
     public static Range<Long> toRange(OpSlice op) {
         Range<Long> result = toRange(op.getStart(), op.getLength());
         return result;
@@ -88,15 +115,15 @@ public class QueryUtils {
     public static Range<Long> createRange(Long limit, Long offset) {
         long beginIndex = offset == null ? 0 : offset;
         Long endIndex = limit == null ? null : beginIndex + limit;
-        
+
         Range<Long> result = endIndex == null
                 ? Range.atLeast(beginIndex)
                 : Range.closedOpen(beginIndex, endIndex)
                 ;
-                
+
         return result;
     }
-    
+
     //public static LimitAndOffset rangeToLimitAndOffset(Range<Long> range)
 
     public static long rangeToOffset(Range<Long> range) {

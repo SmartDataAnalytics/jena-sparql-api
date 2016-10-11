@@ -4,7 +4,7 @@ import java.util.function.Function;
 
 import org.apache.jena.query.Query;
 
-public class F_QueryTransformDatesetDescription
+public class F_QueryTransformDatasetDescription
     implements Function<Query, Query>
 {
     @Override
@@ -13,5 +13,5 @@ public class F_QueryTransformDatesetDescription
         return result;
     }
 
-    public static final F_QueryTransformDatesetDescription fn = new F_QueryTransformDatesetDescription();
+    public static final F_QueryTransformDatasetDescription fn = new F_QueryTransformDatasetDescription();
 }

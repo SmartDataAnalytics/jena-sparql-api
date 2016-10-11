@@ -17,7 +17,7 @@ import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParser;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
-import org.aksw.jena_sparql_api.utils.transform.F_QueryTransformDatesetDescription;
+import org.aksw.jena_sparql_api.utils.transform.F_QueryTransformDatasetDescription;
 import org.aksw.jena_sparql_api.views.CandidateViewSelector;
 import org.aksw.jena_sparql_api.views.CandidateViewSelectorSparqlView;
 import org.aksw.jena_sparql_api.views.Dialect;
@@ -52,7 +52,7 @@ public class LDQ16Demonstrator implements Closeable {
                 .config()
                     .withParser(SparqlQueryParserImpl.create())
                     .withDatasetDescription(DatasetDescriptionUtils.createDefaultGraph(sourceGraphName))
-                    .withQueryTransform(F_QueryTransformDatesetDescription.fn)
+                    .withQueryTransform(F_QueryTransformDatasetDescription.fn)
                     .withPagination(1000)
                 .end()
                 .create();

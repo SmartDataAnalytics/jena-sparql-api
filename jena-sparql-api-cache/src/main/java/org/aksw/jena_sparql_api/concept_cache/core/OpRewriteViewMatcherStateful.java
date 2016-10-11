@@ -72,7 +72,7 @@ public class OpRewriteViewMatcherStateful
 	//protected Map<Node, ViewMatcherData> idToCacheData;
 
 
-	public OpRewriteViewMatcherStateful(Cache<Node, StorageEntry> cache, Set<RemovalListener<Node, StorageEntry>> removalListeners) {
+	public OpRewriteViewMatcherStateful(Cache<Node, StorageEntry> cache, Collection<RemovalListener<Node, StorageEntry>> removalListeners) {
 		this.opNormalizer = OpViewMatcherTreeBased::normalizeOp;
 		this.viewMatcherTreeBased = OpViewMatcherTreeBased.create();
 		this.viewMatcherQuadPatternBased = new SparqlViewCacheImpl<>();

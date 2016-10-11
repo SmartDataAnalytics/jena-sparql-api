@@ -43,19 +43,12 @@ public class VarMapper {
 
 
 
-    /**
-     * TODO Return only the collection of problems at this stage
-     *
-     * @param cachePattern
-     * @param queryPattern
-     * @return
-     */
-    public static Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> createProblems(QuadFilterPatternCanonical cachePattern, QuadFilterPatternCanonical queryPattern) {
-        FeatureMap<Expr, Multimap<Expr, Expr>> cacheIndex = SparqlCacheUtils.indexDnf(cachePattern.getFilterDnf());
-        FeatureMap<Expr, Multimap<Expr, Expr>> queryIndex = SparqlCacheUtils.indexDnf(queryPattern.getFilterDnf());
 
-        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result = new ArrayList<>();
-        for(Entry<Set<Expr>, Collection<Multimap<Expr, Expr>>> entry : queryIndex.entrySet()) {
+    public static Stream<ProblemNeighborhoodAware<Map<Var, Var>, Var>> createProblems(FeatureMap<Expr, Multimap<Expr, Expr>> cacheIndex, FeatureMap<Expr, Multimap<Expr, Expr>> queryIndex) {
+
+    	List<ProblemNeighborhoodAware<Map<Var, Var>, Var>> problems = new ArrayList<>();
+
+    	for(Entry<Set<Expr>, Collection<Multimap<Expr, Expr>>> entry : queryIndex.entrySet()) {
             Set<Expr> querySig = entry.getKey();
             Collection<Multimap<Expr, Expr>> queryMaps = entry.getValue();
 
@@ -86,12 +79,32 @@ public class VarMapper {
                         })
                         .collect(Collectors.toList());
 
-                    result.addAll(localProblems);
+                    problems.addAll(localProblems);
                 }
             }
 
             //cands.forEach(x -> System.out.println("CAND: " + x.getValue()));
         }
+
+    	return problems.stream();
+    }
+
+    /**
+     * TODO Return only the collection of problems at this stage
+     *
+     * @param cachePattern
+     * @param queryPattern
+     * @return
+     */
+    public static Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> createProblems(QuadFilterPatternCanonical cachePattern, QuadFilterPatternCanonical queryPattern) {
+        FeatureMap<Expr, Multimap<Expr, Expr>> cacheIndex = SparqlCacheUtils.indexDnf(cachePattern.getFilterDnf());
+        FeatureMap<Expr, Multimap<Expr, Expr>> queryIndex = SparqlCacheUtils.indexDnf(queryPattern.getFilterDnf());
+
+        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result = new ArrayList<>();
+
+        createProblems(cacheIndex, queryIndex).forEach(result::add);
+
+        //
 
         // Index the quads by the cnf (dnf)?
 

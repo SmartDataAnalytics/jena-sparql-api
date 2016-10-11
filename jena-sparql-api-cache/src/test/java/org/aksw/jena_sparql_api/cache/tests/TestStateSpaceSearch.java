@@ -26,6 +26,7 @@ import org.aksw.combinatorics.collections.Combination;
 import org.aksw.combinatorics.solvers.ProblemContainerNeighbourhoodAware;
 import org.aksw.combinatorics.solvers.ProblemNeighborhoodAware;
 import org.aksw.commons.collections.CartesianProduct;
+import org.aksw.commons.collections.cache.RemovalListenerMultiplexer;
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeImpl;
 import org.aksw.commons.collections.trees.TreeUtils;
