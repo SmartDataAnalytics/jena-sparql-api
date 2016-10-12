@@ -414,7 +414,7 @@ public class SparqlViewMatcherUtils {
     	FeatureMap<Expr, Multimap<Expr, Expr>> cacheIndex = SparqlCacheUtils.indexDnf(toDnf(cacheOp.getVarExprList()));
     	FeatureMap<Expr, Multimap<Expr, Expr>> queryIndex = SparqlCacheUtils.indexDnf(toDnf(userOp.getVarExprList()));
 
-        createProblems(cacheIndex, queryIndex).forEach(result::add);
+        VarMapper.createProblems(cacheIndex, queryIndex).forEach(result::add);
 
         return result;
     }
