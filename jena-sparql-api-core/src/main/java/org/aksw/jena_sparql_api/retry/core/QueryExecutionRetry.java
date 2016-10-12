@@ -16,6 +16,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.nurkiewicz.asyncretry.AsyncRetryExecutor;
 import com.nurkiewicz.asyncretry.RetryExecutor;
 import com.nurkiewicz.asyncretry.backoff.Backoff;
+import com.nurkiewicz.asyncretry.policy.AbortRetryException;
 import com.nurkiewicz.asyncretry.policy.RetryPolicy;
 
 public class QueryExecutionRetry
@@ -28,6 +29,8 @@ public class QueryExecutionRetry
 	protected Backoff backoff;
 	protected boolean fixedDelay;
 	protected ScheduledExecutorService scheduler;
+
+	protected boolean aborted = false;
 
 	public QueryExecutionRetry(Supplier<QueryExecution> supplier, int retryCount, long retryDelayInMs, ScheduledExecutorService scheduler) {
 		super(null);
@@ -56,6 +59,10 @@ public class QueryExecutionRetry
 			try {
 				return callable.call();
 			} catch(Exception e) {
+				if(aborted) {
+					throw new AbortRetryException();
+				}
+
 				decoratee = null;
 				throw new RuntimeException(e);
 			}
@@ -82,6 +89,16 @@ public class QueryExecutionRetry
 //		} catch(Exception e) {
 //			throw new RuntimeException(e);
 //		}
+	}
+
+	// TODO Maybe add synchronization so that we ensure that we do not obtain a new qe from the supplier
+	// immediately after having called abort
+	@Override
+	public void abort() {
+		aborted = true;
+		if(decoratee != null) {
+			decoratee.abort();
+		}
 	}
 
 	@Override
