@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.remap;
+package org.aksw.jena_sparql_api.rename_vars;
 
 import java.util.Iterator;
 import java.util.List;
@@ -13,12 +13,12 @@ import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 
-public class QueryExecutionRemap
+public class QueryExecutionRenameVars
 	extends QueryExecutionDecorator
 {
 	protected Map<Var, Var> varMap;
 
-	public QueryExecutionRemap(QueryExecution decoratee, Map<Var, Var> varMap) {
+	public QueryExecutionRenameVars(QueryExecution decoratee, Map<Var, Var> varMap) {
 		super(decoratee);
 		this.varMap = varMap;
 	}

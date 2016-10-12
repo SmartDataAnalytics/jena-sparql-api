@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.remap;
+package org.aksw.jena_sparql_api.rename_vars;
 
 import java.util.Map;
 import java.util.Map.Entry;
@@ -13,12 +13,12 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.syntax.syntaxtransform.QueryTransformOps;
 
 
-public class QueryExecutionFactoryRemap
+public class QueryExecutionFactoryRenameVars
 	extends QueryExecutionFactoryDecorator
 {
 	protected int baseRenameId = 0;
 
-	public QueryExecutionFactoryRemap(QueryExecutionFactory decoratee) {
+	public QueryExecutionFactoryRenameVars(QueryExecutionFactory decoratee) {
 		super(decoratee);
 		// TODO Auto-generated constructor stub
 	}
@@ -37,7 +37,7 @@ public class QueryExecutionFactoryRemap
 				.collect(Collectors.toMap(Entry::getValue, Entry::getKey));
 
 		QueryExecution baseQe = super.createQueryExecution(query);
-		QueryExecution result = new QueryExecutionRemap(baseQe, inverseVarMap);
+		QueryExecution result = new QueryExecutionRenameVars(baseQe, inverseVarMap);
 
 		return result;
 	}
