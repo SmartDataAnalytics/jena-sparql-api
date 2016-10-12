@@ -1,12 +1,21 @@
 package org.aksw.jena_sparql_api.retry.core;
 
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactoryDecorator;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.ResultSetFormatter;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.nurkiewicz.asyncretry.backoff.Backoff;
 import com.nurkiewicz.asyncretry.backoff.BoundedMaxBackoff;
 import com.nurkiewicz.asyncretry.backoff.BoundedMinBackoff;
@@ -15,12 +24,6 @@ import com.nurkiewicz.asyncretry.backoff.FixedIntervalBackoff;
 import com.nurkiewicz.asyncretry.backoff.ProportionalRandomBackoff;
 import com.nurkiewicz.asyncretry.backoff.UniformRandomBackoff;
 import com.nurkiewicz.asyncretry.policy.RetryPolicy;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
-import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryExecution;
-import org.apache.jena.query.ResultSet;
-import org.apache.jena.query.ResultSetFormatter;
 
 public class QueryExecutionFactoryRetry
     extends QueryExecutionFactoryDecorator
@@ -31,6 +34,7 @@ public class QueryExecutionFactoryRetry
     private final boolean fixedDelay;
     private final RetryPolicy retryPolicy;
     private final Backoff backoff;
+    protected ScheduledExecutorService scheduler;
 
     public QueryExecutionFactoryRetry(QueryExecutionFactory decoratee, int retryCount, long retryDelayInMs) {
         this(decoratee, new RetryPolicy().withMaxRetries(retryCount), new FixedIntervalBackoff(retryDelayInMs), true);
@@ -69,21 +73,18 @@ public class QueryExecutionFactoryRetry
         this.retryPolicy = Preconditions.checkNotNull(retryPolicy);
         this.backoff = Preconditions.checkNotNull(backoff);
         this.fixedDelay = fixedDelay;
+        this.scheduler = Executors.newSingleThreadScheduledExecutor();
     }
 
     @Override
     public QueryExecution createQueryExecution(Query query) {
-        QueryExecution qe = super.createQueryExecution(query);
-//		QueryExecution result = new QueryExecutionRetry(qe, retryCount, retryDelayInMs);
-        QueryExecution result = new QueryExecutionRetry(qe, retryPolicy, backoff, fixedDelay);
+        QueryExecution result = new QueryExecutionRetry(() -> super.createQueryExecution(query), retryPolicy, backoff, fixedDelay, scheduler);
         return result;
     }
 
     @Override
     public QueryExecution createQueryExecution(String queryString) {
-        QueryExecution qe = super.createQueryExecution(queryString);
-//		QueryExecution result = new QueryExecutionRetry(qe, retryCount, retryDelayInMs);
-        QueryExecution result = new QueryExecutionRetry(qe, retryPolicy, backoff, fixedDelay);
+        QueryExecution result = new QueryExecutionRetry(() -> super.createQueryExecution(queryString), retryPolicy, backoff, fixedDelay, scheduler);
         return result;
     }
 
