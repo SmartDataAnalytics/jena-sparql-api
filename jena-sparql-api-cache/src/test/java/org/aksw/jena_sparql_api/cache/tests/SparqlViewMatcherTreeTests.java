@@ -27,12 +27,22 @@ import com.codepoetics.protonpack.StreamUtils;
 
 public class SparqlViewMatcherTreeTests {
 
-	@Test
-	public void test() throws Exception {
-
+	//@Test
+	public void testNoProjection() throws Exception {
 		Model model = ModelFactory.createDefaultModel();
 		RDFDataMgr.read(model, new ClassPathResource("tree-matcher-queries.ttl").getInputStream(), Lang.TURTLE);
+		runTests(model);
+	}
 
+	@Test
+	public void testProjection() throws Exception {
+		Model model = ModelFactory.createDefaultModel();
+		RDFDataMgr.read(model, new ClassPathResource("tree-matcher-queries-projection.ttl").getInputStream(), Lang.TURTLE);
+		runTests(model);
+	}
+
+
+	public static void runTests(Model model) {
 		List<Resource> tests = model.listSubjectsWithProperty(RDF.type, SparqlQcVocab.ContainmentTest).toList();
 
 
