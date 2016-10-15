@@ -15,6 +15,10 @@ public class QueryTransformPrefix
 	private PrefixMapping prefixMapping;
 	boolean doClone;
 
+	public QueryTransformPrefix(PrefixMapping prefixMapping) {
+		this(prefixMapping, true);
+	}
+
 	public QueryTransformPrefix(PrefixMapping prefixMapping, boolean doClone) {
 		super();
 		this.prefixMapping = prefixMapping;
