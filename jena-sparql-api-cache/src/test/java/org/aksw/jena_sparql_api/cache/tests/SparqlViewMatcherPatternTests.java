@@ -45,6 +45,20 @@ public class SparqlViewMatcherPatternTests {
 		return result;
 	}
 
+
+	public void testProjection() throws IOException {
+		Model tests = ModelFactory.createDefaultModel();
+		RDFDataMgr.read(tests, new ClassPathResource("sparqlqc/1.4/benchmark/ucqproj.rdf").getInputStream(), Lang.RDFXML);
+
+        Model model = SparqlQcReader.readResources("sparqlqc/1.4/benchmark/projection/*");
+        List<Resource> ts = tests.listResourcesWithProperty(RDF.type, SparqlQcVocab.ContainmentTest).toList();
+
+        for(Resource t : ts) {
+        	runTest(model, t);
+        }
+
+	}
+
 	@Test
 	public void test() throws IOException {
 		/*
@@ -74,23 +88,29 @@ public class SparqlViewMatcherPatternTests {
         for(int i = 0; i < 1; ++i) {
 	        for(Resource t : ts) {
 	        	++j;
-
-	        	String srcQueryId = t.getRequiredProperty(SparqlQcVocab.sourceQuery).getObject().asLiteral().getString();
-	        	String tgtQueryId = t.getRequiredProperty(SparqlQcVocab.targetQuery).getObject().asLiteral().getString();
-	        	boolean expectedVerdict = Boolean.parseBoolean(t.getRequiredProperty(SparqlQcVocab.result).getObject().asLiteral().getString());
-
-	        	Query viewQuery = resolve(model, srcQueryId);
-	        	Query userQuery = resolve(model, tgtQueryId);
-
-	        	Element viewEl = viewQuery.getQueryPattern();
-	        	Element userEl = userQuery.getQueryPattern();
-
-	        	boolean actualVerdict = SparqlQueryContainmentUtils.tryMatch(userEl, viewEl);
-	        	//System.out.println(srcQueryId + " - " + tgtQueryId + " - " + actualVerdict + " expected: "+ expectedVerdict);
-
-	        	Assert.assertEquals(expectedVerdict, actualVerdict);
+	        	runTest(model, t);
 	        }
         }
         System.out.println("Avg: " + sw.elapsed(TimeUnit.MILLISECONDS) / (double)j + " - " + j);
 	}
+
+	private void runTest(Model model, Resource t) {
+		String srcQueryId = t.getRequiredProperty(SparqlQcVocab.sourceQuery).getObject().asLiteral().getString();
+		String tgtQueryId = t.getRequiredProperty(SparqlQcVocab.targetQuery).getObject().asLiteral().getString();
+		boolean expectedVerdict = Boolean.parseBoolean(t.getRequiredProperty(SparqlQcVocab.result).getObject().asLiteral().getString());
+
+		Query viewQuery = resolve(model, srcQueryId);
+		Query userQuery = resolve(model, tgtQueryId);
+
+		Element viewEl = viewQuery.getQueryPattern();
+		Element userEl = userQuery.getQueryPattern();
+
+		boolean actualVerdict = SparqlQueryContainmentUtils.tryMatch(userEl, viewEl);
+		//System.out.println(srcQueryId + " - " + tgtQueryId + " - " + actualVerdict + " expected: "+ expectedVerdict);
+
+		Assert.assertEquals(expectedVerdict, actualVerdict);
+	}
+
+
+
 }
