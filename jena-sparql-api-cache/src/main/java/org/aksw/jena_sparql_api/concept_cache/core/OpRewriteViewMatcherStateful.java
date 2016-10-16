@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.concept_cache.core;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -12,7 +13,7 @@ import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeUtils;
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCache;
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCacheImpl;
-import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
+import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpExtQuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
@@ -43,6 +44,16 @@ import com.google.common.collect.Range;
 /**
  * Rewrite an algebra expression under view matching
  *
+ * Removes projection and distinct from the ops passed to the pattern matchers
+ * in order to handle different projections on isomorphic patterns:
+ * Given a view op, a query op and a solution OpVarMap. Based on the OpVarMaps root substitution node
+ * in the query op, the query'ops mandatory variables at the matching root will be analyzed
+ * In order for the OpVarMap to be a complete candidate, all mandatory variables must be mapped to.
+ * I.e. map(projectedVars(viewPatternRoot), partialSolution) superseteq mandatoryVars(querySubstNode)
+ *
+ *
+ *
+ *
  * This is a stateful rewriter: It rewrites expressions by injecting references to auxiliary data,
  * and internally a map with further information about the auxiliary data is maintained.
  *
@@ -61,6 +72,11 @@ public class OpRewriteViewMatcherStateful
 	protected OpViewMatcher<Node> viewMatcherTreeBased;
 	protected SparqlViewCache<Node> viewMatcherQuadPatternBased;
 
+
+	protected Map<Node, Map<Node, VarInfo>> patternIdToStorageIdToVarInfo;
+	protected Map<Node, Node> storageIdToPatternId;
+
+	// Maps result set ids to storage ids
 	protected Cache<Node, StorageEntry> cache;
 	//protected Map<Node, StorageEntry> storageMap = new HashMap<>();
 
@@ -78,10 +94,22 @@ public class OpRewriteViewMatcherStateful
 		this.viewMatcherQuadPatternBased = new SparqlViewCacheImpl<>();
 		this.cache = cache;
 
-		removalListeners.add((n) -> viewMatcherTreeBased.removeKey(n.getKey()));
-		removalListeners.add((n) -> viewMatcherQuadPatternBased.removeKey(n.getKey()));
+		removalListeners.add((n)-> removeStorage(n.getKey()));
 	}
 
+	public void removeStorage(Node storageKey) {
+		Node patternId = storageIdToPatternId.computeIfPresent(storageKey, (k, v) -> null);
+
+		viewMatcherTreeBased.removeKey(patternId);
+		viewMatcherQuadPatternBased.removeKey(patternId);
+
+		// TODO Maybe there is potential to optimize with another computeIfPresent
+		Map<Node, VarInfo> map = patternIdToStorageIdToVarInfo.get(patternId);
+		map.remove(storageKey);
+		if(patternIdToStorageIdToVarInfo.isEmpty()) {
+			storageIdToPatternId.remove(storageKey);
+		}
+	}
 
 
 	public Cache<Node, StorageEntry> getCache() {
@@ -92,26 +120,62 @@ public class OpRewriteViewMatcherStateful
 
 	//@Override
 	// TODO Do we need a further argument for the variable information?
-	public void put(Node key, Op op) {
+	public void put(Node storageId, Op op) {
 
     	Op normalizedOp = opNormalizer.rewrite(op);
+
+
+    	// TODO: Finish cutting away the projection
+    	ProjectedOp projectedOp = SparqlCacheUtils.cutProjection(normalizedOp);
+    	// TODO Hack to map between ProjectedOp and VarInfo - make this consistent!
+    	VarInfo varInfo;
+    	if(projectedOp != null) {
+        	varInfo = new VarInfo(new HashSet<>(projectedOp.getProjection().getVars()), Collections.emptySet());
+    		normalizedOp = projectedOp.getResidualOp();
+    	} else {
+    		throw new RuntimeException("todo handle this case");
+    		//OpVars.visibleVars(normalizedOp);
+    	}
+
+    	// TODO Check if the pattern we are putting is isomorphic to an existing one
+    	Node patternId = lookup(normalizedOp);
+
+
+		Map<Node, VarInfo> map = patternIdToStorageIdToVarInfo.computeIfAbsent(patternId,  (n) -> new HashMap<>());
+		map.put(storageId, varInfo);
+
+		storageIdToPatternId.put(storageId, patternId);
+
 
     	// Allocate a new id entry of this op
     	//Node result = NodeFactory.createURI("id://" + StringUtils.md5Hash("" + normalizedItem));
 
-    	// TODO:
+    	// TODO Verify: Transform to qfpc directly (the normalizedOp has the projection cut away)
+		//ProjectedQuadFilterPattern conjunctiveQuery = SparqlCacheUtils.transform(normalizedOp);
+        QuadFilterPattern qfp = SparqlCacheUtils.extractQuadFilterPattern(op);
 
-		ProjectedQuadFilterPattern conjunctiveQuery = SparqlCacheUtils.transform(normalizedOp);
-		if(conjunctiveQuery != null) {
-			QuadFilterPatternCanonical qfpc = SparqlCacheUtils.canonicalize2(conjunctiveQuery.getQuadFilterPattern(), VarGeneratorImpl2.create());
+		if(qfp != null) {
+			QuadFilterPatternCanonical qfpc = SparqlCacheUtils.canonicalize2(qfp, VarGeneratorImpl2.create());
 
-			viewMatcherQuadPatternBased.put(key, qfpc);
+			viewMatcherQuadPatternBased.put(storageId, qfpc);
 		} else {
-			viewMatcherTreeBased.put(key, normalizedOp);
+			viewMatcherTreeBased.put(storageId, normalizedOp);
 		}
+
 
 		//return result;
 
+	}
+
+	/**
+	 * Obtain the patternId for a given op
+	 *
+	 * @param op
+	 * @return
+	 */
+	public Node lookup(Op op) {
+		// TODO
+		return null;
 	}
 
 

@@ -16,6 +16,7 @@ import org.aksw.jena_sparql_api.algebra.transform.TransformJoinToConjunction;
 import org.aksw.jena_sparql_api.algebra.transform.TransformUnionToDisjunction;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMapImpl;
+import org.aksw.jena_sparql_api.concept_cache.core.ProjectedOp;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 import org.aksw.jena_sparql_api.unsorted.OpVisitorFeatureExtractor;
@@ -74,7 +75,6 @@ public class OpViewMatcherTreeBased<K>
 
     @Override
 	public void put(K key, Op item) {
-
 
     	// Check whether the submitted op is an extended conjunctive query,
     	//i.e. is only comprised of distinct, projection, filter and quad pattern in that order, whereas presence is optional

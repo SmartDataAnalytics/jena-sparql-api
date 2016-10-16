@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -19,8 +20,10 @@ import org.aksw.jena_sparql_api.concept_cache.core.VarUsage;
 import org.aksw.jena_sparql_api.concept_cache.core.VarUsageAnalyzerVisitor;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
+import org.aksw.jena_sparql_api.utils.VarExprListUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
+import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.algebra.Table;
@@ -29,12 +32,15 @@ import org.apache.jena.sparql.algebra.op.Op1;
 import org.apache.jena.sparql.algebra.op.Op2;
 import org.apache.jena.sparql.algebra.op.OpBGP;
 import org.apache.jena.sparql.algebra.op.OpExt;
+import org.apache.jena.sparql.algebra.op.OpExtend;
 import org.apache.jena.sparql.algebra.op.OpN;
+import org.apache.jena.sparql.algebra.op.OpProject;
 import org.apache.jena.sparql.algebra.op.OpQuadBlock;
 import org.apache.jena.sparql.algebra.op.OpQuadPattern;
 import org.apache.jena.sparql.algebra.op.OpService;
 import org.apache.jena.sparql.algebra.op.OpTriple;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.core.VarExprList;
 import org.springframework.util.Assert;
 
 
@@ -116,6 +122,69 @@ class OpSummaryImpl
 }
 
 public class OpUtils {
+
+	public static Op extendWithVarMap(Op subOp, Map<Var, Var> oldToNew) {
+		VarExprList vel = VarExprListUtils.createFromVarMap(oldToNew);
+		OpExtend opExtend = OpExtend.create(subOp, vel);
+		OpProject result = new OpProject(opExtend, vel.getVars());
+		return result;
+	}
+
+	/**
+	 * safe version of extend with varMap - renames any colliding var names
+	 *
+	 * Select (?o As ?s) (?s As ?o) { ?s ?p ?o } ->
+	 *
+	 * Select (?o as ?v1) (?s As ?v2) { ?s ?p ?o } ->
+	 * Select (?v1 As ?s) (?v2 As ?o) { { Select (?o as ?v1) ... } }
+	 *
+	 * @param subOp
+	 * @param oldToNew
+	 * @return
+	 */
+	public static Op wrapWithProjection(Op subOp, Map<Var, Var> oldToNew) {
+		// check which variables need to be renamed to fresh variables
+		Set<Var> tgtVars = new HashSet<>(oldToNew.values());
+
+		Set<Var> mapVars = oldToNew.keySet();
+		// NOTE Usually oldToNew.keySet() should be a subset of the visible vars, but
+		// for robustness we just create the union
+		Set<Var> srcVars = OpVars.visibleVars(subOp);
+		srcVars.addAll(mapVars);
+
+		Set<Var> collisions = Sets.intersection(tgtVars, srcVars);
+
+		if(!collisions.isEmpty()) {
+			Set<Var> blacklist = Sets.union(tgtVars, srcVars);
+			Generator<Var> gen = VarGeneratorBlacklist.create(blacklist);
+
+			Map<Var, Var> newOldToNew = new HashMap<>();
+			Map<Var, Var> conflictResolution = new HashMap<>();
+			for(Entry<Var, Var> e : oldToNew.entrySet()) {
+				Var v = e.getKey();
+				Var w = e.getValue();
+				boolean isConflict = collisions.contains(w);
+
+				// Non-conflict vars are not renamed - i.e. mapped to themselves
+				Var t;
+				if(isConflict) {
+					t = gen.next();
+					conflictResolution.put(v, t);
+				} else {
+					t = v;
+					conflictResolution.put(v, v);
+				}
+
+				newOldToNew.put(t, w);
+			}
+
+			subOp = extendWithVarMap(subOp, conflictResolution);
+			oldToNew = newOldToNew;
+		}
+
+		subOp = extendWithVarMap(subOp, oldToNew);
+		return subOp;
+	}
 
 	/**
 	 * Count the number of operators in an op expression

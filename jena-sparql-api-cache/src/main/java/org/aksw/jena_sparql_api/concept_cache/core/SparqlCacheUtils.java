@@ -2,7 +2,6 @@ package org.aksw.jena_sparql_api.concept_cache.core;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -15,11 +14,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.aksw.commons.collections.MultiMaps;
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
-import org.aksw.commons.collections.trees.Tree;
-import org.aksw.commons.collections.trees.TreeUtils;
 import org.aksw.jena_sparql_api.algebra.transform.TransformReplaceConstants;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMapImpl;
@@ -43,7 +39,6 @@ import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.aksw.jena_sparql_api.utils.Vars;
-import org.aksw.jena_sparql_api.views.index.OpIndex;
 import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -55,8 +50,6 @@ import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpAsQuery;
 import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.algebra.Table;
-import org.apache.jena.sparql.algebra.op.OpBGP;
-import org.apache.jena.sparql.algebra.op.OpDisjunction;
 import org.apache.jena.sparql.algebra.op.OpDistinct;
 import org.apache.jena.sparql.algebra.op.OpFilter;
 import org.apache.jena.sparql.algebra.op.OpGraph;
@@ -65,7 +58,6 @@ import org.apache.jena.sparql.algebra.op.OpNull;
 import org.apache.jena.sparql.algebra.op.OpProject;
 import org.apache.jena.sparql.algebra.op.OpQuadPattern;
 import org.apache.jena.sparql.algebra.op.OpService;
-import org.apache.jena.sparql.algebra.op.OpSlice;
 import org.apache.jena.sparql.algebra.op.OpTable;
 import org.apache.jena.sparql.algebra.op.OpUnion;
 import org.apache.jena.sparql.core.Quad;
@@ -580,6 +572,39 @@ public class SparqlCacheUtils {
                 result.add(clause);
             }
         }
+
+        return result;
+    }
+
+
+    /**
+     * Cut away the projection (TODO: and maybe extend) of an op (if any), and return
+     * the projection as a standalone object together with the remaining op.
+     *
+     * @param residualOp
+     * @return
+     */
+    public static ProjectedOp cutProjection(Op op) {
+    	Op residualOp = op;
+
+        Set<Var> projectVars = null;
+
+        boolean isDistinct = false;
+        if(residualOp instanceof OpDistinct) {
+        	isDistinct = true;
+        	residualOp = ((OpDistinct)residualOp).getSubOp();
+        }
+
+        if(residualOp instanceof OpProject) {
+            OpProject tmp = (OpProject)residualOp;
+            projectVars = new HashSet<>(tmp.getVars());
+
+            residualOp = tmp.getSubOp();
+        }
+
+        ProjectedOp result = projectVars == null
+        		? null
+        	    : new ProjectedOp(projectVars, isDistinct, residualOp);
 
         return result;
     }

@@ -35,6 +35,7 @@ import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpAsQuery;
+import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.algebra.op.OpNull;
 import org.apache.jena.sparql.algebra.op.OpService;
 import org.apache.jena.sparql.core.Var;
@@ -105,12 +106,17 @@ public class QueryExecutionViewMatcherMaster
     	//List<String> projectVarNames = VarUtils.getVarNames(projectVars);
 
     	// Store a present slice, but remove it from the query
+    	// NOTE This could also be done on the OP level; but
+    	// it seems to be much more convenient to be done on the query level
     	Range<Long> range = QueryUtils.toRange(query);
     	Query q = query.cloneQuery();
     	q.setLimit(Query.NOLIMIT);
     	q.setOffset(Query.NOLIMIT);
 
     	Op queryOp = Algebra.toQuadForm(Algebra.compile(q));
+
+
+
 
     	// The thing here is, that in general we need to
     	// - Initialize the execution context / jena-wise global data
@@ -121,6 +127,8 @@ public class QueryExecutionViewMatcherMaster
 
     	Map<Node, StorageEntry> storageMap = rr.getIdToStorageEntry();
 
+
+    	// Map<Node, List<
 
 
     	// TODO: All subtrees that are to be executed on the original data source must be wrapped with

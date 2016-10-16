@@ -5,8 +5,8 @@ import java.util.Set;
 import org.apache.jena.sparql.core.Var;
 
 public class VarInfo {
-	public Set<Var> projectVars;
-	public Set<Var> distinctVars;
+	protected Set<Var> projectVars;
+	protected Set<Var> distinctVars;
 
 	public VarInfo(Set<Var> projectVars, Set<Var> distinctVars) {
 		super();
@@ -14,4 +14,11 @@ public class VarInfo {
 		this.distinctVars = distinctVars;
 	}
 
+	public Set<Var> getProjectVars() {
+		return projectVars;
+	}
+
+	public Set<Var> getDistinctVars() {
+		return distinctVars;
+	}
 }
