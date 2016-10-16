@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -154,33 +155,34 @@ public class OpUtils {
 
 		Set<Var> collisions = Sets.intersection(tgtVars, srcVars);
 
-		if(!collisions.isEmpty()) {
-			Set<Var> blacklist = Sets.union(tgtVars, srcVars);
-			Generator<Var> gen = VarGeneratorBlacklist.create(blacklist);
+		Set<Var> blacklist = Sets.union(tgtVars, srcVars);
+		Generator<Var> gen = VarGeneratorBlacklist.create(blacklist);
 
-			Map<Var, Var> newOldToNew = new HashMap<>();
-			Map<Var, Var> conflictResolution = new HashMap<>();
-			for(Entry<Var, Var> e : oldToNew.entrySet()) {
-				Var v = e.getKey();
-				Var w = e.getValue();
-				boolean isConflict = collisions.contains(w);
+		Map<Var, Var> newOldToNew = new LinkedHashMap<>();
+		Map<Var, Var> conflictResolution = new LinkedHashMap<>();
+		for(Entry<Var, Var> e : oldToNew.entrySet()) {
+			Var v = e.getKey();
+			Var w = e.getValue();
+			boolean isConflict = !v.equals(w) && collisions.contains(w);
 
-				// Non-conflict vars are not renamed - i.e. mapped to themselves
-				Var t;
-				if(isConflict) {
-					t = gen.next();
-					conflictResolution.put(v, t);
-				} else {
-					t = v;
-					conflictResolution.put(v, v);
-				}
-
-				newOldToNew.put(t, w);
+			// Non-conflict vars are not renamed - i.e. mapped to themselves
+			Var t;
+			if(isConflict) {
+				t = gen.next();
+				conflictResolution.put(v, t);
+			} else {
+				t = v;
+				conflictResolution.put(v, v);
 			}
 
+			newOldToNew.put(t, w);
+		}
+
+		if(!newOldToNew.equals(oldToNew)) {
 			subOp = extendWithVarMap(subOp, conflictResolution);
 			oldToNew = newOldToNew;
 		}
+
 
 		subOp = extendWithVarMap(subOp, oldToNew);
 		return subOp;

@@ -24,9 +24,9 @@ public class VarExprListUtils {
 			Var w = e.getValue();
 
 			if(v.equals(w)) {
-				result.add(v);
+				result.add(w);
 			} else {
-				result.add(v, new ExprVar(w));
+				result.add(w, new ExprVar(v));
 			}
 		}
 
