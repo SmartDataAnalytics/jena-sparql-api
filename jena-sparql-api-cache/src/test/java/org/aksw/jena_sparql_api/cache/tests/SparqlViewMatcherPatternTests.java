@@ -46,6 +46,7 @@ public class SparqlViewMatcherPatternTests {
 	}
 
 
+	@Test
 	public void testProjection() throws IOException {
 		Model tests = ModelFactory.createDefaultModel();
 		RDFDataMgr.read(tests, new ClassPathResource("sparqlqc/1.4/benchmark/ucqproj.rdf").getInputStream(), Lang.RDFXML);

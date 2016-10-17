@@ -21,24 +21,24 @@ public class SparqlViewMatcherProjectionUtils {
 	 *     (i.e: we cannot un-distinct view variables, hence the query must accept them as they are)
 	 *
 	 *
-	 * @param view
-	 * @param query
+	 * @param viewVarInfo
+	 * @param queryVarUsage
 	 * @param varMap
 	 * @return
 	 */
-	public static boolean validateProjection(VarInfo view, VarUsage query, Map<Var, Var> varMap) {
-		Set<Var> mappedViewVars = SetUtils.mapSet(view.getProjectVars(), varMap);
+	public static boolean validateProjection(VarInfo viewVarInfo, VarUsage queryVarUsage, Map<Var, Var> varMap) {
+		Set<Var> mappedViewVars = SetUtils.mapSet(viewVarInfo.getProjectVars(), varMap);
 		mappedViewVars.remove(null);
 
-		Set<Var> mandatoryVars = VarUsage.getMandatoryVars(query);
+		Set<Var> mandatoryVars = VarUsage.getMandatoryVars(queryVarUsage);
 
 		boolean result = mappedViewVars.containsAll(mandatoryVars);
 
 		if(result) {
 			// We passed the first check, now examine distinct vars
-			if(view.getDistinctLevel() > 0) {
+			if(viewVarInfo.getDistinctLevel() > 0) {
 				// Make sure there is no overlap with non-unique vars
-				result = Sets.intersection(mappedViewVars, query.getNonUnique()).isEmpty();
+				result = Sets.intersection(mappedViewVars, queryVarUsage.getNonUnique()).isEmpty();
 //
 //				if(result) {
 //					// TODO Any more conditions? such as required distinct variables?

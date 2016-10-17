@@ -1,6 +1,5 @@
 package org.aksw.jena_sparql_api.concept_cache.core;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -9,7 +8,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -25,7 +23,6 @@ import org.aksw.jena_sparql_api.utils.BindingUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.ResultSetUtils;
 import org.aksw.jena_sparql_api.utils.VarUtils;
-import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.ARQ;
@@ -35,7 +32,6 @@ import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpAsQuery;
-import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.algebra.op.OpNull;
 import org.apache.jena.sparql.algebra.op.OpService;
 import org.apache.jena.sparql.core.Var;
@@ -153,7 +149,7 @@ public class QueryExecutionViewMatcherMaster
 			Op serviceOp = new OpService(serviceNode, OpNull.create(), false);
 
 			RangedSupplier<Long, Binding> s3 = new RangedSupplierQuery(parentFactory, query);
-			VarInfo varInfo = new VarInfo(new HashSet<>(query.getProjectVars()), Collections.emptySet());
+			VarInfo varInfo = new VarInfo(new HashSet<>(query.getProjectVars()), 0);
 			StorageEntry se = new StorageEntry(s3, varInfo); // The var info is not used
 			storageMap.put(serviceNode, se);
 
@@ -189,7 +185,7 @@ public class QueryExecutionViewMatcherMaster
 
 
     	Set<Var> visibleVars = new HashSet<>(projectVars);//OpVars.visibleVars(rewrittenOp);
-    	VarInfo varInfo = new VarInfo(visibleVars, Collections.emptySet());
+    	VarInfo varInfo = new VarInfo(visibleVars, 0);
 
 //    	if(false) {
 //	    	Iterators.size(storage.apply(range));

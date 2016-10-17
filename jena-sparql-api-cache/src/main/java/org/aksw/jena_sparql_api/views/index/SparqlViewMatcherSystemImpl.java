@@ -180,8 +180,11 @@ public class SparqlViewMatcherSystemImpl
 
 
 
+    @Deprecated
+    // TODO: This method is similar to SparqlQueryContainmentUtils.tryMatch
     public static Stream<OpVarMap> match(Query a, Query b) {
     	Function<Op, OpIndex> opIndexer = new OpIndexerImpl();
+
 
     	OpIndex viewIndex = opIndexer.apply(OpViewMatcherTreeBased.queryToNormalizedOp(a));
     	OpIndex queryIndex = opIndexer.apply(OpViewMatcherTreeBased.queryToNormalizedOp(b));

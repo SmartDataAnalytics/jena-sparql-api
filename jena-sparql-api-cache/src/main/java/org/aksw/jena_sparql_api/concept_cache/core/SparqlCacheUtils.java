@@ -636,6 +636,12 @@ public class SparqlCacheUtils {
         return result;
     }
 
+    public static QuadFilterPatternCanonical extractQuadFilterPatternCanonical(Op op) {
+		QuadFilterPattern qfp = SparqlCacheUtils.extractQuadFilterPattern(op);
+        Generator<Var> generator = VarGeneratorImpl2.create();
+        QuadFilterPatternCanonical result = SparqlCacheUtils.canonicalize2(qfp, generator);
+		return result;
+    }
 
     public static QuadFilterPattern extractQuadFilterPattern(Op op) {
         QuadFilterPattern result = null;
