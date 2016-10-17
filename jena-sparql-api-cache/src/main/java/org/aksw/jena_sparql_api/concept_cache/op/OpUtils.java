@@ -124,6 +124,15 @@ class OpSummaryImpl
 
 public class OpUtils {
 
+	/**
+	 * Low level function that simply turns a var-map into an project(extend()) expression.
+	 *
+	 * It is recommended to use wrapWithProjection which deals with variable name clashes in the renaming.
+	 *
+	 * @param subOp
+	 * @param oldToNew
+	 * @return
+	 */
 	public static Op extendWithVarMap(Op subOp, Map<Var, Var> oldToNew) {
 		VarExprList vel = VarExprListUtils.createFromVarMap(oldToNew);
 		OpExtend opExtend = OpExtend.create(subOp, vel);

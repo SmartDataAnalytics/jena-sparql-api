@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.concept_cache.core;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.jena.sparql.core.Var;
@@ -47,5 +48,11 @@ public class VarUsage {
 	}
 
 
+	public static Set<Var> getMandatoryVars(VarUsage varUsage) {
+		Set<Var> result = new HashSet<Var>();
+		result.addAll(varUsage.referencedVars);
+		result.addAll(varUsage.varDeps.values());
+		return result;
+	}
 
 }

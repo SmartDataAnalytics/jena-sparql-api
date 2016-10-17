@@ -130,7 +130,7 @@ public class OpRewriteViewMatcherStateful
     	// TODO Hack to map between ProjectedOp and VarInfo - make this consistent!
     	VarInfo varInfo;
     	if(projectedOp != null) {
-        	varInfo = new VarInfo(new HashSet<>(projectedOp.getProjection().getVars()), Collections.emptySet());
+        	varInfo = new VarInfo(new HashSet<>(projectedOp.getProjection().getVars()), 0);//Collections.emptySet());
     		normalizedOp = projectedOp.getResidualOp();
     	} else {
     		throw new RuntimeException("todo handle this case");
@@ -284,7 +284,7 @@ public class OpRewriteViewMatcherStateful
     	RangedSupplierLazyLoadingListCache<Binding> storage = new RangedSupplierLazyLoadingListCache<Binding>(executorService, new RangedSupplierOp(rootOp, context), cacheRange, null);
 
     	Node storageRef = null;
-    	VarInfo varInfo = new VarInfo(OpVars.visibleVars(rootOp), Collections.emptySet());
+    	VarInfo varInfo = new VarInfo(OpVars.visibleVars(rootOp), 0); //Collections.emptySet());
     	StorageEntry storageEntry = new StorageEntry(storage, varInfo);
 
     	storageMap.put(storageRef, storageEntry);
