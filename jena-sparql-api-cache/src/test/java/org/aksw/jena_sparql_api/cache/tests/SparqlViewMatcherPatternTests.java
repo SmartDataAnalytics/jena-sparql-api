@@ -15,7 +15,6 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.vocabulary.RDF;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
@@ -103,10 +102,14 @@ public class SparqlViewMatcherPatternTests {
 		Query viewQuery = resolve(model, srcQueryId);
 		Query userQuery = resolve(model, tgtQueryId);
 
-		Element viewEl = viewQuery.getQueryPattern();
-		Element userEl = userQuery.getQueryPattern();
+		System.out.println("View Query: " + viewQuery);
+		System.out.println("User Query: " + userQuery);
 
-		boolean actualVerdict = SparqlQueryContainmentUtils.tryMatch(userEl, viewEl);
+//		Element viewEl = viewQuery.getQueryPattern();
+//		Element userEl = userQuery.getQueryPattern();
+
+		boolean actualVerdict = SparqlQueryContainmentUtils.tryMatch(viewQuery, userQuery);
+				//SparqlQueryContainmentUtils.tryMatch(userEl, viewEl);
 		//System.out.println(srcQueryId + " - " + tgtQueryId + " - " + actualVerdict + " expected: "+ expectedVerdict);
 
 		Assert.assertEquals(expectedVerdict, actualVerdict);

@@ -10,7 +10,7 @@ import org.apache.jena.sparql.graph.NodeTransform;
 public class NodeTransformRenameMap
     implements NodeTransform {
 
-    private final Map<? extends Node, ?extends Node> map;
+    private final Map<? extends Node, ? extends Node> map;
 
     public NodeTransformRenameMap(Map<? extends Node, ? extends Node> map)
     {

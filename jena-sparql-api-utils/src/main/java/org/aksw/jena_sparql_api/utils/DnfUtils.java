@@ -163,6 +163,14 @@ public class DnfUtils
         return dnf;
     }
 
+    public static Set<Set<Expr>> toSetDnf(ExprList exprs)
+    {
+        List<ExprList> clauses = DnfUtils.toClauses(exprs);
+        Set<Set<Expr>> dnf = FilterUtils.toSets(clauses);
+
+        return dnf;
+    }
+
     public static boolean isSatisfiable(Set<Set<Expr>> dnf) {
         for(Set<Expr> clause : dnf) {
             if(ClauseUtils.isSatisfiable(clause)) {

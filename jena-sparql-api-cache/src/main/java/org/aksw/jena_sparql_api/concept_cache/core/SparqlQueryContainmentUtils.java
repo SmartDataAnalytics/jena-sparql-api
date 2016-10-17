@@ -110,7 +110,10 @@ public class SparqlQueryContainmentUtils {
 
 
 	public static boolean tryMatch(Query viewQuery, Query userQuery) {
-		boolean result = match(viewQuery, userQuery).count() > 0;
+		// Op maps without var maps do not count
+		boolean result = match(viewQuery, userQuery)
+				.filter(opVarMap -> opVarMap.getVarMaps().iterator().hasNext())
+				.count() > 0;
 		return result;
 	}
 

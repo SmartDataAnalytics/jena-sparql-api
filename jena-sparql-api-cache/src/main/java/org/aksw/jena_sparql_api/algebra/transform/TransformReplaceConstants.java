@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.List;
 
 import org.aksw.jena_sparql_api.utils.Generator;
-import org.aksw.jena_sparql_api.utils.GeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -15,7 +14,7 @@ import org.apache.jena.sparql.algebra.Transform;
 import org.apache.jena.sparql.algebra.TransformCopy;
 import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.op.OpFilter;
-import org.apache.jena.sparql.algebra.op.OpQuadBlock;
+import org.apache.jena.sparql.algebra.op.OpProject;
 import org.apache.jena.sparql.algebra.op.OpQuadPattern;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Quad;
@@ -32,11 +31,11 @@ public class TransformReplaceConstants
 {
 
     protected Generator<Var> generator;
-    
+
     public TransformReplaceConstants(Generator<Var> generator) {
         this.generator = generator;
     }
-    
+
 
     public static Triple listToTriple(List<Node> nodes) {
         return new Triple(nodes.get(0), nodes.get(1), nodes.get(2));
@@ -61,7 +60,7 @@ public class TransformReplaceConstants
 
         Transform transform = new TransformReplaceConstants(gen);
         Op result = Transformer.transform(transform, op);
-        return result;        
+        return result;
     }
 
     public static Node transform(Node node, boolean isGraphNode, Generator<Var> generator, ExprList filters) {
@@ -82,6 +81,8 @@ public class TransformReplaceConstants
 
     public Op transform(OpQuadPattern op) {
 
+    	List<Var> vars = new ArrayList<>(OpVars.visibleVars(op));
+
         ExprList filters = new ExprList();
 
         BasicPattern triples = new BasicPattern();
@@ -89,6 +90,7 @@ public class TransformReplaceConstants
         Node graphNode = transform(op.getGraphNode(), true, generator, filters);
 
 
+        // TODO Mapping of nodes might be doable with jena transform
         List<Node> nodes = new ArrayList<Node>();
         for(Triple triple : op.getBasicPattern().getList()) {
 
@@ -111,67 +113,69 @@ public class TransformReplaceConstants
             result = OpFilter.filter(filters, result);
         }
 
+        result = new OpProject(result, vars);
+
         return result;
     }
 
-
-  public static Op _replace(OpQuadBlock op) {
-      throw new RuntimeException("Not implemented yet");
-//          ExprList filters = new ExprList();
 //
-//
-//          //BasicPattern triples = new BasicPattern();
-//          QuadPattern quadPattern = new QuadPattern();
-//
-//          //Node rawGraphNode = op.getGraphNode();
-//
-////          Node commonGraphNode = null;
-////          if(rawGraphNode.isConcrete()) {
-////              // If the graph node is a concrete value - except for the default graph,
-////              // replace it with a variable that is constrained to that value
-////              if(!rawGraphNode.equals(Quad.defaultGraphNodeGenerated)) {
-////                  commonGraphNode = transform(rawGraphNode, false, generator, filters);
+//  public static Op _replace(OpQuadBlock op) {
+//      throw new RuntimeException("Not implemented yet");
+////          ExprList filters = new ExprList();
+////
+////
+////          //BasicPattern triples = new BasicPattern();
+////          QuadPattern quadPattern = new QuadPattern();
+////
+////          //Node rawGraphNode = op.getGraphNode();
+////
+//////          Node commonGraphNode = null;
+//////          if(rawGraphNode.isConcrete()) {
+//////              // If the graph node is a concrete value - except for the default graph,
+//////              // replace it with a variable that is constrained to that value
+//////              if(!rawGraphNode.equals(Quad.defaultGraphNodeGenerated)) {
+//////                  commonGraphNode = transform(rawGraphNode, false, generator, filters);
+//////              }
+//////          }
+//////          else {
+//////              // If the graph node is a variable, use it.
+//////              commonGraphNode = rawGraphNode;
+//////          }
+////
+////
+////          List<Node> nodes = new ArrayList<Node>(4);
+////          for(Quad quad : op.getPattern()) {
+////
+////                Node graphNode;
+////                if(commonGraphNode != null) {
+////                    graphNode = commonGraphNode;
+////                } else {
+////                    graphNode = Var.alloc(generator.next());
+////                }
+////                nodes.add(graphNode);
+////
+////
+////              for(Node node : tripleToList(triple)) {
+////
+////                  Node n = transform(node, generator, filters);
+////                  nodes.add(n);
 ////              }
+////
+////              //Triple t = listToTriple(nodes);
+////
+////              //triples.add(t);
+////              Quad q = QuadUtils.listToQuad(nodes);
+////              quadPattern.add(q);
+////              nodes.clear();
 ////          }
-////          else {
-////              // If the graph node is a variable, use it.
-////              commonGraphNode = rawGraphNode;
+////
+////          Op result = new OpQuadBlock(quadPattern);
+////
+////          if(!filters.isEmpty()) {
+////              result = OpFilter.filter(filters, result);
 ////          }
-//
-//
-//          List<Node> nodes = new ArrayList<Node>(4);
-//          for(Quad quad : op.getPattern()) {
-//
-//                Node graphNode;
-//                if(commonGraphNode != null) {
-//                    graphNode = commonGraphNode;
-//                } else {
-//                    graphNode = Var.alloc(generator.next());
-//                }
-//                nodes.add(graphNode);
-//
-//
-//              for(Node node : tripleToList(triple)) {
-//
-//                  Node n = transform(node, generator, filters);
-//                  nodes.add(n);
-//              }
-//
-//              //Triple t = listToTriple(nodes);
-//
-//              //triples.add(t);
-//              Quad q = QuadUtils.listToQuad(nodes);
-//              quadPattern.add(q);
-//              nodes.clear();
-//          }
-//
-//          Op result = new OpQuadBlock(quadPattern);
-//
-//          if(!filters.isEmpty()) {
-//              result = OpFilter.filter(filters, result);
-//          }
-//
-//          return result;
-  }
+////
+////          return result;
+//  }
 
 }
