@@ -11,6 +11,34 @@ import org.apache.jena.sparql.core.Var;
 import com.google.common.collect.Sets;
 
 public class SparqlViewMatcherProjectionUtils {
+	public static boolean validateProjection(VarInfo viewVarInfo, VarInfo userVarInfo, Map<Var, Var> varMap) {
+		Set<Var> mappedViewVars = SetUtils.mapSet(viewVarInfo.getProjectVars(), varMap);
+		mappedViewVars.remove(null);
+
+		Set<Var> userVars = userVarInfo.getProjectVars();
+		boolean result = mappedViewVars.containsAll(userVars);
+
+//		if(result) {
+//			// We passed the first check, now examine distinct vars
+//			if(viewVarInfo.getDistinctLevel() > 0) {
+//				// Make sure there is no overlap with non-unique vars
+//				result = Sets.intersection(mappedViewVars, queryVarUsage.getNonUnique()).isEmpty();
+////
+////				if(result) {
+////					// TODO Any more conditions? such as required distinct variables?
+////				}
+//
+//				// Now check the distinct vars
+////				Set<Var> mappedDistinctViewVars = SetUtils.mapSet(view.getDistinctVars(), varMap);
+////				mappedDistinctViewVars.remove(null);
+//			}
+//		}
+
+		return result;
+	}
+
+
+
 	/**
 	 * Returns true if the view vars described in VarInfo fit the queries var requirements expressed in VarUsage under a given varMap
 	 *

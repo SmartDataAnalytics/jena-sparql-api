@@ -128,6 +128,8 @@ public class SparqlQueryContainmentUtils {
 		// TODO Add utility method for creating the varInfo object
 		VarInfo viewVarInfo = new VarInfo(new HashSet<>(viewPop.getProjection().getVars()), viewPop.isDistinct() ? 2 : 0);
 
+		VarInfo userVarInfo = new VarInfo(new HashSet<>(userPop.getProjection().getVars()), userPop.isDistinct() ? 2 : 0);
+
     	Function<Op, OpIndex> opIndexer = new OpIndexerImpl();
 
     	OpIndex viewIndex = opIndexer.apply(OpViewMatcherTreeBased.normalizeOp(viewResOp));
@@ -179,7 +181,8 @@ public class SparqlQueryContainmentUtils {
 			VarUsage userVarUsage = OpUtils.analyzeVarUsage(userIndex.getTree(), userOp);
 
 			Iterable<Map<Var, Var>> varMap = () -> StreamUtils.stream(varOpMap.getVarMaps())
-					.filter(vm -> SparqlViewMatcherProjectionUtils.validateProjection(viewVarInfo, userVarUsage, vm))
+					//.filter(vm -> SparqlViewMatcherProjectionUtils.validateProjection(viewVarInfo, userVarUsage, vm))
+					.filter(vm -> SparqlViewMatcherProjectionUtils.validateProjection(viewVarInfo, userVarInfo, vm))
 					.iterator();
 
 			OpVarMap r = new OpVarMap(opMap, varMap);

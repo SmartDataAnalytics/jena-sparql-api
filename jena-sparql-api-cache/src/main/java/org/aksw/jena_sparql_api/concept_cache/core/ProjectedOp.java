@@ -16,7 +16,7 @@ public class ProjectedOp {
 		super();
 		this.projectVars = new VarExprList();
 		for(Var v : projectVars) {
-			projectVars.add(v);
+			this.projectVars.add(v);
 		}
 
 		this.distinct = distinct;
