@@ -30,6 +30,7 @@ import org.apache.jena.query.Query;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.OpAsQuery;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.syntax.Element;
 
@@ -104,6 +105,8 @@ public class SparqlQueryContainmentUtils {
 	public static ProjectedOp toProjectedOp(Query query) {
 		Op op = Algebra.compile(query);
 		op = Algebra.toQuadForm(op);
+
+		System.out.println("asQuery: "+ OpAsQuery.asQuery(op));
 		ProjectedOp result = SparqlCacheUtils.cutProjection(op);
 		return result;
 	}
