@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.cache.tests;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -28,21 +30,24 @@ import org.springframework.core.io.ClassPathResource;
 @RunWith(Parameterized.class)
 public class SparqlViewMatcherPatternTests {
 
-
-
-
     @Parameters(name = "Query Containment {index}: {0}")
     public static Collection<Object[]> data()
             throws Exception
     {
+    	List<Object[]> params = new ArrayList<>();
+    	params.addAll(createTestParams("sparqlqc/1.4/benchmark/cqnoproj.rdf", "sparqlqc/1.4/benchmark/noprojection/*"));
+    	params.addAll(createTestParams("sparqlqc/1.4/benchmark/ucqproj.rdf", "sparqlqc/1.4/benchmark/projection/*"));
+    	return params;
+    }
+
+
+    public static Collection<Object[]> createTestParams(String testCases, String queries) throws IOException {
 		Model tests = ModelFactory.createDefaultModel();
-		RDFDataMgr.read(tests, new ClassPathResource("sparqlqc/1.4/benchmark/ucqproj.rdf").getInputStream(), Lang.RDFXML);
-        Model model = SparqlQcReader.readResources("sparqlqc/1.4/benchmark/projection/*");
+		RDFDataMgr.read(tests, new ClassPathResource(testCases).getInputStream(), Lang.RDFXML);
+        Model model = SparqlQcReader.readResources(queries);
         List<Resource> ts = tests.listResourcesWithProperty(RDF.type, SparqlQcVocab.ContainmentTest).toList();
 
         Object data[][] = new Object[ts.size()][3];
-
-
         for(int i = 0; i < ts.size(); ++i) {
         	Resource t = ts.get(i);
             data[i][0] = t.getURI(); //testCase.getName();
