@@ -23,4 +23,10 @@ public class VarInfo {
 	public int getDistinctLevel() {
 		return distinctLevel;
 	}
+
+	@Override
+	public String toString() {
+		return "VarInfo [projectVars=" + projectVars + ", distinctLevel=" + distinctLevel + "]";
+	}
+
 }

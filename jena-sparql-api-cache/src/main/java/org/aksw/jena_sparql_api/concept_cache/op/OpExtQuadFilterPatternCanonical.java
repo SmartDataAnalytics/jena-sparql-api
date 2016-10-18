@@ -5,14 +5,19 @@ import org.apache.jena.atlas.io.IndentedWriter;
 
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.op.OpExt;
+import org.apache.jena.sparql.algebra.op.OpFilter;
 import org.apache.jena.sparql.engine.ExecutionContext;
 import org.apache.jena.sparql.engine.QueryIterator;
 import org.apache.jena.sparql.serializer.SerializationContext;
 import org.apache.jena.sparql.util.NodeIsomorphismMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class OpExtQuadFilterPatternCanonical
     extends OpExt
 {
+	private static final Logger logger = LoggerFactory.getLogger(OpExtQuadFilterPatternCanonical.class);
+
     public OpExtQuadFilterPatternCanonical(QuadFilterPatternCanonical qfpc) {
         super(OpExtQuadFilterPatternCanonical.class.getSimpleName());
 
@@ -27,8 +32,15 @@ public class OpExtQuadFilterPatternCanonical
 
     @Override
     public Op effectiveOp() {
-    	System.out.println("Not sure if it is a good idea for " + OpExtQuadFilterPatternCanonical.class.getName() + " getting called");
+
+    	//System.out.println("Not sure if it is a good idea for " + OpExtQuadFilterPatternCanonical.class.getName() + " getting called");
     	Op result = qfpc.toOp();
+    	if(result instanceof OpFilter) {
+    		// HACK: skip the filter, otherwise OpVars.visibleVars() won't work with Jena 3.1.0
+        	logger.warn(OpExtQuadFilterPatternCanonical.class.getName() + ".effectieOp() hack used");
+    		result = ((OpFilter)result).getSubOp();
+    	}
+
         // TODO Auto-generated method stub
         return result;
     }

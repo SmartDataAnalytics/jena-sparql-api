@@ -31,9 +31,11 @@ public class TransformReplaceConstants
 {
 
     protected Generator<Var> generator;
+	protected boolean omitDefaultGraphFilter;
 
-    public TransformReplaceConstants(Generator<Var> generator) {
+    public TransformReplaceConstants(Generator<Var> generator, boolean omitDefaultGraphFilter) {
         this.generator = generator;
+        this.omitDefaultGraphFilter = omitDefaultGraphFilter;
     }
 
 
@@ -58,17 +60,17 @@ public class TransformReplaceConstants
         Collection<Var> vars = OpVars.mentionedVars(op);
         Generator<Var> gen = VarGeneratorBlacklist.create("v", vars);
 
-        Transform transform = new TransformReplaceConstants(gen);
+        Transform transform = new TransformReplaceConstants(gen, false);
         Op result = Transformer.transform(transform, op);
         return result;
     }
 
-    public static Node transform(Node node, boolean isGraphNode, Generator<Var> generator, ExprList filters) {
+    public static Node transform(Node node, boolean isGraphNode, Generator<Var> generator, ExprList filters, boolean omitDefaultGraphFilter) {
         if(node.isConcrete()) {
             Var var = generator.next();
 
             // Use of the constant Quad.defaultGraphNodeGenerated in the graph position results in a free variable.
-            if(!(isGraphNode && node.equals(Quad.defaultGraphNodeGenerated))) {
+            if(!omitDefaultGraphFilter || !(isGraphNode && node.equals(Quad.defaultGraphNodeGenerated))) {
                 Expr condition = new E_Equals(new ExprVar(var), NodeValue.makeNode(node));
                 filters.add(condition);
             }
@@ -87,7 +89,7 @@ public class TransformReplaceConstants
 
         BasicPattern triples = new BasicPattern();
 
-        Node graphNode = transform(op.getGraphNode(), true, generator, filters);
+        Node graphNode = transform(op.getGraphNode(), true, generator, filters, omitDefaultGraphFilter);
 
 
         // TODO Mapping of nodes might be doable with jena transform
@@ -96,7 +98,7 @@ public class TransformReplaceConstants
 
 
             for(Node node : tripleToList(triple)) {
-                Node n = transform(node, false, generator, filters);
+                Node n = transform(node, false, generator, filters, omitDefaultGraphFilter);
                 nodes.add(n);
             }
 

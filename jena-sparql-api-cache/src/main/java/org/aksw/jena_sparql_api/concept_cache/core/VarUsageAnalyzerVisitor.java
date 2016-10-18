@@ -202,6 +202,7 @@ public class VarUsageAnalyzerVisitor
 
 	@Override
 	public void visit(OpOrder op) {
+		throw new RuntimeException("var usage analysis for opOrder not implemented");
 	}
 
 
