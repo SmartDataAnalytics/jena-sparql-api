@@ -146,8 +146,8 @@ public class SparqlViewMatcherPatternTests {
 		String tgtQueryId = t.getRequiredProperty(SparqlQcVocab.targetQuery).getObject().asLiteral().getString();
 		boolean expectedVerdict = Boolean.parseBoolean(t.getRequiredProperty(SparqlQcVocab.result).getObject().asLiteral().getString());
 
-		Query viewQuery = resolve(model, srcQueryId);
-		Query userQuery = resolve(model, tgtQueryId);
+		Query viewQuery = resolve(model, tgtQueryId);
+		Query userQuery = resolve(model, srcQueryId);
 
 		System.out.println("View Query: " + viewQuery);
 		System.out.println("User Query: " + userQuery);
