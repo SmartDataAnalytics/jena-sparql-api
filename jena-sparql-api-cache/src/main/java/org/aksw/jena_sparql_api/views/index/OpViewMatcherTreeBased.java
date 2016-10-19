@@ -12,7 +12,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.aksw.commons.collections.trees.Tree;
-import org.aksw.jena_sparql_api.algebra.transform.TransformJoinToConjunction;
+import org.aksw.jena_sparql_api.algebra.transform.TransformJoinToSequence;
 import org.aksw.jena_sparql_api.algebra.transform.TransformUnionToDisjunction;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMapImpl;
@@ -209,7 +209,8 @@ public class OpViewMatcherTreeBased<K>
 
 
 	public static Op normalizeOp(Op op) {
-        op = Transformer.transform(TransformJoinToConjunction.fn, Transformer.transform(TransformUnionToDisjunction.fn, op));
+		op = Transformer.transform(TransformUnionToDisjunction.fn, op);
+	    op = Transformer.transform(TransformJoinToSequence.fn, op);
 
         Generator<Var> generatorCache = VarGeneratorImpl2.create();
         Op result = OpUtils.substitute(op, false, (o) -> SparqlCacheUtils.tryCreateCqfp(o, generatorCache));

@@ -30,7 +30,7 @@ import org.aksw.commons.collections.cache.RemovalListenerMultiplexer;
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeImpl;
 import org.aksw.commons.collections.trees.TreeUtils;
-import org.aksw.jena_sparql_api.algebra.transform.TransformJoinToConjunction;
+import org.aksw.jena_sparql_api.algebra.transform.TransformJoinToSequence;
 import org.aksw.jena_sparql_api.algebra.transform.TransformUnionToDisjunction;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMapImpl;

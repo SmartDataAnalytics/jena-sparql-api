@@ -32,6 +32,7 @@ import org.apache.jena.sparql.algebra.op.Op0;
 import org.apache.jena.sparql.algebra.op.Op1;
 import org.apache.jena.sparql.algebra.op.Op2;
 import org.apache.jena.sparql.algebra.op.OpBGP;
+import org.apache.jena.sparql.algebra.op.OpDisjunction;
 import org.apache.jena.sparql.algebra.op.OpExt;
 import org.apache.jena.sparql.algebra.op.OpExtend;
 import org.apache.jena.sparql.algebra.op.OpN;
@@ -40,6 +41,7 @@ import org.apache.jena.sparql.algebra.op.OpQuadBlock;
 import org.apache.jena.sparql.algebra.op.OpQuadPattern;
 import org.apache.jena.sparql.algebra.op.OpService;
 import org.apache.jena.sparql.algebra.op.OpTriple;
+import org.apache.jena.sparql.algebra.op.OpUnion;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
 import org.springframework.util.Assert;
@@ -123,6 +125,20 @@ class OpSummaryImpl
 }
 
 public class OpUtils {
+
+	public static List<Op> getUnionMembers(Op op) {
+		List<Op> result;
+		if(op instanceof OpUnion) {
+			OpUnion o = (OpUnion)op;
+			result = Arrays.asList(o.getLeft(), o.getRight());
+		} else if(op instanceof OpDisjunction) {
+			OpDisjunction o = (OpDisjunction)op;
+			result = o.getElements();
+		} else {
+			result = Collections.singletonList(op);
+		}
+		return result;
+	}
 
 	/**
 	 * Low level function that simply turns a var-map into an project(extend()) expression.

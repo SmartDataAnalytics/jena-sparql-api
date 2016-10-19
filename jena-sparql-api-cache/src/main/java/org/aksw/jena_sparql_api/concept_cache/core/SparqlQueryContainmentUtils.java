@@ -8,6 +8,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.aksw.commons.collections.trees.Tree;
+import org.aksw.jena_sparql_api.algebra.transform.TransformDistributeJoinOverUnion;
 import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
@@ -31,6 +32,8 @@ import org.apache.jena.query.Syntax;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpAsQuery;
+import org.apache.jena.sparql.algebra.Transformer;
+import org.apache.jena.sparql.algebra.optimize.TransformMergeBGPs;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.syntax.Element;
 
@@ -104,6 +107,8 @@ public class SparqlQueryContainmentUtils {
 
 	public static ProjectedOp toProjectedOp(Query query) {
 		Op op = Algebra.compile(query);
+		op = TransformDistributeJoinOverUnion.transform(op);
+		op = Transformer.transform(new TransformMergeBGPs(), op);
 		op = Algebra.toQuadForm(op);
 
 		System.out.println("asQuery: "+ OpAsQuery.asQuery(op));
@@ -181,7 +186,7 @@ public class SparqlQueryContainmentUtils {
 			Map<Op, Op> opMap = varOpMap.getOpMap();
 			Op userOp = opMap.get(viewResOp);
 			// TODO Precompute / Cache var usages
-			VarUsage userVarUsage = OpUtils.analyzeVarUsage(userIndex.getTree(), userOp);
+			//VarUsage userVarUsage = OpUtils.analyzeVarUsage(userIndex.getTree(), userOp);
 
 			Iterable<Map<Var, Var>> varMap = () -> StreamUtils.stream(varOpMap.getVarMaps())
 					//.filter(vm -> SparqlViewMatcherProjectionUtils.validateProjection(viewVarInfo, userVarUsage, vm))

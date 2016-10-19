@@ -45,7 +45,7 @@ public class ExprUtils {
         return result;
     }
 
-    
+
     public static boolean isConstantsOnly(Iterable<Expr> exprs) {
         for(Expr expr : exprs) {
             if(!expr.isConstant()) {
@@ -241,6 +241,28 @@ public class ExprUtils {
         return result;
     }
 
+
+	// todo: isn't that a ring structure?
+	public static <T> T distribute(
+			List<T> as,
+			List<T> bs,
+			BinaryOperator<T> innerJunctor,
+			BinaryOperator<T> outerJunctor) {
+		List<T> outer = new ArrayList<>(as.size());
+		for(T a : as) {
+			List<T> inner = new ArrayList<>(bs.size());
+			for(T b : bs) {
+				T item = innerJunctor.apply(a, b);
+				inner.add(item);
+			}
+			T reduced = opifyBalanced(inner, innerJunctor);
+			outer.add(reduced);
+		}
+		T result = opifyBalanced(outer, outerJunctor);
+
+		return result;
+	}
+
     /**
      * Concatenates the sub exressions using a binary operator
      *
@@ -308,14 +330,14 @@ public class ExprUtils {
             if(f.numArgs() == 2) {
                 Expr a = f.getArg(1);
                 Expr b = f.getArg(2);
-                
+
                 result = extractVarConstant(a, b);
             }
         }
-        
+
         return result;
     }
-    
+
     public static Pair<Var, NodeValue> extractVarConstant(Expr a, Expr b) {
         Pair<Var, NodeValue> result = extractVarConstantDirected(a, b);
         if(result == null) {

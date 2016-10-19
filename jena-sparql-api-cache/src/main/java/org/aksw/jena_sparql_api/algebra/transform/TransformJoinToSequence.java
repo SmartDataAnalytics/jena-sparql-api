@@ -5,10 +5,10 @@ import org.apache.jena.sparql.algebra.TransformCopy;
 import org.apache.jena.sparql.algebra.op.OpJoin;
 import org.apache.jena.sparql.algebra.op.OpSequence;
 
-public class TransformJoinToConjunction
+public class TransformJoinToSequence
     extends TransformCopy
 {
-    public static final TransformJoinToConjunction fn = new TransformJoinToConjunction();
+    public static final TransformJoinToSequence fn = new TransformJoinToSequence();
     @Override
     public Op transform(OpJoin opJoin, Op left, Op right) {
         //OpDisjunction result = OpDisjunction.create();
