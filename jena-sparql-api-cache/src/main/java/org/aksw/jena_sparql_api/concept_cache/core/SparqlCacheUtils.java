@@ -603,7 +603,7 @@ public class SparqlCacheUtils {
         }
 
         ProjectedOp result = projectVars == null
-        		? new ProjectedOp(OpVars.visibleVars(residualOp), false, residualOp)
+        		? new ProjectedOp(OpUtils.visibleNamedVars(residualOp), false, residualOp)
         	    : new ProjectedOp(projectVars, isDistinct, residualOp);
 
         return result;

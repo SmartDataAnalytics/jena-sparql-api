@@ -12,6 +12,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.aksw.commons.collections.trees.Tree;
@@ -125,6 +126,21 @@ class OpSummaryImpl
 }
 
 public class OpUtils {
+
+	/**
+	 * Like OpVars.visibleVars, but filters out non-named vars
+	 * Filter out non-named vars
+	 *
+	 * @param op
+	 * @return
+	 */
+	public static Set<Var> visibleNamedVars(Op op) {
+		Set<Var> result = OpVars.visibleVars(op).stream()
+				.filter(x -> x.isNamedVar())
+				.collect(Collectors.toCollection(Sets::newLinkedHashSet));
+		return result;
+	}
+
 
 	public static List<Op> getUnionMembers(Op op) {
 		List<Op> result;

@@ -1,5 +1,5 @@
 ################################################
-19: CQNoProj#nop7
+Fixed: 19: CQNoProj#nop7
 
 Reason: The blank node becomes a variable and ends up in the projection. I don't get how jena handles this var<->bn mapping
 

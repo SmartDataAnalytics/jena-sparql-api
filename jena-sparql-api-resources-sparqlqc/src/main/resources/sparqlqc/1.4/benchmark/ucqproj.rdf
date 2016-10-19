@@ -5,7 +5,7 @@
   <!ENTITY rdfs		"http://www.w3.org/2000/01/rdf-schema#" >
   <!ENTITY xsd		"http://www.w3.org/2001/XMLSchema#" >
   <!ENTITY dc		"http://purl.org/dc/elements/1.1/" >
-  <!ENTITY dcterms      "http://purl.org/dc/terms/" > 
+  <!ENTITY dcterms      "http://purl.org/dc/terms/" >
   <!ENTITY owl		"http://www.w3.org/2002/07/owl#" > ]>
 
 <rdf:RDF
@@ -145,7 +145,11 @@
       <ContainmentTest rdf:about="#p24">
         <sourceQuery>Q20b</sourceQuery>
 	<targetQuery>Q20a</targetQuery>
-	<result>true</result>
+	<result>false</result>
+<!-- We deliberately skip this query, as in general this kind of containment might be unsuitable for caching -->
+<!-- If the view's top-most operator is a union, it is contained in a user query if one of the view's members matches, BUT -->
+<!-- in general it may be impossible to determine whether a result binding originates from the matched view -->
+<!--	<result>true</result> -->
       </ContainmentTest>
       <ContainmentTest rdf:about="#p25">
         <sourceQuery>Q21a</sourceQuery>
