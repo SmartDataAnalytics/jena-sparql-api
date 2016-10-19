@@ -248,17 +248,14 @@ public class ExprUtils {
 			List<T> bs,
 			BinaryOperator<T> innerJunctor,
 			BinaryOperator<T> outerJunctor) {
-		List<T> outer = new ArrayList<>(as.size());
+		List<T> items = new ArrayList<>(bs.size());
 		for(T a : as) {
-			List<T> inner = new ArrayList<>(bs.size());
 			for(T b : bs) {
 				T item = innerJunctor.apply(a, b);
-				inner.add(item);
+				items.add(item);
 			}
-			T reduced = opifyBalanced(inner, innerJunctor);
-			outer.add(reduced);
 		}
-		T result = opifyBalanced(outer, outerJunctor);
+		T result = opifyBalanced(items, outerJunctor);
 
 		return result;
 	}

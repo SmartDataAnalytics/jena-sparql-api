@@ -9,6 +9,8 @@ import java.util.stream.Stream;
 
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.jena_sparql_api.algebra.transform.TransformDistributeJoinOverUnion;
+import org.aksw.jena_sparql_api.algebra.transform.TransformJoinToSequence;
+import org.aksw.jena_sparql_api.algebra.transform.TransformUnionToDisjunction;
 import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
@@ -107,7 +109,17 @@ public class SparqlQueryContainmentUtils {
 
 	public static ProjectedOp toProjectedOp(Query query) {
 		Op op = Algebra.compile(query);
-		op = TransformDistributeJoinOverUnion.transform(op);
+//		op = Transformer.transform(TransformUnionToDisjunction.fn, op);
+
+		// Push down joins until there is no more change
+		Op current;
+		do {
+			current = op;
+			op = TransformDistributeJoinOverUnion.transform(current);
+		} while(!current.equals(op));
+
+
+//		op = Transformer.transform(TransformUnionToDisjunction.fn, op);
 		op = Transformer.transform(new TransformMergeBGPs(), op);
 		op = Algebra.toQuadForm(op);
 
