@@ -14,8 +14,10 @@ import java.util.stream.Stream;
 import org.aksw.combinatorics.solvers.GenericProblem;
 import org.aksw.combinatorics.solvers.ProblemContainerNeighbourhoodAware;
 import org.aksw.combinatorics.solvers.ProblemNeighborhoodAware;
+import org.aksw.combinatorics.solvers.ProblemStaticSolutions;
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
+import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMapImpl;
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.ProblemVarMappingExpr;
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.ProblemVarMappingQuad;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
@@ -58,6 +60,14 @@ public class VarMapper {
             // Base on the signatures: For the current query clause, find cache clauses that are less restrictive
             Collection<Entry<Set<Expr>, Multimap<Expr, Expr>>> cands = cacheIndex.getIfSubsetOf(querySig);
 
+            // If there is none, the view is not suitable
+            // If the cache index is empty, such as in the case of view := { ?s ?p ?o } then the view is
+            // satisfiable after all
+            if(cands.isEmpty()) {
+            	problems = Collections.singletonList(new ProblemStaticSolutions<>(Collections.singleton(null)));
+            	break;
+            }
+
             for(Entry<Set<Expr>, Multimap<Expr, Expr>> e : cands) {
                 Multimap<Expr, Expr> cacheMap = e.getValue();
                 //System.out.println("  CACHE MAP: " + cacheMap);
@@ -74,6 +84,8 @@ public class VarMapper {
 
                             if(logger.isTraceEnabled()) { logger.trace("Registered problem instance " + p + " with an estimated cost of " + p.getEstimatedCost()); }
                             if(logger.isTraceEnabled()) { logger.trace("  Enumerating its solutions yields " + p.generateSolutions().count() + " items: " + p.generateSolutions().collect(Collectors.toList())); }
+//                            System.out.println("Registered problem instance " + p + " with an estimated cost of " + p.getEstimatedCost());
+//                            System.out.println("  Enumerating its solutions yields " + p.generateSolutions().count() + " items: " + p.generateSolutions().collect(Collectors.toList()));
 
                             return p;
                         })
@@ -104,13 +116,48 @@ public class VarMapper {
 
         createProblems(cacheIndex, queryIndex).forEach(result::add);
 
-        //
+        // TODO The code below does not correctly match quads:
+        // Given a view (v1, {}) (i.e. no filters and a user query (u1, {u1.s = foo}),
+        // we need to match u1 with any quad having a _subset_ of the constraints
 
         // Index the quads by the cnf (dnf)?
 
         IBiSetMultimap<Quad, Set<Set<Expr>>> cacheQuadIndex = SparqlCacheUtils.createMapQuadsToFilters(cachePattern);
         IBiSetMultimap<Quad, Set<Set<Expr>>> queryQuadIndex = SparqlCacheUtils.createMapQuadsToFilters(queryPattern);
 
+
+        FeatureMap<Expr, Quad> queryQuadI = new FeatureMapImpl<>();
+        queryQuadIndex.entries().forEach(e ->
+        	e.getValue().forEach(x -> queryQuadI.put(x, e.getKey())));
+
+
+        cacheQuadIndex.getInverse().asMap().entrySet().forEach(e -> {
+        	Collection<Quad> viewQuads = e.getValue();
+        	Set<Set<Expr>> exprs = e.getKey();
+
+        	// Small hack to look up query quads having more than 'none' constraints
+        	if(exprs.isEmpty()) {
+        		exprs = Collections.singleton(Collections.emptySet());
+        	}
+
+        	Set<Quad> queryQuads = exprs.stream()
+        		.flatMap(expr -> queryQuadI.getIfSupersetOf(expr).stream().map(x -> x.getValue()))
+        		.collect(Collectors.toSet());
+
+        	ProblemVarMappingQuad quadProblem = new ProblemVarMappingQuad(viewQuads, queryQuads, Collections.emptyMap());
+
+            if(logger.isTraceEnabled()) { logger.trace("Registered quad problem instance " + quadProblem + " with an estimated cost of " + quadProblem.getEstimatedCost()); }
+            System.out.println("Registered quad problem instance " + quadProblem + " with an estimated cost of " + quadProblem.getEstimatedCost());
+            //System.out.println("Registered quad problem instance " + quadProblem + " with an estimated cost of " + quadProblem.getEstimatedCost());
+            //System.out.println("  Enumerating its solutions yields " + quadProblem.generateSolutions().count());
+            //System.out.println("Registered quad problem instance " + quadProblem + " with " + quadProblem.generateSolutions().count() + " solutions ");
+
+
+            result.add(quadProblem);
+
+        });
+
+        if(false) {
         Map<Set<Set<Expr>>, Entry<Set<Quad>, Set<Quad>>> quadGroups = MapUtils.groupByKey(cacheQuadIndex.getInverse(), queryQuadIndex.getInverse());
 
         for(Entry<Set<Quad>, Set<Quad>> quadGroup : quadGroups.values()) {
@@ -127,6 +174,7 @@ public class VarMapper {
             result.add(quadProblem);
         }
 
+        }
 
         return result;
     }

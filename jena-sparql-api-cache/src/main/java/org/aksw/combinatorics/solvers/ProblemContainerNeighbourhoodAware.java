@@ -109,7 +109,9 @@ public class ProblemContainerNeighbourhoodAware<S, T>
         regularQueue.computeIfAbsent(cost, (x) -> new HashSet<>()).add(problem);
 
         Collection<T> sourceNeigbourhood = problem.getSourceNeighbourhood();
-        sourceNeigbourhood.forEach(neighbour -> sourceMapping.put(neighbour, problem));
+        if(sourceNeigbourhood != null) {
+        	sourceNeigbourhood.forEach(neighbour -> sourceMapping.put(neighbour, problem));
+        }
     }
 
 
@@ -165,7 +167,9 @@ public class ProblemContainerNeighbourhoodAware<S, T>
 
         // Remove the problem from the neigbourhood index
         Collection<T> sourceNeigborhood = problem.getSourceNeighbourhood();
-        sourceNeigborhood.forEach(neighbor -> sourceMapping.remove(neighbor, problem));
+        if(sourceNeigborhood != null) {
+        	sourceNeigborhood.forEach(neighbor -> sourceMapping.remove(neighbor, problem));
+        }
     }
 
     // TODO Move to multimap utils

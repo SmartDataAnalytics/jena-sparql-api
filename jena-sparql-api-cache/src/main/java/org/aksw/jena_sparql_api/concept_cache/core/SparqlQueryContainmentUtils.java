@@ -188,27 +188,32 @@ public class SparqlQueryContainmentUtils {
 	        // TODO: Require a complete match of the tree - i.e. cache and query trees must have same number of nodes / same depth / some other criteria that can be checked quickly
 	        // In fact, we could use these features as an additional index
 	        solutionStream = SparqlViewMatcherUtils.generateTreeVarMapping(candOpMapping, viewTree, userTree);
+
+
+			// TODO: Analyze query's varUsage
+			//Stream<OpVarMap> result = solutionStream.map(varOpMap -> {
+	        solutionStream = solutionStream.map(varOpMap -> {
+				// Wrap the varOpMap's iterable such that projections
+
+				//Op viewRootOp = viewIndex.getTree().getRoot();
+				Map<Op, Op> opMap = varOpMap.getOpMap();
+				Op userOp = opMap.get(viewResOp);
+				// TODO Precompute / Cache var usages
+				//VarUsage userVarUsage = OpUtils.analyzeVarUsage(userIndex.getTree(), userOp);
+
+				Iterable<Map<Var, Var>> varMap = () -> StreamUtils.stream(varOpMap.getVarMaps())
+						//.filter(vm -> SparqlViewMatcherProjectionUtils.validateProjection(viewVarInfo, userVarUsage, vm))
+						.filter(vm -> SparqlViewMatcherProjectionUtils.validateProjection(viewVarInfo, userVarInfo, vm))
+						.iterator();
+
+				OpVarMap r = new OpVarMap(opMap, varMap);
+				return r;
+			});
 		}
 
-		// TODO: Analyze query's varUsage
-		Stream<OpVarMap> result = solutionStream.map(varOpMap -> {
-			// Wrap the varOpMap's iterable such that projections
+		//result = solutionStream;
 
-			//Op viewRootOp = viewIndex.getTree().getRoot();
-			Map<Op, Op> opMap = varOpMap.getOpMap();
-			Op userOp = opMap.get(viewResOp);
-			// TODO Precompute / Cache var usages
-			//VarUsage userVarUsage = OpUtils.analyzeVarUsage(userIndex.getTree(), userOp);
-
-			Iterable<Map<Var, Var>> varMap = () -> StreamUtils.stream(varOpMap.getVarMaps())
-					//.filter(vm -> SparqlViewMatcherProjectionUtils.validateProjection(viewVarInfo, userVarUsage, vm))
-					.filter(vm -> SparqlViewMatcherProjectionUtils.validateProjection(viewVarInfo, userVarInfo, vm))
-					.iterator();
-
-			OpVarMap r = new OpVarMap(opMap, varMap);
-			return r;
-		});
-
-		return result;
+		//return result;
+		return solutionStream;
 	}
 }

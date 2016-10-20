@@ -109,7 +109,7 @@ public class FeatureMapImpl<K, V>
     /**
      * Return every entry of this featureMap whose associated feature set
      * is a super set of the given one.
-     * 
+     *
      */
     @Override
     public Collection<Entry<Set<K>, V>> getIfSupersetOf(Set<K> prototype) {
@@ -170,14 +170,16 @@ public class FeatureMapImpl<K, V>
 //        float scanThreshold = 0.3f;
 //        float val = scanThreshold * totalCount;
 //        if(indexCount > val) {
-        boolean useScan = indexCount >= totalCount; 
+        boolean useScan = indexCount >= totalCount;
         if(useScan) {
             // perform a scan
             tagSetStream = tagSetToValues.keySet().stream();
         } else {
-            tagSetStream = prototype.stream()
-                    .flatMap(tag -> tagToTagSets.get(tag).stream())
-                    .distinct();
+            tagSetStream = Stream.concat(
+    				Stream.of(Collections.<K>emptySet()),
+    				prototype.stream()
+    					.flatMap(tag -> tagToTagSets.get(tag).stream())
+    					.distinct());
         }
 
         Collection<Entry<Set<K>, V>> result = tagSetStream
@@ -218,5 +220,4 @@ public class FeatureMapImpl<K, V>
 		Collection<V> result = tagSetToValues.get(prototype);
 		return result;
 	}
-
 }
