@@ -40,6 +40,31 @@ import org.apache.jena.sparql.graph.NodeTransformLib;
  */
 public class ExprUtils {
 
+	public static int classify(Expr e) {
+		int result = e.isConstant() ? 0
+				   : e.isVariable() ? 1
+				   : e.isFunction() ? 2
+				   : 3;
+		return result;
+	}
+
+	public static int compare(Expr a, Expr b) {
+		int ca = classify(a);
+		int cb = classify(b);
+
+		int r = cb - ca;
+
+		if(r == 0) {
+			switch(ca) {
+			case 0: r = NodeValue.compare(a.getConstant(), b.getConstant()); break;
+			case 1: r = a.getVarName().compareTo(b.getVarName()); break;
+			case 2: r = a.getFunction().getFunctionIRI().compareTo(b.getFunction().getFunctionIRI()); break;
+			default: throw new RuntimeException("should not come here");
+			}
+ 		}
+		return r;
+	}
+
     public static Tree<Expr> createTree(Expr root) {
         Tree<Expr> result = TreeImpl.create(root, ExprUtils::getSubExprs);
         return result;
