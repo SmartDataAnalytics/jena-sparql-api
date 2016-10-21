@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -358,22 +359,27 @@ public class TestContain {
 	} else throw new Exception( "Need two queries to test" );
     }
 
-    public synchronized Result testContainmentWithTimeOut( final String schema, final Query q1, final Query q2, int timeOutMS ) {
+    public synchronized Result testContainmentWithTimeOut( final String schema, final Query q1, final Query q2, int timeOutMS ) throws InterruptedException, ExecutionException, TimeoutException {
 	final Future<Result> future =
 	    executor.submit( new Callable<Result>() {
 		    // There is no way to shut down such a thread...
 		    //public void stop() { };
 		    public void interrupt() { return; }
 		    public Result call() {
+//		    	try {
+//					Thread.sleep(10000);
+//				} catch (InterruptedException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
 			return testContainment( schema, q1, q2 );
 		    }
 		});
 	try {
-	    //return future.get( timeOutMS, TimeUnit.MILLISECONDS );
-		return future.get();
-	} catch ( Exception ex ) {
-	    future.cancel( true ); // this should interrupt the call
-	    throw new RuntimeException(ex);
+	    return future.get( timeOutMS, TimeUnit.MILLISECONDS );
+		//return future.get();
+//	} catch ( Exception ex ) {
+	    //throw new RuntimeException(ex);
 //	    executor.shutdownNow();
 //	    return new Result( -2 );
 //	} catch ( Throwable ex ) {
@@ -381,6 +387,9 @@ public class TestContain {
 //	    future.cancel( true );
 //	    executor.shutdownNow();
 //	    return new Result( -1 );
+	} catch (InterruptedException | ExecutionException | TimeoutException e) {
+	    future.cancel( true ); // this should interrupt the call
+	    throw e;
 	} finally {
 	    executor.shutdownNow();
 	    try {
