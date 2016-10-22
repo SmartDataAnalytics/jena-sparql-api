@@ -71,7 +71,7 @@ public class MainTestContain {
     }
 
     public static Runnable exec(Resource r) {
-    	return null;
+    	return () -> { System.out.println("yay"); };
     }
 
 	public static void main(String[] args) throws IOException, InterruptedException {
