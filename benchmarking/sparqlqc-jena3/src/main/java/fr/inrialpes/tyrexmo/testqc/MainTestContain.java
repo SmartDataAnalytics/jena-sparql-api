@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -76,7 +77,7 @@ class Task {
 
 public class MainTestContain {
 
-    public static Stream<Resource> prepareTaskExecutions(Collection<Resource> workloads, int runs) {
+    public static Stream<Resource> prepareTaskExecutions(Collection<Resource> workloads, String runName, int runs) {
     	Stream<Resource> result = IntStream.range(0, runs).boxed()
     		.flatMap(runId -> workloads.stream().map(workload -> new SimpleEntry<>(runId, workload)))
     		.map(exec -> {
@@ -90,7 +91,7 @@ public class MainTestContain {
 
                 //long queryId = x.getRequiredProperty(IguanaVocab.queryId).getObject().asLiteral().getLong();
                 String workloadLabel = workload.getRequiredProperty(RDFS.label).getObject().asLiteral().getString();
-                Resource r = m.createResource("http://example.org/query-" + workloadLabel + "-run-" + exec.getKey());
+                Resource r = m.createResource("http://example.org/query-" + runName + "-" +  workloadLabel + "-run-" + exec.getKey());
                 r
                 	.addProperty(IguanaVocab.workload, workload)
                 	.addLiteral(IguanaVocab.run, exec.getKey());
@@ -164,10 +165,6 @@ public class MainTestContain {
     	List<Resource> tasks = SparqlQcReader.loadTasks("sparqlqc/1.4/benchmark/cqnoproj.rdf", "sparqlqc/1.4/benchmark/noprojection/*");
 
 
-
-
-    	Iterator<Resource> taskExecs = prepareTaskExecutions(tasks, 10).iterator();
-
     	Map<String, Object> solvers = new LinkedHashMap<>();
     	solvers.put("JSA", new ContainmentSolverWrapperJsa());
     	solvers.put("SA", new SPARQLAlgebraWrapper());
@@ -177,6 +174,8 @@ public class MainTestContain {
     	Model overall = ModelFactory.createDefaultModel();
     	for(Entry<String, Object> entry : solvers.entrySet()) {
     		String dataset = entry.getKey();
+
+        	Iterator<Resource> taskExecs = prepareTaskExecutions(tasks, dataset, 100).iterator();
 
 	    	//ContainmentSolver solver = new ContainmentSolverWrapperJsa();
     		Object solver = entry.getValue();
@@ -226,16 +225,53 @@ public class MainTestContain {
 
 
 			QueryExecutionFactory qef = IguanaDatasetProcessors.createQef(strategy);
-			qef.createQueryExecution("CONSTRUCT { ex:DefaultDataset rdfs:label \"" + dataset + "\" } { }").execConstruct(strategy);
-			qef.createQueryExecution("CONSTRUCT { ?x qb:dataset ex:DefaultDataset } { ?x ig:run ?r }").execConstruct(strategy);
+			qef.createQueryExecution("CONSTRUCT { ex:" + dataset + " rdfs:label \"" + dataset + "\" } { }").execConstruct(strategy);
+			qef.createQueryExecution("CONSTRUCT { ?x qb:dataset ex:" + dataset +" } { ?x ig:run ?r }").execConstruct(strategy);
 
-			overall.add(strategy);
 			strategy.write(System.out, "TURTLE");
 
 			IguanaDatasetProcessors.enrichWithAvgAndStdDeviation(strategy);
+			overall.add(strategy);
+
     	}
 
 		CategoryDataset dataset = IguanaDatasetProcessors.createDataset(overall);
+
+		List l = dataset.getColumnKeys();
+//		String headings = dataset.getColumnKeys().stream()
+//				.map(x -> x.toString())
+//				.collect(Collectors.joining(", "));
+//
+//		System.out.println(headings);
+
+		dataset.getRowKeys().stream().forEach(rowKey -> {
+			List<String> tmp = new ArrayList<>();
+			tmp.add("" + rowKey);
+			for(int i = 0; i < l.size(); ++i) {
+				tmp.add("" + dataset.getValue((Comparable)rowKey, (Comparable)l.get(i)));
+			}
+			String rowStr = String.join(", ", tmp);
+
+//			String rowStr = Stream.concat(
+//					Stream.of(rowKey.toString()))
+////					dataset.getColumnKeys().stream()
+////					.map(colKey -> dataset.getValue(rowKey, colKey).toString()))
+//				.collect(Collectors.joining(", "));
+
+			System.out.println(rowStr);
+		});
+
+//
+//		for(int i = 0; i < dataset.getRowCount(); ++i) {
+//			dataset.getK
+//			String str = IntStream.range(0, dataset.getColumnCount())
+//				.mapToObj(j -> "" + dataset.getValue(i, j))
+//				.collect(Collectors.joining(", "));
+//
+//			System.out.println(str);
+//		}
+		//System.out.println(dataset);
+		//dataset.
 		//CategoryDataset dataset = createTestDataset();
 
 		JFreeChart chart = IguanaDatasetProcessors.createStatisticalBarChart(dataset);
