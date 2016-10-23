@@ -41,6 +41,7 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.data.category.CategoryDataset;
 
 import com.google.common.util.concurrent.MoreExecutors;
+import com.hp.hpl.jena.query.QueryFactory;
 import com.itextpdf.text.DocumentException;
 
 import fr.inrialpes.tyrexmo.qcwrapper.afmu.AFMUContainmentWrapper;
@@ -51,6 +52,27 @@ class TestCase {
 	public Query target;
 	public boolean expectedResult;
 }
+
+
+class Task {
+	protected Runnable run;
+	protected Runnable cleanup;
+
+	public Task(Runnable run, Runnable cleanup) {
+		super();
+		this.run = run;
+		this.cleanup = cleanup;
+	}
+
+	public Runnable getRun() {
+		return run;
+	}
+
+	public Runnable getCleanup() {
+		return cleanup;
+	}
+}
+
 
 public class MainTestContain {
 
@@ -77,22 +99,43 @@ public class MainTestContain {
     	return result;
     }
 
-    public void Runnable createContainmentSolver(Query a, Query b) {
+    public static Task prepareLegacy(Resource r, LegacyContainmentSolver solver) {
+    	Resource t = r.getRequiredProperty(IguanaVocab.workload).getObject().asResource();
 
-    }
+		String srcQueryStr = t.getRequiredProperty(SparqlQcVocab.sourceQuery).getObject().asResource().getRequiredProperty(LSQ.text).getObject().asLiteral().getString();
+		String tgtQueryStr = t.getRequiredProperty(SparqlQcVocab.targetQuery).getObject().asResource().getRequiredProperty(LSQ.text).getObject().asLiteral().getString();
+		boolean expected = Boolean.parseBoolean(t.getRequiredProperty(SparqlQcVocab.result).getObject().asLiteral().getString());
 
-    public Runnable createLegacyContainmentSolver(Query viewQuery, Query userQuery) {
+		com.hp.hpl.jena.query.Query viewQuery = QueryFactory.create(srcQueryStr);
+		com.hp.hpl.jena.query.Query userQuery = QueryFactory.create(tgtQueryStr);
 
-    	return () -> { try {
+
+    	return new Task(() -> { try {
 			boolean actual = solver.entailed(viewQuery, userQuery);
 			String str = actual == expected ? "CORRECT" : "WRONG";
 			r.addLiteral(RDFS.label, str);
 		} catch (ContainmentTestException e) {
 			throw new RuntimeException();
-		} };
+		} }, () -> {
+			try {
+				solver.cleanup();
+			} catch (ContainmentTestException e) {
+				throw new RuntimeException();
+			}
+		});
+	}
+
+
+    public static Task prepare(Resource r, Object o) {
+    	Task result
+    		= o instanceof ContainmentSolver ? prepare(r, (ContainmentSolver)o)
+    		: o instanceof LegacyContainmentSolver ? prepareLegacy(r, (LegacyContainmentSolver)o)
+    		: null;
+
+    	return result;
     }
 
-    public static Runnable prepare(Resource r, ContainmentSolver solver) {
+    public static Task prepare(Resource r, ContainmentSolver solver) {
     	Resource t = r.getRequiredProperty(IguanaVocab.workload).getObject().asResource();
 
 		String srcQueryStr = t.getRequiredProperty(SparqlQcVocab.sourceQuery).getObject().asResource().getRequiredProperty(LSQ.text).getObject().asLiteral().getString();
@@ -102,17 +145,20 @@ public class MainTestContain {
 		Query viewQuery = SparqlQueryContainmentUtils.queryParser.apply(srcQueryStr);
 		Query userQuery = SparqlQueryContainmentUtils.queryParser.apply(tgtQueryStr);
 
-		//System.out.println("View Query: " + viewQuery);
-		//System.out.println("User Query: " + userQuery);
-
-//		Element viewEl = viewQuery.getQueryPattern();
-//		Element userEl = userQuery.getQueryPattern();
-
-//		boolean actualVerdict = SparqlQueryContainmentUtils.tryMatch(viewQuery, userQuery);
-
-
-//    	new ContainmentSolverWrapperJsa()
-    }
+    	return new Task(() -> { try {
+			boolean actual = solver.entailed(viewQuery, userQuery);
+			String str = actual == expected ? "CORRECT" : "WRONG";
+			r.addLiteral(RDFS.label, str);
+		} catch (ContainmentTestException e) {
+			throw new RuntimeException();
+		} }, () -> {
+			try {
+				solver.cleanup();
+			} catch (ContainmentTestException e) {
+				throw new RuntimeException();
+			}
+		});
+	}
 
 	public static void main(String[] args) throws IOException, InterruptedException, DocumentException {
     	List<Resource> tasks = SparqlQcReader.loadTasks("sparqlqc/1.4/benchmark/cqnoproj.rdf", "sparqlqc/1.4/benchmark/noprojection/*");
@@ -122,28 +168,31 @@ public class MainTestContain {
 
     	Iterator<Resource> taskExecs = prepareTaskExecutions(tasks, 10).iterator();
 
-    	Map<String, ContainmentSolver> solvers = new LinkedHashMap<>();
-    	solvers.put("SA", new SPARQLAlgebraWrapper());
+    	Map<String, Object> solvers = new LinkedHashMap<>();
     	solvers.put("JSA", new ContainmentSolverWrapperJsa());
+    	solvers.put("SA", new SPARQLAlgebraWrapper());
     	solvers.put("AFMU", new AFMUContainmentWrapper());
     	//solvers.put("LMU", //new )
 
-    	for(Entry<String, ContainmentSolver> entry : solvers.entrySet()) {
+    	Model overall = ModelFactory.createDefaultModel();
+    	for(Entry<String, Object> entry : solvers.entrySet()) {
+    		String dataset = entry.getKey();
 
-	    	ContainmentSolver solver = new ContainmentSolverWrapperJsa();
+	    	//ContainmentSolver solver = new ContainmentSolverWrapperJsa();
+    		Object solver = entry.getValue();
 
-	    	Model result = ModelFactory.createDefaultModel();
+	    	Model strategy = ModelFactory.createDefaultModel();
 
 	    	PrintStream out = System.out;
-			TaskDispatcher<Runnable> taskDispatcher =
-				    new TaskDispatcher<Runnable>(
+			TaskDispatcher<Task> taskDispatcher =
+				    new TaskDispatcher<Task>(
 				        taskExecs,
 				        t -> prepare(t, solver),
-				        (task, r) -> task.run(),
+				        (task, r) -> task.run.run(),
 				        //(task, r) -> { try { return task.call(); } catch(Exception e) { throw new RuntimeException(e); } },
-				        (task, r, e) -> {},
+				        (task, r, e) -> {}, //task.close(),
 				        //r -> System.out.println("yay"));
-				        r -> result.add(r.getModel()), //r.getModel().write(out, "TURTLE"),
+				        r -> strategy.add(r.getModel()), //r.getModel().write(out, "TURTLE"),
 				        new DelayerDefault(0));
 
 
@@ -176,16 +225,17 @@ public class MainTestContain {
 			}
 
 
-			QueryExecutionFactory qef = IguanaDatasetProcessors.createQef(result);
-			qef.createQueryExecution("CONSTRUCT { ex:DefaultDataset rdfs:label \"Cached\" } { }").execConstruct(result);
-			qef.createQueryExecution("CONSTRUCT { ?x qb:dataset ex:DefaultDataset } { ?x ig:run ?r }").execConstruct(result);
+			QueryExecutionFactory qef = IguanaDatasetProcessors.createQef(strategy);
+			qef.createQueryExecution("CONSTRUCT { ex:DefaultDataset rdfs:label \"" + dataset + "\" } { }").execConstruct(strategy);
+			qef.createQueryExecution("CONSTRUCT { ?x qb:dataset ex:DefaultDataset } { ?x ig:run ?r }").execConstruct(strategy);
 
-			result.write(System.out, "TURTLE");
+			overall.add(strategy);
+			strategy.write(System.out, "TURTLE");
 
-			IguanaDatasetProcessors.enrichWithAvgAndStdDeviation(result);
+			IguanaDatasetProcessors.enrichWithAvgAndStdDeviation(strategy);
     	}
 
-		CategoryDataset dataset = IguanaDatasetProcessors.createDataset(result);
+		CategoryDataset dataset = IguanaDatasetProcessors.createDataset(overall);
 		//CategoryDataset dataset = createTestDataset();
 
 		JFreeChart chart = IguanaDatasetProcessors.createStatisticalBarChart(dataset);
