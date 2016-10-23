@@ -50,40 +50,26 @@
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 
-<!--
-                        <dependency>
-                                <groupId>log4j</groupId>
-                                <artifactId>log4j</artifactId>
-                                <version>1.2.17</version>
-</dependency>
--->
+		<!-- <dependency> <groupId>log4j</groupId> <artifactId>log4j</artifactId>
+			<version>1.2.17</version> </dependency> -->
 
 
 		<dependency>
-		    <groupId>com.hp.hpl.jena</groupId>
-		    <artifactId>arq</artifactId>
-		    <version>2.8.8</version>
-		    <exclusions>
-		    	<exclusion>
-		    		<groupId>log4j</groupId>
-		    		<artifactId>log4j</artifactId>
-		    	</exclusion>
-		    </exclusions>
+			<groupId>com.hp.hpl.jena</groupId>
+			<artifactId>arq</artifactId>
+			<version>2.8.8</version>
+			<exclusions>
+				<exclusion>
+					<groupId>log4j</groupId>
+					<artifactId>log4j</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
-<!--
-                <dependency>
-                        <groupId>fr.inrialpes.sparqlqc</groupId>
-                        <artifactId>sparqlqc-containmenttester</artifactId>
-                        <version>1.4</version>
-                </dependency>
--->
-<!--
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-api</artifactId>
-		</dependency>
--->
+		<!-- <dependency> <groupId>fr.inrialpes.sparqlqc</groupId> <artifactId>sparqlqc-containmenttester</artifactId>
+			<version>1.4</version> </dependency> -->
+		<!-- <dependency> <groupId>org.slf4j</groupId> <artifactId>slf4j-api</artifactId>
+			</dependency> -->
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
@@ -112,10 +98,10 @@
 		</dependency>
 
 		<dependency>
-    		<groupId>lib</groupId>
-    		<artifactId>javabdd</artifactId>
-    		<version>1.0b2</version>
-    	</dependency>
+			<groupId>lib</groupId>
+			<artifactId>javabdd</artifactId>
+			<version>1.0b2</version>
+		</dependency>
 
 		<dependency>
 			<groupId>lib</groupId>
@@ -128,6 +114,30 @@
 			<artifactId>subsum</artifactId>
 			<version>1.0.0</version>
 		</dependency>
+
+<!-- 		<dependency> -->
+<!-- 			<groupId>xalan</groupId> -->
+<!-- 			<artifactId>xalan</artifactId> -->
+<!-- 			<version>2.3.1</version> -->
+<!-- 		</dependency> -->
+
+		<dependency>
+			<groupId>lib</groupId>
+			<artifactId>xpath20api</artifactId>
+			<version>1.0.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>lib</groupId>
+			<artifactId>xmltypes</artifactId>
+			<version>1.0.0</version>
+		</dependency>
+
+<!-- 		<dependency> -->
+<!-- 		    <groupId>xerces</groupId> -->
+<!-- 		    <artifactId>xercesImpl</artifactId> -->
+<!-- 		    <version>2.7.1</version> -->
+<!-- 		</dependency> -->
 
 	</dependencies>
 
@@ -343,45 +353,28 @@
 
 	<repositories>
 		<repository>
-	    	<id>my-local-repo</id>
-	    	<url>file://${basedir}/repo/</url>
-	  	</repository>
+			<id>my-local-repo</id>
+			<url>file://${basedir}/repo/</url>
+		</repository>
 
-        <repository>
-            <id>maven.aksw.internal</id>
-            <name>University Leipzig, AKSW Maven2 Internal Repository</name>
-            <url>http://maven.aksw.org/repository/internal/</url>
-        </repository>
+		<repository>
+			<id>maven.aksw.internal</id>
+			<name>University Leipzig, AKSW Maven2 Internal Repository</name>
+			<url>http://maven.aksw.org/repository/internal/</url>
+		</repository>
 
-        <repository>
-            <id>maven.aksw.snapshots</id>
-            <name>University Leipzig, AKSW Maven2 Snapshot Repository</name>
-            <url>http://maven.aksw.org/repository/snapshots/</url>
-        </repository>
-
-<!--
 		<repository>
 			<id>maven.aksw.snapshots</id>
-			<name>AKSW Snapshot Repository</name>
-			<url>http://maven.aksw.org/archiva/repository/snapshots</url>
-			<releases>
-				<enabled>false</enabled>
-			</releases>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
+			<name>University Leipzig, AKSW Maven2 Snapshot Repository</name>
+			<url>http://maven.aksw.org/repository/snapshots/</url>
 		</repository>
-                <repository>
-                        <id>maven.aksw.internal</id>
-                        <name>AKSW Release Repository</name>
-                        <url>http://maven.aksw.org/archiva/repository/internal</url>
-                        <releases>
-                                <enabled>true</enabled>
-                        </releases>
-                        <snapshots>
-                                <enabled>false</enabled>
-                        </snapshots>
-                </repository>
--->
+
+		<!-- <repository> <id>maven.aksw.snapshots</id> <name>AKSW Snapshot Repository</name>
+			<url>http://maven.aksw.org/archiva/repository/snapshots</url> <releases>
+			<enabled>false</enabled> </releases> <snapshots> <enabled>true</enabled>
+			</snapshots> </repository> <repository> <id>maven.aksw.internal</id> <name>AKSW
+			Release Repository</name> <url>http://maven.aksw.org/archiva/repository/internal</url>
+			<releases> <enabled>true</enabled> </releases> <snapshots> <enabled>false</enabled>
+			</snapshots> </repository> -->
 	</repositories>
 </project>

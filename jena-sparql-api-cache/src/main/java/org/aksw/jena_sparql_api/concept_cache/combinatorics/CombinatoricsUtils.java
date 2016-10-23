@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -16,9 +17,7 @@ import org.aksw.combinatorics.algos.StateCombinatoricCallback;
 import org.aksw.commons.collections.CartesianProduct;
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
 import org.aksw.jena_sparql_api.concept_cache.domain.PatternSummary;
-import org.aksw.jena_sparql_api.utils.MapUtils;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
-import org.apache.jena.ext.com.google.common.collect.HashBiMap;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
@@ -310,7 +309,8 @@ public class CombinatoricsUtils {
             TriFunction<Map<Var, Var>, Quad, Quad, Stream<Map<Var, Var>>> solutionCombiner = (s, a, b) -> {
                 Stream<Map<Var, Var>> r;
                 try {
-                    HashBiMap<Var, Var> d = HashBiMap.create();
+                    //HashBiMap<Var, Var> d = HashBiMap.create();
+                	Map<Var, Var> d = new HashMap<>();
                     Map<Var, Var> contib = Utils2.createVarMap(a, b);
 
                     d.putAll(contib);

@@ -30,12 +30,16 @@ import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.delay.extra.DelayerDefault;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcReader;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcVocab;
+import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.qcwrapper.jsa.ContainmentSolverWrapperJsa;
 import org.aksw.simba.lsq.vocab.LSQ;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.sparql.syntax.syntaxtransform.QueryTransformOps;
 import org.apache.jena.util.ResourceUtils;
 import org.apache.jena.vocabulary.RDFS;
 import org.jfree.chart.JFreeChart;
@@ -45,7 +49,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.hp.hpl.jena.query.QueryFactory;
 import com.itextpdf.text.DocumentException;
 
-import fr.inrialpes.tyrexmo.qcwrapper.afmu.AFMUContainmentWrapper;
 import fr.inrialpes.tyrexmo.qcwrapper.sparqlalg.SPARQLAlgebraWrapper;
 
 class TestCase {
@@ -77,10 +80,13 @@ class Task {
 
 public class MainTestContain {
 
-    public static Stream<Resource> prepareTaskExecutions(Collection<Resource> workloads, String runName, int runs) {
+	public static final Property WARMUP = ResourceFactory.createProperty("http://ex.org/ontology#warmup");
+
+    public static Stream<Resource> prepareTaskExecutions(Collection<Resource> workloads, String runName, int warmUp, int runs) {
     	Stream<Resource> result = IntStream.range(0, runs).boxed()
     		.flatMap(runId -> workloads.stream().map(workload -> new SimpleEntry<>(runId, workload)))
     		.map(exec -> {
+    			int runId = exec.getKey();
                 Model m = ModelFactory.createDefaultModel();
                 Resource workload = exec.getValue();
                 Model n = ResourceUtils.reachableClosure(workload);
@@ -92,6 +98,10 @@ public class MainTestContain {
                 //long queryId = x.getRequiredProperty(IguanaVocab.queryId).getObject().asLiteral().getLong();
                 String workloadLabel = workload.getRequiredProperty(RDFS.label).getObject().asLiteral().getString();
                 Resource r = m.createResource("http://example.org/query-" + runName + "-" +  workloadLabel + "-run-" + exec.getKey());
+                if(runId < warmUp) {
+                	r.addLiteral(WARMUP, true);
+                }
+
                 r
                 	.addProperty(IguanaVocab.workload, workload)
                 	.addLiteral(IguanaVocab.run, exec.getKey());
@@ -107,8 +117,18 @@ public class MainTestContain {
 		String tgtQueryStr = t.getRequiredProperty(SparqlQcVocab.targetQuery).getObject().asResource().getRequiredProperty(LSQ.text).getObject().asLiteral().getString();
 		boolean expected = Boolean.parseBoolean(t.getRequiredProperty(SparqlQcVocab.result).getObject().asLiteral().getString());
 
-		com.hp.hpl.jena.query.Query viewQuery = QueryFactory.create(srcQueryStr);
-		com.hp.hpl.jena.query.Query userQuery = QueryFactory.create(tgtQueryStr);
+		Query _viewQuery = SparqlQueryContainmentUtils.queryParser.apply(srcQueryStr);
+		//_viewQuery = QueryTransformOps.transform(_viewQuery, QueryUtils.createRandomVarMap(_viewQuery, "x"));
+
+		Query _userQuery = SparqlQueryContainmentUtils.queryParser.apply(tgtQueryStr);
+		//_userQuery = QueryTransformOps.transform(_userQuery, QueryUtils.createRandomVarMap(_userQuery, "y"));
+
+
+//		com.hp.hpl.jena.query.Query viewQuery = QueryFactory.create(srcQueryStr.toString());
+//		com.hp.hpl.jena.query.Query userQuery = QueryFactory.create(tgtQueryStr.toString());
+		com.hp.hpl.jena.query.Query viewQuery = QueryFactory.create(_viewQuery.toString());
+		com.hp.hpl.jena.query.Query userQuery = QueryFactory.create(_userQuery.toString());
+
 
 
     	return new Task(() -> { try {
@@ -143,8 +163,11 @@ public class MainTestContain {
 		String tgtQueryStr = t.getRequiredProperty(SparqlQcVocab.targetQuery).getObject().asResource().getRequiredProperty(LSQ.text).getObject().asLiteral().getString();
 		boolean expected = Boolean.parseBoolean(t.getRequiredProperty(SparqlQcVocab.result).getObject().asLiteral().getString());
 
-		Query viewQuery = SparqlQueryContainmentUtils.queryParser.apply(srcQueryStr);
-		Query userQuery = SparqlQueryContainmentUtils.queryParser.apply(tgtQueryStr);
+		Query _viewQuery = SparqlQueryContainmentUtils.queryParser.apply(srcQueryStr);
+		Query viewQuery = QueryTransformOps.transform(_viewQuery, QueryUtils.createRandomVarMap(_viewQuery, "x"));
+
+		Query _userQuery = SparqlQueryContainmentUtils.queryParser.apply(tgtQueryStr);
+		Query userQuery = QueryTransformOps.transform(_userQuery, QueryUtils.createRandomVarMap(_userQuery, "y"));
 
     	return new Task(() -> { try {
 			boolean actual = solver.entailed(viewQuery, userQuery);
@@ -161,21 +184,29 @@ public class MainTestContain {
 		});
 	}
 
+
 	public static void main(String[] args) throws IOException, InterruptedException, DocumentException {
     	List<Resource> tasks = SparqlQcReader.loadTasks("sparqlqc/1.4/benchmark/cqnoproj.rdf", "sparqlqc/1.4/benchmark/noprojection/*");
+
+//    	tasks = tasks.stream()
+//    			.filter(t -> !t.getURI().contains("19") && !t.getURI().contains("6"))
+//    			.collect(Collectors.toList());
 
 
     	Map<String, Object> solvers = new LinkedHashMap<>();
     	solvers.put("JSA", new ContainmentSolverWrapperJsa());
     	solvers.put("SA", new SPARQLAlgebraWrapper());
-    	solvers.put("AFMU", new AFMUContainmentWrapper());
+    	//solvers.put("AFMU", new AFMUContainmentWrapper());
+    	//solvers.put("TS", new TreeSolverWrapper());
     	//solvers.put("LMU", //new )
 
     	Model overall = ModelFactory.createDefaultModel();
     	for(Entry<String, Object> entry : solvers.entrySet()) {
     		String dataset = entry.getKey();
 
-        	Iterator<Resource> taskExecs = prepareTaskExecutions(tasks, dataset, 100).iterator();
+    		// Attach the solver to the resource
+        	Iterator<Resource> taskExecs = prepareTaskExecutions(tasks, dataset, 200, 700)
+        			.iterator();
 
 	    	//ContainmentSolver solver = new ContainmentSolverWrapperJsa();
     		Object solver = entry.getValue();
@@ -191,7 +222,11 @@ public class MainTestContain {
 				        //(task, r) -> { try { return task.call(); } catch(Exception e) { throw new RuntimeException(e); } },
 				        (task, r, e) -> {}, //task.close(),
 				        //r -> System.out.println("yay"));
-				        r -> strategy.add(r.getModel()), //r.getModel().write(out, "TURTLE"),
+				        r -> { if(r.getProperty(WARMUP) == null) {
+//				        	System.out.println("GOT: ");
+//				        	ResourceUtils.reachableClosure(r).write(System.out, "TURTLE");
+				        	strategy.add(r.getModel()); }
+				        }, //r.getModel().write(out, "TURTLE"),
 				        new DelayerDefault(0));
 
 
@@ -228,39 +263,42 @@ public class MainTestContain {
 			qef.createQueryExecution("CONSTRUCT { ex:" + dataset + " rdfs:label \"" + dataset + "\" } { }").execConstruct(strategy);
 			qef.createQueryExecution("CONSTRUCT { ?x qb:dataset ex:" + dataset +" } { ?x ig:run ?r }").execConstruct(strategy);
 
-			strategy.write(System.out, "TURTLE");
+			//strategy.write(System.out, "TURTLE");
 
 			IguanaDatasetProcessors.enrichWithAvgAndStdDeviation(strategy);
 			overall.add(strategy);
 
     	}
 
+    	//overall.write(System.out, "TURTLE");
+
 		CategoryDataset dataset = IguanaDatasetProcessors.createDataset(overall);
 
-		List l = dataset.getColumnKeys();
-//		String headings = dataset.getColumnKeys().stream()
-//				.map(x -> x.toString())
-//				.collect(Collectors.joining(", "));
-//
-//		System.out.println(headings);
+		if(false) {
+			List l = dataset.getColumnKeys();
+	//		String headings = dataset.getColumnKeys().stream()
+	//				.map(x -> x.toString())
+	//				.collect(Collectors.joining(", "));
+	//
+	//		System.out.println(headings);
 
-		dataset.getRowKeys().stream().forEach(rowKey -> {
-			List<String> tmp = new ArrayList<>();
-			tmp.add("" + rowKey);
-			for(int i = 0; i < l.size(); ++i) {
-				tmp.add("" + dataset.getValue((Comparable)rowKey, (Comparable)l.get(i)));
-			}
-			String rowStr = String.join(", ", tmp);
+			dataset.getRowKeys().stream().forEach(rowKey -> {
+				List<String> tmp = new ArrayList<>();
+				tmp.add("" + rowKey);
+				for(int i = 0; i < l.size(); ++i) {
+					tmp.add("" + dataset.getValue((Comparable)rowKey, (Comparable)l.get(i)));
+				}
+				String rowStr = String.join(", ", tmp);
 
-//			String rowStr = Stream.concat(
-//					Stream.of(rowKey.toString()))
-////					dataset.getColumnKeys().stream()
-////					.map(colKey -> dataset.getValue(rowKey, colKey).toString()))
-//				.collect(Collectors.joining(", "));
+	//			String rowStr = Stream.concat(
+	//					Stream.of(rowKey.toString()))
+	////					dataset.getColumnKeys().stream()
+	////					.map(colKey -> dataset.getValue(rowKey, colKey).toString()))
+	//				.collect(Collectors.joining(", "));
 
-			System.out.println(rowStr);
-		});
-
+				System.out.println(rowStr);
+			});
+		}
 //
 //		for(int i = 0; i < dataset.getRowCount(); ++i) {
 //			dataset.getK
@@ -278,5 +316,6 @@ public class MainTestContain {
 		ChartUtilities2.saveChartAsPDF(new File("/home/raven/tmp/test.pdf"), chart, 1000, 500);
 
 
+		System.out.println("Done.");
 	}
 }
