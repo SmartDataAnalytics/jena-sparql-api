@@ -36,11 +36,11 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleGraph;
 import org.jgrapht.graph.Subgraph;
 
-import org.apache.jena.graph.Triple;
-import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryFactory;
-import org.apache.jena.query.QueryParseException;
-import org.apache.jena.sparql.core.Var;
+import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.query.Query;
+import com.hp.hpl.jena.query.QueryFactory;
+import com.hp.hpl.jena.query.QueryParseException;
+import com.hp.hpl.jena.sparql.core.Var;
 
 public class CycleAnalysis {
 
@@ -49,7 +49,7 @@ public class CycleAnalysis {
     CycleDetector<String,DefaultEdge> detector;
     Set<String> tripleNodeNames;
     Set<String> constantsAndDvars;
-    
+
     CycleAnalysis () {
 	queryGraph = new DefaultDirectedGraph<String, DefaultEdge>(DefaultEdge.class);
 	//g1 = new SimpleGraph<String, DefaultEdge>(DefaultEdge.class);
@@ -80,14 +80,14 @@ public class CycleAnalysis {
         String subject = t.getSubject().toString(); //t.getSubject().getName();
         String predicate = t.getPredicate().toString(); //t.getPredicate().getLocalName();
         String object = t.getObject().toString();//t.getObject().getName();
-        
+
         if (t.getSubject().isURI() ||  t.getSubject().isBlank())
 	    constantsAndDvars.add(subject);
         if (t.getPredicate().isURI())
 	    constantsAndDvars.add(predicate);
         if (t.getObject().isURI() || t.getObject().isLiteral() || t.getObject().isBlank())
 	    constantsAndDvars.add(object);
-        
+
         // add the vertices
         queryGraph.addVertex(tripleNode);
         queryGraph.addVertex(subject);
@@ -98,7 +98,7 @@ public class CycleAnalysis {
         queryGraph.addEdge(subject, tripleNode);
         queryGraph.addEdge(tripleNode, predicate);
         queryGraph.addEdge(tripleNode, object);
-        
+
 	//System.out.println("["+subject+" "+ predicate + " " + object+"]");
     }
 
@@ -125,7 +125,7 @@ public class CycleAnalysis {
     private String getUniqueTripleNodeName() {
     	return "xxx"+(newVarRank++);
     }
-    
+
     private boolean detectCycle( String varName ) {
     	CycleDetector<String,DefaultEdge> detector = new CycleDetector<String,DefaultEdge>(queryGraph);
     	if( !queryGraph.containsVertex(varName) ) {
@@ -141,13 +141,13 @@ public class CycleAnalysis {
      * @return true or false
      */
     public boolean isCycle( Collection<Var> ndvars ) {
-    	boolean cycle = false; 
+    	boolean cycle = false;
     	if ( !ndvars.isEmpty() ) {
 	    for ( Var v : ndvars ) {
 		if ( detectCycle( v.toString() ) ) {
 		    cycle = true;
 		    break;
-		} 			
+		}
 	    }
     	} else cycle = false;
     	return cycle;
@@ -167,7 +167,7 @@ public class CycleAnalysis {
     	}
     	return vars;
     }
-    
+
     public Set<String> convertFromVarToString (List<Var> ndvars) {
     	Set<String> vars = new HashSet<String> ();
     	for (Var var : ndvars) {
@@ -183,39 +183,39 @@ public class CycleAnalysis {
     	}
     	return vars;
     }
-    
+
     public boolean isThereAcycleAmongNDvars(Collection<Var> ndvars) {
     	boolean cycle = false;
     	CycleDetector<String,DefaultEdge> detector = new CycleDetector<String,DefaultEdge>( queryGraph );
-    	if (detectCyclesContainingNDvars(ndvars) && !ndvars.isEmpty()) {    
+    	if (detectCyclesContainingNDvars(ndvars) && !ndvars.isEmpty()) {
 	    if ( detectCyclesContainingConstantsAndDvars() )
 		cycle = false;
 	    else {
         	//cycle = detector.detectCycles();
     		Set<String> varsAppearingInAcycle = detector.findCycles();
-    		
+
 		//    		Subgraph<String, ?, DirectedGraph<String, DefaultEdge>> sg = new Subgraph (queryGraph,detector.findCycles(), queryGraph.edgeSet());
 		//    		System.out.println( sg.edgeSet()); //queryGraph.edgeSet());
-    		Set<DefaultEdge> edges = new HashSet<DefaultEdge> ();    		
+    		Set<DefaultEdge> edges = new HashSet<DefaultEdge> ();
     		for (String vertex : varsAppearingInAcycle) {
-		    edges.addAll(queryGraph.edgesOf(vertex));    			
+		    edges.addAll(queryGraph.edgesOf(vertex));
     		}
     		//System.out.println(edges);
     		// edges is a the cyclic component
-    		// vertexes involved in the cyclic component 
+    		// vertexes involved in the cyclic component
     		Set<String> vertex = new HashSet<String> ();
-    		for (DefaultEdge e : edges) {    			
+    		for (DefaultEdge e : edges) {
 		    vertex.add(queryGraph.getEdgeSource(e));
 		    vertex.add(queryGraph.getEdgeTarget(e));
     		}
     		//System.out.println(vertex);
     		cycle = !cycleContainsAConstantOrADvar(vertex);
-    		
+
 	    }
 	} else cycle = false;
     	return cycle;
     }
-   
+
     private boolean detectCyclesContainingNDvars(Collection<Var> ndvars) {
     	boolean cycle = false;
     	if (ndvars.isEmpty())
@@ -223,7 +223,7 @@ public class CycleAnalysis {
     	else {
     		for (Var var: ndvars) {
     			CycleDetector<String,DefaultEdge> detector = new CycleDetector<String,DefaultEdge>(queryGraph);
-    			if (detector.detectCyclesContainingVertex(var.toString())) { 
+    			if (detector.detectCyclesContainingVertex(var.toString())) {
     				cycle = true;
     				break;
     			}
@@ -231,8 +231,8 @@ public class CycleAnalysis {
     	}
     	return cycle;
     }
-    
-    // check if all the cycles involve constants 
+
+    // check if all the cycles involve constants
     private boolean detectCyclesContainingConstantsAndDvars() {
     	boolean cycle = false;
     	if (constantsAndDvars.isEmpty())
@@ -240,7 +240,7 @@ public class CycleAnalysis {
     	else {
     		for (String var: constantsAndDvars) {
     			CycleDetector<String,DefaultEdge> detector = new CycleDetector<String,DefaultEdge>(queryGraph);
-    			if (detector.detectCyclesContainingVertex(var.toString())) { 
+    			if (detector.detectCyclesContainingVertex(var.toString())) {
     				cycle = true;
     				break;
     			}
@@ -254,8 +254,8 @@ public class CycleAnalysis {
     	if (constantsAndDvars.isEmpty())
     		contains = false;
     	else {
-    		for (String var: constantsAndDvars) {    			
-    			if (vertex.contains(var)) { 
+    		for (String var: constantsAndDvars) {
+    			if (vertex.contains(var)) {
     				contains = true;
     				break;
     			}
@@ -277,19 +277,19 @@ public class CycleAnalysis {
     // getNonDistVars()
     // ta.getResultVars() ++ ta.getProjectVars()
     //    isSelectType() && (isQueryResultStar || getProjectVars().len == )
-    // || isAskType && public 
+    // || isAskType && public
     // There is also getProjectVars() returning variables
     // List<String> getResultVars().
 
     // JE: This is useless, this is only dependent on itself!
     private static void projNoProjTest(String dir) throws IOException {
     	String missingPrefixes = "PREFIX geo: <http://www.example.com/>   PREFIX foaf: <http://xmlns.com/foaf/0.1/>";
-    	int cProj = 0, cNoProj = 0, syntaxerror = 0;  	
+    	int cProj = 0, cNoProj = 0, syntaxerror = 0;
     	int dagProj = 0, dagNoProj = 0;
     	int treeProj = 0, treeNoProj = 0;
     	int acyclic = 0, cyclic = 0;
     	int dag = 0, tree = 0;
-    	
+
     	File [] queries = getAllFiles (dir);
     	for (int i = 0; i < queries.length; i++) {
 	    String fname = queries[i].getAbsolutePath();
@@ -300,7 +300,7 @@ public class CycleAnalysis {
 		AcyclicnessTester cq = new AcyclicnessTester(tf.getTriples());
 		if (cq.isCyclic()) {
 		    cyclic++;
-		    if (cq.projectionCount(query)) 
+		    if (cq.projectionCount(query))
                 	cNoProj++;
 		    else {
                 	cProj++;
@@ -310,7 +310,7 @@ public class CycleAnalysis {
 		    acyclic++;
 		    if (cq.checkIfaDAGisTree()){
             		dag++;
-            		if (cq.projectionCount(query)) 
+            		if (cq.projectionCount(query))
 			    dagNoProj++;
 			else {
 			    dagProj++;
@@ -318,14 +318,14 @@ public class CycleAnalysis {
 		    }
 		    else {
             		tree++;
-            		if (cq.projectionCount(query)) 
+            		if (cq.projectionCount(query))
 			    treeNoProj++;
 			else {
 			    treeProj++;
 			}
 		    }
 		}
-	    }  catch (Exception e) { 
+	    }  catch (Exception e) {
 		syntaxerror++;continue;
 	    }
     	}
@@ -336,5 +336,5 @@ public class CycleAnalysis {
     	System.out.println("Tree stars = "+ treeNoProj + "    Tree proj = " + treeProj + "  Syntax error = " + syntaxerror);
     }
     */
-   
+
 }

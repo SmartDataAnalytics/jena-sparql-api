@@ -73,7 +73,7 @@ public class TestSparqlViewCacheVariableRenaming {
 //            .end()
 //            .create();
 
-        Model model = SparqlQcReader.readResources("sparqlqc/1.4/benchmark/noprojection/*");
+        Model model = SparqlQcReader.readQueryFolder("sparqlqc/1.4/benchmark/noprojection/*");
         SparqlQueryParser sparqlParser = SparqlQueryParserImpl.create(Syntax.syntaxARQ);
 
         Query testSuiteQuery = sparqlParser.apply("SELECT ?s ?c { ?s <" + LSQ.text + ">?c }");

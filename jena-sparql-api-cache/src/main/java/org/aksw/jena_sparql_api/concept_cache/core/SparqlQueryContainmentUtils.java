@@ -123,7 +123,7 @@ public class SparqlQueryContainmentUtils {
 		op = Transformer.transform(new TransformMergeBGPs(), op);
 		op = Algebra.toQuadForm(op);
 
-		System.out.println("asQuery: "+ OpAsQuery.asQuery(op));
+		//System.out.println("asQuery: "+ OpAsQuery.asQuery(op));
 		ProjectedOp result = SparqlCacheUtils.cutProjection(op);
 		return result;
 	}

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <groupId>lib</groupId>
+  <artifactId>javabdd</artifactId>
+  <versioning>
+    <release>1.0b2</release>
+    <versions>
+      <version>1.0b2</version>
+    </versions>
+    <lastUpdated>20161023011023</lastUpdated>
+  </versioning>
+</metadata>

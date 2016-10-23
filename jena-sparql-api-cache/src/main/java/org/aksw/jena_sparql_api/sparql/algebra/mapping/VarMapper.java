@@ -147,7 +147,7 @@ public class VarMapper {
         	ProblemVarMappingQuad quadProblem = new ProblemVarMappingQuad(viewQuads, queryQuads, Collections.emptyMap());
 
             if(logger.isTraceEnabled()) { logger.trace("Registered quad problem instance " + quadProblem + " with an estimated cost of " + quadProblem.getEstimatedCost()); }
-            System.out.println("Registered quad problem instance " + quadProblem + " with an estimated cost of " + quadProblem.getEstimatedCost());
+            //System.out.println("Registered quad problem instance " + quadProblem + " with an estimated cost of " + quadProblem.getEstimatedCost());
             //System.out.println("Registered quad problem instance " + quadProblem + " with an estimated cost of " + quadProblem.getEstimatedCost());
             //System.out.println("  Enumerating its solutions yields " + quadProblem.generateSolutions().count());
             //System.out.println("Registered quad problem instance " + quadProblem + " with " + quadProblem.generateSolutions().count() + " solutions ");

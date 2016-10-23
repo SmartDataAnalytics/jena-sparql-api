@@ -50,7 +50,7 @@ public class SparqlViewMatcherPatternTests {
     public static Collection<Object[]> createTestParams(String testCases, String queries) throws IOException {
 		Model tests = ModelFactory.createDefaultModel();
 		RDFDataMgr.read(tests, new ClassPathResource(testCases).getInputStream(), Lang.RDFXML);
-        Model model = SparqlQcReader.readResources(queries);
+        Model model = SparqlQcReader.readQueryFolder(queries);
         List<Resource> ts = tests.listResourcesWithProperty(RDF.type, SparqlQcVocab.ContainmentTest).toList();
 
         Object data[][] = new Object[ts.size()][3];

@@ -104,6 +104,31 @@
 			<version>0.9.0</version>
 		</dependency>
 
+
+		<dependency>
+			<groupId>lib</groupId>
+			<artifactId>afmu-solver</artifactId>
+			<version>1.0.0</version>
+		</dependency>
+
+		<dependency>
+    		<groupId>lib</groupId>
+    		<artifactId>javabdd</artifactId>
+    		<version>1.0b2</version>
+    	</dependency>
+
+		<dependency>
+			<groupId>lib</groupId>
+			<artifactId>lmu-solver</artifactId>
+			<version>1.0.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>lib</groupId>
+			<artifactId>subsum</artifactId>
+			<version>1.0.0</version>
+		</dependency>
+
 	</dependencies>
 
 	<!-- Don't touch the stuff below unless you know what you are doing -->
@@ -317,6 +342,11 @@
 	</distributionManagement>
 
 	<repositories>
+		<repository>
+	    	<id>my-local-repo</id>
+	    	<url>file://${basedir}/repo/</url>
+	  	</repository>
+
         <repository>
             <id>maven.aksw.internal</id>
             <name>University Leipzig, AKSW Maven2 Internal Repository</name>

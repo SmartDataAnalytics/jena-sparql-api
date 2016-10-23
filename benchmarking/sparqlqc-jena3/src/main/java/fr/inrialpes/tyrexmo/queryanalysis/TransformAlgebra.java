@@ -26,22 +26,24 @@ import java.util.Set;
 import java.util.HashSet;
 import java.util.Stack;
 
-import org.apache.jena.graph.Triple;
-import org.apache.jena.graph.Node;
-import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryFactory;
-import org.apache.jena.query.SortCondition;
-import org.apache.jena.sparql.ARQNotImplemented;
-import org.apache.jena.sparql.algebra.Algebra;
-import org.apache.jena.sparql.algebra.Op;
-import org.apache.jena.sparql.algebra.OpVisitor;
-import org.apache.jena.sparql.algebra.op.*;
-import org.apache.jena.sparql.core.BasicPattern;
-import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.core.VarExprList;
-import org.apache.jena.sparql.expr.Expr;
-import org.apache.jena.sparql.expr.ExprList;
-import org.apache.jena.sparql.syntax.*;
+import org.apache.jena.sparql.algebra.op.OpQuad;
+
+import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.query.Query;
+import com.hp.hpl.jena.query.QueryFactory;
+import com.hp.hpl.jena.query.SortCondition;
+import com.hp.hpl.jena.sparql.ARQNotImplemented;
+import com.hp.hpl.jena.sparql.algebra.Algebra;
+import com.hp.hpl.jena.sparql.algebra.Op;
+import com.hp.hpl.jena.sparql.algebra.OpVisitor;
+import com.hp.hpl.jena.sparql.algebra.op.*;
+import com.hp.hpl.jena.sparql.core.BasicPattern;
+import com.hp.hpl.jena.sparql.core.Var;
+import com.hp.hpl.jena.sparql.core.VarExprList;
+import com.hp.hpl.jena.sparql.expr.Expr;
+import com.hp.hpl.jena.sparql.expr.ExprList;
+import com.hp.hpl.jena.sparql.syntax.*;
 
 /** Convert an Op expression in SPARQL syntax, that is, the reverse of algebra generation */
 public class TransformAlgebra {
@@ -516,11 +518,6 @@ public class TransformAlgebra {
         public void visit(OpDisjunction opDisjunction) {
             throw new ARQNotImplemented("OpDisjunction");
         }
-
-		@Override
-		public void visit(OpQuadBlock quadBlock) {
-            throw new ARQNotImplemented("OpDisjunction");
-		}
 
     }
 }
