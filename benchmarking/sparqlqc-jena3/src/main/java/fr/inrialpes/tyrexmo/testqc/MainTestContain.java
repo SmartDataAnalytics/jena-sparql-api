@@ -31,7 +31,6 @@ import org.aksw.jena_sparql_api.delay.extra.DelayerDefault;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcReader;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcVocab;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
-import org.aksw.qcwrapper.jsa.ContainmentSolverWrapperJsa;
 import org.aksw.simba.lsq.vocab.LSQ;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
@@ -49,7 +48,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.hp.hpl.jena.query.QueryFactory;
 import com.itextpdf.text.DocumentException;
 
-import fr.inrialpes.tyrexmo.qcwrapper.sparqlalg.SPARQLAlgebraWrapper;
+import fr.inrialpes.tyrexmo.qcwrapper.afmu.AFMUContainmentWrapper;
 
 class TestCase {
 	public Query source;
@@ -194,18 +193,19 @@ public class MainTestContain {
 
 
     	Map<String, Object> solvers = new LinkedHashMap<>();
-    	solvers.put("JSA", new ContainmentSolverWrapperJsa());
-    	solvers.put("SA", new SPARQLAlgebraWrapper());
-    	//solvers.put("AFMU", new AFMUContainmentWrapper());
+    	//solvers.put("JSA", new ContainmentSolverWrapperJsa());
+    	//solvers.put("SA", new SPARQLAlgebraWrapper());
+    	solvers.put("AFMU", new AFMUContainmentWrapper());
     	//solvers.put("TS", new TreeSolverWrapper());
     	//solvers.put("LMU", //new )
+
 
     	Model overall = ModelFactory.createDefaultModel();
     	for(Entry<String, Object> entry : solvers.entrySet()) {
     		String dataset = entry.getKey();
 
     		// Attach the solver to the resource
-        	Iterator<Resource> taskExecs = prepareTaskExecutions(tasks, dataset, 200, 700)
+        	Iterator<Resource> taskExecs = prepareTaskExecutions(tasks, dataset, 1, 1)
         			.iterator();
 
 

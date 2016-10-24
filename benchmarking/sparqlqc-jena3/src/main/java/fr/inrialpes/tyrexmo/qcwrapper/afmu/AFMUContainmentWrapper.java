@@ -113,15 +113,8 @@ public class AFMUContainmentWrapper implements LegacyContainmentSolver {
 
     public void cleanup() {};
 
-    /*
-     * JE: Here I comment many things because I think that they are useless
-     */
-    public boolean checkSAT( String phi ) throws ParseException {
-		TimeHistory.start();
-	if ( firstTime ) {
-	    parser = new AFEParser( new StringReader( phi ) );
-	    firstTime = false;
-	} else {
+
+    public static void reset() {
 
 		try {
 			Field field = Formula.class.getDeclaredField("instances");
@@ -149,6 +142,19 @@ public class AFMUContainmentWrapper implements LegacyContainmentSolver {
 			throw new RuntimeException(e);
 		}
 
+    }
+
+
+    /*
+     * JE: Here I comment many things because I think that they are useless
+     */
+    public boolean checkSAT( String phi ) throws ParseException {
+		TimeHistory.start();
+	if ( firstTime ) {
+	    parser = new AFEParser( new StringReader( phi ) );
+	    firstTime = false;
+	} else {
+
 		AFEParser.ReInit( new StringReader( phi ) );
 	}
 
@@ -175,7 +181,10 @@ public class AFMUContainmentWrapper implements LegacyContainmentSolver {
 	//System.out.println(leansize);
 	*/
 	SatCheck satcheck = new SatCheck( f );
-	return !satcheck.satisfiable();
+	boolean result = !satcheck.satisfiable();
+	reset();
+	return result;
+
     }
 
     protected boolean useSameEncoding( Query leftQuery, Query rightQuery ) {
