@@ -5,8 +5,10 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -31,6 +33,7 @@ import org.aksw.jena_sparql_api.delay.extra.DelayerDefault;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcReader;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcVocab;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
+import org.aksw.qcwrapper.jsa.ContainmentSolverWrapperJsa;
 import org.aksw.simba.lsq.vocab.LSQ;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
@@ -44,11 +47,13 @@ import org.apache.jena.vocabulary.RDFS;
 import org.jfree.chart.JFreeChart;
 import org.jfree.data.category.CategoryDataset;
 
+import com.google.common.base.Predicate;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.hp.hpl.jena.query.QueryFactory;
 import com.itextpdf.text.DocumentException;
 
 import fr.inrialpes.tyrexmo.qcwrapper.afmu.AFMUContainmentWrapper;
+import fr.inrialpes.tyrexmo.qcwrapper.sparqlalg.SPARQLAlgebraWrapper;
 
 class TestCase {
 	public Query source;
@@ -135,7 +140,7 @@ public class MainTestContain {
 			String str = actual == expected ? "CORRECT" : "WRONG";
 			r.addLiteral(RDFS.label, str);
 		} catch (ContainmentTestException e) {
-			throw new RuntimeException();
+			throw new RuntimeException(e);
 		} }, () -> {
 			try {
 				solver.cleanup();
@@ -185,7 +190,7 @@ public class MainTestContain {
 
 
 	public static void main(String[] args) throws IOException, InterruptedException, DocumentException {
-    	List<Resource> tasks = SparqlQcReader.loadTasks("sparqlqc/1.4/benchmark/cqnoproj.rdf", "sparqlqc/1.4/benchmark/noprojection/*");
+    	List<Resource> allTasks = SparqlQcReader.loadTasks("sparqlqc/1.4/benchmark/cqnoproj.rdf", "sparqlqc/1.4/benchmark/noprojection/*");
 
 //    	tasks = tasks.stream()
 //    			.filter(t -> !t.getURI().contains("19") && !t.getURI().contains("6"))
@@ -193,19 +198,30 @@ public class MainTestContain {
 
 
     	Map<String, Object> solvers = new LinkedHashMap<>();
-    	//solvers.put("JSA", new ContainmentSolverWrapperJsa());
-    	//solvers.put("SA", new SPARQLAlgebraWrapper());
+    	solvers.put("JSA", new ContainmentSolverWrapperJsa());
+    	solvers.put("SA", new SPARQLAlgebraWrapper());
     	solvers.put("AFMU", new AFMUContainmentWrapper());
     	//solvers.put("TS", new TreeSolverWrapper());
     	//solvers.put("LMU", //new )
+
+    	// TODO Ideally have the blacklist in the data
+    	Map<String, Predicate<String>> blackLists = new HashMap<>();
+    	blackLists.put("AFMU", (r) -> Arrays.asList("nop3", "nop4", "nop15", "nop16").stream().anyMatch(r::contains));
 
 
     	Model overall = ModelFactory.createDefaultModel();
     	for(Entry<String, Object> entry : solvers.entrySet()) {
     		String dataset = entry.getKey();
 
+    		Predicate<String> p = blackLists.get(dataset);
+
+    		List<Resource> tasks = allTasks.stream()
+        			.filter(r -> p == null ? true : !p.apply(r.getURI()))
+        			.collect(Collectors.toList());
+
+
     		// Attach the solver to the resource
-        	Iterator<Resource> taskExecs = prepareTaskExecutions(tasks, dataset, 1, 1)
+        	Iterator<Resource> taskExecs = prepareTaskExecutions(tasks, dataset, 1, 2)
         			.iterator();
 
 

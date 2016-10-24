@@ -135,7 +135,9 @@ public class AFMUContainmentWrapper implements LegacyContainmentSolver {
 			Field field = BuDDyFactory.class.getDeclaredField("INSTANCE");
 			field.setAccessible(true);
 			BuDDyFactory f = (BuDDyFactory)field.get(null);
-			f.done();
+			if(f != null) {
+				f.done();
+			}
 
 			//field.set(null, null);
 		} catch(Exception e) {
@@ -154,7 +156,7 @@ public class AFMUContainmentWrapper implements LegacyContainmentSolver {
 	    parser = new AFEParser( new StringReader( phi ) );
 	    firstTime = false;
 	} else {
-
+		reset();
 		AFEParser.ReInit( new StringReader( phi ) );
 	}
 
