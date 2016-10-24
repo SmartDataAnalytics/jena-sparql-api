@@ -97,11 +97,14 @@
 			<version>1.0.0</version>
 		</dependency>
 
-		<dependency>
-			<groupId>lib</groupId>
-			<artifactId>javabdd</artifactId>
-			<version>1.0b2</version>
-		</dependency>
+		<!-- lmu-solver comes with its own java-bdd version which is incompatible -->
+		<!-- with the version required by the afmu-solver -->
+
+		<!-- <dependency> -->
+		<!-- <groupId>lib</groupId> -->
+		<!-- <artifactId>javabdd</artifactId> -->
+		<!-- <version>1.0b2</version> -->
+		<!-- </dependency> -->
 
 		<dependency>
 			<groupId>lib</groupId>
@@ -115,11 +118,11 @@
 			<version>1.0.0</version>
 		</dependency>
 
-<!-- 		<dependency> -->
-<!-- 			<groupId>xalan</groupId> -->
-<!-- 			<artifactId>xalan</artifactId> -->
-<!-- 			<version>2.3.1</version> -->
-<!-- 		</dependency> -->
+		<!-- <dependency> -->
+		<!-- <groupId>xalan</groupId> -->
+		<!-- <artifactId>xalan</artifactId> -->
+		<!-- <version>2.3.1</version> -->
+		<!-- </dependency> -->
 
 		<dependency>
 			<groupId>lib</groupId>
@@ -134,10 +137,16 @@
 		</dependency>
 
 <!-- 		<dependency> -->
-<!-- 		    <groupId>xerces</groupId> -->
-<!-- 		    <artifactId>xercesImpl</artifactId> -->
-<!-- 		    <version>2.7.1</version> -->
+<!-- 			<groupId>org.xeustechnologies</groupId> -->
+<!-- 			<artifactId>jcl-core</artifactId> -->
+<!-- 			<version>2.6</version> -->
 <!-- 		</dependency> -->
+
+		<!-- <dependency> -->
+		<!-- <groupId>xerces</groupId> -->
+		<!-- <artifactId>xercesImpl</artifactId> -->
+		<!-- <version>2.7.1</version> -->
+		<!-- </dependency> -->
 
 	</dependencies>
 

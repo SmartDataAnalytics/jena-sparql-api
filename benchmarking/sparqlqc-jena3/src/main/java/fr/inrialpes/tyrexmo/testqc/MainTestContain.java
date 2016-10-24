@@ -52,7 +52,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.hp.hpl.jena.query.QueryFactory;
 import com.itextpdf.text.DocumentException;
 
-import fr.inrialpes.tyrexmo.qcwrapper.afmu.AFMUContainmentWrapper;
+import fr.inrialpes.tyrexmo.qcwrapper.lmu.TreeSolverWrapper;
 import fr.inrialpes.tyrexmo.qcwrapper.sparqlalg.SPARQLAlgebraWrapper;
 
 class TestCase {
@@ -200,8 +200,8 @@ public class MainTestContain {
     	Map<String, Object> solvers = new LinkedHashMap<>();
     	solvers.put("JSA", new ContainmentSolverWrapperJsa());
     	solvers.put("SA", new SPARQLAlgebraWrapper());
-    	solvers.put("AFMU", new AFMUContainmentWrapper());
-    	//solvers.put("TS", new TreeSolverWrapper());
+    	//solvers.put("AFMU", new AFMUContainmentWrapper());
+    	solvers.put("TS", new TreeSolverWrapper());
     	//solvers.put("LMU", //new )
 
     	// TODO Ideally have the blacklist in the data
@@ -211,6 +211,10 @@ public class MainTestContain {
 
     	Model overall = ModelFactory.createDefaultModel();
     	for(Entry<String, Object> entry : solvers.entrySet()) {
+//    		JarClassLoader jcl = new JarClassLoader();
+//    		jcl.add("/home/raven/Projects/Eclipse/jena-sparql-api-parent/benchmarking/sparqlqc-jena3/repo/lib/");
+
+
     		String dataset = entry.getKey();
 
     		Predicate<String> p = blackLists.get(dataset);
@@ -221,7 +225,7 @@ public class MainTestContain {
 
 
     		// Attach the solver to the resource
-        	Iterator<Resource> taskExecs = prepareTaskExecutions(tasks, dataset, 1, 2)
+        	Iterator<Resource> taskExecs = prepareTaskExecutions(tasks, dataset, 10, 20)
         			.iterator();
 
 
