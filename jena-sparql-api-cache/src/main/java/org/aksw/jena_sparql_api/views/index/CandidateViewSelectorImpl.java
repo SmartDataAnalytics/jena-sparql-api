@@ -301,7 +301,7 @@ public class CandidateViewSelectorImpl<V>
 
             for(Expr expr : exprs) {
 
-                Pair<Var, NodeValue> e = ExprUtils.extractConstantConstraint(expr);
+                Entry<Var, NodeValue> e = ExprUtils.extractConstantConstraint(expr);
                 if(e != null) {
                     Node node = e.getValue().asNode();
                     if(node.isURI()) {

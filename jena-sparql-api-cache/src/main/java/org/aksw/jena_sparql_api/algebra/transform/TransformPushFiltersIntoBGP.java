@@ -70,7 +70,7 @@ public class TransformPushFiltersIntoBGP
 
 			ExprList exprs = opFilter.getExprs();
 			Set<Set<Expr>> dnf = DnfUtils.toSetDnf(exprs);
-			Map<Var, NodeValue> tmpMap = DnfUtils.extractConstantConstraints(dnf);
+			Map<Var, NodeValue> tmpMap = DnfUtils.extractCommonConstantConstraints(dnf);
 			Map<Var, Node> map = tmpMap.entrySet().stream()
 					.collect(Collectors.toMap(Entry::getKey, e -> e.getValue().asNode()));
 

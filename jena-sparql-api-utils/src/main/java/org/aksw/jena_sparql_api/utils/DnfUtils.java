@@ -1,15 +1,16 @@
 package org.aksw.jena_sparql_api.utils;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
-import org.aksw.commons.util.Pair;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.sparql.algebra.Algebra;
@@ -88,7 +89,7 @@ public class DnfUtils
 
 
 
-    public static void addConstantConstraint(Map<Var, NodeValue> map, Pair<Var, NodeValue> constraint) {
+    public static void addConstantConstraint(Map<Var, NodeValue> map, Entry<Var, NodeValue> constraint) {
         if(constraint == null) {
             return;
         }
@@ -109,13 +110,22 @@ public class DnfUtils
         }
     }
 
+    public static Set<Map<Var, NodeValue>> extractConstantConstraints(Collection<? extends Collection<? extends Expr>> dnf) {
+    	Set<Map<Var, NodeValue>> result = new HashSet<>(dnf.size());
+    	for(Collection<? extends Expr> clause : dnf) {
+    		Map<Var, NodeValue> map = ClauseUtils.extractConstantConstraints(clause);
+    		result.add(map);
+    	}
+    	return result;
+    }
+
     /**
      * For each clause determine the constant constraints, and return those,
      * that are common to all clauses.
      *
      * @param dnf
      */
-    public static Map<Var, NodeValue> extractConstantConstraints(Set<Set<Expr>> dnf) {
+    public static Map<Var, NodeValue> extractCommonConstantConstraints(Set<Set<Expr>> dnf) {
         Map<Var, NodeValue> result = new HashMap<Var, NodeValue>();
 
         Iterator<Set<Expr>> clauseIt = dnf.iterator();
@@ -125,7 +135,7 @@ public class DnfUtils
 
         Set<Expr> firstClause = clauseIt.next();
         for(Expr expr : firstClause) {
-            Pair<Var, NodeValue> constraint = ExprUtils.extractConstantConstraint(expr);
+            Entry<Var, NodeValue> constraint = ExprUtils.extractConstantConstraint(expr);
 
             addConstantConstraint(result,  constraint);
         }
@@ -139,7 +149,7 @@ public class DnfUtils
 
             Set<Expr> clause = clauseIt.next();
             for(Expr expr : clause) {
-                Pair<Var, NodeValue> constraint = ExprUtils.extractConstantConstraint(expr);
+                Entry<Var, NodeValue> constraint = ExprUtils.extractConstantConstraint(expr);
                 if(constraint == null || !result.containsKey(constraint.getKey())) {
                     continue;
                 }

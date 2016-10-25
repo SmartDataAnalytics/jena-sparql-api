@@ -335,7 +335,7 @@ public class ExprUtils {
 
 
 
-    public static Pair<Var, NodeValue> extractConstantConstraint(Expr expr) {
+    public static Entry<Var, NodeValue> extractConstantConstraint(Expr expr) {
         if(expr instanceof E_Equals) {
             E_Equals e = (E_Equals)expr;
             return extractVarConstant(e.getArg1(), e.getArg2());

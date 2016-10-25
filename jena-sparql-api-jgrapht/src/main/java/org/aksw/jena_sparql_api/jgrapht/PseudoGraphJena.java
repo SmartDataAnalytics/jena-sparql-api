@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api_sparql_path2;
+package org.aksw.jena_sparql_api.jgrapht;
 
 import java.util.Collection;
 import java.util.HashSet;

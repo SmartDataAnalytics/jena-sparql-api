@@ -3,10 +3,8 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<artifactId>jena-sparql-api-cache</artifactId>
+	<artifactId>jena-sparql-api-jgrapht</artifactId>
 	<packaging>jar</packaging>
-
-	<name>Jena SPARQL API - Cache</name>
 
 	<parent>
 		<groupId>org.aksw.jena-sparql-api</groupId>
@@ -16,10 +14,10 @@
 
 	<build>
 		<plugins>
-			<!-- <plugin> <groupId>org.apache.maven.plugins</groupId> <artifactId>maven-remote-resources-plugin</artifactId>
-				<version>1.5</version> <configuration> <outputDirectory>${project.build.directory}/classes</outputDirectory>
-				<resourceBundles> <resourceBundle>org.aksw.jena-sparql-api:jena-sparql-api-resources:${project.version}</resourceBundle>
-				</resourceBundles> </configuration> <executions> <execution> <id>process-remote-resources</id>
+			<!-- <plugin> <groupId>org.apache.maven.plugins</groupId> <artifactId>maven-remote-resources-plugin</artifactId> 
+				<version>1.5</version> <configuration> <outputDirectory>${project.build.directory}/classes</outputDirectory> 
+				<resourceBundles> <resourceBundle>org.aksw.jena-sparql-api:jena-sparql-api-resources:${project.version}</resourceBundle> 
+				</resourceBundles> </configuration> <executions> <execution> <id>process-remote-resources</id> 
 				<goals> <goal>process</goal> </goals> </execution> </executions> </plugin> -->
 		</plugins>
 	</build>
@@ -29,21 +27,6 @@
 		<dependency>
 			<groupId>org.aksw.jena-sparql-api</groupId>
 			<artifactId>jena-sparql-api-core</artifactId>
-		</dependency>
-
-		<dependency>
-			<groupId>org.aksw.jena-sparql-api</groupId>
-			<artifactId>jena-sparql-api-jgrapht</artifactId>
-		</dependency>
-
-		<dependency>
-			<groupId>org.aksw.jena-sparql-api</groupId>
-			<artifactId>jena-sparql-api-views</artifactId>
-		</dependency>
-
-		<dependency>
-			<groupId>org.aksw.jena-sparql-api</groupId>
-			<artifactId>jena-sparql-api-resources-sparqlqc</artifactId>
 		</dependency>
 
 
@@ -87,7 +70,7 @@
 			<artifactId>protonpack</artifactId>
 		</dependency>
 
-		<!-- Database - used for SPARQL caching, Runtime dep, as the DB is started
+		<!-- Database - used for SPARQL caching, Runtime dep, as the DB is started 
 			automatically on connection -->
 		<dependency>
 			<groupId>com.h2database</groupId>

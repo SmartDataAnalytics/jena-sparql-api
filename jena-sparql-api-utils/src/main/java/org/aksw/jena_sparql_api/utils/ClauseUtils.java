@@ -1,11 +1,16 @@
 package org.aksw.jena_sparql_api.utils;
 
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.algebra.optimize.ExprTransformConstantFold;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.BindingRoot;
@@ -19,6 +24,18 @@ public class ClauseUtils
 {
 
     public static final Set<Expr> TRUE = Collections.<Expr>singleton(NodeValue.TRUE);
+
+
+    public static Map<Var, NodeValue> extractConstantConstraints(Collection<? extends Expr> clause) {
+    	Map<Var, NodeValue> result = new HashMap<>(clause.size());
+    	for(Expr expr : clause) {
+    		Entry<Var, NodeValue> e = ExprUtils.extractConstantConstraint(expr);
+    		if(e != null) {
+    			result.put(e.getKey(), e.getValue());
+    		}
+    	}
+    	return result;
+    }
 
     /*
      * Use ExprIndex.filterByVars instead

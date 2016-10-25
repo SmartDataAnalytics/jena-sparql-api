@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Set;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.jgrapht.LabeledEdge;
+import org.aksw.jena_sparql_api.jgrapht.LabeledEdgeImpl;
 import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;

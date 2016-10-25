@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.sparql_path2;
 
+import org.aksw.jena_sparql_api.jgrapht.LabeledEdge;
+
 public class EdgeLabelAccessorImpl<V, E, T>
     implements EdgeLabelAccessor<LabeledEdge<V, T>, T>
 {

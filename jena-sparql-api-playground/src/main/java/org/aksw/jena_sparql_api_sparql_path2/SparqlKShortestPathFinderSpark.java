@@ -6,7 +6,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.stream.StreamSupport;
 
-import org.aksw.jena_sparql_api.sparql_path2.LabeledEdge;
+import org.aksw.jena_sparql_api.jgrapht.LabeledEdge;
 import org.aksw.jena_sparql_api.sparql_path2.NestedPath;
 import org.aksw.jena_sparql_api.sparql_path2.Nfa;
 import org.aksw.jena_sparql_api.sparql_path2.PathCompiler;

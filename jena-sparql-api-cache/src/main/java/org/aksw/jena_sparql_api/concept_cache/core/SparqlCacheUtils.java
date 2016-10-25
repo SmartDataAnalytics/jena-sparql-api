@@ -115,6 +115,19 @@ public class SparqlCacheUtils {
         return result;
     }
 
+    /**
+     * Utility method to quickly create a canonical quad filter pattern from a query.
+     *
+     * @param query
+     * @return
+     */
+    public static QuadFilterPatternCanonical fromQuery(Query query) {
+		ProjectedOp op = SparqlQueryContainmentUtils.toProjectedOp(query);
+		Op resOp = op.getResidualOp();
+		QuadFilterPatternCanonical result = SparqlCacheUtils.extractQuadFilterPatternCanonical(resOp);
+		return result;
+    }
+
     public static QuadFilterPatternCanonical removeDefaultGraphFilter(QuadFilterPatternCanonical qfpc) {
         Set<Quad> quads = qfpc.getQuads();
         Set<Set<Expr>> cnf = qfpc.getFilterCnf();

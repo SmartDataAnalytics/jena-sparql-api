@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.sparql_path2;
+package org.aksw.jena_sparql_api.jgrapht;
 
 public interface LabeledEdgeFactory<V, E, T>
 {

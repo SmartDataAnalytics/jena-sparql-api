@@ -5,30 +5,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.regex.Matcher;
 
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlQueryContainmentUtils;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcReader;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcVocab;
 import org.aksw.simba.lsq.vocab.LSQ;
 import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.riot.Lang;
-import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.sparql.algebra.Algebra;
-import org.apache.jena.sparql.algebra.Op;
-import org.apache.jena.sparql.algebra.Transformer;
-import org.apache.jena.sparql.algebra.optimize.TransformPathFlatternStd;
-import org.apache.jena.vocabulary.RDF;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
-import org.springframework.core.io.ClassPathResource;
 
 
 //@FixMethodOrder
@@ -48,16 +37,17 @@ public class SparqlViewMatcherPatternTests {
 
 
     public static Collection<Object[]> createTestParams(String testCases, String queries) throws IOException {
-		Model tests = ModelFactory.createDefaultModel();
-		RDFDataMgr.read(tests, new ClassPathResource(testCases).getInputStream(), Lang.RDFXML);
-        Model model = SparqlQcReader.readQueryFolder(queries);
-        List<Resource> ts = tests.listResourcesWithProperty(RDF.type, SparqlQcVocab.ContainmentTest).toList();
+		//Model tests = ModelFactory.createDefaultModel();
+		//RDFDataMgr.read(tests, new ClassPathResource(testCases).getInputStream(), Lang.RDFXML);
+        //Model model = SparqlQcReader.loadTasks(testCases, queries)readQueryFolder(queries);
+    	List<Resource> ts = SparqlQcReader.loadTasks(testCases, queries);
+        //List<Resource> ts = tests.listResourcesWithProperty(RDF.type, SparqlQcVocab.ContainmentTest).toList();
 
         Object data[][] = new Object[ts.size()][3];
         for(int i = 0; i < ts.size(); ++i) {
         	Resource t = ts.get(i);
             data[i][0] = t.getURI(); //testCase.getName();
-            data[i][1] = model;
+            data[i][1] = t.getModel();
             data[i][2] = t;
         }
 
@@ -77,22 +67,33 @@ public class SparqlViewMatcherPatternTests {
     }
 
 
-	public Query resolve(Model model, String id) {
-    	Matcher m = SparqlQcReader.queryNamePattern.matcher(id);
-    	m.find();
-    	String uri = "http://ex.org/query/" + m.group("id") + "-" + m.group("variant");
-    	Query result = extractQuery(model,  uri);
-    	return result;
-	}
+//    public Query resolve(Model model, String id) {
+//    	Resource r = model.getResource(id);
+//    	System.out.println("YAY: " + id);
+//    	r.getModel().write(System.out, "TURTLE");
+//
+//		String str = r.getRequiredProperty(LSQ.text)
+//				.getObject().asLiteral().getString();
+//		Query result = SparqlQueryContainmentUtils.queryParser.apply(str);
+//		return result;
+//    }
 
-	public Query extractQuery(Model model, String uri) {
-		Resource r = model.getResource(uri);
-
-		String str = r.getRequiredProperty(LSQ.text)
-				.getObject().asLiteral().getString();
-		Query result = SparqlQueryContainmentUtils.queryParser.apply(str);
-		return result;
-	}
+//	public Query resolve(Model model, String id) {
+//    	Matcher m = SparqlQcReader.queryNamePattern.matcher(id);
+//    	m.find();
+//    	String uri = "http://ex.org/query/" + m.group("id") + "-" + m.group("variant");
+//    	Query result = extractQuery(model,  uri);
+//    	return result;
+//	}
+//
+//	public Query extractQuery(Model model, String uri) {
+//		Resource r = model.getResource(uri);
+//
+//		String str = r.getRequiredProperty(LSQ.text)
+//				.getObject().asLiteral().getString();
+//		Query result = SparqlQueryContainmentUtils.queryParser.apply(str);
+//		return result;
+//	}
 
 //
 //	@Test
@@ -148,18 +149,29 @@ public class SparqlViewMatcherPatternTests {
 
 	@Test
 	public void runTest() {
-		String srcQueryId = t.getRequiredProperty(SparqlQcVocab.sourceQuery).getObject().asLiteral().getString();
-		String tgtQueryId = t.getRequiredProperty(SparqlQcVocab.targetQuery).getObject().asLiteral().getString();
+		String srcQueryStr = t.getRequiredProperty(SparqlQcVocab.sourceQuery).getObject().asResource().getRequiredProperty(LSQ.text).getObject().asLiteral().getString();
+		String tgtQueryStr = t.getRequiredProperty(SparqlQcVocab.targetQuery).getObject().asResource().getRequiredProperty(LSQ.text).getObject().asLiteral().getString();
 		boolean expectedVerdict = Boolean.parseBoolean(t.getRequiredProperty(SparqlQcVocab.result).getObject().asLiteral().getString());
 
-		Query viewQuery = resolve(model, tgtQueryId);
-		Query userQuery = resolve(model, srcQueryId);
+		Query viewQuery = SparqlQueryContainmentUtils.queryParser.apply(srcQueryStr);
+		Query userQuery = SparqlQueryContainmentUtils.queryParser.apply(tgtQueryStr);
 
 		System.out.println("View Query: " + viewQuery);
 		System.out.println("User Query: " + userQuery);
 
 //		Element viewEl = viewQuery.getQueryPattern();
 //		Element userEl = userQuery.getQueryPattern();
+
+
+		QueryToGraph.tryMatch(viewQuery, userQuery);
+
+		System.out.println("Hit a key to continue");
+		try {
+			System.in.read();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+
 
 		boolean actualVerdict = SparqlQueryContainmentUtils.tryMatch(viewQuery, userQuery);
 				//SparqlQueryContainmentUtils.tryMatch(userEl, viewEl);
