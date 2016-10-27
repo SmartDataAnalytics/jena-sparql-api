@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.cache.tests;
 
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -89,17 +90,34 @@ public class QueryToGraph {
 		queryToGraph(a, view);
 		queryToGraph(b, user);
 
-		System.out.println("EDGES:");
-		a.edgeSet().forEach(System.out::println);
+		//System.out.println("EDGES:");
+		//a.edgeSet().forEach(System.out::println);
+		//System.out.println("done with edges");
 
-		Comparator<Node> nodeCmp = (x, y) -> x.isVariable() || y.isVariable() ? 0 : x.toString().compareTo(y.toString());
+		Comparator<Node> nodeCmp = (x, y) -> {
+			int  r = (x.isVariable() && y.isVariable()) || (x.isBlank() && y.isBlank()) ? 0 : x.toString().compareTo(y.toString());
+			//System.out.println("" + x + " - " + y + ": " + r);
+			return r;
+		};
 		Comparator<LabeledEdge<Node, Node>> edgeCmp = (x, y) -> x.getLabel().toString().compareTo(y.getLabel().toString());
 //		Comparator<//LabeledEd>
 		VF2SubgraphIsomorphismInspector<Node, LabeledEdge<Node, Node>> inspector = new VF2SubgraphIsomorphismInspector<>(a, b, nodeCmp, edgeCmp, true);
 		Iterator<GraphMapping<Node, LabeledEdge<Node, Node>>> it = inspector.getMappings();
 		while(it.hasNext()) {
 			GraphMapping<Node, LabeledEdge<Node, Node>> x = it.next();
-			System.out.println(x);
+			Map<Var, Var> varMap = new HashMap<>();
+			for(Node node : a.vertexSet()) {
+				if(node.isVariable()) {
+					Var s = (Var)node;
+					Node fff = x.getVertexCorrespondence(s, false);
+					if(fff.isVariable()) {
+						varMap.put(s, (Var)fff);
+					}
+				}
+			}
+			System.out.println(varMap);
+
+			System.out.println(x.getClass());
 		}
 
 	}
