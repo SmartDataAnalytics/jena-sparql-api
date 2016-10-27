@@ -163,17 +163,17 @@ public class SparqlViewMatcherPatternTests {
 //		Element userEl = userQuery.getQueryPattern();
 
 
-		QueryToGraph.tryMatch(viewQuery, userQuery);
+		boolean actualVerdict = QueryToGraph.tryMatch(viewQuery, userQuery);
 
-		System.out.println("Hit a key to continue");
-		try {
-			System.in.read();
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+//		System.out.println("Hit a key to continue");
+//		try {
+//			System.in.read();
+//		} catch (IOException e) {
+//			throw new RuntimeException(e);
+//		}
 
 
-		boolean actualVerdict = SparqlQueryContainmentUtils.tryMatch(viewQuery, userQuery);
+		//boolean actualVerdict = SparqlQueryContainmentUtils.tryMatch(viewQuery, userQuery);
 				//SparqlQueryContainmentUtils.tryMatch(userEl, viewEl);
 		//System.out.println(srcQueryId + " - " + tgtQueryId + " - " + actualVerdict + " expected: "+ expectedVerdict);
 

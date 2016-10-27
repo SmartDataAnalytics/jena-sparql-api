@@ -83,7 +83,7 @@ public class QueryToGraph {
 		toGraph(graph, qfpc);
 	}
 
-	public static void tryMatch(Query view, Query user) {
+	public static boolean tryMatch(Query view, Query user) {
 		DirectedGraph<Node, LabeledEdge<Node, Node>> a = new SimpleDirectedGraph<>(LabeledEdgeImpl.class);
 		DirectedGraph<Node, LabeledEdge<Node, Node>> b = new SimpleDirectedGraph<>(LabeledEdgeImpl.class);
 
@@ -106,20 +106,27 @@ public class QueryToGraph {
 		while(it.hasNext()) {
 			GraphMapping<Node, LabeledEdge<Node, Node>> x = it.next();
 			Map<Var, Var> varMap = new HashMap<>();
+			boolean r = true;
 			for(Node node : a.vertexSet()) {
 				if(node.isVariable()) {
 					Var s = (Var)node;
 					Node fff = x.getVertexCorrespondence(s, false);
 					if(fff.isVariable()) {
 						varMap.put(s, (Var)fff);
+					} else {
+						r = false;
+						break;
 					}
 				}
 			}
-			System.out.println(varMap);
 
-			System.out.println(x.getClass());
+			if(r) {
+				return true;
+			}
+
 		}
 
+		return false;
 	}
 
 
