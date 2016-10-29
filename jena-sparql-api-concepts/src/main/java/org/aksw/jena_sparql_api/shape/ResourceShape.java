@@ -260,7 +260,7 @@ public class ResourceShape {
             if(e instanceof ElementFilter) {
                 ElementFilter filter = (ElementFilter)e;
                 Expr expr = filter.getExpr();
-                Pair<Var, NodeValue> c = ExprUtils.extractConstantConstraint(expr);
+                Entry<Var, NodeValue> c = ExprUtils.extractConstantConstraint(expr);
                 if(c != null && c.getKey().equals(s)) {
                     Node n = c.getValue().asNode();
                     concretePredicates.add(n);

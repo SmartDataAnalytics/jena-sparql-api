@@ -111,6 +111,7 @@ public class DnfUtils
     }
 
     public static Set<Map<Var, NodeValue>> extractConstantConstraints(Collection<? extends Collection<? extends Expr>> dnf) {
+    	dnf = dnf == null ? Collections.emptySet() : dnf;
     	Set<Map<Var, NodeValue>> result = new HashSet<>(dnf.size());
     	for(Collection<? extends Expr> clause : dnf) {
     		Map<Var, NodeValue> map = ClauseUtils.extractConstantConstraints(clause);

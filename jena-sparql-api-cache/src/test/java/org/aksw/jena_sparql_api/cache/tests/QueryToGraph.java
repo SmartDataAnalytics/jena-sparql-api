@@ -7,7 +7,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Stream;
 
+import org.aksw.commons.collections.utils.StreamUtils;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.jgrapht.LabeledEdge;
@@ -23,8 +25,10 @@ import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.GraphMapping;
+import org.jgrapht.alg.isomorphism.IsomorphicGraphMapping;
 import org.jgrapht.alg.isomorphism.VF2SubgraphIsomorphismInspector;
 import org.jgrapht.graph.SimpleDirectedGraph;
+
 
 public class QueryToGraph {
 	public static void addEdge(DirectedGraph<Node, LabeledEdge<Node, Node>> graph, Node edgeLabel, Node source, Node target) {
@@ -78,21 +82,32 @@ public class QueryToGraph {
 		equalExprsToGraph(graph, qfpc.getFilterDnf());
 	}
 
-	public static void queryToGraph(DirectedGraph<Node, LabeledEdge<Node, Node>> graph, Query query) {
+	public static void toGraph(DirectedGraph<Node, LabeledEdge<Node, Node>> graph, Query query) {
 		QuadFilterPatternCanonical qfpc = SparqlCacheUtils.fromQuery(query);
 		toGraph(graph, qfpc);
 	}
 
-	public static boolean tryMatch(Query view, Query user) {
-		DirectedGraph<Node, LabeledEdge<Node, Node>> a = new SimpleDirectedGraph<>(LabeledEdgeImpl.class);
-		DirectedGraph<Node, LabeledEdge<Node, Node>> b = new SimpleDirectedGraph<>(LabeledEdgeImpl.class);
+	public static DirectedGraph<Node, LabeledEdge<Node, Node>> toGraph(QuadFilterPatternCanonical qfpc) {
+		DirectedGraph<Node, LabeledEdge<Node, Node>> graph = new SimpleDirectedGraph<>(LabeledEdgeImpl.class);
 
-		queryToGraph(a, view);
-		queryToGraph(b, user);
+		toGraph(graph, qfpc);
 
-		//System.out.println("EDGES:");
-		//a.edgeSet().forEach(System.out::println);
-		//System.out.println("done with edges");
+		return graph;
+	}
+
+	public static Stream<Map<Var, Var>> match(QuadFilterPatternCanonical view, QuadFilterPatternCanonical user) {
+		DirectedGraph<Node, LabeledEdge<Node, Node>> a = toGraph(view);
+		DirectedGraph<Node, LabeledEdge<Node, Node>> b = toGraph(user);
+
+		Stream<Map<Var, Var>> result = match(a, b);
+		return result;
+	}
+
+	public static Stream<Map<Var, Var>> match(DirectedGraph<Node, LabeledEdge<Node, Node>> a, DirectedGraph<Node, LabeledEdge<Node, Node>> b) {
+
+		System.out.println("EDGES:");
+		a.edgeSet().forEach(System.out::println);
+		System.out.println("done with edges");
 
 		Comparator<Node> nodeCmp = (x, y) -> {
 			int  r = (x.isVariable() && y.isVariable()) || (x.isBlank() && y.isBlank()) ? 0 : x.toString().compareTo(y.toString());
@@ -103,30 +118,46 @@ public class QueryToGraph {
 //		Comparator<//LabeledEd>
 		VF2SubgraphIsomorphismInspector<Node, LabeledEdge<Node, Node>> inspector = new VF2SubgraphIsomorphismInspector<>(a, b, nodeCmp, edgeCmp, true);
 		Iterator<GraphMapping<Node, LabeledEdge<Node, Node>>> it = inspector.getMappings();
-		while(it.hasNext()) {
-			GraphMapping<Node, LabeledEdge<Node, Node>> x = it.next();
-			Map<Var, Var> varMap = new HashMap<>();
-			boolean r = true;
-			for(Node node : a.vertexSet()) {
-				if(node.isVariable()) {
-					Var s = (Var)node;
-					Node fff = x.getVertexCorrespondence(s, false);
-					if(fff.isVariable()) {
-						varMap.put(s, (Var)fff);
-					} else {
-						r = false;
-						break;
+
+		Stream<Map<Var, Var>> result = StreamUtils.stream(it)
+				.map(x -> (IsomorphicGraphMapping<Node, LabeledEdge<Node, Node>>)x)
+				.map(x -> {
+					Map<Var, Var> varMap = new HashMap<>();
+					boolean r = true;
+					for(Node node : a.vertexSet()) {
+						if(node.isVariable()) {
+							Var s = (Var)node;
+							if(x.hasVertexCorrespondence(s)) {
+								Node fff = x.getVertexCorrespondence(s, true);
+								if(fff.isVariable()) {
+									varMap.put(s, (Var)fff);
+								} else {
+									r = false;
+									break;
+								}
+							}
+						}
 					}
-				}
-			}
 
-			if(r) {
-				return true;
-			}
+					Map<Var, Var> s = r ? varMap : null;
+					return s;
+				}).
+				filter(x -> x != null);
 
-		}
+		return result;
+	}
 
-		return false;
+	public static boolean tryMatch(Query view, Query user) {
+		DirectedGraph<Node, LabeledEdge<Node, Node>> a = new SimpleDirectedGraph<>(LabeledEdgeImpl.class);
+		DirectedGraph<Node, LabeledEdge<Node, Node>> b = new SimpleDirectedGraph<>(LabeledEdgeImpl.class);
+
+		toGraph(a, view);
+		toGraph(b, user);
+
+		Stream<Map<Var, Var>> tmp = match(a, b);
+		tmp = tmp.peek(System.out::println);
+		boolean result = tmp.count() > 0;
+		return result;
 	}
 
 

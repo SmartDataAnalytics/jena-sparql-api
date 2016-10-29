@@ -201,7 +201,7 @@ public class MainTestContain {
     	solvers.put("JSA", new ContainmentSolverWrapperJsa());
     	solvers.put("SA", new SPARQLAlgebraWrapper());
     	//solvers.put("AFMU", new AFMUContainmentWrapper());
-    	solvers.put("TS", new TreeSolverWrapper());
+    	//solvers.put("TS", new TreeSolverWrapper());
     	//solvers.put("LMU", //new )
 
     	// TODO Ideally have the blacklist in the data
