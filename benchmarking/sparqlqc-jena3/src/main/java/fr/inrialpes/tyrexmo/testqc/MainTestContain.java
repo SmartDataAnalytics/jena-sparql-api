@@ -32,7 +32,9 @@ import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.delay.extra.DelayerDefault;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcReader;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcVocab;
+import org.aksw.jena_sparql_api.sparql.algebra.mapping.VarMapper;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
+import org.aksw.jena_sparql_api.view_matcher.QueryToGraph;
 import org.aksw.qcwrapper.jsa.ContainmentSolverWrapperJsa;
 import org.aksw.simba.lsq.vocab.LSQ;
 import org.apache.jena.query.Query;
@@ -41,6 +43,7 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.riot.system.RiotLib;
 import org.apache.jena.sparql.syntax.syntaxtransform.QueryTransformOps;
 import org.apache.jena.util.ResourceUtils;
 import org.apache.jena.vocabulary.RDFS;
@@ -190,7 +193,8 @@ public class MainTestContain {
 
 
 	public static void main(String[] args) throws IOException, InterruptedException, DocumentException {
-    	List<Resource> allTasks = SparqlQcReader.loadTasks("sparqlqc/1.4/benchmark/cqnoproj.rdf", "sparqlqc/1.4/benchmark/noprojection/*");
+		List<Resource> allTasks = SparqlQcReader.loadTasks("sparqlqc/1.4/benchmark/cqnoproj.rdf", "sparqlqc/1.4/benchmark/noprojection/*");
+
 
 //    	tasks = tasks.stream()
 //    			.filter(t -> !t.getURI().contains("19") && !t.getURI().contains("6"))
@@ -198,7 +202,8 @@ public class MainTestContain {
 
 
     	Map<String, Object> solvers = new LinkedHashMap<>();
-    	solvers.put("JSA", new ContainmentSolverWrapperJsa());
+    	solvers.put("JSAC", new ContainmentSolverWrapperJsa(VarMapper::createVarMapCandidates));
+    	solvers.put("JSAG", new ContainmentSolverWrapperJsa(QueryToGraph::match));
     	solvers.put("SA", new SPARQLAlgebraWrapper());
     	//solvers.put("AFMU", new AFMUContainmentWrapper());
     	//solvers.put("TS", new TreeSolverWrapper());
@@ -225,7 +230,7 @@ public class MainTestContain {
 
 
     		// Attach the solver to the resource
-        	Iterator<Resource> taskExecs = prepareTaskExecutions(tasks, dataset, 10, 20)
+        	Iterator<Resource> taskExecs = prepareTaskExecutions(tasks, dataset, 100, 200)
         			.iterator();
 
 

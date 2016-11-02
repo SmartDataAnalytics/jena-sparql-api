@@ -4,16 +4,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.jena_sparql_api.algebra.transform.TransformDistributeJoinOverUnion;
-import org.aksw.jena_sparql_api.algebra.transform.TransformJoinToSequence;
-import org.aksw.jena_sparql_api.algebra.transform.TransformUnionToDisjunction;
 import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
-import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.VarMapper;
 import org.aksw.jena_sparql_api.stmt.SparqlElementParser;
 import org.aksw.jena_sparql_api.stmt.SparqlElementParserImpl;
@@ -33,7 +31,6 @@ import org.apache.jena.query.Query;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
-import org.apache.jena.sparql.algebra.OpAsQuery;
 import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.optimize.TransformMergeBGPs;
 import org.apache.jena.sparql.core.Var;
@@ -129,15 +126,39 @@ public class SparqlQueryContainmentUtils {
 	}
 
 
-	public static boolean tryMatch(Query viewQuery, Query userQuery) {
+	public static boolean tryMatch(
+			Query viewQuery,
+			Query userQuery,
+			BiFunction<QuadFilterPatternCanonical, QuadFilterPatternCanonical, Stream<Map<Var, Var>>> qfpcMatcher) {
 		// Op maps without var maps do not count
-		boolean result = match(viewQuery, userQuery)
+		boolean result = match(viewQuery, userQuery, qfpcMatcher)
 				.filter(opVarMap -> opVarMap.getVarMaps().iterator().hasNext())
 				.count() > 0;
 		return result;
 	}
 
-	public static Stream<OpVarMap> match(Query viewQuery, Query userQuery) {
+
+
+
+	/**
+	 * TODO: Somehow add the graph based qfpc matching version here...
+	 * The main issue is, that the qfpc indexing works different in that case...
+	 *
+	 * QfpcMatchers:
+	 * - VarMapper::createVarMapCandidate
+	 * - QueryToGraph::match
+	 *
+	 *
+	 *
+	 * @param viewQuery
+	 * @param userQuery
+	 * @return
+	 */
+	public static Stream<OpVarMap> match(
+			Query viewQuery,
+			Query userQuery,
+			BiFunction<QuadFilterPatternCanonical, QuadFilterPatternCanonical, Stream<Map<Var, Var>>> qfpcMatcher
+		) {
 		ProjectedOp viewPop = toProjectedOp(viewQuery);
 		ProjectedOp userPop = toProjectedOp(userQuery);
 
@@ -175,7 +196,8 @@ public class SparqlQueryContainmentUtils {
 				.map(userQpIndex -> {
 					QuadFilterPatternCanonical userQfpc = userQpIndex.getQfpc();
 					Op userOp = userQpIndex.getOpRef().getNode();
-					Iterable<Map<Var, Var>> varMapping = () -> VarMapper.createVarMapCandidates(viewQfpc, userQfpc).iterator();
+					//Iterable<Map<Var, Var>> varMapping = () -> VarMapper.createVarMapCandidates(viewQfpc, userQfpc).iterator();
+					Iterable<Map<Var, Var>> varMapping = () -> qfpcMatcher.apply(viewQfpc, userQfpc).iterator();
 					Map<Op, Op> opMapping = Collections.singletonMap(viewResOp, userOp);
 					OpVarMap r = new OpVarMap(opMapping, varMapping);
 					return r;

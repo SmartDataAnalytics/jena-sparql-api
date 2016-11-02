@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.cache.tests;
+package org.aksw.jena_sparql_api.view_matcher;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -105,9 +105,9 @@ public class QueryToGraph {
 
 	public static Stream<Map<Var, Var>> match(DirectedGraph<Node, LabeledEdge<Node, Node>> a, DirectedGraph<Node, LabeledEdge<Node, Node>> b) {
 
-		System.out.println("EDGES:");
-		a.edgeSet().forEach(System.out::println);
-		System.out.println("done with edges");
+//		System.out.println("EDGES:");
+//		a.edgeSet().forEach(System.out::println);
+//		System.out.println("done with edges");
 
 		Comparator<Node> nodeCmp = (x, y) -> {
 			int  r = (x.isVariable() && y.isVariable()) || (x.isBlank() && y.isBlank()) ? 0 : x.toString().compareTo(y.toString());
@@ -147,6 +147,14 @@ public class QueryToGraph {
 		return result;
 	}
 
+	/**
+	 * Convenience method for testing.
+	 * Only works for queries whose element is a BGP + filters.
+	 *
+	 * @param view
+	 * @param user
+	 * @return
+	 */
 	public static boolean tryMatch(Query view, Query user) {
 		DirectedGraph<Node, LabeledEdge<Node, Node>> a = new SimpleDirectedGraph<>(LabeledEdgeImpl.class);
 		DirectedGraph<Node, LabeledEdge<Node, Node>> b = new SimpleDirectedGraph<>(LabeledEdgeImpl.class);
