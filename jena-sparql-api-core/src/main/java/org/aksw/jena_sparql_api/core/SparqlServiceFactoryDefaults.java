@@ -1,7 +1,9 @@
 package org.aksw.jena_sparql_api.core;
 
-import com.google.common.base.Predicate;
+import org.apache.http.client.HttpClient;
 import org.apache.jena.sparql.core.DatasetDescription;
+
+import com.google.common.base.Predicate;
 
 public class SparqlServiceFactoryDefaults
     implements SparqlServiceFactory
@@ -19,7 +21,7 @@ public class SparqlServiceFactoryDefaults
 
     @Override
     public SparqlService createSparqlService(
-            String serviceUri, DatasetDescription datasetDescription, Object authenticator) {
+            String serviceUri, DatasetDescription datasetDescription, HttpClient httpClient) {
 
         if(serviceUri == null) {
             serviceUri = defaultServiceUri;
@@ -30,7 +32,7 @@ public class SparqlServiceFactoryDefaults
             }
         }
 
-        SparqlService result = delegate.createSparqlService(serviceUri, datasetDescription, authenticator);
+        SparqlService result = delegate.createSparqlService(serviceUri, datasetDescription, httpClient);
         return result;
     }
 }

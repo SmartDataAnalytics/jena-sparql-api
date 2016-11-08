@@ -7,7 +7,7 @@ import org.aksw.jena_sparql_api.cache.core.QueryExecutionFactoryCacheEx;
 import org.aksw.jena_sparql_api.cache.extra.CacheFrontend;
 import org.aksw.jena_sparql_api.pagination.core.QueryExecutionFactoryPaginated;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
-
+import org.apache.http.client.HttpClient;
 import org.apache.jena.sparql.core.DatasetDescription;
 
 
@@ -39,7 +39,7 @@ public class SparqlServiceFactoryImpl
     }
 
     @Override
-    public SparqlService createSparqlService(String serviceUri, DatasetDescription datasetDescription, Object authenticator) {
+    public SparqlService createSparqlService(String serviceUri, DatasetDescription datasetDescription, HttpClient httpClient) {
 
     	if(datasetDescription == null) {
     		datasetDescription = new DatasetDescription();
@@ -54,7 +54,7 @@ public class SparqlServiceFactoryImpl
 
         if(result == null) {
 
-            SparqlService tmp = delegate.createSparqlService(serviceUri, datasetDescription, authenticator);
+            SparqlService tmp = delegate.createSparqlService(serviceUri, datasetDescription, httpClient);
 
             QueryExecutionFactory qef = tmp.getQueryExecutionFactory();
 

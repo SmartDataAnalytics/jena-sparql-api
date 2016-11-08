@@ -15,9 +15,8 @@ import org.aksw.jena_sparql_api.views.CandidateViewSelectorSparqlView;
 import org.aksw.jena_sparql_api.views.Dialect;
 import org.aksw.jena_sparql_api.views.QueryExecutionFactorySparqlView;
 import org.aksw.jena_sparql_api.views.SparqlView;
-import org.apache.jena.query.QueryExecution;
+import org.apache.http.client.HttpClient;
 import org.apache.jena.query.QueryFactory;
-import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Model;
@@ -97,7 +96,7 @@ public class MainSparqlView {
             @Override
             public SparqlService createSparqlService(String serviceUri,
                     DatasetDescription datasetDescription,
-                    Object authenticator) {
+                    HttpClient httpClient) {
 
                 return new SparqlServiceImpl(sv, null);
             }

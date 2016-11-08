@@ -5,7 +5,7 @@ import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
 import org.aksw.jena_sparql_api.core.SparqlServiceImpl;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
-
+import org.apache.http.client.HttpClient;
 import org.apache.jena.sparql.core.DatasetDescription;
 
 /**
@@ -29,9 +29,9 @@ public class SparqlServiceFactoryDryRun
 
 
     @Override
-    public SparqlService createSparqlService(String serviceUri, DatasetDescription datasetDescription, Object authenticator) {
+    public SparqlService createSparqlService(String serviceUri, DatasetDescription datasetDescription, HttpClient httpClient) {
 
-        SparqlService sparqlService = delegate.createSparqlService(serviceUri, datasetDescription, authenticator);
+        SparqlService sparqlService = delegate.createSparqlService(serviceUri, datasetDescription, httpClient);
 
         QueryExecutionFactory wrappedQef = null;
         UpdateExecutionFactory wrappedUef = null;

@@ -1,9 +1,9 @@
 package org.aksw.jena_sparql_api.util.sparql.syntax.path;
 
+import org.apache.jena.sparql.algebra.walker.ElementWalker_New.EltWalker;
 import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.path.PathVisitor;
 import org.apache.jena.sparql.syntax.Element;
-import org.apache.jena.sparql.syntax.ElementWalker.Walker;
 
 public class PathWalker
 {
@@ -18,7 +18,7 @@ public class PathWalker
         path.visit(w) ;
     }
 
-    protected static void walk$(Element el, Walker walker)
+    protected static void walk$(Element el, EltWalker walker)
     {
         el.visit(walker) ;
     }

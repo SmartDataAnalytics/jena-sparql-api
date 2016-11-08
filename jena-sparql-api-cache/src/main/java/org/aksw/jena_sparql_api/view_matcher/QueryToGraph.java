@@ -88,7 +88,8 @@ public class QueryToGraph {
 	}
 
 	public static DirectedGraph<Node, LabeledEdge<Node, Node>> toGraph(QuadFilterPatternCanonical qfpc) {
-		DirectedGraph<Node, LabeledEdge<Node, Node>> graph = new SimpleDirectedGraph<>(LabeledEdgeImpl.class);
+		//EdgeFactory <Node, LabeledEdge<Node, Node>> edgeFactory = (v, e) -> new LabeledEdgeImpl<>(v, e, null);
+		DirectedGraph<Node, LabeledEdge<Node, Node>> graph = new SimpleDirectedGraph<>((v, e) -> new LabeledEdgeImpl<>(v, e, null));
 
 		toGraph(graph, qfpc);
 
@@ -156,8 +157,8 @@ public class QueryToGraph {
 	 * @return
 	 */
 	public static boolean tryMatch(Query view, Query user) {
-		DirectedGraph<Node, LabeledEdge<Node, Node>> a = new SimpleDirectedGraph<>(LabeledEdgeImpl.class);
-		DirectedGraph<Node, LabeledEdge<Node, Node>> b = new SimpleDirectedGraph<>(LabeledEdgeImpl.class);
+		DirectedGraph<Node, LabeledEdge<Node, Node>> a = new SimpleDirectedGraph<>((v, e) -> new LabeledEdgeImpl<>(v, e, null));
+		DirectedGraph<Node, LabeledEdge<Node, Node>> b = new SimpleDirectedGraph<>((v, e) -> new LabeledEdgeImpl<>(v, e, null));
 
 		toGraph(a, view);
 		toGraph(b, user);

@@ -9,7 +9,7 @@ import org.aksw.jena_sparql_api.mapper.annotation.Base;
 import org.aksw.jena_sparql_api.mapper.annotation.DefaultIri;
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
 import org.aksw.jena_sparql_api.mapper.annotation.RdfType;
-
+import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.jena.sparql.core.DatasetDescription;
 
 /**
@@ -42,17 +42,17 @@ public class SparqlServiceReference {
 //    public SparqlServiceReference(String serviceURL, List<String> defaultGraphURIs) {
 //        this(serviceURL, defaultGraphURIs, Collections.<String>emptySet());
 //    }
-    private final Object authenticator;
-
+    //private final Object authenticator;
+    protected final UsernamePasswordCredentials credentials;
 
     public SparqlServiceReference(String serviceURL, DatasetDescription datasetDescription) {
         this(serviceURL, datasetDescription, null);
     }
 
-    public SparqlServiceReference(String serviceURL, DatasetDescription datasetDescription, Object authenticator) {
+    public SparqlServiceReference(String serviceURL, DatasetDescription datasetDescription, UsernamePasswordCredentials credentials) {
         this.serviceURL = serviceURL;
         this.datasetDescription = datasetDescription;
-        this.authenticator = authenticator;
+        this.credentials = credentials;
     }
 
     /**
@@ -80,8 +80,8 @@ public class SparqlServiceReference {
         return datasetDescription.getNamedGraphURIs();
     }
 
-    public Object getAuthenticator() {
-        return authenticator;
+    public UsernamePasswordCredentials getCredentials() {
+        return credentials;
     }
 
     @Override
@@ -89,7 +89,7 @@ public class SparqlServiceReference {
         final int prime = 31;
         int result = 1;
         result = prime * result
-                + ((authenticator == null) ? 0 : authenticator.hashCode());
+                + ((credentials == null) ? 0 : credentials.hashCode());
         result = prime * result + ((datasetDescription == null) ? 0
                 : datasetDescription.hashCode());
         result = prime * result
@@ -106,10 +106,10 @@ public class SparqlServiceReference {
         if (getClass() != obj.getClass())
             return false;
         SparqlServiceReference other = (SparqlServiceReference) obj;
-        if (authenticator == null) {
-            if (other.authenticator != null)
+        if (credentials == null) {
+            if (other.credentials != null)
                 return false;
-        } else if (!authenticator.equals(other.authenticator))
+        } else if (!credentials.equals(other.credentials))
             return false;
         if (datasetDescription == null) {
             if (other.datasetDescription != null)
@@ -128,7 +128,7 @@ public class SparqlServiceReference {
     public String toString() {
         return "SparqlServiceReference [serviceURL=" + serviceURL
                 + ", datasetDescription=" + datasetDescription
-                + ", authenticator=" + authenticator + "]";
+                + ", authenticator=" + credentials + "]";
     }
 
 }

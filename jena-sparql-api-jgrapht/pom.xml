@@ -9,31 +9,36 @@
 	<parent>
 		<groupId>org.aksw.jena-sparql-api</groupId>
 		<artifactId>jena-sparql-api-parent</artifactId>
-		<version>3.1.0-2-SNAPSHOT</version>
+		<version>3.1.1-1-SNAPSHOT</version>
 	</parent>
 
 	<build>
 		<plugins>
-			<!-- <plugin> <groupId>org.apache.maven.plugins</groupId> <artifactId>maven-remote-resources-plugin</artifactId> 
-				<version>1.5</version> <configuration> <outputDirectory>${project.build.directory}/classes</outputDirectory> 
-				<resourceBundles> <resourceBundle>org.aksw.jena-sparql-api:jena-sparql-api-resources:${project.version}</resourceBundle> 
-				</resourceBundles> </configuration> <executions> <execution> <id>process-remote-resources</id> 
+			<!-- <plugin> <groupId>org.apache.maven.plugins</groupId> <artifactId>maven-remote-resources-plugin</artifactId>
+				<version>1.5</version> <configuration> <outputDirectory>${project.build.directory}/classes</outputDirectory>
+				<resourceBundles> <resourceBundle>org.aksw.jena-sparql-api:jena-sparql-api-resources:${project.version}</resourceBundle>
+				</resourceBundles> </configuration> <executions> <execution> <id>process-remote-resources</id>
 				<goals> <goal>process</goal> </goals> </execution> </executions> </plugin> -->
 		</plugins>
 	</build>
 	<dependencies>
 
 		<!-- Self Dependencies -->
-		<dependency>
-			<groupId>org.aksw.jena-sparql-api</groupId>
-			<artifactId>jena-sparql-api-core</artifactId>
-		</dependency>
+<!-- 		<dependency> -->
+<!-- 			<groupId>org.aksw.jena-sparql-api</groupId> -->
+<!-- 			<artifactId>jena-sparql-api-core</artifactId> -->
+<!-- 		</dependency> -->
 
 
 <!-- 		<dependency> -->
 <!-- 			<groupId>org.aksw.commons</groupId> -->
 <!-- 			<artifactId>aksw-commons-collections</artifactId> -->
 <!-- 		</dependency> -->
+
+		<dependency>
+			<groupId>org.apache.jena</groupId>
+			<artifactId>jena-core</artifactId>
+		</dependency>
 
 		<dependency>
 			<groupId>org.jgrapht</groupId>
@@ -70,7 +75,7 @@
 			<artifactId>protonpack</artifactId>
 		</dependency>
 
-		<!-- Database - used for SPARQL caching, Runtime dep, as the DB is started 
+		<!-- Database - used for SPARQL caching, Runtime dep, as the DB is started
 			automatically on connection -->
 		<dependency>
 			<groupId>com.h2database</groupId>

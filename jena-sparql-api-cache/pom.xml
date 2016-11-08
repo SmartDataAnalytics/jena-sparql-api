@@ -11,7 +11,7 @@
 	<parent>
 		<groupId>org.aksw.jena-sparql-api</groupId>
 		<artifactId>jena-sparql-api-parent</artifactId>
-		<version>3.1.0-2-SNAPSHOT</version>
+		<version>3.1.1-1-SNAPSHOT</version>
 	</parent>
 
 	<build>
@@ -89,11 +89,11 @@
 
 		<!-- Database - used for SPARQL caching, Runtime dep, as the DB is started
 			automatically on connection -->
-		<dependency>
-			<groupId>com.h2database</groupId>
-			<artifactId>h2</artifactId>
+<!-- 		<dependency> -->
+<!-- 			<groupId>com.h2database</groupId> -->
+<!-- 			<artifactId>h2</artifactId> -->
 			<!-- <scope>runtime</scope> -->
-		</dependency>
+<!-- 		</dependency> -->
 
 		<!-- Unit Testing -->
 		<dependency>

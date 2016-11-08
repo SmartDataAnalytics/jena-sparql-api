@@ -57,7 +57,7 @@ import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.aksw.jena_sparql_api.utils.model.Triplet;
 import org.aksw.jena_sparql_api.utils.model.TripletPath;
-import org.apache.jena.atlas.web.auth.HttpAuthenticator;
+import org.apache.http.client.HttpClient;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
@@ -434,9 +434,9 @@ public class MainSparqlPath2 {
         SparqlServiceFactory ssf = new SparqlServiceFactory() {
             @Override
             public SparqlService createSparqlService(String serviceUri,
-                    DatasetDescription datasetDescription, Object authenticator) {
+                    DatasetDescription datasetDescription, HttpClient httpClient) {
 
-                SparqlService coreSparqlService = FluentSparqlService.http(serviceUri, datasetDescription, (HttpAuthenticator)authenticator).create();
+                SparqlService coreSparqlService = FluentSparqlService.http(serviceUri, datasetDescription, httpClient).create();
                 SparqlService r = proxySparqlService(coreSparqlService, sparqlStmtParser, prologue);
                 return r;
             }
@@ -460,9 +460,9 @@ public class MainSparqlPath2 {
         SparqlServiceFactory ssf2 = new SparqlServiceFactory() {
             @Override
             public SparqlService createSparqlService(String serviceUri,
-                    DatasetDescription datasetDescription, Object authenticator) {
+                    DatasetDescription datasetDescription, HttpClient httpClient) {
 
-                SparqlService r = FluentSparqlService.http(serviceUri, datasetDescription, (HttpAuthenticator)authenticator).create();
+                SparqlService r = FluentSparqlService.http(serviceUri, datasetDescription, httpClient).create();
                 //SparqlService r = wrapSparqlService(coreSparqlService, sparqlStmtParser, prologue);
                 return r;
             }

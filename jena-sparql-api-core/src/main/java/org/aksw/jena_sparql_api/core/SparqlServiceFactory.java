@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.core;
 
+import org.apache.http.client.HttpClient;
 import org.apache.jena.sparql.core.DatasetDescription;
 
 /**
@@ -9,5 +10,5 @@ import org.apache.jena.sparql.core.DatasetDescription;
  *
  */
 public interface SparqlServiceFactory {
-    SparqlService createSparqlService(String serviceUri, DatasetDescription datasetDescription, Object authenticator);
+    SparqlService createSparqlService(String serviceUri, DatasetDescription datasetDescription, HttpClient httpClient);
 }

@@ -4,6 +4,7 @@ import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
+import org.apache.http.client.HttpClient;
 import org.apache.jena.sparql.core.DatasetDescription;
 
 public class SparqlServiceFactoryTransform
@@ -19,8 +20,8 @@ public class SparqlServiceFactoryTransform
 
     @Override
     public SparqlService createSparqlService(String serviceUri,
-            DatasetDescription datasetDescription, Object authenticator) {
-          SparqlService raw = delegate.createSparqlService(serviceUri, datasetDescription, authenticator);
+            DatasetDescription datasetDescription, HttpClient httpClient) {
+          SparqlService raw = delegate.createSparqlService(serviceUri, datasetDescription, httpClient);
           SparqlService r = transform.apply(raw);
           return r;
     }

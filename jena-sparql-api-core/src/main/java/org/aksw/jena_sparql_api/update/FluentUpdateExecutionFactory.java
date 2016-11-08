@@ -2,10 +2,9 @@ package org.aksw.jena_sparql_api.update;
 
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryDataset;
-import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryDatasetGraph;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryModel;
-import org.apache.jena.atlas.web.auth.HttpAuthenticator;
+import org.apache.http.client.HttpClient;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.sparql.core.DatasetDescription;
@@ -68,8 +67,8 @@ public class FluentUpdateExecutionFactory {
     }
 
 
-    public static FluentUpdateExecutionFactory http(String endpointUrl, DatasetDescription datasetDescription, HttpAuthenticator authenticator) {
-        UpdateExecutionFactory uef = new UpdateExecutionFactoryHttp(endpointUrl, datasetDescription, authenticator);
+    public static FluentUpdateExecutionFactory http(String endpointUrl, DatasetDescription datasetDescription, HttpClient httpClient) {
+        UpdateExecutionFactory uef = new UpdateExecutionFactoryHttp(endpointUrl, datasetDescription, httpClient);
 
         FluentUpdateExecutionFactory result = FluentUpdateExecutionFactory.from(uef);
         return result;

@@ -18,19 +18,22 @@ import org.aksw.jena_sparql_api.stmt.SparqlParserConfig;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
 import org.aksw.jena_sparql_api.update.FluentSparqlServiceFactory;
-import org.apache.jena.atlas.web.auth.HttpAuthenticator;
+import org.apache.http.client.HttpClient;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.system.RiotLib;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.pfunction.PropertyFunctionRegistry;
+import org.apache.jena.sparql.util.FmtUtils;
 import org.apache.spark.HashPartitioner;
 import org.apache.spark.Partitioner;
 import org.apache.spark.SparkConf;
@@ -63,7 +66,17 @@ public class MainJavaSparkTest {
      * @throws IOException
      */
     public static void main(String[] args) throws InterruptedException, IOException {
+    	if(true) {
+	    	Object o = 1;
+	    	//Node n = NodeFactory.createLiteralByValue(o, TypeMapper.getInstance().getTypeByValue(o));
+	    	Node n = NodeFactory.createURI("http://test");
+	    	String s = FmtUtils.stringForNode(n);
+	    	System.out.println(s);
+	    	Node m = RiotLib.parse(s);
+	    	System.out.println(m);
 
+    		System.exit(0);
+    	}
 
 
         if (args.length < 1) {
@@ -228,9 +241,9 @@ public class MainJavaSparkTest {
         SparqlServiceFactory ssf = new SparqlServiceFactory() {
             @Override
             public SparqlService createSparqlService(String serviceUri,
-                    DatasetDescription datasetDescription, Object authenticator) {
+                    DatasetDescription datasetDescription, HttpClient httpClient) {
 
-                SparqlService coreSparqlService = FluentSparqlService.http(serviceUri, datasetDescription, (HttpAuthenticator)authenticator).create();
+                SparqlService coreSparqlService = FluentSparqlService.http(serviceUri, datasetDescription, httpClient).create();
                 SparqlService r = MainSparqlPath2.proxySparqlService(coreSparqlService, sparqlStmtParser, prologue);
                 return r;
             }

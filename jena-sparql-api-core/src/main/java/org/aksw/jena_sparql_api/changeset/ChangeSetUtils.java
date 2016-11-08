@@ -23,11 +23,7 @@ import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.ResultSetPart;
 import org.aksw.jena_sparql_api.utils.SetGraph;
 import org.aksw.jena_sparql_api.utils.Vars;
-import org.apache.commons.lang3.reflect.FieldUtils;
-import org.apache.jena.atlas.web.auth.SimpleAuthenticator;
-
-import com.google.common.base.Function;
-import com.google.common.base.Functions;
+import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -52,6 +48,9 @@ import org.apache.jena.sparql.util.ModelUtils;
 import org.apache.jena.update.UpdateRequest;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.apache.jena.vocabulary.RDF;
+
+import com.google.common.base.Function;
+import com.google.common.base.Functions;
 
 // TODO A vocubulary class, name it properly
 class V {
@@ -104,15 +103,16 @@ public class ChangeSetUtils {
         model.add(root, V.endpoint, model.createResource(serviceRef.getServiceURL()));
         model.add(root, V.target, model.createResource(targetGraph));
 
-        Object auth = serviceRef.getAuthenticator();
-        if(auth instanceof SimpleAuthenticator) {
-            SimpleAuthenticator a = (SimpleAuthenticator)auth;
+        UsernamePasswordCredentials credentials = serviceRef.getCredentials();
+        //if(auth instanceof SimpleAuthenticator) {
+        if(credentials != null) {
+            //SimpleAuthenticator a = (SimpleAuthenticator)auth;
 
-            String username = (String)FieldUtils.readField(a, "username" , true);
-            char[] password = (char[])FieldUtils.readField(a, "password" , true);
+            //String username = (String)FieldUtils.readField(a, "username" , true);
+            //char[] password = (char[])FieldUtils.readField(a, "password" , true);
 
-            model.add(root, V.username, model.createLiteral(username));
-            model.add(root, V.password, model.createLiteral(new String(password)));
+            model.add(root, V.username, model.createLiteral(credentials.getUserName()));
+            model.add(root, V.password, model.createLiteral(credentials.getPassword()));
         }
     }
 

@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.core;
 
+import org.apache.http.client.HttpClient;
 import org.apache.jena.sparql.core.DatasetDescription;
 
 /**
@@ -15,8 +16,8 @@ public class SparqlServiceFactoryHttp
     }
 
     @Override
-    public SparqlService createSparqlService(String serviceUri, DatasetDescription datasetDescription, Object authenticator) {
-        SparqlService result = SparqlServiceUtils.createSparqlService(serviceUri, datasetDescription, authenticator);
+    public SparqlService createSparqlService(String serviceUri, DatasetDescription datasetDescription, HttpClient httpClient) {
+        SparqlService result = SparqlServiceUtils.createSparqlService(serviceUri, datasetDescription, httpClient);
         return result;
     }
 }

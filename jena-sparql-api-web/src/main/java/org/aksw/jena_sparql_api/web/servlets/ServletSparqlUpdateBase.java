@@ -24,13 +24,13 @@ import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
 import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
 import org.aksw.jena_sparql_api.web.utils.AuthenticatorUtils;
 import org.aksw.jena_sparql_api.web.utils.ThreadUtils;
-import org.apache.jena.atlas.web.auth.HttpAuthenticator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.HttpClient;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.update.UpdateProcessor;
 import org.apache.jena.update.UpdateRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public abstract class ServletSparqlUpdateBase {
@@ -84,15 +84,16 @@ public abstract class ServletSparqlUpdateBase {
 
 
     public UpdateProcessor createUpdateProcessor(String serviceUri, String requestStr, List<String> usingGraphUris, List<String> usingNamedGraphUris) {
-        HttpAuthenticator authenticator = AuthenticatorUtils.parseAuthenticator(req);
+        UsernamePasswordCredentials credentials = AuthenticatorUtils.parseCredentials(req);
+        HttpClient httpClient = AuthenticatorUtils.prepareHttpClientBuilder(credentials).build();
 
         SparqlServiceFactory ssf = getSparqlServiceFactory();
-        UpdateProcessor result = createUpdateProcessor(ssf, serviceUri, requestStr, usingGraphUris, usingNamedGraphUris, authenticator);
+        UpdateProcessor result = createUpdateProcessor(ssf, serviceUri, requestStr, usingGraphUris, usingNamedGraphUris, httpClient);
         return result;
     }
 
 
-    public static UpdateProcessor createUpdateProcessor(SparqlServiceFactory ssf, String serviceUri, String requestStr, List<String> usingGraphUris, List<String> usingNamedGraphUris, HttpAuthenticator authenticator) {
+    public static UpdateProcessor createUpdateProcessor(SparqlServiceFactory ssf, String serviceUri, String requestStr, List<String> usingGraphUris, List<String> usingNamedGraphUris, HttpClient httpClient) {
         // TODO Should we use UsingList or DatasetDescription? The latter feels more natural to use.
 //      UsingList usingList = new UsingList();
 //      usingList.addAllUsing(NodeUtils.convertToNodes(usingGraphUris));
@@ -100,7 +101,7 @@ public abstract class ServletSparqlUpdateBase {
         DatasetDescription datasetDescription = new DatasetDescription(usingGraphUris, usingNamedGraphUris);
 
 
-        SparqlService sparqlService = ssf.createSparqlService(serviceUri, datasetDescription, authenticator);
+        SparqlService sparqlService = ssf.createSparqlService(serviceUri, datasetDescription, httpClient);
 
         UpdateExecutionFactory uef = sparqlService.getUpdateExecutionFactory();
 

@@ -11,14 +11,18 @@ import org.aksw.jena_sparql_api.core.SparqlServiceFactoryHttp;
 import org.aksw.jena_sparql_api.update.DatasetListenerTrack;
 import org.aksw.jena_sparql_api.update.FluentSparqlServiceFactory;
 import org.aksw.jena_sparql_api.update.SparqlServiceFactoryEventSource;
-import org.apache.jena.atlas.web.auth.HttpAuthenticator;
-import org.apache.jena.atlas.web.auth.SimpleAuthenticator;
+import org.aksw.jena_sparql_api.web.utils.AuthenticatorUtils;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 
 import com.google.common.base.Predicates;
@@ -53,9 +57,11 @@ public class ConfigApp {
     @Autowired
     @Qualifier("init")
     public SparqlService sparqlServiceChangeSet(@Qualifier("init") SparqlServiceFactory ssf) {
-        HttpAuthenticator authenticator = new SimpleAuthenticator("dba", "dba".toCharArray());
+    	UsernamePasswordCredentials credentials = new UsernamePasswordCredentials("dba", "dba");
+    	HttpClient httpClient = AuthenticatorUtils.prepareHttpClientBuilder(credentials).build();
+
         DatasetDescription ds = new DatasetDescription(Arrays.asList("http://jsa.aksw.org/test/changesets"), Collections.<String>emptyList());;
-        SparqlService result = ssf.createSparqlService("http://localhost:8890/sparql", ds, authenticator);
+        SparqlService result = ssf.createSparqlService("http://localhost:8890/sparql", ds, httpClient);
         return result;
     }
 

@@ -5,6 +5,7 @@ import java.util.function.Function;
 import org.aksw.jena_sparql_api.core.FluentBase;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
+import org.apache.http.client.HttpClient;
 import org.apache.jena.sparql.core.DatasetDescription;
 
 import com.google.common.base.Supplier;
@@ -63,9 +64,9 @@ public class FluentSparqlServiceFactory<P>
                         public SparqlService createSparqlService(
                                 String serviceUri,
                                 DatasetDescription datasetDescription,
-                                Object authenticator) {
+                                HttpClient httpClient) {
                             // TODO Auto-generated method stub
-                            SparqlService raw = current.createSparqlService(serviceUri, datasetDescription, authenticator);
+                            SparqlService raw = current.createSparqlService(serviceUri, datasetDescription, httpClient);
                             SparqlService r = transform.apply(raw);
                             return r;
                         }

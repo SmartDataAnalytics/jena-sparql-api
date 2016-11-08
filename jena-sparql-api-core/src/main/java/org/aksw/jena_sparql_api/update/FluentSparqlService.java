@@ -14,7 +14,7 @@ import org.aksw.jena_sparql_api.core.SparqlServiceReference;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
-import org.apache.jena.atlas.web.auth.HttpAuthenticator;
+import org.apache.http.client.HttpClient;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
@@ -150,8 +150,8 @@ public class FluentSparqlService<P>
         return http(service, Arrays.asList(defaultGraphs));
     }
 
-    public static FluentSparqlService<?> http(String service, String defaultGraph, HttpAuthenticator authenticator) {
-        return http(service, new DatasetDescription(Collections.singletonList(defaultGraph), Collections.<String>emptyList()), authenticator);
+    public static FluentSparqlService<?> http(String service, String defaultGraph, HttpClient httpClient) {
+        return http(service, new DatasetDescription(Collections.singletonList(defaultGraph), Collections.<String>emptyList()), httpClient);
     }
 
     public static FluentSparqlService<?> http(SparqlServiceReference sparqlService) {
@@ -168,9 +168,9 @@ public class FluentSparqlService<P>
         return http(service, datasetDescription, null);
     }
 
-    public static FluentSparqlService<?> http(String service, DatasetDescription datasetDescription, HttpAuthenticator authenticator) {
-        QueryExecutionFactory qef = new QueryExecutionFactoryHttp(service, datasetDescription, authenticator);
-        UpdateExecutionFactory uef = new UpdateExecutionFactoryHttp(service, datasetDescription, authenticator);
+    public static FluentSparqlService<?> http(String service, DatasetDescription datasetDescription, HttpClient httpClient) {
+        QueryExecutionFactory qef = new QueryExecutionFactoryHttp(service, datasetDescription, httpClient);
+        UpdateExecutionFactory uef = new UpdateExecutionFactoryHttp(service, datasetDescription, httpClient);
         return from(service, datasetDescription, qef, uef);
     }
 

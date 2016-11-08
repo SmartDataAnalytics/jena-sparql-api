@@ -73,7 +73,7 @@ public class VarUsageAnalyzerVisitor
 	public void processExtend(VarExprList vel) {
 		Multimap<Var, Var> updates = HashMultimap.create();
 
-		vel.forEach((v, ex) -> {
+		vel.forEachVarExpr((v, ex) -> {
 			Set<Var> vars = ex == null ? Collections.singleton(v) : ExprVars.getVarsMentioned(ex);
 			vars.forEach(w -> {
 				Collection<Var> deps = varDeps.get(w);

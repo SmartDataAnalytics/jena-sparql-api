@@ -9,16 +9,16 @@ import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtUpdate;
 import org.aksw.jena_sparql_api.web.utils.AuthenticatorUtils;
 import org.aksw.jena_sparql_api.web.utils.DatasetDescriptionRequestUtils;
-import org.apache.jena.atlas.web.auth.HttpAuthenticator;
-import org.springframework.util.Assert;
-import org.springframework.web.bind.ServletRequestBindingException;
-import org.springframework.web.bind.ServletRequestUtils;
-
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.HttpClient;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.update.UpdateProcessor;
 import org.apache.jena.update.UpdateRequest;
+import org.springframework.util.Assert;
+import org.springframework.web.bind.ServletRequestBindingException;
+import org.springframework.web.bind.ServletRequestUtils;
 
 
 /**
@@ -56,8 +56,8 @@ public abstract class ServletSparqlServiceBase
         return result;
     }
 
-    protected HttpAuthenticator getAuthenticator() {
-        HttpAuthenticator result = AuthenticatorUtils.parseAuthenticator(req);
+    protected UsernamePasswordCredentials getCredentials() {
+    	UsernamePasswordCredentials result = AuthenticatorUtils.parseCredentials(req);
         return result;
     }
 
@@ -74,9 +74,10 @@ public abstract class ServletSparqlServiceBase
         String serviceUri = getServiceUri();
 
         DatasetDescription datasetDescription = getDatasetDescription();
-        HttpAuthenticator authenticator = getAuthenticator();
+        UsernamePasswordCredentials credentials = getCredentials();
+        HttpClient httpClient = AuthenticatorUtils.prepareHttpClientBuilder(credentials).build();
 
-        SparqlService ss = ssf.createSparqlService(serviceUri, datasetDescription, authenticator);
+        SparqlService ss = ssf.createSparqlService(serviceUri, datasetDescription, httpClient);
         QueryExecution result = ss.getQueryExecutionFactory().createQueryExecution(query);
         return result;
     }
@@ -88,9 +89,10 @@ public abstract class ServletSparqlServiceBase
         String serviceUri = getServiceUri();
 
         DatasetDescription datasetDescription = getDatasetDescription();
-        HttpAuthenticator authenticator = getAuthenticator();
+        UsernamePasswordCredentials credentials = getCredentials();
+        HttpClient httpClient = AuthenticatorUtils.prepareHttpClientBuilder(credentials).build();
 
-        SparqlService ss = ssf.createSparqlService(serviceUri, datasetDescription, authenticator);
+        SparqlService ss = ssf.createSparqlService(serviceUri, datasetDescription, httpClient);
         UpdateExecutionFactory uef = ss.getUpdateExecutionFactory();
         UpdateProcessor result;
         if(stmt.isParsed()) {
