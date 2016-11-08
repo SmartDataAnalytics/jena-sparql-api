@@ -18,18 +18,12 @@ Snapshots are presently published in our own archiva:
 </repositories>
 
 <dependencies>
+        <!-- This is the core artifact; several other ones build on that. -->
 	<dependency>
 		<groupId>org.aksw.jena-sparql-api</groupId>
 		<artifactId>jena-sparql-api-core</artifactId>
 		<version>3.1.1-1-SNAPSHOT</version>
-	</dependency>
-	
-	<dependency>
-		<groupId>org.aksw.jena-sparql-api</groupId>
-		<artifactId>jena-sparql-api-server</artifactId>
-		<version>3.1.1-SNAPSHOT</version>
-	</dependency>
-	
+	</dependency>	
 	...
 </dependencies>
 ```
