@@ -43,6 +43,10 @@ public class E_RdfTerm
         return new E_RdfTerm(typePlainLiteral, expr, NodeValue.nvEmptyString, NodeValue.nvEmptyString);
     }
 
+    public static E_RdfTerm createPlainLiteral(Expr expr, Expr langTag) {
+        return new E_RdfTerm(typePlainLiteral, expr, langTag, NodeValue.nvEmptyString);
+    }
+
     public static E_RdfTerm createTypedLiteral(Expr expr, Expr datatype) {
 
         //DatatypeSystemDefault.
