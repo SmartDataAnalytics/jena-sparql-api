@@ -6,8 +6,11 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Scanner;
 import java.util.Set;
 import java.util.stream.Stream;
+
+import javax.swing.JFrame;
 
 import org.aksw.commons.collections.utils.StreamUtils;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
@@ -23,11 +26,18 @@ import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.NodeValue;
+import org.jgraph.JGraph;
 import org.jgrapht.DirectedGraph;
+import org.jgrapht.Graph;
 import org.jgrapht.GraphMapping;
 import org.jgrapht.alg.isomorphism.IsomorphicGraphMapping;
 import org.jgrapht.alg.isomorphism.VF2SubgraphIsomorphismInspector;
+import org.jgrapht.ext.JGraphModelAdapter;
 import org.jgrapht.graph.SimpleDirectedGraph;
+
+import com.jgraph.layout.JGraphFacade;
+import com.jgraph.layout.JGraphLayout;
+import com.jgraph.layout.hierarchical.JGraphHierarchicalLayout;
 
 
 public class QueryToGraph {
@@ -64,14 +74,35 @@ public class QueryToGraph {
 			graph.addVertex(orNode);
 
 			for(Entry<Var, NodeValue> e : map.entrySet()) {
-				Var v = e.getKey();
-				Node c = e.getValue().getNode();
+				// Create another blank node for each equality instance
+				// TODO This would be another type of construction: Actually the edge labels are already sufficient for discrimination of equals expressions
+				boolean createNodesForEqualities = true; // Does not work with false as search space gets too big
+				if(createNodesForEqualities) {
+					Node equalsNode = NodeFactory.createBlankNode();
+					graph.addVertex(equalsNode);
 
-				graph.addVertex(v);
-				graph.addVertex(c);
+					Var v = e.getKey();
+					Node c = e.getValue().getNode();
 
-				graph.addEdge(orNode, v, new LabeledEdgeImpl<Node, Node>(orNode, v, Vars.x));
-				graph.addEdge(c, orNode, new LabeledEdgeImpl<Node, Node>(c, orNode, Vars.y));
+					graph.addVertex(v);
+					graph.addVertex(c);
+
+					graph.addEdge(equalsNode, v, new LabeledEdgeImpl<Node, Node>(equalsNode, v, Vars.x));
+					graph.addEdge(c, equalsNode, new LabeledEdgeImpl<Node, Node>(c, equalsNode, Vars.y));
+
+					graph.addEdge(orNode, equalsNode, new LabeledEdgeImpl<Node, Node>(orNode, equalsNode, Vars.z));
+
+				} else {
+
+					Var v = e.getKey();
+					Node c = e.getValue().getNode();
+
+					graph.addVertex(v);
+					graph.addVertex(c);
+
+					graph.addEdge(orNode, v, new LabeledEdgeImpl<Node, Node>(orNode, v, Vars.x));
+					graph.addEdge(c, orNode, new LabeledEdgeImpl<Node, Node>(c, orNode, Vars.y));
+				}
 			}
 		}
 	}
@@ -163,12 +194,38 @@ public class QueryToGraph {
 		toGraph(a, view);
 		toGraph(b, user);
 
+
+//		visualizeGraph(a);
+//		visualizeGraph(b);
+//		try(Scanner s = new Scanner(System.in)) { s.nextLine(); }
+
+
+
 		Stream<Map<Var, Var>> tmp = match(a, b);
-		tmp = tmp.peek(System.out::println);
+		tmp = tmp.peek(x -> System.out.println("Solution: " + x));
 		boolean result = tmp.count() > 0;
 		return result;
 	}
 
 
+
+	public static void visualizeGraph(Graph<?, ?> graph) {
+		JFrame frame = new JFrame();
+		frame.setSize(1000, 800);
+		JGraph jgraph = new JGraph(new JGraphModelAdapter(graph));
+		jgraph.setScale(2);
+		final  JGraphLayout hir = new JGraphHierarchicalLayout();
+		//final  JGraphLayout hir = new JGraphSelfOrganizingOrganicLayout();
+
+		final JGraphFacade graphFacade = new JGraphFacade(jgraph);
+		hir.run(graphFacade);
+		        final Map nestedMap = graphFacade.createNestedMap(true, true);
+		        jgraph.getGraphLayoutCache().edit(nestedMap);
+
+
+		frame.getContentPane().add(jgraph);
+		frame.setVisible(true);
+
+	}
 }
 
