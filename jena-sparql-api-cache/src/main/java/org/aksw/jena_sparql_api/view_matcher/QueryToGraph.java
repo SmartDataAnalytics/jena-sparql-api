@@ -6,11 +6,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Scanner;
 import java.util.Set;
 import java.util.stream.Stream;
-
-import javax.swing.JFrame;
 
 import org.aksw.commons.collections.utils.StreamUtils;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
@@ -26,18 +23,11 @@ import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.NodeValue;
-import org.jgraph.JGraph;
 import org.jgrapht.DirectedGraph;
-import org.jgrapht.Graph;
 import org.jgrapht.GraphMapping;
 import org.jgrapht.alg.isomorphism.IsomorphicGraphMapping;
 import org.jgrapht.alg.isomorphism.VF2SubgraphIsomorphismInspector;
-import org.jgrapht.ext.JGraphModelAdapter;
 import org.jgrapht.graph.SimpleDirectedGraph;
-
-import com.jgraph.layout.JGraphFacade;
-import com.jgraph.layout.JGraphLayout;
-import com.jgraph.layout.hierarchical.JGraphHierarchicalLayout;
 
 
 public class QueryToGraph {
@@ -208,24 +198,24 @@ public class QueryToGraph {
 	}
 
 
-
-	public static void visualizeGraph(Graph<?, ?> graph) {
-		JFrame frame = new JFrame();
-		frame.setSize(1000, 800);
-		JGraph jgraph = new JGraph(new JGraphModelAdapter(graph));
-		jgraph.setScale(2);
-		final  JGraphLayout hir = new JGraphHierarchicalLayout();
-		//final  JGraphLayout hir = new JGraphSelfOrganizingOrganicLayout();
-
-		final JGraphFacade graphFacade = new JGraphFacade(jgraph);
-		hir.run(graphFacade);
-		        final Map nestedMap = graphFacade.createNestedMap(true, true);
-		        jgraph.getGraphLayoutCache().edit(nestedMap);
-
-
-		frame.getContentPane().add(jgraph);
-		frame.setVisible(true);
-
-	}
+//
+//	public static void visualizeGraph(Graph<?, ?> graph) {
+//		JFrame frame = new JFrame();
+//		frame.setSize(1000, 800);
+//		JGraph jgraph = new JGraph(new JGraphModelAdapter(graph));
+//		jgraph.setScale(2);
+//		final  JGraphLayout hir = new JGraphHierarchicalLayout();
+//		//final  JGraphLayout hir = new JGraphSelfOrganizingOrganicLayout();
+//
+//		final JGraphFacade graphFacade = new JGraphFacade(jgraph);
+//		hir.run(graphFacade);
+//		        final Map nestedMap = graphFacade.createNestedMap(true, true);
+//		        jgraph.getGraphLayoutCache().edit(nestedMap);
+//
+//
+//		frame.getContentPane().add(jgraph);
+//		frame.setVisible(true);
+//
+//	}
 }
 

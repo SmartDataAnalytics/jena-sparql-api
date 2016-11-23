@@ -18,35 +18,11 @@
 			<artifactId>sparqlqc-api</artifactId>
 		</dependency>
 
-
-		<dependency>
-			<groupId>org.aksw.jena-sparql-api</groupId>
-			<artifactId>jena-sparql-api-cache</artifactId>
-		</dependency>
-
-<!-- 		<dependency> -->
-<!-- 			<groupId>org.aksw.jena-sparql-api</groupId> -->
-<!-- 			<artifactId>jena-sparql-api-jgrapht</artifactId> -->
-<!-- 		</dependency> -->
-
 		<dependency>
 			<groupId>org.aksw.iguana</groupId>
 			<artifactId>iguana-extended</artifactId>
 		</dependency>
 
-		<!-- <dependency> <groupId>log4j</groupId> <artifactId>log4j</artifactId>
-			<version>1.2.17</version> </dependency> -->
-
-
-		<dependency>
-			<groupId>com.hp.hpl.jena</groupId>
-			<artifactId>arq</artifactId>
-		</dependency>
-
-		<!-- <dependency> <groupId>fr.inrialpes.sparqlqc</groupId> <artifactId>sparqlqc-containmenttester</artifactId>
-			<version>1.4</version> </dependency> -->
-		<!-- <dependency> <groupId>org.slf4j</groupId> <artifactId>slf4j-api</artifactId>
-			</dependency> -->
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
@@ -57,72 +33,20 @@
 			<artifactId>slf4j-log4j12</artifactId>
 		</dependency>
 
-		<!-- <dependency> -->
-		<!-- <groupId>org.jgrapht</groupId> -->
-		<!-- <artifactId>jgrapht-core</artifactId> -->
-		<!-- <version>0.8.3</version> -->
-		<!-- 0.9.0 is so far only deployed in the aksw internal repo (2014-02-01) -->
-		<!-- <version>0.9.0</version> -->
-		<!-- </dependency> -->
-
-
-		<dependency>
-			<groupId>lib</groupId>
-			<artifactId>afmu-solver</artifactId>
-		</dependency>
-
-		<!-- lmu-solver comes with its own java-bdd version which is incompatible -->
-		<!-- with the version required by the afmu-solver -->
-
-		<!-- <dependency> -->
-		<!-- <groupId>lib</groupId> -->
-		<!-- <artifactId>javabdd</artifactId> -->
-		<!-- <version>1.0b2</version> -->
-		<!-- </dependency> -->
-
-		<dependency>
-			<groupId>lib</groupId>
-			<artifactId>lmu-solver</artifactId>
-		</dependency>
-
-		<dependency>
-			<groupId>lib</groupId>
-			<artifactId>subsum</artifactId>
-		</dependency>
-
-		<!-- <dependency> -->
-		<!-- <groupId>xalan</groupId> -->
-		<!-- <artifactId>xalan</artifactId> -->
-		<!-- <version>2.3.1</version> -->
-		<!-- </dependency> -->
-
-		<dependency>
-			<groupId>lib</groupId>
-			<artifactId>xpath20api</artifactId>
-		</dependency>
-
-		<dependency>
-			<groupId>lib</groupId>
-			<artifactId>xmltypes</artifactId>
-		</dependency>
-
-
 		<dependency>
 			<groupId>org.xeustechnologies</groupId>
 			<artifactId>jcl-core</artifactId>
 		</dependency>
 
-		<!-- <dependency> -->
-		<!-- <groupId>org.xeustechnologies</groupId> -->
-		<!-- <artifactId>jcl-core</artifactId> -->
-		<!-- <version>2.6</version> -->
-		<!-- </dependency> -->
+		<dependency>
+			<groupId>org.osgi</groupId>
+			<artifactId>org.osgi.core</artifactId>
+		</dependency>
 
-		<!-- <dependency> -->
-		<!-- <groupId>xerces</groupId> -->
-		<!-- <artifactId>xercesImpl</artifactId> -->
-		<!-- <version>2.7.1</version> -->
-		<!-- </dependency> -->
-
+		<dependency>
+			<groupId>org.apache.felix</groupId>
+			<artifactId>org.apache.felix.framework</artifactId>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 </project>

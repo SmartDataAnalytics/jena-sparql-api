@@ -26,8 +26,8 @@ public interface ContainmentSolver {
 
     public void warmup() throws ContainmentTestException;
 
-    public boolean entailed( Query q1, Query q2 ) throws ContainmentTestException;
-	
+    public boolean entailed( Query q1, Query q2 );// throws ContainmentTestException;
+
     public boolean entailedUnderSchema( Model schema, Query q1, Query q2 ) throws ContainmentTestException;
 
     // Provisory before schemas are really parsed from Jena

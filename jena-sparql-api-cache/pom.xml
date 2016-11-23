@@ -57,17 +57,17 @@
 		<!-- <artifactId>jgrapht-core</artifactId> -->
 		<!-- </dependency> -->
 
-		<dependency>
-			<groupId>jgraph</groupId>
-			<artifactId>jgraph</artifactId>
-			<version>5.13.0.0</version>
-		</dependency>
+<!-- 		<dependency> -->
+<!-- 			<groupId>jgraph</groupId> -->
+<!-- 			<artifactId>jgraph</artifactId> -->
+<!-- 			<version>5.13.0.0</version> -->
+<!-- 		</dependency> -->
 
-		<dependency>
-			<groupId>org.jgrapht</groupId>
-			<artifactId>jgrapht-ext</artifactId>
-			<version>1.0.0</version>
-		</dependency>
+<!-- 		<dependency> -->
+<!-- 			<groupId>org.jgrapht</groupId> -->
+<!-- 			<artifactId>jgrapht-ext</artifactId> -->
+<!-- 			<version>1.0.0</version> -->
+<!-- 		</dependency> -->
 
 		<!-- <dependency> -->
 		<!-- <groupId>org.aksw.jena-sparql-api</groupId> -->
