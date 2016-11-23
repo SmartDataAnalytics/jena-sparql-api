@@ -7,10 +7,20 @@
 	<artifactId>sparqlqc-benchmark</artifactId>
 	<version>1.0.0-SNAPSHOT</version>
 
-	<packaging>jar</packaging>
+	<packaging>pom</packaging>
 
 	<description>Adaption of the sparql query containment benchmark</description>
 	<url>http://lsq.aksw.org</url>
+
+	<modules>
+		<module>sparqlqc-api</module>
+		<module>sparqlqc-core</module>
+		<module>sparqlqc-impl-treesolver</module>
+		<module>sparqlqc-impl-sparqlalgebra</module>
+		<module>sparqlqc-impl-afmu</module>
+		<module>sparqlqc-impl-jsa</module>
+	</modules>
+
 
 	<scm>
 		<url>https://github.com/AKSW/jena-sparql-api</url>
@@ -35,127 +45,159 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<gpg.keyname>AKSW</gpg.keyname>
+
+		<jena.version>3.1.1</jena.version>
+		<jsa.subversion>1-SNAPSHOT</jsa.subversion>
+
+		<jsa.version>${jena.version}-${jsa.subversion}</jsa.version>
 	</properties>
 
-	<dependencies>
-		<dependency>
-			<groupId>org.aksw.jena-sparql-api</groupId>
-			<artifactId>jena-sparql-api-cache</artifactId>
-			<version>3.1.0-2-SNAPSHOT</version>
-		</dependency>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>${project.groupId}</groupId>
+				<artifactId>sparqlqc-api</artifactId>
+				<version>${project.version}</version>
+			</dependency>
 
-		<dependency>
-			<groupId>org.aksw.jena-sparql-api</groupId>
-			<artifactId>jena-sparql-api-jgrapht</artifactId>
-			<version>3.1.0-2-SNAPSHOT</version>
-		</dependency>
+			<dependency>
+				<groupId>org.aksw.jena-sparql-api</groupId>
+				<artifactId>jena-sparql-api-cache</artifactId>
+				<version>${jsa.version}</version>
+			</dependency>
 
-		<dependency>
-			<groupId>org.aksw.iguana</groupId>
-			<artifactId>iguana-extended</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
-		</dependency>
+			<!-- <dependency> -->
+			<!-- <groupId>org.aksw.jena-sparql-api</groupId> -->
+			<!-- <artifactId>jena-sparql-api-jgrapht</artifactId> -->
+			<!-- <version>${jsa.version}</version> -->
+			<!-- </dependency> -->
 
-		<!-- <dependency> <groupId>log4j</groupId> <artifactId>log4j</artifactId>
-			<version>1.2.17</version> </dependency> -->
+			<dependency>
+				<groupId>org.aksw.iguana</groupId>
+				<artifactId>iguana-extended</artifactId>
+				<version>0.0.1-SNAPSHOT</version>
+			</dependency>
 
-
-		<dependency>
-			<groupId>com.hp.hpl.jena</groupId>
-			<artifactId>arq</artifactId>
-			<version>2.8.8</version>
-			<exclusions>
-				<exclusion>
-					<groupId>log4j</groupId>
-					<artifactId>log4j</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-
-		<!-- <dependency> <groupId>fr.inrialpes.sparqlqc</groupId> <artifactId>sparqlqc-containmenttester</artifactId>
-			<version>1.4</version> </dependency> -->
-		<!-- <dependency> <groupId>org.slf4j</groupId> <artifactId>slf4j-api</artifactId>
-			</dependency> -->
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-api</artifactId>
-			<version>1.7.10</version>
-		</dependency>
-
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-log4j12</artifactId>
-			<version>1.7.10</version>
-		</dependency>
-
-<!-- 		<dependency> -->
-<!-- 			<groupId>org.jgrapht</groupId> -->
-<!-- 			<artifactId>jgrapht-core</artifactId> -->
-<!-- 			<version>0.8.3</version> -->
-<!-- 			0.9.0 is so far only deployed in the aksw internal repo (2014-02-01) -->
-<!-- 			<version>0.9.0</version> -->
-<!-- 		</dependency> -->
+			<!-- <dependency> <groupId>log4j</groupId> <artifactId>log4j</artifactId>
+				<version>1.2.17</version> </dependency> -->
 
 
-		<dependency>
-			<groupId>lib</groupId>
-			<artifactId>afmu-solver</artifactId>
-			<version>1.0.0</version>
-		</dependency>
+			<dependency>
+				<groupId>com.hp.hpl.jena</groupId>
+				<artifactId>arq</artifactId>
+				<version>2.8.8</version>
+				<exclusions>
+					<exclusion>
+						<groupId>log4j</groupId>
+						<artifactId>log4j</artifactId>
+					</exclusion>
+				</exclusions>
+			</dependency>
 
-		<!-- lmu-solver comes with its own java-bdd version which is incompatible -->
-		<!-- with the version required by the afmu-solver -->
+			<dependency>
+				<groupId>org.apache.jena</groupId>
+				<artifactId>jena-arq</artifactId>
+				<version>${jena.version}</version>
+			</dependency>
 
-		<!-- <dependency> -->
-		<!-- <groupId>lib</groupId> -->
-		<!-- <artifactId>javabdd</artifactId> -->
-		<!-- <version>1.0b2</version> -->
-		<!-- </dependency> -->
+			<dependency>
+				<groupId>org.jgrapht</groupId>
+				<artifactId>jgrapht-core</artifactId>
+				<version>1.0.0</version>
+			</dependency>
 
-		<dependency>
-			<groupId>lib</groupId>
-			<artifactId>lmu-solver</artifactId>
-			<version>1.0.0</version>
-		</dependency>
 
-		<dependency>
-			<groupId>lib</groupId>
-			<artifactId>subsum</artifactId>
-			<version>1.0.0</version>
-		</dependency>
+			<!-- <dependency> <groupId>fr.inrialpes.sparqlqc</groupId> <artifactId>sparqlqc-containmenttester</artifactId>
+				<version>1.4</version> </dependency> -->
+			<!-- <dependency> <groupId>org.slf4j</groupId> <artifactId>slf4j-api</artifactId>
+				</dependency> -->
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-api</artifactId>
+				<version>1.7.10</version>
+			</dependency>
 
-		<!-- <dependency> -->
-		<!-- <groupId>xalan</groupId> -->
-		<!-- <artifactId>xalan</artifactId> -->
-		<!-- <version>2.3.1</version> -->
-		<!-- </dependency> -->
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-log4j12</artifactId>
+				<version>1.7.10</version>
+			</dependency>
 
-		<dependency>
-			<groupId>lib</groupId>
-			<artifactId>xpath20api</artifactId>
-			<version>1.0.0</version>
-		</dependency>
+			<!-- <dependency> -->
+			<!-- <groupId>org.jgrapht</groupId> -->
+			<!-- <artifactId>jgrapht-core</artifactId> -->
+			<!-- <version>0.8.3</version> -->
+			<!-- 0.9.0 is so far only deployed in the aksw internal repo (2014-02-01) -->
+			<!-- <version>0.9.0</version> -->
+			<!-- </dependency> -->
 
-		<dependency>
-			<groupId>lib</groupId>
-			<artifactId>xmltypes</artifactId>
-			<version>1.0.0</version>
-		</dependency>
 
-<!-- 		<dependency> -->
-<!-- 			<groupId>org.xeustechnologies</groupId> -->
-<!-- 			<artifactId>jcl-core</artifactId> -->
-<!-- 			<version>2.6</version> -->
-<!-- 		</dependency> -->
+			<dependency>
+				<groupId>lib</groupId>
+				<artifactId>afmu-solver</artifactId>
+				<version>1.0.0</version>
+			</dependency>
 
-		<!-- <dependency> -->
-		<!-- <groupId>xerces</groupId> -->
-		<!-- <artifactId>xercesImpl</artifactId> -->
-		<!-- <version>2.7.1</version> -->
-		<!-- </dependency> -->
+			<!-- lmu-solver comes with its own java-bdd version which is incompatible -->
+			<!-- with the version required by the afmu-solver -->
 
-	</dependencies>
+			<!-- <dependency> -->
+			<!-- <groupId>lib</groupId> -->
+			<!-- <artifactId>javabdd</artifactId> -->
+			<!-- <version>1.0b2</version> -->
+			<!-- </dependency> -->
 
+			<dependency>
+				<groupId>lib</groupId>
+				<artifactId>lmu-solver</artifactId>
+				<version>1.0.0</version>
+			</dependency>
+
+			<dependency>
+				<groupId>lib</groupId>
+				<artifactId>subsum</artifactId>
+				<version>1.0.0</version>
+			</dependency>
+
+			<!-- <dependency> -->
+			<!-- <groupId>xalan</groupId> -->
+			<!-- <artifactId>xalan</artifactId> -->
+			<!-- <version>2.3.1</version> -->
+			<!-- </dependency> -->
+
+			<dependency>
+				<groupId>lib</groupId>
+				<artifactId>xpath20api</artifactId>
+				<version>1.0.0</version>
+			</dependency>
+
+			<dependency>
+				<groupId>lib</groupId>
+				<artifactId>xmltypes</artifactId>
+				<version>1.0.0</version>
+			</dependency>
+
+
+			<dependency>
+				<groupId>org.xeustechnologies</groupId>
+				<artifactId>jcl-core</artifactId>
+				<version>2.8</version>
+			</dependency>
+
+			<!-- <dependency> -->
+			<!-- <groupId>org.xeustechnologies</groupId> -->
+			<!-- <artifactId>jcl-core</artifactId> -->
+			<!-- <version>2.6</version> -->
+			<!-- </dependency> -->
+
+			<!-- <dependency> -->
+			<!-- <groupId>xerces</groupId> -->
+			<!-- <artifactId>xercesImpl</artifactId> -->
+			<!-- <version>2.7.1</version> -->
+			<!-- </dependency> -->
+
+		</dependencies>
+	</dependencyManagement>
 	<!-- Don't touch the stuff below unless you know what you are doing -->
 	<build>
 
@@ -179,7 +221,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.1</version>
+				<version>3.6.0</version>
 				<configuration>
 					<source>${maven.compiler.source}</source>
 					<target>${maven.compiler.target}</target>
@@ -258,6 +300,51 @@
 		</plugins>
 		<pluginManagement>
 			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-shade-plugin</artifactId>
+					<version>2.4.3</version>
+					<executions>
+						<execution>
+							<phase>package</phase>
+							<goals>
+								<goal>shade</goal>
+							</goals>
+							<configuration>
+								<createDependencyReducedPom>false</createDependencyReducedPom>
+
+								<shadedArtifactAttached>true</shadedArtifactAttached>
+								<shadedClassifierName>jar-with-dependencies</shadedClassifierName>
+								<attach>false</attach>
+								<descriptorRefs>
+									<descriptorRef>jar-with-dependencies</descriptorRef>
+								</descriptorRefs>
+								<filters>
+									<filter>
+										<artifact>*:*</artifact>
+										<excludes>
+											<exclude>META-INF/*.SF</exclude>
+											<exclude>META-INF/*.DSA</exclude>
+											<exclude>META-INF/*.RSA</exclude>
+										</excludes>
+									</filter>
+								</filters>
+								<transformers>
+									<transformer
+										implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+									<!-- <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer"> -->
+									<!-- <manifestEntries> -->
+									<!-- <mainClass>foo.bar.Main</mainClass> -->
+									<!-- <Class-Path>.</Class-Path> -->
+									<!-- </manifestEntries> -->
+									<!-- </transformer> -->
+								</transformers>
+							</configuration>
+						</execution>
+					</executions>
+				</plugin>
+
+
 				<!--This plugin's configuration is used to store Eclipse m2e settings
 					only. It has no influence on the Maven build itself. -->
 				<plugin>

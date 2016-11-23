@@ -32,10 +32,8 @@ import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.delay.extra.DelayerDefault;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcReader;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcVocab;
-import org.aksw.jena_sparql_api.sparql.algebra.mapping.VarMapper;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
-import org.aksw.jena_sparql_api.view_matcher.QueryToGraph;
-import org.aksw.qcwrapper.jsa.ContainmentSolverWrapperJsa;
+//import org.aksw.qcwrapper.jsa.ContainmentSolverWrapperJsa;
 import org.aksw.simba.lsq.vocab.LSQ;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
@@ -43,45 +41,27 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.jena.riot.system.RiotLib;
 import org.apache.jena.sparql.syntax.syntaxtransform.QueryTransformOps;
 import org.apache.jena.util.ResourceUtils;
 import org.apache.jena.vocabulary.RDFS;
 import org.jfree.chart.JFreeChart;
 import org.jfree.data.category.CategoryDataset;
+import org.xeustechnologies.jcl.JarClassLoader;
+import org.xeustechnologies.jcl.JclObjectFactory;
+import org.xeustechnologies.jcl.proxy.CglibProxyProvider;
+import org.xeustechnologies.jcl.proxy.ProxyProviderFactory;
 
 import com.google.common.base.Predicate;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.hp.hpl.jena.query.QueryFactory;
 import com.itextpdf.text.DocumentException;
 
-import fr.inrialpes.tyrexmo.qcwrapper.lmu.TreeSolverWrapper;
-import fr.inrialpes.tyrexmo.qcwrapper.sparqlalg.SPARQLAlgebraWrapper;
+//import fr.inrialpes.tyrexmo.qcwrapper.sparqlalg.SPARQLAlgebraWrapper;
 
 class TestCase {
 	public Query source;
 	public Query target;
 	public boolean expectedResult;
-}
-
-
-class Task {
-	protected Runnable run;
-	protected Runnable cleanup;
-
-	public Task(Runnable run, Runnable cleanup) {
-		super();
-		this.run = run;
-		this.cleanup = cleanup;
-	}
-
-	public Runnable getRun() {
-		return run;
-	}
-
-	public Runnable getCleanup() {
-		return cleanup;
-	}
 }
 
 
@@ -200,11 +180,26 @@ public class MainTestContain {
 //    			.filter(t -> !t.getURI().contains("19") && !t.getURI().contains("6"))
 //    			.collect(Collectors.toList());
 
+		JarClassLoader jcl = new JarClassLoader();
+		jcl.add("/home/raven/Projects/Eclipse/jena-sparql-api-parent/benchmarking/sparqlqc-jena3/sparqlqc-impl-jsa/target/sparqlqc-impl-jsa-1.0.0-SNAPSHOT-jar-with-dependencies.jar");
+
+		ProxyProviderFactory.setDefaultProxyProvider(new CglibProxyProvider());
+		JclObjectFactory factory = JclObjectFactory.getInstance(true);
+
+		  //Create object of loaded class
+
+		//jcl.u
+
 
     	Map<String, Object> solvers = new LinkedHashMap<>();
-    	solvers.put("JSAC", new ContainmentSolverWrapperJsa(VarMapper::createVarMapCandidates));
-    	solvers.put("JSAG", new ContainmentSolverWrapperJsa(QueryToGraph::match));
-    	solvers.put("SA", new SPARQLAlgebraWrapper());
+    	// C = custom - I = isomorphy
+    	solvers.put("JSAC", (ContainmentSolver)factory.create(jcl, "org.aksw.qcwrapper.jsa.ContainmentSolverWrapperJsaVarMapper"));
+    	solvers.put("JSAI", (ContainmentSolver)factory.create(jcl, "org.aksw.qcwrapper.jsa.ContainmentSolverWrapperJsaSubGraphIsomorphism"));
+//    	solvers.put("JSAC", new ContainmentSolverWrapperJsa(VarMapper::createVarMapCandidates));
+//    	solvers.put("JSAG", new ContainmentSolverWrapperJsa(QueryToGraph::match));
+//    	solvers.put("SA", new SPARQLAlgebraWrapper());
+
+
     	//solvers.put("AFMU", new AFMUContainmentWrapper());
     	//solvers.put("TS", new TreeSolverWrapper());
     	//solvers.put("LMU", //new )

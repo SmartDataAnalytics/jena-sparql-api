@@ -1,7 +1,6 @@
 package org.aksw.qcwrapper.jsa;
 
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
@@ -11,17 +10,15 @@ import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.sparql.core.Var;
 
-import com.google.common.base.Stopwatch;
-
 import fr.inrialpes.tyrexmo.testqc.ContainmentSolver;
 import fr.inrialpes.tyrexmo.testqc.ContainmentTestException;
 
-public class ContainmentSolverWrapperJsa
+public class ContainmentSolverWrapperJsaBase
 	implements ContainmentSolver
 {
 	protected BiFunction<QuadFilterPatternCanonical, QuadFilterPatternCanonical, Stream<Map<Var, Var>>> qfpcMatcher;
 
-	public ContainmentSolverWrapperJsa(
+	public ContainmentSolverWrapperJsaBase(
 			BiFunction<QuadFilterPatternCanonical, QuadFilterPatternCanonical, Stream<Map<Var, Var>>> qfpcMatcher) {
 		super();
 		this.qfpcMatcher = qfpcMatcher;
