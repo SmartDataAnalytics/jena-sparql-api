@@ -12,34 +12,6 @@
 		<version>1.0.0-SNAPSHOT</version>
 	</parent>
 
-	<properties>
-		<main.basedir>${project.basedir}${file.separator}..</main.basedir>
-		<bundle.dynamicImport.package>
-			com.sun.msv.grammar,
-			com.sun.msv.grammar.trex,
-			com.sun.msv.reader,
-			com.sun.msv.reader.trex.ng,
-			com.sun.msv.reader.util,
-			com.sun.msv.util,
-			com.sun.msv.verifier,
-			com.sun.msv.verifier.regexp,
-			com.vividsolutions.jts.algorithm,
-			com.vividsolutions.jts.geom,
-			com.vividsolutions.jts.io,
-			com.vividsolutions.jts.operation.union,
-			com.vividsolutions.jts.operation.valid,
-			com.vividsolutions.jts.simplify,
-			com.vividsolutions.jts.util,
-			commonj.work,
-			javassist,
-			javassist.bytecode,
-			javax.servlet,
-			javax.servlet.http,
-			joptsimple,
-			net.sf.cglib.proxy
-		</bundle.dynamicImport.package>
-	</properties>
-
 	<build>
 		<plugins>
 			<!-- <plugin> -->
@@ -62,9 +34,7 @@
 								<Embed-Dependency>*;scope=compile|runtime</Embed-Dependency>
 								<Embed-Transitive>true</Embed-Transitive>
 								<Bundle-Activator>org.aksw.qcwrapper.jsa.Activator</Bundle-Activator>
-								<Import-Package>
-									*;resolution:=optional,org.osgi.framework,!fr.inrialpes.tyrexmo.testqc.simple
-								</Import-Package>
+								<Import-Package>*;resolution:=optional,org.osgi.framework</Import-Package>
 <!-- 								org.aksw.sparqlqc.api, -->
 <!-- 								<DynamicImport-Package>*</DynamicImport-Package> -->
 <!-- 								<Export-Package>org.aksw.qcwrapper.jsa</Export-Package> -->

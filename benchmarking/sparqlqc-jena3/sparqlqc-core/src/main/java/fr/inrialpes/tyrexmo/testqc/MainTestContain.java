@@ -194,19 +194,9 @@ public class MainTestContain {
 			config.put(Constants.FRAMEWORK_BOOTDELEGATION, "*");
 
 			config.put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA, String.join(",",
-				"fr.inrialpes.tyrexmo.testqc.simple"
+				"fr.inrialpes.tyrexmo.testqc.simple;version=\"1.0.0\"",
+				"org.apache.log4j;version=\"1.0.0\""
 			));
-//			 config.put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA,
-//			 String.join(",",
-//					 "fr.inrialpes.tyrexmo.testqc",
-//					 "org.apache.jena.sparql.algebra",
-//					 "org.apache.jena.query",
-//					 "org.apache.jena.sparql.algebra.optimize",
-//					 "org.apache.jena.sparql.syntax",
-//					 "org.apache.jena.sparql.expr",
-//					 "org.apache.jena.sparql.graph"));
-			// config.put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA,
-			// "fr.inrialpes.tyrexmo.testqc");
 
 			Framework framework = frameworkFactory.newFramework(config);
 			try {

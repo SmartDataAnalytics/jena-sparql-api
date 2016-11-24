@@ -16,7 +16,6 @@
 <!-- 			<groupId>${project.groupId}</groupId> -->
 			<groupId>org.aksw.sparqlqc</groupId>
 			<artifactId>sparqlqc-api-simple</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 
 		<dependency>
