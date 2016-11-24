@@ -78,7 +78,7 @@
 				<version>0.0.1-SNAPSHOT</version>
 			</dependency>
 
-			<!-- <dependency> <groupId>log4j</groupId> <artifactId>log4j</artifactId>
+			<!-- <dependency> <groupId>log4j</groupId> <artifactId>log4j</artifactId> 
 				<version>1.2.17</version> </dependency> -->
 
 
@@ -107,9 +107,9 @@
 			</dependency>
 
 
-			<!-- <dependency> <groupId>fr.inrialpes.sparqlqc</groupId> <artifactId>sparqlqc-containmenttester</artifactId>
+			<!-- <dependency> <groupId>fr.inrialpes.sparqlqc</groupId> <artifactId>sparqlqc-containmenttester</artifactId> 
 				<version>1.4</version> </dependency> -->
-			<!-- <dependency> <groupId>org.slf4j</groupId> <artifactId>slf4j-api</artifactId>
+			<!-- <dependency> <groupId>org.slf4j</groupId> <artifactId>slf4j-api</artifactId> 
 				</dependency> -->
 			<dependency>
 				<groupId>org.slf4j</groupId>
@@ -132,11 +132,11 @@
 			<!-- </dependency> -->
 
 
-			<dependency>
-				<groupId>lib</groupId>
-				<artifactId>afmu-solver</artifactId>
-				<version>1.0.0</version>
-			</dependency>
+			<!-- <dependency> -->
+			<!-- <groupId>lib</groupId> -->
+			<!-- <artifactId>afmu-solver</artifactId> -->
+			<!-- <version>1.0.0</version> -->
+			<!-- </dependency> -->
 
 			<!-- lmu-solver comes with its own java-bdd version which is incompatible -->
 			<!-- with the version required by the afmu-solver -->
@@ -147,17 +147,17 @@
 			<!-- <version>1.0b2</version> -->
 			<!-- </dependency> -->
 
-			<dependency>
-				<groupId>lib</groupId>
-				<artifactId>lmu-solver</artifactId>
-				<version>1.0.0</version>
-			</dependency>
+			<!-- <dependency> -->
+			<!-- <groupId>lib</groupId> -->
+			<!-- <artifactId>lmu-solver</artifactId> -->
+			<!-- <version>1.0.0</version> -->
+			<!-- </dependency> -->
 
-			<dependency>
-				<groupId>lib</groupId>
-				<artifactId>subsum</artifactId>
-				<version>1.0.0</version>
-			</dependency>
+			<!-- <dependency> -->
+			<!-- <groupId>lib</groupId> -->
+			<!-- <artifactId>subsum</artifactId> -->
+			<!-- <version>1.0.0</version> -->
+			<!-- </dependency> -->
 
 			<!-- <dependency> -->
 			<!-- <groupId>xalan</groupId> -->
@@ -165,17 +165,16 @@
 			<!-- <version>2.3.1</version> -->
 			<!-- </dependency> -->
 
-			<dependency>
-				<groupId>lib</groupId>
-				<artifactId>xpath20api</artifactId>
-				<version>1.0.0</version>
-			</dependency>
+			<!-- <dependency> -->
+			<!-- <groupId>lib</groupId> -->
+			<!-- <artifactId>xpath20api</artifactId> -->
+			<!-- <version>1.0.0</version> -->
+			<!-- </dependency> -->
 
-			<dependency>
-				<groupId>lib</groupId>
-				<artifactId>xmltypes</artifactId>
-				<version>1.0.0</version>
-			</dependency>
+			<!-- <dependency> -->
+			<!-- <groupId>lib</groupId> -->
+			<!-- <artifactId>xmltypes</artifactId> -->
+			<!-- </dependency> -->
 
 
 			<dependency>
@@ -357,7 +356,7 @@
 				</plugin>
 
 
-				<!--This plugin's configuration is used to store Eclipse m2e settings
+				<!--This plugin's configuration is used to store Eclipse m2e settings 
 					only. It has no influence on the Maven build itself. -->
 				<plugin>
 					<groupId>org.eclipse.m2e</groupId>
@@ -467,11 +466,6 @@
 
 	<repositories>
 		<repository>
-			<id>my-local-repo</id>
-			<url>file://${basedir}/repo/</url>
-		</repository>
-
-		<repository>
 			<id>maven.aksw.internal</id>
 			<name>University Leipzig, AKSW Maven2 Internal Repository</name>
 			<url>http://maven.aksw.org/repository/internal/</url>
@@ -483,12 +477,12 @@
 			<url>http://maven.aksw.org/repository/snapshots/</url>
 		</repository>
 
-		<!-- <repository> <id>maven.aksw.snapshots</id> <name>AKSW Snapshot Repository</name>
-			<url>http://maven.aksw.org/archiva/repository/snapshots</url> <releases>
-			<enabled>false</enabled> </releases> <snapshots> <enabled>true</enabled>
-			</snapshots> </repository> <repository> <id>maven.aksw.internal</id> <name>AKSW
-			Release Repository</name> <url>http://maven.aksw.org/archiva/repository/internal</url>
-			<releases> <enabled>true</enabled> </releases> <snapshots> <enabled>false</enabled>
+		<!-- <repository> <id>maven.aksw.snapshots</id> <name>AKSW Snapshot Repository</name> 
+			<url>http://maven.aksw.org/archiva/repository/snapshots</url> <releases> 
+			<enabled>false</enabled> </releases> <snapshots> <enabled>true</enabled> 
+			</snapshots> </repository> <repository> <id>maven.aksw.internal</id> <name>AKSW 
+			Release Repository</name> <url>http://maven.aksw.org/archiva/repository/internal</url> 
+			<releases> <enabled>true</enabled> </releases> <snapshots> <enabled>false</enabled> 
 			</snapshots> </repository> -->
 	</repositories>
 </project>

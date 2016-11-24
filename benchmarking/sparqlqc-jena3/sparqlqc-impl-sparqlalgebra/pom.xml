@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<artifactId>sparqlqc-impl-sparqlalgebra</artifactId>
-	<!-- <version>1.0.0-SNAPSHOT</version> -->
+	<!-- <packaging>bundle</packaging> -->
 
 	<parent>
 		<groupId>org.aksw.sparqlqc</groupId>
@@ -19,19 +19,11 @@
 			<artifactId>sparqlqc-api</artifactId>
 		</dependency>
 
-		<!-- <dependency> <groupId>fr.inrialpes.sparqlqc</groupId> <artifactId>sparqlqc-containmenttester</artifactId>
+		<!-- <dependency> <groupId>fr.inrialpes.sparqlqc</groupId> <artifactId>sparqlqc-containmenttester</artifactId> 
 			<version>1.4</version> </dependency> -->
-		<!-- <dependency> <groupId>org.slf4j</groupId> <artifactId>slf4j-api</artifactId>
+		<!-- <dependency> <groupId>org.slf4j</groupId> <artifactId>slf4j-api</artifactId> 
 			</dependency> -->
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-api</artifactId>
-		</dependency>
 
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-log4j12</artifactId>
-		</dependency>
 
 		<!-- <dependency> -->
 		<!-- <groupId>org.jgrapht</groupId> -->
@@ -45,11 +37,13 @@
 		<dependency>
 			<groupId>lib</groupId>
 			<artifactId>afmu-solver</artifactId>
+			<version>1.0.0</version>
 		</dependency>
 
 		<dependency>
 			<groupId>lib</groupId>
 			<artifactId>subsum</artifactId>
+			<version>1.0.0</version>
 		</dependency>
 
 		<!-- <dependency> -->
@@ -61,17 +55,22 @@
 		<dependency>
 			<groupId>lib</groupId>
 			<artifactId>xpath20api</artifactId>
+			<version>1.0.0</version>
 		</dependency>
 
 		<dependency>
 			<groupId>lib</groupId>
 			<artifactId>xmltypes</artifactId>
+			<version>1.0.0</version>
 		</dependency>
 
-
-		<dependency>
-			<groupId>org.xeustechnologies</groupId>
-			<artifactId>jcl-core</artifactId>
-		</dependency>
 	</dependencies>
+
+	<repositories>
+		<repository>
+			<id>local.repo</id>
+			<url>file://${project.basedir}/../repo</url>
+		</repository>
+	</repositories>
+
 </project>

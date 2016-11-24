@@ -51,6 +51,7 @@ import org.jfree.data.category.CategoryDataset;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
+import org.osgi.framework.ServiceReference;
 import org.osgi.framework.launch.Framework;
 import org.osgi.framework.launch.FrameworkFactory;
 import org.xeustechnologies.jcl.JarClassLoader;
@@ -180,18 +181,32 @@ public class MainTestContain {
 
 	public static void main(String[] args) throws Exception {
 
-		if(false) {
+		if(true) {
 			FrameworkFactory frameworkFactory = ServiceLoader.load(FrameworkFactory.class).iterator().next();
 
 			Map<String,String> config = new HashMap<String,String>();
 			config.put(Constants.FRAMEWORK_STORAGE_CLEAN,
 			           Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT);
 
+//	         config.put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA,
+//                     "org.aksw.qcwrapper.jsa.*");
+
 			Framework framework = frameworkFactory.newFramework(config);
 			framework.start();
 			BundleContext context = framework.getBundleContext();
 			Bundle bundle = context.installBundle("reference:file:/home/raven/Projects/Eclipse/jena-sparql-api-parent/benchmarking/sparqlqc-jena3/sparqlqc-impl-jsa/target/sparqlqc-impl-jsa-1.0.0-SNAPSHOT.jar");
 			bundle.start();
+			
+			ServiceReference<ContainmentSolver> sr = context.getServiceReference(ContainmentSolver.class);
+			ContainmentSolver c = context.getService(sr);
+			Query yy = QueryFactory.create("SELECT * { ?s ?p ?o }");
+			boolean result = c.entailed(yy, yy);
+			System.out.println("RESULT: " + result);
+			
+			framework.stop();
+			framework.waitForStop(0);
+			
+			return;
 		}
 
 		List<Resource> allTasks = SparqlQcReader.loadTasks("sparqlqc/1.4/benchmark/cqnoproj.rdf", "sparqlqc/1.4/benchmark/noprojection/*");

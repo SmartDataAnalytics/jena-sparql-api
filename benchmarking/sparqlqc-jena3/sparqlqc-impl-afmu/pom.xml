@@ -4,7 +4,6 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<artifactId>sparqlqc-impl-afmu</artifactId>
-	<!-- <version>1.0.0-SNAPSHOT</version> -->
 
 	<parent>
 		<groupId>org.aksw.sparqlqc</groupId>
@@ -31,30 +30,34 @@
 		<dependency>
 			<groupId>lib</groupId>
 			<artifactId>afmu-solver</artifactId>
+			<version>1.0.0</version>
 		</dependency>
 
 		<!-- lmu-solver comes with its own java-bdd version which is incompatible -->
 		<!-- with the version required by the afmu-solver -->
 
 		<dependency>
-		<groupId>lib</groupId>
-		<artifactId>javabdd</artifactId>
-		<version>1.0b2</version>
+			<groupId>lib</groupId>
+			<artifactId>javabdd</artifactId>
+			<version>1.0b2</version>
 		</dependency>
 
 		<dependency>
 			<groupId>lib</groupId>
 			<artifactId>subsum</artifactId>
+			<version>1.0.0</version>
 		</dependency>
 
 		<dependency>
 			<groupId>lib</groupId>
 			<artifactId>xpath20api</artifactId>
+			<version>1.0.0</version>
 		</dependency>
 
 		<dependency>
 			<groupId>lib</groupId>
 			<artifactId>xmltypes</artifactId>
+			<version>1.0.0</version>
 		</dependency>
 
 
@@ -65,4 +68,12 @@
 
 
 	</dependencies>
+
+	<repositories>
+		<repository>
+			<id>local.repo</id>
+			<url>file://${project.basedir}/../repo</url>
+		</repository>
+	</repositories>
+
 </project>

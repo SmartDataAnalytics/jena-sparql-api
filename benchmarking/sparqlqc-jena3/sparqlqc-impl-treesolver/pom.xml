@@ -21,6 +21,7 @@
 		<dependency>
 			<groupId>lib</groupId>
 			<artifactId>afmu-solver</artifactId>
+			<version>1.0.0</version>
 		</dependency>
 
 		<!-- lmu-solver comes with its own java-bdd version which is incompatible -->
@@ -35,11 +36,13 @@
 		<dependency>
 			<groupId>lib</groupId>
 			<artifactId>lmu-solver</artifactId>
+			<version>1.0.0</version>
 		</dependency>
 
 		<dependency>
 			<groupId>lib</groupId>
 			<artifactId>subsum</artifactId>
+			<version>1.0.0</version>
 		</dependency>
 
 		<!-- <dependency> -->
@@ -51,11 +54,13 @@
 		<dependency>
 			<groupId>lib</groupId>
 			<artifactId>xpath20api</artifactId>
+			<version>1.0.0</version>
 		</dependency>
 
 		<dependency>
 			<groupId>lib</groupId>
 			<artifactId>xmltypes</artifactId>
+			<version>1.0.0</version>
 		</dependency>
 
 
@@ -77,4 +82,11 @@
 		<!-- </dependency> -->
 
 	</dependencies>
+
+	<repositories>
+		<repository>
+			<id>local.repo</id>
+			<url>file://${project.basedir}/../repo</url>
+		</repository>
+	</repositories>
 </project>

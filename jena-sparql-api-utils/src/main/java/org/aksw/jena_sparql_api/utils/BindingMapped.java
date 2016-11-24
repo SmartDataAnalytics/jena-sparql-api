@@ -1,12 +1,18 @@
+package org.aksw.jena_sparql_api.utils;
 import java.util.Iterator;
 import java.util.Map;
 
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
-import org.apache.jena.sparql.engine.binding.BindingWrapped;
 
 
+/**
+ * TODO Finish implementation
+ * 
+ * @author raven
+ *
+ */
 public class BindingMapped
     //extends BindingWrapped
     implements Binding

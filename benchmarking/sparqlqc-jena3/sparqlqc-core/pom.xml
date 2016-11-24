@@ -4,7 +4,6 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<artifactId>sparqlqc-core</artifactId>
-	<!-- <version>1.0.0-SNAPSHOT</version> -->
 
 	<parent>
 		<groupId>org.aksw.sparqlqc</groupId>
@@ -16,6 +15,7 @@
 		<dependency>
 			<groupId>${project.groupId}</groupId>
 			<artifactId>sparqlqc-api</artifactId>
+			<socpe>runtime</socpe>
 		</dependency>
 
 		<dependency>
@@ -36,11 +36,6 @@
 		<dependency>
 			<groupId>org.xeustechnologies</groupId>
 			<artifactId>jcl-core</artifactId>
-		</dependency>
-
-		<dependency>
-			<groupId>org.osgi</groupId>
-			<artifactId>org.osgi.core</artifactId>
 		</dependency>
 
 		<dependency>
