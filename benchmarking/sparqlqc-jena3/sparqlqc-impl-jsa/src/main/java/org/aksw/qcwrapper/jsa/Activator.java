@@ -5,13 +5,13 @@ import java.util.Hashtable;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 
-import fr.inrialpes.tyrexmo.testqc.ContainmentSolver;
+import fr.inrialpes.tyrexmo.testqc.simple.SimpleContainmentSolver;
 
 public class Activator implements BundleActivator
 {
     public void start(BundleContext context)
     {
-        context.registerService(ContainmentSolver.class, new ContainmentSolverWrapperJsaVarMapper(), new Hashtable<>());
+        context.registerService(SimpleContainmentSolver.class, new ContainmentSolverWrapperJsaVarMapper(), new Hashtable<>());
     }
 
     public void stop(BundleContext context)

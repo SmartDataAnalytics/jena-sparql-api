@@ -63,11 +63,14 @@
 								<Embed-Transitive>true</Embed-Transitive>
 								<Bundle-Activator>org.aksw.qcwrapper.jsa.Activator</Bundle-Activator>
 								<Import-Package>
-									*;resolution:=optional,org.osgi.framework
+									*;resolution:=optional,org.osgi.framework,!fr.inrialpes.tyrexmo.testqc.simple
 								</Import-Package>
 <!-- 								org.aksw.sparqlqc.api, -->
-								<DynamicImport-Package>*</DynamicImport-Package>
-								<Export-Package>org.aksw.qcwrapper.jsa.*</Export-Package>
+<!-- 								<DynamicImport-Package>*</DynamicImport-Package> -->
+<!-- 								<Export-Package>org.aksw.qcwrapper.jsa</Export-Package> -->
+<!-- 								<Export-Package>{local-packages}</Export-Package> -->
+<!-- 								<Bundle-ClassPath>{maven-dependencies}</Bundle-ClassPath> -->
+
 <!--                                 <Import-Package>;resolution:=optional,org.osgi.framework</Import-Package> -->
 								<!-- <Export-Package>${bundle.dynamicImport.package}</Export-Package> -->
 								<!-- <Export-Package>{local-packages}</Export-Package> -->
@@ -91,7 +94,13 @@
 	<dependencies>
 
 		<dependency>
-			<groupId>${project.groupId}</groupId>
+			<groupId>org.aksw.sparqlqc</groupId>
+			<artifactId>sparqlqc-api-simple</artifactId>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.aksw.sparqlqc</groupId>
 			<artifactId>sparqlqc-api</artifactId>
 		</dependency>
 
@@ -106,11 +115,11 @@
 		</dependency>
 	</dependencies>
 
-	<repositories>
-		<repository>
-			<id>org.topbraid</id>
-			<url>http://topquadrant.com/repository/spin</url>
-		</repository>
-	</repositories>
+<!-- 	<repositories> -->
+<!-- 		<repository> -->
+<!-- 			<id>org.topbraid</id> -->
+<!-- 			<url>http://topquadrant.com/repository/spin</url> -->
+<!-- 		</repository> -->
+<!-- 	</repositories> -->
 
 </project>

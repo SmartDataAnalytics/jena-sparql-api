@@ -7,14 +7,16 @@ import java.util.stream.Stream;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlQueryContainmentUtils;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.sparql.core.Var;
 
 import fr.inrialpes.tyrexmo.testqc.ContainmentSolver;
 import fr.inrialpes.tyrexmo.testqc.ContainmentTestException;
+import fr.inrialpes.tyrexmo.testqc.simple.SimpleContainmentSolver;
 
 public class ContainmentSolverWrapperJsaBase
-	implements ContainmentSolver
+	implements ContainmentSolver, SimpleContainmentSolver
 {
 	protected BiFunction<QuadFilterPatternCanonical, QuadFilterPatternCanonical, Stream<Map<Var, Var>>> qfpcMatcher;
 
@@ -59,6 +61,14 @@ public class ContainmentSolverWrapperJsaBase
 	@Override
 	public boolean entailedUnderSchema(Model schema, Query q1, Query q2) throws ContainmentTestException {
 		throw new ContainmentTestException("Cannot yet parse Jena Models");
+	}
+
+	@Override
+	public boolean entailed(String queryStr1, String queryStr2) {
+		Query q1 = QueryFactory.create(queryStr1);
+		Query q2 = QueryFactory.create(queryStr2);
+		boolean result = entailed(q1, q2);
+		return result;
 	}
 
 }
