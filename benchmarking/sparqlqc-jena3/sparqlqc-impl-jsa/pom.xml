@@ -1,98 +1,90 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-	<artifactId>sparqlqc-impl-jsa</artifactId>
-	<packaging>bundle</packaging>
+    <artifactId>sparqlqc-impl-jsa</artifactId>
+    <packaging>bundle</packaging>
 
-	<parent>
-		<groupId>org.aksw.sparqlqc</groupId>
-		<artifactId>sparqlqc-benchmark</artifactId>
-		<version>1.0.0-SNAPSHOT</version>
-	</parent>
+    <parent>
+        <groupId>org.aksw.sparqlqc</groupId>
+        <artifactId>sparqlqc-benchmark</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
 
-	<build>
-		<plugins>
-			<!-- <plugin> -->
-			<!-- <groupId>org.apache.maven.plugins</groupId> -->
-			<!-- <artifactId>maven-shade-plugin</artifactId> -->
-			<!-- </plugin> -->
-			<plugin>
-				<groupId>org.apache.felix</groupId>
-				<artifactId>maven-bundle-plugin</artifactId>
-				<version>3.2.0</version>
-				<extensions>true</extensions>
-				<executions>
-					<execution>
-						<phase>package</phase>
-						<goals>
-							<goal>bundle</goal>
-						</goals>
-						<configuration>
-							<instructions>
-								<Embed-Dependency>*;scope=compile|runtime</Embed-Dependency>
-								<Embed-Transitive>true</Embed-Transitive>
-								<Bundle-Activator>org.aksw.qcwrapper.jsa.Activator</Bundle-Activator>
-<!-- 								<Import-Package>*;resolution:=optional,org.osgi.framework</Import-Package> -->
-								<Import-Package>*;resolution:=optional</Import-Package>
-<!-- 								org.aksw.sparqlqc.api, -->
-<!-- 								<DynamicImport-Package>*</DynamicImport-Package> -->
-<!-- 								<Export-Package>org.aksw.qcwrapper.jsa</Export-Package> -->
-<!-- 								<Export-Package>{local-packages}</Export-Package> -->
-<!-- 								<Bundle-ClassPath>{maven-dependencies}</Bundle-ClassPath> -->
+    <build>
+        <plugins>
+            <!-- <plugin> -->
+            <!-- <groupId>org.apache.maven.plugins</groupId> -->
+            <!-- <artifactId>maven-shade-plugin</artifactId> -->
+            <!-- </plugin> -->
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <version>3.2.0</version>
+                <extensions>true</extensions>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>bundle</goal>
+                        </goals>
+                        <configuration>
+                            <instructions>
+                                <Embed-Dependency>*;scope=compile|runtime</Embed-Dependency>
+                                <Embed-Transitive>true</Embed-Transitive>
+                                <Bundle-Activator>org.aksw.qcwrapper.jsa.Activator</Bundle-Activator>
+<!--                                 <Import-Package>*;resolution:=optional,org.osgi.framework</Import-Package> -->
 
-<!--                                 <Import-Package>;resolution:=optional,org.osgi.framework</Import-Package> -->
-								<!-- <Export-Package>${bundle.dynamicImport.package}</Export-Package> -->
-								<!-- <Export-Package>{local-packages}</Export-Package> -->
-								<!-- <Export-Package>!org.aksw.qcwrapper.jsa.*</Export-Package> -->
-								<!-- <Embed-Dependency>*;scope=compile|runtime</Embed-Dependency> -->
-								<!-- <_exportcontents>*</_exportcontents> -->
-								<!-- <Export-Package>org.aksw.qcwrapper.jsa</Export-Package> -->
-								<!-- <Import-Package>*</Import-Package> -->
-								<!-- <Include-Resource>{maven-resources}</Include-Resource> -->
-								<!-- <Private-Package>org.foo.myproject.*</Private-Package> -->
-								<!-- <DynamicImport-Package>*</DynamicImport-Package> -->
-								<!-- <DynamicImport-Package>${bundle.dynamicImport.package}</DynamicImport-Package> -->
-							</instructions>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-		</plugins>
-	</build>
 
-	<dependencies>
+<!-- There are these options for using the application's org.osgi.framework import -->
+<!-- (1) Declare no static imports at all try to import everything dynamically: -->
+<!--                                 <Import-Package>;</Import-Package> -->
+<!--                                 <DynamicImport-Package>*</DynamicImport-Package> -->
+<!-- (2) Declare all static dependencies as optional -->
+                                <Import-Package>*;resolution:=optional</Import-Package>
+<!--                                 <Import-Package></Import-Package> -->
+<!-- (3) Ideally, packages from provided maven dependencies would be mandatory, but I don't see any way to do that, oh well... -->
 
-		<dependency>
-			<groupId>org.aksw.sparqlqc</groupId>
-			<artifactId>sparqlqc-api-simple</artifactId>
-			<scope>provided</scope>
-		</dependency>
+                            </instructions>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
-		<dependency>
-			<groupId>org.aksw.sparqlqc</groupId>
-			<artifactId>sparqlqc-api</artifactId>
+    <dependencies>
+
+        <dependency>
+            <groupId>org.aksw.sparqlqc</groupId>
+            <artifactId>sparqlqc-api-simple</artifactId>
             <scope>provided</scope>
-		</dependency>
+        </dependency>
+
+        <dependency>
+            <groupId>org.aksw.sparqlqc</groupId>
+            <artifactId>sparqlqc-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
 
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
 
-		<dependency>
-			<groupId>org.aksw.jena-sparql-api</groupId>
-			<artifactId>jena-sparql-api-cache</artifactId>
-		</dependency>
+        <dependency>
+            <groupId>org.aksw.jena-sparql-api</groupId>
+            <artifactId>jena-sparql-api-cache</artifactId>
+        </dependency>
 
-		<dependency>
-			<groupId>org.osgi</groupId>
-			<artifactId>org.osgi.core</artifactId>
-			<scope>provided</scope>
-		</dependency>
-				
-	</dependencies>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.core</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+    </dependencies>
 
 <!-- 	<repositories> -->
 <!-- 		<repository> -->
