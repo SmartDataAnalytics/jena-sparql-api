@@ -109,7 +109,9 @@ public class TreeSolverWrapper implements LegacyContainmentSolver, SimpleContain
 
     protected int evaluateFormula( String formula ) {
     fs = new FormulaSolver();
-    return fs.solve_formula_int_result( formula, false, false, false, false, false, false, null );
+    System.out.println("Formula: " + formula);
+    int result = fs.solve_formula_int_result( formula, false, false, false, false, false, false, null );
+    return result;
     }
 
     public void cleanup() {

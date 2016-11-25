@@ -244,6 +244,9 @@ public class MainTestContain {
                 // Misc packages
                 "org.slf4j;version=\"1.0.0\"",
                 "org.apache.log4j;version=\"1.0.0\""
+
+                // ??? What packages are that?
+                //"java_cup.runtime;version=\"1.0.0\""
             ));
 
             Framework framework = frameworkFactory.newFramework(config);
