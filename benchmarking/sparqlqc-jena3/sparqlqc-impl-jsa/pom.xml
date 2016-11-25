@@ -14,42 +14,33 @@
 
     <build>
         <plugins>
-            <!-- <plugin> -->
-            <!-- <groupId>org.apache.maven.plugins</groupId> -->
-            <!-- <artifactId>maven-shade-plugin</artifactId> -->
-            <!-- </plugin> -->
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
                 <version>3.2.0</version>
                 <extensions>true</extensions>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>bundle</goal>
-                        </goals>
-                        <configuration>
-                            <instructions>
-                                <Embed-Dependency>*;scope=compile|runtime</Embed-Dependency>
-                                <Embed-Transitive>true</Embed-Transitive>
-                                <Bundle-Activator>org.aksw.qcwrapper.jsa.Activator</Bundle-Activator>
-<!--                                 <Import-Package>*;resolution:=optional,org.osgi.framework</Import-Package> -->
+                <configuration>
+                    <instructions>
+                        <Embed-Dependency>*;scope=compile|runtime</Embed-Dependency>
+                        <Embed-Transitive>true</Embed-Transitive>
+                        <Bundle-Activator>org.aksw.qcwrapper.jsa.Activator</Bundle-Activator>
+                        <!-- <Import-Package>*;resolution:=optional,org.osgi.framework</Import-Package> -->
 
 
-<!-- There are these options for using the application's org.osgi.framework import -->
-<!-- (1) Declare no static imports at all try to import everything dynamically: -->
-<!--                                 <Import-Package>;</Import-Package> -->
-<!--                                 <DynamicImport-Package>*</DynamicImport-Package> -->
-<!-- (2) Declare all static dependencies as optional -->
-                                <Import-Package>*;resolution:=optional</Import-Package>
-<!--                                 <Import-Package></Import-Package> -->
-<!-- (3) Ideally, packages only originating from provided maven dependencies would be mandatory, but I don't see any way to do that, oh well... -->
+                        <!-- There are these options for using the application's org.osgi.framework
+                            import -->
+                        <!-- (1) Declare no static imports at all try to import everything
+                            dynamically: -->
+                        <!-- <Import-Package>;</Import-Package> -->
+                        <!-- <DynamicImport-Package>*</DynamicImport-Package> -->
+                        <!-- (2) Declare all static dependencies as optional -->
+                        <Import-Package>*;resolution:=optional</Import-Package>
+                        <!-- <Import-Package></Import-Package> -->
+                        <!-- (3) Ideally, packages only originating from provided maven dependencies
+                            would be mandatory, but I don't see any way to do that, oh well... -->
 
-                            </instructions>
-                        </configuration>
-                    </execution>
-                </executions>
+                    </instructions>
+                </configuration>
             </plugin>
         </plugins>
     </build>
@@ -85,12 +76,4 @@
         </dependency>
 
     </dependencies>
-
-<!-- 	<repositories> -->
-<!-- 		<repository> -->
-<!-- 			<id>org.topbraid</id> -->
-<!-- 			<url>http://topquadrant.com/repository/spin</url> -->
-<!-- 		</repository> -->
-<!-- 	</repositories> -->
-
 </project>
