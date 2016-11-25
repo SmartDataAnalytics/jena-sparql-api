@@ -16,8 +16,8 @@
         <module>sparqlqc-api-simple</module>
         <module>sparqlqc-api</module>
         <module>sparqlqc-core</module>
-        <!-- <module>sparqlqc-impl-treesolver</module> <module>sparqlqc-impl-sparqlalgebra</module>
-            ! -->
+        <module>sparqlqc-impl-treesolver</module>
+        <module>sparqlqc-impl-sparqlalgebra</module>
         <module>sparqlqc-impl-afmu</module>
         <module>sparqlqc-impl-jsa</module>
     </modules>
