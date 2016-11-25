@@ -1,79 +1,113 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-	<artifactId>sparqlqc-impl-afmu</artifactId>
+    <artifactId>sparqlqc-impl-afmu</artifactId>
+    <packaging>bundle</packaging>
 
-	<parent>
-		<groupId>org.aksw.sparqlqc</groupId>
-		<artifactId>sparqlqc-benchmark</artifactId>
-		<version>1.0.0-SNAPSHOT</version>
-	</parent>
+    <parent>
+        <groupId>org.aksw.sparqlqc</groupId>
+        <artifactId>sparqlqc-benchmark</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
 
-	<dependencies>
+    <dependencies>
+        <dependency>
+            <groupId>org.aksw.sparqlqc</groupId>
+            <artifactId>sparqlqc-api-simple</artifactId>
+            <scope>provided</scope>
+        </dependency>
 
-		<dependency>
-			<groupId>${project.groupId}</groupId>
-			<artifactId>sparqlqc-api</artifactId>
-		</dependency>
+        <dependency>
+            <groupId>org.aksw.sparqlqc</groupId>
+            <artifactId>sparqlqc-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
 
-		<!-- <dependency> -->
-		<!-- <groupId>org.jgrapht</groupId> -->
-		<!-- <artifactId>jgrapht-core</artifactId> -->
-		<!-- <version>0.8.3</version> -->
-		<!-- 0.9.0 is so far only deployed in the aksw internal repo (2014-02-01) -->
-		<!-- <version>0.9.0</version> -->
-		<!-- </dependency> -->
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.core</artifactId>
+            <scope>provided</scope>
+        </dependency>
 
-
-		<dependency>
-			<groupId>lib</groupId>
-			<artifactId>afmu-solver</artifactId>
-			<version>1.0.0</version>
-		</dependency>
-
-		<!-- lmu-solver comes with its own java-bdd version which is incompatible -->
-		<!-- with the version required by the afmu-solver -->
-
-		<dependency>
-			<groupId>lib</groupId>
-			<artifactId>javabdd</artifactId>
-			<version>1.0b2</version>
-		</dependency>
-
-		<dependency>
-			<groupId>lib</groupId>
-			<artifactId>subsum</artifactId>
-			<version>1.0.0</version>
-		</dependency>
-
-		<dependency>
-			<groupId>lib</groupId>
-			<artifactId>xpath20api</artifactId>
-			<version>1.0.0</version>
-		</dependency>
-
-		<dependency>
-			<groupId>lib</groupId>
-			<artifactId>xmltypes</artifactId>
-			<version>1.0.0</version>
-		</dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
 
 
-		<dependency>
-			<groupId>org.xeustechnologies</groupId>
-			<artifactId>jcl-core</artifactId>
-		</dependency>
+        <dependency>
+            <groupId>lib</groupId>
+            <artifactId>afmu-solver</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
+        <!-- lmu-solver comes with its own java-bdd version which is incompatible -->
+        <!-- with the version required by the afmu-solver -->
+
+        <dependency>
+            <groupId>lib</groupId>
+            <artifactId>javabdd</artifactId>
+            <version>1.0b2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>lib</groupId>
+            <artifactId>subsum</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>lib</groupId>
+            <artifactId>xpath20api</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>lib</groupId>
+            <artifactId>xmltypes</artifactId>
+            <version>1.0.0</version>
+        </dependency>
 
 
-	</dependencies>
+        <dependency>
+            <groupId>org.xeustechnologies</groupId>
+            <artifactId>jcl-core</artifactId>
+        </dependency>
 
-	<repositories>
-		<repository>
-			<id>local.repo</id>
-			<url>file://${project.basedir}/../repo</url>
-		</repository>
-	</repositories>
+
+    </dependencies>
+
+    <repositories>
+        <repository>
+            <id>local.repo</id>
+            <url>file://${project.basedir}/../repo</url>
+        </repository>
+    </repositories>
+
+    <build>
+        <plugins>
+<!--             <plugin> -->
+<!--                 <groupId>org.apache.maven.plugins</groupId> -->
+<!--                 <artifactId>maven-shade-plugin</artifactId> -->
+<!--             </plugin> -->
+
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <version>3.2.0</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Embed-Dependency>*;scope=compile|runtime</Embed-Dependency>
+                        <Embed-Transitive>true</Embed-Transitive>
+                        <Bundle-Activator>fr.inrialpes.tyrexmo.qcwrapper.afmu.Activator</Bundle-Activator>
+                        <Import-Package>*;resolution:=optional</Import-Package>
+                    </instructions>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

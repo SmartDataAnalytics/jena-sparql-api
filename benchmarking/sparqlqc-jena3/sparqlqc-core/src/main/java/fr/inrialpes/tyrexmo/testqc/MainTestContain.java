@@ -38,6 +38,7 @@ import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.simba.lsq.vocab.LSQ;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
+import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
@@ -194,8 +195,14 @@ public class MainTestContain {
             config.put(Constants.FRAMEWORK_BOOTDELEGATION, "*");
 
             config.put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA, String.join(",",
+                // API
                 "fr.inrialpes.tyrexmo.testqc.simple;version=\"1.0.0\"",
                 "fr.inrialpes.tyrexmo.testqc;version=\"1.0.0\"",
+
+                // Dirty API packages (probably should go elsewhere)
+                "fr.inrialpes.tyrexmo.queryanalysis;version=\"1.0.0\"",
+
+                // Jena 3
                 "org.apache.jena.sparql.algebra;version=\"1.0.0\"",
                 "org.apache.jena.sparql.algebra.optimize;version=\"1.0.0\"",
                 "org.apache.jena.sparql.algebra.op;version=\"1.0.0\"",
@@ -208,6 +215,31 @@ public class MainTestContain {
                 "org.apache.jena.graph;version=\"1.0.0\"",
                 "org.apache.jena.ext.com.google.common.collect;version=\"1.0.0\"",
                 "org.apache.jena.sparql.engine.binding;version=\"1.0.0\"",
+
+                // Jena 2 (legacy)
+                "com.hp.hpl.jena.sparql.algebra;version=\"1.0.0\"",
+                "com.hp.hpl.jena.sparql.algebra.optimize;version=\"1.0.0\"",
+                "com.hp.hpl.jena.sparql.algebra.op;version=\"1.0.0\"",
+                "com.hp.hpl.jena.sparql.algebra.expr;version=\"1.0.0\"",
+                "com.hp.hpl.jena.sparql.core;version=\"1.0.0\"",
+                "com.hp.hpl.jena.sparql.syntax;version=\"1.0.0\"",
+                "com.hp.hpl.jena.sparql.expr;version=\"1.0.0\"",
+                "com.hp.hpl.jena.sparql.expr.nodevalue;version=\"1.0.0\"",
+                "com.hp.hpl.jena.sparql.graph;version=\"1.0.0\"",
+                "com.hp.hpl.jena.query;version=\"1.0.0\"",
+                "com.hp.hpl.jena.graph;version=\"1.0.0\"",
+                "com.hp.hpl.jena.ext.com.google.common.collect;version=\"1.0.0\"",
+                "com.hp.hpl.jena.sparql.engine.binding;version=\"1.0.0\"",
+
+                "org.apache.xerces.util;version=\"1.0.0\"",
+                "org.apache.xerces.impl.dv;version=\"1.0.0\"",
+                "org.apache.xerces.xs;version=\"1.0.0\"",
+                "org.apache.xerces.impl.dv.xs;version=\"1.0.0\"",
+                "org.apache.xerces.impl.validation;version=\"1.0.0\"",
+
+                "com.ibm.icu.text;version=\"1.0.0\"",
+
+                // Misc packages
                 "org.slf4j;version=\"1.0.0\"",
                 "org.apache.log4j;version=\"1.0.0\""
             ));
@@ -217,18 +249,20 @@ public class MainTestContain {
                 framework.init();
                 framework.start();
                 BundleContext context = framework.getBundleContext();
-                Bundle bundle = context.installBundle(
-                        "reference:file:/home/raven/Projects/Eclipse/jena-sparql-api-parent/benchmarking/sparqlqc-jena3/sparqlqc-impl-jsa/target/sparqlqc-impl-jsa-1.0.0-SNAPSHOT.jar");
+//                Bundle bundle = context.installBundle("reference:file:/home/raven/Projects/Eclipse/jena-sparql-api-parent/benchmarking/sparqlqc-jena3/sparqlqc-impl-jsa/target/sparqlqc-impl-jsa-1.0.0-SNAPSHOT.jar");
+                Bundle bundle = context.installBundle("reference:file:/home/raven/Projects/Eclipse/jena-sparql-api-parent/benchmarking/sparqlqc-jena3/sparqlqc-impl-afmu/target/sparqlqc-impl-afmu-1.0.0-SNAPSHOT.jar");
                 try {
                     bundle.start();
                     {
                         ServiceReference<ContainmentSolver> sr = context.getServiceReference(ContainmentSolver.class);
                         if (sr != null) {
                             ContainmentSolver c = context.getService(sr);
-                            Query yy = QueryFactory.create("SELECT * { ?s ?p ?o }");
+                            Query yy = QueryFactory.create("SELECT * { ?s ?p ?o }", Syntax.syntaxARQ);
                             boolean result = c.entailed(yy, yy);
                             System.out.println("API: " + result);
                             //throw new RuntimeException("Service reference is null");
+                        } else {
+                            System.err.println("No Containment solver service");
                         }
                     }
 
@@ -236,15 +270,19 @@ public class MainTestContain {
                         ServiceReference<SimpleContainmentSolver> sr = context.getServiceReference(SimpleContainmentSolver.class);
                         if (sr != null) {
                             SimpleContainmentSolver c = context.getService(sr);
-                            Query yy = QueryFactory.create("SELECT * { ?s ?p ?o }");
+                            Query yy = QueryFactory.create("SELECT * { ?s ?p ?o }", Syntax.syntaxARQ);
                             boolean result = c.entailed("" + yy, "" + yy);
                             System.out.println("API-SIMPLE: " + result);
+                        } else {
+                            System.err.println("No Simple Containment solver service");
                         }
                     }
                 } finally {
                     //bundle.uninstall();
                     bundle.stop();
                 }
+            } catch(Exception e) {
+                e.printStackTrace();
             } finally {
 
                 framework.stop();

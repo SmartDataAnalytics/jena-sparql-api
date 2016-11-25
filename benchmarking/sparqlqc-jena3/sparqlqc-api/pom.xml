@@ -1,57 +1,62 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-	<artifactId>sparqlqc-api</artifactId>
-	<packaging>jar</packaging>
+    <artifactId>sparqlqc-api</artifactId>
+    <packaging>jar</packaging>
 
-	<parent>
-		<groupId>org.aksw.sparqlqc</groupId>
-		<artifactId>sparqlqc-benchmark</artifactId>
-		<version>1.0.0-SNAPSHOT</version>
-	</parent>
+    <parent>
+        <groupId>org.aksw.sparqlqc</groupId>
+        <artifactId>sparqlqc-benchmark</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
 
 
-	<build>
-		<plugins>
-			<!-- <plugin> -->
-			<!-- <groupId>org.apache.maven.plugins</groupId> -->
-			<!-- <artifactId>maven-shade-plugin</artifactId> -->
-			<!-- </plugin> -->
-			<!-- <plugin> -->
-			<!-- <groupId>org.apache.felix</groupId> -->
-			<!-- <artifactId>maven-bundle-plugin</artifactId> -->
-			<!-- <version>3.2.0</version> -->
-			<!-- <extensions>true</extensions> -->
-			<!-- <configuration> -->
-			<!-- <instructions> -->
-			<!-- <Embed-Dependency>*;scope=compile|runtime</Embed-Dependency> -->
-			<!-- <Embed-Transitive>true</Embed-Transitive> -->
-			<!-- <Export-Package>{local-packages}</Export-Package> -->
-			<!-- <Import-Package> -->
-			<!-- *;resolution:=optional,org.osgi.framework -->
-			<!-- </Import-Package> -->
-			<!-- </instructions> -->
-			<!-- </configuration> -->
-			<!-- </plugin> -->
-		</plugins>
-	</build>
+    <build>
+        <plugins>
+            <!-- <plugin> -->
+            <!-- <groupId>org.apache.maven.plugins</groupId> -->
+            <!-- <artifactId>maven-shade-plugin</artifactId> -->
+            <!-- </plugin> -->
+            <!-- <plugin> -->
+            <!-- <groupId>org.apache.felix</groupId> -->
+            <!-- <artifactId>maven-bundle-plugin</artifactId> -->
+            <!-- <version>3.2.0</version> -->
+            <!-- <extensions>true</extensions> -->
+            <!-- <configuration> -->
+            <!-- <instructions> -->
+            <!-- <Embed-Dependency>*;scope=compile|runtime</Embed-Dependency> -->
+            <!-- <Embed-Transitive>true</Embed-Transitive> -->
+            <!-- <Export-Package>{local-packages}</Export-Package> -->
+            <!-- <Import-Package> -->
+            <!-- *;resolution:=optional,org.osgi.framework -->
+            <!-- </Import-Package> -->
+            <!-- </instructions> -->
+            <!-- </configuration> -->
+            <!-- </plugin> -->
+        </plugins>
+    </build>
 
-	<dependencies>
-		<dependency>
-			<groupId>com.hp.hpl.jena</groupId>
-			<artifactId>arq</artifactId>
-		</dependency>
+    <dependencies>
+        <dependency>
+            <groupId>com.hp.hpl.jena</groupId>
+            <artifactId>arq</artifactId>
+        </dependency>
 
-		<dependency>
-			<groupId>org.apache.jena</groupId>
-			<artifactId>jena-arq</artifactId>
-		</dependency>
+<!--         <dependency> -->
+<!--             <groupId>com.hp.hpl.jena</groupId> -->
+<!--             <artifactId>util</artifactId> -->
+<!--         </dependency> -->
 
-		<dependency>
-			<groupId>org.jgrapht</groupId>
-			<artifactId>jgrapht-core</artifactId>
-		</dependency>
-	</dependencies>
+        <dependency>
+            <groupId>org.apache.jena</groupId>
+            <artifactId>jena-arq</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jgrapht</groupId>
+            <artifactId>jgrapht-core</artifactId>
+        </dependency>
+    </dependencies>
 </project>

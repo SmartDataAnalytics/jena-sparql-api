@@ -27,54 +27,54 @@ import com.codepoetics.protonpack.StreamUtils;
 
 public class SparqlViewMatcherTreeTests {
 
-	//@Test
-	public void testNoProjection() throws Exception {
-		Model model = ModelFactory.createDefaultModel();
-		RDFDataMgr.read(model, new ClassPathResource("tree-matcher-queries.ttl").getInputStream(), Lang.TURTLE);
-		runTests(model);
-	}
+    //@Test
+    public void testNoProjection() throws Exception {
+        Model model = ModelFactory.createDefaultModel();
+        RDFDataMgr.read(model, new ClassPathResource("tree-matcher-queries.ttl").getInputStream(), Lang.TURTLE);
+        runTests(model);
+    }
 
-	@Test
-	public void testProjection() throws Exception {
-		Model model = ModelFactory.createDefaultModel();
-		RDFDataMgr.read(model, new ClassPathResource("tree-matcher-queries-projection.ttl").getInputStream(), Lang.TURTLE);
-		runTests(model);
-	}
-
-
-	public static void runTests(Model model) {
-		List<Resource> tests = model.listSubjectsWithProperty(RDF.type, SparqlQcVocab.ContainmentTest).toList();
+    @Test
+    public void testProjection() throws Exception {
+        Model model = ModelFactory.createDefaultModel();
+        RDFDataMgr.read(model, new ClassPathResource("tree-matcher-queries-projection.ttl").getInputStream(), Lang.TURTLE);
+        runTests(model);
+    }
 
 
-		SparqlQueryParser queryParser = SparqlQueryParserImpl.create();
-		for(Resource test : tests) {
-			String qas = test.getRequiredProperty(SparqlQcVocab.sourceQuery).getObject().asResource().getRequiredProperty(LSQ.text).getObject().asLiteral().getString();
-			String qbs = test.getRequiredProperty(SparqlQcVocab.targetQuery).getObject().asResource().getRequiredProperty(LSQ.text).getObject().asLiteral().getString();
+    public static void runTests(Model model) {
+        List<Resource> tests = model.listSubjectsWithProperty(RDF.type, SparqlQcVocab.ContainmentTest).toList();
 
-			Set<Map<Var, Var>> expected = test.listProperties(SparqlQcVocab.result)
-					.mapWith(stmt -> stmt.getObject()).toSet().stream()
-					.map(o -> VarUtils.parseVarMap(o.asLiteral().getString()))
-					.collect(Collectors.toSet());
+
+        SparqlQueryParser queryParser = SparqlQueryParserImpl.create();
+        for(Resource test : tests) {
+            String qas = test.getRequiredProperty(SparqlQcVocab.sourceQuery).getObject().asResource().getRequiredProperty(LSQ.text).getObject().asLiteral().getString();
+            String qbs = test.getRequiredProperty(SparqlQcVocab.targetQuery).getObject().asResource().getRequiredProperty(LSQ.text).getObject().asLiteral().getString();
+
+            Set<Map<Var, Var>> expected = test.listProperties(SparqlQcVocab.result)
+                    .mapWith(stmt -> stmt.getObject()).toSet().stream()
+                    .map(o -> VarUtils.parseVarMap(o.asLiteral().getString()))
+                    .collect(Collectors.toSet());
 //			System.out.println("Expected: " + expected);
 
-			Query qa = queryParser.apply(qas);
-			Query qb = queryParser.apply(qbs);
+            Query qa = queryParser.apply(qas);
+            Query qb = queryParser.apply(qbs);
 
-			System.out.println(qa);
-			System.out.println(qb);
+            System.out.println(qa);
+            System.out.println(qb);
 
-			System.out.println("mappings:");
-			Set<Map<Var, Var>> actual = SparqlViewMatcherSystemImpl.match(qa, qb).flatMap(x -> {
-				return StreamUtils.stream(x.getVarMaps());
-			}).collect(Collectors.toSet());
+            System.out.println("mappings:");
+            Set<Map<Var, Var>> actual = SparqlViewMatcherSystemImpl.match(qa, qb).flatMap(x -> {
+                return StreamUtils.stream(x.getVarMaps());
+            }).collect(Collectors.toSet());
 
 
-			System.out.println("Actual: " + actual);
+            System.out.println("Actual: " + actual);
 
-			Assert.assertEquals(expected, actual);
+            Assert.assertEquals(expected, actual);
 
-			System.out.println("done.");
-		}
+            System.out.println("done.");
+        }
 
 
         // TODO We now need to rewrite the query using the canonical quad filter patterns
@@ -234,7 +234,7 @@ public class SparqlViewMatcherTreeTests {
 //            System.out.println();
 //        });
 
-	}
+    }
 
 
 }
