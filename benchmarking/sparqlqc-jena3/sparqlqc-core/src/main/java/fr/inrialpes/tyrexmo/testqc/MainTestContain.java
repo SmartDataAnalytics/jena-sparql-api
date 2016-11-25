@@ -195,6 +195,20 @@ public class MainTestContain {
 
 			config.put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA, String.join(",",
 				"fr.inrialpes.tyrexmo.testqc.simple;version=\"1.0.0\"",
+				"fr.inrialpes.tyrexmo.testqc;version=\"1.0.0\"",
+				"org.apache.jena.sparql.algebra;version=\"1.0.0\"",
+				"org.apache.jena.sparql.algebra.optimize;version=\"1.0.0\"",
+                "org.apache.jena.sparql.algebra.op;version=\"1.0.0\"",
+				"org.apache.jena.sparql.algebra.expr;version=\"1.0.0\"",
+                "org.apache.jena.sparql.core;version=\"1.0.0\"",
+				"org.apache.jena.sparql.syntax;version=\"1.0.0\"",
+				"org.apache.jena.sparql.expr;version=\"1.0.0\"",
+				"org.apache.jena.sparql.graph;version=\"1.0.0\"",
+				"org.apache.jena.query;version=\"1.0.0\"",
+				"org.apache.jena.graph;version=\"1.0.0\"",
+				"org.apache.jena.ext.com.google.common.collect;version=\"1.0.0\"",
+				"org.apache.jena.sparql.engine.binding;version=\"1.0.0\"",
+				"org.slf4j;version=\"1.0.0\"",
 				"org.apache.log4j;version=\"1.0.0\""
 			));
 
@@ -207,15 +221,26 @@ public class MainTestContain {
 						"reference:file:/home/raven/Projects/Eclipse/jena-sparql-api-parent/benchmarking/sparqlqc-jena3/sparqlqc-impl-jsa/target/sparqlqc-impl-jsa-1.0.0-SNAPSHOT.jar");
 				try {
 					bundle.start();
-
-					ServiceReference<SimpleContainmentSolver> sr = context.getServiceReference(SimpleContainmentSolver.class);
-					if (sr == null) {
-						throw new RuntimeException("Service reference is null");
+					{
+    					ServiceReference<ContainmentSolver> sr = context.getServiceReference(ContainmentSolver.class);
+    					if (sr != null) {
+                            ContainmentSolver c = context.getService(sr);
+                            Query yy = QueryFactory.create("SELECT * { ?s ?p ?o }");
+                            boolean result = c.entailed(yy, yy);
+                            System.out.println("API: " + result);
+    						//throw new RuntimeException("Service reference is null");
+    					}
 					}
-					SimpleContainmentSolver c = context.getService(sr);
-					Query yy = QueryFactory.create("SELECT * { ?s ?p ?o }");
-					boolean result = c.entailed("" + yy, "" + yy);
-					System.out.println("RESULT: " + result);
+
+					{
+                        ServiceReference<SimpleContainmentSolver> sr = context.getServiceReference(SimpleContainmentSolver.class);
+                        if (sr != null) {
+                            SimpleContainmentSolver c = context.getService(sr);
+                            Query yy = QueryFactory.create("SELECT * { ?s ?p ?o }");
+                            boolean result = c.entailed("" + yy, "" + yy);
+                            System.out.println("API-SIMPLE: " + result);
+                        }
+                    }
 				} finally {
 					//bundle.uninstall();
 					bundle.stop();

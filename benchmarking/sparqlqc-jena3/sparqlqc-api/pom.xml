@@ -19,22 +19,22 @@
 			<!-- <groupId>org.apache.maven.plugins</groupId> -->
 			<!-- <artifactId>maven-shade-plugin</artifactId> -->
 			<!-- </plugin> -->
-<!-- 			<plugin> -->
-<!-- 				<groupId>org.apache.felix</groupId> -->
-<!-- 				<artifactId>maven-bundle-plugin</artifactId> -->
-<!-- 				<version>3.2.0</version> -->
-<!-- 				<extensions>true</extensions> -->
-<!-- 				<configuration> -->
-<!-- 					<instructions> -->
-<!-- 						<Embed-Dependency>*;scope=compile|runtime</Embed-Dependency> -->
-<!-- 						<Embed-Transitive>true</Embed-Transitive> -->
-<!-- 						<Export-Package>{local-packages}</Export-Package> -->
-<!-- 						<Import-Package> -->
-<!-- 							*;resolution:=optional,org.osgi.framework -->
-<!-- 						</Import-Package> -->
-<!-- 					</instructions> -->
-<!-- 				</configuration> -->
-<!-- 			</plugin> -->
+			<!-- <plugin> -->
+			<!-- <groupId>org.apache.felix</groupId> -->
+			<!-- <artifactId>maven-bundle-plugin</artifactId> -->
+			<!-- <version>3.2.0</version> -->
+			<!-- <extensions>true</extensions> -->
+			<!-- <configuration> -->
+			<!-- <instructions> -->
+			<!-- <Embed-Dependency>*;scope=compile|runtime</Embed-Dependency> -->
+			<!-- <Embed-Transitive>true</Embed-Transitive> -->
+			<!-- <Export-Package>{local-packages}</Export-Package> -->
+			<!-- <Import-Package> -->
+			<!-- *;resolution:=optional,org.osgi.framework -->
+			<!-- </Import-Package> -->
+			<!-- </instructions> -->
+			<!-- </configuration> -->
+			<!-- </plugin> -->
 		</plugins>
 	</build>
 
