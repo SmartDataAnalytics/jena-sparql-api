@@ -44,7 +44,7 @@
 <!-- (2) Declare all static dependencies as optional -->
                                 <Import-Package>*;resolution:=optional</Import-Package>
 <!--                                 <Import-Package></Import-Package> -->
-<!-- (3) Ideally, packages from provided maven dependencies would be mandatory, but I don't see any way to do that, oh well... -->
+<!-- (3) Ideally, packages only originating from provided maven dependencies would be mandatory, but I don't see any way to do that, oh well... -->
 
                             </instructions>
                         </configuration>
@@ -69,6 +69,12 @@
         </dependency>
 
         <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.core</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
@@ -76,12 +82,6 @@
         <dependency>
             <groupId>org.aksw.jena-sparql-api</groupId>
             <artifactId>jena-sparql-api-cache</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.core</artifactId>
-            <scope>provided</scope>
         </dependency>
 
     </dependencies>
