@@ -221,11 +221,13 @@ public class MainTestContain {
                 "com.hp.hpl.jena.sparql.algebra.optimize;version=\"1.0.0\"",
                 "com.hp.hpl.jena.sparql.algebra.op;version=\"1.0.0\"",
                 "com.hp.hpl.jena.sparql.algebra.expr;version=\"1.0.0\"",
+                "com.hp.hpl.jena.sparql.engine;version=\"1.0.0\"",
                 "com.hp.hpl.jena.sparql.core;version=\"1.0.0\"",
                 "com.hp.hpl.jena.sparql.syntax;version=\"1.0.0\"",
                 "com.hp.hpl.jena.sparql.expr;version=\"1.0.0\"",
                 "com.hp.hpl.jena.sparql.expr.nodevalue;version=\"1.0.0\"",
                 "com.hp.hpl.jena.sparql.graph;version=\"1.0.0\"",
+                "com.hp.hpl.jena.sparql.util.graph;version=\"1.0.0\"",
                 "com.hp.hpl.jena.query;version=\"1.0.0\"",
                 "com.hp.hpl.jena.graph;version=\"1.0.0\"",
                 "com.hp.hpl.jena.ext.com.google.common.collect;version=\"1.0.0\"",
@@ -250,7 +252,10 @@ public class MainTestContain {
                 framework.start();
                 BundleContext context = framework.getBundleContext();
 //                Bundle bundle = context.installBundle("reference:file:/home/raven/Projects/Eclipse/jena-sparql-api-parent/benchmarking/sparqlqc-jena3/sparqlqc-impl-jsa/target/sparqlqc-impl-jsa-1.0.0-SNAPSHOT.jar");
-                Bundle bundle = context.installBundle("reference:file:/home/raven/Projects/Eclipse/jena-sparql-api-parent/benchmarking/sparqlqc-jena3/sparqlqc-impl-afmu/target/sparqlqc-impl-afmu-1.0.0-SNAPSHOT.jar");
+                //Bundle bundle = context.installBundle("reference:file:/home/raven/Projects/Eclipse/jena-sparql-api-parent/benchmarking/sparqlqc-jena3/sparqlqc-impl-afmu/target/sparqlqc-impl-afmu-1.0.0-SNAPSHOT.jar");
+                Bundle bundle = context.installBundle("reference:file:/home/raven/Projects/Eclipse/jena-sparql-api-parent/benchmarking/sparqlqc-jena3/sparqlqc-impl-treesolver/target/sparqlqc-impl-treesolver-1.0.0-SNAPSHOT.jar");
+//                Bundle bundle = context.installBundle("reference:file:/home/raven/Projects/Eclipse/jena-sparql-api-parent/benchmarking/sparqlqc-jena3/sparqlqc-impl-sparqlalgebra/target/sparqlqc-impl-sparqlalgebra-1.0.0-SNAPSHOT.jar");
+
                 try {
                     bundle.start();
                     {

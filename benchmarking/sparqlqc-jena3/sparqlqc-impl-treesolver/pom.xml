@@ -4,6 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>sparqlqc-impl-treesolver</artifactId>
+    <packaging>bundle</packaging>
 
     <parent>
         <groupId>org.aksw.sparqlqc</groupId>
