@@ -13,6 +13,13 @@
     </parent>
 
     <dependencies>
+
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.core</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
         <dependency>
             <groupId>org.aksw.sparqlqc</groupId>
             <artifactId>sparqlqc-api-simple</artifactId>
@@ -26,16 +33,9 @@
         </dependency>
 
         <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.core</artifactId>
-            <scope>provided</scope>
+            <groupId>org.aksw.sparqlqc</groupId>
+            <artifactId>sparqlqc-impl-fragment</artifactId>
         </dependency>
-
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-        </dependency>
-
 
         <dependency>
             <groupId>org.aksw.sparqlqc.lib</groupId>
@@ -69,13 +69,6 @@
             <artifactId>xmltypes</artifactId>
             <version>1.0.0</version>
         </dependency>
-
-
-        <dependency>
-            <groupId>org.xeustechnologies</groupId>
-            <artifactId>jcl-core</artifactId>
-        </dependency>
-
 
     </dependencies>
 

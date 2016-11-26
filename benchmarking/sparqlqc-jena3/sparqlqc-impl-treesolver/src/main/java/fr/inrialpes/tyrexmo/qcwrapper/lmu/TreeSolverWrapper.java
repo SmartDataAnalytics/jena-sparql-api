@@ -69,7 +69,7 @@ public class TreeSolverWrapper implements LegacyContainmentSolver, SimpleContain
     String formulaLeft, formulaRight;
     if ( supportedTest( q1, ta1, q2, ta2 ) ) {
         if ( useSameEncoding( q1, q2 ) ){
-            System.out.println("BOTH QUERYS ARE EQUAL - THE IMPLEMENTATION MIGHT BE BUGGED");
+            logger.warn("BOTH QUERYS ARE EQUAL - THE IMPLEMENTATION MIGHT BE BUGGED");
         formulaLeft = new EncodeLHSQuery( ta1 ).getFormula();
         //System.out.println(formulaLeft);
         // JE : ??????? Fortunately, given the coding of useSameEncoding we barely go here!
@@ -110,7 +110,7 @@ public class TreeSolverWrapper implements LegacyContainmentSolver, SimpleContain
 
     protected int evaluateFormula( String formula ) {
     fs = new FormulaSolver();
-    System.out.println("Formula: " + formula);
+    //System.out.println("Formula: " + formula);
     int result = fs.solve_formula_int_result( formula, false, false, false, false, false, false, null );
     return result;
     }

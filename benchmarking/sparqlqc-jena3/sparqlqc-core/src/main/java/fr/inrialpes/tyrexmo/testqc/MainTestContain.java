@@ -55,6 +55,8 @@ import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.launch.Framework;
 import org.osgi.framework.launch.FrameworkFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xeustechnologies.jcl.JarClassLoader;
 import org.xeustechnologies.jcl.JclObjectFactory;
 import org.xeustechnologies.jcl.proxy.CglibProxyProvider;
@@ -73,6 +75,7 @@ class TestCase {
 }
 
 public class MainTestContain {
+    private static final Logger logger = LoggerFactory.getLogger(MainTestContain.class);
 
     public static final Property WARMUP = ResourceFactory.createProperty("http://ex.org/ontology#warmup");
 
@@ -241,63 +244,84 @@ public class MainTestContain {
 
                 "com.ibm.icu.text;version=\"1.0.0\"",
 
-                // Misc packages
-                "org.slf4j;version=\"1.0.0\"",
-                "org.apache.log4j;version=\"1.0.0\""
+                // Logging
+                "org.slf4j;version=\"1.7.0\""
+//                "org.slf4j.impl;version=\"1.0.0\"",
+//                "org.apache.log4j;version=\"1.0.0\""
 
                 // ??? What packages are that?
                 //"java_cup.runtime;version=\"1.0.0\""
             ));
 
+
+            List<File> jarFiles = Arrays.asList("jsa", "sparqlalgebra", "afmu", "treesolver").stream().map(implStr -> {
+                String jarPathStr = String
+                        .format("../sparqlqc-impl-%1$s/target/sparqlqc-impl-%1$s-1.0.0-SNAPSHOT.jar", implStr);
+                File jarFile = new File(jarPathStr);
+                return jarFile;
+}).collect(Collectors.toList());
+
+
+//          Bundle bundle = context.installBundle("reference:file:/home/raven/Projects/Eclipse/jena-sparql-api-parent/benchmarking/sparqlqc-jena3/sparqlqc-impl-jsa/target/sparqlqc-impl-jsa-1.0.0-SNAPSHOT.jar");
+//          Bundle bundle = context.installBundle("reference:file:/home/raven/Projects/Eclipse/jena-sparql-api-parent/benchmarking/sparqlqc-jena3/sparqlqc-impl-afmu/target/sparqlqc-impl-afmu-1.0.0-SNAPSHOT.jar");
+//          Bundle bundle = context.installBundle("reference:file:/home/raven/Projects/Eclipse/jena-sparql-api-parent/benchmarking/sparqlqc-jena3/sparqlqc-impl-treesolver/target/sparqlqc-impl-treesolver-1.0.0-SNAPSHOT.jar");
+//          Bundle bundle = context.installBundle("reference:file:/home/raven/Projects/Eclipse/jena-sparql-api-parent/benchmarking/sparqlqc-jena3/sparqlqc-impl-sparqlalgebra/target/sparqlqc-impl-sparqlalgebra-1.0.0-SNAPSHOT.jar");
+
             Framework framework = frameworkFactory.newFramework(config);
             try {
                 framework.init();
                 framework.start();
+
+
                 BundleContext context = framework.getBundleContext();
-//                Bundle bundle = context.installBundle("reference:file:/home/raven/Projects/Eclipse/jena-sparql-api-parent/benchmarking/sparqlqc-jena3/sparqlqc-impl-jsa/target/sparqlqc-impl-jsa-1.0.0-SNAPSHOT.jar");
-                //Bundle bundle = context.installBundle("reference:file:/home/raven/Projects/Eclipse/jena-sparql-api-parent/benchmarking/sparqlqc-jena3/sparqlqc-impl-afmu/target/sparqlqc-impl-afmu-1.0.0-SNAPSHOT.jar");
-                Bundle bundle = context.installBundle("reference:file:/home/raven/Projects/Eclipse/jena-sparql-api-parent/benchmarking/sparqlqc-jena3/sparqlqc-impl-treesolver/target/sparqlqc-impl-treesolver-1.0.0-SNAPSHOT.jar");
-//                Bundle bundle = context.installBundle("reference:file:/home/raven/Projects/Eclipse/jena-sparql-api-parent/benchmarking/sparqlqc-jena3/sparqlqc-impl-sparqlalgebra/target/sparqlqc-impl-sparqlalgebra-1.0.0-SNAPSHOT.jar");
 
-                try {
-                    String queryStr = "Prefix :<> SELECT * WHERE { ?x :takesCourse 'Course10' . ?x :takesCourse 'Course20' . }";
-                    bundle.start();
-                    {
-                        ServiceReference<ContainmentSolver> sr = context.getServiceReference(ContainmentSolver.class);
-                        if (sr != null) {
-                            ContainmentSolver c = context.getService(sr);
-                            Query yy = QueryFactory.create(queryStr, Syntax.syntaxARQ);
-                            boolean result = c.entailed(yy, yy);
-                            System.out.println("API: " + result);
-                            //throw new RuntimeException("Service reference is null");
-                        } else {
-                            System.err.println("No Containment solver service");
-                        }
-                    }
+                for (File jarFile : jarFiles) {
+                    String jarFileStr = jarFile.getAbsolutePath();
+                    logger.info("Loading: " + jarFileStr);
 
-                    {
-                        ServiceReference<SimpleContainmentSolver> sr = context.getServiceReference(SimpleContainmentSolver.class);
-                        if (sr != null) {
-                            SimpleContainmentSolver c = context.getService(sr);
-                            Query yy = QueryFactory.create(queryStr, Syntax.syntaxARQ);
-                            boolean result = c.entailed("" + yy, "" + yy);
-                            System.out.println("API-SIMPLE: " + result);
-                        } else {
-                            System.err.println("No Simple Containment solver service");
+                    Bundle bundle = context.installBundle("reference:file:" + jarFileStr);
+                    try {
+                        bundle.start();
+
+                        //String queryStr = "Prefix :<> SELECT * WHERE { ?x :takesCourse 'Course10' . ?x :takesCourse 'Course20' . }";
+                        String queryStr = "Select * { ?s ?p ?o }";
+                        {
+                            ServiceReference<ContainmentSolver> sr = context.getServiceReference(ContainmentSolver.class);
+                            if (sr != null) {
+                                ContainmentSolver c = context.getService(sr);
+                                Query yy = QueryFactory.create(queryStr, Syntax.syntaxARQ);
+                                boolean result = c.entailed(yy, yy);
+                                System.out.println("API: " + result);
+                                //throw new RuntimeException("Service reference is null");
+                            } else {
+                                System.err.println("No Containment solver service");
+                            }
                         }
+
+                        {
+                            ServiceReference<SimpleContainmentSolver> sr = context.getServiceReference(SimpleContainmentSolver.class);
+                            if (sr != null) {
+                                SimpleContainmentSolver c = context.getService(sr);
+                                Query yy = QueryFactory.create(queryStr, Syntax.syntaxARQ);
+                                boolean result = c.entailed("" + yy, "" + yy);
+                                System.out.println("API-SIMPLE: " + result);
+                            } else {
+                                System.err.println("No Simple Containment solver service");
+                            }
+                        }
+                    } finally {
+                        bundle.stop();
+                        bundle.uninstall();
                     }
-                } finally {
-                    //bundle.uninstall();
-                    bundle.stop();
                 }
             } catch(Exception e) {
                 e.printStackTrace();
             } finally {
-
                 framework.stop();
                 framework.waitForStop(0);
             }
-            System.out.println("done.");
+
+            logger.info("Done.");
             System.exit(0);
             return;
         }

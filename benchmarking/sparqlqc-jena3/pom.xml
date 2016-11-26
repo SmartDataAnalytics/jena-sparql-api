@@ -15,7 +15,11 @@
     <modules>
         <module>sparqlqc-api-simple</module>
         <module>sparqlqc-api</module>
+
         <module>sparqlqc-core</module>
+
+        <module>sparqlqc-impl-fragment</module>
+
         <module>sparqlqc-impl-treesolver</module>
         <module>sparqlqc-impl-sparqlalgebra</module>
         <module>sparqlqc-impl-afmu</module>
@@ -51,6 +55,7 @@
         <jsa.subversion>1-SNAPSHOT</jsa.subversion>
 
         <jsa.version>${jena.version}-${jsa.subversion}</jsa.version>
+        <slf4j.version>1.7.21</slf4j.version>
     </properties>
 
     <dependencyManagement>
@@ -69,9 +74,9 @@
             </dependency>
 
             <dependency>
-                <groupId>org.aksw.jena-sparql-api</groupId>
-                <artifactId>jena-sparql-api-cache</artifactId>
-                <version>${jsa.version}</version>
+                <groupId>org.aksw.sparqlqc</groupId>
+                <artifactId>sparqlqc-impl-fragment</artifactId>
+                <version>${project.version}</version>
             </dependency>
 
             <!-- <dependency> -->
@@ -102,16 +107,23 @@
                 </exclusions>
             </dependency>
 
-<!--             <dependency> -->
-<!--                 <groupId>com.hp.hpl.jena</groupId> -->
-<!--                 <artifactId>util</artifactId> -->
-<!--                 <version>2.8.8</version> -->
-<!--             </dependency> -->
+            <!-- <dependency> -->
+            <!-- <groupId>com.hp.hpl.jena</groupId> -->
+            <!-- <artifactId>util</artifactId> -->
+            <!-- <version>2.8.8</version> -->
+            <!-- </dependency> -->
 
             <dependency>
                 <groupId>org.apache.jena</groupId>
                 <artifactId>jena-arq</artifactId>
                 <version>${jena.version}</version>
+                <!-- <exclusions> -->
+                <!-- <exclusion> -->
+                <!-- <groupId>org.slf4j</groupId> -->
+                <!-- <artifactId>slf4j-api</artifactId> -->
+                <!-- </exclusion> -->
+                <!-- </exclusions> -->
+
             </dependency>
 
             <dependency>
@@ -128,13 +140,19 @@
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
-                <version>1.7.10</version>
+                <version>${slf4j.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-log4j12</artifactId>
-                <version>1.7.10</version>
+                <version>${slf4j.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>jcl-over-slf4j</artifactId>
+                <version>${slf4j.version}</version>
             </dependency>
 
             <!-- <dependency> -->
