@@ -310,8 +310,13 @@ public class MainTestContain {
                             }
                         }
                     } finally {
-                        bundle.stop();
-                        bundle.uninstall();
+                        try {
+                            bundle.stop();
+                            bundle.uninstall();
+                            logger.info("Uninstalled " + jarFileStr);
+                        } catch(Exception e) {
+                            logger.info("Failed to uninstall " + jarFileStr, e);
+                        }
                     }
                 }
             } catch(Exception e) {
