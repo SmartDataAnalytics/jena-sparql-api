@@ -38,7 +38,7 @@
 
 
         <dependency>
-            <groupId>lib</groupId>
+            <groupId>org.aksw.sparqlqc.lib</groupId>
             <artifactId>afmu-solver</artifactId>
             <version>1.0.0</version>
         </dependency>
@@ -47,25 +47,25 @@
         <!-- with the version required by the afmu-solver -->
 
         <dependency>
-            <groupId>lib</groupId>
+            <groupId>org.aksw.sparqlqc.lib</groupId>
             <artifactId>javabdd</artifactId>
-            <version>1.0b2</version>
+            <version>1.0.0</version>
         </dependency>
 
         <dependency>
-            <groupId>lib</groupId>
+            <groupId>org.aksw.sparqlqc.lib</groupId>
             <artifactId>subsum</artifactId>
             <version>1.0.0</version>
         </dependency>
 
         <dependency>
-            <groupId>lib</groupId>
+            <groupId>org.aksw.sparqlqc.lib</groupId>
             <artifactId>xpath20api</artifactId>
             <version>1.0.0</version>
         </dependency>
 
         <dependency>
-            <groupId>lib</groupId>
+            <groupId>org.aksw.sparqlqc.lib</groupId>
             <artifactId>xmltypes</artifactId>
             <version>1.0.0</version>
         </dependency>
