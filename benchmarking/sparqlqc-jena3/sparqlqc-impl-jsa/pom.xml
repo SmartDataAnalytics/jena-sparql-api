@@ -41,6 +41,12 @@
             <groupId>org.aksw.jena-sparql-api</groupId>
             <artifactId>jena-sparql-api-cache</artifactId>
             <version>${jsa.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-ext</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
     </dependencies>
