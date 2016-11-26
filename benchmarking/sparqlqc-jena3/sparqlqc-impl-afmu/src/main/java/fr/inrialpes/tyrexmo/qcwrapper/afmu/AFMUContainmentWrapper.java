@@ -88,9 +88,10 @@ public class AFMUContainmentWrapper
     String formulaLeft, formulaRight;
     if ( supportedTest( q1, q2 ) ) {
         if ( useSameEncoding( q1, q2 ) ){
+            System.out.println("BOTH QUERYS ARE EQUAL - THE IMPLEMENTATION MIGHT BE BUGGED");
         formulaLeft = new EncodeLHSQuery( q1 ).getFormula();
         // JE : ??????? Fortunately, given the coding of useSameEncoding we barely go here!
-        formulaRight = new EncodeLHSQuery( q1 ).getFormula();
+        formulaRight = new EncodeLHSQuery( q2 ).getFormula();
         } else {
         formulaLeft = new EncodeLHSQuery( q1 ).getFormula();
         formulaRight = new EncodeRHSQuery( q2 ).getFormula();

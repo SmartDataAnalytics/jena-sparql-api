@@ -36,19 +36,15 @@
             <artifactId>slf4j-api</artifactId>
         </dependency>
 
-
         <dependency>
             <groupId>org.aksw.sparqlqc.lib</groupId>
             <artifactId>lmu-solver</artifactId>
             <version>1.0.0</version>
         </dependency>
 
-        <!-- lmu-solver comes with its own java-bdd version which is incompatible -->
-        <!-- with the version required by the afmu-solver -->
-
         <dependency>
             <groupId>org.aksw.sparqlqc.lib</groupId>
-            <artifactId>subsum</artifactId>
+            <artifactId>java-cup-11a-runtime</artifactId>
             <version>1.0.0</version>
         </dependency>
 
@@ -64,11 +60,16 @@
             <version>1.0.0</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.aksw.sparqlqc.lib</groupId>
-            <artifactId>java-cup-11a-runtime</artifactId>
-            <version>1.0.0</version>
-        </dependency>
+
+        <!-- lmu-solver comes with its own java-bdd version which is incompatible -->
+        <!-- with the version required by the afmu-solver -->
+
+        <!-- <dependency> -->
+        <!-- <groupId>org.aksw.sparqlqc.lib</groupId> -->
+        <!-- <artifactId>subsum</artifactId> -->
+        <!-- <version>1.0.0</version> -->
+        <!-- </dependency> -->
+
 
     </dependencies>
 

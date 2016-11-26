@@ -260,12 +260,13 @@ public class MainTestContain {
 //                Bundle bundle = context.installBundle("reference:file:/home/raven/Projects/Eclipse/jena-sparql-api-parent/benchmarking/sparqlqc-jena3/sparqlqc-impl-sparqlalgebra/target/sparqlqc-impl-sparqlalgebra-1.0.0-SNAPSHOT.jar");
 
                 try {
+                    String queryStr = "Prefix :<> SELECT * WHERE { ?x :takesCourse 'Course10' . ?x :takesCourse 'Course20' . }";
                     bundle.start();
                     {
                         ServiceReference<ContainmentSolver> sr = context.getServiceReference(ContainmentSolver.class);
                         if (sr != null) {
                             ContainmentSolver c = context.getService(sr);
-                            Query yy = QueryFactory.create("SELECT * { ?s ?p ?o }", Syntax.syntaxARQ);
+                            Query yy = QueryFactory.create(queryStr, Syntax.syntaxARQ);
                             boolean result = c.entailed(yy, yy);
                             System.out.println("API: " + result);
                             //throw new RuntimeException("Service reference is null");
@@ -278,7 +279,7 @@ public class MainTestContain {
                         ServiceReference<SimpleContainmentSolver> sr = context.getServiceReference(SimpleContainmentSolver.class);
                         if (sr != null) {
                             SimpleContainmentSolver c = context.getService(sr);
-                            Query yy = QueryFactory.create("SELECT * { ?s ?p ?o }", Syntax.syntaxARQ);
+                            Query yy = QueryFactory.create(queryStr, Syntax.syntaxARQ);
                             boolean result = c.entailed("" + yy, "" + yy);
                             System.out.println("API-SIMPLE: " + result);
                         } else {
