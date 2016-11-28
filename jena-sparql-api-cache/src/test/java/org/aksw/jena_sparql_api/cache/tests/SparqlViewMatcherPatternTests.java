@@ -30,23 +30,23 @@ public class SparqlViewMatcherPatternTests {
     public static Collection<Object[]> data()
             throws Exception
     {
-    	List<Object[]> params = new ArrayList<>();
-    	params.addAll(createTestParams("sparqlqc/1.4/benchmark/cqnoproj.rdf", "sparqlqc/1.4/benchmark/noprojection/*"));
-    	//params.addAll(createTestParams("sparqlqc/1.4/benchmark/ucqproj.rdf", "sparqlqc/1.4/benchmark/projection/*"));
-    	return params;
+        List<Object[]> params = new ArrayList<>();
+        params.addAll(createTestParams("sparqlqc/1.4/benchmark/cqnoproj.rdf", "sparqlqc/1.4/benchmark/noprojection/*"));
+        //params.addAll(createTestParams("sparqlqc/1.4/benchmark/ucqproj.rdf", "sparqlqc/1.4/benchmark/projection/*"));
+        return params;
     }
 
 
     public static Collection<Object[]> createTestParams(String testCases, String queries) throws IOException {
-		//Model tests = ModelFactory.createDefaultModel();
-		//RDFDataMgr.read(tests, new ClassPathResource(testCases).getInputStream(), Lang.RDFXML);
+        //Model tests = ModelFactory.createDefaultModel();
+        //RDFDataMgr.read(tests, new ClassPathResource(testCases).getInputStream(), Lang.RDFXML);
         //Model model = SparqlQcReader.loadTasks(testCases, queries)readQueryFolder(queries);
-    	List<Resource> ts = SparqlQcReader.loadTasks(testCases, queries);
+        List<Resource> ts = SparqlQcReader.loadTasks(testCases, queries);
         //List<Resource> ts = tests.listResourcesWithProperty(RDF.type, SparqlQcVocab.ContainmentTest).toList();
 
         Object data[][] = new Object[ts.size()][3];
         for(int i = 0; i < ts.size(); ++i) {
-        	Resource t = ts.get(i);
+            Resource t = ts.get(i);
             data[i][0] = t.getURI(); //testCase.getName();
             data[i][1] = t.getModel();
             data[i][2] = t;
@@ -62,9 +62,9 @@ public class SparqlViewMatcherPatternTests {
     protected Resource t;
 
     public SparqlViewMatcherPatternTests(String name, Model model, Resource resource) {
-    	this.name = name;
-    	this.model = model;
-    	this.t = resource;
+        this.name = name;
+        this.model = model;
+        this.t = resource;
     }
 
 
@@ -148,23 +148,23 @@ public class SparqlViewMatcherPatternTests {
 
 //	public void runTest(Model model, Resource t) {
 
-	@Test
-	public void runTest() {
-		String srcQueryStr = t.getRequiredProperty(SparqlQcVocab.sourceQuery).getObject().asResource().getRequiredProperty(LSQ.text).getObject().asLiteral().getString();
-		String tgtQueryStr = t.getRequiredProperty(SparqlQcVocab.targetQuery).getObject().asResource().getRequiredProperty(LSQ.text).getObject().asLiteral().getString();
-		boolean expectedVerdict = Boolean.parseBoolean(t.getRequiredProperty(SparqlQcVocab.result).getObject().asLiteral().getString());
+    @Test
+    public void runTest() {
+        String srcQueryStr = t.getRequiredProperty(SparqlQcVocab.sourceQuery).getObject().asResource().getRequiredProperty(LSQ.text).getObject().asLiteral().getString();
+        String tgtQueryStr = t.getRequiredProperty(SparqlQcVocab.targetQuery).getObject().asResource().getRequiredProperty(LSQ.text).getObject().asLiteral().getString();
+        boolean expectedVerdict = Boolean.parseBoolean(t.getRequiredProperty(SparqlQcVocab.result).getObject().asLiteral().getString());
 
-		Query viewQuery = SparqlQueryContainmentUtils.queryParser.apply(srcQueryStr);
-		Query userQuery = SparqlQueryContainmentUtils.queryParser.apply(tgtQueryStr);
+        Query viewQuery = SparqlQueryContainmentUtils.queryParser.apply(srcQueryStr);
+        Query userQuery = SparqlQueryContainmentUtils.queryParser.apply(tgtQueryStr);
 
-		System.out.println("View Query: " + viewQuery);
-		System.out.println("User Query: " + userQuery);
+        System.out.println("View Query: " + viewQuery);
+        System.out.println("User Query: " + userQuery);
 
 //		Element viewEl = viewQuery.getQueryPattern();
 //		Element userEl = userQuery.getQueryPattern();
 
 
-		boolean actualVerdict = QueryToGraph.tryMatch(viewQuery, userQuery);
+        //boolean actualVerdict = QueryToGraph.tryMatch(viewQuery, userQuery);
 
 //		System.out.println("Hit a key to continue");
 //		try {
@@ -174,12 +174,17 @@ public class SparqlViewMatcherPatternTests {
 //		}
 
 
-		//boolean actualVerdict = SparqlQueryContainmentUtils.tryMatch(viewQuery, userQuery);
-				//SparqlQueryContainmentUtils.tryMatch(userEl, viewEl);
-		//System.out.println(srcQueryId + " - " + tgtQueryId + " - " + actualVerdict + " expected: "+ expectedVerdict);
+        //VarMapper::createVarMapCandidates
 
-		Assert.assertEquals(expectedVerdict, actualVerdict);
-	}
+        boolean actualVerdict = SparqlQueryContainmentUtils.tryMatch(viewQuery, userQuery, QueryToGraph::match);
+        //boolean actualVerdict = SparqlQueryContainmentUtils.tryMatch(viewQuery, userQuery, VarMapper::createVarMapCandidates);
+
+
+                //SparqlQueryContainmentUtils.tryMatch(userEl, viewEl);
+        //System.out.println(srcQueryId + " - " + tgtQueryId + " - " + actualVerdict + " expected: "+ expectedVerdict);
+
+        Assert.assertEquals(expectedVerdict, actualVerdict);
+    }
 
 
 
