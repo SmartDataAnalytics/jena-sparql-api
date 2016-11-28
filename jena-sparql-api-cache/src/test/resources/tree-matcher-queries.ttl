@@ -13,7 +13,14 @@ q:q1-b
   .
 
 
-t:t1
+t:t1a
+  a qc:ContainmentTest ;
+  qc:sourceQuery q:q1-a ;
+  qc:targetQuery q:q1-b ;
+  qc:result "{?s=?s, ?p=?p, ?o=?o}" ;
+  .
+
+t:t1b
 #  a qc:ContainmentTest ;
   qc:sourceQuery q:q1-b ;
   qc:targetQuery q:q1-a ;

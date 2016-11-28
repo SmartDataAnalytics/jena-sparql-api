@@ -122,10 +122,10 @@ public class SparqlCacheUtils {
      * @return
      */
     public static QuadFilterPatternCanonical fromQuery(Query query) {
-		ProjectedOp op = SparqlQueryContainmentUtils.toProjectedOp(query);
-		Op resOp = op.getResidualOp();
-		QuadFilterPatternCanonical result = SparqlCacheUtils.extractQuadFilterPatternCanonical(resOp);
-		return result;
+        ProjectedOp op = SparqlQueryContainmentUtils.toProjectedOp(query);
+        Op resOp = op.getResidualOp();
+        QuadFilterPatternCanonical result = SparqlCacheUtils.extractQuadFilterPatternCanonical(resOp);
+        return result;
     }
 
     public static QuadFilterPatternCanonical removeDefaultGraphFilter(QuadFilterPatternCanonical qfpc) {
@@ -598,14 +598,14 @@ public class SparqlCacheUtils {
      * @return
      */
     public static ProjectedOp cutProjection(Op op) {
-    	Op residualOp = op;
+        Op residualOp = op;
 
         Set<Var> projectVars = null;
 
         boolean isDistinct = false;
         if(residualOp instanceof OpDistinct) {
-        	isDistinct = true;
-        	residualOp = ((OpDistinct)residualOp).getSubOp();
+            isDistinct = true;
+            residualOp = ((OpDistinct)residualOp).getSubOp();
         }
 
         if(residualOp instanceof OpProject) {
@@ -616,8 +616,8 @@ public class SparqlCacheUtils {
         }
 
         ProjectedOp result = projectVars == null
-        		? new ProjectedOp(OpUtils.visibleNamedVars(residualOp), false, residualOp)
-        	    : new ProjectedOp(projectVars, isDistinct, residualOp);
+                ? new ProjectedOp(OpUtils.visibleNamedVars(residualOp), false, residualOp)
+                : new ProjectedOp(projectVars, isDistinct, residualOp);
 
         return result;
     }
@@ -650,15 +650,15 @@ public class SparqlCacheUtils {
     }
 
     public static QuadFilterPatternCanonical extractQuadFilterPatternCanonical(Op op) {
-		QuadFilterPattern qfp = SparqlCacheUtils.extractQuadFilterPattern(op);
-		QuadFilterPatternCanonical result;
-		if(qfp != null) {
-			Generator<Var> generator = VarGeneratorImpl2.create();
-		    result = SparqlCacheUtils.canonicalize2(qfp, generator);
-		} else {
-			result = null;
-		}
-		return result;
+        QuadFilterPattern qfp = SparqlCacheUtils.extractQuadFilterPattern(op);
+        QuadFilterPatternCanonical result;
+        if(qfp != null) {
+            Generator<Var> generator = VarGeneratorImpl2.create();
+            result = SparqlCacheUtils.canonicalize2(qfp, generator);
+        } else {
+            result = null;
+        }
+        return result;
     }
 
     public static QuadFilterPattern extractQuadFilterPattern(Op op) {
@@ -724,8 +724,8 @@ public class SparqlCacheUtils {
 
         boolean isDistinct = false;
         if(op instanceof OpDistinct) {
-        	isDistinct = true;
-        	op = ((OpDistinct)op).getSubOp();
+            isDistinct = true;
+            op = ((OpDistinct)op).getSubOp();
         }
 
         if(op instanceof OpProject) {
@@ -803,15 +803,15 @@ public class SparqlCacheUtils {
 //    }
 
     public static OpExtQuadFilterPatternCanonical tryCreateCqfp(Op op, Generator<Var> generator) {
-    	QuadFilterPattern qfp = extractQuadFilterPattern(op);
-    	OpExtQuadFilterPatternCanonical result;
-    	if(qfp == null) {
-    		result = null;
-    	} else {
-    		QuadFilterPatternCanonical tmp = canonicalize2(qfp, generator);
-    		result = new OpExtQuadFilterPatternCanonical(tmp);
-    	}
-    	return result;
+        QuadFilterPattern qfp = extractQuadFilterPattern(op);
+        OpExtQuadFilterPatternCanonical result;
+        if(qfp == null) {
+            result = null;
+        } else {
+            QuadFilterPatternCanonical tmp = canonicalize2(qfp, generator);
+            result = new OpExtQuadFilterPatternCanonical(tmp);
+        }
+        return result;
     }
 
     public static QuadFilterPatternCanonical canonicalize2(QuadFilterPattern qfp, Generator<Var> generator) {
@@ -949,13 +949,19 @@ public class SparqlCacheUtils {
 
     /**
      * Note: the result map contains all quads - quads without constraints map to an empty set
+     *
+     *
+     *
      * @param quads
      * @param filterCnf
      * @return
      */
     public static IBiSetMultimap<Quad, Set<Set<Expr>>> createMapQuadsToFilters(QuadFilterPatternCanonical qfpc) {
         Set<Quad> quads = qfpc.getQuads();
-        Set<Set<Expr>> filterCnf = qfpc.getFilterCnf();
+        Set<Set<Expr>> filterCnf = qfpc.getFilterDnf();
+        if(filterCnf == null) {
+            filterCnf = Collections.singleton(Collections.emptySet());
+        }
 
         IBiSetMultimap<Quad, Set<Set<Expr>>> result = createMapQuadsToFilters(quads, filterCnf);
         return result;
@@ -1108,7 +1114,7 @@ public class SparqlCacheUtils {
         if(dnf == null) {
             // A disjunction containing an empty conjunction (latter is generally treated as true - if i'm not mistaken)
             dnf = Collections.singleton(Collections.emptySet());
-        	//dnf = Collections.emptySet();
+            //dnf = Collections.emptySet();
         }
 
         FeatureMap<Expr, Multimap<Expr, Expr>> result = new FeatureMapImpl<>();

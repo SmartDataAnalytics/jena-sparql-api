@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.Multimap;
 
 public class VarMapper {
-	private static final Logger logger = LoggerFactory.getLogger(VarMapper.class);
+    private static final Logger logger = LoggerFactory.getLogger(VarMapper.class);
 
 
     public static GenericProblem<Map<Var, Var>, ?> deriveProblem(List<Var> cacheVars, List<Var> userVars) {
@@ -48,9 +48,9 @@ public class VarMapper {
 
     public static Stream<ProblemNeighborhoodAware<Map<Var, Var>, Var>> createProblems(FeatureMap<Expr, Multimap<Expr, Expr>> cacheIndex, FeatureMap<Expr, Multimap<Expr, Expr>> queryIndex) {
 
-    	List<ProblemNeighborhoodAware<Map<Var, Var>, Var>> problems = new ArrayList<>();
+        List<ProblemNeighborhoodAware<Map<Var, Var>, Var>> problems = new ArrayList<>();
 
-    	for(Entry<Set<Expr>, Collection<Multimap<Expr, Expr>>> entry : queryIndex.entrySet()) {
+        for(Entry<Set<Expr>, Collection<Multimap<Expr, Expr>>> entry : queryIndex.entrySet()) {
             Set<Expr> querySig = entry.getKey();
             Collection<Multimap<Expr, Expr>> queryMaps = entry.getValue();
 
@@ -64,8 +64,8 @@ public class VarMapper {
             // If the cache index is empty, such as in the case of view := { ?s ?p ?o } then the view is
             // satisfiable after all
             if(cands.isEmpty()) {
-            	problems = Collections.singletonList(new ProblemStaticSolutions<>(Collections.singleton(null)));
-            	break;
+                problems = Collections.singletonList(new ProblemStaticSolutions<>(Collections.singleton(null)));
+                break;
             }
 
             for(Entry<Set<Expr>, Multimap<Expr, Expr>> e : cands) {
@@ -98,7 +98,7 @@ public class VarMapper {
             //cands.forEach(x -> System.out.println("CAND: " + x.getValue()));
         }
 
-    	return problems.stream();
+        return problems.stream();
     }
 
     /**
@@ -128,23 +128,35 @@ public class VarMapper {
 
         FeatureMap<Expr, Quad> queryQuadI = new FeatureMapImpl<>();
         queryQuadIndex.entries().forEach(e ->
-        	e.getValue().forEach(x -> queryQuadI.put(x, e.getKey())));
+            e.getValue().forEach(x -> queryQuadI.put(x, e.getKey())
+        ));
+//
+//        FeatureMap<Expr, Quad> queryQuadI = new FeatureMapImpl<>();
+//        queryQuadIndex.entries().forEach(e -> {
+//            Set<Set<Expr>> cnf = e.getValue();
+//            if(cnf.isEmpty()) {
+//                cnf = Collections.singleton(Collections.emptySet());
+//            } else {
+//                cnf.forEach(x -> queryQuadI.put(x, e.getKey()));
+//            }
+//        });
+
 
 
         cacheQuadIndex.getInverse().asMap().entrySet().forEach(e -> {
-        	Collection<Quad> viewQuads = e.getValue();
-        	Set<Set<Expr>> exprs = e.getKey();
+            Collection<Quad> viewQuads = e.getValue();
+            Set<Set<Expr>> exprs = e.getKey();
 
-        	// Small hack to look up query quads having more than 'none' constraints
-        	if(exprs.isEmpty()) {
-        		exprs = Collections.singleton(Collections.emptySet());
-        	}
+            // Small hack to look up query quads having more than 'none' constraints
+            if(exprs.isEmpty()) {
+                exprs = Collections.singleton(Collections.emptySet());
+            }
 
-        	Set<Quad> queryQuads = exprs.stream()
-        		.flatMap(expr -> queryQuadI.getIfSupersetOf(expr).stream().map(x -> x.getValue()))
-        		.collect(Collectors.toSet());
+            Set<Quad> queryQuads = exprs.stream()
+                .flatMap(expr -> queryQuadI.getIfSupersetOf(expr).stream().map(x -> x.getValue()))
+                .collect(Collectors.toSet());
 
-        	ProblemVarMappingQuad quadProblem = new ProblemVarMappingQuad(viewQuads, queryQuads, Collections.emptyMap());
+            ProblemVarMappingQuad quadProblem = new ProblemVarMappingQuad(viewQuads, queryQuads, Collections.emptyMap());
 
             if(logger.isTraceEnabled()) { logger.trace("Registered quad problem instance " + quadProblem + " with an estimated cost of " + quadProblem.getEstimatedCost()); }
             //System.out.println("Registered quad problem instance " + quadProblem + " with an estimated cost of " + quadProblem.getEstimatedCost());

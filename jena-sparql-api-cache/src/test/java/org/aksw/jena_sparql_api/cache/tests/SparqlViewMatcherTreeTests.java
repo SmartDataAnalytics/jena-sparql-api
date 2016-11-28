@@ -43,7 +43,11 @@ public class SparqlViewMatcherTreeTests {
 
 
     public static void runTests(Model model) {
-        List<Resource> tests = model.listSubjectsWithProperty(RDF.type, SparqlQcVocab.ContainmentTest).toList();
+        List<Resource> tests = model
+                .listSubjectsWithProperty(RDF.type, SparqlQcVocab.ContainmentTest).toList().stream()
+                //.filter(r -> r.getURI().equals("http://example.org/test/t1a"))
+                .collect(Collectors.toList());
+
 
 
         SparqlQueryParser queryParser = SparqlQueryParserImpl.create();
@@ -69,6 +73,7 @@ public class SparqlViewMatcherTreeTests {
             }).collect(Collectors.toSet());
 
 
+            expected.forEach(x -> System.out.println("expected: " + x));
             System.out.println("Actual: " + actual);
 
             Assert.assertEquals(expected, actual);
