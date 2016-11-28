@@ -9,7 +9,7 @@ import java.util.List;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlQueryContainmentUtils;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcReader;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcVocab;
-import org.aksw.jena_sparql_api.view_matcher.QueryToGraph;
+import org.aksw.jena_sparql_api.sparql.algebra.mapping.VarMapper;
 import org.aksw.simba.lsq.vocab.LSQ;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
@@ -19,11 +19,15 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 //@FixMethodOrder
 @RunWith(Parameterized.class)
 public class SparqlViewMatcherPatternTests {
+
+    private static final Logger logger = LoggerFactory.getLogger(SparqlViewMatcherPatternTests.class);
 
 
     @Parameters(name = "Query Containment {index}: {0}")
@@ -32,7 +36,7 @@ public class SparqlViewMatcherPatternTests {
     {
         List<Object[]> params = new ArrayList<>();
         params.addAll(createTestParams("sparqlqc/1.4/benchmark/cqnoproj.rdf", "sparqlqc/1.4/benchmark/noprojection/*"));
-        //params.addAll(createTestParams("sparqlqc/1.4/benchmark/ucqproj.rdf", "sparqlqc/1.4/benchmark/projection/*"));
+        params.addAll(createTestParams("sparqlqc/1.4/benchmark/ucqproj.rdf", "sparqlqc/1.4/benchmark/projection/*"));
         return params;
     }
 
@@ -154,11 +158,13 @@ public class SparqlViewMatcherPatternTests {
         String tgtQueryStr = t.getRequiredProperty(SparqlQcVocab.targetQuery).getObject().asResource().getRequiredProperty(LSQ.text).getObject().asLiteral().getString();
         boolean expectedVerdict = Boolean.parseBoolean(t.getRequiredProperty(SparqlQcVocab.result).getObject().asLiteral().getString());
 
-        Query viewQuery = SparqlQueryContainmentUtils.queryParser.apply(srcQueryStr);
-        Query userQuery = SparqlQueryContainmentUtils.queryParser.apply(tgtQueryStr);
+        Query viewQuery = SparqlQueryContainmentUtils.queryParser.apply(tgtQueryStr);
+        Query userQuery = SparqlQueryContainmentUtils.queryParser.apply(srcQueryStr);
 
-        System.out.println("View Query: " + viewQuery);
-        System.out.println("User Query: " + userQuery);
+        logger.debug("Test case: " + t);
+        logger.debug("View Query: " + viewQuery);
+        logger.debug("User Query: " + userQuery);
+
 
 //		Element viewEl = viewQuery.getQueryPattern();
 //		Element userEl = userQuery.getQueryPattern();
@@ -176,9 +182,10 @@ public class SparqlViewMatcherPatternTests {
 
         //VarMapper::createVarMapCandidates
 
-        boolean actualVerdict = SparqlQueryContainmentUtils.tryMatch(viewQuery, userQuery, QueryToGraph::match);
-        //boolean actualVerdict = SparqlQueryContainmentUtils.tryMatch(viewQuery, userQuery, VarMapper::createVarMapCandidates);
+//        boolean actualVerdict = SparqlQueryContainmentUtils.tryMatch(viewQuery, userQuery, QueryToGraph::match);
+        boolean actualVerdict = SparqlQueryContainmentUtils.tryMatch(viewQuery, userQuery, VarMapper::createVarMapCandidates);
 
+        logger.debug("Expected: " + expectedVerdict + " - Actual: " + actualVerdict);
 
                 //SparqlQueryContainmentUtils.tryMatch(userEl, viewEl);
         //System.out.println(srcQueryId + " - " + tgtQueryId + " - " + actualVerdict + " expected: "+ expectedVerdict);

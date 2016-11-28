@@ -28,12 +28,23 @@ public class QuadFilterPatternCanonical {
     private Set<Set<Expr>> filterDnf;
 
     public QuadFilterPatternCanonical(Set<Quad> quads, Set<Set<Expr>> filterCnf) {
+        this(quads, filterCnf, false);
+    }
+
+    public QuadFilterPatternCanonical(Set<Quad> quads, Set<Set<Expr>> filterNf, boolean isDnf) {
         super();
         this.quads = quads;
-        this.filterCnf = filterCnf;
-        this.filterDnf = DnfUtils.toSetDnf(CnfUtils.toExpr(filterCnf));
+        if(isDnf) {
+            this.filterDnf = filterNf;
+            this.filterCnf = CnfUtils.toSetCnf(DnfUtils.toExpr(filterNf));
+        } else {
+            this.filterCnf = filterNf;
+            this.filterDnf = DnfUtils.toSetDnf(CnfUtils.toExpr(filterCnf), true);
+        }
+        //this.filterDnf = DnfUtils.toSetDnf(CnfUtils.toExpr(filterCnf));
 
     }
+
 
     public boolean isEmpty() {
         boolean result = quads.isEmpty() && filterCnf.isEmpty();

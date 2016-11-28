@@ -33,6 +33,7 @@ import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.model.QueryExecutionFactoryModel;
 import org.aksw.jena_sparql_api.utils.ClauseUtils;
 import org.aksw.jena_sparql_api.utils.CnfUtils;
+import org.aksw.jena_sparql_api.utils.DnfUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
@@ -542,7 +543,7 @@ public class SparqlCacheUtils {
      * @param quad
      * @param expr
      */
-    public static Set<Set<Expr>> normalize(Quad quad, Set<Set<Expr>> cnf) {
+    public static Set<Set<Expr>> normalize(Quad quad, Set<Set<Expr>> nf) {
         List<Var> componentVars = Vars.gspo;
 
         Map<Var, Var> renameMap = new HashMap<Var, Var>();
@@ -566,7 +567,7 @@ public class SparqlCacheUtils {
         }
 
         NodeTransformRenameMap transform = new NodeTransformRenameMap(renameMap);
-        Set<Set<Expr>> result = ClauseUtils.applyNodeTransformSet(cnf, transform);
+        Set<Set<Expr>> result = ClauseUtils.applyNodeTransformSet(nf, transform);
         result.addAll(extra);
 
         //System.out.println(result);
@@ -875,19 +876,19 @@ public class SparqlCacheUtils {
         Set<Quad> quads = new LinkedHashSet<Quad>(originalPattern.getQuads());
 
 
-        Set<Set<Expr>> filterCnf = CnfUtils.toSetCnf(expr);
+        Set<Set<Expr>> filterDnf = DnfUtils.toSetDnf(expr, true);
 
-        IBiSetMultimap<Quad, Set<Set<Expr>>> quadToCnf = createMapQuadsToFilters(quads, filterCnf);
-        IBiSetMultimap<Var, VarOccurrence> varOccurrences = createMapVarOccurrences(quadToCnf, false);
+        IBiSetMultimap<Quad, Set<Set<Expr>>> quadToDnf = createMapQuadsToFilters(quads, filterDnf);
+        IBiSetMultimap<Var, VarOccurrence> varOccurrences = createMapVarOccurrences(quadToDnf, false);
 
         //System.out.println("varOccurrences: " + varOccurrences);
         //Set<Set<Set<Expr>>> quadCnfs = new HashSet<Set<Set<Expr>>>(quadCnfList);
 
-        QuadFilterPatternCanonical canonicalPattern = new QuadFilterPatternCanonical(quads, filterCnf);
+        QuadFilterPatternCanonical canonicalPattern = new QuadFilterPatternCanonical(quads, filterDnf);
         //canonicalPattern = canonicalize(canonicalPattern, generator);
 
 
-        PatternSummary result = new PatternSummary(originalPattern, canonicalPattern, quadToCnf, varOccurrences);
+        PatternSummary result = new PatternSummary(originalPattern, canonicalPattern, quadToDnf, varOccurrences);
 
 
         //for(Entry<Var, Collection<VarOccurrence>> entry : varOccurrences.asMap().entrySet()) {
@@ -958,45 +959,79 @@ public class SparqlCacheUtils {
      */
     public static IBiSetMultimap<Quad, Set<Set<Expr>>> createMapQuadsToFilters(QuadFilterPatternCanonical qfpc) {
         Set<Quad> quads = qfpc.getQuads();
-        Set<Set<Expr>> filterCnf = qfpc.getFilterDnf();
-        if(filterCnf == null) {
-            filterCnf = Collections.singleton(Collections.emptySet());
-        }
+        Set<Set<Expr>> filterDnf = qfpc.getFilterDnf();
+//        if(filterCnf == null) {
+//            filterCnf = Collections.singleton(Collections.emptySet());
+//        }
 
-        IBiSetMultimap<Quad, Set<Set<Expr>>> result = createMapQuadsToFilters(quads, filterCnf);
+        IBiSetMultimap<Quad, Set<Set<Expr>>> result = createMapQuadsToFilters(quads, filterDnf);
         return result;
     }
 
+//    public static IBiSetMultimap<Quad, Set<Set<Expr>>> createMapQuadsToFilters(
+//            Set<Quad> quads, Set<Set<Expr>> filterCnf) {
+//        // This is part of the result
+//        //List<Set<Set<Expr>>> quadCnfList = new ArrayList<Set<Set<Expr>>>(quads.size());
+//        IBiSetMultimap<Quad, Set<Set<Expr>>> quadToCnf = new BiHashMultimap<Quad, Set<Set<Expr>>>();
+//
+//
+//
+//        for(Quad quad : quads) {
+//            Set<Var> quadVars = QuadUtils.getVarsMentioned(quad);
+//
+//            Set<Set<Expr>> cnf = new HashSet<Set<Expr>>(); //new HashSet<Clause>();
+//
+//            for(Set<Expr> clause : filterCnf) {
+//                Set<Var> clauseVars = ClauseUtils.getVarsMentioned(clause);
+//
+//                boolean containsAll = quadVars.containsAll(clauseVars);
+//                if(containsAll) {
+//                    cnf.add(clause);
+//                }
+//            }
+//
+//
+//            Set<Set<Expr>> quadCnf = normalize(quad, cnf);
+//            //quadCnfList.add(quadCnf);
+//            quadToCnf.put(quad, quadCnf);
+//        }
+//        return quadToCnf;
+//    }
+
     public static IBiSetMultimap<Quad, Set<Set<Expr>>> createMapQuadsToFilters(
-            Set<Quad> quads, Set<Set<Expr>> filterCnf) {
+            Set<Quad> quads, Set<Set<Expr>> filterDnf) {
         // This is part of the result
         //List<Set<Set<Expr>>> quadCnfList = new ArrayList<Set<Set<Expr>>>(quads.size());
-        IBiSetMultimap<Quad, Set<Set<Expr>>> quadToCnf = new BiHashMultimap<Quad, Set<Set<Expr>>>();
+        IBiSetMultimap<Quad, Set<Set<Expr>>> quadToDnf = new BiHashMultimap<Quad, Set<Set<Expr>>>();
 
 
 
         for(Quad quad : quads) {
             Set<Var> quadVars = QuadUtils.getVarsMentioned(quad);
+            Set<Set<Expr>> dnf = new HashSet<>(); //new HashSet<Clause>();
 
-            Set<Set<Expr>> cnf = new HashSet<Set<Expr>>(); //new HashSet<Clause>();
+            for(Set<Expr> clause : filterDnf) {
+                Set<Expr> cnf = new HashSet<>();
 
-            for(Set<Expr> clause : filterCnf) {
-                Set<Var> clauseVars = ClauseUtils.getVarsMentioned(clause);
+                for(Expr expr : clause) {
+                    Set<Var> exprVars = ExprVars.getVarsMentioned(expr);
 
-                boolean containsAll = quadVars.containsAll(clauseVars);
-                if(containsAll) {
-                    cnf.add(clause);
+                    boolean containsAll = quadVars.containsAll(exprVars);
+                    if(containsAll) {
+                        cnf.add(expr);
+                    }
                 }
+                dnf.add(cnf);
             }
 
+            dnf = SparqlCacheUtils.normalize(quad, dnf);
 
-            Set<Set<Expr>> quadCnf = normalize(quad, cnf);
+            //Set<Set<Expr>> quadCnf = normalize(quad, cnf);
             //quadCnfList.add(quadCnf);
-            quadToCnf.put(quad, quadCnf);
+            quadToDnf.put(quad, dnf);
         }
-        return quadToCnf;
+        return quadToDnf;
     }
-
 
     public static Expr createExpr(ResultSet rs, Map<Var, Var> varMap) {
 
@@ -1111,11 +1146,11 @@ public class SparqlCacheUtils {
 
 
     public static FeatureMap<Expr, Multimap<Expr, Expr>> indexDnf(Set<Set<Expr>> dnf) {
-        if(dnf == null) {
-            // A disjunction containing an empty conjunction (latter is generally treated as true - if i'm not mistaken)
-            dnf = Collections.singleton(Collections.emptySet());
-            //dnf = Collections.emptySet();
-        }
+//        if(dnf == null) {
+//            // A disjunction containing an empty conjunction (latter is generally treated as true - if i'm not mistaken)
+//            dnf = Collections.singleton(Collections.emptySet());
+//            //dnf = Collections.emptySet();
+//        }
 
         FeatureMap<Expr, Multimap<Expr, Expr>> result = new FeatureMapImpl<>();
         for(Set<Expr> clause : dnf) {

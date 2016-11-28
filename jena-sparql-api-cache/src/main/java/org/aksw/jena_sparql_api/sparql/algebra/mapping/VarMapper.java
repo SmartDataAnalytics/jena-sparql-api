@@ -143,17 +143,18 @@ public class VarMapper {
 
 
 
-        cacheQuadIndex.getInverse().asMap().entrySet().forEach(e -> {
+        //cacheQuadIndex.getInverse().asMap().entrySet().forEach(e -> {
+        for(Entry<Set<Set<Expr>>, Collection<Quad>> e : cacheQuadIndex.getInverse().asMap().entrySet()) {
             Collection<Quad> viewQuads = e.getValue();
-            Set<Set<Expr>> exprs = e.getKey();
+            Set<Set<Expr>> dnf = e.getKey();
 
             // Small hack to look up query quads having more than 'none' constraints
-            if(exprs.isEmpty()) {
-                exprs = Collections.singleton(Collections.emptySet());
-            }
+//            if(exprs.isEmpty()) {
+//                exprs = Collections.singleton(Collections.emptySet());
+//            }
 
-            Set<Quad> queryQuads = exprs.stream()
-                .flatMap(expr -> queryQuadI.getIfSupersetOf(expr).stream().map(x -> x.getValue()))
+            Set<Quad> queryQuads = dnf.stream()
+                .flatMap(clause -> queryQuadI.getIfSupersetOf(clause).stream().map(x -> x.getValue()))
                 .collect(Collectors.toSet());
 
             ProblemVarMappingQuad quadProblem = new ProblemVarMappingQuad(viewQuads, queryQuads, Collections.emptyMap());
@@ -167,7 +168,7 @@ public class VarMapper {
 
             result.add(quadProblem);
 
-        });
+        }
 
         if(false) {
         Map<Set<Set<Expr>>, Entry<Set<Quad>, Set<Quad>>> quadGroups = MapUtils.groupByKey(cacheQuadIndex.getInverse(), queryQuadIndex.getInverse());

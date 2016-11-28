@@ -111,13 +111,13 @@ public class DnfUtils
     }
 
     public static Set<Map<Var, NodeValue>> extractConstantConstraints(Collection<? extends Collection<? extends Expr>> dnf) {
-    	dnf = dnf == null ? Collections.emptySet() : dnf;
-    	Set<Map<Var, NodeValue>> result = new HashSet<>(dnf.size());
-    	for(Collection<? extends Expr> clause : dnf) {
-    		Map<Var, NodeValue> map = ClauseUtils.extractConstantConstraints(clause);
-    		result.add(map);
-    	}
-    	return result;
+        dnf = dnf == null ? Collections.emptySet() : dnf;
+        Set<Map<Var, NodeValue>> result = new HashSet<>(dnf.size());
+        for(Collection<? extends Expr> clause : dnf) {
+            Map<Var, NodeValue> map = ClauseUtils.extractConstantConstraints(clause);
+            result.add(map);
+        }
+        return result;
     }
 
     /**
@@ -166,10 +166,19 @@ public class DnfUtils
         return result;
     }
 
-    public static Set<Set<Expr>> toSetDnf(Expr expr)
+    public static Set<Set<Expr>> toSetDnf(Expr expr) {
+        Set<Set<Expr>> result = toSetDnf(expr, false);
+        return result;
+    }
+
+    public static Set<Set<Expr>> toSetDnf(Expr expr, boolean allowEmptyClauseInsteadOfNull)
     {
         List<ExprList> clauses = DnfUtils.toClauses(expr);
         Set<Set<Expr>> dnf = FilterUtils.toSets(clauses);
+
+        if(dnf == null && allowEmptyClauseInsteadOfNull) {
+            dnf = Collections.singleton(Collections.emptySet());
+        }
 
         return dnf;
     }
