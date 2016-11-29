@@ -1,5 +1,0 @@
-PREFIX : <http://www.example.org/>
-
-SELECT * WHERE {
-	?x :name ?y .
-}
