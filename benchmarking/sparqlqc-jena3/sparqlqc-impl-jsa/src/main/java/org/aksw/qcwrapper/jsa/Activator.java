@@ -14,14 +14,14 @@ public class Activator implements BundleActivator
     {
         {
             Hashtable<String, String> meta = new Hashtable<>();
-            meta.put("SHORT_NAME", "JSAC");
+            meta.put("SHORT_LABEL", "JSAC");
 
             context.registerService(SimpleContainmentSolver.class, new ContainmentSolverWrapperJsaVarMapper(), meta);
         }
 
         {
             Hashtable<String, String> meta = new Hashtable<>();
-            meta.put("SHORT_NAME", "JSAI");
+            meta.put("SHORT_LABEL", "JSAI");
 
             context.registerService(ContainmentSolver.class, new ContainmentSolverWrapperJsaSubGraphIsomorphism(), meta);
         }

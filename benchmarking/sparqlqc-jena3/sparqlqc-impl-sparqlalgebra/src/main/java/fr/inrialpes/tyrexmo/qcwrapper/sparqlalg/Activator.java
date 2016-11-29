@@ -15,7 +15,7 @@ public class Activator implements BundleActivator
         SPARQLAlgebraWrapper service = new SPARQLAlgebraWrapper();
 
         Hashtable<String, String> meta = new Hashtable<>();
-        meta.put("SHORT_NAME", "SA");
+        meta.put("SHORT_LABEL", "SA");
 
 
         context.registerService(SimpleContainmentSolver.class, service, meta);

@@ -15,7 +15,7 @@ public class Activator implements BundleActivator
         AFMUContainmentWrapper service = new AFMUContainmentWrapper();
 
         Hashtable<String, String> meta = new Hashtable<>();
-        meta.put("SHORT_NAME", "AFMU");
+        meta.put("SHORT_LABEL", "AFMU");
 
         context.registerService(SimpleContainmentSolver.class, service, meta);
         context.registerService(LegacyContainmentSolver.class, service, meta);

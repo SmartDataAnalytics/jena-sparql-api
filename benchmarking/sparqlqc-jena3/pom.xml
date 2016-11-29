@@ -19,6 +19,7 @@
         <module>sparqlqc-core</module>
 
         <module>sparqlqc-impl-fragment</module>
+        <module>sparqlqc-utils-mu</module>
 
         <module>sparqlqc-impl-treesolver</module>
         <module>sparqlqc-impl-sparqlalgebra</module>
@@ -78,6 +79,19 @@
                 <artifactId>sparqlqc-impl-fragment</artifactId>
                 <version>${project.version}</version>
             </dependency>
+
+            <dependency>
+                <groupId>org.aksw.sparqlqc</groupId>
+                <artifactId>sparqlqc-utils-mu</artifactId>
+                <version>${project.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.hp.hpl.jena</groupId>
+                        <artifactId>arq</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
 
             <!-- <dependency> -->
             <!-- <groupId>org.aksw.jena-sparql-api</groupId> -->

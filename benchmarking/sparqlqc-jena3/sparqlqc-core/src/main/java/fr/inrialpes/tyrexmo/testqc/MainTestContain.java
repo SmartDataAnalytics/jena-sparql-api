@@ -211,6 +211,7 @@ public class MainTestContain {
                 "org.apache.jena.sparql.engine.binding;version=\"1.0.0\"",
 
                 // Jena 2 (legacy)
+                "com.hp.hpl.jena.sparql;version=\"1.0.0\"",
                 "com.hp.hpl.jena.sparql.algebra;version=\"1.0.0\"",
                 "com.hp.hpl.jena.sparql.algebra.optimize;version=\"1.0.0\"",
                 "com.hp.hpl.jena.sparql.algebra.op;version=\"1.0.0\"",
@@ -401,7 +402,7 @@ public class MainTestContain {
         JFreeChart chart = IguanaDatasetProcessors.createStatisticalBarChart(categoryDataset);
         ChartUtilities2.saveChartAsPDF(new File("/home/raven/tmp/test.pdf"), chart, 1000, 500);
 
-        System.out.println("Done.");
+        logger.info("Done.");
     }
 }
 

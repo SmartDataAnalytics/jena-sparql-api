@@ -38,6 +38,11 @@
         </dependency>
 
         <dependency>
+            <groupId>org.aksw.sparqlqc</groupId>
+            <artifactId>sparqlqc-utils-mu</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.aksw.sparqlqc.lib</groupId>
             <artifactId>afmu-solver</artifactId>
             <version>1.0.0</version>

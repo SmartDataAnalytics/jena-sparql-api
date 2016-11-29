@@ -15,7 +15,7 @@ public class Activator implements BundleActivator
         TreeSolverWrapper service = new TreeSolverWrapper();
 
         Hashtable<String, String> meta = new Hashtable<>();
-        meta.put("SHORT_NAME", "TS");
+        meta.put("SHORT_LABEL", "TS");
 
         context.registerService(SimpleContainmentSolver.class, service, meta);
         context.registerService(LegacyContainmentSolver.class, service, meta);

@@ -26,7 +26,7 @@ import java.util.Set;
 import java.util.HashSet;
 import java.util.Stack;
 
-import org.apache.jena.sparql.algebra.op.OpQuad;
+//import com.hp.hpl.jena.sparql.algebra.op.OpQuad;
 
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.graph.Node;
@@ -59,15 +59,15 @@ public class TransformAlgebra {
     private Converter conv;
 
     public TransformAlgebra( Query q ) {
-	query = q;
-    	Op op = Algebra.compile( query );
-    	transformAlgebra( op );
+    query = q;
+        Op op = Algebra.compile( query );
+        transformAlgebra( op );
     }
 
     public TransformAlgebra( String q ) {
-	query = QueryFactory.create(  q);
-    	Op op = Algebra.compile( query );
-    	transformAlgebra( op );
+    query = QueryFactory.create(  q);
+        Op op = Algebra.compile( query );
+        transformAlgebra( op );
     }
 
     private void transformAlgebra( Op op ) {
@@ -87,57 +87,57 @@ public class TransformAlgebra {
     // JE: I think the the new Jena has:
     // getProjectVars() getResultVars() getValuesVariables()
     public List<Var> getResultVars() {
-	// I am fed up creating the query each time
-    	if ( query.isQueryResultStar() ) {
-	    List<Var> list = new ArrayList<Var>();
-	    list.addAll( getAllVariables() );
-	    return list;
-    	} else {
-	    return query.getProjectVars();
-	}
+    // I am fed up creating the query each time
+        if ( query.isQueryResultStar() ) {
+        List<Var> list = new ArrayList<Var>();
+        list.addAll( getAllVariables() );
+        return list;
+        } else {
+        return query.getProjectVars();
+    }
     }
 
     // Distinguished variable names (useless?)
     public List<String> getProjectVars() {
-	return query.getResultVars();
+    return query.getResultVars();
     }
 
     public Set<Var> getAllVariables() {
-	return conv.variables();
-	/*
-	// should be possible to ask it to conv
-	// Remember distinct subjects in this
-	final Set<Var> vars = new HashSet<Var>();
+    return conv.variables();
+    /*
+    // should be possible to ask it to conv
+    // Remember distinct subjects in this
+    final Set<Var> vars = new HashSet<Var>();
 
-	// This will walk through all parts of the query
-	ElementWalker.walk(query.getQueryPattern(),
-			   // For each element...
-			   new ElementVisitorBase() {
-			       // ...when it's a block of triples...
-			       public void visit(ElementPathBlock el) {
-				   // ...go through all the triples...
-				   Iterator<TriplePath> triples = el.patternElts();
-				   while (triples.hasNext()) {
-				       // ...and grab the subject
-				       subjects.add(triples.next().getSubject());
-				   }
-			       }
-			   }
-			   );
-	return vars;
-	*/
+    // This will walk through all parts of the query
+    ElementWalker.walk(query.getQueryPattern(),
+               // For each element...
+               new ElementVisitorBase() {
+                   // ...when it's a block of triples...
+                   public void visit(ElementPathBlock el) {
+                   // ...go through all the triples...
+                   Iterator<TriplePath> triples = el.patternElts();
+                   while (triples.hasNext()) {
+                       // ...and grab the subject
+                       subjects.add(triples.next().getSubject());
+                   }
+                   }
+               }
+               );
+    return vars;
+    */
     }
 
     // non-distinguished vars
     public Collection<Var> getNonDistVars() {
-	return difference( getResultVars(), getAllVariables() );
+    return difference( getResultVars(), getAllVariables() );
     }
 
     //set difference of distinguished vars and all the vars in a query
     private Collection<Var> difference(Collection<Var> dVars, Collection<Var> allVars) {
-	Collection<Var> result = new ArrayList<Var>(allVars);
-	result.removeAll(dVars);
-	return result;
+    Collection<Var> result = new ArrayList<Var>(allVars);
+    result.removeAll(dVars);
+    return result;
     }
 
     /**
@@ -145,13 +145,13 @@ public class TransformAlgebra {
      * @return
      */
     public List<Triple> getTriples() {
-	Object [] triples = lst.toArray();
-	List<Triple> t = new ArrayList<Triple>();
-	for ( int i = 0; i < lst.size(); i++ ) {
-	    if (triples[i] instanceof Triple)
-		t.add((Triple)triples[i]);
-	}
-	return t;
+    Object [] triples = lst.toArray();
+    List<Triple> t = new ArrayList<Triple>();
+    for ( int i = 0; i < lst.size(); i++ ) {
+        if (triples[i] instanceof Triple)
+        t.add((Triple)triples[i]);
+    }
+    return t;
     }
 
     public static class Converter implements OpVisitor {
@@ -160,7 +160,7 @@ public class TransformAlgebra {
         private ElementGroup currentGroup = null;
         private Stack<ElementGroup> stack = new Stack<ElementGroup>();
         private Stack<Object> elems = new Stack<Object>();
-	private Set<Var> allVars = new HashSet<Var>();
+    private Set<Var> allVars = new HashSet<Var>();
         private boolean containsOptional = false;
         private boolean containsFilter = false;
         private boolean containsUnion = false;
@@ -171,7 +171,7 @@ public class TransformAlgebra {
         }
 
         public Stack<Object> getQueryElems() {
-        	return elems;
+            return elems;
          }
 
 
@@ -203,29 +203,29 @@ public class TransformAlgebra {
         }
 
         public void visit( OpTriple opTriple ) {
-	    currentGroup().addElement(process(opTriple.getTriple()));
-	    //System.out.println(opTriple.getTriple().toString());
+        currentGroup().addElement(process(opTriple.getTriple()));
+        //System.out.println(opTriple.getTriple().toString());
         }
 
 
         private ElementTriplesBlock process( BasicPattern pattern ) {
-	    int twoAdded = pattern.size();
-	    ElementTriplesBlock e = new ElementTriplesBlock();
-	    for ( Triple t : pattern ) {
+        int twoAdded = pattern.size();
+        ElementTriplesBlock e = new ElementTriplesBlock();
+        for ( Triple t : pattern ) {
                 // Leave bNode variables as they are
                 // Query serialization will deal with them.
                 e.addTriple(t);
                 // add each triple pattern into the stack
                 elems.add(t);
-		twoAdded--;
+        twoAdded--;
                 if (twoAdded >= 1) elems.add("AND");
-		/* JE 2013/07 */
-		Node s = t.getSubject();
-		if ( s.isVariable() && s instanceof Var ) allVars.add( (Var)s );
-		Node o = t.getObject();
-		if ( o.isVariable() && o instanceof Var ) allVars.add( (Var)o );
-		Node p = t.getPredicate();
-		if ( p.isVariable() && p instanceof Var ) allVars.add( (Var)p );
+        /* JE 2013/07 */
+        Node s = t.getSubject();
+        if ( s.isVariable() && s instanceof Var ) allVars.add( (Var)s );
+        Node o = t.getObject();
+        if ( o.isVariable() && o instanceof Var ) allVars.add( (Var)o );
+        Node p = t.getPredicate();
+        if ( p.isVariable() && p instanceof Var ) allVars.add( (Var)p );
             }
             //elems.add(e);
             return e;
@@ -250,7 +250,7 @@ public class TransformAlgebra {
         public void visit(OpJoin opJoin)
         {
             // Keep things clearly separated.
-	    elems.add("(");
+        elems.add("(");
             Element eLeft = asElement(opJoin.getLeft());
             elems.add("AND");
             Element eRight = asElementGroup(opJoin.getRight());
@@ -272,9 +272,9 @@ public class TransformAlgebra {
             return eg.isEmpty();
         }
 
-	/*************************************************************/
+    /*************************************************************/
         public void visit( OpLeftJoin opLeftJoin ) {
-	    containsOptional = true; // JE: to be discussed
+        containsOptional = true; // JE: to be discussed
             Element eLeft = asElement( opLeftJoin.getLeft() );
             ElementGroup eRight = asElementGroup( opLeftJoin.getRight() );
             /*if ( opLeftJoin.getExprs() != null ) {
@@ -282,20 +282,20 @@ public class TransformAlgebra {
                     ElementFilter f = new ElementFilter(expr);
                     eRight.addElement(f);
                 }
-		}*/
+        }*/
             ElementGroup g = currentGroup();
             if ( !emptyGroup(eLeft) ) g.addElement(eLeft);
             g.addElement( new ElementOptional(eRight) );
         }
 
-	/*************************************************************/
+    /*************************************************************/
 
         public void visit( OpDiff opDiff ) { throw new ARQNotImplemented("OpDiff"); }
 
         public void visit( OpMinus opMinus ) {
-	    // throw new ARQNotImplemented("OpMinus");
-	    // Keep things clearly separated.
-	    elems.add("(");
+        // throw new ARQNotImplemented("OpMinus");
+        // Keep things clearly separated.
+        elems.add("(");
             Element eLeft = asElement(opMinus.getLeft());
             elems.add("MINUS");
             Element eRight = asElementGroup(opMinus.getRight());
@@ -311,8 +311,8 @@ public class TransformAlgebra {
         }
 
         public void visit(OpUnion opUnion) {
-	    containsUnion = true;
-	    elems.add("(");
+        containsUnion = true;
+        elems.add("(");
             Element eLeft = asElementGroup(opUnion.getLeft());
             elems.add("UNION");
             Element eRight = asElementGroup(opUnion.getRight());
@@ -333,9 +333,9 @@ public class TransformAlgebra {
 
             ElementUnion elUnion = new ElementUnion();
             elUnion.addElement(eLeft);
-	    // elems.add(eLeft);
+        // elems.add(eLeft);
             //elems.add("UNION");
-	    // elems.add(eRight);
+        // elems.add(eRight);
             elUnion.addElement(eRight);
             currentGroup().addElement(elUnion);
         }
@@ -344,7 +344,7 @@ public class TransformAlgebra {
         { throw new ARQNotImplemented("OpCondition"); }
 
         public void visit( OpFilter opFilter ) {
-	    containsFilter = true;
+        containsFilter = true;
             // (filter .. (filter ( ... ))   (non-canonicalizing OpFilters)
             // Inner gets Grouped unnecessarily.
             Element e = asElement(opFilter.getSubOp());
@@ -371,13 +371,13 @@ public class TransformAlgebra {
 
         public void visit(OpService opService)
         {  throw new ARQNotImplemented("OpService");
-	    /*
+        /*
             // Hmm - if the subnode has been optimized, we may fail.
             Op op = opService.getSubOp();
             Element x = asElement(opService.getSubOp());
             Element elt = new ElementService( opService.getService(), x );
             currentGroup().addElement(elt);
-	    */
+        */
         }
 
         public void visit(OpDatasetNames dsNames)
@@ -446,22 +446,22 @@ public class TransformAlgebra {
         }
 
 
-	/* JE: 2013/07/05. These are for Jena 2.10*/
+    /* JE: 2013/07/05. These are for Jena 2.10*/
         public void visit( OpTopN op ) {
-	    throw new ARQNotImplemented("OpTopN");
-	}
+        throw new ARQNotImplemented("OpTopN");
+    }
 
         public void visit( OpGroup op ) {
-	    throw new ARQNotImplemented("OpGroup");
-	}
+        throw new ARQNotImplemented("OpGroup");
+    }
 
-        public void visit( OpQuad op ) {
-	    throw new ARQNotImplemented("OpQuad");
-	}
+//        public void visit( OpQuad op ) {
+//        throw new ARQNotImplemented("OpQuad");
+//    }
 
         public void visit( OpExtend op ) {
-	    throw new ARQNotImplemented("OpExtend");
-	    }
+        throw new ARQNotImplemented("OpExtend");
+        }
 
         private Element lastElement() {
             ElementGroup g = currentGroup;
@@ -493,7 +493,7 @@ public class TransformAlgebra {
         private ElementGroup currentGroup() {
 //            if ( currentGroup == null )
 //                startSubGroup();
-        	return currentGroup;
+            return currentGroup;
         }
 
         private ElementGroup peek() {
