@@ -72,7 +72,9 @@ public class MainTestContain {
 
     public static Stream<Resource> prepareTaskExecutions(Collection<Resource> workloads, String runName, int warmUp,
             int runs) {
-        Stream<Resource> result = IntStream.range(0, runs).boxed()
+        int totalRuns = warmUp + runs;
+
+        Stream<Resource> result = IntStream.range(0, totalRuns).boxed()
                 .flatMap(runId -> workloads.stream().map(workload -> new SimpleEntry<>(runId, workload))).map(exec -> {
                     int runId = exec.getKey();
                     Model m = ModelFactory.createDefaultModel();
@@ -344,7 +346,7 @@ public class MainTestContain {
 
 
         // Attach the solver to the resource
-        Iterator<Resource> taskExecs = prepareTaskExecutions(tasks, dataset, 1, 2).iterator();
+        Iterator<Resource> taskExecs = prepareTaskExecutions(tasks, dataset, 1, 1).iterator();
 
 
         Model strategy = ModelFactory.createDefaultModel();
