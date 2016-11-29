@@ -12,8 +12,19 @@ public class Activator implements BundleActivator
 {
     public void start(BundleContext context)
     {
-        context.registerService(SimpleContainmentSolver.class, new ContainmentSolverWrapperJsaVarMapper(), new Hashtable<>());
-        context.registerService(ContainmentSolver.class, new ContainmentSolverWrapperJsaVarMapper(), new Hashtable<>());
+        {
+            Hashtable<String, String> meta = new Hashtable<>();
+            meta.put("SHORT_NAME", "JSAC");
+
+            context.registerService(SimpleContainmentSolver.class, new ContainmentSolverWrapperJsaVarMapper(), meta);
+        }
+
+        {
+            Hashtable<String, String> meta = new Hashtable<>();
+            meta.put("SHORT_NAME", "JSAI");
+
+            context.registerService(ContainmentSolver.class, new ContainmentSolverWrapperJsaSubGraphIsomorphism(), meta);
+        }
     }
 
     public void stop(BundleContext context)

@@ -3,16 +3,13 @@ package fr.inrialpes.tyrexmo.testqc;
 import java.io.File;
 import java.io.PrintStream;
 import java.util.AbstractMap.SimpleEntry;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.ServiceLoader;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -23,7 +20,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import org.aksw.commons.util.reflect.MultiMethod;
 import org.aksw.iguana.reborn.ChartUtilities2;
 import org.aksw.iguana.reborn.TaskDispatcher;
 import org.aksw.iguana.reborn.charts.datasets.IguanaDatasetProcessors;
@@ -57,16 +53,11 @@ import org.osgi.framework.launch.Framework;
 import org.osgi.framework.launch.FrameworkFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xeustechnologies.jcl.JarClassLoader;
-import org.xeustechnologies.jcl.JclObjectFactory;
-import org.xeustechnologies.jcl.proxy.CglibProxyProvider;
-import org.xeustechnologies.jcl.proxy.ProxyProviderFactory;
 
 import com.google.common.base.Predicate;
 import com.google.common.util.concurrent.MoreExecutors;
 
 import fr.inrialpes.tyrexmo.testqc.simple.SimpleContainmentSolver;
-//import fr.inrialpes.tyrexmo.qcwrapper.sparqlalg.SPARQLAlgebraWrapper;
 
 class TestCase {
     public Query source;
@@ -259,13 +250,23 @@ public class MainTestContain {
                         .format("../sparqlqc-impl-%1$s/target/sparqlqc-impl-%1$s-1.0.0-SNAPSHOT.jar", implStr);
                 File jarFile = new File(jarPathStr);
                 return jarFile;
-}).collect(Collectors.toList());
+            }).collect(Collectors.toList());
+
+            // TODO Ideally have the blacklist in the data
+            Map<String, Predicate<String>> blackLists = new HashMap<>();
+            blackLists.put("AFMU", (r) -> Arrays.asList("nop3", "nop4", "nop15", "nop16").stream().anyMatch(r::contains));
+
+            List<Resource> allTasks = SparqlQcReader.loadTasks("sparqlqc/1.4/benchmark/cqnoproj.rdf",
+                    "sparqlqc/1.4/benchmark/noprojection/*");
+
 
 
 //          Bundle bundle = context.installBundle("reference:file:/home/raven/Projects/Eclipse/jena-sparql-api-parent/benchmarking/sparqlqc-jena3/sparqlqc-impl-jsa/target/sparqlqc-impl-jsa-1.0.0-SNAPSHOT.jar");
 //          Bundle bundle = context.installBundle("reference:file:/home/raven/Projects/Eclipse/jena-sparql-api-parent/benchmarking/sparqlqc-jena3/sparqlqc-impl-afmu/target/sparqlqc-impl-afmu-1.0.0-SNAPSHOT.jar");
 //          Bundle bundle = context.installBundle("reference:file:/home/raven/Projects/Eclipse/jena-sparql-api-parent/benchmarking/sparqlqc-jena3/sparqlqc-impl-treesolver/target/sparqlqc-impl-treesolver-1.0.0-SNAPSHOT.jar");
 //          Bundle bundle = context.installBundle("reference:file:/home/raven/Projects/Eclipse/jena-sparql-api-parent/benchmarking/sparqlqc-jena3/sparqlqc-impl-sparqlalgebra/target/sparqlqc-impl-sparqlalgebra-1.0.0-SNAPSHOT.jar");
+
+            int anonId = 0;
 
             Framework framework = frameworkFactory.newFramework(config);
             try {
@@ -283,32 +284,26 @@ public class MainTestContain {
                     try {
                         bundle.start();
 
-                        //String queryStr = "Prefix :<> SELECT * WHERE { ?x :takesCourse 'Course10' . ?x :takesCourse 'Course20' . }";
-                        String queryStr = "Select * { ?s ?p ?o }";
-                        {
-                            ServiceReference<ContainmentSolver> sr = context.getServiceReference(ContainmentSolver.class);
-                            if (sr != null) {
-                                ContainmentSolver c = context.getService(sr);
-                                Query yy = QueryFactory.create(queryStr, Syntax.syntaxARQ);
-                                boolean result = c.entailed(yy, yy);
-                                System.out.println("API: " + result);
-                                //throw new RuntimeException("Service reference is null");
-                            } else {
-                                System.err.println("No Containment solver service");
+                        for(ServiceReference<?> sr : bundle.getRegisteredServices()) {
+
+                            String shortLabel = (String)sr.getProperty("SHORT_LABEL");
+                            if(shortLabel == null) {
+                                shortLabel = "ANON" + ++anonId;
+                            }
+
+                            Predicate<String> p = blackLists.get(shortLabel);
+
+                            List<Resource> tasks = allTasks.stream()
+                                    .filter(r -> p == null ? true : !p.apply(r.getURI()))
+                                    .collect(Collectors.toList());
+
+                            Object service = context.getService(sr);
+
+                            if(service instanceof ContainmentSolver || service instanceof LegacyContainmentSolver) {
+                                run(tasks, shortLabel, service);
                             }
                         }
 
-                        {
-                            ServiceReference<SimpleContainmentSolver> sr = context.getServiceReference(SimpleContainmentSolver.class);
-                            if (sr != null) {
-                                SimpleContainmentSolver c = context.getService(sr);
-                                Query yy = QueryFactory.create(queryStr, Syntax.syntaxARQ);
-                                boolean result = c.entailed("" + yy, "" + yy);
-                                System.out.println("API-SIMPLE: " + result);
-                            } else {
-                                System.err.println("No Simple Containment solver service");
-                            }
-                        }
                     } finally {
                         try {
                             bundle.stop();
@@ -331,207 +326,111 @@ public class MainTestContain {
             return;
         }
 
-        List<Resource> allTasks = SparqlQcReader.loadTasks("sparqlqc/1.4/benchmark/cqnoproj.rdf",
-                "sparqlqc/1.4/benchmark/noprojection/*");
 
         // tasks = tasks.stream()
         // .filter(t -> !t.getURI().contains("19") && !t.getURI().contains("6"))
         // .collect(Collectors.toList());
+    }
 
-        JarClassLoader jcl = new JarClassLoader();
-        // jcl.getSystemLoader().setOrder(-1);
-        // jcl.getParentLoader().setOrder(0);
-        // jcl.getSystemLoader().setEnabled(false);
-        // jcl.getLocalLoader().setEnabled(false);
+    public static void run(Collection<Resource> tasks, String dataset, Object solver) throws Exception {
 
-        jcl.getParentLoader().setEnabled(false);
-        jcl.getThreadLoader().setEnabled(false);
-        jcl.getCurrentLoader().setEnabled(false);
-
-        jcl.getLocalLoader().setOrder(100);
-        jcl.addLoader(jcl.getLocalLoader());
-
-        jcl.add("/home/raven/Projects/Eclipse/jena-sparql-api-parent/benchmarking/sparqlqc-jena3/sparqlqc-impl-jsa/target/sparqlqc-impl-jsa-1.0.0-SNAPSHOT-jar-with-dependencies.jar");
-
-        JclObjectFactory factory;
-        if (false) {
-            ProxyProviderFactory.setDefaultProxyProvider(new CglibProxyProvider());
-            factory = JclObjectFactory.getInstance(true);
-        } else {
-            factory = JclObjectFactory.getInstance();
-        }
-
-        // Create object of loaded class
-
-        // jcl.u
-
-        Map<String, Object> solvers = new LinkedHashMap<>();
-        // C = custom - I = isomorphy
-        Object o = factory.create(jcl, "org.aksw.qcwrapper.jsa.ContainmentSolverWrapperJsaVarMapper");
-
-        // jcl.loadClass("org.aksw.qcwrapper.jsa.ContainmentSolverWrappers");
-
-        // JclUtils.cast(object, clazz)
-        Query yy = QueryFactory.create("SELECT * { ?s ?p ?o }");
-        // Object zz = JclUtils.deepClone(yy);
-        MultiMethod.invoke(o, "cleanup");
-        Arrays.asList(o.getClass().getSuperclass().getDeclaredMethods()).stream().forEach(m -> {
-            List<Class<?>> pts = Arrays.asList(m.getParameterTypes());
-            pts.forEach(t -> {
-                System.out.println(Query.class + " = " + t + ": " + Query.class.equals(t));
-                System.out.println("  " + Query.class.getClassLoader() + " vs " + t.getClassLoader());
-            });
-        });
-        System.out.println("foo: " + MultiMethod.invoke(o, "entailed", yy, yy));
-
-        // ContainmentSolver xx = JclUtils.cast(o, ContainmentSolver.class,
-        // MainTestContain.class.getClassLoader());
-        // System.out.println("bar: " + xx.entailed(yy, yy));
-
-        // solvers.put("JSAC", xx);
-        // solvers.put("JSAC", JclUtils.toCastable(factory.create(jcl,
-        // "org.aksw.qcwrapper.jsa.ContainmentSolverWrapperJsaVarMapper"),
-        // ContainmentSolver.class));
-
-        // solvers.put("JSAI", JclUtils.cast(factory.create(jcl,
-        // "org.aksw.qcwrapper.jsa.ContainmentSolverWrapperJsaSubGraphIsomorphism"),
-        // ContainmentSolver.class));
-        // solvers.put("JSAC", new
-        // ContainmentSolverWrapperJsa(VarMapper::createVarMapCandidates));
-        // solvers.put("JSAG", new
-        // ContainmentSolverWrapperJsa(QueryToGraph::match));
-        // solvers.put("SA", new SPARQLAlgebraWrapper());
-
-        // solvers.put("AFMU", new AFMUContainmentWrapper());
-        // solvers.put("TS", new TreeSolverWrapper());
-        // solvers.put("LMU", //new )
-
-        // TODO Ideally have the blacklist in the data
-        Map<String, Predicate<String>> blackLists = new HashMap<>();
-        blackLists.put("AFMU", (r) -> Arrays.asList("nop3", "nop4", "nop15", "nop16").stream().anyMatch(r::contains));
 
         Model overall = ModelFactory.createDefaultModel();
-        for (Entry<String, Object> entry : solvers.entrySet()) {
-            // JarClassLoader jcl = new JarClassLoader();
-            // jcl.add("/home/raven/Projects/Eclipse/jena-sparql-api-parent/benchmarking/sparqlqc-jena3/repo/lib/");
 
-            String dataset = entry.getKey();
 
-            Predicate<String> p = blackLists.get(dataset);
+        // Attach the solver to the resource
+        Iterator<Resource> taskExecs = prepareTaskExecutions(tasks, dataset, 100, 200).iterator();
 
-            List<Resource> tasks = allTasks.stream().filter(r -> p == null ? true : !p.apply(r.getURI()))
-                    .collect(Collectors.toList());
 
-            // Attach the solver to the resource
-            Iterator<Resource> taskExecs = prepareTaskExecutions(tasks, dataset, 100, 200).iterator();
+        Model strategy = ModelFactory.createDefaultModel();
 
-            // ContainmentSolver solver = new ContainmentSolverWrapperJsa();
-            Object solver = entry.getValue();
+        PrintStream out = System.out;
+        TaskDispatcher<Task> taskDispatcher = new TaskDispatcher<Task>(taskExecs, t -> prepare(t, solver),
+                (task, r) -> task.run.run(),
+                // (task, r) -> { try { return task.call(); }
+                // catch(Exception e) { throw new RuntimeException(e); } },
+                (task, r, e) -> {
+                }, // task.close(),
+                // r -> System.out.println("yay"));
+                r -> {
+                    if (r.getProperty(WARMUP) == null) {
+                        // System.out.println("GOT: ");
+                        // ResourceUtils.reachableClosure(r).write(System.out,
+                        // "TURTLE");
+                        strategy.add(r.getModel());
+                    }
+                }, // r.getModel().write(out, "TURTLE"),
+                new DelayerDefault(0));
 
-            Model strategy = ModelFactory.createDefaultModel();
+        List<Runnable> runnables = Collections.singletonList(taskDispatcher);
 
-            PrintStream out = System.out;
-            TaskDispatcher<Task> taskDispatcher = new TaskDispatcher<Task>(taskExecs, t -> prepare(t, solver),
-                    (task, r) -> task.run.run(),
-                    // (task, r) -> { try { return task.call(); }
-                    // catch(Exception e) { throw new RuntimeException(e); } },
-                    (task, r, e) -> {
-                    }, // task.close(),
-                    // r -> System.out.println("yay"));
-                    r -> {
-                        if (r.getProperty(WARMUP) == null) {
-                            // System.out.println("GOT: ");
-                            // ResourceUtils.reachableClosure(r).write(System.out,
-                            // "TURTLE");
-                            strategy.add(r.getModel());
-                        }
-                    }, // r.getModel().write(out, "TURTLE"),
-                    new DelayerDefault(0));
+        List<Callable<Object>> callables = runnables.stream().map(Executors::callable).collect(Collectors.toList());
 
-            List<Runnable> runnables = Collections.singletonList(taskDispatcher);
+        int workers = 1;
+        ExecutorService executorService = (workers == 1 ? MoreExecutors.newDirectExecutorService()
+                : Executors.newFixedThreadPool(workers));
 
-            List<Callable<Object>> callables = runnables.stream().map(Executors::callable).collect(Collectors.toList());
+        List<Future<Object>> futures = executorService.invokeAll(callables);
 
-            int workers = 1;
-            ExecutorService executorService = (workers == 1 ? MoreExecutors.newDirectExecutorService()
-                    : Executors.newFixedThreadPool(workers));
+        executorService.shutdown();
+        executorService.awaitTermination(5, TimeUnit.SECONDS);
 
-            List<Future<Object>> futures = executorService.invokeAll(callables);
-
-            executorService.shutdown();
-            executorService.awaitTermination(5, TimeUnit.SECONDS);
-
-            if (out != System.out) {
-                out.close();
-            }
-
-            for (Future<?> future : futures) {
-                try {
-                    future.get();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-            }
-
-            QueryExecutionFactory qef = IguanaDatasetProcessors.createQef(strategy);
-            qef.createQueryExecution("CONSTRUCT { ex:" + dataset + " rdfs:label \"" + dataset + "\" } { }")
-                    .execConstruct(strategy);
-            qef.createQueryExecution("CONSTRUCT { ?x qb:dataset ex:" + dataset + " } { ?x ig:run ?r }")
-                    .execConstruct(strategy);
-
-            // strategy.write(System.out, "TURTLE");
-
-            IguanaDatasetProcessors.enrichWithAvgAndStdDeviation(strategy);
-            overall.add(strategy);
-
+        if (out != System.out) {
+            out.close();
         }
 
-        // overall.write(System.out, "TURTLE");
-
-        CategoryDataset dataset = IguanaDatasetProcessors.createDataset(overall);
-
-        if (false) {
-            List l = dataset.getColumnKeys();
-            // String headings = dataset.getColumnKeys().stream()
-            // .map(x -> x.toString())
-            // .collect(Collectors.joining(", "));
-            //
-            // System.out.println(headings);
-
-            dataset.getRowKeys().stream().forEach(rowKey -> {
-                List<String> tmp = new ArrayList<>();
-                tmp.add("" + rowKey);
-                for (int i = 0; i < l.size(); ++i) {
-                    tmp.add("" + dataset.getValue((Comparable) rowKey, (Comparable) l.get(i)));
-                }
-                String rowStr = String.join(", ", tmp);
-
-                // String rowStr = Stream.concat(
-                // Stream.of(rowKey.toString()))
-                //// dataset.getColumnKeys().stream()
-                //// .map(colKey -> dataset.getValue(rowKey,
-                // colKey).toString()))
-                // .collect(Collectors.joining(", "));
-
-                System.out.println(rowStr);
-            });
+        for (Future<?> future : futures) {
+            try {
+                future.get();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
         }
-        //
-        // for(int i = 0; i < dataset.getRowCount(); ++i) {
-        // dataset.getK
-        // String str = IntStream.range(0, dataset.getColumnCount())
-        // .mapToObj(j -> "" + dataset.getValue(i, j))
-        // .collect(Collectors.joining(", "));
-        //
-        // System.out.println(str);
-        // }
-        // System.out.println(dataset);
-        // dataset.
-        // CategoryDataset dataset = createTestDataset();
 
-        JFreeChart chart = IguanaDatasetProcessors.createStatisticalBarChart(dataset);
+        QueryExecutionFactory qef = IguanaDatasetProcessors.createQef(strategy);
+        qef.createQueryExecution("CONSTRUCT { ex:" + dataset + " rdfs:label \"" + dataset + "\" } { }")
+                .execConstruct(strategy);
+        qef.createQueryExecution("CONSTRUCT { ?x qb:dataset ex:" + dataset + " } { ?x ig:run ?r }")
+                .execConstruct(strategy);
+
+        IguanaDatasetProcessors.enrichWithAvgAndStdDeviation(strategy);
+        overall.add(strategy);
+
+        CategoryDataset categoryDataset = IguanaDatasetProcessors.createDataset(overall);
+
+        JFreeChart chart = IguanaDatasetProcessors.createStatisticalBarChart(categoryDataset);
         ChartUtilities2.saveChartAsPDF(new File("/home/raven/tmp/test.pdf"), chart, 1000, 500);
 
         System.out.println("Done.");
     }
 }
+
+
+
+//    if (false) {
+//        List l = dataset.getColumnKeys();
+//        // String headings = dataset.getColumnKeys().stream()
+//        // .map(x -> x.toString())
+//        // .collect(Collectors.joining(", "));
+//        //
+//        // System.out.println(headings);
+//
+//        dataset.getRowKeys().stream().forEach(rowKey -> {
+//            List<String> tmp = new ArrayList<>();
+//            tmp.add("" + rowKey);
+//            for (int i = 0; i < l.size(); ++i) {
+//                tmp.add("" + dataset.getValue((Comparable) rowKey, (Comparable) l.get(i)));
+//            }
+//            String rowStr = String.join(", ", tmp);
+//
+//            // String rowStr = Stream.concat(
+//            // Stream.of(rowKey.toString()))
+//            //// dataset.getColumnKeys().stream()
+//            //// .map(colKey -> dataset.getValue(rowKey,
+//            // colKey).toString()))
+//            // .collect(Collectors.joining(", "));
+//
+//            System.out.println(rowStr);
+//        });
+//    }
+

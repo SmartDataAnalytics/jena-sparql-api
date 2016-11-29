@@ -13,8 +13,12 @@ public class Activator implements BundleActivator
     public void start(BundleContext context)
     {
         TreeSolverWrapper service = new TreeSolverWrapper();
-        context.registerService(SimpleContainmentSolver.class, service, new Hashtable<>());
-        context.registerService(LegacyContainmentSolver.class, service, new Hashtable<>());
+
+        Hashtable<String, String> meta = new Hashtable<>();
+        meta.put("SHORT_NAME", "TS");
+
+        context.registerService(SimpleContainmentSolver.class, service, meta);
+        context.registerService(LegacyContainmentSolver.class, service, meta);
     }
 
     public void stop(BundleContext context)
