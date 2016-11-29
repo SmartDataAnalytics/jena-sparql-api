@@ -181,84 +181,85 @@ public class MainTestContain {
 
     public static void main(String[] args) throws Exception {
 
-        if (true) {
-            FrameworkFactory frameworkFactory = ServiceLoader.load(FrameworkFactory.class).iterator().next();
+        Model overall = ModelFactory.createDefaultModel();
 
-            Map<String, String> config = new HashMap<String, String>();
-            config.put(Constants.FRAMEWORK_STORAGE_CLEAN, Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT);
-            config.put(Constants.FRAMEWORK_BOOTDELEGATION, "*");
+        FrameworkFactory frameworkFactory = ServiceLoader.load(FrameworkFactory.class).iterator().next();
 
-            config.put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA, String.join(",",
-                // API
-                "fr.inrialpes.tyrexmo.testqc.simple;version=\"1.0.0\"",
-                "fr.inrialpes.tyrexmo.testqc;version=\"1.0.0\"",
+        Map<String, String> config = new HashMap<String, String>();
+        config.put(Constants.FRAMEWORK_STORAGE_CLEAN, Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT);
+        config.put(Constants.FRAMEWORK_BOOTDELEGATION, "*");
 
-                // Dirty API packages (probably should go elsewhere)
-                "fr.inrialpes.tyrexmo.queryanalysis;version=\"1.0.0\"",
+        config.put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA, String.join(",",
+            // API
+            "fr.inrialpes.tyrexmo.testqc.simple;version=\"1.0.0\"",
+            "fr.inrialpes.tyrexmo.testqc;version=\"1.0.0\"",
 
-                // Jena 3
-                "org.apache.jena.sparql.algebra;version=\"1.0.0\"",
-                "org.apache.jena.sparql.algebra.optimize;version=\"1.0.0\"",
-                "org.apache.jena.sparql.algebra.op;version=\"1.0.0\"",
-                "org.apache.jena.sparql.algebra.expr;version=\"1.0.0\"",
-                "org.apache.jena.sparql.core;version=\"1.0.0\"",
-                "org.apache.jena.sparql.syntax;version=\"1.0.0\"",
-                "org.apache.jena.sparql.expr;version=\"1.0.0\"",
-                "org.apache.jena.sparql.graph;version=\"1.0.0\"",
-                "org.apache.jena.query;version=\"1.0.0\"",
-                "org.apache.jena.graph;version=\"1.0.0\"",
-                "org.apache.jena.ext.com.google.common.collect;version=\"1.0.0\"",
-                "org.apache.jena.sparql.engine.binding;version=\"1.0.0\"",
+            // Dirty API packages (probably should go elsewhere)
+            "fr.inrialpes.tyrexmo.queryanalysis;version=\"1.0.0\"",
 
-                // Jena 2 (legacy)
-                "com.hp.hpl.jena.sparql;version=\"1.0.0\"",
-                "com.hp.hpl.jena.sparql.algebra;version=\"1.0.0\"",
-                "com.hp.hpl.jena.sparql.algebra.optimize;version=\"1.0.0\"",
-                "com.hp.hpl.jena.sparql.algebra.op;version=\"1.0.0\"",
-                "com.hp.hpl.jena.sparql.algebra.expr;version=\"1.0.0\"",
-                "com.hp.hpl.jena.sparql.engine;version=\"1.0.0\"",
-                "com.hp.hpl.jena.sparql.core;version=\"1.0.0\"",
-                "com.hp.hpl.jena.sparql.syntax;version=\"1.0.0\"",
-                "com.hp.hpl.jena.sparql.expr;version=\"1.0.0\"",
-                "com.hp.hpl.jena.sparql.expr.nodevalue;version=\"1.0.0\"",
-                "com.hp.hpl.jena.sparql.graph;version=\"1.0.0\"",
-                "com.hp.hpl.jena.sparql.util.graph;version=\"1.0.0\"",
-                "com.hp.hpl.jena.query;version=\"1.0.0\"",
-                "com.hp.hpl.jena.graph;version=\"1.0.0\"",
-                "com.hp.hpl.jena.ext.com.google.common.collect;version=\"1.0.0\"",
-                "com.hp.hpl.jena.sparql.engine.binding;version=\"1.0.0\"",
+            // Jena 3
+            "org.apache.jena.sparql.algebra;version=\"1.0.0\"",
+            "org.apache.jena.sparql.algebra.optimize;version=\"1.0.0\"",
+            "org.apache.jena.sparql.algebra.op;version=\"1.0.0\"",
+            "org.apache.jena.sparql.algebra.expr;version=\"1.0.0\"",
+            "org.apache.jena.sparql.core;version=\"1.0.0\"",
+            "org.apache.jena.sparql.syntax;version=\"1.0.0\"",
+            "org.apache.jena.sparql.expr;version=\"1.0.0\"",
+            "org.apache.jena.sparql.graph;version=\"1.0.0\"",
+            "org.apache.jena.query;version=\"1.0.0\"",
+            "org.apache.jena.graph;version=\"1.0.0\"",
+            "org.apache.jena.ext.com.google.common.collect;version=\"1.0.0\"",
+            "org.apache.jena.sparql.engine.binding;version=\"1.0.0\"",
 
-                "org.apache.xerces.util;version=\"1.0.0\"",
-                "org.apache.xerces.impl.dv;version=\"1.0.0\"",
-                "org.apache.xerces.xs;version=\"1.0.0\"",
-                "org.apache.xerces.impl.dv.xs;version=\"1.0.0\"",
-                "org.apache.xerces.impl.validation;version=\"1.0.0\"",
+            // Jena 2 (legacy)
+            "com.hp.hpl.jena.sparql;version=\"1.0.0\"",
+            "com.hp.hpl.jena.sparql.algebra;version=\"1.0.0\"",
+            "com.hp.hpl.jena.sparql.algebra.optimize;version=\"1.0.0\"",
+            "com.hp.hpl.jena.sparql.algebra.op;version=\"1.0.0\"",
+            "com.hp.hpl.jena.sparql.algebra.expr;version=\"1.0.0\"",
+            "com.hp.hpl.jena.sparql.engine;version=\"1.0.0\"",
+            "com.hp.hpl.jena.sparql.core;version=\"1.0.0\"",
+            "com.hp.hpl.jena.sparql.syntax;version=\"1.0.0\"",
+            "com.hp.hpl.jena.sparql.expr;version=\"1.0.0\"",
+            "com.hp.hpl.jena.sparql.expr.nodevalue;version=\"1.0.0\"",
+            "com.hp.hpl.jena.sparql.graph;version=\"1.0.0\"",
+            "com.hp.hpl.jena.sparql.util.graph;version=\"1.0.0\"",
+            "com.hp.hpl.jena.query;version=\"1.0.0\"",
+            "com.hp.hpl.jena.graph;version=\"1.0.0\"",
+            "com.hp.hpl.jena.ext.com.google.common.collect;version=\"1.0.0\"",
+            "com.hp.hpl.jena.sparql.engine.binding;version=\"1.0.0\"",
 
-                "com.ibm.icu.text;version=\"1.0.0\"",
+            "org.apache.xerces.util;version=\"1.0.0\"",
+            "org.apache.xerces.impl.dv;version=\"1.0.0\"",
+            "org.apache.xerces.xs;version=\"1.0.0\"",
+            "org.apache.xerces.impl.dv.xs;version=\"1.0.0\"",
+            "org.apache.xerces.impl.validation;version=\"1.0.0\"",
 
-                // Logging
-                "org.slf4j;version=\"1.7.0\""
+            "com.ibm.icu.text;version=\"1.0.0\"",
+
+            // Logging
+            "org.slf4j;version=\"1.7.0\""
 //                "org.slf4j.impl;version=\"1.0.0\"",
 //                "org.apache.log4j;version=\"1.0.0\""
 
-                // ??? What packages are that?
-                //"java_cup.runtime;version=\"1.0.0\""
-            ));
+            // ??? What packages are that?
+            //"java_cup.runtime;version=\"1.0.0\""
+        ));
 
 
-            List<File> jarFiles = Arrays.asList("jsa", "sparqlalgebra", "afmu", "treesolver").stream().map(implStr -> {
-                String jarPathStr = String
-                        .format("../sparqlqc-impl-%1$s/target/sparqlqc-impl-%1$s-1.0.0-SNAPSHOT.jar", implStr);
-                File jarFile = new File(jarPathStr);
-                return jarFile;
-            }).collect(Collectors.toList());
+        List<File> jarFiles = Arrays.asList("jsa", "sparqlalgebra", "afmu", "treesolver").stream().map(implStr -> {
+            String jarPathStr = String
+                    .format("../sparqlqc-impl-%1$s/target/sparqlqc-impl-%1$s-1.0.0-SNAPSHOT.jar", implStr);
+            File jarFile = new File(jarPathStr);
+            return jarFile;
+        }).collect(Collectors.toList());
 
-            // TODO Ideally have the blacklist in the data
-            Map<String, Predicate<String>> blackLists = new HashMap<>();
-            blackLists.put("AFMU", (r) -> Arrays.asList("nop3", "nop4", "nop15", "nop16").stream().anyMatch(r::contains));
+        // TODO Ideally have the blacklist in the data
+        Map<String, Predicate<String>> blackLists = new HashMap<>();
+        blackLists.put("AFMU", (r) -> Arrays.asList("nop3", "nop4", "nop15", "nop16").stream().anyMatch(r::contains));
 
-            List<Resource> allTasks = SparqlQcReader.loadTasks("sparqlqc/1.4/benchmark/cqnoproj.rdf",
-                    "sparqlqc/1.4/benchmark/noprojection/*");
+        List<Resource> allTasks = SparqlQcReader.loadTasks("sparqlqc/1.4/benchmark/cqnoproj.rdf",
+                "sparqlqc/1.4/benchmark/noprojection/*");
 
 
 
@@ -267,80 +268,83 @@ public class MainTestContain {
 //          Bundle bundle = context.installBundle("reference:file:/home/raven/Projects/Eclipse/jena-sparql-api-parent/benchmarking/sparqlqc-jena3/sparqlqc-impl-treesolver/target/sparqlqc-impl-treesolver-1.0.0-SNAPSHOT.jar");
 //          Bundle bundle = context.installBundle("reference:file:/home/raven/Projects/Eclipse/jena-sparql-api-parent/benchmarking/sparqlqc-jena3/sparqlqc-impl-sparqlalgebra/target/sparqlqc-impl-sparqlalgebra-1.0.0-SNAPSHOT.jar");
 
-            int anonId = 0;
-
-            Framework framework = frameworkFactory.newFramework(config);
-            try {
-                framework.init();
-                framework.start();
 
 
-                BundleContext context = framework.getBundleContext();
+        int anonId = 0;
 
-                for (File jarFile : jarFiles) {
-                    String jarFileStr = jarFile.getAbsolutePath();
-                    logger.info("Loading: " + jarFileStr);
+        Framework framework = frameworkFactory.newFramework(config);
+        try {
+            framework.init();
+            framework.start();
 
-                    Bundle bundle = context.installBundle("reference:file:" + jarFileStr);
-                    try {
-                        bundle.start();
 
-                        for(ServiceReference<?> sr : bundle.getRegisteredServices()) {
+            BundleContext context = framework.getBundleContext();
 
-                            String shortLabel = (String)sr.getProperty("SHORT_LABEL");
-                            if(shortLabel == null) {
-                                shortLabel = "ANON" + ++anonId;
-                            }
+            for (File jarFile : jarFiles) {
+                String jarFileStr = jarFile.getAbsolutePath();
+                logger.info("Loading: " + jarFileStr);
 
-                            Predicate<String> p = blackLists.get(shortLabel);
+                Bundle bundle = context.installBundle("reference:file:" + jarFileStr);
+                try {
+                    bundle.start();
 
-                            List<Resource> tasks = allTasks.stream()
-                                    .filter(r -> p == null ? true : !p.apply(r.getURI()))
-                                    .collect(Collectors.toList());
+                    for(ServiceReference<?> sr : bundle.getRegisteredServices()) {
 
-                            Object service = context.getService(sr);
-
-                            if(service instanceof ContainmentSolver || service instanceof LegacyContainmentSolver) {
-                                run(tasks, shortLabel, service);
-                            }
+                        String shortLabel = (String)sr.getProperty("SHORT_LABEL");
+                        if(shortLabel == null) {
+                            shortLabel = "ANON" + ++anonId;
                         }
 
-                    } finally {
-                        try {
-                            bundle.stop();
-                            bundle.uninstall();
-                            logger.info("Uninstalled " + jarFileStr);
-                        } catch(Exception e) {
-                            logger.info("Failed to uninstall " + jarFileStr, e);
+                        Predicate<String> p = blackLists.get(shortLabel);
+
+                        List<Resource> tasks = allTasks.stream()
+                                .filter(r -> p == null ? true : !p.apply(r.getURI()))
+                                .collect(Collectors.toList());
+
+                        Object service = context.getService(sr);
+
+                        if(service instanceof ContainmentSolver || service instanceof LegacyContainmentSolver) {
+                            run(overall, tasks, shortLabel, service);
                         }
                     }
-                }
-            } catch(Exception e) {
-                e.printStackTrace();
-            } finally {
-                framework.stop();
-                framework.waitForStop(0);
-            }
 
-            logger.info("Done.");
-            System.exit(0);
-            return;
+                } finally {
+                    try {
+                        bundle.stop();
+                        bundle.uninstall();
+                        logger.info("Uninstalled " + jarFileStr);
+                    } catch(Exception e) {
+                        logger.info("Failed to uninstall " + jarFileStr, e);
+                    }
+                }
+            }
+        } catch(Exception e) {
+            e.printStackTrace();
+        } finally {
+            framework.stop();
+            framework.waitForStop(0);
         }
 
+
+        CategoryDataset categoryDataset = IguanaDatasetProcessors.createDataset(overall);
+
+        JFreeChart chart = IguanaDatasetProcessors.createStatisticalBarChart(categoryDataset);
+        ChartUtilities2.saveChartAsPDF(new File("/home/raven/tmp/test.pdf"), chart, 1000, 500);
+
+        logger.info("Done.");
+
+        System.exit(0);
 
         // tasks = tasks.stream()
         // .filter(t -> !t.getURI().contains("19") && !t.getURI().contains("6"))
         // .collect(Collectors.toList());
     }
 
-    public static void run(Collection<Resource> tasks, String dataset, Object solver) throws Exception {
-
-
-        Model overall = ModelFactory.createDefaultModel();
+    public static void run(Model overall, Collection<Resource> tasks, String dataset, Object solver) throws Exception {
 
 
         // Attach the solver to the resource
-        Iterator<Resource> taskExecs = prepareTaskExecutions(tasks, dataset, 100, 200).iterator();
+        Iterator<Resource> taskExecs = prepareTaskExecutions(tasks, dataset, 1, 2).iterator();
 
 
         Model strategy = ModelFactory.createDefaultModel();
@@ -388,6 +392,7 @@ public class MainTestContain {
             }
         }
 
+
         QueryExecutionFactory qef = IguanaDatasetProcessors.createQef(strategy);
         qef.createQueryExecution("CONSTRUCT { ex:" + dataset + " rdfs:label \"" + dataset + "\" } { }")
                 .execConstruct(strategy);
@@ -396,13 +401,6 @@ public class MainTestContain {
 
         IguanaDatasetProcessors.enrichWithAvgAndStdDeviation(strategy);
         overall.add(strategy);
-
-        CategoryDataset categoryDataset = IguanaDatasetProcessors.createDataset(overall);
-
-        JFreeChart chart = IguanaDatasetProcessors.createStatisticalBarChart(categoryDataset);
-        ChartUtilities2.saveChartAsPDF(new File("/home/raven/tmp/test.pdf"), chart, 1000, 500);
-
-        logger.info("Done.");
     }
 }
 
