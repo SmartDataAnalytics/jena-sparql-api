@@ -1,64 +1,17 @@
-# JE: 17/07/2013
+# Sparql Query Containment Benchmark
 
-# ====================================================================================================
-# Compiling
+This repository contains a SPARQL query containment benchmark runner, together with the benchmarkseveral implementations of SPARQL query containment checkers.
+Besides our own approaches, we included all implementations from the download bundle of
+http://sparql-qc-bench.inrialpes.fr/ version 1.4, namely *SparqlAlgebra* aka *SA*, *TreeSolver* aka *LMU*, and *AFMU*.
 
-$ ant compileall    -> compiles everything
-$ ant jar           -> incremental compilation
+Thereby, our own benchmark runner is a *significantly* improved version of that included in the download bundle:
 
-# ====================================================================================================
-# Running
+* We bundled all query containment checkers as OSGI plugins which allows the benchmark runner to evaluate implementations even with conflicting dependencies (LMU and AFMU) in the same java process. The advantages are, that this saves time and it also makes it easy to add future implementations without having to worry about possible conflicts with prior implementations.
+* We fixed the AFMU ContainmentWrapper to properly reset its state after each containment test (using hacks based on reflection). In its original implementation, the java process needed to be restarted after every single containment check. ***Hence, the original benchmark does not perform warm-up runs***.
+* We took great care to only measure the time needed to perform SPARQL query containment checks- i.e. we do not measure thread creation, just-in-time compilation, or SPARQL query parsing. Note, that any time needed to further process parsed SPARQL query objects (e.g. mu-algebra) is counted.
 
-Everything depends on the content of lib/
-- if it contains javabdd...jar => this can run AFMU, not TreeSolver
-- if it contains libbuddy.X (X depending on the architecture) => the BDD code will be native
+***For above reasons we consider our results more accurate. Especially, we show that containment checking is significantly faster than being suggested in the orginal evaluation***
 
-$ sh runtests.sh   -> should do everything
+The main class is [this one](develop/benchmarking/sparqlqc-jena3/sparqlqc-core/src/main/java/fr/inrialpes/tyrexmo/testqc/MainTestContain.java)
 
-Files are here with the correct timeout and memory size, do not regenerate without 
-knowing what you are doing.
-
-# This run specific tests individually
-
-$ java -Xms1512m -Xmx2024m -Djava.library.path=lib -jar lib/containmenttester.jar fr.inrialpes.tyrexmo.qcwrapper.afmu.AFMUContainmentWrapper -x benchmark/cqnoproj.rdf -n nop6 -f asc
-$ java -Xms1512m -Xmx2024m -Djava.library.path=lib -jar lib/containmenttester.jar fr.inrialpes.tyrexmo.qcwrapper.sparqlalg.SPARQLAlgebraWrapper -x benchmark/cqnoproj.rdf -n nop6 -f asc
-$ java -Xms1512m -Xmx2024m -Djava.library.path=lib -jar lib/containmenttester.jar fr.inrialpes.tyrexmo.qcwrapper.lmu.TreeSolverWrapper -x benchmark/cqnoproj.rdf -n nop6 -f asc
-
-# To generate these types of scripts
-
-$ java -jar lib/containmenttester.jar fr.inrialpes.tyrexmo.qcwrapper.sparqlalg.SPARQLAlgebraWrapper -x benchmark/cqnoproj.rdf -f shell -o scripts/testSA-NOP.sh
-                    -> generate test files (change arguments).
-
-# ====================================================================================================
-# Generating web site
-
-$ java -cp lib/containmenttester.jar fr.inrialpes.tyrexmo.testqc.SuiteTool benchmark/cqnoproj.rdf -o html/CQNoProj.html
-$ java -cp lib/containmenttester.jar fr.inrialpes.tyrexmo.testqc.SuiteTool benchmark/ucqproj.rdf -o html/UCQProj.html
-$ java -cp lib/containmenttester.jar fr.inrialpes.tyrexmo.testqc.SuiteTool benchmark/ucqrdfs.rdf -o html/UCQrdfs.html
-
-# ====================================================================================================
-# Analysing queries
-
-$ java -cp lib/containmenttester.jar fr.inrialpes.tyrexmo.queryanalysis.Analysis querylog
-
-with querylog the name of a directory containing one sparql query per file.
-
-# ====================================================================================================
-# Content:
-
-benchmark     description of the benchmark data sets
-
-lib           containmenttester.jar -> the framework with all wrappers
-              lmusolver.jar -> the Lmu-calculus solver, aka TreeSolver
-              subsum.jar -> the SPARQL Algebra solver stuff that works
-              afmusolver.jar -> the Japanese Mu-calculus solver (hopefully non touched)
-
-src the source for QC testing including wrappers
-  fr.inrialpes.tyrexmo.queryanalysis -> common tools for analysing and manipulating queries
-  				     + includes a splitlog.pl perl scripts for extracting queries from logs
-  fr.inrialpes.tyrexmo.testqc.TestContain -> the main class for testing containment (called by the jat above).
-  fr.inrialpes.tyrexmo.testqc.ContainmentSolver -> the minimal interface wrapper have to implement
-  fr.inrialpes.tyrexmo.qcwrapper.afmu.AFMUContainmentWrapper -> our wrapper around AFMU solver
-  fr.inrialpes.tyrexmo.qcwrapper.lmu.TreeSolverWrapper -> same for L_mu solver
-  fr.inrialpes.tyrexmo.qcwrapper.sparqlalg.SPARQLAlgebraWrapper -> same for the SPARQL-Algebra solver
 
