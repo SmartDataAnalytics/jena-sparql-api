@@ -31,7 +31,7 @@ public class TransformReplaceConstants
 {
 
     protected Generator<Var> generator;
-	protected boolean omitDefaultGraphFilter;
+    protected boolean omitDefaultGraphFilter;
 
     public TransformReplaceConstants(Generator<Var> generator, boolean omitDefaultGraphFilter) {
         this.generator = generator;
@@ -83,7 +83,7 @@ public class TransformReplaceConstants
 
     public Op transform(OpQuadPattern op) {
 
-    	List<Var> vars = new ArrayList<>(OpVars.visibleVars(op));
+        List<Var> vars = new ArrayList<>(OpVars.visibleVars(op));
 
         ExprList filters = new ExprList();
 
@@ -115,6 +115,8 @@ public class TransformReplaceConstants
             result = OpFilter.filter(filters, result);
         }
 
+        // Note: We need to add a projection here, so we do not suddely yield more variables than
+        // in the original pattern - otherwise, we could break e.g. SELECT * { ... } queries.
         result = new OpProject(result, vars);
 
         return result;

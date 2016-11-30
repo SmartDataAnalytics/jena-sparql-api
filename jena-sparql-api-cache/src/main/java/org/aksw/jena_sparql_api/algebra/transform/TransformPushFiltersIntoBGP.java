@@ -2,14 +2,19 @@ package org.aksw.jena_sparql_api.algebra.transform;
 
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.jena_sparql_api.concept_cache.core.VarUsage;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
+import org.aksw.jena_sparql_api.utils.CnfUtils;
 import org.aksw.jena_sparql_api.utils.DnfUtils;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
+import org.apache.jena.ext.com.google.common.base.Functions;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.Transform;
@@ -26,8 +31,11 @@ import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.graph.NodeTransformLib;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+
 /**
- * Given filter expressions of form ?x = <const>, where ?x is not a mandatory variable
+ * Given filter expressions of form ?x = <const>, where ?x is an undistinguished (mandatory) variable
  * (i.e. neither indirectly referenced nor projected), push the constant into to BPG's triple patterns
  *
  * Example
@@ -42,55 +50,98 @@ import org.apache.jena.sparql.graph.NodeTransformLib;
  *
  */
 public class TransformPushFiltersIntoBGP
-	extends TransformCopy
+    extends TransformCopy
 {
-	//public static final TransformPushFiltersIntoBGP fn = new TransformPushFiltersIntoBGP();
+    //public static final TransformPushFiltersIntoBGP fn = new TransformPushFiltersIntoBGP();
 
-	protected Tree<Op> tree;
+    protected Tree<Op> tree;
 
-	public static Op transform(Op op) {
-		Tree<Op> tree = OpUtils.createTree(op);
-		Transform transform = new TransformPushFiltersIntoBGP(tree);
+    public static Op transform(Op op) {
+        Tree<Op> tree = OpUtils.createTree(op);
+        Transform transform = new TransformPushFiltersIntoBGP(tree);
         Op result = Transformer.transform(transform, op);
         return result;
-	}
+    }
 
-	public TransformPushFiltersIntoBGP(Tree<Op> tree) {
-		this.tree = tree;
-	}
-
-	@Override
-	public Op transform(OpFilter opFilter, Op subOp) {
-		Op result;
-
-		if(subOp instanceof OpQuadPattern || subOp instanceof OpQuadBlock || subOp instanceof OpBGP) {
-			VarUsage varUsage = OpUtils.analyzeVarUsage(tree, opFilter);
-			System.out.println("varUsage: " + varUsage);
-			Set<Var> mandatoryVars = VarUsage.getMandatoryVars(varUsage);
-
-			ExprList exprs = opFilter.getExprs();
-			Set<Set<Expr>> dnf = DnfUtils.toSetDnf(exprs);
-			Map<Var, NodeValue> tmpMap = DnfUtils.extractCommonConstantConstraints(dnf);
-			Map<Var, Node> map = tmpMap.entrySet().stream()
-					.collect(Collectors.toMap(Entry::getKey, e -> e.getValue().asNode()));
-
-			// Remove all mandatoryVars from the transformation
-			map.keySet().removeAll(mandatoryVars);
+    public TransformPushFiltersIntoBGP(Tree<Op> tree) {
+        this.tree = tree;
+    }
 
 
-			NodeTransform nodeTransform = new NodeTransformRenameMap(map);
-			// Analyze the var usage of the subOp
+    // TODO Move to a util function
+    public static <I, O> Multimap<O, I> group(Iterable<I> items, Function<? super I, O> fn, Predicate<O> exclusions) {
+        Multimap<O, I> result = HashMultimap.create();
+        for(I item : items) {
+            O out = fn.apply(item);
+            boolean exclude = exclusions != null && exclusions.test(out);
+            if(!exclude) {
+                result.put(out, item);
+            }
+        }
 
-			result = NodeTransformLib.transform(nodeTransform, subOp);
-			
-			// 
+        return result;
+    }
 
-		} else {
-			throw new RuntimeException("should not happen");
-		}
 
-		return result;
-	}
+
+    @Override
+    public Op transform(OpFilter opFilter, Op subOp) {
+        Op result;
+
+        if(subOp instanceof OpQuadPattern || subOp instanceof OpQuadBlock || subOp instanceof OpBGP) {
+            VarUsage varUsage = OpUtils.analyzeVarUsage(tree, opFilter);
+            //System.out.println("varUsage: " + varUsage);
+            Set<Var> mandatoryVars = VarUsage.getMandatoryVars(varUsage);
+
+            ExprList exprs = opFilter.getExprs();
+
+            // TODO: Move most of this analysis into a util function
+
+            Set<Set<Expr>> cnf = CnfUtils.toSetCnf(exprs);
+
+            // Extract all equalities and keep references to the originating clauses
+            Multimap<Entry<Var, Node>, Set<Expr>> equalities = group(cnf, CnfUtils::extractEquality, Objects::isNull);
+
+            // Map all variables to the set of pairs
+            Multimap<Var, Entry<Var, Node>> varToEntry = group(equalities.keySet(), e -> e.getKey(), null);
+
+            // Determine all consistent variables (those mapping to just a single entry)
+            Set<Var> consistentVars = varToEntry.asMap().entrySet().stream()
+                    .filter(e -> e.getValue().size() == 1)
+                    .map(e -> e.getKey())
+                    .collect(Collectors.toSet());
+
+            // Remove all mandatoryVars from the transformation
+            consistentVars.removeAll(mandatoryVars);
+
+            // Determine the clauses of all consistent vars
+            Set<Set<Expr>> consistentClauses = consistentVars.stream()
+                    .flatMap(v -> varToEntry.asMap().get(v).stream())
+                    .flatMap(e -> equalities.asMap().get(e).stream())
+                    .collect(Collectors.toSet());
+
+            // Map all consistent variables to their respective value
+            Map<Var, Node> map = consistentVars.stream()
+                    .collect(Collectors.toMap(
+                            v -> v,
+                            v -> varToEntry.get(v).iterator().next().getValue()));
+
+            // Determine the residual clauses which we need to filter by
+            Set<Set<Expr>> residualClauses = cnf.stream()
+                    .filter(clause -> !consistentClauses.contains(clause))
+                    .collect(Collectors.toSet());
+
+            Op newSubOp = map.isEmpty() ? subOp : NodeTransformLib.transform(new NodeTransformRenameMap(map), subOp);
+
+            ExprList exprList = CnfUtils.toExprList(residualClauses);
+            result = OpFilter.filterBy(exprList, newSubOp);
+
+        } else {
+            result = super.transform(opFilter, subOp);
+        }
+
+        return result;
+    }
 
 }
 

@@ -10,7 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
 
+import org.apache.jena.ext.com.google.common.collect.HashMultimap;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
@@ -27,6 +29,8 @@ import org.apache.jena.sparql.expr.ExprFunction;
 import org.apache.jena.sparql.expr.ExprFunction2;
 import org.apache.jena.sparql.expr.ExprList;
 import org.apache.jena.sparql.expr.NodeValue;
+
+import com.google.common.collect.Multimap;
 
 
 // TODO There is already org.apache.jena.sparql.algebra.optimize.TransformFilterConjunction
@@ -45,7 +49,7 @@ public class CnfUtils {
         return (T)result;
     }
 
-    public static Entry<Var, Node> extractEquality(Collection< ? extends Expr> clause) {
+    public static Entry<Var, Node> extractEquality(Collection<? extends Expr> clause) {
         Entry<Var, Node> result = null;
 
         if(clause.size() == 1) {
@@ -71,6 +75,19 @@ public class CnfUtils {
         return result;
     }
 
+    public static <E extends Expr, C extends Collection<? extends E>> Set<C> getEqualityClauses(Iterable<C> cnf) {
+        Set<C> result = new HashSet<>();
+
+        for(C clause : cnf) {
+            Entry<Var, Node> entry = extractEquality(clause);
+            if(entry != null) {
+                result.add(clause);
+            }
+        }
+
+        return result;
+    }
+
     /**
      * Extract from the CNF all mappings from a variable to constant, i.e.
      * if there is ?x = foo, then the result will contain the mapping ?x -> foo.
@@ -82,18 +99,27 @@ public class CnfUtils {
     public static Map<Var, Node> getConstants(Iterable<? extends Collection <? extends Expr>> cnf) {
         Map<Var, Node> result = new HashMap<Var, Node>();
 
+        // Inconsistent variables are those mapping to different values
+        Set<Var> inconsistent = new HashSet<Var>();
+
+        Multimap<Var, Iterable<? extends Collection <? extends Expr>>> varToClauses;
+
         for(Collection<? extends Expr> clause : cnf) {
             Entry<Var, Node> entry = extractEquality(clause);
             if(entry != null) {
                 Var v = entry.getKey();
                 Node c = entry.getValue();
 
-                Node o = result.get(v);
-                if(o != null && !o.equals(c)) {
-                    c = NodeValue.FALSE.getNode();
-                }
 
-                result.put(v, c);
+
+                Node o = result.get(v);
+                if(o != null && !o.equals(c) && !inconsistent.contains(v)) {
+                    inconsistent.add(v);
+                    //c = NodeValue.FALSE.getNode();
+                    result.remove(v);
+                } else {
+                    result.put(v, c);
+                }
             }
         }
 
