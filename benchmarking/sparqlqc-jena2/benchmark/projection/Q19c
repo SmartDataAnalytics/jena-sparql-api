@@ -1,9 +1,0 @@
-PREFIX : <http://www.example.org/>
-
-SELECT ?x  ?z WHERE {
-	?x a :GraduateStudent .
-	?y a :Department .
-	?x :memberOf ?y .
-	?y :subOrganizationOf ?u .
-	?x :email ?z .
-}
