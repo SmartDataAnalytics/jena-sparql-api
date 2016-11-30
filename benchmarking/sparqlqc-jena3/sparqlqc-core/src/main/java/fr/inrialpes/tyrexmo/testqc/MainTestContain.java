@@ -3,6 +3,7 @@ package fr.inrialpes.tyrexmo.testqc;
 import java.io.File;
 import java.io.PrintStream;
 import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -33,8 +34,6 @@ import org.aksw.jena_sparql_api.utils.QueryUtils;
 //import org.aksw.qcwrapper.jsa.ContainmentSolverWrapperJsa;
 import org.aksw.simba.lsq.vocab.LSQ;
 import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryFactory;
-import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
@@ -56,8 +55,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Predicate;
 import com.google.common.util.concurrent.MoreExecutors;
-
-import fr.inrialpes.tyrexmo.testqc.simple.SimpleContainmentSolver;
 
 class TestCase {
     public Query source;
@@ -212,6 +209,7 @@ public class MainTestContain {
             "org.apache.jena.graph;version=\"1.0.0\"",
             "org.apache.jena.ext.com.google.common.collect;version=\"1.0.0\"",
             "org.apache.jena.sparql.engine.binding;version=\"1.0.0\"",
+            "org.apache.jena.atlas.io;version=\"1.0.0\"",
 
             // Jena 2 (legacy)
             "com.hp.hpl.jena.sparql;version=\"1.0.0\"",
@@ -250,6 +248,7 @@ public class MainTestContain {
 
 
         List<File> jarFiles = Arrays.asList("jsa", "sparqlalgebra", "afmu", "treesolver").stream().map(implStr -> {
+        //List<File> jarFiles = Arrays.asList("treesolver").stream().map(implStr -> {
             String jarPathStr = String
                     .format("../sparqlqc-impl-%1$s/target/sparqlqc-impl-%1$s-1.0.0-SNAPSHOT.jar", implStr);
             File jarFile = new File(jarPathStr);
@@ -258,11 +257,17 @@ public class MainTestContain {
 
         // TODO Ideally have the blacklist in the data
         Map<String, Predicate<String>> blackLists = new HashMap<>();
-        blackLists.put("AFMU", (r) -> Arrays.asList("nop3", "nop4", "nop15", "nop16").stream().anyMatch(r::contains));
+        blackLists.put("AFMU", (r) -> Arrays.asList("#nop3", "#nop4", "#nop15", "#nop16", "#p3", "#p4", "#p15", "#p16", "#p23", "#p24", "#p25", "#p26").stream().anyMatch(r::contains));
+        blackLists.put("SA", (r) -> Arrays.asList("UCQProj").stream().anyMatch(r::contains));
+        blackLists.put("TS", (r) -> Arrays.asList("#p23", "#p24", "#p15", "#p25", "#p26").stream().anyMatch(r::contains));         // slow p15, p25, p26
 
-        List<Resource> allTasks = SparqlQcReader.loadTasks("sparqlqc/1.4/benchmark/cqnoproj.rdf",
-                "sparqlqc/1.4/benchmark/noprojection/*");
+        List<Resource> allTasks = new ArrayList<>();
+        allTasks.addAll(SparqlQcReader.loadTasks("sparqlqc/1.4/benchmark/cqnoproj.rdf", "sparqlqc/1.4/benchmark/noprojection/*"));
+        allTasks.addAll(SparqlQcReader.loadTasks("sparqlqc/1.4/benchmark/ucqproj.rdf", "sparqlqc/1.4/benchmark/projection/*"));
 
+
+//        params.addAll(createTestParams("sparqlqc/1.4/benchmark/cqnoproj.rdf", "sparqlqc/1.4/benchmark/noprojection/*"));
+//        params.addAll(createTestParams("sparqlqc/1.4/benchmark/ucqproj.rdf", "sparqlqc/1.4/benchmark/projection/*"));
 
 
 //          Bundle bundle = context.installBundle("reference:file:/home/raven/Projects/Eclipse/jena-sparql-api-parent/benchmarking/sparqlqc-jena3/sparqlqc-impl-jsa/target/sparqlqc-impl-jsa-1.0.0-SNAPSHOT.jar");
@@ -346,7 +351,7 @@ public class MainTestContain {
 
 
         // Attach the solver to the resource
-        Iterator<Resource> taskExecs = prepareTaskExecutions(tasks, dataset, 1, 1).iterator();
+        Iterator<Resource> taskExecs = prepareTaskExecutions(tasks, dataset, 10, 10).iterator();
 
 
         Model strategy = ModelFactory.createDefaultModel();
