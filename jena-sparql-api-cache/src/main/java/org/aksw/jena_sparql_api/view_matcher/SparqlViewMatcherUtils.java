@@ -32,13 +32,13 @@ import org.aksw.jena_sparql_api.sparql.algebra.mapping.MatchingStrategyFactory;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.SequentialMatchIterator;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.TreeMapperImpl;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.VarMapper;
-import org.aksw.jena_sparql_api.utils.DnfUtils;
-import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.op.OpDisjunction;
 import org.apache.jena.sparql.algebra.op.OpDistinct;
 import org.apache.jena.sparql.algebra.op.OpExtend;
+import org.apache.jena.sparql.algebra.op.OpFilter;
+import org.apache.jena.sparql.algebra.op.OpLeftJoin;
 import org.apache.jena.sparql.algebra.op.OpProject;
 import org.apache.jena.sparql.algebra.op.OpSequence;
 import org.apache.jena.sparql.algebra.op.OpSlice;
@@ -55,54 +55,54 @@ import com.google.common.collect.Range;
 
 public class SparqlViewMatcherUtils {
 
-	private static final Logger logger = LoggerFactory.getLogger(SparqlViewMatcherUtils.class);
+    private static final Logger logger = LoggerFactory.getLogger(SparqlViewMatcherUtils.class);
 
     public static Stream<OpVarMap> generateTreeVarMapping(
-			Multimap<Op, Op> candOpMapping,
-			Tree<Op> cacheTree,
-	        Tree<Op> queryTree)
+            Multimap<Op, Op> candOpMapping,
+            Tree<Op> cacheTree,
+            Tree<Op> queryTree)
     {
 
-	    Tree<Op> cacheMultiaryTree = TreeUtils.removeUnaryNodes(cacheTree);
-	    Tree<Op> queryMultiaryTree = TreeUtils.removeUnaryNodes(queryTree);
+        Tree<Op> cacheMultiaryTree = TreeUtils.removeUnaryNodes(cacheTree);
+        Tree<Op> queryMultiaryTree = TreeUtils.removeUnaryNodes(queryTree);
 
-	    Stream<OpVarMap> mappingSolutions = SparqlViewMatcherUtils.generateTreeVarMapping(
-	    		candOpMapping,
-	    		cacheTree, queryTree,
-	    		cacheMultiaryTree, queryMultiaryTree);
+        Stream<OpVarMap> mappingSolutions = SparqlViewMatcherUtils.generateTreeVarMapping(
+                candOpMapping,
+                cacheTree, queryTree,
+                cacheMultiaryTree, queryMultiaryTree);
 
-	    return mappingSolutions;
+        return mappingSolutions;
     }
 
     public static Stream<OpProblemVarMap> processStack(
-    		NestedStack<LayerMapping<Op, Op, Iterable<Map<Op, Op>>>> stack,
-    		Tree<Op> cacheTree, Tree<Op> queryTree,
-    		Tree<Op> cacheMultiaryTree, Tree<Op> queryMultiaryTree
+            NestedStack<LayerMapping<Op, Op, Iterable<Map<Op, Op>>>> stack,
+            Tree<Op> cacheTree, Tree<Op> queryTree,
+            Tree<Op> cacheMultiaryTree, Tree<Op> queryMultiaryTree
     ) {
-    	PredicateFail<Object> pred = new PredicateFail<>(x -> x != null);
+        PredicateFail<Object> pred = new PredicateFail<>(x -> x != null);
 
         // Create the iterators for the node mappings
         // TODO Exit early if any iterable being collected is null
         List<Iterable<Map<Op, Op>>> tmpChildNodeMappingCandidates = stack.stream()
             .flatMap(layerMapping -> layerMapping.getNodeMappings().stream()
                 .map(nodeMapping -> nodeMapping.getValue()))
-            	//.takeWhile(pred) // TODO Re-enable once java 9 works
-            	.peek(x -> pred.test(x))
-            	.filter(x -> !pred.isFailed())
+                //.takeWhile(pred) // TODO Re-enable once java 9 works
+                .peek(x -> pred.test(x))
+                .filter(x -> !pred.isFailed())
                 .collect(Collectors.toList());
 
         boolean skip = pred.isFailed();
 
         List<Iterable<Map<Op, Op>>> childNodeMappingCandidates = skip
-        		? Collections.emptyList()
-        		: tmpChildNodeMappingCandidates;
+                ? Collections.emptyList()
+                : tmpChildNodeMappingCandidates;
 
         CartesianProduct<Map<Op, Op>> cartX = CartesianProduct.create(childNodeMappingCandidates);
 
         Stream<Map<Op, Op>> completeNodeMapStream = cartX.stream()
             .map(listOfMaps -> {
 
-            	// Reset the predicate
+                // Reset the predicate
                 pred.setFailed(false);
 
                 Map<Op, Op> completeNodeMap = listOfMaps.stream()
@@ -141,7 +141,7 @@ public class SparqlViewMatcherUtils {
                     .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 
                 if(pred.isFailed()) {
-                	completeNodeMap = null;
+                    completeNodeMap = null;
                 }
 
 
@@ -165,9 +165,9 @@ public class SparqlViewMatcherUtils {
             List<ProblemNeighborhoodAware<Map<Var, Var>, Var>> ps = mapToProblems.apply(completeNodeMap);
 
             if(logger.isDebugEnabled()) {
-            	for(ProblemNeighborhoodAware<Map<Var, Var>, Var> p : ps) {
-            		logger.debug("Solving problem: " + p);
-            	}
+                for(ProblemNeighborhoodAware<Map<Var, Var>, Var> p : ps) {
+                    logger.debug("Solving problem: " + p);
+                }
             }
 
             OpProblemVarMap r = new OpProblemVarMap(completeNodeMap, ps);
@@ -179,9 +179,9 @@ public class SparqlViewMatcherUtils {
 
 
     public static Stream<OpVarMap> generateTreeVarMapping(
-    		Multimap<Op, Op> candOpMapping,
-    		Tree<Op> cacheTree, Tree<Op> queryTree,
-    		Tree<Op> cacheMultiaryTree, Tree<Op> queryMultiaryTree)
+            Multimap<Op, Op> candOpMapping,
+            Tree<Op> cacheTree, Tree<Op> queryTree,
+            Tree<Op> cacheMultiaryTree, Tree<Op> queryMultiaryTree)
     {
         // The tree mapper only determines sets of candidate mappings for each tree level
         TreeMapperImpl<Op, Op, Iterable<Map<Op, Op>>> tm = new TreeMapperImpl<Op, Op, Iterable<Map<Op, Op>>>(
@@ -203,9 +203,9 @@ public class SparqlViewMatcherUtils {
 
         // Turn each stack into stream of candidate node mappings together with the problems to solve
         Stream<OpProblemVarMap> nodeMappingToProblems =
-    		mappingStream.flatMap(stack -> {
-    			return processStack(stack, cacheTree, queryTree, cacheMultiaryTree, queryMultiaryTree);
-    		});
+            mappingStream.flatMap(stack -> {
+                return processStack(stack, cacheTree, queryTree, cacheMultiaryTree, queryMultiaryTree);
+            });
 
 
         // Solve the problems for each node mapping
@@ -279,11 +279,11 @@ public class SparqlViewMatcherUtils {
                 if(requireCompleteCover) {
                     //System.out.println("Rejecting incomplete cover");
 
-	                result = (as, bs, mapping) -> (aTree.getParent(cacheOp) != null && as.size() != bs.size()
-	                        ? null//IterableUnknownSizeSimple.createEmpty()
-	                        : tmp.apply(as, bs, mapping));
+                    result = (as, bs, mapping) -> (aTree.getParent(cacheOp) != null && as.size() != bs.size()
+                            ? null//IterableUnknownSizeSimple.createEmpty()
+                            : tmp.apply(as, bs, mapping));
                 } else {
-                	result = tmp;
+                    result = tmp;
                 }
 
             } else {
@@ -332,7 +332,7 @@ public class SparqlViewMatcherUtils {
         } else if (n == 0) {
             // If there are no ancestors in the source tree, the mapping is satisfiable
 
-        	result = Stream.empty();
+            result = Stream.empty();
         } else {
             result = Stream.of((Entry<A, B>)null);//Stream.empty();
         }
@@ -352,6 +352,12 @@ public class SparqlViewMatcherUtils {
             map.put(OpExtend.class, GenericBinaryOpImpl.create(SparqlViewMatcherUtils::deriveProblemsExtend));
 
             map.put(OpExtQuadFilterPatternCanonical.class, GenericBinaryOpImpl.create(SparqlViewMatcherUtils::deriveProblemsQfpc));
+
+
+            map.put(OpLeftJoin.class, (x, y) -> Collections.emptySet());
+
+            map.put(OpFilter.class, GenericBinaryOpImpl.create(SparqlViewMatcherUtils::deriveProblemsFilter));
+
 
             Class<?> ac = a.getClass();
             Class<?> bc = b.getClass();
@@ -394,25 +400,25 @@ public class SparqlViewMatcherUtils {
 
     // TODO We should use something like E_Assign instead of equals, as the latter is symmetric.
     public static Expr varExprListToExpr(Var v, Expr e) {
-    	return new E_Equals(new ExprVar(v), e);
+        return new E_Equals(new ExprVar(v), e);
     }
 
     public static Set<Set<Expr>> toDnf(VarExprList vel) {
-    	Set<Set<Expr>> result = vel.getExprs().entrySet().stream()
-    			.map(e -> Collections.singleton(varExprListToExpr(e.getKey(), e.getValue())))
-    			.collect(Collectors.toSet());
+        Set<Set<Expr>> result = vel.getExprs().entrySet().stream()
+                .map(e -> Collections.singleton(varExprListToExpr(e.getKey(), e.getValue())))
+                .collect(Collectors.toSet());
 
 //    	Expr tmp = ExprUtils.andifyBalanced(exprs);
 //
 //    	Set<Set<Expr>> result = DnfUtils.toSetDnf(tmp);
-    	return result;
+        return result;
     }
 
     public static Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> deriveProblemsExtend(OpExtend cacheOp, OpExtend userOp) {
-    	Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result = new ArrayList<>();
+        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result = new ArrayList<>();
 
-    	FeatureMap<Expr, Multimap<Expr, Expr>> cacheIndex = SparqlCacheUtils.indexDnf(toDnf(cacheOp.getVarExprList()));
-    	FeatureMap<Expr, Multimap<Expr, Expr>> queryIndex = SparqlCacheUtils.indexDnf(toDnf(userOp.getVarExprList()));
+        FeatureMap<Expr, Multimap<Expr, Expr>> cacheIndex = SparqlCacheUtils.indexDnf(toDnf(cacheOp.getVarExprList()));
+        FeatureMap<Expr, Multimap<Expr, Expr>> queryIndex = SparqlCacheUtils.indexDnf(toDnf(userOp.getVarExprList()));
 
         VarMapper.createProblems(cacheIndex, queryIndex).forEach(result::add);
 
@@ -429,6 +435,12 @@ public class SparqlViewMatcherUtils {
         List<Expr> aExprs = cacheVars.stream().map(v -> new ExprVar(v)).collect(Collectors.toList());
         List<Expr> bExprs = userVars.stream().map(v -> new ExprVar(v)).collect(Collectors.toList());
         ProblemNeighborhoodAware<Map<Var, Var>, Var> result = new ProblemVarMappingExpr(aExprs, bExprs, Collections.emptyMap());
+        return result;
+    }
+
+    public static Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> deriveProblemsFilter(OpFilter cacheOp, OpFilter userOp) {
+        ProblemNeighborhoodAware<Map<Var, Var>, Var> tmp = new ProblemVarMappingExpr(cacheOp.getExprs().getList(), userOp.getExprs().getList(), Collections.emptyMap());
+        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result = Collections.singleton(tmp);
         return result;
     }
 
@@ -453,9 +465,9 @@ public class SparqlViewMatcherUtils {
         QuadFilterPatternCanonical queryQfpc = userOp.getQfpc();
 
         if(logger.isDebugEnabled()) {
-        	logger.debug("Deriving problems for:");
-        	logger.debug("  " + cacheQfpc);
-        	logger.debug("  " + queryQfpc);
+            logger.debug("Deriving problems for:");
+            logger.debug("  " + cacheQfpc);
+            logger.debug("  " + queryQfpc);
         }
 
 

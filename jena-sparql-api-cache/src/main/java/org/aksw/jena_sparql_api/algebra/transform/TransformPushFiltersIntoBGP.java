@@ -27,6 +27,7 @@ import org.apache.jena.sparql.algebra.op.OpQuadPattern;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprList;
+import org.apache.jena.sparql.expr.ExprVars;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.graph.NodeTransformLib;
@@ -102,10 +103,10 @@ public class TransformPushFiltersIntoBGP
             // Extract all equalities and keep references to the originating clauses
             Multimap<Entry<Var, Node>, Set<Expr>> equalities = group(cnf, CnfUtils::extractEquality, Objects::isNull);
 
-            // Map all variables to the set of pairs
+            // Map all variables to their equal constraints (var, constant)
             Multimap<Var, Entry<Var, Node>> varToEntry = group(equalities.keySet(), e -> e.getKey(), null);
 
-            // Determine all consistent variables (those mapping to just a single entry)
+            // Determine all consistent variables (those mapping to just a single equals constraint)
             Set<Var> consistentVars = varToEntry.asMap().entrySet().stream()
                     .filter(e -> e.getValue().size() == 1)
                     .map(e -> e.getKey())
@@ -116,9 +117,33 @@ public class TransformPushFiltersIntoBGP
 
             // Determine the clauses of all consistent vars
             Set<Set<Expr>> consistentClauses = consistentVars.stream()
-                    .flatMap(v -> varToEntry.asMap().get(v).stream())
-                    .flatMap(e -> equalities.asMap().get(e).stream())
+                    .flatMap(v -> varToEntry.get(v).stream())
+                    .flatMap(e -> equalities.get(e).stream())
                     .collect(Collectors.toSet());
+
+            // Determine the residual clauses which we need to filter by
+            Set<Set<Expr>> residualClauses = cnf.stream()
+                    .filter(clause -> !consistentClauses.contains(clause))
+                    .collect(Collectors.toSet());
+
+            // All variables mentioned in the residual clauses cannot be removed
+            // TODO We could substitute them with their constant
+
+            Set<Var> blockedVars = residualClauses.stream()
+                .flatMap(clause -> clause.stream().flatMap(expr -> ExprVars.getVarsMentioned(expr).stream()))
+                .collect(Collectors.toSet());
+
+            consistentVars.removeAll(blockedVars);
+
+            Set<Set<Expr>> blockedClauses = blockedVars.stream()
+                    .flatMap(v -> varToEntry.get(v).stream())
+                    .flatMap(e -> equalities.get(e).stream())
+                    .collect(Collectors.toSet());
+
+            residualClauses.addAll(blockedClauses);
+
+            // Re-add all forbidden var clauses to the residual clauses
+
 
             // Map all consistent variables to their respective value
             Map<Var, Node> map = consistentVars.stream()
@@ -126,10 +151,7 @@ public class TransformPushFiltersIntoBGP
                             v -> v,
                             v -> varToEntry.get(v).iterator().next().getValue()));
 
-            // Determine the residual clauses which we need to filter by
-            Set<Set<Expr>> residualClauses = cnf.stream()
-                    .filter(clause -> !consistentClauses.contains(clause))
-                    .collect(Collectors.toSet());
+
 
             Op newSubOp = map.isEmpty() ? subOp : NodeTransformLib.transform(new NodeTransformRenameMap(map), subOp);
 

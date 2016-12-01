@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.algebra.transform;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
@@ -57,11 +58,23 @@ public class TransformReplaceConstants
 
     public static Op transform(Op op)
     {
-        Collection<Var> vars = OpVars.mentionedVars(op);
-        Generator<Var> gen = VarGeneratorBlacklist.create("v", vars);
+        Collection<Var> mentionedVars = OpVars.mentionedVars(op);
+
+        Set<Var> oldVisibleVars = OpVars.visibleVars(op);
+
+        Generator<Var> gen = VarGeneratorBlacklist.create("v", mentionedVars);
 
         Transform transform = new TransformReplaceConstants(gen, false);
         Op result = Transformer.transform(transform, op);
+
+        // Ensure the correct projection
+        Set<Var> newVisibleVars = OpVars.visibleVars(op);
+
+        if(!oldVisibleVars.equals(newVisibleVars)) {
+            result = new OpProject(result, new ArrayList<>(oldVisibleVars));
+        }
+
+
         return result;
     }
 
@@ -117,7 +130,7 @@ public class TransformReplaceConstants
 
         // Note: We need to add a projection here, so we do not suddely yield more variables than
         // in the original pattern - otherwise, we could break e.g. SELECT * { ... } queries.
-        result = new OpProject(result, vars);
+//        result = new OpProject(result, vars);
 
         return result;
     }

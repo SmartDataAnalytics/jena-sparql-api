@@ -13,6 +13,8 @@ import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
 import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.op.OpFilter;
+import org.apache.jena.sparql.algebra.op.OpQuadPattern;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
@@ -64,7 +66,8 @@ public class QuadFilterPatternCanonical {
         ExprList exprs = CnfUtils.toExprList(filterCnf);
         //QuadPattern qp = QuadPatternUtils.create(quads);
 
-        Op result = OpUtils.toOp(quads, exprs);
+        Op result = OpUtils.toOp(quads, OpQuadPattern::new);
+        result = OpFilter.filterBy(exprs,  result);
         return result;
     }
 
