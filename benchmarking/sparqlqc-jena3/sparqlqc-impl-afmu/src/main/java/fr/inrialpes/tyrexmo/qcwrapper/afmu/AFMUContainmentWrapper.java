@@ -43,6 +43,7 @@ import fr.inrialpes.tyrexmo.queryanalysis.TransformAlgebra;
 import fr.inrialpes.tyrexmo.testqc.ContainmentTestException;
 import fr.inrialpes.tyrexmo.testqc.LegacyContainmentSolver;
 import fr.inrialpes.tyrexmo.testqc.simple.SimpleContainmentSolver;
+import net.sf.javabdd.BDDFactory;
 import net.sf.javabdd.BuDDyFactory;
 
 public class AFMUContainmentWrapper
@@ -117,7 +118,7 @@ public class AFMUContainmentWrapper
     };
 
     public void cleanup() {
-        reset();
+        //reset();
     };
 
 
@@ -134,22 +135,29 @@ public class AFMUContainmentWrapper
         try {
             Field field = BDDManager.class.getDeclaredField("factory");
             field.setAccessible(true);
-            field.set(null, null);
-        } catch(Exception e) {
-            throw new RuntimeException(e);
-        }
-        try {
-            Field field = BuDDyFactory.class.getDeclaredField("INSTANCE");
-            field.setAccessible(true);
-            BuDDyFactory f = (BuDDyFactory)field.get(null);
-            if(f != null) {
-                f.done();
-            }
+            BDDFactory f = (BDDFactory)field.get(null);
+            //f.reset();
+            f.clearAllDomains();
+            f.clearVarBlocks();
+            f.clearError();
 
             //field.set(null, null);
         } catch(Exception e) {
             throw new RuntimeException(e);
         }
+
+//        try {
+//            Field field = BuDDyFactory.class.getDeclaredField("INSTANCE");
+//            field.setAccessible(true);
+//            BuDDyFactory f = (BuDDyFactory)field.get(null);
+//            if(f != null) {
+//                f.done();
+//            }
+//
+//            //field.set(null, null);
+//        } catch(Exception e) {
+//            throw new RuntimeException(e);
+//        }
 
     }
 
@@ -191,7 +199,7 @@ public class AFMUContainmentWrapper
     SatCheck satcheck = new SatCheck( f );
     boolean result = !satcheck.satisfiable();
 
-//    reset();
+    reset();
 
     return result;
 
