@@ -432,7 +432,7 @@ public class MainTestContain {
 
 
         // Attach the solver to the resource
-        Iterator<Resource> taskExecs = prepareTaskExecutions(tasks, dataset, 1, 1).iterator();
+        Iterator<Resource> taskExecs = prepareTaskExecutions(tasks, dataset, 0, 1).iterator();
 
 
         Model strategy = ModelFactory.createDefaultModel();
@@ -445,7 +445,13 @@ public class MainTestContain {
                 (task, r, e) -> {
                 }, // task.close(),
                 // r -> System.out.println("yay"));
-                r -> {
+                (task, r) -> {
+                    task.cleanup.run();
+
+                    if(!r.getProperty(RDFS.label).getString().equals("CORRECT")) {
+                        logger.warn("Incorrect test result for task " + r + "(" + task + ")");
+                    }
+
                     Statement stmt = r.getProperty(WARMUP);
                     if (stmt == null || !stmt.getBoolean()) { // Warmup is false if the attribute is not present or false
                         // System.out.println("GOT: ");

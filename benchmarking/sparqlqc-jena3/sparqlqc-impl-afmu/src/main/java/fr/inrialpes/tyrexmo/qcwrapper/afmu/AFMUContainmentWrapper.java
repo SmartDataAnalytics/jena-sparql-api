@@ -116,7 +116,9 @@ public class AFMUContainmentWrapper
     }
     };
 
-    public void cleanup() {};
+    public void cleanup() {
+        reset();
+    };
 
 
     public static void reset() {
@@ -188,7 +190,9 @@ public class AFMUContainmentWrapper
     */
     SatCheck satcheck = new SatCheck( f );
     boolean result = !satcheck.satisfiable();
-    reset();
+
+//    reset();
+
     return result;
 
     }
