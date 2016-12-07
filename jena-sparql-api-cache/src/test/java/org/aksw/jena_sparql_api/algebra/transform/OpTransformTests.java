@@ -1,23 +1,21 @@
 package org.aksw.jena_sparql_api.algebra.transform;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
+import org.aksw.jena_sparql_api.concept_cache.core.SparqlQueryContainmentUtils;
+import org.aksw.jena_sparql_api.sparql.algebra.mapping.VarMapper;
+import org.aksw.jena_sparql_api.view_matcher.SparqlViewMatcherUtils;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpAsQuery;
+import org.apache.jena.sparql.algebra.TransformQuadGraph;
 import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.optimize.Optimize;
 import org.apache.jena.sparql.algebra.optimize.TransformFilterPlacement;
 import org.apache.jena.sparql.algebra.optimize.TransformMergeBGPs;
+import org.apache.jena.sparql.algebra.optimize.TransformPattern2Join;
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.runners.Parameterized.Parameters;
 
 
 public class OpTransformTests {
@@ -66,44 +64,61 @@ public class OpTransformTests {
 
     @Test
     public void testBGPToFiltersRoundTrip() {
-//        Op op = Algebra.toQuadForm(Algebra.compile(
-//                QueryFactory.create("SELECT * { ?s a <http://ex.org/Airport> }")));
-        Op op = Algebra.toQuadForm(Algebra.compile(
-                QueryFactory.create("SELECT ?s { ?s a ?t . Filter(?t = <http://ex.org/Airport>) }")));
+        String expectedStr = "SELECT ?s { ?s a <http://ex.org/Airport> . ?x ?y ?z }";
+        String inputStr = "SELECT ?s { ?s a ?t . Filter(?t = <http://ex.org/Airport>) ?x ?y ?z }";
+
+        Query expected = QueryFactory.create(expectedStr);
+
+        Op op = Algebra.toQuadForm(Algebra.compile(QueryFactory.create(inputStr)));
 
         System.out.println("a:" + op);
         op = TransformReplaceConstants.transform(op);
 
-        Transformer.transform(new TransformFilterPlacement(), op);
-
-        System.out.println("b:" + op);
+        System.out.println("b: " + op);
         op = TransformPushFiltersIntoBGP.transform(op);
-        System.out.println("c:" + op);
 
-        Query r = OpAsQuery.asQuery(op);
-        System.out.println(r);
-        //TransformPushFiltersIntoBGP(
+        System.out.println("c:" + op);
+        op = Transformer.transform(new TransformQuadsToTriples(), op);
+
+        System.out.println("d:" + op);
+        op = Transformer.transform(new TransformMergeBGPs(), op);
+
+        // Bad idea to use filter placement; may isolate quads with their own filters
+        // op = Transformer.transform(new TransformFilterPlacement(), op);
+
+        Query actual = OpAsQuery.asQuery(op);
+        System.out.println("e: " + actual);
+
+        Assert.assertEquals(expected, actual);
     }
 
     @Test
     public void testFiltersToBgp1() {
         String queryStr = String.join("\n",
                 "PREFIX skos: <http://www.w3.org/2004/02/skos/core#>",
-                "SELECT *",
+                "SELECT ?a",
                 "WHERE {",
                 "  ?a a skos:Concept .",
                 "  ?b a skos:Concept .",
-                "  FILTER (?a != ?b)",
+                "  FILTER (!(?a = ?b)) ", // TODO normalization substitutes ?a != ?b with !(?a = ?b)
+                "  FILTER (?b = skos:Foobar) ",
                 "}");
 
-        Op op = Algebra.toQuadForm(Algebra.compile(
-                QueryFactory.create(queryStr)));
+        Query query = QueryFactory.create(queryStr);
+
+        Op op = Algebra.toQuadForm(Algebra.compile(QueryFactory.create(queryStr)));
 
         op = TransformPushFiltersIntoBGP.transform(op);
         System.out.println("op:" + op);
 
-        Query r = OpAsQuery.asQuery(op);
-        System.out.println(r);
+        Query actual = OpAsQuery.asQuery(op);
+        actual.setPrefix("skos", "http://www.w3.org/2004/02/skos/core#");
+        //System.out.println(r);
+
+        // TODO: Filter order is non deterministic; use LinkedHashSets
+        // For new assert using our query equivalence algo
+        boolean isMatch = SparqlQueryContainmentUtils.tryMatch(query, actual, VarMapper::createVarMapCandidates);
+        Assert.assertEquals(true, isMatch);
     }
 
     @Test
@@ -119,15 +134,17 @@ public class OpTransformTests {
                     "  FILTER (!BOUND(?broader))",
                     "}");
 
-        Op op = Algebra.toQuadForm(Algebra.compile(
-                QueryFactory.create(queryStr)));
+        Query query = QueryFactory.create(queryStr);
+        Op op = Algebra.toQuadForm(Algebra.compile(query));
 
         op = TransformPushFiltersIntoBGP.transform(op);
         System.out.println("op:" + op);
 
-        Query r = OpAsQuery.asQuery(op);
-        System.out.println(r);
+        Query actual = OpAsQuery.asQuery(op);
+        actual.setPrefix("skos", "http://www.w3.org/2004/02/skos/core#");
 
+        boolean isMatch = SparqlQueryContainmentUtils.tryMatch(query, actual, VarMapper::createVarMapCandidates);
+        Assert.assertEquals(true, isMatch);
     }
 
 }

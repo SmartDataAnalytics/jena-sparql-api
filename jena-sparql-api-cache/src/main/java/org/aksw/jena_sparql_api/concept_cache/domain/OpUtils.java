@@ -4,12 +4,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.BiFunction;
 
 import org.aksw.jena_sparql_api.utils.CnfUtils;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.op.OpBGP;
 import org.apache.jena.sparql.algebra.op.OpFilter;
+import org.apache.jena.sparql.algebra.op.OpGraph;
 import org.apache.jena.sparql.algebra.op.OpNull;
 import org.apache.jena.sparql.algebra.op.OpProject;
 import org.apache.jena.sparql.algebra.op.OpQuadPattern;
@@ -26,14 +29,16 @@ public class OpUtils {
     public static Op toOp(QuadFilterPattern qfp) {
         List<Quad> quads = qfp.getQuads();
         ExprList exprs = new ExprList(qfp.getExpr());
-        Op result = toOp(quads, exprs);
+        Op result = toOp(quads, OpQuadPattern::new);
+        result = OpFilter.filterBy(exprs,  result);
         return result;
     }
 
 
     public static Op toOp(QuadFilterPatternCanonical qfpc) {
         ExprList exprs = CnfUtils.toExprList(qfpc.getFilterCnf());
-        Op result = toOp(qfpc.getQuads(), exprs);
+        Op result = toOp(qfpc.getQuads(), OpQuadPattern::new);
+        result = OpFilter.filterBy(exprs,  result);
         return result;
     }
 
@@ -51,16 +56,19 @@ public class OpUtils {
         return result;
     }
 
-    public static Op toOp(Iterable<Quad> quads, ExprList exprs) {
-        Map<Node, BasicPattern> index = QuadPatternUtils.indexBasicPattern(quads);
+    public static Op toOpGraphTriples(Node graphNode, BasicPattern bgp) {
+        Op result = new OpBGP(bgp);
+        result = Quad.defaultGraphNodeGenerated.equals(graphNode) ? result : new OpGraph(graphNode, result);
+        return result;
+    }
 
-        List<OpQuadPattern> opqs = new ArrayList<OpQuadPattern>();
+    public static Op toOp(Map<Node, BasicPattern> map, BiFunction<Node, BasicPattern, Op> opFactory) {
+        List<Op> opqs = new ArrayList<Op>();
 
-        for(Entry<Node, BasicPattern> entry : index.entrySet()) {
-            OpQuadPattern oqp = new OpQuadPattern(entry.getKey(), entry.getValue());
+        for(Entry<Node, BasicPattern> entry : map.entrySet()) {
+            Op oqp = opFactory.apply(entry.getKey(), entry.getValue());//new OpQuadPattern(entry.getKey(), entry.getValue());
             opqs.add(oqp);
         }
-
 
         Op result;
 
@@ -71,17 +79,30 @@ public class OpUtils {
         } else {
             OpSequence op = OpSequence.create();
 
-            for(OpQuadPattern item : opqs) {
+            for(Op item : opqs) {
                 op.add(item);
             }
 
             result = op;
         }
 
-        if(!exprs.isEmpty()) {
-            result = OpFilter.filter(exprs, result);
-        }
-
         return result;
+    }
+
+    /**
+     *
+     * Suggested arguments for opFactory:
+     * OpQuadPattern::new
+     * OpUtils::toOpGraphTriples
+     *
+     * @param quads
+     * @param opFactory
+     * @return
+     */
+    public static Op toOp(Iterable<Quad> quads, BiFunction<Node, BasicPattern, Op> opFactory) {
+        Map<Node, BasicPattern> index = QuadPatternUtils.indexBasicPattern(quads);
+        Op result = toOp(index, opFactory);
+        return result;
+
     }
 }
