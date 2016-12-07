@@ -8,13 +8,82 @@ q:q1-a
   lsq:text "SELECT * { ?s ?p ?o }" ;
   .
 
-q:q1-b
-  lsq:text "SELECT ?s { ?s ?p ?o }" ;
+
+
+q:l1a
+  lsq:text
+"""
+Select Distinct ?x1 {
+    ?x1 <http://dbpedia.org/ontology/activeYearsStartYear> ?x2.
+    ?x1 <http://dbpedia.org/ontology/associatedBand> ?x3.
+    ?x1 <http://dbpedia.org/ontology/associatedMusicalArtist> ?x4.
+    ?x1 <http://dbpedia.org/ontology/background> "non_vocal_instrumentalist".
+    ?x1 <http://dbpedia.org/ontology/birthDate> ?x5.
+    ?x1 <http://dbpedia.org/ontology/birthPlace> ?x6.
+    ?x1 <http://dbpedia.org/ontology/birthYear> ?x7.
+    ?x1 <http://dbpedia.org/ontology/genre> ?x8.
+    ?x1 <http://dbpedia.org/ontology/instrument> ?x9.
+    ?x1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Agent>.
+    ?x1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Artist>.
+    ?x1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/MusicalArtist>.
+}
+""" .
+
+
+
+q:l1b
+  lsq:text
+"""
+Select Distinct ?x1 {
+    ?x1 <http://dbpedia.org/ontology/activeYearsStartYear> ?x2.
+    ?x1 <http://dbpedia.org/ontology/associatedBand> ?x3.
+    ?x1 <http://dbpedia.org/ontology/associatedMusicalArtist> ?x4.
+    ?x1 <http://dbpedia.org/ontology/background> "non_vocal_instrumentalist".
+    ?x1 <http://dbpedia.org/ontology/birthDate> ?x5.
+    ?x1 <http://dbpedia.org/ontology/birthPlace> ?x6.
+    ?x1 <http://dbpedia.org/ontology/birthYear> ?x7.
+    ?x1 <http://dbpedia.org/ontology/genre> ?x8.
+    ?x1 <http://dbpedia.org/ontology/instrument> ?x9.
+    ?x1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Agent>.
+    ?x1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Artist>.
+    ?x1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/MusicalArtist>.
+    ?x1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Person>.
+}
+""" .
+
+
+q:l1c
+  lsq:text
+"""
+Select ?x1 {
+    ?x1 <http://dbpedia.org/ontology/activeYearsStartYear> ?x2.
+    ?x1 <http://dbpedia.org/ontology/associatedBand> ?x3.
+    ?x1 <http://dbpedia.org/ontology/associatedMusicalArtist> ?x4.
+    ?x1 <http://dbpedia.org/ontology/background> "non_vocal_instrumentalist".
+    ?x1 <http://dbpedia.org/ontology/birthDate> ?x5.
+    ?x1 <http://dbpedia.org/ontology/birthPlace> ?x6.
+    ?x1 <http://dbpedia.org/ontology/birthYear> ?x7.
+    ?x1 <http://dbpedia.org/ontology/genre> ?x8.
+    ?x1 <http://dbpedia.org/ontology/instrument> ?x9.
+    ?x1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Agent>.
+    ?x1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Artist>.
+    ?x1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/MusicalArtist>.
+    ?x1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Person>.
+    ?x1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Thing> .
+}
+""" .
+
+
+t:l1a
+  a qc:ContainmentTest ;
+  qc:sourceQuery q:l1a ;
+  qc:targetQuery q:l1b ;
+  qc:result "{?v_2=?v_2, ?x7=?x7, ?x8=?x8, ?v_3=?v_3, ?v_4=?v_4, ?x5=?x5, ?v_5=?v_5, ?x6=?x6, ?v_6=?v_6, ?x3=?x3, ?v_7=?v_7, ?x4=?x4, ?x1=?x1, ?v_8=?v_8, ?v_9=?v_9, ?x2=?x2, ?v_1=?v_1, ?v_10=?v_10, ?v_15=?v_15, ?v_12=?v_12, ?v_11=?v_11, ?v_14=?v_14, ?x9=?x9, ?v_13=?v_13}" ;
   .
 
 
 t:t1a
-  a qc:ContainmentTest ;
+#  a qc:ContainmentTest ;
   qc:sourceQuery q:q1-a ;
   qc:targetQuery q:q1-b ;
   qc:result "{?s=?s, ?p=?p, ?o=?o}" ;

@@ -40,8 +40,15 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
+<<<<<<< HEAD
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.sparql.syntax.syntaxtransform.QueryTransformOps;
+=======
 import org.apache.jena.rdf.model.Statement;
+>>>>>>> c45657eac1d4449024d34d538d69ec11859edf0b
 import org.apache.jena.util.ResourceUtils;
+import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.jfree.chart.JFreeChart;
 import org.jfree.data.category.CategoryDataset;
@@ -53,6 +60,7 @@ import org.osgi.framework.launch.Framework;
 import org.osgi.framework.launch.FrameworkFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ClassPathResource;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.HashMultimap;
@@ -320,8 +328,12 @@ public class MainTestContain {
         blackLists.put("TS", (r) -> Arrays.asList("#p23", "#p24", "#p15", "#p25", "#p26").stream().anyMatch(r::contains));         // slow p15, p25, p26
 
         List<Resource> allTasks = new ArrayList<>();
-        allTasks.addAll(SparqlQcReader.loadTasks("sparqlqc/1.4/benchmark/cqnoproj.rdf", "sparqlqc/1.4/benchmark/noprojection/*"));
-        allTasks.addAll(SparqlQcReader.loadTasks("sparqlqc/1.4/benchmark/ucqproj.rdf", "sparqlqc/1.4/benchmark/projection/*"));
+        Model model = ModelFactory.createDefaultModel();
+        RDFDataMgr.read(model, new ClassPathResource("tree-matcher-queries.ttl").getInputStream(), Lang.TURTLE);
+        allTasks.addAll(model.listSubjectsWithProperty(RDF.type, SparqlQcVocab.ContainmentTest).toSet());
+
+        //allTasks.addAll(SparqlQcReader.loadTasks("sparqlqc/1.4/benchmark/cqnoproj.rdf", "sparqlqc/1.4/benchmark/noprojection/*"));
+        //allTasks.addAll(SparqlQcReader.loadTasks("sparqlqc/1.4/benchmark/ucqproj.rdf", "sparqlqc/1.4/benchmark/projection/*"));
 
 
 //        params.addAll(createTestParams("sparqlqc/1.4/benchmark/cqnoproj.rdf", "sparqlqc/1.4/benchmark/noprojection/*"));
