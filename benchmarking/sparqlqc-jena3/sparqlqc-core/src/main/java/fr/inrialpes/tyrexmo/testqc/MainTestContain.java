@@ -1,6 +1,7 @@
 package fr.inrialpes.tyrexmo.testqc;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
@@ -11,6 +12,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.ServiceLoader;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -30,7 +32,6 @@ import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.delay.extra.DelayerDefault;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcReader;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcVocab;
-import org.aksw.jena_sparql_api.utils.QueryUtils;
 //import org.aksw.qcwrapper.jsa.ContainmentSolverWrapperJsa;
 import org.aksw.simba.lsq.vocab.LSQ;
 import org.apache.jena.query.Query;
@@ -39,7 +40,7 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.jena.sparql.syntax.syntaxtransform.QueryTransformOps;
+import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.util.ResourceUtils;
 import org.apache.jena.vocabulary.RDFS;
 import org.jfree.chart.JFreeChart;
@@ -54,12 +55,67 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Predicate;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.MoreExecutors;
 
 class TestCase {
-    public Query source;
-    public Query target;
-    public boolean expectedResult;
+    protected Query source;
+    protected Query target;
+    protected boolean expectedResult;
+
+    public TestCase(Query source, Query target, boolean expectedResult) {
+        super();
+        this.source = source;
+        this.target = target;
+        this.expectedResult = expectedResult;
+    }
+
+    public Query getSource() {
+        return source;
+    }
+
+    public Query getTarget() {
+        return target;
+    }
+
+    public boolean getExpectedResult() {
+        return expectedResult;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + (expectedResult ? 1231 : 1237);
+        result = prime * result + ((source == null) ? 0 : source.hashCode());
+        result = prime * result + ((target == null) ? 0 : target.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        TestCase other = (TestCase) obj;
+        if (expectedResult != other.expectedResult)
+            return false;
+        if (source == null) {
+            if (other.source != null)
+                return false;
+        } else if (!source.equals(other.source))
+            return false;
+        if (target == null) {
+            if (other.target != null)
+                return false;
+        } else if (!target.equals(other.target))
+            return false;
+        return true;
+    }
 }
 
 public class MainTestContain {
@@ -85,47 +141,36 @@ public class MainTestContain {
                     // long queryId =
                     // x.getRequiredProperty(IguanaVocab.queryId).getObject().asLiteral().getLong();
                     String workloadLabel = workload.getRequiredProperty(RDFS.label).getObject().asLiteral().getString();
-                    Resource r = m.createResource(
-                            "http://example.org/query-" + runName + "-" + workloadLabel + "-run-" + exec.getKey());
+                    Resource r = m.createResource("http://example.org/query-" + runName + "-" + workloadLabel + "-run" + runId);
+
                     if (runId < warmUp) {
                         r.addLiteral(WARMUP, true);
                     }
 
-                    r.addProperty(IguanaVocab.workload, workload).addLiteral(IguanaVocab.run, exec.getKey());
+                    r
+                        .addProperty(IguanaVocab.workload, workload)
+                        .addLiteral(IguanaVocab.run, exec.getKey());
+
+//                    StringWriter tmp = new StringWriter();
+//                    ResourceUtils.reachableClosure(r).write(tmp, "TTL");
+//                    System.out.println("Created run resource: " + r + " with data " + tmp);
                     return r;
                 });
         return result;
     }
 
-    public static Task prepareLegacy(Resource r, LegacyContainmentSolver solver) {
-        Resource t = r.getRequiredProperty(IguanaVocab.workload).getObject().asResource();
+    public static Task prepareLegacy(Resource r, TestCase testCase, LegacyContainmentSolver solver) {
 
-        String srcQueryStr = t.getRequiredProperty(SparqlQcVocab.sourceQuery).getObject().asResource()
-                .getRequiredProperty(LSQ.text).getObject().asLiteral().getString();
-        String tgtQueryStr = t.getRequiredProperty(SparqlQcVocab.targetQuery).getObject().asResource()
-                .getRequiredProperty(LSQ.text).getObject().asLiteral().getString();
-        boolean expected = Boolean
-                .parseBoolean(t.getRequiredProperty(SparqlQcVocab.result).getObject().asLiteral().getString());
+//        Query _viewQuery = SparqlQueryContainmentUtils.queryParser.apply("" + testCase.getSource());
+//        Query _userQuery = SparqlQueryContainmentUtils.queryParser.apply("" + testCase.getTarget());
 
-        Query _viewQuery = SparqlQueryContainmentUtils.queryParser.apply(srcQueryStr);
-        // _viewQuery = QueryTransformOps.transform(_viewQuery,
-        // QueryUtils.createRandomVarMap(_viewQuery, "x"));
-
-        Query _userQuery = SparqlQueryContainmentUtils.queryParser.apply(tgtQueryStr);
-        // _userQuery = QueryTransformOps.transform(_userQuery,
-        // QueryUtils.createRandomVarMap(_userQuery, "y"));
-
-        // com.hp.hpl.jena.query.Query viewQuery =
-        // QueryFactory.create(srcQueryStr.toString());
-        // com.hp.hpl.jena.query.Query userQuery =
-        // QueryFactory.create(tgtQueryStr.toString());
-        com.hp.hpl.jena.query.Query viewQuery = com.hp.hpl.jena.query.QueryFactory.create(_viewQuery.toString());
-        com.hp.hpl.jena.query.Query userQuery = com.hp.hpl.jena.query.QueryFactory.create(_userQuery.toString());
+        com.hp.hpl.jena.query.Query viewQuery = com.hp.hpl.jena.query.QueryFactory.create(testCase.getSource().toString());
+        com.hp.hpl.jena.query.Query userQuery = com.hp.hpl.jena.query.QueryFactory.create(testCase.getTarget().toString());
 
         return new Task(() -> {
             try {
                 boolean actual = solver.entailed(viewQuery, userQuery);
-                String str = actual == expected ? "CORRECT" : "WRONG";
+                String str = actual == testCase.getExpectedResult() ? "CORRECT" : "WRONG";
                 r.addLiteral(RDFS.label, str);
             } catch (ContainmentTestException e) {
                 throw new RuntimeException(e);
@@ -139,16 +184,7 @@ public class MainTestContain {
         });
     }
 
-    public static Task prepare(Resource r, Object o) {
-        Task result = o instanceof ContainmentSolver ? prepare(r, (ContainmentSolver) o)
-                : o instanceof LegacyContainmentSolver ? prepareLegacy(r, (LegacyContainmentSolver) o) : null;
-
-        return result;
-    }
-
-    public static Task prepare(Resource r, ContainmentSolver solver) {
-        Resource t = r.getRequiredProperty(IguanaVocab.workload).getObject().asResource();
-
+    public static TestCase prepareTestCase(Resource t) {
         String srcQueryStr = t.getRequiredProperty(SparqlQcVocab.sourceQuery).getObject().asResource()
                 .getRequiredProperty(LSQ.text).getObject().asLiteral().getString();
         String tgtQueryStr = t.getRequiredProperty(SparqlQcVocab.targetQuery).getObject().asResource()
@@ -156,15 +192,37 @@ public class MainTestContain {
         boolean expected = Boolean
                 .parseBoolean(t.getRequiredProperty(SparqlQcVocab.result).getObject().asLiteral().getString());
 
-        Query _viewQuery = SparqlQueryContainmentUtils.queryParser.apply(srcQueryStr);
-        Query viewQuery = QueryTransformOps.transform(_viewQuery, QueryUtils.createRandomVarMap(_viewQuery, "x"));
+        Query viewQuery = SparqlQueryContainmentUtils.queryParser.apply(srcQueryStr);
+        Query userQuery = SparqlQueryContainmentUtils.queryParser.apply(tgtQueryStr);
 
-        Query _userQuery = SparqlQueryContainmentUtils.queryParser.apply(tgtQueryStr);
-        Query userQuery = QueryTransformOps.transform(_userQuery, QueryUtils.createRandomVarMap(_userQuery, "y"));
+        TestCase result = new TestCase(viewQuery, userQuery, expected);
+        return result;
+    }
+
+    public static Task prepare(Resource r, Object o) {
+        Resource w = r.getRequiredProperty(IguanaVocab.workload).getObject().asResource();
+        TestCase testCase = prepareTestCase(w);
+
+        Task result;
+        if(o instanceof ContainmentSolver) {
+            result = prepare(r, testCase, (ContainmentSolver)o);
+        } else if(o instanceof LegacyContainmentSolver) {
+            result = prepareLegacy(r, testCase, (LegacyContainmentSolver) o);
+        } else {
+            throw new RuntimeException("Unknown task type: " + o);
+        }
+
+        return result;
+    }
+
+    public static Task prepare(Resource r, TestCase testCase, ContainmentSolver solver) {
+
+//        Query _viewQuery = QueryTransformOps.transform(viewQuery, QueryUtils.createRandomVarMap(_viewQuery, "x"));
+//        Query _userQuery = QueryTransformOps.transform(userQuery, QueryUtils.createRandomVarMap(_userQuery, "y"));
 
         return new Task(() -> { // try {
-            boolean actual = solver.entailed(viewQuery, userQuery);
-            String str = actual == expected ? "CORRECT" : "WRONG";
+            boolean actual = solver.entailed(testCase.getSource(), testCase.getTarget());
+            String str = actual == testCase.getExpectedResult() ? "CORRECT" : "WRONG";
             r.addLiteral(RDFS.label, str);
             // } catch (ContainmentTestException e) {
             // throw new RuntimeException(e);
@@ -295,6 +353,9 @@ public class MainTestContain {
                 try {
                     bundle.start();
 
+                    // Get the distinct set of service instances
+                    Multimap<String, Object> nameToService = HashMultimap.create();
+
                     for(ServiceReference<?> sr : bundle.getRegisteredServices()) {
 
                         String shortLabel = (String)sr.getProperty("SHORT_LABEL");
@@ -302,17 +363,34 @@ public class MainTestContain {
                             shortLabel = "ANON" + ++anonId;
                         }
 
+                        Object service = context.getService(sr);
+
+                        if(service instanceof ContainmentSolver || service instanceof LegacyContainmentSolver) {
+                            nameToService.put(shortLabel, service);
+                        }
+                    }
+
+                    logger.info("Found " + nameToService.size() + " appropriate service(s): ");
+                    nameToService.entries().forEach(e ->
+                        logger.info("  Service: label=" + e.getKey() + ", class=" + e.getValue().getClass().getName() + ", instance=" + e.getValue())
+                    );
+
+
+                    for(Entry<String, Object> e : nameToService.entries()) {
+                        String shortLabel = e.getKey();
+                        Object service = e.getValue();
+
+                        logger.info("Benchmarking service: label=" + shortLabel + ", class=" + service.getClass().getName() + ", instance=" + service);
+
                         Predicate<String> p = blackLists.get(shortLabel);
 
                         List<Resource> tasks = allTasks.stream()
                                 .filter(r -> p == null ? true : !p.apply(r.getURI()))
                                 .collect(Collectors.toList());
 
-                        Object service = context.getService(sr);
 
-                        if(service instanceof ContainmentSolver || service instanceof LegacyContainmentSolver) {
-                            run(overall, tasks, shortLabel, service);
-                        }
+                        Model serviceResults = run(tasks, shortLabel, service);
+                        overall.add(serviceResults);
                     }
 
                 } finally {
@@ -333,6 +411,9 @@ public class MainTestContain {
         }
 
 
+        File rdfOut = File.createTempFile("sparqlqc-", ".ttl");
+        overall.write(new FileOutputStream(rdfOut), "TTL");
+
         CategoryDataset categoryDataset = IguanaDatasetProcessors.createDataset(overall);
 
         JFreeChart chart = IguanaDatasetProcessors.createStatisticalBarChart(categoryDataset);
@@ -347,11 +428,11 @@ public class MainTestContain {
         // .collect(Collectors.toList());
     }
 
-    public static void run(Model overall, Collection<Resource> tasks, String dataset, Object solver) throws Exception {
+    public static Model run(Collection<Resource> tasks, String dataset, Object solver) throws Exception {
 
 
         // Attach the solver to the resource
-        Iterator<Resource> taskExecs = prepareTaskExecutions(tasks, dataset, 10, 10).iterator();
+        Iterator<Resource> taskExecs = prepareTaskExecutions(tasks, dataset, 1, 1).iterator();
 
 
         Model strategy = ModelFactory.createDefaultModel();
@@ -365,7 +446,8 @@ public class MainTestContain {
                 }, // task.close(),
                 // r -> System.out.println("yay"));
                 r -> {
-                    if (r.getProperty(WARMUP) == null) {
+                    Statement stmt = r.getProperty(WARMUP);
+                    if (stmt == null || !stmt.getBoolean()) { // Warmup is false if the attribute is not present or false
                         // System.out.println("GOT: ");
                         // ResourceUtils.reachableClosure(r).write(System.out,
                         // "TURTLE");
@@ -407,7 +489,9 @@ public class MainTestContain {
                 .execConstruct(strategy);
 
         IguanaDatasetProcessors.enrichWithAvgAndStdDeviation(strategy);
-        overall.add(strategy);
+        //overall.add(strategy);
+
+        return strategy;
     }
 }
 

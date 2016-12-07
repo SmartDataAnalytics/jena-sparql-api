@@ -161,7 +161,6 @@ public class AFMUContainmentWrapper
         parser = new AFEParser( new StringReader( phi ) );
         firstTime = false;
     } else {
-        reset();
         AFEParser.ReInit( new StringReader( phi ) );
     }
 
