@@ -185,7 +185,7 @@ public class SparqlViewMatcherPatternTests {
 //        boolean actualVerdict = SparqlQueryContainmentUtils.tryMatch(viewQuery, userQuery, QueryToGraph::match);
         boolean actualVerdict = SparqlQueryContainmentUtils.tryMatch(viewQuery, userQuery, VarMapper::createVarMapCandidates);
 
-        logger.debug("Expected: " + expectedVerdict + " - Actual: " + actualVerdict);
+        logger.debug("Expected: " + expectedVerdict + " - Actual: " + actualVerdict + " Mismatch: " + (expectedVerdict != actualVerdict));
 
                 //SparqlQueryContainmentUtils.tryMatch(userEl, viewEl);
         //System.out.println(srcQueryId + " - " + tgtQueryId + " - " + actualVerdict + " expected: "+ expectedVerdict);

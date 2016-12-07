@@ -30,7 +30,6 @@ import org.aksw.iguana.reborn.charts.datasets.IguanaVocab;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlQueryContainmentUtils;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.delay.extra.DelayerDefault;
-import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcReader;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcVocab;
 //import org.aksw.qcwrapper.jsa.ContainmentSolverWrapperJsa;
 import org.aksw.simba.lsq.vocab.LSQ;
@@ -40,13 +39,9 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
-<<<<<<< HEAD
+import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.sparql.syntax.syntaxtransform.QueryTransformOps;
-=======
-import org.apache.jena.rdf.model.Statement;
->>>>>>> c45657eac1d4449024d34d538d69ec11859edf0b
 import org.apache.jena.util.ResourceUtils;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
