@@ -1,11 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-
+<!--
+ * Copyright (C) INRIA, 2013
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
+-->
 <!DOCTYPE rdf:RDF [
   <!ENTITY rdf		"http://www.w3.org/1999/02/22-rdf-syntax-ns#" >
   <!ENTITY rdfs		"http://www.w3.org/2000/01/rdf-schema#" >
   <!ENTITY xsd		"http://www.w3.org/2001/XMLSchema#" >
   <!ENTITY dc		"http://purl.org/dc/elements/1.1/" >
-  <!ENTITY dcterms      "http://purl.org/dc/terms/" >
+  <!ENTITY dcterms      "http://purl.org/dc/terms/" > 
   <!ENTITY owl		"http://www.w3.org/2002/07/owl#" > ]>
 
 <rdf:RDF
@@ -145,11 +161,7 @@
       <ContainmentTest rdf:about="#p24">
         <sourceQuery>Q20b</sourceQuery>
 	<targetQuery>Q20a</targetQuery>
-	<result>false</result>
-<!-- We deliberately skip this query, as in general this kind of containment might be unsuitable for caching -->
-<!-- If the view's top-most operator is a union, it is contained in a user query if one of the view's members matches, BUT -->
-<!-- in general it may be impossible to determine whether a result binding originates from the matched view -->
-<!--	<result>true</result> -->
+	<result>true</result>
       </ContainmentTest>
       <ContainmentTest rdf:about="#p25">
         <sourceQuery>Q21a</sourceQuery>
@@ -159,7 +171,7 @@
       <ContainmentTest rdf:about="#p26">
         <sourceQuery>Q21b</sourceQuery>
 	<targetQuery>Q21a</targetQuery>
-	<result>false</result>
+	<result>true</result>
       </ContainmentTest>
       <ContainmentTest rdf:about="#p27">
         <sourceQuery>Q22a</sourceQuery>
