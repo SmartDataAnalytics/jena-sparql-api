@@ -1,8 +1,8 @@
 package org.aksw.jena_sparql_api.core;
 
-import com.hp.hpl.jena.sparql.util.Context;
-import com.hp.hpl.jena.update.GraphStore;
-import com.hp.hpl.jena.update.UpdateProcessor;
+import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.util.Context;
+import org.apache.jena.update.UpdateProcessor;
 
 public abstract class UpdateProcessorDelegateSimple
     implements UpdateProcessor
@@ -20,8 +20,8 @@ public abstract class UpdateProcessorDelegateSimple
     }
 
     @Override
-    public GraphStore getGraphStore() {
-        GraphStore result = delegate.getGraphStore();
+    public DatasetGraph getGraphStore() {
+        DatasetGraph result = delegate.getGraphStore();
         return result;
     }
 

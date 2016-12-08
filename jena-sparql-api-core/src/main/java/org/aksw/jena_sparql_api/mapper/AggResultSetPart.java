@@ -6,7 +6,7 @@ import java.util.Set;
 import org.aksw.jena_sparql_api.utils.ResultSetPart;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 
-import com.hp.hpl.jena.sparql.core.Var;
+import org.apache.jena.sparql.core.Var;
 
 public class AggResultSetPart
     implements Agg<ResultSetPart>

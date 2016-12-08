@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.shape;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
-import com.hp.hpl.jena.sparql.core.Prologue;
+import org.apache.jena.sparql.core.Prologue;
 
 public class ResourceShapeParserImpl
     implements ResourceShapeParser

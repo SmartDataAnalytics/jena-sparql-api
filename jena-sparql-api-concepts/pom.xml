@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>jena-sparql-api-concepts</artifactId>
@@ -12,24 +11,41 @@
     <parent>
         <groupId>org.aksw.jena-sparql-api</groupId>
         <artifactId>jena-sparql-api-parent</artifactId>
-        <version>2.13.0-6-SNAPSHOT</version>
+        <version>3.1.1-1</version>
     </parent>
 
     <dependencies>
         <!-- Self Dependencies -->
         <dependency>
             <groupId>org.aksw.jena-sparql-api</groupId>
-            <artifactId>jena-sparql-api-core</artifactId>
+            <artifactId>jena-sparql-api-jgrapht</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>org.jgrapht</groupId>
-            <artifactId>jgrapht-core</artifactId>
+            <groupId>org.aksw.jena-sparql-api</groupId>
+            <artifactId>jena-sparql-api-core</artifactId>
         </dependency>
 
         <dependency>
             <groupId>org.aksw.gson</groupId>
             <artifactId>gson-utils-core</artifactId>
         </dependency>
+
+<!--         <dependency> -->
+<!--             <groupId>org.aksw.jena-sparql-api</groupId> -->
+<!--             <artifactId>jena-sparql-api-web</artifactId> -->
+<!--             <scope>test</scope> -->
+<!--         </dependency> -->
+        <dependency>
+            <groupId>org.aksw.jena-sparql-api</groupId>
+            <artifactId>jena-sparql-api-resources-test-config</artifactId>
+        </dependency>
+
+<!--
+        <dependency>
+            <groupId>net.sourceforge.owlapi</groupId>
+            <artifactId>owlapi-distribution</artifactId>
+        </dependency>
+-->
     </dependencies>
 </project>

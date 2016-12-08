@@ -9,7 +9,7 @@ package org.aksw.jena_sparql_api.pagination.extra;
 
 import org.aksw.commons.collections.SinglePrefetchIterator;
 
-import com.hp.hpl.jena.query.Query;
+import org.apache.jena.query.Query;
 
 /**
  *

@@ -1,0 +1,16 @@
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX o: <http://example.org/ontology/>
+SELECT ?s ?g {
+  ?data
+    a o:Dataset ;
+    rdfs:label ?l .
+
+  ?dist
+    a o:SparqlEndpointDistribution ;
+    o:of ?data ;
+    o:service ?s ;
+    o:graph [
+      rdf:_1 ?g
+    ] .
+}

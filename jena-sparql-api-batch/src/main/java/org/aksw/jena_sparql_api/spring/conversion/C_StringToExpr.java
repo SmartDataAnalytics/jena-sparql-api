@@ -4,7 +4,7 @@ import org.aksw.jena_sparql_api.stmt.SparqlExprParser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.convert.converter.Converter;
 
-import com.hp.hpl.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.Expr;
 
 @AutoRegistered
 public class C_StringToExpr

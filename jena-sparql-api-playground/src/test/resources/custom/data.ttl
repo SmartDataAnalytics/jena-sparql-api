@@ -1,0 +1,25 @@
+@prefix o: <http://ex.org/o/> .
+@prefix r: <http://ex.org/r/> .
+
+# length 1
+r:s o:v r:t .
+
+# length 2
+r:s o:w1 r:w1 .
+r:w1 o:w2 r:t .
+
+# length 3a
+r:s o:x1 r:x1 .
+r:x1 o:x2 r:x2 .
+r:x2 o:x3a r:t .
+
+# length 3b
+r:s o:x1 r:x1 .
+r:x1 o:x2 r:x2 .
+r:x2 o:x3b r:t .
+
+# length 4
+r:s o:y1 r:y1 .
+r:y1 o:y2 r:y2 .
+r:y2 o:y3 r:y3 .
+r:y3 o:y4 r:t .

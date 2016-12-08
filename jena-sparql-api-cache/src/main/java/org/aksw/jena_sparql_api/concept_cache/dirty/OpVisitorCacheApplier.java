@@ -4,13 +4,13 @@ package org.aksw.jena_sparql_api.concept_cache.dirty;
 //import java.util.ArrayList;
 //import java.util.List;
 //
-//import com.hp.hpl.jena.sparql.algebra.Op;
-//import com.hp.hpl.jena.sparql.algebra.OpVisitorBase;
-//import com.hp.hpl.jena.sparql.algebra.op.OpDisjunction;
-//import com.hp.hpl.jena.sparql.algebra.op.OpDistinct;
-//import com.hp.hpl.jena.sparql.algebra.op.OpJoin;
-//import com.hp.hpl.jena.sparql.algebra.op.OpProject;
-//import com.hp.hpl.jena.sparql.algebra.op.OpQuadPattern;
+//import org.apache.jena.sparql.algebra.Op;
+//import org.apache.jena.sparql.algebra.OpVisitorBase;
+//import org.apache.jena.sparql.algebra.op.OpDisjunction;
+//import org.apache.jena.sparql.algebra.op.OpDistinct;
+//import org.apache.jena.sparql.algebra.op.OpJoin;
+//import org.apache.jena.sparql.algebra.op.OpProject;
+//import org.apache.jena.sparql.algebra.op.OpQuadPattern;
 //
 //// Extras: min-height tagger: tag each node of a query with its minimum height, so
 //// that cache parts smaller than that are not considered.

@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.utils;
 
 import java.util.Comparator;
 
-import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Resource;
 
 /**
  * Created by Claus Stadler

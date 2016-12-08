@@ -18,11 +18,11 @@ import org.apache.http.protocol.HttpContext;
 import org.apache.jena.atlas.lib.Sink;
 
 import com.google.common.base.Stopwatch;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.vocabulary.DCTerms;
-import com.hp.hpl.jena.vocabulary.RDF;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.vocabulary.DCTerms;
+import org.apache.jena.vocabulary.RDF;
 
 /**
  * Interceptor for HTTP requests and responses that generates RDF and puts it into
@@ -75,7 +75,7 @@ public class HttpInterceptorRdfLogging
         //String queryStr = request.getFirstHeader("query").getValue();
 
         Stopwatch sw = Stopwatch.createStarted();
-        System.out.println("Request started");
+        //System.out.println("Request started");
 
         HttpRequest orig = unwrap(request);
 
@@ -83,7 +83,7 @@ public class HttpInterceptorRdfLogging
         if(orig instanceof HttpRequestBase) {
             HttpRequestBase x = (HttpRequestBase)orig;
 
-            System.out.println("XXXX" + x.getURI());
+            //System.out.println("XXXX" + x.getURI());
         }
 
         context.setAttribute("stopwatch", sw);
@@ -97,6 +97,9 @@ public class HttpInterceptorRdfLogging
         HttpRequestBase orig = (HttpRequestBase)context.getAttribute("request");
         URI uri = orig.getURI();
         String uriStr = uri.toString();
+
+        //System.out.println("ARGHREQ " + uriStr);
+
         if(!uriStr.contains("log")) {
 
             Stopwatch sw = (Stopwatch)context.getAttribute("stopwatch");
@@ -108,7 +111,7 @@ public class HttpInterceptorRdfLogging
 
             //response.getR
             long requestDuration = sw.elapsed(TimeUnit.MILLISECONDS);
-            System.out.println("TIME TAKEN: " + requestDuration);
+            //System.out.println("TIME TAKEN: " + requestDuration);
             //HttpRequest r
 
             Model m = ModelFactory.createDefaultModel();
@@ -136,6 +139,6 @@ public class HttpInterceptorRdfLogging
 
             modelSink.send(m);
         }
-        System.out.println("Request: " + context.getAttribute("request"));
+        //System.out.println("Request: " + context.getAttribute("request"));
     }
 }

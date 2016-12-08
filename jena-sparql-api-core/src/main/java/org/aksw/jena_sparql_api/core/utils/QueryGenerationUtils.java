@@ -5,20 +5,86 @@ import java.util.Collection;
 import java.util.List;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.mapper.Agg;
+import org.aksw.jena_sparql_api.mapper.AggGraph;
+import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.aksw.jena_sparql_api.utils.GeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.VarUtils;
-
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.sdb.core.Generator;
-import com.hp.hpl.jena.sparql.core.BasicPattern;
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.syntax.Element;
-import com.hp.hpl.jena.sparql.syntax.ElementSubQuery;
-import com.hp.hpl.jena.sparql.syntax.ElementTriplesBlock;
-import com.hp.hpl.jena.sparql.syntax.PatternVars;
+import org.aksw.jena_sparql_api.utils.Vars;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.query.Query;
+import org.apache.jena.sdb.core.Generator;
+import org.apache.jena.sparql.core.BasicPattern;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementGroup;
+import org.apache.jena.sparql.syntax.ElementNamedGraph;
+import org.apache.jena.sparql.syntax.ElementSubQuery;
+import org.apache.jena.sparql.syntax.ElementTriplesBlock;
+import org.apache.jena.sparql.syntax.PatternVars;
+import org.apache.jena.sparql.syntax.Template;
 
 public class QueryGenerationUtils {
+
+    public static Query createQueryQuad(Quad quad) {
+        Query query = new Query();
+        query.setQuerySelectType();
+
+        Node g = quad.getGraph();
+        Node s = quad.getSubject();
+        Node p = quad.getPredicate();
+        Node o = quad.getObject();
+
+        s = g == null || g.equals(Node.ANY) ? Vars.g : g;
+        s = s == null || s.equals(Node.ANY) ? Vars.s : s;
+        p = p == null || p.equals(Node.ANY) ? Vars.p : p;
+        o = o == null || o.equals(Node.ANY) ? Vars.o : o;
+
+        Triple triple = new Triple(s, p, o);
+
+        BasicPattern bgp = new BasicPattern();
+        bgp.add(triple);
+
+        Element element = new ElementTriplesBlock(bgp);
+
+        element = new ElementNamedGraph(g, element);
+
+        query.setQueryPattern(element);
+        return query;
+    }
+
+    public static Query createQueryTriple(Triple m) {
+        Query query = new Query();
+        query.setQueryConstructType();
+
+        /*
+        Node s = m.getMatchSubject();
+        Node p = m.getMatchPredicate();
+        Node o = m.getMatchObject();
+        */
+        Node s = m.getSubject();
+        Node p = m.getPredicate();
+        Node o = m.getObject();
+
+        s = s == null || s.equals(Node.ANY) ? Vars.s : s;
+        p = p == null || p.equals(Node.ANY) ? Vars.p : p;
+        o = o == null || o.equals(Node.ANY) ? Vars.o : o;
+
+        Triple triple = new Triple(s, p, o);
+
+        BasicPattern bgp = new BasicPattern();
+        bgp.add(triple);
+
+        Template template = new Template(bgp);
+        Element element = new ElementTriplesBlock(bgp);
+
+        query.setConstructTemplate(template);
+        query.setQueryPattern(element);
+        return query;
+    }
 
     // Util for cerateQueryCount
     public static Query wrapAsSubQuery(Query query, Var v) {
@@ -38,7 +104,7 @@ public class QueryGenerationUtils {
      *
      * @return
      */
-    public static Concept createPropertyQuery(Concept concept) {
+    public static Concept createPredicateQuery(Concept concept) {
         Collection<Var> vars = PatternVars.vars(concept.getElement());
         List<String> varNames = VarUtils.getVarNames(vars);
 

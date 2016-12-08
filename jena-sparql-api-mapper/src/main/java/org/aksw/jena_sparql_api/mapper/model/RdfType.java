@@ -1,16 +1,19 @@
 package org.aksw.jena_sparql_api.mapper.model;
 
-import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
-import org.aksw.jena_sparql_api.mapper.context.RdfPopulationContext;
-import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
+import java.util.function.Consumer;
 
-import com.hp.hpl.jena.graph.Graph;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.sparql.core.DatasetGraph;
+import org.aksw.jena_sparql_api.beans.model.EntityOps;
+import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
+import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
+import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
 
 /**
- * Base class for RDF based types.
- * A type is used to
+ * Base class for operations for mapping java objects of *a specific* class to and from sets of triples.
+ * 
+ * 
  * <ul>
  *   <li>fetch data from a remote store</li>
  *   <li>instanciate a corresponding java class (can be a proxy implementing appropriate interfaces)</li>
@@ -38,22 +41,25 @@ public interface RdfType
      * @param qef
      * @return
      */
+	
+	//EntityOps getEntityOps();
 
 
     /**
      * Get the type factory that was used to create this RdfType
      *
      */
-    RdfTypeFactory getTypeFactory();
+    //RdfTypeFactory getTypeFactory();
 
 
     /**
      * Return the Java class corresponding to this type
-     * (maybe it should be Type instead of Type)
+     * (maybe it should be Type instead of Class)
      * @return
      */
-    Class<?> getBeanClass();
+    Class<?> getEntityClass();
 
+    
     /**
      * Return the root node that corresponds to the given object in regard to this RdfType.
      * In the case of classes, this is an IRI node, whereas for literals this is
@@ -63,12 +69,36 @@ public interface RdfType
      *
      * getRootNode(createJavaObject(node)).equals(node)
      *
+     * For types mapping to plain literals, this method should (must?) never return null.
+     * Note that certain Java types may not have capabilities assigned for returning a node for a given object.
+     * In this case, the result will be null.
+     * 
+     *
      * @param obj
      * @return
      */
-    Node getRootNode(Object obj);
+    Node getRootNode(Object obj); // TODO May need to add entity manager context argument
 
     /**
+     * Flag to indicate whether entities created from this mapping have their own identity.
+     * If not, ids are usually derived from the parent object
+     *  
+     * @return
+     */
+    boolean hasIdentity();
+    
+    /**
+     * Extract a Java (literal) object from a given node.
+     * 
+     * Note: Creating a *non-primitive* java object is not a concern of RdfType which only *MAPS*
+     * between a java object and its corresponding triples.
+     * The reason is, that via the RdfType's entity class the association to a newInstance method can be
+     * indirectly made on the outside, without RdfType having to be aware of it. 
+     * Also, an RdfType reading a collection may be capable of reading and writing to any collection type, regardless
+     * of the concrete sub-type (list, set, etc). 
+     *
+     * 
+     * 
      * Create an empty java object (i.e. no properties set) based on the given
      * node.
      * In the case of primitive types (e.g. String, Long, etc), the object will already carry the correct value.
@@ -81,8 +111,8 @@ public interface RdfType
      * @param node
      * @return
      */
-    Object createJavaObject(Node node);
-
+    //Object createJavaObject(Node node); // TODO May need to add entity manager context argument
+    Object createJavaObject(Node node, Graph graph);
 
     // boolean isHydrated(Object bean)
 
@@ -97,12 +127,18 @@ public interface RdfType
 
     void exposeShape(ResourceShapeBuilder rsb); // Alternative: ResourceShapeBuilder build();
 
-    void populateBean(RdfPopulationContext populationContext, Object bean, Graph graph); //, Node g, Node s);
+
+    // TODO It seems it should be this way: persistenceContext.populateEntity(entity, graph, rdfType),
+    void populateEntity(RdfPersistenceContext persistenceContext, Object entity, Node subject, Graph inGraph, Consumer<Triple> sink); //, Node g, Node s);
 
     // These two methods only make sense on classes; but not on primitive types ; maybe move down in the type hierarchy.
-//    void populateBean(RdfPopulationContext populationContext, Object bean, DatasetGraph datasetGraph); //, Node g, Node s);
+//    void populateEntity(RdfPopulationContext populationContext, Object bean, DatasetGraph datasetGraph); //, Node g, Node s);
 
 
     //DatasetGraph createDatasetGraph(Object obj, Node g);
-    void emitTriples(RdfEmitterContext emitterContext, Graph out, Object obj);
+    // RdfPersistenceContext persistenceContext, 
+    void emitTriples(RdfEmitterContext emitterContext, Object entity, Node subject, Graph shapeGraph, Consumer<Triple> sink);
+
+//    void exposeTypeDeciderShape(ResourceShapeBuilder rsb);
+//    Collection<RdfType> getApplicableTypes(Resource resource);
 }

@@ -1,18 +1,25 @@
 package org.aksw.jena_sparql_api.core;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.cache.core.QueryExecutionFactoryCacheEx;
 import org.aksw.jena_sparql_api.cache.extra.CacheFrontend;
 import org.aksw.jena_sparql_api.delay.core.QueryExecutionFactoryDelay;
 import org.aksw.jena_sparql_api.limit.QueryExecutionFactoryLimit;
 import org.aksw.jena_sparql_api.pagination.core.QueryExecutionFactoryPaginated;
+import org.aksw.jena_sparql_api.parse.QueryExecutionFactoryParse;
+import org.aksw.jena_sparql_api.post_process.QueryExecutionFactoryPostProcess;
 import org.aksw.jena_sparql_api.prefix.core.QueryExecutionFactoryPrefix;
 import org.aksw.jena_sparql_api.retry.core.QueryExecutionFactoryRetry;
+import org.aksw.jena_sparql_api.transform.QueryExecutionFactoryQueryTransform;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.sparql.core.DatasetDescription;
 
-import com.google.common.base.Function;
 import com.google.common.base.Supplier;
-import com.hp.hpl.jena.shared.PrefixMapping;
 
 /**
  * A fluent API for conveniently building 'recipes' of transformations to apply to any QueryExecutionFactory.
@@ -27,6 +34,7 @@ public class FluentQueryExecutionFactoryFn<P>
     extends FluentFnBase<QueryExecutionFactory, P>
 {
     public FluentQueryExecutionFactoryFn() {
+        this(null, null);
     }
 
     @Override
@@ -37,6 +45,7 @@ public class FluentQueryExecutionFactoryFn<P>
 
 
     public FluentQueryExecutionFactoryFn(Supplier<P> parentSupplier, Function<QueryExecutionFactory, QueryExecutionFactory> fn) {
+        super(true);
         this.parentSupplier = parentSupplier;
         this.fn = fn;
     }
@@ -54,10 +63,25 @@ public class FluentQueryExecutionFactoryFn<P>
     }
 
     public FluentQueryExecutionFactoryFn<P> withPrefixes(final PrefixMapping pm, final boolean doClone) {
+        /**
+         * TODO: Convert to use of a Query transformation (Query -> Query)
+         */
         compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
             @Override
             public QueryExecutionFactory apply(QueryExecutionFactory qef) {
                 QueryExecutionFactory r = new QueryExecutionFactoryPrefix(qef, pm, doClone);
+                return r;
+            }
+        });
+
+        return this;
+    }
+
+    public FluentQueryExecutionFactoryFn<P> withParser(final Function<String, Query> parser) {
+        compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
+            @Override
+            public QueryExecutionFactory apply(QueryExecutionFactory qef) {
+                QueryExecutionFactory r = new QueryExecutionFactoryParse(qef, parser);
                 return r;
             }
         });
@@ -106,6 +130,51 @@ public class FluentQueryExecutionFactoryFn<P>
             @Override
             public QueryExecutionFactory apply(QueryExecutionFactory qef) {
                 QueryExecutionFactory r = new QueryExecutionFactoryLimit(qef, doCloneQuery, limit);
+                return r;
+            }
+        });
+
+        return this;
+    }
+
+    public FluentQueryExecutionFactoryFn<P> withQueryTransform(final Function<Query, Query> queryTransform){
+        compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
+            @Override
+            public QueryExecutionFactory apply(QueryExecutionFactory qef) {
+                QueryExecutionFactory r = new QueryExecutionFactoryQueryTransform(qef, queryTransform);
+                return r;
+            }
+        });
+
+        return this;
+    }
+
+    /**
+     * Configure a function for post processing QueryExecution instances before returning them to the application.
+     *
+     * Note: consumer is probably not the semantically appropriate interface
+     *
+     * @param postProcessor
+     * @return
+     */
+    public FluentQueryExecutionFactoryFn<P> withPostProcessor(final Consumer<QueryExecution> postProcessor) {
+        compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
+            @Override
+            public QueryExecutionFactory apply(QueryExecutionFactory qef) {
+                QueryExecutionFactory r = new QueryExecutionFactoryPostProcess(qef, postProcessor);
+                return r;
+            }
+        });
+
+        return this;
+    }
+
+
+    public FluentQueryExecutionFactoryFn<P> withDatasetDescription(final DatasetDescription datasetDescription) {
+        compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
+            @Override
+            public QueryExecutionFactory apply(QueryExecutionFactory qef) {
+                QueryExecutionFactory r = new QueryExecutionFactoryDatasetDescription(qef, datasetDescription);
                 return r;
             }
         });

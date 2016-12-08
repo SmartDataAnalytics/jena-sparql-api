@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.update_old;
 
-import com.hp.hpl.jena.sparql.core.Quad;
+import org.apache.jena.sparql.core.Quad;
 
 interface UpdateListenerOld {
     void onPreBatchStart();

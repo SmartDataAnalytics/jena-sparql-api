@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE rdf:RDF [
+  <!ENTITY rdf		"http://www.w3.org/1999/02/22-rdf-syntax-ns#" >
+  <!ENTITY rdfs		"http://www.w3.org/2000/01/rdf-schema#" >
+  <!ENTITY xsd		"http://www.w3.org/2001/XMLSchema#" >
+  <!ENTITY dc		"http://purl.org/dc/elements/1.1/" >
+  <!ENTITY dcterms      "http://purl.org/dc/terms/" > 
+  <!ENTITY owl		"http://www.w3.org/2002/07/owl#" > ]>
+
+<rdf:RDF
+ xmlns="http://sparql-qc-bench.inrialpes.fr/testsuite#"
+ xml:base="http://sparql-qc-bench.inrialpes.fr/UCQrdfs"
+ xmlns:rdf	="&rdf;"
+ xmlns:rdfs	="&rdfs;"
+ xmlns:xsd	="&xsd;"
+ xmlns:dc	="&dc;"
+ xmlns:dcterms	="&dcterms;">
+
+  <TestSuite rdf:about="#UCQrdfs">
+    <sourceDir>rdfs</sourceDir>
+    <rdfs:label xml:lang="EN">Containment of Union of Conjunctive Quries under RDFS schema benchmark testcases</rdfs:label>
+    <rdfs:comment>This test suite, as its name implies, is designed for containment of queries that require RDFS reasoning. Thus, a set of RDF schema axioms are selected in order to be able to test containment in the presence of these constraining schemas. The four schemas cover concept and property hierarchies, and typing (domain and range) restriction axioms. Along with the schemas, the test suite contains 18 queries differing in the: number of operators, number of distinguished variables, and having projection (or no projection).</rdfs:comment>
+    <hasTest rdf:parseType="Collection">
+      <WarmupContainmentTest rdf:about="#rdfs0">
+        <sourceQuery>Q39a</sourceQuery>
+     	<targetQuery>Q39c</targetQuery>
+	<!-- No schema can be put in warm-up, this breaks AFMU -->
+     	<!--rdfSchema>C1</rdfSchema-->
+	<result>false</result>
+      </WarmupContainmentTest>
+      <ContainmentTest rdf:about="#rdfs1">
+        <sourceQuery>Q39a</sourceQuery>
+     	<targetQuery>Q39c</targetQuery>
+     	<rdfSchema>C1</rdfSchema>
+	<result>false</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#rdfs2">
+        <sourceQuery>Q39c</sourceQuery>
+	<targetQuery>Q39a</targetQuery>
+	    <rdfSchema>C1</rdfSchema>
+	<result>true</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#rdfs3">
+        <sourceQuery>Q39a</sourceQuery>
+	<targetQuery>Q39b</targetQuery>
+	<rdfSchema>C1</rdfSchema>
+	<result>false</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#rdfs4">
+        <sourceQuery>Q39b</sourceQuery>
+	<targetQuery>Q39a</targetQuery>
+	<rdfSchema>C1</rdfSchema>
+	<result>true</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#rdfs5">
+        <sourceQuery>Q39b</sourceQuery>
+	<targetQuery>Q39c</targetQuery>
+	<rdfSchema>C1</rdfSchema>
+	<result>true</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#rdfs6">
+        <sourceQuery>Q39c</sourceQuery>
+	<targetQuery>Q39b</targetQuery>
+	<rdfSchema>C1</rdfSchema>
+	<result>false</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#rdfs7">
+        <sourceQuery>Q39d</sourceQuery>
+	<targetQuery>Q39e</targetQuery>
+	<rdfSchema>C1</rdfSchema>
+	<result>false</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#rdfs8">
+        <sourceQuery>Q39e</sourceQuery>
+	<targetQuery>Q39d</targetQuery>
+	<rdfSchema>C1</rdfSchema>
+	<result>true</result>
+      </ContainmentTest>
+    <ContainmentTest rdf:about="#rdfs9">
+        <sourceQuery>Q40b</sourceQuery>
+	<targetQuery>Q40d</targetQuery>
+	<rdfSchema>C2</rdfSchema>
+	<result>true</result>
+      </ContainmentTest>
+    <ContainmentTest rdf:about="#rdfs10">
+        <sourceQuery>Q40d</sourceQuery>
+	<targetQuery>Q40b</targetQuery>
+	<rdfSchema>C2</rdfSchema>
+	<result>false</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#rdfs11">
+        <sourceQuery>Q40e</sourceQuery>
+	<targetQuery>Q40b</targetQuery>
+	<rdfSchema>C2</rdfSchema>
+	<result>true</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#rdfs12">
+        <sourceQuery>Q40b</sourceQuery>
+	<targetQuery>Q40e</targetQuery>
+	<rdfSchema>C2</rdfSchema>
+	<result>false</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#rdfs13">
+        <sourceQuery>Q41b</sourceQuery>
+	<targetQuery>Q41c</targetQuery>
+	<rdfSchema>C3</rdfSchema>
+	<result>false</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#rdfs14">
+        <sourceQuery>Q41c</sourceQuery>
+	<targetQuery>Q41b</targetQuery>
+	<rdfSchema>C3</rdfSchema>
+	<result>false</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#rdfs15">
+        <sourceQuery>Q41b</sourceQuery>
+	<targetQuery>Q41d</targetQuery>
+	<rdfSchema>C3</rdfSchema>
+	<result>true</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#rdfs16">
+        <sourceQuery>Q41d</sourceQuery>
+	<targetQuery>Q41b</targetQuery>
+	<rdfSchema>C3</rdfSchema>
+	<result>false</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#rdfs17">
+        <sourceQuery>Q41c</sourceQuery>
+	<targetQuery>Q41d</targetQuery>
+	<rdfSchema>C3</rdfSchema>
+	<result>true</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#rdfs18">
+        <sourceQuery>Q41d</sourceQuery>
+	<targetQuery>Q41c</targetQuery>
+	<rdfSchema>C3</rdfSchema>
+	<result>false</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#rdfs19">
+        <sourceQuery>Q41b</sourceQuery>
+	<targetQuery>Q41a</targetQuery>
+	<rdfSchema>C3</rdfSchema>
+	<result>true</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#rdfs20">
+        <sourceQuery>Q41a</sourceQuery>
+	<targetQuery>Q41b</targetQuery>
+	<rdfSchema>C3</rdfSchema>
+	<result>false</result>
+      </ContainmentTest>
+    <ContainmentTest rdf:about="#rdfs21">
+        <sourceQuery>Q41e</sourceQuery>
+	<targetQuery>Q41a</targetQuery>
+	<rdfSchema>C3</rdfSchema>
+	<result>true</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#rdfs22">
+        <sourceQuery>Q41a</sourceQuery>
+	<targetQuery>Q41e</targetQuery>
+	<rdfSchema>C3</rdfSchema>
+	<result>false</result>
+      </ContainmentTest>
+        <ContainmentTest rdf:about="#rdfs23">
+        <sourceQuery>Q43a</sourceQuery>
+	<targetQuery>Q43b</targetQuery>
+	<rdfSchema>C4</rdfSchema>
+	<result>true</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#rdfs24">
+        <sourceQuery>Q43b</sourceQuery>
+	<targetQuery>Q43a</targetQuery>
+	<rdfSchema>C4</rdfSchema>
+	<result>false</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#rdfs25">
+        <sourceQuery>Q43a</sourceQuery>
+	<targetQuery>Q43c</targetQuery>
+	<rdfSchema>C4</rdfSchema>
+	<result>true</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#rdfs26">
+        <sourceQuery>Q43c</sourceQuery>
+	<targetQuery>Q43a</targetQuery>
+	<rdfSchema>C4</rdfSchema>
+	<result>false</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#rdfs27">
+        <sourceQuery>Q43b</sourceQuery>
+	<targetQuery>Q43c</targetQuery>
+	<rdfSchema>C4</rdfSchema>
+	<result>false</result>
+      </ContainmentTest>
+      <ContainmentTest rdf:about="#rdfs28">
+        <sourceQuery>Q43c</sourceQuery>
+	<targetQuery>Q43b</targetQuery>
+	<rdfSchema>C4</rdfSchema>
+	<result>false</result>
+      </ContainmentTest>
+    </hasTest>
+  </TestSuite>
+</rdf:RDF>

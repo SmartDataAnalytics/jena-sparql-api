@@ -2,10 +2,10 @@ package org.aksw.jena_sparql_api.mapper.model;
 
 import java.util.Collections;
 import java.util.Set;
+import java.util.function.BiFunction;
 
-import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
-
-import com.hp.hpl.jena.graph.Node;
+import org.aksw.jena_sparql_api.beans.model.PropertyOps;
+import org.apache.jena.graph.Node;
 
 public abstract class RdfPopulatorPropertyBase
     implements RdfPopulatorProperty
@@ -18,7 +18,9 @@ public abstract class RdfPopulatorPropertyBase
     /**
      * The (java) name of the attribute
      */
-    protected String propertyName;
+    //protected EntityOps entityOps;
+    //protected String propertyName;
+    protected PropertyOps propertyOps;
     protected Node predicate;
     //protected BeanWrapper owningBean;
 
@@ -29,8 +31,12 @@ public abstract class RdfPopulatorPropertyBase
 
     protected RdfType targetRdfType;
 
+    transient protected Set<String> propertyNames;
 //    protected String fetchMode;
-
+ 
+    // Optional function for creating an Iri (Node) for a given target value
+    protected BiFunction<Object, Object, Node> createTargetNode;
+    
 //    /**
 //     * The type can be either simply a class (including primitive ones), but it can also be
 //     * a parameterized class, such as a List&lt;Person&gt;
@@ -39,17 +45,21 @@ public abstract class RdfPopulatorPropertyBase
 //    protected RdfType rdfType;
 
 
-    public RdfPopulatorPropertyBase(String propertyName, Node predicate, RdfType targetRdfType) { //, String fetchMode) {
+    public RdfPopulatorPropertyBase(PropertyOps propertyOps, Node predicate, RdfType targetRdfType, BiFunction<Object, Object, Node> createTargetNode) { //, String fetchMode) {
         super();
-        this.propertyName = propertyName;
+        //this.propertyName = propertyName;
+        this.propertyOps = propertyOps;
         this.predicate = predicate;
         this.targetRdfType = targetRdfType;
-//        this.fetchMode = fetchMode;
+        
+        this.propertyNames = Collections.singleton(propertyOps.getName());
+        this.createTargetNode = createTargetNode;
     }
 
-    public String getPropertyName() {
-        return propertyName;
-    }
+
+//    public String getPropertyName() {
+//        return propertyOps.getName();
+//    }
 
 //    public Relation getRelation() {
 //        return relation;
@@ -59,11 +69,14 @@ public abstract class RdfPopulatorPropertyBase
 //        return targetRdfType;
 //    }
 
+    @Override
+    public PropertyOps getPropertyOps() {
+        return propertyOps;
+    }
 
 	@Override
-	public Set<String> getPropertyNames() {
-		Set<String> result = Collections.singleton(propertyName);
-		return result;
+	public Set<String> getPropertyNames() {		
+		return propertyNames;
 	}
 
 

@@ -9,7 +9,7 @@ import org.aksw.commons.collections.CacheSet;
 
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Sets;
-import com.hp.hpl.jena.sparql.core.Quad;
+import org.apache.jena.sparql.core.Quad;
 
 
 /**

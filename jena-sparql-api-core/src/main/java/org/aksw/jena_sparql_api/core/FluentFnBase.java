@@ -1,7 +1,6 @@
 package org.aksw.jena_sparql_api.core;
 
-import com.google.common.base.Function;
-import com.google.common.base.Functions;
+import java.util.function.Function;
 
 /**
  * Abstract class upon Fluent APIs for functions can be built.
@@ -16,19 +15,34 @@ import com.google.common.base.Functions;
 public abstract class FluentFnBase<T, P>
     extends FluentBase<Function<T, T>, P>
 {
-    public FluentFnBase() {
-        this(null);
+    /**
+     * Controls chaining order when composing functions.
+     * As a rule of thumb:
+     * If the fluent successively wraps an object, reverse the chain direction, so that first fluent call corresponds to the last wrapper on which methods are invoked first.
+     * If a fluent keeps replacing an object with a new one (i.e. no wrapping), chaining can be done in order, so that the last fluent call corresponds to the last replacement
+     */
+    protected boolean defaultReverseChaining;
+
+    public FluentFnBase(boolean reverseChaining) {
+        this(null, reverseChaining);
     }
 
-    public FluentFnBase(Function<T, T> fn) {
+    public FluentFnBase(Function<T, T> fn, boolean defaultReverseChaining) {
         super(fn);
+        this.defaultReverseChaining = defaultReverseChaining;
     }
 
     public FluentFnBase<T, P> compose(Function<T, T> nextFn) {
         if(fn == null) {
             fn = nextFn;
         } else {
-            fn = Functions.compose(nextFn, fn);
+            fn = defaultReverseChaining
+                ? fn.andThen(nextFn)
+                : nextFn.andThen(fn)
+                ;
+            //fn = Functions.compose(nextFn, fn);
+            //nextFn.andThen(fn);//Functions.compose(fn, nextFn);
+            //fn = nextFn.andThen(fn);
         }
 
         return this;
@@ -38,7 +52,7 @@ public abstract class FluentFnBase<T, P>
     public Function<T, T> value() {
         Function<T, T> result = super.value();
         if(result == null) {
-            result = Functions.<T>identity();
+            result = Function.identity();//Functions.<T>identity();
         }
 
         return result;

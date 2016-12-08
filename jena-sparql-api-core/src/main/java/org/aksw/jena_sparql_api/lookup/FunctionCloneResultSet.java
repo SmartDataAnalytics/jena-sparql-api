@@ -1,8 +1,8 @@
 package org.aksw.jena_sparql_api.lookup;
 
 import com.google.common.base.Function;
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.sparql.resultset.ResultSetMem;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.sparql.resultset.ResultSetMem;
 
 public class FunctionCloneResultSet
     implements Function<ResultSet, ResultSet>

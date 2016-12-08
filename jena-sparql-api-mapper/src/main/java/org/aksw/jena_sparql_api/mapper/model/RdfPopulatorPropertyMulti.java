@@ -1,19 +1,17 @@
 package org.aksw.jena_sparql_api.mapper.model;
 
-import java.beans.PropertyDescriptor;
 import java.util.Collection;
-import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
 
-import org.aksw.jena_sparql_api.mapper.context.RdfPopulationContext;
+import org.aksw.jena_sparql_api.beans.model.PropertyOps;
+import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
+import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.mapper.context.TypedNode;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
-import org.springframework.beans.BeanWrapper;
-import org.springframework.beans.BeanWrapperImpl;
-
-import com.hp.hpl.jena.graph.Graph;
-import com.hp.hpl.jena.graph.GraphUtil;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Triple;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
 
 /**
  * Mapping for multiple occurrences of the same RDF predicate to
@@ -31,7 +29,7 @@ import com.hp.hpl.jena.graph.Triple;
  * </pre>
  * The targetRdfType in this case is String.
  *
- * If however MultiValuedProperty is not present, by default an RDF Seq will be used which will be assigned its own IRI and thus identity.
+ * If however @MultiValuedProperty is not present, by default an RDF Seq will be used which will be assigned its own IRI and thus identity.
  *
  *
  * TODO Clarify relation to indexed properties
@@ -42,22 +40,27 @@ import com.hp.hpl.jena.graph.Triple;
 public class RdfPopulatorPropertyMulti
     extends RdfPopulatorPropertyBase
 {
-    public RdfPopulatorPropertyMulti(String propertyName, Node predicate, RdfType targetRdfType) {
-        super(propertyName, predicate, targetRdfType);
+    public RdfPopulatorPropertyMulti(PropertyOps propertyOps, Node predicate, RdfType targetRdfType, BiFunction<Object, Object, Node> createTargetNode) {
+        super(propertyOps, predicate, targetRdfType, createTargetNode);
     }
 
 
+    //RdfPersistenceContext persistenceContext, 
     @Override
-    public void emitTriples(Graph out, Object bean, Node subject) {
+    public void emitTriples(RdfEmitterContext emitterContext, Object entity, Node subject, Graph shapeGraph, Consumer<Triple> out) {
 
-        BeanWrapper beanWrapper = new BeanWrapperImpl(bean);
-        Collection<?> items = (Collection<?>)beanWrapper.getPropertyValue(propertyName);
+        //BeanWrapper beanWrapper = new BeanWrapperImpl(entity);
+        Collection<?> items = (Collection<?>)propertyOps.getValue(entity);//beanWrapper.getPropertyValue(propertyName);
 
         for(Object item : items) {
             Node o = targetRdfType.getRootNode(item);
             Triple t = new Triple(subject, predicate, o);
 
-            out.add(t);
+            out.accept(t);
+
+
+            //emitterContext.add(item, entity, propertyOps.getName());
+
 //	        if(!out.contains(t)) {
 //
 //	            targetRdfType.writeGraph(out, item);
@@ -67,18 +70,18 @@ public class RdfPopulatorPropertyMulti
 
     /**
      * TODO The collection
-     * @param bean
+     * @param entity
      * @param propertyName
      * @return
      */
-    public static Object getOrCreateBean(Object bean, String propertyName) {
-        BeanWrapper beanWrapper = new BeanWrapperImpl(bean);
-        Object result = beanWrapper.getPropertyValue(propertyName);
+    public static Object getOrCreateBean(Object entity, PropertyOps propertyOps) {
+        //BeanWrapper beanWrapper = new BeanWrapperImpl(entity);
+        Object result = propertyOps.getValue(entity); //beanWrapper.getPropertyValue(propertyName);
 
         if(result == null) {
 
-            PropertyDescriptor pd = beanWrapper.getPropertyDescriptor(propertyName);
-            Class<?> collectionType = pd.getPropertyType();
+            //PropertyDescriptor pd = beanWrapper.getPropertyDescriptor(propertyName);
+            Class<?> collectionType = propertyOps.getType(); //pd.getPropertyType();
 
             try {
                 result = collectionType.newInstance();
@@ -86,22 +89,28 @@ public class RdfPopulatorPropertyMulti
                 throw new RuntimeException(e);
             }
 
-            beanWrapper.setPropertyValue(propertyName, result);
+            //beanWrapper.setPropertyValue(propertyName, result);
+            propertyOps.setValue(entity, result);
         }
         return result;
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public void populateBean(RdfPopulationContext populationContext, Object bean, Graph graph, Node subject) {
+    public void populateEntity(RdfPersistenceContext populationContext, Object bean, Graph graph, Node subject, Consumer<Triple> outSink) {
         // Creates a collection under the given property
-        Collection<? super Object> collection = (Collection<? super Object>)getOrCreateBean(bean, propertyName);
+        Collection<? super Object> collection = (Collection<? super Object>)getOrCreateBean(bean, propertyOps);
 
-        List<Node> os = GraphUtil.listObjects(graph, subject, predicate).toList();
+        for(Triple t : graph.find(subject, predicate, Node.ANY).toSet()) {
+            outSink.accept(t);
 
-        for(Node o : os) {
-            TypedNode typedNode = new TypedNode(targetRdfType, o);
-            Object value = populationContext.objectFor(typedNode);
+            Node o = t.getObject();
+        //List<Node> os = GraphUtil.listObjects(graph, subject, predicate).toList();
+
+        //for(Node o : os) {
+            //TypedNode typedNode = new TypedNode(targetRdfType, o);
+            Class<?> valueClass = propertyOps.getClass();
+            Object value = populationContext.entityFor(valueClass, o, () -> targetRdfType.createJavaObject(o, graph));
             //Object value = rdfType.createJavaObject(o);
             collection.add(value);
         }
@@ -110,11 +119,12 @@ public class RdfPopulatorPropertyMulti
 
     @Override
     public void exposeShape(ResourceShapeBuilder shapeBuilder) {
-        shapeBuilder.outgoing(predicate);
+        shapeBuilder.out(predicate);
 //		ResourceShapeBuilder targetShape = shapeBuilder.outgoing(predicate);
 //
 //		if("eager".equals(fetchMode)) {
 //			targetRdfType.build(targetShape);
 //		}
     }
+
 }

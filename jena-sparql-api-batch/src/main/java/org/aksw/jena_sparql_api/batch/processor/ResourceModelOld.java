@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api.batch.processor;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
 
 /**
  * Combines a resource with two models, one for data and the other for meta data.

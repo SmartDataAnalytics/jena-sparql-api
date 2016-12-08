@@ -3,17 +3,18 @@ package org.aksw.jena_sparql_api.core;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.query.QuerySolution;
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.sparql.util.Context;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.query.Dataset;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QuerySolution;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.util.Context;
 
 /**
- * 
+ *
  *
  * @author Claus Stadler
  *         <p/>
@@ -107,28 +108,43 @@ public class QueryExecutionAdapter
         timeoutHelper.setTimeout(timeout1, timeout2);
     }
 
-	@Override
-	public Iterator<Triple> execConstructTriples() {
+    @Override
+    public Iterator<Triple> execConstructTriples() {
         throw new RuntimeException("Not Implemented.");
-	}
+    }
 
-	@Override
-	public Iterator<Triple> execDescribeTriples() {
+    @Override
+    public Iterator<Triple> execDescribeTriples() {
         throw new RuntimeException("Not Implemented.");
-	}
+    }
 
-	@Override
-	public long getTimeout1() {
+    @Override
+    public long getTimeout1() {
         throw new RuntimeException("Not Implemented.");
-	}
+    }
 
-	@Override
-	public long getTimeout2() {
+    @Override
+    public long getTimeout2() {
         throw new RuntimeException("Not Implemented.");
-	}
+    }
 
-	@Override
-	public boolean isClosed() {
-		throw new RuntimeException("Not Implemented.");
-	}
+    @Override
+    public boolean isClosed() {
+        throw new RuntimeException("Not Implemented.");
+    }
+
+    @Override
+    public Dataset execConstructDataset() {
+        throw new RuntimeException("Not Implemented.");
+    }
+
+    @Override
+    public Dataset execConstructDataset(Dataset arg0) {
+        throw new RuntimeException("Not Implemented.");
+    }
+
+    @Override
+    public Iterator<Quad> execConstructQuads() {
+        throw new RuntimeException("Not Implemented.");
+    }
 }

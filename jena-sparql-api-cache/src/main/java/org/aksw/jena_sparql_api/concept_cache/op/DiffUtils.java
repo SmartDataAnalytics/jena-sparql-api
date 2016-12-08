@@ -20,18 +20,18 @@ import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Sets;
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryFactory;
-import com.hp.hpl.jena.query.Syntax;
-import com.hp.hpl.jena.sparql.algebra.Algebra;
-import com.hp.hpl.jena.sparql.algebra.Op;
-import com.hp.hpl.jena.sparql.algebra.Table;
-import com.hp.hpl.jena.sparql.algebra.op.OpDisjunction;
-import com.hp.hpl.jena.sparql.algebra.op.OpDistinct;
-import com.hp.hpl.jena.sparql.core.Quad;
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.expr.Expr;
-import com.hp.hpl.jena.sparql.graph.NodeTransform;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryFactory;
+import org.apache.jena.query.Syntax;
+import org.apache.jena.sparql.algebra.Algebra;
+import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.Table;
+import org.apache.jena.sparql.algebra.op.OpDisjunction;
+import org.apache.jena.sparql.algebra.op.OpDistinct;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.graph.NodeTransform;
 
 
 
@@ -177,15 +177,15 @@ public class DiffUtils {
 
 
 
-    public Iterator<Map<Var, Var>> getCandidateVarMaps(IBiSetMultimap<Quad, Set<Set<Expr>>> queryQuadToCnf, IBiSetMultimap<Quad, Set<Set<Expr>>> candQuadToCnf, Set<Set<Var>> candVarCombos) {
-        Set<Set<Set<Expr>>> quadCnfs = queryQuadToCnf.getInverse().keySet();  //queryPs.getQuadToCnf().getInverse().keySet();
-
-        // For a pattern there might be multiple candidate variable mappings
-        // Filter expressions are not considered at this stage
-        Iterator<Map<Var, Var>> result = CombinatoricsUtils.computeVarMapQuadBased(queryQuadToCnf, candQuadToCnf, candVarCombos);
-
-        return result;
-    }
+//    public Iterator<Map<Var, Var>> getCandidateVarMaps(IBiSetMultimap<Quad, Set<Set<Expr>>> queryQuadToCnf, IBiSetMultimap<Quad, Set<Set<Expr>>> candQuadToCnf, Set<Set<Var>> candVarCombos) {
+//        Set<Set<Set<Expr>>> quadCnfs = queryQuadToCnf.getInverse().keySet();  //queryPs.getQuadToCnf().getInverse().keySet();
+//
+//        // For a pattern there might be multiple candidate variable mappings
+//        // Filter expressions are not considered at this stage
+//        Iterator<Map<Var, Var>> result = CombinatoricsUtils.computeVarMapQuadBased(queryQuadToCnf, candQuadToCnf, candVarCombos);
+//
+//        return result;
+//    }
 
 
 

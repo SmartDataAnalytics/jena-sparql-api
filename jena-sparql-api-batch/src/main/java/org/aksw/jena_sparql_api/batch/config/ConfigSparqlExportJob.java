@@ -50,11 +50,11 @@ import org.springframework.core.task.TaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.util.CollectionUtils;
 
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryFactory;
-import com.hp.hpl.jena.query.Syntax;
-import com.hp.hpl.jena.sparql.core.DatasetDescription;
-import com.hp.hpl.jena.sparql.engine.binding.Binding;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryFactory;
+import org.apache.jena.query.Syntax;
+import org.apache.jena.sparql.core.DatasetDescription;
+import org.apache.jena.sparql.engine.binding.Binding;
 
 
 
@@ -213,7 +213,7 @@ public class ConfigSparqlExportJob {
     @JobScope
     @Autowired
     public Step dataCountStep(Query query, QueryExecutionFactory qef) {
-        Tasklet tasklet = new TaskletSparqlCountData(query, qef);
+        Tasklet tasklet = new TaskletSparqlCountData(query, qef, TaskletSparqlCountData.class.getSimpleName() + ".count");
         return stepBuilders.get("dataCountStep").tasklet(tasklet).build();
     }
 

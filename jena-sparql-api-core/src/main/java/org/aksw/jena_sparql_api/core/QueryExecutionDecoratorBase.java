@@ -3,17 +3,21 @@ package org.aksw.jena_sparql_api.core;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.query.QuerySolution;
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.sparql.util.Context;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.query.Dataset;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QuerySolution;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.util.Context;
 
 
 /**
+ * Adds beforeExec and afterExec methods that can be used
+ * to allocate and release resources upon performing an execution.
+ *
  * @author Claus Stadler
  *         <p/>
  *         Date: 7/26/11
@@ -25,26 +29,27 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
     protected T decoratee;
 
     public QueryExecutionDecoratorBase(T decoratee) {
-    	//this.decoratee = new QueryExecutionWrapper(decoratee);
-    	this.setDecoratee(decoratee);
+        //this.decoratee = new QueryExecutionWrapper(decoratee);
+        //this.setDecoratee(decoratee);
+        this.decoratee = decoratee;
     }
 
     /*
     public QueryExecutionDecoratorBase(QueryExecution decoratee)
     {
-    	this.setDecoratee(decoratee);
+        this.setDecoratee(decoratee);
         //this.decoratee = decoratee;
     }*/
-    
-    protected QueryExecution getDecoratee()
+
+    public QueryExecution getDecoratee()
     {
         return decoratee;
     }
 
-    protected void setDecoratee(T decoratee)
-    {
-        this.decoratee = decoratee;
-    }
+//    protected void setDecoratee(T decoratee)
+//    {
+//        this.decoratee = decoratee;
+//    }
 
     @Override
     public void setInitialBinding(QuerySolution binding) {
@@ -71,45 +76,15 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
     }
 
     @Override
-    public ResultSet execSelect() {
-        return decoratee.execSelect();
-    }
-
-    @Override
-    public Model execConstruct() {
-        return decoratee.execConstruct();
-    }
-
-    @Override
-    public Model execConstruct(Model model) {
-        return decoratee.execConstruct(model);
-    }
-
-    @Override
-    public Model execDescribe() {
-        return decoratee.execDescribe();
-    }
-
-    @Override
-    public Model execDescribe(Model model) {
-        return decoratee.execDescribe(model);
-    }
-
-    @Override
-    public boolean execAsk() {
-        return decoratee.execAsk();
-    }
-
-    @Override
     public void abort() {
         decoratee.abort();
     }
 
     @Override
     public void close() {
-    	if(decoratee != null) {
-    		decoratee.close();
-    	}
+        if(decoratee != null) {
+            decoratee.close();
+        }
     }
 
     @Override
@@ -132,31 +107,139 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
         decoratee.setTimeout(timeout1, timeout2);
     }
 
-	@Override
-	public Iterator<Triple> execConstructTriples() {
-		return decoratee.execConstructTriples();
-	}
+    @Override
+    public long getTimeout1() {
+        return decoratee.getTimeout1();
+    }
 
-	@Override
-	public Iterator<Triple> execDescribeTriples() {
-		return decoratee.execDescribeTriples();
-	}
+    @Override
+    public long getTimeout2() {
+        return decoratee.getTimeout2();
+    }
 
-	@Override
-	public long getTimeout1() {
-		return decoratee.getTimeout1();
-	}
+    /* (non-Javadoc)
+     * @see org.apache.jena.query.QueryExecution#isClosed()
+     */
+    @Override
+    public boolean isClosed() {
+        return decoratee.isClosed();
+    }
 
-	@Override
-	public long getTimeout2() {
-		return decoratee.getTimeout2();
-	}
+    protected void beforeExec() {
 
-	/* (non-Javadoc)
-	 * @see com.hp.hpl.jena.query.QueryExecution#isClosed()
-	 */
-	@Override
-	public boolean isClosed() {
-		return decoratee.isClosed();
-	}
+    }
+
+    protected void afterExec() {
+
+    }
+
+    @Override
+    public ResultSet execSelect() {
+        beforeExec();
+        try {
+            return decoratee.execSelect();
+        } finally {
+            afterExec();
+        }
+    }
+
+    @Override
+    public Model execConstruct() {
+        beforeExec();
+        try {
+            return decoratee.execConstruct();
+        } finally {
+            afterExec();
+        }
+    }
+
+    @Override
+    public Model execConstruct(Model model) {
+        beforeExec();
+        try {
+            return decoratee.execConstruct(model);
+        } finally {
+            afterExec();
+        }
+    }
+
+    @Override
+    public Model execDescribe() {
+        beforeExec();
+        try {
+            return decoratee.execDescribe();
+        } finally {
+            afterExec();
+        }
+    }
+
+    @Override
+    public Model execDescribe(Model model) {
+        beforeExec();
+        try {
+            return decoratee.execDescribe(model);
+        } finally {
+            afterExec();
+        }
+    }
+
+    @Override
+    public boolean execAsk() {
+        beforeExec();
+        try {
+            return decoratee.execAsk();
+        } finally {
+            afterExec();
+        }
+    }
+
+    @Override
+    public Iterator<Triple> execConstructTriples() {
+        beforeExec();
+        try {
+            return decoratee.execConstructTriples();
+        } finally {
+            afterExec();
+        }
+    }
+
+    @Override
+    public Iterator<Triple> execDescribeTriples() {
+        beforeExec();
+        try {
+            return decoratee.execDescribeTriples();
+        } finally {
+            afterExec();
+        }
+    }
+
+    @Override
+    public Iterator<Quad> execConstructQuads() {
+        beforeExec();
+        try {
+            return decoratee.execConstructQuads();
+        } finally {
+            afterExec();
+        }
+    }
+
+    @Override
+    public Dataset execConstructDataset() {
+        beforeExec();
+        try {
+            return decoratee.execConstructDataset();
+        } finally {
+            afterExec();
+        }
+    }
+
+    @Override
+    public Dataset execConstructDataset(Dataset dataset) {
+        beforeExec();
+        try {
+            return decoratee.execConstructDataset(dataset);
+        } finally {
+            afterExec();
+        }
+    }
 }

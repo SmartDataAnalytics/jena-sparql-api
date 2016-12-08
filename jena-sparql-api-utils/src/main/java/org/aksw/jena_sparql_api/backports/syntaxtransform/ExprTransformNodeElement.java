@@ -20,19 +20,19 @@ package org.aksw.jena_sparql_api.backports.syntaxtransform;
 
 import org.apache.jena.atlas.lib.InternalErrorException ;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.sparql.algebra.Op;
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.expr.E_Exists;
-import com.hp.hpl.jena.sparql.expr.E_NotExists;
-import com.hp.hpl.jena.sparql.expr.Expr;
-import com.hp.hpl.jena.sparql.expr.ExprFunctionOp;
-import com.hp.hpl.jena.sparql.expr.ExprList;
-import com.hp.hpl.jena.sparql.expr.ExprTransformCopy;
-import com.hp.hpl.jena.sparql.expr.ExprVar;
-import com.hp.hpl.jena.sparql.expr.NodeValue;
-import com.hp.hpl.jena.sparql.graph.NodeTransform;
-import com.hp.hpl.jena.sparql.syntax.Element;
+import org.apache.jena.graph.Node;
+import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.expr.E_Exists;
+import org.apache.jena.sparql.expr.E_NotExists;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprFunctionOp;
+import org.apache.jena.sparql.expr.ExprList;
+import org.apache.jena.sparql.expr.ExprTransformCopy;
+import org.apache.jena.sparql.expr.ExprVar;
+import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.graph.NodeTransform;
+import org.apache.jena.sparql.syntax.Element;
 
 /**
  * Special version of ExprTransform for applying a node transform on syntax
@@ -49,7 +49,7 @@ public class ExprTransformNodeElement extends ExprTransformCopy {
 
     @Override
     public Expr transform(ExprVar nv) {
-        Node n = nodeTransform.convert(nv.getAsNode()) ;
+        Node n = nodeTransform.apply(nv.getAsNode()) ;
         if ( n == nv.getAsNode() )
             return nv ;
         if ( n instanceof Var ) {
@@ -61,7 +61,7 @@ public class ExprTransformNodeElement extends ExprTransformCopy {
 
     @Override
     public Expr transform(NodeValue nv) {
-        Node n = nodeTransform.convert(nv.asNode()) ;
+        Node n = nodeTransform.apply(nv.asNode()) ;
         if ( n == nv.asNode() )
             return nv ;
         return NodeValue.makeNode(n) ;

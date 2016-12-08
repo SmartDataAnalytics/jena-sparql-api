@@ -11,10 +11,10 @@ import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.pagination.core.PagingQuery;
 import org.springframework.batch.item.data.AbstractPaginatedDataItemReader;
 
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.sparql.engine.binding.Binding;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.sparql.engine.binding.Binding;
 
 
 /**
@@ -118,7 +118,7 @@ public class ItemReaderSparqlPaging<T>
 
         //if(itQuery == null) {
             PagingQuery pagingQuery = new PagingQuery(this.pageSize, this.query);
-            Iterator<Query> itQuery = pagingQuery.createQueryIterator(this.page * this.pageSize);
+            Iterator<Query> itQuery = pagingQuery.createQueryIterator((long)(this.page * this.pageSize), null);
         //}
 
         Query query = itQuery.next();

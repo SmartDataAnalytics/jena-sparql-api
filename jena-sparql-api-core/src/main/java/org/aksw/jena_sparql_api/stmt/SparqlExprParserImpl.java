@@ -1,8 +1,8 @@
 package org.aksw.jena_sparql_api.stmt;
 
-import com.hp.hpl.jena.shared.PrefixMapping;
-import com.hp.hpl.jena.sparql.expr.Expr;
-import com.hp.hpl.jena.sparql.util.ExprUtils;
+import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.util.ExprUtils;
 
 public class SparqlExprParserImpl
     implements SparqlExprParser

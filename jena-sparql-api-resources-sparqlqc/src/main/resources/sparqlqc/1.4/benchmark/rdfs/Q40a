@@ -1,0 +1,8 @@
+PREFIX : <http://www.lehigh.edu//univ-bench.owl#>
+
+SELECT ?x ?y WHERE 
+{ 
+  ?x a :Professor .
+  ?x :worksFor ?y . 
+  ?y a :Department .
+}

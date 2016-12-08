@@ -4,8 +4,8 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.google.common.collect.AbstractIterator;
-import com.hp.hpl.jena.sparql.algebra.Algebra;
-import com.hp.hpl.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.algebra.Algebra;
+import org.apache.jena.sparql.engine.binding.Binding;
 
 public class IteratorBindingJoin
     extends AbstractIterator<Binding>

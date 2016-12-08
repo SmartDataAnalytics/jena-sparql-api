@@ -1,0 +1,8 @@
+PREFIX : <http://www.example.org/>
+
+SELECT * WHERE {
+	?x :red ?y .
+	?y :blue ?z .
+	?z :blue ?y .
+	?z :blue ?z .
+} 

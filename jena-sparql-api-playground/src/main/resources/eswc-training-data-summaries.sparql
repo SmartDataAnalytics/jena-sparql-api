@@ -1,0 +1,157 @@
+log_enable(2);
+
+
+Sparql
+DEFINE input:default-graph-uri <http://fp7-pp.publicdata.eu/>
+PREFIX r: <http://example.org/resource/>
+PREFIX o: <http://example.org/ontology/>
+INSERT INTO <http://fp7-pp.publicdata.eu/summary/predicate-join/> {
+  ?s
+    a o:PredicateJoinSummary ;
+    o:sourcePredicate ?x ;
+    o:targetPredicate ?y ;
+    o:freqTotal ?ct ;
+    o:freqSource ?ca ;
+    o:freqIntermediary ?cb ;
+    o:freqTarget ?cc
+}
+{
+  { SELECT ?x ?y (Count(*) As ?ct) (Count(Distinct ?a) As ?ca) (Count(Distinct ?b) As ?cb) (Count(Distinct ?c) As ?cc) {
+      ?a ?x ?b .
+      ?b ?y ?c .
+  } GROUP BY ?x ?y }
+  BIND(r:training_dataset As ?d)
+  BIND(uri(concat(str(r:join), '-', encode_for_uri(?d), '-', md5(concat(str(?x), str(?y))))) As ?s)
+}
+;
+
+Done. -- 1041 msec. - on nyu i7
+Done. -- 1161 msec. - on drake i5
+
+
+
+
+-----------
+
+
+
+
+
+
+
+
+
+
+
+
+
+Sparql
+DEFINE input:default-graph-uri <http://2016.eswc-conferences.org/training_dataset.nt>
+PREFIX r: <http://example.org/resource/>
+PREFIX o: <http://example.org/ontology/>
+INSERT INTO <http://2016.eswc-conferences.org/training_dataset.nt/predicate-cooccurrence-outbound/> {
+  ?x o:coOccursOutboundWith ?y
+}
+{
+  { SELECT DISTINCT ?x ?y {
+    ?s ?x ?xo .
+    ?s ?y ?yo
+    FILTER(str(?x) < str(?y))
+  } }
+}
+;
+
+
+
+
+
+
+
+Sparql
+DEFINE input:default-graph-uri <http://2016.eswc-conferences.org/training_dataset.nt>
+PREFIX r: <http://example.org/resource/>
+PREFIX o: <http://example.org/ontology/>
+INSERT INTO <http://2016.eswc-conferences.org/training_dataset.nt/summary/predicate/> {
+  ?s
+    a o:PredicateSummary ;
+    o:predicate ?x ;
+    o:freqTotal ?ct ;
+    o:freqSource ?ca ;
+    o:freqTarget ?cb
+}
+{
+  { SELECT ?x (Count(*) As ?ct) (Count(Distinct ?a) As ?ca) (Count(Distinct ?b) As ?cb) {
+      ?a ?x ?b .
+  } GROUP BY ?x }
+  BIND(r:training_dataset As ?d)
+  BIND(uri(concat(str(r:predicate), '-', encode_for_uri(?d), '-', encode_for_uri(?x))) As ?s)
+}
+;
+# Done. -- 37401 msec.
+# Triples: 65570
+# Raw table: 13114 -- PREFIX o: <http://example.org/ontology/> SELECT Count(*) { ?s o:predicate ?o }
+
+
+
+
+Sparql
+DEFINE input:default-graph-uri <http://2016.eswc-conferences.org/training_dataset.nt>
+PREFIX r: <http://example.org/resource/>
+PREFIX o: <http://example.org/ontology/>
+INSERT INTO <http://2016.eswc-conferences.org/training_dataset.nt/summary/predicate-join/> {
+  ?s
+    a o:PredicateJoinSummary ;
+    o:sourcePredicate ?x ;
+    o:targetPredicate ?y ;
+    o:freqTotal ?ct ;
+    o:freqSource ?ca ;
+    o:freqIntermediary ?cb ;
+    o:freqTarget ?cc
+}
+{
+  { SELECT ?x ?y (Count(*) As ?ct) (Count(Distinct ?a) As ?ca) (Count(Distinct ?b) As ?cb) (Count(Distinct ?c) As ?cc) {
+      ?a ?x ?b .
+      ?b ?y ?c .
+  } GROUP BY ?x ?y }
+  BIND(r:training_dataset As ?d)
+  BIND(uri(concat(str(r:join), '-', encode_for_uri(?d), '-', md5(concat(str(?x), str(?y))))) As ?s)
+}
+;
+
+#Time taken (simultaneously executed with the er one): Done. -- 281154 msec.
+#Total triples: 1923173
+#Size of the raw join table: 274739 (this is 0.16 percent of the worst case possible predicate summary of size 171mio)
+#  PREFIX o: <http://example.org/ontology/> SELECT Count(*) { ?s o:sourcePredicate ?x ; o:targetPredicate ?y }
+
+#    o:dataset ?d ;
+
+
+
+Sparql
+DEFINE input:default-graph-uri <http://2016.eswc-conferences.org/training_dataset.nt>
+PREFIX r: <http://example.org/resource/>
+PREFIX o: <http://example.org/ontology/>
+INSERT INTO <http://2016.eswc-conferences.org/training_dataset.nt/summary/entity-relationship/> {
+  ?s
+    a o:EntityRelationshipSummary ;
+    o:sourceType ?at ;
+    o:targetType ?bt ;
+    o:predicate ?x ;
+    o:freqTotal ?ct ;
+    o:freqSource ?ca ;
+    o:freqTarget ?cb
+}
+{
+  { SELECT DISTINCT ?x ?at ?bt  (Count(*) As ?ct) (Count(Distinct ?a) As ?ca) (Count(Distinct ?b) As ?cb) {
+      ?a ?x ?b .
+      Optional { ?a a ?xat }
+      Optional { ?b a ?xbt }
+      Bind(if(bound(?xat), ?xat , o:Untyped) As ?at)
+      Bind(if(bound(?xbt), ?xbt , o:Untyped) As ?bt)
+  } GROUP BY ?x ?at ?bt }
+  BIND(r:training_dataset As ?d)
+  BIND(uri(concat(str(r:join), '-', encode_for_uri(?d), '-', md5(concat(str(?at), str(?x), str(?bt))))) As ?s)
+}
+;
+# Total time taken: 2061379 msec
+# Tripe Count 41261808

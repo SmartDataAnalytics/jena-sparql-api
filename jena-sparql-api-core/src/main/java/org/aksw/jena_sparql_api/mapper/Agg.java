@@ -2,9 +2,13 @@ package org.aksw.jena_sparql_api.mapper;
 
 import java.util.Set;
 
-import com.hp.hpl.jena.sparql.core.Var;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.engine.binding.Binding;
 
-public interface Agg<T> {
+
+public interface Agg<T>
+    extends Aggregator<Binding, T>
+{
     Acc<T> createAccumulator();
 
     /**

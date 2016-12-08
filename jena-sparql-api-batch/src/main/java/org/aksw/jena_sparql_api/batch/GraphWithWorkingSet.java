@@ -2,8 +2,8 @@ package org.aksw.jena_sparql_api.batch;
 
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 
-import com.hp.hpl.jena.graph.Graph;
-import com.hp.hpl.jena.sparql.graph.GraphWrapper;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.sparql.graph.GraphWrapper;
 
 public class GraphWithWorkingSet
     extends GraphWrapper

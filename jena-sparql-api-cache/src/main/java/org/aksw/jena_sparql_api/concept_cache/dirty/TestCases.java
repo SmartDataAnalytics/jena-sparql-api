@@ -1,16 +1,16 @@
 package org.aksw.jena_sparql_api.concept_cache.dirty;
 
 import org.aksw.jena_sparql_api.compare.QueryExecutionFactoryCompare;
-import org.aksw.jena_sparql_api.concept_cache.core.QueryExecutionFactoryViewMatcher;
+import org.aksw.jena_sparql_api.concept_cache.core.QueryExecutionFactoryViewCacheMaster;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
-import com.hp.hpl.jena.shared.PrefixMapping;
-import com.hp.hpl.jena.shared.impl.PrefixMappingImpl;
-import com.hp.hpl.jena.sparql.modify.request.UpdateModify;
-import com.hp.hpl.jena.update.UpdateFactory;
-import com.hp.hpl.jena.update.UpdateRequest;
+import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.shared.impl.PrefixMappingImpl;
+import org.apache.jena.sparql.modify.request.UpdateModify;
+import org.apache.jena.update.UpdateFactory;
+import org.apache.jena.update.UpdateRequest;
 
 
 public class TestCases {
@@ -47,7 +47,7 @@ public class TestCases {
                 .end()
                 .create();
 
-        QueryExecutionFactory cachedService = new QueryExecutionFactoryViewMatcher(rawService);
+        QueryExecutionFactory cachedService = new QueryExecutionFactoryViewCacheMaster(rawService, null);
 
         boolean forceCompareFailures = false;
         if(forceCompareFailures) {

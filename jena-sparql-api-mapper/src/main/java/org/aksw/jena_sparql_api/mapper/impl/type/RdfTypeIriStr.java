@@ -1,13 +1,8 @@
 package org.aksw.jena_sparql_api.mapper.impl.type;
 
-import org.aksw.jena_sparql_api.mapper.context.RdfPopulationContext;
-import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
-import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
-
-import com.hp.hpl.jena.graph.Graph;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.NodeFactory;
-import com.hp.hpl.jena.sparql.core.DatasetGraph;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 
 /**
  * RdfType to map Java Strings to IRIs and vice versa
@@ -15,16 +10,16 @@ import com.hp.hpl.jena.sparql.core.DatasetGraph;
  *
  */
 public class RdfTypeIriStr
-    extends RdfTypePrimitive
+    extends RdfTypePrimitiveBase
 {
-    public RdfTypeIriStr(RdfTypeFactory typeFactory) {
-        super(typeFactory);
-        // TODO Auto-generated constructor stub
+    public RdfTypeIriStr() { //RdfTypeFactory typeFactory) {
+//        super(typeFactory);
+      super();
     }
 
 
     @Override
-    public Class<?> getBeanClass() {
+    public Class<?> getEntityClass() {
         return String.class;
     }
 
@@ -36,9 +31,15 @@ public class RdfTypeIriStr
     }
 
     @Override
-    public Object createJavaObject(Node node) {
+    public Object createJavaObject(Node node, Graph graph) {
         String result = node.getURI();
         return result;
     }
+    
+	@Override
+	public boolean hasIdentity() {
+		return false;
+	}
+
 
 }

@@ -8,10 +8,10 @@ import org.aksw.jena_sparql_api.stmt.SparqlUpdateParserImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.convert.converter.Converter;
 
-import com.hp.hpl.jena.query.Syntax;
-import com.hp.hpl.jena.sparql.core.DatasetGraph;
-import com.hp.hpl.jena.sparql.core.Prologue;
-import com.hp.hpl.jena.update.UpdateRequest;
+import org.apache.jena.query.Syntax;
+import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.core.Prologue;
+import org.apache.jena.update.UpdateRequest;
 
 /**
  * @author raven

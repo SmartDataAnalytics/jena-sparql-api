@@ -1,10 +1,10 @@
 package org.aksw.jena_sparql_api.stmt;
 
 import com.google.common.base.Supplier;
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryFactory;
-import com.hp.hpl.jena.query.Syntax;
-import com.hp.hpl.jena.sparql.core.Prologue;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryFactory;
+import org.apache.jena.query.Syntax;
+import org.apache.jena.sparql.core.Prologue;
 
 public class SparqlQueryParserImpl
     implements SparqlQueryParser

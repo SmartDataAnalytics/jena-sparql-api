@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.core;
 
-import com.hp.hpl.jena.sparql.core.DatasetDescription;
+import org.apache.jena.sparql.core.DatasetDescription;
 
 public class SparqlServiceImpl
     implements SparqlService
@@ -46,4 +46,10 @@ public class SparqlServiceImpl
         SparqlServiceImpl result = new SparqlServiceImpl(qef, uef);
         return result;
     }
+
+//    @Override
+//    public void close() throws Exception {
+//        qef.close();
+//        //uef.close();
+//    }
 }

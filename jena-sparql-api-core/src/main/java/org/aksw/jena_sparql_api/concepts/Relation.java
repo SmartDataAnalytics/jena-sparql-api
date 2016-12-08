@@ -2,17 +2,21 @@ package org.aksw.jena_sparql_api.concepts;
 
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.aksw.commons.collections.SetUtils;
+import org.aksw.jena_sparql_api.stmt.SparqlElementParser;
+import org.aksw.jena_sparql_api.stmt.SparqlElementParserImpl;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.VarUtils;
-
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.graph.NodeTransform;
-import com.hp.hpl.jena.sparql.lang.ParserSPARQL10;
-import com.hp.hpl.jena.sparql.syntax.Element;
-import com.hp.hpl.jena.sparql.syntax.ElementGroup;
-import com.hp.hpl.jena.sparql.syntax.PatternVars;
+import org.aksw.jena_sparql_api.utils.Vars;
+import org.apache.jena.query.Syntax;
+import org.apache.jena.sparql.core.TriplePath;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.graph.NodeTransform;
+import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementGroup;
+import org.apache.jena.sparql.syntax.PatternVars;
 
 /**
  * This is a binary relation used to relate two concepts to each other
@@ -43,8 +47,30 @@ public class Relation {
         return element;
     }
 
+    public Relation reverse()
+    {
+        Relation result = new Relation(element, targetVar, sourceVar);
+        return result;
+    }
+
+    public Concept getSourceConcept() {
+        Concept result = new Concept(element, sourceVar);
+        return result;
+    }
+
+    public Concept getTargetConcept() {
+        Concept result = new Concept(element, targetVar);
+        return result;
+    }
     public static Relation create(String elementStr, String sourceVarName,
             String targetVarName) {
+        SparqlElementParser parser = SparqlElementParserImpl.create(Syntax.syntaxARQ, null);
+        Relation result = create(elementStr, sourceVarName, targetVarName, parser);
+        return result;
+    }
+
+    public static Relation create(String elementStr, String sourceVarName,
+            String targetVarName, Function<String, ? extends Element> elementParser) {
         Var sourceVar = Var.alloc(sourceVarName);
         Var targetVar = Var.alloc(targetVarName);
 
@@ -54,7 +80,7 @@ public class Relation {
             tmp = "{" + tmp + "}";
         }
 
-        Element element = ParserSPARQL10.parseElement(tmp);
+        Element element = elementParser.apply(tmp);//ParserSPARQL10.parseElement(tmp);
 
         // TODO Find a generic flatten routine
         if (element instanceof ElementGroup) {
@@ -86,6 +112,12 @@ public class Relation {
         Relation result = new Relation(e, s, t);
         return result;
     }
+
+    public static Relation create(org.apache.jena.sparql.path.Path path) {
+        Relation result = new Relation(ElementUtils.createElement(new TriplePath(Vars.s, path, Vars.o)), Vars.s, Vars.o);
+        return result;
+    }
+
 
     @Override
     public int hashCode() {

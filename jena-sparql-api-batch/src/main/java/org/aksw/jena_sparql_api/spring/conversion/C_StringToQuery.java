@@ -4,7 +4,7 @@ import org.aksw.jena_sparql_api.stmt.SparqlQueryParser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.convert.converter.Converter;
 
-import com.hp.hpl.jena.query.Query;
+import org.apache.jena.query.Query;
 
 @AutoRegistered
 public class C_StringToQuery

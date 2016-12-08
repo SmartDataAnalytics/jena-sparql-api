@@ -4,9 +4,9 @@ import java.util.Set;
 
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
 
-import com.hp.hpl.jena.sparql.core.Quad;
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.expr.Expr;
 
 
 
@@ -111,7 +111,10 @@ public class PatternSummary
         return true;
     }
 
-
-
-
+    @Override
+    public String toString() {
+        return "PatternSummary [originalPattern=" + originalPattern
+                + ", canonicalPattern=" + canonicalPattern + ", quadToCnf="
+                + quadToCnf + ", varOccurrences=" + varOccurrences + "]";
+    }
 }

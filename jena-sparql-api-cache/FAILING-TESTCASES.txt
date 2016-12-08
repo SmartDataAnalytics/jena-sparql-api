@@ -1,0 +1,138 @@
+################################################
+Fixed: 19: CQNoProj#nop7
+
+Reason: The blank node becomes a variable and ends up in the projection. I don't get how jena handles this var<->bn mapping
+
+View Query: PREFIX  :     <http://www.example.org/>
+
+SELECT  *
+WHERE
+  { ?x   :takesCourse  ?c1 .
+    ?c1  :shortName    "Cs200" .
+    ?x   :takesCourse  ?c2 .
+    ?c2  :shortName    "Cs301"
+  }
+
+User Query: PREFIX  :     <http://www.example.org/>
+
+SELECT  *
+WHERE
+  { ?x    :takesCourse  ?c1 .
+    ?c1   :shortName    "Cs200" .
+    ?x    :takesCourse  ?c2 .
+    ?c2   :shortName    "Cs301" .
+    ?x    :takesCourse  _:b0 .
+    _:b0  :shortName    "Cs401"
+  }
+
+###############################################
+
+
+
+
+
+
+
+###############################################
+46: UCQProj10
+
+Reason: Probably the clustering of triple patterns by the expressions is incorrect.
+
+View Query: SELECT  ?x ?y
+WHERE
+  { ?x  ?z  ?y }
+
+User Query: PREFIX  :     <http://www.example.org/>
+
+SELECT  ?x ?y
+WHERE
+  { ?x  :name  ?y }
+
+###############################################
+38: UCQProj24
+
+Reason: If the view is a union query, it would be sufficient if *any* of its members matched into the query.
+But i think the way the system works right now, all members would have to match.
+
+
+Wait! I think these is the kind of query containment that is UNSUITABLE for caching, as we cannot discriminate the appropriate bindings:
+Although a part of the view query is contained in the user query, the view provides more bindings than requested.
+
+In the situation, that a requested variable is not bound by an unmatched fragment, we could add FILTER(!Bound(<non referenced variable>)) to the views' bindings for each non-referenced variables.
+But in this case, we are lost: View: SELECT ?x { { ?x a <foo> } UNION { ?x a <bar> } } - Query: Select ?x { ?x a <foo> } -> We cannot use the cache, as it does not allow discriminating between <foo> and <bar>.
+
+
+
+
+View Query: PREFIX  :     <http://example.org/>
+
+SELECT  *
+WHERE
+  { ?x  a                     :Student
+      { ?x  :name  ?y }
+    UNION
+      { ?x  :nickName  ?z }
+    UNION
+      { ?x  :telephone  ?tel }
+    UNION
+      { ?x  :ssn  ?ssn }
+    UNION
+      { ?x  :sex  ?sex }
+    UNION
+      { ?x  :memberOf  ?dept }
+    UNION
+      { ?x  :emailAddress  ?email }
+    UNION
+      { ?x  :age  ?age }
+    ?x  :takesCourse  ?course
+  }
+
+User Query: PREFIX  :     <http://example.org/>
+
+SELECT  *
+WHERE
+  { ?x  a                     :Student
+      { ?x  :name  ?y }
+    UNION
+      { ?x  :nickName      ?z ;
+            :telephone     ?tel ;
+            :ssn           ?ssn ;
+            :sex           ?sex ;
+            :memberOf      ?dept ;
+            :emailAddress  ?email ;
+            :age           ?age
+      }
+    ?x  :takesCourse  ?course
+  }
+
+
+#####################################
+UCQProj#p22
+
+Reason: Probably the clustering of triple patterns by the expressions is incorrect.
+
+View Query: PREFIX  :     <http://www.example.org/>
+
+SELECT  ?x ?z
+WHERE
+  { ?x  a                     :GraduateStudent .
+    ?y  a                     :Department .
+    ?x  :memberOf             ?y .
+    ?y  :subOrganizationOf    ?u .
+    ?x  :email                ?z
+  }
+
+User Query: PREFIX  :     <http://www.example.org/>
+
+SELECT  ?x ?z
+WHERE
+  { ?x  a                     :GraduateStudent .
+    ?y  a                     :Department .
+    ?x  :memberOf             ?y .
+    ?y  :subOrganizationOf    :University1 .
+    ?x  :email                ?z
+  }
+
+
+
+

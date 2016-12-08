@@ -3,26 +3,25 @@ package org.aksw.jena_sparql_api.batch.config;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.function.Supplier;
 
 import org.aksw.jena_sparql_api.core.DatasetListener;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
 import org.aksw.jena_sparql_api.sparql.ext.http.HttpInterceptorRdfLogging;
 import org.aksw.jena_sparql_api.update.DatasetListenerTrack;
-import org.aksw.jena_sparql_api.update.FluentSparqlServiceFactory;
 import org.aksw.jena_sparql_api.update.SinkModelWriter;
-import org.aksw.jena_sparql_api.update.UpdateStrategyEventSource;
+import org.apache.http.HttpRequestInterceptor;
+import org.apache.http.HttpResponseInterceptor;
 import org.apache.http.client.HttpClient;
-import org.apache.http.impl.client.SystemDefaultHttpClient;
-import org.apache.jena.riot.web.HttpOp;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 
 @Configuration
 public class ConfigSparqlServicesCore {
@@ -87,15 +86,22 @@ public class ConfigSparqlServicesCore {
 
         HttpInterceptorRdfLogging logger = new HttpInterceptorRdfLogging(sink);
 
-        SystemDefaultHttpClient httpClient = new SystemDefaultHttpClient();
-        httpClient.addRequestInterceptor(logger);
-        httpClient.addResponseInterceptor(logger);
+
+        PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager();
+        connManager.setMaxTotal(100);
+        connManager.setDefaultMaxPerRoute(100);
+
+        HttpClient httpClient = HttpClientBuilder.create()
+        	.setConnectionManager(connManager)
+        	.addInterceptorLast((HttpRequestInterceptor)logger)
+        	.addInterceptorLast((HttpResponseInterceptor)logger)
+        	.build();
 
         // TODO This sets the httpClient globally, which is actually not desired
-        HttpOp.setDefaultHttpClient(httpClient);
-        HttpOp.setUseDefaultClientWithAuthentication(true);
+        //HttpOp.setDefaultHttpClient(httpClient);
+        //HttpOp.setUseDefaultClientWithAuthentication(true);
 
-        Supplier<HttpClient> result = Suppliers.<HttpClient>ofInstance(httpClient);
+        Supplier<HttpClient> result = () -> httpClient;
 
         return result;
     }

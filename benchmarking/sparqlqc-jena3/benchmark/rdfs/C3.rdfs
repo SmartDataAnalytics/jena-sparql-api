@@ -1,0 +1,6 @@
+{ 
+  (maleHeadOf,sp,headOf),
+  (femaleHeadOf,sp,headOf ), 
+  (FullProfessor,sc,Professor),
+  (headOf,dom,FullProfessor)
+}

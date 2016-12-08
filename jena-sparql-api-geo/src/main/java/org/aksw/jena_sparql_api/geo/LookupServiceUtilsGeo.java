@@ -6,7 +6,7 @@ import org.aksw.jena_sparql_api.lookup.LookupServiceTransformValue;
 import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
 
-import com.hp.hpl.jena.graph.Node;
+import org.apache.jena.graph.Node;
 import com.vividsolutions.jts.geom.Geometry;
 
 public class LookupServiceUtilsGeo {

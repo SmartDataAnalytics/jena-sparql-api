@@ -12,14 +12,14 @@ import org.aksw.jena_sparql_api.utils.CloseableJena;
 import org.aksw.jena_sparql_api.utils.CloseableQueryExecution;
 import org.aksw.jena_sparql_api.utils.ResultSetUtils;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
-import com.hp.hpl.jena.sparql.core.Var;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.sparql.core.Var;
 
 public class ServiceUtils {
 //    public static fetchList(QueryExecutionFactory, QueryExecutionFactory)
@@ -55,9 +55,13 @@ public class ServiceUtils {
     }
 
     public static List<Node> fetchList(QueryExecution qe, Var v) {
-        ResultSet rs = qe.execSelect();
-        List<Node> result = ResultSetUtils.resultSetToList(rs, v);
-        return result;
+        try {
+            ResultSet rs = qe.execSelect();
+            List<Node> result = ResultSetUtils.resultSetToList(rs, v);
+            return result;
+        } finally {
+            qe.close();
+        }
     }
 
 

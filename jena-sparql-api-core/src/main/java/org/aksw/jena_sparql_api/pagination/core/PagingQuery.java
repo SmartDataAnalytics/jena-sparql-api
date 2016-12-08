@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.pagination.core;
 
 import org.aksw.jena_sparql_api.pagination.extra.PaginationQueryIterator;
 
-import com.hp.hpl.jena.query.Query;
+import org.apache.jena.query.Query;
 
 public class PagingQuery {
     private Query proto;
@@ -13,17 +13,23 @@ public class PagingQuery {
         this.pageSize = pageSize;
     }
 
-    public PaginationQueryIterator createQueryIterator(long itemIndex) {
+    public PaginationQueryIterator createQueryIterator(Long offset, Long limit) {
 
-        long baseOffset = proto.getOffset() == Query.NOLIMIT ? 0 : proto.getOffset();
+        long o = offset == null ? 0 : offset;
+        long l = limit == null ? Long.MAX_VALUE : limit;
 
-        long itemOffset = baseOffset + itemIndex;
+        long queryOffset = proto.getOffset() == Query.NOLIMIT ? 0 : proto.getOffset();
 
-        long limit = proto.getLimit() == Query.NOLIMIT ? Query.NOLIMIT : proto.getLimit() - itemIndex;
+        long itemOffset = queryOffset + o;
+
+        long queryLimit = proto.getLimit() == Query.NOLIMIT ? Long.MAX_VALUE : proto.getLimit() - o;
+
+        long itemLimit = Math.min(queryLimit, l);
+        itemLimit = itemLimit == Long.MAX_VALUE ? Query.NOLIMIT : itemLimit;
 
         Query clone = proto.cloneQuery();
         clone.setOffset(itemOffset);
-        clone.setLimit(limit);
+        clone.setLimit(itemLimit);
 
         PaginationQueryIterator result = new PaginationQueryIterator(clone, pageSize);
         return result;

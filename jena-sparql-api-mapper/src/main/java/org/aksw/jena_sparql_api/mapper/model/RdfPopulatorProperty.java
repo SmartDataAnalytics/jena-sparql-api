@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.mapper.model;
 
+import org.aksw.jena_sparql_api.beans.model.PropertyOps;
+
 /**
  * Base class for RdfPopulators that operate on a single bean property
  * @author raven
@@ -21,7 +23,9 @@ public interface RdfPopulatorProperty
      *
      * @return
      */
-    String getPropertyName();
+    //String getPropertyName();
+    
+    PropertyOps getPropertyOps();
 
 
     /**

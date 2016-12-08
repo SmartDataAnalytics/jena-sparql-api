@@ -1,37 +1,38 @@
 package org.aksw.jena_sparql_api.concept_cache.combinatorics;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.aksw.commons.collections.MapUtils;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
 import org.apache.commons.math3.util.CombinatoricsUtils;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.core.Var;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.sparql.algebra.Table;
-import com.hp.hpl.jena.sparql.algebra.table.TableN;
-import com.hp.hpl.jena.sparql.core.Quad;
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.engine.binding.Binding;
-import com.hp.hpl.jena.sparql.engine.binding.BindingHashMap;
-import com.hp.hpl.jena.sparql.graph.NodeTransform;
 
 public class Utils2 {
 
-    public static int getNumMatches(QuadGroup quadGroup) {
+//    public static int getCombinationCount(long n, long k) {
+//        if(k > n) {
+//            result = 0;
+//        } else {
+//            result = (int)(CombinatoricsUtils.factorial(n) / CombinatoricsUtils.factorial(n - k));
+//        }        
+//    }
+    
+    public static int getNumMatches(Entry<? extends Collection<?>, ? extends Collection<?>> quadGroup) {
         int result;
 
-        int c = quadGroup.getCandQuads().size();
-        int q = quadGroup.getQueryQuads().size();
+        int c = quadGroup.getKey().size();
+        int q = quadGroup.getValue().size();
 
         if(c > q) { // If there are more candidates quads than query quads, we can't map all of them
             result = 0;

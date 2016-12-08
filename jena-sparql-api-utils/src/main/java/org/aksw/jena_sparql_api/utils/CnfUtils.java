@@ -1,31 +1,39 @@
 package org.aksw.jena_sparql_api.utils;
 
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryFactory;
-import com.hp.hpl.jena.sparql.algebra.Algebra;
-import com.hp.hpl.jena.sparql.algebra.Op;
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.expr.E_Equals;
-import com.hp.hpl.jena.sparql.expr.E_LogicalAnd;
-import com.hp.hpl.jena.sparql.expr.E_LogicalNot;
-import com.hp.hpl.jena.sparql.expr.E_LogicalOr;
-import com.hp.hpl.jena.sparql.expr.E_NotEquals;
-import com.hp.hpl.jena.sparql.expr.Expr;
-import com.hp.hpl.jena.sparql.expr.ExprFunction;
-import com.hp.hpl.jena.sparql.expr.ExprFunction2;
-import com.hp.hpl.jena.sparql.expr.ExprList;
-import com.hp.hpl.jena.sparql.expr.NodeValue;
+import org.apache.jena.ext.com.google.common.collect.HashMultimap;
+import org.apache.jena.graph.Node;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryFactory;
+import org.apache.jena.sparql.algebra.Algebra;
+import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.expr.E_Equals;
+import org.apache.jena.sparql.expr.E_LogicalAnd;
+import org.apache.jena.sparql.expr.E_LogicalNot;
+import org.apache.jena.sparql.expr.E_LogicalOr;
+import org.apache.jena.sparql.expr.E_NotEquals;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprFunction;
+import org.apache.jena.sparql.expr.ExprFunction2;
+import org.apache.jena.sparql.expr.ExprList;
+import org.apache.jena.sparql.expr.NodeValue;
+
+import com.google.common.collect.Multimap;
 
 
-// TODO There is already com.hp.hpl.jena.sparql.algebra.optimize.TransformFilterConjunction
+// TODO There is already org.apache.jena.sparql.algebra.optimize.TransformFilterConjunction
 public class CnfUtils {
 
     @SuppressWarnings("unchecked")
@@ -41,36 +49,86 @@ public class CnfUtils {
         return (T)result;
     }
 
-    public static Map<Var, Node> getConstants(Iterable<Set<Expr>> cnf) {
-        Map<Var, Node> result = new HashMap<Var, Node>();
+    public static Entry<Var, Node> extractEquality(Collection<? extends Expr> clause) {
+        Entry<Var, Node> result = null;
 
-        for(Set<Expr> clause : cnf) {
-            if(clause.size() == 1) {
-                Expr expr = clause.iterator().next();
+        if(clause.size() == 1) {
+            Expr expr = clause.iterator().next();
 
-                if(expr instanceof E_Equals) {
-                    E_Equals eq = (E_Equals)expr;
+            if(expr instanceof E_Equals) {
+                E_Equals eq = (E_Equals)expr;
 
-                    eq = normalize(eq);
+                eq = normalize(eq);
 
-                    Expr a = eq.getArg1();
-                    Expr b = eq.getArg2();
+                Expr a = eq.getArg1();
+                Expr b = eq.getArg2();
 
-                    if(a.isVariable() && b.isConstant()) {
-                        Var v = a.asVar();
-                        Node c = b.getConstant().getNode();
+                if(a.isVariable() && b.isConstant()) {
+                    Var v = a.asVar();
+                    Node c = b.getConstant().getNode();
 
-                        Node o = result.get(v);
-                        if(o != null && !o.equals(c)) {
-                            c = NodeValue.FALSE.getNode();
-                        }
-
-                        result.put(v, c);
-                    }
+                    result = new SimpleEntry<>(v, c);
                 }
             }
         }
 
+        return result;
+    }
+
+    public static <E extends Expr, C extends Collection<? extends E>> Set<C> getEqualityClauses(Iterable<C> cnf) {
+        Set<C> result = new HashSet<>();
+
+        for(C clause : cnf) {
+            Entry<Var, Node> entry = extractEquality(clause);
+            if(entry != null) {
+                result.add(clause);
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Extract from the CNF all mappings from a variable to constant, i.e.
+     * if there is ?x = foo, then the result will contain the mapping ?x -> foo.
+     *
+     *
+     * @param cnf
+     * @return
+     */
+    public static Map<Var, Node> getConstants(Iterable<? extends Collection <? extends Expr>> cnf) {
+        Map<Var, Node> result = new HashMap<Var, Node>();
+
+        // Inconsistent variables are those mapping to different values
+        Set<Var> inconsistent = new HashSet<Var>();
+
+        Multimap<Var, Iterable<? extends Collection <? extends Expr>>> varToClauses;
+
+        for(Collection<? extends Expr> clause : cnf) {
+            Entry<Var, Node> entry = extractEquality(clause);
+            if(entry != null) {
+                Var v = entry.getKey();
+                Node c = entry.getValue();
+
+
+
+                Node o = result.get(v);
+                if(o != null && !o.equals(c) && !inconsistent.contains(v)) {
+                    inconsistent.add(v);
+                    //c = NodeValue.FALSE.getNode();
+                    result.remove(v);
+                } else {
+                    result.put(v, c);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    public static Expr toExpr(Iterable<Set<Expr>> cnf) {
+        ExprList exprList = toExprList(cnf);
+        Expr result = ExprUtils.andifyBalanced(exprList);
         return result;
     }
 
@@ -203,10 +261,15 @@ public class CnfUtils {
 
     public static Set<Set<Expr>> toSetCnf(Expr expr)
     {
-        List<ExprList> clauses = toClauses(expr);
-        Set<Set<Expr>> cnf = FilterUtils.toSets(clauses);
+        Set<Set<Expr>> result;
+        if(NodeValue.TRUE.equals(expr)) {
+            result = new HashSet<>(); // Return a new set, as callers may want to extend the set//Collections.emptySet();
+        } else {
+            List<ExprList> clauses = toClauses(expr);
+            result = FilterUtils.toSets(clauses);
+        }
 
-        return cnf;
+        return result;
     }
 
     public static List<ExprList> toClauses(Expr expr)

@@ -11,8 +11,8 @@ import org.aksw.jena_sparql_api.core.SparqlServiceReference;
 import org.aksw.jena_sparql_api.core.UpdateContext;
 import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
 
-import com.hp.hpl.jena.sparql.core.Quad;
-import com.hp.hpl.jena.update.UpdateRequest;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.update.UpdateRequest;
 
 class MainSparqlUpdateSimpleDemo {
 

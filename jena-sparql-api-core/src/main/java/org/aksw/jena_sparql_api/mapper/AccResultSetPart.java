@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.aksw.jena_sparql_api.utils.ResultSetPart;
 
-import com.hp.hpl.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.engine.binding.Binding;
 
 public class AccResultSetPart
     implements Acc<ResultSetPart>

@@ -2,16 +2,15 @@ package org.aksw.jena_sparql_api.stmt;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.aksw.jena_sparql_api.concepts.Relation;
-
-import com.google.common.base.Function;
-import com.hp.hpl.jena.query.Syntax;
-import com.hp.hpl.jena.sparql.core.Prologue;
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.syntax.Element;
+import org.apache.jena.query.Syntax;
+import org.apache.jena.sparql.core.Prologue;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.syntax.Element;
 
 /**
  * There are multiple ways to represent a relation:

@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.batch.trash;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactoryBackQuery;
 
-import com.hp.hpl.jena.query.Query;
+import org.apache.jena.query.Query;
 
 public class QueryExecutionFactoryResource
     extends QueryExecutionFactoryBackQuery

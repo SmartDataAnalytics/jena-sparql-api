@@ -1,20 +1,20 @@
 package org.aksw.jena_sparql_api.mapper;
 
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.sparql.core.Var;
+import org.apache.jena.query.Query;
+import org.apache.jena.sparql.core.Var;
 
 public class MappedQuery<T> {
 
-    protected PartitionedQuery partQuery;
+    protected PartitionedQuery1 partQuery;
     protected Agg<T> agg;
 
-    public MappedQuery(PartitionedQuery partQuery, Agg<T> agg) {
+    public MappedQuery(PartitionedQuery1 partQuery, Agg<T> agg) {
         super();
         this.partQuery = partQuery;
         this.agg = agg;
     }
 
-    public PartitionedQuery getPartQuery() {
+    public PartitionedQuery1 getPartQuery() {
         return partQuery;
     }
 
@@ -23,7 +23,7 @@ public class MappedQuery<T> {
     }
 
     public static <T> MappedQuery<T> create(Query query, Var partitionVar, Agg<T> agg) {
-        MappedQuery<T> result = new MappedQuery<T>(new PartitionedQuery(query, partitionVar), agg);
+        MappedQuery<T> result = new MappedQuery<T>(new PartitionedQuery1(query, partitionVar), agg);
         return result;
     }
 

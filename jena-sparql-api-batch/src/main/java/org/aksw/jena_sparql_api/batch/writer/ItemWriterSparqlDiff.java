@@ -13,8 +13,8 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 
 import com.google.common.collect.Lists;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.sparql.core.DatasetGraph;
+import org.apache.jena.graph.Node;
+import org.apache.jena.sparql.core.DatasetGraph;
 
 public class ItemWriterSparqlDiff
     implements ItemWriter<Entry<? extends Node, ? extends Diff<? extends DatasetGraph>>>, InitializingBean
@@ -49,7 +49,7 @@ public class ItemWriterSparqlDiff
         } catch(Exception e) {
             if(e instanceof HttpException) {
                 HttpException x = (HttpException)e;
-                String response = ((HttpException) e).getResponse();
+                String response = x.getResponse();
                 throw new RuntimeException(response, e);
             }
 

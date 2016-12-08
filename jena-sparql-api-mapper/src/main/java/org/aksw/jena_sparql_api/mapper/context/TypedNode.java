@@ -1,8 +1,7 @@
 package org.aksw.jena_sparql_api.mapper.context;
 
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
-
-import com.hp.hpl.jena.graph.Node;
+import org.apache.jena.graph.Node;
 
 public class TypedNode {
 	protected RdfType rdfType;
@@ -10,6 +9,10 @@ public class TypedNode {
 
 	public TypedNode(RdfType rdfType, Node node) {
 		super();
+		if(node == null) {
+		    throw new NullPointerException();
+		}
+
 		this.rdfType = rdfType;
 		this.node = node;
 	}
@@ -52,4 +55,11 @@ public class TypedNode {
 			return false;
 		return true;
 	}
+
+    @Override
+    public String toString() {
+        return "TypedNode [rdfType=" + rdfType + ", node=" + node + "]";
+    }
+	
+	
 }

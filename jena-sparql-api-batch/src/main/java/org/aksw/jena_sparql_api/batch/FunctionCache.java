@@ -3,9 +3,9 @@ package org.aksw.jena_sparql_api.batch;
 import java.util.List;
 
 import com.google.common.cache.Cache;
-import com.hp.hpl.jena.sparql.expr.ExprList;
-import com.hp.hpl.jena.sparql.expr.NodeValue;
-import com.hp.hpl.jena.sparql.function.FunctionBase;
+import org.apache.jena.sparql.expr.ExprList;
+import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.function.FunctionBase;
 
 public class FunctionCache
     extends FunctionBase

@@ -9,16 +9,19 @@ import org.springframework.beans.factory.config.AbstractFactoryBean;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.reflect.TypeToken;
-import com.hp.hpl.jena.sparql.core.Prologue;
+import org.apache.jena.sparql.core.Prologue;
 
 
 public class FactoryBeanPrefixes
-    extends AbstractFactoryBean<String>
+    extends AbstractFactoryBean<Object>
 {
-    protected static int counter = 0;
+    //protected static int counter = 0;
+
+
 
     @Autowired
     protected Gson gson;
+
 
     @Autowired
     protected Prologue prologue;
@@ -43,7 +46,7 @@ public class FactoryBeanPrefixes
 
 
     @Override
-    protected String createInstance()
+    protected Object createInstance()
         throws Exception
     {
         Type type = new TypeToken<Map<String, String>>(){}.getType();
@@ -53,6 +56,7 @@ public class FactoryBeanPrefixes
         prologue.getPrefixMapping().setNsPrefixes(map);
 
         //return prologue.getPrefixMapping();
-        return "" + ++counter;
+        //return "" + ++counter;
+        return null;
     }
 }

@@ -1,0 +1,3 @@
+SELECT ?x ?y  WHERE {
+	?x ?z ?y 
+}

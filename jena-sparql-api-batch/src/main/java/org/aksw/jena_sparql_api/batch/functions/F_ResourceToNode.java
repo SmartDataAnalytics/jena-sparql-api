@@ -1,8 +1,8 @@
 package org.aksw.jena_sparql_api.batch.functions;
 
 import com.google.common.base.Function;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.jena.graph.Node;
+import org.apache.jena.rdf.model.Resource;
 
 public class F_ResourceToNode
     implements Function<Resource, Node>

@@ -20,18 +20,14 @@ public abstract class DelayerBase
     public abstract void setLastRequestTime(long lastRequestTime);
 
     @Override
-    public synchronized void doDelay() {
+    public synchronized void doDelay() throws InterruptedException{
         long now = System.currentTimeMillis();
 
         long remainingDelay = getDelay() - (now - getLastRequestTime());
 
         if (remainingDelay > 0l) {
             logger.debug("Delaying by " + remainingDelay + "ms.");
-            try {
-                Thread.sleep(remainingDelay);
-            } catch (Exception e) {
-
-            }
+            Thread.sleep(remainingDelay);
         }
 
         setLastRequestTime(System.currentTimeMillis());

@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api.mapper;
 
 import com.google.common.base.Function;
-import com.hp.hpl.jena.graph.Node;
+import org.apache.jena.graph.Node;
 
 public class FunctionNodeToString
     implements Function<Node, String>

@@ -7,7 +7,7 @@ import org.aksw.jena_sparql_api.core.QuadContainmentChecker;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 
 import com.google.common.base.Function;
-import com.hp.hpl.jena.sparql.core.Quad;
+import org.apache.jena.sparql.core.Quad;
 
 public class FN_QuadDiffUnique
     implements Function<Diff<? extends Iterable<Quad>>, Diff<Set<Quad>>>

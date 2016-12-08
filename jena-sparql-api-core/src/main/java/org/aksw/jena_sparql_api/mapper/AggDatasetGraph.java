@@ -4,9 +4,9 @@ import java.util.Set;
 
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 
-import com.hp.hpl.jena.sparql.core.DatasetGraph;
-import com.hp.hpl.jena.sparql.core.QuadPattern;
-import com.hp.hpl.jena.sparql.core.Var;
+import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.core.QuadPattern;
+import org.apache.jena.sparql.core.Var;
 
 public class AggDatasetGraph
     implements Agg<DatasetGraph>

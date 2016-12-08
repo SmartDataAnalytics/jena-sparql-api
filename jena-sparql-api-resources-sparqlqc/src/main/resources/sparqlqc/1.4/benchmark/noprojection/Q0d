@@ -1,0 +1,6 @@
+PREFIX : <http://www1.example.org/>
+
+
+SELECT * WHERE { 
+   ?p :maidenName "No" .
+}

@@ -1,9 +1,11 @@
 package org.aksw.jena_sparql_api.concept_cache.dirty;
 
+import java.util.Arrays;
+
 public class CombinatoricsVector
 {
-    private int n;
-    private int[] vector;
+    protected int n;
+    protected int[] vector;
 
     public CombinatoricsVector(int n, int k) {
         this.n = n;
@@ -32,6 +34,7 @@ public class CombinatoricsVector
 
     /**
      * Request to increment the value at a given index.
+     * Can be used to skip all combinations with a certain prefix.
      *
      * @param i
      * @return
@@ -58,7 +61,38 @@ public class CombinatoricsVector
         return result;
     }
 
-    public int[] vector() {
+    public int[] getVector() {
         return vector;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + n;
+        result = prime * result + Arrays.hashCode(vector);
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        CombinatoricsVector other = (CombinatoricsVector) obj;
+        if (n != other.n)
+            return false;
+        if (!Arrays.equals(vector, other.vector))
+            return false;
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        return "CombinatoricsVector [n=" + n + ", vector="
+                + Arrays.toString(vector) + "]";
     }
 }

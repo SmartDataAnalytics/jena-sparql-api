@@ -3,28 +3,52 @@ package org.aksw.jena_sparql_api.utils;
 import java.util.List;
 
 import com.google.common.base.Joiner;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.NodeFactory;
-import com.hp.hpl.jena.sparql.core.DatasetDescription;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.sparql.core.DatasetDescription;
+import org.apache.jena.sparql.core.Quad;
 
 public class DatasetDescriptionUtils {
+
+    public static void mergeInto(DatasetDescription target, DatasetDescription source) {
+        target.addAllDefaultGraphURIs(source.getDefaultGraphURIs());
+        target.addAllNamedGraphURIs(source.getNamedGraphURIs());
+    }
+
     public static Node getSingleDefaultGraph(DatasetDescription datasetDescription) {
         String str = getSingleDefaultGraphUri(datasetDescription);
         Node result = NodeFactory.createURI(str);
         return result;
     }
 
+    /**
+     * If the argument is null or there is only one default graph, this graph IRI is returned; otherwise null.
+     *
+     * @param datasetDescription
+     * @return
+     */
     public static String getSingleDefaultGraphUri(DatasetDescription datasetDescription) {
-        List<String> dgus = datasetDescription.getDefaultGraphURIs();
+        String result;
 
-        String result = datasetDescription != null && dgus.size() == 1
-                ? dgus.iterator().next()
-                : null
-                ;
+        if(datasetDescription == null) {
+            result = Quad.defaultGraphIRI.getURI();
+        } else {
+
+            List<String> dgus = datasetDescription.getDefaultGraphURIs();
+
+            result = datasetDescription != null && dgus.size() == 1
+                    ? dgus.iterator().next()
+                    : null
+                    ;
+        }
 
         return result;
     }
 
+    public static DatasetDescription createDefaultGraph(Node defaultGraph) {
+        DatasetDescription result = createDefaultGraph(defaultGraph.getURI());
+        return result;
+    }
 
     public static DatasetDescription createDefaultGraph(String defaultGraph) {
         DatasetDescription result = new DatasetDescription();

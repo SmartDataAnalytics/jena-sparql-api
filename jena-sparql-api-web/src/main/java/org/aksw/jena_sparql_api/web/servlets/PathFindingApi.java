@@ -25,15 +25,16 @@ import org.aksw.jena_sparql_api.sparql_path.core.algorithm.ConceptPathFinder;
 import org.aksw.jena_sparql_api.utils.SparqlFormatterUtils;
 import org.aksw.jena_sparql_api.web.utils.AuthenticatorUtils;
 import org.aksw.jena_sparql_api.web.utils.ThreadUtils;
-import org.apache.jena.atlas.web.auth.HttpAuthenticator;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.HttpClient;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.sparql.core.DatasetDescription;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.google.gson.Gson;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.sparql.core.DatasetDescription;
 
 
 @Service
@@ -109,7 +110,8 @@ public class PathFindingApi {
     ) throws ClassNotFoundException, SQLException {
 
         // Must parse the authenticator here (outside of the async thread)
-        final HttpAuthenticator authenticator = AuthenticatorUtils.parseAuthenticator(req);
+        UsernamePasswordCredentials credentials = AuthenticatorUtils.parseCredentials(req);
+        HttpClient httpClient = AuthenticatorUtils.prepareHttpClientBuilder(credentials).build();
 
 
         ThreadUtils.start(response, new Runnable() {
@@ -124,7 +126,7 @@ public class PathFindingApi {
                 Concept sourceConcept = Concept.create(sourceElement, sourceVar);
                 Concept targetConcept = Concept.create(targetElement, targetVar);
 
-                SparqlService sparqlService = sparqlServiceFactory.createSparqlService(serviceUri, datasetDescription, authenticator);
+                SparqlService sparqlService = sparqlServiceFactory.createSparqlService(serviceUri, datasetDescription, httpClient);
                 QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
                 Model joinSummaryModel;
 

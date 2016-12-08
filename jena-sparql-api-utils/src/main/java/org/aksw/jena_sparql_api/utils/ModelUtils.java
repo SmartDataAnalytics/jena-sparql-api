@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api.utils;
 
-import com.hp.hpl.jena.rdf.model.*;
-import com.hp.hpl.jena.vocabulary.RDFS;
+import org.apache.jena.rdf.model.*;
+import org.apache.jena.vocabulary.RDFS;
 import org.aksw.commons.collections.MultiMaps;
 import org.aksw.commons.util.strings.StringUtils;
 import org.slf4j.Logger;

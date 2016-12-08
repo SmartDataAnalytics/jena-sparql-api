@@ -3,15 +3,15 @@ package org.aksw.jena_sparql_api.concept_cache;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 import org.junit.Test;
 
-import com.hp.hpl.jena.query.ARQ;
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryFactory;
-import com.hp.hpl.jena.query.Syntax;
-import com.hp.hpl.jena.sparql.algebra.Algebra;
-import com.hp.hpl.jena.sparql.algebra.Op;
-import com.hp.hpl.jena.sparql.algebra.optimize.Optimize;
-import com.hp.hpl.jena.sparql.algebra.optimize.Rewrite;
-import com.hp.hpl.jena.sparql.util.Context;
+import org.apache.jena.query.ARQ;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryFactory;
+import org.apache.jena.query.Syntax;
+import org.apache.jena.sparql.algebra.Algebra;
+import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.optimize.Optimize;
+import org.apache.jena.sparql.algebra.optimize.Rewrite;
+import org.apache.jena.sparql.util.Context;
 
 public class MainVariousTests {
 

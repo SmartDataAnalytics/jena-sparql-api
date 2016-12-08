@@ -6,6 +6,7 @@ import javax.servlet.ServletContext;
 import org.aksw.jena_sparql_api.web.filters.CorsFilter;
 import org.aksw.jena_sparql_api.web.filters.FilterPost;
 import org.springframework.web.context.ContextLoaderListener;
+import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.request.RequestContextListener;
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 import org.springframework.web.filter.CharacterEncodingFilter;
@@ -21,6 +22,11 @@ public class WebAppInitUtils {
         AnnotationConfigWebApplicationContext rootContext = new AnnotationConfigWebApplicationContext();
         rootContext.register(appConfig);
         //rootContext.register(ConfigApp.class);
+        defaultSetup(servletContext, rootContext);
+    }
+
+    public static void defaultSetup(ServletContext servletContext, WebApplicationContext rootContext) {
+
 //
 //        // Manage the lifecycle of the root application context
         servletContext.addListener(new ContextLoaderListener(rootContext));

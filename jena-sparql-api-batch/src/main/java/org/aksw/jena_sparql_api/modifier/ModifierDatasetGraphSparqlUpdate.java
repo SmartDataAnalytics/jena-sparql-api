@@ -2,10 +2,10 @@ package org.aksw.jena_sparql_api.modifier;
 
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryDatasetGraph;
 
-import com.hp.hpl.jena.sparql.core.DatasetGraph;
-import com.hp.hpl.jena.update.UpdateFactory;
-import com.hp.hpl.jena.update.UpdateProcessor;
-import com.hp.hpl.jena.update.UpdateRequest;
+import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.update.UpdateFactory;
+import org.apache.jena.update.UpdateProcessor;
+import org.apache.jena.update.UpdateRequest;
 
 public class ModifierDatasetGraphSparqlUpdate
 	implements Modifier<DatasetGraph>

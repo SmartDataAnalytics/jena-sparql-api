@@ -9,8 +9,8 @@ import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.repeat.RepeatStatus;
 
-import com.hp.hpl.jena.update.UpdateProcessor;
-import com.hp.hpl.jena.update.UpdateRequest;
+import org.apache.jena.update.UpdateProcessor;
+import org.apache.jena.update.UpdateRequest;
 
 
 public class TaskletSparqlUpdate
@@ -21,11 +21,30 @@ public class TaskletSparqlUpdate
     private UpdateExecutionFactory uef;
     private UpdateRequest updateRequest;
 
+    public TaskletSparqlUpdate() {
+        super();
+    }
+
     public TaskletSparqlUpdate(UpdateExecutionFactory uef, UpdateRequest updateRequest) {
         this.uef = uef;
         this.updateRequest = updateRequest;
     }
 
+    public UpdateExecutionFactory getTarget() {
+        return uef;
+    }
+
+    public void setTarget(UpdateExecutionFactory uef) {
+        this.uef = uef;
+    }
+
+    public UpdateRequest getUpdate() {
+        return updateRequest;
+    }
+
+    public void setUpdate(UpdateRequest updateRequest) {
+        this.updateRequest = updateRequest;
+    }
 
     @Override
     public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {

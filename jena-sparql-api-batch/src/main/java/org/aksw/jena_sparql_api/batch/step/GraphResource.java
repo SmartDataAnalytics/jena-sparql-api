@@ -1,13 +1,13 @@
 package org.aksw.jena_sparql_api.batch.step;
 
+import java.util.function.Predicate;
+
 import org.aksw.jena_sparql_api.batch.cli.main.SupplierExtendedIteratorTriples;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.graph.impl.GraphBase;
+import org.apache.jena.util.iterator.ExtendedIterator;
 
 import com.google.common.base.Supplier;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.graph.TripleMatchFilter;
-import com.hp.hpl.jena.graph.impl.GraphBase;
-import com.hp.hpl.jena.util.iterator.ExtendedIterator;
-import com.hp.hpl.jena.util.iterator.Filter;
 
 public class GraphResource
     extends GraphBase
@@ -25,7 +25,7 @@ public class GraphResource
 
     @Override
     protected ExtendedIterator<Triple> graphBaseFind(Triple triplePattern) {
-        Filter<Triple> filter = new TripleMatchFilter(triplePattern);
+        Predicate<Triple> filter = new TripleMatchFilter(triplePattern);
 
         ExtendedIterator<Triple> it = supplier.get();
         ExtendedIterator<Triple> result = it.filterKeep(filter);

@@ -1,0 +1,4 @@
+Select ?s {
+  ?s
+    <http://ex.org/p1> ?o1 .
+}

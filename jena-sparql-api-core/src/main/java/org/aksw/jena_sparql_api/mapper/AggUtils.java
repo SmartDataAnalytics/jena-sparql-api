@@ -1,10 +1,23 @@
 package org.aksw.jena_sparql_api.mapper;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.sparql.expr.Expr;
-import com.hp.hpl.jena.sparql.util.ExprUtils;
+import org.apache.jena.graph.Node;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.util.ExprUtils;
 
 public class AggUtils {
+    public static <T> T accumulate(Agg<T> agg, ResultSet rs) {
+        Acc<T> acc = agg.createAccumulator();
+        while(rs.hasNext()) {
+            Binding binding = rs.nextBinding();
+            acc.accumulate(binding);
+        }
+
+        T result = acc.getValue();
+        return result;
+    }
+
     public static BindingMapper<Node> mapper(String exprStr) {
         Expr expr = ExprUtils.parse(exprStr);
         BindingMapper<Node> result = new BindingMapperExpr(expr);

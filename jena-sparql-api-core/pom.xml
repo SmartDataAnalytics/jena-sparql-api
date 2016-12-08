@@ -1,25 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+    <modelVersion>4.0.0</modelVersion>
 
-	<artifactId>jena-sparql-api-core</artifactId>
-	<packaging>jar</packaging>
+    <artifactId>jena-sparql-api-core</artifactId>
+    <packaging>jar</packaging>
 
-	<name>Jena SPARQL API - Core</name>
-	<url>http://github.org/AKSW/jena-sparql-api</url>
+    <name>Jena SPARQL API - Core</name>
+    <url>http://github.org/AKSW/jena-sparql-api</url>
 
-	<parent>
-		<groupId>org.aksw.jena-sparql-api</groupId>
-		<artifactId>jena-sparql-api-parent</artifactId>
-		<version>2.13.0-6-SNAPSHOT</version>
-	</parent>
+    <parent>
+        <groupId>org.aksw.jena-sparql-api</groupId>
+        <artifactId>jena-sparql-api-parent</artifactId>
+        <version>3.1.1-1</version>
+    </parent>
 
     <dependencies>
-    	<!-- Self Dependencies -->
-    	<dependency>
+        <!-- Self Dependencies -->
+        <dependency>
             <groupId>org.aksw.jena-sparql-api</groupId>
-            <artifactId>jena-sparql-api-utils</artifactId>    	
-    	</dependency>
+            <artifactId>jena-sparql-api-utils</artifactId>
+        </dependency>
+
+        <!-- Needed for representing SPARQL Paths as json objects -->
+        <dependency>
+            <groupId>org.aksw.jena-sparql-api</groupId>
+            <artifactId>jena-sparql-api-sparql-ext</artifactId>
+        </dependency>
+
 
         <!-- Jena -->
         <dependency>
@@ -34,7 +41,7 @@
             <groupId>org.apache.jena</groupId>
             <artifactId>jena-iri</artifactId>
         </dependency>
-        
+
 <!-- 		<dependency> required at least by Jena 2.9.0-incubating -->
 <!-- 			<groupId>xerces</groupId> -->
 <!-- 			<artifactId>xercesImpl</artifactId> -->
@@ -50,38 +57,42 @@
 
 
 
-        <!-- Utils -->
-		<dependency>
-			<groupId>org.aksw.commons</groupId>
-			<artifactId>aksw-commons-collections</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.aksw.commons</groupId>
-			<artifactId>aksw-commons-util</artifactId>
-		</dependency>
-        
+<dependency>
+    <groupId>org.quartz-scheduler</groupId>
+    <artifactId>quartz</artifactId>
+</dependency>
 
-		<!-- Collections -->
-		<dependency>
-			<groupId>com.google.guava</groupId>
-			<artifactId>guava</artifactId>
-		</dependency>
-		
+        <!-- Utils -->
+        <dependency>
+            <groupId>org.aksw.commons</groupId>
+            <artifactId>aksw-commons-collections</artifactId>
+        </dependency>
+<!--         <dependency> -->
+<!--             <groupId>org.aksw.commons</groupId> -->
+<!--             <artifactId>aksw-commons-util</artifactId> -->
+<!--         </dependency> -->
+
+
+        <!-- Collections -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+        </dependency>
+
 
         <!-- Compression -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
-            <version>1.2</version>
-            <type>jar</type>
-            <scope>compile</scope>
         </dependency>
 
         <!-- Logging -->
+<!--
         <dependency>
             <groupId>log4j</groupId>
             <artifactId>log4j</artifactId>
         </dependency>
+-->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -92,12 +103,17 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
         </dependency>
-        
+
+        <dependency>
+            <groupId>org.aksw.jena-sparql-api</groupId>
+            <artifactId>jena-sparql-api-resources-test-config</artifactId>
+        </dependency>
+
+
         <!-- Async-Retry API from https://github.com/nurkiewicz/async-retry -->
         <dependency>
-	        <groupId>com.nurkiewicz.asyncretry</groupId>
-	        <artifactId>asyncretry-jdk7</artifactId>
-	        <version>0.0.6</version>
+            <groupId>com.nurkiewicz.asyncretry</groupId>
+            <artifactId>asyncretry-jdk7</artifactId>
         </dependency>
 
     </dependencies>

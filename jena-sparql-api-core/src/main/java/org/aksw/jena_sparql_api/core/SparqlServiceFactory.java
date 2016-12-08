@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.core;
 
-import com.hp.hpl.jena.sparql.core.DatasetDescription;
+import org.apache.http.client.HttpClient;
+import org.apache.jena.sparql.core.DatasetDescription;
 
 /**
  * Interface for creating QueryExecutionFactories, based on service and default graph URIs.
@@ -9,5 +10,5 @@ import com.hp.hpl.jena.sparql.core.DatasetDescription;
  *
  */
 public interface SparqlServiceFactory {
-    SparqlService createSparqlService(String serviceUri, DatasetDescription datasetDescription, Object authenticator);
+    SparqlService createSparqlService(String serviceUri, DatasetDescription datasetDescription, HttpClient httpClient);
 }

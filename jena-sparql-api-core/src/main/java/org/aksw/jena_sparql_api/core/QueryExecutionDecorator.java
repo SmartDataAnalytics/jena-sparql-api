@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.core;
 
-import com.hp.hpl.jena.query.QueryExecution;
+import org.apache.jena.query.QueryExecution;
 
 public class QueryExecutionDecorator
 	extends QueryExecutionDecoratorBase<QueryExecution>

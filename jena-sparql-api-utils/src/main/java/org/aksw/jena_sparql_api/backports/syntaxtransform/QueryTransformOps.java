@@ -20,27 +20,24 @@ package org.aksw.jena_sparql_api.backports.syntaxtransform;
 
 import java.util.Map ;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryVisitor;
-import com.hp.hpl.jena.query.SortCondition;
-import com.hp.hpl.jena.shared.PrefixMapping;
-import com.hp.hpl.jena.shared.impl.PrefixMappingImpl;
-import com.hp.hpl.jena.sparql.ARQException;
-import com.hp.hpl.jena.sparql.core.DatasetDescription;
-import com.hp.hpl.jena.sparql.core.Prologue;
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.core.VarExprList;
-import com.hp.hpl.jena.sparql.expr.Expr;
-import com.hp.hpl.jena.sparql.expr.ExprTransform;
-import com.hp.hpl.jena.sparql.expr.ExprTransformer;
-import com.hp.hpl.jena.sparql.expr.ExprVar;
-import com.hp.hpl.jena.sparql.expr.NodeValue;
-import com.hp.hpl.jena.sparql.graph.NodeTransform;
-import com.hp.hpl.jena.sparql.syntax.Element;
-import com.hp.hpl.jena.sparql.syntax.ElementGroup;
+import org.aksw.jena_sparql_api.utils.VarExprListUtils;
+import org.apache.jena.graph.Node ;
+import org.apache.jena.query.Query ;
+import org.apache.jena.query.QueryVisitor ;
+import org.apache.jena.query.SortCondition ;
+import org.apache.jena.shared.PrefixMapping ;
+import org.apache.jena.shared.impl.PrefixMappingImpl ;
+import org.apache.jena.sparql.core.DatasetDescription ;
+import org.apache.jena.sparql.core.Prologue ;
+import org.apache.jena.sparql.core.Var ;
+import org.apache.jena.sparql.core.VarExprList ;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprTransform;
+import org.apache.jena.sparql.graph.NodeTransform ;
+import org.apache.jena.sparql.syntax.Element ;
+import org.apache.jena.sparql.syntax.ElementGroup ;
 
-/** Support for transformation of query abstract syntax. */
+/** Support for transformation of query abstract syntax. */ 
 
 public class QueryTransformOps {
     public static Query transform(Query query, Map<Var, Node> substitutions) {
@@ -55,6 +52,7 @@ public class QueryTransformOps {
 
         transformVarExprList(q2.getProject(), exprTransform) ;
         transformVarExprList(q2.getGroupBy(), exprTransform) ;
+
         // Nothing to do about ORDER BY - leave to sort by that variable.
 
         Element el = q2.getQueryPattern() ;
@@ -70,42 +68,18 @@ public class QueryTransformOps {
     }
 
     public static Query transform(Query query, ElementTransform transform) {
-        ExprTransform noop = new ExprTransformApplyElementTransform(transform) ;
+        ExprTransform noop = new ExprTransformApplyElementTransform(transform) ;  
         return transform(query, transform, noop) ;
     }
 
+   
+    
     // Mutates the VarExprList
     private static void transformVarExprList(VarExprList varExprList, ExprTransform exprTransform)
     // , final Map<Var, Node> substitutions)
     {
-        Map<Var, Expr> map = varExprList.getExprs() ;
-
-        for (Var v : varExprList.getVars()) {
-            Expr e = varExprList.getExpr(v) ;
-            ExprVar ev = new ExprVar(v) ;
-            Expr ev2 = exprTransform.transform(ev) ;
-
-            /*
-            if ( ev != ev2 ) {
-                if ( e != null )
-                    throw new ARQException("Can't substitute " + v + " because it's used as an AS variable") ;
-                if ( ev2 instanceof NodeValue ) {
-                    // Convert to (substit value AS ?var)
-                    map.put(v, ev2) ;
-                    continue ;
-                } else
-                    throw new ARQException("Can't substitute " + v + " because it's not a simple value: " + ev2) ;
-            }
-            */
-            if ( e == null )
-                continue ;
-
-            // Didn't change the variable.
-            Expr e2 = ExprTransformer.transform(exprTransform, e) ;
-            if ( e != e2 )
-                // replace
-                map.put(v, e2) ;
-        }
+        VarExprList tmp = VarExprListUtils.transform(varExprList, exprTransform);
+        VarExprListUtils.replace(varExprList, tmp);
     }
 
     static class QueryShallowCopy implements QueryVisitor {
@@ -129,7 +103,7 @@ public class QueryTransformOps {
                 for (String x : desc.getDefaultGraphURIs())
                     newQuery.addNamedGraphURI(x) ;
             }
-
+            
             // Aggregators.
             newQuery.getAggregators().addAll(query.getAggregators()) ;
         }

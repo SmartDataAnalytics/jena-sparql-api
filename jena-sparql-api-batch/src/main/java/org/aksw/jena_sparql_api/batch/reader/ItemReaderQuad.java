@@ -7,14 +7,16 @@ import java.util.Iterator;
 import org.aksw.jena_sparql_api.batch.step.F_TripleToQuad;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.pagination.core.PagingQuery;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.data.AbstractPaginatedDataItemReader;
+import org.springframework.beans.factory.InitializingBean;
 
-import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.sparql.core.Quad;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.sparql.core.Quad;
 
 /**
  * Item reader that reads a SPARQL SELECT query using pagination
@@ -25,27 +27,77 @@ import com.hp.hpl.jena.sparql.core.Quad;
  */
 public class ItemReaderQuad
     extends AbstractPaginatedDataItemReader<Quad>
+    implements InitializingBean
 {
+    private static final Logger logger = LoggerFactory.getLogger(ItemReaderQuad.class);
+
     private Query query;
     private QueryExecutionFactory qef;
-    private Predicate<Quad> predicate;
+    // TODO Validation is not part of the reader but of the processor!
+    //private Predicate<Quad> predicate;
 
-    public ItemReaderQuad(QueryExecutionFactory qef, Query query, Predicate<Quad> predicate) {
+    public static int nextId = 0;
+
+    private int id;
+
+    public ItemReaderQuad() {
+        super();
+        setName(this.getClass().getName());
+
+        this.id = ++nextId;
+    }
+
+    public Query getQuery() {
+        return query;
+    }
+
+    public void setQuery(Query query) {
+        this.query = query;
+    }
+
+    public QueryExecutionFactory getQef() {
+        return qef;
+    }
+
+    public void setQef(QueryExecutionFactory qef) {
+        this.qef = qef;
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        // TODO Assert that properties are valid
+        //System.out.println("TODO validate settings");
+    }
+
+
+    public ItemReaderQuad(QueryExecutionFactory qef, Query query) { //, Predicate<Quad> predicate) {
         setName(this.getClass().getName());
         this.qef = qef;
         this.query = query;
-        this.predicate = predicate;
+        //this.predicate = predicate;
     }
-
 
     @Override
     protected Iterator<Quad> doPageRead() {
         //long limit = (long)this.pageSize;
         long offset = this.page * this.pageSize;
 
+        logger.info("[START] ItemReader " + id + " on page " + this.page);
+
         PagingQuery pagingQuery = new PagingQuery(this.pageSize, this.query);
-        Iterator<Query> itQuery = pagingQuery.createQueryIterator(offset);
+        Iterator<Query> itQuery = pagingQuery.createQueryIterator(offset, null);
         Query query = itQuery.next();
+
+
+//        logger.info("[START] ItemReader " + id + " on page " + this.page);
+//
+//        long offset = this.getCurrentItemCount();
+//        Long limit = maxItemCount != null ? (long)maxItemCount - this.getCurrentItemCount() : null;
+//
+//        PagingQuery pagingQuery = new PagingQuery(this.pageSize, this.query);
+//        Iterator<Query> itQuery = pagingQuery.createQueryIterator(offset, limit);
+//        Query query = itQuery.next();
+
 
         Iterator<Quad> result;
 
@@ -57,10 +109,11 @@ public class ItemReaderQuad
             Iterator<Triple> triplesIt = qe.execConstructTriples();
 
             result = Iterators.transform(triplesIt, F_TripleToQuad.fn);
-            if(predicate != null) {
-                result = Iterators.filter(result, predicate);
-            }
+//            if(predicate != null) {
+//                result = Iterators.filter(result, predicate);
+//            }
         }
+        logger.info("[DONE] ItemReader " + id + " on page " + this.page);
 
         return result;
     }

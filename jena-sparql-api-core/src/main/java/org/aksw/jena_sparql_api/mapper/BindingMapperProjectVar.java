@@ -1,12 +1,15 @@
 package org.aksw.jena_sparql_api.mapper;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.engine.binding.Binding;
+import java.util.Collections;
+import java.util.Set;
+
+import org.apache.jena.graph.Node;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.engine.binding.Binding;
 
 
 public class BindingMapperProjectVar
-    implements BindingMapper<Node>
+    implements BindingMapperVarAware<Node>
 {
     private Var var;
 
@@ -19,7 +22,7 @@ public class BindingMapperProjectVar
     }
 
     @Override
-    public Node map(Binding binding, long rowNum) {
+    public Node apply(Binding binding, Long rowNum) {
         Node result = binding.get(var);
         return result;
     }
@@ -27,5 +30,10 @@ public class BindingMapperProjectVar
     public static BindingMapperProjectVar create(Var var) {
         BindingMapperProjectVar result = new BindingMapperProjectVar(var);
         return result;
+    }
+
+    @Override
+    public Set<Var> getVarsMentioned() {
+        return Collections.singleton(var);
     }
 }

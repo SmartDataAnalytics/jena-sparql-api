@@ -2,84 +2,72 @@ package org.aksw.jena_sparql_api.concept_cache.domain;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
-import org.aksw.commons.collections.multimaps.BiHashMultimap;
-import org.aksw.commons.collections.multimaps.IBiSetMultimap;
 import org.aksw.jena_sparql_api.utils.ClauseUtils;
 import org.aksw.jena_sparql_api.utils.CnfUtils;
+import org.aksw.jena_sparql_api.utils.DnfUtils;
 import org.aksw.jena_sparql_api.utils.NfUtils;
+import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
+import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.op.OpFilter;
+import org.apache.jena.sparql.algebra.op.OpQuadPattern;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprList;
+import org.apache.jena.sparql.graph.NodeTransform;
 
 import com.google.common.collect.Sets;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.sparql.algebra.Op;
-import com.hp.hpl.jena.sparql.algebra.op.OpFilter;
-import com.hp.hpl.jena.sparql.algebra.op.OpNull;
-import com.hp.hpl.jena.sparql.algebra.op.OpQuadPattern;
-import com.hp.hpl.jena.sparql.algebra.op.OpSequence;
-import com.hp.hpl.jena.sparql.core.BasicPattern;
-import com.hp.hpl.jena.sparql.core.Quad;
-import com.hp.hpl.jena.sparql.core.QuadPattern;
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.expr.Expr;
-import com.hp.hpl.jena.sparql.expr.ExprList;
-import com.hp.hpl.jena.sparql.graph.NodeTransform;
 
 public class QuadFilterPatternCanonical {
     private Set<Quad> quads;
+
     private Set<Set<Expr>> filterCnf;
+    private Set<Set<Expr>> filterDnf;
 
     public QuadFilterPatternCanonical(Set<Quad> quads, Set<Set<Expr>> filterCnf) {
+        this(quads, filterCnf, false);
+    }
+
+    public QuadFilterPatternCanonical(Set<Quad> quads, Set<Set<Expr>> filterNf, boolean isDnf) {
         super();
         this.quads = quads;
-        this.filterCnf = filterCnf;
+        if(isDnf) {
+            this.filterDnf = filterNf;
+            this.filterCnf = CnfUtils.toSetCnf(DnfUtils.toExpr(filterNf));
+        } else {
+            this.filterCnf = filterNf;
+            this.filterDnf = DnfUtils.toSetDnf(CnfUtils.toExpr(filterCnf), true);
+        }
+        //this.filterDnf = DnfUtils.toSetDnf(CnfUtils.toExpr(filterCnf));
+
     }
+
 
     public boolean isEmpty() {
         boolean result = quads.isEmpty() && filterCnf.isEmpty();
         return result;
     }
 
+    public QuadFilterPattern toQfp()
+    {
+        Expr expr = DnfUtils.toExpr(filterCnf); //CnfUtils.toExpr(filterDnf);
+        QuadFilterPattern result = new QuadFilterPattern(new ArrayList<>(quads), expr);
+        return result;
+    }
+
+    //@Deprecated // Use OpUtils.toOp(...) instead
     public Op toOp() {
 
         ExprList exprs = CnfUtils.toExprList(filterCnf);
-        QuadPattern qp = QuadPatternUtils.create(quads);
+        //QuadPattern qp = QuadPatternUtils.create(quads);
 
-        Map<Node, BasicPattern> index = QuadPatternUtils.indexBasicPattern(qp);
-
-        List<OpQuadPattern> opqs = new ArrayList<OpQuadPattern>();
-
-        for(Entry<Node, BasicPattern> entry : index.entrySet()) {
-            OpQuadPattern oqp = new OpQuadPattern(entry.getKey(), entry.getValue());
-            opqs.add(oqp);
-        }
-
-
-        Op result;
-
-        if(opqs.isEmpty()) {
-            result = OpNull.create();
-        } else if(opqs.size() == 1) {
-            result = opqs.iterator().next();
-        } else {
-            OpSequence op = OpSequence.create();
-
-            for(OpQuadPattern item : opqs) {
-                op.add(item);
-            }
-
-            result = op;
-        }
-
-        if(!exprs.isEmpty()) {
-            result = OpFilter.filter(exprs, result);
-        }
-
+        Op result = OpUtils.toOp(quads, OpQuadPattern::new);
+        result = OpFilter.filterBy(exprs,  result);
         return result;
     }
 
@@ -89,6 +77,10 @@ public class QuadFilterPatternCanonical {
 
     public Set<Set<Expr>> getFilterCnf() {
         return filterCnf;
+    }
+
+    public Set<Set<Expr>> getFilterDnf() {
+        return filterDnf;
     }
 
     public Set<Var> getVarsMentioned() {
@@ -102,6 +94,13 @@ public class QuadFilterPatternCanonical {
         return result;
     }
 
+    public static QuadFilterPatternCanonical applyVarMapping(QuadFilterPatternCanonical qfpc, Map<Var, Var> varMap) {
+        NodeTransform nodeTransform = new NodeTransformRenameMap(varMap);
+        QuadFilterPatternCanonical result = qfpc.applyNodeTransform(nodeTransform);
+        return result;
+    }
+
+
     public QuadFilterPatternCanonical applyNodeTransform(NodeTransform nodeTransform) {
         Set<Quad> newQuads = QuadUtils.applyNodeTransform(quads, nodeTransform);
         Set<Set<Expr>> newExprs = ClauseUtils.applyNodeTransformSet(filterCnf, nodeTransform);
@@ -111,8 +110,8 @@ public class QuadFilterPatternCanonical {
     }
 
     public QuadFilterPatternCanonical diff(QuadFilterPatternCanonical other) {
-        Set<Quad> newQuads = new HashSet<Quad>(Sets.difference(other.quads, quads));
-        Set<Set<Expr>> newCnf = new HashSet<Set<Expr>>(Sets.difference(other.filterCnf, filterCnf));
+        Set<Quad> newQuads = new HashSet<Quad>(Sets.difference(quads, other.quads));
+        Set<Set<Expr>> newCnf = new HashSet<Set<Expr>>(Sets.difference(filterCnf, other.filterCnf));
 
         QuadFilterPatternCanonical result = new QuadFilterPatternCanonical(newQuads, newCnf);
         return result;
@@ -128,11 +127,13 @@ public class QuadFilterPatternCanonical {
         return result;
     }
 
-    @Override
-    public String toString() {
-        return "QuadFilterPatternNorm [quads=" + quads + ", filterCnf="
-                + filterCnf + "]";
-    }
+//    @Override
+//    public String toString() {
+//        return "QuadFilterPatternNorm [quads=" + quads + ", filterCnf="
+//                + filterCnf + "]";
+//    }
+
+
 
     @Override
     public int hashCode() {
@@ -142,6 +143,12 @@ public class QuadFilterPatternCanonical {
                 + ((filterCnf == null) ? 0 : filterCnf.hashCode());
         result = prime * result + ((quads == null) ? 0 : quads.hashCode());
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "<quads=" + quads + ", filterCnf="
+                + filterCnf + ", filterDnf=" + filterDnf + ">";
     }
 
     @Override
