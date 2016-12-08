@@ -41,7 +41,7 @@ import com.google.common.collect.Multimap;
 
 
 public class OpViewMatcherTreeBased<K>
-	implements OpViewMatcher<K>
+    implements OpViewMatcher<K>
 {
 
     private static final Logger logger = LoggerFactory
@@ -57,8 +57,8 @@ public class OpViewMatcherTreeBased<K>
     protected Map<K, MyEntry<K>> idToQueryIndex;
 
 
-	public OpViewMatcherTreeBased(
-	        Rewrite opNormalizer,
+    public OpViewMatcherTreeBased(
+            Rewrite opNormalizer,
             Function<Op, Set<Set<String>>> itemFeatureExtractor,
             Function<Op, OpIndex> itemIndexer) {
         super();
@@ -71,13 +71,13 @@ public class OpViewMatcherTreeBased<K>
 
 
         //this.qfpcIndex = new SparqlViewCacheImpl();
-	}
+    }
 
     @Override
-	public void put(K key, Op item) {
+    public void put(K key, Op item) {
 
-    	// Check whether the submitted op is an extended conjunctive query,
-    	//i.e. is only comprised of distinct, projection, filter and quad pattern in that order, whereas presence is optional
+        // Check whether the submitted op is an extended conjunctive query,
+        //i.e. is only comprised of distinct, projection, filter and quad pattern in that order, whereas presence is optional
 
 
 //    	Op normalizedItem = opNormalizer.rewrite(item);
@@ -94,16 +94,16 @@ public class OpViewMatcherTreeBased<K>
 
         idToQueryIndex.put(key, entry);
 
-	}
+    }
 
 
     /**
      * Lookup a single candidate
      */
     public LookupResult<K> lookupSingle(Op item) {
-    	Collection<LookupResult<K>> tmp = lookup(item);
-    	LookupResult<K> result = Iterables.getFirst(tmp, null);
-    	return result;
+        Collection<LookupResult<K>> tmp = lookup(item);
+        LookupResult<K> result = Iterables.getFirst(tmp, null);
+        return result;
     }
 
 
@@ -114,17 +114,17 @@ public class OpViewMatcherTreeBased<K>
      * @param item
      * @return
      */
-	//@Override
-	public Collection<LookupResult> lookupSimpleMatches(Op item) {
+    //@Override
+    public Collection<LookupResult> lookupSimpleMatches(Op item) {
 
-		return null;
+        return null;
 
-	}
+    }
 
-	@Override
-	public Collection<LookupResult<K>> lookup(Op item) {
-	    //Op normalizedItem = opNormalizer.rewrite(item);
-	    Set<MyEntry<K>> tmpCands = new HashSet<>();
+    @Override
+    public Collection<LookupResult<K>> lookup(Op item) {
+        //Op normalizedItem = opNormalizer.rewrite(item);
+        Set<MyEntry<K>> tmpCands = new HashSet<>();
 
         itemFeatureExtractor.apply(item).forEach(featureSet -> {
             //featuresToIndexes.getIfSubsetOf(featureSet).stream()
@@ -144,7 +144,7 @@ public class OpViewMatcherTreeBased<K>
         List<LookupResult<K>> result = new ArrayList<>();
 
         for(MyEntry<K> cacheEntry : cands) {
-        	OpIndex cacheIndex = cacheEntry.queryIndex;
+            OpIndex cacheIndex = cacheEntry.queryIndex;
 
             Multimap<Op, Op> candOpMapping = SparqlViewMatcherSystemImpl.getCandidateLeafMapping(cacheIndex, queryIndex);
             Tree<Op> cacheTree = cacheIndex.getTree();
@@ -174,71 +174,71 @@ public class OpViewMatcherTreeBased<K>
 
         }
 
-		return result;
-	}
+        return result;
+    }
 
-	public static <V> Tree<Op> applyMapping(V id, Tree<Op> cacheTree, Tree<Op> queryTree, OpVarMap opVarMap) {
-	    Map<Op, Op> nodeMapping = opVarMap.getOpMap();
+    public static <V> Tree<Op> applyMapping(V id, Tree<Op> cacheTree, Tree<Op> queryTree, OpVarMap opVarMap) {
+        Map<Op, Op> nodeMapping = opVarMap.getOpMap();
 
-	    Op sourceRoot = cacheTree.getRoot();
-	    Op targetNode = nodeMapping.get(sourceRoot);
+        Op sourceRoot = cacheTree.getRoot();
+        Op targetNode = nodeMapping.get(sourceRoot);
 
-	    if(targetNode == null) {
-	        throw new RuntimeException("Could not match root node of a source tree to a node in the target tree - Should not happen.");
-	    }
+        if(targetNode == null) {
+            throw new RuntimeException("Could not match root node of a source tree to a node in the target tree - Should not happen.");
+        }
 
-	    //QuadPattern yay = new QuadPattern();
-	    //Node serviceNode = NodeFactory.createURI("");
-	    OpService placeholderOp = new OpService((Node)id, new OpBGP(), true);
-	    Op repl = OpUtils.substitute(queryTree.getRoot(), false, op -> {
-	       return op == targetNode ? placeholderOp : null;
-	    });
+        //QuadPattern yay = new QuadPattern();
+        //Node serviceNode = NodeFactory.createURI("");
+        OpService placeholderOp = new OpService((Node)id, new OpBGP(), true);
+        Op repl = OpUtils.substitute(queryTree.getRoot(), false, op -> {
+           return op == targetNode ? placeholderOp : null;
+        });
 
-	    Tree<Op> result = OpUtils.createTree(repl);
-	    return result;
-	}
-
-
-
-	public static Op queryToNormalizedOp(Query query) {
-		Op result = Algebra.compile(query);
-		result = Algebra.toQuadForm(result);
-		result = normalizeOp(result);
-		return result;
-	}
+        Tree<Op> result = OpUtils.createTree(repl);
+        return result;
+    }
 
 
-	public static Op normalizeOp(Op op) {
-		op = Transformer.transform(TransformUnionToDisjunction.fn, op);
-	    op = Transformer.transform(TransformJoinToSequence.fn, op);
+
+    public static Op queryToNormalizedOp(Query query) {
+        Op result = Algebra.compile(query);
+        result = Algebra.toQuadForm(result);
+        result = normalizeOp(result);
+        return result;
+    }
+
+
+    public static Op normalizeOp(Op op) {
+        op = Transformer.transform(TransformUnionToDisjunction.fn, op);
+        op = Transformer.transform(TransformJoinToSequence.fn, op);
 
         Generator<Var> generatorCache = VarGeneratorImpl2.create();
         Op result = OpUtils.substitute(op, false, (o) -> SparqlCacheUtils.tryCreateCqfp(o, generatorCache));
 
         return result;
 
-	}
+    }
 
 
-	public static OpViewMatcher create() {
+    public static <T> OpViewMatcher<T> create() {
         Function<Op, Set<Set<String>>> itemFeatureExtractor = (oop) ->
-        	Collections.singleton(OpVisitorFeatureExtractor.getFeatures(oop, (op) -> op.getClass().getSimpleName()));
+            Collections.singleton(OpVisitorFeatureExtractor.getFeatures(oop, (op) -> op.getClass().getSimpleName()));
 
-        OpViewMatcher result = new OpViewMatcherTreeBased(
-        		OpViewMatcherTreeBased::normalizeOp,
+        OpViewMatcher<T> result = new OpViewMatcherTreeBased<>(
+                OpViewMatcherTreeBased::normalizeOp,
                 itemFeatureExtractor,
                 new OpIndexerImpl());
 
         return result;
-	}
+    }
 
-	@Override
-	public void removeKey(Object key) {
-		MyEntry<K> e = idToQueryIndex.get(key);
-		if(e != null) {
-			Set<Set<String>> featureSets = e.featureSets;
-			featuresToIndexes.removeAll(featureSets);
-			idToQueryIndex.remove(key);
-		}
-	}
+    @Override
+    public void removeKey(Object key) {
+        MyEntry<K> e = idToQueryIndex.get(key);
+        if(e != null) {
+            Set<Set<String>> featureSets = e.featureSets;
+            featuresToIndexes.removeAll(featureSets);
+            idToQueryIndex.remove(key);
+        }
+    }
 }

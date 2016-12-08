@@ -65,184 +65,188 @@ import com.google.common.collect.Range;
  *
  */
 public class OpRewriteViewMatcherStateful
-	implements RewriterSparqlViewMatcher
-	//implements Rewrite
+    implements RewriterSparqlViewMatcher
+    //implements Rewrite
 {
-	protected Rewrite opNormalizer;
-	protected OpViewMatcher<Node> viewMatcherTreeBased;
-	protected SparqlViewCache<Node> viewMatcherQuadPatternBased;
+    protected Rewrite opNormalizer;
+    protected OpViewMatcher<Node> viewMatcherTreeBased;
+    protected SparqlViewCache<Node> viewMatcherQuadPatternBased;
 
 
-	protected Map<Node, Map<Node, VarInfo>> patternIdToStorageIdToVarInfo;
-	protected Map<Node, Node> storageIdToPatternId;
+    protected Map<Node, Map<Node, VarInfo>> patternIdToStorageIdToVarInfo;
+    protected Map<Node, Node> storageIdToPatternId;
 
-	// Maps result set ids to storage ids
-	protected Cache<Node, StorageEntry> cache;
-	//protected Map<Node, StorageEntry> storageMap = new HashMap<>();
-
-
-	// Mapping from cache entry id to the cache data
-	// - We need to be able to ask whether a certain range is completely in cache
-	// - Ask which variables are defined by the cache data
-	// -
-	//protected Map<Node, ViewMatcherData> idToCacheData;
+    // Maps result set ids to storage ids
+    protected Cache<Node, StorageEntry> cache;
+    //protected Map<Node, StorageEntry> storageMap = new HashMap<>();
 
 
-	public OpRewriteViewMatcherStateful(Cache<Node, StorageEntry> cache, Collection<RemovalListener<Node, StorageEntry>> removalListeners) {
-		this.opNormalizer = OpViewMatcherTreeBased::normalizeOp;
-		this.viewMatcherTreeBased = OpViewMatcherTreeBased.create();
-		this.viewMatcherQuadPatternBased = new SparqlViewCacheImpl<>();
-		this.cache = cache;
-
-		removalListeners.add((n)-> removeStorage(n.getKey()));
-	}
-
-	public void removeStorage(Node storageKey) {
-		Node patternId = storageIdToPatternId.computeIfPresent(storageKey, (k, v) -> null);
-
-		viewMatcherTreeBased.removeKey(patternId);
-		viewMatcherQuadPatternBased.removeKey(patternId);
-
-		// TODO Maybe there is potential to optimize with another computeIfPresent
-		Map<Node, VarInfo> map = patternIdToStorageIdToVarInfo.get(patternId);
-		map.remove(storageKey);
-		if(patternIdToStorageIdToVarInfo.isEmpty()) {
-			storageIdToPatternId.remove(storageKey);
-		}
-	}
+    // Mapping from cache entry id to the cache data
+    // - We need to be able to ask whether a certain range is completely in cache
+    // - Ask which variables are defined by the cache data
+    // -
+    //protected Map<Node, ViewMatcherData> idToCacheData;
 
 
-	public Cache<Node, StorageEntry> getCache() {
-		return cache;
-	}
+    public OpRewriteViewMatcherStateful(Cache<Node, StorageEntry> cache, Collection<RemovalListener<Node, StorageEntry>> removalListeners) {
+        this.opNormalizer = OpViewMatcherTreeBased::normalizeOp;
+        this.viewMatcherTreeBased = OpViewMatcherTreeBased.create();
+        this.viewMatcherQuadPatternBased = new SparqlViewCacheImpl<>();
+        this.cache = cache;
+
+
+        this.patternIdToStorageIdToVarInfo = new HashMap<>();
+        this.storageIdToPatternId = new HashMap<>();
+
+        removalListeners.add((n)-> removeStorage(n.getKey()));
+    }
+
+    public void removeStorage(Node storageKey) {
+        Node patternId = storageIdToPatternId.computeIfPresent(storageKey, (k, v) -> null);
+
+        viewMatcherTreeBased.removeKey(patternId);
+        viewMatcherQuadPatternBased.removeKey(patternId);
+
+        // TODO Maybe there is potential to optimize with another computeIfPresent
+        Map<Node, VarInfo> map = patternIdToStorageIdToVarInfo.get(patternId);
+        map.remove(storageKey);
+        if(patternIdToStorageIdToVarInfo.isEmpty()) {
+            storageIdToPatternId.remove(storageKey);
+        }
+    }
+
+
+    public Cache<Node, StorageEntry> getCache() {
+        return cache;
+    }
 
 
 
-	//@Override
-	// TODO Do we need a further argument for the variable information?
-	public void put(Node storageId, Op op) {
+    //@Override
+    // TODO Do we need a further argument for the variable information?
+    public void put(Node storageId, Op op) {
 
-    	Op normalizedOp = opNormalizer.rewrite(op);
-
-
-    	// TODO: Finish cutting away the projection
-    	ProjectedOp projectedOp = SparqlCacheUtils.cutProjection(normalizedOp);
-    	// TODO Hack to map between ProjectedOp and VarInfo - make this consistent!
-    	VarInfo varInfo;
-    	if(projectedOp != null) {
-        	varInfo = new VarInfo(new HashSet<>(projectedOp.getProjection().getVars()), 0);//Collections.emptySet());
-    		normalizedOp = projectedOp.getResidualOp();
-    	} else {
-    		throw new RuntimeException("todo handle this case");
-    		//OpVars.visibleVars(normalizedOp);
-    	}
-
-    	// TODO Check if the pattern we are putting is isomorphic to an existing one
-    	Node patternId = lookup(normalizedOp);
+        Op normalizedOp = opNormalizer.rewrite(op);
 
 
-		Map<Node, VarInfo> map = patternIdToStorageIdToVarInfo.computeIfAbsent(patternId,  (n) -> new HashMap<>());
-		map.put(storageId, varInfo);
+        // TODO: Finish cutting away the projection
+        ProjectedOp projectedOp = SparqlCacheUtils.cutProjection(normalizedOp);
+        // TODO Hack to map between ProjectedOp and VarInfo - make this consistent!
+        VarInfo varInfo;
+        if(projectedOp != null) {
+            varInfo = new VarInfo(new HashSet<>(projectedOp.getProjection().getVars()), 0);//Collections.emptySet());
+            normalizedOp = projectedOp.getResidualOp();
+        } else {
+            throw new RuntimeException("todo handle this case");
+            //OpVars.visibleVars(normalizedOp);
+        }
 
-		storageIdToPatternId.put(storageId, patternId);
+        // TODO Check if the pattern we are putting is isomorphic to an existing one
+        Node patternId = lookup(normalizedOp);
 
 
-    	// Allocate a new id entry of this op
-    	//Node result = NodeFactory.createURI("id://" + StringUtils.md5Hash("" + normalizedItem));
+        Map<Node, VarInfo> map = patternIdToStorageIdToVarInfo.computeIfAbsent(patternId,  (n) -> new HashMap<>());
+        map.put(storageId, varInfo);
 
-    	// TODO Verify: Transform to qfpc directly (the normalizedOp has the projection cut away)
-		//ProjectedQuadFilterPattern conjunctiveQuery = SparqlCacheUtils.transform(normalizedOp);
+        storageIdToPatternId.put(storageId, patternId);
+
+
+        // Allocate a new id entry of this op
+        //Node result = NodeFactory.createURI("id://" + StringUtils.md5Hash("" + normalizedItem));
+
+        // TODO Verify: Transform to qfpc directly (the normalizedOp has the projection cut away)
+        //ProjectedQuadFilterPattern conjunctiveQuery = SparqlCacheUtils.transform(normalizedOp);
         QuadFilterPattern qfp = SparqlCacheUtils.extractQuadFilterPattern(op);
 
-		if(qfp != null) {
-			QuadFilterPatternCanonical qfpc = SparqlCacheUtils.canonicalize2(qfp, VarGeneratorImpl2.create());
+        if(qfp != null) {
+            QuadFilterPatternCanonical qfpc = SparqlCacheUtils.canonicalize2(qfp, VarGeneratorImpl2.create());
 
-			viewMatcherQuadPatternBased.put(storageId, qfpc);
-		} else {
-			viewMatcherTreeBased.put(storageId, normalizedOp);
-		}
-
-
-		//return result;
-
-	}
-
-	/**
-	 * Obtain the patternId for a given op
-	 *
-	 * @param op
-	 * @return
-	 */
-	public Node lookup(Op op) {
-		// TODO
-		return null;
-	}
+            viewMatcherQuadPatternBased.put(storageId, qfpc);
+        } else {
+            viewMatcherTreeBased.put(storageId, normalizedOp);
+        }
 
 
-	/**
-	 * The rewrite creates a new algebra expression with view hits injected.
-	 * TODO For convenience, it may be usefule if a a list of the hits themselves was returned
-	 *
-	 *
-	 *
-	 */
-	@Override
-	public RewriteResult2 rewrite(Op rawOp) {
-    	Op op = opNormalizer.rewrite(rawOp);
+        //return result;
+
+    }
+
+    /**
+     * Obtain the patternId for a given op
+     *
+     * @param op
+     * @return
+     */
+    public Node lookup(Op op) {
+        // TODO
+        return null;
+    }
 
 
-    	Op current = op;
-    	for(;;) {
-			// Attempt to replace complete subtrees
-			Collection<LookupResult<Node>> lookupResults = viewMatcherTreeBased.lookup(current);
-
-			if(lookupResults.isEmpty()) {
-				break;
-			}
-
-			for(LookupResult<Node> lr : lookupResults) {
-				OpVarMap opVarMap = lr.getOpVarMap();
-
-				Map<Op, Op> opMap = opVarMap.getOpMap();
-				Iterable<Map<Var, Var>> varMaps = opVarMap.getVarMaps();
-
-				Node viewId = lr.getEntry().id;
-				Op viewRootOp = lr.getEntry().queryIndex.getOp();
-				Map<Var, Var> map = Iterables.getFirst(varMaps, null);
-
-				// TODO Properly inject service references into the op node
+    /**
+     * The rewrite creates a new algebra expression with view hits injected.
+     * TODO For convenience, it may be usefule if a a list of the hits themselves was returned
+     *
+     *
+     *
+     */
+    @Override
+    public RewriteResult2 rewrite(Op rawOp) {
+        Op op = opNormalizer.rewrite(rawOp);
 
 
-				// Get the node in the user query which to replace
-				Op userSubstOp = opMap.get(viewRootOp);
-				Op newNode = new OpService(viewId, new OpQuadBlock(), true);
+        Op current = op;
+        for(;;) {
+            // Attempt to replace complete subtrees
+            Collection<LookupResult<Node>> lookupResults = viewMatcherTreeBased.lookup(current);
 
-				current = OpUtils.substitute(current, userSubstOp, newNode);
-				System.out.println("Current: " + current);
-			}
-    	}
+            if(lookupResults.isEmpty()) {
+                break;
+            }
 
+            for(LookupResult<Node> lr : lookupResults) {
+                OpVarMap opVarMap = lr.getOpVarMap();
 
-		// Find further substitution candidates for all (canonical) quad pattern leafs
-    	Tree<Op> tree = OpUtils.createTree(current);
-    	List<Op> leafs = TreeUtils.getLeafs(tree);
+                Map<Op, Op> opMap = opVarMap.getOpMap();
+                Iterable<Map<Var, Var>> varMaps = opVarMap.getVarMaps();
 
+                Node viewId = lr.getEntry().id;
+                Op viewRootOp = lr.getEntry().queryIndex.getOp();
+                Map<Var, Var> map = Iterables.getFirst(varMaps, null);
 
-    	for(Op rawLeafOp : leafs) {
-    		if(rawLeafOp instanceof OpExtQuadFilterPatternCanonical) {
-    		//Op effectiveOp = leafOp instanceof OpExtQuadFilterPatternCanonical ? ((OpExt)leafOp).effectiveOp() : leafOp;
-    			OpExtQuadFilterPatternCanonical leafOp = (OpExtQuadFilterPatternCanonical)rawLeafOp;
-
-    			Op effectiveOp = leafOp.effectiveOp();
-
-	    		Set<Var> availableVars = OpVars.visibleVars(effectiveOp);
-	    		VarUsage varUsage = OpUtils.analyzeVarUsage(tree, leafOp, availableVars);
-
-	    		System.out.println("VarUsage: " + varUsage);
+                // TODO Properly inject service references into the op node
 
 
-	    		// If we decide to cache the leaf as a whole, we just have to do
-	    		//viewMatcherQuadPatternBased.put(leafOp, cacheOp);
+                // Get the node in the user query which to replace
+                Op userSubstOp = opMap.get(viewRootOp);
+                Op newNode = new OpService(viewId, new OpQuadBlock(), true);
+
+                current = OpUtils.substitute(current, userSubstOp, newNode);
+                System.out.println("Current: " + current);
+            }
+        }
+
+
+        // Find further substitution candidates for all (canonical) quad pattern leafs
+        Tree<Op> tree = OpUtils.createTree(current);
+        List<Op> leafs = TreeUtils.getLeafs(tree);
+
+
+        for(Op rawLeafOp : leafs) {
+            if(rawLeafOp instanceof OpExtQuadFilterPatternCanonical) {
+            //Op effectiveOp = leafOp instanceof OpExtQuadFilterPatternCanonical ? ((OpExt)leafOp).effectiveOp() : leafOp;
+                OpExtQuadFilterPatternCanonical leafOp = (OpExtQuadFilterPatternCanonical)rawLeafOp;
+
+                Op effectiveOp = leafOp.effectiveOp();
+
+                Set<Var> availableVars = OpVars.visibleVars(effectiveOp);
+                VarUsage varUsage = OpUtils.analyzeVarUsage(tree, leafOp, availableVars);
+
+                System.out.println("VarUsage: " + varUsage);
+
+
+                // If we decide to cache the leaf as a whole, we just have to do
+                //viewMatcherQuadPatternBased.put(leafOp, cacheOp);
 
 
 //	    		ProjectedQuadFilterPattern pqfp = SparqlCacheUtils.transform(op);
@@ -254,55 +258,55 @@ public class OpRewriteViewMatcherStateful
 //
 //	    			//viewMatcherQuadPatternBased.
 //
-    		}
+            }
 
 
-    	}
+        }
 
 
-		// TODO Auto-generated method stub
-    	Map<Node, StorageEntry> storageMap = new HashMap<>();
+        // TODO Auto-generated method stub
+        Map<Node, StorageEntry> storageMap = new HashMap<>();
 
-    	RewriteResult2 result = new RewriteResult2(rawOp, storageMap);
-		return result;
-	}
-
-
-	public Op finalizeRewrite(Op op) {
-    	// TODO Adding the overall caching op has to be done AFTER the complete rewrite - i.e. here is the WRONG place
-
-    	Map<Node, StorageEntry> storageMap = new HashMap<>();
-
-    	// Prepare a storage for the original rawOp
-    	QueryExecutionFactory qef = null;
-    	ExecutorService executorService = null;
-
-    	OpExecutor opExecutor = null;
-    	Op rootOp = null;
-    	Range<Long> cacheRange = Range.atMost(100000l);
-    	Context context = null;
-    	RangedSupplierLazyLoadingListCache<Binding> storage = new RangedSupplierLazyLoadingListCache<Binding>(executorService, new RangedSupplierOp(rootOp, context), cacheRange, null);
-
-    	Node storageRef = null;
-    	VarInfo varInfo = new VarInfo(OpVars.visibleVars(rootOp), 0); //Collections.emptySet());
-    	StorageEntry storageEntry = new StorageEntry(storage, varInfo);
-
-    	storageMap.put(storageRef, storageEntry);
-
-    	// Add an operation to cache the whole result
-    	Op superRootOp = new OpService(storageRef, rootOp, false);
+        RewriteResult2 result = new RewriteResult2(rawOp, storageMap);
+        return result;
+    }
 
 
+    public Op finalizeRewrite(Op op) {
+        // TODO Adding the overall caching op has to be done AFTER the complete rewrite - i.e. here is the WRONG place
 
-    	return superRootOp;
-    	// TODO Inject values directly if the data is local and comparatively small
+        Map<Node, StorageEntry> storageMap = new HashMap<>();
+
+        // Prepare a storage for the original rawOp
+        QueryExecutionFactory qef = null;
+        ExecutorService executorService = null;
+
+        OpExecutor opExecutor = null;
+        Op rootOp = null;
+        Range<Long> cacheRange = Range.atMost(100000l);
+        Context context = null;
+        RangedSupplierLazyLoadingListCache<Binding> storage = new RangedSupplierLazyLoadingListCache<Binding>(executorService, new RangedSupplierOp(rootOp, context), cacheRange, null);
+
+        Node storageRef = null;
+        VarInfo varInfo = new VarInfo(OpVars.visibleVars(rootOp), 0); //Collections.emptySet());
+        StorageEntry storageEntry = new StorageEntry(storage, varInfo);
+
+        storageMap.put(storageRef, storageEntry);
+
+        // Add an operation to cache the whole result
+        Op superRootOp = new OpService(storageRef, rootOp, false);
+
+
+
+        return superRootOp;
+        // TODO Inject values directly if the data is local and comparatively small
 //    	Range<Long> range;
 //    	storage.isCached(range);
 
 
-	}
+    }
 
-	//public static Op rewrite
+    //public static Op rewrite
 
 
 
