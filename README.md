@@ -22,11 +22,14 @@ Snapshots are presently published in our own archiva:
 	<dependency>
 		<groupId>org.aksw.jena-sparql-api</groupId>
 		<artifactId>jena-sparql-api-core</artifactId>
-		<version>3.1.1-1-SNAPSHOT</version>
+		<version>{check available versions with the link below}</version>
 	</dependency>	
 	...
 </dependencies>
 ```
+
+Latest version(s): [jena-sparql-api on maven central](http://search.maven.org/#search%7Cga%7C1%7Cjena-sparql-api)
+
 ### Project structure
 
 This library is composed of the following modules:
