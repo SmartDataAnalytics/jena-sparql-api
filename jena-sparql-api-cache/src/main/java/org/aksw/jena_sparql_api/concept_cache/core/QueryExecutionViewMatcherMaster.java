@@ -1,6 +1,5 @@
 package org.aksw.jena_sparql_api.concept_cache.core;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -13,14 +12,17 @@ import java.util.stream.StreamSupport;
 
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeUtils;
+import org.aksw.jena_sparql_api.algebra.transform.TransformPushSlice;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 import org.aksw.jena_sparql_api.core.QueryExecutionBaseSelect;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.ResultSetCloseable;
+import org.aksw.jena_sparql_api.util.collection.CacheRangeInfo;
 import org.aksw.jena_sparql_api.util.collection.RangedSupplier;
 import org.aksw.jena_sparql_api.util.collection.RangedSupplierLazyLoadingListCache;
 import org.aksw.jena_sparql_api.utils.BindingUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
+import org.aksw.jena_sparql_api.utils.RangeUtils;
 import org.aksw.jena_sparql_api.utils.ResultSetUtils;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.apache.jena.graph.Node;
@@ -32,12 +34,16 @@ import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpAsQuery;
+import org.apache.jena.sparql.algebra.Transform;
+import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.op.OpNull;
 import org.apache.jena.sparql.algebra.op.OpService;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.util.Context;
 import org.apache.jena.util.iterator.ClosableIterator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.cache.Cache;
 import com.google.common.collect.Range;
@@ -45,6 +51,8 @@ import com.google.common.collect.Range;
 public class QueryExecutionViewMatcherMaster
 	extends QueryExecutionBaseSelect
 {
+	private static final Logger logger = LoggerFactory.getLogger(QueryExecutionViewMatcherMaster.class);
+
 	protected OpRewriteViewMatcherStateful opRewriter;
 	protected ExecutorService executorService;
 	//protected Map<Node, StorageEntry> storageMap;
@@ -95,6 +103,16 @@ public class QueryExecutionViewMatcherMaster
     	return result;
     }
 
+    /**
+     * Substitute cache references either with the cached data or -
+     * if that is not completely available - substitute with the original expression.
+     *
+     * @param op
+     * @param tree
+     * @return
+     */
+
+
     @Override
     protected ResultSetCloseable executeCoreSelect(Query rawQuery) {
 
@@ -127,7 +145,7 @@ public class QueryExecutionViewMatcherMaster
     	// Map<Node, List<
 
 
-    	// TODO: All subtrees that are to be executed on the original data source must be wrapped with
+    	// All subtrees that are to be executed on the original data source must be wrapped with
 		// a standard sparql service clause
 
 		Tree<Op> tree = OpUtils.createTree(rewrittenOp);
@@ -137,7 +155,10 @@ public class QueryExecutionViewMatcherMaster
 
 		Set<Op> taggedNodes = TreeUtils.propagateBottomUpLabel(tree, predicate);
 
-		System.out.println("Tagged: " + taggedNodes);
+		logger.debug("Tagged: " + taggedNodes);
+
+		// If we tagged the root node, then everything can be executed on the original service
+
 
 		int idX = 0;
 		// Remap all tagged nodes to be executed on the original service
@@ -149,6 +170,7 @@ public class QueryExecutionViewMatcherMaster
 			Op serviceOp = new OpService(serviceNode, OpNull.create(), false);
 
 			RangedSupplier<Long, Binding> s3 = new RangedSupplierQuery(parentFactory, query);
+
 			VarInfo varInfo = new VarInfo(new HashSet<>(query.getProjectVars()), 0);
 			StorageEntry se = new StorageEntry(s3, varInfo); // The var info is not used
 			storageMap.put(serviceNode, se);
@@ -157,6 +179,24 @@ public class QueryExecutionViewMatcherMaster
 		}
 
 		rewrittenOp = OpUtils.substitute(rewrittenOp, false, taggedToService::get);
+
+		// Adujst limit
+		rewrittenOp = QueryUtils.applyRange(rewrittenOp, range);
+
+    	Transform transform = new TransformPushSlice();
+    	Op tmp;
+    	do {
+        	tmp = rewrittenOp;
+    		rewrittenOp = Transformer.transform(transform, tmp);
+
+    	} while(!rewrittenOp.equals(tmp));
+
+    	logger.debug("Raw query being rewritten for execution:\n" + rawQuery);
+    	logger.debug("Rewritten op being passed to execution:\n" + rewrittenOp);
+
+
+
+		//rewrittenOp = new OpSlice(rew)
 
     	Context ctx = context.copy();
     	ctx.put(OpExecutorViewCache.STORAGE_MAP, storageMap);
@@ -206,8 +246,8 @@ public class QueryExecutionViewMatcherMaster
 
 
 
-    	System.out.println("Rewritten op being passed to execution:\n" + rewrittenOp);
-    	System.out.println("Rewritten op being passed to execution:\n" + rawQuery);
+//
+
 
     	// Note: We use Jena to execute the op.
     	// The op itself may use SERVICE<> as the root node, which will cause jena to pass execution to the appropriate handler
@@ -236,6 +276,7 @@ public class QueryExecutionViewMatcherMaster
     		Node id = NodeFactory.createURI("view://ex.org/view" + queryOp.hashCode());
 
         	s2 = new RangedSupplierLazyLoadingListCache<Binding>(executorService, s2, Range.closedOpen(0l, 10000l));
+    		//s2 = new RangedSupplierLazyLoadingListCache<Binding>(executorService, s2, range);
 
         	StorageEntry se2 = new StorageEntry(s2, varInfo);
 

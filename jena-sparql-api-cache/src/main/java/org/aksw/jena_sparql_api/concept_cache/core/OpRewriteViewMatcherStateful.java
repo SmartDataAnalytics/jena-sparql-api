@@ -1,7 +1,6 @@
 package org.aksw.jena_sparql_api.concept_cache.core;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -18,26 +17,35 @@ import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpExtQuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.util.collection.CacheRangeInfo;
+import org.aksw.jena_sparql_api.util.collection.RangedSupplier;
 import org.aksw.jena_sparql_api.util.collection.RangedSupplierLazyLoadingListCache;
+import org.aksw.jena_sparql_api.utils.ResultSetUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.aksw.jena_sparql_api.view_matcher.OpVarMap;
 import org.aksw.jena_sparql_api.views.index.LookupResult;
 import org.aksw.jena_sparql_api.views.index.OpViewMatcher;
 import org.aksw.jena_sparql_api.views.index.OpViewMatcherTreeBased;
-import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.graph.Node;
+import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpVars;
+import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.op.OpQuadBlock;
 import org.apache.jena.sparql.algebra.op.OpService;
+import org.apache.jena.sparql.algebra.op.OpTable;
 import org.apache.jena.sparql.algebra.optimize.Rewrite;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.main.OpExecutor;
 import org.apache.jena.sparql.util.Context;
+import org.apache.jena.util.iterator.ClosableIterator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.RemovalListener;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Range;
 
 
@@ -68,6 +76,9 @@ public class OpRewriteViewMatcherStateful
     implements RewriterSparqlViewMatcher
     //implements Rewrite
 {
+
+	private static final Logger logger = LoggerFactory.getLogger(OpRewriteViewMatcherStateful.class);
+
     protected Rewrite opNormalizer;
     protected OpViewMatcher<Node> viewMatcherTreeBased;
     protected SparqlViewCache<Node> viewMatcherQuadPatternBased;
@@ -184,6 +195,14 @@ public class OpRewriteViewMatcherStateful
 
 
     /**
+     * Possibly new approach(wip):
+     * The rewrite does not directly inject cache hits, but it returns a multimap
+     * that associates nodes with hits.
+     * This way it is possible to chose among the replacement candidates
+     *
+     *
+     * Current approach:
+     *
      * The rewrite creates a new algebra expression with view hits injected.
      * TODO For convenience, it may be usefule if a a list of the hits themselves was returned
      *
@@ -196,6 +215,9 @@ public class OpRewriteViewMatcherStateful
 
 
         Op current = op;
+
+        //Multimap<Op, LookupResult<Node>> nodeToReplacements = HashMultimap.create();
+
         for(;;) {
             // Attempt to replace complete subtrees
             Collection<LookupResult<Node>> lookupResults = viewMatcherTreeBased.lookup(current);
@@ -214,15 +236,48 @@ public class OpRewriteViewMatcherStateful
                 Op viewRootOp = lr.getEntry().queryIndex.getOp();
                 Map<Var, Var> map = Iterables.getFirst(varMaps, null);
 
+                Op userSubstOp = opMap.get(viewRootOp);
+
                 // TODO Properly inject service references into the op node
 
+                // Check the cache for whether the data associated with the view id
+                // is complete
 
-                // Get the node in the user query which to replace
-                Op userSubstOp = opMap.get(viewRootOp);
-                Op newNode = new OpService(viewId, new OpQuadBlock(), true);
+                Op substitute = null;
 
-                current = OpUtils.substitute(current, userSubstOp, newNode);
-                System.out.println("Current: " + current);
+                StorageEntry storageEntry = cache.getIfPresent(viewId);
+                if(storageEntry != null) {
+                	RangedSupplier<Long, Binding> rangedSupplier = storageEntry.storage;
+
+                	@SuppressWarnings("unchecked")
+					CacheRangeInfo<Long> cri = rangedSupplier.unwrap(CacheRangeInfo.class, true);
+
+                	Range<Long> atLeastZero = Range.atLeast(0l);
+                	boolean isAllCached = cri.isCached(atLeastZero);
+                	if(isAllCached) {
+                		ClosableIterator<Binding> bindings = rangedSupplier.apply(atLeastZero);
+                		ResultSet rs = ResultSetUtils.create2(storageEntry.varInfo.getProjectVars(), bindings);
+                		Table table = TableUtils.createTable(rs);
+                		substitute = OpTable.create(table);
+                	}
+                }
+
+
+                // If substitute is null, create a default substitute
+                if(substitute == null) {
+                    // Get the node in the user query which to replace
+                    substitute = new OpService(viewId, new OpQuadBlock(), true);
+
+                    substitute = null;
+                }
+
+                // Apply substitution (if substitute is not null)
+                if(substitute != null) {
+                    current = OpUtils.substitute(current, userSubstOp, substitute);
+                }
+
+
+                logger.debug("Rewrite after substitution: " + current);
             }
         }
 
@@ -264,7 +319,6 @@ public class OpRewriteViewMatcherStateful
         }
 
 
-        // TODO Auto-generated method stub
         Map<Node, StorageEntry> storageMap = new HashMap<>();
 
         RewriteResult2 result = new RewriteResult2(rawOp, storageMap);

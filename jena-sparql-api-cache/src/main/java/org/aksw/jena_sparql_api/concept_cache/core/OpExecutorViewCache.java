@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
+import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.ReplaceConstants;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
@@ -16,6 +17,7 @@ import org.apache.jena.sparql.algebra.OpAsQuery;
 import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.op.OpService;
+import org.apache.jena.sparql.algebra.op.OpSlice;
 import org.apache.jena.sparql.algebra.op.OpUnion;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.ExecutionContext;
@@ -66,12 +68,18 @@ public class OpExecutorViewCache
         QueryIterator result;
         // If there is no storage map in the context, we do not handle view IRIs
         if(serviceUri.startsWith("view://") && storageMap != null) {
+        	Op subOp = opService.getSubOp();
+
+        	Range<Long> range = Range.atLeast(0l);
+        	if(subOp instanceof OpSlice) {
+        		range = QueryUtils.toRange((OpSlice)subOp);
+        	}
+
         	StorageEntry storageEntry = storageMap.get(serviceNode);
         	if(storageEntry == null) {
         		throw new RuntimeException("Could not find a " + StorageEntry.class.getSimpleName() + " instance for " + serviceUri);
         	}
 
-        	Range<Long> range = Range.atLeast(0l);
         	ClosableIterator<Binding> it = storageEntry.storage.apply(range);
 
 //        	while(it.hasNext()) { System.out.println("item: " + it.next()); }

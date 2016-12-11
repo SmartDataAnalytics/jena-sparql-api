@@ -127,7 +127,8 @@ class LazyLoadingCachingListIterator<T>
  * @param <T>
  */
 public class RangedSupplierLazyLoadingListCache<T>
-	implements RangedSupplier<Long, T>
+	implements RangedSupplier<Long, T>, CacheRangeInfo<Long>
+
 {
 
     /**

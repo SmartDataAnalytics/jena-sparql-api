@@ -276,7 +276,6 @@
 						<gitFlowConfig>
 							<versionTagPrefix>v</versionTagPrefix>
 						</gitFlowConfig>
-						<pushRemote>false</pushRemote>
 					</configuration>
 				</plugin>
 

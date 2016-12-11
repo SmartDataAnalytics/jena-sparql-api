@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
+import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.op.OpSlice;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.core.Quad;
@@ -71,6 +72,16 @@ public class QueryUtils {
     public static Range<Long> toRange(OpSlice op) {
         Range<Long> result = toRange(op.getStart(), op.getLength());
         return result;
+    }
+
+    public static Op applyRange(Op op, Range<Long> range) {
+    	long start = rangeToOffset(range);
+    	long length = rangeToLimit(range);
+
+    	Op result = start == Query.NOLIMIT && length == Query.NOLIMIT
+    			? op
+    			: new OpSlice(op, start, length);
+    	return result;
     }
 
     /**
