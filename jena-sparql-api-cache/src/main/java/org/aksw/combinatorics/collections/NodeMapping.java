@@ -23,11 +23,11 @@ public class NodeMapping<A, B, S> {
         this.value = value;
     }
     
-    public Tree<A> getaTree() {
+    public Tree<A> getTreeA() {
         return aTree;
     }
 
-    public Tree<B> getbTree() {
+    public Tree<B> getTreeB() {
         return bTree;
     }
 

@@ -50,6 +50,7 @@ import org.apache.jena.sparql.expr.ExprVar;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Range;
 
@@ -313,6 +314,13 @@ public class SparqlViewMatcherUtils {
 
         int n = sourceUnaryAncestors.size();
         int m = targetUnaryAncestors.size();
+
+        // If the list of sourceUnaryAncestors includes the source's root node,
+        // we do not require all of the ancestors to match
+        if(n > 0 && Iterables.getLast(sourceUnaryAncestors) == sourceTree.getRoot()) {
+        	m = Math.min(m, n);
+        }
+
 
         boolean sameSize = n == m;
 
