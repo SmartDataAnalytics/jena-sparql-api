@@ -200,13 +200,13 @@ public class SparqlViewMatcherQfpcImpl<K>
             // Filter expressions are not considered at this stage
             IBiSetMultimap<Quad, Set<Set<Expr>>> cacheQuadToCnf = qfpcToQuadToCnf.get(cand);
 
-            cacheQuadToCnf.asMap().entrySet().forEach(e -> System.out.println("qfpcToQuadToCnf: " + e.getKey() + " -> " + e.getValue()));
+            cacheQuadToCnf.asMap().entrySet().forEach(e -> logger.debug("qfpcToQuadToCnf: " + e.getKey() + " -> " + e.getValue()));
             //Stream<Map<Var, Var>> varMaps = CombinatoricsUtils.computeVarMapQuadBased(cacheQuadToCnf, queryQuadToCnf, candVarCombos);
             Stream<Map<Var, Var>> varMaps = VarMapper.createVarMapCandidates(cand, queryQfpc);
 
             //while(varMaps.hasNext()) {
             varMaps.forEach(varMap -> {
-                System.out.println("Processing candidate: " + varMap);
+                logger.debug("Processing candidate: " + varMap);
 
 
                 NodeTransform rename = new NodeTransformRenameMap(varMap);
@@ -503,6 +503,7 @@ public class SparqlViewMatcherQfpcImpl<K>
     public void put(K key, QuadFilterPatternCanonical qfpc) {
 
     	keyToPattern.put(key, qfpc);
+    	qfpcToKeys.put(qfpc, key);
 
         //map = new HashMap<Set<Var>, Table>();
         //cacheData.put(qfpc, map);
@@ -600,6 +601,8 @@ public class SparqlViewMatcherQfpcImpl<K>
 	public void removeKey(Object key) {
 		QuadFilterPatternCanonical qfpc = keyToPattern.get(key);
 		if(qfpc != null) {
+			//qfpcToKeys.put(qfpc, key);
+
 			qfpcToQuadToCnf.remove(qfpc);
 			quadCnfToSummary.getInverse().removeAll(qfpc);
 		}

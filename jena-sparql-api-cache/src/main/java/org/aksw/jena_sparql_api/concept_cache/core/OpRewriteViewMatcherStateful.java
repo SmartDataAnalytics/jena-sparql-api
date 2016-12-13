@@ -326,7 +326,7 @@ public class OpRewriteViewMatcherStateful
                 Set<Var> availableVars = OpVars.visibleVars(effectiveOp);
                 VarUsage varUsage = OpUtils.analyzeVarUsage(tree, leafOp, availableVars);
 
-                System.out.println("VarUsage: " + varUsage);
+                logger.debug("VarUsage: " + varUsage);
 
                 Collection<QfpcMatch<Node>> hits = viewMatcherQuadPatternBased.lookup(qfpc);
 
@@ -347,29 +347,33 @@ public class OpRewriteViewMatcherStateful
 
                 // Aggregate
                 QfpcAggMatch<Node> agg = SparqlViewMatcherQfpcImpl.aggregateResults(hits);
+                if(agg != null) {
 
-                List<Op> ops = new ArrayList<>();
-                if(!agg.getReplacementPattern().isEmpty()) {
-                	ops.add(agg.getReplacementPattern().toOp());
+
+	                List<Op> ops = new ArrayList<>();
+	                QuadFilterPatternCanonical replacementPattern = agg.getReplacementPattern();
+	                if(replacementPattern != null && !replacementPattern.isEmpty()) {
+	                	ops.add(replacementPattern.toOp());
+	                }
+
+	                for(QfpcMatch<Node> hit : hits) {
+	                	Table table = hitData.get(hit.getTable());
+
+	                	Op xop = OpTable.create(table);
+	                	ops.add(xop);
+	                }
+
+	                Op result;
+	                if(ops.size() == 1) {
+	                	result = ops.get(0);
+	                } else {
+	                	OpSequence r = OpSequence.create();
+	                	ops.forEach(r::add);
+	                	result = r;
+	                }
+
+	                current = OpUtils.substitute(current, rawLeafOp, result);
                 }
-
-                for(QfpcMatch<Node> hit : hits) {
-                	Table table = hitData.get(hit.getTable());
-
-                	Op xop = OpTable.create(table);
-                	ops.add(xop);
-                }
-
-                Op result;
-                if(ops.size() == 1) {
-                	result = ops.get(0);
-                } else {
-                	OpSequence r = OpSequence.create();
-                	ops.forEach(r::add);
-                	result = r;
-                }
-
-                current = OpUtils.substitute(current, rawLeafOp, result);
             }
         }
 

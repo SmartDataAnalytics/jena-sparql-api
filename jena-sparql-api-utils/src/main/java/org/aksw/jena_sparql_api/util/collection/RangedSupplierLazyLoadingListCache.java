@@ -399,7 +399,7 @@ public class RangedSupplierLazyLoadingListCache<T>
 	@Override
     public <X> X unwrap(Class<X> clazz, boolean reflexive) {
     	@SuppressWarnings("unchecked")
-		X result = reflexive && this.getClass().isAssignableFrom(clazz)
+		X result = reflexive && clazz.isAssignableFrom(this.getClass())//this.getClass().isAssignableFrom(clazz)
     		? (X)this
     		: itemSupplier.unwrap(clazz, true);
 
