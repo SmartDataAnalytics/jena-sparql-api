@@ -135,7 +135,7 @@ public class SparqlViewMatcherQfpcImpl<K>
     		Map<QuadFilterPatternCanonical, IBiSetMultimap<Quad, Set<Set<Expr>>>> qfpcToQuadToCnf,
     		Multimap<QuadFilterPatternCanonical, K> qfpcToKeys
     ) {
-        List<QfpcMatch<K>> rawResult = new ArrayList<>();
+        List<QfpcMatch<K>> result = new ArrayList<>();
 
         // TODO: We need the quadToCnf map for the queryPs
         IBiSetMultimap<Quad, Set<Set<Expr>>> queryQuadToCnf = SparqlCacheUtils.createMapQuadsToFilters(queryQfpc);
@@ -235,7 +235,7 @@ public class SparqlViewMatcherQfpcImpl<K>
                         //Set<Var> candVars = candRename.getVarsMentioned();
                         QfpcMatch<K> cacheHit = new QfpcMatch<>(candRename, diffPattern, k, varMap);
 
-                        rawResult.add(cacheHit);
+                        result.add(cacheHit);
 
                     }
 
