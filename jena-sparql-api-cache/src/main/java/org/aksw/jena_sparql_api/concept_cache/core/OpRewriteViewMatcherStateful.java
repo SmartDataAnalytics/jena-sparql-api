@@ -179,9 +179,12 @@ public class OpRewriteViewMatcherStateful
             QuadFilterPatternCanonical qfpc = SparqlCacheUtils.canonicalize2(qfp, VarGeneratorImpl2.create());
 
             viewMatcherQuadPatternBased.put(storageId, qfpc);
-        } else {
-            viewMatcherTreeBased.put(storageId, normalizedOp);
         }
+
+        // Always add the whole op
+        //else {
+            viewMatcherTreeBased.put(storageId, normalizedOp);
+        //}
 
 
         //return result;

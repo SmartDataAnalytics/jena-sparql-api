@@ -601,7 +601,9 @@ public class SparqlViewMatcherQfpcImpl<K>
 	public void removeKey(Object key) {
 		QuadFilterPatternCanonical qfpc = keyToPattern.get(key);
 		if(qfpc != null) {
+			qfpcToKeys.get(qfpc).remove(key);
 			//qfpcToKeys.put(qfpc, key);
+
 
 			qfpcToQuadToCnf.remove(qfpc);
 			quadCnfToSummary.getInverse().removeAll(qfpc);
