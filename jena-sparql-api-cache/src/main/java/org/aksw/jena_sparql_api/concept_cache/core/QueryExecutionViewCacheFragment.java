@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.concept_cache.core;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCache;
+import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewMatcherQfpc;
 import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.core.QueryExecutionAdapter;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
@@ -30,11 +30,11 @@ public class QueryExecutionViewCacheFragment
     protected QueryExecutionFactory qef;
     protected ProjectedQuadFilterPattern pqfp;
     private Query query;
-    private SparqlViewCache conceptMap;
+    private SparqlViewMatcherQfpc conceptMap;
     private Set<Var> indexVars;
     private long indexResultSetSizeThreshold;
 
-    public QueryExecutionViewCacheFragment(Query query, ProjectedQuadFilterPattern pqfp, QueryExecutionFactory qef, SparqlViewCache conceptMap, Set<Var> indexVars, long indexResultSetSizeThreshold) {
+    public QueryExecutionViewCacheFragment(Query query, ProjectedQuadFilterPattern pqfp, QueryExecutionFactory qef, SparqlViewMatcherQfpc conceptMap, Set<Var> indexVars, long indexResultSetSizeThreshold) {
         this.query = query;
         this.pqfp = pqfp;
         this.qef = qef;

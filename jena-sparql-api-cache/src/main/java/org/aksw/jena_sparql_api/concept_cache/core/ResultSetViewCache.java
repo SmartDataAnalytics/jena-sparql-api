@@ -10,7 +10,7 @@ import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 
 import org.aksw.jena_sparql_api.concept_cache.dirty.IteratorResultSetBinding;
-import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCache;
+import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewMatcherQfpc;
 import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
@@ -77,7 +77,7 @@ public class ResultSetViewCache {
      * @param pqfp
      * @return
      */
-    public static Entry<ResultSet, Boolean> cacheResultSet(ResultSet physicalRs, Set<Var> indexVars, long indexResultSetSizeThreshold, SparqlViewCache sparqlViewCache, ProjectedQuadFilterPattern pqfp) {
+    public static Entry<ResultSet, Boolean> cacheResultSet(ResultSet physicalRs, Set<Var> indexVars, long indexResultSetSizeThreshold, SparqlViewMatcherQfpc sparqlViewCache, ProjectedQuadFilterPattern pqfp) {
 
         ResultSet resultRs;
         //ResultSet physicalRs = decoratee.execSelect();

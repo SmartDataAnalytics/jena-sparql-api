@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.concept_cache.core.CacheResult;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
-import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCache;
+import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewMatcherQfpc;
 import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
@@ -72,7 +72,7 @@ public class OpVisitorViewCacheApplier
      * @param conceptMap
      * @return
      */
-    public static Entry<Op, Boolean> applyX(Op parentOp, SparqlViewCache conceptMap) {
+    public static Entry<Op, Boolean> applyX(Op parentOp, SparqlViewMatcherQfpc conceptMap) {
         return null;
     }
 
@@ -90,7 +90,7 @@ public class OpVisitorViewCacheApplier
      * @param conceptMap
      * @return
      */
-    public static Map<Op, CacheResult> detectCovers(Op parentOp, SparqlViewCache conceptMap) {
+    public static Map<Op, CacheResult> detectCovers(Op parentOp, SparqlViewMatcherQfpc conceptMap) {
         Map<Op, CacheResult> result = new HashMap<>(); // TODO We might consider using an IdentityHashMap
         detectCovers(parentOp, conceptMap, result);
         return result;
@@ -126,7 +126,7 @@ public class OpVisitorViewCacheApplier
     }
 
 
-    public static void detectCovers(Op parentOp, SparqlViewCache conceptMap, Map<Op, CacheResult> result) {
+    public static void detectCovers(Op parentOp, SparqlViewMatcherQfpc conceptMap, Map<Op, CacheResult> result) {
 
         ProjectedQuadFilterPattern pqfp = SparqlCacheUtils.transform(parentOp);
 
@@ -149,7 +149,7 @@ public class OpVisitorViewCacheApplier
     }
 
 
-    public static Op applyCovers(Op parentOp, SparqlViewCache conceptMap, Map<Op, CacheResult> opToCover) {
+    public static Op applyCovers(Op parentOp, SparqlViewMatcherQfpc conceptMap, Map<Op, CacheResult> opToCover) {
 
         Op result;
 

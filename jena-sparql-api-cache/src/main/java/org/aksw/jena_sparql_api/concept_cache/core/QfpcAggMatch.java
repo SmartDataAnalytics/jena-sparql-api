@@ -1,32 +1,38 @@
 package org.aksw.jena_sparql_api.concept_cache.core;
 
-import java.util.Collection;
+import java.util.Set;
 
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 
-import org.apache.jena.sparql.algebra.Table;
-
-public class CacheResult2<V> {
+/**
+ * Aggregated matching of a qfpc.
+ * Yields the replacement pattern and the set of matching keys.
+ *
+ * @author raven
+ *
+ * @param <V>
+ */
+public class QfpcAggMatch<K> {
     protected QuadFilterPatternCanonical replacementPattern;
-    protected Collection<V> tables;
+    protected Set<K> keys;
 
-    public CacheResult2(QuadFilterPatternCanonical replacementPattern, Collection<V> tables) {
+    public QfpcAggMatch(QuadFilterPatternCanonical replacementPattern, Set<K> keys) {
         super();
         this.replacementPattern = replacementPattern;
-        this.tables = tables;
+        this.keys = keys;
     }
 
     public QuadFilterPatternCanonical getReplacementPattern() {
         return this.replacementPattern;
     }
 
-    public Collection<V> getTables() {
-        return tables;
+    public Set<K> getKeys() {
+        return keys;
     }
 
     @Override
     public String toString() {
         return "CacheResult [replacementPattern=" + replacementPattern
-                + ", tables=" + tables + "]";
+                + ", keys=" + keys + "]";
     }
 }

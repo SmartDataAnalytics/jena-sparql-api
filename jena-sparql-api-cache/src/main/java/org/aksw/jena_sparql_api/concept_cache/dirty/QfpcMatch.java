@@ -7,13 +7,14 @@ import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.core.Var;
 
-public class QfpcMatch {
+// TODO: Rename table to 'key'
+public class QfpcMatch<K> {
     private QuadFilterPatternCanonical replacementPattern;
     private QuadFilterPatternCanonical diffPattern;
-    private Table table;
+    private K table;
     private Map<Var, Var> varMap;
 
-    public QfpcMatch(QuadFilterPatternCanonical replacementPattern, QuadFilterPatternCanonical diffPattern, Table table, Map<Var, Var> varMap) {
+    public QfpcMatch(QuadFilterPatternCanonical replacementPattern, QuadFilterPatternCanonical diffPattern, K table, Map<Var, Var> varMap) {
         super();
         this.replacementPattern = replacementPattern;
         this.diffPattern = diffPattern;
@@ -29,7 +30,7 @@ public class QfpcMatch {
         return diffPattern;
     }
 
-    public Table getTable() {
+    public K getTable() {
         return table;
     }
 

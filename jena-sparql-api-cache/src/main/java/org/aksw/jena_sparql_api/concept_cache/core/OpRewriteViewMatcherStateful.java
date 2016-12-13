@@ -7,16 +7,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeUtils;
-import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCache;
-import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCacheImpl;
+import org.aksw.jena_sparql_api.concept_cache.dirty.QfpcMatch;
+import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewMatcherQfpc;
+import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewMatcherQfpcImpl;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpExtQuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.sparql.algebra.mapping.VarMapper;
 import org.aksw.jena_sparql_api.util.collection.CacheRangeInfo;
 import org.aksw.jena_sparql_api.util.collection.RangedSupplier;
 import org.aksw.jena_sparql_api.util.collection.RangedSupplierLazyLoadingListCache;
@@ -24,8 +28,8 @@ import org.aksw.jena_sparql_api.utils.ResultSetUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.aksw.jena_sparql_api.view_matcher.OpVarMap;
 import org.aksw.jena_sparql_api.views.index.LookupResult;
-import org.aksw.jena_sparql_api.views.index.OpViewMatcher;
-import org.aksw.jena_sparql_api.views.index.OpViewMatcherTreeBased;
+import org.aksw.jena_sparql_api.views.index.SparqlViewMatcherOp;
+import org.aksw.jena_sparql_api.views.index.SparqlViewMatcherOpImpl;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.algebra.Op;
@@ -80,8 +84,8 @@ public class OpRewriteViewMatcherStateful
 	private static final Logger logger = LoggerFactory.getLogger(OpRewriteViewMatcherStateful.class);
 
     protected Rewrite opNormalizer;
-    protected OpViewMatcher<Node> viewMatcherTreeBased;
-    protected SparqlViewCache<Node> viewMatcherQuadPatternBased;
+    protected SparqlViewMatcherOp<Node> viewMatcherTreeBased;
+    protected SparqlViewMatcherQfpc<Node> viewMatcherQuadPatternBased;
 
 
     protected Map<Node, Map<Node, VarInfo>> patternIdToStorageIdToVarInfo;
@@ -100,9 +104,9 @@ public class OpRewriteViewMatcherStateful
 
 
     public OpRewriteViewMatcherStateful(Cache<Node, StorageEntry> cache, Collection<RemovalListener<Node, StorageEntry>> removalListeners) {
-        this.opNormalizer = OpViewMatcherTreeBased::normalizeOp;
-        this.viewMatcherTreeBased = OpViewMatcherTreeBased.create();
-        this.viewMatcherQuadPatternBased = new SparqlViewCacheImpl<>();
+        this.opNormalizer = SparqlViewMatcherOpImpl::normalizeOp;
+        this.viewMatcherTreeBased = SparqlViewMatcherOpImpl.create();
+        this.viewMatcherQuadPatternBased = new SparqlViewMatcherQfpcImpl<>();
         this.cache = cache;
 
 
@@ -194,6 +198,28 @@ public class OpRewriteViewMatcherStateful
     }
 
 
+    public static <K> Table getTable(Cache<K, StorageEntry> cache, K key) {
+        StorageEntry storageEntry = cache.getIfPresent(key);
+        Table result = null;
+        if(storageEntry != null) {
+        	RangedSupplier<Long, Binding> rangedSupplier = storageEntry.storage;
+
+        	@SuppressWarnings("unchecked")
+			CacheRangeInfo<Long> cri = rangedSupplier.unwrap(CacheRangeInfo.class, true);
+
+        	Range<Long> atLeastZero = Range.atLeast(0l);
+        	boolean isAllCached = cri.isCached(atLeastZero);
+        	if(isAllCached) {
+        		ClosableIterator<Binding> bindings = rangedSupplier.apply(atLeastZero);
+        		ResultSet rs = ResultSetUtils.create2(storageEntry.varInfo.getProjectVars(), bindings);
+        		result = TableUtils.createTable(rs);
+        		//substitute = OpTable.create(table);
+        	}
+        }
+
+        return result;
+    }
+
     /**
      * Possibly new approach(wip):
      * The rewrite does not directly inject cache hits, but it returns a multimap
@@ -243,25 +269,25 @@ public class OpRewriteViewMatcherStateful
                 // Check the cache for whether the data associated with the view id
                 // is complete
 
-                Op substitute = null;
-
-                StorageEntry storageEntry = cache.getIfPresent(viewId);
-                if(storageEntry != null) {
-                	RangedSupplier<Long, Binding> rangedSupplier = storageEntry.storage;
-
-                	@SuppressWarnings("unchecked")
-					CacheRangeInfo<Long> cri = rangedSupplier.unwrap(CacheRangeInfo.class, true);
-
-                	Range<Long> atLeastZero = Range.atLeast(0l);
-                	boolean isAllCached = cri.isCached(atLeastZero);
-                	if(isAllCached) {
-                		ClosableIterator<Binding> bindings = rangedSupplier.apply(atLeastZero);
-                		ResultSet rs = ResultSetUtils.create2(storageEntry.varInfo.getProjectVars(), bindings);
-                		Table table = TableUtils.createTable(rs);
-                		substitute = OpTable.create(table);
-                	}
-                }
-
+//                StorageEntry storageEntry = cache.getIfPresent(viewId);
+//                if(storageEntry != null) {
+//                	RangedSupplier<Long, Binding> rangedSupplier = storageEntry.storage;
+//
+//                	@SuppressWarnings("unchecked")
+//					CacheRangeInfo<Long> cri = rangedSupplier.unwrap(CacheRangeInfo.class, true);
+//
+//                	Range<Long> atLeastZero = Range.atLeast(0l);
+//                	boolean isAllCached = cri.isCached(atLeastZero);
+//                	if(isAllCached) {
+//                		ClosableIterator<Binding> bindings = rangedSupplier.apply(atLeastZero);
+//                		ResultSet rs = ResultSetUtils.create2(storageEntry.varInfo.getProjectVars(), bindings);
+//                		Table table = TableUtils.createTable(rs);
+//                		substitute = OpTable.create(table);
+//                	}
+//                }
+//
+                Table table = getTable(cache, viewId);
+                Op substitute = table == null ? null : OpTable.create(table);
 
                 // If substitute is null, create a default substitute
                 if(substitute == null) {
@@ -291,6 +317,7 @@ public class OpRewriteViewMatcherStateful
             if(rawLeafOp instanceof OpExtQuadFilterPatternCanonical) {
             //Op effectiveOp = leafOp instanceof OpExtQuadFilterPatternCanonical ? ((OpExt)leafOp).effectiveOp() : leafOp;
                 OpExtQuadFilterPatternCanonical leafOp = (OpExtQuadFilterPatternCanonical)rawLeafOp;
+                QuadFilterPatternCanonical qfpc = leafOp.getQfpc();
 
                 Op effectiveOp = leafOp.effectiveOp();
 
@@ -299,6 +326,56 @@ public class OpRewriteViewMatcherStateful
 
                 System.out.println("VarUsage: " + varUsage);
 
+                Collection<QfpcMatch<Node>> hits = viewMatcherQuadPatternBased.lookup(qfpc);
+
+                // Only retain hits for which we actually have complete cache data
+
+                hits = hits.stream()
+                		//.map(hit -> )
+                		.filter(hit -> getTable(cache, hit.getTable()))
+                		.collect(Collectors.toList());
+
+                //
+                //List<QfpcMatch<K>> result = filterSubsumption(rawResult);
+
+                // Remove subsumption
+                hits = SparqlViewMatcherQfpcImpl.filterSubsumption(hits);
+
+
+
+                QfpcAggMatch<Node> agg = SparqlViewMatcherQfpcImpl.aggregateResults(lr);
+
+                agg.getReplacementPattern();
+
+                // Map keys to tables
+                agg.getKeys()
+
+
+                //lr.getReplacementPattern()
+
+                Stream<Map<Var, Var>> candidateSolutions = VarMapper.createVarMapCandidates(viewQfpc, queryQfpc);
+
+                candidateSolutions.filter(
+                		map -> SparqlViewCacheImpl.validateCandidateByProjectedVars(viewQfpc, queryQfpc, varMap, candVarCombo)
+                );
+
+
+//SparqlQueryContainmentUtils.tryMatch(viewQfpc, queryQfpc)
+                QfpcMatch match;
+                		SparqlViewCacheImpl.postProcessResult(actualResult);
+			postProcessResult(List<QfpcMatch> actualResult) {
+
+
+}
+                //lr.getReplacementPattern()
+
+
+
+                // TODO Use the SparqlCacheUtils to get the set of covers for a qfpc
+                //SparqlCacheUtils.
+
+
+                //viewMatcherQuadPatternBased
 
                 // If we decide to cache the leaf as a whole, we just have to do
                 //viewMatcherQuadPatternBased.put(leafOp, cacheOp);

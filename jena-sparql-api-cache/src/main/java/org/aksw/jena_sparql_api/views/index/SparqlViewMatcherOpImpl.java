@@ -40,12 +40,12 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.Multimap;
 
 
-public class OpViewMatcherTreeBased<K>
-    implements OpViewMatcher<K>
+public class SparqlViewMatcherOpImpl<K>
+    implements SparqlViewMatcherOp<K>
 {
 
     private static final Logger logger = LoggerFactory
-            .getLogger(OpViewMatcherTreeBased.class);
+            .getLogger(SparqlViewMatcherOpImpl.class);
 
     //protected Function<Op, Op> opNormalizer;
     protected Rewrite opNormalizer;
@@ -57,7 +57,7 @@ public class OpViewMatcherTreeBased<K>
     protected Map<K, MyEntry<K>> idToQueryIndex;
 
 
-    public OpViewMatcherTreeBased(
+    public SparqlViewMatcherOpImpl(
             Rewrite opNormalizer,
             Function<Op, Set<Set<String>>> itemFeatureExtractor,
             Function<Op, OpIndex> itemIndexer) {
@@ -220,12 +220,12 @@ public class OpViewMatcherTreeBased<K>
     }
 
 
-    public static <T> OpViewMatcher<T> create() {
+    public static <T> SparqlViewMatcherOp<T> create() {
         Function<Op, Set<Set<String>>> itemFeatureExtractor = (oop) ->
             Collections.singleton(OpVisitorFeatureExtractor.getFeatures(oop, (op) -> op.getClass().getSimpleName()));
 
-        OpViewMatcher<T> result = new OpViewMatcherTreeBased<>(
-                OpViewMatcherTreeBased::normalizeOp,
+        SparqlViewMatcherOp<T> result = new SparqlViewMatcherOpImpl<>(
+                SparqlViewMatcherOpImpl::normalizeOp,
                 itemFeatureExtractor,
                 new OpIndexerImpl());
 

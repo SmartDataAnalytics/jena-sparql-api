@@ -16,7 +16,6 @@ t:t1a
   qc:result "{?p=?p, ?o=?o, ?s=?s, ?v_1=?v_1}" ;
   .
 
-
 q:q2a
   lsq:text "SELECT * { { SELECT ?s { ?s a <http://foo> } } }"
   .

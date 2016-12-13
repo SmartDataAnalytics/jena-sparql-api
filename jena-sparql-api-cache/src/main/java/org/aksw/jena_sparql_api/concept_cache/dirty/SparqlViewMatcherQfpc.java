@@ -1,8 +1,8 @@
 package org.aksw.jena_sparql_api.concept_cache.dirty;
 
-import org.aksw.jena_sparql_api.concept_cache.core.CacheResult;
+import java.util.Collection;
+
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
-import org.apache.jena.graph.Node;
 
 /**
  * TODO Extract an interface from this class in order to support
@@ -11,9 +11,9 @@ import org.apache.jena.graph.Node;
  * @author raven
  *
  */
-public interface SparqlViewCache<K>
+public interface SparqlViewMatcherQfpc<K>
 {
-    CacheResult lookup(QuadFilterPatternCanonical queryQfpc);
+    Collection<QfpcMatch<K>> lookup(QuadFilterPatternCanonical queryQfpc);
     void put(K key, QuadFilterPatternCanonical qfpc);//QuadFilterPatternCanonical qfpc, Table table);
     void removeKey(Object key);
 }

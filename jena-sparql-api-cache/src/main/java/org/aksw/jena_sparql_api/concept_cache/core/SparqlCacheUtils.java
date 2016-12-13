@@ -19,7 +19,7 @@ import org.aksw.commons.collections.multimaps.IBiSetMultimap;
 import org.aksw.jena_sparql_api.algebra.transform.TransformReplaceConstants;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMapImpl;
-import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCache;
+import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewMatcherQfpc;
 import org.aksw.jena_sparql_api.concept_cache.domain.PatternSummary;
 import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
@@ -256,7 +256,7 @@ public class SparqlCacheUtils {
             Map<Node, ? super ViewCacheIndexer> serviceMap,
             //Node serviceNode,
             Query rawQuery,
-            SparqlViewCache conceptMap,
+            SparqlViewMatcherQfpc conceptMap,
             //SparqlViewMatcherSystem viewMatcherSystem,
             long indexResultSetSizeThreshold)
     {
@@ -369,7 +369,7 @@ public class SparqlCacheUtils {
             //QueryExecutionFactory qef,
             Node serviceNode,
             Query rawQuery,
-            SparqlViewCache sparqlViewCache,
+            SparqlViewMatcherQfpc sparqlViewCache,
             long indexResultSetSizeThreshold)
     {
         Op rawOp = Algebra.compile(rawQuery);
@@ -416,7 +416,7 @@ public class SparqlCacheUtils {
                 Op op = e.getKey();
                 QuadFilterPatternCanonical qfpc = qfpToCanonical.get(qfp);
 
-                CacheResult cacheResult = sparqlViewCache.lookup(qfpc);
+                CacheResult cacheResult = null; // TODO Maybe fix this line: sparqlViewCache.lookup(qfpc);
                 Entry<Op, CacheResult> r = cacheResult == null ? null : new SimpleEntry<>(op, cacheResult);
                 return r;
             })

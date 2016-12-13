@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.concept_cache.core;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCache;
+import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewMatcherQfpc;
 import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.apache.jena.query.Query;
@@ -26,10 +26,10 @@ public class ViewCacheIndexerImpl
     implements ViewCacheIndexer
 {
     protected QueryExecutionFactory decoratee;
-    protected SparqlViewCache conceptMap;
+    protected SparqlViewMatcherQfpc conceptMap;
     protected long indexResultSetSizeThreshold;
 
-    public ViewCacheIndexerImpl(QueryExecutionFactory decoratee, SparqlViewCache conceptMap, long indexResultSetSizeThreshold) {
+    public ViewCacheIndexerImpl(QueryExecutionFactory decoratee, SparqlViewMatcherQfpc conceptMap, long indexResultSetSizeThreshold) {
         //super(decoratee);
         this.decoratee = decoratee;
         this.conceptMap = conceptMap;

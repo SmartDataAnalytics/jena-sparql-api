@@ -19,7 +19,7 @@ import org.apache.jena.sparql.algebra.Op;
  *
  * @param <K>
  */
-public interface OpViewMatcher<K> {
+public interface SparqlViewMatcherOp<K> {
     //boolean acceptsAdd(Op op);
 
     void put(K key, Op op);

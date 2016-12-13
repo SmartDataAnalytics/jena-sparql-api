@@ -24,7 +24,7 @@ import org.aksw.jena_sparql_api.view_matcher.SparqlViewMatcherProjectionUtils;
 import org.aksw.jena_sparql_api.view_matcher.SparqlViewMatcherUtils;
 import org.aksw.jena_sparql_api.views.index.OpIndex;
 import org.aksw.jena_sparql_api.views.index.OpIndexerImpl;
-import org.aksw.jena_sparql_api.views.index.OpViewMatcherTreeBased;
+import org.aksw.jena_sparql_api.views.index.SparqlViewMatcherOpImpl;
 import org.aksw.jena_sparql_api.views.index.QuadPatternIndex;
 import org.aksw.jena_sparql_api.views.index.SparqlViewMatcherSystemImpl;
 import org.apache.jena.query.Query;
@@ -173,8 +173,8 @@ public class SparqlQueryContainmentUtils {
 
     	Function<Op, OpIndex> opIndexer = new OpIndexerImpl();
 
-    	OpIndex viewIndex = opIndexer.apply(OpViewMatcherTreeBased.normalizeOp(viewResOp));
-    	OpIndex userIndex = opIndexer.apply(OpViewMatcherTreeBased.normalizeOp(userResOp));
+    	OpIndex viewIndex = opIndexer.apply(SparqlViewMatcherOpImpl.normalizeOp(viewResOp));
+    	OpIndex userIndex = opIndexer.apply(SparqlViewMatcherOpImpl.normalizeOp(userResOp));
 
     	Tree<Op> viewTree = viewIndex.getTree();
     	Tree<Op> userTree = userIndex.getTree();
