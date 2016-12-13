@@ -1,14 +1,16 @@
 package org.aksw.jena_sparql_api.concept_cache.core;
 
+import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeUtils;
@@ -20,7 +22,6 @@ import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpExtQuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.sparql.algebra.mapping.VarMapper;
 import org.aksw.jena_sparql_api.util.collection.CacheRangeInfo;
 import org.aksw.jena_sparql_api.util.collection.RangedSupplier;
 import org.aksw.jena_sparql_api.util.collection.RangedSupplierLazyLoadingListCache;
@@ -36,6 +37,7 @@ import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.op.OpQuadBlock;
+import org.apache.jena.sparql.algebra.op.OpSequence;
 import org.apache.jena.sparql.algebra.op.OpService;
 import org.apache.jena.sparql.algebra.op.OpTable;
 import org.apache.jena.sparql.algebra.optimize.Rewrite;
@@ -329,44 +331,73 @@ public class OpRewriteViewMatcherStateful
                 Collection<QfpcMatch<Node>> hits = viewMatcherQuadPatternBased.lookup(qfpc);
 
                 // Only retain hits for which we actually have complete cache data
+                Map<Node, Table> hitData = hits.stream()
+                		.map(hit -> new SimpleEntry<>(hit.getTable(), getTable(cache, hit.getTable())))
+                		.filter(x -> x.getValue() != null)
+                		.collect(Collectors.toMap(
+                				x -> x.getKey(), x -> x.getValue()));
 
+                // Filter hits by those having associated data
                 hits = hits.stream()
-                		//.map(hit -> )
-                		.filter(hit -> getTable(cache, hit.getTable()))
+                		.filter(x -> hitData.containsKey(x.getTable()))
                 		.collect(Collectors.toList());
 
-                //
-                //List<QfpcMatch<K>> result = filterSubsumption(rawResult);
-
-                // Remove subsumption
+                // Remove subsumed hits
                 hits = SparqlViewMatcherQfpcImpl.filterSubsumption(hits);
 
+                // Aggregate
+                QfpcAggMatch<Node> agg = SparqlViewMatcherQfpcImpl.aggregateResults(hits);
+
+                List<Op> ops = new ArrayList<>();
+                if(!agg.getReplacementPattern().isEmpty()) {
+                	ops.add(agg.getReplacementPattern().toOp());
+                }
+
+                for(QfpcMatch<Node> hit : hits) {
+                	Table table = hitData.get(hit.getTable());
+
+                	Op xop = OpTable.create(table);
+                	ops.add(xop);
+                }
+
+                Op result;
+                if(ops.size() == 1) {
+                	result = ops.get(0);
+                } else {
+                	OpSequence r = OpSequence.create();
+                	ops.forEach(r::add);
+                	result = r;
+                }
+
+                current = OpUtils.substitute(current, rawLeafOp, result);
+            }
+        }
 
 
-                QfpcAggMatch<Node> agg = SparqlViewMatcherQfpcImpl.aggregateResults(lr);
+        Map<Node, StorageEntry> storageMap = new HashMap<>();
 
-                agg.getReplacementPattern();
+        RewriteResult2 result = new RewriteResult2(rawOp, storageMap);
+        return result;
+    }
 
-                // Map keys to tables
-                agg.getKeys()
 
 
-                //lr.getReplacementPattern()
-
-                Stream<Map<Var, Var>> candidateSolutions = VarMapper.createVarMapCandidates(viewQfpc, queryQfpc);
-
-                candidateSolutions.filter(
-                		map -> SparqlViewCacheImpl.validateCandidateByProjectedVars(viewQfpc, queryQfpc, varMap, candVarCombo)
-                );
+//
+//                Stream<Map<Var, Var>> candidateSolutions = VarMapper.createVarMapCandidates(viewQfpc, queryQfpc);
+//
+//                candidateSolutions.filter(
+//                		map -> SparqlViewCacheImpl.validateCandidateByProjectedVars(viewQfpc, queryQfpc, varMap, candVarCombo)
+//                );
 
 
 //SparqlQueryContainmentUtils.tryMatch(viewQfpc, queryQfpc)
-                QfpcMatch match;
-                		SparqlViewCacheImpl.postProcessResult(actualResult);
-			postProcessResult(List<QfpcMatch> actualResult) {
+//                QfpcMatch match;
+//                		SparqlViewCacheImpl.postProcessResult(actualResult);
+//			postProcessResult(List<QfpcMatch> actualResult) {
 
 
-}
+
+
                 //lr.getReplacementPattern()
 
 
@@ -390,18 +421,6 @@ public class OpRewriteViewMatcherStateful
 //
 //	    			//viewMatcherQuadPatternBased.
 //
-            }
-
-
-        }
-
-
-        Map<Node, StorageEntry> storageMap = new HashMap<>();
-
-        RewriteResult2 result = new RewriteResult2(rawOp, storageMap);
-        return result;
-    }
-
 
     public Op finalizeRewrite(Op op) {
         // TODO Adding the overall caching op has to be done AFTER the complete rewrite - i.e. here is the WRONG place
