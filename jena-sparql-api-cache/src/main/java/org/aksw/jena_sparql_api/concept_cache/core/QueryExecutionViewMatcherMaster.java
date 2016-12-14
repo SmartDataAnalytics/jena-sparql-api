@@ -8,16 +8,13 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeUtils;
-import org.aksw.jena_sparql_api.algebra.transform.TransformPushSlice;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 import org.aksw.jena_sparql_api.core.QueryExecutionBaseSelect;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.ResultSetCloseable;
-import org.aksw.jena_sparql_api.util.RewriteUtils;
 import org.aksw.jena_sparql_api.util.collection.RangedSupplier;
 import org.aksw.jena_sparql_api.util.collection.RangedSupplierLazyLoadingListCache;
 import org.aksw.jena_sparql_api.utils.BindingUtils;
@@ -33,13 +30,11 @@ import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpAsQuery;
-import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.op.OpNull;
 import org.apache.jena.sparql.algebra.op.OpService;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.util.Context;
-import org.apache.jena.util.iterator.ClosableIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,13 +80,13 @@ public class QueryExecutionViewMatcherMaster
 
 
     public static ResultSetCloseable createResultSet(List<String> varNames, RangedSupplier<Long, Binding> rangedSupplier, Range<Long> range, Map<Var, Var> varMap) {
-    	ClosableIterator<Binding> it = rangedSupplier.apply(range);
-    	Iterable<Binding> tmp = () -> it;
-    	Stream<Binding> stream = StreamSupport.stream(tmp.spliterator(), false);
+    	Stream<Binding> stream = rangedSupplier.apply(range);
+//    	Iterable<Binding> tmp = () -> it;
+//    	Stream<Binding> stream = StreamSupport.stream(tmp.spliterator(), false);
     	if(varMap != null) {
     		stream = stream.map(b -> BindingUtils.rename(b, varMap));
     	}
-    	stream = stream.onClose(() -> it.close());
+    	//stream = stream.onClose(() -> it.close());
 
     	//List<String> varNames = query.getResultVars();
     	//ResultSetCloseable result = ResultSetUtils.create(varNames, it);

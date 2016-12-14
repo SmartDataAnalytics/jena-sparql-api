@@ -5,11 +5,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeUtils;
@@ -44,7 +46,6 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.main.OpExecutor;
 import org.apache.jena.sparql.util.Context;
-import org.apache.jena.util.iterator.ClosableIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -218,8 +219,9 @@ public class OpRewriteViewMatcherStateful
         	Range<Long> atLeastZero = Range.atLeast(0l);
         	boolean isAllCached = cri.isCached(atLeastZero);
         	if(isAllCached) {
-        		ClosableIterator<Binding> bindings = rangedSupplier.apply(atLeastZero);
-        		ResultSet rs = ResultSetUtils.create2(storageEntry.varInfo.getProjectVars(), bindings);
+        		Stream<Binding> bindings = rangedSupplier.apply(atLeastZero);
+        		Iterator<Binding> it = bindings.iterator();
+        		ResultSet rs = ResultSetUtils.create2(storageEntry.varInfo.getProjectVars(), it);
         		result = TableUtils.createTable(rs);
         		//substitute = OpTable.create(table);
         	}

@@ -5,8 +5,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
-import org.apache.jena.util.iterator.ClosableIterator;
 import org.junit.Test;
 
 import com.google.common.collect.Range;
@@ -20,9 +20,9 @@ public class TestLazyLoadingCachingList {
                 .range(0, 100)
                 .mapToObj(i -> "item-" + i)
                 .collect(Collectors.toList());
-        
+
         RangedSupplier<Long, String> tmp = new RangedSupplierList<>(items);
-        
+
         // Add some delay
         RangedSupplier<Long, String> itemSupplier = (range) -> {
             System.out.println("Supplier: Requested range: " + range);
@@ -33,43 +33,26 @@ public class TestLazyLoadingCachingList {
             }
             return tmp.apply(range);
         };
-        
-        
+
+
         RangedSupplier<Long, String> llcl = new RangedSupplierLazyLoadingListCache<String>(
                 Executors.newFixedThreadPool(4),
                 itemSupplier,
                 Range.closedOpen(0l, 17l),
-                new RangeCostModel());        
-        
-        
-        ClosableIterator<String> itA = llcl.apply(Range.closedOpen(0l, 10l));
-        ClosableIterator<String> itB = llcl.apply(Range.closedOpen(5l, 15l));
-        ClosableIterator<String> itC = llcl.apply(Range.openClosed(3l, 13l));
-        ClosableIterator<String> itD = llcl.apply(Range.closedOpen(15l, 20l));
-        ClosableIterator<String> itE = llcl.apply(Range.closedOpen(15l, 20l));
-        
-        while(itA.hasNext()) {
-            System.out.println("[A] got item: " + itA.next());
-        }
+                new RangeCostModel());
 
-        while(itB.hasNext()) {
-            System.out.println("[B] got item: " + itB.next());
-        }
 
-        while(itC.hasNext()) {
-            System.out.println("[C] got item: " + itC.next());
-        }
+        Stream<String> itA = llcl.apply(Range.closedOpen(0l, 10l));
+        Stream<String> itB = llcl.apply(Range.closedOpen(5l, 15l));
+        Stream<String> itC = llcl.apply(Range.openClosed(3l, 13l));
+        Stream<String> itD = llcl.apply(Range.closedOpen(15l, 20l));
+        Stream<String> itE = llcl.apply(Range.closedOpen(15l, 20l));
 
-        while(itD.hasNext()) {
-            System.out.println("[D] got item: " + itD.next());
-        }
-        
-        while(itE.hasNext()) {
-            System.out.println("[E] got item: " + itE.next());
-        }
-        
-        
-        
+        itA.forEach(x -> System.out.println("[A] got item: " + x));
+        itB.forEach(x -> System.out.println("[B] got item: " + x));
+        itC.forEach(x -> System.out.println("[C] got item: " + x));
+        itD.forEach(x -> System.out.println("[D] got item: " + x));
+        itE.forEach(x -> System.out.println("[E] got item: " + x));
     }
 
 }

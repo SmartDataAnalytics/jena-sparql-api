@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.concept_cache.core;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
@@ -29,7 +30,6 @@ import org.apache.jena.sparql.engine.main.OpExecutor;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.graph.NodeTransformLib;
 import org.apache.jena.sparql.util.Symbol;
-import org.apache.jena.util.iterator.ClosableIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,11 +82,11 @@ public class OpExecutorViewCache
         		throw new RuntimeException("Could not find a " + StorageEntry.class.getSimpleName() + " instance for " + serviceUri);
         	}
 
-        	ClosableIterator<Binding> it = storageEntry.storage.apply(range);
+        	Stream<Binding> stream = storageEntry.storage.apply(range);
 
 //        	while(it.hasNext()) { System.out.println("item: " + it.next()); }
 
-        	result = new QueryIterPlainWrapper(it);
+        	result = new QueryIterPlainWrapper(stream.iterator());
         } else {
         	result = super.exec(opService, input);
         }

@@ -8,9 +8,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import org.aksw.commons.collections.cache.BlockingCacheIterator;
 import org.aksw.commons.collections.cache.Cache;
+import org.aksw.commons.collections.utils.StreamUtils;
 import org.aksw.jena_sparql_api.util.collection.RangedSupplierLazyLoadingListCache.CacheEntry;
 import org.aksw.jena_sparql_api.utils.IteratorClosable;
 import org.aksw.jena_sparql_api.utils.RangeUtils;
@@ -32,14 +34,14 @@ class LazyLoadingCachingListIterator<T>
 
     protected long offset;
     protected RangeMap<Long, RangedSupplierLazyLoadingListCache.CacheEntry<T>> rangeMap;
-    protected Function<Range<Long>, ClosableIterator<T>> itemSupplier;
+    protected Function<Range<Long>, Stream<T>> itemSupplier;
 
     protected boolean usedItemSupplier = false;
 
     public LazyLoadingCachingListIterator(
             Range<Long> canonicalRequestRange,
             RangeMap<Long, CacheEntry<T>> rangeMap,
-            Function<Range<Long>, ClosableIterator<T>> itemSupplier) {
+            Function<Range<Long>, Stream<T>> itemSupplier) {
         super();
         this.canonicalRequestRange = canonicalRequestRange;
         this.rangeMap = rangeMap;
@@ -53,6 +55,7 @@ class LazyLoadingCachingListIterator<T>
     //protected Iterable</C>
     // Iterator for the fraction running from cache
     protected transient ClosableIterator<T> currentIterator;
+    //protected transient Stream<T> currentIterator;
 
     @Override
     public void close() {
@@ -85,7 +88,8 @@ class LazyLoadingCachingListIterator<T>
                 if(e == null) {
                 	if(itemSupplier != null && !usedItemSupplier) {
 	                    Range<Long> r = Range.atLeast(offset).intersection(canonicalRequestRange);
-	                    currentIterator = itemSupplier.apply(r);
+	                    Stream<T> stream = itemSupplier.apply(r);
+	                    currentIterator = new IteratorClosable<>(stream.iterator(), stream::close);
 	                    usedItemSupplier = true;
                 	} else {
                 		result = endOfData();
@@ -255,12 +259,12 @@ public class RangedSupplierLazyLoadingListCache<T>
     }
 
 
-    public ClosableIterator<T> apply(Range<Long> range) {
+    public Stream<T> apply(Range<Long> range) {
         range = normalize(range);
 
-        ClosableIterator<T> result;
+        Stream<T> result;
         if(range.isEmpty()) {
-            result = new IteratorClosable<>(Collections.emptyIterator());
+            result = Stream.empty(); //new IteratorClosable<>(Collections.emptyIterator());
         } else {
             // Prevent changes to the map while we check its content
             synchronized(rangesToData) {
@@ -307,7 +311,8 @@ public class RangedSupplierLazyLoadingListCache<T>
                 fetchGaps(subMap, rangeInfos);
             }
 
-            result = new LazyLoadingCachingListIterator<>(range, rangesToData, itemSupplier);
+            ClosableIterator<T> it = new LazyLoadingCachingListIterator<>(range, rangesToData, itemSupplier);
+            result = org.aksw.jena_sparql_api.util.collection.StreamUtils.stream(it);
         }
         return result;
     }
@@ -340,7 +345,8 @@ public class RangedSupplierLazyLoadingListCache<T>
 
 
         // Start a task to fill the cache
-        ClosableIterator<T> ci = itemSupplier.apply(range);
+        Stream<T> stream = itemSupplier.apply(range);
+        Iterator<T> ci = stream.iterator();
 
         // TODO Return an iterator that triggers caching
         long maxCacheSize = cacheRange.hasUpperBound() ? cacheRange.upperEndpoint() : Long.MAX_VALUE;
@@ -396,7 +402,9 @@ public class RangedSupplierLazyLoadingListCache<T>
                     cache.notifyAll();
                 }
 
-                ci.close();
+                //ci.close();
+                // Close underlying stream
+                stream.close();
             }
         };
 

@@ -1,9 +1,9 @@
 package org.aksw.jena_sparql_api.util.collection;
 
 import java.util.function.BiFunction;
+import java.util.stream.Stream;
 
 import org.aksw.jena_sparql_api.utils.RangeUtils;
-import org.apache.jena.util.iterator.ClosableIterator;
 
 import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.Range;
@@ -27,10 +27,10 @@ public class RangedSupplierSubRange<I extends Comparable<I>, O>
 	}
 
 	@Override
-	public ClosableIterator<O> apply(Range<I> rawRequestRange) {
+	public Stream<O> apply(Range<I> rawRequestRange) {
 		Range<I> effectiveRange = RangeUtils.makeAbsolute(subRange, rawRequestRange, domain, addition);
 
-		ClosableIterator<O> result = subRangeSupplier.apply(effectiveRange);
+		Stream<O> result = subRangeSupplier.apply(effectiveRange);
 		return result;
 	}
 //

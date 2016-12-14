@@ -1,9 +1,11 @@
 package org.aksw.jena_sparql_api.concept_cache.core;
 
+import java.util.stream.Stream;
+
 import org.aksw.jena_sparql_api.algebra.transform.TransformPushSlice;
 import org.aksw.jena_sparql_api.util.RewriteUtils;
 import org.aksw.jena_sparql_api.util.collection.RangedSupplier;
-import org.aksw.jena_sparql_api.utils.IteratorClosable;
+import org.aksw.jena_sparql_api.util.collection.StreamUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.Transformer;
@@ -19,7 +21,6 @@ import org.apache.jena.sparql.engine.main.OpExecutor;
 import org.apache.jena.sparql.engine.main.OpExecutorFactory;
 import org.apache.jena.sparql.engine.main.QC;
 import org.apache.jena.sparql.util.Context;
-import org.apache.jena.util.iterator.ClosableIterator;
 
 import com.google.common.collect.Range;
 
@@ -37,7 +38,7 @@ public class RangedSupplierOp
 	}
 
 	@Override
-	public ClosableIterator<Binding> apply(Range<Long> range) {
+	public Stream<Binding> apply(Range<Long> range) {
 		long offset = QueryUtils.rangeToOffset(range);
 		long limit = QueryUtils.rangeToLimit(range);
 
@@ -52,7 +53,8 @@ public class RangedSupplierOp
 
 
 		QueryIterator it = execute(effectiveOp, context);
-		ClosableIterator<Binding> result = new IteratorClosable<>(it, () -> it.close());
+		Stream<Binding> result = StreamUtils.stream(it);
+		//ClosableIterator<Binding> result = new IteratorClosable<>(it, () -> it.close());
 		return result;
 	}
 
