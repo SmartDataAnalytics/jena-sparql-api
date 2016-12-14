@@ -17,12 +17,11 @@ import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 import org.aksw.jena_sparql_api.core.QueryExecutionBaseSelect;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.ResultSetCloseable;
-import org.aksw.jena_sparql_api.util.collection.CacheRangeInfo;
+import org.aksw.jena_sparql_api.util.RewriteUtils;
 import org.aksw.jena_sparql_api.util.collection.RangedSupplier;
 import org.aksw.jena_sparql_api.util.collection.RangedSupplierLazyLoadingListCache;
 import org.aksw.jena_sparql_api.utils.BindingUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
-import org.aksw.jena_sparql_api.utils.RangeUtils;
 import org.aksw.jena_sparql_api.utils.ResultSetUtils;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.apache.jena.graph.Node;
@@ -34,7 +33,6 @@ import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpAsQuery;
-import org.apache.jena.sparql.algebra.Transform;
 import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.op.OpNull;
 import org.apache.jena.sparql.algebra.op.OpService;
@@ -227,16 +225,13 @@ public class QueryExecutionViewMatcherMaster
 
 		rewrittenOp = OpUtils.substitute(rewrittenOp, false, taggedToService::get);
 
-		// Adujst limit
-		rewrittenOp = QueryUtils.applyRange(rewrittenOp, range);
-
-    	Transform transform = new TransformPushSlice();
-    	Op tmp;
-    	do {
-        	tmp = rewrittenOp;
-    		rewrittenOp = Transformer.transform(transform, tmp);
-
-    	} while(!rewrittenOp.equals(tmp));
+//    	Transform transform = new TransformPushSlice();
+//    	Op tmp;
+//    	do {
+//        	tmp = rewrittenOp;
+//    		rewrittenOp = Transformer.transform(transform, tmp);
+//
+//    	} while(!rewrittenOp.equals(tmp));
 
     	logger.debug("Raw query being rewritten for execution:\n" + rawQuery);
     	logger.debug("Rewritten op being passed to execution:\n" + rewrittenOp);
@@ -248,8 +243,8 @@ public class QueryExecutionViewMatcherMaster
     	Context ctx = context.copy();
     	ctx.put(OpExecutorViewCache.STORAGE_MAP, storageMap);
 
-    	RangedSupplier<Long, Binding> s2;
-    	s2 = new RangedSupplierOp(rewrittenOp, ctx);
+//    	RangedSupplier<Long, Binding> s2;
+//    	s2 = new RangedSupplierOp(rewrittenOp, ctx);
 
 
 
@@ -319,6 +314,8 @@ public class QueryExecutionViewMatcherMaster
 
 
     	//if(cacheWholeQuery) {
+    			RangedSupplier<Long, Binding> s2 = new RangedSupplierOp(rewrittenOp, ctx);
+
     	if(cacheWholeQuery && newRootServiceNode != null) {
     		// Caching the whole query requires the following actions:
     		// (1) Allocate a new id for the query
@@ -332,7 +329,8 @@ public class QueryExecutionViewMatcherMaster
 
         	StorageEntry se2 = new StorageEntry(s2, varInfo);
 
-    		//storageMap.put(id, se2);
+        	// Update the storage entry with the cache wrapper
+    		//storageMap.put(newRootServiceNode, se2);
 
         	// TODO The registration at the cache and the rewriter should be atomic
         	// At least we need to deal with the chance that the rewriter maps an op to an id for
@@ -347,6 +345,13 @@ public class QueryExecutionViewMatcherMaster
 
 
     	List<String> visibleVarNames = VarUtils.getVarNames(visibleVars);
+
+
+		// Adujst limit
+		//rewrittenOp = QueryUtils.applyRange(rewrittenOp, range);
+
+		//rewrittenOp = RewriteUtils.transformUntilNoChange(rewrittenOp, op -> Transformer.transform(TransformPushSlice.fn, op));
+
 
     	ResultSetCloseable result = createResultSet(visibleVarNames, s2, range, null);
 

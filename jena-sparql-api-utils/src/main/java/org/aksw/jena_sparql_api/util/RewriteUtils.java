@@ -1,9 +1,21 @@
-package org.aksw.jena_sparql_api.cache.tests;
+package org.aksw.jena_sparql_api.util;
 
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 public class RewriteUtils {
+
+	public static <T> T transformUntilNoChange(T after, Function<T, T> fn) {
+    	T before;
+		do {
+        	before = after;
+    		after = fn.apply(before);
+    	} while(!before.equals(after));
+
+		return after;
+	}
+
+
 	// TODO The following approaches could also be seen as reductions:
 	// listCandidates returns a stream of reduction rules that are applicable to the baseItem
 	// applyCandidate then applies the reduction rule

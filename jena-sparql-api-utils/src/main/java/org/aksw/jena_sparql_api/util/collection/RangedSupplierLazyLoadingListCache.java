@@ -34,6 +34,8 @@ class LazyLoadingCachingListIterator<T>
     protected RangeMap<Long, RangedSupplierLazyLoadingListCache.CacheEntry<T>> rangeMap;
     protected Function<Range<Long>, ClosableIterator<T>> itemSupplier;
 
+    protected boolean usedItemSupplier = false;
+
     public LazyLoadingCachingListIterator(
             Range<Long> canonicalRequestRange,
             RangeMap<Long, CacheEntry<T>> rangeMap,
@@ -44,6 +46,8 @@ class LazyLoadingCachingListIterator<T>
         this.itemSupplier = itemSupplier;
 
         this.offset = canonicalRequestRange.lowerEndpoint();
+
+        this.usedItemSupplier = false;
     }
 
     //protected Iterable</C>
@@ -76,10 +80,16 @@ class LazyLoadingCachingListIterator<T>
                     e = rangeMap.getEntry(offset);
                 }
 
-                // If there is no entry, consult the itemSupplier
+                // If there is no entry, consult the itemSupplier - if it is present and was not used yet
+                // Otherwise, we are out of data
                 if(e == null) {
-                    Range<Long> r = Range.atLeast(offset).intersection(canonicalRequestRange);
-                    currentIterator = itemSupplier.apply(r);
+                	if(itemSupplier != null && !usedItemSupplier) {
+	                    Range<Long> r = Range.atLeast(offset).intersection(canonicalRequestRange);
+	                    currentIterator = itemSupplier.apply(r);
+	                    usedItemSupplier = true;
+                	} else {
+                		result = endOfData();
+                	}
                 } else {
                     CacheEntry<T> ce = e.getValue();
 
@@ -102,11 +112,11 @@ class LazyLoadingCachingListIterator<T>
             	// In any case, close the current iterator
                 currentIterator.close();
 
-                if(isOffsetInRequestRange) {
-                	// (b) is the case if the offset was within the requested range, but there were no items
-                    result = endOfData();
-                    break;
-                }
+//                if(isOffsetInRequestRange) {
+//                	// (b) is the case if the offset was within the requested range, but there were no items
+//                    result = endOfData();
+//                    break;
+//                }
 
                 currentIterator = null;
             }
@@ -310,6 +320,8 @@ public class RangedSupplierLazyLoadingListCache<T>
         }
     }
 
+    // If we are requesting the last gap, we need to fetch one more item in order to decide whether
+    // the cache is complete
     public void fetchGap(RangeMap<Long, CacheEntry<T>> subMap, Range<Long> range) {
         //System.out.println("GAP: " + range);
 //

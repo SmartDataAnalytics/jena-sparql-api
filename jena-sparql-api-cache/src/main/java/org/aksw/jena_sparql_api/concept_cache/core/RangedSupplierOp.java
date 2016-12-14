@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.concept_cache.core;
 
 import org.aksw.jena_sparql_api.algebra.transform.TransformPushSlice;
+import org.aksw.jena_sparql_api.util.RewriteUtils;
 import org.aksw.jena_sparql_api.util.collection.RangedSupplier;
 import org.aksw.jena_sparql_api.utils.IteratorClosable;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
@@ -42,7 +43,13 @@ public class RangedSupplierOp
 
 		Op effectiveOp = new OpSlice(op, offset, limit);
 
-		effectiveOp = Transformer.transform(TransformPushSlice.fn, effectiveOp);
+		// The base op may be a service reference (or some other expression)
+		// Push down the newly added slice for best performance
+		//effectiveOp = Transformer.transform(TransformPushSlice.fn, effectiveOp);
+
+		// TODO Make this transformation configurable
+		effectiveOp = RewriteUtils.transformUntilNoChange(effectiveOp, op -> Transformer.transform(TransformPushSlice.fn, op));
+
 
 		QueryIterator it = execute(effectiveOp, context);
 		ClosableIterator<Binding> result = new IteratorClosable<>(it, () -> it.close());

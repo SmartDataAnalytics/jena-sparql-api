@@ -68,6 +68,8 @@ public class OpExecutorViewCache
         QueryIterator result;
         // If there is no storage map in the context, we do not handle view IRIs
         if(serviceUri.startsWith("view://") && storageMap != null) {
+        	logger.debug("Intercepted execution of:\n" + opService);
+
         	Op subOp = opService.getSubOp();
 
         	Range<Long> range = Range.atLeast(0l);

@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.stream.Collectors;
 
+import org.aksw.jena_sparql_api.util.RewriteUtils;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

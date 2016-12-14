@@ -143,7 +143,14 @@ public class QueryUtils {
         return result;
     }
 
+    /**
+     *
+     * @param range
+     * @return
+     */
     public static long rangeToLimit(Range<Long> range) {
+    	range = range.canonical(DiscreteDomain.longs());
+
         long result = range.hasUpperBound()
             ? DiscreteDomain.longs().distance(range.lowerEndpoint(), range.upperEndpoint())
             : Query.NOLIMIT;
@@ -163,7 +170,7 @@ public class QueryUtils {
 
         Range<Long> result = max == null
                 ? Range.atLeast(min)
-                : Range.closed(min, max);
+                : Range.closedOpen(min, max);
 
         return result;
     }
