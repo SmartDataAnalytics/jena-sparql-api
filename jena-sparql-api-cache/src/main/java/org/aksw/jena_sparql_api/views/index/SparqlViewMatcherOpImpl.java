@@ -12,7 +12,9 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.aksw.commons.collections.trees.Tree;
+import org.aksw.jena_sparql_api.algebra.transform.TransformEffectiveOp;
 import org.aksw.jena_sparql_api.algebra.transform.TransformJoinToSequence;
+import org.aksw.jena_sparql_api.algebra.transform.TransformPushFiltersIntoBGP;
 import org.aksw.jena_sparql_api.algebra.transform.TransformUnionToDisjunction;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMapImpl;
@@ -208,14 +210,27 @@ public class SparqlViewMatcherOpImpl<K>
     }
 
 
+    public static Op denormalizeOp(Op op) {
+        // Replace QFPCs
+        op = Transformer.transform(new TransformEffectiveOp(), op);
+
+        //op = Transformer.transform(/new Transfo, op)
+        op = TransformPushFiltersIntoBGP.transform(op);
+
+        return op;
+
+        //op = Transformer.transform(TransformDisju, op);
+        //op = Transformer.transform(TransformJoinToSequence.fn, op);
+    }
+
     public static Op normalizeOp(Op op) {
         op = Transformer.transform(TransformUnionToDisjunction.fn, op);
         op = Transformer.transform(TransformJoinToSequence.fn, op);
 
         Generator<Var> generatorCache = VarGeneratorImpl2.create();
-        Op result = OpUtils.substitute(op, false, (o) -> SparqlCacheUtils.tryCreateCqfp(o, generatorCache));
+        op = OpUtils.substitute(op, false, (o) -> SparqlCacheUtils.tryCreateCqfp(o, generatorCache));
 
-        return result;
+        return op;
 
     }
 

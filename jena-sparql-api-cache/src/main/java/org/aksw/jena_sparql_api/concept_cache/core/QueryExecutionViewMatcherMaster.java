@@ -112,9 +112,25 @@ public class QueryExecutionViewMatcherMaster
      * @return
      */
 
+    public static boolean isView(Op op) {
+    	boolean result = op instanceof OpService && isView(((OpService)op).getService());
+    	return result;
+    }
+
+    public static boolean isView(Node node) {
+    	boolean result = isView(node.getURI());
+    	return result;
+    }
+
+    public static boolean isView(String uri) {
+    	boolean result = uri.startsWith("view://");
+    	return result;
+    }
 
     @Override
     protected ResultSetCloseable executeCoreSelect(Query rawQuery) {
+
+    	boolean cacheWholeQuery = true; //!rootService.getURI().startsWith("view://");
 
     	List<Var> projectVars = rawQuery.getProjectVars();
     	//List<String> projectVarNames = VarUtils.getVarNames(projectVars);
@@ -163,19 +179,50 @@ public class QueryExecutionViewMatcherMaster
 		int idX = 0;
 		// Remap all tagged nodes to be executed on the original service
 		Map<Op, Op> taggedToService = new IdentityHashMap<>();
+
+		// Track whether we created a new service for the root node
+		Node newRootServiceNode = null;
+
+    	Cache<Node, StorageEntry> cache = opRewriter.getCache();
+
 		for(Op tag : taggedNodes) {
-			Query query = OpAsQuery.asQuery(tag);
 
-			Node serviceNode = NodeFactory.createURI("view://service/" + idX++);
-			Op serviceOp = new OpService(serviceNode, OpNull.create(), false);
 
-			RangedSupplier<Long, Binding> s3 = new RangedSupplierQuery(parentFactory, query);
 
-			VarInfo varInfo = new VarInfo(new HashSet<>(query.getProjectVars()), 0);
-			StorageEntry se = new StorageEntry(s3, varInfo); // The var info is not used
-			storageMap.put(serviceNode, se);
+			// Only wrap tagged nodes if they are not views already
+			boolean isView = isView(tag);
+			if(isView) {
+				// Lookup the view from the cache and add it to the storage map
+				Node id = ((OpService)tag).getService();
 
-			taggedToService.put(tag, serviceOp);
+				StorageEntry e = cache.getIfPresent(id);
+				//RangedSupplier<Long, Binding> s = e.storage;
+
+				storageMap.put(id, e);
+
+			} else {
+				boolean isRoot = tag == tree.getRoot();
+
+				Query query = OpAsQuery.asQuery(tag);
+
+				Node serviceNode;
+				if(isRoot && cacheWholeQuery) {
+		    		serviceNode = NodeFactory.createURI("view://ex.org/view" + queryOp.hashCode());
+					newRootServiceNode = serviceNode;
+				} else {
+					serviceNode = NodeFactory.createURI("view://service/" + idX++);
+				}
+
+				Op serviceOp = new OpService(serviceNode, OpNull.create(), false);
+
+				RangedSupplier<Long, Binding> s3 = new RangedSupplierQuery(parentFactory, query);
+
+				VarInfo varInfo = new VarInfo(new HashSet<>(query.getProjectVars()), 0);
+				StorageEntry se = new StorageEntry(s3, varInfo); // The var info is not used
+				storageMap.put(serviceNode, se);
+
+				taggedToService.put(tag, serviceOp);
+			}
 		}
 
 		rewrittenOp = OpUtils.substitute(rewrittenOp, false, taggedToService::get);
@@ -261,19 +308,24 @@ public class QueryExecutionViewMatcherMaster
     	// - (if the new query is just linear post processing of an existing cache entry)
 
     	// This means, that the query will be available for cache lookups
-    	boolean cacheWholeQuery = true;
+    	Node rootService = rewrittenOp instanceof OpService
+    			? ((OpService)rewrittenOp).getService()
+    		    : null;
+
+    	//boolean cacheWholeQuery = true; //!rootService.getURI().startsWith("view://");
 
 //    	context.put(OpExecutorViewCache.STORAGE_MAP, storageMap);
 
 
-    	Cache<Node, StorageEntry> cache = opRewriter.getCache();
 
-    	if(cacheWholeQuery) {
+    	//if(cacheWholeQuery) {
+    	if(cacheWholeQuery && newRootServiceNode != null) {
     		// Caching the whole query requires the following actions:
     		// (1) Allocate a new id for the query
     		// (2) Create a storage entry for the rewritten entry
     		// (3) Make the new id of the query together with its original (i.e. non-rewritten) op known to the rewriter
-    		Node id = NodeFactory.createURI("view://ex.org/view" + queryOp.hashCode());
+
+    		//Node id = NodeFactory.createURI("view://ex.org/view" + queryOp.hashCode());
 
         	s2 = new RangedSupplierLazyLoadingListCache<Binding>(executorService, s2, Range.closedOpen(0l, 10000l));
     		//s2 = new RangedSupplierLazyLoadingListCache<Binding>(executorService, s2, range);
@@ -285,11 +337,13 @@ public class QueryExecutionViewMatcherMaster
         	// TODO The registration at the cache and the rewriter should be atomic
         	// At least we need to deal with the chance that the rewriter maps an op to an id for
         	// which the storageEntry has not yet been registered at the cache
-    		opRewriter.put(id, queryOp);
-        	cache.put(id, se2);
-    	} else {
-    		// Nothing todo - just create a result set from s2
+    		opRewriter.put(newRootServiceNode, queryOp);
+        	cache.put(newRootServiceNode, se2);
     	}
+//    	} else {
+//    		s2 = storageMap.get(rootService).storage;
+//    		// Nothing todo - just create a result set from s2
+//    	}
 
 
     	List<String> visibleVarNames = VarUtils.getVarNames(visibleVars);

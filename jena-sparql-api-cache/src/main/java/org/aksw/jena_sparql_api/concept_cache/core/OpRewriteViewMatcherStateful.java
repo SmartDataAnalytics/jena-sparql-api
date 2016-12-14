@@ -7,13 +7,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeUtils;
+import org.aksw.jena_sparql_api.algebra.transform.TransformEffectiveOp;
 import org.aksw.jena_sparql_api.concept_cache.dirty.QfpcMatch;
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewMatcherQfpc;
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewMatcherQfpcImpl;
@@ -36,6 +36,7 @@ import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.algebra.Table;
+import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.op.OpQuadBlock;
 import org.apache.jena.sparql.algebra.op.OpSequence;
 import org.apache.jena.sparql.algebra.op.OpService;
@@ -85,7 +86,10 @@ public class OpRewriteViewMatcherStateful
 
 	private static final Logger logger = LoggerFactory.getLogger(OpRewriteViewMatcherStateful.class);
 
+	// TODO Maybe bundle normalizer and denormalizer into one object
     protected Rewrite opNormalizer;
+    protected Rewrite opDenormalizer;
+
     protected SparqlViewMatcherOp<Node> viewMatcherTreeBased;
     protected SparqlViewMatcherQfpc<Node> viewMatcherQuadPatternBased;
 
@@ -107,6 +111,7 @@ public class OpRewriteViewMatcherStateful
 
     public OpRewriteViewMatcherStateful(Cache<Node, StorageEntry> cache, Collection<RemovalListener<Node, StorageEntry>> removalListeners) {
         this.opNormalizer = SparqlViewMatcherOpImpl::normalizeOp;
+        this.opDenormalizer = SparqlViewMatcherOpImpl::denormalizeOp;
         this.viewMatcherTreeBased = SparqlViewMatcherOpImpl.create();
         this.viewMatcherQuadPatternBased = new SparqlViewMatcherQfpcImpl<>();
         this.cache = cache;
@@ -242,6 +247,7 @@ public class OpRewriteViewMatcherStateful
      */
     @Override
     public RewriteResult2 rewrite(Op rawOp) {
+
         Op op = opNormalizer.rewrite(rawOp);
 
 
@@ -299,7 +305,7 @@ public class OpRewriteViewMatcherStateful
                     // Get the node in the user query which to replace
                     substitute = new OpService(viewId, new OpQuadBlock(), true);
 
-                    substitute = null;
+                    //substitute = null;
                 }
 
                 // Apply substitution (if substitute is not null)
@@ -381,9 +387,11 @@ public class OpRewriteViewMatcherStateful
         }
 
 
+        current = opDenormalizer.rewrite(current);
+
         Map<Node, StorageEntry> storageMap = new HashMap<>();
 
-        RewriteResult2 result = new RewriteResult2(rawOp, storageMap);
+        RewriteResult2 result = new RewriteResult2(current, storageMap);
         return result;
     }
 
