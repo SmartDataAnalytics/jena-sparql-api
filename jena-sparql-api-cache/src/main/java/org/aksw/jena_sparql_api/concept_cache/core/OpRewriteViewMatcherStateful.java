@@ -13,7 +13,6 @@ import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeUtils;
-import org.aksw.jena_sparql_api.algebra.transform.TransformEffectiveOp;
 import org.aksw.jena_sparql_api.concept_cache.dirty.QfpcMatch;
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewMatcherQfpc;
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewMatcherQfpcImpl;
@@ -36,8 +35,7 @@ import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.algebra.Table;
-import org.apache.jena.sparql.algebra.Transformer;
-import org.apache.jena.sparql.algebra.op.OpQuadBlock;
+import org.apache.jena.sparql.algebra.op.OpNull;
 import org.apache.jena.sparql.algebra.op.OpSequence;
 import org.apache.jena.sparql.algebra.op.OpService;
 import org.apache.jena.sparql.algebra.op.OpTable;
@@ -215,7 +213,7 @@ public class OpRewriteViewMatcherStateful
         	RangedSupplier<Long, Binding> rangedSupplier = storageEntry.storage;
 
         	@SuppressWarnings("unchecked")
-			CacheRangeInfo<Long> cri = rangedSupplier.unwrap(CacheRangeInfo.class, true);
+			CacheRangeInfo<Long> cri = rangedSupplier.unwrap(CacheRangeInfo.class, true).get();
 
         	Range<Long> atLeastZero = Range.atLeast(0l);
         	boolean isAllCached = cri.isCached(atLeastZero);
@@ -303,7 +301,7 @@ public class OpRewriteViewMatcherStateful
                 // If substitute is null, create a default substitute
                 if(substitute == null) {
                     // Get the node in the user query which to replace
-                    substitute = new OpService(viewId, new OpQuadBlock(), true);
+                    substitute = new OpService(viewId, OpNull.create(), true);
 
                     //substitute = null;
                 }

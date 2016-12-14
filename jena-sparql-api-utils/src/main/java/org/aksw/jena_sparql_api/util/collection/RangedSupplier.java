@@ -7,15 +7,7 @@ import com.google.common.collect.Range;
 
 @FunctionalInterface
 public interface RangedSupplier<I extends Comparable<I>, O>
-	extends Function<Range<I>, ClosableIterator<O>>
+	extends Function<Range<I>, ClosableIterator<O>>, Contextual
 {
-	default public <X> X unwrap(Class<X> clazz, boolean reflexive) {
-    	@SuppressWarnings("unchecked")
-		X result = reflexive && this.getClass().isAssignableFrom(clazz)
-    		? (X)this
-    		: null;
-
-    	return result;
-	}
 
 }

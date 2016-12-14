@@ -21,7 +21,7 @@ import org.apache.jena.util.iterator.ClosableIterator;
 import com.google.common.collect.Range;
 
 public class RangedSupplierOp
-	implements RangedSupplier<Long, Binding>
+	implements RangedSupplier<Long, Binding>, OpAttribute
 {
 	protected Op op;
 	protected Context context;
@@ -45,15 +45,15 @@ public class RangedSupplierOp
 		return result;
 	}
 
-	@Override
-    public <X> X unwrap(Class<X> clazz, boolean reflexive) {
-    	@SuppressWarnings("unchecked")
-		X result = reflexive && this.getClass().isAssignableFrom(clazz)
-    		? (X)this
-    		: null;
-
-    	return result;
-    }
+//	@Override
+//    public <X> X unwrap(Class<X> clazz, boolean reflexive) {
+//    	@SuppressWarnings("unchecked")
+//		X result = reflexive && this.getClass().isAssignableFrom(clazz)
+//    		? (X)this
+//    		: null;
+//
+//    	return result;
+//    }
 
 	/**
 	 * This is partly a repetition of private functions in QC
@@ -70,5 +70,10 @@ public class RangedSupplierOp
 		QueryIterator result = opExecutor.executeOp(op, qIter);
 
 		return result;
+	}
+
+	@Override
+	public Op getOp() {
+		return op;
 	}
 }

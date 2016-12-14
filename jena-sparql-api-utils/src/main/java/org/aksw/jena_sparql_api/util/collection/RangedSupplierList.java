@@ -37,12 +37,11 @@ public class RangedSupplierList<T>
         return "StaticListItemSupplier [items=" + items + "]";
     }
 
-    public <X> X unwrap(Class<X> clazz, boolean reflexive) {
-    	X result = reflexive && this.getClass().isAssignableFrom(clazz)
-    		? (X)this
-    		: null;
-
-    	return result;
-    }
-
+//    public <X> X unwrap(Class<X> clazz, boolean reflexive) {
+//    	X result = reflexive && this.getClass().isAssignableFrom(clazz)
+//    		? (X)this
+//    		: null;
+//
+//    	return result;
+//    }
 }

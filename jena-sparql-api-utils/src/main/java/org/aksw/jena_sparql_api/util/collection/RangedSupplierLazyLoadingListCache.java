@@ -114,8 +114,6 @@ class LazyLoadingCachingListIterator<T>
 
         return result;
     }
-
-
 }
 
 
@@ -127,8 +125,7 @@ class LazyLoadingCachingListIterator<T>
  * @param <T>
  */
 public class RangedSupplierLazyLoadingListCache<T>
-	implements RangedSupplier<Long, T>, CacheRangeInfo<Long>
-
+	implements RangedSupplier<Long, T>, Delegated, CacheRangeInfo<Long>
 {
 
     /**
@@ -395,16 +392,21 @@ public class RangedSupplierLazyLoadingListCache<T>
 
         //BlockingCacheIterator<T> cacheIt = new BlockingCacheIterator<>(cache);
     }
+//
+//	@Override
+//    public <X> Optional<X> unwrap(Class<X> clazz, boolean reflexive) {
+//    	@SuppressWarnings("unchecked")
+//		Optional<X> result = reflexive && clazz.isAssignableFrom(this.getClass())
+//    		? Optional.of((X)this)
+//    		: itemSupplier.unwrap(clazz, true);
+//
+//    	return result;
+//    }
 
 	@Override
-    public <X> X unwrap(Class<X> clazz, boolean reflexive) {
-    	@SuppressWarnings("unchecked")
-		X result = reflexive && clazz.isAssignableFrom(this.getClass())//this.getClass().isAssignableFrom(clazz)
-    		? (X)this
-    		: itemSupplier.unwrap(clazz, true);
-
-    	return result;
-    }
+	public Contextual getDelegate() {
+		return itemSupplier;
+	}
 
 	/**
 	 * Static utility method to check whether a given range is cached by a ranged supplier by
@@ -417,10 +419,12 @@ public class RangedSupplierLazyLoadingListCache<T>
 	 * @param range
 	 * @return
 	 */
-	public static <V> boolean isCached(RangedSupplier<Long, V> rangedSupplier, Range<Long> range) {
-		@SuppressWarnings("unchecked")
-		RangedSupplierLazyLoadingListCache<V> inst = rangedSupplier.unwrap(RangedSupplierLazyLoadingListCache.class, true);
-		boolean result = inst.isCached(range);
-		return result;
-	}
+//	public static <V> boolean isCached(RangedSupplier<Long, V> rangedSupplier, Range<Long> range) {
+//		@SuppressWarnings("unchecked")
+//		RangedSupplierLazyLoadingListCache<V> inst =
+//		rangedSupplier.unwrap(RangedSupplierLazyLoadingListCache.class, true)
+//			.ifPresent(inst -> inst.isCached(range))
+//		boolean result = inst.isCached(range);
+//		return result;
+//	}
 }

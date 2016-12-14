@@ -9,7 +9,7 @@ import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.Range;
 
 public class RangedSupplierSubRange<I extends Comparable<I>, O>
-	implements RangedSupplier<I, O>
+	implements RangedSupplier<I, O>, Delegated
 {
 	protected RangedSupplier<I, O> subRangeSupplier;
 	protected Range<I> subRange;
@@ -33,16 +33,16 @@ public class RangedSupplierSubRange<I extends Comparable<I>, O>
 		ClosableIterator<O> result = subRangeSupplier.apply(effectiveRange);
 		return result;
 	}
-
-	@Override
-    public <X> X unwrap(Class<X> clazz, boolean reflexive) {
-    	@SuppressWarnings("unchecked")
-		X result = reflexive && this.getClass().isAssignableFrom(clazz)
-    		? (X)this
-    		: subRangeSupplier.unwrap(clazz, true);
-
-    	return result;
-    }
+//
+//	@Override
+//    public <X> X unwrap(Class<X> clazz, boolean reflexive) {
+//    	@SuppressWarnings("unchecked")
+//		X result = reflexive && this.getClass().isAssignableFrom(clazz)
+//    		? (X)this
+//    		: subRangeSupplier.unwrap(clazz, true);
+//
+//    	return result;
+//    }
 
 
 	public static <O> RangedSupplierSubRange<Long, O> create(RangedSupplier<Long, O> subRangeSupplier, Range<Long> subRange) {
@@ -52,6 +52,11 @@ public class RangedSupplierSubRange<I extends Comparable<I>, O>
 				DiscreteDomain.longs(),
 				(a, b) -> a + b);
 		return result;
+	}
+
+	@Override
+	public Contextual getDelegate() {
+		return subRangeSupplier;
 	}
 
 }

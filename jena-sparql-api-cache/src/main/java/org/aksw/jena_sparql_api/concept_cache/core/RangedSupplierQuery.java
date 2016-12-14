@@ -10,13 +10,15 @@ import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
+import org.apache.jena.sparql.algebra.Algebra;
+import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.util.iterator.ClosableIterator;
 
 import com.google.common.collect.Range;
 
 public class RangedSupplierQuery
-	implements RangedSupplier<Long, Binding>
+	implements RangedSupplier<Long, Binding>, OpAttribute
 {
 	protected QueryExecutionFactory qef;
 	protected Query query;
@@ -42,13 +44,19 @@ public class RangedSupplierQuery
 	}
 
 	@Override
-    public <X> X unwrap(Class<X> clazz, boolean reflexive) {
-    	@SuppressWarnings("unchecked")
-		X result = reflexive && this.getClass().isAssignableFrom(clazz)
-    		? (X)this
-    		: null;
+	public Op getOp() {
+		Op result = Algebra.compile(query);
+		return result;
+	}
 
-    	return result;
-    }
+//	@Override
+//    public <X> X unwrap(Class<X> clazz, boolean reflexive) {
+//    	@SuppressWarnings("unchecked")
+//		X result = reflexive && this.getClass().isAssignableFrom(clazz)
+//    		? (X)this
+//    		: null;
+//
+//    	return result;
+//    }
 
 }

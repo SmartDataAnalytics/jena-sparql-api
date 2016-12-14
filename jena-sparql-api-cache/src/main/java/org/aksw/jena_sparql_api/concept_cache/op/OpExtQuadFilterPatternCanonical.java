@@ -35,11 +35,11 @@ public class OpExtQuadFilterPatternCanonical
 
     	//System.out.println("Not sure if it is a good idea for " + OpExtQuadFilterPatternCanonical.class.getName() + " getting called");
     	Op result = qfpc.toOp();
-    	if(result instanceof OpFilter) {
-    		// HACK: skip the filter, otherwise OpVars.visibleVars() won't work with Jena 3.1.0
-        	logger.warn(OpExtQuadFilterPatternCanonical.class.getName() + ".effectieOp() hack used");
-    		result = ((OpFilter)result).getSubOp();
-    	}
+//    	if(result instanceof OpFilter) {
+//    		// HACK: skip the filter, otherwise OpVars.visibleVars() won't work with Jena 3.1.0
+//        	logger.warn(OpExtQuadFilterPatternCanonical.class.getName() + ".effectiveOp() hack used");
+//    		result = ((OpFilter)result).getSubOp();
+//    	}
 
         // TODO Auto-generated method stub
         return result;
