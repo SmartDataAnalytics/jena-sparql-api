@@ -1,9 +1,11 @@
 package org.aksw.jena_sparql_api.concept_cache.core;
 
+import org.aksw.jena_sparql_api.algebra.transform.TransformPushSlice;
 import org.aksw.jena_sparql_api.util.collection.RangedSupplier;
 import org.aksw.jena_sparql_api.utils.IteratorClosable;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.op.OpSlice;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
@@ -38,7 +40,9 @@ public class RangedSupplierOp
 		long offset = QueryUtils.rangeToOffset(range);
 		long limit = QueryUtils.rangeToLimit(range);
 
-		OpSlice effectiveOp = new OpSlice(op, offset, limit);
+		Op effectiveOp = new OpSlice(op, offset, limit);
+
+		effectiveOp = Transformer.transform(TransformPushSlice.fn, effectiveOp);
 
 		QueryIterator it = execute(effectiveOp, context);
 		ClosableIterator<Binding> result = new IteratorClosable<>(it, () -> it.close());

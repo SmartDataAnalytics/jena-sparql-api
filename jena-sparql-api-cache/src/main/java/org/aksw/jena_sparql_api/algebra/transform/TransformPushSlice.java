@@ -3,12 +3,17 @@ package org.aksw.jena_sparql_api.algebra.transform;
 import java.util.List;
 
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
+import org.aksw.jena_sparql_api.utils.QueryUtils;
+import org.aksw.jena_sparql_api.utils.RangeUtils;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.TransformCopy;
 import org.apache.jena.sparql.algebra.op.OpExtend;
 import org.apache.jena.sparql.algebra.op.OpProject;
 import org.apache.jena.sparql.algebra.op.OpService;
 import org.apache.jena.sparql.algebra.op.OpSlice;
+
+import com.google.common.collect.DiscreteDomain;
+import com.google.common.collect.Range;
 
 
 /**
@@ -20,6 +25,8 @@ import org.apache.jena.sparql.algebra.op.OpSlice;
 public class TransformPushSlice
 	extends TransformCopy
 {
+	public static final TransformPushSlice fn = new TransformPushSlice();
+
 	@Override
 	public Op transform(OpSlice opSlice, Op subOp) {
 		Op result = null;
@@ -39,6 +46,13 @@ public class TransformPushSlice
 			} else if(subOp instanceof OpExtend){
 				OpExtend x = (OpExtend)subOp;
 				result = OpExtend.create(replacement, x.getVarExprList());
+			} else if(subOp instanceof OpSlice) {
+				OpSlice x = (OpSlice)subOp;
+				Range<Long> outer = QueryUtils.toRange(x);
+				Range<Long> inner = QueryUtils.toRange(opSlice);
+				// Merge
+				Range<Long> combined = RangeUtils.makeAbsolute(outer, inner, DiscreteDomain.longs(), (a, b) -> a + b);
+				result = QueryUtils.applyRange(x.getSubOp(), combined);
 			}
 		}
 
