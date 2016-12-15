@@ -196,7 +196,13 @@ public class QueryExecutionViewMatcherMaster
 			} else {
 				boolean isRoot = tag == tree.getRoot();
 
-				Query query = OpAsQuery.asQuery(tag);
+				// Do not cache pattern free queries
+				// TODO It would be better to decide caching based on the actual query execution time
+				// I.e. having an auto-caching layer would be nice
+				boolean isPatternFree = OpUtils.isPatternFree(tag);
+				if(isRoot && isPatternFree) {
+					cacheWholeQuery = false;
+				}
 
 				Node serviceNode;
 				if(isRoot && cacheWholeQuery) {
@@ -206,15 +212,20 @@ public class QueryExecutionViewMatcherMaster
 					serviceNode = NodeFactory.createURI("view://service/" + idX++);
 				}
 
-				Op serviceOp = new OpService(serviceNode, OpNull.create(), false);
+				// We do not need to wrap parts of the query execution with a service
+				// if that part is pattern free (i.e. does not depend on external data)
+				// TODO Make sure that this works with EXISTS
+				if(!isPatternFree) {
+					Op serviceOp = new OpService(serviceNode, OpNull.create(), false);
 
-				RangedSupplier<Long, Binding> s3 = new RangedSupplierQuery(parentFactory, query);
+					RangedSupplier<Long, Binding> s3 = new RangedSupplierQuery(parentFactory, query);
 
-				VarInfo varInfo = new VarInfo(new HashSet<>(query.getProjectVars()), 0);
-				StorageEntry se = new StorageEntry(s3, varInfo); // The var info is not used
-				storageMap.put(serviceNode, se);
+					VarInfo varInfo = new VarInfo(new HashSet<>(query.getProjectVars()), 0);
+					StorageEntry se = new StorageEntry(s3, varInfo); // The var info is not used
+					storageMap.put(serviceNode, se);
 
-				taggedToService.put(tag, serviceOp);
+					taggedToService.put(tag, serviceOp);
+				}
 			}
 		}
 
