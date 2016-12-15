@@ -50,8 +50,10 @@ import org.apache.jena.sparql.expr.ExprVar;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Multiset;
 import com.google.common.collect.Range;
 
 public class SparqlViewMatcherUtils {
@@ -468,6 +470,17 @@ public class SparqlViewMatcherUtils {
         //return result;
     }
 
+    public static List<Integer> setOfSizes(Collection<? extends Collection<?>> nestedCollection) {
+    	List<Integer> result = new ArrayList<>(nestedCollection.size());
+    	for(Collection<?> item : nestedCollection) {
+    		result.add(item.size());
+    	}
+
+    	Collections.sort(result);
+
+    	return result;
+    }
+
     public static Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> deriveProblemsQfpc(OpExtQuadFilterPatternCanonical cacheOp, OpExtQuadFilterPatternCanonical userOp) {
         QuadFilterPatternCanonical cacheQfpc = cacheOp.getQfpc();
         QuadFilterPatternCanonical queryQfpc = userOp.getQfpc();
@@ -479,10 +492,21 @@ public class SparqlViewMatcherUtils {
         }
 
 
-        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result = VarMapper.createProblems(cacheQfpc, queryQfpc);
-        for(ProblemNeighborhoodAware<Map<Var, Var>, Var> x : result) {
-            if(logger.isDebugEnabled()) { logger.debug(("  Size: " + x.generateSolutions().count())); }
+        // Potential Hack: The cache qfpc and the query qfpc must be of equal size -
+        // i.e. same number of quads and triples
+        boolean isEqualSize = cacheQfpc.getQuads().size() == queryQfpc.getQuads().size()
+        		&& setOfSizes(cacheQfpc.getFilterDnf()).equals(setOfSizes(queryQfpc.getFilterDnf()));
+
+        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result = isEqualSize
+        		? VarMapper.createProblems(cacheQfpc, queryQfpc)
+        		: Collections.singleton(new ProblemStaticSolutions<>(Collections.singleton(null)));
+
+        if(logger.isDebugEnabled()) {
+        	for(ProblemNeighborhoodAware<Map<Var, Var>, Var> x : result) {
+        		logger.debug(("  Size: " + x.generateSolutions().count()));
+        	}
         }
+
         return result;
     }
 

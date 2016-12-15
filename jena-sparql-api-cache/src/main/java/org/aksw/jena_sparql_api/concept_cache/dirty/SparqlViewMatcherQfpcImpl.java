@@ -228,7 +228,8 @@ public class SparqlViewMatcherQfpcImpl<K>
 
 
                 if(isSubsumed) {
-                    QuadFilterPatternCanonical diffPattern = candRename.diff(queryQfpc);
+                    //QuadFilterPatternCanonical diffPattern = candRename.diff(queryQfpc);
+                	QuadFilterPatternCanonical diffPattern = queryQfpc.diff(candRename);
 
                     Collection<K> keys = qfpcToKeys.get(cand);
                     for(K k : keys) {

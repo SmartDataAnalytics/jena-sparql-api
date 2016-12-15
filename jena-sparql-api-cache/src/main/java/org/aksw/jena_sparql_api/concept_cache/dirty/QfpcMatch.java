@@ -37,4 +37,10 @@ public class QfpcMatch<K> {
     public Map<Var, Var> getVarMap() {
         return varMap;
     }
+
+	@Override
+	public String toString() {
+		return "QfpcMatch [replacementPattern=" + replacementPattern + ", diffPattern=" + diffPattern + ", table="
+				+ table + ", varMap=" + varMap + "]";
+	}
 }

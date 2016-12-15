@@ -36,7 +36,7 @@ class LazyLoadingCachingListIterator<T>
     protected RangeMap<Long, RangedSupplierLazyLoadingListCache.CacheEntry<T>> rangeMap;
     protected Function<Range<Long>, Stream<T>> itemSupplier;
 
-    protected boolean usedItemSupplier = false;
+    protected boolean usedItemSupplier;
 
     public LazyLoadingCachingListIterator(
             Range<Long> canonicalRequestRange,
@@ -93,6 +93,7 @@ class LazyLoadingCachingListIterator<T>
 	                    usedItemSupplier = true;
                 	} else {
                 		result = endOfData();
+                		break;
                 	}
                 } else {
                     CacheEntry<T> ce = e.getValue();
@@ -103,6 +104,14 @@ class LazyLoadingCachingListIterator<T>
 
                     Iterator<T> tmp = new BlockingCacheIterator<>(ce.cache, (int)offsetWithinPage);
                     currentIterator = new IteratorClosable<>(tmp);
+
+                    // The range may be bigger than the data contained in it.
+                    if(!currentIterator.hasNext()) {
+                    	result = endOfData();
+                    	currentIterator.close();
+                    	break;
+                    }
+
                 }
             } else if(currentIterator.hasNext()) {
                 result = currentIterator.next();
@@ -201,7 +210,6 @@ public class RangedSupplierLazyLoadingListCache<T>
 
     protected RangeMap<Long, CacheEntry<T>> rangesToData;
 
-
     // We may dynamically discover that after certain offsets there is no more data
     protected Long dataThreshold = null;
 
@@ -214,12 +222,23 @@ public class RangedSupplierLazyLoadingListCache<T>
 
     /**
      * Expose whether a requested range can be answered only from the local storage - i.e. without a request to the underlying range supplier.
+     * The criteria are:
+     * - dataThreshold is non null - so the end of the data has been seen
+     * - all ranges up to the dataThreshold are consecutive and complete starting from 0
      *
      * @param range
      * @return
      */
     public boolean isCached(Range<Long> range) {
         range = normalize(range);
+
+        // If we already know how much data there is, adjust the request to the available data
+        if(dataThreshold != null) {
+        	Range<Long> dataRange = Range.closedOpen(0l, dataThreshold);
+        	range = range.intersection(dataRange);
+        }
+        //dataThreshold;
+
 
         RangeMap<Long, CacheEntry<T>> subRangeMap = rangesToData.subRangeMap(range);
     	Map<Range<Long>, CacheEntry<T>> x = subRangeMap.asMapOfRanges();
@@ -299,13 +318,24 @@ public class RangedSupplierLazyLoadingListCache<T>
                             : null;
                 }
 
-                if(offset != null && range.hasUpperBound()) {
-                    Range<Long> lastGap = Range.closedOpen(offset, lookupRange.upperEndpoint());
+                // The last gap is the intersection of the range starting at the current offset
+                // with the lookupRange
+                if(offset != null) {
+                	Range<Long> part = Range.atLeast(offset);
+                	Range<Long> lastGap = part.intersection(lookupRange);
 
-                    if(!lastGap.isEmpty()) {
+                	if(!lastGap.isEmpty()) {
                         rangeInfos.add(new RangeInfo<>(lastGap, true, null));
                     }
                 }
+
+//                if(offset != null && range.hasUpperBound()) {
+//                    Range<Long> lastGap = Range.closedOpen(offset, lookupRange.upperEndpoint());
+//
+//                    if(!lastGap.isEmpty()) {
+//                        rangeInfos.add(new RangeInfo<>(lastGap, true, null));
+//                    }
+//                }
 
                 // Prepare fetching of the gaps - this updates the map with additional entries
                 fetchGaps(subMap, rangeInfos);
@@ -380,6 +410,9 @@ public class RangedSupplierLazyLoadingListCache<T>
 
                 if(!hasMoreData) {
                     dataThreshold = dataThreshold == null || i < dataThreshold ? i : dataThreshold;
+
+                    // TODO We can now adjust the reserved range
+                    //subMap.remove(range, cacheEntry);
                 }
 
                 if(isOk) {

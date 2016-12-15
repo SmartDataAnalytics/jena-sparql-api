@@ -255,14 +255,16 @@ public class OpRewriteViewMatcherStateful
 
         //Multimap<Op, LookupResult<Node>> nodeToReplacements = HashMultimap.create();
 
-        for(;;) {
+        boolean changed = true;
+        while(changed) {
             // Attempt to replace complete subtrees
             Collection<LookupResult<Node>> lookupResults = viewMatcherTreeBased.lookup(current);
 
-            if(lookupResults.isEmpty()) {
-                break;
-            }
+//            if(lookupResults.isEmpty()) {
+//                break;
+//            }
 
+            changed = false;
             for(LookupResult<Node> lr : lookupResults) {
                 OpVarMap opVarMap = lr.getOpVarMap();
 
@@ -272,6 +274,10 @@ public class OpRewriteViewMatcherStateful
                 Node viewId = lr.getEntry().id;
                 Op viewRootOp = lr.getEntry().queryIndex.getOp();
                 Map<Var, Var> map = Iterables.getFirst(varMaps, null);
+
+                if(map == null) {
+                	continue;
+                }
 
                 Op userSubstOp = opMap.get(viewRootOp);
 
@@ -311,6 +317,7 @@ public class OpRewriteViewMatcherStateful
                 // Apply substitution (if substitute is not null)
                 if(substitute != null) {
                     current = OpUtils.substitute(current, userSubstOp, substitute);
+                    changed = true;
                 }
 
 
@@ -360,16 +367,17 @@ public class OpRewriteViewMatcherStateful
 
 
 	                List<Op> ops = new ArrayList<>();
-	                QuadFilterPatternCanonical replacementPattern = agg.getReplacementPattern();
-	                if(replacementPattern != null && !replacementPattern.isEmpty()) {
-	                	ops.add(replacementPattern.toOp());
-	                }
 
 	                for(QfpcMatch<Node> hit : hits) {
 	                	Table table = hitData.get(hit.getTable());
 
 	                	Op xop = OpTable.create(table);
 	                	ops.add(xop);
+	                }
+
+	                QuadFilterPatternCanonical replacementPattern = agg.getReplacementPattern();
+	                if(replacementPattern != null && !replacementPattern.isEmpty()) {
+	                	ops.add(replacementPattern.toOp());
 	                }
 
 	                Op result;
