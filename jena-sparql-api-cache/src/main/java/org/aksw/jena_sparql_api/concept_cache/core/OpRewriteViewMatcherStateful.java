@@ -303,8 +303,20 @@ public class OpRewriteViewMatcherStateful
 //                	}
 //                }
 //
-                Table table = getTable(cache, viewId);
-                Op substitute = table == null ? null : OpTable.create(table);
+
+                // Do not perform substitution with a table on the root node so that
+                // we can evaluate slices on the rangedSupplier rather than having jena
+                // to evaluate a SPARQL query
+                // TODO We may evaluate whether this makes a significant difference in performance
+                // - the only time we save is having to copy data from the supplier to the table object
+
+                boolean isRoot = userSubstOp == current;
+
+                Op substitute = null;
+                if(!isRoot) {
+                	Table table = getTable(cache, viewId);
+                	substitute = table == null ? null : OpTable.create(table);
+                }
 
                 // If substitute is null, create a default substitute
                 if(substitute == null) {

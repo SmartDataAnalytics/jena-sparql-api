@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -38,6 +39,7 @@ import org.apache.jena.sparql.util.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Stopwatch;
 import com.google.common.cache.Cache;
 import com.google.common.collect.Range;
 
@@ -122,6 +124,8 @@ public class QueryExecutionViewMatcherMaster
 
     @Override
     protected ResultSetCloseable executeCoreSelect(Query rawQuery) {
+
+    	Stopwatch sw = Stopwatch.createStarted();
 
     	boolean cacheWholeQuery = true; //!rootService.getURI().startsWith("view://");
 
@@ -360,6 +364,8 @@ public class QueryExecutionViewMatcherMaster
 
 
     	ResultSetCloseable result = createResultSet(visibleVarNames, s2, range, null);
+
+    	System.out.println("Time to prepare the result set: " + sw.elapsed(TimeUnit.MILLISECONDS) + " ms");
 
     	return result;
 
