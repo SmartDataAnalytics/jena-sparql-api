@@ -145,7 +145,7 @@ public class QueryExecutionViewMatcherMaster
     	q.setOffset(Query.NOLIMIT);
 
     	Op queryOp = Algebra.toQuadForm(Algebra.compile(q));
-
+    	queryOp = SparqlViewMatcherOpImpl.normalizeOp(queryOp);
 
 
 

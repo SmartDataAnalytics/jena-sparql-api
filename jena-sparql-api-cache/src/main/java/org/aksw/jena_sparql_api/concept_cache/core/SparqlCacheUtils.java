@@ -551,7 +551,7 @@ public class SparqlCacheUtils {
         for(int i = 0; i < 4; ++i) {
             Node tmp = QuadUtils.getNode(quad, i);
 
-            if(i == 0 && Quad.defaultGraphNodeGenerated.equals(tmp)) {
+            if(i == 0 && (Quad.defaultGraphNodeGenerated.equals(tmp) || Quad.defaultGraphIRI.equals(tmp))) {
             	continue;
             }
 
