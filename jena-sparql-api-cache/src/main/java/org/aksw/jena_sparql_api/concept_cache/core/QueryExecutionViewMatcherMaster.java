@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.aksw.commons.collections.trees.Tree;
@@ -163,6 +164,23 @@ public class QueryExecutionViewMatcherMaster
 
 		Tree<Op> tree = OpUtils.createTree(rewrittenOp);
 
+		// Find all referenced views in the expression
+
+		Set<Node> cacheRefs = TreeUtils.inOrderSearch(tree.getRoot(), tree::getChildren)
+			.filter(QueryExecutionViewMatcherMaster::isView)
+			.map(op -> ((OpService)op).getService())
+			.collect(Collectors.toSet());
+
+    	Cache<Node, StorageEntry> cache = opRewriter.getCache();
+
+		for(Node cacheRef : cacheRefs) {
+			StorageEntry e = cache.getIfPresent(cacheRef);
+			//RangedSupplier<Long, Binding> s = e.storage;
+
+			storageMap.put(cacheRef, e);
+		}
+
+
 		// Reverse the levels, so that we start with the leafs
 		Predicate<Op> predicate = x -> !(x instanceof OpService);
 
@@ -180,56 +198,45 @@ public class QueryExecutionViewMatcherMaster
 		// Track whether we created a new service for the root node
 		Node newRootServiceNode = null;
 
-    	Cache<Node, StorageEntry> cache = opRewriter.getCache();
 
 		for(Op tag : taggedNodes) {
 
 
+			boolean isRoot = tag == tree.getRoot();
 
-			// Only wrap tagged nodes if they are not views already
-			boolean isView = isView(tag);
-			if(isView) {
-				// Lookup the view from the cache and add it to the storage map
-				Node id = ((OpService)tag).getService();
+			// Do not cache pattern free queries
+			// TODO It would be better to decide caching based on the actual query execution time
+			// I.e. having an auto-caching layer would be nice
+			boolean isPatternFree = OpUtils.isPatternFree(tag);
+			if(isRoot && isPatternFree) {
+				cacheWholeQuery = false;
+			}
 
-				StorageEntry e = cache.getIfPresent(id);
-				//RangedSupplier<Long, Binding> s = e.storage;
-
-				storageMap.put(id, e);
-
+			Node serviceNode;
+			if(isRoot && cacheWholeQuery) {
+	    		serviceNode = NodeFactory.createURI("view://ex.org/view" + queryOp.hashCode());
+				newRootServiceNode = serviceNode;
 			} else {
-				boolean isRoot = tag == tree.getRoot();
+				serviceNode = NodeFactory.createURI("view://service/" + idX++);
+			}
 
-				// Do not cache pattern free queries
-				// TODO It would be better to decide caching based on the actual query execution time
-				// I.e. having an auto-caching layer would be nice
-				boolean isPatternFree = OpUtils.isPatternFree(tag);
-				if(isRoot && isPatternFree) {
-					cacheWholeQuery = false;
-				}
+			// We do not need to wrap parts of the query execution with a service
+			// if that part is pattern free (i.e. does not depend on external data)
+			// TODO Make sure that this works with EXISTS
+			if(!isPatternFree) {
+				Op serviceOp = new OpService(serviceNode, OpNull.create(), false);
 
-				Node serviceNode;
-				if(isRoot && cacheWholeQuery) {
-		    		serviceNode = NodeFactory.createURI("view://ex.org/view" + queryOp.hashCode());
-					newRootServiceNode = serviceNode;
-				} else {
-					serviceNode = NodeFactory.createURI("view://service/" + idX++);
-				}
+				Query qq = OpAsQuery.asQuery(tag);
 
-				// We do not need to wrap parts of the query execution with a service
-				// if that part is pattern free (i.e. does not depend on external data)
-				// TODO Make sure that this works with EXISTS
-				if(!isPatternFree) {
-					Op serviceOp = new OpService(serviceNode, OpNull.create(), false);
+				logger.info("Root query:\n" + qq);
 
-					RangedSupplier<Long, Binding> s3 = new RangedSupplierQuery(parentFactory, query);
+				RangedSupplier<Long, Binding> s3 = new RangedSupplierQuery(parentFactory, qq);
 
-					VarInfo varInfo = new VarInfo(new HashSet<>(query.getProjectVars()), 0);
-					StorageEntry se = new StorageEntry(s3, varInfo); // The var info is not used
-					storageMap.put(serviceNode, se);
+				VarInfo varInfo = new VarInfo(new HashSet<>(qq.getProjectVars()), 0);
+				StorageEntry se = new StorageEntry(s3, varInfo); // The var info is not used
+				storageMap.put(serviceNode, se);
 
-					taggedToService.put(tag, serviceOp);
-				}
+				taggedToService.put(tag, serviceOp);
 			}
 		}
 
@@ -313,9 +320,9 @@ public class QueryExecutionViewMatcherMaster
     	// - (if the new query is just linear post processing of an existing cache entry)
 
     	// This means, that the query will be available for cache lookups
-    	Node rootService = rewrittenOp instanceof OpService
-    			? ((OpService)rewrittenOp).getService()
-    		    : null;
+//    	Node rootService = rewrittenOp instanceof OpService
+//    			? ((OpService)rewrittenOp).getService()
+//    		    : null;
 
     	//boolean cacheWholeQuery = true; //!rootService.getURI().startsWith("view://");
 

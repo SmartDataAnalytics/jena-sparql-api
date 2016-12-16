@@ -328,6 +328,8 @@ public class OpRewriteViewMatcherStateful
 
                 // Apply substitution (if substitute is not null)
                 if(substitute != null) {
+                	substitute = OpUtils.wrapWithProjection(substitute, map);
+
                     current = OpUtils.substitute(current, userSubstOp, substitute);
                     changed = true;
                 }
