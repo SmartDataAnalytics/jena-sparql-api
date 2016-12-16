@@ -96,13 +96,16 @@ public class TransformReplaceConstants
 
     public Op transform(OpQuadPattern op) {
 
-        List<Var> vars = new ArrayList<>(OpVars.visibleVars(op));
+        //List<Var> vars = new ArrayList<>(OpVars.visibleVars(op));
 
         ExprList filters = new ExprList();
 
         BasicPattern triples = new BasicPattern();
 
-        Node graphNode = transform(op.getGraphNode(), true, generator, filters, omitDefaultGraphFilter);
+        boolean retainDefaultGraphNode = true;
+        Node graphNode = retainDefaultGraphNode && op.getGraphNode().equals(Quad.defaultGraphNodeGenerated)
+        		? Quad.defaultGraphNodeGenerated
+        		: transform(op.getGraphNode(), true, generator, filters, omitDefaultGraphFilter);
 
 
         // TODO Mapping of nodes might be doable with jena transform

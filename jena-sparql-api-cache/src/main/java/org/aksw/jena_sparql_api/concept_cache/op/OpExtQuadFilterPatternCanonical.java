@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.concept_cache.op;
 
+import java.util.List;
+
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.apache.jena.atlas.io.IndentedWriter;
 
@@ -15,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 public class OpExtQuadFilterPatternCanonical
     extends OpExt
+    implements OpCopyable
 {
 	private static final Logger logger = LoggerFactory.getLogger(OpExtQuadFilterPatternCanonical.class);
 
@@ -69,5 +72,11 @@ public class OpExtQuadFilterPatternCanonical
         // TODO Auto-generated method stub
         return false;
     }
+
+	@Override
+	public Op copy(List<Op> subOps) {
+		OpExtQuadFilterPatternCanonical result = new OpExtQuadFilterPatternCanonical(qfpc);
+		return result;
+	}
 
 }

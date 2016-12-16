@@ -12,13 +12,14 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.aksw.commons.collections.trees.Tree;
+import org.aksw.jena_sparql_api.algebra.transform.TransformDisjunctionToUnion;
 import org.aksw.jena_sparql_api.algebra.transform.TransformEffectiveOp;
 import org.aksw.jena_sparql_api.algebra.transform.TransformJoinToSequence;
 import org.aksw.jena_sparql_api.algebra.transform.TransformPushFiltersIntoBGP;
+import org.aksw.jena_sparql_api.algebra.transform.TransformReplaceConstants;
 import org.aksw.jena_sparql_api.algebra.transform.TransformUnionToDisjunction;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMapImpl;
-import org.aksw.jena_sparql_api.concept_cache.core.ProjectedOp;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 import org.aksw.jena_sparql_api.unsorted.OpVisitorFeatureExtractor;
@@ -217,6 +218,8 @@ public class SparqlViewMatcherOpImpl<K>
         //op = Transformer.transform(/new Transfo, op)
         op = TransformPushFiltersIntoBGP.transform(op);
 
+        op = Transformer.transform(TransformDisjunctionToUnion.fn, op);
+
         return op;
 
         //op = Transformer.transform(TransformDisju, op);
@@ -226,6 +229,8 @@ public class SparqlViewMatcherOpImpl<K>
     public static Op normalizeOp(Op op) {
         op = Transformer.transform(TransformUnionToDisjunction.fn, op);
         op = Transformer.transform(TransformJoinToSequence.fn, op);
+        //op = Transformer.transform(new TransformReplaceConstants(), op);
+        op = TransformReplaceConstants.transform(op);
 
         Generator<Var> generatorCache = VarGeneratorImpl2.create();
         op = OpUtils.substitute(op, false, (o) -> SparqlCacheUtils.tryCreateCqfp(o, generatorCache));

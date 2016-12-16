@@ -444,6 +444,9 @@ public class OpUtils {
         } else if (op instanceof OpN) {
             OpN o = (OpN)op;
             result = o.copy(subOps);
+        } else if(op instanceof OpCopyable) {
+            OpCopyable o = (OpCopyable)op;
+            result = o.copy(subOps);
         } else {
             throw new RuntimeException("Should not happen: Could not copy: " + op);
         }

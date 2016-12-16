@@ -5,9 +5,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
@@ -282,6 +284,23 @@ public class ExprUtils {
 		}
 		T result = opifyBalanced(items, outerJunctor);
 
+		return result;
+	}
+
+
+	public static <T> Optional<T> opify(Iterable<T> exprs, BinaryOperator<T> exprFactory) {
+		Optional<T> result;
+		Iterator<T> it = exprs.iterator();
+		if(!it.hasNext()) {
+			result = Optional.empty();
+		} else {
+			T tmp = it.next();
+			while(it.hasNext()) {
+				T b = it.next();
+				tmp = exprFactory.apply(tmp, b);
+			}
+			result = Optional.of(tmp);
+		}
 		return result;
 	}
 

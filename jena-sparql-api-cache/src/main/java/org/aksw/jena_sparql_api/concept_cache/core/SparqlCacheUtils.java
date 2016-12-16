@@ -550,6 +550,11 @@ public class SparqlCacheUtils {
         Set<Set<Expr>> extra = new HashSet<Set<Expr>>();
         for(int i = 0; i < 4; ++i) {
             Node tmp = QuadUtils.getNode(quad, i);
+
+            if(i == 0 && Quad.defaultGraphNodeGenerated.equals(tmp)) {
+            	continue;
+            }
+
             if(!tmp.isVariable()) {
                 throw new RuntimeException("Expected variable normalized quad");
             }
@@ -684,6 +689,11 @@ public class SparqlCacheUtils {
             OpGraph opGraph = (OpGraph)op;
             Node graphNode = opGraph.getNode();
 
+
+//            boolean retainDefaultGraphNode = true;
+//            if(retainDefaultGraphNode && Quad.defaultGraphNodeGenerated.equals(graphNode)) {
+
+
             // The graphNode must be a variable which is not constrained by the filter
 
             Set<Var> filterVars = ExprVars.getVarsMentioned(opFilter.getExprs());
@@ -815,7 +825,15 @@ public class SparqlCacheUtils {
         return result;
     }
 
+    // Assumes that ReplaceConstants has been called
     public static QuadFilterPatternCanonical canonicalize2(QuadFilterPattern qfp, Generator<Var> generator) {
+        Set<Set<Expr>> dnf = DnfUtils.toSetDnf(qfp.getExpr());
+        QuadFilterPatternCanonical result = new QuadFilterPatternCanonical(new LinkedHashSet<>(qfp.getQuads()), dnf, true);
+
+        return result;
+    }
+
+    public static QuadFilterPatternCanonical canonicalize2old(QuadFilterPattern qfp, Generator<Var> generator) {
         QuadFilterPatternCanonical tmp = replaceConstants(qfp.getQuads(), generator);
         tmp = removeDefaultGraphFilter(tmp);
         Set<Set<Expr>> cnf = CnfUtils.toSetCnf(qfp.getExpr());

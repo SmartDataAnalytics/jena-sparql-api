@@ -13,6 +13,7 @@ import java.util.stream.Stream;
 
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeUtils;
+import org.aksw.jena_sparql_api.algebra.transform.TransformDisjunctionToUnion;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 import org.aksw.jena_sparql_api.core.QueryExecutionBaseSelect;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
@@ -23,6 +24,7 @@ import org.aksw.jena_sparql_api.utils.BindingUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.ResultSetUtils;
 import org.aksw.jena_sparql_api.utils.VarUtils;
+import org.aksw.jena_sparql_api.views.index.SparqlViewMatcherOpImpl;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.ARQ;
@@ -32,6 +34,7 @@ import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpAsQuery;
+import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.op.OpNull;
 import org.apache.jena.sparql.algebra.op.OpService;
 import org.apache.jena.sparql.core.Var;
@@ -226,7 +229,11 @@ public class QueryExecutionViewMatcherMaster
 			if(!isPatternFree) {
 				Op serviceOp = new OpService(serviceNode, OpNull.create(), false);
 
-				Query qq = OpAsQuery.asQuery(tag);
+				//TransformDisjunctionToUnion
+				//tag = Transformer.transform(TransformDisjunctionToUnion.fn, tag);
+				Op execOp = SparqlViewMatcherOpImpl.denormalizeOp(tag);
+
+				Query qq = OpAsQuery.asQuery(execOp);
 
 				logger.info("Root query:\n" + qq);
 
