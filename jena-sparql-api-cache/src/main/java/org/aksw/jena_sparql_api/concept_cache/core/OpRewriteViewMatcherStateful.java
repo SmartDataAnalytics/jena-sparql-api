@@ -145,6 +145,30 @@ public class OpRewriteViewMatcherStateful
 
     //@Override
     // TODO Do we need a further argument for the variable information?
+    /**
+     * The storageId is intended to associate result sets with it.
+     *
+     *
+     * The patternId ignores the projection of the result set - i.e.
+     *
+     * The motivation is to reduce the number of candidate-tree mappings by
+     * avoidmseparate entries for expressions that differ only in their projection.
+     *
+     * This approach is only half-assed, because if done properly, we would represent
+     * all candidates in some trie-like structure that would efficiently allow matching
+     * against all relevant candidates at once; and allow iteratively narrowing down the set of remaining
+     * candidates based on the set of constituents (datalog rules?).
+     *
+     * And in my mind this triggers an association with generalized trie and thus rete algorithm
+     * and thus rule systems / data log.
+     * But maybe the my-algebra has even further advantages.
+     *
+     *
+     *
+     *
+     * @param storageId
+     * @param op
+     */
     public void put(Node storageId, Op op) {
 
         Op normalizedOp = opNormalizer.rewrite(op);
@@ -162,9 +186,9 @@ public class OpRewriteViewMatcherStateful
             //OpVars.visibleVars(normalizedOp);
         }
 
+        Node patternId = storageId;
         // TODO Check if the pattern we are putting is isomorphic to an existing one
-        Node patternId = lookup(normalizedOp);
-
+        //Node patternId = lookup(normalizedOp);
 
         Map<Node, VarInfo> map = patternIdToStorageIdToVarInfo.computeIfAbsent(patternId,  (n) -> new HashMap<>());
         map.put(storageId, varInfo);
@@ -250,8 +274,13 @@ public class OpRewriteViewMatcherStateful
 
         Op op = opNormalizer.rewrite(rawOp);
 
+        // Since we are cutting the projection in the put method, we also have to cut it here
 
-        Op current = op;
+        ProjectedOp pop = SparqlCacheUtils.cutProjection(op);
+
+
+
+        Op current = pop.getResidualOp(); // op;
 
         //Multimap<Op, LookupResult<Node>> nodeToReplacements = HashMultimap.create();
 

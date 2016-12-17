@@ -12,6 +12,7 @@ import org.aksw.commons.collections.trees.Tree;
 import org.aksw.jena_sparql_api.algebra.transform.TransformDistributeJoinOverUnion;
 import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
+import org.aksw.jena_sparql_api.concept_cache.op.OpExtQuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.VarMapper;
 import org.aksw.jena_sparql_api.stmt.SparqlElementParser;
 import org.aksw.jena_sparql_api.stmt.SparqlElementParserImpl;
@@ -168,13 +169,15 @@ public class SparqlQueryContainmentUtils {
 
 		// TODO Add utility method for creating the varInfo object
 		VarInfo viewVarInfo = new VarInfo(new HashSet<>(viewPop.getProjection().getVars()), viewPop.isDistinct() ? 2 : 0);
-
 		VarInfo userVarInfo = new VarInfo(new HashSet<>(userPop.getProjection().getVars()), userPop.isDistinct() ? 2 : 0);
 
     	Function<Op, OpIndex> opIndexer = new OpIndexerImpl();
 
-    	OpIndex viewIndex = opIndexer.apply(SparqlViewMatcherOpImpl.normalizeOp(viewResOp));
-    	OpIndex userIndex = opIndexer.apply(SparqlViewMatcherOpImpl.normalizeOp(userResOp));
+    	Op normViewResOp = SparqlViewMatcherOpImpl.normalizeOp(viewResOp);
+    	Op normUserResOp = SparqlViewMatcherOpImpl.normalizeOp(userResOp);
+
+    	OpIndex viewIndex = opIndexer.apply(normViewResOp);
+    	OpIndex userIndex = opIndexer.apply(normUserResOp);
 
     	Tree<Op> viewTree = viewIndex.getTree();
     	Tree<Op> userTree = userIndex.getTree();
@@ -182,7 +185,10 @@ public class SparqlQueryContainmentUtils {
         Multimap<Op, Op> candOpMapping = SparqlViewMatcherSystemImpl.getCandidateLeafMapping(viewIndex, userIndex);
 
         // TODO: Maybe this qfpc check shoud be part of the viewIndex?
-		QuadFilterPatternCanonical viewQfpc = SparqlCacheUtils.extractQuadFilterPatternCanonical(viewResOp);
+		//QuadFilterPatternCanonical viewQfpc = SparqlCacheUtils.extractQuadFilterPatternCanonical(viewResOp);
+        QuadFilterPatternCanonical viewQfpc = normViewResOp instanceof OpExtQuadFilterPatternCanonical
+        		? ((OpExtQuadFilterPatternCanonical)normViewResOp).getQfpc()
+        		: null;
 
 		Stream<OpVarMap> solutionStream;
 		// Use tree matcher or pattern matcher

@@ -128,13 +128,25 @@ public class SparqlViewMatcherOpImpl<K>
     public Collection<LookupResult<K>> lookup(Op item) {
         //Op normalizedItem = opNormalizer.rewrite(item);
         Set<MyEntry<K>> tmpCands = new HashSet<>();
+//
+//        itemFeatureExtractor.apply(item).forEach(featureSet -> {
+//            //featuresToIndexes.getIfSubsetOf(featureSet).stream()
+//            featuresToIndexes.get(featureSet).stream()
+//                //.map(e -> e.getValue())
+//                .forEach(x -> tmpCands.add(x));
+//        });
+
+        // TODO if there is a projection on item, the lookup fails, because
+        // in the index we cut the projection away
+        // So
 
         itemFeatureExtractor.apply(item).forEach(featureSet -> {
             //featuresToIndexes.getIfSubsetOf(featureSet).stream()
-            featuresToIndexes.get(featureSet).stream()
+            featuresToIndexes.getIfSubsetOf(featureSet).stream()
                 //.map(e -> e.getValue())
-                .forEach(x -> tmpCands.add(x));
+                .forEach(x -> tmpCands.add(x.getValue()));
         });
+
 
         // Order candidates by their node count - largest node counts first
         List<MyEntry> cands = new ArrayList<>(tmpCands);

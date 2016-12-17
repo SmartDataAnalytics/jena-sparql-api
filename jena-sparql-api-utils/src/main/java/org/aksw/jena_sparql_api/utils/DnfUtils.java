@@ -270,7 +270,7 @@ public class DnfUtils
         List<ExprList> result = new ArrayList<ExprList>();
 
         for(Expr expr : exprs) {
-            collectOr(expr, result);
+        	collectOr(expr, result);
         }
 
         return result;
@@ -304,7 +304,13 @@ public class DnfUtils
 
             list.add(ors);
         } else {
-            list.add(new ExprList(expr));
+        	ExprList tmp = new ExprList();
+        	// Turn true into empty clause
+        	if(!NodeValue.TRUE.equals(expr)) {
+        		tmp.add(expr);
+        	}
+
+            list.add(tmp);
         }
     }
 
