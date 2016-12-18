@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.utils.enhanced;
+package org.aksw.jena_sparql_api.rdf_stream;
 
 import java.util.function.Consumer;
 import java.util.function.Function;

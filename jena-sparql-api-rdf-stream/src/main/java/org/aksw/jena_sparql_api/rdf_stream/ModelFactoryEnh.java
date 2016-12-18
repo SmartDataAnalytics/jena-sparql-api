@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.utils.enhanced;
+package org.aksw.jena_sparql_api.rdf_stream;
 
 import org.apache.jena.enhanced.BuiltinPersonalities;
 import org.apache.jena.enhanced.Personality;
