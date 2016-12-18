@@ -9,7 +9,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -19,19 +18,22 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.aksw.iguana.reborn.ChartUtilities2;
+import org.aksw.iguana.reborn.ITask;
 import org.aksw.iguana.reborn.TaskDispatcher;
 import org.aksw.iguana.reborn.charts.datasets.IguanaDatasetProcessors;
 import org.aksw.iguana.reborn.charts.datasets.IguanaVocab;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlQueryContainmentUtils;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.delay.extra.DelayerDefault;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcReader;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcVocab;
+import org.aksw.jena_sparql_api.utils.enhanced.ModelFactoryEnh;
+import org.aksw.jena_sparql_api.utils.enhanced.ResourceEnh;
 //import org.aksw.qcwrapper.jsa.ContainmentSolverWrapperJsa;
 import org.aksw.simba.lsq.vocab.LSQ;
 import org.apache.jena.query.Query;
@@ -40,7 +42,6 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.util.ResourceUtils;
 import org.apache.jena.vocabulary.RDFS;
 import org.jfree.chart.JFreeChart;
@@ -433,41 +434,106 @@ public class MainTestContain {
         // .collect(Collectors.toList());
     }
 
+    /**
+     * Function which takes a Stream<Resource>
+     * and converts it into a Stream<Task<T>> by passing a reosurce's property value to a parsing function
+     *
+     */
+    public static <T> Function<Resource, ITask<T>> parseLiteral(Property property, Function<String, T> parser) {
+    	Function<Resource, ITask<T>> result = (x) -> {
+			String str = x.getProperty(property).asTriple().getObject().getLiteralLexicalForm();
+			T o = parser.apply(str);
+			ITask<T> r = new ITask<>(x, o, null);
+			return r;
+    	};
+
+    	return result;
+    }
+
+    public static ResourceEnh copyResourceClosureIntoModelEnh(Resource task) {
+		Model m = ModelFactoryEnh.createModel();
+		m.add(ResourceUtils.reachableClosure(task));
+		ResourceEnh result = task.inModel(m).as(ResourceEnh.class);
+		return result;
+    }
+
+//    public static ResourceEnh createRelatedResource(ResourceEnh r, String pattern) {
+//
+//    }
+
     public static Model run(Collection<Resource> tasks, String dataset, Object solver) throws Exception {
+//ResourceUtils.renameResource(old, uri)
+
+    	tasks.stream()
+    		// Copy workload data into an enhanced graph
+    		.map(MainTestContain::copyResourceClosureIntoModelEnh)
+    		// Create a new blank resource for the observation
+    		// and link it back to the workload resource
+    		.peek(task -> task.addTrait(prepareTestCase(task)))
+    		// TODO Parse query
+    		// TODO Add run information
+    		.map(r -> r.getModel().createResource()
+    					.addProperty(IguanaVocab.workload, r)
+    					.as(ResourceEnh.class))
+
+    		.forEach(r -> r.getModel().write(System.out, "TURTLE"));
+
+
+//        String workloadLabel = workload.getRequiredProperty(RDFS.label).getObject().asLiteral().getString();
+//        Resource r = m.createResource("http://example.org/query-" + runName + "-" + workloadLabel + "-run" + runId);
+//
+//        if (runId < warmUp) {
+//            r.addLiteral(WARMUP, true);
+//        }
+//
+//        r
+//            .addProperty(IguanaVocab.workload, workload)
+
 
 
         // Attach the solver to the resource
-        Iterator<Resource> taskExecs = prepareTaskExecutions(tasks, dataset, 1, 1).iterator();
+        Stream<Resource> taskExecs = prepareTaskExecutions(tasks, dataset, 1, 1);//.iterator();
+
+        //function<Resource, ITask> taskParser;
+
+//        taskExecs
+//        	.peek(r -> r.as(EnhResource).addTrait(parseLiteral(null, SparqlQueryContainmentUtils.queryParser)))
+
+//        Consumer<Resource> eval = SparqlPerformanceEvaluatorBuilder
+//        	.setTaskParser(parseLiteral(null, SparqlQueryContainmentUtils.queryParser))
+//			.setTaskExecutor()
+//			.setProperty()
+//			.create();
 
 
         Model strategy = ModelFactory.createDefaultModel();
 
         PrintStream out = System.out;
-        TaskDispatcher<Task> taskDispatcher = new TaskDispatcher<Task>(taskExecs, t -> prepare(t, solver),
-                (task, r) -> task.run.run(),
-                // (task, r) -> { try { return task.call(); }
-                // catch(Exception e) { throw new RuntimeException(e); } },
-                (task, r, e) -> {
-                }, // task.close(),
-                // r -> System.out.println("yay"));
-                (task, r) -> {
-                    task.cleanup.run();
+        TaskDispatcher<Task> taskDispatcher = null; //new TaskDispatcher<Task>(taskExecs, t -> prepare(t, solver),
+//                (task, r) -> task.run.run(),
+//                // (task, r) -> { try { return task.call(); }
+//                // catch(Exception e) { throw new RuntimeException(e); } },
+//                (task, r, e) -> {
+//                }, // task.close(),
+//                // r -> System.out.println("yay"));
+//                (task, r) -> {
+//                    task.cleanup.run();
+//
+//                    if(!r.getProperty(RDFS.label).getString().equals("CORRECT")) {
+//                        logger.warn("Incorrect test result for task " + r + "(" + task + ")");
+//                    }
+//
+//                    Statement stmt = r.getProperty(WARMUP);
+//                    if (stmt == null || !stmt.getBoolean()) { // Warmup is false if the attribute is not present or false
+//                        // System.out.println("GOT: ");
+//                        // ResourceUtils.reachableClosure(r).write(System.out,
+//                        // "TURTLE");
+//                        strategy.add(r.getModel());
+//                    }
+//                }, // r.getModel().write(out, "TURTLE"),
+//                );
 
-                    if(!r.getProperty(RDFS.label).getString().equals("CORRECT")) {
-                        logger.warn("Incorrect test result for task " + r + "(" + task + ")");
-                    }
-
-                    Statement stmt = r.getProperty(WARMUP);
-                    if (stmt == null || !stmt.getBoolean()) { // Warmup is false if the attribute is not present or false
-                        // System.out.println("GOT: ");
-                        // ResourceUtils.reachableClosure(r).write(System.out,
-                        // "TURTLE");
-                        strategy.add(r.getModel());
-                    }
-                }, // r.getModel().write(out, "TURTLE"),
-                new DelayerDefault(0));
-
-        List<Runnable> runnables = Collections.singletonList(taskDispatcher);
+        List<Runnable> runnables = null; //Collections.singletonList(taskDispatcher);
 
         List<Callable<Object>> callables = runnables.stream().map(Executors::callable).collect(Collectors.toList());
 
