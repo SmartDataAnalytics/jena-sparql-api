@@ -57,10 +57,10 @@ public class RdfStream {
 	 * @return
 	 */
 	public static <T extends Resource> Function<Supplier<Stream<T>>, Supplier<Stream<T>>>
-		repeat(int n, Property property)
+		repeat(int n, Property property, int offset)
 	{
 		return (ss) -> (() -> LongStream.range(0, n).boxed()
-				.flatMap(i -> ss.get().peek(r -> r.addLiteral(property, i))));
+				.flatMap(i -> ss.get().peek(r -> r.addLiteral(property, offset + i))));
 	}
 
 	public static <T extends Resource> Function<Supplier<Stream<T>>, Supplier<Stream<T>>>
@@ -81,6 +81,14 @@ public class RdfStream {
 		map(Function<I, O> fn)
 	{
 		return (ss) -> (() -> ss.get().map(fn));
+	}
+
+	public static <I extends Resource, O extends Resource>
+	Function<Supplier<Stream<I>>, Supplier<Stream<O>>>
+		flatMap(Function<I, Stream<O>> fn)
+	{
+		//return (ss) -> (() -> ss.get().flatMap(x -> fn.apply(x)));
+		return (ss) -> (() -> ss.get().flatMap(fn));
 	}
 
 
