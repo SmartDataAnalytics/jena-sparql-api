@@ -22,7 +22,7 @@ import java.util.stream.Stream;
 
 import org.aksw.iguana.reborn.ChartUtilities2;
 import org.aksw.iguana.reborn.charts.datasets.IguanaDatasetProcessors;
-import org.aksw.iguana.reborn.charts.datasets.IguanaVocab;
+import org.aksw.iguana.vocab.IguanaVocab;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.rdf_stream.core.RdfStream;
 import org.aksw.jena_sparql_api.rdf_stream.enhanced.ResourceEnh;
@@ -464,21 +464,22 @@ public class MainTestContain {
 		RdfStream.start()
 			// Parse the task resource
 			// Allocate a new observation resource, and copy the traits from the workload
-			.andThen(map(r -> r.getModel().createResource().as(ResourceEnh.class)
-					.copyTraitsFrom(r)
+			.andThen(map(w -> w.getModel().createResource().as(ResourceEnh.class)
+					.copyTraitsFrom(w)
 					.addProperty(RDF.type, Observation)
-					.addProperty(IguanaVocab.workload, r)
-					.addProperty(RDFS.comment, r.getProperty(RDFS.label).getString())))
-			.andThen(map(r -> r.as(ResourceEnh.class).addTrait(prepareTask(r, solver))))
-			.andThen(peek(r -> PerformanceAnalyzer.start()
-					.setReportConsumer(postProcess)
-					.create()
-						.accept(r, r.as(ResourceEnh.class).getTrait(Task.class).get().run ) ))
-			//.andThen(peek(r -> PerformanceAnalyzer.analyze(r, () -> Thread.sleep(500))))
+					.addProperty(IguanaVocab.workload, w)
+					.addProperty(RDFS.comment, w.getProperty(RDFS.label).getString())))
+			.andThen(map(o -> o.as(ResourceEnh.class).addTrait(prepareTask(o, solver))))
+//			.andThen(peek(o -> PerformanceAnalyzer.start()
+//					.setReportConsumer(postProcess)
+//					.create()
+//						.accept(o, o.as(ResourceEnh.class).getTrait(Task.class).get().run ) ))
+			.andThen(peek(r -> PerformanceAnalyzer.analyze(r, () -> Thread.sleep(500))))
 			//.andThen(withIndex(IguanaVocab.run))
 		.andThen(repeat(2, IguanaVocab.run))
 		.andThen(peek(r -> { if (r.getProperty(IguanaVocab.run).getInt() < warmUpRuns) { r.addLiteral(WARMUP, true); }}))
 		.andThen(map(r -> r.as(ResourceEnh.class).rename(uriPattern, dataset, IguanaVocab.run, RDFS.comment)))
+		//.andThen(peek(r -> r.addLiteral(RDFS.comment, r.as(ResourceEnh.class).getTrait(Query.class).get().toString()))
 		.apply(() -> tasks.stream()).get()
 		.forEach(r -> r.getModel().write(System.out, "TURTLE"));
 		;

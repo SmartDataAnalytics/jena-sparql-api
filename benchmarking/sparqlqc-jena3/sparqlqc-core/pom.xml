@@ -67,8 +67,8 @@
 
 
 		<dependency>
-		<groupId>org.aksw.iguana</groupId>
-		<artifactId>iguana-core</artifactId>
+			<groupId>org.aksw.iguana</groupId>
+			<artifactId>iguana-core</artifactId>
 		</dependency>
 
 

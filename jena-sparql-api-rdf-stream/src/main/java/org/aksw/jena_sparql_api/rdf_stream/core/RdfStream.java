@@ -91,6 +91,13 @@ public class RdfStream {
 	}
 
 
+//	public static <T extends Resource> Function<Supplier<Stream<T>>, Supplier<Stream<T>>>
+//		seq(Supplier<Stream<T>> ... subFlows)
+//	{
+//		return (ss) -> (() -> ss.get().peek(consumer));
+//	}
+
+
 	/**
 	 * withIndex creates a new stream, with each resource having an incremented value for the given property.
 	 *
