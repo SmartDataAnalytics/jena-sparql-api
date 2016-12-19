@@ -26,6 +26,7 @@ import org.aksw.iguana.reborn.ChartUtilities2;
 import org.aksw.iguana.reborn.charts.datasets.IguanaDatasetProcessors;
 import org.aksw.iguana.reborn.charts.datasets.IguanaVocab;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.rdf_stream.processors.PerformanceAnalyzer;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcReader;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcVocab;
 import org.aksw.simba.lsq.vocab.LSQ;
@@ -451,7 +452,7 @@ public class MainTestContain {
         Model strategy = ModelFactory.createDefaultModel();
 
         PrintStream out = System.out;
-        TaskDispatcher<Task> taskDispatcher = new TaskDispatcher<>((r, t) -> t.run.run());
+        PerformanceAnalyzer<Task> taskDispatcher = new PerformanceAnalyzer<>((r, t) -> t.run.run());
         taskDispatcher
         	.setReportConsumer((r, task) -> {
                   task.cleanup.run();

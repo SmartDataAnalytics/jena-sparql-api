@@ -66,10 +66,10 @@
 		<!-- </dependency> -->
 
 
-		<!-- <dependency> -->
-		<!-- <groupId>org.aksw.iguana</groupId> -->
-		<!-- <artifactId>iguana-extended</artifactId> -->
-		<!-- </dependency> -->
+		<dependency>
+		<groupId>org.aksw.iguana</groupId>
+		<artifactId>iguana-core</artifactId>
+		</dependency>
 
 
 		<!-- <dependency> -->

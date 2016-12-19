@@ -116,7 +116,7 @@
 
 			<dependency>
 				<groupId>org.aksw.iguana</groupId>
-				<artifactId>iguana-extended</artifactId>
+				<artifactId>iguana-core</artifactId>
 				<version>0.0.1-SNAPSHOT</version>
 			</dependency>
 

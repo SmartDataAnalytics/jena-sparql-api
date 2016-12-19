@@ -36,20 +36,20 @@ import com.google.common.base.Stopwatch;
  * @param <R>
  *            The type of the task result
  */
-public class PerformanceEvaluator<T>
+public class PerformanceAnalyzer<T>
 	implements BiConsumer<Resource, T>
 {
-	private static final Logger logger = LoggerFactory.getLogger(PerformanceEvaluator.class);
+	private static final Logger logger = LoggerFactory.getLogger(PerformanceAnalyzer.class);
 
 	protected BiConsumer<Resource, T> taskExecutor;
 	protected TriConsumer<Resource, T, Exception> exceptionHandler;
 	protected BiConsumer<Resource, T> reportConsumer;
 
-	public PerformanceEvaluator(BiConsumer<Resource, T> taskExecutor) {
+	public PerformanceAnalyzer(BiConsumer<Resource, T> taskExecutor) {
 		this(taskExecutor, (r, t, e) -> {}, (r, t) -> {});
 	}
 
-	public PerformanceEvaluator(BiConsumer<Resource, T> taskExecutor, TriConsumer<Resource, T, Exception> exceptionHandler,
+	public PerformanceAnalyzer(BiConsumer<Resource, T> taskExecutor, TriConsumer<Resource, T, Exception> exceptionHandler,
 			BiConsumer<Resource, T> reportConsumer) {
 		super();
 		this.taskExecutor = taskExecutor;
@@ -61,7 +61,7 @@ public class PerformanceEvaluator<T>
 		return taskExecutor;
 	}
 
-	public PerformanceEvaluator<T> setTaskExector(BiConsumer<Resource, T> taskExecutor) {
+	public PerformanceAnalyzer<T> setTaskExector(BiConsumer<Resource, T> taskExecutor) {
 		this.taskExecutor = taskExecutor;
 		return this;
 	}
@@ -70,7 +70,7 @@ public class PerformanceEvaluator<T>
 		return exceptionHandler;
 	}
 
-	public PerformanceEvaluator<T> setExceptionHandler(TriConsumer<Resource, T, Exception> exceptionHandler) {
+	public PerformanceAnalyzer<T> setExceptionHandler(TriConsumer<Resource, T, Exception> exceptionHandler) {
 		this.exceptionHandler = exceptionHandler;
 		return this;
 	}
@@ -79,7 +79,7 @@ public class PerformanceEvaluator<T>
 		return reportConsumer;
 	}
 
-	public PerformanceEvaluator<T> setReportConsumer(BiConsumer<Resource, T> reportConsumer) {
+	public PerformanceAnalyzer<T> setReportConsumer(BiConsumer<Resource, T> reportConsumer) {
 		this.reportConsumer = reportConsumer;
 		return this;
 	}
