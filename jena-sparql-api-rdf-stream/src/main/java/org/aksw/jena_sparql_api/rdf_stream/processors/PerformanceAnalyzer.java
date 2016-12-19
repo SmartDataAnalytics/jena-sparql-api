@@ -7,8 +7,8 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
-import org.aksw.commons.util.function.TriConsumer;
 import org.aksw.jena_sparql_api.vocabs.OWLTIME;
 import org.aksw.jena_sparql_api.vocabs.PROV;
 import org.aksw.simba.lsq.vocab.LSQ;
@@ -36,50 +36,39 @@ import com.google.common.base.Stopwatch;
  * @param <R>
  *            The type of the task result
  */
-public class PerformanceAnalyzer<T>
-	implements BiConsumer<Resource, T>
+public class PerformanceAnalyzer
+//	implements BiConsumer<Resource, Runnable>
 {
 	private static final Logger logger = LoggerFactory.getLogger(PerformanceAnalyzer.class);
 
-	protected BiConsumer<Resource, T> taskExecutor;
-	protected TriConsumer<Resource, T, Exception> exceptionHandler;
-	protected BiConsumer<Resource, T> reportConsumer;
+	protected BiConsumer<Resource, Exception> exceptionHandler;
+	protected Consumer<Resource> reportConsumer;
 
-	public PerformanceAnalyzer(BiConsumer<Resource, T> taskExecutor) {
-		this(taskExecutor, (r, t, e) -> {}, (r, t) -> {});
+	public PerformanceAnalyzer() {
+		this((r, e) -> {}, (r) -> {});
 	}
 
-	public PerformanceAnalyzer(BiConsumer<Resource, T> taskExecutor, TriConsumer<Resource, T, Exception> exceptionHandler,
-			BiConsumer<Resource, T> reportConsumer) {
+	public PerformanceAnalyzer(BiConsumer<Resource, Exception> exceptionHandler,
+			Consumer<Resource> reportConsumer) {
 		super();
-		this.taskExecutor = taskExecutor;
 		this.exceptionHandler = exceptionHandler;
 		this.reportConsumer = reportConsumer;
 	}
 
-	public BiConsumer<Resource, T> getTaskExecutor() {
-		return taskExecutor;
-	}
-
-	public PerformanceAnalyzer<T> setTaskExector(BiConsumer<Resource, T> taskExecutor) {
-		this.taskExecutor = taskExecutor;
-		return this;
-	}
-
-	public TriConsumer<Resource, T, Exception> getExceptionHandler() {
+	public BiConsumer<Resource, Exception> getExceptionHandler() {
 		return exceptionHandler;
 	}
 
-	public PerformanceAnalyzer<T> setExceptionHandler(TriConsumer<Resource, T, Exception> exceptionHandler) {
+	public PerformanceAnalyzer setExceptionHandler(BiConsumer<Resource, Exception> exceptionHandler) {
 		this.exceptionHandler = exceptionHandler;
 		return this;
 	}
 
-	public BiConsumer<Resource, T> getReportConsumer() {
+	public Consumer<Resource> getReportConsumer() {
 		return reportConsumer;
 	}
 
-	public PerformanceAnalyzer<T> setReportConsumer(BiConsumer<Resource, T> reportConsumer) {
+	public PerformanceAnalyzer setReportConsumer(Consumer<Resource> reportConsumer) {
 		this.reportConsumer = reportConsumer;
 		return this;
 	}
@@ -88,44 +77,68 @@ public class PerformanceAnalyzer<T>
 		return logger;
 	}
 
-	@Override
-	public void accept(Resource r, T t) {
+//	@Override
+//	public void accept(Resource r, Runnable t) {
+//	}
 
-		if (r.getProperty(OWLTIME.numericDuration) != null) {
-			StringWriter tmp = new StringWriter();
-			ResourceUtils.reachableClosure(r).write(tmp, "TTL");
-			throw new RuntimeException("Resource " + r + " already has a numeric duration assigned: " + tmp);
-		}
+	public static PerformanceAnalyzer start() {
+		return new PerformanceAnalyzer();
+	}
 
-		Calendar startInstant = new GregorianCalendar();
+//	public static void analyze(Resource r, Runnable t) {
+//		start().create().accept(r, t);
+//	}
 
-		r.addLiteral(PROV.startedAtTime, startInstant);
-
-		Stopwatch sw = Stopwatch.createStarted();
-
-		try {
-			taskExecutor.accept(r, t);
+	public static void analyze(Resource r, RunnableWithException t) {
+		Runnable wrapper = () -> { try {
+			t.run();
 		} catch (Exception e) {
-			// ex = e;
-			logger.warn("Reporting failed task execution", e);
-			r.addLiteral(LSQ.executionError, "" + e);
-
-			exceptionHandler.accept(r, t, e);
-		}
-
-		sw.stop();
-		Calendar stopInstant = new GregorianCalendar();
-		Duration duration = Duration.ofNanos(sw.elapsed(TimeUnit.NANOSECONDS));
-
-		r.addLiteral(PROV.endAtTime, stopInstant);
-		r.addLiteral(OWLTIME.numericDuration, duration.get(ChronoUnit.NANOS) / 1000000000.0);
-
-		try {
-			reportConsumer.accept(r, t);
-		} catch (Exception e) {
-			logger.error("Failed to send report to consumer", e);
 			throw new RuntimeException(e);
-		}
+		} };
+
+		start().create().accept(r, wrapper);
+	}
+
+	public BiConsumer<Resource, Runnable> create() {
+		BiConsumer<Resource, Runnable> result = (r, t) -> {
+			if (r.getProperty(OWLTIME.numericDuration) != null) {
+				StringWriter tmp = new StringWriter();
+				ResourceUtils.reachableClosure(r).write(tmp, "TTL");
+				throw new RuntimeException("Resource " + r + " already has a numeric duration assigned: " + tmp);
+			}
+
+			Calendar startInstant = new GregorianCalendar();
+
+			r.addLiteral(PROV.startedAtTime, startInstant);
+
+			Stopwatch sw = Stopwatch.createStarted();
+
+			try {
+				t.run();
+			} catch (Exception e) {
+				// ex = e;
+				logger.warn("Reporting failed task execution", e);
+				r.addLiteral(LSQ.executionError, "" + e);
+
+				exceptionHandler.accept(r, e);
+			}
+
+			sw.stop();
+			Calendar stopInstant = new GregorianCalendar();
+			Duration duration = Duration.ofNanos(sw.elapsed(TimeUnit.NANOSECONDS));
+
+			r.addLiteral(PROV.endAtTime, stopInstant);
+			r.addLiteral(OWLTIME.numericDuration, duration.get(ChronoUnit.NANOS) / 1000000000.0);
+
+			try {
+				reportConsumer.accept(r);
+			} catch (Exception e) {
+				logger.error("Failed to send report to consumer", e);
+				throw new RuntimeException(e);
+			}
+		};
+
+		return result;
 	}
 
 }

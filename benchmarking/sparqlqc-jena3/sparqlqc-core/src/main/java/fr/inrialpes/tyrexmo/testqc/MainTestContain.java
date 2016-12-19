@@ -3,26 +3,19 @@ package fr.inrialpes.tyrexmo.testqc;
 import static org.aksw.jena_sparql_api.rdf_stream.core.RdfStream.map;
 import static org.aksw.jena_sparql_api.rdf_stream.core.RdfStream.peek;
 import static org.aksw.jena_sparql_api.rdf_stream.core.RdfStream.repeat;
-import static org.aksw.jena_sparql_api.rdf_stream.core.RdfStream.withIndex;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.PrintStream;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.ServiceLoader;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -62,7 +55,6 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Predicate;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import com.google.common.util.concurrent.MoreExecutors;
 
 class TestCase {
     protected Query source;
@@ -447,10 +439,9 @@ public class MainTestContain {
 
         Model strategy = ModelFactory.createDefaultModel();
 
-        PerformanceAnalyzer<Task> performanceAnalyzer = new PerformanceAnalyzer<>((r, t) -> t.run.run());
-        performanceAnalyzer
-        	.setReportConsumer((r, task) -> {
-                  task.cleanup.run();
+        Consumer<Resource> postProcess = (r) -> {
+                Task task = r.as(ResourceEnh.class).getTrait(Task.class).get();
+        		task.cleanup.run();
 
                   if(!r.getProperty(RDFS.label).getString().equals("CORRECT")) {
                       logger.warn("Incorrect test result for task " + r + "(" + task + ")");
@@ -463,7 +454,7 @@ public class MainTestContain {
                       // "TURTLE");
                       strategy.add(r.getModel());
                   }
-              });
+              };
         //workload.getRequiredProperty(RDFS.label).getObject().asLiteral().getString()
 
     	// dataset, suite, run
@@ -479,7 +470,11 @@ public class MainTestContain {
 					.addProperty(IguanaVocab.workload, r)
 					.addProperty(RDFS.comment, r.getProperty(RDFS.label).getString())))
 			.andThen(map(r -> r.as(ResourceEnh.class).addTrait(prepareTask(r, solver))))
-			.andThen(peek(r -> performanceAnalyzer.accept(r, r.as(ResourceEnh.class).getTrait(Task.class).get() ) ))
+			.andThen(peek(r -> PerformanceAnalyzer.start()
+					.setReportConsumer(postProcess)
+					.create()
+						.accept(r, r.as(ResourceEnh.class).getTrait(Task.class).get().run ) ))
+			//.andThen(peek(r -> PerformanceAnalyzer.analyze(r, () -> Thread.sleep(500))))
 			//.andThen(withIndex(IguanaVocab.run))
 		.andThen(repeat(2, IguanaVocab.run))
 		.andThen(peek(r -> { if (r.getProperty(IguanaVocab.run).getInt() < warmUpRuns) { r.addLiteral(WARMUP, true); }}))
