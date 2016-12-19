@@ -18,24 +18,19 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.aksw.iguana.reborn.ChartUtilities2;
-import org.aksw.iguana.reborn.ITask;
 import org.aksw.iguana.reborn.charts.datasets.IguanaDatasetProcessors;
 import org.aksw.iguana.reborn.charts.datasets.IguanaVocab;
-import org.aksw.jena_sparql_api.concept_cache.core.SparqlQueryContainmentUtils;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.rdf_stream.ModelFactoryEnh;
-import org.aksw.jena_sparql_api.rdf_stream.ResourceEnh;
-import org.aksw.jena_sparql_api.rdf_stream.TaskDispatcher;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcReader;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcVocab;
-import org.aksw.jena_sparql_api.vocabs.LSQ;
+import org.aksw.simba.lsq.vocab.LSQ;
 import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
@@ -193,8 +188,8 @@ public class MainTestContain {
         boolean expected = Boolean
                 .parseBoolean(t.getRequiredProperty(SparqlQcVocab.result).getObject().asLiteral().getString());
 
-        Query viewQuery = SparqlQueryContainmentUtils.queryParser.apply(srcQueryStr);
-        Query userQuery = SparqlQueryContainmentUtils.queryParser.apply(tgtQueryStr);
+        Query viewQuery = QueryFactory.create(srcQueryStr); //SparqlQueryContainmentUtils.queryParser.apply(srcQueryStr);
+        Query userQuery = QueryFactory.create(tgtQueryStr); //SparqlQueryContainmentUtils.queryParser.apply(tgtQueryStr);
 
         TestCase result = new TestCase(viewQuery, userQuery, expected);
         return result;
@@ -434,65 +429,12 @@ public class MainTestContain {
         // .collect(Collectors.toList());
     }
 
-    /**
-     * Function which takes a Stream<Resource>
-     * and converts it into a Stream<Task<T>> by passing a reosurce's property value to a parsing function
-     *
-     */
-    public static <T> Function<Resource, ITask<T>> parseLiteral(Property property, Function<String, T> parser) {
-    	Function<Resource, ITask<T>> result = (x) -> {
-			String str = x.getProperty(property).asTriple().getObject().getLiteralLexicalForm();
-			T o = parser.apply(str);
-			ITask<T> r = new ITask<>(x, o, null);
-			return r;
-    	};
-
-    	return result;
-    }
-
-    public static ResourceEnh copyResourceClosureIntoModelEnh(Resource task) {
-		Model m = ModelFactoryEnh.createModel();
-		m.add(ResourceUtils.reachableClosure(task));
-		ResourceEnh result = task.inModel(m).as(ResourceEnh.class);
-		return result;
-    }
-
-//    public static ResourceEnh createRelatedResource(ResourceEnh r, String pattern) {
-//
-//    }
 
     public static Model run(Collection<Resource> tasks, String dataset, Object solver) throws Exception {
-//ResourceUtils.renameResource(old, uri)
 
-    	tasks.stream()
-    		// Copy workload data into an enhanced graph
-    		.map(MainTestContain::copyResourceClosureIntoModelEnh)
-    		// Create a new blank resource for the observation
-    		// and link it back to the workload resource
-    		.peek(task -> task.addTrait(prepareTestCase(task)))
-    		// TODO Parse query
-    		// TODO Add run information
-    		.map(r -> r.getModel().createResource()
-    					.addProperty(IguanaVocab.workload, r)
-    					.as(ResourceEnh.class))
-
-    		.forEach(r -> r.getModel().write(System.out, "TURTLE"));
+        //Stream<Resource> taskExecs = prepareTaskExecutions(tasks, dataset, 1, 1);//.iterator();
 
 
-//        String workloadLabel = workload.getRequiredProperty(RDFS.label).getObject().asLiteral().getString();
-//        Resource r = m.createResource("http://example.org/query-" + runName + "-" + workloadLabel + "-run" + runId);
-//
-//        if (runId < warmUp) {
-//            r.addLiteral(WARMUP, true);
-//        }
-//
-//        r
-//            .addProperty(IguanaVocab.workload, workload)
-
-
-
-        // Attach the solver to the resource
-        Stream<Resource> taskExecs = prepareTaskExecutions(tasks, dataset, 1, 1);//.iterator();
 
         //function<Resource, ITask> taskParser;
 

@@ -10,7 +10,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
 
 import org.aksw.commons.util.contextual.AbstractDelegated;
-import org.aksw.jena_sparql_api.vocabs.LSQ;
+import org.aksw.simba.lsq.vocab.LSQ;
 import org.apache.jena.rdf.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

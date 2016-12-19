@@ -9,9 +9,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
 import org.aksw.commons.util.function.TriConsumer;
-import org.aksw.jena_sparql_api.vocabs.LSQ;
 import org.aksw.jena_sparql_api.vocabs.OWLTIME;
 import org.aksw.jena_sparql_api.vocabs.PROV;
+import org.aksw.simba.lsq.vocab.LSQ;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.util.ResourceUtils;
 import org.slf4j.Logger;
