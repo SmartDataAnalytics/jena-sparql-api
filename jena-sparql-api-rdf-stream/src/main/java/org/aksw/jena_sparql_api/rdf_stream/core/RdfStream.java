@@ -45,12 +45,30 @@ public class RdfStream {
 	}
 
 
+	/**
+	 * repeat repeats the provided supplied n times and to each item
+	 * adds a property indicating the repetation
+	 *
+	 * note that this is different from withIndex:
+	 * within a repetation, the repetation count stays the same for each item, whereas the index is increased.
+	 *
+	 * @param n
+	 * @param property
+	 * @return
+	 */
+	public static <T extends Resource> Function<Supplier<Stream<T>>, Supplier<Stream<T>>>
+		repeat(int n, Property property)
+	{
+		return (ss) -> (() -> LongStream.range(0, n).boxed()
+				.flatMap(i -> ss.get().peek(r -> r.addLiteral(property, i))));
+	}
+
 	public static <T extends Resource> Function<Supplier<Stream<T>>, Supplier<Stream<T>>>
 		repeat(int n)
 	{
-		return (ss) -> (() -> LongStream.range(0, n).boxed().flatMap(i -> ss.get()));
+		return (ss) -> (() -> LongStream.range(0, n).boxed()
+			.flatMap(i -> ss.get()));
 	}
-
 
 	public static <T extends Resource, O> Function<Supplier<Stream<T>>, Supplier<Stream<T>>>
 		repeat(Property p, Stream<O> os)
@@ -73,6 +91,12 @@ public class RdfStream {
 	}
 
 
+	/**
+	 * withIndex creates a new stream, with each resource having an incremented value for the given property.
+	 *
+	 * @param p
+	 * @return
+	 */
 	public static <T extends Resource> Function<Supplier<Stream<T>>, Supplier<Stream<T>>>
 		withIndex(Property p)
 	{

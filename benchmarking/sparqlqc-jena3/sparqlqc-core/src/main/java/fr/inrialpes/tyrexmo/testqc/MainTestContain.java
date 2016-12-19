@@ -468,6 +468,8 @@ public class MainTestContain {
 
     	// dataset, suite, run
     	String uriPattern = "http://ex.org/observation-{0}-{1}-{2}";
+
+
 		RdfStream.start()
 			// Parse the task resource
 			// Allocate a new observation resource, and copy the traits from the workload
@@ -475,13 +477,13 @@ public class MainTestContain {
 					.copyTraitsFrom(r)
 					.addProperty(RDF.type, Observation)
 					.addProperty(IguanaVocab.workload, r)
-					.addProperty(RDFS.label, r.getProperty(RDFS.label).getString())))
+					.addProperty(RDFS.comment, r.getProperty(RDFS.label).getString())))
 			.andThen(map(r -> r.as(ResourceEnh.class).addTrait(prepareTask(r, solver))))
 			.andThen(peek(r -> performanceAnalyzer.accept(r, r.as(ResourceEnh.class).getTrait(Task.class).get() ) ))
-			.andThen(withIndex(IguanaVocab.run))
-		.andThen(repeat(2))
+			//.andThen(withIndex(IguanaVocab.run))
+		.andThen(repeat(2, IguanaVocab.run))
 		.andThen(peek(r -> { if (r.getProperty(IguanaVocab.run).getInt() < warmUpRuns) { r.addLiteral(WARMUP, true); }}))
-		.andThen(map(r -> r.as(ResourceEnh.class).rename(uriPattern, dataset, IguanaVocab.run, RDFS.label)))
+		.andThen(map(r -> r.as(ResourceEnh.class).rename(uriPattern, dataset, IguanaVocab.run, RDFS.comment)))
 		.apply(() -> tasks.stream()).get()
 		.forEach(r -> r.getModel().write(System.out, "TURTLE"));
 		;
