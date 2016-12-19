@@ -3,7 +3,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<artifactId>jena-sparql-api-rdf-stream</artifactId>
+	<artifactId>jena-sparql-api-vocabs</artifactId>
 	<packaging>jar</packaging>
 
 	<parent>
@@ -14,21 +14,8 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>org.aksw.jena-sparql-api</groupId>
-			<artifactId>jena-sparql-api-vocabs</artifactId>
+			<groupId>org.apache.jena</groupId>
+			<artifactId>jena-arq</artifactId>
 		</dependency>
-
-		<dependency>
-			<groupId>com.google.guava</groupId>
-			<artifactId>guava</artifactId>
-		</dependency>
-
-		<dependency>
-			<groupId>org.aksw.commons</groupId>
-			<artifactId>aksw-commons-util</artifactId>
-		</dependency>
-
-
-
 	</dependencies>
 </project>

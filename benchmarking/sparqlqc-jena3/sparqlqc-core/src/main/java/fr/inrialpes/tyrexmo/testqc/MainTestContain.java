@@ -25,23 +25,23 @@ import java.util.stream.Stream;
 
 import org.aksw.iguana.reborn.ChartUtilities2;
 import org.aksw.iguana.reborn.ITask;
-import org.aksw.iguana.reborn.TaskDispatcher;
 import org.aksw.iguana.reborn.charts.datasets.IguanaDatasetProcessors;
 import org.aksw.iguana.reborn.charts.datasets.IguanaVocab;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlQueryContainmentUtils;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.rdf_stream.ModelFactoryEnh;
 import org.aksw.jena_sparql_api.rdf_stream.ResourceEnh;
+import org.aksw.jena_sparql_api.rdf_stream.TaskDispatcher;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcReader;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcVocab;
-//import org.aksw.qcwrapper.jsa.ContainmentSolverWrapperJsa;
-import org.aksw.simba.lsq.vocab.LSQ;
+import org.aksw.jena_sparql_api.vocabs.LSQ;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.util.ResourceUtils;
 import org.apache.jena.vocabulary.RDFS;
 import org.jfree.chart.JFreeChart;
@@ -509,31 +509,27 @@ public class MainTestContain {
         Model strategy = ModelFactory.createDefaultModel();
 
         PrintStream out = System.out;
-        TaskDispatcher<Task> taskDispatcher = null; //new TaskDispatcher<Task>(taskExecs, t -> prepare(t, solver),
-//                (task, r) -> task.run.run(),
-//                // (task, r) -> { try { return task.call(); }
-//                // catch(Exception e) { throw new RuntimeException(e); } },
-//                (task, r, e) -> {
-//                }, // task.close(),
-//                // r -> System.out.println("yay"));
-//                (task, r) -> {
-//                    task.cleanup.run();
-//
-//                    if(!r.getProperty(RDFS.label).getString().equals("CORRECT")) {
-//                        logger.warn("Incorrect test result for task " + r + "(" + task + ")");
-//                    }
-//
-//                    Statement stmt = r.getProperty(WARMUP);
-//                    if (stmt == null || !stmt.getBoolean()) { // Warmup is false if the attribute is not present or false
-//                        // System.out.println("GOT: ");
-//                        // ResourceUtils.reachableClosure(r).write(System.out,
-//                        // "TURTLE");
-//                        strategy.add(r.getModel());
-//                    }
-//                }, // r.getModel().write(out, "TURTLE"),
-//                );
+        TaskDispatcher<Task> taskDispatcher = new TaskDispatcher<>((r, t) -> t.run.run());
+        taskDispatcher
+        	.setReportConsumer((r, task) -> {
+                  task.cleanup.run();
 
-        List<Runnable> runnables = null; //Collections.singletonList(taskDispatcher);
+                  if(!r.getProperty(RDFS.label).getString().equals("CORRECT")) {
+                      logger.warn("Incorrect test result for task " + r + "(" + task + ")");
+                  }
+
+                  Statement stmt = r.getProperty(WARMUP);
+                  if (stmt == null || !stmt.getBoolean()) { // Warmup is false if the attribute is not present or false
+                      // System.out.println("GOT: ");
+                      // ResourceUtils.reachableClosure(r).write(System.out,
+                      // "TURTLE");
+                      strategy.add(r.getModel());
+                  }
+              });
+
+
+
+        List<Runnable> runnables = Collections.singletonList(taskDispatcher);
 
         List<Callable<Object>> callables = runnables.stream().map(Executors::callable).collect(Collectors.toList());
 

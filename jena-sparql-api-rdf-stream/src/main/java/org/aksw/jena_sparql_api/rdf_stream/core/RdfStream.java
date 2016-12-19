@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.rdf_stream;
+package org.aksw.jena_sparql_api.rdf_stream.core;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -6,6 +6,8 @@ import java.util.function.Supplier;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
+import org.aksw.jena_sparql_api.rdf_stream.enhanced.ModelFactoryEnh;
+import org.aksw.jena_sparql_api.rdf_stream.enhanced.ResourceEnh;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;

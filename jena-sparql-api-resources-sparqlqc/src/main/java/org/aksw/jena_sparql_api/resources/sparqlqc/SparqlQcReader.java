@@ -8,7 +8,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.aksw.commons.util.StreamUtils;
-import org.aksw.simba.lsq.vocab.LSQ;
+import org.aksw.jena_sparql_api.vocabs.LSQ;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;

@@ -1,13 +1,17 @@
 package org.aksw.jena_sparql_api.rdf_stream;
 
-import static org.aksw.jena_sparql_api.rdf_stream.RdfStream.map;
-import static org.aksw.jena_sparql_api.rdf_stream.RdfStream.peek;
-import static org.aksw.jena_sparql_api.rdf_stream.RdfStream.repeat;
-import static org.aksw.jena_sparql_api.rdf_stream.RdfStream.withIndex;
+import static org.aksw.jena_sparql_api.rdf_stream.core.RdfStream.map;
+import static org.aksw.jena_sparql_api.rdf_stream.core.RdfStream.peek;
+import static org.aksw.jena_sparql_api.rdf_stream.core.RdfStream.repeat;
+import static org.aksw.jena_sparql_api.rdf_stream.core.RdfStream.withIndex;
 
 import java.util.Arrays;
 import java.util.Set;
 
+import org.aksw.jena_sparql_api.rdf_stream.core.RdfStream;
+import org.aksw.jena_sparql_api.rdf_stream.enhanced.ModelFactoryEnh;
+import org.aksw.jena_sparql_api.rdf_stream.enhanced.ResourceEnh;
+import org.aksw.jena_sparql_api.vocabs.IV;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.OWL;

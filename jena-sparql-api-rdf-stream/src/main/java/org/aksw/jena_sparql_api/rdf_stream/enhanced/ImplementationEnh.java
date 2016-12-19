@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.rdf_stream;
+package org.aksw.jena_sparql_api.rdf_stream.enhanced;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -10,7 +10,7 @@ import org.aksw.jena_sparql_api.stmt.SparqlQueryParser;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.views.index.SparqlViewMatcherSystemImpl;
-import org.aksw.simba.lsq.vocab.LSQ;
+import org.aksw.jena_sparql_api.vocabs.LSQ;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
