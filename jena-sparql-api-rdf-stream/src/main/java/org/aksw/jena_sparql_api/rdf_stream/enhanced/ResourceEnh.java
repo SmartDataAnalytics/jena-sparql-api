@@ -60,6 +60,31 @@ public class ResourceEnh
 		this.meta = meta;
 	}
 
+	@SuppressWarnings("deprecation")
+	public ResourceEnh copyTraitsFrom(Resource other) {
+		if(other.canAs(ResourceEnh.class)) {
+			Node tmp = other.asNode();
+			MutableClassToInstanceMap<Object> srcMap = meta.get(tmp);
+
+			if(srcMap != null) {
+				MutableClassToInstanceMap<Object> tgtMap = getOrCreateTraitMap();
+				tgtMap.putAll(srcMap);
+			}
+		}
+
+		return this;
+	}
+
+	public MutableClassToInstanceMap<Object> getOrCreateTraitMap() {
+		MutableClassToInstanceMap<Object> map = meta.get(node);
+        if(map == null) {
+        	map = MutableClassToInstanceMap.create();
+        	meta.put(node, map);
+        }
+
+        return map;
+	}
+
 	public ResourceEnh addTrait(Object o) {
 		Objects.requireNonNull(o);
 
@@ -70,12 +95,7 @@ public class ResourceEnh
 
 	@SuppressWarnings("deprecation")
 	public ResourceEnh addTrait(Class<?> clazz, Object o) {
-		MutableClassToInstanceMap<Object> map = meta.get(node);
-        if(map == null) {
-        	map = MutableClassToInstanceMap.create();
-        	meta.put(node, map);
-        }
-
+		MutableClassToInstanceMap<Object> map = getOrCreateTraitMap();
         map.put(clazz, o);
 
         return this;

@@ -1,5 +1,10 @@
 package fr.inrialpes.tyrexmo.testqc;
 
+import static org.aksw.jena_sparql_api.rdf_stream.core.RdfStream.map;
+import static org.aksw.jena_sparql_api.rdf_stream.core.RdfStream.peek;
+import static org.aksw.jena_sparql_api.rdf_stream.core.RdfStream.repeat;
+import static org.aksw.jena_sparql_api.rdf_stream.core.RdfStream.withIndex;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
@@ -26,6 +31,8 @@ import org.aksw.iguana.reborn.ChartUtilities2;
 import org.aksw.iguana.reborn.charts.datasets.IguanaDatasetProcessors;
 import org.aksw.iguana.reborn.charts.datasets.IguanaVocab;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.rdf_stream.core.RdfStream;
+import org.aksw.jena_sparql_api.rdf_stream.enhanced.ResourceEnh;
 import org.aksw.jena_sparql_api.rdf_stream.processors.PerformanceAnalyzer;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcReader;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcVocab;
@@ -39,6 +46,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.util.ResourceUtils;
+import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.jfree.chart.JFreeChart;
 import org.jfree.data.category.CategoryDataset;
@@ -196,7 +204,7 @@ public class MainTestContain {
         return result;
     }
 
-    public static Task prepare(Resource r, Object o) {
+    public static Task prepareTask(Resource r, Object o) {
         Resource w = r.getRequiredProperty(IguanaVocab.workload).getObject().asResource();
         TestCase testCase = prepareTestCase(w);
 
@@ -433,27 +441,14 @@ public class MainTestContain {
 
     public static Model run(Collection<Resource> tasks, String dataset, Object solver) throws Exception {
 
-        //Stream<Resource> taskExecs = prepareTaskExecutions(tasks, dataset, 1, 1);//.iterator();
+    	int warmUpRuns = 1;
 
-
-
-        //function<Resource, ITask> taskParser;
-
-//        taskExecs
-//        	.peek(r -> r.as(EnhResource).addTrait(parseLiteral(null, SparqlQueryContainmentUtils.queryParser)))
-
-//        Consumer<Resource> eval = SparqlPerformanceEvaluatorBuilder
-//        	.setTaskParser(parseLiteral(null, SparqlQueryContainmentUtils.queryParser))
-//			.setTaskExecutor()
-//			.setProperty()
-//			.create();
-
+    	Resource Observation = ResourceFactory.createResource("http://purl.org/linked-data/cube#Observation");
 
         Model strategy = ModelFactory.createDefaultModel();
 
-        PrintStream out = System.out;
-        PerformanceAnalyzer<Task> taskDispatcher = new PerformanceAnalyzer<>((r, t) -> t.run.run());
-        taskDispatcher
+        PerformanceAnalyzer<Task> performanceAnalyzer = new PerformanceAnalyzer<>((r, t) -> t.run.run());
+        performanceAnalyzer
         	.setReportConsumer((r, task) -> {
                   task.cleanup.run();
 
@@ -469,33 +464,74 @@ public class MainTestContain {
                       strategy.add(r.getModel());
                   }
               });
+        //workload.getRequiredProperty(RDFS.label).getObject().asLiteral().getString()
+
+    	// dataset, suite, run
+    	String uriPattern = "http://ex.org/observation-{0}-{1}-{2}";
+		RdfStream.start()
+			// Parse the task resource
+			// Allocate a new observation resource, and copy the traits from the workload
+			.andThen(map(r -> r.getModel().createResource().as(ResourceEnh.class)
+					.copyTraitsFrom(r)
+					.addProperty(RDF.type, Observation)
+					.addProperty(IguanaVocab.workload, r)
+					.addProperty(RDFS.label, r.getProperty(RDFS.label).getString())))
+			.andThen(map(r -> r.as(ResourceEnh.class).addTrait(prepareTask(r, solver))))
+			.andThen(peek(r -> performanceAnalyzer.accept(r, r.as(ResourceEnh.class).getTrait(Task.class).get() ) ))
+			.andThen(withIndex(IguanaVocab.run))
+		.andThen(repeat(2))
+		.andThen(peek(r -> { if (r.getProperty(IguanaVocab.run).getInt() < warmUpRuns) { r.addLiteral(WARMUP, true); }}))
+		.andThen(map(r -> r.as(ResourceEnh.class).rename(uriPattern, dataset, IguanaVocab.run, RDFS.label)))
+		.apply(() -> tasks.stream()).get()
+		.forEach(r -> r.getModel().write(System.out, "TURTLE"));
+		;
+
+
+        //Stream<Resource> taskExecs = prepareTaskExecutions(tasks, dataset, 1, 1);//.iterator();
 
 
 
-        List<Runnable> runnables = Collections.singletonList(taskDispatcher);
 
-        List<Callable<Object>> callables = runnables.stream().map(Executors::callable).collect(Collectors.toList());
+        //function<Resource, ITask> taskParser;
 
-        int workers = 1;
-        ExecutorService executorService = (workers == 1 ? MoreExecutors.newDirectExecutorService()
-                : Executors.newFixedThreadPool(workers));
+//        taskExecs
+//        	.peek(r -> r.as(EnhResource).addTrait(parseLiteral(null, SparqlQueryContainmentUtils.queryParser)))
 
-        List<Future<Object>> futures = executorService.invokeAll(callables);
+//        Consumer<Resource> eval = SparqlPerformanceEvaluatorBuilder
+//        	.setTaskParser(parseLiteral(null, SparqlQueryContainmentUtils.queryParser))
+//			.setTaskExecutor()
+//			.setProperty()
+//			.create();
 
-        executorService.shutdown();
-        executorService.awaitTermination(5, TimeUnit.SECONDS);
-
-        if (out != System.out) {
-            out.close();
-        }
-
-        for (Future<?> future : futures) {
-            try {
-                future.get();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }
+//
+//
+//        PrintStream out = System.out;
+//
+//
+//        List<Runnable> runnables = Collections.singletonList(taskDispatcher);
+//
+//        List<Callable<Object>> callables = runnables.stream().map(Executors::callable).collect(Collectors.toList());
+//
+//        int workers = 1;
+//        ExecutorService executorService = (workers == 1 ? MoreExecutors.newDirectExecutorService()
+//                : Executors.newFixedThreadPool(workers));
+//
+//        List<Future<Object>> futures = executorService.invokeAll(callables);
+//
+//        executorService.shutdown();
+//        executorService.awaitTermination(5, TimeUnit.SECONDS);
+//
+//        if (out != System.out) {
+//            out.close();
+//        }
+//
+//        for (Future<?> future : futures) {
+//            try {
+//                future.get();
+//            } catch (Exception ex) {
+//                ex.printStackTrace();
+//            }
+//        }
 
 
         QueryExecutionFactory qef = IguanaDatasetProcessors.createQef(strategy);
@@ -527,7 +563,7 @@ public class MainTestContain {
 //            for (int i = 0; i < l.size(); ++i) {
 //                tmp.add("" + dataset.getValue((Comparable) rowKey, (Comparable) l.get(i)));
 //            }
-//            String rowStr = String.join(", ", tmp);
+//            String rowStr = String.join(", ", tmp);prepare
 //
 //            // String rowStr = Stream.concat(
 //            // Stream.of(rowKey.toString()))
