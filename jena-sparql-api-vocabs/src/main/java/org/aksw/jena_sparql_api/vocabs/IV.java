@@ -26,6 +26,7 @@ public class IV {
     public static final Property warmup = property("warmup");
 
     public static final Property experiment = property("experiment");
+    public static final Property thread = property("thread");
     public static final Property job = property("job");
     public static final Property step = property("step");
     public static final Property run = property("run");
