@@ -8,9 +8,11 @@ import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import org.aksw.jena_sparql_api.rdf_stream.core.RdfStreamOps;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.ext.com.google.common.base.Optional;
 import org.apache.jena.graph.Node;
+import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.impl.ResourceImpl;
@@ -176,4 +178,12 @@ public class ResourceEnh
 
 		return result;
 	}
+
+	public static ResourceEnh copyClosure(Resource task) {
+		Model m = ModelFactoryEnh.createModel();
+		m.add(ResourceUtils.reachableClosure(task));
+		ResourceEnh result = task.inModel(m).as(ResourceEnh.class);
+		return result;
+	}
+
 }

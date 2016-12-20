@@ -7,22 +7,18 @@ import java.util.function.Supplier;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
-import org.aksw.jena_sparql_api.rdf_stream.enhanced.ModelFactoryEnh;
 import org.aksw.jena_sparql_api.rdf_stream.enhanced.ResourceEnh;
-import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.util.ResourceUtils;
 
+/**
+ * ss = stream supplier - a Supplier&gt;Stream&gt;T&lt;&lt; with T extends Resource
+ *
+ * @author raven
+ *
+ */
 public class RdfStreamOps {
-    public static ResourceEnh copyResourceClosureIntoModelEnh(Resource task) {
-		Model m = ModelFactoryEnh.createModel();
-		m.add(ResourceUtils.reachableClosure(task));
-		ResourceEnh result = task.inModel(m).as(ResourceEnh.class);
-		return result;
-    }
-
-	public static <T extends Resource> Function<Supplier<Stream<T>>, Supplier<Stream<T>>>
+    public static <T extends Resource> Function<Supplier<Stream<T>>, Supplier<Stream<T>>>
 		start()
 	{
 		return (ss) -> (() -> ss.get());
@@ -47,7 +43,7 @@ public class RdfStreamOps {
 		startWithCopy()
 	{
 		//return (ss) -> (() -> ss.get().map(RdfStreamOps::copyResourceClosureIntoModelEnh));
-		return RdfStreamOps.<T>start().andThen(map(RdfStreamOps::copyResourceClosureIntoModelEnh));
+		return RdfStreamOps.<T>start().andThen(map(ResourceEnh::copyClosure));
 	}
 
 
