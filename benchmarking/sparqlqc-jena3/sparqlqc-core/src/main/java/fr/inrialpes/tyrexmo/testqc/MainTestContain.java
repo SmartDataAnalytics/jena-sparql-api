@@ -16,13 +16,13 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import org.aksw.beast.benchmark.performance.PerformanceAnalyzer;
+import org.aksw.beast.core.RdfStream;
+import org.aksw.beast.enhanced.ResourceEnh;
 import org.aksw.iguana.reborn.ChartUtilities2;
 import org.aksw.iguana.reborn.charts.datasets.IguanaDatasetProcessors;
 import org.aksw.iguana.vocab.IguanaVocab;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.rdf_stream.core.RdfStream;
-import org.aksw.jena_sparql_api.rdf_stream.enhanced.ResourceEnh;
-import org.aksw.jena_sparql_api.rdf_stream.processors.PerformanceAnalyzer;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcReader;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcVocab;
 import org.aksw.simba.lsq.vocab.LSQ;
