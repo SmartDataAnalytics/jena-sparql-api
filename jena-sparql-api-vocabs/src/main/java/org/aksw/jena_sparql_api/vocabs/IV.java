@@ -23,6 +23,8 @@ public class IV {
     public static Resource resource(String local) { return ResourceFactory.createResource(ns + local); }
     public static Property property(String local) { return ResourceFactory.createProperty(ns + local); }
 
+    public static final Property warmup = property("warmup");
+
     public static final Property experiment = property("experiment");
     public static final Property job = property("job");
     public static final Property step = property("step");

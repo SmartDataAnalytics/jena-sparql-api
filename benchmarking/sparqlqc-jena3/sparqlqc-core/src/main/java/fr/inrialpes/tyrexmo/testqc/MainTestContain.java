@@ -1,8 +1,8 @@
 package fr.inrialpes.tyrexmo.testqc;
 
-import static org.aksw.jena_sparql_api.rdf_stream.core.RdfStream.map;
-import static org.aksw.jena_sparql_api.rdf_stream.core.RdfStream.peek;
-import static org.aksw.jena_sparql_api.rdf_stream.core.RdfStream.repeat;
+import static org.aksw.jena_sparql_api.rdf_stream.core.RdfStreamOps.map;
+import static org.aksw.jena_sparql_api.rdf_stream.core.RdfStreamOps.peek;
+import static org.aksw.jena_sparql_api.rdf_stream.core.RdfStreamOps.repeat;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -24,7 +24,7 @@ import org.aksw.iguana.reborn.ChartUtilities2;
 import org.aksw.iguana.reborn.charts.datasets.IguanaDatasetProcessors;
 import org.aksw.iguana.vocab.IguanaVocab;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.rdf_stream.core.RdfStream;
+import org.aksw.jena_sparql_api.rdf_stream.core.RdfStreamOps;
 import org.aksw.jena_sparql_api.rdf_stream.enhanced.ResourceEnh;
 import org.aksw.jena_sparql_api.rdf_stream.processors.PerformanceAnalyzer;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcReader;
@@ -461,7 +461,7 @@ public class MainTestContain {
     	String uriPattern = "http://ex.org/observation-{0}-{1}-{2}";
 
 
-		RdfStream.start()
+		RdfStreamOps.startWithCopy()
 			// Parse the task resource
 			// Allocate a new observation resource, and copy the traits from the workload
 			.andThen(map(w -> w.getModel().createResource().as(ResourceEnh.class)

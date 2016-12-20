@@ -1,10 +1,5 @@
 package org.aksw.jena_sparql_api.rdf_stream;
 
-import static org.aksw.jena_sparql_api.rdf_stream.core.RdfStream.map;
-import static org.aksw.jena_sparql_api.rdf_stream.core.RdfStream.peek;
-import static org.aksw.jena_sparql_api.rdf_stream.core.RdfStream.repeat;
-import static org.aksw.jena_sparql_api.rdf_stream.core.RdfStream.withIndex;
-
 import java.util.Arrays;
 import java.util.Set;
 
@@ -72,16 +67,16 @@ public class RdfStreamTest {
 
 		RdfStream.start()
 			// Allocate a new resource
-			.andThen(map(r -> r.getModel().createResource().addProperty(RDFS.seeAlso, r)))
-			.andThen(withIndex(IV.item)) // item index, always 1
-			.andThen(repeat(2))
-			.andThen(withIndex(IV.run)) // counts to 2 per item
-			//.andThen(repeat(3))
-			.andThen(repeat(RDFS.label, Arrays.asList("a", "b", "c").stream()))
-			.andThen(withIndex(IV.experiment)) // counts to 6
-			.andThen(peek(r -> { if(r.getProperty(IV.run).getInt() < 3) { r.addProperty(RDF.type, RDFS.Class); }}))
-			.andThen(map(r -> r.as(ResourceEnh.class).rename(template, RDFS.label, IV.run, "x-" + r.getProperty(IV.item).getInt())))
-			//.andThen(map(r ->))
+			.map(r -> r.getModel().createResource().addProperty(RDFS.seeAlso, r))
+			.withIndex(IV.item) // item index, always 1
+			.repeat(2)
+			.withIndex(IV.run) // counts to 2 per item
+			//repeat(3))
+			.repeatForLiterals(RDFS.label, Arrays.asList("a", "b", "c").stream())
+			.withIndex(IV.experiment) // counts to 6
+			.peek(r -> { if(r.getProperty(IV.run).getInt() < 3) { r.addProperty(RDF.type, RDFS.Class); }})
+			.map(r -> r.as(ResourceEnh.class).rename(template, RDFS.label, IV.run, "x-" + r.getProperty(IV.item).getInt()))
+			//map(r ->))
 			.apply(() -> items.stream()).get()
 			//.map(r -> r.as(ResourceEnh.class))
 			//.forEach(r -> r.getModel().write(System.out, "TURTLE"));

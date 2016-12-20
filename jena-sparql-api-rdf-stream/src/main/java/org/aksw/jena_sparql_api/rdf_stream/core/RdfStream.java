@@ -2,122 +2,106 @@ package org.aksw.jena_sparql_api.rdf_stream.core;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
-import org.aksw.jena_sparql_api.rdf_stream.enhanced.ModelFactoryEnh;
 import org.aksw.jena_sparql_api.rdf_stream.enhanced.ResourceEnh;
-import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.util.ResourceUtils;
 
-public class RdfStream {
-    public static ResourceEnh copyResourceClosureIntoModelEnh(Resource task) {
-		Model m = ModelFactoryEnh.createModel();
-		m.add(ResourceUtils.reachableClosure(task));
-		ResourceEnh result = task.inModel(m).as(ResourceEnh.class);
-		return result;
-    }
+public class RdfStream<I extends Resource, O extends Resource>
+	implements Function<Supplier<Stream<I>>, Supplier<Stream<O>>>
+{
+	protected Function<Supplier<Stream<I>>, Supplier<Stream<O>>> current;
 
-	/**
-	 * starts with copyResourceClosureIntoModelEnh
-	 *
-	 * For each item in the stream, map its closure to a new resource
-	 * @param stream
-	 * @param p
-	 * @return
-	 */
-	public static <T extends Resource> Function<Supplier<Stream<T>>, Supplier<Stream<ResourceEnh>>>
+	public RdfStream(Function<Supplier<Stream<I>>, Supplier<Stream<O>>> current) {
+		super();
+		this.current = current;
+	}
+
+	public static <T extends Resource> RdfStream<T, T>
 		start()
 	{
-		return (ss) -> (() -> ss.get().map(RdfStream::copyResourceClosureIntoModelEnh));
+		return new RdfStream<T, T>(RdfStreamOps.<T>start());
 	}
-
-
-	public static <T extends Resource> Supplier<Stream<T>>
-		withIndex(Supplier<Stream<T>> stream, Property p)
-	{
-		int i = 0;
-
-		return () -> stream.get().peek(r -> r.addLiteral(p, new Integer(i)));
-	}
-
 
 	/**
-	 * repeat repeats the provided supplied n times and to each item
-	 * adds a property indicating the repetation
-	 *
-	 * note that this is different from withIndex:
-	 * within a repetation, the repetation count stays the same for each item, whereas the index is increased.
-	 *
-	 * @param n
-	 * @param property
+	 * Convenience function which starts are stream builder that of each resource
+	 * creates a copy of its closure in an enhanced model
 	 * @return
 	 */
-	public static <T extends Resource> Function<Supplier<Stream<T>>, Supplier<Stream<T>>>
-		repeat(int n, Property property, int offset)
+	public static <T extends Resource> RdfStream<T, ResourceEnh>
+		startWithCopy()
 	{
-		return (ss) -> (() -> LongStream.range(0, n).boxed()
-				.flatMap(i -> ss.get().peek(r -> r.addLiteral(property, offset + i))));
+		return new RdfStream<T, ResourceEnh>(RdfStreamOps.<T>startWithCopy());
 	}
 
-	public static <T extends Resource> Function<Supplier<Stream<T>>, Supplier<Stream<T>>>
+	public <Y extends Resource> RdfStream<I, Y>
+		map(Function<O, Y> fn)
+	{
+		return new RdfStream<I, Y>(this.current.andThen(RdfStreamOps.map(fn)));
+	}
+
+	public <Y extends Resource> RdfStream<I, Y>
+		flatMap(Function<O, Stream<Y>> fn)
+	{
+		return new RdfStream<I, Y>(this.current.andThen(RdfStreamOps.flatMap(fn)));
+	}
+
+
+	public RdfStream<I, O>
+		filter(Predicate<O> predicate)
+	{
+		return new RdfStream<I, O>(this.current.andThen(RdfStreamOps.filter(predicate)));
+	}
+
+	public RdfStream<I, O>
+		peek(Consumer<O> action)
+	{
+		return new RdfStream<I, O>(this.current.andThen(RdfStreamOps.peek(action)));
+	}
+
+	public RdfStream<I, O>
+		withIndex(Property property)
+	{
+		return new RdfStream<I, O>(this.current.andThen(RdfStreamOps.withIndex(property)));
+	}
+
+	public RdfStream<I, O>
 		repeat(int n)
 	{
-		return (ss) -> (() -> LongStream.range(0, n).boxed()
-			.flatMap(i -> ss.get()));
+		return new RdfStream<I, O>(this.current.andThen(RdfStreamOps.repeat(n)));
 	}
 
-	public static <T extends Resource, O> Function<Supplier<Stream<T>>, Supplier<Stream<T>>>
-		repeat(Property p, Stream<O> os)
+	public <X> RdfStream<I, O>
+		repeatForLiterals(Property p, Stream<X> os)
 	{
-		return (ss) -> (() -> os.flatMap(o -> ss.get().peek(r -> r.addLiteral(p, o))));
+		return new RdfStream<I, O>(this.current.andThen(RdfStreamOps.repeatForLiterals(p, os)));
 	}
 
-
-	public static <I extends Resource, O extends Resource> Function<Supplier<Stream<I>>, Supplier<Stream<O>>>
-		map(Function<I, O> fn)
+	public RdfStream<I, O>
+		repeat(int n, Property property, int offset)
 	{
-		return (ss) -> (() -> ss.get().map(fn));
+		return new RdfStream<I, O>(this.current.andThen(RdfStreamOps.repeat(n, property, offset)));
 	}
 
-	public static <I extends Resource, O extends Resource>
-	Function<Supplier<Stream<I>>, Supplier<Stream<O>>>
-		flatMap(Function<I, Stream<O>> fn)
+	@SafeVarargs
+	final public <Y extends Resource> RdfStream<I, Y>
+		seq(Function<Supplier<Stream<O>>, Supplier<Stream<Y>>> ... subFlows)
 	{
-		//return (ss) -> (() -> ss.get().flatMap(x -> fn.apply(x)));
-		return (ss) -> (() -> ss.get().flatMap(fn));
+		return new RdfStream<I, Y>(this.current.andThen(RdfStreamOps.seq(subFlows)));
 	}
 
 
-	public static <T extends Resource> Function<Supplier<Stream<T>>, Supplier<Stream<T>>>
-		peek(Consumer<T> consumer)
-	{
-		return (ss) -> (() -> ss.get().peek(consumer));
+	public Function<Supplier<Stream<I>>, Supplier<Stream<O>>> get() {
+		return current;
+	}
+
+	@Override
+	public Supplier<Stream<O>> apply(Supplier<Stream<I>> t) {
+		return current.apply(t);
 	}
 
 
-//	public static <T extends Resource> Function<Supplier<Stream<T>>, Supplier<Stream<T>>>
-//		seq(Supplier<Stream<T>> ... subFlows)
-//	{
-//		return (ss) -> (() -> ss.get().peek(consumer));
-//	}
-
-
-	/**
-	 * withIndex creates a new stream, with each resource having an incremented value for the given property.
-	 *
-	 * @param p
-	 * @return
-	 */
-	public static <T extends Resource> Function<Supplier<Stream<T>>, Supplier<Stream<T>>>
-		withIndex(Property p)
-	{
-		return (ss) -> (() -> {
-			int i[] = {0};
-			return ss.get().peek(r -> r.addLiteral(p, new Integer(++i[0])));
-		});
-	}
 }
