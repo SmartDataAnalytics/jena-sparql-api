@@ -16,10 +16,10 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import org.aksw.beast.benchmark.performance.PerformanceAnalyzer;
-import org.aksw.beast.core.RdfStream;
+import org.aksw.beast.benchmark.performance.BenchmarkTime;
 import org.aksw.beast.enhanced.ResourceEnh;
-import org.aksw.iguana.reborn.ChartUtilities2;
+import org.aksw.beast.rdfstream.RdfStream;
+import org.aksw.beast.viz.jfreechart.ChartUtilities2;
 import org.aksw.iguana.reborn.charts.datasets.IguanaDatasetProcessors;
 import org.aksw.iguana.vocab.IguanaVocab;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
@@ -429,15 +429,15 @@ public class MainTestContain {
 
     public static Model run(Collection<Resource> tasks, String dataset, Object solver) throws Exception {
 
-    	int warmUpRuns = 1;
+        int warmUpRuns = 1;
 
-    	Resource Observation = ResourceFactory.createResource("http://purl.org/linked-data/cube#Observation");
+        Resource Observation = ResourceFactory.createResource("http://purl.org/linked-data/cube#Observation");
 
         Model strategy = ModelFactory.createDefaultModel();
 
         Consumer<Resource> postProcess = (r) -> {
                 Task task = r.as(ResourceEnh.class).getTrait(Task.class).get();
-        		task.cleanup.run();
+                task.cleanup.run();
 
                   if(!r.getProperty(RDFS.label).getString().equals("CORRECT")) {
                       logger.warn("Incorrect test result for task " + r + "(" + task + ")");
@@ -453,32 +453,32 @@ public class MainTestContain {
               };
         //workload.getRequiredProperty(RDFS.label).getObject().asLiteral().getString()
 
-    	// dataset, suite, run
-    	String uriPattern = "http://ex.org/observation-{0}-{1}-{2}";
+        // dataset, suite, run
+        String uriPattern = "http://ex.org/observation-{0}-{1}-{2}";
 
 
-		RdfStream.startWithCopy()
-			// Parse the task resource
-			// Allocate a new observation resource, and copy the traits from the workload
-			.map(w -> w.getModel().createResource().as(ResourceEnh.class)
-					.copyTraitsFrom(w)
-					.addProperty(RDF.type, Observation)
-					.addProperty(IguanaVocab.workload, w)
-					.addProperty(RDFS.comment, w.getProperty(RDFS.label).getString()))
-			.map(o -> o.as(ResourceEnh.class).addTrait(prepareTask(o, solver)))
+        RdfStream.startWithCopy()
+            // Parse the task resource
+            // Allocate a new observation resource, and copy the traits from the workload
+            .map(w -> w.getModel().createResource().as(ResourceEnh.class)
+                    .copyTraitsFrom(w)
+                    .addProperty(RDF.type, Observation)
+                    .addProperty(IguanaVocab.workload, w)
+                    .addProperty(RDFS.comment, w.getProperty(RDFS.label).getString()))
+            .map(o -> o.as(ResourceEnh.class).addTrait(prepareTask(o, solver)))
 //			.peek(o -> PerformanceAnalyzer.start()
 //					.setReportConsumer(postProcess)
 //					.create()
 //						.accept(o, o.as(ResourceEnh.class).getTrait(Task.class).get().run ) ))
-			.peek(r -> PerformanceAnalyzer.analyze(r, () -> Thread.sleep(500)))
-			//.withIndex(IguanaVocab.run))
-		.repeat(2, IguanaVocab.run, 1)
-		.peek(r -> { if (r.getProperty(IguanaVocab.run).getInt() < warmUpRuns) { r.addLiteral(WARMUP, true); }})
-		.map(r -> r.as(ResourceEnh.class).rename(uriPattern, dataset, IguanaVocab.run, RDFS.comment))
-		//.peek(r -> r.addLiteral(RDFS.comment, r.as(ResourceEnh.class).getTrait(Query.class).get().toString()))
-		.apply(() -> tasks.stream()).get()
-		.forEach(r -> r.getModel().write(System.out, "TURTLE"))
-		;
+            .peek(r -> BenchmarkTime.benchmark(r, () -> Thread.sleep(500)))
+            //.withIndex(IguanaVocab.run))
+        .repeat(2, IguanaVocab.run, 1)
+        .peek(r -> { if (r.getProperty(IguanaVocab.run).getInt() < warmUpRuns) { r.addLiteral(WARMUP, true); }})
+        .map(r -> r.as(ResourceEnh.class).rename(uriPattern, dataset, IguanaVocab.run, RDFS.comment))
+        //.peek(r -> r.addLiteral(RDFS.comment, r.as(ResourceEnh.class).getTrait(Query.class).get().toString()))
+        .apply(() -> tasks.stream()).get()
+        .forEach(r -> r.getModel().write(System.out, "TURTLE"))
+        ;
 
 
         //Stream<Resource> taskExecs = prepareTaskExecutions(tasks, dataset, 1, 1);//.iterator();
