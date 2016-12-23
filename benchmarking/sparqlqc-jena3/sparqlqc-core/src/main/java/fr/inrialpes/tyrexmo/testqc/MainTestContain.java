@@ -436,7 +436,7 @@ public class MainTestContain {
         Model strategy = ModelFactory.createDefaultModel();
 
         Consumer<Resource> postProcess = (r) -> {
-                Task task = r.as(ResourceEnh.class).getTrait(Task.class).get();
+                Task task = r.as(ResourceEnh.class).getTag(Task.class).get();
                 task.cleanup.run();
 
                   if(!r.getProperty(RDFS.label).getString().equals("CORRECT")) {
@@ -461,11 +461,11 @@ public class MainTestContain {
             // Parse the task resource
             // Allocate a new observation resource, and copy the traits from the workload
             .map(w -> w.getModel().createResource().as(ResourceEnh.class)
-                    .copyTraitsFrom(w)
+                    .copyTagsFrom(w)
                     .addProperty(RDF.type, Observation)
                     .addProperty(IguanaVocab.workload, w)
                     .addProperty(RDFS.comment, w.getProperty(RDFS.label).getString()))
-            .map(o -> o.as(ResourceEnh.class).addTrait(prepareTask(o, solver)))
+            .map(o -> o.as(ResourceEnh.class).addTag(prepareTask(o, solver)))
 //			.peek(o -> PerformanceAnalyzer.start()
 //					.setReportConsumer(postProcess)
 //					.create()
