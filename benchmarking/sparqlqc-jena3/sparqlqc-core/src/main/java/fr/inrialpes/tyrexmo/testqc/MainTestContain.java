@@ -17,6 +17,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.aksw.beast.benchmark.performance.BenchmarkTime;
+import org.aksw.beast.benchmark.performance.PerformanceBenchmark;
 import org.aksw.beast.enhanced.ResourceEnh;
 import org.aksw.beast.rdfstream.RdfStream;
 import org.aksw.beast.viz.jfreechart.ChartUtilities2;
@@ -93,7 +94,7 @@ public class MainTestContain {
         return result;
     }
 
-    public static Task prepareLegacy(Resource r, TestCase testCase, LegacyContainmentSolver solver) {
+    public static Task prepareTaskJena2(Resource r, TestCase testCase, LegacyContainmentSolver solver) {
 
 //        Query _viewQuery = SparqlQueryContainmentUtils.queryParser.apply("" + testCase.getSource());
 //        Query _userQuery = SparqlQueryContainmentUtils.queryParser.apply("" + testCase.getTarget());
@@ -118,7 +119,7 @@ public class MainTestContain {
         });
     }
 
-    public static TestCase prepareTestCase(Resource t) {
+    public static TestCase parseTestCase(Resource t) {
         String srcQueryStr = t.getRequiredProperty(SparqlQcVocab.sourceQuery).getObject().asResource()
                 .getRequiredProperty(LSQ.text).getObject().asLiteral().getString();
         String tgtQueryStr = t.getRequiredProperty(SparqlQcVocab.targetQuery).getObject().asResource()
@@ -135,13 +136,13 @@ public class MainTestContain {
 
     public static Task prepareTask(Resource r, Object o) {
         Resource w = r.getRequiredProperty(IguanaVocab.workload).getObject().asResource();
-        TestCase testCase = prepareTestCase(w);
+        TestCase testCase = parseTestCase(w);
 
         Task result;
         if(o instanceof ContainmentSolver) {
-            result = prepare(r, testCase, (ContainmentSolver)o);
+            result = prepareTaskJena3(r, testCase, (ContainmentSolver)o);
         } else if(o instanceof LegacyContainmentSolver) {
-            result = prepareLegacy(r, testCase, (LegacyContainmentSolver) o);
+            result = prepareTaskJena2(r, testCase, (LegacyContainmentSolver) o);
         } else {
             throw new RuntimeException("Unknown task type: " + o);
         }
@@ -149,7 +150,7 @@ public class MainTestContain {
         return result;
     }
 
-    public static Task prepare(Resource r, TestCase testCase, ContainmentSolver solver) {
+    public static Task prepareTaskJena3(Resource r, TestCase testCase, ContainmentSolver solver) {
 
 //        Query _viewQuery = QueryTransformOps.transform(viewQuery, QueryUtils.createRandomVarMap(_viewQuery, "x"));
 //        Query _userQuery = QueryTransformOps.transform(userQuery, QueryUtils.createRandomVarMap(_userQuery, "y"));
@@ -371,6 +372,7 @@ public class MainTestContain {
     public static Model run(Collection<Resource> tasks, String dataset, Object solver) throws Exception {
 
         int warmUpRuns = 1;
+        int evalRuns = 2;
 
         Resource Observation = ResourceFactory.createResource("http://purl.org/linked-data/cube#Observation");
 
@@ -392,34 +394,40 @@ public class MainTestContain {
                       strategy.add(r.getModel());
                   }
               };
+
+        PerformanceBenchmark.createQueryPerformanceEvaluationWorkflow(
+        		parser, analyzer, warmUpRuns, evalRuns);
+        
+        
         //workload.getRequiredProperty(RDFS.label).getObject().asLiteral().getString()
 
         // dataset, suite, run
         String uriPattern = "http://ex.org/observation-{0}-{1}-{2}";
 
-
-        RdfStream.startWithCopy()
-            // Parse the task resource
-            // Allocate a new observation resource, and copy the traits from the workload
-            .map(w -> w.getModel().createResource().as(ResourceEnh.class)
-                    .copyTagsFrom(w)
-                    .addProperty(RDF.type, Observation)
-                    .addProperty(IguanaVocab.workload, w)
-                    .addProperty(RDFS.comment, w.getProperty(RDFS.label).getString()))
-            .map(o -> o.as(ResourceEnh.class).addTag(prepareTask(o, solver)))
-//			.peek(o -> PerformanceAnalyzer.start()
-//					.setReportConsumer(postProcess)
-//					.create()
-//						.accept(o, o.as(ResourceEnh.class).getTrait(Task.class).get().run ) ))
-            .peek(r -> BenchmarkTime.benchmark(r, () -> Thread.sleep(500)))
-            //.withIndex(IguanaVocab.run))
-        .repeat(2, IguanaVocab.run, 1)
-        .peek(r -> { if (r.getProperty(IguanaVocab.run).getInt() < warmUpRuns) { r.addLiteral(WARMUP, true); }})
-        .map(r -> r.as(ResourceEnh.class).rename(uriPattern, dataset, IguanaVocab.run, RDFS.comment))
-        //.peek(r -> r.addLiteral(RDFS.comment, r.as(ResourceEnh.class).getTrait(Query.class).get().toString()))
-        .apply(() -> tasks.stream()).get()
-        .forEach(r -> r.getModel().write(System.out, "TURTLE"))
-        ;
+//        
+//
+//        RdfStream.startWithCopy()
+//            // Parse the task resource
+//            // Allocate a new observation resource, and copy the traits from the workload
+//            .map(w -> w.getModel().createResource().as(ResourceEnh.class)
+//                    .copyTagsFrom(w)
+//                    .addProperty(RDF.type, Observation)
+//                    .addProperty(IguanaVocab.workload, w)
+//                    .addProperty(RDFS.comment, w.getProperty(RDFS.label).getString()))
+//            .map(o -> o.as(ResourceEnh.class).addTag(prepareTask(o, solver)))
+////			.peek(o -> PerformanceAnalyzer.start()
+////					.setReportConsumer(postProcess)
+////					.create()
+////						.accept(o, o.as(ResourceEnh.class).getTrait(Task.class).get().run ) ))
+//            .peek(r -> BenchmarkTime.benchmark(r, () -> Thread.sleep(500)))
+//            //.withIndex(IguanaVocab.run))
+//        .repeat(2, IguanaVocab.run, 1)
+//        .peek(r -> { if (r.getProperty(IguanaVocab.run).getInt() < warmUpRuns) { r.addLiteral(WARMUP, true); }})
+//        .map(r -> r.as(ResourceEnh.class).rename(uriPattern, dataset, IguanaVocab.run, RDFS.comment))
+//        //.peek(r -> r.addLiteral(RDFS.comment, r.as(ResourceEnh.class).getTrait(Query.class).get().toString()))
+//        .apply(() -> tasks.stream()).get()
+//        .forEach(r -> r.getModel().write(System.out, "TURTLE"))
+//        ;
 
 
         //Stream<Resource> taskExecs = prepareTaskExecutions(tasks, dataset, 1, 1);//.iterator();
@@ -467,16 +475,16 @@ public class MainTestContain {
 //                ex.printStackTrace();
 //            }
 //        }
-
-
-        QueryExecutionFactory qef = IguanaDatasetProcessors.createQef(strategy);
-        qef.createQueryExecution("CONSTRUCT { ex:" + dataset + " rdfs:label \"" + dataset + "\" } { }")
-                .execConstruct(strategy);
-        qef.createQueryExecution("CONSTRUCT { ?x qb:dataset ex:" + dataset + " } { ?x ig:run ?r }")
-                .execConstruct(strategy);
-
-        IguanaDatasetProcessors.enrichWithAvgAndStdDeviation(strategy);
-        //overall.add(strategy);
+//
+//
+//        QueryExecutionFactory qef = IguanaDatasetProcessors.createQef(strategy);
+//        qef.createQueryExecution("CONSTRUCT { ex:" + dataset + " rdfs:label \"" + dataset + "\" } { }")
+//                .execConstruct(strategy);
+//        qef.createQueryExecution("CONSTRUCT { ?x qb:dataset ex:" + dataset + " } { ?x ig:run ?r }")
+//                .execConstruct(strategy);
+//
+//        IguanaDatasetProcessors.enrichWithAvgAndStdDeviation(strategy);
+//        //overall.add(strategy);
 
         return strategy;
     }
