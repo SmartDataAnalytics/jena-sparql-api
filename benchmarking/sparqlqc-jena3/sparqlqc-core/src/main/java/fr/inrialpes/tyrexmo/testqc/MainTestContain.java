@@ -1,7 +1,6 @@
 package fr.inrialpes.tyrexmo.testqc;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,14 +15,11 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import org.aksw.beast.benchmark.performance.BenchmarkTime;
 import org.aksw.beast.benchmark.performance.PerformanceBenchmark;
 import org.aksw.beast.enhanced.ResourceEnh;
 import org.aksw.beast.rdfstream.RdfStream;
-import org.aksw.beast.viz.jfreechart.ChartUtilities2;
-import org.aksw.iguana.reborn.charts.datasets.IguanaDatasetProcessors;
+import org.aksw.beast.vocabs.IV;
 import org.aksw.iguana.vocab.IguanaVocab;
-import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcReader;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcVocab;
 import org.aksw.simba.lsq.vocab.LSQ;
@@ -36,10 +32,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.util.ResourceUtils;
-import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
-import org.jfree.chart.JFreeChart;
-import org.jfree.data.category.CategoryDataset;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
@@ -94,7 +87,7 @@ public class MainTestContain {
         return result;
     }
 
-    public static Task prepareTaskJena2(Resource r, TestCase testCase, LegacyContainmentSolver solver) {
+    public static Task prepareTaskJena2(TestCase testCase, LegacyContainmentSolver solver) {
 
 //        Query _viewQuery = SparqlQueryContainmentUtils.queryParser.apply("" + testCase.getSource());
 //        Query _userQuery = SparqlQueryContainmentUtils.queryParser.apply("" + testCase.getTarget());
@@ -102,11 +95,12 @@ public class MainTestContain {
         com.hp.hpl.jena.query.Query viewQuery = com.hp.hpl.jena.query.QueryFactory.create(testCase.getSource().toString());
         com.hp.hpl.jena.query.Query userQuery = com.hp.hpl.jena.query.QueryFactory.create(testCase.getTarget().toString());
 
-        return new Task(() -> {
+        return new Task(testCase,
+        	() -> {
             try {
                 boolean actual = solver.entailed(viewQuery, userQuery);
-                String str = actual == testCase.getExpectedResult() ? "CORRECT" : "WRONG";
-                r.addLiteral(RDFS.label, str);
+                //String str = actual == testCase.getExpectedResult() ? "CORRECT" : "WRONG";
+                return actual;
             } catch (ContainmentTestException e) {
                 throw new RuntimeException(e);
             }
@@ -134,15 +128,15 @@ public class MainTestContain {
         return result;
     }
 
-    public static Task prepareTask(Resource r, Object o) {
-        Resource w = r.getRequiredProperty(IguanaVocab.workload).getObject().asResource();
+    public static Task prepareTask(Resource w, Object o) {
+        //Resource w = r.getRequiredProperty(IguanaVocab.workload).getObject().asResource();
         TestCase testCase = parseTestCase(w);
 
         Task result;
         if(o instanceof ContainmentSolver) {
-            result = prepareTaskJena3(r, testCase, (ContainmentSolver)o);
+            result = prepareTaskJena3(testCase, (ContainmentSolver)o);
         } else if(o instanceof LegacyContainmentSolver) {
-            result = prepareTaskJena2(r, testCase, (LegacyContainmentSolver) o);
+            result = prepareTaskJena2(testCase, (LegacyContainmentSolver) o);
         } else {
             throw new RuntimeException("Unknown task type: " + o);
         }
@@ -150,15 +144,18 @@ public class MainTestContain {
         return result;
     }
 
-    public static Task prepareTaskJena3(Resource r, TestCase testCase, ContainmentSolver solver) {
+    public static Task prepareTaskJena3(TestCase testCase, ContainmentSolver solver) {
 
 //        Query _viewQuery = QueryTransformOps.transform(viewQuery, QueryUtils.createRandomVarMap(_viewQuery, "x"));
 //        Query _userQuery = QueryTransformOps.transform(userQuery, QueryUtils.createRandomVarMap(_userQuery, "y"));
 
-        return new Task(() -> { // try {
+        return new Task(
+        	testCase, 	
+        	() -> { // try {
             boolean actual = solver.entailed(testCase.getSource(), testCase.getTarget());
-            String str = actual == testCase.getExpectedResult() ? "CORRECT" : "WRONG";
-            r.addLiteral(RDFS.label, str);
+            //String str = actual == testCase.getExpectedResult() ? "CORRECT" : "WRONG";
+            return actual;
+            //r.addLiteral(RDFS.label, str);
             // } catch (ContainmentTestException e) {
             // throw new RuntimeException(e);
             // }
@@ -351,16 +348,18 @@ public class MainTestContain {
         }
 
 
-        File rdfOut = File.createTempFile("sparqlqc-", ".ttl");
-        overall.write(new FileOutputStream(rdfOut), "TTL");
-
-        CategoryDataset categoryDataset = IguanaDatasetProcessors.createDataset(overall);
-
-        JFreeChart chart = IguanaDatasetProcessors.createStatisticalBarChart(categoryDataset);
-        ChartUtilities2.saveChartAsPDF(new File("/home/raven/tmp/test.pdf"), chart, 1000, 500);
+//        File rdfOut = File.createTempFile("sparqlqc-", ".ttl");
+//        overall.write(new FileOutputStream(rdfOut), "TTL");
+//
+//        CategoryDataset categoryDataset = IguanaDatasetProcessors.createDataset(overall);
+//
+//        JFreeChart chart = IguanaDatasetProcessors.createStatisticalBarChart(categoryDataset);
+//        ChartUtilities2.saveChartAsPDF(new File("/home/raven/tmp/test.pdf"), chart, 1000, 500);
 
         logger.info("Done.");
 
+        
+        // Force exit due to threads of the osgi framework that stay alive for another minute
         System.exit(0);
 
         // tasks = tasks.stream()
@@ -395,14 +394,36 @@ public class MainTestContain {
                   }
               };
 
-        PerformanceBenchmark.createQueryPerformanceEvaluationWorkflow(
-        		parser, analyzer, warmUpRuns, evalRuns);
+        
+              
+        RdfStream<Resource, ResourceEnh> workflow = PerformanceBenchmark.createQueryPerformanceEvaluationWorkflow(
+        		Task.class,
+        		r -> MainTestContain.prepareTask(r, solver),
+        		(r, t) -> {
+        			boolean actual;
+					try {
+						actual = t.run.call();
+					} catch (Exception e) {
+						throw new RuntimeException(e);
+					}
+                    String str = actual == t.getTestCase().getExpectedResult() ? "CORRECT" : "WRONG";
+                    r.addLiteral(RDFS.label, str);
+        			postProcess.accept(r);
+        		},
+        		warmUpRuns, evalRuns);
+        
+        String uriPattern = "http://ex.org/observation-{0}-{1}-{2}";
+        workflow
+        	.apply(tasks).get()
+        	.peek(r -> r.addProperty(RDFS.comment, r.getProperty(IguanaVocab.workload).getProperty(RDFS.label).getString()))
+            .map(r -> r.as(ResourceEnh.class).rename(uriPattern, dataset, IV.run, RDFS.comment))
+        	.forEach(r -> r.getModel().write(System.out, "TURTLE"));
+        	
         
         
         //workload.getRequiredProperty(RDFS.label).getObject().asLiteral().getString()
 
         // dataset, suite, run
-        String uriPattern = "http://ex.org/observation-{0}-{1}-{2}";
 
 //        
 //
