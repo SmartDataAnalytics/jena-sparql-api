@@ -60,6 +60,12 @@
             <artifactId>beast-viz-jfreechart</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>org.aksw.beast</groupId>
+            <artifactId>beast-viz-xchart</artifactId>
+        </dependency>
+
+
         <!-- <dependency> -->
         <!-- <groupId>org.slf4j</groupId> -->
         <!-- <artifactId>jcl-over-slf4j</artifactId> -->

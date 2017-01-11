@@ -10,15 +10,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.ServiceLoader;
+import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import org.aksw.beast.benchmark.performance.BenchmarkTime;
 import org.aksw.beast.benchmark.performance.PerformanceBenchmark;
+import org.aksw.beast.compare.StringPrettyComparator;
 import org.aksw.beast.enhanced.ResourceEnh;
+import org.aksw.beast.rdfstream.RdfGroupBy;
 import org.aksw.beast.rdfstream.RdfStream;
+import org.aksw.beast.viz.xchart.DimensionArranger;
+import org.aksw.beast.viz.xchart.MergeStrategy;
+import org.aksw.beast.viz.xchart.XChartStatBarChartProcessor;
+import org.aksw.beast.vocabs.CV;
 import org.aksw.beast.vocabs.IV;
+import org.aksw.beast.vocabs.OWLTIME;
+import org.aksw.beast.vocabs.QB;
 import org.aksw.iguana.vocab.IguanaVocab;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcReader;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcVocab;
@@ -28,11 +39,22 @@ import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.sparql.expr.aggregate.AggAvg;
+import org.apache.jena.sparql.expr.aggregate.lib.AccStatStdDevPopulation;
 import org.apache.jena.util.ResourceUtils;
+import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
+import org.knowm.xchart.CategoryChart;
+import org.knowm.xchart.CategoryChartBuilder;
+import org.knowm.xchart.SwingWrapper;
+import org.knowm.xchart.VectorGraphicsEncoder;
+import org.knowm.xchart.VectorGraphicsEncoder.VectorGraphicsFormat;
+import org.knowm.xchart.style.Styler.LegendPosition;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
@@ -49,43 +71,6 @@ import com.google.common.collect.Multimap;
 public class MainTestContain {
     private static final Logger logger = LoggerFactory.getLogger(MainTestContain.class);
 
-    public static final Property WARMUP = ResourceFactory.createProperty("http://ex.org/ontology#warmup");
-
-    public static Stream<Resource> prepareTaskExecutions(Collection<Resource> workloads, String runName, int warmUp,
-            int runs) {
-        int totalRuns = warmUp + runs;
-
-        Stream<Resource> result = IntStream.range(0, totalRuns).boxed()
-                .flatMap(runId -> workloads.stream().map(workload -> new SimpleEntry<>(runId, workload))).map(exec -> {
-                    int runId = exec.getKey();
-                    Model m = ModelFactory.createDefaultModel();
-                    Resource workload = exec.getValue();
-                    Model n = ResourceUtils.reachableClosure(workload);
-                    m.add(n);
-                    workload = workload.inModel(m);
-
-                    // workload.getModel().write(System.out, "TURTLE");
-
-                    // long queryId =
-                    // x.getRequiredProperty(IguanaVocab.queryId).getObject().asLiteral().getLong();
-                    String workloadLabel = workload.getRequiredProperty(RDFS.label).getObject().asLiteral().getString();
-                    Resource r = m.createResource("http://example.org/query-" + runName + "-" + workloadLabel + "-run" + runId);
-
-                    if (runId < warmUp) {
-                        r.addLiteral(WARMUP, true);
-                    }
-
-                    r
-                        .addProperty(IguanaVocab.workload, workload)
-                        .addLiteral(IguanaVocab.run, exec.getKey());
-
-//                    StringWriter tmp = new StringWriter();
-//                    ResourceUtils.reachableClosure(r).write(tmp, "TTL");
-//                    System.out.println("Created run resource: " + r + " with data " + tmp);
-                    return r;
-                });
-        return result;
-    }
 
     public static Task prepareTaskJena2(TestCase testCase, LegacyContainmentSolver solver) {
 
@@ -236,8 +221,8 @@ public class MainTestContain {
             //"java_cup.runtime;version=\"1.0.0\""
         ));
 
-        List<String> jarFileNames = Arrays.asList("jsa", "sparqlalgebra", "afmu", "treesolver");
-        //List<String> jarFileNames = Arrays.asList("afmu");
+        //List<String> jarFileNames = Arrays.asList("jsa", "sparqlalgebra", "afmu", "treesolver");
+        List<String> jarFileNames = Arrays.asList("jsa");
 
         List<File> jarFiles = jarFileNames.stream().map(implStr -> {
         //List<File> jarFiles = Arrays.asList("treesolver").stream().map(implStr -> {
@@ -356,11 +341,86 @@ public class MainTestContain {
 //        JFreeChart chart = IguanaDatasetProcessors.createStatisticalBarChart(categoryDataset);
 //        ChartUtilities2.saveChartAsPDF(new File("/home/raven/tmp/test.pdf"), chart, 1000, 500);
 
+        Set<Resource> observations = overall.listResourcesWithProperty(RDF.type, QB.Observation).toSet();
+        
+        //observations.forEach(r -> RDFDataMgr.write(System.out, r.getModel(), RDFFormat.TURTLE_BLOCKS));
+        
+        // Chart specific post processing
+        List<Resource> avgs =
+        RdfGroupBy.enh()
+            .on(IguanaVocab.workload)
+            .on(IV.job)
+            .on(IV.phase)
+            .agg(CV.value, OWLTIME.numericDuration, AggAvg.class)
+            .agg(CV.stDev, OWLTIME.numericDuration, AccStatStdDevPopulation.class)
+            .apply(observations.stream())
+            //.map(g -> g.rename("http://ex.org/avg/query{0}-user{1}", IV.job, IV.thread, IV.thread))
+            .map(g -> g.rename("http://ex.org/avg/query{0}-user{1}", IV.job, IV.phase))
+            .collect(Collectors.toList());
+
+        
+        avgs.forEach(g -> g
+//                .addProperty(CV.series, g.getModel().createResource("http://example.org/Default")) // g.getProperty(IV.job).getObject()
+//                .addProperty(CV.seriesLabel,g.getProperty(CV.series).getResource().getLocalName())
+                .addProperty(CV.category, g.getProperty(IguanaVocab.workload).getObject())
+                //.addProperty(CV.categoryLabel, g.getProperty(CV.category).getResource().getLocalName())
+                .addLiteral(CV.series, g.getProperty(IV.phase).getString()) // g.getProperty(IV.job).getObject()
+                //.addLiteral(CV.seriesLabel, g.getProperty(IV.phase).getString()) // g.getProperty(IV.job).getObject()
+         );
+
+//        avgs.forEach(r -> RDFDataMgr.write(System.out, r.getModel(), RDFFormat.TURTLE_BLOCKS));
+        
+        
+
+//      File outFile = File.createTempFile("beast-", ".pdf").getAbsoluteFile();
+      CategoryChart xChart = new CategoryChartBuilder()
+              .width(800)
+              .height(600)
+              .title("Score Histogram")
+              .xAxisTitle("Score")
+              .yAxisTitle("Number")
+              .build();
+      //xChart.getStyler().setY
+
+      MergeStrategy<RDFNode> ms = new MergeStrategy<>();
+      ms.setMergeEleCmp(StringPrettyComparator::doCompare);
+      ms.setMergeStrategy(MergeStrategy.MIX);
+      DimensionArranger<RDFNode> arr = new DimensionArranger<>(ms);
+
+      arr.getPredefinedKeys().add(ResourceFactory.createResource("http://ex.org/q7"));
+      arr.getPredefinedKeys().add(ResourceFactory.createPlainLiteral("This"));
+      arr.getPredefinedKeys().add(ResourceFactory.createPlainLiteral("is"));
+      arr.getPredefinedKeys().add(ResourceFactory.createPlainLiteral("a"));
+      arr.getPredefinedKeys().add(ResourceFactory.createPlainLiteral("test"));
+
+      DimensionArranger<RDFNode> seriesArr = new DimensionArranger<>(ms);
+
+      Function<Set<RDFNode>, List<RDFNode>> fnx = arr;
+      XChartStatBarChartProcessor.addSeries(xChart, avgs, null, null, seriesArr, fnx, true);
+
+      xChart.getStyler().setLegendPosition(LegendPosition.InsideNW);
+
+      xChart.getStyler().setYAxisLogarithmic(true);
+      //xChart.getStyler().setYAxisDecimalPattern(yAxisDecimalPattern)
+      xChart.getStyler().setYAxisTicksVisible(true);
+      xChart.getStyler().setXAxisLabelRotation(45);
+      //xChart.getStyler().setYAxisTickMarkSpacingHint(yAxisTickMarkSpacingHint)
+
+      VectorGraphicsEncoder.saveVectorGraphic(xChart, "/tmp/Sample_Chart", VectorGraphicsFormat.SVG);
+//SSystem.out.println("exp: " + Math.pow(10, Math.floor(Math.log10(0.0123))));
+      new SwingWrapper<CategoryChart>(xChart).displayChart();
+        
+        
+        
+        
+        
+        
+        
         logger.info("Done.");
 
         
         // Force exit due to threads of the osgi framework that stay alive for another minute
-        System.exit(0);
+        //System.exit(0);
 
         // tasks = tasks.stream()
         // .filter(t -> !t.getURI().contains("19") && !t.getURI().contains("6"))
@@ -368,14 +428,10 @@ public class MainTestContain {
     }
 
 
-    public static Model run(Collection<Resource> tasks, String dataset, Object solver) throws Exception {
+    public static Model run(Collection<Resource> tasks, String methodLabel, Object solver) throws Exception {
 
         int warmUpRuns = 1;
         int evalRuns = 2;
-
-        Resource Observation = ResourceFactory.createResource("http://purl.org/linked-data/cube#Observation");
-
-        Model strategy = ModelFactory.createDefaultModel();
 
         Consumer<Resource> postProcess = (r) -> {
                 Task task = r.as(ResourceEnh.class).getTag(Task.class).get();
@@ -384,17 +440,7 @@ public class MainTestContain {
                   if(!r.getProperty(RDFS.label).getString().equals("CORRECT")) {
                       logger.warn("Incorrect test result for task " + r + "(" + task + ")");
                   }
-
-                  Statement stmt = r.getProperty(WARMUP);
-                  if (stmt == null || !stmt.getBoolean()) { // Warmup is false if the attribute is not present or false
-                      // System.out.println("GOT: ");
-                      // ResourceUtils.reachableClosure(r).write(System.out,
-                      // "TURTLE");
-                      strategy.add(r.getModel());
-                  }
               };
-
-        
               
         RdfStream<Resource, ResourceEnh> workflow = PerformanceBenchmark.createQueryPerformanceEvaluationWorkflow(
         		Task.class,
@@ -402,23 +448,30 @@ public class MainTestContain {
         		(r, t) -> {
         			boolean actual;
 					try {
-						actual = t.run.call();
+			        	actual = BenchmarkTime.benchmark(r, () -> t.run.call());
 					} catch (Exception e) {
 						throw new RuntimeException(e);
 					}
-                    String str = actual == t.getTestCase().getExpectedResult() ? "CORRECT" : "WRONG";
+					boolean expected = t.getTestCase().getExpectedResult();
+                    String str = actual == expected ? "CORRECT" : "WRONG";
                     r.addLiteral(RDFS.label, str);
         			postProcess.accept(r);
         		},
         		warmUpRuns, evalRuns);
         
+        Model result = ModelFactory.createDefaultModel();
+
         String uriPattern = "http://ex.org/observation-{0}-{1}-{2}";
+        //"http://example.org/query-" + runName + "-" + workloadLabel + "-run" + runId
         workflow
         	.apply(tasks).get()
         	.peek(r -> r.addProperty(RDFS.comment, r.getProperty(IguanaVocab.workload).getProperty(RDFS.label).getString()))
-            .map(r -> r.as(ResourceEnh.class).rename(uriPattern, dataset, IV.run, RDFS.comment))
-        	.forEach(r -> r.getModel().write(System.out, "TURTLE"));
+        	.peek(r -> r.addProperty(IV.phase, methodLabel))
+            .map(r -> r.as(ResourceEnh.class).rename(uriPattern, IV.phase, IV.run, RDFS.comment))
+        	//.forEach(r -> r.getModel().write(System.out, "TURTLE"));
+            .forEach(r -> result.add(r.getModel()));
         	
+        return result;
         
         
         //workload.getRequiredProperty(RDFS.label).getObject().asLiteral().getString()
@@ -506,8 +559,8 @@ public class MainTestContain {
 //
 //        IguanaDatasetProcessors.enrichWithAvgAndStdDeviation(strategy);
 //        //overall.add(strategy);
-
-        return strategy;
+//
+//        return strategy;
     }
 }
 
@@ -539,4 +592,40 @@ public class MainTestContain {
 //            System.out.println(rowStr);
 //        });
 //    }
+
+//public static Stream<Resource> prepareTaskExecutions(Collection<Resource> workloads, String runName, int warmUp,
+//int runs) {
+//int totalRuns = warmUp + runs;
+//
+//Stream<Resource> result = IntStream.range(0, totalRuns).boxed()
+//  .flatMap(runId -> workloads.stream().map(workload -> new SimpleEntry<>(runId, workload))).map(exec -> {
+//      int runId = exec.getKey();
+//      Model m = ModelFactory.createDefaultModel();
+//      Resource workload = exec.getValue();
+//      Model n = ResourceUtils.reachableClosure(workload);
+//      m.add(n);
+//      workload = workload.inModel(m);
+//
+//      // workload.getModel().write(System.out, "TURTLE");
+//
+//      // long queryId =
+//      // x.getRequiredProperty(IguanaVocab.queryId).getObject().asLiteral().getLong();
+//      String workloadLabel = workload.getRequiredProperty(RDFS.label).getObject().asLiteral().getString();
+//      Resource r = m.createResource("http://example.org/query-" + runName + "-" + workloadLabel + "-run" + runId);
+//
+//      if (runId < warmUp) {
+//          r.addLiteral(WARMUP, true);
+//      }
+//
+//      r
+//          .addProperty(IguanaVocab.workload, workload)
+//          .addLiteral(IguanaVocab.run, exec.getKey());
+//
+////      StringWriter tmp = new StringWriter();
+////      ResourceUtils.reachableClosure(r).write(tmp, "TTL");
+////      System.out.println("Created run resource: " + r + " with data " + tmp);
+//      return r;
+//  });
+//return result;
+//}
 
