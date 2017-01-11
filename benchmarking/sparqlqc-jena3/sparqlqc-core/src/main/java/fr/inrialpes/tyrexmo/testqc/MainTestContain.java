@@ -135,7 +135,7 @@ public class MainTestContain {
 //        Query _userQuery = QueryTransformOps.transform(userQuery, QueryUtils.createRandomVarMap(_userQuery, "y"));
 
         return new Task(
-        	testCase, 	
+        	testCase,
         	() -> { // try {
             boolean actual = solver.entailed(testCase.getSource(), testCase.getTarget());
             //String str = actual == testCase.getExpectedResult() ? "CORRECT" : "WRONG";
@@ -342,43 +342,39 @@ public class MainTestContain {
 //        ChartUtilities2.saveChartAsPDF(new File("/home/raven/tmp/test.pdf"), chart, 1000, 500);
 
         Set<Resource> observations = overall.listResourcesWithProperty(RDF.type, QB.Observation).toSet();
-        
+
         //observations.forEach(r -> RDFDataMgr.write(System.out, r.getModel(), RDFFormat.TURTLE_BLOCKS));
-        
+
         // Chart specific post processing
         List<Resource> avgs =
         RdfGroupBy.enh()
             .on(IguanaVocab.workload)
-            .on(IV.job)
-            .on(IV.phase)
+            .on(IV.job) // This is just the local name of the workload
+            .on(IV.method)
             .agg(CV.value, OWLTIME.numericDuration, AggAvg.class)
             .agg(CV.stDev, OWLTIME.numericDuration, AccStatStdDevPopulation.class)
             .apply(observations.stream())
             //.map(g -> g.rename("http://ex.org/avg/query{0}-user{1}", IV.job, IV.thread, IV.thread))
-            .map(g -> g.rename("http://ex.org/avg/query{0}-user{1}", IV.job, IV.phase))
+            .map(g -> g.rename("http://ex.org/avg/query{0}-user{1}", IV.job, IV.method))
             .collect(Collectors.toList());
 
-        
+
+        // Augment the observation resources with chart information
+        // Note: This is a hack, as the chart information is highly context dependent and 2 resources with these annotations cannot be fused consistently
         avgs.forEach(g -> g
-//                .addProperty(CV.series, g.getModel().createResource("http://example.org/Default")) // g.getProperty(IV.job).getObject()
-//                .addProperty(CV.seriesLabel,g.getProperty(CV.series).getResource().getLocalName())
                 .addProperty(CV.category, g.getProperty(IguanaVocab.workload).getObject())
-                //.addProperty(CV.categoryLabel, g.getProperty(CV.category).getResource().getLocalName())
-                .addLiteral(CV.series, g.getProperty(IV.phase).getString()) // g.getProperty(IV.job).getObject()
-                //.addLiteral(CV.seriesLabel, g.getProperty(IV.phase).getString()) // g.getProperty(IV.job).getObject()
-         );
+                .addLiteral(CV.series, g.getProperty(IV.method).getString()) // g.getProperty(IV.job).getObject()
+        );
 
 //        avgs.forEach(r -> RDFDataMgr.write(System.out, r.getModel(), RDFFormat.TURTLE_BLOCKS));
-        
-        
 
 //      File outFile = File.createTempFile("beast-", ".pdf").getAbsoluteFile();
       CategoryChart xChart = new CategoryChartBuilder()
               .width(1650)
               .height(1050)
-              .title("Score Histogram")
-              .xAxisTitle("Score")
-              .yAxisTitle("Number")
+              .title("Performance Histogram")
+              .xAxisTitle("Workload")
+              .yAxisTitle("Time (s)")
               .build();
 
       XChartStatBarChartProcessor.addSeries(xChart, avgs, null, null, null, null, true);
@@ -389,22 +385,24 @@ public class MainTestContain {
       //xChart.getStyler().setYAxisDecimalPattern(yAxisDecimalPattern)
       xChart.getStyler().setYAxisTicksVisible(true);
       xChart.getStyler().setXAxisLabelRotation(45);
-      
+      //System.out.println(xChart.getStyler().getYAxisDecimalPattern());
+      xChart.getStyler().setYAxisDecimalPattern("###,###,###,###,###.#####");
+
       //xChart.getStyler().setYAxisTickMarkSpacingHint(yAxisTickMarkSpacingHint)
 
       VectorGraphicsEncoder.saveVectorGraphic(xChart, "/tmp/Sample_Chart", VectorGraphicsFormat.SVG);
 //SSystem.out.println("exp: " + Math.pow(10, Math.floor(Math.log10(0.0123))));
       new SwingWrapper<CategoryChart>(xChart).displayChart();
-        
-        
-        
-        
-        
-        
-        
+
+
+
+
+
+
+
         logger.info("Done.");
 
-        
+
         // Force exit due to threads of the osgi framework that stay alive for another minute
         //System.exit(0);
 
@@ -427,7 +425,7 @@ public class MainTestContain {
                       logger.warn("Incorrect test result for task " + r + "(" + task + ")");
                   }
               };
-              
+
         RdfStream<Resource, ResourceEnh> workflow = PerformanceBenchmark.createQueryPerformanceEvaluationWorkflow(
         		Task.class,
         		r -> MainTestContain.prepareTask(r, solver),
@@ -444,7 +442,7 @@ public class MainTestContain {
         			postProcess.accept(r);
         		},
         		warmUpRuns, evalRuns);
-        
+
         Model result = ModelFactory.createDefaultModel();
 
         String uriPattern = "http://ex.org/observation-{0}-{1}-{2}";
@@ -452,19 +450,19 @@ public class MainTestContain {
         workflow
         	.apply(tasks).get()
         	.peek(r -> r.addProperty(RDFS.comment, r.getProperty(IguanaVocab.workload).getProperty(RDFS.label).getString()))
-        	.peek(r -> r.addProperty(IV.phase, methodLabel))
-            .map(r -> r.as(ResourceEnh.class).rename(uriPattern, IV.phase, IV.run, RDFS.comment))
+        	.peek(r -> r.addProperty(IV.method, methodLabel))
+            .map(r -> r.as(ResourceEnh.class).rename(uriPattern, IV.method, IV.run, RDFS.comment))
         	//.forEach(r -> r.getModel().write(System.out, "TURTLE"));
             .forEach(r -> result.add(r.getModel()));
-        	
+
         return result;
-        
-        
+
+
         //workload.getRequiredProperty(RDFS.label).getObject().asLiteral().getString()
 
         // dataset, suite, run
 
-//        
+//
 //
 //        RdfStream.startWithCopy()
 //            // Parse the task resource
