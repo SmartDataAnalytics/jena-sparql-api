@@ -1,7 +1,7 @@
 package fr.inrialpes.tyrexmo.testqc;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -12,19 +12,13 @@ import java.util.Map.Entry;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import org.aksw.beast.benchmark.performance.BenchmarkTime;
 import org.aksw.beast.benchmark.performance.PerformanceBenchmark;
-import org.aksw.beast.compare.StringPrettyComparator;
 import org.aksw.beast.enhanced.ResourceEnh;
 import org.aksw.beast.rdfstream.RdfGroupBy;
 import org.aksw.beast.rdfstream.RdfStream;
-import org.aksw.beast.viz.xchart.DimensionArranger;
-import org.aksw.beast.viz.xchart.MergeStrategy;
 import org.aksw.beast.viz.xchart.XChartStatBarChartProcessor;
 import org.aksw.beast.vocabs.CV;
 import org.aksw.beast.vocabs.IV;
@@ -38,10 +32,7 @@ import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.Property;
-import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.expr.aggregate.AggAvg;
@@ -71,6 +62,18 @@ import com.google.common.collect.Multimap;
 public class MainTestContain {
     private static final Logger logger = LoggerFactory.getLogger(MainTestContain.class);
 
+    public static String toString(Resource r, RDFFormat format) {
+    	Model m = ResourceUtils.reachableClosure(r);
+    	String result = toString(m, format);
+    	return result;
+    }
+
+    public static String toString(Model model, RDFFormat format) {
+    	ByteArrayOutputStream out = new ByteArrayOutputStream();
+    	RDFDataMgr.write(out, model, format);
+    	String result = out.toString();
+    	return result;
+    }
 
     public static Task prepareTaskJena2(TestCase testCase, LegacyContainmentSolver solver) {
 
@@ -138,7 +141,9 @@ public class MainTestContain {
         	testCase,
         	() -> { // try {
             boolean actual = solver.entailed(testCase.getSource(), testCase.getTarget());
+        	//boolean actual = solver.entailed(testCase.getTarget(), testCase.getSource());
             //String str = actual == testCase.getExpectedResult() ? "CORRECT" : "WRONG";
+            //System.out.println(str);
             return actual;
             //r.addLiteral(RDFS.label, str);
             // } catch (ContainmentTestException e) {
@@ -421,8 +426,9 @@ public class MainTestContain {
                 Task task = r.as(ResourceEnh.class).getTag(Task.class).get();
                 task.cleanup.run();
 
-                  if(!r.getProperty(RDFS.label).getString().equals("CORRECT")) {
-                      logger.warn("Incorrect test result for task " + r + "(" + task + ")");
+                  if(!r.getRequiredProperty(IV.assessment).getString().equals("CORRECT")) {
+                      logger.warn("Incorrect test result for task " + r + "(" + task + "): " + toString(r, RDFFormat.TURTLE_BLOCKS));
+
                   }
               };
 
@@ -437,8 +443,11 @@ public class MainTestContain {
 						throw new RuntimeException(e);
 					}
 					boolean expected = t.getTestCase().getExpectedResult();
+
                     String str = actual == expected ? "CORRECT" : "WRONG";
-                    r.addLiteral(RDFS.label, str);
+                    r
+                    	.addLiteral(IV.value, actual)
+                    	.addLiteral(IV.assessment, str);
         			postProcess.accept(r);
         		},
         		warmUpRuns, evalRuns);
