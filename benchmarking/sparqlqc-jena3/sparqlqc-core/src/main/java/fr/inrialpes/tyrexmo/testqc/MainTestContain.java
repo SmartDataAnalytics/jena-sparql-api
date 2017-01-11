@@ -374,29 +374,14 @@ public class MainTestContain {
 
 //      File outFile = File.createTempFile("beast-", ".pdf").getAbsoluteFile();
       CategoryChart xChart = new CategoryChartBuilder()
-              .width(800)
-              .height(600)
+              .width(1650)
+              .height(1050)
               .title("Score Histogram")
               .xAxisTitle("Score")
               .yAxisTitle("Number")
               .build();
-      //xChart.getStyler().setY
 
-      MergeStrategy<RDFNode> ms = new MergeStrategy<>();
-      ms.setMergeEleCmp(StringPrettyComparator::doCompare);
-      ms.setMergeStrategy(MergeStrategy.MIX);
-      DimensionArranger<RDFNode> arr = new DimensionArranger<>(ms);
-
-      arr.getPredefinedKeys().add(ResourceFactory.createResource("http://ex.org/q7"));
-      arr.getPredefinedKeys().add(ResourceFactory.createPlainLiteral("This"));
-      arr.getPredefinedKeys().add(ResourceFactory.createPlainLiteral("is"));
-      arr.getPredefinedKeys().add(ResourceFactory.createPlainLiteral("a"));
-      arr.getPredefinedKeys().add(ResourceFactory.createPlainLiteral("test"));
-
-      DimensionArranger<RDFNode> seriesArr = new DimensionArranger<>(ms);
-
-      Function<Set<RDFNode>, List<RDFNode>> fnx = arr;
-      XChartStatBarChartProcessor.addSeries(xChart, avgs, null, null, seriesArr, fnx, true);
+      XChartStatBarChartProcessor.addSeries(xChart, avgs, null, null, null, null, true);
 
       xChart.getStyler().setLegendPosition(LegendPosition.InsideNW);
 
@@ -404,6 +389,7 @@ public class MainTestContain {
       //xChart.getStyler().setYAxisDecimalPattern(yAxisDecimalPattern)
       xChart.getStyler().setYAxisTicksVisible(true);
       xChart.getStyler().setXAxisLabelRotation(45);
+      
       //xChart.getStyler().setYAxisTickMarkSpacingHint(yAxisTickMarkSpacingHint)
 
       VectorGraphicsEncoder.saveVectorGraphic(xChart, "/tmp/Sample_Chart", VectorGraphicsFormat.SVG);
