@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -63,16 +64,16 @@ public class MainTestContain {
     private static final Logger logger = LoggerFactory.getLogger(MainTestContain.class);
 
     public static String toString(Resource r, RDFFormat format) {
-    	Model m = ResourceUtils.reachableClosure(r);
-    	String result = toString(m, format);
-    	return result;
+        Model m = ResourceUtils.reachableClosure(r);
+        String result = toString(m, format);
+        return result;
     }
 
     public static String toString(Model model, RDFFormat format) {
-    	ByteArrayOutputStream out = new ByteArrayOutputStream();
-    	RDFDataMgr.write(out, model, format);
-    	String result = out.toString();
-    	return result;
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        RDFDataMgr.write(out, model, format);
+        String result = out.toString();
+        return result;
     }
 
     public static Task prepareTaskJena2(TestCase testCase, LegacyContainmentSolver solver) {
@@ -84,7 +85,7 @@ public class MainTestContain {
         com.hp.hpl.jena.query.Query userQuery = com.hp.hpl.jena.query.QueryFactory.create(testCase.getTarget().toString());
 
         return new Task(testCase,
-        	() -> {
+            () -> {
             try {
                 boolean actual = solver.entailed(viewQuery, userQuery);
                 //String str = actual == testCase.getExpectedResult() ? "CORRECT" : "WRONG";
@@ -138,10 +139,10 @@ public class MainTestContain {
 //        Query _userQuery = QueryTransformOps.transform(userQuery, QueryUtils.createRandomVarMap(_userQuery, "y"));
 
         return new Task(
-        	testCase,
-        	() -> { // try {
+            testCase,
+            () -> { // try {
             boolean actual = solver.entailed(testCase.getSource(), testCase.getTarget());
-        	//boolean actual = solver.entailed(testCase.getTarget(), testCase.getSource());
+            //boolean actual = solver.entailed(testCase.getTarget(), testCase.getSource());
             //String str = actual == testCase.getExpectedResult() ? "CORRECT" : "WRONG";
             //System.out.println(str);
             return actual;
@@ -242,6 +243,18 @@ public class MainTestContain {
         blackLists.put("AFMU", (r) -> Arrays.asList("#nop3", "#nop4", "#nop15", "#nop16", "#p3", "#p4", "#p15", "#p16", "#p23", "#p24", "#p25", "#p26").stream().anyMatch(r::contains));
         blackLists.put("SA", (r) -> Arrays.asList("UCQProj").stream().anyMatch(r::contains));
         blackLists.put("TS", (r) -> Arrays.asList("#p23", "#p24", "#p15", "#p25", "#p26").stream().anyMatch(r::contains));         // slow p15, p25, p26
+
+        //blackLists.put("JSAC", (r) -> true);
+
+
+//        Set<String> overrides = new HashSet<>(Arrays.asList(
+//                "http://sparql-qc-bench.inrialpes.fr/UCQProj#p24", // This is not the type of query we want to use for caching (the view is a union which partially matches into the user query)
+//                // TODO Fix the test case below:
+//                "http://sparql-qc-bench.inrialpes.fr/UCQProj#p26", // CARE! A view must not have more quad patterns than the query ; so the benchmark is correct - This consideration was WRONG: I think this is a bug in the benchmark; the expected result is wrong
+//                "http://sparql-qc-bench.inrialpes.fr/UCQProj#p27"  // Like p24; we require exact match of all of the views union members
+//            ));
+
+
 
         List<Resource> allTasks = new ArrayList<>();
         //RDFDataMgr.read(model, new ClassPathResource("tree-matcher-queries.ttl").getInputStream(), Lang.TURTLE);
@@ -433,35 +446,35 @@ public class MainTestContain {
               };
 
         RdfStream<Resource, ResourceEnh> workflow = PerformanceBenchmark.createQueryPerformanceEvaluationWorkflow(
-        		Task.class,
-        		r -> MainTestContain.prepareTask(r, solver),
-        		(r, t) -> {
-        			boolean actual;
-					try {
-			        	actual = BenchmarkTime.benchmark(r, () -> t.run.call());
-					} catch (Exception e) {
-						throw new RuntimeException(e);
-					}
-					boolean expected = t.getTestCase().getExpectedResult();
+                Task.class,
+                r -> MainTestContain.prepareTask(r, solver),
+                (r, t) -> {
+                    boolean actual;
+                    try {
+                        actual = BenchmarkTime.benchmark(r, () -> t.run.call());
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                    boolean expected = t.getTestCase().getExpectedResult();
 
                     String str = actual == expected ? "CORRECT" : "WRONG";
                     r
-                    	.addLiteral(IV.value, actual)
-                    	.addLiteral(IV.assessment, str);
-        			postProcess.accept(r);
-        		},
-        		warmUpRuns, evalRuns);
+                        .addLiteral(IV.value, actual)
+                        .addLiteral(IV.assessment, str);
+                    postProcess.accept(r);
+                },
+                warmUpRuns, evalRuns);
 
         Model result = ModelFactory.createDefaultModel();
 
         String uriPattern = "http://ex.org/observation-{0}-{1}-{2}";
         //"http://example.org/query-" + runName + "-" + workloadLabel + "-run" + runId
         workflow
-        	.apply(tasks).get()
-        	.peek(r -> r.addProperty(RDFS.comment, r.getProperty(IguanaVocab.workload).getProperty(RDFS.label).getString()))
-        	.peek(r -> r.addProperty(IV.method, methodLabel))
+            .apply(tasks).get()
+            .peek(r -> r.addProperty(RDFS.comment, r.getProperty(IguanaVocab.workload).getProperty(RDFS.label).getString()))
+            .peek(r -> r.addProperty(IV.method, methodLabel))
             .map(r -> r.as(ResourceEnh.class).rename(uriPattern, IV.method, IV.run, RDFS.comment))
-        	//.forEach(r -> r.getModel().write(System.out, "TURTLE"));
+            //.forEach(r -> r.getModel().write(System.out, "TURTLE"));
             .forEach(r -> result.add(r.getModel()));
 
         return result;
