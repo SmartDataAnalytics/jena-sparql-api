@@ -143,7 +143,7 @@ public class TestStateSpaceSearch {
         //200000l
         //executorService
 
-        qef = new QueryExecutionFactoryViewMatcherMaster(qef, viewMatcherRewriter, executorService);
+        qef = new QueryExecutionFactoryViewMatcherMaster(qef, viewMatcherRewriter, executorService, true);
         qef = new QueryExecutionFactoryParse(qef, SparqlQueryParserImpl.create());
 
         Stopwatch sw = Stopwatch.createStarted();

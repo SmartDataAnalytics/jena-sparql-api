@@ -50,7 +50,7 @@ public class SparqlViewMatcherCacheTests {
         QueryExecutionFactory qef = FluentQueryExecutionFactory.from(model).create();
         ExecutorService executorService = Executors.newCachedThreadPool();
 
-        QueryExecutionFactoryViewMatcherMaster tmp = QueryExecutionFactoryViewMatcherMaster.create(qef, queryCacheBuilder, executorService);
+        QueryExecutionFactoryViewMatcherMaster tmp = QueryExecutionFactoryViewMatcherMaster.create(qef, queryCacheBuilder, executorService, true);
         Cache<Node, StorageEntry> queryCache = tmp.getCache();
         qef = new QueryExecutionFactoryParse(tmp, SparqlQueryParserImpl.create());
 

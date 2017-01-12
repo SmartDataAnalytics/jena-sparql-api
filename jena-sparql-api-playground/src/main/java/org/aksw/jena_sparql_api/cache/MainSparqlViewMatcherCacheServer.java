@@ -31,6 +31,7 @@ public class MainSparqlViewMatcherCacheServer {
 	}
 
 	public static void mainTestQuery(String[] args) {
+
 		QueryExecutionFactory qef = createQef();
 		System.out.println(ResultSetFormatter.asText(qef.createQueryExecution("SELECT * { ?s a <http://dbpedia.org/ontology/ResearchProject> }").execSelect()));
 
@@ -39,6 +40,7 @@ public class MainSparqlViewMatcherCacheServer {
 		QueryExecutionViewMatcherMaster x = QueryExecutionDecoratorBase.unwrap(QueryExecutionViewMatcherMaster.class, qe);
 		System.out.println(x);
 
+		qef.close();
 	}
 
 	public static QueryExecutionFactory createQef() {
@@ -49,10 +51,11 @@ public class MainSparqlViewMatcherCacheServer {
 				.create();
 
 		CacheBuilder<Object, Object> queryCacheBuilder = CacheBuilder.newBuilder().maximumSize(10000);
+
 		ExecutorService executorService = Executors.newCachedThreadPool();
 
 		QueryExecutionFactoryViewMatcherMaster tmp = QueryExecutionFactoryViewMatcherMaster.create(qef,
-				queryCacheBuilder, executorService);
+				queryCacheBuilder, executorService, true);
 
 		qef = FluentQueryExecutionFactory.from(tmp)
 				.config().withParser(SparqlQueryParserImpl.create()).end()

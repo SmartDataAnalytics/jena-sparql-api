@@ -13,7 +13,6 @@ import java.util.stream.Stream;
 
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeUtils;
-import org.aksw.jena_sparql_api.algebra.transform.TransformDisjunctionToUnion;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 import org.aksw.jena_sparql_api.core.QueryExecutionBaseSelect;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
@@ -34,7 +33,6 @@ import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpAsQuery;
-import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.op.OpNull;
 import org.apache.jena.sparql.algebra.op.OpService;
 import org.apache.jena.sparql.core.Var;
@@ -54,7 +52,6 @@ public class QueryExecutionViewMatcherMaster
 
 	protected OpRewriteViewMatcherStateful opRewriter;
 	protected ExecutorService executorService;
-	//protected Map<Node, StorageEntry> storageMap;
 
 	// The jena context - used for setting up cache entries
 	// TODO Not sure if this was better part of the rewriter - or even a rewriteContext object
@@ -62,14 +59,13 @@ public class QueryExecutionViewMatcherMaster
 
 	// TODO Maybe add a decider which determines whether the result set of a query should be cached
 
-
-	//protected Map<Node, RangedSupplier<Long, Binding>> opToRangedSupplier;
-	//protected ExecutorService executorService;
-	//protected OpViewMatcher viewMatcher;
-
-
-
     protected long indexResultSetSizeThreshold;
+
+
+    // Statistic attributes
+    protected static Double preparationTimeInSec;
+    // null: not set, 0: miss, 1: partial, 2: complete
+    protected static Integer cacheHitLevel;
 
     public QueryExecutionViewMatcherMaster(
     		Query query,
@@ -87,15 +83,10 @@ public class QueryExecutionViewMatcherMaster
 
     public static ResultSetCloseable createResultSet(List<String> varNames, RangedSupplier<Long, Binding> rangedSupplier, Range<Long> range, Map<Var, Var> varMap) {
     	Stream<Binding> stream = rangedSupplier.apply(range);
-//    	Iterable<Binding> tmp = () -> it;
-//    	Stream<Binding> stream = StreamSupport.stream(tmp.spliterator(), false);
     	if(varMap != null) {
     		stream = stream.map(b -> BindingUtils.rename(b, varMap));
     	}
-    	//stream = stream.onClose(() -> it.close());
 
-    	//List<String> varNames = query.getResultVars();
-    	//ResultSetCloseable result = ResultSetUtils.create(varNames, it);
     	ResultSet rs = ResultSetUtils.create(varNames, stream.iterator());
     	ResultSetCloseable result = new ResultSetCloseable(rs);
 
@@ -148,7 +139,6 @@ public class QueryExecutionViewMatcherMaster
     	queryOp = SparqlViewMatcherOpImpl.normalizeOp(queryOp);
 
 
-
     	// The thing here is, that in general we need to
     	// - Initialize the execution context / jena-wise global data
     	// - Perform the rewrite (may affect execution context state)
@@ -157,10 +147,6 @@ public class QueryExecutionViewMatcherMaster
     	Op rewrittenOp = rr.getOp();
 
     	Map<Node, StorageEntry> storageMap = rr.getIdToStorageEntry();
-
-
-    	// Map<Node, List<
-
 
     	// All subtrees that are to be executed on the original data source must be wrapped with
 		// a standard sparql service clause
@@ -249,96 +235,18 @@ public class QueryExecutionViewMatcherMaster
 
 		rewrittenOp = OpUtils.substitute(rewrittenOp, false, taggedToService::get);
 
-//    	Transform transform = new TransformPushSlice();
-//    	Op tmp;
-//    	do {
-//        	tmp = rewrittenOp;
-//    		rewrittenOp = Transformer.transform(transform, tmp);
-//
-//    	} while(!rewrittenOp.equals(tmp));
-
     	logger.debug("Raw query being rewritten for execution:\n" + rawQuery);
     	logger.debug("Rewritten op being passed to execution:\n" + rewrittenOp);
 
 
-
-		//rewrittenOp = new OpSlice(rew)
-
     	Context ctx = context.copy();
     	ctx.put(OpExecutorViewCache.STORAGE_MAP, storageMap);
-
-//    	RangedSupplier<Long, Binding> s2;
-//    	s2 = new RangedSupplierOp(rewrittenOp, ctx);
-
-
-
-    		// For each parents of which all children are in the set, remove the children from the set
-    		// and add the parent to the set instead
-
-
-
-
-//    	Node serviceNode = NodeFactory.createURI("view://test.org");
-//
-//    	rewrittenOp = new OpService(serviceNode, OpNull.create(), false);
-//
-//    	RangedSupplier<Long, Binding> backend = new RangedSupplierQuery(parentFactory, rawQuery);
-//    	//RangedSupplierLazyLoadingListCache<Binding>
-//    	RangedSupplier<Long, Binding> storage = new RangedSupplierLazyLoadingListCache<>(executorService, backend, Range.atMost(10000l), null);
-//
-//    	storage = RangedSupplierSubRange.create(storage, range);
-
 
 
     	Set<Var> visibleVars = new HashSet<>(projectVars);//OpVars.visibleVars(rewrittenOp);
     	VarInfo varInfo = new VarInfo(visibleVars, 0);
 
-//    	if(false) {
-//	    	Iterators.size(storage.apply(range));
-//	    	@SuppressWarnings("unchecked")
-//			RangedSupplierLazyLoadingListCache<Binding> test = storage.unwrap(RangedSupplierLazyLoadingListCache.class, true);
-//	    	System.out.println("Is range cached: " + test.isCached(range));
-//
-//	    	ResultSet xxx = ResultSetUtils.create2(visibleVars, storage.apply(range));
-//	    	Table table = TableUtils.createTable(xxx);
-//	    	OpTable repl = OpTable.create(table);
-//	    	rewrittenOp = repl;
-//    	}
-
-
-
-//    	StorageEntry se = new StorageEntry(storage, varInfo);
-//    	storageMap.put(serviceNode, se);
-
-
-
-//
-
-
-    	// Note: We use Jena to execute the op.
-    	// The op itself may use SERVICE<> as the root node, which will cause jena to pass execution to the appropriate handler
-
-    	// TODO Pass the op to an op executor
-    	//QueryEngineMainQuad
-
-    	// TODO Decide whether to cache the overall query
-    	// Do NOT cache if:
-    	// - there is already a cache entry that only differs in the var map
-    	// - (if the new query is just linear post processing of an existing cache entry)
-
-    	// This means, that the query will be available for cache lookups
-//    	Node rootService = rewrittenOp instanceof OpService
-//    			? ((OpService)rewrittenOp).getService()
-//    		    : null;
-
-    	//boolean cacheWholeQuery = true; //!rootService.getURI().startsWith("view://");
-
-//    	context.put(OpExecutorViewCache.STORAGE_MAP, storageMap);
-
-
-
-    	//if(cacheWholeQuery) {
-    			RangedSupplier<Long, Binding> s2 = new RangedSupplierOp(rewrittenOp, ctx);
+    	RangedSupplier<Long, Binding> s2 = new RangedSupplierOp(rewrittenOp, ctx);
 
     	if(cacheWholeQuery && newRootServiceNode != null) {
     		// Caching the whole query requires the following actions:
@@ -362,81 +270,161 @@ public class QueryExecutionViewMatcherMaster
     		opRewriter.put(newRootServiceNode, queryOp);
         	cache.put(newRootServiceNode, se2);
     	}
-//    	} else {
-//    		s2 = storageMap.get(rootService).storage;
-//    		// Nothing todo - just create a result set from s2
-//    	}
-
 
     	List<String> visibleVarNames = VarUtils.getVarNames(visibleVars);
-
-
-		// Adujst limit
-		//rewrittenOp = QueryUtils.applyRange(rewrittenOp, range);
-
-		//rewrittenOp = RewriteUtils.transformUntilNoChange(rewrittenOp, op -> Transformer.transform(TransformPushSlice.fn, op));
-
-
     	ResultSetCloseable result = createResultSet(visibleVarNames, s2, range, null);
 
-    	System.out.println("Time to prepare the result set: " + sw.elapsed(TimeUnit.MILLISECONDS) + " ms");
+    	preparationTimeInSec =  sw.stop().elapsed(TimeUnit.NANOSECONDS) / 1000000000.0;
+
+    	System.out.println("Time to prepare the result set: " + (preparationTimeInSec * 1000) + " ms");
 
     	return result;
-
-
-//    	DatasetGraph dg = DatasetGraphFactory.create();
-//    	Context context = ARQ.getContext().copy();
-//    	context.put(OpExecutorViewCache.STORAGE_MAP, storageMap);
-//    	QueryEngineFactory qef = QueryEngineRegistry.get().find(rewrittenOp, dg, context);
-//    	Plan plan = qef.create(rewrittenOp, dg, BindingRoot.create(), context);
-//    	QueryIterator queryIter = plan.iterator();
-//
-//
-//    	//QueryIterator queryIter = x.eval(rewrittenOp, dg, BindingRoot.create(), context);
-//    	ResultSet tmpRs = ResultSetFactory.create(queryIter, projectVarNames);
-//
-//    	// TODO Not sure if we should really return a result set, or a QueryIter instead
-//    	ResultSetCloseable result = new ResultSetCloseable(tmpRs, () -> queryIter.close());
-
-
-
-
-    	//ResultSetUtils.create(varNames, bindingIt)
-
-    	//QueryEngineMain
-    	//QC.execute(rewrittenOp, BindingRoot.create(), ARQ.getContext());
-
-    	//org.apache.jena.query.QueryExecutionFactory.create(queryStr, syntax, model, initialBinding)
-//
-//
-//
-//    	LookupResult<Node> lr = viewMatcher.lookupSingle(opCache);
-//        RangedSupplier<Long, Binding> rangedSupplier;
-//        Map<Var, Var> varMap;
-//        if(lr == null) {
-//            Node id = viewMatcher.add(opCache);
-//        	// Obtain the supplier from a factory (the factory may e.g. manage the sharing of a thread pool)
-//
-//            rangedSupplier = new RangedSupplierQuery(parentFactory, query);
-//        	rangedSupplier = new RangedSupplierLazyLoadingListCache<>(executorService, rangedSupplier, Range.atMost(10000l), null);
-//
-//        	//rangedSupplier = new RangedSupplierQuery(parentFactory, q);
-//        	opToRangedSupplier.put(id, rangedSupplier);
-//        	varMap = null;
-//        }
-//        else {
-//
-//            varMap = Iterables.getFirst(lr.getOpVarMap().getVarMaps(), null);
-//
-//            assert varMap != null : "VarMap was not expected to be null at this point";
-//
-//        	Node entryId = lr.getEntry().id;
-//        	rangedSupplier = opToRangedSupplier.get(entryId);
-//        }
-//
-//        ResultSetCloseable result = createResultSet(rangedSupplier, range, varMap);
-//        return result;
     }
+
+
+	@Override
+	protected QueryExecution executeCoreSelectX(Query query) {
+		// TODO Fix bad design - this method is not needed
+		return null;
+	}
+
+}
+
+
+
+
+
+//if(false) {
+//	Iterators.size(storage.apply(range));
+//	@SuppressWarnings("unchecked")
+//	RangedSupplierLazyLoadingListCache<Binding> test = storage.unwrap(RangedSupplierLazyLoadingListCache.class, true);
+//	System.out.println("Is range cached: " + test.isCached(range));
+//
+//	ResultSet xxx = ResultSetUtils.create2(visibleVars, storage.apply(range));
+//	Table table = TableUtils.createTable(xxx);
+//	OpTable repl = OpTable.create(table);
+//	rewrittenOp = repl;
+//}
+
+
+
+//StorageEntry se = new StorageEntry(storage, varInfo);
+//storageMap.put(serviceNode, se);
+
+
+
+//
+
+
+// Note: We use Jena to execute the op.
+// The op itself may use SERVICE<> as the root node, which will cause jena to pass execution to the appropriate handler
+
+// TODO Pass the op to an op executor
+//QueryEngineMainQuad
+
+// TODO Decide whether to cache the overall query
+// Do NOT cache if:
+// - there is already a cache entry that only differs in the var map
+// - (if the new query is just linear post processing of an existing cache entry)
+
+// This means, that the query will be available for cache lookups
+//Node rootService = rewrittenOp instanceof OpService
+//		? ((OpService)rewrittenOp).getService()
+//	    : null;
+
+//boolean cacheWholeQuery = true; //!rootService.getURI().startsWith("view://");
+
+//context.put(OpExecutorViewCache.STORAGE_MAP, storageMap);
+
+
+
+//if(cacheWholeQuery) {
+//RangedSupplier<Long, Binding> s2;
+//s2 = new RangedSupplierOp(rewrittenOp, ctx);
+
+
+
+	// For each parents of which all children are in the set, remove the children from the set
+	// and add the parent to the set instead
+
+
+
+
+//Node serviceNode = NodeFactory.createURI("view://test.org");
+//
+//rewrittenOp = new OpService(serviceNode, OpNull.create(), false);
+//
+//RangedSupplier<Long, Binding> backend = new RangedSupplierQuery(parentFactory, rawQuery);
+////RangedSupplierLazyLoadingListCache<Binding>
+//RangedSupplier<Long, Binding> storage = new RangedSupplierLazyLoadingListCache<>(executorService, backend, Range.atMost(10000l), null);
+//
+//storage = RangedSupplierSubRange.create(storage, range);
+
+
+
+
+
+// Adujst limit
+//rewrittenOp = QueryUtils.applyRange(rewrittenOp, range);
+
+//rewrittenOp = RewriteUtils.transformUntilNoChange(rewrittenOp, op -> Transformer.transform(TransformPushSlice.fn, op));
+
+
+
+//DatasetGraph dg = DatasetGraphFactory.create();
+//Context context = ARQ.getContext().copy();
+//context.put(OpExecutorViewCache.STORAGE_MAP, storageMap);
+//QueryEngineFactory qef = QueryEngineRegistry.get().find(rewrittenOp, dg, context);
+//Plan plan = qef.create(rewrittenOp, dg, BindingRoot.create(), context);
+//QueryIterator queryIter = plan.iterator();
+//
+//
+////QueryIterator queryIter = x.eval(rewrittenOp, dg, BindingRoot.create(), context);
+//ResultSet tmpRs = ResultSetFactory.create(queryIter, projectVarNames);
+//
+//// TODO Not sure if we should really return a result set, or a QueryIter instead
+//ResultSetCloseable result = new ResultSetCloseable(tmpRs, () -> queryIter.close());
+
+
+
+
+//ResultSetUtils.create(varNames, bindingIt)
+
+//QueryEngineMain
+//QC.execute(rewrittenOp, BindingRoot.create(), ARQ.getContext());
+
+//org.apache.jena.query.QueryExecutionFactory.create(queryStr, syntax, model, initialBinding)
+//
+//
+//
+//LookupResult<Node> lr = viewMatcher.lookupSingle(opCache);
+//RangedSupplier<Long, Binding> rangedSupplier;
+//Map<Var, Var> varMap;
+//if(lr == null) {
+//    Node id = viewMatcher.add(opCache);
+//	// Obtain the supplier from a factory (the factory may e.g. manage the sharing of a thread pool)
+//
+//    rangedSupplier = new RangedSupplierQuery(parentFactory, query);
+//	rangedSupplier = new RangedSupplierLazyLoadingListCache<>(executorService, rangedSupplier, Range.atMost(10000l), null);
+//
+//	//rangedSupplier = new RangedSupplierQuery(parentFactory, q);
+//	opToRangedSupplier.put(id, rangedSupplier);
+//	varMap = null;
+//}
+//else {
+//
+//    varMap = Iterables.getFirst(lr.getOpVarMap().getVarMaps(), null);
+//
+//    assert varMap != null : "VarMap was not expected to be null at this point";
+//
+//	Node entryId = lr.getEntry().id;
+//	rangedSupplier = opToRangedSupplier.get(entryId);
+//}
+//
+//ResultSetCloseable result = createResultSet(rangedSupplier, range, varMap);
+//return result;
+
+
 
 //
 //    public static StorageEntry createStorageEntry(Op op, VarInfo varInfo, Context context) {
@@ -460,11 +448,3 @@ public class QueryExecutionViewMatcherMaster
 //
 //    }
 //
-	@Override
-	protected QueryExecution executeCoreSelectX(Query query) {
-		// TODO Fix bad design - this method is not needed
-		return null;
-	}
-
-}
-
