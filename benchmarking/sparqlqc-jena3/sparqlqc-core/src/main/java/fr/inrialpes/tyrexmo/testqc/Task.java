@@ -13,9 +13,14 @@ public class Task {
 		this.run = run;
 		this.cleanup = cleanup;
 	}
-	
+
 	public TestCase getTestCase() {
 		return testCase;
+	}
+
+	public Task setTestCase(TestCase testCase) {
+		this.testCase = testCase;
+		return this;
 	}
 
 	public Callable<Boolean> getRun() {

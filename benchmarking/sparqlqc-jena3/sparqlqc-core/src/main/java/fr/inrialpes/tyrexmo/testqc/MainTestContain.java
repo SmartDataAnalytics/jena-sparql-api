@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -102,13 +103,15 @@ public class MainTestContain {
         });
     }
 
-    public static TestCase parseTestCase(Resource t) {
+    public static TestCase parseTestCase(Resource t, boolean invertExpected) {
         String srcQueryStr = t.getRequiredProperty(SparqlQcVocab.sourceQuery).getObject().asResource()
                 .getRequiredProperty(LSQ.text).getObject().asLiteral().getString();
         String tgtQueryStr = t.getRequiredProperty(SparqlQcVocab.targetQuery).getObject().asResource()
                 .getRequiredProperty(LSQ.text).getObject().asLiteral().getString();
         boolean expected = Boolean
                 .parseBoolean(t.getRequiredProperty(SparqlQcVocab.result).getObject().asLiteral().getString());
+
+        expected = invertExpected ? !expected : expected;
 
         Query viewQuery = QueryFactory.create(srcQueryStr); //SparqlQueryContainmentUtils.queryParser.apply(srcQueryStr);
         Query userQuery = QueryFactory.create(tgtQueryStr); //SparqlQueryContainmentUtils.queryParser.apply(tgtQueryStr);
@@ -117,9 +120,10 @@ public class MainTestContain {
         return result;
     }
 
-    public static Task prepareTask(Resource w, Object o) {
+
+    public static Task prepareTask(Resource w, Object o, boolean invertExpected) {
         //Resource w = r.getRequiredProperty(IguanaVocab.workload).getObject().asResource();
-        TestCase testCase = parseTestCase(w);
+        TestCase testCase = parseTestCase(w, invertExpected);
 
         Task result;
         if(o instanceof ContainmentSolver) {
@@ -246,13 +250,17 @@ public class MainTestContain {
 
         //blackLists.put("JSAC", (r) -> true);
 
+        Set<String> jsaOverrides = new HashSet<>(Arrays.asList(
+            "http://sparql-qc-bench.inrialpes.fr/UCQProj#p24", // This is not the type of query we want to use for caching (the view is a union which partially matches into the user query)
+            // TODO Fix the test case below:
+            "http://sparql-qc-bench.inrialpes.fr/UCQProj#p26", // CARE! A view must not have more quad patterns than the query ; so the benchmark is correct - This consideration was WRONG: I think this is a bug in the benchmark; the expected result is wrong
+            "http://sparql-qc-bench.inrialpes.fr/UCQProj#p27"  // Like p24; we require exact match of all of the views union members
+        ));
 
-//        Set<String> overrides = new HashSet<>(Arrays.asList(
-//                "http://sparql-qc-bench.inrialpes.fr/UCQProj#p24", // This is not the type of query we want to use for caching (the view is a union which partially matches into the user query)
-//                // TODO Fix the test case below:
-//                "http://sparql-qc-bench.inrialpes.fr/UCQProj#p26", // CARE! A view must not have more quad patterns than the query ; so the benchmark is correct - This consideration was WRONG: I think this is a bug in the benchmark; the expected result is wrong
-//                "http://sparql-qc-bench.inrialpes.fr/UCQProj#p27"  // Like p24; we require exact match of all of the views union members
-//            ));
+        Map<String, Predicate<String>> overrides = new HashMap<>();
+        overrides.put("JSAI", jsaOverrides::contains);
+        overrides.put("JSAC", jsaOverrides::contains);
+
 
 
 
@@ -329,7 +337,16 @@ public class MainTestContain {
                                 .collect(Collectors.toList());
 
 
-                        Model serviceResults = run(tasks, shortLabel, service);
+                        Predicate<String> overridden = overrides.get(shortLabel);
+
+                        BiFunction<Resource, Object, Task> taskParser = (r, solver) -> {
+                        	boolean invertExpected = overridden != null && overridden.apply(r.getURI());
+
+                        	Task task = MainTestContain.prepareTask(r, solver, invertExpected);
+                        	return task;
+                        };
+
+                        Model serviceResults = run(tasks, shortLabel, service, taskParser);
                         overall.add(serviceResults);
                     }
 
@@ -430,7 +447,7 @@ public class MainTestContain {
     }
 
 
-    public static Model run(Collection<Resource> tasks, String methodLabel, Object solver) throws Exception {
+    public static Model run(Collection<Resource> tasks, String methodLabel, Object solver, BiFunction<Resource, Object, Task> taskParser) throws Exception {
 
         int warmUpRuns = 1;
         int evalRuns = 2;
@@ -447,7 +464,7 @@ public class MainTestContain {
 
         RdfStream<Resource, ResourceEnh> workflow = PerformanceBenchmark.createQueryPerformanceEvaluationWorkflow(
                 Task.class,
-                r -> MainTestContain.prepareTask(r, solver),
+                r -> taskParser.apply(r, solver),
                 (r, t) -> {
                     boolean actual;
                     try {
