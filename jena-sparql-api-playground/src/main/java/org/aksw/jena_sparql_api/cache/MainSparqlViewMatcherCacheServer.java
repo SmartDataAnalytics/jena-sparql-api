@@ -9,9 +9,13 @@ import java.util.concurrent.Executors;
 
 import org.aksw.jena_sparql_api.concept_cache.core.JenaExtensionViewMatcher;
 import org.aksw.jena_sparql_api.concept_cache.core.QueryExecutionFactoryViewMatcherMaster;
+import org.aksw.jena_sparql_api.concept_cache.core.QueryExecutionViewMatcherMaster;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.QueryExecutionDecoratorBase;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.server.utils.FactoryBeanSparqlServer;
+import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
+import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSetFormatter;
 import org.eclipse.jetty.server.Server;
 
@@ -20,24 +24,44 @@ import com.google.common.cache.CacheBuilder;
 public class MainSparqlViewMatcherCacheServer {
 
 	public static void main(String[] args) {
+		JenaExtensionViewMatcher.register();
+
+
 		mainTestQuery(args);
 	}
 
 	public static void mainTestQuery(String[] args) {
 		QueryExecutionFactory qef = createQef();
 		System.out.println(ResultSetFormatter.asText(qef.createQueryExecution("SELECT * { ?s a <http://dbpedia.org/ontology/ResearchProject> }").execSelect()));
-		System.out.println(ResultSetFormatter.asText(qef.createQueryExecution("SELECT * { ?s a <http://dbpedia.org/ontology/ResearchProject> }").execSelect()));
+
+		QueryExecution qe = qef.createQueryExecution("SELECT * { ?s a <http://dbpedia.org/ontology/ResearchProject> }");
+		System.out.println(ResultSetFormatter.asText(qe.execSelect()));
+		QueryExecutionViewMatcherMaster x = QueryExecutionDecoratorBase.unwrap(QueryExecutionViewMatcherMaster.class, qe);
+		System.out.println(x);
+
 	}
 
 	public static QueryExecutionFactory createQef() {
 		QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://dbpedia.org/sparql", "http://dbpedia.org")
-				.config().withDefaultLimit(1000, true).end().create();
+				.config()
+					.withDefaultLimit(1000, true)
+				.end()
+				.create();
+
+		CacheBuilder<Object, Object> queryCacheBuilder = CacheBuilder.newBuilder().maximumSize(10000);
+		ExecutorService executorService = Executors.newCachedThreadPool();
+
+		QueryExecutionFactoryViewMatcherMaster tmp = QueryExecutionFactoryViewMatcherMaster.create(qef,
+				queryCacheBuilder, executorService);
+
+		qef = FluentQueryExecutionFactory.from(tmp)
+				.config().withParser(SparqlQueryParserImpl.create()).end()
+				.create();
 
 		return qef;
 	}
 
 	public static void mainServer(String[] args) throws InterruptedException, IOException, URISyntaxException {
-		JenaExtensionViewMatcher.register();
 
 		/*
 		 * Query query =
@@ -54,17 +78,12 @@ public class MainSparqlViewMatcherCacheServer {
 		// supports
 		// - registering (Op, value) entries
 		// - rewriting an Op using references to the registered ops
-		CacheBuilder<Object, Object> queryCacheBuilder = CacheBuilder.newBuilder().maximumSize(10000);
-
-		ExecutorService executorService = Executors.newCachedThreadPool();
 
 		QueryExecutionFactory qef = createQef();
-		QueryExecutionFactoryViewMatcherMaster tmp = QueryExecutionFactoryViewMatcherMaster.create(qef,
-				queryCacheBuilder, executorService);
 
 		int port = 7531;
 		Server server = FactoryBeanSparqlServer.newInstance()
-				.setSparqlServiceFactory(tmp)
+				.setSparqlServiceFactory(qef)
 				.setPort(port)
 				.create();
 

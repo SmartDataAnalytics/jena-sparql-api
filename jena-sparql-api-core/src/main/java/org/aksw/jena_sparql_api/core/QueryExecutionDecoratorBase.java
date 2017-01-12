@@ -242,4 +242,26 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
             afterExec();
         }
     }
+
+    @SuppressWarnings("unchecked")
+    public <X> X unwrap(Class<X> clazz) {
+        X result;
+        if(getClass().isAssignableFrom(clazz)) {
+            result = (X)this;
+        }
+        else {
+        	result = QueryExecutionDecoratorBase.unwrap(clazz, decoratee);
+        }
+
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <X> X unwrap(Class<X> clazz, QueryExecution qe) {
+    	Object tmp = qe instanceof QueryExecutionDecoratorBase
+    			? ((QueryExecutionDecoratorBase<?>)qe).unwrap(clazz)
+    			: null;
+    	X result = (X)tmp;
+    	return result;
+    }
 }
