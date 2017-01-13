@@ -284,8 +284,12 @@ public class OpRewriteViewMatcherStateful
 
         //Multimap<Op, LookupResult<Node>> nodeToReplacements = HashMultimap.create();
 
-        boolean changed = true;
-        while(changed) {
+        int rewriteLevel = 0;
+
+        boolean changed;
+        do {
+            changed = false;
+
             // Attempt to replace complete subtrees
             Collection<LookupResult<Node>> lookupResults = viewMatcherTreeBased.lookup(current);
 
@@ -293,7 +297,6 @@ public class OpRewriteViewMatcherStateful
 //                break;
 //            }
 
-            changed = false;
             for(LookupResult<Node> lr : lookupResults) {
                 OpVarMap opVarMap = lr.getOpVarMap();
 
@@ -302,6 +305,7 @@ public class OpRewriteViewMatcherStateful
 
                 Node viewId = lr.getEntry().id;
                 Op viewRootOp = lr.getEntry().queryIndex.getOp();
+
                 Map<Var, Var> map = Iterables.getFirst(varMaps, null);
 
                 if(map == null) {
@@ -341,6 +345,10 @@ public class OpRewriteViewMatcherStateful
 
                 boolean isRoot = userSubstOp == current;
 
+                // if the root node was mapped, we have a complete match, indicated by rewriteLevel 2
+                rewriteLevel = Math.max(rewriteLevel, isRoot ? 2 : 1);
+
+
                 Op substitute = null;
                 if(!isRoot) {
                 	Table table = getTable(cache, viewId);
@@ -366,14 +374,21 @@ public class OpRewriteViewMatcherStateful
 
                 logger.debug("Rewrite after substitution: " + current);
             }
-        }
+        } while(changed);
 
 
         // Find further substitution candidates for all (canonical) quad pattern leafs
         Tree<Op> tree = OpUtils.createTree(current);
         List<Op> leafs = TreeUtils.getLeafs(tree);
 
+        // Determine the rewrite level:
+        // If there is just a single leaf and there is no replacement pattern (i.e. every quad of the query was covered by one or more views)
+        // then we have a complete rewrite.
+        // TODO We can distinguish between complete rewrites where the result is pattern free (no more remote calls), and
+        // and those where there is only a single operation left
 
+        boolean hasRewrite = false;
+        boolean isCompleteRewrite = true;
         for(Op rawLeafOp : leafs) {
             if(rawLeafOp instanceof OpExtQuadFilterPatternCanonical) {
             //Op effectiveOp = leafOp instanceof OpExtQuadFilterPatternCanonical ? ((OpExt)leafOp).effectiveOp() : leafOp;
@@ -407,7 +422,7 @@ public class OpRewriteViewMatcherStateful
                 // Aggregate
                 QfpcAggMatch<Node> agg = SparqlViewMatcherQfpcImpl.aggregateResults(hits);
                 if(agg != null) {
-
+                	hasRewrite = true;
 
 	                List<Op> ops = new ArrayList<>();
 
@@ -419,8 +434,16 @@ public class OpRewriteViewMatcherStateful
 	                }
 
 	                QuadFilterPatternCanonical replacementPattern = agg.getReplacementPattern();
-	                if(replacementPattern != null && !replacementPattern.isEmpty()) {
+	                boolean hasNonEmptyRemainder = replacementPattern != null && !replacementPattern.isEmpty();
+
+	                if(hasNonEmptyRemainder) {
 	                	ops.add(replacementPattern.toOp());
+	                }
+
+	                if(hasNonEmptyRemainder) {
+	                	isCompleteRewrite = false;
+	                } else {
+
 	                }
 
 	                Op result;
@@ -437,12 +460,16 @@ public class OpRewriteViewMatcherStateful
             }
         }
 
+        if(hasRewrite) {
+        	rewriteLevel = isCompleteRewrite ? 2 : 1;
+        }
+
 
         current = opDenormalizer.rewrite(current);
 
         Map<Node, StorageEntry> storageMap = new HashMap<>();
 
-        RewriteResult2 result = new RewriteResult2(current, storageMap);
+        RewriteResult2 result = new RewriteResult2(current, storageMap, rewriteLevel);
         return result;
     }
 

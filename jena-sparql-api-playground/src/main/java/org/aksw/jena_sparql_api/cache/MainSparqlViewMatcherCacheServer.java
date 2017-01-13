@@ -38,7 +38,7 @@ public class MainSparqlViewMatcherCacheServer {
 		QueryExecution qe = qef.createQueryExecution("SELECT * { ?s a <http://dbpedia.org/ontology/ResearchProject> }");
 		System.out.println(ResultSetFormatter.asText(qe.execSelect()));
 		QueryExecutionViewMatcherMaster x = QueryExecutionDecoratorBase.unwrap(QueryExecutionViewMatcherMaster.class, qe);
-		System.out.println(x);
+		System.out.println(x.getCacheHitLevel());
 
 		qef.close();
 	}

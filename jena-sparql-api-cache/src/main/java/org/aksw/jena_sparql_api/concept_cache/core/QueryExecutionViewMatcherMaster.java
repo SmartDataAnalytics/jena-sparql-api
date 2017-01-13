@@ -65,7 +65,7 @@ public class QueryExecutionViewMatcherMaster
     // Statistic attributes
     protected static Double preparationTimeInSec;
     // null: not set, 0: miss, 1: partial, 2: complete
-    protected static Integer cacheHitLevel;
+    protected Integer cacheHitLevel;
 
     public QueryExecutionViewMatcherMaster(
     		Query query,
@@ -144,6 +144,7 @@ public class QueryExecutionViewMatcherMaster
     	// - Perform the rewrite (may affect execution context state)
     	// - Clean up the execution context / jena-wise global data
     	RewriteResult2 rr = opRewriter.rewrite(queryOp);
+    	cacheHitLevel = rr.getRewriteLevel();
     	Op rewrittenOp = rr.getOp();
 
     	Map<Node, StorageEntry> storageMap = rr.getIdToStorageEntry();
@@ -286,6 +287,11 @@ public class QueryExecutionViewMatcherMaster
 	protected QueryExecution executeCoreSelectX(Query query) {
 		// TODO Fix bad design - this method is not needed
 		return null;
+	}
+
+
+	public Integer getCacheHitLevel() {
+		return cacheHitLevel;
 	}
 
 }

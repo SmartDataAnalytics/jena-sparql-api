@@ -149,7 +149,7 @@ public class SparqlViewMatcherOpImpl<K>
 
 
         // Order candidates by their node count - largest node counts first
-        List<MyEntry> cands = new ArrayList<>(tmpCands);
+        List<MyEntry<K>> cands = new ArrayList<>(tmpCands);
         Collections.sort(cands, (a, b) -> ((int)(a.queryIndex.getTree().nodeCount() - b.queryIndex.getTree().nodeCount())));
 
         if(logger.isDebugEnabled()) { logger.debug("Phase 1: " + cands.size() + "/" + featuresToIndexes.size() + " passed"); }
