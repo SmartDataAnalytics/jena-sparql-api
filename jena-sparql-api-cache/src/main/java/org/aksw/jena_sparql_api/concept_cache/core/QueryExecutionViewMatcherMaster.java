@@ -63,7 +63,7 @@ public class QueryExecutionViewMatcherMaster
 
 
     // Statistic attributes
-    protected static Double preparationTimeInSec;
+    protected Double preparationTimeInSec;
     // null: not set, 0: miss, 1: partial, 2: complete
     protected Integer cacheHitLevel;
 
@@ -136,7 +136,13 @@ public class QueryExecutionViewMatcherMaster
     	q.setOffset(Query.NOLIMIT);
 
     	Op queryOp = Algebra.toQuadForm(Algebra.compile(q));
-    	queryOp = SparqlViewMatcherOpImpl.normalizeOp(queryOp);
+//    	queryOp = SparqlViewMatcherOpImpl.normalizeOp(queryOp);
+
+
+    	// TODO opRewriter.lookup and opRewriter.put() both perform normalization
+    	// We could this duplicate processing by normalizing here
+    	// and passing the projected op to both functions
+        //ProjectedOp pop = SparqlCacheUtils.cutProjectionAndNormalize(queryOp, SparqlViewMatcherOpImpl::normalizeOp);
 
 
     	// The thing here is, that in general we need to

@@ -61,6 +61,7 @@ import org.apache.jena.sparql.algebra.op.OpQuadPattern;
 import org.apache.jena.sparql.algebra.op.OpService;
 import org.apache.jena.sparql.algebra.op.OpTable;
 import org.apache.jena.sparql.algebra.op.OpUnion;
+import org.apache.jena.sparql.algebra.optimize.Rewrite;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.QuadPattern;
 import org.apache.jena.sparql.core.Var;
@@ -595,6 +596,16 @@ public class SparqlCacheUtils {
         return result;
     }
 
+
+    public static ProjectedOp cutProjectionAndNormalize(Op op, Rewrite opNormalizer) {
+    	// Before normalization, cut away the projection on the original op first
+        ProjectedOp projectedOp = SparqlCacheUtils.cutProjection(op);
+
+        Op normalizedOp = opNormalizer.rewrite(projectedOp.getResidualOp());
+        ProjectedOp result = new ProjectedOp(projectedOp.getProjection(), projectedOp.isDistinct(), normalizedOp);
+
+        return result;
+    }
 
     /**
      * Cut away the projection (TODO: and maybe extend) of an op (if any), and return

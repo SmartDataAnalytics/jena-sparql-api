@@ -20,25 +20,54 @@ import org.apache.jena.query.ResultSetFormatter;
 import org.eclipse.jetty.server.Server;
 
 import com.google.common.cache.CacheBuilder;
+import com.google.common.util.concurrent.MoreExecutors;
 
 public class MainSparqlViewMatcherCacheServer {
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 		JenaExtensionViewMatcher.register();
 
 
-		mainTestQuery(args);
+		mainTestQuery2(args);
+		//mainServer(args);
 	}
 
-	public static void mainTestQuery(String[] args) {
+	public static void mainTestQuery1(String[] args) {
 
 		QueryExecutionFactory qef = createQef();
-		System.out.println(ResultSetFormatter.asText(qef.createQueryExecution("SELECT * { ?s a <http://dbpedia.org/ontology/ResearchProject> }").execSelect()));
+		{
+			QueryExecution qe = qef.createQueryExecution("SELECT * { ?s a <http://dbpedia.org/ontology/ResearchProject> }");
+			System.out.println(ResultSetFormatter.asText(qe.execSelect()));
+			QueryExecutionViewMatcherMaster x = QueryExecutionDecoratorBase.unwrap(QueryExecutionViewMatcherMaster.class, qe);
+			System.out.println("CacheHitLevel:" + x.getCacheHitLevel());
+		}
 
-		QueryExecution qe = qef.createQueryExecution("SELECT * { ?s a <http://dbpedia.org/ontology/ResearchProject> }");
-		System.out.println(ResultSetFormatter.asText(qe.execSelect()));
-		QueryExecutionViewMatcherMaster x = QueryExecutionDecoratorBase.unwrap(QueryExecutionViewMatcherMaster.class, qe);
-		System.out.println(x.getCacheHitLevel());
+		{
+			QueryExecution qe = qef.createQueryExecution("SELECT * { ?s a <http://dbpedia.org/ontology/ResearchProject> }");
+			System.out.println(ResultSetFormatter.asText(qe.execSelect()));
+			QueryExecutionViewMatcherMaster x = QueryExecutionDecoratorBase.unwrap(QueryExecutionViewMatcherMaster.class, qe);
+			System.out.println("CacheHitLevel:" + x.getCacheHitLevel());
+		}
+
+		qef.close();
+	}
+
+	public static void mainTestQuery2(String[] args) {
+
+		QueryExecutionFactory qef = createQef();
+		{
+			QueryExecution qe = qef.createQueryExecution("SELECT * { ?s a <http://dbpedia.org/ontology/ResearchProject> }");
+			System.out.println(ResultSetFormatter.asText(qe.execSelect()));
+			QueryExecutionViewMatcherMaster x = QueryExecutionDecoratorBase.unwrap(QueryExecutionViewMatcherMaster.class, qe);
+			System.out.println("CacheHitLevel:" + x.getCacheHitLevel());
+		}
+
+		{
+			QueryExecution qe = qef.createQueryExecution("SELECT * { ?s a <http://dbpedia.org/ontology/ResearchProject> . ?s ?p ?o }");
+			System.out.println(ResultSetFormatter.asText(qe.execSelect()));
+			QueryExecutionViewMatcherMaster x = QueryExecutionDecoratorBase.unwrap(QueryExecutionViewMatcherMaster.class, qe);
+			System.out.println("CacheHitLevel:" + x.getCacheHitLevel());
+		}
 
 		qef.close();
 	}
@@ -52,7 +81,7 @@ public class MainSparqlViewMatcherCacheServer {
 
 		CacheBuilder<Object, Object> queryCacheBuilder = CacheBuilder.newBuilder().maximumSize(10000);
 
-		ExecutorService executorService = Executors.newCachedThreadPool();
+		ExecutorService executorService = MoreExecutors.newDirectExecutorService(); //Executors.newCachedThreadPool();
 
 		QueryExecutionFactoryViewMatcherMaster tmp = QueryExecutionFactoryViewMatcherMaster.create(qef,
 				queryCacheBuilder, executorService, true);

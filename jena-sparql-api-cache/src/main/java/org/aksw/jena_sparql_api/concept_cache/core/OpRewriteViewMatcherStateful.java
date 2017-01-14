@@ -141,8 +141,6 @@ public class OpRewriteViewMatcherStateful
         return cache;
     }
 
-
-
     //@Override
     // TODO Do we need a further argument for the variable information?
     /**
@@ -171,11 +169,10 @@ public class OpRewriteViewMatcherStateful
      */
     public void put(Node storageId, Op op) {
 
-        Op normalizedOp = opNormalizer.rewrite(op);
-
+        ProjectedOp projectedOp = SparqlCacheUtils.cutProjectionAndNormalize(op, opNormalizer);
+        Op normalizedOp = projectedOp.getResidualOp();
 
         // TODO: Finish cutting away the projection
-        ProjectedOp projectedOp = SparqlCacheUtils.cutProjection(normalizedOp);
         // TODO Hack to map between ProjectedOp and VarInfo - make this consistent!
         VarInfo varInfo;
         if(projectedOp != null) {
@@ -201,10 +198,14 @@ public class OpRewriteViewMatcherStateful
 
         // TODO Verify: Transform to qfpc directly (the normalizedOp has the projection cut away)
         //ProjectedQuadFilterPattern conjunctiveQuery = SparqlCacheUtils.transform(normalizedOp);
-        QuadFilterPattern qfp = SparqlCacheUtils.extractQuadFilterPattern(op);
+        //QuadFilterPattern qfp = SparqlCacheUtils.extractQuadFilterPattern(op);
 
-        if(qfp != null) {
-            QuadFilterPatternCanonical qfpc = SparqlCacheUtils.canonicalize2(qfp, VarGeneratorImpl2.create());
+        OpExtQuadFilterPatternCanonical opQfpc = normalizedOp instanceof OpExtQuadFilterPatternCanonical
+        		? (OpExtQuadFilterPatternCanonical)normalizedOp
+        		: null;
+
+        if(opQfpc != null) {
+            QuadFilterPatternCanonical qfpc = opQfpc.getQfpc();//SparqlCacheUtils.canonicalize2(qfp, VarGeneratorImpl2.create());
 
             viewMatcherQuadPatternBased.put(storageId, qfpc);
         }
@@ -272,12 +273,8 @@ public class OpRewriteViewMatcherStateful
     @Override
     public RewriteResult2 rewrite(Op rawOp) {
 
-        Op op = opNormalizer.rewrite(rawOp);
-
         // Since we are cutting the projection in the put method, we also have to cut it here
-
-        ProjectedOp pop = SparqlCacheUtils.cutProjection(op);
-
+        ProjectedOp pop = SparqlCacheUtils.cutProjectionAndNormalize(rawOp, opNormalizer);
 
 
         Op current = pop.getResidualOp(); // op;

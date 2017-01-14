@@ -443,6 +443,14 @@ public class RangedSupplierLazyLoadingListCache<T>
 
         //BlockingCacheIterator<T> cacheIt = new BlockingCacheIterator<>(cache);
     }
+
+	@Override
+	public String toString() {
+		return "RangedSupplierLazyLoadingListCache [cacheRange=" + cacheRange
+				+ ", costModel=" + costModel + ", rangesToData=" + rangesToData + ", dataThreshold=" + dataThreshold + ", executorService=" + executorService
+				+ "]";
+	}
+
 //
 //	@Override
 //    public <X> Optional<X> unwrap(Class<X> clazz, boolean reflexive) {

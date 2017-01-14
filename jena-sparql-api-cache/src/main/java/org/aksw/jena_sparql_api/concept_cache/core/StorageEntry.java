@@ -14,4 +14,11 @@ public class StorageEntry {
 	//public RangedSupplierLazyLoadingListCache<Binding> storage;
 	public RangedSupplier<Long, Binding> storage;
 	public VarInfo varInfo;
+
+	@Override
+	public String toString() {
+		return "StorageEntry [storage=" + storage + ", varInfo=" + varInfo + "]";
+	}
+
+
 }
