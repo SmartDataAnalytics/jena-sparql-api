@@ -12,6 +12,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.aksw.commons.collections.SetUtils;
+
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
@@ -218,6 +220,21 @@ public class FeatureMapImpl<K, V>
 	public Collection<V> get(Set<K> prototype) {
 		//Collection<V> result = Collections.unmodifiableCollection(tagSetToValues.get(prototype));
 		Collection<V> result = tagSetToValues.get(prototype);
+		return result;
+	}
+
+
+	@Override
+	public boolean removeValue(Object v) {
+		Set<Set<K>> tagSets = getTagSets(v);
+		boolean result = remove(tagSets);
+		return result;
+	}
+
+	@Override
+	public Set<Set<K>> getTagSets(Object v) {
+		@SuppressWarnings("unchecked")
+		Set<Set<K>> result = SetUtils.asSet(valueToTagSets.get((V)v));
 		return result;
 	}
 }

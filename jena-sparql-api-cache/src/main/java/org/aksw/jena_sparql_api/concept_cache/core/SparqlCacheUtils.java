@@ -602,7 +602,7 @@ public class SparqlCacheUtils {
         ProjectedOp projectedOp = SparqlCacheUtils.cutProjection(op);
 
         Op normalizedOp = opNormalizer.rewrite(projectedOp.getResidualOp());
-        ProjectedOp result = new ProjectedOp(projectedOp.getProjection(), projectedOp.isDistinct(), normalizedOp);
+        ProjectedOp result = new ProjectedOp(projectedOp.getProjection(), normalizedOp);
 
         return result;
     }
@@ -619,22 +619,22 @@ public class SparqlCacheUtils {
 
         Set<Var> projectVars = null;
 
-        boolean isDistinct = false;
+        int distinctLevel = 0;
         if(residualOp instanceof OpDistinct) {
-            isDistinct = true;
+        	distinctLevel = 2;
             residualOp = ((OpDistinct)residualOp).getSubOp();
         }
 
         if(residualOp instanceof OpProject) {
             OpProject tmp = (OpProject)residualOp;
-            projectVars = new HashSet<>(tmp.getVars());
+            projectVars = new LinkedHashSet<>(tmp.getVars());
 
             residualOp = tmp.getSubOp();
         }
 
         ProjectedOp result = projectVars == null
-                ? new ProjectedOp(OpUtils.visibleNamedVars(residualOp), false, residualOp)
-                : new ProjectedOp(projectVars, isDistinct, residualOp);
+                ? new ProjectedOp(new VarInfo(OpUtils.visibleNamedVars(residualOp), 0), residualOp)
+                : new ProjectedOp(new VarInfo(projectVars, distinctLevel), residualOp);
 
         return result;
     }

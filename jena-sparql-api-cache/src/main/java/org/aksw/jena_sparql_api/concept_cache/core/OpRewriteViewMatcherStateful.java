@@ -29,7 +29,8 @@ import org.aksw.jena_sparql_api.util.collection.RangedSupplierLazyLoadingListCac
 import org.aksw.jena_sparql_api.utils.ResultSetUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.aksw.jena_sparql_api.view_matcher.OpVarMap;
-import org.aksw.jena_sparql_api.views.index.LookupResult;
+import org.aksw.jena_sparql_api.view_matcher.SparqlViewMatcherProjectionUtils;
+import org.aksw.jena_sparql_api.views.index.KeyedOpVarMap;
 import org.aksw.jena_sparql_api.views.index.SparqlViewMatcherOp;
 import org.aksw.jena_sparql_api.views.index.SparqlViewMatcherOpImpl;
 import org.apache.jena.graph.Node;
@@ -86,15 +87,15 @@ public class OpRewriteViewMatcherStateful
 	private static final Logger logger = LoggerFactory.getLogger(OpRewriteViewMatcherStateful.class);
 
 	// TODO Maybe bundle normalizer and denormalizer into one object
-    protected Rewrite opNormalizer;
+    //protected Rewrite opNormalizer;
     protected Rewrite opDenormalizer;
 
     protected SparqlViewMatcherOp<Node> viewMatcherTreeBased;
     protected SparqlViewMatcherQfpc<Node> viewMatcherQuadPatternBased;
 
 
-    protected Map<Node, Map<Node, VarInfo>> patternIdToStorageIdToVarInfo;
-    protected Map<Node, Node> storageIdToPatternId;
+    //protected Map<Node, Map<Node, VarInfo>> patternIdToStorageIdToVarInfo;
+    //protected Map<Node, Node> storageIdToPatternId;
 
     // Maps result set ids to storage ids
     protected Cache<Node, StorageEntry> cache;
@@ -109,31 +110,31 @@ public class OpRewriteViewMatcherStateful
 
 
     public OpRewriteViewMatcherStateful(Cache<Node, StorageEntry> cache, Collection<RemovalListener<Node, StorageEntry>> removalListeners) {
-        this.opNormalizer = SparqlViewMatcherOpImpl::normalizeOp;
+        //this.opNormalizer = SparqlViewMatcherOpImpl::normalizeOp;
         this.opDenormalizer = SparqlViewMatcherOpImpl::denormalizeOp;
         this.viewMatcherTreeBased = SparqlViewMatcherOpImpl.create();
         this.viewMatcherQuadPatternBased = new SparqlViewMatcherQfpcImpl<>();
         this.cache = cache;
 
 
-        this.patternIdToStorageIdToVarInfo = new HashMap<>();
-        this.storageIdToPatternId = new HashMap<>();
+        //this.patternIdToStorageIdToVarInfo = new HashMap<>();
+        //this.storageIdToPatternId = new HashMap<>();
 
         removalListeners.add((n)-> removeStorage(n.getKey()));
     }
 
-    public void removeStorage(Node storageKey) {
-        Node patternId = storageIdToPatternId.computeIfPresent(storageKey, (k, v) -> null);
+    public void removeStorage(Node patternId) {
+        //Node patternId = storageIdToPatternId.computeIfPresent(storageKey, (k, v) -> null);
 
         viewMatcherTreeBased.removeKey(patternId);
         viewMatcherQuadPatternBased.removeKey(patternId);
 
         // TODO Maybe there is potential to optimize with another computeIfPresent
-        Map<Node, VarInfo> map = patternIdToStorageIdToVarInfo.get(patternId);
-        map.remove(storageKey);
-        if(patternIdToStorageIdToVarInfo.isEmpty()) {
-            storageIdToPatternId.remove(storageKey);
-        }
+        //Map<Node, VarInfo> map = patternIdToStorageIdToVarInfo.get(patternId);
+//        map.remove(storageKey);
+//        if(patternIdToStorageIdToVarInfo.isEmpty()) {
+//            storageIdToPatternId.remove(storageKey);
+//        }
     }
 
 
@@ -167,30 +168,32 @@ public class OpRewriteViewMatcherStateful
      * @param storageId
      * @param op
      */
-    public void put(Node storageId, Op op) {
+    public void put(Node storageId, Op normalizedOp) {
 
-        ProjectedOp projectedOp = SparqlCacheUtils.cutProjectionAndNormalize(op, opNormalizer);
-        Op normalizedOp = projectedOp.getResidualOp();
+        //ProjectedOp projectedOp = SparqlCacheUtils.cutProjectionAndNormalize(op, opNormalizer);
+        //Op normalizedOp = projectedOp.getResidualOp();
 
         // TODO: Finish cutting away the projection
         // TODO Hack to map between ProjectedOp and VarInfo - make this consistent!
-        VarInfo varInfo;
-        if(projectedOp != null) {
-            varInfo = new VarInfo(new HashSet<>(projectedOp.getProjection().getVars()), 0);//Collections.emptySet());
-            normalizedOp = projectedOp.getResidualOp();
-        } else {
-            throw new RuntimeException("todo handle this case");
-            //OpVars.visibleVars(normalizedOp);
-        }
+//        VarInfo varInfo;
+//        if(projectedOp != null) {
+//            varInfo = new VarInfo(new HashSet<>(projectedOp.getProjection().getVars()), 0);//Collections.emptySet());
+//            normalizedOp = projectedOp.getResidualOp();
+//        } else {
+//            throw new RuntimeException("todo handle this case");
+//            //OpVars.visibleVars(normalizedOp);
+//        }
 
+        // TODO Derive a proper patternId (maybe a hash from the normalizedOp?)
         Node patternId = storageId;
+
         // TODO Check if the pattern we are putting is isomorphic to an existing one
         //Node patternId = lookup(normalizedOp);
 
-        Map<Node, VarInfo> map = patternIdToStorageIdToVarInfo.computeIfAbsent(patternId,  (n) -> new HashMap<>());
-        map.put(storageId, varInfo);
+        //Map<Node, VarInfo> map = patternIdToStorageIdToVarInfo.computeIfAbsent(patternId,  (n) -> new HashMap<>());
+        //map.put(storageId, varInfo);
 
-        storageIdToPatternId.put(storageId, patternId);
+        //storageIdToPatternId.put(storageId, patternId);
 
 
         // Allocate a new id entry of this op
@@ -271,13 +274,14 @@ public class OpRewriteViewMatcherStateful
      *
      */
     @Override
-    public RewriteResult2 rewrite(Op rawOp) {
+    public RewriteResult2 rewrite(Op normalizedOp) {
 
         // Since we are cutting the projection in the put method, we also have to cut it here
-        ProjectedOp pop = SparqlCacheUtils.cutProjectionAndNormalize(rawOp, opNormalizer);
+        //ProjectedOp pop = SparqlCacheUtils.cutProjectionAndNormalize(rawOp, opNormalizer);
 
+    	Op current = normalizedOp;
 
-        Op current = pop.getResidualOp(); // op;
+        //Op current = pop.getResidualOp(); // op;
 
         //Multimap<Op, LookupResult<Node>> nodeToReplacements = HashMultimap.create();
 
@@ -288,13 +292,16 @@ public class OpRewriteViewMatcherStateful
             changed = false;
 
             // Attempt to replace complete subtrees
-            Collection<LookupResult<Node>> lookupResults = viewMatcherTreeBased.lookup(current);
+            Collection<KeyedOpVarMap<Node>> lookupResults = viewMatcherTreeBased.lookup(current);
+
+            // Projection validation:
+            //SparqlViewMatcherProjectionUtils.validateProjection(viewVarInfo, userVarInfo, vm)
 
 //            if(lookupResults.isEmpty()) {
 //                break;
 //            }
 
-            for(LookupResult<Node> lr : lookupResults) {
+            for(KeyedOpVarMap<Node> lr : lookupResults) {
                 OpVarMap opVarMap = lr.getOpVarMap();
 
                 Map<Op, Op> opMap = opVarMap.getOpMap();
@@ -466,6 +473,9 @@ public class OpRewriteViewMatcherStateful
 
         Map<Node, StorageEntry> storageMap = new HashMap<>();
 
+        //ProjectedOp cp = new ProjectedOp(pop.getProjection(), pop.isDistinct(), current);
+
+        //RewriteResult2 result = new RewriteResult2(current, storageMap, rewriteLevel);
         RewriteResult2 result = new RewriteResult2(current, storageMap, rewriteLevel);
         return result;
     }

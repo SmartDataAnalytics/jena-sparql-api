@@ -10,7 +10,7 @@ import java.util.function.BiConsumer;
  * items. Multiple items may have exactly the same features.
  *
  * Hence, this class is called FeatureMap for brevity, but is actually as Feature*Multi*Map.
- * Multimaps can be represented as Collections of entries; i.e. adding multiple entries with the same key is valid. 
+ * Multimaps can be represented as Collections of entries; i.e. adding multiple entries with the same key is valid.
  *
  *
  * @author raven
@@ -23,13 +23,15 @@ public interface FeatureMap<K, V>
     //extends Map<Set<K>, Collection<V>>
     //extends Multimap<Set<K>, V>
 {
-    
+
     default void forEach(BiConsumer<Set<K>, V> consumer) {
         this.forEach(e -> consumer.accept(e.getKey(), e.getValue()));
     }
-    
+
     void put(Set<K> tagSet, V value);
+
     boolean remove(Object tagSet);
+    boolean removeValue(Object value);
 
     Set<Set<K>> keySet();
     Collection<V> values();
@@ -38,7 +40,9 @@ public interface FeatureMap<K, V>
 
     // Get all items having exactly the specified feature set
     Collection<V> get(Set<K> prototype);
-    
+    Set<Set<K>> getTagSets(Object v);
+
+
     /**
      *
      * @param prototye

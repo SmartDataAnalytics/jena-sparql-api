@@ -1,7 +1,8 @@
 package org.aksw.jena_sparql_api.views.index;
 
-import java.util.Collection;
+import java.util.Map;
 
+import org.aksw.jena_sparql_api.view_matcher.OpVarMap;
 import org.apache.jena.sparql.algebra.Op;
 
 /**
@@ -22,10 +23,19 @@ import org.apache.jena.sparql.algebra.Op;
 public interface SparqlViewMatcherOp<K> {
     //boolean acceptsAdd(Op op);
 
+	K allocate(Op op);
+
     void put(K key, Op op);
 
-    LookupResult<K> lookupSingle(Op op);
-    Collection<LookupResult<K>> lookup(Op op);
+    //KeyedOpVarMap<K> lookupSingle(Op op);
+    //Collection<KeyedOpVarMap<K>> lookup(Op op);
+    /**
+     * The result should be a LinkedHashMap of candidate matches - i.e. the entry set should be ordered, with the 'best' match first
+     *
+     * @param op
+     * @return
+     */
+    Map<K, OpVarMap> lookup(Op op);
 
     void removeKey(Object key);
     //void remove(V key);

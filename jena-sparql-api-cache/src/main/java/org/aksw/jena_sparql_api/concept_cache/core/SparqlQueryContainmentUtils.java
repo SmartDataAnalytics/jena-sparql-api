@@ -168,8 +168,11 @@ public class SparqlQueryContainmentUtils {
 		Op userResOp = userPop.getResidualOp();
 
 		// TODO Add utility method for creating the varInfo object
-		VarInfo viewVarInfo = new VarInfo(new HashSet<>(viewPop.getProjection().getVars()), viewPop.isDistinct() ? 2 : 0);
-		VarInfo userVarInfo = new VarInfo(new HashSet<>(userPop.getProjection().getVars()), userPop.isDistinct() ? 2 : 0);
+//		VarInfo viewVarInfo = new VarInfo(new HashSet<>(viewPop.getProjection().getVars()), viewPop.isDistinct() ? 2 : 0);
+//		VarInfo userVarInfo = new VarInfo(new HashSet<>(userPop.getProjection().getVars()), userPop.isDistinct() ? 2 : 0);
+
+		VarInfo viewVarInfo = viewPop.getProjection();
+		VarInfo userVarInfo = userPop.getProjection();
 
     	Function<Op, OpIndex> opIndexer = new OpIndexerImpl();
 

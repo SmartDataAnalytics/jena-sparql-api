@@ -142,16 +142,18 @@ public class QueryExecutionViewMatcherMaster
     	// TODO opRewriter.lookup and opRewriter.put() both perform normalization
     	// We could this duplicate processing by normalizing here
     	// and passing the projected op to both functions
-        //ProjectedOp pop = SparqlCacheUtils.cutProjectionAndNormalize(queryOp, SparqlViewMatcherOpImpl::normalizeOp);
+        ProjectedOp pop = SparqlCacheUtils.cutProjectionAndNormalize(queryOp, SparqlViewMatcherOpImpl::normalizeOp);
+        Op coreQueryOp = pop.getResidualOp();
 
 
     	// The thing here is, that in general we need to
     	// - Initialize the execution context / jena-wise global data
     	// - Perform the rewrite (may affect execution context state)
     	// - Clean up the execution context / jena-wise global data
-    	RewriteResult2 rr = opRewriter.rewrite(queryOp);
+    	RewriteResult2 rr = opRewriter.rewrite(coreQueryOp);
     	cacheHitLevel = rr.getRewriteLevel();
     	Op rewrittenOp = rr.getOp();
+
 
     	Map<Node, StorageEntry> storageMap = rr.getIdToStorageEntry();
 
@@ -210,7 +212,7 @@ public class QueryExecutionViewMatcherMaster
 
 			Node serviceNode;
 			if(isRoot && cacheWholeQuery) {
-	    		serviceNode = NodeFactory.createURI("view://ex.org/view" + queryOp.hashCode());
+	    		serviceNode = NodeFactory.createURI("view://ex.org/view" + coreQueryOp.hashCode());
 				newRootServiceNode = serviceNode;
 			} else {
 				serviceNode = NodeFactory.createURI("view://service/" + idX++);
@@ -274,7 +276,7 @@ public class QueryExecutionViewMatcherMaster
         	// TODO The registration at the cache and the rewriter should be atomic
         	// At least we need to deal with the chance that the rewriter maps an op to an id for
         	// which the storageEntry has not yet been registered at the cache
-    		opRewriter.put(newRootServiceNode, queryOp);
+    		opRewriter.put(newRootServiceNode, coreQueryOp);
         	cache.put(newRootServiceNode, se2);
     	}
 

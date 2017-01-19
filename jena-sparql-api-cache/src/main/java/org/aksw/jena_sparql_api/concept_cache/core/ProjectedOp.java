@@ -1,41 +1,46 @@
 package org.aksw.jena_sparql_api.concept_cache.core;
 
-import java.util.Collection;
-
 import org.apache.jena.sparql.algebra.Op;
-import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.core.VarExprList;
 
 public class ProjectedOp {
 	//protected VarInfo varInfo;
-	protected VarExprList projectVars;
-	protected boolean distinct;
+	//protected VarExprList projectVars;
+	//protected boolean distinct;
+	protected VarInfo varInfo;
 	protected Op residualOp;
 
-	public ProjectedOp(Collection<Var> projectVars, boolean distinct, Op residualOp) {
-		super();
-		this.projectVars = new VarExprList();
-		for(Var v : projectVars) {
-			this.projectVars.add(v);
-		}
 
-		this.distinct = distinct;
+	// TODO: Add a Filter attribute (maybe require DNF)
+	//protected Set<Set<Expr>> filterDnf;
+
+//
+//	public ProjectedOp(Set<Var> projectVars, boolean distinct, Op residualOp) {
+//		super();
+////		this.projectVars = new VarExprList();
+////		for(Var v : projectVars) {
+////			this.projectVars.add(v);
+////		}
+////
+////		this.distinct = distinct;
+//		this.varInfo = new VarInfo(projectVars, distinct == true ? 2 : 0);
+//		this.residualOp = residualOp;
+//	}
+
+	public ProjectedOp(VarInfo varInfo, Op residualOp) {
+		super();
+//		this.projectVars = projection;
+//		this.distinct = distinct;
+		this.varInfo = varInfo;
 		this.residualOp = residualOp;
 	}
 
-	public ProjectedOp(VarExprList projection, boolean distinct, Op residualOp) {
-		super();
-		this.projectVars = projection;
-		this.distinct = distinct;
-		this.residualOp = residualOp;
+	public VarInfo getProjection() {
+		return varInfo;
 	}
 
-	public VarExprList getProjection() {
-		return projectVars;
-	}
-
+	@Deprecated
 	public boolean isDistinct() {
-		return distinct;
+		return varInfo.getDistinctLevel() > 0;
 	}
 
 	public Op getResidualOp() {
@@ -44,6 +49,6 @@ public class ProjectedOp {
 
 	@Override
 	public String toString() {
-		return "ProjectedOp [projection=" + projectVars + ", distinct=" + distinct + ", residualOp=" + residualOp + "]";
+		return "ProjectedOp [varInfo=" + varInfo + ", residualOp=" + residualOp + "]";
 	}
 }

@@ -30,6 +30,9 @@ import com.google.common.collect.Multimap;
 public class OpIndexerImpl
     implements Function<Op, OpIndex>
 {
+    protected Function<Op, Set<Set<String>>> opFeatureExtractor;
+
+
     public static Stream<Entry<Set<Expr>, QuadPatternIndex>> createQuadPatternIndex(Tree<Op> treeOp, Op qfpOp, QuadFilterPatternCanonical qfpc) {
         TreeNode<Op> opRef = new TreeNodeImpl<>(treeOp, qfpOp);
 
@@ -120,6 +123,8 @@ public class OpIndexerImpl
 
 //        String id = StringUtils.md5Hash("" + op);
 //        Node idNode = NodeFactory.createLiteral(id);
+
+        //Set<Set<String>> features = SparqlViewMatcherOpImpl.extractFeatures(op);
 
         OpIndex result = new OpIndex(op, tree, quadPatternIndex);
 
