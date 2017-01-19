@@ -8,6 +8,8 @@ import org.aksw.jena_sparql_api.view_matcher.OpVarMap;
 public interface SparqlViewMatcherPop<K> {
     //boolean acceptsAdd(Op op);
 
+	ProjectedOp getPop(K key);
+
     void put(K key, ProjectedOp op);
 
     //KeyedOpVarMap<K> lookupSingle(Op op);

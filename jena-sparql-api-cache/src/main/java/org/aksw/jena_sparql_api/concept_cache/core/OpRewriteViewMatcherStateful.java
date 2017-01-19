@@ -4,10 +4,10 @@ import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
@@ -18,7 +18,6 @@ import org.aksw.commons.collections.trees.TreeUtils;
 import org.aksw.jena_sparql_api.concept_cache.dirty.QfpcMatch;
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewMatcherQfpc;
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewMatcherQfpcImpl;
-import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpExtQuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
@@ -27,12 +26,10 @@ import org.aksw.jena_sparql_api.util.collection.CacheRangeInfo;
 import org.aksw.jena_sparql_api.util.collection.RangedSupplier;
 import org.aksw.jena_sparql_api.util.collection.RangedSupplierLazyLoadingListCache;
 import org.aksw.jena_sparql_api.utils.ResultSetUtils;
-import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.aksw.jena_sparql_api.view_matcher.OpVarMap;
-import org.aksw.jena_sparql_api.view_matcher.SparqlViewMatcherProjectionUtils;
-import org.aksw.jena_sparql_api.views.index.KeyedOpVarMap;
-import org.aksw.jena_sparql_api.views.index.SparqlViewMatcherOp;
 import org.aksw.jena_sparql_api.views.index.SparqlViewMatcherOpImpl;
+import org.aksw.jena_sparql_api.views.index.SparqlViewMatcherPop;
+import org.aksw.jena_sparql_api.views.index.SparqlViewMatcherPopImpl;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.algebra.Op;
@@ -90,7 +87,7 @@ public class OpRewriteViewMatcherStateful
     //protected Rewrite opNormalizer;
     protected Rewrite opDenormalizer;
 
-    protected SparqlViewMatcherOp<Node> viewMatcherTreeBased;
+    protected SparqlViewMatcherPop<Node> viewMatcherTreeBased;
     protected SparqlViewMatcherQfpc<Node> viewMatcherQuadPatternBased;
 
 
@@ -112,7 +109,7 @@ public class OpRewriteViewMatcherStateful
     public OpRewriteViewMatcherStateful(Cache<Node, StorageEntry> cache, Collection<RemovalListener<Node, StorageEntry>> removalListeners) {
         //this.opNormalizer = SparqlViewMatcherOpImpl::normalizeOp;
         this.opDenormalizer = SparqlViewMatcherOpImpl::denormalizeOp;
-        this.viewMatcherTreeBased = SparqlViewMatcherOpImpl.create();
+        this.viewMatcherTreeBased = SparqlViewMatcherPopImpl.create();
         this.viewMatcherQuadPatternBased = new SparqlViewMatcherQfpcImpl<>();
         this.cache = cache;
 
@@ -168,7 +165,7 @@ public class OpRewriteViewMatcherStateful
      * @param storageId
      * @param op
      */
-    public void put(Node storageId, Op normalizedOp) {
+    public void put(Node storageId, ProjectedOp pop) { // Op normalizedOp
 
         //ProjectedOp projectedOp = SparqlCacheUtils.cutProjectionAndNormalize(op, opNormalizer);
         //Op normalizedOp = projectedOp.getResidualOp();
@@ -203,6 +200,9 @@ public class OpRewriteViewMatcherStateful
         //ProjectedQuadFilterPattern conjunctiveQuery = SparqlCacheUtils.transform(normalizedOp);
         //QuadFilterPattern qfp = SparqlCacheUtils.extractQuadFilterPattern(op);
 
+
+        Op normalizedOp = pop.getResidualOp();
+
         OpExtQuadFilterPatternCanonical opQfpc = normalizedOp instanceof OpExtQuadFilterPatternCanonical
         		? (OpExtQuadFilterPatternCanonical)normalizedOp
         		: null;
@@ -210,12 +210,13 @@ public class OpRewriteViewMatcherStateful
         if(opQfpc != null) {
             QuadFilterPatternCanonical qfpc = opQfpc.getQfpc();//SparqlCacheUtils.canonicalize2(qfp, VarGeneratorImpl2.create());
 
+            // TODO Make the quad based view matcher projection-aware
             viewMatcherQuadPatternBased.put(storageId, qfpc);
         }
 
         // Always add the whole op
         //else {
-            viewMatcherTreeBased.put(storageId, normalizedOp);
+            viewMatcherTreeBased.put(storageId, pop);
         //}
 
 
@@ -274,12 +275,13 @@ public class OpRewriteViewMatcherStateful
      *
      */
     @Override
-    public RewriteResult2 rewrite(Op normalizedOp) {
+    public RewriteResult2 rewrite(ProjectedOp pop) {//Op normalizedOp) {
 
         // Since we are cutting the projection in the put method, we also have to cut it here
         //ProjectedOp pop = SparqlCacheUtils.cutProjectionAndNormalize(rawOp, opNormalizer);
 
-    	Op current = normalizedOp;
+    	Op current = pop.getResidualOp();//normalizedOp;
+    	//ProjectedOp current = pop;
 
         //Op current = pop.getResidualOp(); // op;
 
@@ -292,7 +294,8 @@ public class OpRewriteViewMatcherStateful
             changed = false;
 
             // Attempt to replace complete subtrees
-            Collection<KeyedOpVarMap<Node>> lookupResults = viewMatcherTreeBased.lookup(current);
+            ProjectedOp currentPop = new ProjectedOp(pop.getProjection(), current);
+            Map<Node, OpVarMap> lookupResults = viewMatcherTreeBased.lookup(currentPop);
 
             // Projection validation:
             //SparqlViewMatcherProjectionUtils.validateProjection(viewVarInfo, userVarInfo, vm)
@@ -301,14 +304,15 @@ public class OpRewriteViewMatcherStateful
 //                break;
 //            }
 
-            for(KeyedOpVarMap<Node> lr : lookupResults) {
-                OpVarMap opVarMap = lr.getOpVarMap();
+            for(Entry<Node, OpVarMap> lr : lookupResults.entrySet()) {
+                Node viewId = lr.getKey();
+                OpVarMap opVarMap = lr.getValue();
 
                 Map<Op, Op> opMap = opVarMap.getOpMap();
                 Iterable<Map<Var, Var>> varMaps = opVarMap.getVarMaps();
 
-                Node viewId = lr.getEntry().id;
-                Op viewRootOp = lr.getEntry().queryIndex.getOp();
+                //Op viewRootOp = lr.getEntry().queryIndex.getOp();
+                Op viewRootOp = viewMatcherTreeBased.getPop(viewId).getResidualOp();
 
                 Map<Var, Var> map = Iterables.getFirst(varMaps, null);
 

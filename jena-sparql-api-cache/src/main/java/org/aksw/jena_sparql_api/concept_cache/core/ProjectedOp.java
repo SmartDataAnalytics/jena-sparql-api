@@ -51,4 +51,35 @@ public class ProjectedOp {
 	public String toString() {
 		return "ProjectedOp [varInfo=" + varInfo + ", residualOp=" + residualOp + "]";
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((residualOp == null) ? 0 : residualOp.hashCode());
+		result = prime * result + ((varInfo == null) ? 0 : varInfo.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		ProjectedOp other = (ProjectedOp) obj;
+		if (residualOp == null) {
+			if (other.residualOp != null)
+				return false;
+		} else if (!residualOp.equals(other.residualOp))
+			return false;
+		if (varInfo == null) {
+			if (other.varInfo != null)
+				return false;
+		} else if (!varInfo.equals(other.varInfo))
+			return false;
+		return true;
+	}
 }

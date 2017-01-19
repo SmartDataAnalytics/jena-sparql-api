@@ -4,12 +4,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.aksw.commons.collections.trees.Tree;
@@ -74,12 +77,15 @@ public class SparqlViewMatcherOpImpl<P>
     public SparqlViewMatcherOpImpl(
             Rewrite opNormalizer,
             Function<Op, Set<Set<String>>> itemFeatureExtractor,
-            Function<Op, OpIndex> itemIndexer) {
+            Function<Op, OpIndex> itemIndexer,
+            Supplier<P> nextPatternIdSupplier) {
         super();
         this.opNormalizer = opNormalizer;
         this.itemFeatureExtractor = itemFeatureExtractor;
         this.itemIndexer = itemIndexer;
         this.featuresToIndexes = new FeatureMapImpl<>(); //featuresToIndexes;
+
+        this.nextPatternIdSupplier = nextPatternIdSupplier;
 
         idToQueryIndex = new HashMap<>();
 
@@ -92,6 +98,7 @@ public class SparqlViewMatcherOpImpl<P>
     	put(result, item);
     	return result;
     }
+
 
     @Override
     public void put(P key, Op item) {
@@ -376,14 +383,20 @@ public class SparqlViewMatcherOpImpl<P>
     	return Collections.singleton(OpVisitorFeatureExtractor.getFeatures(oop, (op) -> op.getClass().getSimpleName()));
     }
 
-    public static <T> SparqlViewMatcherOp<T> create() {
+    public static SparqlViewMatcherOp<Integer> create() {
 //        Function<Op, Set<Set<String>>> itemFeatureExtractor = (oop) ->
 //            Collections.singleton(OpVisitorFeatureExtractor.getFeatures(oop, (op) -> op.getClass().getSimpleName()));
 
-        SparqlViewMatcherOp<T> result = new SparqlViewMatcherOpImpl<>(
+    	Iterator<Integer> nextPatternIdIt =
+    			IntStream.generate(new AtomicInteger()::getAndIncrement).iterator();
+
+    	Supplier<Integer> supplier = () -> nextPatternIdIt.next();
+
+        SparqlViewMatcherOp<Integer> result = new SparqlViewMatcherOpImpl<>(
                 SparqlViewMatcherOpImpl::normalizeOp,
                 SparqlViewMatcherOpImpl::extractFeatures,
-                new OpIndexerImpl());
+                new OpIndexerImpl(),
+                supplier);
 
         return result;
     }
@@ -400,4 +413,11 @@ public class SparqlViewMatcherOpImpl<P>
 //            idToQueryIndex.remove(key);
 //        }
     }
+
+	@Override
+	public Op getOp(P key) {
+		OpIndex opIndex = idToQueryIndex.get(key);
+		Op result = opIndex == null ? null : opIndex.getOp();
+		return result;
+	}
 }

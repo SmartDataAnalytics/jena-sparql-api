@@ -23,6 +23,8 @@ import org.apache.jena.sparql.algebra.Op;
 public interface SparqlViewMatcherOp<K> {
     //boolean acceptsAdd(Op op);
 
+	Op getOp(K key);
+
 	K allocate(Op op);
 
     void put(K key, Op op);

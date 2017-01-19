@@ -6,10 +6,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
+import org.aksw.commons.collections.trees.Tree;
 import org.aksw.jena_sparql_api.concept_cache.core.ProjectedOp;
 import org.aksw.jena_sparql_api.concept_cache.core.VarInfo;
+import org.aksw.jena_sparql_api.concept_cache.core.VarUsage;
+import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 import org.aksw.jena_sparql_api.view_matcher.OpVarMap;
 import org.aksw.jena_sparql_api.view_matcher.SparqlViewMatcherProjectionUtils;
+import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.core.Var;
 
@@ -27,8 +31,7 @@ import com.google.common.collect.Multimap;
 public class SparqlViewMatcherPopImpl<K, P>
 	implements SparqlViewMatcherPop<K>
 {
-
-	SparqlViewMatcherOp<P> delegate;
+	protected SparqlViewMatcherOp<P> delegate;
 
     // A map to associate projections with pattern ids
     //protected Map<P, Map<K, ProjectedOp>> patternIdToKeyToPop;
@@ -37,17 +40,20 @@ public class SparqlViewMatcherPopImpl<K, P>
 
     protected Map<K, ProjectedOp> keyToPop;
 
-    public SparqlViewMatcherPopImpl() {
+    public SparqlViewMatcherPopImpl(SparqlViewMatcherOp<P> delegate) {
     	this(
-    		null,
+    		delegate,
     		HashMultimap.create(),
     		new HashMap<>(),
     		new HashMap<>()
     	);
     }
 
-    public SparqlViewMatcherPopImpl(SparqlViewMatcherOp<P> delegate, Multimap<P, K> patternIdToKeys,
-			Map<K, P> keyToPatternId, Map<K, ProjectedOp> keyToPop) {
+    public SparqlViewMatcherPopImpl(
+    		SparqlViewMatcherOp<P> delegate,
+    		Multimap<P, K> patternIdToKeys,
+			Map<K, P> keyToPatternId,
+			Map<K, ProjectedOp> keyToPop) {
 		super();
 		this.delegate = delegate;
 		this.patternIdToKeys = patternIdToKeys;
@@ -104,8 +110,12 @@ public class SparqlViewMatcherPopImpl<K, P>
 	@Override
 	public Map<K, OpVarMap> lookup(ProjectedOp pop) {
 
-		VarInfo userVarInfo = pop.getProjection();
+
+		//VarInfo userVarInfo = pop.getProjection();
+
+
     	Op patternOp = pop.getResidualOp();
+        Tree<Op> userTree = OpUtils.createTree(patternOp);
 
 		Map<P, OpVarMap> cands = delegate.lookup(patternOp);
 
@@ -117,6 +127,18 @@ public class SparqlViewMatcherPopImpl<K, P>
 		for(Entry<P, OpVarMap> cand : cands.entrySet()) {
 			P patternId = cand.getKey();
 			OpVarMap opVarMap = cand.getValue();
+
+			// Determine the user node corresponding to the view's root node
+            Map<Op, Op> opMap = opVarMap.getOpMap();
+            Op viewRootOp = delegate.getOp(patternId);
+            Op userViewRootOp = opMap.get(viewRootOp);
+
+
+            // Analyze the var usage at that node
+            VarUsage varUsage = OpUtils.analyzeVarUsage(userTree, userViewRootOp);
+            // TODO Take distinct level into account
+            VarInfo userVarInfo = new VarInfo(VarUsage.getMandatoryVars(varUsage), 0);
+
 
 			for(Map<Var, Var> varMap : opVarMap.getVarMaps()) {
 				Collection<K> keys = lookupKeys(userVarInfo, patternId, varMap);
@@ -135,10 +157,24 @@ public class SparqlViewMatcherPopImpl<K, P>
 	@Override
 	public void removeKey(Object key) {
 		keyToPop.remove(key);
-		P patternId = keyToPatternId.get(key);
+		Object patternId = keyToPatternId.get(key);
 
 		delegate.removeKey(patternId);
 		patternIdToKeys.remove(patternId, key);
 		keyToPatternId.remove(key);
 	}
+
+	@Override
+	public ProjectedOp getPop(K key) {
+		ProjectedOp result = keyToPop.get(key);
+		return result;
+	}
+
+	public static SparqlViewMatcherPop<Node> create() {
+		SparqlViewMatcherOp<Integer> delegate = SparqlViewMatcherOpImpl.create();
+		SparqlViewMatcherPop<Node> result = new SparqlViewMatcherPopImpl<>(delegate);
+		return result;
+	}
+
+
 }
