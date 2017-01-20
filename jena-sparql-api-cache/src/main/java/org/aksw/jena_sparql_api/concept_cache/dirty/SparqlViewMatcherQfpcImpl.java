@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -18,7 +19,6 @@ import org.aksw.commons.collections.multimaps.BiHashMultimap;
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
 import org.aksw.commons.collections.multimaps.MultimapUtils;
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.Utils2;
-import org.aksw.jena_sparql_api.concept_cache.core.CacheResult;
 import org.aksw.jena_sparql_api.concept_cache.core.QfpcAggMatch;
 import org.aksw.jena_sparql_api.concept_cache.core.SetUtils;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
@@ -95,8 +95,8 @@ public class SparqlViewMatcherQfpcImpl<K>
      *
      * @return
      */
-    public Collection<QfpcMatch<K>> lookup(QuadFilterPatternCanonical queryQfpc) {
-    	Collection<QfpcMatch<K>> result = lookupCore(queryQfpc, quadCnfToSummary, qfpcToQuadToCnf, qfpcToKeys);
+    public Map<K, QfpcMatch> lookup(QuadFilterPatternCanonical queryQfpc) {
+    	Map<K, QfpcMatch> result = lookupCore(queryQfpc, quadCnfToSummary, qfpcToQuadToCnf, qfpcToKeys);
 
 //    	List<CacheResult2<V>> result = tmp.stream()
 //    		.map(qfpcMatch -> new CacheResult2<>())
@@ -106,15 +106,41 @@ public class SparqlViewMatcherQfpcImpl<K>
     }
 
 
-    public static <K> List<QfpcMatch<K>> filterSubsumption(Collection<QfpcMatch<K>> hits) {
-        // Prune subsumed results
-        List<QfpcMatch<K>> result =
-                hits.stream()
-                .filter(a ->
-                    !hits.stream().anyMatch(b -> a != b && b.getDiffPattern().isSubsumedBy(a.getDiffPattern())))
-                .collect(Collectors.toList());
+//    public static <K> List<QfpcMatch<K>> filterSubsumption(Collection<QfpcMatch<K>> hits) {
+//        // Prune subsumed results
+//        List<QfpcMatch<K>> result =
+//                hits.stream()
+//                .filter(a ->
+//                    !hits.stream().anyMatch(b -> a != b && b.getDiffPattern().isSubsumedBy(a.getDiffPattern())))
+//                .collect(Collectors.toList());
+//
+//            logger.debug("CacheHits after subsumtion: " + result.size());
+//
+//
+//
+//        // TODO We need to return all subsumed candidates so that we can
+//        // properly establish subsumption relations
+//
+//
+//
+//       logger.debug("CacheHits: " + result.size());
+//
+//       return result;
+//    }
 
-            logger.debug("CacheHits after subsumtion: " + result.size());
+    public static <K> Map<K, QfpcMatch> filterSubsumption(Map<K, QfpcMatch> hits) {
+        // Prune subsumed results
+        Map<K, QfpcMatch> result =
+                hits.entrySet().stream()
+                .filter(a ->
+                    !hits.entrySet().stream().anyMatch(b -> a != b && b.getValue().getDiffPattern().isSubsumedBy(a.getValue().getDiffPattern())))
+                .collect(Collectors.toMap(
+                		Entry::getKey,
+                		Entry::getValue,
+                		(x, y) -> { throw new AssertionError(); },
+                		LinkedHashMap::new));
+
+        logger.debug("CacheHits after subsumtion: " + result.size());
 
 
 
@@ -128,14 +154,18 @@ public class SparqlViewMatcherQfpcImpl<K>
        return result;
     }
 
-    public static <K> Collection<QfpcMatch<K>> lookupCore(
+
+
+
+    public static <K> Map<K, QfpcMatch> lookupCore(
     		QuadFilterPatternCanonical queryQfpc,
     		IBiSetMultimap<Set<Set<Expr>>, QuadFilterPatternCanonical> quadCnfToSummary,
     		//Map<QuadFilterPatternCanonical, Map<Set<Var>, Table>> cacheData,
     		Map<QuadFilterPatternCanonical, IBiSetMultimap<Quad, Set<Set<Expr>>>> qfpcToQuadToCnf,
     		Multimap<QuadFilterPatternCanonical, K> qfpcToKeys
     ) {
-        List<QfpcMatch<K>> result = new ArrayList<>();
+        //List<QfpcMatch<K>> result = new ArrayList<>();
+    	Map<K, QfpcMatch> result = new LinkedHashMap<>();
 
         // TODO: We need the quadToCnf map for the queryPs
         IBiSetMultimap<Quad, Set<Set<Expr>>> queryQuadToCnf = SparqlCacheUtils.createMapQuadsToFilters(queryQfpc);
@@ -234,9 +264,10 @@ public class SparqlViewMatcherQfpcImpl<K>
                     Collection<K> keys = qfpcToKeys.get(cand);
                     for(K k : keys) {
                         //Set<Var> candVars = candRename.getVarsMentioned();
-                        QfpcMatch<K> cacheHit = new QfpcMatch<>(candRename, diffPattern, k, varMap);
+                        QfpcMatch cacheHit = new QfpcMatch(candRename, diffPattern, varMap);
 
-                        result.add(cacheHit);
+                        //result.add(cacheHit);
+                        result.put(k, cacheHit);
 
                     }
 
@@ -265,7 +296,7 @@ public class SparqlViewMatcherQfpcImpl<K>
 //    }
 
 
-    public static <K> QfpcAggMatch<K> aggregateResults(Collection<QfpcMatch<K>> actualResult) {
+    public static <K> QfpcAggMatch<K> aggregateResults(Map<K, QfpcMatch> actualResult) {
         // TODO This has square complexity - maybe we could do better
         //List<QfpcMatch> argh = result;
 //
@@ -282,18 +313,20 @@ public class SparqlViewMatcherQfpcImpl<K>
         //CacheHit r = null;
         QuadFilterPatternCanonical replacementPattern = null;
         Set<K> keys = new LinkedHashSet<>();
-        for(QfpcMatch<K> ch : actualResult) {
+        for(Entry<K, QfpcMatch> e : actualResult.entrySet()) {
+        	K key = e.getKey();
+        	QfpcMatch ch = e.getValue();
 
             logger.debug("VarMap: Cache to Query: " + ch.getVarMap());
             //ch.get
             if(replacementPattern == null) {
                  replacementPattern = ch.getDiffPattern();
-                 keys.add(ch.getTable());
+                 keys.add(key);
             } else {
                 QuadFilterPatternCanonical diff = replacementPattern.diff(ch.getDiffPattern());
                 if(!diff.equals(replacementPattern)) {
                     replacementPattern = diff;
-                    keys.add(ch.getTable());
+                    keys.add(key);
                 }
             }
         }

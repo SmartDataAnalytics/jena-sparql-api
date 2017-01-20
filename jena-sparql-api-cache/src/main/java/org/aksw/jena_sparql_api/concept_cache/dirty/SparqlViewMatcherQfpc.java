@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.concept_cache.dirty;
 
-import java.util.Collection;
+import java.util.Map;
 
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 
@@ -13,7 +13,7 @@ import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
  */
 public interface SparqlViewMatcherQfpc<K>
 {
-    Collection<QfpcMatch<K>> lookup(QuadFilterPatternCanonical queryQfpc);
+    Map<K, QfpcMatch> lookup(QuadFilterPatternCanonical queryQfpc);
     void put(K key, QuadFilterPatternCanonical qfpc);//QuadFilterPatternCanonical qfpc, Table table);
     void removeKey(Object key);
 }

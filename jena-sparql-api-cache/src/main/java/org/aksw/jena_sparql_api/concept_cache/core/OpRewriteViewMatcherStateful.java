@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -410,19 +411,23 @@ public class OpRewriteViewMatcherStateful
 
                 logger.debug("VarUsage: " + varUsage);
 
-                Collection<QfpcMatch<Node>> hits = viewMatcherQuadPatternBased.lookup(qfpc);
+                Map<Node, QfpcMatch> hits = viewMatcherQuadPatternBased.lookup(qfpc);
 
                 // Only retain hits for which we actually have complete cache data
-                Map<Node, Table> hitData = hits.stream()
-                		.map(hit -> new SimpleEntry<>(hit.getTable(), getTable(cache, hit.getTable())))
+                Map<Node, Table> hitData = hits.entrySet().stream()
+                		.map(hit -> new SimpleEntry<>(hit.getKey(), getTable(cache, hit.getKey())))
                 		.filter(x -> x.getValue() != null)
                 		.collect(Collectors.toMap(
                 				x -> x.getKey(), x -> x.getValue()));
 
                 // Filter hits by those having associated data
-                hits = hits.stream()
-                		.filter(x -> hitData.containsKey(x.getTable()))
-                		.collect(Collectors.toList());
+                hits = hits.entrySet().stream()
+                		.filter(x -> hitData.containsKey(x.getKey()))
+                		.collect(Collectors.toMap(
+                				Entry::getKey,
+                				Entry::getValue,
+                				(x, y) -> { throw new AssertionError(); },
+                				LinkedHashMap::new));
 
                 // Remove subsumed hits
                 hits = SparqlViewMatcherQfpcImpl.filterSubsumption(hits);
@@ -434,8 +439,8 @@ public class OpRewriteViewMatcherStateful
 
 	                List<Op> ops = new ArrayList<>();
 
-	                for(QfpcMatch<Node> hit : hits) {
-	                	Table table = hitData.get(hit.getTable());
+	                for(Entry<Node, QfpcMatch> hit : hits.entrySet()) {
+	                	Table table = hitData.get(hit.getKey());
 
 	                	Op xop = OpTable.create(table);
 	                	ops.add(xop);
