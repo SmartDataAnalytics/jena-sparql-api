@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.aksw.jena_sparql_api.concept_cache.core.VarInfo;
 import org.aksw.jena_sparql_api.utils.ClauseUtils;
 import org.aksw.jena_sparql_api.utils.CnfUtils;
 import org.aksw.jena_sparql_api.utils.DnfUtils;
@@ -28,40 +27,30 @@ public class QuadFilterPatternCanonical {
     protected Set<Quad> quads;
 
 
-    //protected VarInfo varInfo;
-
-
     // TODO Replace with exprHolder
-    protected Set<Set<Expr>> filterCnf;
-    protected Set<Set<Expr>> filterDnf;
+//    protected Set<Set<Expr>> filterCnf;
+//    protected Set<Set<Expr>> filterDnf;
+    protected ExprHolder exprHolder;
 
-    public QuadFilterPatternCanonical(Set<Quad> quads, Set<Set<Expr>> filterCnf) {
-        this(quads, filterCnf, false);
-    }
+//    public QuadFilterPatternCanonical(Set<Quad> quads, Set<Set<Expr>> filterCnf) {
+//        this(quads, filterCnf, false);
+//    }
 
-    public QuadFilterPatternCanonical(Set<Quad> quads, Set<Set<Expr>> filterNf, boolean isDnf) {
+    public QuadFilterPatternCanonical(Set<Quad> quads, ExprHolder exprHolder) {
         super();
         this.quads = quads;
-        if(isDnf) {
-            this.filterDnf = filterNf;
-            this.filterCnf = CnfUtils.toSetCnf(DnfUtils.toExpr(filterNf));
-        } else {
-            this.filterCnf = filterNf;
-            this.filterDnf = DnfUtils.toSetDnf(CnfUtils.toExpr(filterCnf), true);
-        }
-        //this.filterDnf = DnfUtils.toSetDnf(CnfUtils.toExpr(filterCnf));
-
+        this.exprHolder = exprHolder;
     }
 
 
     public boolean isEmpty() {
-        boolean result = quads.isEmpty() && filterCnf.isEmpty();
+        boolean result = quads.isEmpty() && exprHolder.isEmpty();
         return result;
     }
 
     public QuadFilterPattern toQfp()
     {
-        Expr expr = DnfUtils.toExpr(filterCnf); //CnfUtils.toExpr(filterDnf);
+        Expr expr = DnfUtils.toExpr(exprHolder.getCnf()); //CnfUtils.toExpr(filterDnf);
         QuadFilterPattern result = new QuadFilterPattern(new ArrayList<>(quads), expr);
         return result;
     }
@@ -69,7 +58,7 @@ public class QuadFilterPatternCanonical {
     //@Deprecated // Use OpUtils.toOp(...) instead
     public Op toOp() {
 
-        ExprList exprs = CnfUtils.toExprList(filterCnf);
+        ExprList exprs = CnfUtils.toExprList(exprHolder.getCnf());
         //QuadPattern qp = QuadPatternUtils.create(quads);
 
         Op result = OpUtils.toOp(quads, OpQuadPattern::new);
@@ -81,12 +70,16 @@ public class QuadFilterPatternCanonical {
         return quads;
     }
 
+    public ExprHolder getExprHolder() {
+    	return exprHolder;
+    }
+
     public Set<Set<Expr>> getFilterCnf() {
-        return filterCnf;
+        return exprHolder.getCnf();
     }
 
     public Set<Set<Expr>> getFilterDnf() {
-        return filterDnf;
+        return exprHolder.getDnf();
     }
 
     public Set<Var> getVarsMentioned() {
@@ -94,7 +87,7 @@ public class QuadFilterPatternCanonical {
 
         // Optionally, include the filterCnf, although a filter should never include any vars that are not part
         // of the quads
-        Set<Var> extra = NfUtils.getVarsMentioned(filterCnf);
+        Set<Var> extra = NfUtils.getVarsMentioned(exprHolder.getCnf());
         result.addAll(extra);
 
         return result;
@@ -109,17 +102,17 @@ public class QuadFilterPatternCanonical {
 
     public QuadFilterPatternCanonical applyNodeTransform(NodeTransform nodeTransform) {
         Set<Quad> newQuads = QuadUtils.applyNodeTransform(quads, nodeTransform);
-        Set<Set<Expr>> newExprs = ClauseUtils.applyNodeTransformSet(filterCnf, nodeTransform);
+        Set<Set<Expr>> newExprs = ClauseUtils.applyNodeTransformSet(exprHolder.getCnf(), nodeTransform);
 
-        QuadFilterPatternCanonical result = new QuadFilterPatternCanonical(newQuads, newExprs);
+        QuadFilterPatternCanonical result = new QuadFilterPatternCanonical(newQuads, ExprHolder.fromCnf(newExprs));
         return result;
     }
 
     public QuadFilterPatternCanonical diff(QuadFilterPatternCanonical other) {
         Set<Quad> newQuads = new HashSet<Quad>(Sets.difference(quads, other.quads));
-        Set<Set<Expr>> newCnf = new HashSet<Set<Expr>>(Sets.difference(filterCnf, other.filterCnf));
+        Set<Set<Expr>> newCnf = new HashSet<Set<Expr>>(Sets.difference(exprHolder.getCnf(), other.exprHolder.getCnf()));
 
-        QuadFilterPatternCanonical result = new QuadFilterPatternCanonical(newQuads, newCnf);
+        QuadFilterPatternCanonical result = new QuadFilterPatternCanonical(newQuads, ExprHolder.fromCnf(newCnf));
         return result;
     }
 
@@ -127,7 +120,7 @@ public class QuadFilterPatternCanonical {
         boolean containsAllQuads = other.getQuads().containsAll(quads);
 
         boolean result = containsAllQuads
-            ? CnfUtils.isSubsumedBy(other.filterCnf, filterCnf)
+            ? CnfUtils.isSubsumedBy(other.getFilterCnf(), getFilterCnf())
             : false;
 
         return result;
@@ -146,7 +139,7 @@ public class QuadFilterPatternCanonical {
         final int prime = 31;
         int result = 1;
         result = prime * result
-                + ((filterCnf == null) ? 0 : filterCnf.hashCode());
+                + ((exprHolder == null) ? 0 : exprHolder.hashCode());
         result = prime * result + ((quads == null) ? 0 : quads.hashCode());
         return result;
     }
@@ -154,7 +147,7 @@ public class QuadFilterPatternCanonical {
     @Override
     public String toString() {
         return "<quads=" + quads + ", filterCnf="
-                + filterCnf + ", filterDnf=" + filterDnf + ">";
+                + exprHolder + ">";
     }
 
     @Override
@@ -166,10 +159,10 @@ public class QuadFilterPatternCanonical {
         if (getClass() != obj.getClass())
             return false;
         QuadFilterPatternCanonical other = (QuadFilterPatternCanonical) obj;
-        if (filterCnf == null) {
-            if (other.filterCnf != null)
+        if (exprHolder == null) {
+            if (other.exprHolder != null)
                 return false;
-        } else if (!filterCnf.equals(other.filterCnf))
+        } else if (!exprHolder.equals(other.exprHolder))
             return false;
         if (quads == null) {
             if (other.quads != null)

@@ -7,7 +7,7 @@ import org.aksw.jena_sparql_api.utils.DnfUtils;
 import org.apache.jena.sparql.expr.Expr;
 
 /**
- * Holder for holding an expression in different representations,
+ * Holder for holding an immutable expression in different representations,
  * such as normal forms.
  * Lazy conversion between representations.
  *
@@ -66,6 +66,11 @@ public class ExprHolder {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((getExpr() == null) ? 0 : getExpr().hashCode());
+		return result;
+	}
+
+	boolean isEmpty() {
+		boolean result = getCnf().isEmpty();
 		return result;
 	}
 

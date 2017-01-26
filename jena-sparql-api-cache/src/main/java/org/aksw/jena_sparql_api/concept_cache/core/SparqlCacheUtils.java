@@ -20,6 +20,7 @@ import org.aksw.jena_sparql_api.algebra.transform.TransformReplaceConstants;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMapImpl;
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewMatcherQfpc;
+import org.aksw.jena_sparql_api.concept_cache.domain.ExprHolder;
 import org.aksw.jena_sparql_api.concept_cache.domain.PatternSummary;
 import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
@@ -157,7 +158,7 @@ public class SparqlCacheUtils {
             return r;
         }).collect(Collectors.toSet());
 
-        QuadFilterPatternCanonical result = new QuadFilterPatternCanonical(quads, newCnf);
+        QuadFilterPatternCanonical result = new QuadFilterPatternCanonical(quads, ExprHolder.fromCnf(newCnf));
         return result;
     }
 
@@ -210,7 +211,7 @@ public class SparqlCacheUtils {
             }
         }
 
-        QuadFilterPatternCanonical result = new QuadFilterPatternCanonical(newQuads, newCnf);
+        QuadFilterPatternCanonical result = new QuadFilterPatternCanonical(newQuads, ExprHolder.fromCnf(newCnf));
         return result;
     }
 
@@ -839,7 +840,7 @@ public class SparqlCacheUtils {
     // Assumes that ReplaceConstants has been called
     public static QuadFilterPatternCanonical canonicalize2(QuadFilterPattern qfp, Generator<Var> generator) {
         Set<Set<Expr>> dnf = DnfUtils.toSetDnf(qfp.getExpr());
-        QuadFilterPatternCanonical result = new QuadFilterPatternCanonical(new LinkedHashSet<>(qfp.getQuads()), dnf, true);
+        QuadFilterPatternCanonical result = new QuadFilterPatternCanonical(new LinkedHashSet<>(qfp.getQuads()), ExprHolder.fromDnf(dnf));
 
         return result;
     }
@@ -849,7 +850,7 @@ public class SparqlCacheUtils {
         tmp = removeDefaultGraphFilter(tmp);
         Set<Set<Expr>> cnf = CnfUtils.toSetCnf(qfp.getExpr());
         cnf.addAll(tmp.getFilterCnf());
-        QuadFilterPatternCanonical result = new QuadFilterPatternCanonical(tmp.getQuads(), cnf);
+        QuadFilterPatternCanonical result = new QuadFilterPatternCanonical(tmp.getQuads(), ExprHolder.fromCnf(cnf));
 
         return result;
     }
@@ -861,7 +862,7 @@ public class SparqlCacheUtils {
         newCnf.addAll(qfpc.getFilterCnf());
         newCnf.addAll(tmp.getFilterCnf());
 
-        QuadFilterPatternCanonical result = new QuadFilterPatternCanonical(tmp.getQuads(), newCnf);
+        QuadFilterPatternCanonical result = new QuadFilterPatternCanonical(tmp.getQuads(), ExprHolder.fromCnf(newCnf));
         return result;
     }
 
@@ -894,7 +895,7 @@ public class SparqlCacheUtils {
             newQuads.add(newQuad);
         }
 
-        QuadFilterPatternCanonical result = new QuadFilterPatternCanonical(newQuads, cnf);
+        QuadFilterPatternCanonical result = new QuadFilterPatternCanonical(newQuads, ExprHolder.fromCnf(cnf));
         return result;
     }
 
@@ -913,7 +914,7 @@ public class SparqlCacheUtils {
         //System.out.println("varOccurrences: " + varOccurrences);
         //Set<Set<Set<Expr>>> quadCnfs = new HashSet<Set<Set<Expr>>>(quadCnfList);
 
-        QuadFilterPatternCanonical canonicalPattern = new QuadFilterPatternCanonical(quads, filterDnf);
+        QuadFilterPatternCanonical canonicalPattern = new QuadFilterPatternCanonical(quads, ExprHolder.fromDnf(filterDnf));
         //canonicalPattern = canonicalize(canonicalPattern, generator);
 
 
