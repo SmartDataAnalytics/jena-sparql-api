@@ -25,8 +25,9 @@ import org.aksw.commons.collections.utils.StreamUtils;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.ProblemVarMappingExpr;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
+import org.aksw.jena_sparql_api.concept_cache.domain.ConjunctiveQuery;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
-import org.aksw.jena_sparql_api.concept_cache.op.OpExtQuadFilterPatternCanonical;
+import org.aksw.jena_sparql_api.concept_cache.op.OpExtConjunctiveQuery;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.LayerMapping;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.MatchingStrategyFactory;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.SequentialMatchIterator;
@@ -50,10 +51,8 @@ import org.apache.jena.sparql.expr.ExprVar;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Multiset;
 import com.google.common.collect.Range;
 
 public class SparqlViewMatcherUtils {
@@ -361,7 +360,7 @@ public class SparqlViewMatcherUtils {
             map.put(OpSlice.class, GenericBinaryOpImpl.create(SparqlViewMatcherUtils::deriveProblemsSlice));
             map.put(OpExtend.class, GenericBinaryOpImpl.create(SparqlViewMatcherUtils::deriveProblemsExtend));
 
-            map.put(OpExtQuadFilterPatternCanonical.class, GenericBinaryOpImpl.create(SparqlViewMatcherUtils::deriveProblemsQfpc));
+            map.put(OpExtConjunctiveQuery.class, GenericBinaryOpImpl.create(SparqlViewMatcherUtils::deriveProblemsCq));
 
 
             map.put(OpLeftJoin.class, (x, y) -> Collections.emptySet());
@@ -481,9 +480,31 @@ public class SparqlViewMatcherUtils {
     	return result;
     }
 
-    public static Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> deriveProblemsQfpc(OpExtQuadFilterPatternCanonical cacheOp, OpExtQuadFilterPatternCanonical userOp) {
-        QuadFilterPatternCanonical cacheQfpc = cacheOp.getQfpc();
-        QuadFilterPatternCanonical queryQfpc = userOp.getQfpc();
+    public static Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> deriveProblemsQfpc(OpExtConjunctiveQuery cacheOp, OpExtConjunctiveQuery userOp) {
+    	ConjunctiveQuery viewCq = cacheOp.getQfpc();
+    	ConjunctiveQuery userCq = userOp.getQfpc();
+
+    	Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result =
+    			deriveProblemsCq(viewCq, userCq);
+
+    	// TODO Validate projection
+
+    	return result;
+    }
+
+    public static Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> deriveProblemsCq(ConjunctiveQuery viewCq, ConjunctiveQuery userCq) {
+    	QuadFilterPatternCanonical viewQfpc = viewCq.getPattern();
+        QuadFilterPatternCanonical userQfpc = userCq.getPattern();
+
+    	Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result =
+    			deriveProblemsQfpc(viewQfpc, userQfpc);
+
+    	return result;
+    }
+
+
+
+    public static Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> deriveProblemsQfpc(QuadFilterPatternCanonical cacheQfpc, QuadFilterPatternCanonical queryQfpc) {
 
         if(logger.isDebugEnabled()) {
             logger.debug("Deriving problems for:");

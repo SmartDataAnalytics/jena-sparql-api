@@ -2,7 +2,6 @@ package org.aksw.jena_sparql_api.concept_cache.core;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -10,9 +9,10 @@ import java.util.stream.Stream;
 
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.jena_sparql_api.algebra.transform.TransformDistributeJoinOverUnion;
+import org.aksw.jena_sparql_api.concept_cache.domain.ConjunctiveQuery;
 import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
-import org.aksw.jena_sparql_api.concept_cache.op.OpExtQuadFilterPatternCanonical;
+import org.aksw.jena_sparql_api.concept_cache.op.OpExtConjunctiveQuery;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.VarMapper;
 import org.aksw.jena_sparql_api.stmt.SparqlElementParser;
 import org.aksw.jena_sparql_api.stmt.SparqlElementParserImpl;
@@ -25,8 +25,8 @@ import org.aksw.jena_sparql_api.view_matcher.SparqlViewMatcherProjectionUtils;
 import org.aksw.jena_sparql_api.view_matcher.SparqlViewMatcherUtils;
 import org.aksw.jena_sparql_api.views.index.OpIndex;
 import org.aksw.jena_sparql_api.views.index.OpIndexerImpl;
-import org.aksw.jena_sparql_api.views.index.SparqlViewMatcherOpImpl;
 import org.aksw.jena_sparql_api.views.index.QuadPatternIndex;
+import org.aksw.jena_sparql_api.views.index.SparqlViewMatcherOpImpl;
 import org.aksw.jena_sparql_api.views.index.SparqlViewMatcherSystemImpl;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.Syntax;
@@ -189,8 +189,8 @@ public class SparqlQueryContainmentUtils {
 
         // TODO: Maybe this qfpc check shoud be part of the viewIndex?
 		//QuadFilterPatternCanonical viewQfpc = SparqlCacheUtils.extractQuadFilterPatternCanonical(viewResOp);
-        QuadFilterPatternCanonical viewQfpc = normViewResOp instanceof OpExtQuadFilterPatternCanonical
-        		? ((OpExtQuadFilterPatternCanonical)normViewResOp).getQfpc()
+        ConjunctiveQuery viewQfpc = normViewResOp instanceof OpExtConjunctiveQuery
+        		? ((OpExtConjunctiveQuery)normViewResOp).getQfpc()
         		: null;
 
 		Stream<OpVarMap> solutionStream;

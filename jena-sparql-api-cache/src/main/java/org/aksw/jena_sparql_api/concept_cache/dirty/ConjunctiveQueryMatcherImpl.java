@@ -1,17 +1,22 @@
 package org.aksw.jena_sparql_api.concept_cache.dirty;
 
-import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.aksw.commons.collections.reversible.ReversibleMap;
 import org.aksw.commons.collections.reversible.ReversibleMapImpl;
+import org.aksw.jena_sparql_api.concept_cache.core.VarInfo;
 import org.aksw.jena_sparql_api.concept_cache.domain.ConjunctiveQuery;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
+import org.aksw.jena_sparql_api.view_matcher.SparqlViewMatcherProjectionUtils;
+import org.apache.jena.sparql.core.Var;
 
 public class ConjunctiveQueryMatcherImpl<K>
-	implements ConjuntiveQueryMatcher<K>
+	implements ConjunctiveQueryMatcher<K>
 {
 	protected AtomicLong patternIdGeneratr = new AtomicLong();
 	protected SparqlViewMatcherQfpc<Long> patternMatcher = new SparqlViewMatcherQfpcImpl<>();
@@ -44,8 +49,29 @@ public class ConjunctiveQueryMatcherImpl<K>
 		QuadFilterPatternCanonical qfpc = cq.getPattern();
 		Map<Long, QfpcMatch> matches = patternMatcher.lookup(qfpc);
 
-		// TODO Auto-generated method stub
-		return null;
+		VarInfo userVarInfo = cq.getProjection();
+
+		Map<K, QfpcMatch> result = new LinkedHashMap<>();
+		for(Entry<Long, QfpcMatch> e : matches.entrySet()) {
+			Object patternId = e.getKey();
+			QfpcMatch match = e.getValue();
+			Map<Var, Var> varMap = match.getVarMap();
+
+			Set<K> keys = keyToPatternId.reverse().get((Long)patternId);
+			for(K key : keys) {
+				ConjunctiveQuery candCq = keyToQuery.get(key);
+				VarInfo viewVarInfo = candCq.getProjection();
+
+				boolean isProjValid = SparqlViewMatcherProjectionUtils.validateProjection(viewVarInfo, userVarInfo, varMap);
+
+				if(isProjValid) {
+					result.put(key, match);
+				}
+
+			}
+		}
+
+		return result;
 	}
 
 

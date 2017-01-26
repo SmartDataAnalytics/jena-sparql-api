@@ -20,13 +20,14 @@ import org.aksw.jena_sparql_api.algebra.transform.TransformReplaceConstants;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMapImpl;
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewMatcherQfpc;
+import org.aksw.jena_sparql_api.concept_cache.domain.ConjunctiveQuery;
 import org.aksw.jena_sparql_api.concept_cache.domain.ExprHolder;
 import org.aksw.jena_sparql_api.concept_cache.domain.PatternSummary;
 import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.domain.VarOccurrence;
-import org.aksw.jena_sparql_api.concept_cache.op.OpExtQuadFilterPatternCanonical;
+import org.aksw.jena_sparql_api.concept_cache.op.OpExtConjunctiveQuery;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 import org.aksw.jena_sparql_api.concept_cache.trash.OpVisitorViewCacheApplier;
 import org.aksw.jena_sparql_api.core.QueryExecutionExecWrapper;
@@ -679,6 +680,41 @@ public class SparqlCacheUtils {
         return result;
     }
 
+
+    public static ConjunctiveQuery tryExtractConjunctiveQuery(Op op, Generator<Var> generator) {
+    	OpDistinct opDistinct = null;
+    	OpProject opProject = null;
+
+    	if(op instanceof OpDistinct) {
+    		opDistinct = (OpDistinct)op;
+    		op = opDistinct.getSubOp();
+    	}
+
+    	if(op instanceof OpProject) {
+    		opProject = (OpProject)op;
+    		op = opProject.getSubOp();
+    	}
+
+    	QuadFilterPattern qfp = extractQuadFilterPattern(op);
+
+    	ConjunctiveQuery result = null;
+    	if(qfp != null) {
+    		boolean isDistinct = opDistinct != null;
+    		Set<Var> projectVars = opProject == null
+    				? OpVars.visibleVars(op)
+    				: new LinkedHashSet<>(opProject.getVars());
+
+    		VarInfo varInfo = new VarInfo(projectVars, isDistinct ? 2 : 0);
+
+          QuadFilterPatternCanonical qfpc = canonicalize2(qfp, generator);
+
+    		// TODO canonicalize the pattern
+    		result = new ConjunctiveQuery(varInfo, qfpc);
+    	}
+
+    	return result;
+    }
+
     public static QuadFilterPattern extractQuadFilterPattern(Op op) {
         QuadFilterPattern result = null;
 
@@ -825,16 +861,22 @@ public class SparqlCacheUtils {
 //        return result;
 //    }
 
-    public static OpExtQuadFilterPatternCanonical tryCreateCqfp(Op op, Generator<Var> generator) {
-        QuadFilterPattern qfp = extractQuadFilterPattern(op);
-        OpExtQuadFilterPatternCanonical result;
-        if(qfp == null) {
-            result = null;
-        } else {
-            QuadFilterPatternCanonical tmp = canonicalize2(qfp, generator);
-            result = new OpExtQuadFilterPatternCanonical(tmp);
-        }
-        return result;
+    public static OpExtConjunctiveQuery tryCreateCqfp(Op op, Generator<Var> generator) {
+    	ConjunctiveQuery cq = tryExtractConjunctiveQuery(op, generator);
+    	OpExtConjunctiveQuery result = cq == null
+    			? null
+    			: new OpExtConjunctiveQuery(cq);
+
+    	return result;
+//    	QuadFilterPattern qfp = extractQuadFilterPattern(op);
+//        OpExtConjunctiveQuery result;
+//        if(qfp == null) {
+//            result = null;
+//        } else {
+//            QuadFilterPatternCanonical tmp = canonicalize2(qfp, generator);
+//            result = new OpExtConjunctiveQuery(tmp, generator);
+//        }
+//        return result;
     }
 
     // Assumes that ReplaceConstants has been called

@@ -16,11 +16,13 @@ import java.util.stream.Stream;
 
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeUtils;
+import org.aksw.jena_sparql_api.concept_cache.dirty.ConjunctiveQueryMatcher;
+import org.aksw.jena_sparql_api.concept_cache.dirty.ConjunctiveQueryMatcherImpl;
 import org.aksw.jena_sparql_api.concept_cache.dirty.QfpcMatch;
-import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewMatcherQfpc;
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewMatcherQfpcImpl;
+import org.aksw.jena_sparql_api.concept_cache.domain.ConjunctiveQuery;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
-import org.aksw.jena_sparql_api.concept_cache.op.OpExtQuadFilterPatternCanonical;
+import org.aksw.jena_sparql_api.concept_cache.op.OpExtConjunctiveQuery;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.util.collection.CacheRangeInfo;
@@ -89,7 +91,9 @@ public class OpRewriteViewMatcherStateful
     protected Rewrite opDenormalizer;
 
     protected SparqlViewMatcherPop<Node> viewMatcherTreeBased;
-    protected SparqlViewMatcherQfpc<Node> viewMatcherQuadPatternBased;
+    //protected SparqlViewMatcherQfpc<Node> viewMatcherQuadPatternBased;
+    protected ConjunctiveQueryMatcher<Node> viewMatcherQuadPatternBased;
+
 
 
     //protected Map<Node, Map<Node, VarInfo>> patternIdToStorageIdToVarInfo;
@@ -111,7 +115,7 @@ public class OpRewriteViewMatcherStateful
         //this.opNormalizer = SparqlViewMatcherOpImpl::normalizeOp;
         this.opDenormalizer = SparqlViewMatcherOpImpl::denormalizeOp;
         this.viewMatcherTreeBased = SparqlViewMatcherPopImpl.create();
-        this.viewMatcherQuadPatternBased = new SparqlViewMatcherQfpcImpl<>();
+        this.viewMatcherQuadPatternBased = new ConjunctiveQueryMatcherImpl<>();
         this.cache = cache;
 
 
@@ -204,15 +208,15 @@ public class OpRewriteViewMatcherStateful
 
         Op normalizedOp = pop.getResidualOp();
 
-        OpExtQuadFilterPatternCanonical opQfpc = normalizedOp instanceof OpExtQuadFilterPatternCanonical
-        		? (OpExtQuadFilterPatternCanonical)normalizedOp
+        OpExtConjunctiveQuery opQfpc = normalizedOp instanceof OpExtConjunctiveQuery
+        		? (OpExtConjunctiveQuery)normalizedOp
         		: null;
 
         if(opQfpc != null) {
-            QuadFilterPatternCanonical qfpc = opQfpc.getQfpc();//SparqlCacheUtils.canonicalize2(qfp, VarGeneratorImpl2.create());
+            ConjunctiveQuery cq = opQfpc.getQfpc();//SparqlCacheUtils.canonicalize2(qfp, VarGeneratorImpl2.create());
 
             // TODO Make the quad based view matcher projection-aware
-            viewMatcherQuadPatternBased.put(storageId, qfpc);
+            viewMatcherQuadPatternBased.put(storageId, cq);
         }
 
         // Always add the whole op
@@ -399,19 +403,20 @@ public class OpRewriteViewMatcherStateful
         boolean hasRewrite = false;
         boolean isCompleteRewrite = true;
         for(Op rawLeafOp : leafs) {
-            if(rawLeafOp instanceof OpExtQuadFilterPatternCanonical) {
+            if(rawLeafOp instanceof OpExtConjunctiveQuery) {
             //Op effectiveOp = leafOp instanceof OpExtQuadFilterPatternCanonical ? ((OpExt)leafOp).effectiveOp() : leafOp;
-                OpExtQuadFilterPatternCanonical leafOp = (OpExtQuadFilterPatternCanonical)rawLeafOp;
-                QuadFilterPatternCanonical qfpc = leafOp.getQfpc();
+                OpExtConjunctiveQuery leafOp = (OpExtConjunctiveQuery)rawLeafOp;
+                //QuadFilterPatternCanonical qfpc = leafOp.getQfpc();
+                ConjunctiveQuery userCq = leafOp.getQfpc();
 
-                Op effectiveOp = leafOp.effectiveOp();
+//                Op effectiveOp = leafOp.effectiveOp();
+//
+//                Set<Var> availableVars = OpVars.visibleVars(effectiveOp);
+//                VarUsage varUsage = OpUtils.analyzeVarUsage(tree, leafOp, availableVars);
 
-                Set<Var> availableVars = OpVars.visibleVars(effectiveOp);
-                VarUsage varUsage = OpUtils.analyzeVarUsage(tree, leafOp, availableVars);
+                //logger.debug("VarUsage: " + varUsage);
 
-                logger.debug("VarUsage: " + varUsage);
-
-                Map<Node, QfpcMatch> hits = viewMatcherQuadPatternBased.lookup(qfpc);
+                Map<Node, QfpcMatch> hits = viewMatcherQuadPatternBased.lookup(userCq);
 
                 // Only retain hits for which we actually have complete cache data
                 Map<Node, Table> hitData = hits.entrySet().stream()

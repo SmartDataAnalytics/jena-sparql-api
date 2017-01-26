@@ -1,6 +1,11 @@
 package org.aksw.jena_sparql_api.concept_cache.domain;
 
+import java.util.ArrayList;
+
 import org.aksw.jena_sparql_api.concept_cache.core.VarInfo;
+import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.op.OpDistinct;
+import org.apache.jena.sparql.algebra.op.OpProject;
 
 /**
  * Note: The reason why SparqlConjunctiveQuery and
@@ -30,5 +35,18 @@ public class ConjunctiveQuery {
 
 	public QuadFilterPatternCanonical getPattern() {
 		return qfpc;
+	}
+
+	public Op toOp() {
+		Op result = qfpc.toOp();
+
+		// Create the projection
+		result = new OpProject(result, new ArrayList<>(projection.getProjectVars()));
+
+		if(projection.getDistinctLevel() > 0) {
+			result = new OpDistinct(result);
+		}
+
+		return result;
 	}
 }
