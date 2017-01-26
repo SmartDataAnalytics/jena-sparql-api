@@ -49,4 +49,43 @@ public class ConjunctiveQuery {
 
 		return result;
 	}
+
+
+	@Override
+	public String toString() {
+		return "ConjunctiveQuery [projection=" + projection + ", qfpc=" + qfpc + "]";
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((projection == null) ? 0 : projection.hashCode());
+		result = prime * result + ((qfpc == null) ? 0 : qfpc.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		ConjunctiveQuery other = (ConjunctiveQuery) obj;
+		if (projection == null) {
+			if (other.projection != null)
+				return false;
+		} else if (!projection.equals(other.projection))
+			return false;
+		if (qfpc == null) {
+			if (other.qfpc != null)
+				return false;
+		} else if (!qfpc.equals(other.qfpc))
+			return false;
+		return true;
+	}
+
+
 }
