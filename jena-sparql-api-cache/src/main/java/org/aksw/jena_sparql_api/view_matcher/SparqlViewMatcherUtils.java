@@ -360,7 +360,7 @@ public class SparqlViewMatcherUtils {
             map.put(OpSlice.class, GenericBinaryOpImpl.create(SparqlViewMatcherUtils::deriveProblemsSlice));
             map.put(OpExtend.class, GenericBinaryOpImpl.create(SparqlViewMatcherUtils::deriveProblemsExtend));
 
-            map.put(OpExtConjunctiveQuery.class, GenericBinaryOpImpl.create(SparqlViewMatcherUtils::deriveProblemsCq));
+            map.put(OpExtConjunctiveQuery.class, GenericBinaryOpImpl.create(SparqlViewMatcherUtils::deriveProblemsOpCq));
 
 
             map.put(OpLeftJoin.class, (x, y) -> Collections.emptySet());
@@ -480,7 +480,7 @@ public class SparqlViewMatcherUtils {
     	return result;
     }
 
-    public static Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> deriveProblemsQfpc(OpExtConjunctiveQuery cacheOp, OpExtConjunctiveQuery userOp) {
+    public static Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> deriveProblemsOpCq(OpExtConjunctiveQuery cacheOp, OpExtConjunctiveQuery userOp) {
     	ConjunctiveQuery viewCq = cacheOp.getQfpc();
     	ConjunctiveQuery userCq = userOp.getQfpc();
 
