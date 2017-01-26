@@ -142,6 +142,8 @@ public class SparqlQueryContainmentUtils {
 
 
 	/**
+	 * TODO Possibly deprecate in favor of the conjunctive query and tree based indexers.
+	 *
 	 * TODO: Somehow add the graph based qfpc matching version here...
 	 * The main issue is, that the qfpc indexing works different in that case...
 	 *
@@ -189,8 +191,12 @@ public class SparqlQueryContainmentUtils {
 
         // TODO: Maybe this qfpc check shoud be part of the viewIndex?
 		//QuadFilterPatternCanonical viewQfpc = SparqlCacheUtils.extractQuadFilterPatternCanonical(viewResOp);
-        ConjunctiveQuery viewQfpc = normViewResOp instanceof OpExtConjunctiveQuery
+        ConjunctiveQuery viewCq = normViewResOp instanceof OpExtConjunctiveQuery
         		? ((OpExtConjunctiveQuery)normViewResOp).getQfpc()
+        		: null;
+
+        QuadFilterPatternCanonical viewQfpc = viewCq != null
+        		? viewCq.getPattern()
         		: null;
 
 		Stream<OpVarMap> solutionStream;
@@ -206,7 +212,11 @@ public class SparqlQueryContainmentUtils {
 					QuadFilterPatternCanonical userQfpc = userQpIndex.getQfpc();
 					Op userOp = userQpIndex.getOpRef().getNode();
 					//Iterable<Map<Var, Var>> varMapping = () -> VarMapper.createVarMapCandidates(viewQfpc, userQfpc).iterator();
-					Iterable<Map<Var, Var>> varMapping = () -> qfpcMatcher.apply(viewQfpc, userQfpc).iterator();
+
+					Iterable<Map<Var, Var>> varMapping = () -> qfpcMatcher.apply(viewQfpc, userQfpc)
+							.filter(vm -> SparqlViewMatcherProjectionUtils.validateProjection(viewVarInfo, userVarInfo, vm))
+							.iterator();
+
 					Map<Op, Op> opMapping = Collections.singletonMap(viewResOp, userOp);
 					OpVarMap r = new OpVarMap(opMapping, varMapping);
 					return r;
