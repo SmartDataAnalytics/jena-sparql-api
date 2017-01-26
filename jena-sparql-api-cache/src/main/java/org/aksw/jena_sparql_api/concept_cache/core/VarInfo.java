@@ -1,8 +1,10 @@
 package org.aksw.jena_sparql_api.concept_cache.core;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.graph.NodeTransform;
 
 public class VarInfo {
 	protected Set<Var> projectVars;
@@ -29,4 +31,13 @@ public class VarInfo {
 		return "VarInfo [projectVars=" + projectVars + ", distinctLevel=" + distinctLevel + "]";
 	}
 
+
+	public VarInfo applyTransform(NodeTransform nodeTransform) {
+		Set<Var> vars = projectVars.stream()
+				.map(v -> (Var)nodeTransform.apply(v))
+				.collect(Collectors.toSet());
+
+		VarInfo result = new VarInfo(vars, distinctLevel);
+		return result;
+	}
 }

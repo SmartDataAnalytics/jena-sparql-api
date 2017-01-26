@@ -20,6 +20,8 @@ import org.apache.jena.sparql.core.Var;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
+
+
 /**
  * Wrapper for handling projections
  *

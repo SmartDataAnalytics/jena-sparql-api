@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.aksw.jena_sparql_api.concept_cache.core.VarInfo;
 import org.aksw.jena_sparql_api.utils.ClauseUtils;
 import org.aksw.jena_sparql_api.utils.CnfUtils;
 import org.aksw.jena_sparql_api.utils.DnfUtils;
@@ -24,10 +25,15 @@ import org.apache.jena.sparql.graph.NodeTransform;
 import com.google.common.collect.Sets;
 
 public class QuadFilterPatternCanonical {
-    private Set<Quad> quads;
+    protected Set<Quad> quads;
 
-    private Set<Set<Expr>> filterCnf;
-    private Set<Set<Expr>> filterDnf;
+
+    //protected VarInfo varInfo;
+
+
+    // TODO Replace with exprHolder
+    protected Set<Set<Expr>> filterCnf;
+    protected Set<Set<Expr>> filterDnf;
 
     public QuadFilterPatternCanonical(Set<Quad> quads, Set<Set<Expr>> filterCnf) {
         this(quads, filterCnf, false);
