@@ -559,7 +559,7 @@ public class SparqlCacheUtils {
             }
 
             if(!tmp.isVariable()) {
-                throw new RuntimeException("Expected variable normalized quad");
+                throw new RuntimeException("Expected variable normalized quad, got: " + quad);
             }
 
             Var quadVar = (Var)tmp;

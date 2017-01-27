@@ -373,8 +373,8 @@ public class SparqlViewMatcherOpImpl<P>
         op = TransformReplaceConstants.transform(op);
 
         Generator<Var> generatorCache = VarGeneratorImpl2.create();
+        //op = OpUtils.substitute(op, false, (o) -> SparqlCacheUtils.tryCreateCqfp(o, generatorCache));
         op = OpUtils.substitute(op, false, (o) -> SparqlCacheUtils.tryCreateCqfp(o, generatorCache));
-
         return op;
     }
 

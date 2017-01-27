@@ -61,16 +61,22 @@ public class ExprHolder {
 		return new ExprHolder(null, null, dnf);
 	}
 
+	boolean isEmpty() {
+		boolean result = getCnf().isEmpty();
+		return result;
+	}
+
+	@Override
+	public String toString() {
+		String result = "" + getExpr();
+		return result;
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((getExpr() == null) ? 0 : getExpr().hashCode());
-		return result;
-	}
-
-	boolean isEmpty() {
-		boolean result = getCnf().isEmpty();
 		return result;
 	}
 
