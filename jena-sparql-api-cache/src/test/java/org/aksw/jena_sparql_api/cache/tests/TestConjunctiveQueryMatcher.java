@@ -16,7 +16,18 @@ import org.junit.Test;
 
 public class TestConjunctiveQueryMatcher {
 
-	protected ConjunctiveQuery cq = Stream.of("SELECT DISTINCT ?s { ?s a ?t }")
+	protected ConjunctiveQuery cqS = Stream.of("SELECT DISTINCT ?s { ?s a ?t }")
+			.map(QueryFactory::create)
+			.map(Algebra::compile)
+			.map(Algebra::toQuadForm)
+			.map(SparqlViewMatcherOpImpl::normalizeOp)
+			.map(op -> (OpExtConjunctiveQuery)op)
+			.map(OpExtConjunctiveQuery::getQfpc)
+			//.map(op -> SparqlCacheUtils.tryExtractConjunctiveQuery(op, VarGeneratorImpl2.create()))
+			.findFirst()
+			.orElse(null);
+
+	protected ConjunctiveQuery cqST = Stream.of("SELECT ?s ?t { ?s a ?t }")
 			.map(QueryFactory::create)
 			.map(Algebra::compile)
 			.map(Algebra::toQuadForm)
@@ -30,18 +41,32 @@ public class TestConjunctiveQueryMatcher {
 	@Test
 	public void testConjunctiveQueryExtraction() {
 		//System.out.println(cq);
-		Assert.assertNotNull(cq);
+		Assert.assertNotNull(cqS);
+		Assert.assertNotNull(cqST);
 		// TODO Validate correctness thoroughly
 
 		//System.out.println(cq);
 	}
 
 	@Test
-	public void testConjunctiveQueryMatcher() {
+	public void testConjunctiveQueryMatcherS() {
 		ConjunctiveQueryMatcher<String> matcher = new ConjunctiveQueryMatcherImpl<>();
-		matcher.put("test", cq);
+		matcher.put("test", cqS);
 
-		Map<String, QfpcMatch> map = matcher.lookup(cq);
+		Map<String, QfpcMatch> map = matcher.lookup(cqS);
+		Assert.assertEquals(map.size(), 1);
 		System.out.println(map);
 	}
+
+	@Test
+	public void testConjunctiveQueryMatcherST() {
+		ConjunctiveQueryMatcher<String> matcher = new ConjunctiveQueryMatcherImpl<>();
+		matcher.put("test", cqST);
+
+		Map<String, QfpcMatch> map = matcher.lookup(cqS);
+		Assert.assertEquals(map.size(), 1);
+		System.out.println(map);
+	}
+
+
 }
