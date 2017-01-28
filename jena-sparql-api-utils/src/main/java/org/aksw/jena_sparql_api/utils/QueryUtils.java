@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.aksw.jena_sparql_api.backports.syntaxtransform.QueryTransformOps;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.algebra.Op;
@@ -25,6 +26,14 @@ import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.Range;
 
 public class QueryUtils {
+
+	public static Query randomizeVars(Query query) {
+		Map<Var, Var> varMap = createRandomVarMap(query, "rv");
+		Query result = QueryTransformOps.transform(query, varMap);
+		System.out.println(query + "now:\n" + result);
+		return result;
+	}
+
 	public static Map<Var, Var> createRandomVarMap(Query query, String base) {
         Collection<Var> vars = PatternVars.vars(query.getQueryPattern());
         Generator<Var> gen = VarGeneratorBlacklist.create(base, vars);
