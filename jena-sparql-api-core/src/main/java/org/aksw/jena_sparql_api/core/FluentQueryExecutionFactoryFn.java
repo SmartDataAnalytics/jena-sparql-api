@@ -13,6 +13,7 @@ import org.aksw.jena_sparql_api.parse.QueryExecutionFactoryParse;
 import org.aksw.jena_sparql_api.post_process.QueryExecutionFactoryPostProcess;
 import org.aksw.jena_sparql_api.prefix.core.QueryExecutionFactoryPrefix;
 import org.aksw.jena_sparql_api.retry.core.QueryExecutionFactoryRetry;
+import org.aksw.jena_sparql_api.stmt.SparqlStmtQuery;
 import org.aksw.jena_sparql_api.transform.QueryExecutionFactoryQueryTransform;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
@@ -51,40 +52,45 @@ public class FluentQueryExecutionFactoryFn<P>
     }
 
     public FluentQueryExecutionFactoryFn<P> withDelay(final int delayDuration, final TimeUnit delayTimeUnit) {
-        compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
-            @Override
-            public QueryExecutionFactory apply(QueryExecutionFactory qef) {
-                QueryExecutionFactory r = new QueryExecutionFactoryDelay(qef, delayDuration, delayTimeUnit);
-                return r;
-            }
-        });
+        compose(qef -> new QueryExecutionFactoryDelay(qef, delayDuration, delayTimeUnit));
+
+//    	compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
+//            @Override
+//            public QueryExecutionFactory apply(QueryExecutionFactory qef) {
+//                QueryExecutionFactory r = new QueryExecutionFactoryDelay(qef, delayDuration, delayTimeUnit);
+//                return r;
+//            }
+//        });
 
         return this;
     }
 
     public FluentQueryExecutionFactoryFn<P> withPrefixes(final PrefixMapping pm, final boolean doClone) {
-        /**
+    	compose(qef -> new QueryExecutionFactoryPrefix(qef, pm, doClone));
+    	/**
          * TODO: Convert to use of a Query transformation (Query -> Query)
          */
-        compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
-            @Override
-            public QueryExecutionFactory apply(QueryExecutionFactory qef) {
-                QueryExecutionFactory r = new QueryExecutionFactoryPrefix(qef, pm, doClone);
-                return r;
-            }
-        });
+//        compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
+//            @Override
+//            public QueryExecutionFactory apply(QueryExecutionFactory qef) {
+//                QueryExecutionFactory r = new QueryExecutionFactoryPrefix(qef, pm, doClone);
+//                return r;
+//            }
+//        });
 
         return this;
     }
 
     public FluentQueryExecutionFactoryFn<P> withParser(final Function<String, Query> parser) {
-        compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
-            @Override
-            public QueryExecutionFactory apply(QueryExecutionFactory qef) {
-                QueryExecutionFactory r = new QueryExecutionFactoryParse(qef, parser);
-                return r;
-            }
-        });
+    	compose(qef -> new QueryExecutionFactoryParse(qef, parser));
+
+//        compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
+//            @Override
+//            public QueryExecutionFactory apply(QueryExecutionFactory qef) {
+//                QueryExecutionFactory r = new QueryExecutionFactoryParse(qef, parser);
+//                return r;
+//            }
+//        });
 
         return this;
     }
@@ -102,49 +108,56 @@ public class FluentQueryExecutionFactoryFn<P>
     }
 
     public FluentQueryExecutionFactoryFn<P> withRetry(final int retryCount, final long retryDelayDuration, final TimeUnit retryDelayTimeUnit) {
-        compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
-            @Override
-            public QueryExecutionFactory apply(QueryExecutionFactory qef) {
-                QueryExecutionFactory r = new QueryExecutionFactoryRetry(qef, retryCount, retryDelayDuration, retryDelayTimeUnit);
-                return r;
-            }
-        });
+    	compose(qef -> new QueryExecutionFactoryRetry(qef, retryCount, retryDelayDuration, retryDelayTimeUnit));
+// compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
+//            @Override
+//            public QueryExecutionFactory apply(QueryExecutionFactory qef) {
+//                QueryExecutionFactory r = new QueryExecutionFactoryRetry(qef, retryCount, retryDelayDuration, retryDelayTimeUnit);
+//                return r;
+//            }
+//        });
 
         return this;
     }
 
     public FluentQueryExecutionFactoryFn<P> withCache(final CacheFrontend cache){
-        compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
-            @Override
-            public QueryExecutionFactory apply(QueryExecutionFactory qef) {
-                QueryExecutionFactory r = qef = new QueryExecutionFactoryCacheEx(qef, cache);
-                return r;
-            }
-        });
+    	compose(qef -> new QueryExecutionFactoryCacheEx(qef, cache));
+
+//        compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
+//            @Override
+//            public QueryExecutionFactory apply(QueryExecutionFactory qef) {
+//                QueryExecutionFactory r = qef = new QueryExecutionFactoryCacheEx(qef, cache);
+//                return r;
+//            }
+//        });
 
         return this;
     }
 
     public FluentQueryExecutionFactoryFn<P> withDefaultLimit(final long limit, final boolean doCloneQuery){
-        compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
-            @Override
-            public QueryExecutionFactory apply(QueryExecutionFactory qef) {
-                QueryExecutionFactory r = new QueryExecutionFactoryLimit(qef, doCloneQuery, limit);
-                return r;
-            }
-        });
+    	compose(qef -> new QueryExecutionFactoryLimit(qef, doCloneQuery, limit));
+
+//    	compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
+//            @Override
+//            public QueryExecutionFactory apply(QueryExecutionFactory qef) {
+//                QueryExecutionFactory r = new QueryExecutionFactoryLimit(qef, doCloneQuery, limit);
+//                return r;
+//            }
+//        });
 
         return this;
     }
 
     public FluentQueryExecutionFactoryFn<P> withQueryTransform(final Function<Query, Query> queryTransform){
-        compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
-            @Override
-            public QueryExecutionFactory apply(QueryExecutionFactory qef) {
-                QueryExecutionFactory r = new QueryExecutionFactoryQueryTransform(qef, queryTransform);
-                return r;
-            }
-        });
+    	compose(qef -> new QueryExecutionFactoryQueryTransform(qef, queryTransform));
+
+//        compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
+//            @Override
+//            public QueryExecutionFactory apply(QueryExecutionFactory qef) {
+//                QueryExecutionFactory r = new QueryExecutionFactoryQueryTransform(qef, queryTransform);
+//                return r;
+//            }
+//        });
 
         return this;
     }
@@ -158,26 +171,42 @@ public class FluentQueryExecutionFactoryFn<P>
      * @return
      */
     public FluentQueryExecutionFactoryFn<P> withPostProcessor(final Consumer<QueryExecution> postProcessor) {
-        compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
-            @Override
-            public QueryExecutionFactory apply(QueryExecutionFactory qef) {
-                QueryExecutionFactory r = new QueryExecutionFactoryPostProcess(qef, postProcessor);
-                return r;
-            }
-        });
+        compose(qef -> new QueryExecutionFactoryPostProcess(qef, postProcessor));
+
+//    	compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
+//            @Override
+//            public QueryExecutionFactory apply(QueryExecutionFactory qef) {
+//                QueryExecutionFactory r = new QueryExecutionFactoryPostProcess(qef, postProcessor);
+//                return r;
+//            }
+//        });
 
         return this;
     }
 
 
+//    public FluentQueryExecutionFactoryFn<P> withTimeoutHandler(final Consumer<SparqlStmtQuery> callback) {
+//        compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
+//            @Override
+//            public QueryExecutionFactory apply(QueryExecutionFactory qef) {
+//                QueryExecutionFactory r = new QueryExecutionFactoryPostProcess(qef, postProcessor);
+//                return r;
+//            }
+//        });
+//
+//        return this;
+//    }
+
+
     public FluentQueryExecutionFactoryFn<P> withDatasetDescription(final DatasetDescription datasetDescription) {
-        compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
-            @Override
-            public QueryExecutionFactory apply(QueryExecutionFactory qef) {
-                QueryExecutionFactory r = new QueryExecutionFactoryDatasetDescription(qef, datasetDescription);
-                return r;
-            }
-        });
+    	compose(qef -> new QueryExecutionFactoryDatasetDescription(qef, datasetDescription));
+//        compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
+//            @Override
+//            public QueryExecutionFactory apply(QueryExecutionFactory qef) {
+//                QueryExecutionFactory r = new QueryExecutionFactoryDatasetDescription(qef, datasetDescription);
+//                return r;
+//            }
+//        });
 
         return this;
     }
@@ -191,14 +220,16 @@ public class FluentQueryExecutionFactoryFn<P>
      * @return
      */
     public FluentQueryExecutionFactoryFn<P> selectOnly() {
-        compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
-            @Override
-            public QueryExecutionFactory apply(QueryExecutionFactory qef) {
-                QueryExecutionFactory r = new QueryExecutionFactorySelect(qef);
-                return r;
-            }
-        });
+    	compose(QueryExecutionFactorySelect::new);
 
+//        compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
+//            @Override
+//            public QueryExecutionFactory apply(QueryExecutionFactory qef) {
+//                QueryExecutionFactory r = new QueryExecutionFactorySelect(qef);
+//                return r;
+//            }
+//        });
+//
         return this;
     }
 
