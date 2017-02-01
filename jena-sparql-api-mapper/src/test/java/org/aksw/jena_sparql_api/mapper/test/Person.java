@@ -9,7 +9,8 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.sparql.graph.GraphFactory;
 
-@DefaultIri("o:#{firstName}-#{lastName}-#{birthPlace}-#{birthDate.toString()}")
+//@DefaultIri("o:#{firstName}-#{lastName}-#{birthPlace}-#{birthDate.toString()}")
+@DefaultIri("o:#{firstName}-#{lastName}-#{birthPlace}")
 public class Person {
     @Iri("foaf:firstName")
     private String firstName;
