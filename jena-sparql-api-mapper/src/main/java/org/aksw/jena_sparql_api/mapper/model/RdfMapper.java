@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
+import org.aksw.jena_sparql_api.mapper.impl.type.UnresolvedResource;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
@@ -26,27 +27,27 @@ import org.apache.jena.graph.Triple;
  * @author raven
  *
  */
-public interface RdfPopulator {
+public interface RdfMapper {
 
     /**
      * It may be useful giving property mappers names.
      * For mappers that map to a single java property, the mapper name can be that of the property.
      * But if a mapper writes to multiple java properties, a custom name could be given.
-     * 
+     *
      * A default implementation could return a string from joining the ordered affected
      * property names alphabetically.
-     *  
+     *
      */
     default String getName() {
         List<String> tmp = new ArrayList<>(getPropertyNames());
         if(tmp.isEmpty()) {
-            throw new RuntimeException(RdfPopulator.class.getSimpleName() + " instance did not declare any affected property names");
+            throw new RuntimeException(RdfMapper.class.getSimpleName() + " instance did not declare any affected property names");
         }
         Collections.sort(tmp);
         String result = tmp.stream().collect(Collectors.joining("-"));
         return result;
     }
-    
+
     /**
      * Return the set of entity properties which are affected by this populator.
      * For instance, an RDF wktLiteral may map to two properties 'lat' and 'long'
@@ -66,6 +67,8 @@ public interface RdfPopulator {
     void exposeShape(ResourceShapeBuilder shapeBuilder);
 
 
+    void exposeFragment(UnresolvedResource out, Object entity);
+
     /**
      * Emit triples from the object
      *
@@ -84,4 +87,7 @@ public interface RdfPopulator {
      * @return
      */
     void populateEntity(RdfPersistenceContext persistenceContext, Object entity, Graph inGraph, Node subject, Consumer<Triple> outSink);
+
+
+    Node getTargetNode(String subjectUri, Object entity);
 }

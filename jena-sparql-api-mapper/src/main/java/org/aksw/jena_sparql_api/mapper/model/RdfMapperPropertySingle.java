@@ -17,10 +17,10 @@ import org.apache.jena.graph.Triple;
 import com.google.common.base.Defaults;
 import com.google.common.collect.Iterables;
 
-public class RdfPopulatorPropertySingle
-    extends RdfPopulatorPropertyBase
+public class RdfMapperPropertySingle
+    extends RdfMapperPropertyBase
 {
-    public RdfPopulatorPropertySingle(
+    public RdfMapperPropertySingle(
             PropertyOps propertyOps,
             Node predicate,
             RdfType targetRdfType,

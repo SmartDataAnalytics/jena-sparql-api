@@ -7,8 +7,8 @@ import org.aksw.jena_sparql_api.beans.model.PropertyOps;
  * @author raven
  *
  */
-public interface RdfPopulatorProperty
-	extends RdfPopulator
+public interface RdfMapperProperty
+	extends RdfMapper
 {
 
     /**

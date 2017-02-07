@@ -37,10 +37,10 @@ import org.apache.jena.graph.Triple;
  * @author raven
  *
  */
-public class RdfPopulatorPropertyMulti
-    extends RdfPopulatorPropertyBase
+public class RdfMapperPropertyMulti
+    extends RdfMapperPropertyBase
 {
-    public RdfPopulatorPropertyMulti(PropertyOps propertyOps, Node predicate, RdfType targetRdfType, BiFunction<Object, Object, Node> createTargetNode) {
+    public RdfMapperPropertyMulti(PropertyOps propertyOps, Node predicate, RdfType targetRdfType, BiFunction<Object, Object, Node> createTargetNode) {
         super(propertyOps, predicate, targetRdfType, createTargetNode);
     }
 

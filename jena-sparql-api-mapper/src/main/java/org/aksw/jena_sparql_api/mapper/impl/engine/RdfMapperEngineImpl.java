@@ -7,11 +7,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import javax.management.remote.TargetedNotification;
+
 import org.aksw.commons.collections.diff.Diff;
+import org.aksw.commons.util.strings.StringUtils;
 import org.aksw.jena_sparql_api.beans.model.EntityOps;
 import org.aksw.jena_sparql_api.beans.model.PropertyOps;
 import org.aksw.jena_sparql_api.concepts.Concept;
@@ -29,8 +33,11 @@ import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContextImpl;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContextImpl;
 import org.aksw.jena_sparql_api.mapper.context.ResolutionRequest;
+import org.aksw.jena_sparql_api.mapper.impl.type.RdfClass;
+import org.aksw.jena_sparql_api.mapper.impl.type.RdfPropertyDescriptor;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
-import org.aksw.jena_sparql_api.mapper.model.RdfPopulatorProperty;
+import org.aksw.jena_sparql_api.mapper.impl.type.UnresolvedResource;
+import org.aksw.jena_sparql_api.mapper.model.RdfMapperProperty;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.aksw.jena_sparql_api.mapper.model.ShapeExposable;
@@ -44,7 +51,9 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
@@ -52,13 +61,14 @@ import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sparql.util.ModelUtils;
+import org.apache.jena.util.ResourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class RdfMapperEngineImpl
     implements RdfMapperEngine
 {
-	private static final Logger logger = LoggerFactory.getLogger(RdfMapperEngine.class);
+    private static final Logger logger = LoggerFactory.getLogger(RdfMapperEngine.class);
 
     protected Prologue prologue;
     //protected QueryExecutionFactory qef;
@@ -95,7 +105,7 @@ public class RdfMapperEngineImpl
 
 
     public RdfTypeFactory getTypeFactory() {
-    	return typeFactory;
+        return typeFactory;
     }
 
     //@Override
@@ -140,14 +150,14 @@ public class RdfMapperEngineImpl
 
 
     public static RDFNode fetch(Prologue prologue, SparqlService sparqlService, ShapeExposable shapeSupplier, Node node) {
-    	Map<Node, RDFNode> tmp = fetch(prologue, sparqlService, shapeSupplier, Collections.singletonList(node));
-    	RDFNode result = tmp.get(node);
-    	return result;
+        Map<Node, RDFNode> tmp = fetch(prologue, sparqlService, shapeSupplier, Collections.singletonList(node));
+        RDFNode result = tmp.get(node);
+        return result;
     }
 
     public Map<Node, RDFNode> fetch(ShapeExposable shapeSupplier, Collection<Node> nodes) {
-    	Map<Node, RDFNode> result = fetch(prologue, sparqlService, shapeSupplier, nodes);
-    	return result;
+        Map<Node, RDFNode> result = fetch(prologue, sparqlService, shapeSupplier, nodes);
+        return result;
     }
 
     public static Map<Node, RDFNode> fetch(Prologue prologue, SparqlService sparqlService, ShapeExposable shapeSupplier, Collection<Node> nodes) {
@@ -167,13 +177,13 @@ public class RdfMapperEngineImpl
             Map<Node, Graph> map = ls.apply(nodes);
 
             result = map.entrySet().stream()
-            	.collect(Collectors.toMap(
-            			Entry::getKey,
-            		e -> {
-            		Model m = ModelFactory.createModelForGraph(e.getValue());
-            		RDFNode r = ModelUtils.convertGraphNodeToRDFNode(e.getKey(), m);
-            		return r;
-            	}));
+                .collect(Collectors.toMap(
+                        Entry::getKey,
+                    e -> {
+                    Model m = ModelFactory.createModelForGraph(e.getValue());
+                    RDFNode r = ModelUtils.convertGraphNodeToRDFNode(e.getKey(), m);
+                    return r;
+                }));
 
         } else {
             result = Collections.emptyMap();
@@ -223,63 +233,65 @@ public class RdfMapperEngineImpl
 //    }
 
     public static Set<Class<?>> getNonSubsumedClasses(Collection<Class<?>> classes) {
-    	// Retain all classes which are not a super class of any other
-    	Set<Class<?>> result = classes.stream()
-    		.filter(c -> classes.stream().noneMatch(c::isAssignableFrom))
-    		.collect(Collectors.toSet());
+        // Retain all classes which are not a super class of any other
+        Set<Class<?>> result = classes.stream()
+            .filter(c -> classes.stream().noneMatch(c::isAssignableFrom))
+            .collect(Collectors.toSet());
 
-    	return result;
+        return result;
     }
 
     public static Set<Class<?>> getMostSpecificSubclasses(Class<?> given, Collection<Class<?>> classes) {
-    	// Filter the set by all classes that are a subclass of the given one
-    	Set<Class<?>> tmp = classes.stream()
-    		.filter(given::isAssignableFrom)
-    		.collect(Collectors.toSet());
+        // Filter the set by all classes that are a subclass of the given one
+        Set<Class<?>> tmp = classes.stream()
+            .filter(given::isAssignableFrom)
+            .collect(Collectors.toSet());
 
-    	Set<Class<?>> result = getNonSubsumedClasses(tmp);
-    	return result;
+        Set<Class<?>> result = getNonSubsumedClasses(tmp);
+        return result;
     }
 
     /**
      * Perform a lookup in the persistence context for an entity with id 'node'
      * of type 'clazz'.
      * If no such entity exists, use clazz's corresponding rdfType to fetch
-     * triples and instanciate the entity
+     * triples and instanciate the entity.
+     *
+     * Will load corresponding triples from the underlying store
      *
      */
     public <T> T find(Class<T> clazz, Node node) {
-    	EntityId entityId = new EntityId(clazz, node);
+        EntityId entityId = new EntityId(clazz, node);
 
-    	logger.debug("Entity lookup with " + node + " " + clazz.getName());
-    	System.out.println("Entity lookup with " + node + " " + clazz.getName());
+        logger.debug("Entity lookup with " + node + " " + clazz.getName());
+        //System.out.println("Entity lookup with " + node + " " + clazz.getName());
 
-    	// Determine if there already exists an (sub-)entity for the given class and node
+        // Determine if there already exists an (sub-)entity for the given class and node
         Object entity = persistenceContext.entityFor(clazz, node, null);
 
         Class<?> actualClazz = clazz;
         if(entity == null) {
-        	// Determine the set of possible types of node
-        	// Thereby obtain the shape, fetch data corresponding to the node,
-        	// obtain java class candidates, and filter by the class requested
-        	{
-        		RDFNode rdfNode = fetch(prologue, sparqlService, typeDecider, node);
-        		if(rdfNode != null) {
-	        		Collection<Class<?>> classes = typeDecider.getApplicableTypes(rdfNode.asResource());
+            // Determine the set of possible types of node
+            // Thereby obtain the shape, fetch data corresponding to the node,
+            // obtain java class candidates, and filter by the class requested
+            {
+                RDFNode rdfNode = fetch(prologue, sparqlService, typeDecider, node);
+                if(rdfNode != null) {
+                    Collection<Class<?>> classes = typeDecider.getApplicableTypes(rdfNode.asResource());
 
-	        		Set<Class<?>> mscs = getMostSpecificSubclasses(clazz, classes);
+                    Set<Class<?>> mscs = getMostSpecificSubclasses(clazz, classes);
 
-	        		Class<?> tmpClazz;
-	        		if(mscs.isEmpty()) {
-	        			throw new RuntimeException("No applicable type found for " + node + " [" + clazz.getName() + "]");
-	        		} else if(mscs.size() > 1) {
-	        			throw new RuntimeException("Multiple non-subsumed sub-class candidates of " + clazz + " found: " + mscs);
-	        		} else {
-	        			actualClazz = mscs.iterator().next();
-	        		}
-        		}
-        		// TODO select the className which is the most specific sub class of the given class
-        	}
+                    Class<?> tmpClazz;
+                    if(mscs.isEmpty()) {
+                        throw new RuntimeException("No applicable type found for " + node + " [" + clazz.getName() + "]");
+                    } else if(mscs.size() > 1) {
+                        throw new RuntimeException("Multiple non-subsumed sub-class candidates of " + clazz + " found: " + mscs);
+                    } else {
+                        actualClazz = mscs.iterator().next();
+                    }
+                }
+                // TODO select the className which is the most specific sub class of the given class
+            }
 
 
 
@@ -297,7 +309,7 @@ public class RdfMapperEngineImpl
 
             persistenceContext.getIdToEntityMap().put(entityId, entity);
 
-            persistenceContext.getEntityToIdMap().put(entity, entityId);
+            //persistenceContext.getEntityToIdMap().put(entity, entityId);
         }
 
         // The call to populateEntity may trigger requests to resolve further entities
@@ -319,21 +331,21 @@ public class RdfMapperEngineImpl
             Class<?> resolveClass = resolveRdfClass == null ? (resolveValue == null ? null : resolveValue.getClass()) : resolveRdfClass.getEntityClass();
 
             if(resolveNode == null) {
-            	Class<?> resolveEntityClass = resolveEntity.getClass();
-            	RdfType resolveEntityRdfType = typeFactory.forJavaType(resolveEntityClass);
+                Class<?> resolveEntityClass = resolveEntity.getClass();
+                RdfType resolveEntityRdfType = typeFactory.forJavaType(resolveEntityClass);
 
-            	resolveNode = resolveEntityRdfType.getRootNode(resolveEntity);
+                resolveNode = resolveEntityRdfType.getRootNode(resolveEntity);
 
-            	if(resolveClass == null) {
-            		resolveClass = resolveEntityClass;
-            	}
+                if(resolveClass == null) {
+                    resolveClass = resolveEntityClass;
+                }
 
-            	// Create a node for the entity
-            	System.out.println("oops");
+                // Create a node for the entity
+                System.out.println("oops");
             }
 
             if(resolveClass == null || resolveNode == null) {
-            	throw new RuntimeException("Should not happen");
+                throw new RuntimeException("Should not happen");
             }
 
             Object childEntity = find(resolveClass, resolveNode);
@@ -459,7 +471,7 @@ public class RdfMapperEngineImpl
 //    }
 
 
-    public void processProperty(ResourceShapeBuilder builder, RdfPopulatorProperty rdfProperty) {
+    public void processProperty(ResourceShapeBuilder builder, RdfMapperProperty rdfProperty) {
         //Relation relation = rdfProperty.getRelation();
         //Node predicate = rdfProperty.get
         //builder.outgoing(relation);
@@ -479,7 +491,23 @@ public class RdfMapperEngineImpl
 //    }
 //
 
+    public Node resolve(Node s, Node p) {
+        ResourceShapeBuilder rsb = new ResourceShapeBuilder();
+        rsb.out(p);
+        ShapeExposable se = x-> x.getResourceShape();
+        Property pp = ResourceFactory.createProperty(p.getURI());
+        RDFNode rdfNode = fetch(se, Collections.singleton(s)).get(s);
+        rdfNode = rdfNode == null ? null : rdfNode.asResource().getProperty(pp).getObject();
+        Node result = rdfNode.asNode();
+        //Collection<Node> result =
+        return result;
+    }
 
+    /*
+     *
+     * (non-Javadoc)
+     * @see org.aksw.jena_sparql_api.mapper.impl.engine.RdfMapperEngine#merge(java.lang.Object)
+     */
     @Override
     public <T> T merge(T tmpEntity) {
         RdfType rootRdfType = typeFactory.forJavaType(tmpEntity.getClass());
@@ -489,6 +517,13 @@ public class RdfMapperEngineImpl
         return result;
     }
 
+
+    public Object find(EntityId entityId) {
+        Class<?> entityClass = entityId.getEntityClass();
+        Node node = entityId.getNode();
+        Object result = find(entityClass, node);
+        return result;
+    }
 
 
     /**
@@ -507,115 +542,59 @@ public class RdfMapperEngineImpl
      */
     @Override
     public <T> T merge(T srcEntity, Node node) {
-    	Function<Class<?>, EntityOps> entityOpsFactory = ((RdfTypeFactoryImpl)typeFactory).getEntityOpsFactory();
-
+        Objects.requireNonNull(srcEntity);
+        Objects.requireNonNull(node);
+        Function<Class<?>, EntityOps> entityOpsFactory = ((RdfTypeFactoryImpl)typeFactory).getEntityOpsFactory();
 
         Class<?> entityClass = srcEntity.getClass();
         EntityId entityId = new EntityId(entityClass, node);
 
 
-//        Object tgtEntity = persistenceContext.getIdToEntityMap().get(entityId);
-//        if(tgtEntity == null) {
-//
-//	        // If needed, fetch the graph corresponding to that entity
-////	        EntityGraphMap<EntityId> entityGraphMap = persistenceContext.getEntityGraphMap();
-////	        Graph graph = entityGraphMap.getGraphForKey(entityId);
-//            tgtEntity = find(entityClass, node);
-//        }
-        Object tgtEntity = find(entityClass, node);
-
-//        if(graph == null) {
-//            // Request the data for the entity
-//            tgtEntity = find(entityClass, node);
-//
-//
-////            RdfType type = typeFactory.forJavaType(entityClass);
-////            graph = fetch(type, node);
-////            entityGraphMap.putAll(graph, entityId);
-//
-//            // Create a new entity
-//            //Object entity =
-//
-//            //Object entity = type.createJavaObject(node, graph);
-//
-//
-//        }
-
-//        RdfType type = typeFactory.forJavaType(entityClass);
-//        RdfClass rdfClass = (RdfClass)type;
-//        for(RdfPopulator populator : rdfClass.getPopulators()) {
-//        	populator.
-//        }
+        Object tgtEntity = find(entityId);
 
 
-        // Merge the attribute values of the given entity into the fetched one
+
+        // Recursively merge the entities that appear as values of the srcEntity
         EntityOps entityOps = entityOpsFactory.apply(entityClass);
-        for(PropertyOps propertyOps : entityOps.getProperties()) {
-        	Object srcValue = propertyOps.getValue(srcEntity);
-        	Object tgtValue = propertyOps.getValue(tgtEntity);
 
-        	// Ask the context for the target value's oned
-        	EntityId tgtId = persistenceContext.getEntityToIdMap().get(tgtValue);
-        	Object mergedValue;
-        	if(tgtId != null) {
-        		Node tgtNode = tgtId.getNode();
-            	mergedValue = merge(srcValue, tgtNode);
-        	} else {
-        		mergedValue = srcValue;
-        	}
-        	if(propertyOps.isWritable()) {
-        		propertyOps.setValue(tgtEntity, mergedValue);
-        	}
+        RdfType type = typeFactory.forJavaType(entityClass);
+        RdfClass rdfClass = (RdfClass)type;
+
+
+        UnresolvedResource r = new UnresolvedResource();
+        rdfClass.exposeFragment(r, srcEntity, null);
+
+        for(Entry<RDFNode, Object> placeholder : r.getPlaceholders().entrySet()) {
+            // Resolve the placeholder nodes
 
 
         }
 
+        // Copy the attribute values of srcEntity to the allocated tgtEntity
+        for(PropertyOps propertyOps : entityOps.getProperties()) {
+            Object srcValue = propertyOps.getValue(srcEntity);
+            Object tgtValue = propertyOps.getValue(tgtEntity);
 
 
 
+            // Ask the persistence context whether there is already an entity for the target value
 
-        //Class<?> entityClazz = type.getClass();
-        //Object entity = persistenceContext.entityFor(entityClass, node, () -> type.createJavaObject(node, null));
+            //find(tgtValue);
 
-        /*
-         * TODO Copying the properties should make use of EntityOps.copy(...)
-         * We may even make use of maps instead of java entities.
-         * (Although entities are probably more efficient performance wise)
-         */
-
-
-        // TODO We need to perform a recursive merge
-    	//Set<Object> affectedEntities = Sets.newIdentityHashSet();
-    	// persistenceContext.getManagedEntities()
-//    	Object entity = EntityOps.deepCopy(
-//    			srcEntity,
-//    			//clazz -> ((RdfClass)typeFactory.forJavaType(clazz)).getEntityOps(),
-//    			entityOpsFactory,
-//    			//affectedEntities,
-//    	    	persistenceContext.getManagedEntities()
-//
-//    			);
+            EntityId tgtId = null; //persistenceContext.getIdToEntityMap().inverse().get(tgtValue);
+            Object mergedValue;
+            if(tgtId != null) {
+                Node tgtNode = tgtId.getNode();
+                mergedValue = merge(srcValue, tgtNode);
+            } else {
+                mergedValue = srcValue;
+            }
+            if(propertyOps.isWritable()) {
+                propertyOps.setValue(tgtEntity, mergedValue);
+            }
 
 
-//        if(entity != tmpEntity) {
-//            if(type instanceof RdfClass) {
-//            	RdfClass rdfClass = (RdfClass)type;
-//            	EntityOps entityOps = rdfClass.getEntityOps();
-//
-//            	for(PropertyOps propertyOps : entityOps.getProperties()) {
-//            		Object value = propertyOps.getValue(entity);
-//
-//
-//            	}
-//
-//            	//EntityOps.copy(entityOps, entityOps, tmpEntity, entity);
-//            }
-//
-//
-//            //EntityOps.copy()
-//            //BeanUtils.copyProperties(tmpEntity, entity);
-//        }
-
+        }
 
         DatasetDescription datasetDescription = sparqlService.getDatasetDescription();
         String gStr = DatasetDescriptionUtils.getSingleDefaultGraphUri(datasetDescription);
@@ -650,6 +629,81 @@ public class RdfMapperEngineImpl
 //        System.out.println("diff: " + diff);
         UpdateExecutionFactory uef = sparqlService.getUpdateExecutionFactory();
         UpdateExecutionUtils.executeUpdate(uef, diff);
+
+
+
+
+
+        //Class<?> entityClazz = type.getClass();
+        //Object entity = persistenceContext.entityFor(entityClass, node, () -> type.createJavaObject(node, null));
+
+        /*
+         * TODO Copying the properties should make use of EntityOps.copy(...)
+         * We may even make use of maps instead of java entities.
+         * (Although entities are probably more efficient performance wise)
+         */
+
+
+        // TODO We need to perform a recursive merge
+        //Set<Object> affectedEntities = Sets.newIdentityHashSet();
+        // persistenceContext.getManagedEntities()
+//    	Object entity = EntityOps.deepCopy(
+//    			srcEntity,
+//    			//clazz -> ((RdfClass)typeFactory.forJavaType(clazz)).getEntityOps(),
+//    			entityOpsFactory,
+//    			//affectedEntities,
+//    	    	persistenceContext.getManagedEntities()
+//
+//    			);
+
+
+//        if(entity != tmpEntity) {
+//            if(type instanceof RdfClass) {
+//            	RdfClass rdfClass = (RdfClass)type;
+//            	EntityOps entityOps = rdfClass.getEntityOps();
+//
+//            	for(PropertyOps propertyOps : entityOps.getProperties()) {
+//            		Object value = propertyOps.getValue(entity);
+//
+//
+//            	}
+//
+//            	//EntityOps.copy(entityOps, entityOps, tmpEntity, entity);
+//            }
+//
+//
+//            //EntityOps.copy()
+//            //BeanUtils.copyProperties(tmpEntity, entity);
+//        }
+
+
+//        for(RdfPropertyDescriptor pd : rdfClass.getPropertyDescriptors()) {
+//            // Check which properties have a corresponding RDF property that leads to a java entity
+//            // that has to be merged
+//
+//            Entry<Node, Object> po = rdfClass.
+//
+//            String propertyName = pd.getName();
+//            PropertyOps propertyOps = entityOps.getProperty(propertyName);
+//
+//
+//            RdfType targetRdfType = pd.getRdfType();
+//            Node targetNode;
+//            if(!targetRdfType.hasIdentity()) {
+//                targetNode = NodeFactory.createURI(node.getURI() + StringUtils.md5Hash(propertyName));
+//            } else {
+//                targetNode = targetRdfType.getRootNode(srcEntity);
+//            }
+//
+//
+//
+//            //pm.get
+//        }
+        //rdfClass.getProperty
+
+//        for(RdfPopulator populator : rdfClass.getPopulators()) {
+//          populator.
+//        }
 
 
 //        @SuppressWarnings("unchecked")
@@ -701,12 +755,33 @@ public class RdfMapperEngineImpl
 
     @Override
     public void emitTriples(Graph outGraph, Object entity) {
+        EntityId entityId = persistenceContext.getEntityToIdMap().get(entity);
+        if(entityId == null) {
+            throw new RuntimeException("Entity does not have an associated Id: " + entity);
+        }
+
+        // Get all nodes associated with that entity
 
     }
 
 
+    /**
+     * Emit triples into the outgraph
+     *
+     * For any referenced entityId (i.e. node and class), the corresponding
+     * triples will be fetched first (if not done yet) before emitting that entityId's triples,
+     * such that the emit routine can access the prior's entity state.
+     *
+     *
+     */
     @Override
     public void emitTriples(Graph outGraph, Object entity, Node subject) {
+        // Check whether the entity was already associated with node
+        // (One java object can only be based on 1 node, however, 1 node may have multiple java objects as views)
+
+
+        //getOrFetchResource()
+
         // Check the persistence context for any prior mapping for the given entity
         //persistenceContext.getRootNode(
 

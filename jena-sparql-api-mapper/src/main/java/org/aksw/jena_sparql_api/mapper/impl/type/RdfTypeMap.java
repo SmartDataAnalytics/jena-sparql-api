@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.batch.backend.sparql;
+package org.aksw.jena_sparql_api.mapper.impl.type;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -9,7 +9,6 @@ import java.util.function.Function;
 import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.mapper.context.TypedNode;
-import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeComplexBase;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;

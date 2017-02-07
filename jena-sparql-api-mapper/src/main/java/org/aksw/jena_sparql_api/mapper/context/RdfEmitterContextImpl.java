@@ -13,40 +13,40 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 
 public class RdfEmitterContextImpl
-	implements RdfEmitterContext
+    implements RdfEmitterContext
 {
     protected Frontier<Object> frontier = FrontierImpl.createIdentityFrontier();
     protected RdfPersistenceContext persistenceContext;
-    
+
     //protected Multimap<RdfType, Node> unresolvedNodes = HashMultimap.create();
-    
+
 //    protected Map<Node, Triplet<Object, String>> unresolvedValues = new HashMap<>();
-    
-    
+
+
     // Mapping from placeholder nodes to requested resolutions
     protected Map<Node, ResolutionRequest> nodeToResolutionRequest;
-    //protected 
-    
+    //protected
+
 
     protected Map<Object, Node> entityToNode = new IdentityHashMap<>();
 
-    
+
     // Grouping:
     //
-    
-    
-	//protected EntityContext<? super Object> entityContext;
+
+
+    //protected EntityContext<? super Object> entityContext;
     //protected Frontier<>
     //protected Map<Object, Node> entityToNode = new IdentityHashMap<>();
     //protected Map<Node,>
 
-	public RdfEmitterContextImpl(RdfPersistenceContext persistenceContext) {
-	    this.persistenceContext = persistenceContext;
-		//this(EntityContextImpl.createIdentityContext(Object.class));
-	    
-	}
-	
-	
+    public RdfEmitterContextImpl(RdfPersistenceContext persistenceContext) {
+        this.persistenceContext = persistenceContext;
+        //this(EntityContextImpl.createIdentityContext(Object.class));
+
+    }
+
+
 
 //	public RdfEmitterContextImpl(EntityContext<? super Object> entityContext) {
 //		this.entityContext = entityContext;
@@ -62,7 +62,7 @@ public class RdfEmitterContextImpl
 //		// TODO We could keep track of who referenced the bean
 //	}
 
-	public Map<Node, ResolutionRequest> getNodeToResolutionRequest() {
+    public Map<Node, ResolutionRequest> getNodeToResolutionRequest() {
         return nodeToResolutionRequest;
     }
 
@@ -92,9 +92,33 @@ public class RdfEmitterContextImpl
 
     public static int i = 1;
 
+    /**
+     *
+     * @param entity
+     * @return
+     */
+//    public Node findNode(Object entity) {
+//        Node result = entityToNode.get(entity);
+//        if(result == null) {
+//            EntityId id = persistenceContext.getIdToEntityMap().inverse().get(entity);
+//            result = id != null ? id.getNode() : null;
+//        }
+//
+//        return result;
+//    }
+
+    public Node requestResolution(Object parentEntity, String propertyName) {
+        return null;
+        // Lookup the parent entity
+
+//        Node result = findNode();
+//        new ResolutionRequest()
+    }
 
     @Override
     public Node requestResolution(Object entity) {
+
+
         // Obtain the entity's rdfType
         //persistenceContext.ge
         RdfTypeFactory typeFactory = null;
@@ -104,15 +128,15 @@ public class RdfEmitterContextImpl
         Node rootNode = type.getRootNode(entity);
         //Node result = requestResolution(entity, type, () -> rootNode);
         //Node result = persistenceContext.requestResolution(/propertyOps, entity, node);
-        
+
         if(true) {
             throw new RuntimeException("not implemented yet");
         }
-        
+
         return null;
         //return result;
     }
-    
+
 //    @Override
 //    public Node requestResolution(Object entity, Node node) {
 //        // Obtain the entity's rdfType
@@ -122,52 +146,52 @@ public class RdfEmitterContextImpl
 //        RdfType type = typeFactory.forJavaType(clazz);
 //
 //        Node rootNode = type.getRootNode(entity);
-//        Node result = requestResolution(entity, type, () -> rootNode);        
-//        
+//        Node result = requestResolution(entity, type, () -> rootNode);
+//
 //        return result;
 //    }
-//    
+//
 
 //    public Node requestReuse(Node subject, Node predicate, boolean reverse) {
-//        
+//
 //    }
 //
 //    public Node requestReuse(Node subject, Node predicate, boolean reverse) {
-//        
+//
 //    }
 
-    
-    
-    
+
+
+
     /**
      * Generate a placeholder node for the value of the property 'property' of entity 'subject'.
      * Resolution of placeholders yields a Map<Node, Node>, mapping placeholders to concrete nodes.
-     * 
-     * 
-     * 
+     *
+     *
+     *
      * Note that subject may again be a placeholder; the engine will attempt to resolve nested placeholder.
-     * 
+     *
      * @param subject
      * @param property
      */
 //    public Node requestPlaceholder(Node subject, Directed<Node> property) {
-//        
+//
 //    }
-    
+
     /**
      * Request a placeholder node which corresponds to the (inverse) property of the given subject.
-     * 
+     *
      * Making the strategy for what to do with an existing node configurable is work in progress.
-     * 
+     *
      * Furthermore, the given java entity triple should be written using the given rdfType with the obtained placeholder node
      * as the starting node.
      * This means, that during writing, further requestResultion requests can be occurr.
-     * 
-     * 
+     *
+     *
      * Note, that based on the triples written to the sink, existing iri values may be looked up and possibly reused.
-     * Node subject, Directed<Node> property, 
-     * 
-     * 
+     * Node subject, Directed<Node> property,
+     *
+     *
      */
 //    @Override
 //    public Node requestResolution(Object entity, RdfType rdfType, Supplier<Node> iriGenerator) {
@@ -175,13 +199,13 @@ public class RdfEmitterContextImpl
 //        // If not, ask the persistenceContext
 //        // If we still have no node, generate one and mark it for future resolution.
 //        Node result = entityToNode.get(entity);
-//        
+//
 //        if(result == null) {
 //            result = persistenceContext.getPrimaryNodeMap().get(entity);
 //            if(result == null) {
 //                result = NodeFactory.createBlankNode();
 //                ResolutionRequest request = new ResolutionRequest(entity, rdfType, iriGenerator);
-//                
+//
 //                nodeToResolutionRequest.put(result, request);
 //
 //                entityToNode.put(entity, result);
@@ -193,14 +217,14 @@ public class RdfEmitterContextImpl
 //        // However, this can require lookups to the database
 //        // In order to be able to perform bulk lookups, we return placeholder nodes
 //        // for values for which we don't know the node.
-//        
+//
 //        // About the placeholders:
 //        // Option 1: Always generate placeholders
-//        // Option 2: If the persistenceContext holds a node mapping for the value, use this 
-//        
-//        
+//        // Option 2: If the persistenceContext holds a node mapping for the value, use this
+//
+//
 //        //System.out.println("Unresolved nodes: " + unresolvedNodes.values());
-//        
+//
 //        return result;
 //    }
 
@@ -214,7 +238,7 @@ public class RdfEmitterContextImpl
 //    public void add(Node node, Object entity) {
 //        entityToNode.put(entity, node);
 //    }
-//    
+//
 //    public Node get(Object entity, RdfType rdfType) {
 //        Node result = entityToNode.get(entity);
 //        if(result == null) {
@@ -223,7 +247,7 @@ public class RdfEmitterContextImpl
 //                throw new RuntimeException("Could not obtain a node for: " + entity);
 //            }
 //        }
-//        
+//
 //        return result;
 //    }
 

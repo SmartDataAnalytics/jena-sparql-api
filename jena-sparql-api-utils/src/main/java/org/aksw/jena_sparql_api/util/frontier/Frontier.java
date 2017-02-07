@@ -9,19 +9,21 @@ package org.aksw.jena_sparql_api.util.frontier;
 public interface Frontier<T>
 {
 
-	/**
-	 * Add an entity to the frontier
-	 *
-	 * @param rdfType
-	 * @param bean
-	 */
-	void add(T item);
-	T next();
-	boolean isEmpty();
+    /**
+     * Add an entity to the frontier
+     *
+     * @param rdfType
+     * @param bean
+     */
+    void add(T item);
+    T next();
+    boolean isEmpty();
 
 
-	FrontierStatus getStatus(Object item);
-	void setStatus(T item, FrontierStatus status);
-	//boolean isDone(T item);
-	//void makeDone(T item);
+    FrontierStatus getStatus(Object item);
+    void setStatus(T item, FrontierStatus status);
+
+    boolean contains(Object item);
+    //boolean isDone(T item);
+    //void makeDone(T item);
 }
