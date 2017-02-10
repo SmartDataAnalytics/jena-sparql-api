@@ -6,6 +6,7 @@ import java.util.function.Function;
 import org.aksw.jena_sparql_api.beans.model.PropertyOps;
 import org.aksw.jena_sparql_api.mapper.model.RdfMapperProperty;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
+import org.aksw.jena_sparql_api.mapper.util.ValueHolder;
 import org.apache.jena.rdf.model.RDFNode;
 
 /**
@@ -16,6 +17,7 @@ import org.apache.jena.rdf.model.RDFNode;
  */
 public class PlaceholderInfo {
 	// TODO Maybe this should be only a reference to the targetRdfType, instead of that object itself
+	protected Class<?> targetClass;
 	protected RdfType targetRdfType;
 
 	protected Object parentEntity;
@@ -28,6 +30,8 @@ public class PlaceholderInfo {
 	// The mapper that generated this placeholder information
 	protected RdfMapperProperty mapper;
 	
+	protected ValueHolder valueHolder;	
+	
 	/**
 	 * Function that returns a node's URI based on a remapping of
 	 * of nodes in the fragment that were resolved.
@@ -35,14 +39,20 @@ public class PlaceholderInfo {
 	 */
 	protected Function<Map<RDFNode, RDFNode>, RDFNode> iriGenerator;
 	
-	public PlaceholderInfo(RdfType targetRdfType, Object parentEntity, PropertyOps propertyOps, Object value,
-			RdfMapperProperty mapper) {
+	public PlaceholderInfo(Class<?> targetClass, RdfType targetRdfType, Object parentEntity, PropertyOps propertyOps, Object value,
+			RdfMapperProperty mapper, ValueHolder valueHolder) {
 		super();
+		this.targetClass = targetClass;
 		this.targetRdfType = targetRdfType;
 		this.parentEntity = parentEntity;
 		this.propertyOps = propertyOps;
 		this.value = value;
 		this.mapper = mapper;
+		this.valueHolder = valueHolder;
+	}
+
+	public Class<?> getTargetClass() {
+		return targetClass;
 	}
 
 	public RdfType getTargetRdfType() {

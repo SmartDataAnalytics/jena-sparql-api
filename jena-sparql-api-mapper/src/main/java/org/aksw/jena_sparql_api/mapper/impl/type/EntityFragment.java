@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.mapper.impl.type;
 
+import java.util.IdentityHashMap;
 import java.util.Map;
 
 /**
@@ -11,9 +12,19 @@ import java.util.Map;
  *
  */
 public class EntityFragment {
-	protected Map<String, EntityPlaceholderInfo> propertyToInfo;
+	protected Object rootEntity;
+	protected Map<Object, Map<String, EntityPlaceholderInfo>> propertyInfos;
 	
-	public Map<String, EntityPlaceholderInfo> getPropertyInfo() {
-		return propertyToInfo;
+	public EntityFragment(Object rootEntity) {
+		this.rootEntity = rootEntity; 
+		this.propertyInfos = new IdentityHashMap<>();
+	}
+	
+	public Map<Object, Map<String, EntityPlaceholderInfo>> getPropertyInfos() {
+		return propertyInfos;
+	}
+
+	public Object getRootEntity() {
+		return rootEntity;
 	}
 }

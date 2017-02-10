@@ -344,7 +344,7 @@ public class RdfMapperEngineImpl
     	
         // We now need to construct a function that is capable of resolving
         // the property values of the entity
-        for(Entry<String, EntityPlaceholderInfo> e : entityFragment.getPropertyInfo().entrySet()) {
+        for(Entry<String, EntityPlaceholderInfo> e : entityFragment.getPropertyInfos().entrySet()) {
         	EntityPlaceholderInfo pi = e.getValue();
         	Class<?> valueClass = e.getValue().getTargetRdfType().getEntityClass();
         	Node valueNode = pi.getRdfNode().asNode();
@@ -551,7 +551,7 @@ public class RdfMapperEngineImpl
         DatasetGraph newState = DatasetGraphFactory.create();
         Graph outGraph = Quad.defaultGraphIRI.equals(g) ? newState.getDefaultGraph() : newState.getGraph(g);
         //rdfClass.emitTriples(out, entity);
-        emitTriples(outGraph, tgtEntity);
+        //emitTriples(outGraph, tgtEntity);
 
 
         DatasetGraph oldState = DatasetGraphFactory.create();

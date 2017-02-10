@@ -2,7 +2,6 @@ package org.aksw.jena_sparql_api.mapper.impl.type;
 
 import org.aksw.jena_sparql_api.beans.model.PropertyOps;
 import org.aksw.jena_sparql_api.mapper.model.RdfMapperProperty;
-import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 
@@ -17,18 +16,23 @@ public class EntityPlaceholderInfo
 	extends PlaceholderInfo
 {
 	protected RDFNode rdfNode;
+	protected Class<?> targetClass;
 	
-	public EntityPlaceholderInfo(RdfType targetRdfType, Object parentEntity, Resource parentRes, PropertyOps propertyOps, RDFNode rdfNode,
+	public EntityPlaceholderInfo(Class<?> targetClass, Object parentEntity, Resource parentRes, PropertyOps propertyOps, RDFNode rdfNode,
 			RdfMapperProperty mapper) {
-		super(targetRdfType, parentEntity, propertyOps, null, mapper);
+		super(targetClass, null, parentEntity, propertyOps, null, mapper, null);
 
+		this.targetClass = targetClass;
 		this.rdfNode = rdfNode;
 	}
+
+//	public Class<?> getTargetClass() {
+//		return targetClass;
+//	}
 
 	public RDFNode getRdfNode() {
 		return rdfNode;
 	}
-
 	
 	
 }

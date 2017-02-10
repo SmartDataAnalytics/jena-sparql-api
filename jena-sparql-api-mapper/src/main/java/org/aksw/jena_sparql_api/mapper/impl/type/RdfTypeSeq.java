@@ -13,6 +13,7 @@ import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
 
 /**
  * A type that
@@ -61,19 +62,16 @@ public class RdfTypeSeq
         return null;
     }
 
-    @Override
-    public void populateEntity(RdfPersistenceContext persistenceContext,
-            Object entity, Node subject, Graph inGraph, Consumer<Triple> sink) {
-        // TODO Auto-generated method stub
-        
-    }
 
     @Override
-    public void emitTriples(
-            RdfEmitterContext emitterContext, Object entity, Node subject,
-            Graph shapeGraph, Consumer<Triple> sink) {
-        // TODO Auto-generated method stub
-        
+    public void exposeFragment(ResourceFragment out, Resource priorState, Object entity) {
+    	// TODO Auto-generated method stub	
+    }
+    
+    @Override
+    public EntityFragment populate(Resource shape, Object entity) {
+    	// TODO Auto-generated method stub
+    	return null;
     }
 
 	@Override

@@ -3,25 +3,18 @@ package org.aksw.jena_sparql_api.mapper.impl.type;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
-import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
-import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
-import org.aksw.jena_sparql_api.mapper.model.RdfType;
+import org.aksw.jena_sparql_api.mapper.util.ValueHolder;
+import org.aksw.jena_sparql_api.mapper.util.ValueHolderImpl;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
-import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
-import org.apache.jena.graph.NodeFactory;
-import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.sparql.util.ModelUtils;
 
 public class RdfTypeMap
     //extends RdfPopulatorPropertyBase
@@ -34,13 +27,35 @@ public class RdfTypeMap
     public static final Property keyClass = ResourceFactory.createProperty("http://jsa.aksw.org/ontology/keyClass");
     public static final Property valueClass = ResourceFactory.createProperty("http://jsa.aksw.org/ontology/valueClass");
 
+//    protected RdfType keyRdfType;
+//    protected RdfType valueRdfType;
+    protected Class<?> keyClazz;
+    protected Class<?> valueClazz;
+    
     //protected MapOps mapOps;
     protected Function<Object, Map> createMapView;
 
     // , PropertyOps propertyOps, Node predicate, RdfType targetRdfType
-    public RdfTypeMap(Function<Object, Map> createMapView) {
+    
+    public RdfTypeMap(
+        	Function<Object, Map> createMapView)
+    {
+    	this(createMapView, Object.class, Object.class);
+    }
+    
+    public RdfTypeMap(
+    	Function<Object, Map> createMapView,
+//    	RdfType keyRdfType,
+//    	RdfType valueRdfType
+    	Class<?> keyClazz,
+    	Class<?> valueClazz
+    	) {
         ///super(typeFactory);
         this.createMapView = createMapView;
+//        this.keyRdfType = keyRdfType;
+//        this.valueRdfType = valueRdfType;
+        this.keyClazz = keyClazz;
+        this.valueClazz = valueClazz;
     }
 
 
@@ -52,10 +67,12 @@ public class RdfTypeMap
         tmp.out(value.asNode());
     }
 
-    @Override
-    public void emitTriples(RdfEmitterContext emitterContext, Object entity, Node subject,
-            Graph shapeGraph, Consumer<Triple> sink) {
+//    @Override
+//    public void emitTriples(RdfEmitterContext emitterContext, Object entity, Node subject,
+//            Graph shapeGraph, Consumer<Triple> sink) {
 
+    @Override
+    public void exposeFragment(ResourceFragment out, Resource priorState, Object entity) {
         @SuppressWarnings("unchecked")
         Map<? super Object, ? super Object> map = createMapView.apply(entity);
 
@@ -65,59 +82,76 @@ public class RdfTypeMap
             Object k = e.getKey();
             Object v = e.getValue();
 
-            Node eNode = NodeFactory.createURI(subject.getURI() + "-" + i);
+            Resource subject = out.getResource();
+            Model m = subject.getModel();
 
-            //persistenceContext.
-            //persistenceContext.entityFor(new TypedNode(rdfType, node));
+            Resource r = m.createResource(subject.getURI() + "-" + i); 
+            
+            Resource kNode = m.createResource();
+            Resource vNode = m.createResource();
+            
+            subject.addProperty(entry, r);
+            
+            r
+            	.addProperty(key, kNode)
+            	.addProperty(value, vNode);
 
-
-//            Node kNode = null; // emitterContext.getValueNode(entity, propertyName)//RdfPersistenceContextImpl.getOrCreateRootNode(persistenceContext, typeFactory, k);
-//            Node vNode = null; //RdfPersistenceContextImpl.getOrCreateRootNode(persistenceContext, typeFactory, v);
-
-//            emitterContext.add(k, entity, "key" + i);
-//            emitterContext.add(v, entity, "value" + i);
-
-            //Node keyNode = emitterContext.
-
-            //Node kNode = emitterContext.getValueNode(entity, "key" + i, v);
-            //Node vNode = emitterContext.getValueNode(entity, "value" + i, v);
-
-            Node kNode = emitterContext.requestResolution(k);
-            Node vNode = emitterContext.requestResolution(v);
-
-            sink.accept(new Triple(subject, entry.asNode(), eNode));
-            sink.accept(new Triple(eNode, key.asNode(), kNode));
-            sink.accept(new Triple(eNode, value.asNode(), vNode));
+//            ValueHolder vh = new ValueHolderImpl(
+//            	() -> map.get(k),
+//            	x -> map.put(k, x)
+//            );
+            
+            out.getPlaceholders().put(kNode, new PlaceholderInfo(keyClazz, null, entity, null, k, null, null));
+            out.getPlaceholders().put(vNode, new PlaceholderInfo(valueClazz, null, entity, null, v, null, null));
 
             ++i;
         }
 
     }
+    
+    /**
+     * The fragment will contain information about which nodes need to be resolved.
+     * Once everything is resolved, there needs to be a function that carries
+     * out the actualy population - so its more like
+     * 
+     * Populator populator = exposePopulator(shape, entity) // Maybe the entity is not needed at this stage
+     * 
+     * populator.refs.forEach((key, class, node) -> context.put(key, rdfMapperEngine.resolve(class, node)))
+     * populator.resolve(context)
+     * 
+     * 
+     */
+	@Override
+	public EntityFragment populate(Resource shape, Object entity) {
+	
+	    // <Object, Object>
+	    Map<Object, Object> map = createMapView.apply(entity);
+	
 
-    @Override
-    public void populateEntity(RdfPersistenceContext persistenceContext, Object entity, Node subject, Graph graph, Consumer<Triple> outSink) {
-        Model model = ModelFactory.createModelForGraph(graph);
-        RDFNode root = ModelUtils.convertGraphNodeToRDFNode(subject, model);
+	    EntityFragment result = new EntityFragment(entity);
+	    for(Statement stmt : shape.listProperties(entry).toList()) {
+	        Resource e = stmt.getObject().asResource();
+	
+	        Node kNode = e.getProperty(key).getObject().asNode();
+	        Node vNode = e.getProperty(value).getObject().asNode();
+	
+	        // TODO: We need to dynamically figure out which entity the node could be
+	        EntityPlaceholderInfo placeholder = new EntityPlaceholderInfo(valueClass, entity, parentRes, propertyOps, vNode, null);
+	        //RdfType rdfType = null;
+	        //Object k = persistenceContext.entityFor(Object.class, kNode, null);//new TypedNode(rdfType, kNode));          Object v = persistenceContext.entityFor(Object.class, vNode, null);//new TypedNode(rdfType, vNode));
+	
+	        Object k = null;
+	        ValueHolder vh = new ValueHolderImpl(
+	        		() -> map.get(k),
+	        		v -> map.put(k, v)	        		
+	        );
+	        
+//	        map.put(k, v);
+	    }
+	    
+	    return result;
+	}
 
-        // <Object, Object>
-        Map map = createMapView.apply(entity);
-
-
-        for(Statement stmt : root.asResource().listProperties(entry).toList()) {
-            Resource e = stmt.getObject().asResource();
-
-            Node kNode = e.getProperty(key).getObject().asNode();
-            Node vNode = e.getProperty(value).getObject().asNode();
-
-
-            // TODO: We need to dynamically figure out which entity the node could be
-            RdfType rdfType = null;
-            Object k = persistenceContext.entityFor(Object.class, kNode, null);//new TypedNode(rdfType, kNode));
-            Object v = persistenceContext.entityFor(Object.class, vNode, null);//new TypedNode(rdfType, vNode));
-
-            map.put(k, v);
-        }
-    }
 
     @Override
     public Class<?> getEntityClass() {
@@ -154,3 +188,30 @@ public class RdfTypeMap
 //    }
 
 }
+
+//
+//@Override
+//public void populateEntity(RdfPersistenceContext persistenceContext, Object entity, Node subject, Graph graph, Consumer<Triple> outSink) {
+//  Model model = ModelFactory.createModelForGraph(graph);
+//  RDFNode root = ModelUtils.convertGraphNodeToRDFNode(subject, model);
+//
+//  // <Object, Object>
+//  Map map = createMapView.apply(entity);
+//
+//
+//  for(Statement stmt : root.asResource().listProperties(entry).toList()) {
+//      Resource e = stmt.getObject().asResource();
+//
+//      Node kNode = e.getProperty(key).getObject().asNode();
+//      Node vNode = e.getProperty(value).getObject().asNode();
+//
+//
+//      // TODO: We need to dynamically figure out which entity the node could be
+//      RdfType rdfType = null;
+//      Object k = persistenceContext.entityFor(Object.class, kNode, null);//new TypedNode(rdfType, kNode));
+//      Object v = persistenceContext.entityFor(Object.class, vNode, null);//new TypedNode(rdfType, vNode));
+//
+//      map.put(k, v);
+//  }
+//}
+
