@@ -19,6 +19,7 @@ import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.springframework.cglib.proxy.Callback;
@@ -257,7 +258,8 @@ public class RdfClass
      * @param datasetGraph
      */
     @Override
-    public void populateEntity(RdfPersistenceContext persistenceContext, Object entity, Node s, Graph inGraph, Consumer<Triple> outSink) {
+    public EntityFragment populate(Resource shape, Object entity) {
+    //public void populateEntity(RdfPersistenceContext persistenceContext, Object entity, Node s, Graph inGraph, Consumer<Triple> outSink) {
         //DatasetGraph result = DatasetGraphFactory.createMem();
 
         //Graph graph = result.getDefaultGraph();
@@ -266,9 +268,11 @@ public class RdfClass
         /*
          *  Run all of this class' populators
          */
+        EntityFragment result = new EntityFragment();
         for(RdfMapper pd : populators) {
-            pd.populateEntity(persistenceContext, entity, inGraph, s, outSink);
+            EntityPlaceholderInfo placeholder = pd.populateEntity(result, shape, entity);
         }
+        return result;
     }
 
     //writeGraph(Object obj, Node g, )
@@ -280,34 +284,34 @@ public class RdfClass
      * @param g
      * @return
      */
-    @Override
-    public void emitTriples(RdfEmitterContext emitterContext, Object entity, Node s, Graph shapeGraph, Consumer<Triple> out) {
-        //Node s = getRootNode(obj);
-        //Node s = persistenceContext.getRootNode(entity);
-        if(s == null) {
-            throw new RuntimeException("Could not determine (iri-)node of entity " + (entity == null ? " null " : entity.getClass().getName()) + " - " + entity);
-        }
-
-        /*
-         * Run the emitters of all of this class' populators
-         */
-        for(RdfMapper populator : populators) {
-            populator.emitTriples(emitterContext, entity, s, shapeGraph, out);
-        }
-
-        /*
-         * Based on the property descriptors, the RdfClass
-         * notifies the emitter context which property values need additional
-         * emitting
-         */
-//        BeanWrapper beanWrapper = new BeanWrapperImpl(entity);
-//        for(RdfPropertyDescriptor pd : propertyDescriptors.values()) {
-//            String propertyName = pd.getName();
-//
-//            Object propertyValue = beanWrapper.getPropertyValue(propertyName);
-//            emitterContext.add(propertyValue, entity, propertyName);
+//    @Override
+//    public void emitTriples(RdfEmitterContext emitterContext, Object entity, Node s, Graph shapeGraph, Consumer<Triple> out) {
+//        //Node s = getRootNode(obj);
+//        //Node s = persistenceContext.getRootNode(entity);
+//        if(s == null) {
+//            throw new RuntimeException("Could not determine (iri-)node of entity " + (entity == null ? " null " : entity.getClass().getName()) + " - " + entity);
 //        }
-    }
+//
+//        /*
+//         * Run the emitters of all of this class' populators
+//         */
+//        for(RdfMapper populator : populators) {
+//            populator.emitTriples(emitterContext, entity, s, shapeGraph, out);
+//        }
+//
+//        /*
+//         * Based on the property descriptors, the RdfClass
+//         * notifies the emitter context which property values need additional
+//         * emitting
+//         */
+////        BeanWrapper beanWrapper = new BeanWrapperImpl(entity);
+////        for(RdfPropertyDescriptor pd : propertyDescriptors.values()) {
+////            String propertyName = pd.getName();
+////
+////            Object propertyValue = beanWrapper.getPropertyValue(propertyName);
+////            emitterContext.add(propertyValue, entity, propertyName);
+////        }
+//    }
 
 
 
@@ -364,7 +368,7 @@ public class RdfClass
     }
 
     @Override
-    public Object createJavaObject(Node node, Graph graph) {
+    public Object createJavaObject(RDFNode r) {
         if(!entityOps.isInstantiable()) {
             throw new RuntimeException("EntityOps is not instantiable: " + entityOps);
         }
@@ -385,9 +389,9 @@ public class RdfClass
      * @param entity
      * @return
      */
-    public void exposeFragment(UnresolvedResource out, Object entity, Resource priorState) {
+    public void exposeFragment(ResourceFragment out, Resource priorState, Object entity) {
         for(RdfMapper populator : populators) {
-            populator.exposeFragment(out, entity);
+            populator.exposeFragment(out, priorState, entity);
         }
     }
 

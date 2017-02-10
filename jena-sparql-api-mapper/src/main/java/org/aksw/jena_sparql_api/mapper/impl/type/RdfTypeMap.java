@@ -8,9 +8,7 @@ import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
-import org.aksw.jena_sparql_api.mapper.context.TypedNode;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
-import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
@@ -135,7 +133,7 @@ public class RdfTypeMap
 
 
     @Override
-    public Object createJavaObject(Node node, Graph graph) {
+    public Object createJavaObject(RDFNode node) {
         @SuppressWarnings("rawtypes")
         Map result = new HashMap();
         return result;

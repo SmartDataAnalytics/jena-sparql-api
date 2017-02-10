@@ -110,7 +110,7 @@ public class RdfMapperPropertyMulti
         //for(Node o : os) {
             //TypedNode typedNode = new TypedNode(targetRdfType, o);
             Class<?> valueClass = propertyOps.getClass();
-            Object value = populationContext.entityFor(valueClass, o, () -> targetRdfType.createJavaObject(o, graph));
+            Object value = populationContext.entityFor(valueClass, o, () -> targetRdfType.createEntity(o, graph));
             //Object value = rdfType.createJavaObject(o);
             collection.add(value);
         }

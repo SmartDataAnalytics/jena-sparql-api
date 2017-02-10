@@ -1,14 +1,11 @@
 package org.aksw.jena_sparql_api.mapper.model;
 
-import java.util.function.Consumer;
-
-import org.aksw.jena_sparql_api.beans.model.EntityOps;
-import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
-import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
+import org.aksw.jena_sparql_api.mapper.impl.type.EntityFragment;
+import org.aksw.jena_sparql_api.mapper.impl.type.ResourceFragment;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
-import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
-import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
 
 /**
  * Base class for operations for mapping java objects of *a specific* class to and from sets of triples.
@@ -112,7 +109,8 @@ public interface RdfType
      * @return
      */
     //Object createJavaObject(Node node); // TODO May need to add entity manager context argument
-    Object createJavaObject(Node node, Graph graph);
+    // TODO This is the responsibility of the type decider
+    Object createJavaObject(RDFNode r);
 
     // boolean isHydrated(Object bean)
 
@@ -127,17 +125,38 @@ public interface RdfType
 
     void exposeShape(ResourceShapeBuilder rsb); // Alternative: ResourceShapeBuilder build();
 
+    
 
     // TODO It seems it should be this way: persistenceContext.populateEntity(entity, graph, rdfType),
-    void populateEntity(RdfPersistenceContext persistenceContext, Object entity, Node subject, Graph inGraph, Consumer<Triple> sink); //, Node g, Node s);
+    //void populateEntity(RdfPersistenceContext persistenceContext, Object entity, Node subject, Graph inGraph, Consumer<Triple> sink); //, Node g, Node s);
 
     // These two methods only make sense on classes; but not on primitive types ; maybe move down in the type hierarchy.
 //    void populateEntity(RdfPopulationContext populationContext, Object bean, DatasetGraph datasetGraph); //, Node g, Node s);
 
+    /**
+     * 
+     * 
+     * @param out
+     * @param priorState
+     * @param entity
+     */
+    void exposeFragment(ResourceFragment out, Resource priorState, Object entity);
+    
+    /**
+     * Populates an entity from a resource RDF graph that should match the
+     * exposed shape.
+     * 
+     * 
+     * 
+     * @param inout
+     * @param shape
+     * @param entity
+     */
+    EntityFragment populate(Resource shape, Object entity);
 
     //DatasetGraph createDatasetGraph(Object obj, Node g);
     // RdfPersistenceContext persistenceContext, 
-    void emitTriples(RdfEmitterContext emitterContext, Object entity, Node subject, Graph shapeGraph, Consumer<Triple> sink);
+    //void emitTriples(RdfEmitterContext emitterContext, Object entity, Node subject, Graph shapeGraph, Consumer<Triple> sink);
 
 //    void exposeTypeDeciderShape(ResourceShapeBuilder rsb);
 //    Collection<RdfType> getApplicableTypes(Resource resource);

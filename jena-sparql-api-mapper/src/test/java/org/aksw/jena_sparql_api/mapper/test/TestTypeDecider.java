@@ -15,7 +15,7 @@ import org.junit.Test;
 public class TestTypeDecider
     extends TestMapperBase
 {
-    //@Test
+    @Test
     public void test() {
         Map<Class<?>, Node> map = TypeDeciderImpl.scan("org.aksw.jena_sparql_api.mapper.test");
         Assert.assertNotEquals(0, map.size());

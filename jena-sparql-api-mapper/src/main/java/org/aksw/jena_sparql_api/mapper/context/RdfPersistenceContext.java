@@ -42,6 +42,7 @@ public interface RdfPersistenceContext
     Object entityFor(Class<?> clazz, Node node, Supplier<Object> newInstance);
 
 
+    
     EntityGraphMap<EntityId> getEntityGraphMap();
     ReversibleMap<EntityId, Object> getIdToEntityMap();
     Map<Object, EntityId> getEntityToIdMap();

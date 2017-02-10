@@ -1,7 +1,5 @@
 package org.aksw.jena_sparql_api.mapper.model;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.function.Consumer;
 
 import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
@@ -11,7 +9,7 @@ import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.RDFNode;
 
 public class RdfTypeCollection
     extends RdfTypeComplexBase
@@ -46,7 +44,7 @@ public class RdfTypeCollection
 //    }
 
     @Override
-    public Object createJavaObject(Node node, Graph graph) {
+    public Object createJavaObject(RDFNode node) {
         return null;
     }
 

@@ -1,8 +1,8 @@
 package org.aksw.jena_sparql_api.mapper.impl.type;
 
-import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.rdf.model.RDFNode;
 
 /**
  * RdfType to map Java Strings to IRIs and vice versa
@@ -31,8 +31,8 @@ public class RdfTypeIriStr
     }
 
     @Override
-    public Object createJavaObject(Node node, Graph graph) {
-        String result = node.getURI();
+    public Object createJavaObject(RDFNode node) {
+        String result = node.asNode().getURI();
         return result;
     }
     

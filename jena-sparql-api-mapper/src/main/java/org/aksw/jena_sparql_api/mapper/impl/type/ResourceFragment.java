@@ -15,20 +15,20 @@ import org.apache.jena.rdf.model.Resource;
  * @author raven
  *
  */
-public class UnresolvedResource {
+public class ResourceFragment {
     protected Resource resource;
-    protected Map<RDFNode, Object> placeholders;
+    protected Map<RDFNode, PlaceholderInfo> placeholders;
 
-    public UnresolvedResource() {
+    public ResourceFragment() {
         this(ModelFactory.createDefaultModel().createResource());
     }
 
-    public UnresolvedResource(Resource resource) {
+    public ResourceFragment(Resource resource) {
         this(resource, new HashMap<>());
     }
 
-    public UnresolvedResource(Resource resource,
-            Map<RDFNode, Object> placeholders) {
+    public ResourceFragment(Resource resource,
+            Map<RDFNode, PlaceholderInfo> placeholders) {
         super();
         this.resource = resource;
         this.placeholders = placeholders;
@@ -38,7 +38,7 @@ public class UnresolvedResource {
         return resource;
     }
 
-    public Map<RDFNode, Object> getPlaceholders() {
+    public Map<RDFNode, PlaceholderInfo> getPlaceholders() {
         return placeholders;
     }
 

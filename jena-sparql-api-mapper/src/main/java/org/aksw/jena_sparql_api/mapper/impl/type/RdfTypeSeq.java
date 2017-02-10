@@ -12,6 +12,7 @@ import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.RDFNode;
 
 /**
  * A type that
@@ -55,7 +56,7 @@ public class RdfTypeSeq
     }
 
     @Override
-    public Object createJavaObject(Node node, Graph graph) {
+    public Object createJavaObject(RDFNode node) {
         // TODO Auto-generated method stub
         return null;
     }

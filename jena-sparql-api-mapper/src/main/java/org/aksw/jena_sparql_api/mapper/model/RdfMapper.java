@@ -9,11 +9,12 @@ import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
-import org.aksw.jena_sparql_api.mapper.impl.type.UnresolvedResource;
+import org.aksw.jena_sparql_api.mapper.impl.type.ResourceFragment;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Resource;
 
 /**
  * RdfPopulators map bean properties to triples and vice versa.
@@ -67,8 +68,11 @@ public interface RdfMapper {
     void exposeShape(ResourceShapeBuilder shapeBuilder);
 
 
-    void exposeFragment(UnresolvedResource out, Object entity);
+    // Expose fragment will supersede emitTriples
+    void exposeFragment(ResourceFragment out, Resource priorState, Object entity);
 
+    void readFragment(Object tgtEntity, ResourceFragment inout);
+    
     /**
      * Emit triples from the object
      *
@@ -76,6 +80,7 @@ public interface RdfMapper {
      * @param bean
      * @param subject
      */
+    @Deprecated
     void emitTriples(RdfEmitterContext emitterContext, Object entity, Node subject, Graph shapeGraph, Consumer<Triple> outSink);
 
     /**
@@ -87,7 +92,4 @@ public interface RdfMapper {
      * @return
      */
     void populateEntity(RdfPersistenceContext persistenceContext, Object entity, Graph inGraph, Node subject, Consumer<Triple> outSink);
-
-
-    Node getTargetNode(String subjectUri, Object entity);
 }
