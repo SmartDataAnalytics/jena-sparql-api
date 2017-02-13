@@ -1,7 +1,6 @@
 package org.aksw.jena_sparql_api.mapper.model;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 import java.util.function.BiFunction;
 
@@ -10,13 +9,10 @@ import org.aksw.jena_sparql_api.mapper.impl.type.PlaceholderInfo;
 import org.aksw.jena_sparql_api.mapper.impl.type.ResourceFragment;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
-import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.h2.util.StringUtils;
-
-import com.google.common.collect.Iterables;
 
 public abstract class RdfMapperPropertyBase
     implements RdfMapperProperty
@@ -32,7 +28,7 @@ public abstract class RdfMapperPropertyBase
     //protected EntityOps entityOps;
     //protected String propertyName;
     protected PropertyOps propertyOps;
-    protected Node predicate;
+    protected Property predicate;
     //protected BeanWrapper owningBean;
 
     /**
@@ -56,7 +52,7 @@ public abstract class RdfMapperPropertyBase
 //    protected RdfType rdfType;
 
 
-    public RdfMapperPropertyBase(PropertyOps propertyOps, Node predicate, RdfType targetRdfType, BiFunction<Object, Object, Node> createTargetNode) { //, String fetchMode) {
+    public RdfMapperPropertyBase(PropertyOps propertyOps, Property predicate, RdfType targetRdfType, BiFunction<Object, Object, Node> createTargetNode) { //, String fetchMode) {
         super();
         //this.propertyName = propertyName;
         this.propertyOps = propertyOps;
@@ -78,42 +74,42 @@ public abstract class RdfMapperPropertyBase
         Object v = propertyOps.getValue(entity);
 
         
-        PlaceholderInfo info = new PlaceholderInfo(targetRdfType, entity, propertyOps, v, this);
+        PlaceholderInfo info = new PlaceholderInfo(null, targetRdfType, entity, null, propertyOps, v, null, this);
         
 //        Map<RDFNode, Object> placeholders = new HashMap<>();
 //        placeholders.put(o, v);
         
         out.getPlaceholders().put(o, info);
     }
-
-    @Override
-    public void readFragment(Object tgtEntity, ResourceFragment inout) {
-        Resource r = inout.getResource();
-        r.getProperty(property);
-
-        
-        inout.getPlaceholders()
-        Node node;
-        if(t != null) {
-            node = t.getObject();
-            outSink.accept(t);
-        } else {
-            node = null;
-        }
-
-        if(node == null) {
-        	if(createTargetNode != null) {
-	        	Object childEntity = propertyOps.getValue(entity);
-	        	if(childEntity != null) {
-	        		node = createTargetNode.apply(entity, childEntity);
-	        	}
-        	}
-        }
-        
-        if(node != null) {
-        	persistenceContext.requestResolution(propertyOps, entity, node);
-        }
-     }
+//
+//    @Override
+//    public void readFragment(Object tgtEntity, ResourceFragment inout) {
+//        Resource r = inout.getResource();
+//        r.getProperty(property);
+//
+//        
+//        inout.getPlaceholders()
+//        Node node;
+//        if(t != null) {
+//            node = t.getObject();
+//            outSink.accept(t);
+//        } else {
+//            node = null;
+//        }
+//
+//        if(node == null) {
+//        	if(createTargetNode != null) {
+//	        	Object childEntity = propertyOps.getValue(entity);
+//	        	if(childEntity != null) {
+//	        		node = createTargetNode.apply(entity, childEntity);
+//	        	}
+//        	}
+//        }
+//        
+//        if(node != null) {
+//        	persistenceContext.requestResolution(propertyOps, entity, node);
+//        }
+//     }
     
 //    public String getPropertyName() {
 //        return propertyOps.getName();

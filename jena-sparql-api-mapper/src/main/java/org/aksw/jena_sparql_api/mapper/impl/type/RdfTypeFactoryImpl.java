@@ -19,7 +19,6 @@ import org.aksw.jena_sparql_api.mapper.annotation.MappedBy;
 import org.aksw.jena_sparql_api.mapper.annotation.MultiValued;
 import org.aksw.jena_sparql_api.mapper.model.F_GetValue;
 import org.aksw.jena_sparql_api.mapper.model.RdfMapperProperty;
-import org.aksw.jena_sparql_api.mapper.model.RdfMapperPropertyMulti;
 import org.aksw.jena_sparql_api.mapper.model.RdfMapperPropertySingle;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
@@ -33,6 +32,8 @@ import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Syntax;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.Prologue;
 import org.slf4j.Logger;
@@ -271,7 +272,7 @@ public class RdfTypeFactoryImpl
         if(isCandidate && (hasIri || isMappedBy)) {
             logger.debug("Annotation on property " + propertyName + " detected: " + iriStr);
 
-            Node predicate = iriStr != null ? NodeFactory.createURI(iriStr) : null;
+            Property predicate = iriStr != null ? ResourceFactory.createProperty(iriStr) : null;
 
             processProperty(rdfClass, entityOps, pd, predicate, frontier);
 
@@ -300,7 +301,7 @@ public class RdfTypeFactoryImpl
         return result;
     }
 
-    protected void processProperty(RdfClass rdfClass, EntityOps beanInfo, PropertyOps pd, Node predicate, Frontier<RdfClass> frontier) {
+    protected void processProperty(RdfClass rdfClass, EntityOps beanInfo, PropertyOps pd, Property predicate, Frontier<RdfClass> frontier) {
         Class<?> entityClass = beanInfo.getAssociatedClass();
 
         String propertyName = pd.getName();
@@ -367,7 +368,7 @@ public class RdfTypeFactoryImpl
         //RdfProperty result = new RdfPropertyDatatypeOld(beanInfo, pd, null, predicate, rdfValueMapper);
         RdfPropertyDescriptor descriptor = new RdfPropertyDescriptor(propertyName, targetRdfType, "");
         RdfMapperProperty populator = isCollectionProperty
-                ? new RdfMapperPropertyMulti(pd, predicate, targetRdfType, defaultIriFn)
+                ? null //new RdfMapperPropertyMulti(pd, predicate, targetRdfType, defaultIriFn)
                 : new RdfMapperPropertySingle(pd, predicate, targetRdfType, defaultIriFn)
                 ;
 

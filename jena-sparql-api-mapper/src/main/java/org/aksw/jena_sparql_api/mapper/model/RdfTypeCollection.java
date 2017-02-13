@@ -11,7 +11,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.RDFNode;
 
-public class RdfTypeCollection
+public abstract class RdfTypeCollection
     extends RdfTypeComplexBase
 {
     protected Node predicate;
@@ -53,21 +53,6 @@ public class RdfTypeCollection
     public void exposeShape(ResourceShapeBuilder rsb) {
         // TODO Auto-generated method stub
 
-    }
-
-    @Override
-    public void populateEntity(RdfPersistenceContext persistenceContext,
-            Object entity, Node subject, Graph inGraph, Consumer<Triple> sink) {
-        // TODO Auto-generated method stub
-        
-    }
-
-    @Override
-    public void emitTriples(
-            RdfEmitterContext emitterContext, Object entity, Node subject,
-            Graph shapeGraph, Consumer<Triple> sink) {
-        // TODO Auto-generated method stub
-        
     }
 
 	@Override

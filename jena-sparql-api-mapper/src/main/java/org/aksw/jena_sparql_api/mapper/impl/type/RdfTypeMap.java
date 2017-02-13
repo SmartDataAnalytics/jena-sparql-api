@@ -1,6 +1,10 @@
 package org.aksw.jena_sparql_api.mapper.impl.type;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Function;
@@ -101,8 +105,8 @@ public class RdfTypeMap
 //            	x -> map.put(k, x)
 //            );
             
-            out.getPlaceholders().put(kNode, new PlaceholderInfo(keyClazz, null, entity, null, k, null, null));
-            out.getPlaceholders().put(vNode, new PlaceholderInfo(valueClazz, null, entity, null, v, null, null));
+            out.getPlaceholders().put(kNode, new PlaceholderInfo(keyClazz, null, entity, null, null, k, null, null));
+            out.getPlaceholders().put(vNode, new PlaceholderInfo(valueClazz, null, entity, null, null, v, null, null));
 
             ++i;
         }
@@ -132,21 +136,29 @@ public class RdfTypeMap
 	    for(Statement stmt : shape.listProperties(entry).toList()) {
 	        Resource e = stmt.getObject().asResource();
 	
-	        Node kNode = e.getProperty(key).getObject().asNode();
-	        Node vNode = e.getProperty(value).getObject().asNode();
+	        RDFNode kNode = e.getProperty(key).getObject();
+	        RDFNode vNode = e.getProperty(value).getObject();
 	
-	        // TODO: We need to dynamically figure out which entity the node could be
-	        EntityPlaceholderInfo placeholder = new EntityPlaceholderInfo(valueClass, entity, parentRes, propertyOps, vNode, null);
-	        //RdfType rdfType = null;
-	        //Object k = persistenceContext.entityFor(Object.class, kNode, null);//new TypedNode(rdfType, kNode));          Object v = persistenceContext.entityFor(Object.class, vNode, null);//new TypedNode(rdfType, vNode));
-	
-	        Object k = null;
-	        ValueHolder vh = new ValueHolderImpl(
-	        		() -> map.get(k),
-	        		v -> map.put(k, v)	        		
-	        );
+	        PlaceholderInfo kPlaceholder = new PlaceholderInfo(keyClazz, null, entity, shape, null, null, kNode, null);
+	        PlaceholderInfo vPlaceholder = new PlaceholderInfo(valueClazz, null, entity, shape, null, null, vNode, null);
+
+	        List<PlaceholderInfo> entryPlaceholders = Arrays.asList(kPlaceholder, vPlaceholder);
 	        
-//	        map.put(k, v);
+	        new PopulationTask() {
+				
+				@Override
+				public Collection<PopulationTask> resolve(List<Object> resolutions) {
+					Object k = resolutions.get(0);
+					Object v = resolutions.get(1);
+					map.put(k, v);
+					return Collections.emptyList();
+				}
+				
+				@Override
+				public List<PlaceholderInfo> getPlaceholders() {
+					return entryPlaceholders;
+				}
+			};	        
 	    }
 	    
 	    return result;

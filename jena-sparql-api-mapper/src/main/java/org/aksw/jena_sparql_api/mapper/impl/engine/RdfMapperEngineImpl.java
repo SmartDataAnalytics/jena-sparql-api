@@ -29,8 +29,8 @@ import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.aksw.jena_sparql_api.mapper.context.EntityId;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.mapper.impl.type.EntityFragment;
-import org.aksw.jena_sparql_api.mapper.impl.type.EntityPlaceholderInfo;
 import org.aksw.jena_sparql_api.mapper.impl.type.PlaceholderInfo;
+import org.aksw.jena_sparql_api.mapper.impl.type.PopulationTask;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfClass;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
 import org.aksw.jena_sparql_api.mapper.impl.type.ResourceFragment;
@@ -344,13 +344,18 @@ public class RdfMapperEngineImpl
     	
         // We now need to construct a function that is capable of resolving
         // the property values of the entity
-        for(Entry<String, EntityPlaceholderInfo> e : entityFragment.getPropertyInfos().entrySet()) {
-        	EntityPlaceholderInfo pi = e.getValue();
-        	Class<?> valueClass = e.getValue().getTargetRdfType().getEntityClass();
-        	Node valueNode = pi.getRdfNode().asNode();
-        	EntityState valueState = loadEntity(valueClass, valueNode);
-        	Object value = valueState.getEntity();
-        	pi.getPropertyOps().setValue(entity, value);
+    	for(PopulationTask task : entityFragment.getTasks()) {
+    		List<Object> resolutions = new ArrayList<>();
+    		for(PlaceholderInfo placeholder : task.getPlaceholders()) {
+            	Class<?> valueClass = placeholder.getTargetRdfType().getEntityClass();
+            	Node valueNode = placeholder.getRdfNode().asNode();
+            	EntityState valueState = loadEntity(valueClass, valueNode);
+            	Object value = valueState.getEntity();
+            	resolutions.add(value);
+            	//placeholder.getPropertyOps().setValue(entity, value);    			
+    		}
+    		
+    		task.resolve(resolutions);
         }
         
     	

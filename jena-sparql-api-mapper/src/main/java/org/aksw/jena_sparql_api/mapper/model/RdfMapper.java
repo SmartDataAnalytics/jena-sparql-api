@@ -4,16 +4,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
-import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
+import org.aksw.jena_sparql_api.mapper.impl.type.EntityFragment;
 import org.aksw.jena_sparql_api.mapper.impl.type.ResourceFragment;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
-import org.apache.jena.graph.Graph;
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Resource;
 
 /**
@@ -71,7 +66,8 @@ public interface RdfMapper {
     // Expose fragment will supersede emitTriples
     void exposeFragment(ResourceFragment out, Resource priorState, Object entity);
 
-    void readFragment(Object tgtEntity, ResourceFragment inout);
+    //EntityFragment populate(Object tgtEntity, ResourceFragment inout);
+    void populate(EntityFragment out, Resource shape, Object entity);
     
     /**
      * Emit triples from the object
@@ -80,8 +76,8 @@ public interface RdfMapper {
      * @param bean
      * @param subject
      */
-    @Deprecated
-    void emitTriples(RdfEmitterContext emitterContext, Object entity, Node subject, Graph shapeGraph, Consumer<Triple> outSink);
+//    @Deprecated
+//    void emitTriples(RdfEmitterContext emitterContext, Object entity, Node subject, Graph shapeGraph, Consumer<Triple> outSink);
 
     /**
      * Set entity property values from a given subject's RDF graph
@@ -91,5 +87,5 @@ public interface RdfMapper {
      * @param outSink the sub-set of triples in inGraph used to populate the entity
      * @return
      */
-    void populateEntity(RdfPersistenceContext persistenceContext, Object entity, Graph inGraph, Node subject, Consumer<Triple> outSink);
+//    void populateEntity(RdfPersistenceContext persistenceContext, Object entity, Graph inGraph, Node subject, Consumer<Triple> outSink);
 }

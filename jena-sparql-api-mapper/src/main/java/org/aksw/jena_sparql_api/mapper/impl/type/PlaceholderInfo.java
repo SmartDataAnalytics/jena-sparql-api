@@ -21,8 +21,12 @@ public class PlaceholderInfo {
 	protected RdfType targetRdfType;
 
 	protected Object parentEntity;
+	protected RDFNode parentRdfNode;
 	protected PropertyOps propertyOps;
+	
 	protected Object value;
+	protected RDFNode rdfNode;
+
 	
 	// Function to generate an IRI for the placeholder based on the parent's IRI
 	//protected BiFunction<String, Object, String> generateIriFn;
@@ -39,16 +43,18 @@ public class PlaceholderInfo {
 	 */
 	protected Function<Map<RDFNode, RDFNode>, RDFNode> iriGenerator;
 	
-	public PlaceholderInfo(Class<?> targetClass, RdfType targetRdfType, Object parentEntity, PropertyOps propertyOps, Object value,
-			RdfMapperProperty mapper, ValueHolder valueHolder) {
+	public PlaceholderInfo(Class<?> targetClass, RdfType targetRdfType, Object parentEntity, RDFNode parentRdfNode, PropertyOps propertyOps, Object value,
+			RDFNode rdfNode, RdfMapperProperty mapper) {// ValueHolder valueHolder) {
 		super();
 		this.targetClass = targetClass;
 		this.targetRdfType = targetRdfType;
 		this.parentEntity = parentEntity;
+		this.parentRdfNode = parentRdfNode;
 		this.propertyOps = propertyOps;
 		this.value = value;
+		this.rdfNode = rdfNode;
 		this.mapper = mapper;
-		this.valueHolder = valueHolder;
+		//this.valueHolder = valueHolder;
 	}
 
 	public Class<?> getTargetClass() {
@@ -63,12 +69,20 @@ public class PlaceholderInfo {
 		return parentEntity;
 	}
 
+	public RDFNode getParentRdfNode() {
+		return parentRdfNode;
+	}
+	
 	public PropertyOps getPropertyOps() {
 		return propertyOps;
 	}
 
 	public Object getValue() {
 		return value;
+	}
+
+	public RDFNode getRdfNode() {
+		return rdfNode;
 	}
 
 	public RdfMapperProperty getMapper() {

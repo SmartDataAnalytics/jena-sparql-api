@@ -5,20 +5,15 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.beans.model.EntityOps;
 import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
-import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.mapper.model.RdfMapper;
 import org.aksw.jena_sparql_api.mapper.proxy.MethodInterceptorRdf;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
-import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
-import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.core.DatasetGraph;
@@ -268,9 +263,10 @@ public class RdfClass
         /*
          *  Run all of this class' populators
          */
-        EntityFragment result = new EntityFragment();
+        EntityFragment result = new EntityFragment(entity);
         for(RdfMapper pd : populators) {
-            EntityPlaceholderInfo placeholder = pd.populateEntity(result, shape, entity);
+            //EntityPlaceholderInfo placeholder =
+            pd.populate(result, shape, entity);
         }
         return result;
     }
