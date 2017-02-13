@@ -59,7 +59,7 @@ public class RdfMapperPropertySingle
     	Statement stmt = shape.getProperty(predicate);
     	RDFNode o = stmt == null ? null : stmt.getObject();
 
-    	List<PlaceholderInfo> pis = Arrays.asList(new PlaceholderInfo(null, targetRdfType, entity, null, propertyOps, null, null, this));
+    	List<PlaceholderInfo> pis = Arrays.asList(new PlaceholderInfo(null, targetRdfType, entity, null, propertyOps, null, o, this));
 
     	//out.getPropertyInfos().put(key, value);
     	out.getTasks().add(new PopulationTask() {

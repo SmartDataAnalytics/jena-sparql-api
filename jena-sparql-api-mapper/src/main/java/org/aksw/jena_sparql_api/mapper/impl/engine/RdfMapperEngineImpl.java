@@ -210,7 +210,7 @@ public class RdfMapperEngineImpl
             LookupService<Node, Graph> ls = LookupServiceUtils.createLookupService(qef, mc);
             Map<Node, Graph> map = ls.apply(Collections.singleton(node));            
             Graph g = map.get(node);
-            Model m = ModelFactory.createModelForGraph(g);
+            Model m = g == null ? ModelFactory.createDefaultModel() : ModelFactory.createModelForGraph(g);
             RDFNode n = ModelUtils.convertGraphNodeToRDFNode(node, m);
             result = n.asResource();
         } else {
@@ -281,7 +281,7 @@ public class RdfMapperEngineImpl
         // Determine if there already exists an (sub-)entity for the given class and node
         //Object entity = persistenceContext.entityFor(clazz, node, null);
         EntityState entityState = persistenceContext.get(entityId);
-        Object entity = entityState.getEntity();
+        Object entity = entityState == null ? null : entityState.getEntity();
 
         
         // If there is no entity yet, use the type decider to check whether
@@ -348,10 +348,16 @@ public class RdfMapperEngineImpl
     		List<Object> resolutions = new ArrayList<>();
     		for(PlaceholderInfo placeholder : task.getPlaceholders()) {
             	Class<?> valueClass = placeholder.getTargetRdfType().getEntityClass();
-            	Node valueNode = placeholder.getRdfNode().asNode();
-            	EntityState valueState = loadEntity(valueClass, valueNode);
-            	Object value = valueState.getEntity();
-            	resolutions.add(value);
+            	RDFNode valueRdfNode = placeholder.getRdfNode();
+            	Object value;
+            	if(valueRdfNode != null) {
+            		Node valueNode = valueRdfNode.asNode();
+            		EntityState valueState = loadEntity(valueClass, valueNode);
+            		value = valueState.getEntity();
+            	} else {
+            		value = null;
+            	}
+        		resolutions.add(value);
             	//placeholder.getPropertyOps().setValue(entity, value);    			
     		}
     		
