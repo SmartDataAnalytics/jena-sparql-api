@@ -275,7 +275,12 @@ public class RdfMapperEngineImpl
     public EntityState loadEntity(Class<?> clazz, Node node) {
         EntityId entityId = new EntityId(clazz, node);
 
-        logger.debug("Entity lookup with " + node + " " + clazz.getName());
+        logger.debug("Entity lookup with " + entityId);
+
+        Objects.requireNonNull(clazz);
+    	Objects.requireNonNull(node);
+    	
+
         //System.out.println("Entity lookup with " + node + " " + clazz.getName());
 
         // Determine if there already exists an (sub-)entity for the given class and node
@@ -289,7 +294,7 @@ public class RdfMapperEngineImpl
         // E.g. If there is request for Object.class, then the type decider may reveal that the
         // given node can be instantiated as a Person.class
         
-        // TODO Probably there could a set of matching classes
+        // TODO Probably there could be a set of matching classes
         // Options for dealing with this:
         // (a) Instantiate all of them
         // (b) Instantiate any (as this is a subclass of the requested class, any subclass would fit)
@@ -324,25 +329,34 @@ public class RdfMapperEngineImpl
         // instantiate it,
         // fetch the triples
         //
-        Resource r;
+        RDFNode rn;// = entityState.getShapeResource();
         EntityFragment entityFragment;
-        if(entity == null) {
-        	r = fetch(rdfType, node);
-        	entity = rdfType.createJavaObject(r);
-
-            // Load the entity's state
-        	//ResourceFragment fragment = new ResourceFragment();
-        	entityFragment = rdfType.populate(r, entity);
+        if(entity == null) {        
+    		rn = fetch(rdfType, node);
+    		if(rn == null) {
+        		rn = ModelUtils.convertGraphNodeToRDFNode(node, ModelFactory.createDefaultModel());    			
+    		}
+        	
+    		entity = rdfType.createJavaObject(rn);
         } else {
-        	r = entityState.getShapeResource().asResource();
-        	entityFragment = entityState.getEntityFragment();
+        	rn = entityState.getShapeResource();
         }
         
-        ResourceFragment resourceFragment = null;
-        EntityState result = new EntityState(entity, r, resourceFragment, entityFragment);
+        if(rn.isResource()) {
+        	Resource r = rn.asResource();
+        	entityFragment = rdfType.populate(r, entity);
+        	
+        	//entityFragment = entityState.getEntityFragment();
+
+        	populateEntity(entityFragment);
+        } else {
+        	entityFragment = new EntityFragment(entity);
+        }
+        
+    	ResourceFragment resourceFragment = null;
+        EntityState result = new EntityState(entity, rn, resourceFragment, entityFragment);
     	originalState.put(entityId, result);
     	
-    	populateEntity(entityFragment);
     	
     	return result;
     }
@@ -357,6 +371,9 @@ public class RdfMapperEngineImpl
             	RDFNode valueRdfNode = placeholder.getRdfNode();
             	Object value;
             	if(valueRdfNode != null) {
+            		if(valueClass == null) {
+            			throw new RuntimeException("Should not happen got " + valueRdfNode + " without corresponding java class");
+            		}
             		Node valueNode = valueRdfNode.asNode();
             		EntityState valueState = loadEntity(valueClass, valueNode);
             		value = valueState.getEntity();

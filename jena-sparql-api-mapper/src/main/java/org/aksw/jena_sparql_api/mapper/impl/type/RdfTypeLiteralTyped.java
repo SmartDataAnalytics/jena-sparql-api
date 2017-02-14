@@ -23,7 +23,7 @@ public class RdfTypeLiteralTyped
 
     @Override
     public Class<?> getEntityClass() {
-        return null;
+        return rdfDatatype.getJavaClass();
     }
 
 //    @Override
