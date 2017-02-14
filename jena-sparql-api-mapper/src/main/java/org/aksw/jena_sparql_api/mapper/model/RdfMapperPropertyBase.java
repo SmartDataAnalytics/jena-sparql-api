@@ -68,13 +68,15 @@ public abstract class RdfMapperPropertyBase
 
         Resource s = out.getResource();
         Model tmp = s.getModel();
-        Property p = tmp.createProperty(predicate.getURI());
         Resource o = tmp.createResource();
 
         Object v = propertyOps.getValue(entity);
 
+        s.addProperty(predicate, o);
         
         PlaceholderInfo info = new PlaceholderInfo(null, targetRdfType, entity, null, propertyOps, v, null, this);
+        
+        
         
 //        Map<RDFNode, Object> placeholders = new HashMap<>();
 //        placeholders.put(o, v);

@@ -3,7 +3,6 @@ package org.aksw.jena_sparql_api.sparql.ext.datatypes;
 import java.util.Calendar;
 
 import org.apache.jena.datatypes.xsd.XSDDateTime;
-import org.apache.jena.datatypes.xsd.impl.XSDAbstractDateTimeType;
 import org.apache.jena.datatypes.xsd.impl.XSDDateTimeType;
 
 public class RDFDatatypeCalendar

@@ -9,6 +9,7 @@ public class EntityState {
 	protected RDFNode shapeResource;
 	protected ResourceFragment resourceFragment;
 	protected EntityFragment entityFragment;
+	protected RDFNode currentResource;
 		
 	public EntityState(Object entity, RDFNode shapeResource, ResourceFragment resourceFragment,
 			EntityFragment entityFragment) {
@@ -17,6 +18,7 @@ public class EntityState {
 		this.shapeResource = shapeResource;
 		this.resourceFragment = resourceFragment;
 		this.entityFragment = entityFragment;
+		this.currentResource = null;
 	}
 
 	public Object getEntity() {
@@ -34,5 +36,15 @@ public class EntityState {
 	public EntityFragment getEntityFragment() {
 		return entityFragment;
 	}
+
+	public RDFNode getCurrentResource() {
+		return currentResource;
+	}
+
+	public void setCurrentResource(RDFNode currentResource) {
+		this.currentResource = currentResource;
+	}
+	
+	
 	
 }

@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.diff.Diff;
 import org.aksw.jena_sparql_api.beans.model.EntityOps;
-import org.aksw.jena_sparql_api.beans.model.PropertyOps;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
@@ -74,7 +73,8 @@ public class RdfMapperEngineImpl
     protected RdfTypeFactory typeFactory;
     //protected RdfPersistenceContext persistenceContext;
     
-    protected Map<EntityId, EntityState> persistenceContext = new HashMap<>();
+    protected Map<EntityId, EntityState> originalState = new HashMap<>();
+    //protected Map<EntityId, EntityState> currentState = new HashMap<>();
 
 
     // TODO Place a configured type decider in here
@@ -280,7 +280,7 @@ public class RdfMapperEngineImpl
 
         // Determine if there already exists an (sub-)entity for the given class and node
         //Object entity = persistenceContext.entityFor(clazz, node, null);
-        EntityState entityState = persistenceContext.get(entityId);
+        EntityState entityState = originalState.get(entityId);
         Object entity = entityState == null ? null : entityState.getEntity();
 
         
@@ -340,8 +340,14 @@ public class RdfMapperEngineImpl
         
         ResourceFragment resourceFragment = null;
         EntityState result = new EntityState(entity, r, resourceFragment, entityFragment);
-    	persistenceContext.put(entityId, result);
+    	originalState.put(entityId, result);
     	
+    	populateEntity(entityFragment);
+    	
+    	return result;
+    }
+    
+    void populateEntity(EntityFragment entityFragment) {
         // We now need to construct a function that is capable of resolving
         // the property values of the entity
     	for(PopulationTask task : entityFragment.getTasks()) {
@@ -363,9 +369,6 @@ public class RdfMapperEngineImpl
     		
     		task.resolve(resolutions);
         }
-        
-    	
-    	return result;
     }
 
     public Node resolve(Node s, Node p) {
@@ -439,9 +442,9 @@ public class RdfMapperEngineImpl
         ResourceFragment r = new ResourceFragment();        
         rdfClass.exposeFragment(r, priorState, srcEntity);
 
-        Resource resolvedFragment = r.getResource(); 
-        // TODO Make sure to actually resolve any loose ends in the fragment  
-        rdfClass.populate(resolvedFragment, tgtEntity);
+        Resource exposedS = r.getResource(); 
+
+        // First resolve the placeholders, then populate the entity from the resolved resource
         
         // Perform a breadth-first traversal of the RDF graph and resolve entities
         //TreeUtils.depth(tree)
@@ -451,9 +454,10 @@ public class RdfMapperEngineImpl
         // Perform a breadth first search of the RDF fragment and resolve
         // placeholder nodes
         Model resolvedModel = ModelFactory.createDefaultModel();
-        Resource superRoot = resolvedModel.createResource();
+        //Resource superRoot = resolvedModel.createResource();
         Resource unresolvedRoot = r.getResource();
-        Resource resolvedRoot = unresolvedRoot.inModel(resolvedModel);
+        //Resource resolvedRoot = unresolvedRoot.inModel(resolvedModel);
+        Resource resolvedRoot = ModelUtils.convertGraphNodeToRDFNode(node, resolvedModel).asResource();
         //resolvedModel.add(superRoot, RDF.type, r.getResource());
         
         Set<RDFNode> current = Collections.singleton(r.getResource());
@@ -479,79 +483,70 @@ public class RdfMapperEngineImpl
 
 	        			Resource s = resolutions.get(fragS).asResource();	        			
 	        			
-	    	        	PlaceholderInfo info = placeholders.get(fragS);
-	    	        	
-	    	        	// NOTE There are two ways to obtain an iri for the entity:
-	    	        	// (a) The entity's parent node links via a given property to the to-be reused iri
-	    	        	// (b) We invoke the iri generator
-	    	        	Object entity = info.getValue();
-	    	        	
-	    	        	boolean reuseIri = true;
-	    	        	RDFNode reusedO = s.getPropertyResourceValue(p);
-	    	        	
-	    	        	RDFNode o = reuseIri && reusedO != null
-	    	        			? reusedO
-	    	        			: info.getIriGenerator().apply(resolutions);	    	        	
-	    	        	
-	    	        	
-	    	        	
-	    	        	// The entity may need recursive resolution	        	
-	    	        	//current.add(e);
-	    	        	
-	    	        	
-	    	        	resolutions.put(fragO, o);
-
-	    	        	// TODO get the parent now
-	    	        	s.addProperty(p, o);
+	    	        	PlaceholderInfo info = placeholders.get(fragO);
+	    	        	if(info != null) {
+		    	        	// NOTE There are two ways to obtain an iri for the entity:
+		    	        	// (a) The entity's parent node links via a given property to the to-be reused iri
+		    	        	// (b) We invoke the iri generator
+		    	        	Object entity = info.getValue();
+		    	        	
+		    	        	boolean reuseIri = true;
+		    	        	RDFNode reusedO = s.getPropertyResourceValue(p);
+		    	        	
+		    	        	RDFNode o;
+		    	        	Function<Map<RDFNode, RDFNode>, RDFNode> iriGenerator = info.getIriGenerator();
+		    	        	if(iriGenerator == null) {
+		    	        		Node n = info.getTargetRdfType().getRootNode(entity);
+		    	        		o = ModelUtils.convertGraphNodeToRDFNode(n, resolvedModel);
+		    	        	} else {			    	        	
+			    	        	o = reuseIri && reusedO != null
+			    	        			? reusedO
+			    	        			: info.getIriGenerator().apply(resolutions);	    	        	
+		    	        	}
+		    	        	
+		    	        	
+		    	        	// The entity may need recursive resolution	        	
+		    	        	//current.add(e);
+		    	        	
+		    	        	
+		    	        	resolutions.put(fragO, o);
+			    	        	
+		    	        	// TODO get the parent now
+		    	        	s.addProperty(p, o);
+	    	        	}
 	        		}
 	        		
 	        	}
 	        }
-	        
+	
+//	        for(Entry<RDFNode, RDFNode> e : resolutions.entrySet()) {
+//	        	//e.getKey().
+//	        	ResourceUtils.renameResource(old, uri)
+//	        }
+        	//ResourceUtils.renameResource(, uri);
+
 	        current = next;
 	        next = new HashSet<>();
         }
 
-        for(Entry<RDFNode, PlaceholderInfo> placeholder : r.getPlaceholders().entrySet()) {
-            // Resolve the placeholder nodes
-        	
+        
+        Resource resolvedS = resolutions.get(exposedS).asResource();
+        
+        // TODO Make sure to actually resolve any loose ends in the fragment  
+        EntityFragment entityFragment = rdfClass.populate(resolvedS, tgtEntity);
+        populateEntity(entityFragment);
+        
+        entityState.setCurrentResource(resolvedS);
+        //currentState.put(entityId, value);
+        
+        commit();
+        
+        @SuppressWarnings("unchecked")
+        T result = (T)tgtEntity;
+        return result;
+    }
 
-
-        }
-
-
-        // Recursively merge the entities that appear as values of the srcEntity
-        EntityOps entityOps = entityOpsFactory.apply(entityClass);
-
-
-
-
-        // Copy the attribute values of srcEntity to the allocated tgtEntity
-        for(PropertyOps propertyOps : entityOps.getProperties()) {
-            Object srcValue = propertyOps.getValue(srcEntity);
-            Object tgtValue = propertyOps.getValue(tgtEntity);
-
-
-
-            // Ask the persistence context whether there is already an entity for the target value
-
-            //find(tgtValue);
-
-            EntityId tgtId = null; //persistenceContext.getIdToEntityMap().inverse().get(tgtValue);
-            Object mergedValue;
-            if(tgtId != null) {
-                Node tgtNode = tgtId.getNode();
-                mergedValue = merge(srcValue, tgtNode);
-            } else {
-                mergedValue = srcValue;
-            }
-            if(propertyOps.isWritable()) {
-                propertyOps.setValue(tgtEntity, mergedValue);
-            }
-
-
-        }
-
+    public void commit() {
         DatasetDescription datasetDescription = sparqlService.getDatasetDescription();
         String gStr = DatasetDescriptionUtils.getSingleDefaultGraphUri(datasetDescription);
         if(gStr == null) {
@@ -559,36 +554,73 @@ public class RdfMapperEngineImpl
         }
         Node g = NodeFactory.createURI(gStr);
 
-        DatasetGraph newState = DatasetGraphFactory.create();
-        Graph outGraph = Quad.defaultGraphIRI.equals(g) ? newState.getDefaultGraph() : newState.getGraph(g);
-        //rdfClass.emitTriples(out, entity);
-        //emitTriples(outGraph, tgtEntity);
-
-
         DatasetGraph oldState = DatasetGraphFactory.create();
-
-        Graph targetGraph = oldState.getGraph(g);
-        if(targetGraph == null) {
-            targetGraph = GraphFactory.createDefaultGraph();
-            oldState.addGraph(g, targetGraph);
+        DatasetGraph newState = DatasetGraphFactory.create();
+        
+        for(Entry<EntityId, EntityState> e : originalState.entrySet()) {
+        	EntityState state = e.getValue();
+        	RDFNode current = state.getCurrentResource();
+        	if(current != null) {
+            	Graph oldGraph = state.getShapeResource().getModel().getGraph();
+        		Graph newGraph = current.getModel().getGraph();
+        		        		
+        		oldState.addGraph(g, oldGraph);
+                newState.addGraph(g, newGraph);
+        	}
+        	
         }
+        
+//        Graph targetGraph = oldState.getGraph(g);
+//        if(targetGraph == null) {
+//            targetGraph = GraphFactory.createDefaultGraph();
+//            oldState.addGraph(g, targetGraph);
+//        }
 
-
-
-//        System.out.println("oldState");
-//        DatasetGraphUtils.write(System.out, oldState);
-//
-//        System.out.println("newState");
-//        DatasetGraphUtils.write(System.out, newState);
 
         Diff<Set<Quad>> diff = UpdateDiffUtils.computeDelta(newState, oldState);
-//        System.out.println("diff: " + diff);
         UpdateExecutionFactory uef = sparqlService.getUpdateExecutionFactory();
         UpdateExecutionUtils.executeUpdate(uef, diff);
 
+//        Graph outGraph = Quad.defaultGraphIRI.equals(g) ? newState.getDefaultGraph() : newState.getGraph(g);
+        //rdfClass.emitTriples(out, entity);
+        //emitTriples(outGraph, tgtEntity);
 
-
-
+    }
+    
+//    public void commitOld() {
+//        // Recursively merge the entities that appear as values of the srcEntity
+//        EntityOps entityOps = entityOpsFactory.apply(entityClass);
+//
+//
+//
+//
+//        // Copy the attribute values of srcEntity to the allocated tgtEntity
+//        for(PropertyOps propertyOps : entityOps.getProperties()) {
+//            Object srcValue = propertyOps.getValue(srcEntity);
+//            Object tgtValue = propertyOps.getValue(tgtEntity);
+//
+//
+//
+//            // Ask the persistence context whether there is already an entity for the target value
+//
+//            //find(tgtValue);
+//
+//            EntityId tgtId = null; //persistenceContext.getIdToEntityMap().inverse().get(tgtValue);
+//            Object mergedValue;
+//            if(tgtId != null) {
+//                Node tgtNode = tgtId.getNode();
+//                mergedValue = merge(srcValue, tgtNode);
+//            } else {
+//                mergedValue = srcValue;
+//            }
+//            if(propertyOps.isWritable()) {
+//                propertyOps.setValue(tgtEntity, mergedValue);
+//            }
+//
+//
+//        }
+//
+//    }
 
         //Class<?> entityClazz = type.getClass();
         //Object entity = persistenceContext.entityFor(entityClass, node, () -> type.createJavaObject(node, null));
@@ -696,11 +728,6 @@ public class RdfMapperEngineImpl
 //        //RdfClass rdfClass = RdfClassFactory.createDefault(prologue).create(clazz);
 //        //RdfClass rdfClass = (RdfClass)typeFactory.forJavaType(clazz);
 //
-
-        @SuppressWarnings("unchecked")
-        T result = (T)tgtEntity;
-        return result;
-    }
 
 
     @Override
