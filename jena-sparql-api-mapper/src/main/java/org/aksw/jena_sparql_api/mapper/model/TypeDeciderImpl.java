@@ -4,8 +4,10 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.aksw.jena_sparql_api.beans.model.EntityOps;
 import org.aksw.jena_sparql_api.mapper.annotation.RdfType;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.apache.jena.graph.Node;
@@ -29,12 +31,23 @@ public class TypeDeciderImpl
 {
 	private static final Logger logger = LoggerFactory.getLogger(TypeDeciderImpl.class);
 
-    protected Property typeProperty = RDF.type;
+    protected Property typeProperty;
     protected Map<Node, Class<?>> nodeToClass;
     protected Map<Class<?>, Node> classToNode;
 
+    
+    public TypeDeciderImpl() {
+    	this(RDF.type, new HashMap<>(), new HashMap<>());
+    }
 
-    public void addMapping(Node node, Class<?> clazz) {
+    public TypeDeciderImpl(Property typeProperty, Map<Node, Class<?>> nodeToClass, Map<Class<?>, Node> classToNode) {
+		super();
+		this.typeProperty = typeProperty;
+		this.nodeToClass = nodeToClass;
+		this.classToNode = classToNode;
+	}
+
+	public void addMapping(Node node, Class<?> clazz) {
         nodeToClass.put(node, clazz);
         classToNode.put(clazz, node);
     }
@@ -63,12 +76,14 @@ public class TypeDeciderImpl
     public void writeTypeTriples(Resource outResource, Object entity) {
         Class<?> clazz = entity.getClass();
         Node type = classToNode.get(clazz);
-
-        Model model = outResource.getModel();
-        RDFNode rdfNode = ModelUtils.convertGraphNodeToRDFNode(type, model);
-
-        outResource
-            .addProperty(typeProperty, rdfNode);
+        if(type != null) {
+        
+	        Model model = outResource.getModel();
+	        RDFNode rdfNode = ModelUtils.convertGraphNodeToRDFNode(type, model);
+	
+	        outResource
+	            .addProperty(typeProperty, rdfNode);
+        }
     }
 
 

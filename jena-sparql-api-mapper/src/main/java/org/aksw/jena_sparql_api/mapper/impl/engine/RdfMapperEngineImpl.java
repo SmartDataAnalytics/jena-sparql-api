@@ -337,15 +337,21 @@ public class RdfMapperEngineImpl
         		rn = ModelUtils.convertGraphNodeToRDFNode(node, ModelFactory.createDefaultModel());    			
     		}
         	
-    		entity = rdfType.createJavaObject(rn);
+    		entity = rdfType.createJavaObject(rn);    		
         } else {
-        	rn = entityState.getShapeResource();
+        	rn = entityState.getCurrentResource();
+        	if(rn == null) {
+        		rn = entityState.getShapeResource();
+        	}
         }
         
         if(rn.isResource()) {
         	Resource r = rn.asResource();
         	entityFragment = rdfType.populate(r, entity);
-        	
+
+        	// Add the type triples
+        	typeDecider.writeTypeTriples(r, entity);
+
         	//entityFragment = entityState.getEntityFragment();
 
         	populateEntity(entityFragment);
