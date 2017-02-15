@@ -35,25 +35,25 @@ public class RdfTypeMap
 //    protected RdfType valueRdfType;
     protected Class<?> keyClazz;
     protected Class<?> valueClazz;
-    
+
     //protected MapOps mapOps;
     protected Function<Object, Map> createMapView;
 
     // , PropertyOps propertyOps, Node predicate, RdfType targetRdfType
-    
+
     public RdfTypeMap(
-        	Function<Object, Map> createMapView)
+            Function<Object, Map> createMapView)
     {
-    	this(createMapView, Object.class, Object.class);
+        this(createMapView, Object.class, Object.class);
     }
-    
+
     public RdfTypeMap(
-    	Function<Object, Map> createMapView,
+        Function<Object, Map> createMapView,
 //    	RdfType keyRdfType,
 //    	RdfType valueRdfType
-    	Class<?> keyClazz,
-    	Class<?> valueClazz
-    	) {
+        Class<?> keyClazz,
+        Class<?> valueClazz
+        ) {
         ///super(typeFactory);
         this.createMapView = createMapView;
 //        this.keyRdfType = keyRdfType;
@@ -89,22 +89,22 @@ public class RdfTypeMap
             Resource subject = out.getResource();
             Model m = subject.getModel();
 
-            Resource r = m.createResource(subject.getURI() + "-" + i); 
-            
+            Resource r = m.createResource(subject.getURI() + "-" + i);
+
             Resource kNode = m.createResource();
             Resource vNode = m.createResource();
-            
+
             subject.addProperty(entry, r);
-            
+
             r
-            	.addProperty(key, kNode)
-            	.addProperty(value, vNode);
+                .addProperty(key, kNode)
+                .addProperty(value, vNode);
 
 //            ValueHolder vh = new ValueHolderImpl(
 //            	() -> map.get(k),
 //            	x -> map.put(k, x)
 //            );
-            
+
             out.getPlaceholders().put(kNode, new PlaceholderInfo(keyClazz, null, entity, null, null, k, null, null));
             out.getPlaceholders().put(vNode, new PlaceholderInfo(valueClazz, null, entity, null, null, v, null, null));
 
@@ -112,63 +112,62 @@ public class RdfTypeMap
         }
 
     }
-    
+
     /**
      * The fragment will contain information about which nodes need to be resolved.
      * Once everything is resolved, there needs to be a function that carries
      * out the actualy population - so its more like
-     * 
+     *
      * Populator populator = exposePopulator(shape, entity) // Maybe the entity is not needed at this stage
-     * 
+     *
      * populator.refs.forEach((key, class, node) -> context.put(key, rdfMapperEngine.resolve(class, node)))
      * populator.resolve(context)
-     * 
-     * 
+     *
+     *
      */
-	@Override
-	public EntityFragment populate(Resource shape, Object entity) {
-	
-	    // <Object, Object>
-	    Map<Object, Object> map = createMapView.apply(entity);
-	
+    @Override
+    public EntityFragment populate(Resource shape, Object entity) {
 
-	    EntityFragment result = new EntityFragment(entity);
-	    for(Statement stmt : shape.listProperties(entry).toList()) {
-	        Resource e = stmt.getObject().asResource();
-	
-	        RDFNode kNode = e.getProperty(key).getObject();
-	        RDFNode vNode = e.getProperty(value).getObject();
-	
-	        PlaceholderInfo kPlaceholder = new PlaceholderInfo(keyClazz, null, entity, shape, null, null, kNode, null);
-	        PlaceholderInfo vPlaceholder = new PlaceholderInfo(valueClazz, null, entity, shape, null, null, vNode, null);
+        // <Object, Object>
+        Map<Object, Object> map = createMapView.apply(entity);
 
-	        List<PlaceholderInfo> entryPlaceholders = Arrays.asList(kPlaceholder, vPlaceholder);
-	        
-	        new PopulationTask() {
-				
-				@Override
-				public Collection<PopulationTask> resolve(List<Object> resolutions) {
-					Object k = resolutions.get(0);
-					Object v = resolutions.get(1);
-					map.put(k, v);
-					return Collections.emptyList();
-				}
-				
-				@Override
-				public List<PlaceholderInfo> getPlaceholders() {
-					return entryPlaceholders;
-				}
-			};	        
-	    }
-	    
-	    return result;
-	}
+
+        EntityFragment result = new EntityFragment(entity);
+        for(Statement stmt : shape.listProperties(entry).toList()) {
+            Resource e = stmt.getObject().asResource();
+
+            RDFNode kNode = e.getProperty(key).getObject();
+            RDFNode vNode = e.getProperty(value).getObject();
+
+            PlaceholderInfo kPlaceholder = new PlaceholderInfo(keyClazz, null, entity, shape, null, null, kNode, null);
+            PlaceholderInfo vPlaceholder = new PlaceholderInfo(valueClazz, null, entity, shape, null, null, vNode, null);
+
+            List<PlaceholderInfo> entryPlaceholders = Arrays.asList(kPlaceholder, vPlaceholder);
+
+            new PopulationTask() {
+
+                @Override
+                public Collection<PopulationTask> resolve(List<Object> resolutions) {
+                    Object k = resolutions.get(0);
+                    Object v = resolutions.get(1);
+                    map.put(k, v);
+                    return Collections.emptyList();
+                }
+
+                @Override
+                public List<PlaceholderInfo> getPlaceholders() {
+                    return entryPlaceholders;
+                }
+            };
+        }
+
+        return result;
+    }
 
 
     @Override
     public Class<?> getEntityClass() {
-        // TODO Auto-generated method stub
-        return null;
+        return Map.class;
     }
 
     @Override
