@@ -457,11 +457,25 @@ public class RdfMapperEngineImpl
      */
     @Override
     public <T> T merge(T srcEntity, Node node) {
+        Class<?> entityClass = srcEntity.getClass();
+        T result = merge(srcEntity, node, entityClass);
+
+        return result;
+    }
+
+    public <T> T merge(T srcEntity, Node node, Class<?> entityClass) {
+        RdfType rdfType = typeFactory.forJavaType(entityClass);
+
+        T result = merge(srcEntity, node, entityClass, rdfType);
+        return result;
+    }
+
+    public <T> T merge(T srcEntity, Node node, Class<?> entityClass, RdfType rdfClass) {
+
         Objects.requireNonNull(srcEntity);
         Objects.requireNonNull(node);
         Function<Class<?>, EntityOps> entityOpsFactory = ((RdfTypeFactoryImpl)typeFactory).getEntityOpsFactory();
 
-        Class<?> entityClass = srcEntity.getClass();
         EntityId entityId = new EntityId(entityClass, node);
 
         EntityState entityState = loadEntity(entityClass, node);
@@ -469,8 +483,8 @@ public class RdfMapperEngineImpl
 
 
         // TODO tgtEntity might be a subclass of the given entityClass - how to handle this case?
-        RdfType type = typeFactory.forJavaType(entityClass);
-        RdfClass rdfClass = (RdfClass)type;
+        //RdfType type = typeFactory.forJavaType(entityClass);
+        //RdfClass rdfClass = (RdfClass)rdfType;
 
         Resource priorState = entityState.getShapeResource().asResource();
 
@@ -516,9 +530,16 @@ public class RdfMapperEngineImpl
                         Property p = fragStmt.getPredicate();
                         RDFNode fragO = fragStmt.getObject();
 
+                        if(fragO != null && fragO.isResource()) {
+                            next.add(fragO);
+                        }
+
+//                        RDFNode sTmp = resolutions.get(fragS);
+//                        Resource s = sTmp != null && sTmp.isResource() ? sTmp.asResource() : null; //resolutions.get(fragS).asResource();
                         Resource s = resolutions.get(fragS).asResource();
 
                         PlaceholderInfo info = placeholders.get(fragO);
+                        RDFNode o;
                         if(info != null) {
                             // NOTE There are two ways to obtain an iri for the entity:
                             // (a) The entity's parent node links via a given property to the to-be reused iri
@@ -526,15 +547,18 @@ public class RdfMapperEngineImpl
                             Object entity = info.getValue();
 
                             boolean reuseIri = true;
-                            RDFNode reusedO = s.getPropertyResourceValue(p);
+                            Statement reusedStmt = fragS.getProperty(p);
+                            RDFNode reusedO = reusedStmt == null ? null : reusedStmt.getObject();
 
-                            RDFNode o;
                             //Function<Map<RDFNode, RDFNode>, RDFNode> iriGenerator = info.getIriGenerator();
                             RdfMapperProperty propertyMapper = info.getMapper();
                             if(propertyMapper != null) {
                                 Node n;
                                 if(!info.getTargetRdfType().hasIdentity() && !info.getTargetRdfType().isSimpleType()) {
                                     n = propertyMapper.getTargetNode(s.getURI(), entity);
+                                    Class<?> valueClass = info.getPropertyOps().getType();
+                                    RdfType entityRdfType = info.getTargetRdfType();
+                                    merge(entity, n, valueClass, entityRdfType);
                                 } else {
                                     n = info.getTargetRdfType().getRootNode(entity);
                                 }
@@ -543,22 +567,25 @@ public class RdfMapperEngineImpl
                                     throw new RuntimeException("Should not happen");
                                 }
                                 o = ModelUtils.convertGraphNodeToRDFNode(n, resolvedModel);
+
                             } else {
                                 o = reuseIri && reusedO != null
                                         ? reusedO
                                         : info.getIriGenerator().apply(resolutions);
                             }
-
-
-                            // The entity may need recursive resolution
-                            //current.add(e);
-
-
-                            resolutions.put(fragO, o);
-
-                            // TODO get the parent now
-                            s.addProperty(p, o);
+                        } else {
+                            o = fragO.inModel(resolvedModel);//ModelUtils.convertGraphNodeToRDFNode(fragO, resolvedModel);
                         }
+
+                        // The entity may need recursive resolution
+                        //current.add(e);
+
+
+                        resolutions.put(fragO, o);
+
+                        // TODO get the parent now
+                        s.addProperty(p, o);
+
                     }
 
                 }

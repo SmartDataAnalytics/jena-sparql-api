@@ -89,7 +89,7 @@ public class RdfTypeMap
             Resource subject = out.getResource();
             Model m = subject.getModel();
 
-            Resource r = m.createResource(subject.getURI() + "-" + i);
+            Resource r = m.createResource(priorState.getURI() + "-" + i);
 
             Resource kNode = m.createResource();
             Resource vNode = m.createResource();
