@@ -30,7 +30,6 @@ import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.mapper.impl.type.EntityFragment;
 import org.aksw.jena_sparql_api.mapper.impl.type.PlaceholderInfo;
 import org.aksw.jena_sparql_api.mapper.impl.type.PopulationTask;
-import org.aksw.jena_sparql_api.mapper.impl.type.RdfClass;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
 import org.aksw.jena_sparql_api.mapper.impl.type.ResourceFragment;
 import org.aksw.jena_sparql_api.mapper.model.RdfMapperProperty;
@@ -57,7 +56,6 @@ import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.core.Quad;
-import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sparql.util.ModelUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -545,33 +543,48 @@ public class RdfMapperEngineImpl
                             // (a) The entity's parent node links via a given property to the to-be reused iri
                             // (b) We invoke the iri generator
                             Object entity = info.getValue();
-
+                            Class<?> valueClass = entity != null
+                            		? entity.getClass()
+                            		: info.getTargetClass();//getPropertyOps().getType();
+                            
                             boolean reuseIri = true;
                             Statement reusedStmt = fragS.getProperty(p);
                             RDFNode reusedO = reusedStmt == null ? null : reusedStmt.getObject();
 
+                            
+                            RdfType targetRdfType = info.getTargetRdfType();
+                            
                             //Function<Map<RDFNode, RDFNode>, RDFNode> iriGenerator = info.getIriGenerator();
                             RdfMapperProperty propertyMapper = info.getMapper();
-                            if(propertyMapper != null) {
-                                Node n;
-                                if(!info.getTargetRdfType().hasIdentity() && !info.getTargetRdfType().isSimpleType()) {
-                                    n = propertyMapper.getTargetNode(s.getURI(), entity);
-                                    Class<?> valueClass = info.getPropertyOps().getType();
-                                    RdfType entityRdfType = info.getTargetRdfType();
-                                    merge(entity, n, valueClass, entityRdfType);
-                                } else {
-                                    n = info.getTargetRdfType().getRootNode(entity);
-                                }
 
-                                if(n == null) {
-                                    throw new RuntimeException("Should not happen");
-                                }
+                        	boolean hasDependentIdentity = targetRdfType == null || (!targetRdfType.isSimpleType() && !targetRdfType.hasIdentity()); 
+                            if(targetRdfType == null) {
+                            	targetRdfType = typeFactory.forJavaType(valueClass);
+                            }
+                            Node n = propertyMapper != null && hasDependentIdentity
+                            		? propertyMapper.getTargetNode(s.getURI(), entity)
+                            		: targetRdfType.getRootNode(entity);
+                            				                            
+                            if(n != null) {
                                 o = ModelUtils.convertGraphNodeToRDFNode(n, resolvedModel);
 
+                                //Class<?> valueClass = info.getPropertyOps().getType();
+                                //RdfType entityRdfType = info.getTargetRdfType();
+                                
+                                
+                                if(o.isResource()) {
+                                	merge(entity, n, valueClass, targetRdfType);
+                                }
+
+//                                if(n == null) {
+//                                    throw new RuntimeException("Should not happen");
+//                                }
+//                                o = ModelUtils.convertGraphNodeToRDFNode(n, resolvedModel);
+//
                             } else {
                                 o = reuseIri && reusedO != null
-                                        ? reusedO
-                                        : info.getIriGenerator().apply(resolutions);
+                                ? reusedO
+                                : info.getIriGenerator().apply(resolutions);
                             }
                         } else {
                             o = fragO.inModel(resolvedModel);//ModelUtils.convertGraphNodeToRDFNode(fragO, resolvedModel);
@@ -606,6 +619,10 @@ public class RdfMapperEngineImpl
 
         // TODO Make sure to actually resolve any loose ends in the fragment
         EntityFragment entityFragment = rdfClass.populate(resolvedS, tgtEntity);
+        if(entityFragment == null) {
+        	throw new NullPointerException("Population must not return a null fragment, Error might be in the implementation of " + rdfClass.getClass());
+        }
+        
         populateEntity(entityFragment);
 
         entityState.setCurrentResource(resolvedS);

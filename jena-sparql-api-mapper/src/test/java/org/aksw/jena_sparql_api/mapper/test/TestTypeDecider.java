@@ -34,8 +34,15 @@ public class TestTypeDecider
         person.setBirthDate(new GregorianCalendar(2000, 0, 0));
 
         person.getTags().put("a", "b");
+        person.getTags().put("c", "d");
         
         entityManager.persist(person);
+        
+        person.getTags().clear();
+        person.getTags().put("x", "y");
+        
+        entityManager.persist(person);
+        
         //mapperEngine.getPersistenceContext().clear()
         person = entityManager.find(Person.class, "o:John-Doe-Dover");
         System.out.println("Direct entity: " + person);
