@@ -667,6 +667,9 @@ public class RdfMapperEngineImpl
 
 
         Diff<Set<Quad>> diff = UpdateDiffUtils.computeDelta(newState, oldState);
+        
+        System.out.println("Applying diff: " + diff);
+        
         UpdateExecutionFactory uef = sparqlService.getUpdateExecutionFactory();
         UpdateExecutionUtils.executeUpdate(uef, diff);
 
