@@ -33,6 +33,8 @@ public class TestTypeDecider
         //DateFormat df = new SimpleDateFormat("yyyy/MM/dd");
         person.setBirthDate(new GregorianCalendar(2000, 0, 0));
 
+        person.getTags().put("a", "b");
+        
         entityManager.persist(person);
         //mapperEngine.getPersistenceContext().clear()
         person = entityManager.find(Person.class, "o:John-Doe-Dover");

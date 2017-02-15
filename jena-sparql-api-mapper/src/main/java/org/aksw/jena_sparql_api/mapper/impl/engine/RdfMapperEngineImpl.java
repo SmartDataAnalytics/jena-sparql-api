@@ -325,6 +325,8 @@ public class RdfMapperEngineImpl
 
         RdfType rdfType = typeFactory.forJavaType(actualClazz);
 
+        // TODO This method re-populates existing entities - that may be unneccesary - isn't it?
+        
         // If there is no entity yet,
         // instantiate it,
         // fetch the triples
@@ -520,6 +522,9 @@ public class RdfMapperEngineImpl
 		    	        	Function<Map<RDFNode, RDFNode>, RDFNode> iriGenerator = info.getIriGenerator();
 		    	        	if(iriGenerator == null) {
 		    	        		Node n = info.getTargetRdfType().getRootNode(entity);
+		    	        		if(n == null) {
+		    	        			throw new RuntimeException("Should not happen");
+		    	        		}
 		    	        		o = ModelUtils.convertGraphNodeToRDFNode(n, resolvedModel);
 		    	        	} else {			    	        	
 			    	        	o = reuseIri && reusedO != null

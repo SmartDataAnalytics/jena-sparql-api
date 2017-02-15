@@ -355,7 +355,7 @@ public class RdfTypeFactoryImpl
             String defaultIriStr = defaultIri.value();
             Expression expression = parser.parseExpression(defaultIriStr,
                     parserContext);
-
+            
             Function<Object, Node> defaultIriFnTmp = new F_GetValue<String>(String.class, expression,
                     evalContext).andThen(iri -> NodeFactory.createURI(iri));
 
