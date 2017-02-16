@@ -11,6 +11,8 @@ import org.aksw.jena_sparql_api.sparql.ext.datatypes.RDFDatatypeCalendar;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -19,8 +21,6 @@ public class TestTypeDecider
 {
     @Test
     public void test() {
-    	TypeMapper.getInstance().registerDatatype(new RDFDatatypeCalendar());
-    	
         Map<Class<?>, Node> map = TypeDeciderImpl.scan("org.aksw.jena_sparql_api.mapper.test");
         Assert.assertNotEquals(0, map.size());
 
@@ -55,7 +55,7 @@ public class TestTypeDecider
 
         Model rdf = sparqlService.getQueryExecutionFactory().createQueryExecution("CONSTRUCT WHERE { ?s ?p ?o }").execConstruct();
         System.out.println("TRIPLES:");
-        rdf.write(System.out, "TTL");
+        RDFDataMgr.write(System.out, rdf, RDFFormat.TURTLE);
 
         mapperEngine.fetch(typeDecider, Collections.singleton(id)).get(id);
 
