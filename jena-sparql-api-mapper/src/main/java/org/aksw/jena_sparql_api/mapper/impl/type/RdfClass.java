@@ -268,6 +268,7 @@ public class RdfClass
             //EntityPlaceholderInfo placeholder =
             pd.populate(result, shape, entity);
         }
+
         return result;
     }
 

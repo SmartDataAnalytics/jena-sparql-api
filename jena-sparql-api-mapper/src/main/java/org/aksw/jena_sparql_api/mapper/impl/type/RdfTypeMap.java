@@ -144,7 +144,7 @@ public class RdfTypeMap
 
             List<PlaceholderInfo> entryPlaceholders = Arrays.asList(kPlaceholder, vPlaceholder);
 
-            new PopulationTask() {
+            PopulationTask task = new PopulationTask() {
 
                 @Override
                 public Collection<PopulationTask> resolve(List<Object> resolutions) {
@@ -159,6 +159,8 @@ public class RdfTypeMap
                     return entryPlaceholders;
                 }
             };
+            
+            result.getTasks().add(task);
         }
 
         return result;
