@@ -83,6 +83,10 @@ public class RdfMapperEngineImpl
         this(sparqlService, RdfTypeFactoryImpl.createDefault(), new Prologue(), null); //new RdfPopulationContextImpl());
     }
 
+    public RdfMapperEngineImpl(SparqlService sparqlService, Prologue prologue) {
+        this(sparqlService, RdfTypeFactoryImpl.createDefault(), prologue, null); //new RdfPopulationContextImpl());
+    }
+
     public RdfMapperEngineImpl(SparqlService sparqlService, RdfTypeFactory typeFactory) {
         this(sparqlService, typeFactory, new Prologue(), null); //new RdfPopulationContextImpl());
     }
