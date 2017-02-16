@@ -26,31 +26,37 @@ public class TestTypeDecider
 
         TypeDecider typeDecider = new TypeDeciderImpl();
 
-        Person person = new Person();
-        person.setFirstName("John");
-        person.setLastName("Doe");
-        person.setBirthPlace("Dover");
+        Person anne = new Person();
+        anne.setFirstName("Anne");
+        anne.setLastName("Anderson");
+        anne.setBirthPlace("Arizona");
+        anne.setBirthDate(new GregorianCalendar(2000, 0, 0));
+        
+        Person bob = new Person();
+        bob.setFirstName("Bob");
+        bob.setLastName("Bowlin");
+        bob.setBirthPlace("Brooklyn");
         //DateFormat df = new SimpleDateFormat("yyyy/MM/dd");
-        person.setBirthDate(new GregorianCalendar(2000, 0, 0));
+        bob.setBirthDate(new GregorianCalendar(2000, 0, 0));
 
-        person.getTags().put("a", "b");
-        person.getTags().put("c", "d");
+        bob.getTags().put("knows", anne);
+        //bob.getTags().put("c", "d");
         
-        entityManager.persist(person);
+        entityManager.persist(bob);
         
-        person.getTags().clear();
-        person.getTags().put("x", "y");
+        //bob.getTags().clear();
+        //bob.getTags().put("x", "y");
         
-        entityManager.persist(person);
+        entityManager.persist(bob);
         
         //mapperEngine.getPersistenceContext().clear()
-        person = entityManager.find(Person.class, "o:John-Doe-Dover");
-        System.out.println("Direct entity: " + person);
+        bob = entityManager.find(Person.class, "o:John-Doe-Dover");
+        System.out.println("Direct entity: " + bob);
 
 
         //mapperEngine.merge();
         RdfType rdfType = mapperEngine.getTypeFactory().forJavaType(Person.class);
-        Node id = rdfType.getRootNode(person);
+        Node id = rdfType.getRootNode(bob);
         System.out.println("Allocated ID: " + id);
 
         Model rdf = sparqlService.getQueryExecutionFactory().createQueryExecution("CONSTRUCT WHERE { ?s ?p ?o }").execConstruct();

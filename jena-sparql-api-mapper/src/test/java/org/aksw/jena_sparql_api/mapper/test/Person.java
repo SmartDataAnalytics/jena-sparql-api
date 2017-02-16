@@ -23,7 +23,7 @@ public class Person {
     private Calendar birthDate;
 
     @Iri("foaf:tags")
-    private Map<String, String> tags = new HashMap<>();
+    private Map<String, Person> tags = new HashMap<>();
     
     public String getFirstName() {
         return firstName;
@@ -57,11 +57,11 @@ public class Person {
         this.birthDate = birthDate;
     }
 
-    public Map<String, String> getTags() {
+    public Map<String, Person> getTags() {
 		return tags;
 	}
 
-	public void setTags(Map<String, String> tags) {
+	public void setTags(Map<String, Person> tags) {
 		this.tags = tags;
 	}
 

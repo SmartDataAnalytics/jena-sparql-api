@@ -3,6 +3,8 @@ package org.aksw.jena_sparql_api.benchmark.rdf_mapper;
 
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
@@ -46,6 +48,8 @@ public class MainRdfMapperKomma {
 					{
 						addConcept(Book.class);
 						addConcept(Person.class);
+						addConcept(Map.class);
+						addBehaviour(HashMap.class);
 					}
 				}));
 
@@ -106,6 +110,7 @@ public class MainRdfMapperKomma {
 				Person.class);
 		person.setName(name);
 		person.setDateOfBirth(cal);
+		person.getTags().put("a", "b");
 		// This will result in the following RDF statements
 
 		// person rdf:type <http://enilink.net/examples/objectmapping#Person>

@@ -378,7 +378,13 @@ public class RdfMapperEngineImpl
         for(PopulationTask task : entityFragment.getTasks()) {
             List<Object> resolutions = new ArrayList<>();
             for(PlaceholderInfo placeholder : task.getPlaceholders()) {
-                Class<?> valueClass = placeholder.getTargetRdfType().getEntityClass();
+            	RdfType targetRdfType = placeholder.getTargetRdfType();
+            	Class<?> valueClass = targetRdfType != null
+            			? targetRdfType.getEntityClass()
+            			: placeholder.getTargetClass();
+
+            	Objects.requireNonNull(valueClass);
+                //Class<?> valueClass = placeholder.getTargetRdfType().getEntityClass();
 
 
                 // TODO Property-based identity
