@@ -96,7 +96,7 @@ public class EntityManagerJena
 
     @Override
     public void remove(Object entity) {
-        throw new UnsupportedOperationException();
+    	engine.remove(entity);
     }
 
     @Override

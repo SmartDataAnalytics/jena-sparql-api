@@ -42,12 +42,15 @@ public class TestTypeDecider
         
         entityManager.persist(bob);
         
-        bob.getTags().clear();
+        //bob.getTags().clear();
         //bob.getTags().put("x", "y");
         
-        entityManager.persist(bob);
+        entityManager.remove(bob);
+        //entityManager.persist(bob);
         
         //mapperEngine.getPersistenceContext().clear()
+        // TODO: The find method yet needs to expand the prefix 
+        
         bob = entityManager.find(Person.class, "o:John-Doe-Dover");
         System.out.println("Direct entity: " + bob);
 
