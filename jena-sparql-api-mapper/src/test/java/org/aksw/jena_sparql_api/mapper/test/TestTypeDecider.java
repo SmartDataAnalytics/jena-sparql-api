@@ -7,8 +7,6 @@ import java.util.Map;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.mapper.model.TypeDecider;
 import org.aksw.jena_sparql_api.mapper.model.TypeDeciderImpl;
-import org.aksw.jena_sparql_api.sparql.ext.datatypes.RDFDatatypeCalendar;
-import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.RDFDataMgr;
@@ -60,6 +58,7 @@ public class TestTypeDecider
         System.out.println("Allocated ID: " + id);
 
         Model rdf = sparqlService.getQueryExecutionFactory().createQueryExecution("CONSTRUCT WHERE { ?s ?p ?o }").execConstruct();
+        rdf.setNsPrefixes(prologue.getPrefixMapping());
         System.out.println("TRIPLES:");
         RDFDataMgr.write(System.out, rdf, RDFFormat.TURTLE);
 

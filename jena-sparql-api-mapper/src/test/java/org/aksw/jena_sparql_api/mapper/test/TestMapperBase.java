@@ -22,6 +22,7 @@ public class TestMapperBase {
     protected Dataset ds;
     protected SparqlService sparqlService;
     protected RdfMapperEngineImpl mapperEngine;
+    protected Prologue prologue;
     protected EntityManager entityManager;
 
     @Before
@@ -43,7 +44,7 @@ public class TestMapperBase {
                 .end()
                 .create();
         
-        Prologue prologue = new Prologue();
+        prologue = new Prologue();
         prologue.setPrefix("o", "http://example.org/ontololgy/");
         prologue.setPrefix("foaf", FOAF.NS);
 
