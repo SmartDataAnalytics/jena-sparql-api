@@ -84,7 +84,7 @@ public class RdfMapperEngineImpl
     }
 
     public RdfMapperEngineImpl(SparqlService sparqlService, Prologue prologue) {
-        this(sparqlService, RdfTypeFactoryImpl.createDefault(), prologue, null); //new RdfPopulationContextImpl());
+        this(sparqlService, RdfTypeFactoryImpl.createDefault(prologue), prologue, null); //new RdfPopulationContextImpl());
     }
 
     public RdfMapperEngineImpl(SparqlService sparqlService, RdfTypeFactory typeFactory) {
@@ -573,7 +573,7 @@ public class RdfMapperEngineImpl
                             }
                             Node n = propertyMapper != null && hasDependentIdentity
                             		? propertyMapper.getTargetNode(s.getURI(), entity)
-                            		: targetRdfType.getRootNode(entity);
+                            		: (entity != null ? targetRdfType.getRootNode(entity) : null);
                             				                            
                             if(n != null) {
                                 o = ModelUtils.convertGraphNodeToRDFNode(n, resolvedModel);
@@ -592,9 +592,11 @@ public class RdfMapperEngineImpl
 //                                o = ModelUtils.convertGraphNodeToRDFNode(n, resolvedModel);
 //
                             } else {
-                                o = reuseIri && reusedO != null
-                                ? reusedO
-                                : info.getIriGenerator().apply(resolutions);
+                            	// TODO We may want to obtain a null value for the placeholder
+                            	o = null;
+//                                o = reuseIri && reusedO != null
+//                                ? reusedO
+//                                : info.getIriGenerator().apply(resolutions);
                             }
                         } else {
                             o = fragO.inModel(resolvedModel);//ModelUtils.convertGraphNodeToRDFNode(fragO, resolvedModel);
@@ -604,11 +606,12 @@ public class RdfMapperEngineImpl
                         //current.add(e);
 
 
-                        resolutions.put(fragO, o);
-
-                        // TODO get the parent now
-                        s.addProperty(p, o);
-
+                        if(o != null) {
+	                        resolutions.put(fragO, o);
+	
+	                        // TODO get the parent now
+	                        s.addProperty(p, o);
+                        }
                     }
 
                 }

@@ -173,10 +173,11 @@ public class RdfTypeFactoryImpl
         Function<Object, String> defaultIriFn = null;
         if (defaultIri != null) {
             String iriStr = defaultIri.value();
-            Expression expression = parser.parseExpression(iriStr,
-                    parserContext);
-            defaultIriFn = new F_GetValue<String>(String.class, expression,
-                    evalContext);
+//            Expression expression = parser.parseExpression(iriStr,
+//                    parserContext);
+            defaultIriFn = (o) -> resolveIriExpr(iriStr, o);
+            		//new F_GetValue<String>(String.class, expression,
+                    //evalContext).andThen(RdfTypeFactory::resolveIriExpr);
         }
 
         RdfClass result = new RdfClass(entityOps, defaultIriFn);
@@ -184,9 +185,9 @@ public class RdfTypeFactoryImpl
         return result;
     }
 
-    protected String resolveIriExpr(String exprStr) {
+    protected String resolveIriExpr(String exprStr, Object rootObject) {
         Expression expression = parser.parseExpression(exprStr, parserContext);
-        String tmp = expression.getValue(evalContext, String.class);
+        String tmp = expression.getValue(evalContext, rootObject, String.class);
         tmp = tmp.trim();
 
         PrefixMapping prefixMapping = prologue.getPrefixMapping();
@@ -258,7 +259,7 @@ public class RdfTypeFactoryImpl
 
         Iri iriAnn = pd.findAnnotation(Iri.class); //findPropertyAnnotation(clazz, pd, Iri.class);
         String iriExprStr = iriAnn == null ? null : iriAnn.value();
-        String iriStr = iriExprStr == null ? null : resolveIriExpr(iriExprStr);
+        String iriStr = iriExprStr == null ? null : resolveIriExpr(iriExprStr, null);
         boolean hasIri = iriStr != null && !iriStr.isEmpty();
 
         String mappedBy = (String)AnnotationUtils.getValue(pd.findAnnotation(MappedBy.class)); //findPropertyAnnotation(clazz, pd, MappedBy.class));
@@ -380,18 +381,29 @@ public class RdfTypeFactoryImpl
     }
 
     public static RdfTypeFactoryImpl createDefault() {
-        ConversionServiceFactoryBean bean = new ConversionServiceFactoryBean();
-        bean.afterPropertiesSet();
-        ConversionService conversionService = bean.getObject();
-
-        Prologue prologue = new Prologue();
-        RdfTypeFactoryImpl result = createDefault(prologue, null, conversionService);
+        RdfTypeFactoryImpl result = createDefault(null);
+        return result;
+    }
+    
+    public static RdfTypeFactoryImpl createDefault(Prologue prologue) {
+        RdfTypeFactoryImpl result = createDefault(prologue, null, null);
         return result;
     }
 
-    public static RdfTypeFactoryImpl createDefault(Prologue prologue, Function<Class<?>, EntityOps> entityOpsFactory, ConversionService conversionService) {
+    public static RdfTypeFactoryImpl createDefault(Prologue prologue, Function<Class<?>, EntityOps> entityOpsFactory, ConversionService _conversionService) {
         prologue = prologue != null ? prologue : new Prologue();
 
+        
+        ConversionService conversionService;
+        if(_conversionService == null) {
+        	ConversionServiceFactoryBean bean = new ConversionServiceFactoryBean();
+        	bean.afterPropertiesSet();
+        	conversionService = bean.getObject();
+        } else {
+        	conversionService = _conversionService;
+        }
+
+        
         entityOpsFactory = entityOpsFactory != null
                 ? entityOpsFactory
                 : (clazz) -> EntityModel.createDefaultModel(clazz, conversionService);

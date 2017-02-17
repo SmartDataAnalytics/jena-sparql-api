@@ -30,7 +30,7 @@ public class TestTypeDecider
         anne.setFirstName("Anne");
         anne.setLastName("Anderson");
         anne.setBirthPlace("Arizona");
-        anne.setBirthDate(new GregorianCalendar(2000, 0, 0));
+        //anne.setBirthDate(new GregorianCalendar(2000, 0, 0));
         
         Person bob = new Person();
         bob.setFirstName("Bob");
@@ -44,7 +44,7 @@ public class TestTypeDecider
         
         entityManager.persist(bob);
         
-        //bob.getTags().clear();
+        bob.getTags().clear();
         //bob.getTags().put("x", "y");
         
         entityManager.persist(bob);
