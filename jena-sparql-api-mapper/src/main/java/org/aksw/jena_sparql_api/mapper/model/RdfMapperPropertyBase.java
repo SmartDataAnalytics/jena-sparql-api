@@ -138,7 +138,7 @@ public abstract class RdfMapperPropertyBase
     public Node getTargetNode(String subjectUri, Object entity) {
         Node result = targetRdfType.hasIdentity()
                 ? targetRdfType.getRootNode(entity)
-                : NodeFactory.createURI(subjectUri + "/" + StringUtils.urlEncode(propertyOps.getName()));
+                : NodeFactory.createURI(subjectUri + "-" + StringUtils.urlEncode(propertyOps.getName()));
         return result;
     }
 

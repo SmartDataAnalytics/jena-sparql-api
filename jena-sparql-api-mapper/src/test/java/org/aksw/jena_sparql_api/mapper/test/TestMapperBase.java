@@ -50,6 +50,7 @@ public class TestMapperBase {
 
         mapperEngine = new RdfMapperEngineImpl(sparqlService, prologue);
                 
+        
         entityManager = new EntityManagerJena(mapperEngine);
     }
 }

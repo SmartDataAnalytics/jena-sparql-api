@@ -4,6 +4,13 @@ import java.util.Collections;
 import java.util.GregorianCalendar;
 import java.util.Map;
 
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
+import javax.persistence.metamodel.Metamodel;
+
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.mapper.model.TypeDecider;
 import org.aksw.jena_sparql_api.mapper.model.TypeDeciderImpl;
@@ -45,7 +52,7 @@ public class TestTypeDecider
         //bob.getTags().clear();
         //bob.getTags().put("x", "y");
         
-        entityManager.remove(bob);
+        //entityManager.remove(bob);
         //entityManager.persist(bob);
         
         //mapperEngine.getPersistenceContext().clear()
@@ -66,6 +73,20 @@ public class TestTypeDecider
         RDFDataMgr.write(System.out, rdf, RDFFormat.TURTLE);
 
         mapperEngine.fetch(typeDecider, Collections.singleton(id)).get(id);
+
+                
+    	CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+    	CriteriaQuery<Person> q = cb.createQuery(Person.class);
+
+    	//ParameterExpression<Long> p = cb.parameter(Long.class);
+
+    	Root<Person> c = q.from(Person.class);
+    	CriteriaQuery<Person> x = q.select(c).where(cb.equal(c.get("firstName"), "Anne"));
+    	
+    	TypedQuery<Person> query = entityManager.createQuery(x);
+    	Person match = query.getSingleResult();
+    	
+    	System.out.println(match);
 
 
         //typeDecider.getApplicableTypes(subject);
