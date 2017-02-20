@@ -6,12 +6,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.beans.model.EntityOps;
 import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.concepts.Relation;
-import org.aksw.jena_sparql_api.concepts.RelationOps;
 import org.aksw.jena_sparql_api.mapper.model.RdfMapper;
 import org.aksw.jena_sparql_api.mapper.proxy.MethodInterceptorRdf;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
@@ -397,17 +394,22 @@ public class RdfClass
     }
 
 
-    Relation getRelation(String propertyName) {
-    	List<Relation> relations = populators.stream()
-    			.map(rdfMapper -> rdfMapper.getRelation(propertyName))
+    @Override
+    public PathFragment resolve(String propertyName) {
+    	PathFragment result = populators.stream()
+    			.map(rdfMapper -> rdfMapper.resolve(propertyName))
     			.filter(relation -> relation != null)
-    			.collect(Collectors.toList());
+    			.findFirst()
+    			.orElse(null);
+    			//.collect(Collectors.toList());
 
     	// TODO Compute the union of the relations? (we may also consider raising an exception if there are multiple ones)
     	//RelationOps.
-    	Relation result = relations.isEmpty() ? null : relations.iterator().next();
+    	//Relation result = relations.isEmpty() ? null : relations.iterator().next();
+    	
     	return result;
     }
+
     
 //    @Override
 //    public void exposeTypeDeciderShape(ResourceShapeBuilder rsb) {

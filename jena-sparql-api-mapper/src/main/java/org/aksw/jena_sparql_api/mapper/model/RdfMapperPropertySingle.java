@@ -10,6 +10,7 @@ import org.aksw.jena_sparql_api.beans.model.PropertyOps;
 import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.aksw.jena_sparql_api.mapper.impl.type.EntityFragment;
+import org.aksw.jena_sparql_api.mapper.impl.type.PathFragment;
 import org.aksw.jena_sparql_api.mapper.impl.type.PlaceholderInfo;
 import org.aksw.jena_sparql_api.mapper.impl.type.PopulationTask;
 import org.aksw.jena_sparql_api.mapper.impl.type.ResourceFragment;
@@ -144,9 +145,9 @@ public class RdfMapperPropertySingle
     }
 
 	@Override
-	public Relation getRelation(String propertyName) {
-		Relation result = this.propertyOps.getName().equals(propertyName)
-			? RelationUtils.createRelation(predicate.asNode(), false)
+	public PathFragment resolve(String propertyName) {
+		PathFragment result = this.propertyOps.getName().equals(propertyName)
+			? new PathFragment(RelationUtils.createRelation(predicate.asNode(), false), propertyOps.getType(), targetRdfType, null)
 			: null;
 
 		return result;

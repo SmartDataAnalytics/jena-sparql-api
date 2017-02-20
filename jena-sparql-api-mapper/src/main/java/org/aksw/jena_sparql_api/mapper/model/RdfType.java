@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.mapper.model;
 
 import org.aksw.jena_sparql_api.mapper.impl.type.EntityFragment;
+import org.aksw.jena_sparql_api.mapper.impl.type.PathFragment;
 import org.aksw.jena_sparql_api.mapper.impl.type.ResourceFragment;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.apache.jena.graph.Node;
@@ -153,6 +154,9 @@ public interface RdfType
      * @param entity
      */
     EntityFragment populate(Resource shape, Object entity);
+
+    
+    PathFragment resolve(String propertyName);
 
     //DatasetGraph createDatasetGraph(Object obj, Node g);
     // RdfPersistenceContext persistenceContext, 

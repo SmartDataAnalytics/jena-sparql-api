@@ -29,6 +29,8 @@ import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.aksw.jena_sparql_api.mapper.context.EntityId;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.mapper.impl.type.EntityFragment;
+import org.aksw.jena_sparql_api.mapper.impl.type.PathFragment;
+import org.aksw.jena_sparql_api.mapper.impl.type.PathResolver;
 import org.aksw.jena_sparql_api.mapper.impl.type.PlaceholderInfo;
 import org.aksw.jena_sparql_api.mapper.impl.type.PopulationTask;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
@@ -893,6 +895,12 @@ public class RdfMapperEngineImpl
     @Override
     public RdfTypeFactory getRdfTypeFactory() {
         return typeFactory;
+    }
+    
+    public PathResolver createResolver(Class<?> javaClass) {
+    	PathFragment pathFragment = new PathFragment(null, javaClass, null, null);
+    	PathResolver result = new PathResolverImpl(pathFragment, this, null, null);
+    	return result;
     }
 
 //

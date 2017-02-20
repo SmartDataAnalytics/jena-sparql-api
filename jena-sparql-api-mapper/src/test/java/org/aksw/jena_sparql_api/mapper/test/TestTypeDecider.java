@@ -4,13 +4,13 @@ import java.util.Collections;
 import java.util.GregorianCalendar;
 import java.util.Map;
 
-import javax.persistence.EntityManagerFactory;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
-import javax.persistence.metamodel.Metamodel;
 
+import org.aksw.jena_sparql_api.concepts.Relation;
+import org.aksw.jena_sparql_api.mapper.impl.type.PathResolver;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.mapper.model.TypeDecider;
 import org.aksw.jena_sparql_api.mapper.model.TypeDeciderImpl;
@@ -48,6 +48,10 @@ public class TestTypeDecider
         //bob.getTags().put("c", "d");
         
         entityManager.persist(bob);
+        
+        PathResolver pathResolver = mapperEngine.createResolver(Person.class);
+        Relation relation = pathResolver.resolve("tags").resolve("key").getPathFragment().getRelation();
+        System.out.println("Relation: " + relation);
         
         //bob.getTags().clear();
         //bob.getTags().put("x", "y");

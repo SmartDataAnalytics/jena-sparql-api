@@ -1,20 +1,27 @@
 package org.aksw.jena_sparql_api.concepts;
 
-import org.aksw.jena_sparql_api.utils.ElementUtils;
-import org.aksw.jena_sparql_api.utils.Vars;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
+import org.aksw.jena_sparql_api.utils.ElementUtils;
+import org.aksw.jena_sparql_api.utils.VarUtils;
+import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
 import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
+import org.apache.jena.sparql.syntax.ElementUnion;
+import org.apache.jena.sparql.syntax.PatternVars;
 import org.apache.jena.sparql.util.ExprUtils;
 
 public class RelationUtils {
@@ -39,6 +46,49 @@ public class RelationUtils {
         return result;
     }
 
+//    public static Relation union(Relation a, Relation b, boolean transformInPlaceIfApplicable) {
+//    	Relation result = addUnionMember(a, b, false);
+//    	return result;
+//    }
+    
+    /**
+     * 
+     * 
+     * @param a
+     * @param b
+     * @param transformInPlaceIfApplicable Add 'b' to to 'a' if a's element already is a union
+     * @return
+     */
+    public static Relation union(Relation a, Relation b, boolean transformInPlaceIfApplicable) {
+    	Element ae = a.getElement();
+
+    	ElementUnion u;
+    	boolean isInPlace;
+    	if(transformInPlaceIfApplicable && a.getElement() instanceof ElementUnion) {
+    		u = (ElementUnion)ae;
+    		isInPlace = true;
+    	} else {
+    		u = new ElementUnion();
+    		u.addElement(a.getElement());
+    		isInPlace = false;
+    	}
+    	
+    	
+    	Map<Var, Var> varMap = new HashMap<>();
+    	
+    	Collection<Var> vas = PatternVars.vars(a.getElement());
+    	Collection<Var> vbs = PatternVars.vars(b.getElement());
+    	VarUtils.createDistinctVarMap(vbs, vas, true, null);    	
+    	
+    	varMap.put(b.getSourceVar(), a.getSourceVar());
+    	varMap.put(b.getTargetVar(), a.getTargetVar());
+    	Element c = ElementUtils.createRenamedElement(b.getElement(), varMap);
+    	u.addElement(c);
+
+    	Relation result = isInPlace ? a : new Relation(u, a.getSourceVar(), a.getTargetVar());
+    	return result;
+    }
+    
     public static Relation createRelation(String propertyUri, boolean isInverse, PrefixMapping prefixMapping) {
 
         String p = prefixMapping == null ? propertyUri : prefixMapping.expandPrefix(propertyUri);

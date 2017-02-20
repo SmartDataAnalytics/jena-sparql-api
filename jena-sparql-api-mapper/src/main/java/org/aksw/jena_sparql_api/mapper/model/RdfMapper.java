@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.mapper.impl.type.EntityFragment;
+import org.aksw.jena_sparql_api.mapper.impl.type.PathFragment;
 import org.aksw.jena_sparql_api.mapper.impl.type.ResourceFragment;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.apache.jena.rdf.model.Resource;
@@ -75,7 +75,8 @@ public interface RdfMapper {
      * 
      * @return
      */
-    Relation getRelation(String propertyName);
+    //Relation getRelation(String propertyName);
+    PathFragment resolve(String propertyName);
     
     /**
      * Emit triples from the object
