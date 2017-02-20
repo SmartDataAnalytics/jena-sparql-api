@@ -15,14 +15,12 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
-import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.Expr;
-import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
+import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementUnion;
 import org.apache.jena.sparql.syntax.PatternVars;
-import org.apache.jena.sparql.util.ExprUtils;
 
 public class RelationUtils {
 
@@ -50,6 +48,33 @@ public class RelationUtils {
 //    	Relation result = addUnionMember(a, b, false);
 //    	return result;
 //    }
+    
+    public static Relation and(Relation a, Relation b, boolean transformInPlaceIfApplicable) {
+    	Element ae = a.getElement();
+    	Element be = b.getElement();
+    	
+    	Collection<Var> vas = PatternVars.vars(ae);
+    	Collection<Var> vbs = PatternVars.vars(be);
+    	Map<Var, Var> varMap = VarUtils.createDistinctVarMap(vbs, vas, true, null);
+    	
+    	varMap.put(b.getSourceVar(), a.getTargetVar());
+    	Element ce = ElementUtils.createRenamedElement(be, varMap);
+    	
+    	ElementGroup eg;
+    	boolean isInPlace = ae instanceof ElementGroup && transformInPlaceIfApplicable; 
+    	if(isInPlace) {
+    		eg = (ElementGroup)ae;
+    	} else {
+    		eg = new ElementGroup();
+    		eg.addElement(ae);
+    	}
+    	eg.addElement(ce);;
+		
+    	Relation result = new Relation(eg, a.getSourceVar(), varMap.getOrDefault(b.getTargetVar(), a.getSourceVar()));
+    	
+    	return result;    	
+    }
+    
     
     /**
      * 
@@ -99,8 +124,16 @@ public class RelationUtils {
 
 
     public static Relation createRelation(Node property, boolean isInverse) {
-        Expr expr = new E_Equals(new ExprVar(Vars.p), ExprUtils.nodeToExpr(property));
-        Relation result = createRelation(expr, isInverse);
+    	
+        //Expr expr = new E_Equals(new ExprVar(Vars.p), ExprUtils.nodeToExpr(property));
+    	
+    	Triple t = isInverse
+    			? new Triple(Vars.o, property, Vars.s)
+    			: new Triple(Vars.s, property, Vars.o);
+    	    	
+    	Element element = ElementUtils.createElement(t);
+    	//Element element = new ElementTriplesBlock(bgp);
+        Relation result = new Relation(element, Vars.s, Vars.o);//createRelation(expr, isInverse);
         return result;
     }
 

@@ -13,6 +13,8 @@ import org.aksw.jena_sparql_api.mapper.model.RdfType;
 public class PathResolverImpl
 	implements PathResolver
 {	
+	protected PathResolver parent;
+	
 	/**
 	 * The current pathFragment - null for the root path resolver
 	 */
@@ -29,9 +31,13 @@ public class PathResolverImpl
 	
 	protected String reachingPropertyName;
 	
-	protected PathResolver parent;
 	//protected RdfType current;
 
+	@Override
+	public PathResolver getParent() {
+		return parent;
+	}
+	
 	@Override
 	public PathFragment getPathFragment() {
 		return pathFragment;

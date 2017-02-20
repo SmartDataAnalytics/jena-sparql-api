@@ -50,7 +50,9 @@ public class TestTypeDecider
         entityManager.persist(bob);
         
         PathResolver pathResolver = mapperEngine.createResolver(Person.class);
-        Relation relation = pathResolver.resolve("tags").resolve("key").getPathFragment().getRelation();
+        Relation relation = pathResolver.resolve("tags").resolve("key").getOverallRelation();
+        
+        
         System.out.println("Relation: " + relation);
         
         //bob.getTags().clear();
