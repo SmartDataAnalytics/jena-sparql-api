@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.function.BiFunction;
 
 import org.aksw.jena_sparql_api.beans.model.PropertyOps;
+import org.aksw.jena_sparql_api.concepts.Relation;
+import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.aksw.jena_sparql_api.mapper.impl.type.EntityFragment;
 import org.aksw.jena_sparql_api.mapper.impl.type.PlaceholderInfo;
 import org.aksw.jena_sparql_api.mapper.impl.type.PopulationTask;
@@ -140,6 +142,15 @@ public class RdfMapperPropertySingle
     public PropertyOps getPropertyOps() {
         return propertyOps;
     }
+
+	@Override
+	public Relation getRelation(String propertyName) {
+		Relation result = this.propertyOps.getName().equals(propertyName)
+			? RelationUtils.createRelation(predicate.asNode(), false)
+			: null;
+
+		return result;
+	}
 
 //	@Override
 //	public Object readPropertyValue(Graph graph, Node subject) {

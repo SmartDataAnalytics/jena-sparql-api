@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.mapper.impl.type.EntityFragment;
 import org.aksw.jena_sparql_api.mapper.impl.type.ResourceFragment;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
@@ -68,6 +69,13 @@ public interface RdfMapper {
 
     //EntityFragment populate(Object tgtEntity, ResourceFragment inout);
     void populate(EntityFragment out, Resource shape, Object entity);
+    
+    /**
+     * Return a relation that addresses the attribute on in the RDF
+     * 
+     * @return
+     */
+    Relation getRelation(String propertyName);
     
     /**
      * Emit triples from the object
