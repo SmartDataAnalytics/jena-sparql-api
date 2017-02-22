@@ -48,7 +48,7 @@ public class PredicateBase
 
 	@Override
 	public Predicate not() {
-		return new LogicalNotPredicate(this);
+		return new ExpressionPredicate(new LogicalNotExpression(this));
 	}
 
 }

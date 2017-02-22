@@ -19,14 +19,17 @@ public class PathImpl<X>
 	protected CriteriaEnv env;
 
 	protected Path<?> parentPath;
-	protected String attrName;
+	protected String attributeName;
 	protected Class<X> valueType;
 
+	public String getAttributeName() {
+		return attributeName;
+	}
 
 	public PathImpl(Path<?> parentPath, String attrName, Class<X> valueType) {
 		super(valueType);
 		this.parentPath = parentPath;
-		this.attrName = attrName;
+		this.attributeName = attrName;
 		//super(parentPath, attrName, valueType);
 	}
 

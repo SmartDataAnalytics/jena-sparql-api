@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.mapper.jpa.criteria;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -19,6 +20,7 @@ import javax.persistence.metamodel.EntityType;
 import javax.persistence.metamodel.Metamodel;
 
 import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.ExpressionPredicate;
+import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.LogicalAndExpression;
 import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.PredicateBase;
 import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.RootImpl;
 import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.VExpression;
@@ -45,7 +47,7 @@ class CriteriaQueryImpl<T> implements CriteriaQuery<T> {
 	protected Metamodel model;
 	//protected Function<Class<X>, EntityType<X>> entityTypeProvider;
 	
-	protected Set<Root<?>> roots;
+	protected Set<Root<?>> roots = new HashSet<>();
 	protected List<Predicate> where = new ArrayList<>();
 	protected List<Order> orders;
 	protected OrderedMap<Object, Class<?>> params; /*
@@ -74,7 +76,11 @@ class CriteriaQueryImpl<T> implements CriteriaQuery<T> {
 	
 	@Override
 	public <X> Root<X> from(Class<X> entityClass) {
-		return new RootImpl<>(entityClass);
+		Root<X> result = new RootImpl<>(entityClass);
+		
+		roots.add(result);
+		
+		return result;
 //		EntityType<X> entityType = model.entity(entityClass);
 //		Root<X> result = from(entityType);
 //		return result;
@@ -102,11 +108,17 @@ class CriteriaQueryImpl<T> implements CriteriaQuery<T> {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
 	@Override
 	public Predicate getRestriction() {
-		// TODO Auto-generated method stub
-		return null;
+		VExpression<Boolean> tmp = where.stream()
+			.map(p -> (VExpression<Boolean>)p)
+			.reduce((a, b) -> (VExpression<Boolean>)new LogicalAndExpression(a, b))
+			.orElse(null);
+		
+		return tmp == null ? null : new ExpressionPredicate(tmp);
 	}
+
 	@Override
 	public List<Expression<?>> getGroupList() {
 		// TODO Auto-generated method stub
@@ -212,5 +224,7 @@ class CriteriaQueryImpl<T> implements CriteriaQuery<T> {
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
+	
 
 }

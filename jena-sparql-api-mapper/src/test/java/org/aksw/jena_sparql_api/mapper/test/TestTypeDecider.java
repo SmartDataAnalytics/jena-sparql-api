@@ -1,14 +1,16 @@
 package org.aksw.jena_sparql_api.mapper.test;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.GregorianCalendar;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Expression;
+import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
 
 import org.aksw.jena_sparql_api.beans.model.EntityOps;
@@ -16,6 +18,8 @@ import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.mapper.impl.type.PathResolver;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
 import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.ExpressionCompiler;
+import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.PathImpl;
+import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.VExpression;
 import org.aksw.jena_sparql_api.mapper.jpa.metamodel.MetamodelGenerator;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.mapper.model.TypeDecider;
@@ -30,6 +34,29 @@ import org.junit.Test;
 public class TestTypeDecider
     extends TestMapperBase
 {
+	public static Relation resolvePath(PathResolver pathResolver, Path<?> path) {
+		List<String> list = new ArrayList<>();
+		
+		Path<?> current = path;
+		while(current != null) {
+			PathImpl<?> p = (PathImpl<?>)current;
+			list.add(p.getAttributeName());
+			current = p.getParentPath();
+		}
+
+		Collections.reverse(list);
+		
+		PathResolver x = pathResolver;
+		for(String attr : list) {
+			if(x != null && attr != null) {
+				x = x.resolve(attr);
+			}
+		}
+		
+		Relation result = x == null ? null : x.getOverallRelation();
+		return result;
+	}
+	
     @Test
     public void test() {
         Map<Class<?>, Node> map = TypeDeciderImpl.scan("org.aksw.jena_sparql_api.mapper.test");
@@ -81,10 +108,9 @@ public class TestTypeDecider
 
         
         
-//        ExpressionCompiler compiler = new ExpressionCompiler(
-//        	path -> (PathImpl)
-//        );
-        
+        ExpressionCompiler compiler = new ExpressionCompiler(
+        	path -> resolvePath(pathResolver, path)
+        );        
 
         
         
@@ -109,6 +135,12 @@ public class TestTypeDecider
     	Root<Person> c = q.from(Person.class);
     	CriteriaQuery<Person> x = q.select(c).where(cb.equal(c.get("firstName"), "Anne"));
     	
+    	((VExpression<?>)x.getRestriction()).accept(compiler);
+    	System.out.println(compiler.getElements());
+    	
+    	
+    	
+    	System.out.println("CriteriaQuery: " + x);
     	TypedQuery<Person> query = entityManager.createQuery(x);
     	Person match = query.getSingleResult();
     	

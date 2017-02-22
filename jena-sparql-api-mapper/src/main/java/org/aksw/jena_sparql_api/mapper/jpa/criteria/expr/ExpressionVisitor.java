@@ -5,9 +5,10 @@ import javax.persistence.criteria.Path;
 public interface ExpressionVisitor<T> {
 	T visit(Path<?> e);
 
-	T visit(LogicalNotPredicate e);
+	T visit(LogicalNotExpression e);
 	
-	T visit(EqualsExpression e);
-	
-	T visit(ValueExpression<?> e);
+	T visit(LogicalAndExpression e);
+	T visit(EqualsExpression e);	
+	T visit(ValueExpression<?> e);	
+	T visit(GreatestExpression<?> e);
 }
