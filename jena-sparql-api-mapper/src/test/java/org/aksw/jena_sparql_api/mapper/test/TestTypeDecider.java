@@ -8,12 +8,14 @@ import java.util.function.Function;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Expression;
 import javax.persistence.criteria.Root;
 
 import org.aksw.jena_sparql_api.beans.model.EntityOps;
 import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.mapper.impl.type.PathResolver;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
+import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.ExpressionCompiler;
 import org.aksw.jena_sparql_api.mapper.jpa.metamodel.MetamodelGenerator;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.mapper.model.TypeDecider;
@@ -77,7 +79,15 @@ public class TestTypeDecider
         bob = entityManager.find(Person.class, "o:John-Doe-Dover");
         System.out.println("Direct entity: " + bob);
 
+        
+        
+//        ExpressionCompiler compiler = new ExpressionCompiler(
+//        	path -> (PathImpl)
+//        );
+        
 
+        
+        
         //mapperEngine.merge();
         RdfType rdfType = mapperEngine.getTypeFactory().forJavaType(Person.class);
         Node id = rdfType.getRootNode(bob);

@@ -72,6 +72,8 @@ public class MetamodelGenerator {
 			
 			System.out.println(keyClass + " -> " + valueClass);
 		
+			//MapAttributeImpl m = new MapAttributeImpl();
+			
 		} else { // Singular attribute
 			System.out.println(attrCls);
 		}

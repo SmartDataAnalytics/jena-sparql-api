@@ -2,6 +2,8 @@ package org.aksw.jena_sparql_api.mapper.impl.engine;
 
 import java.util.function.Function;
 
+import org.aksw.jena_sparql_api.concepts.Relation;
+import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.aksw.jena_sparql_api.mapper.impl.type.PathFragment;
 import org.aksw.jena_sparql_api.mapper.impl.type.PathResolver;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
@@ -38,7 +40,7 @@ public class PathResolverImpl
 		return parent;
 	}
 	
-	@Override
+	//@Override
 	public PathFragment getPathFragment() {
 		return pathFragment;
 	}
@@ -93,4 +95,23 @@ public class PathResolverImpl
 		PathResolver result = resolve(mapperEngine, pathFragment, propertyName);
 		return result;
 	}
+	
+	@Override
+	public Relation getOverallRelation() {
+		PathResolver parent = getParent();
+		//PathResolver grandParent = parent != null ? parent.getParent() : null;
+
+		Relation parentRelationContrib = parent == null
+			? null
+			: parent.getOverallRelation();
+
+		Relation relationContrib = getPathFragment().getRelation();
+		
+		Relation result = parentRelationContrib == null
+			? relationContrib
+			: RelationUtils.and(parentRelationContrib, relationContrib, false);
+				
+		return result;
+	}
+
 }

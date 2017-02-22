@@ -7,16 +7,20 @@ import javax.persistence.criteria.Expression;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Selection;
 
-import org.apache.jena.sparql.expr.Expr;
+import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.LogicalNotPredicate;
 
-public class PredicateJena
-    extends ExpressionImpl<Boolean>
+public abstract class PredicateBase
+    extends ExpressionBase<Boolean>
     implements Predicate
 {
 
-    public PredicateJena(Expr expr) {
-        super(expr);
-    }
+	public PredicateBase() {
+		super(Boolean.class);
+	}
+
+//    public PredicateBase(Expression<Boolean> expression) {
+//        super(expression, null);
+//    }
 
     @Override
     public Predicate isNull() {
@@ -110,8 +114,13 @@ public class PredicateJena
 
     @Override
     public Predicate not() {
-        // TODO Auto-generated method stub
-        return null;
+    	return new LogicalNotPredicate(this);
     }
+
+//	@Override
+//	public <X> X accept(ExpressionVisitor<X> visitor) {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
 
 }

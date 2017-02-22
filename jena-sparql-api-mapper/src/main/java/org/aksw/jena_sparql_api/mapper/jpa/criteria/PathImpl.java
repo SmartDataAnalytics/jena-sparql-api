@@ -10,10 +10,10 @@ import javax.persistence.metamodel.MapAttribute;
 import javax.persistence.metamodel.PluralAttribute;
 import javax.persistence.metamodel.SingularAttribute;
 
-import org.apache.jena.sparql.expr.Expr;
+import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.ExpressionVisitor;
 
 public class PathImpl<X>
-	extends ExpressionImpl<X>
+	extends ExpressionBase<X>
 	implements Path<X>
 {
 	protected Path<?> parentPath;
@@ -21,15 +21,12 @@ public class PathImpl<X>
 	protected Class<X> valueType;
 	
 	public PathImpl(Path<?> parentPath, String attrName, Class<X> valueType) {
-		super(null);
+		super(valueType);
 		this.parentPath = parentPath;
 		this.attrName = attrName;
 		this.valueType = valueType;
 	}
 	
-	public PathImpl(Expr expr) {
-		super(expr);
-	}
 
 	@Override
 	public Bindable<X> getModel() {
@@ -67,5 +64,11 @@ public class PathImpl<X>
 		Class<Y> javaClass = null;
 		
 		return new PathImpl<Y>(this, attributeName, javaClass);
+	}
+
+	@Override
+	public <X> X accept(ExpressionVisitor<X> visitor) {
+		X result = visitor.visit(this);
+		return result;
 	}
 }

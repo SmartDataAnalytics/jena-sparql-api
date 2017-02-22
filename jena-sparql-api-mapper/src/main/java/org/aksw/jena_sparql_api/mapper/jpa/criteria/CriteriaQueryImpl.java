@@ -65,6 +65,7 @@ class CriteriaQueryImpl<T> implements CriteriaQuery<T> {
 	protected Map<Selection<?>, String> _aliases = null;
 	protected Map<Selection<?>, Value> _rootVariables = new HashMap<Selection<?>, Value>();
 	
+	
 	@Override
 	public <X> Root<X> from(Class<X> entityClass) {
 		EntityType<X> entityType = model.entity(entityClass);
