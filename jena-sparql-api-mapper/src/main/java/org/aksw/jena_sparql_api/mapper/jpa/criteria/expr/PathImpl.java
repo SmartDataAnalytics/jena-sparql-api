@@ -4,7 +4,7 @@ import javax.persistence.criteria.Path;
 
 public class PathImpl<X>
 	extends org.aksw.jena_sparql_api.mapper.jpa.criteria.PathImpl<X>
-	implements Expression<X>
+	implements VExpression<X>
 {
 
 	public PathImpl(Path<?> parentPath, String attrName, Class<X> valueType) {
@@ -12,7 +12,7 @@ public class PathImpl<X>
 	}
 
 	@SuppressWarnings("unchecked")
-	public <T> Expression<T> as(Class<T> cls) {
-		return (Expression<T>)this; 
+	public <T> VExpression<T> as(Class<T> cls) {
+		return (VExpression<T>)this; 
 	}
 }

@@ -68,9 +68,10 @@ class CriteriaQueryImpl<T> implements CriteriaQuery<T> {
 	
 	@Override
 	public <X> Root<X> from(Class<X> entityClass) {
-		EntityType<X> entityType = model.entity(entityClass);
-		Root<X> result = from(entityType);
-		return result;
+		return new RootImpl<>(entityClass);
+//		EntityType<X> entityType = model.entity(entityClass);
+//		Root<X> result = from(entityType);
+//		return result;
 	}
 
 	@Override

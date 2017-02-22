@@ -8,4 +8,6 @@ public interface ExpressionVisitor<T> {
 	T visit(LogicalNotPredicate e);
 	
 	T visit(EqualsExpression e);
+	
+	T visit(ValueExpression<?> e);
 }

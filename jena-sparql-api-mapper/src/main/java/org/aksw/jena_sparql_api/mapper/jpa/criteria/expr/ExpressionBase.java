@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.mapper.jpa.criteria.expr;
 
 public abstract class ExpressionBase<T>
 	extends org.aksw.jena_sparql_api.mapper.jpa.criteria.ExpressionBase<T>
-	implements Expression<T>
+	implements VExpression<T>
 {
 
 	public ExpressionBase(Class<T> javaClass) {
@@ -10,7 +10,7 @@ public abstract class ExpressionBase<T>
 	}
 
 	@SuppressWarnings("unchecked")
-	public <X> Expression<X> as(Class<X> cls) {
-		return (Expression<X>)this; 
+	public <X> VExpression<X> as(Class<X> cls) {
+		return (VExpression<X>)this; 
 	}
 }

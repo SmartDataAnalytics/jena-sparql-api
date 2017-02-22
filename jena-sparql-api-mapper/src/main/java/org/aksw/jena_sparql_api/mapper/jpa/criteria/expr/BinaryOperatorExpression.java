@@ -1,25 +1,23 @@
 package org.aksw.jena_sparql_api.mapper.jpa.criteria.expr;
 
 
-import org.aksw.jena_sparql_api.mapper.jpa.criteria.ExpressionBase;
-
 public abstract class BinaryOperatorExpression<T>
 	extends ExpressionBase<T>
 {
-	protected Expression<?> leftHandOperand; 
-	protected Expression<?> rightHandOperand;
+	protected VExpression<?> leftHandOperand; 
+	protected VExpression<?> rightHandOperand;
 
-	public BinaryOperatorExpression(Class<T> javaClass, Expression<?> leftHandOperand, Expression<?> rightHandOperand) {
+	public BinaryOperatorExpression(Class<T> javaClass, VExpression<?> leftHandOperand, VExpression<?> rightHandOperand) {
 		super(javaClass);
 		this.leftHandOperand = leftHandOperand;
 		this.rightHandOperand = rightHandOperand;
 	}
 
-	public Expression<?> getLeftHandOperand() {
+	public VExpression<?> getLeftHandOperand() {
 		return leftHandOperand;
 	}
 
-	public Expression<?> getRightHandOperand() {
+	public VExpression<?> getRightHandOperand() {
 		return rightHandOperand;
 	}
 

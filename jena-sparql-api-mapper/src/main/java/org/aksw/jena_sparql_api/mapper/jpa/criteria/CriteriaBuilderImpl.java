@@ -20,6 +20,11 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Selection;
 import javax.persistence.criteria.Subquery;
 
+import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.EqualsExpression;
+import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.ExpressionPredicate;
+import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.VExpression;
+import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.ValueExpression;
+
 public class CriteriaBuilderImpl
     implements CriteriaBuilder
 {
@@ -232,8 +237,11 @@ public class CriteriaBuilderImpl
 
     @Override
     public Predicate equal(Expression<?> x, Object y) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+    	VExpression<?> z = new ValueExpression<>(Object.class, y);
+
+    	VExpression<Boolean> tmp = new EqualsExpression((VExpression<?>)x, z);
+    	Predicate result = new ExpressionPredicate(tmp);
+    	return result;
     }
 
     @Override

@@ -4,7 +4,7 @@ package org.aksw.jena_sparql_api.mapper.jpa.criteria.expr;
 public class EqualsExpression
 	extends BinaryOperatorExpression<Boolean>
 {
-	public EqualsExpression(Expression<?> a, Expression<?> b) {
+	public EqualsExpression(VExpression<?> a, VExpression<?> b) {
 		super(Boolean.class, a, b);
 	}
 
