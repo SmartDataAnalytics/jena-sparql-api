@@ -1,7 +1,12 @@
 package org.aksw.jena_sparql_api.mapper.jpa.metamodel;
 
+import java.awt.List;
+import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 import javax.persistence.metamodel.Attribute;
@@ -34,10 +39,44 @@ public class MetamodelGenerator {
 	
 	
 	public <X> Attribute<X, ?> createAttribute(Class<X> cls, PropertyOps pop) {
-		Type type = pop.getReadMethod().getGenericReturnType();
+		Class<?> attrCls = pop.getType();
 		
-		if(type instanceof ParameterizedType) {
+		String attributeName = pop.getName();
+		System.out.println("Analysing attribute " + attributeName);
+		
+		Method m = pop.getReadMethod();
+		Type type = m != null ? m.getGenericReturnType(): null;
+		ParameterizedType p = type instanceof ParameterizedType ? (ParameterizedType)type : null;
+		Type[] types = p != null ? p.getActualTypeArguments() : new Type[0];
+		
+		if(Collection.class.isAssignableFrom(attrCls)) {
+						
+//			if(false) {
+//				// NOTE Map-like collection handling (possibly multimaps) could go here
+//			} else {
+			Class<?> itemClass = types != null && types.length >= 1 ? (Class<?>)types[0] : null;
+
+			if(List.class.isAssignableFrom(attrCls)) {
+
+			} else if(Set.class.isAssignableFrom(attrCls)) {
+			
+			} else { // Simply a collection
+			
+			}
+			
+			System.out.println(itemClass);
+//			}
+		} else if(Map.class.isAssignableFrom(attrCls)) {
+			Class<?> keyClass = types != null && types.length >= 2 ? (Class<?>)types[0] : null;
+			Class<?> valueClass = types != null && types.length >= 2 ? (Class<?>)types[1] : null;
+			
+			System.out.println(keyClass + " -> " + valueClass);
+		
+		} else { // Singular attribute
+			System.out.println(attrCls);
 		}
+		
+		
 		
 		return null;
 	}
