@@ -133,7 +133,9 @@ public class TestTypeDecider
     	//ParameterExpression<Long> p = cb.parameter(Long.class);
 
     	Root<Person> c = q.from(Person.class);
-    	CriteriaQuery<Person> x = q.select(c).where(cb.equal(c.get("firstName"), "Anne"));
+    	CriteriaQuery<Person> x = q.select(c)
+    			.where(cb.equal(c.get("firstName"), "Anne"))
+    			.where(cb.equal(c.get("lastName"), "Anderson"));
     	
     	((VExpression<?>)x.getRestriction()).accept(compiler);
     	System.out.println(compiler.getElements());

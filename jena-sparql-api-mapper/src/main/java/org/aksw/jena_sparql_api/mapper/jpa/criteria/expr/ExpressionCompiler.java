@@ -12,6 +12,7 @@ import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.expr.E_Equals;
+import org.apache.jena.sparql.expr.E_LogicalAnd;
 import org.apache.jena.sparql.expr.E_LogicalNot;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprVar;
@@ -92,8 +93,10 @@ public class ExpressionCompiler
 	
 	@Override
 	public Expr visit(LogicalAndExpression e) {
-		e.getLeftHandOperand().accept(this);
-		e.getRightHandOperand().accept(this);
-		return null;
+		Expr a = e.getLeftHandOperand().accept(this);
+		Expr b = e.getRightHandOperand().accept(this);
+		
+		// TODO This way of implementation is certainly wrong - do it right 
+		return new E_LogicalAnd(a, b);
 	}
 }
