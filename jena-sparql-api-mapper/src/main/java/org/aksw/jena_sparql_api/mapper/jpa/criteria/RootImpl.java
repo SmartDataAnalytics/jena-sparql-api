@@ -26,7 +26,7 @@ import javax.persistence.metamodel.PluralAttribute;
 import javax.persistence.metamodel.SetAttribute;
 import javax.persistence.metamodel.SingularAttribute;
 
-public class RootJena<X>
+public class RootImpl<X>
     implements Root<X>
 {
 

@@ -2,7 +2,6 @@ package org.aksw.jena_sparql_api.mapper.jpa.core;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -17,15 +16,13 @@ import javax.persistence.metamodel.Metamodel;
 
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.mapper.impl.engine.RdfMapperEngine;
+import org.aksw.jena_sparql_api.mapper.jpa.criteria.CriteriaBuilderImpl;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
-import org.hibernate.ejb.Ejb3Configuration;
-import org.hibernate.ejb.EntityManagerFactoryImpl;
-import org.hibernate.ejb.criteria.CriteriaBuilderImpl;
 
 
-public class EntityManagerJena
+public class EntityManagerImpl
     implements EntityManager
 {
 	protected RdfMapperEngine engine;
@@ -44,7 +41,7 @@ public class EntityManagerJena
     protected SparqlService sparqlService;
 
 
-    public EntityManagerJena(RdfMapperEngine engine) {
+    public EntityManagerImpl(RdfMapperEngine engine) {
         super();
         this.engine = engine;      
     }
@@ -268,29 +265,29 @@ public class EntityManagerJena
 
     @Override
     public CriteriaBuilder getCriteriaBuilder() {
+//
+//            Properties properties = new Properties();
+//            properties.put("javax.persistence.provider", "org.hibernate.ejb.HibernatePersistence");
+//            properties.put("javax.persistence.transactionType", "RESOURCE_LOCAL");
+//            properties.put("hibernate.connection.username", "sa");
+//            properties.put("hibernate.connection.password" ,"");
+//            properties.put("hibernate.connection.driver_class","org.h2.Driver");
+//            //properties.put("hibernate.connection.url", String.format("jdbc:h2:mem:%s;MODE=DB2", scope) );
+//            properties.put("hibernate.dialect" ,"org.hibernate.dialect.H2Dialect");
+//            properties.put("hibernate.hbm2ddl.auto","create-drop");
+//
+//            Ejb3Configuration cfg = new Ejb3Configuration();
+//            cfg.addProperties(properties);
+////            for(Class<?> clazz : entities)
+////            {
+////                cfg.addAnnotatedClass(clazz);
+////            }
+//
+//            EntityManagerFactoryImpl emf = (EntityManagerFactoryImpl)cfg.buildEntityManagerFactory();
+//
 
-            Properties properties = new Properties();
-            properties.put("javax.persistence.provider", "org.hibernate.ejb.HibernatePersistence");
-            properties.put("javax.persistence.transactionType", "RESOURCE_LOCAL");
-            properties.put("hibernate.connection.username", "sa");
-            properties.put("hibernate.connection.password" ,"");
-            properties.put("hibernate.connection.driver_class","org.h2.Driver");
-            //properties.put("hibernate.connection.url", String.format("jdbc:h2:mem:%s;MODE=DB2", scope) );
-            properties.put("hibernate.dialect" ,"org.hibernate.dialect.H2Dialect");
-            properties.put("hibernate.hbm2ddl.auto","create-drop");
-
-            Ejb3Configuration cfg = new Ejb3Configuration();
-            cfg.addProperties(properties);
-//            for(Class<?> clazz : entities)
-//            {
-//                cfg.addAnnotatedClass(clazz);
-//            }
-
-            EntityManagerFactoryImpl emf = (EntityManagerFactoryImpl)cfg.buildEntityManagerFactory();
-
-
-    	CriteriaBuilder result = new CriteriaBuilderImpl(emf);
-        //CriteriaBuilderJena result = new CriteriaBuilderJena();
+//    	CriteriaBuilder result = new CriteriaBuilderImpl(emf);
+        CriteriaBuilder result = new CriteriaBuilderImpl();
         return result;
     }
 

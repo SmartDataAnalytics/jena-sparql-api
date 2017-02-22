@@ -103,7 +103,7 @@ public class RelationUtils {
     	
     	Collection<Var> vas = PatternVars.vars(a.getElement());
     	Collection<Var> vbs = PatternVars.vars(b.getElement());
-    	VarUtils.createDistinctVarMap(vbs, vas, true, null);    	
+    	VarUtils.createDistinctVarMap(vbs, vas, true, null);
     	
     	varMap.put(b.getSourceVar(), a.getSourceVar());
     	varMap.put(b.getTargetVar(), a.getTargetVar());

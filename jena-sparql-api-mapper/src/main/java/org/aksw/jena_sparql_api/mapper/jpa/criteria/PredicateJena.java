@@ -10,7 +10,7 @@ import javax.persistence.criteria.Selection;
 import org.apache.jena.sparql.expr.Expr;
 
 public class PredicateJena
-    extends ExpressionJena<Boolean>
+    extends ExpressionImpl<Boolean>
     implements Predicate
 {
 

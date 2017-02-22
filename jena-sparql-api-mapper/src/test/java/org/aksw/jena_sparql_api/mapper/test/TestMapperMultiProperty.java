@@ -6,7 +6,7 @@ import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.mapper.context.TypedNode;
 import org.aksw.jena_sparql_api.mapper.impl.engine.RdfMapperEngineImpl;
-import org.aksw.jena_sparql_api.mapper.jpa.core.EntityManagerJena;
+import org.aksw.jena_sparql_api.mapper.jpa.core.EntityManagerImpl;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.stmt.SparqlStmt;
@@ -79,7 +79,7 @@ public class TestMapperMultiProperty {
         System.out.println("---");
 
 
-        EntityManagerJena em = new EntityManagerJena(new RdfMapperEngineImpl(sparqlService));
+        EntityManagerImpl em = new EntityManagerImpl(new RdfMapperEngineImpl(sparqlService));
 //		RdfType countryType = em.getRdfTypeFactory().forJavaType(Country.class);
 //
 //		TypedNode typedNode = new TypedNode(countryType, aut);
@@ -118,7 +118,7 @@ public class TestMapperMultiProperty {
 
         SparqlService sparqlService = FluentSparqlService.forDataset().create();
 //sparqlService.getDatasetDescription().
-        EntityManagerJena em = new EntityManagerJena(new RdfMapperEngineImpl(sparqlService));
+        EntityManagerImpl em = new EntityManagerImpl(new RdfMapperEngineImpl(sparqlService));
         RdfType countryType = em.getRdfTypeFactory().forJavaType(Country.class);
 
 // TODO Fix the code below

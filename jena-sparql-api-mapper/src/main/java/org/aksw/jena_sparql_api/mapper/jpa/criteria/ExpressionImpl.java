@@ -9,12 +9,15 @@ import javax.persistence.criteria.Selection;
 
 import org.apache.jena.sparql.expr.Expr;
 
-public class ExpressionJena<T>
-    implements javax.persistence.criteria.Expression<T>
+public class ExpressionImpl<T>
+	extends SelectionImpl<T>
+    implements Expression<T>
 {
     protected Expr expr;
+    protected String aliasName;
 
-    public ExpressionJena(Expr expr) {
+    public ExpressionImpl(Expr expr) {
+    	super(null, null);
         this.expr = expr;
     }
 
@@ -22,11 +25,6 @@ public class ExpressionJena<T>
         return expr;
     }
 
-    @Override
-    public Selection<T> alias(String name) {
-        // TODO Auto-generated method stub
-        return null;
-    }
 
     @Override
     public boolean isCompoundSelection() {

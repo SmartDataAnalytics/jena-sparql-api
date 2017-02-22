@@ -19,6 +19,7 @@ public class PropertyModel
 {
 	private static final Logger logger = LoggerFactory.getLogger(PropertyModel.class);
 	
+	// protected EntityModel entityModel;
     protected String name;
     protected Class<?> type;
     protected Function<Object, ?> getter;
@@ -99,13 +100,13 @@ public class PropertyModel
 
     @Override
     public boolean isWritable() {
-        boolean result = setter != null;;
+        boolean result = setter != null;
         return result;
     }
 
     @Override
     public boolean isReadable() {
-        boolean result = getter != null;;
+        boolean result = getter != null;
         return result;
     }    
     

@@ -4,7 +4,7 @@ import javax.persistence.EntityManager;
 
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.mapper.impl.engine.RdfMapperEngineImpl;
-import org.aksw.jena_sparql_api.mapper.jpa.core.EntityManagerJena;
+import org.aksw.jena_sparql_api.mapper.jpa.core.EntityManagerImpl;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
@@ -51,6 +51,6 @@ public class TestMapperBase {
         mapperEngine = new RdfMapperEngineImpl(sparqlService, prologue);
                 
         
-        entityManager = new EntityManagerJena(mapperEngine);
+        entityManager = new EntityManagerImpl(mapperEngine);
     }
 }

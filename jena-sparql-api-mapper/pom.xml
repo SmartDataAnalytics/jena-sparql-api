@@ -47,16 +47,16 @@
 			<artifactId>spring-json-core</artifactId>
 		</dependency>
 
-		<dependency>
-			<groupId>org.hibernate.javax.persistence</groupId>
-			<artifactId>hibernate-jpa-2.0-api</artifactId>
-		</dependency>
+<!-- 		<dependency> -->
+<!-- 			<groupId>org.hibernate.javax.persistence</groupId> -->
+<!-- 			<artifactId>hibernate-jpa-2.0-api</artifactId> -->
+<!-- 		</dependency> -->
 
-		<dependency>
-			<groupId>org.hibernate</groupId>
-			<artifactId>hibernate-entitymanager</artifactId>
+<!-- 		<dependency> -->
+<!-- 			<groupId>org.hibernate</groupId> -->
+<!-- 			<artifactId>hibernate-entitymanager</artifactId> -->
 			<!-- <version>4.3.0.Beta4</version> -->
-			<version>4.2.3.Final</version>
+<!-- 			<version>4.2.3.Final</version> -->
 
 			<!-- <exclusions> -->
 			<!-- <exclusion> -->
@@ -64,7 +64,7 @@
 			<!-- <artifactId>jboss-logging</artifactId> -->
 			<!-- </exclusion> -->
 			<!-- </exclusions> -->
-		</dependency>
+<!-- 		</dependency> -->
 
 		<dependency>
 			<groupId>org.aksw.jena-sparql-api</groupId>

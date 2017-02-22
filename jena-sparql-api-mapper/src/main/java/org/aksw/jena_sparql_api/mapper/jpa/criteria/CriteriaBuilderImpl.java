@@ -20,7 +20,7 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Selection;
 import javax.persistence.criteria.Subquery;
 
-public class CriteriaBuilderJena
+public class CriteriaBuilderImpl
     implements CriteriaBuilder
 {
 
@@ -31,7 +31,7 @@ public class CriteriaBuilderJena
 
     @Override
     public <T> CriteriaQuery<T> createQuery(Class<T> resultClass) {
-        CriteriaQueryJena<T> result = new CriteriaQueryJena<T>();
+        CriteriaQueryImpl<T> result = new CriteriaQueryImpl<T>();
 
         return result;
     }
@@ -225,6 +225,7 @@ public class CriteriaBuilderJena
 
     @Override
     public Predicate equal(Expression<?> x, Expression<?> y) {
+    	
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException();
     }
