@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.mapper.jpa.criteria;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +18,10 @@ import javax.persistence.criteria.Subquery;
 import javax.persistence.metamodel.EntityType;
 import javax.persistence.metamodel.Metamodel;
 
+import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.ExpressionPredicate;
+import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.PredicateBase;
+import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.RootImpl;
+import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.VExpression;
 import org.apache.openjpa.kernel.exps.Value;
 import org.apache.openjpa.lib.util.Localizer;
 import org.apache.openjpa.lib.util.OrderedMap;
@@ -40,14 +46,14 @@ class CriteriaQueryImpl<T> implements CriteriaQuery<T> {
 	//protected Function<Class<X>, EntityType<X>> entityTypeProvider;
 	
 	protected Set<Root<?>> roots;
-	protected Predicate where;
+	protected List<Predicate> where = new ArrayList<>();
 	protected List<Order> orders;
 	protected OrderedMap<Object, Class<?>> params; /*
 													 * <ParameterExpression<?>,
 													 * Class<?>>
 													 */
 	protected Selection<? extends T> selection;
-	protected List<Selection<?>> selections;
+	protected List<Selection<?>> selections = new ArrayList<>();
 	protected List<Expression<?>> groups;
 	protected Predicate having;
 	protected List<Subquery<?>> subqueries;
@@ -123,9 +129,10 @@ class CriteriaQueryImpl<T> implements CriteriaQuery<T> {
 	}
 	@Override
 	public CriteriaQuery<T> select(Selection<? extends T> selection) {
-		// TODO Auto-generated method stub
-		return null;
+		selections.add(selection);
+		return this;
 	}
+
 	@Override
 	public CriteriaQuery<T> multiselect(Selection<?>... selections) {
 		// TODO Auto-generated method stub
@@ -136,20 +143,34 @@ class CriteriaQueryImpl<T> implements CriteriaQuery<T> {
 		// TODO Auto-generated method stub
 		return null;
 	}
+		
+	
+	public static Predicate wrapAsPredicate(Expression<Boolean> expr) {
+		Class<?> exprClass = expr.getClass();
+		Predicate result = PredicateBase.class.isAssignableFrom(exprClass)
+				? (Predicate)expr
+				: new ExpressionPredicate((VExpression<Boolean>)expr);
+		return result;
+	}
+	
 	@Override
 	public CriteriaQuery<T> where(Expression<Boolean> restriction) {
-		// TODO Auto-generated method stub
-		return null;
+		where.add(wrapAsPredicate(restriction));
+		return this;
 	}
+
 	@Override
 	public CriteriaQuery<T> where(Predicate... restrictions) {
-		// TODO Auto-generated method stub
-		return null;
+		Arrays.asList(restrictions).stream()
+			.map(CriteriaQueryImpl::wrapAsPredicate)
+			.forEach(where::add);
+
+		return this;		
 	}
+
 	@Override
 	public CriteriaQuery<T> groupBy(Expression<?>... grouping) {
-		// TODO Auto-generated method stub
-		return null;
+		return this;
 	}
 	@Override
 	public CriteriaQuery<T> groupBy(List<Expression<?>> grouping) {

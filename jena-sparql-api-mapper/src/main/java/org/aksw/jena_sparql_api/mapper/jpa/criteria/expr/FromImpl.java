@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.mapper.jpa.criteria;
+package org.aksw.jena_sparql_api.mapper.jpa.criteria.expr;
 
 import java.util.Collection;
 import java.util.List;

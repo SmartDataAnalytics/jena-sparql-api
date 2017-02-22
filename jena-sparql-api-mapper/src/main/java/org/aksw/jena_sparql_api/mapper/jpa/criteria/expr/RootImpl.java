@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.mapper.jpa.criteria;
+package org.aksw.jena_sparql_api.mapper.jpa.criteria.expr;
 
 import javax.persistence.criteria.Root;
 import javax.persistence.metamodel.EntityType;

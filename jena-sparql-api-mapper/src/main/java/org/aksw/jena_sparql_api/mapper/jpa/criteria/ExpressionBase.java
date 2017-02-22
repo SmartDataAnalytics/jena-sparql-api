@@ -100,5 +100,4 @@ public abstract class ExpressionBase<T>
 		return (Expression<X>)this;
     }
     
-    public abstract <X> X accept(ExpressionVisitor<X> visitor);
 }

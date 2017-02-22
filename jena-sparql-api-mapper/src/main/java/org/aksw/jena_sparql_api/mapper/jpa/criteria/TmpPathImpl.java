@@ -10,17 +10,17 @@ import javax.persistence.metamodel.MapAttribute;
 import javax.persistence.metamodel.PluralAttribute;
 import javax.persistence.metamodel.SingularAttribute;
 
-import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.ExpressionVisitor;
-
-public class PathImpl<X>
+public class TmpPathImpl<X>
 	extends ExpressionBase<X>
 	implements Path<X>
 {
+	protected CriteriaEnv env;
+
 	protected Path<?> parentPath;
 	protected String attrName;
 	protected Class<X> valueType;
 	
-	public PathImpl(Path<?> parentPath, String attrName, Class<X> valueType) {
+	public TmpPathImpl(CriteriaEnv env, Path<?> parentPath, String attrName, Class<X> valueType) {
 		super(valueType);
 		this.parentPath = parentPath;
 		this.attrName = attrName;
@@ -63,12 +63,12 @@ public class PathImpl<X>
 		// TODO obtain the target Type
 		Class<Y> javaClass = null;
 		
-		return new PathImpl<Y>(this, attributeName, javaClass);
+		return new TmpPathImpl<Y>(env, this, attributeName, javaClass);
 	}
-
-	@Override
-	public <X> X accept(ExpressionVisitor<X> visitor) {
-		X result = visitor.visit(this);
-		return result;
-	}
+//
+//	@Override
+//	public <T> T accept(ExpressionVisitor<T> visitor) {
+//		X result = visitor.visit(this);
+//		return result;
+//	}
 }
