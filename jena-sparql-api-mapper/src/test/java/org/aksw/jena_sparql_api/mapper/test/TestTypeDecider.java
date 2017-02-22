@@ -3,14 +3,18 @@ package org.aksw.jena_sparql_api.mapper.test;
 import java.util.Collections;
 import java.util.GregorianCalendar;
 import java.util.Map;
+import java.util.function.Function;
 
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 
+import org.aksw.jena_sparql_api.beans.model.EntityOps;
 import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.mapper.impl.type.PathResolver;
+import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
+import org.aksw.jena_sparql_api.mapper.jpa.metamodel.MetamodelGenerator;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.mapper.model.TypeDecider;
 import org.aksw.jena_sparql_api.mapper.model.TypeDeciderImpl;
@@ -51,6 +55,12 @@ public class TestTypeDecider
         
         PathResolver pathResolver = mapperEngine.createResolver(Person.class);
         Relation relation = pathResolver.resolve("tags").resolve("key").getOverallRelation();
+        
+        
+        Function<Class<?>, EntityOps> entityOpsFactory = ((RdfTypeFactoryImpl)mapperEngine.getRdfTypeFactory()).getEntityOpsFactory();
+        MetamodelGenerator mmg = new MetamodelGenerator(entityOpsFactory);
+        
+        mmg.apply(Person.class);
         
         
         System.out.println("Relation: " + relation);
