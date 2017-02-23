@@ -3,8 +3,10 @@ package org.aksw.jena_sparql_api.mapper.test;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.GregorianCalendar;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 import javax.persistence.TypedQuery;
@@ -24,17 +26,25 @@ import org.aksw.jena_sparql_api.mapper.jpa.metamodel.MetamodelGenerator;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.mapper.model.TypeDecider;
 import org.aksw.jena_sparql_api.mapper.model.TypeDeciderImpl;
+import org.aksw.jena_sparql_api.utils.Generator;
+import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
+import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.sparql.core.Var;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestTypeDecider
-    extends TestMapperBase
-{
-	public static Relation resolvePath(PathResolver pathResolver, Path<?> path) {
+class PathResolverUtil {
+	protected Set<Var> blacklist = new HashSet<>();
+	protected Generator<Var> varGen = VarGeneratorBlacklist.create(blacklist);
+	
+	public Relation resolvePath(PathResolver pathResolver, Path<?> path) {
+		blacklist.addAll(VarUtils.toSet(pathResolver.getAliases()));
+		
+		
 		List<String> list = new ArrayList<>();
 		
 		Path<?> current = path;
@@ -53,9 +63,16 @@ public class TestTypeDecider
 			}
 		}
 		
-		Relation result = x == null ? null : x.getOverallRelation();
+		Relation result = x == null ? null : x.getOverallRelation(varGen);
+		System.out.println("Resolved path: " + result);
 		return result;
 	}
+	
+}
+
+public class TestTypeDecider
+    extends TestMapperBase
+{
 	
     @Test
     public void test() {
@@ -83,7 +100,7 @@ public class TestTypeDecider
         entityManager.persist(bob);
         
         PathResolver pathResolver = mapperEngine.createResolver(Person.class);
-        Relation relation = pathResolver.resolve("tags").resolve("key").getOverallRelation();
+//        Relation relation = pathResolver.resolve("tags").resolve("key").getOverallRelation();
         
         
         Function<Class<?>, EntityOps> entityOpsFactory = ((RdfTypeFactoryImpl)mapperEngine.getRdfTypeFactory()).getEntityOpsFactory();
@@ -92,7 +109,7 @@ public class TestTypeDecider
         mmg.apply(Person.class);
         
         
-        System.out.println("Relation: " + relation);
+        //System.out.println("Relation: " + relation);
         
         //bob.getTags().clear();
         //bob.getTags().put("x", "y");
@@ -107,9 +124,10 @@ public class TestTypeDecider
         System.out.println("Direct entity: " + bob);
 
         
+        PathResolverUtil pathResolverUtil = new PathResolverUtil();
         
         ExpressionCompiler compiler = new ExpressionCompiler(
-        	path -> resolvePath(pathResolver, path)
+        	path -> pathResolverUtil.resolvePath(pathResolver, path)
         );        
 
         

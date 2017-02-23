@@ -96,6 +96,16 @@ public class Relation {
         return result;
     }
 
+    /**
+     * Return all vars that are neither source nor target
+     * @return
+     */
+    public Set<Var> getInnerVars() {
+        Set<Var> result = SetUtils.asSet(PatternVars.vars(element));
+        result.remove(sourceVar);
+        result.remove(targetVar);
+        return result;
+    }
 
     public Set<Var> getVarsMentioned() {
         Set<Var> result = SetUtils.asSet(PatternVars.vars(element));
@@ -193,4 +203,12 @@ public class Relation {
         return result;
     }
 
+    
+    public static Relation empty() {
+    	return new Relation(new ElementGroup(), Vars.s, Vars.s);
+    }
+
+    public static Relation empty(Var var) {
+    	return new Relation(new ElementGroup(), var, var);
+    }
 }

@@ -30,6 +30,18 @@ public class PathFragment
 		this.nextResolver = nextResolver;
 	}
 	
+	
+	/**
+	 * Create a copy of the path fragment with the relation replaced.
+	 * Useful when variables needed to be renamed.
+	 * 
+	 * @param newRelation
+	 * @return
+	 */
+	public PathFragment cloneWithNewRelation(Relation newRelation) {
+		return new PathFragment(newRelation, javaClass, rdfType, nextResolver);
+	}
+	
 	//@Override
 	public RdfType getRdfType() {
 		return rdfType;

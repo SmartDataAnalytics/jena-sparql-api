@@ -49,13 +49,17 @@ public class RelationUtils {
 //    	return result;
 //    }
     
+//    public static Relation concat(Relation a, Relation b, boolean transformInPlaceIfApplicable) {
+//    	
+//    }
+    
     public static Relation and(Relation a, Relation b, boolean transformInPlaceIfApplicable) {
     	Element ae = a.getElement();
     	Element be = b.getElement();
     	
     	Collection<Var> vas = PatternVars.vars(ae);
     	Collection<Var> vbs = PatternVars.vars(be);
-    	Map<Var, Var> varMap = VarUtils.createDistinctVarMap(vbs, vas, true, null);
+    	Map<Var, Var> varMap = VarUtils.createDistinctVarMap(vas, vbs, true, null);
     	
     	varMap.put(b.getSourceVar(), a.getTargetVar());
     	Element ce = ElementUtils.createRenamedElement(be, varMap);

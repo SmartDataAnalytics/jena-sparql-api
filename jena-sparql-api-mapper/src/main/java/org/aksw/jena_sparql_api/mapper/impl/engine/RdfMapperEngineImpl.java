@@ -17,6 +17,7 @@ import org.aksw.commons.collections.diff.Diff;
 import org.aksw.jena_sparql_api.beans.model.EntityOps;
 import org.aksw.jena_sparql_api.beans.model.PropertyOps;
 import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
@@ -59,6 +60,7 @@ import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.util.ModelUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -898,7 +900,7 @@ public class RdfMapperEngineImpl
     }
     
     public PathResolver createResolver(Class<?> javaClass) {
-    	PathFragment pathFragment = new PathFragment(null, javaClass, null, null);
+    	PathFragment pathFragment = new PathFragment(Relation.empty(Var.alloc("root")), javaClass, null, null);
     	PathResolver result = new PathResolverImpl(pathFragment, this, null, null);
     	return result;
     }
