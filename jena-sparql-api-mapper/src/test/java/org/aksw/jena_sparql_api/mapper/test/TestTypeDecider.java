@@ -90,7 +90,9 @@ public class TestTypeDecider
 
         mapperEngine.fetch(typeDecider, Collections.singleton(id)).get(id);
 
-                
+
+        
+        
     	CriteriaBuilder cb = entityManager.getCriteriaBuilder();
     	CriteriaQuery<Person> q = cb.createQuery(Person.class);
 
@@ -102,7 +104,6 @@ public class TestTypeDecider
     			.where(cb.equal(c.get("lastName"), "Anderson"));
     	
     	
-    	System.out.println("CriteriaQuery: " + x);
     	TypedQuery<Person> query = entityManager.createQuery(x);
     	Person match = query.getSingleResult();
     	
