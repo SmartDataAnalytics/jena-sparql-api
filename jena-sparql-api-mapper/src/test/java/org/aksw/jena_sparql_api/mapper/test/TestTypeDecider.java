@@ -1,74 +1,28 @@
 package org.aksw.jena_sparql_api.mapper.test;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.GregorianCalendar;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Function;
 
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
 
 import org.aksw.jena_sparql_api.beans.model.EntityOps;
-import org.aksw.jena_sparql_api.concepts.Relation;
-import org.aksw.jena_sparql_api.mapper.impl.type.PathResolver;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
-import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.ExpressionCompiler;
-import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.PathImpl;
-import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.VExpression;
 import org.aksw.jena_sparql_api.mapper.jpa.metamodel.MetamodelGenerator;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.mapper.model.TypeDecider;
 import org.aksw.jena_sparql_api.mapper.model.TypeDeciderImpl;
-import org.aksw.jena_sparql_api.utils.Generator;
-import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
-import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
-import org.apache.jena.sparql.core.Var;
 import org.junit.Assert;
 import org.junit.Test;
 
-class PathResolverUtil {
-	protected Set<Var> blacklist = new HashSet<>();
-	protected Generator<Var> varGen = VarGeneratorBlacklist.create(blacklist);
-	
-	public Relation resolvePath(PathResolver pathResolver, Path<?> path) {
-		blacklist.addAll(VarUtils.toSet(pathResolver.getAliases()));
-		
-		
-		List<String> list = new ArrayList<>();
-		
-		Path<?> current = path;
-		while(current != null) {
-			PathImpl<?> p = (PathImpl<?>)current;
-			list.add(p.getAttributeName());
-			current = p.getParentPath();
-		}
-
-		Collections.reverse(list);
-		
-		PathResolver x = pathResolver;
-		for(String attr : list) {
-			if(x != null && attr != null) {
-				x = x.resolve(attr);
-			}
-		}
-		
-		Relation result = x == null ? null : x.getOverallRelation(varGen);
-		System.out.println("Resolved path: " + result);
-		return result;
-	}
-	
-}
 
 public class TestTypeDecider
     extends TestMapperBase
@@ -99,7 +53,6 @@ public class TestTypeDecider
         
         entityManager.persist(bob);
         
-        PathResolver pathResolver = mapperEngine.createResolver(Person.class);
 //        Relation relation = pathResolver.resolve("tags").resolve("key").getOverallRelation();
         
         
@@ -122,13 +75,6 @@ public class TestTypeDecider
         
         bob = entityManager.find(Person.class, "o:John-Doe-Dover");
         System.out.println("Direct entity: " + bob);
-
-        
-        PathResolverUtil pathResolverUtil = new PathResolverUtil();
-        
-        ExpressionCompiler compiler = new ExpressionCompiler(
-        	path -> pathResolverUtil.resolvePath(pathResolver, path)
-        );        
 
         
         
@@ -155,16 +101,12 @@ public class TestTypeDecider
     			.where(cb.equal(c.get("firstName"), "Anne"))
     			.where(cb.equal(c.get("lastName"), "Anderson"));
     	
-    	((VExpression<?>)x.getRestriction()).accept(compiler);
-    	System.out.println(compiler.getElements());
-    	
-    	
     	
     	System.out.println("CriteriaQuery: " + x);
     	TypedQuery<Person> query = entityManager.createQuery(x);
     	Person match = query.getSingleResult();
     	
-    	System.out.println(match);
+    	System.out.println("Result: " + match);
 
 
         //typeDecider.getApplicableTypes(subject);

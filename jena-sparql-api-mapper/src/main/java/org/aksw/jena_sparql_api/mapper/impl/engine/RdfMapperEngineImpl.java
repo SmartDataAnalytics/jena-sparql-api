@@ -80,6 +80,11 @@ public class RdfMapperEngineImpl
     protected Map<EntityId, EntityState> originalState = new HashMap<>();
     //protected Map<EntityId, EntityState> currentState = new HashMap<>();
 
+    
+    @Override
+    public SparqlService getSparqlService() {
+    	return sparqlService;
+    }
 
     // TODO Place a configured type decider in here
     protected TypeDecider typeDecider = new TypeDeciderImpl();

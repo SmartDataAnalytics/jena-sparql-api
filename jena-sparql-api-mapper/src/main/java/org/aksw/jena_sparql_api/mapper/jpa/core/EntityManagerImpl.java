@@ -17,6 +17,7 @@ import javax.persistence.metamodel.Metamodel;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.mapper.impl.engine.RdfMapperEngine;
 import org.aksw.jena_sparql_api.mapper.jpa.criteria.CriteriaBuilderImpl;
+import org.aksw.jena_sparql_api.mapper.jpa.criteria.TypedQueryImpl;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -195,8 +196,8 @@ public class EntityManagerImpl
 
     @Override
     public <T> TypedQuery<T> createQuery(CriteriaQuery<T> criteriaQuery) {
-        // TODO Auto-generated method stub
-        return null;
+    	TypedQueryImpl<T> result = new TypedQueryImpl<T>(criteriaQuery, engine);
+    	return result;
     }
 
     @Override

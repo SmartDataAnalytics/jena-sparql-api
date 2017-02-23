@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.mapper.impl.type.PathResolver;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.aksw.jena_sparql_api.mapper.model.ShapeExposable;
@@ -14,7 +15,8 @@ import org.apache.jena.sparql.core.Prologue;
 
 public interface RdfMapperEngine
 {
-
+	SparqlService getSparqlService();
+	
     Prologue getPrologue();
 
     RdfTypeFactory getRdfTypeFactory();
@@ -41,5 +43,7 @@ public interface RdfMapperEngine
     Map<Node, RDFNode> fetch(ShapeExposable shapeSupplier, Collection<Node> nodes);
     
     
+    public PathResolver createResolver(Class<?> javaClass);
+
     //PathResolver getRelation(Path path);
 }

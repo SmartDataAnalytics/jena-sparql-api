@@ -47,6 +47,8 @@ class CriteriaQueryImpl<T> implements CriteriaQuery<T> {
 	protected Metamodel model;
 	//protected Function<Class<X>, EntityType<X>> entityTypeProvider;
 	
+	protected Class<T> resultType;
+	
 	protected Set<Root<?>> roots = new HashSet<>();
 	protected List<Predicate> where = new ArrayList<>();
 	protected List<Order> orders;
@@ -61,7 +63,6 @@ class CriteriaQueryImpl<T> implements CriteriaQuery<T> {
 	protected List<Subquery<?>> subqueries;
 	protected boolean distinct;
 	protected Subquery<?> delegator;
-	protected Class<T> resultClass;
 	protected boolean compiled;
 
 	// AliasContext
@@ -73,6 +74,10 @@ class CriteriaQueryImpl<T> implements CriteriaQuery<T> {
 	protected Map<Selection<?>, String> _aliases = null;
 	protected Map<Selection<?>, Value> _rootVariables = new HashMap<Selection<?>, Value>();
 	
+	
+	public CriteriaQueryImpl(Class<T> resultType) {
+		this.resultType = resultType;
+	}
 	
 	@Override
 	public <X> Root<X> from(Class<X> entityClass) {
@@ -136,9 +141,9 @@ class CriteriaQueryImpl<T> implements CriteriaQuery<T> {
 	}
 	@Override
 	public Class<T> getResultType() {
-		// TODO Auto-generated method stub
-		return null;
+		return resultType;
 	}
+
 	@Override
 	public CriteriaQuery<T> select(Selection<? extends T> selection) {
 		selections.add(selection);

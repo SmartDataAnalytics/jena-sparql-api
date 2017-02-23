@@ -36,7 +36,7 @@ public class CriteriaBuilderImpl
 
     @Override
     public <T> CriteriaQuery<T> createQuery(Class<T> resultClass) {
-        CriteriaQueryImpl<T> result = new CriteriaQueryImpl<T>();
+        CriteriaQueryImpl<T> result = new CriteriaQueryImpl<T>(resultClass);
 
         return result;
     }

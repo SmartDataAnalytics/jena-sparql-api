@@ -1,64 +1,173 @@
 package org.aksw.jena_sparql_api.mapper.jpa.criteria;
 
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import javax.persistence.FlushModeType;
 import javax.persistence.LockModeType;
 import javax.persistence.Parameter;
 import javax.persistence.TemporalType;
 import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Path;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.core.SparqlService;
-import org.aksw.jena_sparql_api.mapper.impl.type.RdfClass;
+import org.aksw.jena_sparql_api.core.utils.ServiceUtils;
+import org.aksw.jena_sparql_api.mapper.impl.engine.RdfMapperEngine;
+import org.aksw.jena_sparql_api.mapper.impl.type.PathResolver;
+import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.ExpressionCompiler;
+import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.PathImpl;
+import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.VExpression;
+import org.aksw.jena_sparql_api.mapper.test.Person;
+import org.aksw.jena_sparql_api.utils.ElementUtils;
+import org.aksw.jena_sparql_api.utils.Generator;
+import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
+import org.aksw.jena_sparql_api.utils.VarUtils;
+import org.apache.jena.graph.Node;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.syntax.Element;
 
-public class TypedQueryJena<X>
+
+class PathResolverUtil {
+	protected Set<Var> blacklist = new HashSet<>();
+	protected Generator<Var> varGen = VarGeneratorBlacklist.create(blacklist);
+	
+	public Relation resolvePath(PathResolver pathResolver, Path<?> path) {
+		blacklist.addAll(VarUtils.toSet(pathResolver.getAliases()));
+		
+		
+		List<String> list = new ArrayList<>();
+		
+		Path<?> current = path;
+		while(current != null) {
+			PathImpl<?> p = (PathImpl<?>)current;
+			list.add(p.getAttributeName());
+			current = p.getParentPath();
+		}
+
+		Collections.reverse(list);
+		
+		PathResolver x = pathResolver;
+		for(String attr : list) {
+			if(x != null && attr != null) {
+				x = x.resolve(attr);
+			}
+		}
+		
+		Relation result = x == null ? null : x.getOverallRelation(varGen);
+		System.out.println("Resolved path: " + result);
+		return result;
+	}
+	
+}
+
+
+public class TypedQueryImpl<X>
     implements TypedQuery<X>
 {
-    protected RdfClass rdfClass;
-    protected SparqlService sparqlService;
-    protected Concept concept;
+	protected Integer startPosition = null;
+	protected Integer maxResult = null;
+	
+	protected CriteriaQuery<X> criteriaQuery;
+	protected RdfMapperEngine engine;
 
-    private TypedQueryJena(RdfClass rdfClass, SparqlService sparqlService, Concept concept) {
-        this.rdfClass = rdfClass;
-        this.sparqlService = sparqlService;
-        this.concept = concept;
+    //protected SparqlService sparqlService;
+    //protected Concept concept;
+
+    
+    protected Function<Class<?>, PathResolver> pathResolverFactory;
+
+    
+//    protected Query compileQuery() {
+//    	Query result = new Query();
+//    	
+//    	return result;
+//    }
+
+    protected Concept compileConcept() {
+        
+    	//RdfType engine.getRdfTypeFactory().
+    	
+    	
+        PathResolver pathResolver = engine.createResolver(Person.class);//mapperEngine.createResolver(Person.class);
+
+        PathResolverUtil pathResolverUtil = new PathResolverUtil();
+        
+        ExpressionCompiler compiler = new ExpressionCompiler(
+        	path -> pathResolverUtil.resolvePath(pathResolver, path)
+        );        
+
+    	((VExpression<?>)criteriaQuery.getRestriction()).accept(compiler);
+    	System.out.println(compiler.getElements());
+
+    	Element el = ElementUtils.groupIfNeeded(compiler.getElements());
+    	
+    	// TODO Merge in the rdftype's concept
+    	// TODO Handle the root variable in a better way
+    	
+    	Concept result = new Concept(el, Var.alloc("root"));
+    	return result;    	
+    }
+    
+    
+    public TypedQueryImpl(CriteriaQuery<X> criteriaQuery, RdfMapperEngine engine) {//SparqlService sparqlService, Concept concept) {
+    	this.criteriaQuery = criteriaQuery;
+    	this.engine = engine;
     }
 
     @Override
     public X getSingleResult() {
-        //entityManager.
-//       //rdfClass.
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+    	SparqlService sparqlService = engine.getSparqlService();
+    	
+    	
+    	Concept concept = compileConcept();
+    	
+    	
+    	List<Node> items = ServiceUtils.fetchList(sparqlService.getQueryExecutionFactory(), concept, 1l, startPosition == null ? null : startPosition.longValue());
+
+    	System.out.println("GOT " + items + " for concept" + concept);
+    	
+    	X result;
+    	if(items.isEmpty()) {
+    		result = null;
+    	} else {
+    		Node node = items.iterator().next();
+        	Class<X> clazz = criteriaQuery.getResultType();
+        	result = engine.find(clazz, node);    		
+    	}
+    
+    	return result;
     }
 
     @Override
     public TypedQuery<X> setMaxResults(int maxResult) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+    	this.maxResult = maxResult;
+    	return this;
     }
 
     @Override
     public TypedQuery<X> setFirstResult(int startPosition) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+    	this.startPosition = startPosition;
+    	return this;
     }
 
     @Override
     public int getMaxResults() {
-        // TODO Auto-generated method stub
-        return 0;
+    	return maxResult;
     }
 
     @Override
     public int getFirstResult() {
-        // TODO Auto-generated method stub
-        return 0;
+    	return startPosition;
     }
 
     @Override
