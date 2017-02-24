@@ -51,7 +51,7 @@ class CriteriaQueryImpl<T> implements CriteriaQuery<T> {
 	
 	protected Set<Root<?>> roots = new HashSet<>();
 	protected List<Predicate> where = new ArrayList<>();
-	protected List<Order> orders;
+	protected List<Order> orders = new ArrayList<>();
 	protected OrderedMap<Object, Class<?>> params; /*
 													 * <ParameterExpression<?>,
 													 * Class<?>>
@@ -206,13 +206,15 @@ class CriteriaQueryImpl<T> implements CriteriaQuery<T> {
 	}
 	@Override
 	public CriteriaQuery<T> orderBy(Order... o) {
-		// TODO Auto-generated method stub
-		return null;
+		orders.addAll(Arrays.asList(o));
+		
+		return this;
 	}
 	@Override
 	public CriteriaQuery<T> orderBy(List<Order> o) {
-		// TODO Auto-generated method stub
-		return null;
+		orders.addAll(o);
+		
+		return this;
 	}
 	@Override
 	public CriteriaQuery<T> distinct(boolean distinct) {
@@ -221,9 +223,9 @@ class CriteriaQueryImpl<T> implements CriteriaQuery<T> {
 	}
 	@Override
 	public List<Order> getOrderList() {
-		// TODO Auto-generated method stub
-		return null;
+		return orders;
 	}
+
 	@Override
 	public Set<ParameterExpression<?>> getParameters() {
 		// TODO Auto-generated method stub

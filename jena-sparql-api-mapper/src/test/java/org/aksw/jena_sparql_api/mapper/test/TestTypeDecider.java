@@ -5,6 +5,7 @@ import java.util.GregorianCalendar;
 import java.util.Map;
 import java.util.function.Function;
 
+import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
@@ -102,13 +103,13 @@ public class TestTypeDecider
     	CriteriaQuery<Person> x = q.select(c)
     			.where(cb.equal(c.get("firstName"), "Anne"))
     			.where(cb.equal(c.get("lastName"), "Anderson"));
-    	
-    	
+
+    	q.orderBy(cb.desc(c.get("firstName")));
+
     	TypedQuery<Person> query = entityManager.createQuery(x);
     	Person match = query.getSingleResult();
     	
     	System.out.println("Result: " + match);
-
 
         //typeDecider.getApplicableTypes(subject);
     }

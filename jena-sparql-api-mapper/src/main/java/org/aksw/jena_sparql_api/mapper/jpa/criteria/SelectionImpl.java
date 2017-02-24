@@ -10,7 +10,7 @@ public class SelectionImpl<X>
 {
 	//protected Expression<X> expression;
 	
-	public SelectionImpl(Class<X> javaType) {
+	public SelectionImpl(Class<? extends X> javaType) {
 		super(javaType, null);
 		//super(expression.getJavaType(), alias);
 		//this.expression = expression;

@@ -1,10 +1,11 @@
 package org.aksw.jena_sparql_api.mapper.jpa.criteria.expr;
 
+
 public class GreatestExpression<T>
 	extends UnaryOperatorExpression<T>
 {
-	public GreatestExpression(Class<T> javaClass, VExpression<T> operand) {
-		super(javaClass, operand);
+	public GreatestExpression(VExpression<T> operand) {
+		super(operand.getJavaType(), operand);
 	}
 
 	@Override

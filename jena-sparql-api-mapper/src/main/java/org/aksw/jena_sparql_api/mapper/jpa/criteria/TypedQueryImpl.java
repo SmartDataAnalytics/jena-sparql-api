@@ -16,6 +16,7 @@ import javax.persistence.Parameter;
 import javax.persistence.TemporalType;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Order;
 import javax.persistence.criteria.Path;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
@@ -33,7 +34,10 @@ import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.apache.jena.graph.Node;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.SortCondition;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.syntax.Element;
 
 
@@ -109,6 +113,21 @@ public class TypedQueryImpl<X>
     	((VExpression<?>)criteriaQuery.getRestriction()).accept(compiler);
     	System.out.println(compiler.getElements());
 
+    	
+    	
+
+    	
+    	// Compile order
+    	List<SortCondition> sortConditions = new ArrayList<>();
+    	for(Order order : criteriaQuery.getOrderList()) {
+    		VExpression<?> x = ((OrderImpl)order).getExpression();
+    		Expr e = x.accept(compiler);
+    		
+    		int dir = order.isAscending() ? Query.ORDER_ASCENDING : Query.ORDER_DESCENDING;
+    		sortConditions.add(new SortCondition(e, dir));    		
+    	}
+    	System.out.println("Sort conditions: " + sortConditions);
+    	
     	Element el = ElementUtils.groupIfNeeded(compiler.getElements());
     	
     	// TODO Merge in the rdftype's concept
@@ -117,20 +136,26 @@ public class TypedQueryImpl<X>
     	Concept result = new Concept(el, Var.alloc("root"));
     	return result;    	
     }
-    
+
+    /*
+    public void compileOrder() {
+        
+    }*/
+
     
     public TypedQueryImpl(CriteriaQuery<X> criteriaQuery, RdfMapperEngine engine) {//SparqlService sparqlService, Concept concept) {
     	this.criteriaQuery = criteriaQuery;
     	this.engine = engine;
     }
 
+    
     @Override
     public X getSingleResult() {
     	SparqlService sparqlService = engine.getSparqlService();
     	
     	
     	Concept concept = compileConcept();
-    	
+    	//compileOrder();
     	
     	List<Node> items = ServiceUtils.fetchList(sparqlService.getQueryExecutionFactory(), concept, 1l, startPosition == null ? null : startPosition.longValue());
 

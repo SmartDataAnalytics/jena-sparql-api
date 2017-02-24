@@ -5,7 +5,7 @@ public abstract class ExpressionBase<T>
 	implements VExpression<T>
 {
 
-	public ExpressionBase(Class<T> javaClass) {
+	public ExpressionBase(Class<? extends T> javaClass) {
 		super(javaClass);
 	}
 

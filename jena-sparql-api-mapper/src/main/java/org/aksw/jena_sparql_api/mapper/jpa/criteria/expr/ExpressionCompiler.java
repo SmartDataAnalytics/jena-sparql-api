@@ -7,16 +7,20 @@ import java.util.function.Function;
 import javax.persistence.criteria.Path;
 
 import org.aksw.jena_sparql_api.concepts.Relation;
+import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.E_LogicalAnd;
 import org.apache.jena.sparql.expr.E_LogicalNot;
 import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprAggregator;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.expr.aggregate.AggMax;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
 
@@ -44,6 +48,10 @@ public class ExpressionCompiler
 
 	public Expr visit(Path<?> e) {
 		Relation relation = pathHandler.apply(e);
+		 
+		if(relation == null) {
+			throw new RuntimeException("Could not resolve path: " + e);
+		}
 		
 		Element element = relation.getElement();
 		if(element != null) {
@@ -77,8 +85,10 @@ public class ExpressionCompiler
 	public Expr visit(GreatestExpression<?> e) {
 		// Prepare a sub-query
 		
-		//Expr expr = e.getOperand().accept(visitor);
-		return null;
+		Expr expr = e.getOperand().accept(this);
+		AggMax agg = new AggMax(expr);
+		Expr result = new ExprAggregator(Vars.x, agg);
+		return result;
 	}
 	
 	@Override

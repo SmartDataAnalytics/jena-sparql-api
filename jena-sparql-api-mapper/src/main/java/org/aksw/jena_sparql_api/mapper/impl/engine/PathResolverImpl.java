@@ -130,50 +130,56 @@ public class PathResolverImpl
 	public Relation getOverallRelation(Generator<Var> varGen) {
 		//PathResolver parent = getParent();
 		//PathResolver grandParent = parent != null ? parent.getParent() : null;
-		Relation contribRel = getPathFragment().getRelation();
-
-		Var srcVar;
-		Var tgtVar;
-		Element e;
-
-		String aliasName = this.getAlias();
-		if(aliasName != null) {
-			tgtVar = Var.alloc(aliasName);
+		
+		Relation result;
+		if(pathFragment == null) {
+			result = null;
 		} else {
-			// Conservative approach: always obtain a new var from the generator
-			tgtVar = varGen.next();
-			//tgtVar = fixedVars.contains(tgtVar) ? varGen.next() : tgtVar; 
-			//tgtVar = varGen.prefer(tgtVar);
-		}
-		
-		
-		if(parent != null) {
-		
-			Relation parentRel = parent.getOverallRelation(varGen);
-			
-			Collection<Var> parentVars = parentRel.getVarsMentioned();
-			
-			Collection<Var> contribInnerVars = contribRel.getInnerVars();
+			Relation contribRel = getPathFragment().getRelation();
 	
-			// - Make any intermediary var of the contribRel distinct from union(fixedVars, vars(parentRel))
-			// - If there is an alias, map contribRel.tgtVar -> alias; otherwise allocate a fresh name
-			Map<Var, Var> varMap = VarUtils.createDistinctVarMap(parentVars, contribInnerVars, true, varGen);
+			Var srcVar;
+			Var tgtVar;
+			Element e;
 	
-			varMap.put(contribRel.getSourceVar(), parentRel.getSourceVar());
-			varMap.put(contribRel.getTargetVar(), tgtVar);			
+			String aliasName = this.getAlias();
+			if(aliasName != null) {
+				tgtVar = Var.alloc(aliasName);
+			} else {
+				// Conservative approach: always obtain a new var from the generator
+				tgtVar = varGen.next();
+				//tgtVar = fixedVars.contains(tgtVar) ? varGen.next() : tgtVar; 
+				//tgtVar = varGen.prefer(tgtVar);
+			}
 			
-			contribRel = contribRel.applyNodeTransform(new NodeTransformRenameMap(varMap));
 			
-			srcVar = parentRel.getSourceVar();
-			e = ElementUtils.groupIfNeeded(parentRel.getElement(), contribRel.getElement());
-		} else {
-			srcVar = contribRel.getSourceVar(); //varGen.next();
-			e = contribRel.getElement();
+			if(parent != null) {
+			
+				Relation parentRel = parent.getOverallRelation(varGen);
+				
+				Collection<Var> parentVars = parentRel.getVarsMentioned();
+				
+				Collection<Var> contribInnerVars = contribRel.getInnerVars();
+		
+				// - Make any intermediary var of the contribRel distinct from union(fixedVars, vars(parentRel))
+				// - If there is an alias, map contribRel.tgtVar -> alias; otherwise allocate a fresh name
+				Map<Var, Var> varMap = VarUtils.createDistinctVarMap(parentVars, contribInnerVars, true, varGen);
+		
+				varMap.put(contribRel.getSourceVar(), parentRel.getSourceVar());
+				varMap.put(contribRel.getTargetVar(), tgtVar);			
+				
+				contribRel = contribRel.applyNodeTransform(new NodeTransformRenameMap(varMap));
+				
+				srcVar = parentRel.getSourceVar();
+				e = ElementUtils.groupIfNeeded(parentRel.getElement(), contribRel.getElement());
+			} else {
+				srcVar = contribRel.getSourceVar(); //varGen.next();
+				e = contribRel.getElement();
+			}
+	
+			result = new Relation(e, srcVar, tgtVar);
+			// if there is an alias, replace the target with it
 		}
 
-		Relation result = new Relation(e, srcVar, tgtVar);
-		// if there is an alias, replace the target with it
-		
 		return result;
 	}
 

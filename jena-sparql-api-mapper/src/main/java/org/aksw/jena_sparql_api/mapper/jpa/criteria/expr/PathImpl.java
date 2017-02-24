@@ -84,4 +84,9 @@ public class PathImpl<X>
 	public <Y> Path<Y> get(String attributeName) {
 		return new PathImpl<Y>(this, attributeName, null);
 	}
+	
+	@Override
+	public String toString() {
+		return (parentPath == null ? "" : parentPath.toString() + ".") + attributeName;
+	}
 }

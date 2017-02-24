@@ -24,7 +24,7 @@ public abstract class ExpressionBase<T>
 //        return expr;
 //    }
 
-    public ExpressionBase(Class<T> javaClass) {
+    public ExpressionBase(Class<? extends T> javaClass) {
 		super(javaClass);
 	}
 

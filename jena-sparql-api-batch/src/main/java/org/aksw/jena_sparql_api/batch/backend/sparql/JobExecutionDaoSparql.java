@@ -145,7 +145,7 @@ public class JobExecutionDaoSparql
     }
 
     @Override
-    public List<JobExecution> findJobExecutions(final JobInstance job) {
+    public List<JobExecution> findJobExecutions(JobInstance job) {
     	CriteriaQuery<JobExecution> cq = em.getCriteriaBuilder().createQuery(JobExecution.class);
     	TypedQuery<JobExecution> tq = em.createQuery(cq);
     	List<JobExecution> result = tq.getResultList();
@@ -250,6 +250,11 @@ public class JobExecutionDaoSparql
 
     @Override
     public JobExecution getLastJobExecution(JobInstance jobInstance) {
+    	
+//    	private static final String GET_LAST_EXECUTION = "SELECT JOB_EXECUTION_ID, START_TIME, END_TIME, STATUS, EXIT_CODE, EXIT_MESSAGE, CREATE_TIME, LAST_UPDATED, VERSION, JOB_CONFIGURATION_LOCATION "
+//                + "from %PREFIX%JOB_EXECUTION E where JOB_INSTANCE_ID = ? and JOB_EXECUTION_ID in (SELECT max(JOB_EXECUTION_ID) from %PREFIX%JOB_EXECUTION E2 where E2.JOB_INSTANCE_ID = ?)";
+
+    	// WHERE ... AND JOB_EXECUTION_ID in (SELECT max(JOB_EXECUTION_ID) from %PREFIX%JOB_EXECUTION E2 where E2.JOB_INSTANCE_ID = ?)"
         Long id = jobInstance.getId();
 
     	CriteriaBuilder cb = em.getCriteriaBuilder();

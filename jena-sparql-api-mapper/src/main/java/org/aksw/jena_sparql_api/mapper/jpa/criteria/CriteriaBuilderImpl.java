@@ -22,6 +22,7 @@ import javax.persistence.criteria.Subquery;
 
 import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.EqualsExpression;
 import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.ExpressionPredicate;
+import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.GreatestExpression;
 import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.VExpression;
 import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.ValueExpression;
 
@@ -66,14 +67,14 @@ public class CriteriaBuilderImpl
 
     @Override
     public Order asc(Expression<?> x) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+    	Order result = new OrderImpl(true, (VExpression<?>)x);
+    	return result;
     }
 
     @Override
     public Order desc(Expression<?> x) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+    	Order result = new OrderImpl(false, (VExpression<?>)x);
+    	return result;
     }
 
     @Override
@@ -115,8 +116,7 @@ public class CriteriaBuilderImpl
     @Override
     public <X extends Comparable<? super X>> Expression<X> greatest(
             Expression<X> x) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+    	return new GreatestExpression<>((VExpression<X>)x);
     }
 
     @Override

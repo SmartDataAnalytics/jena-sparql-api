@@ -5,7 +5,7 @@ public abstract class UnaryOperatorExpression<T>
 {
 	protected VExpression<?> operand; 
 	
-	public UnaryOperatorExpression(Class<T> javaClass, VExpression<?> operand) {
+	public UnaryOperatorExpression(Class<? extends T> javaClass, VExpression<?> operand) {
 		super(javaClass);
 		this.operand = operand;
 	}
