@@ -2,10 +2,10 @@ package org.aksw.jena_sparql_api.mapper.test;
 
 import java.util.Collections;
 import java.util.GregorianCalendar;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
@@ -100,18 +100,19 @@ public class TestTypeDecider
     	//ParameterExpression<Long> p = cb.parameter(Long.class);
 
     	Root<Person> c = q.from(Person.class);
-    	CriteriaQuery<Person> x = q.select(c)
-    			.where(cb.equal(c.get("firstName"), "Anne"))
-    			.where(cb.equal(c.get("lastName"), "Anderson"));
+    	CriteriaQuery<Person> x = q.select(c);
+//    			.where(cb.equal(c.get("firstName"), "Anne"))
+//    			.where(cb.equal(c.get("lastName"), "Anderson"));
 
     	q.orderBy(cb.desc(c.get("firstName")));
 
     	TypedQuery<Person> query = entityManager.createQuery(x);
 //    	query.setFirstResult(2);
 //    	query.setMaxResults(2);
-    	Person match = query.getSingleResult();
+    	List<Person> matches = query.getResultList();
+    	//Person match = query.getSingleResult();
     	
-    	System.out.println("Result: " + match);
+    	System.out.println("Result: " + matches);
 
         //typeDecider.getApplicableTypes(subject);
     }

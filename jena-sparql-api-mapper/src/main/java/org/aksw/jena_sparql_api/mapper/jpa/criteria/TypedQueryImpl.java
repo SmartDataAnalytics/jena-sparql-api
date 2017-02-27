@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import javax.persistence.FlushModeType;
 import javax.persistence.LockModeType;
@@ -36,6 +37,7 @@ import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.VarUtils;
+import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.SortCondition;
@@ -101,7 +103,10 @@ public class TypedQueryImpl<X>
 //    }
 
     protected OrderedConcept compileConcept() {
-        
+        // Get the SPARQL concept from the type decider for the requested entity type
+    	//engine.getT
+    	
+    	
     	//RdfType engine.getRdfTypeFactory().
     	
     	Var rootVar = Var.alloc("root");
@@ -115,12 +120,18 @@ public class TypedQueryImpl<X>
         	path -> pathResolverUtil.resolvePath(pathResolver, path)
         );        
 
-    	((VExpression<?>)criteriaQuery.getRestriction()).accept(filterCompiler);
-    	//System.out.println(filterCompiler.getElements());
+        VExpression<?> filterEx = (VExpression<?>)criteriaQuery.getRestriction();
+        Concept filterConcept;
+    	if(filterEx != null) {
+    		filterEx.accept(filterCompiler);
+    		//System.out.println(filterCompiler.getElements());
 
-    	Element filterEl = ElementUtils.groupIfNeeded(filterCompiler.getElements());
+    		Element filterEl = ElementUtils.groupIfNeeded(filterCompiler.getElements());
 
-    	Concept filterConcept = new Concept(filterEl, rootVar);
+    		filterConcept = new Concept(filterEl, rootVar);
+    	} else {
+    		filterConcept = ConceptUtils.createSubjectConcept();
+    	}
     	
         ExpressionCompiler orderCompiler = new ExpressionCompiler(
           	path -> pathResolverUtil.resolvePath(pathResolver, path)
@@ -164,25 +175,8 @@ public class TypedQueryImpl<X>
     
     @Override
     public X getSingleResult() {
-    	SparqlService sparqlService = engine.getSparqlService();
-    	
-    	
-    	OrderedConcept concept = compileConcept();
-    	//compileOrder();
-    	
-    	List<Node> items = ServiceUtils.fetchList(sparqlService.getQueryExecutionFactory(), concept, 1l, startPosition == null ? null : startPosition.longValue());
-
-    	System.out.println("GOT " + items + " for concept" + concept);
-    	
-    	X result;
-    	if(items.isEmpty()) {
-    		result = null;
-    	} else {
-    		Node node = items.iterator().next();
-        	Class<X> clazz = criteriaQuery.getResultType();
-        	result = engine.find(clazz, node);    		
-    	}
-    
+    	List<X> items = getResultList(1);
+    	X result = Iterables.getFirst(items, null);
     	return result;
     }
 
@@ -290,11 +284,43 @@ public class TypedQueryImpl<X>
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException();
     }
-
+    
     @Override
     public List<X> getResultList() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+    	List<X> result = getResultList(null);
+    	return result;
+    }
+    
+    public List<X> getResultList(Integer limit) { //, Integer offset) {
+    	Long l = maxResult != null ? maxResult.longValue() : null;
+    	l = limit != null ? limit.longValue() : null;
+    	Long o = startPosition != null ? startPosition.longValue() : null;
+    	
+    	SparqlService sparqlService = engine.getSparqlService();
+    	
+    	
+    	OrderedConcept concept = compileConcept();
+    	//compileOrder();
+    	
+    	//List<Node> items = ServiceUtils.fetchList(sparqlService.getQueryExecutionFactory(), concept, 1l, startPosition == null ? null : startPosition.longValue());
+    	List<Node> items = ServiceUtils.fetchList(sparqlService.getQueryExecutionFactory(), concept, l, o);
+    	List<X> result = items.stream().map(node -> {
+        	Class<X> clazz = criteriaQuery.getResultType();
+        	Object r = engine.find(clazz, node);
+        	return (X)r;    		
+    	}).collect(Collectors.toList());
+    	System.out.println("GOT " + items + " for concept" + concept);
+    	
+//    	X result;
+//    	if(items.isEmpty()) {
+//    		result = null;
+//    	} else {
+//    		Node node = items.iterator().next();
+//        	Class<X> clazz = criteriaQuery.getResultType();
+//        	result = engine.find(clazz, node);    		
+//    	}
+    
+    	return result;
     }
 
     @Override

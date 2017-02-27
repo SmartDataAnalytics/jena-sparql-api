@@ -37,7 +37,7 @@ public class ServiceUtils {
 
     public static List<Node> fetchList(QueryExecutionFactory qef, OrderedConcept orderedConcept, Long limit, Long offset) {
         Query query = ConceptUtils.createQueryList(orderedConcept, limit, offset);
-        System.out.println("Query: " + query);
+        //System.out.println("Query: " + query);
         List<Node> result = fetchList(qef, query, orderedConcept.getConcept().getVar());
         return result;
     }

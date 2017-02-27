@@ -9,6 +9,7 @@ import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.mapper.impl.type.PathResolver;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.aksw.jena_sparql_api.mapper.model.ShapeExposable;
+import org.aksw.jena_sparql_api.mapper.model.TypeDecider;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.sparql.core.Prologue;
@@ -20,6 +21,9 @@ public interface RdfMapperEngine
     Prologue getPrologue();
 
     RdfTypeFactory getRdfTypeFactory();
+    
+    TypeDecider getTypeDecider();
+    
 
     //<T> LookupService<Node, T> getLookupService(Class<T> clazz);
     <T> T find(Class<T> clazz, Node rootNode);

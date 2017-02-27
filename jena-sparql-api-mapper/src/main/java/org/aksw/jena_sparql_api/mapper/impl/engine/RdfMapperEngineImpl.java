@@ -86,6 +86,11 @@ public class RdfMapperEngineImpl
     	return sparqlService;
     }
 
+    @Override
+    public TypeDecider getTypeDecider() {
+    	return typeDecider;
+    }
+    
     // TODO Place a configured type decider in here
     protected TypeDecider typeDecider = new TypeDeciderImpl();
 
