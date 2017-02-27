@@ -20,6 +20,9 @@ import javax.persistence.criteria.Order;
 import javax.persistence.criteria.Path;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.concepts.ConceptOps;
+import org.aksw.jena_sparql_api.concepts.ConceptUtils;
+import org.aksw.jena_sparql_api.concepts.OrderedConcept;
 import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.utils.ServiceUtils;
@@ -97,43 +100,53 @@ public class TypedQueryImpl<X>
 //    	return result;
 //    }
 
-    protected Concept compileConcept() {
+    protected OrderedConcept compileConcept() {
         
     	//RdfType engine.getRdfTypeFactory().
     	
+    	Var rootVar = Var.alloc("root");
     	
+
         PathResolver pathResolver = engine.createResolver(Person.class);//mapperEngine.createResolver(Person.class);
 
         PathResolverUtil pathResolverUtil = new PathResolverUtil();
         
-        ExpressionCompiler compiler = new ExpressionCompiler(
+        ExpressionCompiler filterCompiler = new ExpressionCompiler(
         	path -> pathResolverUtil.resolvePath(pathResolver, path)
         );        
 
-    	((VExpression<?>)criteriaQuery.getRestriction()).accept(compiler);
-    	System.out.println(compiler.getElements());
+    	((VExpression<?>)criteriaQuery.getRestriction()).accept(filterCompiler);
+    	//System.out.println(filterCompiler.getElements());
 
+    	Element filterEl = ElementUtils.groupIfNeeded(filterCompiler.getElements());
+
+    	Concept filterConcept = new Concept(filterEl, rootVar);
     	
-    	
+        ExpressionCompiler orderCompiler = new ExpressionCompiler(
+          	path -> pathResolverUtil.resolvePath(pathResolver, path)
+        );        
 
     	
     	// Compile order
     	List<SortCondition> sortConditions = new ArrayList<>();
     	for(Order order : criteriaQuery.getOrderList()) {
     		VExpression<?> x = ((OrderImpl)order).getExpression();
-    		Expr e = x.accept(compiler);
+    		Expr e = x.accept(orderCompiler);
     		
     		int dir = order.isAscending() ? Query.ORDER_ASCENDING : Query.ORDER_DESCENDING;
     		sortConditions.add(new SortCondition(e, dir));    		
     	}
+    	Element orderEl = ElementUtils.groupIfNeeded(orderCompiler.getElements());
+    	Concept orderC = new Concept(orderEl, rootVar); 
+    	
+    	OrderedConcept orderConcept = new OrderedConcept(orderC, sortConditions); 
     	System.out.println("Sort conditions: " + sortConditions);
     	
-    	Element el = ElementUtils.groupIfNeeded(compiler.getElements());
+    	OrderedConcept result = ConceptOps.applyOrder(filterConcept, orderConcept, null);
     	
     	// TODO Merge in the rdftype's concept
     	// TODO Handle the root variable in a better way
     	
-    	Concept result = new Concept(el, Var.alloc("root"));
     	return result;    	
     }
 
@@ -154,7 +167,7 @@ public class TypedQueryImpl<X>
     	SparqlService sparqlService = engine.getSparqlService();
     	
     	
-    	Concept concept = compileConcept();
+    	OrderedConcept concept = compileConcept();
     	//compileOrder();
     	
     	List<Node> items = ServiceUtils.fetchList(sparqlService.getQueryExecutionFactory(), concept, 1l, startPosition == null ? null : startPosition.longValue());

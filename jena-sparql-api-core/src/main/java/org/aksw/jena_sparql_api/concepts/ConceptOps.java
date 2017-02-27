@@ -31,7 +31,7 @@ public class ConceptOps {
 
 	public static OrderedConcept applyOrder(Concept concept, OrderedConcept ordered, Generator<Var> generator) {
 		Map<Var, Var> varMap = createAlignedVarMap(concept, ordered.getConcept(), generator);
-        Concept tmp = intersect(concept, ordered.getConcept(), varMap);
+        Concept tmp = intersect2(concept, ordered.getConcept(), varMap);
 
         List<SortCondition> orderBy = NodeTransformLib.transform(new NodeTransformSubst(varMap), ordered.getOrderBy());
 		
@@ -172,7 +172,7 @@ public class ConceptOps {
 
     }
 
-    public static Concept intersect(Concept concept, Concept filter, Map<Var, Var> varMap) {
+    public static Concept intersect2(Concept concept, Concept filter, Map<Var, Var> varMap) {
         Concept result;
 
         if(filter != null) {
