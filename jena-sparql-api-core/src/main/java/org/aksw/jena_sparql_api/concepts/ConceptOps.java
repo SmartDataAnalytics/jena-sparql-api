@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.concepts;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -9,7 +10,9 @@ import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
+import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
+import org.apache.jena.query.SortCondition;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
 import org.apache.jena.sparql.expr.E_Equals;
@@ -17,13 +20,25 @@ import org.apache.jena.sparql.expr.ExprAggregator;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.aggregate.AggCountVar;
 import org.apache.jena.sparql.graph.NodeTransform;
+import org.apache.jena.sparql.graph.NodeTransformLib;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
+import org.apache.jena.sparql.syntax.syntaxtransform.NodeTransformSubst;
 
 public class ConceptOps {
 
+	public static OrderedConcept applyOrder(Concept concept, OrderedConcept ordered, Generator<Var> generator) {
+		Map<Var, Var> varMap = createAlignedVarMap(concept, ordered.getConcept(), generator);
+        Concept tmp = intersect(concept, ordered.getConcept(), varMap);
+
+        List<SortCondition> orderBy = NodeTransformLib.transform(new NodeTransformSubst(varMap), ordered.getOrderBy());
+		
+        OrderedConcept result = new OrderedConcept(tmp, orderBy);
+        return result;
+	}
+	
 
     public static Concept forAllIfRolePresent(Relation role, Concept filler, Generator<Var> generator) {
 
@@ -91,18 +106,38 @@ public class ConceptOps {
     }
 
 
-
     public static Concept align(Concept concept, Set<Var> vbs, Var vbJoinVar, Generator<Var> generator) {
-        Set<Var> vas = concept.getVarsMentioned();
-        Map<Var, Var> varMap = VarUtils.createDistinctVarMap(vas, vbs, true, generator);
-
-        //varMap.put(vbJoinVar, concept.getVar());
-        varMap.put(concept.getVar(), vbJoinVar);
-        NodeTransform nodeTransform = new NodeTransformRenameMap(varMap);
+    	Map<Var, Var> varMap = createAlignedVarMap(concept, vbs, vbJoinVar, generator);
+    	Concept result = applyNodeTransform(concept, varMap);
+    	return result;
+    }
+    
+    
+    public static Concept applyNodeTransform(Concept concept, Map<? extends Node, ? extends Node> nodeMap) {
+        NodeTransform nodeTransform = new NodeTransformRenameMap(nodeMap);
 
         Concept result = concept.applyNodeTransform(nodeTransform);
         return result;
     }
+
+    public static Map<Var, Var> createAlignedVarMap(Concept concept, Set<Var> vbs, Var vbJoinVar, Generator<Var> generator) {
+        Set<Var> vas = concept.getVarsMentioned();
+        Map<Var, Var> result = VarUtils.createDistinctVarMap(vas, vbs, true, generator);
+
+        //varMap.put(vbJoinVar, concept.getVar());
+        result.put(concept.getVar(), vbJoinVar);
+
+        return result;
+    }
+
+    public static Map<Var, Var> createAlignedVarMap(Concept concept, Concept forbiddenVars,  Generator<Var> generator) {
+        Var vb = forbiddenVars.getVar();
+    	Set<Var> vbs = forbiddenVars.getVarsMentioned();
+        Map<Var, Var> result = createAlignedVarMap(concept, vbs, vb, generator);
+        		
+        return result;
+    }
+
 
     public static Concept align(Concept alignee, Concept forbiddenVars, Generator<Var> generator) {
         Set<Var> vbs = forbiddenVars.getVarsMentioned();
@@ -118,7 +153,7 @@ public class ConceptOps {
     }
 
     public static Concept intersect(Stream<Concept> conceptStream) {
-        Concept result = conceptStream.reduce(Concept.TOP, (x, y) -> ConceptOps.intersect(y, x, null));
+        Concept result = conceptStream.reduce(Concept.TOP, (x, y) -> ConceptOps.intersect(y, x, (Generator<Var>)null));
         return result;
     }
 
@@ -134,6 +169,21 @@ public class ConceptOps {
       }
 
       return result;
+
+    }
+
+    public static Concept intersect(Concept concept, Concept filter, Map<Var, Var> varMap) {
+        Concept result;
+
+        if(filter != null) {
+            Concept tmp = ConceptOps.applyNodeTransform(filter, varMap);
+            Element e = ElementUtils.mergeElements(concept.getElement(), tmp.getElement());
+            result = new Concept(e, concept.getVar());
+        } else {
+            result = concept;
+        }
+
+        return result;
 
     }
 

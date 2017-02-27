@@ -107,6 +107,8 @@ public class TestTypeDecider
     	q.orderBy(cb.desc(c.get("firstName")));
 
     	TypedQuery<Person> query = entityManager.createQuery(x);
+//    	query.setFirstResult(2);
+//    	query.setMaxResults(2);
     	Person match = query.getSingleResult();
     	
     	System.out.println("Result: " + match);
