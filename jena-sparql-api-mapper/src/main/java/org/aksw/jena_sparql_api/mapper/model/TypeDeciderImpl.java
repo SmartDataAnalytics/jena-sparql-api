@@ -61,6 +61,15 @@ public class TypeDeciderImpl
     }
 
     @Override
+    public void exposeShape(ResourceShapeBuilder rsb, Class<?> clazz) {    	
+    	Node node = classToNode.get(clazz);
+    	if(node == null) {
+    		throw new RuntimeException("No corresponding concept found for class " + clazz);
+    	}
+    	rsb.out(typeProperty).filter(node);
+    }
+    
+    @Override
     public Collection<Class<?>> getApplicableTypes(Resource subject) {
         Set<Class<?>> result = subject
             .listProperties(typeProperty).toSet().stream()

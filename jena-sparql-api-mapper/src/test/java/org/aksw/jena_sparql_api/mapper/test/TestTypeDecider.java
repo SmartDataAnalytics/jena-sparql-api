@@ -24,96 +24,105 @@ import org.apache.jena.riot.RDFFormat;
 import org.junit.Assert;
 import org.junit.Test;
 
+class JobExecution {
+}
 
-public class TestTypeDecider
-    extends TestMapperBase
-{
-	
-    @Test
-    public void test() {
-        Map<Class<?>, Node> map = TypeDeciderImpl.scan("org.aksw.jena_sparql_api.mapper.test");
-        Assert.assertNotEquals(0, map.size());
+public class TestTypeDecider extends TestMapperBase {
 
-        TypeDecider typeDecider = new TypeDeciderImpl();
+	@Test
+	public void test() {
+		Map<Class<?>, Node> map = TypeDeciderImpl.scan("org.aksw.jena_sparql_api.mapper.test");
+		Assert.assertNotEquals(0, map.size());
 
-        Person anne = new Person();
-        anne.setFirstName("Anne");
-        anne.setLastName("Anderson");
-        anne.setBirthPlace("Arizona");
-        //anne.setBirthDate(new GregorianCalendar(2000, 0, 0));
-        
-        Person bob = new Person();
-        bob.setFirstName("Bob");
-        bob.setLastName("Bowlin");
-        bob.setBirthPlace("Brooklyn");
-        //DateFormat df = new SimpleDateFormat("yyyy/MM/dd");
-        bob.setBirthDate(new GregorianCalendar(2000, 0, 0));
+		TypeDecider typeDecider = new TypeDeciderImpl();
 
-        bob.getTags().put("knows", anne);
-        //bob.getTags().put("c", "d");
-        
-        entityManager.persist(bob);
-        
-//        Relation relation = pathResolver.resolve("tags").resolve("key").getOverallRelation();
-        
-        
-        Function<Class<?>, EntityOps> entityOpsFactory = ((RdfTypeFactoryImpl)mapperEngine.getRdfTypeFactory()).getEntityOpsFactory();
-        MetamodelGenerator mmg = new MetamodelGenerator(entityOpsFactory);
-        
-        mmg.apply(Person.class);
-        
-        
-        //System.out.println("Relation: " + relation);
-        
-        //bob.getTags().clear();
-        //bob.getTags().put("x", "y");
-        
-        //entityManager.remove(bob);
-        //entityManager.persist(bob);
-        
-        //mapperEngine.getPersistenceContext().clear()
-        // TODO: The find method yet needs to expand the prefix 
-        
-        bob = entityManager.find(Person.class, "o:John-Doe-Dover");
-        System.out.println("Direct entity: " + bob);
+		Person anne = new Person();
+		anne.setFirstName("Anne");
+		anne.setLastName("Anderson");
+		anne.setBirthPlace("Arizona");
+		// anne.setBirthDate(new GregorianCalendar(2000, 0, 0));
 
-        
-        
-        //mapperEngine.merge();
-        RdfType rdfType = mapperEngine.getTypeFactory().forJavaType(Person.class);
-        Node id = rdfType.getRootNode(bob);
-        System.out.println("Allocated ID: " + id);
+		Person bob = new Person();
+		bob.setFirstName("Bob");
+		bob.setLastName("Bowlin");
+		bob.setBirthPlace("Brooklyn");
+		// DateFormat df = new SimpleDateFormat("yyyy/MM/dd");
+		bob.setBirthDate(new GregorianCalendar(2000, 0, 0));
 
-        Model rdf = sparqlService.getQueryExecutionFactory().createQueryExecution("CONSTRUCT WHERE { ?s ?p ?o }").execConstruct();
-        rdf.setNsPrefixes(prologue.getPrefixMapping());
-        System.out.println("TRIPLES:");
-        RDFDataMgr.write(System.out, rdf, RDFFormat.TURTLE);
+		bob.getTags().put("knows", anne);
+		// bob.getTags().put("c", "d");
 
-        mapperEngine.fetch(typeDecider, Collections.singleton(id)).get(id);
+		entityManager.persist(bob);
 
+		// Relation relation =
+		// pathResolver.resolve("tags").resolve("key").getOverallRelation();
 
-        
-        
-    	CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-    	CriteriaQuery<Person> q = cb.createQuery(Person.class);
+		Function<Class<?>, EntityOps> entityOpsFactory = ((RdfTypeFactoryImpl) mapperEngine.getRdfTypeFactory())
+				.getEntityOpsFactory();
+		MetamodelGenerator mmg = new MetamodelGenerator(entityOpsFactory);
 
-    	//ParameterExpression<Long> p = cb.parameter(Long.class);
+		mmg.apply(Person.class);
 
-    	Root<Person> c = q.from(Person.class);
-    	CriteriaQuery<Person> x = q.select(c);
-//    			.where(cb.equal(c.get("firstName"), "Anne"))
-//    			.where(cb.equal(c.get("lastName"), "Anderson"));
+		// System.out.println("Relation: " + relation);
 
-    	q.orderBy(cb.desc(c.get("firstName")));
+		// bob.getTags().clear();
+		// bob.getTags().put("x", "y");
 
-    	TypedQuery<Person> query = entityManager.createQuery(x);
-//    	query.setFirstResult(2);
-//    	query.setMaxResults(2);
-    	List<Person> matches = query.getResultList();
-    	//Person match = query.getSingleResult();
-    	
-    	System.out.println("Result: " + matches);
+		// entityManager.remove(bob);
+		// entityManager.persist(bob);
 
-        //typeDecider.getApplicableTypes(subject);
-    }
+		// mapperEngine.getPersistenceContext().clear()
+		// TODO: The find method yet needs to expand the prefix
+
+		bob = entityManager.find(Person.class, "o:John-Doe-Dover");
+		System.out.println("Direct entity: " + bob);
+
+		// mapperEngine.merge();
+		RdfType rdfType = mapperEngine.getTypeFactory().forJavaType(Person.class);
+		Node id = rdfType.getRootNode(bob);
+		System.out.println("Allocated ID: " + id);
+
+		Model rdf = sparqlService.getQueryExecutionFactory().createQueryExecution("CONSTRUCT WHERE { ?s ?p ?o }")
+				.execConstruct();
+		rdf.setNsPrefixes(prologue.getPrefixMapping());
+		System.out.println("TRIPLES:");
+		RDFDataMgr.write(System.out, rdf, RDFFormat.TURTLE);
+
+		mapperEngine.fetch(typeDecider, Collections.singleton(id)).get(id);
+
+		CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+		CriteriaQuery<Person> cq = cb.createQuery(Person.class);
+
+		// ParameterExpression<Long> p = cb.parameter(Long.class);
+
+		Root<Person> r = cq.from(Person.class);
+		CriteriaQuery<Person> x = cq.select(r);
+		// .where(cb.equal(c.get("firstName"), "Anne"))
+		// .where(cb.equal(c.get("lastName"), "Anderson"));
+
+		cq.orderBy(cb.desc(r.get("firstName")));
+
+		TypedQuery<Person> query = entityManager.createQuery(x);
+		// query.setFirstResult(2);
+		// query.setMaxResults(2);
+		List<Person> matches = query.getResultList();
+		// Person match = query.getSingleResult();
+
+		System.out.println("Result: " + matches);
+
+		// typeDecider.getApplicableTypes(subject);
+	}
+
+	public void tmp() {
+		Long jobInstanceId = 1l;
+
+		CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+
+		CriteriaQuery<JobExecution> cq = cb.createQuery(JobExecution.class);
+		Root<JobExecution> r = cq.from(JobExecution.class);
+
+		cq.select(r).where(cb.equal(r.get("jobInstanceId"), jobInstanceId)).orderBy(cb.desc(r.get("executionId")));
+		TypedQuery<JobExecution> query = entityManager.createQuery(cq);
+		List<JobExecution> tq = query.getResultList();
+	}
 }
