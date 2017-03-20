@@ -1,14 +1,14 @@
 # The Java-RDF Mapper module
 
-This Apache-jena based module enables mapping Java classes to RDF data and vice versa.
-Hence, it is similar to projects such as Jena Beans, (todo add list of other projects).
+This Apache-Jena based module enables mapping Java classes to RDF data managed in a SPARQL endpoint and vice versa.
+
 
 ## Features
+* Growing support for JPA criteria queries.
 * A set of annotations for conveniently mapping classes a developer has control over. By default, the annotation processor evaluates many arguments as spring expressions and subsequently expands namespace declarations of IRIs where appropriate.
 * Sping-based component scanning for populating the model of the mappings
-* Extension points for creating custom RDF-Java mappers
-* View-based approach: Java classes are seen as 'views' over RDF resources, hence, multiple views over an RDF resource may exist.
-
+* Extension points for creating custom mappers for classes and properties.
+* View-based approach: Java classes are seen as 'views' over RDF resources, hence, multiple views over an RDF resource may exist. Each view is associated with a set of triples - removals affect all views.
 
 ## A simple example
 
@@ -30,7 +30,7 @@ class Person {
 ```
 
 ## Components
-
+![Screenshot](doc/images/uml.png)
 
 ## Annotations
 
