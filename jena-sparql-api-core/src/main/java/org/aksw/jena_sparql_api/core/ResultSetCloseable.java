@@ -3,9 +3,11 @@ package org.aksw.jena_sparql_api.core;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.query.ResultSetFactory;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.ResultSetFactory;
 
 /**
  * @author Claus Stadler
@@ -15,19 +17,33 @@ import com.hp.hpl.jena.query.ResultSetFactory;
 public class ResultSetCloseable extends ResultSetClose {
     private Closeable closeable;
 
+    /**
+     * Cached result vars
+     */
+    protected List<String> resultVars;
+
     public ResultSetCloseable(ResultSet decoratee) {
-        super(decoratee, true);
-        this.closeable = null;
+        //super(decoratee, true);
+        //this.closeable = null;
+        this(decoratee, null);
     }
 
     public ResultSetCloseable(ResultSet decoratee, Closeable closeable) {
         super(decoratee, true);
-        if (closeable == null) {
-            throw new NullPointerException();
-        }
+//        if (closeable == null) {
+//            throw new NullPointerException();
+//        }
         this.closeable = closeable;
 
+        resultVars = new ArrayList<String>(decoratee.getResultVars());
+
+
         super.checkClose();
+    }
+
+    @Override
+    public List<String> getResultVars() {
+        return resultVars;
     }
 
     @Override

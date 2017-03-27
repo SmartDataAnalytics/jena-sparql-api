@@ -1,0 +1,4 @@
+<http://ex.org/JohnDoe> <http://ex.org/label> "John Doe"^^<http://www.w3.org/2001/XMLSchema#string> <http://ex.org/graph/> .
+<http://ex.org/JohnDoe> <http://ex.org/age> "20"^^<http://www.w3.org/2001/XMLSchema#int> <http://ex.org/graph/> .
+<http://ex.org/JohnDoe> <http://ex.org/age> "30"^^<http://www.w3.org/2001/XMLSchema#int> <http://ex.org/graph/> .
+<http://ex.org/JohnDoe> <http://ex.org/age> "40"^^<http://www.w3.org/2001/XMLSchema#int> <http://ex.org/graph/> .

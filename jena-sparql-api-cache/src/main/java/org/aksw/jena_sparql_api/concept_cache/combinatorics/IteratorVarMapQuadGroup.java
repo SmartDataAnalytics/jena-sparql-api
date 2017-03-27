@@ -1,16 +1,18 @@
 package org.aksw.jena_sparql_api.concept_cache.combinatorics;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.aksw.commons.collections.MapUtils;
 import org.aksw.jena_sparql_api.concept_cache.dirty.CombinatoricsVector;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.core.Var;
 
 import com.google.common.collect.AbstractIterator;
-import com.hp.hpl.jena.sparql.core.Quad;
-import com.hp.hpl.jena.sparql.core.Var;
 
 class IteratorVarMapQuadGroup
     extends AbstractIterator<Map<Var, Var>>
@@ -33,7 +35,6 @@ class IteratorVarMapQuadGroup
         this.baseSolution = baseSolution;
 
         this.combi = new CombinatoricsVector(targetQuads.size(), sourceQuads.size());
-
         this.partialSolutions = new ArrayList<Map<Var, Var>>(sourceQuads.size());
 
         update(0);
@@ -41,7 +42,7 @@ class IteratorVarMapQuadGroup
 
     // Returns true if a solution was generated
     private boolean update(int i) {
-        int[] vector = combi.vector();
+        int[] vector = combi.getVector();
 
         for(; i < vector.length; ++i) {
 
@@ -101,12 +102,12 @@ class IteratorVarMapQuadGroup
     @Override
     protected Map<Var, Var> computeNext() {
         // Check if we are at a solution
-        while(combi.vector() != null && partialSolutions.size() != sourceQuads.size()) {
+        while(combi.getVector() != null && partialSolutions.size() != sourceQuads.size()) {
             inc();
         }
 
         Map<Var, Var> result;
-        if(combi.vector() == null) {
+        if(combi.getVector() == null) {
             result = this.endOfData();
         } else {
 
@@ -118,8 +119,9 @@ class IteratorVarMapQuadGroup
     }
 
 
-    public static Iterator<Map<Var, Var>> create(QuadGroup quadGroup, Map<Var, Var> baseSolution) {
-        Iterator<Map<Var, Var>> result = new IteratorVarMapQuadGroup(new ArrayList<Quad>(quadGroup.getCandQuads()), new ArrayList<Quad>(quadGroup.getQueryQuads()), baseSolution);
+    public static Iterator<Map<Var, Var>> create(Entry<? extends Collection<Quad>, ? extends Collection<Quad>> quadGroup, Map<Var, Var> baseSolution) {
+        // key = candQuads, value = queryQuads
+        Iterator<Map<Var, Var>> result = new IteratorVarMapQuadGroup(new ArrayList<Quad>(quadGroup.getKey()), new ArrayList<Quad>(quadGroup.getValue()), baseSolution);
         return result;
     }
 }

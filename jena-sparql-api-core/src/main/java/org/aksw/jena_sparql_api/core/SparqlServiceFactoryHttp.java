@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.core;
 
-import com.hp.hpl.jena.sparql.core.DatasetDescription;
+import org.apache.http.client.HttpClient;
+import org.apache.jena.sparql.core.DatasetDescription;
 
 /**
  * TODO Find a concept where we create an initial qef, and then support wrapping it
@@ -15,8 +16,8 @@ public class SparqlServiceFactoryHttp
     }
 
     @Override
-    public SparqlService createSparqlService(String serviceUri, DatasetDescription datasetDescription, Object authenticator) {
-        SparqlService result = SparqlServiceUtils.createSparqlService(serviceUri, datasetDescription, authenticator);
+    public SparqlService createSparqlService(String serviceUri, DatasetDescription datasetDescription, HttpClient httpClient) {
+        SparqlService result = SparqlServiceUtils.createSparqlService(serviceUri, datasetDescription, httpClient);
         return result;
     }
 }

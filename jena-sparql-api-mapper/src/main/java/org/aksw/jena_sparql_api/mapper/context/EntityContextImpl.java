@@ -102,12 +102,8 @@ public class EntityContextImpl<T>
         @SuppressWarnings("unchecked")
         X result = isManaged(entity)
             ? (X)getState(entity).get(attribute)
-            : null
+            : defaultValue
             ;
-
-        if(result == null) {
-            result = defaultValue;
-        }
 
         return result;
     }

@@ -4,15 +4,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-import org.aksw.jena_sparql_api.core.QueryExecutionFactoryBackString;
+import org.aksw.jena_sparql_api.core.QueryExecutionFactoryBase;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
-import org.apache.jena.atlas.web.ContentType;
-import org.apache.jena.atlas.web.auth.HttpAuthenticator;
-import org.apache.jena.riot.WebContent;
-
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.sparql.core.DatasetDescription;
-import com.hp.hpl.jena.sparql.engine.http.QueryEngineHTTP;
+import org.apache.http.client.HttpClient;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.sparql.core.DatasetDescription;
+import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
 
 /**
  * @author Claus Stadler
@@ -21,11 +19,11 @@ import com.hp.hpl.jena.sparql.engine.http.QueryEngineHTTP;
  *         Time: 9:47 PM
  */
 public class QueryExecutionFactoryHttp
-    extends QueryExecutionFactoryBackString
+    extends QueryExecutionFactoryBase
 {
     private String service;
     private DatasetDescription datasetDescription;
-    private HttpAuthenticator httpAuthenticator;
+    private HttpClient httpClient;
 
     //private List<String> defaultGraphs = new ArrayList<String>();
 
@@ -41,10 +39,10 @@ public class QueryExecutionFactoryHttp
         this(service, new DatasetDescription(new ArrayList<String>(defaultGraphs), Collections.<String>emptyList()), null);
     }
 
-    public QueryExecutionFactoryHttp(String service, DatasetDescription datasetDescription, HttpAuthenticator httpAuthenticator) {
+    public QueryExecutionFactoryHttp(String service, DatasetDescription datasetDescription, HttpClient httpClient) {
         this.service = service;
         this.datasetDescription = datasetDescription;
-        this.httpAuthenticator = httpAuthenticator;
+        this.httpClient = httpClient;
     }
 
     @Override
@@ -60,17 +58,28 @@ public class QueryExecutionFactoryHttp
         return result;
     }
 
-    @Override
-    public QueryExecution createQueryExecution(String queryString) {
-        QueryEngineHTTP qe = new QueryEngineHTTP(service, queryString, httpAuthenticator);
-
+    public QueryExecution postProcesss(QueryEngineHTTP qe) {
         qe.setDefaultGraphURIs(datasetDescription.getDefaultGraphURIs());
         qe.setNamedGraphURIs(datasetDescription.getNamedGraphURIs());
 
-
         QueryExecution result = new QueryExecutionHttpWrapper(qe);
-        //QueryExecution result = qe;
+        return result;
+    }
+
+    @Override
+    public QueryExecution createQueryExecution(String queryString) {
+        QueryEngineHTTP qe = new QueryEngineHTTP(service, queryString, httpClient);
+        QueryExecution result = postProcesss(qe);
 
         return result;
     }
+
+    @Override
+    public QueryExecution createQueryExecution(Query query) {
+        QueryEngineHTTP qe = new QueryEngineHTTP(service, query, httpClient);
+        QueryExecution result = postProcesss(qe);
+
+        return result;
+    }
+
 }

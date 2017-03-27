@@ -11,10 +11,10 @@ import java.util.Set;
 import com.google.common.base.Function;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Sets;
-import com.hp.hpl.jena.sparql.algebra.Op;
-import com.hp.hpl.jena.sparql.algebra.OpVisitorBase;
-import com.hp.hpl.jena.sparql.algebra.op.OpDistinct;
-import com.hp.hpl.jena.sparql.algebra.op.OpExt;
+import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.OpVisitorBase;
+import org.apache.jena.sparql.algebra.op.OpDistinct;
+import org.apache.jena.sparql.algebra.op.OpExt;
 
 
 // So from the outside we really need candidate mappings
@@ -249,8 +249,8 @@ public class OpVisitorCacheCandidateFinder
 
     @Override
     public void visit(OpExt op) {
-        if(op instanceof OpQuadFilterPatternCanonical) {
-            this.visit((OpQuadFilterPatternCanonical) op);
+        if(op instanceof OpExtQuadFilterPatternCanonical) {
+            this.visit((OpExtQuadFilterPatternCanonical) op);
         }
     }
 
@@ -269,7 +269,7 @@ public class OpVisitorCacheCandidateFinder
         op.visit(this);
     }
 
-    public void visit(OpQuadFilterPatternCanonical op) {
+    public void visit(OpExtQuadFilterPatternCanonical op) {
         //op.visit(opVisitor);
     }
 

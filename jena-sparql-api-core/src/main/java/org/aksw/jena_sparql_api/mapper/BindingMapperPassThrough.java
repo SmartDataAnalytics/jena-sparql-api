@@ -1,11 +1,11 @@
 package org.aksw.jena_sparql_api.mapper;
 
-import com.hp.hpl.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.engine.binding.Binding;
 
 public class BindingMapperPassThrough
     implements BindingMapper<Binding>
 {
-    public Binding map(Binding binding, long rowNum) {
+    public Binding apply(Binding binding, Long rowNum) {
         return binding;
     }
 }

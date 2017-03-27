@@ -3,10 +3,10 @@ package org.aksw.jena_sparql_api.batch.functions;
 import java.util.Map.Entry;
 
 import com.google.common.base.Function;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.RDFNode;
-import com.hp.hpl.jena.sparql.util.ModelUtils;
+import org.apache.jena.graph.Node;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.sparql.util.ModelUtils;
 
 public class F_NodeModelToResource<T extends RDFNode>
     implements Function<Entry<Node, Model>, T>

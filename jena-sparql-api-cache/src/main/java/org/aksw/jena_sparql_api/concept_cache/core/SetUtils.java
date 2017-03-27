@@ -8,7 +8,7 @@ public class SetUtils {
 
 
     /**
-     * Maps a set of key to a corresponding set of values via a given map
+     * Maps a set of keys to a corresponding set of values via a given map
      * TODO Probably this method can be replaced by something from guava
      *
      * @param set

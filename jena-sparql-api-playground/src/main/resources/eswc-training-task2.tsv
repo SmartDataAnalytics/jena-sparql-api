@@ -1,0 +1,22 @@
+training-dataset	http://dbpedia.org/resource/Felipe_Massa	http://dbpedia.org/resource/Red_Bull	32	http://dbpedia.org/property/firstWin	task2_q1_32.txt
+training-dataset	http://dbpedia.org/resource/Felipe_Massa	http://dbpedia.org/resource/Red_Bull	98	http://dbpedia.org/property/firstWin	task2_q1_98.txt
+training-dataset	http://dbpedia.org/resource/Felipe_Massa	http://dbpedia.org/resource/Red_Bull	1914	http://dbpedia.org/property/firstWin	task2_q1_1914.txt
+training-dataset	http://dbpedia.org/resource/Felipe_Massa	http://dbpedia.org/resource/Red_Bull	16632	http://dbpedia.org/property/firstWin	task2_q1_16632.txt
+training-dataset	http://dbpedia.org/resource/Felipe_Massa	http://dbpedia.org/resource/Red_Bull	212988	http://dbpedia.org/property/firstWin	task2_q1_212988.txt
+training-dataset	http://dbpedia.org/resource/1952_Winter_Olympics	http://dbpedia.org/resource/Elliot_Richardson	3	http://dbpedia.org/property/after	task2_q2_3.txt
+training-dataset	http://dbpedia.org/resource/1952_Winter_Olympics	http://dbpedia.org/resource/Elliot_Richardson	4	http://dbpedia.org/property/after	task2_q2_4.txt
+training-dataset	http://dbpedia.org/resource/1952_Winter_Olympics	http://dbpedia.org/resource/Elliot_Richardson	76	http://dbpedia.org/property/after	task2_q2_76.txt
+training-dataset	http://dbpedia.org/resource/1952_Winter_Olympics	http://dbpedia.org/resource/Elliot_Richardson	151	http://dbpedia.org/property/after	task2_q2_151.txt
+training-dataset	http://dbpedia.org/resource/1952_Winter_Olympics	http://dbpedia.org/resource/Elliot_Richardson	2311	http://dbpedia.org/property/after	task2_q2_2311.txt
+training-dataset	http://dbpedia.org/resource/Karl_W._Hofmann	http://dbpedia.org/resource/Elliot_Richardson	12	http://dbpedia.org/property/predecessor	task2_q3_12.txt
+training-dataset	http://dbpedia.org/resource/Karl_W._Hofmann	http://dbpedia.org/resource/Elliot_Richardson	76	http://dbpedia.org/property/predecessor	task2_q3_76.txt
+training-dataset	http://dbpedia.org/resource/Karl_W._Hofmann	http://dbpedia.org/resource/Elliot_Richardson	1440	http://dbpedia.org/property/predecessor	task2_q3_1440.txt
+training-dataset	http://dbpedia.org/resource/Karl_W._Hofmann	http://dbpedia.org/resource/Elliot_Richardson	8088	http://dbpedia.org/property/predecessor	task2_q3_8088.txt
+training-dataset	http://dbpedia.org/resource/James_K._Polk	http://dbpedia.org/resource/Felix_Grundy	1	http://dbpedia.org/ontology/president	task2_q4_1.txt
+training-dataset	http://dbpedia.org/resource/James_K._Polk	http://dbpedia.org/resource/Felix_Grundy	6	http://dbpedia.org/ontology/president	task2_q4_6.txt
+training-dataset	http://dbpedia.org/resource/James_K._Polk	http://dbpedia.org/resource/Felix_Grundy	72	http://dbpedia.org/ontology/president	task2_q4_72.txt
+training-dataset	http://dbpedia.org/resource/James_K._Polk	http://dbpedia.org/resource/Felix_Grundy	614	http://dbpedia.org/ontology/president	task2_q4_614.txt
+training-dataset	http://dbpedia.org/resource/James_K._Polk	http://dbpedia.org/resource/Felix_Grundy	5483	http://dbpedia.org/ontology/president	task2_q4_5483.txt
+training-dataset	http://dbpedia.org/resource/James_K._Polk	http://dbpedia.org/resource/Felix_Grundy	52649	http://dbpedia.org/ontology/president	task2_q4_52649.txt
+training-dataset	http://dbpedia.org/resource/James_K._Polk	http://dbpedia.org/resource/Felix_Grundy	471199	http://dbpedia.org/ontology/president	task2_q4_471199.txt
+

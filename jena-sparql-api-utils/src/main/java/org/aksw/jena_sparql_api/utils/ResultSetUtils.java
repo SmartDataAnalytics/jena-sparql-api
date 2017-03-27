@@ -2,7 +2,6 @@ package org.aksw.jena_sparql_api.utils;
 
 import java.io.Closeable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -11,26 +10,29 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.common.collect.Iterators;
+import org.apache.jena.graph.Node;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.ResultSetFactory;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.engine.QueryIterator;
+import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.engine.binding.BindingHashMap;
+import org.apache.jena.sparql.engine.iterator.QueryIterPlainWrapper;
+import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.util.iterator.ExtendedIterator;
+import org.apache.jena.util.iterator.WrappedIterator;
+
 import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.Multimap;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.query.ResultSetFactory;
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.engine.QueryIterator;
-import com.hp.hpl.jena.sparql.engine.binding.Binding;
-import com.hp.hpl.jena.sparql.engine.binding.BindingHashMap;
-import com.hp.hpl.jena.sparql.engine.iterator.QueryIter;
-import com.hp.hpl.jena.sparql.engine.iterator.QueryIterPlainWrapper;
-import com.hp.hpl.jena.sparql.expr.NodeValue;
-import com.hp.hpl.jena.util.iterator.ExtendedIterator;
-import com.hp.hpl.jena.util.iterator.WrappedIterator;
 
 
 public class ResultSetUtils {
+
+    public static List<Var> getVars(ResultSet rs) {
+        List<Var> result = VarUtils.toList(rs.getResultVars());
+        return result;
+    }
 
     public static Integer resultSetToInt(ResultSet rs, Var v) {
         Integer result = null;
@@ -48,6 +50,23 @@ public class ResultSetUtils {
 
         return result;
     }
+
+//    public static Long resultSetToInt(ResultSet rs, Var v) {
+//        Integer result = null;
+//
+//        if (rs.hasNext()) {
+//            Binding binding = rs.nextBinding();
+//
+//            Node node = binding.get(v);
+//            NodeValue nv = NodeValue.makeNode(node);
+//            result = nv.getInteger().longValue();
+//
+//            // TODO Validate that the result actually is int.
+//            //result = node.getLiteral().
+//        }
+//
+//        return result;
+//    }
 
 
     public static List<Node> resultSetToList(ResultSet rs, Var v) {
@@ -182,11 +201,21 @@ public class ResultSetUtils {
             newBindings.add(n);
         }
 
-        QueryIterator queryIter = new QueryIterPlainWrapper(newBindings.iterator());
+        ResultSet result = create2(vars, newBindings.iterator());
 
-        List<String> varNames = org.aksw.jena_sparql_api.utils.VarUtils.getVarNames(vars);
+        return result;
+    }
+
+    public static ResultSet create(List<String> varNames, Iterator<Binding> bindingIt) {
+        QueryIterator queryIter = new QueryIterPlainWrapper(bindingIt);
+
         ResultSet result = ResultSetFactory.create(queryIter, varNames);
+        return result;
+    }
 
+    public static ResultSet create2(Iterable<Var> vars, Iterator<Binding> bindingIt) {
+        List<String> varNames = org.aksw.jena_sparql_api.utils.VarUtils.getVarNames(vars);        
+        ResultSet result = create(varNames, bindingIt);
         return result;
     }
 

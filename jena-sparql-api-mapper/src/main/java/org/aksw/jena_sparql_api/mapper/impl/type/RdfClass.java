@@ -5,40 +5,40 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
+import org.aksw.jena_sparql_api.beans.model.EntityOps;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
-import org.aksw.jena_sparql_api.mapper.context.RdfPopulationContext;
+import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.mapper.model.RdfPopulator;
-import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.aksw.jena_sparql_api.mapper.proxy.MethodInterceptorRdf;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
-import org.springframework.beans.BeanWrapper;
-import org.springframework.beans.BeanWrapperImpl;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.sparql.core.DatasetGraph;
 import org.springframework.cglib.proxy.Callback;
 import org.springframework.cglib.proxy.Enhancer;
 import org.springframework.cglib.proxy.Factory;
-
-import com.google.common.base.Function;
-import com.hp.hpl.jena.graph.Graph;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.NodeFactory;
-import com.hp.hpl.jena.sparql.core.DatasetGraph;
-import com.hp.hpl.jena.sparql.core.DatasetGraphFactory;
 
 /**
  * An RdfClass is one type of implementation that can map Java objects to and from RDF graphs.
  *
  */
 public class RdfClass
-    extends RdfTypeBase
+    extends RdfTypeComplexBase
 {
     // TODO: Add type parameters
 
     /**
      * The affected class (maybe we should use the fully qualified class name instead?)
      */
-    protected Class<?> beanClass;
+    //protected Class<?> beanClass;
+    protected EntityOps entityOps;
+    
 
     /**
      * The concept that captures rdf terms that are instances of this class.
@@ -72,7 +72,7 @@ public class RdfClass
      * However, the value and the RdfType of the property determine whether
      * additional population is needed.
      *
-     * A populationContext is used to keep track of beans that were not populated yet.
+     * A persistenceContext is used to keep track of beans that were not populated yet.
      *
      * Each property has a corresponding RdfType
      *
@@ -82,7 +82,7 @@ public class RdfClass
     /**
      * PropertyDescriptors map the Java property types to RdfType instances.
      * The population status of a property value depends on the
-     * RdfType and value in regard to a populationContext.
+     * RdfType and value in regard to a persistenceContext.
      *
      */
     protected Map<String, RdfPropertyDescriptor> propertyDescriptors = new HashMap<String, RdfPropertyDescriptor>();
@@ -115,6 +115,10 @@ public class RdfClass
 //    	beanWrapper.getPropertyDescriptors()
 //    }
 
+    public EntityOps getEntityOps() {
+        return entityOps;
+    }
+    
     public Concept getConcept() {
         return concept;
     }
@@ -157,17 +161,18 @@ public class RdfClass
 
     // Map<String, RdfProperty> propertyToMapping
     // Prologue prologue
-    public RdfClass(RdfTypeFactory typeFactory, Class<?> targetClass, Function<Object, String> defaultIriFn) {
-        super(typeFactory);
-        this.beanClass = targetClass;
+    public RdfClass(EntityOps targetClass, Function<Object, String> defaultIriFn) {
+        //super(typeFactory);
+        super();
+        this.entityOps = targetClass;
         this.defaultIriFn = defaultIriFn;
         //this.prologue = prologue;
         //this.propertyToMapping = propertyToMapping;
     }
 
     @Override
-    public Class<?> getBeanClass() {
-        return beanClass;
+    public Class<?> getEntityClass() {
+        return entityOps.getAssociatedClass();
     }
 
     @Override
@@ -246,21 +251,21 @@ public class RdfClass
     /**
      * Set property values of the given target object based a DatasetGraph.
      *
-     * @param bean
+     * @param entity
      * @param datasetGraph
      */
     @Override
-    public void populateBean(RdfPopulationContext populationContext, Object bean, Graph graph) {
+    public void populateEntity(RdfPersistenceContext persistenceContext, Object entity, Node s, Graph inGraph, Consumer<Triple> outSink) {
         //DatasetGraph result = DatasetGraphFactory.createMem();
 
         //Graph graph = result.getDefaultGraph();
-        Node s = populationContext.getRootNode(bean);
+        //Node s = persistenceContext.getRootNode(bean);
 
         /*
          *  Run all of this class' populators
          */
         for(RdfPopulator pd : populators) {
-            pd.populateBean(populationContext, bean, graph, s);
+            pd.populateEntity(persistenceContext, entity, inGraph, s, outSink);
         }
     }
 
@@ -269,19 +274,23 @@ public class RdfClass
     /**
      * Extract triples for a given object in the specified target graph.
      *
-     * @param obj
+     * @param entity
      * @param g
      * @return
      */
     @Override
-    public void emitTriples(RdfEmitterContext emitterContext, Graph out, Object obj) {
-        Node s = getRootNode(obj);
-
+    public void emitTriples(RdfEmitterContext emitterContext, Object entity, Node s, Graph shapeGraph, Consumer<Triple> out) {
+        //Node s = getRootNode(obj);
+        //Node s = persistenceContext.getRootNode(entity);
+        if(s == null) {
+            throw new RuntimeException("Could not determine (iri-)node of entity " + (entity == null ? " null " : entity.getClass().getName()) + " - " + entity);
+        }
+        
         /*
          * Run the emitters of all of this class' populators
          */
         for(RdfPopulator populator : populators) {
-            populator.emitTriples(out, obj, s);
+            populator.emitTriples(emitterContext, entity, s, shapeGraph, out);
         }
 
         /*
@@ -289,13 +298,13 @@ public class RdfClass
          * notifies the emitter context which property values need additional
          * emitting
          */
-        BeanWrapper beanWrapper = new BeanWrapperImpl(obj);
-        for(RdfPropertyDescriptor pd : propertyDescriptors.values()) {
-            String propertyName = pd.getName();
-
-            Object propertyValue = beanWrapper.getPropertyValue(propertyName);
-            emitterContext.add(propertyValue, obj, propertyName);
-        }
+//        BeanWrapper beanWrapper = new BeanWrapperImpl(entity);
+//        for(RdfPropertyDescriptor pd : propertyDescriptors.values()) {
+//            String propertyName = pd.getName();
+//
+//            Object propertyValue = beanWrapper.getPropertyValue(propertyName);
+//            emitterContext.add(propertyValue, entity, propertyName);
+//        }
     }
 
 
@@ -314,7 +323,7 @@ public class RdfClass
 
         Object o;
         try {
-            o = beanClass.newInstance();
+            o = entityOps.newInstance();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -322,30 +331,62 @@ public class RdfClass
         MethodInterceptorRdf interceptor = new MethodInterceptorRdf(o, this, subject, datasetGraph);
         //new Class<?>[] { ProxiedRdf.class }
 //        Object result = Enhancer.create(targetClass, null, interceptor);
+        Class<?> beanClass = entityOps.getAssociatedClass();
         Object result = Enhancer.create(beanClass, null, interceptor);
 
         return result;
     }
 
+//    @Override
+//    public Object createJavaObject(Node subject) {
+//        Object result;
+//        try {
+//            result = entityOps.newInstance();
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
+//
+//// TODO The proxy mechanism is not controlled at type level, but at engine level
+////        MethodInterceptorRdf interceptor = new MethodInterceptorRdf(o, this, subject);
+////        Object result = Enhancer.create(beanClass, null, interceptor);
+//
+//        return result;
+//    }
+
     @Override
-    public Object createJavaObject(Node subject) {
-        Object result;
-        try {
-            result = beanClass.newInstance();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+    public String toString() {
+        return "RdfClass [entityOps=" + entityOps + ", concept=" + concept
+                + ", defaultIriFn=" + defaultIriFn + ", populators="
+                + populators + ", propertyDescriptors=" + propertyDescriptors
+                + ", isPopulated=" + isPopulated + "]";
+    }
+
+    @Override
+    public Object createJavaObject(Node node, Graph graph) {
+        if(!entityOps.isInstantiable()) {
+            throw new RuntimeException("EntityOps is not instantiable: " + entityOps);
         }
-
-// TODO The proxy mechanism is not controlled at type level, but at engine level
-//        MethodInterceptorRdf interceptor = new MethodInterceptorRdf(o, this, subject);
-//        Object result = Enhancer.create(beanClass, null, interceptor);
-
+        Object result = entityOps.newInstance();
         return result;
     }
 
-    @Override
-    public boolean isSimpleType() {
-        return false;
-    }
+	@Override
+	public boolean hasIdentity() {
+		boolean result = defaultIriFn != null;
+		return result;
+	}
 
+//    @Override
+//    public void exposeTypeDeciderShape(ResourceShapeBuilder rsb) {
+//        // TODO Auto-generated method stub
+//        
+//    }
+//
+//    @Override
+//    public Collection<RdfType> getApplicableTypes(Resource resource) {
+//        // TODO Auto-generated method stub
+//        return null;
+//    }
+    
+    
 }

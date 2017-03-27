@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.stmt;
 
 import java.util.Comparator;
 
-import com.hp.hpl.jena.query.QueryParseException;
+import org.apache.jena.query.QueryParseException;
 
 /**
  * Compares QueryParseExceptions by their line and column number.
@@ -25,7 +25,7 @@ public class QueryParseExceptionComparator
     public static int doCompare(QueryParseException a, QueryParseException b) {
         int result = b.getLine() - a.getLine();
 
-        result = result == 0 ? result : b.getColumn() - a.getColumn();
+        result = result == 0 ? b.getColumn() - a.getColumn() :  result;
         return result;
     }
 }

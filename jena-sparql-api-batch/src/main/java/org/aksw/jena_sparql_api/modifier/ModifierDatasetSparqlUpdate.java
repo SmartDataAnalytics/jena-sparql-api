@@ -2,11 +2,11 @@ package org.aksw.jena_sparql_api.modifier;
 
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryDataset;
 
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.update.UpdateFactory;
-import com.hp.hpl.jena.update.UpdateProcessor;
-import com.hp.hpl.jena.update.UpdateRequest;
+import org.apache.jena.query.Dataset;
+import org.apache.jena.query.Dataset;
+import org.apache.jena.update.UpdateFactory;
+import org.apache.jena.update.UpdateProcessor;
+import org.apache.jena.update.UpdateRequest;
 
 public class ModifierDatasetSparqlUpdate
 	implements Modifier<Dataset>

@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.mapper;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.hp.hpl.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.engine.binding.Binding;
 
 /**
  * An accumulator similar to that of Jena, however it uses a generic for the

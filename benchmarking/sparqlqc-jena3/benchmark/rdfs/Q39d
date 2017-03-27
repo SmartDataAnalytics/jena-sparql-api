@@ -1,0 +1,9 @@
+PREFIX : <http://www.lehigh.edu//univ-bench.owl#>
+
+SELECT ?x WHERE { 
+  ?x a :Student .
+  ?x :takesCourse ?y .
+  ?x :telephone ?tel .
+  ?x :sex "male" .
+  ?y :courseName "Course10" .
+}

@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.batch.processor;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 
-import com.hp.hpl.jena.update.UpdateProcessor;
+import org.apache.jena.update.UpdateProcessor;
 
 /**
  * Perform a pre-configured update with a set of resources

@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.mapper;
 
 import java.util.Set;
 
-import com.hp.hpl.jena.sparql.core.Var;
+import org.apache.jena.sparql.core.Var;
 
 public class AggLiteral<T>
     implements Agg<T>
@@ -21,8 +21,12 @@ public class AggLiteral<T>
 
     @Override
     public Set<Var> getDeclaredVars() {
-        // TODO Auto-generated method stub
-        return null;
+        Set<Var> result = mapper instanceof BindingMapperVarAware<?>
+            ? ((BindingMapperVarAware<?>)mapper).getVarsMentioned()
+            : null // Collections.emptySet()
+            ;
+
+        return result;
     }
 
     public static <T> AggLiteral<T> create(BindingMapper<T> mapper) {

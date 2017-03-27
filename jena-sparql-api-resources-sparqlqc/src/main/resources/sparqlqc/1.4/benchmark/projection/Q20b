@@ -1,0 +1,21 @@
+PREFIX : <http://example.org/>
+
+
+
+
+
+
+SELECT * WHERE { 
+  ?x a :Student . 
+  {?x :name ?y } 
+    UNION 
+  {?x :nickName ?z .
+   ?x :telephone ?tel .
+   ?x :ssn ?ssn .
+   ?x :sex ?sex . 
+   ?x :memberOf ?dept .
+   ?x :emailAddress ?email .
+   ?x :age ?age  .
+    } 
+ ?x :takesCourse ?course .
+}

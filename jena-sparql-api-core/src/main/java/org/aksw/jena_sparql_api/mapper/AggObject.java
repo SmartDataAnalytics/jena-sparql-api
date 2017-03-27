@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import com.hp.hpl.jena.sparql.core.Var;
+import org.apache.jena.sparql.core.Var;
 
 public class AggObject<K> implements Agg<Map<K, ?>> {
     private Map<K, Agg<?>> keyToSubAgg;

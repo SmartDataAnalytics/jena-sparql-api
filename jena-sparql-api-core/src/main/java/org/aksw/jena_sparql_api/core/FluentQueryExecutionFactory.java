@@ -7,16 +7,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.fallback.QueryExecutionFactoryFallback;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.model.QueryExecutionFactoryModel;
+import org.apache.jena.query.Dataset;
+import org.apache.jena.query.DatasetFactory;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.core.DatasetGraphFactory;
+import org.apache.jena.sparql.core.DatasetImpl;
+import org.apache.jena.sparql.util.Context;
 
-import com.google.common.base.Function;
 import com.google.common.base.Supplier;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.sparql.core.DatasetGraph;
-import com.hp.hpl.jena.sparql.core.DatasetGraphFactory;
 
 /**
  * @author Lorenz Buehmann
@@ -32,15 +36,70 @@ public class FluentQueryExecutionFactory<P>
         this.fn = qef;
     }
 
-    public static FluentQueryExecutionFactory<?> model(Model model){
+    /**
+     * Use from instead
+     *
+     * @param model
+     * @return
+     */
+    @Deprecated
+    public static FluentQueryExecutionFactory<?> model(Model model) {
         return new FluentQueryExecutionFactory<Object>(new QueryExecutionFactoryModel(model));
     }
 
-    public static FluentQueryExecutionFactory<?> defaultDatasetGraph(){
-        return FluentQueryExecutionFactory.start(DatasetGraphFactory.createMem());
+    /**
+     * Use from instead
+     *
+     * @param model
+     * @return
+     */
+    @Deprecated
+    public static FluentQueryExecutionFactory<?> model(Model model, Context context) {
+        Dataset dataset = DatasetFactory.create(model);
+        return from(dataset, context);
     }
 
-    public static FluentQueryExecutionFactory<?> start(DatasetGraph datasetGraph){
+
+    public static FluentQueryExecutionFactory<?> from(Model model) {
+        return new FluentQueryExecutionFactory<Object>(new QueryExecutionFactoryModel(model));
+    }
+
+    public static FluentQueryExecutionFactory<?> from(QueryExecutionFactory qef) {
+        return new FluentQueryExecutionFactory<Object>(qef);
+    }
+
+    public static FluentQueryExecutionFactory<?> from(Model model, Context context) {
+        Dataset dataset = DatasetFactory.create(model);
+        return from(dataset, context);
+    }
+
+
+//    public static FluentQueryExecutionFactory<?> dataset(Dataset dataset) {
+//        return new FluentQueryExecutionFactory<Object>(new QueryExecutionFactoryDataset(dataset));
+//    }
+//
+//    public static FluentQueryExecutionFactory<?> dataset(Dataset dataset, Context context) {
+//        return new FluentQueryExecutionFactory<Object>(new QueryExecutionFactoryDataset(dataset, context));
+//    }
+
+    public static FluentQueryExecutionFactory<?> from(Dataset dataset) {
+        return from(dataset, null);
+    }
+
+    public static FluentQueryExecutionFactory<?> from(Dataset dataset, Context context) {
+        return new FluentQueryExecutionFactory<Object>(new QueryExecutionFactoryDataset(dataset, context));
+    }
+
+    public static FluentQueryExecutionFactory<?> from(DatasetGraph datasetGraph, Context context) {
+        Dataset dataset = DatasetImpl.wrap(datasetGraph);
+        return from(dataset, context);
+    }
+
+    public static FluentQueryExecutionFactory<?> defaultDatasetGraph() {
+        return FluentQueryExecutionFactory.from(DatasetGraphFactory.createMem());
+    }
+
+    public static FluentQueryExecutionFactory<?> from(DatasetGraph datasetGraph){
         return new FluentQueryExecutionFactory<Object>(new QueryExecutionFactoryDatasetGraph(datasetGraph, false));
     }
 

@@ -3,7 +3,9 @@ package org.aksw.jena_sparql_api.mapper.context;
 import java.util.Map;
 
 /**
- * Interface for associating metadata with entities
+ * Interface for associating metadata with entities.
+ * 
+ * We could replace with with Jena EnhGraph
  *
  * @author raven
  *

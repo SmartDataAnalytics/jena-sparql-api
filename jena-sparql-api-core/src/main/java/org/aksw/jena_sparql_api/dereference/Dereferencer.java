@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.dereference;
 
 import org.aksw.commons.collections.IClosable;
 
-import com.hp.hpl.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Model;
 
 /**
  * @author Claus Stadler

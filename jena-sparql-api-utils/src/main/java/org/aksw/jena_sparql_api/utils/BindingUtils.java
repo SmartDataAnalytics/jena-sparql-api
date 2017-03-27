@@ -7,11 +7,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.engine.binding.Binding;
-import com.hp.hpl.jena.sparql.engine.binding.BindingHashMap;
-import com.hp.hpl.jena.sparql.expr.NodeValue;
+import org.apache.jena.graph.Node;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.engine.binding.BindingHashMap;
+import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.graph.NodeTransform;
 
 public class BindingUtils {
 
@@ -19,16 +20,32 @@ public class BindingUtils {
 //        Binding result = new BindingHashMap();
 //    }
 
-    public static Map<Var, Node> toMap(Binding binding) {
-    	Map<Var, Node> result = new HashMap<Var, Node>();
-    	Iterator<Var> it = binding.vars();
-    	while(it.hasNext()) {
-    		Var v = it.next();
-    		Node n = binding.get(v);
-    		result.put(v, n);
-    	}
+    public static Binding transformKeys(Binding binding, NodeTransform transform) {
+        Iterator<Var> it = binding.vars();
 
-    	return result;
+        BindingHashMap result = new BindingHashMap();
+        while(it.hasNext()) {
+            Var o = it.next();
+            Node node = binding.get(o);
+
+            Var n = (Var)transform.apply(o);
+
+            result.add(n, node);
+        }
+
+        return result;
+    }
+
+    public static Map<Var, Node> toMap(Binding binding) {
+        Map<Var, Node> result = new HashMap<Var, Node>();
+        Iterator<Var> it = binding.vars();
+        while(it.hasNext()) {
+            Var v = it.next();
+            Node n = binding.get(v);
+            result.put(v, n);
+        }
+
+        return result;
     }
 
     public static List<Binding> addRowIds(Collection<Binding> bindings, Var rowId) {

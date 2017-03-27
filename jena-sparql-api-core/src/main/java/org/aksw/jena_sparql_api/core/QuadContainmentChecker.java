@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.core;
 
 import java.util.Set;
 
-import com.hp.hpl.jena.sparql.core.Quad;
+import org.apache.jena.sparql.core.Quad;
 
 /**
  * Interface for checking whether a set of quads is available via a given

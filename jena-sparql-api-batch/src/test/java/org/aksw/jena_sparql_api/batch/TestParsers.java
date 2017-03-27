@@ -7,7 +7,7 @@ import org.aksw.jena_sparql_api.stmt.SparqlRelationParser;
 import org.aksw.jena_sparql_api.stmt.SparqlRelationParserImpl;
 import org.junit.Test;
 
-import com.hp.hpl.jena.query.Syntax;
+import org.apache.jena.query.Syntax;
 import com.vividsolutions.jts.util.Assert;
 
 public class TestParsers {
@@ -17,6 +17,6 @@ public class TestParsers {
 
         Relation actual = parser.apply("?s ?o | ?s <http://foo.bar/baz> ?o");
 
-        Assert.equals("?s ?o | ?s  <http://foo.bar/baz>  ?o .", actual.toString());
+        Assert.equals("?s ?o | ?s  <http://foo.bar/baz>  ?o", actual.toString());
     }
 }

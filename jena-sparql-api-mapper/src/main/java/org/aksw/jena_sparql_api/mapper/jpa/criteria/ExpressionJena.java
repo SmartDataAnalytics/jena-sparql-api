@@ -7,7 +7,7 @@ import javax.persistence.criteria.Expression;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Selection;
 
-import com.hp.hpl.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.Expr;
 
 public class ExpressionJena<T>
     implements javax.persistence.criteria.Expression<T>

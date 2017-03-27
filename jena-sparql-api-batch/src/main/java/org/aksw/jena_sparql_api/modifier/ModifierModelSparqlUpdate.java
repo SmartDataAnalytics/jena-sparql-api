@@ -2,10 +2,10 @@ package org.aksw.jena_sparql_api.modifier;
 
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryModel;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.update.UpdateFactory;
-import com.hp.hpl.jena.update.UpdateProcessor;
-import com.hp.hpl.jena.update.UpdateRequest;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.update.UpdateFactory;
+import org.apache.jena.update.UpdateProcessor;
+import org.apache.jena.update.UpdateRequest;
 
 
 /**

@@ -5,8 +5,8 @@ import java.util.Map.Entry;
 import org.aksw.jena_sparql_api.modifier.Modifier;
 import org.springframework.batch.item.ItemProcessor;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
 
 public class ItemProcessorModifierModel
     implements ItemProcessor<Entry<Resource, Model>, Entry<Resource, Model>>

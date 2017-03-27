@@ -3,8 +3,8 @@ package org.aksw.jena_sparql_api.cache.extra;
 
 import org.aksw.commons.collections.IClosable;
 
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.rdf.model.Model;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.rdf.model.Model;
 
 /**
  * @author Claus Stadler
@@ -16,6 +16,10 @@ public interface CacheResource
     extends IClosable
 {
     boolean isOutdated();
+
+    // isCachingInProgress()
+    // void abort();
+    // isModel() isResultSet() isBoolean()
 
     //InputStream open();
 

@@ -8,8 +8,8 @@ import org.aksw.commons.collections.diff.Diff;
 import org.apache.jena.atlas.lib.Sink;
 
 import com.google.common.base.Function;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.sparql.core.Quad;
+import org.apache.jena.graph.Node;
+import org.apache.jena.sparql.core.Quad;
 
 /**
  * Partitions a diff into several diffs based on the graph and distributes

@@ -13,7 +13,7 @@ import javax.persistence.criteria.Selection;
 import javax.persistence.criteria.Subquery;
 import javax.persistence.metamodel.EntityType;
 
-import com.hp.hpl.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.Expr;
 
 public class CriteriaQueryJena<T>
     implements CriteriaQuery<T>

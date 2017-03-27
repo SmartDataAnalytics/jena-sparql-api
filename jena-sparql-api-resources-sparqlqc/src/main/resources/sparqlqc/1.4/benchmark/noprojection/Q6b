@@ -1,0 +1,7 @@
+PREFIX : <http://www.example.org/>
+
+SELECT * WHERE {
+	?x a :Faculty .
+	?y a :University .
+	?x ?z ?y .
+}

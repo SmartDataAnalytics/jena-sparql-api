@@ -9,26 +9,47 @@ import java.util.Map;
 import java.util.Set;
 
 import org.aksw.commons.collections.MapUtils;
-import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformSubst;
-import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformer;
+import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransform;
 import org.aksw.jena_sparql_api.backports.syntaxtransform.ExprTransformNodeElement;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.sparql.core.BasicPattern;
+import org.apache.jena.sparql.core.TriplePath;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprTransform;
+import org.apache.jena.sparql.graph.NodeTransform;
+import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementFilter;
+import org.apache.jena.sparql.syntax.ElementGroup;
+import org.apache.jena.sparql.syntax.ElementPathBlock;
+import org.apache.jena.sparql.syntax.ElementTriplesBlock;
+import org.apache.jena.sparql.syntax.ElementUnion;
+import org.apache.jena.sparql.syntax.PatternVars;
+//import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
+//import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformer;
+//import org.apache.jena.sparql.syntax.syntaxtransform.ExprTransformNodeElement;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.expr.Expr;
-import com.hp.hpl.jena.sparql.expr.ExprTransform;
-import com.hp.hpl.jena.sparql.graph.NodeTransform;
-import com.hp.hpl.jena.sparql.syntax.Element;
-import com.hp.hpl.jena.sparql.syntax.ElementFilter;
-import com.hp.hpl.jena.sparql.syntax.ElementGroup;
-import com.hp.hpl.jena.sparql.syntax.ElementTriplesBlock;
-import com.hp.hpl.jena.sparql.syntax.ElementUnion;
-import com.hp.hpl.jena.sparql.syntax.PatternVars;
-
+//import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
+//import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformer;
+//import org.apache.jena.sparql.syntax.syntaxtransform.ExprTransformNodeElement;
 
 
 public class ElementUtils {
+
+    public static ElementTriplesBlock createElement(Triple triple) {
+        BasicPattern bgp = new BasicPattern();
+        bgp.add(triple);
+        ElementTriplesBlock result = new ElementTriplesBlock(bgp);
+        return result;
+    }
+
+    public static ElementPathBlock createElement(TriplePath triplePath) {
+        ElementPathBlock result = new ElementPathBlock();
+        result.addTriplePath(triplePath);
+        return result;
+    }
+
 
     public static List<Triple> extractTriples(Element e) {
         List<Triple> result = new ArrayList<Triple>();
@@ -81,6 +102,13 @@ public class ElementUtils {
 
     public static Map<Node, Var> createMapFixVarNames(Element element) {
         Collection<Var> vars = PatternVars.vars(element);
+        Map<Node, Var> result = createMapFixVarNames(vars);
+
+        return result;
+    }
+
+
+    public static Map<Node, Var> createMapFixVarNames(Collection<Var> vars) {
         //Set<Var> vars = NodeUtils.getVarsMentioned(nodes);
         //Set<Node> bnodes = NodeUtils.getBnodesMentioned(vars);
         Generator<Var> gen = VarGeneratorBlacklist.create("v", vars);
@@ -90,7 +118,7 @@ public class ElementUtils {
 //            result.put(node, gen.next());
 //        }
         for(Var var : vars) {
-            if(var.getName().startsWith("?")) {
+            if(var.getName().startsWith("?") || var.getName().startsWith("/")) {
                 result.put(var, gen.next());
             }
             //System.out.println(var);
@@ -98,6 +126,7 @@ public class ElementUtils {
 
         return result;
     }
+
 
     public static Element fixVarNames(Element element) {
         Map<Node, Var> nodeMap = createMapFixVarNames(element);
@@ -138,6 +167,25 @@ public class ElementUtils {
         return result;
     }
 
+    public static Element groupIfNeeded(Iterable<Element> members) {
+        ElementGroup tmp = new ElementGroup();
+        for(Element member : members) {
+            if(member != null) {
+                tmp.addElement(member);
+            }
+        }
+
+        Element result = flatten(tmp);
+
+        return result;
+
+    }
+
+    public static Element groupIfNeeded(Element ... members) {
+        Element result = groupIfNeeded(Arrays.asList(members));
+        return result;
+    }
+
     public static ElementGroup createElementGroup(Iterable<Element> members) {
         ElementGroup result = new ElementGroup();
         for(Element member : members) {
@@ -160,10 +208,12 @@ public class ElementUtils {
         return result;
     }
 
+    @Deprecated // Use TransformElementLib.transform instead
     public static Element applyNodeTransform(Element element, NodeTransform nodeTransform) {
-        ElementTransformSubst elementTransform = new ElementTransformSubst(nodeTransform);
-        ExprTransform exprTransform = new ExprTransformNodeElement(nodeTransform, elementTransform);
-        Element result = ElementTransformer.transform(element, elementTransform, exprTransform);
+        org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform elementTransform = new ElementTransformSubst2(nodeTransform);//new ElementTransformSubst2(nodeTransform);
+        ExprTransform exprTransform = new org.apache.jena.sparql.syntax.syntaxtransform.ExprTransformNodeElement(nodeTransform, elementTransform);
+        //Element result = ElementTransformer.transform(element, elementTransform, exprTransform);
+        Element result = org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformer.transform(element, elementTransform, exprTransform); 
         return result;
     }
 
@@ -179,6 +229,24 @@ public class ElementUtils {
         }
     }
 
+    public static void mergeElements(ElementGroup target, ElementTriplesBlock etb, Element source) {
+        if(source instanceof ElementTriplesBlock) {
+            ElementTriplesBlock e = (ElementTriplesBlock)source;
+            for(Triple t : e.getPattern()) {
+                etb.addTriple(t);
+            }
+        } else if(source instanceof ElementGroup) {
+            ElementGroup es = (ElementGroup)source;
+
+            for(Element e : es.getElements()) {
+                mergeElements(target, etb, e);
+                //target.addElement(e);
+            }
+        } else {
+            target.addElement(source);
+        }
+    }
+
     /**
      * Creates a new ElementGroup that contains the elements of the given arguments.
      * Argument ElementGroups are flattened. ElementTriplesBlocks however are not combined.
@@ -188,12 +256,48 @@ public class ElementUtils {
      * @return
      */
     public static Element mergeElements(Element first, Element second) {
-        ElementGroup result = new ElementGroup();
+        ElementGroup tmp = new ElementGroup();
+        ElementTriplesBlock etb = new ElementTriplesBlock();
+        tmp.addElement(etb);
 
-        copyElements(result, first);
-        copyElements(result, second);
+
+        mergeElements(tmp, etb, first);
+        mergeElements(tmp, etb, second);
+
+        // Remove empty element triple blocks
+        ElementGroup result = new ElementGroup();
+        for(Element e : tmp.getElements()) {
+            if((e instanceof ElementTriplesBlock) && ((ElementTriplesBlock)e).isEmpty()) {
+                // Skip
+            } else {
+                result.addElement(e);
+            }
+        }
 
         return result;
+    }
+
+    public static Element unionElements(Element first, Element second) {
+        ElementUnion result = new ElementUnion();
+
+        addUnionElements(result, first);
+        addUnionElements(result, second);
+
+        return result;
+    }
+
+    public static void addUnionElements(ElementUnion out, Element e) {
+        if(e instanceof ElementUnion) {
+            ElementUnion u = (ElementUnion)e;
+            for(Element m : u.getElements()) {
+                out.addElement(m);
+            }
+        }
+        else if(e instanceof ElementGroup && ((ElementGroup)e).isEmpty()) {
+            // nothing todo
+        } else {
+            out.addElement(e);
+        }
     }
 
     public static List<Element> toElementList(Element element) {

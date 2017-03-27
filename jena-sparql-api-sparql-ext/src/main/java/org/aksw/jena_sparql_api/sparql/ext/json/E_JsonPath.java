@@ -1,13 +1,16 @@
 package org.aksw.jena_sparql_api.sparql.ext.json;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
-import com.hp.hpl.jena.datatypes.RDFDatatype;
-import com.hp.hpl.jena.datatypes.TypeMapper;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.NodeFactory;
-import com.hp.hpl.jena.sparql.expr.NodeValue;
-import com.hp.hpl.jena.sparql.function.FunctionBase2;
+import org.apache.jena.datatypes.RDFDatatype;
+import org.apache.jena.datatypes.TypeMapper;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.function.FunctionBase2;
 import com.jayway.jsonpath.JsonPath;
 
 /**
@@ -19,6 +22,9 @@ import com.jayway.jsonpath.JsonPath;
 public class E_JsonPath
     extends FunctionBase2
 {
+
+    private static final Logger logger = LoggerFactory.getLogger(E_JsonPath.class);
+
     private Gson gson;
 
     public E_JsonPath() {
@@ -127,8 +133,14 @@ public class E_JsonPath
             Object tmp = gson.fromJson(json, Object.class); //JsonTransformerObject.toJava.apply(json);
             String queryStr = query.getString();
 
-            Object o = JsonPath.read(tmp, queryStr);
-            result = jsonToNodeValue(o, gson);
+            try {
+                // If parsing the JSON fails, we return nothing, yet we log an error
+                Object o = JsonPath.read(tmp, queryStr);
+                result = jsonToNodeValue(o, gson);
+            } catch(Exception e) {
+                logger.warn(e.getLocalizedMessage());
+                result = NodeValue.nvNothing;
+            }
 
         } else {
             result = NodeValue.nvNothing;

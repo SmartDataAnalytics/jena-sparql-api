@@ -3,8 +3,8 @@ package org.aksw.jena_sparql_api.utils.transform;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.sparql.graph.NodeTransform;
+import org.apache.jena.graph.Node;
+import org.apache.jena.sparql.graph.NodeTransform;
 
 /**
  * Transformer that does nothing, but collects all encountered nodes
@@ -12,17 +12,17 @@ import com.hp.hpl.jena.sparql.graph.NodeTransform;
  * @author raven
  */
 public class NodeTransformCollectNodes
-	implements NodeTransform
+    implements NodeTransform
 {
-	public Set<Node> nodes = new HashSet<Node>();
+    public Set<Node> nodes = new HashSet<Node>();
 
-	@Override
-	public Node convert(Node node) {
-		nodes.add(node);
-		return node;
-	}
+    @Override
+    public Node apply(Node node) {
+        nodes.add(node);
+        return node;
+    }
 
-	public Set<Node> getNodes() {
-		return nodes;
-	}
+    public Set<Node> getNodes() {
+        return nodes;
+    }
 }

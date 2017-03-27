@@ -3,10 +3,10 @@ package org.aksw.jena_sparql_api.concepts;
 import org.aksw.jena_sparql_api.stmt.SparqlElementParser;
 import org.aksw.jena_sparql_api.stmt.SparqlElementParserImpl;
 
-import com.hp.hpl.jena.query.Syntax;
-import com.hp.hpl.jena.sparql.core.Prologue;
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.syntax.Element;
+import org.apache.jena.query.Syntax;
+import org.apache.jena.sparql.core.Prologue;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.syntax.Element;
 
 /**
  * A relation that in addition has a variable for the property

@@ -1,24 +1,36 @@
 package org.aksw.jena_sparql_api.core;
 
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.update.GraphStore;
-import com.hp.hpl.jena.update.GraphStoreFactory;
-import com.hp.hpl.jena.update.UpdateProcessor;
-import com.hp.hpl.jena.update.UpdateRequest;
+import org.apache.jena.query.Dataset;
+import org.apache.jena.sparql.util.Context;
+import org.apache.jena.update.UpdateProcessor;
+import org.apache.jena.update.UpdateRequest;
 
 public class UpdateExecutionFactoryDataset
-    implements UpdateExecutionFactory
+    extends UpdateExecutionFactoryParsingBase
 {
-    private Dataset dataset;
+    protected Dataset dataset;
+    protected Context context;
 
     public UpdateExecutionFactoryDataset(Dataset dataset) {
+        this(dataset, null);
+    }
+
+    public UpdateExecutionFactoryDataset(Dataset dataset, Context context) {
         this.dataset = dataset;
+        this.context = context;
+    }
+
+    public Dataset getDataset() {
+        return dataset;
+    }
+
+    public Context getContext() {
+        return context;
     }
 
     @Override
     public UpdateProcessor createUpdateProcessor(UpdateRequest updateRequest) {
-        GraphStore graphStore = GraphStoreFactory.create(dataset);
-        UpdateProcessor result = com.hp.hpl.jena.update.UpdateExecutionFactory.create(updateRequest, graphStore);
+        UpdateProcessor result = org.apache.jena.update.UpdateExecutionFactory.create(updateRequest, dataset, context);
         return result;
     }
 }

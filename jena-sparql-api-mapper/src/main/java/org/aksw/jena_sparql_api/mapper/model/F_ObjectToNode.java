@@ -1,11 +1,11 @@
 package org.aksw.jena_sparql_api.mapper.model;
 
+import java.util.function.Function;
+
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
 import org.aksw.jena_sparql_api.utils.NodeUtils;
-
-import com.google.common.base.Function;
-import com.hp.hpl.jena.datatypes.TypeMapper;
-import com.hp.hpl.jena.graph.Node;
+import org.apache.jena.datatypes.TypeMapper;
+import org.apache.jena.graph.Node;
 
 /**
  * Convert a Java object to an RDF node.

@@ -6,12 +6,34 @@ import javax.servlet.http.HttpServletRequest;
 import javax.xml.bind.DatatypeConverter;
 
 import org.aksw.commons.util.strings.StringUtils;
-import org.apache.jena.atlas.web.auth.HttpAuthenticator;
-import org.apache.jena.atlas.web.auth.SimpleAuthenticator;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.utils.HttpClientUtils;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.HttpClientBuilder;
 
 public class AuthenticatorUtils {
-    public static HttpAuthenticator parseAuthenticator(HttpServletRequest req) {
-        HttpAuthenticator result = null;
+	/**
+	 * Create a http client with username / password authentication.
+	 * If the argument is null, an http client without authentication is returned.
+	 *
+	 * @param credentials
+	 * @return
+	 */
+	public static HttpClientBuilder prepareHttpClientBuilder(UsernamePasswordCredentials credentials) {
+        HttpClientBuilder result = HttpClientBuilder.create();
+        if(credentials != null) {
+        	CredentialsProvider provider = new BasicCredentialsProvider();
+            provider.setCredentials(AuthScope.ANY, credentials);
+        	result.setDefaultCredentialsProvider(provider);
+        }
+        return result;
+	}
+
+    public static UsernamePasswordCredentials parseCredentials(HttpServletRequest req) {
+    	UsernamePasswordCredentials result = null;
         /*
         Enumeration<String> e = req.getHeaderNames();
         while(e.hasMoreElements()) {
@@ -33,9 +55,10 @@ public class AuthenticatorUtils {
 
             if(values.length == 2) {
                 String username = values[0];
-                char[] password = values[1].toCharArray();
+                String password = values[1];
+                //char[] password = values[1].toCharArray();
 
-                result = new SimpleAuthenticator(username, password);
+                result = new UsernamePasswordCredentials(username, password);
             } else {
                 throw new RuntimeException("Invalid header - got: " + Arrays.asList(values));
             }

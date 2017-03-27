@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api.core;
 
-import com.hp.hpl.jena.update.UpdateProcessor;
-import com.hp.hpl.jena.update.UpdateRequest;
+import org.apache.jena.update.UpdateProcessor;
+import org.apache.jena.update.UpdateRequest;
 
 
 /**
@@ -11,7 +11,7 @@ import com.hp.hpl.jena.update.UpdateRequest;
  *
  */
 public class UpdateExecutionFactoryChangeSet
-    implements UpdateExecutionFactory
+    extends UpdateExecutionFactoryParsingBase
 {
     private UpdateExecutionFactory uef;
 
@@ -20,6 +20,5 @@ public class UpdateExecutionFactoryChangeSet
         // TODO Auto-generated method stub
         return null;
     }
-
 
 }

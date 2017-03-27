@@ -1,29 +1,35 @@
 package org.aksw.jena_sparql_api.compare;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.aksw.commons.collections.diff.Diff;
 import org.aksw.commons.collections.diff.ListDiff;
 import org.aksw.commons.util.strings.StringUtils;
 import org.aksw.jena_sparql_api.utils.ModelDiff;
+import org.aksw.jena_sparql_api.utils.ResultSetPart;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.query.Dataset;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QuerySolution;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.ResultSetFactory;
+import org.apache.jena.query.ResultSetFormatter;
+import org.apache.jena.query.ResultSetRewindable;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.util.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Multisets;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.query.QuerySolution;
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.query.ResultSetFactory;
-import com.hp.hpl.jena.query.ResultSetRewindable;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.sparql.util.Context;
 
 
 /**
@@ -39,12 +45,26 @@ public class QueryExecutionCompare
     private static final Logger logger = LoggerFactory.getLogger(QueryExecutionCompare.class);
 
 
-    public static Multiset<QuerySolution> toMultiset(ResultSet rs) {
+    public static Multiset<QuerySolution> toMultisetQs(ResultSet rs) {
         Multiset<QuerySolution> result = HashMultiset.create();
         while(rs.hasNext()) {
             QuerySolution original = rs.next();
 
             QuerySolution wrapped = new QuerySolutionWithEquals(original);
+
+            result.add(wrapped);
+        }
+
+        return result;
+    }
+
+    public static Multiset<Binding> toMultiset(ResultSet rs) {
+        Multiset<Binding> result = HashMultiset.create();
+        while(rs.hasNext()) {
+            Binding original = rs.nextBinding();
+
+            Binding wrapped = original;
+            //QuerySolution wrapped = new QuerySolutionWithEquals(original);
 
             result.add(wrapped);
         }
@@ -70,24 +90,24 @@ public class QueryExecutionCompare
      * @param b
      * @return
      */
-    public static ListDiff<QuerySolution> compareOrdered(ResultSet a, ResultSet b) {
-        ListDiff<QuerySolution> result = new ListDiff<QuerySolution>();
+    public static ListDiff<Binding> compareOrdered(ResultSet a, ResultSet b) {
+        ListDiff<Binding> result = new ListDiff<>();
 
-        QuerySolution x = null;
-        QuerySolution y = null;
+        Binding x = null;
+        Binding y = null;
 
         while(a.hasNext()) {
             if(!b.hasNext()) {
                 while(a.hasNext()) {
-                    result.getAdded().add(a.next());
+                    result.getAdded().add(a.nextBinding());
                 }
                 return result;
             }
 
             //if((x == null && y == null) ||  x.equals(y)
             if(x == y || x.equals(y)) {
-                x = a.next();
-                y = b.next();
+                x = a.nextBinding();
+                y = b.nextBinding();
                 continue;
             }
 
@@ -96,27 +116,27 @@ public class QueryExecutionCompare
 
             if(sx.compareTo(sy) < 0) {
                 result.getRemoved().add(x);
-                x = a.next();
+                x = a.nextBinding();
             } else {
                 result.getAdded().add(y);
-                y = b.next();
+                y = b.nextBinding();
             }
         }
 
         while(b.hasNext()) {
-            result.getRemoved().add(b.next());
+            result.getRemoved().add(b.nextBinding());
         }
 
         return result;
     }
 
-    public static ListDiff<QuerySolution> compareUnordered(ResultSet a, ResultSet b) {
-        ListDiff<QuerySolution> result = new ListDiff<QuerySolution>();
+    public static ListDiff<Binding> compareUnordered(ResultSet a, ResultSet b) {
+        ListDiff<Binding> result = new ListDiff<>();
 
-        Multiset<QuerySolution> x = toMultiset(a);
-        Multiset<QuerySolution> y = toMultiset(b);
+        Multiset<Binding> x = toMultiset(a);
+        Multiset<Binding> y = toMultiset(b);
 
-        Multiset<QuerySolution> common = HashMultiset.create(Multisets.intersection(x, y));
+        Multiset<Binding> common = HashMultiset.create(Multisets.intersection(x, y));
 
         y.removeAll(common);
         x.removeAll(common);
@@ -145,14 +165,14 @@ public class QueryExecutionCompare
 
     private Query query = null;
 
-    private ListDiff<QuerySolution> resultSetDiff = null; // The diff after the query execution
+    private Diff<ResultSetPart> resultSetDiff = null; // The diff after the query execution
     private ModelDiff modelDiff = null;
     private Diff<Boolean> askDiff = null;
 
 
     public boolean isDifference() {
         if(resultSetDiff != null) {
-            return !(resultSetDiff.getAdded().isEmpty() && resultSetDiff.getRemoved().isEmpty());
+            return !(resultSetDiff.getAdded().getBindings().isEmpty() && resultSetDiff.getRemoved().getBindings().isEmpty());
         } else if(modelDiff != null) {
             return !(modelDiff.getAdded().isEmpty() && modelDiff.getRemoved().isEmpty());
         } else if(askDiff != null) {
@@ -218,32 +238,45 @@ public class QueryExecutionCompare
     public ResultSet execSelect() {
         ResultSetRewindable x;
         ResultSetRewindable y;
+        long timeA = -1;
+        long timeB = -1;
         try {
+            Stopwatch asw = Stopwatch.createStarted();
             ResultSet r = a.execSelect();
             x = ResultSetFactory.makeRewindable(r);
             //System.out.println("ResultSet [A]");
             //ResultSetFormatter.out(System.out, x);
             x.reset();
+            timeA = asw.stop().elapsed(TimeUnit.MILLISECONDS);
 
+            Stopwatch bsw = Stopwatch.createStarted();
             ResultSet s = b.execSelect();
             y = ResultSetFactory.makeRewindable(s);
             //System.out.println("ResultSet [B]");
             //ResultSetFormatter.out(System.out, y);
             y.reset();
-
+            timeB = bsw.stop().elapsed(TimeUnit.MILLISECONDS);
         } catch(RuntimeException e) {
             // Set diff in order to indicate that the execution was performed
-            resultSetDiff = new ListDiff<QuerySolution>();
-            throw e;
+            resultSetDiff = Diff.<ResultSetPart>create(new ResultSetPart(), new ResultSetPart()); //new ListDiff<>();
+            throw new RuntimeException(e);
         }
 
-        resultSetDiff = (isOrdered)
+
+
+        ListDiff<Binding> tmp = (isOrdered)
                 ? compareOrdered(x, y)
                 : compareUnordered(x, y);
+
+        resultSetDiff = Diff.create(
+                new ResultSetPart(x.getResultVars(), tmp.getAdded()),
+                new ResultSetPart(y.getResultVars(), tmp.getRemoved()));
 
         x.reset();
 
         logResultSet();
+        String relation = timeA == timeB ? "=" : (timeA > timeB ? ">" : "<");
+        logger.debug("Execution time relation: [" + timeA + " " + relation + " " + timeB + "]");
 
         return x;
     }
@@ -251,15 +284,34 @@ public class QueryExecutionCompare
     public void log(long added, long removed) {
         String msg = added + "\t" + removed + "\t" + StringUtils.urlEncode("" + query);
 
-        if(added == 0 && removed == 0) {
+        boolean isEqual = added == 0 && removed == 0;
+        if(isEqual) {
             logger.info("[ OK ] " + msg);
         } else {
             logger.warn("[FAIL] " + msg);
         }
     }
 
+
+    public void log(ResultSetPart ra, ResultSetPart rb) {
+        List<Binding> a = ra.getBindings();
+        List<Binding> b = rb.getBindings();
+
+        log(a.size(), b.size());
+        boolean isEqual = a.isEmpty() && b.isEmpty();
+
+        if(!isEqual) {
+            ResultSet rsa = ResultSetPart.toResultSet(ra);
+            ResultSet rsb = ResultSetPart.toResultSet(rb);
+
+            logger.debug("Excessive:\n" + ResultSetFormatter.asText(rsa));
+            logger.debug("Missing:\n" + ResultSetFormatter.asText(rsb));
+        }
+
+    }
+
     public void logResultSet() {
-        log(resultSetDiff.getAdded().size(), resultSetDiff.getRemoved().size());
+        log(resultSetDiff.getAdded(), resultSetDiff.getRemoved());
     }
 
     public void logModel() {
@@ -476,11 +528,26 @@ public class QueryExecutionCompare
     }
 
     /* (non-Javadoc)
-     * @see com.hp.hpl.jena.query.QueryExecution#isClosed()
+     * @see org.apache.jena.query.QueryExecution#isClosed()
      */
     @Override
     public boolean isClosed() {
         return a.isClosed() && b.isClosed();
+    }
+
+    @Override
+    public Iterator<Quad> execConstructQuads() {
+        throw new RuntimeException("Not implemented yet");
+    }
+
+    @Override
+    public Dataset execConstructDataset() {
+        throw new RuntimeException("Not implemented yet");
+    }
+
+    @Override
+    public Dataset execConstructDataset(Dataset dataset) {
+        throw new RuntimeException("Not implemented yet");
     }
 
     /*

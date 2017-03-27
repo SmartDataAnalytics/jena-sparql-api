@@ -3,8 +3,8 @@ package org.aksw.jena_sparql_api.sparql.ext.http;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
-import com.hp.hpl.jena.sparql.expr.NodeValue;
-import com.hp.hpl.jena.sparql.function.FunctionBase1;
+import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.function.FunctionBase1;
 
 public class E_EncodeForQsa extends FunctionBase1 {
     /**

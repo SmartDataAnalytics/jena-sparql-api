@@ -9,12 +9,14 @@ import javax.ws.rs.core.Context;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
+import org.aksw.jena_sparql_api.stmt.SparqlStmtUpdate;
 import org.aksw.jena_sparql_api.utils.UriUtils;
 import org.aksw.jena_sparql_api.web.servlets.SparqlEndpointBase;
 
 import com.google.common.collect.Multimap;
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryExecution;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.update.UpdateProcessor;
 
 
 
@@ -64,6 +66,11 @@ public class SparqlEndpointProxy
         QueryExecution result = qef.createQueryExecution(query);
 
         return result;
+    }
+
+    @Override
+    public UpdateProcessor createUpdateProcessor(SparqlStmtUpdate stmt) {
+        throw new RuntimeException("Updates not supported");
     }
 }
 

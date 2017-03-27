@@ -8,11 +8,11 @@ import java.util.Set;
 
 import org.aksw.commons.collections.PrefetchIterator;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.sparql.engine.binding.Binding;
-import com.hp.hpl.jena.sparql.syntax.Template;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.syntax.Template;
 
 /**
  * @author Claus Stadler

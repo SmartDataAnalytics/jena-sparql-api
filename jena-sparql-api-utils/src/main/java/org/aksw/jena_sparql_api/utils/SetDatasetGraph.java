@@ -3,9 +3,9 @@ package org.aksw.jena_sparql_api.utils;
 import java.util.AbstractSet;
 import java.util.Iterator;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.sparql.core.DatasetGraph;
-import com.hp.hpl.jena.sparql.core.Quad;
+import org.apache.jena.graph.Node;
+import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.core.Quad;
 
 public class SetDatasetGraph
     extends AbstractSet<Quad>

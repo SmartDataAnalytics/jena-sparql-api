@@ -1,0 +1,4 @@
+<http://ex.org/Austria> <http://ex.org/label> "Austria"^^<http://www.w3.org/2001/XMLSchema#string> <http://ex.org/graph/> .
+<http://ex.org/Austria> <http://ex.org/population> "20"^^<http://www.w3.org/2001/XMLSchema#int> <http://ex.org/graph/> .
+<http://ex.org/Austria> <http://ex.org/population> "30"^^<http://www.w3.org/2001/XMLSchema#int> <http://ex.org/graph/> .
+<http://ex.org/Austria> <http://ex.org/population> "40"^^<http://www.w3.org/2001/XMLSchema#int> <http://ex.org/graph/> .

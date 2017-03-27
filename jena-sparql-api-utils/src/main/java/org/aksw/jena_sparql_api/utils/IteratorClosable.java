@@ -4,7 +4,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.Iterator;
 
-import com.hp.hpl.jena.util.iterator.ClosableIterator;
+import org.apache.jena.util.iterator.ClosableIterator;
 
 
 public class IteratorClosable<T>
@@ -13,7 +13,12 @@ public class IteratorClosable<T>
     private Iterator<T> delegate;
     private Closeable closable;
 
+    public IteratorClosable(Iterator<T> delegate) {
+        this(delegate, null);
+    }
+    
     public IteratorClosable(Iterator<T> delegate, Closeable closable) {
+        super();
         this.delegate = delegate;
         this.closable = closable;
     }

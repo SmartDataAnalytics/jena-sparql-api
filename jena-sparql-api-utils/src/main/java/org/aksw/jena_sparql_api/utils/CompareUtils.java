@@ -7,12 +7,12 @@ import java.util.Set;
 
 
 import com.google.common.collect.Sets;
-import com.hp.hpl.jena.graph.Graph;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.graph.impl.GraphMatcher;
-import com.hp.hpl.jena.sparql.core.Quad;
-import com.hp.hpl.jena.util.iterator.ExtendedIterator;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.graph.impl.GraphMatcher;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.util.iterator.ExtendedIterator;
 
 public class CompareUtils {
 

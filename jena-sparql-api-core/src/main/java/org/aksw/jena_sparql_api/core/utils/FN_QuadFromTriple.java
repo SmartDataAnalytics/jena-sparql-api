@@ -1,9 +1,9 @@
 package org.aksw.jena_sparql_api.core.utils;
 
 import com.google.common.base.Function;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.sparql.core.Quad;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.sparql.core.Quad;
 
 public class FN_QuadFromTriple
     implements Function<Triple, Quad>

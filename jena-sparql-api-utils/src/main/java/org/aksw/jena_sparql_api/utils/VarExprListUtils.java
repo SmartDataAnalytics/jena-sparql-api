@@ -1,16 +1,39 @@
 package org.aksw.jena_sparql_api.utils;
 
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.core.VarExprList;
-import com.hp.hpl.jena.sparql.expr.Expr;
-import com.hp.hpl.jena.sparql.expr.ExprVars;
-import com.hp.hpl.jena.sparql.syntax.PatternVars;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.core.VarExprList;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprTransform;
+import org.apache.jena.sparql.expr.ExprTransformer;
+import org.apache.jena.sparql.expr.ExprVar;
+import org.apache.jena.sparql.expr.ExprVars;
 
 public class VarExprListUtils {
+
+
+	public static VarExprList createFromVarMap(Map<Var, Var> varMap) {
+		VarExprList result = new VarExprList();
+		for(Entry<Var, Var> e : varMap.entrySet()) {
+			Var v = e.getKey();
+			Var w = e.getValue();
+
+			if(v.equals(w)) {
+				result.add(w);
+			} else {
+				result.add(w, new ExprVar(v));
+			}
+		}
+
+		return result;
+	}
+
+
     /**
      * Get the referenced variables
      *
@@ -31,4 +54,51 @@ public class VarExprListUtils {
         return result;
     }
 
+    private static Expr transform(Expr expr, ExprTransform exprTransform)
+    {
+        if ( expr == null || exprTransform == null )
+            return expr ;
+        return ExprTransformer.transform(exprTransform, expr) ;
+    }
+    // Copied from package org.apache.jena.sparql.algebra.ApplyTransformVisitor;
+    public static VarExprList transform(VarExprList varExpr, ExprTransform exprTransform)
+    {
+        List<Var> vars = varExpr.getVars() ;
+        VarExprList varExpr2 = new VarExprList() ;
+        boolean changed = false ;
+        for ( Var v : vars )
+        {
+            Expr e = varExpr.getExpr(v) ;
+            Expr e2 =  e ;
+            if ( e != null )
+                e2 = transform(e, exprTransform) ;
+            if ( e2 == null )
+                varExpr2.add(v) ;
+            else
+                varExpr2.add(v, e2) ;
+            if ( e != e2 )
+                changed = true ;
+        }
+        if ( ! changed )
+            return varExpr ;
+        return varExpr2 ;
+    }
+
+    public static void replace(VarExprList dst, VarExprList src) {
+        if(dst != src) {
+            dst.clear();
+            copy(dst, src);
+        }
+    }
+
+    public static void copy(VarExprList dst, VarExprList src) {
+        for(Var v : src.getVars()) {
+            Expr e = src.getExpr(v);
+            if(e == null) {
+                src.add(v);
+            } else {
+                src.add(v, e);
+            }
+        }
+    }
 }

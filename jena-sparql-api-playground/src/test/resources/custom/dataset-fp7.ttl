@@ -1,0 +1,73 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+@prefix r: <http://example.org/resource/> .
+@prefix o: <http://example.org/ontology/> .
+
+
+###############################################################################
+# Main Dataset
+###############################################################################
+
+r:data-fp7
+  a o:Dataset ;
+  .
+
+r:dist-sparql-data-fp7-1
+  a o:SparqlEndpointDistribution ;
+  o:of r:data-fp7 ;
+  o:service <http://localhost:8890/sparql> ;
+  o:graph [
+    rdf:_1 <http://fp7-pp.publicdata.eu/>
+  ] ;
+  .
+
+
+###############################################################################
+# File based distribution (e.g. for loading into spark)
+###############################################################################
+r:dist-url-data-fp7-1
+  a o:UrlDistribution ;
+  o:of r:data-fp7 ;
+  o:url <file:///home/raven/Projects/Eclipse/Spark-RDF/tmp/fp7_ict_project_partners_database_2007_2011.nt>
+  .
+
+
+
+
+###############################################################################
+# Predicate Join Summary
+###############################################################################
+
+r:data-pjs-fp7-1
+  a o:Dataset ;
+  o:predicateJoinSummaryOf r:data-fp7-1 ;
+  .
+
+r:dist-sparql-data-pjs-fp7-1
+  a o:SparqlEndpointDistribution ;
+  o:of r:data-fp7 ;
+  o:service <http://localhost:8890/sparql> ;
+  o:graph [
+    rdf:_1 <http://fp7-pp.publicdata.eu/summary/predicate-join/>
+  ] ;
+  .
+
+
+###############################################################################
+# Predicate Summary
+###############################################################################
+
+r:data-ps-fp7-1
+  a o:Dataset ;
+  o:predicateSummaryOf r:data-fp7-1 ;
+  .
+
+
+r:dist-sparql-data-ps-fp7-1
+  a o:SparqlEndpointDistribution ;
+  o:of r:data-fp7 ;
+  o:service <http://localhost:8890/sparql> ;
+  o:graph [
+    rdf:_1 <http://fp7-pp.publicdata.eu/summary/predicate/>
+  ] ;
+  .

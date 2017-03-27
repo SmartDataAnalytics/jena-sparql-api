@@ -2,15 +2,14 @@ package org.aksw.jena_sparql_api.batch.cli.main;
 
 import java.util.Iterator;
 
+import org.aksw.jena_sparql_api.utils.ExtendedIteratorClosable;
 import org.apache.jena.atlas.web.TypedInputStream;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.riot.RiotReader;
+import org.apache.jena.util.iterator.ExtendedIterator;
 
 import com.google.common.base.Supplier;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.util.iterator.ExtendedIterator;
-import com.hp.hpl.jena.util.iterator.WrappedIterator;
 
 public class SupplierExtendedIteratorTriples
     implements Supplier<ExtendedIterator<Triple>>
@@ -33,7 +32,7 @@ public class SupplierExtendedIteratorTriples
         Lang lang = RDFDataMgr.determineLang(fileNameOrUrl, null, langHint);
         String base = tis.getBaseURI();
 
-        Iterator<Triple> itTriple = RiotReader.createIteratorTriples(tis, lang, base);
+        Iterator<Triple> itTriple = RDFDataMgr.createIteratorTriples(tis, lang, base);
         ExtendedIterator<Triple> result = ExtendedIteratorClosable.create(itTriple, tis);
 
         return result;

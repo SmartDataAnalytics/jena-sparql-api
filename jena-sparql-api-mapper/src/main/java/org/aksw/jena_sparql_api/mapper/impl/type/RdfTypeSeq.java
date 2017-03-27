@@ -1,15 +1,17 @@
 package org.aksw.jena_sparql_api.mapper.impl.type;
 
+import java.util.function.Consumer;
+
 import org.aksw.jena_sparql_api.concepts.PropertyRelation;
 import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
-import org.aksw.jena_sparql_api.mapper.context.RdfPopulationContext;
+import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.mapper.model.RdfSeqUtils;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
-
-import com.hp.hpl.jena.graph.Graph;
-import com.hp.hpl.jena.graph.Node;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
 
 /**
  * A type that
@@ -18,12 +20,15 @@ import com.hp.hpl.jena.graph.Node;
  *
  */
 public class RdfTypeSeq
-    extends RdfTypeBase
+    extends RdfTypeComplexBase
 {
     public RdfTypeSeq(RdfTypeFactory typeFactory, RdfType itemRdfType) {
-        super(typeFactory);
         this.itemRdfType = itemRdfType;
     }
+//    public RdfTypeSeq(RdfTypeFactory typeFactory, RdfType itemRdfType) {
+//        super(typeFactory);
+//        this.itemRdfType = itemRdfType;
+//    }
 
     private RdfType itemRdfType;
 
@@ -38,7 +43,7 @@ public class RdfTypeSeq
     }
 
     @Override
-    public Class<?> getBeanClass() {
+    public Class<?> getEntityClass() {
         // TODO Auto-generated method stub
         return null;
     }
@@ -50,27 +55,29 @@ public class RdfTypeSeq
     }
 
     @Override
-    public Object createJavaObject(Node node) {
+    public Object createJavaObject(Node node, Graph graph) {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public boolean isSimpleType() {
+    public void populateEntity(RdfPersistenceContext persistenceContext,
+            Object entity, Node subject, Graph inGraph, Consumer<Triple> sink) {
         // TODO Auto-generated method stub
-        return false;
+        
     }
 
     @Override
-    public void emitTriples(RdfEmitterContext emitterContext, Graph out, Object obj) {
+    public void emitTriples(
+            RdfEmitterContext emitterContext, Object entity, Node subject,
+            Graph shapeGraph, Consumer<Triple> sink) {
         // TODO Auto-generated method stub
-
+        
     }
 
-    @Override
-    public void populateBean(RdfPopulationContext populationContext, Object targetObj, Graph graph) {
-        // TODO Auto-generated method stub
-
-    }
-
+	@Override
+	public boolean hasIdentity() {
+		return false;
+	}
+    
 }

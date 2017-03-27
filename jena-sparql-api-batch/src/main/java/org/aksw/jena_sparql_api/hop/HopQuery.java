@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.hop;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.mapper.MappedQuery;
 
-import com.hp.hpl.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.core.DatasetGraph;
 
 public class HopQuery
     extends HopBase

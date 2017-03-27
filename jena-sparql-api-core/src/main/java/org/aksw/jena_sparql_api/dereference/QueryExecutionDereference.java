@@ -6,10 +6,10 @@ import java.net.URISyntaxException;
 import org.aksw.jena_sparql_api.core.QueryExecutionAdapter;
 import org.aksw.jena_sparql_api.core.QueryExecutionBaseSelect;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
+import org.apache.jena.graph.Node;
+import org.apache.jena.query.Query;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 
 /**
  * @author Claus Stadler

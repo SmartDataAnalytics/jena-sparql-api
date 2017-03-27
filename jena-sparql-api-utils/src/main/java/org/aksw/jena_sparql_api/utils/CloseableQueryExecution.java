@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.utils;
 import java.io.Closeable;
 import java.io.IOException;
 
-import com.hp.hpl.jena.query.QueryExecution;
+import org.apache.jena.query.QueryExecution;
 
 public class CloseableQueryExecution
     implements Closeable

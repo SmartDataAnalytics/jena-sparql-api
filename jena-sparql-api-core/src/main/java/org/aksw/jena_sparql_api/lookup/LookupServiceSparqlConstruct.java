@@ -9,21 +9,21 @@ import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ModelUtils;
 
 import com.google.common.collect.Iterables;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.impl.ModelCom;
-import com.hp.hpl.jena.rdf.model.impl.ResourceImpl;
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.expr.E_OneOf;
-import com.hp.hpl.jena.sparql.expr.Expr;
-import com.hp.hpl.jena.sparql.expr.ExprList;
-import com.hp.hpl.jena.sparql.expr.ExprVar;
-import com.hp.hpl.jena.sparql.expr.NodeValue;
-import com.hp.hpl.jena.sparql.syntax.Element;
-import com.hp.hpl.jena.sparql.syntax.ElementFilter;
+import org.apache.jena.graph.Node;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.impl.ModelCom;
+import org.apache.jena.rdf.model.impl.ResourceImpl;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.expr.E_OneOf;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprList;
+import org.apache.jena.sparql.expr.ExprVar;
+import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementFilter;
 
 
 /**
@@ -43,10 +43,10 @@ public class LookupServiceSparqlConstruct
         this.query = query;
         this.var = var;
     }
-    
+
     @Override
     public Map<Node, Model> apply(Iterable<Node> keys) {
-        System.out.println("Lookup Request with " + Iterables.size(keys) + " keys: " + keys);
+        //System.out.println("Lookup Request with " + Iterables.size(keys) + " keys: " + keys);
 
         Map<Node, Model> result = new HashMap<Node, Model>();
 
@@ -66,7 +66,7 @@ public class LookupServiceSparqlConstruct
             Element newElement = ElementUtils.mergeElements(q.getQueryPattern(), filterElement);
             q.setQueryPattern(newElement);
 
-            System.out.println("Lookup query: " + q);
+            //System.out.println("Lookup query: " + q);
 
             QueryExecution qe = qef.createQueryExecution(q);
             Model fullModel = qe.execConstruct();
@@ -74,7 +74,7 @@ public class LookupServiceSparqlConstruct
             Iterator<Node> it = keys.iterator();
             while(it.hasNext()) {
                 Node key = it.next();
-                               
+
                 Resource s = new ResourceImpl(key, (ModelCom)fullModel);
                 Model tmp = ModelUtils.filterBySubject(fullModel, s);
                 result.put(key, tmp);

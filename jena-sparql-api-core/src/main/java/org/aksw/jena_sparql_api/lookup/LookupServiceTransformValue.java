@@ -1,8 +1,8 @@
 package org.aksw.jena_sparql_api.lookup;
 
 import java.util.Map;
+import java.util.function.Function;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Maps;
 
 
@@ -20,7 +20,13 @@ public class LookupServiceTransformValue<K, W, V>
     @Override
     public Map<K, W> apply(Iterable<K> keys) {
         Map<K, V> tmp = base.apply(keys);
-        Map<K, W> result = Maps.transformValues(tmp, fn);
+        Map<K, W> result = Maps.transformValues(tmp, GuavaFunctionWrapper.wrap(fn));
+        return result;
+    }
+
+    @Deprecated
+    public static <K, W, V> LookupServiceTransformValue<K, W, V> create(LookupService<K, V> base, com.google.common.base.Function<? super V, W> fn) {
+        LookupServiceTransformValue<K, W, V> result = new LookupServiceTransformValue<K, W, V>(base, (arg) -> fn.apply(arg));
         return result;
     }
 

@@ -2,12 +2,17 @@ package org.aksw.jena_sparql_api.batch.writer;
 
 import java.util.List;
 
+import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
 import org.aksw.jena_sparql_api.core.utils.UpdateExecutionUtils;
+import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.util.Assert;
-
-import com.hp.hpl.jena.sparql.core.Quad;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.Syntax;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.sparql.core.Quad;
 
 public class ItemWriterQuad
     implements ItemWriter<Quad>
@@ -15,11 +20,26 @@ public class ItemWriterQuad
     private UpdateExecutionFactory uef;
     private boolean isDelete;
 
+    public ItemWriterQuad() {
+    }
+
     public ItemWriterQuad(UpdateExecutionFactory uef, boolean isDelete) {
         this.uef = uef;
         this.isDelete = isDelete;
 
         Assert.notNull(uef);
+    }
+
+    public UpdateExecutionFactory getTarget() {
+        return uef;
+    }
+
+    public void setTarget(UpdateExecutionFactory uef) {
+        this.uef = uef;
+    }
+
+    public void setDelete(boolean isDelete) {
+        this.isDelete = isDelete;
     }
 
     public UpdateExecutionFactory getUpdateExecutionFactory() {

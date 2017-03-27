@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.mapper;
 
-import com.hp.hpl.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.Element;
 
 /**
  * Combines a SPARQL element with a row wise mapping to Java objects

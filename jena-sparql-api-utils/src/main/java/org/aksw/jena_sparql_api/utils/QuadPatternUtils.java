@@ -9,18 +9,41 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import com.hp.hpl.jena.graph.Graph;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.sparql.core.BasicPattern;
-import com.hp.hpl.jena.sparql.core.Quad;
-import com.hp.hpl.jena.sparql.core.QuadPattern;
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.graph.GraphFactory;
-import com.hp.hpl.jena.sparql.util.NodeComparator;
-import com.hp.hpl.jena.sparql.util.TripleComparator;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.sparql.core.BasicPattern;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.core.QuadPattern;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.graph.GraphFactory;
+import org.apache.jena.sparql.graph.NodeTransform;
+import org.apache.jena.sparql.graph.NodeTransformLib;
+import org.apache.jena.sparql.util.NodeComparator;
+import org.apache.jena.sparql.util.TripleComparator;
 
 public class QuadPatternUtils {
+
+
+    /**
+     * Replace all variable names with the same variable (?a in this case).
+     * Useful for checking whether two expressions are structurally equivalent.
+     *
+     * @param expr
+     */
+    public static QuadPattern signaturize(QuadPattern quadPattern) {
+        NodeTransform nodeTransform = new NodeTransformSignaturize();
+        QuadPattern result = NodeTransformLib.transform(nodeTransform, quadPattern);
+        return result;
+    }
+
+    public static QuadPattern signaturize(QuadPattern quadPattern, Map<? extends Node, ? extends Node> nodeMap) {
+        NodeTransform baseTransform = new NodeTransformRenameMap(nodeMap);
+        NodeTransform nodeTransform = new NodeTransformSignaturize(baseTransform);
+        QuadPattern result = NodeTransformLib.transform(nodeTransform, quadPattern);
+        return result;
+    }
 
 
     public static String toNTripleString(QuadPattern quadPattern) throws Exception {
@@ -146,13 +169,13 @@ public class QuadPatternUtils {
         return result;
     }
 
-    public static Set<Var> getVarsMentioned(Iterable<Quad> quadPattern) {
+    public static Set<Var> getVarsMentioned(Iterable<? extends Quad> quadPattern) {
         Set<Var> result = new HashSet<Var>();
         for (Quad quad : quadPattern) {
             Set<Var> tmp = QuadUtils.getVarsMentioned(quad);
             result.addAll(tmp);
         }
-    
+
         return result;
     }
 

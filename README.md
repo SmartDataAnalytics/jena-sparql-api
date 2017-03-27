@@ -5,14 +5,11 @@
 This library offers several [Jena](http://jena.apache.org/)-compatible ways to *transparently* add delays, caching, pagination, retry and even query transformations before sending off your original SPARQL query. This frees your application layer from the hassle of dealing with those issues. Also, the server module bundles Jena with the [Atmosphere](https://github.com/Atmosphere/atmosphere) framework, giving you a kickstart for REST and websocket implementations. 
 
 ### Maven
+Releases are available on [maven central](http://search.maven.org/#search%7Cga%7C1%7Cjena-sparql-api).
+Snapshots are presently published in our own archiva:
+
 ```xml
 <repositories>
-	<repository>
-	    <id>maven.aksw.internal</id>
-	    <name>University Leipzig, AKSW Maven2 Repository</name>
-	    <url>http://maven.aksw.org/archiva/repository/internal</url>
-	</repository>
-	
 	<repository>
 	    <id>maven.aksw.snapshots</id>
 	    <name>University Leipzig, AKSW Maven2 Repository</name>
@@ -21,21 +18,18 @@ This library offers several [Jena](http://jena.apache.org/)-compatible ways to *
 </repositories>
 
 <dependencies>
+        <!-- This is the core artifact; several other ones build on that. -->
 	<dependency>
 		<groupId>org.aksw.jena-sparql-api</groupId>
 		<artifactId>jena-sparql-api-core</artifactId>
-		<version>2.13.0-5</version>
-	</dependency>
-	
-	<dependency>
-		<groupId>org.aksw.jena-sparql-api</groupId>
-		<artifactId>jena-sparql-api-server</artifactId>
-		<version>2.13.0-5</version>
-	</dependency>
-	
+		<version>{check available versions with the link below}</version>
+	</dependency>	
 	...
 </dependencies>
 ```
+
+Latest version(s): [jena-sparql-api on maven central](http://search.maven.org/#search%7Cga%7C1%7Cjena-sparql-api)
+
 ### Project structure
 
 This library is composed of the following modules:

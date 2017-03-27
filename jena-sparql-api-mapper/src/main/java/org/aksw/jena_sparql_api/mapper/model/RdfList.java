@@ -4,7 +4,7 @@ import java.util.AbstractList;
 import java.util.List;
 import java.util.Map;
 
-import com.hp.hpl.jena.graph.Node;
+import org.apache.jena.graph.Node;
 
 public class RdfList<T>
     extends AbstractList<T>

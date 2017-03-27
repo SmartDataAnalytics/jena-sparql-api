@@ -24,34 +24,35 @@ import java.util.List ;
 
 import org.apache.jena.atlas.logging.Log ;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.expr.Expr;
-import com.hp.hpl.jena.sparql.expr.ExprList;
-import com.hp.hpl.jena.sparql.expr.ExprTransform;
-import com.hp.hpl.jena.sparql.expr.ExprTransformer;
-import com.hp.hpl.jena.sparql.syntax.Element;
-import com.hp.hpl.jena.sparql.syntax.ElementAssign;
-import com.hp.hpl.jena.sparql.syntax.ElementBind;
-import com.hp.hpl.jena.sparql.syntax.ElementData;
-import com.hp.hpl.jena.sparql.syntax.ElementDataset;
-import com.hp.hpl.jena.sparql.syntax.ElementExists;
-import com.hp.hpl.jena.sparql.syntax.ElementFilter;
-import com.hp.hpl.jena.sparql.syntax.ElementGroup;
-import com.hp.hpl.jena.sparql.syntax.ElementMinus;
-import com.hp.hpl.jena.sparql.syntax.ElementNamedGraph;
-import com.hp.hpl.jena.sparql.syntax.ElementNotExists;
-import com.hp.hpl.jena.sparql.syntax.ElementOptional;
-import com.hp.hpl.jena.sparql.syntax.ElementPathBlock;
-import com.hp.hpl.jena.sparql.syntax.ElementService;
-import com.hp.hpl.jena.sparql.syntax.ElementSubQuery;
-import com.hp.hpl.jena.sparql.syntax.ElementTriplesBlock;
-import com.hp.hpl.jena.sparql.syntax.ElementUnion;
-import com.hp.hpl.jena.sparql.syntax.ElementVisitor;
-import com.hp.hpl.jena.sparql.syntax.ElementWalker;
+import org.apache.jena.graph.Node;
+import org.apache.jena.query.Query;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprList;
+import org.apache.jena.sparql.expr.ExprTransform;
+import org.apache.jena.sparql.expr.ExprTransformer;
+import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementAssign;
+import org.apache.jena.sparql.syntax.ElementBind;
+import org.apache.jena.sparql.syntax.ElementData;
+import org.apache.jena.sparql.syntax.ElementDataset;
+import org.apache.jena.sparql.syntax.ElementExists;
+import org.apache.jena.sparql.syntax.ElementFilter;
+import org.apache.jena.sparql.syntax.ElementGroup;
+import org.apache.jena.sparql.syntax.ElementMinus;
+import org.apache.jena.sparql.syntax.ElementNamedGraph;
+import org.apache.jena.sparql.syntax.ElementNotExists;
+import org.apache.jena.sparql.syntax.ElementOptional;
+import org.apache.jena.sparql.syntax.ElementPathBlock;
+import org.apache.jena.sparql.syntax.ElementService;
+import org.apache.jena.sparql.syntax.ElementSubQuery;
+import org.apache.jena.sparql.syntax.ElementTriplesBlock;
+import org.apache.jena.sparql.syntax.ElementUnion;
+import org.apache.jena.sparql.syntax.ElementVisitor;
+import org.apache.jena.sparql.syntax.ElementVisitorBase;
+import org.apache.jena.sparql.syntax.ElementWalker;
 
-/** A bottom-up application of a transformation of SPARQL syntax Elements. 
+/** A bottom-up application of a transformation of SPARQL syntax Elements.
  * {@linkplain QueryTransformOps#transform} provides the mechanism
  * to apply to a {@linkplain Query}.
  * @see ElementTransformCopyBase
@@ -105,8 +106,12 @@ public class ElementTransformer {
     /** The primitive operation to apply a transformation to an Op */
     protected Element applyTransformation(ApplyTransformVisitor transformApply, Element element,
                                           ElementVisitor beforeVisitor, ElementVisitor afterVisitor) {
-        ElementWalker.walk(element, transformApply) ; // , beforeVisitor,
-                                                      // afterVisitor) ;
+//        ElementWalker.walk(element, transformApply) ; // , beforeVisitor,
+//                                                      // afterVisitor) ;
+        beforeVisitor = beforeVisitor == null ? new ElementVisitorBase() : beforeVisitor;
+        afterVisitor = afterVisitor == null ? new ElementVisitorBase() : afterVisitor;
+
+        ElementWalker.walk(element, transformApply, beforeVisitor, afterVisitor);
         Element r = transformApply.result() ;
         return r ;
     }
@@ -182,8 +187,8 @@ public class ElementTransformer {
 
         @Override
         public void visit(ElementData el) {
-            transform.transform(el) ;
-            push(el) ;
+            Element el2 = transform.transform(el) ;
+            push(el2) ;
         }
 
         @Override
@@ -232,7 +237,7 @@ public class ElementTransformer {
             Node n = el.getGraphNameNode() ;
             Node n1 = transformNode(n) ;
             Element elt1 = pop() ;
-            Element el2 = transform.transform(el, n, elt1) ; 
+            Element el2 = transform.transform(el, n, elt1) ;
             push(el2) ;
         }
 
@@ -252,7 +257,7 @@ public class ElementTransformer {
             push(el2) ;
         }
 
-        // When you need to force the walking of the tree ... 
+        // When you need to force the walking of the tree ...
         // EXISTS / NOT EXISTS
         private Element subElement(Element elt) {
             ElementWalker.walk(elt, this) ;

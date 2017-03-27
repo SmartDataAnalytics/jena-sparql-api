@@ -2,53 +2,76 @@ package org.aksw.jena_sparql_api.retry.core;
 
 import java.util.Iterator;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.Supplier;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionDecorator;
-import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.rdf.model.Model;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import com.nurkiewicz.asyncretry.AsyncRetryExecutor;
 import com.nurkiewicz.asyncretry.RetryExecutor;
 import com.nurkiewicz.asyncretry.backoff.Backoff;
+import com.nurkiewicz.asyncretry.policy.AbortRetryException;
 import com.nurkiewicz.asyncretry.policy.RetryPolicy;
-import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.rdf.model.Model;
 
 public class QueryExecutionRetry
 	extends QueryExecutionDecorator
-{	
-	private int retryCount;
-	private long retryDelayInMs;
-	private RetryPolicy retryPolicy;
-	private Backoff backoff;
-	private boolean fixedDelay;
-	
-	
-	public QueryExecutionRetry(QueryExecution decoratee, int retryCount, long retryDelayInMs) {
-		super(decoratee);
+{
+	protected Supplier<QueryExecution> supplier;
+	protected int retryCount;
+	protected long retryDelayInMs;
+	protected RetryPolicy retryPolicy;
+	protected Backoff backoff;
+	protected boolean fixedDelay;
+	protected ScheduledExecutorService scheduler;
+
+	protected boolean aborted = false;
+
+	public QueryExecutionRetry(Supplier<QueryExecution> supplier, int retryCount, long retryDelayInMs, ScheduledExecutorService scheduler) {
+		super(null);
+		this.supplier = supplier;
 		this.retryCount = retryCount;
 		this.retryDelayInMs = retryDelayInMs;
+		this.scheduler = scheduler;
 	}
-	
-	public QueryExecutionRetry(QueryExecution decoratee, RetryPolicy retryPolicy, Backoff backoff, boolean fixedDelay) {
-		super(decoratee);
-		
+
+	public QueryExecutionRetry(Supplier<QueryExecution> supplier, RetryPolicy retryPolicy, Backoff backoff, boolean fixedDelay, ScheduledExecutorService scheduler) {
+		super(null);
+
+		this.supplier = supplier;
 		this.retryPolicy = retryPolicy;
 		this.backoff = backoff;
 		this.fixedDelay = fixedDelay;
+		this.scheduler = scheduler;
 	}
 
+
 	public <T> T doTry(Callable<T> callable) {
-		ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+		Callable<T> wrapper = () -> {
+			if(decoratee == null) {
+				decoratee = supplier.get();
+			}
+			try {
+				return callable.call();
+			} catch(Exception e) {
+				if(aborted) {
+					throw new AbortRetryException();
+				}
+
+				decoratee = null;
+				throw new RuntimeException(e);
+			}
+		};
+
+		//ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 		RetryExecutor executor = new AsyncRetryExecutor(scheduler, retryPolicy, backoff, fixedDelay);
-		
-		ListenableFuture<T> future = executor.getWithRetry(callable);
+
+		ListenableFuture<T> future = executor.getWithRetry(wrapper);
 //		scheduler.shutdown();
 		try {
 			T result = future.get();
@@ -58,7 +81,7 @@ public class QueryExecutionRetry
 		} finally {
 			scheduler.shutdown();
 		}
-		
+
 //		CallableRetry<T> retry = new CallableRetry<T>(callable, retryCount, retryDelayInMs);
 //		try {
 //			T result = retry.call();
@@ -67,84 +90,54 @@ public class QueryExecutionRetry
 //			throw new RuntimeException(e);
 //		}
 	}
-	
+
+	// TODO Maybe add synchronization so that we ensure that we do not obtain a new qe from the supplier
+	// immediately after having called abort
+	@Override
+	public void abort() {
+		aborted = true;
+		if(decoratee != null) {
+			decoratee.abort();
+		}
+	}
+
 	@Override
 	public boolean execAsk() {
-		return doTry(new Callable<Boolean>() {
-			@Override
-			public Boolean call() throws Exception {
-				return QueryExecutionRetry.super.execAsk(); 
-			}
-		});
+		return doTry(() -> super.execAsk());
 	}
 
 	@Override
 	public ResultSet execSelect() {
-		return doTry(new Callable<ResultSet>() {
-			@Override
-			public ResultSet call() throws Exception {
-				return QueryExecutionRetry.super.execSelect(); 
-			}
-		});
+		return doTry(() -> super.execSelect());
 	}
 
 	@Override
 	public Model execConstruct() {
-		return doTry(new Callable<Model>() {
-			@Override
-			public Model call() throws Exception {
-				return QueryExecutionRetry.super.execConstruct(); 
-			}
-		});
+		return doTry(() -> super.execConstruct());
 	}
 
 	@Override
 	public Model execConstruct(final Model model) {
-		return doTry(new Callable<Model>() {
-			@Override
-			public Model call() throws Exception {
-				return QueryExecutionRetry.super.execConstruct(model); 
-			}
-		});
+		return doTry(() -> super.execConstruct(model));
 	}
 
 	@Override
 	public Iterator<Triple> execConstructTriples() {
-		return doTry(new Callable<Iterator<Triple>>() {
-			@Override
-			public Iterator<Triple> call() throws Exception {
-				return QueryExecutionRetry.super.execConstructTriples(); 
-			}
-		});
+		return doTry(() -> super.execConstructTriples());
 	}
 
 	@Override
 	public Model execDescribe() {
-		return doTry(new Callable<Model>() {
-			@Override
-			public Model call() throws Exception {
-				return QueryExecutionRetry.super.execDescribe(); 
-			}
-		});
+		return doTry(() -> super.execDescribe());
 	}
 
 	@Override
 	public Model execDescribe(final Model model) {
-		return doTry(new Callable<Model>() {
-			@Override
-			public Model call() throws Exception {
-				return QueryExecutionRetry.super.execDescribe(model); 
-			}
-		});
+		return doTry(() -> super.execDescribe(model));
 	}
 
 	@Override
 	public Iterator<Triple> execDescribeTriples() {
-		return doTry(new Callable<Iterator<Triple>>() {
-			@Override
-			public Iterator<Triple> call() throws Exception {
-				return QueryExecutionRetry.super.execDescribeTriples(); 
-			}
-		});
+		return doTry(() -> super.execDescribeTriples());
 	}
 }

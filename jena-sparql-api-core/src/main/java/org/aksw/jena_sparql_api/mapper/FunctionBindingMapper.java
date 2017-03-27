@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api.mapper;
 
 import com.google.common.base.Function;
-import com.hp.hpl.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.engine.binding.Binding;
 
 /**
  * Guava Function wrapper for BindingMapper objects
@@ -26,7 +26,7 @@ public class FunctionBindingMapper<T>
 
     @Override
     public T apply(Binding binding) {
-        T result = bindingMapper.map(binding, offset);
+        T result = bindingMapper.apply(binding, offset);
         return result;
     }
     

@@ -2,26 +2,28 @@ package org.aksw.jena_sparql_api.shape;
 
 import java.util.Map;
 
+import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.utils.Vars;
-
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.NodeFactory;
-import com.hp.hpl.jena.rdf.model.Property;
-import com.hp.hpl.jena.shared.PrefixMapping;
-import com.hp.hpl.jena.shared.impl.PrefixMappingImpl;
-import com.hp.hpl.jena.sparql.core.Prologue;
-import com.hp.hpl.jena.sparql.expr.E_Equals;
-import com.hp.hpl.jena.sparql.expr.Expr;
-import com.hp.hpl.jena.sparql.expr.ExprVar;
-import com.hp.hpl.jena.sparql.syntax.ElementFilter;
-import com.hp.hpl.jena.sparql.util.ExprUtils;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.shared.impl.PrefixMappingImpl;
+import org.apache.jena.sparql.core.Prologue;
+import org.apache.jena.sparql.expr.E_Equals;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprVar;
+import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.syntax.ElementFilter;
+import org.apache.jena.sparql.util.ExprUtils;
 
 
 public class ResourceShapeBuilder {
-    private ResourceShape resourceShape;
-    private PrefixMapping prefixMapping;
-    //private Prologue prologue;
+	protected ResourceShapeBuilder parent;
+
+    protected ResourceShape resourceShape;
+    protected PrefixMapping prefixMapping;
 
     public ResourceShapeBuilder() {
         this(new Prologue());
@@ -40,7 +42,12 @@ public class ResourceShapeBuilder {
     }
 
     public ResourceShapeBuilder(ResourceShape resourceShape, PrefixMapping prefixMapping) {
-        this.resourceShape = resourceShape;
+        this(null, resourceShape, prefixMapping);
+    }
+
+    public ResourceShapeBuilder(ResourceShapeBuilder parent, ResourceShape resourceShape, PrefixMapping prefixMapping) {
+        this.parent = parent;
+    	this.resourceShape = resourceShape;
         this.prefixMapping = prefixMapping;
     }
 
@@ -52,55 +59,77 @@ public class ResourceShapeBuilder {
         return prefixMapping;
     }
 
-    public ResourceShapeBuilder outgoing(String propertyUri) {
+    public ResourceShapeBuilder filter(Node node) {
+    	Expr expr = NodeValue.makeNode(node);
+    	ResourceShapeBuilder result = filter(expr);
+    	return result;
+    }
+
+    public ResourceShapeBuilder filter(Expr expr) {
+    	Concept concept = null;
+    	ResourceShapeBuilder result = filter(concept);
+    	return result;
+
+//    	Concept.cr
+//
+//    	ResourceShapeBuilder result = filter(expr);
+//    	return result;
+    }
+
+    public ResourceShapeBuilder filter(Concept concept) {
+    	return null;
+    }
+
+
+    public ResourceShapeBuilder out(String propertyUri) {
         ResourceShapeBuilder result = nav(propertyUri, false);
         return result;
     }
 
-    public ResourceShapeBuilder outgoing(Node property) {
+    public ResourceShapeBuilder out(Node property) {
         ResourceShapeBuilder result = nav(property, false);
         return result;
     }
 
-    public ResourceShapeBuilder outgoing(Property property) {
+    public ResourceShapeBuilder out(Property property) {
         ResourceShapeBuilder result = nav(property, false);
         return result;
     }
 
 
-    public ResourceShapeBuilder outgoing(Expr expr) {
+    public ResourceShapeBuilder out(Expr expr) {
         ResourceShapeBuilder result = nav(expr, false);
         return result;
     }
 
 
-    public ResourceShapeBuilder outgoing(Relation relation) {
+    public ResourceShapeBuilder out(Relation relation) {
         ResourceShapeBuilder result = nav(relation, false);
         return result;
     }
 
-    public ResourceShapeBuilder incoming(String propertyUri) {
+    public ResourceShapeBuilder in(String propertyUri) {
         ResourceShapeBuilder result = nav(propertyUri, true);
         return result;
     }
 
-    public ResourceShapeBuilder incoming(Node property) {
+    public ResourceShapeBuilder in(Node property) {
         ResourceShapeBuilder result = nav(property, true);
         return result;
     }
 
-    public ResourceShapeBuilder incoming(Property property) {
+    public ResourceShapeBuilder in(Property property) {
         ResourceShapeBuilder result = nav(property, false);
         return result;
     }
 
-    public ResourceShapeBuilder incoming(Expr expr) {
+    public ResourceShapeBuilder in(Expr expr) {
         ResourceShapeBuilder result = nav(expr, true);
         return result;
     }
 
 
-    public ResourceShapeBuilder incoming(Relation relation) {
+    public ResourceShapeBuilder in(Relation relation) {
         ResourceShapeBuilder result = nav(relation, true);
         return result;
     }

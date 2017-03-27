@@ -9,17 +9,21 @@ import org.aksw.jena_sparql_api.core.utils.ServiceUtils;
 import org.aksw.jena_sparql_api.utils.ResultSetPart;
 import org.aksw.jena_sparql_api.utils.ResultSetUtils;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.syntax.ElementSubQuery;
+import org.apache.jena.graph.Node;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.syntax.ElementSubQuery;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public class ListServiceSparqlQuery
     implements ListService<Concept, Node, ResultSetPart>
 {
+    private static final Logger logger = LoggerFactory.getLogger(ListServiceSparqlQuery.class);
+
     private QueryExecutionFactory qef;
     private Query attrQuery;
     private Var attrVar;
@@ -51,12 +55,18 @@ public class ListServiceSparqlQuery
             filterConcept = ConceptUtils.createSubjectConcept();
         }
 
+        // Make the filter concept make use of the attrVar
+        if(!attrVar.equals(filterConcept.getVar())) {
+            filterConcept = ConceptUtils.createRenamedConcept(filterConcept, attrVar);
+        }
+
         //System.out.println(attrQuery);
         //if(true) { throw new RuntimeException("foo"); }
 
         Query query = ConceptUtils.createAttrQuery(this.attrQuery, attrVar, this.isLeftJoin, filterConcept, limit, offset, this.forceSubQuery);
 
-        System.out.println(query);
+        logger.debug("Query: " + query);
+        //System.out.println(query);
         //if(true) {throw new RuntimeException(""); }
 
         QueryExecution qe = qef.createQueryExecution(query);

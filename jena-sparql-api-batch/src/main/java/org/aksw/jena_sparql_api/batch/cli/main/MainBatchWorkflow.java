@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.script.Invocable;
+import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 
@@ -22,10 +23,13 @@ import org.aksw.gson.utils.JsonTransformerRewrite;
 import org.aksw.gson.utils.JsonVisitorRewrite;
 import org.aksw.gson.utils.JsonWalker;
 import org.aksw.jena_sparql_api.batch.BatchWorkflowManager;
+import org.aksw.jena_sparql_api.batch.JenaExtensionBatch;
 import org.aksw.jena_sparql_api.batch.ListServiceResourceShape;
 import org.aksw.jena_sparql_api.batch.QueryTransformConstructGroupedGraph;
 import org.aksw.jena_sparql_api.batch.config.ConfigBatchJobDynamic;
 import org.aksw.jena_sparql_api.batch.config.ConfigParsersCore;
+import org.aksw.jena_sparql_api.batch.json.rewriters.JsonVisitorRewriteBeanClassName;
+import org.aksw.jena_sparql_api.batch.json.rewriters.JsonVisitorRewriteBeanDefinition;
 import org.aksw.jena_sparql_api.batch.json.rewriters.JsonVisitorRewriteClass;
 import org.aksw.jena_sparql_api.batch.json.rewriters.JsonVisitorRewriteHop;
 import org.aksw.jena_sparql_api.batch.json.rewriters.JsonVisitorRewriteJson;
@@ -37,6 +41,8 @@ import org.aksw.jena_sparql_api.batch.json.rewriters.JsonVisitorRewriteSparqlPip
 import org.aksw.jena_sparql_api.batch.json.rewriters.JsonVisitorRewriteSparqlService;
 import org.aksw.jena_sparql_api.batch.json.rewriters.JsonVisitorRewriteSparqlStep;
 import org.aksw.jena_sparql_api.batch.json.rewriters.JsonVisitorRewriteSparqlUpdate;
+import org.aksw.jena_sparql_api.batch.step.FactoryBeanStepLog;
+import org.aksw.jena_sparql_api.batch.step.FactoryBeanStepSparqlCount;
 import org.aksw.jena_sparql_api.batch.to_review.MapTransformer;
 import org.aksw.jena_sparql_api.batch.to_review.MapTransformerSimple;
 import org.aksw.jena_sparql_api.beans.json.JsonProcessorContext;
@@ -65,8 +71,26 @@ import org.aksw.jena_sparql_api.sparql.ext.term.E_TermValid;
 import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.spring.json.ContextProcessorJsonUtils;
-import org.apache.http.client.HttpClient;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.jena.datatypes.TypeMapper;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QueryFactory;
+import org.apache.jena.query.ResultSetFormatter;
+import org.apache.jena.query.Syntax;
+import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.shared.impl.PrefixMappingImpl;
+import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.core.Prologue;
+import org.apache.jena.sparql.function.FunctionRegistry;
+import org.apache.jena.sparql.pfunction.PropertyFunctionRegistry;
+import org.apache.jena.update.UpdateFactory;
+import org.apache.jena.update.UpdateRequest;
+import org.apache.jena.vocabulary.OWL;
+import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.vocabulary.RDFS;
+import org.apache.jena.vocabulary.XSD;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.Job;
@@ -78,42 +102,21 @@ import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
 import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
 import org.springframework.batch.core.repository.JobRestartException;
+import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.config.Scope;
+import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.context.annotation.AnnotationConfigUtils;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
-import com.google.common.base.Supplier;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.stream.JsonReader;
-import com.hp.hpl.jena.datatypes.TypeMapper;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.NodeFactory;
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.query.QueryFactory;
-import com.hp.hpl.jena.query.ResultSetFormatter;
-import com.hp.hpl.jena.query.Syntax;
-import com.hp.hpl.jena.shared.PrefixMapping;
-import com.hp.hpl.jena.shared.impl.PrefixMappingImpl;
-import com.hp.hpl.jena.sparql.core.DatasetGraph;
-import com.hp.hpl.jena.sparql.core.Prologue;
-import com.hp.hpl.jena.sparql.function.FunctionRegistry;
-import com.hp.hpl.jena.sparql.pfunction.PropertyFunctionRegistry;
-import com.hp.hpl.jena.update.UpdateFactory;
-import com.hp.hpl.jena.update.UpdateRequest;
-import com.hp.hpl.jena.vocabulary.OWL;
-import com.hp.hpl.jena.vocabulary.RDF;
-import com.hp.hpl.jena.vocabulary.RDFS;
-import com.hp.hpl.jena.vocabulary.XSD;
-
-import fr.dudie.nominatim.client.JsonNominatimClient;
-import fr.dudie.nominatim.client.NominatimClient;
 
 public class MainBatchWorkflow {
 
@@ -142,7 +145,79 @@ public class MainBatchWorkflow {
 
 
     public static void main(String[] args) throws Exception {
+        String str = readResource("job-fetch-data-4-threads.js");
 
+        Reader reader = new StringReader(str); //new InputStreamReader(in);
+        JsonReader jsonReader = new JsonReader(reader);
+        jsonReader.setLenient(true);
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+        JsonElement o = gson.fromJson(jsonReader, JsonElement.class);
+        String canon = gson.toJson(o);
+
+
+        ScriptEngineManager factory = new ScriptEngineManager();
+        ScriptEngine engine = factory.getEngineByName("JavaScript");
+
+        Logger scriptLogger = LoggerFactory.getLogger(MainBatchWorkflow.class.getName() + "-ScriptEngine");
+        engine.put("logger", logger);
+        ScriptContext ctx  = engine.getContext();
+        //Bindings bindings = ctx.getBindings(ScriptContext.GLOBAL_SCOPE);
+
+        engine.eval(readResource("js/lib/lodash/4.3.0/lodash.js"));//, bindings);
+        engine.eval(readResource("js/src/rewrite-master.js"));//, bindings);
+
+        List<String> rewriterResourceNames = Arrays.asList(
+            "js/src/rewriters/RewriterSparqlHop.js",
+            "js/src/rewriters/RewriterJson.js",
+            "js/src/rewriters/RewriterPrefixes.js",
+            "js/src/rewriters/RewriterSparqlFile.js",
+            "js/src/rewriters/RewriterSparqlCount.js",
+            "js/src/rewriters/RewriterSparqlService.js",
+            "js/src/rewriters/RewriterSparqlStep.js",
+            "js/src/rewriters/RewriterSparqlUpdate.js",
+            "js/src/rewriters/RewriterBeanClassName.js",
+            "js/src/rewriters/RewriterBeanDefinition.js",
+            "js/src/rewriters/RewriterSparqlPipe.js",
+            "js/src/rewriters/RewriterSimpleJob.js",
+            "js/src/rewriters/RewriterShell.js",
+            "js/src/rewriters/RewriterLog.js"
+        );
+        String base = "src/main/resources/";
+        for(String name : rewriterResourceNames) {
+            engine.eval("load('" + base + "/" + name + "')");
+            //engine.eval(readResource(name));
+        }
+
+
+//        new JsonVisitorRewriteSparqlService(),
+//        new JsonVisitorRewriteShape(),
+//        new JsonVisitorRewriteJson(),
+//        new JsonVisitorRewriteSparqlStep(),
+//        new JsonVisitorRewriteSimpleJob(),
+//        new JsonVisitorRewriteSparqlFile(),
+//        new JsonVisitorRewriteSparqlPipe(),
+//        new JsonVisitorRewriteSparqlUpdate(),
+//        new JsonVisitorRewritePrefixes(),
+//        new JsonVisitorRewriteHop(),
+//        new JsonVisitorRewriteClass("$dataSource", DriverManagerDataSource.class.getName()),
+//        new JsonVisitorRewriteClass("$log", FactoryBeanStepLog.class.getName()),
+//        new JsonVisitorRewriteClass("$sparqlCount", FactoryBeanStepSparqlCount.class.getName()),
+//        new JsonVisitorRewriteBeanClassName(),
+//        new JsonVisitorRewriteBeanDefinition()
+
+        Invocable inv = (Invocable)engine;
+        Object tmpJsonStr = inv.invokeFunction("performRewrite", canon);
+        String jsonStr = (String)tmpJsonStr;
+        String prettyJsonStr = gson.toJson(gson.fromJson(jsonStr, Object.class));
+
+        System.out.println("RESULT\n--------------------------------------------");
+        System.out.println(prettyJsonStr);
+        //engine.eval("var foo = JSON.parse(data); print(_(Object.keys(foo)).map(function(x) { return 'yay' + x; }));");
+
+        if(true) {
+            System.exit(0);
+        }
 
 //        String queryStr = "INSERT { ?s tmp:location ?l } WHERE { ?s o:address [ o:country [ rdfs:label ?col ] ; o:city [ rdfs:label ?cil ]  ] BIND(concat(?cil, ' ', ?col) As ?l) }";
 //
@@ -185,7 +260,7 @@ public class MainBatchWorkflow {
 //    	mainXml();
         ApplicationContext baseContext = initBaseContext(null);
 
-        initJenaExtensions(baseContext);
+        JenaExtensionBatch.initJenaExtensions(baseContext);
         mainContext(baseContext);
     }
 
@@ -217,74 +292,6 @@ public class MainBatchWorkflow {
 
     }
 
-    public static void initJenaExtensions(ApplicationContext context) {
-        //ApplicationContext baseContext = initBaseContext();
-        @SuppressWarnings("unchecked")
-        Supplier<HttpClient> httpClientSupplier = (Supplier<HttpClient>)context.getBean("httpClientSupplier");
-
-
-        TypeMapper.getInstance().registerDatatype(new RDFDatatypeJson());
-
-
-        //NominatimClient nominatimClient = new JsonNominatimClient(new DefaultHttpClient(), "cstadler@informatik.uni-leipzig.de");
-        //FunctionRegistry.get().put("http://jsa.aksw.org/fn/nominatim/geocode", FunctionFactoryCache.create(FunctionFactoryGeocodeNominatim.create(nominatimClient)));
-
-        FunctionRegistry.get().put(jsonFn + "parse", E_JsonParse.class);
-        FunctionRegistry.get().put(jsonFn + "path", E_JsonPath.class);
-
-        //Context.
-
-        FunctionRegistry.get().put(httpFn + "get", new FunctionFactoryE_Http(httpClientSupplier));
-        FunctionRegistry.get().put(httpFn + "encode_for_qsa", E_EncodeForQsa.class);
-
-        FunctionRegistry.get().put(termFn + "valid", E_TermValid.class);
-
-        //FunctionRegistry.get().put
-        //UserDefinedFunctionFactory.getFactory().add(httpFn + "getJson", "", args);
-
-        PropertyFunctionRegistry.get().put(jsonFn + "unnest", new PropertyFunctionFactoryJsonUnnest());
-
-        PrefixMapping pm = getDefaultPrefixMapping();
-
-        QueryExecutionFactory qef = FluentQueryExecutionFactory
-            .defaultDatasetGraph()
-            .config()
-                .withPrefixes(pm, true)
-            .end()
-            .create();
-
-        Query query = new Query();
-        query.setPrefixMapping(pm);
-
-        if(false) {
-        QueryFactory.parse(query, "Select * {"
-                + "  Bind(\"['foo', ['bar', 'baz']]\"^^xsd:json As ?json)\n"
-                + "  ?json json:unnest ?lvl1.\n"
-                + "  Optional { ?lvl1 json:unnest ?lvl2. }\n"
-                + "}", "http://example.org/base/", Syntax.syntaxARQ);
-        }
-
-        if(false) {
-            QueryFactory.parse(query, "Select ?osmType ?osmId ?x ?y {"
-                    + "  VALUES(?s) { (<http://nominatim.openstreetmap.org/search/?format=json&q=Leipzig>) }\n"
-                    + "  BIND(http:get(?s) As ?json).\n"
-                    + "  ?json json:unnest ?item.\n"
-                    + "  BIND(json:path(?item, '$.osm_type') As ?osmType)\n"
-                    + "  BIND(json:path(?item, '$.osm_id') As ?osmId)\n"
-                    + "  BIND(xsd:decimal(json:path(?item, '$.lon')) As ?x)\n"
-                    + "  BIND(xsd:decimal(json:path(?item, '$.lat')) As ?y)\n"
-                    + "}", "http://example.org/base/", Syntax.syntaxARQ);
-
-            Prologue prologue = new Prologue(pm);
-
-            QueryExecution qe = qef.createQueryExecution(query);
-            System.out.println(ResultSetFormatter.asText(qe.execSelect(), prologue));
-        }
-
-
-        //System.exit(0);
-    }
-
     public static ApplicationContext initBaseContext(ApplicationContext appContext) {
         AnnotationConfigApplicationContext coreContext = new AnnotationConfigApplicationContext();
         //if(appContext != null) {
@@ -302,21 +309,48 @@ public class MainBatchWorkflow {
         return baseContext;
     }
 
-    public static GenericApplicationContext initBatchContext(ApplicationContext baseContext) {
+    public static void copyScopes(GenericApplicationContext targetCtx, GenericApplicationContext sourceCtx) {
+        for(String scopeName : sourceCtx.getBeanFactory().getRegisteredScopeNames()) {
+            Scope scope = sourceCtx.getBeanFactory().getRegisteredScope(scopeName);
+            targetCtx.getBeanFactory().registerScope(scopeName, scope);
+        }
+    }
+
+    public static AnnotationConfigApplicationContext initBatchContext(ApplicationContext baseContext) {
         //ApplicationContext baseContext = initBaseContext();
         //AnnotationConfigApplicationContext baseContext = new AnnotationConfigApplicationContext(ConfigBatchJobDynamic.class);
         //AnnotationConfigApplicationContext x = new AnnotationConfigApplicationContext()
 
 
-        GenericApplicationContext batchContext = new GenericApplicationContext(baseContext);
-        AnnotationConfigUtils.registerAnnotationConfigProcessors(batchContext);
+//        GenericApplicationContext batchContext = new GenericApplicationContext(baseContext);
+//        AnnotationConfigUtils.registerAnnotationConfigProcessors(batchContext);
+
+
+        AnnotationConfigApplicationContext batchContext = new AnnotationConfigApplicationContext();
+        batchContext.setParent(baseContext);
+
+        copyScopes(batchContext, (GenericApplicationContext)baseContext);
 
         return batchContext;
     }
 
-    public static ApplicationContext initContext(ApplicationContext baseContext, JsonElement json) throws Exception {
+    /**
+     * Returns a NON-REFRESHED context object
+     * This means that modifications on the returned object are still allowed,
+     * however .refresh() must be eventually called
+     *
+     *
+     * @param baseContext
+     * @param json
+     * @return
+     * @throws Exception
+     */
+    public static AnnotationConfigApplicationContext initContext(ApplicationContext baseContext, JsonElement json) throws Exception {
 
-        GenericApplicationContext batchContext = initBatchContext(baseContext);
+//        Object stepScope = baseContext.getBean("step");
+//        System.out.println("StepScope: " + stepScope);
+
+        AnnotationConfigApplicationContext result = initBatchContext(baseContext);
 
         // Preprocessors
         JsonProcessorKey contextPreprocessor = new JsonProcessorKey();
@@ -334,7 +368,7 @@ public class MainBatchWorkflow {
         //contextPreprocessor.getProcessors().add(alias);
 
         // Core Beans processor
-        JsonProcessorContext contextProcessor = new JsonProcessorContext(batchContext);
+        JsonProcessorContext contextProcessor = new JsonProcessorContext(result);
 
         //JsonProcessorMap jobProcessor = new JsonProcessorMap();
         //jobProcessor.register("context", false, contextProcessor);
@@ -342,13 +376,13 @@ public class MainBatchWorkflow {
 
 
 
-        JsonElement jobParamsJson = readJsonElementFromResource("params.js");
+        //JsonElement jobParamsJson = readJsonElementFromResource("params.js");
         //List<JsonVisitorRewrite> jr = Arrays.<JsonVisitorRewrite>asList(
 
         JsonVisitorRewriteJobParameters subVisitor = new JsonVisitorRewriteJobParameters();
         JsonVisitorRewriteKeys visitor = JsonVisitorRewriteKeys.create(JsonTransformerRewrite.create(subVisitor, false));
 
-        JsonElement effectiveJobParamsJson = JsonWalker.visit(jobParamsJson, visitor);
+        //JsonElement effectiveJobParamsJson = JsonWalker.visit(jobParamsJson, visitor);
 
         //UserDefinedFunctionFactory fff;
         // my:foo(?x, ?y ?z) = someotherexpression
@@ -359,11 +393,11 @@ public class MainBatchWorkflow {
 
         //JsonElement effectiveJobParamsJson = JsonWalker.rewrite(jobParamsJson, jr);
 
-        System.out.println("Job params: " +  new GsonBuilder().setPrettyPrinting().create().toJson(effectiveJobParamsJson));
+        //System.out.println("Job params: " +  new GsonBuilder().setPrettyPrinting().create().toJson(effectiveJobParamsJson));
 
-        JobParameters jobParams = JobParametersJsonUtils.toJobParameters(effectiveJobParamsJson, null);
+        //JobParameters jobParams = JobParametersJsonUtils.toJobParameters(effectiveJobParamsJson, null);
 
-        System.out.println(jobParams);
+        //System.out.println(jobParams);
 
 
         //System.exit(0);
@@ -388,7 +422,8 @@ public class MainBatchWorkflow {
 
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         String str = gson.toJson(json);
-        System.out.println(str);
+        logger.debug("Final JSON specification: " + str);
+        //System.out.println(str);
 
         contextProcessor.process(json);
 
@@ -397,14 +432,136 @@ public class MainBatchWorkflow {
         //contextProcessor.process(json);
 
 
-        //jobProcessor.process(json);
+        //batchContext.refresh();
 
-        batchContext.refresh();
-
-        return batchContext;
+        return result;
     }
 
-    public static JsonElement rewrite(JsonElement json) {
+    public static BeanDefinition beanDefinitionOfType(BeanDefinitionRegistry context, Class<?> clazz) {
+        BeanDefinition result = null;
+
+        //jobProcessor.process(json);
+        String[] names = context.getBeanDefinitionNames();
+        for(String name : names) {
+            BeanDefinition bd = context.getBeanDefinition(name);
+            String className = bd.getBeanClassName();
+            Class<?> c;
+            try {
+                c = Class.forName(className);
+            } catch (ClassNotFoundException e) {
+                logger.warn("Unexpected non-fatal expection", e);
+                continue;
+                // Nothing to do here; we just ignore it
+            }
+
+            // If the clazz is a FactoryBean, get its type
+            if(FactoryBean.class.isAssignableFrom(c)) {
+                FactoryBean<?> fb;
+                try {
+                    fb = (FactoryBean<?>)c.newInstance();
+                } catch (Exception e) {
+                    logger.warn("Unexpected non-fatal exception", e);
+                    continue;
+                }
+                c = fb.getObjectType();
+                // Just skip these kind of factories - e.g. ScopedProxyFactoryBean does not yield an object type
+//                if(c == null) {
+//                    throw new RuntimeException("Bean factory that does not declare an object type encountered: " + fb.getClass() + " - " + fb);
+//                }
+            }
+
+            if(c != null && clazz.isAssignableFrom(c)) {
+                result = bd;
+                break;
+            }
+            //BeanFactoryUtils.beanOfType(batchContext, Job.class);
+            //BeanFactoryUtils.
+        }
+
+        return result;
+    }
+
+    public static JsonElement rewrite(JsonElement json) throws Exception{
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+        String jsonStr = gson.toJson(json);
+//        JsonElement o = gson.fromJson(jsonReader, JsonElement.class);
+//        String canon = gson.toJson(o);
+
+
+        ScriptEngineManager factory = new ScriptEngineManager();
+        ScriptEngine engine = factory.getEngineByName("JavaScript");
+
+        Logger scriptLogger = LoggerFactory.getLogger(MainBatchWorkflow.class.getName() + "-ScriptEngine");
+        engine.put("logger", logger);
+        ScriptContext ctx  = engine.getContext();
+        //Bindings bindings = ctx.getBindings(ScriptContext.GLOBAL_SCOPE);
+
+        engine.eval(readResource("js/lib/lodash/4.3.0/lodash.js"));//, bindings);
+        engine.eval(readResource("js/src/rewrite-master.js"));//, bindings);
+
+        List<String> rewriterResourceNames = Arrays.asList(
+            "js/src/rewriters/RewriterJson.js",
+            "js/src/rewriters/RewriterPrefixes.js",
+            "js/src/rewriters/RewriterSparqlFile.js",
+            "js/src/rewriters/RewriterSparqlCount.js",
+            "js/src/rewriters/RewriterSparqlService.js",
+            "js/src/rewriters/RewriterSparqlStep.js",
+            "js/src/rewriters/RewriterSparqlHop.js",
+            "js/src/rewriters/RewriterSparqlUpdate.js",
+            "js/src/rewriters/RewriterBeanClassName.js",
+            "js/src/rewriters/RewriterBeanDefinition.js",
+            "js/src/rewriters/RewriterSparqlPipe.js",
+            "js/src/rewriters/RewriterLog.js",
+            "js/src/rewriters/RewriterShell.js"
+        );
+        //String base = "src/main/resources/";
+        String base = "/home/raven/Projects/Eclipse/jena-sparql-api-parent/jena-sparql-api-batch/src/main/resources/";
+        for(String name : rewriterResourceNames) {
+            engine.eval("load('" + base + "/" + name + "')");
+            //engine.eval(readResource(name));
+        }
+
+
+//        new JsonVisitorRewriteSparqlService(),
+//        new JsonVisitorRewriteShape(),
+//        new JsonVisitorRewriteJson(),
+//        new JsonVisitorRewriteSparqlStep(),
+//        new JsonVisitorRewriteSimpleJob(),
+//        new JsonVisitorRewriteSparqlFile(),
+//        new JsonVisitorRewriteSparqlPipe(),
+//        new JsonVisitorRewriteSparqlUpdate(),
+//        new JsonVisitorRewritePrefixes(),
+//        new JsonVisitorRewriteHop(),
+//        new JsonVisitorRewriteClass("$dataSource", DriverManagerDataSource.class.getName()),
+//        new JsonVisitorRewriteClass("$log", FactoryBeanStepLog.class.getName()),
+//        new JsonVisitorRewriteClass("$sparqlCount", FactoryBeanStepSparqlCount.class.getName()),
+//        new JsonVisitorRewriteBeanClassName(),
+//        new JsonVisitorRewriteBeanDefinition()
+
+        Invocable inv = (Invocable)engine;
+        Object tmpJsonOutStr = inv.invokeFunction("performRewrite", jsonStr);
+        String jsonOutStr = (String)tmpJsonOutStr;
+
+        Reader reader = new StringReader(jsonOutStr); //new InputStreamReader(in);
+        JsonReader jsonReader = new JsonReader(reader);
+        jsonReader.setLenient(true);
+        JsonElement result = gson.fromJson(jsonReader, JsonElement.class);
+
+        String canon = gson.toJson(result);
+        logger.info("Using configuration: " + canon);
+
+        return result;
+
+
+        //String prettyJsonOutStr = gson.toJson(gson.fromJson(jsonOutStr, Object.class));
+
+        //System.out.println("RESULT\n--------------------------------------------");
+        //System.out.println(prettyJsonStr);
+
+    }
+
+    public static JsonElement rewriteOld(JsonElement json) {
         List<JsonVisitorRewrite> rewriters = Arrays.<JsonVisitorRewrite>asList(
                 new JsonVisitorRewriteSparqlService(),
                 new JsonVisitorRewriteShape(),
@@ -416,7 +573,11 @@ public class MainBatchWorkflow {
                 new JsonVisitorRewriteSparqlUpdate(),
                 new JsonVisitorRewritePrefixes(),
                 new JsonVisitorRewriteHop(),
-                new JsonVisitorRewriteClass("$dataSource", DriverManagerDataSource.class.getName())
+                new JsonVisitorRewriteClass("$dataSource", DriverManagerDataSource.class.getName()),
+                new JsonVisitorRewriteClass("$log", FactoryBeanStepLog.class.getName()),
+                new JsonVisitorRewriteClass("$sparqlCount", FactoryBeanStepSparqlCount.class.getName()),
+                new JsonVisitorRewriteBeanClassName(),
+                new JsonVisitorRewriteBeanDefinition()
         );
         JsonElement result = JsonWalker.rewriteUntilNoChange(json, rewriters);
         return result;
@@ -563,7 +724,7 @@ public class MainBatchWorkflow {
         //b.outgoing("rdf:type").outgoing(NodeValue.TRUE).incoming(ExprUtils.parse("?p = rdfs:label && langMatches(lang(?o), 'en')", pm));
 
         //ElementTriplesBlock
-        //com.hp.hpl.jena.sparql.syntax.
+        //org.apache.jena.sparql.syntax.
 
         //Concept concept = Concept.parse("?s | ?s a <http://linkedgeodata.org/ontology/Castle>");
         //Concept concept = Concept.parse("?s | Filter(?s = <http://linkedgeodata.org/triplify/node289523439> || ?s = <http://linkedgeodata.org/triplify/node290076702>)");
@@ -616,9 +777,9 @@ we can then use an automaton representation and minimize the states, and convert
 
 
         //Query query = ResourceShape.createQuery(rs, concept);
-        MappedConcept<DatasetGraph> mappedConcept = ResourceShape.createMappedConcept2(rs, concept);
+        MappedConcept<DatasetGraph> mappedConcept = ResourceShape.createMappedConcept2(rs, concept, false);
         System.out.println(mappedConcept);
-        MappedConcept<DatasetGraph> mcLgdShape = ResourceShape.createMappedConcept2(lgdShape, null);
+        MappedConcept<DatasetGraph> mcLgdShape = ResourceShape.createMappedConcept2(lgdShape, null, false);
 
         //LookupServiceTransformKey.create(LookupServiceTransformValue.create(base, fn), keyMapper)
         //LookupServiceListService

@@ -7,28 +7,45 @@ import java.util.Set;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.ResultSetCloseable;
+import org.aksw.jena_sparql_api.mapper.BindingMapper;
 import org.aksw.jena_sparql_api.mapper.BindingMapperProjectVar;
+import org.aksw.jena_sparql_api.mapper.BindingMapperQuad;
+import org.aksw.jena_sparql_api.mapper.BindingMapperUtils;
 import org.aksw.jena_sparql_api.mapper.FunctionBindingMapper;
 import org.aksw.jena_sparql_api.utils.CloseableQueryExecution;
+import org.aksw.jena_sparql_api.utils.ExtendedIteratorClosable;
 import org.aksw.jena_sparql_api.utils.IteratorResultSetBinding;
+import org.aksw.jena_sparql_api.utils.Vars;
+import org.apache.jena.atlas.lib.Closeable;
 import org.apache.jena.atlas.lib.Sink;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QueryFactory;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.ResultSetFormatter;
+import org.apache.jena.query.Syntax;
+import org.apache.jena.shared.impl.PrefixMappingImpl;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.core.VarExprList;
+import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprAggregator;
+import org.apache.jena.sparql.expr.ExprList;
+import org.apache.jena.sparql.expr.aggregate.AggCount;
+import org.apache.jena.sparql.expr.aggregate.AggCountDistinct;
+import org.apache.jena.sparql.expr.aggregate.AggCountVarDistinct;
+import org.apache.jena.sparql.expr.aggregate.Aggregator;
+import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementSubQuery;
+import org.apache.jena.util.iterator.ExtendedIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.query.QueryFactory;
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.query.ResultSetFormatter;
-import com.hp.hpl.jena.query.Syntax;
-import com.hp.hpl.jena.sparql.core.Quad;
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.engine.binding.Binding;
-import com.hp.hpl.jena.sparql.syntax.Element;
 
 
 public class QueryExecutionUtils {
@@ -39,6 +56,109 @@ public class QueryExecutionUtils {
     public static final Var vp = Var.alloc("p");
     public static final Var vo = Var.alloc("o");
 
+
+    public static void abortAfterFirstRow(QueryExecution qe) {
+        Query query = qe.getQuery();
+        assert query != null : "QueryExecution did not tell us which query it is bound to - query was null";
+        int queryType = query.getQueryType();
+
+        try {
+            switch (queryType) {
+            case Query.QueryTypeAsk:
+                qe.execAsk();
+                break;
+            case Query.QueryTypeConstruct:
+                Iterator<Triple> itC = qe.execConstructTriples();
+                itC.hasNext();
+                break;
+            case Query.QueryTypeDescribe:
+                Iterator<Triple> itD = qe.execDescribeTriples();
+                itD.hasNext();
+                break;
+            case Query.QueryTypeSelect:
+                ResultSet rs = qe.execSelect();
+                rs.hasNext();
+                break;
+            default:
+                throw new RuntimeException("Unknown query type - should not happen: queryType = " + queryType);
+            }
+        } finally {
+            qe.abort();
+        }
+    }
+
+    /**
+     * Consumes the full response (result set or triples) of a QueryExecution
+     * Only uses the iterator-based methods to avoid cluttering up the heap
+     *
+     * @param qe
+     */
+    public static long consume(QueryExecution qe) {
+        Query query = qe.getQuery();
+        assert query != null : "QueryExecution did not tell us which query it is bound to - query was null";
+        int queryType = query.getQueryType();
+
+        long result;
+        switch (queryType) {
+        case Query.QueryTypeAsk:
+            qe.execAsk();
+            result = 1;
+            break;
+        case Query.QueryTypeConstruct:
+            Iterator<Triple> itC = qe.execConstructTriples();
+            result = Iterators.size(itC);
+            break;
+        case Query.QueryTypeDescribe:
+            Iterator<Triple> itD = qe.execDescribeTriples();
+            result = Iterators.size(itD);
+            break;
+        case Query.QueryTypeSelect:
+            ResultSet rs = qe.execSelect();
+            result = ResultSetFormatter.consume(rs);
+            break;
+        default:
+            throw new RuntimeException("Unknown query type - should not happen: queryType = " + queryType);
+        }
+
+        return result;
+    }
+
+
+
+    public static Iterator<Quad> findQuads(QueryExecutionFactory qef, Node g, Node s, Node p, Node o) {
+        Quad quad = new Quad(g, s, p, o);
+        Query query = QueryGenerationUtils.createQueryQuad(new Quad(g, s, p, o));
+        BindingMapper<Quad> mapper = new BindingMapperQuad(quad);
+        Iterator<Quad> result = BindingMapperUtils.execMapped(qef, query, mapper);
+        return result;
+    }
+
+    public static void tryClose(Object obj) {
+        if(obj instanceof AutoCloseable) {
+            try {
+                ((AutoCloseable) obj).close();
+            } catch (Exception e) {
+                logger.warn("Exception while closing", e);
+            }
+        } else if(obj instanceof Closeable) {
+            ((Closeable) obj).close();
+        }
+    }
+
+    /**
+     * Exec construct with wrapper to extended iterator
+     * @param qef
+     * @param query
+     * @return
+     */
+    public static ExtendedIterator<Triple> execConstruct(QueryExecutionFactory qef, Query query) {
+        QueryExecution qe = qef.createQueryExecution(query);
+        Iterator<Triple> it = qe.execConstructTriples();
+
+        ExtendedIteratorClosable<Triple> result = ExtendedIteratorClosable.create(it, () -> { tryClose(it); qe.close();});
+        //WrappedIterator<Triple> result = WrappedIterator.<Triple>createNoRemove(it);
+        return result;
+    }
 
     public static boolean validate(QueryExecutionFactory qef, boolean suppressException) {
 
@@ -96,7 +216,45 @@ public class QueryExecutionUtils {
         return result;
     }
 
+
+
     public static long countQuery(Query query, QueryExecutionFactory qef) {
+        boolean needsWrapping = !query.getGroupBy().isEmpty() || !query.getAggregators().isEmpty();
+
+        boolean useCountDistinct = !needsWrapping && query.isDistinct() && query.isQueryResultStar();
+
+        //boolean isDistinct = query.isDistinct();
+
+
+        Aggregator agg = useCountDistinct
+                ? new AggCountDistinct()
+                : new AggCount();
+
+        Query cQuery = new Query();
+        cQuery.setQuerySelectType();
+        cQuery.setPrefixMapping(query.getPrefixMapping());
+        cQuery.getProject().add(Vars.c, new ExprAggregator(Vars.x, agg));
+
+        Element queryPattern;
+        if(needsWrapping) {
+            Query q = query.cloneQuery();
+            q.setPrefixMapping(new PrefixMappingImpl());
+            queryPattern = new ElementSubQuery(q);
+        } else {
+            queryPattern = query.getQueryPattern();
+        }
+
+
+        cQuery.setQueryPattern(queryPattern);
+//System.out.println("CQUERY: " + cQuery);
+        QueryExecution qe = qef.createQueryExecution(cQuery);
+        long result = ServiceUtils.fetchInteger(qe, Vars.c);
+
+        return result;
+    }
+
+    @Deprecated // Remove once countQuery works as espected
+    public static long countQueryOld(Query query, QueryExecutionFactory qef) {
         Var outputVar = Var.alloc("_c_");
 
         if(query.isConstructType()) {

@@ -23,22 +23,22 @@ import org.aksw.jena_sparql_api.utils.SetDatasetGraph;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Sets;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.sparql.core.BasicPattern;
-import com.hp.hpl.jena.sparql.core.DatasetGraph;
-import com.hp.hpl.jena.sparql.core.DatasetGraphFactory;
-import com.hp.hpl.jena.sparql.core.Quad;
-import com.hp.hpl.jena.sparql.engine.binding.Binding;
-import com.hp.hpl.jena.sparql.modify.request.QuadAcc;
-import com.hp.hpl.jena.sparql.modify.request.UpdateDataDelete;
-import com.hp.hpl.jena.sparql.modify.request.UpdateDataInsert;
-import com.hp.hpl.jena.sparql.modify.request.UpdateDeleteWhere;
-import com.hp.hpl.jena.sparql.modify.request.UpdateModify;
-import com.hp.hpl.jena.sparql.syntax.Element;
-import com.hp.hpl.jena.update.Update;
-import com.hp.hpl.jena.util.iterator.ExtendedIterator;
+import org.apache.jena.graph.Node;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.sparql.core.BasicPattern;
+import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.core.DatasetGraphFactory;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.modify.request.QuadAcc;
+import org.apache.jena.sparql.modify.request.UpdateDataDelete;
+import org.apache.jena.sparql.modify.request.UpdateDataInsert;
+import org.apache.jena.sparql.modify.request.UpdateDeleteWhere;
+import org.apache.jena.sparql.modify.request.UpdateModify;
+import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.update.Update;
+import org.apache.jena.util.iterator.ExtendedIterator;
 
 public class UpdateDiffUtils {
 
@@ -111,6 +111,7 @@ public class UpdateDiffUtils {
 
         return result;
     }
+
 
     public static Iterator<Diff<Set<Quad>>> createIteratorDiff(QueryExecutionFactory qef, UpdateDeleteWhere update, int batchSize) {
 

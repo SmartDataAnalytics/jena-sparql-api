@@ -1,0 +1,5 @@
+PREFIX : <http://www.example.org/>
+
+SELECT  ?z WHERE {
+	?x ?z ?y .
+}

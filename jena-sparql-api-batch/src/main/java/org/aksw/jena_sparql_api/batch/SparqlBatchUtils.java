@@ -52,7 +52,8 @@ public class SparqlBatchUtils {
                         for(StepExecution stepExecution : stepExecutions) {
                             BatchStatus stepStatus = stepExecution.getStatus();
 
-                            if(!BatchStatus.STOPPED.equals(stepStatus)) {
+                            //if(!BatchStatus.STOPPED.equals(stepStatus)) {
+                            if(!BatchStatus.COMPLETED.equals(stepStatus)) {
                                 stepExecution.setStatus(BatchStatus.STOPPED);
                                 stepExecution.setEndTime(endTime);
                                 jobRepository.update(stepExecution);
@@ -62,7 +63,8 @@ public class SparqlBatchUtils {
                         BatchStatus jobStatus = jobExecution.getStatus();
                         //jobExecution.isRunning()
                         //if(jobStatus.equals(BatchStatus.STARTED)) {
-                        if(!BatchStatus.STOPPED.equals(jobStatus)) {
+                        //if(!BatchStatus.STOPPED.equals(jobStatus)) {
+                        if(!BatchStatus.COMPLETED.equals(jobStatus)) {
                             jobExecution.setStatus(BatchStatus.STOPPED);
                             jobExecution.setEndTime(endTime);
                             jobRepository.update(jobExecution);

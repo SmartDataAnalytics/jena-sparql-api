@@ -1,77 +1,99 @@
 package org.aksw.jena_sparql_api.mapper.model;
 
 import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
-import org.aksw.jena_sparql_api.mapper.context.RdfPopulationContext;
+import org.aksw.jena_sparql_api.beans.model.PropertyOps;
+import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
+import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
 import org.aksw.jena_sparql_api.mapper.context.TypedNode;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
-import org.springframework.beans.BeanWrapper;
-import org.springframework.beans.BeanWrapperImpl;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
 
+import com.google.common.base.Defaults;
 import com.google.common.collect.Iterables;
-import com.hp.hpl.jena.graph.Graph;
-import com.hp.hpl.jena.graph.GraphUtil;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Triple;
 
 public class RdfPopulatorPropertySingle
     extends RdfPopulatorPropertyBase
 {
-    public RdfPopulatorPropertySingle(String propertyName, Node predicate, RdfType targetRdfType) { // String fetchMode) {
-        super(propertyName, predicate, targetRdfType);
+    public RdfPopulatorPropertySingle(
+            PropertyOps propertyOps,
+            Node predicate,
+            RdfType targetRdfType,
+            BiFunction<Object, Object, Node> createTargetIri) { // String fetchMode) {
+        super(propertyOps, predicate, targetRdfType, createTargetIri);
     }
 
     @Override
-    public void emitTriples(Graph out, Object obj, Node subject) {
-        BeanWrapper beanWrapper = new BeanWrapperImpl(obj);
-        Object value = beanWrapper.getPropertyValue(propertyName);
+    public void emitTriples(RdfEmitterContext emitterContext, Object entity, Node subject, Graph shapeGraph, Consumer<Triple> outSink) {
+        Object value = propertyOps.getValue(entity);
 
         if(value != null) {
+            Supplier<Node> defaultNodeGenerator = createTargetNode == null
+                    ? null
+                    : () -> createTargetNode.apply(entity, value);
 
-            Node o = targetRdfType.getRootNode(value);
-
-    //        Triple tmp = RelationUtils.extractTriple(relation);
-    //        Node p = tmp.getPredicate();
-
-            //Quad t = new Quad(Quad.defaultGraphIRI, subject, p, o);
+            Node o = emitterContext.requestResolution(value);//, targetRdfType, defaultNodeGenerator);
             Triple t = new Triple(subject, predicate, o);
-            out.add(t);
+            outSink.accept(t);
+            
+            // maybe we should write triples to the emitter context, as references
+            // need to be resolved anyway
+            //emitterContext.accept(t);
         }
-
-        //RdfPopulationContext emitterContext;
-        //emitterContext.g
-        //emitterContext.$(value, obj, propertyName);
-//        if(!out.contains(t)) {
-//
-//            targetRdfType.writeGraph(out, obj);
-//        }
     }
 
     @Override
-    public void populateBean(RdfPopulationContext populationContext, Object bean, Graph graph, Node subject) {
-//		Class<?> beanClass = bean.getClass();
-//		RdfType rdfType = populationContext.forJavaType(beanClass);
-//		RdfClass rdfClass = (RdfClass)rdfType;
-//		RdfPropertyDescriptor propertyDescriptor = rdfClass.getPropertyDescriptors(propertyName);
-//		RdfType targetRdfType = propertyDescriptor.getRdfType();
+    public void populateEntity(RdfPersistenceContext persistenceContext, Object entity, Graph inGraph, Node subject, Consumer<Triple> outSink) {
+        List<Triple> triples = inGraph.find(subject, predicate, Node.ANY).toList();
 
-        List<Node> objects = GraphUtil.listObjects(graph, subject, predicate).toList();
-        Node node = Iterables.getFirst(objects, null);
+        Triple t = Iterables.getFirst(triples, null);
 
-        TypedNode typedNode = new TypedNode(targetRdfType, node);
+        Node node;
+        if(t != null) {
+            node = t.getObject();
+            outSink.accept(t);
+        } else {
+            node = null;
+        }
 
-        Object value = node == null
-                ? null
-                : populationContext.objectFor(typedNode)
-                ;//rdfType.createJavaObject(node);
+        if(node == null) {
+        	if(createTargetNode != null) {
+	        	Object childEntity = propertyOps.getValue(entity);
+	        	if(childEntity != null) {
+	        		node = createTargetNode.apply(entity, childEntity);
+	        	}
+        	}
+        }
+        
+        if(node != null) {
+        	persistenceContext.requestResolution(propertyOps, entity, node);
+        }
+ 
+        //persistenceContext.requestResolution(entity, propertyOps, subject, rdfType);
 
-        BeanWrapper beanWrapper = new BeanWrapperImpl(bean);
-        beanWrapper.setPropertyValue(propertyName, value);
+               
+//        Object value = node == null
+//                ? null
+//                : persistenceContext.entityFor(new TypedNode(targetRdfType, node))
+//                ;//rdfType.createJavaObject(node);
+//
+//
+//        // We cannot set property values of primitive types to null
+//        Class<?> valueType = propertyOps.getType();
+//        if(value == null && valueType.isPrimitive()) {
+//            value = Defaults.defaultValue(valueType);
+//        }
+//        propertyOps.setValue(entity, value);
     }
 
     @Override
     public void exposeShape(ResourceShapeBuilder shapeBuilder) {
-        shapeBuilder.outgoing(predicate);
+        shapeBuilder.out(predicate);
 //		ResourceShapeBuilder targetShape = shapeBuilder.outgoing(predicate);
 
 //		if("eager".equals(fetchMode)) {
@@ -79,9 +101,23 @@ public class RdfPopulatorPropertySingle
 //		}
     }
 
+    @Override
+    public String toString() {
+        return "RdfPopulatorPropertySingle [propertyName=" + propertyOps.getName()
+                + ", predicate=" + predicate + ", targetRdfType="
+                + targetRdfType + "]";
+    }
+
+    @Override
+    public PropertyOps getPropertyOps() {
+        return propertyOps;
+    }
+
 //	@Override
 //	public Object readPropertyValue(Graph graph, Node subject) {
 //		// TODO Auto-generated method stub
 //		return null;
 //	}
+    
+    
 }

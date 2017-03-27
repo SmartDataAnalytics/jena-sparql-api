@@ -2,19 +2,16 @@ package org.aksw.jena_sparql_api.http;
 
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionDecorator;
-import org.apache.jena.atlas.web.HttpException;
 
 import com.google.common.base.Supplier;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.query.ResultSetFactory;
-import com.hp.hpl.jena.sparql.engine.http.QueryExceptionHTTP;
-import com.hp.hpl.jena.sparql.engine.iterator.QueryIterNullIterator;
-import com.hp.hpl.jena.sparql.resultset.ResultSetException;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.ResultSetFactory;
+import org.apache.jena.sparql.engine.iterator.QueryIterNullIterator;
+import org.apache.jena.sparql.resultset.ResultSetException;
 
 public class QueryExecutionHttpWrapper
     extends QueryExecutionDecorator
@@ -68,14 +65,8 @@ public class QueryExecutionHttpWrapper
                     f = new RuntimeException(e);
                 }
 
-            } else if(e instanceof HttpException) {
-                HttpException x = (HttpException)e;
-                f = new HttpException(x.getResponse(), e);
-            } else if(e instanceof  QueryExceptionHTTP) {
-                QueryExceptionHTTP x = (QueryExceptionHTTP)e;
-                f = new QueryExceptionHTTP(x.getResponseMessage() + " ", e);
             } else {
-                f = new RuntimeException(e);
+                f = HttpExceptionUtils.makeHumanFriendly(e);
             }
 
             throw f;

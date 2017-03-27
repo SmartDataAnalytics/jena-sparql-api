@@ -6,14 +6,14 @@ import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.utils.Vars;
 
 import com.google.common.base.Functions;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.sparql.expr.E_OneOf;
-import com.hp.hpl.jena.sparql.expr.Expr;
-import com.hp.hpl.jena.sparql.expr.ExprList;
-import com.hp.hpl.jena.sparql.expr.ExprVar;
-import com.hp.hpl.jena.sparql.expr.NodeValue;
-import com.hp.hpl.jena.sparql.syntax.Element;
-import com.hp.hpl.jena.sparql.syntax.ElementFilter;
+import org.apache.jena.graph.Node;
+import org.apache.jena.sparql.expr.E_OneOf;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprList;
+import org.apache.jena.sparql.expr.ExprVar;
+import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementFilter;
 
 public class LookupServiceListService<V>
     implements LookupService<Node, V>

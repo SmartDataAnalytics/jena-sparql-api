@@ -6,17 +6,17 @@ import java.util.List;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.engine.QueryIterator;
-import com.hp.hpl.jena.sparql.engine.binding.Binding;
-import com.hp.hpl.jena.sparql.engine.binding.BindingFactory;
-import com.hp.hpl.jena.sparql.engine.iterator.QueryIterNullIterator;
-import com.hp.hpl.jena.sparql.engine.iterator.QueryIterPlainWrapper;
-import com.hp.hpl.jena.sparql.expr.NodeValue;
-import com.hp.hpl.jena.sparql.pfunction.PFuncSimple;
-import com.hp.hpl.jena.sparql.pfunction.PropertyFunction;
-import com.hp.hpl.jena.sparql.pfunction.PropertyFunctionFactory;
+import org.apache.jena.graph.Node;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.engine.QueryIterator;
+import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.engine.binding.BindingFactory;
+import org.apache.jena.sparql.engine.iterator.QueryIterNullIterator;
+import org.apache.jena.sparql.engine.iterator.QueryIterPlainWrapper;
+import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.pfunction.PFuncSimple;
+import org.apache.jena.sparql.pfunction.PropertyFunction;
+import org.apache.jena.sparql.pfunction.PropertyFunctionFactory;
 
 /**
  * {
@@ -27,7 +27,8 @@ import com.hp.hpl.jena.sparql.pfunction.PropertyFunctionFactory;
  * @author raven
  *
  */
-public class PropertyFunctionFactoryJsonUnnest implements PropertyFunctionFactory {
+public class PropertyFunctionFactoryJsonUnnest
+    implements PropertyFunctionFactory {
 
     protected Gson gson;
 
@@ -47,7 +48,7 @@ public class PropertyFunctionFactoryJsonUnnest implements PropertyFunctionFactor
         {
             @Override
             public QueryIterator execEvaluated(Binding binding, Node subject, Node predicate, Node object,
-                    com.hp.hpl.jena.sparql.engine.ExecutionContext execCtx) {
+                    org.apache.jena.sparql.engine.ExecutionContext execCtx) {
                 // Get the subject's value
                 Node node = subject.isVariable()
                         ? binding.get((Var)subject)

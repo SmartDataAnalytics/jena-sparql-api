@@ -28,8 +28,8 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.sparql.core.DatasetGraph;
+import org.apache.jena.graph.Node;
+import org.apache.jena.sparql.core.DatasetGraph;
 
 public class ListServiceHop
     implements ListService<Concept, Node, DatasetGraph>
@@ -53,7 +53,7 @@ public class ListServiceHop
         //HashMultimap.<Node, Node>create()
         execRec(root, sourceNodes, result, defaultQef, null);
 
-        MainBatchWorkflow.write(System.out, result);
+        //MainBatchWorkflow.write(System.out, result);
 
         return result;
     }

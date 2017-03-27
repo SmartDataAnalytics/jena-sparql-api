@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.mapper;
 import java.util.List;
 import java.util.Set;
 
-import com.hp.hpl.jena.sparql.core.Var;
+import org.apache.jena.sparql.core.Var;
 
 public class AggList<T>
     implements Agg<List<T>>
@@ -25,8 +25,8 @@ public class AggList<T>
 
     @Override
     public Set<Var> getDeclaredVars() {
-        // TODO Auto-generated method stub
-        return null;
+        Set<Var> result = subAgg.getDeclaredVars();
+        return result;
     }
 
     public static <T> AggList<T> create(Agg<T> subAgg) {

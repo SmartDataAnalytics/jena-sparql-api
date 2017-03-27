@@ -12,9 +12,14 @@ import java.util.Set;
 
 import org.aksw.commons.collections.MapUtils;
 import org.aksw.commons.util.Pair;
+import org.aksw.jena_sparql_api.concept.builder.api.ConceptExpr;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptOps;
 import org.aksw.jena_sparql_api.concepts.Relation;
+import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.SparqlService;
+import org.aksw.jena_sparql_api.lookup.LookupService;
+import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
 import org.aksw.jena_sparql_api.mapper.Agg;
 import org.aksw.jena_sparql_api.mapper.AggDatasetGraph;
 import org.aksw.jena_sparql_api.mapper.AggGraph;
@@ -27,33 +32,36 @@ import org.aksw.jena_sparql_api.utils.Triples;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.query.Query;
+import org.apache.jena.sparql.core.BasicPattern;
+import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.core.QuadPattern;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.expr.E_Equals;
+import org.apache.jena.sparql.expr.E_OneOf;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprList;
+import org.apache.jena.sparql.expr.ExprVar;
+import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.function.FunctionEnv;
+import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementBind;
+import org.apache.jena.sparql.syntax.ElementFilter;
+import org.apache.jena.sparql.syntax.ElementNamedGraph;
+import org.apache.jena.sparql.syntax.ElementSubQuery;
+import org.apache.jena.sparql.syntax.ElementTriplesBlock;
+import org.apache.jena.sparql.syntax.PatternVars;
+import org.apache.jena.sparql.syntax.Template;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import com.hp.hpl.jena.graph.Graph;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.sparql.core.BasicPattern;
-import com.hp.hpl.jena.sparql.core.DatasetGraph;
-import com.hp.hpl.jena.sparql.core.Quad;
-import com.hp.hpl.jena.sparql.core.QuadPattern;
-import com.hp.hpl.jena.sparql.core.Var;
-import com.hp.hpl.jena.sparql.engine.binding.Binding;
-import com.hp.hpl.jena.sparql.expr.E_Equals;
-import com.hp.hpl.jena.sparql.expr.E_OneOf;
-import com.hp.hpl.jena.sparql.expr.Expr;
-import com.hp.hpl.jena.sparql.expr.ExprList;
-import com.hp.hpl.jena.sparql.expr.ExprVar;
-import com.hp.hpl.jena.sparql.expr.NodeValue;
-import com.hp.hpl.jena.sparql.function.FunctionEnv;
-import com.hp.hpl.jena.sparql.syntax.Element;
-import com.hp.hpl.jena.sparql.syntax.ElementFilter;
-import com.hp.hpl.jena.sparql.syntax.ElementNamedGraph;
-import com.hp.hpl.jena.sparql.syntax.ElementSubQuery;
-import com.hp.hpl.jena.sparql.syntax.ElementTriplesBlock;
-import com.hp.hpl.jena.sparql.syntax.PatternVars;
-import com.hp.hpl.jena.sparql.syntax.Template;
 
 
 /**
@@ -131,53 +139,63 @@ import com.hp.hpl.jena.sparql.syntax.Template;
  *
  */
 public class ResourceShape {
-    private Map<Relation, ResourceShape> outgoing = new HashMap<Relation, ResourceShape>();
-    private Map<Relation, ResourceShape> ingoing = new HashMap<Relation, ResourceShape>();
+
+    private static final Logger logger = LoggerFactory.getLogger(ResourceShape.class);
+
+    private Map<Relation, ResourceShape> out = new HashMap<Relation, ResourceShape>();
+    private Map<Relation, ResourceShape> in = new HashMap<Relation, ResourceShape>();
+
+    private ConceptExpr expr;
+
+    public boolean isEmpty() {
+        boolean result = out.isEmpty() && in.isEmpty();
+        return result;
+    }
 
     public Map<Relation, ResourceShape> getOutgoing() {
-        return outgoing;
+        return out;
     }
 
     public Map<Relation, ResourceShape> getIngoing() {
-        return ingoing;
+        return in;
     }
 
     public void extend(ResourceShape that) {
         // TODO Maybe we should create a deep clone of 'that' first
-        this.outgoing.putAll(that.outgoing);
-        this.ingoing.putAll(that.ingoing);
+        this.out.putAll(that.out);
+        this.in.putAll(that.in);
     }
 
 
-    public static List<Concept> collectConcepts(ResourceShape source) {
+    public static List<Concept> collectConcepts(ResourceShape source, boolean includeGraph) {
         List<Concept> result = new ArrayList<Concept>();
-        collectConcepts(result, source);
+        collectConcepts(result, source, includeGraph);
         return result;
     }
 
-    public static void collectConcepts(Collection<Concept> result, ResourceShape source) {
+    public static void collectConcepts(Collection<Concept> result, ResourceShape source, boolean includeGraph) {
         Generator<Var> vargen = VarGeneratorImpl.create("v");
 
-        collectConcepts(result, source, vargen);
+        collectConcepts(result, source, vargen, includeGraph);
     }
 
-    public static void collectConcepts(Collection<Concept> result, ResourceShape source, Generator<Var> vargen) {
+    public static void collectConcepts(Collection<Concept> result, ResourceShape source, Generator<Var> vargen, boolean includeGraph) {
         Concept baseConcept = new Concept((Element)null, Vars.x);
-        collectConcepts(result, baseConcept, source, vargen);
+        collectConcepts(result, baseConcept, source, vargen, includeGraph);
     }
 
-    public static void collectConcepts(Collection<Concept> result, Concept baseConcept, ResourceShape source, Generator<Var> vargen) {
+    public static void collectConcepts(Collection<Concept> result, Concept baseConcept, ResourceShape source, Generator<Var> vargen, boolean includeGraph) {
 
         Map<Relation, ResourceShape> outgoing = source.getOutgoing();
         Map<Relation, ResourceShape> ingoing = source.getIngoing();
 
-        collectConcepts(result, baseConcept, outgoing, false, vargen);
-        collectConcepts(result, baseConcept, ingoing, true, vargen);
+        collectConcepts(result, baseConcept, outgoing, false, vargen, includeGraph);
+        collectConcepts(result, baseConcept, ingoing, true, vargen, includeGraph);
 
         //collectConcepts(result, null, source,);
     }
 
-    public static void collectConcepts(Collection<Concept> result, Concept baseConcept, Map<Relation, ResourceShape> map, boolean isInverse, Generator<Var> vargen) {
+    public static void collectConcepts(Collection<Concept> result, Concept baseConcept, Map<Relation, ResourceShape> map, boolean isInverse, Generator<Var> vargen, boolean includeGraph) {
 
 //        Var baseVar = baseConcept.getVar();
 
@@ -188,7 +206,7 @@ public class ResourceShape {
             for(Relation relation : opt) {
                 //Concept sc = new Concept(relation.getElement(), baseVar);
                 Concept sc = baseConcept;
-                Concept item = createConcept(sc, vargen, relation, isInverse);
+                Concept item = createConcept(sc, vargen, relation, isInverse, includeGraph);
                 result.add(item);
             }
         }
@@ -211,14 +229,14 @@ public class ResourceShape {
                 //Concept sc = new Concept(relation.getElement(), baseVar);
                 Concept sc = baseConcept;
 
-                Concept item = createConcept(sc, vargen, relation, isInverse);
+                Concept item = createConcept(sc, vargen, relation, isInverse, includeGraph);
 
                 //result.add(item);
 
                 // Map the
 
                 // Now use the concept as a base for its children
-                collectConcepts(result, item, target, vargen);
+                collectConcepts(result, item, target, vargen, includeGraph);
             }
 
 
@@ -242,7 +260,7 @@ public class ResourceShape {
             if(e instanceof ElementFilter) {
                 ElementFilter filter = (ElementFilter)e;
                 Expr expr = filter.getExpr();
-                Pair<Var, NodeValue> c = ExprUtils.extractConstantConstraint(expr);
+                Entry<Var, NodeValue> c = ExprUtils.extractConstantConstraint(expr);
                 if(c != null && c.getKey().equals(s)) {
                     Node n = c.getValue().asNode();
                     concretePredicates.add(n);
@@ -265,7 +283,7 @@ public class ResourceShape {
         if(!concretePredicates.isEmpty()) {
             ExprList exprs = new ExprList();
             for(Node node : concretePredicates) {
-                Expr expr = com.hp.hpl.jena.sparql.util.ExprUtils.nodeToExpr(node);
+                Expr expr = org.apache.jena.sparql.util.ExprUtils.nodeToExpr(node);
                 exprs.add(expr);
             }
 
@@ -294,8 +312,8 @@ public class ResourceShape {
         return null;
     }
 
-    public static Query createQuery(ResourceShape resourceShape, Concept filter) {
-        List<Concept> concepts = ResourceShape.collectConcepts(resourceShape);
+    public static Query createQuery(ResourceShape resourceShape, Concept filter, boolean includeGraph) {
+        List<Concept> concepts = ResourceShape.collectConcepts(resourceShape, includeGraph);
 
         Query result = createQuery(concepts, filter);
         return result;
@@ -315,7 +333,7 @@ public class ResourceShape {
 
         List<Concept> tmps = new ArrayList<Concept>();
         for(Concept concept : concepts) {
-            Concept tmp = ConceptOps.intersect(concept, filter);
+            Concept tmp = ConceptOps.intersect(concept, filter, null);
             tmps.add(tmp);
         }
 
@@ -356,25 +374,25 @@ public class ResourceShape {
 //        return result;
 //    }
 
-    public static MappedConcept<DatasetGraph> createMappedConcept2(ResourceShape resourceShape, Concept filter) {
-        Query query = createQuery(resourceShape, filter);
-        System.out.println(query);
+    public static MappedConcept<DatasetGraph> createMappedConcept2(ResourceShape resourceShape, Concept filter, boolean includeGraph) {
+        Query query = createQuery(resourceShape, filter, includeGraph);
+        logger.debug("Created query from resource shape: " + query);
         MappedConcept<DatasetGraph> result = createMappedConcept2(query);
         return result;
     }
 
-    public static MappedConcept<Graph> createMappedConcept(ResourceShape resourceShape, Concept filter) {
-        Query query = createQuery(resourceShape, filter);
-        System.out.println(query);
+    public static MappedConcept<Graph> createMappedConcept(ResourceShape resourceShape, Concept filter, boolean includeGraph) {
+        Query query = createQuery(resourceShape, filter, includeGraph);
+        logger.debug("Created query from resource shape: " + query);
         MappedConcept<Graph> result = createMappedConcept(query);
         return result;
     }
 
     public static MappedConcept<DatasetGraph> createMappedConcept2(Query query) {
-    	QuadPattern qp = new QuadPattern();
-    	qp.add(new Quad(Vars.g, Vars.s, Vars.p, Vars.o));
+        QuadPattern qp = new QuadPattern();
+        qp.add(new Quad(Vars.g, Vars.s, Vars.p, Vars.o));
 
-    	Agg<DatasetGraph> agg = new AggDatasetGraph(qp);
+        Agg<DatasetGraph> agg = new AggDatasetGraph(qp);
 
         Concept concept = new Concept(new ElementSubQuery(query), Vars.x);
 
@@ -384,12 +402,14 @@ public class ResourceShape {
 
 
     public static MappedConcept<Graph> createMappedConcept(Query query) {
+        // TODO We need to include the triple direction in var ?z
+
         BasicPattern bgp = new BasicPattern();
         bgp.add(new Triple(Vars.s, Vars.p, Vars.o));
         Template template = new Template(bgp);
 
         //Agg<Map<Node, Graph>> agg = AggMap.create(new BindingMapperExpr(new ExprVar(Vars.g)), new AggGraph(template));
-        Agg<Graph> agg = new AggGraph(template);
+        Agg<Graph> agg = new AggGraph(template, Vars.z);
 
         Concept concept = new Concept(new ElementSubQuery(query), Vars.x);
 
@@ -401,7 +421,7 @@ public class ResourceShape {
 
         List<Concept> tmps = new ArrayList<Concept>();
         for(Concept concept : concepts) {
-            Concept tmp = ConceptOps.intersect(concept, filter);
+            Concept tmp = ConceptOps.intersect(concept, filter, null);
             tmps.add(tmp);
         }
 
@@ -415,10 +435,14 @@ public class ResourceShape {
                 Query q = new Query();
                 q.setQuerySelectType();
                 q.getProject().add(Vars.x, new ExprVar(Vars.s));
-                q.getProject().add(Vars.g);
+
+                if(vs.contains(Vars.g)) {
+                    q.getProject().add(Vars.g);
+                }
                 q.getProject().add(Vars.s);
                 q.getProject().add(Vars.p);
                 q.getProject().add(Vars.o);
+                q.getProject().add(Vars.z);
                 q.setQueryPattern(e);
 
                 e = new ElementSubQuery(q);
@@ -431,15 +455,21 @@ public class ResourceShape {
 
         Element element = ElementUtils.union(elements);
 
-        Query result = new Query();
-        result.setQuerySelectType();
-        result.getProject().add(Vars.x);
-        result.getProject().add(Vars.g);
-        result.getProject().add(Vars.s);
-        result.getProject().add(Vars.p);
-        result.getProject().add(Vars.o);
-        result.setQueryPattern(element);
+        Query result;
+        if(elements.size() > 1) {
 
+            result = new Query();
+            result.setQuerySelectType();
+            result.getProject().add(Vars.x);
+            result.getProject().add(Vars.g);
+            result.getProject().add(Vars.s);
+            result.getProject().add(Vars.p);
+            result.getProject().add(Vars.o);
+            result.getProject().add(Vars.z);
+            result.setQueryPattern(element);
+        } else{
+            result = ((ElementSubQuery)element).getQuery();
+        }
 
         return result;
     }
@@ -452,7 +482,7 @@ public class ResourceShape {
      * @param isInverse
      * @return
      */
-    public static Concept createConcept(Concept baseConcept, Generator<Var> vargen, Relation predicateRelation, boolean isInverse) {
+    public static Concept createConcept(Concept baseConcept, Generator<Var> vargen, Relation predicateRelation, boolean isInverse, boolean includeGraph) {
         Var sourceVar;
 
         Var baseVar = baseConcept.getVar();
@@ -467,7 +497,11 @@ public class ResourceShape {
         bp.add(triple);
 
         Element etmp = new ElementTriplesBlock(bp);
-        Element e2 = new ElementNamedGraph(Vars.g, etmp);
+
+        Element e2 = includeGraph
+                ? new ElementNamedGraph(Vars.g, etmp)
+                : etmp;
+
 
         Element e;
         if(baseElement != null) {
@@ -479,11 +513,13 @@ public class ResourceShape {
             Map<Var, Var> rename = new HashMap<Var, Var>();
             rename.put(Vars.s, vargen.next());
             rename.put(Vars.p, vargen.next());
+            rename.put(Vars.z, vargen.next());
             rename.put(Vars.o, Vars.s);
 
             rename.put(baseVar, Vars.x);
 
             sourceVar = MapUtils.getOrElse(rename, baseVar, baseVar);
+            //Element e1 = Element
             Element e1 = ElementUtils.createRenamedElement(baseElement, rename);
             e = ElementUtils.mergeElements(e1, e2);
 
@@ -505,6 +541,9 @@ public class ResourceShape {
 
         Element e3 = ElementUtils.createRenamedElement(predicateRelation.getElement(), pc);
         Element newElement = ElementUtils.mergeElements(e, e3);
+
+        Element e4 = new ElementBind(Vars.z, NodeValue.makeBoolean(isInverse));
+        newElement = ElementUtils.mergeElements(newElement, e4);
 
 
         Concept result = new Concept(newElement, sourceVar);
@@ -587,9 +626,9 @@ public class ResourceShape {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((ingoing == null) ? 0 : ingoing.hashCode());
+        result = prime * result + ((in == null) ? 0 : in.hashCode());
         result = prime * result
-                + ((outgoing == null) ? 0 : outgoing.hashCode());
+                + ((out == null) ? 0 : out.hashCode());
         return result;
     }
 
@@ -602,23 +641,43 @@ public class ResourceShape {
         if (getClass() != obj.getClass())
             return false;
         ResourceShape other = (ResourceShape) obj;
-        if (ingoing == null) {
-            if (other.ingoing != null)
+        if (in == null) {
+            if (other.in != null)
                 return false;
-        } else if (!ingoing.equals(other.ingoing))
+        } else if (!in.equals(other.in))
             return false;
-        if (outgoing == null) {
-            if (other.outgoing != null)
+        if (out == null) {
+            if (other.out != null)
                 return false;
-        } else if (!outgoing.equals(other.outgoing))
+        } else if (!out.equals(other.out))
             return false;
         return true;
     }
 
     @Override
     public String toString() {
-        return "ResourceShape [outgoing=" + outgoing + ", ingoing=" + ingoing
+        return "ResourceShape [outgoing=" + out + ", ingoing=" + in
                 + "]";
     }
 
+    public static Graph fetchData(SparqlService sparqlService, ResourceShape shape, Node node) {
+        QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
+
+        Graph result = fetchData(qef, shape, node);
+        return result;
+    }
+
+
+    public static Graph fetchData(QueryExecutionFactory qef, ResourceShape shape, Node node) {
+        MappedConcept<Graph> mc = ResourceShape.createMappedConcept(shape, null, false);
+        LookupService<Node, Graph> ls = LookupServiceUtils.createLookupService(qef, mc);
+        Map<Node, Graph> map = ls.apply(Collections.singleton(node));
+//        if(map.size() > 1) {
+//            throw new RuntimeException("Should not happen");
+//        }
+
+        Graph result = map.isEmpty() ? null : map.values().iterator().next();
+        return result;
+
+    }
 }

@@ -7,5 +7,5 @@ package org.aksw.jena_sparql_api.delay.extra;
  *         Time: 10:57 AM
  */
 public interface Delayer {
-    void doDelay();
+    void doDelay() throws InterruptedException;
 }

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- NOTE: This is an empty package, as it turned out that there was no
+        need for common resources. Yet, its easier to leave this package rather
+        than to remove it from all referencing modules. -->
+
+    <artifactId>sparqlqc-impl-fragment</artifactId>
+    <packaging>jar</packaging>
+
+    <parent>
+        <groupId>org.aksw.sparqlqc</groupId>
+        <artifactId>sparqlqc-benchmark</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <dependencies>
+    </dependencies>
+
+    <!-- <build> -->
+    <!-- <plugins> -->
+    <!-- <plugin> -->
+    <!-- <groupId>org.apache.felix</groupId> -->
+    <!-- <artifactId>maven-bundle-plugin</artifactId> -->
+    <!-- <version>3.2.0</version> -->
+    <!-- <extensions>true</extensions> -->
+    <!-- <configuration> -->
+    <!-- <instructions> -->
+    <!-- <Embed-Dependency>*;scope=compile|runtime</Embed-Dependency> -->
+    <!-- <Embed-Transitive>true</Embed-Transitive> -->
+    <!-- <Bundle-Activator>fr.inrialpes.tyrexmo.qcwrapper.lmu.Activator</Bundle-Activator> -->
+    <!-- <Import-Package>*;resolution:=optional</Import-Package> -->
+    <!-- </instructions> -->
+    <!-- </configuration> -->
+    <!-- </plugin> -->
+    <!-- </plugins> -->
+    <!-- </build> -->
+
+</project>

@@ -8,10 +8,10 @@ import org.aksw.jena_sparql_api.utils.ClauseUtils;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.sparql.core.Quad;
-import com.hp.hpl.jena.sparql.expr.Expr;
-import com.hp.hpl.jena.sparql.graph.NodeTransform;
+import org.apache.jena.graph.Node;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.graph.NodeTransform;
 
 public class QfpSummary {
     private Set<Quad> quads;

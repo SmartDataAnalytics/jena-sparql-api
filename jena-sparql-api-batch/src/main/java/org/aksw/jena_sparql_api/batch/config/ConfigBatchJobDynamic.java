@@ -1,7 +1,10 @@
 package org.aksw.jena_sparql_api.batch.config;
 
+import java.util.Arrays;
+
 import org.aksw.jena_sparql_api.batch.BatchWorkflowManager;
-import org.aksw.jena_sparql_api.spring.conversion.ConverterRegistryPostProcessor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.configuration.ListableJobLocator;
 import org.springframework.batch.core.configuration.annotation.AbstractBatchConfiguration;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
@@ -10,13 +13,17 @@ import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.batch.core.launch.support.SimpleJobOperator;
 import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.scope.JobScope;
+import org.springframework.batch.core.scope.StepScope;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.convert.support.ConfigurableConversionService;
-import org.springframework.core.convert.support.DefaultConversionService;
 
 
 
@@ -59,7 +66,10 @@ class ItemProcessorSparqlResultSet
 @ComponentScan({"org.aksw.jena_sparql_api.batch.step"})
 @EnableBatchProcessing
 public class ConfigBatchJobDynamic
+    implements ApplicationContextAware
 {
+    
+    private static final Logger logger = LoggerFactory.getLogger(ConfigBatchJobDynamic.class);
 
 //    @Configuration
 //    @Import(ConfigServicesCore.class)
@@ -87,5 +97,31 @@ public class ConfigBatchJobDynamic
         return result;
     }
 
+    @Override
+    public void setApplicationContext(ApplicationContext ctx) throws BeansException {
+        DefaultListableBeanFactory beanFactory = (DefaultListableBeanFactory)((ConfigurableApplicationContext)ctx).getBeanFactory();
+        logger.info("Application context contains: " + Arrays.toString(beanFactory.getRegisteredScopeNames()));
+    }
+
+//    @Bean
+//    public JobScope jobScope() {
+//        JobScope result = new JobScope();
+//        return result;
+//    }
+//
+//    @Bean
+//    public StepScope stepScope() {
+//        StepScope result = new StepScope();
+//        return result;
+//    }
+
+//    @Bean
+//    @Autowired
+//    // JobScope jobScope,
+//    public String deleteThisTest(StepScope stepScope) {
+//        //System.out.println(jobScope);
+//        System.out.println(stepScope);
+//        return "yay";
+//    }
 
 }

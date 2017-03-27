@@ -1,8 +1,10 @@
 package org.aksw.jena_sparql_api.sparql.ext.http;
 
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.function.Supplier;
 
 import org.aksw.jena_sparql_api.sparql.ext.json.NodeValueJson;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -10,14 +12,11 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
-import org.springframework.util.StreamUtils;
+import org.apache.jena.graph.Node;
+import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.function.FunctionBase1;
 
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.google.common.net.MediaType;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.sparql.expr.NodeValue;
-import com.hp.hpl.jena.sparql.function.FunctionBase1;
 
 /**
  * jsonLiteral jsonp(jsonLiteral, queryString)
@@ -39,11 +38,11 @@ public class E_Http
     private Supplier<HttpClient> httpClientSupplier;
 
     public E_Http() {
-        this(new DefaultHttpClient());
+        this(() -> new DefaultHttpClient());
     }
 
     public E_Http(HttpClient httpClient) {
-        this(Suppliers.ofInstance(httpClient));
+        this(() -> httpClient);
     }
 
     public E_Http(Supplier<HttpClient> httpClientSupplier) {
@@ -64,6 +63,10 @@ public class E_Http
     }
 
     public NodeValue _exec(NodeValue nv) throws Exception {
+//        if(true) {
+//            return NodeValue.nvNothing;
+//        }
+
         String url;
         if(nv.isString()) {
             url = nv.getString();
@@ -80,7 +83,7 @@ public class E_Http
             try {
                 request = new HttpGet(url);
 
-                System.out.println("HTTP Request: " + request);
+                //System.out.println("HTTP Request: " + request);
 
                 // add request header
                 //request.addHeader("User-Agent", USER_AGENT)
@@ -93,7 +96,8 @@ public class E_Http
 
                 if(statusCode == 200) {
                     //String str = StreamUtils.toString(entity.getContent());
-                    String str = StreamUtils.copyToString(entity.getContent(), Charset.forName("UTF-8"));
+
+                    String str = IOUtils.toString(entity.getContent(), StandardCharsets.UTF_8); //, Charset.forName("UTF-8"));
 
                     Header contentType = entity.getContentType();
                     String contentTypeValue = contentType.getValue();
@@ -123,4 +127,12 @@ public class E_Http
 
         return result;
     }
+
+//    public static void main(String[] args) {
+//        E_Http expr = new E_Http();
+//        for(int i  = 0; i < 1000; ++i) {
+//            NodeValue res = expr.exec(NodeValue.makeNode(NodeFactory.createURI("http://cstadler.aksw.org")));
+//            System.out.println(res);
+//        }
+//    }
 }

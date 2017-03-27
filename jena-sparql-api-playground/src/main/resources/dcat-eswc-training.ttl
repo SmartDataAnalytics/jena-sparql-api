@@ -1,0 +1,76 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+@prefix o: <http://example.org/ontology/> .
+
+@prefix r: <http://example.org/resource/> .
+
+
+###############################################################################
+# Main Dataset
+###############################################################################
+
+r:data-eswc-training
+  a o:Dataset ;
+  rdfs:label "training-dataset" ;
+  .
+
+r:dist-sparql-data-eswc-training-1
+  a o:SparqlEndpointDistribution ;
+  o:of r:data-eswc-training ;
+  o:service <http://localhost:8890/sparql> ;
+  o:graph [
+    rdf:_1 <http://2016.eswc-conferences.org/training_dataset.nt>
+  ] ;
+  .
+
+
+###############################################################################
+# File based distribution (e.g. for loading into spark)
+###############################################################################
+#r:dist-url-data-eswc-training-1
+#  a o:UrlDistribution ;
+#  o:of r:data-eswc-training ;
+#  o:url <file:///home/raven/Projects/Eclipse/Spark-RDF/tmp/eswc-training_ict_project_partners_database_2007_2011.nt>
+#  .
+
+
+
+
+###############################################################################
+# Predicate Join Summary
+###############################################################################
+
+r:data-pjs-eswc-training-1
+  a o:Dataset ;
+  o:predicateJoinSummaryOf r:data-eswc-training ;
+  .
+
+r:dist-sparql-data-pjs-eswc-training-1
+  a o:SparqlEndpointDistribution ;
+  o:of r:data-pjs-eswc-training-1 ;
+  o:service <http://localhost:8890/sparql> ;
+  o:graph [
+    rdf:_1 <http://2016.eswc-conferences.org/training_dataset.nt/summary/predicate-join/>
+  ] ;
+  .
+
+
+###############################################################################
+# Predicate Summary
+###############################################################################
+
+r:data-ps-eswc-training-1
+  a o:Dataset ;
+  o:predicateSummaryOf r:data-eswc-training-1 ;
+  .
+
+
+r:dist-sparql-data-ps-eswc-training-1
+  a o:SparqlEndpointDistribution ;
+  o:of r:data-eswc-training ;
+  o:service <http://localhost:8890/sparql> ;
+  o:graph [
+    rdf:_1 <http://2016.eswc-conferences.org/training_dataset.nt/summary/predicate/>
+  ] ;
+  .

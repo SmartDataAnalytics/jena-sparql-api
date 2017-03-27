@@ -6,9 +6,9 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hp.hpl.jena.query.QuerySolution;
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.sparql.engine.binding.Binding;
+import org.apache.jena.query.QuerySolution;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.sparql.engine.binding.Binding;
 
 
 /**
@@ -74,10 +74,13 @@ public class ResultSetClose
         if(!isClosed) {
             boolean hasNext;
 
+            // If an exception occurs, still try to close first
+            Exception tmp = null;
             try {
                 hasNext = decoratee.hasNext();
             } catch(Exception e) {
                 hasNext = false;
+                tmp = e;
             }
 
             if(!hasNext) {
@@ -88,6 +91,10 @@ public class ResultSetClose
                 catch(Exception e) {
                     logger.error("Error closing an object supposedly underlying a Jena ResultSet", e);
                 }
+            }
+
+            if(tmp != null) {
+                throw new RuntimeException(tmp);
             }
         }
         return isClosed;

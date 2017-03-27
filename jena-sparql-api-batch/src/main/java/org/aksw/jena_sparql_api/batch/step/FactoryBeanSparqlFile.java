@@ -6,8 +6,8 @@ import org.aksw.jena_sparql_api.core.SparqlServiceImpl;
 import org.aksw.jena_sparql_api.model.QueryExecutionFactoryModel;
 import org.springframework.beans.factory.config.AbstractFactoryBean;
 
-import com.hp.hpl.jena.graph.Graph;
-import com.hp.hpl.jena.query.QueryExecution;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.query.QueryExecution;
 
 public class FactoryBeanSparqlFile
     extends AbstractFactoryBean<SparqlService>
