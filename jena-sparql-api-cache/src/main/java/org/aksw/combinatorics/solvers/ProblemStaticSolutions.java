@@ -18,18 +18,18 @@ public class ProblemStaticSolutions<S, T>
         super();
         this.solutions = solutions;
     }
-    
+
 //    @Override
 //    public int compareTo(Problem<S> o) {
 //        return
 //    }
-    
+
     public boolean isEmpty() {
         return solutions.isEmpty();
     }
 
     @Override
-    public long getEstimatedCost() 
+    public long getEstimatedCost()
     {
         return solutions.size();
     }
@@ -48,4 +48,9 @@ public class ProblemStaticSolutions<S, T>
     public Collection<T> getSourceNeighbourhood() {
         return neighborhood;
     }
+
+	@Override
+	public String toString() {
+		return "ProblemStaticSolutions [solutions=" + solutions + ", neighborhood=" + neighborhood + "]";
+	}
 }

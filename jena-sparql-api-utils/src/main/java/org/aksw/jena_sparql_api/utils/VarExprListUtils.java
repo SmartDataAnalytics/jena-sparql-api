@@ -68,14 +68,19 @@ public class VarExprListUtils {
         boolean changed = false ;
         for ( Var v : vars )
         {
+        	Expr newVE = exprTransform.transform(new ExprVar(v));
+        	Var newV = newVE == null ? v : ((ExprVar)newVE).asVar();
+
+        	changed = !v.equals(newV);
+
             Expr e = varExpr.getExpr(v) ;
             Expr e2 =  e ;
             if ( e != null )
                 e2 = transform(e, exprTransform) ;
             if ( e2 == null )
-                varExpr2.add(v) ;
+                varExpr2.add(newV) ;
             else
-                varExpr2.add(v, e2) ;
+                varExpr2.add(newV, e2) ;
             if ( e != e2 )
                 changed = true ;
         }
@@ -95,9 +100,9 @@ public class VarExprListUtils {
         for(Var v : src.getVars()) {
             Expr e = src.getExpr(v);
             if(e == null) {
-                src.add(v);
+                dst.add(v);
             } else {
-                src.add(v, e);
+                dst.add(v, e);
             }
         }
     }

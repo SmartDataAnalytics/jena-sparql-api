@@ -2,12 +2,15 @@ package org.aksw.jena_sparql_api.mapper.context;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import org.aksw.commons.collections.reversible.ReversibleMap;
+import org.aksw.commons.collections.reversible.ReversibleMapImpl;
 import org.aksw.jena_sparql_api.beans.model.PropertyOps;
 import org.aksw.jena_sparql_api.mapper.impl.engine.EntityGraphMap;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
@@ -15,29 +18,31 @@ import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.graph.Node;
 
 import com.google.common.collect.ClassToInstanceMap;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multimaps;
 import com.google.common.collect.MutableClassToInstanceMap;
 
 public class RdfPersistenceContextImpl
     implements RdfPersistenceContext
 {
-	protected Set<Object> managedEntities = Sets.newIdentityHashSet();
-	
+    protected Set<Object> managedEntities = Sets.newIdentityHashSet();
+
     protected RdfTypeFactory typeFactory;
 
     protected Map<Object, Node> entityToPrimaryNode = new IdentityHashMap<>();
-    
+
     //protected Map<RdfType, Map<Node, Object>> typeToNodeToEntity;
     protected Map<Node, ClassToInstanceMap<Object>> nodeToTypeToEntity = new HashMap<>();
-    
+
     //protected Frontier<ResolutionRequest>
     protected List<ResolutionRequest> resolutionRequests = new ArrayList<>();
-    
-    
-    
-    protected Map<EntityId, Object> idToEntity = new HashMap<>();
-    protected Map<Object, EntityId> entityToId = new IdentityHashMap<>();
+
+    //protected Multimap<Object, EntityId> entity
+
+    protected ReversibleMap<EntityId, Object> idToEntity = new ReversibleMapImpl<>(new HashMap<>(), Multimaps.newSetMultimap(Maps.newIdentityHashMap(), HashSet::new));
+    //protected Map<Object, EntityId> entityToId = new IdentityHashMap<>();
     protected EntityGraphMap<EntityId> entityGraphMap = new EntityGraphMap<EntityId>();
-    
+
     public Map<Object, Node> getPrimaryNodeMap() {
         return entityToPrimaryNode;
     }
@@ -45,12 +50,12 @@ public class RdfPersistenceContextImpl
     public List<ResolutionRequest> getResolutionRequests() {
         return resolutionRequests;
     }
-    
+
     @Override
     public Set<Object> getManagedEntities() {
-    	return managedEntities;
+        return managedEntities;
     }
-    
+
     @Override
     public void requestResolution(PropertyOps propertyOps, Object entity,
             Node node) {
@@ -61,11 +66,11 @@ public class RdfPersistenceContextImpl
     @Override
     public Object entityFor(Class<?> clazz, Node node, Supplier<Object> newInstance) {
         ClassToInstanceMap<Object> typeToEntity = nodeToTypeToEntity.computeIfAbsent(node, (x) -> MutableClassToInstanceMap.create());
-        
+
         Object result = newInstance != null
                 ? typeToEntity.computeIfAbsent(clazz, (type) -> newInstance.get())
                 : typeToEntity.get(clazz);
-        
+
         return result;
     }
 
@@ -74,21 +79,21 @@ public class RdfPersistenceContextImpl
         return entityGraphMap;
     }
 
-	@Override
-	public Map<EntityId, Object> getIdToEntityMap() {
-		return idToEntity;
-	}
+    @Override
+    public ReversibleMap<EntityId, Object> getIdToEntityMap() {
+        return idToEntity;
+    }
 
-	@Override
-	public Map<Object, EntityId> getEntityToIdMap() {
-		return entityToId;
-	}
-    
+    @Override
+    public Map<Object, EntityId> getEntityToIdMap() {
+        // TODO Auto-generated method stub
+        return null;
+    }
 
-    
-    
-    
-//    
+
+
+
+//
 //    protected EntityContext<Object> entityContext = EntityContextImpl.createIdentityContext(Object.class);
 //    protected EntityContext<TypedNode> typedNodeContext = new EntityContextImpl<TypedNode>();
 //
@@ -106,8 +111,8 @@ public class RdfPersistenceContextImpl
 //    public Frontier<TypedNode> getFrontier() {
 //        return frontier;
 //    }
-//    
-//    
+//
+//
 //
 ////	public void setFrontier(Frontier<TypedNode> frontier) {
 ////		this.frontier = frontier;
@@ -149,7 +154,7 @@ public class RdfPersistenceContextImpl
 //
 //        // Check if there is already a java object for the given class with the given id
 //        Object result = typedNodeContext.getAttribute(typedNode, "entity", null);
-//        if(result == null) {            
+//        if(result == null) {
 //            result = rdfType.createJavaObject(node, null);
 //            typedNodeContext.setAttribute(typedNode, "entity", result);
 //        }
@@ -161,7 +166,7 @@ public class RdfPersistenceContextImpl
 //
 //        return result;
 //    }
-//    
+//
 //
 //    /**
 //     * TODO It could happen that multiple typedNodes map to the same entity
@@ -208,7 +213,7 @@ public class RdfPersistenceContextImpl
 //        }
 //        Node result = persistenceContext.getRawRootNode(entity);
 //        if(result == null) {
-//            
+//
 //            Class<?> clazz = entity.getClass();
 //            RdfType rdfType = typeFactory.forJavaType(clazz);
 //            result = rdfType.getRootNode(entity);
@@ -227,17 +232,17 @@ public class RdfPersistenceContextImpl
 //    @Override
 //    public void put(Node node, Object entity) {
 //        RdfType rdfType = typeFactory.forJavaType(entity.getClass());
-//        TypedNode typedNode = new TypedNode(rdfType, node);        
+//        TypedNode typedNode = new TypedNode(rdfType, node);
 //
 //        typedNodeContext.setAttribute(typedNode, "entity", entity);
-//        entityContext.setAttribute(entity, "rootNode", node);        
+//        entityContext.setAttribute(entity, "rootNode", node);
 //    }
 //
 //    @Override
 //    public void requestResolution(Object entity, String propertyName,
 //            Node subject, RdfType rdfType) {
 //        // TODO Auto-generated method stub
-//        
+//
 //    }
 //
 }

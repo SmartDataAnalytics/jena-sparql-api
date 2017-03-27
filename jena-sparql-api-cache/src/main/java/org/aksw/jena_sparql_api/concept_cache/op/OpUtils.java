@@ -9,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -185,47 +186,55 @@ public class OpUtils {
 	 * @return
 	 */
 	public static Op wrapWithProjection(Op subOp, Map<Var, Var> oldToNew) {
-		// check which variables need to be renamed to fresh variables
-		Set<Var> tgtVars = new HashSet<>(oldToNew.values());
+		// Remove identity mappings
+		oldToNew = oldToNew.entrySet().stream()
+				.filter(e -> !Objects.equals(e.getKey(), e.getValue()))
+				.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 
-		Set<Var> mapVars = oldToNew.keySet();
-		// NOTE Usually oldToNew.keySet() should be a subset of the visible vars, but
-		// for robustness we just create the union
-		Set<Var> srcVars = OpVars.visibleVars(subOp);
-		srcVars.addAll(mapVars);
+		if(!oldToNew.isEmpty()) {
 
-		Set<Var> collisions = Sets.intersection(tgtVars, srcVars);
+			// check which variables need to be renamed to fresh variables
+			Set<Var> tgtVars = new HashSet<>(oldToNew.values());
 
-		Set<Var> blacklist = Sets.union(tgtVars, srcVars);
-		Generator<Var> gen = VarGeneratorBlacklist.create(blacklist);
+			Set<Var> mapVars = oldToNew.keySet();
+			// NOTE Usually oldToNew.keySet() should be a subset of the visible vars, but
+			// for robustness we just create the union
+			Set<Var> srcVars = OpVars.visibleVars(subOp);
+			srcVars.addAll(mapVars);
 
-		Map<Var, Var> newOldToNew = new LinkedHashMap<>();
-		Map<Var, Var> conflictResolution = new LinkedHashMap<>();
-		for(Entry<Var, Var> e : oldToNew.entrySet()) {
-			Var v = e.getKey();
-			Var w = e.getValue();
-			boolean isConflict = !v.equals(w) && collisions.contains(w);
+			Set<Var> collisions = Sets.intersection(tgtVars, srcVars);
 
-			// Non-conflict vars are not renamed - i.e. mapped to themselves
-			Var t;
-			if(isConflict) {
-				t = gen.next();
-				conflictResolution.put(v, t);
-			} else {
-				t = v;
-				conflictResolution.put(v, v);
+			Set<Var> blacklist = Sets.union(tgtVars, srcVars);
+			Generator<Var> gen = VarGeneratorBlacklist.create(blacklist);
+
+			Map<Var, Var> newOldToNew = new LinkedHashMap<>();
+			Map<Var, Var> conflictResolution = new LinkedHashMap<>();
+			for(Entry<Var, Var> e : oldToNew.entrySet()) {
+				Var v = e.getKey();
+				Var w = e.getValue();
+				boolean isConflict = !v.equals(w) && collisions.contains(w);
+
+				// Non-conflict vars are not renamed - i.e. mapped to themselves
+				Var t;
+				if(isConflict) {
+					t = gen.next();
+					conflictResolution.put(v, t);
+				} else {
+					t = v;
+					conflictResolution.put(v, v);
+				}
+
+				newOldToNew.put(t, w);
 			}
 
-			newOldToNew.put(t, w);
+			if(!newOldToNew.equals(oldToNew)) {
+				subOp = extendWithVarMap(subOp, conflictResolution);
+				oldToNew = newOldToNew;
+			}
+
+
+			subOp = extendWithVarMap(subOp, oldToNew);
 		}
-
-		if(!newOldToNew.equals(oldToNew)) {
-			subOp = extendWithVarMap(subOp, conflictResolution);
-			oldToNew = newOldToNew;
-		}
-
-
-		subOp = extendWithVarMap(subOp, oldToNew);
 		return subOp;
 	}
 
@@ -434,6 +443,9 @@ public class OpUtils {
             result = o.copy(subOps.get(0), subOps.get(1));
         } else if (op instanceof OpN) {
             OpN o = (OpN)op;
+            result = o.copy(subOps);
+        } else if(op instanceof OpCopyable) {
+            OpCopyable o = (OpCopyable)op;
             result = o.copy(subOps);
         } else {
             throw new RuntimeException("Should not happen: Could not copy: " + op);

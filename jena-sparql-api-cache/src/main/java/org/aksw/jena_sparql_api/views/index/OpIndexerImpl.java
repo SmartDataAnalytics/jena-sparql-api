@@ -18,7 +18,7 @@ import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMapImpl;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
-import org.aksw.jena_sparql_api.concept_cache.op.OpExtQuadFilterPatternCanonical;
+import org.aksw.jena_sparql_api.concept_cache.op.OpExtConjunctiveQuery;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -30,6 +30,9 @@ import com.google.common.collect.Multimap;
 public class OpIndexerImpl
     implements Function<Op, OpIndex>
 {
+    protected Function<Op, Set<Set<String>>> opFeatureExtractor;
+
+
     public static Stream<Entry<Set<Expr>, QuadPatternIndex>> createQuadPatternIndex(Tree<Op> treeOp, Op qfpOp, QuadFilterPatternCanonical qfpc) {
         TreeNode<Op> opRef = new TreeNodeImpl<>(treeOp, qfpOp);
 
@@ -80,13 +83,22 @@ public class OpIndexerImpl
 //    }
 
 	  public static Stream<Entry<Op, QuadFilterPatternCanonical>> streamQuadFilterPatterns(Tree<Op> tree) {
-	  Stream<Entry<Op, QuadFilterPatternCanonical>> result = TreeUtils
-	          .inOrderSearch(
-	                  tree.getRoot(),
-	                  tree::getChildren,
-	                  o -> (o instanceof OpExtQuadFilterPatternCanonical) ? ((OpExtQuadFilterPatternCanonical)o).getQfpc() : null,
-	                  (opNode, value) -> value == null) // descend while the value is null
-	          .filter(e -> e.getValue() != null);
+//	  Stream<Entry<Op, QuadFilterPatternCanonical>> result = TreeUtils
+//	          .inOrderSearch(
+//	                  tree.getRoot(),
+//	                  tree::getChildren,
+//	                  o -> (o instanceof OpExtConjunctiveQuery) ? ((OpExtConjunctiveQuery)o).getQfpc() : null,
+//	                  (opNode, value) -> value == null) // descend while the value is null
+//	          .filter(e -> e.getValue() != null);
+//
+
+		  Stream<Entry<Op, QuadFilterPatternCanonical>> result = TreeUtils
+		          .inOrderSearch(
+		                  tree.getRoot(),
+		                  tree::getChildren,
+		                  o -> (o instanceof OpExtConjunctiveQuery) ? ((OpExtConjunctiveQuery)o).getQfpc().getPattern() : null,
+		                  (opNode, value) -> value == null) // descend while the value is null
+		          .filter(e -> e.getValue() != null);
 
 
 
@@ -120,6 +132,8 @@ public class OpIndexerImpl
 
 //        String id = StringUtils.md5Hash("" + op);
 //        Node idNode = NodeFactory.createLiteral(id);
+
+        //Set<Set<String>> features = SparqlViewMatcherOpImpl.extractFeatures(op);
 
         OpIndex result = new OpIndex(op, tree, quadPatternIndex);
 

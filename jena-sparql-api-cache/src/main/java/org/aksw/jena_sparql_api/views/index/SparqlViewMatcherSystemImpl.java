@@ -186,8 +186,8 @@ public class SparqlViewMatcherSystemImpl
     	Function<Op, OpIndex> opIndexer = new OpIndexerImpl();
 
 
-    	OpIndex viewIndex = opIndexer.apply(OpViewMatcherTreeBased.queryToNormalizedOp(a));
-    	OpIndex queryIndex = opIndexer.apply(OpViewMatcherTreeBased.queryToNormalizedOp(b));
+    	OpIndex viewIndex = opIndexer.apply(SparqlViewMatcherOpImpl.queryToNormalizedOp(a));
+    	OpIndex queryIndex = opIndexer.apply(SparqlViewMatcherOpImpl.queryToNormalizedOp(b));
 
 
         Multimap<Op, Op> candOpMapping = SparqlViewMatcherSystemImpl.getCandidateLeafMapping(viewIndex, queryIndex);

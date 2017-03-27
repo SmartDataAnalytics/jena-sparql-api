@@ -1,22 +1,24 @@
 package org.aksw.jena_sparql_api.concept_cache.core;
 
 import java.util.Iterator;
+import java.util.stream.Stream;
 
+import org.aksw.commons.collections.utils.StreamUtils;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.util.collection.RangedSupplier;
-import org.aksw.jena_sparql_api.utils.IteratorClosable;
 import org.aksw.jena_sparql_api.utils.IteratorResultSetBinding;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
+import org.apache.jena.sparql.algebra.Algebra;
+import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.engine.binding.Binding;
-import org.apache.jena.util.iterator.ClosableIterator;
 
 import com.google.common.collect.Range;
 
 public class RangedSupplierQuery
-	implements RangedSupplier<Long, Binding>
+	implements RangedSupplier<Long, Binding>, OpAttribute
 {
 	protected QueryExecutionFactory qef;
 	protected Query query;
@@ -28,27 +30,38 @@ public class RangedSupplierQuery
 	}
 
 	@Override
-	public ClosableIterator<Binding> apply(Range<Long> range) {
+	public Stream<Binding> apply(Range<Long> range) {
 		Query clone = query.cloneQuery();
 		QueryUtils.applyRange(clone, range);
 
 		QueryExecution qe = qef.createQueryExecution(clone);
 		ResultSet rs = qe.execSelect();
 
-		Iterator<Binding> it = new IteratorResultSetBinding(rs);
 
-		ClosableIterator<Binding> result = new IteratorClosable<>(it, () -> qe.close());
+		Iterator<Binding> it = new IteratorResultSetBinding(rs);
+		Stream<Binding> result = StreamUtils.stream(it);
+		result.onClose(qe::close);
+
 		return result;
+//
+//		ClosableIterator<Binding> result = new IteratorClosable<>(it, () -> qe.close());
+//		return result;
 	}
 
 	@Override
-    public <X> X unwrap(Class<X> clazz, boolean reflexive) {
-    	@SuppressWarnings("unchecked")
-		X result = reflexive && this.getClass().isAssignableFrom(clazz)
-    		? (X)this
-    		: null;
+	public Op getOp() {
+		Op result = Algebra.compile(query);
+		return result;
+	}
 
-    	return result;
-    }
+//	@Override
+//    public <X> X unwrap(Class<X> clazz, boolean reflexive) {
+//    	@SuppressWarnings("unchecked")
+//		X result = reflexive && this.getClass().isAssignableFrom(clazz)
+//    		? (X)this
+//    		: null;
+//
+//    	return result;
+//    }
 
 }

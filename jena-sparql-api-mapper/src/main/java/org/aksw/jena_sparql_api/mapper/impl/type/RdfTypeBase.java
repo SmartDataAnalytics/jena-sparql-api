@@ -14,4 +14,8 @@ public abstract class RdfTypeBase
 //    public RdfTypeFactory getTypeFactory() {
 //        return typeFactory;
 //    }
+	
+	public PathFragment resolve(String propertyName) {
+		return null;
+	}
 }

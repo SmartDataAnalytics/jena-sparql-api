@@ -2,16 +2,19 @@ package org.aksw.jena_sparql_api.http;
 
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Optional;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionDecorator;
-
-import com.google.common.base.Supplier;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.sparql.engine.iterator.QueryIterNullIterator;
 import org.apache.jena.sparql.resultset.ResultSetException;
+
+import com.google.common.base.Supplier;
 
 public class QueryExecutionHttpWrapper
     extends QueryExecutionDecorator
@@ -46,7 +49,6 @@ public class QueryExecutionHttpWrapper
 
         return result;
     }
-
 
     @SuppressWarnings("unchecked")
     public static <T> T wrapException(Supplier<T> supplier) {

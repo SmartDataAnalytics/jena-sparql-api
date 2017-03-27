@@ -1,10 +1,7 @@
 package org.aksw.jena_sparql_api.util.collection;
 
-import java.util.Iterator;
 import java.util.List;
-
-import org.aksw.jena_sparql_api.utils.IteratorClosable;
-import org.apache.jena.util.iterator.ClosableIterator;
+import java.util.stream.Stream;
 
 import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.Range;
@@ -20,16 +17,13 @@ public class RangedSupplierList<T>
     }
 
     @Override
-    public ClosableIterator<T> apply(Range<Long> range) {
+    public Stream<T> apply(Range<Long> range) {
         Range<Long> validRange = Range.closedOpen(0l, (long)items.size());
         Range<Long> effectiveRange = range.intersection(validRange).canonical(DiscreteDomain.longs());
 
         List<T> subList = items.subList(effectiveRange.lowerEndpoint().intValue(), effectiveRange.upperEndpoint().intValue());
-        //ClosableIterator<T>
-        Iterator<T> it = subList.iterator();
-        IteratorClosable<T> result = new IteratorClosable<>(it, null);
 
-        return result;
+        return subList.stream();
     }
 
     @Override
@@ -37,12 +31,11 @@ public class RangedSupplierList<T>
         return "StaticListItemSupplier [items=" + items + "]";
     }
 
-    public <X> X unwrap(Class<X> clazz, boolean reflexive) {
-    	X result = reflexive && this.getClass().isAssignableFrom(clazz)
-    		? (X)this
-    		: null;
-
-    	return result;
-    }
-
+//    public <X> X unwrap(Class<X> clazz, boolean reflexive) {
+//    	X result = reflexive && this.getClass().isAssignableFrom(clazz)
+//    		? (X)this
+//    		: null;
+//
+//    	return result;
+//    }
 }

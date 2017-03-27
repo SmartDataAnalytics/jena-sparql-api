@@ -2,8 +2,8 @@ package org.aksw.jena_sparql_api.concept_cache.core;
 
 import java.util.Map;
 
-import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCache;
-import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCacheImpl;
+import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewMatcherQfpc;
+import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewMatcherQfpcImpl;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactoryDecorator;
 import org.apache.jena.graph.Node;
@@ -25,17 +25,17 @@ import org.apache.jena.query.QueryFactory;
 public class QueryExecutionFactoryViewCacheMaster
     extends QueryExecutionFactoryDecorator
 {
-    protected SparqlViewCache conceptMap;
+    protected SparqlViewMatcherQfpc conceptMap;
     protected long indexResultSetSizeThreshold;
 
     protected Map<Node, ? super ViewCacheIndexer> serviceMap;
 
 
     public QueryExecutionFactoryViewCacheMaster(QueryExecutionFactory decoratee, Map<Node, ? super ViewCacheIndexer> serviceMap) {
-        this(decoratee, serviceMap, new SparqlViewCacheImpl(), 10000);
+        this(decoratee, serviceMap, new SparqlViewMatcherQfpcImpl(), 10000);
     }
 
-    public QueryExecutionFactoryViewCacheMaster(QueryExecutionFactory decoratee, Map<Node, ? super ViewCacheIndexer> serviceMap, SparqlViewCache conceptMap, long indexResultSetSizeThreshold) {
+    public QueryExecutionFactoryViewCacheMaster(QueryExecutionFactory decoratee, Map<Node, ? super ViewCacheIndexer> serviceMap, SparqlViewMatcherQfpc conceptMap, long indexResultSetSizeThreshold) {
         super(decoratee);
         this.conceptMap = conceptMap;
         this.indexResultSetSizeThreshold = indexResultSetSizeThreshold;

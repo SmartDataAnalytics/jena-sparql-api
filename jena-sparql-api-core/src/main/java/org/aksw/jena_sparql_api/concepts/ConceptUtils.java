@@ -22,6 +22,7 @@ import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
+import org.apache.jena.query.SortCondition;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_OneOf;
 import org.apache.jena.sparql.expr.Expr;
@@ -386,6 +387,18 @@ public class ConceptUtils {
         return result;
     }
 
+    public static Query createQueryList(OrderedConcept orderedConcept, Long limit, Long offset) {
+    	Concept concept = orderedConcept.getConcept(); 
+    	Query result = createQueryList(concept, limit, offset);
+    	
+    	for(SortCondition sc : orderedConcept.getOrderBy()) {
+    		result.addOrderBy(sc);
+    	}
+    	
+    	return result;
+    }
+    
+    
     public static Query createQueryList(Concept concept, Long limit, Long offset) {
         Query result = new Query();
         result.setQuerySelectType();

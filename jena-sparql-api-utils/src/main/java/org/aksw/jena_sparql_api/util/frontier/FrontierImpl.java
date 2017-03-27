@@ -107,4 +107,10 @@ public class FrontierImpl<T>
     public String toString() {
         return "FrontierImpl [open=" + open + ", done=" + done + "]";
     }
+
+    @Override
+    public boolean contains(Object item) {
+        boolean result = open.contains(item) || done.contains(item);
+        return result;
+    }
 }

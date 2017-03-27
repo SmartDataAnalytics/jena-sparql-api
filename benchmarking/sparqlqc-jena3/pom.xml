@@ -53,7 +53,7 @@
         <gpg.keyname>AKSW</gpg.keyname>
 
         <jena.version>3.1.1</jena.version>
-        <jsa.subversion>1-SNAPSHOT</jsa.subversion>
+        <jsa.subversion>2-SNAPSHOT</jsa.subversion>
 
         <jsa.version>${jena.version}-${jsa.subversion}</jsa.version>
         <slf4j.version>1.7.21</slf4j.version>
@@ -61,6 +61,32 @@
 
     <dependencyManagement>
         <dependencies>
+
+             <dependency>
+                 <groupId>org.aksw.beast</groupId>
+                 <artifactId>beast-viz-jfreechart</artifactId>
+                 <version>1.0.0-SNAPSHOT</version>
+             </dependency>
+
+            <dependency>
+                <groupId>org.aksw.beast</groupId>
+                <artifactId>beast-viz-xchart</artifactId>
+                <version>1.0.0-SNAPSHOT</version>
+            </dependency>
+
+
+            <dependency>
+                <groupId>org.aksw.jena-sparql-api</groupId>
+                <artifactId>jena-sparql-api-resources-sparqlqc</artifactId>
+                <version>${jsa.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.aksw.jena-sparql-api</groupId>
+                <artifactId>jena-sparql-api-core</artifactId>
+                <version>${jsa.version}</version>
+            </dependency>
+
             <dependency>
                 <groupId>org.aksw.sparqlqc</groupId>
                 <artifactId>sparqlqc-api-simple</artifactId>
@@ -93,15 +119,10 @@
             </dependency>
 
 
-            <!-- <dependency> -->
-            <!-- <groupId>org.aksw.jena-sparql-api</groupId> -->
-            <!-- <artifactId>jena-sparql-api-jgrapht</artifactId> -->
-            <!-- <version>${jsa.version}</version> -->
-            <!-- </dependency> -->
 
             <dependency>
                 <groupId>org.aksw.iguana</groupId>
-                <artifactId>iguana-extended</artifactId>
+                <artifactId>iguana-core</artifactId>
                 <version>0.0.1-SNAPSHOT</version>
             </dependency>
 

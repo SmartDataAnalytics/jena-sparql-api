@@ -37,10 +37,10 @@ import org.apache.jena.sparql.graph.NodeTransform ;
 import org.apache.jena.sparql.syntax.Element ;
 import org.apache.jena.sparql.syntax.ElementGroup ;
 
-/** Support for transformation of query abstract syntax. */ 
+/** Support for transformation of query abstract syntax. */
 
 public class QueryTransformOps {
-    public static Query transform(Query query, Map<Var, Node> substitutions) {
+    public static Query transform(Query query, Map<Var, ? extends Node> substitutions) {
         ElementTransform eltrans = new ElementTransformSubst(substitutions) ;
         NodeTransform nodeTransform = new NodeTransformSubst(substitutions) ;
         ExprTransform exprTrans = new ExprTransformNodeElement(nodeTransform, eltrans) ;
@@ -68,12 +68,12 @@ public class QueryTransformOps {
     }
 
     public static Query transform(Query query, ElementTransform transform) {
-        ExprTransform noop = new ExprTransformApplyElementTransform(transform) ;  
+        ExprTransform noop = new ExprTransformApplyElementTransform(transform) ;
         return transform(query, transform, noop) ;
     }
 
-   
-    
+
+
     // Mutates the VarExprList
     private static void transformVarExprList(VarExprList varExprList, ExprTransform exprTransform)
     // , final Map<Var, Node> substitutions)
@@ -103,7 +103,7 @@ public class QueryTransformOps {
                 for (String x : desc.getDefaultGraphURIs())
                     newQuery.addNamedGraphURI(x) ;
             }
-            
+
             // Aggregators.
             newQuery.getAggregators().addAll(query.getAggregators()) ;
         }

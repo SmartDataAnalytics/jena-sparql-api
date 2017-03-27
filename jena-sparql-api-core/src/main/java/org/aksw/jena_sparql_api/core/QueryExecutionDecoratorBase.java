@@ -133,11 +133,17 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
 
     }
 
+    protected void onException(Exception e) {
+    }
+
     @Override
     public ResultSet execSelect() {
         beforeExec();
         try {
             return decoratee.execSelect();
+        } catch(Exception e) {
+        	onException(e);
+        	throw new RuntimeException(e);
         } finally {
             afterExec();
         }
@@ -148,6 +154,9 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
         beforeExec();
         try {
             return decoratee.execConstruct();
+        } catch(Exception e) {
+        	onException(e);
+        	throw new RuntimeException(e);
         } finally {
             afterExec();
         }
@@ -158,6 +167,9 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
         beforeExec();
         try {
             return decoratee.execConstruct(model);
+        } catch(Exception e) {
+        	onException(e);
+        	throw new RuntimeException(e);
         } finally {
             afterExec();
         }
@@ -168,6 +180,9 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
         beforeExec();
         try {
             return decoratee.execDescribe();
+        } catch(Exception e) {
+        	onException(e);
+        	throw new RuntimeException(e);
         } finally {
             afterExec();
         }
@@ -178,6 +193,9 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
         beforeExec();
         try {
             return decoratee.execDescribe(model);
+        } catch(Exception e) {
+        	onException(e);
+        	throw new RuntimeException(e);
         } finally {
             afterExec();
         }
@@ -188,6 +206,9 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
         beforeExec();
         try {
             return decoratee.execAsk();
+        } catch(Exception e) {
+        	onException(e);
+        	throw new RuntimeException(e);
         } finally {
             afterExec();
         }
@@ -198,6 +219,9 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
         beforeExec();
         try {
             return decoratee.execConstructTriples();
+        } catch(Exception e) {
+        	onException(e);
+        	throw new RuntimeException(e);
         } finally {
             afterExec();
         }
@@ -208,6 +232,9 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
         beforeExec();
         try {
             return decoratee.execDescribeTriples();
+        } catch(Exception e) {
+        	onException(e);
+        	throw new RuntimeException(e);
         } finally {
             afterExec();
         }
@@ -218,6 +245,9 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
         beforeExec();
         try {
             return decoratee.execConstructQuads();
+        } catch(Exception e) {
+        	onException(e);
+        	throw new RuntimeException(e);
         } finally {
             afterExec();
         }
@@ -228,6 +258,9 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
         beforeExec();
         try {
             return decoratee.execConstructDataset();
+        } catch(Exception e) {
+        	onException(e);
+        	throw new RuntimeException(e);
         } finally {
             afterExec();
         }
@@ -238,8 +271,33 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
         beforeExec();
         try {
             return decoratee.execConstructDataset(dataset);
+        } catch(Exception e) {
+        	onException(e);
+        	throw new RuntimeException(e);
         } finally {
             afterExec();
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    public <X> X unwrap(Class<X> clazz) {
+        X result;
+        if(getClass().isAssignableFrom(clazz)) {
+            result = (X)this;
+        }
+        else {
+        	result = QueryExecutionDecoratorBase.unwrap(clazz, decoratee);
+        }
+
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <X> X unwrap(Class<X> clazz, QueryExecution qe) {
+    	Object tmp = qe instanceof QueryExecutionDecoratorBase
+    			? ((QueryExecutionDecoratorBase<?>)qe).unwrap(clazz)
+    			: null;
+    	X result = (X)tmp;
+    	return result;
     }
 }

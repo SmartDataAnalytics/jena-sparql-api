@@ -46,7 +46,7 @@ import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 public class ElementTransformSubst extends ElementTransformCopyBase {
     private final NodeTransform nodeTransform ;
 
-    public ElementTransformSubst(Map<Var, Node> mapping) {
+    public ElementTransformSubst(Map<Var, ? extends Node> mapping) {
         this(new NodeTransformSubst(mapping)) ;
     }
 

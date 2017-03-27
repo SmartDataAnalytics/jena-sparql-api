@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import org.aksw.commons.collections.reversible.ReversibleMap;
 import org.aksw.jena_sparql_api.beans.model.PropertyOps;
 import org.aksw.jena_sparql_api.mapper.impl.engine.EntityGraphMap;
 import org.apache.jena.graph.Node;
@@ -27,21 +28,22 @@ import org.apache.jena.graph.Node;
  */
 public interface RdfPersistenceContext
 {
-	/**
-	 * An identity Hashset of managed entities
-	 * 
-	 * @return
-	 */
-	Set<Object> getManagedEntities();
-	
+    /**
+     * An identity Hashset of managed entities
+     *
+     * @return
+     */
+    Set<Object> getManagedEntities();
+
     Map<Object, Node> getPrimaryNodeMap();
-    
+
     void requestResolution(PropertyOps propertyOps, Object entity, Node node);
     List<ResolutionRequest> getResolutionRequests();
     Object entityFor(Class<?> clazz, Node node, Supplier<Object> newInstance);
 
+
     
     EntityGraphMap<EntityId> getEntityGraphMap();
-    Map<EntityId, Object> getIdToEntityMap();
+    ReversibleMap<EntityId, Object> getIdToEntityMap();
     Map<Object, EntityId> getEntityToIdMap();
 }

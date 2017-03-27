@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.batch.tasklet;
 
+import org.aksw.jena_sparql_api.mapper.util.ValueHolder;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.Expression;
 

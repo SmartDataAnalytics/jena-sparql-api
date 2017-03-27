@@ -11,6 +11,7 @@ import java.util.Set;
 import org.aksw.commons.collections.MapUtils;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
 import org.apache.commons.math3.util.CombinatoricsUtils;
+import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 
@@ -25,9 +26,9 @@ public class Utils2 {
 //            result = 0;
 //        } else {
 //            result = (int)(CombinatoricsUtils.factorial(n) / CombinatoricsUtils.factorial(n - k));
-//        }        
+//        }
 //    }
-    
+
     public static int getNumMatches(Entry<? extends Collection<?>, ? extends Collection<?>> quadGroup) {
         int result;
 
@@ -95,8 +96,22 @@ public class Utils2 {
         Map<Var, Var> result = new HashMap<Var, Var>();
 
         for(int i = 0; i < 4; ++i) {
-            Var s = (Var)QuadUtils.getNode(source, i);
-            Var t = (Var)QuadUtils.getNode(target, i);
+        	Node x = QuadUtils.getNode(source, i);
+        	Node y = QuadUtils.getNode(target, i);
+
+        	// Skip non-variable components
+        	if(!x.isVariable()) {
+        		if(!x.equals(y)) {
+        			result = null;
+        			break;
+        		} else {
+        			continue;
+        		}
+        	}
+
+            Var s = (Var)x;
+            // TODO Make sure y is a variable
+            Var t = (Var)y;
 
             Map<Var, Var> cand = Collections.singletonMap(s, t);
             boolean isCompatible = MapUtils.isPartiallyCompatible(cand, result);

@@ -19,36 +19,18 @@ import com.google.common.cache.RemovalListener;
 public class QueryExecutionFactoryViewMatcherMaster
     extends QueryExecutionFactoryDecorator
 {
-    //protected SparqlViewMatcherSystem viewMatcherSystem;
-	//protected QueryExecutionFactory decoratee;
 	protected OpRewriteViewMatcherStateful viewMatcher;
 	protected ExecutorService executorService;
-	//protected Map<Node, RangedSupplier<Long, Binding>> opToRangedSupplier;
-	//protected Map<Node, StorageEntry> storageMap;
 
     protected long indexResultSetSizeThreshold;
-
     protected Map<Node, ? super ViewCacheIndexer> serviceMap;
+    protected boolean closeExecutorService;
 
-
-//    public QueryExecutionFactoryViewMatcherMaster(QueryExecutionFactory decoratee, Map<Node, ? super ViewCacheIndexer> serviceMap) {
-//        this(decoratee, serviceMap, new SparqlViewMatcherSystemImpl(), 10000);
-//    }
-
-//    public QueryExecutionFactoryViewMatcherMaster(QueryExecutionFactory decoratee, OpRewriteViewMatcherStateful viewMatcher) { //long indexResultSetSizeThreshold) {
-//        super(decoratee);
-//        this.viewMatcher = viewMatcher;
-//    }
-
-    public QueryExecutionFactoryViewMatcherMaster(QueryExecutionFactory decoratee, OpRewriteViewMatcherStateful viewMatcher, ExecutorService executorService) { //long indexResultSetSizeThreshold) {
+    public QueryExecutionFactoryViewMatcherMaster(QueryExecutionFactory decoratee, OpRewriteViewMatcherStateful viewMatcher, ExecutorService executorService, boolean closeExecutorService) { //long indexResultSetSizeThreshold) {
         super(decoratee);
-        //this.viewMatcherSystem = viewMatcherSystem;
-    	//this.decoratee = decoratee;
         this.viewMatcher = viewMatcher;
         this.executorService = executorService;
-        //this.indexResultSetSizeThreshold = indexResultSetSizeThreshold;
-        //this.storageMap = storageMap;
-        //this.opToRangedSupplier = new HashMap<>();
+        this.closeExecutorService = closeExecutorService;
     }
 
     public Cache<Node, StorageEntry> getCache() {
@@ -71,25 +53,35 @@ public class QueryExecutionFactoryViewMatcherMaster
     		QueryExecutionFactory qef,
     		Cache<Node, StorageEntry> queryCache,
     		Collection<RemovalListener<Node, StorageEntry>> removalListeners,
-    		ExecutorService executorService) {
+    		ExecutorService executorService,
+    		boolean closeExecutorService
+    		) {
 
 		OpRewriteViewMatcherStateful viewMatcherRewriter = new OpRewriteViewMatcherStateful(queryCache, removalListeners);
-		QueryExecutionFactoryViewMatcherMaster result = new QueryExecutionFactoryViewMatcherMaster(qef, viewMatcherRewriter, executorService);
+		QueryExecutionFactoryViewMatcherMaster result = new QueryExecutionFactoryViewMatcherMaster(qef, viewMatcherRewriter, executorService, closeExecutorService);
 
         return result;
     }
 
 
-    public static QueryExecutionFactoryViewMatcherMaster create(QueryExecutionFactory qef, CacheBuilder<Object, Object> cacheBuilder, ExecutorService executorService) {
+    public static QueryExecutionFactoryViewMatcherMaster create(QueryExecutionFactory qef, CacheBuilder<Object, Object> cacheBuilder, ExecutorService executorService, boolean closeExecutorService) {
 		RemovalListenerMultiplexer<Node, StorageEntry> removalListeners = new RemovalListenerMultiplexer<>();
 
 		Cache<Node, StorageEntry> queryCache = cacheBuilder
 				.removalListener(removalListeners)
 				.build();
 
-		QueryExecutionFactoryViewMatcherMaster result = create(qef, queryCache, removalListeners.getClients(), executorService);
+		QueryExecutionFactoryViewMatcherMaster result = create(qef, queryCache, removalListeners.getClients(), executorService, closeExecutorService);
 
         return result;
+    }
+
+    @Override
+    public void close() {
+    	if(closeExecutorService) {
+    		executorService.shutdown();
+    	}
+    	super.close();
     }
 
 }

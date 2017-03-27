@@ -4,9 +4,11 @@ import java.util.AbstractMap.SimpleEntry;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -16,6 +18,26 @@ import org.aksw.commons.collections.multimaps.IBiSetMultimap;
 import com.google.common.collect.Sets;
 
 public class MapUtils {
+
+    public static <K, V> Map<K, V> index(Collection<K> keys, Function<K, V> fn) {
+        Map<K, V> result = index(keys, fn, new HashMap<>());
+        return result;
+    }
+
+    public static <K, V> Map<K, V> indexIdentity(Collection<K> keys, Function<K, V> fn) {
+        Map<K, V> result = index(keys, fn, new IdentityHashMap<>());
+        return result;
+    }
+
+    public static <K, V> Map<K, V> index(Collection<K> keys, Function<K, V> fn, Map<K, V> result) {
+        for(K key : keys) {
+            V value = fn.apply(key);
+            result.put(key, value);
+        }
+        return result;
+    }
+
+
     public static <K, V> Map<K, V> merge(Map<K, V> a, Map<K, V> b) {
         Map<K, V> result = Stream.of(a, b)
                 .map(Map::entrySet)

@@ -6,6 +6,7 @@ import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 
 import org.apache.jena.sparql.algebra.Table;
 
+// TODO Remove and use QfpcAggMatch instead
 public class CacheResult {
     protected QuadFilterPatternCanonical replacementPattern;
     protected Collection<Table> tables;

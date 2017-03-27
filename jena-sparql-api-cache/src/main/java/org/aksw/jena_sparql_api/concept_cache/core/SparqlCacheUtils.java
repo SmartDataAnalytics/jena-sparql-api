@@ -19,13 +19,15 @@ import org.aksw.commons.collections.multimaps.IBiSetMultimap;
 import org.aksw.jena_sparql_api.algebra.transform.TransformReplaceConstants;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
 import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMapImpl;
-import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewCache;
+import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewMatcherQfpc;
+import org.aksw.jena_sparql_api.concept_cache.domain.ConjunctiveQuery;
+import org.aksw.jena_sparql_api.concept_cache.domain.ExprHolder;
 import org.aksw.jena_sparql_api.concept_cache.domain.PatternSummary;
 import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.domain.VarOccurrence;
-import org.aksw.jena_sparql_api.concept_cache.op.OpExtQuadFilterPatternCanonical;
+import org.aksw.jena_sparql_api.concept_cache.op.OpExtConjunctiveQuery;
 import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 import org.aksw.jena_sparql_api.concept_cache.trash.OpVisitorViewCacheApplier;
 import org.aksw.jena_sparql_api.core.QueryExecutionExecWrapper;
@@ -61,6 +63,7 @@ import org.apache.jena.sparql.algebra.op.OpQuadPattern;
 import org.apache.jena.sparql.algebra.op.OpService;
 import org.apache.jena.sparql.algebra.op.OpTable;
 import org.apache.jena.sparql.algebra.op.OpUnion;
+import org.apache.jena.sparql.algebra.optimize.Rewrite;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.QuadPattern;
 import org.apache.jena.sparql.core.Var;
@@ -156,7 +159,7 @@ public class SparqlCacheUtils {
             return r;
         }).collect(Collectors.toSet());
 
-        QuadFilterPatternCanonical result = new QuadFilterPatternCanonical(quads, newCnf);
+        QuadFilterPatternCanonical result = new QuadFilterPatternCanonical(quads, ExprHolder.fromCnf(newCnf));
         return result;
     }
 
@@ -209,7 +212,7 @@ public class SparqlCacheUtils {
             }
         }
 
-        QuadFilterPatternCanonical result = new QuadFilterPatternCanonical(newQuads, newCnf);
+        QuadFilterPatternCanonical result = new QuadFilterPatternCanonical(newQuads, ExprHolder.fromCnf(newCnf));
         return result;
     }
 
@@ -256,7 +259,7 @@ public class SparqlCacheUtils {
             Map<Node, ? super ViewCacheIndexer> serviceMap,
             //Node serviceNode,
             Query rawQuery,
-            SparqlViewCache conceptMap,
+            SparqlViewMatcherQfpc conceptMap,
             //SparqlViewMatcherSystem viewMatcherSystem,
             long indexResultSetSizeThreshold)
     {
@@ -369,7 +372,7 @@ public class SparqlCacheUtils {
             //QueryExecutionFactory qef,
             Node serviceNode,
             Query rawQuery,
-            SparqlViewCache sparqlViewCache,
+            SparqlViewMatcherQfpc sparqlViewCache,
             long indexResultSetSizeThreshold)
     {
         Op rawOp = Algebra.compile(rawQuery);
@@ -416,7 +419,7 @@ public class SparqlCacheUtils {
                 Op op = e.getKey();
                 QuadFilterPatternCanonical qfpc = qfpToCanonical.get(qfp);
 
-                CacheResult cacheResult = sparqlViewCache.lookup(qfpc);
+                CacheResult cacheResult = null; // TODO Maybe fix this line: sparqlViewCache.lookup(qfpc);
                 Entry<Op, CacheResult> r = cacheResult == null ? null : new SimpleEntry<>(op, cacheResult);
                 return r;
             })
@@ -550,8 +553,13 @@ public class SparqlCacheUtils {
         Set<Set<Expr>> extra = new HashSet<Set<Expr>>();
         for(int i = 0; i < 4; ++i) {
             Node tmp = QuadUtils.getNode(quad, i);
+
+            if(i == 0 && (Quad.defaultGraphNodeGenerated.equals(tmp) || Quad.defaultGraphIRI.equals(tmp))) {
+            	continue;
+            }
+
             if(!tmp.isVariable()) {
-                throw new RuntimeException("Expected variable normalized quad");
+                throw new RuntimeException("Expected variable normalized quad, got: " + quad);
             }
 
             Var quadVar = (Var)tmp;
@@ -591,6 +599,16 @@ public class SparqlCacheUtils {
     }
 
 
+    public static ProjectedOp cutProjectionAndNormalize(Op op, Rewrite opNormalizer) {
+    	// Before normalization, cut away the projection on the original op first
+        ProjectedOp projectedOp = SparqlCacheUtils.cutProjection(op);
+
+        Op normalizedOp = opNormalizer.rewrite(projectedOp.getResidualOp());
+        ProjectedOp result = new ProjectedOp(projectedOp.getProjection(), normalizedOp);
+
+        return result;
+    }
+
     /**
      * Cut away the projection (TODO: and maybe extend) of an op (if any), and return
      * the projection as a standalone object together with the remaining op.
@@ -603,22 +621,22 @@ public class SparqlCacheUtils {
 
         Set<Var> projectVars = null;
 
-        boolean isDistinct = false;
+        int distinctLevel = 0;
         if(residualOp instanceof OpDistinct) {
-            isDistinct = true;
+        	distinctLevel = 2;
             residualOp = ((OpDistinct)residualOp).getSubOp();
         }
 
         if(residualOp instanceof OpProject) {
             OpProject tmp = (OpProject)residualOp;
-            projectVars = new HashSet<>(tmp.getVars());
+            projectVars = new LinkedHashSet<>(tmp.getVars());
 
             residualOp = tmp.getSubOp();
         }
 
         ProjectedOp result = projectVars == null
-                ? new ProjectedOp(OpUtils.visibleNamedVars(residualOp), false, residualOp)
-                : new ProjectedOp(projectVars, isDistinct, residualOp);
+                ? new ProjectedOp(new VarInfo(OpUtils.visibleNamedVars(residualOp), 0), residualOp)
+                : new ProjectedOp(new VarInfo(projectVars, distinctLevel), residualOp);
 
         return result;
     }
@@ -662,6 +680,41 @@ public class SparqlCacheUtils {
         return result;
     }
 
+
+    public static ConjunctiveQuery tryExtractConjunctiveQuery(Op op, Generator<Var> generator) {
+    	OpDistinct opDistinct = null;
+    	OpProject opProject = null;
+
+    	if(op instanceof OpDistinct) {
+    		opDistinct = (OpDistinct)op;
+    		op = opDistinct.getSubOp();
+    	}
+
+    	if(op instanceof OpProject) {
+    		opProject = (OpProject)op;
+    		op = opProject.getSubOp();
+    	}
+
+    	QuadFilterPattern qfp = extractQuadFilterPattern(op);
+
+    	ConjunctiveQuery result = null;
+    	if(qfp != null) {
+    		boolean isDistinct = opDistinct != null;
+    		Set<Var> projectVars = opProject == null
+    				? OpVars.visibleVars(op)
+    				: new LinkedHashSet<>(opProject.getVars());
+
+    		VarInfo varInfo = new VarInfo(projectVars, isDistinct ? 2 : 0);
+
+          QuadFilterPatternCanonical qfpc = canonicalize2(qfp, generator);
+
+    		// TODO canonicalize the pattern
+    		result = new ConjunctiveQuery(varInfo, qfpc);
+    	}
+
+    	return result;
+    }
+
     public static QuadFilterPattern extractQuadFilterPattern(Op op) {
         QuadFilterPattern result = null;
 
@@ -683,6 +736,11 @@ public class SparqlCacheUtils {
         if(op instanceof OpGraph) {
             OpGraph opGraph = (OpGraph)op;
             Node graphNode = opGraph.getNode();
+
+
+//            boolean retainDefaultGraphNode = true;
+//            if(retainDefaultGraphNode && Quad.defaultGraphNodeGenerated.equals(graphNode)) {
+
 
             // The graphNode must be a variable which is not constrained by the filter
 
@@ -803,24 +861,38 @@ public class SparqlCacheUtils {
 //        return result;
 //    }
 
-    public static OpExtQuadFilterPatternCanonical tryCreateCqfp(Op op, Generator<Var> generator) {
-        QuadFilterPattern qfp = extractQuadFilterPattern(op);
-        OpExtQuadFilterPatternCanonical result;
-        if(qfp == null) {
-            result = null;
-        } else {
-            QuadFilterPatternCanonical tmp = canonicalize2(qfp, generator);
-            result = new OpExtQuadFilterPatternCanonical(tmp);
-        }
+    public static OpExtConjunctiveQuery tryCreateCqfp(Op op, Generator<Var> generator) {
+    	ConjunctiveQuery cq = tryExtractConjunctiveQuery(op, generator);
+    	OpExtConjunctiveQuery result = cq == null
+    			? null
+    			: new OpExtConjunctiveQuery(cq);
+
+    	return result;
+//    	QuadFilterPattern qfp = extractQuadFilterPattern(op);
+//        OpExtConjunctiveQuery result;
+//        if(qfp == null) {
+//            result = null;
+//        } else {
+//            QuadFilterPatternCanonical tmp = canonicalize2(qfp, generator);
+//            result = new OpExtConjunctiveQuery(tmp, generator);
+//        }
+//        return result;
+    }
+
+    // Assumes that ReplaceConstants has been called
+    public static QuadFilterPatternCanonical canonicalize2(QuadFilterPattern qfp, Generator<Var> generator) {
+        Set<Set<Expr>> dnf = DnfUtils.toSetDnf(qfp.getExpr());
+        QuadFilterPatternCanonical result = new QuadFilterPatternCanonical(new LinkedHashSet<>(qfp.getQuads()), ExprHolder.fromDnf(dnf));
+
         return result;
     }
 
-    public static QuadFilterPatternCanonical canonicalize2(QuadFilterPattern qfp, Generator<Var> generator) {
+    public static QuadFilterPatternCanonical canonicalize2old(QuadFilterPattern qfp, Generator<Var> generator) {
         QuadFilterPatternCanonical tmp = replaceConstants(qfp.getQuads(), generator);
         tmp = removeDefaultGraphFilter(tmp);
         Set<Set<Expr>> cnf = CnfUtils.toSetCnf(qfp.getExpr());
         cnf.addAll(tmp.getFilterCnf());
-        QuadFilterPatternCanonical result = new QuadFilterPatternCanonical(tmp.getQuads(), cnf);
+        QuadFilterPatternCanonical result = new QuadFilterPatternCanonical(tmp.getQuads(), ExprHolder.fromCnf(cnf));
 
         return result;
     }
@@ -832,7 +904,7 @@ public class SparqlCacheUtils {
         newCnf.addAll(qfpc.getFilterCnf());
         newCnf.addAll(tmp.getFilterCnf());
 
-        QuadFilterPatternCanonical result = new QuadFilterPatternCanonical(tmp.getQuads(), newCnf);
+        QuadFilterPatternCanonical result = new QuadFilterPatternCanonical(tmp.getQuads(), ExprHolder.fromCnf(newCnf));
         return result;
     }
 
@@ -865,7 +937,7 @@ public class SparqlCacheUtils {
             newQuads.add(newQuad);
         }
 
-        QuadFilterPatternCanonical result = new QuadFilterPatternCanonical(newQuads, cnf);
+        QuadFilterPatternCanonical result = new QuadFilterPatternCanonical(newQuads, ExprHolder.fromCnf(cnf));
         return result;
     }
 
@@ -884,7 +956,7 @@ public class SparqlCacheUtils {
         //System.out.println("varOccurrences: " + varOccurrences);
         //Set<Set<Set<Expr>>> quadCnfs = new HashSet<Set<Set<Expr>>>(quadCnfList);
 
-        QuadFilterPatternCanonical canonicalPattern = new QuadFilterPatternCanonical(quads, filterDnf);
+        QuadFilterPatternCanonical canonicalPattern = new QuadFilterPatternCanonical(quads, ExprHolder.fromDnf(filterDnf));
         //canonicalPattern = canonicalize(canonicalPattern, generator);
 
 

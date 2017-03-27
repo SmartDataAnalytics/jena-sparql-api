@@ -11,6 +11,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import javax.persistence.EntityManager;
+import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.ParameterExpression;
+import javax.persistence.criteria.Root;
+
 import org.aksw.jena_sparql_api.geo.vocab.BATCH;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
@@ -40,9 +47,19 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.incrementer.DataFieldMaxValueIncrementer;
 import org.springframework.util.Assert;
 
-public class JobExecutionDaoSparql extends AbstractJdbcBatchMetadataDao implements JobExecutionDao, InitializingBean {
+public class JobExecutionDaoSparql
+	extends AbstractJdbcBatchMetadataDao
+	implements JobExecutionDao, InitializingBean
+{
 
     private static final Log logger = LogFactory.getLog(JdbcJobExecutionDao.class);
+
+    protected EntityManager em;
+
+    
+    public JobExecutionDaoSparql(EntityManager em) {
+    	this.em = em;
+    }
 
     // TODO Essentially these are all the properties we have to deal with
     public static List<Property> properties = Arrays.asList(BATCH.jobExecutionId, BATCH.startTime, BATCH.endTime, BATCH.status, BATCH.exitCode, BATCH.exitMessage, DCTerms.created, DCTerms.modified, BATCH.version, BATCH.jobConfigurationLocation);
@@ -128,40 +145,11 @@ public class JobExecutionDaoSparql extends AbstractJdbcBatchMetadataDao implemen
     }
 
     @Override
-    public List<JobExecution> findJobExecutions(final JobInstance job) {
-
-        Assert.notNull(job, "Job cannot be null.");
-        Assert.notNull(job.getId(), "Job Id cannot be null.");
-
-/*
- *         private static final String FIND_JOB_EXECUTIONS = "SELECT
- *         JOB_EXECUTION_ID,
- *         START_TIME,
- *         END_TIME,
- *         STATUS,
- *         EXIT_CODE, EXIT_MESSAGE, CREATE_TIME, LAST_UPDATED, VERSION, JOB_CONFIGURATION_LOCATION"
- */
-//                + " from %PREFIX%JOB_EXECUTION where JOB_INSTANCE_ID = ? order by JOB_EXECUTION_ID desc";
-        
-        ResourceShapeBuilder b = new ResourceShapeBuilder();
-        b.out(BATCH.jobExecutionId);
-        b.out(BATCH.startTime);
-        b.out(BATCH.status);
-        b.out(BATCH.stopTime);
-        b.out(BATCH.exitCode);
-        b.out(BATCH.exitMessage);
-        b.out(DCTerms.created);
-        b.out(DCTerms.modified);
-        b.out(BATCH.version);
-        b.out(BATCH.jobConfigurationLocation);
-
-        ResourceShape s = b.getResourceShape();
-        MappedConcept<Graph> mc = ResourceShape.createMappedConcept(s, null, false);
-      
-        // TODO: Add filter and order
-        
-        
-        return getJdbcTemplate().query(getQuery(FIND_JOB_EXECUTIONS), new JobExecutionRowMapper(job), job.getId());
+    public List<JobExecution> findJobExecutions(JobInstance job) {
+    	CriteriaQuery<JobExecution> cq = em.getCriteriaBuilder().createQuery(JobExecution.class);
+    	TypedQuery<JobExecution> tq = em.createQuery(cq);
+    	List<JobExecution> result = tq.getResultList();
+    	return result;
     }
 
     /**
@@ -176,40 +164,11 @@ public class JobExecutionDaoSparql extends AbstractJdbcBatchMetadataDao implemen
      */
     @Override
     public void saveJobExecution(JobExecution jobExecution) {
-
         validateJobExecution(jobExecution);
 
         jobExecution.incrementVersion();
 
-        Resource jobRes = null;
-        jobRes
-            .addLiteral(BATCH.id, jobExecution.getId())
-            .addLiteral(BATCH.jobId, jobExecution.getJobId())
-            .addLiteral(BATCH.startTime, jobExecution.getStartTime())
-            .addLiteral(BATCH.stopTime, jobExecution.getEndTime())
-            .addLiteral(BATCH.status, jobExecution.getStatus())
-            .addLiteral(BATCH.exitCode, jobExecution.getExitStatus().getExitCode())
-            .addLiteral(BATCH.exitMessage, jobExecution.getExitStatus().getExitDescription())
-            .addLiteral(BATCH.version, jobExecution.getVersion())
-            .addLiteral(DCTerms.created, jobExecution.getCreateTime())
-            .addLiteral(DCTerms.modified, jobExecution.getLastUpdated())
-            .addLiteral(BATCH.jobConfigurationLocation, jobExecution.getJobConfigurationName());
-
-            //updateResource(jobRes);
-
-//        jobExecution.setId(jobExecutionIncrementer.nextLongValue());
-//        Object[] parameters = new Object[] { jobExecution.getId(), jobExecution.getJobId(),
-//                jobExecution.getStartTime(), jobExecution.getEndTime(), jobExecution.getStatus().toString(),
-//                jobExecution.getExitStatus().getExitCode(), jobExecution.getExitStatus().getExitDescription(),
-//                jobExecution.getVersion(), jobExecution.getCreateTime(), jobExecution.getLastUpdated(),
-//                jobExecution.getJobConfigurationName() };
-//        getJdbcTemplate().update(
-//                getQuery(SAVE_JOB_EXECUTION),
-//                parameters,
-//                new int[] { Types.BIGINT, Types.BIGINT, Types.TIMESTAMP, Types.TIMESTAMP, Types.VARCHAR,
-//                    Types.VARCHAR, Types.VARCHAR, Types.INTEGER, Types.TIMESTAMP, Types.TIMESTAMP, Types.VARCHAR });
-
-        insertJobParameters(jobRes, jobExecution.getId(), jobExecution.getJobParameters());
+        em.persist(jobExecution);
     }
 
     /**
@@ -291,20 +250,25 @@ public class JobExecutionDaoSparql extends AbstractJdbcBatchMetadataDao implemen
 
     @Override
     public JobExecution getLastJobExecution(JobInstance jobInstance) {
+    	
+//    	private static final String GET_LAST_EXECUTION = "SELECT JOB_EXECUTION_ID, START_TIME, END_TIME, STATUS, EXIT_CODE, EXIT_MESSAGE, CREATE_TIME, LAST_UPDATED, VERSION, JOB_CONFIGURATION_LOCATION "
+//                + "from %PREFIX%JOB_EXECUTION E where JOB_INSTANCE_ID = ? and JOB_EXECUTION_ID in (SELECT max(JOB_EXECUTION_ID) from %PREFIX%JOB_EXECUTION E2 where E2.JOB_INSTANCE_ID = ?)";
 
+    	// WHERE ... AND JOB_EXECUTION_ID in (SELECT max(JOB_EXECUTION_ID) from %PREFIX%JOB_EXECUTION E2 where E2.JOB_INSTANCE_ID = ?)"
         Long id = jobInstance.getId();
 
-        List<JobExecution> executions = getJdbcTemplate().query(getQuery(GET_LAST_EXECUTION),
-                new JobExecutionRowMapper(jobInstance), id, id);
+    	CriteriaBuilder cb = em.getCriteriaBuilder();
+    	CriteriaQuery<JobExecution> q = cb.createQuery(JobExecution.class);
 
-        Assert.state(executions.size() <= 1, "There must be at most one latest job execution");
+    	//ParameterExpression<Long> p = cb.parameter(Long.class);
 
-        if (executions.isEmpty()) {
-            return null;
-        }
-        else {
-            return executions.get(0);
-        }
+    	Root<JobExecution> c = q.from(JobExecution.class);
+    	CriteriaQuery<JobExecution> x = q.select(c).where(cb.gt(c.get("jobInstance.id"), id));
+    	
+    	TypedQuery<JobExecution> query = em.createQuery(x);
+    	JobExecution result = query.getSingleResult();
+    	
+    	return result;
     }
 
     /*
@@ -316,9 +280,18 @@ public class JobExecutionDaoSparql extends AbstractJdbcBatchMetadataDao implemen
     @Override
     public JobExecution getJobExecution(Long executionId) {
         try {
-            JobExecution jobExecution = getJdbcTemplate().queryForObject(getQuery(GET_EXECUTION_BY_ID),
-                    new JobExecutionRowMapper(), executionId);
-            return jobExecution;
+        	CriteriaBuilder cb = em.getCriteriaBuilder();
+        	CriteriaQuery<JobExecution> q = cb.createQuery(JobExecution.class);
+
+        	//ParameterExpression<Long> p = cb.parameter(Long.class);
+
+        	Root<JobExecution> c = q.from(JobExecution.class);
+        	CriteriaQuery<JobExecution> x = q.select(c).where(cb.gt(c.get("jobInstance.id"), executionId));
+        	
+        	TypedQuery<JobExecution> query = em.createQuery(x);
+        	JobExecution result = query.getSingleResult();
+        	
+        	return result;
         }
         catch (EmptyResultDataAccessException e) {
             return null;
@@ -338,8 +311,8 @@ public class JobExecutionDaoSparql extends AbstractJdbcBatchMetadataDao implemen
         RowCallbackHandler handler = new RowCallbackHandler() {
             @Override
             public void processRow(ResultSet rs) throws SQLException {
-                JobExecutionRowMapper mapper = new JobExecutionRowMapper();
-                result.add(mapper.mapRow(rs, 0));
+                //JobExecutionRowMapper mapper = new JobExecutionRowMapper();
+                //result.add(mapper.mapRow(rs, 0));
             }
         };
         getJdbcTemplate().query(getQuery(GET_RUNNING_EXECUTIONS), new Object[] { jobName }, handler);
@@ -459,75 +432,51 @@ public class JobExecutionDaoSparql extends AbstractJdbcBatchMetadataDao implemen
     }
 
 
-    // Return a query for job executions
-    public void retrieveJobExecutions() {
-        //return getJdbcTemplate().query(getQuery(FIND_JOB_EXECUTIONS), new JobExecutionRowMapper(job), job.getId());
-        // Create a shape for matching job executions
-        ResourceShapeBuilder b = new ResourceShapeBuilder();
-        b.out(BATCH.id);
-        b.out(BATCH.jobId);
-        b.out(BATCH.startTime);
-        b.out(BATCH.stopTime);
-        b.out(BATCH.exitCode);
-        b.out(BATCH.status);
-        b.out(BATCH.exitMessage);
-        b.out(BATCH.version);
-        b.out(DCTerms.created);
-        b.out(DCTerms.modified);
-        b.out(BATCH.jobConfigurationLocation);
-
-        ResourceShape s = b.getResourceShape();
-        MappedConcept<Graph> mc = ResourceShape.createMappedConcept(s, null, false);
-        //ListServiceUtils.createListServiceAcc(qef,
-        //b.clone();
-
-    }
-
-
-    /**
-     * Re-usable mapper for {@link JobExecution} instances.
-     *
-     * @author Dave Syer
-     *
-     */
-    private final class JobExecutionRowMapper implements RowMapper<JobExecution> {
-
-        private JobInstance jobInstance;
-
-        private JobParameters jobParameters;
-
-        public JobExecutionRowMapper() {
-        }
-
-        public JobExecutionRowMapper(JobInstance jobInstance) {
-            this.jobInstance = jobInstance;
-        }
-
-        @Override
-        public JobExecution mapRow(ResultSet rs, int rowNum) throws SQLException {
-            Long id = rs.getLong(1);
-            String jobConfigurationLocation = rs.getString(10);
-            JobExecution jobExecution;
-            if (jobParameters == null) {
-                jobParameters = getJobParameters(id);
-            }
-
-            if (jobInstance == null) {
-                jobExecution = new JobExecution(id, jobParameters, jobConfigurationLocation);
-            }
-            else {
-                jobExecution = new JobExecution(jobInstance, id, jobParameters, jobConfigurationLocation);
-            }
-
-            jobExecution.setStartTime(rs.getTimestamp(2));
-            jobExecution.setEndTime(rs.getTimestamp(3));
-            jobExecution.setStatus(BatchStatus.valueOf(rs.getString(4)));
-            jobExecution.setExitStatus(new ExitStatus(rs.getString(5), rs.getString(6)));
-            jobExecution.setCreateTime(rs.getTimestamp(7));
-            jobExecution.setLastUpdated(rs.getTimestamp(8));
-            jobExecution.setVersion(rs.getInt(9));
-            return jobExecution;
-        }
-
-    }
+//
+//    /**
+//     * Re-usable mapper for {@link JobExecution} instances.
+//     *
+//     * @author Dave Syer
+//     *
+//     */
+//    private final class JobExecutionRowMapper implements RowMapper<JobExecution> {
+//
+//        private JobInstance jobInstance;
+//
+//        private JobParameters jobParameters;
+//
+//        public JobExecutionRowMapper() {
+//        }
+//
+//        public JobExecutionRowMapper(JobInstance jobInstance) {
+//            this.jobInstance = jobInstance;
+//        }
+//
+//        @Override
+//        public JobExecution mapRow(ResultSet rs, int rowNum) throws SQLException {
+//            Long id = rs.getLong(1);
+//            String jobConfigurationLocation = rs.getString(10);
+//            JobExecution jobExecution;
+//            if (jobParameters == null) {
+//                jobParameters = getJobParameters(id);
+//            }
+//
+//            if (jobInstance == null) {
+//                jobExecution = new JobExecution(id, jobParameters, jobConfigurationLocation);
+//            }
+//            else {
+//                jobExecution = new JobExecution(jobInstance, id, jobParameters, jobConfigurationLocation);
+//            }
+//
+//            jobExecution.setStartTime(rs.getTimestamp(2));
+//            jobExecution.setEndTime(rs.getTimestamp(3));
+//            jobExecution.setStatus(BatchStatus.valueOf(rs.getString(4)));
+//            jobExecution.setExitStatus(new ExitStatus(rs.getString(5), rs.getString(6)));
+//            jobExecution.setCreateTime(rs.getTimestamp(7));
+//            jobExecution.setLastUpdated(rs.getTimestamp(8));
+//            jobExecution.setVersion(rs.getInt(9));
+//            return jobExecution;
+//        }
+//
+//    }
 }

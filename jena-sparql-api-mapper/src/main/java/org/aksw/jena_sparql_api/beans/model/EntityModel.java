@@ -20,8 +20,7 @@ import org.springframework.core.convert.ConversionService;
 public class EntityModel
     implements EntityOps
 {
-	// Simple implies that entities can only be initialized using clone
-	// TODO Use a better naming
+	// Primitives can ONLY be initialized using .clone()
 	protected boolean isPrimitive;
 
 //	protected boolean isCollection;
@@ -35,6 +34,8 @@ public class EntityModel
     protected Supplier<?> newInstance;
     protected Function<Object, ?> clone;
     protected Map<String, PropertyModel> propertyOps;
+    
+    //protected Map<String, PropertyModel> declaredPropertyModels;
     
     protected Function<Class<?>, Object> annotationFinder;
     //protected Set<Class<?>> annotationOverrides;

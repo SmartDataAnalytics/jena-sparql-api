@@ -18,9 +18,8 @@ import org.aksw.jena_sparql_api.mapper.annotation.IriType;
 import org.aksw.jena_sparql_api.mapper.annotation.MappedBy;
 import org.aksw.jena_sparql_api.mapper.annotation.MultiValued;
 import org.aksw.jena_sparql_api.mapper.model.F_GetValue;
-import org.aksw.jena_sparql_api.mapper.model.RdfPopulatorProperty;
-import org.aksw.jena_sparql_api.mapper.model.RdfPopulatorPropertyMulti;
-import org.aksw.jena_sparql_api.mapper.model.RdfPopulatorPropertySingle;
+import org.aksw.jena_sparql_api.mapper.model.RdfMapperProperty;
+import org.aksw.jena_sparql_api.mapper.model.RdfMapperPropertySingle;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.aksw.jena_sparql_api.stmt.SparqlRelationParser;
@@ -33,6 +32,8 @@ import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Syntax;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.Prologue;
 import org.slf4j.Logger;
@@ -67,17 +68,17 @@ public class RdfTypeFactoryImpl
 
     protected Function<Class<?>, EntityOps> entityOpsFactory;
     //protected Map<Class<?>, EntityOps> entityOpsCache;
-    
+
     protected Map<Class<?>, RdfType> classToRdfType = new HashMap<Class<?>, RdfType>();
     protected TypeMapper typeMapper;
     protected ConversionService conversionService;
 
     public RdfTypeFactoryImpl(
-            ExpressionParser parser, 
-            ParserContext parserContext, 
-            EvaluationContext evalContext, 
-            TypeMapper typeMapper, 
-            Prologue prologue, 
+            ExpressionParser parser,
+            ParserContext parserContext,
+            EvaluationContext evalContext,
+            TypeMapper typeMapper,
+            Prologue prologue,
             SparqlRelationParser relationParser,
             Function<Class<?>, EntityOps> entityOpsFactory,
             ConversionService conversionService) {
@@ -91,19 +92,19 @@ public class RdfTypeFactoryImpl
         this.entityOpsFactory = entityOpsFactory;
         this.conversionService = conversionService;
     }
-    
-    public Function<Class<?>, EntityOps> getEntityOpsFactory() {
-		return entityOpsFactory;
-	}
 
-	public Prologue getPrologue() {
+    public Function<Class<?>, EntityOps> getEntityOpsFactory() {
+        return entityOpsFactory;
+    }
+
+    public Prologue getPrologue() {
         return prologue;
     }
 
     public Map<Class<?>, RdfType> getClassToRdfType() {
         return classToRdfType;
     }
-    
+
 
     @Override
     public RdfType forJavaType(Class<?> clazz) {
@@ -160,22 +161,23 @@ public class RdfTypeFactoryImpl
         RdfClass result = allocateRdfClass(entityOps);
         return result;
     }
-    
+
     protected RdfClass allocateRdfClass(EntityOps entityOps) {
 
         //org.aksw.jena_sparql_api.mapper.annotation.RdfType rdfType = AnnotationUtils.findAnnotation(clazz, org.aksw.jena_sparql_api.mapper.annotation.RdfType.class);
         org.aksw.jena_sparql_api.mapper.annotation.RdfType rdfType = entityOps.findAnnotation(org.aksw.jena_sparql_api.mapper.annotation.RdfType.class);
-                
+
         //DefaultIri defaultIri = AnnotationUtils.findAnnotation(clazz, DefaultIri.class);
         DefaultIri defaultIri = entityOps.findAnnotation(DefaultIri.class);
 
         Function<Object, String> defaultIriFn = null;
         if (defaultIri != null) {
             String iriStr = defaultIri.value();
-            Expression expression = parser.parseExpression(iriStr,
-                    parserContext);
-            defaultIriFn = new F_GetValue<String>(String.class, expression,
-                    evalContext);
+//            Expression expression = parser.parseExpression(iriStr,
+//                    parserContext);
+            defaultIriFn = (o) -> resolveIriExpr(iriStr, o);
+            		//new F_GetValue<String>(String.class, expression,
+                    //evalContext).andThen(RdfTypeFactory::resolveIriExpr);
         }
 
         RdfClass result = new RdfClass(entityOps, defaultIriFn);
@@ -183,9 +185,9 @@ public class RdfTypeFactoryImpl
         return result;
     }
 
-    protected String resolveIriExpr(String exprStr) {
+    protected String resolveIriExpr(String exprStr, Object rootObject) {
         Expression expression = parser.parseExpression(exprStr, parserContext);
-        String tmp = expression.getValue(evalContext, String.class);
+        String tmp = expression.getValue(evalContext, rootObject, String.class);
         tmp = tmp.trim();
 
         PrefixMapping prefixMapping = prologue.getPrefixMapping();
@@ -222,7 +224,7 @@ public class RdfTypeFactoryImpl
 
             EntityOps entityOps = rdfClass.getEntityOps();
             //PropertyDescriptor[] pds = beanInfo.getPropertyDescriptors();
- 
+
             for(PropertyOps pd : entityOps.getProperties()) {
                 //String propertyName = pd.getName();
                 processProperty(rdfClass, entityOps, pd, frontier);
@@ -243,7 +245,7 @@ public class RdfTypeFactoryImpl
 
     //RdfPopulatorProperty
     protected void processProperty(RdfClass rdfClass, EntityOps entityOps, PropertyOps pd, Frontier<RdfClass> frontier) {
-        RdfPopulatorProperty result = null;
+        RdfMapperProperty result = null;
 
         Class<?> clazz = entityOps.getAssociatedClass();
         String propertyName = pd.getName();
@@ -257,7 +259,7 @@ public class RdfTypeFactoryImpl
 
         Iri iriAnn = pd.findAnnotation(Iri.class); //findPropertyAnnotation(clazz, pd, Iri.class);
         String iriExprStr = iriAnn == null ? null : iriAnn.value();
-        String iriStr = iriExprStr == null ? null : resolveIriExpr(iriExprStr);
+        String iriStr = iriExprStr == null ? null : resolveIriExpr(iriExprStr, null);
         boolean hasIri = iriStr != null && !iriStr.isEmpty();
 
         String mappedBy = (String)AnnotationUtils.getValue(pd.findAnnotation(MappedBy.class)); //findPropertyAnnotation(clazz, pd, MappedBy.class));
@@ -271,7 +273,7 @@ public class RdfTypeFactoryImpl
         if(isCandidate && (hasIri || isMappedBy)) {
             logger.debug("Annotation on property " + propertyName + " detected: " + iriStr);
 
-            Node predicate = iriStr != null ? NodeFactory.createURI(iriStr) : null;
+            Property predicate = iriStr != null ? ResourceFactory.createProperty(iriStr) : null;
 
             processProperty(rdfClass, entityOps, pd, predicate, frontier);
 
@@ -300,7 +302,7 @@ public class RdfTypeFactoryImpl
         return result;
     }
 
-    protected void processProperty(RdfClass rdfClass, EntityOps beanInfo, PropertyOps pd, Node predicate, Frontier<RdfClass> frontier) {
+    protected void processProperty(RdfClass rdfClass, EntityOps beanInfo, PropertyOps pd, Property predicate, Frontier<RdfClass> frontier) {
         Class<?> entityClass = beanInfo.getAssociatedClass();
 
         String propertyName = pd.getName();
@@ -345,7 +347,7 @@ public class RdfTypeFactoryImpl
             targetRdfType = new RdfTypeIriStr();
         }
 
-        
+
         DefaultIri defaultIri = pd.findAnnotation(DefaultIri.class);
         BiFunction<Object, Object, Node> defaultIriFn;
         if(defaultIri == null) {
@@ -354,47 +356,58 @@ public class RdfTypeFactoryImpl
             String defaultIriStr = defaultIri.value();
             Expression expression = parser.parseExpression(defaultIriStr,
                     parserContext);
-
+            
             Function<Object, Node> defaultIriFnTmp = new F_GetValue<String>(String.class, expression,
                     evalContext).andThen(iri -> NodeFactory.createURI(iri));
-            
+
             defaultIriFn = (entity, value) -> defaultIriFnTmp.apply(entity);
-                        
+
         }
-        
+
         //Relation relation = RelationUtils.createRelation(predicate.getURI(), false, prefixMapping);
 
         //RdfProperty result = new RdfPropertyDatatypeOld(beanInfo, pd, null, predicate, rdfValueMapper);
         RdfPropertyDescriptor descriptor = new RdfPropertyDescriptor(propertyName, targetRdfType, "");
-        RdfPopulatorProperty populator = isCollectionProperty
-                ? new RdfPopulatorPropertyMulti(pd, predicate, targetRdfType, defaultIriFn)
-                : new RdfPopulatorPropertySingle(pd, predicate, targetRdfType, defaultIriFn)
+        RdfMapperProperty populator = isCollectionProperty
+                ? null //new RdfMapperPropertyMulti(pd, predicate, targetRdfType, defaultIriFn)
+                : new RdfMapperPropertySingle(pd, predicate, targetRdfType, defaultIriFn)
                 ;
 
         rdfClass.addPropertyDescriptor(descriptor);
-        rdfClass.addPopulator(populator);
+        rdfClass.addPropertyMapper(populator);
 
         //return result;
 
     }
 
     public static RdfTypeFactoryImpl createDefault() {
-		ConversionServiceFactoryBean bean = new ConversionServiceFactoryBean();
-		bean.afterPropertiesSet();
-		ConversionService conversionService = bean.getObject();		
-
-        Prologue prologue = new Prologue();
-        RdfTypeFactoryImpl result = createDefault(prologue, null, conversionService);
+        RdfTypeFactoryImpl result = createDefault(null);
+        return result;
+    }
+    
+    public static RdfTypeFactoryImpl createDefault(Prologue prologue) {
+        RdfTypeFactoryImpl result = createDefault(prologue, null, null);
         return result;
     }
 
-    public static RdfTypeFactoryImpl createDefault(Prologue prologue, Function<Class<?>, EntityOps> entityOpsFactory, ConversionService conversionService) {
+    public static RdfTypeFactoryImpl createDefault(Prologue prologue, Function<Class<?>, EntityOps> entityOpsFactory, ConversionService _conversionService) {
         prologue = prologue != null ? prologue : new Prologue();
 
+        
+        ConversionService conversionService;
+        if(_conversionService == null) {
+        	ConversionServiceFactoryBean bean = new ConversionServiceFactoryBean();
+        	bean.afterPropertiesSet();
+        	conversionService = bean.getObject();
+        } else {
+        	conversionService = _conversionService;
+        }
+
+        
         entityOpsFactory = entityOpsFactory != null
                 ? entityOpsFactory
                 : (clazz) -> EntityModel.createDefaultModel(clazz, conversionService);
-        
+
         StandardEvaluationContext evalContext = new StandardEvaluationContext();
         TemplateParserContext parserContext = new TemplateParserContext();
 
@@ -411,6 +424,8 @@ public class RdfTypeFactoryImpl
 
         TypeMapper typeMapper = TypeMapper.getInstance();
         RdfTypeFactoryImpl result = new RdfTypeFactoryImpl(parser, parserContext, evalContext, typeMapper, prologue, relationParser, entityOpsFactory, conversionService);
+
+        result.getClassToRdfType().put(Map.class, new RdfTypeMap(x -> (Map)x));
         return result;
     }
 }

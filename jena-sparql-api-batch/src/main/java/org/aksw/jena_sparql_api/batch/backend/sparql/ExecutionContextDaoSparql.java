@@ -95,6 +95,7 @@ public class ExecutionContextDaoSparql extends AbstractJdbcBatchMetadataDao impl
 
     @Override
     public ExecutionContext getExecutionContext(StepExecution stepExecution) {
+    	//stepExecution.getJobExecution();
         Long executionId = stepExecution.getId();
         Assert.notNull(executionId, "ExecutionId must not be null.");
 

@@ -7,12 +7,15 @@
 	<artifactId>jena-sparql-api-parent</artifactId>
 
 	<packaging>pom</packaging>
-	<version>3.1.1-1</version>
+	<version>3.1.1-2-SNAPSHOT</version>
 	<name>Jena SPARQL API - Parent</name>
 	<description>An RDF library for abstracting SPARQL queries.</description>
 	<url>https://github.com/AKSW/jena-sparql-api</url>
 
 	<modules>
+		<module>jena-sparql-api-vocabs</module>
+		<module>jena-sparql-api-rdf-stream</module>
+
 		<module>jena-sparql-api-resources-test-config</module>
 		<module>jena-sparql-api-resources</module>
 
@@ -99,7 +102,7 @@
 
 		<spring.version>4.1.4.RELEASE</spring.version>
 		<spring.batch.version>3.0.7.RELEASE</spring.batch.version>
-		<aksw.commons.version>0.8.1</aksw.commons.version>
+		<aksw.commons.version>0.8.2-SNAPSHOT</aksw.commons.version>
 
 		<atmosphere.version>2.0.0.RC3</atmosphere.version>
 		<atmosphere-spring.version>1.1.0.RC5</atmosphere-spring.version>
@@ -276,7 +279,6 @@
 						<gitFlowConfig>
 							<versionTagPrefix>v</versionTagPrefix>
 						</gitFlowConfig>
-						<pushRemote>false</pushRemote>
 					</configuration>
 				</plugin>
 
@@ -399,6 +401,12 @@
 			<!-- </exclusion> -->
 			<!-- </exclusions> -->
 			<!-- </dependency> -->
+
+			<dependency>
+				<groupId>org.aksw.jena-sparql-api</groupId>
+				<artifactId>jena-sparql-api-vocabs</artifactId>
+				<version>${project.version}</version>
+			</dependency>
 
 			<dependency>
 				<groupId>org.aksw.jena-sparql-api</groupId>

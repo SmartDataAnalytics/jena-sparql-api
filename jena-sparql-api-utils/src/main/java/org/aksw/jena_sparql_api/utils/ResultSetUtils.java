@@ -14,6 +14,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFactory;
+import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.QueryIterator;
 import org.apache.jena.sparql.engine.binding.Binding;
@@ -214,7 +215,7 @@ public class ResultSetUtils {
     }
 
     public static ResultSet create2(Iterable<Var> vars, Iterator<Binding> bindingIt) {
-        List<String> varNames = org.aksw.jena_sparql_api.utils.VarUtils.getVarNames(vars);        
+        List<String> varNames = org.aksw.jena_sparql_api.utils.VarUtils.getVarNames(vars);
         ResultSet result = create(varNames, bindingIt);
         return result;
     }

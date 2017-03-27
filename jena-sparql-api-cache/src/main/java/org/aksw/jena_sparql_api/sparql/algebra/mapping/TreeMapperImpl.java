@@ -113,9 +113,8 @@ public class TreeMapperImpl<A, B, S> {
 
 
     public void recurse(int i, NestedStack<LayerMapping<A, B, S>> parentLayerMappingStack, Consumer<NestedStack<LayerMapping<A, B, S>>> consumer) {
-    	if(logger.isDebugEnabled()) {
-    		logger.debug("Entering level " + i);
-    	}
+
+    	if(logger.isDebugEnabled()) { logger.debug("Entering level " + i); }
 
 
     	//Map<A, B> parentMapping = parentMappingStack.getValue();
@@ -188,11 +187,13 @@ public class TreeMapperImpl<A, B, S> {
 //                    IterableUnknownSize<Map<A, B>> it = predicate.apply(aChildren, bChildren, mappings);
 //                    boolean r = it.mayHaveItems();
 
-
                 	if(logger.isDebugEnabled()) {
                 		logger.debug("  Source: " + aParent);
                 		logger.debug("  Target: " + bParent);
-                		logger.debug(  "Satisfiable: " + satisfiability);
+                		logger.debug("  Satisfiable: " + satisfiability);
+                		nodeMappings.forEach(m ->
+                			m.getChildMapping().entries().forEach(n ->
+                				logger.debug("  ChildMapping: " + n)));
                 	}
 
                 	if(!r) {

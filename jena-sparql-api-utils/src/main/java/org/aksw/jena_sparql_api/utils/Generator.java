@@ -6,6 +6,8 @@ public interface Generator<T>
     T next();
     T current();
 
+    //T prefer(T item);
+
     /**
      * Clones should idependently yield the same sequences of items as the original object
      *

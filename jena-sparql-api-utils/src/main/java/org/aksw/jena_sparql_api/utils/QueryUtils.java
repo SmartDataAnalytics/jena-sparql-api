@@ -7,8 +7,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.aksw.jena_sparql_api.backports.syntaxtransform.QueryTransformOps;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
+import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.op.OpSlice;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.core.Quad;
@@ -24,6 +26,14 @@ import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.Range;
 
 public class QueryUtils {
+
+	public static Query randomizeVars(Query query) {
+		Map<Var, Var> varMap = createRandomVarMap(query, "rv");
+		Query result = QueryTransformOps.transform(query, varMap);
+		System.out.println(query + "now:\n" + result);
+		return result;
+	}
+
 	public static Map<Var, Var> createRandomVarMap(Query query, String base) {
         Collection<Var> vars = PatternVars.vars(query.getQueryPattern());
         Generator<Var> gen = VarGeneratorBlacklist.create(base, vars);
@@ -71,6 +81,16 @@ public class QueryUtils {
     public static Range<Long> toRange(OpSlice op) {
         Range<Long> result = toRange(op.getStart(), op.getLength());
         return result;
+    }
+
+    public static Op applyRange(Op op, Range<Long> range) {
+    	long start = rangeToOffset(range);
+    	long length = rangeToLimit(range);
+
+    	Op result = start == Query.NOLIMIT && length == Query.NOLIMIT
+    			? op
+    			: new OpSlice(op, start, length);
+    	return result;
     }
 
     /**
@@ -132,7 +152,14 @@ public class QueryUtils {
         return result;
     }
 
+    /**
+     *
+     * @param range
+     * @return
+     */
     public static long rangeToLimit(Range<Long> range) {
+    	range = range.canonical(DiscreteDomain.longs());
+
         long result = range.hasUpperBound()
             ? DiscreteDomain.longs().distance(range.lowerEndpoint(), range.upperEndpoint())
             : Query.NOLIMIT;
@@ -152,7 +179,7 @@ public class QueryUtils {
 
         Range<Long> result = max == null
                 ? Range.atLeast(min)
-                : Range.closed(min, max);
+                : Range.closedOpen(min, max);
 
         return result;
     }

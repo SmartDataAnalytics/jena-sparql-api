@@ -21,11 +21,15 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.vocabulary.RDF;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
 
 import com.codepoetics.protonpack.StreamUtils;
 
 public class SparqlViewMatcherTreeTests {
+
+	private static final Logger logger = LoggerFactory.getLogger(SparqlViewMatcherTreeTests.class);
 
     @Test
     public void testNoProjection() throws Exception {
@@ -61,20 +65,23 @@ public class SparqlViewMatcherTreeTests {
                     .collect(Collectors.toSet());
 //			System.out.println("Expected: " + expected);
 
+            logger.debug("View Query: " + qas);
             Query qa = queryParser.apply(qas);
+
+            logger.debug("User Query: " + qbs);
             Query qb = queryParser.apply(qbs);
 
-            System.out.println(qa);
-            System.out.println(qb);
+//            System.out.println(qa);
+//            System.out.println(qb);
 
-            System.out.println("mappings:");
+            logger.debug("mappings:");
             Set<Map<Var, Var>> actual = SparqlViewMatcherSystemImpl.match(qa, qb).flatMap(x -> {
                 return StreamUtils.stream(x.getVarMaps());
             }).collect(Collectors.toSet());
 
 
-            expected.forEach(x -> System.out.println("expected: " + x));
-            System.out.println("Actual: " + actual);
+            expected.forEach(x -> logger.debug("expected: " + x));
+            logger.debug("Actual: " + actual);
 
             Assert.assertEquals(expected, actual);
 

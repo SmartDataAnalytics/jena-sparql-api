@@ -4,10 +4,32 @@
 @prefix qc: <http://sparql-qc-bench.inrialpes.fr/testsuite#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-q:q1-a
+
+q:q1a
   lsq:text "SELECT * { ?s ?p ?o }" ;
   .
 
+t:t1a
+  a qc:ContainmentTest ;
+  qc:sourceQuery q:q1a ;
+  qc:targetQuery q:q1a ;
+  qc:result "{?p=?p, ?o=?o, ?s=?s, ?v_1=?v_1}" ;
+  .
+
+q:q2a
+  lsq:text "SELECT * { { SELECT ?s { ?s a <http://foo> } } }"
+  .
+
+q:q2b
+  lsq:text "SELECT * { { SELECT ?s { ?s a <http://foo> } } FILTER(?s = <http://bar>) }"
+  .
+
+t:t2a
+  a qc:ContainmentTest ;
+  qc:sourceQuery q:q2a ;
+  qc:targetQuery q:q2b ;
+  qc:result "{?v_2=?v_2, ?v_3=?v_3, ?s=?s, ?v_1=?v_1}" ;
+  .
 
 
 q:l1a
@@ -79,21 +101,6 @@ t:l1a
   qc:sourceQuery q:l1a ;
   qc:targetQuery q:l1b ;
   qc:result "{?v_2=?v_2, ?x7=?x7, ?x8=?x8, ?v_3=?v_3, ?v_4=?v_4, ?x5=?x5, ?v_5=?v_5, ?x6=?x6, ?v_6=?v_6, ?x3=?x3, ?v_7=?v_7, ?x4=?x4, ?x1=?x1, ?v_8=?v_8, ?v_9=?v_9, ?x2=?x2, ?v_1=?v_1, ?v_10=?v_10, ?v_15=?v_15, ?v_12=?v_12, ?v_11=?v_11, ?v_14=?v_14, ?x9=?x9, ?v_13=?v_13}" ;
-  .
-
-
-t:t1a
-#  a qc:ContainmentTest ;
-  qc:sourceQuery q:q1-a ;
-  qc:targetQuery q:q1-b ;
-  qc:result "{?s=?s, ?p=?p, ?o=?o}" ;
-  .
-
-t:t1b
-#  a qc:ContainmentTest ;
-  qc:sourceQuery q:q1-b ;
-  qc:targetQuery q:q1-a ;
-  qc:result "{?v_2=?v_2, ?v_3=?v_3, ?c=?c, ?b=?b, ?v_1=?v_1, ?a=?a}" ;
   .
 
 q:q2-a

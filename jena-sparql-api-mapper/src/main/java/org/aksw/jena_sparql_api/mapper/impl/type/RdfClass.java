@@ -5,20 +5,17 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.beans.model.EntityOps;
 import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.mapper.context.RdfEmitterContext;
-import org.aksw.jena_sparql_api.mapper.context.RdfPersistenceContext;
-import org.aksw.jena_sparql_api.mapper.model.RdfPopulator;
+import org.aksw.jena_sparql_api.mapper.model.RdfMapper;
 import org.aksw.jena_sparql_api.mapper.proxy.MethodInterceptorRdf;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
-import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
-import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.springframework.cglib.proxy.Callback;
 import org.springframework.cglib.proxy.Enhancer;
@@ -33,12 +30,13 @@ public class RdfClass
 {
     // TODO: Add type parameters
 
+
     /**
      * The affected class (maybe we should use the fully qualified class name instead?)
      */
     //protected Class<?> beanClass;
     protected EntityOps entityOps;
-    
+
 
     /**
      * The concept that captures rdf terms that are instances of this class.
@@ -77,7 +75,7 @@ public class RdfClass
      * Each property has a corresponding RdfType
      *
      */
-    protected List<RdfPopulator> populators = new ArrayList<RdfPopulator>();
+    protected List<RdfMapper> populators = new ArrayList<RdfMapper>();
 
     /**
      * PropertyDescriptors map the Java property types to RdfType instances.
@@ -95,7 +93,7 @@ public class RdfClass
 //        this(typeFactory, targetClass, defaultIriFn, prologue, new LinkedHashMap<String, RdfProperty>());
 //    }
 
-    public Collection<RdfPopulator> getPopulators() {
+    public Collection<RdfMapper> getPropertyMappers() {
         //Collection<RdfProperty> result = propertyToMapping.values();
         return this.populators;
     }
@@ -115,10 +113,11 @@ public class RdfClass
 //    	beanWrapper.getPropertyDescriptors()
 //    }
 
+    
     public EntityOps getEntityOps() {
         return entityOps;
     }
-    
+
     public Concept getConcept() {
         return concept;
     }
@@ -140,7 +139,7 @@ public class RdfClass
         propertyDescriptors.put(name, propertyDescriptor);
     }
 
-    public void addPopulator(RdfPopulator populator) {
+    public void addPropertyMapper(RdfMapper populator) {
         checkPopulated();
 
         populators.add(populator);
@@ -177,7 +176,7 @@ public class RdfClass
 
     @Override
     public void exposeShape(ResourceShapeBuilder builder) {
-        for(RdfPopulator populator : populators) {
+        for(RdfMapper populator : populators) {
             populator.exposeShape(builder);
         }
     }
@@ -255,7 +254,8 @@ public class RdfClass
      * @param datasetGraph
      */
     @Override
-    public void populateEntity(RdfPersistenceContext persistenceContext, Object entity, Node s, Graph inGraph, Consumer<Triple> outSink) {
+    public EntityFragment populate(Resource shape, Object entity) {
+    //public void populateEntity(RdfPersistenceContext persistenceContext, Object entity, Node s, Graph inGraph, Consumer<Triple> outSink) {
         //DatasetGraph result = DatasetGraphFactory.createMem();
 
         //Graph graph = result.getDefaultGraph();
@@ -264,9 +264,13 @@ public class RdfClass
         /*
          *  Run all of this class' populators
          */
-        for(RdfPopulator pd : populators) {
-            pd.populateEntity(persistenceContext, entity, inGraph, s, outSink);
+        EntityFragment result = new EntityFragment(entity);
+        for(RdfMapper pd : populators) {
+            //EntityPlaceholderInfo placeholder =
+            pd.populate(result, shape, entity);
         }
+
+        return result;
     }
 
     //writeGraph(Object obj, Node g, )
@@ -278,34 +282,34 @@ public class RdfClass
      * @param g
      * @return
      */
-    @Override
-    public void emitTriples(RdfEmitterContext emitterContext, Object entity, Node s, Graph shapeGraph, Consumer<Triple> out) {
-        //Node s = getRootNode(obj);
-        //Node s = persistenceContext.getRootNode(entity);
-        if(s == null) {
-            throw new RuntimeException("Could not determine (iri-)node of entity " + (entity == null ? " null " : entity.getClass().getName()) + " - " + entity);
-        }
-        
-        /*
-         * Run the emitters of all of this class' populators
-         */
-        for(RdfPopulator populator : populators) {
-            populator.emitTriples(emitterContext, entity, s, shapeGraph, out);
-        }
-
-        /*
-         * Based on the property descriptors, the RdfClass
-         * notifies the emitter context which property values need additional
-         * emitting
-         */
-//        BeanWrapper beanWrapper = new BeanWrapperImpl(entity);
-//        for(RdfPropertyDescriptor pd : propertyDescriptors.values()) {
-//            String propertyName = pd.getName();
-//
-//            Object propertyValue = beanWrapper.getPropertyValue(propertyName);
-//            emitterContext.add(propertyValue, entity, propertyName);
+//    @Override
+//    public void emitTriples(RdfEmitterContext emitterContext, Object entity, Node s, Graph shapeGraph, Consumer<Triple> out) {
+//        //Node s = getRootNode(obj);
+//        //Node s = persistenceContext.getRootNode(entity);
+//        if(s == null) {
+//            throw new RuntimeException("Could not determine (iri-)node of entity " + (entity == null ? " null " : entity.getClass().getName()) + " - " + entity);
 //        }
-    }
+//
+//        /*
+//         * Run the emitters of all of this class' populators
+//         */
+//        for(RdfMapper populator : populators) {
+//            populator.emitTriples(emitterContext, entity, s, shapeGraph, out);
+//        }
+//
+//        /*
+//         * Based on the property descriptors, the RdfClass
+//         * notifies the emitter context which property values need additional
+//         * emitting
+//         */
+////        BeanWrapper beanWrapper = new BeanWrapperImpl(entity);
+////        for(RdfPropertyDescriptor pd : propertyDescriptors.values()) {
+////            String propertyName = pd.getName();
+////
+////            Object propertyValue = beanWrapper.getPropertyValue(propertyName);
+////            emitterContext.add(propertyValue, entity, propertyName);
+////        }
+//    }
 
 
 
@@ -362,7 +366,7 @@ public class RdfClass
     }
 
     @Override
-    public Object createJavaObject(Node node, Graph graph) {
+    public Object createJavaObject(RDFNode r) {
         if(!entityOps.isInstantiable()) {
             throw new RuntimeException("EntityOps is not instantiable: " + entityOps);
         }
@@ -370,16 +374,47 @@ public class RdfClass
         return result;
     }
 
-	@Override
-	public boolean hasIdentity() {
-		boolean result = defaultIriFn != null;
-		return result;
-	}
+    @Override
+    public boolean hasIdentity() {
+        boolean result = defaultIriFn != null;
+        return result;
+    }
 
+
+    /**
+     * Return an RDF graph from the entity, where nodes may be placeholders
+     *
+     * @param entity
+     * @return
+     */
+    public void exposeFragment(ResourceFragment out, Resource priorState, Object entity) {
+        for(RdfMapper populator : populators) {
+            populator.exposeFragment(out, priorState, entity);
+        }
+    }
+
+
+    @Override
+    public PathFragment resolve(String propertyName) {
+    	PathFragment result = populators.stream()
+    			.map(rdfMapper -> rdfMapper.resolve(propertyName))
+    			.filter(relation -> relation != null)
+    			.findFirst()
+    			.orElse(null);
+    			//.collect(Collectors.toList());
+
+    	// TODO Compute the union of the relations? (we may also consider raising an exception if there are multiple ones)
+    	//RelationOps.
+    	//Relation result = relations.isEmpty() ? null : relations.iterator().next();
+    	
+    	return result;
+    }
+
+    
 //    @Override
 //    public void exposeTypeDeciderShape(ResourceShapeBuilder rsb) {
 //        // TODO Auto-generated method stub
-//        
+//
 //    }
 //
 //    @Override
@@ -387,6 +422,6 @@ public class RdfClass
 //        // TODO Auto-generated method stub
 //        return null;
 //    }
-    
-    
+
+
 }

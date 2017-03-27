@@ -2,9 +2,11 @@ package org.aksw.jena_sparql_api.concept_cache.core;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
+import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.ReplaceConstants;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
@@ -16,6 +18,7 @@ import org.apache.jena.sparql.algebra.OpAsQuery;
 import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.op.OpService;
+import org.apache.jena.sparql.algebra.op.OpSlice;
 import org.apache.jena.sparql.algebra.op.OpUnion;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.ExecutionContext;
@@ -27,7 +30,6 @@ import org.apache.jena.sparql.engine.main.OpExecutor;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.graph.NodeTransformLib;
 import org.apache.jena.sparql.util.Symbol;
-import org.apache.jena.util.iterator.ClosableIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,17 +68,25 @@ public class OpExecutorViewCache
         QueryIterator result;
         // If there is no storage map in the context, we do not handle view IRIs
         if(serviceUri.startsWith("view://") && storageMap != null) {
+        	logger.debug("Intercepted execution of:\n" + opService);
+
+        	Op subOp = opService.getSubOp();
+
+        	Range<Long> range = Range.atLeast(0l);
+        	if(subOp instanceof OpSlice) {
+        		range = QueryUtils.toRange((OpSlice)subOp);
+        	}
+
         	StorageEntry storageEntry = storageMap.get(serviceNode);
         	if(storageEntry == null) {
         		throw new RuntimeException("Could not find a " + StorageEntry.class.getSimpleName() + " instance for " + serviceUri);
         	}
 
-        	Range<Long> range = Range.atLeast(0l);
-        	ClosableIterator<Binding> it = storageEntry.storage.apply(range);
+        	Stream<Binding> stream = storageEntry.storage.apply(range);
 
 //        	while(it.hasNext()) { System.out.println("item: " + it.next()); }
 
-        	result = new QueryIterPlainWrapper(it);
+        	result = new QueryIterPlainWrapper(stream.iterator());
         } else {
         	result = super.exec(opService, input);
         }

@@ -13,6 +13,8 @@ import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransform;
 import org.aksw.jena_sparql_api.backports.syntaxtransform.ExprTransformNodeElement;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.TriplePath;
 import org.apache.jena.sparql.core.Var;
@@ -37,6 +39,16 @@ import org.apache.jena.sparql.syntax.PatternVars;
 
 public class ElementUtils {
 
+//    public static Generator<Var> freshVars(Element element){
+//        Collection<Var> blacklistVars = PatternVars.vars(element);
+//
+//        Generator<Var> gen = VarGeneratorImpl2.create("v");
+//        Generator<Var> result = new VarGeneratorBlacklist(gen, blacklistVars);
+//
+//        return result;
+//    }
+
+	
     public static ElementTriplesBlock createElement(Triple triple) {
         BasicPattern bgp = new BasicPattern();
         bgp.add(triple);

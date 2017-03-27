@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.view_matcher;
 
+import java.util.Collections;
 import java.util.Map;
 
 import org.apache.jena.ext.com.google.common.collect.Iterables;
@@ -17,6 +18,13 @@ public class OpVarMap
         super();
         this.opMap = opMapping;
         this.varMap = varMapping;
+    }
+
+    public OpVarMap(Map<Op, Op> opMapping,
+            Map<Var, Var> varMapping) {
+        super();
+        this.opMap = opMapping;
+        this.varMap = Collections.singleton(varMapping);
     }
 
     public Map<Op, Op> getOpMap() {

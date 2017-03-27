@@ -4,12 +4,18 @@ import java.util.Set;
 
 import org.apache.jena.graph.Node;
 
-public class MyEntry<V> {
-	public V id;
-	public Set<Set<String>> featureSets;
-	public OpIndex queryIndex;
+/**
+ * This class is no longer needed
+ * @author raven
+ *
+ * @param <K>
+ */
+public class MyEntry<K> {
+	protected K id;
+	protected Set<Set<String>> featureSets;
+	protected OpIndex queryIndex;
 
-	public MyEntry(V id, Set<Set<String>> featureSets, OpIndex queryIndex) {
+	public MyEntry(K id, Set<Set<String>> featureSets, OpIndex queryIndex) {
 		super();
 		this.id = id;
 		this.featureSets = featureSets;

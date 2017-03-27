@@ -6,17 +6,17 @@ import java.util.List;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
+import org.aksw.jena_sparql_api.concepts.OrderedConcept;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.lookup.CountInfo;
-import org.aksw.jena_sparql_api.utils.CloseableJena;
 import org.aksw.jena_sparql_api.utils.CloseableQueryExecution;
 import org.aksw.jena_sparql_api.utils.ResultSetUtils;
-
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.sparql.core.Var;
@@ -33,6 +33,13 @@ public class ServiceUtils {
             result.add(resource);
         }
 
+        return result;
+    }
+
+    public static List<Node> fetchList(QueryExecutionFactory qef, OrderedConcept orderedConcept, Long limit, Long offset) {
+        Query query = ConceptUtils.createQueryList(orderedConcept, limit, offset);
+        //System.out.println("Query: " + query);
+        List<Node> result = fetchList(qef, query, orderedConcept.getConcept().getVar());
         return result;
     }
 
@@ -66,6 +73,7 @@ public class ServiceUtils {
 
 
     public static Integer fetchInteger(QueryExecutionFactory qef, Query query, Var v) {
+        //System.out.println(query);
         QueryExecution qe = qef.createQueryExecution(query);
         Integer result = fetchInteger(qe, v);
         return result;
@@ -77,10 +85,15 @@ public class ServiceUtils {
      */
     public static Integer fetchInteger(QueryExecution qe, Var v) {
         ResultSet rs = qe.execSelect();
+        //System.out.println(ResultSetFormatter.asText(rs));
         Integer result = ResultSetUtils.resultSetToInt(rs, v);
 
         return result;
     }
+
+//    public static Long fetchLong(QueryExecutionFactory qef, Concept c) {
+//
+//    }
 
 
     // NOTE: If there is a rowLimit, we can't determine whether there are more items or not

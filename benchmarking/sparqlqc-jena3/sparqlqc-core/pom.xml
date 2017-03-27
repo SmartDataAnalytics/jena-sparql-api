@@ -12,8 +12,15 @@
     </parent>
 
     <dependencies>
+
         <dependency>
-<!-- 			<groupId>${project.groupId}</groupId> -->
+            <groupId>org.aksw.jena-sparql-api</groupId>
+            <artifactId>jena-sparql-api-resources-sparqlqc</artifactId>
+        </dependency>
+
+
+        <dependency>
+            <!-- <groupId>${project.groupId}</groupId> -->
             <groupId>org.aksw.sparqlqc</groupId>
             <artifactId>sparqlqc-api-simple</artifactId>
         </dependency>
@@ -23,10 +30,10 @@
             <artifactId>sparqlqc-api</artifactId>
         </dependency>
 
-<!--         <dependency> -->
-<!--             <groupId>org.aksw.sparqlqc</groupId> -->
-<!--             <artifactId>sparqlqc-impl-fragment</artifactId> -->
-<!--         </dependency> -->
+        <!-- <dependency> -->
+        <!-- <groupId>org.aksw.sparqlqc</groupId> -->
+        <!-- <artifactId>sparqlqc-impl-fragment</artifactId> -->
+        <!-- </dependency> -->
 
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -38,27 +45,48 @@
             <artifactId>slf4j-log4j12</artifactId>
         </dependency>
 
-<!--         <dependency> -->
-<!--             <groupId>org.slf4j</groupId> -->
-<!--             <artifactId>jcl-over-slf4j</artifactId> -->
-<!--         </dependency> -->
+        <dependency>
+            <groupId>org.aksw.jena-sparql-api</groupId>
+            <artifactId>jena-sparql-api-core</artifactId>
+        </dependency>
 
+        <!-- <dependency> -->
+        <!-- <groupId>org.aksw.jena-sparql-api</groupId> -->
+        <!-- <artifactId>jena-sparql-api-vocabs</artifactId> -->
+        <!-- </dependency> -->
 
         <dependency>
-            <groupId>org.aksw.iguana</groupId>
-            <artifactId>iguana-extended</artifactId>
+            <groupId>org.aksw.beast</groupId>
+            <artifactId>beast-viz-jfreechart</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.aksw.beast</groupId>
+            <artifactId>beast-viz-xchart</artifactId>
         </dependency>
 
 
-<!--         <dependency> -->
-<!--             <groupId>org.slf4j</groupId> -->
-<!--             <artifactId>slf4j-api</artifactId> -->
-<!--         </dependency> -->
+        <!-- <dependency> -->
+        <!-- <groupId>org.slf4j</groupId> -->
+        <!-- <artifactId>jcl-over-slf4j</artifactId> -->
+        <!-- </dependency> -->
+
 
 <!--         <dependency> -->
-<!--             <groupId>org.slf4j</groupId> -->
-<!--             <artifactId>slf4j-log4j12</artifactId> -->
+<!--             <groupId>org.aksw.iguana</groupId> -->
+<!--             <artifactId>iguana-core</artifactId> -->
 <!--         </dependency> -->
+
+
+        <!-- <dependency> -->
+        <!-- <groupId>org.slf4j</groupId> -->
+        <!-- <artifactId>slf4j-api</artifactId> -->
+        <!-- </dependency> -->
+
+        <!-- <dependency> -->
+        <!-- <groupId>org.slf4j</groupId> -->
+        <!-- <artifactId>slf4j-log4j12</artifactId> -->
+        <!-- </dependency> -->
 
         <dependency>
             <groupId>org.apache.felix</groupId>

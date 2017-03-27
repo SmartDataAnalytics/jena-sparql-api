@@ -1,15 +1,14 @@
 package org.aksw.jena_sparql_api.mapper.test;
 
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.aksw.jena_sparql_api.mapper.annotation.DefaultIri;
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
-import org.apache.jena.riot.RDFDataMgr;
 
-import org.apache.jena.graph.Graph;
-import org.apache.jena.sparql.graph.GraphFactory;
-
-@DefaultIri("o:#{firstName}-#{lastName}-#{birthPlace}-#{birthDate.toString()}")
+//@DefaultIri("o:#{firstName}-#{lastName}-#{birthPlace}-#{birthDate.toString()}")
+@DefaultIri("o:#{firstName}-#{lastName}-#{birthPlace}")
 public class Person {
     @Iri("foaf:firstName")
     private String firstName;
@@ -23,6 +22,9 @@ public class Person {
     @Iri("foaf:birthDate")
     private Calendar birthDate;
 
+    @Iri("foaf:tags")
+    private Map<String, Person> tags = new HashMap<>();
+    
     public String getFirstName() {
         return firstName;
     }
@@ -55,7 +57,15 @@ public class Person {
         this.birthDate = birthDate;
     }
 
-    @Override
+    public Map<String, Person> getTags() {
+		return tags;
+	}
+
+	public void setTags(Map<String, Person> tags) {
+		this.tags = tags;
+	}
+
+	@Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;

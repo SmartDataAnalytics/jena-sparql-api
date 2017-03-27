@@ -6,7 +6,7 @@ import java.util.GregorianCalendar;
 
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.mapper.impl.engine.RdfMapperEngineImpl;
-import org.aksw.jena_sparql_api.mapper.jpa.core.EntityManagerJena;
+import org.aksw.jena_sparql_api.mapper.jpa.core.EntityManagerImpl;
 import org.aksw.jena_sparql_api.sparql.ext.datatypes.RDFDatatypeCalendar;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
 import org.junit.Test;
@@ -31,7 +31,7 @@ public class TestMapperSimple {
 		person.setBirthDate(new GregorianCalendar(2000, 0, 0));
 
 		SparqlService sparqlService = FluentSparqlService.forModel().create();
-		EntityManagerJena em = new EntityManagerJena(new RdfMapperEngineImpl(sparqlService));
+		EntityManagerImpl em = new EntityManagerImpl(new RdfMapperEngineImpl(sparqlService));
 		em.persist(person);
 
 		Model rdf = sparqlService.getQueryExecutionFactory().createQueryExecution("CONSTRUCT WHERE { ?s ?p ?o }").execConstruct();

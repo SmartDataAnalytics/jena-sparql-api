@@ -1,9 +1,14 @@
 package org.aksw.jena_sparql_api.concept_cache.core;
 
+import java.util.stream.Stream;
+
+import org.aksw.jena_sparql_api.algebra.transform.TransformPushSlice;
+import org.aksw.jena_sparql_api.util.RewriteUtils;
 import org.aksw.jena_sparql_api.util.collection.RangedSupplier;
-import org.aksw.jena_sparql_api.utils.IteratorClosable;
+import org.aksw.jena_sparql_api.util.collection.StreamUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.op.OpSlice;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
@@ -16,12 +21,11 @@ import org.apache.jena.sparql.engine.main.OpExecutor;
 import org.apache.jena.sparql.engine.main.OpExecutorFactory;
 import org.apache.jena.sparql.engine.main.QC;
 import org.apache.jena.sparql.util.Context;
-import org.apache.jena.util.iterator.ClosableIterator;
 
 import com.google.common.collect.Range;
 
 public class RangedSupplierOp
-	implements RangedSupplier<Long, Binding>
+	implements RangedSupplier<Long, Binding>, OpAttribute
 {
 	protected Op op;
 	protected Context context;
@@ -34,26 +38,35 @@ public class RangedSupplierOp
 	}
 
 	@Override
-	public ClosableIterator<Binding> apply(Range<Long> range) {
+	public Stream<Binding> apply(Range<Long> range) {
 		long offset = QueryUtils.rangeToOffset(range);
 		long limit = QueryUtils.rangeToLimit(range);
 
-		OpSlice effectiveOp = new OpSlice(op, offset, limit);
+		Op effectiveOp = new OpSlice(op, offset, limit);
+
+		// The base op may be a service reference (or some other expression)
+		// Push down the newly added slice for best performance
+		//effectiveOp = Transformer.transform(TransformPushSlice.fn, effectiveOp);
+
+		// TODO Make this transformation configurable
+		effectiveOp = RewriteUtils.transformUntilNoChange(effectiveOp, op -> Transformer.transform(TransformPushSlice.fn, op));
+
 
 		QueryIterator it = execute(effectiveOp, context);
-		ClosableIterator<Binding> result = new IteratorClosable<>(it, () -> it.close());
+		Stream<Binding> result = StreamUtils.stream(it);
+		//ClosableIterator<Binding> result = new IteratorClosable<>(it, () -> it.close());
 		return result;
 	}
 
-	@Override
-    public <X> X unwrap(Class<X> clazz, boolean reflexive) {
-    	@SuppressWarnings("unchecked")
-		X result = reflexive && this.getClass().isAssignableFrom(clazz)
-    		? (X)this
-    		: null;
-
-    	return result;
-    }
+//	@Override
+//    public <X> X unwrap(Class<X> clazz, boolean reflexive) {
+//    	@SuppressWarnings("unchecked")
+//		X result = reflexive && this.getClass().isAssignableFrom(clazz)
+//    		? (X)this
+//    		: null;
+//
+//    	return result;
+//    }
 
 	/**
 	 * This is partly a repetition of private functions in QC
@@ -70,5 +83,10 @@ public class RangedSupplierOp
 		QueryIterator result = opExecutor.executeOp(op, qIter);
 
 		return result;
+	}
+
+	@Override
+	public Op getOp() {
+		return op;
 	}
 }

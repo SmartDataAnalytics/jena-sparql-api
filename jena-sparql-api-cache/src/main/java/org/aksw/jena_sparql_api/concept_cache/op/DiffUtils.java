@@ -232,6 +232,7 @@ public class DiffUtils {
      * @param tables
      * @return
      */
+    /*
     public static List<QfpcMatch> findMatches(QuadFilterPatternCanonical rawCachePattern, QuadFilterPatternCanonical queryPattern, Map<Var, Var> varMap, Iterable<Table> tables) {
         List<QfpcMatch> result = new ArrayList<QfpcMatch>();
 
@@ -295,6 +296,7 @@ public class DiffUtils {
 
         return result;
     }
+    */
 
     public static Object find(Collection<Op> caches, Op request) {
 
