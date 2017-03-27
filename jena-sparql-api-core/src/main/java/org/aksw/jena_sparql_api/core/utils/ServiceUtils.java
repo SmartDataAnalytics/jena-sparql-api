@@ -16,6 +16,7 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.sparql.core.Var;
@@ -72,6 +73,7 @@ public class ServiceUtils {
 
 
     public static Integer fetchInteger(QueryExecutionFactory qef, Query query, Var v) {
+        //System.out.println(query);
         QueryExecution qe = qef.createQueryExecution(query);
         Integer result = fetchInteger(qe, v);
         return result;
@@ -83,10 +85,15 @@ public class ServiceUtils {
      */
     public static Integer fetchInteger(QueryExecution qe, Var v) {
         ResultSet rs = qe.execSelect();
+        //System.out.println(ResultSetFormatter.asText(rs));
         Integer result = ResultSetUtils.resultSetToInt(rs, v);
 
         return result;
     }
+
+//    public static Long fetchLong(QueryExecutionFactory qef, Concept c) {
+//
+//    }
 
 
     // NOTE: If there is a rowLimit, we can't determine whether there are more items or not
