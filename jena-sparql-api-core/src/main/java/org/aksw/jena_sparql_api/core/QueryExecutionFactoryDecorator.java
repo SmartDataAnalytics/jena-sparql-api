@@ -53,7 +53,7 @@ public class QueryExecutionFactoryDecorator
     }
 
     @Override
-    public void close() {
+    public void close() throws Exception {
         decoratee.close();
     }
 }

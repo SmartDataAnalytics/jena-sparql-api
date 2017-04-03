@@ -24,105 +24,104 @@ import com.google.common.util.concurrent.MoreExecutors;
 
 public class MainSparqlViewMatcherCacheServer {
 
-	public static void main(String[] args) throws Exception {
-		JenaExtensionViewMatcher.register();
+    public static void main(String[] args) throws Exception {
+        JenaExtensionViewMatcher.register();
 
 
-		mainTestQuery2(args);
-		//mainServer(args);
-	}
+        mainTestQuery2(args);
+        //mainServer(args);
+    }
 
-	public static void mainTestQuery1(String[] args) {
+    public static void mainTestQuery1(String[] args) throws Exception {
 
-		QueryExecutionFactory qef = createQef();
-		{
-			QueryExecution qe = qef.createQueryExecution("SELECT * { ?s a <http://dbpedia.org/ontology/ResearchProject> }");
-			System.out.println(ResultSetFormatter.asText(qe.execSelect()));
-			QueryExecutionViewMatcherMaster x = QueryExecutionDecoratorBase.unwrap(QueryExecutionViewMatcherMaster.class, qe);
-			System.out.println("CacheHitLevel:" + x.getCacheHitLevel());
-		}
+        try(QueryExecutionFactory qef = createQef()) {
+            {
+                QueryExecution qe = qef.createQueryExecution("SELECT * { ?s a <http://dbpedia.org/ontology/ResearchProject> }");
+                System.out.println(ResultSetFormatter.asText(qe.execSelect()));
+                QueryExecutionViewMatcherMaster x = QueryExecutionDecoratorBase.unwrap(QueryExecutionViewMatcherMaster.class, qe);
+                System.out.println("CacheHitLevel:" + x.getCacheHitLevel());
+            }
 
-		{
-			QueryExecution qe = qef.createQueryExecution("SELECT * { ?s a <http://dbpedia.org/ontology/ResearchProject> }");
-			System.out.println(ResultSetFormatter.asText(qe.execSelect()));
-			QueryExecutionViewMatcherMaster x = QueryExecutionDecoratorBase.unwrap(QueryExecutionViewMatcherMaster.class, qe);
-			System.out.println("CacheHitLevel:" + x.getCacheHitLevel());
-		}
+            {
+                QueryExecution qe = qef.createQueryExecution("SELECT * { ?s a <http://dbpedia.org/ontology/ResearchProject> }");
+                System.out.println(ResultSetFormatter.asText(qe.execSelect()));
+                QueryExecutionViewMatcherMaster x = QueryExecutionDecoratorBase.unwrap(QueryExecutionViewMatcherMaster.class, qe);
+                System.out.println("CacheHitLevel:" + x.getCacheHitLevel());
+            }
 
-		qef.close();
-	}
+        }
+    }
 
-	public static void mainTestQuery2(String[] args) {
+    public static void mainTestQuery2(String[] args) throws Exception {
 
-		QueryExecutionFactory qef = createQef();
-		{
-			QueryExecution qe = qef.createQueryExecution("SELECT * { ?s a <http://dbpedia.org/ontology/ResearchProject> }");
-			System.out.println(ResultSetFormatter.asText(qe.execSelect()));
-			QueryExecutionViewMatcherMaster x = QueryExecutionDecoratorBase.unwrap(QueryExecutionViewMatcherMaster.class, qe);
-			System.out.println("CacheHitLevel:" + x.getCacheHitLevel());
-		}
+        try(QueryExecutionFactory qef = createQef()) {
+            {
+                QueryExecution qe = qef.createQueryExecution("SELECT * { ?s a <http://dbpedia.org/ontology/ResearchProject> }");
+                System.out.println(ResultSetFormatter.asText(qe.execSelect()));
+                QueryExecutionViewMatcherMaster x = QueryExecutionDecoratorBase.unwrap(QueryExecutionViewMatcherMaster.class, qe);
+                System.out.println("CacheHitLevel:" + x.getCacheHitLevel());
+            }
 
-		{
-			QueryExecution qe = qef.createQueryExecution("SELECT * { ?s a <http://dbpedia.org/ontology/ResearchProject> . ?s ?p ?o }");
-			System.out.println(ResultSetFormatter.asText(qe.execSelect()));
-			QueryExecutionViewMatcherMaster x = QueryExecutionDecoratorBase.unwrap(QueryExecutionViewMatcherMaster.class, qe);
-			System.out.println("CacheHitLevel:" + x.getCacheHitLevel());
-		}
+            {
+                QueryExecution qe = qef.createQueryExecution("SELECT * { ?s a <http://dbpedia.org/ontology/ResearchProject> . ?s ?p ?o }");
+                System.out.println(ResultSetFormatter.asText(qe.execSelect()));
+                QueryExecutionViewMatcherMaster x = QueryExecutionDecoratorBase.unwrap(QueryExecutionViewMatcherMaster.class, qe);
+                System.out.println("CacheHitLevel:" + x.getCacheHitLevel());
+            }
+        }
+    }
 
-		qef.close();
-	}
+    public static QueryExecutionFactory createQef() {
+        QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://dbpedia.org/sparql", "http://dbpedia.org")
+                .config()
+                    .withDefaultLimit(1000, true)
+                .end()
+                .create();
 
-	public static QueryExecutionFactory createQef() {
-		QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://dbpedia.org/sparql", "http://dbpedia.org")
-				.config()
-					.withDefaultLimit(1000, true)
-				.end()
-				.create();
+        CacheBuilder<Object, Object> queryCacheBuilder = CacheBuilder.newBuilder().maximumSize(10000);
 
-		CacheBuilder<Object, Object> queryCacheBuilder = CacheBuilder.newBuilder().maximumSize(10000);
+        ExecutorService executorService = MoreExecutors.newDirectExecutorService(); //Executors.newCachedThreadPool();
 
-		ExecutorService executorService = MoreExecutors.newDirectExecutorService(); //Executors.newCachedThreadPool();
+        QueryExecutionFactoryViewMatcherMaster tmp = QueryExecutionFactoryViewMatcherMaster.create(qef,
+                queryCacheBuilder, executorService, true);
 
-		QueryExecutionFactoryViewMatcherMaster tmp = QueryExecutionFactoryViewMatcherMaster.create(qef,
-				queryCacheBuilder, executorService, true);
+        qef = FluentQueryExecutionFactory.from(tmp)
+                .config().withParser(SparqlQueryParserImpl.create()).end()
+                .create();
 
-		qef = FluentQueryExecutionFactory.from(tmp)
-				.config().withParser(SparqlQueryParserImpl.create()).end()
-				.create();
+        return qef;
+    }
 
-		return qef;
-	}
+    public static void mainServer(String[] args) throws InterruptedException, IOException, URISyntaxException {
 
-	public static void mainServer(String[] args) throws InterruptedException, IOException, URISyntaxException {
+        /*
+         * Query query =
+         * QueryFactory.create("SELECT ?s { ?s ?p ?o } LIMIT 100000"); Op op =
+         * Algebra.compile(query); System.out.println("Before: " + op);
+         * Transform t = new TransformTopN(); op = Transformer.transform(t, op);
+         * System.out.println("After: " + op); Query q = OpAsQuery.asQuery(op);
+         * System.out.println("Result: " + q);
+         *
+         * if(true) { return; }
+         */
 
-		/*
-		 * Query query =
-		 * QueryFactory.create("SELECT ?s { ?s ?p ?o } LIMIT 100000"); Op op =
-		 * Algebra.compile(query); System.out.println("Before: " + op);
-		 * Transform t = new TransformTopN(); op = Transformer.transform(t, op);
-		 * System.out.println("After: " + op); Query q = OpAsQuery.asQuery(op);
-		 * System.out.println("Result: " + q);
-		 *
-		 * if(true) { return; }
-		 */
+        // Create an implemetation of the view matcher - i.e. an object that
+        // supports
+        // - registering (Op, value) entries
+        // - rewriting an Op using references to the registered ops
 
-		// Create an implemetation of the view matcher - i.e. an object that
-		// supports
-		// - registering (Op, value) entries
-		// - rewriting an Op using references to the registered ops
+        QueryExecutionFactory qef = createQef();
 
-		QueryExecutionFactory qef = createQef();
+        int port = 7531;
+        Server server = FactoryBeanSparqlServer.newInstance()
+                .setSparqlServiceFactory(qef)
+                .setPort(port)
+                .create();
 
-		int port = 7531;
-		Server server = FactoryBeanSparqlServer.newInstance()
-				.setSparqlServiceFactory(qef)
-				.setPort(port)
-				.create();
+        if (Desktop.isDesktopSupported()) {
+            Desktop.getDesktop().browse(new URI("http://localhost:" + port + "/sparql"));
+        }
 
-		if (Desktop.isDesktopSupported()) {
-			Desktop.getDesktop().browse(new URI("http://localhost:" + port + "/sparql"));
-		}
-
-		server.join();
-	}
+        server.join();
+    }
 }

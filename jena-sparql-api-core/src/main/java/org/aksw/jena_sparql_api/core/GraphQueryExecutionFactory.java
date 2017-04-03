@@ -34,7 +34,11 @@ public class GraphQueryExecutionFactory
     @Override
     public void close() {
         if(delegateClose) {
-            this.qef.close();
+            try {
+                this.qef.close();
+            } catch(Exception e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 

@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.concepts;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -16,6 +17,7 @@ import org.apache.jena.query.SortCondition;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
 import org.apache.jena.sparql.expr.E_Equals;
+import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprAggregator;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.aggregate.AggCountVar;
@@ -29,16 +31,37 @@ import org.apache.jena.sparql.syntax.syntaxtransform.NodeTransformSubst;
 
 public class ConceptOps {
 
-	public static OrderedConcept applyOrder(Concept concept, OrderedConcept ordered, Generator<Var> generator) {
-		Map<Var, Var> varMap = createAlignedVarMap(concept, ordered.getConcept(), generator);
+    // This referenced method was removed from NodeTransformLib in Jena 3.2.0
+    public static List<SortCondition> transform(NodeTransform nodeTransform, List<SortCondition> conditions)
+    {
+        List<SortCondition> conditions2 = new ArrayList<>() ;
+        boolean same = true ;
+        for ( SortCondition sc : conditions )
+        {
+            Expr expr = sc.getExpression() ;
+            Expr expr2 = NodeTransformLib.transform(nodeTransform, expr) ;
+            if ( expr != expr2 )
+                same = false ;
+            SortCondition sc2 = new SortCondition(expr2, sc.getDirection()) ;
+            conditions2.add(sc2) ;
+        }
+
+        if ( same )
+            return conditions ;
+        return conditions2 ;
+    }
+
+
+    public static OrderedConcept applyOrder(Concept concept, OrderedConcept ordered, Generator<Var> generator) {
+        Map<Var, Var> varMap = createAlignedVarMap(concept, ordered.getConcept(), generator);
         Concept tmp = intersect2(concept, ordered.getConcept(), varMap);
 
-        List<SortCondition> orderBy = NodeTransformLib.transform(new NodeTransformSubst(varMap), ordered.getOrderBy());
-		
+        List<SortCondition> orderBy = /*NodeTransformLib.*/transform(new NodeTransformSubst(varMap), ordered.getOrderBy());
+
         OrderedConcept result = new OrderedConcept(tmp, orderBy);
         return result;
-	}
-	
+    }
+
 
     public static Concept forAllIfRolePresent(Relation role, Concept filler, Generator<Var> generator) {
 
@@ -107,12 +130,12 @@ public class ConceptOps {
 
 
     public static Concept align(Concept concept, Set<Var> vbs, Var vbJoinVar, Generator<Var> generator) {
-    	Map<Var, Var> varMap = createAlignedVarMap(concept, vbs, vbJoinVar, generator);
-    	Concept result = applyNodeTransform(concept, varMap);
-    	return result;
+        Map<Var, Var> varMap = createAlignedVarMap(concept, vbs, vbJoinVar, generator);
+        Concept result = applyNodeTransform(concept, varMap);
+        return result;
     }
-    
-    
+
+
     public static Concept applyNodeTransform(Concept concept, Map<? extends Node, ? extends Node> nodeMap) {
         NodeTransform nodeTransform = new NodeTransformRenameMap(nodeMap);
 
@@ -132,9 +155,9 @@ public class ConceptOps {
 
     public static Map<Var, Var> createAlignedVarMap(Concept concept, Concept forbiddenVars,  Generator<Var> generator) {
         Var vb = forbiddenVars.getVar();
-    	Set<Var> vbs = forbiddenVars.getVarsMentioned();
+        Set<Var> vbs = forbiddenVars.getVarsMentioned();
         Map<Var, Var> result = createAlignedVarMap(concept, vbs, vb, generator);
-        		
+
         return result;
     }
 
