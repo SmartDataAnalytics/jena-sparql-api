@@ -8,12 +8,12 @@ package org.aksw.jena_sparql_api.core;
  *         Time: 10:54 AM
  */
 public interface QueryExecutionFactory
-    extends QueryExecutionFactoryString, QueryExecutionFactoryQuery
+    extends QueryExecutionFactoryString, QueryExecutionFactoryQuery, AutoCloseable
 {
     String getId();
     String getState();
 
     <T> T unwrap(Class<T> clazz);
 
-    void close();
+//    void close();
 }
