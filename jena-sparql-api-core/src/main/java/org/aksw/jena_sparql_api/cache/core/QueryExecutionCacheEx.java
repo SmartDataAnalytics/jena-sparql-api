@@ -96,11 +96,12 @@ public class QueryExecutionCacheEx
                 }
 
                 throw new RuntimeException(e);
+            } finally {
+                getDecoratee().close();
             }
 
             logger.trace("Cache write [" + service + "]: " + queryString);
             cache.write(service, queryString, rs);
-            getDecoratee().close();
             resource = cache.lookup(service, queryString);
             if(resource == null) {
                 throw new RuntimeException("Cache error: Lookup of just written data failed");
