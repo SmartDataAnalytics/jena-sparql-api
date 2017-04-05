@@ -5,7 +5,6 @@
 target
 
 bin
-#cache
 
 # Package Files #
 *.jar

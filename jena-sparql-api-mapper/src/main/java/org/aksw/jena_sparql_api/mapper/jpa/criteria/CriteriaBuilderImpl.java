@@ -10,14 +10,23 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.persistence.Tuple;
+import javax.persistence.criteria.CollectionJoin;
 import javax.persistence.criteria.CompoundSelection;
 import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaDelete;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.CriteriaUpdate;
 import javax.persistence.criteria.Expression;
+import javax.persistence.criteria.Join;
+import javax.persistence.criteria.ListJoin;
+import javax.persistence.criteria.MapJoin;
 import javax.persistence.criteria.Order;
 import javax.persistence.criteria.ParameterExpression;
+import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 import javax.persistence.criteria.Selection;
+import javax.persistence.criteria.SetJoin;
 import javax.persistence.criteria.Subquery;
 
 import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.EqualsExpression;
@@ -67,14 +76,14 @@ public class CriteriaBuilderImpl
 
     @Override
     public Order asc(Expression<?> x) {
-    	Order result = new OrderImpl(true, (VExpression<?>)x);
-    	return result;
+        Order result = new OrderImpl(true, (VExpression<?>)x);
+        return result;
     }
 
     @Override
     public Order desc(Expression<?> x) {
-    	Order result = new OrderImpl(false, (VExpression<?>)x);
-    	return result;
+        Order result = new OrderImpl(false, (VExpression<?>)x);
+        return result;
     }
 
     @Override
@@ -116,7 +125,7 @@ public class CriteriaBuilderImpl
     @Override
     public <X extends Comparable<? super X>> Expression<X> greatest(
             Expression<X> x) {
-    	return new GreatestExpression<>((VExpression<X>)x);
+        return new GreatestExpression<>((VExpression<X>)x);
     }
 
     @Override
@@ -230,18 +239,18 @@ public class CriteriaBuilderImpl
 
     @Override
     public Predicate equal(Expression<?> x, Expression<?> y) {
-    	
+
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException();
     }
 
     @Override
     public Predicate equal(Expression<?> x, Object y) {
-    	VExpression<?> z = new ValueExpression<>(Object.class, y);
+        VExpression<?> z = new ValueExpression<>(Object.class, y);
 
-    	VExpression<Boolean> tmp = new EqualsExpression((VExpression<?>)x, z);
-    	Predicate result = new ExpressionPredicate(tmp);
-    	return result;
+        VExpression<Boolean> tmp = new EqualsExpression((VExpression<?>)x, z);
+        Predicate result = new ExpressionPredicate(tmp);
+        return result;
     }
 
     @Override
@@ -916,6 +925,60 @@ public class CriteriaBuilderImpl
             Expression<?>... args) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public <T> CriteriaUpdate<T> createCriteriaUpdate(Class<T> targetEntity) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public <T> CriteriaDelete<T> createCriteriaDelete(Class<T> targetEntity) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public <X, T, V extends T> Join<X, V> treat(Join<X, T> join, Class<V> type) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public <X, T, E extends T> CollectionJoin<X, E> treat(CollectionJoin<X, T> join, Class<E> type) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public <X, T, E extends T> SetJoin<X, E> treat(SetJoin<X, T> join, Class<E> type) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public <X, T, E extends T> ListJoin<X, E> treat(ListJoin<X, T> join, Class<E> type) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public <X, K, T, V extends T> MapJoin<X, K, V> treat(MapJoin<X, K, T> join, Class<V> type) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public <X, T extends X> Path<T> treat(Path<X> path, Class<T> type) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public <X, T extends X> Root<T> treat(Root<X> root, Class<T> type) {
+        // TODO Auto-generated method stub
+        return null;
     }
 
 }

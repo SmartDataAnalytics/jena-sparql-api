@@ -3,15 +3,19 @@ package org.aksw.jena_sparql_api.mapper.jpa.core;
 import java.util.List;
 import java.util.Map;
 
+import javax.persistence.EntityGraph;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.FlushModeType;
 import javax.persistence.LockModeType;
 import javax.persistence.Query;
+import javax.persistence.StoredProcedureQuery;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaDelete;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.CriteriaUpdate;
 import javax.persistence.metamodel.Metamodel;
 
 import org.aksw.jena_sparql_api.core.SparqlService;
@@ -26,7 +30,7 @@ import org.apache.jena.graph.NodeFactory;
 public class EntityManagerImpl
     implements EntityManager
 {
-	protected RdfMapperEngine engine;
+    protected RdfMapperEngine engine;
 
     /**
      * The languagePreferences acts as a default method to priorize and filter items in a set of (literal)
@@ -44,7 +48,7 @@ public class EntityManagerImpl
 
     public EntityManagerImpl(RdfMapperEngine engine) {
         super();
-        this.engine = engine;      
+        this.engine = engine;
     }
 
 //    public RdfPersistenceContext getPersistenceContext() {
@@ -58,15 +62,15 @@ public class EntityManagerImpl
 
 
     public RdfTypeFactory getRdfTypeFactory() {
-    	RdfTypeFactory result = engine.getRdfTypeFactory();
-    	return result;
+        RdfTypeFactory result = engine.getRdfTypeFactory();
+        return result;
     }
 
 
     @Override
     public <T> T find(Class<T> clazz, Object primaryKey) {
 
-    	//LookupService<Node, T> ls = engine.getLookupService(clazz);
+        //LookupService<Node, T> ls = engine.getLookupService(clazz);
 
         Node node;
         if(primaryKey instanceof String) {
@@ -91,14 +95,14 @@ public class EntityManagerImpl
 
     @Override
     public <T> T merge(T entity) {
-    	T result = engine.merge(entity);
-    	return result;
+        T result = engine.merge(entity);
+        return result;
     }
 
 
     @Override
     public void remove(Object entity) {
-    	engine.remove(entity);
+        engine.remove(entity);
     }
 
     @Override
@@ -196,8 +200,8 @@ public class EntityManagerImpl
 
     @Override
     public <T> TypedQuery<T> createQuery(CriteriaQuery<T> criteriaQuery) {
-    	TypedQueryImpl<T> result = new TypedQueryImpl<T>(criteriaQuery, engine);
-    	return result;
+        TypedQueryImpl<T> result = new TypedQueryImpl<T>(criteriaQuery, engine);
+        return result;
     }
 
     @Override
@@ -295,6 +299,72 @@ public class EntityManagerImpl
     @Override
     public Metamodel getMetamodel() {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Query createQuery(CriteriaUpdate updateQuery) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Query createQuery(CriteriaDelete deleteQuery) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public StoredProcedureQuery createNamedStoredProcedureQuery(String name) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public StoredProcedureQuery createStoredProcedureQuery(String procedureName) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public StoredProcedureQuery createStoredProcedureQuery(String procedureName, Class... resultClasses) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public StoredProcedureQuery createStoredProcedureQuery(String procedureName, String... resultSetMappings) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public boolean isJoinedToTransaction() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public <T> EntityGraph<T> createEntityGraph(Class<T> rootType) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public EntityGraph<?> createEntityGraph(String graphName) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public EntityGraph<?> getEntityGraph(String graphName) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public <T> List<EntityGraph<? super T>> getEntityGraphs(Class<T> entityClass) {
+        // TODO Auto-generated method stub
+        return null;
     }
 
 
