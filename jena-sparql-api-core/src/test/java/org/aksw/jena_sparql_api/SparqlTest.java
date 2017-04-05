@@ -10,8 +10,10 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import org.aksw.commons.util.concurrent.CountingCompletionService;
 import org.aksw.jena_sparql_api.compare.QueryExecutionCompare;
 import org.aksw.jena_sparql_api.compare.QueryExecutionFactoryCompare;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
@@ -121,7 +123,7 @@ public class SparqlTest {
 //        QueryExecutionFactory qef3 = new QueryExecutionFactoryModel(model);
 
 
-        qef = new QueryExecutionFactoryRetry(qef, 5, 1);
+        //qef = new QueryExecutionFactoryRetry(qef, 5, 1);
 
         // Add delay in order to be nice to the remote server (delay in milli seconds)
         //qef = new QueryExecutionFactoryDelay(qef, 1);
@@ -149,17 +151,36 @@ public class SparqlTest {
 
 
 
-        ExecutorService executors = Executors.newFixedThreadPool(nThreads);
+        ExecutorService es = Executors.newFixedThreadPool(nThreads);
+        CountingCompletionService<?> cs = new CountingCompletionService<Void>(es);
 
         Random rand = new Random();
 
         for(int i = 0; i < nThreads; ++i) {
             Runnable runnable = new QueryRunnable(nLoops, rand, nResources, qefCompare);
             //runnable.run();
-            executors.submit(runnable);
+            cs.submit(runnable, null);
         }
-        executors.shutdown();
-        executors.awaitTermination(20, TimeUnit.SECONDS);
+
+        boolean failed = false;
+        while(cs.hasUncompletedTasks()) {
+            Future<?> f = cs.take();
+            try {
+                f.get();
+            } catch(Exception e) {
+                e.printStackTrace();
+                failed = true;
+            }
+        }
+
+        Thread.sleep(10000);
+
+        es.shutdown();
+        es.awaitTermination(20, TimeUnit.SECONDS);
+
+        if(failed) {
+            throw new RuntimeException("Test failed due to exceptions in threads");
+        }
     }
 
 
