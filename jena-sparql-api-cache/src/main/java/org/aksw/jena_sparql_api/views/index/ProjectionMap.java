@@ -23,31 +23,31 @@ public class ProjectionMap<K, V> {
     protected ReversibleMap<K, V> keyToPatternId;
     protected Map<K, VarInfo> keyToVarInfo;
 
-	public void put(K key, V value, VarInfo varInfo) {
-		keyToPatternId.put(key,  value);
-		keyToVarInfo.put(key, varInfo);
-	}
+    public void put(K key, V value, VarInfo varInfo) {
+        keyToPatternId.put(key,  value);
+        keyToVarInfo.put(key, varInfo);
+    }
 
-	public void remove(Object key) {
-		keyToPatternId.remove(key);
-		keyToVarInfo.remove(key);
-	}
+    public void remove(Object key) {
+        keyToPatternId.remove(key);
+        keyToVarInfo.remove(key);
+    }
 
-	public void removeValue(Object value) {
-		Set<K> keys = keyToPatternId.reverse().removeAll(value);
-		keys.forEach(keyToVarInfo::remove);
+    public void removeValue(Object value) {
+        Set<K> keys = keyToPatternId.reverse().removeAll(value);
+        keys.forEach(keyToVarInfo::remove);
 
-	}
+    }
 
-	public Collection<K> lookup(V patternId, VarInfo userVarInfo, Map<Var, Var> varMap) {
-    	Collection<K> keys = keyToPatternId.reverse().get(patternId);
+    public Collection<K> lookup(V patternId, VarInfo userVarInfo, Map<Var, Var> varMap) {
+        Collection<K> keys = keyToPatternId.reverse().get(patternId);
 
-    	Collection<K> result = keys.stream().filter(key -> {
-    		VarInfo viewVarInfo = keyToVarInfo.get(key);
-    		boolean r = SparqlViewMatcherProjectionUtils.validateProjection(viewVarInfo, userVarInfo, varMap);
-    		return r;
-    	}).collect(Collectors.toList());
+        Collection<K> result = keys.stream().filter(key -> {
+            VarInfo viewVarInfo = keyToVarInfo.get(key);
+            boolean r = SparqlViewMatcherProjectionUtils.validateProjection(viewVarInfo, userVarInfo, varMap, false);
+            return r;
+        }).collect(Collectors.toList());
 
-    	return result;
-	}
+        return result;
+    }
 }

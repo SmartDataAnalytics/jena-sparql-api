@@ -555,7 +555,7 @@ public class SparqlCacheUtils {
             Node tmp = QuadUtils.getNode(quad, i);
 
             if(i == 0 && (Quad.defaultGraphNodeGenerated.equals(tmp) || Quad.defaultGraphIRI.equals(tmp))) {
-            	continue;
+                continue;
             }
 
             if(!tmp.isVariable()) {
@@ -600,7 +600,7 @@ public class SparqlCacheUtils {
 
 
     public static ProjectedOp cutProjectionAndNormalize(Op op, Rewrite opNormalizer) {
-    	// Before normalization, cut away the projection on the original op first
+        // Before normalization, cut away the projection on the original op first
         ProjectedOp projectedOp = SparqlCacheUtils.cutProjection(op);
 
         Op normalizedOp = opNormalizer.rewrite(projectedOp.getResidualOp());
@@ -623,7 +623,7 @@ public class SparqlCacheUtils {
 
         int distinctLevel = 0;
         if(residualOp instanceof OpDistinct) {
-        	distinctLevel = 2;
+            distinctLevel = 2;
             residualOp = ((OpDistinct)residualOp).getSubOp();
         }
 
@@ -682,37 +682,37 @@ public class SparqlCacheUtils {
 
 
     public static ConjunctiveQuery tryExtractConjunctiveQuery(Op op, Generator<Var> generator) {
-    	OpDistinct opDistinct = null;
-    	OpProject opProject = null;
+        OpDistinct opDistinct = null;
+        OpProject opProject = null;
 
-    	if(op instanceof OpDistinct) {
-    		opDistinct = (OpDistinct)op;
-    		op = opDistinct.getSubOp();
-    	}
+        if(op instanceof OpDistinct) {
+            opDistinct = (OpDistinct)op;
+            op = opDistinct.getSubOp();
+        }
 
-    	if(op instanceof OpProject) {
-    		opProject = (OpProject)op;
-    		op = opProject.getSubOp();
-    	}
+        if(op instanceof OpProject) {
+            opProject = (OpProject)op;
+            op = opProject.getSubOp();
+        }
 
-    	QuadFilterPattern qfp = extractQuadFilterPattern(op);
+        QuadFilterPattern qfp = extractQuadFilterPattern(op);
 
-    	ConjunctiveQuery result = null;
-    	if(qfp != null) {
-    		boolean isDistinct = opDistinct != null;
-    		Set<Var> projectVars = opProject == null
-    				? OpVars.visibleVars(op)
-    				: new LinkedHashSet<>(opProject.getVars());
+        ConjunctiveQuery result = null;
+        if(qfp != null) {
+            boolean isDistinct = opDistinct != null;
+            Set<Var> projectVars = opProject == null
+                    ? OpVars.visibleVars(op)
+                    : new LinkedHashSet<>(opProject.getVars());
 
-    		VarInfo varInfo = new VarInfo(projectVars, isDistinct ? 2 : 0);
+            VarInfo varInfo = new VarInfo(projectVars, isDistinct ? 2 : 0);
 
           QuadFilterPatternCanonical qfpc = canonicalize2(qfp, generator);
 
-    		// TODO canonicalize the pattern
-    		result = new ConjunctiveQuery(varInfo, qfpc);
-    	}
+            // TODO canonicalize the pattern
+            result = new ConjunctiveQuery(varInfo, qfpc);
+        }
 
-    	return result;
+        return result;
     }
 
     public static QuadFilterPattern extractQuadFilterPattern(Op op) {
@@ -862,12 +862,12 @@ public class SparqlCacheUtils {
 //    }
 
     public static OpExtConjunctiveQuery tryCreateCqfp(Op op, Generator<Var> generator) {
-    	ConjunctiveQuery cq = tryExtractConjunctiveQuery(op, generator);
-    	OpExtConjunctiveQuery result = cq == null
-    			? null
-    			: new OpExtConjunctiveQuery(cq);
+        ConjunctiveQuery cq = tryExtractConjunctiveQuery(op, generator);
+        OpExtConjunctiveQuery result = cq == null
+                ? null
+                : new OpExtConjunctiveQuery(cq);
 
-    	return result;
+        return result;
 //    	QuadFilterPattern qfp = extractQuadFilterPattern(op);
 //        OpExtConjunctiveQuery result;
 //        if(qfp == null) {

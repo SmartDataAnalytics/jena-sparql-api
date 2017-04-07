@@ -74,11 +74,14 @@ public class DnfUtils
         List<Expr> tmpOrs = new ArrayList<Expr>();
         for(Iterable<Expr> ands : ors) {
             Expr and = ExprUtils.andifyBalanced(ands);
+            if(and == null) {
+                and = NodeValue.TRUE;
+            }
 
             tmpOrs.add(and);
         }
 
-        if(Iterables.isEmpty(ors)) {
+        if(Iterables.isEmpty(tmpOrs)) {
             return NodeValue.FALSE;
         }
 
@@ -270,7 +273,7 @@ public class DnfUtils
         List<ExprList> result = new ArrayList<ExprList>();
 
         for(Expr expr : exprs) {
-        	collectOr(expr, result);
+            collectOr(expr, result);
         }
 
         return result;
@@ -304,11 +307,11 @@ public class DnfUtils
 
             list.add(ors);
         } else {
-        	ExprList tmp = new ExprList();
-        	// Turn true into empty clause
-        	if(!NodeValue.TRUE.equals(expr)) {
-        		tmp.add(expr);
-        	}
+            ExprList tmp = new ExprList();
+            // Turn true into empty clause
+            if(!NodeValue.TRUE.equals(expr)) {
+                tmp.add(expr);
+            }
 
             list.add(tmp);
         }

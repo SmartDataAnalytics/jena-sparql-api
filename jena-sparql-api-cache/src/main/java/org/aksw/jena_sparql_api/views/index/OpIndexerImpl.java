@@ -82,7 +82,7 @@ public class OpIndexerImpl
 //        return result;
 //    }
 
-	  public static Stream<Entry<Op, QuadFilterPatternCanonical>> streamQuadFilterPatterns(Tree<Op> tree) {
+      public static Stream<Entry<Op, QuadFilterPatternCanonical>> streamQuadFilterPatterns(Tree<Op> tree) {
 //	  Stream<Entry<Op, QuadFilterPatternCanonical>> result = TreeUtils
 //	          .inOrderSearch(
 //	                  tree.getRoot(),
@@ -92,18 +92,18 @@ public class OpIndexerImpl
 //	          .filter(e -> e.getValue() != null);
 //
 
-		  Stream<Entry<Op, QuadFilterPatternCanonical>> result = TreeUtils
-		          .inOrderSearch(
-		                  tree.getRoot(),
-		                  tree::getChildren,
-		                  o -> (o instanceof OpExtConjunctiveQuery) ? ((OpExtConjunctiveQuery)o).getQfpc().getPattern() : null,
-		                  (opNode, value) -> value == null) // descend while the value is null
-		          .filter(e -> e.getValue() != null);
+          Stream<Entry<Op, QuadFilterPatternCanonical>> result = TreeUtils
+                  .inOrderSearch(
+                          tree.getRoot(),
+                          tree::getChildren,
+                          o -> (o instanceof OpExtConjunctiveQuery) ? ((OpExtConjunctiveQuery)o).getQfpc().getPattern() : null,
+                          (opNode, value) -> value == null) // descend while the value is null
+                  .filter(e -> e.getValue() != null);
 
 
 
-	  return result;
-	}
+      return result;
+    }
 
     @Override
     public OpIndex apply(Op op) {
@@ -118,7 +118,7 @@ public class OpIndexerImpl
 
         // Traverse the cache op and create a mapping from op to QuadFilterPatternCanonical
         Map<Op, QuadFilterPatternCanonical> opToQfp = streamQuadFilterPatterns(treeOp)
-        		.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+                .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 
         FeatureMap<Expr, QuadPatternIndex> quadPatternIndex = new FeatureMapImpl<>();
 
@@ -133,9 +133,9 @@ public class OpIndexerImpl
 //        String id = StringUtils.md5Hash("" + op);
 //        Node idNode = NodeFactory.createLiteral(id);
 
-        //Set<Set<String>> features = SparqlViewMatcherOpImpl.extractFeatures(op);
+        Set<Set<String>> features = SparqlViewMatcherOpImpl.extractFeatures(op);
 
-        OpIndex result = new OpIndex(op, tree, quadPatternIndex);
+        OpIndex result = new OpIndex(op, tree, quadPatternIndex, features);
 
         return result;
     }

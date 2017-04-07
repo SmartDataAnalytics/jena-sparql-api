@@ -159,7 +159,7 @@ public class SparqlViewMatcherQfpcImpl<K>
 
     public static <K> Map<K, QfpcMatch> lookupCore(
     		QuadFilterPatternCanonical queryQfpc,
-    		IBiSetMultimap<Set<Set<Expr>>, QuadFilterPatternCanonical> quadCnfToSummary,
+    		IBiSetMultimap<Set<Set<Expr>>, QuadFilterPatternCanonical> quadDnfToSummary,
     		//Map<QuadFilterPatternCanonical, Map<Set<Var>, Table>> cacheData,
     		Map<QuadFilterPatternCanonical, IBiSetMultimap<Quad, Set<Set<Expr>>>> qfpcToQuadToCnf,
     		Multimap<QuadFilterPatternCanonical, K> qfpcToKeys
@@ -186,7 +186,7 @@ public class SparqlViewMatcherQfpcImpl<K>
 
 
         for(Set<Set<Expr>> quadCnf : quadCnfs) {
-            Collection<QuadFilterPatternCanonical> cands = quadCnfToSummary.get(quadCnf);
+            Collection<QuadFilterPatternCanonical> cands = quadDnfToSummary.get(quadCnf);
 
             // TODO: Keep track of which variables are candidates -
             // e.g. variables that have only a single varOcc (i.e. appear only once in the query) cannot be used for caching

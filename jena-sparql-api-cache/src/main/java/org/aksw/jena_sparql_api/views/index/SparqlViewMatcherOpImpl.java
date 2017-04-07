@@ -33,6 +33,7 @@ import org.aksw.jena_sparql_api.view_matcher.OpVarMap;
 import org.aksw.jena_sparql_api.view_matcher.SparqlViewMatcherUtils;
 import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
@@ -94,9 +95,9 @@ public class SparqlViewMatcherOpImpl<P>
     }
 
     public P allocate(Op item) {
-    	P result = nextPatternIdSupplier.get();
-    	put(result, item);
-    	return result;
+        P result = nextPatternIdSupplier.get();
+        put(result, item);
+        return result;
     }
 
 
@@ -271,7 +272,7 @@ public class SparqlViewMatcherOpImpl<P>
         });
 
 
-        // Order candidates by their node count - largest node counts first
+        // Order candidates by their node count - largest node counts (number of operators in the algebra tree) first
         List<P> cands = new ArrayList<>(tmpCands);
         Collections.sort(cands, (a, b) -> ((int)(idToQueryIndex.get(a).getTree().nodeCount() - idToQueryIndex.get(b).getTree().nodeCount())));
 
@@ -285,8 +286,8 @@ public class SparqlViewMatcherOpImpl<P>
 
         for(P cacheEntry : cands) {
             //OpIndex cacheIndex = cacheEntry.queryIndex;
-        	P id = cacheEntry;
-        	OpIndex cacheIndex = idToQueryIndex.get(cacheEntry);
+            P id = cacheEntry;
+            OpIndex cacheIndex = idToQueryIndex.get(cacheEntry);
 
             Multimap<Op, Op> candOpMapping = SparqlViewMatcherSystemImpl.getCandidateLeafMapping(cacheIndex, queryIndex);
             Tree<Op> cacheTree = cacheIndex.getTree();
@@ -304,7 +305,10 @@ public class SparqlViewMatcherOpImpl<P>
 
                 //K id = cacheEntry.id;
                 // We need to update the queryIndex (remove sub-trees that matched)
-                Tree<Op> r = applyMapping(id, cacheTree, queryTree, opVarMap);
+
+                // This id is just for logging purposes
+                Node tmpId = NodeFactory.createURI("http://tmpId-" + id);
+                Tree<Op> r = applyMapping(tmpId, cacheTree, queryTree, opVarMap);
 
                 if(logger.isDebugEnabled()) { logger.debug("Result: " + r); }
                 if(logger.isDebugEnabled()) { logger.debug("Varmap: " + Iterables.toString(opVarMap.getVarMaps())); }
@@ -320,7 +324,18 @@ public class SparqlViewMatcherOpImpl<P>
         return result;
     }
 
-    public static <V> Tree<Op> applyMapping(V id, Tree<Op> cacheTree, Tree<Op> queryTree, OpVarMap opVarMap) {
+    /**
+     * Create a tree based on the queryTree where the subtree of the cacheTree has been replaced
+     * with a OpService node which references the given id
+     *
+     *
+     * @param id
+     * @param cacheTree
+     * @param queryTree
+     * @param opVarMap
+     * @return
+     */
+    public static <V> Tree<Op> applyMapping(Node id, Tree<Op> cacheTree, Tree<Op> queryTree, OpVarMap opVarMap) {
         Map<Op, Op> nodeMapping = opVarMap.getOpMap();
 
         Op sourceRoot = cacheTree.getRoot();
@@ -332,7 +347,7 @@ public class SparqlViewMatcherOpImpl<P>
 
         //QuadPattern yay = new QuadPattern();
         //Node serviceNode = NodeFactory.createURI("");
-        OpService placeholderOp = new OpService((Node)id, new OpBGP(), true);
+        OpService placeholderOp = new OpService(id, new OpBGP(), true);
         Op repl = OpUtils.substitute(queryTree.getRoot(), false, op -> {
            return op == targetNode ? placeholderOp : null;
         });
@@ -380,17 +395,17 @@ public class SparqlViewMatcherOpImpl<P>
 
 
     public static Set<Set<String>> extractFeatures(Op oop) {
-    	return Collections.singleton(OpVisitorFeatureExtractor.getFeatures(oop, (op) -> op.getClass().getSimpleName()));
+        return Collections.singleton(OpVisitorFeatureExtractor.getFeatures(oop, (op) -> op.getClass().getSimpleName()));
     }
 
     public static SparqlViewMatcherOp<Integer> create() {
 //        Function<Op, Set<Set<String>>> itemFeatureExtractor = (oop) ->
 //            Collections.singleton(OpVisitorFeatureExtractor.getFeatures(oop, (op) -> op.getClass().getSimpleName()));
 
-    	Iterator<Integer> nextPatternIdIt =
-    			IntStream.generate(new AtomicInteger()::getAndIncrement).iterator();
+        Iterator<Integer> nextPatternIdIt =
+                IntStream.generate(new AtomicInteger()::getAndIncrement).iterator();
 
-    	Supplier<Integer> supplier = () -> nextPatternIdIt.next();
+        Supplier<Integer> supplier = () -> nextPatternIdIt.next();
 
         SparqlViewMatcherOp<Integer> result = new SparqlViewMatcherOpImpl<>(
                 SparqlViewMatcherOpImpl::normalizeOp,
@@ -403,8 +418,8 @@ public class SparqlViewMatcherOpImpl<P>
 
     @Override
     public void removeKey(Object key) {
-    	featuresToIndexes.removeValue(key);
-    	idToQueryIndex.remove(key);
+        featuresToIndexes.removeValue(key);
+        idToQueryIndex.remove(key);
 
 //        MyEntry<K> e = idToQueryIndex.get(key);
 //        if(e != null) {
@@ -414,10 +429,10 @@ public class SparqlViewMatcherOpImpl<P>
 //        }
     }
 
-	@Override
-	public Op getOp(P key) {
-		OpIndex opIndex = idToQueryIndex.get(key);
-		Op result = opIndex == null ? null : opIndex.getOp();
-		return result;
-	}
+    @Override
+    public Op getOp(P key) {
+        OpIndex opIndex = idToQueryIndex.get(key);
+        Op result = opIndex == null ? null : opIndex.getOp();
+        return result;
+    }
 }

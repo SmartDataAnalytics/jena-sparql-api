@@ -31,9 +31,9 @@ import com.google.common.collect.Multimap;
  * @param <P>
  */
 public class SparqlViewMatcherPopImpl<K, P>
-	implements SparqlViewMatcherPop<K>
+    implements SparqlViewMatcherPop<K>
 {
-	protected SparqlViewMatcherOp<P> delegate;
+    protected SparqlViewMatcherOp<P> delegate;
 
     // A map to associate projections with pattern ids
     //protected Map<P, Map<K, ProjectedOp>> patternIdToKeyToPop;
@@ -43,27 +43,27 @@ public class SparqlViewMatcherPopImpl<K, P>
     protected Map<K, ProjectedOp> keyToPop;
 
     public SparqlViewMatcherPopImpl(SparqlViewMatcherOp<P> delegate) {
-    	this(
-    		delegate,
-    		HashMultimap.create(),
-    		new HashMap<>(),
-    		new HashMap<>()
-    	);
+        this(
+            delegate,
+            HashMultimap.create(),
+            new HashMap<>(),
+            new HashMap<>()
+        );
     }
 
     public SparqlViewMatcherPopImpl(
-    		SparqlViewMatcherOp<P> delegate,
-    		Multimap<P, K> patternIdToKeys,
-			Map<K, P> keyToPatternId,
-			Map<K, ProjectedOp> keyToPop) {
-		super();
-		this.delegate = delegate;
-		this.patternIdToKeys = patternIdToKeys;
-		this.keyToPatternId = keyToPatternId;
-		this.keyToPop = keyToPop;
-	}
+            SparqlViewMatcherOp<P> delegate,
+            Multimap<P, K> patternIdToKeys,
+            Map<K, P> keyToPatternId,
+            Map<K, ProjectedOp> keyToPop) {
+        super();
+        this.delegate = delegate;
+        this.patternIdToKeys = patternIdToKeys;
+        this.keyToPatternId = keyToPatternId;
+        this.keyToPop = keyToPop;
+    }
 
-	/**
+    /**
      * Function that filters the entries associated with a patternId by
      *
      * @param projection
@@ -72,65 +72,65 @@ public class SparqlViewMatcherPopImpl<K, P>
      * @return
      */
     public Collection<K> lookupKeys(VarInfo userVarInfo, P patternId, Map<Var, Var> varMap) {
-    	Collection<K> keys = patternIdToKeys.get(patternId);
+        Collection<K> keys = patternIdToKeys.get(patternId);
 
-    	Collection<K> result = keys.stream().filter(key -> {
-    		VarInfo viewVarInfo = keyToPop.get(key).getProjection();
-    		boolean r = SparqlViewMatcherProjectionUtils.validateProjection(viewVarInfo, userVarInfo, varMap);
-    		return r;
-    	}).collect(Collectors.toList());
+        Collection<K> result = keys.stream().filter(key -> {
+            VarInfo viewVarInfo = keyToPop.get(key).getProjection();
+            boolean r = SparqlViewMatcherProjectionUtils.validateProjection(viewVarInfo, userVarInfo, varMap, false);
+            return r;
+        }).collect(Collectors.toList());
 
-    	return result;
+        return result;
     }
 
-	@Override
-	public void put(K key, ProjectedOp pop) {
+    @Override
+    public void put(K key, ProjectedOp pop) {
 
-		// TODO Check if the op is isomorphic to an existing pattern - in that case we could reuse a prior pattern id
-		// For now we allocate a new entry
+        // TODO Check if the op is isomorphic to an existing pattern - in that case we could reuse a prior pattern id
+        // For now we allocate a new entry
 
-		// Remove a possible prior entry
-		removeKey(key);
+        // Remove a possible prior entry
+        removeKey(key);
 
-		Op patternOp = pop.getResidualOp();
+        Op patternOp = pop.getResidualOp();
 
-		P patternId = delegate.allocate(patternOp);
-		keyToPatternId.put(key, patternId);
-		keyToPop.put(key, pop);
-	}
-
-
-	/**
-	 * Map<K, Entry<Map<Op, Op>, Map<Var, Var>>
-	 *
-	 *
-	 *
-	 *
-	 * @param pop
-	 * @return
-	 */
-	@Override
-	public Map<K, OpVarMap> lookup(ProjectedOp pop) {
+        P patternId = delegate.allocate(patternOp);
+        keyToPatternId.put(key, patternId);
+        keyToPop.put(key, pop);
+    }
 
 
-		//VarInfo userVarInfo = pop.getProjection();
+    /**
+     * Map<K, Entry<Map<Op, Op>, Map<Var, Var>>
+     *
+     *
+     *
+     *
+     * @param pop
+     * @return
+     */
+    @Override
+    public Map<K, OpVarMap> lookup(ProjectedOp pop) {
 
 
-    	Op patternOp = pop.getResidualOp();
+        //VarInfo userVarInfo = pop.getProjection();
+
+
+        Op patternOp = pop.getResidualOp();
         Tree<Op> userTree = OpUtils.createTree(patternOp);
 
-		Map<P, OpVarMap> cands = delegate.lookup(patternOp);
+        Map<P, OpVarMap> cands = delegate.lookup(patternOp);
 
 
-		// TODO What is the result datastructure?
-		//LinkedHashMap<K, OpVarMap> result = null;
-		Map<K, OpVarMap> result = new HashMap<>();
+        // TODO What is the result datastructure?
+        //LinkedHashMap<K, OpVarMap> result = null;
+        Map<K, OpVarMap> result = new HashMap<>();
 
-		for(Entry<P, OpVarMap> cand : cands.entrySet()) {
-			P patternId = cand.getKey();
-			OpVarMap opVarMap = cand.getValue();
+        for(Entry<P, OpVarMap> cand : cands.entrySet()) {
+            P patternId = cand.getKey();
+            OpVarMap opVarMap = cand.getValue();
 
-			// Determine the user node corresponding to the view's root node
+            // Determine the user node corresponding to the view's root node
             Map<Op, Op> opMap = opVarMap.getOpMap();
             Op viewRootOp = delegate.getOp(patternId);
             Op userViewRootOp = opMap.get(viewRootOp);
@@ -142,41 +142,41 @@ public class SparqlViewMatcherPopImpl<K, P>
             VarInfo userVarInfo = new VarInfo(VarUsage.getMandatoryVars(varUsage), 0);
 
 
-			for(Map<Var, Var> varMap : opVarMap.getVarMaps()) {
-				Collection<K> keys = lookupKeys(userVarInfo, patternId, varMap);
+            for(Map<Var, Var> varMap : opVarMap.getVarMaps()) {
+                Collection<K> keys = lookupKeys(userVarInfo, patternId, varMap);
 
-				for(K key : keys) {
-					OpVarMap e = new OpVarMap(opVarMap.getOpMap(), varMap);
-					result.put(key, e);
-				}
-			}
-		}
+                for(K key : keys) {
+                    OpVarMap e = new OpVarMap(opVarMap.getOpMap(), varMap);
+                    result.put(key, e);
+                }
+            }
+        }
 
-		return result;
-	}
+        return result;
+    }
 
 
-	@Override
-	public void removeKey(Object key) {
-		keyToPop.remove(key);
-		Object patternId = keyToPatternId.get(key);
+    @Override
+    public void removeKey(Object key) {
+        keyToPop.remove(key);
+        Object patternId = keyToPatternId.get(key);
 
-		delegate.removeKey(patternId);
-		patternIdToKeys.remove(patternId, key);
-		keyToPatternId.remove(key);
-	}
+        delegate.removeKey(patternId);
+        patternIdToKeys.remove(patternId, key);
+        keyToPatternId.remove(key);
+    }
 
-	@Override
-	public ProjectedOp getPop(K key) {
-		ProjectedOp result = keyToPop.get(key);
-		return result;
-	}
+    @Override
+    public ProjectedOp getPop(K key) {
+        ProjectedOp result = keyToPop.get(key);
+        return result;
+    }
 
-	public static SparqlViewMatcherPop<Node> create() {
-		SparqlViewMatcherOp<Integer> delegate = SparqlViewMatcherOpImpl.create();
-		SparqlViewMatcherPop<Node> result = new SparqlViewMatcherPopImpl<>(delegate);
-		return result;
-	}
+    public static SparqlViewMatcherPop<Node> create() {
+        SparqlViewMatcherOp<Integer> delegate = SparqlViewMatcherOpImpl.create();
+        SparqlViewMatcherPop<Node> result = new SparqlViewMatcherPopImpl<>(delegate);
+        return result;
+    }
 
 
 }
