@@ -8,6 +8,7 @@ import java.util.Set;
 
 import org.aksw.commons.collections.multimaps.MultimapUtils;
 import org.aksw.commons.collections.trees.Tree;
+import org.apache.jena.query.SortCondition;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.algebra.OpVisitorBase;
@@ -223,7 +224,9 @@ public class VarUsageAnalyzerVisitor
 
     @Override
     public void visit(OpOrder op) {
-        throw new RuntimeException("var usage analysis for opOrder not implemented");
+        for(SortCondition sc :op.getConditions()) {
+            processExpr(sc.getExpression());
+        }
     }
 
 

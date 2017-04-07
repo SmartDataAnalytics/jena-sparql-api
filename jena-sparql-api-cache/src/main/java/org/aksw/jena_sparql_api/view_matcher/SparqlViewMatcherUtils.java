@@ -40,6 +40,7 @@ import org.apache.jena.sparql.algebra.op.OpDistinct;
 import org.apache.jena.sparql.algebra.op.OpExtend;
 import org.apache.jena.sparql.algebra.op.OpFilter;
 import org.apache.jena.sparql.algebra.op.OpLeftJoin;
+import org.apache.jena.sparql.algebra.op.OpOrder;
 import org.apache.jena.sparql.algebra.op.OpProject;
 import org.apache.jena.sparql.algebra.op.OpSequence;
 import org.apache.jena.sparql.algebra.op.OpSlice;
@@ -319,7 +320,7 @@ public class SparqlViewMatcherUtils {
         // If the list of sourceUnaryAncestors includes the source's root node,
         // we do not require all of the ancestors to match
         if(n > 0 && Iterables.getLast(sourceUnaryAncestors) == sourceTree.getRoot()) {
-        	m = Math.min(m, n);
+            m = Math.min(m, n);
         }
 
 
@@ -367,6 +368,7 @@ public class SparqlViewMatcherUtils {
 
             map.put(OpFilter.class, GenericBinaryOpImpl.create(SparqlViewMatcherUtils::deriveProblemsFilter));
 
+            map.put(OpOrder.class, GenericBinaryOpImpl.create(SparqlViewMatcherUtils::deriveProblemsOrder));
 
             Class<?> ac = a.getClass();
             Class<?> bc = b.getClass();
@@ -453,6 +455,13 @@ public class SparqlViewMatcherUtils {
         return result;
     }
 
+    public static Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> deriveProblemsOrder(OpOrder cacheOp, OpOrder userOp) {
+        //ProblemNeighborhoodAware<Map<Var, Var>, Var> tmp = new ProblemVarMappingExpr(cacheOp.getExprs().getList(), userOp.getExprs().getList(), Collections.emptyMap());
+        //Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result = Collections.singleton(tmp);
+        //return result;
+        logger.warn("OpOrder support not implemented");
+        return Collections.emptySet();
+    }
 
 
     public static Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> deriveProblemsSequence(OpSequence cacheOp, OpSequence userOp) {
@@ -470,36 +479,36 @@ public class SparqlViewMatcherUtils {
     }
 
     public static List<Integer> setOfSizes(Collection<? extends Collection<?>> nestedCollection) {
-    	List<Integer> result = new ArrayList<>(nestedCollection.size());
-    	for(Collection<?> item : nestedCollection) {
-    		result.add(item.size());
-    	}
+        List<Integer> result = new ArrayList<>(nestedCollection.size());
+        for(Collection<?> item : nestedCollection) {
+            result.add(item.size());
+        }
 
-    	Collections.sort(result);
+        Collections.sort(result);
 
-    	return result;
+        return result;
     }
 
     public static Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> deriveProblemsOpCq(OpExtConjunctiveQuery cacheOp, OpExtConjunctiveQuery userOp) {
-    	ConjunctiveQuery viewCq = cacheOp.getQfpc();
-    	ConjunctiveQuery userCq = userOp.getQfpc();
+        ConjunctiveQuery viewCq = cacheOp.getQfpc();
+        ConjunctiveQuery userCq = userOp.getQfpc();
 
-    	Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result =
-    			deriveProblemsCq(viewCq, userCq);
+        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result =
+                deriveProblemsCq(viewCq, userCq);
 
-    	// TODO Validate projection
+        // TODO Validate projection
 
-    	return result;
+        return result;
     }
 
     public static Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> deriveProblemsCq(ConjunctiveQuery viewCq, ConjunctiveQuery userCq) {
-    	QuadFilterPatternCanonical viewQfpc = viewCq.getPattern();
+        QuadFilterPatternCanonical viewQfpc = viewCq.getPattern();
         QuadFilterPatternCanonical userQfpc = userCq.getPattern();
 
-    	Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result =
-    			deriveProblemsQfpc(viewQfpc, userQfpc);
+        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result =
+                deriveProblemsQfpc(viewQfpc, userQfpc);
 
-    	return result;
+        return result;
     }
 
 
@@ -516,16 +525,16 @@ public class SparqlViewMatcherUtils {
         // Potential Hack: The cache qfpc and the query qfpc must be of equal size -
         // i.e. same number of quads and triples
         boolean isEqualSize = cacheQfpc.getQuads().size() == queryQfpc.getQuads().size()
-        		&& setOfSizes(cacheQfpc.getFilterDnf()).equals(setOfSizes(queryQfpc.getFilterDnf()));
+                && setOfSizes(cacheQfpc.getFilterDnf()).equals(setOfSizes(queryQfpc.getFilterDnf()));
 
         Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result = isEqualSize
-        		? VarMapper.createProblems(cacheQfpc, queryQfpc)
-        		: Collections.singleton(new ProblemStaticSolutions<>(Collections.singleton(null)));
+                ? VarMapper.createProblems(cacheQfpc, queryQfpc)
+                : Collections.singleton(new ProblemStaticSolutions<>(Collections.singleton(null)));
 
         if(logger.isDebugEnabled()) {
-        	for(ProblemNeighborhoodAware<Map<Var, Var>, Var> x : result) {
-        		logger.debug(("  Size: " + x.generateSolutions().count()));
-        	}
+            for(ProblemNeighborhoodAware<Map<Var, Var>, Var> x : result) {
+                logger.debug(("  Size: " + x.generateSolutions().count()));
+            }
         }
 
         return result;
