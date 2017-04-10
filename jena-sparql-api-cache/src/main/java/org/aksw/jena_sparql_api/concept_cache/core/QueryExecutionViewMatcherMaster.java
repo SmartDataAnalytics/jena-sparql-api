@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.concept_cache.core;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,7 +36,6 @@ import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpAsQuery;
 import org.apache.jena.sparql.algebra.op.OpNull;
-import org.apache.jena.sparql.algebra.op.OpProject;
 import org.apache.jena.sparql.algebra.op.OpService;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
@@ -126,6 +126,10 @@ public class QueryExecutionViewMatcherMaster
 
         boolean cacheWholeQuery = true; //!rootService.getURI().startsWith("view://");
 
+
+        boolean isDistinct = rawQuery.isDistinct();
+
+
         List<Var> projectVars = rawQuery.getProjectVars();
         //List<String> projectVarNames = VarUtils.getVarNames(projectVars);
 
@@ -145,7 +149,7 @@ public class QueryExecutionViewMatcherMaster
         // We could this duplicate processing by normalizing here
         // and passing the projected op to both functions
         ProjectedOp pop = SparqlCacheUtils.cutProjectionAndNormalize(queryOp, SparqlViewMatcherOpImpl::normalizeOp);
-        List<Var> popVars = new ArrayList<>(pop.getProjection().getProjectVars());
+        //List<Var> popVars = new ArrayList<>(pop.getProjection().getProjectVars());
 
         //Op coreQueryOp = pop.getResidualOp();
 
@@ -237,13 +241,17 @@ public class QueryExecutionViewMatcherMaster
 
                 Query qq = OpAsQuery.asQuery(execOp);
                 qq.getProjectVars().clear();
-                qq.getProjectVars().addAll(popVars);
+                qq.getProjectVars().addAll(projectVars);
+                qq.setQueryResultStar(false);
+
+
+                qq.setDistinct(isDistinct);
 
                 logger.info("Root query:\n" + qq);
 
                 RangedSupplier<Long, Binding> s3 = new RangedSupplierQuery(parentFactory, qq);
 
-                VarInfo varInfo = new VarInfo(new HashSet<>(qq.getProjectVars()), 0);
+                VarInfo varInfo = new VarInfo(new LinkedHashSet<>(qq.getProjectVars()), isDistinct ? 2 : 0);
                 StorageEntry se = new StorageEntry(s3, varInfo); // The var info is not used
                 storageMap.put(serviceNode, se);
 
@@ -262,7 +270,7 @@ public class QueryExecutionViewMatcherMaster
 
 
         Set<Var> visibleVars = new HashSet<>(projectVars);//OpVars.visibleVars(rewrittenOp);
-        VarInfo varInfo = new VarInfo(visibleVars, 0);
+        VarInfo varInfo = new VarInfo(visibleVars, isDistinct ? 2 : 0);
 
         RangedSupplier<Long, Binding> s2 = new RangedSupplierOp(rewrittenOp, ctx);
 

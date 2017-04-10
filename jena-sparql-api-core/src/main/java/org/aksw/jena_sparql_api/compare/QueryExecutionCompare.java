@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.compare;
 
+import java.io.ByteArrayOutputStream;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -9,6 +10,7 @@ import org.aksw.commons.collections.diff.ListDiff;
 import org.aksw.commons.util.strings.StringUtils;
 import org.aksw.jena_sparql_api.utils.ModelDiff;
 import org.aksw.jena_sparql_api.utils.ResultSetPart;
+import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.Query;
@@ -20,6 +22,8 @@ import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.query.ResultSetRewindable;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.util.Context;
@@ -272,6 +276,7 @@ public class QueryExecutionCompare
                 new ResultSetPart(x.getResultVars(), tmp.getAdded()),
                 new ResultSetPart(y.getResultVars(), tmp.getRemoved()));
 
+        // Reset x once more in order to return it
         x.reset();
 
         logResultSet();
@@ -316,6 +321,17 @@ public class QueryExecutionCompare
 
     public void logModel() {
         log(modelDiff.getAdded().size(), modelDiff.getRemoved().size());
+
+        logger.debug("Query: " + query);
+        logger.debug("Excessive:\n" + toString(modelDiff.getAdded(), RDFFormat.TURTLE_PRETTY));
+        logger.debug("Missing:\n" + toString(modelDiff.getRemoved(), RDFFormat.TURTLE_PRETTY));
+    }
+
+    public static String toString(Model model, RDFFormat format) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        RDFDataMgr.write(baos, model, format);
+        String result = baos.toString();
+        return result;
     }
 
     public void logAsk() {
@@ -509,12 +525,16 @@ public class QueryExecutionCompare
 
     @Override
     public Iterator<Triple> execConstructTriples() {
-        throw new RuntimeException("Not implemented yet");
+        Model tmp = execConstruct();
+        Iterator<Triple> result = tmp.getGraph().find(Node.ANY, Node.ANY, Node.ANY).toSet().iterator();
+        return result;
     }
 
     @Override
     public Iterator<Triple> execDescribeTriples() {
-        throw new RuntimeException("Not implemented yet");
+        Model tmp = execDescribe();
+        Iterator<Triple> result = tmp.getGraph().find(Node.ANY, Node.ANY, Node.ANY).toSet().iterator();
+        return result;
     }
 
     @Override

@@ -7,6 +7,7 @@ import java.net.URISyntaxException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.aksw.jena_sparql_api.compare.QueryExecutionFactoryCompare;
 import org.aksw.jena_sparql_api.concept_cache.core.JenaExtensionViewMatcher;
 import org.aksw.jena_sparql_api.concept_cache.core.QueryExecutionFactoryViewMatcherMaster;
 import org.aksw.jena_sparql_api.concept_cache.core.QueryExecutionViewMatcherMaster;
@@ -79,15 +80,23 @@ public class MainSparqlViewMatcherCacheServer {
                 .end()
                 .create();
 
+        cached = false;
+        boolean compare = false;
         if(cached) {
 
             CacheBuilder<Object, Object> queryCacheBuilder = CacheBuilder.newBuilder().maximumSize(10000);
 
             ExecutorService executorService = MoreExecutors.newDirectExecutorService(); //Executors.newCachedThreadPool();
 
-            qef = QueryExecutionFactoryViewMatcherMaster.create(qef,
+            QueryExecutionFactory cachedQef = QueryExecutionFactoryViewMatcherMaster.create(qef,
                     queryCacheBuilder, executorService, true);
+
+            //qef = cachedQef;
+            if(compare) {
+                qef = new QueryExecutionFactoryCompare(qef, cachedQef);
+            }
         }
+
 
         qef = FluentQueryExecutionFactory.from(qef)
                 .config().withParser(SparqlQueryParserImpl.create()).end()
@@ -114,7 +123,7 @@ public class MainSparqlViewMatcherCacheServer {
         // - registering (Op, value) entries
         // - rewriting an Op using references to the registered ops
 
-        QueryExecutionFactory qef = createQef(false);
+        QueryExecutionFactory qef = createQef(true);
 
         int port = 7531;
         Server server = FactoryBeanSparqlServer.newInstance()
