@@ -533,7 +533,13 @@ public class SparqlViewMatcherUtils {
 
         if(logger.isDebugEnabled()) {
             for(ProblemNeighborhoodAware<Map<Var, Var>, Var> x : result) {
-                logger.debug(("  Size: " + x.generateSolutions().count()));
+                long estimatedCost = x.getEstimatedCost();
+                if(estimatedCost > 10000) {
+                    logger.warn("High estimated cost detected!");
+                }
+
+                logger.debug("  Estimated cost: " + estimatedCost);
+                logger.debug("  Actual size: " + x.generateSolutions().count());
             }
         }
 

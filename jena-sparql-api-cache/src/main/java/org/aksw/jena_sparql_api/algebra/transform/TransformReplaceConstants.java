@@ -2,7 +2,9 @@ package org.aksw.jena_sparql_api.algebra.transform;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.aksw.jena_sparql_api.utils.Generator;
@@ -78,25 +80,37 @@ public class TransformReplaceConstants
         return result;
     }
 
-    public static Node transform(Node node, boolean isGraphNode, Generator<Var> generator, ExprList filters, boolean omitDefaultGraphFilter) {
+    public static Node transform(Map<Node, Var> nodeToVar, Node node, boolean isGraphNode, Generator<Var> generator, ExprList filters, boolean omitDefaultGraphFilter) {
+        Node result;
+
         if(node.isConcrete()) {
-            Var var = generator.next();
+            Var var = nodeToVar.get(node);
+            if(var == null) {
+                var = generator.next();
+                nodeToVar.put(node, var);
 
-            // Use of the constant Quad.defaultGraphNodeGenerated in the graph position results in a free variable.
-            if(!omitDefaultGraphFilter || !(isGraphNode && node.equals(Quad.defaultGraphNodeGenerated))) {
-                Expr condition = new E_Equals(new ExprVar(var), NodeValue.makeNode(node));
-                filters.add(condition);
+                // Use of the constant Quad.defaultGraphNodeGenerated in the graph position results in a free variable.
+                if(!omitDefaultGraphFilter || !(isGraphNode && node.equals(Quad.defaultGraphNodeGenerated))) {
+                    Expr condition = new E_Equals(new ExprVar(var), NodeValue.makeNode(node));
+                    filters.add(condition);
+                }
             }
-
-            return var;
+            result = var;
+        } else {
+            result = node;
         }
 
-        return node;
+        return result;
+
+
     }
 
     public Op transform(OpQuadPattern op) {
 
         //List<Var> vars = new ArrayList<>(OpVars.visibleVars(op));
+
+        Map<Node, Var> nodeToVar = new HashMap<>();
+
 
         ExprList filters = new ExprList();
 
@@ -104,8 +118,8 @@ public class TransformReplaceConstants
 
         boolean retainDefaultGraphNode = true;
         Node graphNode = retainDefaultGraphNode && op.getGraphNode().equals(Quad.defaultGraphNodeGenerated)
-        		? Quad.defaultGraphNodeGenerated
-        		: transform(op.getGraphNode(), true, generator, filters, omitDefaultGraphFilter);
+                ? Quad.defaultGraphNodeGenerated
+                : transform(nodeToVar, op.getGraphNode(), true, generator, filters, omitDefaultGraphFilter);
 
 
         // TODO Mapping of nodes might be doable with jena transform
@@ -114,7 +128,7 @@ public class TransformReplaceConstants
 
 
             for(Node node : tripleToList(triple)) {
-                Node n = transform(node, false, generator, filters, omitDefaultGraphFilter);
+                Node n = transform(nodeToVar, node, false, generator, filters, omitDefaultGraphFilter);
                 nodes.add(n);
             }
 

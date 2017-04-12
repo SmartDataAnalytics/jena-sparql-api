@@ -71,7 +71,7 @@ public class QuadFilterPatternCanonical {
     }
 
     public ExprHolder getExprHolder() {
-    	return exprHolder;
+        return exprHolder;
     }
 
     public Set<Set<Expr>> getFilterCnf() {
@@ -146,8 +146,8 @@ public class QuadFilterPatternCanonical {
 
     @Override
     public String toString() {
-        return "<quads=" + quads + ", filterCnf="
-                + exprHolder + ">";
+        return "<quads=" + quads + ", filterDnf="
+                + exprHolder.getDnf() + ">";
     }
 
     @Override

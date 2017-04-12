@@ -122,6 +122,8 @@ public class QueryExecutionViewMatcherMaster
     @Override
     protected ResultSetCloseable executeCoreSelect(Query rawQuery) {
 
+        System.out.println("Query: " + rawQuery);
+
         Stopwatch sw = Stopwatch.createStarted();
 
         boolean cacheWholeQuery = true; //!rootService.getURI().startsWith("view://");
@@ -153,6 +155,8 @@ public class QueryExecutionViewMatcherMaster
 
         //Op coreQueryOp = pop.getResidualOp();
 
+        System.out.println("Normalized: " + pop.getResidualOp());
+        System.out.println("Round trip: " + OpAsQuery.asQuery(SparqlViewMatcherOpImpl.denormalizeOp(pop.getResidualOp())));
 
         // The thing here is, that in general we need to
         // - Initialize the execution context / jena-wise global data
@@ -302,8 +306,10 @@ public class QueryExecutionViewMatcherMaster
 
         preparationTimeInSec =  sw.stop().elapsed(TimeUnit.NANOSECONDS) / 1000000000.0;
 
-        System.out.println("Time to prepare the result set: " + (preparationTimeInSec * 1000) + " ms");
+        logger.debug("Time to prepare the result set: " + (preparationTimeInSec * 1000) + " ms");
 
+
+        logger.debug("CacheHitLevel:" + getCacheHitLevel());
         return result;
     }
 
