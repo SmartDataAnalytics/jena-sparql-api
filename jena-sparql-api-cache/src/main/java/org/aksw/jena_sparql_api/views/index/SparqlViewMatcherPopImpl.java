@@ -76,7 +76,7 @@ public class SparqlViewMatcherPopImpl<K, P>
 
         Collection<K> result = keys.stream().filter(key -> {
             VarInfo viewVarInfo = keyToPop.get(key).getProjection();
-            boolean r = SparqlViewMatcherProjectionUtils.validateProjection(viewVarInfo, userVarInfo, varMap, false);
+            boolean r = SparqlViewMatcherProjectionUtils.validateProjection(viewVarInfo, userVarInfo, varMap, true);
             return r;
         }).collect(Collectors.toList());
 
@@ -97,6 +97,7 @@ public class SparqlViewMatcherPopImpl<K, P>
         P patternId = delegate.allocate(patternOp);
         keyToPatternId.put(key, patternId);
         keyToPop.put(key, pop);
+        patternIdToKeys.put(patternId, key);
     }
 
 
@@ -111,13 +112,8 @@ public class SparqlViewMatcherPopImpl<K, P>
      */
     @Override
     public Map<K, OpVarMap> lookup(ProjectedOp pop) {
-
-
-        //VarInfo userVarInfo = pop.getProjection();
-
-
         Op patternOp = pop.getResidualOp();
-        Tree<Op> userTree = OpUtils.createTree(patternOp);
+        VarInfo userVarInfo = pop.getProjection();
 
         Map<P, OpVarMap> cands = delegate.lookup(patternOp);
 
@@ -130,18 +126,6 @@ public class SparqlViewMatcherPopImpl<K, P>
             P patternId = cand.getKey();
             OpVarMap opVarMap = cand.getValue();
 
-            // Determine the user node corresponding to the view's root node
-            Map<Op, Op> opMap = opVarMap.getOpMap();
-            Op viewRootOp = delegate.getOp(patternId);
-            Op userViewRootOp = opMap.get(viewRootOp);
-
-
-            // Analyze the var usage at that node
-            VarUsage varUsage = OpUtils.analyzeVarUsage(userTree, userViewRootOp);
-            // TODO Take distinct level into account
-            VarInfo userVarInfo = new VarInfo(VarUsage.getMandatoryVars(varUsage), 0);
-
-
             for(Map<Var, Var> varMap : opVarMap.getVarMaps()) {
                 Collection<K> keys = lookupKeys(userVarInfo, patternId, varMap);
 
@@ -153,6 +137,25 @@ public class SparqlViewMatcherPopImpl<K, P>
         }
 
         return result;
+
+        // Determine the user node corresponding to the view's root node
+        //Map<Op, Op> opMap = opVarMap.getOpMap();
+        //Op viewRootOp = delegate.getOp(patternId);
+        //Op userViewRootOp = opMap.get(viewRootOp);
+
+
+        // Analyze the var usage at that node
+        //Op denormalizedUserViewRootOp = SparqlViewMatcherOpImpl.denormalizeOp(userViewRootOp);
+        //VarUsage varUsage = OpUtils.analyzeVarUsage(userTree, denormalizedUserViewRootOp);
+        // TODO Take distinct level into account
+        //VarInfo userVarInfo = new VarInfo(VarUsage.getMandatoryVars(varUsage), 0);
+
+        // If the
+//        if(viewRootOp.equals(userViewRootOp)) {
+//            userVarInfo = pop.getProjection();
+//        }
+        //VarInfo userVarInfo = pop.getProjection();
+        //Tree<Op> userTree = OpUtils.createTree(patternOp);
     }
 
 

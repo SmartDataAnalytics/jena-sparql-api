@@ -149,7 +149,7 @@ public class SparqlViewMatcherQfpcImpl<K>
 
 
 
-       logger.debug("CacheHits: " + result.size());
+       //logger.debug("CacheHits: " + result.size());
 
        return result;
     }

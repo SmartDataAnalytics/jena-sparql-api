@@ -321,6 +321,10 @@ public class SparqlViewMatcherOpImpl<P>
 
         }
 
+        if(logger.isDebugEnabled()) {
+            logger.debug("Final candidate list: " + result.size());
+        }
+
         return result;
     }
 

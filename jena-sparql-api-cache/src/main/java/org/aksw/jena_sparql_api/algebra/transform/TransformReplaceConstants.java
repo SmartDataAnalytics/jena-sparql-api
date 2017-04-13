@@ -70,11 +70,11 @@ public class TransformReplaceConstants
         Op result = Transformer.transform(transform, op);
 
         // Ensure the correct projection
-        Set<Var> newVisibleVars = OpVars.visibleVars(op);
-
-        if(!oldVisibleVars.equals(newVisibleVars)) {
-            result = new OpProject(result, new ArrayList<>(oldVisibleVars));
-        }
+//        Set<Var> newVisibleVars = OpVars.visibleVars(op);
+//
+//        if(!oldVisibleVars.equals(newVisibleVars)) {
+//            result = new OpProject(result, new ArrayList<>(oldVisibleVars));
+//        }
 
 
         return result;
@@ -144,6 +144,13 @@ public class TransformReplaceConstants
         if(!filters.isEmpty()) {
             result = OpFilter.filter(filters, result);
         }
+
+        Set<Var> oldVisibleVars = OpVars.visibleVars(op);
+        Set<Var> newVisibleVars = OpVars.visibleVars(result);
+        if(!oldVisibleVars.equals(newVisibleVars)) {
+            result = new OpProject(result, new ArrayList<>(oldVisibleVars));
+        }
+
 
         // Note: We need to add a projection here, so we do not suddely yield more variables than
         // in the original pattern - otherwise, we could break e.g. SELECT * { ... } queries.

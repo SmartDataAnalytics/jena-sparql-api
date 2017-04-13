@@ -91,7 +91,7 @@ public class MainSparqlViewMatcherCacheServer {
             QueryExecutionFactory cachedQef = QueryExecutionFactoryViewMatcherMaster.create(qef,
                     queryCacheBuilder, executorService, true);
 
-            qef = cachedQef;
+            //qef = cachedQef;
             if(compare) {
                 qef = new QueryExecutionFactoryCompare(qef, cachedQef);
             }
