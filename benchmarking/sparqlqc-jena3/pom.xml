@@ -25,7 +25,9 @@
         <module>sparqlqc-impl-sparqlalgebra</module>
         <module>sparqlqc-impl-afmu</module>
         <module>sparqlqc-impl-jsa</module>
-    </modules>
+ 
+        <module>sparqlqc-dataset-analysis</module>
+   </modules>
 
 
     <scm>

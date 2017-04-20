@@ -81,7 +81,7 @@ public class MainSparqlViewMatcherCacheServer {
                 .create();
 
         cached = true;
-        boolean compare = true;
+        boolean compare = false;
         if(cached) {
 
             CacheBuilder<Object, Object> queryCacheBuilder = CacheBuilder.newBuilder().maximumSize(10000);
@@ -91,10 +91,7 @@ public class MainSparqlViewMatcherCacheServer {
             QueryExecutionFactory cachedQef = QueryExecutionFactoryViewMatcherMaster.create(qef,
                     queryCacheBuilder, executorService, true);
 
-            //qef = cachedQef;
-            if(compare) {
-                qef = new QueryExecutionFactoryCompare(qef, cachedQef);
-            }
+            qef = compare ? new QueryExecutionFactoryCompare(qef, cachedQef) : cachedQef;
         }
 
 
