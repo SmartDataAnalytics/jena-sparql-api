@@ -168,10 +168,11 @@ public class RdfMapperPropertySingle
                 group.addElement(ElementUtils.createElement(new Triple(Vars.s, predicate.asNode(), Vars.x)));
                 Expr expr = typeConverter.toJava(new ExprVar(Vars.x));
                 group.addElement(new ElementBind(Vars.o, expr));
+                relation = new Relation(group, Vars.s, Vars.o);
             }
 
 
-            new PathFragment(RelationUtils.createRelation(predicate.asNode(), false), propertyOps.getType(), targetRdfType, null);
+            result = new PathFragment(relation, propertyOps.getType(), targetRdfType, null);
         }
 
 

@@ -159,7 +159,7 @@ public class TestMapperDBpedia {
         RdfTypeFactoryImpl tf = (RdfTypeFactoryImpl)mapperEngine.getRdfTypeFactory();
         TypeConversionServiceImpl tcs = (TypeConversionServiceImpl)tf.getTypeConversionService();
 
-        tcs.put(new TypeConverterBase(XSD.gYear.toString(), Integer.class) {
+        tcs.put(new TypeConverterBase(XSD.gYear.toString(), int.class) {
             @Override
             public Expr toJava(Expr expr) {
                 return new E_DateTimeYear(expr);
