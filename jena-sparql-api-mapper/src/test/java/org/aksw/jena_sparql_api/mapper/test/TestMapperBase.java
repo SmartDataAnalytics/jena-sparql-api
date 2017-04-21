@@ -43,14 +43,14 @@ public class TestMapperBase {
                     .end()
                 .end()
                 .create();
-        
+
         prologue = new Prologue();
         prologue.setPrefix("o", "http://example.org/ontololgy/");
         prologue.setPrefix("foaf", FOAF.NS);
 
         mapperEngine = new RdfMapperEngineImpl(sparqlService, prologue);
-                
-        
+
+
         entityManager = new EntityManagerImpl(mapperEngine);
     }
 }

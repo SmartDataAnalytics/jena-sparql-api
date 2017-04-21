@@ -19,6 +19,7 @@ import org.aksw.commons.collections.trees.Tree;
 import org.aksw.jena_sparql_api.algebra.transform.TransformDisjunctionToUnion;
 import org.aksw.jena_sparql_api.algebra.transform.TransformEffectiveOp;
 import org.aksw.jena_sparql_api.algebra.transform.TransformJoinToSequence;
+import org.aksw.jena_sparql_api.algebra.transform.TransformMergeProject;
 import org.aksw.jena_sparql_api.algebra.transform.TransformPushFiltersIntoBGP;
 import org.aksw.jena_sparql_api.algebra.transform.TransformReplaceConstants;
 import org.aksw.jena_sparql_api.algebra.transform.TransformUnionToDisjunction;
@@ -390,6 +391,9 @@ public class SparqlViewMatcherOpImpl<P>
         op = Transformer.transform(TransformJoinToSequence.fn, op);
         //op = Transformer.transform(new TransformReplaceConstants(), op);
         op = TransformReplaceConstants.transform(op);
+        //System.out.println("before:" + op);
+        op = TransformMergeProject.transform(op);
+        //System.out.println("after:" + op);
 
         Generator<Var> generatorCache = VarGeneratorImpl2.create();
         //op = OpUtils.substitute(op, false, (o) -> SparqlCacheUtils.tryCreateCqfp(o, generatorCache));

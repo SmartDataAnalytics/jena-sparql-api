@@ -11,6 +11,22 @@ import org.apache.jena.sparql.core.Var;
 import com.google.common.collect.Sets;
 
 public class SparqlViewMatcherProjectionUtils {
+
+    /**
+     *
+     * allowPartial:
+     * false: The view may provide at least the or even more variables than the user query
+     * true: The view may provide fewer variables (but at least 1) than the user query
+     *  - useful when a BGP matched partially in a larger user query BGP - in that case the view will not provide all variables
+     *
+     *
+     *
+     * @param viewVarInfo
+     * @param userVarInfo
+     * @param varMap
+     * @param allowPartial
+     * @return
+     */
     public static boolean validateProjection(VarInfo viewVarInfo, VarInfo userVarInfo, Map<Var, Var> varMap, boolean allowPartial) {
         Set<Var> mappedViewVars = SetUtils.mapSet(viewVarInfo.getProjectVars(), varMap);
         mappedViewVars.remove(null);
@@ -18,6 +34,7 @@ public class SparqlViewMatcherProjectionUtils {
         Set<Var> userVars = userVarInfo.getProjectVars();
         boolean result = allowPartial
                 ? userVars.containsAll(mappedViewVars)
+                //? !Sets.intersection(userVars, mappedViewVars).isEmpty()
                 : mappedViewVars.containsAll(userVars);
 
 //		if(result) {

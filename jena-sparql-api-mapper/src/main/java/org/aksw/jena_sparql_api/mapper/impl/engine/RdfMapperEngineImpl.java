@@ -40,6 +40,7 @@ import org.aksw.jena_sparql_api.mapper.model.RdfMapperProperty;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.aksw.jena_sparql_api.mapper.model.ShapeExposable;
+import org.aksw.jena_sparql_api.mapper.model.TypeConversionServiceImpl;
 import org.aksw.jena_sparql_api.mapper.model.TypeDecider;
 import org.aksw.jena_sparql_api.mapper.model.TypeDeciderImpl;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
@@ -77,20 +78,28 @@ public class RdfMapperEngineImpl
     protected RdfTypeFactory typeFactory;
     //protected RdfPersistenceContext persistenceContext;
 
+
+    /**
+     * Used for non-default conversions between java objects and rdf nodes
+     * E.g. for mapping java integer to xsd:gYear and vice versa
+     */
+    //protected TypeConversionService typeConverter;
+
+
     protected Map<EntityId, EntityState> originalState = new HashMap<>();
     //protected Map<EntityId, EntityState> currentState = new HashMap<>();
 
-    
+
     @Override
     public SparqlService getSparqlService() {
-    	return sparqlService;
+        return sparqlService;
     }
 
     @Override
     public TypeDecider getTypeDecider() {
-    	return typeDecider;
+        return typeDecider;
     }
-    
+
     // TODO Place a configured type decider in here
     protected TypeDecider typeDecider = new TypeDeciderImpl();
 
@@ -256,7 +265,9 @@ public class RdfMapperEngineImpl
     public static Set<Class<?>> getNonSubsumedClasses(Collection<Class<?>> classes) {
         // Retain all classes which are not a super class of any other
         Set<Class<?>> result = classes.stream()
-            .filter(c -> classes.stream().noneMatch(c::isAssignableFrom))
+            .filter(c -> classes.stream()
+                    .filter(d -> !c.equals(d)) // Do not compare classes to itself
+                    .noneMatch(c::isAssignableFrom))
             .collect(Collectors.toSet());
 
         return result;
@@ -394,12 +405,12 @@ public class RdfMapperEngineImpl
         for(PopulationTask task : entityFragment.getTasks()) {
             List<Object> resolutions = new ArrayList<>();
             for(PlaceholderInfo placeholder : task.getPlaceholders()) {
-            	RdfType targetRdfType = placeholder.getTargetRdfType();
-            	Class<?> valueClass = targetRdfType != null
-            			? targetRdfType.getEntityClass()
-            			: placeholder.getTargetClass();
+                RdfType targetRdfType = placeholder.getTargetRdfType();
+                Class<?> valueClass = targetRdfType != null
+                        ? targetRdfType.getEntityClass()
+                        : placeholder.getTargetClass();
 
-            	Objects.requireNonNull(valueClass);
+                Objects.requireNonNull(valueClass);
                 //Class<?> valueClass = placeholder.getTargetRdfType().getEntityClass();
 
 
@@ -413,12 +424,14 @@ public class RdfMapperEngineImpl
                 RDFNode valueRdfNode = placeholder.getRdfNode();
                 Object value;
                 if(valueRdfNode != null) {
-                    if(valueClass == null) {
-                        throw new RuntimeException("Should not happen got " + valueRdfNode + " without corresponding java class");
-                    }
+//                    if(valueClass == null) {
+//                        throw new RuntimeException("Should not happen got " + valueRdfNode + " without corresponding java class");
+//                    }
                     Node valueNode = valueRdfNode.asNode();
                     EntityState valueState = loadEntity(valueClass, valueNode);
                     value = valueState.getEntity();
+
+
                 } else {
                     value = null;
                 }
@@ -466,30 +479,30 @@ public class RdfMapperEngineImpl
 
     @Override
     public void remove(Object entity) {
-    	Class<?> entityClazz = entity.getClass();
-    	RdfType rdfType = typeFactory.forJavaType(entityClazz);
-    	Node node = rdfType.getRootNode(entity);
+        Class<?> entityClazz = entity.getClass();
+        RdfType rdfType = typeFactory.forJavaType(entityClazz);
+        Node node = rdfType.getRootNode(entity);
 
-    	remove(node, entityClazz);
+        remove(node, entityClazz);
     }
 
     /**
      * Remove triples of a resource according to the given class's rdfType
-     * 
+     *
      * @param node
      * @param clazz
      */
     @Override
     public void remove(Node node, Class<?> clazz) {
-    	EntityState entityState = loadEntity(clazz, node);
-    	
-    	for(EntityId entityId : entityState.getDependentEntityIds()) {
-    		remove(entityId.getNode(), entityId.getEntityClass());
-    	}
-    	
-    	entityState.setCurrentResource(entityState.getShapeResource().inModel(ModelFactory.createDefaultModel()));//.getCurrentResource().getModel().removeAll();
-    	
-    	commit();
+        EntityState entityState = loadEntity(clazz, node);
+
+        for(EntityId entityId : entityState.getDependentEntityIds()) {
+            remove(entityId.getNode(), entityId.getEntityClass());
+        }
+
+        entityState.setCurrentResource(entityState.getShapeResource().inModel(ModelFactory.createDefaultModel()));//.getCurrentResource().getModel().removeAll();
+
+        commit();
     }
 
 
@@ -518,21 +531,21 @@ public class RdfMapperEngineImpl
         EntityId entityId = merge(srcEntity, node, entityClass, null);
         EntityState entityState = originalState.get(entityId);
         Object entity = entityState == null ? null : entityState.getEntity();
-        
+
         @SuppressWarnings("unchecked")
-		T result = (T)entity;
+        T result = (T)entity;
         return result;
     }
 
-    
+
     public EntityId merge(Object srcEntity, Node node, Class<?> entityClass, RdfType rdfClass) {
 
         Objects.requireNonNull(srcEntity);
         Objects.requireNonNull(node);
-        
+
         entityClass = entityClass != null ? entityClass : srcEntity.getClass();
         rdfClass = rdfClass != null ? rdfClass : typeFactory.forJavaType(entityClass);
-        
+
         Function<Class<?>, EntityOps> entityOpsFactory = ((RdfTypeFactoryImpl)typeFactory).getEntityOpsFactory();
 
         EntityId entityId = new EntityId(entityClass, node);
@@ -603,54 +616,54 @@ public class RdfMapperEngineImpl
                             // NOTE There are two ways to obtain an iri for the entity:
                             // (a) The entity's parent node links via a given property to the to-be reused iri
                             // (b) We invoke the iri generator
-                        	//RdfMapper rdfMapper = info.getMapper();//.getPropertyOps().getType();
-                        	
+                            //RdfMapper rdfMapper = info.getMapper();//.getPropertyOps().getType();
+
                             Object entity = info.getValue();
                             Class<?> valueClass = entity != null
-                            		? entity.getClass()
-                            		: info.getTargetClass();//getPropertyOps().getType();
-                            
+                                    ? entity.getClass()
+                                    : info.getTargetClass();//getPropertyOps().getType();
+
                             boolean reuseIri = true;
                             Statement reusedStmt = fragS.getProperty(p);
                             RDFNode reusedO = reusedStmt == null ? null : reusedStmt.getObject();
 
-                            
+
                             RdfType targetRdfType = info.getTargetRdfType();
-                            
+
                             //Function<Map<RDFNode, RDFNode>, RDFNode> iriGenerator = info.getIriGenerator();
                             RdfMapperProperty propertyMapper = info.getMapper();
 
                             PropertyOps pops = propertyMapper != null ? propertyMapper.getPropertyOps() : null;
-                            
+
                             targetRdfType = targetRdfType != null ? targetRdfType : typeFactory.forJavaType(valueClass);
                             //targetRdfType == null ||
-                        	boolean hasDependentIdentity = !targetRdfType.isSimpleType() && !targetRdfType.hasIdentity(); 
+                            boolean hasDependentIdentity = !targetRdfType.isSimpleType() && !targetRdfType.hasIdentity();
 //                            if(targetRdfType == null) {
 //                            	if(pops != null) {
 //                                    valueClass = pops.getType();
 //                            	}
 //                            	targetRdfType = typeFactory.forJavaType(valueClass);
 //                            }
-                            
+
                             Node n = propertyMapper != null && hasDependentIdentity
-                            		? propertyMapper.getTargetNode(s.getURI(), entity)
-                            		: (entity != null ? targetRdfType.getRootNode(entity) : null);
-                            				                            
+                                    ? propertyMapper.getTargetNode(s.getURI(), entity)
+                                    : (entity != null ? targetRdfType.getRootNode(entity) : null);
+
                             if(n != null) {
                                 o = ModelUtils.convertGraphNodeToRDFNode(n, resolvedModel);
 
                                 //Class<?> valueClass = info.getPropertyOps().getType();
                                 //RdfType entityRdfType = info.getTargetRdfType();
-                                
-                                
+
+
                                 if(o.isResource()) {
-                                	// If the entity's identity is dependent, link it to the parent entity
-                                	// so that deletes can cascade.        
-                                	EntityId valueEntityId = merge(entity, n, valueClass, targetRdfType);
-                                	
-                                	if(hasDependentIdentity) {
-                                		entityState.getDependentEntityIds().add(valueEntityId);
-                                	}
+                                    // If the entity's identity is dependent, link it to the parent entity
+                                    // so that deletes can cascade.
+                                    EntityId valueEntityId = merge(entity, n, valueClass, targetRdfType);
+
+                                    if(hasDependentIdentity) {
+                                        entityState.getDependentEntityIds().add(valueEntityId);
+                                    }
 
                                 }
 
@@ -660,8 +673,8 @@ public class RdfMapperEngineImpl
 //                                o = ModelUtils.convertGraphNodeToRDFNode(n, resolvedModel);
 //
                             } else {
-                            	// TODO We may want to obtain a null value for the placeholder
-                            	o = null;
+                                // TODO We may want to obtain a null value for the placeholder
+                                o = null;
 //                                o = reuseIri && reusedO != null
 //                                ? reusedO
 //                                : info.getIriGenerator().apply(resolutions);
@@ -675,10 +688,10 @@ public class RdfMapperEngineImpl
 
 
                         if(o != null) {
-	                        resolutions.put(fragO, o);
-	
-	                        // TODO get the parent now
-	                        s.addProperty(p, o);
+                            resolutions.put(fragO, o);
+
+                            // TODO get the parent now
+                            s.addProperty(p, o);
                         }
                     }
 
@@ -701,9 +714,9 @@ public class RdfMapperEngineImpl
         // TODO Make sure to actually resolve any loose ends in the fragment
         EntityFragment entityFragment = rdfClass.populate(resolvedS, tgtEntity);
         if(entityFragment == null) {
-        	throw new NullPointerException("Population must not return a null fragment, Error might be in the implementation of " + rdfClass.getClass());
+            throw new NullPointerException("Population must not return a null fragment, Error might be in the implementation of " + rdfClass.getClass());
         }
-        
+
         populateEntity(entityFragment);
 
         entityState.setCurrentResource(resolvedS);
@@ -749,9 +762,9 @@ public class RdfMapperEngineImpl
 
 
         Diff<Set<Quad>> diff = UpdateDiffUtils.computeDelta(newState, oldState);
-        
+
         System.out.println("Applying diff: " + diff);
-        
+
         UpdateExecutionFactory uef = sparqlService.getUpdateExecutionFactory();
         UpdateExecutionUtils.executeUpdate(uef, diff);
 
@@ -908,11 +921,11 @@ public class RdfMapperEngineImpl
     public RdfTypeFactory getRdfTypeFactory() {
         return typeFactory;
     }
-    
+
     public PathResolver createResolver(Class<?> javaClass) {
-    	PathFragment pathFragment = new PathFragment(Relation.empty(Var.alloc("root")), javaClass, null, null);
-    	PathResolver result = new PathResolverImpl(pathFragment, this, null, null);
-    	return result;
+        PathFragment pathFragment = new PathFragment(Relation.empty(Var.alloc("root")), javaClass, null, null);
+        PathResolver result = new PathResolverImpl(pathFragment, this, null, null);
+        return result;
     }
 
 //

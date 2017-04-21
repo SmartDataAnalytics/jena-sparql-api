@@ -73,8 +73,8 @@ public class MainSparqlViewMatcherCacheServer {
     }
 
     public static QueryExecutionFactory createQef(boolean cached) {
-        //QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://dbpedia.org/sparql", "http://dbpedia.org")
-        QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://localhost:8900/sparql", "http://bsbm.org/100m/")
+        QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://dbpedia.org/sparql", "http://dbpedia.org")
+        //QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://localhost:8900/sparql", "http://bsbm.org/100m/")
                 .config()
                     .withDefaultLimit(1000, true)
                 .end()

@@ -62,7 +62,7 @@ public class ConjunctiveQueryMatcherImpl<K>
                 ConjunctiveQuery candCq = keyToQuery.get(key);
                 VarInfo viewVarInfo = candCq.getProjection();
 
-                boolean isProjValid = SparqlViewMatcherProjectionUtils.validateProjection(viewVarInfo, userVarInfo, varMap, true);
+                boolean isProjValid = SparqlViewMatcherProjectionUtils.validateProjection(viewVarInfo, userVarInfo, varMap, false);
 
                 if(isProjValid) {
                     result.put(key, match);

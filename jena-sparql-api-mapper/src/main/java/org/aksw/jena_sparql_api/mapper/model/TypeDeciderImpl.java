@@ -29,27 +29,31 @@ import org.springframework.core.type.filter.AnnotationTypeFilter;
 public class TypeDeciderImpl
     implements TypeDecider
 {
-	private static final Logger logger = LoggerFactory.getLogger(TypeDeciderImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(TypeDeciderImpl.class);
 
     protected Property typeProperty;
     protected Map<Node, Class<?>> nodeToClass;
     protected Map<Class<?>, Node> classToNode;
 
-    
+
     public TypeDeciderImpl() {
-    	this(RDF.type, new HashMap<>(), new HashMap<>());
+        this(RDF.type, new HashMap<>(), new HashMap<>());
     }
 
     public TypeDeciderImpl(Property typeProperty, Map<Node, Class<?>> nodeToClass, Map<Class<?>, Node> classToNode) {
-		super();
-		this.typeProperty = typeProperty;
-		this.nodeToClass = nodeToClass;
-		this.classToNode = classToNode;
-	}
+        super();
+        this.typeProperty = typeProperty;
+        this.nodeToClass = nodeToClass;
+        this.classToNode = classToNode;
+    }
 
-	public void addMapping(Node node, Class<?> clazz) {
+    public void put(Node node, Class<?> clazz) {
         nodeToClass.put(node, clazz);
         classToNode.put(clazz, node);
+    }
+
+    public void putAll(Map<Node, Class<?>> map) {
+        map.entrySet().forEach(e -> put(e.getKey(), e.getValue()));
     }
 
     // TODO We may want to take the type hierarchy on the RDF level into account
@@ -61,14 +65,14 @@ public class TypeDeciderImpl
     }
 
     @Override
-    public void exposeShape(ResourceShapeBuilder rsb, Class<?> clazz) {    	
-    	Node node = classToNode.get(clazz);
-    	if(node == null) {
-    		throw new RuntimeException("No corresponding concept found for class " + clazz);
-    	}
-    	rsb.out(typeProperty).filter(node);
+    public void exposeShape(ResourceShapeBuilder rsb, Class<?> clazz) {
+        Node node = classToNode.get(clazz);
+        if(node == null) {
+            throw new RuntimeException("No corresponding concept found for class " + clazz);
+        }
+        rsb.out(typeProperty).filter(node);
     }
-    
+
     @Override
     public Collection<Class<?>> getApplicableTypes(Resource subject) {
         Set<Class<?>> result = subject
@@ -86,38 +90,38 @@ public class TypeDeciderImpl
         Class<?> clazz = entity.getClass();
         Node type = classToNode.get(clazz);
         if(type != null) {
-        
-	        Model model = outResource.getModel();
-	        RDFNode rdfNode = ModelUtils.convertGraphNodeToRDFNode(type, model);
-	
-	        outResource
-	            .addProperty(typeProperty, rdfNode);
+
+            Model model = outResource.getModel();
+            RDFNode rdfNode = ModelUtils.convertGraphNodeToRDFNode(type, model);
+
+            outResource
+                .addProperty(typeProperty, rdfNode);
         }
     }
 
 
     public static Map<Class<?>, Node> scan(String basePackage) {
-    	ClassPathScanningCandidateComponentProvider provider
-        	= new ClassPathScanningCandidateComponentProvider(false);
-    	provider.addIncludeFilter(new AnnotationTypeFilter(RdfType.class));
-    	//return provider;
-    	Set<BeanDefinition> beanDefs = provider.findCandidateComponents(basePackage);
-    	Map<Class<?>, Node> result = new HashMap<>();
-    	for(BeanDefinition beanDef : beanDefs) {
-    		String beanClassName = beanDef.getBeanClassName();
-    		Class<?> beanClass;
-    		try {
-    			beanClass = Class.forName(beanClassName); //beanDef.getBeanClassName();
-    		} catch(Exception e) {
-    			logger.warn("Skipped class due to exception: " + beanClassName);
-    			continue;
-    		}
-    		//Ann
-    		RdfType rdfType = AnnotationUtils.findAnnotation(beanClass, RdfType.class);
-    		Node node = NodeFactory.createURI(rdfType.value());
-    		result.put(beanClass, node);
-    	}
+        ClassPathScanningCandidateComponentProvider provider
+            = new ClassPathScanningCandidateComponentProvider(false);
+        provider.addIncludeFilter(new AnnotationTypeFilter(RdfType.class));
+        //return provider;
+        Set<BeanDefinition> beanDefs = provider.findCandidateComponents(basePackage);
+        Map<Class<?>, Node> result = new HashMap<>();
+        for(BeanDefinition beanDef : beanDefs) {
+            String beanClassName = beanDef.getBeanClassName();
+            Class<?> beanClass;
+            try {
+                beanClass = Class.forName(beanClassName); //beanDef.getBeanClassName();
+            } catch(Exception e) {
+                logger.warn("Skipped class due to exception: " + beanClassName);
+                continue;
+            }
+            //Ann
+            RdfType rdfType = AnnotationUtils.findAnnotation(beanClass, RdfType.class);
+            Node node = NodeFactory.createURI(rdfType.value());
+            result.put(beanClass, node);
+        }
 
-    	return result;
+        return result;
     }
 }

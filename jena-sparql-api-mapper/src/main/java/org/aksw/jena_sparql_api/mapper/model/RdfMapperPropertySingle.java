@@ -15,11 +15,18 @@ import org.aksw.jena_sparql_api.mapper.impl.type.PlaceholderInfo;
 import org.aksw.jena_sparql_api.mapper.impl.type.PopulationTask;
 import org.aksw.jena_sparql_api.mapper.impl.type.ResourceFragment;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
+import org.aksw.jena_sparql_api.utils.ElementUtils;
+import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprVar;
+import org.apache.jena.sparql.syntax.ElementBind;
+import org.apache.jena.sparql.syntax.ElementGroup;
 
 public class RdfMapperPropertySingle
     extends RdfMapperPropertyBase
@@ -28,16 +35,17 @@ public class RdfMapperPropertySingle
             PropertyOps propertyOps,
             Property predicate,
             RdfType targetRdfType,
-            BiFunction<Object, Object, Node> createTargetIri) { // String fetchMode) {
-        super(propertyOps, predicate, targetRdfType, createTargetIri);
+            BiFunction<Object, Object, Node> createTargetIri,
+            TypeConverter typeConverter) { // String fetchMode) {
+        super(propertyOps, predicate, targetRdfType, createTargetIri, typeConverter);
     }
 
     @Override
     public void exposeFragment(ResourceFragment out, Resource priorState, Object entity) {
-    	// TODO Auto-generated method stub
-    	super.exposeFragment(out, priorState, entity);
+        // TODO Auto-generated method stub
+        super.exposeFragment(out, priorState, entity);
     }
-//    
+//
 //    @Override
 //    public void emitTriples(RdfEmitterContext emitterContext, Object entity, Node subject, Graph shapeGraph, Consumer<Triple> outSink) {
 //        Object value = propertyOps.getValue(entity);
@@ -50,7 +58,7 @@ public class RdfMapperPropertySingle
 //            Node o = emitterContext.requestResolution(value);//, targetRdfType, defaultNodeGenerator);
 //            Triple t = new Triple(subject, predicate, o);
 //            outSink.accept(t);
-//            
+//
 //            // maybe we should write triples to the emitter context, as references
 //            // need to be resolved anyway
 //            //emitterContext.accept(t);
@@ -59,24 +67,25 @@ public class RdfMapperPropertySingle
 
     @Override
     public void populate(EntityFragment out, Resource shape, Object entity) {
-    	Statement stmt = shape.getProperty(predicate);
-    	RDFNode o = stmt == null ? null : stmt.getObject();
+        Statement stmt = shape.getProperty(predicate);
+        RDFNode o = stmt == null ? null : stmt.getObject();
 
-    	List<PlaceholderInfo> pis = Arrays.asList(new PlaceholderInfo(null, targetRdfType, entity, null, propertyOps, null, o, this));
+        List<PlaceholderInfo> pis = Arrays.asList(new PlaceholderInfo(null, targetRdfType, entity, null, propertyOps, null, o, this));
 
-    	//out.getPropertyInfos().put(key, value);
-    	out.getTasks().add(new PopulationTask() {
-			@Override
-			public List<PlaceholderInfo> getPlaceholders() {
-				return pis;
-			}
+        //out.getPropertyInfos().put(key, value);
+        out.getTasks().add(new PopulationTask() {
+            @Override
+            public List<PlaceholderInfo> getPlaceholders() {
+                return pis;
+            }
 
-			@Override
-			public Collection<PopulationTask> resolve(List<Object> resolutions) {
-				propertyOps.setValue(entity, resolutions.get(0));
-				return Collections.emptyList();
-			}    		
-    	});
+            @Override
+            public Collection<PopulationTask> resolve(List<Object> resolutions) {
+                Object value = resolutions.get(0);
+                propertyOps.setValue(entity, value);
+                return Collections.emptyList();
+            }
+        });
     }
 //    @Override
 //    public void populateEntity(RdfPersistenceContext persistenceContext, Object entity, Graph inGraph, Node subject, Consumer<Triple> outSink) {
@@ -100,14 +109,14 @@ public class RdfMapperPropertySingle
 //	        	}
 //        	}
 //        }
-//        
+//
 //        if(node != null) {
 //        	persistenceContext.requestResolution(propertyOps, entity, node);
 //        }
-// 
+//
 //        //persistenceContext.requestResolution(entity, propertyOps, subject, rdfType);
 //
-//               
+//
 ////        Object value = node == null
 ////                ? null
 ////                : persistenceContext.entityFor(new TypedNode(targetRdfType, node))
@@ -144,20 +153,36 @@ public class RdfMapperPropertySingle
         return propertyOps;
     }
 
-	@Override
-	public PathFragment resolve(String propertyName) {
-		PathFragment result = this.propertyOps.getName().equals(propertyName)
-			? new PathFragment(RelationUtils.createRelation(predicate.asNode(), false), propertyOps.getType(), targetRdfType, null)
-			: null;
+    @Override
+    public PathFragment resolve(String propertyName) {
+        PathFragment result = null;
 
-		return result;
-	}
+        boolean isMatchingProperty = propertyOps.getName().equals(propertyName);
+
+        if(isMatchingProperty) {
+            Relation relation;
+            if(typeConverter == null) {
+                relation = RelationUtils.createRelation(predicate.asNode(), false);
+            } else {
+                ElementGroup group = new ElementGroup();
+                group.addElement(ElementUtils.createElement(new Triple(Vars.s, predicate.asNode(), Vars.x)));
+                Expr expr = typeConverter.toJava(new ExprVar(Vars.x));
+                group.addElement(new ElementBind(Vars.o, expr));
+            }
+
+
+            new PathFragment(RelationUtils.createRelation(predicate.asNode(), false), propertyOps.getType(), targetRdfType, null);
+        }
+
+
+        return result;
+    }
 
 //	@Override
 //	public Object readPropertyValue(Graph graph, Node subject) {
 //		// TODO Auto-generated method stub
 //		return null;
 //	}
-    
-    
+
+
 }

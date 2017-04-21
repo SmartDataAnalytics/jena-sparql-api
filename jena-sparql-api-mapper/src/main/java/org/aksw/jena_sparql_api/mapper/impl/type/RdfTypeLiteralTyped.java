@@ -4,6 +4,7 @@ import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.RDFNode;
 
 public class RdfTypeLiteralTyped
@@ -48,7 +49,23 @@ public class RdfTypeLiteralTyped
 
     @Override
     public Object createJavaObject(RDFNode node) {
-        Object result = node.asNode().getLiteralValue();
+        Object result;
+        if(node.isLiteral()) {
+            Literal literal = node.asLiteral();
+            //RDFDatatype nodeDt = literal.getDatatype();
+
+            // TODO Make sure that the node datatype/value is actually compatible with this one
+            // I think node datatype must be a sub-type of this one (e.g. nodedt=Student, thisdt=Person)
+
+            Object tmp = literal.getValue();
+
+            String lexicalForm = rdfDatatype.unparse(tmp);
+            result = rdfDatatype.parse(lexicalForm);
+
+        } else {
+            throw new RuntimeException("Literal node expected");
+        }
+
         return result;
     }
 
@@ -56,11 +73,11 @@ public class RdfTypeLiteralTyped
     public String toString() {
         return "RdfTypeLiteralTyped [rdfDatatype=" + rdfDatatype + "]";
     }
-    
-	@Override
-	public boolean hasIdentity() {
-		return false;
-	}
 
-    
+    @Override
+    public boolean hasIdentity() {
+        return false;
+    }
+
+
 }
