@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 
 import javax.persistence.FlushModeType;
 import javax.persistence.LockModeType;
+import javax.persistence.NonUniqueResultException;
 import javax.persistence.Parameter;
 import javax.persistence.TemporalType;
 import javax.persistence.TypedQuery;
@@ -51,6 +52,24 @@ class PathResolverUtil {
     protected Set<Var> blacklist = new HashSet<>();
     protected Generator<Var> varGen = VarGeneratorBlacklist.create(blacklist);
 
+    public static Path<?> getRootPath(Path<?> path) {
+        Path<?> result = path;
+        if(result != null) {
+            Path<?> parentPath;
+            while((parentPath = result.getParentPath()) != null) {
+                result = parentPath;
+            }
+        }
+
+        return result;
+    }
+
+    public static Class<?> getRootClass(Path<?> path) {
+        Path<?> rootPath = getRootPath(path);
+        Class<?> result = rootPath == null ? null : rootPath.getJavaType();
+        return result;
+    }
+
     public Relation resolvePath(PathResolver pathResolver, Path<?> path) {
         blacklist.addAll(VarUtils.toSet(pathResolver.getAliases()));
 
@@ -62,6 +81,11 @@ class PathResolverUtil {
             PathImpl<?> p = (PathImpl<?>)current;
             list.add(p.getAttributeName());
             current = p.getParentPath();
+
+            // Do not navigate to the root, because casting it to PathImpl will fail
+            if(current.getParentPath() == null) {
+                break;
+            }
         }
 
         Collections.reverse(list);
@@ -121,12 +145,19 @@ public class TypedQueryImpl<X>
         Var rootVar = Var.alloc("root");
 
 
-        PathResolver pathResolver = engine.createResolver(resultType);//mapperEngine.createResolver(Person.class);
+        //PathResolver pathResolver = engine.createResolver(resultType);//mapperEngine.createResolver(Person.class);
 
         PathResolverUtil pathResolverUtil = new PathResolverUtil();
 
         ExpressionCompiler filterCompiler = new ExpressionCompiler(
-            path -> pathResolverUtil.resolvePath(pathResolver, path)
+            path -> {
+                // Get the root type of the path
+                Class<?> rootClass = PathResolverUtil.getRootClass(path);
+                PathResolver pathResolver = engine.createResolver(rootClass);
+
+                Relation r = pathResolverUtil.resolvePath(pathResolver, path);
+                return r;
+            }
         );
 
         VExpression<?> filterEx = (VExpression<?>)criteriaQuery.getRestriction();
@@ -143,8 +174,29 @@ public class TypedQueryImpl<X>
         }
 
         ExpressionCompiler orderCompiler = new ExpressionCompiler(
-              path -> pathResolverUtil.resolvePath(pathResolver, path)
+//              path -> pathResolverUtil.resolvePath(pathResolver, path)
+                path -> {
+                    Class<?> rootClass = PathResolverUtil.getRootClass(path);
+                    PathResolver pathResolver = engine.createResolver(rootClass);
+
+                    Relation r = pathResolverUtil.resolvePath(pathResolver, path);
+                    return r;
+                }
+
         );
+
+
+
+        // Compile selection - TODO This is a hack right now
+        VExpression<?> selectionEx = (VExpression<?>)criteriaQuery.getSelection();
+        if(selectionEx != null) {
+            selectionEx.accept(filterCompiler);
+        }
+
+//        Selection<?> selections = criteriaQuery.getSelection();
+//        for(Selection<?> selection : selections) {
+//
+//        }
 
 
         // Compile order
@@ -184,7 +236,11 @@ public class TypedQueryImpl<X>
 
     @Override
     public X getSingleResult() {
-        List<X> items = getResultList(1);
+        List<X> items = getResultList(2);
+        if(items.size() > 1) {
+            throw new NonUniqueResultException();
+        }
+
         X result = Iterables.getFirst(items, null);
         return result;
     }

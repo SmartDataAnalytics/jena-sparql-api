@@ -29,8 +29,11 @@ import javax.persistence.criteria.Selection;
 import javax.persistence.criteria.SetJoin;
 import javax.persistence.criteria.Subquery;
 
+import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.AvgExpression;
 import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.EqualsExpression;
 import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.ExpressionPredicate;
+import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.GreaterThanExpression;
+import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.GreaterThanOrEqualToExpression;
 import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.GreatestExpression;
 import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.VExpression;
 import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.ValueExpression;
@@ -88,8 +91,7 @@ public class CriteriaBuilderImpl
 
     @Override
     public <N extends Number> Expression<Double> avg(Expression<N> x) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        return new AvgExpression((VExpression<N>)x);
     }
 
     @Override
@@ -275,8 +277,11 @@ public class CriteriaBuilderImpl
     @Override
     public <Y extends Comparable<? super Y>> Predicate greaterThan(
             Expression<? extends Y> x, Y y) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        VExpression<?> z = new ValueExpression<>(Object.class, y);
+
+        VExpression<Boolean> tmp = new GreaterThanExpression((VExpression<?>)x, z);
+        Predicate result = new ExpressionPredicate(tmp);
+        return result;
     }
 
     @Override
@@ -289,8 +294,11 @@ public class CriteriaBuilderImpl
     @Override
     public <Y extends Comparable<? super Y>> Predicate greaterThanOrEqualTo(
             Expression<? extends Y> x, Y y) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        VExpression<?> z = new ValueExpression<>(Object.class, y);
+
+        VExpression<Boolean> tmp = new GreaterThanOrEqualToExpression((VExpression<?>)x, z);
+        Predicate result = new ExpressionPredicate(tmp);
+        return result;
     }
 
     @Override

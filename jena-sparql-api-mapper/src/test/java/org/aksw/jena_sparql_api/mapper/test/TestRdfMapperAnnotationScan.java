@@ -9,9 +9,9 @@ import org.junit.Test;
 
 public class TestRdfMapperAnnotationScan {
 
-	@Test
-	public void test() {
-		Map<Class<?>, Node> map = TypeDeciderImpl.scan("org.aksw.jena_sparql_api.mapper.test");
-		Assert.assertNotEquals(0, map.size());
-	}
+    @Test
+    public void test() {
+        Map<Class<?>, Node> map = TypeDeciderImpl.scan("org.aksw.jena_sparql_api.mapper.test");
+        Assert.assertNotEquals(0, map.size());
+    }
 }

@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.mapper.jpa.criteria.expr;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import javax.persistence.criteria.Path;
@@ -13,12 +14,15 @@ import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.expr.E_Equals;
+import org.apache.jena.sparql.expr.E_GreaterThan;
+import org.apache.jena.sparql.expr.E_GreaterThanOrEqual;
 import org.apache.jena.sparql.expr.E_LogicalAnd;
 import org.apache.jena.sparql.expr.E_LogicalNot;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprAggregator;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.expr.aggregate.AggAvg;
 import org.apache.jena.sparql.expr.aggregate.AggMax;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
@@ -74,11 +78,30 @@ public class ExpressionCompiler
 
     @Override
     public Expr visit(EqualsExpression e) {
+        Expr result = appendExpr(e, (a, b) -> new E_Equals(a, b));
+
+        return result;
+    }
+
+    @Override
+    public Expr visit(GreaterThanExpression e) {
+        Expr result = appendExpr(e, (a, b) -> new E_GreaterThan(a, b));
+
+        return result;
+    }
+
+    @Override
+    public Expr visit(GreaterThanOrEqualToExpression e) {
+        Expr result = appendExpr(e, (a, b) -> new E_GreaterThanOrEqual(a, b));
+
+        return result;
+    }
+
+    public Expr appendExpr(BinaryOperatorExpression<Boolean> e, BiFunction<Expr, Expr, Expr> op) {
         Expr a = e.getLeftHandOperand().accept(this);
         Expr b = e.getRightHandOperand().accept(this);
 
-        Expr result = new E_Equals(a, b);
-
+        Expr result = op.apply(a, b);
         elements.add(new ElementFilter(result));
 
         return result;
@@ -100,6 +123,17 @@ public class ExpressionCompiler
         Expr result = new ExprAggregator(Vars.x, agg);
         return result;
     }
+
+    @Override
+    public Expr visit(AvgExpression e) {
+        // Prepare a sub-query
+
+        Expr expr = e.getOperand().accept(this);
+        AggAvg agg = new AggAvg(expr);
+        Expr result = new ExprAggregator(Vars.x, agg);
+        return result;
+    }
+
 
     @Override
     public Expr visit(ValueExpression<?> e) {

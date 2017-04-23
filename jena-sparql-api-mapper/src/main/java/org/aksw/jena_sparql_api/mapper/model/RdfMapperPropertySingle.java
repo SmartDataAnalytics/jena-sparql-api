@@ -19,6 +19,7 @@ import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
@@ -42,9 +43,25 @@ public class RdfMapperPropertySingle
 
     @Override
     public void exposeFragment(ResourceFragment out, Resource priorState, Object entity) {
-        // TODO Auto-generated method stub
-        super.exposeFragment(out, priorState, entity);
+
+        Resource s = out.getResource();
+        Model tmp = s.getModel();
+        Resource o = tmp.createResource();
+
+        Object v = propertyOps.getValue(entity);
+
+        s.addProperty(predicate, o);
+
+        PlaceholderInfo info = new PlaceholderInfo(null, targetRdfType, entity, null, propertyOps, v, null, this);
+
+
+
+//        Map<RDFNode, Object> placeholders = new HashMap<>();
+//        placeholders.put(o, v);
+
+        out.getPlaceholders().put(o, info);
     }
+
 //
 //    @Override
 //    public void emitTriples(RdfEmitterContext emitterContext, Object entity, Node subject, Graph shapeGraph, Consumer<Triple> outSink) {

@@ -68,26 +68,7 @@ public abstract class RdfMapperPropertyBase
         this.typeConverter = typeConverter;
     }
 
-    @Override
-    public void exposeFragment(ResourceFragment out, Resource priorState, Object entity) {
 
-        Resource s = out.getResource();
-        Model tmp = s.getModel();
-        Resource o = tmp.createResource();
-
-        Object v = propertyOps.getValue(entity);
-
-        s.addProperty(predicate, o);
-
-        PlaceholderInfo info = new PlaceholderInfo(null, targetRdfType, entity, null, propertyOps, v, null, this);
-
-
-
-//        Map<RDFNode, Object> placeholders = new HashMap<>();
-//        placeholders.put(o, v);
-
-        out.getPlaceholders().put(o, info);
-    }
 //
 //    @Override
 //    public void readFragment(Object tgtEntity, ResourceFragment inout) {

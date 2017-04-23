@@ -23,6 +23,8 @@ import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.PredicateBase;
 import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.RootImpl;
 import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.VExpression;
 
+import com.google.common.collect.Iterables;
+
 /**
  * Criteria query implementation.
  *
@@ -105,8 +107,7 @@ class CriteriaQueryImpl<T> implements CriteriaQuery<T> {
 
     @Override
     public Selection<T> getSelection() {
-        // TODO Auto-generated method stub
-        return null;
+        return (Selection<T>)Iterables.getFirst(selections, null);
     }
 
     @Override

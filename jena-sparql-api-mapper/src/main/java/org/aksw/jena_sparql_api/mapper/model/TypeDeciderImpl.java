@@ -4,10 +4,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.aksw.jena_sparql_api.beans.model.EntityOps;
 import org.aksw.jena_sparql_api.mapper.annotation.RdfType;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.apache.jena.graph.Node;
@@ -16,6 +14,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.util.ModelUtils;
 import org.apache.jena.vocabulary.RDF;
 import org.slf4j.Logger;
@@ -47,12 +46,12 @@ public class TypeDeciderImpl
         this.classToNode = classToNode;
     }
 
-    public void put(Node node, Class<?> clazz) {
+    public void put(Class<?> clazz, Node node) {
         nodeToClass.put(node, clazz);
         classToNode.put(clazz, node);
     }
 
-    public void putAll(Map<Node, Class<?>> map) {
+    public void putAll(Map<Class<?>, Node> map) {
         map.entrySet().forEach(e -> put(e.getKey(), e.getValue()));
     }
 
@@ -99,8 +98,12 @@ public class TypeDeciderImpl
         }
     }
 
-
     public static Map<Class<?>, Node> scan(String basePackage) {
+        Map<Class<?>, Node> result = scan(basePackage, new Prologue());
+        return result;
+    }
+
+    public static Map<Class<?>, Node> scan(String basePackage, Prologue prologue) {
         ClassPathScanningCandidateComponentProvider provider
             = new ClassPathScanningCandidateComponentProvider(false);
         provider.addIncludeFilter(new AnnotationTypeFilter(RdfType.class));
@@ -118,7 +121,9 @@ public class TypeDeciderImpl
             }
             //Ann
             RdfType rdfType = AnnotationUtils.findAnnotation(beanClass, RdfType.class);
-            Node node = NodeFactory.createURI(rdfType.value());
+            String iri = rdfType.value();
+            String expanded = prologue.getPrefixMapping().expandPrefix(iri);
+            Node node = NodeFactory.createURI(expanded);
             result.put(beanClass, node);
         }
 

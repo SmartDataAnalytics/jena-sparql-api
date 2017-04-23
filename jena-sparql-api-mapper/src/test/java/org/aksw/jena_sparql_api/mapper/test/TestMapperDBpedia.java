@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api.mapper.test;
 
 import java.text.ParseException;
-import java.util.List;
+import java.util.Calendar;
 
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
@@ -29,9 +29,11 @@ import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.expr.E_DateTimeYear;
 import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.util.PrefixMapping2;
 import org.apache.jena.vocabulary.XSD;
 import org.junit.Test;
 
@@ -88,18 +90,50 @@ public class TestMapperDBpedia {
 //    }
 
 
-    @RdfType("http://dbpedia.org/ontology/Company")
-    @DefaultIri("http://dbpedia.org/resource/#{label}")
+    @RdfType("schema:Person")
+    @DefaultIri("dbr:#{name}")
+    public static class Person {
+        @Iri("rdfs:label")
+        private String name;
+
+        @Iri("dbo:birthDate")
+        private Calendar birthDate;
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public Calendar getBirthDate() {
+            return birthDate;
+        }
+
+        public void setBirthDate(Calendar birthDate) {
+            this.birthDate = birthDate;
+        }
+    }
+
+
+    @RdfType("dbo:Company")
+    @DefaultIri("dbr:#{label}")
     public static class Company {
-        @Iri("http://www.w3.org/2000/01/rdf-schema#label")
+
+        //@Lang("en")
+        @Iri("rdfs:label")
         private String label;
 
-        @Iri("http://dbpedia.org/ontology/foundingYear")
-        @Datatype("http://www.w3.org/2001/XMLSchema#gYear")
+        @Iri("dbo:foundingYear")
+        @Datatype("xsd:gYear")
         private int foundingYear;
 
-        @Iri("http://dbpedia.org/ontology/numberOfLocations")
+        @Iri("dbo:numberOfLocations")
         private int numberOfLocations;
+
+//        @Iri("dbo:keyPerson")
+//        private Set<Person> keyPersons;
 
         public String getLabel() {
             return label;
@@ -130,11 +164,31 @@ public class TestMapperDBpedia {
             return "Company [label=" + label + ", foundingYear=" + foundingYear + ", numberOfLocations="
                     + numberOfLocations + "]";
         }
+
+//        public Set<Person> getKeyPersons() {
+//            return keyPersons;
+//        }
+//
+//        public void setKeyPersons(Set<Person> keyPersons) {
+//            this.keyPersons = keyPersons;
+//        }
+
+//        @Override
+//        public String toString() {
+//            return "Company [label=" + label + ", foundingYear=" + foundingYear + ", numberOfLocations="
+//                    + numberOfLocations + ", keyPersons=" + keyPersons + "]";
+//        }
+
     }
 
 
     @Test
     public void test1() throws ParseException {
+        Prologue prologue = new Prologue(new PrefixMapping2(PrefixMapping.Extended));
+        prologue.setPrefix("schema", "http://schema.org/");
+        prologue.setPrefix("dbo", "http://dbpedia.org/ontology/");
+        prologue.setPrefix("dbr", "http://dbpedia.org/resource/");
+
         SparqlService sparqlService = FluentSparqlService.http("http://dbpedia.org/sparql", "http://dbpedia.org")
                 .config()
                     .configQuery()
@@ -148,12 +202,10 @@ public class TestMapperDBpedia {
                 .end()
                 .create();
 
-        Prologue prologue = new Prologue();
-//        prologue.setPrefix("o", "http://example.org/E_DateTimeYearontololgy/");
-//        prologue.setPrefix("foaf", FOAF.NS);
 
         RdfMapperEngineImpl mapperEngine = new RdfMapperEngineImpl(sparqlService, prologue);
-        ((TypeDeciderImpl)mapperEngine.getTypeDecider()).put(NodeFactory.createURI("http://dbpedia.org/ontology/Company"), Company.class);
+        ((TypeDeciderImpl)mapperEngine.getTypeDecider()).putAll(TypeDeciderImpl.scan(TestMapperDBpedia.class.getPackage().getName(), prologue));
+        //NodeFactory.createURI("http://dbpedia.org/ontology/Company"), Company.class);
 
 
         RdfTypeFactoryImpl tf = (RdfTypeFactoryImpl)mapperEngine.getRdfTypeFactory();
@@ -169,30 +221,61 @@ public class TestMapperDBpedia {
             public Node toRdf(Object o) {
                 Node node = NodeFactory.createLiteral("" + o, XSDDatatype.XSDgYear);
                 return node;
-                //NodeValue.makeDatti
-                //XSDDatatype.XSDgYear.un
             }
         });
+
+
+//        tcs.put(new TypeConverterBase(XSD.xstring.toString(), String.class) {
+//            @Override
+//            public Expr toJava(Expr expr) {
+//                return new E_Str(expr);
+//            }
+//
+//            @Override
+//            public Node toRdf(Object o) {
+//                Node node = NodeFactory.createLiteral("" + o, XSDDatatype.XSDstring);
+//                return node;
+//            }
+//        });
 
 
         EntityManager entityManager = new EntityManagerImpl(mapperEngine);
 
 
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<Company> cq = cb.createQuery(Company.class);
+//        {
+//	        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+//	        CriteriaQuery<Company> cq = cb.createQuery(Company.class);
+//
+//	        Root<Company> r = cq.from(Company.class);
+//	        CriteriaQuery<Company> x = cq.select(r)
+//	                .where(cb.greaterThanOrEqualTo(r.get("foundingYear"), 1955))
+//	                .where(cb.greaterThanOrEqualTo(r.get("numberOfLocations"), 36000))
+//	                ;
+//
+//	        TypedQuery<Company> query = entityManager.createQuery(x);
+//	        List<Company> matches = query.getResultList();
+//	        matches.forEach(m -> System.out.println("Result: " + m));
+//        }
 
-        Root<Company> r = cq.from(Company.class);
-        CriteriaQuery<Company> x = cq.select(r)
-                .where(cb.equal(r.get("foundingYear"), 2012))
-                .where(cb.equal(r.get("numberOfLocations"), 13));
+        {
+            CriteriaBuilder cb2 = entityManager.getCriteriaBuilder();
+            CriteriaQuery<Double> cq2 = cb2.createQuery(Double.class);
+            Root<Company> r2 = cq2.from(Company.class);
+            CriteriaQuery<Double> x2 = cq2.select(cb2.avg(r2.get("numberOfLocations")));
+//                    .where(cb2.greaterThanOrEqualTo(r2.get("foundingYear"), 1955))
+//                    .where(cb2.greaterThanOrEqualTo(r2.get("numberOfLocations"), 36000))
+//                    ;
 
-        cq.orderBy(cb.desc(r.get("foundingYear")));
+            TypedQuery<Double> tq2 = entityManager.createQuery(x2);
+            Double m2 = tq2.getSingleResult();
+            System.out.println("Avg: " + m2);
+            //List<Double> m2 = query.getResultList();
+            //matches.forEach(m -> System.out.println("avg: " + m));
+        }
+        //cq.orderBy(cb.desc(r.get("foundingYear")));
 
-        TypedQuery<Company> query = entityManager.createQuery(x);
-        List<Company> matches = query.getResultList();
         // Person match = query.getSingleResult();
 
-        matches.forEach(m -> System.out.println("Result: " + m));
 
 
 //

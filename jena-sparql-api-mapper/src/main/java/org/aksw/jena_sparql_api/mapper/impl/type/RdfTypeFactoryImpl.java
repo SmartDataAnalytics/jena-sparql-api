@@ -20,6 +20,7 @@ import org.aksw.jena_sparql_api.mapper.annotation.MappedBy;
 import org.aksw.jena_sparql_api.mapper.annotation.MultiValued;
 import org.aksw.jena_sparql_api.mapper.model.F_GetValue;
 import org.aksw.jena_sparql_api.mapper.model.RdfMapperProperty;
+import org.aksw.jena_sparql_api.mapper.model.RdfMapperPropertyMulti;
 import org.aksw.jena_sparql_api.mapper.model.RdfMapperPropertySingle;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
@@ -380,8 +381,9 @@ public class RdfTypeFactoryImpl
         TypeConverter typeConverter = null;
         Datatype dt = pd.findAnnotation(Datatype.class);
         if(dt != null) {
-            String dtName = dt.value();
-            typeConverter = typeConversionService.getConverter(dt.value(), propertyType);
+            String rawDtName = dt.value();
+            String dtName = resolveIriExpr(rawDtName, null);
+            typeConverter = typeConversionService.getConverter(dtName, propertyType);
             if(typeConverter == null) {
                 throw new RuntimeException("Could not find a type converter: " + dtName + " -> " + propertyType);
             }
@@ -395,7 +397,7 @@ public class RdfTypeFactoryImpl
         //RdfProperty result = new RdfPropertyDatatypeOld(beanInfo, pd, null, predicate, rdfValueMapper);
         RdfPropertyDescriptor descriptor = new RdfPropertyDescriptor(propertyName, targetRdfType, "");
         RdfMapperProperty populator = isCollectionProperty
-                ? null //new RdfMapperPropertyMulti(pd, predicate, targetRdfType, defaultIriFn)
+                ? new RdfMapperPropertyMulti(pd, predicate, targetRdfType, defaultIriFn, typeConverter)
                 : new RdfMapperPropertySingle(pd, predicate, targetRdfType, defaultIriFn, typeConverter)
                 ;
 

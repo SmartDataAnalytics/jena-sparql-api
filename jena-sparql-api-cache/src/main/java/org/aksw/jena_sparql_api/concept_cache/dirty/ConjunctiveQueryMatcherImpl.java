@@ -9,11 +9,14 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.aksw.commons.collections.reversible.ReversibleMap;
 import org.aksw.commons.collections.reversible.ReversibleMapImpl;
+import org.aksw.jena_sparql_api.concept_cache.core.SetUtils;
 import org.aksw.jena_sparql_api.concept_cache.core.VarInfo;
 import org.aksw.jena_sparql_api.concept_cache.domain.ConjunctiveQuery;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.view_matcher.SparqlViewMatcherProjectionUtils;
 import org.apache.jena.sparql.core.Var;
+
+import com.google.common.collect.Sets;
 
 public class ConjunctiveQueryMatcherImpl<K>
     implements ConjunctiveQueryMatcher<K>
@@ -50,6 +53,7 @@ public class ConjunctiveQueryMatcherImpl<K>
         Map<Long, QfpcMatch> matches = patternMatcher.lookup(qfpc);
 
         VarInfo userVarInfo = cq.getProjection();
+        Set<Var> requestedVars = userVarInfo.getProjectVars();
 
         Map<K, QfpcMatch> result = new LinkedHashMap<>();
         for(Entry<Long, QfpcMatch> e : matches.entrySet()) {
@@ -57,12 +61,31 @@ public class ConjunctiveQueryMatcherImpl<K>
             QfpcMatch match = e.getValue();
             Map<Var, Var> varMap = match.getVarMap();
 
+            // Determine the mandatory vars.
+            // These are the vars of a matching view that are
+            // participating in joins and expressions of the residual pattern
+
+            Set<Var> residualVars = match.getDiffPattern().getVarsMentioned();
+            Set<Var> patternVars  = match.getReplacementPattern().getVarsMentioned();
+            Set<Var> mandatoryVars = Sets.intersection(patternVars, residualVars);
+
+            // TODO Properly deal with the deduplication level!!!
+
             Set<K> keys = keyToPatternId.reverse().get((Long)patternId);
             for(K key : keys) {
                 ConjunctiveQuery candCq = keyToQuery.get(key);
                 VarInfo viewVarInfo = candCq.getProjection();
 
-                boolean isProjValid = SparqlViewMatcherProjectionUtils.validateProjection(viewVarInfo, userVarInfo, varMap, false);
+                // The view projection must cover all mandatory vars,
+                Set<Var> viewProvidedVars = SetUtils.mapSet(viewVarInfo.getProjectVars(), varMap);
+                boolean mandatoryVarsCovered = viewProvidedVars.containsAll(mandatoryVars);
+
+                // and the remaining provided variables must cover all of the requested projection
+                Set<Var> queryProvidedVars = Sets.union(residualVars, viewProvidedVars);
+                boolean requestedVarsCovered = queryProvidedVars.containsAll(requestedVars);
+
+                boolean isProjValid = mandatoryVarsCovered && requestedVarsCovered;
+                //boolean isProjValid = SparqlViewMatcherProjectionUtils.validateProjection(viewVarInfo, userVarInfo, varMap, false);
 
                 if(isProjValid) {
                     result.put(key, match);

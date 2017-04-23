@@ -18,5 +18,10 @@ public interface ExpressionVisitor<T> {
     T visit(LogicalAndExpression e);
     T visit(EqualsExpression e);
     T visit(ValueExpression<?> e);
+
     T visit(GreatestExpression<?> e);
+    T visit(AvgExpression e);
+
+    T visit(GreaterThanExpression e);
+    T visit(GreaterThanOrEqualToExpression e);
 }
