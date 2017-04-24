@@ -182,7 +182,7 @@ public class TestMapperDBpedia {
     }
 
 
-    //@Test
+    @Test
     public void test1() throws ParseException {
         Prologue prologue = new Prologue(new PrefixMapping2(PrefixMapping.Extended));
         prologue.setPrefix("schema", "http://schema.org/");

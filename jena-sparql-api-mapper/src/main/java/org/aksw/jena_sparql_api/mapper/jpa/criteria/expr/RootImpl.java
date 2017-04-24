@@ -40,4 +40,41 @@ public class RootImpl<X>
     public Path<?> getParentPath() {
         return null;
     }
+
+
+    @Override
+    public String toString() {
+        return "RootImpl [javaType=" + javaType + ", entityType=" + entityType + "]";
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((entityType == null) ? 0 : entityType.hashCode());
+        result = prime * result + ((javaType == null) ? 0 : javaType.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        RootImpl other = (RootImpl) obj;
+        if (entityType == null) {
+            if (other.entityType != null)
+                return false;
+        } else if (!entityType.equals(other.entityType))
+            return false;
+        if (javaType == null) {
+            if (other.javaType != null)
+                return false;
+        } else if (!javaType.equals(other.javaType))
+            return false;
+        return true;
+    }
 }

@@ -381,7 +381,10 @@ public class RdfMapperEngineImpl
             entityFragment = rdfType.populate(r, entity);
 
             // Add the type triples
-            typeDecider.writeTypeTriples(r, entity);
+            // TODO This entityClass might be redundant with another variable in the function
+            Class<?> entityClass = entity.getClass();
+
+            typeDecider.writeTypeTriples(r, entityClass);
 
             //entityFragment = entityState.getEntityFragment();
 

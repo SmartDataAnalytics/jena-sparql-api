@@ -101,8 +101,7 @@ class CriteriaQueryImpl<T> implements CriteriaQuery<T> {
 
     @Override
     public Set<Root<?>> getRoots() {
-        // TODO Auto-generated method stub
-        return null;
+        return roots;
     }
 
     @Override

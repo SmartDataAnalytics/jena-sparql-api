@@ -85,8 +85,8 @@ public class TypeDeciderImpl
     }
 
     @Override
-    public void writeTypeTriples(Resource outResource, Object entity) {
-        Class<?> clazz = entity.getClass();
+    public void writeTypeTriples(Resource outResource, Class<?> clazz) { //Object entity) {
+        //Class<?> clazz = entity.getClass();
         Node type = classToNode.get(clazz);
         if(type != null) {
 

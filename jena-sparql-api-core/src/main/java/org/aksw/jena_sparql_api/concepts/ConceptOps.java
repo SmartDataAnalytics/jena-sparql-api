@@ -199,7 +199,10 @@ public class ConceptOps {
         Concept result;
 
         if(filter != null) {
-            Concept tmp = ConceptOps.applyNodeTransform(filter, varMap);
+            Concept tmp = varMap == null
+                    ? filter
+                    : ConceptOps.applyNodeTransform(filter, varMap);
+
             Element e = ElementUtils.mergeElements(concept.getElement(), tmp.getElement());
             result = new Concept(e, concept.getVar());
         } else {

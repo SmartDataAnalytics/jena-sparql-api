@@ -20,12 +20,15 @@ import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Order;
 import javax.persistence.criteria.Path;
+import javax.persistence.criteria.Root;
+import javax.persistence.criteria.Selection;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptOps;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.concepts.OrderedConcept;
 import org.aksw.jena_sparql_api.concepts.Relation;
+import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.utils.ServiceUtils;
 import org.aksw.jena_sparql_api.mapper.impl.engine.RdfMapperEngine;
@@ -37,15 +40,24 @@ import org.aksw.jena_sparql_api.mapper.model.TypeDecider;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
+import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.SortCondition;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprAggregator;
+import org.apache.jena.sparql.expr.aggregate.Aggregator;
+import org.apache.jena.sparql.graph.NodeTransformLib;
 import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementFilter;
+import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 
 
 class PathResolverUtil {
@@ -127,6 +139,8 @@ public class TypedQueryImpl<X>
 //    	return result;
 //    }
 
+    Var rootVar = Var.alloc("root");
+
     protected OrderedConcept compileConcept() {
         // Get the SPARQL concept from the type decider for the requested entity type
         //engine.getT
@@ -142,28 +156,46 @@ public class TypedQueryImpl<X>
 
         //RdfType engine.getRdfTypeFactory().
 
-        Var rootVar = Var.alloc("root");
 
 
         //PathResolver pathResolver = engine.createResolver(resultType);//mapperEngine.createResolver(Person.class);
 
-        PathResolverUtil pathResolverUtil = new PathResolverUtil();
+        ExpressionCompiler filterCompiler = new ExpressionCompiler(this::resolvePath);
+        //elements.add(new ElementFilter(result));
 
-        ExpressionCompiler filterCompiler = new ExpressionCompiler(
-            path -> {
-                // Get the root type of the path
-                Class<?> rootClass = PathResolverUtil.getRootClass(path);
-                PathResolver pathResolver = engine.createResolver(rootClass);
 
-                Relation r = pathResolverUtil.resolvePath(pathResolver, path);
-                return r;
-            }
-        );
+        Set<Root<?>> roots = criteriaQuery.getRoots();
+        for(Root<?> root : roots) {
+            Class<?> javaType = root.getJavaType();
+
+            Resource r = ModelFactory.createDefaultModel().createResource();
+
+            engine.getTypeDecider().writeTypeTriples(r, javaType);
+
+            BasicPattern bp = new BasicPattern();
+            r.getModel().getGraph().find(Node.ANY, Node.ANY, Node.ANY).toSet().forEach(bp::add);
+
+            bp = NodeTransformLib.transform(new NodeTransformRenameMap(Collections.singletonMap(r.asNode(), rootVar)), bp);
+
+            ElementTriplesBlock etb = new ElementTriplesBlock(bp);
+
+            filterCompiler.getElements().add(etb);
+
+            //lengine.getTypeDecider().writeTypeTriples(outResource, entity);
+            //RdfType rdfType = engine.getRdfTypeFactory().forJavaType(javaType);
+            //rdfType
+            //engine.getTypeDecider().writeTypeTriples(outResource, entity);
+        }
+
 
         VExpression<?> filterEx = (VExpression<?>)criteriaQuery.getRestriction();
         Concept filterConcept;
         if(filterEx != null) {
-            filterEx.accept(filterCompiler);
+            Expr expr = filterEx.accept(filterCompiler);
+            filterCompiler.getElements().add(new ElementFilter(expr));
+        }
+
+        if(!filterCompiler.getElements().isEmpty()) {
             //System.out.println(filterCompiler.getElements());
 
             Element filterEl = ElementUtils.groupIfNeeded(filterCompiler.getElements());
@@ -173,18 +205,7 @@ public class TypedQueryImpl<X>
             filterConcept = ConceptUtils.createSubjectConcept();
         }
 
-        ExpressionCompiler orderCompiler = new ExpressionCompiler(
-//              path -> pathResolverUtil.resolvePath(pathResolver, path)
-                path -> {
-                    Class<?> rootClass = PathResolverUtil.getRootClass(path);
-                    PathResolver pathResolver = engine.createResolver(rootClass);
-
-                    Relation r = pathResolverUtil.resolvePath(pathResolver, path);
-                    return r;
-                }
-
-        );
-
+        ExpressionCompiler orderCompiler = new ExpressionCompiler(this::resolvePath);
 
 
         // Compile selection - TODO This is a hack right now
@@ -193,7 +214,6 @@ public class TypedQueryImpl<X>
 //            selectionEx.accept(filterCompiler);
 //        }
 
-//        Selection<?> selections = criteriaQuery.getSelection();
 //        for(Selection<?> selection : selections) {
 //
 //        }
@@ -217,9 +237,23 @@ public class TypedQueryImpl<X>
         OrderedConcept result = ConceptOps.applyOrder(filterConcept, orderConcept, null);
 
         // TODO Merge in the rdftype's concept
+
+
+
         // TODO Handle the root variable in a better way
 
         return result;
+    }
+
+    public Relation resolvePath(Path<?> path) {
+        PathResolverUtil pathResolverUtil = new PathResolverUtil();
+
+        // Get the root type of the path
+        Class<?> rootClass = PathResolverUtil.getRootClass(path);
+        PathResolver pathResolver = engine.createResolver(rootClass);
+
+        Relation r = pathResolverUtil.resolvePath(pathResolver, path);
+        return r;
     }
 
     /*
@@ -364,17 +398,63 @@ public class TypedQueryImpl<X>
         SparqlService sparqlService = engine.getSparqlService();
 
 
-        OrderedConcept concept = compileConcept();
+        OrderedConcept orderedConcept = compileConcept();
+        Var resultVar = orderedConcept.getConcept().getVar();
+
+        Query query = ConceptUtils.createQueryList(orderedConcept, l, o);
+
+
+        Selection<X> selection = criteriaQuery.getSelection();
+
+        // TODO The check against Root is somewhat hacky, as we may need to reuse its alias
+        if(selection != null && !(selection instanceof Root)) {
+            ExpressionCompiler selectionCompiler = new ExpressionCompiler(this::resolvePath);
+
+            VExpression<X> e = (VExpression<X>)selection;
+            Expr expr = e.accept(selectionCompiler);
+
+            //Concept tmp = new Concept(selectionCompiler.getElements(), rootVar);
+
+            List<Element> els = new ArrayList<>();
+            if(!orderedConcept.getConcept().isSubjectConcept()) {
+                els.add(query.getQueryPattern());
+            }
+
+
+            els.addAll(selectionCompiler.getElements());
+            Element x = ElementUtils.groupIfNeeded(els);
+
+            query.setQueryPattern(x);
+
+
+            // Append the elements to the query
+            if(expr instanceof ExprAggregator) {
+                Aggregator agg = ((ExprAggregator) expr).getAggregator();
+                expr = query.allocAggregate(agg);
+            }
+
+            query.getProject().clear();
+            query.getProject().add(resultVar, expr);
+
+
+            //selection.filterCompiler
+        }
+
+
         //compileOrder();
 
         //List<Node> items = ServiceUtils.fetchList(sparqlService.getQueryExecutionFactory(), concept, 1l, startPosition == null ? null : startPosition.longValue());
-        List<Node> items = ServiceUtils.fetchList(sparqlService.getQueryExecutionFactory(), concept, l, o);
+        //List<Node> items = ServiceUtils.fetchList(sparqlService.getQueryExecutionFactory(), concept, l, o);
+        QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
+        List<Node> items = ServiceUtils.fetchList(qef, query, orderedConcept.getConcept().getVar());
+
+
         List<X> result = items.stream().map(node -> {
             Class<X> clazz = criteriaQuery.getResultType();
             Object r = engine.find(clazz, node);
             return (X)r;
         }).collect(Collectors.toList());
-        System.out.println("GOT " + items + " for concept" + concept);
+        System.out.println("GOT " + items + " for concept" + query);
 
 //    	X result;
 //    	if(items.isEmpty()) {

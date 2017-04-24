@@ -25,7 +25,6 @@ import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.expr.aggregate.AggAvg;
 import org.apache.jena.sparql.expr.aggregate.AggMax;
 import org.apache.jena.sparql.syntax.Element;
-import org.apache.jena.sparql.syntax.ElementFilter;
 
 /**
  * Compiles JPA criteria expressions to SPARQL expressions.
@@ -102,7 +101,7 @@ public class ExpressionCompiler
         Expr b = e.getRightHandOperand().accept(this);
 
         Expr result = op.apply(a, b);
-        elements.add(new ElementFilter(result));
+        //elements.add(new ElementFilter(result));
 
         return result;
     }
