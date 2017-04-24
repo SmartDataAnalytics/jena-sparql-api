@@ -188,10 +188,10 @@ public class TypedQueryImpl<X>
 
 
         // Compile selection - TODO This is a hack right now
-        VExpression<?> selectionEx = (VExpression<?>)criteriaQuery.getSelection();
-        if(selectionEx != null) {
-            selectionEx.accept(filterCompiler);
-        }
+//        VExpression<?> selectionEx = (VExpression<?>)criteriaQuery.getSelection();
+//        if(selectionEx != null) {
+//            selectionEx.accept(filterCompiler);
+//        }
 
 //        Selection<?> selections = criteriaQuery.getSelection();
 //        for(Selection<?> selection : selections) {
