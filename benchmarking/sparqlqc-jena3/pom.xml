@@ -25,7 +25,9 @@
         <module>sparqlqc-impl-sparqlalgebra</module>
         <module>sparqlqc-impl-afmu</module>
         <module>sparqlqc-impl-jsa</module>
- 
+
+        <module>sparqlqc-bundle-impl</module>
+
         <module>sparqlqc-dataset-analysis</module>
    </modules>
 
@@ -63,6 +65,13 @@
 
     <dependencyManagement>
         <dependencies>
+
+            <dependency>
+                <groupId>org.aksw.sparqlqc</groupId>
+                <artifactId>sparqlqc-bundle-impl</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
 
              <dependency>
                  <groupId>org.aksw.beast</groupId>

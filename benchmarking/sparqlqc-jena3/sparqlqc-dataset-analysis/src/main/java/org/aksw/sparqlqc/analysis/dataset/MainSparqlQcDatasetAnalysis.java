@@ -1,20 +1,20 @@
 package org.aksw.sparqlqc.analysis.dataset;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
 import java.security.Permission;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.SparqlServiceReference;
 import org.aksw.simba.lsq.vocab.LSQ;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.rdf.model.Model;
@@ -25,6 +25,7 @@ import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.sparql.core.DatasetDescription;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
@@ -33,8 +34,12 @@ import org.osgi.framework.launch.Framework;
 import org.osgi.framework.launch.FrameworkFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ClassPathResource;
 
 import fr.inrialpes.tyrexmo.testqc.simple.SimpleContainmentSolver;
+import joptsimple.OptionParser;
+import joptsimple.OptionSet;
+import joptsimple.OptionSpec;
 
 public class MainSparqlQcDatasetAnalysis {
 
@@ -67,8 +72,48 @@ public class MainSparqlQcDatasetAnalysis {
 
     public static void main(String[] args) throws Exception {
 
-        forbidSystemExitCall();
 
+        OptionParser parser = new OptionParser();
+
+        String endpointUrl = "http://localhost:8890/sparql";
+        String queryStr = "PREFIX lsq:<http://lsq.aksw.org/vocab#> SELECT ?s ?o { ?s lsq:text ?o ; lsq:hasSpin [ a <http://spinrdf.org/sp#Select> ] } ORDER BY ASC(strlen(?o))";
+
+        boolean useParallel = false;
+
+        OptionSpec<String> endpointUrlOs = parser
+                .acceptsAll(Arrays.asList("e", "endpoint"), "Local SPARQL service (endpoint) URL on which to execute queries")
+                .withRequiredArg()
+                .defaultsTo(endpointUrl)
+                ;
+
+        OptionSpec<String> graphUriOs = parser
+                .acceptsAll(Arrays.asList("g", "graph"), "Local graph(s) from which to retrieve the data")
+                .withRequiredArg()
+                ;
+
+        OptionSpec<String> queryOs = parser
+                .acceptsAll(Arrays.asList("q", "query"), "Query for fetching query resources and strings, output variables must be named ?s and ?o")
+                .withRequiredArg()
+                .defaultsTo(queryStr)
+                ;
+
+        OptionSpec<Integer> nOs = parser
+                .acceptsAll(Arrays.asList("n", "numItems"), "Number of items to process")
+                .withRequiredArg()
+                .ofType(Integer.class)
+                ;
+
+        OptionSpec<String> parallelOs = parser
+                .acceptsAll(Arrays.asList("p", "parallel"), "Use parallel stream processing - may not work with certain solvers")
+                .withOptionalArg()
+                //.ofType(Boolean.class)
+                ;
+
+
+        OptionSet options = parser.parse(args);
+
+
+        forbidSystemExitCall();
         FrameworkFactory frameworkFactory = ServiceLoader.load(FrameworkFactory.class).iterator().next();
 
         Map<String, String> config = new HashMap<String, String>();
@@ -120,26 +165,90 @@ public class MainSparqlQcDatasetAnalysis {
         // ??? What packages are that?
         // "java_cup.runtime;version=\"1.0.0\""
         ));
-        List<String> jarFileNames = Arrays.asList("jsa", "sparqlalgebra", "afmu", "treesolver");
-
-        List<File> jarFiles = jarFileNames.stream().map(implStr -> {
-            String jarPathStr = String.format("../sparqlqc-impl-%1$s/target/sparqlqc-impl-%1$s-1.0.0-SNAPSHOT.jar",
-                    implStr);
-            File jarFile = new File(jarPathStr);
-            return jarFile;
-        }).collect(Collectors.toList());
 
         Framework framework = frameworkFactory.newFramework(config);
         framework.init();
         framework.start();
 
+
+        try {
+
+            if(options.has(endpointUrlOs)) {
+                endpointUrl = endpointUrlOs.value(options);
+            }
+
+            List<String> defaultGraphIris = graphUriOs.values(options);
+            if(options.has(queryOs)) {
+                queryStr = queryOs.value(options);
+            }
+            Integer n = nOs.value(options);
+
+            if(n != null) {
+                queryStr = queryStr + " LIMIT " + n;
+            }
+
+            useParallel = options.has(parallelOs);
+
+
+            DatasetDescription datasetDescription = DatasetDescription.create(defaultGraphIris, Collections.emptyList());
+            SparqlServiceReference endpointDescription = new SparqlServiceReference(endpointUrl, datasetDescription);
+
+            logger.info("Endpoint: " + endpointDescription);
+            logger.info("Query: " + queryStr);
+            logger.info("Parallel: " + useParallel);
+
+            QueryExecutionFactory qef = FluentQueryExecutionFactory.http(endpointDescription).create();
+            QueryExecution qe = qef.createQueryExecution(queryStr);
+//            QueryExecution qe = qef.createQueryExecution(
+//                    "PREFIX lsq:<http://lsq.aksw.org/vocab#> CONSTRUCT { ?s lsq:text ?o } { ?s lsq:text ?o ; lsq:hasSpin [ a <http://spinrdf.org/sp#Select> ] } ORDER BY ASC(strlen(?o)) LIMIT 3000");
+
+            Model in = ModelFactory.createDefaultModel();
+            qe.execSelect().forEachRemaining(qs -> {
+                in.add(qs.get("s").asResource(), LSQ.text, qs.get("o"));
+            });
+
+            Set<Resource> items = in.listSubjects().toSet();
+
+            Supplier<Stream<Resource>> queryIterable = useParallel
+                    ? () -> items.parallelStream()
+                    : () -> items.stream();
+
+
+
+            run(framework, queryIterable);
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+
+        framework.stop();
+        if (false) {
+            framework.waitForStop(0);
+        } else {
+            enableSystemExitCall();
+            System.exit(0);
+        }
+
+    }
+
+    public static void run(Framework framework, Supplier<Stream<Resource>> queryIterable) throws Exception {
+
+
+
+        List<String> pluginNames = Arrays.asList("jsa"); //, "sparqlalgebra", "afmu", "treesolver");
+
+        // "reference:file:" + jarFileStr
+        List<String> jarRefs = pluginNames.stream().map(pluginName ->
+            String.format("sparqlqc-impl-%1$s-1.0.0-SNAPSHOT.jar", pluginName)
+        ).collect(Collectors.toList());
+
+
         BundleContext context = framework.getBundleContext();
 
-        for (File jarFile : jarFiles) {
-            String jarFileStr = jarFile.getAbsolutePath();
-            logger.info("Loading: " + jarFileStr);
+        for (String jarRef : jarRefs) {
+            logger.info("Loading: " + jarRef);
+            ClassPathResource r = new ClassPathResource(jarRef);
 
-            Bundle bundle = context.installBundle("reference:file:" + jarFileStr);
+            Bundle bundle = context.installBundle("inputstream:" + jarRef, r.getInputStream());
             bundle.start();
         }
 
@@ -148,19 +257,10 @@ public class MainSparqlQcDatasetAnalysis {
         Map<String, SimpleContainmentSolver> solvers = Arrays.asList(srs).stream().collect(Collectors.toMap(
                 sr -> "" + sr.getProperty("SHORT_LABEL"), sr -> (SimpleContainmentSolver) context.getService(sr)));
 
-        System.out.println(solvers);
+        //System.out.println(solvers);
 
         // QueryExecutionFactory qef = FluentI
 
-        QueryExecutionFactory qef = FluentQueryExecutionFactory
-                .http("http://localhost:8910/sparql", "http://lsq.aksw.org/swdf/").create();
-        QueryExecution qe = qef.createQueryExecution(
-                "PREFIX lsq:<http://lsq.aksw.org/vocab#> CONSTRUCT { ?s lsq:text ?o } { ?s lsq:text ?o ; lsq:hasSpin [ a <http://spinrdf.org/sp#Select> ] } ORDER BY ASC(strlen(?o)) LIMIT 3000");
-
-        Model in = ModelFactory.createDefaultModel();
-        qe.execSelect().forEachRemaining(qs -> {
-            in.add(qs.get("s").asResource(), LSQ.text, qs.get("o"));
-        });
 
         // String xxx = "PREFIX lsq:<http://lsq.aksw.org/vocab#> CONSTRUCT { ?s
         // ?p ?o } WHERE { { SELECT SAMPLE(?x) AS ?s (lsq:text As ?p) ?o { ?x
@@ -178,7 +278,6 @@ public class MainSparqlQcDatasetAnalysis {
 
         // Supplier<Stream<Resource>> queryIterable = () ->
         // in.listSubjects().toSet().parallelStream();
-        Supplier<Stream<Resource>> queryIterable = () -> in.listSubjects().toSet().stream();
 
         // System.out.println(solvers);
         // if(true) return;
@@ -188,7 +287,7 @@ public class MainSparqlQcDatasetAnalysis {
         // String solverShortLabel = e.getKey();
         // SimpleContainmentSolver solver = e.getValue();
 
-        String solverShortLabel = "TS";
+        String solverShortLabel = "JSAC";
         SimpleContainmentSolver solver = solvers.get(solverShortLabel);
 
         String ns = "http://lsq.aksw.org/vocab#";
@@ -197,7 +296,7 @@ public class MainSparqlQcDatasetAnalysis {
         Property _entailmentError = ResourceFactory.createProperty(ns + "entailmentError-" + solverShortLabel);
         Property _inputError = ResourceFactory.createProperty(ns + "inputError-" + solverShortLabel);
 
-        Stream<Statement> x = queryIterable.get().peek((foo) -> System.out.println("foo: " + foo))
+        Stream<Statement> x = queryIterable.get()//.peek((foo) -> System.out.println("foo: " + foo))
                 .flatMap(a -> queryIterable.get().map(b -> {
                     Model m = ModelFactory.createDefaultModel();
                     try {
@@ -234,23 +333,16 @@ public class MainSparqlQcDatasetAnalysis {
 
         // System.out.println(x.count());
 
-        OutputStream out = new FileOutputStream(new File("/mnt/Data/tmp/swdf-containment-" + solverShortLabel + ".nt"));
+        //OutputStream out = new FileOutputStream(new File("/mnt/Data/tmp/swdf-containment-" + solverShortLabel + ".nt"));
         x.forEach(stmt -> {
             Model m = ModelFactory.createDefaultModel();
             m.add(stmt);
-            RDFDataMgr.write(out, m, RDFFormat.NTRIPLES_UTF8);
+            RDFDataMgr.write(System.out, m, RDFFormat.NTRIPLES_UTF8);
         });
 
-        out.flush();
-        out.close();
+        //out.flush();
+        //out.close();
 
-        framework.stop();
-        if (false) {
-            framework.waitForStop(0);
-        } else {
-            enableSystemExitCall();
-            System.exit(0);
-        }
 
     }
 
