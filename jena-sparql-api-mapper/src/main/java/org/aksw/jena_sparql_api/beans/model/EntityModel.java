@@ -198,6 +198,9 @@ public class EntityModel
 
 
         Map<String, PropertyModel> propertyOps = new HashMap<String, PropertyModel>();
+
+        // TODO Add support for public fields
+
         for(PropertyDescriptor pd : beanInfo.getPropertyDescriptors()) {
             Class<?> propertyType = pd.getPropertyType();
             String propertyName = pd.getName();

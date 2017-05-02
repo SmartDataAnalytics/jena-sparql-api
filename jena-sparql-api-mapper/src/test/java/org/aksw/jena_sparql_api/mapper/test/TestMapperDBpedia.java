@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.mapper.test;
 
 import java.text.ParseException;
 import java.util.Calendar;
+import java.util.List;
 
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
@@ -188,6 +189,7 @@ public class TestMapperDBpedia {
         prologue.setPrefix("schema", "http://schema.org/");
         prologue.setPrefix("dbo", "http://dbpedia.org/ontology/");
         prologue.setPrefix("dbr", "http://dbpedia.org/resource/");
+        prologue.setPrefix("nss", "http://example.org/nss/");
 
         SparqlService sparqlService = FluentSparqlService.http("http://dbpedia.org/sparql", "http://dbpedia.org")
                 .config()
@@ -243,21 +245,22 @@ public class TestMapperDBpedia {
 
 
 //        {
-//	        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-//	        CriteriaQuery<Company> cq = cb.createQuery(Company.class);
-//
-//	        Root<Company> r = cq.from(Company.class);
-//	        CriteriaQuery<Company> x = cq.select(r)
-//	                .where(cb.greaterThanOrEqualTo(r.get("foundingYear"), 1955))
-//	                .where(cb.greaterThanOrEqualTo(r.get("numberOfLocations"), 36000))
-//	                ;
-//
-//	        TypedQuery<Company> query = entityManager.createQuery(x);
-//	        List<Company> matches = query.getResultList();
-//	        matches.forEach(m -> System.out.println("Result: " + m));
+            CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+            CriteriaQuery<Company> cq = cb.createQuery(Company.class);
+
+            Root<Company> r = cq.from(Company.class);
+            cq.select(r)
+                    .where(cb.greaterThanOrEqualTo(r.get("foundingYear"), 1955))
+                    .where(cb.greaterThanOrEqualTo(r.get("numberOfLocations"), 36000))
+                    ;
+
+            TypedQuery<Company> query = entityManager.createQuery(cq);
+            List<Company> matches = query.getResultList();
+            matches.forEach(m -> System.out.println("Result: " + m));
 //        }
 
         {
+            if(false) {
             CriteriaBuilder cb2 = entityManager.getCriteriaBuilder();
             CriteriaQuery<Double> cq2 = cb2.createQuery(Double.class);
             Root<Company> r2 = cq2.from(Company.class);
@@ -268,7 +271,7 @@ public class TestMapperDBpedia {
 
             TypedQuery<Double> tq2 = entityManager.createQuery(x2);
             Double m2 = tq2.getSingleResult();
-            System.out.println("Avg: " + m2);
+            System.out.println("Avg: " + m2);}
             //List<Double> m2 = query.getResultList();
             //matches.forEach(m -> System.out.println("avg: " + m));
         }

@@ -113,7 +113,7 @@ public class RdfClass
 //    	beanWrapper.getPropertyDescriptors()
 //    }
 
-    
+
     public EntityOps getEntityOps() {
         return entityOps;
     }
@@ -396,21 +396,24 @@ public class RdfClass
 
     @Override
     public PathFragment resolve(String propertyName) {
-    	PathFragment result = populators.stream()
-    			.map(rdfMapper -> rdfMapper.resolve(propertyName))
-    			.filter(relation -> relation != null)
-    			.findFirst()
-    			.orElse(null);
-    			//.collect(Collectors.toList());
+        PathFragment result = populators.stream()
+                .map(rdfMapper -> {
+                    PathFragment r = rdfMapper.resolve(propertyName);
+                    return r;
+                })
+                .filter(relation -> relation != null)
+                .findFirst()
+                .orElse(null);
+                //.collect(Collectors.toList());
 
-    	// TODO Compute the union of the relations? (we may also consider raising an exception if there are multiple ones)
-    	//RelationOps.
-    	//Relation result = relations.isEmpty() ? null : relations.iterator().next();
-    	
-    	return result;
+        // TODO Compute the union of the relations? (we may also consider raising an exception if there are multiple ones)
+        //RelationOps.
+        //Relation result = relations.isEmpty() ? null : relations.iterator().next();
+
+        return result;
     }
 
-    
+
 //    @Override
 //    public void exposeTypeDeciderShape(ResourceShapeBuilder rsb) {
 //        // TODO Auto-generated method stub

@@ -15,6 +15,7 @@ import org.aksw.jena_sparql_api.beans.model.PropertyOps;
 import org.aksw.jena_sparql_api.mapper.annotation.Datatype;
 import org.aksw.jena_sparql_api.mapper.annotation.DefaultIri;
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
+import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.aksw.jena_sparql_api.mapper.annotation.IriType;
 import org.aksw.jena_sparql_api.mapper.annotation.MappedBy;
 import org.aksw.jena_sparql_api.mapper.annotation.MultiValued;
@@ -272,6 +273,23 @@ public class RdfTypeFactoryImpl
         Iri iriAnn = pd.findAnnotation(Iri.class); //findPropertyAnnotation(clazz, pd, Iri.class);
         String iriExprStr = iriAnn == null ? null : iriAnn.value();
         String iriStr = iriExprStr == null ? null : resolveIriExpr(iriExprStr, null);
+
+        IriNs iriNsAnn = pd.findAnnotation(IriNs.class);
+        String iriNsExprStr = iriNsAnn == null ? null : iriNsAnn.value();
+        iriNsExprStr = iriNsExprStr == null ? null : iriNsExprStr + (iriNsExprStr.contains(":") ? "" : ":") + propertyName;
+        String iriNsStr = iriNsExprStr == null ? null : resolveIriExpr(iriNsExprStr, null);
+
+        if(iriNsStr != null) {
+            if(iriStr != null) {
+                throw new RuntimeException("@Iri and @IriNs annotations on same element is invalid");
+            }
+
+            iriStr = iriNsStr;
+        }
+
+
+
+
         boolean hasIri = iriStr != null && !iriStr.isEmpty();
 
         String mappedBy = (String)AnnotationUtils.getValue(pd.findAnnotation(MappedBy.class)); //findPropertyAnnotation(clazz, pd, MappedBy.class));
