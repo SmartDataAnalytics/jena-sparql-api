@@ -8,6 +8,7 @@ import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import javax.persistence.Tuple;
 import javax.persistence.criteria.CollectionJoin;
@@ -41,7 +42,6 @@ import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.ValueExpression;
 public class CriteriaBuilderImpl
     implements CriteriaBuilder
 {
-
     @Override
     public CriteriaQuery<Object> createQuery() {
         throw new UnsupportedOperationException();

@@ -13,41 +13,40 @@ import org.aksw.jena_sparql_api.mapper.model.TypeDecider;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.sparql.core.Prologue;
+import org.apache.jena.sparql.core.Var;
 
 public interface RdfMapperEngine
 {
-	SparqlService getSparqlService();
-	
+    SparqlService getSparqlService();
+
     Prologue getPrologue();
 
     RdfTypeFactory getRdfTypeFactory();
-    
-    TypeDecider getTypeDecider();
-    
 
-    //<T> LookupService<Node, T> getLookupService(Class<T> clazz);
+    TypeDecider getTypeDecider();
+
     <T> T find(Class<T> clazz, Node rootNode);
 
-    //List<T> list(Class<T> clazz);
     <T> List<T> list(Class<T> clazz, Concept concept);
 
 
     <T> T merge(T entity);
     <T> T merge(T entity, Node node);
 
-    
+
     void remove(Object entity);
     void remove(Node node, Class<?> clazz);
-    
-//    void emitTriples(Graph outGraph, Object entity);
-//    void emitTriples(Graph outGraph, Object entity, Node node);
 
-
-    // This method should probably not go here
     Map<Node, RDFNode> fetch(ShapeExposable shapeSupplier, Collection<Node> nodes);
-    
-    
-    public PathResolver createResolver(Class<?> javaClass);
 
-    //PathResolver getRelation(Path path);
+
+    /**
+     * Creates a path resolver starting from the given entityClass.
+     * The rootVar
+     *
+     * @param javaClass
+     * @param rootVar
+     * @return
+     */
+    PathResolver createResolver(Class<?> entityClass);
 }

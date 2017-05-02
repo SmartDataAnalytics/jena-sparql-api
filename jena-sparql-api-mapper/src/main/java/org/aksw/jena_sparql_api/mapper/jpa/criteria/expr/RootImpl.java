@@ -21,7 +21,7 @@ public class RootImpl<X>
 
 
     public RootImpl(Class<X> root, EntityType<X> entityType) {
-        super();
+        super(null, null, root);
         this.javaType = root;
         this.entityType = entityType;
     }
@@ -76,5 +76,22 @@ public class RootImpl<X>
         } else if (!javaType.equals(other.javaType))
             return false;
         return true;
+    }
+
+    @Override
+    public String getReachingAttributeName() {
+        return null;
+    }
+
+    @Override
+    public <T> T accept(PathVisitor<T> visitor) {
+        T result = visitor.visit(this);
+        return result;
+    }
+
+    @Override
+    public <T> T accept(ExpressionVisitor<T> visitor) {
+        T result = visitor.visit(this);
+        return result;
     }
 }

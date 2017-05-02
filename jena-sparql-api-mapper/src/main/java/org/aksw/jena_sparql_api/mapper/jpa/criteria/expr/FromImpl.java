@@ -26,120 +26,23 @@ import javax.persistence.metamodel.SetAttribute;
 import javax.persistence.metamodel.SingularAttribute;
 
 public class FromImpl<Z, X>
-    implements From<Z, X>
+    extends PathImpl<X>
+    implements VFrom<Z, X>
 {
-    //protected Function<> resolver;
+    // TODO Would be great if consistency checks with the metamodel to raise errors early could be delegated to a lambda
+    // in order to improve re-use
+    // protected Function<> resolver;
 
-    @Override
-    public Bindable<X> getModel() {
-        return null;
+    public FromImpl(Path<?> parentPath, String attrName, Class<X> valueType) {
+        super(parentPath, attrName, valueType);
     }
 
-    @Override
-    public Path<?> getParentPath() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public <Y> Path<Y> get(SingularAttribute<? super X, Y> attribute) {
-        String attrName = attribute.getName();
-        Path<Y> result = get(attrName);
-        return result;
-    }
-
-    @Override
-    public <E, C extends Collection<E>> Expression<C> get(PluralAttribute<X, C, E> collection) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public <K, V, M extends Map<K, V>> Expression<M> get(MapAttribute<X, K, V> map) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Expression<Class<? extends X>> type() {
-
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public <Y> Path<Y> get(String attributeName) {
-        Path<Y> result = new PathImpl<>(this, attributeName, null);
-        return result;
-    }
-
-    @Override
-    public Predicate isNull() {
-
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Predicate isNotNull() {
-
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Predicate in(Object... values) {
-
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Predicate in(Expression<?>... values) {
-
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Predicate in(Collection<?> values) {
-
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Predicate in(Expression<Collection<?>> values) {
-
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public <X> Expression<X> as(Class<X> type) {
-
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Selection<X> alias(String name) {
-
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean isCompoundSelection() {
-
-        return false;
-    }
-
-    @Override
-    public List<Selection<?>> getCompoundSelectionItems() {
-
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Class<? extends X> getJavaType() {
-
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public String getAlias() {
-
-        throw new UnsupportedOperationException();
-    }
+//    @Override
+//    public <Y> Path<Y> get(SingularAttribute<? super X, Y> attribute) {
+//        String attrName = attribute.getName();
+//        Path<Y> result = get(attrName);
+//        return result;
+//    }
 
     @Override
     public Set<Fetch<X, ?>> getFetches() {
@@ -320,5 +223,4 @@ public class FromImpl<Z, X>
 
         throw new UnsupportedOperationException();
     }
-
 }

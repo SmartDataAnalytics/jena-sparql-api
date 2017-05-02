@@ -1,7 +1,5 @@
 package org.aksw.jena_sparql_api.mapper.jpa.criteria.expr;
 
-import javax.persistence.criteria.Path;
-
 /**
  * TODO This interface needs to be extended to
  * cover all possible expressions of the JPA
@@ -10,8 +8,10 @@ import javax.persistence.criteria.Path;
  *
  * @param <T>
  */
-public interface ExpressionVisitor<T> {
-    T visit(Path<?> e);
+public interface ExpressionVisitor<T>
+    extends PathVisitor<T>
+{
+    //T visit(VPath<?> e);
 
     T visit(LogicalNotExpression e);
 

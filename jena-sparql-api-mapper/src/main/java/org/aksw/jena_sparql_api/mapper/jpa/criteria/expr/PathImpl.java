@@ -10,19 +10,21 @@ import javax.persistence.metamodel.MapAttribute;
 import javax.persistence.metamodel.PluralAttribute;
 import javax.persistence.metamodel.SingularAttribute;
 
-import org.aksw.jena_sparql_api.mapper.jpa.criteria.CriteriaEnv;
-
 public class PathImpl<X>
     extends ExpressionBase<X>
-    implements Path<X>
+    implements VPath<X>
 {
-    protected CriteriaEnv env;
-
     protected Path<?> parentPath;
     protected String attributeName;
     protected Class<X> valueType;
 
-    public String getAttributeName() {
+    /**
+     * The attribute name by with this instance of path was reached.
+     * null for the root of a path
+     *
+     */
+    @Override
+    public String getReachingAttributeName() {
         return attributeName;
     }
 
@@ -40,6 +42,12 @@ public class PathImpl<X>
 
     @Override
     public <T> T accept(ExpressionVisitor<T> visitor) {
+        T result = visitor.visit(this);
+        return result;
+    }
+
+    @Override
+    public <T> T accept(PathVisitor<T> visitor) {
         T result = visitor.visit(this);
         return result;
     }
@@ -88,4 +96,5 @@ public class PathImpl<X>
     public String toString() {
         return (parentPath == null ? "" : parentPath.toString() + ".") + attributeName;
     }
+
 }
