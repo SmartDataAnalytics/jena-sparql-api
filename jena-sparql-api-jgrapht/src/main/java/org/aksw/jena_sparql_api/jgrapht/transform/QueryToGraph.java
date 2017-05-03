@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.view_matcher;
+package org.aksw.jena_sparql_api.jgrapht.transform;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -10,15 +10,12 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import org.aksw.commons.collections.utils.StreamUtils;
-import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
-import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
-import org.aksw.jena_sparql_api.jgrapht.LabeledEdge;
-import org.aksw.jena_sparql_api.jgrapht.LabeledEdgeImpl;
+import org.aksw.jena_sparql_api.jgrapht.wrapper.LabeledEdge;
+import org.aksw.jena_sparql_api.jgrapht.wrapper.LabeledEdgeImpl;
 import org.aksw.jena_sparql_api.utils.DnfUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
-import org.apache.jena.query.Query;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
@@ -27,23 +24,51 @@ import org.jgrapht.DirectedGraph;
 import org.jgrapht.GraphMapping;
 import org.jgrapht.alg.isomorphism.IsomorphicGraphMapping;
 import org.jgrapht.alg.isomorphism.VF2SubgraphIsomorphismInspector;
-import org.jgrapht.graph.SimpleDirectedGraph;
 
 
 public class QueryToGraph {
+
+    public static Node unionMember = NodeFactory.createURI("http://ex.org/unionMember");
+    public static Node quadBlockMember = NodeFactory.createURI("http://ex.org/quadBlockMember");
+    public static Node filtered = NodeFactory.createURI("http://ex.org/filtered");
+
+
+    //public static unionToGraph(DirectedGraph<Node, LabeledEdge<Node, Node>>)
+
     public static void addEdge(DirectedGraph<Node, LabeledEdge<Node, Node>> graph, Node edgeLabel, Node source, Node target) {
         graph.addVertex(source);
         graph.addVertex(target);
         graph.addEdge(source, target, new LabeledEdgeImpl<>(source, target, edgeLabel));
     }
 
-    public static void addQuad(DirectedGraph<Node, LabeledEdge<Node, Node>> graph, Quad quad) {
+    public static Node addQuad(DirectedGraph<Node, LabeledEdge<Node, Node>> graph, Quad quad) {
         // Allocate a fresh node for the quad
         Node quadNode = NodeFactory.createBlankNode();
         addEdge(graph, Vars.s, quad.getSubject(), quadNode);
         addEdge(graph, Vars.p, quadNode, quad.getPredicate());
         addEdge(graph, Vars.o, quadNode, quad.getObject());
         addEdge(graph, Vars.g, quadNode, quad.getGraph());
+
+        return quadNode;
+    }
+
+
+    /**
+     * Connects every quad's node to a newly allocated node representing the quad block
+     *
+     * @param graph
+     * @param quads
+     * @return
+     */
+    public static Node quadsToGraphNode(DirectedGraph<Node, LabeledEdge<Node, Node>> graph, Collection<Quad> quads) {
+        Node quadBlockNode = NodeFactory.createBlankNode();
+        //graph = new DirectedPseudograph<>(LabeledEdgeImpl.class);
+        for(Quad quad : quads) {
+            Node quadNode = addQuad(graph, quad);
+            addEdge(graph, quadBlockMember, quadBlockNode, quadNode);
+        }
+
+        return quadBlockNode;
     }
 
 
@@ -98,32 +123,8 @@ public class QueryToGraph {
     }
 
 
-    public static void toGraph(DirectedGraph<Node, LabeledEdge<Node, Node>> graph, QuadFilterPatternCanonical qfpc) {
-        quadsToGraph(graph, qfpc.getQuads());
-        equalExprsToGraph(graph, qfpc.getFilterDnf());
-    }
 
-    public static void toGraph(DirectedGraph<Node, LabeledEdge<Node, Node>> graph, Query query) {
-        QuadFilterPatternCanonical qfpc = SparqlCacheUtils.fromQuery(query);
-        toGraph(graph, qfpc);
-    }
 
-    public static DirectedGraph<Node, LabeledEdge<Node, Node>> toGraph(QuadFilterPatternCanonical qfpc) {
-        //EdgeFactory <Node, LabeledEdge<Node, Node>> edgeFactory = (v, e) -> new LabeledEdgeImpl<>(v, e, null);
-        DirectedGraph<Node, LabeledEdge<Node, Node>> graph = new SimpleDirectedGraph<>((v, e) -> new LabeledEdgeImpl<>(v, e, null));
-
-        toGraph(graph, qfpc);
-
-        return graph;
-    }
-
-    public static Stream<Map<Var, Var>> match(QuadFilterPatternCanonical view, QuadFilterPatternCanonical user) {
-        DirectedGraph<Node, LabeledEdge<Node, Node>> a = toGraph(view);
-        DirectedGraph<Node, LabeledEdge<Node, Node>> b = toGraph(user);
-
-        Stream<Map<Var, Var>> result = match(a, b);
-        return result;
-    }
 
     public static Stream<Map<Var, Var>> match(DirectedGraph<Node, LabeledEdge<Node, Node>> a, DirectedGraph<Node, LabeledEdge<Node, Node>> b) {
 
@@ -169,53 +170,5 @@ public class QueryToGraph {
         return result;
     }
 
-    /**
-     * Convenience method for testing.
-     * Only works for queries whose element is a BGP + filters.
-     *
-     * @param view
-     * @param user
-     * @return
-     */
-    public static boolean tryMatch(Query view, Query user) {
-        DirectedGraph<Node, LabeledEdge<Node, Node>> a = new SimpleDirectedGraph<>((v, e) -> new LabeledEdgeImpl<>(v, e, null));
-        DirectedGraph<Node, LabeledEdge<Node, Node>> b = new SimpleDirectedGraph<>((v, e) -> new LabeledEdgeImpl<>(v, e, null));
-
-        toGraph(a, view);
-        toGraph(b, user);
-
-
-//		visualizeGraph(a);
-//		visualizeGraph(b);
-//		try(Scanner s = new Scanner(System.in)) { s.nextLine(); }
-
-
-
-        Stream<Map<Var, Var>> tmp = match(a, b);
-        tmp = tmp.peek(x -> System.out.println("Solution: " + x));
-        boolean result = tmp.count() > 0;
-        return result;
-    }
-
-
-//
-//	public static void visualizeGraph(Graph<?, ?> graph) {
-//		JFrame frame = new JFrame();
-//		frame.setSize(1000, 800);
-//		JGraph jgraph = new JGraph(new JGraphModelAdapter(graph));
-//		jgraph.setScale(2);
-//		final  JGraphLayout hir = new JGraphHierarchicalLayout();
-//		//final  JGraphLayout hir = new JGraphSelfOrganizingOrganicLayout();
-//
-//		final JGraphFacade graphFacade = new JGraphFacade(jgraph);
-//		hir.run(graphFacade);
-//		        final Map nestedMap = graphFacade.createNestedMap(true, true);
-//		        jgraph.getGraphLayoutCache().edit(nestedMap);
-//
-//
-//		frame.getContentPane().add(jgraph);
-//		frame.setVisible(true);
-//
-//	}
 }
 

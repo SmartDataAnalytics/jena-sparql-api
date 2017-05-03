@@ -4,9 +4,9 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewMatcherQfpc;
-import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.core.QueryExecutionAdapter;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.utils.sparql.ProjectedQuadFilterPattern;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;

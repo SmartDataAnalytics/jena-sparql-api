@@ -1,6 +1,6 @@
 package org.aksw.qcwrapper.jsa;
 
-import org.aksw.jena_sparql_api.view_matcher.QueryToGraph;
+import org.aksw.jena_sparql_api.jgrapht.transform.QueryToGraph;
 
 public class ContainmentSolverWrapperJsaSubGraphIsomorphism
     extends ContainmentSolverWrapperJsaBase

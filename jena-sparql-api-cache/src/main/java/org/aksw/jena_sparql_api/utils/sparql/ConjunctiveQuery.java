@@ -1,8 +1,9 @@
-package org.aksw.jena_sparql_api.concept_cache.domain;
+package org.aksw.jena_sparql_api.utils.sparql;
 
 import java.util.ArrayList;
 
 import org.aksw.jena_sparql_api.concept_cache.core.VarInfo;
+import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.op.OpDistinct;
 import org.apache.jena.sparql.algebra.op.OpProject;

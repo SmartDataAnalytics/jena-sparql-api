@@ -41,6 +41,8 @@
 
         <module>jena-sparql-api-geo</module>
 
+        <module>jena-sparql-api-shapes</module>
+
         <module>jena-sparql-api-mapper</module>
         <module>jena-sparql-api-batch</module>
 
@@ -94,6 +96,7 @@
         <jena.version>3.1.1</jena.version>
         <jetty.version>8.1.17.v20150415</jetty.version>
 
+        <jgrapht.version>1.0.1</jgrapht.version>
 
         <!-- <jetty-plugin.version>8.1.10.v20130312</jetty-plugin.version> -->
         <!-- <jersey-spring.version>1.17.1</jersey-spring.version> -->
@@ -610,7 +613,14 @@
             <dependency>
                 <groupId>org.jgrapht</groupId>
                 <artifactId>jgrapht-core</artifactId>
-                <version>1.0.0</version>
+                <version>${jgrapht.version}</version>
+            </dependency>
+
+            <!-- Present for playground and potential demos -->
+            <dependency>
+                <groupId>org.jgrapht</groupId>
+                <artifactId>jgrapht-ext</artifactId>
+                <version>${jgrapht.version}</version>
             </dependency>
 
             <!-- Java8 stream utilities, such as zip -->

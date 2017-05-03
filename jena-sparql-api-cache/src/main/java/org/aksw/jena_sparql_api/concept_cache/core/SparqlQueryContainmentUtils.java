@@ -9,8 +9,6 @@ import java.util.stream.Stream;
 
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.jena_sparql_api.algebra.transform.TransformDistributeJoinOverUnion;
-import org.aksw.jena_sparql_api.concept_cache.domain.ConjunctiveQuery;
-import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.op.OpExtConjunctiveQuery;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.VarMapper;
@@ -20,6 +18,8 @@ import org.aksw.jena_sparql_api.stmt.SparqlQueryParser;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
+import org.aksw.jena_sparql_api.utils.sparql.ConjunctiveQuery;
+import org.aksw.jena_sparql_api.utils.sparql.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.view_matcher.OpVarMap;
 import org.aksw.jena_sparql_api.view_matcher.SparqlViewMatcherProjectionUtils;
 import org.aksw.jena_sparql_api.view_matcher.SparqlViewMatcherUtils;

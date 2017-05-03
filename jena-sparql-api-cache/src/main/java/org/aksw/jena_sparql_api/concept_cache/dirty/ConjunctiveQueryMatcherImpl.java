@@ -11,8 +11,8 @@ import org.aksw.commons.collections.reversible.ReversibleMap;
 import org.aksw.commons.collections.reversible.ReversibleMapImpl;
 import org.aksw.jena_sparql_api.concept_cache.core.SetUtils;
 import org.aksw.jena_sparql_api.concept_cache.core.VarInfo;
-import org.aksw.jena_sparql_api.concept_cache.domain.ConjunctiveQuery;
 import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
+import org.aksw.jena_sparql_api.utils.sparql.ConjunctiveQuery;
 import org.aksw.jena_sparql_api.view_matcher.SparqlViewMatcherProjectionUtils;
 import org.apache.jena.sparql.core.Var;
 

@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.jgrapht;
+package org.aksw.jena_sparql_api.jgrapht.wrapper;
 
 import org.jgrapht.graph.DefaultEdge;
 

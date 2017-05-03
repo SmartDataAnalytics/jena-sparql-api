@@ -8,6 +8,7 @@ import java.util.function.BiFunction;
 
 import org.aksw.jena_sparql_api.utils.CnfUtils;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
+import org.aksw.jena_sparql_api.utils.sparql.ProjectedQuadFilterPattern;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.op.OpBGP;

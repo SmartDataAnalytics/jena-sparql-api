@@ -1,10 +1,11 @@
-package org.aksw.jena_sparql_api.jgrapht;
+package org.aksw.jena_sparql_api.jgrapht.wrapper;
 
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.jgrapht.EdgeFactory;
 
-class EdgeFactoryJena
+
+public class EdgeFactoryJena
     implements EdgeFactory<Node, Triple>
 {
     protected Node predicate;

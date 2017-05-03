@@ -5,8 +5,8 @@ import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.jgrapht.LabeledEdge;
-import org.aksw.jena_sparql_api.jgrapht.LabeledEdgeImpl;
+import org.aksw.jena_sparql_api.jgrapht.wrapper.LabeledEdge;
+import org.aksw.jena_sparql_api.jgrapht.wrapper.LabeledEdgeImpl;
 import org.aksw.jena_sparql_api.lookup.ListService;
 import org.aksw.jena_sparql_api.lookup.ListServiceUtils;
 import org.aksw.jena_sparql_api.lookup.LookupService;

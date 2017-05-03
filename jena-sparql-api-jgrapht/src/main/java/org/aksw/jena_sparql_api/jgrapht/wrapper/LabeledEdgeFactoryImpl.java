@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.jgrapht;
+package org.aksw.jena_sparql_api.jgrapht.wrapper;
 
 public class LabeledEdgeFactoryImpl<V, T>
     implements LabeledEdgeFactory<V, LabeledEdgeImpl<V, T>, T>

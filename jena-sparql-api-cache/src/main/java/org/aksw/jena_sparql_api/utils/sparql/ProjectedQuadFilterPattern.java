@@ -1,7 +1,8 @@
-package org.aksw.jena_sparql_api.concept_cache.domain;
+package org.aksw.jena_sparql_api.utils.sparql;
 
 import java.util.Set;
 
+import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
 import org.apache.jena.sparql.core.Var;
 
 public class ProjectedQuadFilterPattern {

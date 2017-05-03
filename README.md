@@ -1,4 +1,15 @@
-## Welcome to the Jena SPARQL API project!
+## Welcome to the Jena SPARQL API project
+An advanced Jena-based SPARQL processing stack for building Semantic Web applications.
+
+Highlights:
+* Fluent SPARQL Query API - Transparently enhance query execution with caching, pagination, rewriting, transformations, and so on, without having to worry about that in your application logic.
+* Transparent basic (normalized) string caching - Just the usual string based caching as it has been implemented over and over again
+* Query Transformations
+* SPARQL sub graph isomorphism checker
+* Transparent sub graph isomorphy cache - Uses the isomorphism checker for caching - Detects whether prior result sets fit into a current query - regardless of variable naming.
+* JPA-based Java<->RDF mapper: Run JPA criteria queries over Java classes which are actually backed by SPARQL.
+
+
 
 [![Build Status](http://ci.aksw.org/jenkins/job/jena-sparql-api/badge/icon)](http://ci.aksw.org/jenkins/job/jena-sparql-api/)
 
@@ -30,6 +41,7 @@ Snapshots are presently published in our own archiva:
 
 Latest version(s): [jena-sparql-api on maven central](http://search.maven.org/#search%7Cga%7C1%7Cjena-sparql-api)
 
+
 ### Project structure
 
 This library is composed of the following modules:
@@ -37,6 +49,11 @@ This library is composed of the following modules:
 * `jena-sparql-api-server`: An abstract SPARQL enpdoint class that allows you to easily create your own SPARQL endpoint. For example, the SPARQL-SQL rewriter [Sparqlify](http://github.com/AKSW/Sparqlify) is implemented against these interfaces.
 * `jena-sparql-api-utils`: Utilities common to all packages.
 * `jena-sparql-api-example-proxy`: An example how to create a simple SPARQL proxy. You can easily adapt it to add pagination, caching and delays.
+* `jena-sparql-api-sparql-ext`: SPARQL extensions for processing non-RDF data as part of query evaluation. Most prominently features support for querying JSON documents and unnesting JSON arrays to triples. (We should also add CSV processing for completeness, although covered by the TARQL tool).
+* `jena-sparql-api-jgrapht`: Provides a JGraphT wrapper for Jena's Graph interface. Yes, we were aware that RDF is not a plain graph, but a labeled directed pseudo graph and implemented it accordingly. Also contains conversions of SPARQL queries to graphs. Enables e.g. subgraph isomorphism analysis.
+* `jena-sparql-api-mapper`: Powerful module to query RDF data transparently with the Java Persistence API (JPA) criteria queries. I.e. queries and updates are expressed over (annotated) Java classes, and no RDF specifics are exposed to the developer.
+
+
 
 ### Usage
 

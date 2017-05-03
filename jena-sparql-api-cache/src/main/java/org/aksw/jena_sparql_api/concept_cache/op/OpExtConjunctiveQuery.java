@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.concept_cache.op;
 
 import java.util.List;
 
-import org.aksw.jena_sparql_api.concept_cache.domain.ConjunctiveQuery;
+import org.aksw.jena_sparql_api.utils.sparql.ConjunctiveQuery;
 import org.apache.jena.atlas.io.IndentedWriter;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.op.OpExt;
