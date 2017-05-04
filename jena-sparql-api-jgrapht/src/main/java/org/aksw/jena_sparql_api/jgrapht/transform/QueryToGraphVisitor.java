@@ -33,20 +33,20 @@ public class QueryToGraphVisitor
 {
     protected Supplier<Node> nodeSupplier;
     protected BiMap<Var, Node> varToNode;
-    protected Graph graph;
+    protected GraphVar graph;
 
     protected Stack<Node> stack = new Stack<>();
 
     public QueryToGraphVisitor() {
-        this(GraphFactory.createDefaultGraph(), () -> NodeFactory.createBlankNode());
+        this(new GraphVarImpl(), () -> NodeFactory.createBlankNode());
     }
 
     public QueryToGraphVisitor(Supplier<Node> nodeSupplier) {
-        this(GraphFactory.createDefaultGraph(), nodeSupplier);
+        this(new GraphVarImpl(), nodeSupplier);
     }
 
 
-    public QueryToGraphVisitor(Graph graph, Supplier<Node> nodeSupplier) {
+    public QueryToGraphVisitor(GraphVar graph, Supplier<Node> nodeSupplier) {
         super();
         this.graph = graph;
         this.nodeSupplier = nodeSupplier;// = new GeneratorBlacklist(generator, blacklist)
@@ -62,7 +62,7 @@ public class QueryToGraphVisitor
     }
 
 
-    public Graph getGraph() {
+    public GraphVar getGraph() {
         return graph;
     }
 

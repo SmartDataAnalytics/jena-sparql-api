@@ -4,6 +4,7 @@ import java.security.Permission;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
@@ -21,13 +22,17 @@ import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.aksw.jena_sparql_api.shape.lookup.MapServiceResourceShape;
+import org.aksw.jena_sparql_api.stmt.SparqlQueryParser;
+import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
+import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.aksw.simba.lsq.vocab.LSQ;
-import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
+import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
@@ -277,7 +282,7 @@ public class MainSparqlQcDatasetAnalysis {
 
         //LookupService<Node, Resource> nodeToQuery =
         LookupService<Node, Resource> ls = MapServiceResourceShape.createLookupService(dataQef, dataShape)
-                    .mapValues((k, v) -> ResourceFactory.createResource("http://foo.bar/baz"));
+                    .mapValues(ResourceUtils::asResource);
 
         //ls.apply(t);
 
@@ -287,12 +292,25 @@ public class MainSparqlQcDatasetAnalysis {
         //LookupServiceUtils.createLookupService(dataQef, dataShape);
 
 
+        //feed(ms.streamData(null, null))
+
+        SparqlQueryParser parser = SparqlQueryParserImpl.create();
         //LookupServiceListService.create(listService)
         ms.streamData(null, null).forEach(r -> {
+            Set<Node> nodes = new HashSet<>();
+            nodes.add(r.asNode());
+            Set<Node> targets = r.listProperties().mapWith(Statement::getObject).mapWith(RDFNode::asNode).toSet();
+            nodes.addAll(targets);
+
+            Map<Node, Query> map = ls.apply(nodes).entrySet().stream().collect(
+                    Collectors.toMap(e -> e.getKey(), e -> parser.apply(e.getValue().getProperty(LSQ.text).getString())));
 
 
-            System.out.println("Resource: " + r);
-            RDFDataMgr.write(System.out, r.getModel(), RDFFormat.TURTLE_BLOCKS);
+
+
+
+            System.out.println("Resource: " + map);
+            //RDFDataMgr.write(System.out, r.getModel(), RDFFormat.TURTLE_BLOCKS);
         });
 
 

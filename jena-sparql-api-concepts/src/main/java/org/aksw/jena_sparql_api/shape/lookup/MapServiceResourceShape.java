@@ -10,12 +10,10 @@ import org.aksw.jena_sparql_api.lookup.MapPaginator;
 import org.aksw.jena_sparql_api.lookup.MapService;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
+import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.sparql.util.ModelUtils;
 
 public class MapServiceResourceShape
     implements MapService<Concept, Node, Graph>
@@ -45,14 +43,18 @@ public class MapServiceResourceShape
         return result;
     }
 
+
+
     public static ListService<Concept, Resource> createListService(QueryExecutionFactory qef, ResourceShape resourceShape, boolean isLeftJoin) {
         MapServiceResourceShape base = create(qef, resourceShape, isLeftJoin);
 
-        ListService<Concept, Resource> result = ListServiceMapWrapper.create(base, (node, graph) -> {
-            Model model = ModelFactory.createModelForGraph(graph);
-            Resource r = ModelUtils.convertGraphNodeToRDFNode(node, model).asResource();
-            return r;
-        });
+        ListService<Concept, Resource> result = ListServiceMapWrapper.create(base, ResourceUtils::asResource);
+
+//        (node, graph) -> {
+//            Model model = ModelFactory.createModelForGraph(graph);
+//            Resource r = ModelUtils.convertGraphNodeToRDFNode(node, model).asResource();
+//            return r;
+//        });
 
         return result;
     }

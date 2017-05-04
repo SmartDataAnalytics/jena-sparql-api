@@ -8,11 +8,11 @@ import java.util.stream.Collectors;
 import javax.swing.JFrame;
 
 import org.aksw.jena_sparql_api.concept_cache.op.OpExtConjunctiveQuery;
+import org.aksw.jena_sparql_api.jgrapht.transform.GraphVar;
 import org.aksw.jena_sparql_api.jgrapht.transform.QueryToGraphVisitor;
 import org.aksw.jena_sparql_api.jgrapht.transform.QueryToJenaGraph;
 import org.aksw.jena_sparql_api.jgrapht.wrapper.PseudoGraphJenaGraph;
 import org.aksw.jena_sparql_api.views.index.SparqlViewMatcherOpImpl;
-import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.QueryFactory;
@@ -37,9 +37,9 @@ class ExtendedQueryToGraphVisitor
         super();
     }
 
-    public ExtendedQueryToGraphVisitor(Graph graph, Supplier<Node> nodeSupplier) {
-        super(graph, nodeSupplier);
-    }
+//    public ExtendedQueryToGraphVisitor(Graph graph, Supplier<Node> nodeSupplier) {
+//        super(graph, nodeSupplier);
+//    }
 
     public ExtendedQueryToGraphVisitor(Supplier<Node> nodeSupplier) {
         super(nodeSupplier);
@@ -54,7 +54,11 @@ class ExtendedQueryToGraphVisitor
 
 }
 
+
+
 public class MainSparqlQueryToGraph {
+
+
 
     public static void main(String[] args) {
 //        org.apache.jena.graph.Graph g = GraphFactory.createDefaultGraph();
@@ -70,7 +74,7 @@ public class MainSparqlQueryToGraph {
         };
 
 
-        int i = 1;
+        int i = 0;
         String caseA = cases[i][0];
         String caseB = cases[i][1];
 
@@ -88,21 +92,22 @@ public class MainSparqlQueryToGraph {
         Supplier<Supplier<Node>> ssn = () -> { int[] x = {0}; return () -> NodeFactory.createBlankNode("_" + x[0]++); };
         QueryToGraphVisitor av = new ExtendedQueryToGraphVisitor(ssn.get());
         aop.visit(av);
-        Graph ag = av.getGraph();
-
+        GraphVar ag = av.getGraph();
+        //System.out.println(ag.get);
 
         QueryToGraphVisitor bv = new ExtendedQueryToGraphVisitor(ssn.get());
         bop.visit(bv);
-        Graph bg = bv.getGraph();
+        GraphVar bg = bv.getGraph();
 
 
         System.out.println("Graph A:");
-        RDFDataMgr.write(System.out, ag, RDFFormat.NTRIPLES);
+        RDFDataMgr.write(System.out, ag.getWrapped(), RDFFormat.NTRIPLES);
+        System.out.println(ag.getVarToNode());
         System.out.println();
         System.out.println("Graph B:");
-        RDFDataMgr.write(System.out, bg, RDFFormat.NTRIPLES);
+        RDFDataMgr.write(System.out, bg.getWrapped(), RDFFormat.NTRIPLES);
 
-        List<Map<Var, Var>> solutions = QueryToJenaGraph.match(bg, bv.getNodeToVar(), ag, av.getNodeToVar()).collect(Collectors.toList());
+        List<Map<Var, Var>> solutions = QueryToJenaGraph.match(bg, ag).collect(Collectors.toList());
 
         System.out.println("VarMap entries: " + solutions.size());
         solutions.forEach(varMap -> System.out.print(varMap));

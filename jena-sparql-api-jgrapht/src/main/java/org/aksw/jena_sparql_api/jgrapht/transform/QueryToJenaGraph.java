@@ -13,7 +13,6 @@ import java.util.stream.Stream;
 import org.aksw.commons.collections.utils.StreamUtils;
 import org.aksw.jena_sparql_api.jgrapht.wrapper.PseudoGraphJenaGraph;
 import org.aksw.jena_sparql_api.utils.DnfUtils;
-import org.aksw.jena_sparql_api.utils.QuadUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
@@ -62,11 +61,11 @@ public class QueryToJenaGraph {
     //public static unionToGraph(DirectedGraph<Node, LabeledEdge<Node, Node>>)
 
     public static void addEdge(Graph graph, Node source, Node edgeLabel, Node target, Supplier<Node> nodeSupplier, Map<Var, Node> varToNode) {
-        Node o = target.isVariable()
-                ? varToNode.computeIfAbsent((Var)target, (var) -> nodeSupplier.get())
-                : target;
+//        Node o = target.isVariable()
+//                ? varToNode.computeIfAbsent((Var)target, (var) -> nodeSupplier.get())
+//                : target;
 
-        graph.add(new Triple(source, edgeLabel, o));
+        graph.add(new Triple(source, edgeLabel, target));
     }
 
     public static Node addQuad(Graph graph, Quad quad, Supplier<Node> nodeSupplier, Map<Var, Node> varToNode) {
@@ -143,18 +142,78 @@ public class QueryToJenaGraph {
     }
 
 
+    public static Stream<Map<Var, Var>> match(GraphVar a, GraphVar b) {
+        DirectedGraph<Node, Triple> adg = new PseudoGraphJenaGraph(a);
+        DirectedGraph<Node, Triple> bdg = new PseudoGraphJenaGraph(b);
+
+        Stream<Map<Var, Var>> result = match(adg, bdg);
+        return result;
+    }
 
 
     public static Stream<Map<Var, Var>> match(Graph a, Map<Node, Var> aNodeToVar, Graph b, Map<Node, Var> bNodeToVar) {
         DirectedGraph<Node, Triple> adg = new PseudoGraphJenaGraph(a);
         DirectedGraph<Node, Triple> bdg = new PseudoGraphJenaGraph(b);
 
-        Stream<Map<Var, Var>> result = match(adg, aNodeToVar, bdg, bNodeToVar);
+        Stream<Map<Var, Var>> result = matchOld(adg, aNodeToVar, bdg, bNodeToVar);
         return result;
     }
 
 
     public static Stream<Map<Var, Var>> match(
+            DirectedGraph<Node, Triple> a,
+            DirectedGraph<Node, Triple> b) {
+
+//        System.out.println("EDGES:");
+//        b.edgeSet().forEach(System.out::println);
+//        System.out.println("done with edges");
+
+        Comparator<Node> nodeCmp = (x, y) -> {
+            int  r = (x.isVariable() && y.isVariable()) || (x.isBlank() && y.isBlank())
+                    ? 0
+                    : x.toString().compareTo(y.toString());
+            //System.err.println("NodeCmp [" + r + "] for " + x + " <-> " + y);
+            return r;
+        };
+
+        Comparator<Triple> edgeCmp = (x, y) -> {
+            int r = x.getPredicate().toString().compareTo(y.getPredicate().toString());
+            //System.err.println("EdgeCmp: [" + r + "] for " + x + " <-> " + y);
+            return r;
+        };
+
+
+
+        VF2SubgraphIsomorphismInspector<Node, Triple> inspector = new VF2SubgraphIsomorphismInspector<>(b, a, nodeCmp, edgeCmp, true);
+        Iterator<GraphMapping<Node, Triple>> it = inspector.getMappings();
+
+        Stream<Map<Var, Var>> result = StreamUtils.stream(it)
+                .map(m -> (IsomorphicGraphMapping<Node, Triple>)m)
+                .map(m -> {
+                    //System.out.println("Mapping: " + m);
+                    Map<Var, Var> varMap = null;
+                    for(Node bNode : b.vertexSet()) {
+                        if(bNode.isVariable()) {
+                            if(m.hasVertexCorrespondence(bNode)) {
+                                Node aNode = m.getVertexCorrespondence(bNode, true);
+                                if(aNode.isVariable()) {
+                                    varMap = varMap == null ? new HashMap<>() : varMap;
+                                    varMap.put((Var)bNode, (Var)aNode);
+                                } else {
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    return varMap;
+                }).
+                filter(x -> x != null);
+
+        return result;
+    }
+
+    public static Stream<Map<Var, Var>> matchOld(
             DirectedGraph<Node, Triple> a,
             Map<Node, Var> aNodeToVar,
             DirectedGraph<Node, Triple> b,
