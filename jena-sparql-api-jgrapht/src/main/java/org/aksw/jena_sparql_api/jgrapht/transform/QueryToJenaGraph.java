@@ -27,6 +27,9 @@ import org.jgrapht.GraphMapping;
 import org.jgrapht.alg.isomorphism.IsomorphicGraphMapping;
 import org.jgrapht.alg.isomorphism.VF2SubgraphIsomorphismInspector;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
+
 
 /**
  * We can directly convert BGPs and expressions to an RDF graph.
@@ -142,11 +145,11 @@ public class QueryToJenaGraph {
     }
 
 
-    public static Stream<Map<Var, Var>> match(GraphVar a, GraphVar b) {
+    public static Stream<BiMap<Node, Node>> match(Graph a, Graph b) {
         DirectedGraph<Node, Triple> adg = new PseudoGraphJenaGraph(a);
         DirectedGraph<Node, Triple> bdg = new PseudoGraphJenaGraph(b);
 
-        Stream<Map<Var, Var>> result = match(adg, bdg);
+        Stream<BiMap<Node, Node>> result = match(adg, bdg);
         return result;
     }
 
@@ -160,7 +163,7 @@ public class QueryToJenaGraph {
     }
 
 
-    public static Stream<Map<Var, Var>> match(
+    public static Stream<BiMap<Node, Node>> match(
             DirectedGraph<Node, Triple> a,
             DirectedGraph<Node, Triple> b) {
 
@@ -187,26 +190,35 @@ public class QueryToJenaGraph {
         VF2SubgraphIsomorphismInspector<Node, Triple> inspector = new VF2SubgraphIsomorphismInspector<>(b, a, nodeCmp, edgeCmp, true);
         Iterator<GraphMapping<Node, Triple>> it = inspector.getMappings();
 
-        Stream<Map<Var, Var>> result = StreamUtils.stream(it)
+        Stream<BiMap<Node, Node>> result = StreamUtils.stream(it)
                 .map(m -> (IsomorphicGraphMapping<Node, Triple>)m)
                 .map(m -> {
-                    //System.out.println("Mapping: " + m);
-                    Map<Var, Var> varMap = null;
+                    BiMap<Node, Node> nodeMap = HashBiMap.create();//new HashMap<>();
                     for(Node bNode : b.vertexSet()) {
-                        if(bNode.isVariable()) {
-                            if(m.hasVertexCorrespondence(bNode)) {
-                                Node aNode = m.getVertexCorrespondence(bNode, true);
-                                if(aNode.isVariable()) {
-                                    varMap = varMap == null ? new HashMap<>() : varMap;
-                                    varMap.put((Var)bNode, (Var)aNode);
-                                } else {
-                                    break;
-                                }
-                            }
+                        if(m.hasVertexCorrespondence(bNode)) {
+                            Node aNode = m.getVertexCorrespondence(bNode, true);
+                            nodeMap.put(bNode, aNode);
                         }
                     }
 
-                    return varMap;
+
+                    //System.out.println("Mapping: " + m);
+//                    Map<Var, Var> varMap = null;
+//                    for(Node bNode : b.vertexSet()) {
+//                        if(bNode.isVariable()) {
+//                            if(m.hasVertexCorrespondence(bNode)) {
+//                                Node aNode = m.getVertexCorrespondence(bNode, true);
+//                                if(aNode.isVariable()) {
+//                                    varMap = varMap == null ? new HashMap<>() : varMap;
+//                                    varMap.put((Var)bNode, (Var)aNode);
+//                                } else {
+//                                    break;
+//                                }
+//                            }
+//                        }
+//                    }
+
+                    return nodeMap;
                 }).
                 filter(x -> x != null);
 

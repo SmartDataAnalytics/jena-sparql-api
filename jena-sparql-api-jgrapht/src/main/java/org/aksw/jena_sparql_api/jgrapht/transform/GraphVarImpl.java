@@ -23,24 +23,12 @@ import com.google.common.collect.HashBiMap;
  *
  */
 public class GraphVarImpl
-    extends WrappedGraph
+    extends GraphNodeRemapBase
     implements GraphVar
 {
     protected BiMap<Var, Node> varToNode;
     protected Function<Var, Node> nodeGenerator;
 
-    protected transient NodeTransform fromGraph;// = new NodeTransformRenameMap(nodeToVar);
-    protected transient NodeTransform toGraph;
-
-//    public static Triple fromGraph(Triple t, Map<Node, Var> nodeToVar) {
-//        Triple result = NodeTransformLib.transform(, t);
-//        return result;
-//    }
-//
-//    public static Triple toGraph(Triple t, Map<Var, Node> varToNode) {
-//        Triple result = NodeTransformLib.transform(new NodeTransformRenameMap(varToNode), t);
-//        return result;
-//    }
 
     public GraphVarImpl() {
         this(GraphFactory.createDefaultGraph());
@@ -70,41 +58,41 @@ public class GraphVarImpl
         return base;
     }
 
-    @Override
-    public void add(Triple t) {
-        Triple u = NodeTransformLib.transform(toGraph, t);
-        super.add(u);
-    }
-
-    @Override
-    public void delete(Triple t) {
-        Triple u = NodeTransformLib.transform(toGraph, t);
-        super.delete(u);
-    }
-
-    @Override
-    public boolean contains(Triple t) {
-        Triple u = NodeTransformLib.transform(toGraph, t);
-        return super.contains(u);
-    }
-
-
-    @Override
-    public ExtendedIterator<Triple> find(Triple m) {
-        Triple u = NodeTransformLib.transform(toGraph, m);
-        return super.find(u).mapWith(v -> NodeTransformLib.transform(fromGraph, v));
-    }
-
-    @Override
-
-    public boolean contains(Node s, Node p, Node o) {
-        boolean result = contains(new Triple(s, p, o));
-        return result;
-    }
-
-    public ExtendedIterator<Triple> find(Node s, Node p, Node o) {
-        ExtendedIterator<Triple> result = find(new Triple(s, p, o));
-        return result;
-    }
+//    @Override
+//    public void add(Triple t) {
+//        Triple u = NodeTransformLib.transform(toGraph, t);
+//        super.add(u);
+//    }
+//
+//    @Override
+//    public void delete(Triple t) {
+//        Triple u = NodeTransformLib.transform(toGraph, t);
+//        super.delete(u);
+//    }
+//
+//    @Override
+//    public boolean contains(Triple t) {
+//        Triple u = NodeTransformLib.transform(toGraph, t);
+//        return super.contains(u);
+//    }
+//
+//
+//    @Override
+//    public ExtendedIterator<Triple> find(Triple m) {
+//        Triple u = NodeTransformLib.transform(toGraph, m);
+//        return super.find(u).mapWith(v -> NodeTransformLib.transform(fromGraph, v));
+//    }
+//
+//    @Override
+//
+//    public boolean contains(Node s, Node p, Node o) {
+//        boolean result = contains(new Triple(s, p, o));
+//        return result;
+//    }
+//
+//    public ExtendedIterator<Triple> find(Node s, Node p, Node o) {
+//        ExtendedIterator<Triple> result = find(new Triple(s, p, o));
+//        return result;
+//    }
 
 }
