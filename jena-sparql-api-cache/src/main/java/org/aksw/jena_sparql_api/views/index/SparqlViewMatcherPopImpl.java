@@ -170,7 +170,7 @@ public class SparqlViewMatcherPopImpl<K, P>
     }
 
     @Override
-    public ProjectedOp getPop(K key) {
+    public ProjectedOp getPattern(K key) {
         ProjectedOp result = keyToPop.get(key);
         return result;
     }
@@ -179,6 +179,11 @@ public class SparqlViewMatcherPopImpl<K, P>
         SparqlViewMatcherOp<Integer> delegate = SparqlViewMatcherOpImpl.create();
         SparqlViewMatcherPop<Node> result = new SparqlViewMatcherPopImpl<>(delegate);
         return result;
+    }
+
+    @Override
+    public K allocate(ProjectedOp op) {
+        throw new UnsupportedOperationException();
     }
 
 

@@ -28,4 +28,5 @@ public class Vars {
 
     public static final List<Var> spo = Arrays.asList(s, p, o);
     public static final List<Var> gspo = Arrays.asList(g, s, p, o);
+    public static final Var[] gspoArr = {g, s, p, o};
 }

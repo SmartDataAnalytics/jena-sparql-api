@@ -317,7 +317,7 @@ public class OpRewriteViewMatcherStateful
                 Iterable<Map<Var, Var>> varMaps = opVarMap.getVarMaps();
 
                 //Op viewRootOp = lr.getEntry().queryIndex.getOp();
-                Op viewRootOp = viewMatcherTreeBased.getPop(viewId).getResidualOp();
+                Op viewRootOp = viewMatcherTreeBased.getPattern(viewId).getResidualOp();
 
                 Map<Var, Var> map = Iterables.getFirst(varMaps, null);
 

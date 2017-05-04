@@ -5,12 +5,12 @@ import org.apache.jena.graph.Triple;
 import org.jgrapht.EdgeFactory;
 
 
-public class EdgeFactoryJena
+public class EdgeFactoryJenaGraph
     implements EdgeFactory<Node, Triple>
 {
     protected Node predicate;
 
-    public EdgeFactoryJena(Node predicate) {
+    public EdgeFactoryJenaGraph(Node predicate) {
         super();
         this.predicate = predicate;
     }

@@ -438,7 +438,7 @@ public class SparqlViewMatcherOpImpl<P>
     }
 
     @Override
-    public Op getOp(P key) {
+    public Op getPattern(P key) {
         OpIndex opIndex = idToQueryIndex.get(key);
         Op result = opIndex == null ? null : opIndex.getOp();
         return result;
