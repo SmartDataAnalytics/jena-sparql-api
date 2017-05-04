@@ -187,17 +187,17 @@ public class QueryToJenaGraph {
 
 
 
-        VF2SubgraphIsomorphismInspector<Node, Triple> inspector = new VF2SubgraphIsomorphismInspector<>(b, a, nodeCmp, edgeCmp, true);
+        VF2SubgraphIsomorphismInspector<Node, Triple> inspector = new VF2SubgraphIsomorphismInspector<>(a, b, nodeCmp, edgeCmp, true);
         Iterator<GraphMapping<Node, Triple>> it = inspector.getMappings();
 
         Stream<BiMap<Node, Node>> result = StreamUtils.stream(it)
                 .map(m -> (IsomorphicGraphMapping<Node, Triple>)m)
                 .map(m -> {
                     BiMap<Node, Node> nodeMap = HashBiMap.create();//new HashMap<>();
-                    for(Node bNode : b.vertexSet()) {
-                        if(m.hasVertexCorrespondence(bNode)) {
-                            Node aNode = m.getVertexCorrespondence(bNode, true);
-                            nodeMap.put(bNode, aNode);
+                    for(Node aNode : a.vertexSet()) {
+                        if(m.hasVertexCorrespondence(aNode)) {
+                            Node bNode = m.getVertexCorrespondence(aNode, true);
+                            nodeMap.put(aNode, bNode);
                         }
                     }
 
