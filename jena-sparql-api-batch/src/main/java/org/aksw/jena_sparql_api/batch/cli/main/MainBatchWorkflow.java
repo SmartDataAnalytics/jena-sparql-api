@@ -49,8 +49,8 @@ import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
-import org.aksw.jena_sparql_api.lookup.ListService;
-import org.aksw.jena_sparql_api.lookup.ListServiceUtils;
+import org.aksw.jena_sparql_api.lookup.MapService;
+import org.aksw.jena_sparql_api.lookup.MapServiceUtils;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceListService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
@@ -60,7 +60,7 @@ import org.aksw.jena_sparql_api.modifier.ModifierDatasetGraphEnrich;
 import org.aksw.jena_sparql_api.modifier.ModifierDatasetGraphSparqlUpdate;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.aksw.jena_sparql_api.shape.ResourceShapeParserJsonObject;
-import org.aksw.jena_sparql_api.shape.lookup.ListServiceResourceShape;
+import org.aksw.jena_sparql_api.shape.lookup.MapServiceResourceShapeDataset;
 import org.aksw.jena_sparql_api.sparql.ext.http.E_EncodeForQsa;
 import org.aksw.jena_sparql_api.sparql.ext.http.FunctionFactoryE_Http;
 import org.aksw.jena_sparql_api.sparql.ext.json.E_JsonParse;
@@ -798,7 +798,7 @@ we can then use an automaton representation and minimize the states, and convert
 
         //LookupService<Node, Graph> ls = LookupServiceUtils.createLookupService(qef, mappedConcept);
 
-        LookupService<Node, DatasetGraph> lsLgdX = LookupServiceListService.create(ListServiceResourceShape.create(qefLgd, lgdShape, true));
+        LookupService<Node, DatasetGraph> lsLgdX = LookupServiceListService.create(MapServiceResourceShapeDataset.create(qefLgd, lgdShape, true));
 
         //LookupService<Node, Graph> lsLgdX = LookupServiceUtils.createLookupService(qefLgd, mcLgdShape);
         //LookupService<Node, Model> lsLgd2 = LookupServiceTransformValue.create(lsLgdX, F_GraphToModel.fn);
@@ -813,7 +813,7 @@ we can then use an automaton representation and minimize the states, and convert
 
 
 
-        ListService<Concept, Node, DatasetGraph> ls = ListServiceUtils.createListServiceMappedConcept(qef, mappedConcept, true);
+        MapService<Concept, Node, DatasetGraph> ls = MapServiceUtils.createListServiceMappedConcept(qef, mappedConcept, true);
 
         Map<Node, DatasetGraph> nodeToDatasetGraph = ls.fetchData(concept, null, null);
 

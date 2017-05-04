@@ -10,19 +10,28 @@ import java.util.stream.Stream;
 import com.google.common.base.Function;
 import com.google.common.collect.Range;
 
-public class PaginatorTransform<K, I, O>
-    implements Paginator<K, O>
+/**
+ * FIXME Possibly extend with generic transform instead of just value
+ *
+ * @author raven
+ *
+ * @param <K>
+ * @param <I>
+ * @param <O>
+ */
+public class MapPaginatorTransformItem<K, I, O>
+    implements MapPaginator<K, O>
 {
-    protected Paginator<K, I> delegate;
+    protected MapPaginator<K, I> delegate;
     protected Function<I, O> fnTransformItem;
 
-    public PaginatorTransform(Paginator<K, I> delegate, Function<I, O> fnTransformItem) {
+    public MapPaginatorTransformItem(MapPaginator<K, I> delegate, Function<I, O> fnTransformItem) {
         this.delegate = delegate;
         this.fnTransformItem = fnTransformItem;
     }
 
     @Override
-    public Map<K, O> fetchData(Range<Long> range) {
+    public Map<K, O> fetchMap(Range<Long> range) {
         //Map<K, I> map = delegate.fetchData(range);
 
         Map<K, O> result = apply(range)
@@ -57,8 +66,8 @@ public class PaginatorTransform<K, I, O>
         return result;
     }
 
-    public static <K, I, O> PaginatorTransform<K, I, O> create(Paginator<K, I> listService, Function<I, O> fnTransformItem) {
-        PaginatorTransform<K, I, O> result = new PaginatorTransform<K, I, O>(listService, fnTransformItem);
+    public static <K, I, O> MapPaginatorTransformItem<K, I, O> create(MapPaginator<K, I> listService, Function<I, O> fnTransformItem) {
+        MapPaginatorTransformItem<K, I, O> result = new MapPaginatorTransformItem<K, I, O>(listService, fnTransformItem);
         return result;
     }
 }

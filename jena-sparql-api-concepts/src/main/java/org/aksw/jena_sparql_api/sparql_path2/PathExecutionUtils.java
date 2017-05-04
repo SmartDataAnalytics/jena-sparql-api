@@ -7,8 +7,8 @@ import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.jgrapht.wrapper.LabeledEdge;
 import org.aksw.jena_sparql_api.jgrapht.wrapper.LabeledEdgeImpl;
-import org.aksw.jena_sparql_api.lookup.ListService;
-import org.aksw.jena_sparql_api.lookup.ListServiceUtils;
+import org.aksw.jena_sparql_api.lookup.MapService;
+import org.aksw.jena_sparql_api.lookup.MapServiceUtils;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceFilterKey;
 import org.aksw.jena_sparql_api.lookup.LookupServiceListService;
@@ -34,7 +34,7 @@ public class PathExecutionUtils {
 
         //MappedConcept<Graph> mc = ResourceShape.createMappedConcept(rsb.getResourceShape(), filter);
         MappedConcept<Graph> mc = ResourceShape.createMappedConcept(rsb.getResourceShape(), null, false);
-        ListService<Concept, Node, Graph> ls = ListServiceUtils.createListServiceAcc(qef, mc, false);
+        MapService<Concept, Node, Graph> ls = MapServiceUtils.createListServiceAcc(qef, mc, false);
         //Map<Node, Graph> nodeToGraph = ls.fetchData(null, null, null);
 
         // TODO Add a default fluent API

@@ -22,10 +22,10 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Range;
 
-public class PaginatorSparqlQuery
-    extends PaginatorSparqlQueryBase<Node, ResultSetPart>
+public class MapPaginatorSparqlQuery
+    extends MapPaginatorSparqlQueryBase<Node, ResultSetPart>
 {
-    private static final Logger logger = LoggerFactory.getLogger(PaginatorSparqlQuery.class);
+    private static final Logger logger = LoggerFactory.getLogger(MapPaginatorSparqlQuery.class);
 
 
     protected Query attrQuery;
@@ -33,7 +33,7 @@ public class PaginatorSparqlQuery
     protected boolean forceSubQuery;
 
 
-    public PaginatorSparqlQuery(QueryExecutionFactory qef, Concept filterConcept, boolean isLeftJoin, Query attrQuery, Var attrVar, boolean forceSubQuery) {
+    public MapPaginatorSparqlQuery(QueryExecutionFactory qef, Concept filterConcept, boolean isLeftJoin, Query attrQuery, Var attrVar, boolean forceSubQuery) {
         super(qef, filterConcept, isLeftJoin);
         this.attrQuery = attrQuery;
         this.attrVar = attrVar;
@@ -41,7 +41,7 @@ public class PaginatorSparqlQuery
     }
 
     @Override
-    public Map<Node, ResultSetPart> fetchData(Range<Long> range) {
+    public Map<Node, ResultSetPart> fetchMap(Range<Long> range) {
         if(filterConcept == null) {
             filterConcept = ConceptUtils.createSubjectConcept();
         }
@@ -101,7 +101,7 @@ public class PaginatorSparqlQuery
 
     @Override
     public Stream<Entry<Node, ResultSetPart>> apply(Range<Long> range) {
-        Map<Node, ResultSetPart> map = fetchData(range);
+        Map<Node, ResultSetPart> map = fetchMap(range);
         return map.entrySet().stream();
     }
 }

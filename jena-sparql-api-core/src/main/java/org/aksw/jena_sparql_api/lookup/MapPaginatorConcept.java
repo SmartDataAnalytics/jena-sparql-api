@@ -20,19 +20,25 @@ import org.apache.jena.sparql.syntax.ElementSubQuery;
 
 import com.google.common.collect.Range;
 
-public class PaginatorConcept
-    implements Paginator<Node, Node>
+/**
+ * TODO Convert to a ListService
+ *
+ * @author raven
+ *
+ */
+public class MapPaginatorConcept
+    implements MapPaginator<Node, Node>
 {
     protected QueryExecutionFactory qef;
     protected Concept concept;
 
-    public PaginatorConcept(QueryExecutionFactory qef, Concept concept) {
+    public MapPaginatorConcept(QueryExecutionFactory qef, Concept concept) {
         this.qef = qef;
         this.concept = concept;
     }
 
     @Override
-    public Map<Node, Node> fetchData(Range<Long> range) {
+    public Map<Node, Node> fetchMap(Range<Long> range) {
         Query query = concept.asQuery();
         QueryUtils.applyRange(query, range);
 //        query.setLimit(limit == null ? Query.NOLIMIT : limit);
@@ -117,7 +123,7 @@ public class PaginatorConcept
 
     @Override
     public Stream<Entry<Node, Node>> apply(Range<Long> range) {
-        Map<Node, Node> map = fetchData(range);
+        Map<Node, Node> map = fetchMap(range);
         return map.entrySet().stream();
     }
 

@@ -18,9 +18,9 @@ import org.apache.jena.sparql.syntax.ElementFilter;
 public class LookupServiceListService<V>
     implements LookupService<Node, V>
 {
-    private ListService<Concept, Node, V> listService;
+    private MapService<Concept, Node, V> listService;
 
-    public LookupServiceListService(ListService<Concept, Node, V> listService) {
+    public LookupServiceListService(MapService<Concept, Node, V> listService) {
         super();
         this.listService = listService;
     }
@@ -42,7 +42,7 @@ public class LookupServiceListService<V>
     }
 
 
-    public static <V> LookupServiceListService<V> create(ListService<Concept, Node, V> listService) {
+    public static <V> LookupServiceListService<V> create(MapService<Concept, Node, V> listService) {
         LookupServiceListService<V> result = new LookupServiceListService<>(listService);
         return result;
     }

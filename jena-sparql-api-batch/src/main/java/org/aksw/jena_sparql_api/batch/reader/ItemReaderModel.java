@@ -6,8 +6,8 @@ import java.util.Map.Entry;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.lookup.ListService;
-import org.aksw.jena_sparql_api.lookup.ListServiceUtils;
+import org.aksw.jena_sparql_api.lookup.MapService;
+import org.aksw.jena_sparql_api.lookup.MapServiceUtils;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.springframework.batch.item.data.AbstractPaginatedDataItemReader;
 
@@ -28,9 +28,9 @@ public class ItemReaderModel
     extends AbstractPaginatedDataItemReader<Entry<Resource, Model>>
 {
     private Concept concept;
-    private ListService<Concept, Resource, Model> listService;
+    private MapService<Concept, Resource, Model> listService;
 
-    public ItemReaderModel(ListService<Concept, Resource, Model> listService, Concept concept) {
+    public ItemReaderModel(MapService<Concept, Resource, Model> listService, Concept concept) {
         setName(this.getClass().getName());
         this.listService = listService;
         this.concept = concept;

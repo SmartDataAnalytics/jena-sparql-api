@@ -8,8 +8,8 @@ import org.apache.jena.query.Query;
 import org.apache.jena.sparql.core.Var;
 
 
-public class ListServiceSparqlQuery
-    implements ListService<Concept, Node, ResultSetPart>
+public class MapServiceSparqlQuery
+    implements MapService<Concept, Node, ResultSetPart>
 {
     protected QueryExecutionFactory qef;
     protected boolean isLeftJoin;
@@ -18,15 +18,15 @@ public class ListServiceSparqlQuery
     protected Var attrVar;
     protected boolean forceSubQuery;
 
-    public ListServiceSparqlQuery(QueryExecutionFactory qef, Query attrQuery, Var attrVar) {
+    public MapServiceSparqlQuery(QueryExecutionFactory qef, Query attrQuery, Var attrVar) {
         this(qef, attrQuery, attrVar, true, false);
     }
 
-    public ListServiceSparqlQuery(QueryExecutionFactory qef, Query attrQuery, Var attrVar, boolean isLeftJoin) {
+    public MapServiceSparqlQuery(QueryExecutionFactory qef, Query attrQuery, Var attrVar, boolean isLeftJoin) {
         this(qef, attrQuery, attrVar, isLeftJoin, false);
     }
 
-    public ListServiceSparqlQuery(QueryExecutionFactory qef, Query attrQuery,
+    public MapServiceSparqlQuery(QueryExecutionFactory qef, Query attrQuery,
             Var attrVar, boolean isLeftJoin, boolean forceSubQuery) {
         super();
         this.qef = qef;
@@ -37,8 +37,8 @@ public class ListServiceSparqlQuery
     }
 
     @Override
-    public Paginator<Node, ResultSetPart> createPaginator(Concept filterConcept) {
-        PaginatorSparqlQuery result = new PaginatorSparqlQuery(qef, filterConcept, isLeftJoin, attrQuery, attrVar, forceSubQuery);
+    public MapPaginator<Node, ResultSetPart> createPaginator(Concept filterConcept) {
+        MapPaginatorSparqlQuery result = new MapPaginatorSparqlQuery(qef, filterConcept, isLeftJoin, attrQuery, attrVar, forceSubQuery);
         return result;
     }
 

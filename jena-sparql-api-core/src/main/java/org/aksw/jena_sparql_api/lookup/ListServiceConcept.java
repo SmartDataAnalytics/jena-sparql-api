@@ -10,7 +10,7 @@ import org.apache.jena.graph.Node;
 
 
 public class ListServiceConcept
-    implements ListService<Concept, Node, Node>
+    implements MapService<Concept, Node, Node>
 {
     protected QueryExecutionFactory qef;
 
@@ -20,15 +20,15 @@ public class ListServiceConcept
 
 
     @Override
-    public Paginator<Node, Node> createPaginator(Concept concept) {
-        PaginatorConcept result = new PaginatorConcept(qef, concept);
+    public MapPaginator<Node, Node> createPaginator(Concept concept) {
+        MapPaginatorConcept result = new MapPaginatorConcept(qef, concept);
         return result;
     }
 
 
     public static void main(String[] args) {
         QueryExecutionFactory qef = new QueryExecutionFactoryHttp("http://dbpedia.org/sparql");
-        ListService<Concept, Node, Node> ls = new ListServiceConcept(qef);
+        MapService<Concept, Node, Node> ls = new ListServiceConcept(qef);
 
         Concept concept = ConceptUtils.listAllPredicates;
 

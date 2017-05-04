@@ -6,47 +6,58 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Stream;
 
-import org.aksw.jena_sparql_api.batch.cli.main.MainBatchWorkflow;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.Relation;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.utils.ServiceUtils;
 import org.aksw.jena_sparql_api.lookup.CountInfo;
-import org.aksw.jena_sparql_api.lookup.ListService;
-import org.aksw.jena_sparql_api.lookup.ListServiceUtils;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceListService;
 import org.aksw.jena_sparql_api.lookup.LookupServicePartition;
 import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
+import org.aksw.jena_sparql_api.lookup.MapPaginator;
+import org.aksw.jena_sparql_api.lookup.MapService;
+import org.aksw.jena_sparql_api.lookup.MapServiceUtils;
 import org.aksw.jena_sparql_api.mapper.MappedQuery;
 import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
+import org.aksw.jena_sparql_api.utils.QueryUtils;
+import org.apache.jena.graph.Node;
+import org.apache.jena.sparql.core.DatasetGraph;
 
 import com.google.common.base.Functions;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
+import com.google.common.collect.Range;
 import com.google.common.collect.Sets;
-import org.apache.jena.graph.Node;
-import org.apache.jena.sparql.core.DatasetGraph;
 
-public class ListServiceHop
-    implements ListService<Concept, Node, DatasetGraph>
+public class MapPaginatorHop
+    implements MapPaginator<Node, DatasetGraph>
 {
     protected QueryExecutionFactory defaultQef;
     protected Hop root;
+    protected Concept concept;
 
     public static int chunkSize = 30;
 
-    public ListServiceHop(QueryExecutionFactory defaultQef, Hop root) {
+    public MapPaginatorHop(QueryExecutionFactory defaultQef, Hop root, Concept concept, int chunkSize) {
         super();
         this.defaultQef = defaultQef;
         this.root = root;
+        this.concept = concept;
+
+        // TODO FIXME The chunkSize parameter needs to be handed over to static functions...
+        //this.chunkSize = chunkSize;
     }
 
     @Override
-    public Map<Node, DatasetGraph> fetchData(Concept concept, Long limit, Long offset) {
+    public Map<Node, DatasetGraph> fetchMap(Range<Long> range) {
+        Long limit = QueryUtils.rangeToLimit(range);
+        Long offset = QueryUtils.rangeToOffset(range);
+
         List<Node> sourceNodes = ServiceUtils.fetchList(defaultQef, concept, limit, offset);
 
         Map<Node, DatasetGraph> result = new HashMap<Node, DatasetGraph>();
@@ -60,7 +71,7 @@ public class ListServiceHop
 
 
     @Override
-    public CountInfo fetchCount(Concept concept, Long itemLimit, Long rowLimit) {
+    public CountInfo fetchCount(Long itemLimit, Long rowLimit) {
         CountInfo result = ServiceUtils.fetchCountConcept(defaultQef, concept, itemLimit, rowLimit);
         return result;
     }
@@ -69,7 +80,7 @@ public class ListServiceHop
 
     public static void execQueriesHop(QueryExecutionFactory qef, Collection<Node> nodes, Collection<MappedQuery<DatasetGraph>> mappedQueries, Map<Node, DatasetGraph> result) {
         for(MappedQuery<DatasetGraph> mappedQuery : mappedQueries) {
-            ListService<Concept, Node, DatasetGraph> listService = ListServiceUtils.createListServiceMappedQuery(qef, mappedQuery, true);
+            MapService<Concept, Node, DatasetGraph> listService = MapServiceUtils.createListServiceMappedQuery(qef, mappedQuery, true);
             LookupService<Node, DatasetGraph> lookupService = LookupServiceListService.create(listService);
 
             lookupService = LookupServicePartition.create(lookupService, chunkSize);
@@ -185,35 +196,10 @@ public class ListServiceHop
         processHopQueries(hopQueries, sourceNodes, result, defaultQef, back);
         processHopRelations(hopRelations, sourceNodes, result, defaultQef, back);
     }
+
+    @Override
+    public Stream<Entry<Node, DatasetGraph>> apply(Range<Long> range) {
+        return fetchMap(range).entrySet().stream();
+    }
+
 }
-
-
-//List<MappedQuery<DatasetGraph>> mappedQueries = hop.getQueries();
-//execQueriesHop(qef, nodes, mappedQueries, result);
-//
-//Multimap<Relation, Hop> relationToData = hop.getRelationToData();
-//Map<Relation, Collection<Hop>> map = relationToData.asMap();
-//
-//for(Entry<Relation, Collection<Hop>> entry : map.entrySet()) {
-//  Relation relation = entry.getKey();
-//  Var sourceVar = relation.getSourceVar();
-//
-//  AggList<Node> agg = AggList.create(AggLiteral.create(BindingMapperProjectVar.create(relation.getTargetVar())));
-//  Query query = RelationUtils.createQuery(relation);
-//  MappedQuery<List<Node>> mappedQuery = MappedQuery.create(query, sourceVar, agg);
-//  LookupService<Node, List<Node>> lookupService = LookupServiceUtils.createLookupService(qef, mappedQuery);
-//
-//  Map<Node, List<Node>> tmpRelatedNodes = lookupService.apply(nodes);
-//  Set<Node> relatedNodes = Sets.newHashSet(
-//          FluentIterable.from(tmpRelatedNodes.values()).transformAndConcat(Functions.<List<Node>>identity())); // TODO move to a flatMap util function
-//
-//  Collection<Hop> subHops = entry.getValue();
-//  //relation.getE
-//
-//  //List<Hop> subHops = //hopItem.getHops();
-//  for(Hop subHop : subHops) {
-//      //QueryExecutionFactory subQef = subHop.getQef();
-//      execRec(subHop, relatedNodes, null, null, result, qef);
-//  }
-//}
-//
