@@ -23,25 +23,9 @@ class ListServiceTransformItem<C, K, I, O>
     }
 
     @Override
-    public Map<K, O> fetchData(C concept, Long limit, Long offset) {
-
-        Map<K, I> map = listService.fetchData(concept, limit, offset);
-
-        Map<K, O> result = new LinkedHashMap<K, O>();
-        for(Entry<K, I> entry : map.entrySet()) {
-            K k = entry.getKey();
-            I i = entry.getValue();
-            O o = fnTransformItem.apply(i);
-
-            result.put(k, o);
-        }
-
-        return result;
-    }
-
-    @Override
-    public CountInfo fetchCount(C concept, Long itemLimit, Long rowLimit) {
-        CountInfo result = listService.fetchCount(concept, itemLimit, rowLimit);
+    public Paginator<K, O> createPaginator(C concept) {
+        Paginator<K, I> base = listService.createPaginator(concept);
+        Paginator<K, O> result = PaginatorTransform.create(base, fnTransformItem);
         return result;
     }
 

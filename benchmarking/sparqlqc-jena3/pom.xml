@@ -99,6 +99,12 @@
             </dependency>
 
             <dependency>
+                <groupId>org.aksw.jena-sparql-api</groupId>
+                <artifactId>jena-sparql-api-concepts</artifactId>
+                <version>${jsa.version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>org.aksw.sparqlqc</groupId>
                 <artifactId>sparqlqc-api-simple</artifactId>
                 <version>${project.version}</version>

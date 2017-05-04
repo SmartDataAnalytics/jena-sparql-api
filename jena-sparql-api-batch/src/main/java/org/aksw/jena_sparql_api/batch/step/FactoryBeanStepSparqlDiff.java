@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import org.aksw.commons.collections.diff.Diff;
-import org.aksw.jena_sparql_api.batch.ListServiceResourceShape;
 import org.aksw.jena_sparql_api.batch.processor.ItemProcessorModifierDatasetGraphDiff;
 import org.aksw.jena_sparql_api.batch.reader.ItemReaderDatasetGraph;
 import org.aksw.jena_sparql_api.batch.writer.ItemWriterSparqlDiff;
@@ -19,6 +18,7 @@ import org.aksw.jena_sparql_api.modifier.Modifier;
 import org.aksw.jena_sparql_api.modifier.ModifierList;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.aksw.jena_sparql_api.shape.ResourceShapeParser;
+import org.aksw.jena_sparql_api.shape.lookup.ListServiceResourceShape;
 import org.aksw.jena_sparql_api.stmt.SparqlUpdateParser;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;

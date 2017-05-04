@@ -15,7 +15,10 @@ import java.util.stream.Stream;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlServiceReference;
+import org.aksw.jena_sparql_api.shape.ResourceShape;
+import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.aksw.simba.lsq.vocab.LSQ;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -229,6 +232,40 @@ public class MainSparqlQcDatasetAnalysis {
         }
 
     }
+
+
+    /**
+     * - Gather a chunk of triples from the stream,
+     * - Create the vertexset, i.e. the set of subjects / objects (we could use the jgraphT pseudograph wrapper for that)
+     * - Perform lookup of the query strings
+     * - Parse the query strings (might use a cache)
+     * - Remove prefixes
+     * - Check for equivalence
+     * - If equal, filter the triple, i.e. don't output it
+     *
+     * @param tripleStream
+     * @param qef
+     */
+    public static void filterByIdenticalNormalizedQuery(Stream<Triple> tripleStream, QueryExecutionFactory qef) {
+        ResourceShapeBuilder rsb = new ResourceShapeBuilder();
+        rsb.out(LSQ.text);
+        ResourceShape shape = rsb.getResourceShape();
+        ListServiceResourceShapeModel ls = new ListServiceResourceShapeModel(qef, shape, false);
+        
+
+        //shape.
+
+
+        //ParameterizedSparqlString pss = new ParameterizedSparqlString();
+
+        //GraphUtils.allNodes(graph)
+
+        //LookupServiceSparqlQuery
+    //	qef.createQueryExecution("CONSTRUCT { ?s lsq:asText ?o } WHERE { ?s lsq:asText)
+    //	tripleStream.forEach(
+    }
+
+
 
     public static void run(Framework framework, Supplier<Stream<Resource>> queryIterable) throws Exception {
 
