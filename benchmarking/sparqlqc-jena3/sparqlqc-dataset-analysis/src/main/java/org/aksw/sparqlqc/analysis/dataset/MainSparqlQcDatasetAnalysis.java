@@ -12,13 +12,18 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlServiceReference;
+import org.aksw.jena_sparql_api.lookup.ListService;
+import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
+import org.aksw.jena_sparql_api.shape.lookup.MapServiceResourceShape;
 import org.aksw.simba.lsq.vocab.LSQ;
-import org.apache.jena.graph.Triple;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Node;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -74,6 +79,11 @@ public class MainSparqlQcDatasetAnalysis {
     }
 
     public static void main(String[] args) throws Exception {
+
+        if(true) {
+            filterByIdenticalNormalizedQuery();
+            return;
+        }
 
 
         OptionParser parser = new OptionParser();
@@ -246,12 +256,46 @@ public class MainSparqlQcDatasetAnalysis {
      * @param tripleStream
      * @param qef
      */
-    public static void filterByIdenticalNormalizedQuery(Stream<Triple> tripleStream, QueryExecutionFactory qef) {
-        ResourceShapeBuilder rsb = new ResourceShapeBuilder();
-        rsb.out(LSQ.text);
-        ResourceShape shape = rsb.getResourceShape();
-        ListServiceResourceShapeModel ls = new ListServiceResourceShapeModel(qef, shape, false);
-        
+    public static void filterByIdenticalNormalizedQuery() {//Stream<Triple> tripleStream, QueryExecutionFactory qef) {
+        Model model = RDFDataMgr.loadModel("file:///home/raven/Downloads/result.nt");
+        QueryExecutionFactory qef = FluentQueryExecutionFactory.from(model).create();
+
+        QueryExecutionFactory dataQef = FluentQueryExecutionFactory.http("http://localhost:8950/sparql").create();
+
+        ResourceShapeBuilder linkRsb = new ResourceShapeBuilder();
+        linkRsb.out("http://lsq.aksw.org/vocab#isEntailed-JSAC");
+
+
+        ResourceShape shape = linkRsb.getResourceShape();
+        ListService<Concept, Resource> ms = MapServiceResourceShape.createListService(qef, shape, false);
+
+
+        ResourceShapeBuilder dataRsb = new ResourceShapeBuilder();
+        dataRsb.out(LSQ.text);
+        ResourceShape dataShape = linkRsb.getResourceShape();
+
+
+        //LookupService<Node, Resource> nodeToQuery =
+        LookupService<Node, Resource> ls = MapServiceResourceShape.createLookupService(dataQef, dataShape)
+                    .mapValues((k, v) -> ResourceFactory.createResource("http://foo.bar/baz"));
+
+        //ls.apply(t);
+
+        //ls.fe
+
+
+        //LookupServiceUtils.createLookupService(dataQef, dataShape);
+
+
+        //LookupServiceListService.create(listService)
+        ms.streamData(null, null).forEach(r -> {
+
+
+            System.out.println("Resource: " + r);
+            RDFDataMgr.write(System.out, r.getModel(), RDFFormat.TURTLE_BLOCKS);
+        });
+
+
 
         //shape.
 

@@ -4,6 +4,8 @@ import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.lookup.ListService;
 import org.aksw.jena_sparql_api.lookup.ListServiceMapWrapper;
+import org.aksw.jena_sparql_api.lookup.LookupService;
+import org.aksw.jena_sparql_api.lookup.LookupServiceListService;
 import org.aksw.jena_sparql_api.lookup.MapPaginator;
 import org.aksw.jena_sparql_api.lookup.MapService;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
@@ -55,4 +57,18 @@ public class MapServiceResourceShape
         return result;
     }
 
+
+    /**
+     * Create a lookup service that wraps an instance of this service
+     *
+     * @param qef
+     * @param shape
+     * @return
+     */
+    public static LookupService<Node, Graph> createLookupService(QueryExecutionFactory qef, ResourceShape shape) {
+        MapServiceResourceShape base = new MapServiceResourceShape(qef, shape, false);
+        LookupService<Node, Graph> result = LookupServiceListService.create(base);
+
+        return result;
+    }
 }

@@ -147,7 +147,8 @@ public class QueryUtils {
     //public static LimitAndOffset rangeToLimitAndOffset(Range<Long> range)
 
     public static long rangeToOffset(Range<Long> range) {
-        long result = range.lowerEndpoint();
+        long result = range == null ? 0 : range.lowerEndpoint();
+
         result = result == 0 ? Query.NOLIMIT : result;
         return result;
     }
@@ -158,11 +159,11 @@ public class QueryUtils {
      * @return
      */
     public static long rangeToLimit(Range<Long> range) {
-        range = range.canonical(DiscreteDomain.longs());
+        range = range == null ? null : range.canonical(DiscreteDomain.longs());
 
-        long result = range.hasUpperBound()
-            ? DiscreteDomain.longs().distance(range.lowerEndpoint(), range.upperEndpoint())
-            : Query.NOLIMIT;
+        long result = range == null || !range.hasUpperBound()
+            ? Query.NOLIMIT
+            : DiscreteDomain.longs().distance(range.lowerEndpoint(), range.upperEndpoint());
 
         return result;
     }

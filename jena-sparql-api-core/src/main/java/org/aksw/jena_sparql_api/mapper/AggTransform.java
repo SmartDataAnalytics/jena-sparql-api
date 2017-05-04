@@ -34,7 +34,7 @@ public class AggTransform<I, O>
         return result;
     }
 
-    public static <I, O> AggTransform<I, O> create(Agg<I> subAgg, com.google.common.base.Function<I, O> transform) {
+    public static <I, O> AggTransform<I, O> create(Agg<I> subAgg, Function<I, O> transform) {
         AggTransform<I, O> result = new AggTransform<I, O>(subAgg, transform);
         return result;
     }

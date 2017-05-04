@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.geo;
 
-import com.google.common.base.Function;
+import java.util.function.Function;
+
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.io.WKTReader;

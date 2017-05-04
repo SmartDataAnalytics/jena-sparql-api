@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.lookup;
 
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 
@@ -21,6 +22,7 @@ import com.google.common.collect.Range;
  *
  */
 public interface MapService<C, K, V>
+    extends ListService<C, Entry<K, V>>
     // extends Function<C, Paginator<K, V>>
 {
     MapPaginator<K, V> createPaginator(C concept);
@@ -66,4 +68,14 @@ public interface MapService<C, K, V>
         Map<K, V> result = fetchData(concept, range);
         return result;
     }
+
+
+    /**
+     *
+     * @param listService
+     * @return
+     */
+//    default <I> ListService<K, V> compose(ListService<I, K> listService) {
+//        return null;
+//    }
 }

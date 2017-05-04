@@ -1,10 +1,7 @@
 package org.aksw.jena_sparql_api.lookup;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.function.Function;
 
-import com.google.common.base.Function;
 
 /**
  * A list service that transforms the input concept to another

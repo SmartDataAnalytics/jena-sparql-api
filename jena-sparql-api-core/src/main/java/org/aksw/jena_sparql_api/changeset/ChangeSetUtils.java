@@ -50,7 +50,6 @@ import org.apache.jena.util.iterator.ExtendedIterator;
 import org.apache.jena.vocabulary.RDF;
 
 import com.google.common.base.Function;
-import com.google.common.base.Functions;
 
 // TODO A vocubulary class, name it properly
 class V {
@@ -139,9 +138,9 @@ public class ChangeSetUtils {
 
         // We filter by o, but project by s
         LookupService<Node, Node> result =
-                LookupServiceTransformValue.create(ls, Functions.compose(
-                        FunctionBindingMapper.create(BindingMapperProjectVar.create(Vars.s)),
-                        FunctionResultSetPartFirstRow.fn));
+                LookupServiceTransformValue.create(ls, (k, v) ->
+                        FunctionResultSetPartFirstRow.fn.andThen(
+                        FunctionBindingMapper.create(BindingMapperProjectVar.create(Vars.s))).apply(v));
 
         return result;
     }

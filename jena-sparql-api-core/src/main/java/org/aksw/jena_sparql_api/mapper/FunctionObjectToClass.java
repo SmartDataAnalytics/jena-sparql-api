@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.mapper;
 
-import com.google.common.base.Function;
+import java.util.function.Function;
+
 import com.google.gson.Gson;
 
 /**

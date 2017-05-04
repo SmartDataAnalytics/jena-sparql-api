@@ -44,7 +44,7 @@ public class PathExecutionUtils {
         //lsls.partition(100);
         //lsls = LookupServicePartition.create(lsls, 100);
 
-        LookupService<Node, Set<Triplet<Node, Node>>> s = lsls.mapValues(e -> {
+        LookupService<Node, Set<Triplet<Node, Node>>> s = lsls.mapValues((k, e) -> {
 //            Map<Node, Set<Triplet<Node, Node>>> r =
 //              map.entrySet().stream()
 //              .collect(Collectors.toMap(Entry::getKey, e -> graphToTriplets(e.getValue())));
