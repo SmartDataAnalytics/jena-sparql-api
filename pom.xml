@@ -41,8 +41,6 @@
 
         <module>jena-sparql-api-geo</module>
 
-        <module>jena-sparql-api-shapes</module>
-
         <module>jena-sparql-api-mapper</module>
         <module>jena-sparql-api-batch</module>
 
