@@ -67,18 +67,26 @@ public class GraphNodeRemapBase
     }
 
     @Override
-
     public boolean contains(Node s, Node p, Node o) {
-        boolean result = contains(new Triple(s, p, o));
+        boolean result = contains(createTriple(s, p, o));
         return result;
     }
 
     public ExtendedIterator<Triple> find(Node s, Node p, Node o) {
-        ExtendedIterator<Triple> result = find(new Triple(
-                s == null ? Node.ANY : s,
-                p == null ? Node.ANY : p,
-                o == null ? Node.ANY : o));
+        ExtendedIterator<Triple> result = find(createTriple(s, p, o));
         return result;
     }
 
+    @Override
+    public void remove(Node s, Node p, Node o) {
+        delete(createTriple(s, p, o));
+    }
+
+    public static Triple createTriple(Node s, Node p, Node o) {
+        Triple result = new Triple(
+                s == null ? Node.ANY : s,
+                p == null ? Node.ANY : p,
+                o == null ? Node.ANY : o);
+        return result;
+    }
 }

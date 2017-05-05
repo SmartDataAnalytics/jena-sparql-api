@@ -145,11 +145,11 @@ public class QueryToJenaGraph {
     }
 
 
-    public static Stream<BiMap<Node, Node>> match(Graph a, Graph b) {
+    public static Stream<BiMap<Node, Node>> match(Map<Node, Node> baseIso, Graph a, Graph b) {
         DirectedGraph<Node, Triple> adg = new PseudoGraphJenaGraph(a);
         DirectedGraph<Node, Triple> bdg = new PseudoGraphJenaGraph(b);
 
-        Stream<BiMap<Node, Node>> result = match(adg, bdg);
+        Stream<BiMap<Node, Node>> result = match(baseIso,adg, bdg);
         return result;
     }
 
@@ -164,6 +164,7 @@ public class QueryToJenaGraph {
 
 
     public static Stream<BiMap<Node, Node>> match(
+            Map<Node, Node> baseIso, // view to user query
             DirectedGraph<Node, Triple> a,
             DirectedGraph<Node, Triple> b) {
 
@@ -171,8 +172,10 @@ public class QueryToJenaGraph {
 //        b.edgeSet().forEach(System.out::println);
 //        System.out.println("done with edges");
 
+
         Comparator<Node> nodeCmp = (x, y) -> {
-            int  r = (x.isVariable() && y.isVariable()) || (x.isBlank() && y.isBlank())
+            x = baseIso.getOrDefault(x, x);
+            int  r = (x == y || x.isVariable() && y.isVariable()) || (x.isBlank() && y.isBlank())
                     ? 0
                     : x.toString().compareTo(y.toString());
             //System.err.println("NodeCmp [" + r + "] for " + x + " <-> " + y);
@@ -187,16 +190,16 @@ public class QueryToJenaGraph {
 
 
 
-        VF2SubgraphIsomorphismInspector<Node, Triple> inspector = new VF2SubgraphIsomorphismInspector<>(a, b, nodeCmp, edgeCmp, true);
+        VF2SubgraphIsomorphismInspector<Node, Triple> inspector = new VF2SubgraphIsomorphismInspector<>(b, a, nodeCmp, edgeCmp, true);
         Iterator<GraphMapping<Node, Triple>> it = inspector.getMappings();
 
         Stream<BiMap<Node, Node>> result = StreamUtils.stream(it)
                 .map(m -> (IsomorphicGraphMapping<Node, Triple>)m)
                 .map(m -> {
                     BiMap<Node, Node> nodeMap = HashBiMap.create();//new HashMap<>();
-                    for(Node aNode : a.vertexSet()) {
-                        if(m.hasVertexCorrespondence(aNode)) {
-                            Node bNode = m.getVertexCorrespondence(aNode, true);
+                    for(Node bNode : b.vertexSet()) {
+                        if(m.hasVertexCorrespondence(bNode)) {
+                            Node aNode = m.getVertexCorrespondence(bNode, true);
                             nodeMap.put(aNode, bNode);
                         }
                     }

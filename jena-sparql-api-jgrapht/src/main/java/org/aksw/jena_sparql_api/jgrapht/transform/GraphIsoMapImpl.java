@@ -14,22 +14,26 @@ public class GraphIsoMapImpl
     extends GraphNodeRemapBase
     implements GraphIsoMap
 {
-    protected BiMap<Node, Node> outToIn;
+    /**
+     * Remaps nodes contained *in* this graph to they are exposed differently to the *out*side.
+     *
+     */
+    protected BiMap<Node, Node> inToOut;
 
     public BiMap<Node, Node> getOutToIn() {
-        return outToIn;
+        return inToOut.inverse();
     }
 
     public BiMap<Node, Node> getInToOut() {
-        return outToIn.inverse();
+        return inToOut;
     }
 
-    public GraphIsoMapImpl(Graph graph, BiMap<Node, Node> outToIn) {
+    public GraphIsoMapImpl(Graph graph, BiMap<Node, Node> inToOut) {
         super(graph);
-        this.outToIn = outToIn;
+        this.inToOut = inToOut;
 
-        toGraph = (n) -> outToIn.getOrDefault(n, n);
-        fromGraph = (n) -> outToIn.inverse().getOrDefault(n, n);
+        toGraph = (n) -> inToOut.inverse().getOrDefault(n, n);
+        fromGraph = (n) -> inToOut.getOrDefault(n, n);
     }
 
 }
