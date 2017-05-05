@@ -126,7 +126,7 @@ public class VarUsageAnalyzerVisitor
     }
 
 
-    public void processJoin(List<Op> children) {
+    public void processJoin(Collection<Op> children) {
         Set<Var> visibleVars = new HashSet<>();
         for(Op child : children) {
             if(child != current) {
@@ -161,20 +161,20 @@ public class VarUsageAnalyzerVisitor
 
     @Override
     public void visit(OpJoin op) {
-        List<Op> children = tree.getChildren(op);
+        Collection<Op> children = tree.getChildren(op);
         processJoin(children);
     }
 
     @Override
     public void visit(OpLeftJoin op) {
-        List<Op> children = tree.getChildren(op);
+        Collection<Op> children = tree.getChildren(op);
         processJoin(children);
         processExprs(op.getExprs());
     }
 
     @Override
     public void visit(OpSequence op) {
-        List<Op> children = tree.getChildren(op);
+        Collection<Op> children = tree.getChildren(op);
         processJoin(children);
     }
 

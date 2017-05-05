@@ -176,8 +176,8 @@ public class TreeMapperImpl<A, B, S> {
                     //MatchingStrategyFactory<A, B> predicate = isSatisfiable.apply(parentMap.getKey(), parentMap.getValue());
 
                     Multimap<A, B> mappings = cluster.getMappings();
-                    List<A> aChildren = aTree.getChildren(parentMap.getKey());
-                    List<B> bChildren = bTree.getChildren(parentMap.getValue());
+                    List<A> aChildren = new ArrayList<>(aTree.getChildren(parentMap.getKey()));
+                    List<B> bChildren = new ArrayList<>(bTree.getChildren(parentMap.getValue()));
 
                     S clusterX = matchingStrategy.apply(aChildren, bChildren, mappings);
                     boolean r = isSatisfiable.test(clusterX);

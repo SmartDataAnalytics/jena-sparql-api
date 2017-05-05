@@ -26,15 +26,15 @@ import com.google.common.collect.Multimap;
 /**
  * A k permutations of n implementation using candidate mapping lists between
  * items of K and N.
- * 
+ *
  * This is a more restrictive version of k permutations of n where each
  * k does not map to all n, but only a subset of them n.
- * 
+ *
  *
  * The solution datatype is Map<ClusterKey, Multimap<A, B>> - i.e. for every cluster the candidate
  * mappings.
- * 
- * 
+ *
+ *
  * @author raven
  *
  */
@@ -46,17 +46,17 @@ public class TreeMapperCandidateList<A, B>
     /**
      * A multimap that maps each item of A to its candidates in B.
      * Whenever an 'a' is mapped to a 'b', the 'b' is no longer available for
-     * further mappings of 'a'. 
-     * 
+     * further mappings of 'a'.
+     *
      */
     //protected BiHashMultimap<A, B> remaining;
-        
+
     protected Tree<A> aTree;
     protected Tree<B> bTree;
     protected Multimap<A, B> childMapping;
 
     protected Multimap<A, B> remainingParentMapping;
-    
+
     public TreeMapperCandidateList(
             Tree<A> aTree,
             Tree<B> bTree,
@@ -73,50 +73,50 @@ public class TreeMapperCandidateList<A, B>
 
     public Stream<ClusterStack<A, B, Entry<A, B>>> stream() {//S baseSolution) {
         List<ClusterStack<A, B, Entry<A, B>>> list = new ArrayList<>();
-        
+
         run((stack) -> list.add(stack));
 
         Stream<ClusterStack<A, B, Entry<A, B>>> result = list.stream();
         return result;
     }
 
-    
-    
-    
+
+
+
     public void run(Consumer<ClusterStack<A, B, Entry<A, B>>> completeMatch) {
         boolean isEmpty = as.isEmpty(); //remainingA.successor.isTail();
         if(!isEmpty) {
             recurse(0, null, completeMatch);
         }
     }
-    
+
     //@Override
     public void recurse(int i, ClusterStack<A, B, Entry<A, B>> stack, Consumer<ClusterStack<A, B, Entry<A, B>>> completeMatch) {
-        
-        
+
+
         // Instead of iterating all as, we iterate over the parents of the bs that they map to
         // Find out to which parents of B the items of a can map.
-        // Then, pick 
+        // Then, pick
         if(i < as.size()) {
             A a = as.get(i);
-            
+
             // TODO Maybe with more clever data structures we can get rid of having to create a copy
             List<B> bs = new ArrayList<>(remainingParentMapping.get(a));
 
             // Pick a 'b'
             for(B b : bs) {
-                
+
                 Entry<A, B> clusterKey = new SimpleEntry<>(a, b);
-//                
+//
 //                // Get the clusterKey for b
 //                // (for tree-children that would usually be their parent)
 //                S clusterKey = bToClusterKey.apply(b);
-//                
+//
 //                // Get all b's that are valid within the cluster
-//                // (Note: This assumes that this set is known beforehand) 
+//                // (Note: This assumes that this set is known beforehand)
 //                // (for a tree, that would be the children of the parent)
 //                Collection<B> candidateBsInCluster = clusterKeyToBs.apply(clusterKey);
-//                
+//
 //                // Get all a's in relation to the candidate b's
 //                //List<A> affectedAs = new ArrayList<>();
 //                //Map<B, List<A>> bToAffectedAs;
@@ -129,14 +129,14 @@ public class TreeMapperCandidateList<A, B>
 //                        clusterCandidateMapping.put(affectedA, candidateB);
 //                    }
 //                }
-                
+
                 // The candidate mapping is the mapping of all children of the matched parents
                 // in accordance with child candidate mapping
                 // If the parent is null, it means that the tree only consists of the root node
 
-                List<A> aChildren = a == null ? Collections.singletonList(aTree.getRoot()) : aTree.getChildren(a);
-                List<B> bChildren = b == null ? Collections.singletonList(bTree.getRoot()) : bTree.getChildren(b);
-                                
+                List<A> aChildren = a == null ? Collections.singletonList(aTree.getRoot()) : new ArrayList<>(aTree.getChildren(a));
+                List<B> bChildren = b == null ? Collections.singletonList(bTree.getRoot()) : new ArrayList<>(bTree.getChildren(b));
+
                 boolean unsatisfiable = false;
 
                 Multimap<A, B> clusterCandidateMapping = HashMultimap.create();
@@ -150,7 +150,7 @@ public class TreeMapperCandidateList<A, B>
                         unsatisfiable = true;
                         break;
                     }
-                    
+
                     clusterCandidateMapping.putAll(aChild, bRemaining);
                     // All children of A must have candidates
                 }
@@ -159,69 +159,69 @@ public class TreeMapperCandidateList<A, B>
                     //BiHashMultimap<A, B> mm = KPermutationsOfNUtils.create(clusterCandidateMapping);
                     // Collect all single-mappings
                     BiMap<B, A> bToOnlyA = HashBiMap.create();
-                    
+
                     for(Entry<A, Collection<B>> e : clusterCandidateMapping.asMap().entrySet()) {
                         A ax = e.getKey();
                         if(e.getValue().size() == 1) {
                             B bx = e.getValue().iterator().next();
-    
+
                             if(bToOnlyA.containsKey(bx)) {
                                 unsatisfiable = true;
                                 break;
-                            } else {                        
+                            } else {
                                 bToOnlyA.put(bx, ax);
                             }
                         }
                     }
-    
+
                     //if(!unsatisifable) {
                     while(!bToOnlyA.isEmpty()) {
                         BiMap<B, A> nextBToOnlyA = HashBiMap.create();
-    
+
                         Collection<B> bRemovals = bToOnlyA.keySet();
                         //for(Entry<A, Collection<B>> e : clusterCandidateMapping.asMap().entrySet()) {
                         Map<A, Collection<B>> m = clusterCandidateMapping.asMap();
-                        
+
                         // Note: We have to copy the keyset because changing collection of the entries' value
                         // causes a cme.
                         for(A ax : new HashSet<>(m.keySet())) {
                             Collection<B> bxs = m.get(ax);
                             int sizeBefore = bxs.size();
-                        
+
                             // remove all bs that only map to a single a
                             bxs.removeAll(bRemovals);
-                            
+
                             B restoreB = bToOnlyA.inverse().get(ax);
                             if(restoreB != null) {
                                 bxs.add(restoreB);
                             }
-                            
+
                             int sizeAfter = bxs.size();
-                            
+
                             if(sizeAfter == 1 && sizeBefore != sizeAfter) {
                                 B newB = bxs.iterator().next();
                                 nextBToOnlyA.put(newB, ax);
-                            }                        
+                            }
                         }
-                        
+
                         bToOnlyA = nextBToOnlyA;
                     }
                 }
 
                 // Recurse if still satisfiable
                 if(!unsatisfiable) {
-                                                        
+
                     // Update state: Remove the clusterCandidateMapping from the remaining set
                     remainingParentMapping.remove(a, b);
 //                    for(Entry<A, B> e : clusterCandidateMapping.entries()) {
 //                        remainingParentMapping.remove(e.getKey(), e.getValue());
 //                    }
-    
+
                     Cluster<A, B, Entry<A, B>> cluster = new Cluster<>(clusterKey, clusterCandidateMapping);
                     ClusterStack<A, B, Entry<A, B>> newStack = new ClusterStack<>(stack, cluster);
-                    
+
                     recurse(i + 1, newStack, completeMatch);
-                    
+
                     // Restore state
                     remainingParentMapping.put(a, b);
 //                    for(Entry<A, B> e : clusterCandidateMapping.entries()) {
@@ -233,5 +233,5 @@ public class TreeMapperCandidateList<A, B>
             completeMatch.accept(stack);
         }
 
-    }   
+    }
 }
