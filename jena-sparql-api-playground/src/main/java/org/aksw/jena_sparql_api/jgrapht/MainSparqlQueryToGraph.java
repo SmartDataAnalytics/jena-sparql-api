@@ -1,6 +1,5 @@
 package org.aksw.jena_sparql_api.jgrapht;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -26,11 +25,13 @@ import org.aksw.jena_sparql_api.jgrapht.transform.GraphVar;
 import org.aksw.jena_sparql_api.jgrapht.transform.QueryToGraphVisitor;
 import org.aksw.jena_sparql_api.jgrapht.transform.QueryToJenaGraph;
 import org.aksw.jena_sparql_api.jgrapht.wrapper.PseudoGraphJenaGraph;
+import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.views.index.SparqlViewMatcherOpImpl;
 import org.apache.jena.atlas.io.IndentedWriter;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.graph.compose.Difference;
 import org.apache.jena.graph.compose.Intersection;
 import org.apache.jena.query.QueryFactory;
@@ -39,6 +40,7 @@ import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.op.OpExt;
+import org.apache.jena.sparql.graph.GraphFactory;
 import org.jgraph.JGraph;
 import org.jgrapht.ext.JGraphModelAdapter;
 
@@ -537,9 +539,9 @@ public class MainSparqlQueryToGraph {
 
 
     public static void main(String[] args) {
-//        org.apache.jena.graph.Graph g = GraphFactory.createDefaultGraph();
-//        g.add(new Triple(Vars.s, Vars.p, Vars.o));
-//        RDFDataMgr.write(System.out, g, RDFFormat.NTRIPLES);
+        org.apache.jena.graph.Graph g = GraphFactory.createDefaultGraph();
+        g.add(new Triple(Vars.s, Vars.p, Vars.o));
+        RDFDataMgr.write(System.out, g, RDFFormat.NTRIPLES);
 //        String[][] cases = {
 //            { "Prefix : <http://ex.org/> Select * { ?a ?b ?c }",
 //              "Prefix : <http://ex.org/> Select * { ?x ?y ?z }", },
@@ -549,24 +551,28 @@ public class MainSparqlQueryToGraph {
 //              "Prefix : <http://ex.org/> Select * { ?x a ?o . ?x ?y ?z }" },
 //            { "Prefix : <http://ex.org/> Select * { ?x a ?o . ?x ?y ?z . ?z a ?w}" }
 //        };
-//        String caseA = cases[0][0];
-//        String caseB = cases[1][0];
-//        String caseC = cases[3][0];
 
         String[][] cases = {
                 { "Prefix : <http://ex.org/> Select * { ?a ?a ?a }",
-                  "Prefix : <http://ex.org/> Select * { ?x ?y ?z }", },
-                { "Prefix : <http://ex.org/> Select * { ?f ?f ?f . ?g ?g ?g }",
-                  "Prefix : <http://ex.org/> Select * { ?x a ?o ; ?y ?z }" },
-                { "Prefix : <http://ex.org/> Select * { ?x ?x ?x . ?y ?y ?y }",
-                  "Prefix : <http://ex.org/> Select * { ?x ?x ?x . ?y ?y ?y . ?z ?z ? z}",
-                  "Prefix : <http://ex.org/> Select * { ?x a ?o . ?x ?y ?z }" },
-                { "Prefix : <http://ex.org/> Select * { ?i a :Bakery ; :locatedIn :Leipzig }" }
+                  "Prefix : <http://ex.org/> Select * { ?x ?x ?x . ?y ?y ?y }",
+                  "Prefix : <http://ex.org/> Select * { ?x ?x ?x . ?y ?y ?y . ?z ?z ?z }" },
+
+                { "Prefix : <http://ex.org/> Select * { ?as ?ap ?ao }",
+                  "Prefix : <http://ex.org/> Select * { ?js ?jp ?jo . ?ks ?kp ?ko }",
+                  "Prefix : <http://ex.org/> Select * { ?xs ?xp ?xo . ?ys ?yp ?yo . ?zs ?zp ?zo }" },
+
+                // test examples with overlapping variables
+                { "Prefix : <http://ex.org/> Select * { ?as ?ap ?ao }",
+                  "Prefix : <http://ex.org/> Select * { ?xs ?xp ?xo . ?ys ?yp ?yo }",
+                  "Prefix : <http://ex.org/> Select * { ?xs ?xp ?xo . ?ys ?yp ?yo . ?zs ?zp ?zo }" }
+
             };
 
-        String caseA = cases[0][0];
-        String caseB = cases[1][0];
-        String caseC = cases[2][0];
+        String caseA = cases[1][0];
+        String caseB = cases[1][1];
+        String caseC = cases[1][2];
+
+        // This does not work with jgrapht due to lack of support for multi edges!!!
 
         Op aop = Algebra.toQuadForm(Algebra.compile(QueryFactory.create(caseA)));
         Op bop = Algebra.toQuadForm(Algebra.compile(QueryFactory.create(caseB)));
