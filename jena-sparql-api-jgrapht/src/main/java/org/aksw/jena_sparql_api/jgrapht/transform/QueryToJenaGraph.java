@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -145,7 +146,7 @@ public class QueryToJenaGraph {
     }
 
 
-    public static Stream<BiMap<Node, Node>> match(Map<Node, Node> baseIso, Graph a, Graph b) {
+    public static Stream<BiMap<Node, Node>> match(BiMap<Node, Node> baseIso, Graph a, Graph b) {
         DirectedGraph<Node, Triple> adg = new PseudoGraphJenaGraph(a);
         DirectedGraph<Node, Triple> bdg = new PseudoGraphJenaGraph(b);
 
@@ -163,21 +164,46 @@ public class QueryToJenaGraph {
     }
 
 
+    public static int getLevel(Node node) {
+        int result
+            = node == null ? 1
+            : node.isLiteral() ? 2
+            : node.isURI() ? 3
+            : node.isBlank() ? 4
+            : node.isVariable() ? 5
+            : 0;
+
+        return result;
+    }
+
+
+
     public static Stream<BiMap<Node, Node>> match(
-            Map<Node, Node> baseIso, // view to user query
+            BiMap<Node, Node> baseIso, // view to user query
             DirectedGraph<Node, Triple> a,
             DirectedGraph<Node, Triple> b) {
 
+
+        //baseIso = HashBiMap.create();
 //        System.out.println("EDGES:");
 //        b.edgeSet().forEach(System.out::println);
 //        System.out.println("done with edges");
 
+        //System.out.println(baseIso);
 
-        Comparator<Node> nodeCmp = (x, y) -> {
-            x = baseIso.getOrDefault(x, x);
-            int  r = (x == y || x.isVariable() && y.isVariable()) || (x.isBlank() && y.isBlank())
+
+
+        Comparator<Node> nodeCmp = (i, j) -> {
+            Node x = i;//baseIso.getOrDefault(i, i);
+            Node y = j;//baseIso.inverse().getOrDefault(j, j);
+            //System.out.println(i + " vs " + j + " => " + x + " vs " + y);
+            //(x == y)1 ||
+
+            int d = getLevel(x) - getLevel(y);
+
+            int  r = (x.isVariable() && y.isVariable()) || (x.isBlank() && y.isBlank())
                     ? 0
-                    : x.toString().compareTo(y.toString());
+                    : d == 0 ? x.toString().compareTo(y.toString()) : d;
             //System.err.println("NodeCmp [" + r + "] for " + x + " <-> " + y);
             return r;
         };
@@ -188,6 +214,10 @@ public class QueryToJenaGraph {
             return r;
         };
 
+//        a.edgeSet().forEach(e -> System.out.println("a: " + e));
+//        b.edgeSet().forEach(e -> System.out.println("b: " + e));
+//        System.out.println("a: "+ a.vertexSet());
+//        System.out.println("b: "+ b.vertexSet());
 
 
         VF2SubgraphIsomorphismInspector<Node, Triple> inspector = new VF2SubgraphIsomorphismInspector<>(b, a, nodeCmp, edgeCmp, true);
@@ -203,6 +233,7 @@ public class QueryToJenaGraph {
                             nodeMap.put(aNode, bNode);
                         }
                     }
+                    System.out.println("Created map: " + nodeMap);
 
 
                     //System.out.println("Mapping: " + m);

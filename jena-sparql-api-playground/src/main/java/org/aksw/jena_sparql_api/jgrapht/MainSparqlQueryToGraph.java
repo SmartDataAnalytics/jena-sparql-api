@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api.jgrapht;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -11,10 +11,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.swing.JFrame;
 
-import org.aksw.commons.collections.MapUtils;
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
 import org.aksw.commons.collections.trees.LabeledNodeImpl;
 import org.aksw.commons.collections.trees.LabeledTree;
@@ -32,7 +32,10 @@ import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.compose.Difference;
+import org.apache.jena.graph.compose.Intersection;
 import org.apache.jena.query.QueryFactory;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.op.OpExt;
@@ -42,12 +45,12 @@ import org.jgrapht.ext.JGraphModelAdapter;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 import com.jgraph.layout.JGraphFacade;
 import com.jgraph.layout.JGraphLayout;
 import com.jgraph.layout.hierarchical.JGraphHierarchicalLayout;
-
-import jersey.repackaged.com.google.common.collect.Sets;
 
 
 class ExtendedQueryToGraphVisitor
@@ -78,20 +81,25 @@ class ExtendedQueryToGraphVisitor
 class InsertPosition<K> {
     protected GraphIndexNode<K> node;
     protected GraphIsoMap graphIso;
+
     public InsertPosition(GraphIndexNode<K> node, GraphIsoMap graphIso) {
         super();
         this.node = node;
         this.graphIso = graphIso;
     }
+
     public GraphIndexNode<K> getNode() {
         return node;
     }
+
     public GraphIsoMap getGraphIso() {
         return graphIso;
     }
 
-
-
+    @Override
+    public String toString() {
+        return "InsertPosition [node=" + node + ", graphIso=" + graphIso.size() + "]";
+    }
 }
 
 /**
@@ -129,9 +137,14 @@ class GraphIndexNode<K>
         return tree.idToGraph.put(id, graphIso);
     }
 
-    Set<K> getKeys() {
+    public Set<K> getKeys() {
         return tree.idToKeys.get(id);
     }
+
+//    public Set<K> setKeys() {
+//        return tree.idToKeys.pu
+//    }
+
 }
 
 class GraphIndex<K>
@@ -217,10 +230,13 @@ class GraphIndex<K>
     public Multimap<K, Map<Node, Node>> lookup(Graph graph) {
 
         Collection<InsertPosition<K>> positions = new LinkedList<>();
-        findInsertPositions(positions, rootNode, graph, HashBiMap.create(), IndentedWriter.stderr);
+        findInsertPositions(positions, rootNode, graph, HashBiMap.create(), true, IndentedWriter.stderr);
 
         Multimap<K, Map<Node, Node>> result = HashMultimap.create();
         for(InsertPosition<K> pos : positions) {
+            // Match with the children
+
+            System.out.println("Node " + pos.node + " with keys " + pos.node.getKeys());
             for(K key : pos.node.getKeys()) {
                 result.put(key, pos.graphIso.getInToOut());
             }
@@ -242,6 +258,11 @@ class GraphIndex<K>
     }
 
 
+    public static <T> Iterable<T> toIterable(Stream<T> stream) {
+        Iterable<T> result = () -> stream.iterator();
+        return result;
+    }
+
     /**
      * Clones a sub tree thereby removing the triples in the removal graph
      *
@@ -250,10 +271,11 @@ class GraphIndex<K>
      * @param writer
      * @return
      */
-    GraphIndexNode<K> cloneWithRemoval(GraphIndexNode<K> node, Graph removalGraph, IndentedWriter writer) {
+    GraphIndexNode<K> cloneWithRemoval(GraphIndexNode<K> node, BiMap<Node, Node> iso, Graph removalGraph, IndentedWriter writer) {
         GraphIsoMap graphIso = node.getValue();
-        BiMap<Node, Node> nodeIso = graphIso.getInToOut();
-        GraphIsoMap mappedRemovalGraph = new GraphIsoMapImpl(removalGraph, nodeIso);
+        BiMap<Node, Node> priorNodeIso = graphIso.getInToOut();
+
+        GraphIsoMap mappedRemovalGraph = new GraphIsoMapImpl(removalGraph, priorNodeIso);
 
         //System.out.println("REMOVAL");
         //RDFDataMgr.write(System.out, mappedRemovalGraph, RDFFormat.NTRIPLES);
@@ -267,24 +289,44 @@ class GraphIndex<K>
         Graph cloneGraph = new Difference(graphIso.getWrapped(), mappedRemovalGraph);
         writer.println("Cloned graph size reduced from  " + graphIso.size() + " -> " + cloneGraph.size());
 
-        GraphIndexNode<K> result = createNode(new GraphIsoMapImpl(cloneGraph, nodeIso));
+        BiMap<Node, Node> newNodeIso = mapDomainVia(iso, priorNodeIso);
+
+        GraphIndexNode<K> result = createNode(new GraphIsoMapImpl(cloneGraph, newNodeIso));
+        //node.getKeys()
+        result.getKeys().addAll(node.getKeys());
+
 
         // Then for each child: map the removal graph according to the child's iso
         for(GraphIndexNode<K> child : node.getChildren()) {
-            GraphIndexNode<K> cloneChild = cloneWithRemoval(child, mappedRemovalGraph, writer);
+
+            GraphIndexNode<K> cloneChild = cloneWithRemoval(child, newNodeIso, mappedRemovalGraph, writer);
+            deleteNode(child.getKey());
             result.appendChild(cloneChild);
         }
+
+
 
         return result;
     }
 
 
+    public static BiMap<Node, Node> mapDomainVia(BiMap<Node, Node> src, BiMap<Node, Node> map) {
+        BiMap<Node, Node> result = src.entrySet().stream().collect(Collectors.toMap(
+                e -> map.getOrDefault(e.getKey(), e.getKey()),
+                e -> e.getValue(),
+                (u, v) -> { throw new RuntimeException("should not hapen"); },
+                HashBiMap::create));
+        return result;
+    }
 
-    void findInsertPositions(Collection<InsertPosition<K>> out, GraphIndexNode<K> node, Graph insertGraph, BiMap<Node, Node> baseIso, IndentedWriter writer) {
+    void findInsertPositions(Collection<InsertPosition<K>> out, GraphIndexNode<K> node, Graph insertGraph, BiMap<Node, Node> rawBaseIso, boolean lookupMode, IndentedWriter writer) {
         //children.forEach(child -> {
 
+        writer.println("Finding insert position for user graph of size " + insertGraph.size());
+        RDFDataMgr.write(System.out, insertGraph, RDFFormat.NTRIPLES);
+        //System.out.println("under raw: " + rawBaseIso);
 
-        boolean isSubsumed[] = {false};
+        boolean isSubsumed = false;
 
         writer.incIndent();
         for(GraphIndexNode<K> child : node.getChildren()) {
@@ -292,45 +334,50 @@ class GraphIndex<K>
             //BiMap<Node, Node> isoMap = child.graphIso.getOutToIn();
             //Graph candGraph = new GraphIsoMapImpl(graph, isoMap);
             GraphIsoMap viewGraph = child.getValue();
+            BiMap<Node, Node> transIso = viewGraph.getInToOut();
+
+            // Map the image of the iso through the view graph iso
+            BiMap<Node, Node> baseIso = mapDomainVia(rawBaseIso, transIso);
+
+            //iso.entrySet().stream()
+
 
             writer.println("Comparison with view graph of size " + viewGraph.size());
-//            RDFDataMgr.write(System.out, viewGraph, RDFFormat.NTRIPLES);
-//            System.out.println("under: " + currentIso);
+            //RDFDataMgr.write(System.out, viewGraph, RDFFormat.NTRIPLES);
+            //System.out.println("under: " + viewGraph.getInToOut());
 
             // For every found isomorphism, check all children whether they are also isomorphic.
             //
             writer.incIndent();
-            int i[] = {0};
-            QueryToJenaGraph.match(baseIso, viewGraph, insertGraph).forEach(iso -> {
-                isSubsumed[0] = true;
+            int i = 0;
+            //baseIso.inverse()
+            for(BiMap<Node, Node> iso : toIterable(QueryToJenaGraph.match(baseIso, viewGraph, insertGraph))) {
 
-                writer.println("Found match #" + ++i[0] + ":");
+                isSubsumed = true;
+
+                writer.println("Found match #" + ++i + ":");
                 writer.incIndent();
 
-                // Do this state space search thingy: update the state, track the changes, compute and restore
-                // This means: track which keys will be added, add them, and later remove them again
-                boolean isCompatible = MapUtils.isCompatible(iso, baseIso);
-                if(!isCompatible) {
-                    writer.println("Not compatible with current mapping");
-                    writer.incIndent();
-                    writer.println("baseIso: " + baseIso);
-                    writer.println("iso: " + iso);
-                    writer.decIndent();
-                    throw new RuntimeException("This should never happen - unless either there is a bug or even worse there is a conecptual issues");
-                    //return;
-                }
+
                 Set<Node> affectedKeys = new HashSet<>(Sets.difference(iso.keySet(), baseIso.keySet()));
+                writer.println("From node " + node + " child " + child);
+                writer.println("baseIso     : " + baseIso);
+                writer.println("viewGraphIso: " + viewGraph.getInToOut());
+                writer.println("iso         : " + iso);
+
                 affectedKeys.forEach(k -> baseIso.put(k, iso.get(k)));
-                baseIso.putAll(iso);
                 writer.println("Contributed " + affectedKeys + " yielding iso mapping: " + iso);
+
 
                 // iso: how to rename nodes of the view graph so it matches with the insert graph
                 Graph g = new GraphIsoMapImpl(viewGraph, iso);
 
-                Difference diff = new Difference(g, viewGraph); // left side should be the smaller graph for performance
+                //Difference diff = new Difference(g, viewGraph); // left side should be the smaller graph for performance
+                Difference diff = new Difference(insertGraph, g);
 
                 // now create the diff between the insert graph and mapped child graph
                 writer.println("Diff has " + diff.size() + " triples at depth " + writer.getUnitIndent());
+                writer.println("Diff: " + diff);
                 //RDFDataMgr.write(System.out, diff, RDFFormat.NTRIPLES);
 
 
@@ -338,29 +385,37 @@ class GraphIndex<K>
                 // if the diff is empty, associate the pattern id with this node
 
                 // on non empty diff, add the subgraphs as children to that node
-                if(diff.isEmpty()) {
-
-                } else {
+//                if(diff.isEmpty()) {
+//
+//                } else {
                     ///child.add(diff, iso, writer);
                     // yield this as an insert position
                     //InsertPosition<K> p = new InsertPosition(this, viewGraph);
-                    findInsertPositions(out, child, diff, iso, writer);
-                }
+                    findInsertPositions(out, child, diff, iso, lookupMode, writer);
+//                }
 
                 affectedKeys.forEach(baseIso::remove);
 
                 writer.decIndent();
-            });
+            }
             writer.decIndent();
         }
         writer.decIndent();
 
-        if(!isSubsumed[0]) {
+        if(!isSubsumed || lookupMode) {
             // Make a copy of the baseIso, as it is transient due to state space search
-            GraphIsoMap gim = new GraphIsoMapImpl(insertGraph, HashBiMap.create(baseIso));
+            GraphIsoMap gim = new GraphIsoMapImpl(insertGraph, HashBiMap.create(rawBaseIso));
             InsertPosition<K> pos = new InsertPosition<>(node, gim);
             out.add(pos);
         }
+    }
+
+    @Override
+    public GraphIndexNode<K> deleteNode(Long node) {
+        idToKeys.removeAll(node);
+        idToGraph.remove(node);
+
+        return super.deleteNode(node);
     }
 
     /**
@@ -373,7 +428,7 @@ class GraphIndex<K>
         // The insert graph must be larger than the node Graph
 
         Collection<InsertPosition<K>> positions = new LinkedList<>();
-        findInsertPositions(positions, rootNode, insertGraph, baseIso, writer);
+        findInsertPositions(positions, rootNode, insertGraph, baseIso, false, writer);
 
         for(InsertPosition<K> pos : positions) {
             performAdd(key, pos, writer);
@@ -391,22 +446,22 @@ class GraphIndex<K>
 //        System.out.println("under: " + currentIso);
 
         // If the addition is not on a leaf node, check if we subsume anything
-        boolean isSubsumed[] = {!node.getChildren().isEmpty()}; //{false};
+        boolean isSubsumed = node.getChildren().isEmpty(); //{false};
 
 
         // Make a copy of the baseIso, as it is transient due to state space search
         //GraphIsoMap gim = new GraphIsoMapImpl(insertGraph, HashBiMap.create(baseIso));
 
-        boolean wasAdded[] = {false};
+        boolean wasAdded = false;
 
         // If the insertGraph was not subsumed,
         // check if it subsumes any of the other children
         // for example { ?s ?p ?o } may not be subsumed by an existing child, but it will subsume any other children
         // use clusters
         // add it as a new child
-        if(!isSubsumed[0]) {
+        if(!isSubsumed) {
             writer.println("We are not subsumed, but maybe we subsume");
-            GraphIndexNode<K> subsumeRoot = createNode(graphIso);//new GraphIndexNode<K>(graphIso);
+            GraphIndexNode<K> subsumeRoot = null;//createNode(graphIso);//new GraphIndexNode<K>(graphIso);
 
 
             //for(GraphIndexNode child : children) {
@@ -421,34 +476,41 @@ class GraphIndex<K>
 
                 // For every found isomorphism, check all children whether they are also isomorphic.
                 writer.incIndent();
-                int i[] = {0};
-                QueryToJenaGraph.match(baseIso.inverse(), insertGraph, viewGraph).forEach(iso -> {
-                    writer.println("Detected subsumption #" + ++i[0]);
+                int i = 0;
+                for(BiMap<Node, Node> iso : Lists.newArrayList(toIterable(QueryToJenaGraph.match(baseIso.inverse(), insertGraph, viewGraph)))) {
+                    writer.println("Detected subsumption #" + ++i);
+                    writer.println("  with iso: " + iso);
                     writer.incIndent();
 
-                    GraphIsoMap insertGraphX = new GraphIsoMapImpl(insertGraph, iso);
+                    GraphIsoMap mappedInsertGraph = new GraphIsoMapImpl(insertGraph, iso);
 //                    System.out.println("Remapped insert via " + iso);
 //                    RDFDataMgr.write(System.out, insertGraphX, RDFFormat.NTRIPLES);
 //                    System.out.println("---");
 
-                    Difference diff = new Difference(viewGraph, insertGraphX);
+                    //Difference retain = new Difference(viewGraph, insertGraphX);
 
+                    // The part which is duplicated between the insert graph and the view
+                    // is subject to removal
+                    Intersection removalGraph = new Intersection(mappedInsertGraph, viewGraph);
 
-                    GraphIndexNode<K> newChild = cloneWithRemoval(child, diff, writer);
+                    // Allocate root before child to give it a lower id for cosmetics
+                    subsumeRoot = subsumeRoot == null ? createNode(graphIso) : subsumeRoot;
 
+                    GraphIndexNode<K> newChild = cloneWithRemoval(child, iso, removalGraph, writer);
                     subsumeRoot.appendChild(newChild);//add(newChild, baseIso, writer);
+
                     writer.decIndent();
-                });
+                }
 
-                if(i[0] > 0) {
-                    // Remove all mappings of keys for that node
-                    //child.itemIds
-
+                if(subsumeRoot != null) {
+                    //it.remove();
+                    deleteNode(child.getKey());
+                    node.appendChild(subsumeRoot);
+                    subsumeRoot.getKeys().add(key);
 
                     writer.println("A node was subsumed and therefore removed");
-                    wasAdded[0] = true;
+                    wasAdded = true;
                     // not sure if this remove works
-                    it.remove();
                 }
                 writer.decIndent();
 
@@ -458,8 +520,11 @@ class GraphIndex<K>
         }
 
         // If nothing was subsumed, add it to this node
-        if(!wasAdded[0]) {
-            node.appendChild(createNode(graphIso));
+        if(!wasAdded) {
+            writer.println("Attached graph of size " + graphIso.size() + " to node " + node);
+            GraphIndexNode<K> target = createNode(graphIso);
+            target.getKeys().add(key);
+            node.appendChild(target);
         }
     }
 
@@ -475,20 +540,33 @@ public class MainSparqlQueryToGraph {
 //        org.apache.jena.graph.Graph g = GraphFactory.createDefaultGraph();
 //        g.add(new Triple(Vars.s, Vars.p, Vars.o));
 //        RDFDataMgr.write(System.out, g, RDFFormat.NTRIPLES);
-        String[][] cases = {
-            { "Prefix : <http://ex.org/> Select * { ?a ?b ?c }",
-              "Prefix : <http://ex.org/> Select * { ?x ?y ?z }", },
-            { "Prefix : <http://ex.org/> Select * { ?d a ?f ; ?g ?h }",
-              "Prefix : <http://ex.org/> Select * { ?x a ?o ; ?y ?z }" },
-            { "Prefix : <http://ex.org/> Select * { ?i a :Bakery ; :locatedIn :Leipzig }",
-              "Prefix : <http://ex.org/> Select * { ?x a ?o . ?x ?y ?z }" },
-            { "Prefix : <http://ex.org/> Select * { ?x a ?o . ?x ?y ?z . ?z a ?w}" }
-        };
+//        String[][] cases = {
+//            { "Prefix : <http://ex.org/> Select * { ?a ?b ?c }",
+//              "Prefix : <http://ex.org/> Select * { ?x ?y ?z }", },
+//            { "Prefix : <http://ex.org/> Select * { ?d a ?f ; ?g ?h }",
+//              "Prefix : <http://ex.org/> Select * { ?x a ?o ; ?y ?z }" },
+//            { "Prefix : <http://ex.org/> Select * { ?i a :Bakery ; :locatedIn :Leipzig }",
+//              "Prefix : <http://ex.org/> Select * { ?x a ?o . ?x ?y ?z }" },
+//            { "Prefix : <http://ex.org/> Select * { ?x a ?o . ?x ?y ?z . ?z a ?w}" }
+//        };
+//        String caseA = cases[0][0];
+//        String caseB = cases[1][0];
+//        String caseC = cases[3][0];
 
+        String[][] cases = {
+                { "Prefix : <http://ex.org/> Select * { ?a ?a ?a }",
+                  "Prefix : <http://ex.org/> Select * { ?x ?y ?z }", },
+                { "Prefix : <http://ex.org/> Select * { ?f ?f ?f . ?g ?g ?g }",
+                  "Prefix : <http://ex.org/> Select * { ?x a ?o ; ?y ?z }" },
+                { "Prefix : <http://ex.org/> Select * { ?x ?x ?x . ?y ?y ?y }",
+                  "Prefix : <http://ex.org/> Select * { ?x ?x ?x . ?y ?y ?y . ?z ?z ? z}",
+                  "Prefix : <http://ex.org/> Select * { ?x a ?o . ?x ?y ?z }" },
+                { "Prefix : <http://ex.org/> Select * { ?i a :Bakery ; :locatedIn :Leipzig }" }
+            };
 
         String caseA = cases[0][0];
         String caseB = cases[1][0];
-        String caseC = cases[3][0];
+        String caseC = cases[2][0];
 
         Op aop = Algebra.toQuadForm(Algebra.compile(QueryFactory.create(caseA)));
         Op bop = Algebra.toQuadForm(Algebra.compile(QueryFactory.create(caseB)));
@@ -515,7 +593,7 @@ public class MainSparqlQueryToGraph {
 
         QueryToGraphVisitor cv = new ExtendedQueryToGraphVisitor(ssn.get());
         cop.visit(cv);
-        GraphVar cg = bv.getGraph();
+        GraphVar cg = cv.getGraph();
 
 
 //        System.out.println("Graph A:");
@@ -525,10 +603,10 @@ public class MainSparqlQueryToGraph {
 //        System.out.println("Graph B:");
 //        RDFDataMgr.write(System.out, bg.getWrapped(), RDFFormat.NTRIPLES);
 //
-        List<Map<Node, Node>> solutions = QueryToJenaGraph.match(Collections.emptyMap(), bg, ag).collect(Collectors.toList());
+        List<Map<Node, Node>> solutions = QueryToJenaGraph.match(HashBiMap.create(), bg, ag).collect(Collectors.toList());
 
         System.out.println("VarMap entries: " + solutions.size());
-        solutions.forEach(varMap -> System.out.print(varMap));
+        solutions.forEach(varMap -> System.out.println(varMap));
 
 
         GraphIndex<Node> index = GraphIndex.create();
@@ -542,11 +620,12 @@ public class MainSparqlQueryToGraph {
         } else {
             // most generic inserted last
             index.add(bg);
-            index.add(cg);
+            //index.add(cg);
             index.add(ag);
         }
 
-        index.lookup(cg).entries().forEach(e -> System.out.println("Lookup item: " + e));
+        System.out.println("Performing lookup");
+        index.lookup(cg).entries().forEach(e -> System.out.println("Lookup result: " + e));
 
 
         //SparqlQueryContainmentUtils.match(viewQuery, userQuery, qfpcMatcher)
@@ -576,3 +655,16 @@ public class MainSparqlQueryToGraph {
     }
 
 }
+//// Do this state space search thingy: update the state, track the changes, compute and restore
+//// This means: track which keys will be added, add them, and later remove them again
+//boolean isCompatible = MapUtils.isCompatible(iso, baseIso);
+//if(!isCompatible) {
+//  writer.println("Not compatible with current mapping");
+//  writer.incIndent();
+//  writer.println("baseIso: " + baseIso);
+//  writer.println("iso: " + iso);
+//  writer.decIndent();
+//  throw new RuntimeException("This should never happen - unless either there is a bug or even worse there is a conecptual issues");
+//  //return;
+//}
+//

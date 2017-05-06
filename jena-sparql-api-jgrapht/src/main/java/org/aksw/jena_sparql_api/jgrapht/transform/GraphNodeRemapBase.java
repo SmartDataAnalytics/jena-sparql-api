@@ -1,9 +1,13 @@
 package org.aksw.jena_sparql_api.jgrapht.transform;
 
+import java.io.ByteArrayOutputStream;
+
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.graph.impl.WrappedGraph;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.graph.NodeTransformLib;
 import org.apache.jena.util.iterator.ExtendedIterator;
@@ -89,4 +93,14 @@ public class GraphNodeRemapBase
                 o == null ? Node.ANY : o);
         return result;
     }
+
+    @Override
+    public String toString() {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        RDFDataMgr.write(out, this, RDFFormat.NTRIPLES);
+        return out.toString();
+    }
+
+
 }
+
