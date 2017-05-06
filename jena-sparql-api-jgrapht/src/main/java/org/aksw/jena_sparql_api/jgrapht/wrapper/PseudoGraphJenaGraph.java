@@ -103,7 +103,6 @@ public class PseudoGraphJenaGraph
 
     @Override
     public boolean containsEdge(Node sourceVertex, Node targetVertex) {
-        // TODO Not sure if contains works with Node.ANY - may have to use !.find().toSet().isEmpyt()
         boolean result = find(graph, sourceVertex, confinementPredicate, targetVertex).hasNext();
         return result;
     }
@@ -243,7 +242,7 @@ public class PseudoGraphJenaGraph
 
 
     /**
-     * Wrapper for find where a lookup with a variable filters the triples to those containing the variable
+     * A delegate to find - single point for adding any post processing should it become necessary
      *
      * @param graph
      * @param s
@@ -252,15 +251,16 @@ public class PseudoGraphJenaGraph
      * @return
      */
     public static ExtendedIterator<Triple> find(Graph graph, Node s, Node p, Node o) {
-        ExtendedIterator<Triple> result = graph.find(s, p, o).filterKeep(t -> {
-            boolean r =
-                    (s.equals(Node.ANY) ? true : t.getSubject().equals(s)) &&
-                    (p.equals(Node.ANY) ? true : t.getPredicate().equals(p)) &&
-                    (o.equals(Node.ANY) ? true : t.getObject().equals(o));
-            return r;
-        });
+//  Filter used to allow matches by variable names - vars are now handled by GraphVar
+//        ExtendedIterator<Triple> result = graph.find(s, p, o).filterKeep(t -> {
+//            boolean r =
+//                    (s.equals(Node.ANY) ? true : t.getSubject().equals(s)) &&
+//                    (p.equals(Node.ANY) ? true : t.getPredicate().equals(p)) &&
+//                    (o.equals(Node.ANY) ? true : t.getObject().equals(o));
+//            return r;
+//        });
 
-        return result;
+        return graph.find(s, p, o);
     }
 
     @Override

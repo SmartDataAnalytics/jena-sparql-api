@@ -5,7 +5,7 @@ import java.io.ByteArrayOutputStream;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.graph.impl.WrappedGraph;
+import org.apache.jena.graph.impl.GraphBase;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.graph.NodeTransform;
@@ -19,71 +19,38 @@ import org.apache.jena.util.iterator.ExtendedIterator;
  *
  */
 public class GraphNodeRemapBase
-    extends WrappedGraph
+    extends GraphBase
 {
+    protected Graph graph;
     protected NodeTransform fromGraph;// = new NodeTransformRenameMap(nodeToVar);
     protected NodeTransform toGraph;
 
-//    public static Triple fromGraph(Triple t, Map<Node, Var> nodeToVar) {
-//        Triple result = NodeTransformLib.transform(, t);
-//        return result;
-//    }
-//
-//    public static Triple toGraph(Triple t, Map<Var, Node> varToNode) {
-//        Triple result = NodeTransformLib.transform(new NodeTransformRenameMap(varToNode), t);
-//        return result;
-//    }
-
     public GraphNodeRemapBase(Graph graph) {//, NodeTransform fromGraph, NodeTransform toGraph) {
-        super(graph);
+        this.graph = graph;
+        //super(graph);
 //        this.fromGraph = fromGraph;
 //        this.toGraph = toGraph;
     }
 
-    @Override
+
+
+    //@Override
     public Graph getWrapped() {
-        return base;
+        return graph;
     }
 
+
     @Override
-    public void add(Triple t) {
+    public void performAdd(Triple t) {
         Triple u = NodeTransformLib.transform(toGraph, t);
-        super.add(u);
+        graph.add(u);
     }
 
+
     @Override
-    public void delete(Triple t) {
+    public void performDelete(Triple t) {
         Triple u = NodeTransformLib.transform(toGraph, t);
-        super.delete(u);
-    }
-
-    @Override
-    public boolean contains(Triple t) {
-        Triple u = NodeTransformLib.transform(toGraph, t);
-        return super.contains(u);
-    }
-
-
-    @Override
-    public ExtendedIterator<Triple> find(Triple m) {
-        Triple u = NodeTransformLib.transform(toGraph, m);
-        return super.find(u).mapWith(v -> NodeTransformLib.transform(fromGraph, v));
-    }
-
-    @Override
-    public boolean contains(Node s, Node p, Node o) {
-        boolean result = contains(createTriple(s, p, o));
-        return result;
-    }
-
-    public ExtendedIterator<Triple> find(Node s, Node p, Node o) {
-        ExtendedIterator<Triple> result = find(createTriple(s, p, o));
-        return result;
-    }
-
-    @Override
-    public void remove(Node s, Node p, Node o) {
-        delete(createTriple(s, p, o));
+        graph.delete(u);
     }
 
     public static Triple createTriple(Node s, Node p, Node o) {
@@ -101,6 +68,52 @@ public class GraphNodeRemapBase
         return out.toString();
     }
 
+    @Override
+    protected ExtendedIterator<Triple> graphBaseFind(Triple m) {
+        Triple u = NodeTransformLib.transform(toGraph, m);
+        return graph.find(u).mapWith(v -> NodeTransformLib.transform(fromGraph, v));
+    }
+
+
+//    @Override
+//    public boolean contains(Triple t) {
+//        Triple u = NodeTransformLib.transform(toGraph, t);
+//        return graph.contains(u);
+//    }
+
+
+//    @Override
+//    public ExtendedIterator<Triple> find(Triple m) {
+//        Triple u = NodeTransformLib.transform(toGraph, m);
+//        return graph.find(u).mapWith(v -> NodeTransformLib.transform(fromGraph, v));
+//    }
+
+//    @Override
+//    public boolean contains(Node s, Node p, Node o) {
+//        boolean result = contains(createTriple(s, p, o));
+//        return result;
+//    }
+
+//    public ExtendedIterator<Triple> find(Node s, Node p, Node o) {
+//        ExtendedIterator<Triple> result = find(createTriple(s, p, o));
+//        return result;
+//    }
+
+
+//  public static Triple fromGraph(Triple t, Map<Node, Var> nodeToVar) {
+//      Triple result = NodeTransformLib.transform(, t);
+//      return result;
+//  }
+//
+//  public static Triple toGraph(Triple t, Map<Var, Node> varToNode) {
+//      Triple result = NodeTransformLib.transform(new NodeTransformRenameMap(varToNode), t);
+//      return result;
+//  }
+
+//  @Override
+//  public void remove(Node s, Node p, Node o) {
+//      delete(createTriple(s, p, o));
+//  }
 
 }
 

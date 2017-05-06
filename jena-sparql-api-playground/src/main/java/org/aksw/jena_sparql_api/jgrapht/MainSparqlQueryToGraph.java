@@ -8,16 +8,19 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.swing.JFrame;
 
+import org.aksw.commons.collections.MapUtils;
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
 import org.aksw.commons.collections.trees.LabeledNodeImpl;
 import org.aksw.commons.collections.trees.LabeledTree;
 import org.aksw.commons.collections.trees.ReclaimingSupplier;
+import org.aksw.commons.util.strings.StringPrettyComparator;
 import org.aksw.jena_sparql_api.concept_cache.op.OpExtConjunctiveQuery;
 import org.aksw.jena_sparql_api.jgrapht.transform.GraphIsoMap;
 import org.aksw.jena_sparql_api.jgrapht.transform.GraphIsoMapImpl;
@@ -235,10 +238,11 @@ class GraphIndex<K>
         findInsertPositions(positions, rootNode, graph, HashBiMap.create(), true, IndentedWriter.stderr);
 
         Multimap<K, Map<Node, Node>> result = HashMultimap.create();
+        System.out.println("Lookup results: " + positions.size());
         for(InsertPosition<K> pos : positions) {
             // Match with the children
 
-            System.out.println("Node " + pos.node + " with keys " + pos.node.getKeys());
+            //System.out.println("Node " + pos.node + " with keys " + pos.node.getKeys() + " iso: " + pos.getGraphIso().getInToOut());
             for(K key : pos.node.getKeys()) {
                 result.put(key, pos.graphIso.getInToOut());
             }
@@ -353,12 +357,20 @@ class GraphIndex<K>
             writer.incIndent();
             int i = 0;
             //baseIso.inverse()
-            for(BiMap<Node, Node> iso : toIterable(QueryToJenaGraph.match(baseIso, viewGraph, insertGraph))) {
+            Iterable<BiMap<Node, Node>> isos = QueryToJenaGraph.match(baseIso, viewGraph, insertGraph).collect(Collectors.toSet());
+            for(BiMap<Node, Node> iso : isos) {
+            //for(BiMap<Node, Node> iso : Lists.newArrayList(toIterable(QueryToJenaGraph.match(baseIso, viewGraph, insertGraph)))) {
 
                 isSubsumed = true;
 
                 writer.println("Found match #" + ++i + ":");
                 writer.incIndent();
+
+                boolean isCompatible = MapUtils.isCompatible(iso, baseIso);
+                if(!isCompatible) {
+                    System.out.println("incompatible");
+                    continue;
+                }
 
 
                 Set<Node> affectedKeys = new HashSet<>(Sets.difference(iso.keySet(), baseIso.keySet()));
@@ -368,7 +380,7 @@ class GraphIndex<K>
                 writer.println("iso         : " + iso);
 
                 affectedKeys.forEach(k -> baseIso.put(k, iso.get(k)));
-                writer.println("Contributed " + affectedKeys + " yielding iso mapping: " + iso);
+                //writer.println("Contributed " + affectedKeys + " yielding iso mapping: " + iso);
 
 
                 // iso: how to rename nodes of the view graph so it matches with the insert graph
@@ -393,7 +405,7 @@ class GraphIndex<K>
                     ///child.add(diff, iso, writer);
                     // yield this as an insert position
                     //InsertPosition<K> p = new InsertPosition(this, viewGraph);
-                    findInsertPositions(out, child, diff, iso, lookupMode, writer);
+                    findInsertPositions(out, child, diff, baseIso, lookupMode, writer);
 //                }
 
                 affectedKeys.forEach(baseIso::remove);
@@ -466,6 +478,7 @@ class GraphIndex<K>
             GraphIndexNode<K> subsumeRoot = null;//createNode(graphIso);//new GraphIndexNode<K>(graphIso);
 
 
+            writer.incIndent();
             //for(GraphIndexNode child : children) {
             Iterator<GraphIndexNode<K>> it = node.getChildren().iterator();//children.listIterator();
             while(it.hasNext()) {
@@ -479,7 +492,22 @@ class GraphIndex<K>
                 // For every found isomorphism, check all children whether they are also isomorphic.
                 writer.incIndent();
                 int i = 0;
-                for(BiMap<Node, Node> iso : Lists.newArrayList(toIterable(QueryToJenaGraph.match(baseIso.inverse(), insertGraph, viewGraph)))) {
+
+//
+//                Iterable<BiMap<Node, Node>> isoTmp = Lists.newArrayList(toIterable(QueryToJenaGraph.match(baseIso.inverse(), insertGraph, viewGraph)));
+//
+//                GraphVar ga = new GraphVarImpl();
+//                //insertGraph.find(Node.ANY, Node.ANY, Node.ANY).forEachRemaining(ga::add);
+//                GraphUtil.addInto(ga, insertGraph);
+//                ga.find(Node.ANY, Node.ANY, Var.alloc("ao")).forEachRemaining(x -> System.out.println(x));
+//                GraphVar gb = new GraphVarImpl();
+//                viewGraph.find(Node.ANY, Node.ANY, Node.ANY).forEachRemaining(gb::add);
+//                //GraphUtil.addInto(gb, viewGraph);
+//                insertGraph = ga;
+//                viewGraph = new GraphIsoMapImpl(gb, HashBiMap.create());
+
+                Iterable<BiMap<Node, Node>> isos = QueryToJenaGraph.match(baseIso.inverse(), insertGraph, viewGraph).collect(Collectors.toSet());
+                for(BiMap<Node, Node> iso : isos) {
                     writer.println("Detected subsumption #" + ++i);
                     writer.println("  with iso: " + iso);
                     writer.incIndent();
@@ -517,7 +545,7 @@ class GraphIndex<K>
                 writer.decIndent();
 
             }
-
+            writer.decIndent();
 
         }
 
@@ -536,6 +564,12 @@ class GraphIndex<K>
 
 public class MainSparqlQueryToGraph {
 
+    public static <K, V> Map<K, V> prettify(Map<? extends K, ? extends V> map) {
+        Map<K, V> result = new TreeMap<>(StringPrettyComparator::doCompare);
+        result.putAll(map);
+
+        return result;
+    }
 
 
     public static void main(String[] args) {
@@ -559,7 +593,8 @@ public class MainSparqlQueryToGraph {
 
                 { "Prefix : <http://ex.org/> Select * { ?as ?ap ?ao }",
                   "Prefix : <http://ex.org/> Select * { ?js ?jp ?jo . ?ks ?kp ?ko }",
-                  "Prefix : <http://ex.org/> Select * { ?xs ?xp ?xo . ?ys ?yp ?yo . ?zs ?zp ?zo }" },
+                  "Prefix : <http://ex.org/> Select * { ?xs ?xp ?xo . ?ys ?yp ?yo . ?zs ?zp ?zo }",
+                  "Prefix : <http://ex.org/> Select * { ?sa ?sp ?so . ?ts ?tp ?to .}" },
 
                 // test examples with overlapping variables
                 { "Prefix : <http://ex.org/> Select * { ?as ?ap ?ao }",
@@ -570,7 +605,7 @@ public class MainSparqlQueryToGraph {
 
         String caseA = cases[1][0];
         String caseB = cases[1][1];
-        String caseC = cases[1][2];
+        String caseC = cases[1][3];
 
         // This does not work with jgrapht due to lack of support for multi edges!!!
 
@@ -609,10 +644,13 @@ public class MainSparqlQueryToGraph {
 //        System.out.println("Graph B:");
 //        RDFDataMgr.write(System.out, bg.getWrapped(), RDFFormat.NTRIPLES);
 //
-        List<Map<Node, Node>> solutions = QueryToJenaGraph.match(HashBiMap.create(), bg, ag).collect(Collectors.toList());
+        List<Map<Node, Node>> solutions = QueryToJenaGraph.match(HashBiMap.create(), bg, cg).collect(Collectors.toList());
+//
+//        System.out.println("VarMap entries: " + solutions.size());
 
-        System.out.println("VarMap entries: " + solutions.size());
-        solutions.forEach(varMap -> System.out.println(varMap));
+        solutions.forEach(varMap -> {
+            System.out.println(prettify(varMap));
+        });
 
 
         GraphIndex<Node> index = GraphIndex.create();
@@ -631,11 +669,11 @@ public class MainSparqlQueryToGraph {
         }
 
         System.out.println("Performing lookup");
-        index.lookup(cg).entries().forEach(e -> System.out.println("Lookup result: " + e));
+        index.lookup(cg).entries().forEach(e -> System.out.println("Lookup result: " + e.getKey() + ": " + prettify(e.getValue())));
 
 
         //SparqlQueryContainmentUtils.match(viewQuery, userQuery, qfpcMatcher)
-        org.jgrapht.Graph<?, ?> dg = new PseudoGraphJenaGraph(ag);
+        org.jgrapht.Graph<?, ?> dg = new PseudoGraphJenaGraph(cg);
         //System.out.println(graph);
         if(false) {
             visualizeGraph(dg);
@@ -647,7 +685,7 @@ public class MainSparqlQueryToGraph {
         JFrame frame = new JFrame();
         frame.setSize(1000, 800);
         JGraph jgraph = new JGraph(new JGraphModelAdapter(graph));
-        jgraph.setScale(2);
+        jgraph.setScale(1);
         final JGraphLayout hir = new JGraphHierarchicalLayout();
         // final JGraphLayout hir = new JGraphSelfOrganizingOrganicLayout();
 

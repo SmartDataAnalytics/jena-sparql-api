@@ -39,24 +39,25 @@ public class GraphVarImpl
         return varToNode;
     }
 
+
     public GraphVarImpl(Graph base) {
         super(base);
 
         varToNode = HashBiMap.create();
-        nodeGenerator = (v) -> NodeFactory.createBlankNode("var_" + v.getName());
+        nodeGenerator = (v) -> NodeFactory.createURI("var://" + v.getName());
 
         toGraph = (n) -> n.isVariable() ? varToNode.computeIfAbsent((Var)n, (v) -> nodeGenerator.apply(v)) : n;
         fromGraph = (n) -> {
-            Var v = varToNode.inverse().get(n);
+            Var v = varToNode.inverse().get(n); // Can't use getOrDefault because we can't pass a Node as default arg
             Node r = v == null ? n : v;
             return r;
         };
     }
 
-    @Override
-    public Graph getWrapped() {
-        return base;
-    }
+//    @Override
+//    public Graph getWrapped() {
+//        return base;
+//    }
 
 //    @Override
 //    public void add(Triple t) {

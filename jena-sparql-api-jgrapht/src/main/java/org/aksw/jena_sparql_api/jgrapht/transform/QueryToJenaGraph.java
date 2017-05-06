@@ -6,8 +6,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -23,10 +23,14 @@ import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.util.NodeComparator;
+import org.apache.jena.sparql.util.NodeUtils;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.GraphMapping;
+import org.jgrapht.Graphs;
 import org.jgrapht.alg.isomorphism.IsomorphicGraphMapping;
 import org.jgrapht.alg.isomorphism.VF2SubgraphIsomorphismInspector;
+import org.jgrapht.graph.SimpleDirectedGraph;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
@@ -64,22 +68,21 @@ public class QueryToJenaGraph {
 
     //public static unionToGraph(DirectedGraph<Node, LabeledEdge<Node, Node>>)
 
-    public static void addEdge(Graph graph, Node source, Node edgeLabel, Node target, Supplier<Node> nodeSupplier, Map<Var, Node> varToNode) {
-//        Node o = target.isVariable()
-//                ? varToNode.computeIfAbsent((Var)target, (var) -> nodeSupplier.get())
-//                : target;
-
+    public static void addEdge(Graph graph, Node source, Node edgeLabel, Node target) {
         graph.add(new Triple(source, edgeLabel, target));
     }
 
-    public static Node addQuad(Graph graph, Quad quad, Supplier<Node> nodeSupplier, Map<Var, Node> varToNode) {
+    public static Node addQuad(Graph graph, Quad quad, Supplier<Node> nodeSupplier) {
         // Allocate a fresh node for the quad
-        Node quadNode = nodeSupplier.get();//NodeFactory.createBlankNode();
+        Node quadNode = nodeSupplier.get();
 
-        addEdge(graph, quadNode, g, quad.getGraph(), nodeSupplier, varToNode);
-        addEdge(graph, quadNode, s, quad.getSubject(), nodeSupplier, varToNode);
-        addEdge(graph, quadNode, p, quad.getPredicate(), nodeSupplier, varToNode);
-        addEdge(graph, quadNode, o, quad.getObject(), nodeSupplier, varToNode);
+        g = quad.getGraph();
+        if(!Quad.defaultGraphIRI.equals(g) && !Quad.defaultGraphNodeGenerated.equals(g)) {
+            addEdge(graph, quadNode, g, quad.getGraph());
+        }
+        addEdge(graph, quadNode, s, quad.getSubject());
+        addEdge(graph, quadNode, p, quad.getPredicate());
+        addEdge(graph, quadNode, o, quad.getObject());
 
         return quadNode;
     }
@@ -92,22 +95,22 @@ public class QueryToJenaGraph {
      * @param quads
      * @return
      */
-    public static Node quadsToGraphNode(Graph graph, Collection<Quad> quads, Supplier<Node> nodeSupplier, Map<Var, Node> varToNode) {
+    public static Node quadsToGraphNode(Graph graph, Collection<Quad> quads, Supplier<Node> nodeSupplier) {
         Node quadBlockNode = nodeSupplier.get();
         //graph = new DirectedPseudograph<>(LabeledEdgeImpl.class);
         for(Quad quad : quads) {
-            Node quadNode = addQuad(graph, quad, nodeSupplier, varToNode);
-            addEdge(graph, quadBlockNode, quadBlockMember, quadNode, nodeSupplier, varToNode);
+            Node quadNode = addQuad(graph, quad, nodeSupplier);
+            addEdge(graph, quadBlockNode, quadBlockMember, quadNode);
         }
 
         return quadBlockNode;
     }
 
 
-    public static void quadsToGraph(Graph graph, Collection<Quad> quads, Supplier<Node> nodeSupplier, Map<Var, Node> varToNode) {
+    public static void quadsToGraph(Graph graph, Collection<Quad> quads, Supplier<Node> nodeSupplier) {
         //graph = new DirectedPseudograph<>(LabeledEdgeImpl.class);
         for(Quad quad : quads) {
-            addQuad(graph, quad, nodeSupplier, varToNode);
+            addQuad(graph, quad, nodeSupplier);
         }
     }
 
@@ -129,17 +132,17 @@ public class QueryToJenaGraph {
                     Var v = e.getKey();
                     Node c = e.getValue().getNode();
 
-                    addEdge(graph, equalsNode, ev, v, nodeSupplier, varToNode);
-                    addEdge(graph, c, ec, equalsNode, nodeSupplier, varToNode);
-                    addEdge(graph, orNode, dm, equalsNode, nodeSupplier, varToNode);
+                    addEdge(graph, equalsNode, ev, v);
+                    addEdge(graph, c, ec, equalsNode);
+                    addEdge(graph, orNode, dm, equalsNode);
 
                 } else {
 
                     Var v = e.getKey();
                     Node c = e.getValue().getNode();
 
-                    addEdge(graph, orNode, Vars.x, v, nodeSupplier, varToNode);
-                    addEdge(graph, c, Vars.y, orNode, nodeSupplier, varToNode);
+                    addEdge(graph, orNode, Vars.x, v);
+                    addEdge(graph, c, Vars.y, orNode);
                 }
             }
         }
@@ -147,10 +150,17 @@ public class QueryToJenaGraph {
 
 
     public static Stream<BiMap<Node, Node>> match(BiMap<Node, Node> baseIso, Graph a, Graph b) {
-        DirectedGraph<Node, Triple> adg = new PseudoGraphJenaGraph(a);
-        DirectedGraph<Node, Triple> bdg = new PseudoGraphJenaGraph(b);
+        DirectedGraph<Node, Triple> atmp = new PseudoGraphJenaGraph(a);
+        DirectedGraph<Node, Triple> btmp = new PseudoGraphJenaGraph(b);
 
-        Stream<BiMap<Node, Node>> result = match(baseIso,adg, bdg);
+        // Create a copy of the wrapped graph, as we will have to re-compute a lot of data with the view
+        DirectedGraph<Node, Triple> adg = new SimpleDirectedGraph<>(Triple.class);
+        DirectedGraph<Node, Triple> bdg = new SimpleDirectedGraph<>(Triple.class);
+
+        Graphs.addGraph(adg, atmp);
+        Graphs.addGraph(bdg, btmp);
+
+        Stream<BiMap<Node, Node>> result = match(baseIso, adg, bdg);
         return result;
     }
 
@@ -164,63 +174,65 @@ public class QueryToJenaGraph {
     }
 
 
-    public static int getLevel(Node node) {
-        int result
-            = node == null ? 1
-            : node.isLiteral() ? 2
-            : node.isURI() ? 3
-            : node.isBlank() ? 4
-            : node.isVariable() ? 5
-            : 0;
+//    public static int getLevel(Node node) {
+//        int result
+//            = node == null ? 1
+//            : node.isLiteral() ? 2
+//            : node.isURI() ? 3
+//            : node.isBlank() ? 4
+//            : node.isVariable() ? 5
+//            : 0;
+//
+//        return result;
+//    }
+//
+//
+//    public static int compareByString(Object i, Object j) {
+//        String x = Objects.toString(i);
+//        String y = Objects.toString(j);
+//
+//        int result = x.compareTo(y);
+//        return result;
+//    }
 
+    public static int compareNodes(BiMap<Node, Node> baseIso, Node i, Node j) {
+        int result;
+        // If nodes were mapped by the isomorphism, they need to be equal
+        // otherwise, we treat vars and blanknodes as always equal among each other.
+
+        Node ii;
+        Node jj;
+
+        if((ii = baseIso.get(i)) != null) {
+            result = Objects.equals(ii, j) ? 0 : NodeUtils.compareRDFTerms(ii, j);
+        } else if((jj = baseIso.inverse().get(j)) != null) {
+            result = Objects.equals(i, jj) ? 0 : NodeUtils.compareRDFTerms(i, jj);
+        } else {
+            result =  (i.isVariable() && j.isVariable()) || (i.isBlank() && j.isBlank())
+                    ? 0
+                    : NodeUtils.compareRDFTerms(i, j);
+        }
+
+//        System.err.println("NodeCmp [" + result + "] for " + i + " <-> " + j);
         return result;
     }
-
-
 
     public static Stream<BiMap<Node, Node>> match(
             BiMap<Node, Node> baseIso, // view to user query
             DirectedGraph<Node, Triple> a,
             DirectedGraph<Node, Triple> b) {
 
-
-        //baseIso = HashBiMap.create();
-//        System.out.println("EDGES:");
-//        b.edgeSet().forEach(System.out::println);
-//        System.out.println("done with edges");
-
-        //System.out.println(baseIso);
-
-
-
-        Comparator<Node> nodeCmp = (i, j) -> {
-            Node x = i;//baseIso.getOrDefault(i, i);
-            Node y = j;//baseIso.inverse().getOrDefault(j, j);
-            //System.out.println(i + " vs " + j + " => " + x + " vs " + y);
-            //(x == y)1 ||
-
-            int d = getLevel(x) - getLevel(y);
-
-            int  r = (x.isVariable() && y.isVariable()) || (x.isBlank() && y.isBlank())
-                    ? 0
-                    : d == 0 ? x.toString().compareTo(y.toString()) : d;
-            //System.err.println("NodeCmp [" + r + "] for " + x + " <-> " + y);
-            return r;
-        };
-
-        Comparator<Triple> edgeCmp = (x, y) -> {
-            int r = x.getPredicate().toString().compareTo(y.getPredicate().toString());
-            //System.err.println("EdgeCmp: [" + r + "] for " + x + " <-> " + y);
-            return r;
-        };
-
 //        a.edgeSet().forEach(e -> System.out.println("a: " + e));
 //        b.edgeSet().forEach(e -> System.out.println("b: " + e));
 //        System.out.println("a: "+ a.vertexSet());
 //        System.out.println("b: "+ b.vertexSet());
+//        System.err.println("NodeCmp under " + baseIso);
 
+        Comparator<Node> nodeCmp = (x, y) -> QueryToJenaGraph.compareNodes(baseIso, x, y);
+        Comparator<Triple> edgeCmp = (x, y) -> QueryToJenaGraph.compareNodes(baseIso, x.getPredicate(), y.getPredicate());
 
-        VF2SubgraphIsomorphismInspector<Node, Triple> inspector = new VF2SubgraphIsomorphismInspector<>(b, a, nodeCmp, edgeCmp, true);
+        VF2SubgraphIsomorphismInspector<Node, Triple> inspector =
+                new VF2SubgraphIsomorphismInspector<>(b, a, nodeCmp, edgeCmp, true);
         Iterator<GraphMapping<Node, Triple>> it = inspector.getMappings();
 
         Stream<BiMap<Node, Node>> result = StreamUtils.stream(it)
@@ -228,12 +240,16 @@ public class QueryToJenaGraph {
                 .map(m -> {
                     BiMap<Node, Node> nodeMap = HashBiMap.create();//new HashMap<>();
                     for(Node bNode : b.vertexSet()) {
-                        if(m.hasVertexCorrespondence(bNode)) {
-                            Node aNode = m.getVertexCorrespondence(bNode, true);
-                            nodeMap.put(aNode, bNode);
-                        }
+//                        if(bNode.isVariable()) {
+                            if(m.hasVertexCorrespondence(bNode)) {
+                                Node aNode = m.getVertexCorrespondence(bNode, true);
+//                                if(aNode.isVariable()) {
+                                    nodeMap.put(aNode, bNode);
+//                                }
+                            }
+//                        }
                     }
-                    System.out.println("Created map: " + nodeMap);
+//                    System.out.println("Created map: " + nodeMap);
 
 
                     //System.out.println("Mapping: " + m);
@@ -253,8 +269,9 @@ public class QueryToJenaGraph {
 //                    }
 
                     return nodeMap;
-                }).
-                filter(x -> x != null);
+                });
+                //filter(x -> x != null)
+                // .distinct(); // not sure
 
         return result;
     }
