@@ -123,8 +123,8 @@ public class ServiceUtils {
 
         Var outputVar = Var.alloc("_count_"); //ConceptUtils.freshVar(concept);
 
-        long xitemLimit = itemLimit == null ? null : itemLimit + 1;
-        long xrowLimit = rowLimit == null ? null : rowLimit + 1;
+        Long xitemLimit = itemLimit == null ? null : itemLimit + 1;
+        Long xrowLimit = rowLimit == null ? null : rowLimit + 1;
 
         Query countQuery = QueryGenerationUtils.createQueryCount(query, outputVar, xitemLimit, xrowLimit);
 

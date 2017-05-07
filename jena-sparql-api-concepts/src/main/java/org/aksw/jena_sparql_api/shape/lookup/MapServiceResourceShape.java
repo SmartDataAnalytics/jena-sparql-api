@@ -34,7 +34,7 @@ public class MapServiceResourceShape
     @Override
     public MapPaginator<Node, Graph> createPaginator(Concept filterConcept) {
         MappedConcept<Graph> mappedConcept = ResourceShape.createMappedConcept(resourceShape, filterConcept, false);
-        MapPaginatorMappedConcept<Graph> result = new MapPaginatorMappedConcept<>(qef, filterConcept, isLeftJoin, mappedConcept);
+        MapPaginatorMappedConcept<Graph> result = new MapPaginatorMappedConcept<>(qef, null, isLeftJoin, mappedConcept);
         return result;
     }
 

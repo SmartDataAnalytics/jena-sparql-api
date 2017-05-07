@@ -24,6 +24,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.SortCondition;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.engine.binding.BindingHashMap;
 import org.apache.jena.sparql.expr.E_OneOf;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprAggregator;
@@ -31,6 +32,7 @@ import org.apache.jena.sparql.expr.ExprList;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.aggregate.AggCount;
 import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementData;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementOptional;
@@ -46,6 +48,20 @@ public class ConceptUtils {
     public static Concept listAllPredicates = Concept.create("?s ?p ?o", "p");
     public static Concept listAllGraphs = Concept.create("Graph ?g { ?s ?p ?o }", "g");
 
+
+    public static Concept createConcept(Iterable<Node> nodes) {
+        ElementData data = new ElementData();
+        data.add(Vars.s);
+        for(Node node : nodes) {
+            BindingHashMap binding = new BindingHashMap();
+            binding.add(Vars.s, node);
+            data.add(binding);
+        }
+
+        Concept result = new Concept(data, Vars.s);
+        return result;
+
+    }
 
     public static Concept createFilterConcept(Collection<Node> nodes) {
 

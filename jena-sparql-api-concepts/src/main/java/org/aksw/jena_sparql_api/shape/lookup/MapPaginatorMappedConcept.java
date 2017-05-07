@@ -14,7 +14,6 @@ import org.aksw.jena_sparql_api.lookup.MapServiceUtils;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.apache.jena.graph.Node;
-import org.apache.jena.sparql.core.DatasetGraph;
 
 import com.google.common.collect.Range;
 
@@ -35,13 +34,13 @@ public class MapPaginatorMappedConcept<G>
     @Override
     public Map<Node, G> fetchMap(Range<Long> range) {
         MapService<Concept, Node, G> ms = MapServiceUtils.createListServiceMappedConcept(qef, mappedConcept, isLeftJoin);
-        Map<Node, G> result = ms.fetchData(filterConcept, range);
+        Map<Node, G> result = ms.fetchData(null, range);
         return result;
     }
 
     @Override
     public CountInfo fetchCount(Long itemLimit, Long rowLimit) {
-        CountInfo result = ServiceUtils.fetchCountConcept(qef, filterConcept, itemLimit, rowLimit);
+        CountInfo result = ServiceUtils.fetchCountConcept(qef, mappedConcept.getConcept(), itemLimit, rowLimit);
         return result;
     }
 

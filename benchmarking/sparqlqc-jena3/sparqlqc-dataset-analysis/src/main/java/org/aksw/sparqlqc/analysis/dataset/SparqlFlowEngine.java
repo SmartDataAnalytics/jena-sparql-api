@@ -15,15 +15,25 @@ public class SparqlFlowEngine {
         queryParser = SparqlQueryParserImpl.create();
     }
 
-    public PaginatorQuery fromSelect(String queryStr) {
+    public PaginatorQueryBinding fromSelect(String queryStr) {
         Query query = queryParser.apply(queryStr);
-        PaginatorQuery result = fromSelect(query);
+        PaginatorQueryBinding result = fromSelect(query);
         return result;
     }
 
-    public PaginatorQuery fromSelect(Query query) {
-        PaginatorQuery result = new PaginatorQuery(qef, query);
+    public PaginatorQueryBinding fromSelect(Query query) {
+        PaginatorQueryBinding result = new PaginatorQueryBinding(qef, query);
         return result;
     }
 
+    public PaginatorQueryTriple fromConstruct(String queryStr) {
+        Query query = queryParser.apply(queryStr);
+        PaginatorQueryTriple result = fromConstruct(query);
+        return result;
+    }
+
+    public PaginatorQueryTriple fromConstruct(Query query) {
+        PaginatorQueryTriple result = new PaginatorQueryTriple(qef, query);
+        return result;
+    }
 }

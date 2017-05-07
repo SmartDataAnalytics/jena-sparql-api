@@ -190,10 +190,10 @@ public class QueryUtils {
 
         Long newMax = (parent.hasUpperBound()
             ? child.hasUpperBound()
-                ? Math.min(parent.upperEndpoint(), child.upperEndpoint())
+                ? (Long)Math.min(parent.upperEndpoint(), child.upperEndpoint())
                 : parent.upperEndpoint()
             : child.hasUpperBound()
-                ? child.upperEndpoint()
+                ? (Long)child.upperEndpoint()
                 : null);
 
         Range<Long> result = newMax == null

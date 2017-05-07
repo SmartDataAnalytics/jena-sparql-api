@@ -17,6 +17,7 @@ import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlServiceReference;
+import org.aksw.jena_sparql_api.lookup.ListPaginator;
 import org.aksw.jena_sparql_api.lookup.ListService;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
@@ -26,7 +27,10 @@ import org.aksw.jena_sparql_api.stmt.SparqlQueryParser;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.aksw.simba.lsq.vocab.LSQ;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.GraphUtil;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.rdf.model.Model;
@@ -39,6 +43,8 @@ import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.core.DatasetDescription;
+import org.apache.jena.sparql.graph.GraphFactory;
+import org.apache.jena.sparql.util.graph.GraphUtils;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
@@ -264,43 +270,52 @@ public class MainSparqlQcDatasetAnalysis {
      * @param qef
      */
     public static void filterByIdenticalNormalizedQuery() {//Stream<Triple> tripleStream, QueryExecutionFactory qef) {
+//      linkRsb.out("http://lsq.aksw.org/vocab#isEntailed-JSAC");
+
+
         String fileUrl = "file:///home/raven/Downloads/result.nt";
-        //Model model = RDFDataMgr.loadModel("file:///home/raven/Downloads/result.nt");
-        //QueryExecutionFactory qef = FluentQueryExecutionFactory.from(model).create();
 
         QueryExecutionFactory qef = FluentQueryExecutionFactory.fromFileNameOrUrl(fileUrl).create();
-
         SparqlFlowEngine engine = new SparqlFlowEngine(qef);
 
-        engine
-            .fromSelect("SELECT * { ?s ?p ?o }")
-            .chunk(10).apply(Range.atMost(10l)).forEach(x -> {
-                System.out.println("got batch: " + x);
+
+
+        QueryExecutionFactory dataQef = FluentQueryExecutionFactory.http("http://localhost:8950/swdfsparql").create();
+        //QueryExecutionFactory dataQef = FluentQueryExecutionFactory.http("http://localhost:8950/sparql").create();
+
+        ResourceShapeBuilder dataRsb = new ResourceShapeBuilder();
+        dataRsb.out(LSQ.text);
+        ResourceShape dataShape = dataRsb.getResourceShape();
+        LookupService<Node, Resource> dataLs = MapServiceResourceShape.createLookupService(dataQef, dataShape)
+                .mapValues(ResourceUtils::asResource);
+
+
+        ListPaginator<List<Triple>> paginator = engine
+            .fromConstruct("CONSTRUCT WHERE { ?s ?p ?o }")
+            .chunk(10);
+
+        System.out.println("Processing " + paginator.fetchCount(null, null) + " items");
+
+        paginator.apply(Range.atMost(10l)).map(list -> {
+                Graph g = GraphFactory.createDefaultGraph();
+                GraphUtil.add(g, list);
+                return g;
+            }).forEach(x -> {
+                Map<Node, Resource> map = dataLs.apply(() -> GraphUtils.allNodes(x));
+
+
+
+                System.out.println("got batch: " + map);
             });
+
 
         if(true) {
             return;
         }
 
 
-        QueryExecutionFactory dataQef = FluentQueryExecutionFactory.http("http://localhost:8950/sparql").create();
-
-        ResourceShapeBuilder linkRsb = new ResourceShapeBuilder();
-        linkRsb.out("http://lsq.aksw.org/vocab#isEntailed-JSAC");
-
-
-        ResourceShape shape = linkRsb.getResourceShape();
-        ListService<Concept, Resource> ms = MapServiceResourceShape.createListService(qef, shape, true);
-
-
-        ResourceShapeBuilder dataRsb = new ResourceShapeBuilder();
-        dataRsb.out(LSQ.text);
-        ResourceShape dataShape = linkRsb.getResourceShape();
-
 
         //LookupService<Node, Resource> nodeToQuery =
-        LookupService<Node, Resource> ls = MapServiceResourceShape.createLookupService(dataQef, dataShape)
-                    .mapValues(ResourceUtils::asResource);
 
         //ls.apply(t);
 
@@ -311,25 +326,25 @@ public class MainSparqlQcDatasetAnalysis {
 
 
         //feed(ms.streamData(null, null))
-
-        SparqlQueryParser parser = SparqlQueryParserImpl.create();
-        //LookupServiceListService.create(listService)
-        ms.streamData(null, null).forEach(r -> {
-            Set<Node> nodes = new HashSet<>();
-            nodes.add(r.asNode());
-            Set<Node> targets = r.listProperties().mapWith(Statement::getObject).mapWith(RDFNode::asNode).toSet();
-            nodes.addAll(targets);
-
-            Map<Node, Query> map = ls.apply(nodes).entrySet().stream().collect(
-                    Collectors.toMap(e -> e.getKey(), e -> parser.apply(e.getValue().getProperty(LSQ.text).getString())));
-
-
-
-
-
-            System.out.println("Resource: " + map);
-            //RDFDataMgr.write(System.out, r.getModel(), RDFFormat.TURTLE_BLOCKS);
-        });
+//
+//        SparqlQueryParser parser = SparqlQueryParserImpl.create();
+//        //LookupServiceListService.create(listService)
+//        ms.streamData(null, null).forEach(r -> {
+//            Set<Node> nodes = new HashSet<>();
+//            nodes.add(r.asNode());
+//            Set<Node> targets = r.listProperties().mapWith(Statement::getObject).mapWith(RDFNode::asNode).toSet();
+//            nodes.addAll(targets);
+//
+//            Map<Node, Query> map = ls.apply(nodes).entrySet().stream().collect(
+//                    Collectors.toMap(e -> e.getKey(), e -> parser.apply(e.getValue().getProperty(LSQ.text).getString())));
+//
+//
+//
+//
+//
+//            System.out.println("Resource: " + map);
+//            //RDFDataMgr.write(System.out, r.getModel(), RDFFormat.TURTLE_BLOCKS);
+//        });
 
 
 
