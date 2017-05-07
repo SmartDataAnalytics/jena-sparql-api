@@ -108,7 +108,6 @@ public class ConceptUtils {
         return result;
     }
 
-
     public static Set<Var> getVarsMentioned(Concept concept) {
         Collection<Var> tmp = PatternVars.vars(concept.getElement());
         Set<Var> result = SetUtils.asSet(tmp);
@@ -388,17 +387,17 @@ public class ConceptUtils {
     }
 
     public static Query createQueryList(OrderedConcept orderedConcept, Long limit, Long offset) {
-    	Concept concept = orderedConcept.getConcept(); 
-    	Query result = createQueryList(concept, limit, offset);
-    	
-    	for(SortCondition sc : orderedConcept.getOrderBy()) {
-    		result.addOrderBy(sc);
-    	}
-    	
-    	return result;
+        Concept concept = orderedConcept.getConcept();
+        Query result = createQueryList(concept, limit, offset);
+
+        for(SortCondition sc : orderedConcept.getOrderBy()) {
+            result.addOrderBy(sc);
+        }
+
+        return result;
     }
-    
-    
+
+
     public static Query createQueryList(Concept concept, Long limit, Long offset) {
         Query result = new Query();
         result.setQuerySelectType();

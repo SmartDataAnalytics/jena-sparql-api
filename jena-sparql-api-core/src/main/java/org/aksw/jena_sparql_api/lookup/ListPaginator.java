@@ -16,4 +16,8 @@ public interface ListPaginator<T>
         List<T> result = apply(range).collect(Collectors.toList());
         return result;
     }
+
+    default ListPaginator<List<T>> chunk(long chunkSize) {
+        return new ListPaginatorBatch<T>(this, chunkSize);
+    }
 }

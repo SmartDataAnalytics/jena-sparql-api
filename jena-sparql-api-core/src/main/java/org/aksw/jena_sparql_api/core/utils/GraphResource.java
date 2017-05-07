@@ -1,13 +1,12 @@
-package org.aksw.jena_sparql_api.batch.step;
+package org.aksw.jena_sparql_api.core.utils;
 
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
-import org.aksw.jena_sparql_api.batch.cli.main.SupplierExtendedIteratorTriples;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.graph.impl.GraphBase;
 import org.apache.jena.util.iterator.ExtendedIterator;
 
-import com.google.common.base.Supplier;
 
 public class GraphResource
     extends GraphBase

@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.batch.step;
+package org.aksw.jena_sparql_api.core.utils;
 
 import java.util.function.Predicate;
 

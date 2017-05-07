@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.batch.step;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.SparqlServiceImpl;
+import org.aksw.jena_sparql_api.core.utils.GraphResource;
 import org.aksw.jena_sparql_api.model.QueryExecutionFactoryModel;
 import org.springframework.beans.factory.config.AbstractFactoryBean;
 

@@ -23,55 +23,55 @@ public class RangeUtils {
      * @return
      */
     public static <C extends Comparable<C>> Range<C> makeAbsolute(Range<C> outer, Range<C> relative, DiscreteDomain<C> domain, BiFunction<C, Long, C> addition) {
-		long distance = domain.distance(outer.lowerEndpoint(), relative.lowerEndpoint());
+        long distance = domain.distance(outer.lowerEndpoint(), relative.lowerEndpoint());
 
-		Range<C> shifted = RangeUtils.shift(relative, distance, domain, addition);
-		Range<C> result = shifted.intersection(outer);
-    	return result;
+        Range<C> shifted = RangeUtils.shift(relative, distance, domain, addition);
+        Range<C> result = shifted.intersection(outer);
+        return result;
     }
 
 
     public static <C extends Comparable<C>> Range<C> shift(Range<C> range, long distance, DiscreteDomain<C> domain) {
-    	BiFunction<C, Long, C> addition = (item, d) -> {
-    		C result = item;
-    		if(d >= 0) {
-    			for(int i = 0; i < d; ++i) {
-    				result = domain.next(item);
-    			}
-    		} else {
-    			for(int i = 0; i < -d; ++i) {
-    				result = domain.previous(item);
-    			}
-    		}
-    		return result;
-    	};
+        BiFunction<C, Long, C> addition = (item, d) -> {
+            C result = item;
+            if(d >= 0) {
+                for(int i = 0; i < d; ++i) {
+                    result = domain.next(item);
+                }
+            } else {
+                for(int i = 0; i < -d; ++i) {
+                    result = domain.previous(item);
+                }
+            }
+            return result;
+        };
 
-    	Range<C> result = shift(range, distance, domain, addition);
-    	return result;
+        Range<C> result = shift(range, distance, domain, addition);
+        return result;
     }
 
     public static <C extends Comparable<C>> Range<C> shift(Range<C> rawRange, long distance, DiscreteDomain<C> domain, BiFunction<C, Long, C> addition) {
 
-    	Range<C> range = rawRange.canonical(domain);
+        Range<C> range = rawRange.canonical(domain);
 
-		Range<C> result;
-		if(range.hasLowerBound()) {
-			C oldLower = range.lowerEndpoint();
-			C newLower = addition.apply(oldLower, distance);
+        Range<C> result;
+        if(range.hasLowerBound()) {
+            C oldLower = range.lowerEndpoint();
+            C newLower = addition.apply(oldLower, distance);
 
-			if(range.hasUpperBound()) {
-				C oldUpper = range.upperEndpoint();
-				C newUpper = addition.apply(oldUpper, distance);
-				result = Range.closedOpen(newLower, newUpper);
-			} else {
-				result = Range.atLeast(oldLower);
-			}
+            if(range.hasUpperBound()) {
+                C oldUpper = range.upperEndpoint();
+                C newUpper = addition.apply(oldUpper, distance);
+                result = Range.closedOpen(newLower, newUpper);
+            } else {
+                result = Range.atLeast(oldLower);
+            }
 
-		} else {
-			throw new IllegalArgumentException("Cannot displace a range without lower bound");
-		}
+        } else {
+            throw new IllegalArgumentException("Cannot displace a range without lower bound");
+        }
 
-		return result;
+        return result;
     }
 
     public static <K extends Comparable<K>, V> Set<Entry<Range<K>, V>> getIntersectingRanges(Range<K> r, Collection<Entry<Range<K>, V>> ranges) {
@@ -89,6 +89,26 @@ public class RangeUtils {
         return result;
     }
 
+    public static Range<Long> multiplyByPageSize(Range<Long> range, long pageSize) {
+        Range<Long> result;
+
+        if(range.hasLowerBound()) {
+            if(range.hasUpperBound()) {
+                result = Range.closedOpen(range.lowerEndpoint() * pageSize, range.upperEndpoint() * pageSize);
+            } else {
+                result = Range.atLeast(range.lowerEndpoint() * pageSize);
+            }
+        } else {
+            if(range.hasUpperBound()) {
+                result = Range.lessThan(range.upperEndpoint() * pageSize);
+            } else {
+                result = Range.all();
+            }
+
+        }
+
+        return result;
+    }
 
     public static PageInfo<Long> computeRange(Range<Long> range, long pageSize) {
         // Example: If pageSize=100 and offset = 130, then we will adjust the offset to 100, and use a subOffset of 30

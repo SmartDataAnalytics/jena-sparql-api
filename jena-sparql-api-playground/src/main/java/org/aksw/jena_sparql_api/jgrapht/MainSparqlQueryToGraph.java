@@ -238,7 +238,7 @@ class GraphIndex<K>
         findInsertPositions(positions, rootNode, graph, HashBiMap.create(), true, IndentedWriter.stderr);
 
         Multimap<K, Map<Node, Node>> result = HashMultimap.create();
-        System.out.println("Lookup results: " + positions.size());
+        System.out.println("Lookup result candidates: " + positions.size());
         for(InsertPosition<K> pos : positions) {
             // Match with the children
 
@@ -321,6 +321,16 @@ class GraphIndex<K>
     }
 
 
+    /**
+     * Transitively map all elements in the domain of 'src'
+     * { x -> z | x in dom(src) & z = via(src(x)) }
+     *
+     * FIXME Return a BiMap view instead of a materialized copy
+     *
+     * @param src
+     * @param map
+     * @return
+     */
     public static BiMap<Node, Node> mapDomainVia(BiMap<Node, Node> src, BiMap<Node, Node> map) {
         BiMap<Node, Node> result = src.entrySet().stream().collect(Collectors.toMap(
                 e -> map.getOrDefault(e.getKey(), e.getKey()),
@@ -332,10 +342,18 @@ class GraphIndex<K>
         return result;
     }
 
-    void findInsertPositions(Collection<InsertPosition<K>> out, GraphIndexNode<K> node, Graph insertGraph, BiMap<Node, Node> rawBaseIso, boolean lookupMode, IndentedWriter writer) {
-        //children.forEach(child -> {
-
-
+    /**
+     * For a given insertGraph, find all nodes in the tree at which insert has to occurr.
+     *
+     *
+     * @param out
+     * @param node
+     * @param insertGraph
+     * @param rawBaseIso
+     * @param retrievalMode false: only return leaf nodes of insertion, true: return all encountered nodes
+     * @param writer
+     */
+    void findInsertPositions(Collection<InsertPosition<K>> out, GraphIndexNode<K> node, Graph insertGraph, BiMap<Node, Node> rawBaseIso, boolean retrievalMode, IndentedWriter writer) {
         BiMap<Node, Node> transIso = node.getValue().getInToOut();
 
         // Map the image of the iso through the view graph iso
@@ -350,20 +368,8 @@ class GraphIndex<K>
 
         writer.incIndent();
         for(GraphIndexNode<K> child : node.getChildren()) {
-        //children.stream().flatMap(child -> {
-            //BiMap<Node, Node> isoMap = child.graphIso.getOutToIn();
-            //Graph candGraph = new GraphIsoMapImpl(graph, isoMap);
-
 
             GraphIsoMap viewGraph = child.getValue();
-//            BiMap<Node, Node> transIso = viewGraph.getInToOut();
-//
-//            // Map the image of the iso through the view graph iso
-//            BiMap<Node, Node> baseIso = mapDomainVia(rawBaseIso, transIso);
-
-
-            //iso.entrySet().stream()
-
 
             writer.println("Comparison with view graph of size " + viewGraph.size());
             //RDFDataMgr.write(System.out, viewGraph, RDFFormat.NTRIPLES);
@@ -398,31 +404,18 @@ class GraphIndex<K>
                 affectedKeys.forEach(k -> baseIso.put(k, iso.get(k)));
                 //writer.println("Contributed " + affectedKeys + " yielding iso mapping: " + iso);
 
-
                 // iso: how to rename nodes of the view graph so it matches with the insert graph
                 Graph g = new GraphIsoMapImpl(viewGraph, iso);
 
-                //Difference diff = new Difference(g, viewGraph); // left side should be the smaller graph for performance
                 Difference diff = new Difference(insertGraph, g);
 
                 // now create the diff between the insert graph and mapped child graph
                 writer.println("Diff has " + diff.size() + " triples at depth " + writer.getUnitIndent());
                 writer.println("Diff: " + diff);
-                //RDFDataMgr.write(System.out, diff, RDFFormat.NTRIPLES);
 
 
-
-                // if the diff is empty, associate the pattern id with this node
-
-                // on non empty diff, add the subgraphs as children to that node
-//                if(diff.isEmpty()) {
-//
-//                } else {
-                    ///child.add(diff, iso, writer);
-                    // yield this as an insert position
-                    //InsertPosition<K> p = new InsertPosition(this, viewGraph);
-                    findInsertPositions(out, child, diff, baseIso, lookupMode, writer);
-//                }
+                // TODO optimize handling of empty diffs
+                findInsertPositions(out, child, diff, baseIso, retrievalMode, writer);
 
                 affectedKeys.forEach(baseIso::remove);
 
@@ -432,7 +425,7 @@ class GraphIndex<K>
         }
         writer.decIndent();
 
-        if(!isSubsumed || lookupMode) {
+        if(!isSubsumed || retrievalMode) {
             // Make a copy of the baseIso, as it is transient due to state space search
             GraphIsoMap gim = new GraphIsoMapImpl(insertGraph, HashBiMap.create(rawBaseIso));
             InsertPosition<K> pos = new InsertPosition<>(node, gim);
@@ -680,7 +673,7 @@ public class MainSparqlQueryToGraph {
         } else {
             // most generic inserted last
             index.add(bg);
-            //index.add(cg);
+            index.add(cg);
             index.add(ag);
         }
 

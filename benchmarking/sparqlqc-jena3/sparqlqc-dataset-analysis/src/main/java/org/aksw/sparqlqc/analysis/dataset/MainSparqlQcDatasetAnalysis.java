@@ -49,6 +49,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
 
+import com.google.common.collect.Range;
+
 import fr.inrialpes.tyrexmo.testqc.simple.SimpleContainmentSolver;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
@@ -262,8 +264,24 @@ public class MainSparqlQcDatasetAnalysis {
      * @param qef
      */
     public static void filterByIdenticalNormalizedQuery() {//Stream<Triple> tripleStream, QueryExecutionFactory qef) {
-        Model model = RDFDataMgr.loadModel("file:///home/raven/Downloads/result.nt");
-        QueryExecutionFactory qef = FluentQueryExecutionFactory.from(model).create();
+        String fileUrl = "file:///home/raven/Downloads/result.nt";
+        //Model model = RDFDataMgr.loadModel("file:///home/raven/Downloads/result.nt");
+        //QueryExecutionFactory qef = FluentQueryExecutionFactory.from(model).create();
+
+        QueryExecutionFactory qef = FluentQueryExecutionFactory.fromFileNameOrUrl(fileUrl).create();
+
+        SparqlFlowEngine engine = new SparqlFlowEngine(qef);
+
+        engine
+            .fromSelect("SELECT * { ?s ?p ?o }")
+            .chunk(10).apply(Range.atMost(10l)).forEach(x -> {
+                System.out.println("got batch: " + x);
+            });
+
+        if(true) {
+            return;
+        }
+
 
         QueryExecutionFactory dataQef = FluentQueryExecutionFactory.http("http://localhost:8950/sparql").create();
 
@@ -272,7 +290,7 @@ public class MainSparqlQcDatasetAnalysis {
 
 
         ResourceShape shape = linkRsb.getResourceShape();
-        ListService<Concept, Resource> ms = MapServiceResourceShape.createListService(qef, shape, false);
+        ListService<Concept, Resource> ms = MapServiceResourceShape.createListService(qef, shape, true);
 
 
         ResourceShapeBuilder dataRsb = new ResourceShapeBuilder();
