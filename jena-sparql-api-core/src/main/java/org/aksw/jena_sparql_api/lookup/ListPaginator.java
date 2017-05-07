@@ -17,7 +17,7 @@ public interface ListPaginator<T>
         return result;
     }
 
-    default ListPaginator<List<T>> chunk(long chunkSize) {
+    default ListPaginator<List<T>> batch(long chunkSize) {
         return new ListPaginatorBatch<T>(this, chunkSize);
     }
 }

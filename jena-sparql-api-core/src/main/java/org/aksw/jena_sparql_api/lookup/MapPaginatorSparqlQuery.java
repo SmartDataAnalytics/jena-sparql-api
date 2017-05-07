@@ -155,7 +155,7 @@ public class MapPaginatorSparqlQuery
                   }
               }
 
-              Entry<Node, ResultSetPart> r = lookAhead == null
+              Entry<Node, ResultSetPart> r = lookAhead == null && rsp.getBindings().isEmpty()
                       ? endOfData()
                       : new SimpleEntry<>(currentNode, rsp);
 

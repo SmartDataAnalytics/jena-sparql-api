@@ -1,29 +1,29 @@
 package org.aksw.sparqlqc.analysis.dataset;
 
+import java.io.IOException;
 import java.security.Permission;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Map.Entry;
 import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlServiceReference;
 import org.aksw.jena_sparql_api.lookup.ListPaginator;
-import org.aksw.jena_sparql_api.lookup.ListService;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.aksw.jena_sparql_api.shape.lookup.MapServiceResourceShape;
-import org.aksw.jena_sparql_api.stmt.SparqlQueryParser;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.aksw.simba.lsq.vocab.LSQ;
@@ -36,7 +36,6 @@ import org.apache.jena.query.QueryExecution;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
-import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
@@ -47,7 +46,9 @@ import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sparql.util.graph.GraphUtils;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.BundleException;
 import org.osgi.framework.Constants;
+import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.launch.Framework;
 import org.osgi.framework.launch.FrameworkFactory;
@@ -92,6 +93,8 @@ public class MainSparqlQcDatasetAnalysis {
     }
 
     public static void main(String[] args) throws Exception {
+
+        init();
 
         if(true) {
             filterByIdenticalNormalizedQuery();
@@ -139,6 +142,214 @@ public class MainSparqlQcDatasetAnalysis {
         OptionSet options = parser.parse(args);
 
 
+
+
+        try {
+
+            if(options.has(endpointUrlOs)) {
+                endpointUrl = endpointUrlOs.value(options);
+            }
+
+            List<String> defaultGraphIris = graphUriOs.values(options);
+            if(options.has(queryOs)) {
+                queryStr = queryOs.value(options);
+            }
+            Integer n = nOs.value(options);
+
+            if(n != null) {
+                queryStr = queryStr + " LIMIT " + n;
+            }
+
+            useParallel = options.has(parallelOs);
+
+
+            DatasetDescription datasetDescription = DatasetDescription.create(defaultGraphIris, Collections.emptyList());
+            SparqlServiceReference endpointDescription = new SparqlServiceReference(endpointUrl, datasetDescription);
+
+            logger.info("Endpoint: " + endpointDescription);
+            logger.info("Query: " + queryStr);
+            logger.info("Parallel: " + useParallel);
+
+            QueryExecutionFactory qef = FluentQueryExecutionFactory.http(endpointDescription).create();
+            QueryExecution qe = qef.createQueryExecution(queryStr);
+//            QueryExecution qe = qef.createQueryExecution(
+//                    "PREFIX lsq:<http://lsq.aksw.org/vocab#> CONSTRUCT { ?s lsq:text ?o } { ?s lsq:text ?o ; lsq:hasSpin [ a <http://spinrdf.org/sp#Select> ] } ORDER BY ASC(strlen(?o)) LIMIT 3000");
+
+            Model in = ModelFactory.createDefaultModel();
+            qe.execSelect().forEachRemaining(qs -> {
+                in.add(qs.get("s").asResource(), LSQ.text, qs.get("o"));
+            });
+
+            Set<Resource> items = in.listSubjects().toSet();
+
+            Supplier<Stream<Resource>> queryIterable = useParallel
+                    ? () -> items.parallelStream()
+                    : () -> items.stream();
+
+
+
+            run("JSAC", jsaSolver, queryIterable);
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+
+        destroy();
+        System.exit(0);
+    }
+
+
+    /**
+     * - Gather a chunk of triples from the stream,
+     * - Create the vertexset, i.e. the set of subjects / objects (we could use the jgraphT pseudograph wrapper for that)
+     * - Perform lookup of the query strings
+     * - Parse the query strings (might use a cache)
+     * - Remove prefixes
+     * - Check for equivalence
+     * - If equal, filter the triple, i.e. don't output it
+     *
+     * @param tripleStream
+     * @param qef
+     */
+    public static void filterByIdenticalNormalizedQuery() {//Stream<Triple> tripleStream, QueryExecutionFactory qef) {
+//      linkRsb.out("http://lsq.aksw.org/vocab#isEntailed-JSAC");
+
+
+        String fileUrl = "file:///home/raven/Downloads/result.nt";
+
+        QueryExecutionFactory qef = FluentQueryExecutionFactory.fromFileNameOrUrl(fileUrl).create();
+        SparqlFlowEngine engine = new SparqlFlowEngine(qef);
+
+
+
+        QueryExecutionFactory dataQef = FluentQueryExecutionFactory.http("http://localhost:8950/swdfsparql").create();
+        //QueryExecutionFactory dataQef = FluentQueryExecutionFactory.http("http://localhost:8950/sparql").create();
+
+        ResourceShapeBuilder dataRsb = new ResourceShapeBuilder();
+        dataRsb.out(LSQ.text);
+        ResourceShape dataShape = dataRsb.getResourceShape();
+        LookupService<Node, Resource> dataLs = MapServiceResourceShape.createLookupService(dataQef, dataShape)
+                .mapValues(ResourceUtils::asResource);
+
+
+        ListPaginator<List<Triple>> paginator = engine
+            .fromConstruct("CONSTRUCT WHERE { ?s ?p ?o }")
+            .batch(10);
+
+        System.out.println("Processing " + paginator.fetchCount(null, null) + " batches");
+
+        Function<String, Query> parser = SparqlQueryParserImpl.create();
+
+        paginator.apply(Range.atMost(1l)).map(triples -> {
+                // Create a graph from each batch of triples
+                Graph graph = GraphFactory.createDefaultGraph();
+                GraphUtil.add(graph, triples);
+                return graph;
+            }).flatMap(graph -> {
+                // For all nodes in the graph, fetch all associated information according to the shape
+                // FIXME: We should exclude predicate nodes
+                Map<Node, Resource> map = dataLs.apply(() -> GraphUtils.allNodes(graph));
+
+                // Extract the value of LSQ.text and parse it as a query
+                Map<Node, Query> m = map.entrySet().stream().collect(Collectors.toMap(
+                        Entry::getKey,
+                        e -> {
+                            Query r = parser.apply(e.getValue().getProperty(LSQ.text).getString());
+                            r.getPrefixMapping().clearNsPrefixMap();
+                            return r;
+                        }));
+
+                // Now determine for each triple, whether the normalized queries are
+                // equal or isomorphic
+                Set<Triple> accepts = graph.find(Node.ANY, Node.ANY, Node.ANY).toSet().stream().filter(t -> {
+                    Query a = m.get(t.getSubject());
+                    Query b = m.get(t.getObject());
+
+                    if(a == null) {
+                        logger.warn("No query for subject " + t.getSubject());
+                    }
+
+                    if(b == null) {
+                        logger.warn("No query for object " + t.getObject());
+                    }
+
+
+                    boolean r = !Objects.equals(a, b) && a != null && b != null;
+                    System.out.println("r = " + r);
+                    return r;
+
+                    //boolean r = jsaSolver.entailed(Objects.toString(a), Objects.toString(b));
+                    //return r;
+                }).collect(Collectors.toSet());
+
+                return accepts.stream();
+                //System.out.println("got batch: " + m);
+            }).forEach(x -> {
+                System.out.println(x);
+            });
+
+
+        //LookupService<Node, Resource> nodeToQuery =
+
+        //ls.apply(t);
+
+        //ls.fe
+
+
+        //LookupServiceUtils.createLookupService(dataQef, dataShape);
+
+
+        //feed(ms.streamData(null, null))
+//
+//        SparqlQueryParser parser = SparqlQueryParserImpl.create();
+//        //LookupServiceListService.create(listService)
+//        ms.streamData(null, null).forEach(r -> {
+//            Set<Node> nodes = new HashSet<>();
+//            nodes.add(r.asNode());
+//            Set<Node> targets = r.listProperties().mapWith(Statement::getObject).mapWith(RDFNode::asNode).toSet();
+//            nodes.addAll(targets);
+//
+//            Map<Node, Query> map = ls.apply(nodes).entrySet().stream().collect(
+//                    Collectors.toMap(e -> e.getKey(), e -> parser.apply(e.getValue().getProperty(LSQ.text).getString())));
+//
+//
+//
+//
+//
+//            System.out.println("Resource: " + map);
+//            //RDFDataMgr.write(System.out, r.getModel(), RDFFormat.TURTLE_BLOCKS);
+//        });
+
+
+
+        //shape.
+
+
+        //ParameterizedSparqlString pss = new ParameterizedSparqlString();
+
+        //GraphUtils.allNodes(graph)
+
+        //LookupServiceSparqlQuery
+    //	qef.createQueryExecution("CONSTRUCT { ?s lsq:asText ?o } WHERE { ?s lsq:asText)
+    //	tripleStream.forEach(
+    }
+
+
+    public static SimpleContainmentSolver jsaSolver = null;
+
+
+    public static Framework framework = null;
+
+
+    public static void destroy() throws BundleException, InterruptedException {
+        enableSystemExitCall();
+        framework.stop();
+        if (false) {
+            framework.waitForStop(0);
+        }
+    }
+
+
+    public static void init() throws BundleException, IOException, InvalidSyntaxException {
         forbidSystemExitCall();
         FrameworkFactory frameworkFactory = ServiceLoader.load(FrameworkFactory.class).iterator().next();
 
@@ -192,179 +403,9 @@ public class MainSparqlQcDatasetAnalysis {
         // "java_cup.runtime;version=\"1.0.0\""
         ));
 
-        Framework framework = frameworkFactory.newFramework(config);
+        framework = frameworkFactory.newFramework(config);
         framework.init();
         framework.start();
-
-
-        try {
-
-            if(options.has(endpointUrlOs)) {
-                endpointUrl = endpointUrlOs.value(options);
-            }
-
-            List<String> defaultGraphIris = graphUriOs.values(options);
-            if(options.has(queryOs)) {
-                queryStr = queryOs.value(options);
-            }
-            Integer n = nOs.value(options);
-
-            if(n != null) {
-                queryStr = queryStr + " LIMIT " + n;
-            }
-
-            useParallel = options.has(parallelOs);
-
-
-            DatasetDescription datasetDescription = DatasetDescription.create(defaultGraphIris, Collections.emptyList());
-            SparqlServiceReference endpointDescription = new SparqlServiceReference(endpointUrl, datasetDescription);
-
-            logger.info("Endpoint: " + endpointDescription);
-            logger.info("Query: " + queryStr);
-            logger.info("Parallel: " + useParallel);
-
-            QueryExecutionFactory qef = FluentQueryExecutionFactory.http(endpointDescription).create();
-            QueryExecution qe = qef.createQueryExecution(queryStr);
-//            QueryExecution qe = qef.createQueryExecution(
-//                    "PREFIX lsq:<http://lsq.aksw.org/vocab#> CONSTRUCT { ?s lsq:text ?o } { ?s lsq:text ?o ; lsq:hasSpin [ a <http://spinrdf.org/sp#Select> ] } ORDER BY ASC(strlen(?o)) LIMIT 3000");
-
-            Model in = ModelFactory.createDefaultModel();
-            qe.execSelect().forEachRemaining(qs -> {
-                in.add(qs.get("s").asResource(), LSQ.text, qs.get("o"));
-            });
-
-            Set<Resource> items = in.listSubjects().toSet();
-
-            Supplier<Stream<Resource>> queryIterable = useParallel
-                    ? () -> items.parallelStream()
-                    : () -> items.stream();
-
-
-
-            run(framework, queryIterable);
-        } catch(Exception e) {
-            e.printStackTrace();
-        }
-
-        framework.stop();
-        if (false) {
-            framework.waitForStop(0);
-        } else {
-            enableSystemExitCall();
-            System.exit(0);
-        }
-
-    }
-
-
-    /**
-     * - Gather a chunk of triples from the stream,
-     * - Create the vertexset, i.e. the set of subjects / objects (we could use the jgraphT pseudograph wrapper for that)
-     * - Perform lookup of the query strings
-     * - Parse the query strings (might use a cache)
-     * - Remove prefixes
-     * - Check for equivalence
-     * - If equal, filter the triple, i.e. don't output it
-     *
-     * @param tripleStream
-     * @param qef
-     */
-    public static void filterByIdenticalNormalizedQuery() {//Stream<Triple> tripleStream, QueryExecutionFactory qef) {
-//      linkRsb.out("http://lsq.aksw.org/vocab#isEntailed-JSAC");
-
-
-        String fileUrl = "file:///home/raven/Downloads/result.nt";
-
-        QueryExecutionFactory qef = FluentQueryExecutionFactory.fromFileNameOrUrl(fileUrl).create();
-        SparqlFlowEngine engine = new SparqlFlowEngine(qef);
-
-
-
-        QueryExecutionFactory dataQef = FluentQueryExecutionFactory.http("http://localhost:8950/swdfsparql").create();
-        //QueryExecutionFactory dataQef = FluentQueryExecutionFactory.http("http://localhost:8950/sparql").create();
-
-        ResourceShapeBuilder dataRsb = new ResourceShapeBuilder();
-        dataRsb.out(LSQ.text);
-        ResourceShape dataShape = dataRsb.getResourceShape();
-        LookupService<Node, Resource> dataLs = MapServiceResourceShape.createLookupService(dataQef, dataShape)
-                .mapValues(ResourceUtils::asResource);
-
-
-        ListPaginator<List<Triple>> paginator = engine
-            .fromConstruct("CONSTRUCT WHERE { ?s ?p ?o }")
-            .chunk(10);
-
-        System.out.println("Processing " + paginator.fetchCount(null, null) + " items");
-
-        paginator.apply(Range.atMost(10l)).map(list -> {
-                Graph g = GraphFactory.createDefaultGraph();
-                GraphUtil.add(g, list);
-                return g;
-            }).forEach(x -> {
-                Map<Node, Resource> map = dataLs.apply(() -> GraphUtils.allNodes(x));
-
-
-
-                System.out.println("got batch: " + map);
-            });
-
-
-        if(true) {
-            return;
-        }
-
-
-
-        //LookupService<Node, Resource> nodeToQuery =
-
-        //ls.apply(t);
-
-        //ls.fe
-
-
-        //LookupServiceUtils.createLookupService(dataQef, dataShape);
-
-
-        //feed(ms.streamData(null, null))
-//
-//        SparqlQueryParser parser = SparqlQueryParserImpl.create();
-//        //LookupServiceListService.create(listService)
-//        ms.streamData(null, null).forEach(r -> {
-//            Set<Node> nodes = new HashSet<>();
-//            nodes.add(r.asNode());
-//            Set<Node> targets = r.listProperties().mapWith(Statement::getObject).mapWith(RDFNode::asNode).toSet();
-//            nodes.addAll(targets);
-//
-//            Map<Node, Query> map = ls.apply(nodes).entrySet().stream().collect(
-//                    Collectors.toMap(e -> e.getKey(), e -> parser.apply(e.getValue().getProperty(LSQ.text).getString())));
-//
-//
-//
-//
-//
-//            System.out.println("Resource: " + map);
-//            //RDFDataMgr.write(System.out, r.getModel(), RDFFormat.TURTLE_BLOCKS);
-//        });
-
-
-
-        //shape.
-
-
-        //ParameterizedSparqlString pss = new ParameterizedSparqlString();
-
-        //GraphUtils.allNodes(graph)
-
-        //LookupServiceSparqlQuery
-    //	qef.createQueryExecution("CONSTRUCT { ?s lsq:asText ?o } WHERE { ?s lsq:asText)
-    //	tripleStream.forEach(
-    }
-
-
-
-    public static void run(Framework framework, Supplier<Stream<Resource>> queryIterable) throws Exception {
-
-
 
         List<String> pluginNames = Arrays.asList("jsa"); //, "sparqlalgebra", "afmu", "treesolver");
 
@@ -420,7 +461,14 @@ public class MainSparqlQcDatasetAnalysis {
         // SimpleContainmentSolver solver = e.getValue();
 
         String solverShortLabel = "JSAC";
-        SimpleContainmentSolver solver = solvers.get(solverShortLabel);
+        jsaSolver = solvers.get(solverShortLabel);
+    }
+
+
+    public static void run(String solverShortLabel, SimpleContainmentSolver solver, Supplier<Stream<Resource>> queryIterable) throws Exception {
+
+
+        //String solverShortLabel = "JSAC";
 
         String ns = "http://lsq.aksw.org/vocab#";
         Property _isEntailed = ResourceFactory.createProperty(ns + "isEntailed-" + solverShortLabel);
