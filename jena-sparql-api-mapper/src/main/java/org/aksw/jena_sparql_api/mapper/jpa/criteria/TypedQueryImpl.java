@@ -440,6 +440,7 @@ public class TypedQueryImpl<X>
             //selection.filterCompiler
         }
 
+        System.out.println("Query: " + query);
 
         //compileOrder();
 

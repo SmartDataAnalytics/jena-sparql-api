@@ -14,21 +14,88 @@ This Apache-Jena based module enables mapping Java classes to RDF data managed i
 
 
 ```java
-// A simple class with annotations
-@RdfType("ex:Person")
-@DefaultIri("ex:#{id}")
-class Person {
-  @Iri("ex:id")
-  private int id;
+@RdfType("dbo:Company")
+@DefaultIri("dbr:#{label}")
+public static class Company {
 
-  @Iri("ex:name")
-  private String name;
+    //@Lang("en")
+    @Iri("rdfs:label")
+    private String label;
 
-  // getters and setters omitted for brevity
+    @IriNs("dbo")
+    @Datatype("xsd:gYear")
+    private int foundingYear;
+
+    @IriNs("dbo")
+    private int numberOfLocations;
+
+    // getters and setters omitted for brevity
 }
 
 ```
 
+This is an excerpt from the [ExampleMapperDBpedia.java](src/main/java/org/aksw/jena_sparql_api/mapper/examples/ExampleMapperDBpedia.java) class:
+
+```java
+public class MainMapperDBpedia {
+
+
+    public static void main(String[] args) throws Exception {
+
+        /*
+         * Boiler plate code for setup
+         */
+
+        SparqlEntityManagerFactory emFactory = new SparqlEntityManagerFactory();
+
+        emFactory.getPrefixMapping()
+            .setNsPrefix("schema", "http://schema.org/")
+            .setNsPrefix("dbo", "http://dbpedia.org/ontology/")
+            .setNsPrefix("dbr", "http://dbpedia.org/resource/")
+            .setNsPrefix("nss", "http://example.org/nss/");
+
+        //
+        emFactory.addScanPackageName(MainMapperDBpedia.class.getPackage().getName());
+
+        emFactory.setSparqlService(FluentSparqlService
+            .http("http://dbpedia.org/sparql", "http://dbpedia.org")
+                .config().configQuery()
+                    .withParser(SparqlQueryParserImpl.create())
+                    .withPagination(50000)
+                .end().end().create());
+
+        EntityManager em = emFactory.getObject();
+
+        /*
+         * Query 1: Companies founded after 1955 with more than 36000 locations
+         */
+
+        List<Company> matches = JpaUtils.getResultList(em, Company.class, (cb, cq) -> {
+            Root<Company> r = cq.from(Company.class);
+            cq.select(r)
+                    .where(cb.greaterThanOrEqualTo(r.get("foundingYear"), 1955))
+                    .where(cb.greaterThanOrEqualTo(r.get("numberOfLocations"), 36000))
+                    ;
+        });
+
+        for(Company c : matches) {
+            System.out.println("Matched: " + c);
+        }
+
+        /*
+         * Query 2: Avg number of locations of all companies
+         */
+
+        Double avg = JpaUtils.getSingleResult(em, Double.class, (cb, cq) -> {
+            Root<Company> r2 = cq.from(Company.class);
+            cq.select(cb.avg(r2.get("numberOfLocations")));
+        }).doubleValue();
+
+        System.out.println("Average number of locations: " + avg);
+    }
+}
+
+```
 ## Usage
 
 
