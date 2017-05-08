@@ -1,14 +1,17 @@
 package org.aksw.sparqlqc.analysis.dataset;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.security.Permission;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.function.Function;
@@ -98,6 +101,9 @@ public class MainSparqlQcDatasetAnalysis {
 
         if(true) {
             filterByIdenticalNormalizedQuery();
+
+        destroy();
+        System.exit(0);
             return;
         }
 
@@ -209,14 +215,21 @@ public class MainSparqlQcDatasetAnalysis {
      *
      * @param tripleStream
      * @param qef
+     * @throws IOException
      */
-    public static void filterByIdenticalNormalizedQuery() {//Stream<Triple> tripleStream, QueryExecutionFactory qef) {
+    public static void filterByIdenticalNormalizedQuery() throws IOException {//Stream<Triple> tripleStream, QueryExecutionFactory qef) {
 //      linkRsb.out("http://lsq.aksw.org/vocab#isEntailed-JSAC");
 
 
         String fileUrl = "file:///home/raven/Downloads/result.nt";
+        Model rawModel = RDFDataMgr.loadModel(fileUrl);
+        // Create a new model without identities
+        rawModel = FluentQueryExecutionFactory.from(rawModel).create().createQueryExecution("CONSTRUCT { ?s ?p ?o } { ?s ?p ?o . FILTER(NOT EXISTS {?o ?p ?s }) }").execConstruct();
 
-        QueryExecutionFactory qef = FluentQueryExecutionFactory.fromFileNameOrUrl(fileUrl).create();
+
+        //QueryExecutionFactory qef = FluentQueryExecutionFactory.fromFileNameOrUrl(fileUrl).create();
+
+        QueryExecutionFactory qef = FluentQueryExecutionFactory.from(rawModel).create();
         SparqlFlowEngine engine = new SparqlFlowEngine(qef);
 
 
@@ -233,18 +246,22 @@ public class MainSparqlQcDatasetAnalysis {
 
         ListPaginator<List<Triple>> paginator = engine
             .fromConstruct("CONSTRUCT WHERE { ?s ?p ?o }")
-            .batch(10);
+            .batch(50);
 
-        System.out.println("Processing " + paginator.fetchCount(null, null) + " batches");
+        logger.info("Processing " + paginator.fetchCount(null, null) + " batches");
+
+        OutputStream out = new FileOutputStream("/tmp/qc.nt");
 
         Function<String, Query> parser = SparqlQueryParserImpl.create();
 
-        paginator.apply(Range.atMost(1l)).map(triples -> {
+        Range<Long> range = Range.atMost(1l);
+        range = Range.all();
+        paginator.apply(range).map(triples -> {
                 // Create a graph from each batch of triples
                 Graph graph = GraphFactory.createDefaultGraph();
                 GraphUtil.add(graph, triples);
                 return graph;
-            }).flatMap(graph -> {
+            }).map(graph -> {
                 // For all nodes in the graph, fetch all associated information according to the shape
                 // FIXME: We should exclude predicate nodes
                 Map<Node, Resource> map = dataLs.apply(() -> GraphUtils.allNodes(graph));
@@ -260,7 +277,9 @@ public class MainSparqlQcDatasetAnalysis {
 
                 // Now determine for each triple, whether the normalized queries are
                 // equal or isomorphic
-                Set<Triple> accepts = graph.find(Node.ANY, Node.ANY, Node.ANY).toSet().stream().filter(t -> {
+
+                Graph r = GraphFactory.createDefaultGraph();
+                graph.find(Node.ANY, Node.ANY, Node.ANY).toSet().stream().filter(t -> {
                     Query a = m.get(t.getSubject());
                     Query b = m.get(t.getObject());
 
@@ -273,20 +292,24 @@ public class MainSparqlQcDatasetAnalysis {
                     }
 
 
-                    boolean r = !Objects.equals(a, b) && a != null && b != null;
-                    System.out.println("r = " + r);
-                    return r;
+                    boolean s = !Objects.equals(a, b) && a != null && b != null;
+                    //System.out.println("r = " + r);
+                    return s;
 
                     //boolean r = jsaSolver.entailed(Objects.toString(a), Objects.toString(b));
                     //return r;
-                }).collect(Collectors.toSet());
+                }).forEach(r::add);
 
-                return accepts.stream();
+
+                return r;
                 //System.out.println("got batch: " + m);
-            }).forEach(x -> {
-                System.out.println(x);
+            }).forEach(g -> {
+                Model m = ModelFactory.createModelForGraph(g);
+                RDFDataMgr.write(out, m, RDFFormat.NTRIPLES);
             });
 
+        out.flush();
+        out.close();
 
         //LookupService<Node, Resource> nodeToQuery =
 
