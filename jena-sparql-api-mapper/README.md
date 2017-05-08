@@ -4,8 +4,8 @@ This Apache-Jena based module enables mapping Java classes to RDF data managed i
 
 
 ## Features
-* Growing support for JPA criteria queries.
-* A set of annotations for conveniently mapping classes a developer has control over. By default, the annotation processor evaluates many arguments as spring expressions and subsequently expands namespace declarations of IRIs where appropriate.
+* **Growing support for JPA criteria queries:** Write queries against Java domain models and don't bother with the RDF specifics.
+* A set of annotations for conveniently mapping classes a developer has control over. By default, the annotation processor evaluates many arguments as *Spring Expression Language* (SpEL) expressions and subsequently expands namespace declarations of IRIs where appropriate.
 * Sping-based component scanning for populating the model of the mappings
 * Extension points for creating custom mappers for classes and properties.
 * View-based approach: Java classes are seen as 'views' over RDF resources, hence, multiple views over an RDF resource may exist. Each view is associated with a set of triples - removals affect all views.
@@ -54,7 +54,6 @@ public class MainMapperDBpedia {
             .setNsPrefix("dbr", "http://dbpedia.org/resource/")
             .setNsPrefix("nss", "http://example.org/nss/");
 
-        //
         emFactory.addScanPackageName(MainMapperDBpedia.class.getPackage().getName());
 
         emFactory.setSparqlService(FluentSparqlService
@@ -139,7 +138,8 @@ There are two aspects to the system:
 |-------------|-----------|--------|--------------|
 | DefaultIri  | Class     | String | Assigns a default rule to generate IRIs for instances of the class. It is valid for RDF resources corresponding to this class (which may e.g. be stored in a triple store) to have IRIs that do not follow this pattern. |
 | RdfType     | Class     | -      | This annotation work in two ways: On the one hand, each resource corresponding to this class is associated with the provided type. On the other hand, all resources of that type define the set of class instances which can be created from the RDF data. |
-| Iri         | Property  | String | Assigns an IRI to a property |
+| Iri         | Property  | String | Assigns an IRI to an attribute |
+| IriNs       | Property  | String | Shorthand to assign an IRI to an attribute: The attribute name is appended to the given namespace |
 | MultiValued | Property (of type Collection)  | -      | Controls the RDF mapping strategy of Java collections. MultiValued creates for each item of the collection a triple with the property's corresponding IRI |
 
 ###
