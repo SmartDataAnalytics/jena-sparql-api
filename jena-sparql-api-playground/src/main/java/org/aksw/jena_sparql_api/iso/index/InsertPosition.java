@@ -1,27 +1,47 @@
 package org.aksw.jena_sparql_api.iso.index;
 
-import org.aksw.jena_sparql_api.jgrapht.transform.GraphIsoMap;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Node;
+
+import com.google.common.collect.BiMap;
 
 public class InsertPosition<K> {
     protected GraphIndexNode<K> node;
-    protected GraphIsoMap graphIso;
+    protected Graph residualQueryGraph;
+    protected Graph residualViewGraph;
 
-    public InsertPosition(GraphIndexNode<K> node, GraphIsoMap graphIso) {
+    protected BiMap<Node, Node> iso;
+
+    public InsertPosition(
+            GraphIndexNode<K> node,
+//            Graph residualViewGraph,
+            Graph residualQueryGraph,
+            BiMap<Node, Node> iso) {
         super();
         this.node = node;
-        this.graphIso = graphIso;
+//        this.residualViewGraph = residualViewGraph;
+        this.residualQueryGraph = residualQueryGraph;
+        this.iso = iso;
     }
 
     public GraphIndexNode<K> getNode() {
         return node;
     }
 
-    public GraphIsoMap getGraphIso() {
-        return graphIso;
+//    public Graph getResidualViewGraph() {
+//        return residualViewGraph;
+//    }
+
+    public Graph getResidualQueryGraph() {
+        return residualQueryGraph;
+    }
+
+    public BiMap<Node, Node> getIso() {
+        return iso;
     }
 
     @Override
     public String toString() {
-        return "InsertPosition [node=" + node + ", graphIso=" + graphIso.size() + "]";
+        return "InsertPosition [node=" + node + ", residualQueryGraph=" + residualQueryGraph + ", iso=" + iso + "]";
     }
 }

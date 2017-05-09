@@ -99,6 +99,7 @@ public class ProblemNodeMappingGraph<V, E, T>
         int k = viewGraph.edgeSet().size();
 
         long result = ProblemMappingKPermutationsOfN.kCombinationCount(n, k);
+        System.out.println("estimated cost: " + result);
         return result;
     }
 

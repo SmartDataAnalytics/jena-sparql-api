@@ -68,8 +68,8 @@ public class MainSparqlQueryToGraph {
 
                 { "Prefix : <http://ex.org/> Select * { ?as ?ap ?ao }",
                   "Prefix : <http://ex.org/> Select * { ?js ?jp ?jo . ?ks ?kp ?ko }",
-                  "Prefix : <http://ex.org/> Select * { ?xs ?xp ?xo . ?ys ?yp ?yo . ?zs ?zp ?zo }",
-                  "Prefix : <http://ex.org/> Select * { ?sa ?sp ?so . ?ts ?tp ?to .}" },
+                  "Prefix : <http://ex.org/> Select * { ?ss ?sp ?so . ?ts ?tp ?to .}" ,
+                  "Prefix : <http://ex.org/> Select * { ?xs ?xp ?xo . ?ys ?yp ?yo . ?zs ?zp ?zo }"},
 
                 // test examples with overlapping variables
                 { "Prefix : <http://ex.org/> Select * { ?as ?ap ?ao }",
@@ -80,7 +80,7 @@ public class MainSparqlQueryToGraph {
 
         String caseA = cases[1][0];
         String caseB = cases[1][1];
-        String caseC = cases[1][3];
+        String caseC = cases[1][2];
 
         // This does not work with jgrapht due to lack of support for multi edges!!!
 
@@ -138,19 +138,22 @@ public class MainSparqlQueryToGraph {
             index.add(cg);
         } else {
             // most generic inserted last
-            index.add(bg);
             index.add(cg);
+            index.add(bg);
             index.add(ag);
         }
 
 //        System.out.println("Performing lookup");
 //        index.lookupFlat(cg).entries().forEach(e -> System.out.println("Lookup result: " + e.getKey() + ": " + prettify(e.getValue())));
 
-        Map<Node, ProblemNeighborhoodAware<BiMap<Var, Var>, Var>> map = index.lookupStream(cg);
+        System.out.println("Index tree: ");
+        index.printTree();
+
+        Map<Node, ProblemNeighborhoodAware<BiMap<Var, Var>, Var>> map = index.lookupStream(cg, false);
 
         map.forEach((k, p) -> {
             System.out.println("Solutions for : " + k);
-            System.out.println("Estimated cost: " + p.getEstimatedCost());
+            //System.out.println("Estimated cost: " + p.getEstimatedCost());
             p.generateSolutions().forEach(s -> {
                 System.out.println("  " + s);
             });

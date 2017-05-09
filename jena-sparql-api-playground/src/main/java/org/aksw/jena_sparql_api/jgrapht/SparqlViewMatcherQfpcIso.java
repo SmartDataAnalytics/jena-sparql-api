@@ -17,22 +17,20 @@ import org.aksw.jena_sparql_api.iso.index.ProblemVarMappingCompound;
 import org.aksw.jena_sparql_api.iso.index.ProblemVarWrapper;
 import org.aksw.jena_sparql_api.iso.index.SubGraphIsomorphismIndex;
 import org.aksw.jena_sparql_api.jgrapht.transform.GraphVar;
+import org.aksw.jena_sparql_api.jgrapht.transform.GraphVarImpl;
 import org.aksw.jena_sparql_api.jgrapht.transform.QueryToGraphVisitor;
 import org.aksw.jena_sparql_api.jgrapht.transform.QueryToJenaGraph;
 import org.aksw.jena_sparql_api.jgrapht.wrapper.PseudoGraphJenaGraph;
-import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.graph.NodeTransform;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.Graphs;
 import org.jgrapht.graph.SimpleDirectedGraph;
 
 import com.google.common.collect.BiMap;
-import com.google.common.collect.Multimap;
 
 public class SparqlViewMatcherQfpcIso<K>
     implements SparqlViewMatcherQfpc<K>
@@ -69,15 +67,9 @@ public class SparqlViewMatcherQfpcIso<K>
 
     public static ProblemNeighborhoodAware<BiMap<Var, Var>, Var> toProblem(InsertPosition<?> pos) {
         // TODO This is making the hacky index structure clean
-        Graph residualQueryGraph = pos.getGraphIso().getWrapped();
-        Graph residualViewGraph = pos.getNode().getValue().getWrapped();
-
-        // TODO Something is swapped
-        Graph x = residualViewGraph;
-        residualViewGraph = residualQueryGraph;
-        residualQueryGraph = x;
-
-        BiMap<Node, Node> baseIso = pos.getGraphIso().getInToOut();
+        Graph residualQueryGraph = pos.getResidualQueryGraph();
+        Graph residualViewGraph = new GraphVarImpl();//pos.getNode().getValue(); //new GraphIsoMapImpl(pos.getNode().getValue(), pos.getNode().getTransIso()); //pos.getNode().getValue();
+        BiMap<Node, Node> baseIso = pos.getIso();
 
         DirectedGraph<Node, Triple> viewGraphGraphView = new PseudoGraphJenaGraph(residualViewGraph);
         DirectedGraph<Node, Triple> queryGraphGraphView = new PseudoGraphJenaGraph(residualQueryGraph);
@@ -94,10 +86,11 @@ public class SparqlViewMatcherQfpcIso<K>
                 QueryToJenaGraph::createNodeComparator, QueryToJenaGraph::createEdgeComparator);
 
 
-//        rawProblem.generateSolutions().forEach(s -> {
-//            System.out.println("Raw Solution: " + s);
-//        });
-//
+        System.out.println("RAW SOLUTIONS for " + pos.getNode().getKey());
+        rawProblem.generateSolutions().forEach(s -> {
+            System.out.println("  Raw Solution: " + s);
+        });
+
         ProblemNeighborhoodAware<BiMap<Var, Var>, Var> result = new ProblemVarWrapper(rawProblem);
 
         return result;
@@ -109,6 +102,7 @@ public class SparqlViewMatcherQfpcIso<K>
         ProblemVarMappingCompound<BiMap<Var, Var>, Var> result = new ProblemVarMappingCompound<>(problems);
         return result;
     }
+
 
     @Override
     public Map<K, QfpcMatch> lookup(QuadFilterPatternCanonical queryQfpc) {
