@@ -217,6 +217,32 @@ public class QueryToJenaGraph {
         return result;
     }
 
+
+    public static Iterator<GraphMapping<Node, Triple>> matchIt(
+            BiMap<Node, Node> baseIso, // view to user query
+            DirectedGraph<Node, Triple> a,
+            DirectedGraph<Node, Triple> b) {
+        Comparator<Node> nodeCmp = (x, y) -> QueryToJenaGraph.compareNodes(baseIso, x, y);
+        Comparator<Triple> edgeCmp = (x, y) -> QueryToJenaGraph.compareNodes(baseIso, x.getPredicate(), y.getPredicate());
+
+        VF2SubgraphIsomorphismInspector<Node, Triple> inspector =
+                new VF2SubgraphIsomorphismInspector<>(b, a, nodeCmp, edgeCmp, true);
+        Iterator<GraphMapping<Node, Triple>> result = inspector.getMappings();
+
+        return result;
+    }
+
+    public static Comparator<Node> createNodeComparator(BiMap<Node, Node> baseIso) {
+        Comparator<Node> result = (x, y) -> QueryToJenaGraph.compareNodes(baseIso, x, y);
+        return result;
+    }
+
+    public static Comparator<Triple> createEdgeComparator(BiMap<Node, Node> baseIso) {
+        Comparator<Triple> result = (x, y) -> QueryToJenaGraph.compareNodes(baseIso, x.getPredicate(), y.getPredicate());
+        return result;
+    }
+
+
     public static Stream<BiMap<Node, Node>> match(
             BiMap<Node, Node> baseIso, // view to user query
             DirectedGraph<Node, Triple> a,
@@ -228,8 +254,8 @@ public class QueryToJenaGraph {
 //        System.out.println("b: "+ b.vertexSet());
 //        System.err.println("NodeCmp under " + baseIso);
 
-        Comparator<Node> nodeCmp = (x, y) -> QueryToJenaGraph.compareNodes(baseIso, x, y);
-        Comparator<Triple> edgeCmp = (x, y) -> QueryToJenaGraph.compareNodes(baseIso, x.getPredicate(), y.getPredicate());
+        Comparator<Node> nodeCmp = createNodeComparator(baseIso);
+        Comparator<Triple> edgeCmp = createEdgeComparator(baseIso);
 
         VF2SubgraphIsomorphismInspector<Node, Triple> inspector =
                 new VF2SubgraphIsomorphismInspector<>(b, a, nodeCmp, edgeCmp, true);

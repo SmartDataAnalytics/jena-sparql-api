@@ -42,23 +42,29 @@ public abstract class ProblemMappingKPermutationsOfN<A, B, X, Y>
         boolean result = cost == 0l;
         return result;
     }
-    
-    @Override
-    public long getEstimatedCost() {
-        int k = as.size();
-        int n = bs.size();
 
+
+    public static long kCombinationCount(int n, int k) {
         long result;
         if(k > n) {
             result = 0;
         } else {
           //result = LongMath.factorial(n) / LongMath.factorial(n - k);
 
-//	The formula below should be equal to the one above
+    //The formula below should be equal to the one above
             long combinationCount = LongMath.binomial(n, k);
             long permutationCount = LongMath.factorial(k);
             result = combinationCount * permutationCount;
         }
+        return result;
+    }
+
+    @Override
+    public long getEstimatedCost() {
+        int n = bs.size();
+        int k = as.size();
+
+        long result = kCombinationCount(n, k);
 
         return result;
     }
