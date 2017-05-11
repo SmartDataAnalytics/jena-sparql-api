@@ -81,18 +81,21 @@ public class MainSparqlQueryToGraph {
         String caseA = cases[1][0];
         String caseB = cases[1][1];
         String caseC = cases[1][2];
+        String caseD = cases[1][3];
 
         // This does not work with jgrapht due to lack of support for multi edges!!!
 
         Op aop = Algebra.toQuadForm(Algebra.compile(QueryFactory.create(caseA)));
         Op bop = Algebra.toQuadForm(Algebra.compile(QueryFactory.create(caseB)));
         Op cop = Algebra.toQuadForm(Algebra.compile(QueryFactory.create(caseC)));
+        Op dop = Algebra.toQuadForm(Algebra.compile(QueryFactory.create(caseD)));
         //System.out.println(op);
 
 
         aop = SparqlViewMatcherOpImpl.normalizeOp(aop);
         bop = SparqlViewMatcherOpImpl.normalizeOp(bop);
         cop = SparqlViewMatcherOpImpl.normalizeOp(cop);
+        dop = SparqlViewMatcherOpImpl.normalizeOp(dop);
 
 
         //RDFDataMgr.write(System.out, graph, RDFFormat.NTRIPLES);
@@ -111,6 +114,9 @@ public class MainSparqlQueryToGraph {
         cop.visit(cv);
         GraphVar cg = cv.getGraph();
 
+        QueryToGraphVisitor dv = new ExtendedQueryToGraphVisitor(ssn.get());
+        dop.visit(dv);
+        GraphVar dg = dv.getGraph();
 
 //        System.out.println("Graph A:");
 //        RDFDataMgr.write(System.out, ag.getWrapped(), RDFFormat.NTRIPLES);
@@ -138,7 +144,8 @@ public class MainSparqlQueryToGraph {
             index.add(cg);
         } else {
             // most generic inserted last
-            index.add(cg);
+            index.add(dg);
+            //index.add(cg);
             index.add(bg);
             index.add(ag);
         }
@@ -163,10 +170,10 @@ public class MainSparqlQueryToGraph {
 
 
         //SparqlQueryContainmentUtils.match(viewQuery, userQuery, qfpcMatcher)
-        org.jgrapht.Graph<?, ?> dg = new PseudoGraphJenaGraph(cg);
+        org.jgrapht.Graph<?, ?> xg = new PseudoGraphJenaGraph(dg);
         //System.out.println(graph);
         if(false) {
-            visualizeGraph(dg);
+            visualizeGraph(xg);
         }
     }
 

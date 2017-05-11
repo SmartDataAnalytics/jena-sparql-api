@@ -11,17 +11,20 @@ public class InsertPosition<K> {
     protected Graph residualViewGraph;
 
     protected BiMap<Node, Node> iso;
+    protected BiMap<Node, Node> latestIsoAB;
 
     public InsertPosition(
             GraphIndexNode<K> node,
 //            Graph residualViewGraph,
             Graph residualQueryGraph,
-            BiMap<Node, Node> iso) {
+            BiMap<Node, Node> iso,
+            BiMap<Node, Node> latestIsoAB) {
         super();
         this.node = node;
 //        this.residualViewGraph = residualViewGraph;
         this.residualQueryGraph = residualQueryGraph;
         this.iso = iso;
+        this.latestIsoAB = latestIsoAB;
     }
 
     public GraphIndexNode<K> getNode() {
@@ -38,6 +41,11 @@ public class InsertPosition<K> {
 
     public BiMap<Node, Node> getIso() {
         return iso;
+    }
+
+
+    public BiMap<Node, Node> getLatestIsoAB() {
+        return latestIsoAB;
     }
 
     @Override

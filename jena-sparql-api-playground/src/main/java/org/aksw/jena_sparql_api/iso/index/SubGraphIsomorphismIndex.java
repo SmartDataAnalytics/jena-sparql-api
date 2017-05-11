@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -155,7 +156,7 @@ public class SubGraphIsomorphismIndex<K>
     public Multimap<K, InsertPosition<K>> lookup(Graph queryGraph, boolean exactMatch) {
 
         Collection<InsertPosition<K>> positions = new LinkedList<>();
-        findInsertPositions(positions, rootNode, queryGraph, HashBiMap.create(), true, exactMatch, IndentedWriter.stderr);
+        findInsertPositions(positions, rootNode, queryGraph, HashBiMap.create(), HashBiMap.create(), true, exactMatch, IndentedWriter.stderr);
 
         Multimap<K, InsertPosition<K>> result = HashMultimap.create();
         System.out.println("Lookup result candidates: " + positions.size());
@@ -187,7 +188,7 @@ public class SubGraphIsomorphismIndex<K>
     public Multimap<K, BiMap<Node, Node>> lookupFlat(Graph queryGraph, boolean exactMatch) {
 
         Collection<InsertPosition<K>> positions = new LinkedList<>();
-        findInsertPositions(positions, rootNode, queryGraph, HashBiMap.create(), true, exactMatch, IndentedWriter.stderr);
+        findInsertPositions(positions, rootNode, queryGraph, HashBiMap.create(), HashBiMap.create(), true, exactMatch, IndentedWriter.stderr);
 
         Multimap<K, BiMap<Node, Node>> result = HashMultimap.create();
         System.out.println("Lookup result candidates: " + positions.size());
@@ -221,55 +222,57 @@ public class SubGraphIsomorphismIndex<K>
         return result;
     }
 
+//    /**
+//     * Return the subset of BC not covered
+//     *
+//     * @return
+//     */
+//    public static BiMap<T, T> isoDiff(isoCD, isoBC) {
+//
+//    }
+
+
     /**
      * Clones a sub tree thereby removing the triples in the removal graph
+     * TODO: How to update the remaining isomorphisms?
      *
      *
-     * @param removalGraph
+     *
+     *
+     * @param removalGraphC
      * @param writer
      * @return
      */
-    GraphIndexNode<K> cloneWithRemoval(GraphIndexNode<K> nodeC, BiMap<Node, Node> isoAB, Graph removalGraph, IndentedWriter writer) {
+    // Note: isoBC will be equivalent to nodeC.getTransIso() on recursion, but the first call will override it
+    GraphIndexNode<K> cloneWithRemoval(GraphIndexNode<K> nodeC, BiMap<Node, Node> isoBC, Graph removalGraphC, IndentedWriter writer) { //BiMap<Node, Node> isoBC, Graph residualInsertGraphB,
         Graph graphC = nodeC.getValue();
-        BiMap<Node, Node> isoAC = nodeC.getTransIso();//graphC.getInToOut();
 
-        GraphIsoMap mappedRemovalGraph = new GraphIsoMapImpl(removalGraph, isoAC);
+        Graph residualGraphC = difference(graphC, removalGraphC);
+        writer.println("Cloned graph size reduced from  " + graphC.size() + " -> " + residualGraphC.size());
 
-        //System.out.println("REMOVAL");
-        //RDFDataMgr.write(System.out, mappedRemovalGraph, RDFFormat.NTRIPLES);
-        //System.out.println("DATA");
-        //RDFDataMgr.write(System.out, graphIso, RDFFormat.NTRIPLES);
-
-        // Create a clone of the node graph
-        // Alternatively, create a Difference view
-        //Graph cloneGraph = GraphFactory.createDefaultGraph();
-        //
-        Graph cloneGraph = new Difference(graphC, mappedRemovalGraph);
-        writer.println("Cloned graph size reduced from  " + graphC.size() + " -> " + cloneGraph.size());
-
-
-        BiMap<Node, Node> isoBC = mapDomainVia(isoAC, isoAB.inverse());
-        writer.println("iso to subsumed node: " + isoBC);
-
-        // Remove from the prior node iso the parts now covered by the iso
-
-
-        GraphIndexNode<K> result = createNode(cloneGraph, isoBC);
-        //node.getKeys()
-        result.getKeys().addAll(nodeC.getKeys());
+        GraphIndexNode<K> newNodeC = createNode(residualGraphC, isoBC);
+        newNodeC.getKeys().addAll(nodeC.getKeys());
 
 
         // Then for each child: map the removal graph according to the child's iso
         for(GraphIndexNode<K> child : nodeC.getChildren()) {
 
-            GraphIndexNode<K> cloneChild = cloneWithRemoval(child, isoBC, mappedRemovalGraph, writer);
-            deleteNode(child.getKey());
-            result.appendChild(cloneChild);
+            BiMap<Node, Node> isoCD = child.getTransIso();
+            GraphIsoMap removalGraphD = new GraphIsoMapImpl(removalGraphC, isoCD);
+
+            GraphIndexNode<K> cloneChild = cloneWithRemoval(child, isoCD, removalGraphD, writer);
+            //deleteNode(child.getKey());
+            newNodeC.appendChild(cloneChild);
+        }
+
+        long[] nodeIds = nodeC.getChildren().stream().mapToLong(GraphIndexNode::getKey).toArray();
+        for(Long nodeId : nodeIds) {
+            deleteNode(nodeId);
         }
 
 
 
-        return result;
+        return newNodeC;
     }
 
 
@@ -328,7 +331,7 @@ public class SubGraphIsomorphismIndex<K>
      * @param retrievalMode false: only return leaf nodes of insertion, true: return all encountered nodes
      * @param writer
      */
-    void findInsertPositions(Collection<InsertPosition<K>> out, GraphIndexNode<K> node, Graph insertGraph, BiMap<Node, Node> rawBaseIso, boolean retrievalMode, boolean exactMatch, IndentedWriter writer) {
+    void findInsertPositions(Collection<InsertPosition<K>> out, GraphIndexNode<K> node, Graph insertGraph, BiMap<Node, Node> rawBaseIso, BiMap<Node, Node> latestIsoAB, boolean retrievalMode, boolean exactMatch, IndentedWriter writer) {
         BiMap<Node, Node> transIso = node.getTransIso();//.getValue().getInToOut();
 
         // Map the image of the iso through the view graph iso
@@ -391,7 +394,7 @@ public class SubGraphIsomorphismIndex<K>
 
 
                 // TODO optimize handling of empty diffs
-                findInsertPositions(out, child, diff, baseIso, retrievalMode, exactMatch, writer);
+                findInsertPositions(out, child, diff, baseIso, iso, retrievalMode, exactMatch, writer);
 
                 affectedKeys.forEach(baseIso::remove);
 
@@ -407,7 +410,7 @@ public class SubGraphIsomorphismIndex<K>
                 writer.println("Marking location for insert");
                 //System.out.println("keys at node: " + node.getKeys() + " - " + node);
                 // Make a copy of the baseIso, as it is transient due to state space search
-                InsertPosition<K> pos = new InsertPosition<>(node, insertGraph, HashBiMap.create(baseIso));
+                InsertPosition<K> pos = new InsertPosition<>(node, insertGraph, HashBiMap.create(baseIso), latestIsoAB);
                 out.add(pos);
             }
         }
@@ -441,7 +444,7 @@ public class SubGraphIsomorphismIndex<K>
         // The insert graph must be larger than the node Graph
 
         Collection<InsertPosition<K>> positions = new LinkedList<>();
-        findInsertPositions(positions, rootNode, insertGraph, baseIso, false, false, writer);
+        findInsertPositions(positions, rootNode, insertGraph, baseIso, HashBiMap.create(), false, false, writer);
 
 //        positions.forEach(p -> {
 //            System.out.println("Insert pos: " + p.getNode().getKey() + " --- " + p.getIso());
@@ -468,14 +471,16 @@ public class SubGraphIsomorphismIndex<K>
     void performAdd(K key, InsertPosition<K> pos, IndentedWriter writer) {
         GraphIndexNode<K> nodeA = pos.getNode();
         //Graph insertGraphIsoB = pos.getGraphIso();
-        Graph insertGraphB = pos.getResidualQueryGraph();
+
+        Graph residualInsertGraphB = pos.getResidualQueryGraph();
+        BiMap<Node, Node> isoAB = pos.getLatestIsoAB();
         BiMap<Node, Node> baseIso = pos.getIso();
 
-        writer.println("Insert attempt of user graph of size " + insertGraphB.size());
+        writer.println("Insert attempt of user graph of size " + residualInsertGraphB.size());
 
         // If the insert graph is empty, just append the key to the insert node
         // i.e. do not create a child node
-        if(insertGraphB.isEmpty()) {
+        if(residualInsertGraphB.isEmpty()) {
             nodeA.getKeys().add(key);
             return;
         }
@@ -519,44 +524,19 @@ public class SubGraphIsomorphismIndex<K>
                 writer.incIndent();
                 int i = 0;
 
-//
-//                Iterable<BiMap<Node, Node>> isoTmp = Lists.newArrayList(toIterable(QueryToJenaGraph.match(baseIso.inverse(), insertGraph, viewGraph)));
-//
-//                GraphVar ga = new GraphVarImpl();
-//                //insertGraph.find(Node.ANY, Node.ANY, Node.ANY).forEachRemaining(ga::add);
-//                GraphUtil.addInto(ga, insertGraph);
-//                ga.find(Node.ANY, Node.ANY, Var.alloc("ao")).forEachRemaining(x -> System.out.println(x));
-//                GraphVar gb = new GraphVarImpl();
-//                viewGraph.find(Node.ANY, Node.ANY, Node.ANY).forEachRemaining(gb::add);
-//                //GraphUtil.addInto(gb, viewGraph);
-//                insertGraph = ga;
-//                viewGraph = new GraphIsoMapImpl(gb, HashBiMap.create());
-
-                Iterable<BiMap<Node, Node>> isos = QueryToJenaGraph.match(baseIso.inverse(), insertGraphB, viewGraphC).collect(Collectors.toSet());
-                for(BiMap<Node, Node> isoAB : isos) {
-                    writer.println("Detected subsumption #" + ++i);
-                    writer.println("  with iso: " + isoAB);
+                Iterable<BiMap<Node, Node>> isosBC = QueryToJenaGraph.match(baseIso.inverse(), residualInsertGraphB, viewGraphC).collect(Collectors.toSet());
+                for(BiMap<Node, Node> isoBC : isosBC) {
+                    writer.println("Detected subsumption #" + ++i + " with iso: " + isoBC);
                     writer.incIndent();
 
                     // TODO FUCK! This isoGraph object may be a reason to keep the original graph and the iso in a combined graph object
-                    GraphIsoMap mappedInsertGraph = new GraphIsoMapImpl(insertGraphB, isoAB);
-//                    System.out.println("Remapped insert via " + iso);
-//                    RDFDataMgr.write(System.out, insertGraphX, RDFFormat.NTRIPLES);
-//                    System.out.println("---");
+                    nodeB = nodeB == null ? createNode(residualInsertGraphB, isoAB) : nodeB;
+                    GraphIsoMap mappedResidualInsertGraphC = new GraphIsoMapImpl(residualInsertGraphB, isoBC);
+                    Graph removalGraphC = intersection(mappedResidualInsertGraphC, viewGraphC);
+                    GraphIndexNode<K> newChild = cloneWithRemoval(nodeC, isoBC, removalGraphC, writer);
 
-                    //Difference retain = new Difference(viewGraph, insertGraphX);
-
-                    // The part which is duplicated between the insert graph and the view
-                    // is subject to removal
-                    Intersection removalGraph = new Intersection(mappedInsertGraph, viewGraphC);
-
-                    // Allocate root before child to give it a lower id for cosmetics
-                    //nodeB = nodeB == null ? createNode(mappedInsertGraph) : nodeB;
-                    nodeB = nodeB == null ? createNode(insertGraphB, isoAB) : nodeB;
-
-
-                    GraphIndexNode<K> newChild = cloneWithRemoval(nodeC, isoAB, removalGraph, writer);
                     nodeB.appendChild(newChild);//add(newChild, baseIso, writer);
+
 
                     writer.decIndent();
                 }
@@ -580,11 +560,38 @@ public class SubGraphIsomorphismIndex<K>
 
         // If nothing was subsumed, add it to this node
         if(!wasAdded) {
-            writer.println("Attached graph of size " + insertGraphB.size() + " to node " + nodeA);
-            GraphIndexNode<K> target = createNode(insertGraphB, baseIso);
+            writer.println("Attached graph of size " + residualInsertGraphB.size() + " to node " + nodeA);
+            GraphIndexNode<K> target = createNode(residualInsertGraphB, baseIso);
             target.getKeys().add(key);
             nodeA.appendChild(target);
         }
     }
 
 }
+
+
+//
+//Iterable<BiMap<Node, Node>> isoTmp = Lists.newArrayList(toIterable(QueryToJenaGraph.match(baseIso.inverse(), insertGraph, viewGraph)));
+//
+//GraphVar ga = new GraphVarImpl();
+////insertGraph.find(Node.ANY, Node.ANY, Node.ANY).forEachRemaining(ga::add);
+//GraphUtil.addInto(ga, insertGraph);
+//ga.find(Node.ANY, Node.ANY, Var.alloc("ao")).forEachRemaining(x -> System.out.println(x));
+//GraphVar gb = new GraphVarImpl();
+//viewGraph.find(Node.ANY, Node.ANY, Node.ANY).forEachRemaining(gb::add);
+////GraphUtil.addInto(gb, viewGraph);
+//insertGraph = ga;
+//viewGraph = new GraphIsoMapImpl(gb, HashBiMap.create());
+
+//                    System.out.println("Remapped insert via " + iso);
+//RDFDataMgr.write(System.out, insertGraphX, RDFFormat.NTRIPLES);
+//System.out.println("---");
+
+//Difference retain = new Difference(viewGraph, insertGraphX);
+
+// The part which is duplicated between the insert graph and the view
+// is subject to removal
+//Intersection removalGraph = new Intersection(mappedInsertGraph, viewGraphC);
+
+// Allocate root before child to give it a lower id for cosmetics
+//nodeB = nodeB == null ? createNode(mappedInsertGraph) : nodeB;
