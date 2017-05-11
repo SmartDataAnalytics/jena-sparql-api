@@ -42,7 +42,7 @@
     <artifactId>maven-dependency-plugin</artifactId>
     <executions>
         <execution>
-            <id>copy</id>
+            <id>copy-sparqlqc-impl-jsa</id>
             <phase>prepare-package</phase>
             <goals>
                 <goal>copy</goal>
@@ -52,6 +52,57 @@
                     <artifactItem>
                         <groupId>org.aksw.sparqlqc</groupId>
                         <artifactId>sparqlqc-impl-jsa</artifactId>
+                        <version>${project.version}</version>
+                        <outputDirectory>${project.build.directory}/classes</outputDirectory>                                 
+                    </artifactItem>
+                </artifactItems>
+            </configuration>
+        </execution>
+        <execution>
+            <id>copy-sparqlqc-impl-sparqlalgebra</id>
+            <phase>prepare-package</phase>
+            <goals>
+                <goal>copy</goal>
+            </goals>
+            <configuration>
+                <artifactItems>
+                    <artifactItem>
+                        <groupId>org.aksw.sparqlqc</groupId>
+                        <artifactId>sparqlqc-impl-sparqlalgebra</artifactId>
+                        <version>${project.version}</version>
+                        <outputDirectory>${project.build.directory}/classes</outputDirectory>                                 
+                    </artifactItem>
+                </artifactItems>
+            </configuration>
+        </execution>
+        <execution>
+            <id>copy-sparql-qc-impl-treesolver</id>
+            <phase>prepare-package</phase>
+            <goals>
+                <goal>copy</goal>
+            </goals>
+            <configuration>
+                <artifactItems>
+                    <artifactItem>
+                        <groupId>org.aksw.sparqlqc</groupId>
+                        <artifactId>sparqlqc-impl-treesolver</artifactId>
+                        <version>${project.version}</version>
+                        <outputDirectory>${project.build.directory}/classes</outputDirectory>                                 
+                    </artifactItem>
+                </artifactItems>
+            </configuration>
+        </execution>
+        <execution>
+            <id>copy-sparql-qc-impl-afmu</id>
+            <phase>prepare-package</phase>
+            <goals>
+                <goal>copy</goal>
+            </goals>
+            <configuration>
+                <artifactItems>
+                    <artifactItem>
+                        <groupId>org.aksw.sparqlqc</groupId>
+                        <artifactId>sparqlqc-impl-afmu</artifactId>
                         <version>${project.version}</version>
                         <outputDirectory>${project.build.directory}/classes</outputDirectory>                                 
                     </artifactItem>

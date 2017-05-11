@@ -1,4 +1,4 @@
-package org.aksw.sparqlqc.analysis.dataset;
+package org.aksw.jena_sparql_api.lookup;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParser;

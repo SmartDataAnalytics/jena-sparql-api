@@ -1,4 +1,4 @@
-package org.aksw.sparqlqc.analysis.dataset;
+package org.aksw.jena_sparql_api.lookup;
 
 import java.util.Iterator;
 import java.util.function.Function;
@@ -7,8 +7,6 @@ import java.util.stream.Stream;
 import org.aksw.commons.collections.utils.StreamUtils;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.utils.ServiceUtils;
-import org.aksw.jena_sparql_api.lookup.CountInfo;
-import org.aksw.jena_sparql_api.lookup.ListPaginator;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
