@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Map;
 
 import javax.persistence.EntityGraph;
-import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.FlushModeType;
@@ -28,7 +27,7 @@ import org.apache.jena.graph.NodeFactory;
 
 
 public class EntityManagerImpl
-    implements EntityManager
+    implements RdfEntityManager
 {
     protected RdfMapperEngine engine;
 
@@ -59,6 +58,12 @@ public class EntityManagerImpl
 //
 //		return result;
 //    }
+
+    @Override
+    public String getIri(Object entity) {
+        String result = engine.getIri(entity);
+        return result;
+    }
 
 
     public RdfTypeFactory getRdfTypeFactory() {
@@ -366,6 +371,5 @@ public class EntityManagerImpl
         // TODO Auto-generated method stub
         return null;
     }
-
 
 }

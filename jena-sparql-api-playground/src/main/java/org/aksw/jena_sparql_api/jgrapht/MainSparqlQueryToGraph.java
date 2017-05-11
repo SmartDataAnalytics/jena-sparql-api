@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.jgrapht;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -10,16 +11,22 @@ import javax.swing.JFrame;
 
 import org.aksw.combinatorics.solvers.ProblemNeighborhoodAware;
 import org.aksw.commons.util.strings.StringPrettyComparator;
+import org.aksw.jena_sparql_api.concept_cache.op.OpExtConjunctiveQuery;
 import org.aksw.jena_sparql_api.iso.index.SubGraphIsomorphismIndex;
 import org.aksw.jena_sparql_api.jgrapht.transform.GraphVar;
 import org.aksw.jena_sparql_api.jgrapht.transform.QueryToGraphVisitor;
 import org.aksw.jena_sparql_api.jgrapht.transform.QueryToJenaGraph;
 import org.aksw.jena_sparql_api.jgrapht.wrapper.PseudoGraphJenaGraph;
+import org.aksw.jena_sparql_api.mapper.jpa.core.RdfEntityManager;
+import org.aksw.jena_sparql_api.mapper.jpa.core.SparqlEntityManagerFactory;
+import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
+import org.aksw.jena_sparql_api.update.FluentSparqlService;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.views.index.SparqlViewMatcherOpImpl;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
@@ -29,6 +36,8 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.graph.GraphFactory;
 import org.jgraph.JGraph;
 import org.jgrapht.ext.JGraphModelAdapter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
@@ -39,6 +48,10 @@ import com.jgraph.layout.hierarchical.JGraphHierarchicalLayout;
 
 public class MainSparqlQueryToGraph {
 
+
+    private static final Logger logger = LoggerFactory.getLogger(MainSparqlQueryToGraph.class);
+
+
     public static <K, V> Map<K, V> prettify(Map<? extends K, ? extends V> map) {
         Map<K, V> result = new TreeMap<>(StringPrettyComparator::doCompare);
         result.putAll(map);
@@ -47,7 +60,7 @@ public class MainSparqlQueryToGraph {
     }
 
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         org.apache.jena.graph.Graph g = GraphFactory.createDefaultGraph();
         g.add(new Triple(Vars.s, Vars.p, Vars.o));
         RDFDataMgr.write(System.out, g, RDFFormat.NTRIPLES);
@@ -135,19 +148,74 @@ public class MainSparqlQueryToGraph {
 
 
         SubGraphIsomorphismIndex<Node> index = SubGraphIsomorphismIndex.create();
-        int xxx = 1;
+        int xxx = 3;
 
         if(xxx == 0) {
             // incremental subsumtion
             index.add(ag);
             index.add(bg);
             index.add(cg);
-        } else {
+        } else if(xxx == 2){
             // most generic inserted last
             index.add(dg);
             //index.add(cg);
             index.add(bg);
             index.add(ag);
+        } else {
+            SparqlEntityManagerFactory emf = new SparqlEntityManagerFactory();
+            emf.setSparqlService(FluentSparqlService.http("http://localhost:8950/sparql").create());
+            emf.addScanPackageName(MainSparqlQueryToGraph.class.getPackage().getName());
+            RdfEntityManager em = emf.getObject();
+//            List<LsqQuery> queries = JpaUtils.createTypedQuery(em, LsqQuery.class, (cb, cq) -> {
+//                Root<LsqQuery> root = cq.from(LsqQuery.class);
+//                cq.select(root);
+//            }).setMaxResults(1000).getResultList();
+
+            List<LsqQuery> queries = new ArrayList<>();
+            queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q-005cc91b"));
+            queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q-00061e2b"));
+
+            //System.out.println(queries);
+            int i = 0;
+            for(LsqQuery lsqq : queries) {
+                String id = em.getIri(lsqq);
+                String queryStr = lsqq.getText();
+                Query query;
+                try {
+                    query = SparqlQueryParserImpl.create().apply(queryStr);
+                } catch(Exception e) {
+                    logger.warn("Failed to parse: " + queryStr);
+                    continue;
+                }
+                Op op = Algebra.toQuadForm(Algebra.compile(query));
+                Op nop = SparqlViewMatcherOpImpl.normalizeOp(op);
+
+
+                // Collect all conjunctive queries
+                if(!(nop instanceof OpExtConjunctiveQuery)) {
+                    //System.out.println("Not a conjunctive query - skipping");
+                } else {
+                    ++i;
+                    OpExtConjunctiveQuery ocq = (OpExtConjunctiveQuery)nop;
+                    //ConjunctiveQuery cq = SparqlCacheUtils.tryExtractConjunctiveQuery(op, generator)
+
+                    System.out.println("indexing: " + ocq.getQfpc());
+
+                    QueryToGraphVisitor q2g = new ExtendedQueryToGraphVisitor(ssn.get());
+                    q2g.visit(ocq);
+                    GraphVar graph = q2g.getGraph();
+                    index.put(NodeFactory.createURI(id), graph);
+                }
+
+
+
+            }
+            System.out.println("Processed: " + i);
+index.printTree();
+
+
+            System.exit(0);
+
         }
 
 //        System.out.println("Performing lookup");

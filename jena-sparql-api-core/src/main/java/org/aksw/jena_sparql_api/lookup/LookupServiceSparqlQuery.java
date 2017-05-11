@@ -25,14 +25,18 @@ import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public class LookupServiceSparqlQuery
     implements LookupService<Node, ResultSetPart>
 {
-    private QueryExecutionFactory sparqlService;
-    private Query query;
-    private Var var;
+    private static final Logger logger = LoggerFactory.getLogger(LookupServiceSparqlQuery.class);
+
+    protected QueryExecutionFactory sparqlService;
+    protected Query query;
+    protected Var var;
 
     public LookupServiceSparqlQuery(QueryExecutionFactory sparqlService, Query query, Var var) {
         this.sparqlService = sparqlService;
@@ -53,13 +57,13 @@ public class LookupServiceSparqlQuery
             E_OneOf expr = new E_OneOf(new ExprVar(var), exprs);
             Element filterElement = new ElementFilter(expr);
 
-            System.out.println("Looking up: " + query);
-            
+
             Query q = query.cloneQuery();
             Element newElement = ElementUtils.mergeElements(q.getQueryPattern(), filterElement);
             q.setQueryPattern(newElement);
 
             //System.out.println("Lookup query: " + q);
+            logger.debug("Looking up: " + q);
 
             Map<Node, List<Binding>> map = new HashMap<Node, List<Binding>>();
             QueryExecution qe = sparqlService.createQueryExecution(q);

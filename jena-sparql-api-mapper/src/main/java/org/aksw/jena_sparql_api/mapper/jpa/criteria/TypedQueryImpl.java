@@ -390,9 +390,10 @@ public class TypedQueryImpl<X>
         return result;
     }
 
+    // TODO The limit argument can be removed, as this is is read from the maxResult field
     public List<X> getResultList(Integer limit) { //, Integer offset) {
         Long l = maxResult != null ? maxResult.longValue() : null;
-        l = limit != null ? limit.longValue() : null;
+        //l = limit != null ? limit.longValue() : null;
         Long o = startPosition != null ? startPosition.longValue() : null;
 
         SparqlService sparqlService = engine.getSparqlService();

@@ -45,6 +45,7 @@ import org.aksw.jena_sparql_api.mapper.model.TypeDecider;
 import org.aksw.jena_sparql_api.mapper.model.TypeDeciderImpl;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
+import org.aksw.jena_sparql_api.shape.lookup.MapServiceResourceShape;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
@@ -152,6 +153,28 @@ public class RdfMapperEngineImpl
         return null;
     }
 
+
+    /**
+     *
+     * TODO Currently this method has linear complexity - optimize using an index!
+     */
+    @Override
+    public String getIri(Object entity) {
+        String result = null;
+        for(EntityState entityState : originalState.values()) {
+            if(entityState.getEntity() == entity) {
+                RDFNode tmp = entityState.getShapeResource();
+                if(tmp != null && tmp.isResource()) {
+                    result = tmp.asResource().getURI();
+                    break;
+                }
+                throw new RuntimeException("Entity exists but does not have an IRI - should not happen");
+                //result = entityState.getResourceFragment().getResource().getURI()
+            }
+        }
+        return result;
+    }
+
 //    public ListService<Concept, Node, DatasetGraph> prepareListService(RdfClass rdfClass, Concept filterConcept) {
 //
 //Collection<TypedNode> typedNodes
@@ -197,9 +220,8 @@ public class RdfMapperEngineImpl
         //Graph result;
         Map<Node, RDFNode> result;
         if(!shape.isEmpty()) {
-            MappedConcept<Graph> mc = ResourceShape.createMappedConcept(shape, null, false);
             QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
-            LookupService<Node, Graph> ls = LookupServiceUtils.createLookupService(qef, mc);
+            LookupService<Node, Graph> ls = MapServiceResourceShape.createLookupService(qef, shape);
             Map<Node, Graph> map = ls.apply(nodes);
 
             result = map.entrySet().stream()
@@ -234,7 +256,8 @@ public class RdfMapperEngineImpl
         if(!shape.isEmpty()) {
             MappedConcept<Graph> mc = ResourceShape.createMappedConcept(shape, null, false);
             QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
-            LookupService<Node, Graph> ls = LookupServiceUtils.createLookupService(qef, mc);
+            LookupService<Node, Graph> ls = MapServiceResourceShape.createLookupService(qef, shape);
+
             Map<Node, Graph> map = ls.apply(Collections.singleton(node));
             Graph g = map.get(node);
             Model m = g == null ? ModelFactory.createDefaultModel() : ModelFactory.createModelForGraph(g);

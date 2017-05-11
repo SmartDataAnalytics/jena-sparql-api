@@ -58,7 +58,7 @@ public class SparqlEntityManagerFactory
     }
 
     @Override
-    public EntityManager getObject() throws Exception {
+    public RdfEntityManager getObject() throws Exception {
 
         RdfMapperEngineImpl mapperEngine = new RdfMapperEngineImpl(sparqlService, prologue);
 
@@ -101,7 +101,7 @@ public class SparqlEntityManagerFactory
 //        });
 
 
-        EntityManager result = new EntityManagerImpl(mapperEngine);
+        RdfEntityManager result = new EntityManagerImpl(mapperEngine);
 
         return result;
     }

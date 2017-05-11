@@ -72,8 +72,19 @@ public class LookupServiceUtils {
 
 
 
+    /**
+     * This version is broken - use
+     * MapServiceResourceShape.createLookupService(qef, shape);
+     * @param sparqlService
+     * @param mappedConcept
+     * @return
+     */
+    @Deprecated
     public static <T> LookupService<Node, T> createLookupService(QueryExecutionFactory sparqlService, MappedConcept<T> mappedConcept) {
 
+        if(true) {
+            throw new RuntimeException("This method is broken. Use MapServiceResourceShape.createLookupService(qef, shape) instead)");
+        }
         Concept concept = mappedConcept.getConcept();
         Query query = concept.asQuery();
         query.setQueryResultStar(true);
