@@ -1,12 +1,14 @@
 package org.aksw.jena_sparql_api.jgrapht;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import javax.persistence.criteria.Root;
 import javax.swing.JFrame;
 
 import org.aksw.combinatorics.solvers.ProblemNeighborhoodAware;
@@ -19,6 +21,7 @@ import org.aksw.jena_sparql_api.jgrapht.transform.QueryToJenaGraph;
 import org.aksw.jena_sparql_api.jgrapht.wrapper.PseudoGraphJenaGraph;
 import org.aksw.jena_sparql_api.mapper.jpa.core.RdfEntityManager;
 import org.aksw.jena_sparql_api.mapper.jpa.core.SparqlEntityManagerFactory;
+import org.aksw.jena_sparql_api.mapper.util.JpaUtils;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
 import org.aksw.jena_sparql_api.utils.Vars;
@@ -166,15 +169,31 @@ public class MainSparqlQueryToGraph {
             emf.setSparqlService(FluentSparqlService.http("http://localhost:8950/sparql").create());
             emf.addScanPackageName(MainSparqlQueryToGraph.class.getPackage().getName());
             RdfEntityManager em = emf.getObject();
-//            List<LsqQuery> queries = JpaUtils.createTypedQuery(em, LsqQuery.class, (cb, cq) -> {
-//                Root<LsqQuery> root = cq.from(LsqQuery.class);
-//                cq.select(root);
-//            }).setMaxResults(1000).getResultList();
 
-            List<LsqQuery> queries = new ArrayList<>();
-            queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q-005cc91b"));
-            queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q-00061e2b"));
-
+            List<LsqQuery> queries;
+            int yyy = 2;
+            if(yyy == 0) {
+                queries = JpaUtils.createTypedQuery(em, LsqQuery.class, (cb, cq) -> {
+                    Root<LsqQuery> root = cq.from(LsqQuery.class);
+                    cq.select(root);
+                }).setMaxResults(10000).getResultList();
+            } else if(yyy == 1) {
+                queries = new ArrayList<>();
+                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q-005cc91b"));
+                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q-00061e2b"));
+            } else if(yyy == 2) {
+                queries = new ArrayList<>();
+                //queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q-01a34de1"));
+                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q-03aa957f")); // SELECT  ?s ?str WHERE   { ?s  ?p  ?str     FILTER strstarts(str(?str), "1")   }
+                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q-0000eb19")); // SELECT  ?property ?value WHERE   { <http://data.semanticweb.org/organization/a-i-group-faculty-of-technology-bielefeld-university-germany>               ?property  ?value   } "
+                //the second query has the filter: SELECT  ?s ?str WHERE   { ?s  ?p  ?str     FILTER strstarts(str(?str), "1")   } "
+                // TODO figure out why it is subsumed by ?s ?p ?o - and even more: why it subsumes every other query
+                  //96 keys: [http://lsq.aksw.org/res/q-01a34de1 (SELECT ?s ?p ?o), http://lsq.aksw.org/res/q-011578c8 (ASK ?s ?p ?o)]
+                    //    518 keys: [http://lsq.aksw.org/res/q-03aa957f]            }
+                //       519 keys: [http://lsq.aksw.org/res/q-0000eb19]
+            } else {
+                queries = Collections.emptyList();
+            }
             //System.out.println(queries);
             int i = 0;
             for(LsqQuery lsqq : queries) {
@@ -204,6 +223,7 @@ public class MainSparqlQueryToGraph {
                     QueryToGraphVisitor q2g = new ExtendedQueryToGraphVisitor(ssn.get());
                     q2g.visit(ocq);
                     GraphVar graph = q2g.getGraph();
+                    System.out.println(graph);
                     index.put(NodeFactory.createURI(id), graph);
                 }
 

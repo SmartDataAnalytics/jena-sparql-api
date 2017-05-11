@@ -14,6 +14,7 @@ import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpVisitorBase;
 import org.apache.jena.sparql.algebra.op.OpBGP;
 import org.apache.jena.sparql.algebra.op.OpDisjunction;
+import org.apache.jena.sparql.algebra.op.OpDistinct;
 import org.apache.jena.sparql.algebra.op.OpFilter;
 import org.apache.jena.sparql.algebra.op.OpProject;
 import org.apache.jena.sparql.algebra.op.OpQuadBlock;
@@ -68,6 +69,11 @@ public class QueryToGraphVisitor
 
     public Node getResult() {
         return stack.firstElement();
+    }
+
+    @Override
+    public void visit(OpDistinct op) {
+        op.getSubOp().visit(this);
     }
 
     @Override

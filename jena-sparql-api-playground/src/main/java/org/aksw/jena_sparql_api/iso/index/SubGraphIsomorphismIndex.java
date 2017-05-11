@@ -1,11 +1,11 @@
 package org.aksw.jena_sparql_api.iso.index;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -29,8 +29,6 @@ import org.apache.jena.graph.GraphUtil;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.graph.compose.Difference;
-import org.apache.jena.graph.compose.Intersection;
 import org.apache.jena.sparql.core.Var;
 
 import com.google.common.collect.BiMap;
@@ -473,10 +471,7 @@ public class SubGraphIsomorphismIndex<K>
         //Graph insertGraphIsoB = pos.getGraphIso();
 
         Graph residualInsertGraphB = pos.getResidualQueryGraph();
-        BiMap<Node, Node> isoAB = pos.getLatestIsoAB();
-        BiMap<Node, Node> baseIso = pos.getIso();
 
-        writer.println("Insert attempt of user graph of size " + residualInsertGraphB.size());
 
         // If the insert graph is empty, just append the key to the insert node
         // i.e. do not create a child node
@@ -485,6 +480,15 @@ public class SubGraphIsomorphismIndex<K>
             return;
         }
 
+
+
+        BiMap<Node, Node> isoAB = pos.getLatestIsoAB();
+        BiMap<Node, Node> baseIso = pos.getIso();
+
+        GraphIndexNode<K> nodeB = createNode(residualInsertGraphB, isoAB);
+        nodeB.getKeys().add(key);
+
+        writer.println("Insert attempt of user graph of size " + residualInsertGraphB.size());
 //        RDFDataMgr.write(System.out, insertGraph, RDFFormat.NTRIPLES);
 //        System.out.println("under: " + currentIso);
 
@@ -497,7 +501,7 @@ public class SubGraphIsomorphismIndex<K>
         // Make a copy of the baseIso, as it is transient due to state space search
         //GraphIsoMap gim = new GraphIsoMapImpl(insertGraph, HashBiMap.create(baseIso));
 
-        boolean wasAdded = false;
+        //boolean wasAdded = false;
 
         // If the insertGraph was not subsumed,
         // check if it subsumes any of the other children
@@ -506,12 +510,13 @@ public class SubGraphIsomorphismIndex<K>
         // add it as a new child
         if(!isSubsumed) {
             writer.println("We are not subsumed, but maybe we subsume");
-            GraphIndexNode<K> nodeB = null;//createNode(graphIso);//new GraphIndexNode<K>(graphIso);
+//            GraphIndexNode<K> nodeB = null;//createNode(graphIso);//new GraphIndexNode<K>(graphIso);
 
 
             writer.incIndent();
             //for(GraphIndexNode child : children) {
-            Iterator<GraphIndexNode<K>> it = nodeA.getChildren().iterator();//children.listIterator();
+            //Iterator<GraphIndexNode<K>> it = nodeA.getChildren().iterator();//children.listIterator();
+            Iterator<GraphIndexNode<K>> it = new ArrayList<>(nodeA.getChildren()).iterator();
             while(it.hasNext()) {
                 GraphIndexNode<K> nodeC = it.next();
                 Graph viewGraphC = nodeC.getValue();
@@ -524,33 +529,39 @@ public class SubGraphIsomorphismIndex<K>
                 writer.incIndent();
                 int i = 0;
 
+                boolean isSubsumedC = false;
                 Iterable<BiMap<Node, Node>> isosBC = QueryToJenaGraph.match(baseIso.inverse(), residualInsertGraphB, viewGraphC).collect(Collectors.toSet());
                 for(BiMap<Node, Node> isoBC : isosBC) {
+                    isSubsumedC = true;
                     writer.println("Detected subsumption #" + ++i + " with iso: " + isoBC);
                     writer.incIndent();
 
                     // TODO FUCK! This isoGraph object may be a reason to keep the original graph and the iso in a combined graph object
-                    nodeB = nodeB == null ? createNode(residualInsertGraphB, isoAB) : nodeB;
+                    //nodeB = nodeB == null ? createNode(residualInsertGraphB, isoAB) : nodeB;
                     GraphIsoMap mappedResidualInsertGraphC = new GraphIsoMapImpl(residualInsertGraphB, isoBC);
                     Graph removalGraphC = intersection(mappedResidualInsertGraphC, viewGraphC);
-                    GraphIndexNode<K> newChild = cloneWithRemoval(nodeC, isoBC, removalGraphC, writer);
+                    GraphIndexNode<K> newChildC = cloneWithRemoval(nodeC, isoBC, removalGraphC, writer);
 
-                    nodeB.appendChild(newChild);//add(newChild, baseIso, writer);
+                    nodeB.appendChild(newChildC);//add(newChild, baseIso, writer);
 
 
                     writer.decIndent();
                 }
 
-                if(nodeB != null) {
-                    //it.remove();
+                if(isSubsumedC) {
                     deleteNode(nodeC.getKey());
-                    nodeA.appendChild(nodeB);
-                    nodeB.getKeys().add(key);
-
-                    writer.println("A node was subsumed and therefore removed");
-                    wasAdded = true;
-                    // not sure if this remove works
                 }
+
+
+//                if(nodeB != null) {
+//                    //it.remove();
+//
+//                    //nodeB.getKeys().add(key);
+//
+//                    writer.println("A node was subsumed and therefore removed");
+//                    //wasAdded = true;
+//                    // not sure if this remove works
+//                }
                 writer.decIndent();
 
             }
@@ -559,12 +570,13 @@ public class SubGraphIsomorphismIndex<K>
         }
 
         // If nothing was subsumed, add it to this node
-        if(!wasAdded) {
+        //if(!wasAdded) {
             writer.println("Attached graph of size " + residualInsertGraphB.size() + " to node " + nodeA);
-            GraphIndexNode<K> target = createNode(residualInsertGraphB, baseIso);
-            target.getKeys().add(key);
-            nodeA.appendChild(target);
-        }
+            nodeA.appendChild(nodeB);
+            //GraphIndexNode<K> target = createNode(residualInsertGraphB, baseIso);
+            //target.getKeys().add(key);
+            //nodeA.appendChild(target);
+        //}
     }
 
 }
