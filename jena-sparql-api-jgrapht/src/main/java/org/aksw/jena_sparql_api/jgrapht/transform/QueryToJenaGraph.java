@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -14,6 +15,7 @@ import java.util.stream.Stream;
 import org.aksw.commons.collections.utils.StreamUtils;
 import org.aksw.jena_sparql_api.jgrapht.wrapper.PseudoGraphJenaGraph;
 import org.aksw.jena_sparql_api.utils.DnfUtils;
+import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
@@ -21,10 +23,12 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprFunction;
 import org.apache.jena.sparql.expr.NodeValue;
-import org.apache.jena.sparql.util.NodeComparator;
 import org.apache.jena.sparql.util.NodeUtils;
+import org.apache.jena.vocabulary.RDFS;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.GraphMapping;
 import org.jgrapht.Graphs;
@@ -60,6 +64,9 @@ public class QueryToJenaGraph {
 
     public static Node[] gspo = {g, s, p, o};
 
+    public static Node argNode = NodeFactory.createURI("arg://unordered"); // unordered argument
+
+    public static Node cm = NodeFactory.createURI("http://ex.org/cm"); // conjunction member
     public static Node dm = NodeFactory.createURI("http://ex.org/dm"); // disjunction member
 
     public static Node ev = NodeFactory.createURI("http://ex.org/ea"); // equality var argument
@@ -114,8 +121,62 @@ public class QueryToJenaGraph {
         }
     }
 
+
+    public static Node exprToGraph(Graph graph, Expr expr, Supplier<Node> nodeSupplier) {
+        Node result;
+        if(expr.isConstant()) {
+            result = expr.getConstant().asNode();
+        } else if(expr.isFunction()) {
+            result = nodeSupplier.get();
+
+            boolean isCommutative = expr instanceof E_Equals;
+
+            ExprFunction ef = expr.getFunction();
+            String fnId = ExprUtils.getFunctionId(ef);
+
+            graph.add(new Triple(result, RDFS.label.asNode(), NodeFactory.createLiteral(fnId)));
+
+            List<Expr> args = ef.getArgs();
+            int n = args.size();
+            for(int i = 0; i < n; ++i) {
+                Expr arg = args.get(i);
+                Node argNode = exprToGraph(graph, arg, nodeSupplier);
+
+                Node p = isCommutative ? argNode : NodeFactory.createURI("arg://" + i);
+
+                graph.add(new Triple(result, p, argNode));
+            }
+
+        } else if(expr.isVariable()){
+            result = expr.asVar();
+        } else {
+            throw new RuntimeException("should not happen");
+        }
+
+        return result;
+    }
+
+
+    public static void dnfToGraph(Graph graph, Collection<? extends Collection<? extends Expr>> dnf, Supplier<Node> nodeSupplier) {
+        Node orNode = nodeSupplier.get();
+        for(Collection<? extends Expr> clause : dnf) {
+            // Create a blank node for each clause
+
+            Node andNode = nodeSupplier.get();
+            addEdge(graph, orNode, dm, andNode);
+            for(Expr e : clause) {
+                // Create another blank node for each equality instance
+                // TODO This would be another type of construction: Actually the edge labels are already sufficient for discrimination of equals expressions
+                //Node equalsNode = nodeSupplier.get();
+
+                Node eNode = exprToGraph(graph, e, nodeSupplier);
+                addEdge(graph, andNode, cm, eNode);
+            }
+        }
+    }
+
     // Filters: Extract all equality filters
-    public static void equalExprsToGraph(Graph graph, Collection<? extends Collection<? extends Expr>> dnf, Supplier<Node> nodeSupplier, Map<Var, Node> varToNode) {
+    public static void equalExprsToGraphOld(Graph graph, Collection<? extends Collection<? extends Expr>> dnf, Supplier<Node> nodeSupplier, Map<Var, Node> varToNode) {
         Set<Map<Var, NodeValue>> maps = DnfUtils.extractConstantConstraints(dnf);
 
         for(Map<Var, NodeValue> map : maps) {

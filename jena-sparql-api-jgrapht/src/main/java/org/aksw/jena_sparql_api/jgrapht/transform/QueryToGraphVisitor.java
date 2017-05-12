@@ -89,7 +89,7 @@ public class QueryToGraphVisitor
 
         ExprList exprs = op.getExprs();
         Set<Set<Expr>> dnf = DnfUtils.toSetDnf(exprs);
-        QueryToJenaGraph.equalExprsToGraph(graph, dnf, nodeSupplier, varToNode);
+        QueryToJenaGraph.dnfToGraph(graph, dnf, nodeSupplier);
 
 
         Node result = nodeSupplier.get();
