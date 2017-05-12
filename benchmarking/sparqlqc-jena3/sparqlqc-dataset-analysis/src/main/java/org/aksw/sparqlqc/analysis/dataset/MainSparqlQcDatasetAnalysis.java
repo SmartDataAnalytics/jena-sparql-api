@@ -29,6 +29,7 @@ import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.aksw.jena_sparql_api.shape.lookup.MapServiceResourceShape;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
+import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.aksw.simba.lsq.vocab.LSQ;
 import org.apache.jena.graph.Graph;
@@ -62,6 +63,7 @@ import org.springframework.core.io.ClassPathResource;
 
 import com.google.common.collect.Range;
 
+import arq.load;
 import fr.inrialpes.tyrexmo.testqc.simple.SimpleContainmentSolver;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
@@ -100,13 +102,13 @@ public class MainSparqlQcDatasetAnalysis {
 
         init();
 
-        if(true) {
-            filterByIdenticalNormalizedQuery();
-
-        destroy();
-        System.exit(0);
-            return;
-        }
+//        if(true) {
+//            filterByIdenticalNormalizedQuery();
+//
+//        destroy();
+//        System.exit(0);
+//            return;
+//        }
 
 
         OptionParser parser = new OptionParser();
@@ -115,6 +117,12 @@ public class MainSparqlQcDatasetAnalysis {
         String queryStr = "PREFIX lsq:<http://lsq.aksw.org/vocab#> SELECT ?s ?o { ?s lsq:text ?o ; lsq:hasSpin [ a <http://spinrdf.org/sp#Select> ] } ORDER BY ASC(strlen(?o))";
 
         boolean useParallel = false;
+
+        OptionSpec<String> solverOs = parser
+                .acceptsAll(Arrays.asList("s", "solver"), "The solver to use, one of: " + solvers.keySet())
+                .withRequiredArg()
+                //.defaultsTo(null)
+                ;
 
         OptionSpec<String> endpointUrlOs = parser
                 .acceptsAll(Arrays.asList("e", "endpoint"), "Local SPARQL service (endpoint) URL on which to execute queries")
@@ -194,10 +202,17 @@ public class MainSparqlQcDatasetAnalysis {
                     : () -> items.stream();
 
 
+            String solverLabel = solverOs.value(options);
+            SimpleContainmentSolver solver = solvers.get(solverLabel);
 
-            run("JSAC", jsaSolver, queryIterable);
+            if(solver == null) {
+                throw new RuntimeException("No solver with label '" + solverLabel + "' found");
+            }
+
+            run(solverLabel, solver, queryIterable);
         } catch(Exception e) {
             e.printStackTrace();
+            parser.printHelpOn(System.err);
         }
 
         destroy();
@@ -357,8 +372,12 @@ public class MainSparqlQcDatasetAnalysis {
     //	tripleStream.forEach(
     }
 
+    public static Map<String, SimpleContainmentSolver> solvers = null;
 
     public static SimpleContainmentSolver jsaSolver = null;
+    public static SimpleContainmentSolver sparqlAlgebraSolver = null;
+    public static SimpleContainmentSolver treeSolver = null;
+    public static SimpleContainmentSolver afmuSolver = null;
 
 
     public static Framework framework = null;
@@ -431,7 +450,7 @@ public class MainSparqlQcDatasetAnalysis {
         framework.init();
         framework.start();
 
-        List<String> pluginNames = Arrays.asList("jsa"); //, "sparqlalgebra", "afmu", "treesolver");
+        List<String> pluginNames = Arrays.asList("jsa", "sparqlalgebra", "afmu", "treesolver");
 
         // "reference:file:" + jarFileStr
         List<String> jarRefs = pluginNames.stream().map(pluginName ->
@@ -451,7 +470,7 @@ public class MainSparqlQcDatasetAnalysis {
 
         ServiceReference<?>[] srs = context.getAllServiceReferences(SimpleContainmentSolver.class.getName(), null);
 
-        Map<String, SimpleContainmentSolver> solvers = Arrays.asList(srs).stream().collect(Collectors.toMap(
+        Map<String, SimpleContainmentSolver> loadedSolvers = Arrays.asList(srs).stream().collect(Collectors.toMap(
                 sr -> "" + sr.getProperty("SHORT_LABEL"), sr -> (SimpleContainmentSolver) context.getService(sr)));
 
         //System.out.println(solvers);
@@ -484,8 +503,11 @@ public class MainSparqlQcDatasetAnalysis {
         // String solverShortLabel = e.getKey();
         // SimpleContainmentSolver solver = e.getValue();
 
-        String solverShortLabel = "JSAC";
-        jsaSolver = solvers.get(solverShortLabel);
+        solvers = loadedSolvers;
+        jsaSolver = loadedSolvers.get("JSAC");
+        sparqlAlgebraSolver = loadedSolvers.get("SA");
+        treeSolver = loadedSolvers.get("TS");
+        afmuSolver = loadedSolvers.get("AFMU");
     }
 
 
@@ -500,7 +522,9 @@ public class MainSparqlQcDatasetAnalysis {
         Property _entailmentError = ResourceFactory.createProperty(ns + "entailmentError-" + solverShortLabel);
         Property _inputError = ResourceFactory.createProperty(ns + "inputError-" + solverShortLabel);
 
-        Stream<Statement> x = queryIterable.get()//.peek((foo) -> System.out.println("foo: " + foo))
+        Function<String, Query> parser = SparqlQueryParserImpl.create();
+
+        Stream<Model> x = queryIterable.get()//.peek((foo) -> System.out.println("foo: " + foo))
                 .flatMap(a -> queryIterable.get().map(b -> {
                     Model m = ModelFactory.createDefaultModel();
                     try {
@@ -514,11 +538,21 @@ public class MainSparqlQcDatasetAnalysis {
                         String bStr = b.getProperty(LSQ.text).getString();
 
                         try {
-                            boolean isEntailed = solver.entailed(aStr, bStr);
-                            if (isEntailed) {
-                                m.add(a, _isEntailed, b);
-                            } else {
-                                m.add(a, _isNotEntailed, b);
+                            Query aq = parser.apply(aStr);
+                            Query bq = parser.apply(bStr);
+
+                            aq.getPrefixMapping().clearNsPrefixMap();
+                            bq.getPrefixMapping().clearNsPrefixMap();
+
+                            boolean queriesAreTheSame = Objects.equals(aq, bq) && aq != null;
+                            if(!queriesAreTheSame) {
+                            //System.out.println("r = " + r);
+                                boolean isEntailed = solver.entailed(aStr, bStr);
+                                if (isEntailed) {
+                                    m.add(a, _isEntailed, b);
+                                } else {
+                                    m.add(a, _isNotEntailed, b);
+                                }
                             }
                         } catch (Exception ex) {
                             m.add(a, _entailmentError, b);
@@ -528,7 +562,7 @@ public class MainSparqlQcDatasetAnalysis {
                         m.add(a, _inputError, b);
                         logger.warn("Input error", ey);
                     }
-                    return m.listStatements().next();
+                    return m;//.listStatements().next();
                 })
 
         );
@@ -538,9 +572,9 @@ public class MainSparqlQcDatasetAnalysis {
         // System.out.println(x.count());
 
         //OutputStream out = new FileOutputStream(new File("/mnt/Data/tmp/swdf-containment-" + solverShortLabel + ".nt"));
-        x.forEach(stmt -> {
-            Model m = ModelFactory.createDefaultModel();
-            m.add(stmt);
+        x.forEach(m -> {
+            //Model m = ModelFactory.createDefaultModel();
+            //m.add(stmt);
             RDFDataMgr.write(System.out, m, RDFFormat.NTRIPLES_UTF8);
         });
 
