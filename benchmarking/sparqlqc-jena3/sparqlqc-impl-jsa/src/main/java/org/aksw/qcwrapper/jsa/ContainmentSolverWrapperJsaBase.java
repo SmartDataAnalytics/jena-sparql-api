@@ -16,59 +16,73 @@ import fr.inrialpes.tyrexmo.testqc.ContainmentTestException;
 import fr.inrialpes.tyrexmo.testqc.simple.SimpleContainmentSolver;
 
 public class ContainmentSolverWrapperJsaBase
-	implements ContainmentSolver, SimpleContainmentSolver
+    implements ContainmentSolver, SimpleContainmentSolver
 {
-	protected BiFunction<QuadFilterPatternCanonical, QuadFilterPatternCanonical, Stream<Map<Var, Var>>> qfpcMatcher;
+    protected BiFunction<QuadFilterPatternCanonical, QuadFilterPatternCanonical, Stream<Map<Var, Var>>> qfpcMatcher;
 
-	public ContainmentSolverWrapperJsaBase(
-			BiFunction<QuadFilterPatternCanonical, QuadFilterPatternCanonical, Stream<Map<Var, Var>>> qfpcMatcher) {
-		super();
-		this.qfpcMatcher = qfpcMatcher;
-	}
+    public ContainmentSolverWrapperJsaBase(
+            BiFunction<QuadFilterPatternCanonical, QuadFilterPatternCanonical, Stream<Map<Var, Var>>> qfpcMatcher) {
+        super();
+        this.qfpcMatcher = qfpcMatcher;
+    }
 
-	@Override
-	public void warmup() throws ContainmentTestException {
-		SparqlQueryContainmentUtils.tryMatch(
-			String.join("\n",
-				"?x <my://type> <my://Airport> .",
-        		"?x <my://label> ?n ; ?h ?i . ",
-        		"FILTER(langMatches(lang(?n), 'en')) .",
-        		"FILTER(<mp://fn>(?x, ?n))"),
+    @Override
+    public void warmup() throws ContainmentTestException {
+        SparqlQueryContainmentUtils.tryMatch(
+            String.join("\n",
+                "?x <my://type> <my://Airport> .",
+                "?x <my://label> ?n ; ?h ?i . ",
+                "FILTER(langMatches(lang(?n), 'en')) .",
+                "FILTER(<mp://fn>(?x, ?n))"),
 
-			String.join("\n",
-        		"?s <my://type> <my://Airport> .",
-        		"?s ?p ?l .",
-        		"FILTER(?p = <my://label> || ?p = <my://name>)")
-		);
-	}
+            String.join("\n",
+                "?s <my://type> <my://Airport> .",
+                "?s ?p ?l .",
+                "FILTER(?p = <my://label> || ?p = <my://name>)")
+        );
+    }
 
-	@Override
-	public boolean entailed(Query q1, Query q2) {// throws ContainmentTestException {
-		boolean result = SparqlQueryContainmentUtils.tryMatch(q2, q1, qfpcMatcher);
-		return result;
-	}
+    @Override
+    public boolean entailed(Query q1, Query q2) {// throws ContainmentTestException {
+        boolean result = SparqlQueryContainmentUtils.tryMatch(q2, q1, qfpcMatcher);
+        return result;
+    }
 
-	@Override
-	public void cleanup() throws ContainmentTestException {
-		System.gc();
-	}
+    @Override
+    public void cleanup() throws ContainmentTestException {
+        System.gc();
+    }
 
-	@Override
-	public boolean entailedUnderSchema(String schema, Query q1, Query q2) throws ContainmentTestException {
-		throw new ContainmentTestException("Cannot yet parse Jena Models");
-	}
+    @Override
+    public boolean entailedUnderSchema(String schema, Query q1, Query q2) throws ContainmentTestException {
+        throw new ContainmentTestException("Cannot yet parse Jena Models");
+    }
 
-	@Override
-	public boolean entailedUnderSchema(Model schema, Query q1, Query q2) throws ContainmentTestException {
-		throw new ContainmentTestException("Cannot yet parse Jena Models");
-	}
+    @Override
+    public boolean entailedUnderSchema(Model schema, Query q1, Query q2) throws ContainmentTestException {
+        throw new ContainmentTestException("Cannot yet parse Jena Models");
+    }
 
-	@Override
-	public boolean entailed(String queryStr1, String queryStr2) {
-		Query q1 = QueryFactory.create(queryStr1);
-		Query q2 = QueryFactory.create(queryStr2);
-		boolean result = entailed(q1, q2);
-		return result;
-	}
+    @Override
+    public boolean entailed(String queryStr1, String queryStr2) {
+        Query q1 = QueryFactory.create(queryStr1);
+        Query q2 = QueryFactory.create(queryStr2);
+        boolean result = entailed(q1, q2);
+        return result;
+    }
+
+    @Override
+    public boolean entailedUnderSchema(String schema, String queryStr1, String queryStr2) {
+        Query q1 = QueryFactory.create(queryStr1);
+        Query q2 = QueryFactory.create(queryStr2);
+        boolean result;
+        try {
+            result = entailedUnderSchema(schema ,q1, q2);
+        } catch (ContainmentTestException e) {
+            throw new RuntimeException(e);
+        }
+        return result;
+
+    }
 
 }

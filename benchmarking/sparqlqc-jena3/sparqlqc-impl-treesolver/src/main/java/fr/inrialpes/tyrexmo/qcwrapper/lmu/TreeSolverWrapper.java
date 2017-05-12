@@ -32,10 +32,11 @@ import fr.inrialpes.tyrexmo.queryanalysis.CycleAnalysis;
 import fr.inrialpes.tyrexmo.queryanalysis.TransformAlgebra;
 import fr.inrialpes.tyrexmo.testqc.ContainmentTestException;
 import fr.inrialpes.tyrexmo.testqc.LegacyContainmentSolver;
+import fr.inrialpes.tyrexmo.testqc.LegacyContainmentSolverBase;
 import fr.inrialpes.tyrexmo.testqc.simple.SimpleContainmentSolver;
 import fr.inrialpes.wam.treelogic.BottomUpSolver.FormulaSolver;
 
-public class TreeSolverWrapper implements LegacyContainmentSolver, SimpleContainmentSolver {
+public class TreeSolverWrapper extends LegacyContainmentSolverBase {
     final static Logger logger = LoggerFactory.getLogger( TreeSolverWrapper.class );
 
     /*kripke restriction \varphi_r */
@@ -173,18 +174,18 @@ public class TreeSolverWrapper implements LegacyContainmentSolver, SimpleContain
     return !rightQueryDistVars.equals( leftQueryDistVars );
     }
 
-    @Override
-    public boolean entailed(String queryStr1, String queryStr2) {
-        Query q1 = QueryFactory.create(queryStr1);
-        Query q2 = QueryFactory.create(queryStr2);
-        boolean result;
-        try {
-            result = entailed(q1, q2);
-        } catch (ContainmentTestException e) {
-            throw new RuntimeException(e);
-        }
-        return result;
-    }
+//    @Override
+//    public boolean entailed(String queryStr1, String queryStr2) {
+//        Query q1 = QueryFactory.create(queryStr1);
+//        Query q2 = QueryFactory.create(queryStr2);
+//        boolean result;
+//        try {
+//            result = entailed(q1, q2);
+//        } catch (ContainmentTestException e) {
+//            throw new RuntimeException(e);
+//        }
+//        return result;
+//    }
 }
 
 

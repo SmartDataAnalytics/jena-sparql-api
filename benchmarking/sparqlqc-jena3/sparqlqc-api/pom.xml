@@ -40,6 +40,12 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.aksw.sparqlqc</groupId>
+            <artifactId>sparqlqc-api-simple</artifactId>
+        </dependency>
+
+
+        <dependency>
             <groupId>com.hp.hpl.jena</groupId>
             <artifactId>arq</artifactId>
         </dependency>

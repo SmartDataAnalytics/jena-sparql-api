@@ -268,8 +268,8 @@ public class MainTestContain {
         //RDFDataMgr.read(model, new ClassPathResource("tree-matcher-queries.ttl").getInputStream(), Lang.TURTLE);
         //allTasks.addAll(model.listSubjectsWithProperty(RDF.type, SparqlQcVocab.ContainmentTest).toSet());
 
-        allTasks.addAll(SparqlQcReader.loadTasks("sparqlqc/1.4/benchmark/cqnoproj.rdf", "sparqlqc/1.4/benchmark/noprojection/*"));
-        allTasks.addAll(SparqlQcReader.loadTasks("sparqlqc/1.4/benchmark/ucqproj.rdf", "sparqlqc/1.4/benchmark/projection/*"));
+        allTasks.addAll(SparqlQcReader.loadTasks("sparqlqc/1.4/benchmark/cqnoproj.rdf"));
+        allTasks.addAll(SparqlQcReader.loadTasks("sparqlqc/1.4/benchmark/ucqproj.rdf"));
 
 
 //        params.addAll(createTestParams("sparqlqc/1.4/benchmark/cqnoproj.rdf", "sparqlqc/1.4/benchmark/noprojection/*"));
@@ -340,10 +340,10 @@ public class MainTestContain {
                         Predicate<String> overridden = overrides.get(shortLabel);
 
                         BiFunction<Resource, Object, Task> taskParser = (r, solver) -> {
-                        	boolean invertExpected = overridden != null && overridden.apply(r.getURI());
+                            boolean invertExpected = overridden != null && overridden.apply(r.getURI());
 
-                        	Task task = MainTestContain.prepareTask(r, solver, invertExpected);
-                        	return task;
+                            Task task = MainTestContain.prepareTask(r, solver, invertExpected);
+                            return task;
                         };
 
                         Model serviceResults = run(tasks, shortLabel, service, taskParser);
