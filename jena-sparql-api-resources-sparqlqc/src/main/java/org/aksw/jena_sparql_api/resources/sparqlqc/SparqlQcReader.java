@@ -84,6 +84,7 @@ public class SparqlQcReader {
 
         List<org.apache.jena.rdf.model.Resource> testCases = testSuites.stream()
                 .flatMap(testSuite -> testSuite.getProperty(SparqlQcVocab.hasTest).getObject().as(RDFList.class).asJavaList().stream().map(RDFNode::asResource))
+                .filter(task -> !task.hasProperty(RDF.type, SparqlQcVocab.WarmupContainmentTest))
                 .collect(Collectors.toList());
 
         return testCases;
