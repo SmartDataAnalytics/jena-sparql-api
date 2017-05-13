@@ -57,6 +57,8 @@ import org.apache.jena.sparql.graph.NodeTransformLib;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 
@@ -87,6 +89,9 @@ class AliasMapper
 public class TypedQueryImpl<X>
     implements TypedQuery<X>
 {
+
+    private static final Logger logger = LoggerFactory.getLogger(TypedQueryImpl.class);
+
     protected Integer startPosition = null;
     protected Integer maxResult = null;
 
@@ -193,7 +198,6 @@ public class TypedQueryImpl<X>
         }
 
         if(!filterCompiler.getElements().isEmpty()) {
-            //System.out.println(filterCompiler.getElements());
 
             Element filterEl = ElementUtils.groupIfNeeded(filterCompiler.getElements());
 
@@ -229,7 +233,7 @@ public class TypedQueryImpl<X>
         Concept orderC = new Concept(orderEl, firstRoot);
 
         OrderedConcept orderConcept = new OrderedConcept(orderC, sortConditions);
-        System.out.println("Sort conditions: " + sortConditions);
+        logger.debug("Sort conditions: " + sortConditions);
 
         OrderedConcept result = ConceptOps.applyOrder(filterConcept, orderConcept, null);
 
@@ -441,7 +445,7 @@ public class TypedQueryImpl<X>
             //selection.filterCompiler
         }
 
-        System.out.println("Query: " + query);
+        logger.debug("Query: " + query);
 
         //compileOrder();
 
@@ -456,7 +460,7 @@ public class TypedQueryImpl<X>
             Object r = engine.find(clazz, node);
             return (X)r;
         }).collect(Collectors.toList());
-        System.out.println("GOT " + items + " for concept" + query);
+        logger.debug("GOT " + items + " for concept" + query);
 
 //    	X result;
 //    	if(items.isEmpty()) {
