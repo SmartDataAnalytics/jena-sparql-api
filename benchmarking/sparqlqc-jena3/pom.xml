@@ -68,6 +68,12 @@
 
             <dependency>
                 <groupId>org.aksw.sparqlqc</groupId>
+                <artifactId>sparqlqc-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.aksw.sparqlqc</groupId>
                 <artifactId>sparqlqc-api-simple</artifactId>
                 <version>${project.version}</version>
             </dependency>

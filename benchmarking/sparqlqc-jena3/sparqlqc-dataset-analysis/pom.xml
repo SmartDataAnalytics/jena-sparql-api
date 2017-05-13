@@ -21,6 +21,11 @@
 
         <dependency>
             <groupId>org.aksw.sparqlqc</groupId>
+            <artifactId>sparqlqc-core</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.aksw.sparqlqc</groupId>
             <artifactId>sparqlqc-bundle-impl</artifactId>
         </dependency>
 

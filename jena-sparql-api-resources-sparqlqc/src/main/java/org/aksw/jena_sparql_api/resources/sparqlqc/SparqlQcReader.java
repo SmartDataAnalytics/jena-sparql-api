@@ -55,7 +55,7 @@ public class SparqlQcReader {
 		
 		normalizeSqcfModel(testSuitesModel);
 		
-		List<Resource> result = testSuitesModel.listSubjectsWithProperty(RDF.type, SparqlQcVocab.TestSuite).toList();
+		List<Resource> result = testSuitesModel.listSubjectsWithProperty(SparqlQcVocab.hasTest).toList();
 		
 		//enrichTestCasesWithLabels(testSuitesModel);
 		
@@ -115,7 +115,7 @@ public class SparqlQcReader {
 		renameProperty(testSuitesModel, ResourceFactory.createProperty("http://sqc-framework.aksw.org/vocab#subQuery"), SparqlQcVocab.sourceQuery.getURI());
 		renameProperty(testSuitesModel, ResourceFactory.createProperty("http://sqc-framework.aksw.org/vocab#superQuery"), SparqlQcVocab.targetQuery.getURI());
 		
-		RDFDataMgr.write(System.out, testSuitesModel, RDFFormat.TURTLE_PRETTY);
+		//RDFDataMgr.write(System.out, testSuitesModel, RDFFormat.TURTLE_PRETTY);
 	}
 	
 	

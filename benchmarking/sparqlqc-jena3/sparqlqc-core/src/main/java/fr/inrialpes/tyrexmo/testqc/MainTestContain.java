@@ -15,6 +15,7 @@ import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.aksw.beast.benchmark.performance.BenchmarkTime;
 import org.aksw.beast.benchmark.performance.PerformanceBenchmark;
@@ -28,10 +29,6 @@ import org.aksw.beast.vocabs.OWLTIME;
 import org.aksw.beast.vocabs.QB;
 import org.aksw.iguana.vocab.IguanaVocab;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcReader;
-import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcVocab;
-import org.aksw.simba.lsq.vocab.LSQ;
-import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
@@ -76,93 +73,6 @@ public class MainTestContain {
         String result = out.toString();
         return result;
     }
-
-    public static Task prepareTaskJena2(TestCase testCase, LegacyContainmentSolver solver) {
-
-//        Query _viewQuery = SparqlQueryContainmentUtils.queryParser.apply("" + testCase.getSource());
-//        Query _userQuery = SparqlQueryContainmentUtils.queryParser.apply("" + testCase.getTarget());
-
-        com.hp.hpl.jena.query.Query viewQuery = com.hp.hpl.jena.query.QueryFactory.create(testCase.getSource().toString());
-        com.hp.hpl.jena.query.Query userQuery = com.hp.hpl.jena.query.QueryFactory.create(testCase.getTarget().toString());
-
-        return new Task(testCase,
-            () -> {
-            try {
-                boolean actual = solver.entailed(viewQuery, userQuery);
-                //String str = actual == testCase.getExpectedResult() ? "CORRECT" : "WRONG";
-                return actual;
-            } catch (ContainmentTestException e) {
-                throw new RuntimeException(e);
-            }
-        }, () -> {
-            try {
-                solver.cleanup();
-            } catch (ContainmentTestException e) {
-                throw new RuntimeException();
-            }
-        });
-    }
-
-    public static TestCase parseTestCase(Resource t, boolean invertExpected) {
-        String srcQueryStr = t.getRequiredProperty(SparqlQcVocab.sourceQuery).getObject().asResource()
-                .getRequiredProperty(LSQ.text).getObject().asLiteral().getString();
-        String tgtQueryStr = t.getRequiredProperty(SparqlQcVocab.targetQuery).getObject().asResource()
-                .getRequiredProperty(LSQ.text).getObject().asLiteral().getString();
-        boolean expected = Boolean
-                .parseBoolean(t.getRequiredProperty(SparqlQcVocab.result).getObject().asLiteral().getString());
-
-        expected = invertExpected ? !expected : expected;
-
-        Query viewQuery = QueryFactory.create(srcQueryStr); //SparqlQueryContainmentUtils.queryParser.apply(srcQueryStr);
-        Query userQuery = QueryFactory.create(tgtQueryStr); //SparqlQueryContainmentUtils.queryParser.apply(tgtQueryStr);
-
-        TestCase result = new TestCase(viewQuery, userQuery, expected);
-        return result;
-    }
-
-
-    public static Task prepareTask(Resource w, Object o, boolean invertExpected) {
-        //Resource w = r.getRequiredProperty(IguanaVocab.workload).getObject().asResource();
-        TestCase testCase = parseTestCase(w, invertExpected);
-
-        Task result;
-        if(o instanceof ContainmentSolver) {
-            result = prepareTaskJena3(testCase, (ContainmentSolver)o);
-        } else if(o instanceof LegacyContainmentSolver) {
-            result = prepareTaskJena2(testCase, (LegacyContainmentSolver) o);
-        } else {
-            throw new RuntimeException("Unknown task type: " + o);
-        }
-
-        return result;
-    }
-
-    public static Task prepareTaskJena3(TestCase testCase, ContainmentSolver solver) {
-
-//        Query _viewQuery = QueryTransformOps.transform(viewQuery, QueryUtils.createRandomVarMap(_viewQuery, "x"));
-//        Query _userQuery = QueryTransformOps.transform(userQuery, QueryUtils.createRandomVarMap(_userQuery, "y"));
-
-        return new Task(
-            testCase,
-            () -> { // try {
-            boolean actual = solver.entailed(testCase.getSource(), testCase.getTarget());
-            //boolean actual = solver.entailed(testCase.getTarget(), testCase.getSource());
-            //String str = actual == testCase.getExpectedResult() ? "CORRECT" : "WRONG";
-            //System.out.println(str);
-            return actual;
-            //r.addLiteral(RDFS.label, str);
-            // } catch (ContainmentTestException e) {
-            // throw new RuntimeException(e);
-            // }
-        }, () -> {
-            try {
-                solver.cleanup();
-            } catch (ContainmentTestException e) {
-                throw new RuntimeException();
-            }
-        });
-    }
-
     public static void main(String[] args) throws Exception {
 
         Model overall = ModelFactory.createDefaultModel();
@@ -342,12 +252,13 @@ public class MainTestContain {
                         BiFunction<Resource, Object, Task> taskParser = (r, solver) -> {
                             boolean invertExpected = overridden != null && overridden.apply(r.getURI());
 
-                            Task task = MainTestContain.prepareTask(r, solver, invertExpected);
+                            Task task = SparqlQcPreparation.prepareTask(r, solver, invertExpected);
                             return task;
                         };
 
-                        Model serviceResults = run(tasks, shortLabel, service, taskParser);
-                        overall.add(serviceResults);
+                        run(tasks, shortLabel, service, taskParser)
+                        	.forEach(r -> overall.add(r.getModel()));
+                        //overall.add(serviceResults);
                     }
 
                 } finally {
@@ -447,10 +358,10 @@ public class MainTestContain {
     }
 
 
-    public static Model run(Collection<Resource> tasks, String methodLabel, Object solver, BiFunction<Resource, Object, Task> taskParser) throws Exception {
+    public static Stream<Resource> run(Collection<Resource> tasks, String methodLabel, Object solver, BiFunction<Resource, Object, Task> taskParser) throws Exception {
 
-        int warmUpRuns = 1;
-        int evalRuns = 2;
+        int warmUpRuns = 0;
+        int evalRuns = 1;
 
         Consumer<Resource> postProcess = (r) -> {
                 Task task = r.as(ResourceEnh.class).getTag(Task.class).get();
@@ -467,11 +378,7 @@ public class MainTestContain {
                 r -> taskParser.apply(r, solver),
                 (r, t) -> {
                     boolean actual;
-                    try {
-                        actual = BenchmarkTime.benchmark(r, () -> t.run.call());
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
+                    actual = BenchmarkTime.benchmark(r, () -> t.run.call());
                     boolean expected = t.getTestCase().getExpectedResult();
 
                     String str = actual == expected ? "CORRECT" : "WRONG";
@@ -482,17 +389,18 @@ public class MainTestContain {
                 },
                 warmUpRuns, evalRuns);
 
-        Model result = ModelFactory.createDefaultModel();
+        //workflow = workflow.peek(foo -> { System.out.println("still alive"); });
+        //Model result = ModelFactory.createDefaultModel();
 
         String uriPattern = "http://ex.org/observation-{0}-{1}-{2}";
         //"http://example.org/query-" + runName + "-" + workloadLabel + "-run" + runId
-        workflow
+        Stream<Resource> result = workflow
             .apply(tasks).get()
             .peek(r -> r.addProperty(RDFS.comment, r.getProperty(IguanaVocab.workload).getProperty(RDFS.label).getString()))
             .peek(r -> r.addProperty(IV.method, methodLabel))
-            .map(r -> r.as(ResourceEnh.class).rename(uriPattern, IV.method, IV.run, RDFS.comment))
+            .map(r -> r.as(ResourceEnh.class).rename(uriPattern, IV.method, IV.run, RDFS.comment));
             //.forEach(r -> r.getModel().write(System.out, "TURTLE"));
-            .forEach(r -> result.add(r.getModel()));
+            //.forEach(r -> result.add(r.getModel()));
 
         return result;
 
