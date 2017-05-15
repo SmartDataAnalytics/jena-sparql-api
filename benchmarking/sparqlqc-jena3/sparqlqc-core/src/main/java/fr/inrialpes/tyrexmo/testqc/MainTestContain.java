@@ -61,18 +61,7 @@ import com.google.common.collect.Multimap;
 public class MainTestContain {
     private static final Logger logger = LoggerFactory.getLogger(MainTestContain.class);
 
-    public static String toString(Resource r, RDFFormat format) {
-        Model m = ResourceUtils.reachableClosure(r);
-        String result = toString(m, format);
-        return result;
-    }
 
-    public static String toString(Model model, RDFFormat format) {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        RDFDataMgr.write(out, model, format);
-        String result = out.toString();
-        return result;
-    }
     public static void main(String[] args) throws Exception {
 
         Model overall = ModelFactory.createDefaultModel();
@@ -249,10 +238,10 @@ public class MainTestContain {
 
                         Predicate<String> overridden = overrides.get(shortLabel);
 
-                        BiFunction<Resource, Object, Task> taskParser = (r, solver) -> {
+                        BiFunction<Resource, Object, TaskImpl> taskParser = (r, solver) -> {
                             boolean invertExpected = overridden != null && overridden.apply(r.getURI());
 
-                            Task task = SparqlQcPreparation.prepareTask(r, solver, invertExpected);
+                            TaskImpl task = SparqlQcPreparation.prepareTask(r, solver, invertExpected);
                             return task;
                         };
 
@@ -358,23 +347,23 @@ public class MainTestContain {
     }
 
 
-    public static Stream<Resource> run(Collection<Resource> tasks, String methodLabel, Object solver, BiFunction<Resource, Object, Task> taskParser) throws Exception {
+    public static Stream<Resource> run(Collection<Resource> tasks, String methodLabel, Object solver, BiFunction<Resource, Object, TaskImpl> taskParser) throws Exception {
 
         int warmUpRuns = 0;
         int evalRuns = 1;
 
         Consumer<Resource> postProcess = (r) -> {
-                Task task = r.as(ResourceEnh.class).getTag(Task.class).get();
+                TaskImpl task = r.as(ResourceEnh.class).getTag(TaskImpl.class).get();
                 task.cleanup.run();
 
                   if(!r.getRequiredProperty(IV.assessment).getString().equals("CORRECT")) {
-                      logger.warn("Incorrect test result for task " + r + "(" + task + "): " + toString(r, RDFFormat.TURTLE_BLOCKS));
+                      logger.warn("Incorrect test result for task " + r + "(" + task + "): " + FactoryBeanRdfBenchmarkRunner.toString(r, RDFFormat.TURTLE_BLOCKS));
 
                   }
               };
 
         RdfStream<Resource, ResourceEnh> workflow = PerformanceBenchmark.createQueryPerformanceEvaluationWorkflow(
-                Task.class,
+                TaskImpl.class,
                 r -> taskParser.apply(r, solver),
                 (r, t) -> {
                     boolean actual;
@@ -397,9 +386,10 @@ public class MainTestContain {
         Stream<Resource> result = workflow
             .apply(tasks).get()
             .peek(r -> r.addProperty(RDFS.comment, r.getProperty(IguanaVocab.workload).getProperty(RDFS.label).getString()))
+            //.peek(r -> System.out.println(r.getProperty(RDFS.comment)))
             .peek(r -> r.addProperty(IV.method, methodLabel))
             .map(r -> r.as(ResourceEnh.class).rename(uriPattern, IV.method, IV.run, RDFS.comment));
-            //.forEach(r -> r.getModel().write(System.out, "TURTLE"));
+            //.peek(r -> r.getModel().write(System.out, "TURTLE"));
             //.forEach(r -> result.add(r.getModel()));
 
         return result;

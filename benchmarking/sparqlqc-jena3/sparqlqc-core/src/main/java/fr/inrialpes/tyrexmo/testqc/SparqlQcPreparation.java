@@ -8,7 +8,7 @@ import org.apache.jena.rdf.model.Resource;
 
 public class SparqlQcPreparation {
 
-    public static Task prepareTaskJena2(TestCase testCase, LegacyContainmentSolver solver) {
+    public static TaskImpl prepareTaskJena2(TestCase testCase, LegacyContainmentSolver solver) {
 
 //        Query _viewQuery = SparqlQueryContainmentUtils.queryParser.apply("" + testCase.getSource());
 //        Query _userQuery = SparqlQueryContainmentUtils.queryParser.apply("" + testCase.getTarget());
@@ -16,7 +16,7 @@ public class SparqlQcPreparation {
         com.hp.hpl.jena.query.Query viewQuery = com.hp.hpl.jena.query.QueryFactory.create(testCase.getSource().toString());
         com.hp.hpl.jena.query.Query userQuery = com.hp.hpl.jena.query.QueryFactory.create(testCase.getTarget().toString());
 
-        return new Task(testCase,
+        return new TaskImpl(testCase,
             () -> {
             try {
                 boolean actual = solver.entailed(viewQuery, userQuery);
@@ -52,11 +52,11 @@ public class SparqlQcPreparation {
     }
 
 
-    public static Task prepareTask(Resource w, Object o, boolean invertExpected) {
+    public static TaskImpl prepareTask(Resource w, Object o, boolean invertExpected) {
         //Resource w = r.getRequiredProperty(IguanaVocab.workload).getObject().asResource();
         TestCase testCase = parseTestCase(w, invertExpected);
 
-        Task result;
+        TaskImpl result;
         if(o instanceof ContainmentSolver) {
             result = prepareTaskJena3(testCase, (ContainmentSolver)o);
         } else if(o instanceof LegacyContainmentSolver) {
@@ -68,12 +68,12 @@ public class SparqlQcPreparation {
         return result;
     }
 
-    public static Task prepareTaskJena3(TestCase testCase, ContainmentSolver solver) {
+    public static TaskImpl prepareTaskJena3(TestCase testCase, ContainmentSolver solver) {
 
 //        Query _viewQuery = QueryTransformOps.transform(viewQuery, QueryUtils.createRandomVarMap(_viewQuery, "x"));
 //        Query _userQuery = QueryTransformOps.transform(userQuery, QueryUtils.createRandomVarMap(_userQuery, "y"));
 
-        return new Task(
+        return new TaskImpl(
             testCase,
             () -> { // try {
             boolean actual = solver.entailed(testCase.getSource(), testCase.getTarget());

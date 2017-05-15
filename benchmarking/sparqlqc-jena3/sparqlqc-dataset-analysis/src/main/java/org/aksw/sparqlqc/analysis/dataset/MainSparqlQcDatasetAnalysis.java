@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
@@ -42,6 +43,8 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.graph.GraphFactory;
+import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.util.graph.GraphUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -158,11 +161,58 @@ public class MainSparqlQcDatasetAnalysis {
                 in.add(qs.get("s").asResource(), LSQ.text, qs.get("o"));
             });
 
-            Set<Resource> items = in.listSubjects().toSet();
+            Set<Resource> rawLsqQueries = in.listSubjects().toSet();
 
+            Function<String, Query> queryParser = SparqlQueryParserImpl.create();
+            
+            Set<Resource> lsqQueries = rawLsqQueries.stream().filter(lsqq -> {
+            	boolean r = true;
+            	try {
+                    Query query = queryParser.apply(lsqq.getProperty(LSQ.text).getString());
+                    query.getPrefixMapping().clearNsPrefixMap();
+                    // remove queries with values
+
+                    if(!query.isSelectType()) {
+                    	r = false;
+                    } else {
+                    	// Check for ?s ?p ?o queries
+	                    Element element = query.getQueryPattern();
+	                    if(element instanceof ElementTriplesBlock) {
+	                        List<Triple> triples = ((ElementTriplesBlock)element).getPattern().getList();
+	
+	                        if(triples.size() == 1) {
+	
+	                            Triple triple = triples.get(0);
+	
+	                            // TODO Refactor into e.g. ElementUtils.isVarsOnly(element)
+	                            boolean condition =
+	                                    triple.getSubject().isVariable() &&
+	                                    triple.getPredicate().isVariable() &&
+	                                    triple.getObject().isVariable();
+	                            
+	                            if(condition) {
+	                            	r = false;
+	                            }
+	                        }
+	                    }
+                    }
+
+                    return r;
+
+            	} catch(Exception e) {
+            		logger.warn("Could not handle query: " + e);
+            	}
+            	
+            	return r;            	
+            }).collect(Collectors.toSet());
+            
+            
+            logger.info("Number of queries remaining: " + lsqQueries.size());            
+            TimeUnit.SECONDS.sleep(3);
+            
             Supplier<Stream<Resource>> queryIterable = useParallel
-                    ? () -> items.parallelStream()
-                    : () -> items.stream();
+                    ? () -> lsqQueries.parallelStream()
+                    : () -> lsqQueries.stream();
 
 
             String solverLabel = solverOs.value(options);
@@ -369,10 +419,16 @@ public class MainSparqlQcDatasetAnalysis {
                             aq.getPrefixMapping().clearNsPrefixMap();
                             bq.getPrefixMapping().clearNsPrefixMap();
 
+                            aq.setLimit(Query.NOLIMIT);
+                            bq.setLimit(Query.NOLIMIT);
+                            
+                            String aEffective = "" + aq;
+                            String bEffective = "" + bq;
+                            
                             boolean queriesAreTheSame = Objects.equals(aq, bq) && aq != null;
                             if(!queriesAreTheSame) {
                             //System.out.println("r = " + r);
-                                boolean isEntailed = solver.entailed(aStr, bStr);
+                                boolean isEntailed = solver.entailed(aEffective, bEffective);
                                 if (isEntailed) {
                                     m.add(a, _isEntailed, b);
                                 } else {
