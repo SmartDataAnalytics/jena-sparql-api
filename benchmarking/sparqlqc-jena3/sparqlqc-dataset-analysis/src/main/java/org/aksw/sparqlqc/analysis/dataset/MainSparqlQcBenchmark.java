@@ -120,8 +120,8 @@ public class MainSparqlQcBenchmark {
             	.addProperty(RDF.type, SparqlQcVocab.ContainmentTest)
             	.addProperty(RDFS.label, "custom-q1-q2")
             	.addLiteral(SparqlQcVocab.result, expectedResult)
-            	.addProperty(SparqlQcVocab.sourceQuery, q1)
-            	.addProperty(SparqlQcVocab.targetQuery, q2);
+            	.addProperty(SparqlQcVocab.sourceQuery, q1Res)
+            	.addProperty(SparqlQcVocab.targetQuery, q2Res);
             
             testCases = Collections.singletonList(testCaseRes);
         } else {

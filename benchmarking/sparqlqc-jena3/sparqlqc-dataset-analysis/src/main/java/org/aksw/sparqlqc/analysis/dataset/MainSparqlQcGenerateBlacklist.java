@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcReader;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcVocab;
+import org.aksw.simba.lsq.vocab.LSQ;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.osgi.framework.BundleException;
@@ -52,7 +53,7 @@ public class MainSparqlQcGenerateBlacklist {
                 ;
 
         OptionSpec<Long> timeoutInMsOs = parser
-                .acceptsAll(Arrays.asList("t", "timeout"), "The timeout in milliseconds")
+                .acceptsAll(Arrays.asList("t", "timeout"), "The timeout in seconds")
                 .withRequiredArg()
                 .ofType(Long.class)
                 //.defaultsTo(null)
@@ -60,6 +61,14 @@ public class MainSparqlQcGenerateBlacklist {
         
         OptionSet options = parser.parse(args);
 	
+        
+        if(!options.has(fileOs)) {
+        	logger.info("Benchmark file required");
+        	SparqlQcTools.destroy();
+        	parser.printHelpOn(System.err);
+        	System.exit(1);
+        }
+        
         
         String filename = fileOs.value(options);
 
@@ -75,32 +84,34 @@ public class MainSparqlQcGenerateBlacklist {
         String solverLabel = solverOs.value(options);
         //Object solver = SparqlQcTools.solvers.get(solverLabel);
 
-        long timeoutInMs = timeoutInMsOs.value(options);
+        long timeoutInS = timeoutInMsOs.value(options);
     
         
         
         for(Resource testCase : testCases) {
-        	Statement s1 = testCase.getProperty(SparqlQcVocab.sourceQuery);
-        	Statement s2 = testCase.getProperty(SparqlQcVocab.targetQuery);
-        	Statement expectedResultStmt = testCase.getProperty(SparqlQcVocab.result);
-        	
-        	if(s1 == null || s2 == null) {
+        	String q1;
+        	String q2;
+        	boolean expectedResult;
+        	try {
+        		q1 = testCase.getProperty(SparqlQcVocab.sourceQuery).getProperty(LSQ.text).getString();
+        		q2 = testCase.getProperty(SparqlQcVocab.targetQuery).getProperty(LSQ.text).getString();
+        		expectedResult = testCase.getProperty(SparqlQcVocab.result).getBoolean();
+        	} catch(Exception e) {
+        		logger.warn("Failed to interpret test case: " + testCase);
         		continue;
         	}
         	
-        	String q1 = s1.getString();
-        	String q2 = s2.getString();
-        	
-        	boolean expectedResult = expectedResultStmt != null ? expectedResultStmt.getBoolean() : false;
-        	
         	try {
-	        	ProcessBuilder pb = new ProcessBuilder(cmd, "-s", solverLabel, "-q1", q1, "-q2", q2, "-e", "" + expectedResult);
+        		String[] pargs = { cmd, "-s", solverLabel, "-q1", q1, "-q2", q2, "-e", "" + expectedResult};
+        		logger.info("Invoking: " + Arrays.asList(pargs));
+	        	ProcessBuilder pb = new ProcessBuilder(pargs);
 	        	Process p = pb.start();
-	        	boolean isDone = p.waitFor(timeoutInMs, TimeUnit.SECONDS);
+	        	boolean isDone = p.waitFor(timeoutInS, TimeUnit.SECONDS);
 	        	if(isDone) {
 	        		logger.info("Test case " + testCase + " finished in time");
 	        	} else {	        	
 	        		logger.info("Blacklisting: " + testCase);
+	        		System.out.println(testCase.getURI());
 	        		p.destroy();
 	        		p.waitFor(1, TimeUnit.SECONDS);
 	        		if(p.isAlive()) {
