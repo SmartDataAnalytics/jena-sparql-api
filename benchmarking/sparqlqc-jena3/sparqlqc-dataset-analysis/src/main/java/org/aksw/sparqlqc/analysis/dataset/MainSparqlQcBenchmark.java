@@ -3,13 +3,12 @@ package org.aksw.sparqlqc.analysis.dataset;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.aksw.beast.rdfstream.RdfGroupBy;
-import org.aksw.beast.viz.xchart.XChartStatBarChartProcessor;
+import org.aksw.beast.viz.xchart.XChartStatBarChartBuilder;
 import org.aksw.beast.vocabs.CV;
+import org.aksw.beast.vocabs.IV;
 import org.aksw.beast.vocabs.OWLTIME;
-import org.aksw.iguana.vocab.IguanaVocab;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcReader;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -17,6 +16,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.expr.aggregate.AggAvg;
+import org.apache.jena.sparql.expr.aggregate.AggSum;
 import org.apache.jena.sparql.expr.aggregate.lib.AccStatStdDevPopulation;
 import org.apache.jena.vocabulary.RDFS;
 import org.knowm.xchart.CategoryChart;
@@ -88,18 +88,21 @@ public class MainSparqlQcBenchmark {
 //            return task;
 //        };
         
-        Stream<Resource> observationStream =
+        int evalRuns = 10;
+        
+        List<Resource> observations =
         		FactoryBeanRdfBenchmarkRunner.create(TaskImpl.class)
         			.setMetaModel(metaModel)
         			.setMethodLabel((r) -> jsac) // Note: this could be a supplier which derives it from the workload
-        			.setNumEvalRuns(1)
+        			.setNumEvalRuns(evalRuns)
         			.setNumWarmupRuns(1)
         			.setTaskParser(r -> SparqlQcPreparation.prepareTask(r, solver, false))
         			.setTaskExecutor((o, t) -> t.call())
         			.setExpectedValueSupplier((r, t) -> t.getTestCase().getExpectedResult())
         			.setWorkload(testCases)
-        			.run();
-    
+        			.run()
+        			.collect(Collectors.toList());
+            
         // Chart specific post processing
         List<Resource> avgs =
         RdfGroupBy.enh()
@@ -109,7 +112,7 @@ public class MainSparqlQcBenchmark {
             .on(CV.seriesLabel)
             .agg(CV.value, OWLTIME.numericDuration, AggAvg.class)
             .agg(CV.stDev, OWLTIME.numericDuration, AccStatStdDevPopulation.class)
-            .apply(observationStream)
+            .apply(observations.stream())
 //            .peek(g -> {
 //            	g
 //            		.addLiteral(CV.seriesLabel, o)
@@ -120,6 +123,47 @@ public class MainSparqlQcBenchmark {
 
         avgs.forEach(o -> RDFDataMgr.write(System.out, o.getModel(), RDFFormat.TURTLE));
 
+        
+
+        // Total times for each run - base for deriving the query mix per hour (qmph) standard metric
+        List<Resource> totalRunTimePerRun =
+	        RdfGroupBy.enh()
+	        .on(IV.run) // Rename workload to category
+	        //.on(IV.experiment)
+	        .agg(CV.value, OWLTIME.numericDuration, AggSum.class)
+	        .apply(observations.stream())
+            .map(g -> g.rename("http://ex.org/totalRunTime-{0}", IV.run))
+            .collect(Collectors.toList());
+
+        // Hack to add a constant property to group on
+        totalRunTimePerRun.forEach(r -> r.addProperty(IV.experiment, "default"));
+
+        
+        List<Resource> avgRunTimeAcrossAllRuns =
+	        RdfGroupBy.enh()
+	            .on(IV.experiment) // Rename workload to category
+	            .agg(CV.value, CV.value, AggAvg.class)
+	            .agg(CV.stDev, CV.value, AccStatStdDevPopulation.class)
+	            .apply(totalRunTimePerRun.stream())
+	            .map(g -> g.rename("http://ex.org/avgRunTime"))
+	            .collect(Collectors.toList());
+
+
+        
+        
+        // Compute the qmph time from the overall time:
+        // qmph = (overallTimeInS / queryMixSize) / 60 * 60 seconds
+        avgRunTimeAcrossAllRuns.forEach(r -> {
+        	double avgRunTime = r.getRequiredProperty(CV.value).getDouble();
+        	double qmph = (60.0 * 60.0) / avgRunTime;
+        	System.out.println("QMPH: " + qmph);
+        	//System.out.println("Overall time");
+        	System.out.println(FactoryBeanRdfBenchmarkRunner.toString(r, RDFFormat.TURTLE_PRETTY));
+        });
+
+        
+        
+        
 
         // Augment the observation resources with chart information
         // Note: This is a hack, as the chart information is highly context dependent and 2 resources with these annotations cannot be fused consistently
@@ -139,7 +183,11 @@ public class MainSparqlQcBenchmark {
               .yAxisTitle("Time (s)")
               .build();
 
-      XChartStatBarChartProcessor.addSeries(xChart, avgs, null, null, null, null, true);
+      XChartStatBarChartBuilder.from(xChart)
+      	.processSeries(avgs);
+      	
+      
+      //XChartStatBarChartProcessor.addSeries(xChart, avgs, null, null, null, null, true);
 
       xChart.getStyler().setLegendPosition(LegendPosition.InsideNW);
 

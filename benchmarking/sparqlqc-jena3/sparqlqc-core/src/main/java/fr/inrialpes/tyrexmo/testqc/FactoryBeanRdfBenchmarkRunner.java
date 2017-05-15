@@ -300,25 +300,18 @@ public class FactoryBeanRdfBenchmarkRunner<T> {
             .apply(workload).get()
             //.peek(r -> r.addProperty(CV.categoryLabel, resourceToLabel.apply(r)))
             .peek(obsRes -> {
-            	// Extracting the workload label is not necessary here
-            	// As this can be done from the workload itself
             	Resource workloadRes = obsRes.getPropertyResourceValue(IguanaVocab.workload);
             	String categoryLabel = workloadRes.getProperty(RDFS.label).getString();
-            	
-            	obsRes
-            		.addProperty(CV.category, IguanaVocab.workload)
-            		.addProperty(CV.categoryLabel, categoryLabel);
-            })            
-            .peek(obsRes -> {
-            	Resource workloadRes = obsRes.getPropertyResourceValue(IguanaVocab.workload);
+
             	Resource seriesRes = seriesMapper.apply(workloadRes);
             	String seriesLabel = seriesRes.getProperty(RDFS.label).getString();
-            	
-            	// Note: We need the series label here in order to construct a pretty URI for the observation
+
             	obsRes
-            		.addProperty(CV.series, seriesRes)
-            		.addProperty(CV.seriesLabel, seriesLabel);
-            })
+            		.addProperty(CV.category, workloadRes)
+            		.addProperty(CV.categoryLabel, categoryLabel)
+        			.addProperty(CV.series, seriesRes)
+        			.addProperty(CV.seriesLabel, seriesLabel);
+            })            
             .map(r -> r.as(ResourceEnh.class).rename(observationUriPattern, CV.seriesLabel, IV.run, CV.categoryLabel));
             //.peek(r -> r.getModel().write(System.out, "TURTLE"));
             //.forEach(r -> result.add(r.getModel()));
