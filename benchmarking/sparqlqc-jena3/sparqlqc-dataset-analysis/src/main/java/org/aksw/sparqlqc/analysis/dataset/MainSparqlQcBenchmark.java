@@ -97,6 +97,14 @@ public class MainSparqlQcBenchmark {
                 .defaultsTo(0)
                 ;
 
+        // size of the subset of test cases to process
+        OptionSpec<Integer> numTestCases = parser
+                .acceptsAll(Arrays.asList("n", "numtests"), "number of test cases to process")
+                .withRequiredArg()
+                .ofType(Integer.class)
+                .defaultsTo(null)
+                ;
+
         OptionSpec<Integer> numEvalRunsOs = parser
                 .acceptsAll(Arrays.asList("a", "eval"), "number of eval runs")
                 .withRequiredArg()
@@ -177,8 +185,12 @@ public class MainSparqlQcBenchmark {
         }
 
         
-        testCases = testCases.subList(0, 10);
-        
+        if(options.has(numTestCases)) {
+        	Integer n = numTestCases.value(options);
+        	if(n != null) {
+        		testCases = testCases.subList(0, Math.min(testCases.size(), n));
+        	}
+        }
         
         
         String solverLabel = solverOs.value(options);
@@ -213,6 +225,7 @@ public class MainSparqlQcBenchmark {
         			.collect(Collectors.toList());
         
         Property matchCount = ResourceFactory.createProperty("http://ex.org/matchCount");
+        Property handleCount = ResourceFactory.createProperty("http://ex.org/handleCount");
         Property qmph = ResourceFactory.createProperty("http://ex.org/qmph");
         
         Resource BenchmarkResult = ResourceFactory.createResource("http://ex.org/BenchmarkResult");
@@ -222,7 +235,16 @@ public class MainSparqlQcBenchmark {
         for(Resource obsRes : observations) {
         	if(obsRes.hasProperty(IV.assessment, "CORRECT")) {
         		obsRes.addLiteral(matchCount, 1);
+        	} else {
+        		obsRes.addLiteral(matchCount, 0);
         	}
+        	
+        	if(obsRes.hasProperty(LSQ.execError)) {
+        		obsRes.addLiteral(handleCount, 0);
+        	} else {
+        		obsRes.addLiteral(handleCount, 1);
+        	}
+        	
         }
         
         // Chart specific post processing
@@ -235,13 +257,14 @@ public class MainSparqlQcBenchmark {
             .agg(CV.value, OWLTIME.numericDuration, AggAvg.class)
             .agg(CV.stDev, OWLTIME.numericDuration, AccStatStdDevPopulation.class)
             .agg(matchCount, matchCount, AggSum.class)
+            .agg(handleCount, handleCount, AggSum.class)
             .apply(observations.stream())
 //            .peek(g -> {
 //            	g
 //            		.addLiteral(CV.seriesLabel, o)
 //            })
             //.map(g -> g.rename("http://ex.org/avg/query{0}-user{1}", IV.job, IV.thread, IV.thread))
-            .map(g -> g.rename("http://ex.org/avg/query{0}-user{1}", CV.seriesLabel, CV.categoryLabel))
+            .map(g -> g.rename("http://ex.org/obs/case{0}-solver{1}", CV.seriesLabel, CV.categoryLabel))
             .collect(Collectors.toList());
 
 
@@ -262,8 +285,9 @@ public class MainSparqlQcBenchmark {
 	        //.on(IV.experiment)
 	        .agg(CV.value, OWLTIME.numericDuration, AggSum.class)
 	        .agg(matchCount, matchCount, AggSum.class)
+	        .agg(handleCount, handleCount, AggSum.class)
 	        .apply(observations.stream())
-            .map(g -> g.rename("http://ex.org/totalRunTime-{0}", IV.run))
+            .map(g -> g.rename("http://ex.org/totalRunRunTime-{0}", IV.run))
             .collect(Collectors.toList());
 
         System.err.println("Total time per run ");
@@ -284,6 +308,8 @@ public class MainSparqlQcBenchmark {
 	            .on(IV.experiment) // Rename workload to category
 	            .agg(CV.value, CV.value, AggAvg.class)
 	            .agg(CV.stDev, CV.value, AccStatStdDevPopulation.class)
+	            .agg(matchCount, matchCount, AggSum.class)
+	            .agg(handleCount, handleCount, AggSum.class)
 	            .apply(totalRunTimePerRun.stream())
 	            .map(g -> g.rename("http://ex.org/avgRunTime"))
 	            .collect(Collectors.toList());
