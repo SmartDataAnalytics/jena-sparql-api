@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -26,6 +27,7 @@ import org.apache.jena.vocabulary.RDFS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 
 /**
@@ -273,8 +275,11 @@ public class FactoryBeanRdfBenchmarkRunner<T> {
                 	
                 	Object actual;
                 	try {
-                		actual = BenchmarkTime.benchmark(obsRes, () -> taskExecutor.apply(obsRes, t));
-
+                		//Stopwatch sw = Stopwatch.createStarted();
+                		actual = BenchmarkTime.benchmark(obsRes, () -> taskExecutor.apply(obsRes, t));                		
+                		
+                		//System.err.println("Time spent: " + sw.elapsed(TimeUnit.MILLISECONDS) / 1000.0);
+                		
                 		if(actual != null) {
     	                    obsRes
     	                      .addLiteral(IV.value, actual);

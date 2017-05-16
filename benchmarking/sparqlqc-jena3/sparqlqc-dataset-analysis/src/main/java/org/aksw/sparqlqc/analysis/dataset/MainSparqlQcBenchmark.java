@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.aksw.beast.rdfstream.RdfGroupBy;
@@ -39,6 +40,8 @@ import org.knowm.xchart.VectorGraphicsEncoder.VectorGraphicsFormat;
 import org.knowm.xchart.style.Styler.LegendPosition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Stopwatch;
 
 import fr.inrialpes.tyrexmo.testqc.FactoryBeanRdfBenchmarkRunner;
 import fr.inrialpes.tyrexmo.testqc.SparqlQcPreparation;
@@ -102,7 +105,7 @@ public class MainSparqlQcBenchmark {
                 .acceptsAll(Arrays.asList("n", "numtests"), "number of test cases to process")
                 .withRequiredArg()
                 .ofType(Integer.class)
-                .defaultsTo(null)
+                .defaultsTo(-1)
                 ;
 
         OptionSpec<Integer> numEvalRunsOs = parser
@@ -187,7 +190,7 @@ public class MainSparqlQcBenchmark {
         
         if(options.has(numTestCases)) {
         	Integer n = numTestCases.value(options);
-        	if(n != null) {
+        	if(n >= 0) {
         		testCases = testCases.subList(0, Math.min(testCases.size(), n));
         	}
         }
@@ -211,6 +214,9 @@ public class MainSparqlQcBenchmark {
 //        };
         
         
+        int item[] = {0};
+        
+        Stopwatch sw = Stopwatch.createStarted();
         List<Resource> observations =
         		FactoryBeanRdfBenchmarkRunner.create(TaskImpl.class)
         			.setMetaModel(metaModel)
@@ -222,6 +228,9 @@ public class MainSparqlQcBenchmark {
         			.setExpectedValueSupplier((r, t) -> t.getTestCase().getExpectedResult())
         			.setWorkload(testCases)
         			.run()
+        			.peek(r -> {
+        				System.err.println("Got next item #" + (++item[0]) + "at time: " + sw.elapsed(TimeUnit.MILLISECONDS) / 1000.0);
+        			})
         			.collect(Collectors.toList());
         
         Property matchCount = ResourceFactory.createProperty("http://ex.org/matchCount");
@@ -233,6 +242,9 @@ public class MainSparqlQcBenchmark {
         Resource ObservationResult = ResourceFactory.createResource("http://ex.org/ObservationResult");
         
         for(Resource obsRes : observations) {
+        	RDFDataMgr.write(System.err, obsRes.getModel(), RDFFormat.TURTLE_PRETTY);
+
+        	
         	if(obsRes.hasProperty(IV.assessment, "CORRECT")) {
         		obsRes.addLiteral(matchCount, 1);
         	} else {
