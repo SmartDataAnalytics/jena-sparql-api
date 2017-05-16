@@ -105,7 +105,7 @@ public class MainSparqlQcBenchmark {
                 ;
 
         OptionSpec<File> blacklistOs = parser
-                .acceptsAll(Arrays.asList("b", "blacklist"), "Blacklist of test cases which to ignore")
+                .acceptsAll(Arrays.asList("b", "blacklist"), "One ore more blacklists of test case uris which to ignore")
                 .withRequiredArg()
                 .ofType(File.class)
                 ;
@@ -124,10 +124,12 @@ public class MainSparqlQcBenchmark {
         
         Set<String> blacklistUris = new HashSet<>();
         if(options.has(blacklistOs)) {
-        	File blacklist = blacklistOs.value(options);
-        	Files.lines(Paths.get(blacklist.getAbsolutePath()))
-        		.filter(line -> !Strings.isNullOrEmpty(line))
-        		.forEach(blacklistUris::add);        	
+        	List<File> blacklists = blacklistOs.values(options);
+        	for(File blacklist : blacklists) {
+	        	Files.lines(Paths.get(blacklist.getAbsolutePath()))
+	        		.filter(line -> !Strings.isNullOrEmpty(line))
+	        		.forEach(blacklistUris::add);
+        	}
         }
 
         //filename = "saleem-swdf-benchmark.ttl";
@@ -135,7 +137,14 @@ public class MainSparqlQcBenchmark {
         if(options.has(fileOs)) {
             String filename = fileOs.value(options);
             logger.info("Loading: " + filename);
-        	testCases = SparqlQcReader.loadTasksSqcf(filename);
+        	List<Resource> rawTestCases = SparqlQcReader.loadTasksSqcf(filename);
+
+        	testCases = rawTestCases.stream()
+        			.filter(r -> !(r.isURIResource() && blacklistUris.contains(r.getURI())))
+        			.collect(Collectors.toList());
+        	
+        	logger.info(testCases.size() + "/" + rawTestCases.size() + " test cases remain after applying blacklist");
+        	
         } else if(options.has(q1Os)) {
             String q1 = q1Os.value(options);
             String q2 = q2Os.value(options);
