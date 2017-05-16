@@ -20,6 +20,7 @@ public class SparqlQcVocab {
     public static final Property targetQuery = property("targetQuery" );
     public static final Property rdfSchema = property("rdfSchema" );
     public static final Property result = property("result" );
+    //public static final Property error = property("error" );
 
     public static final Property Schema = property("Schema" );
 

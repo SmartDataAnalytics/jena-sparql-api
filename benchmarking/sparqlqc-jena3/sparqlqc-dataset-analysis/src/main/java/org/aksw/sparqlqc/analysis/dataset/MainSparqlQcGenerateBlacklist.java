@@ -56,7 +56,7 @@ public class MainSparqlQcGenerateBlacklist {
                 .acceptsAll(Arrays.asList("t", "timeout"), "The timeout in seconds")
                 .withRequiredArg()
                 .ofType(Long.class)
-                //.defaultsTo(null)
+                .defaultsTo(5l)
                 ;
         
         OptionSet options = parser.parse(args);

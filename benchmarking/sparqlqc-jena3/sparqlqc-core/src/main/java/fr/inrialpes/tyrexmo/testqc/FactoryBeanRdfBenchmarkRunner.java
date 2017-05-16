@@ -16,6 +16,7 @@ import org.aksw.beast.rdfstream.RdfStream;
 import org.aksw.beast.vocabs.CV;
 import org.aksw.beast.vocabs.IV;
 import org.aksw.iguana.vocab.IguanaVocab;
+import org.aksw.simba.lsq.vocab.LSQ;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.riot.RDFDataMgr;
@@ -270,20 +271,28 @@ public class FactoryBeanRdfBenchmarkRunner<T> {
                 		obsRes.getModel().add(metaModel);
                 	}
                 	
-                    Object actual = BenchmarkTime.benchmark(obsRes, () -> taskExecutor.apply(obsRes, t));
-                    if(actual != null) {
-	                    obsRes
-	                      .addLiteral(IV.value, actual);
-                    }
-                    
-                    if(expectedValueSupplier != null) {
-                    	Object expected = expectedValueSupplier.apply(obsRes, t);
-                        String str = Objects.equals(actual, expected) ? "CORRECT" : "WRONG";
-                      
-                        obsRes
-                        	.addLiteral(IV.assessment, str);
-                        	postProcess.accept(obsRes);
-                    }
+                	Object actual;
+                	try {
+                		actual = BenchmarkTime.benchmark(obsRes, () -> taskExecutor.apply(obsRes, t));
+
+                		if(actual != null) {
+    	                    obsRes
+    	                      .addLiteral(IV.value, actual);
+                        }
+                        
+                        if(expectedValueSupplier != null) {
+                        	Object expected = expectedValueSupplier.apply(obsRes, t);
+                            String str = Objects.equals(actual, expected) ? "CORRECT" : "WRONG";
+                          
+                            obsRes
+                            	.addLiteral(IV.assessment, str);
+                            	postProcess.accept(obsRes);
+                        }
+                	} catch(Exception e) {
+                		obsRes
+                			.addLiteral(LSQ.processingError, e.getMessage());
+                	}
+                	
                     
 //                    
 //                    boolean expected = t.getTestCase().getExpectedResult();

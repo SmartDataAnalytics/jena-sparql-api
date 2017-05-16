@@ -1,9 +1,13 @@
 package org.aksw.sparqlqc.analysis.dataset;
 
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.aksw.beast.rdfstream.RdfGroupBy;
@@ -14,10 +18,13 @@ import org.aksw.beast.vocabs.OWLTIME;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcReader;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcVocab;
 import org.aksw.simba.lsq.vocab.LSQ;
+import org.apache.jena.ext.com.google.common.base.Strings;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.expr.aggregate.AggAvg;
 import org.apache.jena.sparql.expr.aggregate.AggSum;
@@ -83,7 +90,26 @@ public class MainSparqlQcBenchmark {
                 .defaultsTo(false)
                 ;
 
-        
+        OptionSpec<Integer> numWarmupRunsOs = parser
+                .acceptsAll(Arrays.asList("w", "warmup"), "number of warmup runs")
+                .withRequiredArg()
+                .ofType(Integer.class)
+                .defaultsTo(0)
+                ;
+
+        OptionSpec<Integer> numEvalRunsOs = parser
+                .acceptsAll(Arrays.asList("a", "eval"), "number of eval runs")
+                .withRequiredArg()
+                .ofType(Integer.class)
+                .defaultsTo(1)
+                ;
+
+        OptionSpec<File> blacklistOs = parser
+                .acceptsAll(Arrays.asList("b", "blacklist"), "Blacklist of test cases which to ignore")
+                .withRequiredArg()
+                .ofType(File.class)
+                ;
+
         OptionSpec<String> solverOs = parser
                 .acceptsAll(Arrays.asList("s", "solver"), "The solver to use, one of: " + SparqlQcTools.solvers.keySet())
                 .withRequiredArg()
@@ -93,7 +119,17 @@ public class MainSparqlQcBenchmark {
         OptionSet options = parser.parse(args);
 	
         
+        int numWarmupRuns = numWarmupRunsOs.value(options);
+        int numEvalRuns = numEvalRunsOs.value(options);
         
+        Set<String> blacklistUris = new HashSet<>();
+        if(options.has(blacklistOs)) {
+        	File blacklist = blacklistOs.value(options);
+        	Files.lines(Paths.get(blacklist.getAbsolutePath()))
+        		.filter(line -> !Strings.isNullOrEmpty(line))
+        		.forEach(blacklistUris::add);        	
+        }
+
         //filename = "saleem-swdf-benchmark.ttl";
         List<Resource> testCases;
         if(options.has(fileOs)) {
@@ -132,7 +168,7 @@ public class MainSparqlQcBenchmark {
         }
 
         
-        //testCases = testCases.subList(0, 10);
+        testCases = testCases.subList(0, 10);
         
         
         
@@ -143,31 +179,43 @@ public class MainSparqlQcBenchmark {
         
         
         Model metaModel = ModelFactory.createDefaultModel();
-        Resource jsac = metaModel.createResource("http://ex.org/series/" + solverLabel);
-        metaModel.add(jsac, RDFS.label, "JSAC");
+        Resource solverRes = metaModel.createResource("http://ex.org/series/" + solverLabel);
         
         logger.info("Got solver " + solverLabel + " " + solver);
         
+        metaModel.add(solverRes, RDFS.label, solverLabel);
 //        Function<Resource, Callable<Boolean>> taskParser = (r) -> {
 //            Callable<Boolean> task = SparqlQcPreparation.prepareTask(r, solver, false);
 //            return task;
 //        };
         
-        int evalRuns = 1;
         
         List<Resource> observations =
         		FactoryBeanRdfBenchmarkRunner.create(TaskImpl.class)
         			.setMetaModel(metaModel)
-        			.setMethodLabel((r) -> jsac) // Note: this could be a supplier which derives it from the workload
-        			.setNumEvalRuns(evalRuns)
-        			.setNumWarmupRuns(0)
+        			.setMethodLabel((r) -> solverRes) // Note: this could be a supplier which derives it from the workload
+        			.setNumEvalRuns(numEvalRuns)
+        			.setNumWarmupRuns(numWarmupRuns)
         			.setTaskParser(r -> SparqlQcPreparation.prepareTask(r, solver, false))
         			.setTaskExecutor((o, t) -> t.call())
         			.setExpectedValueSupplier((r, t) -> t.getTestCase().getExpectedResult())
         			.setWorkload(testCases)
         			.run()
         			.collect(Collectors.toList());
-            
+        
+        Property matchCount = ResourceFactory.createProperty("http://ex.org/matchCount");
+        Property qmph = ResourceFactory.createProperty("http://ex.org/qmph");
+        
+        Resource BenchmarkResult = ResourceFactory.createResource("http://ex.org/BenchmarkResult");
+        Resource RunResult = ResourceFactory.createResource("http://ex.org/RunResult");
+        Resource ObservationResult = ResourceFactory.createResource("http://ex.org/ObservationResult");
+        
+        for(Resource obsRes : observations) {
+        	if(obsRes.hasProperty(IV.assessment, "CORRECT")) {
+        		obsRes.addLiteral(matchCount, 1);
+        	}
+        }
+        
         // Chart specific post processing
         List<Resource> avgs =
         RdfGroupBy.enh()
@@ -177,6 +225,7 @@ public class MainSparqlQcBenchmark {
             .on(CV.seriesLabel)
             .agg(CV.value, OWLTIME.numericDuration, AggAvg.class)
             .agg(CV.stDev, OWLTIME.numericDuration, AccStatStdDevPopulation.class)
+            .agg(matchCount, matchCount, AggSum.class)
             .apply(observations.stream())
 //            .peek(g -> {
 //            	g
@@ -187,9 +236,13 @@ public class MainSparqlQcBenchmark {
             .collect(Collectors.toList());
 
 
-        System.out.println("Individually observed performance measures: ");
+        System.err.println("Individually observed performance measures: ");
         for(Resource avg : avgs) {
-        	System.out.println(avg.getURI() + "\t" + avg.getProperty(CV.value).getDouble() + "\t" + avg.getProperty(CV.stDev).getDouble());
+        	avg.addProperty(RDF.type, ObservationResult);
+        	System.err.println(avg.getURI() + "\t" + avg.getProperty(CV.value).getDouble() + "\t" + avg.getProperty(CV.stDev).getDouble());
+        	
+        	RDFDataMgr.write(System.out, avg.getModel(), RDFFormat.TURTLE_BLOCKS);
+
         }
         
 
@@ -199,13 +252,17 @@ public class MainSparqlQcBenchmark {
 	        .on(IV.run) // Rename workload to category
 	        //.on(IV.experiment)
 	        .agg(CV.value, OWLTIME.numericDuration, AggSum.class)
+	        .agg(matchCount, matchCount, AggSum.class)
 	        .apply(observations.stream())
             .map(g -> g.rename("http://ex.org/totalRunTime-{0}", IV.run))
             .collect(Collectors.toList());
 
-        System.out.println("Total time per run ");
+        System.err.println("Total time per run ");
         for(Resource r : totalRunTimePerRun) {
-        	System.out.println(r.getURI() + "\t" + r.getProperty(CV.value).getDouble());
+        	r.addProperty(RDF.type, RunResult);
+        	System.err.println(r.getURI() + "\t" + r.getProperty(CV.value).getDouble());
+        	
+        	RDFDataMgr.write(System.out, r.getModel(), RDFFormat.TURTLE_BLOCKS);
         }
 
         
@@ -222,9 +279,12 @@ public class MainSparqlQcBenchmark {
 	            .map(g -> g.rename("http://ex.org/avgRunTime"))
 	            .collect(Collectors.toList());
 
-        System.out.println("Average run runtime");
+        System.err.println("Average run runtime");
         for(Resource r : avgRunTimeAcrossAllRuns) {
-        	System.out.println(r.getURI() + "\t" + r.getProperty(CV.value).getDouble() + "\t" + r.getProperty(CV.stDev).getDouble());
+        	r.addProperty(RDF.type, BenchmarkResult);
+        	System.err.println(r.getURI() + "\t" + r.getProperty(CV.value).getDouble() + "\t" + r.getProperty(CV.stDev).getDouble());
+        
+        	RDFDataMgr.write(System.out, r.getModel(), RDFFormat.TURTLE_BLOCKS);
         }
 
         
@@ -233,10 +293,15 @@ public class MainSparqlQcBenchmark {
         // qmph = (overallTimeInS / queryMixSize) / 60 * 60 seconds
         avgRunTimeAcrossAllRuns.forEach(r -> {
         	double avgRunTime = r.getRequiredProperty(CV.value).getDouble();
-        	double qmph = (60.0 * 60.0) / avgRunTime;
-        	System.out.println("QMPH: " + qmph);
+        	double qmphValue = (60.0 * 60.0) / avgRunTime;
+        	
+        	r.addLiteral(qmph, qmphValue);
+
+        	System.err.println("QMPH: " + qmphValue);
         	//System.out.println("Overall time");
-        	System.out.println(FactoryBeanRdfBenchmarkRunner.toString(r, RDFFormat.TURTLE_PRETTY));
+        	System.err.println(FactoryBeanRdfBenchmarkRunner.toString(r, RDFFormat.TURTLE_PRETTY));
+
+        	RDFDataMgr.write(System.out, r.getModel(), RDFFormat.TURTLE_BLOCKS);
         });
 
         
