@@ -8,9 +8,9 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.aksw.combinatorics.solvers.ProblemNeighborhoodAware;
+import org.aksw.jena_sparql_api.algebra.utils.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.dirty.QfpcMatch;
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewMatcherQfpc;
-import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.iso.index.InsertPosition;
 import org.aksw.jena_sparql_api.iso.index.ProblemNodeMappingGraph;
 import org.aksw.jena_sparql_api.iso.index.ProblemVarMappingCompound;

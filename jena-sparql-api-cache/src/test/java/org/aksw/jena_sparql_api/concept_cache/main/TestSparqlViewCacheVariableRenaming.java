@@ -10,12 +10,12 @@ import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import org.aksw.jena_sparql_api.algebra.utils.QuadFilterPatternCanonical;
+import org.aksw.jena_sparql_api.algebra.utils.AlgebraUtils;
 import org.aksw.jena_sparql_api.backports.syntaxtransform.QueryTransformOps;
 import org.aksw.jena_sparql_api.concept_cache.core.CacheResult;
-import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewMatcherQfpc;
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewMatcherQfpcImpl;
-import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcReader;
@@ -110,7 +110,7 @@ public class TestSparqlViewCacheVariableRenaming {
 
     public static void testVariableRenaming(Query userQuery) throws IOException {
 
-        QuadFilterPatternCanonical userQfpc = SparqlCacheUtils.transform2(userQuery);
+        QuadFilterPatternCanonical userQfpc = AlgebraUtils.transform2(userQuery);
 
         Collection<Var> vars = PatternVars.vars(userQuery.getQueryPattern());
         Generator<Var> gen = VarGeneratorBlacklist.create("v", vars);
@@ -124,7 +124,7 @@ public class TestSparqlViewCacheVariableRenaming {
         List<Var> cacheResultVars = cacheQuery.getProjectVars();
 
         //List<Var> renamedVars = renamedQuery.getProjectVars();
-        QuadFilterPatternCanonical cacheQfpc = SparqlCacheUtils.transform2(cacheQuery);
+        QuadFilterPatternCanonical cacheQfpc = AlgebraUtils.transform2(cacheQuery);
 
 
 //        Cache<Integer, String> cache = CacheBuilder

@@ -8,9 +8,14 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.aksw.commons.collections.trees.Tree;
+import org.aksw.jena_sparql_api.algebra.analysis.VarInfo;
 import org.aksw.jena_sparql_api.algebra.transform.TransformDistributeJoinOverUnion;
-import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
-import org.aksw.jena_sparql_api.concept_cache.op.OpExtConjunctiveQuery;
+import org.aksw.jena_sparql_api.algebra.utils.ConjunctiveQuery;
+import org.aksw.jena_sparql_api.algebra.utils.OpExtConjunctiveQuery;
+import org.aksw.jena_sparql_api.algebra.utils.ProjectedOp;
+import org.aksw.jena_sparql_api.algebra.utils.ProjectedQuadFilterPattern;
+import org.aksw.jena_sparql_api.algebra.utils.QuadFilterPatternCanonical;
+import org.aksw.jena_sparql_api.algebra.utils.AlgebraUtils;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.VarMapper;
 import org.aksw.jena_sparql_api.stmt.SparqlElementParser;
 import org.aksw.jena_sparql_api.stmt.SparqlElementParserImpl;
@@ -18,15 +23,13 @@ import org.aksw.jena_sparql_api.stmt.SparqlQueryParser;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
-import org.aksw.jena_sparql_api.utils.sparql.ConjunctiveQuery;
-import org.aksw.jena_sparql_api.utils.sparql.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.view_matcher.OpVarMap;
-import org.aksw.jena_sparql_api.view_matcher.SparqlViewMatcherProjectionUtils;
 import org.aksw.jena_sparql_api.view_matcher.SparqlViewMatcherUtils;
 import org.aksw.jena_sparql_api.views.index.OpIndex;
 import org.aksw.jena_sparql_api.views.index.OpIndexerImpl;
 import org.aksw.jena_sparql_api.views.index.QuadPatternIndex;
 import org.aksw.jena_sparql_api.views.index.SparqlViewMatcherOpImpl;
+import org.aksw.jena_sparql_api.views.index.SparqlViewMatcherProjectionUtils;
 import org.aksw.jena_sparql_api.views.index.SparqlViewMatcherSystemImpl;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.Syntax;
@@ -54,10 +57,10 @@ public class SparqlQueryContainmentUtils {
 
 
     public static QuadFilterPatternCanonical canonicalize(Element element) {
-        ProjectedQuadFilterPattern pqfp = SparqlCacheUtils.transform(element);
+        ProjectedQuadFilterPattern pqfp = AlgebraUtils.transform(element);
         Generator<Var> generator = VarGeneratorImpl2.create();
 
-        QuadFilterPatternCanonical result = SparqlCacheUtils.canonicalize2(pqfp.getQuadFilterPattern(), generator);
+        QuadFilterPatternCanonical result = AlgebraUtils.canonicalize2(pqfp.getQuadFilterPattern(), generator);
 
         return result;
     }
@@ -105,27 +108,6 @@ public class SparqlQueryContainmentUtils {
     }
 
 
-    public static ProjectedOp toProjectedOp(Query query) {
-        Op op = Algebra.compile(query);
-//		op = Transformer.transform(TransformUnionToDisjunction.fn, op);
-
-        // Push down joins until there is no more change
-        Op current;
-        do {
-            current = op;
-            op = TransformDistributeJoinOverUnion.transform(current);
-        } while(!current.equals(op));
-
-
-//		op = Transformer.transform(TransformUnionToDisjunction.fn, op);
-        op = Transformer.transform(new TransformMergeBGPs(), op);
-        op = Algebra.toQuadForm(op);
-
-        //System.out.println("asQuery: "+ OpAsQuery.asQuery(op));
-        ProjectedOp result = SparqlCacheUtils.cutProjection(op);
-        return result;
-    }
-
 
     public static boolean tryMatch(
             Query viewQuery,
@@ -162,8 +144,8 @@ public class SparqlQueryContainmentUtils {
             Query userQuery,
             BiFunction<QuadFilterPatternCanonical, QuadFilterPatternCanonical, Stream<Map<Var, Var>>> qfpcMatcher
         ) {
-        ProjectedOp viewPop = toProjectedOp(viewQuery);
-        ProjectedOp userPop = toProjectedOp(userQuery);
+        ProjectedOp viewPop = AlgebraUtils.toProjectedOp(viewQuery);
+        ProjectedOp userPop = AlgebraUtils.toProjectedOp(userQuery);
 
         // Check whether the view's residual op can be converted to a canonical quad filter pattern
         Op viewResOp = viewPop.getResidualOp();

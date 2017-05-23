@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.jgrapht;
 
 import java.util.function.Supplier;
 
-import org.aksw.jena_sparql_api.concept_cache.op.OpExtConjunctiveQuery;
+import org.aksw.jena_sparql_api.algebra.utils.OpExtConjunctiveQuery;
 import org.aksw.jena_sparql_api.jgrapht.transform.QueryToGraphVisitor;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.algebra.op.OpExt;

@@ -15,23 +15,23 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.aksw.commons.collections.SetUtils;
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
 import org.aksw.commons.collections.multimaps.IBiSetMultimap;
 import org.aksw.commons.collections.multimaps.MultimapUtils;
+import org.aksw.jena_sparql_api.algebra.utils.AlgebraUtils;
+import org.aksw.jena_sparql_api.algebra.utils.PatternSummary;
+import org.aksw.jena_sparql_api.algebra.utils.ProjectedQuadFilterPattern;
+import org.aksw.jena_sparql_api.algebra.utils.QuadFilterPattern;
+import org.aksw.jena_sparql_api.algebra.utils.QuadFilterPatternCanonical;
+import org.aksw.jena_sparql_api.algebra.utils.VarOccurrence;
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.Utils2;
 import org.aksw.jena_sparql_api.concept_cache.core.QfpcAggMatch;
-import org.aksw.jena_sparql_api.concept_cache.core.SetUtils;
-import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
 import org.aksw.jena_sparql_api.concept_cache.core.TableUtils;
-import org.aksw.jena_sparql_api.concept_cache.domain.PatternSummary;
-import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
-import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
-import org.aksw.jena_sparql_api.concept_cache.domain.VarOccurrence;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.VarMapper;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.aksw.jena_sparql_api.utils.ResultSetPart;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
-import org.aksw.jena_sparql_api.utils.sparql.ProjectedQuadFilterPattern;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.algebra.Table;
@@ -168,7 +168,7 @@ public class SparqlViewMatcherQfpcImpl<K>
     	Map<K, QfpcMatch> result = new LinkedHashMap<>();
 
         // TODO: We need the quadToCnf map for the queryPs
-        IBiSetMultimap<Quad, Set<Set<Expr>>> queryQuadToCnf = SparqlCacheUtils.createMapQuadsToFilters(queryQfpc);
+        IBiSetMultimap<Quad, Set<Set<Expr>>> queryQuadToCnf = AlgebraUtils.createMapQuadsToFilters(queryQfpc);
 
 
 
@@ -542,7 +542,7 @@ public class SparqlViewMatcherQfpcImpl<K>
         //map = new HashMap<Set<Var>, Table>();
         //cacheData.put(qfpc, map);
 
-        IBiSetMultimap<Quad, Set<Set<Expr>>> quadToCnf = SparqlCacheUtils.createMapQuadsToFilters(qfpc);
+        IBiSetMultimap<Quad, Set<Set<Expr>>> quadToCnf = AlgebraUtils.createMapQuadsToFilters(qfpc);
         qfpcToQuadToCnf.put(qfpc, quadToCnf);
 
         Set<Set<Set<Expr>>> quadCnfs = quadToCnf.getInverse().keySet();
@@ -580,7 +580,7 @@ public class SparqlViewMatcherQfpcImpl<K>
     public void index(Query query, ResultSet rs) {
 
         //Table table = createTable(rs);
-        ProjectedQuadFilterPattern pqfp = SparqlCacheUtils.transform(query);
+        ProjectedQuadFilterPattern pqfp = AlgebraUtils.transform(query);
         QuadFilterPattern qfp = pqfp.getQuadFilterPattern();
 
         Table table = TableUtils.createTable(rs);
@@ -626,7 +626,7 @@ public class SparqlViewMatcherQfpcImpl<K>
 
     public void index(QuadFilterPattern qfp, Table table) {
 
-        QuadFilterPatternCanonical qfpc = SparqlCacheUtils.canonicalize2(qfp, VarGeneratorImpl2.create("v"));
+        QuadFilterPatternCanonical qfpc = AlgebraUtils.canonicalize2(qfp, VarGeneratorImpl2.create("v"));
         index(qfpc, table);
     }
 

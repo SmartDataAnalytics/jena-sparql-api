@@ -7,13 +7,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
+import org.aksw.jena_sparql_api.algebra.utils.OpUtils;
+import org.aksw.jena_sparql_api.algebra.utils.ProjectedQuadFilterPattern;
+import org.aksw.jena_sparql_api.algebra.utils.QuadFilterPattern;
+import org.aksw.jena_sparql_api.algebra.utils.QuadFilterPatternCanonical;
+import org.aksw.jena_sparql_api.algebra.utils.AlgebraUtils;
 import org.aksw.jena_sparql_api.concept_cache.core.CacheResult;
-import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewMatcherQfpc;
-import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
-import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
-import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
-import org.aksw.jena_sparql_api.utils.sparql.ProjectedQuadFilterPattern;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.op.OpJoin;
@@ -111,7 +111,7 @@ public class OpVisitorViewCacheApplier
      * @param result
      */
     public static void detectPrimitiveCachableOps(Op parentOp, Map<Op, ProjectedQuadFilterPattern> result) {
-        ProjectedQuadFilterPattern pqfp = SparqlCacheUtils.transform(parentOp);
+        ProjectedQuadFilterPattern pqfp = AlgebraUtils.transform(parentOp);
 
         if (pqfp == null) {
             // Recursively descend to the children
@@ -128,7 +128,7 @@ public class OpVisitorViewCacheApplier
 
     public static void detectCovers(Op parentOp, SparqlViewMatcherQfpc conceptMap, Map<Op, CacheResult> result) {
 
-        ProjectedQuadFilterPattern pqfp = SparqlCacheUtils.transform(parentOp);
+        ProjectedQuadFilterPattern pqfp = AlgebraUtils.transform(parentOp);
 
         if (pqfp == null) {
             // Recursively descend to the children

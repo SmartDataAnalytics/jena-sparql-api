@@ -13,7 +13,7 @@ import javax.swing.JFrame;
 
 import org.aksw.combinatorics.solvers.ProblemNeighborhoodAware;
 import org.aksw.commons.util.strings.StringPrettyComparator;
-import org.aksw.jena_sparql_api.concept_cache.op.OpExtConjunctiveQuery;
+import org.aksw.jena_sparql_api.algebra.utils.OpExtConjunctiveQuery;
 import org.aksw.jena_sparql_api.iso.index.SubGraphIsomorphismIndex;
 import org.aksw.jena_sparql_api.jgrapht.transform.GraphVar;
 import org.aksw.jena_sparql_api.jgrapht.transform.QueryToGraphVisitor;

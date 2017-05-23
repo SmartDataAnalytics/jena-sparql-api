@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.concept_cache.core;
 
+import org.aksw.jena_sparql_api.algebra.analysis.VarInfo;
 import org.apache.jena.graph.Node;
 
 public class ProjectionEntry {

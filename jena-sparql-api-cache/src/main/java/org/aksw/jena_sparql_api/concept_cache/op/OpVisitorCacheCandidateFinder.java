@@ -11,6 +11,9 @@ import java.util.Set;
 import com.google.common.base.Function;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Sets;
+
+import org.aksw.jena_sparql_api.algebra.utils.OpExtConjunctiveQuery;
+import org.aksw.jena_sparql_api.algebra.utils.OpUtils;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpVisitorBase;
 import org.apache.jena.sparql.algebra.op.OpDistinct;

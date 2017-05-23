@@ -39,6 +39,7 @@
 
         <module>jena-sparql-api-data-client</module>
 
+        <module>jena-sparql-api-algebra</module>
 
         <module>jena-sparql-api-geo</module>
 
@@ -525,6 +526,12 @@
             <dependency>
                 <groupId>org.aksw.jena-sparql-api</groupId>
                 <artifactId>jena-sparql-api-resources-sparqlqc</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.aksw.jena-sparql-api</groupId>
+                <artifactId>jena-sparql-api-algebra</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

@@ -9,13 +9,14 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 
+import org.aksw.jena_sparql_api.algebra.utils.ProjectedQuadFilterPattern;
+import org.aksw.jena_sparql_api.algebra.utils.QuadFilterPattern;
+import org.aksw.jena_sparql_api.algebra.utils.QuadFilterPatternCanonical;
+import org.aksw.jena_sparql_api.algebra.utils.AlgebraUtils;
 import org.aksw.jena_sparql_api.concept_cache.dirty.IteratorResultSetBinding;
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewMatcherQfpc;
-import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
-import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.utils.ResultSetPart;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
-import org.aksw.jena_sparql_api.utils.sparql.ProjectedQuadFilterPattern;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.core.Var;
@@ -104,7 +105,7 @@ public class ResultSetViewCache {
             //resultRs = ResultSetFactory.copyResults(tmp);
 
             QuadFilterPattern qfp = pqfp.getQuadFilterPattern();
-            QuadFilterPatternCanonical qfpc = SparqlCacheUtils.canonicalize2(qfp, VarGeneratorImpl2.create("v"));
+            QuadFilterPatternCanonical qfpc = AlgebraUtils.canonicalize2(qfp, VarGeneratorImpl2.create("v"));
 
             //ResultSet cacheRs = ResultSetUtils.project(resultRs, indexVars, true);
             Table table = ResultSetPart.toTable(tmp);

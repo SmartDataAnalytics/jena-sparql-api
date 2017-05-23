@@ -3,9 +3,10 @@ package org.aksw.jena_sparql_api.concept_cache.core;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.aksw.jena_sparql_api.algebra.utils.ProjectedQuadFilterPattern;
+import org.aksw.jena_sparql_api.algebra.utils.AlgebraUtils;
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewMatcherQfpc;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.utils.sparql.ProjectedQuadFilterPattern;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.sparql.algebra.Op;
@@ -41,7 +42,7 @@ public class ViewCacheIndexerImpl
      */
     @Override
     public QueryExecution createQueryExecution(Op indexPattern, Query query) {
-        ProjectedQuadFilterPattern pqfp = SparqlCacheUtils.transform(indexPattern);
+        ProjectedQuadFilterPattern pqfp = AlgebraUtils.transform(indexPattern);
         if(pqfp == null) {
             throw new RuntimeException("Query is not indexable: " + query);
         }

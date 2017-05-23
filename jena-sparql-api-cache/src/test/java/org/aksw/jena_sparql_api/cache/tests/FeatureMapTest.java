@@ -5,8 +5,8 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.Map.Entry;
 
-import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
-import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMapImpl;
+import org.aksw.commons.collections.FeatureMap;
+import org.aksw.commons.collections.FeatureMapImpl;
 import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.junit.Assert;
 import org.junit.Test;

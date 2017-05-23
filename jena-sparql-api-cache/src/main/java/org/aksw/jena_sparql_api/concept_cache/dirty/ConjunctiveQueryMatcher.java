@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.concept_cache.dirty;
 
 import java.util.Map;
 
-import org.aksw.jena_sparql_api.utils.sparql.ConjunctiveQuery;
+import org.aksw.jena_sparql_api.algebra.utils.ConjunctiveQuery;
 
 public interface ConjunctiveQueryMatcher<K> {
     Map<K, QfpcMatch> lookup(ConjunctiveQuery cq);

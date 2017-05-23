@@ -4,8 +4,8 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
+import org.aksw.jena_sparql_api.algebra.utils.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlQueryContainmentUtils;
-import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Model;

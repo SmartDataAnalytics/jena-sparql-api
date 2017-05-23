@@ -7,13 +7,12 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.aksw.commons.collections.SetUtils;
 import org.aksw.commons.collections.reversible.ReversibleMap;
 import org.aksw.commons.collections.reversible.ReversibleMapImpl;
-import org.aksw.jena_sparql_api.concept_cache.core.SetUtils;
-import org.aksw.jena_sparql_api.concept_cache.core.VarInfo;
-import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
-import org.aksw.jena_sparql_api.utils.sparql.ConjunctiveQuery;
-import org.aksw.jena_sparql_api.view_matcher.SparqlViewMatcherProjectionUtils;
+import org.aksw.jena_sparql_api.algebra.analysis.VarInfo;
+import org.aksw.jena_sparql_api.algebra.utils.ConjunctiveQuery;
+import org.aksw.jena_sparql_api.algebra.utils.QuadFilterPatternCanonical;
 import org.apache.jena.sparql.core.Var;
 
 import com.google.common.collect.Sets;
