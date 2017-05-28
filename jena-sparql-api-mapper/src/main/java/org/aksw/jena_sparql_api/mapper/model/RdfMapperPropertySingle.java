@@ -29,6 +29,8 @@ import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.syntax.ElementBind;
 import org.apache.jena.sparql.syntax.ElementGroup;
 
+import com.google.common.base.Defaults;
+
 public class RdfMapperPropertySingle
     extends RdfMapperPropertyBase
 {
@@ -99,11 +101,19 @@ public class RdfMapperPropertySingle
             @Override
             public Collection<PopulationTask> resolve(List<Object> resolutions) {
                 Object value = resolutions.get(0);
+
+                Class<?> propertyClass = propertyOps.getType();
+                if(value == null) {
+                    value = Defaults.defaultValue(propertyClass);
+                }
+
                 propertyOps.setValue(entity, value);
                 return Collections.emptyList();
             }
         });
     }
+
+
 //    @Override
 //    public void populateEntity(RdfPersistenceContext persistenceContext, Object entity, Graph inGraph, Node subject, Consumer<Triple> outSink) {
 //        List<Triple> triples = inGraph.find(subject, predicate, Node.ANY).toList();

@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.lookup;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Function;
@@ -34,7 +35,12 @@ public class MapPaginatorTransformItem<K, I, O>
     public Map<K, O> fetchMap(Range<Long> range) {
         //Map<K, I> map = delegate.fetchData(range);
 
-        Map<K, O> result = apply(range)
+        // Create an intermediary list so that in case of any
+        // error, such as duplicate key, we can investigate the problem
+        //List<Entry<K, O>> items = apply(range).collect(Collectors.toList());
+
+//        Map<K, O> result = items.stream()//apply(range)
+          Map<K, O> result = apply(range)
                 .collect(Collectors.toMap(
                         Entry<K, O>::getKey,
                         Entry<K, O>::getValue,

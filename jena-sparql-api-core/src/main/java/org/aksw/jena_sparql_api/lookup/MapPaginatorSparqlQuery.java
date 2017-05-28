@@ -150,6 +150,7 @@ public class MapPaginatorSparqlQuery
 
                   if(Objects.equal(groupNode, currentNode)) {
                       rsp.getBindings().add(lookAhead);
+                      lookAhead = null;
                   } else {
                       break;
                   }

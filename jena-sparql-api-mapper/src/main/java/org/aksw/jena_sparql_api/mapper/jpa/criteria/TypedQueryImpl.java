@@ -439,8 +439,18 @@ public class TypedQueryImpl<X>
             }
 
             query.getProject().clear();
-            query.getProject().add(resultVar, expr);
 
+            // TODO Obtain a SPARQL variable for the selection
+            // The selection may be an expression and thus have an alias mapping
+            if(selection instanceof Expression) {
+                Expression<?> selExpr = (Expression<?>)selection;
+                String varName = aliasMapper.apply(selExpr);
+                resultVar = Var.alloc(varName);
+                query.getProject().add(resultVar, expr);
+
+            } else {
+                query.getProject().add(resultVar, expr);
+            }
 
             //selection.filterCompiler
         }
@@ -452,7 +462,9 @@ public class TypedQueryImpl<X>
         //List<Node> items = ServiceUtils.fetchList(sparqlService.getQueryExecutionFactory(), concept, 1l, startPosition == null ? null : startPosition.longValue());
         //List<Node> items = ServiceUtils.fetchList(sparqlService.getQueryExecutionFactory(), concept, l, o);
         QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
-        List<Node> items = ServiceUtils.fetchList(qef, query, orderedConcept.getConcept().getVar());
+
+        // TODO Using the resultVar here is a hack
+        List<Node> items = ServiceUtils.fetchList(qef, query, resultVar);
 
 
         List<X> result = items.stream().map(node -> {

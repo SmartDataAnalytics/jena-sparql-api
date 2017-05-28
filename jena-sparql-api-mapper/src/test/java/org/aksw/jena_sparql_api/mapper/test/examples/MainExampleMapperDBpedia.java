@@ -1,10 +1,11 @@
-package org.aksw.jena_sparql_api.mapper.examples;
+package org.aksw.jena_sparql_api.mapper.test.examples;
 
 import java.util.List;
 
 import javax.persistence.EntityManager;
 import javax.persistence.criteria.Root;
 
+import org.aksw.jena_sparql_api.mapper.examples.Company;
 import org.aksw.jena_sparql_api.mapper.jpa.core.SparqlEntityManagerFactory;
 import org.aksw.jena_sparql_api.mapper.util.JpaUtils;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
@@ -15,7 +16,7 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 
 
-public class ExampleMapperDBpedia {
+public class MainExampleMapperDBpedia {
 
 
     public static void main(String[] args) throws Exception {
@@ -33,10 +34,13 @@ public class ExampleMapperDBpedia {
             .setNsPrefix("nss", "http://example.org/nss/");
 
         //
-        emFactory.addScanPackageName(ExampleMapperDBpedia.class.getPackage().getName());
+        emFactory.addScanPackageName(Company.class.getPackage().getName());
+
+        Model dataModel = RDFDataMgr.loadModel("dbpedia-companies.ttl");
 
         emFactory.setSparqlService(FluentSparqlService
-            .http("http://dbpedia.org/sparql", "http://dbpedia.org")
+                .from(dataModel)
+            //.http("http://dbpedia.org/sparql", "http://dbpedia.org")
                 .config().configQuery()
                     .withParser(SparqlQueryParserImpl.create())
                     .withPagination(50000)
@@ -72,8 +76,6 @@ public class ExampleMapperDBpedia {
         matches.forEach(emLocal::merge);
 
         RDFDataMgr.write(System.out, model, RDFFormat.TURTLE_PRETTY);
-
-
 
         /*
          * Query 2: Avg number of locations of all companies

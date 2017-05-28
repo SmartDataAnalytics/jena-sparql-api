@@ -254,7 +254,7 @@ public class RdfMapperEngineImpl
         // TODO The lookup service should deal with empty concepts
         Resource result;
         if(!shape.isEmpty()) {
-            MappedConcept<Graph> mc = ResourceShape.createMappedConcept(shape, null, false);
+//            MappedConcept<Graph> mc = ResourceShape.createMappedConcept(shape, null, false);
             QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
             LookupService<Node, Graph> ls = MapServiceResourceShape.createLookupService(qef, shape);
 

@@ -6,8 +6,8 @@ import javax.persistence.EntityManager;
 import javax.persistence.criteria.Root;
 
 import org.aksw.jena_sparql_api.mapper.examples.Company;
-import org.aksw.jena_sparql_api.mapper.examples.ExampleMapperDBpedia;
 import org.aksw.jena_sparql_api.mapper.jpa.core.SparqlEntityManagerFactory;
+import org.aksw.jena_sparql_api.mapper.test.examples.MainExampleMapperDBpedia;
 import org.aksw.jena_sparql_api.mapper.util.JpaUtils;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
@@ -27,7 +27,7 @@ public class MainSparqlToJson {
             .setNsPrefix("nss", "http://example.org/nss/");
 
         //
-        emFactory.addScanPackageName(ExampleMapperDBpedia.class.getPackage().getName());
+        emFactory.addScanPackageName(MainExampleMapperDBpedia.class.getPackage().getName());
 
         emFactory.setSparqlService(FluentSparqlService
             .http("http://dbpedia.org/sparql", "http://dbpedia.org")
