@@ -18,7 +18,6 @@ import org.apache.jena.riot.RDFFormat;
 
 public class MainExampleMapperDBpedia {
 
-
     public static void main(String[] args) throws Exception {
 
         /*
@@ -33,7 +32,7 @@ public class MainExampleMapperDBpedia {
             .setNsPrefix("dbr", "http://dbpedia.org/resource/")
             .setNsPrefix("nss", "http://example.org/nss/");
 
-        //
+        // Classes which to register to the persistence unit
         emFactory.addScanPackageName(Company.class.getPackage().getName());
 
         Model dataModel = RDFDataMgr.loadModel("dbpedia-companies.ttl");
@@ -48,6 +47,7 @@ public class MainExampleMapperDBpedia {
 
         EntityManager em = emFactory.getObject();
 
+
         /*
          * Query 1: Companies founded after 1955 with more than 36000 locations
          */
@@ -60,9 +60,19 @@ public class MainExampleMapperDBpedia {
                     ;
         });
 
+        System.out.println("Example 1 =======================================================");
+        System.out.println("Companies founded after 1955 with more than 36000 locations");
         for(Company c : matches) {
             System.out.println("Matched: " + c);
         }
+
+
+        System.out.println("Example 2 ===========================================================");
+        System.out.println("Value for McDonalds");
+        Company c = em.find(Company.class, "http://dbpedia.org/resource/McDonald's");
+        System.out.println("Found: " + c);
+
+        System.out.println("Example 3 ===========================================================");
 
         /*
          * Extra: Put the entities into an in-memory backed SPARQL endpoint for modification
@@ -71,15 +81,36 @@ public class MainExampleMapperDBpedia {
         emFactory.setSparqlService(FluentSparqlService.from(model).create());
         EntityManager emLocal = emFactory.getObject();
 
-        matches.forEach(emLocal::persist);
-        matches.forEach(m -> m.setNumberOfLocations(1000));
-        matches.forEach(emLocal::merge);
+        //matches.forEach(emLocal::persist);
+        for(Company match : matches) {
+            try {
+                emLocal.persist(match);
+            } catch(Exception e) {
+                e.printStackTrace();
+            }
+        }
 
+        matches.forEach(m -> m.setNumberOfLocations(1000));
+
+
+        //matches.forEach(emLocal::merge);
+        for(Company match : matches) {
+            try {
+                emLocal.persist(match);
+            } catch(Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+
+        System.out.println("Model after updating properties:");
         RDFDataMgr.write(System.out, model, RDFFormat.TURTLE_PRETTY);
 
         /*
          * Query 2: Avg number of locations of all companies
          */
+
+        System.out.println("Example 4 ===========================================================");
 
         Double avg = JpaUtils.getSingleResult(em, Double.class, (cb, cq) -> {
             Root<Company> r2 = cq.from(Company.class);

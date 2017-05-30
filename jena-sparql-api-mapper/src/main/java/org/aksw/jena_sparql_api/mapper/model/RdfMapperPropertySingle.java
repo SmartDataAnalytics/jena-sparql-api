@@ -12,7 +12,7 @@ import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.aksw.jena_sparql_api.mapper.impl.type.EntityFragment;
 import org.aksw.jena_sparql_api.mapper.impl.type.PathFragment;
 import org.aksw.jena_sparql_api.mapper.impl.type.PlaceholderInfo;
-import org.aksw.jena_sparql_api.mapper.impl.type.PopulationTask;
+import org.aksw.jena_sparql_api.mapper.impl.type.ResolutionTask;
 import org.aksw.jena_sparql_api.mapper.impl.type.ResourceFragment;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
@@ -92,14 +92,14 @@ public class RdfMapperPropertySingle
         List<PlaceholderInfo> pis = Arrays.asList(new PlaceholderInfo(null, targetRdfType, entity, null, propertyOps, null, o, this));
 
         //out.getPropertyInfos().put(key, value);
-        out.getTasks().add(new PopulationTask() {
+        out.getTasks().add(new ResolutionTask<PlaceholderInfo>() {
             @Override
             public List<PlaceholderInfo> getPlaceholders() {
                 return pis;
             }
 
             @Override
-            public Collection<PopulationTask> resolve(List<Object> resolutions) {
+            public Collection<ResolutionTask<PlaceholderInfo>> resolve(List<Object> resolutions) {
                 Object value = resolutions.get(0);
 
                 Class<?> propertyClass = propertyOps.getType();

@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.mapper.model;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -13,7 +13,8 @@ import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.aksw.jena_sparql_api.mapper.impl.type.EntityFragment;
 import org.aksw.jena_sparql_api.mapper.impl.type.PathFragment;
 import org.aksw.jena_sparql_api.mapper.impl.type.PlaceholderInfo;
-import org.aksw.jena_sparql_api.mapper.impl.type.PopulationTask;
+import org.aksw.jena_sparql_api.mapper.impl.type.ResolutionTask;
+import org.aksw.jena_sparql_api.mapper.impl.type.ResolutionTaskBase;
 import org.aksw.jena_sparql_api.mapper.impl.type.ResourceFragment;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
@@ -92,20 +93,20 @@ extends RdfMapperPropertyBase
 
     @Override
     public void populate(EntityFragment out, Resource shape, Object entity) {
-        Statement stmt = shape.getProperty(predicate);
-        RDFNode o = stmt == null ? null : stmt.getObject();
+        List<Statement> stmts = shape.listProperties(predicate).toList();
 
-        List<PlaceholderInfo> pis = Arrays.asList(new PlaceholderInfo(null, targetRdfType, entity, null, propertyOps, null, o, this));
+        List<PlaceholderInfo> pis = new ArrayList<>();
+
+        for(Statement stmt : stmts) {
+            RDFNode o = stmt == null ? null : stmt.getObject();
+
+            pis.add(new PlaceholderInfo(null, targetRdfType, entity, null, propertyOps, null, o, this));
+        }
 
         //out.getPropertyInfos().put(key, value);
-        out.getTasks().add(new PopulationTask() {
+        out.getTasks().add(new ResolutionTaskBase<PlaceholderInfo>(pis) {
             @Override
-            public List<PlaceholderInfo> getPlaceholders() {
-                return pis;
-            }
-
-            @Override
-            public Collection<PopulationTask> resolve(List<Object> resolutions) {
+            public Collection<ResolutionTask<PlaceholderInfo>> resolve(List<Object> resolutions) {
                 //Object value = resolutions.get(0);
                 // TODO The collection type has to be injected from elsewhere
                 Object value = new HashSet<>(resolutions);

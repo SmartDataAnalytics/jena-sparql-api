@@ -175,19 +175,13 @@ public class RdfTypeMap
 
                 List<PlaceholderInfo> entryPlaceholders = Arrays.asList(kPlaceholder, vPlaceholder);
 
-                PopulationTask task = new PopulationTask() {
-
+                ResolutionTask<PlaceholderInfo> task = new ResolutionTaskBase<PlaceholderInfo>(entryPlaceholders) {
                     @Override
-                    public Collection<PopulationTask> resolve(List<Object> resolutions) {
+                    public Collection<ResolutionTask<PlaceholderInfo>> resolve(List<Object> resolutions) {
                         Object k = resolutions.get(0);
                         Object v = resolutions.get(1);
                         map.put(k, v);
                         return Collections.emptyList();
-                    }
-
-                    @Override
-                    public List<PlaceholderInfo> getPlaceholders() {
-                        return entryPlaceholders;
                     }
                 };
 

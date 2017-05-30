@@ -5,9 +5,9 @@
 @prefix dbo:  <http://dbpedia.org/ontology/>
 @prefix dbr:  <http://dbpedia.org/resource/>
 
-dbr:McDonalds
+dbr:McDonald's
   a dbo:Company ;
-  rdfs:label "McDonalds" ;
+  rdfs:label "McDonald's" ;
   dbo:numberOfLocations 36000 ;
   dbo:foundingYear "1955"^^xsd:gYear ;
   .

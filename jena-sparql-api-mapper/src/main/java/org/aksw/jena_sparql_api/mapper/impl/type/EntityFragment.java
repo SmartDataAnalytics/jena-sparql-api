@@ -16,7 +16,7 @@ import java.util.Map;
 public class EntityFragment {
 	protected Object rootEntity;
 	protected Map<Object, Map<String, PlaceholderInfo>> propertyInfos;
-	protected List<PopulationTask> populationTasks;
+	protected List<ResolutionTask> populationTasks;
 	
 	
 	public EntityFragment(Object rootEntity) {
@@ -33,7 +33,7 @@ public class EntityFragment {
 		return rootEntity;
 	}
 	
-	public List<PopulationTask> getTasks() {
+	public List<ResolutionTask> getTasks() {
 		return populationTasks;
 	}
 }

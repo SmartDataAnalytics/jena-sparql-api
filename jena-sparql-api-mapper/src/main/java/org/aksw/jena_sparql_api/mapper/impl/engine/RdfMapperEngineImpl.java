@@ -33,7 +33,7 @@ import org.aksw.jena_sparql_api.mapper.impl.type.EntityFragment;
 import org.aksw.jena_sparql_api.mapper.impl.type.PathFragment;
 import org.aksw.jena_sparql_api.mapper.impl.type.PathResolver;
 import org.aksw.jena_sparql_api.mapper.impl.type.PlaceholderInfo;
-import org.aksw.jena_sparql_api.mapper.impl.type.PopulationTask;
+import org.aksw.jena_sparql_api.mapper.impl.type.ResolutionTask;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
 import org.aksw.jena_sparql_api.mapper.impl.type.ResourceFragment;
 import org.aksw.jena_sparql_api.mapper.model.RdfMapperProperty;
@@ -428,7 +428,7 @@ public class RdfMapperEngineImpl
     void populateEntity(EntityFragment entityFragment) {
         // We now need to construct a function that is capable of resolving
         // the property values of the entity
-        for(PopulationTask task : entityFragment.getTasks()) {
+        for(ResolutionTask<PlaceholderInfo> task : entityFragment.getTasks()) {
             List<Object> resolutions = new ArrayList<>();
             for(PlaceholderInfo placeholder : task.getPlaceholders()) {
                 RdfType targetRdfType = placeholder.getTargetRdfType();
