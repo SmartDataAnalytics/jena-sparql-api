@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.mapper.test;
+package org.aksw.jena_sparql_api.mapper.test.domain;
 
 import org.aksw.commons.collections.NaturalComparator;
 import org.aksw.jena_sparql_api.mapper.annotation.DefaultIri;

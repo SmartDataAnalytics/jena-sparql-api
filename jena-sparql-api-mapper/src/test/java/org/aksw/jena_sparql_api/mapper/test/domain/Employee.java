@@ -1,10 +1,10 @@
-package org.aksw.jena_sparql_api.mapper.test;
+package org.aksw.jena_sparql_api.mapper.test.domain;
 
 import org.aksw.jena_sparql_api.mapper.annotation.Inverse;
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
 
 public class Employee
-	extends Person
+	extends PersonOld
 {
 	@Iri("o:department")
 	@Inverse

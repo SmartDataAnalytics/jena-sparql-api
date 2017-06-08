@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.mapper.examples;
+package org.aksw.jena_sparql_api.mapper.test.domain;
 
 import org.aksw.jena_sparql_api.mapper.annotation.Datatype;
 import org.aksw.jena_sparql_api.mapper.annotation.DefaultIri;

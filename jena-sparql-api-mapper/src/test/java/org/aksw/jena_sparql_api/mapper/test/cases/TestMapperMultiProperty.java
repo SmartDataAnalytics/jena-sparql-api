@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.mapper.test;
+package org.aksw.jena_sparql_api.mapper.test.cases;
 
 import java.text.ParseException;
 
@@ -8,6 +8,7 @@ import org.aksw.jena_sparql_api.mapper.context.TypedNode;
 import org.aksw.jena_sparql_api.mapper.impl.engine.RdfMapperEngineImpl;
 import org.aksw.jena_sparql_api.mapper.jpa.core.EntityManagerImpl;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
+import org.aksw.jena_sparql_api.mapper.test.domain.Country;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.stmt.SparqlStmt;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;

@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.mapper.test;
+package org.aksw.jena_sparql_api.mapper.test.domain;
 
 import java.util.Set;
 

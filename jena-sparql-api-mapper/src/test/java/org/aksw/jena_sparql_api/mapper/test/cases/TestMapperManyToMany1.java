@@ -1,8 +1,9 @@
-package org.aksw.jena_sparql_api.mapper.test.manytomany;
+package org.aksw.jena_sparql_api.mapper.test.cases;
 
 import java.util.Arrays;
 
-import org.aksw.jena_sparql_api.mapper.test.TestMapperBase;
+import org.aksw.jena_sparql_api.mapper.test.domain.Author;
+import org.aksw.jena_sparql_api.mapper.test.domain.Book;
 import org.junit.Test;
 
 public class TestMapperManyToMany1

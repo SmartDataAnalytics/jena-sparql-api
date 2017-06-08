@@ -1,12 +1,12 @@
-package org.aksw.jena_sparql_api.mapper.test.examples;
+package org.aksw.jena_sparql_api.mapper.test.cases;
 
 import java.util.List;
 
 import javax.persistence.EntityManager;
 import javax.persistence.criteria.Root;
 
-import org.aksw.jena_sparql_api.mapper.examples.Company;
 import org.aksw.jena_sparql_api.mapper.jpa.core.SparqlEntityManagerFactory;
+import org.aksw.jena_sparql_api.mapper.test.domain.Company;
 import org.aksw.jena_sparql_api.mapper.util.JpaUtils;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;

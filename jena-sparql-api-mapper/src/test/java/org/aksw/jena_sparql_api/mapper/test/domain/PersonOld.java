@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.mapper.examples;
+package org.aksw.jena_sparql_api.mapper.test.domain;
 
 import java.util.Calendar;
 
@@ -6,9 +6,10 @@ import org.aksw.jena_sparql_api.mapper.annotation.DefaultIri;
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
 import org.aksw.jena_sparql_api.mapper.annotation.RdfType;
 
+// TODO Remove this class
 @RdfType("schema:Person")
 @DefaultIri("dbr:#{name}")
-public class Person {
+public class PersonOld {
     @Iri("rdfs:label")
     private String name;
 

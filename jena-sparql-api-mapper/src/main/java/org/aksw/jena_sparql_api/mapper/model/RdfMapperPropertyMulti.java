@@ -32,7 +32,7 @@ import org.apache.jena.sparql.syntax.ElementBind;
 import org.apache.jena.sparql.syntax.ElementGroup;
 
 public class RdfMapperPropertyMulti
-extends RdfMapperPropertyBase
+    extends RdfMapperPropertyBase
 {
     public RdfMapperPropertyMulti(
             PropertyOps propertyOps,

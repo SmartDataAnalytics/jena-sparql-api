@@ -1,10 +1,9 @@
-package org.aksw.jena_sparql_api.mapper.test.manytomany;
+package org.aksw.jena_sparql_api.mapper.test.domain;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
-import org.aksw.jena_sparql_api.mapper.test.common.NamedEntity;
 
 
 public class Book

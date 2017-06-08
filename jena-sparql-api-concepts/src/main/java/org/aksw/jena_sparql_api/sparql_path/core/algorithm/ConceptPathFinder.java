@@ -51,7 +51,7 @@ import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.jgrapht.GraphPath;
-import org.jgrapht.alg.DijkstraShortestPath;
+import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.GraphWalk;
@@ -283,8 +283,8 @@ public class ConceptPathFinder {
                 candidateGraphPaths.add(graphPath);
             }
             else {
-                DijkstraShortestPath<Node, DefaultEdge> dijkstraShortestPath = new DijkstraShortestPath<Node, DefaultEdge>(graph, startVertex, candidate);
-                GraphPath<Node, DefaultEdge> tmp = dijkstraShortestPath.getPath();
+                DijkstraShortestPath<Node, DefaultEdge> dijkstraShortestPath = new DijkstraShortestPath<Node, DefaultEdge>(graph);
+                GraphPath<Node, DefaultEdge> tmp = dijkstraShortestPath.getPath(startVertex, candidate);
                 if(tmp != null) {
                     candidateGraphPaths.add(tmp);
                 }
