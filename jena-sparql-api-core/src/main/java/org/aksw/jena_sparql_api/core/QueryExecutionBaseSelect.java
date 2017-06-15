@@ -378,6 +378,11 @@ public abstract class QueryExecutionBaseSelect
         return executeCoreSelect(query);
     }
 
+    @Override
+    public Query getQuery() {
+        return query;
+    }
+
     //@Override
     public void executeUpdate(UpdateRequest updateRequest)
     {
