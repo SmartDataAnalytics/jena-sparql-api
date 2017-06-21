@@ -9,6 +9,7 @@ import org.apache.jena.sparql.expr.ExprFunctionN;
 import org.apache.jena.sparql.expr.ExprList;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.serializer.SerializationContext;
 import org.apache.jena.vocabulary.XSD;
 
 
@@ -66,6 +67,9 @@ public class E_RdfTerm
         return new E_RdfTerm(typeTypedLiteral, expr, NodeValue.nvEmptyString, datatypeExpr);
     }
 
+    public String getFunctionIRI() {
+        return SparqlifyConstants.rdfTermLabel;
+    }
 
     public E_RdfTerm(List<Expr> exprs) {
         this(exprs.get(0), exprs.get(1), exprs.get(2), exprs.get(3));
@@ -117,6 +121,14 @@ public class E_RdfTerm
         return true;
         */
     }
+
+    public String getFunctionPrintName(SerializationContext cxt) {
+        String functionIri = getFunctionIRI();
+        String result = functionIri == null ? super.getFunctionPrintName(cxt) : "<" + functionIri + ">";
+
+        return result;
+    }
+
 
     @Override
     public NodeValue getConstant() {
