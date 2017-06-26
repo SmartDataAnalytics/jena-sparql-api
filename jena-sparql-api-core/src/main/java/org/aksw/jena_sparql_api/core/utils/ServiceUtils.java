@@ -119,6 +119,29 @@ public class ServiceUtils {
         return result;
     }
 
+    public static CountInfo fetchCountQuery(QueryExecutionFactory sparqlService, Query query, Long itemLimit, Long rowLimit) {
+
+        Var outputVar = Var.alloc("_count_"); //ConceptUtils.freshVar(concept);
+
+        Long xitemLimit = itemLimit == null ? null : itemLimit + 1;
+        Long xrowLimit = rowLimit == null ? null : rowLimit + 1;
+
+        Query countQuery = QueryGenerationUtils.createQueryCount(query, outputVar, xitemLimit, xrowLimit);
+
+        //var qe = sparqlService.createQueryExecution(countQuery);
+
+        Integer count = ServiceUtils.fetchInteger(sparqlService, countQuery, outputVar);
+        boolean hasMoreItems = rowLimit != null
+            ? null
+            : (itemLimit != null ? count > itemLimit : false)
+            ;
+
+        Long c = hasMoreItems ? itemLimit : count;
+        CountInfo result = new CountInfo(c, hasMoreItems, itemLimit);
+        return result;
+    }
+
+
     /**
      * CONSTRUCT queries are mapped to result sets with the variables ?s ?p ?o
      *

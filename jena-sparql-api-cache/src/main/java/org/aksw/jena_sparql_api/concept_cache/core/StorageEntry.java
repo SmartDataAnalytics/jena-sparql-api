@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.concept_cache.core;
 
+import org.aksw.jena_sparql_api.algebra.analysis.VarInfo;
 import org.aksw.jena_sparql_api.util.collection.RangedSupplier;
 import org.apache.jena.sparql.engine.binding.Binding;
 

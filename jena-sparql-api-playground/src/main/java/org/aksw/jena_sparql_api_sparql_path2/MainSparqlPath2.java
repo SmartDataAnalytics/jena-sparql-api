@@ -19,10 +19,10 @@ import org.aksw.jena_sparql_api.core.GraphSparqlService;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
-import org.aksw.jena_sparql_api.jgrapht.LabeledEdge;
-import org.aksw.jena_sparql_api.jgrapht.LabeledEdgeImpl;
-import org.aksw.jena_sparql_api.lookup.ListService;
-import org.aksw.jena_sparql_api.lookup.ListServiceUtils;
+import org.aksw.jena_sparql_api.jgrapht.wrapper.LabeledEdge;
+import org.aksw.jena_sparql_api.jgrapht.wrapper.LabeledEdgeImpl;
+import org.aksw.jena_sparql_api.lookup.MapService;
+import org.aksw.jena_sparql_api.lookup.MapServiceUtils;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceCacheMem;
 import org.aksw.jena_sparql_api.lookup.LookupServiceListService;
@@ -163,7 +163,7 @@ public class MainSparqlPath2 {
                 }));
         MappedQuery<Map<Node, Number>> mappedQuery = MappedQuery.create(query, source, agg);
 
-        ListService<Concept, Node, Map<Node, Number>> lsx = ListServiceUtils.createListServiceMappedQuery(qef, mappedQuery, false);
+        MapService<Concept, Node, Map<Node, Number>> lsx = MapServiceUtils.createListServiceMappedQuery(qef, mappedQuery, false);
         LookupService<Node, Map<Node, Number>> result = LookupServiceListService.create(lsx);
 
         result = LookupServicePartition.create(result, 100, 4);
@@ -233,7 +233,7 @@ public class MainSparqlPath2 {
                 AggTransform.create(AggLiteral.create(BindingMapperProjectVar.create(Vars.x)), (node) -> (Number)node.getLiteralValue()));
         MappedQuery<Map<Node, Number>> mappedQuery = MappedQuery.create(query, Vars.s, agg);
 
-        ListService<Concept, Node, Map<Node, Number>> lsx = ListServiceUtils.createListServiceMappedQuery(qef, mappedQuery, false);
+        MapService<Concept, Node, Map<Node, Number>> lsx = MapServiceUtils.createListServiceMappedQuery(qef, mappedQuery, false);
         LookupService<Node, Map<Node, Number>> result = LookupServiceListService.create(lsx);
 
 

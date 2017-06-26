@@ -6,7 +6,7 @@ import java.util.Set;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.core.utils.QueryExecutionUtils;
-import org.aksw.jena_sparql_api.lookup.ListService;
+import org.aksw.jena_sparql_api.lookup.MapService;
 import org.aksw.jena_sparql_api.lookup.ListServiceConcept;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
@@ -32,7 +32,7 @@ public class DatasetGraphSparqlService
     @Override
     public Iterator<Node> listGraphNodes() {
         QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
-        ListService<Concept, Node, Node> ls = new ListServiceConcept(qef);
+        MapService<Concept, Node, Node> ls = new ListServiceConcept(qef);
         Set<Node> nodes = ls.fetchData(ConceptUtils.listAllGraphs, null, null).keySet();
         return nodes.iterator();
     }

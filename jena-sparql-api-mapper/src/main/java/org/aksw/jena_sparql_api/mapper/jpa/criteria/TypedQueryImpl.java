@@ -4,86 +4,94 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import javax.persistence.FlushModeType;
 import javax.persistence.LockModeType;
+import javax.persistence.NonUniqueResultException;
 import javax.persistence.Parameter;
 import javax.persistence.TemporalType;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Expression;
 import javax.persistence.criteria.Order;
-import javax.persistence.criteria.Path;
+import javax.persistence.criteria.Root;
+import javax.persistence.criteria.Selection;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptOps;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.concepts.OrderedConcept;
-import org.aksw.jena_sparql_api.concepts.Relation;
+import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.utils.ServiceUtils;
 import org.aksw.jena_sparql_api.mapper.impl.engine.RdfMapperEngine;
 import org.aksw.jena_sparql_api.mapper.impl.type.PathResolver;
 import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.ExpressionCompiler;
-import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.PathImpl;
 import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.VExpression;
+import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.VPath;
 import org.aksw.jena_sparql_api.mapper.model.TypeDecider;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
-import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
-import org.aksw.jena_sparql_api.utils.VarUtils;
+import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.SortCondition;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprAggregator;
+import org.apache.jena.sparql.expr.aggregate.Aggregator;
+import org.apache.jena.sparql.graph.NodeTransformLib;
 import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementFilter;
+import org.apache.jena.sparql.syntax.ElementTriplesBlock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
-class PathResolverUtil {
-    protected Set<Var> blacklist = new HashSet<>();
-    protected Generator<Var> varGen = VarGeneratorBlacklist.create(blacklist);
 
-    public Relation resolvePath(PathResolver pathResolver, Path<?> path) {
-        blacklist.addAll(VarUtils.toSet(pathResolver.getAliases()));
+class AliasMapper
+    implements Function<Expression<?>, String>
+{
+    //protected Set<String> aliasBlacklist = new HashSet<>();
+    //protected Generator<String> aliasGenerator;
+    protected Map<Expression<?>, String> expressionToAlias = new IdentityHashMap<>();
+    protected Supplier<String> aliasSupplier;
 
-
-        List<String> list = new ArrayList<>();
-
-        Path<?> current = path;
-        while(current != null) {
-            PathImpl<?> p = (PathImpl<?>)current;
-            list.add(p.getAttributeName());
-            current = p.getParentPath();
-        }
-
-        Collections.reverse(list);
-
-        PathResolver x = pathResolver;
-        for(String attr : list) {
-            if(x != null && attr != null) {
-                x = x.resolve(attr);
-            }
-        }
-
-        Relation result = x == null ? null : x.getOverallRelation(varGen);
-        System.out.println("Resolved path: " + result);
-        return result;
+    public AliasMapper() {
+        int[] i = {0};
+        aliasSupplier = () -> { return "_a" + ++i[0]; };
     }
 
+
+
+    @Override
+    public String apply(Expression<?> e) {
+        String result = expressionToAlias.computeIfAbsent(e, (x) -> x.getAlias() != null ? e.getAlias() : aliasSupplier.get());
+
+        return result;
+    }
 }
 
 
 public class TypedQueryImpl<X>
     implements TypedQuery<X>
 {
+
+    private static final Logger logger = LoggerFactory.getLogger(TypedQueryImpl.class);
+
     protected Integer startPosition = null;
     protected Integer maxResult = null;
 
@@ -94,7 +102,9 @@ public class TypedQueryImpl<X>
     //protected Concept concept;
 
 
-    protected Function<Class<?>, PathResolver> pathResolverFactory;
+    //protected Function<Class<?>, PathResolver> pathResolverFactory;
+    Function<Expression<?>, String> aliasMapper = new AliasMapper();
+    protected Supplier<ExpressionCompiler> expressionCompilerFactory;
 
 
 //    protected Query compileQuery() {
@@ -103,7 +113,32 @@ public class TypedQueryImpl<X>
 //    	return result;
 //    }
 
+    //Var rootVar = Var.alloc("root");
+
+    /**
+     * Each expression compiler yields its own set of elements, but use a common
+     * aliasMapper
+     *
+     * @return
+     */
+    Supplier<ExpressionCompiler> createExpressionCompilerFactory() {
+
+        //Function<Expression<?>, String> aliasMapper = new AliasMapper();
+
+        return () -> {
+            Set<Element> elements = new LinkedHashSet<>();
+            return new ExpressionCompiler(elements, path -> resolvePath(path, elements, aliasMapper));
+        };
+    }
+
     protected OrderedConcept compileConcept() {
+        // In the following, we will assign to every expression object not having an alias set, a fresh unique one.
+        // Two non-identical objects are treated as different expressions, even if their states are equal
+
+        //Set<Var> blacklist = new HashSet<Var>();
+        //Map<Expression<?>, Var> aliasMap = new IdentityHashMap<>();
+
+
         // Get the SPARQL concept from the type decider for the requested entity type
         //engine.getT
 
@@ -118,33 +153,71 @@ public class TypedQueryImpl<X>
 
         //RdfType engine.getRdfTypeFactory().
 
-        Var rootVar = Var.alloc("root");
 
 
-        PathResolver pathResolver = engine.createResolver(resultType);//mapperEngine.createResolver(Person.class);
+        //PathResolver pathResolver = engine.createResolver(resultType);//mapperEngine.createResolver(Person.class);
 
-        PathResolverUtil pathResolverUtil = new PathResolverUtil();
+        ExpressionCompiler filterCompiler = expressionCompilerFactory.get(); //new ExpressionCompiler(path -> resolvePath(path, aliasMap));//this::resolvePath);
+        //elements.add(new ElementFilter(result));
 
-        ExpressionCompiler filterCompiler = new ExpressionCompiler(
-            path -> pathResolverUtil.resolvePath(pathResolver, path)
-        );
+
+        Set<Root<?>> roots = criteriaQuery.getRoots();
+        Var firstRoot = null; // HACK, add support for proper selections
+        for(Root<?> root : roots) {
+            Class<?> javaType = root.getJavaType();
+
+            Resource r = ModelFactory.createDefaultModel().createResource();
+
+            engine.getTypeDecider().writeTypeTriples(r, javaType);
+
+            BasicPattern bp = new BasicPattern();
+            r.getModel().getGraph().find(Node.ANY, Node.ANY, Node.ANY).toSet().forEach(bp::add);
+
+            String rootName = aliasMapper.apply(root);
+            Var rootVar = Var.alloc(rootName);
+            firstRoot = firstRoot == null ? rootVar : firstRoot;
+
+            bp = NodeTransformLib.transform(new NodeTransformRenameMap(Collections.singletonMap(r.asNode(), rootVar)), bp);
+
+            ElementTriplesBlock etb = new ElementTriplesBlock(bp);
+
+            filterCompiler.getElements().add(etb);
+
+            //lengine.getTypeDecider().writeTypeTriples(outResource, entity);
+            //RdfType rdfType = engine.getRdfTypeFactory().forJavaType(javaType);
+            //rdfType
+            //engine.getTypeDecider().writeTypeTriples(outResource, entity);
+        }
+
 
         VExpression<?> filterEx = (VExpression<?>)criteriaQuery.getRestriction();
         Concept filterConcept;
         if(filterEx != null) {
-            filterEx.accept(filterCompiler);
-            //System.out.println(filterCompiler.getElements());
+            Expr expr = filterEx.accept(filterCompiler);
+            filterCompiler.getElements().add(new ElementFilter(expr));
+        }
+
+        if(!filterCompiler.getElements().isEmpty()) {
 
             Element filterEl = ElementUtils.groupIfNeeded(filterCompiler.getElements());
 
-            filterConcept = new Concept(filterEl, rootVar);
+            filterConcept = new Concept(filterEl, firstRoot);
         } else {
             filterConcept = ConceptUtils.createSubjectConcept();
         }
 
-        ExpressionCompiler orderCompiler = new ExpressionCompiler(
-              path -> pathResolverUtil.resolvePath(pathResolver, path)
-        );
+        ExpressionCompiler orderCompiler = expressionCompilerFactory.get(); //new ExpressionCompiler(this::resolvePath);
+
+
+        // Compile selection - TODO This is a hack right now
+//        VExpression<?> selectionEx = (VExpression<?>)criteriaQuery.getSelection();
+//        if(selectionEx != null) {
+//            selectionEx.accept(filterCompiler);
+//        }
+
+//        for(Selection<?> selection : selections) {
+//
+//        }
 
 
         // Compile order
@@ -157,15 +230,30 @@ public class TypedQueryImpl<X>
             sortConditions.add(new SortCondition(e, dir));
         }
         Element orderEl = ElementUtils.groupIfNeeded(orderCompiler.getElements());
-        Concept orderC = new Concept(orderEl, rootVar);
+        Concept orderC = new Concept(orderEl, firstRoot);
 
         OrderedConcept orderConcept = new OrderedConcept(orderC, sortConditions);
-        System.out.println("Sort conditions: " + sortConditions);
+        logger.debug("Sort conditions: " + sortConditions);
 
         OrderedConcept result = ConceptOps.applyOrder(filterConcept, orderConcept, null);
 
         // TODO Merge in the rdftype's concept
+
+
+
         // TODO Handle the root variable in a better way
+
+        return result;
+    }
+
+    public Var resolvePath(VPath<?> path, Set<Element> elements, Function<Expression<?>, String> aliasMapper) {
+        // Get the root type of the path
+        Class<?> rootClass = PathResolverVarMapper.getRootClass(path);
+        PathResolver rootResolver = engine.createResolver(rootClass);
+
+        PathResolverVarMapper pathMapper = new PathResolverVarMapper(rootResolver, elements, aliasMapper);
+
+        Var result = path.accept(pathMapper);
 
         return result;
     }
@@ -179,12 +267,18 @@ public class TypedQueryImpl<X>
     public TypedQueryImpl(CriteriaQuery<X> criteriaQuery, RdfMapperEngine engine) {//SparqlService sparqlService, Concept concept) {
         this.criteriaQuery = criteriaQuery;
         this.engine = engine;
+
+        expressionCompilerFactory = this.createExpressionCompilerFactory();
     }
 
 
     @Override
     public X getSingleResult() {
-        List<X> items = getResultList(1);
+        List<X> items = getResultList(2);
+        if(items.size() > 1) {
+            throw new NonUniqueResultException();
+        }
+
         X result = Iterables.getFirst(items, null);
         return result;
     }
@@ -300,25 +394,85 @@ public class TypedQueryImpl<X>
         return result;
     }
 
+    // TODO The limit argument can be removed, as this is is read from the maxResult field
     public List<X> getResultList(Integer limit) { //, Integer offset) {
         Long l = maxResult != null ? maxResult.longValue() : null;
-        l = limit != null ? limit.longValue() : null;
+        //l = limit != null ? limit.longValue() : null;
         Long o = startPosition != null ? startPosition.longValue() : null;
 
         SparqlService sparqlService = engine.getSparqlService();
 
 
-        OrderedConcept concept = compileConcept();
+        OrderedConcept orderedConcept = compileConcept();
+        Var resultVar = orderedConcept.getConcept().getVar();
+
+        Query query = ConceptUtils.createQueryList(orderedConcept, l, o);
+
+
+        Selection<X> selection = criteriaQuery.getSelection();
+
+        // TODO The check against Root is somewhat hacky, as we may need to reuse its alias
+        if(selection != null && !(selection instanceof Root)) {
+            ExpressionCompiler selectionCompiler = expressionCompilerFactory.get(); //new ExpressionCompiler(this::resolvePath);
+
+            VExpression<X> e = (VExpression<X>)selection;
+            Expr expr = e.accept(selectionCompiler);
+
+            //Concept tmp = new Concept(selectionCompiler.getElements(), rootVar);
+
+            List<Element> els = new ArrayList<>();
+            if(!orderedConcept.getConcept().isSubjectConcept()) {
+                els.add(query.getQueryPattern());
+            }
+
+
+            els.addAll(selectionCompiler.getElements());
+            Element x = ElementUtils.groupIfNeeded(els);
+
+            query.setQueryPattern(x);
+
+
+            // Append the elements to the query
+            if(expr instanceof ExprAggregator) {
+                Aggregator agg = ((ExprAggregator) expr).getAggregator();
+                expr = query.allocAggregate(agg);
+            }
+
+            query.getProject().clear();
+
+            // TODO Obtain a SPARQL variable for the selection
+            // The selection may be an expression and thus have an alias mapping
+            if(selection instanceof Expression) {
+                Expression<?> selExpr = (Expression<?>)selection;
+                String varName = aliasMapper.apply(selExpr);
+                resultVar = Var.alloc(varName);
+                query.getProject().add(resultVar, expr);
+
+            } else {
+                query.getProject().add(resultVar, expr);
+            }
+
+            //selection.filterCompiler
+        }
+
+        logger.debug("Query: " + query);
+
         //compileOrder();
 
         //List<Node> items = ServiceUtils.fetchList(sparqlService.getQueryExecutionFactory(), concept, 1l, startPosition == null ? null : startPosition.longValue());
-        List<Node> items = ServiceUtils.fetchList(sparqlService.getQueryExecutionFactory(), concept, l, o);
+        //List<Node> items = ServiceUtils.fetchList(sparqlService.getQueryExecutionFactory(), concept, l, o);
+        QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
+
+        // TODO Using the resultVar here is a hack
+        List<Node> items = ServiceUtils.fetchList(qef, query, resultVar);
+
+
         List<X> result = items.stream().map(node -> {
             Class<X> clazz = criteriaQuery.getResultType();
             Object r = engine.find(clazz, node);
             return (X)r;
         }).collect(Collectors.toList());
-        System.out.println("GOT " + items + " for concept" + concept);
+        logger.debug("GOT " + items + " for concept" + query);
 
 //    	X result;
 //    	if(items.isEmpty()) {

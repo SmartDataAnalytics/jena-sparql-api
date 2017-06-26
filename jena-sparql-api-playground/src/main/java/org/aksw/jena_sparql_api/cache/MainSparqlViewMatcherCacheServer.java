@@ -7,6 +7,7 @@ import java.net.URISyntaxException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.aksw.jena_sparql_api.compare.QueryExecutionFactoryCompare;
 import org.aksw.jena_sparql_api.concept_cache.core.JenaExtensionViewMatcher;
 import org.aksw.jena_sparql_api.concept_cache.core.QueryExecutionFactoryViewMatcherMaster;
 import org.aksw.jena_sparql_api.concept_cache.core.QueryExecutionViewMatcherMaster;
@@ -28,13 +29,13 @@ public class MainSparqlViewMatcherCacheServer {
         JenaExtensionViewMatcher.register();
 
 
-        mainTestQuery2(args);
-        //mainServer(args);
+        //mainTestQuery2(args);
+        mainServer(args);
     }
 
     public static void mainTestQuery1(String[] args) throws Exception {
 
-        try(QueryExecutionFactory qef = createQef()) {
+        try(QueryExecutionFactory qef = createQef(true)) {
             {
                 QueryExecution qe = qef.createQueryExecution("SELECT * { ?s a <http://dbpedia.org/ontology/ResearchProject> }");
                 System.out.println(ResultSetFormatter.asText(qe.execSelect()));
@@ -54,7 +55,7 @@ public class MainSparqlViewMatcherCacheServer {
 
     public static void mainTestQuery2(String[] args) throws Exception {
 
-        try(QueryExecutionFactory qef = createQef()) {
+        try(QueryExecutionFactory qef = createQef(true)) {
             {
                 QueryExecution qe = qef.createQueryExecution("SELECT * { ?s a <http://dbpedia.org/ontology/ResearchProject> }");
                 System.out.println(ResultSetFormatter.asText(qe.execSelect()));
@@ -71,21 +72,30 @@ public class MainSparqlViewMatcherCacheServer {
         }
     }
 
-    public static QueryExecutionFactory createQef() {
+    public static QueryExecutionFactory createQef(boolean cached) {
         QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://dbpedia.org/sparql", "http://dbpedia.org")
+        //QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://localhost:8900/sparql", "http://bsbm.org/100m/")
                 .config()
                     .withDefaultLimit(1000, true)
                 .end()
                 .create();
 
-        CacheBuilder<Object, Object> queryCacheBuilder = CacheBuilder.newBuilder().maximumSize(10000);
+        cached = true;
+        boolean compare = false;
+        if(cached) {
 
-        ExecutorService executorService = MoreExecutors.newDirectExecutorService(); //Executors.newCachedThreadPool();
+            CacheBuilder<Object, Object> queryCacheBuilder = CacheBuilder.newBuilder().maximumSize(10000);
 
-        QueryExecutionFactoryViewMatcherMaster tmp = QueryExecutionFactoryViewMatcherMaster.create(qef,
-                queryCacheBuilder, executorService, true);
+            ExecutorService executorService = MoreExecutors.newDirectExecutorService(); //Executors.newCachedThreadPool();
 
-        qef = FluentQueryExecutionFactory.from(tmp)
+            QueryExecutionFactory cachedQef = QueryExecutionFactoryViewMatcherMaster.create(qef,
+                    queryCacheBuilder, executorService, true);
+
+            qef = compare ? new QueryExecutionFactoryCompare(qef, cachedQef) : cachedQef;
+        }
+
+
+        qef = FluentQueryExecutionFactory.from(qef)
                 .config().withParser(SparqlQueryParserImpl.create()).end()
                 .create();
 
@@ -110,7 +120,7 @@ public class MainSparqlViewMatcherCacheServer {
         // - registering (Op, value) entries
         // - rewriting an Op using references to the registered ops
 
-        QueryExecutionFactory qef = createQef();
+        QueryExecutionFactory qef = createQef(true);
 
         int port = 7531;
         Server server = FactoryBeanSparqlServer.newInstance()

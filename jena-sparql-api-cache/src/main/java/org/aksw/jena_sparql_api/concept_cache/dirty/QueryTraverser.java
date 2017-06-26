@@ -2,8 +2,7 @@ package org.aksw.jena_sparql_api.concept_cache.dirty;
 
 import java.util.List;
 
-import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
-
+import org.aksw.jena_sparql_api.algebra.utils.OpUtils;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.op.OpQuadPattern;
 

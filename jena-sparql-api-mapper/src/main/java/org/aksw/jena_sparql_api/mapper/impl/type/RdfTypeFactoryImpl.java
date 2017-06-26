@@ -12,16 +12,22 @@ import org.aksw.commons.util.strings.StringUtils;
 import org.aksw.jena_sparql_api.beans.model.EntityModel;
 import org.aksw.jena_sparql_api.beans.model.EntityOps;
 import org.aksw.jena_sparql_api.beans.model.PropertyOps;
+import org.aksw.jena_sparql_api.mapper.annotation.Datatype;
 import org.aksw.jena_sparql_api.mapper.annotation.DefaultIri;
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
+import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.aksw.jena_sparql_api.mapper.annotation.IriType;
 import org.aksw.jena_sparql_api.mapper.annotation.MappedBy;
 import org.aksw.jena_sparql_api.mapper.annotation.MultiValued;
 import org.aksw.jena_sparql_api.mapper.model.F_GetValue;
 import org.aksw.jena_sparql_api.mapper.model.RdfMapperProperty;
+import org.aksw.jena_sparql_api.mapper.model.RdfMapperPropertyMulti;
 import org.aksw.jena_sparql_api.mapper.model.RdfMapperPropertySingle;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
+import org.aksw.jena_sparql_api.mapper.model.TypeConversionService;
+import org.aksw.jena_sparql_api.mapper.model.TypeConversionServiceImpl;
+import org.aksw.jena_sparql_api.mapper.model.TypeConverter;
 import org.aksw.jena_sparql_api.stmt.SparqlRelationParser;
 import org.aksw.jena_sparql_api.stmt.SparqlRelationParserImpl;
 import org.aksw.jena_sparql_api.util.frontier.Frontier;
@@ -73,6 +79,9 @@ public class RdfTypeFactoryImpl
     protected TypeMapper typeMapper;
     protected ConversionService conversionService;
 
+
+    protected TypeConversionService typeConversionService = new TypeConversionServiceImpl();
+
     public RdfTypeFactoryImpl(
             ExpressionParser parser,
             ParserContext parserContext,
@@ -105,6 +114,10 @@ public class RdfTypeFactoryImpl
         return classToRdfType;
     }
 
+
+    public TypeConversionService getTypeConversionService() {
+        return typeConversionService;
+    }
 
     @Override
     public RdfType forJavaType(Class<?> clazz) {
@@ -176,7 +189,7 @@ public class RdfTypeFactoryImpl
 //            Expression expression = parser.parseExpression(iriStr,
 //                    parserContext);
             defaultIriFn = (o) -> resolveIriExpr(iriStr, o);
-            		//new F_GetValue<String>(String.class, expression,
+                    //new F_GetValue<String>(String.class, expression,
                     //evalContext).andThen(RdfTypeFactory::resolveIriExpr);
         }
 
@@ -260,6 +273,23 @@ public class RdfTypeFactoryImpl
         Iri iriAnn = pd.findAnnotation(Iri.class); //findPropertyAnnotation(clazz, pd, Iri.class);
         String iriExprStr = iriAnn == null ? null : iriAnn.value();
         String iriStr = iriExprStr == null ? null : resolveIriExpr(iriExprStr, null);
+
+        IriNs iriNsAnn = pd.findAnnotation(IriNs.class);
+        String iriNsExprStr = iriNsAnn == null ? null : iriNsAnn.value();
+        iriNsExprStr = iriNsExprStr == null ? null : iriNsExprStr + (iriNsExprStr.contains(":") ? "" : ":") + propertyName;
+        String iriNsStr = iriNsExprStr == null ? null : resolveIriExpr(iriNsExprStr, null);
+
+        if(iriNsStr != null) {
+            if(iriStr != null) {
+                throw new RuntimeException("@Iri and @IriNs annotations on same element is invalid");
+            }
+
+            iriStr = iriNsStr;
+        }
+
+
+
+
         boolean hasIri = iriStr != null && !iriStr.isEmpty();
 
         String mappedBy = (String)AnnotationUtils.getValue(pd.findAnnotation(MappedBy.class)); //findPropertyAnnotation(clazz, pd, MappedBy.class));
@@ -356,7 +386,7 @@ public class RdfTypeFactoryImpl
             String defaultIriStr = defaultIri.value();
             Expression expression = parser.parseExpression(defaultIriStr,
                     parserContext);
-            
+
             Function<Object, Node> defaultIriFnTmp = new F_GetValue<String>(String.class, expression,
                     evalContext).andThen(iri -> NodeFactory.createURI(iri));
 
@@ -364,13 +394,29 @@ public class RdfTypeFactoryImpl
 
         }
 
+
+
+        TypeConverter typeConverter = null;
+        Datatype dt = pd.findAnnotation(Datatype.class);
+        if(dt != null) {
+            String rawDtName = dt.value();
+            String dtName = resolveIriExpr(rawDtName, null);
+            typeConverter = typeConversionService.getConverter(dtName, propertyType);
+            if(typeConverter == null) {
+                throw new RuntimeException("Could not find a type converter: " + dtName + " -> " + propertyType);
+            }
+        }
+        //typeConversionService.getConverter(datatypeIri, clazz)
+
         //Relation relation = RelationUtils.createRelation(predicate.getURI(), false, prefixMapping);
+        //typeConversionService.getConverter(overrideRdfType, pd.getType());
+
 
         //RdfProperty result = new RdfPropertyDatatypeOld(beanInfo, pd, null, predicate, rdfValueMapper);
         RdfPropertyDescriptor descriptor = new RdfPropertyDescriptor(propertyName, targetRdfType, "");
         RdfMapperProperty populator = isCollectionProperty
-                ? null //new RdfMapperPropertyMulti(pd, predicate, targetRdfType, defaultIriFn)
-                : new RdfMapperPropertySingle(pd, predicate, targetRdfType, defaultIriFn)
+                ? new RdfMapperPropertyMulti(pd, predicate, targetRdfType, defaultIriFn, typeConverter)
+                : new RdfMapperPropertySingle(pd, predicate, targetRdfType, defaultIriFn, typeConverter)
                 ;
 
         rdfClass.addPropertyDescriptor(descriptor);
@@ -384,7 +430,7 @@ public class RdfTypeFactoryImpl
         RdfTypeFactoryImpl result = createDefault(null);
         return result;
     }
-    
+
     public static RdfTypeFactoryImpl createDefault(Prologue prologue) {
         RdfTypeFactoryImpl result = createDefault(prologue, null, null);
         return result;
@@ -393,17 +439,17 @@ public class RdfTypeFactoryImpl
     public static RdfTypeFactoryImpl createDefault(Prologue prologue, Function<Class<?>, EntityOps> entityOpsFactory, ConversionService _conversionService) {
         prologue = prologue != null ? prologue : new Prologue();
 
-        
+
         ConversionService conversionService;
         if(_conversionService == null) {
-        	ConversionServiceFactoryBean bean = new ConversionServiceFactoryBean();
-        	bean.afterPropertiesSet();
-        	conversionService = bean.getObject();
+            ConversionServiceFactoryBean bean = new ConversionServiceFactoryBean();
+            bean.afterPropertiesSet();
+            conversionService = bean.getObject();
         } else {
-        	conversionService = _conversionService;
+            conversionService = _conversionService;
         }
 
-        
+
         entityOpsFactory = entityOpsFactory != null
                 ? entityOpsFactory
                 : (clazz) -> EntityModel.createDefaultModel(clazz, conversionService);

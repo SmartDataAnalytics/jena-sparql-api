@@ -7,7 +7,7 @@
     <artifactId>jena-sparql-api-parent</artifactId>
 
     <packaging>pom</packaging>
-    <version>3.1.1-2-SNAPSHOT</version>
+    <version>3.3.0-1</version>
     <name>Jena SPARQL API - Parent</name>
     <description>An RDF library for abstracting SPARQL queries.</description>
     <url>https://github.com/AKSW/jena-sparql-api</url>
@@ -32,12 +32,14 @@
         <module>jena-sparql-api-views</module>
 
         <module>jena-sparql-api-concepts</module>
+        <module>jena-sparql-api-query-containment</module>
         <module>jena-sparql-api-cache</module>
         <module>jena-sparql-api-cache-h2</module>
         <module>jena-sparql-api-update</module>
 
         <module>jena-sparql-api-data-client</module>
 
+        <module>jena-sparql-api-algebra</module>
 
         <module>jena-sparql-api-geo</module>
 
@@ -91,9 +93,10 @@
 
 
         <!-- temporary downgrade due to https://issues.apache.org/jira/browse/JENA-1294 ... -->
-        <jena.version>3.1.1</jena.version>
+        <jena.version>3.3.0</jena.version>
         <jetty.version>8.1.17.v20150415</jetty.version>
 
+        <jgrapht.version>1.0.1</jgrapht.version>
 
         <!-- <jetty-plugin.version>8.1.10.v20130312</jetty-plugin.version> -->
         <!-- <jersey-spring.version>1.17.1</jersey-spring.version> -->
@@ -213,6 +216,8 @@
             <!-- </configuration> -->
             <!-- </plugin> -->
 
+<!-- It may be useful to be able to create fat jars on demand during development, but with the shade plugin as is, it would upload them as part of every deployment/release - therefore its disabled as of now -->
+<!--
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -250,7 +255,7 @@
                         </execution>
                     </executions>
             </plugin>
-
+-->
             <plugin>
                 <groupId>org.jboss.tattletale</groupId>
                 <artifactId>tattletale-maven</artifactId>
@@ -459,6 +464,13 @@
                 <version>${project.version}</version>
             </dependency>
 
+
+            <dependency>
+                <groupId>org.aksw.jena-sparql-api</groupId>
+                <artifactId>jena-sparql-api-query-containment</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
             <dependency>
                 <groupId>org.aksw.jena-sparql-api</groupId>
                 <artifactId>jena-sparql-api-cache</artifactId>
@@ -516,6 +528,12 @@
             <dependency>
                 <groupId>org.aksw.jena-sparql-api</groupId>
                 <artifactId>jena-sparql-api-resources-sparqlqc</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.aksw.jena-sparql-api</groupId>
+                <artifactId>jena-sparql-api-algebra</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -610,7 +628,14 @@
             <dependency>
                 <groupId>org.jgrapht</groupId>
                 <artifactId>jgrapht-core</artifactId>
-                <version>1.0.0</version>
+                <version>${jgrapht.version}</version>
+            </dependency>
+
+            <!-- Present for playground and potential demos -->
+            <dependency>
+                <groupId>org.jgrapht</groupId>
+                <artifactId>jgrapht-ext</artifactId>
+                <version>${jgrapht.version}</version>
             </dependency>
 
             <!-- Java8 stream utilities, such as zip -->

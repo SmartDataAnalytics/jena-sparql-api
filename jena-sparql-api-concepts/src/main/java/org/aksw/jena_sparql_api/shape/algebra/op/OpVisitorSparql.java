@@ -124,15 +124,7 @@ public class OpVisitorSparql
     public Concept visit(OpEnumeration op) {
         List<Node> nodes = op.getNodes();
 
-        ElementData data = new ElementData();
-        data.add(Vars.s);
-        for(Node node : nodes) {
-            BindingHashMap binding = new BindingHashMap();
-            binding.add(Vars.s, node);
-            data.add(binding);
-        }
-
-        Concept result = new Concept(data, Vars.s);
+        Concept result = ConceptUtils.createConcept(nodes);
         return result;
     }
 

@@ -5,13 +5,9 @@ import java.util.Collection;
 import java.util.List;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.mapper.Agg;
-import org.aksw.jena_sparql_api.mapper.AggGraph;
-import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.aksw.jena_sparql_api.utils.GeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
-import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
@@ -19,8 +15,9 @@ import org.apache.jena.sdb.core.Generator;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.aggregate.AggCount;
 import org.apache.jena.sparql.syntax.Element;
-import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementNamedGraph;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
@@ -97,6 +94,45 @@ public class QueryGenerationUtils {
 
         return result;
     }
+
+    public static Query wrapAsSubQuery(Query query) {
+        Element esq = new ElementSubQuery(query);
+
+        Query result = new Query();
+        result.setQuerySelectType();
+        result.setQueryResultStar(true);
+        result.setQueryPattern(esq);
+
+        return result;
+    }
+
+
+    public static Query createQueryCount(Query query, Var outputVar, Long itemLimit, Long rowLimit) {
+        Query subQuery = query.cloneQuery();
+
+        if(rowLimit != null) {
+            subQuery.setDistinct(false);
+            subQuery.setLimit(rowLimit);
+
+            subQuery = QueryGenerationUtils.wrapAsSubQuery(subQuery);
+            subQuery.setDistinct(true);
+        }
+
+        if(itemLimit != null) {
+            subQuery.setLimit(itemLimit);
+        }
+
+        Element esq = new ElementSubQuery(subQuery);
+
+        Query result = new Query();
+        Expr aggCount = result.allocAggregate(new AggCount());
+        result.setQuerySelectType();
+        result.getProject().add(outputVar, aggCount);
+        result.setQueryPattern(esq);
+
+        return result;
+    }
+
 
 
     /**

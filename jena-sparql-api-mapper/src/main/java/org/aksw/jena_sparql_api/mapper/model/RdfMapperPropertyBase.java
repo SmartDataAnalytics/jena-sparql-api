@@ -43,6 +43,9 @@ public abstract class RdfMapperPropertyBase
 
     // Optional function for creating an Iri (Node) for a given target value
     protected BiFunction<Object, Object, Node> createTargetNode;
+    protected TypeConverter typeConverter;
+
+
 
 //    /**
 //     * The type can be either simply a class (including primitive ones), but it can also be
@@ -52,7 +55,7 @@ public abstract class RdfMapperPropertyBase
 //    protected RdfType rdfType;
 
 
-    public RdfMapperPropertyBase(PropertyOps propertyOps, Property predicate, RdfType targetRdfType, BiFunction<Object, Object, Node> createTargetNode) { //, String fetchMode) {
+    public RdfMapperPropertyBase(PropertyOps propertyOps, Property predicate, RdfType targetRdfType, BiFunction<Object, Object, Node> createTargetNode, TypeConverter typeConverter) { //, String fetchMode) {
         super();
         //this.propertyName = propertyName;
         this.propertyOps = propertyOps;
@@ -61,35 +64,18 @@ public abstract class RdfMapperPropertyBase
 
         this.propertyNames = Collections.singleton(propertyOps.getName());
         this.createTargetNode = createTargetNode;
+
+        this.typeConverter = typeConverter;
     }
 
-    @Override
-    public void exposeFragment(ResourceFragment out, Resource priorState, Object entity) {
 
-        Resource s = out.getResource();
-        Model tmp = s.getModel();
-        Resource o = tmp.createResource();
-
-        Object v = propertyOps.getValue(entity);
-
-        s.addProperty(predicate, o);
-        
-        PlaceholderInfo info = new PlaceholderInfo(null, targetRdfType, entity, null, propertyOps, v, null, this);
-        
-        
-        
-//        Map<RDFNode, Object> placeholders = new HashMap<>();
-//        placeholders.put(o, v);
-        
-        out.getPlaceholders().put(o, info);
-    }
 //
 //    @Override
 //    public void readFragment(Object tgtEntity, ResourceFragment inout) {
 //        Resource r = inout.getResource();
 //        r.getProperty(property);
 //
-//        
+//
 //        inout.getPlaceholders()
 //        Node node;
 //        if(t != null) {
@@ -107,12 +93,12 @@ public abstract class RdfMapperPropertyBase
 //	        	}
 //        	}
 //        }
-//        
+//
 //        if(node != null) {
 //        	persistenceContext.requestResolution(propertyOps, entity, node);
 //        }
 //     }
-    
+
 //    public String getPropertyName() {
 //        return propertyOps.getName();
 //    }

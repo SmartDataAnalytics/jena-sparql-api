@@ -9,12 +9,15 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 
+import org.aksw.jena_sparql_api.core.utils.GraphResource;
 import org.aksw.jena_sparql_api.fallback.QueryExecutionFactoryFallback;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.model.QueryExecutionFactoryModel;
+import org.apache.jena.graph.Graph;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.core.DatasetImpl;
@@ -71,6 +74,15 @@ public class FluentQueryExecutionFactory<P>
     public static FluentQueryExecutionFactory<?> from(Model model, Context context) {
         Dataset dataset = DatasetFactory.create(model);
         return from(dataset, context);
+    }
+
+    public static FluentQueryExecutionFactory<?> from(Graph graph) {
+        return from(ModelFactory.createModelForGraph(graph));
+    }
+
+    public static FluentQueryExecutionFactory<?> fromFileNameOrUrl(String fileNameOrUrl) {
+        Graph graph = new GraphResource(fileNameOrUrl);
+        return from(graph);
     }
 
 

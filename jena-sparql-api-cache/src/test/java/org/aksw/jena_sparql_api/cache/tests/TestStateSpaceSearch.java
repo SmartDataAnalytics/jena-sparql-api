@@ -26,22 +26,22 @@ import org.aksw.combinatorics.collections.Combination;
 import org.aksw.combinatorics.solvers.ProblemContainerNeighbourhoodAware;
 import org.aksw.combinatorics.solvers.ProblemNeighborhoodAware;
 import org.aksw.commons.collections.CartesianProduct;
+import org.aksw.commons.collections.FeatureMap;
+import org.aksw.commons.collections.FeatureMapImpl;
 import org.aksw.commons.collections.cache.RemovalListenerMultiplexer;
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeImpl;
 import org.aksw.commons.collections.trees.TreeUtils;
 import org.aksw.jena_sparql_api.algebra.transform.TransformJoinToSequence;
 import org.aksw.jena_sparql_api.algebra.transform.TransformUnionToDisjunction;
-import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
-import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMapImpl;
+import org.aksw.jena_sparql_api.algebra.utils.OpUtils;
+import org.aksw.jena_sparql_api.algebra.utils.ProjectedQuadFilterPattern;
+import org.aksw.jena_sparql_api.algebra.utils.QuadFilterPatternCanonical;
+import org.aksw.jena_sparql_api.algebra.utils.AlgebraUtils;
 import org.aksw.jena_sparql_api.concept_cache.core.JenaExtensionViewMatcher;
 import org.aksw.jena_sparql_api.concept_cache.core.OpRewriteViewMatcherStateful;
 import org.aksw.jena_sparql_api.concept_cache.core.QueryExecutionFactoryViewMatcherMaster;
-import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
 import org.aksw.jena_sparql_api.concept_cache.core.StorageEntry;
-import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
-import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
-import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.parse.QueryExecutionFactoryParse;
@@ -679,18 +679,18 @@ System.out.println("----- yay");
 //            System.exit(0);
 //        }
 
-        ProjectedQuadFilterPattern cachePqfp = SparqlCacheUtils.transform(cacheElement);
+        ProjectedQuadFilterPattern cachePqfp = AlgebraUtils.transform(cacheElement);
         System.out.println("ProjectedQuadFilterPattern[cache]: " + cachePqfp);
 
-        ProjectedQuadFilterPattern queryPqfp = SparqlCacheUtils.transform(queryElement);
+        ProjectedQuadFilterPattern queryPqfp = AlgebraUtils.transform(queryElement);
         System.out.println("ProjectedQuadFilterPattern[query]: " + queryPqfp);
 
         Generator<Var> generator = VarGeneratorImpl2.create();
-        QuadFilterPatternCanonical cacheQfpc = SparqlCacheUtils.canonicalize2(cachePqfp.getQuadFilterPattern(), generator);
+        QuadFilterPatternCanonical cacheQfpc = AlgebraUtils.canonicalize2(cachePqfp.getQuadFilterPattern(), generator);
         System.out.println("QuadFilterPatternCanonical[cache]: " + cacheQfpc);
 
 
-        QuadFilterPatternCanonical queryQfpc = SparqlCacheUtils.canonicalize2(queryPqfp.getQuadFilterPattern(), generator);
+        QuadFilterPatternCanonical queryQfpc = AlgebraUtils.canonicalize2(queryPqfp.getQuadFilterPattern(), generator);
         System.out.println("QuadFilterPatternCanonical[query]: " + queryQfpc);
 
 

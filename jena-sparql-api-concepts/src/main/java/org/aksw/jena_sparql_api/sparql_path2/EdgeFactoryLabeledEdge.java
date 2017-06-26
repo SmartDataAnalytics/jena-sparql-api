@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api.sparql_path2;
 
-import org.aksw.jena_sparql_api.jgrapht.LabeledEdge;
-import org.aksw.jena_sparql_api.jgrapht.LabeledEdgeImpl;
+import org.aksw.jena_sparql_api.jgrapht.wrapper.LabeledEdge;
+import org.aksw.jena_sparql_api.jgrapht.wrapper.LabeledEdgeImpl;
 import org.jgrapht.EdgeFactory;
 
 public class EdgeFactoryLabeledEdge<V, T>

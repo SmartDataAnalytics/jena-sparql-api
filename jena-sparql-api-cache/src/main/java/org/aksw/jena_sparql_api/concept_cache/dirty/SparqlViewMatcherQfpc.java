@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.concept_cache.dirty;
 
 import java.util.Map;
 
-import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
+import org.aksw.jena_sparql_api.algebra.utils.QuadFilterPatternCanonical;
 
 /**
  * TODO Extract an interface from this class in order to support

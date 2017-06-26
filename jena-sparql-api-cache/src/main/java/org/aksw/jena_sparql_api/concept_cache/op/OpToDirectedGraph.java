@@ -5,7 +5,7 @@ import java.util.List;
 import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
 import org.jgrapht.experimental.dag.DirectedAcyclicGraph.CycleFoundException;
 import org.jgrapht.graph.DefaultEdge;
-
+import org.aksw.jena_sparql_api.algebra.utils.OpUtils;
 import org.apache.jena.sparql.algebra.Op;
 
 public class OpToDirectedGraph {

@@ -3,11 +3,11 @@ package org.aksw.jena_sparql_api.cache.tests;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import org.aksw.jena_sparql_api.algebra.utils.ConjunctiveQuery;
+import org.aksw.jena_sparql_api.algebra.utils.OpExtConjunctiveQuery;
 import org.aksw.jena_sparql_api.concept_cache.dirty.ConjunctiveQueryMatcher;
 import org.aksw.jena_sparql_api.concept_cache.dirty.ConjunctiveQueryMatcherImpl;
 import org.aksw.jena_sparql_api.concept_cache.dirty.QfpcMatch;
-import org.aksw.jena_sparql_api.concept_cache.domain.ConjunctiveQuery;
-import org.aksw.jena_sparql_api.concept_cache.op.OpExtConjunctiveQuery;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.views.index.SparqlViewMatcherOpImpl;
 import org.apache.jena.query.Query;

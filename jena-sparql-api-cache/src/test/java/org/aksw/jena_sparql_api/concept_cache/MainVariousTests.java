@@ -1,8 +1,6 @@
 package org.aksw.jena_sparql_api.concept_cache;
 
-import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
-import org.junit.Test;
-
+import org.aksw.jena_sparql_api.algebra.utils.OpUtils;
 import org.apache.jena.query.ARQ;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
@@ -12,6 +10,7 @@ import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.optimize.Optimize;
 import org.apache.jena.sparql.algebra.optimize.Rewrite;
 import org.apache.jena.sparql.util.Context;
+import org.junit.Test;
 
 public class MainVariousTests {
 
@@ -44,12 +43,13 @@ public class MainVariousTests {
 
         op = rewriter.rewrite(op);// Algebra.optimize(op);
 
+        // TODO The summarize method no longer exists in this module, as LSQ feature extractor would do the same thing
 
-        Object summary = OpUtils.summarize(op);
-        System.out.println("Summary: " + summary);
-        System.out.println("IsEquivalent: " + OpUtils.isEquivalent(op, op));
-
-
-        System.out.println("yay" + op);
+//        Object summary = OpUtils.summarize(op);
+//        System.out.println("Summary: " + summary);
+//        System.out.println("IsEquivalent: " + OpUtils.isEquivalent(op, op));
+//
+//
+//        System.out.println("yay" + op);
     }
 }

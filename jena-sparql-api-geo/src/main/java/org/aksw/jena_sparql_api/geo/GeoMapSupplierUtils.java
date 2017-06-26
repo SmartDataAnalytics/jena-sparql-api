@@ -1,10 +1,11 @@
 package org.aksw.jena_sparql_api.geo;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.aksw.commons.util.strings.StringUtils;
 import org.aksw.jena_sparql_api.concepts.Concept;
@@ -14,15 +15,11 @@ import org.aksw.jena_sparql_api.mapper.AggUtils;
 import org.aksw.jena_sparql_api.mapper.FunctionNodeToString;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.aksw.jena_sparql_api.utils.TripleUtils;
-
-import com.google.common.base.Function;
-import com.google.common.collect.Collections2;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.reasoner.rulesys.builtins.StrConcat;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_Str;
@@ -33,6 +30,7 @@ import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.vocabulary.RDF;
+
 import com.vividsolutions.jts.geom.Geometry;
 
 public class GeoMapSupplierUtils {
@@ -180,8 +178,7 @@ public class GeoMapSupplierUtils {
     }
 
     public static Set<Triple> convertOgcToVirt(Set<Triple> ts) {
-        Collection<Triple> tmp = Collections2.transform(ts, fnConvertOgcToVirt);
-        Set<Triple> result = new HashSet<Triple>(tmp);
+        Set<Triple> result = ts.stream().map(fnConvertOgcToVirt).collect(Collectors.toSet());
         return result;
     }
 

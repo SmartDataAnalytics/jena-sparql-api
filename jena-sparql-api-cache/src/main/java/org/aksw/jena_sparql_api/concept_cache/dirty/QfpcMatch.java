@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.concept_cache.dirty;
 
 import java.util.Map;
 
-import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
+import org.aksw.jena_sparql_api.algebra.utils.QuadFilterPatternCanonical;
 import org.apache.jena.sparql.core.Var;
 
 // TODO: Rename table to 'key'

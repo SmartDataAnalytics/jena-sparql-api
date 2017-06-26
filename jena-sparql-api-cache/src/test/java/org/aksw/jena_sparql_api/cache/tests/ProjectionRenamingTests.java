@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.cache.tests;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
+import org.aksw.jena_sparql_api.algebra.utils.OpUtils;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.utils.Vars;

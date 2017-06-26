@@ -5,7 +5,6 @@
 target
 
 bin
-#cache
 
 # Package Files #
 *.jar
@@ -17,7 +16,6 @@ bin
 *.iml
 *.log
 
-felix-cache
 
 pom.xml.releaseBackup
 pom.xml.versionsBackup

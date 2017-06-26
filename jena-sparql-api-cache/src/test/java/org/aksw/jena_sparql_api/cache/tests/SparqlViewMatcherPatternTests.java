@@ -37,17 +37,17 @@ public class SparqlViewMatcherPatternTests {
             throws Exception
     {
         List<Object[]> params = new ArrayList<>();
-        params.addAll(createTestParams("sparqlqc/1.4/benchmark/cqnoproj.rdf", "sparqlqc/1.4/benchmark/noprojection/*"));
-        params.addAll(createTestParams("sparqlqc/1.4/benchmark/ucqproj.rdf", "sparqlqc/1.4/benchmark/projection/*"));
+        //params.addAll(createTestParams("sparqlqc/1.4/benchmark/cqnoproj.rdf"));
+        params.addAll(createTestParams("sparqlqc/1.4/benchmark/ucqproj.rdf"));
         return params;
     }
 
 
-    public static Collection<Object[]> createTestParams(String testCases, String queries) throws IOException {
+    public static Collection<Object[]> createTestParams(String testCases) throws IOException {
         //Model tests = ModelFactory.createDefaultModel();
         //RDFDataMgr.read(tests, new ClassPathResource(testCases).getInputStream(), Lang.RDFXML);
         //Model model = SparqlQcReader.loadTasks(testCases, queries)readQueryFolder(queries);
-        List<Resource> ts = SparqlQcReader.loadTasks(testCases, queries);
+        List<Resource> ts = SparqlQcReader.loadTasks(testCases);
         //List<Resource> ts = tests.listResourcesWithProperty(RDF.type, SparqlQcVocab.ContainmentTest).toList();
 
         Object data[][] = new Object[ts.size()][3];

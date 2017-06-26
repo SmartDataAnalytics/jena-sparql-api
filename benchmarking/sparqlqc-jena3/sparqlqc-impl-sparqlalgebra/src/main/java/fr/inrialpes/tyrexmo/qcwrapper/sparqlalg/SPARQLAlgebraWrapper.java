@@ -65,6 +65,10 @@ public class SPARQLAlgebraWrapper extends CommonWrapper implements LegacyContain
         return true;
     }
 
+
+    // Note: Actually this class could inherit from LegacyContainmentCheckerBase, but it already
+    // derives from CommonWrapper
+
     @Override
     public boolean entailed(String queryStr1, String queryStr2) {
         Query q1 = QueryFactory.create(queryStr1);
@@ -77,4 +81,18 @@ public class SPARQLAlgebraWrapper extends CommonWrapper implements LegacyContain
         }
         return result;
     }
+
+    @Override
+    public boolean entailedUnderSchema(String schema, String queryStr1, String queryStr2) {
+        Query q1 = QueryFactory.create(queryStr1);
+        Query q2 = QueryFactory.create(queryStr2);
+        boolean result;
+        try {
+            result = entailedUnderSchema(schema, q1, q2);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return result;
+    }
+
 }

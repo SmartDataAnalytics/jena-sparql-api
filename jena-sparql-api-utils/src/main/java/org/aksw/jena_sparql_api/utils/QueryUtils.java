@@ -27,14 +27,14 @@ import com.google.common.collect.Range;
 
 public class QueryUtils {
 
-	public static Query randomizeVars(Query query) {
-		Map<Var, Var> varMap = createRandomVarMap(query, "rv");
-		Query result = QueryTransformOps.transform(query, varMap);
-		System.out.println(query + "now:\n" + result);
-		return result;
-	}
+    public static Query randomizeVars(Query query) {
+        Map<Var, Var> varMap = createRandomVarMap(query, "rv");
+        Query result = QueryTransformOps.transform(query, varMap);
+        //System.out.println(query + "now:\n" + result);
+        return result;
+    }
 
-	public static Map<Var, Var> createRandomVarMap(Query query, String base) {
+    public static Map<Var, Var> createRandomVarMap(Query query, String base) {
         Collection<Var> vars = PatternVars.vars(query.getQueryPattern());
         Generator<Var> gen = VarGeneratorBlacklist.create(base, vars);
 
@@ -44,7 +44,7 @@ public class QueryUtils {
                         v -> gen.next()));
 
         return varMap;
-	}
+    }
 
 //	public static Query applyVarMap(Query query, Map<Var, ? extends Node> varMap) {
 ////		Map<Var, Node> tmp = varMap.entrySet().stream()
@@ -84,13 +84,13 @@ public class QueryUtils {
     }
 
     public static Op applyRange(Op op, Range<Long> range) {
-    	long start = rangeToOffset(range);
-    	long length = rangeToLimit(range);
+        long start = rangeToOffset(range);
+        long length = rangeToLimit(range);
 
-    	Op result = start == Query.NOLIMIT && length == Query.NOLIMIT
-    			? op
-    			: new OpSlice(op, start, length);
-    	return result;
+        Op result = start == Query.NOLIMIT && length == Query.NOLIMIT
+                ? op
+                : new OpSlice(op, start, length);
+        return result;
     }
 
     /**
@@ -147,7 +147,8 @@ public class QueryUtils {
     //public static LimitAndOffset rangeToLimitAndOffset(Range<Long> range)
 
     public static long rangeToOffset(Range<Long> range) {
-        long result = range.lowerEndpoint();
+        long result = range == null ? 0 : range.lowerEndpoint();
+
         result = result == 0 ? Query.NOLIMIT : result;
         return result;
     }
@@ -158,11 +159,11 @@ public class QueryUtils {
      * @return
      */
     public static long rangeToLimit(Range<Long> range) {
-    	range = range.canonical(DiscreteDomain.longs());
+        range = range == null ? null : range.canonical(DiscreteDomain.longs());
 
-        long result = range.hasUpperBound()
-            ? DiscreteDomain.longs().distance(range.lowerEndpoint(), range.upperEndpoint())
-            : Query.NOLIMIT;
+        long result = range == null || !range.hasUpperBound()
+            ? Query.NOLIMIT
+            : DiscreteDomain.longs().distance(range.lowerEndpoint(), range.upperEndpoint());
 
         return result;
     }
@@ -189,10 +190,10 @@ public class QueryUtils {
 
         Long newMax = (parent.hasUpperBound()
             ? child.hasUpperBound()
-                ? Math.min(parent.upperEndpoint(), child.upperEndpoint())
+                ? (Long)Math.min(parent.upperEndpoint(), child.upperEndpoint())
                 : parent.upperEndpoint()
             : child.hasUpperBound()
-                ? child.upperEndpoint()
+                ? (Long)child.upperEndpoint()
                 : null);
 
         Range<Long> result = newMax == null

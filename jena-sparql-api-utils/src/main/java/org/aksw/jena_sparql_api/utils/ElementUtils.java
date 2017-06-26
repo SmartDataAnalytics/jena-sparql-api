@@ -9,12 +9,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.aksw.commons.collections.MapUtils;
-import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransform;
-import org.aksw.jena_sparql_api.backports.syntaxtransform.ExprTransformNodeElement;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.sparql.algebra.Op;
-import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.TriplePath;
 import org.apache.jena.sparql.core.Var;
@@ -48,7 +44,7 @@ public class ElementUtils {
 //        return result;
 //    }
 
-	
+
     public static ElementTriplesBlock createElement(Triple triple) {
         BasicPattern bgp = new BasicPattern();
         bgp.add(triple);
@@ -169,7 +165,7 @@ public class ElementUtils {
         if(elements.size() == 1) {
             result = elements.iterator().next();
         } else {
-            ElementUnion e= new ElementUnion();
+            ElementUnion e = new ElementUnion();
             for(Element element : elements) {
                 e.addElement(element);
             }
@@ -179,15 +175,11 @@ public class ElementUtils {
         return result;
     }
 
-    public static Element groupIfNeeded(Iterable<Element> members) {
-        ElementGroup tmp = new ElementGroup();
-        for(Element member : members) {
-            if(member != null) {
-                tmp.addElement(member);
-            }
-        }
-
-        Element result = flatten(tmp);
+    public static Element groupIfNeeded(Collection<Element> members) {
+        Element result = members.size() == 1
+                ? members.iterator().next()
+                : createElementGroup(members)
+                ;
 
         return result;
 
@@ -225,7 +217,7 @@ public class ElementUtils {
         org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform elementTransform = new ElementTransformSubst2(nodeTransform);//new ElementTransformSubst2(nodeTransform);
         ExprTransform exprTransform = new org.apache.jena.sparql.syntax.syntaxtransform.ExprTransformNodeElement(nodeTransform, elementTransform);
         //Element result = ElementTransformer.transform(element, elementTransform, exprTransform);
-        Element result = org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformer.transform(element, elementTransform, exprTransform); 
+        Element result = org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformer.transform(element, elementTransform, exprTransform);
         return result;
     }
 
@@ -277,14 +269,17 @@ public class ElementUtils {
         mergeElements(tmp, etb, second);
 
         // Remove empty element triple blocks
-        ElementGroup result = new ElementGroup();
+        //ElementGroup result = new ElementGroup();
+        List<Element> els = new ArrayList<>();
         for(Element e : tmp.getElements()) {
             if((e instanceof ElementTriplesBlock) && ((ElementTriplesBlock)e).isEmpty()) {
                 // Skip
             } else {
-                result.addElement(e);
+                els.add(e);
             }
         }
+
+        Element result = groupIfNeeded(els);
 
         return result;
     }

@@ -5,12 +5,12 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.aksw.jena_sparql_api.concept_cache.collection.FeatureMap;
-import org.aksw.jena_sparql_api.concept_cache.core.SparqlCacheUtils;
-import org.aksw.jena_sparql_api.concept_cache.domain.ProjectedQuadFilterPattern;
-import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPattern;
-import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
-import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
+import org.aksw.commons.collections.FeatureMap;
+import org.aksw.jena_sparql_api.algebra.utils.OpUtils;
+import org.aksw.jena_sparql_api.algebra.utils.ProjectedQuadFilterPattern;
+import org.aksw.jena_sparql_api.algebra.utils.QuadFilterPattern;
+import org.aksw.jena_sparql_api.algebra.utils.QuadFilterPatternCanonical;
+import org.aksw.jena_sparql_api.algebra.utils.AlgebraUtils;
 import org.aksw.jena_sparql_api.concept_cache.trash.OpVisitorViewCacheApplier;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.apache.jena.sparql.algebra.Algebra;
@@ -71,7 +71,7 @@ public class QfpcMap {
                 .collect(Collectors.toMap(e -> e.getValue().getQuadFilterPattern(), e -> {
                     ProjectedQuadFilterPattern pqfp = e.getValue();
                     QuadFilterPattern qfp = pqfp.getQuadFilterPattern();
-                    QuadFilterPatternCanonical r = SparqlCacheUtils.canonicalize2(qfp, generator);
+                    QuadFilterPatternCanonical r = AlgebraUtils.canonicalize2(qfp, generator);
                     return r;
                 }));
 
@@ -79,7 +79,7 @@ public class QfpcMap {
 
         //qfpcs.stream().
         for(QuadFilterPatternCanonical qfpc : qfpcs) {
-            FeatureMap<Expr, Multimap<Expr, Expr>> clausesIndex = SparqlCacheUtils.indexDnf(qfpc.getFilterDnf());
+            FeatureMap<Expr, Multimap<Expr, Expr>> clausesIndex = AlgebraUtils.indexDnf(qfpc.getFilterDnf());
 
             for(Entry<Set<Expr>, Collection<Multimap<Expr, Expr>>> clauseSigToLiteralSigToLiteral : clausesIndex.entrySet()) {
 

@@ -25,6 +25,10 @@
         <module>sparqlqc-impl-sparqlalgebra</module>
         <module>sparqlqc-impl-afmu</module>
         <module>sparqlqc-impl-jsa</module>
+
+        <module>sparqlqc-bundle-impl</module>
+
+        <module>sparqlqc-dataset-analysis</module>
     </modules>
 
 
@@ -62,11 +66,30 @@
     <dependencyManagement>
         <dependencies>
 
-             <dependency>
-                 <groupId>org.aksw.beast</groupId>
-                 <artifactId>beast-viz-jfreechart</artifactId>
-                 <version>1.0.0-SNAPSHOT</version>
-             </dependency>
+            <dependency>
+                <groupId>org.aksw.sparqlqc</groupId>
+                <artifactId>sparqlqc-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.aksw.sparqlqc</groupId>
+                <artifactId>sparqlqc-api-simple</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.aksw.sparqlqc</groupId>
+                <artifactId>sparqlqc-bundle-impl</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+
+            <dependency>
+                <groupId>org.aksw.beast</groupId>
+                <artifactId>beast-viz-jfreechart</artifactId>
+                <version>1.0.0-SNAPSHOT</version>
+            </dependency>
 
             <dependency>
                 <groupId>org.aksw.beast</groupId>
@@ -84,6 +107,12 @@
             <dependency>
                 <groupId>org.aksw.jena-sparql-api</groupId>
                 <artifactId>jena-sparql-api-core</artifactId>
+                <version>${jsa.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.aksw.jena-sparql-api</groupId>
+                <artifactId>jena-sparql-api-concepts</artifactId>
                 <version>${jsa.version}</version>
             </dependency>
 

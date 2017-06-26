@@ -19,14 +19,6 @@ import org.aksw.jena_sparql_api.sparql_path.core.PathConstraint;
 import org.aksw.jena_sparql_api.sparql_path.core.VocabPath;
 import org.aksw.jena_sparql_api.utils.GeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.VarUtils;
-import org.jgrapht.GraphPath;
-import org.jgrapht.alg.DijkstraShortestPath;
-import org.jgrapht.graph.DefaultDirectedGraph;
-import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.GraphPathImpl;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
@@ -58,6 +50,13 @@ import org.apache.jena.sparql.syntax.PatternVars;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
+import org.jgrapht.GraphPath;
+import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
+import org.jgrapht.graph.DefaultDirectedGraph;
+import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.GraphWalk;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class GraphPathComparator<V, E>
     implements Comparator<GraphPath<V, E>> {
@@ -280,12 +279,12 @@ public class ConceptPathFinder {
             //Resource dest = joinSummaryModel.asRDFNode(candidate).asResource();
 
             if(startVertex.equals(candidate)) {
-                GraphPath<Node, DefaultEdge> graphPath = new GraphPathImpl<Node, DefaultEdge>(graph, startVertex, candidate, new ArrayList<DefaultEdge>(), 0.0);
+                GraphPath<Node, DefaultEdge> graphPath = new GraphWalk<Node, DefaultEdge>(graph, startVertex, candidate, new ArrayList<DefaultEdge>(), 0.0);
                 candidateGraphPaths.add(graphPath);
             }
             else {
-                DijkstraShortestPath<Node, DefaultEdge> dijkstraShortestPath = new DijkstraShortestPath<Node, DefaultEdge>(graph, startVertex, candidate);
-                GraphPath<Node, DefaultEdge> tmp = dijkstraShortestPath.getPath();
+                DijkstraShortestPath<Node, DefaultEdge> dijkstraShortestPath = new DijkstraShortestPath<Node, DefaultEdge>(graph);
+                GraphPath<Node, DefaultEdge> tmp = dijkstraShortestPath.getPath(startVertex, candidate);
                 if(tmp != null) {
                     candidateGraphPaths.add(tmp);
                 }

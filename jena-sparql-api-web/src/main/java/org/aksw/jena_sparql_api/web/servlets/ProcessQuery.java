@@ -7,17 +7,13 @@ import java.util.Iterator;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.StreamingOutput;
 
-import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.utils.QueryExecutionAndType;
 import org.aksw.jena_sparql_api.utils.SparqlFormatterUtils;
 import org.aksw.jena_sparql_api.utils.Writer;
-
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
-import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.ResultSet;
-import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 
@@ -123,21 +119,21 @@ public class ProcessQuery {
 
             } else if (queryType == Query.QueryTypeDescribe) {
 
-                Writer<Model> writer = SparqlFormatterUtils.getModelWriter(format);
+                Writer<Iterator<Triple>> writer = SparqlFormatterUtils.getTripleWriter(format);
                 if (writer == null) {
                     throw new RuntimeException("No formatter found: Model -> "
                             + format);
                 }
 
                 // TODO: Get the prefixes from the sparqlify config
-                Model model = ModelFactory.createDefaultModel();
+                //Model model = ModelFactory.createDefaultModel();
 //				model.setNsPrefix("lgd-owl", "http://linkedgeodata.org/ontology/");
 //				model.setNsPrefix("lgd-node",
 //						"http://linkedgeodata.org/resource/node/");
 //				model.setNsPrefix("lgd-way",
 //						"http://linkedgeodata.org/resource/way/");
 
-                qe.execDescribe(model);
+                //qe.execDescribe(model);
 
                 // Tested what pubby does if there are multiple subjects
                 // Result: Pubby does not display that in the HTML, although such
@@ -147,7 +143,8 @@ public class ProcessQuery {
                 // model.getNsPrefixMap().put("lgdo",
                 // "http://linkedgeodata.org/ontology/");
 
-                return wrapWriter(qe, writer, model);
+                Iterator<Triple> it = qe.execDescribeTriples();
+                return wrapWriter(qe, writer, it);
 
             } else {
 

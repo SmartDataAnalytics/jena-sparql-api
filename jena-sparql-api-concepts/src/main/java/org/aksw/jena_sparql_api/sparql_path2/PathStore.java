@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.aksw.jena_sparql_api.jgrapht.LabeledEdge;
+import org.aksw.jena_sparql_api.jgrapht.wrapper.LabeledEdge;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.TriplePath;
 import org.apache.jena.sparql.path.Path;

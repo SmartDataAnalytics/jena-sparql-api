@@ -45,14 +45,15 @@ import com.google.common.collect.Range;
 public class OpExecutorViewCache
     extends OpExecutor
 {
-	public static final Symbol STORAGE_MAP = Symbol.create("storageMap");
+    public static final Symbol STORAGE_MAP = Symbol.create("storageMap");
 
     private static final Logger logger = LoggerFactory.getLogger(OpExecutorViewCache.class);
 
     protected Map<Node, StorageEntry> storageMap;
 
     //Map<Node, StorageEntry> storageMap
-    protected OpExecutorViewCache(ExecutionContext execCxt) {
+    @SuppressWarnings("unchecked")
+	protected OpExecutorViewCache(ExecutionContext execCxt) {
         super(execCxt);
         //this.serviceToQef = serviceToQef;
         this.storageMap = (Map<Node, StorageEntry>) execCxt.getContext().get(STORAGE_MAP);
@@ -67,28 +68,29 @@ public class OpExecutorViewCache
 
         QueryIterator result;
         // If there is no storage map in the context, we do not handle view IRIs
+        logger.debug("Checking whether to intercept sparql execution of service:\n" + serviceUri);
         if(serviceUri.startsWith("view://") && storageMap != null) {
-        	logger.debug("Intercepted execution of:\n" + opService);
+            logger.debug("Intercepted execution of:\n" + opService);
 
-        	Op subOp = opService.getSubOp();
+            Op subOp = opService.getSubOp();
 
-        	Range<Long> range = Range.atLeast(0l);
-        	if(subOp instanceof OpSlice) {
-        		range = QueryUtils.toRange((OpSlice)subOp);
-        	}
+            Range<Long> range = Range.atLeast(0l);
+            if(subOp instanceof OpSlice) {
+                range = QueryUtils.toRange((OpSlice)subOp);
+            }
 
-        	StorageEntry storageEntry = storageMap.get(serviceNode);
-        	if(storageEntry == null) {
-        		throw new RuntimeException("Could not find a " + StorageEntry.class.getSimpleName() + " instance for " + serviceUri);
-        	}
+            StorageEntry storageEntry = storageMap.get(serviceNode);
+            if(storageEntry == null) {
+                throw new RuntimeException("Could not find a " + StorageEntry.class.getSimpleName() + " instance for " + serviceUri);
+            }
 
-        	Stream<Binding> stream = storageEntry.storage.apply(range);
+            Stream<Binding> stream = storageEntry.storage.apply(range);
 
 //        	while(it.hasNext()) { System.out.println("item: " + it.next()); }
 
-        	result = new QueryIterPlainWrapper(stream.iterator());
+            result = new QueryIterPlainWrapper(stream.iterator());
         } else {
-        	result = super.exec(opService, input);
+            result = super.exec(opService, input);
         }
 
         return result;

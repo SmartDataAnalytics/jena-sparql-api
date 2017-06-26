@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.concept_cache.core;
 
 import java.util.Set;
 
-import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
+import org.aksw.jena_sparql_api.algebra.utils.QuadFilterPatternCanonical;
 
 /**
  * Aggregated matching of a qfpc.

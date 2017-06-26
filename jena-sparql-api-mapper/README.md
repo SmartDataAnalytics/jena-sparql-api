@@ -4,8 +4,8 @@ This Apache-Jena based module enables mapping Java classes to RDF data managed i
 
 
 ## Features
-* Growing support for JPA criteria queries.
-* A set of annotations for conveniently mapping classes a developer has control over. By default, the annotation processor evaluates many arguments as spring expressions and subsequently expands namespace declarations of IRIs where appropriate.
+* **Growing support for JPA criteria queries:** Write queries against Java domain models and don't bother with the RDF specifics.
+* A set of annotations for conveniently mapping classes a developer has control over. By default, the annotation processor evaluates many arguments as *Spring Expression Language* (SpEL) expressions and subsequently expands namespace declarations of IRIs where appropriate.
 * Sping-based component scanning for populating the model of the mappings
 * Extension points for creating custom mappers for classes and properties.
 * View-based approach: Java classes are seen as 'views' over RDF resources, hence, multiple views over an RDF resource may exist. Each view is associated with a set of triples - removals affect all views.
@@ -14,21 +14,87 @@ This Apache-Jena based module enables mapping Java classes to RDF data managed i
 
 
 ```java
-// A simple class with annotations
-@RdfType("ex:Person")
-@DefaultIri("ex:#{id}")
-class Person {
-  @Iri("ex:id")
-  private int id;
+@RdfType("dbo:Company")
+@DefaultIri("dbr:#{label}")
+public static class Company {
 
-  @Iri("ex:name")
-  private String name;
+    //@Lang("en")
+    @Iri("rdfs:label")
+    private String label;
 
-  // getters and setters omitted for brevity
+    @IriNs("dbo")
+    @Datatype("xsd:gYear")
+    private int foundingYear;
+
+    @IriNs("dbo")
+    private int numberOfLocations;
+
+    // getters and setters omitted for brevity
 }
 
 ```
 
+This is an excerpt from the [ExampleMapperDBpedia.java](src/main/java/org/aksw/jena_sparql_api/mapper/examples/ExampleMapperDBpedia.java) class:
+
+```java
+public class MainMapperDBpedia {
+
+
+    public static void main(String[] args) throws Exception {
+
+        /*
+         * Boiler plate code for setup
+         */
+
+        SparqlEntityManagerFactory emFactory = new SparqlEntityManagerFactory();
+
+        emFactory.getPrefixMapping()
+            .setNsPrefix("schema", "http://schema.org/")
+            .setNsPrefix("dbo", "http://dbpedia.org/ontology/")
+            .setNsPrefix("dbr", "http://dbpedia.org/resource/")
+            .setNsPrefix("nss", "http://example.org/nss/");
+
+        emFactory.addScanPackageName(MainMapperDBpedia.class.getPackage().getName());
+
+        emFactory.setSparqlService(FluentSparqlService
+            .http("http://dbpedia.org/sparql", "http://dbpedia.org")
+                .config().configQuery()
+                    .withParser(SparqlQueryParserImpl.create())
+                    .withPagination(50000)
+                .end().end().create());
+
+        EntityManager em = emFactory.getObject();
+
+        /*
+         * Query 1: Companies founded after 1955 with more than 36000 locations
+         */
+
+        List<Company> matches = JpaUtils.getResultList(em, Company.class, (cb, cq) -> {
+            Root<Company> r = cq.from(Company.class);
+            cq.select(r)
+                    .where(cb.greaterThanOrEqualTo(r.get("foundingYear"), 1955))
+                    .where(cb.greaterThanOrEqualTo(r.get("numberOfLocations"), 36000))
+                    ;
+        });
+
+        for(Company c : matches) {
+            System.out.println("Matched: " + c);
+        }
+
+        /*
+         * Query 2: Avg number of locations of all companies
+         */
+
+        Double avg = JpaUtils.getSingleResult(em, Double.class, (cb, cq) -> {
+            Root<Company> r2 = cq.from(Company.class);
+            cq.select(cb.avg(r2.get("numberOfLocations")));
+        }).doubleValue();
+
+        System.out.println("Average number of locations: " + avg);
+    }
+}
+
+```
 ## Usage
 
 
@@ -72,7 +138,8 @@ There are two aspects to the system:
 |-------------|-----------|--------|--------------|
 | DefaultIri  | Class     | String | Assigns a default rule to generate IRIs for instances of the class. It is valid for RDF resources corresponding to this class (which may e.g. be stored in a triple store) to have IRIs that do not follow this pattern. |
 | RdfType     | Class     | -      | This annotation work in two ways: On the one hand, each resource corresponding to this class is associated with the provided type. On the other hand, all resources of that type define the set of class instances which can be created from the RDF data. |
-| Iri         | Property  | String | Assigns an IRI to a property |
+| Iri         | Property  | String | Assigns an IRI to an attribute |
+| IriNs       | Property  | String | Shorthand to assign an IRI to an attribute: The attribute name is appended to the given namespace |
 | MultiValued | Property (of type Collection)  | -      | Controls the RDF mapping strategy of Java collections. MultiValued creates for each item of the collection a triple with the property's corresponding IRI |
 
 ###

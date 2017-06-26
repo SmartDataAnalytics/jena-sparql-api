@@ -6,9 +6,9 @@ import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.apache.jena.rdf.model.Resource;
 
 public interface TypeDecider
-	extends ShapeExposable
+    extends ShapeExposable
 {
-	void exposeShape(ResourceShapeBuilder rsb, Class<?> clazz);
+    void exposeShape(ResourceShapeBuilder rsb, Class<?> clazz);
     Collection<Class<?>> getApplicableTypes(Resource subject);
-    void writeTypeTriples(Resource outResource, Object entity);
+    void writeTypeTriples(Resource outResource, Class<?> clazz); //Object entity);
 }

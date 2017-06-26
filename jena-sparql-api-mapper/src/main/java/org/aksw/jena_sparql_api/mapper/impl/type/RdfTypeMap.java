@@ -29,202 +29,202 @@ import org.apache.jena.rdf.model.Statement;
  * PluralAttribute, which in addition to the value type also has a key type - so
  * its not a collection of entries, but a collection of values with an
  * additional key type.
- * 
+ *
  * The essence is, that it should be possible to resolve access to 'key' and
  * 'value' attributes
- * 
- * 
- * 
- * 
+ *
+ *
+ *
+ *
  * @author raven
  *
  */
 public class RdfTypeMap
-		// extends RdfPopulatorPropertyBase
-		extends RdfTypeComplexBase {
-	public static final Property entry = ResourceFactory.createProperty("http://jsa.aksw.org/ontology/entry");
-	public static final Property key = ResourceFactory.createProperty("http://jsa.aksw.org/ontology/key");
-	public static final Property value = ResourceFactory.createProperty("http://jsa.aksw.org/ontology/value");
+        // extends RdfPopulatorPropertyBase
+        extends RdfTypeComplexBase {
+    public static final Property entry = ResourceFactory.createProperty("http://jsa.aksw.org/ontology/entry");
+    public static final Property key = ResourceFactory.createProperty("http://jsa.aksw.org/ontology/key");
+    public static final Property value = ResourceFactory.createProperty("http://jsa.aksw.org/ontology/value");
 
-	// public static final Property keyClass =
-	// ResourceFactory.createProperty("http://jsa.aksw.org/ontology/keyClass");
-	// public static final Property valueClass =
-	// ResourceFactory.createProperty("http://jsa.aksw.org/ontology/valueClass");
+    // public static final Property keyClass =
+    // ResourceFactory.createProperty("http://jsa.aksw.org/ontology/keyClass");
+    // public static final Property valueClass =
+    // ResourceFactory.createProperty("http://jsa.aksw.org/ontology/valueClass");
 
-	protected RdfType keyRdfType;
-	protected RdfType valueRdfType;
-	protected Class<?> keyClazz;
-	protected Class<?> valueClazz;
+    protected RdfType keyRdfType;
+    protected RdfType valueRdfType;
+    protected Class<?> keyClazz;
+    protected Class<?> valueClazz;
 
-	// protected MapOps mapOps;
-	protected Function<Object, Map> createMapView;
+    // protected MapOps mapOps;
+    protected Function<Object, Map> createMapView;
 
-	// , PropertyOps propertyOps, Node predicate, RdfType targetRdfType
+    // , PropertyOps propertyOps, Node predicate, RdfType targetRdfType
 
-	// public RdfTypeMap(
-	// Function<Object, Map> createMapView)
-	// {
-	// this(createMapView, Object.class, Object.class);
-	// }
+    // public RdfTypeMap(
+    // Function<Object, Map> createMapView)
+    // {
+    // this(createMapView, Object.class, Object.class);
+    // }
 
-	public RdfTypeMap(Function<Object, Map> createMapView) {
-		this(createMapView, Object.class, Object.class);
-	}
+    public RdfTypeMap(Function<Object, Map> createMapView) {
+        this(createMapView, Object.class, Object.class);
+    }
 
-	public RdfTypeMap(Function<Object, Map> createMapView, RdfType keyRdfType, RdfType valueRdfType
-	// Class<?> keyClazz,
-	// Class<?> valueClazz
-	) {
-		/// super(typeFactory);
-		this.createMapView = createMapView;
-		this.keyRdfType = keyRdfType;
-		this.valueRdfType = valueRdfType;
-		// this.keyClazz = keyClazz;
-		// this.valueClazz = valueClazz;
-	}
+    public RdfTypeMap(Function<Object, Map> createMapView, RdfType keyRdfType, RdfType valueRdfType
+    // Class<?> keyClazz,
+    // Class<?> valueClazz
+    ) {
+        /// super(typeFactory);
+        this.createMapView = createMapView;
+        this.keyRdfType = keyRdfType;
+        this.valueRdfType = valueRdfType;
+        // this.keyClazz = keyClazz;
+        // this.valueClazz = valueClazz;
+    }
 
-	public RdfTypeMap(Function<Object, Map> createMapView, Class<?> keyClazz, Class<?> valueClazz) {
-		/// super(typeFactory);
-		this.createMapView = createMapView;
-		this.keyClazz = keyClazz;
-		this.valueClazz = valueClazz;
-	}
+    public RdfTypeMap(Function<Object, Map> createMapView, Class<?> keyClazz, Class<?> valueClazz) {
+        /// super(typeFactory);
+        this.createMapView = createMapView;
+        this.keyClazz = keyClazz;
+        this.valueClazz = valueClazz;
+    }
 
-	@Override
-	public void exposeShape(ResourceShapeBuilder shapeBuilder) {
-		ResourceShapeBuilder tmp = shapeBuilder.out(entry.asNode());
+    @Override
+    public void exposeShape(ResourceShapeBuilder shapeBuilder) {
+        ResourceShapeBuilder tmp = shapeBuilder.out(entry.asNode());
 
-		tmp.out(key.asNode());
-		tmp.out(value.asNode());
-	}
+        tmp.out(key.asNode());
+        tmp.out(value.asNode());
+    }
 
-	// @Override
-	// public void emitTriples(RdfEmitterContext emitterContext, Object entity,
-	// Node subject,
-	// Graph shapeGraph, Consumer<Triple> sink) {
+    // @Override
+    // public void emitTriples(RdfEmitterContext emitterContext, Object entity,
+    // Node subject,
+    // Graph shapeGraph, Consumer<Triple> sink) {
 
-	@Override
-	public void exposeFragment(ResourceFragment out, Resource priorState, Object entity) {
-		@SuppressWarnings("unchecked")
-		Map<? super Object, ? super Object> map = createMapView.apply(entity);
+    @Override
+    public void exposeFragment(ResourceFragment out, Resource priorState, Object entity) {
+        @SuppressWarnings("unchecked")
+        Map<? super Object, ? super Object> map = createMapView.apply(entity);
 
-		int i = 1;
-		for (Entry<?, ?> e : map.entrySet()) {
-			Object k = e.getKey();
-			Object v = e.getValue();
+        int i = 1;
+        for (Entry<?, ?> e : map.entrySet()) {
+            Object k = e.getKey();
+            Object v = e.getValue();
 
-			Resource subject = out.getResource();
-			Model m = subject.getModel();
+            Resource subject = out.getResource();
+            Model m = subject.getModel();
 
-			Resource r = m.createResource(priorState.getURI() + "-" + i);
+            Resource r = m.createResource(priorState.getURI() + "-" + i);
 
-			Resource kNode = m.createResource();
-			Resource vNode = m.createResource();
+            Resource kNode = m.createResource();
+            Resource vNode = m.createResource();
 
-			subject.addProperty(entry, r);
+            subject.addProperty(entry, r);
 
-			r.addProperty(key, kNode).addProperty(value, vNode);
+            r.addProperty(key, kNode).addProperty(value, vNode);
 
-			// ValueHolder vh = new ValueHolderImpl(
-			// () -> map.get(k),
-			// x -> map.put(k, x)
-			// );
+            // ValueHolder vh = new ValueHolderImpl(
+            // () -> map.get(k),
+            // x -> map.put(k, x)
+            // );
 
-			out.getPlaceholders().put(kNode, new PlaceholderInfo(keyClazz, null, entity, null, null, k, null, null));
-			out.getPlaceholders().put(vNode, new PlaceholderInfo(valueClazz, null, entity, null, null, v, null, null));
+            out.getPlaceholders().put(kNode, new PlaceholderInfo(keyClazz, null, entity, null, null, k, null, null));
+            out.getPlaceholders().put(vNode, new PlaceholderInfo(valueClazz, null, entity, null, null, v, null, null));
 
-			++i;
-		}
+            ++i;
+        }
 
-	}
+    }
 
-	/**
-	 * The fragment will contain information about which nodes need to be
-	 * resolved. Once everything is resolved, there needs to be a function that
-	 * carries out the actualy population - so its more like
-	 *
-	 * Populator populator = exposePopulator(shape, entity) // Maybe the entity
-	 * is not needed at this stage
-	 *
-	 * populator.refs.forEach((key, class, node) -> context.put(key,
-	 * rdfMapperEngine.resolve(class, node))) populator.resolve(context)
-	 *
-	 *
-	 */
-	@Override
-	public EntityFragment populate(Resource shape, Object entity) {
+    /**
+     * The fragment will contain information about which nodes need to be
+     * resolved. Once everything is resolved, there needs to be a function that
+     * carries out the actualy population - so its more like
+     *
+     * Populator populator = exposePopulator(shape, entity) // Maybe the entity
+     * is not needed at this stage
+     *
+     * populator.refs.forEach((key, class, node) -> context.put(key,
+     * rdfMapperEngine.resolve(class, node))) populator.resolve(context)
+     *
+     *
+     */
+    @Override
+    public EntityFragment populate(Resource shape, Object entity) {
 
-		// <Object, Object>
-		Map<Object, Object> map = createMapView.apply(entity);
+        // <Object, Object>
+        Map<Object, Object> map = createMapView.apply(entity);
 
-		EntityFragment result = new EntityFragment(entity);
-		for (Statement stmt : shape.listProperties(entry).toList()) {
-			Resource e = stmt.getObject().asResource();
+        EntityFragment result = new EntityFragment(entity);
+        for (Statement stmt : shape.listProperties(entry).toList()) {
+            Resource e = stmt.getObject().asResource();
 
-			RDFNode kNode = e.getProperty(key).getObject();
-			RDFNode vNode = e.getProperty(value).getObject();
+            Statement kStmt = e.getProperty(key);
+            Statement vStmt = e.getProperty(value);
 
-			PlaceholderInfo kPlaceholder = new PlaceholderInfo(keyClazz, null, entity, shape, null, null, kNode, null);
-			PlaceholderInfo vPlaceholder = new PlaceholderInfo(valueClazz, null, entity, shape, null, null, vNode,
-					null);
+            if(kStmt != null && vStmt != null) {
 
-			List<PlaceholderInfo> entryPlaceholders = Arrays.asList(kPlaceholder, vPlaceholder);
+                RDFNode kNode = kStmt.getObject();
+                RDFNode vNode = vStmt.getObject();
 
-			PopulationTask task = new PopulationTask() {
+                PlaceholderInfo kPlaceholder = new PlaceholderInfo(keyClazz, null, entity, shape, null, null, kNode, null);
+                PlaceholderInfo vPlaceholder = new PlaceholderInfo(valueClazz, null, entity, shape, null, null, vNode,
+                        null);
 
-				@Override
-				public Collection<PopulationTask> resolve(List<Object> resolutions) {
-					Object k = resolutions.get(0);
-					Object v = resolutions.get(1);
-					map.put(k, v);
-					return Collections.emptyList();
-				}
+                List<PlaceholderInfo> entryPlaceholders = Arrays.asList(kPlaceholder, vPlaceholder);
 
-				@Override
-				public List<PlaceholderInfo> getPlaceholders() {
-					return entryPlaceholders;
-				}
-			};
+                ResolutionTask<PlaceholderInfo> task = new ResolutionTaskBase<PlaceholderInfo>(entryPlaceholders) {
+                    @Override
+                    public Collection<ResolutionTask<PlaceholderInfo>> resolve(List<Object> resolutions) {
+                        Object k = resolutions.get(0);
+                        Object v = resolutions.get(1);
+                        map.put(k, v);
+                        return Collections.emptyList();
+                    }
+                };
 
-			result.getTasks().add(task);
-		}
+                result.getTasks().add(task);
+            }
+        }
 
-		return result;
-	}
+        return result;
+    }
 
-	@Override
-	public Class<?> getEntityClass() {
-		return Map.class;
-	}
+    @Override
+    public Class<?> getEntityClass() {
+        return Map.class;
+    }
 
-	@Override
-	public Node getRootNode(Object obj) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    @Override
+    public Node getRootNode(Object obj) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 
-	@Override
-	public Object createJavaObject(RDFNode node) {
-		@SuppressWarnings("rawtypes")
-		Map result = new HashMap();
-		return result;
-	}
+    @Override
+    public Object createJavaObject(RDFNode node) {
+        @SuppressWarnings("rawtypes")
+        Map result = new HashMap();
+        return result;
+    }
 
-	@Override
-	public boolean hasIdentity() {
-		// TODO Auto-generated method stub
-		return false;
-	}
+    @Override
+    public boolean hasIdentity() {
+        // TODO Auto-generated method stub
+        return false;
+    }
 
-	public PathFragment resolve(String propertyName) {
-		PathFragment result = "key".equals(propertyName)
-				? new PathFragment(RelationUtils.createRelation(key, false), keyClazz, keyRdfType, null)
-				: "value".equals(propertyName)
-						? new PathFragment(RelationUtils.createRelation(value, false), keyClazz, valueRdfType, null)
-						: null;
+    public PathFragment resolve(String propertyName) {
+        PathFragment result = "key".equals(propertyName)
+                ? new PathFragment(RelationUtils.createRelation(key, false), keyClazz, keyRdfType, null)
+                : "value".equals(propertyName)
+                        ? new PathFragment(RelationUtils.createRelation(value, false), keyClazz, valueRdfType, null)
+                        : null;
 
-		return result;
-	}
+        return result;
+    }
 
 }
 

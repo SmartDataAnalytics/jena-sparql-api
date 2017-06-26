@@ -2,8 +2,8 @@ package org.aksw.jena_sparql_api.cache.tests;
 
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeUtils;
-import org.aksw.jena_sparql_api.concept_cache.core.VarUsage;
-import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
+import org.aksw.jena_sparql_api.algebra.analysis.VarUsage;
+import org.aksw.jena_sparql_api.algebra.utils.OpUtils;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;

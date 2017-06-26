@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>sparqlqc-bundle-impl</artifactId>
+    <packaging>jar</packaging>
+
+    <parent>
+        <groupId>org.aksw.sparqlqc</groupId>
+        <artifactId>sparqlqc-benchmark</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.aksw.sparqlqc</groupId>
+            <artifactId>sparqlqc-api-simple</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.aksw.sparqlqc</groupId>
+            <artifactId>sparqlqc-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>org.apache.felix.framework</artifactId>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-dependency-plugin</artifactId>
+    <executions>
+        <execution>
+            <id>copy-sparqlqc-impl-jsa</id>
+            <phase>prepare-package</phase>
+            <goals>
+                <goal>copy</goal>
+            </goals>
+            <configuration>
+                <artifactItems>
+                    <artifactItem>
+                        <groupId>org.aksw.sparqlqc</groupId>
+                        <artifactId>sparqlqc-impl-jsa</artifactId>
+                        <version>${project.version}</version>
+                        <outputDirectory>${project.build.directory}/classes</outputDirectory>                                 
+                    </artifactItem>
+                </artifactItems>
+            </configuration>
+        </execution>
+        <execution>
+            <id>copy-sparqlqc-impl-sparqlalgebra</id>
+            <phase>prepare-package</phase>
+            <goals>
+                <goal>copy</goal>
+            </goals>
+            <configuration>
+                <artifactItems>
+                    <artifactItem>
+                        <groupId>org.aksw.sparqlqc</groupId>
+                        <artifactId>sparqlqc-impl-sparqlalgebra</artifactId>
+                        <version>${project.version}</version>
+                        <outputDirectory>${project.build.directory}/classes</outputDirectory>                                 
+                    </artifactItem>
+                </artifactItems>
+            </configuration>
+        </execution>
+        <execution>
+            <id>copy-sparql-qc-impl-treesolver</id>
+            <phase>prepare-package</phase>
+            <goals>
+                <goal>copy</goal>
+            </goals>
+            <configuration>
+                <artifactItems>
+                    <artifactItem>
+                        <groupId>org.aksw.sparqlqc</groupId>
+                        <artifactId>sparqlqc-impl-treesolver</artifactId>
+                        <version>${project.version}</version>
+                        <outputDirectory>${project.build.directory}/classes</outputDirectory>                                 
+                    </artifactItem>
+                </artifactItems>
+            </configuration>
+        </execution>
+        <execution>
+            <id>copy-sparql-qc-impl-afmu</id>
+            <phase>prepare-package</phase>
+            <goals>
+                <goal>copy</goal>
+            </goals>
+            <configuration>
+                <artifactItems>
+                    <artifactItem>
+                        <groupId>org.aksw.sparqlqc</groupId>
+                        <artifactId>sparqlqc-impl-afmu</artifactId>
+                        <version>${project.version}</version>
+                        <outputDirectory>${project.build.directory}/classes</outputDirectory>                                 
+                    </artifactItem>
+                </artifactItems>
+            </configuration>
+        </execution>
+    </executions>
+</plugin>
+        </plugins>
+    </build>
+
+</project>

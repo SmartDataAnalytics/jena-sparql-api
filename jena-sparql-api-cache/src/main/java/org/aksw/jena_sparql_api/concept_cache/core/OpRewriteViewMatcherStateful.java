@@ -9,21 +9,22 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeUtils;
+import org.aksw.jena_sparql_api.algebra.analysis.VarInfo;
+import org.aksw.jena_sparql_api.algebra.utils.ConjunctiveQuery;
+import org.aksw.jena_sparql_api.algebra.utils.OpExtConjunctiveQuery;
+import org.aksw.jena_sparql_api.algebra.utils.OpUtils;
+import org.aksw.jena_sparql_api.algebra.utils.ProjectedOp;
+import org.aksw.jena_sparql_api.algebra.utils.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.dirty.ConjunctiveQueryMatcher;
 import org.aksw.jena_sparql_api.concept_cache.dirty.ConjunctiveQueryMatcherImpl;
 import org.aksw.jena_sparql_api.concept_cache.dirty.QfpcMatch;
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewMatcherQfpcImpl;
-import org.aksw.jena_sparql_api.concept_cache.domain.ConjunctiveQuery;
-import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
-import org.aksw.jena_sparql_api.concept_cache.op.OpExtConjunctiveQuery;
-import org.aksw.jena_sparql_api.concept_cache.op.OpUtils;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.util.collection.CacheRangeInfo;
 import org.aksw.jena_sparql_api.util.collection.RangedSupplier;
@@ -84,9 +85,9 @@ public class OpRewriteViewMatcherStateful
     //implements Rewrite
 {
 
-	private static final Logger logger = LoggerFactory.getLogger(OpRewriteViewMatcherStateful.class);
+    private static final Logger logger = LoggerFactory.getLogger(OpRewriteViewMatcherStateful.class);
 
-	// TODO Maybe bundle normalizer and denormalizer into one object
+    // TODO Maybe bundle normalizer and denormalizer into one object
     //protected Rewrite opNormalizer;
     protected Rewrite opDenormalizer;
 
@@ -209,8 +210,8 @@ public class OpRewriteViewMatcherStateful
         Op normalizedOp = pop.getResidualOp();
 
         OpExtConjunctiveQuery opQfpc = normalizedOp instanceof OpExtConjunctiveQuery
-        		? (OpExtConjunctiveQuery)normalizedOp
-        		: null;
+                ? (OpExtConjunctiveQuery)normalizedOp
+                : null;
 
         if(opQfpc != null) {
             ConjunctiveQuery cq = opQfpc.getQfpc();//SparqlCacheUtils.canonicalize2(qfp, VarGeneratorImpl2.create());
@@ -245,20 +246,20 @@ public class OpRewriteViewMatcherStateful
         StorageEntry storageEntry = cache.getIfPresent(key);
         Table result = null;
         if(storageEntry != null) {
-        	RangedSupplier<Long, Binding> rangedSupplier = storageEntry.storage;
+            RangedSupplier<Long, Binding> rangedSupplier = storageEntry.storage;
 
-        	@SuppressWarnings("unchecked")
-			CacheRangeInfo<Long> cri = rangedSupplier.unwrap(CacheRangeInfo.class, true).get();
+            @SuppressWarnings("unchecked")
+            CacheRangeInfo<Long> cri = rangedSupplier.unwrap(CacheRangeInfo.class, true).get();
 
-        	Range<Long> atLeastZero = Range.atLeast(0l);
-        	boolean isAllCached = cri.isCached(atLeastZero);
-        	if(isAllCached) {
-        		Stream<Binding> bindings = rangedSupplier.apply(atLeastZero);
-        		Iterator<Binding> it = bindings.iterator();
-        		ResultSet rs = ResultSetUtils.create2(storageEntry.varInfo.getProjectVars(), it);
-        		result = TableUtils.createTable(rs);
-        		//substitute = OpTable.create(table);
-        	}
+            Range<Long> atLeastZero = Range.atLeast(0l);
+            boolean isAllCached = cri.isCached(atLeastZero);
+            if(isAllCached) {
+                Stream<Binding> bindings = rangedSupplier.apply(atLeastZero);
+                Iterator<Binding> it = bindings.iterator();
+                ResultSet rs = ResultSetUtils.create2(storageEntry.varInfo.getProjectVars(), it);
+                result = TableUtils.createTable(rs);
+                //substitute = OpTable.create(table);
+            }
         }
 
         return result;
@@ -285,8 +286,8 @@ public class OpRewriteViewMatcherStateful
         // Since we are cutting the projection in the put method, we also have to cut it here
         //ProjectedOp pop = SparqlCacheUtils.cutProjectionAndNormalize(rawOp, opNormalizer);
 
-    	Op current = pop.getResidualOp();//normalizedOp;
-    	//ProjectedOp current = pop;
+        Op current = pop.getResidualOp();//normalizedOp;
+        //ProjectedOp current = pop;
 
         //Op current = pop.getResidualOp(); // op;
 
@@ -317,12 +318,12 @@ public class OpRewriteViewMatcherStateful
                 Iterable<Map<Var, Var>> varMaps = opVarMap.getVarMaps();
 
                 //Op viewRootOp = lr.getEntry().queryIndex.getOp();
-                Op viewRootOp = viewMatcherTreeBased.getPop(viewId).getResidualOp();
+                Op viewRootOp = viewMatcherTreeBased.getPattern(viewId).getResidualOp();
 
                 Map<Var, Var> map = Iterables.getFirst(varMaps, null);
 
                 if(map == null) {
-                	continue;
+                    continue;
                 }
 
                 Op userSubstOp = opMap.get(viewRootOp);
@@ -364,8 +365,8 @@ public class OpRewriteViewMatcherStateful
 
                 Op substitute = null;
                 if(!isRoot) {
-                	Table table = getTable(cache, viewId);
-                	substitute = table == null ? null : OpTable.create(table);
+                    Table table = getTable(cache, viewId);
+                    substitute = table == null ? null : OpTable.create(table);
                 }
 
                 // If substitute is null, create a default substitute
@@ -378,7 +379,7 @@ public class OpRewriteViewMatcherStateful
 
                 // Apply substitution (if substitute is not null)
                 if(substitute != null) {
-                	substitute = OpUtils.wrapWithProjection(substitute, map);
+                    substitute = OpUtils.wrapWithProjection(substitute, map);
 
                     current = OpUtils.substitute(current, userSubstOp, substitute);
                     changed = true;
@@ -418,21 +419,23 @@ public class OpRewriteViewMatcherStateful
 
                 Map<Node, QfpcMatch> hits = viewMatcherQuadPatternBased.lookup(userCq);
 
+                logger.debug("Got " + hits.size() + " hits for lookup with " + userCq);
+
                 // Only retain hits for which we actually have complete cache data
                 Map<Node, Table> hitData = hits.entrySet().stream()
-                		.map(hit -> new SimpleEntry<>(hit.getKey(), getTable(cache, hit.getKey())))
-                		.filter(x -> x.getValue() != null)
-                		.collect(Collectors.toMap(
-                				x -> x.getKey(), x -> x.getValue()));
+                        .map(hit -> new SimpleEntry<>(hit.getKey(), getTable(cache, hit.getKey())))
+                        .filter(x -> x.getValue() != null)
+                        .collect(Collectors.toMap(
+                                x -> x.getKey(), x -> x.getValue()));
 
                 // Filter hits by those having associated data
                 hits = hits.entrySet().stream()
-                		.filter(x -> hitData.containsKey(x.getKey()))
-                		.collect(Collectors.toMap(
-                				Entry::getKey,
-                				Entry::getValue,
-                				(x, y) -> { throw new AssertionError(); },
-                				LinkedHashMap::new));
+                        .filter(x -> hitData.containsKey(x.getKey()))
+                        .collect(Collectors.toMap(
+                                Entry::getKey,
+                                Entry::getValue,
+                                (x, y) -> { throw new AssertionError(); },
+                                LinkedHashMap::new));
 
                 // Remove subsumed hits
                 hits = SparqlViewMatcherQfpcImpl.filterSubsumption(hits);
@@ -440,46 +443,46 @@ public class OpRewriteViewMatcherStateful
                 // Aggregate
                 QfpcAggMatch<Node> agg = SparqlViewMatcherQfpcImpl.aggregateResults(hits);
                 if(agg != null) {
-                	hasRewrite = true;
+                    hasRewrite = true;
 
-	                List<Op> ops = new ArrayList<>();
+                    List<Op> ops = new ArrayList<>();
 
-	                for(Entry<Node, QfpcMatch> hit : hits.entrySet()) {
-	                	Table table = hitData.get(hit.getKey());
+                    for(Entry<Node, QfpcMatch> hit : hits.entrySet()) {
+                        Table table = hitData.get(hit.getKey());
 
-	                	Op xop = OpTable.create(table);
-	                	ops.add(xop);
-	                }
+                        Op xop = OpTable.create(table);
+                        ops.add(xop);
+                    }
 
-	                QuadFilterPatternCanonical replacementPattern = agg.getReplacementPattern();
-	                boolean hasNonEmptyRemainder = replacementPattern != null && !replacementPattern.isEmpty();
+                    QuadFilterPatternCanonical replacementPattern = agg.getReplacementPattern();
+                    boolean hasNonEmptyRemainder = replacementPattern != null && !replacementPattern.isEmpty();
 
-	                if(hasNonEmptyRemainder) {
-	                	ops.add(replacementPattern.toOp());
-	                }
+                    if(hasNonEmptyRemainder) {
+                        ops.add(replacementPattern.toOp());
+                    }
 
-	                if(hasNonEmptyRemainder) {
-	                	isCompleteRewrite = false;
-	                } else {
+                    if(hasNonEmptyRemainder) {
+                        isCompleteRewrite = false;
+                    } else {
 
-	                }
+                    }
 
-	                Op result;
-	                if(ops.size() == 1) {
-	                	result = ops.get(0);
-	                } else {
-	                	OpSequence r = OpSequence.create();
-	                	ops.forEach(r::add);
-	                	result = r;
-	                }
+                    Op result;
+                    if(ops.size() == 1) {
+                        result = ops.get(0);
+                    } else {
+                        OpSequence r = OpSequence.create();
+                        ops.forEach(r::add);
+                        result = r;
+                    }
 
-	                current = OpUtils.substitute(current, rawLeafOp, result);
+                    current = OpUtils.substitute(current, rawLeafOp, result);
                 }
             }
         }
 
         if(hasRewrite) {
-        	rewriteLevel = isCompleteRewrite ? 2 : 1;
+            rewriteLevel = isCompleteRewrite ? 2 : 1;
         }
 
 

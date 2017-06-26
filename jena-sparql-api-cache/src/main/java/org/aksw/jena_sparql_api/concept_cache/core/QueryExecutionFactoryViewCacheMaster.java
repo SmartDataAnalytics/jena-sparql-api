@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.concept_cache.core;
 
 import java.util.Map;
 
+import org.aksw.jena_sparql_api.algebra.utils.AlgebraUtils;
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewMatcherQfpc;
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewMatcherQfpcImpl;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;

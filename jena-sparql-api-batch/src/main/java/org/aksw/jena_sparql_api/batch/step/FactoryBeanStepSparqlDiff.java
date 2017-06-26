@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import org.aksw.commons.collections.diff.Diff;
-import org.aksw.jena_sparql_api.batch.ListServiceResourceShape;
 import org.aksw.jena_sparql_api.batch.processor.ItemProcessorModifierDatasetGraphDiff;
 import org.aksw.jena_sparql_api.batch.reader.ItemReaderDatasetGraph;
 import org.aksw.jena_sparql_api.batch.writer.ItemWriterSparqlDiff;
@@ -13,12 +12,13 @@ import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
 import org.aksw.jena_sparql_api.hop.Hop;
-import org.aksw.jena_sparql_api.hop.ListServiceHop;
-import org.aksw.jena_sparql_api.lookup.ListService;
+import org.aksw.jena_sparql_api.hop.MapServiceHop;
+import org.aksw.jena_sparql_api.lookup.MapService;
 import org.aksw.jena_sparql_api.modifier.Modifier;
 import org.aksw.jena_sparql_api.modifier.ModifierList;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.aksw.jena_sparql_api.shape.ResourceShapeParser;
+import org.aksw.jena_sparql_api.shape.lookup.MapServiceResourceShapeDataset;
 import org.aksw.jena_sparql_api.stmt.SparqlUpdateParser;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
@@ -205,17 +205,17 @@ public class FactoryBeanStepSparqlDiff
         return targetUef;
     }
 
-    public ListService<Concept, Node, DatasetGraph> createListService() {
+    public MapService<Concept, Node, DatasetGraph> createListService() {
 
         //Hop hop = (shape instanceof Hop) ? (Hop)shape : null;
         //ResourceShape sh = (shape instanceof ResourceShape) ? (ResourceShape)shape : null;
         ResourceShape sh = shape;
 
-        ListService<Concept, Node, DatasetGraph> result;
+        MapService<Concept, Node, DatasetGraph> result;
         if(hop != null) {
-             result = new ListServiceHop(sourceQef, hop);
+             result = new MapServiceHop(sourceQef, hop, 30);
         } else if(sh != null) {
-            result = new ListServiceResourceShape(sourceQef, sh, true);
+            result = new MapServiceResourceShapeDataset(sourceQef, sh, true);
         } else {
             throw new RuntimeException("No shape provided");
         }
@@ -228,7 +228,7 @@ public class FactoryBeanStepSparqlDiff
         Modifier<DatasetGraph> modifier = ModifierList.<DatasetGraph>create(modifiers);
 
 
-        ListService<Concept, Node, DatasetGraph> listService = createListService();
+        MapService<Concept, Node, DatasetGraph> listService = createListService();
         //ItemReader<Entry<Node, DatasetGraph>> itemReader = new ItemReaderDatasetGraph(listService, concept);
         ItemReaderDatasetGraph itemReader = new ItemReaderDatasetGraph(listService, concept);
         ItemProcessor<Entry<? extends Node, ? extends DatasetGraph>, Entry<Node, Diff<DatasetGraph>>> itemProcessor = new ItemProcessorModifierDatasetGraphDiff(modifier);

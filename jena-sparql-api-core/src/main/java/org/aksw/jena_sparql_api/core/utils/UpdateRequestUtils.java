@@ -28,30 +28,42 @@ import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
 
 public class UpdateRequestUtils {
-	public static UpdateRequest clone(UpdateRequest request) {
-		UpdateRequest result = new UpdateRequest();
-		result.setBaseURI(request.getBaseURI());
-		result.setPrefixMapping(request.getPrefixMapping());
-		result.setResolver(request.getResolver());
 
-		for(Update update : request.getOperations()) {
-			Update clone = UpdateUtils.clone(update);
-			result.add(clone);
-		}
-		return result;
-	}
+    /**
+     * Append operations from src to tgt
+     * @param tgt
+     * @param src
+     * @return
+     */
+    public static UpdateRequest append(UpdateRequest tgt, UpdateRequest src) {
+        src.getOperations().forEach(tgt::add);
+        return tgt;
+    }
 
-	public static void applyWithIri(UpdateRequest updateRequest, String withIri) {
-		for(Update update : updateRequest.getOperations()) {
-			UpdateUtils.applyWithIriIfApplicable(update, withIri);
-		}
-	}
+    public static UpdateRequest clone(UpdateRequest request) {
+        UpdateRequest result = new UpdateRequest();
+        result.setBaseURI(request.getBaseURI());
+        result.setPrefixMapping(request.getPrefixMapping());
+        result.setResolver(request.getResolver());
 
-	public static void applyDatasetDescription(UpdateRequest updateRequest, DatasetDescription dg) {
-		for(Update update : updateRequest.getOperations()) {
-			UpdateUtils.applyDatasetDescriptionIfApplicable(update, dg);
-		}
-	}
+        for(Update update : request.getOperations()) {
+            Update clone = UpdateUtils.clone(update);
+            result.add(clone);
+        }
+        return result;
+    }
+
+    public static void applyWithIri(UpdateRequest updateRequest, String withIri) {
+        for(Update update : updateRequest.getOperations()) {
+            UpdateUtils.applyWithIriIfApplicable(update, withIri);
+        }
+    }
+
+    public static void applyDatasetDescription(UpdateRequest updateRequest, DatasetDescription dg) {
+        for(Update update : updateRequest.getOperations()) {
+            UpdateUtils.applyDatasetDescriptionIfApplicable(update, dg);
+        }
+    }
 
     public static void fixVarNames(UpdateRequest updateRequest) {
         List<Update> updates = updateRequest.getOperations();

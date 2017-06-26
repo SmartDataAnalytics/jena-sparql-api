@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.ResultSetCloseable;
+import org.aksw.jena_sparql_api.lookup.GuavaFunctionWrapper;
 import org.aksw.jena_sparql_api.mapper.BindingMapper;
 import org.aksw.jena_sparql_api.mapper.BindingMapperProjectVar;
 import org.aksw.jena_sparql_api.mapper.BindingMapperQuad;
@@ -29,14 +31,10 @@ import org.apache.jena.query.Syntax;
 import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.core.VarExprList;
 import org.apache.jena.sparql.engine.binding.Binding;
-import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprAggregator;
-import org.apache.jena.sparql.expr.ExprList;
 import org.apache.jena.sparql.expr.aggregate.AggCount;
 import org.apache.jena.sparql.expr.aggregate.AggCountDistinct;
-import org.apache.jena.sparql.expr.aggregate.AggCountVarDistinct;
 import org.apache.jena.sparql.expr.aggregate.Aggregator;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
@@ -44,7 +42,6 @@ import org.apache.jena.util.iterator.ExtendedIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 
 
@@ -364,7 +361,7 @@ public class QueryExecutionUtils {
         Iterator<Binding> itBinding = new IteratorResultSetBinding(rs);
         Function<Binding, Node> fn = FunctionBindingMapper.create(new BindingMapperProjectVar(var));
 
-        Iterator<Node> result = Iterators.transform(itBinding, fn);
+        Iterator<Node> result = Iterators.transform(itBinding, new GuavaFunctionWrapper<>(fn));
 
         return result;
     }

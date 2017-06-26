@@ -1,7 +1,6 @@
 package org.aksw.jena_sparql_api.utils;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -25,7 +24,7 @@ public class ResultSetPart {
     }
 
     public ResultSetPart(List<String> varNames) {
-        this(varNames, Collections.emptyList());
+        this(varNames, new ArrayList<Binding>());
     }
 
     public ResultSetPart(List<String> varNames, List<Binding> rows) {

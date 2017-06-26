@@ -1,6 +1,10 @@
 package org.aksw.jena_sparql_api.lookup;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public interface LookupService<K, V>
@@ -10,8 +14,14 @@ public interface LookupService<K, V>
         return LookupServicePartition.create(this, k);
     }
 
-    default <W> LookupService<K, W> mapValues(Function<V, W> fn) {
+    default <W> LookupService<K, W> mapValues(BiFunction<K, V, W> fn) {
         return LookupServiceTransformValue.create(this, fn);
+    }
+
+    default List<V> fetchList(Iterable<K> keys) {
+        Collection<V> tmp = apply(keys).values();
+        List<V> result = tmp instanceof List ? (List<V>)tmp : new ArrayList<V>(tmp);
+        return result;
     }
 
 //    @Override

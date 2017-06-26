@@ -2,36 +2,23 @@ package org.aksw.jena_sparql_api.concept_cache.op;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-import org.aksw.commons.collections.multimaps.IBiSetMultimap;
 import org.aksw.commons.util.reflect.MultiMethod;
-import org.aksw.jena_sparql_api.concept_cache.combinatorics.CombinatoricsUtils;
-import org.aksw.jena_sparql_api.concept_cache.combinatorics.Utils2;
-import org.aksw.jena_sparql_api.concept_cache.core.SetUtils;
-import org.aksw.jena_sparql_api.concept_cache.core.TableUtils;
-import org.aksw.jena_sparql_api.concept_cache.dirty.QfpcMatch;
-import org.aksw.jena_sparql_api.concept_cache.domain.QuadFilterPatternCanonical;
+import org.aksw.jena_sparql_api.algebra.utils.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
-
-import com.google.common.collect.AbstractIterator;
-import com.google.common.collect.Sets;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
-import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.op.OpDisjunction;
 import org.apache.jena.sparql.algebra.op.OpDistinct;
-import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.graph.NodeTransform;
+
+import com.google.common.collect.AbstractIterator;
 
 
 
