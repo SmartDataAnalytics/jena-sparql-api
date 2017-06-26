@@ -29,4 +29,7 @@ public class SparqlQcVocab {
     public static final Property id = property("http://ex.org/ontology/id");
 
     public static final Property variant = property("http://ex.org/ontology/variant");
+
+
+    public static final Property sparqlQueryString = property("http://lsq.aksw.org/vocab#text");
 }

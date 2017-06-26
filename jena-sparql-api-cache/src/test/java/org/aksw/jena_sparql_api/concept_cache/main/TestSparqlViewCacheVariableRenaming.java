@@ -10,8 +10,8 @@ import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import org.aksw.jena_sparql_api.algebra.utils.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.algebra.utils.AlgebraUtils;
+import org.aksw.jena_sparql_api.algebra.utils.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.backports.syntaxtransform.QueryTransformOps;
 import org.aksw.jena_sparql_api.concept_cache.core.CacheResult;
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewMatcherQfpc;
@@ -19,11 +19,11 @@ import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewMatcherQfpcImpl;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcReader;
+import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcVocab;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParser;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
-import org.aksw.simba.lsq.vocab.LSQ;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.ResultSet;
@@ -35,7 +35,6 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.pfunction.PropertyFunctionRegistry;
 import org.apache.jena.sparql.syntax.PatternVars;
 import org.apache.jena.system.JenaSystem;
-import org.junit.Test;
 
 import com.google.common.base.Stopwatch;
 
@@ -76,7 +75,7 @@ public class TestSparqlViewCacheVariableRenaming {
         Model model = SparqlQcReader.readQueryFolder("sparqlqc/1.4/benchmark/noprojection/*");
         SparqlQueryParser sparqlParser = SparqlQueryParserImpl.create(Syntax.syntaxARQ);
 
-        Query testSuiteQuery = sparqlParser.apply("SELECT ?s ?c { ?s <" + LSQ.text + ">?c }");
+        Query testSuiteQuery = sparqlParser.apply("SELECT ?s ?c { ?s <" + SparqlQcVocab.sparqlQueryString + ">?c }");
         //QueryUtils.injectFilter(testSuiteQuery, "?s = <http://ex.org/query/4-b>");
 
         QueryExecutionFactory qef = FluentQueryExecutionFactory.from(model).create();

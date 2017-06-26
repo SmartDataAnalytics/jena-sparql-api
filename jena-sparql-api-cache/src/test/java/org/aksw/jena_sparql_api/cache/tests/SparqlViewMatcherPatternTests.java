@@ -12,7 +12,6 @@ import org.aksw.jena_sparql_api.concept_cache.core.SparqlQueryContainmentUtils;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcReader;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcVocab;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.VarMapper;
-import org.aksw.simba.lsq.vocab.LSQ;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
@@ -156,8 +155,8 @@ public class SparqlViewMatcherPatternTests {
 
     @Test
     public void runTest() {
-        String srcQueryStr = t.getRequiredProperty(SparqlQcVocab.sourceQuery).getObject().asResource().getRequiredProperty(LSQ.text).getObject().asLiteral().getString();
-        String tgtQueryStr = t.getRequiredProperty(SparqlQcVocab.targetQuery).getObject().asResource().getRequiredProperty(LSQ.text).getObject().asLiteral().getString();
+        String srcQueryStr = t.getRequiredProperty(SparqlQcVocab.sourceQuery).getObject().asResource().getRequiredProperty(SparqlQcVocab.sparqlQueryString).getObject().asLiteral().getString();
+        String tgtQueryStr = t.getRequiredProperty(SparqlQcVocab.targetQuery).getObject().asResource().getRequiredProperty(SparqlQcVocab.sparqlQueryString).getObject().asLiteral().getString();
         boolean expectedVerdict = Boolean.parseBoolean(t.getRequiredProperty(SparqlQcVocab.result).getObject().asLiteral().getString());
 
         Set<String> overrides = new HashSet<>(Arrays.asList(

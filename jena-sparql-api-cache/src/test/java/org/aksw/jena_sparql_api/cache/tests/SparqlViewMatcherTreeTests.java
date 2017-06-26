@@ -10,7 +10,6 @@ import org.aksw.jena_sparql_api.stmt.SparqlQueryParser;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.views.index.SparqlViewMatcherSystemImpl;
-import org.aksw.simba.lsq.vocab.LSQ;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -29,7 +28,7 @@ import com.codepoetics.protonpack.StreamUtils;
 
 public class SparqlViewMatcherTreeTests {
 
-	private static final Logger logger = LoggerFactory.getLogger(SparqlViewMatcherTreeTests.class);
+    private static final Logger logger = LoggerFactory.getLogger(SparqlViewMatcherTreeTests.class);
 
     @Test
     public void testNoProjection() throws Exception {
@@ -56,8 +55,8 @@ public class SparqlViewMatcherTreeTests {
 
         SparqlQueryParser queryParser = SparqlQueryParserImpl.create();
         for(Resource test : tests) {
-            String qas = test.getRequiredProperty(SparqlQcVocab.sourceQuery).getObject().asResource().getRequiredProperty(LSQ.text).getObject().asLiteral().getString();
-            String qbs = test.getRequiredProperty(SparqlQcVocab.targetQuery).getObject().asResource().getRequiredProperty(LSQ.text).getObject().asLiteral().getString();
+            String qas = test.getRequiredProperty(SparqlQcVocab.sourceQuery).getObject().asResource().getRequiredProperty(SparqlQcVocab.sparqlQueryString).getObject().asLiteral().getString();
+            String qbs = test.getRequiredProperty(SparqlQcVocab.targetQuery).getObject().asResource().getRequiredProperty(SparqlQcVocab.sparqlQueryString).getObject().asLiteral().getString();
 
             Set<Map<Var, Var>> expected = test.listProperties(SparqlQcVocab.result)
                     .mapWith(stmt -> stmt.getObject()).toSet().stream()
