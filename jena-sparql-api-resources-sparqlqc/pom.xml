@@ -34,12 +34,13 @@
             <artifactId>jena-sparql-api-resources-test-config</artifactId>
         </dependency>
 
+<!--
 		<dependency>
 			<groupId>org.aksw.simba.lsq</groupId>
 			<artifactId>lsq-vocab-jena</artifactId>
 			<version>1.0.0-SNAPSHOT</version>
 		</dependency>
-
+-->
 		<dependency>
 	        <groupId>org.topbraid</groupId>
 	        <artifactId>spin</artifactId>
