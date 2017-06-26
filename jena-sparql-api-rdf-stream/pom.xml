@@ -13,6 +13,7 @@
 	</parent>
 
 	<dependencies>
+<!--
 		<dependency>
 			<groupId>org.aksw.jena-sparql-api</groupId>
 			<artifactId>jena-sparql-api-vocabs</artifactId>
@@ -39,7 +40,7 @@
 			<artifactId>iguana-vocab-jena</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
-
+-->
 
 	</dependencies>
 </project>
