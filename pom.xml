@@ -7,7 +7,7 @@
     <artifactId>jena-sparql-api-parent</artifactId>
 
     <packaging>pom</packaging>
-    <version>3.3.0-1-SNAPSHOT</version>
+    <version>3.3.0-1</version>
     <name>Jena SPARQL API - Parent</name>
     <description>An RDF library for abstracting SPARQL queries.</description>
     <url>https://github.com/AKSW/jena-sparql-api</url>
