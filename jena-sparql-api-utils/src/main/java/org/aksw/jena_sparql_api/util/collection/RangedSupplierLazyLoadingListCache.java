@@ -6,136 +6,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
-import org.aksw.commons.collections.cache.BlockingCacheIterator;
 import org.aksw.commons.collections.cache.Cache;
-import org.aksw.jena_sparql_api.util.collection.RangedSupplierLazyLoadingListCache.CacheEntry;
-import org.aksw.jena_sparql_api.utils.IteratorClosable;
+import org.aksw.commons.collections.cache.CacheImpl;
 import org.aksw.jena_sparql_api.utils.RangeUtils;
 import org.apache.jena.util.iterator.ClosableIterator;
 
-import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeMap;
 import com.google.common.collect.TreeRangeMap;
-
-
-class LazyLoadingCachingListIterator<T>
-    extends AbstractIterator<T>
-    implements ClosableIterator<T>
-{
-    protected Range<Long> canonicalRequestRange;
-    //protected long upperBound;
-
-    protected long offset;
-    protected RangeMap<Long, RangedSupplierLazyLoadingListCache.CacheEntry<T>> rangeMap;
-    protected Function<Range<Long>, Stream<T>> delegate;
-
-    protected boolean usedDelegate;
-
-    public LazyLoadingCachingListIterator(
-            Range<Long> canonicalRequestRange,
-            RangeMap<Long, CacheEntry<T>> rangeMap,
-            Function<Range<Long>, Stream<T>> delegate) {
-        super();
-        this.canonicalRequestRange = canonicalRequestRange;
-        this.rangeMap = rangeMap;
-        this.delegate = delegate;
-
-        this.offset = canonicalRequestRange.lowerEndpoint();
-
-        this.usedDelegate = false;
-    }
-
-    //protected Iterable</C>
-    // Iterator for the fraction running from cache
-    protected transient ClosableIterator<T> currentIterator;
-    //protected transient Stream<T> currentIterator;
-
-    @Override
-    public void close() {
-        currentIterator.close();
-    }
-
-    @Override
-    protected T computeNext() {
-        T result;
-
-        for(;;) {
-        	boolean isOffsetInRequestRange = canonicalRequestRange.contains(offset);
-            if(!isOffsetInRequestRange) {
-                // TODO Use a cheaper primitive int / long comparison instead of the range
-                // We hit the end of the requested iteration - exit
-                currentIterator.close();
-
-                result = endOfData();
-                break;
-            } else if(currentIterator == null) {
-
-                // Make sure the map is not modified during lookup
-                Entry<Range<Long>, CacheEntry<T>> e;
-                synchronized(rangeMap) {
-                    e = rangeMap.getEntry(offset);
-                }
-
-                // If there is no entry, consult the delegate - if it is present and was not used yet
-                // Otherwise, we are out of data
-                if(e == null) {
-                	if(delegate != null && !usedDelegate) {
-	                    Range<Long> r = Range.atLeast(offset).intersection(canonicalRequestRange);
-	                    Stream<T> stream = delegate.apply(r);
-	                    currentIterator = new IteratorClosable<>(stream.iterator(), stream::close);
-	                    usedDelegate = true;
-                	} else {
-                		result = endOfData();
-                		break;
-                	}
-                } else {
-                    CacheEntry<T> ce = e.getValue();
-
-                    // get the relative offset of
-                    Range<Long> pageRange = ce.range;
-                    long offsetWithinPage = offset - pageRange.lowerEndpoint();
-
-                    Iterator<T> tmp = new BlockingCacheIterator<>(ce.cache, (int)offsetWithinPage);
-                    currentIterator = new IteratorClosable<>(tmp);
-
-                    // The range may be bigger than the data contained in it.
-                    if(!currentIterator.hasNext()) {
-                    	result = endOfData();
-                    	currentIterator.close();
-                    	break;
-                    }
-
-                }
-            } else if(currentIterator.hasNext()) {
-                result = currentIterator.next();
-                ++offset;
-                break;
-            } else { // if(!currentIterator.hasNext()) {
-                // If the current iterator has no more items, we either
-                // (a) have reached the end of a page and we need to advance to the next one
-                // (b) there simple may not be any more data available
-
-            	// In any case, close the current iterator
-                currentIterator.close();
-
-//                if(isOffsetInRequestRange) {
-//                	// (b) is the case if the offset was within the requested range, but there were no items
-//                    result = endOfData();
-//                    break;
-//                }
-
-                currentIterator = null;
-            }
-        }
-
-        return result;
-    }
-}
 
 
 /**
@@ -146,8 +27,8 @@ class LazyLoadingCachingListIterator<T>
  * @param <T>
  */
 public class RangedSupplierLazyLoadingListCache<T>
-	extends RangedSupplierDelegated<Long, T>
-	implements CacheRangeInfo<Long>
+    extends RangedSupplierDelegated<Long, T>
+    implements CacheRangeInfo<Long>
 {
 
     /**
@@ -160,9 +41,9 @@ public class RangedSupplierLazyLoadingListCache<T>
      */
     static class CacheEntry<T> {
         Range<Long> range;
-        Cache<List<T>> cache;
+        Cache<T> cache;
 
-        public CacheEntry(Range<Long> range, Cache<List<T>> cache) {
+        public CacheEntry(Range<Long> range, Cache<T> cache) {
             super();
             this.range = range;
             this.cache = cache;
@@ -174,10 +55,10 @@ public class RangedSupplierLazyLoadingListCache<T>
         boolean isGap;
 
         //CacheEntry<T> entry;
-        Cache<List<T>> cache;
+        Cache<T> cache;
 
         public RangeInfo(Range<Long> range, boolean isGap,
-                Cache<List<T>> cache) {
+                Cache<T> cache) {
             super();
             this.range = range;
             this.isGap = isGap;
@@ -215,7 +96,7 @@ public class RangedSupplierLazyLoadingListCache<T>
     public static Range<Long> normalize(Range<Long> range) {
         range = RangeUtils.startFromZero(range);
         Range<Long> result = range.canonical(DiscreteDomain.longs());
-    	return result;
+        return result;
     }
 
     /**
@@ -232,39 +113,39 @@ public class RangedSupplierLazyLoadingListCache<T>
 
         // If we already know how much data there is, adjust the request to the available data
         if(dataThreshold != null) {
-        	Range<Long> dataRange = Range.closedOpen(0l, dataThreshold);
-        	range = range.intersection(dataRange);
+            Range<Long> dataRange = Range.closedOpen(0l, dataThreshold);
+            range = range.intersection(dataRange);
         }
         //dataThreshold;
 
 
         RangeMap<Long, CacheEntry<T>> subRangeMap = rangesToData.subRangeMap(range);
-    	Map<Range<Long>, CacheEntry<T>> x = subRangeMap.asMapOfRanges();
+        Map<Range<Long>, CacheEntry<T>> x = subRangeMap.asMapOfRanges();
 
-    	boolean result;
-    	if(x.size() == 1) {
-    		// Check if the range is covered AND the cache data is complete
-    		Entry<Range<Long>, CacheEntry<T>> entry = x.entrySet().iterator().next();
-    		CacheEntry<T> ce = entry.getValue();
+        boolean result;
+        if(x.size() == 1) {
+            // Check if the range is covered AND the cache data is complete
+            Entry<Range<Long>, CacheEntry<T>> entry = x.entrySet().iterator().next();
+            CacheEntry<T> ce = entry.getValue();
 
-    		boolean isEnclosing = ce.range.encloses(range);
-    		// TODO Actually we do not need the whole range to be complete, but only the requested section has to be loaded yet
-    		boolean isDataComplete = ce.cache.isComplete();
+            boolean isEnclosing = ce.range.encloses(range);
+            // TODO Actually we do not need the whole range to be complete, but only the requested section has to be loaded yet
+            boolean isDataComplete = ce.cache.isComplete();
 
-    		result = isEnclosing && isDataComplete;
-    	} else {
-    		result = false;
-    	}
+            result = isEnclosing && isDataComplete;
+        } else {
+            result = false;
+        }
 
-    	return result;
+        return result;
     }
 
     public RangedSupplierLazyLoadingListCache(ExecutorService executorService, RangedSupplier<Long, T> delegate) {
-    	this(executorService, delegate, Range.atLeast(0l));
+        this(executorService, delegate, Range.atLeast(0l));
     }
 
     public RangedSupplierLazyLoadingListCache(ExecutorService executorService, RangedSupplier<Long, T> delegate, Range<Long> range) {
-    	this(executorService, delegate, range, null);
+        this(executorService, delegate, range, null);
     }
 
     public RangedSupplierLazyLoadingListCache(ExecutorService executorService, RangedSupplier<Long, T> delegate, Range<Long> cacheRange, RangeCostModel costModel) {
@@ -296,7 +177,7 @@ public class RangedSupplierLazyLoadingListCache<T>
                 for(Entry<Range<Long>, CacheEntry<T>> e : subMap.asMapOfRanges().entrySet()) {
     //                Entry<Range<Long>, CacheEntry<T>> e = it.next();
                     Range<Long> eRange = e.getKey();
-                    Cache<List<T>> cache = e.getValue().cache;
+                    Cache<T> cache = e.getValue().cache;
                     long ele = eRange.lowerEndpoint();
 
 
@@ -319,10 +200,10 @@ public class RangedSupplierLazyLoadingListCache<T>
                 // The last gap is the intersection of the range starting at the current offset
                 // with the lookupRange
                 if(offset != null) {
-                	Range<Long> part = Range.atLeast(offset);
-                	Range<Long> lastGap = part.intersection(lookupRange);
+                    Range<Long> part = Range.atLeast(offset);
+                    Range<Long> lastGap = part.intersection(lookupRange);
 
-                	if(!lastGap.isEmpty()) {
+                    if(!lastGap.isEmpty()) {
                         rangeInfos.add(new RangeInfo<>(lastGap, true, null));
                     }
                 }
@@ -366,7 +247,7 @@ public class RangedSupplierLazyLoadingListCache<T>
 //        subMap.subRangeMap(range).clear();
 
         List<T> cacheData = new ArrayList<>();
-        Cache<List<T>> cache = new Cache<>(cacheData);
+        Cache<T> cache = new CacheImpl<>(cacheData);
         CacheEntry<T> cacheEntry = new CacheEntry<>(range, cache);
         subMap.put(range, cacheEntry);
 
@@ -392,7 +273,7 @@ public class RangedSupplierLazyLoadingListCache<T>
 
                 while((hasMoreData = ci.hasNext()) &&
                         !(isTooBig = i >= maxCacheSize) &&
-                        (isOk = !(cache.isAbanoned() || Thread.interrupted()))) {
+                        (isOk = !cache.isAbandoned() && !Thread.interrupted())) {
                     ++i;
 
                     T binding = ci.next();
@@ -400,9 +281,9 @@ public class RangedSupplierLazyLoadingListCache<T>
 
                     //System.out.println("Caching page " + range + " item " + i + ": " + binding);
                     if(i % notificationInterval == 0) {
-	                    synchronized(cache) {
-	                        cache.notifyAll();
-	                    }
+                        synchronized(cache) {
+                            cache.notifyAll();
+                        }
                     }
                 }
 
@@ -414,21 +295,21 @@ public class RangedSupplierLazyLoadingListCache<T>
                 }
 
                 if(isOk) {
-                    cache.setComplete(true);
+                    cache.setComplete();
                 }
 
                 if(isTooBig) {
                     // TODO Adjust the interval to the max cache size
                     // because for this interval the cache is complete
 
-                    cache.setComplete(true);
+                    cache.setComplete();
                 }
 
             } catch(Exception e) {
-                cache.setAbanoned(true);
+                cache.setAbandoned();
                 throw new RuntimeException(e);
             } finally {
-            	// Notify for a last time (if there is no data, this will actually also be the first notification for clients)
+                // Notify for a last time (if there is no data, this will actually also be the first notification for clients)
                 synchronized(cache) {
                     cache.notifyAll();
                 }
@@ -444,12 +325,12 @@ public class RangedSupplierLazyLoadingListCache<T>
         //BlockingCacheIterator<T> cacheIt = new BlockingCacheIterator<>(cache);
     }
 
-	@Override
-	public String toString() {
-		return "RangedSupplierLazyLoadingListCache [cacheRange=" + cacheRange
-				+ ", costModel=" + costModel + ", rangesToData=" + rangesToData + ", dataThreshold=" + dataThreshold + ", executorService=" + executorService
-				+ "]";
-	}
+    @Override
+    public String toString() {
+        return "RangedSupplierLazyLoadingListCache [cacheRange=" + cacheRange
+                + ", costModel=" + costModel + ", rangesToData=" + rangesToData + ", dataThreshold=" + dataThreshold + ", executorService=" + executorService
+                + "]";
+    }
 
 //
 //	@Override
@@ -462,17 +343,17 @@ public class RangedSupplierLazyLoadingListCache<T>
 //    	return result;
 //    }
 
-	/**
-	 * Static utility method to check whether a given range is cached by a ranged supplier by
-	 * attempting to unwrap an instance of this class.
-	 *
-	 * TODO: Deal with range transformations
-	 *
-	 *
-	 * @param rangedSupplier
-	 * @param range
-	 * @return
-	 */
+    /**
+     * Static utility method to check whether a given range is cached by a ranged supplier by
+     * attempting to unwrap an instance of this class.
+     *
+     * TODO: Deal with range transformations
+     *
+     *
+     * @param rangedSupplier
+     * @param range
+     * @return
+     */
 //	public static <V> boolean isCached(RangedSupplier<Long, V> rangedSupplier, Range<Long> range) {
 //		@SuppressWarnings("unchecked")
 //		RangedSupplierLazyLoadingListCache<V> inst =

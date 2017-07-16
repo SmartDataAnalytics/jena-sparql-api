@@ -8,10 +8,11 @@ import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.persistence.FlushModeType;
 import javax.persistence.LockModeType;
@@ -25,13 +26,16 @@ import javax.persistence.criteria.Order;
 import javax.persistence.criteria.Root;
 import javax.persistence.criteria.Selection;
 
+import org.aksw.commons.collections.cache.StreamBackedList;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptOps;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.concepts.OrderedConcept;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
-import org.aksw.jena_sparql_api.core.utils.ServiceUtils;
+import org.aksw.jena_sparql_api.lookup.ListPaginator;
+import org.aksw.jena_sparql_api.lookup.ListService;
+import org.aksw.jena_sparql_api.lookup.ListServiceConcept;
 import org.aksw.jena_sparql_api.mapper.impl.engine.RdfMapperEngine;
 import org.aksw.jena_sparql_api.mapper.impl.type.PathResolver;
 import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.ExpressionCompiler;
@@ -40,8 +44,8 @@ import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.VPath;
 import org.aksw.jena_sparql_api.mapper.model.TypeDecider;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
-import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
+import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
@@ -56,9 +60,12 @@ import org.apache.jena.sparql.expr.aggregate.Aggregator;
 import org.apache.jena.sparql.graph.NodeTransformLib;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
+import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.Range;
 
 
 
@@ -274,7 +281,7 @@ public class TypedQueryImpl<X>
 
     @Override
     public X getSingleResult() {
-        List<X> items = getResultList(2);
+        List<X> items = getResultList(Range.closedOpen(0l, 2l));
         if(items.size() > 1) {
             throw new NonUniqueResultException();
         }
@@ -388,17 +395,32 @@ public class TypedQueryImpl<X>
         throw new UnsupportedOperationException();
     }
 
+    public List<X> getResultList(Range<Long> range) {
+        Stream<X> stream = getResultStream(range);
+
+        List<X> result = new StreamBackedList<>(stream);
+
+        //List<X> result = stream.collect(Collectors.toList());
+        //logger.debug("GOT " + result + " for concept" + compileConcept());
+
+        return result;
+    }
+
     @Override
     public List<X> getResultList() {
         List<X> result = getResultList(null);
         return result;
     }
 
-    // TODO The limit argument can be removed, as this is is read from the maxResult field
-    public List<X> getResultList(Integer limit) { //, Integer offset) {
-        Long l = maxResult != null ? maxResult.longValue() : null;
-        //l = limit != null ? limit.longValue() : null;
-        Long o = startPosition != null ? startPosition.longValue() : null;
+    public Stream<X> getResultStream(Range<Long> requestRange) { //, Integer offset) {
+
+        if(requestRange == null) {
+            Long l = maxResult != null ? maxResult.longValue() : null;
+            //l = limit != null ? limit.longValue() : null;
+            Long o = startPosition != null ? startPosition.longValue() : null;
+
+            requestRange = QueryUtils.createRange(l, o);
+        }
 
         SparqlService sparqlService = engine.getSparqlService();
 
@@ -406,7 +428,7 @@ public class TypedQueryImpl<X>
         OrderedConcept orderedConcept = compileConcept();
         Var resultVar = orderedConcept.getConcept().getVar();
 
-        Query query = ConceptUtils.createQueryList(orderedConcept, l, o);
+        Query query = ConceptUtils.createQueryList(orderedConcept, requestRange);
 
 
         Selection<X> selection = criteriaQuery.getSelection();
@@ -464,15 +486,22 @@ public class TypedQueryImpl<X>
         QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
 
         // TODO Using the resultVar here is a hack
-        List<Node> items = ServiceUtils.fetchList(qef, query, resultVar);
+        ListService<Concept, Entry<Node, Node>> ls = new ListServiceConcept(qef);
+        ListPaginator<Entry<Node, Node>> paginator = ls.createPaginator(new Concept(new ElementSubQuery(query), resultVar));
 
 
-        List<X> result = items.stream().map(node -> {
+        Stream<Node> items = paginator.apply(requestRange).map(Entry::getKey);
+        //List<Node> items = ServiceUtils.fetchList(qef, query, resultVar);
+
+
+        Stream<X> result = items.map(node -> {
             Class<X> clazz = criteriaQuery.getResultType();
             Object r = engine.find(clazz, node);
             return (X)r;
-        }).collect(Collectors.toList());
-        logger.debug("GOT " + items + " for concept" + query);
+        });
+
+
+        //List<X> result = resultStream.collect(Collectors.toList());
 
 //    	X result;
 //    	if(items.isEmpty()) {

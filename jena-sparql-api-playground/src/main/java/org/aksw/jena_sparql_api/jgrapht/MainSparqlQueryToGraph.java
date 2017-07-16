@@ -171,7 +171,7 @@ public class MainSparqlQueryToGraph {
             RdfEntityManager em = emf.getObject();
 
             List<LsqQuery> queries;
-            int yyy = 2;
+            int yyy = 0;
             if(yyy == 0) {
                 queries = JpaUtils.createTypedQuery(em, LsqQuery.class, (cb, cq) -> {
                     Root<LsqQuery> root = cq.from(LsqQuery.class);
