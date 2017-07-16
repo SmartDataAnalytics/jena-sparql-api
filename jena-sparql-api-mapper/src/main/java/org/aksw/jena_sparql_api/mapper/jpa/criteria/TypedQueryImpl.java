@@ -490,7 +490,9 @@ public class TypedQueryImpl<X>
         ListPaginator<Entry<Node, Node>> paginator = ls.createPaginator(new Concept(new ElementSubQuery(query), resultVar));
 
 
-        Stream<Node> items = paginator.apply(requestRange).map(Entry::getKey);
+        Stream<Entry<Node, Node>> rawItems = paginator.apply(requestRange);
+
+        Stream<Node> items = rawItems.map(Entry::getKey);
         //List<Node> items = ServiceUtils.fetchList(qef, query, resultVar);
 
 

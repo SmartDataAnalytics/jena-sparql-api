@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.jgrapht;
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
 import org.aksw.jena_sparql_api.mapper.annotation.RdfType;
 
-@RdfType("http://spinrdf.org/sp#Query")
+@RdfType("http://lsq.aksw.org/vocab#Query")
 public class LsqQuery {
     @Iri
     protected String iri;
