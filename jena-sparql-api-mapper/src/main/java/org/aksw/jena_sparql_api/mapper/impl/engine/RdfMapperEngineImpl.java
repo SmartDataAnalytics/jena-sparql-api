@@ -621,7 +621,7 @@ public class RdfMapperEngineImpl
         //BiMap<ResolutionTask<PlaceholderInfo>, Integer> taskToId = HashBiMap.create();
 
         //Multimap<EntityId, Indexed<ResolutionTask<PlaceholderInfo>>> valueToResolutionSlot = ArrayListMultimap.create();
-        Set<EntityId> workload = new HashSet<>();
+        //Set<EntityId> workload = new HashSet<>();
         Map<ResolutionTask<PlaceholderInfo>, List<EntityId>> taskToParams = new HashMap<>();
 //        Multimap<ResolutionTask<PlaceholderInfo>, EntityId> taskToParams = ArrayListMultimap.create()//new HashMap<>();
 
@@ -652,7 +652,7 @@ public class RdfMapperEngineImpl
     //                }
 
                     RDFNode valueRdfNode = placeholder.getRdfNode();
-                    Object value;
+                    //Object value;
                     if(valueRdfNode != null) {
     //                    if(valueClass == null) {
     //                        throw new RuntimeException("Should not happen got " + valueRdfNode + " without corresponding java class");
@@ -662,6 +662,8 @@ public class RdfMapperEngineImpl
                         entityIdsByClass.put(valueClass, entityId);
 
                         params.add(entityId);
+                    } else {
+                    	params.add(null);
                     }
                 }
                 taskToParams.put(task, params);
