@@ -54,7 +54,7 @@ public class PathResolverImpl
      * Similar to JPA's metamodel.
      *
      */
-    protected RdfMapperEngine mapperEngine;
+    protected RdfMapperEngineBatched mapperEngine;
     //protected Function<String, PathResolver>
 
     // The property name by this path resolver was reached - null for the root
@@ -72,7 +72,7 @@ public class PathResolverImpl
         return pathFragment;
     }
 
-    public PathResolverImpl(PathFragment pathFragment, RdfMapperEngine mapperEngine, String reachingPropertyName, PathResolverImpl parent) {
+    public PathResolverImpl(PathFragment pathFragment, RdfMapperEngineBatched mapperEngine, String reachingPropertyName, PathResolverImpl parent) {
         super();
         this.pathFragment = pathFragment;
         this.mapperEngine = mapperEngine;
@@ -95,7 +95,7 @@ public class PathResolverImpl
         return result;
     }
 
-    public PathResolver resolve(RdfMapperEngine mapperEngine, PathFragment pathFragment, String propertyName) {
+    public PathResolver resolve(RdfMapperEngineBatched mapperEngine, PathFragment pathFragment, String propertyName) {
         PathResolver result;
 
         PathResolver tmp = pathFragment.getNextResolver();

@@ -27,6 +27,7 @@ import javax.persistence.criteria.Root;
 import javax.persistence.criteria.Selection;
 
 import org.aksw.commons.collections.cache.StreamBackedList;
+import org.aksw.commons.collections.utils.StreamUtils;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptOps;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
@@ -36,7 +37,7 @@ import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.lookup.ListPaginator;
 import org.aksw.jena_sparql_api.lookup.ListService;
 import org.aksw.jena_sparql_api.lookup.ListServiceConcept;
-import org.aksw.jena_sparql_api.mapper.impl.engine.RdfMapperEngine;
+import org.aksw.jena_sparql_api.mapper.impl.engine.RdfMapperEngineBatched;
 import org.aksw.jena_sparql_api.mapper.impl.type.PathResolver;
 import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.ExpressionCompiler;
 import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.VExpression;
@@ -103,8 +104,10 @@ public class TypedQueryImpl<X>
     protected Integer maxResult = null;
 
     protected CriteriaQuery<X> criteriaQuery;
-    protected RdfMapperEngine engine;
+    protected RdfMapperEngineBatched engine;
 
+
+    protected Long batchSize = 30l;
     //protected SparqlService sparqlService;
     //protected Concept concept;
 
@@ -271,7 +274,7 @@ public class TypedQueryImpl<X>
     }*/
 
 
-    public TypedQueryImpl(CriteriaQuery<X> criteriaQuery, RdfMapperEngine engine) {//SparqlService sparqlService, Concept concept) {
+    public TypedQueryImpl(CriteriaQuery<X> criteriaQuery, RdfMapperEngineBatched engine) {//SparqlService sparqlService, Concept concept) {
         this.criteriaQuery = criteriaQuery;
         this.engine = engine;
 
@@ -495,11 +498,15 @@ public class TypedQueryImpl<X>
         Stream<Node> items = rawItems.map(Entry::getKey);
         //List<Node> items = ServiceUtils.fetchList(qef, query, resultVar);
 
+        Stream<List<Node>> batchedItems = StreamUtils.mapToBatch(items, batchSize);
 
-        Stream<X> result = items.map(node -> {
+        Stream<X> result = batchedItems.flatMap(nodes -> {
             Class<X> clazz = criteriaQuery.getResultType();
-            Object r = engine.find(clazz, node);
-            return (X)r;
+            Map<Node, X> map = engine.find(clazz, nodes);
+
+            Stream<X> r = nodes.stream().map(map::get);
+
+            return r;//(X)r;
         });
 
 

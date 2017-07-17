@@ -8,16 +8,17 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import javax.persistence.EntityManager;
+
 import org.aksw.jena_sparql_api.beans.model.EntityModel;
 import org.aksw.jena_sparql_api.beans.model.EntityOps;
 import org.aksw.jena_sparql_api.beans.model.PropertyModel;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.mapper.annotation.DefaultIri;
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
-import org.aksw.jena_sparql_api.mapper.impl.engine.RdfMapperEngine;
-import org.aksw.jena_sparql_api.mapper.impl.engine.RdfMapperEngineImpl;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeMap;
+import org.aksw.jena_sparql_api.mapper.jpa.core.SparqlEntityManagerFactory;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.mapper.util.BeanUtils;
 import org.aksw.jena_sparql_api.sparql.ext.datatypes.RDFDatatypeDate;
@@ -35,52 +36,52 @@ import org.springframework.core.convert.ConversionService;
 public class SpringBatchMappings {
 
 
-	public static <I, O> Function<I, O> memoize(Function<I, O> fn) {
-		Map<I, O> cache = new HashMap<>();
+    public static <I, O> Function<I, O> memoize(Function<I, O> fn) {
+        Map<I, O> cache = new HashMap<>();
 
-		Function<I, O> result = (i) -> cache.computeIfAbsent(i, fn);
-		return result;
-	}
+        Function<I, O> result = (i) -> cache.computeIfAbsent(i, fn);
+        return result;
+    }
 
 
-	public static void test() {
+    public static void test() {
 //	    TypeDeciderImpl typeDecider = new TypeDeciderImpl();
-	    //typeDecider.addMapping(
-	    //typeDecider.exposeShape(rsb);
+        //typeDecider.addMapping(
+        //typeDecider.exposeShape(rsb);
 //	    ResourceShapeBuilder rsb = new ResourceShapeBuilder();
 //	    typeDecider.exposeShape(rsb);
 //	    ResourceShape rs = rsb.getResourceShape();
 //	    ResourceShape.fetchData(qef, rs, NodeFactory.createURI("http://ex.org/11"));
 //
 
-		ConversionServiceFactoryBean bean = new ConversionServiceFactoryBean();
-		bean.afterPropertiesSet();
+        ConversionServiceFactoryBean bean = new ConversionServiceFactoryBean();
+        bean.afterPropertiesSet();
 
-		ConversionService cs = bean.getObject();
+        ConversionService cs = bean.getObject();
 
 //		cs.convert(source, targetType);
 
-    	Long value = 1l;
+        Long value = 1l;
 
-    	TypeMapper tm = TypeMapper.getInstance();
-    	RDFDatatype dt = tm.getTypeByClass(value.getClass());
+        TypeMapper tm = TypeMapper.getInstance();
+        RDFDatatype dt = tm.getTypeByClass(value.getClass());
 
-    	//Object y = dt.cannonicalise(value);
-    	//dt.getJavaClass()
-
-
-    	String lex = dt.unparse(value);
-    	Node node = NodeFactory.createLiteral(lex, dt);
-    	Object o = dt.parse(lex);
-    	System.out.println(o.getClass());
-
-    	Object x = node.getLiteralValue();
-    	System.out.println("Got value: " + x.getClass() + " " + node);
-
-	}
+        //Object y = dt.cannonicalise(value);
+        //dt.getJavaClass()
 
 
-	public static void main(String[] args) {
+        String lex = dt.unparse(value);
+        Node node = NodeFactory.createLiteral(lex, dt);
+        Object o = dt.parse(lex);
+        System.out.println(o.getClass());
+
+        Object x = node.getLiteralValue();
+        System.out.println("Got value: " + x.getClass() + " " + node);
+
+    }
+
+
+    public static void main(String[] args) throws Exception {
 //		ResourceShapeBuilder rsb = new ResourceShapeBuilder();
 //		ResourceShapeImpl rs = new ResourceShapeImpl();
 //
@@ -90,13 +91,13 @@ public class SpringBatchMappings {
 
 
 
-		EntityModel.createDefaultModel(Boolean.class, null);
+        EntityModel.createDefaultModel(Boolean.class, null);
 
 
-		ConversionServiceFactoryBean bean = new ConversionServiceFactoryBean();
-		bean.afterPropertiesSet();
+        ConversionServiceFactoryBean bean = new ConversionServiceFactoryBean();
+        bean.afterPropertiesSet();
 
-		ConversionService conversionService = bean.getObject();
+        ConversionService conversionService = bean.getObject();
 
 
 //        ExecutionContext ecx = new ExecutionContext();
@@ -235,7 +236,13 @@ public class SpringBatchMappings {
 
         SparqlService sparqlService = FluentSparqlService.forModel().create();
 
-        RdfMapperEngine engine = new RdfMapperEngineImpl(sparqlService, typeFactory);
+        EntityManager em = SparqlEntityManagerFactory.create()
+                .setSparqlService(sparqlService)
+                .setTypeFactory(typeFactory)
+                .getObject();
+
+
+//        RdfMapperEngineBatched engine = new RdfMapperEngineImpl(sparqlService, typeFactory);
         //engine.find(clazz, rootNode);
         JobExecution entity = new JobExecution(11l);
         ExecutionContext ec = new ExecutionContext();
@@ -245,24 +252,24 @@ public class SpringBatchMappings {
         entity.setExecutionContext(ec);
 
 
-        engine.merge(entity);
+        em.merge(entity);
         //engine.emitTriples(graph, entity);
 
         Model model = sparqlService.getQueryExecutionFactory().createQueryExecution("CONSTRUCT WHERE { ?s ?p ?o }").execConstruct();
         System.out.println("Graph:");
         model.write(System.out, "TTL");
 
-        JobExecution lr = engine.find(JobExecution.class, NodeFactory.createURI("http://ex.org/11"));
+        JobExecution lr = em.find(JobExecution.class, NodeFactory.createURI("http://ex.org/11"));
         System.out.println("Lookup result: " + lr);
 
         //lr.setVersion(111);
-        engine.merge(lr);
+        em.merge(lr);
 
 
         System.out.println("Graph:");
         sparqlService.getQueryExecutionFactory().createQueryExecution("CONSTRUCT WHERE { ?s ?p ?o }").execConstruct().write(System.out, "TTL");
 
-        System.out.println("Lookup result: " + engine.find(JobExecution.class, NodeFactory.createURI("http://ex.org/11")));
+        System.out.println("Lookup result: " + em.find(JobExecution.class, NodeFactory.createURI("http://ex.org/11")));
 
 
         //EntityManagerJena em = new EntityManagerJena(engine)

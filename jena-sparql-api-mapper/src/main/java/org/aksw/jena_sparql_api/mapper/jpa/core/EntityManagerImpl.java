@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.mapper.jpa.core;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -18,7 +19,7 @@ import javax.persistence.criteria.CriteriaUpdate;
 import javax.persistence.metamodel.Metamodel;
 
 import org.aksw.jena_sparql_api.core.SparqlService;
-import org.aksw.jena_sparql_api.mapper.impl.engine.RdfMapperEngine;
+import org.aksw.jena_sparql_api.mapper.impl.engine.RdfMapperEngineBatched;
 import org.aksw.jena_sparql_api.mapper.jpa.criteria.CriteriaBuilderImpl;
 import org.aksw.jena_sparql_api.mapper.jpa.criteria.TypedQueryImpl;
 import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
@@ -29,7 +30,7 @@ import org.apache.jena.graph.NodeFactory;
 public class EntityManagerImpl
     implements RdfEntityManager
 {
-    protected RdfMapperEngine engine;
+    protected RdfMapperEngineBatched engine;
 
     /**
      * The languagePreferences acts as a default method to priorize and filter items in a set of (literal)
@@ -45,7 +46,7 @@ public class EntityManagerImpl
     protected SparqlService sparqlService;
 
 
-    public EntityManagerImpl(RdfMapperEngine engine) {
+    public EntityManagerImpl(RdfMapperEngineBatched engine) {
         super();
         this.engine = engine;
     }
@@ -86,7 +87,8 @@ public class EntityManagerImpl
             throw new RuntimeException("Invalid primary key type: " + primaryKey);
         }
 
-        T result = engine.find(clazz, node);
+        Map<Node, T> map = engine.find(clazz, Collections.singleton(node));
+        T result = map.get(node);
         //Map<Node, T> nodeToBean = ls.apply(Collections.singleton(node));
         //T result = nodeToBean.get(node);
 

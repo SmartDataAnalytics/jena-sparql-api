@@ -1,6 +1,8 @@
 package org.aksw.jena_sparql_api.mapper.impl.engine;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.SparqlService;
@@ -10,7 +12,12 @@ import org.aksw.jena_sparql_api.mapper.model.TypeDecider;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Prologue;
 
-public interface RdfMapperEngine
+/**
+ * TODO Remove all non-set based methods from the interface
+ * @author raven
+ *
+ */
+public interface RdfMapperEngineBatched
 {
     SparqlService getSparqlService();
 
@@ -20,9 +27,13 @@ public interface RdfMapperEngine
 
     TypeDecider getTypeDecider();
 
-    <T> T find(Class<T> clazz, Node rootNode);
+//    <T> T find(Class<T> clazz, Node rootNode);
+
+//    <T> List<T> find(Class<T> clazz, List<Node> rootNodes);
+
 
     <T> List<T> list(Class<T> clazz, Concept concept);
+    <T> Map<Node, T> find(Class<T> clazz, Collection<Node> rootNodes);
 
 
     <T> T merge(T entity);

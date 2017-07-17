@@ -176,7 +176,7 @@ public class MainSparqlQueryToGraph {
                 queries = JpaUtils.createTypedQuery(em, LsqQuery.class, (cb, cq) -> {
                     Root<LsqQuery> root = cq.from(LsqQuery.class);
                     cq.select(root);
-                }).setMaxResults(10000).getResultList();
+                }).setMaxResults(10).getResultList();
             } else if(yyy == 1) {
                 queries = new ArrayList<>();
                 queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q-005cc91b"));
