@@ -88,7 +88,7 @@ public class RdfMapperEngineImpl
     //protected TypeConversionService typeConverter;
 
 
-    protected Map<EntityId, EntityState> originalState = new HashMap<>();
+    protected Map<EntityId, EntityState> originalState = Collections.synchronizedMap(new HashMap<>());
     //protected Map<EntityId, EntityState> currentState = new HashMap<>();
 
 
@@ -162,15 +162,17 @@ public class RdfMapperEngineImpl
     @Override
     public String getIri(Object entity) {
         String result = null;
-        for(EntityState entityState : originalState.values()) {
-            if(entityState.getEntity() == entity) {
-                RDFNode tmp = entityState.getShapeResource();
-                if(tmp != null && tmp.isResource()) {
-                    result = tmp.asResource().getURI();
-                    break;
+        synchronized(originalState) {
+            for(EntityState entityState : originalState.values()) {
+                if(entityState.getEntity() == entity) {
+                    RDFNode tmp = entityState.getShapeResource();
+                    if(tmp != null && tmp.isResource()) {
+                        result = tmp.asResource().getURI();
+                        break;
+                    }
+                    throw new RuntimeException("Entity exists but does not have an IRI - should not happen");
+                    //result = entityState.getResourceFragment().getResource().getURI()
                 }
-                throw new RuntimeException("Entity exists but does not have an IRI - should not happen");
-                //result = entityState.getResourceFragment().getResource().getURI()
             }
         }
         return result;
