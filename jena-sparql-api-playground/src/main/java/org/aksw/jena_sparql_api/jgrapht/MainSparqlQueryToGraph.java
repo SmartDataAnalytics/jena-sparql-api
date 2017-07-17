@@ -197,6 +197,8 @@ public class MainSparqlQueryToGraph {
             //System.out.println(queries);
             int i = 0;
             for(LsqQuery lsqq : queries) {
+                System.out.println("Got lsq query: " + lsqq);
+
                 String id = em.getIri(lsqq);
                 String queryStr = lsqq.getText();
                 Query query;

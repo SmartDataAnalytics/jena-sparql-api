@@ -621,6 +621,7 @@ public class RdfMapperEngineImpl
         //Multimap<EntityId, Indexed<ResolutionTask<PlaceholderInfo>>> valueToResolutionSlot = ArrayListMultimap.create();
         Set<EntityId> workload = new HashSet<>();
         Map<ResolutionTask<PlaceholderInfo>, List<EntityId>> taskToParams = new HashMap<>();
+//        Multimap<ResolutionTask<PlaceholderInfo>, EntityId> taskToParams = ArrayListMultimap.create()//new HashMap<>();
 
         for(EntityFragment entityFragment : entityFragments) {
 
@@ -661,6 +662,7 @@ public class RdfMapperEngineImpl
                         params.add(entityId);
                     }
                 }
+                taskToParams.put(task, params);
             }
         }
 
