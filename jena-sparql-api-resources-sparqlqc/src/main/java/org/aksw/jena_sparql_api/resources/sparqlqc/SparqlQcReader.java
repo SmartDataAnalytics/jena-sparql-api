@@ -26,13 +26,10 @@ import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.riot.RDFFormat;
-import org.apache.jena.util.ResourceUtils;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-import org.topbraid.spin.vocabulary.SP;
 
 /**
  * The essential method is .loadTasks(rdfFile, queryFolder) which enriches the
@@ -96,7 +93,7 @@ public class SparqlQcReader {
 
     public static void normalizeSqcfModel(Model testSuitesModel) {
         // Transform hasTest to an RDF list
-        Property hasTest = ResourceFactory.createProperty("http://sqc-framework.aksw.org/testsuit#hasTest");
+        Property hasTest = ResourceFactory.createProperty("http://sqc-framework.aksw.org/testsuite#hasTest");
         List<Statement> stmts = testSuitesModel.listStatements(null, hasTest, (RDFNode)null).toList();
         testSuitesModel.remove(stmts);
 
@@ -270,6 +267,12 @@ public class SparqlQcReader {
         return result;
     }
 
+    public static Resource createQueryRecordResource(QueryRef qr) {
+        Resource result = ResourceFactory
+                .createResource("http://ex.org/query-record/Q" + qr.getId() + qr.getVariant());
+        return result;
+    }
+
     public static Resource createSchemaResource(Long id) {
         Resource result = ResourceFactory.createResource("http://ex.org/schema/C" + id);
         return result;
@@ -293,8 +296,12 @@ public class SparqlQcReader {
 
         String content = IOUtils.toString(resource.getInputStream(), StandardCharsets.UTF_8);
 
-        inout.add(result, RDF.type, SparqlQcVocab.Schema).add(result, SparqlQcVocab.id, inout.createTypedLiteral(id))
-                .add(result, LSQtext, inout.createLiteral(content)).add(result, RDFS.label, fileName);
+        inout
+            .add(result, RDF.type, SparqlQcVocab.Schema)
+            .add(result, SparqlQcVocab.id, inout.createTypedLiteral(id))
+            .add(result, LSQtext, inout.createLiteral(content))
+            .add(result, RDFS.label, fileName);
+
         // ResourceFactory.createProperty("http://iguana.aksw.org/ontology#queryId")
         // System.out.println("" + id + variant);
 
@@ -306,13 +313,32 @@ public class SparqlQcReader {
         String fileName = resource.getFilename();
         QueryRef qr = parseQueryId(fileName);
 
-        Resource result = createQueryResource(qr).inModel(inout);
+        Resource result = createQueryRecordResource(qr).inModel(inout);
+
+        Resource q = createQueryResource(qr).inModel(inout);
 
         String content = StreamUtils.toString(resource.getInputStream());
 
-        inout.add(result, RDF.type, SP.Query).add(result, SparqlQcVocab.id, inout.createTypedLiteral(qr.id))
-                .add(result, LSQtext, inout.createLiteral(content))
-                .add(result, SparqlQcVocab.variant, inout.createLiteral(qr.variant)).add(result, RDFS.label, fileName);
+        q
+            .addProperty(RDF.type, SparqlQcVocab.Query)
+            .addLiteral(LSQtext, content)  //inout.createLiteral(content))
+            ;
+
+        result
+            .addProperty(RDF.type, SparqlQcVocab.QueryRecord)
+            .addProperty(SparqlQcVocab.query, q)
+            .addProperty(SparqlQcVocab.id, inout.createTypedLiteral(qr.id))
+            .addProperty(SparqlQcVocab.variant, inout.createLiteral(qr.variant))
+            ;
+
+
+            //.add(result, RDFS.label, fileName);
+            //.add(result, )
+
+//        	.add(result, SparqlQcVocab.id, inout.createTypedLiteral(qr.id))
+//            .add(result, SparqlQcVocab.variant, inout.createLiteral(qr.variant))
+//            .add(result, RDFS.label, fileName);
+//        	.add(result, )
         // ResourceFactory.createProperty("http://iguana.aksw.org/ontology#queryId")
         // System.out.println("" + id + variant);
 
