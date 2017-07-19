@@ -407,16 +407,16 @@ public class SparqlQcReader {
 //            model.add(stmt.getSubject(), stmt.getPredicate(), o);
 //        }
 //    }
-//
-//    @Deprecated
-//    public static Model readQueryFolder(String path) throws IOException {
-//        org.springframework.core.io.Resource[] resources = resolver.getResources(path); // "sparqlqc/1.4/benchmark/noprojection/*");
-//
-//        Model result = ModelFactory.createDefaultModel();
-//
-//        Arrays.asList(resources).stream().forEach(x -> processQueryRecordUnchecked(x, result));
-//
-//        return result;
-//    }
+
+    @Deprecated
+    public static Model readQueryFolder(String path) throws IOException {
+        org.springframework.core.io.Resource[] resources = resolver.getResources(path); // "sparqlqc/1.4/benchmark/noprojection/*");
+
+        Model result = ModelFactory.createDefaultModel();
+
+        Arrays.asList(resources).stream().forEach(x -> processQueryRecordUnchecked(x, result));
+
+        return result;
+    }
 
 }
