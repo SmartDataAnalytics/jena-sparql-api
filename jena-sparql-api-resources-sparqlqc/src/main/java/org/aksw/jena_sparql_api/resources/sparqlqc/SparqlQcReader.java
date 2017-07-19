@@ -230,7 +230,7 @@ public class SparqlQcReader {
                 String baseIri = testSuite.getURI() + "-Q";
 
                 String iri = createQueryResourceIri(baseIri, r);
-                ResourceUtils.renameResource(r, iri);
+                r = ResourceUtils.renameResource(r, iri);
                 return r;
             };
 
