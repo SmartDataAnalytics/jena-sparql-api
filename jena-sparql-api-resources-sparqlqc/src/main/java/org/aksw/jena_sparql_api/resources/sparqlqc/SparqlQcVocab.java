@@ -21,6 +21,9 @@ public class SparqlQcVocab {
     public static final Property result = property("result" );
     //public static final Property error = property("error" );
 
+//    public static final Property sourceQueryRecord = property("sourceQueryRecord" );
+//    public static final Property targetQueryRecord = property("targetQueryRecord" );
+
     public static final Property Schema = property("Schema" );
 
 

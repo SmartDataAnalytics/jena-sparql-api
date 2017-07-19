@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.resources.sparqlqc;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.jena.rdf.model.Model;
@@ -13,7 +14,10 @@ public class MainRdfizeSparqlQc {
     public static void main(String[] args) throws IOException {
         Model model = ModelFactory.createDefaultModel();
 
-        List<Resource> suites = SparqlQcReader.loadTestSuites("sparqlqc/1.4/benchmark/cqnoproj.rdf");
+        List<Resource> suites = new ArrayList<>();
+        suites.addAll(SparqlQcReader.loadTestSuites("sparqlqc/1.4/benchmark/cqnoproj.rdf"));
+        suites.addAll(SparqlQcReader.loadTestSuites("sparqlqc/1.4/benchmark/ucqproj.rdf"));
+        suites.addAll(SparqlQcReader.loadTestSuites("sparqlqc/1.4/benchmark/ucqrdfs.rdf"));
 
         suites.forEach(suite -> model.add(suite.getModel()));
 
