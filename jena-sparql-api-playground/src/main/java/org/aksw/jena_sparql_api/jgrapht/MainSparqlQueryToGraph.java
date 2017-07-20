@@ -14,6 +14,7 @@ import javax.swing.JFrame;
 import org.aksw.combinatorics.solvers.ProblemNeighborhoodAware;
 import org.aksw.commons.util.strings.StringPrettyComparator;
 import org.aksw.jena_sparql_api.algebra.utils.OpExtConjunctiveQuery;
+import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.iso.index.SubGraphIsomorphismIndex;
 import org.aksw.jena_sparql_api.jgrapht.transform.GraphVar;
 import org.aksw.jena_sparql_api.jgrapht.transform.QueryToGraphVisitor;
@@ -31,6 +32,8 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.algebra.Algebra;
@@ -166,7 +169,11 @@ public class MainSparqlQueryToGraph {
             index.add(ag);
         } else {
             SparqlEntityManagerFactory emf = new SparqlEntityManagerFactory();
-            emf.setSparqlService(FluentSparqlService.http("http://localhost:8950/sparql").create());
+            Model model = RDFDataMgr.loadModel("lsq-sparqlqc-synthetic-simple.ttl", Lang.TURTLE);
+            SparqlService ss = FluentSparqlService.from(model).create();
+            //SparqlService ss = FluentSparqlService.http("http://localhost:8950/sparql").create();
+
+            emf.setSparqlService(ss);
             emf.addScanPackageName(MainSparqlQueryToGraph.class.getPackage().getName());
             RdfEntityManager em = emf.getObject();
 

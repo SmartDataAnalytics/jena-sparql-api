@@ -1,0 +1,26 @@
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+
+PREFIX lsq: <http://lsq.aksw.org/vocab#>
+
+PREFIX : <http://lsq.aksw.org/res/>
+
+:q1
+  a lsq:Query ;
+  lsq:text "PREFIX : <http://ex.org/> SELECT * { ?s a :Person }" ;
+  .
+
+:q2
+  a lsq:Query ;
+  lsq:text "PREFIX : <http://ex.org/> SELECT * { ?s a :Person ; :label ?l }" ;
+  .
+
+:q3
+  a lsq:Query ;
+  lsq:text "PREFIX : <http://ex.org/> SELECT * { ?s a :Person ; :label ?l ;  S:name ?n }" ;
+  .
+
