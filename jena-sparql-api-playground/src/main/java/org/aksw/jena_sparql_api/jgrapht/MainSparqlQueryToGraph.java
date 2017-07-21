@@ -15,7 +15,7 @@ import org.aksw.combinatorics.solvers.ProblemNeighborhoodAware;
 import org.aksw.commons.util.strings.StringPrettyComparator;
 import org.aksw.jena_sparql_api.algebra.utils.OpExtConjunctiveQuery;
 import org.aksw.jena_sparql_api.core.SparqlService;
-import org.aksw.jena_sparql_api.iso.index.SubGraphIsomorphismIndex;
+import org.aksw.jena_sparql_api.iso.index.SubGraphIsomorphismIndexRdf;
 import org.aksw.jena_sparql_api.jgrapht.transform.GraphVar;
 import org.aksw.jena_sparql_api.jgrapht.transform.QueryToGraphVisitor;
 import org.aksw.jena_sparql_api.jgrapht.transform.QueryToJenaGraph;
@@ -153,7 +153,7 @@ public class MainSparqlQueryToGraph {
         });
 
 
-        SubGraphIsomorphismIndex<Node> index = SubGraphIsomorphismIndex.create();
+        SubGraphIsomorphismIndexRdf<Node> index = SubGraphIsomorphismIndexRdf.create();
         int xxx = 3;
 
         if(xxx == 0) {

@@ -19,8 +19,17 @@ PREFIX : <http://lsq.aksw.org/res/>
   lsq:text "PREFIX : <http://ex.org/> SELECT * { ?s a :Person ; :label ?l }" ;
   .
 
-:q3
+:q3a
   a lsq:Query ;
-  lsq:text "PREFIX : <http://ex.org/> SELECT * { ?s a :Person ; :label ?l ;  S:name ?n }" ;
+  lsq:text "PREFIX : <http://ex.org/> SELECT * { ?s a :Person ; :label ?l ;  :name ?n }" ;
   .
 
+:q3b
+  a lsq:Query ;
+  lsq:text "PREFIX : <http://ex.org/> SELECT * { ?s a :Person ; :label ?l ;  :name ?n }" ;
+  .
+
+:q4
+  a lsq:Query ;
+  lsq:text "PREFIX : <http://ex.org/> SELECT * { ?s a :Person ; :label ?l ;  :age ?a ; }" ;
+  .

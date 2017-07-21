@@ -1,24 +1,21 @@
 package org.aksw.jena_sparql_api.iso.index;
 
-import org.apache.jena.graph.Graph;
-import org.apache.jena.graph.Node;
-
 import com.google.common.collect.BiMap;
 
-public class InsertPosition<K> {
-    protected GraphIndexNode<K> node;
-    protected Graph residualQueryGraph;
-    protected Graph residualViewGraph;
+public class InsertPosition<K, G, N> {
+    protected GraphIndexNode<K, G, N> node;
+    protected G residualQueryGraph;
+    protected G residualViewGraph;
 
-    protected BiMap<Node, Node> iso;
-    protected BiMap<Node, Node> latestIsoAB;
+    protected BiMap<N, N> iso;
+    protected BiMap<N, N> latestIsoAB;
 
     public InsertPosition(
-            GraphIndexNode<K> node,
+            GraphIndexNode<K, G, N> node,
 //            Graph residualViewGraph,
-            Graph residualQueryGraph,
-            BiMap<Node, Node> iso,
-            BiMap<Node, Node> latestIsoAB) {
+            G residualQueryGraph,
+            BiMap<N, N> iso,
+            BiMap<N, N> latestIsoAB) {
         super();
         this.node = node;
 //        this.residualViewGraph = residualViewGraph;
@@ -27,7 +24,7 @@ public class InsertPosition<K> {
         this.latestIsoAB = latestIsoAB;
     }
 
-    public GraphIndexNode<K> getNode() {
+    public GraphIndexNode<K, G, N> getNode() {
         return node;
     }
 
@@ -35,16 +32,16 @@ public class InsertPosition<K> {
 //        return residualViewGraph;
 //    }
 
-    public Graph getResidualQueryGraph() {
+    public G getResidualQueryGraph() {
         return residualQueryGraph;
     }
 
-    public BiMap<Node, Node> getIso() {
+    public BiMap<N, N> getIso() {
         return iso;
     }
 
 
-    public BiMap<Node, Node> getLatestIsoAB() {
+    public BiMap<N, N> getLatestIsoAB() {
         return latestIsoAB;
     }
 

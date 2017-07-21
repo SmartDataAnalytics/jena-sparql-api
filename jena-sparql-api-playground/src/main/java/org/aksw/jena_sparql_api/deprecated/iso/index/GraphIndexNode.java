@@ -1,10 +1,13 @@
-package org.aksw.jena_sparql_api.iso.index;
+package org.aksw.jena_sparql_api.deprecated.iso.index;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Node;
 
 import com.google.common.collect.BiMap;
 
@@ -28,23 +31,23 @@ import com.google.common.collect.BiMap;
  * @author raven
  *
  */
-public class GraphIndexNode<K, G, N>
+public class GraphIndexNode<K>
     //extends LabeledNodeImpl<Long, GraphIndexNode<K>, SubGraphIsomorphismIndex<K>>
 {
-    protected GraphIndexNode<K, G, N> parent;
+    protected GraphIndexNode<K> parent;
     protected long id;
-    protected BiMap<N, N> transIso;
-    protected G graph;
+    protected BiMap<Node, Node> transIso;
+    protected Graph graph;
     protected Set<K> keys = new HashSet<>();
     //protected LinkedList<GraphIndexNode<K>> children = new LinkedList<>();
-    protected Map<Long, GraphIndexNode<K, G, N>> idToChild = new LinkedHashMap<>();
+    protected Map<Long, GraphIndexNode<K>> idToChild = new LinkedHashMap<>();
 
 
     public boolean isLeaf() {
         return getChildren().isEmpty();
     }
 
-    public GraphIndexNode(GraphIndexNode<K, G, N> parent, Long id) {
+    public GraphIndexNode(GraphIndexNode<K> parent, Long id) {
         this.parent = parent;
         this.id = id;
         //super(tree, id);
@@ -52,15 +55,15 @@ public class GraphIndexNode<K, G, N>
 
 
 
-    public void setParent(GraphIndexNode<K, G, N> parent) {
+    public void setParent(GraphIndexNode<K> parent) {
         this.parent = parent;
     }
 
-    public GraphIndexNode<K, G, N> getParent() {
+    public GraphIndexNode<K> getParent() {
         return parent;
     }
 
-    public BiMap<N, N> getTransIso() {
+    public BiMap<Node, Node> getTransIso() {
         return transIso;
     }
 
@@ -68,11 +71,11 @@ public class GraphIndexNode<K, G, N>
         return id;
     }
 
-    public G getValue() {
+    public Graph getValue() {
         return graph;
     }
 
-    public void setTransIso(BiMap<N, N> transIso) {
+    public void setTransIso(BiMap<Node, Node> transIso) {
         this.transIso = transIso;
     }
 
@@ -80,17 +83,17 @@ public class GraphIndexNode<K, G, N>
         idToChild.remove(id);
     }
 
-    public Collection<GraphIndexNode<K, G, N>> getChildren() {
+    public Collection<GraphIndexNode<K>> getChildren() {
         return idToChild.values();
     }
 
-    public G setValue(G graph) {//IsoMap graphIso) {
+    public Graph setValue(Graph graph) {//IsoMap graphIso) {
         this.graph = graph;
         //return tree.idToGraph.put(id, graphIso);
         return graph;
     }
 
-    public void appendChild(GraphIndexNode<K, G, N> child) {
+    public void appendChild(GraphIndexNode<K> child) {
         if(child.getParent() != null) {
             throw new RuntimeException("Node already has a parent");
         }

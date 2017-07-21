@@ -17,15 +17,11 @@ import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
 import org.aksw.jena_sparql_api.http.HttpExceptionUtils;
 import org.aksw.jena_sparql_api.utils.DatasetDescriptionUtils;
 import org.aksw.jena_sparql_api.utils.DatasetGraphDiffUtils;
+import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.aksw.jena_sparql_api.utils.NodeUtils;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Function;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Iterators;
+import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -45,6 +41,12 @@ import org.apache.jena.update.Update;
 import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateProcessor;
 import org.apache.jena.update.UpdateRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Function;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
 
 public class UpdateExecutionUtils {
 
@@ -263,10 +265,21 @@ public class UpdateExecutionUtils {
 
 
     public static UpdateDeleteInsert createUpdateRename(Node before, Node after, int i) {
-        //TripleUtils.
+        Node[] deleteTerms = { Quad.defaultGraphIRI, Vars.s, Vars.p, Vars.o };
+        deleteTerms[i] = before;
+        Quad deleteQuad = QuadUtils.arrayToQuad(deleteTerms);
 
-        // TODO
-        return null;
+        Node[] insertTerms = { Quad.defaultGraphIRI, Vars.s, Vars.p, Vars.o };
+        insertTerms[i] = after;
+        Quad insertQuad = QuadUtils.arrayToQuad(insertTerms);
+
+        UpdateDeleteInsert result = new UpdateDeleteInsert();
+        result.getDeleteAcc().addQuad(deleteQuad);
+        result.getInsertAcc().addQuad(insertQuad);
+
+        result.setElement(ElementUtils.createElement(deleteQuad));
+
+        return result;
     }
 
     /**

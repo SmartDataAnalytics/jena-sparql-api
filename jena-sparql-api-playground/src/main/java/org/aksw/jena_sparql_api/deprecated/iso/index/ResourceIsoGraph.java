@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.iso.index;
+package org.aksw.jena_sparql_api.deprecated.iso.index;
 
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.Node;
