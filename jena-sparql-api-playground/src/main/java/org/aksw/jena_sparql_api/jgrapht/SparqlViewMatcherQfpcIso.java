@@ -15,6 +15,7 @@ import org.aksw.jena_sparql_api.deprecated.iso.index.ProblemNodeMappingGraph;
 import org.aksw.jena_sparql_api.deprecated.iso.index.ProblemVarMappingCompound;
 import org.aksw.jena_sparql_api.deprecated.iso.index.ProblemVarWrapper;
 import org.aksw.jena_sparql_api.deprecated.iso.index.SubGraphIsomorphismIndex;
+import org.aksw.jena_sparql_api.deprecated.iso.index.SubGraphIsomorphismIndexBase;
 import org.aksw.jena_sparql_api.iso.index.InsertPosition;
 import org.aksw.jena_sparql_api.jgrapht.transform.GraphVar;
 import org.aksw.jena_sparql_api.jgrapht.transform.GraphVarImpl;
@@ -39,7 +40,7 @@ public class SparqlViewMatcherQfpcIso<K>
     protected Map<K, QuadFilterPatternCanonical> keyToCq;
 
     public SparqlViewMatcherQfpcIso() {
-        this.graphIndex = new SubGraphIsomorphismIndex<>(null);//keySupplier);
+        this.graphIndex = new SubGraphIsomorphismIndexBase<>(null);//keySupplier);
         this.keyToCq = new HashMap<>();
     }
 

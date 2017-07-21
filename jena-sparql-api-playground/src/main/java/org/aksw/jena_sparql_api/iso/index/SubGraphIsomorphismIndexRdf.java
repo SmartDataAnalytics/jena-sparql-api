@@ -20,7 +20,7 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.Multimap;
 
 public class SubGraphIsomorphismIndexRdf<K>
-    extends SubGraphIsomorphismIndex<K, Graph, Node>
+    extends SubGraphIsomorphismIndexBase<K, Graph, Node>
 {
     public static SubGraphIsomorphismIndexRdf<Node> create() {
         int i[] = {0};
