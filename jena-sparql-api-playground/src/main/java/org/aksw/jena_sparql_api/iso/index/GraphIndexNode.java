@@ -6,6 +6,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.aksw.commons.collections.set_trie.TagMap;
+import org.aksw.commons.collections.set_trie.TagMapSetTrie;
+
 import com.google.common.collect.BiMap;
 
 /**
@@ -35,18 +38,27 @@ public class GraphIndexNode<K, G, N>
     protected long id;
     protected BiMap<N, N> transIso;
     protected G graph;
+    protected Set<Object> graphTags;
+
     protected Set<K> keys = new HashSet<>();
     //protected LinkedList<GraphIndexNode<K>> children = new LinkedList<>();
     protected Map<Long, GraphIndexNode<K, G, N>> idToChild = new LinkedHashMap<>();
 
+    // Tag-based index of the child nodes
+    protected TagMap<Long, Object> childIndex;
 
     public boolean isLeaf() {
         return getChildren().isEmpty();
     }
 
-    public GraphIndexNode(GraphIndexNode<K, G, N> parent, Long id) {
+    public GraphIndexNode(GraphIndexNode<K, G, N> parent, Long id, BiMap<N, N> transIso, G graph, Set<Object> graphTags, TagMap<Long, Object> childIndex) {
         this.parent = parent;
         this.id = id;
+
+        this.transIso = transIso;
+        this.graph = graph;
+        this.graphTags = graphTags;
+        this.childIndex = childIndex;
         //super(tree, id);
     }
 
@@ -72,12 +84,17 @@ public class GraphIndexNode<K, G, N>
         return graph;
     }
 
-    public void setTransIso(BiMap<N, N> transIso) {
-        this.transIso = transIso;
+    public Set<Object> getGraphTags() {
+        return graphTags;
     }
+
+//    public void setTransIso(BiMap<N, N> transIso) {
+//        this.transIso = transIso;
+//    }
 
     public void removeChildById(long id) {
         idToChild.remove(id);
+        childIndex.remove(id);
     }
 
     public Collection<GraphIndexNode<K, G, N>> getChildren() {
@@ -97,6 +114,10 @@ public class GraphIndexNode<K, G, N>
         child.setParent(this);
 
         idToChild.put(child.getKey(), child);
+
+
+        childIndex.put(child.getKey(), child.graphTags);
+
     }
 
     public Set<K> getKeys() {

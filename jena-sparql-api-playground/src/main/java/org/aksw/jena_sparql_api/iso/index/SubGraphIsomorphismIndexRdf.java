@@ -1,10 +1,13 @@
 package org.aksw.jena_sparql_api.iso.index;
 
+import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.aksw.combinatorics.solvers.ProblemNeighborhoodAware;
+import org.aksw.commons.collections.utils.StreamUtils;
 import org.aksw.jena_sparql_api.jgrapht.SparqlViewMatcherQfpcIso;
 import org.aksw.jena_sparql_api.jgrapht.transform.GraphIsoMapImpl;
 import org.aksw.jena_sparql_api.jgrapht.transform.GraphVarImpl;
@@ -15,6 +18,7 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.compose.Difference;
 import org.apache.jena.graph.compose.Intersection;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.util.graph.GraphUtils;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.Multimap;
@@ -75,6 +79,15 @@ public class SubGraphIsomorphismIndexRdf<K>
     @Override
     public Iterable<BiMap<Node, Node>> match(BiMap<Node, Node> baseIso, Graph viewGraph, Graph insertGraph) {
         Iterable<BiMap<Node, Node>> result = QueryToJenaGraph.match(baseIso, viewGraph, insertGraph).collect(Collectors.toSet());
+        return result;
+    }
+
+    @Override
+    protected Collection<?> extractGraphTags(Graph graph) {
+        Set<Node> result = StreamUtils.stream(GraphUtils.allNodes(graph))
+                .filter(n -> n.isURI() || n.isLiteral())
+                .collect(Collectors.toSet());
+
         return result;
     }
 

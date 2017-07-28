@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.iso.index;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -14,9 +15,12 @@ import java.util.stream.Stream;
 
 import org.aksw.commons.collections.MapUtils;
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
+import org.aksw.commons.collections.multimaps.IBiSetMultimap;
+import org.aksw.commons.collections.set_trie.TagMapSetTrie;
 import org.aksw.commons.collections.trees.ReclaimingSupplier;
-import org.aksw.jena_sparql_api.jgrapht.transform.GraphIsoMap;
 import org.apache.jena.atlas.io.IndentedWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
@@ -35,6 +39,39 @@ import com.google.common.collect.Sets;
 public abstract class SubGraphIsomorphismIndexBase<K, G, N> implements SubGraphIsomorphismIndex<K, G, N>
 //    extends LabeledTree<Long, //GraphIndexNode<K>>
 {
+    private static final Logger logger = LoggerFactory.getLogger(SubGraphIsomorphismIndexBase.class);
+
+    // Optional function that extracts a set of static features from a graph
+    // Typically this is the set of static node and/or edge labels
+    // The feature set must be consistent with the isomorphism relation:
+    // If there is a subgraph iso from '(n)eedle' to '(h)aystack, then
+    // the features of n must be a subset of that of h
+    // existsIso(n, h) implies features(n) subsetOf features(h)
+    //protected Function<G, Collection<?>> graphToStaticFeatures;
+    protected abstract Collection<?> extractGraphTags(G graph);
+
+    public abstract G createSet(); //new GraphVarImpl()
+    public abstract G applyIso(G set, BiMap<N, N> iso); // new GraphIsoMapImpl(removalGraphC, isoCD)
+    public abstract int size(G set);
+    public abstract G difference(G baseSet, G removalSet);
+    public abstract G intersection(G baseSet, G removalSet);
+
+    protected Set<Object> extractGraphTagsWrapper(G graph) {
+        Collection<?> tmp = extractGraphTags(graph);
+        Set<Object> result = tmp.stream().collect(Collectors.toSet());
+        return result;
+    }
+
+
+    /* (non-Javadoc)
+     * @see org.aksw.jena_sparql_api.iso.index.SubGraphIsomorphismIndex#match(com.google.common.collect.BiMap, G, G)
+     */
+    @Override
+    public abstract Iterable<BiMap<N, N>> match(BiMap<N, N> baseIso, G a, G b); // QueryToJenaGraph.match(baseIso, viewGraph, insertGraph).collect(Collectors.toSet());
+
+
+
+
     protected long root;
     protected GraphIndexNode<K, G, N> rootNode;
     protected Supplier<Long> idSupplier;
@@ -49,13 +86,14 @@ public abstract class SubGraphIsomorphismIndexBase<K, G, N> implements SubGraphI
         idSupplier = new ReclaimingSupplier<>(() -> i[0]++);
 
 
-        rootNode = createNode(createSet(), HashBiMap.create());
+        rootNode = createNode(createSet(), Collections.emptySet(), HashBiMap.create());
         //rootNode = createNode(new GraphIsoMapImpl(new GraphVarImpl(), HashBiMap.create()));
         root = rootNode.getKey();
 
     }
 
-    Map<Long, GraphIsoMap> idToGraph = new HashMap<>();
+
+    //Map<Long, GraphIsoMap> idToGraph = new HashMap<>();
 
 
 //    long nextId[] = {0};
@@ -68,15 +106,15 @@ public abstract class SubGraphIsomorphismIndexBase<K, G, N> implements SubGraphI
 //    protected Map<Long, GraphIndexNode<K>> IdToNode = new HashMap<>();
 //    protected ReversibleMap<Long, Long> childToParent = new ReversibleMapImpl<>();
 
-    protected BiHashMultimap<Long, K> idToKeys = new BiHashMultimap<>();
+    protected IBiSetMultimap<Long, K> idToKeys = new BiHashMultimap<>();
 
 
 
     /* (non-Javadoc)
-	 * @see org.aksw.jena_sparql_api.iso.index.SubGraphIsomorphismIndex#removeKey(java.lang.Object)
-	 */
+     * @see org.aksw.jena_sparql_api.iso.index.SubGraphIsomorphismIndex#removeKey(java.lang.Object)
+     */
     @Override
-	public void removeKey(Object key) {
+    public void removeKey(Object key) {
         // Copy id set to avoid concurrent modification
         //Set<Long> ids = idToKeys.getInverse().get(key);
         Set<Long> ids = new HashSet<>(idToKeys.getInverse().get(key));
@@ -98,13 +136,13 @@ public abstract class SubGraphIsomorphismIndexBase<K, G, N> implements SubGraphI
      * @param graphIso
      * @return
      */
-    protected GraphIndexNode<K, G, N> createNode(G graph, BiMap<N, N> transIso) {
+    protected GraphIndexNode<K, G, N> createNode(G graph, Set<Object> graphTags, BiMap<N, N> transIso) {
         Long id = idSupplier.get();
-        GraphIndexNode<K, G, N> result = new GraphIndexNode<K, G, N>(null, id);
-        keyToNode.put(id, result);
 
-        result.setValue(graph);
-        result.setTransIso(transIso);
+//        Set<Object> graphTags = extractGraphTagsWrapper(graph);
+
+        GraphIndexNode<K, G, N> result = new GraphIndexNode<K, G, N>(null, id, transIso, graph, graphTags, new TagMapSetTrie<>());
+        keyToNode.put(id, result);
 
         return result;
     }
@@ -126,16 +164,18 @@ public abstract class SubGraphIsomorphismIndexBase<K, G, N> implements SubGraphI
 
 
     /* (non-Javadoc)
-	 * @see org.aksw.jena_sparql_api.iso.index.SubGraphIsomorphismIndex#lookup(G, boolean)
-	 */
-    @Override
-	public Multimap<K, InsertPosition<K, G, N>> lookup(G queryGraph, boolean exactMatch) {
+     * @see org.aksw.jena_sparql_api.iso.index.SubGraphIsomorphismIndex#lookup(G, boolean)
+     */
+    //@Override
+    public Multimap<K, InsertPosition<K, G, N>> lookup(G queryGraph, boolean exactMatch) {
+
+        Set<Object> queryGraphTags = extractGraphTagsWrapper(queryGraph);
 
         Collection<InsertPosition<K, G, N>> positions = new LinkedList<>();
-        findInsertPositions(positions, rootNode, queryGraph, HashBiMap.create(), HashBiMap.create(), true, exactMatch, IndentedWriter.stderr);
+        findInsertPositions(positions, rootNode, queryGraph, queryGraphTags, HashBiMap.create(), HashBiMap.create(), true, exactMatch, IndentedWriter.stderr);
 
         Multimap<K, InsertPosition<K, G, N>> result = HashMultimap.create();
-        System.out.println("Lookup result candidates: " + positions.size());
+        logger.debug("Lookup result candidates: " + positions.size());
         for(InsertPosition<K, G, N> pos : positions) {
             // Match with the children
 
@@ -153,11 +193,14 @@ public abstract class SubGraphIsomorphismIndexBase<K, G, N> implements SubGraphI
 
     public Multimap<K, BiMap<N, N>> lookupFlat(G queryGraph, boolean exactMatch) {
 
+        Set<Object> queryGraphTags = extractGraphTagsWrapper(queryGraph);
+
+
         Collection<InsertPosition<K, G, N>> positions = new LinkedList<>();
-        findInsertPositions(positions, rootNode, queryGraph, HashBiMap.create(), HashBiMap.create(), true, exactMatch, IndentedWriter.stderr);
+        findInsertPositions(positions, rootNode, queryGraph, queryGraphTags, HashBiMap.create(), HashBiMap.create(), true, exactMatch, IndentedWriter.stderr);
 
         Multimap<K, BiMap<N, N>> result = HashMultimap.create();
-        System.out.println("Lookup result candidates: " + positions.size());
+        logger.debug("Lookup result candidates: " + positions.size());
         for(InsertPosition<K, G, N> pos : positions) {
             // Match with the children
 
@@ -170,10 +213,10 @@ public abstract class SubGraphIsomorphismIndexBase<K, G, N> implements SubGraphI
     }
 
     /* (non-Javadoc)
-	 * @see org.aksw.jena_sparql_api.iso.index.SubGraphIsomorphismIndex#put(K, G)
-	 */
+     * @see org.aksw.jena_sparql_api.iso.index.SubGraphIsomorphismIndex#put(K, G)
+     */
     @Override
-	public K put(K key, G graph) {
+    public K put(K key, G graph) {
         add(key, graph, HashBiMap.create(), IndentedWriter.stderr);
 
         return null;
@@ -207,13 +250,16 @@ public abstract class SubGraphIsomorphismIndexBase<K, G, N> implements SubGraphI
      * @return
      */
     // Note: isoBC will be equivalent to nodeC.getTransIso() on recursion, but the first call will override it
-    GraphIndexNode<K, G, N> cloneWithRemoval(GraphIndexNode<K, G, N> nodeC, BiMap<N, N> isoBC, G removalGraphC, IndentedWriter writer) { //BiMap<Node, Node> isoBC, Graph residualInsertGraphB,
+    //       - so this set of tags depends on the parent node
+    GraphIndexNode<K, G, N> cloneWithRemoval(GraphIndexNode<K, G, N> nodeC, BiMap<N, N> isoBC, G removalGraphC, Set<Object> removalGraphCTags, IndentedWriter writer) { //BiMap<Node, Node> isoBC, Graph residualInsertGraphB,
         G graphC = nodeC.getValue();
 
         G residualGraphC = difference(graphC, removalGraphC);
-        writer.println("Cloned graph size reduced from  " + size(graphC) + " -> " + size(residualGraphC));
+        Set<Object> residualGraphCTags = Sets.difference(nodeC.getGraphTags(), removalGraphCTags);
 
-        GraphIndexNode<K, G, N> newNodeC = createNode(residualGraphC, isoBC);
+        logger.debug("Cloned graph size reduced from  " + size(graphC) + " -> " + size(residualGraphC));
+
+        GraphIndexNode<K, G, N> newNodeC = createNode(residualGraphC, residualGraphCTags, isoBC);
         newNodeC.getKeys().addAll(nodeC.getKeys());
 
 
@@ -222,9 +268,12 @@ public abstract class SubGraphIsomorphismIndexBase<K, G, N> implements SubGraphI
 
             BiMap<N, N> isoCD = child.getTransIso();
 //            GraphIsoMap removalGraphD = new GraphIsoMapImpl(removalGraphC, isoCD);
-          G removalGraphD = applyIso(removalGraphC, isoCD);
+            G removalGraphD = applyIso(removalGraphC, isoCD);
 
-            GraphIndexNode<K, G, N> cloneChild = cloneWithRemoval(child, isoCD, removalGraphD, writer);
+            // NOTE Graph tags are unaffected by isomorphism
+            Set<Object> removalGraphDTags = removalGraphCTags;
+
+            GraphIndexNode<K, G, N> cloneChild = cloneWithRemoval(child, isoCD, removalGraphD, removalGraphDTags, writer);
             //deleteNode(child.getKey());
             newNodeC.appendChild(cloneChild);
         }
@@ -238,17 +287,6 @@ public abstract class SubGraphIsomorphismIndexBase<K, G, N> implements SubGraphI
 
         return newNodeC;
     }
-
-    public abstract G createSet(); //new GraphVarImpl()
-    public abstract G applyIso(G set, BiMap<N, N> iso); // new GraphIsoMapImpl(removalGraphC, isoCD)
-    public abstract int size(G set);
-    public abstract G difference(G baseSet, G removalSet);
-    public abstract G intersection(G baseSet, G removalSet);
-    /* (non-Javadoc)
-	 * @see org.aksw.jena_sparql_api.iso.index.SubGraphIsomorphismIndex#match(com.google.common.collect.BiMap, G, G)
-	 */
-    @Override
-	public abstract Iterable<BiMap<N, N>> match(BiMap<N, N> baseIso, G a, G b); // QueryToJenaGraph.match(baseIso, viewGraph, insertGraph).collect(Collectors.toSet());
 
     public boolean isEmpty(G graph) {
         boolean result = size(graph) == 0;
@@ -288,11 +326,14 @@ public abstract class SubGraphIsomorphismIndexBase<K, G, N> implements SubGraphI
      * @param retrievalMode false: only return leaf nodes of insertion, true: return all encountered nodes
      * @param writer
      */
-    void findInsertPositions(Collection<InsertPosition<K, G, N>> out, GraphIndexNode<K, G, N> node, G insertGraph, BiMap<N, N> rawBaseIso, BiMap<N, N> latestIsoAB, boolean retrievalMode, boolean exactMatch, IndentedWriter writer) {
+    void findInsertPositions(Collection<InsertPosition<K, G, N>> out, GraphIndexNode<K, G, N> node, G insertGraph, Set<Object> insertGraphTags, BiMap<N, N> rawBaseIso, BiMap<N, N> latestIsoAB, boolean retrievalMode, boolean exactMatch, IndentedWriter writer) {
         BiMap<N, N> transIso = node.getTransIso();//.getValue().getInToOut();
 
         // Map the image of the iso through the view graph iso
         BiMap<N, N> baseIso = mapDomainVia(rawBaseIso, transIso);
+
+        // Create the residual set of tags by removing the tags present on the current node from the graphTags
+        Set<Object> residualInsertGraphTags = Sets.difference(insertGraphTags, node.getGraphTags());
 
 
         writer.println("Finding insert position for user graph of size " + size(insertGraph));
@@ -302,7 +343,13 @@ public abstract class SubGraphIsomorphismIndexBase<K, G, N> implements SubGraphI
         boolean isSubsumed = false;
 
         writer.incIndent();
-        for(GraphIndexNode<K, G, N> child : node.getChildren()) {
+        Collection<GraphIndexNode<K, G, N>> candChildren =
+                node.childIndex.getAllSupersetsOf(residualInsertGraphTags, false).keySet().stream()
+                .map(nodeId -> node.idToChild.get(nodeId))
+                .collect(Collectors.toList());
+
+        //for(GraphIndexNode<K, G, N> child : node.getChildren()) {
+        for(GraphIndexNode<K, G, N> child : candChildren) {
 
             G viewGraph = child.getValue();
 
@@ -343,16 +390,18 @@ public abstract class SubGraphIsomorphismIndexBase<K, G, N> implements SubGraphI
                 //Graph g = new GraphIsoMapImpl(viewGraph, iso);
                 G g = applyIso(viewGraph, iso);
 
-                G diff = difference(insertGraph, g);
+                G graphDiff = difference(insertGraph, g);
                 //Difference diff = new Difference(insertGraph, g);
 
                 // now create the diff between the insert graph and mapped child graph
-                writer.println("Diff " + diff + " has "+ size(diff) + " triples at depth " + writer.getUnitIndent());
+                writer.println("Diff " + graphDiff + " has "+ size(graphDiff) + " triples at depth " + writer.getUnitIndent());
 
+
+                //Set<Object> tagDiff = Sets.difference(insertGraphTags, node.graphTags);
 
 
                 // TODO optimize handling of empty diffs
-                findInsertPositions(out, child, diff, baseIso, iso, retrievalMode, exactMatch, writer);
+                findInsertPositions(out, child, graphDiff, residualInsertGraphTags, baseIso, iso, retrievalMode, exactMatch, writer);
 
                 affectedKeys.forEach(baseIso::remove);
 
@@ -368,7 +417,7 @@ public abstract class SubGraphIsomorphismIndexBase<K, G, N> implements SubGraphI
                 writer.println("Marking location for insert");
                 //System.out.println("keys at node: " + node.getKeys() + " - " + node);
                 // Make a copy of the baseIso, as it is transient due to state space search
-                InsertPosition<K, G, N> pos = new InsertPosition<>(node, insertGraph, HashBiMap.create(baseIso), latestIsoAB);
+                InsertPosition<K, G, N> pos = new InsertPosition<>(node, insertGraph, insertGraphTags, HashBiMap.create(baseIso), latestIsoAB);
                 out.add(pos);
             }
         }
@@ -386,7 +435,7 @@ public abstract class SubGraphIsomorphismIndexBase<K, G, N> implements SubGraphI
         //result.getP
 
         idToKeys.removeAll(node);
-        idToGraph.remove(node);
+        //idToGraph.remove(node);
 
         return result;
         //return super.deleteNode(node);
@@ -401,8 +450,10 @@ public abstract class SubGraphIsomorphismIndexBase<K, G, N> implements SubGraphI
     void add(K key, G insertGraph, BiMap<N, N> baseIso, IndentedWriter writer) {
         // The insert graph must be larger than the node Graph
 
+        Set<Object> insertGraphTags = extractGraphTagsWrapper(insertGraph);
+
         Collection<InsertPosition<K, G, N>> positions = new LinkedList<>();
-        findInsertPositions(positions, rootNode, insertGraph, baseIso, HashBiMap.create(), false, false, writer);
+        findInsertPositions(positions, rootNode, insertGraph, insertGraphTags, baseIso, HashBiMap.create(), false, false, writer);
 
 //        positions.forEach(p -> {
 //            System.out.println("Insert pos: " + p.getNode().getKey() + " --- " + p.getIso());
@@ -418,7 +469,7 @@ public abstract class SubGraphIsomorphismIndexBase<K, G, N> implements SubGraphI
     }
 
     public void printTree(GraphIndexNode<K, G, N> node, IndentedWriter writer) {
-        writer.println("" + node.getKey() + " keys: " + node.getKeys());
+        writer.println("" + node.getKey() + " keys: " + node.getKeys() + " --- " + node.getGraphTags());
         writer.incIndent();
         for(GraphIndexNode<K, G, N> child : node.getChildren()) {
             printTree(child, writer);
@@ -431,6 +482,7 @@ public abstract class SubGraphIsomorphismIndexBase<K, G, N> implements SubGraphI
         //Graph insertGraphIsoB = pos.getGraphIso();
 
         G residualInsertGraphB = pos.getResidualQueryGraph();
+        Set<Object> residualInsertGraphBTags = pos.getResidualQueryGraphTags();
 
 
         // If the insert graph is empty, just append the key to the insert node
@@ -445,7 +497,7 @@ public abstract class SubGraphIsomorphismIndexBase<K, G, N> implements SubGraphI
         BiMap<N, N> isoAB = pos.getLatestIsoAB();
         BiMap<N, N> baseIso = pos.getIso();
 
-        GraphIndexNode<K, G, N> nodeB = createNode(residualInsertGraphB, isoAB);
+        GraphIndexNode<K, G, N> nodeB = createNode(residualInsertGraphB, residualInsertGraphBTags, isoAB);
         nodeB.getKeys().add(key);
 
         writer.println("Insert attempt of user graph of size " + size(residualInsertGraphB));
@@ -480,6 +532,7 @@ public abstract class SubGraphIsomorphismIndexBase<K, G, N> implements SubGraphI
             while(it.hasNext()) {
                 GraphIndexNode<K, G, N> nodeC = it.next();
                 G viewGraphC = nodeC.getValue();
+                Set<Object> viewGraphCTags = nodeC.getGraphTags();
 
                 writer.println("Comparison with view graph of size " + size(viewGraphC));
 //                RDFDataMgr.write(System.out, viewGraph, RDFFormat.NTRIPLES);
@@ -499,8 +552,12 @@ public abstract class SubGraphIsomorphismIndexBase<K, G, N> implements SubGraphI
                     // TODO FUCK! This isoGraph object may be a reason to keep the original graph and the iso in a combined graph object
                     //nodeB = nodeB == null ? createNode(residualInsertGraphB, isoAB) : nodeB;
                     G mappedResidualInsertGraphC = applyIso(residualInsertGraphB, isoBC);
+                    Set<Object> mappedResidualInsertGraphCTags = residualInsertGraphBTags;
                     G removalGraphC = intersection(mappedResidualInsertGraphC, viewGraphC);
-                    GraphIndexNode<K, G, N> newChildC = cloneWithRemoval(nodeC, isoBC, removalGraphC, writer);
+
+                    Set<Object> removalGraphCTags = Sets.intersection(mappedResidualInsertGraphCTags, viewGraphCTags);
+
+                    GraphIndexNode<K, G, N> newChildC = cloneWithRemoval(nodeC, isoBC, removalGraphC, removalGraphCTags, writer);
 
                     nodeB.appendChild(newChildC);//add(newChild, baseIso, writer);
 

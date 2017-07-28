@@ -19,7 +19,7 @@ public interface SubGraphIsomorphismIndex<K, G, N> {
      * @param queryGraph
      * @return
      */
-    Multimap<K, InsertPosition<K, G, N>> lookup(G queryGraph, boolean exactMatch);
+    //Multimap<K, InsertPosition<K, G, N>> lookup(G queryGraph, boolean exactMatch);
 
     /**
      * Insert a graph pattern with a specific key, thereby replacing any existing one having this key already
