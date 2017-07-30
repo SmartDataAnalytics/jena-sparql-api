@@ -30,6 +30,6 @@ public class LsqQuery {
 
     @Override
     public String toString() {
-        return "LsqQuery [text=" + text + "]";
+        return "LsqQuery [iri=" + iri + ", text=" + text + "]";
     }
 }

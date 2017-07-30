@@ -28,8 +28,8 @@ public class SetOpsJGraphTRdfJena
         NodeTransform tmp = (node) -> MoreObjects.firstNonNull(nodeTransform.apply(node), node);
         Triple result = NodeTransformLib.transform(tmp, edge);
 
-        System.out.println("Transformed " + edge);
-        System.out.println("  Into " + result);
+//        System.out.println("Transformed " + edge);
+//        System.out.println("  Into " + result);
 
         return result;
     }

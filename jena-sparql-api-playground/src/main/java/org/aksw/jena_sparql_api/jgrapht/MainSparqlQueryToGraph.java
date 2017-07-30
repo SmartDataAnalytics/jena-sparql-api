@@ -211,9 +211,12 @@ public class MainSparqlQueryToGraph {
             //System.out.println(queries);
             int i = 0;
             for(LsqQuery lsqq : queries) {
+                // TODO HACK We need to fetch the iri from the em, as the mapper currently does not support placing an entity's iri into a field
+                String id = em.getIri(lsqq);
+                lsqq.setIri(id);
+
                 System.out.println("Got lsq query: " + lsqq);
 
-                String id = em.getIri(lsqq);
                 String queryStr = lsqq.getText();
                 Query query;
                 try {

@@ -46,16 +46,28 @@ public abstract class SetOpsJGraphTBase<V, E, G extends Graph<V, E>>
 
 
     public static <V, E, T extends Graph<V, E>> T difference(T result, Graph<V, E> baseSet, Graph<V, E> removalSet) {
-        Graphs.addGraph(result, baseSet);
 
-        //Graphs.unio
-        result.removeAllEdges(removalSet.edgeSet());
-        baseSet.vertexSet().forEach(v -> {
-            if(baseSet.edgesOf(v).isEmpty()) {
-                result.removeVertex(v);
+        baseSet.edgeSet().forEach(e -> {
+            boolean skip = removalSet.containsEdge(e);
+            if(!skip) {
+                V srcVertex = baseSet.getEdgeSource(e);
+                V tgtVertex = baseSet.getEdgeTarget(e);
+                result.addVertex(srcVertex);
+                result.addVertex(tgtVertex);
+                result.addEdge(srcVertex, tgtVertex, e);
             }
         });
 
+//    	Graphs.addGraph(result, baseSet);
+//
+//        //Graphs.unio
+//        result.removeAllEdges(removalSet.edgeSet());
+//        baseSet.vertexSet().forEach(v -> {
+//            if(baseSet.edgesOf(v).isEmpty()) {
+//                result.removeVertex(v);
+//            }
+//        });
+//
         return result;
     }
 
