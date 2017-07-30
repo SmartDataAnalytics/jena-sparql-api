@@ -4,7 +4,8 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import org.jgrapht.Graph;
-import org.jgrapht.Graphs;
+
+import com.google.common.base.MoreObjects;
 
 public abstract class SetOpsJGraphTBase<V, E, G extends Graph<V, E>>
     implements SetOps<G, V>
@@ -78,7 +79,9 @@ public abstract class SetOpsJGraphTBase<V, E, G extends Graph<V, E>>
 
 
     public static <V, E, G extends Graph<V, E>> G transformItems(G result, G set, Function<V, V> nodeTransform, BiFunction<E, Function<V, V>, E> edgeTransform) {
-        set.vertexSet().stream().map(nodeTransform).forEach(result::addVertex);
+        set.vertexSet().stream()
+            .map(item -> MoreObjects.firstNonNull(nodeTransform.apply(item), item))
+            .forEach(result::addVertex);
 
         set.edgeSet().stream().forEach(e -> {
             E isoEdge = edgeTransform.apply(e, nodeTransform);

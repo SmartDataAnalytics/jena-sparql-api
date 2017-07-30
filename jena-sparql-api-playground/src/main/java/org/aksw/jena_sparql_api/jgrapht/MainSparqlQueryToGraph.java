@@ -1,12 +1,16 @@
 package org.aksw.jena_sparql_api.jgrapht;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import javax.persistence.criteria.Root;
 import javax.swing.JFrame;
@@ -14,7 +18,6 @@ import javax.swing.JFrame;
 import org.aksw.commons.util.strings.StringPrettyComparator;
 import org.aksw.jena_sparql_api.algebra.utils.OpExtConjunctiveQuery;
 import org.aksw.jena_sparql_api.core.SparqlService;
-import org.aksw.jena_sparql_api.iso.index.SetOpsJGraphTRdfJena;
 import org.aksw.jena_sparql_api.iso.index.SubGraphIsomorphismIndex;
 import org.aksw.jena_sparql_api.iso.index.SubGraphIsomorphismIndexJGraphT;
 import org.aksw.jena_sparql_api.iso.index.SubGraphIsomorphismIndexWrapper;
@@ -47,7 +50,6 @@ import org.jgrapht.ext.JGraphModelAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Functions;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.jgraph.layout.JGraphFacade;
@@ -70,6 +72,14 @@ public class MainSparqlQueryToGraph {
 
 
     public static void main(String[] args) throws Exception {
+        Iterable<Integer> iA = Arrays.asList(1, 2, 2, 3);
+        Iterator<Integer> itA = iA.iterator();
+        Stream<Integer> streamA = StreamSupport.stream(((Iterable<Integer>)() -> itA).spliterator(), false);
+        Iterable<Integer> iB = () -> streamA.distinct().iterator();
+        for(Integer item : iB) {
+            System.out.println(item);
+        }
+
         org.apache.jena.graph.Graph g = new GraphVarImpl(); //GraphFactory.createDefaultGraph();
         g.add(new Triple(Vars.s, Vars.p, Vars.o));
         RDFDataMgr.write(System.out, g, RDFFormat.NTRIPLES);
@@ -242,7 +252,7 @@ public class MainSparqlQueryToGraph {
                     QueryToGraphVisitor q2g = new ExtendedQueryToGraphVisitor(ssn.get());
                     q2g.visit(ocq);
                     GraphVar graph = q2g.getGraph();
-                    System.out.println(graph);
+                    //System.out.println(graph);
                     index.put(NodeFactory.createURI(id), graph);
                 }
 

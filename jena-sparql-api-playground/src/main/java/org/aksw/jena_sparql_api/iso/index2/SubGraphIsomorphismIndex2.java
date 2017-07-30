@@ -13,22 +13,19 @@ import java.util.stream.Stream;
 
 import org.aksw.commons.collections.reversible.ReversibleMap;
 import org.aksw.commons.collections.reversible.ReversibleMapImpl;
-import org.aksw.commons.collections.utils.StreamUtils;
 import org.aksw.jena_sparql_api.iso.index.SubGraphIsomorphismIndex;
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.Triple;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.GraphMapping;
 import org.jgrapht.Graphs;
 import org.jgrapht.alg.isomorphism.IsomorphicGraphMapping;
 import org.jgrapht.alg.isomorphism.VF2SubgraphIsomorphismInspector;
-import org.jgrapht.graph.DirectedSubgraph;
 import org.jgrapht.graph.SimpleDirectedGraph;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Streams;
 
 /**
  * Implementation of the sub graph isomorphism index which merges all insert DAGs (TODO would it also work with arbitrary graphs)
@@ -73,7 +70,7 @@ public abstract class SubGraphIsomorphismIndex2<K, N, E>
                 new VF2SubgraphIsomorphismInspector<>(b, a, nodeCmp, edgeCmp, true);
         Iterator<GraphMapping<N, E>> it = inspector.getMappings();
 
-        Stream<BiMap<N, N>> r = StreamUtils.stream(it)
+        Stream<BiMap<N, N>> r = Streams.stream(it)
             .map(m -> (IsomorphicGraphMapping<N, E>)m)
             .map(m -> { // TODO Maybe implementing a BiMap wrapper backed by IsomorphicGraphMapping improves performance a little
                 BiMap<N, N> nodeMap = HashBiMap.create();//new HashMap<>();

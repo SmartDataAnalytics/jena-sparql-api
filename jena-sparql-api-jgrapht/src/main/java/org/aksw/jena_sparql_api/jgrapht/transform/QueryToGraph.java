@@ -9,7 +9,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import org.aksw.commons.collections.utils.StreamUtils;
 import org.aksw.jena_sparql_api.jgrapht.wrapper.LabeledEdge;
 import org.aksw.jena_sparql_api.jgrapht.wrapper.LabeledEdgeImpl;
 import org.aksw.jena_sparql_api.utils.DnfUtils;
@@ -24,6 +23,8 @@ import org.jgrapht.DirectedGraph;
 import org.jgrapht.GraphMapping;
 import org.jgrapht.alg.isomorphism.IsomorphicGraphMapping;
 import org.jgrapht.alg.isomorphism.VF2SubgraphIsomorphismInspector;
+
+import com.google.common.collect.Streams;
 
 
 public class QueryToGraph {
@@ -142,7 +143,7 @@ public class QueryToGraph {
         VF2SubgraphIsomorphismInspector<Node, LabeledEdge<Node, Node>> inspector = new VF2SubgraphIsomorphismInspector<>(b, a, nodeCmp, edgeCmp, true);
         Iterator<GraphMapping<Node, LabeledEdge<Node, Node>>> it = inspector.getMappings();
 
-        Stream<Map<Var, Var>> result = StreamUtils.stream(it)
+        Stream<Map<Var, Var>> result = Streams.stream(it)
                 .map(x -> (IsomorphicGraphMapping<Node, LabeledEdge<Node, Node>>)x)
                 .map(x -> {
                     Map<Var, Var> varMap = new HashMap<>();

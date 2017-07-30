@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -20,6 +21,7 @@ import org.aksw.commons.collections.multimaps.IBiSetMultimap;
 import org.aksw.commons.collections.set_trie.TagMapSetTrie;
 import org.aksw.commons.collections.trees.ReclaimingSupplier;
 import org.apache.jena.atlas.io.IndentedWriter;
+import org.apache.jena.ext.com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,20 +30,25 @@ import com.google.common.collect.HashBiMap;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
+import com.google.common.collect.Streams;
 
 /**
+ * Generic sub graph isomorphism index class that is essentially a Map.
+ * Keys of type K are associated with a graph/set of type G having items of type V.
  *
- *
+ * Instances are parameterized with set operations, an isomorphims matcher and an optional
+ * graph tagger.
  *
  * @author raven
  *
  * @param <K>
  */
-public abstract class SubGraphIsomorphismIndexBase<K, G, V> implements SubGraphIsomorphismIndex<K, G, V>
+public class SubGraphIsomorphismIndexBase<K, G, V> implements SubGraphIsomorphismIndex<K, G, V>
 //    extends LabeledTree<Long, //GraphIndexNode<K>>
 {
     private static final Logger logger = LoggerFactory.getLogger(SubGraphIsomorphismIndexBase.class);
 
+    protected IsoMatcher<G, V> isoMatcher;
     // Optional function that extracts a set of static features from a graph
     // Typically this is the set of static node and/or edge labels
     // The feature set must be consistent with the isomorphism relation:
@@ -50,26 +57,14 @@ public abstract class SubGraphIsomorphismIndexBase<K, G, V> implements SubGraphI
     // existsIso(n, h) implies features(n) subsetOf features(h)
     //protected Function<G, Collection<?>> graphToStaticFeatures;
     //protected abstract Collection<?> extractGraphTags(G graph);
-
     protected Function<? super G, Collection<?>> extractGraphTags;
-
     protected SetOps<G, V> setOps;
-//    public abstract G createSet(); //new GraphVarImpl()
-//    public abstract G applyIso(G set, BiMap<N, N> iso); // new GraphIsoMapImpl(removalGraphC, isoCD)
-//    public abstract int size(G set);
-//    public abstract G difference(G baseSet, G removalSet);
-//    public abstract G intersection(G baseSet, G removalSet);
 
     protected Set<Object> extractGraphTagsWrapper(G graph) {
         Collection<?> tmp = extractGraphTags.apply(graph);
         Set<Object> result = tmp.stream().collect(Collectors.toSet());
         return result;
     }
-
-
-    public abstract Iterable<BiMap<V, V>> match(BiMap<V, V> baseIso, G a, G b); // QueryToJenaGraph.match(baseIso, viewGraph, insertGraph).collect(Collectors.toSet());
-
-
 
 
     protected long root;
@@ -81,12 +76,14 @@ public abstract class SubGraphIsomorphismIndexBase<K, G, V> implements SubGraphI
     public SubGraphIsomorphismIndexBase(
             Supplier<K> keySupplier,
             SetOps<G, V> setOps,
-            Function<? super G, Collection<?>> extractGraphTags
+            Function<? super G, Collection<?>> extractGraphTags,
+            IsoMatcher<G, V> isoMatcher
             ) {
         super();
         this.keySupplier = keySupplier;
         this.setOps = setOps;
         this.extractGraphTags = extractGraphTags;
+        this.isoMatcher = isoMatcher;
 
         long i[] = {0};
         idSupplier = new ReclaimingSupplier<>(() -> i[0]++);
@@ -150,6 +147,8 @@ public abstract class SubGraphIsomorphismIndexBase<K, G, V> implements SubGraphI
         GraphIndexNode<K, G, V> result = new GraphIndexNode<K, G, V>(null, id, transIso, graph, graphTags, new TagMapSetTrie<>());
         keyToNode.put(id, result);
 
+
+        logger.debug("Created node with id " + id);
         return result;
     }
 
@@ -168,6 +167,97 @@ public abstract class SubGraphIsomorphismIndexBase<K, G, V> implements SubGraphI
         return key;
     }
 
+
+    public Map<K, Iterable<BiMap<V, V>>> lookupStream(G queryGraph, boolean exactMatch) {
+        Multimap<K, InsertPosition<K, G, V>> matches = lookup(queryGraph, exactMatch);
+
+        Map<K, Iterable<BiMap<V, V>>> result =
+            matches.asMap().entrySet().stream()
+                .collect(Collectors.toMap(
+                        Entry::getKey,
+                        e -> createProblem(e.getValue())));
+
+        return result;
+    }
+
+//    protected ProblemNeighborhoodAware<BiMap<V, V>, V> toProblem(InsertPosition<?, G, V> pos) {
+//        BiMap<V, V> baseIso = pos.getIso();
+//        G residualQueryGraph = pos.getResidualQueryGraph();
+//
+//        // TODO This looks wrong, why an empty graph here?!
+//        G residualViewGraph = setOps.createNew(); // new
+//                                                    // GraphVarImpl();//pos.getNode().getValue();
+//                                                    // //new
+//                                                    // GraphIsoMapImpl(pos.getNode().getValue(),
+//                                                    // pos.getNode().getTransIso());
+//                                                    // //pos.getNode().getValue();
+//
+//        // QueryToJenaGraph::createNodeComparator,
+//        // QueryToJenaGraph::createEdgeComparator);
+//        ProblemNeighborhoodAware<BiMap<V, V>, V> result = isoMatcher.match(baseIso, residualViewGraph, residualQueryGraph);
+//
+//        return result;
+//    }
+
+    protected Iterable<BiMap<V, V>> toProblem(InsertPosition<?, G, V> pos) {
+        BiMap<V, V> baseIso = pos.getIso();
+        G residualQueryGraph = pos.getResidualQueryGraph();
+
+        // TODO This looks wrong, why an empty graph here?!
+        G residualViewGraph = setOps.createNew(); // new
+                                                    // GraphVarImpl();//pos.getNode().getValue();
+                                                    // //new
+                                                    // GraphIsoMapImpl(pos.getNode().getValue(),
+                                                    // pos.getNode().getTransIso());
+                                                    // //pos.getNode().getValue();
+
+        // QueryToJenaGraph::createNodeComparator,
+        // QueryToJenaGraph::createEdgeComparator);
+        Iterable<BiMap<V, V>> result = isoMatcher.match(baseIso, residualViewGraph, residualQueryGraph);
+
+        return result;
+    }
+
+    protected Iterable<BiMap<V, V>> createProblem(Collection<? extends InsertPosition<?, G, V>> poss) {
+        Iterable<BiMap<V, V>> result = () -> poss.stream()
+                //The following two lines are equivalent to .flatMap(pos -> Streams.stream(toProblem(pos)))
+                .map(this::toProblem)
+                .flatMap(Streams::stream)
+                .distinct()
+                .iterator();
+                //.collect(Collectors.toList());
+
+        return result;
+    }
+//
+//    public Map<K, ProblemNeighborhoodAware<BiMap<V, V>, V>> lookupStream2(G queryGraph, boolean exactMatch) {
+//        Multimap<K, InsertPosition<K, G, V>> matches = lookup(queryGraph, exactMatch);
+//
+//        Map<K, ProblemNeighborhoodAware<BiMap<V, V>, V>> result =
+//            matches.asMap().entrySet().stream()
+//                .collect(Collectors.toMap(
+//                        Entry::getKey,
+//                        e -> createProblem(e.getValue())
+//                        ));
+//
+//        return result;
+////                    Map<K, ProblemNeighborhoodAware<BiMap<Var, Var>, Var>> result = matches.asMap().entrySet().stream()
+////                            .collect(Collectors.toMap(e -> e.getKey(), e -> SparqlViewMatcherQfpcIso.createCompound(e.getValue())));
+////
+////
+////        BiMap<Node, Node> baseIso = pos.getIso();
+////
+////
+////        System.out.println("RAW SOLUTIONS for " + pos.getNode().getKey());
+////        rawProblem.generateSolutions().forEach(s -> {
+////            System.out.println("  Raw Solution: " + s);
+////        });
+////
+////        ProblemNeighborhoodAware<BiMap<Var, Var>, Var> result = new ProblemVarWrapper(rawProblem);
+////
+////
+////        return result;
+//    }
 
     /* (non-Javadoc)
      * @see org.aksw.jena_sparql_api.iso.index.SubGraphIsomorphismIndex#lookup(G, boolean)
@@ -263,7 +353,7 @@ public abstract class SubGraphIsomorphismIndexBase<K, G, V> implements SubGraphI
         G residualGraphC = setOps.difference(graphC, removalGraphC);
         Set<Object> residualGraphCTags = Sets.difference(nodeC.getGraphTags(), removalGraphCTags);
 
-        logger.debug("Cloned graph size reduced from  " + setOps.size(graphC) + " -> " + setOps.size(residualGraphC));
+        logger.debug("At node " + nodeC.getKey() + ": Cloned graph size reduced from  " + setOps.size(graphC) + " -> " + setOps.size(residualGraphC));
 
         GraphIndexNode<K, G, V> newNodeC = createNode(residualGraphC, residualGraphCTags, isoBC);
         newNodeC.getKeys().addAll(nodeC.getKeys());
@@ -368,7 +458,9 @@ public abstract class SubGraphIsomorphismIndexBase<K, G, V> implements SubGraphI
             writer.incIndent();
             int i = 0;
             //baseIso.inverse()
-            Iterable<BiMap<V, V>> isos = match(baseIso, viewGraph, insertGraph);
+            Iterable<BiMap<V, V>> isos = isoMatcher.match(baseIso, viewGraph, insertGraph);
+//            isos = Lists.newArrayList(isos);
+//            System.out.println("Worked B!");
             for(BiMap<V, V> iso : isos) {
             //for(BiMap<Node, Node> iso : Lists.newArrayList(toIterable(QueryToJenaGraph.match(baseIso, viewGraph, insertGraph)))) {
 
@@ -550,7 +642,9 @@ public abstract class SubGraphIsomorphismIndexBase<K, G, V> implements SubGraphI
                 int i = 0;
 
                 boolean isSubsumedC = false;
-                Iterable<BiMap<V, V>> isosBC = match(baseIso.inverse(), residualInsertGraphB, viewGraphC);//QueryToJenaGraph.match(baseIso.inverse(), residualInsertGraphB, viewGraphC).collect(Collectors.toSet());
+                Iterable<BiMap<V, V>> isosBC = isoMatcher.match(baseIso.inverse(), residualInsertGraphB, viewGraphC);//QueryToJenaGraph.match(baseIso.inverse(), residualInsertGraphB, viewGraphC).collect(Collectors.toSet());
+//                isosBC = Lists.newArrayList(isosBC);
+//                System.out.println("Worked A!");
                 for(BiMap<V, V> isoBC : isosBC) {
                     isSubsumedC = true;
                     writer.println("Detected subsumption #" + ++i + " with iso: " + isoBC);

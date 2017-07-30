@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
-import org.aksw.commons.collections.utils.StreamUtils;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
@@ -29,6 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Range;
+import com.google.common.collect.Streams;
 
 public class MapPaginatorSparqlQuery
     extends MapPaginatorSparqlQueryBase<Node, ResultSetPart>
@@ -171,7 +171,7 @@ public class MapPaginatorSparqlQuery
           }
       };
 
-      Stream<Entry<Node, ResultSetPart>> result = StreamUtils.stream(it);
+      Stream<Entry<Node, ResultSetPart>> result = Streams.stream(it);
       result.onClose(() -> qe.close());
 
       return result;

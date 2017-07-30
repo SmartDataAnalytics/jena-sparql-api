@@ -7,6 +7,7 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.graph.NodeTransformLib;
 import org.jgrapht.DirectedGraph;
+import org.jgrapht.Graphs;
 import org.jgrapht.graph.DirectedSubgraph;
 import org.jgrapht.graph.SimpleDirectedGraph;
 
@@ -37,6 +38,12 @@ public class SetOpsJGraphTRdfJena
     @Override
     public DirectedGraph<Node, Triple> intersect(DirectedGraph<Node, Triple> baseGraph, DirectedGraph<Node, Triple> removalGraph) {
         DirectedGraph<Node, Triple> result = new DirectedSubgraph<>(baseGraph, removalGraph.vertexSet(), removalGraph.edgeSet());
+
+        //Materialize the intersection
+        //DirectedGraph<Node, Triple> tmp = createNew();
+        //Graphs.addGraph(tmp, result);
+        //result = tmp
+
         return result;
     }
 }

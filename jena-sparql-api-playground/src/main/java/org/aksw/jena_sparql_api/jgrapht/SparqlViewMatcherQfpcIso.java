@@ -12,7 +12,7 @@ import org.aksw.jena_sparql_api.algebra.utils.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.dirty.QfpcMatch;
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewMatcherQfpc;
 import org.aksw.jena_sparql_api.deprecated.iso.index.ProblemNodeMappingGraph;
-import org.aksw.jena_sparql_api.deprecated.iso.index.ProblemVarMappingCompound;
+import org.aksw.jena_sparql_api.deprecated.iso.index.ProblemUnion;
 import org.aksw.jena_sparql_api.deprecated.iso.index.ProblemVarWrapper;
 import org.aksw.jena_sparql_api.deprecated.iso.index.SubGraphIsomorphismIndex;
 import org.aksw.jena_sparql_api.deprecated.iso.index.SubGraphIsomorphismIndexBase;
@@ -100,7 +100,7 @@ public class SparqlViewMatcherQfpcIso<K>
     public static ProblemNeighborhoodAware<BiMap<Var, Var>, Var> createCompound(Collection<? extends InsertPosition<?, Graph, Node>> poss) {
         List<ProblemNeighborhoodAware<BiMap<Var, Var>, Var>> problems = poss.stream().map(SparqlViewMatcherQfpcIso::toProblem).collect(Collectors.toList());
 
-        ProblemVarMappingCompound<BiMap<Var, Var>, Var> result = new ProblemVarMappingCompound<>(problems);
+        ProblemUnion<BiMap<Var, Var>, Var> result = new ProblemUnion<>(problems);
         return result;
     }
 

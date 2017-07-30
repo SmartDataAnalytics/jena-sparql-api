@@ -8,12 +8,12 @@ import java.util.stream.Stream;
 import org.aksw.combinatorics.solvers.ProblemNeighborhoodAware;
 import org.aksw.isomorphism.CostAware;
 
-public class ProblemVarMappingCompound<S, T>
+public class ProblemUnion<S, T>
     implements ProblemNeighborhoodAware<S, T>
 {
     protected Collection<? extends ProblemNeighborhoodAware<S, T>> problems;
 
-    public ProblemVarMappingCompound(Collection<? extends ProblemNeighborhoodAware<S, T>> problems) {
+    public ProblemUnion(Collection<? extends ProblemNeighborhoodAware<S, T>> problems) {
         super();
         this.problems = problems;
     }

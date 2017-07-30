@@ -8,8 +8,8 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.aksw.combinatorics.solvers.ProblemNeighborhoodAware;
-import org.aksw.commons.collections.utils.StreamUtils;
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.ProblemMappingKPermutationsOfN;
+import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.jgrapht.Graph;
 import org.jgrapht.GraphMapping;
 import org.jgrapht.alg.isomorphism.IsomorphicGraphMapping;
@@ -17,6 +17,8 @@ import org.jgrapht.alg.isomorphism.VF2SubgraphIsomorphismInspector;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+
+import jersey.repackaged.com.google.common.collect.Lists;
 
 public class ProblemNodeMappingGraph<V, E, G extends Graph<V, E>, T>
     implements ProblemNeighborhoodAware<BiMap<V, V>, T>
@@ -40,23 +42,36 @@ public class ProblemNodeMappingGraph<V, E, G extends Graph<V, E>, T>
             G queryGraph,
             Function<BiMap<V, V>, Comparator<V>> nodeComparatorFactory,
             Function<BiMap<V, V>, Comparator<E>> edgeComparatorFactory) {
-
+        super();
         this.baseSolution = baseSolution;
         this.viewGraph = viewGraph;
         this.queryGraph = queryGraph;
 
         nodeComparator = nodeComparatorFactory.apply(baseSolution);
         edgeComparator = edgeComparatorFactory.apply(baseSolution);
+
         inspector = new VF2SubgraphIsomorphismInspector<>(queryGraph, viewGraph, nodeComparator, edgeComparator, true);
+//        System.out.println("New inspector for viewGraphHash: " + viewGraph.hashCode() + ", queryGraphHash: " + queryGraph.hashCode());
 
         //super(as, bs, baseSolution);
     }
 
     @Override
     public Stream<BiMap<V, V>> generateSolutions() {
+//        VF2SubgraphIsomorphismInspector<V, E> inspector;
+//        inspector = new VF2SubgraphIsomorphismInspector<>(queryGraph, viewGraph, nodeComparator, edgeComparator, true);
+
         Iterator<GraphMapping<V, E>> it = inspector.getMappings();
 
-        Stream<BiMap<V, V>> result = StreamUtils.stream(it)
+        Stream<GraphMapping<V, E>> baseStream = Lists.newArrayList(it).stream();
+        // TODO WHY DOES THIS TRULY STREAMING VERSION FAIL WITH ODD DUPLICATE ITEMS AND NPE???
+//        Stream<GraphMapping<V, E>> baseStream = Streams.stream(it);
+
+
+        Stream<BiMap<V, V>> result = baseStream//Streams.stream(it)
+//            .peek(x -> System.out.println("Seen: " + x))
+//            .peek(x -> System.out.println("viewGraphHash: " + viewGraph.hashCode() + ", queryGraphHash: " + queryGraph.hashCode()))
+//            .distinct()
             .map(m -> (IsomorphicGraphMapping<V, E>)m)
             .map(m -> {
                 BiMap<V, V> nodeMap = HashBiMap.create();//new HashMap<>();
@@ -87,6 +102,9 @@ public class ProblemNodeMappingGraph<V, E, G extends Graph<V, E>, T>
 
     @Override
     public boolean isEmpty() {
+//        VF2SubgraphIsomorphismInspector<V, E> inspector;
+//        inspector = new VF2SubgraphIsomorphismInspector<>(queryGraph, viewGraph, nodeComparator, edgeComparator, true);
+
         boolean result = inspector.isomorphismExists();
         return result;
     }
@@ -99,7 +117,7 @@ public class ProblemNodeMappingGraph<V, E, G extends Graph<V, E>, T>
         int k = viewGraph.edgeSet().size();
 
         long result = ProblemMappingKPermutationsOfN.kCombinationCount(n, k);
-        System.out.println("estimated cost: " + result);
+//        System.out.println("estimated cost: " + result);
         return result;
     }
 
