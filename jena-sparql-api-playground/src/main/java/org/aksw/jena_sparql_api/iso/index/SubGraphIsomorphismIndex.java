@@ -1,7 +1,8 @@
 package org.aksw.jena_sparql_api.iso.index;
 
+import java.util.Map;
+
 import com.google.common.collect.BiMap;
-import com.google.common.collect.Multimap;
 
 
 public interface SubGraphIsomorphismIndex<K, G, N> {
@@ -21,6 +22,10 @@ public interface SubGraphIsomorphismIndex<K, G, N> {
      */
     //Multimap<K, InsertPosition<K, G, N>> lookup(G queryGraph, boolean exactMatch);
 
+    // Add a new entry, thereby allocating a new key
+    // TODO This method should maybe not be part of the core interface
+    K add(G graph);
+
     /**
      * Insert a graph pattern with a specific key, thereby replacing any existing one having this key already
      *
@@ -30,6 +35,14 @@ public interface SubGraphIsomorphismIndex<K, G, N> {
      */
     K put(K key, G graph);
 
-    Iterable<BiMap<N, N>> match(BiMap<N, N> baseIso, G a, G b); // QueryToJenaGraph.match(baseIso, viewGraph, insertGraph).collect(Collectors.toSet());
+    // Return the set of keys together with the isomorphisms
+    Map<K, Iterable<BiMap<N, N>>> lookupStream(G queryGraph, boolean exactMatch);
+
+
+    // Temporary? debug method
+    void printTree();
+
+
+//    Iterable<BiMap<N, N>> match(BiMap<N, N> baseIso, G a, G b); // QueryToJenaGraph.match(baseIso, viewGraph, insertGraph).collect(Collectors.toSet());
 
 }

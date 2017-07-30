@@ -100,48 +100,9 @@ public abstract class SubGraphIsomorphismIndex2<K, N, E>
 
     public abstract E applyIso(BiMap<N, N> iso, E edge);
 
-    // TODO We could return a wrapper view of the graph
-    public DirectedGraph<N, E> applyIso(BiMap<N, N> iso, DirectedGraph<N, E> set) {
-        DirectedGraph<N, E> result = createSet();
-
-        set.vertexSet().stream().map(iso::get).forEach(result::addVertex);
-
-//        Graphs.addAllVertices(result, vertices);
-
-        set.edgeSet().stream().forEach(e -> {
-            E isoEdge = applyIso(iso, e);
-            N isoSrc = iso.get(set.getEdgeSource(e));
-            N isoTgt = iso.get(set.getEdgeTarget(e));
-
-            result.addEdge(isoSrc, isoTgt, isoEdge);
-        });
-
-        return result;
-    }
 
     public int size(DirectedGraph<N, E> set) {
         return set.edgeSet().size();
-    }
-
-    public DirectedGraph<N, E> difference(DirectedGraph<N, E> baseSet, DirectedGraph<N, E> removalSet) {
-
-        DirectedGraph<N, E> result = createSet();
-        Graphs.addGraph(result, baseSet);
-
-        //Graphs.unio
-        baseSet.removeAllEdges(removalSet.edgeSet());
-        baseSet.vertexSet().forEach(v -> {
-            if(baseSet.edgesOf(v).isEmpty()) {
-                baseSet.removeVertex(v);
-            }
-        });
-
-        return result;
-    }
-
-    public DirectedGraph<N, E> intersection(DirectedGraph<N, E> baseSet, DirectedGraph<N, E> removalSet) {
-        DirectedGraph<N, E> result = new DirectedSubgraph<>(baseSet, removalSet.vertexSet(), removalSet.edgeSet());
-        return result;
     }
 
 
@@ -242,7 +203,7 @@ public abstract class SubGraphIsomorphismIndex2<K, N, E>
         for(BiMap<N, N> iso : isos) {
             foundAtLeastOneIso = true;
 
-            DirectedGraph<N, E> isoGraph = applyIso(iso, insertGraph);
+            DirectedGraph<N, E> isoGraph = null; // applyIso(iso, insertGraph);
 
             // If there are no keys, we need to insert the graph
             Collection<K> keys = keyToSubGraph.reverse().get(isoGraph);

@@ -10,7 +10,7 @@ import java.util.stream.Stream;
 import org.aksw.combinatorics.solvers.ProblemNeighborhoodAware;
 import org.aksw.commons.collections.utils.StreamUtils;
 import org.aksw.jena_sparql_api.concept_cache.combinatorics.ProblemMappingKPermutationsOfN;
-import org.jgrapht.DirectedGraph;
+import org.jgrapht.Graph;
 import org.jgrapht.GraphMapping;
 import org.jgrapht.alg.isomorphism.IsomorphicGraphMapping;
 import org.jgrapht.alg.isomorphism.VF2SubgraphIsomorphismInspector;
@@ -18,12 +18,12 @@ import org.jgrapht.alg.isomorphism.VF2SubgraphIsomorphismInspector;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 
-public class ProblemNodeMappingGraph<V, E, T>
+public class ProblemNodeMappingGraph<V, E, G extends Graph<V, E>, T>
     implements ProblemNeighborhoodAware<BiMap<V, V>, T>
     //extends ProblemMappingVarsBase<DirectedGraph<Node, Triple>, DirectedGraph<Node, Triple>, Var, Var>
 {
-    protected DirectedGraph<V, E> viewGraph;
-    protected DirectedGraph<V, E> queryGraph;
+    protected G viewGraph;
+    protected G queryGraph;
     protected Comparator<V> nodeComparator;
     protected Comparator<E> edgeComparator;
 
@@ -36,8 +36,8 @@ public class ProblemNodeMappingGraph<V, E, T>
 
     public ProblemNodeMappingGraph(
             BiMap<V, V> baseSolution,
-            DirectedGraph<V, E> viewGraph,
-            DirectedGraph<V, E> queryGraph,
+            G viewGraph,
+            G queryGraph,
             Function<BiMap<V, V>, Comparator<V>> nodeComparatorFactory,
             Function<BiMap<V, V>, Comparator<E>> edgeComparatorFactory) {
 

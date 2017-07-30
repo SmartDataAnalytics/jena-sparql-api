@@ -1,0 +1,35 @@
+package org.aksw.jena_sparql_api.iso.index;
+
+import java.util.function.Function;
+
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.sparql.graph.NodeTransform;
+import org.apache.jena.sparql.graph.NodeTransformLib;
+import org.jgrapht.DirectedGraph;
+import org.jgrapht.graph.DirectedSubgraph;
+import org.jgrapht.graph.SimpleDirectedGraph;
+
+public class SetOpsJGraphTRdfJena
+    extends SetOpsJGraphTBase<Node, Triple, DirectedGraph<Node, Triple>>
+{
+    public static final SetOpsJGraphTRdfJena INSTANCE = new SetOpsJGraphTRdfJena();
+
+    @Override
+    public DirectedGraph<Node, Triple> createNew() {
+        return new SimpleDirectedGraph<>(Triple.class);
+    }
+
+    @Override
+    protected Triple transformEdge(Triple edge, Function<Node, Node> nodeTransform) {
+        NodeTransform tmp = (node) -> nodeTransform.apply(node);
+        Triple result = NodeTransformLib.transform(tmp, edge);
+        return result;
+    }
+
+    @Override
+    public DirectedGraph<Node, Triple> intersect(DirectedGraph<Node, Triple> baseGraph, DirectedGraph<Node, Triple> removalGraph) {
+        DirectedGraph<Node, Triple> result = new DirectedSubgraph<>(baseGraph, removalGraph.vertexSet(), removalGraph.edgeSet());
+        return result;
+    }
+}

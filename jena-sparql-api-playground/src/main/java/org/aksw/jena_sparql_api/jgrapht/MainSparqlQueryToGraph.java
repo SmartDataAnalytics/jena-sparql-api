@@ -15,7 +15,9 @@ import org.aksw.combinatorics.solvers.ProblemNeighborhoodAware;
 import org.aksw.commons.util.strings.StringPrettyComparator;
 import org.aksw.jena_sparql_api.algebra.utils.OpExtConjunctiveQuery;
 import org.aksw.jena_sparql_api.core.SparqlService;
-import org.aksw.jena_sparql_api.iso.index.SubGraphIsomorphismIndexRdf;
+import org.aksw.jena_sparql_api.iso.index.SubGraphIsomorphismIndex;
+import org.aksw.jena_sparql_api.iso.index.SubGraphIsomorphismIndexJGraphT;
+import org.aksw.jena_sparql_api.iso.index.SubGraphIsomorphismIndexWrapper;
 import org.aksw.jena_sparql_api.jgrapht.transform.GraphVar;
 import org.aksw.jena_sparql_api.jgrapht.transform.QueryToGraphVisitor;
 import org.aksw.jena_sparql_api.jgrapht.transform.QueryToJenaGraph;
@@ -27,6 +29,7 @@ import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.views.index.SparqlViewMatcherOpImpl;
+import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
@@ -153,7 +156,10 @@ public class MainSparqlQueryToGraph {
         });
 
 
-        SubGraphIsomorphismIndexRdf<Node> index = SubGraphIsomorphismIndexRdf.create();
+        SubGraphIsomorphismIndex<Node, Graph, Node> index =
+                SubGraphIsomorphismIndexWrapper.wrap(
+                        SubGraphIsomorphismIndexJGraphT.create(),//SubGraphIsomorphismIndexRdf.create();
+                        PseudoGraphJenaGraph::new);
         int xxx = 3;
 
         if(xxx == 0) {
@@ -253,12 +259,12 @@ index.printTree();
         System.out.println("Index tree: ");
         index.printTree();
 
-        Map<Node, ProblemNeighborhoodAware<BiMap<Var, Var>, Var>> map = index.lookupStream(cg, false);
+        Map<Node, Iterable<BiMap<Node, Node>>> map = index.lookupStream(cg, false);
 
         map.forEach((k, p) -> {
             System.out.println("Solutions for : " + k);
             //System.out.println("Estimated cost: " + p.getEstimatedCost());
-            p.generateSolutions().forEach(s -> {
+            p.forEach(s -> {
                 System.out.println("  " + s);
             });
             System.out.println("done");

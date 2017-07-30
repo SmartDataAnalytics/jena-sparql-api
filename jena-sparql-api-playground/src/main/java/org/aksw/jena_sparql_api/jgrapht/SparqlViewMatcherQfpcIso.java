@@ -82,7 +82,7 @@ public class SparqlViewMatcherQfpcIso<K>
         Graphs.addGraph(viewGraph, viewGraphGraphView);
         Graphs.addGraph(queryGraph, queryGraphGraphView);
 
-        ProblemNodeMappingGraph<Node, Triple, Node> rawProblem = new ProblemNodeMappingGraph<>(
+        ProblemNodeMappingGraph<Node, Triple, DirectedGraph<Node, Triple>, Node> rawProblem = new ProblemNodeMappingGraph<>(
                 baseIso, viewGraph, queryGraph,
                 QueryToJenaGraph::createNodeComparator, QueryToJenaGraph::createEdgeComparator);
 
@@ -103,7 +103,6 @@ public class SparqlViewMatcherQfpcIso<K>
         ProblemVarMappingCompound<BiMap<Var, Var>, Var> result = new ProblemVarMappingCompound<>(problems);
         return result;
     }
-
 
     @Override
     public Map<K, QfpcMatch> lookup(QuadFilterPatternCanonical queryQfpc) {
