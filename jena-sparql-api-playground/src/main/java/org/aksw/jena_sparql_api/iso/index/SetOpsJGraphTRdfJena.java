@@ -10,6 +10,8 @@ import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DirectedSubgraph;
 import org.jgrapht.graph.SimpleDirectedGraph;
 
+import com.google.common.base.MoreObjects;
+
 public class SetOpsJGraphTRdfJena
     extends SetOpsJGraphTBase<Node, Triple, DirectedGraph<Node, Triple>>
 {
@@ -22,8 +24,13 @@ public class SetOpsJGraphTRdfJena
 
     @Override
     protected Triple transformEdge(Triple edge, Function<Node, Node> nodeTransform) {
-        NodeTransform tmp = (node) -> nodeTransform.apply(node);
+        //NodeTransform tmp = (node) -> nodeTransform.apply(node);
+        NodeTransform tmp = (node) -> MoreObjects.firstNonNull(nodeTransform.apply(node), node);
         Triple result = NodeTransformLib.transform(tmp, edge);
+
+        System.out.println("Transformed " + edge);
+        System.out.println("  Into " + result);
+
         return result;
     }
 

@@ -29,8 +29,6 @@ import com.google.common.collect.Multimap;
 public class SubGraphIsomorphismIndexJGraphT<K, V, E, G extends Graph<V, E>>
     extends SubGraphIsomorphismIndexBase<K, G, V>
 {
-    protected SetOps<G, V> graphOps;
-
     //protected Comparator<V> createVertexComparator(BiMap<V, V> baseIso);
     //protected Comparator<E> createEdgeComparator(BiMap<V, V> baseIso);
     protected Function<BiMap<V, V>, Comparator<V>> createVertexComparator;
@@ -42,8 +40,7 @@ public class SubGraphIsomorphismIndexJGraphT<K, V, E, G extends Graph<V, E>>
             SetOps<G, V> graphOps,
             Function<BiMap<V, V>, Comparator<V>> createVertexComparator,
             Function<BiMap<V, V>, Comparator<E>> createEdgeComparator) {
-        super(keySupplier, extractGraphTags);
-        this.graphOps = graphOps;
+        super(keySupplier, graphOps, extractGraphTags);
         this.createVertexComparator = createVertexComparator;
         this.createEdgeComparator = createEdgeComparator;
     }
@@ -92,7 +89,7 @@ public class SubGraphIsomorphismIndexJGraphT<K, V, E, G extends Graph<V, E>>
         G residualQueryGraph = pos.getResidualQueryGraph();
 
         // TODO This looks wrong, why an empty graph here?!
-        G residualViewGraph = graphOps.createNew(); //new GraphVarImpl();//pos.getNode().getValue(); //new GraphIsoMapImpl(pos.getNode().getValue(), pos.getNode().getTransIso()); //pos.getNode().getValue();
+        G residualViewGraph = setOps.createNew(); //new GraphVarImpl();//pos.getNode().getValue(); //new GraphIsoMapImpl(pos.getNode().getValue(), pos.getNode().getTransIso()); //pos.getNode().getValue();
 
         //QueryToJenaGraph::createNodeComparator, QueryToJenaGraph::createEdgeComparator);
         ProblemNeighborhoodAware<BiMap<V, V>, V> result =

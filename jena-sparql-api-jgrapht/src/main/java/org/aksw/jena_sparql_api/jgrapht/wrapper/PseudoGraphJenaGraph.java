@@ -60,7 +60,12 @@ public class PseudoGraphJenaGraph
     public Triple getEdge(Node sourceVertex, Node targetVertex) {
         Set<Triple> edges = getAllEdges(sourceVertex, targetVertex);
         // TODO Maybe throw an exception or return null if there are multiple edges
-        Triple result = edges.iterator().next();
+
+        Triple result = edges.isEmpty() ? null : edges.iterator().next();
+        if(result == null) {
+            throw new RuntimeException("null edge should not happen");
+        }
+
         return result;
     }
 

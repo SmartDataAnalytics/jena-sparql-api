@@ -11,14 +11,15 @@ import java.util.stream.Collectors;
 import javax.persistence.criteria.Root;
 import javax.swing.JFrame;
 
-import org.aksw.combinatorics.solvers.ProblemNeighborhoodAware;
 import org.aksw.commons.util.strings.StringPrettyComparator;
 import org.aksw.jena_sparql_api.algebra.utils.OpExtConjunctiveQuery;
 import org.aksw.jena_sparql_api.core.SparqlService;
+import org.aksw.jena_sparql_api.iso.index.SetOpsJGraphTRdfJena;
 import org.aksw.jena_sparql_api.iso.index.SubGraphIsomorphismIndex;
 import org.aksw.jena_sparql_api.iso.index.SubGraphIsomorphismIndexJGraphT;
 import org.aksw.jena_sparql_api.iso.index.SubGraphIsomorphismIndexWrapper;
 import org.aksw.jena_sparql_api.jgrapht.transform.GraphVar;
+import org.aksw.jena_sparql_api.jgrapht.transform.GraphVarImpl;
 import org.aksw.jena_sparql_api.jgrapht.transform.QueryToGraphVisitor;
 import org.aksw.jena_sparql_api.jgrapht.transform.QueryToJenaGraph;
 import org.aksw.jena_sparql_api.jgrapht.wrapper.PseudoGraphJenaGraph;
@@ -41,13 +42,12 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
-import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.graph.GraphFactory;
 import org.jgraph.JGraph;
 import org.jgrapht.ext.JGraphModelAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Functions;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.jgraph.layout.JGraphFacade;
@@ -70,7 +70,7 @@ public class MainSparqlQueryToGraph {
 
 
     public static void main(String[] args) throws Exception {
-        org.apache.jena.graph.Graph g = GraphFactory.createDefaultGraph();
+        org.apache.jena.graph.Graph g = new GraphVarImpl(); //GraphFactory.createDefaultGraph();
         g.add(new Triple(Vars.s, Vars.p, Vars.o));
         RDFDataMgr.write(System.out, g, RDFFormat.NTRIPLES);
 //        String[][] cases = {
@@ -160,6 +160,7 @@ public class MainSparqlQueryToGraph {
                 SubGraphIsomorphismIndexWrapper.wrap(
                         SubGraphIsomorphismIndexJGraphT.create(),//SubGraphIsomorphismIndexRdf.create();
                         PseudoGraphJenaGraph::new);
+                        //kk -> SetOpsJGraphTRdfJena.INSTANCE.transformItems(new PseudoGraphJenaGraph(kk), v -> v));
         int xxx = 3;
 
         if(xxx == 0) {

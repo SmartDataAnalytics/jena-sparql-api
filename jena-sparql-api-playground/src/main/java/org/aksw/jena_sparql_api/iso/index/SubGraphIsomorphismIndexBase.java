@@ -80,10 +80,13 @@ public abstract class SubGraphIsomorphismIndexBase<K, G, V> implements SubGraphI
 
     public SubGraphIsomorphismIndexBase(
             Supplier<K> keySupplier,
+            SetOps<G, V> setOps,
             Function<? super G, Collection<?>> extractGraphTags
             ) {
         super();
         this.keySupplier = keySupplier;
+        this.setOps = setOps;
+        this.extractGraphTags = extractGraphTags;
 
         long i[] = {0};
         idSupplier = new ReclaimingSupplier<>(() -> i[0]++);

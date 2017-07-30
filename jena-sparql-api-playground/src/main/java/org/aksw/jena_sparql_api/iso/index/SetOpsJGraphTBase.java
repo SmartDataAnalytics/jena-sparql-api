@@ -3,14 +3,8 @@ package org.aksw.jena_sparql_api.iso.index;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.Triple;
-import org.jgrapht.DirectedGraph;
 import org.jgrapht.Graph;
 import org.jgrapht.Graphs;
-import org.jgrapht.graph.DirectedSubgraph;
-
-import com.google.common.collect.BiMap;
 
 public abstract class SetOpsJGraphTBase<V, E, G extends Graph<V, E>>
     implements SetOps<G, V>
@@ -55,10 +49,10 @@ public abstract class SetOpsJGraphTBase<V, E, G extends Graph<V, E>>
         Graphs.addGraph(result, baseSet);
 
         //Graphs.unio
-        baseSet.removeAllEdges(removalSet.edgeSet());
+        result.removeAllEdges(removalSet.edgeSet());
         baseSet.vertexSet().forEach(v -> {
             if(baseSet.edgesOf(v).isEmpty()) {
-                baseSet.removeVertex(v);
+                result.removeVertex(v);
             }
         });
 

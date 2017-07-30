@@ -9,7 +9,6 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.graph.compose.Difference;
 import org.apache.jena.graph.compose.Intersection;
-import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.graph.NodeTransformLib;
 
@@ -52,8 +51,9 @@ public class SetOpsGraphJena
     @Override
     public Graph transformItems(Graph graph, Function<Node, Node> nodeTransform) {
         NodeTransform tmp = (node) -> nodeTransform.apply(node);
-        Graph result = GraphFactory.createDefaultGraph();
-        graph.find(Node.ANY, Node.ANY, Node.ANY).forEachRemaining(t -> {
+        Graph result = createNew();
+        graph.find(null, null, null).forEachRemaining(t -> {
+        //graph.find(Node.ANY, Node.ANY, Node.ANY).forEachRemaining(t -> {
             Triple u = NodeTransformLib.transform(tmp, t);
             result.add(u);
         });
