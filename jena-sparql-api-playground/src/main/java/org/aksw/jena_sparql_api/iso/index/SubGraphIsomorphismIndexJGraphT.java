@@ -61,7 +61,7 @@ class IsoMatcherImpl<V, E, G extends Graph<V, E>>
 }
 
 public class SubGraphIsomorphismIndexJGraphT<K, V, E, G extends Graph<V, E>>
-    extends SubGraphIsomorphismIndexBase<K, G, V>
+    extends SubGraphIsomorphismIndexImpl<K, G, V>
 {
     //protected Comparator<V> createVertexComparator(BiMap<V, V> baseIso);
     //protected Comparator<E> createEdgeComparator(BiMap<V, V> baseIso);

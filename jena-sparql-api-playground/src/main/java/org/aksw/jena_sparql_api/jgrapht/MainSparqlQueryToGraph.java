@@ -3,9 +3,11 @@ package org.aksw.jena_sparql_api.jgrapht;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -33,6 +35,7 @@ import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.views.index.SparqlViewMatcherOpImpl;
+import org.apache.jena.ext.com.google.common.collect.Lists;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -220,6 +223,9 @@ public class MainSparqlQueryToGraph {
             }
             //System.out.println(queries);
             int i = 0;
+
+            queries = Lists.newArrayList(queries);
+            //Collections.sort(queries, (x, y) -> Objects.compare(x.getIri(), y.getIri(), Comparator.reverseOrder()));
             for(LsqQuery lsqq : queries) {
                 // TODO HACK We need to fetch the iri from the em, as the mapper currently does not support placing an entity's iri into a field
                 String id = em.getIri(lsqq);

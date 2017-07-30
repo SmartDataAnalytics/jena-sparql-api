@@ -43,10 +43,10 @@ import com.google.common.collect.Streams;
  *
  * @param <K>
  */
-public class SubGraphIsomorphismIndexBase<K, G, V> implements SubGraphIsomorphismIndex<K, G, V>
+public class SubGraphIsomorphismIndexImpl<K, G, V> implements SubGraphIsomorphismIndex<K, G, V>
 //    extends LabeledTree<Long, //GraphIndexNode<K>>
 {
-    private static final Logger logger = LoggerFactory.getLogger(SubGraphIsomorphismIndexBase.class);
+    private static final Logger logger = LoggerFactory.getLogger(SubGraphIsomorphismIndexImpl.class);
 
     protected IsoMatcher<G, V> isoMatcher;
     // Optional function that extracts a set of static features from a graph
@@ -73,7 +73,7 @@ public class SubGraphIsomorphismIndexBase<K, G, V> implements SubGraphIsomorphis
     protected Map<Long, GraphIndexNode<K, G, V>> keyToNode = new HashMap<>();
 
 
-    public SubGraphIsomorphismIndexBase(
+    public SubGraphIsomorphismIndexImpl(
             Supplier<K> keySupplier,
             SetOps<G, V> setOps,
             Function<? super G, Collection<?>> extractGraphTags,
