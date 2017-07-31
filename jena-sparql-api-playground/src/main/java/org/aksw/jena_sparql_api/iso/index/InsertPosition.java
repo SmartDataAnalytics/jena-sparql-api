@@ -4,22 +4,22 @@ import java.util.Set;
 
 import com.google.common.collect.BiMap;
 
-public class InsertPosition<K, G, N> {
-    protected GraphIndexNode<K, G, N> node;
+public class InsertPosition<K, G, N, T> {
+    protected GraphIndexNode<K, G, N, T> node;
     protected G residualQueryGraph;
     //protected G residualViewGraph;
 
-    protected Set<Object> residualQueryGraphTags;
+    protected Set<T> residualQueryGraphTags;
     //protected Set<Object> residualViewGraphTags;
 
     protected BiMap<N, N> iso;
     protected BiMap<N, N> latestIsoAB;
 
     public InsertPosition(
-            GraphIndexNode<K, G, N> node,
+            GraphIndexNode<K, G, N, T> node,
 //            Graph residualViewGraph,
             G residualQueryGraph,
-            Set<Object> residualQueryGraphTags,
+            Set<T> residualQueryGraphTags,
             BiMap<N, N> iso,
             BiMap<N, N> latestIsoAB) {
         super();
@@ -31,7 +31,7 @@ public class InsertPosition<K, G, N> {
         this.latestIsoAB = latestIsoAB;
     }
 
-    public GraphIndexNode<K, G, N> getNode() {
+    public GraphIndexNode<K, G, N, T> getNode() {
         return node;
     }
 
@@ -43,7 +43,7 @@ public class InsertPosition<K, G, N> {
         return residualQueryGraph;
     }
 
-    public Set<Object> getResidualQueryGraphTags() {
+    public Set<T> getResidualQueryGraphTags() {
         return residualQueryGraphTags;
     }
 

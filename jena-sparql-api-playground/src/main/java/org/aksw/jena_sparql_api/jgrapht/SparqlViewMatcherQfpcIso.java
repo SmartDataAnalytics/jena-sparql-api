@@ -66,7 +66,7 @@ public class SparqlViewMatcherQfpcIso<K>
 //        return result;
 //    }
 
-    public static ProblemNeighborhoodAware<BiMap<Var, Var>, Var> toProblem(InsertPosition<?, Graph, Node> pos) {
+    public static ProblemNeighborhoodAware<BiMap<Var, Var>, Var> toProblem(InsertPosition<?, Graph, Node, ?> pos) {
         // TODO This is making the hacky index structure clean
         Graph residualQueryGraph = pos.getResidualQueryGraph();
         Graph residualViewGraph = new GraphVarImpl();//pos.getNode().getValue(); //new GraphIsoMapImpl(pos.getNode().getValue(), pos.getNode().getTransIso()); //pos.getNode().getValue();
@@ -97,7 +97,7 @@ public class SparqlViewMatcherQfpcIso<K>
         return result;
     }
 
-    public static ProblemNeighborhoodAware<BiMap<Var, Var>, Var> createCompound(Collection<? extends InsertPosition<?, Graph, Node>> poss) {
+    public static ProblemNeighborhoodAware<BiMap<Var, Var>, Var> createCompound(Collection<? extends InsertPosition<?, Graph, Node, ?>> poss) {
         List<ProblemNeighborhoodAware<BiMap<Var, Var>, Var>> problems = poss.stream().map(SparqlViewMatcherQfpcIso::toProblem).collect(Collectors.toList());
 
         ProblemUnion<BiMap<Var, Var>, Var> result = new ProblemUnion<>(problems);

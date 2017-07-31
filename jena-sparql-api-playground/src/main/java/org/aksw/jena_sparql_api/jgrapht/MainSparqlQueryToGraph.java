@@ -3,11 +3,9 @@ package org.aksw.jena_sparql_api.jgrapht;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.TreeMap;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -48,6 +46,10 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.vocabulary.FOAF;
+import org.apache.jena.vocabulary.OWL;
+import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.vocabulary.RDFS;
 import org.jgraph.JGraph;
 import org.jgrapht.ext.JGraphModelAdapter;
 import org.slf4j.Logger;
@@ -225,10 +227,10 @@ public class MainSparqlQueryToGraph {
                 // - q3a, q2a, q1b, q1a
                 queries = Lists.newArrayList();
 
-                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q2a"));
                 queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q1a"));
+                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q2b"));
                 queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q3a"));
-                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q1b"));
+                //queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q1b"));
 
             } else {
                 queries = Collections.emptyList();
@@ -248,7 +250,9 @@ public class MainSparqlQueryToGraph {
                 System.out.println("Item: " + q);
             }
             //Collections.sort(queries, (x, y) -> Objects.compare(x.getIri(), y.getIri(), Comparator.reverseOrder()));
+            int iii = 0;
             for(LsqQuery lsqq : queries) {
+
                 // TODO HACK We need to fetch the iri from the em, as the mapper currently does not support placing an entity's iri into a field
 
                 System.out.println("Got lsq query: " + lsqq);
@@ -279,6 +283,15 @@ public class MainSparqlQueryToGraph {
                     q2g.visit(ocq);
                     GraphVar graph = q2g.getGraph();
                     //System.out.println(graph);
+
+                    if(false) {
+                    graph = new GraphVarImpl();
+                    if(iii >= 0) { graph.add(new Triple(Vars.s.asNode(), RDF.type.asNode(), OWL.Class.asNode())); }
+                    if(iii >= 1) { graph.add(new Triple(Vars.s.asNode(), RDFS.label.asNode(), Vars.l.asNode())); }
+                    if(iii >= 2) { graph.add(new Triple(Vars.s.asNode(), FOAF.name.asNode(), Vars.o.asNode())); }
+                    ++iii;
+                    }
+
                     index.put(NodeFactory.createURI(lsqq.getIri()), graph);
                 }
 

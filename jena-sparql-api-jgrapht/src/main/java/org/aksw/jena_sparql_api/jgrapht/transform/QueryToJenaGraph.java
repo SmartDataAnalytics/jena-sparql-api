@@ -255,28 +255,38 @@ public class QueryToJenaGraph {
 //        int result = x.compareTo(y);
 //        return result;
 //    }
-
     public static int compareNodes(BiMap<Node, Node> baseIso, Node i, Node j) {
-        int result;
-        // If nodes were mapped by the isomorphism, they need to be equal
-        // otherwise, we treat vars and blanknodes as always equal among each other.
+        int result = (
+                        (i.isVariable() && j.isVariable()) ||
+                        (i.isBlank() && j.isBlank() ||
+                        Objects.equals(baseIso.get(i), j)))
+                ? 0
+                : NodeUtils.compareRDFTerms(i, j);
 
-        Node ii;
-        Node jj;
-
-        if((ii = baseIso.get(i)) != null) {
-            result = Objects.equals(ii, j) ? 0 : NodeUtils.compareRDFTerms(ii, j);
-        } else if((jj = baseIso.inverse().get(j)) != null) {
-            result = Objects.equals(i, jj) ? 0 : NodeUtils.compareRDFTerms(i, jj);
-        } else {
-            result =  (i.isVariable() && j.isVariable()) || (i.isBlank() && j.isBlank())
-                    ? 0
-                    : NodeUtils.compareRDFTerms(i, j);
-        }
-
-//        System.err.println("NodeCmp [" + result + "] for " + i + " <-> " + j);
         return result;
     }
+
+//    public static int compareNodesOld(BiMap<Node, Node> baseIso, Node i, Node j) {
+//        int result;
+//        // If nodes were mapped by the isomorphism, they need to be equal
+//        // otherwise, we treat vars and blanknodes as always equal among each other.
+//
+//        Node ii;
+//        Node jj;
+//
+//        if((ii = baseIso.get(i)) != null) {
+//            result = Objects.equals(ii, j) ? 0 : NodeUtils.compareRDFTerms(ii, j);
+//        } else if((jj = baseIso.inverse().get(j)) != null) {
+//            result = Objects.equals(i, jj) ? 0 : NodeUtils.compareRDFTerms(i, jj);
+//        } else {
+//            result =  (i.isVariable() && j.isVariable()) || (i.isBlank() && j.isBlank())
+//                    ? 0
+//                    : NodeUtils.compareRDFTerms(i, j);
+//        }
+//
+////        System.err.println("NodeCmp [" + result + "] for " + i + " <-> " + j);
+//        return result;
+//    }
 
 
     public static Iterator<GraphMapping<Node, Triple>> matchIt(

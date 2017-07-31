@@ -31,27 +31,27 @@ import com.google.common.collect.BiMap;
  * @author raven
  *
  */
-public class GraphIndexNode<K, G, N>
+public class GraphIndexNode<K, G, N, T>
     //extends LabeledNodeImpl<Long, GraphIndexNode<K>, SubGraphIsomorphismIndex<K>>
 {
-    protected GraphIndexNode<K, G, N> parent;
+    protected GraphIndexNode<K, G, N, T> parent;
     protected long id;
     protected BiMap<N, N> transIso;
     protected G graph;
-    protected Set<Object> graphTags;
+    protected Set<T> graphTags;
 
     protected Set<K> keys = new HashSet<>();
     //protected LinkedList<GraphIndexNode<K>> children = new LinkedList<>();
-    protected Map<Long, GraphIndexNode<K, G, N>> idToChild = new LinkedHashMap<>();
+    protected Map<Long, GraphIndexNode<K, G, N, T>> idToChild = new LinkedHashMap<>();
 
     // Tag-based index of the child nodes
-    protected TagMap<Long, Object> childIndex;
+    protected TagMap<Long, T> childIndex;
 
     public boolean isLeaf() {
         return getChildren().isEmpty();
     }
 
-    public GraphIndexNode(GraphIndexNode<K, G, N> parent, Long id, BiMap<N, N> transIso, G graph, Set<Object> graphTags, TagMap<Long, Object> childIndex) {
+    public GraphIndexNode(GraphIndexNode<K, G, N, T> parent, Long id, BiMap<N, N> transIso, G graph, Set<T> graphTags, TagMap<Long, T> childIndex) {
         this.parent = parent;
         this.id = id;
 
@@ -64,11 +64,11 @@ public class GraphIndexNode<K, G, N>
 
 
 
-    public void setParent(GraphIndexNode<K, G, N> parent) {
+    public void setParent(GraphIndexNode<K, G, N, T> parent) {
         this.parent = parent;
     }
 
-    public GraphIndexNode<K, G, N> getParent() {
+    public GraphIndexNode<K, G, N, T> getParent() {
         return parent;
     }
 
@@ -84,7 +84,7 @@ public class GraphIndexNode<K, G, N>
         return graph;
     }
 
-    public Set<Object> getGraphTags() {
+    public Set<T> getGraphTags() {
         return graphTags;
     }
 
@@ -97,7 +97,7 @@ public class GraphIndexNode<K, G, N>
         childIndex.remove(id);
     }
 
-    public Collection<GraphIndexNode<K, G, N>> getChildren() {
+    public Collection<GraphIndexNode<K, G, N, T>> getChildren() {
         return idToChild.values();
     }
 
@@ -107,7 +107,7 @@ public class GraphIndexNode<K, G, N>
         return graph;
     }
 
-    public void appendChild(GraphIndexNode<K, G, N> child) {
+    public void appendChild(GraphIndexNode<K, G, N, T> child) {
         if(child.getParent() != null) {
             throw new RuntimeException("Node already has a parent");
         }
@@ -127,10 +127,9 @@ public class GraphIndexNode<K, G, N>
 
     @Override
     public String toString() {
-        return "GraphIndexNode [id=" + id + ", transIso=" + transIso + ", graph=" + graph + ", keys=" + keys
-                + ", children=" + idToChild + "]";
+        return "GraphIndexNode [id=" + id + ", transIso=" + transIso + ", graph=" + graph + ", graphTags=" + graphTags
+                + ", keys=" + keys + ", idToChild=" + idToChild + ", childIndex=" + childIndex + "]";
     }
-
 
 
 //    public Set<K> setKeys() {
