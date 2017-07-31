@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Streams;
@@ -423,11 +424,11 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
      * @param out
      * @param node
      * @param insertGraph
-     * @param rawBaseIso
+     * @param baseIso
      * @param retrievalMode false: only return leaf nodes of insertion, true: return all encountered nodes
      * @param writer
      */
-    void findInsertPositions(Collection<InsertPosition<K, G, V, T>> out, GraphIndexNode<K, G, V, T> node, G insertGraph, Set<T> insertGraphTags, BiMap<V, V> rawBaseIso, BiMap<V, V> latestIsoAB, boolean retrievalMode, boolean exactMatch, IndentedWriter writer) {
+    void findInsertPositions(Collection<InsertPosition<K, G, V, T>> out, GraphIndexNode<K, G, V, T> node, G insertGraph, Set<T> insertGraphTags, BiMap<V, V> baseIso, BiMap<V, V> latestIsoAB, boolean retrievalMode, boolean exactMatch, IndentedWriter writer) {
         //BiMap<V, V> transIso = node.getTransIso();//.getValue().getInToOut();
 
         // Map the image of the iso through the view graph iso
@@ -468,21 +469,25 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
             // (transIso captures the remapping of set/graph items when moving from the parent to the child node)
             // E.g. if the parent was {(?x a Foo)} and the child is {(?s a Bar)}, then the transIso could be ?x -> ?s
             // if the child node's full graph was { ?s a Foo ; a Bar }.
-            BiMap<V, V> transBaseIso = mapDomainVia(rawBaseIso, child.getTransIso());
+            BiMap<V, V> transBaseIso = mapDomainVia(baseIso, child.getTransIso());
 
-            BiMap<V, V> ffs = transBaseIso;
-            if(setOps.size(viewGraph) == 9) {
-                System.out.println("Got debug iso: " + ffs);
-                //                ffs = HashBiMap.create();
-            }
+//            BiMap<V, V> ffs = transBaseIso;
+//            if(setOps.size(viewGraph) == 9) {
+//                System.out.println("Got debug iso: " + ffs);
+//                //                ffs = HashBiMap.create();
+//            }
 
             //baseIso.inverse()
             //Iterable<BiMap<V, V>> isos = isoMatcher.match(baseIso, viewGraph, insertGraph);
-            Iterable<BiMap<V, V>> isos = isoMatcher.match(ffs, viewGraph, insertGraph);
+            Iterable<BiMap<V, V>> isos = isoMatcher.match(transBaseIso, viewGraph, insertGraph);
 //            isos = Lists.newArrayList(isos);
 //            System.out.println("Worked B!");
             for(BiMap<V, V> iso : isos) {
             //for(BiMap<Node, Node> iso : Lists.newArrayList(toIterable(QueryToJenaGraph.match(baseIso, viewGraph, insertGraph)))) {
+
+                // Compute the differences between iso and transBaseIso
+                BiMap<V, V> deltaIso = HashBiMap.create(
+                        Maps.difference(iso, transBaseIso).entriesOnlyOnLeft());
 
                 isSubsumed = true;
 
@@ -501,6 +506,7 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
 //                writer.println("baseIso     : " + baseIso);
 //                writer.println("viewGraphIso: " + viewGraph.getInToOut());
                 writer.println("iso         : " + iso);
+                writer.println("deltaIso    : " + deltaIso);
 
                 affectedKeys.forEach(k -> transBaseIso.put(k, iso.get(k)));
                 //writer.println("Contributed " + affectedKeys + " yielding iso mapping: " + iso);
@@ -520,7 +526,7 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
 
 
                 // TODO optimize handling of empty diffs
-                findInsertPositions(out, child, graphDiff, residualInsertGraphTags, transBaseIso, iso, retrievalMode, exactMatch, writer);
+                findInsertPositions(out, child, graphDiff, residualInsertGraphTags, transBaseIso, deltaIso, retrievalMode, exactMatch, writer);
 
                 affectedKeys.forEach(transBaseIso::remove);
 
@@ -536,7 +542,7 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
                 writer.println("Marking location for insert");
                 //System.out.println("keys at node: " + node.getKeys() + " - " + node);
                 // Make a copy of the baseIso, as it is transient due to state space search
-                InsertPosition<K, G, V, T> pos = new InsertPosition<>(node, insertGraph, residualInsertGraphTags, HashBiMap.create(rawBaseIso), latestIsoAB);
+                InsertPosition<K, G, V, T> pos = new InsertPosition<>(node, insertGraph, residualInsertGraphTags, HashBiMap.create(baseIso), latestIsoAB);
                 out.add(pos);
             }
         }
@@ -588,7 +594,7 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
     }
 
     public void printTree(GraphIndexNode<K, G, V, T> node, IndentedWriter writer) {
-        writer.println("" + node.getKey() + " keys: " + node.getKeys() + " --- " + node.getGraphTags() + " transIso:" + node.getTransIso());
+        writer.println("" + node.getKey() + " keys: " + node.getKeys() + " --- tags: " + node.getGraphTags() + " --- transIso:" + node.getTransIso());
         writer.incIndent();
         for(GraphIndexNode<K, G, V, T> child : node.getChildren()) {
             printTree(child, writer);
