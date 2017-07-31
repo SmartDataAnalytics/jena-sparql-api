@@ -198,12 +198,14 @@ public class MainSparqlQueryToGraph {
             RdfEntityManager em = emf.getObject();
 
             List<LsqQuery> queries;
-            int yyy = 0;
-            if(yyy == 0) {
+            int yyy = 6;
+            if(yyy == 5) {
                 queries = JpaUtils.createTypedQuery(em, LsqQuery.class, (cb, cq) -> {
                     Root<LsqQuery> root = cq.from(LsqQuery.class);
                     cq.select(root);
                 }).setMaxResults(1000).getResultList();
+
+
             } else if(yyy == 1) {
                 queries = new ArrayList<>();
                 queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q-005cc91b"));
@@ -218,18 +220,36 @@ public class MainSparqlQueryToGraph {
                   //96 keys: [http://lsq.aksw.org/res/q-01a34de1 (SELECT ?s ?p ?o), http://lsq.aksw.org/res/q-011578c8 (ASK ?s ?p ?o)]
                     //    518 keys: [http://lsq.aksw.org/res/q-03aa957f]            }
                 //       519 keys: [http://lsq.aksw.org/res/q-0000eb19]
+            } else if(yyy == 6) {
+                // Problematic orders:
+                // - q3a, q2a, q1b, q1a
+                queries = Lists.newArrayList();
+
+                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q2a"));
+                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q1a"));
+                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q3a"));
+                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q1b"));
+
             } else {
                 queries = Collections.emptyList();
             }
             //System.out.println(queries);
             int i = 0;
 
+
             queries = Lists.newArrayList(queries);
+            for(LsqQuery q : queries) {
+                String id = em.getIri(q);
+                q.setIri(id);
+            }
+
+            //Collections.shuffle(queries);
+            for(LsqQuery q : queries) {
+                System.out.println("Item: " + q);
+            }
             //Collections.sort(queries, (x, y) -> Objects.compare(x.getIri(), y.getIri(), Comparator.reverseOrder()));
             for(LsqQuery lsqq : queries) {
                 // TODO HACK We need to fetch the iri from the em, as the mapper currently does not support placing an entity's iri into a field
-                String id = em.getIri(lsqq);
-                lsqq.setIri(id);
 
                 System.out.println("Got lsq query: " + lsqq);
 
@@ -259,7 +279,7 @@ public class MainSparqlQueryToGraph {
                     q2g.visit(ocq);
                     GraphVar graph = q2g.getGraph();
                     //System.out.println(graph);
-                    index.put(NodeFactory.createURI(id), graph);
+                    index.put(NodeFactory.createURI(lsqq.getIri()), graph);
                 }
 
 

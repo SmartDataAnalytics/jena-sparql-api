@@ -29,13 +29,13 @@ PREFIX : <http://lsq.aksw.org/res/>
   lsq:text "PREFIX : <http://ex.org/> SELECT * { ?s a :Person ; :label ?l ;  :name ?n }" ;
   .
 
-:q3b
-  a lsq:Query ;
-  lsq:text "PREFIX : <http://ex.org/> SELECT * { ?x a :Person ; :label ?y ;  :name ?z }" ;
-  .
+#:q3b
+#  a lsq:Query ;
+#  lsq:text "PREFIX : <http://ex.org/> SELECT * { ?x a :Person ; :label ?y ;  :name ?z }" ;
+#  .
 
-:q4a
-  a lsq:Query ;
-  lsq:text "PREFIX : <http://ex.org/> SELECT * { ?s a :Person ; :label ?l ;  :age ?a ; }" ;
-  .
+#:q4a
+#  a lsq:Query ;
+#  lsq:text "PREFIX : <http://ex.org/> SELECT * { ?s a :Person ; :label ?l ;  :age ?a ; }" ;
+#  .
 
