@@ -40,7 +40,11 @@ public class GraphIndexNode<K, G, N, T>
     protected G graph;
     protected Set<T> graphTags;
 
-    protected Set<K> key;
+    /**
+     * The first key for which this node was created.
+     * Alternate keys are managed outside of the node
+     */
+    protected K key;
     //protected Set<K> keys = new HashSet<>();
     //protected LinkedList<GraphIndexNode<K>> children = new LinkedList<>();
     protected Map<Long, GraphIndexNode<K, G, N, T>> idToChild = new LinkedHashMap<>();
@@ -123,10 +127,9 @@ public class GraphIndexNode<K, G, N, T>
 //        return key;
 //    }
 //
-//    public K getKey() {
-//        return key;
-//        //return tree.idToKeys.get(id);
-//    }
+    public K getKey() {
+        return key;
+    }
 
     @Override
     public String toString() {

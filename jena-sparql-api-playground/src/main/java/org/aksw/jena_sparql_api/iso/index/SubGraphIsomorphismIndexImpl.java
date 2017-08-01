@@ -27,6 +27,7 @@ import org.aksw.commons.collections.set_trie.TagMap;
 import org.aksw.commons.collections.set_trie.TagMapSetTrie;
 import org.aksw.commons.collections.trees.ReclaimingSupplier;
 import org.apache.jena.atlas.io.IndentedWriter;
+import org.apache.jena.ext.com.google.common.base.Predicate;
 import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -709,6 +710,8 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
     }
 
 
+
+
     public static <T, X> Stream<T> lookupProvidedChildrenByTags(Stream<T> children, X tags, BiFunction<T, X, X> adjuster, BiFunction<T, X, Stream<T>> nodeToChildren) {
         Stream<T> result = children.flatMap(child -> {
             X adjustedTags = adjuster.apply(child, tags);
@@ -717,6 +720,7 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
         });
         return result;
     }
+
     public static <T, X> Stream<T> reachableNodesWithParent(T node, X tags, BiFunction<T, X, X> adjuster, BiFunction<T, X, Stream<T>> nodeToChildren) {
         Stream<T> result = Stream.concat(
                 Stream.of(node),
@@ -726,6 +730,82 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
                 }));
         return result;
     }
+
+//    public static <T> Stream<T> breadthFirstStream(Collection<T> nodes, Function<T, Stream<T>> nodeToChildren) {
+//        return breadthFirstStream(() -> nodes.stream(), nodeToChildren);
+//    }
+
+    public static <T> Stream<T> breadthFirstStream(T node, Function<T, Stream<T>> nodeToChildren) {
+        Stream<T> result = Stream.concat(
+                Stream.of(node),
+                nodeToChildren.apply(node).flatMap(child -> breadthFirstStream(child, nodeToChildren)));
+
+        return result;
+    }
+
+    public static <T> Stream<T> breadthFirstStreamMulti(Collection<T> nodes, Function<T, Stream<T>> nodeToChildren) {
+        Stream<T> result = Stream.concat(
+                nodes.stream(),
+                nodes.stream().flatMap(child -> breadthFirstStream(child, nodeToChildren)));
+
+        return result;
+    }
+
+    /**
+     * There are two options to compute each key's graph in a subtree:
+     * (1) We start with each key's complete graph, and then subtract the graph of the node
+     * (2) Starting from the node, construct for an arbitrary node with that key the graph
+     *
+     * Approach 2:
+     * For every key, pick a graph among those with a minimum depth (so we need the least number of
+     * applyIso+union operations)
+     * This means: perform breadth first, and
+     *
+     */
+    public Map<K, G> loadGraphsInSubTree(Collection<GraphIndexNode<K, G, V, T>> startNodes) {
+        Map<K, GraphIndexNode<K, G, V, T>> keyToNode = new HashMap<>();
+
+        breadthFirstStreamMulti(startNodes, n -> n.getChildren().stream())
+            .forEach(n -> {
+                System.out.println("BFS: " + n);
+                Set<K> keys = idToKeys.get(n.getId());
+                for(K key : keys) {
+                    keyToNode.computeIfAbsent(key, k -> n);
+                }
+            });
+
+        // Now process the map; we can memoize graphs computed for nodes
+        Map<K, G> result = keyToNode.entrySet().stream()
+            .collect(Collectors.toMap(
+                Entry::getKey,
+                e -> assembleGraphAtNode(e.getValue(), (n) -> startNodes.contains(n))));
+
+        return result;
+    }
+
+    /**
+     * Get the list of parents, reverse it and apply transIso and union
+     *
+     * @param node
+     * @return
+     */
+    public G assembleGraphAtNode(GraphIndexNode<K, G, V, T> destNode, Predicate<GraphIndexNode<K, G, V, T>> isStartNode) {
+
+        // TODO Support memoization of assembledGraphs
+        G result = isStartNode.test(destNode)
+            ? destNode.getValue()
+            : setOps.union(
+                setOps.applyIso(assembleGraphAtNode(destNode.getParent(), isStartNode), destNode.getTransIso()),
+                destNode.getValue());
+
+        return result;
+    }
+
+    public static <T> void parentsOf(T node, Function<T, T> getParent) {
+
+    }
+
+
 
     void performAdd(K key, InsertPosition<K, G, V, T> pos, IndentedWriter writer) {
         GraphIndexNode<K, G, V, T> nodeA = pos.getNode();
@@ -788,42 +868,44 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
                     );
 
 
-            Collection<GraphIndexNode<K, G, V, T>> tmp = candChildren.collect(Collectors.toList());
-
-            candChildren = tmp.stream();
-
-            // For every key in the sub-tree, collect one representative
-            // residual graph.
-            Map<K, G> keyToGraph = new HashMap<>();
-            Multimap<K, K> altKeys = HashMultimap.create();
-            candChildren.forEach(node -> {
-                // Pick one key as the representative key and use the others as alt keys
-                Collection<K> keys = new HashSet<>(idToKeys.get(node.getId()));
-                idToKeys.removeAll(node.getId());
-
-                if(!keys.isEmpty()) {
-                    K repKey = keys.iterator().next();
-                    for(K altKey : keys) {
-                        if(!Objects.equals(repKey, altKey)) {
-                            altKeys.put(repKey, altKey);
-                        }
-                    }
-
-                    // For the repKey, build the graph
-                    // The baseGraph is this node's parent keyGraph
-                    Collection<K> parentKeys = keys;///idToKeys.get(node.getId());
-                    K parentRepKey = Iterables.getFirst(parentKeys, null);
-                    G baseGraph = keyToGraph.get(parentRepKey);
-                    G keyGraph = baseGraph == null
-                            ? node.getValue()
-                            : setOps.union(setOps.applyIso(baseGraph, node.transIso), node.graph)
-                            ;
-
-                    keyToGraph.put(repKey, keyGraph);
-                }
-            });
+//            Collection<GraphIndexNode<K, G, V, T>> tmp = candChildren.collect(Collectors.toList());
+//
+//            candChildren = tmp.stream();
+//
+//            // For every key in the sub-tree, collect one representative
+//            // residual graph.
+//            Map<K, G> keyToGraph = new HashMap<>();
+//            Multimap<K, K> altKeys = HashMultimap.create();
+//            candChildren.forEach(node -> {
+//                // Pick one key as the representative key and use the others as alt keys
+//                Collection<K> keys = new HashSet<>(idToKeys.get(node.getId()));
+//                idToKeys.removeAll(node.getId());
+//
+//                if(!keys.isEmpty()) {
+//                    K repKey = keys.iterator().next();
+//                    for(K altKey : keys) {
+//                        if(!Objects.equals(repKey, altKey)) {
+//                            altKeys.put(repKey, altKey);
+//                        }
+//                    }
+//
+//                    // For the repKey, build the graph
+//                    // The baseGraph is this node's parent keyGraph
+//                    Collection<K> parentKeys = keys;///idToKeys.get(node.getId());
+//                    K parentRepKey = Iterables.getFirst(parentKeys, null);
+//                    G baseGraph = keyToGraph.get(parentRepKey);
+//                    G keyGraph = baseGraph == null
+//                            ? node.getValue()
+//                            : setOps.union(setOps.applyIso(baseGraph, node.transIso), node.graph)
+//                            ;
+//
+//                    keyToGraph.put(repKey, keyGraph);
+//                }
+//            });
 
             // Order the graphs by size
+            Map<K, G> keyToGraph = loadGraphsInSubTree(directCandChildren);
+
             List<Entry<K, G>> keyGraphs = new ArrayList<>(keyToGraph.entrySet());
             Collections.sort(keyGraphs, (a, b) -> setOps.size(b.getValue()) - setOps.size(a.getValue()));
 
