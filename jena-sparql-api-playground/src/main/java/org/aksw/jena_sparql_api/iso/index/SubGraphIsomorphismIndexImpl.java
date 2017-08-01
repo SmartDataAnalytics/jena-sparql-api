@@ -758,16 +758,13 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
             nodeA.appendChild(nodeB);
             idToKeys.put(nodeBId, key);
         } else {
-            // Save the keys of nodeA
-            Long nodeAId = nodeA.getId();
-            Set<K> nodeAKeys = new HashSet<>(idToKeys.get(nodeAId));
-
-
             // Create the node that will replace nodeA, and
             // create and append the insert node as a child
             TagMap<Long, T> tagMap = new TagMapSetTrie<>(tagComparator);
             GraphIndexNode<K, G, V, T> replacementNodeA = new GraphIndexNode<>(nodeA.getParent(), nodeA.getId(), nodeA.getTransIso(), nodeA.getValue(), nodeA.getGraphTags(), tagMap);
+
             replacementNodeA.appendChild(nodeB);
+            idToKeys.put(nodeB.getId(), key);
 
             // The candidate children or those whose tag sets are a super set
             // of that of the insert graph
@@ -802,7 +799,7 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
             candChildren.forEach(node -> {
                 // Pick one key as the representative key and use the others as alt keys
                 Collection<K> keys = new HashSet<>(idToKeys.get(node.getId()));
-//                idToKeys.removeAll(node.getId());
+                idToKeys.removeAll(node.getId());
 
                 if(!keys.isEmpty()) {
                     K repKey = keys.iterator().next();
