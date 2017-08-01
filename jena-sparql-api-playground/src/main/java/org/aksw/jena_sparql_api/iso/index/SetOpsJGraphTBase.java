@@ -4,6 +4,8 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import org.jgrapht.Graph;
+import org.jgrapht.Graphs;
+import org.jgrapht.graph.GraphUnion;
 
 import com.google.common.base.MoreObjects;
 
@@ -18,6 +20,16 @@ public abstract class SetOpsJGraphTBase<V, E, G extends Graph<V, E>>
         SetOpsJGraphTBase.transformItems(result, a, nodeTransform, this::transformEdge);
         return result;
     }
+
+    @Override
+    public G union(G a, G b) {
+        Graph<V, E> tmp = new GraphUnion<V, E, G>(a, b);
+        G result = createNew();
+        Graphs.addGraph(result, tmp);
+
+        return result;
+    }
+
 
 //	@Override
 //	public DirectedGraph<Node, Triple> applyIso(DirectedGraph<Node, Triple> a, BiMap<Node, Node> itemTransform) {
@@ -84,9 +96,16 @@ public abstract class SetOpsJGraphTBase<V, E, G extends Graph<V, E>>
             .forEach(result::addVertex);
 
         set.edgeSet().stream().forEach(e -> {
+            V src = set.getEdgeSource(e);
+            V tgt = set.getEdgeTarget(e);
+
+            V tmpSrc = nodeTransform.apply(src);
+            V tmpTgt = nodeTransform.apply(tgt);
+
+            V isoSrc = tmpSrc != null ? tmpSrc : src;
+            V isoTgt = tmpTgt != null ? tmpTgt : tgt;
+
             E isoEdge = edgeTransform.apply(e, nodeTransform);
-            V isoSrc = nodeTransform.apply(set.getEdgeSource(e));
-            V isoTgt = nodeTransform.apply(set.getEdgeTarget(e));
 
             result.addEdge(isoSrc, isoTgt, isoEdge);
         });

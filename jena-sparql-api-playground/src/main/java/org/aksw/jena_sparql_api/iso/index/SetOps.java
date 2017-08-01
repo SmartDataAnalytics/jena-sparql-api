@@ -8,6 +8,10 @@ public interface SetOps<S, I> {
     S createNew();
     S intersect(S a, S b);
     S difference(S a, S b);
+    S union(S a, S b);
+
+    // S materialize(S a)
+
     //S transformItems(S a, Function<I, I> itemTransform);
 
     S transformItems(S a, Function<I, I> nodeTransform);

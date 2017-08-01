@@ -9,6 +9,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.graph.compose.Difference;
 import org.apache.jena.graph.compose.Intersection;
+import org.apache.jena.graph.compose.Union;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.graph.NodeTransformLib;
 
@@ -57,6 +58,12 @@ public class SetOpsGraphJena
             Triple u = NodeTransformLib.transform(tmp, t);
             result.add(u);
         });
+        return result;
+    }
+
+    @Override
+    public Graph union(Graph a, Graph b) {
+        Graph result = new Union(a, b);
         return result;
     }
 

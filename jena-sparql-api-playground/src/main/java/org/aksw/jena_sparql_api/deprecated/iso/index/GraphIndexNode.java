@@ -38,7 +38,9 @@ public class GraphIndexNode<K>
     protected long id;
     protected BiMap<Node, Node> transIso;
     protected Graph graph;
-    protected Set<K> keys = new HashSet<>();
+    protected Set<K> keys;
+
+    //protected Set<K> keys = new HashSet<>();
     //protected LinkedList<GraphIndexNode<K>> children = new LinkedList<>();
     protected Map<Long, GraphIndexNode<K>> idToChild = new LinkedHashMap<>();
 
@@ -106,6 +108,7 @@ public class GraphIndexNode<K>
         return keys;
         //return tree.idToKeys.get(id);
     }
+
 
     @Override
     public String toString() {

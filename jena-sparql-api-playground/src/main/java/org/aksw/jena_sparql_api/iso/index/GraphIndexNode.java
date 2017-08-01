@@ -40,7 +40,8 @@ public class GraphIndexNode<K, G, N, T>
     protected G graph;
     protected Set<T> graphTags;
 
-    protected Set<K> keys = new HashSet<>();
+    protected Set<K> key;
+    //protected Set<K> keys = new HashSet<>();
     //protected LinkedList<GraphIndexNode<K>> children = new LinkedList<>();
     protected Map<Long, GraphIndexNode<K, G, N, T>> idToChild = new LinkedHashMap<>();
 
@@ -76,7 +77,7 @@ public class GraphIndexNode<K, G, N, T>
         return transIso;
     }
 
-    public long getKey() {
+    public long getId() {
         return id;
     }
 
@@ -113,22 +114,24 @@ public class GraphIndexNode<K, G, N, T>
         }
         child.setParent(this);
 
-        idToChild.put(child.getKey(), child);
-
-
-        childIndex.put(child.getKey(), child.graphTags);
+        idToChild.put(child.getId(), child);
+        childIndex.put(child.getId(), child.getGraphTags());
 
     }
 
-    public Set<K> getKeys() {
-        return keys;
-        //return tree.idToKeys.get(id);
-    }
+//    public void setKey(K key) {
+//        return key;
+//    }
+//
+//    public K getKey() {
+//        return key;
+//        //return tree.idToKeys.get(id);
+//    }
 
     @Override
     public String toString() {
         return "GraphIndexNode [id=" + id + ", transIso=" + transIso + ", graph=" + graph + ", graphTags=" + graphTags
-                + ", keys=" + keys + ", idToChild=" + idToChild + ", childIndex=" + childIndex + "]";
+                + ", idToChild=" + idToChild + ", childIndex=" + childIndex + "]";
     }
 
 

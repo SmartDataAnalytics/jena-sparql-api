@@ -87,7 +87,7 @@ public class SparqlViewMatcherQfpcIso<K>
                 QueryToJenaGraph::createNodeComparator, QueryToJenaGraph::createEdgeComparator);
 
 
-        System.out.println("RAW SOLUTIONS for " + pos.getNode().getKey());
+        System.out.println("RAW SOLUTIONS for " + pos.getNode().getId());
         rawProblem.generateSolutions().forEach(s -> {
             System.out.println("  Raw Solution: " + s);
         });

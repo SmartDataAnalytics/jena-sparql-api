@@ -227,10 +227,16 @@ public class MainSparqlQueryToGraph {
                 // - q3a, q2a, q1b, q1a
                 queries = Lists.newArrayList();
 
-                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q1a"));
-                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q2b"));
-                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q3a"));
+                //queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q4w"));
+//                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q1x"));
+//                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q3z"));
+//                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q2y"));
                 //queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q1b"));
+
+                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q2y"));
+                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q1x"));
+                //queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q3z"));
+                //queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q4w"));
 
             } else {
                 queries = Collections.emptyList();

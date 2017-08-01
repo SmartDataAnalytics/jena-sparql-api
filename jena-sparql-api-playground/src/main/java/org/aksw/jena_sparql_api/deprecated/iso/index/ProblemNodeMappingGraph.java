@@ -14,6 +14,8 @@ import org.jgrapht.Graph;
 import org.jgrapht.GraphMapping;
 import org.jgrapht.alg.isomorphism.IsomorphicGraphMapping;
 import org.jgrapht.alg.isomorphism.VF2SubgraphIsomorphismInspector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
@@ -24,32 +26,73 @@ public class ProblemNodeMappingGraph<V, E, G extends Graph<V, E>, T>
     implements ProblemNeighborhoodAware<BiMap<V, V>, T>
     //extends ProblemMappingVarsBase<DirectedGraph<Node, Triple>, DirectedGraph<Node, Triple>, Var, Var>
 {
-    protected G viewGraph;
-    protected G queryGraph;
-    protected Comparator<V> nodeComparator;
-    protected Comparator<E> edgeComparator;
+    private static final Logger logger = LoggerFactory.getLogger(ProblemNodeMappingGraph.class);
+
 
     protected BiMap<V, V> baseSolution;
-
-    protected VF2SubgraphIsomorphismInspector<V, E> inspector;
+    protected G viewGraph;
+    protected G queryGraph;
 
     protected Function<BiMap<V, V>, Comparator<V>> nodeComparatorFactory;
     protected Function<BiMap<V, V>, Comparator<E>> edgeComparatorFactory;
+
+    protected boolean skipIncompatibleMappings;
+
+    protected transient Comparator<V> nodeComparator;
+    protected transient Comparator<E> edgeComparator;
+    protected transient VF2SubgraphIsomorphismInspector<V, E> inspector;
+
+//    public ProblemNodeMappingGraph(
+//            BiMap<V, V> baseSolution,
+//            G viewGraph,
+//            G queryGraph,
+//            Comparator<V> nodeComparator,
+//            Comparator<E> edgeComparator,
+//            boolean skipIncompatibleMappings) {
+//        super();
+//        this.baseSolution = baseSolution;
+//        this.viewGraph = viewGraph;
+//        this.queryGraph = queryGraph;
+//
+//        this.nodeComparator = nodeComparator;
+//        this.edgeComparator = edgeComparator;
+//
+//        this.skipIncompatibleMappings = skipIncompatibleMappings;
+//        inspector = new VF2SubgraphIsomorphismInspector<>(queryGraph, viewGraph, nodeComparator, edgeComparator, true);
+//    }
 
     public ProblemNodeMappingGraph(
             BiMap<V, V> baseSolution,
             G viewGraph,
             G queryGraph,
             Function<BiMap<V, V>, Comparator<V>> nodeComparatorFactory,
-            Function<BiMap<V, V>, Comparator<E>> edgeComparatorFactory) {
+            Function<BiMap<V, V>, Comparator<E>> edgeComparatorFactory)
+    {
+        this(
+            baseSolution, viewGraph, queryGraph,
+            nodeComparatorFactory, edgeComparatorFactory,
+            true);
+    }
+
+    public ProblemNodeMappingGraph(
+            BiMap<V, V> baseSolution,
+            G viewGraph,
+            G queryGraph,
+            Function<BiMap<V, V>, Comparator<V>> nodeComparatorFactory,
+            Function<BiMap<V, V>, Comparator<E>> edgeComparatorFactory,
+            boolean skipIncompatibleMappings) {
         super();
         this.baseSolution = baseSolution;
         this.viewGraph = viewGraph;
         this.queryGraph = queryGraph;
 
-        nodeComparator = nodeComparatorFactory.apply(baseSolution);
-        edgeComparator = edgeComparatorFactory.apply(baseSolution);
+        this.nodeComparatorFactory = nodeComparatorFactory;
+        this.edgeComparatorFactory = edgeComparatorFactory;
 
+        this.nodeComparator = nodeComparatorFactory.apply(baseSolution);
+        this.edgeComparator = edgeComparatorFactory.apply(baseSolution);
+
+        this.skipIncompatibleMappings = skipIncompatibleMappings;
         inspector = new VF2SubgraphIsomorphismInspector<>(queryGraph, viewGraph, nodeComparator, edgeComparator, true);
 //        System.out.println("New inspector for viewGraphHash: " + viewGraph.hashCode() + ", queryGraphHash: " + queryGraph.hashCode());
 
@@ -79,14 +122,32 @@ public class ProblemNodeMappingGraph<V, E, G extends Graph<V, E>, T>
                 // Add the base solution
                 nodeMap.putAll(baseSolution);
 
+                System.out.println("Base Mappings:");
+                nodeMap.forEach((k, v) -> System.out.println("  " + k + " -> " + v));
+
+                System.out.println("New Mappings:");
                 for(V bNode : queryGraph.vertexSet()) {
                     if(m.hasVertexCorrespondence(bNode)) {
                         V aNode = m.getVertexCorrespondence(bNode, true);
+                        System.out.println("  " + aNode + " -> " + bNode);
+                        try {
                             nodeMap.put(aNode, bNode);
+                        } catch(IllegalArgumentException e) {
+                            if(skipIncompatibleMappings) {
+                                // If the mapping is inconsistent with the baseMapping, skip it
+                                // but log a warnign
+                                logger.warn("Skipping incompatible mapping");
+                                nodeMap = null;
+                                break;
+                            } else {
+                                throw new RuntimeException(e);
+                            }
+                        }
                     }
                 }
                 return nodeMap;
-            });
+            })
+            .filter(x -> x != null);
 
         return result;
     }
@@ -97,7 +158,7 @@ public class ProblemNodeMappingGraph<V, E, G extends Graph<V, E>, T>
         newBaseSolution.putAll(baseSolution);
         newBaseSolution.putAll(partialSolution);
 
-        return Collections.singleton(new ProblemNodeMappingGraph<>(newBaseSolution, viewGraph, queryGraph, nodeComparatorFactory, edgeComparatorFactory));
+        return Collections.singleton(new ProblemNodeMappingGraph<>(newBaseSolution, viewGraph, queryGraph, nodeComparatorFactory, edgeComparatorFactory, skipIncompatibleMappings));
     }
 
     @Override
