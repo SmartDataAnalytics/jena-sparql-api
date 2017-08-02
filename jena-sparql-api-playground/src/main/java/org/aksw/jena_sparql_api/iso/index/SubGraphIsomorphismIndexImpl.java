@@ -339,7 +339,7 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
     public K put(K key, G graph) {
         Set<T> insertGraphTags = extractGraphTagsWrapper(graph);
 
-        add(rootNode, key, graph, insertGraphTags, HashBiMap.create(), IndentedWriter.stderr);
+        add(rootNode, key, graph, insertGraphTags, HashBiMap.create(), false, IndentedWriter.stderr);
 
         return null;
     }
@@ -652,7 +652,7 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
      *
      * @param graph
      */
-    void add(GraphIndexNode<K, G, V, T> node, K key, G insertGraph, Set<T> insertGraphTags, BiMap<V, V> baseIso, IndentedWriter writer) {
+    void add(GraphIndexNode<K, G, V, T> node, K key, G insertGraph, Set<T> insertGraphTags, BiMap<V, V> baseIso, boolean forceInsert, IndentedWriter writer) {
         // The insert graph must be larger than the node Graph
 
 
@@ -665,7 +665,7 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
 //        });
 
         for(InsertPosition<K, G, V, T> pos : positions) {
-            performAdd(key, pos, writer);
+            performAdd(key, pos, forceInsert, writer);
         }
     }
 
@@ -807,7 +807,7 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
 
 
 
-    void performAdd(K key, InsertPosition<K, G, V, T> pos, IndentedWriter writer) {
+    void performAdd(K key, InsertPosition<K, G, V, T> pos, boolean forceInsert, IndentedWriter writer) {
         GraphIndexNode<K, G, V, T> nodeA = pos.getNode();
         //Graph insertGraphIsoB = pos.getGraphIso();
 
@@ -833,7 +833,7 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
         // Otherwise, we need to do a more complex update procedure where we
         // re-insert every graph in the node's subtree
         GraphIndexNode<K, G, V, T> nodeB = createNode(residualInsertGraphB, residualInsertGraphBTags, isoAB);
-        if(nodeA.childIndex.isEmpty()) {
+        if(forceInsert || nodeA.childIndex.isEmpty()) {
             Long nodeBId = nodeB.getId();
             nodeA.appendChild(nodeB);
             idToKeys.put(nodeBId, key);
@@ -848,8 +848,12 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
 
             // The candidate children or those whose tag sets are a super set
             // of that of the insert graph
-            Set<GraphIndexNode<K, G, V, T>> directCandChildren =
-                    nodeA.childIndex.getAllSupersetsOf(residualInsertGraphBTags, false).keySet().stream()
+//            Set<GraphIndexNode<K, G, V, T>> directCandChildren =
+//                    nodeA.childIndex.getAllSupersetsOf(residualInsertGraphBTags, false).keySet().stream()
+//                    .map(nodeId -> nodeA.idToChild.get(nodeId))
+//                    .collect(Collectors.toCollection(Sets::newIdentityHashSet));
+
+            Set<GraphIndexNode<K, G, V, T>> directCandChildren = nodeA.childIndex.getAllSupersetsOf(Collections.emptySet(), false).keySet().stream()
                     .map(nodeId -> nodeA.idToChild.get(nodeId))
                     .collect(Collectors.toCollection(Sets::newIdentityHashSet));
 
@@ -906,8 +910,10 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
             // Order the graphs by size
             Map<K, G> keyToGraph = loadGraphsInSubTree(directCandChildren);
 
+            System.out.println("Found these graphs in subtree of candidate children: " + keyToGraph.keySet());
+
             List<Entry<K, G>> keyGraphs = new ArrayList<>(keyToGraph.entrySet());
-            Collections.sort(keyGraphs, (a, b) -> setOps.size(b.getValue()) - setOps.size(a.getValue()));
+            Collections.sort(keyGraphs, (a, b) -> setOps.size(a.getValue()) - setOps.size(b.getValue()));
 
             // Perform additions
             for(Entry<K, G> keyGraph : keyGraphs) {
@@ -916,11 +922,12 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
                 Set<T> insertGraphTags = extractGraphTagsWrapper(insertGraph);
                 BiMap<V, V> baseIso = HashBiMap.create();
 
-                add(replacementNodeA, k, insertGraph, insertGraphTags, baseIso, writer);
+                add(replacementNodeA, k, insertGraph, insertGraphTags, baseIso, true, writer);
             }
 
             // Append all unaffected non-candidate children
             for(GraphIndexNode<K, G, V, T> node : nonDirectCandChildren) {
+                node.setParent(null);
                 replacementNodeA.appendChild(node);
             }
 

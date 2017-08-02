@@ -233,10 +233,15 @@ public class MainSparqlQueryToGraph {
 //                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q2y"));
                 //queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q1b"));
 
-                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q2y"));
-                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q1x"));
+                //queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q2y"));
+                //queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q1x"));
                 //queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q3z"));
                 //queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q4w"));
+
+                // Multi-subsumption
+                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q1x"));
+                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q2y"));
+                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/r1a"));
 
             } else {
                 queries = Collections.emptyList();

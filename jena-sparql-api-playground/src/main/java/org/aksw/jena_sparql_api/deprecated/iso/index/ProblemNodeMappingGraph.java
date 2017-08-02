@@ -122,10 +122,10 @@ public class ProblemNodeMappingGraph<V, E, G extends Graph<V, E>, T>
                 // Add the base solution
                 nodeMap.putAll(baseSolution);
 
-                System.out.println("Base Mappings:");
+                //System.out.println("Base Mappings:");
                 nodeMap.forEach((k, v) -> System.out.println("  " + k + " -> " + v));
 
-                System.out.println("New Mappings:");
+                //System.out.println("New Mappings:");
                 for(V bNode : queryGraph.vertexSet()) {
                     if(m.hasVertexCorrespondence(bNode)) {
                         V aNode = m.getVertexCorrespondence(bNode, true);
