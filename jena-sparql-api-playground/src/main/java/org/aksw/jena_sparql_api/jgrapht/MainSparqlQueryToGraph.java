@@ -239,18 +239,20 @@ public class MainSparqlQueryToGraph {
                 //queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q4w"));
 
                 // Test case: Multi-subsumption
-//                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q1x"));
-//                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q2y"));
-//                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/r1a"));
-//                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/spo"));
-
+                if(true) {
+                    queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q1x"));
+                    queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q2y"));
+                    queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/r1a"));
+                    queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/spo"));
+                }
 
                 // Test case: New root inserted late
                 // expected: { spo: { q1x: {q2y}, q2y}
-                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q1x"));
-                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q2y"));
-                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/spo"));
-
+                if(false) {
+                    queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q1x"));
+                    queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q2y"));
+                    queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/spo"));
+                }
             } else {
                 queries = Collections.emptyList();
             }
