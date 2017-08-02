@@ -507,6 +507,9 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
 
         boolean isSubsumed = false;
 
+        boolean insertAtThisNode = false;
+
+
         // Candidate children for recursive lookup of the insert position
         // are those whose tags are subsets of the insertGraphTags
         writer.incIndent();
@@ -551,6 +554,7 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
 //            isos = Lists.newArrayList(isos);
 //            System.out.println("Worked B!");
             for(BiMap<V, V> iso : isos) {
+                isSubsumed = true;
             //for(BiMap<Node, Node> iso : Lists.newArrayList(toIterable(QueryToJenaGraph.match(baseIso, viewGraph, insertGraph)))) {
 
                 // TODO I tink the next 3 commented out lines are wrong and can be removed
@@ -564,7 +568,6 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
                         .filter(e -> !Objects.equals(e.getKey(), e.getValue()))
                         .collect(collectToBiMap(Entry::getKey, Entry::getValue));
 
-                isSubsumed = true;
 
                 writer.println("Found match #" + ++i + ":");
                 writer.incIndent();
@@ -579,6 +582,7 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
                     System.out.println("iso         : " + iso);
                     System.out.println("transBaseIso: " + transBaseIso);
                     //throw new RuntimeException("should not happen");
+                    insertAtThisNode = true;
                     continue;
                 }
 
@@ -623,7 +627,10 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
         }
         writer.decIndent();
 
-        if(!isSubsumed || retrievalMode) {
+
+        insertAtThisNode = insertAtThisNode || !isSubsumed;
+        if(insertAtThisNode || retrievalMode) {
+        //if(!isSubsumed || retrievalMode) {
 
             if(!exactMatch || isEmpty(insertGraph)) {
                 writer.println("Marking location for insert");
