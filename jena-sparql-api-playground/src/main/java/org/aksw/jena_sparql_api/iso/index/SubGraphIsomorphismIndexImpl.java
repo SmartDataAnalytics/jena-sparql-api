@@ -874,11 +874,16 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
 //                    .map(nodeId -> nodeA.idToChild.get(nodeId))
 //                    .collect(Collectors.toCollection(Sets::newIdentityHashSet));
 
-            Set<GraphIndexNode<K, G, V, T>> directCandChildren = nodeA.childIndex.getAllSupersetsOf(Collections.emptySet(), false).keySet().stream()
+            Set<GraphIndexNode<K, G, V, T>> directCandChildren =
+                    nodeA.childIndex.getAllSupersetsOf(residualInsertGraphBTags, false).keySet().stream()
                     .map(nodeId -> nodeA.idToChild.get(nodeId))
                     .collect(Collectors.toCollection(Sets::newIdentityHashSet));
 
-            List<GraphIndexNode<K, G, V, T>> nonDirectCandChildren = nodeA.idToChild.values().stream()
+//            Set<GraphIndexNode<K, G, V, T>> directCandChildren = nodeA.childIndex.getAllSupersetsOf(Collections.emptySet(), false).keySet().stream()
+//                    .map(nodeId -> nodeA.idToChild.get(nodeId))
+//                    .collect(Collectors.toCollection(Sets::newIdentityHashSet));
+
+            List<GraphIndexNode<K, G, V, T>> directNonCandChildren = nodeA.idToChild.values().stream()
                     .filter(node -> !directCandChildren.contains(node))
                     .collect(Collectors.toList());
 
@@ -947,7 +952,7 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
             }
 
             // Append all unaffected non-candidate children
-            for(GraphIndexNode<K, G, V, T> node : nonDirectCandChildren) {
+            for(GraphIndexNode<K, G, V, T> node : directNonCandChildren) {
                 node.setParent(null);
                 replacementNodeA.appendChild(node);
             }
