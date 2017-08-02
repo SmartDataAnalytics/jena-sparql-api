@@ -34,7 +34,7 @@ public class ListPaginatorBatch<I>
         Range<Long> newRange = RangeUtils.multiplyByPageSize(range, batchSize);
         Stream<I> in = base.apply(newRange);
 
-        Stream<List<I>> result = StreamUtils.mapToBatch(in, batchSize);
+        Stream<List<I>> result = StreamUtils.mapToBatch(in, (int)batchSize);
 
         return result;
     }

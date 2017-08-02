@@ -498,7 +498,8 @@ public class TypedQueryImpl<X>
         Stream<Node> items = rawItems.map(Entry::getKey);
         //List<Node> items = ServiceUtils.fetchList(qef, query, resultVar);
 
-        Stream<List<Node>> batchedItems = StreamUtils.mapToBatch(items, batchSize);
+        // FIXME for robustness: if batchSize is null, use some default
+        Stream<List<Node>> batchedItems = StreamUtils.mapToBatch(items, batchSize.intValue());
 
         Stream<X> result = batchedItems.flatMap(nodes -> {
             Class<X> clazz = criteriaQuery.getResultType();
