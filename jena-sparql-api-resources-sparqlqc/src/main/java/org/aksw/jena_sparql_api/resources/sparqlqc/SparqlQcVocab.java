@@ -3,7 +3,6 @@ package org.aksw.jena_sparql_api.resources.sparqlqc;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.jena.vocabulary.RDF;
 
 public class SparqlQcVocab {
     public static final String ns = "http://sparql-qc-bench.inrialpes.fr/testsuite#";
@@ -22,14 +21,23 @@ public class SparqlQcVocab {
     public static final Property result = property("result" );
     //public static final Property error = property("error" );
 
+//    public static final Property sourceQueryRecord = property("sourceQueryRecord" );
+//    public static final Property targetQueryRecord = property("targetQueryRecord" );
+
     public static final Property Schema = property("Schema" );
 
 
     // TODO Replace with SPIN or LSQ Query
-    public static final Property id = property("http://ex.org/ontology/id");
+    // TODO the query property links a query record with resource representing the query.
+    // Same name for class and property is discouraged by best practices - thus rename
+    public static final Property query = property("query");
 
-    public static final Property variant = property("http://ex.org/ontology/variant");
+    public static final Resource QueryRecord = resource("QueryRecord");
+    public static final Property id = property("id"); //ResourceFactory.createProperty("http://ex.org/ontology/id");
+
+    public static final Property variant = property("variant"); //ResourceFactory.createProperty("http://ex.org/ontology/variant");
 
 
-    public static final Property sparqlQueryString = property("http://lsq.aksw.org/vocab#text");
+    public static final Property Query = ResourceFactory.createProperty("http://lsq.aksw.org/vocab#Query");
+    public static final Property sparqlQueryString = ResourceFactory.createProperty("http://lsq.aksw.org/vocab#text");
 }

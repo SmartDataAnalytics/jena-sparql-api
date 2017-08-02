@@ -32,7 +32,6 @@ import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-import org.topbraid.spin.vocabulary.SP;
 
 /**
  * The essential method is .loadTasks(rdfFile, queryFolder) which enriches the
@@ -96,7 +95,7 @@ public class SparqlQcReader {
 
     public static void normalizeSqcfModel(Model testSuitesModel) {
         // Transform hasTest to an RDF list
-        Property hasTest = ResourceFactory.createProperty("http://sqc-framework.aksw.org/testsuit#hasTest");
+        Property hasTest = ResourceFactory.createProperty("http://sqc-framework.aksw.org/testsuite#hasTest");
         List<Statement> stmts = testSuitesModel.listStatements(null, hasTest, (RDFNode)null).toList();
         testSuitesModel.remove(stmts);
 
@@ -182,9 +181,11 @@ public class SparqlQcReader {
         }
     }
 
-    public static void resolveIoResourceRef(Resource testCase, Property property,
+    public static RDFNode resolveIoResourceRef(Resource testCase, Property property,
             // String basePath,
             Map<String, RDFNode> cache, BiFunction<String, Model, RDFNode> rdfizer) {
+        RDFNode result;
+
         Statement stmt = testCase.getProperty(property);
         if (stmt != null) {
             String str = stmt.getString();
@@ -198,7 +199,13 @@ public class SparqlQcReader {
 
             testCase.removeAll(property);
             testCase.addProperty(property, res);
+
+            result = res;
+        } else {
+            result = null;
         }
+
+        return result;
     }
 
     public static void loadTestSuite(Resource testSuite, String basePath) {
@@ -218,7 +225,12 @@ public class SparqlQcReader {
             BiFunction<String, Model, RDFNode> queryResolver = (refStr, m) -> {
                 String filePath = resourceFolder + "/" + refStr;
                 org.springframework.core.io.Resource ioResource = new ClassPathResource(filePath);
-                RDFNode r = SparqlQcReader.processQueryUnchecked(ioResource, m);
+                Resource r = SparqlQcReader.processQueryRecordUnchecked(ioResource, m);
+
+                String baseIri = testSuite.getURI() + "-Q";
+
+                String iri = createQueryResourceIri(baseIri, r);
+                r = ResourceUtils.renameResource(r, iri);
                 return r;
             };
 
@@ -234,13 +246,24 @@ public class SparqlQcReader {
                 resolveIoResourceRef(testCase, SparqlQcVocab.targetQuery, resolvedQueryRef, queryResolver);
                 resolveIoResourceRef(testCase, SparqlQcVocab.rdfSchema, resolvedSchemaRef, schemaResolver);
             }
+
+
+
+            // Add short hands to omit the record resource
+//            for (Resource testCase : testCases) {
+//                RDFDataMgr.write(System.out, testCase.getModel(), RDFFormat.TURTLE_PRETTY);
+//
+//                testCase.addProperty(SparqlQcVocab.sourceQuery, testCase.getProperty(SparqlQcVocab.sourceQueryRecord).getObject().asResource().getPropertyResourceValue(SparqlQcVocab.query).asResource());
+//                testCase.addProperty(SparqlQcVocab.targetQuery, testCase.getProperty(SparqlQcVocab.targetQueryRecord).getObject().asResource().getPropertyResourceValue(SparqlQcVocab.query).asResource());
+//            }
+
         }
     }
 
-    public static Resource processQueryUnchecked(
+    public static Resource processQueryRecordUnchecked(
             org.springframework.core.io.Resource resource, Model inout) {
         try {
-            return processQuery(resource, inout);
+            return processQueryRecord(resource, inout);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -254,21 +277,33 @@ public class SparqlQcReader {
         return result;
     }
 
-    public static QueryRef parseQueryId(String ref) {
+    public static Resource parseQueryId(String ref) {
+        Resource result = ModelFactory.createDefaultModel().createResource();
+
         Matcher m = queryNamePattern.matcher(ref);
         m.find();
         Long id = Long.parseLong(m.group("id"));
         String variant = m.group("variant");
 
-        QueryRef result = new QueryRef(id, variant);
+        //QueryRef result = new QueryRef(id, variant);
+        //Resource result = ModelFactory.createDefaultModel().createResource();
+        result
+            .addLiteral(SparqlQcVocab.id, id)
+            .addLiteral(SparqlQcVocab.variant, variant);
+
         return result;
     }
 
-    public static Resource createQueryResource(QueryRef qr) {
-        Resource result = ResourceFactory
-                .createResource("http://ex.org/query/Q" + qr.getId() + qr.getVariant());
+    public static String createQueryResourceIri(String baseIri, Resource qr) { //QueryRef qr) {
+        String result = baseIri + qr.getProperty(SparqlQcVocab.id).getLong() + qr.getProperty(SparqlQcVocab.variant).getString();
         return result;
     }
+
+//    public static Resource createQueryRecordResource(QueryRef qr) {
+//        Resource result = ResourceFactory
+//                .createResource("http://ex.org/query-record/Q" + qr.getId() + qr.getVariant());
+//        return result;
+//    }
 
     public static Resource createSchemaResource(Long id) {
         Resource result = ResourceFactory.createResource("http://ex.org/schema/C" + id);
@@ -293,26 +328,65 @@ public class SparqlQcReader {
 
         String content = IOUtils.toString(resource.getInputStream(), StandardCharsets.UTF_8);
 
-        inout.add(result, RDF.type, SparqlQcVocab.Schema).add(result, SparqlQcVocab.id, inout.createTypedLiteral(id))
-                .add(result, LSQtext, inout.createLiteral(content)).add(result, RDFS.label, fileName);
+        inout
+            .add(result, RDF.type, SparqlQcVocab.Schema)
+            .add(result, SparqlQcVocab.id, inout.createTypedLiteral(id))
+            .add(result, LSQtext, inout.createLiteral(content))
+            .add(result, RDFS.label, fileName);
+
         // ResourceFactory.createProperty("http://iguana.aksw.org/ontology#queryId")
         // System.out.println("" + id + variant);
 
         return result;
     }
 
-    public static Resource processQuery(org.springframework.core.io.Resource resource,
+    public static Resource processQueryRecord(org.springframework.core.io.Resource resource,
             Model inout) throws IOException {
         String fileName = resource.getFilename();
-        QueryRef qr = parseQueryId(fileName);
+        Resource baseQr = parseQueryId(fileName);
 
-        Resource result = createQueryResource(qr).inModel(inout);
+//        String qr = createQueryResourceIri(baseQr);
+
+        Resource result = inout.createResource();
+
 
         String content = StreamUtils.toString(resource.getInputStream());
 
-        inout.add(result, RDF.type, SP.Query).add(result, SparqlQcVocab.id, inout.createTypedLiteral(qr.id))
-                .add(result, LSQtext, inout.createLiteral(content))
-                .add(result, SparqlQcVocab.variant, inout.createLiteral(qr.variant)).add(result, RDFS.label, fileName);
+        if(false) {
+            Resource q = inout.createResource();//createQueryResource(qr).inModel(inout);
+
+            q
+                .addProperty(RDF.type, SparqlQcVocab.Query)
+                .addLiteral(LSQtext, content)  //inout.createLiteral(content))
+                ;
+
+            result
+                .addProperty(RDF.type, SparqlQcVocab.QueryRecord)
+                .addProperty(SparqlQcVocab.query, q)
+                //.addProperty(SparqlQcVocab.id, inout.createTypedLiteral(qr.id))
+                //.addProperty(SparqlQcVocab.variant, inout.createLiteral(qr.variant))
+                ;
+        } else {
+            result
+            .addProperty(RDF.type, SparqlQcVocab.Query)
+            .addProperty(LSQtext, content)
+            //.addProperty(SparqlQcVocab.id, inout.createTypedLiteral(qr.id))
+            //.addProperty(SparqlQcVocab.variant, inout.createLiteral(qr.variant))
+            ;
+
+        }
+
+        result.addProperty(SparqlQcVocab.id, baseQr.getProperty(SparqlQcVocab.id).getObject());
+        result.addProperty(SparqlQcVocab.variant, baseQr.getProperty(SparqlQcVocab.variant).getObject());
+
+
+            //.add(result, RDFS.label, fileName);
+            //.add(result, )
+
+//        	.add(result, SparqlQcVocab.id, inout.createTypedLiteral(qr.id))
+//            .add(result, SparqlQcVocab.variant, inout.createLiteral(qr.variant))
+//            .add(result, RDFS.label, fileName);
+//        	.add(result, )
         // ResourceFactory.createProperty("http://iguana.aksw.org/ontology#queryId")
         // System.out.println("" + id + variant);
 
@@ -322,17 +396,17 @@ public class SparqlQcReader {
     /**
      * Replace the strings of :sourceQuery and :targetQuery with proper uris
      */
-    @Deprecated
-    public static void fixQueryReferences(Model model, Property property) {
-        Set<Statement> stmts = model.listStatements(null, property, (RDFNode) null).toSet();
-        for (Statement stmt : stmts) {
-            String ref = stmt.getObject().asLiteral().getString();
-            QueryRef qr = parseQueryId(ref);
-            Resource o = createQueryResource(qr).inModel(model);
-            model.remove(stmt);
-            model.add(stmt.getSubject(), stmt.getPredicate(), o);
-        }
-    }
+//    @Deprecated
+//    public static void fixQueryReferences(Model model, Property property) {
+//        Set<Statement> stmts = model.listStatements(null, property, (RDFNode) null).toSet();
+//        for (Statement stmt : stmts) {
+//            String ref = stmt.getObject().asLiteral().getString();
+//            QueryRef qr = parseQueryId(ref);
+//            Resource o = createQueryResource(qr).inModel(model);
+//            model.remove(stmt);
+//            model.add(stmt.getSubject(), stmt.getPredicate(), o);
+//        }
+//    }
 
     @Deprecated
     public static Model readQueryFolder(String path) throws IOException {
@@ -340,7 +414,7 @@ public class SparqlQcReader {
 
         Model result = ModelFactory.createDefaultModel();
 
-        Arrays.asList(resources).stream().forEach(x -> processQueryUnchecked(x, result));
+        Arrays.asList(resources).stream().forEach(x -> processQueryRecordUnchecked(x, result));
 
         return result;
     }

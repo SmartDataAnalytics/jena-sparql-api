@@ -2,11 +2,8 @@ package org.aksw.jena_sparql_api.http;
 
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionDecorator;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;

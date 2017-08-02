@@ -26,3 +26,5 @@ felix-cache
 
 JSA-NOP.tsv
 results.tsv
+
+*.swp

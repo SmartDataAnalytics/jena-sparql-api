@@ -11,7 +11,9 @@ import java.util.Set;
 import org.aksw.commons.collections.MapUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.sdb.compiler.QuadBlock;
 import org.apache.jena.sparql.core.BasicPattern;
+import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.TriplePath;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
@@ -20,6 +22,7 @@ import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.ElementGroup;
+import org.apache.jena.sparql.syntax.ElementNamedGraph;
 import org.apache.jena.sparql.syntax.ElementPathBlock;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.ElementUnion;
@@ -49,6 +52,16 @@ public class ElementUtils {
         BasicPattern bgp = new BasicPattern();
         bgp.add(triple);
         ElementTriplesBlock result = new ElementTriplesBlock(bgp);
+        return result;
+    }
+
+    public static Element createElement(Quad quad) {
+        Element tripleEl = createElement(quad.asTriple());
+
+        Element result = Quad.isDefaultGraph(quad.getGraph())
+                ? tripleEl
+                : new ElementNamedGraph(quad.getGraph(), tripleEl);
+
         return result;
     }
 

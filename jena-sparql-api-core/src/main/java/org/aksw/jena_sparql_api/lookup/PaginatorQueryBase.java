@@ -4,7 +4,6 @@ import java.util.Iterator;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import org.aksw.commons.collections.utils.StreamUtils;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.utils.ServiceUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
@@ -13,6 +12,7 @@ import org.apache.jena.query.QueryExecution;
 import org.apache.jena.sparql.engine.binding.Binding;
 
 import com.google.common.collect.Range;
+import com.google.common.collect.Streams;
 
 public abstract class PaginatorQueryBase<T>
     implements ListPaginator<T>
@@ -43,7 +43,7 @@ public abstract class PaginatorQueryBase<T>
         QueryExecution qe = qef.createQueryExecution(clonedQuery);
         Iterator<T> it = obtainResultIterator(qe); // new IteratorResultSetBinding(qe.execSelect());
 
-        Stream<T> result = StreamUtils.stream(it);
+        Stream<T> result = Streams.stream(it);
         result.onClose(() -> qe.close());
         return result;
     }

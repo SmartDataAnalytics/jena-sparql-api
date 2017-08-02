@@ -12,7 +12,6 @@ import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import org.aksw.commons.collections.utils.StreamUtils;
 import org.aksw.jena_sparql_api.jgrapht.wrapper.PseudoGraphJenaGraph;
 import org.aksw.jena_sparql_api.utils.DnfUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
@@ -38,6 +37,7 @@ import org.jgrapht.graph.SimpleDirectedGraph;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import com.google.common.collect.Streams;
 
 
 /**
@@ -255,28 +255,38 @@ public class QueryToJenaGraph {
 //        int result = x.compareTo(y);
 //        return result;
 //    }
-
     public static int compareNodes(BiMap<Node, Node> baseIso, Node i, Node j) {
-        int result;
-        // If nodes were mapped by the isomorphism, they need to be equal
-        // otherwise, we treat vars and blanknodes as always equal among each other.
+        int result = (
+                        (i.isVariable() && j.isVariable()) ||
+                        (i.isBlank() && j.isBlank() ||
+                        Objects.equals(baseIso.get(i), j)))
+                ? 0
+                : NodeUtils.compareRDFTerms(i, j);
 
-        Node ii;
-        Node jj;
-
-        if((ii = baseIso.get(i)) != null) {
-            result = Objects.equals(ii, j) ? 0 : NodeUtils.compareRDFTerms(ii, j);
-        } else if((jj = baseIso.inverse().get(j)) != null) {
-            result = Objects.equals(i, jj) ? 0 : NodeUtils.compareRDFTerms(i, jj);
-        } else {
-            result =  (i.isVariable() && j.isVariable()) || (i.isBlank() && j.isBlank())
-                    ? 0
-                    : NodeUtils.compareRDFTerms(i, j);
-        }
-
-//        System.err.println("NodeCmp [" + result + "] for " + i + " <-> " + j);
         return result;
     }
+
+//    public static int compareNodesOld(BiMap<Node, Node> baseIso, Node i, Node j) {
+//        int result;
+//        // If nodes were mapped by the isomorphism, they need to be equal
+//        // otherwise, we treat vars and blanknodes as always equal among each other.
+//
+//        Node ii;
+//        Node jj;
+//
+//        if((ii = baseIso.get(i)) != null) {
+//            result = Objects.equals(ii, j) ? 0 : NodeUtils.compareRDFTerms(ii, j);
+//        } else if((jj = baseIso.inverse().get(j)) != null) {
+//            result = Objects.equals(i, jj) ? 0 : NodeUtils.compareRDFTerms(i, jj);
+//        } else {
+//            result =  (i.isVariable() && j.isVariable()) || (i.isBlank() && j.isBlank())
+//                    ? 0
+//                    : NodeUtils.compareRDFTerms(i, j);
+//        }
+//
+////        System.err.println("NodeCmp [" + result + "] for " + i + " <-> " + j);
+//        return result;
+//    }
 
 
     public static Iterator<GraphMapping<Node, Triple>> matchIt(
@@ -322,7 +332,7 @@ public class QueryToJenaGraph {
                 new VF2SubgraphIsomorphismInspector<>(b, a, nodeCmp, edgeCmp, true);
         Iterator<GraphMapping<Node, Triple>> it = inspector.getMappings();
 
-        Stream<BiMap<Node, Node>> result = StreamUtils.stream(it)
+        Stream<BiMap<Node, Node>> result = Streams.stream(it)
                 .map(m -> (IsomorphicGraphMapping<Node, Triple>)m)
                 .map(m -> {
                     BiMap<Node, Node> nodeMap = HashBiMap.create();//new HashMap<>();
@@ -392,7 +402,7 @@ public class QueryToJenaGraph {
         VF2SubgraphIsomorphismInspector<Node, Triple> inspector = new VF2SubgraphIsomorphismInspector<>(b, a, nodeCmp, edgeCmp, true);
         Iterator<GraphMapping<Node, Triple>> it = inspector.getMappings();
 
-        Stream<Map<Var, Var>> result = StreamUtils.stream(it)
+        Stream<Map<Var, Var>> result = Streams.stream(it)
                 .map(m -> (IsomorphicGraphMapping<Node, Triple>)m)
                 .map(m -> {
                     //System.out.println("Mapping: " + m);

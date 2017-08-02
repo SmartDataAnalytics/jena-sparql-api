@@ -7,7 +7,7 @@
     <artifactId>jena-sparql-api-parent</artifactId>
 
     <packaging>pom</packaging>
-    <version>3.3.0-1</version>
+    <version>3.3.0-2</version>
     <name>Jena SPARQL API - Parent</name>
     <description>An RDF library for abstracting SPARQL queries.</description>
     <url>https://github.com/AKSW/jena-sparql-api</url>
@@ -52,7 +52,7 @@
         <module>jena-sparql-api-example-proxy</module>
 
         <module>jena-sparql-api-example-views</module>
-        <module>jena-sparql-api-playground</module>
+<!--        <module>jena-sparql-api-playground</module> -->
     </modules>
 
     <issueManagement>
@@ -107,7 +107,7 @@
 
         <spring.version>4.1.4.RELEASE</spring.version>
         <spring.batch.version>3.0.7.RELEASE</spring.batch.version>
-        <aksw.commons.version>0.8.2</aksw.commons.version>
+        <aksw.commons.version>0.8.4</aksw.commons.version>
 
         <atmosphere.version>2.0.0.RC3</atmosphere.version>
         <atmosphere-spring.version>1.1.0.RC5</atmosphere-spring.version>
@@ -145,7 +145,7 @@
             <plugin>
                 <groupId>com.amashchenko.maven.plugin</groupId>
                 <artifactId>gitflow-maven-plugin</artifactId>
-                <version>1.5.0</version>
+                <version>1.6.0</version>
                 <configuration>
                     <gitFlowConfig>
                         <versionTagPrefix>v</versionTagPrefix>
@@ -922,7 +922,7 @@
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
-                <version>19.0</version>
+                <version>22.0</version>
             </dependency>
 
             <dependency>

@@ -14,6 +14,7 @@ import org.aksw.jena_sparql_api.core.utils.QueryGenerationUtils;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprListUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
+import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.Triples;
 import org.aksw.jena_sparql_api.utils.VarExprListUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
@@ -39,6 +40,8 @@ import org.apache.jena.sparql.syntax.ElementOptional;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.PatternVars;
+
+import com.google.common.collect.Range;
 
 public class ConceptUtils {
     public static Concept listDeclaredProperties = Concept.create("?s a ?t . Filter(?t = <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> || ?t = <http://www.w3.org/2002/07/owl#ObjectProperty> || ?t = <http://www.w3.org/2002/07/owl#DataTypeProperty>)", "s");
@@ -402,6 +405,17 @@ public class ConceptUtils {
         return result;
     }
 
+    public static Query createQueryList(OrderedConcept orderedConcept, Range<Long> range) {
+        Concept concept = orderedConcept.getConcept();
+        Query result = createQueryList(concept, range);
+
+        for(SortCondition sc : orderedConcept.getOrderBy()) {
+            result.addOrderBy(sc);
+        }
+
+        return result;
+    }
+
     public static Query createQueryList(OrderedConcept orderedConcept, Long limit, Long offset) {
         Concept concept = orderedConcept.getConcept();
         Query result = createQueryList(concept, limit, offset);
@@ -413,6 +427,14 @@ public class ConceptUtils {
         return result;
     }
 
+
+    public static Query createQueryList(Concept concept, Range<Long> range) {
+        long offset = QueryUtils.rangeToOffset(range);
+        long limit = QueryUtils.rangeToLimit(range);
+
+        Query result = createQueryList(concept, limit, offset);
+        return result;
+    }
 
     public static Query createQueryList(Concept concept, Long limit, Long offset) {
         Query result = new Query();

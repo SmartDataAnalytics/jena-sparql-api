@@ -8,6 +8,7 @@ import javax.persistence.EntityManager;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.mapper.impl.engine.RdfMapperEngineImpl;
 import org.aksw.jena_sparql_api.mapper.impl.type.RdfTypeFactoryImpl;
+import org.aksw.jena_sparql_api.mapper.model.RdfTypeFactory;
 import org.aksw.jena_sparql_api.mapper.model.TypeConversionServiceImpl;
 import org.aksw.jena_sparql_api.mapper.model.TypeConverterBase;
 import org.aksw.jena_sparql_api.mapper.model.TypeDeciderImpl;
@@ -29,6 +30,7 @@ public class SparqlEntityManagerFactory
     protected Set<String> scanPackageNames;
 
     protected SparqlService sparqlService;
+    protected RdfTypeFactory typeFactory;
 
     public SparqlEntityManagerFactory() {
         this.prologue = new Prologue(new PrefixMapping2(PrefixMapping.Extended));
@@ -40,8 +42,9 @@ public class SparqlEntityManagerFactory
         return prologue;
     }
 
-    public void setSparqlService(SparqlService sparqlService) {
+    public SparqlEntityManagerFactory setSparqlService(SparqlService sparqlService) {
         this.sparqlService = sparqlService;
+        return this;
     }
 
     public PrefixMapping getPrefixMapping() {
@@ -53,14 +56,31 @@ public class SparqlEntityManagerFactory
         return scanPackageNames;
     }
 
-    public void addScanPackageName(String packageName) {
+    public SparqlEntityManagerFactory addScanPackageName(String packageName) {
         this.scanPackageNames.add(packageName);
+        return this;
     }
+
+    public RdfTypeFactory getTypeFactory() {
+        return typeFactory;
+    }
+
+    public SparqlEntityManagerFactory setTypeFactory(RdfTypeFactory typeFactory) {
+        this.typeFactory = typeFactory;
+        return this;
+    }
+
 
     @Override
     public RdfEntityManager getObject() throws Exception {
 
-        RdfMapperEngineImpl mapperEngine = new RdfMapperEngineImpl(sparqlService, prologue);
+        RdfMapperEngineImpl mapperEngine;
+        if(typeFactory == null) {
+            mapperEngine = new RdfMapperEngineImpl(sparqlService, prologue);
+        } else {
+            mapperEngine = new RdfMapperEngineImpl(sparqlService, typeFactory, prologue);
+        }
+
 
         for(String scanPackageName : scanPackageNames) {
 
@@ -116,4 +136,8 @@ public class SparqlEntityManagerFactory
         return false;
     }
 
+
+    public static SparqlEntityManagerFactory create() {
+        return new SparqlEntityManagerFactory();
+    }
 }

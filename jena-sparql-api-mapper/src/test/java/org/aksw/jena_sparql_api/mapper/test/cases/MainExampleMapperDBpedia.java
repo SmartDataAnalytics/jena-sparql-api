@@ -118,5 +118,16 @@ public class MainExampleMapperDBpedia {
         }).doubleValue();
 
         System.out.println("Average number of locations: " + avg);
+
+
+
+        /*
+         * Join 1: (to be done)
+         * TODO port examples from http://www.objectdb.com/java/jpa/query/jpql/from
+         */
+//        CriteriaQuery<Country> q = cb.createQuery(Country.class);
+//        Root<Country> c = q.from(Country.class);
+//        Join<Country> p = c.join("capital", JoinType.LEFT);
+
     }
 }

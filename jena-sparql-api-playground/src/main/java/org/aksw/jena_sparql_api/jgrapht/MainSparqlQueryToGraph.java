@@ -1,21 +1,28 @@
 package org.aksw.jena_sparql_api.jgrapht;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import javax.persistence.criteria.Root;
 import javax.swing.JFrame;
 
-import org.aksw.combinatorics.solvers.ProblemNeighborhoodAware;
 import org.aksw.commons.util.strings.StringPrettyComparator;
 import org.aksw.jena_sparql_api.algebra.utils.OpExtConjunctiveQuery;
+import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.iso.index.SubGraphIsomorphismIndex;
+import org.aksw.jena_sparql_api.iso.index.SubGraphIsomorphismIndexJGraphT;
+import org.aksw.jena_sparql_api.iso.index.SubGraphIsomorphismIndexWrapper;
 import org.aksw.jena_sparql_api.jgrapht.transform.GraphVar;
+import org.aksw.jena_sparql_api.jgrapht.transform.GraphVarImpl;
 import org.aksw.jena_sparql_api.jgrapht.transform.QueryToGraphVisitor;
 import org.aksw.jena_sparql_api.jgrapht.transform.QueryToJenaGraph;
 import org.aksw.jena_sparql_api.jgrapht.wrapper.PseudoGraphJenaGraph;
@@ -26,17 +33,23 @@ import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.views.index.SparqlViewMatcherOpImpl;
+import org.apache.jena.ext.com.google.common.collect.Lists;
+import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
-import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.graph.GraphFactory;
+import org.apache.jena.sparql.vocabulary.FOAF;
+import org.apache.jena.vocabulary.OWL;
+import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.vocabulary.RDFS;
 import org.jgraph.JGraph;
 import org.jgrapht.ext.JGraphModelAdapter;
 import org.slf4j.Logger;
@@ -64,7 +77,15 @@ public class MainSparqlQueryToGraph {
 
 
     public static void main(String[] args) throws Exception {
-        org.apache.jena.graph.Graph g = GraphFactory.createDefaultGraph();
+        Iterable<Integer> iA = Arrays.asList(1, 2, 2, 3);
+        Iterator<Integer> itA = iA.iterator();
+        Stream<Integer> streamA = StreamSupport.stream(((Iterable<Integer>)() -> itA).spliterator(), false);
+        Iterable<Integer> iB = () -> streamA.distinct().iterator();
+        for(Integer item : iB) {
+            System.out.println(item);
+        }
+
+        org.apache.jena.graph.Graph g = new GraphVarImpl(); //GraphFactory.createDefaultGraph();
         g.add(new Triple(Vars.s, Vars.p, Vars.o));
         RDFDataMgr.write(System.out, g, RDFFormat.NTRIPLES);
 //        String[][] cases = {
@@ -150,7 +171,11 @@ public class MainSparqlQueryToGraph {
         });
 
 
-        SubGraphIsomorphismIndex<Node> index = SubGraphIsomorphismIndex.create();
+        SubGraphIsomorphismIndex<Node, Graph, Node> index =
+                SubGraphIsomorphismIndexWrapper.wrap(
+                        SubGraphIsomorphismIndexJGraphT.create(),//SubGraphIsomorphismIndexRdf.create();
+                        PseudoGraphJenaGraph::new);
+                        //kk -> SetOpsJGraphTRdfJena.INSTANCE.transformItems(new PseudoGraphJenaGraph(kk), v -> v));
         int xxx = 3;
 
         if(xxx == 0) {
@@ -166,17 +191,23 @@ public class MainSparqlQueryToGraph {
             index.add(ag);
         } else {
             SparqlEntityManagerFactory emf = new SparqlEntityManagerFactory();
-            emf.setSparqlService(FluentSparqlService.http("http://localhost:8950/sparql").create());
+            Model model = RDFDataMgr.loadModel("lsq-sparqlqc-synthetic-simple.ttl", Lang.TURTLE);
+            SparqlService ss = FluentSparqlService.from(model).create();
+            //SparqlService ss = FluentSparqlService.http("http://localhost:8950/sparql").create();
+
+            emf.setSparqlService(ss);
             emf.addScanPackageName(MainSparqlQueryToGraph.class.getPackage().getName());
             RdfEntityManager em = emf.getObject();
 
             List<LsqQuery> queries;
-            int yyy = 2;
-            if(yyy == 0) {
+            int yyy = 6;
+            if(yyy == 5) {
                 queries = JpaUtils.createTypedQuery(em, LsqQuery.class, (cb, cq) -> {
                     Root<LsqQuery> root = cq.from(LsqQuery.class);
                     cq.select(root);
-                }).setMaxResults(10000).getResultList();
+                }).setMaxResults(1000).getResultList();
+
+
             } else if(yyy == 1) {
                 queries = new ArrayList<>();
                 queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q-005cc91b"));
@@ -191,13 +222,60 @@ public class MainSparqlQueryToGraph {
                   //96 keys: [http://lsq.aksw.org/res/q-01a34de1 (SELECT ?s ?p ?o), http://lsq.aksw.org/res/q-011578c8 (ASK ?s ?p ?o)]
                     //    518 keys: [http://lsq.aksw.org/res/q-03aa957f]            }
                 //       519 keys: [http://lsq.aksw.org/res/q-0000eb19]
+            } else if(yyy == 6) {
+                // Problematic orders:
+                // - q3a, q2a, q1b, q1a
+                queries = Lists.newArrayList();
+
+                //queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q4w"));
+//                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q1x"));
+//                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q3z"));
+//                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q2y"));
+                //queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q1b"));
+
+                //queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q2y"));
+                //queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q1x"));
+                //queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q3z"));
+                //queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q4w"));
+
+                // Test case: Multi-subsumption
+//                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q1x"));
+//                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q2y"));
+//                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/r1a"));
+//                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/spo"));
+
+
+                // Test case: New root inserted late
+                // expected: { spo: { q1x: {q2y}, q2y}
+                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q1x"));
+                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q2y"));
+                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/spo"));
+
             } else {
                 queries = Collections.emptyList();
             }
             //System.out.println(queries);
             int i = 0;
+
+
+            queries = Lists.newArrayList(queries);
+            for(LsqQuery q : queries) {
+                String id = em.getIri(q);
+                q.setIri(id);
+            }
+
+            //Collections.shuffle(queries);
+            for(LsqQuery q : queries) {
+                System.out.println("Item: " + q);
+            }
+            //Collections.sort(queries, (x, y) -> Objects.compare(x.getIri(), y.getIri(), Comparator.reverseOrder()));
+            int iii = 0;
             for(LsqQuery lsqq : queries) {
-                String id = em.getIri(lsqq);
+
+                // TODO HACK We need to fetch the iri from the em, as the mapper currently does not support placing an entity's iri into a field
+
+                System.out.println("Got lsq query: " + lsqq);
+
                 String queryStr = lsqq.getText();
                 Query query;
                 try {
@@ -223,8 +301,17 @@ public class MainSparqlQueryToGraph {
                     QueryToGraphVisitor q2g = new ExtendedQueryToGraphVisitor(ssn.get());
                     q2g.visit(ocq);
                     GraphVar graph = q2g.getGraph();
-                    System.out.println(graph);
-                    index.put(NodeFactory.createURI(id), graph);
+                    //System.out.println(graph);
+
+                    if(false) {
+                    graph = new GraphVarImpl();
+                    if(iii >= 0) { graph.add(new Triple(Vars.s.asNode(), RDF.type.asNode(), OWL.Class.asNode())); }
+                    if(iii >= 1) { graph.add(new Triple(Vars.s.asNode(), RDFS.label.asNode(), Vars.l.asNode())); }
+                    if(iii >= 2) { graph.add(new Triple(Vars.s.asNode(), FOAF.name.asNode(), Vars.o.asNode())); }
+                    ++iii;
+                    }
+
+                    index.put(NodeFactory.createURI(lsqq.getIri()), graph);
                 }
 
 
@@ -244,12 +331,12 @@ index.printTree();
         System.out.println("Index tree: ");
         index.printTree();
 
-        Map<Node, ProblemNeighborhoodAware<BiMap<Var, Var>, Var>> map = index.lookupStream(cg, false);
+        Map<Node, Iterable<BiMap<Node, Node>>> map = index.lookupStream(cg, false);
 
         map.forEach((k, p) -> {
             System.out.println("Solutions for : " + k);
             //System.out.println("Estimated cost: " + p.getEstimatedCost());
-            p.generateSolutions().forEach(s -> {
+            p.forEach(s -> {
                 System.out.println("  " + s);
             });
             System.out.println("done");

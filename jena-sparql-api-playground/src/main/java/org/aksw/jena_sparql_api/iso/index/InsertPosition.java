@@ -1,33 +1,37 @@
 package org.aksw.jena_sparql_api.iso.index;
 
-import org.apache.jena.graph.Graph;
-import org.apache.jena.graph.Node;
+import java.util.Set;
 
 import com.google.common.collect.BiMap;
 
-public class InsertPosition<K> {
-    protected GraphIndexNode<K> node;
-    protected Graph residualQueryGraph;
-    protected Graph residualViewGraph;
+public class InsertPosition<K, G, N, T> {
+    protected GraphIndexNode<K, G, N, T> node;
+    protected G residualQueryGraph;
+    //protected G residualViewGraph;
 
-    protected BiMap<Node, Node> iso;
-    protected BiMap<Node, Node> latestIsoAB;
+    protected Set<T> residualQueryGraphTags;
+    //protected Set<Object> residualViewGraphTags;
+
+    protected BiMap<N, N> iso;
+    protected BiMap<N, N> latestIsoAB;
 
     public InsertPosition(
-            GraphIndexNode<K> node,
+            GraphIndexNode<K, G, N, T> node,
 //            Graph residualViewGraph,
-            Graph residualQueryGraph,
-            BiMap<Node, Node> iso,
-            BiMap<Node, Node> latestIsoAB) {
+            G residualQueryGraph,
+            Set<T> residualQueryGraphTags,
+            BiMap<N, N> iso,
+            BiMap<N, N> latestIsoAB) {
         super();
         this.node = node;
 //        this.residualViewGraph = residualViewGraph;
         this.residualQueryGraph = residualQueryGraph;
+        this.residualQueryGraphTags = residualQueryGraphTags;
         this.iso = iso;
         this.latestIsoAB = latestIsoAB;
     }
 
-    public GraphIndexNode<K> getNode() {
+    public GraphIndexNode<K, G, N, T> getNode() {
         return node;
     }
 
@@ -35,16 +39,20 @@ public class InsertPosition<K> {
 //        return residualViewGraph;
 //    }
 
-    public Graph getResidualQueryGraph() {
+    public G getResidualQueryGraph() {
         return residualQueryGraph;
     }
 
-    public BiMap<Node, Node> getIso() {
+    public Set<T> getResidualQueryGraphTags() {
+        return residualQueryGraphTags;
+    }
+
+    public BiMap<N, N> getIso() {
         return iso;
     }
 
 
-    public BiMap<Node, Node> getLatestIsoAB() {
+    public BiMap<N, N> getLatestIsoAB() {
         return latestIsoAB;
     }
 

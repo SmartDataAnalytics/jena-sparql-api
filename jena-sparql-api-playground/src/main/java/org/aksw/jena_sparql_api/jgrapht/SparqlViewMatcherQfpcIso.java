@@ -11,11 +11,12 @@ import org.aksw.combinatorics.solvers.ProblemNeighborhoodAware;
 import org.aksw.jena_sparql_api.algebra.utils.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.dirty.QfpcMatch;
 import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewMatcherQfpc;
+import org.aksw.jena_sparql_api.deprecated.iso.index.ProblemNodeMappingGraph;
+import org.aksw.jena_sparql_api.deprecated.iso.index.ProblemUnion;
+import org.aksw.jena_sparql_api.deprecated.iso.index.ProblemVarWrapper;
+import org.aksw.jena_sparql_api.deprecated.iso.index.SubGraphIsomorphismIndex;
+import org.aksw.jena_sparql_api.deprecated.iso.index.SubGraphIsomorphismIndexBase;
 import org.aksw.jena_sparql_api.iso.index.InsertPosition;
-import org.aksw.jena_sparql_api.iso.index.ProblemNodeMappingGraph;
-import org.aksw.jena_sparql_api.iso.index.ProblemVarMappingCompound;
-import org.aksw.jena_sparql_api.iso.index.ProblemVarWrapper;
-import org.aksw.jena_sparql_api.iso.index.SubGraphIsomorphismIndex;
 import org.aksw.jena_sparql_api.jgrapht.transform.GraphVar;
 import org.aksw.jena_sparql_api.jgrapht.transform.GraphVarImpl;
 import org.aksw.jena_sparql_api.jgrapht.transform.QueryToGraphVisitor;
@@ -39,7 +40,7 @@ public class SparqlViewMatcherQfpcIso<K>
     protected Map<K, QuadFilterPatternCanonical> keyToCq;
 
     public SparqlViewMatcherQfpcIso() {
-        this.graphIndex = new SubGraphIsomorphismIndex<>(null);//keySupplier);
+        this.graphIndex = new SubGraphIsomorphismIndexBase<>(null);//keySupplier);
         this.keyToCq = new HashMap<>();
     }
 
@@ -65,7 +66,7 @@ public class SparqlViewMatcherQfpcIso<K>
 //        return result;
 //    }
 
-    public static ProblemNeighborhoodAware<BiMap<Var, Var>, Var> toProblem(InsertPosition<?> pos) {
+    public static ProblemNeighborhoodAware<BiMap<Var, Var>, Var> toProblem(InsertPosition<?, Graph, Node, ?> pos) {
         // TODO This is making the hacky index structure clean
         Graph residualQueryGraph = pos.getResidualQueryGraph();
         Graph residualViewGraph = new GraphVarImpl();//pos.getNode().getValue(); //new GraphIsoMapImpl(pos.getNode().getValue(), pos.getNode().getTransIso()); //pos.getNode().getValue();
@@ -81,12 +82,12 @@ public class SparqlViewMatcherQfpcIso<K>
         Graphs.addGraph(viewGraph, viewGraphGraphView);
         Graphs.addGraph(queryGraph, queryGraphGraphView);
 
-        ProblemNodeMappingGraph<Node, Triple, Node> rawProblem = new ProblemNodeMappingGraph<>(
+        ProblemNodeMappingGraph<Node, Triple, DirectedGraph<Node, Triple>, Node> rawProblem = new ProblemNodeMappingGraph<>(
                 baseIso, viewGraph, queryGraph,
                 QueryToJenaGraph::createNodeComparator, QueryToJenaGraph::createEdgeComparator);
 
 
-        System.out.println("RAW SOLUTIONS for " + pos.getNode().getKey());
+        System.out.println("RAW SOLUTIONS for " + pos.getNode().getId());
         rawProblem.generateSolutions().forEach(s -> {
             System.out.println("  Raw Solution: " + s);
         });
@@ -96,13 +97,12 @@ public class SparqlViewMatcherQfpcIso<K>
         return result;
     }
 
-    public static ProblemNeighborhoodAware<BiMap<Var, Var>, Var> createCompound(Collection<? extends InsertPosition<?>> poss) {
+    public static ProblemNeighborhoodAware<BiMap<Var, Var>, Var> createCompound(Collection<? extends InsertPosition<?, Graph, Node, ?>> poss) {
         List<ProblemNeighborhoodAware<BiMap<Var, Var>, Var>> problems = poss.stream().map(SparqlViewMatcherQfpcIso::toProblem).collect(Collectors.toList());
 
-        ProblemVarMappingCompound<BiMap<Var, Var>, Var> result = new ProblemVarMappingCompound<>(problems);
+        ProblemUnion<BiMap<Var, Var>, Var> result = new ProblemUnion<>(problems);
         return result;
     }
-
 
     @Override
     public Map<K, QfpcMatch> lookup(QuadFilterPatternCanonical queryQfpc) {

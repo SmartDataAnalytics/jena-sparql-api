@@ -1,0 +1,93 @@
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+
+PREFIX lsq: <http://lsq.aksw.org/vocab#>
+
+PREFIX : <http://lsq.aksw.org/res/>
+
+:q1a
+  a lsq:Query ;
+  lsq:text "PREFIX : <http://ex.org/> SELECT * { ?a a :Person }" ;
+  .
+
+:q1b
+  a lsq:Query ;
+  lsq:text "PREFIX : <http://ex.org/> SELECT * { ?b a :Person }" ;
+  .
+
+:q1x
+  a lsq:Query ;
+  lsq:text "PREFIX : <http://ex.org/> SELECT * { ?x a :Person }" ;
+  .
+
+:q2a
+  a lsq:Query ;
+  lsq:text "PREFIX : <http://ex.org/> SELECT * { ?a a :Person ; :label ?l }" ;
+  .
+
+:q2b
+  a lsq:Query ;
+  lsq:text "PREFIX : <http://ex.org/> SELECT * { ?b a :Person ; :label ?l }" ;
+  .
+
+:q2x
+  a lsq:Query ;
+  lsq:text "PREFIX : <http://ex.org/> SELECT * { ?x a :Person ; :label ?l }" ;
+  .
+
+:q2y
+  a lsq:Query ;
+  lsq:text "PREFIX : <http://ex.org/> SELECT * { ?y a :Person ; :label ?l }" ;
+  .
+
+:q3a
+  a lsq:Query ;
+  lsq:text "PREFIX : <http://ex.org/> SELECT * { ?a a :Person ; :label ?l ; :age ?n }" ;
+  .
+
+:q3b
+  a lsq:Query ;
+  lsq:text "PREFIX : <http://ex.org/> SELECT * { ?b a :Person ; :label ?y ; :age ?z }" ;
+  .
+
+:q3x
+  a lsq:Query ;
+  lsq:text "PREFIX : <http://ex.org/> SELECT * { ?x a :Person ; :label ?l ; :age ?a ; }" ;
+  .
+
+:q3y
+  a lsq:Query ;
+  lsq:text "PREFIX : <http://ex.org/> SELECT * { ?y a :Person ; :label ?l ; :age ?a ; }" ;
+  .
+
+:q3z
+  a lsq:Query ;
+  lsq:text "PREFIX : <http://ex.org/> SELECT * { ?z a :Person ; :label ?l ; :age ?a ; }" ;
+  .
+
+
+:q4w
+  a lsq:Query ;
+  lsq:text "PREFIX : <http://ex.org/> SELECT * { ?w a :Person ; :label ?l ; :age ?a ; :name ?n }" ;
+  .
+
+
+:r1a
+  a lsq:Query ;
+  lsq:text "PREFIX : <http://ex.org/> SELECT * { ?a :label ?l }" ;
+  .
+
+#:r2a
+#  a lsq:Query ;
+#  lsq:text "PREFIX : <http://ex.org/> SELECT * { ?a :label ?l }" ;
+#  .
+
+
+:spo
+  a lsq:Query ;
+  lsq:text "PREFIX : <http://ex.org/> SELECT * { ?s ?p ?o }" ;
+  .
