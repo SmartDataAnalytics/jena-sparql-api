@@ -145,7 +145,7 @@
             <plugin>
                 <groupId>com.amashchenko.maven.plugin</groupId>
                 <artifactId>gitflow-maven-plugin</artifactId>
-                <version>1.5.0</version>
+                <version>1.6.0</version>
                 <configuration>
                     <gitFlowConfig>
                         <versionTagPrefix>v</versionTagPrefix>
