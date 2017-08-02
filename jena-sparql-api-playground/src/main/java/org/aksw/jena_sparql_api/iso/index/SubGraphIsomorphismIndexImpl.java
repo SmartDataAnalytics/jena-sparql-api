@@ -554,7 +554,6 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
 //            isos = Lists.newArrayList(isos);
 //            System.out.println("Worked B!");
             for(BiMap<V, V> iso : isos) {
-                isSubsumed = true;
             //for(BiMap<Node, Node> iso : Lists.newArrayList(toIterable(QueryToJenaGraph.match(baseIso, viewGraph, insertGraph)))) {
 
                 // TODO I tink the next 3 commented out lines are wrong and can be removed
@@ -582,10 +581,12 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
                     System.out.println("iso         : " + iso);
                     System.out.println("transBaseIso: " + transBaseIso);
                     //throw new RuntimeException("should not happen");
-                    insertAtThisNode = true;
+                    //insertAtThisNode = true;
                     continue;
                 }
 
+                // A graph is only subsumed if the found iso is compatible with the base iso
+                isSubsumed = true;
 
                 // Affected keys are the nodes of the view graph that were newly mapped by the iso
                 // We implement a state-space-search approach here: We update the transBaseIso in place
