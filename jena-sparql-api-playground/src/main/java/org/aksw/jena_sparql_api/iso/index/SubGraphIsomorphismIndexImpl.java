@@ -28,7 +28,7 @@ import org.aksw.commons.collections.set_trie.TagMapSetTrie;
 import org.aksw.commons.collections.trees.ReclaimingSupplier;
 import org.apache.jena.atlas.io.IndentedWriter;
 import org.apache.jena.ext.com.google.common.base.Predicate;
-import org.apache.jena.ext.com.google.common.collect.Iterables;
+import org.jgrapht.Graph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -534,7 +534,7 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
             // E.g. if the parent was {(?x a Foo)} and the child is {(?s a Bar)}, then the transIso could be ?x -> ?s
             // if the child node's full graph was { ?s a Foo ; a Bar }.
             BiMap<V, V> childTransIso = child.getTransIso();
-            BiMap<V, V> transBaseIso = mapDomainVia(baseIso, child.getTransIso());
+            BiMap<V, V> transBaseIso = mapDomainVia(baseIso, childTransIso);
 
             //System.out.println("TRANS BASE ISO: " + childTransIso);
             //System.out.println("APPLIED TRANS BASE ISO: " + transBaseIso);
@@ -569,10 +569,17 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
                 writer.println("Found match #" + ++i + ":");
                 writer.incIndent();
 
-                // TODO Eventually remove this validation or turn it into an assertion
+
+                // We need to validate whether the mapping is compatible with the base mapping
+                // E.g. if we insert [i1: { ?s ?p ?o }, i2: { ?x a Person }, i3: { ?y a Person ; label ?l}
+                // Then there will be two isos from i1 to i3, but only one that is compatible with i2
                 boolean isCompatible = MapUtils.isCompatible(iso, transBaseIso);
                 if(!isCompatible) {
-                    throw new RuntimeException("should not happen");
+                    System.out.println("Incompatible:");
+                    System.out.println("iso         : " + iso);
+                    System.out.println("transBaseIso: " + transBaseIso);
+                    //throw new RuntimeException("should not happen");
+                    continue;
                 }
 
 
@@ -595,18 +602,18 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
                 //Graph g = new GraphIsoMapImpl(viewGraph, iso);
                 G g = setOps.applyIso(viewGraph, iso);
 
-                G graphDiff = setOps.difference(insertGraph, g);
+                G residualInsertGraph = setOps.difference(insertGraph, g);
                 //Difference diff = new Difference(insertGraph, g);
 
                 // now create the diff between the insert graph and mapped child graph
-                writer.println("Diff " + graphDiff + " has "+ setOps.size(graphDiff) + " triples at depth " + writer.getUnitIndent());
+                writer.println("Diff " + residualInsertGraph + " has "+ setOps.size(residualInsertGraph) + " triples at depth " + writer.getUnitIndent());
 
 
                 //Set<Object> tagDiff = Sets.difference(insertGraphTags, node.graphTags);
 
 
                 // TODO optimize handling of empty diffs
-                findInsertPositions(out, child, graphDiff, residualInsertGraphTags, transBaseIso, deltaIso, retrievalMode, exactMatch, writer);
+                findInsertPositions(out, child, residualInsertGraph, residualInsertGraphTags, transBaseIso, deltaIso, retrievalMode, exactMatch, writer);
 
                 affectedKeys.forEach(transBaseIso::remove);
 
@@ -780,6 +787,12 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
                 Entry::getKey,
                 e -> assembleGraphAtNode(e.getValue(), (n) -> startNodes.contains(n))));
 
+        for(Entry<K, G> e : result.entrySet()) {
+            System.out.println("GRAPH OF: " + e.getKey());
+            Graph<?, ?> g = (Graph<?, ?>)e.getValue();
+            g.edgeSet().forEach(xxx -> System.out.println("edge: " + xxx));
+        }
+
         return result;
     }
 
@@ -920,9 +933,9 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
                 K k = keyGraph.getKey();
                 G insertGraph = keyGraph.getValue();
                 Set<T> insertGraphTags = extractGraphTagsWrapper(insertGraph);
-                BiMap<V, V> baseIso = HashBiMap.create();
+                //BiMap<V, V> baseIso = HashBiMap.create();
 
-                add(replacementNodeA, k, insertGraph, insertGraphTags, baseIso, true, writer);
+                add(replacementNodeA, k, insertGraph, insertGraphTags, baseIsoAB, true, writer);
             }
 
             // Append all unaffected non-candidate children
@@ -934,6 +947,9 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
             // Replace the node and update keys
             nodeA.childIndex = replacementNodeA.childIndex;
             nodeA.idToChild = replacementNodeA.idToChild;
+
+            // For every child, set the parent to nodeA
+            replacementNodeA.idToChild.values().forEach(n -> {n.setParent(null); n.setParent(nodeA); });
 
             //idToKeys.putAll(nodeAId, nodeAKeys);
             /*

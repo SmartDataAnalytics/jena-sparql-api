@@ -123,13 +123,13 @@ public class ProblemNodeMappingGraph<V, E, G extends Graph<V, E>, T>
                 nodeMap.putAll(baseSolution);
 
                 //System.out.println("Base Mappings:");
-                nodeMap.forEach((k, v) -> System.out.println("  " + k + " -> " + v));
+                //nodeMap.forEach((k, v) -> System.out.println("  " + k + " -> " + v));
 
                 //System.out.println("New Mappings:");
                 for(V bNode : queryGraph.vertexSet()) {
                     if(m.hasVertexCorrespondence(bNode)) {
                         V aNode = m.getVertexCorrespondence(bNode, true);
-                        System.out.println("  " + aNode + " -> " + bNode);
+                        //System.out.println("  " + aNode + " -> " + bNode);
                         try {
                             nodeMap.put(aNode, bNode);
                         } catch(IllegalArgumentException e) {

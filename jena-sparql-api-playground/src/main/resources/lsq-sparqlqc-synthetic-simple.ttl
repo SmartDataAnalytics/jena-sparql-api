@@ -85,3 +85,9 @@ PREFIX : <http://lsq.aksw.org/res/>
 #  a lsq:Query ;
 #  lsq:text "PREFIX : <http://ex.org/> SELECT * { ?a :label ?l }" ;
 #  .
+
+
+:spo
+  a lsq:Query ;
+  lsq:text "PREFIX : <http://ex.org/> SELECT * { ?s ?p ?o }" ;
+  .
