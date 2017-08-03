@@ -79,14 +79,48 @@ public class MainSparqlQueryToGraph {
     }
 
 
-    public static void main(String[] args) throws Exception {
-        Iterable<Integer> iA = Arrays.asList(1, 2, 2, 3);
-        Iterator<Integer> itA = iA.iterator();
-        Stream<Integer> streamA = StreamSupport.stream(((Iterable<Integer>)() -> itA).spliterator(), false);
-        Iterable<Integer> iB = () -> streamA.distinct().iterator();
-        for(Integer item : iB) {
-            System.out.println(item);
+    public static Graph queryToGraph(String queryStr) {
+        Graph result;
+
+        Query query;
+        try {
+            query = SparqlQueryParserImpl.create().apply(queryStr);
+        } catch(Exception e) {
+            throw new RuntimeException("Failed to parse: " + queryStr, e);
         }
+        Op op = Algebra.toQuadForm(Algebra.compile(query));
+        Op nop = SparqlViewMatcherOpImpl.normalizeOp(op);
+
+
+        // Collect all conjunctive queries
+        if(!(nop instanceof OpExtConjunctiveQuery)) {
+            //System.out.println("Not a conjunctive query - skipping");
+            throw new RuntimeException("Not a conjunctive query - skipping");
+        } else {
+
+            OpExtConjunctiveQuery ocq = (OpExtConjunctiveQuery)nop;
+            //ConjunctiveQuery cq = SparqlCacheUtils.tryExtractConjunctiveQuery(op, generator)
+
+            //System.out.println("indexing: " + ocq.getQfpc());
+
+            Supplier<Supplier<Node>> ssn = () -> { int[] x = {0}; return () -> NodeFactory.createBlankNode("_" + x[0]++); };
+            QueryToGraphVisitor q2g = new ExtendedQueryToGraphVisitor(ssn.get());
+            q2g.visit(ocq);
+            result = q2g.getGraph();
+        }
+
+        return result;
+    }
+
+
+    public static void main(String[] args) throws Exception {
+
+        SubGraphIsomorphismIndex<Node, Graph, Node> index =
+                SubGraphIsomorphismIndexWrapper.wrap(
+                        SubGraphIsomorphismIndexJGraphT.create(),
+                        PseudoGraphJenaGraph::new);
+
+
 
         org.apache.jena.graph.Graph g = new GraphVarImpl(); //GraphFactory.createDefaultGraph();
         g.add(new Triple(Vars.s, Vars.p, Vars.o));
@@ -174,11 +208,6 @@ public class MainSparqlQueryToGraph {
         });
 
 
-        SubGraphIsomorphismIndex<Node, Graph, Node> index =
-                SubGraphIsomorphismIndexWrapper.wrap(
-                        SubGraphIsomorphismIndexJGraphT.create(),//SubGraphIsomorphismIndexRdf.create();
-                        PseudoGraphJenaGraph::new);
-                        //kk -> SetOpsJGraphTRdfJena.INSTANCE.transformItems(new PseudoGraphJenaGraph(kk), v -> v));
         int xxx = 3;
 
         if(xxx == 0) {
@@ -415,6 +444,17 @@ lookupResult.asMap().forEach((k, isos) -> {
     }
 
 }
+
+
+//Iterable<Integer> iA = Arrays.asList(1, 2, 2, 3);
+//Iterator<Integer> itA = iA.iterator();
+//Stream<Integer> streamA = StreamSupport.stream(((Iterable<Integer>)() -> itA).spliterator(), false);
+//Iterable<Integer> iB = () -> streamA.distinct().iterator();
+//for(Integer item : iB) {
+//    System.out.println(item);
+//}
+
+
 //// Do this state space search thingy: update the state, track the changes, compute and restore
 //// This means: track which keys will be added, add them, and later remove them again
 //boolean isCompatible = MapUtils.isCompatible(iso, baseIso);

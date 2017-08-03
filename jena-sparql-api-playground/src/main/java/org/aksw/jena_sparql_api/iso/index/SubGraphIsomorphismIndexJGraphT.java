@@ -75,11 +75,8 @@ public class SubGraphIsomorphismIndexJGraphT<K, V, E, G extends Graph<V, E>, T>
     }
 
     // TODO Move to util class
-    public static SubGraphIsomorphismIndexJGraphT<Node, Node, Triple, DirectedGraph<Node, Triple>, Node> create() {
-        int i[] = {0};
-        Supplier<Node> idSupplier = () -> NodeFactory.createURI("http://index.node/id" + i[0]++);
-
-        SubGraphIsomorphismIndexJGraphT<Node, Node, Triple, DirectedGraph<Node, Triple>, Node> result =
+    public static <K> SubGraphIsomorphismIndexJGraphT<K, Node, Triple, DirectedGraph<Node, Triple>, Node> create() {
+        SubGraphIsomorphismIndexJGraphT<K, Node, Triple, DirectedGraph<Node, Triple>, Node> result =
                 new SubGraphIsomorphismIndexJGraphT<>(
                         SubGraphIsomorphismIndexJGraphT::extractGraphTags,
                         NodeUtils::compareRDFTerms,
