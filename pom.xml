@@ -52,7 +52,7 @@
         <module>jena-sparql-api-example-proxy</module>
 
         <module>jena-sparql-api-example-views</module>
-<!--        <module>jena-sparql-api-playground</module> -->
+        <!-- <module>jena-sparql-api-playground</module> -->
     </modules>
 
     <issueManagement>
@@ -107,7 +107,7 @@
 
         <spring.version>4.1.4.RELEASE</spring.version>
         <spring.batch.version>3.0.7.RELEASE</spring.batch.version>
-        <aksw.commons.version>0.8.5</aksw.commons.version>
+        <aksw.commons.version>0.8.6</aksw.commons.version>
 
         <atmosphere.version>2.0.0.RC3</atmosphere.version>
         <atmosphere-spring.version>1.1.0.RC5</atmosphere-spring.version>
@@ -129,18 +129,18 @@
     <build>
         <plugins>
             <!-- That's a sledge hammer solution - but at least it works ... -->
-            <!-- <plugin> -->
-            <!-- <groupId>org.apache.maven.plugins</groupId> -->
-            <!-- <artifactId>maven-release-plugin</artifactId> -->
-            <!-- <version>2.5.2</version> -->
-            <!-- <configuration> -->
-            <!-- <arguments>-P!source-artifacts</arguments> -->
-            <!-- <useReleaseProfile>false</useReleaseProfile> -->
-            <!-- <releaseProfiles>release</releaseProfiles> -->
-            <!-- <goals>-Dmaven.test.skip=false deploy</goals> -->
-            <!-- <autoVersionSubmodules>true</autoVersionSubmodules> -->
-            <!-- </configuration> -->
-            <!-- </plugin> -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.5.3</version>
+                <configuration>
+                    <arguments>-P!source-artifacts</arguments>
+                    <useReleaseProfile>false</useReleaseProfile>
+                    <releaseProfiles>release</releaseProfiles>
+                    <goals>-Dmaven.test.skip=false deploy</goals>
+                    <autoVersionSubmodules>true</autoVersionSubmodules>
+                </configuration>
+            </plugin>
 
             <plugin>
                 <groupId>com.amashchenko.maven.plugin</groupId>
