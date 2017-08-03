@@ -26,7 +26,7 @@ public class SubGraphIsomorphismIndexWrapper<K, O, G, V>
 
     @Override
     public void removeKey(Object key) {
-        index.removeKey(index);
+        index.removeKey(key);
     }
 
     @Override

@@ -238,8 +238,18 @@ public class MainSparqlQueryToGraph {
                 //queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q3z"));
                 //queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q4w"));
 
-                // Test case: Multi-subsumption
+                // Test case: Keys with equivalent under isomorphism entities
                 if(true) {
+                    queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q1x"));
+                    queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q1a"));
+                    //queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q2y"));
+                    //queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/r1a"));
+                    //queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/spo"));
+                }
+
+
+                // Test case: Multi-subsumption
+                if(false) {
                     queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q1x"));
                     queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q2y"));
                     queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/r1a"));
@@ -322,6 +332,10 @@ public class MainSparqlQueryToGraph {
             System.out.println("Processed: " + i);
 index.printTree();
 
+System.out.println("Deleting...");
+index.removeKey(NodeFactory.createURI("http://lsq.aksw.org/res/q1x"));
+index.removeKey(NodeFactory.createURI("http://lsq.aksw.org/res/q1a"));
+index.printTree();
 
             System.exit(0);
 

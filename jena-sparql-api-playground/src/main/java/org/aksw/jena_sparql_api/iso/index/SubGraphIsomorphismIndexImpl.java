@@ -21,24 +21,26 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.aksw.commons.collections.MapUtils;
-import org.aksw.commons.collections.multimaps.BiHashMultimap;
-import org.aksw.commons.collections.multimaps.IBiSetMultimap;
+import org.aksw.commons.collections.reversible.ReversibleMap;
+import org.aksw.commons.collections.reversible.ReversibleMapImpl;
+import org.aksw.commons.collections.reversible.ReversibleSetMultimap;
 import org.aksw.commons.collections.set_trie.TagMap;
 import org.aksw.commons.collections.set_trie.TagMapSetTrie;
 import org.aksw.commons.collections.trees.ReclaimingSupplier;
 import org.apache.jena.atlas.io.IndentedWriter;
 import org.apache.jena.ext.com.google.common.base.Predicate;
-import org.jgrapht.Graph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Streams;
+import com.google.common.collect.Table;
 import com.google.common.io.ByteStreams;
 
 /**
@@ -80,10 +82,25 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
     protected long root;
     protected GraphIndexNode<K, G, V, T> rootNode;
     protected Supplier<Long> idSupplier;
-    protected Map<Long, GraphIndexNode<K, G, V, T>> keyToNode = new HashMap<>();
+    protected Map<Long, GraphIndexNode<K, G, V, T>> idToNode = new HashMap<>();
 
     protected Supplier<K> keySupplier;
-    protected IBiSetMultimap<Long, K> idToKeys = new BiHashMultimap<>();
+    //protected IBiSetMultimap<Long, K> idToKeys = new BiHashMultimap<>();
+
+    // Every node is only associated with a single pref key which corresponds to the key's graph from which this node was created
+    // but one pref key can be at multiple nodes
+    protected ReversibleMap<Long, K> idToPrefKey = new ReversibleMapImpl<>();
+
+
+    /**
+     * If the sets of two keys are isomorphic, then all keys except for the first one
+     * become alternate keys of the first one
+     */
+    //protected ReversibleMap<K, K> keyToAltKeys = new ReversibleMapImpl<>();
+
+    // This table maps preferred keys to their alternate keys and the isos from pref keys' graph of that of alt
+    // So we can transition from a pref key to all other isomorphic graphs
+    protected Table<K, K, BiMap<V, V>> prefKeyToAltKeysWithIso = HashBasedTable.create();
 
 
     protected boolean enableDebugInfo = false;
@@ -142,10 +159,49 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
      */
     @Override
     public void removeKey(Object key) {
+
+        // FIXME Make the cast more safe - we should never throw an exception
+        K possibleAltKey = (K)key;
+        Set<K> prefKeys = prefKeyToAltKeysWithIso.column((K)possibleAltKey).keySet();
+        // Note: by the way the prefKeys set is constructed it must have only at most one entry
+        K prefKey = prefKeys.isEmpty()
+                ? possibleAltKey
+                : prefKeys.iterator().next();
+
+        Set<K> altKeys = prefKeyToAltKeysWithIso.row(prefKey).keySet();
+
+        // Remove the key from the alt keys
+        altKeys.remove(key);
+
+        // If the prefKey no longer has any alt keys, remove all nodes associated with that key
+        boolean extinguishNodes = altKeys.isEmpty();
+
+        if(extinguishNodes) {
+            ReversibleSetMultimap<K, Long> prefKeyToIds = idToPrefKey.reverse();
+            List<Long> nodeIds = new ArrayList<>(prefKeyToIds.get(prefKey));
+
+//            prefKeyToIds.removeAll(prefKey);
+
+            for(long nodeId : nodeIds) {
+                GraphIndexNode<K, G, V, T> node = idToNode.get(nodeId);
+                extinguishNode(node);
+            }
+        }
+
+
+        // Get all nodes of the pref key
+
+
+        // If we removed a pref key which still has alt keys...
+        // pick a
+
+
+
         // Copy id set to avoid concurrent modification
         //Set<Long> ids = idToKeys.getInverse().get(key);
         //Set<Long> ids = new HashSet<>(idToKeys.getInverse().get(key));
-        idToKeys.getInverse().removeAll(key);
+
+        //idToKeys.getInverse().removeAll(key);
 //        for(Long id : ids) {
 //            keyToNode.get(id).getKeys().remove(key);
 //            //deleteNode(id);
@@ -171,7 +227,7 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
 
         TagMap<Long, T> tagMap = new TagMapSetTrie<>(tagComparator);
         GraphIndexNode<K, G, V, T> result = new GraphIndexNode<>(null, id, transIso, graph, graphTags, tagMap);
-        keyToNode.put(id, result);
+        idToNode.put(id, result);
 
 
 //        if(logger.isDebugEnabled()) {
@@ -207,9 +263,15 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
                         e -> createProblem(e.getValue())));
 
 
+//        Map<K, Iterable<BiMap<V, V>>> result = tmp.entrySet().stream()
+//            .flatMap(e -> idToKeys.get(e.getKey()).stream().map(key -> new SimpleEntry<>(key, e.getValue())))
+//            .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+
+        // TODO Include all alternative keys
         Map<K, Iterable<BiMap<V, V>>> result = tmp.entrySet().stream()
-            .flatMap(e -> idToKeys.get(e.getKey()).stream().map(key -> new SimpleEntry<>(key, e.getValue())))
-            .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+        //.flatMap(e -> idToPrefKey.get(e.getKey()).stream().map(key -> new SimpleEntry<>(key, e.getValue())))
+        .map(e -> new SimpleEntry<>(idToPrefKey.get(e.getKey()), e.getValue()))
+        .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 
 
         return result;
@@ -473,6 +535,13 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
         return result;
     }
 
+    public static <T> BiMap<T, T> removeIdentity(Map<T, T> map) {
+        BiMap<T, T> result = map.entrySet().stream()
+                .filter(e -> !Objects.equals(e.getKey(), e.getValue()))
+                .collect(collectToBiMap(Entry::getKey, Entry::getValue));
+        return result;
+    }
+
     public static <T, K, U> Collector<T, ?, BiMap<K, U>> collectToBiMap(Function<? super T, ? extends K> keyMapper, Function<? super T, ? extends U> valueMapper) {
         Collector<T, ?, BiMap<K, U>> x = Collectors.toMap(
                 keyMapper, valueMapper,
@@ -583,10 +652,7 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
 
                 // The difference is all non-identical mappings
                 // FIXME We could exclude identical mappings already in the iso matcher
-                BiMap<V, V> deltaIso = iso.entrySet().stream()
-                        .filter(e -> !Objects.equals(e.getKey(), e.getValue()))
-                        .collect(collectToBiMap(Entry::getKey, Entry::getValue));
-
+                BiMap<V, V> deltaIso = removeIdentity(iso);
 
                 writer.println("Found match #" + ++i + ":");
                 writer.incIndent();
@@ -663,18 +729,56 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
         }
     }
 
+
+
+    /**
+     * Test whether the node is a leaf without any associated keys
+     *
+     * @param node
+     * @return
+     */
+    protected boolean isEmptyLeafNode(GraphIndexNode<K, G, V, T> node) {
+        long nodeId = node.getId();
+        K prefKey = idToPrefKey.get(nodeId);
+        Set<K> altKeys = prefKey == null ? Collections.emptySet() : prefKeyToAltKeysWithIso.row(prefKey).keySet();
+
+        boolean result =
+                node.isLeaf() && altKeys.isEmpty();
+
+        return result;
+    }
+
+//    protected void extinguishNode(long nodeId) {
+//        GraphIndexNode<K, G, V, T> node = idToNode.get(nodeId);
+//        extinguishNode(node);
+//    }
+
+    protected void extinguishNode(GraphIndexNode<K, G, V, T> node) {
+        if(node != null && node.getParent() != null) { // Do not extinguish the root node
+            long nodeId = node.getId();
+            // If the node is a child node, then remove it
+            if(isEmptyLeafNode(node)) {
+                deleteNode(nodeId);
+
+                GraphIndexNode<K, G, V, T> parentNode = node.getParent();
+                extinguishNode(parentNode);
+            }
+        }
+    }
+
     //@Override
-    public GraphIndexNode<K, G, V, T> deleteNode(Long node) {
-        GraphIndexNode<K, G, V, T> result = keyToNode.remove(node);
+    public GraphIndexNode<K, G, V, T> deleteNode(Long nodeId) {
+        GraphIndexNode<K, G, V, T> result = idToNode.remove(nodeId);
         if(result.getParent() != null) {
-            result.getParent().removeChildById(node);
+            result.getParent().removeChildById(nodeId);
         }
 
         // todo: unlink the node from the parent
 
         //result.getP
 
-        idToKeys.removeAll(node);
+        idToPrefKey.remove(nodeId);
+        //idToKeys.removeAll(node);
         //idToGraph.remove(node);
 
         return result;
@@ -709,7 +813,11 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
     }
 
     public void printTree(GraphIndexNode<K, G, V, T> node, IndentedWriter writer) {
-        writer.println("" + node.getId() + " keys: " + idToKeys.get(node.getId()) + " --- tags: " + node.getGraphTags() + " --- transIso:" + node.getTransIso());
+        K prefKey = idToPrefKey.get(node.getId());
+        Set<K> altKeys = prefKey == null
+                ? Collections.emptySet()
+                : prefKeyToAltKeysWithIso.row(prefKey).keySet();
+        writer.println("" + node.getId() + " keys: " + prefKey + " " + altKeys + " --- tags: " + node.getGraphTags() + " --- transIso:" + node.getTransIso());
         writer.incIndent();
         for(GraphIndexNode<K, G, V, T> child : node.getChildren()) {
             printTree(child, writer);
@@ -809,10 +917,13 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
         breadthFirstSearchWithMultipleStartNodes(startNodes, n -> n.getChildren().stream())
             .forEach(n -> {
                 //System.out.println("BFS: " + n);
-                Set<K> keys = idToKeys.get(n.getId());
-                for(K key : keys) {
-                    keyToNode.computeIfAbsent(key, k -> n);
-                }
+//                Set<K> keys = idToKeys.get(n.getId());
+//                for(K key : keys) {
+//                    keyToNode.computeIfAbsent(key, k -> n);
+//                }
+                Long nodeId = n.getId();
+                K prefKey = idToPrefKey.get(nodeId);
+                keyToNode.computeIfAbsent(prefKey, k -> n);
             });
 
         // Now process the map; we can memoize graphs computed for nodes
@@ -865,8 +976,21 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
         // If the insert graph is empty, just append the key to the insert node
         // i.e. do not create a child node
         if(isEmpty(residualInsertGraphB)) {
+            long nodeAId = nodeA.getId();
+
+            // Get the node's pref key
+            K prefKey = idToPrefKey.get(nodeAId);
+            //K prefkey = keys.iterator().next();
+
+            Map<K, BiMap<V, V>> altKeyToIso = prefKeyToAltKeysWithIso.row(prefKey);
+            //BiMap<V, V> deltaIso = pos.getLatestIsoAB();
+
+            BiMap<V, V> deltaIso = removeIdentity(pos.getIso());
+
+            altKeyToIso.put(key, deltaIso);
+
             //nodeA.getKeys().add(key);
-            idToKeys.put(nodeA.getId(), key);
+            //idToKeys.put(nodeA.getId(), key);
             return;
         }
 
@@ -880,10 +1004,16 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
         // Otherwise, we need to do a more complex update procedure where we
         // re-insert every graph in the node's subtree
         GraphIndexNode<K, G, V, T> nodeB = createNode(residualInsertGraphB, residualInsertGraphBTags, isoAB);
-        if(forceInsert || nodeA.childIndex.isEmpty()) {
-            Long nodeBId = nodeB.getId();
+        long nodeBId = nodeB.getId();
+
+        if(forceInsert || nodeA.isLeaf()) { //nodeA.childIndex.isEmpty()) {
             nodeA.appendChild(nodeB);
-            idToKeys.put(nodeBId, key);
+            //idToKeys.put(nodeBId, key);
+            idToPrefKey.put(nodeBId, key);
+
+            Map<K, BiMap<V, V>> altKeyToIso = prefKeyToAltKeysWithIso.row(key);
+            altKeyToIso.put(key, pos.getIso());
+
         } else {
             // Create the node that will replace nodeA, and
             // create and append the insert node as a child
@@ -891,7 +1021,8 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
             GraphIndexNode<K, G, V, T> replacementNodeA = new GraphIndexNode<>(nodeA.getParent(), nodeA.getId(), nodeA.getTransIso(), nodeA.getValue(), nodeA.getGraphTags(), tagMap);
 
             replacementNodeA.appendChild(nodeB);
-            idToKeys.put(nodeB.getId(), key);
+            //idToKeys.put(nodeB.getId(), key);
+            idToPrefKey.put(nodeB.getId(), key);
 
             // The candidate children or those whose tag sets are a super set
             // of that of the insert graph
@@ -915,13 +1046,13 @@ public class SubGraphIsomorphismIndexImpl<K, G, V, T> implements SubGraphIsomorp
 
             // Iterate all children whose graphTags are a super set of the given one
             // Thereby recursively updating the lookup tag set with the graphTags covered by a node
-            Stream<GraphIndexNode<K, G, V, T>> candChildren = lookupProvidedChildrenByTags(
-                    directCandChildren.stream(),
-                    residualInsertGraphBTags,
-                    (node, tags) -> Sets.difference(tags, node.getGraphTags()),
-                    (node, tags) -> node.childIndex.getAllSupersetsOf(tags, false)
-                            .keySet().stream().map(nodeId -> nodeA.idToChild.get(nodeId))
-                    );
+//            Stream<GraphIndexNode<K, G, V, T>> candChildren = lookupProvidedChildrenByTags(
+//                    directCandChildren.stream(),
+//                    residualInsertGraphBTags,
+//                    (node, tags) -> Sets.difference(tags, node.getGraphTags()),
+//                    (node, tags) -> node.childIndex.getAllSupersetsOf(tags, false)
+//                            .keySet().stream().map(nodeId -> nodeA.idToChild.get(nodeId))
+//                    );
 
 
 //            Collection<GraphIndexNode<K, G, V, T>> tmp = candChildren.collect(Collectors.toList());
