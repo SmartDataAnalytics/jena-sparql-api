@@ -3,9 +3,11 @@ package org.aksw.jena_sparql_api.jgrapht;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -57,6 +59,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import com.google.common.collect.Multimap;
 import com.jgraph.layout.JGraphFacade;
 import com.jgraph.layout.JGraphLayout;
 import com.jgraph.layout.hierarchical.JGraphHierarchicalLayout;
@@ -180,15 +183,15 @@ public class MainSparqlQueryToGraph {
 
         if(xxx == 0) {
             // incremental subsumtion
-            index.add(ag);
-            index.add(bg);
-            index.add(cg);
+//            index.add(ag);
+//            index.add(bg);
+//            index.add(cg);
         } else if(xxx == 2){
             // most generic inserted last
-            index.add(dg);
-            //index.add(cg);
-            index.add(bg);
-            index.add(ag);
+//            index.add(dg);
+//            //index.add(cg);
+//            index.add(bg);
+//            index.add(ag);
         } else {
             SparqlEntityManagerFactory emf = new SparqlEntityManagerFactory();
             Model model = RDFDataMgr.loadModel("lsq-sparqlqc-synthetic-simple.ttl", Lang.TURTLE);
@@ -239,7 +242,7 @@ public class MainSparqlQueryToGraph {
                 //queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q4w"));
 
                 // Test case: Keys with equivalent under isomorphism entities
-                if(true) {
+                if(false) {
                     queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q1x"));
                     queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q1a"));
                     //queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q2y"));
@@ -249,7 +252,7 @@ public class MainSparqlQueryToGraph {
 
 
                 // Test case: Multi-subsumption
-                if(false) {
+                if(true) {
                     queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q1x"));
                     queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q2y"));
                     queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/r1a"));
@@ -282,6 +285,7 @@ public class MainSparqlQueryToGraph {
             }
             //Collections.sort(queries, (x, y) -> Objects.compare(x.getIri(), y.getIri(), Comparator.reverseOrder()));
             int iii = 0;
+            Map<Node, Graph> nodeToGraph = new HashMap<>();
             for(LsqQuery lsqq : queries) {
 
                 // TODO HACK We need to fetch the iri from the em, as the mapper currently does not support placing an entity's iri into a field
@@ -323,19 +327,43 @@ public class MainSparqlQueryToGraph {
                     ++iii;
                     }
 
-                    index.put(NodeFactory.createURI(lsqq.getIri()), graph);
+                    nodeToGraph.put(NodeFactory.createURI(lsqq.getIri()), graph);
+
                 }
 
 
 
             }
+
             System.out.println("Processed: " + i);
-index.printTree();
+
+            for(Entry<Node, Graph> e : nodeToGraph.entrySet()) {
+                index.put(e.getKey(), e.getValue());
+            }
+            //index.put(NodeFactory.createURI(lsqq.getIri()), graph);
+
+            index.printTree();
 
 System.out.println("Deleting...");
 index.removeKey(NodeFactory.createURI("http://lsq.aksw.org/res/q1x"));
 index.removeKey(NodeFactory.createURI("http://lsq.aksw.org/res/q1a"));
 index.printTree();
+
+
+index.put(NodeFactory.createURI("http://lsq.aksw.org/res/q1x"), nodeToGraph.get(NodeFactory.createURI("http://lsq.aksw.org/res/q1x")));
+index.printTree();
+
+
+
+Graph grr = nodeToGraph.get(NodeFactory.createURI("http://lsq.aksw.org/res/q2y"));
+Multimap<Node, BiMap<Node, Node>> lookupResult = index.lookupX(grr, false);
+
+lookupResult.asMap().forEach((k, isos) -> {
+    isos.forEach(iso -> {
+        System.out.println(k + ": " + iso);
+    });
+});
+
 
             System.exit(0);
 
@@ -347,7 +375,7 @@ index.printTree();
         System.out.println("Index tree: ");
         index.printTree();
 
-        Map<Node, Iterable<BiMap<Node, Node>>> map = index.lookupStream(cg, false);
+        Map<Node, Iterable<BiMap<Node, Node>>> map = null;// index.lookupStream(cg, false);
 
         map.forEach((k, p) -> {
             System.out.println("Solutions for : " + k);

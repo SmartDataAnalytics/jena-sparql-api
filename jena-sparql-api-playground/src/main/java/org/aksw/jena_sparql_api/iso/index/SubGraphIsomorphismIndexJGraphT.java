@@ -64,12 +64,12 @@ public class SubGraphIsomorphismIndexJGraphT<K, V, E, G extends Graph<V, E>, T>
     //protected Comparator<E> createEdgeComparator(BiMap<V, V> baseIso);
 
     public SubGraphIsomorphismIndexJGraphT(
-            Supplier<K> keySupplier,
+            //Supplier<K> keySupplier,
             Function<? super G, Collection<T>> extractGraphTags,
             Comparator<? super T> tagComparator,
             SetOps<G, V> graphOps,
             IsoMatcher<G, V> isoMatcher) {
-        super(keySupplier, graphOps, extractGraphTags, tagComparator, isoMatcher);
+        super(graphOps, extractGraphTags, tagComparator, isoMatcher);
 //        this.createVertexComparator = createVertexComparator;
 //        this.createEdgeComparator = createEdgeComparator;
     }
@@ -81,7 +81,6 @@ public class SubGraphIsomorphismIndexJGraphT<K, V, E, G extends Graph<V, E>, T>
 
         SubGraphIsomorphismIndexJGraphT<Node, Node, Triple, DirectedGraph<Node, Triple>, Node> result =
                 new SubGraphIsomorphismIndexJGraphT<>(
-                        idSupplier,
                         SubGraphIsomorphismIndexJGraphT::extractGraphTags,
                         NodeUtils::compareRDFTerms,
                         SetOpsJGraphTRdfJena.INSTANCE,

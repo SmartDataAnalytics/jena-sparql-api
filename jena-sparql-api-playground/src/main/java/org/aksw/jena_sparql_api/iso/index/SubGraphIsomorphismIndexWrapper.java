@@ -1,11 +1,9 @@
 package org.aksw.jena_sparql_api.iso.index;
 
-import java.util.Map;
 import java.util.function.Function;
 
-import org.jgrapht.Graph;
-
 import com.google.common.collect.BiMap;
+import com.google.common.collect.Multimap;
 
 /**
  *
@@ -40,20 +38,28 @@ public class SubGraphIsomorphismIndexWrapper<K, O, G, V>
         return null;
     }
 
-    @Override
-    public K add(O obj) {
-        G graph = objectToGraph.apply(obj);
-        K result = index.add(graph);
-        return result;
-    }
+//    @Override
+//    public K add(O obj) {
+//        G graph = objectToGraph.apply(obj);
+//        K result = index.add(graph);
+//        return result;
+//    }
 
     @Override
-    public Map<K, Iterable<BiMap<V, V>>> lookupStream(O queryObj, boolean exactMatch) {
+    public Multimap<K, BiMap<V, V>> lookupX(O queryObj, boolean exactMatch) {
         G graph = objectToGraph.apply(queryObj);
 
-        Map<K, Iterable<BiMap<V, V>>> result = index.lookupStream(graph, exactMatch);
+        Multimap<K, BiMap<V, V>> result = index.lookupX(graph, exactMatch);
         return result;
     }
+
+//    @Override
+//    public Map<K, Iterable<BiMap<V, V>>> lookupStream(O queryObj, boolean exactMatch) {
+//        G graph = objectToGraph.apply(queryObj);
+//
+//        Map<K, Iterable<BiMap<V, V>>> result = index.lookupStream(graph, exactMatch);
+//        return result;
+//    }
 
     @Override
     public void printTree() {
