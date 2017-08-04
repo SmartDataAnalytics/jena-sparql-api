@@ -47,8 +47,8 @@ import com.google.common.io.ByteStreams;
  *   <li>Keys of type K are associated with a graph G with nodes type V.</li>
  *   <li>
  *     Keys of type K are associated with a set G whose items are composed from atoms of type V.
- *     For instance, an RDF graph (V = org.apache.jena.graph.Graph) is a set of triples,
- *     which are composed of V=org.apache.jena.graph.Node nodes.
+ *     For instance, an RDF graph (G = org.apache.jena.graph.Graph) is a set of triples,
+ *     which are composed of (V=org.apache.jena.graph.Node) nodes.
  *   </li>
  * </ul>
  *
