@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api.jgrapht;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
 
 import javax.persistence.EntityManager;
 
@@ -20,6 +20,9 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.Multimap;
+
 
 public class SubGraphIsomorphismIndexTests {
 
@@ -36,14 +39,14 @@ public class SubGraphIsomorphismIndexTests {
                 .getObject();
     }
 
-    public void run(List<String> queryIds) {
+    public SubGraphIsomorphismIndex<String, String, Node> buildIndex(Collection<String> queryIds) {
 
         SubGraphIsomorphismIndex<String, Graph, Node> base =
                 SubGraphIsomorphismIndexWrapper.wrap(
                         SubGraphIsomorphismIndexJGraphT.create(),
                         PseudoGraphJenaGraph::new);
 
-        SubGraphIsomorphismIndex<String, String, Node> index =
+        SubGraphIsomorphismIndex<String, String, Node> result =
                 SubGraphIsomorphismIndexWrapper.wrap(base, MainSparqlQueryToGraph::queryToGraph);
 
 
@@ -51,10 +54,31 @@ public class SubGraphIsomorphismIndexTests {
             LsqQuery lsqQuery = em.find(LsqQuery.class, queryId);
 
             String queryStr = lsqQuery.getText();
-            index.put(queryId, queryStr);
+            result.put(queryId, queryStr);
         }
 
         base.printTree();
+
+        return result;
+    }
+
+    public void lookup(SubGraphIsomorphismIndex<String, String, Node> index, Collection<String> queryIds) {
+
+        System.out.println("Lookup results:");
+        for(String queryId : queryIds) {
+            LsqQuery lsqQuery = em.find(LsqQuery.class, queryId);
+
+            String queryStr = lsqQuery.getText();
+            System.out.println("Lookup result for " + queryId + ": " + queryStr);
+            Multimap<String, BiMap<Node, Node>> r = index.lookupX(queryStr, false);
+
+            r.asMap().forEach((k, isos) -> {
+                isos.forEach(iso -> {
+                    System.out.println(k + ": " + iso);
+                });
+            });
+        }
+        System.out.println("End of lookup results");
     }
 
     /**
@@ -62,7 +86,7 @@ public class SubGraphIsomorphismIndexTests {
      */
     @Test
     public void keysWithEquivalentUnderIsomorphismGraphs() {
-        run(Arrays.asList(
+        buildIndex(Arrays.asList(
                 "http://lsq.aksw.org/res/q1x",
                 "http://lsq.aksw.org/res/q1a"
         ));
@@ -79,7 +103,7 @@ public class SubGraphIsomorphismIndexTests {
      */
     @Test
     public void multiSubsumption() {
-        run(Arrays.asList(
+        buildIndex(Arrays.asList(
                 "http://lsq.aksw.org/res/q1x",
                 "http://lsq.aksw.org/res/q2y",
                 "http://lsq.aksw.org/res/r1a",
@@ -87,12 +111,29 @@ public class SubGraphIsomorphismIndexTests {
         ));
     }
 
+    /**
+     * Insert the entry that becomes the root node last, which requires rebuilding the whole index
+     */
     @Test
     public void lateRootNode() {
-        run(Arrays.asList(
+        buildIndex(Arrays.asList(
                 "http://lsq.aksw.org/res/q1x",
                 "http://lsq.aksw.org/res/q2y",
                 "http://lsq.aksw.org/res/spo"
+        ));
+    }
+
+    @Test
+    public void lookup1() {
+        SubGraphIsomorphismIndex<String, String, Node> index = buildIndex(Arrays.asList(
+                "http://lsq.aksw.org/res/q1x",
+                "http://lsq.aksw.org/res/q2y",
+                "http://lsq.aksw.org/res/spo"
+        ));
+
+
+        lookup(index, Arrays.asList(
+                "http://lsq.aksw.org/res/q2y"
         ));
     }
 }

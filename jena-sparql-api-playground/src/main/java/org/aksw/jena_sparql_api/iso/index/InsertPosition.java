@@ -5,7 +5,7 @@ import java.util.Set;
 import com.google.common.collect.BiMap;
 
 public class InsertPosition<K, G, N, T> {
-    protected GraphIndexNode<K, G, N, T> node;
+    protected IndexNode<K, G, N, T> node;
     protected G residualQueryGraph;
     //protected G residualViewGraph;
 
@@ -16,7 +16,7 @@ public class InsertPosition<K, G, N, T> {
     protected BiMap<N, N> latestIsoAB;
 
     public InsertPosition(
-            GraphIndexNode<K, G, N, T> node,
+            IndexNode<K, G, N, T> node,
 //            Graph residualViewGraph,
             G residualQueryGraph,
             Set<T> residualQueryGraphTags,
@@ -31,7 +31,7 @@ public class InsertPosition<K, G, N, T> {
         this.latestIsoAB = latestIsoAB;
     }
 
-    public GraphIndexNode<K, G, N, T> getNode() {
+    public IndexNode<K, G, N, T> getNode() {
         return node;
     }
 
