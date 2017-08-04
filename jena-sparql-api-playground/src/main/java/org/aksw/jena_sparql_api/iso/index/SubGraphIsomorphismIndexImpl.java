@@ -44,16 +44,51 @@ import com.google.common.io.ByteStreams;
  * Generic sub graph isomorphism index class that on the surface acts like a Map.
  * The ways the index can be seen are:
  * <ul>
- * <li>Keys of type K are associated with a graph G with nodes type V.</li>
- * <li>Keys of type K are associated with a set G whose items are composed from atoms of type V.</li>
- *   For instance, an RDF graph (V = org.apache.jena.graph.Graph) is a set of triples,
- *   which are composed of V=org.apache.jena.graph.Node nodes.
- * <ul>
+ *   <li>Keys of type K are associated with a graph G with nodes type V.</li>
+ *   <li>
+ *     Keys of type K are associated with a set G whose items are composed from atoms of type V.
+ *     For instance, an RDF graph (V = org.apache.jena.graph.Graph) is a set of triples,
+ *     which are composed of V=org.apache.jena.graph.Node nodes.
+ *   </li>
+ * </ul>
  *
  * Type T is for tags, which is a set of static features of G.
  * Typically, this is a set of constants in G;
  * which is invariant - i.e. never remapped - by an isomorphism.
  *
+ *
+ * The implementation is based on the construction of an isomorphism-based subsumption
+ * graph among the (key, graph) pairs.
+ * Thereby, the keys (of type K) correspond to nodes in the subsumption graph.
+ * Edges represent subsumption relations between nodes and carry the following information
+ * about the transition from a source node to a target node:
+ * <ul>
+ *   <li>
+ *     The isomorphism that needs to be applied to reach the target.
+ *     I.e. whatever isomorphism existed to reach the source, the edge holds information how to re-map it
+ *     to the graph associated with the target.
+ *   </li>
+ *   <li>
+ *     The residual graph between the source and the target under the given isomorphism.
+ *     I.e. if a lookup request with a query graph reached the source node, the target node
+ *     can only be reached if there exists
+ *     an isomorphism between the query graph's residual graph and residual graph associated with the edge.
+ *   </li>
+ *   <li>
+ *     A set of graphTags, which describe static features of the graph. Static features are those that are
+ *     unaffected (not subject to being remapped) by the isomorphisms; i.e. constants.
+ *     Hence, a query graph must have a super-set of an edge's graph tags for the lookup to traverse that edge.
+ *   </li>
+ * </ul>
+ *
+ * The implementation uses a hybrid approach to sub graph indexes comprised of:
+ * <ul>
+ *   <li>
+ *     A generic isomorphism matcher, which is expected to yield possible isomorphisms for two given entities of type G.
+ *     Typically, this could be backed by a VF2 implementaiton
+ *   </li>
+ *   <li>Tags subset/superset queries are optimized using a set trie implementation.</li>
+ * </ul>
  *
  *
  * @author raven
