@@ -1,6 +1,5 @@
 package org.aksw.jena_sparql_api.concept_cache.core;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
@@ -15,10 +14,11 @@ import java.util.stream.Stream;
 
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeUtils;
+import org.aksw.commons.graph.index.jena.transform.QueryToGraph;
 import org.aksw.jena_sparql_api.algebra.analysis.VarInfo;
+import org.aksw.jena_sparql_api.algebra.utils.AlgebraUtils;
 import org.aksw.jena_sparql_api.algebra.utils.OpUtils;
 import org.aksw.jena_sparql_api.algebra.utils.ProjectedOp;
-import org.aksw.jena_sparql_api.algebra.utils.AlgebraUtils;
 import org.aksw.jena_sparql_api.core.QueryExecutionBaseSelect;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.ResultSetCloseable;
@@ -153,7 +153,7 @@ public class QueryExecutionViewMatcherMaster
         // TODO opRewriter.lookup and opRewriter.put() both perform normalization
         // We could this duplicate processing by normalizing here
         // and passing the projected op to both functions
-        ProjectedOp pop = AlgebraUtils.cutProjectionAndNormalize(queryOp, SparqlViewMatcherOpImpl::normalizeOp);
+        ProjectedOp pop = AlgebraUtils.cutProjectionAndNormalize(queryOp, QueryToGraph::normalizeOp);
         //List<Var> popVars = new ArrayList<>(pop.getProjection().getProjectVars());
 
         //Op coreQueryOp = pop.getResidualOp();

@@ -5,9 +5,9 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.aksw.combinatorics.solvers.Problem;
+import org.aksw.combinatorics.solvers.collections.ProblemContainer;
+import org.aksw.combinatorics.solvers.collections.ProblemContainerPick;
 import org.aksw.isomorphism.ActionProblemContainer;
-import org.aksw.isomorphism.ProblemContainer;
-import org.aksw.isomorphism.ProblemContainerPick;
 import org.aksw.state_space_search.core.Action;
 import org.aksw.state_space_search.core.State;
 

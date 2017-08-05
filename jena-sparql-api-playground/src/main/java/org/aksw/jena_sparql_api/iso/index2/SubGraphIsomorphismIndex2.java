@@ -13,7 +13,7 @@ import java.util.stream.Stream;
 
 import org.aksw.commons.collections.reversible.ReversibleMap;
 import org.aksw.commons.collections.reversible.ReversibleMapImpl;
-import org.aksw.jena_sparql_api.iso.index.SubGraphIsomorphismIndex;
+import org.aksw.commons.graph.SubGraphIsomorphismIndex;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.GraphMapping;
 import org.jgrapht.Graphs;

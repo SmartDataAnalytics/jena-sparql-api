@@ -4,15 +4,11 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.function.BiFunction;
 
+import org.aksw.commons.util.strings.StringUtils;
 import org.aksw.jena_sparql_api.beans.model.PropertyOps;
-import org.aksw.jena_sparql_api.mapper.impl.type.PlaceholderInfo;
-import org.aksw.jena_sparql_api.mapper.impl.type.ResourceFragment;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
-import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
-import org.apache.jena.rdf.model.Resource;
-import org.h2.util.StringUtils;
 
 public abstract class RdfMapperPropertyBase
     implements RdfMapperProperty

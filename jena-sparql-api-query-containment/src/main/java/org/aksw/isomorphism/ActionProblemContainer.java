@@ -4,6 +4,7 @@ import java.util.function.BinaryOperator;
 import java.util.function.Predicate;
 
 import org.aksw.combinatorics.algos.StateProblemContainer;
+import org.aksw.combinatorics.solvers.collections.ProblemContainer;
 import org.aksw.state_space_search.core.Action;
 import org.aksw.state_space_search.core.State;
 

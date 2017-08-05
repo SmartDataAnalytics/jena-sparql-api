@@ -18,17 +18,11 @@ import java.util.stream.Stream;
 import org.aksw.commons.collections.FeatureMap;
 import org.aksw.commons.collections.FeatureMapImpl;
 import org.aksw.commons.collections.trees.Tree;
+import org.aksw.commons.graph.index.jena.transform.QueryToGraph;
 import org.aksw.jena_sparql_api.algebra.transform.TransformDisjunctionToUnion;
 import org.aksw.jena_sparql_api.algebra.transform.TransformEffectiveOp;
-import org.aksw.jena_sparql_api.algebra.transform.TransformJoinToSequence;
-import org.aksw.jena_sparql_api.algebra.transform.TransformMergeProject;
 import org.aksw.jena_sparql_api.algebra.transform.TransformPushFiltersIntoBGP;
-import org.aksw.jena_sparql_api.algebra.transform.TransformReplaceConstants;
-import org.aksw.jena_sparql_api.algebra.transform.TransformUnionToDisjunction;
 import org.aksw.jena_sparql_api.algebra.utils.OpUtils;
-import org.aksw.jena_sparql_api.algebra.utils.AlgebraUtils;
-import org.aksw.jena_sparql_api.utils.Generator;
-import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.aksw.jena_sparql_api.view_matcher.OpVarMap;
 import org.aksw.jena_sparql_api.view_matcher.SparqlViewMatcherUtils;
 import org.apache.jena.ext.com.google.common.collect.Iterables;
@@ -41,7 +35,6 @@ import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.op.OpBGP;
 import org.apache.jena.sparql.algebra.op.OpService;
 import org.apache.jena.sparql.algebra.optimize.Rewrite;
-import org.apache.jena.sparql.core.Var;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -365,7 +358,7 @@ public class SparqlViewMatcherOpImpl<P>
     public static Op queryToNormalizedOp(Query query) {
         Op result = Algebra.compile(query);
         result = Algebra.toQuadForm(result);
-        result = normalizeOp(result);
+        result = QueryToGraph.normalizeOp(result);
         return result;
     }
 
@@ -385,21 +378,6 @@ public class SparqlViewMatcherOpImpl<P>
         //op = Transformer.transform(TransformJoinToSequence.fn, op);
     }
 
-    public static Op normalizeOp(Op op) {
-        op = Transformer.transform(TransformUnionToDisjunction.fn, op);
-        op = Transformer.transform(TransformJoinToSequence.fn, op);
-        //op = Transformer.transform(new TransformReplaceConstants(), op);
-        op = TransformReplaceConstants.transform(op);
-        //System.out.println("before:" + op);
-        op = TransformMergeProject.transform(op);
-        //System.out.println("after:" + op);
-
-        Generator<Var> generatorCache = VarGeneratorImpl2.create();
-        //op = OpUtils.substitute(op, false, (o) -> SparqlCacheUtils.tryCreateCqfp(o, generatorCache));
-        op = OpUtils.substitute(op, false, (o) -> AlgebraUtils.tryCreateCqfp(o, generatorCache));
-        return op;
-    }
-
 
     public static Set<Set<String>> extractFeatures(Op oop) {
         return Collections.singleton(OpVisitorFeatureExtractor.getFeatures(oop, (op) -> op.getClass().getSimpleName()));
@@ -415,7 +393,7 @@ public class SparqlViewMatcherOpImpl<P>
         Supplier<Integer> supplier = () -> nextPatternIdIt.next();
 
         SparqlViewMatcherOp<Integer> result = new SparqlViewMatcherOpImpl<>(
-                SparqlViewMatcherOpImpl::normalizeOp,
+                QueryToGraph::normalizeOp,
                 SparqlViewMatcherOpImpl::extractFeatures,
                 new OpIndexerImpl(),
                 supplier);

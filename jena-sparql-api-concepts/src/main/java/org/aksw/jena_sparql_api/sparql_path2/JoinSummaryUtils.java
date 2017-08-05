@@ -4,9 +4,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.aksw.commons.jena.jgrapht.LabeledEdge;
+import org.aksw.commons.jena.jgrapht.LabeledEdgeImpl;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.jgrapht.wrapper.LabeledEdge;
-import org.aksw.jena_sparql_api.jgrapht.wrapper.LabeledEdgeImpl;
 import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;

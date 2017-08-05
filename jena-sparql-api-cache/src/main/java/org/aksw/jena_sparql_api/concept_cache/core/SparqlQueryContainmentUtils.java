@@ -8,14 +8,14 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.aksw.commons.collections.trees.Tree;
+import org.aksw.commons.graph.index.jena.transform.QueryToGraph;
 import org.aksw.jena_sparql_api.algebra.analysis.VarInfo;
-import org.aksw.jena_sparql_api.algebra.transform.TransformDistributeJoinOverUnion;
+import org.aksw.jena_sparql_api.algebra.utils.AlgebraUtils;
 import org.aksw.jena_sparql_api.algebra.utils.ConjunctiveQuery;
 import org.aksw.jena_sparql_api.algebra.utils.OpExtConjunctiveQuery;
 import org.aksw.jena_sparql_api.algebra.utils.ProjectedOp;
 import org.aksw.jena_sparql_api.algebra.utils.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.algebra.utils.QuadFilterPatternCanonical;
-import org.aksw.jena_sparql_api.algebra.utils.AlgebraUtils;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.VarMapper;
 import org.aksw.jena_sparql_api.stmt.SparqlElementParser;
 import org.aksw.jena_sparql_api.stmt.SparqlElementParserImpl;
@@ -28,15 +28,11 @@ import org.aksw.jena_sparql_api.view_matcher.SparqlViewMatcherUtils;
 import org.aksw.jena_sparql_api.views.index.OpIndex;
 import org.aksw.jena_sparql_api.views.index.OpIndexerImpl;
 import org.aksw.jena_sparql_api.views.index.QuadPatternIndex;
-import org.aksw.jena_sparql_api.views.index.SparqlViewMatcherOpImpl;
 import org.aksw.jena_sparql_api.views.index.SparqlViewMatcherProjectionUtils;
 import org.aksw.jena_sparql_api.views.index.SparqlViewMatcherSystemImpl;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.Syntax;
-import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
-import org.apache.jena.sparql.algebra.Transformer;
-import org.apache.jena.sparql.algebra.optimize.TransformMergeBGPs;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.syntax.Element;
 
@@ -160,8 +156,8 @@ public class SparqlQueryContainmentUtils {
 
         Function<Op, OpIndex> opIndexer = new OpIndexerImpl();
 
-        Op normViewResOp = SparqlViewMatcherOpImpl.normalizeOp(viewResOp);
-        Op normUserResOp = SparqlViewMatcherOpImpl.normalizeOp(userResOp);
+        Op normViewResOp = QueryToGraph.normalizeOp(viewResOp);
+        Op normUserResOp = QueryToGraph.normalizeOp(userResOp);
 
         OpIndex viewIndex = opIndexer.apply(normViewResOp);
         OpIndex userIndex = opIndexer.apply(normUserResOp);
