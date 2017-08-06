@@ -9,10 +9,13 @@ import java.util.stream.Collectors;
 
 import org.aksw.combinatorics.solvers.ProblemNeighborhoodAware;
 import org.aksw.combinatorics.solvers.ProblemUnion;
-import org.aksw.commons.graph.InsertPosition;
-import org.aksw.commons.graph.index.jena.GraphVar;
-import org.aksw.commons.graph.index.jena.GraphVarImpl;
+import org.aksw.commons.graph.index.core.InsertPosition;
+import org.aksw.commons.graph.index.jena.SubgraphIsomorphismIndexJena;
+import org.aksw.commons.graph.index.jena.transform.QueryToGraphVisitor;
 import org.aksw.commons.graph.index.jgrapht.ProblemNodeMappingGraph;
+import org.aksw.commons.jena.graph.GraphVar;
+import org.aksw.commons.jena.graph.GraphVarImpl;
+import org.aksw.commons.jena.jgrapht.PseudoGraphJenaGraph;
 import org.aksw.jena_sparql_api.algebra.utils.ExtendedQueryToGraphVisitor;
 import org.aksw.jena_sparql_api.algebra.utils.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.concept_cache.dirty.QfpcMatch;
@@ -20,9 +23,6 @@ import org.aksw.jena_sparql_api.concept_cache.dirty.SparqlViewMatcherQfpc;
 import org.aksw.jena_sparql_api.deprecated.iso.index.ProblemVarWrapper;
 import org.aksw.jena_sparql_api.deprecated.iso.index.SubGraphIsomorphismIndex;
 import org.aksw.jena_sparql_api.deprecated.iso.index.SubGraphIsomorphismIndexBase;
-import org.aksw.jena_sparql_api.jgrapht.transform.QueryToGraphVisitor;
-import org.aksw.jena_sparql_api.jgrapht.transform.QueryToJenaGraph;
-import org.aksw.jena_sparql_api.jgrapht.wrapper.PseudoGraphJenaGraph;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -85,7 +85,7 @@ public class SparqlViewMatcherQfpcIso<K>
 
         ProblemNodeMappingGraph<Node, Triple, DirectedGraph<Node, Triple>, Node> rawProblem = new ProblemNodeMappingGraph<>(
                 baseIso, viewGraph, queryGraph,
-                QueryToJenaGraph::createNodeComparator, QueryToJenaGraph::createEdgeComparator);
+                SubgraphIsomorphismIndexJena::createNodeComparator, SubgraphIsomorphismIndexJena::createEdgeComparator);
 
 
         System.out.println("RAW SOLUTIONS for " + pos.getNode().getKey());

@@ -36,6 +36,12 @@
 
 
         <!-- Self Dependencies -->
+
+        <dependency>
+            <groupId>org.aksw.jena-sparql-api</groupId>
+            <artifactId>jena-sparql-api-query-containment</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.aksw.jena-sparql-api</groupId>
             <artifactId>jena-sparql-api-core</artifactId>
@@ -63,8 +69,8 @@
         </dependency>
 
         <dependency>
-            <groupId>org.aksw.jena-sparql-api</groupId>
-            <artifactId>jena-sparql-api-jgrapht</artifactId>
+            <groupId>org.aksw.commons</groupId>
+            <artifactId>jena-jgrapht-bindings</artifactId>
         </dependency>
 
         <dependency>

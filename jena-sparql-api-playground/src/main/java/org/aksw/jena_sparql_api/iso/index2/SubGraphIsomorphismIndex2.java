@@ -13,7 +13,7 @@ import java.util.stream.Stream;
 
 import org.aksw.commons.collections.reversible.ReversibleMap;
 import org.aksw.commons.collections.reversible.ReversibleMapImpl;
-import org.aksw.commons.graph.SubGraphIsomorphismIndex;
+import org.aksw.commons.graph.index.core.SubgraphIsomorphismIndex;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.GraphMapping;
 import org.jgrapht.Graphs;
@@ -39,7 +39,7 @@ import com.google.common.collect.Streams;
  *
  */
 public abstract class SubGraphIsomorphismIndex2<K, N, E>
-    implements SubGraphIsomorphismIndex<K, DirectedGraph<N, E>, N>
+    implements SubgraphIsomorphismIndex<K, DirectedGraph<N, E>, N>
 {
     protected Class<E> edgeClass;
     protected DirectedGraph<N, E> globalGraph;

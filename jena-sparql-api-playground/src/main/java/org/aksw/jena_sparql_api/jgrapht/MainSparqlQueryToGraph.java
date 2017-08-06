@@ -1,42 +1,36 @@
 package org.aksw.jena_sparql_api.jgrapht;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import javax.persistence.criteria.Root;
 import javax.swing.JFrame;
 
-import org.aksw.commons.graph.SubGraphIsomorphismIndex;
-import org.aksw.commons.graph.index.core.SubGraphIsomorphismIndexWrapper;
-import org.aksw.commons.graph.index.jena.GraphVar;
-import org.aksw.commons.graph.index.jena.GraphVarImpl;
+import org.aksw.commons.graph.index.core.SubgraphIsomorphismIndex;
+import org.aksw.commons.graph.index.core.SubgraphIsomorphismIndexWrapper;
 import org.aksw.commons.graph.index.jena.LsqQuery;
+import org.aksw.commons.graph.index.jena.SubgraphIsomorphismIndexJena;
+import org.aksw.commons.graph.index.jena.transform.QueryToGraph;
+import org.aksw.commons.graph.index.jena.transform.QueryToGraphVisitor;
+import org.aksw.commons.jena.graph.GraphVar;
+import org.aksw.commons.jena.graph.GraphVarImpl;
+import org.aksw.commons.jena.jgrapht.PseudoGraphJenaGraph;
 import org.aksw.commons.util.strings.StringPrettyComparator;
 import org.aksw.jena_sparql_api.algebra.utils.ExtendedQueryToGraphVisitor;
 import org.aksw.jena_sparql_api.algebra.utils.OpExtConjunctiveQuery;
 import org.aksw.jena_sparql_api.core.SparqlService;
-import org.aksw.jena_sparql_api.iso.index.SubGraphIsomorphismIndexJGraphT;
-import org.aksw.jena_sparql_api.jgrapht.transform.QueryToGraphVisitor;
-import org.aksw.jena_sparql_api.jgrapht.transform.QueryToJenaGraph;
-import org.aksw.jena_sparql_api.jgrapht.wrapper.PseudoGraphJenaGraph;
 import org.aksw.jena_sparql_api.mapper.jpa.core.RdfEntityManager;
 import org.aksw.jena_sparql_api.mapper.jpa.core.SparqlEntityManagerFactory;
 import org.aksw.jena_sparql_api.mapper.util.JpaUtils;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
 import org.aksw.jena_sparql_api.utils.Vars;
-import org.aksw.jena_sparql_api.views.index.SparqlViewMatcherOpImpl;
 import org.apache.jena.ext.com.google.common.collect.Lists;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
@@ -60,7 +54,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Multimap;
 import com.jgraph.layout.JGraphFacade;
 import com.jgraph.layout.JGraphLayout;
@@ -91,7 +84,7 @@ public class MainSparqlQueryToGraph {
             throw new RuntimeException("Failed to parse: " + queryStr, e);
         }
         Op op = Algebra.toQuadForm(Algebra.compile(query));
-        Op nop = SparqlViewMatcherOpImpl.normalizeOp(op);
+        Op nop = QueryToGraph.normalizeOp(op);
 
 
         // Collect all conjunctive queries
@@ -117,9 +110,9 @@ public class MainSparqlQueryToGraph {
 
     public static void main(String[] args) throws Exception {
 
-        SubGraphIsomorphismIndex<Node, Graph, Node> index =
-                SubGraphIsomorphismIndexWrapper.wrap(
-                        SubGraphIsomorphismIndexJGraphT.create(),
+        SubgraphIsomorphismIndex<Node, Graph, Node> index =
+                SubgraphIsomorphismIndexWrapper.wrap(
+                        SubgraphIsomorphismIndexJena.create(),
                         PseudoGraphJenaGraph::new);
 
 
@@ -168,10 +161,10 @@ public class MainSparqlQueryToGraph {
         //System.out.println(op);
 
 
-        aop = SparqlViewMatcherOpImpl.normalizeOp(aop);
-        bop = SparqlViewMatcherOpImpl.normalizeOp(bop);
-        cop = SparqlViewMatcherOpImpl.normalizeOp(cop);
-        dop = SparqlViewMatcherOpImpl.normalizeOp(dop);
+        aop = QueryToGraph.normalizeOp(aop);
+        bop = QueryToGraph.normalizeOp(bop);
+        cop = QueryToGraph.normalizeOp(cop);
+        dop = QueryToGraph.normalizeOp(dop);
 
 
         //RDFDataMgr.write(System.out, graph, RDFFormat.NTRIPLES);
@@ -201,7 +194,7 @@ public class MainSparqlQueryToGraph {
 //        System.out.println("Graph B:");
 //        RDFDataMgr.write(System.out, bg.getWrapped(), RDFFormat.NTRIPLES);
 //
-        List<Map<Node, Node>> solutions = QueryToJenaGraph.match(HashBiMap.create(), bg, cg).collect(Collectors.toList());
+        List<Map<Node, Node>> solutions = null; //QueryToJenaGraph.match(HashBiMap.create(), bg, cg).collect(Collectors.toList());
 //
 //        System.out.println("VarMap entries: " + solutions.size());
 
@@ -332,7 +325,7 @@ public class MainSparqlQueryToGraph {
                     continue;
                 }
                 Op op = Algebra.toQuadForm(Algebra.compile(query));
-                Op nop = SparqlViewMatcherOpImpl.normalizeOp(op);
+                Op nop = QueryToGraph.normalizeOp(op);
 
 
                 // Collect all conjunctive queries
