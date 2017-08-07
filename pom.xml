@@ -29,6 +29,8 @@
         <module>jena-sparql-api-core</module>
         <module>jena-sparql-api-connection</module>
 
+        <module>jena-sparql-api-cache</module>
+
         <module>jena-sparql-api-views</module>
 
         <module>jena-sparql-api-concepts</module>
