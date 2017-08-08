@@ -13,7 +13,7 @@ t:t1a
   a qc:ContainmentTest ;
   qc:sourceQuery q:q1a ;
   qc:targetQuery q:q1a ;
-  qc:result "{?p=?p, ?o=?o, ?s=?s, ?v_1=?v_1}" ;
+  qc:result "{?p=?p, ?o=?o, ?s=?s }" ;
   .
 
 q:q2a
@@ -28,7 +28,7 @@ t:t2a
   a qc:ContainmentTest ;
   qc:sourceQuery q:q2a ;
   qc:targetQuery q:q2b ;
-  qc:result "{?v_2=?v_2, ?v_3=?v_3, ?s=?s, ?v_1=?v_1}" ;
+  qc:result "{?v_2=?v_2, ?s=?s, ?v_1=?v_1}" ;
   .
 
 
@@ -97,7 +97,7 @@ Select ?x1 {
 
 
 t:l1a
-  a qc:ContainmentTest ;
+#  a qc:ContainmentTest ;
   qc:sourceQuery q:l1a ;
   qc:targetQuery q:l1b ;
   qc:result "{?v_2=?v_2, ?x7=?x7, ?x8=?x8, ?v_3=?v_3, ?v_4=?v_4, ?x5=?x5, ?v_5=?v_5, ?x6=?x6, ?v_6=?v_6, ?x3=?x3, ?v_7=?v_7, ?x4=?x4, ?x1=?x1, ?v_8=?v_8, ?v_9=?v_9, ?x2=?x2, ?v_1=?v_1, ?v_10=?v_10, ?v_15=?v_15, ?v_12=?v_12, ?v_11=?v_11, ?v_14=?v_14, ?x9=?x9, ?v_13=?v_13}" ;
@@ -119,14 +119,14 @@ t:t2-1
 #  a qc:ContainmentTest ;
   qc:sourceQuery q:q2-a ;
   qc:targetQuery q:q2-b ;
-  qc:result "{?v_2=?v_2, ?v_3=?v_3, ?s=?x, ?v_1=?v_1}" ;
+  qc:result "{?v_2=?v_2, ?s=?x, ?v_1=?v_1}" ;
   .
 
 t:t2-2
   a qc:ContainmentTest ;
   qc:sourceQuery q:q2-a ;
   qc:targetQuery q:q2-c ;
-  qc:result "{?v_2=?v_2, ?x=?a, ?v_3=?v_3, ?v_1=?v_1}" ;
+  qc:result "{?v_2=?v_2, ?x=?a, ?v_1=?v_1}" ;
   .
 
 

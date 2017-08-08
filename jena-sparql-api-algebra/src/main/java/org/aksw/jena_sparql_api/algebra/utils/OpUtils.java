@@ -120,8 +120,8 @@ public class OpUtils {
      */
     public static Op wrapWithProjection(Op subOp, Map<Var, Var> oldToNew) {
         // Remove identity mappings
-        oldToNew = oldToNew.entrySet().stream().filter(e -> !Objects.equals(e.getKey(), e.getValue()))
-                .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+        //oldToNew = oldToNew.entrySet().stream().filter(e -> !Objects.equals(e.getKey(), e.getValue()))
+        //        .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 
         if (!oldToNew.isEmpty()) {
 

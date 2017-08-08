@@ -55,6 +55,7 @@ public class SparqlViewMatcherTreeTests {
 
         SparqlQueryParser queryParser = SparqlQueryParserImpl.create();
         for(Resource test : tests) {
+            logger.debug("Test ID: " + test);
             String qas = test.getRequiredProperty(SparqlQcVocab.sourceQuery).getObject().asResource().getRequiredProperty(SparqlQcVocab.sparqlQueryString).getObject().asLiteral().getString();
             String qbs = test.getRequiredProperty(SparqlQcVocab.targetQuery).getObject().asResource().getRequiredProperty(SparqlQcVocab.sparqlQueryString).getObject().asLiteral().getString();
 
