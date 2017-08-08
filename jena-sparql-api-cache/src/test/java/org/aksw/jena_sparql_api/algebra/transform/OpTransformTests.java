@@ -74,20 +74,27 @@ public class OpTransformTests {
         System.out.println("a:" + op);
         op = TransformReplaceConstants.transform(op);
 
-        System.out.println("b: " + op);
+        System.out.println("b:" + op);
+        op = Transformer.transform(new TransformFilterPlacement(), op);
+
+        System.out.println("c: " + op);
         op = TransformPushFiltersIntoBGP.transform(op);
 
-        System.out.println("c:" + op);
+        System.out.println("d:" + op);
         op = Transformer.transform(new TransformQuadsToTriples(), op);
 
-        System.out.println("d:" + op);
+        System.out.println("e:" + op);
         op = Transformer.transform(new TransformMergeBGPs(), op);
 
-        // Bad idea to use filter placement; may isolate quads with their own filters
+        // Clean up projection
+        op = TransformMergeProject.transform(op);
+        System.out.println("f:" + op);
+
+        // Bad idea to use filter placement here; may isolate quads with their own filters
         // op = Transformer.transform(new TransformFilterPlacement(), op);
 
         Query actual = OpAsQuery.asQuery(op);
-        System.out.println("e: " + actual);
+        System.out.println("f: " + actual);
 
         Assert.assertEquals(expected, actual);
     }
