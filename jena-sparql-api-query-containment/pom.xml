@@ -31,11 +31,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.aksw.jena-sparql-api</groupId>
-            <artifactId>jena-sparql-api-algebra</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>org.aksw.commons</groupId>
             <artifactId>subgraph-isomorphism-index-jena</artifactId>
         </dependency>
@@ -121,10 +116,6 @@
         <!-- </dependency> -->
 
         <!-- Unit Testing -->
-        <dependency>
-            <groupId>org.aksw.jena-sparql-api</groupId>
-            <artifactId>jena-sparql-api-resources-test-config</artifactId>
-        </dependency>
 
         <dependency>
             <groupId>org.aksw.jena-sparql-api</groupId>
