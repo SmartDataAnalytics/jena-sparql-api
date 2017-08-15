@@ -3,6 +3,8 @@ package org.aksw.jena_sparql_api.stmt;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryParseException;
 import org.apache.jena.query.Syntax;
+import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.update.UpdateRequest;
 
 
@@ -91,7 +93,17 @@ public class SparqlStmtParserImpl
 //        SparqlStmtParserImpl result
 //    }
     public static SparqlStmtParserImpl create(Syntax syntax, boolean actAsClassifier) {
-        SparqlStmtParserImpl result = create(SparqlParserConfig.create(syntax), actAsClassifier);
+        SparqlStmtParserImpl result = create(SparqlParserConfig.newInstance().setSyntax(syntax).applyDefaults(), actAsClassifier);
+        return result;
+    }
+
+    public static SparqlStmtParserImpl create(Syntax syntax, PrefixMapping prefixMapping, boolean actAsClassifier) {
+        SparqlStmtParserImpl result = create(SparqlParserConfig.newInstance().setSyntax(syntax).setPrefixMapping(prefixMapping).applyDefaults(), actAsClassifier);
+        return result;
+    }
+
+    public static SparqlStmtParserImpl create(Syntax syntax, Prologue prologue, boolean actAsClassifier) {
+        SparqlStmtParserImpl result = create(SparqlParserConfig.newInstance().setSyntax(syntax).setPrologue(prologue).applyDefaults(), actAsClassifier);
         return result;
     }
 
@@ -104,7 +116,6 @@ public class SparqlStmtParserImpl
         SparqlQueryParser queryParser = SparqlQueryParserImpl.create(config);
         SparqlUpdateParser updateParser = SparqlUpdateParserImpl.create(config);
         SparqlStmtParserImpl result = new SparqlStmtParserImpl(queryParser, updateParser, actAsClassifier);
-
         return result;
     }
 
