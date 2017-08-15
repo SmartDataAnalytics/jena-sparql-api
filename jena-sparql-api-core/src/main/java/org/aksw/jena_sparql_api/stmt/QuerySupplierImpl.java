@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.stmt;
 
 import com.google.common.base.Supplier;
 import org.apache.jena.query.Query;
+import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.core.Prologue;
 
 public class QuerySupplierImpl
@@ -25,7 +26,10 @@ public class QuerySupplierImpl
 
         if(prologue != null) {
             result.setBaseURI(prologue.getBaseURI());
-            result.setPrefixMapping(prologue.getPrefixMapping());
+            PrefixMappingImpl tmp = new PrefixMappingImpl();
+            // Note: Query parsing may modify the prefixes, hence create a copy of the prefix mappings
+            tmp.setNsPrefixes(prologue.getPrefixMapping());
+            result.setPrefixMapping(tmp);
         }
 
         return result;
