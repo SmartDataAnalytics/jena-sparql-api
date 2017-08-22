@@ -97,14 +97,6 @@ public class MainTestSparqlViewCache {
 
 
     public static void main(String[] args) throws IOException {
-        //AnnotationConfigApplicationContext
-
-        //OpExecutorFactoryViewCache.registerGlobally();
-        JenaExtensionViewMatcher.register();
-        //QC.setFactory(ARQ.getContext(), OpExecutorFactoryViewCache.get());
-
-
-
         String data = "simple";
 
 

@@ -14,7 +14,6 @@ import javax.swing.JFrame;
 
 import org.aksw.commons.graph.index.core.SubgraphIsomorphismIndex;
 import org.aksw.commons.graph.index.core.SubgraphIsomorphismIndexWrapper;
-import org.aksw.commons.graph.index.jena.LsqQuery;
 import org.aksw.commons.graph.index.jena.SubgraphIsomorphismIndexJena;
 import org.aksw.commons.graph.index.jena.transform.QueryToGraph;
 import org.aksw.commons.graph.index.jena.transform.QueryToGraphVisitor;

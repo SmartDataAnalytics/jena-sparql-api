@@ -75,7 +75,7 @@ class QueryRewrite {
 
 /**
  * TODO Separate cache specific parts from query containment ones
- * 
+ *
  * @author raven
  *
  */
@@ -437,10 +437,12 @@ public class AlgebraUtils {
 
             VarInfo varInfo = new VarInfo(projectVars, isDistinct ? 2 : 0);
 
-          QuadFilterPatternCanonical qfpc = canonicalize2(qfp, generator);
+            QuadFilterPatternCanonical qfpc = canonicalize2(qfp, generator);
+            result = new ConjunctiveQuery(varInfo, qfpc);
+
 
             // TODO canonicalize the pattern
-            result = new ConjunctiveQuery(varInfo, qfpc);
+//            result = new ConjunctiveQuery(varInfo, qfpc);
         }
 
         return result;
@@ -592,22 +594,53 @@ public class AlgebraUtils {
 //        return result;
 //    }
 
-    public static OpExtConjunctiveQuery tryCreateCqfp(Op op, Generator<Var> generator) {
+    public static OpExtConjunctiveQuery tryCreateCqfpOld(Op op, Generator<Var> generator) {
         ConjunctiveQuery cq = tryExtractConjunctiveQuery(op, generator);
+
         OpExtConjunctiveQuery result = cq == null
                 ? null
                 : new OpExtConjunctiveQuery(cq);
 
         return result;
-//    	QuadFilterPattern qfp = extractQuadFilterPattern(op);
-//        OpExtConjunctiveQuery result;
-//        if(qfp == null) {
-//            result = null;
-//        } else {
-//            QuadFilterPatternCanonical tmp = canonicalize2(qfp, generator);
-//            result = new OpExtConjunctiveQuery(tmp, generator);
-//        }
-//        return result;
+    }
+
+    public static Op tryCreateCqfp(Op op, Generator<Var> generator) {
+        ConjunctiveQuery cq = tryExtractConjunctiveQuery(op, generator);
+
+        // Idea:
+        // Separate the purely conjunctive filter part from the disjunctive part:
+        // The set of clauses having only 1 element remain part of the conjunctive query
+        // the other clauses go into a separate filter node
+
+        //Set<Expr> conjunctive = new LinkedHashSet<>();
+        Op result = null;
+        if(cq != null) {
+            Set<Set<Expr>> conjunctive = new LinkedHashSet<>();
+            Set<Set<Expr>> disjunctive = new LinkedHashSet<>();
+
+            Set<Set<Expr>> cnf = cq.getPattern().getExprHolder().getCnf();
+
+            for(Set<Expr> clause : cnf) {
+                if(clause.size() == 1) {
+                    //conjunctive.add(clause.iterator().next());
+                    conjunctive.add(clause);
+                } else {
+                    disjunctive.add(clause);
+                }
+            }
+
+            QuadFilterPatternCanonical qfpc = new QuadFilterPatternCanonical(cq.getPattern().getQuads(), ExprHolder.fromCnf(conjunctive));
+            cq = new ConjunctiveQuery(cq.getProjection(), qfpc);
+            result = new OpExtConjunctiveQuery(cq);
+
+            if(!disjunctive.isEmpty()) {
+                Expr expr = DnfUtils.toExpr(disjunctive);
+                result = OpFilter.filterDirect(expr, result);
+            }
+
+        }
+
+        return result;
     }
 
     // Assumes that ReplaceConstants has been called

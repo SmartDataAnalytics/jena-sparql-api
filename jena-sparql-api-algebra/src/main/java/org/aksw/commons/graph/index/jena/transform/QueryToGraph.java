@@ -32,6 +32,7 @@ import org.apache.jena.query.QueryFactory;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.Transformer;
+import org.apache.jena.sparql.algebra.optimize.TransformFilterPlacement;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
@@ -52,6 +53,7 @@ public class QueryToGraph {
         //op = Transformer.transform(new TransformReplaceConstants(), op);
         op = TransformReplaceConstants.transform(op);
         //System.out.println("before:" + op);
+        op = Transformer.transform(new TransformFilterPlacement(), op);
         op = TransformMergeProject.transform(op);
         //System.out.println("after:" + op);
 
@@ -70,8 +72,23 @@ public class QueryToGraph {
         } catch(Exception e) {
             throw new RuntimeException("Failed to parse: " + queryStr, e);
         }
+        result = queryToGraph(query);
+
+        return result;
+    }
+
+    public static Graph queryToGraph(Query query) {
         Op op = Algebra.toQuadForm(Algebra.compile(query));
+
         Op nop = normalizeOp(op);
+        Graph result = queryToGraph(nop);
+
+        return result;
+    }
+
+    public static Graph queryToGraph(Op nop) {
+        Graph result;
+
 
 
         // Collect all conjunctive queries
