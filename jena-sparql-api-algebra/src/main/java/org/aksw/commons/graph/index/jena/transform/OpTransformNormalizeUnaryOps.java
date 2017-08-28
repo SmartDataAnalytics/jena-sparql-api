@@ -71,6 +71,12 @@ public class OpTransformNormalizeUnaryOps
         return result;
     }
 
+    @Override
+    public Op transform(OpExt subOp) {
+        OpDistinctExtendFilter result = wrap(subOp);
+        return result;
+    }
+
 //    @Override
 //    public Op transform(OpDisjunction opDisjunction, List<Op> elts) {
 //

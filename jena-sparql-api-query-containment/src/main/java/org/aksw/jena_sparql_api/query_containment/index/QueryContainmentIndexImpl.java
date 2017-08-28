@@ -109,7 +109,7 @@ public class QueryContainmentIndexImpl<K, G, N, O> {
 
     public static void main(String[] args) {
         QueryContainmentIndexImpl<Node, DirectedGraph<Node, Triple>, Node, Op> index = QueryContainmentIndexImpl.create();
-        Op op = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("PREFIX : <http://ex.org/> SELECT DISTINCT ?s { ?s a ?t . FILTER(?t = :foo || ?t = :bar) }")));
+        Op op = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("PREFIX : <http://ex.org/> SELECT ?s { { SELECT DISTINCT ?s { ?s a ?t . FILTER(?t = :foo || ?t = :bar) } } UNION { ?x ?y ?z } }")));
 
         System.out.println(op);
         op = QueryToGraph.normalizeOp(op);

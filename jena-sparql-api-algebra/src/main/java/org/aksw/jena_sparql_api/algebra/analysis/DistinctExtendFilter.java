@@ -129,10 +129,12 @@ public class DistinctExtendFilter {
                 : preDistinctVarDefs;
 
         // Validate that all requested projected variables are actually present
+        // It is valid to project non-existent variables:
+        // Consider SELECT ?s { { ?s ?p ?o } UNION { ?x ?y ?z } }
         boolean isValidRequest = varDefs.keySet().containsAll(projectVars);
-        if(!isValidRequest) {
-            throw new RuntimeException("Cannot project by non-available vars");
-        }
+//        if(!isValidRequest) {
+//            throw new RuntimeException("Cannot project by non-available vars: " + projectVars + " - available: " + varDefs.keySet());
+//        }
 
         // If this causes a change in the variables, then distinct becomes false again
         varDefs.keySet().retainAll(projectVars);
