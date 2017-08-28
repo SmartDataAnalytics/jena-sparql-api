@@ -47,7 +47,7 @@ import com.google.common.collect.Streams;
 
 public class QueryToGraph {
 
-    public static Op normalizeOp(Op op) {
+    public static Op normalizeOpReplaceConstants(Op op) {
         op = Transformer.transform(TransformUnionToDisjunction.fn, op);
         op = Transformer.transform(TransformJoinToSequence.fn, op);
         //op = Transformer.transform(new TransformReplaceConstants(), op);
@@ -57,11 +57,22 @@ public class QueryToGraph {
         op = TransformMergeProject.transform(op);
         //System.out.println("after:" + op);
 
+//        Generator<Var> generatorCache = VarGeneratorImpl2.create();
+//        //op = OpUtils.substitute(op, false, (o) -> SparqlCacheUtils.tryCreateCqfp(o, generatorCache));
+//        op = OpUtils.substitute(op, false, (o) -> AlgebraUtils.tryCreateCqfp(o, generatorCache));
+        return op;
+    }
+
+    public static Op normalizeOp(Op op) {
+        op = normalizeOpReplaceConstants(op);
         Generator<Var> generatorCache = VarGeneratorImpl2.create();
         //op = OpUtils.substitute(op, false, (o) -> SparqlCacheUtils.tryCreateCqfp(o, generatorCache));
         op = OpUtils.substitute(op, false, (o) -> AlgebraUtils.tryCreateCqfp(o, generatorCache));
+        op = Transformer.transform(new OpTransformNormalizeUnaryOps(), op);
+
         return op;
     }
+
 
     public static Graph queryToGraph(String queryStr) {
         Graph result;

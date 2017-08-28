@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.algebra.utils;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.jena.atlas.io.IndentedWriter;
@@ -16,7 +17,7 @@ public class OpExtConjunctiveQuery
     extends OpExt
     implements OpCopyable
 {
-	private static final Logger logger = LoggerFactory.getLogger(OpExtConjunctiveQuery.class);
+    private static final Logger logger = LoggerFactory.getLogger(OpExtConjunctiveQuery.class);
 
     private ConjunctiveQuery conjunctiveQuery;
 
@@ -33,8 +34,8 @@ public class OpExtConjunctiveQuery
     @Override
     public Op effectiveOp() {
 
-    	//System.out.println("Not sure if it is a good idea for " + OpExtQuadFilterPatternCanonical.class.getName() + " getting called");
-    	Op result = conjunctiveQuery.toOp();
+        //System.out.println("Not sure if it is a good idea for " + OpExtQuadFilterPatternCanonical.class.getName() + " getting called");
+        Op result = conjunctiveQuery.toOp();
 //    	if(result instanceof OpFilter) {
 //    		// HACK: skip the filter, otherwise OpVars.visibleVars() won't work with Jena 3.1.0
 //        	logger.warn(OpExtQuadFilterPatternCanonical.class.getName() + ".effectiveOp() hack used");
@@ -70,10 +71,14 @@ public class OpExtConjunctiveQuery
         return false;
     }
 
-	@Override
-	public Op copy(List<Op> subOps) {
-		OpExtConjunctiveQuery result = new OpExtConjunctiveQuery(conjunctiveQuery);
-		return result;
-	}
+    @Override
+    public Op copy(List<Op> subOps) {
+        OpExtConjunctiveQuery result = new OpExtConjunctiveQuery(conjunctiveQuery);
+        return result;
+    }
 
+    @Override
+    public List<Op> getElements() {
+        return Collections.emptyList();
+    }
 }

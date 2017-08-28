@@ -7,6 +7,7 @@ import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeUtils;
 import org.aksw.commons.graph.index.core.SubgraphIsomorphismIndex;
 import org.aksw.commons.graph.index.jena.SubgraphIsomorphismIndexJena;
+import org.aksw.commons.graph.index.jena.transform.OpTransformNormalizeUnaryOps;
 import org.aksw.commons.graph.index.jena.transform.QueryToGraph;
 import org.aksw.commons.jena.jgrapht.PseudoGraphJenaGraph;
 import org.aksw.jena_sparql_api.algebra.utils.OpUtils;
@@ -16,6 +17,7 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.Transformer;
 import org.jgrapht.DirectedGraph;
 
 
@@ -108,6 +110,13 @@ public class QueryContainmentIndexImpl<K, G, N, O> {
     public static void main(String[] args) {
         QueryContainmentIndexImpl<Node, DirectedGraph<Node, Triple>, Node, Op> index = QueryContainmentIndexImpl.create();
         Op op = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("PREFIX : <http://ex.org/> SELECT DISTINCT ?s { ?s a ?t . FILTER(?t = :foo || ?t = :bar) }")));
+
+        System.out.println(op);
+        op = QueryToGraph.normalizeOp(op);
+//        op = Transformer.transform(new OpTransformNormalizeUnaryOps(), op);
+
+        System.out.println("normalized args: " + op);
+
         index.put(Node.ANY, op);
 
     }

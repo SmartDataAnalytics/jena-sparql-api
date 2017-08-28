@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.algebra.utils;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -24,6 +25,7 @@ import org.aksw.jena_sparql_api.utils.CnfUtils;
 import org.aksw.jena_sparql_api.utils.DnfUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
+import org.aksw.jena_sparql_api.utils.NfUtils;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
@@ -629,13 +631,29 @@ public class AlgebraUtils {
                 }
             }
 
+            Set<Var> requiredVars = new LinkedHashSet<Var>(cq.getProjection().getProjectVars());
+
+            Set<Var> vars = NfUtils.getVarsMentioned(disjunctive);
+            requiredVars.addAll(vars);
+
             QuadFilterPatternCanonical qfpc = new QuadFilterPatternCanonical(cq.getPattern().getQuads(), ExprHolder.fromCnf(conjunctive));
-            cq = new ConjunctiveQuery(cq.getProjection(), qfpc);
+            cq = new ConjunctiveQuery(new VarInfo(requiredVars, 0), qfpc);
             result = new OpExtConjunctiveQuery(cq);
 
             if(!disjunctive.isEmpty()) {
                 Expr expr = DnfUtils.toExpr(disjunctive);
                 result = OpFilter.filterDirect(expr, result);
+
+                // Apply project
+                if(!requiredVars.equals(cq.getProjection().getProjectVars())) {
+                    result = new OpProject(result, new ArrayList<>(cq.getProjection().getProjectVars()));
+                }
+            }
+
+
+            // Apply distinct
+            if(cq.getProjection().getDistinctLevel() != 0) {
+                result = new OpDistinct(result);
             }
 
         }

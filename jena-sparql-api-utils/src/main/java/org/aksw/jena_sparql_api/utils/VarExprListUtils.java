@@ -16,22 +16,36 @@ import org.apache.jena.sparql.expr.ExprVars;
 
 public class VarExprListUtils {
 
+    public static VarExprList createFromMap(Map<Var, Expr> map) {
+        VarExprList result = new VarExprList();
+        for(Entry<Var, Expr> e : map.entrySet()) {
+            Var v = e.getKey();
+            Expr w = e.getValue();
 
-	public static VarExprList createFromVarMap(Map<Var, Var> varMap) {
-		VarExprList result = new VarExprList();
-		for(Entry<Var, Var> e : varMap.entrySet()) {
-			Var v = e.getKey();
-			Var w = e.getValue();
+            if(w.isVariable() && v.equals(w.asVar())) {
+                result.add(v);
+            } else {
+                result.add(v, w);
+            }
+        }
 
-			if(v.equals(w)) {
-				result.add(w);
-			} else {
-				result.add(w, new ExprVar(v));
-			}
-		}
+        return result;
+    }
+    public static VarExprList createFromVarMap(Map<Var, Var> varMap) {
+        VarExprList result = new VarExprList();
+        for(Entry<Var, Var> e : varMap.entrySet()) {
+            Var v = e.getKey();
+            Var w = e.getValue();
 
-		return result;
-	}
+            if(v.equals(w)) {
+                result.add(w);
+            } else {
+                result.add(w, new ExprVar(v));
+            }
+        }
+
+        return result;
+    }
 
 
     /**
@@ -68,10 +82,10 @@ public class VarExprListUtils {
         boolean changed = false ;
         for ( Var v : vars )
         {
-        	Expr newVE = exprTransform.transform(new ExprVar(v));
-        	Var newV = newVE == null ? v : ((ExprVar)newVE).asVar();
+            Expr newVE = exprTransform.transform(new ExprVar(v));
+            Var newV = newVE == null ? v : ((ExprVar)newVE).asVar();
 
-        	changed = !v.equals(newV);
+            changed = !v.equals(newV);
 
             Expr e = varExpr.getExpr(v) ;
             Expr e2 =  e ;

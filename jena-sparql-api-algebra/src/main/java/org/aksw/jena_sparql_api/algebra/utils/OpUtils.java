@@ -9,7 +9,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -55,6 +54,7 @@ import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
+import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprList;
 
 import com.google.common.collect.Lists;
@@ -168,6 +168,37 @@ public class OpUtils {
             subOp = extendWithVarMap(subOp, oldToNew);
         }
         return subOp;
+    }
+
+
+    /**
+     * Apply project and extend as needed
+     *
+     * @param subOp
+     * @param map
+     * @return
+     */
+    public static Op applyExtendProject(Op result, Map<Var, Expr> map) {
+        Set<Var> visibleVars = OpVars.visibleVars(result);
+
+        Map<Var, Var> identityMappings = map.entrySet().stream()
+                .filter(e -> e.getValue().isVariable() && e.getKey().equals(e.getValue().asVar()))
+                .collect(Collectors.toMap(Entry::getKey, e -> e.getValue().asVar()));
+
+        Map<Var, Expr> extensions = map.entrySet().stream()
+                .filter(e -> !identityMappings.containsKey(e.getKey()))
+                .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+
+        if(!extensions.isEmpty()) {
+            VarExprList vel = VarExprListUtils.createFromMap(extensions);
+            result = OpExtend.extend(result, vel);
+        }
+
+        if(visibleVars.equals(map.keySet())) {
+            result = new OpProject(result, new ArrayList<>(map.keySet()));
+        }
+
+        return result;
     }
 
     /**
@@ -387,6 +418,8 @@ public class OpUtils {
             result = Arrays.asList(tmp.getLeft(), tmp.getRight());
         } else if (op instanceof OpN) {
             result = ((OpN) op).getElements();
+        } else if (op instanceof OpCopyable) {
+            result = ((OpCopyable) op).getElements();
         } else if (op instanceof OpExt) {
             // TODO We probably should support descending into children of an
             // OpExt
