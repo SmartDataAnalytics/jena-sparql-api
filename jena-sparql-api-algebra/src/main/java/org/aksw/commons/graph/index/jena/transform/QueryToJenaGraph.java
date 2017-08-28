@@ -125,7 +125,7 @@ public class QueryToJenaGraph {
                 Expr arg = args.get(i);
                 Node argNode = exprToGraph(graph, arg, nodeSupplier);
 
-                Node p = isCommutative ? argNode : NodeFactory.createURI("arg://" + i);
+                Node p = isCommutative ? NodeFactory.createURI("arg://any") : NodeFactory.createURI("arg://" + i);
 
                 graph.add(new Triple(result, p, argNode));
             }

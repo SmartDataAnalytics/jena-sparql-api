@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.query_containment.index;
 
 import java.util.AbstractMap.SimpleEntry;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -25,7 +26,9 @@ import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.jgrapht.DirectedGraph;
 
+import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
 
 
@@ -96,7 +99,6 @@ public class QueryContainmentIndexImpl<K, G, N, O> {
 
 
         O normViewOp = normalizer.apply(viewOp);
-
         Tree<O> tree = TreeImpl.create(normViewOp, parentToChildren);//OpUtils.createTree((Op)normViewOp);
         //TreeNodeImpl<Op>
 
@@ -142,8 +144,28 @@ public class QueryContainmentIndexImpl<K, G, N, O> {
      * @param userOp
      */
     public void match(O userOp) {
+        O normUserOp = normalizer.apply(userOp);
+        Tree<O> tree = TreeImpl.create(normUserOp, parentToChildren);//OpUtils.createTree((Op)normViewOp);
+
+        List<List<O>> nodesPerLevel = TreeUtils.nodesPerLevel(tree);
+
+        //Collections.reverse(nodesPerLevel);
+        for(List<O> level : nodesPerLevel) {
+            System.out.println("Level");
+        //for(List<O> level : Collections.singleton(nodesPerLevel.iterator().next())) {
+            for(O op : level) {
+                System.out.println("Lookup with : " + op);
+                G graph = opToGraph.apply(op);
+                if(graph != null) {
+
+                    Multimap<Entry<K, Long>, BiMap<N, N>> candidates = index.lookupX(graph, false);
+                    System.out.println("Candidates: " + candidates.size() + ": " + candidates);
+                }
+            }
+        }
+
+
 //        Tree<Op> tree = OpUtils.createTree(userOp);
-//        List<List<Op>> nodesPerLevel = TreeUtils.nodesPerLevel(tree);
 //
 //
 //        // Perform basic lookup of the leaf nodes
@@ -155,6 +177,26 @@ public class QueryContainmentIndexImpl<K, G, N, O> {
 //                Multimap<K, BiMap<N, N>> matches = index.lookupX(queryGraph, false);
 //            }
 //        }
+//        TreeUtils.inOrderSearch(tree.getRoot(), tree::getChildren).forEach(op -> {
+//            TreeNode<O> node = new TreeNodeImpl<>(tree, op);
+
+            // Create the candidate leaf mapping for the layer
+
+
+
+//            G graph = opToGraph.apply(op);
+//            if(graph != null) {
+//                Entry<K, Long> e = new SimpleEntry<>(key, leafNodeId[0]);
+//
+//                keyToNodeIndexToNode.put(key, leafNodeId[0], node);
+//                index.put(e, graph);
+//
+//                leafNodeId[0]++;
+//            }
+//        });
+
+
+
 
         // Group matches by view queries
         // I.e. resolve the (view) pattern key to the (view) query id
@@ -178,6 +220,8 @@ public class QueryContainmentIndexImpl<K, G, N, O> {
 
 
         index.put(Node.ANY, op);
+
+        index.match(op);
 
     }
 }
