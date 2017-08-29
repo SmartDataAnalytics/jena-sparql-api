@@ -509,7 +509,7 @@
             <dependency>
                 <groupId>org.aksw.commons</groupId>
                 <artifactId>subgraph-isomorphism-index-jena</artifactId>
-                <version>1.0.0</version>
+                <version>1.0.1-SNAPSHOT</version>
             </dependency>
 
 

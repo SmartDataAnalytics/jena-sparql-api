@@ -1,7 +1,9 @@
 package org.aksw.jena_sparql_api.query_containment.index;
 
 import java.util.AbstractMap.SimpleEntry;
-import java.util.Collections;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -124,8 +126,13 @@ public class QueryContainmentIndexImpl<K, G, N, O> {
                 Entry<K, Long> e = new SimpleEntry<>(key, leafNodeId[0]);
 
                 keyToNodeIndexToNode.put(key, leafNodeId[0], node);
+                System.out.println("Insert: " + e);
+                System.out.println("Graph: " + graph);
+
                 index.put(e, graph);
 
+
+                index.printTree();
                 leafNodeId[0]++;
             }
         });
@@ -150,17 +157,58 @@ public class QueryContainmentIndexImpl<K, G, N, O> {
         List<List<O>> nodesPerLevel = TreeUtils.nodesPerLevel(tree);
 
         //Collections.reverse(nodesPerLevel);
+
         for(List<O> level : nodesPerLevel) {
+
+            //Map<K, Multimap<TreeNode<O>, Entry<TreeNode<O>, Collection<BiMap<Node, Node>>>>> candMappings = new HashMap<>();//HashMultimap.create();
+            Map<K, Table<TreeNode<O>, TreeNode<O>, Collection<BiMap<N, N>>>> candToMappings = new HashMap<>();
+
             System.out.println("Level");
         //for(List<O> level : Collections.singleton(nodesPerLevel.iterator().next())) {
             for(O op : level) {
+                TreeNode<O> userNode = new TreeNodeImpl<>(tree, op);
+
                 System.out.println("Lookup with : " + op);
                 G graph = opToGraph.apply(op);
                 if(graph != null) {
 
                     Multimap<Entry<K, Long>, BiMap<N, N>> candidates = index.lookupX(graph, false);
                     System.out.println("Candidates: " + candidates.size() + ": " + candidates);
+
+                    // Group all candidates belonging to the same query
+                    for(Entry<Entry<K, Long>, Collection<BiMap<N, N>>> xxx : candidates.asMap().entrySet()) {
+                        Entry<K, Long> e = xxx.getKey();
+                        K key = e.getKey();
+                        Long nodeId = e.getValue();
+                        Collection<BiMap<N, N>> isosContribs = xxx.getValue();
+
+                        TreeNode<O> viewNode = keyToNodeIndexToNode.get(key, nodeId);
+
+                        Table<TreeNode<O>, TreeNode<O>, Collection<BiMap<N, N>>> table = candToMappings.computeIfAbsent(key, x -> HashBasedTable.create());//x -> new LinkedHashMap<>());
+                        Map<TreeNode<O>, Collection<BiMap<N, N>>> toIsos = table.row(viewNode);
+                        Collection<BiMap<N, N>> isos = toIsos.computeIfAbsent(userNode, x -> new LinkedHashSet<>());
+                        isos.addAll(isosContribs);
+
+                        //.get(userNode);
+
+
+                        table.put(viewNode, userNode, isos);
+                    }
                 }
+
+                System.out.println("Level mapping:");
+                for(Entry<K, Table<TreeNode<O>, TreeNode<O>, Collection<BiMap<N, N>>>> e : candToMappings.entrySet()) {
+                    System.out.println("  Key: " + e.getValue());
+                    for(Entry<TreeNode<O>, Map<TreeNode<O>, Collection<BiMap<N, N>>>> f : e.getValue().rowMap().entrySet()) {
+                        System.out.println("    View: " + f.getKey());
+
+                        for(Entry<TreeNode<O>, Collection<BiMap<N, N>>> g : f.getValue().entrySet()) {
+                            System.out.println("      User: " + g.getKey() + " via " + g.getValue());
+                        }
+                    }
+
+                }
+
             }
         }
 
