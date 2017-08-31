@@ -1,18 +1,22 @@
 package org.aksw.jena_sparql_api.utils;
 
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprTransform;
+import org.apache.jena.sparql.expr.ExprTransformSubstitute;
 import org.apache.jena.sparql.expr.ExprTransformer;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.ExprVars;
+import org.apache.jena.sparql.graph.NodeTransform;
 
 public class VarExprListUtils {
 
@@ -74,6 +78,21 @@ public class VarExprListUtils {
             return expr ;
         return ExprTransformer.transform(exprTransform, expr) ;
     }
+
+    public static Map<Var, Expr> applyNodeTransform(Map<Var, Expr> varExpr, NodeTransform nodeTransform)
+    {
+        Map<Var, Expr> result = varExpr.entrySet().stream()
+                .collect(Collectors.toMap(
+                        e -> (Var)nodeTransform.apply(e.getKey()),
+                        e -> e.getValue().applyNodeTransform(nodeTransform),
+                        (u, v) -> { throw new RuntimeException("Duplicate key"); },
+                        LinkedHashMap::new
+                ));
+
+        return result;
+    }
+
+
     // Copied from package org.apache.jena.sparql.algebra.ApplyTransformVisitor;
     public static VarExprList transform(VarExprList varExpr, ExprTransform exprTransform)
     {
@@ -102,6 +121,22 @@ public class VarExprListUtils {
             return varExpr ;
         return varExpr2 ;
     }
+
+
+    public static ExprTransform createExprTransform(Map<Var, Expr> varDefs) {
+        // TODO Avoid creating the copy of the map
+        Map<String, Expr> tmp = varDefs.entrySet().stream()
+                .collect(Collectors.toMap(
+                    e -> e.getKey().getName(),
+                    Entry::getValue,
+                    (u, v) -> { throw new RuntimeException("duplicate"); },
+                    LinkedHashMap::new
+                ));
+
+        ExprTransform result = new ExprTransformSubstitute(tmp);
+        return result;
+    }
+
 
     public static void replace(VarExprList dst, VarExprList src) {
         if(dst != src) {

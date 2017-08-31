@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.algebra.utils.ExprHolder;
 import org.aksw.jena_sparql_api.algebra.utils.OpUtils;
+import org.aksw.jena_sparql_api.utils.VarExprListUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.sparql.algebra.Op;
@@ -23,10 +24,10 @@ import org.apache.jena.sparql.expr.E_LogicalAnd;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprList;
 import org.apache.jena.sparql.expr.ExprTransform;
-import org.apache.jena.sparql.expr.ExprTransformSubstitute;
 import org.apache.jena.sparql.expr.ExprTransformer;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.util.ExprUtils;
 
 /**
@@ -91,11 +92,13 @@ public class DistinctExtendFilter {
         return result;
     }
 
-    public DistinctExtendFilter(Map<Var, Expr> varToDef, boolean distinct, ExprHolder filter) {
-        this.preDistinctVarDefs = varToDef;
-        //this.distinct = distinct;
-        this.filter = filter;
-    }
+//    public DistinctExtendFilter(Map<Var, Expr> varToDef, boolean distinct, ExprHolder filter) {
+//        this.preDistinctVarDefs = varToDef;
+//        //this.distinct = distinct;
+//        this.filter = filter;
+//    }
+
+
 
 
     public static Map<Var, Expr> createIdentityMap(Collection<Var> vars) {
@@ -110,9 +113,16 @@ public class DistinctExtendFilter {
 
         return result;
     }
+    public DistinctExtendFilter(Map<Var, Expr> preDistinctVarDefs, Map<Var, Expr> postDistinctVarDefs, ExprHolder filter) {
+        super();
+        this.preDistinctVarDefs = preDistinctVarDefs;
+        this.postDistinctVarDefs = postDistinctVarDefs;
+        this.filter = filter;
+    }
+
     public static DistinctExtendFilter create(Collection<Var> initialVars) {
         Map<Var, Expr> map = createIdentityMap(initialVars);
-        DistinctExtendFilter result = new DistinctExtendFilter(map, false, ExprHolder.from(NodeValue.TRUE));
+        DistinctExtendFilter result = new DistinctExtendFilter(map, null, ExprHolder.from(NodeValue.TRUE));
         return result;
     }
 
@@ -325,7 +335,7 @@ public class DistinctExtendFilter {
 
 
     public static Map<Var, Expr> expandDefs(Map<Var, Expr> src, Map<Var, Expr> varDefs) {
-        ExprTransform exprTransform = createExprTransform(varDefs);
+        ExprTransform exprTransform = VarExprListUtils.createExprTransform(varDefs);
 
         // Expand previously expanded variables
         Map<Var, Expr> result = src.entrySet().stream()
@@ -344,23 +354,52 @@ public class DistinctExtendFilter {
     }
 
 
-    public static ExprTransform createExprTransform(Map<Var, Expr> varDefs) {
-        // TODO Avoid creating the copy of the map
-        Map<String, Expr> tmp = varDefs.entrySet().stream()
-                .collect(Collectors.toMap(
-                    e -> e.getKey().getName(),
-                    Entry::getValue,
-                    (u, v) -> { throw new RuntimeException("duplicate"); },
-                    LinkedHashMap::new
-                ));
-
-        ExprTransform result = new ExprTransformSubstitute(tmp);
+    public static Expr expandExpr(Expr expr, Map<Var, Expr> varDefs) {
+        ExprTransform exprTransform = VarExprListUtils.createExprTransform(varDefs);
+        Expr result = ExprTransformer.transform(exprTransform, expr);
         return result;
     }
 
-    public static Expr expandExpr(Expr expr, Map<Var, Expr> varDefs) {
-        ExprTransform exprTransform = createExprTransform(varDefs);
-        Expr result = ExprTransformer.transform(exprTransform, expr);
+
+
+    public boolean isDistinct() {
+        boolean result = postDistinctVarDefs != null;
+        return result;
+    }
+
+
+    public ExprHolder getFilter() {
+        return filter;
+    }
+
+    public Map<Var, Expr> getPreDistinctVarDefs() {
+        return preDistinctVarDefs;
+    }
+
+    public Map<Var, Expr> getPostDistinctVarDefs() {
+        return postDistinctVarDefs;
+    }
+
+
+
+    public DistinctExtendFilter applyNodeTransform(NodeTransform nodeTransform) {
+
+
+        Map<Var, Expr> preMap = null;
+        if(preDistinctVarDefs != null) {
+            preMap = VarExprListUtils.applyNodeTransform(preDistinctVarDefs, nodeTransform);
+        }
+
+        Map<Var, Expr> postMap = null;
+        if(postDistinctVarDefs != null) {
+            postMap = VarExprListUtils.applyNodeTransform(preDistinctVarDefs, nodeTransform);
+        }
+
+        Expr tmp = filter.getExpr().applyNodeTransform(nodeTransform);
+        ExprHolder eh = ExprHolder.from(tmp);
+
+        DistinctExtendFilter result = new DistinctExtendFilter(preMap, postMap, eh);
+
         return result;
     }
 
@@ -380,5 +419,7 @@ public class DistinctExtendFilter {
 
         System.out.println(def);
     }
+
+
 
 }

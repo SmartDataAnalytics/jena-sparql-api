@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.query_containment.index;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -16,6 +17,7 @@ import org.aksw.commons.collections.trees.TreeNodeImpl;
 import org.aksw.commons.collections.trees.TreeUtils;
 import org.aksw.commons.graph.index.core.SubgraphIsomorphismIndex;
 import org.aksw.commons.graph.index.jena.SubgraphIsomorphismIndexJena;
+import org.aksw.commons.graph.index.jena.transform.OpDistinctExtendFilter;
 import org.aksw.commons.graph.index.jena.transform.QueryToGraph;
 import org.aksw.commons.jena.jgrapht.PseudoGraphJenaGraph;
 import org.aksw.jena_sparql_api.algebra.utils.OpExtConjunctiveQuery;
@@ -150,30 +152,31 @@ public class QueryContainmentIndexImpl<K, G, N, O> {
      *
      * @param userOp
      */
+    @SuppressWarnings("unchecked")
     public void match(O userOp) {
         O normUserOp = normalizer.apply(userOp);
         Tree<O> tree = TreeImpl.create(normUserOp, parentToChildren);//OpUtils.createTree((Op)normViewOp);
 
         List<List<O>> nodesPerLevel = TreeUtils.nodesPerLevel(tree);
 
-        //Collections.reverse(nodesPerLevel);
+        Collections.reverse(nodesPerLevel);
 
-        for(List<O> level : nodesPerLevel) {
+        for(List<O> level : Collections.singleton(nodesPerLevel.iterator().next())) { //nodesPerLevel) {
 
             //Map<K, Multimap<TreeNode<O>, Entry<TreeNode<O>, Collection<BiMap<Node, Node>>>>> candMappings = new HashMap<>();//HashMultimap.create();
             Map<K, Table<TreeNode<O>, TreeNode<O>, Collection<BiMap<N, N>>>> candToMappings = new HashMap<>();
 
-            System.out.println("Level");
+//            System.out.println("Level");
         //for(List<O> level : Collections.singleton(nodesPerLevel.iterator().next())) {
             for(O op : level) {
                 TreeNode<O> userNode = new TreeNodeImpl<>(tree, op);
 
-                System.out.println("Lookup with : " + op);
+//                System.out.println("Lookup with : " + op);
                 G graph = opToGraph.apply(op);
                 if(graph != null) {
 
                     Multimap<Entry<K, Long>, BiMap<N, N>> candidates = index.lookupX(graph, false);
-                    System.out.println("Candidates: " + candidates.size() + ": " + candidates);
+//                    System.out.println("Candidates: " + candidates.size() + ": " + candidates);
 
                     // Group all candidates belonging to the same query
                     for(Entry<Entry<K, Long>, Collection<BiMap<N, N>>> xxx : candidates.asMap().entrySet()) {
@@ -191,6 +194,13 @@ public class QueryContainmentIndexImpl<K, G, N, O> {
 
                         //.get(userNode);
 
+                        // For testing: get the parent OpDef nodes
+                        OpDistinctExtendFilter viewDef = (OpDistinctExtendFilter)viewNode.getParent().getNode();
+                        OpDistinctExtendFilter userDef = (OpDistinctExtendFilter)viewNode.getParent().getNode();
+
+                        for(BiMap<N, N> iso : isos) {
+                            TreeMatcher.match(viewDef, userDef, (Map<Node, Node>)iso);
+                        }
 
                         table.put(viewNode, userNode, isos);
                     }
@@ -198,7 +208,7 @@ public class QueryContainmentIndexImpl<K, G, N, O> {
 
                 System.out.println("Level mapping:");
                 for(Entry<K, Table<TreeNode<O>, TreeNode<O>, Collection<BiMap<N, N>>>> e : candToMappings.entrySet()) {
-                    System.out.println("  Key: " + e.getValue());
+                    System.out.println("  Key: " + e.getKey()); // + " " + e.getValue());
                     for(Entry<TreeNode<O>, Map<TreeNode<O>, Collection<BiMap<N, N>>>> f : e.getValue().rowMap().entrySet()) {
                         System.out.println("    View: " + f.getKey());
 
