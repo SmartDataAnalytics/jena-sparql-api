@@ -7,6 +7,7 @@ import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
@@ -23,11 +24,8 @@ import org.aksw.combinatorics.solvers.collections.ProblemSolver;
 import org.aksw.commons.collections.multimaps.MultimapUtils;
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeUtils;
-import org.apache.jena.sparql.algebra.Op;
 
 import com.codepoetics.protonpack.functions.TriFunction;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
 import com.google.common.collect.Table.Cell;
@@ -108,11 +106,6 @@ public class TreeMapper<K, A, B, M, C, V> {
     }
 
 
-    public <X, Y> Multimap<X, Y> createMultimap() {
-        Multimap<X, Y> result = MultimapUtils.newSetMultimap(aIdentity, bIdentity);
-        return result;
-    }
-
     public static <K, V> Map<K, V> createMap(boolean useIdentity) {
         return useIdentity
                 ? new IdentityHashMap<>()
@@ -147,29 +140,56 @@ public class TreeMapper<K, A, B, M, C, V> {
                     mm.put(cell.getRowKey(), cell.getColumnKey());
                 }
 
-                Multimap<A, A> viewParentToChildren = MultimapUtils.groupBy(mm.keys(), viewTree::getParent, MultimapUtils.newSetMultimap(aIdentity, aIdentity));
-                Multimap<B, B> userParentToChildren = MultimapUtils.groupBy(mm.values(), userTree::getParent, MultimapUtils.newSetMultimap(bIdentity, bIdentity));
 
-                Multimap<A, B> parentCandAlignment = createMultimap();//MultimapUtils.newSetMultimap(aIdentity, bIdentity);
-                for(Entry<A, Collection<B>> x : mm.asMap().entrySet()) {
-                    A a = x.getKey();
-                    A aParent = viewTree.getParent(a);
-                    for(B y : x.getValue()) {
-                        B bParent = userTree.getParent(y);
-                        parentCandAlignment.put(aParent, bParent);
+                Multimap<A, A> viewAncestorToChildren = MultimapUtils.groupBy(mm.keys(), (node) -> TreeUtils.getFirstMultiaryAncestor(viewTree, node), MultimapUtils.newSetMultimap(aIdentity, aIdentity));
+                //Multimap<B, B> userMultiaryAncestorToChildren = MultimapUtils.groupBy(mm.values(), (node) -> TreeUtils.getFirstMultiaryAncestor(userTree, node), MultimapUtils.newSetMultimap(bIdentity, bIdentity));
+
+                Multimap<A, B> ancestorCandAlignment = MultimapUtils.newSetMultimap(aIdentity, bIdentity);
+                for(Entry<A, A> f : viewAncestorToChildren.entries()) {
+                    A aAncestor = f.getKey();
+                    A aChild = f.getValue();
+
+                    Collection<B> bChildren = alignmentProblems.row(aChild).keySet();
+                    for(B b : bChildren) {
+                        B bAncestor = TreeUtils.getFirstMultiaryAncestor(userTree, b);
+                        ancestorCandAlignment.put(aAncestor, bAncestor);
                     }
                 }
 
-                Stream<Map<A, B>> childAlignmentStream = KPermutationsOfNUtils.kPermutationsOfN(parentCandAlignment, () -> createMap(aIdentity)).flatMap(parentAlignment -> {
+
+//                for(Entry<A, Collection<B>> x : mm.asMap().entrySet()) {
+//                    A a = x.getKey();
+//                    A aAncestor = TreeUtils.getFirstMultiaryAncestor(viewTree, a); //viewTree.getParent(a);
+//                    for(B b : x.getValue()) {
+//                        B bAncestor = TreeUtils.getFirstMultiaryAncestor(userTree, b);
+//                        multiaryAncestorCandAlignment.put(aAncestor, bAncestor);
+//                    }
+//                }
+
+                Stream<Map<A, B>> childAlignmentStream = KPermutationsOfNUtils.kPermutationsOfN(ancestorCandAlignment, () -> createMap(aIdentity)).flatMap(parentAlignment -> {
                     // For each parent alignment, create the kPermutationsOfN for the children
-                    Multimap<A, B> childCandAlignment = createMultimap();
+                    Multimap<A, B> childCandAlignment = MultimapUtils.newSetMultimap(aIdentity, bIdentity);
                     for(Entry<A, B> f : parentAlignment.entrySet()) {
-                        A aParent = f.getKey();
-                        B bParent = f.getValue();
-                        for(A aChild : viewParentToChildren.get(aParent)) {
-                            Collection<B> bChildren = userParentToChildren.get(bParent);
-                            childCandAlignment.putAll(aChild, bChildren);
+                        A aMultiaryAncestor = f.getKey();
+
+                        Collection<A> aChildren = viewAncestorToChildren.get(aMultiaryAncestor);
+
+                        for(A aChild : aChildren) {
+                            Set<B> bChildren = alignmentProblems.row(aChild).keySet();
+                            for(B bChild : bChildren) {
+                                B bAncestor = TreeUtils.getFirstMultiaryAncestor(userTree, bChild);
+                                boolean isMatch = ancestorCandAlignment.containsEntry(aMultiaryAncestor, bAncestor);
+                                if(isMatch) {
+                                    childCandAlignment.put(aChild, bChild);
+                                }
+                            }
                         }
+
+//                        B bParent = f.getValue();
+//                        for(A aChild : viewMultiaryAncestorToChildren.get(aMultiaryAncestor)) {
+//                            Collection<B> bChildren = userMultiaryAncestorToChildren.get(bParent);
+//                            childCandAlignment.putAll(aChild, bChildren);
+//                        }
 
                     }
 
@@ -230,24 +250,21 @@ public class TreeMapper<K, A, B, M, C, V> {
 
             // Create the initial matching for the leafs
             // Obtain the candidate views for that user node
-            Table<K, A, ProblemNeighborhoodAware<M, ?>> leafMatchings = leafMatcher.apply(userTree, userOp, baseMatching);
+            Table<K, A, ProblemNeighborhoodAware<M, ?>> matchTable = leafMatcher.apply(userTree, userOp, baseMatching);
 
-            for(Cell<K, A, ProblemNeighborhoodAware<M, ?>> leafMatching : leafMatchings.cellSet()) {
-                K viewKey = leafMatching.getRowKey();
-                A viewOp = leafMatching.getColumnKey();
-                //Tree<A> viewParentTree = viewKeyToTree.apply(viewKey);
-                //A viewParentOp = viewParentTree.getParent(viewOp);
-                ProblemNeighborhoodAware<M, ?> matchings = leafMatching.getValue();
+            for(Entry<K, Map<A, ProblemNeighborhoodAware<M, ?>>> matchEntry : matchTable.rowMap().entrySet()) {
 
-                //B userParentOp = userTree.getParent(userOp);
-                //Entry<A, B> parentMatch = new SimpleEntry<>(viewParentOp, userParentOp);
+                K viewKey = matchEntry.getKey();
 
-                Table<A, B, ProblemNeighborhoodAware<M, ?>> table = HashBasedTable.create();
-                table.put(viewOp, userOp, matchings);
+                Table<A, B, ProblemNeighborhoodAware<M, ?>> table = result.computeIfAbsent(viewKey,
+                        (k) -> TreeMapper.createTable(aIdentity, bIdentity));
 
-                result.put(viewKey, table);
-                //viewCandMatching.put(viewKey, viewParentOp, table);
-                //viewCandMatching.put(viewKey, parentMatch, table);
+                for(Entry<A, ProblemNeighborhoodAware<M, ?>> leafMatching : matchEntry.getValue().entrySet()) {
+                    A viewOp = leafMatching.getKey();
+                    ProblemNeighborhoodAware<M, ?> matching = leafMatching.getValue();
+
+                    table.put(viewOp, userOp, matching);
+                }
             }
         }
 
