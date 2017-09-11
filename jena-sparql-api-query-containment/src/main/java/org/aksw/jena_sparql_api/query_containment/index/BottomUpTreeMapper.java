@@ -76,8 +76,10 @@ public class BottomUpTreeMapper<A, B, M, C, V> {
 
         while(it.hasNext()) {
             A a = it.next();
-            //Entry<B, M> bEntry = leafAlignment.row(a).entrySet().iterator().next();
-            B b = leafAlignment.get(a);//bEntry.getKey();
+
+            B b = viewTree.getChildren(a).isEmpty() // is leaf
+                ? leafAlignment.get(a)
+                : result.getNodeMappings().columnKeySet().iterator().next();
 
             Entry<C, V> mappingEntry = nodeMapper.apply(a, b, result);
             V mapping = mappingEntry.getValue();
