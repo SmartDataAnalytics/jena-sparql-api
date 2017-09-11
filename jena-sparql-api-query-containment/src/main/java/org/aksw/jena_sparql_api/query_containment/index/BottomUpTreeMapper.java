@@ -68,7 +68,7 @@ public class BottomUpTreeMapper<A, B, M, C, V> {
      * @return
      */
     public TreeMapping<A, B, M, V> solve(M baseSolution, Map<A, B> leafAlignment) {
-        Table<A, B, V> nodeMapping = HashBasedTable.create();
+        Table<A, B, V> nodeMapping = tableSupplier.get();//HashBasedTable.create();
         //tableSupplier.get();
         TreeMapping<A, B, M, V> result = new TreeMapping<>(viewTree, userTree, baseSolution, nodeMapping);
 

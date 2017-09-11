@@ -29,6 +29,7 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.op.OpNull;
 import org.jgrapht.DirectedGraph;
 
 import com.codepoetics.protonpack.functions.TriFunction;
@@ -196,7 +197,7 @@ public class QueryContainmentIndexImpl<K, G, N, A, V> {
     }
 
     public static Entry<BiMap<Node, Node>, Op> mapNodes(Op viewNode, Op usernode, TreeMapping<Op, Op, BiMap<Node, Node>, Op> mapping) {
-        return null;
+        return new SimpleEntry<>(HashBiMap.create(), OpNull.create());
     }
 
     public Stream<Entry<K, TreeMapping<A, A, BiMap<N, N>, V>>> match(A userOp) {
