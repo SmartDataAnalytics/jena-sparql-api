@@ -7,7 +7,6 @@ import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
@@ -24,8 +23,10 @@ import org.aksw.combinatorics.solvers.collections.ProblemSolver;
 import org.aksw.commons.collections.multimaps.MultimapUtils;
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeUtils;
+import org.apache.jena.sparql.algebra.Op;
 
 import com.codepoetics.protonpack.functions.TriFunction;
+import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
@@ -45,24 +46,24 @@ import com.google.common.collect.Tables;
  * @param <C>
  * @param <M>
  */
-public class TreeMapper<K, G, N, A, B, M, C, V> {
+public class TreeMapper<K, A, B, M, C, V> {
 
     protected Function<? super K, ? extends Tree<A>> viewKeyToTree;
-    protected Function<Tree<B>, Stream<Set<B>>> bottomUpTreeTraversalFactory;
-    protected TriFunction<Tree<B>, B, M, Table<K, A, ProblemNeighborhoodAware<M, M>>> leafMatcher;
+    protected TriFunction<Tree<B>, B, M, Table<K, A, ProblemNeighborhoodAware<M, ?>>> leafMatcher;
 
     protected TriFunction<A, B, TreeMapping<A, B, M, V>, Entry<C, V>> nodeMapper;
 
     protected BiFunction<M, C, M> addMatchingContribution;
-
-    protected Supplier<Table<A, B, V>> tableSupplier;
-    protected Function<Tree<A>, Stream<A>> bottomUpTraverser;
-
-
-
-    protected Supplier<M> createEmptyMatching;
     protected BinaryOperator<M> matchingCombiner;
-    protected Predicate<M> isMatchingSatisfiable;
+    protected Predicate<M> isMatchingUnsatisfiable;
+    //protected Function<Tree<B>, Stream<Set<B>>> bottomUpTreeTraversalFactory;
+
+    //protected Supplier<Table<A, B, V>> tableSupplier;
+    //protected Function<Tree<A>, Stream<A>> bottomUpTraverser;
+
+
+
+    //protected Supplier<M> createEmptyMatching;
 
 
     // We could create task-sets from sub-trees
@@ -70,14 +71,39 @@ public class TreeMapper<K, G, N, A, B, M, C, V> {
     boolean aIdentity;
     boolean bIdentity;
 
-    public <T> Table<A, B, T> createTable() {
-        Map<A, Map<B, T>> backingMap = createMap();
+    public TreeMapper(Function<? super K, ? extends Tree<A>> viewKeyToTree,
+            TriFunction<Tree<B>, B, M, Table<K, A, ProblemNeighborhoodAware<M, ?>>> leafMatcher,
+            TriFunction<A, B, TreeMapping<A, B, M, V>, Entry<C, V>> nodeMapper,
+            BiFunction<M, C, M> addMatchingContribution,
+            //Function<Tree<A>, Stream<A>> bottomUpTraverser,
+            //Supplier<M> createEmptyMatching,
+            BinaryOperator<M> matchingCombiner,
+            Predicate<M> isMatchingUnsatisfiable,
+            boolean aIdentity,
+            boolean bIdentity) {
+        super();
+        this.viewKeyToTree = viewKeyToTree;
+        this.leafMatcher = leafMatcher;
+        this.nodeMapper = nodeMapper;
+        this.addMatchingContribution = addMatchingContribution;
+        //this.bottomUpTraverser = bottomUpTraverser;
+        //this.createEmptyMatching = createEmptyMatching;
+        this.matchingCombiner = matchingCombiner;
+        this.isMatchingUnsatisfiable = isMatchingUnsatisfiable;
+        this.aIdentity = aIdentity;
+        this.bIdentity = bIdentity;
+    }
 
-        Supplier<Map<B, T>> supplier = bIdentity
+
+
+    public static <R, C, V> Table<R, C, V> createTable(boolean rowIdentity, boolean columnIdentity) {
+        Map<R, Map<C, V>> backingMap = createMap(rowIdentity);
+
+        Supplier<Map<C, V>> supplier = columnIdentity
                 ? () -> new IdentityHashMap<>()
                 : () -> new LinkedHashMap<>();
 
-        Table<A, B, T> result = Tables.newCustomTable(backingMap, supplier::get);
+        Table<R, C, V> result = Tables.newCustomTable(backingMap, supplier::get);
         return result;
     }
 
@@ -87,8 +113,8 @@ public class TreeMapper<K, G, N, A, B, M, C, V> {
         return result;
     }
 
-    public <T> Map<A, T> createMap() {
-        return aIdentity
+    public static <K, V> Map<K, V> createMap(boolean useIdentity) {
+        return useIdentity
                 ? new IdentityHashMap<>()
                 : new LinkedHashMap<>();
     }
@@ -96,7 +122,7 @@ public class TreeMapper<K, G, N, A, B, M, C, V> {
     public Stream<Entry<K, TreeMapping<A, B, M, V>>> createMappings(M baseMatching, Tree<B> userTree) {
 
         //Table<K, Entry<A, B>, Table<A, B, ProblemNeighborhoodAware<S, S>>> leafMappings = createLeafMappings(userTree);
-        Map<K, Table<A, B, ProblemNeighborhoodAware<M, M>>> leafMappingPerView = createLeafMappings(baseMatching, userTree);
+        Map<K, Table<A, B, ProblemNeighborhoodAware<M, ?>>> leafMappingPerView = createLeafMappings(baseMatching, userTree);
 
 
         Stream<Entry<K, TreeMapping<A, B, M, V>>> result = leafMappingPerView.entrySet().stream()
@@ -108,16 +134,16 @@ public class TreeMapper<K, G, N, A, B, M, C, V> {
                 BottomUpTreeMapper<A, B, M, C, V> mapper = new BottomUpTreeMapper<A, B, M, C, V>(
                         viewTree, userTree,
                         nodeMapper,
-                        addMatchingContribution, isMatchingSatisfiable,
-                        this::createTable
+                        addMatchingContribution, isMatchingUnsatisfiable,
+                        () -> createTable(aIdentity, bIdentity)
 //                        BottomUpTreeTraversals::postOrder//bottomUpTraverser
                         );
 
 
-                Table<A, B, ProblemNeighborhoodAware<M, M>> alignmentProblems = e.getValue();
+                Table<A, B, ProblemNeighborhoodAware<M, ?>> alignmentProblems = e.getValue();
                 Multimap<A, B> mm = MultimapUtils.newSetMultimap(aIdentity, bIdentity);
 
-                for(Cell<A, B, ProblemNeighborhoodAware<M, M>> cell : alignmentProblems.cellSet()) {
+                for(Cell<A, B, ProblemNeighborhoodAware<M, ?>> cell : alignmentProblems.cellSet()) {
                     mm.put(cell.getRowKey(), cell.getColumnKey());
                 }
 
@@ -134,7 +160,7 @@ public class TreeMapper<K, G, N, A, B, M, C, V> {
                     }
                 }
 
-                Stream<Map<A, B>> childAlignmentStream = KPermutationsOfNUtils.kPermutationsOfN(parentCandAlignment, this::createMap).flatMap(parentAlignment -> {
+                Stream<Map<A, B>> childAlignmentStream = KPermutationsOfNUtils.kPermutationsOfN(parentCandAlignment, () -> createMap(aIdentity)).flatMap(parentAlignment -> {
                     // For each parent alignment, create the kPermutationsOfN for the children
                     Multimap<A, B> childCandAlignment = createMultimap();
                     for(Entry<A, B> f : parentAlignment.entrySet()) {
@@ -147,7 +173,7 @@ public class TreeMapper<K, G, N, A, B, M, C, V> {
 
                     }
 
-                    Stream<Map<A, B>> t = KPermutationsOfNUtils.kPermutationsOfN(childCandAlignment, this::createMap);
+                    Stream<Map<A, B>> t = KPermutationsOfNUtils.kPermutationsOfN(childCandAlignment, () -> createMap(aIdentity));
 
                     return t;
                 });
@@ -161,7 +187,7 @@ public class TreeMapper<K, G, N, A, B, M, C, V> {
 
                 Stream<TreeMapping<A, B, M, V>> r = childAlignmentStream.flatMap(leafAlignment -> {
                     // Get all the problems
-                    Collection<ProblemNeighborhoodAware<M, M>> problems = leafAlignment.entrySet().stream()
+                    Collection<ProblemNeighborhoodAware<M, ?>> problems = leafAlignment.entrySet().stream()
                             .map(f -> alignmentProblems.get(f.getKey(), f.getValue()))
                             .collect(Collectors.toList());
 
@@ -195,8 +221,8 @@ public class TreeMapper<K, G, N, A, B, M, C, V> {
     /**
      *
      */
-    public Map<K, Table<A, B, ProblemNeighborhoodAware<M, M>>> createLeafMappings(M baseMatching, Tree<B> userTree) {
-        Map<K, Table<A, B, ProblemNeighborhoodAware<M, M>>> result = new HashMap<>();
+    public Map<K, Table<A, B, ProblemNeighborhoodAware<M, ?>>> createLeafMappings(M baseMatching, Tree<B> userTree) {
+        Map<K, Table<A, B, ProblemNeighborhoodAware<M, ?>>> result = new HashMap<>();
 
         Collection<B> leafNodes = TreeUtils.getLeafs(userTree);
 
@@ -204,19 +230,19 @@ public class TreeMapper<K, G, N, A, B, M, C, V> {
 
             // Create the initial matching for the leafs
             // Obtain the candidate views for that user node
-            Table<K, A, ProblemNeighborhoodAware<M, M>> leafMatchings = leafMatcher.apply(userTree, userOp, baseMatching);
+            Table<K, A, ProblemNeighborhoodAware<M, ?>> leafMatchings = leafMatcher.apply(userTree, userOp, baseMatching);
 
-            for(Cell<K, A, ProblemNeighborhoodAware<M, M>> leafMatching : leafMatchings.cellSet()) {
+            for(Cell<K, A, ProblemNeighborhoodAware<M, ?>> leafMatching : leafMatchings.cellSet()) {
                 K viewKey = leafMatching.getRowKey();
                 A viewOp = leafMatching.getColumnKey();
                 //Tree<A> viewParentTree = viewKeyToTree.apply(viewKey);
                 //A viewParentOp = viewParentTree.getParent(viewOp);
-                ProblemNeighborhoodAware<M, M> matchings = leafMatching.getValue();
+                ProblemNeighborhoodAware<M, ?> matchings = leafMatching.getValue();
 
                 //B userParentOp = userTree.getParent(userOp);
                 //Entry<A, B> parentMatch = new SimpleEntry<>(viewParentOp, userParentOp);
 
-                Table<A, B, ProblemNeighborhoodAware<M, M>> table = HashBasedTable.create();
+                Table<A, B, ProblemNeighborhoodAware<M, ?>> table = HashBasedTable.create();
                 table.put(viewOp, userOp, matchings);
 
                 result.put(viewKey, table);

@@ -107,7 +107,7 @@ public class CombinatoricsUtils {
         // Combine the solutions of each equivalence class into an overall solution,
         // thereby filter out incompatible bindings (indicated by null)
         Stream<Map<Var, Var>> result = cart.stream()
-            .map(solutionParts -> org.aksw.commons.collections.MapUtils.mergeCompatible(solutionParts))
+            .map(solutionParts -> org.aksw.commons.collections.MapUtils.<Var, Var, Map<Var, Var>>mergeCompatible(solutionParts, HashMap::new))
             .filter(Objects::nonNull);
 
         return result;
@@ -310,7 +310,7 @@ public class CombinatoricsUtils {
                 Stream<Map<Var, Var>> r;
                 try {
                     //HashBiMap<Var, Var> d = HashBiMap.create();
-                	Map<Var, Var> d = new HashMap<>();
+                    Map<Var, Var> d = new HashMap<>();
                     Map<Var, Var> contib = Utils2.createVarMap(a, b);
 
                     d.putAll(contib);

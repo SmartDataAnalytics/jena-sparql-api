@@ -1,16 +1,17 @@
 package org.aksw.jena_sparql_api.query_containment.index;
 
 import java.util.AbstractMap.SimpleEntry;
-import java.util.Iterator;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.function.BiFunction;
+import java.util.Objects;
 import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import org.aksw.combinatorics.solvers.ProblemNeighborhoodAware;
+import org.aksw.combinatorics.solvers.ProblemStaticSolutions;
+import org.aksw.commons.collections.MapUtils;
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeImpl;
 import org.aksw.commons.collections.trees.TreeNode;
@@ -33,6 +34,8 @@ import org.jgrapht.DirectedGraph;
 import com.codepoetics.protonpack.functions.TriFunction;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.HashBiMap;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
 
 /*
@@ -74,7 +77,7 @@ import com.google.common.collect.Table;
  *
  */
 
-public class QueryContainmentIndexImpl<K, G, N, A, C, S> {
+public class QueryContainmentIndexImpl<K, G, N, A, V> {
     protected Function<? super A, A> normalizer;
     protected Function<? super A, G> opToGraph;
 
@@ -82,6 +85,7 @@ public class QueryContainmentIndexImpl<K, G, N, A, C, S> {
 
     protected SubgraphIsomorphismIndex<Entry<K, Long>, G, N> index;
 
+    protected TriFunction<A, A, TreeMapping<A, A, BiMap<N, N>, V>, Entry<BiMap<N, N>, V>> nodeMapper;
     protected Table<K, Long, TreeNode<A>> keyToNodeIndexToNode = HashBasedTable.create();
 
 
@@ -97,15 +101,16 @@ public class QueryContainmentIndexImpl<K, G, N, A, C, S> {
         return result;
     }
 
-    public static <K> QueryContainmentIndexImpl<K, DirectedGraph<Node, Triple>, Node, Op, BiMap<Node, Node>, BiMap<Node, Node>> create() {
+    public static <K> QueryContainmentIndexImpl<K, DirectedGraph<Node, Triple>, Node, Op, Op> create() {
 
         SubgraphIsomorphismIndex<Entry<K, Long>, DirectedGraph<Node, Triple>, Node> sii = SubgraphIsomorphismIndexJena.create();
 
-        QueryContainmentIndexImpl<K, DirectedGraph<Node, Triple>, Node, Op, BiMap<Node, Node>, BiMap<Node, Node>> result = new QueryContainmentIndexImpl<K, DirectedGraph<Node, Triple>, Node, Op, BiMap<Node, Node>, BiMap<Node, Node>>(
+        QueryContainmentIndexImpl<K, DirectedGraph<Node, Triple>, Node, Op, Op> result = new QueryContainmentIndexImpl<K, DirectedGraph<Node, Triple>, Node, Op, Op>(
                 QueryToGraph::normalizeOp,
                 OpUtils::getSubOps,
                 QueryContainmentIndexImpl::queryToJGraphT,
-                sii
+                sii,
+                QueryContainmentIndexImpl::mapNodes
                 );
         return result;
 
@@ -115,14 +120,15 @@ public class QueryContainmentIndexImpl<K, G, N, A, C, S> {
             Function<? super A, A> normalizer,
             Function<A, List<A>> parentToChildren,
             Function<? super A, G> opToGraph,
-            SubgraphIsomorphismIndex<Entry<K, Long>, G, N> index
-
+            SubgraphIsomorphismIndex<Entry<K, Long>, G, N> index,
+            TriFunction<A, A, TreeMapping<A, A, BiMap<N, N>, V>, Entry<BiMap<N, N>, V>> nodeMapper
             ) {
         super();
         this.normalizer = normalizer;
         this.parentToChildren = parentToChildren;
         this.opToGraph = opToGraph;
         this.index = index;
+        this.nodeMapper = nodeMapper;
     }
 
     public void remove(K key) {
@@ -138,27 +144,14 @@ public class QueryContainmentIndexImpl<K, G, N, A, C, S> {
     }
 
     public void put(K key, A viewOp) {
-
-
         A normViewOp = normalizer.apply(viewOp);
         Tree<A> tree = TreeImpl.create(normViewOp, parentToChildren);//OpUtils.createTree((Op)normViewOp);
-        //TreeNodeImpl<Op>
-
-
-//        List<List<Op>> nodesPerLevel = TreeUtils.nodesPerLevel(tree);
-//        List<List<TreeNode<Op>>> npl = nodesPerLevel.stream()
-//                .map(l -> l.stream().map(n -> (TreeNode<Op>)new TreeNodeImpl<Op>(tree, n)).collect(Collectors.toList()))
-//                .collect(Collectors.toList());
-//
-//        Collections.reverse(npl);
-
-//        npl.get(0).forEach(x -> System.out.println("Item: " + x));
-
 
         // Convert the leaf nodes to graphs
         long leafNodeId[] = {0};
 
-        TreeUtils.inOrderSearch(tree.getRoot(), tree::getChildren).forEach(op -> {
+        //TreeUtils.inOrderSearch(tree.getRoot(), tree::getChildren)
+        TreeUtils.leafStream(tree).forEach(op -> {
             TreeNode<A> node = new TreeNodeImpl<>(tree, op);
 
             G graph = opToGraph.apply(op);
@@ -171,24 +164,65 @@ public class QueryContainmentIndexImpl<K, G, N, A, C, S> {
 
                 index.put(e, graph);
 
-
                 index.printTree();
                 leafNodeId[0]++;
             }
         });
 
-
-
-        // Iterate the leaf nodes
     }
 
-    void match(Op op) {
 
+    public Table<K, A, ProblemNeighborhoodAware<BiMap<N, N>, ?>> lookupLeaf(Tree<A> tree, A leaf, BiMap<N, N> baseMatching) {
+        G graph = opToGraph.apply(leaf);
+
+        Multimap<Entry<K, Long>, BiMap<N, N>> matches = index.lookupX(graph, false);
+
+        Table<K, A, ProblemNeighborhoodAware<BiMap<N, N>, ?>> result = TreeMapper.createTable(true, true);
+        for(Entry<Entry<K, Long>, BiMap<N, N>> e : matches.entries()) {
+            Entry<K, Long> f = e.getKey();
+            K viewKey = f.getKey();
+            Long leafIndex = f.getValue();
+
+            TreeNode<A> viewTreeNode = keyToNodeIndexToNode.get(viewKey, leafIndex);
+            A leafNode = viewTreeNode.getNode();
+            BiMap<N, N> matching = e.getValue();
+
+            ProblemNeighborhoodAware<BiMap<N, N>, ?> problems = new ProblemStaticSolutions<>(Collections.singleton(matching));
+
+            result.put(viewKey, leafNode, problems);
+        }
+
+        return result;
+    }
+
+    public static Entry<BiMap<Node, Node>, Op> mapNodes(Op viewNode, Op usernode, TreeMapping<Op, Op, BiMap<Node, Node>, Op> mapping) {
+        return null;
+    }
+
+    public Stream<Entry<K, TreeMapping<A, A, BiMap<N, N>, V>>> match(A userOp) {
+        TreeMapper<K, A, A, BiMap<N, N>, BiMap<N, N>, V> treeMapper = new TreeMapper<K, A, A, BiMap<N, N>, BiMap<N, N>, V>(
+            key -> keyToNodeIndexToNode.row(null).values().iterator().next().getTree(),
+            this::lookupLeaf,
+            nodeMapper,
+            (m, c) -> MapUtils.mergeCompatible(m, c, HashBiMap::create),
+            (m1, m2) -> MapUtils.mergeCompatible(m1, m2, HashBiMap::create),
+            Objects::isNull,
+            true,
+            true
+        );
+
+        A normUserOp = normalizer.apply(userOp);
+        Tree<A> userTree = TreeImpl.create(normUserOp, parentToChildren);//OpUtils.createTree((Op)normViewOp);
+
+        BiMap<N, N> baseMatching = HashBiMap.create();
+        Stream<Entry<K, TreeMapping<A, A, BiMap<N, N>, V>>> result = treeMapper.createMappings(baseMatching, userTree);
+
+        return result;
     }
 
 
     public static void main(String[] args) {
-        QueryContainmentIndexImpl<Node, DirectedGraph<Node, Triple>, Node, Op, BiMap<Node, Node>, BiMap<Node, Node>> index = QueryContainmentIndexImpl.create();
+        QueryContainmentIndexImpl<Node, DirectedGraph<Node, Triple>, Node, Op, Op> index = QueryContainmentIndexImpl.create();
         Op op = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("PREFIX : <http://ex.org/> SELECT ?s { { SELECT DISTINCT ?s { ?s a ?t . FILTER(?t = :foo || ?t = :bar) } } UNION { ?x ?y ?z } }")));
 
 
@@ -216,130 +250,9 @@ class Mapping<A, B, S, C> {
 }
 
 
-class TreeMapping<A, B, S, M> {
-    protected Tree<A> aTree;
-    protected Tree<B> bTree;
-    protected S overallMatching;
-    protected Table<A, B, M> nodeMappings;
-
-    public TreeMapping(Tree<A> aTree, Tree<B> bTree, S overallMatching, Table<A, B, M> nodeMappings) {
-        super();
-        this.aTree = aTree;
-        this.bTree = bTree;
-        this.overallMatching = overallMatching;
-        this.nodeMappings = nodeMappings;
-    }
-
-    public Tree<A> getaTree() {
-        return aTree;
-    }
-
-    public Tree<B> getbTree() {
-        return bTree;
-    }
-
-    public S getOverallMatching() {
-        return overallMatching;
-    }
-
-    public Table<A, B, M> getNodeMappings() {
-        return nodeMappings;
-    }
-}
-
-
 interface MappingCombiner<K, A, B, S, C> {
     //Function<K, S, Entry<A, B>, List<Mapping<A, B, S, C>>, Entry<S, C>> mappingCombiner;
     //Mulitmap<S, C> combine(S overallMatching, A viewParent, B userParent, Table<A, B, Entry<S, C>>> );
-}
-
-
-/**
- *
- * @author raven
- *
- * @param <A> Node type of the first tree
- * @param <B> Node type of the other tree
- * @param <M> Type of the matching object
- * @param <C> Type of the matching contribution object
- * @param <V> The value of the mapping computation
- */
-class BottomUpTreeMapper<A, B, M, C, V> {
-
-    protected Tree<A> viewTree;
-    protected Tree<B> userTree;
-
-    protected TriFunction<A, B, TreeMapping<A, B, M, V>, Entry<C, V>> nodeMapper;
-
-    protected BiFunction<M, C, M> addMatchingContribution;
-    protected Predicate<M> isMatchingSatisfiable;
-
-    protected Supplier<Table<A, B, V>> tableSupplier;
-    protected Function<Tree<A>, Stream<A>> bottomUpTraverser;
-
-
-    public BottomUpTreeMapper(
-            Tree<A> viewTree,
-            Tree<B> userTree,
-            TriFunction<A, B, TreeMapping<A, B, M, V>, Entry<C, V>> nodeMapper,
-            BiFunction<M, C, M> addMatchingContribution,
-            Predicate<M> isMatchingSatisfiable,
-            Supplier<Table<A, B, V>> tableSupplier
-            ) {
-            //Function<Tree<A>, Stream<A>> bottomUpTraverser) {
-        super();
-        this.viewTree = viewTree;
-        this.userTree = userTree;
-        this.nodeMapper = nodeMapper;
-        this.addMatchingContribution = addMatchingContribution;
-        this.isMatchingSatisfiable = isMatchingSatisfiable;
-        this.tableSupplier = tableSupplier;
-        //this.bottomUpTraverser = bottomUpTraverser;
-        this.bottomUpTraverser = BottomUpTreeTraversals::postOrder;
-    }
-
-
-    /**
-     * Assumes that there is a 1:1 correspondence among the parents of any aligned pair of nodes
-     *
-     * @param baseSolution
-     * @param leafAlignment
-     * @return
-     */
-    public TreeMapping<A, B, M, V> solve(M baseSolution, Map<A, B> leafAlignment) {
-        Table<A, B, V> nodeMapping = HashBasedTable.create();
-        //tableSupplier.get();
-        TreeMapping<A, B, M, V> result = new TreeMapping<>(viewTree, userTree, baseSolution, nodeMapping);
-
-        Iterator<A> it = bottomUpTraverser.apply(viewTree).iterator();
-
-        while(it.hasNext()) {
-            A a = it.next();
-            //Entry<B, M> bEntry = leafAlignment.row(a).entrySet().iterator().next();
-            B b = leafAlignment.get(a);//bEntry.getKey();
-
-            Entry<C, V> mappingEntry = nodeMapper.apply(a, b, result);
-            V mapping = mappingEntry.getValue();
-
-            // null means unsatisfiable
-            if(mapping != null) {
-                C contribution = mappingEntry.getKey();
-                M newBaseSolution = addMatchingContribution.apply(baseSolution, contribution);
-
-                boolean isAcceptable = isMatchingSatisfiable.test(newBaseSolution);
-                if(!isAcceptable) {
-                    result = null;
-                    break;
-                }
-
-
-                result.overallMatching = newBaseSolution;
-                result.nodeMappings.put(a, b, mapping);
-            }
-        }
-
-        return result;
-    }
 }
 
 
@@ -848,3 +761,14 @@ class BottomUpTreeMapper<A, B, M, C, V> {
 
 //public static Op
 
+//TreeNodeImpl<Op>
+
+
+//List<List<Op>> nodesPerLevel = TreeUtils.nodesPerLevel(tree);
+//List<List<TreeNode<Op>>> npl = nodesPerLevel.stream()
+//      .map(l -> l.stream().map(n -> (TreeNode<Op>)new TreeNodeImpl<Op>(tree, n)).collect(Collectors.toList()))
+//      .collect(Collectors.toList());
+//
+//Collections.reverse(npl);
+
+//npl.get(0).forEach(x -> System.out.println("Item: " + x));
