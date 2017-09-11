@@ -201,7 +201,7 @@ public class QueryContainmentIndexImpl<K, G, N, A, V> {
 
     public Stream<Entry<K, TreeMapping<A, A, BiMap<N, N>, V>>> match(A userOp) {
         TreeMapper<K, A, A, BiMap<N, N>, BiMap<N, N>, V> treeMapper = new TreeMapper<K, A, A, BiMap<N, N>, BiMap<N, N>, V>(
-            key -> keyToNodeIndexToNode.row(null).values().iterator().next().getTree(),
+            key -> keyToNodeIndexToNode.row(key).values().iterator().next().getTree(),
             this::lookupLeaf,
             nodeMapper,
             (m, c) -> MapUtils.mergeCompatible(m, c, HashBiMap::create),
@@ -228,7 +228,7 @@ public class QueryContainmentIndexImpl<K, G, N, A, V> {
 
         index.put(Node.ANY, op);
 
-        index.match(op);
+        index.match(op).forEach(mr -> System.out.println("Match result: " + mr));
 
     }
 }
