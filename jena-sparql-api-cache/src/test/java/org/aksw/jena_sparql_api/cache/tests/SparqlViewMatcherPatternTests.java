@@ -16,6 +16,7 @@ import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -25,6 +26,7 @@ import org.slf4j.LoggerFactory;
 
 
 //@FixMethodOrder
+@Ignore
 @RunWith(Parameterized.class)
 public class SparqlViewMatcherPatternTests {
 

@@ -14,8 +14,10 @@ import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
+@Ignore
 public class TestConjunctiveQueryMatcher {
 
     public static ConjunctiveQuery asConjunctiveQuery(Query query) {

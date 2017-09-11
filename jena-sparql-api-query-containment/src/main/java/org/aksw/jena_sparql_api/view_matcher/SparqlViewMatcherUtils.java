@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -252,8 +253,8 @@ public class SparqlViewMatcherUtils {
         // discard candidates which yield problem instances without solutions.
 
         Map<Class<?>, MatchingStrategyFactory<A, B>> opToMatcherTest = new HashMap<>();
-        opToMatcherTest.put(OpDisjunction.class, (as, bs, mapping) -> KPermutationsOfNUtils.createIterable(mapping));
-        opToMatcherTest.put(OpSequence.class, (as, bs, mapping) -> KPermutationsOfNUtils.createIterable(mapping));
+        opToMatcherTest.put(OpDisjunction.class, (as, bs, mapping) -> KPermutationsOfNUtils.createIterable(mapping, LinkedHashMap::new));
+        opToMatcherTest.put(OpSequence.class, (as, bs, mapping) -> KPermutationsOfNUtils.createIterable(mapping, LinkedHashMap::new));
 
         Function<Class<?>, MatchingStrategyFactory<A, B>> fnOpToMatchingStrategyFactory = (nodeType) ->
             opToMatcherTest.getOrDefault(nodeType, (as, bs, mapping) -> SequentialMatchIterator.createIterable(as, bs, mapping));

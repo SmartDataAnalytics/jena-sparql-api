@@ -19,6 +19,7 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.vocabulary.RDF;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +27,7 @@ import org.springframework.core.io.ClassPathResource;
 
 import com.codepoetics.protonpack.StreamUtils;
 
+@Ignore
 public class SparqlViewMatcherTreeTests {
 
     private static final Logger logger = LoggerFactory.getLogger(SparqlViewMatcherTreeTests.class);

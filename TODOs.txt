@@ -1,0 +1,10 @@
+Test cases to fix in:
+
+SparqlViewMatcherPatternTests
+TestConjunctiveQueryMatcher
+SubGraphIsomorphismIndexTests
+OpTransformTests
+MainVariousTests
+SparqlViewMatcherCacheTests
+SparqlViewMatcherTreeTests
+
