@@ -6,11 +6,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.aksw.combinatorics.collections.CombinationStack;
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
+import org.aksw.commons.collections.multimaps.MultimapUtils;
+import org.aksw.jena_sparql_api.query_containment.index.TreeMapper;
 
 import com.codepoetics.protonpack.functions.TriFunction;
 import com.google.common.collect.Multimap;
@@ -35,8 +36,8 @@ public class KPermutationsOfNUtils {
         return result;
     }
 
-    public static <A, B> Iterable<Map<A, B>> createIterable(Multimap<A, B> childMapping, Supplier<Map<A, B>> mapSupplier) {
-        Iterable<Map<A, B>> result = () -> kPermutationsOfN(childMapping, mapSupplier).iterator();
+    public static <A, B> Iterable<Map<A, B>> createIterable(Multimap<A, B> childMapping, boolean aIdentity, boolean bIdentity) {
+        Iterable<Map<A, B>> result = () -> kPermutationsOfN(childMapping, aIdentity, bIdentity).iterator();
         //Optional<Iterable<Map<A, B>>> result = Optional.of(tmp);
         return result;
         //IterableUnknownSize<Map<A, B>> result = new IterableUnknownSizeSimple<>(true, tmp);
@@ -46,8 +47,13 @@ public class KPermutationsOfNUtils {
 
 
     //public static <A, B> Stream<CombinationStack<A, B, Object>> kPermutationsOfN(Multimap<A, B> mapping) {
-    public static <A, B> Stream<Map<A, B>> kPermutationsOfN(Multimap<A, B> mapping, Supplier<Map<A, B>> mapSupplier) {
-        BiHashMultimap<A, B> map = new BiHashMultimap<>();
+    public static <A, B> Stream<Map<A, B>> kPermutationsOfN(Multimap<A, B> mapping, boolean aIdentity, boolean bIdentity) {
+        BiHashMultimap<A, B> map = new BiHashMultimap<>(
+                MultimapUtils.newSetMultimap(aIdentity, bIdentity),
+                MultimapUtils.newSetMultimap(bIdentity, aIdentity)
+        );
+
+        Supplier<Map<A, B>> mapSupplier = () -> TreeMapper.createMap(aIdentity);
 
         // TODO Create a putAll method on the bi-multimap
         for(Entry<A, B> entry : mapping.entries()) {
@@ -64,8 +70,12 @@ public class KPermutationsOfNUtils {
         Stream<CombinationStack<A, B, Object>> result = engine.stream(null);
 
         Stream<Map<A, B>> res = result.map(stack -> {
-            Map<A, B> r = stack.stream().collect(Collectors.toMap(
-                    Entry::getKey, Entry::getValue, (u, v) -> { throw new IllegalStateException(); }, mapSupplier));
+            // This approach supports null values in keys and values
+            Map<A, B> r = stack.stream().collect(
+                    mapSupplier,
+                    (m, e) -> m.put(e.getKey(), e.getValue()),
+                    Map::putAll);
+
             return r;
         });
 

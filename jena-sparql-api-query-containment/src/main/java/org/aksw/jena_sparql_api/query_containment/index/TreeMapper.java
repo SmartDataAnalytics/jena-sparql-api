@@ -54,20 +54,9 @@ public class TreeMapper<K, A, B, M, C, V> {
     protected BiFunction<M, C, M> addMatchingContribution;
     protected BinaryOperator<M> matchingCombiner;
     protected Predicate<M> isMatchingUnsatisfiable;
-    //protected Function<Tree<B>, Stream<Set<B>>> bottomUpTreeTraversalFactory;
 
-    //protected Supplier<Table<A, B, V>> tableSupplier;
-    //protected Function<Tree<A>, Stream<A>> bottomUpTraverser;
-
-
-
-    //protected Supplier<M> createEmptyMatching;
-
-
-    // We could create task-sets from sub-trees
-
-    boolean aIdentity;
-    boolean bIdentity;
+    protected boolean aIdentity;
+    protected boolean bIdentity;
 
     public TreeMapper(Function<? super K, ? extends Tree<A>> viewKeyToTree,
             TriFunction<Tree<B>, B, M, Table<K, A, ProblemNeighborhoodAware<M, ?>>> leafMatcher,
@@ -107,9 +96,10 @@ public class TreeMapper<K, A, B, M, C, V> {
 
 
     public static <K, V> Map<K, V> createMap(boolean useIdentity) {
-        return useIdentity
+        Map<K, V> result = useIdentity
                 ? new IdentityHashMap<>()
                 : new LinkedHashMap<>();
+        return result;
     }
 
     public Stream<Entry<K, TreeMapping<A, B, M, V>>> createMappings(M baseMatching, Tree<B> userTree) {
@@ -166,7 +156,7 @@ public class TreeMapper<K, A, B, M, C, V> {
 //                    }
 //                }
 
-                Stream<Map<A, B>> childAlignmentStream = KPermutationsOfNUtils.kPermutationsOfN(ancestorCandAlignment, () -> createMap(aIdentity)).flatMap(parentAlignment -> {
+                Stream<Map<A, B>> childAlignmentStream = KPermutationsOfNUtils.kPermutationsOfN(ancestorCandAlignment, aIdentity, bIdentity).flatMap(parentAlignment -> {
                     // For each parent alignment, create the kPermutationsOfN for the children
                     Multimap<A, B> childCandAlignment = MultimapUtils.newSetMultimap(aIdentity, bIdentity);
                     for(Entry<A, B> f : parentAlignment.entrySet()) {
@@ -193,7 +183,7 @@ public class TreeMapper<K, A, B, M, C, V> {
 
                     }
 
-                    Stream<Map<A, B>> t = KPermutationsOfNUtils.kPermutationsOfN(childCandAlignment, () -> createMap(aIdentity));
+                    Stream<Map<A, B>> t = KPermutationsOfNUtils.kPermutationsOfN(childCandAlignment, aIdentity, bIdentity);
 
                     return t;
                 });

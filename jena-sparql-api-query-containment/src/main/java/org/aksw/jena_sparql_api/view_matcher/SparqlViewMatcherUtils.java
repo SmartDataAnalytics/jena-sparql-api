@@ -253,8 +253,8 @@ public class SparqlViewMatcherUtils {
         // discard candidates which yield problem instances without solutions.
 
         Map<Class<?>, MatchingStrategyFactory<A, B>> opToMatcherTest = new HashMap<>();
-        opToMatcherTest.put(OpDisjunction.class, (as, bs, mapping) -> KPermutationsOfNUtils.createIterable(mapping, LinkedHashMap::new));
-        opToMatcherTest.put(OpSequence.class, (as, bs, mapping) -> KPermutationsOfNUtils.createIterable(mapping, LinkedHashMap::new));
+        opToMatcherTest.put(OpDisjunction.class, (as, bs, mapping) -> KPermutationsOfNUtils.createIterable(mapping, false, false));
+        opToMatcherTest.put(OpSequence.class, (as, bs, mapping) -> KPermutationsOfNUtils.createIterable(mapping, false, false));
 
         Function<Class<?>, MatchingStrategyFactory<A, B>> fnOpToMatchingStrategyFactory = (nodeType) ->
             opToMatcherTest.getOrDefault(nodeType, (as, bs, mapping) -> SequentialMatchIterator.createIterable(as, bs, mapping));

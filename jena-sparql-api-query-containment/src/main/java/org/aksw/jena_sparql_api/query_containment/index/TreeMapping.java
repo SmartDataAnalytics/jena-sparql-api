@@ -33,4 +33,10 @@ public class TreeMapping<A, B, S, M> {
     public Table<A, B, M> getNodeMappings() {
         return nodeMappings;
     }
+
+    @Override
+    public String toString() {
+        return "TreeMapping [overallMatching=" + overallMatching + "]";
+                //+ ", nodeMappings=" + nodeMappings + "]";
+    }
 }

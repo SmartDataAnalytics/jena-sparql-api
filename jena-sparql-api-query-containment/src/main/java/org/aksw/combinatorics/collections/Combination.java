@@ -2,6 +2,15 @@ package org.aksw.combinatorics.collections;
 
 import java.util.AbstractMap.SimpleEntry;
 
+/**
+ * TODO Replace with guava's Cell class
+ *
+ * @author raven
+ *
+ * @param <A>
+ * @param <B>
+ * @param <S>
+ */
 public class Combination<A, B, S>
     extends SimpleEntry<A, B>
 {
