@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.query_containment.index;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -66,6 +67,7 @@ public class BottomUpTreeMapper<A, B, M, C, V> {
      * @param leafAlignment
      * @return
      */
+    @SuppressWarnings("unchecked")
     public TreeMapping<A, B, M, V> solve(M baseSolution, Map<A, B> leafAlignment) {
         Table<A, B, V> nodeMapping = tableSupplier.get();//HashBasedTable.create();
         //tableSupplier.get();
@@ -78,7 +80,18 @@ public class BottomUpTreeMapper<A, B, M, C, V> {
 
             B b = viewTree.getChildren(a).isEmpty() // is leaf
                 ? leafAlignment.get(a)
-                : result.getNodeMappings().columnKeySet().iterator().next();
+                : nodeMapping.columnKeySet().iterator().next();
+
+            // Track the mapping of the parents
+            A aParent = viewTree.getParent(a);
+            B bParent = userTree.getParent(b);
+            if(aParent != null && bParent != null) {
+                // FIXME This is an ugly hack where we incorrectly cast a static object as V in order
+                // to fake a 'null' value as guava tables do not support null values.
+                // The fake value will be replaced with the actual value during the process
+                nodeMapping.put(aParent, bParent, (V)Collections.EMPTY_SET);
+            }
+            //}
 
             Entry<C, V> mappingEntry = nodeMapper.apply(a, b, result);
             V mapping = mappingEntry == null ? null : mappingEntry.getValue();

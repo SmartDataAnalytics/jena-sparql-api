@@ -111,6 +111,7 @@ public class TreeMapper<K, A, B, M, C, V> {
         Stream<Entry<K, TreeMapping<A, B, M, V>>> result = leafMappingPerView.entrySet().stream()
             .flatMap(e -> {
                 K viewKey = e.getKey();
+                System.out.println("Processing view with key: " + viewKey);
 
                 Tree<A> viewTree = viewKeyToTree.apply(viewKey);
 
@@ -262,12 +263,3 @@ public class TreeMapper<K, A, B, M, C, V> {
     }
 
 }
-
-
-//.map(Map::entrySet)
-//.map(Collection::stream)
-//.collect(Collectors.toMap(
-//      Entry::getKey,
-//      Entry::getValue,
-//      (u, v) -> { throw new IllegalStateException(); },
-//      this::createMap);

@@ -37,6 +37,7 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Streams;
 import com.google.common.collect.Table;
 
 
@@ -256,7 +257,7 @@ public class QueryContainmentIndexImpl<K, G, N, A, V> {
         index.put(NodeFactory.createURI("http://a"), opA);
         index.put(NodeFactory.createURI("http://b"), opB);
 
-        index.match(opB).forEach(mr -> System.out.println("Match result: " + mr));
+        index.match(opB).forEach(mr -> System.out.println("Match result: " + mr.getValue().getNodeMappings().row(mr.getValue().getaTree().getRoot())));
     }
 }
 
