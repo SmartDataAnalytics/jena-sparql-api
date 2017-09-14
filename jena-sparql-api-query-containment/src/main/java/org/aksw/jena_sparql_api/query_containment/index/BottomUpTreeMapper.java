@@ -15,6 +15,7 @@ import org.aksw.commons.collections.trees.Tree;
 import com.codepoetics.protonpack.functions.TriFunction;
 import com.google.common.collect.Table;
 
+
 /**
  *
  * @author raven
@@ -86,7 +87,7 @@ public class BottomUpTreeMapper<A, B, M, C, V> {
             A aParent = viewTree.getParent(a);
             B bParent = userTree.getParent(b);
             if(aParent != null && bParent != null) {
-                // FIXME This is an ugly hack where we incorrectly cast a static object as V in order
+                // TODO This is an ugly hack where we incorrectly cast a static object as V in order
                 // to fake a 'null' value as guava tables do not support null values.
                 // The fake value will be replaced with the actual value during the process
                 nodeMapping.put(aParent, bParent, (V)Collections.EMPTY_SET);
