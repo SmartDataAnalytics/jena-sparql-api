@@ -404,6 +404,46 @@ public class DistinctExtendFilter {
     }
 
 
+
+
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((filter == null) ? 0 : filter.hashCode());
+        result = prime * result + ((postDistinctVarDefs == null) ? 0 : postDistinctVarDefs.hashCode());
+        result = prime * result + ((preDistinctVarDefs == null) ? 0 : preDistinctVarDefs.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        DistinctExtendFilter other = (DistinctExtendFilter) obj;
+        if (filter == null) {
+            if (other.filter != null)
+                return false;
+        } else if (!filter.equals(other.filter))
+            return false;
+        if (postDistinctVarDefs == null) {
+            if (other.postDistinctVarDefs != null)
+                return false;
+        } else if (!postDistinctVarDefs.equals(other.postDistinctVarDefs))
+            return false;
+        if (preDistinctVarDefs == null) {
+            if (other.preDistinctVarDefs != null)
+                return false;
+        } else if (!preDistinctVarDefs.equals(other.preDistinctVarDefs))
+            return false;
+        return true;
+    }
+
     public static void main(String[] args) {
         DistinctExtendFilter def = DistinctExtendFilter.create(new LinkedHashSet<>(Arrays.asList(Vars.s, Vars.p, Vars.o)));
 

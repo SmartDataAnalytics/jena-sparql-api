@@ -12,7 +12,6 @@ import java.util.stream.Stream;
 import org.aksw.commons.collections.trees.Tree;
 
 import com.codepoetics.protonpack.functions.TriFunction;
-import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 
 /**
@@ -30,7 +29,7 @@ public class BottomUpTreeMapper<A, B, M, C, V> {
     protected Tree<A> viewTree;
     protected Tree<B> userTree;
 
-    protected TriFunction<A, B, TreeMapping<A, B, M, V>, Entry<C, V>> nodeMapper;
+    protected TriFunction<? super A, ? super B, TreeMapping<A, B, M, V>, ? extends Entry<C, V>> nodeMapper;
 
     protected BiFunction<M, C, M> addMatchingContribution;
     protected Predicate<M> isMatchingUnsatisfiable;
@@ -42,7 +41,7 @@ public class BottomUpTreeMapper<A, B, M, C, V> {
     public BottomUpTreeMapper(
             Tree<A> viewTree,
             Tree<B> userTree,
-            TriFunction<A, B, TreeMapping<A, B, M, V>, Entry<C, V>> nodeMapper,
+            TriFunction<? super A, ? super B, TreeMapping<A, B, M, V>, ? extends Entry<C, V>> nodeMapper,
             BiFunction<M, C, M> addMatchingContribution,
             Predicate<M> isMatchingUnsatisfiable,
             Supplier<Table<A, B, V>> tableSupplier
@@ -82,7 +81,7 @@ public class BottomUpTreeMapper<A, B, M, C, V> {
                 : result.getNodeMappings().columnKeySet().iterator().next();
 
             Entry<C, V> mappingEntry = nodeMapper.apply(a, b, result);
-            V mapping = mappingEntry.getValue();
+            V mapping = mappingEntry == null ? null : mappingEntry.getValue();
 
             // null means unsatisfiable
             if(mapping != null) {

@@ -49,7 +49,7 @@ public class TreeMapper<K, A, B, M, C, V> {
     protected Function<? super K, ? extends Tree<A>> viewKeyToTree;
     protected TriFunction<Tree<B>, B, M, Table<K, A, ProblemNeighborhoodAware<M, ?>>> leafMatcher;
 
-    protected TriFunction<A, B, TreeMapping<A, B, M, V>, Entry<C, V>> nodeMapper;
+    protected TriFunction<? super A, ? super B, TreeMapping<A, B, M, V>, ? extends Entry<C, V>> nodeMapper;
 
     protected BiFunction<M, C, M> addMatchingContribution;
     protected BinaryOperator<M> matchingCombiner;
@@ -60,7 +60,7 @@ public class TreeMapper<K, A, B, M, C, V> {
 
     public TreeMapper(Function<? super K, ? extends Tree<A>> viewKeyToTree,
             TriFunction<Tree<B>, B, M, Table<K, A, ProblemNeighborhoodAware<M, ?>>> leafMatcher,
-            TriFunction<A, B, TreeMapping<A, B, M, V>, Entry<C, V>> nodeMapper,
+            TriFunction<? super A, ? super B, TreeMapping<A, B, M, V>, ? extends Entry<C, V>> nodeMapper,
             BiFunction<M, C, M> addMatchingContribution,
             //Function<Tree<A>, Stream<A>> bottomUpTraverser,
             //Supplier<M> createEmptyMatching,
