@@ -26,7 +26,6 @@
         <module>jena-sparql-api-sparql-ext</module>
 
         <module>jena-sparql-api-core</module>
-        <module>jena-sparql-api-connection</module>
 
         <module>jena-sparql-api-cache</module>
 
