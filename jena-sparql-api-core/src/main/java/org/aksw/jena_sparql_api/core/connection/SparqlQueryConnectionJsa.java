@@ -21,6 +21,12 @@ public class SparqlQueryConnectionJsa
     }
 
     @Override
+    public QueryExecution query(String queryStr) {
+        QueryExecution result = queryExecutionFactory.createQueryExecution(queryStr);
+        return result;
+    }
+
+    @Override
     public void close() {
         try {
             queryExecutionFactory.close();

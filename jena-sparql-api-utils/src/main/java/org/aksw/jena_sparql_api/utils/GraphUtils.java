@@ -12,6 +12,12 @@ import org.apache.jena.util.iterator.ExtendedIterator;
 
 public class GraphUtils {
 
+    public static Graph toMemGraph(Iterable<Triple> triples) {
+        Graph result = GraphFactory.createGraphMem();
+        triples.forEach(result::add);
+        return result;
+    }
+
     public static Map<Node, Graph> indexBySubject(Graph graph) {
         ExtendedIterator<Triple> it = graph.find(Node.ANY, Node.ANY, Node.ANY);
         Map<Node, Graph> result;
