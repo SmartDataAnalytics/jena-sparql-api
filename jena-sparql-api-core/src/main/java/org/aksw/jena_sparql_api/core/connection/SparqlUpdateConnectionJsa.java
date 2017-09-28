@@ -9,6 +9,11 @@ public class SparqlUpdateConnectionJsa
 {
     protected UpdateExecutionFactory updateExecutionFactory;
 
+    public SparqlUpdateConnectionJsa(UpdateExecutionFactory updateExecutionFactory) {
+        super();
+        this.updateExecutionFactory = updateExecutionFactory;
+    }
+
     @Override
     public void update(UpdateRequest updateRequest) {
         UpdateProcessor updateProcessor = updateExecutionFactory.createUpdateProcessor(updateRequest);
