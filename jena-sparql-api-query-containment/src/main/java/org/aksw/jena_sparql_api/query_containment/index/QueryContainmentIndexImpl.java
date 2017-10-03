@@ -104,6 +104,11 @@ public class QueryContainmentIndexImpl<K, G, N, A, V> {
 
         return result;
     }
+    
+    
+    public SubgraphIsomorphismIndex<Entry<K, Long>, G, N> getIndex() {
+		return index;
+	}
 
     /**
      * Creates a QueryContainmentIndex instance for SPARQL queries
