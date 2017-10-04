@@ -168,6 +168,7 @@ public class QueryContainmentIndexImpl<K, G, N, A, V> {
 
         //TreeUtils.inOrderSearch(tree.getRoot(), tree::getChildren)
         TreeUtils.leafStream(tree).forEach(op -> {
+        	System.out.println("Processing op: " + op);
             TreeNode<A> node = new TreeNodeImpl<>(tree, op);
 
             G graph = opToGraph.apply(op);
@@ -176,11 +177,12 @@ public class QueryContainmentIndexImpl<K, G, N, A, V> {
 
                 keyToNodeIndexToNode.put(key, leafNodeId[0], node);
                 System.out.println("Insert: " + e);
-                System.out.println("Graph: " + graph);
+//                System.out.println("Graph: " + graph);
+                //System.out.println("Graph of size: " + graph);
 
                 index.put(e, graph);
 
-                index.printTree();
+                //index.printTree();
                 leafNodeId[0]++;
             }
         });
@@ -251,18 +253,18 @@ public class QueryContainmentIndexImpl<K, G, N, A, V> {
 //    }
 
 
-    public static void main(String[] args) {
-        NodeMapperOpEquality nodeMapper = new NodeMapperOpEquality();
-        QueryContainmentIndexImpl<Node, DirectedGraph<Node, Triple>, Node, Op, Op> index = QueryContainmentIndexImpl.create(nodeMapper);
-
-        Op opA = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("PREFIX : <http://ex.org/> SELECT ?s { ?s a :Airport }")));
-        Op opB = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("PREFIX : <http://ex.org/> SELECT ?s { { SELECT DISTINCT ?s { ?s a ?t . FILTER(?t = :foo || ?t = :bar) } } UNION { ?x ?y ?z } }")));
-
-
-        index.put(NodeFactory.createURI("http://a"), opA);
-        index.put(NodeFactory.createURI("http://b"), opB);
-
-        index.match(opB).forEach(mr -> System.out.println("Match result: " + mr.getKey() + ": " + mr.getValue().getNodeMappings().row(mr.getValue().getaTree().getRoot())));
-    }
+//    public static void main(String[] args) {
+//        NodeMapperOpEquality nodeMapper = new NodeMapperOpEquality();
+//        QueryContainmentIndexImpl<Node, DirectedGraph<Node, Triple>, Node, Op, Op> index = QueryContainmentIndexImpl.create(nodeMapper);
+//
+//        Op opA = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("PREFIX : <http://ex.org/> SELECT ?s { ?s a :Airport }")));
+//        Op opB = Algebra.toQuadForm(Algebra.compile(QueryFactory.create("PREFIX : <http://ex.org/> SELECT ?s { { SELECT DISTINCT ?s { ?s a ?t . FILTER(?t = :foo || ?t = :bar) } } UNION { ?x ?y ?z } }")));
+//
+//
+//        index.put(NodeFactory.createURI("http://a"), opA);
+//        index.put(NodeFactory.createURI("http://b"), opB);
+//
+//        index.match(opB).forEach(mr -> System.out.println("Match result: " + mr.getKey() + ": " + mr.getValue().getNodeMappings().row(mr.getValue().getaTree().getRoot())));
+//    }
 }
 

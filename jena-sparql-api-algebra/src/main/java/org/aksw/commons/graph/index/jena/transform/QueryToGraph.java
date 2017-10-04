@@ -53,7 +53,7 @@ public class QueryToGraph {
         //op = Transformer.transform(new TransformReplaceConstants(), op);
         op = TransformReplaceConstants.transform(op);
         //System.out.println("before:" + op);
-        op = Transformer.transform(new TransformFilterPlacement(), op);
+        op = Transformer.transform(new TransformFilterPlacement(false), op);
         op = TransformMergeProject.transform(op);
         //System.out.println("after:" + op);
 

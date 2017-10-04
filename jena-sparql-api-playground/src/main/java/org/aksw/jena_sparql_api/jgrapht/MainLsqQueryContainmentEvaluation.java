@@ -50,7 +50,7 @@ public class MainLsqQueryContainmentEvaluation {
         queries = JpaUtils.createTypedQuery(em, LsqQuery.class, (cb, cq) -> {
             Root<LsqQuery> root = cq.from(LsqQuery.class);
             cq.select(root);
-        }).setMaxResults(1000).getResultList();
+        }).setMaxResults(1).getResultList();
 
         
         // hack; shoud be done by the framework
