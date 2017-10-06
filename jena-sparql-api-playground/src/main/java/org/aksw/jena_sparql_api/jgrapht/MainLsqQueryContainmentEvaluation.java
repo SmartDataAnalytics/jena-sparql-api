@@ -78,11 +78,16 @@ public class MainLsqQueryContainmentEvaluation {
             q.setIri(id);
         }
 
+        lsqQueries = lsqQueries.stream()
+        		//.filter(lsqQuery -> Arrays.asList("http://lsq.aksw.org/res/q-00f148fa", "http://lsq.aksw.org/res/q-00d5ab86", "http://lsq.aksw.org/res/q-00dcd456", "http://lsq.aksw.org/res/q-00d1b176").contains(lsqQuery.getIri()))
+        		//.filter(lsqQuery -> Arrays.asList("http://lsq.aksw.org/res/q-00d5ab86", "http://lsq.aksw.org/res/q-00dcd456").contains(lsqQuery.getIri()))
+        		.collect(Collectors.toList());
+        
         List<Entry<Node, Op>> ops = lsqQueries.stream()
-        		.filter(lsqQuery -> Arrays.asList("http://lsq.aksw.org/res/q-00ebbf80", "http://lsq.aksw.org/res/q-00d1b176").contains(lsqQuery.getIri()))
+        		//.filter(lsqQuery -> Arrays.asList("http://lsq.aksw.org/res/q-00ebbf80", "http://lsq.aksw.org/res/q-00d1b176").contains(lsqQuery.getIri()))
         		.map(lsqQuery -> {
                     // TODO HACK We need to fetch the iri from the em, as the mapper currently does not support placing an entity's iri into a field
-                    System.out.println("Got lsq query: " + lsqQuery);
+                    //System.out.println("Got lsq query: " + lsqQuery);
 
                 	Node node = NodeFactory.createURI(lsqQuery.getIri());
                     String queryStr = lsqQuery.getText();
@@ -94,6 +99,7 @@ public class MainLsqQueryContainmentEvaluation {
                         //continue;
                         return null;
                     }
+                    System.out.println("Got lsq query " + lsqQuery.getIri() + ": " + query);
                 
                     Op op = Algebra.toQuadForm(Algebra.compile(query));
 
