@@ -94,7 +94,16 @@ public class BottomUpTreeMapper<A, B, M, C, V> {
             }
             //}
 
-            Entry<C, V> mappingEntry = nodeMapper.apply(a, b, result);
+            Entry<C, V> mappingEntry;
+            
+            // If a non-null (i.e. non-root) view node is mapped to the user root, it is
+            // unsatisfiable
+            if(a != null && b == null) {
+            	mappingEntry = null;
+            } else {
+            	mappingEntry = nodeMapper.apply(a, b, result);            	
+            }
+            
             V mapping = mappingEntry == null ? null : mappingEntry.getValue();
 
             // null means unsatisfiable
@@ -111,6 +120,9 @@ public class BottomUpTreeMapper<A, B, M, C, V> {
 
                 result.overallMatching = newBaseSolution;
                 result.nodeMappings.put(a, b, mapping);
+            } else {
+            	// The mapping on some nodes was unsatisfiable, therefore its no use to continue
+            	break;
             }
         }
 

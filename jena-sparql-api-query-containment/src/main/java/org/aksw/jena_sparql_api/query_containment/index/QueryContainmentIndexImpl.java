@@ -25,19 +25,17 @@ import org.aksw.jena_sparql_api.algebra.utils.OpExtConjunctiveQuery;
 import org.aksw.jena_sparql_api.algebra.utils.OpUtils;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
-import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.query.QueryFactory;
-import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.jgrapht.DirectedGraph;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.codepoetics.protonpack.functions.TriFunction;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Streams;
 import com.google.common.collect.Table;
 
 
@@ -81,7 +79,12 @@ import com.google.common.collect.Table;
  * - perform the tree matching / mapping upwards
  *
  */
-public class QueryContainmentIndexImpl<K, G, N, A, V> {
+public class QueryContainmentIndexImpl<K, G, N, A, V>
+	implements QueryContainmentIndex<K, G, N, A, V>
+{	
+	private static final Logger logger = LoggerFactory.getLogger(QueryContainmentIndexImpl.class);
+
+	
     protected Function<? super A, A> normalizer;
     protected Function<? super A, G> opToGraph;
 
@@ -106,7 +109,11 @@ public class QueryContainmentIndexImpl<K, G, N, A, V> {
     }
     
     
-    public SubgraphIsomorphismIndex<Entry<K, Long>, G, N> getIndex() {
+    /* (non-Javadoc)
+	 * @see org.aksw.jena_sparql_api.query_containment.index.QueryContainmentIndex#getIndex()
+	 */
+    @Override
+	public SubgraphIsomorphismIndex<Entry<K, Long>, G, N> getIndex() {
 		return index;
 	}
 
@@ -117,10 +124,22 @@ public class QueryContainmentIndexImpl<K, G, N, A, V> {
      * @param nodeMapper
      * @return
      */
-    public static <K, V> QueryContainmentIndexImpl<K, DirectedGraph<Node, Triple>, Node, Op, V> create(TriFunction<? super Op, ? super Op, TreeMapping<Op, Op, BiMap<Node, Node>, V>, ? extends Entry<BiMap<Node, Node>, V>> nodeMapper) {
+    public static <K, V> QueryContainmentIndex<K, DirectedGraph<Node, Triple>, Node, Op, V> create(TriFunction<? super Op, ? super Op, TreeMapping<Op, Op, BiMap<Node, Node>, V>, ? extends Entry<BiMap<Node, Node>, V>> nodeMapper) {
         SubgraphIsomorphismIndex<Entry<K, Long>, DirectedGraph<Node, Triple>, Node> sii = SubgraphIsomorphismIndexJena.create();
 
-        QueryContainmentIndexImpl<K, DirectedGraph<Node, Triple>, Node, Op, V> result = new QueryContainmentIndexImpl<K, DirectedGraph<Node, Triple>, Node, Op, V>(
+        QueryContainmentIndex<K, DirectedGraph<Node, Triple>, Node, Op, V> result = create(sii, nodeMapper);
+        return result;
+    }
+
+    public static <K, V> QueryContainmentIndex<K, DirectedGraph<Node, Triple>, Node, Op, V> createFlat(TriFunction<? super Op, ? super Op, TreeMapping<Op, Op, BiMap<Node, Node>, V>, ? extends Entry<BiMap<Node, Node>, V>> nodeMapper) {
+        SubgraphIsomorphismIndex<Entry<K, Long>, DirectedGraph<Node, Triple>, Node> sii = SubgraphIsomorphismIndexJena.createFlat();
+
+        QueryContainmentIndex<K, DirectedGraph<Node, Triple>, Node, Op, V> result = create(sii, nodeMapper);
+        return result;
+    }
+
+    public static <K, V> QueryContainmentIndex<K, DirectedGraph<Node, Triple>, Node, Op, V> create(SubgraphIsomorphismIndex<Entry<K, Long>, DirectedGraph<Node, Triple>, Node> sii, TriFunction<? super Op, ? super Op, TreeMapping<Op, Op, BiMap<Node, Node>, V>, ? extends Entry<BiMap<Node, Node>, V>> nodeMapper) {
+        QueryContainmentIndex<K, DirectedGraph<Node, Triple>, Node, Op, V> result = new QueryContainmentIndexImpl<K, DirectedGraph<Node, Triple>, Node, Op, V>(
                 QueryToGraph::normalizeOp,
                 OpUtils::getSubOps,
                 QueryContainmentIndexImpl::queryToJGraphT,
@@ -128,7 +147,6 @@ public class QueryContainmentIndexImpl<K, G, N, A, V> {
                 nodeMapper
                 );
         return result;
-
     }
 
     public QueryContainmentIndexImpl(
@@ -147,7 +165,11 @@ public class QueryContainmentIndexImpl<K, G, N, A, V> {
     }
 
 
-    public void remove(K key) {
+    /* (non-Javadoc)
+	 * @see org.aksw.jena_sparql_api.query_containment.index.QueryContainmentIndex#remove(K)
+	 */
+    @Override
+	public void remove(K key) {
         Map<Long, TreeNode<A>> rows = keyToNodeIndexToNode.row(key);
 
         // Remove related index entries
@@ -159,7 +181,11 @@ public class QueryContainmentIndexImpl<K, G, N, A, V> {
         rows.clear();
     }
 
-    public void put(K key, A viewOp) {
+    /* (non-Javadoc)
+	 * @see org.aksw.jena_sparql_api.query_containment.index.QueryContainmentIndex#put(K, A)
+	 */
+    @Override
+	public void put(K key, A viewOp) {
         A normViewOp = normalizer.apply(viewOp);
         Tree<A> tree = TreeImpl.create(normViewOp, parentToChildren);//OpUtils.createTree((Op)normViewOp);
 
@@ -168,7 +194,7 @@ public class QueryContainmentIndexImpl<K, G, N, A, V> {
 
         //TreeUtils.inOrderSearch(tree.getRoot(), tree::getChildren)
         TreeUtils.leafStream(tree).forEach(op -> {
-        	System.out.println("Processing op: " + op);
+        	//System.out.println("Processing op: " + op);
             TreeNode<A> node = new TreeNodeImpl<>(tree, op);
 
             G graph = opToGraph.apply(op);
@@ -176,7 +202,7 @@ public class QueryContainmentIndexImpl<K, G, N, A, V> {
                 Entry<K, Long> e = new SimpleEntry<>(key, leafNodeId[0]);
 
                 keyToNodeIndexToNode.put(key, leafNodeId[0], node);
-                System.out.println("Insert: " + e);
+                //System.out.println("Insert: " + e);
 //                System.out.println("Graph: " + graph);
                 //System.out.println("Graph of size: " + graph);
 
@@ -191,29 +217,37 @@ public class QueryContainmentIndexImpl<K, G, N, A, V> {
 
 
     public Table<K, A, ProblemNeighborhoodAware<BiMap<N, N>, ?>> lookupLeaf(Tree<A> tree, A leaf, BiMap<N, N> baseMatching) {
-        G graph = opToGraph.apply(leaf);
-
-        Multimap<Entry<K, Long>, BiMap<N, N>> matches = index.lookupX(graph, false);
-
         Table<K, A, ProblemNeighborhoodAware<BiMap<N, N>, ?>> result = TreeMapper.createTable(true, true);
-        for(Entry<Entry<K, Long>, BiMap<N, N>> e : matches.entries()) {
-            Entry<K, Long> f = e.getKey();
-            K viewKey = f.getKey();
-            Long leafIndex = f.getValue();
 
-            TreeNode<A> viewTreeNode = keyToNodeIndexToNode.get(viewKey, leafIndex);
-            A leafNode = viewTreeNode.getNode();
-            BiMap<N, N> matching = e.getValue();
-
-            ProblemNeighborhoodAware<BiMap<N, N>, ?> problems = new ProblemStaticSolutions<>(Collections.singleton(matching));
-
-            result.put(viewKey, leafNode, problems);
+        G graph = opToGraph.apply(leaf);
+        if(graph == null) {
+        	// TODO Maybe we should raise an exception here
+        	logger.warn("Graph was null for node: " + leaf);
+        } else {
+	        Multimap<Entry<K, Long>, BiMap<N, N>> matches = index.lookupX(graph, false);
+	
+	        for(Entry<Entry<K, Long>, BiMap<N, N>> e : matches.entries()) {
+	            Entry<K, Long> f = e.getKey();
+	            K viewKey = f.getKey();
+	            Long leafIndex = f.getValue();
+	
+	            TreeNode<A> viewTreeNode = keyToNodeIndexToNode.get(viewKey, leafIndex);
+	            A leafNode = viewTreeNode.getNode();
+	            BiMap<N, N> matching = e.getValue();
+	
+	            ProblemNeighborhoodAware<BiMap<N, N>, ?> problems = new ProblemStaticSolutions<>(Collections.singleton(matching));
+	
+	            result.put(viewKey, leafNode, problems);
+	        }	
         }
-
         return result;
     }
 
-    public Stream<Entry<K, TreeMapping<A, A, BiMap<N, N>, V>>> match(A userOp) {
+    /* (non-Javadoc)
+	 * @see org.aksw.jena_sparql_api.query_containment.index.QueryContainmentIndex#match(A)
+	 */
+    @Override
+	public Stream<Entry<K, TreeMapping<A, A, BiMap<N, N>, V>>> match(A userOp) {
         TreeMapper<K, A, A, BiMap<N, N>, BiMap<N, N>, V> treeMapper = new TreeMapper<>(
             key -> keyToNodeIndexToNode.row(key).values().iterator().next().getTree(),
             this::lookupLeaf,

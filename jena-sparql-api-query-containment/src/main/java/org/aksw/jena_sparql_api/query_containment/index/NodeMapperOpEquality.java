@@ -24,6 +24,8 @@ public class NodeMapperOpEquality
     public Entry<BiMap<Node, Node>, Op> apply(Op viewOp, Op userOp, TreeMapping<Op, Op, BiMap<Node, Node>, Op> tm) {
         Class<?> viewOpClass = viewOp.getClass();
         Class<?> userOpClass = userOp.getClass();
+//        Class<?> viewOpClass = viewOp == null ? null : viewOp.getClass();
+//        Class<?> userOpClass = userOp == null ? null : userOp.getClass();
 
         Entry<BiMap<Node, Node>, Op> result;
         if(!Objects.equals(viewOpClass, userOpClass)) {

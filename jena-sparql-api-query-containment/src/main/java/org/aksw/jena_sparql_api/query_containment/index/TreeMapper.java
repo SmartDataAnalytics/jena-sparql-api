@@ -24,6 +24,8 @@ import org.aksw.combinatorics.solvers.collections.ProblemSolver;
 import org.aksw.commons.collections.multimaps.MultimapUtils;
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.codepoetics.protonpack.functions.TriFunction;
 import com.google.common.collect.Multimap;
@@ -46,6 +48,9 @@ import com.google.common.collect.Tables;
  */
 public class TreeMapper<K, A, B, M, C, V> {
 
+	private static final Logger logger = LoggerFactory.getLogger(TreeMapper.class);
+
+	
     protected Function<? super K, ? extends Tree<A>> viewKeyToTree;
     protected TriFunction<Tree<B>, B, M, Table<K, A, ProblemNeighborhoodAware<M, ?>>> leafMatcher;
 
@@ -111,7 +116,7 @@ public class TreeMapper<K, A, B, M, C, V> {
         Stream<Entry<K, TreeMapping<A, B, M, V>>> result = leafMappingPerView.entrySet().stream()
             .flatMap(e -> {
                 K viewKey = e.getKey();
-                System.out.println("Processing view with key: " + viewKey);
+                logger.debug("Processing view with key: " + viewKey);
 
                 Tree<A> viewTree = viewKeyToTree.apply(viewKey);
 
