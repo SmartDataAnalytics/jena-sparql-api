@@ -268,6 +268,15 @@ public class QueryContainmentIndexImpl<K, G, N, A, V>
         return result;
     }
 
+
+	@Override
+	public String toString() {
+		return "QueryContainmentIndexImpl [normalizer=" + normalizer + ", opToGraph=" + opToGraph
+				+ ", parentToChildren=" + parentToChildren + ", index=" + index + ", nodeMapper=" + nodeMapper + "]";
+	}
+
+    
+    
 //    public static Entry<BiMap<Node, Node>, Op> mapNodes(Op viewNode, Op userNode, TreeMapping<Op, Op, BiMap<Node, Node>, Op> mapping) {
 //        Class<?> viewNodeClass = viewNode.getClass();
 //        Class<?> userNodeClass = userNode.getClass();

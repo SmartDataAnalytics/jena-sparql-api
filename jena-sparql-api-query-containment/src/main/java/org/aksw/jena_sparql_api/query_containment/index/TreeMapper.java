@@ -248,6 +248,8 @@ public class TreeMapper<K, A, B, M, C, V> {
             // Obtain the candidate views for that user node
             Table<K, A, ProblemNeighborhoodAware<M, ?>> matchTable = leafMatcher.apply(userTree, userOp, baseMatching);
 
+            logger.debug("Found " + matchTable.rowMap().size() + " candidate leafs  for" + userOp);
+            
             for(Entry<K, Map<A, ProblemNeighborhoodAware<M, ?>>> matchEntry : matchTable.rowMap().entrySet()) {
 
                 K viewKey = matchEntry.getKey();

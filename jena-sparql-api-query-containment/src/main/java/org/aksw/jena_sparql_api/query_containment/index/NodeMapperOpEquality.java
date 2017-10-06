@@ -43,8 +43,9 @@ public class NodeMapperOpEquality
 
         }
 
-        boolean isMatch = result != null;
-        System.out.println((isMatch ? "Match" : "No match") + " between\n" + viewOp + "and\n" + userOp);
+        // Check for match between the given trees
+        //boolean isMatch = result != null;
+        //System.out.println((isMatch ? "Match" : "No match") + " between\n" + viewOp + "and\n" + userOp);
 
         return result;
     }

@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.jgrapht;
 
 import java.util.AbstractMap.SimpleEntry;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -9,6 +10,8 @@ import java.util.stream.Collectors;
 import javax.persistence.criteria.Root;
 
 import org.aksw.commons.collections.tagmap.ValidationUtils;
+import org.aksw.commons.graph.index.core.SubgraphIsomorphismIndex;
+import org.aksw.commons.graph.index.jena.SubgraphIsomorphismIndexJena;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.mapper.jpa.core.RdfEntityManager;
 import org.aksw.jena_sparql_api.mapper.jpa.core.SparqlEntityManagerFactory;
@@ -37,11 +40,18 @@ public class MainLsqQueryContainmentEvaluation {
 	public static void main(String[] args) throws Exception {
         NodeMapperOpEquality nodeMapper = new NodeMapperOpEquality();
                 
-        QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, Op> indexA = QueryContainmentIndexImpl.create(nodeMapper);
-        QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, Op> indexB = QueryContainmentIndexImpl.createFlat(nodeMapper);
+        //QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, Op> indexA = QueryContainmentIndexImpl.create(nodeMapper);
+        //QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, Op> indexB = QueryContainmentIndexImpl.createFlat(nodeMapper);
 
+        SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> siiA = SubgraphIsomorphismIndexJena.create();
+        SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> siiB = SubgraphIsomorphismIndexJena.createFlat();
+
+        SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> sii = ValidationUtils.createValidatingProxy(SubgraphIsomorphismIndex.class, siiA, siiB);
         
-        QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, Op> index = ValidationUtils.createValidatingProxy(QueryContainmentIndex.class, indexA, indexB);
+        
+        QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, Op> index = QueryContainmentIndexImpl.create(sii, nodeMapper);
+               
+        //QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, Op> index = ValidationUtils.createValidatingProxy(QueryContainmentIndex.class, indexA, indexB);
         
         SparqlEntityManagerFactory emf = new SparqlEntityManagerFactory();
         //Model model = RDFDataMgr.loadModel("lsq-sparqlqc-synthetic-simple.ttl", Lang.TURTLE);
@@ -69,6 +79,7 @@ public class MainLsqQueryContainmentEvaluation {
         }
 
         List<Entry<Node, Op>> ops = lsqQueries.stream()
+        		.filter(lsqQuery -> Arrays.asList("http://lsq.aksw.org/res/q-00ebbf80", "http://lsq.aksw.org/res/q-00d1b176").contains(lsqQuery.getIri()))
         		.map(lsqQuery -> {
                     // TODO HACK We need to fetch the iri from the em, as the mapper currently does not support placing an entity's iri into a field
                     System.out.println("Got lsq query: " + lsqQuery);
@@ -98,6 +109,8 @@ public class MainLsqQueryContainmentEvaluation {
 	    }
         
         for(Entry<Node, Op> e : ops) {
+        	
+        	logger.info("Querying view candidates of: " + e.getKey());
 	        Op op = e.getValue();
         	index.match(op);
 	    }
