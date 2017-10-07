@@ -93,7 +93,7 @@ public class QueryToGraphVisitor
 
 
         Node result = nodeSupplier.get();
-        QueryToJenaGraph.addEdge(graph, QueryToGraph.filtered, result, subNode);
+        QueryToJenaGraph.addEdge(graph, result, QueryToGraph.filtered, subNode);
         stack.push(result);
     }
 
@@ -131,7 +131,7 @@ public class QueryToGraphVisitor
         for(Op member : ops) {
             member.visit(this);
             Node memberNode = stack.pop();
-            QueryToJenaGraph.addEdge(graph, QueryToGraph.unionMember, result, memberNode);
+            QueryToJenaGraph.addEdge(graph, result, QueryToGraph.unionMember, memberNode);
         }
 
         stack.push(result);

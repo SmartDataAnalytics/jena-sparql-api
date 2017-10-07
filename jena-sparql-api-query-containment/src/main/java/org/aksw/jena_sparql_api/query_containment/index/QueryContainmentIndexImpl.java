@@ -199,9 +199,9 @@ public class QueryContainmentIndexImpl<K, G, N, A, V>
 
             G graph = opToGraph.apply(op);
             
-            System.out.println();
-            System.out.println("Graph for " + key);
-            System.out.println(graph);
+//            System.out.println();
+//            System.out.println("Graph for " + key);
+//            System.out.println(graph);
             
             if(graph != null) {
                 Entry<K, Long> e = new SimpleEntry<>(key, leafNodeId[0]);

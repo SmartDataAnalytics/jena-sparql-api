@@ -2,7 +2,9 @@ package org.aksw.jena_sparql_api.jgrapht;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -32,13 +34,26 @@ import org.jgrapht.DirectedGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
+
 public class MainLsqQueryContainmentEvaluation {
 
 	private static final Logger logger = LoggerFactory.getLogger(MainLsqQueryContainmentEvaluation.class);
 
 	
 	public static void main(String[] args) throws Exception {
-        NodeMapperOpEquality nodeMapper = new NodeMapperOpEquality();
+//        BiMap<String, String> mapA = HashBiMap.create();
+//        mapA.put("a", "b");
+//        mapA.put("b", "c");
+//        mapA.put("c", "a");
+//		
+//		System.out.println(mapA);
+//		if(true) {
+//			return;
+//		}
+		
+		NodeMapperOpEquality nodeMapper = new NodeMapperOpEquality();
                 
         //QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, Op> indexA = QueryContainmentIndexImpl.create(nodeMapper);
         //QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, Op> indexB = QueryContainmentIndexImpl.createFlat(nodeMapper);
@@ -71,7 +86,7 @@ public class MainLsqQueryContainmentEvaluation {
         }).setMaxResults(300).getResultList();
 
         
-        // hack; shoud be done by the framework
+        // hack; should be done by the framework
         lsqQueries = Lists.newArrayList(lsqQueries);
         for(LsqQuery q : lsqQueries) {
             String id = em.getIri(q);
@@ -80,10 +95,13 @@ public class MainLsqQueryContainmentEvaluation {
 
         lsqQueries = lsqQueries.stream()
         		//.filter(lsqQuery -> Arrays.asList("http://lsq.aksw.org/res/q-00f148fa", "http://lsq.aksw.org/res/q-00d5ab86", "http://lsq.aksw.org/res/q-00dcd456", "http://lsq.aksw.org/res/q-00d1b176").contains(lsqQuery.getIri()))
-        		//.filter(lsqQuery -> Arrays.asList("http://lsq.aksw.org/res/q-00d5ab86", "http://lsq.aksw.org/res/q-00dcd456").contains(lsqQuery.getIri()))
+        		//.filter(lsqQuery -> Arrays.asList(""http://lsq.aksw.org/res/q-00d5ab86", "http://lsq.aksw.org/res/q-00dcd456").contains(lsqQuery.getIri()))
+        		//.filter(lsqQuery -> Arrays.asList("http://lsq.aksw.org/res/q-00d1b176").contains(lsqQuery.getIri()))
+        		//.filter(lsqQuery -> Arrays.asList("http://lsq.aksw.org/res/q-00f148fa", "http://lsq.aksw.org/res/q-00d5ab86", "http://lsq.aksw.org/res/q-00dcd456", "http://lsq.aksw.org/res/q-00d1b176").contains(lsqQuery.getIri()))
+        		//.filter(lsqQuery -> Arrays.asList("http://lsq.aksw.org/res/q-00dcd456", "http://lsq.aksw.org/res/q-00d5ab86", "http://lsq.aksw.org/res/q-00f148fa", "http://lsq.aksw.org/res/q-00d1b176").contains(lsqQuery.getIri()))
         		.collect(Collectors.toList());
         
-        List<Entry<Node, Op>> ops = lsqQueries.stream()
+        Map<Node, Op> ops = lsqQueries.stream()
         		//.filter(lsqQuery -> Arrays.asList("http://lsq.aksw.org/res/q-00ebbf80", "http://lsq.aksw.org/res/q-00d1b176").contains(lsqQuery.getIri()))
         		.map(lsqQuery -> {
                     // TODO HACK We need to fetch the iri from the em, as the mapper currently does not support placing an entity's iri into a field
@@ -106,17 +124,32 @@ public class MainLsqQueryContainmentEvaluation {
                     return new SimpleEntry<>(node, op);
         		})
         		.filter(Objects::nonNull)
-        		.collect(Collectors.toList());
-        		
-        for(Entry<Node, Op> e : ops) {
+        		.collect(Collectors.toMap(Entry::getKey, Entry::getValue, (u, v) -> { throw new RuntimeException("duplicate ckey"); }, LinkedHashMap::new));
+        
+        //ops.put(NodeFactory.createURI("http://lsq.aksw.org/res/foobar"), ops.get(NodeFactory.createURI("http://lsq.aksw.org/res/q-00d1b176")));
+        System.out.println("Ops Size: " + ops.size());
+        
+        for(Entry<Node, Op> e : ops.entrySet()) {
 	        Node node = e.getKey();
 	        Op op = e.getValue();
         	index.put(node, op);
 	    }
         
-        for(Entry<Node, Op> e : ops) {
+        siiA.printTree();
+        
+//        System.out.println("XXX: " + siiA.get(new SimpleEntry<>(NodeFactory.createURI("http://lsq.aksw.org/res/q-00d5ab86"), 2l)));
+//        System.out.println("XXX: " + siiA.get(new SimpleEntry<>(NodeFactory.createURI("http://lsq.aksw.org/res/q-00f148fa"), 0l)));
+        System.out.println("XXX: " + ops.get(NodeFactory.createURI("http://lsq.aksw.org/res/q-00d5ab86")));
+        System.out.println("XXX: " + ops.get(NodeFactory.createURI("http://lsq.aksw.org/res/q-00f148fa")));
+                	
+        	
+        for(Entry<Node, Op> e : ops.entrySet()) {
         	
         	logger.info("Querying view candidates of: " + e.getKey());
+        	if(Arrays.asList("http://lsq.aksw.org/res/q-00d1b176").contains(e.getKey().getURI())) {
+        		System.out.println("Got a specific URI: " + e.getKey());
+        	}
+        	
 	        Op op = e.getValue();
         	index.match(op);
 	    }
