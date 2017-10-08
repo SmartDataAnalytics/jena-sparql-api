@@ -7,6 +7,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -130,18 +131,15 @@ public class MainLsqQueryContainmentEvaluation {
         		//.filter(lsqQuery -> Arrays.asList(""http://lsq.aksw.org/res/q-00d5ab86", "http://lsq.aksw.org/res/q-00dcd456").contains(lsqQuery.getIri()))
         		//.filter(lsqQuery -> Arrays.asList("http://lsq.aksw.org/res/q-00d1b176").contains(lsqQuery.getIri()))
         		//.filter(lsqQuery -> Arrays.asList("http://lsq.aksw.org/res/q-00f148fa", "http://lsq.aksw.org/res/q-00d5ab86", "http://lsq.aksw.org/res/q-00dcd456", "http://lsq.aksw.org/res/q-00d1b176").contains(lsqQuery.getIri()))
-//        		.filter(lsqQuery -> Arrays.asList(
-//        		        "http://lsq.aksw.org/res/q-00dcd456",
-//        		        "http://lsq.aksw.org/res/q-00d5ab86",
-//        		        "http://lsq.aksw.org/res/q-00f148fa",
-//        		        "http://lsq.aksw.org/res/q-00d1b176",
-//        		        "http://lsq.aksw.org/res/q-00ea1cb7",
-//        		        "http://lsq.aksw.org/res/q-00e5a47a",
-//        		        "http://lsq.aksw.org/res/q-00d679a3",
-//        		        "http://lsq.aksw.org/res/q-01c6111c",
-//        		        "http://lsq.aksw.org/res/q-00db8476"
-//        		        ).contains(lsqQuery.getIri()))
+        		.filter(lsqQuery -> Arrays.asList(
+        		        "http://lsq.aksw.org/res/q-00dcd456", // ?s ?p ?o
+        		        "http://lsq.aksw.org/res/q-00d5ab86", // 0: { ?a  rdf:type  swc:TutorialEvent . ?a ?b ?c } 2: { ?c  rdf:type  ?d }
+        		        //"http://lsq.aksw.org/res/q-00dc64d6", // 
+        		        "http://lsq.aksw.org/res/q-00e5a47a" // { ?instance  swc:hasProgramme  ?a . ?instance rdf:type ?dClass . }
+        		        ).contains(lsqQuery.getIri()))
         		.collect(Collectors.toList());
+        
+        //Collections.reverse(lsqQueries);
         
         Map<Node, Op> ops = lsqQueries.stream()
         		//.filter(lsqQuery -> Arrays.asList("http://lsq.aksw.org/res/q-00ebbf80", "http://lsq.aksw.org/res/q-00d1b176").contains(lsqQuery.getIri()))
@@ -172,6 +170,8 @@ public class MainLsqQueryContainmentEvaluation {
         System.out.println("Ops Size: " + ops.size());
         
         Node criticalNode = NodeFactory.createURI("http://lsq.aksw.org/res/q-00e5a47a");
+        
+        
         Op criticalOp = ops.get(criticalNode);
         
         Iterator<Entry<Node, Op>> it = ops.entrySet().iterator();
@@ -184,8 +184,15 @@ public class MainLsqQueryContainmentEvaluation {
 //        		siiA.printTree();
 //        	}
 //
+	        
 	        try {
 	            logger.debug("Indexing: " + node);
+	            
+	            if(node.equals(criticalNode)) {
+	                System.out.println("Indexing ");
+	            }
+	            
+                index.put(NodeFactory.createURI(node.getURI() + "alias1"), op);
 	            index.put(node, op);
 	        } catch(Exception ex) {
 	            logger.warn("Failed to index: " + node + " " + op, ex);
@@ -220,11 +227,12 @@ public class MainLsqQueryContainmentEvaluation {
         Stopwatch sw = Stopwatch.createStarted();
 	        for(Entry<Node, Op> e : ops.entrySet()) {
 	        	
-	        	if(Arrays.asList("http://lsq.aksw.org/res/q-00e5a47a").contains(e.getKey().getURI())) {
-	                logger.info("Querying view candidates of: " + e.getKey());
+	        	if(Arrays.asList(criticalNode).contains(e.getKey())) {
 	        		System.out.println("Got a specific URI: " + e.getKey());
                     siiA.printTree();
 
+                    //Thread.sleep(5000);
+                    logger.info("Querying view candidates of: " + e.getKey());                    
                     Op op = e.getValue();
                     index.match(op);
 	        	}
@@ -235,7 +243,8 @@ public class MainLsqQueryContainmentEvaluation {
         
         
         System.out.println();
-//        System.out.println("Result Index tree:");
+        System.out.println("Result Index tree:");
+        siiA.printTree();
         
         //index.getIndex().printTree();
 	}
