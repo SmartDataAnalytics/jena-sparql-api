@@ -1,7 +1,13 @@
 package org.aksw.jena_sparql_api.jgrapht;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,7 +50,8 @@ public class MainLsqQueryContainmentEvaluation {
 	private static final Logger logger = LoggerFactory.getLogger(MainLsqQueryContainmentEvaluation.class);
 
 	
-	public static void main(String[] args) throws Exception {
+	@SuppressWarnings("unchecked")
+    public static void main(String[] args) throws Exception {
 //        BiMap<String, String> mapA = HashBiMap.create();
 //        mapA.put("a", "b");
 //        mapA.put("b", "c");
@@ -82,20 +89,36 @@ public class MainLsqQueryContainmentEvaluation {
 
         List<LsqQuery> lsqQueries;
 
-        lsqQueries = JpaUtils.createTypedQuery(em, LsqQuery.class, (cb, cq) -> {
-            Root<LsqQuery> root = cq.from(LsqQuery.class);
-            cq.select(root);
-        }).setMaxResults(1000).getResultList();
+        File qFile = new File("/tmp/queries.dat");
 
-        
-        // hack; should be done by the framework
-        lsqQueries = Lists.newArrayList(lsqQueries);
-        for(LsqQuery q : lsqQueries) {
-            String id = em.getIri(q);
-            q.setIri(id);
+        if(qFile.exists()) {
+            try(ObjectInputStream in = new ObjectInputStream(new FileInputStream(qFile))) {
+                lsqQueries = (List<LsqQuery>)in.readObject();
+            }
+        } else {
+            lsqQueries = JpaUtils.createTypedQuery(em, LsqQuery.class, (cb, cq) -> {
+                Root<LsqQuery> root = cq.from(LsqQuery.class);
+                cq.select(root);
+            }).setMaxResults(10000).getResultList();
+    
+            
+            // hack; should be done by the framework
+            lsqQueries = Lists.newArrayList(lsqQueries);
+            for(LsqQuery q : lsqQueries) {
+                String id = em.getIri(q);
+                q.setIri(id);
+            }
+            
+            ObjectOutputStream oout = new ObjectOutputStream(new FileOutputStream(qFile));
+            oout.writeObject(lsqQueries);
+            oout.flush();
+            oout.close();
         }
+        
         System.out.println("# queries: "+ lsqQueries.size());
+
         Thread.sleep(1000);
+        
 
         lsqQueries = lsqQueries.stream()
         		//.filter(lsqQuery -> Arrays.asList("http://lsq.aksw.org/res/q-00f148fa", "http://lsq.aksw.org/res/q-00d5ab86", "http://lsq.aksw.org/res/q-00dcd456", "http://lsq.aksw.org/res/q-00d1b176").contains(lsqQuery.getIri()))
@@ -121,7 +144,7 @@ public class MainLsqQueryContainmentEvaluation {
                         //continue;
                         return null;
                     }
-                    System.out.println("Got lsq query " + lsqQuery.getIri() + ": " + query);
+                    //System.out.println("Got lsq query " + lsqQuery.getIri() + ": " + query);
                 
                     Op op = Algebra.toQuadForm(Algebra.compile(query));
 
@@ -136,20 +159,29 @@ public class MainLsqQueryContainmentEvaluation {
         Node criticalNode = NodeFactory.createURI("http://lsq.aksw.org/res/q-00ea1cb7");
         Op criticalOp = ops.get(criticalNode);
         
-        for(Entry<Node, Op> e : ops.entrySet()) {
+        Iterator<Entry<Node, Op>> it = ops.entrySet().iterator();
+        while(it.hasNext()) {
+            Entry<Node, Op> e = it.next();
 	        Node node = e.getKey();
 	        Op op = e.getValue();
-        	System.out.println("Inserted: " + node);
-        	if(node.equals(criticalNode)) {
-        		siiA.printTree();
-        	}
-
-        	index.put(node, op);
+//        	System.out.println("Inserted: " + node);
+//        	if(node.equals(criticalNode)) {
+//        		siiA.printTree();
+//        	}
+//
+	        try {
+	            logger.debug("Indexing: " + node);
+	            index.put(node, op);
+	        } catch(Exception ex) {
+	            logger.warn("Failed to index: " + node + " " + op, ex);
+	            it.remove();
+	        }
         	
-        	if(node.equals(criticalNode)) {
-        		siiA.printTree();
-        	}
-        	index.match(criticalOp);
+//        	if(node.equals(criticalNode)) {
+//        		siiA.printTree();
+//                //index.match(criticalOp);
+//                System.out.println("SUCCESS");
+//        	}
 //        	if(Arrays.asList("http://lsq.aksw.org/res/q-00ea1cb7").contains(e.getKey().getURI())) {
 //        		System.out.println("Got a specific URI: " + e.getKey());
 //        		Thread.sleep(5000);
@@ -158,25 +190,27 @@ public class MainLsqQueryContainmentEvaluation {
 //        	index.match(op);
 	    }
         
-        siiA.printTree();
-        
-        System.out.println("HERE");
+//        siiA.printTree();
+//        
+//        System.out.println("HERE");
         //Thread.sleep(5000);
 //        System.out.println("XXX: " + siiA.get(new SimpleEntry<>(NodeFactory.createURI("http://lsq.aksw.org/res/q-00d5ab86"), 2l)));
 //        System.out.println("XXX: " + siiA.get(new SimpleEntry<>(NodeFactory.createURI("http://lsq.aksw.org/res/q-00f148fa"), 0l)));
-        System.out.println("XXX: " + ops.get(NodeFactory.createURI("http://lsq.aksw.org/res/q-00d5ab86")));
-        System.out.println("XXX: " + ops.get(NodeFactory.createURI("http://lsq.aksw.org/res/q-00f148fa")));
+//        System.out.println("XXX: " + ops.get(NodeFactory.createURI("http://lsq.aksw.org/res/q-00d5ab86")));
+//        System.out.println("XXX: " + ops.get(NodeFactory.createURI("http://lsq.aksw.org/res/q-00f148fa")));
                 	
         	
-        for(int xx = 0; xx < 10; ++xx) {
+        for(int xx = 0; xx < 2; ++xx) {
         Stopwatch sw = Stopwatch.createStarted();
 	        for(Entry<Node, Op> e : ops.entrySet()) {
 	        	
-	        	logger.info("Querying view candidates of: " + e.getKey());
-	        	if(Arrays.asList("http://lsq.aksw.org/res/q-00ea1cb7").contains(e.getKey().getURI())) {
+	        	if(Arrays.asList("http://lsq.aksw.org/res/q-00e5a47a").contains(e.getKey().getURI())) {
+	                logger.info("Querying view candidates of: " + e.getKey());
 	        		System.out.println("Got a specific URI: " + e.getKey());
-			        Op op = e.getValue();
-		        	index.match(op);
+                    //siiA.printTree();
+
+                    Op op = e.getValue();
+                    index.match(op);
 	        	}
 	        	
 		    }
