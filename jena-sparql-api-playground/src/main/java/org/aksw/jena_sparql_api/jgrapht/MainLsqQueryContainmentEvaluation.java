@@ -89,7 +89,10 @@ public class MainLsqQueryContainmentEvaluation {
 
         List<LsqQuery> lsqQueries;
 
-        File qFile = new File("/tmp/queries.dat");
+        int offset = 0;
+        int limit = 10000;
+        
+        File qFile = new File("/tmp/queries-" + offset + "-" + limit + ".dat");
 
         if(qFile.exists()) {
             try(ObjectInputStream in = new ObjectInputStream(new FileInputStream(qFile))) {
@@ -99,7 +102,7 @@ public class MainLsqQueryContainmentEvaluation {
             lsqQueries = JpaUtils.createTypedQuery(em, LsqQuery.class, (cb, cq) -> {
                 Root<LsqQuery> root = cq.from(LsqQuery.class);
                 cq.select(root);
-            }).setMaxResults(10000).getResultList();
+            }).setFirstResult(offset).setMaxResults(limit).getResultList();
     
             
             // hack; should be done by the framework
@@ -114,18 +117,30 @@ public class MainLsqQueryContainmentEvaluation {
             oout.flush();
             oout.close();
         }
+
+        //lsqQueries = lsqQueries.subList(00, 9000);
         
         System.out.println("# queries: "+ lsqQueries.size());
 
         Thread.sleep(1000);
-        
+
 
         lsqQueries = lsqQueries.stream()
         		//.filter(lsqQuery -> Arrays.asList("http://lsq.aksw.org/res/q-00f148fa", "http://lsq.aksw.org/res/q-00d5ab86", "http://lsq.aksw.org/res/q-00dcd456", "http://lsq.aksw.org/res/q-00d1b176").contains(lsqQuery.getIri()))
         		//.filter(lsqQuery -> Arrays.asList(""http://lsq.aksw.org/res/q-00d5ab86", "http://lsq.aksw.org/res/q-00dcd456").contains(lsqQuery.getIri()))
         		//.filter(lsqQuery -> Arrays.asList("http://lsq.aksw.org/res/q-00d1b176").contains(lsqQuery.getIri()))
         		//.filter(lsqQuery -> Arrays.asList("http://lsq.aksw.org/res/q-00f148fa", "http://lsq.aksw.org/res/q-00d5ab86", "http://lsq.aksw.org/res/q-00dcd456", "http://lsq.aksw.org/res/q-00d1b176").contains(lsqQuery.getIri()))
-        		//.filter(lsqQuery -> Arrays.asList("http://lsq.aksw.org/res/q-00dcd456", "http://lsq.aksw.org/res/q-00d5ab86", "http://lsq.aksw.org/res/q-00f148fa", "http://lsq.aksw.org/res/q-00d1b176", "http://lsq.aksw.org/res/q-00ea1cb7").contains(lsqQuery.getIri()))
+//        		.filter(lsqQuery -> Arrays.asList(
+//        		        "http://lsq.aksw.org/res/q-00dcd456",
+//        		        "http://lsq.aksw.org/res/q-00d5ab86",
+//        		        "http://lsq.aksw.org/res/q-00f148fa",
+//        		        "http://lsq.aksw.org/res/q-00d1b176",
+//        		        "http://lsq.aksw.org/res/q-00ea1cb7",
+//        		        "http://lsq.aksw.org/res/q-00e5a47a",
+//        		        "http://lsq.aksw.org/res/q-00d679a3",
+//        		        "http://lsq.aksw.org/res/q-01c6111c",
+//        		        "http://lsq.aksw.org/res/q-00db8476"
+//        		        ).contains(lsqQuery.getIri()))
         		.collect(Collectors.toList());
         
         Map<Node, Op> ops = lsqQueries.stream()
@@ -156,7 +171,7 @@ public class MainLsqQueryContainmentEvaluation {
         //ops.put(NodeFactory.createURI("http://lsq.aksw.org/res/foobar"), ops.get(NodeFactory.createURI("http://lsq.aksw.org/res/q-00d1b176")));
         System.out.println("Ops Size: " + ops.size());
         
-        Node criticalNode = NodeFactory.createURI("http://lsq.aksw.org/res/q-00ea1cb7");
+        Node criticalNode = NodeFactory.createURI("http://lsq.aksw.org/res/q-00e5a47a");
         Op criticalOp = ops.get(criticalNode);
         
         Iterator<Entry<Node, Op>> it = ops.entrySet().iterator();
@@ -176,6 +191,7 @@ public class MainLsqQueryContainmentEvaluation {
 	            logger.warn("Failed to index: " + node + " " + op, ex);
 	            it.remove();
 	        }
+	        //index.match(criticalOp);
         	
 //        	if(node.equals(criticalNode)) {
 //        		siiA.printTree();
@@ -207,7 +223,7 @@ public class MainLsqQueryContainmentEvaluation {
 	        	if(Arrays.asList("http://lsq.aksw.org/res/q-00e5a47a").contains(e.getKey().getURI())) {
 	                logger.info("Querying view candidates of: " + e.getKey());
 	        		System.out.println("Got a specific URI: " + e.getKey());
-                    //siiA.printTree();
+                    siiA.printTree();
 
                     Op op = e.getValue();
                     index.match(op);
