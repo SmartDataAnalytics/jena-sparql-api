@@ -6,6 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -34,6 +35,7 @@ import org.jgrapht.DirectedGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 
@@ -61,8 +63,8 @@ public class MainLsqQueryContainmentEvaluation {
         SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> siiA = SubgraphIsomorphismIndexJena.create();
         SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> siiB = SubgraphIsomorphismIndexJena.createFlat();
 
-        SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> sii = ValidationUtils.createValidatingProxy(SubgraphIsomorphismIndex.class, siiA, siiB);
-        
+        SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> siiC = ValidationUtils.createValidatingProxy(SubgraphIsomorphismIndex.class, siiA, siiB);
+        SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> sii = siiC;
         
         QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, Op> index = QueryContainmentIndexImpl.create(sii, nodeMapper);
                
@@ -83,7 +85,7 @@ public class MainLsqQueryContainmentEvaluation {
         lsqQueries = JpaUtils.createTypedQuery(em, LsqQuery.class, (cb, cq) -> {
             Root<LsqQuery> root = cq.from(LsqQuery.class);
             cq.select(root);
-        }).setMaxResults(300).getResultList();
+        }).setMaxResults(1000).getResultList();
 
         
         // hack; should be done by the framework
@@ -92,13 +94,15 @@ public class MainLsqQueryContainmentEvaluation {
             String id = em.getIri(q);
             q.setIri(id);
         }
+        System.out.println("# queries: "+ lsqQueries.size());
+        Thread.sleep(1000);
 
         lsqQueries = lsqQueries.stream()
         		//.filter(lsqQuery -> Arrays.asList("http://lsq.aksw.org/res/q-00f148fa", "http://lsq.aksw.org/res/q-00d5ab86", "http://lsq.aksw.org/res/q-00dcd456", "http://lsq.aksw.org/res/q-00d1b176").contains(lsqQuery.getIri()))
         		//.filter(lsqQuery -> Arrays.asList(""http://lsq.aksw.org/res/q-00d5ab86", "http://lsq.aksw.org/res/q-00dcd456").contains(lsqQuery.getIri()))
         		//.filter(lsqQuery -> Arrays.asList("http://lsq.aksw.org/res/q-00d1b176").contains(lsqQuery.getIri()))
         		//.filter(lsqQuery -> Arrays.asList("http://lsq.aksw.org/res/q-00f148fa", "http://lsq.aksw.org/res/q-00d5ab86", "http://lsq.aksw.org/res/q-00dcd456", "http://lsq.aksw.org/res/q-00d1b176").contains(lsqQuery.getIri()))
-        		//.filter(lsqQuery -> Arrays.asList("http://lsq.aksw.org/res/q-00dcd456", "http://lsq.aksw.org/res/q-00d5ab86", "http://lsq.aksw.org/res/q-00f148fa", "http://lsq.aksw.org/res/q-00d1b176").contains(lsqQuery.getIri()))
+        		//.filter(lsqQuery -> Arrays.asList("http://lsq.aksw.org/res/q-00dcd456", "http://lsq.aksw.org/res/q-00d5ab86", "http://lsq.aksw.org/res/q-00f148fa", "http://lsq.aksw.org/res/q-00d1b176", "http://lsq.aksw.org/res/q-00ea1cb7").contains(lsqQuery.getIri()))
         		.collect(Collectors.toList());
         
         Map<Node, Op> ops = lsqQueries.stream()
@@ -129,31 +133,55 @@ public class MainLsqQueryContainmentEvaluation {
         //ops.put(NodeFactory.createURI("http://lsq.aksw.org/res/foobar"), ops.get(NodeFactory.createURI("http://lsq.aksw.org/res/q-00d1b176")));
         System.out.println("Ops Size: " + ops.size());
         
+        Node criticalNode = NodeFactory.createURI("http://lsq.aksw.org/res/q-00ea1cb7");
+        Op criticalOp = ops.get(criticalNode);
+        
         for(Entry<Node, Op> e : ops.entrySet()) {
 	        Node node = e.getKey();
 	        Op op = e.getValue();
+        	System.out.println("Inserted: " + node);
+        	if(node.equals(criticalNode)) {
+        		siiA.printTree();
+        	}
+
         	index.put(node, op);
+        	
+        	if(node.equals(criticalNode)) {
+        		siiA.printTree();
+        	}
+        	index.match(criticalOp);
+//        	if(Arrays.asList("http://lsq.aksw.org/res/q-00ea1cb7").contains(e.getKey().getURI())) {
+//        		System.out.println("Got a specific URI: " + e.getKey());
+//        		Thread.sleep(5000);
+//        	}
+//
+//        	index.match(op);
 	    }
         
         siiA.printTree();
         
+        System.out.println("HERE");
+        //Thread.sleep(5000);
 //        System.out.println("XXX: " + siiA.get(new SimpleEntry<>(NodeFactory.createURI("http://lsq.aksw.org/res/q-00d5ab86"), 2l)));
 //        System.out.println("XXX: " + siiA.get(new SimpleEntry<>(NodeFactory.createURI("http://lsq.aksw.org/res/q-00f148fa"), 0l)));
         System.out.println("XXX: " + ops.get(NodeFactory.createURI("http://lsq.aksw.org/res/q-00d5ab86")));
         System.out.println("XXX: " + ops.get(NodeFactory.createURI("http://lsq.aksw.org/res/q-00f148fa")));
                 	
         	
-        for(Entry<Node, Op> e : ops.entrySet()) {
-        	
-        	logger.info("Querying view candidates of: " + e.getKey());
-        	if(Arrays.asList("http://lsq.aksw.org/res/q-00d1b176").contains(e.getKey().getURI())) {
-        		System.out.println("Got a specific URI: " + e.getKey());
-        	}
-        	
-	        Op op = e.getValue();
-        	index.match(op);
-	    }
-        
+        for(int xx = 0; xx < 10; ++xx) {
+        Stopwatch sw = Stopwatch.createStarted();
+	        for(Entry<Node, Op> e : ops.entrySet()) {
+	        	
+	        	logger.info("Querying view candidates of: " + e.getKey());
+	        	if(Arrays.asList("http://lsq.aksw.org/res/q-00ea1cb7").contains(e.getKey().getURI())) {
+	        		System.out.println("Got a specific URI: " + e.getKey());
+			        Op op = e.getValue();
+		        	index.match(op);
+	        	}
+	        	
+		    }
+	        System.out.println("Time taken: " + sw.stop().elapsed(TimeUnit.MILLISECONDS));
+        }
         
         
         System.out.println();
