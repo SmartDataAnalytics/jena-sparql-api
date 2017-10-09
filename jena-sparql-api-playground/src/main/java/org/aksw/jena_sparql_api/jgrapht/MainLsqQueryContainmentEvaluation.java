@@ -33,6 +33,7 @@ import org.aksw.jena_sparql_api.query_containment.index.QueryContainmentIndex;
 import org.aksw.jena_sparql_api.query_containment.index.QueryContainmentIndexImpl;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
+import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.jena.ext.com.google.common.collect.Lists;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -54,8 +55,13 @@ public class MainLsqQueryContainmentEvaluation {
 	
 	@SuppressWarnings("unchecked")
     public static void main(String[] args) throws Exception {
-		for(int i = 0; i < 1000; ++i) {
+		int n = 1;
+		for(int i = 0; i < n; ++i) {
 			doRun();
+			
+			if(i + 1 != n) {
+				Thread.sleep(3000);
+			}
 		}
 	}
 	
@@ -91,10 +97,27 @@ public class MainLsqQueryContainmentEvaluation {
 		        "http://foobar"
 		        ).stream().map(NodeFactory::createURI).collect(Collectors.toList());
 
+        //"http://lsq.aksw.org/res/q-00d1b176",
+        List<Node> nodesD = Arrays.asList(
+		        "http://lsq.aksw.org/res/q-08319d47",   // C { 05bb5a8c + 4 more TPs }
+		        "http://lsq.aksw.org/res/q-05bb5a8c",   // B { ?person foaf:made ?paper . ?paper dc:title ?title }
+		        "http://lsq.aksw.org/res/q-00dcd456",   // A { ?s ?p ?o }
+		        "http://foobar"
+		        ).stream().map(NodeFactory::createURI).collect(Collectors.toList());
+
         
-        List<Node> filter = null;
+        List<Node> filter = nodesD;
     	boolean shuffle = false;
         
+    	//Collections.reverse(nodesD);
+    	
+        if(filter != null) {
+        	if(shuffle) {
+        		Collections.shuffle(filter);
+        	}
+            System.out.println("ORDER: " + filter);
+        }
+
     	
 		NodeMapperOpEquality nodeMapper = new NodeMapperOpEquality();
                 
@@ -192,10 +215,14 @@ public class MainLsqQueryContainmentEvaluation {
                         return null;
                     }
                     
-                    //query.setPrefixMapping(QueryUtils.usedPrefixes(query));
                     
-                    //System.out.println("Got lsq query " + lsqQuery.getIri() + ": " + query);
-                
+                    if(filter != null) {
+                    	Query q = query.cloneQuery();
+                        q.setPrefixMapping(QueryUtils.usedPrefixes(query));
+                    	
+                    	System.out.println("Got lsq query " + lsqQuery.getIri() + ":\n" + q);
+                    }
+                    
                     Op op = Algebra.toQuadForm(Algebra.compile(query));
 
                     return new SimpleEntry<>(node, op);
@@ -226,11 +253,8 @@ public class MainLsqQueryContainmentEvaluation {
         
         List<Entry<Node, Op>> opList = new ArrayList<>(ops.entrySet());
         
-        if(shuffle) {
-        	Collections.shuffle(opList);
-        }
         
-        System.out.println("SHUFFLE: " + opList.stream().map(Entry::getKey).collect(Collectors.toList()));
+//        System.out.println("SHUFFLE: " + opList.stream().map(Entry::getKey).collect(Collectors.toList()));
         
         Iterator<Entry<Node, Op>> it = opList.iterator();
         while(it.hasNext()) {
@@ -318,7 +342,7 @@ public class MainLsqQueryContainmentEvaluation {
     	        System.out.println("Rate: " + rateInSeconds);
 		  	}
 	        
-	        System.out.println("Time taken: " + sw.stop().elapsed(TimeUnit.MILLISECONDS));
+	        System.out.println("Time taken: " + sw.stop().elapsed(TimeUnit.MILLISECONDS));	        
         }
         
         
