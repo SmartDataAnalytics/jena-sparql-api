@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 
 import javax.persistence.criteria.Root;
 
+import org.aksw.commons.collections.tagmap.TagMapSetTrie;
 import org.aksw.commons.collections.tagmap.ValidationUtils;
 import org.aksw.commons.graph.index.core.SubgraphIsomorphismIndex;
 import org.aksw.commons.graph.index.jena.SubgraphIsomorphismIndexJena;
@@ -38,6 +39,7 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.util.NodeUtils;
 import org.jgrapht.DirectedGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,11 +70,12 @@ public class MainLsqQueryContainmentEvaluation {
         //QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, Op> indexA = QueryContainmentIndexImpl.create(nodeMapper);
         //QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, Op> indexB = QueryContainmentIndexImpl.createFlat(nodeMapper);
 
-        SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> siiA = SubgraphIsomorphismIndexJena.create();
-        SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> siiB = SubgraphIsomorphismIndexJena.createFlat();
+        SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> siiTreeTags = SubgraphIsomorphismIndexJena.create();
+        SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> siiFlat = SubgraphIsomorphismIndexJena.createFlat();
+        SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> siiTagBased = SubgraphIsomorphismIndexJena.createTagBased(new TagMapSetTrie<>(NodeUtils::compareRDFTerms));
 
-        SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> siiC = ValidationUtils.createValidatingProxy(SubgraphIsomorphismIndex.class, siiA, siiB);
-        SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> sii = siiC;
+        SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> siiValidating = ValidationUtils.createValidatingProxy(SubgraphIsomorphismIndex.class, siiTreeTags, siiTagBased);
+        SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> sii = siiValidating;
         
         QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, Op> index = QueryContainmentIndexImpl.create(sii, nodeMapper);
                
@@ -131,12 +134,12 @@ public class MainLsqQueryContainmentEvaluation {
         		//.filter(lsqQuery -> Arrays.asList(""http://lsq.aksw.org/res/q-00d5ab86", "http://lsq.aksw.org/res/q-00dcd456").contains(lsqQuery.getIri()))
         		//.filter(lsqQuery -> Arrays.asList("http://lsq.aksw.org/res/q-00d1b176").contains(lsqQuery.getIri()))
         		//.filter(lsqQuery -> Arrays.asList("http://lsq.aksw.org/res/q-00f148fa", "http://lsq.aksw.org/res/q-00d5ab86", "http://lsq.aksw.org/res/q-00dcd456", "http://lsq.aksw.org/res/q-00d1b176").contains(lsqQuery.getIri()))
-        		.filter(lsqQuery -> Arrays.asList(
-        		        "http://lsq.aksw.org/res/q-00dcd456", // ?s ?p ?o
-        		        "http://lsq.aksw.org/res/q-00d5ab86", // 0: { ?a  rdf:type  swc:TutorialEvent . ?a ?b ?c } 2: { ?c  rdf:type  ?d }
-        		        //"http://lsq.aksw.org/res/q-00dc64d6", // 
-        		        "http://lsq.aksw.org/res/q-00e5a47a" // { ?instance  swc:hasProgramme  ?a . ?instance rdf:type ?dClass . }
-        		        ).contains(lsqQuery.getIri()))
+//        		.filter(lsqQuery -> Arrays.asList(
+//        		        "http://lsq.aksw.org/res/q-00dcd456", // ?s ?p ?o
+//        		        "http://lsq.aksw.org/res/q-00d5ab86", // 0: { ?a  rdf:type  swc:TutorialEvent . ?a ?b ?c } 2: { ?c  rdf:type  ?d }
+//        		        //"http://lsq.aksw.org/res/q-00dc64d6", // 
+//        		        "http://lsq.aksw.org/res/q-00e5a47a" // { ?instance  swc:hasProgramme  ?a . ?instance rdf:type ?dClass . }
+//        		        ).contains(lsqQuery.getIri()))
         		.collect(Collectors.toList());
         
         //Collections.reverse(lsqQueries);
@@ -169,8 +172,8 @@ public class MainLsqQueryContainmentEvaluation {
         //ops.put(NodeFactory.createURI("http://lsq.aksw.org/res/foobar"), ops.get(NodeFactory.createURI("http://lsq.aksw.org/res/q-00d1b176")));
         System.out.println("Ops Size: " + ops.size());
         
-        Node criticalNode = NodeFactory.createURI("http://lsq.aksw.org/res/q-00e5a47a");
-        
+        //Node criticalNode = NodeFactory.createURI("http://lsq.aksw.org/res/q-00e5a47a");
+        Node criticalNode = NodeFactory.createURI("http://lsq.aksw.org/res/q-00dc64d6");
         
         Op criticalOp = ops.get(criticalNode);
         
@@ -192,7 +195,7 @@ public class MainLsqQueryContainmentEvaluation {
 	                System.out.println("Indexing ");
 	            }
 	            
-                index.put(NodeFactory.createURI(node.getURI() + "alias1"), op);
+                //index.put(NodeFactory.createURI(node.getURI() + "alias1"), op);
 	            index.put(node, op);
 	        } catch(Exception ex) {
 	            logger.warn("Failed to index: " + node + " " + op, ex);
@@ -224,27 +227,40 @@ public class MainLsqQueryContainmentEvaluation {
                 	
         	
         for(int xx = 0; xx < 2; ++xx) {
-        Stopwatch sw = Stopwatch.createStarted();
+        	Stopwatch sw = Stopwatch.createStarted();
+        	int seenQueryCount = 0;
 	        for(Entry<Node, Op> e : ops.entrySet()) {
 	        	
-	        	if(Arrays.asList(criticalNode).contains(e.getKey())) {
-	        		System.out.println("Got a specific URI: " + e.getKey());
-                    siiA.printTree();
+//	        	if(Arrays.asList(criticalNode).contains(e.getKey())) {
+//	        		System.out.println("Got a specific URI: " + e.getKey());
+//                    siiA.printTree();
 
                     //Thread.sleep(5000);
-                    logger.info("Querying view candidates of: " + e.getKey());                    
+                    System.out.println("Querying view candidates of: " + e.getKey());                    
                     Op op = e.getValue();
-                    index.match(op);
-	        	}
-	        	
-		    }
+                    try {
+                    	index.match(op);
+                    } catch(Exception ex) {
+                    	logger.error("Failed match", ex);
+                    	sii.printTree();
+                    	Thread.sleep(5000);
+                    	index.match(op);
+                    }
+//	        	}
+	        	                
+    	        ++seenQueryCount;
+    	        double elapsedSeconds = sw.elapsed(TimeUnit.MILLISECONDS) / 1000.0;
+    	        double rateInSeconds = elapsedSeconds / (double)seenQueryCount;
+    	        System.out.println("Rate: " + rateInSeconds);
+		  	}
+	        
 	        System.out.println("Time taken: " + sw.stop().elapsed(TimeUnit.MILLISECONDS));
         }
         
         
         System.out.println();
-        System.out.println("Result Index tree:");
-        siiA.printTree();
+        //System.out.println("Result Index tree:");
+        //sii.printTree();
         
         //index.getIndex().printTree();
 	}
