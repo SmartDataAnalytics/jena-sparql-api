@@ -134,12 +134,21 @@ public class MainLsqQueryContainmentEvaluation {
         		//.filter(lsqQuery -> Arrays.asList(""http://lsq.aksw.org/res/q-00d5ab86", "http://lsq.aksw.org/res/q-00dcd456").contains(lsqQuery.getIri()))
         		//.filter(lsqQuery -> Arrays.asList("http://lsq.aksw.org/res/q-00d1b176").contains(lsqQuery.getIri()))
         		//.filter(lsqQuery -> Arrays.asList("http://lsq.aksw.org/res/q-00f148fa", "http://lsq.aksw.org/res/q-00d5ab86", "http://lsq.aksw.org/res/q-00dcd456", "http://lsq.aksw.org/res/q-00d1b176").contains(lsqQuery.getIri()))
-//        		.filter(lsqQuery -> Arrays.asList(
-//        		        "http://lsq.aksw.org/res/q-00dcd456", // ?s ?p ?o
-//        		        "http://lsq.aksw.org/res/q-00d5ab86", // 0: { ?a  rdf:type  swc:TutorialEvent . ?a ?b ?c } 2: { ?c  rdf:type  ?d }
-//        		        //"http://lsq.aksw.org/res/q-00dc64d6", // 
+        		.filter(lsqQuery -> Arrays.asList(
+        		        //"http://lsq.aksw.org/res/q-00dcd456", // ?s ?p ?o
+        		        "http://lsq.aksw.org/res/q-00ea1cb7",
+        		        "http://lsq.aksw.org/res/q-00e1bc49",
+        		        "http://lsq.aksw.org/res/q-0a1604c3"
+        		        //"http://lsq.aksw.org/res/q-00d5ab86", // 0: { ?a  rdf:type  swc:TutorialEvent . ?a ?b ?c } 2: { ?c  rdf:type  ?d }
+        		        //"http://lsq.aksw.org/res/q-00d679a3",
+        		        //"http://lsq.aksw.org/res/q-00dc64d6", // 
+        		        //"http://lsq.aksw.org/res/q-00db8476"
+//        		        "http://lsq.aksw.org/res/q-0a3ec3ad",
+        		        
+//        		        "http://lsq.aksw.org/res/q-00ea1cb7",
+//        		        "http://lsq.aksw.org/res/q-030a1d4e",
 //        		        "http://lsq.aksw.org/res/q-00e5a47a" // { ?instance  swc:hasProgramme  ?a . ?instance rdf:type ?dClass . }
-//        		        ).contains(lsqQuery.getIri()))
+        		        ).contains(lsqQuery.getIri()))
         		.collect(Collectors.toList());
         
         //Collections.reverse(lsqQueries);
@@ -240,10 +249,11 @@ public class MainLsqQueryContainmentEvaluation {
                     Op op = e.getValue();
                     try {
                     	index.match(op);
-                    } catch(Exception ex) {
+                    } catch(Throwable ex) { // We need to catch Assertion*Error*
                     	logger.error("Failed match", ex);
-                    	sii.printTree();
-                    	Thread.sleep(5000);
+                    	siiTreeTags.printTree();
+                    	//Thread.sleep(60000);
+                    	
                     	index.match(op);
                     }
 //	        	}
