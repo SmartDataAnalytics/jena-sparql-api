@@ -201,6 +201,7 @@ public class QueryContainmentIndexImpl<K, G, N, A, V>
             
 //            System.out.println();
 //            System.out.println("Graph for " + key);
+//            System.out.println(op);
 //            System.out.println(graph);
             
             if(graph != null) {

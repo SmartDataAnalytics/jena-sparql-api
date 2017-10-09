@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
@@ -13,8 +14,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import javax.persistence.criteria.Root;
@@ -45,8 +46,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Stopwatch;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 
 public class MainLsqQueryContainmentEvaluation {
 
@@ -55,6 +54,13 @@ public class MainLsqQueryContainmentEvaluation {
 	
 	@SuppressWarnings("unchecked")
     public static void main(String[] args) throws Exception {
+		for(int i = 0; i < 1000; ++i) {
+			doRun();
+		}
+	}
+	
+    public static void doRun() throws Exception {
+	
 //        BiMap<String, String> mapA = HashBiMap.create();
 //        mapA.put("a", "b");
 //        mapA.put("b", "c");
@@ -64,7 +70,32 @@ public class MainLsqQueryContainmentEvaluation {
 //		if(true) {
 //			return;
 //		}
-		
+
+        List<Node> nodesA = Arrays.asList(
+		        "http://lsq.aksw.org/res/q-00ea1cb7",  // C
+		        "http://lsq.aksw.org/res/q-0a1604c3", // B
+		        "http://lsq.aksw.org/res/q-00dcd456", // A ?s ?p ?o
+		        "http://foobar"
+		        ).stream().map(NodeFactory::createURI).collect(Collectors.toList());
+
+        List<Node> nodesB = Arrays.asList(
+		        "http://lsq.aksw.org/res/q-00dcd456", // A ?s ?p ?o
+		        "http://lsq.aksw.org/res/q-0a1604c3", // B
+		        "http://lsq.aksw.org/res/q-00ea1cb7",  // C
+		        "http://foobar"
+		        ).stream().map(NodeFactory::createURI).collect(Collectors.toList());
+
+        List<Node> nodesC = Arrays.asList(
+		        "http://lsq.aksw.org/res/q-00d1b176",
+		        "http://lsq.aksw.org/res/q-00dcd456", // A ?s ?p ?o
+		        "http://foobar"
+		        ).stream().map(NodeFactory::createURI).collect(Collectors.toList());
+
+        
+        List<Node> filter = null;
+    	boolean shuffle = false;
+        
+    	
 		NodeMapperOpEquality nodeMapper = new NodeMapperOpEquality();
                 
         //QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, Op> indexA = QueryContainmentIndexImpl.create(nodeMapper);
@@ -122,38 +153,29 @@ public class MainLsqQueryContainmentEvaluation {
             oout.close();
         }
 
-        //lsqQueries = lsqQueries.subList(00, 9000);
+        lsqQueries = lsqQueries.subList(0, 10000);
         
         System.out.println("# queries: "+ lsqQueries.size());
 
-        Thread.sleep(1000);
+        //Thread.sleep(1000);
 
+        if(filter != null) {
+            lsqQueries = lsqQueries.stream()
+            		.filter(lsqQuery -> filter.contains(NodeFactory.createURI(lsqQuery.getIri())))
+            		.collect(Collectors.toList());        	
+        }
 
-        lsqQueries = lsqQueries.stream()
-        		//.filter(lsqQuery -> Arrays.asList("http://lsq.aksw.org/res/q-00f148fa", "http://lsq.aksw.org/res/q-00d5ab86", "http://lsq.aksw.org/res/q-00dcd456", "http://lsq.aksw.org/res/q-00d1b176").contains(lsqQuery.getIri()))
-        		//.filter(lsqQuery -> Arrays.asList(""http://lsq.aksw.org/res/q-00d5ab86", "http://lsq.aksw.org/res/q-00dcd456").contains(lsqQuery.getIri()))
-        		//.filter(lsqQuery -> Arrays.asList("http://lsq.aksw.org/res/q-00d1b176").contains(lsqQuery.getIri()))
-        		//.filter(lsqQuery -> Arrays.asList("http://lsq.aksw.org/res/q-00f148fa", "http://lsq.aksw.org/res/q-00d5ab86", "http://lsq.aksw.org/res/q-00dcd456", "http://lsq.aksw.org/res/q-00d1b176").contains(lsqQuery.getIri()))
-        		.filter(lsqQuery -> Arrays.asList(
-        		        //"http://lsq.aksw.org/res/q-00dcd456", // ?s ?p ?o
-        		        "http://lsq.aksw.org/res/q-00ea1cb7",
-        		        "http://lsq.aksw.org/res/q-00e1bc49",
-        		        "http://lsq.aksw.org/res/q-0a1604c3"
-        		        //"http://lsq.aksw.org/res/q-00d5ab86", // 0: { ?a  rdf:type  swc:TutorialEvent . ?a ?b ?c } 2: { ?c  rdf:type  ?d }
-        		        //"http://lsq.aksw.org/res/q-00d679a3",
-        		        //"http://lsq.aksw.org/res/q-00dc64d6", // 
-        		        //"http://lsq.aksw.org/res/q-00db8476"
-//        		        "http://lsq.aksw.org/res/q-0a3ec3ad",
-        		        
-//        		        "http://lsq.aksw.org/res/q-00ea1cb7",
-//        		        "http://lsq.aksw.org/res/q-030a1d4e",
-//        		        "http://lsq.aksw.org/res/q-00e5a47a" // { ?instance  swc:hasProgramme  ?a . ?instance rdf:type ?dClass . }
-        		        ).contains(lsqQuery.getIri()))
-        		.collect(Collectors.toList());
+//        lsqQueries = lsqQueries.stream()
+//        		//.filter(lsqQuery -> Arrays.asList("http://lsq.aksw.org/res/q-00f148fa", "http://lsq.aksw.org/res/q-00d5ab86", "http://lsq.aksw.org/res/q-00dcd456", "http://lsq.aksw.org/res/q-00d1b176").contains(lsqQuery.getIri()))
+//        		//.filter(lsqQuery -> Arrays.asList(""http://lsq.aksw.org/res/q-00d5ab86", "http://lsq.aksw.org/res/q-00dcd456").contains(lsqQuery.getIri()))
+//        		//.filter(lsqQuery -> Arrays.asList("http://lsq.aksw.org/res/q-00d1b176").contains(lsqQuery.getIri()))
+//        		//.filter(lsqQuery -> Arrays.asList("http://lsq.aksw.org/res/q-00f148fa", "http://lsq.aksw.org/res/q-00d5ab86", "http://lsq.aksw.org/res/q-00dcd456", "http://lsq.aksw.org/res/q-00d1b176").contains(lsqQuery.getIri()))
+//        		.filter(lsqQuery -> nodes.contains(NodeFactory.createURI(lsqQuery.getIri())))
+//        		.collect(Collectors.toList());
         
         //Collections.reverse(lsqQueries);
         
-        Map<Node, Op> ops = lsqQueries.stream()
+        Map<Node, Op> ops2 = lsqQueries.stream()
         		//.filter(lsqQuery -> Arrays.asList("http://lsq.aksw.org/res/q-00ebbf80", "http://lsq.aksw.org/res/q-00d1b176").contains(lsqQuery.getIri()))
         		.map(lsqQuery -> {
                     // TODO HACK We need to fetch the iri from the em, as the mapper currently does not support placing an entity's iri into a field
@@ -169,6 +191,9 @@ public class MainLsqQueryContainmentEvaluation {
                         //continue;
                         return null;
                     }
+                    
+                    //query.setPrefixMapping(QueryUtils.usedPrefixes(query));
+                    
                     //System.out.println("Got lsq query " + lsqQuery.getIri() + ": " + query);
                 
                     Op op = Algebra.toQuadForm(Algebra.compile(query));
@@ -179,14 +204,35 @@ public class MainLsqQueryContainmentEvaluation {
         		.collect(Collectors.toMap(Entry::getKey, Entry::getValue, (u, v) -> { throw new RuntimeException("duplicate ckey"); }, LinkedHashMap::new));
         
         //ops.put(NodeFactory.createURI("http://lsq.aksw.org/res/foobar"), ops.get(NodeFactory.createURI("http://lsq.aksw.org/res/q-00d1b176")));
-        System.out.println("Ops Size: " + ops.size());
         
         //Node criticalNode = NodeFactory.createURI("http://lsq.aksw.org/res/q-00e5a47a");
         Node criticalNode = NodeFactory.createURI("http://lsq.aksw.org/res/q-00dc64d6");
-        
+
+        Map<Node, Op> ops;
+        if(filter != null) { 
+
+	        ops = filter.stream()
+	        		.map(node -> new SimpleEntry<>(node, ops2.get(node)))
+	        		.filter(e -> e.getValue() != null)
+	        		.collect(Collectors.toMap(Entry::getKey, Entry::getValue, (u, v) -> { throw new RuntimeException("duplicate ckey"); }, LinkedHashMap::new));
+	        
+        } else {
+	        ops = ops2;
+        }
+
+        System.out.println("# ops: "+ ops.size());
+
         Op criticalOp = ops.get(criticalNode);
         
-        Iterator<Entry<Node, Op>> it = ops.entrySet().iterator();
+        List<Entry<Node, Op>> opList = new ArrayList<>(ops.entrySet());
+        
+        if(shuffle) {
+        	Collections.shuffle(opList);
+        }
+        
+        System.out.println("SHUFFLE: " + opList.stream().map(Entry::getKey).collect(Collectors.toList()));
+        
+        Iterator<Entry<Node, Op>> it = opList.iterator();
         while(it.hasNext()) {
             Entry<Node, Op> e = it.next();
 	        Node node = e.getKey();
@@ -206,10 +252,16 @@ public class MainLsqQueryContainmentEvaluation {
 	            
                 //index.put(NodeFactory.createURI(node.getURI() + "alias1"), op);
 	            index.put(node, op);
+	            
+	            //System.out.println("Current Index tree:");
+	            //siiTreeTags.printTree();
+
 	        } catch(Exception ex) {
 	            logger.warn("Failed to index: " + node + " " + op, ex);
 	            it.remove();
 	        }
+	        
+	        
 	        //index.match(criticalOp);
         	
 //        	if(node.equals(criticalNode)) {
@@ -235,7 +287,7 @@ public class MainLsqQueryContainmentEvaluation {
 //        System.out.println("XXX: " + ops.get(NodeFactory.createURI("http://lsq.aksw.org/res/q-00f148fa")));
                 	
         	
-        for(int xx = 0; xx < 2; ++xx) {
+        for(int xx = 0; xx < 1; ++xx) {
         	Stopwatch sw = Stopwatch.createStarted();
         	int seenQueryCount = 0;
 	        for(Entry<Node, Op> e : ops.entrySet()) {
@@ -255,6 +307,8 @@ public class MainLsqQueryContainmentEvaluation {
                     	//Thread.sleep(60000);
                     	
                     	index.match(op);
+                    	//throw new RuntimeException(ex);
+                    	//break;
                     }
 //	        	}
 	        	                
@@ -269,8 +323,8 @@ public class MainLsqQueryContainmentEvaluation {
         
         
         System.out.println();
-        //System.out.println("Result Index tree:");
-        //sii.printTree();
+        System.out.println("Result Index tree:");
+        siiTreeTags.printTree();
         
         //index.getIndex().printTree();
 	}
