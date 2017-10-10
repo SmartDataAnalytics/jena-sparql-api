@@ -55,7 +55,7 @@ public class MainLsqQueryContainmentEvaluation {
 	
 	@SuppressWarnings("unchecked")
     public static void main(String[] args) throws Exception {
-		int n = 1000;
+		int n = 1;
 		for(int i = 0; i < n; ++i) {
 			doRun();
 			
@@ -124,8 +124,8 @@ public class MainLsqQueryContainmentEvaluation {
 		        "http://foobar"
 		        ).stream().map(NodeFactory::createURI).collect(Collectors.toList());
         
-        List<Node> filter = nodesE;
-    	boolean shuffle = true;
+        List<Node> filter = null;//nodesE;
+    	boolean shuffle = false;
         
     	//Collections.reverse(nodesD);
     	
@@ -332,7 +332,7 @@ public class MainLsqQueryContainmentEvaluation {
         for(int xx = 0; xx < 1; ++xx) {
         	Stopwatch sw = Stopwatch.createStarted();
         	int seenQueryCount = 0;
-	        for(Entry<Node, Op> e : ops.entrySet()) {
+	        for(Entry<Node, Op> e : opList) {
 	        	
 //	        	if(Arrays.asList(criticalNode).contains(e.getKey())) {
 //	        		System.out.println("Got a specific URI: " + e.getKey());
