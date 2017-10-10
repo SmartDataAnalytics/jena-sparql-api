@@ -55,12 +55,12 @@ public class MainLsqQueryContainmentEvaluation {
 	
 	@SuppressWarnings("unchecked")
     public static void main(String[] args) throws Exception {
-		int n = 1;
+		int n = 1000;
 		for(int i = 0; i < n; ++i) {
 			doRun();
 			
 			if(i + 1 != n) {
-				Thread.sleep(3000);
+				//Thread.sleep(3000);
 			}
 		}
 	}
@@ -98,16 +98,34 @@ public class MainLsqQueryContainmentEvaluation {
 		        ).stream().map(NodeFactory::createURI).collect(Collectors.toList());
 
         //"http://lsq.aksw.org/res/q-00d1b176",
+
+// http://lsq.aksw.org/res/q-08319d47: 
+//        29 SELECT DISTINCT  ?nombre ?confec ?tema ?even
+//        		 30 WHERE
+//        		 31   { ?person  rdf:type      foaf:Person ;
+//        		 32              foaf:name     ?nombre ;
+//        		 33              foaf:page     ?page ;
+//        		 34              foaf:made     ?confec .
+//        		 35     ?confec  dc:title      ?tema ;
+//        		 36              swc:isPartOf  ?even
+//        		 37   }
+//        		 38 LIMIT   1000
         List<Node> nodesD = Arrays.asList(
 		        "http://lsq.aksw.org/res/q-08319d47",   // C { 05bb5a8c + 4 more TPs }
-		        "http://lsq.aksw.org/res/q-05bb5a8c",   // B { ?person foaf:made ?paper . ?paper dc:title ?title }
 		        "http://lsq.aksw.org/res/q-00dcd456",   // A { ?s ?p ?o }
+		        "http://lsq.aksw.org/res/q-05bb5a8c",   // B { ?person foaf:made ?paper . ?paper dc:title ?title }
 		        "http://foobar"
 		        ).stream().map(NodeFactory::createURI).collect(Collectors.toList());
 
+        List<Node> nodesE = Arrays.asList(
+		        "http://lsq.aksw.org/res/q-05bb5a8c",   // B { ?person foaf:made ?paper . ?paper dc:title ?title }
+		        "http://lsq.aksw.org/res/q-08319d47",   // C { 05bb5a8c + 4 more TPs }
+		        "http://lsq.aksw.org/res/q-00dcd456",   // A { ?s ?p ?o }
+		        "http://foobar"
+		        ).stream().map(NodeFactory::createURI).collect(Collectors.toList());
         
-        List<Node> filter = nodesD;
-    	boolean shuffle = false;
+        List<Node> filter = nodesE;
+    	boolean shuffle = true;
         
     	//Collections.reverse(nodesD);
     	
