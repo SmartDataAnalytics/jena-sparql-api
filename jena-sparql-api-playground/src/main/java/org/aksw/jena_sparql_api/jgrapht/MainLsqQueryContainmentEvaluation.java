@@ -9,12 +9,14 @@ import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -55,7 +57,7 @@ public class MainLsqQueryContainmentEvaluation {
 	
 	@SuppressWarnings("unchecked")
     public static void main(String[] args) throws Exception {
-		int n = 1;
+		int n = 1000;
 		for(int i = 0; i < n; ++i) {
 			doRun();
 			
@@ -118,14 +120,41 @@ public class MainLsqQueryContainmentEvaluation {
 		        ).stream().map(NodeFactory::createURI).collect(Collectors.toList());
 
         List<Node> nodesE = Arrays.asList(
+        		"http://lsq.aksw.org/res/q-07dd2d6f",
 		        "http://lsq.aksw.org/res/q-05bb5a8c",   // B { ?person foaf:made ?paper . ?paper dc:title ?title }
 		        "http://lsq.aksw.org/res/q-08319d47",   // C { 05bb5a8c + 4 more TPs }
 		        "http://lsq.aksw.org/res/q-00dcd456",   // A { ?s ?p ?o }
+		        "http://lsq.aksw.org/res/q-07e1980e",
+		        "http://lsq.aksw.org/res/q-02b76ce3",
+		        "http://foobar"
+		        ).stream().map(NodeFactory::createURI).collect(Collectors.toList());
+
+        List<Node> nodesF = Arrays.asList(
+		        "http://lsq.aksw.org/res/q-05bb5a8c",   // B { ?person foaf:made ?paper . ?paper dc:title ?title }
+		        "http://lsq.aksw.org/res/q-08319d47",   // C { 05bb5a8c + 4 more TPs }
+		        "http://lsq.aksw.org/res/q-00dcd456",   // A { ?s ?p ?o }
+		        "http://lsq.aksw.org/res/q-07e1980e",
+		        "http://lsq.aksw.org/res/q-02b76ce3",
+		        "http://lsq.aksw.org/res/q-07dd2d6f", // had wrong result in output
+		        "http://foobar"
+		        ).stream().map(NodeFactory::createURI).collect(Collectors.toList());
+
+        List<Node> nodesG = Arrays.asList(
+		        "http://lsq.aksw.org/res/q-0a553057",   // B { ?person foaf:made ?paper . ?paper dc:title ?title }
+		        "http://lsq.aksw.org/res/q-0a3ec3ad",
 		        "http://foobar"
 		        ).stream().map(NodeFactory::createURI).collect(Collectors.toList());
         
-        List<Node> filter = null;//nodesE;
+        Set<Node> nodesX = new HashSet<Node>();
+        nodesX.addAll(nodesA);
+        nodesX.addAll(nodesE);
+        nodesX.addAll(nodesG);
+        nodesX.addAll(nodesF);
+        
+        List<Node> filter = null; //new ArrayList<>(nodesX); //nodesF;
     	boolean shuffle = false;
+        Node criticalNode = null; //NodeFactory.createURI("http://lsq.aksw.org/res/q-07d915bc");
+
         
     	//Collections.reverse(nodesD);
     	
@@ -194,7 +223,8 @@ public class MainLsqQueryContainmentEvaluation {
             oout.close();
         }
 
-        lsqQueries = lsqQueries.subList(0, 10000);
+        //lsqQueries = lsqQueries.subList(8000, 8100);
+        lsqQueries = lsqQueries.subList(8000, 10000);
         
         System.out.println("# queries: "+ lsqQueries.size());
 
@@ -251,7 +281,6 @@ public class MainLsqQueryContainmentEvaluation {
         //ops.put(NodeFactory.createURI("http://lsq.aksw.org/res/foobar"), ops.get(NodeFactory.createURI("http://lsq.aksw.org/res/q-00d1b176")));
         
         //Node criticalNode = NodeFactory.createURI("http://lsq.aksw.org/res/q-00e5a47a");
-        Node criticalNode = NodeFactory.createURI("http://lsq.aksw.org/res/q-00dc64d6");
 
         Map<Node, Op> ops;
         if(filter != null) { 
@@ -334,7 +363,7 @@ public class MainLsqQueryContainmentEvaluation {
         	int seenQueryCount = 0;
 	        for(Entry<Node, Op> e : opList) {
 	        	
-//	        	if(Arrays.asList(criticalNode).contains(e.getKey())) {
+	        	if(criticalNode == null || Arrays.asList(criticalNode).contains(e.getKey())) {
 //	        		System.out.println("Got a specific URI: " + e.getKey());
 //                    siiA.printTree();
 
@@ -352,7 +381,7 @@ public class MainLsqQueryContainmentEvaluation {
                     	//throw new RuntimeException(ex);
                     	//break;
                     }
-//	        	}
+	        	}
 	        	                
     	        ++seenQueryCount;
     	        double elapsedSeconds = sw.elapsed(TimeUnit.MILLISECONDS) / 1000.0;

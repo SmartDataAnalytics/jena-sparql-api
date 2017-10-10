@@ -40,20 +40,20 @@ public class QueryToJenaGraph {
     public static Node TP = NodeFactory.createURI("http://ex.org/TP");
     //public static Node TP = NodeFactory.createURI("http://ex.org/TP");
 
-    public static Node g = NodeFactory.createURI("http://ex.org/g");
-    public static Node s = NodeFactory.createURI("http://ex.org/s");
-    public static Node p = NodeFactory.createURI("http://ex.org/p");
-    public static Node o = NodeFactory.createURI("http://ex.org/o");
+    public static final Node g = NodeFactory.createURI("http://ex.org/g");
+    public static final Node s = NodeFactory.createURI("http://ex.org/s");
+    public static final Node p = NodeFactory.createURI("http://ex.org/p");
+    public static final Node o = NodeFactory.createURI("http://ex.org/o");
 
-    public static Node[] gspo = {g, s, p, o};
+    public static final Node[] gspo = {g, s, p, o};
 
-    public static Node argNode = NodeFactory.createURI("arg://unordered"); // unordered argument
+    public static final Node argNode = NodeFactory.createURI("arg://unordered"); // unordered argument
 
-    public static Node cm = NodeFactory.createURI("http://ex.org/cm"); // conjunction member
-    public static Node dm = NodeFactory.createURI("http://ex.org/dm"); // disjunction member
+    public static final Node cm = NodeFactory.createURI("http://ex.org/cm"); // conjunction member
+    public static final Node dm = NodeFactory.createURI("http://ex.org/dm"); // disjunction member
 
-    public static Node ev = NodeFactory.createURI("http://ex.org/ea"); // equality var argument
-    public static Node ec = NodeFactory.createURI("http://ex.org/ea"); // equality const argument
+    public static final Node ev = NodeFactory.createURI("http://ex.org/ea"); // equality var argument
+    public static final Node ec = NodeFactory.createURI("http://ex.org/ea"); // equality const argument
 
 
     //public static unionToGraph(DirectedGraph<Node, LabeledEdge<Node, Node>>)
@@ -66,8 +66,8 @@ public class QueryToJenaGraph {
         // Allocate a fresh node for the quad
         Node quadNode = nodeSupplier.get();
 
-        g = quad.getGraph();
-        if(!Quad.defaultGraphIRI.equals(g) && !Quad.defaultGraphNodeGenerated.equals(g)) {
+        Node gg = quad.getGraph();
+        if(!Quad.defaultGraphIRI.equals(gg) && !Quad.defaultGraphNodeGenerated.equals(gg)) {
             addEdge(graph, quadNode, g, quad.getGraph());
         }
         addEdge(graph, quadNode, s, quad.getSubject());
