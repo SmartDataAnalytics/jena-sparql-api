@@ -57,7 +57,7 @@ public class MainLsqQueryContainmentEvaluation {
 	
 	@SuppressWarnings("unchecked")
     public static void main(String[] args) throws Exception {
-		int n = 1000;
+		int n = 1;
 		for(int i = 0; i < n; ++i) {
 			doRun();
 			
@@ -145,15 +145,52 @@ public class MainLsqQueryContainmentEvaluation {
 		        "http://foobar"
 		        ).stream().map(NodeFactory::createURI).collect(Collectors.toList());
         
+        List<Node> nodesH = Arrays.asList(
+                "http://lsq.aksw.org/res/q-1f7e2778",
+                "http://lsq.aksw.org/res/q-1cc48e1a", 
+                "http://foobar"
+            ).stream().map(NodeFactory::createURI).collect(Collectors.toList());
+        List<Node> nodesY = Arrays.asList(
+                "http://lsq.aksw.org/res/q-1f7e2778", 
+                "http://lsq.aksw.org/res/q-1cb02a53", 
+                "http://lsq.aksw.org/res/q-1a9649ac", 
+                "http://lsq.aksw.org/res/q-1f3e6981", 
+                "http://lsq.aksw.org/res/q-219e9dfd", 
+                "http://lsq.aksw.org/res/q-21928849", 
+                "http://lsq.aksw.org/res/q-215099fb", 
+                "http://lsq.aksw.org/res/q-1d26f81c", 
+                "http://lsq.aksw.org/res/q-21a0a856", 
+                "http://lsq.aksw.org/res/q-1cb3555d", 
+                "http://lsq.aksw.org/res/q-21582481", 
+                "http://lsq.aksw.org/res/q-1ee03b8c", 
+                "http://lsq.aksw.org/res/q-2167d571", 
+                "http://lsq.aksw.org/res/q-1c2ca6b6", 
+                "http://lsq.aksw.org/res/q-21587b79", 
+                "http://lsq.aksw.org/res/q-1ed4652e", 
+                "http://lsq.aksw.org/res/q-1cf9c6c1", 
+                "http://lsq.aksw.org/res/q-1cdca5ea", 
+                "http://lsq.aksw.org/res/q-1fb633fc", 
+                "http://lsq.aksw.org/res/q-2199136d", 
+                "http://lsq.aksw.org/res/q-1f147eba", 
+                "http://lsq.aksw.org/res/q-1f1b73fc", 
+                "http://lsq.aksw.org/res/q-1f5daf7c", 
+                "http://lsq.aksw.org/res/q-1cc48e1a", 
+//              "http://lsq.aksw.org/res/q-1ee03b8c", 
+//                "http://lsq.aksw.org/res/q-1f8f40ce", 
+//                "http://lsq.aksw.org/res/q-1c5e53d2", 
+                "http://foobar"
+            ).stream().map(NodeFactory::createURI).collect(Collectors.toList());
+         
+        
         Set<Node> nodesX = new HashSet<Node>();
-        nodesX.addAll(nodesA);
-        nodesX.addAll(nodesE);
-        nodesX.addAll(nodesG);
-        nodesX.addAll(nodesF);
+        nodesX.addAll(nodesY);
+//        nodesX.addAll(nodesE);
+//        nodesX.addAll(nodesG);
+//        nodesX.addAll(nodesF);
         
         List<Node> filter = null; //new ArrayList<>(nodesX); //nodesF;
     	boolean shuffle = false;
-        Node criticalNode = null; //NodeFactory.createURI("http://lsq.aksw.org/res/q-07d915bc");
+        Node criticalNode = null; //NodeFactory.createURI("http://lsq.aksw.org/res/q-1cc48e1a");
 
         
     	//Collections.reverse(nodesD);
@@ -195,7 +232,7 @@ public class MainLsqQueryContainmentEvaluation {
         List<LsqQuery> lsqQueries;
 
         int offset = 0;
-        int limit = 10000;
+        int limit = 30000;
         
         File qFile = new File("/tmp/queries-" + offset + "-" + limit + ".dat");
 
@@ -223,8 +260,9 @@ public class MainLsqQueryContainmentEvaluation {
             oout.close();
         }
 
+        //lsqQueries = lsqQueries.subList(0, 1000);
         //lsqQueries = lsqQueries.subList(8000, 8100);
-        lsqQueries = lsqQueries.subList(8000, 10000);
+        lsqQueries = lsqQueries.subList(0, 30000);
         
         System.out.println("# queries: "+ lsqQueries.size());
 
@@ -304,6 +342,7 @@ public class MainLsqQueryContainmentEvaluation {
 //        System.out.println("SHUFFLE: " + opList.stream().map(Entry::getKey).collect(Collectors.toList()));
         
         Iterator<Entry<Node, Op>> it = opList.iterator();
+        int indexCounter = 0;
         while(it.hasNext()) {
             Entry<Node, Op> e = it.next();
 	        Node node = e.getKey();
@@ -315,7 +354,7 @@ public class MainLsqQueryContainmentEvaluation {
 //
 	        
 	        try {
-	            logger.debug("Indexing: " + node);
+	            logger.debug("Indexing [" + ++indexCounter + "]: " + node);
 	            
 	            if(node.equals(criticalNode)) {
 	                System.out.println("Indexing ");
