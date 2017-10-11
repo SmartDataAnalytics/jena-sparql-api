@@ -57,9 +57,53 @@ public class MainLsqQueryContainmentEvaluation {
 	
 	@SuppressWarnings("unchecked")
     public static void main(String[] args) throws Exception {
-		int n = 1;
+
+        SparqlEntityManagerFactory emf = new SparqlEntityManagerFactory();
+        //Model model = RDFDataMgr.loadModel("lsq-sparqlqc-synthetic-simple.ttl", Lang.TURTLE);
+        //SparqlService ss = FluentSparqlService.from(model).create();
+        SparqlService ss = FluentSparqlService.http("http://localhost:8950/sparql").create();
+        //SparqlService ss = FluentSparqlService.http("http://lsq.aksw.org/sparql").create();
+
+        emf.setSparqlService(ss);
+        emf.addScanPackageName(MainSparqlQueryToGraph.class.getPackage().getName());
+        RdfEntityManager em = emf.getObject();
+
+        List<LsqQuery> lsqQueries;
+
+        int offset = 0;
+        int limit = 30000;
+        
+        File qFile = new File("/tmp/queries-" + offset + "-" + limit + ".dat");
+
+        if(qFile.exists()) {
+            try(ObjectInputStream in = new ObjectInputStream(new FileInputStream(qFile))) {
+                lsqQueries = (List<LsqQuery>)in.readObject();
+            }
+        } else {
+            lsqQueries = JpaUtils.createTypedQuery(em, LsqQuery.class, (cb, cq) -> {
+                Root<LsqQuery> root = cq.from(LsqQuery.class);
+                cq.select(root);
+            }).setFirstResult(offset).setMaxResults(limit).getResultList();
+    
+            
+            // hack; should be done by the framework
+            lsqQueries = Lists.newArrayList(lsqQueries);
+            for(LsqQuery q : lsqQueries) {
+                String id = em.getIri(q);
+                q.setIri(id);
+            }
+            
+            ObjectOutputStream oout = new ObjectOutputStream(new FileOutputStream(qFile));
+            oout.writeObject(lsqQueries);
+            oout.flush();
+            oout.close();
+        }
+	    
+	    
+	    
+		int n = 1000;
 		for(int i = 0; i < n; ++i) {
-			doRun();
+			doRun(lsqQueries);
 			
 			if(i + 1 != n) {
 				//Thread.sleep(3000);
@@ -67,7 +111,7 @@ public class MainLsqQueryContainmentEvaluation {
 		}
 	}
 	
-    public static void doRun() throws Exception {
+    public static void doRun(List<LsqQuery> lsqQueries) throws Exception {
 	
 //        BiMap<String, String> mapA = HashBiMap.create();
 //        mapA.put("a", "b");
@@ -180,16 +224,208 @@ public class MainLsqQueryContainmentEvaluation {
 //                "http://lsq.aksw.org/res/q-1c5e53d2", 
                 "http://foobar"
             ).stream().map(NodeFactory::createURI).collect(Collectors.toList());
-         
+
+        List<Node> nodesZ = Arrays.asList(
+"http://lsq.aksw.org/res/q-01a34de1", 
+"http://lsq.aksw.org/res/q-02f0c3d7", 
+"http://lsq.aksw.org/res/q-1542fa51", 
+"http://lsq.aksw.org/res/q-12b1169e", 
+"http://lsq.aksw.org/res/q-1542fa51", 
+"http://lsq.aksw.org/res/q-1cb02a53", 
+"http://lsq.aksw.org/res/q-0a71648b", 
+"http://lsq.aksw.org/res/q-0d9f0243", 
+"http://lsq.aksw.org/res/q-21928849", 
+"http://lsq.aksw.org/res/q-0cd88027", 
+"http://lsq.aksw.org/res/q-0a696fe5", 
+"http://lsq.aksw.org/res/q-00d5ab86", 
+"http://lsq.aksw.org/res/q-1754371d", 
+"http://lsq.aksw.org/res/q-010162bb", 
+"http://lsq.aksw.org/res/q-174465fd", 
+"http://lsq.aksw.org/res/q-080bb526", 
+"http://lsq.aksw.org/res/q-21a0a856", 
+"http://lsq.aksw.org/res/q-0da4b853", 
+"http://lsq.aksw.org/res/q-08356904", 
+"http://lsq.aksw.org/res/q-08356904", 
+"http://lsq.aksw.org/res/q-0f7034af", 
+"http://lsq.aksw.org/res/q-12199024", 
+"http://lsq.aksw.org/res/q-12199024", 
+"http://lsq.aksw.org/res/q-1ee03b8c", 
+"http://lsq.aksw.org/res/q-1ee03b8c", 
+"http://lsq.aksw.org/res/q-11202793", 
+"http://lsq.aksw.org/res/q-0a1c0f8f", 
+"http://lsq.aksw.org/res/q-07d50c32", 
+"http://lsq.aksw.org/res/q-0569e351", 
+"http://lsq.aksw.org/res/q-1cdca5ea", 
+"http://lsq.aksw.org/res/q-0a763963", 
+"http://lsq.aksw.org/res/q-0790fbb5", 
+"http://lsq.aksw.org/res/q-05e5a05c", 
+"http://lsq.aksw.org/res/q-11e008fa", 
+"http://lsq.aksw.org/res/q-079b2194", 
+"http://lsq.aksw.org/res/q-14fdf694", 
+"http://lsq.aksw.org/res/q-1f8f40ce", 
+"http://lsq.aksw.org/res/q-02d86ac1", 
+"http://lsq.aksw.org/res/q-0fb1cf93", 
+"http://lsq.aksw.org/res/q-00f8ee20", 
+"http://lsq.aksw.org/res/q-07c8aab2", 
+"http://lsq.aksw.org/res/q-00f148fa", 
+"http://lsq.aksw.org/res/q-02adf4b1", 
+"http://lsq.aksw.org/res/q-14d67ede", 
+"http://lsq.aksw.org/res/q-020d7175", 
+"http://lsq.aksw.org/res/q-1a2aad83", 
+"http://lsq.aksw.org/res/q-0ab566e6", 
+"http://lsq.aksw.org/res/q-00dcd456", 
+"http://lsq.aksw.org/res/q-1a183566", 
+"http://lsq.aksw.org/res/q-01d133fa", 
+"http://lsq.aksw.org/res/q-1cc48e1a", 
+"http://lsq.aksw.org/res/q-1f3e6981", 
+"http://lsq.aksw.org/res/q-219e9dfd", 
+"http://lsq.aksw.org/res/q-1a4d9ad2", 
+"http://lsq.aksw.org/res/q-0af14c34", 
+"http://lsq.aksw.org/res/q-12327a61", 
+"http://lsq.aksw.org/res/q-123de850", 
+"http://lsq.aksw.org/res/q-1a8b0b01", 
+"http://lsq.aksw.org/res/q-02315601", 
+"http://lsq.aksw.org/res/q-1a72a026", 
+"http://lsq.aksw.org/res/q-02f54dfa", 
+"http://lsq.aksw.org/res/q-0fa8db3b", 
+"http://lsq.aksw.org/res/q-02315601", 
+"http://lsq.aksw.org/res/q-1cd2a277", 
+"http://lsq.aksw.org/res/q-19ab9b8b", 
+"http://lsq.aksw.org/res/q-1776a369", 
+"http://lsq.aksw.org/res/q-0a5eecac", 
+"http://lsq.aksw.org/res/q-19e81324", 
+"http://lsq.aksw.org/res/q-21582481", 
+"http://lsq.aksw.org/res/q-01923335", 
+"http://lsq.aksw.org/res/q-0d78e814", 
+"http://lsq.aksw.org/res/q-15321a3e", 
+"http://lsq.aksw.org/res/q-19dd80e1", 
+"http://lsq.aksw.org/res/q-11a43795", 
+"http://lsq.aksw.org/res/q-21587b79", 
+"http://lsq.aksw.org/res/q-1c2ca6b6", 
+"http://lsq.aksw.org/res/q-1ed4652e", 
+"http://lsq.aksw.org/res/q-0d7b6130", 
+"http://lsq.aksw.org/res/q-0a741431", 
+"http://lsq.aksw.org/res/q-086f78bd", 
+"http://lsq.aksw.org/res/q-147b92be", 
+"http://lsq.aksw.org/res/q-147b92be", 
+"http://lsq.aksw.org/res/q-148da8c1", 
+"http://lsq.aksw.org/res/q-12298a9a", 
+"http://lsq.aksw.org/res/q-12d10d80", 
+"http://lsq.aksw.org/res/q-0d7b6130", 
+"http://lsq.aksw.org/res/q-12298a9a", 
+"http://lsq.aksw.org/res/q-1f147eba", 
+"http://lsq.aksw.org/res/q-0575fd2b", 
+"http://lsq.aksw.org/res/q-054a1247", 
+"http://lsq.aksw.org/res/q-1f5daf7c", 
+"http://lsq.aksw.org/res/q-1edbcfdd", 
+"http://lsq.aksw.org/res/q-030c36b8", 
+"http://lsq.aksw.org/res/q-19ba0ec5", 
+"http://lsq.aksw.org/res/q-02918d28", 
+"http://lsq.aksw.org/res/q-14c796ed", 
+"http://lsq.aksw.org/res/q-11fd9147", 
+"http://lsq.aksw.org/res/q-054b7b9c", 
+"http://lsq.aksw.org/res/q-054b7b9c", 
+"http://lsq.aksw.org/res/q-0170fb32", 
+"http://lsq.aksw.org/res/q-0d2cd9be", 
+"http://lsq.aksw.org/res/q-0a3355ff", 
+"http://lsq.aksw.org/res/q-115fc1dd", 
+"http://lsq.aksw.org/res/q-0a9f338b", 
+"http://lsq.aksw.org/res/q-17a074e9", 
+"http://lsq.aksw.org/res/q-17267dc9", 
+"http://lsq.aksw.org/res/q-12bc14cd", 
+"http://lsq.aksw.org/res/q-11c1ddef", 
+"http://lsq.aksw.org/res/q-11a160b2", 
+"http://lsq.aksw.org/res/q-17f2a865", 
+"http://lsq.aksw.org/res/q-11de2a8a", 
+"http://lsq.aksw.org/res/q-081ae29d", 
+"http://lsq.aksw.org/res/q-08105bc3", 
+"http://lsq.aksw.org/res/q-1d26f81c", 
+"http://lsq.aksw.org/res/q-0a6ecbd0", 
+"http://lsq.aksw.org/res/q-115c3b05", 
+"http://lsq.aksw.org/res/q-0fd1e2ec", 
+"http://lsq.aksw.org/res/q-2167d571", 
+"http://lsq.aksw.org/res/q-11767874", 
+"http://lsq.aksw.org/res/q-123028d6", 
+"http://lsq.aksw.org/res/q-02d1bd69", 
+"http://lsq.aksw.org/res/q-0a2ae7ee", 
+"http://lsq.aksw.org/res/q-07ef75ef", 
+"http://lsq.aksw.org/res/q-0a2ae7ee", 
+"http://lsq.aksw.org/res/q-0118ea9f", 
+"http://lsq.aksw.org/res/q-14c14d6d", 
+"http://lsq.aksw.org/res/q-11f05e0a", 
+"http://lsq.aksw.org/res/q-1f1b73fc", 
+"http://lsq.aksw.org/res/q-12abf2b0", 
+"http://lsq.aksw.org/res/q-01aadfa3", 
+"http://lsq.aksw.org/res/q-1a488197", 
+"http://lsq.aksw.org/res/q-0fc60c0a", 
+"http://lsq.aksw.org/res/q-0d0c9ef9", 
+"http://lsq.aksw.org/res/q-0fb45505", 
+"http://lsq.aksw.org/res/q-1531be3f", 
+"http://lsq.aksw.org/res/q-11988af7", 
+"http://lsq.aksw.org/res/q-129355cf", 
+"http://lsq.aksw.org/res/q-0fe4c85b", 
+"http://lsq.aksw.org/res/q-07eba3e9", 
+"http://lsq.aksw.org/res/q-013dd9ba", 
+"http://lsq.aksw.org/res/q-1f7e2778", 
+"http://lsq.aksw.org/res/q-129d4e8b", 
+"http://lsq.aksw.org/res/q-08237184", 
+"http://lsq.aksw.org/res/q-011578c8", 
+"http://lsq.aksw.org/res/q-024c7959", 
+"http://lsq.aksw.org/res/q-02c8874a", 
+"http://lsq.aksw.org/res/q-02c64fbf", 
+"http://lsq.aksw.org/res/q-215099fb", 
+"http://lsq.aksw.org/res/q-0ade4cb9", 
+"http://lsq.aksw.org/res/q-07dc0d33", 
+"http://lsq.aksw.org/res/q-1cb3555d", 
+"http://lsq.aksw.org/res/q-0cedd37c", 
+"http://lsq.aksw.org/res/q-1045f148", 
+"http://lsq.aksw.org/res/q-0cedd37c", 
+"http://lsq.aksw.org/res/q-1045f148", 
+"http://lsq.aksw.org/res/q-10041501", 
+"http://lsq.aksw.org/res/q-0acbee2d", 
+"http://lsq.aksw.org/res/q-0fd5e688", 
+"http://lsq.aksw.org/res/q-17c60ddc", 
+"http://lsq.aksw.org/res/q-01157e1c", 
+"http://lsq.aksw.org/res/q-0cb6747e", 
+"http://lsq.aksw.org/res/q-011fb6d0", 
+"http://lsq.aksw.org/res/q-0f7bd7b6", 
+"http://lsq.aksw.org/res/q-1254e631", 
+"http://lsq.aksw.org/res/q-11fcead0", 
+"http://lsq.aksw.org/res/q-07df7392", 
+"http://lsq.aksw.org/res/q-1cf9c6c1", 
+"http://lsq.aksw.org/res/q-05216d11", 
+"http://lsq.aksw.org/res/q-0ab6b994", 
+"http://lsq.aksw.org/res/q-150fb1a0", 
+"http://lsq.aksw.org/res/q-1fb633fc", 
+"http://lsq.aksw.org/res/q-150fb1a0", 
+"http://lsq.aksw.org/res/q-031f73bc", 
+"http://lsq.aksw.org/res/q-2199136d", 
+"http://lsq.aksw.org/res/q-0260f440", 
+"http://lsq.aksw.org/res/q-0260f440", 
+"http://lsq.aksw.org/res/q-0d5b6dd8", 
+"http://lsq.aksw.org/res/q-1214800d", 
+"http://lsq.aksw.org/res/q-12108897", 
+"http://lsq.aksw.org/res/q-1480df3b", 
+"http://lsq.aksw.org/res/q-121462cd", 
+"http://lsq.aksw.org/res/q-0a34baa3", 
+"http://lsq.aksw.org/res/q-1c5e53d2", 
+"http://lsq.aksw.org/res/q-11551f6e", 
+"http://lsq.aksw.org/res/q-19ee74be", 
+"http://lsq.aksw.org/res/q-17de8414", 
+"http://lsq.aksw.org/res/q-07e9506e", 
+"http://lsq.aksw.org/res/q-0a9f78b5", 
+"http://lsq.aksw.org/res/q-05e0acfb", 
+"foobar"
+).stream().map(NodeFactory::createURI).collect(Collectors.toList());
         
         Set<Node> nodesX = new HashSet<Node>();
-        nodesX.addAll(nodesY);
+        nodesX.addAll(nodesZ);
 //        nodesX.addAll(nodesE);
 //        nodesX.addAll(nodesG);
 //        nodesX.addAll(nodesF);
         
-        List<Node> filter = null; //new ArrayList<>(nodesX); //nodesF;
-    	boolean shuffle = false;
+        List<Node> filter = new ArrayList<>(nodesX); //nodesF;
+    	boolean shuffle = true;
         Node criticalNode = null; //NodeFactory.createURI("http://lsq.aksw.org/res/q-1cc48e1a");
 
         
@@ -219,49 +455,9 @@ public class MainLsqQueryContainmentEvaluation {
                
         //QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, Op> index = ValidationUtils.createValidatingProxy(QueryContainmentIndex.class, indexA, indexB);
         
-        SparqlEntityManagerFactory emf = new SparqlEntityManagerFactory();
-        //Model model = RDFDataMgr.loadModel("lsq-sparqlqc-synthetic-simple.ttl", Lang.TURTLE);
-        //SparqlService ss = FluentSparqlService.from(model).create();
-        SparqlService ss = FluentSparqlService.http("http://localhost:8950/sparql").create();
-        //SparqlService ss = FluentSparqlService.http("http://lsq.aksw.org/sparql").create();
-
-        emf.setSparqlService(ss);
-        emf.addScanPackageName(MainSparqlQueryToGraph.class.getPackage().getName());
-        RdfEntityManager em = emf.getObject();
-
-        List<LsqQuery> lsqQueries;
-
-        int offset = 0;
-        int limit = 30000;
-        
-        File qFile = new File("/tmp/queries-" + offset + "-" + limit + ".dat");
-
-        if(qFile.exists()) {
-            try(ObjectInputStream in = new ObjectInputStream(new FileInputStream(qFile))) {
-                lsqQueries = (List<LsqQuery>)in.readObject();
-            }
-        } else {
-            lsqQueries = JpaUtils.createTypedQuery(em, LsqQuery.class, (cb, cq) -> {
-                Root<LsqQuery> root = cq.from(LsqQuery.class);
-                cq.select(root);
-            }).setFirstResult(offset).setMaxResults(limit).getResultList();
-    
-            
-            // hack; should be done by the framework
-            lsqQueries = Lists.newArrayList(lsqQueries);
-            for(LsqQuery q : lsqQueries) {
-                String id = em.getIri(q);
-                q.setIri(id);
-            }
-            
-            ObjectOutputStream oout = new ObjectOutputStream(new FileOutputStream(qFile));
-            oout.writeObject(lsqQueries);
-            oout.flush();
-            oout.close();
-        }
-
         //lsqQueries = lsqQueries.subList(0, 1000);
         //lsqQueries = lsqQueries.subList(8000, 8100);
+        //lsqQueries = lsqQueries.subList(15000, 20000);
         lsqQueries = lsqQueries.subList(0, 30000);
         
         System.out.println("# queries: "+ lsqQueries.size());
@@ -425,7 +621,7 @@ public class MainLsqQueryContainmentEvaluation {
     	        ++seenQueryCount;
     	        double elapsedSeconds = sw.elapsed(TimeUnit.MILLISECONDS) / 1000.0;
     	        double rateInSeconds = elapsedSeconds / (double)seenQueryCount;
-    	        System.out.println("Rate: " + rateInSeconds);
+    	        System.out.println("Rate [after " + seenQueryCount + " queries]: " + rateInSeconds);
 		  	}
 	        
 	        System.out.println("Time taken: " + sw.stop().elapsed(TimeUnit.MILLISECONDS));	        
