@@ -449,7 +449,7 @@ public class MainLsqQueryContainmentEvaluation {
         SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> siiTagBased = SubgraphIsomorphismIndexJena.createTagBased(new TagMapSetTrie<>(NodeUtils::compareRDFTerms));
 
         SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> siiValidating = ValidationUtils.createValidatingProxy(SubgraphIsomorphismIndex.class, siiTreeTags, siiTagBased);
-        SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> sii = siiValidating;
+        SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> sii = siiTreeTags;//siiValidating;
         
         QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, Op> index = QueryContainmentIndexImpl.create(sii, nodeMapper);
                
@@ -458,7 +458,7 @@ public class MainLsqQueryContainmentEvaluation {
         //lsqQueries = lsqQueries.subList(0, 1000);
         //lsqQueries = lsqQueries.subList(8000, 8100);
         //lsqQueries = lsqQueries.subList(15000, 20000);
-        lsqQueries = lsqQueries.subList(0, 30000);
+        lsqQueries = lsqQueries.subList(20000, 30000);
         
         System.out.println("# queries: "+ lsqQueries.size());
 
