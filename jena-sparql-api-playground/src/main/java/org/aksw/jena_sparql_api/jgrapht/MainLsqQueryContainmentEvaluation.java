@@ -426,7 +426,7 @@ public class MainLsqQueryContainmentEvaluation {
         
         List<Node> filter = new ArrayList<>(nodesX); //nodesF;
     	boolean shuffle = true;
-        Node criticalNode = null; //NodeFactory.createURI("http://lsq.aksw.org/res/q-1cc48e1a");
+        Node criticalNode = NodeFactory.createURI("http://lsq.aksw.org/res/q-08237184");
 
         
     	//Collections.reverse(nodesD);
