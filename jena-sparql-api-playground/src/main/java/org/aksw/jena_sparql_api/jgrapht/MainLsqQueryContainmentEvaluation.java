@@ -101,7 +101,7 @@ public class MainLsqQueryContainmentEvaluation {
 	    
 	    
 	    
-		int n = 1000;
+		int n = 1;
 		for(int i = 0; i < n; ++i) {
 			doRun(lsqQueries);
 			
@@ -424,9 +424,9 @@ public class MainLsqQueryContainmentEvaluation {
 //        nodesX.addAll(nodesG);
 //        nodesX.addAll(nodesF);
         
-        List<Node> filter = new ArrayList<>(nodesX); //nodesF;
-    	boolean shuffle = true;
-        Node criticalNode = NodeFactory.createURI("http://lsq.aksw.org/res/q-08237184");
+        List<Node> filter = null; //new ArrayList<>(nodesX); //nodesF;
+    	boolean shuffle = false;
+        Node criticalNode = null; //NodeFactory.createURI("http://lsq.aksw.org/res/q-08237184");
 
         
     	//Collections.reverse(nodesD);
