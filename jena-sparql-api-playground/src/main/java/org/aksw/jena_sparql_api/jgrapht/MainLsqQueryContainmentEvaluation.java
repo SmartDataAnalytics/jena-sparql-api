@@ -472,7 +472,7 @@ public class MainLsqQueryContainmentEvaluation {
                
         //QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, Op> index = ValidationUtils.createValidatingProxy(QueryContainmentIndex.class, indexA, indexB);
         
-        lsqQueries = lsqQueries.subList(0, 10000);
+        //lsqQueries = lsqQueries.subList(0, 10000);
         //lsqQueries = lsqQueries.subList(8000, 8100);
         //lsqQueries = lsqQueries.subList(15000, 20000);
         //lsqQueries = lsqQueries.subList(20000, 30000);
@@ -671,9 +671,9 @@ public class MainLsqQueryContainmentEvaluation {
                     	//break;
                     }
 
-	               	 if(matches.isEmpty()) {
-	            		 throw new RuntimeException("failed");
-	            	 }
+//	               	 if(matches.isEmpty()) {
+//	            		 throw new RuntimeException("failed");
+//	            	 }
 	               	 	               	 
 	               	 // Find identity mapping:
 	            	 //TreeMapping<Op, Op, BiMap<Node, Node>, Op> treeMap = matches.get(key).stream().filter(tm -> tm.getOverallMatching().isEmpty()).findFirst().orElse(null);
@@ -693,7 +693,7 @@ public class MainLsqQueryContainmentEvaluation {
 	               	.map(jj -> jj.getKey()).collect(Collectors.toSet());
 	               	if(isomorphicKeys.size() > 1) { 
 	               		System.out.println(key + " is isomorphic to: " + isomorphicKeys);
-	               		Thread.sleep(10000);
+	               		//Thread.sleep(10000);
 	               	}
 
                     

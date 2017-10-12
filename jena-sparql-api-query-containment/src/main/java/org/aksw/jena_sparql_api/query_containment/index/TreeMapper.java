@@ -117,7 +117,7 @@ public class TreeMapper<K, A, B, M, C, V> {
         Stream<Entry<K, TreeMapping<A, B, M, V>>> result = leafMappingPerView.entrySet().stream()
             .flatMap(e -> {
                 K viewKey = e.getKey();
-                logger.debug("Processing view with key: " + viewKey);
+                //logger.debug("Processing view with key: " + viewKey);
 
                 Tree<A> viewTree = viewKeyToTree.apply(viewKey);
 
@@ -190,6 +190,10 @@ public class TreeMapper<K, A, B, M, C, V> {
 
                     }
 
+                    // TODO Based on the parent alignment, we could use different strategies to match the children
+                    // e.g. sequential
+                    
+                    
                     Stream<Map<A, B>> t = KPermutationsOfNUtils.kPermutationsOfN(childCandAlignment, aIdentity, bIdentity);
 
                     return t;

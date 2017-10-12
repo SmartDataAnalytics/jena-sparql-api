@@ -229,6 +229,7 @@ public class QueryContainmentIndexImpl<K, G, N, A, V>
         if(graph == null) {
         	// TODO Maybe we should raise an exception here
         	logger.warn("Graph was null for node: " + leaf);
+        	//throw new RuntimeException("Graph was null for node: " + leaf);
         } else {
 	        Multimap<Entry<K, Long>, BiMap<N, N>> matches = index.lookupX(graph, false);
 	

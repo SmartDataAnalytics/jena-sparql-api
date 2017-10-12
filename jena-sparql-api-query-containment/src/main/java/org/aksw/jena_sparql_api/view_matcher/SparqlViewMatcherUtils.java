@@ -24,6 +24,7 @@ import org.aksw.commons.collections.stacks.NestedStack;
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeUtils;
 import org.aksw.commons.collections.utils.StreamUtils;
+import org.aksw.commons.graph.index.jena.transform.OpDistinctExtendFilter;
 import org.aksw.jena_sparql_api.algebra.utils.AlgebraUtils;
 import org.aksw.jena_sparql_api.algebra.utils.ConjunctiveQuery;
 import org.aksw.jena_sparql_api.algebra.utils.OpExtConjunctiveQuery;
@@ -363,7 +364,7 @@ public class SparqlViewMatcherUtils {
             map.put(OpExtend.class, GenericBinaryOpImpl.create(SparqlViewMatcherUtils::deriveProblemsExtend));
 
             map.put(OpExtConjunctiveQuery.class, GenericBinaryOpImpl.create(SparqlViewMatcherUtils::deriveProblemsOpCq));
-
+            map.put(OpDistinctExtendFilter.class, (x, y) -> Collections.emptySet());
 
             map.put(OpLeftJoin.class, (x, y) -> Collections.emptySet());
 

@@ -814,9 +814,9 @@ public class AlgebraUtils {
     public static IBiSetMultimap<Quad, Set<Set<Expr>>> createMapQuadsToFilters(QuadFilterPatternCanonical qfpc) {
         Set<Quad> quads = qfpc.getQuads();
         Set<Set<Expr>> filterDnf = qfpc.getFilterDnf();
-//        if(filterCnf == null) {
-//            filterCnf = Collections.singleton(Collections.emptySet());
-//        }
+        if(filterDnf == null) {
+            filterDnf = Collections.singleton(Collections.emptySet());
+        }
 
         IBiSetMultimap<Quad, Set<Set<Expr>>> result = createMapQuadsToFilters(quads, filterDnf);
         return result;
@@ -987,13 +987,14 @@ public class AlgebraUtils {
 
 
     public static FeatureMap<Expr, Multimap<Expr, Expr>> indexDnf(Set<Set<Expr>> dnf) {
-//        if(dnf == null) {
-//            // A disjunction containing an empty conjunction (latter is generally treated as true - if i'm not mistaken)
-//            dnf = Collections.singleton(Collections.emptySet());
-//            //dnf = Collections.emptySet();
-//        }
+        if(dnf == null) {
+            // A disjunction containing an empty conjunction (latter is generally treated as true - if i'm not mistaken)
+            dnf = Collections.singleton(Collections.emptySet());
+            //dnf = Collections.emptySet();
+        }
 
         FeatureMap<Expr, Multimap<Expr, Expr>> result = new FeatureMapImpl<>();
+
         for(Set<Expr> clause : dnf) {
             Multimap<Expr, Expr> exprSigToExpr = HashMultimap.create();
             Set<Expr> clauseSig = new HashSet<>();

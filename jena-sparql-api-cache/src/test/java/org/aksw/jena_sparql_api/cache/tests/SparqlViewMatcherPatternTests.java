@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 
 
 //@FixMethodOrder
-@Ignore
+//@Ignore
 @RunWith(Parameterized.class)
 public class SparqlViewMatcherPatternTests {
 

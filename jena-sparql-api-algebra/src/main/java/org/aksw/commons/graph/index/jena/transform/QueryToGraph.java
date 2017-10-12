@@ -68,7 +68,7 @@ public class QueryToGraph {
         Generator<Var> generatorCache = VarGeneratorImpl2.create();
         //op = OpUtils.substitute(op, false, (o) -> SparqlCacheUtils.tryCreateCqfp(o, generatorCache));
         op = OpUtils.substitute(op, false, (o) -> AlgebraUtils.tryCreateCqfp(o, generatorCache));
-        op = Transformer.transform(new OpTransformNormalizeUnaryOps(), op);
+        //op = Transformer.transform(new OpTransformNormalizeUnaryOps(), op);
 
         return op;
     }

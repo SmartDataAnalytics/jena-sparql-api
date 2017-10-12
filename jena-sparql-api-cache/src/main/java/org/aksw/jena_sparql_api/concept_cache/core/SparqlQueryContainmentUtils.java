@@ -111,7 +111,11 @@ public class SparqlQueryContainmentUtils {
             BiFunction<QuadFilterPatternCanonical, QuadFilterPatternCanonical, Stream<Map<Var, Var>>> qfpcMatcher) {
         // Op maps without var maps do not count
         boolean result = match(viewQuery, userQuery, qfpcMatcher)
-                .filter(opVarMap -> opVarMap.getVarMaps().iterator().hasNext())
+                .filter(opVarMap -> {
+                	Iterable<Map<Var, Var>> varMaps = opVarMap.getVarMaps();
+                	boolean r = varMaps.iterator().hasNext();
+                	return r;
+                })
                 .count() > 0;
         return result;
     }
@@ -222,7 +226,10 @@ public class SparqlQueryContainmentUtils {
 
                 Iterable<Map<Var, Var>> varMap = () -> StreamUtils.stream(varOpMap.getVarMaps())
                         //.filter(vm -> SparqlViewMatcherProjectionUtils.validateProjection(viewVarInfo, userVarUsage, vm))
-                        .filter(vm -> SparqlViewMatcherProjectionUtils.validateProjection(viewVarInfo, userVarInfo, vm, false))
+                        .filter(vm -> { 
+                        	boolean r = SparqlViewMatcherProjectionUtils.validateProjection(viewVarInfo, userVarInfo, vm, false);
+                			return r;
+                        })
                         .iterator();
 
                 OpVarMap r = new OpVarMap(opMap, varMap);
