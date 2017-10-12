@@ -67,30 +67,19 @@ public class OpDistinctExtendFilter
     public boolean equalTo(Op obj, NodeIsomorphismMap labelMap) {
         if (this == obj)
             return true;
-        if (!super.equals(obj))
-            return false;
         if (getClass() != obj.getClass())
             return false;
         OpDistinctExtendFilter other = (OpDistinctExtendFilter) obj;
-        if (def == null) {
-            if (other.def != null)
-                return false;
-        } else if (!def.equals(other.def))
-            return false;
-        if (subOp == null) {
-            if (other.subOp != null)
-                return false;
-        } else if (!subOp.equals(other.subOp))
-            return false;
-        return true;
+        Op a = effectiveOp();
+        Op b = other.effectiveOp();
+        boolean result = a.equalTo(b, labelMap);
+        return result;
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
-        int result = 1;
-        result = prime * result + ((def == null) ? 0 : def.hashCode());
-        result = prime * result + ((subOp == null) ? 0 : subOp.hashCode());
+        int result = prime * effectiveOp().hashCode();
         return result;
     }
 

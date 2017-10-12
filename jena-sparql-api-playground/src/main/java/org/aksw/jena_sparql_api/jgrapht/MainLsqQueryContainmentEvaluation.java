@@ -33,6 +33,7 @@ import org.aksw.jena_sparql_api.mapper.util.JpaUtils;
 import org.aksw.jena_sparql_api.query_containment.index.NodeMapperOpEquality;
 import org.aksw.jena_sparql_api.query_containment.index.QueryContainmentIndex;
 import org.aksw.jena_sparql_api.query_containment.index.QueryContainmentIndexImpl;
+import org.aksw.jena_sparql_api.query_containment.index.TreeMapping;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
@@ -43,12 +44,19 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.OpAsQuery;
+import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.util.NodeUtils;
 import org.jgrapht.DirectedGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Table;
 
 public class MainLsqQueryContainmentEvaluation {
 
@@ -418,8 +426,17 @@ public class MainLsqQueryContainmentEvaluation {
 "foobar"
 ).stream().map(NodeFactory::createURI).collect(Collectors.toList());
         
+        //"http://lsq.aksw.org/res/q-00d5ab86"
+        
+        
+        List<Node> nodesU = Arrays.asList(
+                "http://lsq.aksw.org/res/q-00d5ab86",
+                "http://lsq.aksw.org/res/q-00f148fa", 
+                "http://foobar"
+            ).stream().map(NodeFactory::createURI).collect(Collectors.toList());
+        
         Set<Node> nodesX = new HashSet<Node>();
-        nodesX.addAll(nodesZ);
+        nodesX.addAll(nodesU);
 //        nodesX.addAll(nodesE);
 //        nodesX.addAll(nodesG);
 //        nodesX.addAll(nodesF);
@@ -455,14 +472,12 @@ public class MainLsqQueryContainmentEvaluation {
                
         //QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, Op> index = ValidationUtils.createValidatingProxy(QueryContainmentIndex.class, indexA, indexB);
         
-        //lsqQueries = lsqQueries.subList(0, 1000);
+        lsqQueries = lsqQueries.subList(0, 10000);
         //lsqQueries = lsqQueries.subList(8000, 8100);
         //lsqQueries = lsqQueries.subList(15000, 20000);
-        lsqQueries = lsqQueries.subList(20000, 30000);
+        //lsqQueries = lsqQueries.subList(20000, 30000);
         
-        System.out.println("# queries: "+ lsqQueries.size());
-
-        //Thread.sleep(1000);
+        System.out.println("# initial queries: "+ lsqQueries.size());
 
         if(filter != null) {
             lsqQueries = lsqQueries.stream()
@@ -505,6 +520,11 @@ public class MainLsqQueryContainmentEvaluation {
                     	System.out.println("Got lsq query " + lsqQuery.getIri() + ":\n" + q);
                     }
                     
+                    // We only want select queries for now
+                    if(!query.isSelectType()) {
+                    	return null;
+                    }
+                    
                     Op op = Algebra.toQuadForm(Algebra.compile(query));
 
                     return new SimpleEntry<>(node, op);
@@ -528,7 +548,8 @@ public class MainLsqQueryContainmentEvaluation {
 	        ops = ops2;
         }
 
-        System.out.println("# ops: "+ ops.size());
+        System.out.println("# remaining queries: "+ ops.size());
+        Thread.sleep(1000);
 
         Op criticalOp = ops.get(criticalNode);
         
@@ -548,6 +569,33 @@ public class MainLsqQueryContainmentEvaluation {
 //        		siiA.printTree();
 //        	}
 //
+	
+	        // Lets filter out spo
+//	        boolean isSpo = false;
+//	        Query q = OpAsQuery.asQuery(op);
+//
+//	        Element element = q.getQueryPattern();
+//	        if(element instanceof ElementTriplesBlock) {
+//	            List<Triple> triples = ((ElementTriplesBlock)element).getPattern().getList();
+//
+//	            if(triples.size() == 1) {
+//
+//	                Triple triple = triples.get(0);
+//
+//	                // TODO Refactor into e.g. ElementUtils.isVarsOnly(element)
+//	                isSpo =
+//	                        triple.getSubject().isVariable() &&
+//	                        triple.getPredicate().isVariable() &&
+//	                        triple.getObject().isVariable();
+//
+//	            }
+//	        }
+//
+//	        
+//	        if(isSpo) {
+//	        	logger.debug("Skipping spo " + node);
+//	        	continue;
+//	        }
 	        
 	        try {
 	            logger.debug("Indexing [" + ++indexCounter + "]: " + node);
@@ -558,7 +606,7 @@ public class MainLsqQueryContainmentEvaluation {
 	            
                 //index.put(NodeFactory.createURI(node.getURI() + "alias1"), op);
 	            index.put(node, op);
-	            
+	            //System.out.println("Op: " + OpAsQuery.asQuery(op));
 	            //System.out.println("Current Index tree:");
 	            //siiTreeTags.printTree();
 
@@ -597,16 +645,22 @@ public class MainLsqQueryContainmentEvaluation {
         	Stopwatch sw = Stopwatch.createStarted();
         	int seenQueryCount = 0;
 	        for(Entry<Node, Op> e : opList) {
+	        	Node key = e.getKey();
 	        	
 	        	if(criticalNode == null || Arrays.asList(criticalNode).contains(e.getKey())) {
 //	        		System.out.println("Got a specific URI: " + e.getKey());
 //                    siiA.printTree();
 
                     //Thread.sleep(5000);
+	        		Multimap<Node, TreeMapping<Op, Op, BiMap<Node, Node>, Op>> matches = ArrayListMultimap.create();
+	        		
                     System.out.println("Querying view candidates of: " + e.getKey());                    
                     Op op = e.getValue();
                     try {
-                    	index.match(op);
+                    	//index.match(op);                    	
+                    	 index.match(op).forEach(item -> {
+                             matches.put(item.getKey(), item.getValue());
+                    	 });
                     } catch(Throwable ex) { // We need to catch Assertion*Error*
                     	logger.error("Failed match", ex);
                     	siiTreeTags.printTree();
@@ -616,6 +670,34 @@ public class MainLsqQueryContainmentEvaluation {
                     	//throw new RuntimeException(ex);
                     	//break;
                     }
+
+	               	 if(matches.isEmpty()) {
+	            		 throw new RuntimeException("failed");
+	            	 }
+	               	 	               	 
+	               	 // Find identity mapping:
+	            	 //TreeMapping<Op, Op, BiMap<Node, Node>, Op> treeMap = matches.get(key).stream().filter(tm -> tm.getOverallMatching().isEmpty()).findFirst().orElse(null);
+	            	 
+	               	 // Find all isomorphic ones:
+	               	Set<Node> isomorphicKeys = matches.entries().stream().filter(jj -> {
+	               		TreeMapping<Op, Op, BiMap<Node, Node>, Op> treeMapping = jj.getValue();
+	               		Op rootA = treeMapping.getaTree().getRoot();
+	               		Op rootB = treeMapping.getbTree().getRoot();
+	               		
+	               		Table<Op, Op, Op> m = jj.getValue().getNodeMappings();
+	               		Map<Op, Op> targets = m.row(rootA);
+	               		
+	               		boolean containsRoot = targets.containsKey(rootB);
+	               		return containsRoot;
+	               	})
+	               	.map(jj -> jj.getKey()).collect(Collectors.toSet());
+	               	if(isomorphicKeys.size() > 1) { 
+	               		System.out.println(key + " is isomorphic to: " + isomorphicKeys);
+	               		Thread.sleep(10000);
+	               	}
+
+                    
+                    
 	        	}
 	        	                
     	        ++seenQueryCount;
@@ -629,8 +711,8 @@ public class MainLsqQueryContainmentEvaluation {
         
         
         System.out.println();
-        System.out.println("Result Index tree:");
-        siiTreeTags.printTree();
+        //System.out.println("Result Index tree:");
+        //siiTreeTags.printTree();
         
         //index.getIndex().printTree();
 	}

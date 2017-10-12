@@ -70,18 +70,24 @@ public class BottomUpTreeMapper<A, B, M, C, V> {
      */
     @SuppressWarnings("unchecked")
     public TreeMapping<A, B, M, V> solve(M baseSolution, Map<A, B> leafAlignment) {
-        Table<A, B, V> nodeMapping = tableSupplier.get();//HashBasedTable.create();
-        //tableSupplier.get();
+        //Table<A, B, V> t = tableSupplier.get();//HashBasedTable.create();
+
+    	Table<A, B, V> nodeMapping = tableSupplier.get();//HashBasedTable.create();
+
+    	Table<A, B, V> parentMapping = tableSupplier.get();//HashBasedTable.create();
+
+    	//tableSupplier.get();
         TreeMapping<A, B, M, V> result = new TreeMapping<>(viewTree, userTree, baseSolution, nodeMapping);
 
         Iterator<A> it = bottomUpTraverser.apply(viewTree).iterator();
 
+        boolean foundMatch = false;
         while(it.hasNext()) {
             A a = it.next();
 
             B b = viewTree.getChildren(a).isEmpty() // is leaf
                 ? leafAlignment.get(a)
-                : nodeMapping.columnKeySet().iterator().next();
+                : parentMapping.row(a).keySet().iterator().next();
 
             // Track the mapping of the parents
             A aParent = viewTree.getParent(a);
@@ -89,8 +95,14 @@ public class BottomUpTreeMapper<A, B, M, C, V> {
             if(aParent != null && bParent != null) {
                 // TODO This is an ugly hack where we incorrectly cast a static object as V in order
                 // to fake a 'null' value as guava tables do not support null values.
-                // The fake value will be replaced with the actual value during the process
-                nodeMapping.put(aParent, bParent, (V)Collections.EMPTY_SET);
+                // The fake value will be replaced with the actual value during the process               
+
+            	// FIXME The reason for this hack is identity vs equals; we reuse the table
+            	// for the mapping of parents which at this point should go into a separate map
+            	
+            	if(!parentMapping.contains(aParent, bParent)) {
+            		parentMapping.put(aParent, bParent, (V)Collections.EMPTY_SET);
+            	}
             }
             //}
 
@@ -119,11 +131,31 @@ public class BottomUpTreeMapper<A, B, M, C, V> {
 
 
                 result.overallMatching = newBaseSolution;
+                // HACK (consequence of the hack above): We now need to remove the parent mapping again
+                Map<B, V> col = parentMapping.row(a);
+                col.clear();
+                col.put(b, mapping);
+//
                 result.nodeMappings.put(a, b, mapping);
+
+                //parentMapping.put(a, b, mapping);
+
+//                int rowSize = result.nodeMappings.row(a).size();
+//            	// Probably should not happen
+//            	System.out.println("row size: " + result.nodeMappings.row(a).size());
+//                System.out.println(a);
+//                System.out.println(b);
+//                
+                
+                foundMatch = true;
             } else {
             	// The mapping on some nodes was unsatisfiable, therefore its no use to continue
             	break;
             }
+        }
+        
+        if(!foundMatch) {
+        	result = null;
         }
 
         return result;

@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.algebra.utils;
 import java.util.Collections;
 import java.util.List;
 
+import org.aksw.commons.graph.index.jena.transform.OpDistinctExtendFilter;
 import org.apache.jena.atlas.io.IndentedWriter;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.op.OpExt;
@@ -61,14 +62,24 @@ public class OpExtConjunctiveQuery
 
     @Override
     public int hashCode() {
-        // TODO Auto-generated method stub
-        return 0;
+        final int prime = 31;
+    	int result = prime * effectiveOp().hashCode();
+    	return result;
     }
 
     @Override
-    public boolean equalTo(Op other, NodeIsomorphismMap labelMap) {
-        // TODO Auto-generated method stub
-        return false;
+    public boolean equalTo(Op obj, NodeIsomorphismMap labelMap) {
+        if (this == obj)
+            return true;
+        if (getClass() != obj.getClass())
+            return false;
+        OpExtConjunctiveQuery other = (OpExtConjunctiveQuery)obj;
+        Op a = effectiveOp();
+        Op b = other.effectiveOp();
+        boolean result = a.equalTo(b, labelMap);
+        return result;
+        
+        
     }
 
     @Override

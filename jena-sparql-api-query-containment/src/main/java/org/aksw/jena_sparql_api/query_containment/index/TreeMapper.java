@@ -92,8 +92,8 @@ public class TreeMapper<K, A, B, M, C, V> {
         Map<R, Map<C, V>> backingMap = createMap(rowIdentity);
 
         Supplier<Map<C, V>> supplier = columnIdentity
-                ? () -> new IdentityHashMap<>()
-                : () -> new LinkedHashMap<>();
+                ? IdentityHashMap::new
+                : LinkedHashMap::new;
 
         Table<R, C, V> result = Tables.newCustomTable(backingMap, supplier::get);
         return result;
@@ -104,6 +104,7 @@ public class TreeMapper<K, A, B, M, C, V> {
         Map<K, V> result = useIdentity
                 ? new IdentityHashMap<>()
                 : new LinkedHashMap<>();
+                
         return result;
     }
 
@@ -208,7 +209,7 @@ public class TreeMapper<K, A, B, M, C, V> {
                             .collect(Collectors.toList());
 
                     //M baseMatching = createEmptyMatching.get();
-
+//System.out.println("Got child alignment");
                     ProblemContainer<M> problemContainer = ProblemContainerImpl.create(problems);
                     ProblemSolver<M> solver = new ProblemSolver<>(problemContainer, baseMatching, matchingCombiner);
 
@@ -221,7 +222,10 @@ public class TreeMapper<K, A, B, M, C, V> {
                     });
                 });
 
-                return r.map(item -> new SimpleEntry<>(viewKey, item));
+                Stream<Entry<K, TreeMapping<A, B, M, V>>> t = r
+                		.filter(item -> item != null)
+                		.map(item -> new SimpleEntry<>(viewKey, item));
+                return t;
             });
 
         return result;
