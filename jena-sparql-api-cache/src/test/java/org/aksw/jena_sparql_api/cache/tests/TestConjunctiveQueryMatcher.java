@@ -24,7 +24,7 @@ public class TestConjunctiveQueryMatcher {
     ConjunctiveQuery result = Stream.of(query)
         .map(Algebra::compile)
         .map(Algebra::toQuadForm)
-        .map(QueryToGraph::normalizeOp)
+        .map(op -> QueryToGraph.normalizeOp(op, false))
         .map(op -> (OpExtConjunctiveQuery)op)
         .map(OpExtConjunctiveQuery::getQfpc)
         .findFirst()

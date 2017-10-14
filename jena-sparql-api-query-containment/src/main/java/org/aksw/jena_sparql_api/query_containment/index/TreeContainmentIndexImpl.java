@@ -6,7 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.aksw.combinatorics.solvers.ProblemNeighborhoodAware;
@@ -20,11 +22,14 @@ import org.aksw.commons.collections.trees.TreeUtils;
 import org.aksw.commons.graph.index.core.SubgraphIsomorphismIndex;
 import org.aksw.commons.graph.index.jena.SubgraphIsomorphismIndexJena;
 import org.aksw.commons.graph.index.jena.transform.QueryToGraph;
+import org.aksw.commons.graph.index.jena.transform.QueryToGraphVisitor;
 import org.aksw.commons.jena.jgrapht.PseudoGraphJenaGraph;
+import org.aksw.jena_sparql_api.algebra.utils.ExtendedQueryToGraphVisitor;
 import org.aksw.jena_sparql_api.algebra.utils.OpExtConjunctiveQuery;
 import org.aksw.jena_sparql_api.algebra.utils.OpUtils;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.algebra.Op;
 import org.jgrapht.DirectedGraph;
@@ -79,21 +84,26 @@ import com.google.common.collect.Table;
  * - perform the tree matching / mapping upwards
  *
  */
-public class QueryContainmentIndexImpl<K, G, N, A, V>
-	implements QueryContainmentIndex<K, G, N, A, V>
+public class TreeContainmentIndexImpl<K, X, G, N, A, V>
+	implements TreeContainmentIndex<K, G, N, A, V>
 {	
-	private static final Logger logger = LoggerFactory.getLogger(QueryContainmentIndexImpl.class);
+	private static final Logger logger = LoggerFactory.getLogger(TreeContainmentIndexImpl.class);
 
 	
     protected Function<? super A, A> normalizer;
-    protected Function<? super A, G> opToGraph;
+    
+    protected Function<? super A, X> opToMetaGraph;
+    protected BiFunction<? super A, ? super X, G> metaGraphToGraph;
+
+    // We do not map inputs directly to graphs, but to an intermediate object of type X from which the graph for indexing is obtained
+    //protected Function<? super A, G> opToGraph;
 
     protected Function<A, List<A>> parentToChildren;
 
     protected SubgraphIsomorphismIndex<Entry<K, Long>, G, N> index;
 
     protected TriFunction<? super A, ? super A, TreeMapping<A, A, BiMap<N, N>, V>, ? extends Entry<BiMap<N, N>, V>> nodeMapper;
-    protected Table<K, Long, TreeNode<A>> keyToNodeIndexToNode = HashBasedTable.create();
+    protected Table<K, Long, LeafInfo<Entry<K, Long>, A, X, G>> keyToNodeIndexToInfo = HashBasedTable.create();
 
 
 
@@ -106,6 +116,26 @@ public class QueryContainmentIndexImpl<K, G, N, A, V>
         }
 
         return result;
+    }
+    
+    public static OpGraph queryToOpGraph(Op op) {
+        OpGraph result = null;
+
+        if(op instanceof OpExtConjunctiveQuery) {
+            OpExtConjunctiveQuery ocq = (OpExtConjunctiveQuery)op;
+            //ConjunctiveQuery cq = SparqlCacheUtils.tryExtractConjunctiveQuery(op, generator)
+
+            //System.out.println("indexing: " + ocq.getQfpc());
+
+            Supplier<Supplier<Node>> ssn = () -> { int[] x = {0}; return () -> NodeFactory.createBlankNode("_" + x[0]++); };
+            QueryToGraphVisitor q2g = new ExtendedQueryToGraphVisitor(ssn.get());
+            q2g.visit(ocq);
+            
+            result = new OpGraph(q2g.getNodeToExpr(), q2g.getGraph());
+        }
+
+        return result;
+    	    	
     }
     
     
@@ -124,42 +154,47 @@ public class QueryContainmentIndexImpl<K, G, N, A, V>
      * @param nodeMapper
      * @return
      */
-    public static <K, V> QueryContainmentIndex<K, DirectedGraph<Node, Triple>, Node, Op, V> create(TriFunction<? super Op, ? super Op, TreeMapping<Op, Op, BiMap<Node, Node>, V>, ? extends Entry<BiMap<Node, Node>, V>> nodeMapper) {
+    public static <K, V> TreeContainmentIndex<K, DirectedGraph<Node, Triple>, Node, Op, V> create(TriFunction<? super Op, ? super Op, TreeMapping<Op, Op, BiMap<Node, Node>, V>, ? extends Entry<BiMap<Node, Node>, V>> nodeMapper) {
         SubgraphIsomorphismIndex<Entry<K, Long>, DirectedGraph<Node, Triple>, Node> sii = SubgraphIsomorphismIndexJena.create();
 
-        QueryContainmentIndex<K, DirectedGraph<Node, Triple>, Node, Op, V> result = create(sii, nodeMapper);
+        TreeContainmentIndex<K, DirectedGraph<Node, Triple>, Node, Op, V> result = create(sii, nodeMapper);
         return result;
     }
 
-    public static <K, V> QueryContainmentIndex<K, DirectedGraph<Node, Triple>, Node, Op, V> createFlat(TriFunction<? super Op, ? super Op, TreeMapping<Op, Op, BiMap<Node, Node>, V>, ? extends Entry<BiMap<Node, Node>, V>> nodeMapper) {
+    public static <K, V> TreeContainmentIndex<K, DirectedGraph<Node, Triple>, Node, Op, V> createFlat(TriFunction<? super Op, ? super Op, TreeMapping<Op, Op, BiMap<Node, Node>, V>, ? extends Entry<BiMap<Node, Node>, V>> nodeMapper) {
         SubgraphIsomorphismIndex<Entry<K, Long>, DirectedGraph<Node, Triple>, Node> sii = SubgraphIsomorphismIndexJena.createFlat();
 
-        QueryContainmentIndex<K, DirectedGraph<Node, Triple>, Node, Op, V> result = create(sii, nodeMapper);
+        TreeContainmentIndex<K, DirectedGraph<Node, Triple>, Node, Op, V> result = create(sii, nodeMapper);
         return result;
     }
 
-    public static <K, V> QueryContainmentIndex<K, DirectedGraph<Node, Triple>, Node, Op, V> create(SubgraphIsomorphismIndex<Entry<K, Long>, DirectedGraph<Node, Triple>, Node> sii, TriFunction<? super Op, ? super Op, TreeMapping<Op, Op, BiMap<Node, Node>, V>, ? extends Entry<BiMap<Node, Node>, V>> nodeMapper) {
-        QueryContainmentIndex<K, DirectedGraph<Node, Triple>, Node, Op, V> result = new QueryContainmentIndexImpl<K, DirectedGraph<Node, Triple>, Node, Op, V>(
-                QueryToGraph::normalizeOp,
+    public static <K, V> TreeContainmentIndex<K, DirectedGraph<Node, Triple>, Node, Op, V> create(SubgraphIsomorphismIndex<Entry<K, Long>, DirectedGraph<Node, Triple>, Node> sii, TriFunction<? super Op, ? super Op, TreeMapping<Op, Op, BiMap<Node, Node>, V>, ? extends Entry<BiMap<Node, Node>, V>> nodeMapper) {
+        TreeContainmentIndex<K, DirectedGraph<Node, Triple>, Node, Op, V> result = new TreeContainmentIndexImpl<K, OpGraph, DirectedGraph<Node, Triple>, Node, Op, V>(
+                op -> QueryToGraph.normalizeOp(op, true),
                 OpUtils::getSubOps,
-                QueryContainmentIndexImpl::queryToJGraphT,
+                TreeContainmentIndexImpl::queryToOpGraph,
+                (op, opGraph) -> opGraph.getJGraphTGraph(),
                 sii,
                 nodeMapper
                 );
         return result;
     }
 
-    public QueryContainmentIndexImpl(
+    public TreeContainmentIndexImpl(
             Function<? super A, A> normalizer,
             Function<A, List<A>> parentToChildren,
-            Function<? super A, G> opToGraph,
+            Function<? super A, X> opToMetaGraph,
+            BiFunction<? super A, ? super X, G> metaGraphToGraph,
+            //Function<? super A, G> opToGraph,
             SubgraphIsomorphismIndex<Entry<K, Long>, G, N> index,
             TriFunction<? super A, ? super A, TreeMapping<A, A, BiMap<N, N>, V>, ? extends Entry<BiMap<N, N>, V>> nodeMapper
             ) {
         super();
         this.normalizer = normalizer;
         this.parentToChildren = parentToChildren;
-        this.opToGraph = opToGraph;
+        //this.opToGraph = opToGraph;
+        this.opToMetaGraph = opToMetaGraph;
+        this.metaGraphToGraph = metaGraphToGraph;        
         this.index = index;
         this.nodeMapper = nodeMapper;
     }
@@ -170,7 +205,7 @@ public class QueryContainmentIndexImpl<K, G, N, A, V>
 	 */
     @Override
 	public void remove(K key) {
-        Map<Long, TreeNode<A>> rows = keyToNodeIndexToNode.row(key);
+        Map<Long, ?> rows = keyToNodeIndexToInfo.row(key);
 
         // Remove related index entries
         for(Long id : rows.keySet()) {
@@ -197,7 +232,9 @@ public class QueryContainmentIndexImpl<K, G, N, A, V>
         	//System.out.println("Processing op: " + op);
             TreeNode<A> node = new TreeNodeImpl<>(tree, op);
 
-            G graph = opToGraph.apply(op);
+            X metaGraph = opToMetaGraph.apply(op);
+            
+            G graph = metaGraphToGraph.apply(op, metaGraph);//opToGraph.apply(op);
             
 //            System.out.println();
 //            System.out.println("Graph for " + key);
@@ -207,7 +244,9 @@ public class QueryContainmentIndexImpl<K, G, N, A, V>
             if(graph != null) {
                 Entry<K, Long> e = new SimpleEntry<>(key, leafNodeId[0]);
 
-                keyToNodeIndexToNode.put(key, leafNodeId[0], node);
+                LeafInfo<Entry<K, Long>, A, X, G> leafInfo = new LeafInfo<>(e, metaGraph, graph, node);
+                
+                keyToNodeIndexToInfo.put(key, leafNodeId[0], leafInfo);
                 //System.out.println("Insert: " + e);
 //                System.out.println("Graph: " + graph);
                 //System.out.println("Graph of size: " + graph);
@@ -225,7 +264,9 @@ public class QueryContainmentIndexImpl<K, G, N, A, V>
     public Table<K, A, ProblemNeighborhoodAware<BiMap<N, N>, ?>> lookupLeaf(Tree<A> tree, A leaf, BiMap<N, N> baseMatching) {
         Table<K, A, ProblemNeighborhoodAware<BiMap<N, N>, ?>> result = TreeMapper.createTable(true, true);
 
-        G graph = opToGraph.apply(leaf);
+        X metaGraph = opToMetaGraph.apply(leaf);
+        //G graph = opToGraph.apply(leaf);
+        G graph = metaGraphToGraph.apply(leaf, metaGraph);
         if(graph == null) {
         	// TODO Maybe we should raise an exception here
         	logger.warn("Graph was null for node: " + leaf);
@@ -238,7 +279,9 @@ public class QueryContainmentIndexImpl<K, G, N, A, V>
 	            K viewKey = f.getKey();
 	            Long leafIndex = f.getValue();
 	
-	            TreeNode<A> viewTreeNode = keyToNodeIndexToNode.get(viewKey, leafIndex);
+	            LeafInfo<Entry<K, Long>, A, X, G> leafInfo = keyToNodeIndexToInfo.get(viewKey, leafIndex); 
+	            
+	            TreeNode<A> viewTreeNode = leafInfo.getNode();
 	            A leafNode = viewTreeNode.getNode();
 	            BiMap<N, N> matching = e.getValue();
 	
@@ -256,7 +299,7 @@ public class QueryContainmentIndexImpl<K, G, N, A, V>
     @Override
 	public Stream<Entry<K, TreeMapping<A, A, BiMap<N, N>, V>>> match(A userOp) {
         TreeMapper<K, A, A, BiMap<N, N>, BiMap<N, N>, V> treeMapper = new TreeMapper<>(
-            key -> keyToNodeIndexToNode.row(key).values().iterator().next().getTree(),
+            key -> keyToNodeIndexToInfo.row(key).values().iterator().next().getNode().getTree(),
             this::lookupLeaf,
             nodeMapper,
             (m, c) -> MapUtils.mergeCompatible(m, c, HashBiMap::create),
@@ -276,11 +319,7 @@ public class QueryContainmentIndexImpl<K, G, N, A, V>
     }
 
 
-	@Override
-	public String toString() {
-		return "QueryContainmentIndexImpl [normalizer=" + normalizer + ", opToGraph=" + opToGraph
-				+ ", parentToChildren=" + parentToChildren + ", index=" + index + ", nodeMapper=" + nodeMapper + "]";
-	}
+    
 
     
     

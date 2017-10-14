@@ -63,12 +63,15 @@ public class QueryToGraph {
         return op;
     }
 
-    public static Op normalizeOp(Op op) {
+    public static Op normalizeOp(Op op, boolean normalizeUnaryOps) {
         op = normalizeOpReplaceConstants(op);
         Generator<Var> generatorCache = VarGeneratorImpl2.create();
         //op = OpUtils.substitute(op, false, (o) -> SparqlCacheUtils.tryCreateCqfp(o, generatorCache));
         op = OpUtils.substitute(op, false, (o) -> AlgebraUtils.tryCreateCqfp(o, generatorCache));
-        //op = Transformer.transform(new OpTransformNormalizeUnaryOps(), op);
+        
+        if(normalizeUnaryOps) {
+        	op = Transformer.transform(new OpTransformNormalizeUnaryOps(), op);
+        }
 
         return op;
     }
@@ -91,7 +94,7 @@ public class QueryToGraph {
     public static Graph queryToGraph(Query query) {
         Op op = Algebra.toQuadForm(Algebra.compile(query));
 
-        Op nop = normalizeOp(op);
+        Op nop = normalizeOp(op, false);
         Graph result = queryToGraph(nop);
 
         return result;

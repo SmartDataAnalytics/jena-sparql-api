@@ -83,7 +83,7 @@ public class MainSparqlQueryToGraph {
             throw new RuntimeException("Failed to parse: " + queryStr, e);
         }
         Op op = Algebra.toQuadForm(Algebra.compile(query));
-        Op nop = QueryToGraph.normalizeOp(op);
+        Op nop = QueryToGraph.normalizeOp(op, false);
 
 
         // Collect all conjunctive queries
@@ -160,10 +160,10 @@ public class MainSparqlQueryToGraph {
         //System.out.println(op);
 
 
-        aop = QueryToGraph.normalizeOp(aop);
-        bop = QueryToGraph.normalizeOp(bop);
-        cop = QueryToGraph.normalizeOp(cop);
-        dop = QueryToGraph.normalizeOp(dop);
+        aop = QueryToGraph.normalizeOp(aop, false);
+        bop = QueryToGraph.normalizeOp(bop, false);
+        cop = QueryToGraph.normalizeOp(cop, false);
+        dop = QueryToGraph.normalizeOp(dop, false);
 
 
         //RDFDataMgr.write(System.out, graph, RDFFormat.NTRIPLES);
@@ -324,7 +324,7 @@ public class MainSparqlQueryToGraph {
                     continue;
                 }
                 Op op = Algebra.toQuadForm(Algebra.compile(query));
-                Op nop = QueryToGraph.normalizeOp(op);
+                Op nop = QueryToGraph.normalizeOp(op, false);
 
 
                 // Collect all conjunctive queries

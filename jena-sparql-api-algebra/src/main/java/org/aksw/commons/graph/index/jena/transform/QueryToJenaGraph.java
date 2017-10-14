@@ -16,11 +16,13 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.expr.E_Equals;
+import org.apache.jena.sparql.expr.E_StrContains;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprFunction;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.vocabulary.RDFS;
+
+import com.google.common.collect.BiMap;
 
 
 /**
@@ -105,25 +107,42 @@ public class QueryToJenaGraph {
     }
 
 
-    public static Node exprToGraph(Graph graph, Expr expr, Supplier<Node> nodeSupplier) {
+    public static Node exprToGraph(Graph graph, Map<Node, Expr> nodeToExpr, Expr expr, boolean isRootExpr, Supplier<Node> nodeSupplier) {
         Node result;
         if(expr.isConstant()) {
             result = expr.getConstant().asNode();
         } else if(expr.isFunction()) {
             result = nodeSupplier.get();
 
-            boolean isCommutative = expr instanceof E_Equals;
+            nodeToExpr.put(result, expr);
+            
+            
+            
+            // We use normalization on expressions instead
+            boolean isCommutative = false; //expr instanceof E_Equals;
 
             ExprFunction ef = expr.getFunction();
             String fnId = ExprUtils.getFunctionId(ef);
 
             graph.add(new Triple(result, RDFS.label.asNode(), NodeFactory.createLiteral(fnId)));
 
+	            
             List<Expr> args = ef.getArgs();
             int n = args.size();
+            
+            // HACK Do this handling properly
+            // Constants as the second arg on E_StrContains are omitted
+            // and are checked in postprocessing
+            if(isRootExpr && expr instanceof E_StrContains) {
+            	E_StrContains e = (E_StrContains)expr;
+            	if(e.getArg2().isConstant()) {
+            		n = 1;
+            	}
+            }
+            
             for(int i = 0; i < n; ++i) {
                 Expr arg = args.get(i);
-                Node argNode = exprToGraph(graph, arg, nodeSupplier);
+                Node argNode = exprToGraph(graph, nodeToExpr, arg, false, nodeSupplier);
 
                 Node p = isCommutative ? NodeFactory.createURI("arg://any") : NodeFactory.createURI("arg://" + i);
 
@@ -140,24 +159,39 @@ public class QueryToJenaGraph {
     }
 
 
-    public static void dnfToGraph(Graph graph, Collection<? extends Collection<? extends Expr>> dnf, Supplier<Node> nodeSupplier) {
+    public static void dnfToGraph(Graph graph, BiMap<Node, Expr> nodeToExpr, Collection<? extends Collection<? extends Expr>> dnf, Supplier<Node> nodeSupplier) {
         Node orNode = nodeSupplier.get();
         for(Collection<? extends Expr> clause : dnf) {
             // Create a blank node for each clause
 
             Node andNode = nodeSupplier.get();
             addEdge(graph, orNode, dm, andNode);
-            for(Expr e : clause) {
-                // Create another blank node for each equality instance
-                // TODO This would be another type of construction: Actually the edge labels are already sufficient for discrimination of equals expressions
-                //Node equalsNode = nodeSupplier.get();
 
-                Node eNode = exprToGraph(graph, e, nodeSupplier);
-                addEdge(graph, andNode, cm, eNode);
-            }
+            clauseToGraph(andNode, graph, nodeToExpr, clause, nodeSupplier);
         }
     }
 
+    
+    public static void clauseToGraph(Node andNode, Graph graph, BiMap<Node, Expr> nodeToExpr, Collection<? extends Expr> clause, Supplier<Node> nodeSupplier) {
+        for(Expr e : clause) {
+        	// The same expression may be present in multiple clauses
+        	Node eNode = nodeToExpr.inverse().get(e);
+        	
+        	if(eNode == null) {
+        		eNode = exprToGraph(graph, nodeToExpr, e, true, nodeSupplier);            		
+        	}
+        	
+            // Create another blank node for each equality instance
+            // TODO This would be another type of construction: Actually the edge labels are already sufficient for discrimination of equals expressions
+            //Node equalsNode = nodeSupplier.get();
+        	
+        	if(andNode != null) {
+        		addEdge(graph, andNode, cm, eNode);
+        	}
+        }
+
+    }
+    
     // Filters: Extract all equality filters
     public static void equalExprsToGraphOld(Graph graph, Collection<? extends Collection<? extends Expr>> dnf, Supplier<Node> nodeSupplier, Map<Var, Node> varToNode) {
         Set<Map<Var, NodeValue>> maps = DnfUtils.extractConstantConstraints(dnf);

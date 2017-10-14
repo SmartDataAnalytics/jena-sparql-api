@@ -21,7 +21,7 @@ import com.google.common.collect.AbstractIterator;
  * @author raven
  *
  */
-class BottomUpTreeTraversals {
+public class BottomUpTreeTraversals {
     public static <T> Stream<T> postOrder(T node, Function<T, Collection<T>> getChildren) {
         return Stream.concat(
                 getChildren.apply(node).stream().flatMap(child -> postOrder(child, getChildren)),

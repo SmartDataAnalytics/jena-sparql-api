@@ -8,7 +8,7 @@ public class OpIndexer {
 
 
     public OpIndex create(Op op) {
-        op = QueryToGraph.normalizeOp(op);
+        op = QueryToGraph.normalizeOp(op, false);
 
         // FILTER(?p = rdf:type && (?o = Foo) || (?o = Bar))
         // -> ?p becomes part of the conjunctive query, {{?o = Foo} { ?o = Bar}} becomes part of a parent DNF

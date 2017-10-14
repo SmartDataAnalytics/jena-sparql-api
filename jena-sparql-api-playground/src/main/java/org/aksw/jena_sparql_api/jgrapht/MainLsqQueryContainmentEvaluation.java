@@ -31,8 +31,8 @@ import org.aksw.jena_sparql_api.mapper.jpa.core.RdfEntityManager;
 import org.aksw.jena_sparql_api.mapper.jpa.core.SparqlEntityManagerFactory;
 import org.aksw.jena_sparql_api.mapper.util.JpaUtils;
 import org.aksw.jena_sparql_api.query_containment.index.NodeMapperOpEquality;
-import org.aksw.jena_sparql_api.query_containment.index.QueryContainmentIndex;
-import org.aksw.jena_sparql_api.query_containment.index.QueryContainmentIndexImpl;
+import org.aksw.jena_sparql_api.query_containment.index.TreeContainmentIndex;
+import org.aksw.jena_sparql_api.query_containment.index.TreeContainmentIndexImpl;
 import org.aksw.jena_sparql_api.query_containment.index.TreeMapping;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
@@ -466,13 +466,13 @@ public class MainLsqQueryContainmentEvaluation {
         SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> siiTagBased = SubgraphIsomorphismIndexJena.createTagBased(new TagMapSetTrie<>(NodeUtils::compareRDFTerms));
 
         SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> siiValidating = ValidationUtils.createValidatingProxy(SubgraphIsomorphismIndex.class, siiTreeTags, siiTagBased);
-        SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> sii = siiTreeTags;//siiValidating;
+        SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> sii = siiTreeTags; //siiValidating;
         
-        QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, Op> index = QueryContainmentIndexImpl.create(sii, nodeMapper);
+        TreeContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, Op> index = TreeContainmentIndexImpl.create(sii, nodeMapper);
                
         //QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, Op> index = ValidationUtils.createValidatingProxy(QueryContainmentIndex.class, indexA, indexB);
         
-        //lsqQueries = lsqQueries.subList(0, 10000);
+        lsqQueries = lsqQueries.subList(0, 10000);
         //lsqQueries = lsqQueries.subList(8000, 8100);
         //lsqQueries = lsqQueries.subList(15000, 20000);
         //lsqQueries = lsqQueries.subList(20000, 30000);
@@ -717,4 +717,5 @@ public class MainLsqQueryContainmentEvaluation {
         //index.getIndex().printTree();
 	}
 
+    
 }

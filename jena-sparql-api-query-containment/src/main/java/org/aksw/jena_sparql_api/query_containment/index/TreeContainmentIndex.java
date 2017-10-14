@@ -7,7 +7,7 @@ import org.aksw.commons.graph.index.core.SubgraphIsomorphismIndex;
 
 import com.google.common.collect.BiMap;
 
-public interface QueryContainmentIndex<K, G, N, A, V> {
+public interface TreeContainmentIndex<K, G, N, A, V> {
 
 	// K is the type of the key for a whole query, whereas Entry<K, Long> is the key
 	// referring to a specific leaf in such a query

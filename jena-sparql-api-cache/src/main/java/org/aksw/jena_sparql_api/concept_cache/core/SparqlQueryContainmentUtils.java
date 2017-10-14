@@ -160,8 +160,8 @@ public class SparqlQueryContainmentUtils {
 
         Function<Op, OpIndex> opIndexer = new OpIndexerImpl();
 
-        Op normViewResOp = QueryToGraph.normalizeOp(viewResOp);
-        Op normUserResOp = QueryToGraph.normalizeOp(userResOp);
+        Op normViewResOp = QueryToGraph.normalizeOp(viewResOp, false);
+        Op normUserResOp = QueryToGraph.normalizeOp(userResOp, false);
 
         OpIndex viewIndex = opIndexer.apply(normViewResOp);
         OpIndex userIndex = opIndexer.apply(normUserResOp);

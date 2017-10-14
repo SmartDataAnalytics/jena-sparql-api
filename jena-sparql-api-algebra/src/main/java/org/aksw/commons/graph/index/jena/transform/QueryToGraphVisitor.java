@@ -1,6 +1,8 @@
 package org.aksw.commons.graph.index.jena.transform;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 import java.util.function.Supplier;
@@ -34,7 +36,13 @@ public class QueryToGraphVisitor
 {
     protected Supplier<Node> nodeSupplier;
     protected BiMap<Var, Node> varToNode;
+    
+    
     protected GraphVar graph;
+    
+    // During the graph conversion we keep track of the original expression of each node
+    protected Map<Node, Expr> nodeToExpr;
+    
 
     protected Stack<Node> stack = new Stack<>();
 
@@ -52,6 +60,7 @@ public class QueryToGraphVisitor
         this.graph = graph;
         this.nodeSupplier = nodeSupplier;// = new GeneratorBlacklist(generator, blacklist)
         this.varToNode = HashBiMap.create();
+        this.nodeToExpr = new HashMap<>();
     }
 
     public BiMap<Var, Node> getVarToNode() {
@@ -62,8 +71,11 @@ public class QueryToGraphVisitor
         return varToNode.inverse();
     }
 
+    public Map<Node, Expr> getNodeToExpr() {
+		return nodeToExpr;
+	}
 
-    public GraphVar getGraph() {
+	public GraphVar getGraph() {
         return graph;
     }
 
@@ -89,7 +101,7 @@ public class QueryToGraphVisitor
 
         ExprList exprs = op.getExprs();
         Set<Set<Expr>> dnf = DnfUtils.toSetDnf(exprs);
-        QueryToJenaGraph.dnfToGraph(graph, dnf, nodeSupplier);
+        QueryToJenaGraph.dnfToGraph(graph, nodeToExpr, dnf, nodeSupplier);
 
 
         Node result = nodeSupplier.get();

@@ -153,7 +153,7 @@ public class QueryExecutionViewMatcherMaster
         // TODO opRewriter.lookup and opRewriter.put() both perform normalization
         // We could this duplicate processing by normalizing here
         // and passing the projected op to both functions
-        ProjectedOp pop = AlgebraUtils.cutProjectionAndNormalize(queryOp, QueryToGraph::normalizeOp);
+        ProjectedOp pop = AlgebraUtils.cutProjectionAndNormalize(queryOp, op -> QueryToGraph.normalizeOp(op, false));
         //List<Var> popVars = new ArrayList<>(pop.getProjection().getProjectVars());
 
         //Op coreQueryOp = pop.getResidualOp();
