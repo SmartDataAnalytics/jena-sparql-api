@@ -13,6 +13,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -107,7 +108,19 @@ public class ExpressionMapper {
         return sii;
 	}
 	
-	
+
+	public static <T, K, U, M extends Map<K, U>> Collector<T, ?, M> toMap(
+			Function<? super T, ? extends K> keyMapper,
+			Function<? super T, ? extends U> valueMapper,
+			Supplier<M> mapSupplier) {
+		Collector<T, ?, M> result = Collectors.toMap(
+				keyMapper,
+				valueMapper,
+				(u, v) -> { throw new RuntimeException("should not happen"); },
+				mapSupplier);
+		return result;
+	}
+
 	public static <T, K, U> Collector<T, ?, Map<K, U>> toLinkedHashMap(
 			Function<? super T, ? extends K> keyMapper,
 			Function<? super T, ? extends U> valueMapper) {
@@ -149,6 +162,9 @@ public class ExpressionMapper {
 	 */
 	public static Multimap<BiMap<Node, Node>, Set<Set<Expr>>> computeResidualCnf(BiMap<Node, Node> baseIso, Set<Set<Expr>> viewCnf, Set<Set<Expr>> userCnf) {
 
+		Predicate<Expr> isVar = (e) -> e.isVariable();
+		
+		
 		SubgraphIsomorphismIndex<Long, DirectedGraph<Node, Triple>, Node> sii = createIndex();
         Supplier<Supplier<Node>> ssn = () -> { int[] x = {0}; return () -> NodeFactory.createBlankNode("_" + x[0]++); };
         
@@ -203,7 +219,7 @@ public class ExpressionMapper {
         	
         	DirectedGraph<Node, Triple> g = viewOpGraph.getJGraphTGraph();
 
-        	System.out.println("Lookup with clause: " + viewClause);
+        	//System.out.println("Lookup with clause: " + viewClause);
         	
         	// This returns candidate clauses of the query that may be more restrictive than those
         	// of the view
@@ -247,7 +263,11 @@ public class ExpressionMapper {
         //compats.forEach(compat -> {
         for(Entry<List<Entry<Long, BiMap<Node, Node>>>, BiMap<Node, Node>> compat : l) {
         	
-        	BiMap<Node, Node> totalIso = compat.getValue();
+        	BiMap<Node, Node> rawIso = compat.getValue();
+        	
+        	BiMap<Node, Node> totalIso = rawIso.inverse().entrySet().stream()
+        			.filter(e -> e.getKey().isVariable() || e.getValue().isVariable())
+        			.collect(toMap(Entry::getKey, Entry::getValue, HashBiMap::create));
         	
             Set<Set<Expr>> residualCnf = new LinkedHashSet<>();
             Set<Long> coveredUserClauseIds = new LinkedHashSet<>();
@@ -278,6 +298,7 @@ public class ExpressionMapper {
         		
         		Set<Expr> residualClause = new HashSet<>();
         		for(Expr userExpr : userClause) {
+        			
         			
         			Node userNode = userExprToNode.get(userExpr);
         			Node viewNode = userToView.getOrDefault(userNode, userNode);
@@ -356,6 +377,13 @@ public class ExpressionMapper {
         	}
         	
         	if(residualCnf != null) {
+        		
+        		// FIXME What to do if these expressions use variables that have not been mapped???
+        		// Possible resolutions
+        		// (a) reject the match
+        		// (b) return the non-covered user clauses separately from the resdual expressions
+        		// Probably (b) is best
+        		
                 // Add all query clauses not covered by the view 
             	for(Entry<Long, Set<Expr>> e : idToUserClause.entrySet()) {
             		Long userId = e.getKey();
@@ -384,7 +412,7 @@ public class ExpressionMapper {
 	
 	public static void main(String[] args) {
 		Expr view = ExprUtils.parse("1 + ?y * ?x = ?h && contains(?i, 'foo') && (?a = 1 || ?a = 2 || ?a = 3)");
-		Expr user = ExprUtils.parse("(?a * ?b) + 1 = ?z && contains(?j, 'foobar') && (?o = 1 || ?o = 2) && ?x = 4");
+		Expr user = ExprUtils.parse("(?a * ?b) + 1 = ?z && contains(?j, 'foobar') && (?o = 1 || ?o = 2) && ?a = 4");
 		
 		// TODO Should the result include identity mappings? Probably yes for the sake of
 		// future compatibility checking 

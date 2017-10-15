@@ -134,8 +134,7 @@ public class TreeContainmentIndexImpl<K, X, G, N, A, V>
             result = new OpGraph(q2g.getGraph(), q2g.getNodeToExpr());
         }
 
-        return result;
-    	    	
+        return result;    	    	
     }
     
     
