@@ -41,7 +41,7 @@ public class QueryToGraphVisitor
     protected GraphVar graph;
     
     // During the graph conversion we keep track of the original expression of each node
-    protected Map<Node, Expr> nodeToExpr;
+    protected BiMap<Node, Expr> nodeToExpr;
     
 
     protected Stack<Node> stack = new Stack<>();
@@ -60,7 +60,7 @@ public class QueryToGraphVisitor
         this.graph = graph;
         this.nodeSupplier = nodeSupplier;// = new GeneratorBlacklist(generator, blacklist)
         this.varToNode = HashBiMap.create();
-        this.nodeToExpr = new HashMap<>();
+        this.nodeToExpr = HashBiMap.create();
     }
 
     public BiMap<Var, Node> getVarToNode() {
@@ -71,7 +71,7 @@ public class QueryToGraphVisitor
         return varToNode.inverse();
     }
 
-    public Map<Node, Expr> getNodeToExpr() {
+    public BiMap<Node, Expr> getNodeToExpr() {
 		return nodeToExpr;
 	}
 

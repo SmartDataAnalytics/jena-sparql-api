@@ -131,7 +131,7 @@ public class TreeContainmentIndexImpl<K, X, G, N, A, V>
             QueryToGraphVisitor q2g = new ExtendedQueryToGraphVisitor(ssn.get());
             q2g.visit(ocq);
             
-            result = new OpGraph(q2g.getNodeToExpr(), q2g.getGraph());
+            result = new OpGraph(q2g.getGraph(), q2g.getNodeToExpr());
         }
 
         return result;

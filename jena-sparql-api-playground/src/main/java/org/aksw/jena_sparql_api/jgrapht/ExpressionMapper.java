@@ -267,7 +267,7 @@ public class ExpressionMapper {
         		long userId = e.getKey();
         		Set<Expr> userClause = idToUserClause.get(userId);
         		BiMap<Node, Node> userToView = e.getValue();
-        		//BiMap<Node, Node> viewToUser = userToView.inverse(); 
+        		BiMap<Node, Node> viewToUser = userToView.inverse(); 
 
         		System.out.println("  Candidate user clause: " + idToUserClause.get(userId));
 
@@ -289,16 +289,16 @@ public class ExpressionMapper {
 	        			
             			Expr viewExpr = xviewNodeToExpr.get(viewNode);
 	
-	        			Expr renamedUserExpr = userExpr.applyNodeTransform(new NodeTransformRenameMap(userToView));
+	        			Expr renamedViewExpr = viewExpr.applyNodeTransform(new NodeTransformRenameMap(viewToUser));
 
-	        			if(Objects.equals(viewExpr, renamedUserExpr)) {
+	        			if(Objects.equals(renamedViewExpr, userExpr)) {
 	        				residualClause.add(viewExpr);
 	        			} else {
 	        			
 	        			// Handle regex
-		        			if(renamedUserExpr instanceof E_StrContains) {
-		        				E_StrContains aExpr = (E_StrContains)viewExpr;
-		        				E_StrContains bExpr = (E_StrContains)renamedUserExpr;
+		        			if(userExpr instanceof E_StrContains) {
+		        				E_StrContains aExpr = (E_StrContains)renamedViewExpr;
+		        				E_StrContains bExpr = (E_StrContains)userExpr;
 		
 		//        				if(Objects.equals(aExpr, bExpr)) {
 		//        					r = Expr.
@@ -383,13 +383,13 @@ public class ExpressionMapper {
 	}
 	
 	public static void main(String[] args) {
-		//Expr view = ExprUtils.parse("1 + ?y * ?x = ?h && contains(?i, 'foo') && (?a = 1 || ?a = 2 || ?a = 3)");
-		//Expr user = ExprUtils.parse("(?a * ?b) + 1 = ?z && contains(?j, 'foobar') && (?o = 1 || ?o = 2) && ?x = 4");
+		Expr view = ExprUtils.parse("1 + ?y * ?x = ?h && contains(?i, 'foo') && (?a = 1 || ?a = 2 || ?a = 3)");
+		Expr user = ExprUtils.parse("(?a * ?b) + 1 = ?z && contains(?j, 'foobar') && (?o = 1 || ?o = 2) && ?x = 4");
 		
 		// TODO Should the result include identity mappings? Probably yes for the sake of
 		// future compatibility checking 
-		Expr view = ExprUtils.parse("?x = ?y");
-		Expr user = ExprUtils.parse("?x = ?y && ?a = ?b");
+		//Expr view = ExprUtils.parse("?i = ?y");
+		//Expr user = ExprUtils.parse("?x = ?y && ?a = ?b");
 		
 		// Expected: [(contains(?j, 'foobar'), !?o = ?3)]
 		
