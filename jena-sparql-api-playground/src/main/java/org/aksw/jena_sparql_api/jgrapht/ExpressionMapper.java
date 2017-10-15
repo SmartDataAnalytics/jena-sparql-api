@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.jgrapht;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,6 +13,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -43,6 +45,7 @@ import org.jgrapht.DirectedGraph;
 
 import com.codepoetics.protonpack.Indexed;
 import com.codepoetics.protonpack.StreamUtils;
+import com.codepoetics.protonpack.functions.TriFunction;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
@@ -51,20 +54,67 @@ import com.google.common.collect.Multimap;
 
 
 public class ExpressionMapper {
+	
+	public static Set<Expr> clauseHandler(Set<Expr> residualClause, Expr viewExpr, Expr userExpr) {
+		Set<Expr> result = residualClause;
+		
+		// Handle regex
+		if(userExpr instanceof E_StrContains) {
+			E_StrContains aExpr = (E_StrContains)viewExpr;
+			E_StrContains bExpr = (E_StrContains)userExpr;
+	
+			Expr a = aExpr.getArg2();
+			Expr b = bExpr.getArg2();
+	
+			String aStr = getString(a);
+			String bStr = getString(b);
+			
+			
+			if(aStr != null && bStr != null && bStr.contains(aStr)) {
+				result.add(new E_StrContains(bExpr.getArg1(), b));
+			} else {
+				result = null;
+			}
+		}
+
+		return result;
+	}
+	
 	public static Multimap<BiMap<Node, Node>, Set<Set<Expr>>> computeResidualExpressions(BiMap<Node, Node> baseIso, Expr view, Expr user) {
 		view = ExprTransformer.transform(new ExprTransformVariableOrder(), view);
 		user = ExprTransformer.transform(new ExprTransformVariableOrder(), user);
 
-		System.out.println("Normalization: " + view + " vs " + user);
+//		System.out.println("Normalization: " + view + " vs " + user);
 		
 		Set<Set<Expr>> viewDnf = CnfUtils.toSetCnf(view);
 		Set<Set<Expr>> userDnf = CnfUtils.toSetCnf(user);
 		
-		System.out.println("viewNf: " + viewDnf);
-		System.out.println("userNf: " + userDnf);
+//		System.out.println("viewNf: " + viewDnf);
+//		System.out.println("userNf: " + userDnf);
 		//if(viewDnf.size() >= 1 || userDnf.)
 		
-		Multimap<BiMap<Node, Node>, Set<Set<Expr>>> result = computeResidualCnf(baseIso, viewDnf, userDnf);
+		
+		SubgraphIsomorphismIndex<Long, DirectedGraph<Node, Triple>, Node> sii = createIndex();
+		Predicate<Expr> isVar = (e) -> e.isVariable();
+        Supplier<Supplier<Node>> ssn = () -> { int[] x = {0}; return () -> NodeFactory.createBlankNode("_" + x[0]++); };
+        BiFunction<Expr, BiMap<Node, Node>, Expr> applyExprIso = (e, iso) -> e.applyNodeTransform(new NodeTransformRenameMap(iso));
+        
+		
+		Multimap<BiMap<Node, Node>, Set<Set<Expr>>> result = computeResidualCnf(
+				Node::isVariable,
+				applyExprIso,
+				sii,
+				ssn,
+				ExpressionMapper::clauseHandler,
+				
+				ExpressionMapper::toOpGraph,
+				OpGraph::getJGraphTGraph,
+				OpGraph::getNodeToExpr,
+				
+				
+				baseIso,
+				viewDnf,
+				userDnf);
 		return result;
 	}
 	
@@ -160,38 +210,54 @@ public class ExpressionMapper {
 	 * @param userCnf
 	 * @return
 	 */
-	public static Multimap<BiMap<Node, Node>, Set<Set<Expr>>> computeResidualCnf(BiMap<Node, Node> baseIso, Set<Set<Expr>> viewCnf, Set<Set<Expr>> userCnf) {
-
-		Predicate<Expr> isVar = (e) -> e.isVariable();
-		
-		
-		SubgraphIsomorphismIndex<Long, DirectedGraph<Node, Triple>, Node> sii = createIndex();
-        Supplier<Supplier<Node>> ssn = () -> { int[] x = {0}; return () -> NodeFactory.createBlankNode("_" + x[0]++); };
-        
-        Supplier<Node> userNodeSupplier = ssn.get();
-        Supplier<Node> viewNodeSupplier = ssn.get();
-        BiMap<Node, Expr> userNodeToExpr = HashBiMap.create();
-        BiMap<Node, Expr> viewNodeToExpr = HashBiMap.create();
+	public static <E, N, T, O, G> Multimap<BiMap<N, N>, Set<Set<E>>> computeResidualCnf(
+			// Basic Node and Expr handling
+			Predicate<? super N> isVar,
+			BiFunction<? super E, BiMap<N, N>, E> applyExprIso,
+			
+			// Indexing
+			SubgraphIsomorphismIndex<Long, G, N> sii,
+			Supplier<Supplier<N>> ssn,
+			
+			// Expression post-processing
+			TriFunction<Set<E>, E,  E, Set<E>> clauseHandler,
+					
+			// Graph conversion
+			TriFunction<Set<E>, BiMap<N, E>, Supplier<N>, O> toOpGraph,
+			Function<O, G> opGraphToGraph,
+			Function<O, BiMap<N, E>> opGraphToNodeToExpr,
+			
+			// Actual expressions
+			BiMap<N, N> baseIso,
+			Set<Set<E>> viewCnf,
+			Set<Set<E>> userCnf)
+	{        
+        Supplier<N> userNodeSupplier = ssn.get();
+        Supplier<N> viewNodeSupplier = ssn.get();
+        BiMap<N, E> userNodeToExpr = HashBiMap.create();
+        BiMap<N, E> viewNodeToExpr = HashBiMap.create();
         
         //HashMap<Integer, Set<Expr>> idToViewClause = new LinkedHashMap<>();
-        Map<Long, Set<Expr>> idToUserClause = StreamUtils.zipWithIndex(userCnf.stream())
+        Map<Long, Set<E>> idToUserClause = StreamUtils.zipWithIndex(userCnf.stream())
         		.collect(toLinkedHashMap(Indexed::getIndex, Indexed::getValue));
+      //viewExpr.applyNodeTransform(new NodeTransformRenameMap(viewToUser));
+        Map<Long, O> idToUserOpGraph = new HashMap<>();
 
-        Map<Long, OpGraph> idToUserOpGraph = new HashMap<>();
-
-        for(Entry<Long, Set<Expr>> userClauseI : idToUserClause.entrySet()) {
+        for(Entry<Long, Set<E>> userClauseI : idToUserClause.entrySet()) {
         	long id = userClauseI.getKey();
-        	Set<Expr> userClause = userClauseI.getValue();
+        	Set<E> userClause = userClauseI.getValue();
         	
-        	OpGraph opGraph = toOpGraph(userClause, userNodeToExpr, userNodeSupplier);        	
-        	DirectedGraph<Node, Triple> g = opGraph.getJGraphTGraph();
+        	O opGraph = toOpGraph.apply(userClause, userNodeToExpr, userNodeSupplier);        	
+        	G g = opGraphToGraph.apply(opGraph);
+        	//DirectedGraph<Node, Triple>
+        	
         	
         	sii.put(id, g);
         	idToUserOpGraph.put(id, opGraph);
         }
 
-        Map<Long, Set<Expr>> idToViewClause = StreamUtils.zipWithIndex(viewCnf.stream())
-        		.collect(toLinkedHashMap(Indexed::getIndex, Indexed::getValue));
+//        Map<Long, Set<E>> idToViewClause = StreamUtils.zipWithIndex(viewCnf.stream())
+//        		.collect(toLinkedHashMap(Indexed::getIndex, Indexed::getValue));
 
         
         
@@ -199,40 +265,40 @@ public class ExpressionMapper {
 
         
         // TODO Sort view clauses by size (we expect those to yield fewest isos)
-        List<Set<Expr>> viewClausesBySize = new ArrayList<>(viewCnf);
+        List<Set<E>> viewClausesBySize = new ArrayList<>(viewCnf);
         Collections.sort(viewClausesBySize, (a, b) -> Integer.compare(a.size(), b.size()));
         
-        List<List<Entry<Long, BiMap<Node, Node>>>> candList = new ArrayList<>();
+        List<List<Entry<Long, BiMap<N, N>>>> candList = new ArrayList<>();
         
-        List<OpGraph> viewClauseIdToOpGraph = new ArrayList<>(viewClausesBySize.size());
+        List<O> viewClauseIdToOpGraph = new ArrayList<>(viewClausesBySize.size());
         
         
         // For each view clause retrieve the set of candidate user clauses
         for(int i = 0; i < viewClausesBySize.size(); ++i) {
 
-        	Set<Expr> viewClause = viewClausesBySize.get(i);
-        	OpGraph viewOpGraph = toOpGraph(viewClause, viewNodeToExpr, viewNodeSupplier);
+        	Set<E> viewClause = viewClausesBySize.get(i);
+        	O viewOpGraph = toOpGraph.apply(viewClause, viewNodeToExpr, viewNodeSupplier);
         	viewClauseIdToOpGraph.add(viewOpGraph);
         	
         	//BiMap<Node, Expr> viewNodeToExpr = viewOpGraph.getNodeToExpr();
         	//BiMap<Expr, Node> viewExprToNode = viewNodeToExpr.inverse();
         	
-        	DirectedGraph<Node, Triple> g = viewOpGraph.getJGraphTGraph();
+        	G g = opGraphToGraph.apply(viewOpGraph);
 
         	//System.out.println("Lookup with clause: " + viewClause);
         	
         	// This returns candidate clauses of the query that may be more restrictive than those
         	// of the view
-        	Multimap<Long, BiMap<Node, Node>> userClauseCands = sii.lookupX(g, false, baseIso);
+        	Multimap<Long, BiMap<N, N>> userClauseCands = sii.lookupX(g, false, baseIso);
 
         	candList.add(new ArrayList<>(userClauseCands.entries()));
         }
         
         
-        Stream<Entry<List<Entry<Long, BiMap<Node, Node>>>, BiMap<Node, Node>>> compats = Lists.cartesianProduct(candList).stream().map(items -> {
-        	BiMap<Node, Node> total = HashBiMap.create();
-        	for(Entry<Long, BiMap<Node, Node>> entry : items) {
-        		BiMap<Node, Node> contrib = entry.getValue();
+        Stream<Entry<List<Entry<Long, BiMap<N, N>>>, BiMap<N, N>>> compats = Lists.cartesianProduct(candList).stream().map(items -> {
+        	BiMap<N, N> total = HashBiMap.create();
+        	for(Entry<Long, BiMap<N, N>> entry : items) {
+        		BiMap<N, N> contrib = entry.getValue();
         		try {
         			total.putAll(contrib);
         		} catch(Exception e) {
@@ -243,7 +309,7 @@ public class ExpressionMapper {
         	}
         	
         	
-        	Entry<List<Entry<Long, BiMap<Node, Node>>>, BiMap<Node, Node>> r = total == null
+        	Entry<List<Entry<Long, BiMap<N, N>>>, BiMap<N, N>> r = total == null
         			? null
         			: new SimpleEntry<>(items, total);        	
 
@@ -252,94 +318,73 @@ public class ExpressionMapper {
         
         
         
-        List<Entry<List<Entry<Long, BiMap<Node, Node>>>, BiMap<Node, Node>>> l = compats.collect(Collectors.toList());
-        System.out.println("Cartesian product of isos yeld " + l.size() + " compatible mappings");
+        List<Entry<List<Entry<Long, BiMap<N, N>>>, BiMap<N, N>>> l = compats.collect(Collectors.toList());
+        //System.out.println("Cartesian product of isos yeld " + l.size() + " compatible mappings");
         	
         	//StateCartesian<Set<Expr>, Long, BiMap<Node, Node>> cart = null;
         	
         	
-        Multimap<BiMap<Node, Node>, Set<Set<Expr>>> result = ArrayListMultimap.create();
+        Multimap<BiMap<N, N>, Set<Set<E>>> result = ArrayListMultimap.create();
 
         //compats.forEach(compat -> {
-        for(Entry<List<Entry<Long, BiMap<Node, Node>>>, BiMap<Node, Node>> compat : l) {
+        for(Entry<List<Entry<Long, BiMap<N, N>>>, BiMap<N, N>> compat : l) {
         	
-        	BiMap<Node, Node> rawIso = compat.getValue();
+        	BiMap<N, N> rawIso = compat.getValue();
         	
-        	BiMap<Node, Node> totalIso = rawIso.inverse().entrySet().stream()
-        			.filter(e -> e.getKey().isVariable() || e.getValue().isVariable())
+        	BiMap<N, N> totalIso = rawIso.inverse().entrySet().stream()
+        			.filter(e -> isVar.test(e.getKey()) || isVar.test(e.getValue()))
         			.collect(toMap(Entry::getKey, Entry::getValue, HashBiMap::create));
         	
-            Set<Set<Expr>> residualCnf = new LinkedHashSet<>();
+            Set<Set<E>> residualCnf = new LinkedHashSet<>();
             Set<Long> coveredUserClauseIds = new LinkedHashSet<>();
 
         	for(int i = 0; i < viewClausesBySize.size(); ++i) {
-        		Set<Expr> viewClause = viewClausesBySize.get(i);
+        		Set<E> viewClause = viewClausesBySize.get(i);
         		System.out.println("viewClause: " + viewClause);
 	        		
-	        	Entry<Long, BiMap<Node, Node>> e = compat.getKey().get(i);
+	        	Entry<Long, BiMap<N, N>> e = compat.getKey().get(i);
 	        	
-	        	BiMap<Node, Expr> xviewNodeToExpr = viewClauseIdToOpGraph.get(i).getNodeToExpr();
+	        	O viewOpGraph = viewClauseIdToOpGraph.get(i); //.getNodeToExpr();
+	        	Map<? super N, ? extends E> xviewNodeToExpr = opGraphToNodeToExpr.apply(viewOpGraph);
 	        	
 	        	//boolean foundMatch = false;
 	//        	for(Entry<Long, BiMap<Node, Node>> e : cands.entries()) {
 	        		
 	        	//for(Entry<Long, BiMap<Node, Node>> e : userCands) {
         		long userId = e.getKey();
-        		Set<Expr> userClause = idToUserClause.get(userId);
-        		BiMap<Node, Node> userToView = e.getValue();
-        		BiMap<Node, Node> viewToUser = userToView.inverse(); 
+        		Set<E> userClause = idToUserClause.get(userId);
+        		BiMap<N, N> userToView = e.getValue();
+        		BiMap<N, N> viewToUser = userToView.inverse(); 
 
         		System.out.println("  Candidate user clause: " + idToUserClause.get(userId));
 
         		
-        		OpGraph userOpGraph = idToUserOpGraph.get(userId);
-        		BiMap<Node, Expr> xuserNodeToExpr = userOpGraph.getNodeToExpr();
-        		BiMap<Expr, Node> userExprToNode = xuserNodeToExpr.inverse();
+        		O userOpGraph = idToUserOpGraph.get(userId);
+        		BiMap<N, E> xuserNodeToExpr = opGraphToNodeToExpr.apply(userOpGraph); //.getNodeToExpr();
+        		BiMap<E, N> userExprToNode = xuserNodeToExpr.inverse();
         		
-        		Set<Expr> residualClause = new HashSet<>();
-        		for(Expr userExpr : userClause) {
+        		Set<E> residualClause = new HashSet<>();
+        		for(E userExpr : userClause) {
         			
         			
-        			Node userNode = userExprToNode.get(userExpr);
-        			Node viewNode = userToView.getOrDefault(userNode, userNode);
+        			N userNode = userExprToNode.get(userExpr);
+        			N viewNode = userToView.getOrDefault(userNode, userNode);
         			
         			if(viewNode == null) {
         				//residualClause.add(userExpr);
         				residualClause = null;
         			} else {
 	        			
-            			Expr viewExpr = xviewNodeToExpr.get(viewNode);
+        				
+        				
+            			E viewExpr = xviewNodeToExpr.get(viewNode);
 	
-	        			Expr renamedViewExpr = viewExpr.applyNodeTransform(new NodeTransformRenameMap(viewToUser));
+	        			E renamedViewExpr = applyExprIso.apply(viewExpr, viewToUser);
 
 	        			if(Objects.equals(renamedViewExpr, userExpr)) {
 	        				residualClause.add(viewExpr);
 	        			} else {
-	        			
-	        			// Handle regex
-		        			if(userExpr instanceof E_StrContains) {
-		        				E_StrContains aExpr = (E_StrContains)renamedViewExpr;
-		        				E_StrContains bExpr = (E_StrContains)userExpr;
-		
-		//        				if(Objects.equals(aExpr, bExpr)) {
-		//        					r = Expr.
-		//        				}
-		        				
-		        				Expr a = aExpr.getArg2();
-		        				Expr b = bExpr.getArg2();
-		
-		        				String aStr = getString(a);
-		        				String bStr = getString(b);
-		        				
-		        				
-		        				if(aStr != null && bStr != null && bStr.contains(aStr)) {
-		        					residualClause.add(new E_StrContains(bExpr.getArg1(), b));
-		        				} else {
-		        					residualClause = null;
-		        				}
-		        			} else {		        			
-		        				residualClause = null;
-		        			}
+	        				residualClause = clauseHandler.apply(residualClause, renamedViewExpr, userExpr);	        			
 	        			}
 	        			
 	        			
@@ -385,13 +430,13 @@ public class ExpressionMapper {
         		// Probably (b) is best
         		
                 // Add all query clauses not covered by the view 
-            	for(Entry<Long, Set<Expr>> e : idToUserClause.entrySet()) {
+            	for(Entry<Long, Set<E>> e : idToUserClause.entrySet()) {
             		Long userId = e.getKey();
             		if(coveredUserClauseIds.contains(userId)) {
             			continue;
             		}
             		
-            		Set<Expr> nonCoveredClause = e.getValue();
+            		Set<E> nonCoveredClause = e.getValue();
             		residualCnf.add(nonCoveredClause);
             	}
 	
@@ -403,13 +448,10 @@ public class ExpressionMapper {
         	}        	        	
         }
         
-        
-        
-
-
         return result;
 	}
 	
+
 	public static void main(String[] args) {
 		Expr view = ExprUtils.parse("1 + ?y * ?x = ?h && contains(?i, 'foo') && (?a = 1 || ?a = 2 || ?a = 3)");
 		Expr user = ExprUtils.parse("(?a * ?b) + 1 = ?z && contains(?j, 'foobar') && (?o = 1 || ?o = 2) && ?a = 4");
