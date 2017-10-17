@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.jgrapht;
+package org.aksw.jena_sparql_api.query_containment.index;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
@@ -28,7 +28,6 @@ import org.aksw.commons.graph.index.jena.SubgraphIsomorphismIndexJena;
 import org.aksw.commons.graph.index.jena.transform.QueryToJenaGraph;
 import org.aksw.commons.jena.graph.GraphVarImpl;
 import org.aksw.jena_sparql_api.algebra.transform.ExprTransformVariableOrder;
-import org.aksw.jena_sparql_api.query_containment.index.OpGraph;
 import org.aksw.jena_sparql_api.utils.CnfUtils;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.apache.jena.graph.Graph;
@@ -86,9 +85,15 @@ public class ExpressionMapper {
 
 //		System.out.println("Normalization: " + view + " vs " + user);
 		
-		Set<Set<Expr>> viewDnf = CnfUtils.toSetCnf(view);
-		Set<Set<Expr>> userDnf = CnfUtils.toSetCnf(user);
+		Set<Set<Expr>> viewCnf = CnfUtils.toSetCnf(view);
+		Set<Set<Expr>> userCnf = CnfUtils.toSetCnf(user);
 		
+		Multimap<BiMap<Node, Node>, Set<Set<Expr>>> result = computeResidualExpressions(baseIso, viewCnf, userCnf);
+		return result;
+	}
+	
+	public static Multimap<BiMap<Node, Node>, Set<Set<Expr>>> computeResidualExpressions(BiMap<Node, Node> baseIso, Set<Set<Expr>> viewCnf, Set<Set<Expr>> userCnf) {
+
 //		System.out.println("viewNf: " + viewDnf);
 //		System.out.println("userNf: " + userDnf);
 		//if(viewDnf.size() >= 1 || userDnf.)
@@ -113,8 +118,8 @@ public class ExpressionMapper {
 				
 				
 				baseIso,
-				viewDnf,
-				userDnf);
+				viewCnf,
+				userCnf);
 		return result;
 	}
 	

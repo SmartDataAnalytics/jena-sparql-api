@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.query_containment.index;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
 
 import org.aksw.commons.graph.index.jena.transform.OpDistinctExtendFilter;
 import org.aksw.jena_sparql_api.algebra.analysis.DistinctExtendFilter;
@@ -14,12 +15,14 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.op.OpDisjunction;
 import org.apache.jena.sparql.algebra.op.OpNull;
+import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.graph.NodeTransformLib;
 
 import com.codepoetics.protonpack.functions.TriFunction;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import com.google.common.collect.Multimap;
 
 public class NodeMapperOpContainment
     implements TriFunction<Op, Op, TreeMapping<Op, Op, BiMap<Node, Node>, Op>, Entry<BiMap<Node, Node>, Op>>
@@ -72,14 +75,32 @@ public class NodeMapperOpContainment
 
 
     public Entry<BiMap<Node, Node>, Op> map(OpExtConjunctiveQuery viewOp, OpExtConjunctiveQuery userOp, TreeMapping<Op, Op, BiMap<Node, Node>, Op> tm) {
-        QuadFilterPatternCanonical view = viewOp.getQfpc().getPattern().applyNodeTransform(new NodeTransformRenameMap(tm.getOverallMatching()));
+        QuadFilterPatternCanonical view = viewOp.getQfpc().getPattern(); //.applyNodeTransform(new NodeTransformRenameMap(tm.getOverallMatching()));
         QuadFilterPatternCanonical user = userOp.getQfpc().getPattern();
 
-        QuadFilterPatternCanonical residual = user.diff(view);
+//        QuadFilterPatternCanonical residual = user.diff(view);
 
-        Op result = residual.isEmpty()
-                ? OpNull.create()
-                : null;
+        
+//        DistinctExtendFilter view = viewOp.getDef().applyNodeTransform(new NodeTransformRenameMap(tm.getOverallMatching()));
+//        DistinctExtendFilter user = userOp.getDef();
+
+        BiMap<Node, Node> baseIso = tm.getOverallMatching();
+        
+        //Set<Set<Expr>> viewCnf = view.getFilter().getCnf();
+        //Set<Set<Expr>> userCnf = user.getFilter().getCnf();
+        Expr viewExpr = view.getExprHolder().getExpr();
+        Expr userExpr = user.getExprHolder().getExpr();
+        
+        Multimap<BiMap<Node, Node>, Set<Set<Expr>>> maps = ExpressionMapper.computeResidualExpressions(baseIso, viewExpr, userExpr);
+        
+        System.out.println(maps);
+
+        
+        Op result = null;
+//        
+//        Op result = residual.isEmpty()
+//                ? OpNull.create()
+//                : null;
 
         return new SimpleEntry<>(HashBiMap.create(), result);
     }
@@ -89,6 +110,16 @@ public class NodeMapperOpContainment
         DistinctExtendFilter view = viewOp.getDef().applyNodeTransform(new NodeTransformRenameMap(tm.getOverallMatching()));
         DistinctExtendFilter user = userOp.getDef();
 
+        BiMap<Node, Node> baseIso = tm.getOverallMatching();
+        
+        //Set<Set<Expr>> viewCnf = view.getFilter().getCnf();
+        //Set<Set<Expr>> userCnf = user.getFilter().getCnf();
+        Expr viewExpr = view.getFilter().getExpr();
+        Expr userExpr = view.getFilter().getExpr();
+        
+        Multimap<BiMap<Node, Node>, Set<Set<Expr>>> maps = ExpressionMapper.computeResidualExpressions(baseIso, viewExpr, userExpr);
+        
+        System.out.println(maps);
         // TODO How to create the diff properly?
         // If we had access to the underlying graphs of the ops, we could use the information to deal with symmetric expressions
         

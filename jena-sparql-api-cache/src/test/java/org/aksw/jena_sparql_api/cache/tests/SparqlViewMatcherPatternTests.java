@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
@@ -14,6 +15,9 @@ import org.aksw.commons.collections.tagmap.TagMapSetTrie;
 import org.aksw.commons.collections.tagmap.ValidationUtils;
 import org.aksw.commons.graph.index.core.SubgraphIsomorphismIndex;
 import org.aksw.commons.graph.index.jena.SubgraphIsomorphismIndexJena;
+import org.aksw.jena_sparql_api.algebra.analysis.VarUsage;
+import org.aksw.jena_sparql_api.algebra.analysis.VarUsage2;
+import org.aksw.jena_sparql_api.algebra.analysis.VarUsageAnalyzer2Visitor;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlQueryContainmentUtils;
 import org.aksw.jena_sparql_api.query_containment.index.NodeMapperOpContainment;
 import org.aksw.jena_sparql_api.query_containment.index.NodeMapperOpEquality;
@@ -258,14 +262,23 @@ public class SparqlViewMatcherPatternTests {
         TreeContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, Op> index = TreeContainmentIndexImpl.create(sii, nodeMapper);
 
  
-        view = QueryFactory.create("PREFIX ex: <http://ex.org/> SELECT * { ?s a ex:Person ; ex:name ?n . FILTER(regex(?n, 'fr')) }");
-        user = QueryFactory.create("PREFIX ex: <http://ex.org/> SELECT * { ?s a ex:Person ; ex:name ?n . FILTER(regex(?n, 'franz')) }");
+        view = QueryFactory.create("PREFIX ex: <http://ex.org/> SELECT DISTINCT ?s { ?s a ex:Person ; ex:name ?n . FILTER(contains(?n, 'fr')) }");
+        user = QueryFactory.create("PREFIX ex: <http://ex.org/> SELECT * { ?s a ex:Person ; ex:name ?n . FILTER(contains(?n, 'franz')) }");
+        
         
         
         
         Node viewKey = NodeFactory.createURI("http://ex.org/view");
         Op viewOp = Algebra.toQuadForm(Algebra.compile(view));
 
+        
+        VarUsageAnalyzer2Visitor varUsageAnalyzer = new VarUsageAnalyzer2Visitor();
+        Map<Op, VarUsage2> map = VarUsageAnalyzer2Visitor.analyze(viewOp, varUsageAnalyzer);
+        for(Entry<Op, VarUsage2> e : map.entrySet()) {
+        	System.out.println(e);
+        }
+        
+        
         index.put(viewKey, viewOp);
 
         Op userOp = Algebra.toQuadForm(Algebra.compile(user));
