@@ -19,6 +19,7 @@ import org.apache.jena.sparql.algebra.OpVisitorBase;
 import org.apache.jena.sparql.algebra.op.Op1;
 import org.apache.jena.sparql.algebra.op.OpAssign;
 import org.apache.jena.sparql.algebra.op.OpDistinct;
+import org.apache.jena.sparql.algebra.op.OpExt;
 import org.apache.jena.sparql.algebra.op.OpExtend;
 import org.apache.jena.sparql.algebra.op.OpFilter;
 import org.apache.jena.sparql.algebra.op.OpGroup;
@@ -158,13 +159,13 @@ public class VarUsageAnalyzer2Visitor
     	
     	for(Op subOp : OpUtils.getSubOps(op)) {
     		
-    		if(op instanceof OpGroup) {
+    		if(subOp instanceof OpGroup) {
         		// Do not push the distinct flag into aggregations;
         		// in general these depend on duplicates
     		} else {
     			// TODO We can only push into EXTEND/ASSIGN if the expressions are deterministic
     			
-    			pushDownDistinct(op);
+    			pushDownDistinct(subOp);
     		}
     	}
     }
@@ -183,7 +184,7 @@ public class VarUsageAnalyzer2Visitor
     	
     	
     	// Push down distinct
-    	
+    	pushDownDistinct(op);
     	
     	
 //    	Set<Var> vars = varDeps.keySet();
@@ -254,6 +255,20 @@ public class VarUsageAnalyzer2Visitor
         processExtend(op, op.getSubOp(), op.getVarExprList());
     }
 
+    @Override
+    public void visit(OpExt opExt) {
+    	Op effectiveOp = opExt.effectiveOp();
+    	if(effectiveOp == null) {
+    		throw new IllegalArgumentException("Default handing of OpExt requires an effectiveOp");
+    	}
+    	
+    	effectiveOp.visit(this);
+
+    	VarUsage2 varUsage = opToVarUsage.get(effectiveOp);
+    	
+    	opToVarUsage.put(opExt, varUsage);
+    }
+    
     @Override
     public void visit(OpAssign op) {
         processExtend(op, op.getSubOp(), op.getVarExprList());

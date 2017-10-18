@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.query_containment.index;
 
 import java.util.AbstractMap.SimpleEntry;
+import java.util.Collections;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
@@ -25,10 +26,10 @@ import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Multimap;
 
 public class NodeMapperOpContainment
-    implements TriFunction<Op, Op, TreeMapping<Op, Op, BiMap<Node, Node>, Op>, Entry<BiMap<Node, Node>, Op>>
+    implements TriFunction<Op, Op, TreeMapping<Op, Op, BiMap<Node, Node>, ResidualMatching>, Entry<BiMap<Node, Node>, ResidualMatching>>
 {
     @Override
-    public Entry<BiMap<Node, Node>, Op> apply(Op viewOp, Op userOp, TreeMapping<Op, Op, BiMap<Node, Node>, Op> tm) {
+    public Entry<BiMap<Node, Node>, ResidualMatching> apply(Op viewOp, Op userOp, TreeMapping<Op, Op, BiMap<Node, Node>, ResidualMatching> tm) {
 //        Class<?> viewOpClass = viewOp == null ? null : viewOp.getClass();
 //        Class<?> userOpClass = userOp == null ? null : userOp.getClass();
 
@@ -44,7 +45,7 @@ public class NodeMapperOpContainment
         
         
         
-        Entry<BiMap<Node, Node>, Op> result;
+        Entry<BiMap<Node, Node>, ResidualMatching> result;
         if(!Objects.equals(viewOpClass, userOpClass)) {
             result = null;
         } else {
@@ -61,7 +62,7 @@ public class NodeMapperOpContainment
             	NodeTransform nodeTransform = new NodeTransformRenameMap(tm.getOverallMatching());
             	Op x = NodeTransformLib.transform(nodeTransform, viewOp);
             	
-            	result = Objects.equals(x, userOp) ? new SimpleEntry<>(HashBiMap.create(), OpNull.create()) : null;            	
+            	result = Objects.equals(x, userOp) ? new SimpleEntry<>(HashBiMap.create(), new ResidualMatching(Collections.singleton(Collections.emptySet()))) : null;            	
             }
 
         }
@@ -74,7 +75,7 @@ public class NodeMapperOpContainment
     }
 
 
-    public Entry<BiMap<Node, Node>, Op> map(OpExtConjunctiveQuery viewOp, OpExtConjunctiveQuery userOp, TreeMapping<Op, Op, BiMap<Node, Node>, Op> tm) {
+    public Entry<BiMap<Node, Node>, ResidualMatching> map(OpExtConjunctiveQuery viewOp, OpExtConjunctiveQuery userOp, TreeMapping<Op, Op, BiMap<Node, Node>, ResidualMatching> tm) {
         QuadFilterPatternCanonical view = viewOp.getQfpc().getPattern(); //.applyNodeTransform(new NodeTransformRenameMap(tm.getOverallMatching()));
         QuadFilterPatternCanonical user = userOp.getQfpc().getPattern();
 
@@ -93,20 +94,28 @@ public class NodeMapperOpContainment
         
         Multimap<BiMap<Node, Node>, Set<Set<Expr>>> maps = ExpressionMapper.computeResidualExpressions(baseIso, viewExpr, userExpr);
         
-        System.out.println(maps);
+        System.out.println("Residual Exprs: " + maps);
 
         
-        Op result = null;
+        Entry<BiMap<Node, Node>, ResidualMatching> result = null;
+        
+        if(!maps.isEmpty()) {
+        	Entry<BiMap<Node, Node>, Set<Set<Expr>>> e = maps.entries().iterator().next();
+        	result = new SimpleEntry<>(e.getKey(), new ResidualMatching(e.getValue()));        	
+        }
+        
+        //Op result = null;
 //        
 //        Op result = residual.isEmpty()
 //                ? OpNull.create()
 //                : null;
 
-        return new SimpleEntry<>(HashBiMap.create(), result);
+        //return new SimpleEntry<>(HashBiMap.create(), result);
+        return result;
     }
 
 
-    public Entry<BiMap<Node, Node>, Op> map(OpDistinctExtendFilter viewOp, OpDistinctExtendFilter userOp, TreeMapping<Op, Op, BiMap<Node, Node>, Op> tm) {
+    public Entry<BiMap<Node, Node>, ResidualMatching> map(OpDistinctExtendFilter viewOp, OpDistinctExtendFilter userOp, TreeMapping<Op, Op, BiMap<Node, Node>, ResidualMatching> tm) {
         DistinctExtendFilter view = viewOp.getDef().applyNodeTransform(new NodeTransformRenameMap(tm.getOverallMatching()));
         DistinctExtendFilter user = userOp.getDef();
 
@@ -119,18 +128,27 @@ public class NodeMapperOpContainment
         
         Multimap<BiMap<Node, Node>, Set<Set<Expr>>> maps = ExpressionMapper.computeResidualExpressions(baseIso, viewExpr, userExpr);
         
-        System.out.println(maps);
+        System.out.println("Residual Exprs: " + maps);
         // TODO How to create the diff properly?
         // If we had access to the underlying graphs of the ops, we could use the information to deal with symmetric expressions
         
         
+        Entry<BiMap<Node, Node>, ResidualMatching> result = null;
+        
+        if(!maps.isEmpty()) {
+        	Entry<BiMap<Node, Node>, Set<Set<Expr>>> e = maps.entries().iterator().next();
+        	result = new SimpleEntry<>(e.getKey(), new ResidualMatching(e.getValue()));        	
+        }
+        
+        return result;
+
         // TODO Extensions may yield additional matchings
 
-        Op result = view.equals(user)
-                ? OpNull.create()
-                : null;
-
-        return new SimpleEntry<>(HashBiMap.create(), result);
+//        Op result = view.equals(user)
+//                ? OpNull.create()
+//                : null;
+//
+//        return new SimpleEntry<>(HashBiMap.create(), result);
     }
 
 }

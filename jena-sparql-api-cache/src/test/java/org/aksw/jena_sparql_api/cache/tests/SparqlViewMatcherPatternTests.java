@@ -7,20 +7,20 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.tagmap.TagMapSetTrie;
 import org.aksw.commons.collections.tagmap.ValidationUtils;
 import org.aksw.commons.graph.index.core.SubgraphIsomorphismIndex;
 import org.aksw.commons.graph.index.jena.SubgraphIsomorphismIndexJena;
-import org.aksw.jena_sparql_api.algebra.analysis.VarUsage;
+import org.aksw.commons.graph.index.jena.transform.QueryToGraph;
 import org.aksw.jena_sparql_api.algebra.analysis.VarUsage2;
 import org.aksw.jena_sparql_api.algebra.analysis.VarUsageAnalyzer2Visitor;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlQueryContainmentUtils;
 import org.aksw.jena_sparql_api.query_containment.index.NodeMapperOpContainment;
-import org.aksw.jena_sparql_api.query_containment.index.NodeMapperOpEquality;
+import org.aksw.jena_sparql_api.query_containment.index.ResidualMatching;
 import org.aksw.jena_sparql_api.query_containment.index.TreeContainmentIndex;
 import org.aksw.jena_sparql_api.query_containment.index.TreeContainmentIndexImpl;
 import org.aksw.jena_sparql_api.query_containment.index.TreeMapping;
@@ -39,7 +39,6 @@ import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.util.NodeUtils;
 import org.jgrapht.DirectedGraph;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -259,35 +258,39 @@ public class SparqlViewMatcherPatternTests {
         SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> siiValidating = ValidationUtils.createValidatingProxy(SubgraphIsomorphismIndex.class, siiTreeTags, siiTagBased);
         SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> sii = siiValidating;
         
-        TreeContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, Op> index = TreeContainmentIndexImpl.create(sii, nodeMapper);
+        TreeContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, ResidualMatching> index = TreeContainmentIndexImpl.create(sii, nodeMapper);
 
  
-        view = QueryFactory.create("PREFIX ex: <http://ex.org/> SELECT DISTINCT ?s { ?s a ex:Person ; ex:name ?n . FILTER(contains(?n, 'fr')) }");
-        user = QueryFactory.create("PREFIX ex: <http://ex.org/> SELECT * { ?s a ex:Person ; ex:name ?n . FILTER(contains(?n, 'franz')) }");
+        view = QueryFactory.create("PREFIX ex: <http://ex.org/> SELECT * { ?s a ex:Person ; ex:name ?n . FILTER(contains(?n, 'fr')) }");
+        user = QueryFactory.create("PREFIX ex: <http://ex.org/> SELECT DISTINCT ?s { ?s a ex:Person ; ex:name ?n . FILTER(contains(?n, 'franz')) }");
         
         
         
         
         Node viewKey = NodeFactory.createURI("http://ex.org/view");
         Op viewOp = Algebra.toQuadForm(Algebra.compile(view));
+        Op userOp = Algebra.toQuadForm(Algebra.compile(user));
 
         
-        VarUsageAnalyzer2Visitor varUsageAnalyzer = new VarUsageAnalyzer2Visitor();
-        Map<Op, VarUsage2> map = VarUsageAnalyzer2Visitor.analyze(viewOp, varUsageAnalyzer);
-        for(Entry<Op, VarUsage2> e : map.entrySet()) {
-        	System.out.println(e);
-        }
-        
+
+        {
+        	Op op = userOp;
+        	//op = QueryToGraph.normalizeOp(op, true);
+	        VarUsageAnalyzer2Visitor varUsageAnalyzer = new VarUsageAnalyzer2Visitor();
+	        Map<Op, VarUsage2> map = VarUsageAnalyzer2Visitor.analyze(op, varUsageAnalyzer);
+	        for(Entry<Op, VarUsage2> e : map.entrySet()) {
+	        	System.out.println("VarUsage: " + e);
+	        }
+        }        
         
         index.put(viewKey, viewOp);
 
-        Op userOp = Algebra.toQuadForm(Algebra.compile(user));
 
-        List<Entry<Node, TreeMapping<Op, Op, BiMap<Node, Node>, Op>>> matches = 
+        List<Entry<Node, TreeMapping<Op, Op, BiMap<Node, Node>, ResidualMatching>>> matches = 
         		index.match(userOp).collect(Collectors.toList());
 
         System.out.println("Begin of matches:");
-		for(Entry<Node, TreeMapping<Op, Op, BiMap<Node, Node>, Op>> match : matches) {
+		for(Entry<Node, TreeMapping<Op, Op, BiMap<Node, Node>, ResidualMatching>> match : matches) {
         	System.out.println("  Match: " + match);
         }
         System.out.println("End of matches");
