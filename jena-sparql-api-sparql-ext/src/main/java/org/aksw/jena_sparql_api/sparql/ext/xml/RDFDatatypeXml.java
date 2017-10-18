@@ -22,6 +22,7 @@ import org.apache.jena.datatypes.DatatypeFormatException;
 import org.apache.jena.vocabulary.XSD;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
+import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
@@ -34,7 +35,21 @@ public class RDFDatatypeXml
     public static DocumentBuilder createDefaultDocumentBuilder() {
     	DocumentBuilder result;
 		try {
-			result = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+//			result = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+	        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+	        factory.setValidating(false);
+	        factory.setNamespaceAware(false);
+
+	        result = factory.newDocumentBuilder();
+	        result.setEntityResolver(new EntityResolver() {
+
+	            @Override
+	            public InputSource resolveEntity(String publicId, String systemId)
+	                    throws SAXException, IOException {
+	                //System.out.println("Ignoring " + publicId + ", " + systemId);
+	                return new InputSource(new StringReader(""));
+	            }
+	        });
 		} catch (ParserConfigurationException e) {
 			throw new RuntimeException(e);
 		}

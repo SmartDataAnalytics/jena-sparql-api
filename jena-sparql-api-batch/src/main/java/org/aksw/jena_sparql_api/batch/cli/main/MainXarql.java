@@ -9,6 +9,7 @@ import java.nio.file.Paths;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.sparql.ext.json.JenaExtensionJson;
+import org.aksw.jena_sparql_api.sparql.ext.xml.JenaExtensionXml;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.Syntax;
@@ -22,7 +23,7 @@ import org.apache.jena.vocabulary.RDFS;
 
 public class MainXarql {
 	public static void main(String[] args) throws IOException {
-		JenaExtensionJson.register();
+		//JenaExtensionJson.register();
 		
 		Path path = Paths.get(args[0]); //"/home/raven/Projects/Eclipse/trento-bike-racks/datasets/bikesharing/trento-bike-sharing.json");
 		String str = new String(Files.readAllBytes(path), StandardCharsets.ISO_8859_1);
@@ -36,6 +37,7 @@ public class MainXarql {
 		pm.setNsPrefixes(PrefixMapping.Extended);
 		//PropertyFunction
 		pm.setNsPrefix("json", JenaExtensionJson.jsonFn);
+		pm.setNsPrefix("xml", JenaExtensionXml.xmlFn);
 		
 		String q = args[1];
 		
