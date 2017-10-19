@@ -328,7 +328,7 @@ public class QueryContainmentIndexImpl<K, X, Y, G, N, A, V>
     public Table<K, A, ProblemNeighborhoodAware<BiMap<N, N>, ?>> lookupLeaf(X userContext, Entry<A, Y> userLeaf, BiMap<N, N> baseMatching) {
         
     	// FIXME Make identities configurable
-    	Table<K, A, ProblemNeighborhoodAware<BiMap<N, N>, ?>> result = TreeMapper.createTable(false, true);
+    	Table<K, A, ProblemNeighborhoodAware<BiMap<N, N>, ?>> result = TreeMapper.createTable(true, true);
 
         // FIXME the user processing may require different preprocessing efforts than that of the view, so enhance to different preprocessors
         

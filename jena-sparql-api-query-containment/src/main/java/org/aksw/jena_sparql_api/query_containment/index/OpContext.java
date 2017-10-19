@@ -71,7 +71,7 @@ public class OpContext {
             OpGraph leafOpGraph = QueryContainmentIndexImpl.queryToOpGraph(leafOp);
 
             if(leafOpGraph != null) {
-            	leafOpGraphs.put(op, leafOpGraph);
+            	leafOpGraphs.put(leafOp, leafOpGraph);
             }
         });
 
