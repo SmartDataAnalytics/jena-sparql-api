@@ -138,7 +138,7 @@ public class QueryContainmentIndexImpl<K, X, Y, G, N, A, V>
             QueryToGraphVisitor q2g = new ExtendedQueryToGraphVisitor(ssn.get());
             q2g.visit(ocq);
             
-            result = new OpGraph(q2g.getGraph(), q2g.getNodeToExpr());
+            result = new OpGraph(q2g.getGraph(), q2g.getNodeToExpr(), q2g.getNodeToQuad());
         }
 
         return result;    	    	

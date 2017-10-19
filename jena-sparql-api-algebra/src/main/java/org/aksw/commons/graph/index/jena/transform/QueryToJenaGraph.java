@@ -64,17 +64,24 @@ public class QueryToJenaGraph {
         graph.add(new Triple(source, edgeLabel, target));
     }
 
-    public static Node addQuad(Graph graph, Quad quad, Supplier<Node> nodeSupplier) {
-        // Allocate a fresh node for the quad
-        Node quadNode = nodeSupplier.get();
-
-        Node gg = quad.getGraph();
-        if(!Quad.defaultGraphIRI.equals(gg) && !Quad.defaultGraphNodeGenerated.equals(gg)) {
-            addEdge(graph, quadNode, g, quad.getGraph());
-        }
-        addEdge(graph, quadNode, s, quad.getSubject());
-        addEdge(graph, quadNode, p, quad.getPredicate());
-        addEdge(graph, quadNode, o, quad.getObject());
+    public static Node addQuad(Graph graph, Quad quad, Map<Quad, Node> quadToNode, Supplier<Node> nodeSupplier) {
+    	Node quadNode = quadToNode.get(quad);
+    	if(quadNode == null) {
+    		
+	    	
+	    	// Allocate a fresh node for the quad
+	        quadNode = nodeSupplier.get();
+	
+	        quadToNode.put(quad, quadNode);
+	        
+	        Node gg = quad.getGraph();
+	        if(!Quad.defaultGraphIRI.equals(gg) && !Quad.defaultGraphNodeGenerated.equals(gg)) {
+	            addEdge(graph, quadNode, g, quad.getGraph());
+	        }
+	        addEdge(graph, quadNode, s, quad.getSubject());
+	        addEdge(graph, quadNode, p, quad.getPredicate());
+	        addEdge(graph, quadNode, o, quad.getObject());
+    	}
 
         return quadNode;
     }
@@ -87,11 +94,11 @@ public class QueryToJenaGraph {
      * @param quads
      * @return
      */
-    public static Node quadsToGraphNode(Graph graph, Collection<Quad> quads, Supplier<Node> nodeSupplier) {
+    public static Node quadsToGraphNode(Graph graph, Map<Quad, Node> quadToNode, Collection<Quad> quads, Supplier<Node> nodeSupplier) {
         Node quadBlockNode = nodeSupplier.get();
         //graph = new DirectedPseudograph<>(LabeledEdgeImpl.class);
         for(Quad quad : quads) {
-            Node quadNode = addQuad(graph, quad, nodeSupplier);
+            Node quadNode = addQuad(graph, quad, quadToNode, nodeSupplier);
             addEdge(graph, quadBlockNode, quadBlockMember, quadNode);
         }
 
@@ -99,10 +106,10 @@ public class QueryToJenaGraph {
     }
 
 
-    public static void quadsToGraph(Graph graph, Collection<Quad> quads, Supplier<Node> nodeSupplier) {
+    public static void quadsToGraph(Graph graph, Collection<Quad> quads, Map<Quad, Node> quadToNode, Supplier<Node> nodeSupplier) {
         //graph = new DirectedPseudograph<>(LabeledEdgeImpl.class);
         for(Quad quad : quads) {
-            addQuad(graph, quad, nodeSupplier);
+            addQuad(graph, quad, quadToNode, nodeSupplier);
         }
     }
 

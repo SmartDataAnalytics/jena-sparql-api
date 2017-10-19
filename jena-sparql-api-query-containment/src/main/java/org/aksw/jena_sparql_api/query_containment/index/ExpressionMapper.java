@@ -2,7 +2,6 @@ package org.aksw.jena_sparql_api.query_containment.index;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -100,7 +99,7 @@ public class ExpressionMapper {
 		
 		
 		SubgraphIsomorphismIndex<Long, DirectedGraph<Node, Triple>, Node> sii = createIndex();
-		Predicate<Expr> isVar = (e) -> e.isVariable();
+		//Predicate<Expr> isVar = (e) -> e.isVariable();
         Supplier<Supplier<Node>> ssn = () -> { int[] x = {0}; return () -> NodeFactory.createBlankNode("_" + x[0]++); };
         BiFunction<Expr, BiMap<Node, Node>, Expr> applyExprIso = (e, iso) -> e.applyNodeTransform(new NodeTransformRenameMap(iso));
         
@@ -144,7 +143,7 @@ public class ExpressionMapper {
 		Graph graph = new GraphVarImpl();
         QueryToJenaGraph.clauseToGraph(clauseNode, graph, nodeToExpr, conjunction, nodeSupplier);
 
-        OpGraph result = new OpGraph(graph, nodeToExpr);
+        OpGraph result = new OpGraph(graph, nodeToExpr, HashBiMap.create());
         return result;
 	}
 	

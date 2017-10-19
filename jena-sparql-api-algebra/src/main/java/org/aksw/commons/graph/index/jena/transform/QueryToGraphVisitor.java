@@ -1,8 +1,6 @@
 package org.aksw.commons.graph.index.jena.transform;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 import java.util.function.Supplier;
@@ -36,6 +34,7 @@ public class QueryToGraphVisitor
 {
     protected Supplier<Node> nodeSupplier;
     protected BiMap<Var, Node> varToNode;
+    protected BiMap<Quad, Node> quadToNode;
     
     
     protected GraphVar graph;
@@ -61,6 +60,7 @@ public class QueryToGraphVisitor
         this.nodeSupplier = nodeSupplier;// = new GeneratorBlacklist(generator, blacklist)
         this.varToNode = HashBiMap.create();
         this.nodeToExpr = HashBiMap.create();
+        this.quadToNode = HashBiMap.create();
     }
 
     public BiMap<Var, Node> getVarToNode() {
@@ -71,6 +71,14 @@ public class QueryToGraphVisitor
         return varToNode.inverse();
     }
 
+    public BiMap<Quad, Node> getQuadToNode() {
+    	return quadToNode;
+    }
+
+    public BiMap<Node, Quad> getNodeToQuad() {
+    	return quadToNode.inverse();
+    }
+    
     public BiMap<Node, Expr> getNodeToExpr() {
 		return nodeToExpr;
 	}
@@ -129,7 +137,7 @@ public class QueryToGraphVisitor
     }
 
     public void handleQuads(List<Quad> quads) {
-        Node result = QueryToJenaGraph.quadsToGraphNode(graph, quads, nodeSupplier);
+        Node result = QueryToJenaGraph.quadsToGraphNode(graph, quadToNode, quads, nodeSupplier);
         stack.push(result);
         //QueryToJenaGraph.quadsToGraph(graph, quads, nodeSupplier, varToNode);
     }

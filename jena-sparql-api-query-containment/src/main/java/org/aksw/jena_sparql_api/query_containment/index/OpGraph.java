@@ -4,6 +4,7 @@ import org.aksw.commons.jena.jgrapht.PseudoGraphJenaGraph;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.expr.Expr;
 import org.jgrapht.DirectedGraph;
 
@@ -22,10 +23,12 @@ public class OpGraph {
 	// TODO Add an attribute for the OP nodes
 	
 	protected BiMap<Node, Expr> nodeToExpr;
+	protected BiMap<Node, Quad> nodeToQuad;
+	
 	protected Graph jenaGraph;
 	protected DirectedGraph<Node, Triple> jgraphTGraph;
-	
-	public OpGraph(Graph jenaGraph, BiMap<Node, Expr> nodeToExpr) {
+
+	public OpGraph(Graph jenaGraph, BiMap<Node, Expr> nodeToExpr, BiMap<Node, Quad> nodeToQuad) {
 		super();
 		this.jenaGraph = jenaGraph;
 		this.nodeToExpr = nodeToExpr;
@@ -37,6 +40,10 @@ public class OpGraph {
 		return nodeToExpr;
 	}
 
+	public BiMap<Node, Quad> getNodeToQuad() {
+		return nodeToQuad;
+	}
+	
 	public Graph getJenaGraph() {
 		return jenaGraph;
 	}

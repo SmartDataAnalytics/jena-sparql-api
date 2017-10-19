@@ -12,10 +12,12 @@ import org.aksw.jena_sparql_api.algebra.utils.OpExtConjunctiveQuery;
 import org.aksw.jena_sparql_api.algebra.utils.OpUtils;
 import org.aksw.jena_sparql_api.algebra.utils.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
+import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.op.OpDisjunction;
 import org.apache.jena.sparql.algebra.op.OpNull;
+import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.graph.NodeTransformLib;
@@ -88,6 +90,17 @@ public class NodeMapperOpContainment
         QuadFilterPatternCanonical view = viewOp.getQfpc().getPattern(); //.applyNodeTransform(new NodeTransformRenameMap(tm.getOverallMatching()));
         QuadFilterPatternCanonical user = userOp.getQfpc().getPattern();
 
+        QuadFilterPatternCanonical viewTransformed = viewOp.getQfpc().getPattern().applyNodeTransform(new NodeTransformRenameMap(tm.getOverallMatching()));
+        
+        Set<Quad> viewQuads = viewTransformed.getQuads();
+        Set<Quad> userQuads = user.getQuads();
+        
+        Set<Quad> diffQuadsA = Sets.difference(userQuads, viewQuads);
+        Set<Quad> diffQuadsB = Sets.difference(viewQuads, userQuads);
+        
+        System.out.println("DIFF quads: " + diffQuadsA);
+        System.out.println("DIFF quads: " + diffQuadsB);
+        
 //        QuadFilterPatternCanonical residual = user.diff(view);
 
         
@@ -133,7 +146,7 @@ public class NodeMapperOpContainment
         //Set<Set<Expr>> viewCnf = view.getFilter().getCnf();
         //Set<Set<Expr>> userCnf = user.getFilter().getCnf();
         Expr viewExpr = view.getFilter().getExpr();
-        Expr userExpr = view.getFilter().getExpr();
+        Expr userExpr = user.getFilter().getExpr();
         
         Multimap<BiMap<Node, Node>, Set<Set<Expr>>> maps = ExpressionMapper.computeResidualExpressions(baseIso, viewExpr, userExpr);
         
