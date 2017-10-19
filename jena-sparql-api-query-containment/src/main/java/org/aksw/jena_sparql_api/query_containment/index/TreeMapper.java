@@ -28,7 +28,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codepoetics.protonpack.functions.TriFunction;
-import com.google.common.collect.BiMap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
 import com.google.common.collect.Table.Cell;
@@ -50,7 +49,7 @@ import com.google.common.collect.Tables;
  * @param <C>
  * @param <M>
  */
-public class TreeMapper<K, XA, XB, A, B, M, C, V> {
+public class TreeMapper<K, XA, XB, YA, YB, A, B, M, C, V> {
 
 	private static final Logger logger = LoggerFactory.getLogger(TreeMapper.class);
 
@@ -58,9 +57,15 @@ public class TreeMapper<K, XA, XB, A, B, M, C, V> {
     protected Function<? super K, ? extends XA> viewKeyToViewContext;
     protected Function<? super XA, ? extends Tree<A>> viewContextToTree;
     
+    
+    //protected Function<?>
 
-    protected TriFunction<Tree<B>, B, M, Table<K, A, ProblemNeighborhoodAware<M, ?>>> leafMatcher;
+    protected Function<? super XB, ? extends Tree<B>> getTree;
+    protected Function<? super XB, Map<B, YB>> getLeafNodes;
+    
+    protected TriFunction<XB, Entry<B, YB>, M, Table<K, A, ProblemNeighborhoodAware<M, ?>>> leafMatcher;
 
+    
     //protected TriFunction<? super A, ? super B, TreeMapping<A, B, M, V>, ? extends Entry<C, V>> nodeMapper;
     //protected BiFunction<? super XA, ?super XB, ? extends NodeMapper<A, B, M, V>> nodeMapperFactory;
     protected BiFunction<? super XA, ?super XB, ? extends NodeMapper<A, B, M, C, V>> nodeMapperFactory;
@@ -77,7 +82,10 @@ public class TreeMapper<K, XA, XB, A, B, M, C, V> {
     		Function<? super K, ? extends XA> viewKeyToXA,
     		Function<? super XA, ? extends Tree<A>> xaToTree,
 
-            TriFunction<Tree<B>, B, M, Table<K, A, ProblemNeighborhoodAware<M, ?>>> leafMatcher,
+    	    Function<? super XB, ? extends Tree<B>> getTree,
+    		Function<? super XB, Map<B, YB>> getLeafNodes,
+    				
+            TriFunction<XB, Entry<B, YB>, M, Table<K, A, ProblemNeighborhoodAware<M, ?>>> leafMatcher,
             //TriFunction<? super A, ? super B, TreeMapping<A, B, M, V>, ? extends Entry<C, V>> nodeMapper,
             //BiFunction<? super XA, ?super XB, ? extends NodeMapper<A, B, M, V>> nodeMapperFactory,
             BiFunction<? super XA, ?super XB, ? extends NodeMapper<A, B, M, C, V>> nodeMapperFactory,
@@ -92,6 +100,9 @@ public class TreeMapper<K, XA, XB, A, B, M, C, V> {
         super();
         this.viewKeyToViewContext = viewKeyToXA;
         this.viewContextToTree = xaToTree;
+        
+        this.getTree = getTree;
+        this.getLeafNodes = getLeafNodes;
         
         
         this.leafMatcher = leafMatcher;
@@ -127,11 +138,12 @@ public class TreeMapper<K, XA, XB, A, B, M, C, V> {
         return result;
     }
 
-    public Stream<Entry<K, TreeMapping<A, B, M, V>>> createMappings(M baseMatching, Tree<B> userTree, XB userContext) {
+    public Stream<Entry<K, TreeMapping<A, B, M, V>>> createMappings(M baseMatching, XB userContext) {
 
         //Table<K, Entry<A, B>, Table<A, B, ProblemNeighborhoodAware<S, S>>> leafMappings = createLeafMappings(userTree);
-        Map<K, Table<A, B, ProblemNeighborhoodAware<M, ?>>> leafMappingPerView = createLeafMappings(baseMatching, userTree);
+        Map<K, Table<A, B, ProblemNeighborhoodAware<M, ?>>> leafMappingPerView = createLeafMappings(baseMatching, userContext);
 
+        Tree<B> userTree = getTree.apply(userContext);
 
         Stream<Entry<K, TreeMapping<A, B, M, V>>> result = leafMappingPerView.entrySet().stream()
             .flatMap(e -> {
@@ -270,17 +282,28 @@ public class TreeMapper<K, XA, XB, A, B, M, C, V> {
     /**
      *
      */
-    public Map<K, Table<A, B, ProblemNeighborhoodAware<M, ?>>> createLeafMappings(M baseMatching, Tree<B> userTree) {
+    public Map<K, Table<A, B, ProblemNeighborhoodAware<M, ?>>> createLeafMappings(M baseMatching, XB userContext) { //Tree<B> userTree) {
+
+        //Collection<B> leafNodes = TreeUtils.getLeafs(userTree);
+        Map<B, YB> leafMap = getLeafNodes.apply(userContext);
+        
+        Map<K, Table<A, B, ProblemNeighborhoodAware<M, ?>>> result = createLeafMappings(baseMatching, userContext, leafMap.entrySet());
+        
+        return result;
+    }
+    
+    public Map<K, Table<A, B, ProblemNeighborhoodAware<M, ?>>> createLeafMappings(M baseMatching, XB userContext, Collection<Entry<B, YB>> leafEntries) { 
+        //for(B userOp : leafNodes) {
         Map<K, Table<A, B, ProblemNeighborhoodAware<M, ?>>> result = new HashMap<>();
+        for(Entry<B, YB> leafEntry : leafEntries) {
 
-        Collection<B> leafNodes = TreeUtils.getLeafs(userTree);
-
-        for(B userOp : leafNodes) {
-
+        	//Tree<B> userTree = getTree.apply(userContext);
+        	B userOp = leafEntry.getKey();
+        	//YB leafData = leafEntry.getValue();
         	
             // Create the initial matching for the leafs
             // Obtain the candidate views for that user node
-            Table<K, A, ProblemNeighborhoodAware<M, ?>> matchTable = leafMatcher.apply(userTree, userOp, baseMatching);
+            Table<K, A, ProblemNeighborhoodAware<M, ?>> matchTable = leafMatcher.apply(userContext, leafEntry, baseMatching);
             
             logger.debug("Found " + matchTable.rowMap().size() + " candidate leafs  for" + userOp);
             

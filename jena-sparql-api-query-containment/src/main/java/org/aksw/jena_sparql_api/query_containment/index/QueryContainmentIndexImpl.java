@@ -87,11 +87,14 @@ public class QueryContainmentIndexImpl<K, X, Y, G, N, A, V>
 	
     //protected Function<? super A, A> normalizer;
     
-    protected Function<? super A, X> treePreprocessor;
+    protected Function<? super A, X> treePreprocessor;    
+    
+    protected Function<? super X, Map<A, Y>> preprocessLeafs;
+    
     protected Function<? super X, ? extends Tree<A>> getTree;
     
     
-    protected BiFunction<? super A, ? super X, Y> leafPreprocessor;
+    //protected BiFunction<? super A, ? super X, Y> leafPreprocessor;
     protected Function<? super Y, G> getGraph;
 
     // We do not map inputs directly to graphs, but to an intermediate object of type X from which the graph for indexing is obtained
@@ -178,8 +181,9 @@ public class QueryContainmentIndexImpl<K, X, Y, G, N, A, V>
     		QueryContainmentIndex<K, DirectedGraph<Node, Triple>, Node, Op, V> result =
         		new QueryContainmentIndexImpl<K, OpContext, OpGraph, DirectedGraph<Node, Triple>, Node, Op, V>(
         				OpContext::create,
+        				OpContext::getLeafOpGraphs,
 		                OpContext::getNormalizedOpTree,		                
-		                (op, opContext) -> QueryContainmentIndexImpl.queryToOpGraph(op),
+		                //(op, opContext) -> QueryContainmentIndexImpl.queryToOpGraph(op),
 		                opGraph -> opGraph.getJGraphTGraph(),//opContext.getOpAsGraph().getJGraphTGraph(),
 		                sii,
 		                nodeMapperFactory
@@ -189,8 +193,9 @@ public class QueryContainmentIndexImpl<K, X, Y, G, N, A, V>
 
     public QueryContainmentIndexImpl(
             Function<? super A, X> preprocessor,
-            Function<? super X, Tree<A>> getTree,
-            BiFunction<? super A, ? super X, Y> leafPreprocessor,
+            Function<? super X, Map<A, Y>> preprocessLeafs,
+            Function<? super X, Tree<A>> getTree,            		
+            //BiFunction<? super A, ? super X, Y> leafPreprocessor,
             Function<? super Y, G> getGraph,
             
             SubgraphIsomorphismIndex<Entry<K, Long>, G, N> index,
@@ -198,8 +203,9 @@ public class QueryContainmentIndexImpl<K, X, Y, G, N, A, V>
     		) {
         super();
         this.treePreprocessor = preprocessor;
+        this.preprocessLeafs = preprocessLeafs;
         this.getTree = getTree;
-        this.leafPreprocessor = leafPreprocessor;
+        //this.leafPreprocessor = leafPreprocessor;
         this.getGraph = getGraph;
         //this.metaGraphToGraph = metaGraphToGraph;        
         this.index = index;
@@ -233,21 +239,16 @@ public class QueryContainmentIndexImpl<K, X, Y, G, N, A, V>
         
     	X preprocessedA = treePreprocessor.apply(viewOp);
     	Tree<A> tree = getTree.apply(preprocessedA);
-    	
-    	
-        //CA contextA = analyzer.apply(normViewOp);
-        
-        //Tree<A> tree = TreeImpl.create(normViewOp, parentToChildren);//OpUtils.createTree((Op)normViewOp);
 
-        // Convert the leaf nodes to graphs
-        long leafNodeId[] = {0};
-
-        //TreeUtils.inOrderSearch(tree.getRoot(), tree::getChildren)
-        TreeUtils.leafStream(tree).forEach(op -> {
-        	//System.out.println("Processing op: " + op);
+        long leafNodeId = 0;
+    	
+    	Map<A, Y> leafToPreprocessed = preprocessLeafs.apply(preprocessedA);
+    	for(Entry<A, Y> x : leafToPreprocessed.entrySet()) {
+    		A op = x.getKey();
             TreeNode<A> node = new TreeNodeImpl<>(tree, op);
 
-            Y leafPreprocessed = leafPreprocessor.apply(op, preprocessedA);
+            Y leafPreprocessed = x.getValue();
+            //Y leafPreprocessed = leafPreprocessor.apply(op, preprocessedA);
             
             //X preprocessed = treePreprocessor.apply(op);
             G graph = getGraph.apply(leafPreprocessed);
@@ -260,11 +261,11 @@ public class QueryContainmentIndexImpl<K, X, Y, G, N, A, V>
 //            System.out.println(graph);
             
             if(graph != null) {
-                Entry<K, Long> e = new SimpleEntry<>(key, leafNodeId[0]);
+                Entry<K, Long> e = new SimpleEntry<>(key, leafNodeId);
 
                 LeafInfo<Entry<K, Long>, A, X, Y, G> leafInfo = new LeafInfo<>(e, preprocessedA, leafPreprocessed, graph, node);
                 
-                keyToNodeIndexToInfo.put(key, leafNodeId[0], leafInfo);
+                keyToNodeIndexToInfo.put(key, leafNodeId, leafInfo);
                 //System.out.println("Insert: " + e);
 //                System.out.println("Graph: " + graph);
                 //System.out.println("Graph of size: " + graph);
@@ -272,24 +273,74 @@ public class QueryContainmentIndexImpl<K, X, Y, G, N, A, V>
                 index.put(e, graph);
 
                 //index.printTree();
-                leafNodeId[0]++;
+                leafNodeId++;
             }
-        });
+    		
+    	}
+    	
+    	
+        //CA contextA = analyzer.apply(normViewOp);
+        
+        //Tree<A> tree = TreeImpl.create(normViewOp, parentToChildren);//OpUtils.createTree((Op)normViewOp);
+
+        // Convert the leaf nodes to graphs
+
+        //Stream<>getLeafs.apply(viewOp, preprocessedA);
+        
+        //TreeUtils.inOrderSearch(tree.getRoot(), tree::getChildren)
+//        TreeUtils.leafStream(tree).forEach(op -> {
+//        	//System.out.println("Processing op: " + op);
+//            TreeNode<A> node = new TreeNodeImpl<>(tree, op);
+//
+//            Y leafPreprocessed = leafPreprocessor.apply(op, preprocessedA);
+//            
+//            //X preprocessed = treePreprocessor.apply(op);
+//            G graph = getGraph.apply(leafPreprocessed);
+//            
+//            //G graph = getGraph.apply(preprocessed);//opToGraph.apply(op);
+//            
+////            System.out.println();
+////            System.out.println("Graph for " + key);
+////            System.out.println(op);
+////            System.out.println(graph);
+//            
+//            if(graph != null) {
+//                Entry<K, Long> e = new SimpleEntry<>(key, leafNodeId[0]);
+//
+//                LeafInfo<Entry<K, Long>, A, X, Y, G> leafInfo = new LeafInfo<>(e, preprocessedA, leafPreprocessed, graph, node);
+//                
+//                keyToNodeIndexToInfo.put(key, leafNodeId[0], leafInfo);
+//                //System.out.println("Insert: " + e);
+////                System.out.println("Graph: " + graph);
+//                //System.out.println("Graph of size: " + graph);
+//
+//                index.put(e, graph);
+//
+//                //index.printTree();
+//                leafNodeId[0]++;
+//            }
+//        });
 
     }
 
 
-    public Table<K, A, ProblemNeighborhoodAware<BiMap<N, N>, ?>> lookupLeaf(Tree<A> tree, A leaf, BiMap<N, N> baseMatching) {
-        Table<K, A, ProblemNeighborhoodAware<BiMap<N, N>, ?>> result = TreeMapper.createTable(true, true);
+    // Tree<A> tree
+    public Table<K, A, ProblemNeighborhoodAware<BiMap<N, N>, ?>> lookupLeaf(X userContext, Entry<A, Y> userLeaf, BiMap<N, N> baseMatching) {
+        
+    	// FIXME Make identities configurable
+    	Table<K, A, ProblemNeighborhoodAware<BiMap<N, N>, ?>> result = TreeMapper.createTable(false, true);
 
         // FIXME the user processing may require different preprocessing efforts than that of the view, so enhance to different preprocessors
         
-        Y preprocessed = leafPreprocessor.apply(leaf, null);
+        //Map<A, Y> leafMap = preprocessLeafs.apply(userContext);
+        
+        //Y preprocessed = leafPreprocessor.apply(userLeaf, null);
         //G graph = opToGraph.apply(leaf);
+        Y preprocessed = userLeaf.getValue();//leafMap.get(userLeaf);
         G graph = getGraph.apply(preprocessed);
         if(graph == null) {
         	// TODO Maybe we should raise an exception here
-        	logger.warn("Graph was null for node: " + leaf);
+        	logger.warn("Graph was null for node: " + userLeaf);
         	//throw new RuntimeException("Graph was null for node: " + leaf);
         } else {
 	        Multimap<Entry<K, Long>, BiMap<N, N>> matches = index.lookupX(graph, false);
@@ -318,9 +369,12 @@ public class QueryContainmentIndexImpl<K, X, Y, G, N, A, V>
 	 */
     @Override
 	public Stream<Entry<K, TreeMapping<A, A, BiMap<N, N>, V>>> match(A userOp) {
-        TreeMapper<K, X, X, A, A, BiMap<N, N>, BiMap<N, N>, V> treeMapper = new TreeMapper<>(
+        TreeMapper<K, X, X, Y, Y, A, A, BiMap<N, N>, BiMap<N, N>, V> treeMapper = new TreeMapper<K, X, X, Y, Y, A, A, BiMap<N, N>, BiMap<N, N>, V>(
             key -> keyToNodeIndexToInfo.row(key).values().iterator().next().getMetaGraph(),
             getTree,
+            
+            getTree,
+            preprocessLeafs,
             //(preprocessed) -> preprocessed.getNormalizedOpTree(), 
             this::lookupLeaf,
             nodeMapperFactory,
@@ -336,11 +390,11 @@ public class QueryContainmentIndexImpl<K, X, Y, G, N, A, V>
         //A normUserOp = getNormalizedOp.apply(normUserContext);
         
         //Tree<A> userTree = TreeImpl.create(normUserOp, parentToChildren);//OpUtils.createTree((Op)normViewOp);
-        Tree<A> userTree = getTree.apply(preprocessedUserOp);
+        //Tree<A> userTree = getTree.apply(preprocessedUserOp);
         
         
         BiMap<N, N> baseMatching = HashBiMap.create();                
-        Stream<Entry<K, TreeMapping<A, A, BiMap<N, N>, V>>> result = treeMapper.createMappings(baseMatching, userTree, preprocessedUserOp);
+        Stream<Entry<K, TreeMapping<A, A, BiMap<N, N>, V>>> result = treeMapper.createMappings(baseMatching, preprocessedUserOp);
 
         return result;
     }
