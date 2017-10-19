@@ -16,7 +16,6 @@ import org.apache.jena.query.SortCondition;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.algebra.OpVisitorBase;
-import org.apache.jena.sparql.algebra.op.Op1;
 import org.apache.jena.sparql.algebra.op.OpAssign;
 import org.apache.jena.sparql.algebra.op.OpDistinct;
 import org.apache.jena.sparql.algebra.op.OpExt;
@@ -433,9 +432,15 @@ public class VarUsageAnalyzer2Visitor
     	varUsage.setVisibleVars(suppliedVars);
     }
     
-    
-    public static Map<Op, VarUsage2> analyze(Op op, VarUsageAnalyzer2Visitor visitor) {
-        VarUsageAnalyzer2Visitor varUsageAnalyzer = new VarUsageAnalyzer2Visitor();
+
+    public static Map<Op, VarUsage2> analyze(Op op) {
+    	VarUsageAnalyzer2Visitor varUsageAnalyzer = new VarUsageAnalyzer2Visitor();
+    	Map<Op, VarUsage2> result = analyze(op, varUsageAnalyzer);
+    	return result;
+    }
+
+    public static Map<Op, VarUsage2> analyze(Op op, VarUsageAnalyzer2Visitor varUsageAnalyzer) {
+        //VarUsageAnalyzer2Visitor varUsageAnalyzer = new VarUsageAnalyzer2Visitor();
         op.visit(varUsageAnalyzer);
         
         Map<Op, VarUsage2> result = varUsageAnalyzer.getResult();

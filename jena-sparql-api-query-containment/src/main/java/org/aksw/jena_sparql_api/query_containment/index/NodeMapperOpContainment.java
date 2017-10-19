@@ -20,14 +20,23 @@ import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.graph.NodeTransformLib;
 
-import com.codepoetics.protonpack.functions.TriFunction;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Multimap;
 
 public class NodeMapperOpContainment
-    implements TriFunction<Op, Op, TreeMapping<Op, Op, BiMap<Node, Node>, ResidualMatching>, Entry<BiMap<Node, Node>, ResidualMatching>>
+	implements NodeMapperOp
+    //implements TriFunction<Op, Op, TreeMapping<Op, Op, BiMap<Node, Node>, ResidualMatching>, Entry<BiMap<Node, Node>, ResidualMatching>>
 {
+	protected OpContext viewContext;
+	protected OpContext userContext;
+
+	
+	public NodeMapperOpContainment(OpContext viewContext, OpContext userContext) {
+		this.viewContext = viewContext;
+		this.userContext = userContext;
+	}
+	
     @Override
     public Entry<BiMap<Node, Node>, ResidualMatching> apply(Op viewOp, Op userOp, TreeMapping<Op, Op, BiMap<Node, Node>, ResidualMatching> tm) {
 //        Class<?> viewOpClass = viewOp == null ? null : viewOp.getClass();

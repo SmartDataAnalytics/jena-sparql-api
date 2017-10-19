@@ -16,15 +16,15 @@ import org.apache.jena.sparql.algebra.op.OpNull;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.graph.NodeTransformLib;
 
-import com.codepoetics.protonpack.functions.TriFunction;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 
 public class NodeMapperOpEquality
-    implements TriFunction<Op, Op, TreeMapping<Op, Op, BiMap<Node, Node>, Op>, Entry<BiMap<Node, Node>, Op>>
+    //implements TriFunction<Op, Op, TreeMapping<Op, Op, BiMap<Node, Node>, Op>, Entry<BiMap<Node, Node>, Op>>
+	implements NodeMapperOp
 {
     @Override
-    public Entry<BiMap<Node, Node>, Op> apply(Op viewOp, Op userOp, TreeMapping<Op, Op, BiMap<Node, Node>, Op> tm) {
+    public Entry<BiMap<Node, Node>, ResidualMatching> apply(Op viewOp, Op userOp, TreeMapping<Op, Op, BiMap<Node, Node>, ResidualMatching> tm) {
 //        Class<?> viewOpClass = viewOp == null ? null : viewOp.getClass();
 //        Class<?> userOpClass = userOp == null ? null : userOp.getClass();
 
@@ -40,7 +40,7 @@ public class NodeMapperOpEquality
         
         
         
-        Entry<BiMap<Node, Node>, Op> result;
+        Entry<BiMap<Node, Node>, ResidualMatching> result;
         if(!Objects.equals(viewOpClass, userOpClass)) {
             result = null;
         } else {
@@ -54,7 +54,7 @@ public class NodeMapperOpEquality
             	NodeTransform nodeTransform = new NodeTransformRenameMap(tm.getOverallMatching());
             	Op x = NodeTransformLib.transform(nodeTransform, viewOp);
             	
-            	result = Objects.equals(x, userOp) ? new SimpleEntry<>(HashBiMap.create(), OpNull.create()) : null;            	
+            	result = Objects.equals(x, userOp) ? new SimpleEntry<>(HashBiMap.create(), new ResidualMatching(true)) : null;            	
             }
 
         }
@@ -67,28 +67,28 @@ public class NodeMapperOpEquality
     }
 
 
-    public Entry<BiMap<Node, Node>, Op> map(OpExtConjunctiveQuery viewOp, OpExtConjunctiveQuery userOp, TreeMapping<Op, Op, BiMap<Node, Node>, Op> tm) {
+    public Entry<BiMap<Node, Node>, ResidualMatching> map(OpExtConjunctiveQuery viewOp, OpExtConjunctiveQuery userOp, TreeMapping<Op, Op, BiMap<Node, Node>, ResidualMatching> tm) {
         QuadFilterPatternCanonical view = viewOp.getQfpc().getPattern().applyNodeTransform(new NodeTransformRenameMap(tm.getOverallMatching()));
         QuadFilterPatternCanonical user = userOp.getQfpc().getPattern();
 
         QuadFilterPatternCanonical residual = user.diff(view);
 
-        Op result = residual.isEmpty()
-                ? OpNull.create()
+        ResidualMatching result = residual.isEmpty()
+                ? new ResidualMatching(true)
                 : null;
 
         return new SimpleEntry<>(HashBiMap.create(), result);
     }
 
 
-    public Entry<BiMap<Node, Node>, Op> map(OpDistinctExtendFilter viewOp, OpDistinctExtendFilter userOp, TreeMapping<Op, Op, BiMap<Node, Node>, Op> tm) {
+    public Entry<BiMap<Node, Node>, ResidualMatching> map(OpDistinctExtendFilter viewOp, OpDistinctExtendFilter userOp, TreeMapping<Op, Op, BiMap<Node, Node>, ResidualMatching> tm) {
         DistinctExtendFilter view = viewOp.getDef().applyNodeTransform(new NodeTransformRenameMap(tm.getOverallMatching()));
         DistinctExtendFilter user = userOp.getDef();
 
         // TODO Extensions may yield additional matchings
 
-        Op result = view.equals(user)
-                ? OpNull.create()
+        ResidualMatching result = view.equals(user)
+                ? new ResidualMatching(true) //OpNull.create()
                 : null;
 
         return new SimpleEntry<>(HashBiMap.create(), result);

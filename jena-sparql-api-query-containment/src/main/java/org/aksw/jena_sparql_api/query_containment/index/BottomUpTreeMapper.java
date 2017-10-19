@@ -31,8 +31,11 @@ public class BottomUpTreeMapper<A, B, M, C, V> {
     protected Tree<A> viewTree;
     protected Tree<B> userTree;
 
-    protected TriFunction<? super A, ? super B, TreeMapping<A, B, M, V>, ? extends Entry<C, V>> nodeMapper;
+    //protected TriFunction<? super A, ? super B, TreeMapping<A, B, M, V>, ? extends Entry<C, V>> nodeMapper;
 
+    //protected NodeMapper<A, B, M, V> nodeMapper;
+    protected NodeMapper<A, B, M, C, V> nodeMapper;
+    
     protected BiFunction<M, C, M> addMatchingContribution;
     protected Predicate<M> isMatchingUnsatisfiable;
 
@@ -43,7 +46,10 @@ public class BottomUpTreeMapper<A, B, M, C, V> {
     public BottomUpTreeMapper(
             Tree<A> viewTree,
             Tree<B> userTree,
-            TriFunction<? super A, ? super B, TreeMapping<A, B, M, V>, ? extends Entry<C, V>> nodeMapper,
+            NodeMapper<A, B, M, C, V> nodeMapper,
+            //NodeMapper<A, B, M, V> nodeMapper,
+            
+            //TriFunction<? super A, ? super B, TreeMapping<A, B, M, V>, ? extends Entry<C, V>> nodeMapper,
             BiFunction<M, C, M> addMatchingContribution,
             Predicate<M> isMatchingUnsatisfiable,
             Supplier<Table<A, B, V>> tableSupplier

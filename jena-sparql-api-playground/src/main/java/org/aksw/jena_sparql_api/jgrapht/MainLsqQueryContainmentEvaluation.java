@@ -18,6 +18,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import javax.persistence.criteria.Root;
@@ -30,9 +31,12 @@ import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.mapper.jpa.core.RdfEntityManager;
 import org.aksw.jena_sparql_api.mapper.jpa.core.SparqlEntityManagerFactory;
 import org.aksw.jena_sparql_api.mapper.util.JpaUtils;
+import org.aksw.jena_sparql_api.query_containment.index.NodeMapperOp;
 import org.aksw.jena_sparql_api.query_containment.index.NodeMapperOpEquality;
-import org.aksw.jena_sparql_api.query_containment.index.TreeContainmentIndex;
-import org.aksw.jena_sparql_api.query_containment.index.TreeContainmentIndexImpl;
+import org.aksw.jena_sparql_api.query_containment.index.OpContext;
+import org.aksw.jena_sparql_api.query_containment.index.QueryContainmentIndex;
+import org.aksw.jena_sparql_api.query_containment.index.QueryContainmentIndexImpl;
+import org.aksw.jena_sparql_api.query_containment.index.ResidualMatching;
 import org.aksw.jena_sparql_api.query_containment.index.TreeMapping;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
@@ -44,9 +48,6 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
-import org.apache.jena.sparql.algebra.OpAsQuery;
-import org.apache.jena.sparql.syntax.Element;
-import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.util.NodeUtils;
 import org.jgrapht.DirectedGraph;
 import org.slf4j.Logger;
@@ -456,7 +457,7 @@ public class MainLsqQueryContainmentEvaluation {
         }
 
     	
-		NodeMapperOpEquality nodeMapper = new NodeMapperOpEquality();
+		BiFunction<OpContext, OpContext, NodeMapperOp> nodeMapperFactory = (a, b) -> new NodeMapperOpEquality();
                 
         //QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, Op> indexA = QueryContainmentIndexImpl.create(nodeMapper);
         //QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, Op> indexB = QueryContainmentIndexImpl.createFlat(nodeMapper);
@@ -468,7 +469,7 @@ public class MainLsqQueryContainmentEvaluation {
         SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> siiValidating = ValidationUtils.createValidatingProxy(SubgraphIsomorphismIndex.class, siiTreeTags, siiTagBased);
         SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> sii = siiTreeTags; //siiValidating;
         
-        TreeContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, Op> index = TreeContainmentIndexImpl.create(sii, nodeMapper);
+        QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, ResidualMatching> index = QueryContainmentIndexImpl.create(sii, nodeMapperFactory);
                
         //QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, Op> index = ValidationUtils.createValidatingProxy(QueryContainmentIndex.class, indexA, indexB);
         
@@ -652,7 +653,7 @@ public class MainLsqQueryContainmentEvaluation {
 //                    siiA.printTree();
 
                     //Thread.sleep(5000);
-	        		Multimap<Node, TreeMapping<Op, Op, BiMap<Node, Node>, Op>> matches = ArrayListMultimap.create();
+	        		Multimap<Node, TreeMapping<Op, Op, BiMap<Node, Node>, ResidualMatching>> matches = ArrayListMultimap.create();
 	        		
                     System.out.println("Querying view candidates of: " + e.getKey());                    
                     Op op = e.getValue();
@@ -680,12 +681,12 @@ public class MainLsqQueryContainmentEvaluation {
 	            	 
 	               	 // Find all isomorphic ones:
 	               	Set<Node> isomorphicKeys = matches.entries().stream().filter(jj -> {
-	               		TreeMapping<Op, Op, BiMap<Node, Node>, Op> treeMapping = jj.getValue();
+	               		TreeMapping<Op, Op, BiMap<Node, Node>, ResidualMatching> treeMapping = jj.getValue();
 	               		Op rootA = treeMapping.getaTree().getRoot();
 	               		Op rootB = treeMapping.getbTree().getRoot();
 	               		
-	               		Table<Op, Op, Op> m = jj.getValue().getNodeMappings();
-	               		Map<Op, Op> targets = m.row(rootA);
+	               		Table<Op, Op, ResidualMatching> m = jj.getValue().getNodeMappings();
+	               		Map<Op, ResidualMatching> targets = m.row(rootA);
 	               		
 	               		boolean containsRoot = targets.containsKey(rootB);
 	               		return containsRoot;

@@ -4,7 +4,7 @@ import org.aksw.commons.collections.trees.TreeNode;
 
 
 /**
- * Internal datastructure used by the {@link TreeContainmentIndexImpl}
+ * Internal datastructure used by the {@link QueryContainmentIndexImpl}
  * 
  * @author raven Oct 13, 2017
  *
@@ -13,16 +13,18 @@ import org.aksw.commons.collections.trees.TreeNode;
  * @param <X>
  * @param <G>
  */
-public class LeafInfo<K, A, X, G> {
+public class LeafInfo<K, A, X, Y, G> {
 	protected K viewKey;
 	protected X metaGraph;
+	protected Y leafData;
 	protected G graph;
 	protected TreeNode<A> node;
 	
-	public LeafInfo(K viewKey, X metaGraph, G graph, TreeNode<A> node) {
+	public LeafInfo(K viewKey, X metaGraph, Y leafData, G graph, TreeNode<A> node) {
 		super();
 		this.viewKey = viewKey;
 		this.metaGraph = metaGraph;
+		this.leafData = leafData;
 		this.graph = graph;
 		this.node = node;
 	}
@@ -33,6 +35,10 @@ public class LeafInfo<K, A, X, G> {
 
 	public X getMetaGraph() {
 		return metaGraph;
+	}
+	
+	public Y getLeafdata() {
+		return leafData;
 	}
 
 	public G getGraph() {

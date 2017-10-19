@@ -28,12 +28,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codepoetics.protonpack.functions.TriFunction;
+import com.google.common.collect.BiMap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
 import com.google.common.collect.Table.Cell;
 import com.google.common.collect.Tables;
 
 /**
+ * 
+ * 
+ * 
  * TODO Depth-First iteration vs Per Layer iteration (bottom-up breadth first)
  *
  * @author raven
@@ -46,16 +50,22 @@ import com.google.common.collect.Tables;
  * @param <C>
  * @param <M>
  */
-public class TreeMapper<K, A, B, M, C, V> {
+public class TreeMapper<K, XA, XB, A, B, M, C, V> {
 
 	private static final Logger logger = LoggerFactory.getLogger(TreeMapper.class);
 
-	
-    protected Function<? super K, ? extends Tree<A>> viewKeyToTree;
+	// Two functions: One maps a key to some object XA, the other extracts the tree from it
+    protected Function<? super K, ? extends XA> viewKeyToViewContext;
+    protected Function<? super XA, ? extends Tree<A>> viewContextToTree;
+    
+
     protected TriFunction<Tree<B>, B, M, Table<K, A, ProblemNeighborhoodAware<M, ?>>> leafMatcher;
 
-    protected TriFunction<? super A, ? super B, TreeMapping<A, B, M, V>, ? extends Entry<C, V>> nodeMapper;
-
+    //protected TriFunction<? super A, ? super B, TreeMapping<A, B, M, V>, ? extends Entry<C, V>> nodeMapper;
+    //protected BiFunction<? super XA, ?super XB, ? extends NodeMapper<A, B, M, V>> nodeMapperFactory;
+    protected BiFunction<? super XA, ?super XB, ? extends NodeMapper<A, B, M, C, V>> nodeMapperFactory;
+    
+    
     protected BiFunction<M, C, M> addMatchingContribution;
     protected BinaryOperator<M> matchingCombiner;
     protected Predicate<M> isMatchingUnsatisfiable;
@@ -63,9 +73,15 @@ public class TreeMapper<K, A, B, M, C, V> {
     protected boolean aIdentity;
     protected boolean bIdentity;
 
-    public TreeMapper(Function<? super K, ? extends Tree<A>> viewKeyToTree,
+    public TreeMapper(
+    		Function<? super K, ? extends XA> viewKeyToXA,
+    		Function<? super XA, ? extends Tree<A>> xaToTree,
+
             TriFunction<Tree<B>, B, M, Table<K, A, ProblemNeighborhoodAware<M, ?>>> leafMatcher,
-            TriFunction<? super A, ? super B, TreeMapping<A, B, M, V>, ? extends Entry<C, V>> nodeMapper,
+            //TriFunction<? super A, ? super B, TreeMapping<A, B, M, V>, ? extends Entry<C, V>> nodeMapper,
+            //BiFunction<? super XA, ?super XB, ? extends NodeMapper<A, B, M, V>> nodeMapperFactory,
+            BiFunction<? super XA, ?super XB, ? extends NodeMapper<A, B, M, C, V>> nodeMapperFactory,
+            
             BiFunction<M, C, M> addMatchingContribution,
             //Function<Tree<A>, Stream<A>> bottomUpTraverser,
             //Supplier<M> createEmptyMatching,
@@ -74,9 +90,12 @@ public class TreeMapper<K, A, B, M, C, V> {
             boolean aIdentity,
             boolean bIdentity) {
         super();
-        this.viewKeyToTree = viewKeyToTree;
+        this.viewKeyToViewContext = viewKeyToXA;
+        this.viewContextToTree = xaToTree;
+        
+        
         this.leafMatcher = leafMatcher;
-        this.nodeMapper = nodeMapper;
+        this.nodeMapperFactory = nodeMapperFactory;
         this.addMatchingContribution = addMatchingContribution;
         //this.bottomUpTraverser = bottomUpTraverser;
         //this.createEmptyMatching = createEmptyMatching;
@@ -108,7 +127,7 @@ public class TreeMapper<K, A, B, M, C, V> {
         return result;
     }
 
-    public Stream<Entry<K, TreeMapping<A, B, M, V>>> createMappings(M baseMatching, Tree<B> userTree) {
+    public Stream<Entry<K, TreeMapping<A, B, M, V>>> createMappings(M baseMatching, Tree<B> userTree, XB userContext) {
 
         //Table<K, Entry<A, B>, Table<A, B, ProblemNeighborhoodAware<S, S>>> leafMappings = createLeafMappings(userTree);
         Map<K, Table<A, B, ProblemNeighborhoodAware<M, ?>>> leafMappingPerView = createLeafMappings(baseMatching, userTree);
@@ -119,10 +138,16 @@ public class TreeMapper<K, A, B, M, C, V> {
                 K viewKey = e.getKey();
                 //logger.debug("Processing view with key: " + viewKey);
 
-                Tree<A> viewTree = viewKeyToTree.apply(viewKey);
+                XA viewContext = viewKeyToViewContext.apply(viewKey);
+                Tree<A> viewTree = viewContextToTree.apply(viewContext);//viewKeyToTree.apply(viewKey);
 
-                BottomUpTreeMapper<A, B, M, C, V> mapper = new BottomUpTreeMapper<A, B, M, C, V>(
-                        viewTree, userTree,
+                //XB xb = null;
+                //NodeMapper<A, B, M, V> 
+                NodeMapper<A, B, M, C, V> nodeMapper = nodeMapperFactory.apply(viewContext, userContext);
+                
+                BottomUpTreeMapper<A, B, M, C, V> treeMapper = new BottomUpTreeMapper<A, B, M, C, V>(
+                        viewTree,
+                        userTree,
                         nodeMapper,
                         addMatchingContribution, isMatchingUnsatisfiable,
                         () -> createTable(aIdentity, bIdentity)
@@ -220,7 +245,7 @@ public class TreeMapper<K, A, B, M, C, V> {
                     return solver.streamSolutions().map(matching -> {
                         // For each alignment and matching perform the tree mapping
 
-                        TreeMapping<A, B, M, V> s = mapper.solve(matching, leafAlignment);
+                        TreeMapping<A, B, M, V> s = treeMapper.solve(matching, leafAlignment);
 
                         return s;
                     });

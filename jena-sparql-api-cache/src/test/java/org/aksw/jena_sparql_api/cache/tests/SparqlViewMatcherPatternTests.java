@@ -9,20 +9,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.tagmap.TagMapSetTrie;
 import org.aksw.commons.collections.tagmap.ValidationUtils;
 import org.aksw.commons.graph.index.core.SubgraphIsomorphismIndex;
 import org.aksw.commons.graph.index.jena.SubgraphIsomorphismIndexJena;
-import org.aksw.commons.graph.index.jena.transform.QueryToGraph;
 import org.aksw.jena_sparql_api.algebra.analysis.VarUsage2;
 import org.aksw.jena_sparql_api.algebra.analysis.VarUsageAnalyzer2Visitor;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlQueryContainmentUtils;
+import org.aksw.jena_sparql_api.query_containment.index.NodeMapperOp;
 import org.aksw.jena_sparql_api.query_containment.index.NodeMapperOpContainment;
+import org.aksw.jena_sparql_api.query_containment.index.OpContext;
+import org.aksw.jena_sparql_api.query_containment.index.QueryContainmentIndex;
+import org.aksw.jena_sparql_api.query_containment.index.QueryContainmentIndexImpl;
 import org.aksw.jena_sparql_api.query_containment.index.ResidualMatching;
-import org.aksw.jena_sparql_api.query_containment.index.TreeContainmentIndex;
-import org.aksw.jena_sparql_api.query_containment.index.TreeContainmentIndexImpl;
 import org.aksw.jena_sparql_api.query_containment.index.TreeMapping;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcReader;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcVocab;
@@ -246,7 +248,8 @@ public class SparqlViewMatcherPatternTests {
     
 
     public static boolean tryMatch(Query view, Query user) {
-    	NodeMapperOpContainment nodeMapper = new NodeMapperOpContainment();
+    	
+    	BiFunction<OpContext, OpContext, NodeMapperOp> nodeMapperFactory = (aContext, bContext) -> new NodeMapperOpContainment(aContext, bContext);
         
         //QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, Op> indexA = QueryContainmentIndexImpl.create(nodeMapper);
         //QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, Op> indexB = QueryContainmentIndexImpl.createFlat(nodeMapper);
@@ -258,7 +261,7 @@ public class SparqlViewMatcherPatternTests {
         SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> siiValidating = ValidationUtils.createValidatingProxy(SubgraphIsomorphismIndex.class, siiTreeTags, siiTagBased);
         SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> sii = siiValidating;
         
-        TreeContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, ResidualMatching> index = TreeContainmentIndexImpl.create(sii, nodeMapper);
+        QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, ResidualMatching> index = QueryContainmentIndexImpl.create(sii, nodeMapperFactory);
 
  
         view = QueryFactory.create("PREFIX ex: <http://ex.org/> SELECT * { ?s a ex:Person ; ex:name ?n . FILTER(contains(?n, 'fr')) }");
@@ -276,8 +279,8 @@ public class SparqlViewMatcherPatternTests {
         {
         	Op op = userOp;
         	//op = QueryToGraph.normalizeOp(op, true);
-	        VarUsageAnalyzer2Visitor varUsageAnalyzer = new VarUsageAnalyzer2Visitor();
-	        Map<Op, VarUsage2> map = VarUsageAnalyzer2Visitor.analyze(op, varUsageAnalyzer);
+	        //VarUsageAnalyzer2Visitor varUsageAnalyzer = new VarUsageAnalyzer2Visitor();
+	        Map<Op, VarUsage2> map = VarUsageAnalyzer2Visitor.analyze(op);
 	        for(Entry<Op, VarUsage2> e : map.entrySet()) {
 	        	System.out.println("VarUsage: " + e);
 	        }
