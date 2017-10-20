@@ -77,7 +77,7 @@ public class OpContext {
 
         
         //OpGraph opGraph = QueryContainmentIndexImpl.queryToOpGraph(normalizedOp);
-        Map<Op, VarUsage2> opToVarUsage = VarUsageAnalyzer2Visitor.analyze(op);
+        Map<Op, VarUsage2> opToVarUsage = VarUsageAnalyzer2Visitor.analyze(normalizedOp);
         
         
         

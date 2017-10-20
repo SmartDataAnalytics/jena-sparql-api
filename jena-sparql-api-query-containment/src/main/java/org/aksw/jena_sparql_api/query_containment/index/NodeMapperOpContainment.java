@@ -95,11 +95,15 @@ public class NodeMapperOpContainment
         Set<Quad> viewQuads = viewTransformed.getQuads();
         Set<Quad> userQuads = user.getQuads();
         
-        Set<Quad> diffQuadsA = Sets.difference(userQuads, viewQuads);
+        Set<Quad> residualJoinQuads = Sets.difference(userQuads, viewQuads);
         Set<Quad> diffQuadsB = Sets.difference(viewQuads, userQuads);
         
-        System.out.println("DIFF quads: " + diffQuadsA);
+        System.out.println("DIFF quads: " + residualJoinQuads);
         System.out.println("DIFF quads: " + diffQuadsB);
+        
+        
+        System.out.println("VarUsage view: " + viewContext.getOpToVarUsage().get(viewOp));
+        System.out.println("VarUsage user: " + userContext.getOpToVarUsage().get(userOp));
         
 //        QuadFilterPatternCanonical residual = user.diff(view);
 
@@ -123,7 +127,12 @@ public class NodeMapperOpContainment
         
         if(!maps.isEmpty()) {
         	Entry<BiMap<Node, Node>, Set<Set<Expr>>> e = maps.entries().iterator().next();
-        	result = new SimpleEntry<>(e.getKey(), new ResidualMatching(e.getValue()));        	
+        	
+        	
+        	ResidualMatching residualMatching = new ResidualMatching(e.getValue());
+        	residualMatching.setResidualQuadJoins(residualJoinQuads);
+        	
+        	result = new SimpleEntry<>(e.getKey(), residualMatching);        	
         }
         
         //Op result = null;

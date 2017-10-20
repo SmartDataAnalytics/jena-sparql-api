@@ -16,9 +16,11 @@ import org.aksw.commons.collections.tagmap.TagMapSetTrie;
 import org.aksw.commons.collections.tagmap.ValidationUtils;
 import org.aksw.commons.graph.index.core.SubgraphIsomorphismIndex;
 import org.aksw.commons.graph.index.jena.SubgraphIsomorphismIndexJena;
+import org.aksw.commons.graph.index.jena.transform.QueryToGraph;
 import org.aksw.jena_sparql_api.algebra.analysis.VarUsage2;
 import org.aksw.jena_sparql_api.algebra.analysis.VarUsageAnalyzer2Visitor;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlQueryContainmentUtils;
+import org.aksw.jena_sparql_api.query_containment.index.ExpressionMapper;
 import org.aksw.jena_sparql_api.query_containment.index.NodeMapperOp;
 import org.aksw.jena_sparql_api.query_containment.index.NodeMapperOpContainment;
 import org.aksw.jena_sparql_api.query_containment.index.OpContext;
@@ -33,11 +35,12 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.util.ExprUtils;
 import org.apache.jena.sparql.util.NodeUtils;
 import org.jgrapht.DirectedGraph;
 import org.junit.Assert;
@@ -49,6 +52,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
+import com.google.common.collect.Multimap;
 
 
 //@FixMethodOrder
@@ -264,8 +269,8 @@ public class SparqlViewMatcherPatternTests {
         QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, ResidualMatching> index = QueryContainmentIndexImpl.create(sii, nodeMapperFactory);
 
  
-        view = QueryFactory.create("PREFIX ex: <http://ex.org/> SELECT * { ?s a ex:Person ; ex:name ?n . FILTER(contains(?n, 'fr')) }");
-        user = QueryFactory.create("PREFIX ex: <http://ex.org/> SELECT DISTINCT ?s { ?s a ex:Person ; ex:name ?n . FILTER(contains(?n, 'franz')) }");
+        //view = QueryFactory.create("PREFIX ex: <http://ex.org/> SELECT * { ?s a ex:Person ; ex:name ?n . FILTER(contains(?n, 'fr')) }");
+        //user = QueryFactory.create("PREFIX ex: <http://ex.org/> SELECT DISTINCT ?s { ?s a ex:Person ; ex:name ?n . FILTER(contains(?n, 'franz')) }");
         
         
         
@@ -277,7 +282,7 @@ public class SparqlViewMatcherPatternTests {
         
 
         {
-        	Op op = userOp;
+        	Op op = QueryToGraph.normalizeOp(userOp, true);
         	//op = QueryToGraph.normalizeOp(op, true);
 	        //VarUsageAnalyzer2Visitor varUsageAnalyzer = new VarUsageAnalyzer2Visitor();
 	        Map<Op, VarUsage2> map = VarUsageAnalyzer2Visitor.analyze(op);
@@ -285,6 +290,7 @@ public class SparqlViewMatcherPatternTests {
 	        	System.out.println("VarUsage: " + e);
 	        }
         }        
+
         
         index.put(viewKey, viewOp);
 

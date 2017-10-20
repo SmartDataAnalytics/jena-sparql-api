@@ -53,7 +53,7 @@ public class OpDistinctExtendFilter
 
     @Override
     public void outputArgs(IndentedWriter out, SerializationContext sCxt) {
-        Op tmp = def.toOp(subOp);
+        Op tmp = effectiveOp();
         tmp.output(out);
 
 //    	out.println("" + def);

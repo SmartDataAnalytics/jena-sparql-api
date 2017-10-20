@@ -16,7 +16,6 @@ import org.aksw.commons.collections.MapUtils;
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeNode;
 import org.aksw.commons.collections.trees.TreeNodeImpl;
-import org.aksw.commons.collections.trees.TreeUtils;
 import org.aksw.commons.graph.index.core.SubgraphIsomorphismIndex;
 import org.aksw.commons.graph.index.jena.transform.QueryToGraph;
 import org.aksw.commons.graph.index.jena.transform.QueryToGraphVisitor;
@@ -32,6 +31,7 @@ import org.jgrapht.DirectedGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codepoetics.protonpack.collectors.CollectorUtils;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.HashBiMap;
@@ -103,6 +103,8 @@ public class QueryContainmentIndexImpl<K, X, Y, G, N, A, V>
     //protected Function<A, List<A>> parentToChildren;
 
     protected SubgraphIsomorphismIndex<Entry<K, Long>, G, N> index;
+    
+    protected Function<? super BiMap<N, N>, ? extends BiMap<N, N>> matchingCleaner;
 
     //protected TriFunction<? super A, ? super A, TreeMapping<A, A, BiMap<N, N>, V>, ? extends Entry<BiMap<N, N>, V>> nodeMapper;
     
@@ -186,9 +188,17 @@ public class QueryContainmentIndexImpl<K, X, Y, G, N, A, V>
 		                //(op, opContext) -> QueryContainmentIndexImpl.queryToOpGraph(op),
 		                opGraph -> opGraph.getJGraphTGraph(),//opContext.getOpAsGraph().getJGraphTGraph(),
 		                sii,
+		                QueryContainmentIndexImpl::retainVarMappingsOnly,
 		                nodeMapperFactory
 		                );
         return result;
+    }
+    
+    public static BiMap<Node, Node> retainVarMappingsOnly(BiMap<Node, Node> iso) {
+    	BiMap<Node, Node> result = iso.entrySet().stream()
+    		.filter(e -> e.getKey().isVariable())
+    		.collect(ExpressionMapper.toMap(Entry::getKey, Entry::getValue, HashBiMap::create));
+    	return result;
     }
 
     public QueryContainmentIndexImpl(
@@ -199,6 +209,7 @@ public class QueryContainmentIndexImpl<K, X, Y, G, N, A, V>
             Function<? super Y, G> getGraph,
             
             SubgraphIsomorphismIndex<Entry<K, Long>, G, N> index,
+            Function<? super BiMap<N, N>, ? extends BiMap<N, N>> matchingCleaner,
             BiFunction<? super X, ?super X, ? extends NodeMapper<A, A, BiMap<N, N>, BiMap<N, N>, V>> nodeMapperFactory
     		) {
         super();
@@ -209,6 +220,7 @@ public class QueryContainmentIndexImpl<K, X, Y, G, N, A, V>
         this.getGraph = getGraph;
         //this.metaGraphToGraph = metaGraphToGraph;        
         this.index = index;
+        this.matchingCleaner = matchingCleaner;
         this.nodeMapperFactory = nodeMapperFactory;
     }
 
@@ -354,8 +366,12 @@ public class QueryContainmentIndexImpl<K, X, Y, G, N, A, V>
 	            
 	            TreeNode<A> viewTreeNode = leafInfo.getNode();
 	            A leafNode = viewTreeNode.getNode();
-	            BiMap<N, N> matching = e.getValue();
+	            BiMap<N, N> rawMatching = e.getValue();
 	
+	            // TODO Filter solutions
+	            BiMap<N, N> matching = matchingCleaner.apply(rawMatching);
+	            
+	            
 	            ProblemNeighborhoodAware<BiMap<N, N>, ?> problems = new ProblemStaticSolutions<>(Collections.singleton(matching));
 	
 	            result.put(viewKey, leafNode, problems);

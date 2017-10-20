@@ -194,7 +194,7 @@ public class OpUtils {
             result = OpExtend.extend(result, vel);
         }
 
-        if(visibleVars.equals(map.keySet())) {
+        if(!visibleVars.equals(map.keySet())) {
             result = new OpProject(result, new ArrayList<>(map.keySet()));
         }
 

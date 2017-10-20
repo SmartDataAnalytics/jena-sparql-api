@@ -418,16 +418,19 @@ public class AlgebraUtils {
         OpDistinct opDistinct = null;
         OpProject opProject = null;
 
-        if(op instanceof OpDistinct) {
+        boolean consumeDistinct = false;
+        boolean consumeProject = false;
+
+        if(consumeDistinct && op instanceof OpDistinct) {
             opDistinct = (OpDistinct)op;
             op = opDistinct.getSubOp();
         }
 
-        if(op instanceof OpProject) {
+        if(consumeProject && op instanceof OpProject) {
             opProject = (OpProject)op;
             op = opProject.getSubOp();
         }
-
+        
         QuadFilterPattern qfp = extractQuadFilterPattern(op);
 
         ConjunctiveQuery result = null;

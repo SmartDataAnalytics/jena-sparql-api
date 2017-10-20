@@ -71,6 +71,8 @@ public class TreeMapper<K, XA, XB, YA, YB, A, B, M, C, V> {
     protected BiFunction<? super XA, ?super XB, ? extends NodeMapper<A, B, M, C, V>> nodeMapperFactory;
     
     
+    //protected Function<M, M> matchingCleaner;
+    
     protected BiFunction<M, C, M> addMatchingContribution;
     protected BinaryOperator<M> matchingCombiner;
     protected Predicate<M> isMatchingUnsatisfiable;
