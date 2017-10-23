@@ -1,10 +1,12 @@
 package org.aksw.jena_sparql_api.algebra.analysis;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -17,6 +19,7 @@ import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.algebra.OpVisitorBase;
 import org.apache.jena.sparql.algebra.op.OpAssign;
+import org.apache.jena.sparql.algebra.op.OpDisjunction;
 import org.apache.jena.sparql.algebra.op.OpDistinct;
 import org.apache.jena.sparql.algebra.op.OpExt;
 import org.apache.jena.sparql.algebra.op.OpExtend;
@@ -29,6 +32,7 @@ import org.apache.jena.sparql.algebra.op.OpProject;
 import org.apache.jena.sparql.algebra.op.OpQuadPattern;
 import org.apache.jena.sparql.algebra.op.OpReduced;
 import org.apache.jena.sparql.algebra.op.OpSequence;
+import org.apache.jena.sparql.algebra.op.OpUnion;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
 import org.apache.jena.sparql.expr.Expr;
@@ -132,6 +136,10 @@ public class VarUsageAnalyzer2Visitor
     	Set<Var> visibleVars = new LinkedHashSet<>();
         for(Op subOp : subOps) {
         	VarUsage2 subVarUsage = opToVarUsage.get(subOp);
+        	if(subVarUsage == null) {
+        		throw new NullPointerException();
+        	}
+
         	Set<Var> argVars = subVarUsage.getVisibleVars();
         	visibleVars.addAll(argVars);
         	
@@ -140,6 +148,9 @@ public class VarUsageAnalyzer2Visitor
         
         joinVars = new LinkedHashSet<>(joinVars);
 
+        
+        varUsage.setVisibleVars(visibleVars);
+        
         // Mark the join vars as essential on all sub expressions
         //for(Op subOp : subOps) {
         	markEssential(op, joinVars);
@@ -217,7 +228,39 @@ public class VarUsageAnalyzer2Visitor
 //        Collection<Op> children = tree.getChildren(op);
         processJoin(op, op.getElements());
     }
+    
 
+    public void processUnion(Op op, List<Op> subOps) {
+    	List<VarUsage2> subVarUsages = new ArrayList<>(subOps.size());
+    	
+    	for(Op subOp : subOps) {
+        	subOp.visit(this);
+        	
+        	VarUsage2 varUsage = opToVarUsage.get(subOp);
+        	subVarUsages.add(varUsage);
+    	}
+    	
+    	VarUsage2 varUsage = allocate(op);
+    	
+    	Set<Var> visibleVars = new LinkedHashSet<>();
+    	for(VarUsage2 subVarUsage : subVarUsages) {
+    		visibleVars.addAll(subVarUsage.getVisibleVars());
+    	}
+    			
+    	varUsage.setVisibleVars(visibleVars);    	
+    }
+    
+    @Override 
+    public void visit(OpDisjunction op) {
+    	List<Op> subOps = OpUtils.getSubOps(op);
+    	processUnion(op, subOps);
+    }
+
+    @Override 
+    public void visit(OpUnion op) {
+    	List<Op> subOps = Arrays.asList(op.getLeft(), op.getRight());
+    	processUnion(op, subOps);
+    }
 
 
     @Override

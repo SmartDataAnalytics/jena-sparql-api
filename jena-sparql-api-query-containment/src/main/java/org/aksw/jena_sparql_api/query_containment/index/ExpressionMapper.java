@@ -209,7 +209,7 @@ public class ExpressionMapper {
 	/**
 	 * The residual expression is expressed over the variables of the view
 	 * 
-	 * @param baseIso
+	 * @param baseIsoViewToUser
 	 * @param viewCnf
 	 * @param userCnf
 	 * @return
@@ -232,7 +232,7 @@ public class ExpressionMapper {
 			Function<O, BiMap<N, E>> opGraphToNodeToExpr,
 			
 			// Actual expressions
-			BiMap<N, N> baseIso,
+			BiMap<N, N> baseIsoViewToUser,
 			Set<Set<E>> viewCnf,
 			Set<Set<E>> userCnf)
 	{        
@@ -240,6 +240,9 @@ public class ExpressionMapper {
         Supplier<N> viewNodeSupplier = ssn.get();
         BiMap<N, E> userNodeToExpr = HashBiMap.create();
         BiMap<N, E> viewNodeToExpr = HashBiMap.create();
+        
+        BiMap<N, N> baseIsoUserToView = baseIsoViewToUser.inverse();
+        
         
         //HashMap<Integer, Set<Expr>> idToViewClause = new LinkedHashMap<>();
         Map<Long, Set<E>> idToUserClause = StreamUtils.zipWithIndex(userCnf.stream())
@@ -293,7 +296,7 @@ public class ExpressionMapper {
         	
         	// This returns candidate clauses of the query that may be more restrictive than those
         	// of the view
-        	Multimap<Long, BiMap<N, N>> userClauseCands = sii.lookupX(g, false, baseIso);
+        	Multimap<Long, BiMap<N, N>> userClauseCands = sii.lookupX(g, false, baseIsoUserToView);
 
         	candList.add(new ArrayList<>(userClauseCands.entries()));
         }
