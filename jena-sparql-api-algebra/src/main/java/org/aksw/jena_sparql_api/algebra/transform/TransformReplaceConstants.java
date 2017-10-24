@@ -142,7 +142,7 @@ public class TransformReplaceConstants
         Op result = new OpQuadPattern(graphNode, triples);
 
         if(!filters.isEmpty()) {
-            result = OpFilter.filter(filters, result);
+            result = OpFilter.filterBy(filters, result);
         }
 
         Set<Var> oldVisibleVars = OpVars.visibleVars(op);

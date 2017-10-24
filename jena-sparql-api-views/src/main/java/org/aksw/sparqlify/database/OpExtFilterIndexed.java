@@ -33,7 +33,7 @@ public class OpExtFilterIndexed
 
 	@Override
 	public Op effectiveOp() {
-		return OpFilter.filter(restrictions.getExprs(), subOp);
+		return OpFilter.filterBy(restrictions.getExprs(), subOp);
 	}
 
 	@Override

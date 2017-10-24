@@ -21,7 +21,7 @@ public class AccDatasetGraph
     private QuadPattern quadPattern;
 
     public AccDatasetGraph(QuadPattern quadPattern) {
-       this(DatasetGraphFactory.createMem(), quadPattern);
+       this(DatasetGraphFactory.createGeneral(), quadPattern);
     }
 
     public AccDatasetGraph(DatasetGraph datasetGraph, QuadPattern quadPattern) {

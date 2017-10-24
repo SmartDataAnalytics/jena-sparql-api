@@ -29,7 +29,7 @@ public class TestMapperBase {
     public void beforeTest() {
         //String graphName = "http://ex.org/graph/";
         graphName = "http://ex.org/graph/";
-        ds = DatasetFactory.createMem();
+        ds = DatasetFactory.createGeneral();
         DatasetDescription dd = DatasetDescriptionUtils.createDefaultGraph(graphName);
         sparqlService = FluentSparqlService.from(ds)
                 .config()

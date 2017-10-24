@@ -19,8 +19,7 @@ public class UpdateExecutionFactoryDatasetGraph
     @Override
     public UpdateProcessor createUpdateProcessor(UpdateRequest updateRequest) {
 
-        GraphStore graphStore = GraphStoreFactory.create(datasetGraph);
-        UpdateProcessor result = org.apache.jena.update.UpdateExecutionFactory.create(updateRequest, graphStore);
+        UpdateProcessor result = org.apache.jena.update.UpdateExecutionFactory.create(updateRequest, datasetGraph);
         return result;
     }
 
