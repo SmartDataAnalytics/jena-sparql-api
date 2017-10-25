@@ -20,7 +20,6 @@ import org.aksw.commons.graph.index.jena.transform.QueryToGraph;
 import org.aksw.jena_sparql_api.algebra.analysis.VarUsage2;
 import org.aksw.jena_sparql_api.algebra.analysis.VarUsageAnalyzer2Visitor;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlQueryContainmentUtils;
-import org.aksw.jena_sparql_api.query_containment.index.ExpressionMapper;
 import org.aksw.jena_sparql_api.query_containment.index.NodeMapperOp;
 import org.aksw.jena_sparql_api.query_containment.index.NodeMapperOpContainment;
 import org.aksw.jena_sparql_api.query_containment.index.OpContext;
@@ -39,8 +38,6 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
-import org.apache.jena.sparql.expr.Expr;
-import org.apache.jena.sparql.util.ExprUtils;
 import org.apache.jena.sparql.util.NodeUtils;
 import org.jgrapht.DirectedGraph;
 import org.junit.Assert;
@@ -52,8 +49,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
-import com.google.common.collect.Multimap;
 
 
 //@FixMethodOrder
@@ -276,8 +271,10 @@ public class SparqlViewMatcherPatternTests {
         
         
         Node viewKey = NodeFactory.createURI("http://ex.org/view");
-        Op viewOp = Algebra.toQuadForm(Algebra.compile(view));
-        Op userOp = Algebra.toQuadForm(Algebra.compile(user));
+//        Op viewOp = Algebra.toQuadForm(Algebra.compile(view));
+//        Op userOp = Algebra.toQuadForm(Algebra.compile(user));
+        Op viewOp = Algebra.compile(view);
+        Op userOp = Algebra.compile(user);
 
         
 

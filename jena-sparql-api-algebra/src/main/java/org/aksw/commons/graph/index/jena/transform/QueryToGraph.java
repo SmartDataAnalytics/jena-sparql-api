@@ -34,6 +34,7 @@ import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.optimize.TransformFilterPlacement;
+import org.apache.jena.sparql.algebra.optimize.TransformMergeBGPs;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
@@ -49,15 +50,23 @@ import com.google.common.collect.Streams;
 public class QueryToGraph {
 
     public static Op normalizeOpReplaceConstants(Op op) {
+        //Op xxx = Optimize.stdOptimizationFactory.create(ARQ.getContext()).rewrite(op);
+        
         // Transform join of union to union of joins
         op = TransformDistributeJoinOverUnion.transform(op);
 
-        System.out.println("now op:\n" + op);
+        //System.out.println("now op:\n" + op);
         
         op = Transformer.transform(TransformUnionToDisjunction.fn, op);
+        
+        op = Transformer.transform(new TransformMergeBGPs(), op);
+
         op = Transformer.transform(TransformJoinToSequence.fn, op);
 
-        System.out.println("now op:\n" + op);
+        //System.out.println("now op:\n" + op);
+        
+        op = Algebra.toQuadForm(op);
+        //System.out.println("now op:\n" + op);
         
         
         //op = Transformer.transform(new TransformReplaceConstants(), op);
