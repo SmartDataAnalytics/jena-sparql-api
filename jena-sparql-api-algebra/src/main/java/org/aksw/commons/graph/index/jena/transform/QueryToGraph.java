@@ -12,6 +12,7 @@ import java.util.stream.Stream;
 
 import org.aksw.commons.jena.jgrapht.LabeledEdge;
 import org.aksw.commons.jena.jgrapht.LabeledEdgeImpl;
+import org.aksw.jena_sparql_api.algebra.transform.TransformDistributeJoinOverUnion;
 import org.aksw.jena_sparql_api.algebra.transform.TransformJoinToSequence;
 import org.aksw.jena_sparql_api.algebra.transform.TransformMergeProject;
 import org.aksw.jena_sparql_api.algebra.transform.TransformReplaceConstants;
@@ -48,8 +49,17 @@ import com.google.common.collect.Streams;
 public class QueryToGraph {
 
     public static Op normalizeOpReplaceConstants(Op op) {
+        // Transform join of union to union of joins
+        op = TransformDistributeJoinOverUnion.transform(op);
+
+        System.out.println("now op:\n" + op);
+        
         op = Transformer.transform(TransformUnionToDisjunction.fn, op);
         op = Transformer.transform(TransformJoinToSequence.fn, op);
+
+        System.out.println("now op:\n" + op);
+        
+        
         //op = Transformer.transform(new TransformReplaceConstants(), op);
         op = TransformReplaceConstants.transform(op);
         //System.out.println("before:" + op);

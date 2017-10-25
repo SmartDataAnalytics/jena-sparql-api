@@ -289,7 +289,10 @@ public class SparqlViewMatcherPatternTests {
 	        for(Entry<Op, VarUsage2> e : map.entrySet()) {
 	        	System.out.println("VarUsage: " + e);
 	        }
+	        System.out.println("Normalized Op: " + op);
         }        
+        
+        
 
         
         index.put(viewKey, viewOp);
