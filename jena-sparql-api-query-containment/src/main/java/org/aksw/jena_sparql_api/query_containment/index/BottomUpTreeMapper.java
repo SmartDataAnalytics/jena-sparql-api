@@ -87,7 +87,7 @@ public class BottomUpTreeMapper<A, B, M, C, V> {
 
         Iterator<A> it = bottomUpTraverser.apply(viewTree).iterator();
 
-        boolean foundMatch = false;
+        //boolean foundMatch = false;
         while(it.hasNext()) {
             A a = it.next();
 
@@ -153,16 +153,17 @@ public class BottomUpTreeMapper<A, B, M, C, V> {
 //                System.out.println(b);
 //                
                 
-                foundMatch = true;
+                //foundMatch = true;
             } else {
+                result = null;
             	// The mapping on some nodes was unsatisfiable, therefore its no use to continue
             	break;
             }
         }
         
-        if(!foundMatch) {
-        	result = null;
-        }
+//        if(!foundMatch) {
+//        	result = null;
+//        }
 
         return result;
     }
