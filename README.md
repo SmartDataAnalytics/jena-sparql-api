@@ -11,7 +11,9 @@ Highlights:
 
 
 
-[![Build Status](http://ci.aksw.org/jenkins/job/jena-sparql-api/badge/icon)](http://ci.aksw.org/jenkins/job/jena-sparql-api/)
+AKSW-CI [![Build Status](http://ci.aksw.org/jenkins/job/jena-sparql-api/badge/icon)](http://ci.aksw.org/jenkins/job/jena-sparql-api/)
+, Travis-CI [master] [![Build Status](https://travis-ci.org/AKSW/jena-sparql-api.svg?branch=master)](https://travis-ci.org/AKSW/jena-sparql-api)
+, Travis-CI [develop][![Build Status](https://travis-ci.org/AKSW/jena-sparql-api.svg?branch=develop)](https://travis-ci.org/AKSW/jena-sparql-api)
 
 This library offers several [Jena](http://jena.apache.org/)-compatible ways to *transparently* add delays, caching, pagination, retry and even query transformations before sending off your original SPARQL query. This frees your application layer from the hassle of dealing with those issues. Also, the server module bundles Jena with the [Atmosphere](https://github.com/Atmosphere/atmosphere) framework, giving you a kickstart for REST and websocket implementations. 
 
