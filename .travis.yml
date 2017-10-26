@@ -10,4 +10,4 @@ branches:
     - develop
 install: /bin/true
 script:
-  - "mvn clean install verify"
+  - "mvn -q clean verify -U"
