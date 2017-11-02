@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.sparql.ext.init;
 
+import org.aksw.jena_sparql_api.sparql.ext.csv.JenaExtensionCsv;
 import org.aksw.jena_sparql_api.sparql.ext.json.JenaExtensionJson;
 import org.aksw.jena_sparql_api.sparql.ext.xml.JenaExtensionXml;
 import org.apache.jena.system.JenaSubsystemLifecycle;
@@ -14,6 +15,7 @@ public class InitJenaSparqlApiSparqlExtensions
     public void start() {
         logger.debug("JenaSparqlAPI SPARQL extension initialization");
         JenaExtensionJson.register();
+        JenaExtensionCsv.register();
         JenaExtensionXml.register();
     }
 

@@ -8,6 +8,7 @@ import java.nio.file.Paths;
 
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.sparql.ext.csv.JenaExtensionCsv;
 import org.aksw.jena_sparql_api.sparql.ext.json.JenaExtensionJson;
 import org.aksw.jena_sparql_api.sparql.ext.xml.JenaExtensionXml;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
@@ -38,6 +39,7 @@ public class MainXarql {
 		//PropertyFunction
 		pm.setNsPrefix("json", JenaExtensionJson.jsonFn);
 		pm.setNsPrefix("xml", JenaExtensionXml.xmlFn);
+		pm.setNsPrefix("csv", JenaExtensionCsv.ns);
 		
 		String q = args[1];
 		
