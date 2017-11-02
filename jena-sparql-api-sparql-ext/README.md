@@ -97,11 +97,12 @@ This means, that all JSON extensions can be used for further processing, and no 
 ```
 
 * Base format: One of the predefined (https://commons.apache.org/proper/commons-csv/apidocs/org/apache/commons/csv/CSVFormat.html)[CSV Formats] defined by [Apache Commons CSV](https://commons.apache.org/proper/commons-csv/). Defaults to `excel`.
-* `-s`: Field separator, default to `'`
-* `-d`: Field delimitor, defaults to `,`
-* `-e`: Escape charater, defaults to `\`
+* `-s`: Field separator, such as `,`
+* `-d`: Field delimitor, such as `"`
+* `-e`: Escape charater, such as `\`
 * `-h`: User first row as headers, defaults to `false`.
 
+The defaults are determined by the base format and can be overridden using the options.
 Without headers, the row json object's keys are labeled `col0` to `coln`.
 
 
