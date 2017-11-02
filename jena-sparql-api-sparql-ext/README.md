@@ -86,8 +86,7 @@ This means, that all JSON extensions can be used for further processing, and no 
 | Category  | Synopsis    | Description | 
 | --------- | ----------- | ------------|
 | **Namespaces**          | `csv: <http://jsa.aksw.org/fn/csv/>`  | Namespace for CSV (property) function extensions |
-datatype can be used as a cast expression in order to parse strings to json literals. |
-| **Functions**           | `xsd:json csv:parse(string literal, "optionsString") | Parse CSV data provided as a string literal into a `xsd:json literal` holding the corresponding JSON array. |
+| **Functions**           | `xsd:json csv:parse(string literal, "optionsString")` | Parse CSV data provided as a string literal into a `xsd:json literal` holding the corresponding JSON array. |
 | **Property Functions**  | `?csvUrl csv:parse (?rowJsonObj "optionsString")` | Parse the data at the URL in the subject position as a CSV file with the given options. **Streams** each row and binds it as a JSON object to `?rowJsonObj`. |
 |                         | `?csvUrl csv:parse ?rowJsonObj` | Equivalent to `?csvUrl csv:parse (?rowJsonObj "excel")` |
 
