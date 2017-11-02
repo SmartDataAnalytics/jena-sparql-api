@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.sparql.ext.csv;
 
+import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.function.FunctionRegistry;
 import org.apache.jena.sparql.pfunction.PropertyFunctionRegistry;
 
@@ -10,5 +11,9 @@ public class JenaExtensionCsv {
         FunctionRegistry.get().put(ns + "parse", E_CsvParse.class);
         
         PropertyFunctionRegistry.get().put(ns + "parse", new PropertyFunctionFactoryCsvParse());
+    }
+    
+    public static void addPrefixes(PrefixMapping pm) {
+		pm.setNsPrefix("csv", JenaExtensionCsv.ns);
     }
 }

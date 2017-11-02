@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.sparql.ext.xml;
 
 import org.apache.jena.datatypes.TypeMapper;
+import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.function.FunctionRegistry;
 
 public class JenaExtensionXml {
@@ -13,5 +14,9 @@ public class JenaExtensionXml {
         TypeMapper.getInstance().registerDatatype(new RDFDatatypeXml());
         
         //PropertyFunctionRegistry.get().put(xmlFn + "unnest", new PropertyFunctionFactoryJsonUnnest());
+    }
+    
+    public static void addPrefixes(PrefixMapping pm) {
+		pm.setNsPrefix("xml", JenaExtensionXml.xmlFn);
     }
 }

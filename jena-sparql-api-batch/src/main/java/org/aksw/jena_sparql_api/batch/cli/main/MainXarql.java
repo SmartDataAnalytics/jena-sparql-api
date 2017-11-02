@@ -10,6 +10,7 @@ import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.sparql.ext.csv.JenaExtensionCsv;
 import org.aksw.jena_sparql_api.sparql.ext.json.JenaExtensionJson;
+import org.aksw.jena_sparql_api.sparql.ext.util.JenaExtensionUtil;
 import org.aksw.jena_sparql_api.sparql.ext.xml.JenaExtensionXml;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.apache.jena.query.QueryExecution;
@@ -36,6 +37,8 @@ public class MainXarql {
 		
 		PrefixMapping pm = new PrefixMappingImpl();
 		pm.setNsPrefixes(PrefixMapping.Extended);
+		JenaExtensionUtil.addPrefixes(pm);
+		
 		//PropertyFunction
 		pm.setNsPrefix("json", JenaExtensionJson.jsonFn);
 		pm.setNsPrefix("xml", JenaExtensionXml.xmlFn);
