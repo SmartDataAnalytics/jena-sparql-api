@@ -87,7 +87,7 @@ This means, that all JSON extensions can be used for further processing, and no 
 | --------- | ----------- | ------------|
 | **Namespaces**          | `csv: <http://jsa.aksw.org/fn/csv/>`  | Namespace for CSV (property) function extensions |
 | **Functions**           | `xsd:json csv:parse(string literal, "optionsString")` | Parse CSV data provided as a string literal into a `xsd:json literal` holding the corresponding JSON array. |
-| **Property Functions**  | `?csvUrl csv:parse (?rowJsonObj "optionsString")` | Parse the data at the URL in the subject position as a CSV file with the given options. **Streams** each row and binds it as a JSON object to `?rowJsonObj`. |
+| **Property Functions**  | `?csvUrl csv:parse (?rowJsonObj "optionsString")` | Parse the data at the URL in the subject position as a CSV resource with the given options. **Streams** each row and binds it as a JSON object to `?rowJsonObj`. |
 |                         | `?csvUrl csv:parse ?rowJsonObj` | Equivalent to `?csvUrl csv:parse (?rowJsonObj "excel")` |
 
 #### CSV option strings
@@ -109,6 +109,10 @@ Without headers, the row json object's keys are labeled `col0` to `coln`.
 ### XML
 At present there is XPath integration.
 
+#### Example
+```
+BIND(xml:path(?o, "//html/text()") AS ?x)
+```
 
 ### Related projects:
 * TARQL
