@@ -12,7 +12,7 @@ provides appropriate metadata which gets picked up by Jena's plugin system.
     <version><!-- Check link below for latest version--></version>
 </dependency>
 ```
-Click (http://search.maven.org/#search|ga|1|a%3A%22jena-sparql-api-sparql-ext%22)[here] to check for the latest version of the dependency
+Check [here](http://search.maven.org/#search|ga|1|a%3A%22jena-sparql-api-sparql-ext%22) for the latest artifact version.
 
 
 ## Data formats
@@ -31,7 +31,7 @@ Note, that while there is streaming support for the CSV format, at present there
 |                         | `?jsonObject json:bind ()` | Make all top-level key-value pairs of the given json object available as a SPARQL binding. I.e. all keys can be accessed via SPARQL variables. |
 
 #### Json Path Expressions
-Please refer to the (https://github.com/json-path/JsonPath)[JsonPath] project GitHub page for path expression examples and the specification.
+Please refer to the [JsonPath](https://github.com/json-path/JsonPath) project GitHub page for path expression examples and the specification.
 
 #### JSON <-> SPARQL datatype mapping
 | JSON        | RDF         |
@@ -96,7 +96,7 @@ This means, that all JSON extensions can be used for further processing, and no 
 [base format] [-s] [-d] [-e] [-h]
 ```
 
-* Base format: One of the predefined (https://commons.apache.org/proper/commons-csv/apidocs/org/apache/commons/csv/CSVFormat.html)[CSV Formats] defined by [Apache Commons CSV](https://commons.apache.org/proper/commons-csv/). Defaults to `excel`.
+* Base format: One of the predefined [CSV Formats](https://commons.apache.org/proper/commons-csv/apidocs/org/apache/commons/csv/CSVFormat.html) defined by [Apache Commons CSV](https://commons.apache.org/proper/commons-csv/). Defaults to `excel`.
 * `-s`: Field separator, such as `,`
 * `-d`: Field delimitor, such as `"`
 * `-e`: Escape charater, such as `\`
@@ -113,5 +113,5 @@ At present there is XPath integration.
 ### Related projects:
 * TARQL
 * JARQL
-* (https://ci.mines-stetienne.fr/sparql-generate/)[SPARQL Generate]: This project introduces its own SPARQL-based syntax for facilitating data integration.
+* [SPARQL Generate](https://ci.mines-stetienne.fr/sparql-generate/): This project introduces its own SPARQL-based syntax for facilitating data integration.
 
