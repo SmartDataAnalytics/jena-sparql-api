@@ -10,7 +10,7 @@
 	<version>3.4.0-2-SNAPSHOT</version>
 	<name>Jena SPARQL API - Parent</name>
 	<description>An RDF library for abstracting SPARQL queries.</description>
-	<url>https://github.com/AKSW/jena-sparql-api</url>
+	<url>https://github.com/SmartDataAnalytics/jena-sparql-api</url>
 
 	<modules>
 		<module>jena-sparql-api-vocabs</module>
@@ -56,7 +56,7 @@
 	</modules>
 
 	<issueManagement>
-		<url>https://github.com/AKSW/jena-sparql-api/issues</url>
+		<url>https://github.com/SmartDataAnalytics/jena-sparql-api/issues</url>
 		<system>GitHub</system>
 	</issueManagement>
 
@@ -69,9 +69,9 @@
 	</licenses>
 
 	<scm>
-		<url>https://github.com/AKSW/jena-sparql-api</url>
-		<connection>scm:git:git://github.com/AKSW/jena-sparql-api.git</connection>
-		<developerConnection>scm:git:git@github.com:AKSW/jena-sparql-api.git</developerConnection>
+		<url>https://github.com/SmartDataAnalytics/jena-sparql-api</url>
+		<connection>scm:git:git://github.com/SmartDataAnalytics/jena-sparql-api.git</connection>
+		<developerConnection>scm:git:git@github.com:SmartDataAnalytics/jena-sparql-api.git</developerConnection>
 		<tag>HEAD</tag>
 	</scm>
 
