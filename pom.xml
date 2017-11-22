@@ -7,7 +7,7 @@
 	<artifactId>jena-sparql-api-parent</artifactId>
 
 	<packaging>pom</packaging>
-	<version>3.4.0-2-SNAPSHOT</version>
+	<version>3.5.0-1-SNAPSHOT</version>
 	<name>Jena SPARQL API - Parent</name>
 	<description>An RDF library for abstracting SPARQL queries.</description>
 	<url>https://github.com/SmartDataAnalytics/jena-sparql-api</url>
@@ -94,7 +94,7 @@
 
 		<!-- temporary downgrade due to https://issues.apache.org/jira/browse/JENA-1294 
 			... -->
-		<jena.version>3.4.0</jena.version>
+		<jena.version>3.5.0</jena.version>
 		<jetty.version>9.2.22.v20170606</jetty.version>
 		<jetty.jsp.version>9.2.22.v20170606</jetty.jsp.version>
 
