@@ -34,13 +34,13 @@ public class ItemProcessorDatasetDiff
 	public Diff<Set<Quad>> process(Entry<Resource, Dataset> entry) throws Exception {
 		Dataset base = entry.getValue();
 		DatasetGraph baseGraph = base.asDatasetGraph();
-		DatasetGraph cloneGraph = DatasetGraphFactory.createMem();
+		DatasetGraph cloneGraph = DatasetGraphFactory.createGeneral();
 		Iterator<Quad> it = baseGraph.find();
 		while(it.hasNext()) {
 			Quad q = it.next();
 			cloneGraph.add(q);
 		}
-		Dataset clone = DatasetFactory.create(cloneGraph);
+		Dataset clone = DatasetFactory.wrap(cloneGraph);
 
 		modifier.apply(clone);
 

@@ -28,7 +28,7 @@ public class MethodInterceptorRdf
     protected DatasetGraph datasetGraph;
 
     public MethodInterceptorRdf(Object proxied, RdfClass rdfClass, Node subject) {
-        this(proxied, rdfClass, subject, DatasetGraphFactory.createMem());
+        this(proxied, rdfClass, subject, DatasetGraphFactory.createGeneral());
     }
 
     public MethodInterceptorRdf(Object proxied, RdfClass rdfClass, Node subject, DatasetGraph datasetGraph) {

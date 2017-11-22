@@ -34,7 +34,7 @@ public class DatasetGraphUtils {
 
     public static DatasetGraph clone(DatasetGraph datasetGraph) {
         Iterator<Quad> it = datasetGraph.find();
-        DatasetGraph clone = DatasetGraphFactory.createMem();
+        DatasetGraph clone = DatasetGraphFactory.createGeneral();
         addAll(clone, it);
 
         return clone;
@@ -54,7 +54,7 @@ public class DatasetGraphUtils {
             DatasetGraph otherGraph = entry.getValue();
             DatasetGraph graph = result.get(node);
             if(graph == null) {
-                graph = DatasetGraphFactory.createMem();
+                graph = DatasetGraphFactory.createGeneral();
                 result.put(node, graph);
             }
 
@@ -66,8 +66,8 @@ public class DatasetGraphUtils {
 
 
     public static Diff<DatasetGraph> wrapDiffDatasetGraph(Diff<? extends Iterable<? extends Quad>> diff) {
-        DatasetGraph added = DatasetGraphFactory.createMem();
-        DatasetGraph removed = DatasetGraphFactory.createMem();
+        DatasetGraph added = DatasetGraphFactory.createGeneral();
+        DatasetGraph removed = DatasetGraphFactory.createGeneral();
 
         DatasetGraphUtils.addAll(added, diff.getAdded());
         DatasetGraphUtils.addAll(removed, diff.getRemoved());
@@ -78,7 +78,7 @@ public class DatasetGraphUtils {
     }
 
     public static void write(PrintStream out, DatasetGraph dg) {
-        Dataset ds = DatasetFactory.create(dg);
+        Dataset ds = DatasetFactory.wrap(dg);
 
 
         Model dm = ds.getDefaultModel();

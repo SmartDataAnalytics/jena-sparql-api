@@ -48,7 +48,7 @@ public class TestMapperMultiProperty {
      */
     //@Test // TODO Fix and re-enable this test
     public void testCherryPicking() throws Exception {
-        Dataset ds = DatasetFactory.createMem();
+        Dataset ds = DatasetFactory.createGeneral();
         RDFDataMgr.read(ds, new ClassPathResource("test-country.nq").getInputStream(), Lang.NQUADS);
 
         String graphName = ds.listNames().next();
@@ -113,8 +113,8 @@ public class TestMapperMultiProperty {
         Node population = NodeFactory.createURI("http://ex.org/population");
 
         graph.add(new Triple(aut, label, NodeFactory.createLiteral("Austria")));
-        graph.add(new Triple(aut, population, NodeFactory.createUncachedLiteral(7, intType)));
-        graph.add(new Triple(aut, population, NodeFactory.createUncachedLiteral(8, intType)));
+        graph.add(new Triple(aut, population, NodeFactory.createLiteralByValue(7, intType)));
+        graph.add(new Triple(aut, population, NodeFactory.createLiteralByValue(8, intType)));
 
 
         SparqlService sparqlService = FluentSparqlService.forDataset().create();

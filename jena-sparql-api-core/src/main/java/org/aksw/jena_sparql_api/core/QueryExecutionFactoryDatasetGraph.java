@@ -37,7 +37,7 @@ public class QueryExecutionFactoryDatasetGraph
 
     @Override
     public QueryExecution createQueryExecution(Query query) {
-        Dataset dataset = DatasetFactory.create(datasetGraph);
+        Dataset dataset = DatasetFactory.wrap(datasetGraph);
 
         //QueryExecution result = QueryEngineRegistry.get().find(query, datasetGraph, ARQ.getContext());
         //GraphStore graphStore = GraphStoreFactory.create(datasetGraph);
