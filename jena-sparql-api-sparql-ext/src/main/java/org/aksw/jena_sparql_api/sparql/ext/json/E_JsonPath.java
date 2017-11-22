@@ -55,7 +55,7 @@ public class E_JsonPath
 
     public static NodeValue createPrimitiveNodeValue(Object o) {
         RDFDatatype dtype = TypeMapper.getInstance().getTypeByValue(o);
-        Node node = NodeFactory.createUncachedLiteral(o, dtype);
+        Node node = NodeFactory.createLiteralByValue(o, dtype);
         NodeValue result = NodeValue.makeNode(node);
         return result;
     }

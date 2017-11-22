@@ -111,7 +111,7 @@ public class FluentSparqlService<P>
 
 
     public static FluentSparqlService<?> forDataset() {
-        Dataset dataset = DatasetFactory.createMem();
+        Dataset dataset = DatasetFactory.createGeneral();
         FluentSparqlService<?> result = from(dataset);
         return result;
     }
@@ -126,7 +126,7 @@ public class FluentSparqlService<P>
     }
 
     public static FluentSparqlService<?> forDatasetGraph() {
-        DatasetGraph datasetGraph = DatasetGraphFactory.createMem();
+        DatasetGraph datasetGraph = DatasetGraphFactory.createGeneral();
         FluentSparqlService<?> result = from(datasetGraph);
         return result;
     }
