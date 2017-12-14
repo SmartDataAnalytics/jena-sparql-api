@@ -9,6 +9,7 @@ import java.util.function.BinaryOperator;
 import org.aksw.jena_sparql_api.exprs_ext.E_StrConcatPermissive;
 import org.aksw.jena_sparql_api.utils.DnfUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
+import org.apache.jena.datatypes.xsd.impl.RDFLangString;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.E_GreaterThan;
@@ -345,6 +346,8 @@ public class SqlTranslationUtils {
 
     public static E_RdfTerm expandConstant(Node node) {
         int type;
+        
+        // FIXME Expansion should make use of the lexical value - not the java object!
         Object val = "";
         String lang = null;
         String dt = null;
@@ -362,7 +365,7 @@ public class SqlTranslationUtils {
             //lex = node.getLiteralLexicalForm();
 
             String datatype = node.getLiteralDatatypeURI();
-            if(datatype == null || datatype.isEmpty()) {
+            if(datatype == null || datatype.isEmpty() || datatype.equals(RDFLangString.rdfLangString.getURI())) {
                 //System.err.println("Treating plain literals as typed ones");
                 logger.warn("Treating plain literals as typed ones");
                 type = 2;
@@ -379,7 +382,7 @@ public class SqlTranslationUtils {
         String langStr = lang == null ? "" : lang;
 
         return new E_RdfTerm(
-                NodeValue.makeDecimal(type), NodeValue.makeNode(val.toString(), lang, dt),
+                NodeValue.makeDecimal(type), NodeValue.makeNode(val.toString(), null, dt),
                 NodeValue.makeString(langStr), NodeValue.makeString(dtStr));
 
         /*
