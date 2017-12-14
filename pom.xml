@@ -91,11 +91,9 @@
 		<!-- <jetty.version>8.1.16.v20140903</jetty.version> -->
 
 
-		<!-- temporary downgrade due to https://issues.apache.org/jira/browse/JENA-1294 
-			... -->
 		<jena.version>3.5.0</jena.version>
-		<jetty.version>9.2.22.v20170606</jetty.version>
-		<jetty.jsp.version>9.2.22.v20170606</jetty.jsp.version>
+		<jetty.version>9.4.8.v20171121</jetty.version>
+<!--		<jetty.jsp.version>9.2.22.v20170606</jetty.jsp.version> -->
 
 		<jgrapht.version>1.0.1</jgrapht.version>
 
@@ -103,7 +101,7 @@
 		<!-- <jersey-spring.version>1.17.1</jersey-spring.version> -->
 
 		<!-- 2.18 could be tried out next -->
-		<jersey.version>2.26</jersey.version>
+		<jersey.version>2.22.2</jersey.version>
 
 		<spring.version>4.3.10.RELEASE</spring.version>
 		<spring.batch.version>3.0.8.RELEASE</spring.batch.version>
@@ -644,7 +642,7 @@
 
 			<dependency>
 				<groupId>org.glassfish.jersey.ext</groupId>
-				<artifactId>jersey-spring4</artifactId>
+				<artifactId>jersey-spring3</artifactId>
 				<version>${jersey.version}</version>
 
 				<exclusions>
@@ -813,8 +811,8 @@
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty</groupId>
-				<artifactId>jetty-jsp</artifactId>
-				<version>${jetty.jsp.version}</version>
+				<artifactId>apache-jsp</artifactId>
+				<version>${jetty.version}</version>
 			</dependency>
 
 			<!-- <dependency> <groupId>org.eclipse.jetty</groupId> <artifactId>jetty-jsp</artifactId> 
