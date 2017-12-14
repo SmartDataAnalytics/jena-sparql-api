@@ -1,38 +1,35 @@
 package org.aksw.jena_sparql_api.jgrapht;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import javax.persistence.criteria.Root;
 import javax.swing.JFrame;
 
+import org.aksw.commons.graph.index.core.SubgraphIsomorphismIndex;
+import org.aksw.commons.graph.index.core.SubgraphIsomorphismIndexWrapper;
+import org.aksw.commons.graph.index.jena.SubgraphIsomorphismIndexJena;
+import org.aksw.commons.graph.index.jena.transform.QueryToGraph;
+import org.aksw.commons.graph.index.jena.transform.QueryToGraphVisitor;
+import org.aksw.commons.jena.graph.GraphVar;
+import org.aksw.commons.jena.graph.GraphVarImpl;
+import org.aksw.commons.jena.jgrapht.PseudoGraphJenaGraph;
 import org.aksw.commons.util.strings.StringPrettyComparator;
+import org.aksw.jena_sparql_api.algebra.utils.ExtendedQueryToGraphVisitor;
 import org.aksw.jena_sparql_api.algebra.utils.OpExtConjunctiveQuery;
 import org.aksw.jena_sparql_api.core.SparqlService;
-import org.aksw.jena_sparql_api.iso.index.SubGraphIsomorphismIndex;
-import org.aksw.jena_sparql_api.iso.index.SubGraphIsomorphismIndexJGraphT;
-import org.aksw.jena_sparql_api.iso.index.SubGraphIsomorphismIndexWrapper;
-import org.aksw.jena_sparql_api.jgrapht.transform.GraphVar;
-import org.aksw.jena_sparql_api.jgrapht.transform.GraphVarImpl;
-import org.aksw.jena_sparql_api.jgrapht.transform.QueryToGraphVisitor;
-import org.aksw.jena_sparql_api.jgrapht.transform.QueryToJenaGraph;
-import org.aksw.jena_sparql_api.jgrapht.wrapper.PseudoGraphJenaGraph;
 import org.aksw.jena_sparql_api.mapper.jpa.core.RdfEntityManager;
 import org.aksw.jena_sparql_api.mapper.jpa.core.SparqlEntityManagerFactory;
 import org.aksw.jena_sparql_api.mapper.util.JpaUtils;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
 import org.aksw.jena_sparql_api.utils.Vars;
-import org.aksw.jena_sparql_api.views.index.SparqlViewMatcherOpImpl;
 import org.apache.jena.ext.com.google.common.collect.Lists;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
@@ -56,7 +53,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
+import com.google.common.collect.Multimap;
 import com.jgraph.layout.JGraphFacade;
 import com.jgraph.layout.JGraphLayout;
 import com.jgraph.layout.hierarchical.JGraphHierarchicalLayout;
@@ -76,14 +73,48 @@ public class MainSparqlQueryToGraph {
     }
 
 
-    public static void main(String[] args) throws Exception {
-        Iterable<Integer> iA = Arrays.asList(1, 2, 2, 3);
-        Iterator<Integer> itA = iA.iterator();
-        Stream<Integer> streamA = StreamSupport.stream(((Iterable<Integer>)() -> itA).spliterator(), false);
-        Iterable<Integer> iB = () -> streamA.distinct().iterator();
-        for(Integer item : iB) {
-            System.out.println(item);
+    public static Graph queryToGraph(String queryStr) {
+        Graph result;
+
+        Query query;
+        try {
+            query = SparqlQueryParserImpl.create().apply(queryStr);
+        } catch(Exception e) {
+            throw new RuntimeException("Failed to parse: " + queryStr, e);
         }
+        Op op = Algebra.toQuadForm(Algebra.compile(query));
+        Op nop = QueryToGraph.normalizeOp(op, false);
+
+
+        // Collect all conjunctive queries
+        if(!(nop instanceof OpExtConjunctiveQuery)) {
+            //System.out.println("Not a conjunctive query - skipping");
+            throw new RuntimeException("Not a conjunctive query - skipping");
+        } else {
+
+            OpExtConjunctiveQuery ocq = (OpExtConjunctiveQuery)nop;
+            //ConjunctiveQuery cq = SparqlCacheUtils.tryExtractConjunctiveQuery(op, generator)
+
+            //System.out.println("indexing: " + ocq.getQfpc());
+
+            Supplier<Supplier<Node>> ssn = () -> { int[] x = {0}; return () -> NodeFactory.createBlankNode("_" + x[0]++); };
+            QueryToGraphVisitor q2g = new ExtendedQueryToGraphVisitor(ssn.get());
+            q2g.visit(ocq);
+            result = q2g.getGraph();
+        }
+
+        return result;
+    }
+
+
+    public static void main(String[] args) throws Exception {
+
+        SubgraphIsomorphismIndex<Node, Graph, Node> index =
+                SubgraphIsomorphismIndexWrapper.wrap(
+                        SubgraphIsomorphismIndexJena.create(),
+                        PseudoGraphJenaGraph::new);
+
+
 
         org.apache.jena.graph.Graph g = new GraphVarImpl(); //GraphFactory.createDefaultGraph();
         g.add(new Triple(Vars.s, Vars.p, Vars.o));
@@ -129,10 +160,10 @@ public class MainSparqlQueryToGraph {
         //System.out.println(op);
 
 
-        aop = SparqlViewMatcherOpImpl.normalizeOp(aop);
-        bop = SparqlViewMatcherOpImpl.normalizeOp(bop);
-        cop = SparqlViewMatcherOpImpl.normalizeOp(cop);
-        dop = SparqlViewMatcherOpImpl.normalizeOp(dop);
+        aop = QueryToGraph.normalizeOp(aop, false);
+        bop = QueryToGraph.normalizeOp(bop, false);
+        cop = QueryToGraph.normalizeOp(cop, false);
+        dop = QueryToGraph.normalizeOp(dop, false);
 
 
         //RDFDataMgr.write(System.out, graph, RDFFormat.NTRIPLES);
@@ -162,7 +193,7 @@ public class MainSparqlQueryToGraph {
 //        System.out.println("Graph B:");
 //        RDFDataMgr.write(System.out, bg.getWrapped(), RDFFormat.NTRIPLES);
 //
-        List<Map<Node, Node>> solutions = QueryToJenaGraph.match(HashBiMap.create(), bg, cg).collect(Collectors.toList());
+        List<Map<Node, Node>> solutions = null; //QueryToJenaGraph.match(HashBiMap.create(), bg, cg).collect(Collectors.toList());
 //
 //        System.out.println("VarMap entries: " + solutions.size());
 
@@ -171,24 +202,19 @@ public class MainSparqlQueryToGraph {
         });
 
 
-        SubGraphIsomorphismIndex<Node, Graph, Node> index =
-                SubGraphIsomorphismIndexWrapper.wrap(
-                        SubGraphIsomorphismIndexJGraphT.create(),//SubGraphIsomorphismIndexRdf.create();
-                        PseudoGraphJenaGraph::new);
-                        //kk -> SetOpsJGraphTRdfJena.INSTANCE.transformItems(new PseudoGraphJenaGraph(kk), v -> v));
         int xxx = 3;
 
         if(xxx == 0) {
             // incremental subsumtion
-            index.add(ag);
-            index.add(bg);
-            index.add(cg);
+//            index.add(ag);
+//            index.add(bg);
+//            index.add(cg);
         } else if(xxx == 2){
             // most generic inserted last
-            index.add(dg);
-            //index.add(cg);
-            index.add(bg);
-            index.add(ag);
+//            index.add(dg);
+//            //index.add(cg);
+//            index.add(bg);
+//            index.add(ag);
         } else {
             SparqlEntityManagerFactory emf = new SparqlEntityManagerFactory();
             Model model = RDFDataMgr.loadModel("lsq-sparqlqc-synthetic-simple.ttl", Lang.TURTLE);
@@ -238,19 +264,31 @@ public class MainSparqlQueryToGraph {
                 //queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q3z"));
                 //queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q4w"));
 
-                // Test case: Multi-subsumption
-//                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q1x"));
-//                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q2y"));
-//                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/r1a"));
-//                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/spo"));
+                // Test case: Keys with equivalent under isomorphism entities
+                if(false) {
+                    queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q1x"));
+                    queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q1a"));
+                    //queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q2y"));
+                    //queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/r1a"));
+                    //queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/spo"));
+                }
 
+
+                // Test case: Multi-subsumption
+                if(true) {
+                    queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q1x"));
+                    queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q2y"));
+                    queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/r1a"));
+                    queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/spo"));
+                }
 
                 // Test case: New root inserted late
                 // expected: { spo: { q1x: {q2y}, q2y}
-                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q1x"));
-                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q2y"));
-                queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/spo"));
-
+                if(false) {
+                    queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q1x"));
+                    queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/q2y"));
+                    queries.add(em.find(LsqQuery.class, "http://lsq.aksw.org/res/spo"));
+                }
             } else {
                 queries = Collections.emptyList();
             }
@@ -270,6 +308,7 @@ public class MainSparqlQueryToGraph {
             }
             //Collections.sort(queries, (x, y) -> Objects.compare(x.getIri(), y.getIri(), Comparator.reverseOrder()));
             int iii = 0;
+            Map<Node, Graph> nodeToGraph = new HashMap<>();
             for(LsqQuery lsqq : queries) {
 
                 // TODO HACK We need to fetch the iri from the em, as the mapper currently does not support placing an entity's iri into a field
@@ -285,7 +324,7 @@ public class MainSparqlQueryToGraph {
                     continue;
                 }
                 Op op = Algebra.toQuadForm(Algebra.compile(query));
-                Op nop = SparqlViewMatcherOpImpl.normalizeOp(op);
+                Op nop = QueryToGraph.normalizeOp(op, false);
 
 
                 // Collect all conjunctive queries
@@ -311,14 +350,42 @@ public class MainSparqlQueryToGraph {
                     ++iii;
                     }
 
-                    index.put(NodeFactory.createURI(lsqq.getIri()), graph);
+                    nodeToGraph.put(NodeFactory.createURI(lsqq.getIri()), graph);
+
                 }
 
 
 
             }
+
             System.out.println("Processed: " + i);
+
+            for(Entry<Node, Graph> e : nodeToGraph.entrySet()) {
+                index.put(e.getKey(), e.getValue());
+            }
+            //index.put(NodeFactory.createURI(lsqq.getIri()), graph);
+
+            index.printTree();
+
+System.out.println("Deleting...");
+index.removeKey(NodeFactory.createURI("http://lsq.aksw.org/res/q1x"));
+index.removeKey(NodeFactory.createURI("http://lsq.aksw.org/res/q1a"));
 index.printTree();
+
+
+index.put(NodeFactory.createURI("http://lsq.aksw.org/res/q1x"), nodeToGraph.get(NodeFactory.createURI("http://lsq.aksw.org/res/q1x")));
+index.printTree();
+
+
+
+Graph grr = nodeToGraph.get(NodeFactory.createURI("http://lsq.aksw.org/res/q2y"));
+Multimap<Node, BiMap<Node, Node>> lookupResult = index.lookupX(grr, false);
+
+lookupResult.asMap().forEach((k, isos) -> {
+    isos.forEach(iso -> {
+        System.out.println(k + ": " + iso);
+    });
+});
 
 
             System.exit(0);
@@ -331,7 +398,7 @@ index.printTree();
         System.out.println("Index tree: ");
         index.printTree();
 
-        Map<Node, Iterable<BiMap<Node, Node>>> map = index.lookupStream(cg, false);
+        Map<Node, Iterable<BiMap<Node, Node>>> map = null;// index.lookupStream(cg, false);
 
         map.forEach((k, p) -> {
             System.out.println("Solutions for : " + k);
@@ -371,6 +438,17 @@ index.printTree();
     }
 
 }
+
+
+//Iterable<Integer> iA = Arrays.asList(1, 2, 2, 3);
+//Iterator<Integer> itA = iA.iterator();
+//Stream<Integer> streamA = StreamSupport.stream(((Iterable<Integer>)() -> itA).spliterator(), false);
+//Iterable<Integer> iB = () -> streamA.distinct().iterator();
+//for(Integer item : iB) {
+//    System.out.println(item);
+//}
+
+
 //// Do this state space search thingy: update the state, track the changes, compute and restore
 //// This means: track which keys will be added, add them, and later remove them again
 //boolean isCompatible = MapUtils.isCompatible(iso, baseIso);

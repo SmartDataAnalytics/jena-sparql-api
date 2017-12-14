@@ -14,19 +14,19 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.aksw.commons.jena.jgrapht.LabeledEdge;
+import org.aksw.commons.jena.jgrapht.LabeledEdgeImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.GraphSparqlService;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
-import org.aksw.jena_sparql_api.jgrapht.wrapper.LabeledEdge;
-import org.aksw.jena_sparql_api.jgrapht.wrapper.LabeledEdgeImpl;
-import org.aksw.jena_sparql_api.lookup.MapService;
-import org.aksw.jena_sparql_api.lookup.MapServiceUtils;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceCacheMem;
 import org.aksw.jena_sparql_api.lookup.LookupServiceListService;
 import org.aksw.jena_sparql_api.lookup.LookupServicePartition;
+import org.aksw.jena_sparql_api.lookup.MapService;
+import org.aksw.jena_sparql_api.lookup.MapServiceUtils;
 import org.aksw.jena_sparql_api.mapper.Agg;
 import org.aksw.jena_sparql_api.mapper.AggLiteral;
 import org.aksw.jena_sparql_api.mapper.AggMap;
@@ -428,7 +428,7 @@ public class MainSparqlPath2 {
         pm.setNsPrefixes(PrefixMapping.Extended);
         Prologue prologue = new Prologue(pm);
 
-        SparqlStmtParserImpl sparqlStmtParser = SparqlStmtParserImpl.create(SparqlParserConfig.create(Syntax.syntaxARQ, prologue));
+        SparqlStmtParserImpl sparqlStmtParser = SparqlStmtParserImpl.create(new SparqlParserConfig(Syntax.syntaxARQ, prologue));
 
 
         SparqlServiceFactory ssf = new SparqlServiceFactory() {

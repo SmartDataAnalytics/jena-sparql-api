@@ -1,6 +1,5 @@
 package org.aksw.jena_sparql_api.core;
 
-import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
 import org.apache.http.client.HttpClient;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.modify.UpdateProcessRemote;
@@ -31,7 +30,8 @@ public class UpdateExecutionFactoryHttp
 
     @Override
     public UpdateProcessor createUpdateProcessor(UpdateRequest updateRequest) {
-        UpdateRequestUtils.fixVarNames(updateRequest);
+        // Fixing var names should be done with transform
+        // UpdateRequestUtils.fixVarNames(updateRequest);
 
         UpdateProcessRemote result = new UpdateProcessRemote(updateRequest, remoteEndpoint, null);//request, endpoint, context);
 

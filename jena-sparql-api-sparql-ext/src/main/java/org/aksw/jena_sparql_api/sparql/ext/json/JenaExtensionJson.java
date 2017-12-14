@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.sparql.ext.json;
 
 import org.apache.jena.datatypes.TypeMapper;
+import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.function.FunctionRegistry;
 import org.apache.jena.sparql.pfunction.PropertyFunctionRegistry;
 
@@ -14,5 +15,9 @@ public class JenaExtensionJson {
         TypeMapper.getInstance().registerDatatype(new RDFDatatypeJson());
         
         PropertyFunctionRegistry.get().put(jsonFn + "unnest", new PropertyFunctionFactoryJsonUnnest());
+    }
+    
+    public static void addPrefixes(PrefixMapping pm) {
+		pm.setNsPrefix("json", JenaExtensionJson.jsonFn);
     }
 }

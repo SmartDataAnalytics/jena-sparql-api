@@ -7,8 +7,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.aksw.commons.jena.jgrapht.LabeledEdge;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.jgrapht.wrapper.LabeledEdge;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.sparql_path2.Nfa;
 import org.aksw.jena_sparql_api.sparql_path2.PathCompiler;

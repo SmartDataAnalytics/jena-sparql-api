@@ -36,7 +36,6 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 
-import au.com.bytecode.opencsv.CSVReader;
 
 
 public class MainKShortestPathsTaskRunner {
@@ -192,29 +191,30 @@ public class MainKShortestPathsTaskRunner {
         //String taskFile = "tasks.tsv";
 
         //ClassPathResource
-        try(CSVReader reader = new CSVReader(new InputStreamReader(new ClassPathResource(taskResource).getInputStream()), '\t')) {
-
-            // First path: Validate referenecd resources and set up services
-            String[] row;
-            while((row = reader.readNext()) != null) {
-                List<String> cols = Arrays.asList(row);
-
-                boolean isRowEmpty = cols.size() == 1 && cols.get(0).trim().equals("");
-                if(!isRowEmpty) {
-                    TaskContext taskContext = createTaskContext(cols, resourceLoader, refPath, dcatQef);
-                    taskContexts.add(taskContext);
-                }
-
-            }
-        }
-
-        // run the tasks
-        for(TaskContext taskContext : taskContexts) {
-            runTask(taskContext);
-
-            //break;
-            //taskContext.get
-        }
+// TODO Fix CSV reader
+//        try(CSVReader reader = new CSVReader(new InputStreamReader(new ClassPathResource(taskResource).getInputStream()), '\t')) {
+//
+//            // First path: Validate referenecd resources and set up services
+//            String[] row;
+//            while((row = reader.readNext()) != null) {
+//                List<String> cols = Arrays.asList(row);
+//
+//                boolean isRowEmpty = cols.size() == 1 && cols.get(0).trim().equals("");
+//                if(!isRowEmpty) {
+//                    TaskContext taskContext = createTaskContext(cols, resourceLoader, refPath, dcatQef);
+//                    taskContexts.add(taskContext);
+//                }
+//
+//            }
+//        }
+//
+//        // run the tasks
+//        for(TaskContext taskContext : taskContexts) {
+//            runTask(taskContext);
+//
+//            //break;
+//            //taskContext.get
+//        }
 
     }
 }

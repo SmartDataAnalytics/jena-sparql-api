@@ -71,7 +71,7 @@ public class SparqlPathUtils {
 //              .create();
 
 
-      SparqlStmtParserImpl sparqlStmtParser = SparqlStmtParserImpl.create(SparqlParserConfig.create(Syntax.syntaxARQ, prologue));
+      SparqlStmtParserImpl sparqlStmtParser = SparqlStmtParserImpl.create(new SparqlParserConfig(Syntax.syntaxARQ, prologue));
 
 
       SparqlService result = MainSparqlPath2.proxySparqlService(baseDataService, sparqlStmtParser, prologue);

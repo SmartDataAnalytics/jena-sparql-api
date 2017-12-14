@@ -10,7 +10,6 @@ Highlights:
 * JPA-based Java<->RDF mapper: Run JPA criteria queries over Java classes which are actually backed by SPARQL.
 
 
-
 [![Build Status](http://ci.aksw.org/jenkins/job/jena-sparql-api/badge/icon)](http://ci.aksw.org/jenkins/job/jena-sparql-api/)
 
 This library offers several [Jena](http://jena.apache.org/)-compatible ways to *transparently* add delays, caching, pagination, retry and even query transformations before sending off your original SPARQL query. This frees your application layer from the hassle of dealing with those issues. Also, the server module bundles Jena with the [Atmosphere](https://github.com/Atmosphere/atmosphere) framework, giving you a kickstart for REST and websocket implementations. 

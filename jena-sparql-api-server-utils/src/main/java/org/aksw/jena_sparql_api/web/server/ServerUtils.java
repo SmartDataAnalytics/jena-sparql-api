@@ -114,6 +114,7 @@ public class ServerUtils {
 
         final WebAppContext webAppContext = new WebAppContext();
 
+
         // AnnotationConfigWebApplicationContext rootContext = new
         // AnnotationConfigWebApplicationContext();
         // rootContext.register(AppConfig.class);
@@ -132,6 +133,7 @@ public class ServerUtils {
                 // WebAppInitializer initializer = new WebAppInitializer();
                 try {
                     Context servletContext = webAppContext.getServletContext();
+                    servletContext.setExtendedListenerTypes(true);
                     // servletContext.setExtendedListenerTypes(true);
                     initializer.onStartup(servletContext);
                 } catch (ServletException e) {

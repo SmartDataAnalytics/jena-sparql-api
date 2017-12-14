@@ -10,7 +10,7 @@ class F_DatasetGraphToDataset
 {
     @Override
     public Dataset apply(DatasetGraph datasetGraph) {
-        Dataset result = DatasetFactory.create(datasetGraph);
+        Dataset result = DatasetFactory.wrap(datasetGraph);
         return result;
     }
 

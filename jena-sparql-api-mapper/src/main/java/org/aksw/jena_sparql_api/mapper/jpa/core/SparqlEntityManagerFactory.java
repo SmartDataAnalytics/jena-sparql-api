@@ -137,7 +137,7 @@ public class SparqlEntityManagerFactory
     }
 
 
-    public static SparqlEntityManagerFactory create() {
+    public static SparqlEntityManagerFactory newInstance() {
         return new SparqlEntityManagerFactory();
     }
 }

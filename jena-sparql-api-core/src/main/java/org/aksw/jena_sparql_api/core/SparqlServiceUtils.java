@@ -1,7 +1,6 @@
 package org.aksw.jena_sparql_api.core;
 
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
-import org.aksw.jena_sparql_api.stmt.SparqlParserConfig;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
 import org.apache.http.client.HttpClient;
@@ -13,10 +12,10 @@ import org.apache.jena.sparql.core.DatasetGraphFactory;
 public class SparqlServiceUtils {
 
     public static SparqlService createSparqlServiceMem(String serviceUri, DatasetDescription datasetDescription, HttpClient httpClient) {
-    	DatasetGraph dg = DatasetGraphFactory.create();
+        DatasetGraph dg = DatasetGraphFactory.create();
         final SparqlService result = FluentSparqlService.from(dg)
             .config()
-                .withParser(SparqlStmtParserImpl.create(SparqlParserConfig.create(Syntax.syntaxARQ)))
+                .withParser(SparqlStmtParserImpl.create(Syntax.syntaxARQ, false))
                 .withDatasetDescription(datasetDescription)
             .end()
             .create();

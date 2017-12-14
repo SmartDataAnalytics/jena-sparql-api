@@ -1,6 +1,5 @@
 package org.aksw.jena_sparql_api.web.servlets;
 
-import javax.naming.OperationNotSupportedException;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.FormParam;
@@ -19,7 +18,6 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.StreamingOutput;
 
 import org.aksw.jena_sparql_api.core.utils.QueryExecutionAndType;
-import org.aksw.jena_sparql_api.stmt.SparqlParserConfig;
 import org.aksw.jena_sparql_api.stmt.SparqlStmt;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParser;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
@@ -48,7 +46,7 @@ public abstract class SparqlEndpointBase {
 
     //private @Context HttpServletRequest req;
 
-    protected SparqlStmtParser defaultSparqlStmtParser = SparqlStmtParserImpl.create(SparqlParserConfig.create(Syntax.syntaxARQ), true);
+    protected SparqlStmtParser defaultSparqlStmtParser = SparqlStmtParserImpl.create(Syntax.syntaxARQ, true);
 
     protected SparqlStmtParser getSparqlStmtParser() {
         return defaultSparqlStmtParser;

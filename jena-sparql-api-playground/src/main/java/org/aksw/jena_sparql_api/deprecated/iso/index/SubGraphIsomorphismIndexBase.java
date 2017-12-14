@@ -15,11 +15,11 @@ import java.util.stream.Stream;
 import org.aksw.commons.collections.MapUtils;
 import org.aksw.commons.collections.multimaps.BiHashMultimap;
 import org.aksw.commons.collections.trees.ReclaimingSupplier;
-import org.aksw.jena_sparql_api.jgrapht.transform.GraphIsoMap;
-import org.aksw.jena_sparql_api.jgrapht.transform.GraphIsoMapImpl;
-import org.aksw.jena_sparql_api.jgrapht.transform.GraphVar;
-import org.aksw.jena_sparql_api.jgrapht.transform.GraphVarImpl;
-import org.aksw.jena_sparql_api.jgrapht.transform.QueryToJenaGraph;
+import org.aksw.commons.graph.index.jena.transform.QueryToJenaGraph;
+import org.aksw.commons.jena.graph.GraphIsoMap;
+import org.aksw.commons.jena.graph.GraphIsoMapImpl;
+import org.aksw.commons.jena.graph.GraphVar;
+import org.aksw.commons.jena.graph.GraphVarImpl;
 import org.aksw.jena_sparql_api.utils.SetGraph;
 import org.apache.jena.atlas.io.IndentedWriter;
 import org.apache.jena.graph.Graph;
@@ -347,7 +347,7 @@ public class SubGraphIsomorphismIndexBase<K>
             writer.incIndent();
             int i = 0;
             //baseIso.inverse()
-            Iterable<BiMap<Node, Node>> isos = QueryToJenaGraph.match(baseIso, viewGraph, insertGraph).collect(Collectors.toSet());
+            Iterable<BiMap<Node, Node>> isos = null; //QueryToJenaGraph.match(baseIso, viewGraph, insertGraph).collect(Collectors.toSet());
             for(BiMap<Node, Node> iso : isos) {
             //for(BiMap<Node, Node> iso : Lists.newArrayList(toIterable(QueryToJenaGraph.match(baseIso, viewGraph, insertGraph)))) {
 
@@ -521,7 +521,7 @@ public class SubGraphIsomorphismIndexBase<K>
                 int i = 0;
 
                 boolean isSubsumedC = false;
-                Iterable<BiMap<Node, Node>> isosBC = QueryToJenaGraph.match(baseIso.inverse(), residualInsertGraphB, viewGraphC).collect(Collectors.toSet());
+                Iterable<BiMap<Node, Node>> isosBC = null; //QueryToJenaGraph.match(baseIso.inverse(), residualInsertGraphB, viewGraphC).collect(Collectors.toSet());
                 for(BiMap<Node, Node> isoBC : isosBC) {
                     isSubsumedC = true;
                     writer.println("Detected subsumption #" + ++i + " with iso: " + isoBC);

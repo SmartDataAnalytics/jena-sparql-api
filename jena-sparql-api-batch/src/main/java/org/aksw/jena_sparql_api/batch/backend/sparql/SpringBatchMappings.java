@@ -236,7 +236,7 @@ public class SpringBatchMappings {
 
         SparqlService sparqlService = FluentSparqlService.forModel().create();
 
-        EntityManager em = SparqlEntityManagerFactory.create()
+        EntityManager em = SparqlEntityManagerFactory.newInstance()
                 .setSparqlService(sparqlService)
                 .setTypeFactory(typeFactory)
                 .getObject();

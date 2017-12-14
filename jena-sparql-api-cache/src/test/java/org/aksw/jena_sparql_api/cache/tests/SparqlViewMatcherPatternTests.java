@@ -6,15 +6,40 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
+import org.aksw.commons.collections.tagmap.TagMapSetTrie;
+import org.aksw.commons.collections.tagmap.ValidationUtils;
+import org.aksw.commons.graph.index.core.SubgraphIsomorphismIndex;
+import org.aksw.commons.graph.index.jena.SubgraphIsomorphismIndexJena;
+import org.aksw.commons.graph.index.jena.transform.QueryToGraph;
+import org.aksw.jena_sparql_api.algebra.analysis.VarUsage2;
+import org.aksw.jena_sparql_api.algebra.analysis.VarUsageAnalyzer2Visitor;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlQueryContainmentUtils;
+import org.aksw.jena_sparql_api.query_containment.index.NodeMapperOp;
+import org.aksw.jena_sparql_api.query_containment.index.NodeMapperOpContainment;
+import org.aksw.jena_sparql_api.query_containment.index.OpContext;
+import org.aksw.jena_sparql_api.query_containment.index.QueryContainmentIndex;
+import org.aksw.jena_sparql_api.query_containment.index.QueryContainmentIndexImpl;
+import org.aksw.jena_sparql_api.query_containment.index.ResidualMatching;
+import org.aksw.jena_sparql_api.query_containment.index.TreeMapping;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcReader;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcVocab;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.VarMapper;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.sparql.algebra.Algebra;
+import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.util.NodeUtils;
+import org.jgrapht.DirectedGraph;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -23,8 +48,11 @@ import org.junit.runners.Parameterized.Parameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.BiMap;
+
 
 //@FixMethodOrder
+//@Ignore
 @RunWith(Parameterized.class)
 public class SparqlViewMatcherPatternTests {
 
@@ -36,7 +64,7 @@ public class SparqlViewMatcherPatternTests {
             throws Exception
     {
         List<Object[]> params = new ArrayList<>();
-        //params.addAll(createTestParams("sparqlqc/1.4/benchmark/cqnoproj.rdf"));
+        params.addAll(createTestParams("sparqlqc/1.4/benchmark/cqnoproj.rdf"));
         params.addAll(createTestParams("sparqlqc/1.4/benchmark/ucqproj.rdf"));
         return params;
     }
@@ -196,8 +224,16 @@ public class SparqlViewMatcherPatternTests {
         //VarMapper::createVarMapCandidates
 
 //        boolean actualVerdict = SparqlQueryContainmentUtils.tryMatch(viewQuery, userQuery, QueryToGraph::match);
-        boolean actualVerdict = SparqlQueryContainmentUtils.tryMatch(viewQuery, userQuery, VarMapper::createVarMapCandidates);
-
+        
+        
+        boolean useOldCode = false;
+        boolean actualVerdict;
+        
+        if(useOldCode) {
+        	actualVerdict = SparqlQueryContainmentUtils.tryMatch(viewQuery, userQuery, VarMapper::createVarMapCandidates);
+        } else {
+        	actualVerdict = tryMatch(viewQuery, userQuery);	
+        }
         logger.debug("Expected: " + expectedVerdict + " " + (overridden ? "(overridden)" : "") + " - Actual: " + actualVerdict + " Mismatch: " + (expectedVerdict != actualVerdict));
 
                 //SparqlQueryContainmentUtils.tryMatch(userEl, viewEl);
@@ -208,4 +244,67 @@ public class SparqlViewMatcherPatternTests {
 
 
 
+    
+    
+
+    public static boolean tryMatch(Query view, Query user) {
+    	
+    	BiFunction<OpContext, OpContext, NodeMapperOp> nodeMapperFactory = (aContext, bContext) -> new NodeMapperOpContainment(aContext, bContext);
+        
+        //QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, Op> indexA = QueryContainmentIndexImpl.create(nodeMapper);
+        //QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, Op> indexB = QueryContainmentIndexImpl.createFlat(nodeMapper);
+
+        SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> siiTreeTags = SubgraphIsomorphismIndexJena.create();
+        SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> siiFlat = SubgraphIsomorphismIndexJena.createFlat();
+        SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> siiTagBased = SubgraphIsomorphismIndexJena.createTagBased(new TagMapSetTrie<>(NodeUtils::compareRDFTerms));
+
+        SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> siiValidating = ValidationUtils.createValidatingProxy(SubgraphIsomorphismIndex.class, siiTreeTags, siiTagBased);
+        SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> sii = siiValidating;
+        
+        QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, ResidualMatching> index = QueryContainmentIndexImpl.create(sii, nodeMapperFactory);
+
+ 
+        //view = QueryFactory.create("PREFIX ex: <http://ex.org/> SELECT * { ?s a ex:Person ; ex:name ?n . FILTER(contains(?n, 'fr')) }");
+        //user = QueryFactory.create("PREFIX ex: <http://ex.org/> SELECT DISTINCT ?s { ?s a ex:Person ; ex:name ?n . FILTER(contains(?n, 'franz')) }");
+        
+        
+        
+        
+        Node viewKey = NodeFactory.createURI("http://ex.org/view");
+//        Op viewOp = Algebra.toQuadForm(Algebra.compile(view));
+//        Op userOp = Algebra.toQuadForm(Algebra.compile(user));
+        Op viewOp = Algebra.compile(view);
+        Op userOp = Algebra.compile(user);
+
+        
+
+        {
+        	Op op = QueryToGraph.normalizeOp(userOp, true);
+        	//op = QueryToGraph.normalizeOp(op, true);
+	        //VarUsageAnalyzer2Visitor varUsageAnalyzer = new VarUsageAnalyzer2Visitor();
+	        Map<Op, VarUsage2> map = VarUsageAnalyzer2Visitor.analyze(op);
+	        for(Entry<Op, VarUsage2> e : map.entrySet()) {
+	        	System.out.println("VarUsage: " + e);
+	        }
+	        System.out.println("Normalized Op: " + op);
+        }        
+        
+        
+
+        
+        index.put(viewKey, viewOp);
+
+
+        List<Entry<Node, TreeMapping<Op, Op, BiMap<Node, Node>, ResidualMatching>>> matches = 
+        		index.match(userOp).collect(Collectors.toList());
+
+        System.out.println("Begin of matches:");
+		for(Entry<Node, TreeMapping<Op, Op, BiMap<Node, Node>, ResidualMatching>> match : matches) {
+        	System.out.println("  Match: " + match);
+        }
+        System.out.println("End of matches");
+        
+        boolean hasMatches = !matches.isEmpty();
+        return hasMatches;
+    }
 }

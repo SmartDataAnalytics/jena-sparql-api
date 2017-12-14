@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.sparql_path2;
 
-import org.aksw.jena_sparql_api.jgrapht.wrapper.LabeledEdge;
+import org.aksw.commons.jena.jgrapht.LabeledEdge;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.PathVisitorRewriteInvert;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.PathVisitorTopDown;
 import org.apache.jena.sparql.path.Path;

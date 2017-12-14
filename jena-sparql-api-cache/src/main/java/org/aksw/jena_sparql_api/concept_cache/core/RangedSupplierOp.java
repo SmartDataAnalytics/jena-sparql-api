@@ -15,7 +15,6 @@ import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.engine.ExecutionContext;
 import org.apache.jena.sparql.engine.QueryIterator;
 import org.apache.jena.sparql.engine.binding.Binding;
-import org.apache.jena.sparql.engine.iterator.QueryIter;
 import org.apache.jena.sparql.engine.iterator.QueryIterRoot;
 import org.apache.jena.sparql.engine.main.OpExecutor;
 import org.apache.jena.sparql.engine.main.OpExecutorFactory;
@@ -25,38 +24,38 @@ import org.apache.jena.sparql.util.Context;
 import com.google.common.collect.Range;
 
 public class RangedSupplierOp
-	implements RangedSupplier<Long, Binding>, OpAttribute
+    implements RangedSupplier<Long, Binding>, OpAttribute
 {
-	protected Op op;
-	protected Context context;
+    protected Op op;
+    protected Context context;
 
 
-	public RangedSupplierOp(Op op, Context context) {
-		super();
-		this.op = op;
-		this.context = context;
-	}
+    public RangedSupplierOp(Op op, Context context) {
+        super();
+        this.op = op;
+        this.context = context;
+    }
 
-	@Override
-	public Stream<Binding> apply(Range<Long> range) {
-		long offset = QueryUtils.rangeToOffset(range);
-		long limit = QueryUtils.rangeToLimit(range);
+    @Override
+    public Stream<Binding> apply(Range<Long> range) {
+        long offset = QueryUtils.rangeToOffset(range);
+        long limit = QueryUtils.rangeToLimit(range);
 
-		Op effectiveOp = new OpSlice(op, offset, limit);
+        Op effectiveOp = new OpSlice(op, offset, limit);
 
-		// The base op may be a service reference (or some other expression)
-		// Push down the newly added slice for best performance
-		//effectiveOp = Transformer.transform(TransformPushSlice.fn, effectiveOp);
+        // The base op may be a service reference (or some other expression)
+        // Push down the newly added slice for best performance
+        //effectiveOp = Transformer.transform(TransformPushSlice.fn, effectiveOp);
 
-		// TODO Make this transformation configurable
-		effectiveOp = RewriteUtils.transformUntilNoChange(effectiveOp, op -> Transformer.transform(TransformPushSlice.fn, op));
+        // TODO Make this transformation configurable
+        effectiveOp = RewriteUtils.transformUntilNoChange(effectiveOp, op -> Transformer.transform(TransformPushSlice.fn, op));
 
 
-		QueryIterator it = execute(effectiveOp, context);
-		Stream<Binding> result = StreamUtils.stream(it);
-		//ClosableIterator<Binding> result = new IteratorClosable<>(it, () -> it.close());
-		return result;
-	}
+        QueryIterator it = execute(effectiveOp, context);
+        Stream<Binding> result = StreamUtils.stream(it);
+        //ClosableIterator<Binding> result = new IteratorClosable<>(it, () -> it.close());
+        return result;
+    }
 
 //	@Override
 //    public <X> X unwrap(Class<X> clazz, boolean reflexive) {
@@ -68,25 +67,25 @@ public class RangedSupplierOp
 //    	return result;
 //    }
 
-	/**
-	 * This is partly a repetition of private functions in QC
-	 * @param op
-	 * @param context
-	 * @return
-	 */
-	public static QueryIterator execute(Op op, Context context) {
-		DatasetGraph dg = DatasetGraphFactory.create();
-		OpExecutorFactory opExecutorFactory = QC.getFactory(context);
-		ExecutionContext execCxt = new ExecutionContext(context, dg.getDefaultGraph(), dg, opExecutorFactory);
-		QueryIter qIter = QueryIterRoot.create(execCxt);
-		OpExecutor opExecutor = opExecutorFactory.create(execCxt);
-		QueryIterator result = opExecutor.executeOp(op, qIter);
+    /**
+     * This is partly a repetition of private functions in QC
+     * @param op
+     * @param context
+     * @return
+     */
+    public static QueryIterator execute(Op op, Context context) {
+        DatasetGraph dg = DatasetGraphFactory.create();
+        OpExecutorFactory opExecutorFactory = QC.getFactory(context);
+        ExecutionContext execCxt = new ExecutionContext(context, dg.getDefaultGraph(), dg, opExecutorFactory);
+        QueryIterator qIter = QueryIterRoot.create(execCxt);
+        OpExecutor opExecutor = opExecutorFactory.create(execCxt);
+        QueryIterator result = opExecutor.executeOp(op, qIter);
 
-		return result;
-	}
+        return result;
+    }
 
-	@Override
-	public Op getOp() {
-		return op;
-	}
+    @Override
+    public Op getOp() {
+        return op;
+    }
 }

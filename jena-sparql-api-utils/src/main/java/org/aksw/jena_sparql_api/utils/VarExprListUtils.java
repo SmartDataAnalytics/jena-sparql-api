@@ -1,37 +1,55 @@
 package org.aksw.jena_sparql_api.utils;
 
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprTransform;
+import org.apache.jena.sparql.expr.ExprTransformSubstitute;
 import org.apache.jena.sparql.expr.ExprTransformer;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.ExprVars;
+import org.apache.jena.sparql.graph.NodeTransform;
 
 public class VarExprListUtils {
 
+    public static VarExprList createFromMap(Map<Var, Expr> map) {
+        VarExprList result = new VarExprList();
+        for(Entry<Var, Expr> e : map.entrySet()) {
+            Var v = e.getKey();
+            Expr w = e.getValue();
 
-	public static VarExprList createFromVarMap(Map<Var, Var> varMap) {
-		VarExprList result = new VarExprList();
-		for(Entry<Var, Var> e : varMap.entrySet()) {
-			Var v = e.getKey();
-			Var w = e.getValue();
+            if(w.isVariable() && v.equals(w.asVar())) {
+                result.add(v);
+            } else {
+                result.add(v, w);
+            }
+        }
 
-			if(v.equals(w)) {
-				result.add(w);
-			} else {
-				result.add(w, new ExprVar(v));
-			}
-		}
+        return result;
+    }
+    public static VarExprList createFromVarMap(Map<Var, Var> varMap) {
+        VarExprList result = new VarExprList();
+        for(Entry<Var, Var> e : varMap.entrySet()) {
+            Var v = e.getKey();
+            Var w = e.getValue();
 
-		return result;
-	}
+            if(v.equals(w)) {
+                result.add(w);
+            } else {
+                result.add(w, new ExprVar(v));
+            }
+        }
+
+        return result;
+    }
 
 
     /**
@@ -60,6 +78,21 @@ public class VarExprListUtils {
             return expr ;
         return ExprTransformer.transform(exprTransform, expr) ;
     }
+
+    public static Map<Var, Expr> applyNodeTransform(Map<Var, Expr> varExpr, NodeTransform nodeTransform)
+    {
+        Map<Var, Expr> result = varExpr.entrySet().stream()
+                .collect(Collectors.toMap(
+                        e -> (Var)nodeTransform.apply(e.getKey()),
+                        e -> e.getValue().applyNodeTransform(nodeTransform),
+                        (u, v) -> { throw new RuntimeException("Duplicate key"); },
+                        LinkedHashMap::new
+                ));
+
+        return result;
+    }
+
+
     // Copied from package org.apache.jena.sparql.algebra.ApplyTransformVisitor;
     public static VarExprList transform(VarExprList varExpr, ExprTransform exprTransform)
     {
@@ -68,10 +101,10 @@ public class VarExprListUtils {
         boolean changed = false ;
         for ( Var v : vars )
         {
-        	Expr newVE = exprTransform.transform(new ExprVar(v));
-        	Var newV = newVE == null ? v : ((ExprVar)newVE).asVar();
+            Expr newVE = exprTransform.transform(new ExprVar(v));
+            Var newV = newVE == null ? v : ((ExprVar)newVE).asVar();
 
-        	changed = !v.equals(newV);
+            changed = !v.equals(newV);
 
             Expr e = varExpr.getExpr(v) ;
             Expr e2 =  e ;
@@ -88,6 +121,22 @@ public class VarExprListUtils {
             return varExpr ;
         return varExpr2 ;
     }
+
+
+    public static ExprTransform createExprTransform(Map<Var, Expr> varDefs) {
+        // TODO Avoid creating the copy of the map
+        Map<String, Expr> tmp = varDefs.entrySet().stream()
+                .collect(Collectors.toMap(
+                    e -> e.getKey().getName(),
+                    Entry::getValue,
+                    (u, v) -> { throw new RuntimeException("duplicate"); },
+                    LinkedHashMap::new
+                ));
+
+        ExprTransform result = new ExprTransformSubstitute(tmp);
+        return result;
+    }
+
 
     public static void replace(VarExprList dst, VarExprList src) {
         if(dst != src) {

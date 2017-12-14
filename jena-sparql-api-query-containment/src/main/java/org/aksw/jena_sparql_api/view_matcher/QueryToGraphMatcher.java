@@ -3,11 +3,11 @@ package org.aksw.jena_sparql_api.view_matcher;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import org.aksw.commons.graph.index.jena.transform.QueryToGraph;
+import org.aksw.commons.jena.jgrapht.LabeledEdge;
+import org.aksw.commons.jena.jgrapht.LabeledEdgeImpl;
 import org.aksw.jena_sparql_api.algebra.utils.AlgebraUtils;
 import org.aksw.jena_sparql_api.algebra.utils.QuadFilterPatternCanonical;
-import org.aksw.jena_sparql_api.jgrapht.transform.QueryToGraph;
-import org.aksw.jena_sparql_api.jgrapht.wrapper.LabeledEdge;
-import org.aksw.jena_sparql_api.jgrapht.wrapper.LabeledEdgeImpl;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.core.Var;

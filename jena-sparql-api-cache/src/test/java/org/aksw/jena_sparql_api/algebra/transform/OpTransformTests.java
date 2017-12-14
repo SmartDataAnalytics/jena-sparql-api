@@ -2,22 +2,20 @@ package org.aksw.jena_sparql_api.algebra.transform;
 
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlQueryContainmentUtils;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.VarMapper;
-import org.aksw.jena_sparql_api.view_matcher.SparqlViewMatcherUtils;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpAsQuery;
-import org.apache.jena.sparql.algebra.TransformQuadGraph;
 import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.optimize.Optimize;
 import org.apache.jena.sparql.algebra.optimize.TransformFilterPlacement;
 import org.apache.jena.sparql.algebra.optimize.TransformMergeBGPs;
-import org.apache.jena.sparql.algebra.optimize.TransformPattern2Join;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
-
+@Ignore
 public class OpTransformTests {
 //
 //    @Parameters(name = "Transformation {index}: {0}")
@@ -74,20 +72,27 @@ public class OpTransformTests {
         System.out.println("a:" + op);
         op = TransformReplaceConstants.transform(op);
 
-        System.out.println("b: " + op);
+        System.out.println("b:" + op);
+        op = Transformer.transform(new TransformFilterPlacement(), op);
+
+        System.out.println("c: " + op);
         op = TransformPushFiltersIntoBGP.transform(op);
 
-        System.out.println("c:" + op);
+        System.out.println("d:" + op);
         op = Transformer.transform(new TransformQuadsToTriples(), op);
 
-        System.out.println("d:" + op);
+        System.out.println("e:" + op);
         op = Transformer.transform(new TransformMergeBGPs(), op);
 
-        // Bad idea to use filter placement; may isolate quads with their own filters
+        // Clean up projection
+        op = TransformMergeProject.transform(op);
+        System.out.println("f:" + op);
+
+        // Bad idea to use filter placement here; may isolate quads with their own filters
         // op = Transformer.transform(new TransformFilterPlacement(), op);
 
         Query actual = OpAsQuery.asQuery(op);
-        System.out.println("e: " + actual);
+        System.out.println("f: " + actual);
 
         Assert.assertEquals(expected, actual);
     }

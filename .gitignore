@@ -12,7 +12,7 @@ bin
 *.ear
 
 #Idea files
-.idea/*
+.idea/
 *.iml
 *.log
 

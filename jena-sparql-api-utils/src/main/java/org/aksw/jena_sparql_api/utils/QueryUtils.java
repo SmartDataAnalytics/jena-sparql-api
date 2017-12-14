@@ -4,12 +4,19 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransform;
+import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformSubst;
+import org.aksw.jena_sparql_api.backports.syntaxtransform.ExprTransformNodeElement;
 import org.aksw.jena_sparql_api.backports.syntaxtransform.QueryTransformOps;
+import org.aksw.jena_sparql_api.utils.transform.NodeTransformCollectNodes;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
+import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.op.OpSlice;
 import org.apache.jena.sparql.core.DatasetDescription;
@@ -17,6 +24,8 @@ import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprTransform;
+import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.PatternVars;
@@ -26,6 +35,65 @@ import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.Range;
 
 public class QueryUtils {
+
+    public static Query applyNodeTransform(Query query, NodeTransform nodeTransform) {
+
+        ElementTransform eltrans = new ElementTransformSubst(nodeTransform) ;
+        //NodeTransform nodeTransform = new NodeTransformSubst(nodeTransform) ;
+        ExprTransform exprTrans = new ExprTransformNodeElement(nodeTransform, eltrans) ;
+        Query result = QueryTransformOps.transform(query, eltrans, exprTrans) ;
+
+        return result;
+    }
+
+    /**
+     * Scans the query for all occurrences of URI nodes and returns the applicable subset of its
+     * prefix mapping.
+     *
+     * Note: In principle sub queries may define their own prefixes
+     *
+     * <pre>
+     * {@code
+     * PREFIX foo: <http://ex.org/foo/>
+     * SELECT * {
+     *   {
+     *     PREFIX foo2: <http://ex.org/foo/>
+     *     SELECT * { foo2:a ... }
+     *   }
+     * }
+     * }
+     * </pre>
+     *
+     * This method ignores 'inner' prefixes, so for the example above, the method will
+     * incorrectly return foo as a used prefix.
+     *
+     * @param query
+     * @return
+     */
+    public static PrefixMapping usedPrefixes(Query query) {
+        NodeTransformCollectNodes nodeUsageCollector = new NodeTransformCollectNodes();
+
+        applyNodeTransform(query, nodeUsageCollector);
+        Set<Node> nodes = nodeUsageCollector.getNodes();
+
+        PrefixMapping pm = query.getPrefixMapping();
+        Map<String, String> usedPrefixes = nodes.stream()
+                .filter(Node::isURI)
+                .map(Node::getURI)
+                .map(x -> {
+                    String tmp = pm.shortForm(x);
+                    String r = Objects.equals(x, tmp) ? null : tmp.split(":", 2)[0];
+                    return r;
+                })
+                //.peek(System.out::println)
+                .filter(x -> x != null)
+                .distinct()
+                .collect(Collectors.toMap(x -> x, pm::getNsPrefixURI));
+
+        PrefixMapping result = new PrefixMappingImpl();
+        result.setNsPrefixes(usedPrefixes);
+        return result;
+    }
 
     public static Query randomizeVars(Query query) {
         Map<Var, Var> varMap = createRandomVarMap(query, "rv");
