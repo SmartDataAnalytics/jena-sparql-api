@@ -12,6 +12,7 @@ import java.util.stream.Stream;
 
 import org.aksw.commons.jena.jgrapht.LabeledEdge;
 import org.aksw.commons.jena.jgrapht.LabeledEdgeImpl;
+import org.aksw.jena_sparql_api.algebra.transform.TransformDistributeJoinOverUnion;
 import org.aksw.jena_sparql_api.algebra.transform.TransformJoinToSequence;
 import org.aksw.jena_sparql_api.algebra.transform.TransformMergeProject;
 import org.aksw.jena_sparql_api.algebra.transform.TransformReplaceConstants;
@@ -32,6 +33,8 @@ import org.apache.jena.query.QueryFactory;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.Transformer;
+import org.apache.jena.sparql.algebra.optimize.TransformFilterPlacement;
+import org.apache.jena.sparql.algebra.optimize.TransformMergeBGPs;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
@@ -46,20 +49,53 @@ import com.google.common.collect.Streams;
 
 public class QueryToGraph {
 
-    public static Op normalizeOp(Op op) {
+    public static Op normalizeOpReplaceConstants(Op op) {
+        //Op xxx = Optimize.stdOptimizationFactory.create(ARQ.getContext()).rewrite(op);
+        
+        // Transform join of union to union of joins
+        op = TransformDistributeJoinOverUnion.transform(op);
+
+        //System.out.println("now op:\n" + op);
+        
         op = Transformer.transform(TransformUnionToDisjunction.fn, op);
+        
+        op = Transformer.transform(new TransformMergeBGPs(), op);
+
         op = Transformer.transform(TransformJoinToSequence.fn, op);
+
+        //System.out.println("now op:\n" + op);
+        
+        op = Algebra.toQuadForm(op);
+        //System.out.println("now op:\n" + op);
+        
+        
         //op = Transformer.transform(new TransformReplaceConstants(), op);
         op = TransformReplaceConstants.transform(op);
         //System.out.println("before:" + op);
+        op = Transformer.transform(new TransformFilterPlacement(false), op);
         op = TransformMergeProject.transform(op);
         //System.out.println("after:" + op);
 
-        Generator<Var> generatorCache = VarGeneratorImpl2.create();
-        //op = OpUtils.substitute(op, false, (o) -> SparqlCacheUtils.tryCreateCqfp(o, generatorCache));
-        op = OpUtils.substitute(op, false, (o) -> AlgebraUtils.tryCreateCqfp(o, generatorCache));
+//        Generator<Var> generatorCache = VarGeneratorImpl2.create();
+//        //op = OpUtils.substitute(op, false, (o) -> SparqlCacheUtils.tryCreateCqfp(o, generatorCache));
+//        op = OpUtils.substitute(op, false, (o) -> AlgebraUtils.tryCreateCqfp(o, generatorCache));
         return op;
     }
+
+    public static Op normalizeOp(Op baseOp, boolean normalizeUnaryOps) {
+        Op op = normalizeOpReplaceConstants(baseOp);
+        Generator<Var> generatorCache = VarGeneratorImpl2.create();
+        //op = OpUtils.substitute(op, false, (o) -> SparqlCacheUtils.tryCreateCqfp(o, generatorCache));
+
+        op = OpUtils.substitute(op, false, (o) -> AlgebraUtils.tryCreateCqfp(o, generatorCache));
+        if(normalizeUnaryOps) {
+        	op = Transformer.transform(new OpTransformNormalizeUnaryOps(), op);
+        }
+        
+
+        return op;
+    }
+
 
     public static Graph queryToGraph(String queryStr) {
         Graph result;
@@ -70,8 +106,23 @@ public class QueryToGraph {
         } catch(Exception e) {
             throw new RuntimeException("Failed to parse: " + queryStr, e);
         }
+        result = queryToGraph(query);
+
+        return result;
+    }
+
+    public static Graph queryToGraph(Query query) {
         Op op = Algebra.toQuadForm(Algebra.compile(query));
-        Op nop = normalizeOp(op);
+
+        Op nop = normalizeOp(op, false);
+        Graph result = queryToGraph(nop);
+
+        return result;
+    }
+
+    public static Graph queryToGraph(Op nop) {
+        Graph result;
+
 
 
         // Collect all conjunctive queries

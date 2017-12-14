@@ -9,10 +9,13 @@ import org.apache.jena.vocabulary.XSD;
 public class RDFDatatypeJson
     extends BaseDatatype
 {
+	public static final String IRI = XSD.getURI() + "json"; 
+	public static final RDFDatatypeJson INSTANCE = new RDFDatatypeJson();
+	
     private Gson gson;
 
     public RDFDatatypeJson() {
-        this(XSD.getURI() + "json");
+    	this(IRI);
     }
 
     public RDFDatatypeJson(String uri) {

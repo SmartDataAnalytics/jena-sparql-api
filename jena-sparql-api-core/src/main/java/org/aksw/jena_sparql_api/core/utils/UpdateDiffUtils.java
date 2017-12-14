@@ -43,7 +43,7 @@ import org.apache.jena.util.iterator.ExtendedIterator;
 public class UpdateDiffUtils {
 
     public static Diff<DatasetGraph> combineDatasetGraph(Iterable<? extends Diff<? extends DatasetGraph>> diffs) {
-        Diff<DatasetGraph> result = Diff.create(DatasetGraphFactory.createMem(), DatasetGraphFactory.createMem());
+        Diff<DatasetGraph> result = Diff.create(DatasetGraphFactory.createGeneral(), DatasetGraphFactory.createGeneral());
 
         // Create a writable view on the result
         Diff<Set<Quad>> resultView = DatasetGraphDiffUtils.wrapDatasetGraph(result);

@@ -11,8 +11,6 @@ import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.apache.jena.sparql.expr.E_Add;
 import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.E_Multiply;
-import org.apache.jena.sparql.expr.E_Subtract;
-import org.apache.jena.sparql.expr.E_UnaryPlus;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprFunction2;
 import org.apache.jena.sparql.expr.ExprTransformCopy;

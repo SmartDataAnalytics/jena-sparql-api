@@ -114,7 +114,7 @@ public class JoinSizeChecker {
         BasicPattern bp = new BasicPattern();
         bp.add(quad.asTriple());
         OpQuadPattern opA = new OpQuadPattern(quad.getGraph(), bp);
-        Op opB = OpFilter.filter(exprs, opA);
+        Op opB = OpFilter.filterBy(exprs, opA);
 
         Query query = OpAsQuery.asQuery(opB);
         Element result = query.getQueryPattern();

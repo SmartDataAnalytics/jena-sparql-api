@@ -108,7 +108,7 @@ public class FluentQueryExecutionFactory<P>
     }
 
     public static FluentQueryExecutionFactory<?> defaultDatasetGraph() {
-        return FluentQueryExecutionFactory.from(DatasetGraphFactory.createMem());
+        return FluentQueryExecutionFactory.from(DatasetGraphFactory.createGeneral());
     }
 
     public static FluentQueryExecutionFactory<?> from(DatasetGraph datasetGraph){

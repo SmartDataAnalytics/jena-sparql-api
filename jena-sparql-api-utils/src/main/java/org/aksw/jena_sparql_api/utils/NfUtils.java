@@ -22,7 +22,7 @@ public class NfUtils {
 
         for(Iterable<? extends Expr> clause : clauses) {
             Set<Var> tmp = ClauseUtils.getVarsMentioned(clause);
-            tmp.addAll(tmp);
+            result.addAll(tmp);
         }
 
         return result;

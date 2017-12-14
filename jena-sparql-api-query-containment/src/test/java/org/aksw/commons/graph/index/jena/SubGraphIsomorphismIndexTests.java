@@ -18,12 +18,14 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.Multimap;
 
 
+@Ignore
 public class SubGraphIsomorphismIndexTests {
 
     protected static EntityManager em;

@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.algebra.transform;
 
 import java.util.List;
 
+import org.aksw.jena_sparql_api.algebra.utils.AlgebraUtils;
 import org.aksw.jena_sparql_api.algebra.utils.OpUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.apache.jena.sparql.algebra.Op;
@@ -30,7 +31,8 @@ public class TransformDistributeJoinOverUnion
 {
 	public static Op transform(Op op) {
 		Transform transform = new TransformDistributeJoinOverUnion();
-        Op result = Transformer.transform(transform, op);
+		Op result = AlgebraUtils.repeatTransformUntilNoMoreChange(op, o -> Transformer.transform(transform, o));
+        //Op result = Transformer.transform(transform, op);
         return result;
 	}
 

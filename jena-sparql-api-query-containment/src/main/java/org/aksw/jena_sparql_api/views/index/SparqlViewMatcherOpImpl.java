@@ -358,7 +358,7 @@ public class SparqlViewMatcherOpImpl<P>
     public static Op queryToNormalizedOp(Query query) {
         Op result = Algebra.compile(query);
         result = Algebra.toQuadForm(result);
-        result = QueryToGraph.normalizeOp(result);
+        result = QueryToGraph.normalizeOp(result, false);
         return result;
     }
 
@@ -393,7 +393,7 @@ public class SparqlViewMatcherOpImpl<P>
         Supplier<Integer> supplier = () -> nextPatternIdIt.next();
 
         SparqlViewMatcherOp<Integer> result = new SparqlViewMatcherOpImpl<>(
-                QueryToGraph::normalizeOp,
+                op -> QueryToGraph.normalizeOp(op, false),
                 SparqlViewMatcherOpImpl::extractFeatures,
                 new OpIndexerImpl(),
                 supplier);

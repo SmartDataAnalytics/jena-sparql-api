@@ -5,12 +5,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.google.common.collect.Iterables;
+import org.apache.jena.atlas.io.AWriter;
+import org.apache.jena.atlas.io.StringWriterI;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.riot.out.NodeFormatterNT;
 import org.apache.jena.sparql.core.Var;
+
+import com.google.common.collect.Iterables;
 
 public class NodeUtils {
     public static Node asNullableNode(String uri) {
@@ -58,7 +62,19 @@ public class NodeUtils {
         return result;
     }
 
+    
     public static String toNTriplesString(Node node) {
+        NodeFormatterNT formatter = new NodeFormatterNT();
+        AWriter writer = new StringWriterI();
+        formatter.format(writer, node);
+        String result = writer.toString();
+        return result;
+    }
+    
+    
+    @Deprecated
+    public static String toNTriplesStringOld(Node node) {
+        
         String result;
         if(node.isURI()) {
             result = "<" + node.getURI() + ">";
@@ -94,7 +110,7 @@ public class NodeUtils {
             }
         }
         else if(node.isBlank()) {
-            result = node.getBlankNodeLabel();
+            result = "_:" + node.getBlankNodeLabel();
         } else if(node.isVariable()) {
             result = "?" + ((Var)node).getVarName();
         } else {

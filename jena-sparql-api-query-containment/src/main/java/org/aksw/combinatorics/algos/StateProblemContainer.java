@@ -4,6 +4,7 @@ import java.util.function.BinaryOperator;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import org.aksw.combinatorics.solvers.GenericProblem;
 import org.aksw.combinatorics.solvers.Problem;
 import org.aksw.combinatorics.solvers.collections.ProblemContainer;
 import org.aksw.combinatorics.solvers.collections.ProblemContainerPick;
@@ -56,7 +57,7 @@ public class StateProblemContainer<S>
     public Stream<Action<S>> getActions() {
         ProblemContainerPick<S> pick = problemContainer.pick();
 
-        Problem<S> picked = pick.getPicked();
+        GenericProblem<S, ?> picked = pick.getPicked();
         ProblemContainer<S> remaining = pick.getRemaining();
 
         Stream<Action<S>> result = picked

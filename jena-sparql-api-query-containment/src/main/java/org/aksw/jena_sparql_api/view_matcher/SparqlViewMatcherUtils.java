@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -23,6 +24,7 @@ import org.aksw.commons.collections.stacks.NestedStack;
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeUtils;
 import org.aksw.commons.collections.utils.StreamUtils;
+import org.aksw.commons.graph.index.jena.transform.OpDistinctExtendFilter;
 import org.aksw.jena_sparql_api.algebra.utils.AlgebraUtils;
 import org.aksw.jena_sparql_api.algebra.utils.ConjunctiveQuery;
 import org.aksw.jena_sparql_api.algebra.utils.OpExtConjunctiveQuery;
@@ -252,8 +254,8 @@ public class SparqlViewMatcherUtils {
         // discard candidates which yield problem instances without solutions.
 
         Map<Class<?>, MatchingStrategyFactory<A, B>> opToMatcherTest = new HashMap<>();
-        opToMatcherTest.put(OpDisjunction.class, (as, bs, mapping) -> KPermutationsOfNUtils.createIterable(mapping));
-        opToMatcherTest.put(OpSequence.class, (as, bs, mapping) -> KPermutationsOfNUtils.createIterable(mapping));
+        opToMatcherTest.put(OpDisjunction.class, (as, bs, mapping) -> KPermutationsOfNUtils.createIterable(mapping, false, false));
+        opToMatcherTest.put(OpSequence.class, (as, bs, mapping) -> KPermutationsOfNUtils.createIterable(mapping, false, false));
 
         Function<Class<?>, MatchingStrategyFactory<A, B>> fnOpToMatchingStrategyFactory = (nodeType) ->
             opToMatcherTest.getOrDefault(nodeType, (as, bs, mapping) -> SequentialMatchIterator.createIterable(as, bs, mapping));
@@ -362,7 +364,7 @@ public class SparqlViewMatcherUtils {
             map.put(OpExtend.class, GenericBinaryOpImpl.create(SparqlViewMatcherUtils::deriveProblemsExtend));
 
             map.put(OpExtConjunctiveQuery.class, GenericBinaryOpImpl.create(SparqlViewMatcherUtils::deriveProblemsOpCq));
-
+            map.put(OpDistinctExtendFilter.class, (x, y) -> Collections.emptySet());
 
             map.put(OpLeftJoin.class, (x, y) -> Collections.emptySet());
 

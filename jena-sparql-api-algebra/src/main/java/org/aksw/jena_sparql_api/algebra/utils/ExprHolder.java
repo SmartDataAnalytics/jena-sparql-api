@@ -5,6 +5,7 @@ import java.util.Set;
 import org.aksw.jena_sparql_api.utils.CnfUtils;
 import org.aksw.jena_sparql_api.utils.DnfUtils;
 import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.NodeValue;
 
 /**
  * Holder for holding an immutable expression in different representations,
@@ -36,6 +37,8 @@ public class ExprHolder {
     		   dnf != null ? DnfUtils.toExpr(dnf) : null)
     		: expr;
 
+    	expr = expr == null ? NodeValue.TRUE : expr;
+    		   
     	return expr;
     }
 

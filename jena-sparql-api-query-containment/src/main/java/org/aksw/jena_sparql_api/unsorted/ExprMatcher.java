@@ -14,6 +14,7 @@ import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.NodeValue;
 
 public class ExprMatcher {
+
     /**
      * The query expr must subsume the cache expr.
      *
@@ -22,7 +23,7 @@ public class ExprMatcher {
      * @return
      */
     public static Expr match(Expr cache, Expr query) {
-        System.out.println("MATCHING " + cache + " WITH " + query);
+        //System.out.println("MATCHING " + cache + " WITH " + query);
         Expr result = NodeValue.FALSE;
 
         if(cache.equals(query)) {
@@ -63,9 +64,9 @@ public class ExprMatcher {
     }
 
 
-    public static CartesianProduct<Combination<Expr, Expr, Expr>> match(Set<Expr> cacheConjection, Set<Expr> queryConjunction) {
+    public static CartesianProduct<Combination<Expr, Expr, Expr>> match(Set<Expr> cacheConjunction, Set<Expr> queryConjunction) {
         CartesianProduct<Combination<Expr, Expr, Expr>> result = CartesianProductUtils.createOnDemandCartesianProduct(
-                cacheConjection,
+                cacheConjunction,
                 queryConjunction,
                 ExprMatcher::match,
                 x -> x.equals(NodeValue.FALSE));

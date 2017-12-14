@@ -16,11 +16,13 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.expr.E_Equals;
+import org.apache.jena.sparql.expr.E_StrContains;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprFunction;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.vocabulary.RDFS;
+
+import com.google.common.collect.BiMap;
 
 
 /**
@@ -40,20 +42,20 @@ public class QueryToJenaGraph {
     public static Node TP = NodeFactory.createURI("http://ex.org/TP");
     //public static Node TP = NodeFactory.createURI("http://ex.org/TP");
 
-    public static Node g = NodeFactory.createURI("http://ex.org/g");
-    public static Node s = NodeFactory.createURI("http://ex.org/s");
-    public static Node p = NodeFactory.createURI("http://ex.org/p");
-    public static Node o = NodeFactory.createURI("http://ex.org/o");
+    public static final Node g = NodeFactory.createURI("http://ex.org/g");
+    public static final Node s = NodeFactory.createURI("http://ex.org/s");
+    public static final Node p = NodeFactory.createURI("http://ex.org/p");
+    public static final Node o = NodeFactory.createURI("http://ex.org/o");
 
-    public static Node[] gspo = {g, s, p, o};
+    public static final Node[] gspo = {g, s, p, o};
 
-    public static Node argNode = NodeFactory.createURI("arg://unordered"); // unordered argument
+    public static final Node argNode = NodeFactory.createURI("arg://unordered"); // unordered argument
 
-    public static Node cm = NodeFactory.createURI("http://ex.org/cm"); // conjunction member
-    public static Node dm = NodeFactory.createURI("http://ex.org/dm"); // disjunction member
+    public static final Node cm = NodeFactory.createURI("http://ex.org/cm"); // conjunction member
+    public static final Node dm = NodeFactory.createURI("http://ex.org/dm"); // disjunction member
 
-    public static Node ev = NodeFactory.createURI("http://ex.org/ea"); // equality var argument
-    public static Node ec = NodeFactory.createURI("http://ex.org/ea"); // equality const argument
+    public static final Node ev = NodeFactory.createURI("http://ex.org/ea"); // equality var argument
+    public static final Node ec = NodeFactory.createURI("http://ex.org/ea"); // equality const argument
 
 
     //public static unionToGraph(DirectedGraph<Node, LabeledEdge<Node, Node>>)
@@ -62,17 +64,24 @@ public class QueryToJenaGraph {
         graph.add(new Triple(source, edgeLabel, target));
     }
 
-    public static Node addQuad(Graph graph, Quad quad, Supplier<Node> nodeSupplier) {
-        // Allocate a fresh node for the quad
-        Node quadNode = nodeSupplier.get();
-
-        g = quad.getGraph();
-        if(!Quad.defaultGraphIRI.equals(g) && !Quad.defaultGraphNodeGenerated.equals(g)) {
-            addEdge(graph, quadNode, g, quad.getGraph());
-        }
-        addEdge(graph, quadNode, s, quad.getSubject());
-        addEdge(graph, quadNode, p, quad.getPredicate());
-        addEdge(graph, quadNode, o, quad.getObject());
+    public static Node addQuad(Graph graph, Quad quad, Map<Quad, Node> quadToNode, Supplier<Node> nodeSupplier) {
+    	Node quadNode = quadToNode.get(quad);
+    	if(quadNode == null) {
+    		
+	    	
+	    	// Allocate a fresh node for the quad
+	        quadNode = nodeSupplier.get();
+	
+	        quadToNode.put(quad, quadNode);
+	        
+	        Node gg = quad.getGraph();
+	        if(!Quad.defaultGraphIRI.equals(gg) && !Quad.defaultGraphNodeGenerated.equals(gg)) {
+	            addEdge(graph, quadNode, g, quad.getGraph());
+	        }
+	        addEdge(graph, quadNode, s, quad.getSubject());
+	        addEdge(graph, quadNode, p, quad.getPredicate());
+	        addEdge(graph, quadNode, o, quad.getObject());
+    	}
 
         return quadNode;
     }
@@ -85,11 +94,11 @@ public class QueryToJenaGraph {
      * @param quads
      * @return
      */
-    public static Node quadsToGraphNode(Graph graph, Collection<Quad> quads, Supplier<Node> nodeSupplier) {
+    public static Node quadsToGraphNode(Graph graph, Map<Quad, Node> quadToNode, Collection<Quad> quads, Supplier<Node> nodeSupplier) {
         Node quadBlockNode = nodeSupplier.get();
         //graph = new DirectedPseudograph<>(LabeledEdgeImpl.class);
         for(Quad quad : quads) {
-            Node quadNode = addQuad(graph, quad, nodeSupplier);
+            Node quadNode = addQuad(graph, quad, quadToNode, nodeSupplier);
             addEdge(graph, quadBlockNode, quadBlockMember, quadNode);
         }
 
@@ -97,35 +106,52 @@ public class QueryToJenaGraph {
     }
 
 
-    public static void quadsToGraph(Graph graph, Collection<Quad> quads, Supplier<Node> nodeSupplier) {
+    public static void quadsToGraph(Graph graph, Collection<Quad> quads, Map<Quad, Node> quadToNode, Supplier<Node> nodeSupplier) {
         //graph = new DirectedPseudograph<>(LabeledEdgeImpl.class);
         for(Quad quad : quads) {
-            addQuad(graph, quad, nodeSupplier);
+            addQuad(graph, quad, quadToNode, nodeSupplier);
         }
     }
 
 
-    public static Node exprToGraph(Graph graph, Expr expr, Supplier<Node> nodeSupplier) {
+    public static Node exprToGraph(Graph graph, Map<Node, Expr> nodeToExpr, Expr expr, boolean isRootExpr, Supplier<Node> nodeSupplier) {
         Node result;
         if(expr.isConstant()) {
             result = expr.getConstant().asNode();
         } else if(expr.isFunction()) {
             result = nodeSupplier.get();
 
-            boolean isCommutative = expr instanceof E_Equals;
+            nodeToExpr.put(result, expr);
+            
+            
+            
+            // We use normalization on expressions instead
+            boolean isCommutative = false; //expr instanceof E_Equals;
 
             ExprFunction ef = expr.getFunction();
             String fnId = ExprUtils.getFunctionId(ef);
 
             graph.add(new Triple(result, RDFS.label.asNode(), NodeFactory.createLiteral(fnId)));
 
+	            
             List<Expr> args = ef.getArgs();
             int n = args.size();
+            
+            // HACK Do this handling properly
+            // Constants as the second arg on E_StrContains are omitted
+            // and are checked in postprocessing
+            if(isRootExpr && expr instanceof E_StrContains) {
+            	E_StrContains e = (E_StrContains)expr;
+            	if(e.getArg2().isConstant()) {
+            		n = 1;
+            	}
+            }
+            
             for(int i = 0; i < n; ++i) {
                 Expr arg = args.get(i);
-                Node argNode = exprToGraph(graph, arg, nodeSupplier);
+                Node argNode = exprToGraph(graph, nodeToExpr, arg, false, nodeSupplier);
 
-                Node p = isCommutative ? argNode : NodeFactory.createURI("arg://" + i);
+                Node p = isCommutative ? NodeFactory.createURI("arg://any") : NodeFactory.createURI("arg://" + i);
 
                 graph.add(new Triple(result, p, argNode));
             }
@@ -140,24 +166,39 @@ public class QueryToJenaGraph {
     }
 
 
-    public static void dnfToGraph(Graph graph, Collection<? extends Collection<? extends Expr>> dnf, Supplier<Node> nodeSupplier) {
+    public static void dnfToGraph(Graph graph, BiMap<Node, Expr> nodeToExpr, Collection<? extends Collection<? extends Expr>> dnf, Supplier<Node> nodeSupplier) {
         Node orNode = nodeSupplier.get();
         for(Collection<? extends Expr> clause : dnf) {
             // Create a blank node for each clause
 
             Node andNode = nodeSupplier.get();
             addEdge(graph, orNode, dm, andNode);
-            for(Expr e : clause) {
-                // Create another blank node for each equality instance
-                // TODO This would be another type of construction: Actually the edge labels are already sufficient for discrimination of equals expressions
-                //Node equalsNode = nodeSupplier.get();
 
-                Node eNode = exprToGraph(graph, e, nodeSupplier);
-                addEdge(graph, andNode, cm, eNode);
-            }
+            clauseToGraph(andNode, graph, nodeToExpr, clause, nodeSupplier);
         }
     }
 
+    
+    public static void clauseToGraph(Node andNode, Graph graph, BiMap<Node, Expr> nodeToExpr, Collection<? extends Expr> clause, Supplier<Node> nodeSupplier) {
+        for(Expr e : clause) {
+        	// The same expression may be present in multiple clauses
+        	Node eNode = nodeToExpr.inverse().get(e);
+        	
+        	if(eNode == null) {
+        		eNode = exprToGraph(graph, nodeToExpr, e, true, nodeSupplier);            		
+        	}
+        	
+            // Create another blank node for each equality instance
+            // TODO This would be another type of construction: Actually the edge labels are already sufficient for discrimination of equals expressions
+            //Node equalsNode = nodeSupplier.get();
+        	
+        	if(andNode != null) {
+        		addEdge(graph, andNode, cm, eNode);
+        	}
+        }
+
+    }
+    
     // Filters: Extract all equality filters
     public static void equalExprsToGraphOld(Graph graph, Collection<? extends Collection<? extends Expr>> dnf, Supplier<Node> nodeSupplier, Map<Var, Node> varToNode) {
         Set<Map<Var, NodeValue>> maps = DnfUtils.extractConstantConstraints(dnf);

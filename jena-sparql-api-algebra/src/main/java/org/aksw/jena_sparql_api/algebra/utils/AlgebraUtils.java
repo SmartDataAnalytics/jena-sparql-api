@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.algebra.utils;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -10,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.FeatureMap;
@@ -24,6 +26,7 @@ import org.aksw.jena_sparql_api.utils.CnfUtils;
 import org.aksw.jena_sparql_api.utils.DnfUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
+import org.aksw.jena_sparql_api.utils.NfUtils;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
@@ -75,7 +78,7 @@ class QueryRewrite {
 
 /**
  * TODO Separate cache specific parts from query containment ones
- * 
+ *
  * @author raven
  *
  */
@@ -118,6 +121,15 @@ public class AlgebraUtils {
         return result;
     }
 
+    public static <T> T repeatTransformUntilNoMoreChange(T op, Function<? super T, ? extends T> transform) {
+    	T current;
+        do {
+            current = op;
+            op = transform.apply(current);
+        } while(!current.equals(op));
+        
+        return current;
+    }
 
     public static ProjectedOp toProjectedOp(Query query) {
         Op op = Algebra.compile(query);
@@ -416,16 +428,19 @@ public class AlgebraUtils {
         OpDistinct opDistinct = null;
         OpProject opProject = null;
 
-        if(op instanceof OpDistinct) {
+        boolean consumeDistinct = false;
+        boolean consumeProject = false;
+
+        if(consumeDistinct && op instanceof OpDistinct) {
             opDistinct = (OpDistinct)op;
             op = opDistinct.getSubOp();
         }
 
-        if(op instanceof OpProject) {
+        if(consumeProject && op instanceof OpProject) {
             opProject = (OpProject)op;
             op = opProject.getSubOp();
         }
-
+        
         QuadFilterPattern qfp = extractQuadFilterPattern(op);
 
         ConjunctiveQuery result = null;
@@ -437,10 +452,12 @@ public class AlgebraUtils {
 
             VarInfo varInfo = new VarInfo(projectVars, isDistinct ? 2 : 0);
 
-          QuadFilterPatternCanonical qfpc = canonicalize2(qfp, generator);
+            QuadFilterPatternCanonical qfpc = canonicalize2(qfp, generator);
+            result = new ConjunctiveQuery(varInfo, qfpc);
+
 
             // TODO canonicalize the pattern
-            result = new ConjunctiveQuery(varInfo, qfpc);
+//            result = new ConjunctiveQuery(varInfo, qfpc);
         }
 
         return result;
@@ -592,22 +609,69 @@ public class AlgebraUtils {
 //        return result;
 //    }
 
-    public static OpExtConjunctiveQuery tryCreateCqfp(Op op, Generator<Var> generator) {
+    public static OpExtConjunctiveQuery tryCreateCqfpOld(Op op, Generator<Var> generator) {
         ConjunctiveQuery cq = tryExtractConjunctiveQuery(op, generator);
+
         OpExtConjunctiveQuery result = cq == null
                 ? null
                 : new OpExtConjunctiveQuery(cq);
 
         return result;
-//    	QuadFilterPattern qfp = extractQuadFilterPattern(op);
-//        OpExtConjunctiveQuery result;
-//        if(qfp == null) {
-//            result = null;
-//        } else {
-//            QuadFilterPatternCanonical tmp = canonicalize2(qfp, generator);
-//            result = new OpExtConjunctiveQuery(tmp, generator);
-//        }
-//        return result;
+    }
+
+    public static Op tryCreateCqfp(Op op, Generator<Var> generator) {
+        ConjunctiveQuery cq = tryExtractConjunctiveQuery(op, generator);
+
+        // Idea:
+        // Separate the purely conjunctive filter part from the disjunctive part:
+        // The set of clauses having only 1 element remain part of the conjunctive query
+        // the other clauses go into a separate filter node
+
+        //Set<Expr> conjunctive = new LinkedHashSet<>();
+        Op result = null;
+        if(cq != null) {
+            Set<Set<Expr>> conjunctive = new LinkedHashSet<>();
+            Set<Set<Expr>> disjunctive = new LinkedHashSet<>();
+
+            Set<Set<Expr>> cnf = cq.getPattern().getExprHolder().getCnf();
+
+            for(Set<Expr> clause : cnf) {
+                if(clause.size() == 1) {
+                    //conjunctive.add(clause.iterator().next());
+                    conjunctive.add(clause);
+                } else {
+                    disjunctive.add(clause);
+                }
+            }
+
+            Set<Var> requiredVars = new LinkedHashSet<Var>(cq.getProjection().getProjectVars());
+
+            Set<Var> vars = NfUtils.getVarsMentioned(disjunctive);
+            requiredVars.addAll(vars);
+
+            QuadFilterPatternCanonical qfpc = new QuadFilterPatternCanonical(cq.getPattern().getQuads(), ExprHolder.fromCnf(conjunctive));
+            cq = new ConjunctiveQuery(new VarInfo(requiredVars, 0), qfpc);
+            result = new OpExtConjunctiveQuery(cq);
+
+            if(!disjunctive.isEmpty()) {
+                Expr expr = DnfUtils.toExpr(disjunctive);
+                result = OpFilter.filterDirect(expr, result);
+
+                // Apply project
+                if(!requiredVars.equals(cq.getProjection().getProjectVars())) {
+                    result = new OpProject(result, new ArrayList<>(cq.getProjection().getProjectVars()));
+                }
+            }
+
+
+            // Apply distinct
+            if(cq.getProjection().getDistinctLevel() != 0) {
+                result = new OpDistinct(result);
+            }
+
+        }
+
+        return result;
     }
 
     // Assumes that ReplaceConstants has been called
@@ -763,9 +827,9 @@ public class AlgebraUtils {
     public static IBiSetMultimap<Quad, Set<Set<Expr>>> createMapQuadsToFilters(QuadFilterPatternCanonical qfpc) {
         Set<Quad> quads = qfpc.getQuads();
         Set<Set<Expr>> filterDnf = qfpc.getFilterDnf();
-//        if(filterCnf == null) {
-//            filterCnf = Collections.singleton(Collections.emptySet());
-//        }
+        if(filterDnf == null) {
+            filterDnf = Collections.singleton(Collections.emptySet());
+        }
 
         IBiSetMultimap<Quad, Set<Set<Expr>>> result = createMapQuadsToFilters(quads, filterDnf);
         return result;
@@ -936,13 +1000,14 @@ public class AlgebraUtils {
 
 
     public static FeatureMap<Expr, Multimap<Expr, Expr>> indexDnf(Set<Set<Expr>> dnf) {
-//        if(dnf == null) {
-//            // A disjunction containing an empty conjunction (latter is generally treated as true - if i'm not mistaken)
-//            dnf = Collections.singleton(Collections.emptySet());
-//            //dnf = Collections.emptySet();
-//        }
+        if(dnf == null) {
+            // A disjunction containing an empty conjunction (latter is generally treated as true - if i'm not mistaken)
+            dnf = Collections.singleton(Collections.emptySet());
+            //dnf = Collections.emptySet();
+        }
 
         FeatureMap<Expr, Multimap<Expr, Expr>> result = new FeatureMapImpl<>();
+
         for(Set<Expr> clause : dnf) {
             Multimap<Expr, Expr> exprSigToExpr = HashMultimap.create();
             Set<Expr> clauseSig = new HashSet<>();

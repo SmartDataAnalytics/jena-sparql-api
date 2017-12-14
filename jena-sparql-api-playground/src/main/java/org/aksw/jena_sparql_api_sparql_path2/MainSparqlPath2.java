@@ -428,7 +428,7 @@ public class MainSparqlPath2 {
         pm.setNsPrefixes(PrefixMapping.Extended);
         Prologue prologue = new Prologue(pm);
 
-        SparqlStmtParserImpl sparqlStmtParser = SparqlStmtParserImpl.create(SparqlParserConfig.create(Syntax.syntaxARQ, prologue));
+        SparqlStmtParserImpl sparqlStmtParser = SparqlStmtParserImpl.create(new SparqlParserConfig(Syntax.syntaxARQ, prologue));
 
 
         SparqlServiceFactory ssf = new SparqlServiceFactory() {

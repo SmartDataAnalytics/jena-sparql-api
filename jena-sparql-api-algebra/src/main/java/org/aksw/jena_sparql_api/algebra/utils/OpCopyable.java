@@ -5,5 +5,6 @@ import java.util.List;
 import org.apache.jena.sparql.algebra.Op;
 
 public interface OpCopyable {
-	Op copy(List<Op> subOps);
+    Op copy(List<Op> subOps);
+    List<Op> getElements();
 }

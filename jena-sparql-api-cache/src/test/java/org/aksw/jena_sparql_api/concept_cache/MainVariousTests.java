@@ -1,6 +1,5 @@
 package org.aksw.jena_sparql_api.concept_cache;
 
-import org.aksw.jena_sparql_api.algebra.utils.OpUtils;
 import org.apache.jena.query.ARQ;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
@@ -10,8 +9,10 @@ import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.optimize.Optimize;
 import org.apache.jena.sparql.algebra.optimize.Rewrite;
 import org.apache.jena.sparql.util.Context;
+import org.junit.Ignore;
 import org.junit.Test;
 
+@Ignore
 public class MainVariousTests {
 
 

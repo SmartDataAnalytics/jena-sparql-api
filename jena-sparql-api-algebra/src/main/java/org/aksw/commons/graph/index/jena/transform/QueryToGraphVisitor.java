@@ -34,7 +34,14 @@ public class QueryToGraphVisitor
 {
     protected Supplier<Node> nodeSupplier;
     protected BiMap<Var, Node> varToNode;
+    protected BiMap<Quad, Node> quadToNode;
+    
+    
     protected GraphVar graph;
+    
+    // During the graph conversion we keep track of the original expression of each node
+    protected BiMap<Node, Expr> nodeToExpr;
+    
 
     protected Stack<Node> stack = new Stack<>();
 
@@ -52,6 +59,8 @@ public class QueryToGraphVisitor
         this.graph = graph;
         this.nodeSupplier = nodeSupplier;// = new GeneratorBlacklist(generator, blacklist)
         this.varToNode = HashBiMap.create();
+        this.nodeToExpr = HashBiMap.create();
+        this.quadToNode = HashBiMap.create();
     }
 
     public BiMap<Var, Node> getVarToNode() {
@@ -62,8 +71,19 @@ public class QueryToGraphVisitor
         return varToNode.inverse();
     }
 
+    public BiMap<Quad, Node> getQuadToNode() {
+    	return quadToNode;
+    }
 
-    public GraphVar getGraph() {
+    public BiMap<Node, Quad> getNodeToQuad() {
+    	return quadToNode.inverse();
+    }
+    
+    public BiMap<Node, Expr> getNodeToExpr() {
+		return nodeToExpr;
+	}
+
+	public GraphVar getGraph() {
         return graph;
     }
 
@@ -89,11 +109,11 @@ public class QueryToGraphVisitor
 
         ExprList exprs = op.getExprs();
         Set<Set<Expr>> dnf = DnfUtils.toSetDnf(exprs);
-        QueryToJenaGraph.dnfToGraph(graph, dnf, nodeSupplier);
+        QueryToJenaGraph.dnfToGraph(graph, nodeToExpr, dnf, nodeSupplier);
 
 
         Node result = nodeSupplier.get();
-        QueryToJenaGraph.addEdge(graph, QueryToGraph.filtered, result, subNode);
+        QueryToJenaGraph.addEdge(graph, result, QueryToGraph.filtered, subNode);
         stack.push(result);
     }
 
@@ -117,7 +137,7 @@ public class QueryToGraphVisitor
     }
 
     public void handleQuads(List<Quad> quads) {
-        Node result = QueryToJenaGraph.quadsToGraphNode(graph, quads, nodeSupplier);
+        Node result = QueryToJenaGraph.quadsToGraphNode(graph, quadToNode, quads, nodeSupplier);
         stack.push(result);
         //QueryToJenaGraph.quadsToGraph(graph, quads, nodeSupplier, varToNode);
     }
@@ -131,7 +151,7 @@ public class QueryToGraphVisitor
         for(Op member : ops) {
             member.visit(this);
             Node memberNode = stack.pop();
-            QueryToJenaGraph.addEdge(graph, QueryToGraph.unionMember, result, memberNode);
+            QueryToJenaGraph.addEdge(graph, result, QueryToGraph.unionMember, memberNode);
         }
 
         stack.push(result);
