@@ -5,10 +5,10 @@ import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.function.FunctionRegistry;
 
 public class JenaExtensionXml {
-    public static String xmlFn = "http://jsa.aksw.org/fn/xml/";
+    public static String ns = "http://jsa.aksw.org/fn/xml/";
     
     public static void register() {
-        FunctionRegistry.get().put(xmlFn + "path", E_XPath.class);
+        FunctionRegistry.get().put(ns + "path", E_XPath.class);
         //FunctionRegistry.get().put(jsonFn + "path", E_JsonPath.class);
 
         TypeMapper.getInstance().registerDatatype(new RDFDatatypeXml());
@@ -17,6 +17,6 @@ public class JenaExtensionXml {
     }
     
     public static void addPrefixes(PrefixMapping pm) {
-		pm.setNsPrefix("xml", JenaExtensionXml.xmlFn);
+		pm.setNsPrefix("xml", ns);
     }
 }

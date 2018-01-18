@@ -1,8 +1,11 @@
 package org.aksw.jena_sparql_api.stmt;
 
-import com.google.common.base.Supplier;
+import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.update.UpdateRequest;
+
+import com.google.common.base.Supplier;
 
 public class UpdateSupplierImpl
     implements Supplier<UpdateRequest>
@@ -25,7 +28,10 @@ public class UpdateSupplierImpl
 
         if(prologue != null) {
             result.setBaseURI(prologue.getResolver());
-            result.setPrefixMapping(prologue.getPrefixMapping());
+            PrefixMapping copy = new PrefixMappingImpl();
+            copy.setNsPrefixes(prologue.getPrefixMapping());
+            
+            result.setPrefixMapping(copy); //prologue.getPrefixMapping());
         }
 
         return result;
