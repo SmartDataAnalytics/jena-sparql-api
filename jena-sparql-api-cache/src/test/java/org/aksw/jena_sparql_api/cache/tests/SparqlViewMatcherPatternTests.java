@@ -232,7 +232,7 @@ public class SparqlViewMatcherPatternTests {
         if(useOldCode) {
         	actualVerdict = SparqlQueryContainmentUtils.tryMatch(viewQuery, userQuery, VarMapper::createVarMapCandidates);
         } else {
-        	actualVerdict = tryMatch(viewQuery, userQuery);	
+        	actualVerdict = SparqlQueryContainmentUtils.tryMatchNew(viewQuery, userQuery, true);	
         }
         logger.debug("Expected: " + expectedVerdict + " " + (overridden ? "(overridden)" : "") + " - Actual: " + actualVerdict + " Mismatch: " + (expectedVerdict != actualVerdict));
 
@@ -245,66 +245,5 @@ public class SparqlViewMatcherPatternTests {
 
 
     
-    
-
-    public static boolean tryMatch(Query view, Query user) {
-    	
-    	BiFunction<OpContext, OpContext, NodeMapperOp> nodeMapperFactory = (aContext, bContext) -> new NodeMapperOpContainment(aContext, bContext);
-        
-        //QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, Op> indexA = QueryContainmentIndexImpl.create(nodeMapper);
-        //QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, Op> indexB = QueryContainmentIndexImpl.createFlat(nodeMapper);
-
-        SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> siiTreeTags = SubgraphIsomorphismIndexJena.create();
-        SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> siiFlat = SubgraphIsomorphismIndexJena.createFlat();
-        SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> siiTagBased = SubgraphIsomorphismIndexJena.createTagBased(new TagMapSetTrie<>(NodeUtils::compareRDFTerms));
-
-        SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> siiValidating = ValidationUtils.createValidatingProxy(SubgraphIsomorphismIndex.class, siiTreeTags, siiTagBased);
-        SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> sii = siiValidating;
-        
-        QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, ResidualMatching> index = QueryContainmentIndexImpl.create(sii, nodeMapperFactory);
-
- 
-        //view = QueryFactory.create("PREFIX ex: <http://ex.org/> SELECT * { ?s a ex:Person ; ex:name ?n . FILTER(contains(?n, 'fr')) }");
-        //user = QueryFactory.create("PREFIX ex: <http://ex.org/> SELECT DISTINCT ?s { ?s a ex:Person ; ex:name ?n . FILTER(contains(?n, 'franz')) }");
-        
-        
-        
-        
-        Node viewKey = NodeFactory.createURI("http://ex.org/view");
-//        Op viewOp = Algebra.toQuadForm(Algebra.compile(view));
-//        Op userOp = Algebra.toQuadForm(Algebra.compile(user));
-        Op viewOp = Algebra.compile(view);
-        Op userOp = Algebra.compile(user);
-
-        
-
-        {
-        	Op op = QueryToGraph.normalizeOp(userOp, true);
-        	//op = QueryToGraph.normalizeOp(op, true);
-	        //VarUsageAnalyzer2Visitor varUsageAnalyzer = new VarUsageAnalyzer2Visitor();
-	        Map<Op, VarUsage2> map = VarUsageAnalyzer2Visitor.analyze(op);
-	        for(Entry<Op, VarUsage2> e : map.entrySet()) {
-	        	System.out.println("VarUsage: " + e);
-	        }
-	        System.out.println("Normalized Op: " + op);
-        }        
-        
-        
-
-        
-        index.put(viewKey, viewOp);
-
-
-        List<Entry<Node, TreeMapping<Op, Op, BiMap<Node, Node>, ResidualMatching>>> matches = 
-        		index.match(userOp).collect(Collectors.toList());
-
-        System.out.println("Begin of matches:");
-		for(Entry<Node, TreeMapping<Op, Op, BiMap<Node, Node>, ResidualMatching>> match : matches) {
-        	System.out.println("  Match: " + match);
-        }
-        System.out.println("End of matches");
-        
-        boolean hasMatches = !matches.isEmpty();
-        return hasMatches;
-    }
+   
 }

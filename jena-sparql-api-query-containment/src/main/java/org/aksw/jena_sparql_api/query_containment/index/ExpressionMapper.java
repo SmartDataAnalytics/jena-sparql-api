@@ -146,19 +146,31 @@ public class ExpressionMapper {
         OpGraph result = new OpGraph(graph, nodeToExpr, HashBiMap.create());
         return result;
 	}
-	
+
 	public static SubgraphIsomorphismIndex<Long, DirectedGraph<Node, Triple>, Node> createIndex() {
+		return createIndex(false);
+	}
+	
+	
+	public static <K> SubgraphIsomorphismIndex<K, DirectedGraph<Node, Triple>, Node> createIndex(boolean validate) {
 		// Create an index entry for each view clause
 		// Then, perform a lookup with each user clause whether there is an entry.
 		// If there is none, the view cannot be used to answer the query
 		
-		SubgraphIsomorphismIndex<Long, DirectedGraph<Node, Triple>, Node> siiTreeTags = SubgraphIsomorphismIndexJena.create();
-        SubgraphIsomorphismIndex<Long, DirectedGraph<Node, Triple>, Node> siiFlat = SubgraphIsomorphismIndexJena.createFlat();
-        SubgraphIsomorphismIndex<Long, DirectedGraph<Node, Triple>, Node> siiTagBased = SubgraphIsomorphismIndexJena.createTagBased(new TagMapSetTrie<>(NodeUtils::compareRDFTerms));
+		SubgraphIsomorphismIndex<K, DirectedGraph<Node, Triple>, Node> siiTreeTags = SubgraphIsomorphismIndexJena.create();
 
-        SubgraphIsomorphismIndex<Long, DirectedGraph<Node, Triple>, Node> siiValidating = ValidationUtils.createValidatingProxy(SubgraphIsomorphismIndex.class, siiTreeTags, siiTagBased);
-        SubgraphIsomorphismIndex<Long, DirectedGraph<Node, Triple>, Node> sii = siiValidating;
+        SubgraphIsomorphismIndex<K, DirectedGraph<Node, Triple>, Node> sii;
 
+        if(validate) {
+			//SubgraphIsomorphismIndex<Long, DirectedGraph<Node, Triple>, Node> siiFlat = SubgraphIsomorphismIndexJena.createFlat();
+	        SubgraphIsomorphismIndex<K, DirectedGraph<Node, Triple>, Node> siiTagBased = SubgraphIsomorphismIndexJena.createTagBased(new TagMapSetTrie<>(NodeUtils::compareRDFTerms));
+	
+	        SubgraphIsomorphismIndex<K, DirectedGraph<Node, Triple>, Node> siiValidating = ValidationUtils.createValidatingProxy(SubgraphIsomorphismIndex.class, siiTreeTags, siiTagBased);
+	        sii = siiValidating;
+        } else {
+        	sii = siiTreeTags;
+        }
+        
         return sii;
 	}
 	

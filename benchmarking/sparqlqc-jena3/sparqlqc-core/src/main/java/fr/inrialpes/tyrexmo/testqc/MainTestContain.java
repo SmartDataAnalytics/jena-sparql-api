@@ -81,19 +81,25 @@ public class MainTestContain {
             "fr.inrialpes.tyrexmo.queryanalysis;version=\"1.0.0\"",
 
             // Jena 3
+            "org.apache.jena.atlas.io;version=\"1.0.0\"",
+            "org.apache.jena.ext.com.google.common.collect;version=\"1.0.0\"",
+            "org.apache.jena.graph;version=\"1.0.0\"",
+            "org.apache.jena.graph.impl;version=\"1.0.0\"",
+            "org.apache.jena.rdf.model;version=\"1.0.0\"",
+            "org.apache.jena.shared;version=\"1.0.0\"",
+            "org.apache.jena.query;version=\"1.0.0\"",
             "org.apache.jena.sparql.algebra;version=\"1.0.0\"",
             "org.apache.jena.sparql.algebra.optimize;version=\"1.0.0\"",
             "org.apache.jena.sparql.algebra.op;version=\"1.0.0\"",
             "org.apache.jena.sparql.algebra.expr;version=\"1.0.0\"",
             "org.apache.jena.sparql.core;version=\"1.0.0\"",
-            "org.apache.jena.sparql.syntax;version=\"1.0.0\"",
-            "org.apache.jena.sparql.expr;version=\"1.0.0\"",
             "org.apache.jena.sparql.graph;version=\"1.0.0\"",
-            "org.apache.jena.query;version=\"1.0.0\"",
-            "org.apache.jena.graph;version=\"1.0.0\"",
-            "org.apache.jena.ext.com.google.common.collect;version=\"1.0.0\"",
             "org.apache.jena.sparql.engine.binding;version=\"1.0.0\"",
-            "org.apache.jena.atlas.io;version=\"1.0.0\"",
+            "org.apache.jena.sparql.expr;version=\"1.0.0\"",
+            "org.apache.jena.sparql.syntax;version=\"1.0.0\"",
+            "org.apache.jena.sparql.util;version=\"1.0.0\"",
+            "org.apache.jena.util.iterator;version=\"1.0.0\"",
+            "org.apache.jena.vocabulary;version=\"1.0.0\"",
 
             // Jena 2 (legacy)
             "com.hp.hpl.jena.sparql;version=\"1.0.0\"",
@@ -130,8 +136,8 @@ public class MainTestContain {
             //"java_cup.runtime;version=\"1.0.0\""
         ));
 
-        //List<String> jarFileNames = Arrays.asList("jsa", "sparqlalgebra", "afmu", "treesolver");
-        List<String> jarFileNames = Arrays.asList("jsa");
+        List<String> jarFileNames = Arrays.asList("jsa", "sparqlalgebra", "afmu", "treesolver");
+        //List<String> jarFileNames = Arrays.asList("jsa");
 
         List<File> jarFiles = jarFileNames.stream().map(implStr -> {
         //List<File> jarFiles = Arrays.asList("treesolver").stream().map(implStr -> {
@@ -159,7 +165,7 @@ public class MainTestContain {
         Map<String, Predicate<String>> overrides = new HashMap<>();
         overrides.put("JSAI", jsaOverrides::contains);
         overrides.put("JSAC", jsaOverrides::contains);
-
+        overrides.put("JSAG", jsaOverrides::contains);
 
 
 
@@ -167,9 +173,10 @@ public class MainTestContain {
         //RDFDataMgr.read(model, new ClassPathResource("tree-matcher-queries.ttl").getInputStream(), Lang.TURTLE);
         //allTasks.addAll(model.listSubjectsWithProperty(RDF.type, SparqlQcVocab.ContainmentTest).toSet());
 
-//        allTasks.addAll(SparqlQcReader.loadTasks("sparqlqc/1.4/benchmark/cqnoproj.rdf"));
-//        allTasks.addAll(SparqlQcReader.loadTasks("sparqlqc/1.4/benchmark/ucqproj.rdf"));
-        allTasks.addAll(SparqlQcReader.loadTasksSqcf("saleem-swdf-benchmark.ttl"));
+        allTasks.addAll(SparqlQcReader.loadTasks("sparqlqc/1.4/benchmark/cqnoproj.rdf"));
+        allTasks.addAll(SparqlQcReader.loadTasks("sparqlqc/1.4/benchmark/ucqproj.rdf"));
+
+//        allTasks.addAll(SparqlQcReader.loadTasksSqcf("saleem-swdf-benchmark.ttl"));
 
 //        params.addAll(createTestParams("sparqlqc/1.4/benchmark/cqnoproj.rdf", "sparqlqc/1.4/benchmark/noprojection/*"));
 //        params.addAll(createTestParams("sparqlqc/1.4/benchmark/ucqproj.rdf", "sparqlqc/1.4/benchmark/projection/*"));
@@ -210,6 +217,12 @@ public class MainTestContain {
                             shortLabel = "ANON" + ++anonId;
                         }
 
+                        
+//                        System.out.println("[HACK] Remove this line eventually!");
+//                        if(!shortLabel.equals("JSAG")) {
+//                        	continue;
+//                        }
+                        
                         Object service = context.getService(sr);
 
                         if(service instanceof ContainmentSolver || service instanceof LegacyContainmentSolver) {
@@ -349,7 +362,7 @@ public class MainTestContain {
 
     public static Stream<Resource> run(Collection<Resource> tasks, String methodLabel, Object solver, BiFunction<Resource, Object, TaskImpl> taskParser) throws Exception {
 
-        int warmUpRuns = 0;
+        int warmUpRuns = 1;
         int evalRuns = 1;
 
         Consumer<Resource> postProcess = (r) -> {
@@ -358,7 +371,8 @@ public class MainTestContain {
 
                   if(!r.getRequiredProperty(IV.assessment).getString().equals("CORRECT")) {
                       logger.warn("Incorrect test result for task " + r + "(" + task + "): " + FactoryBeanRdfBenchmarkRunner.toString(r, RDFFormat.TURTLE_BLOCKS));
-
+                  } else {
+                	  logger.debug("Correct result for task " + r);
                   }
               };
 
@@ -385,10 +399,10 @@ public class MainTestContain {
         //"http://example.org/query-" + runName + "-" + workloadLabel + "-run" + runId
         Stream<Resource> result = workflow
             .apply(tasks).get()
-            .peek(r -> r.addProperty(RDFS.comment, r.getProperty(IguanaVocab.workload).getProperty(RDFS.label).getString()))
+            .peek(r -> r.addProperty(IV.job, r.getProperty(IguanaVocab.workload).getProperty(RDFS.label).getString()))
             //.peek(r -> System.out.println(r.getProperty(RDFS.comment)))
             .peek(r -> r.addProperty(IV.method, methodLabel))
-            .map(r -> r.as(ResourceEnh.class).rename(uriPattern, IV.method, IV.run, RDFS.comment));
+            .map(r -> r.as(ResourceEnh.class).rename(uriPattern, IV.method, IV.run, IV.job));
             //.peek(r -> r.getModel().write(System.out, "TURTLE"));
             //.forEach(r -> result.add(r.getModel()));
 
