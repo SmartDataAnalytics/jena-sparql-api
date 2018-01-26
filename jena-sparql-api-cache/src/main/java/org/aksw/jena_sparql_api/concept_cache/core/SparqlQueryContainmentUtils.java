@@ -56,9 +56,11 @@ import org.apache.jena.sparql.syntax.Element;
 import org.jgrapht.DirectedGraph;
 
 import com.codepoetics.protonpack.StreamUtils;
+import com.codepoetics.protonpack.functions.TriFunction;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
+import com.google.common.collect.Table;
 
 public class SparqlQueryContainmentUtils {
     // TODO Move default parsers to some central place
@@ -156,7 +158,7 @@ public class SparqlQueryContainmentUtils {
 
     public static boolean tryMatch(Query view, Query user, boolean validate) {
     	
-    	BiFunction<OpContext, OpContext, NodeMapperOp> nodeMapperFactory = NodeMapperOpContainment::new; //(aContext, bContext) -> new NodeMapperOpContainment(aContext, bContext);
+    	TriFunction<OpContext, OpContext, Table<Op, Op, BiMap<Node, Node>>, NodeMapperOp> nodeMapperFactory = NodeMapperOpContainment::new; //(aContext, bContext) -> new NodeMapperOpContainment(aContext, bContext);
         
         //QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, Op> indexA = QueryContainmentIndexImpl.create(nodeMapper);
         //QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, Op> indexB = QueryContainmentIndexImpl.createFlat(nodeMapper);
@@ -209,11 +211,14 @@ public class SparqlQueryContainmentUtils {
         List<Entry<Node, TreeMapping<Op, Op, BiMap<Var, Var>, ResidualMatching>>> matches = 
         		tmp.collect(Collectors.toList());
 
-//        System.out.println("Begin of matches:");
-//		for(Entry<Node, TreeMapping<Op, Op, BiMap<Node, Node>, ResidualMatching>> match : matches) {
-//        	System.out.println("  Match: " + match);
-//        }
-//        System.out.println("End of matches");
+        boolean printOutMappings = false;
+        if(printOutMappings) {
+	        System.out.println("Begin of matches:");
+			for(Entry<Node, TreeMapping<Op, Op, BiMap<Var, Var>, ResidualMatching>> match : matches) {
+	        	System.out.println("  Match: " + match);
+	        }
+	        System.out.println("End of matches");
+        }
         
         boolean hasMatches = !matches.isEmpty();
         return hasMatches;

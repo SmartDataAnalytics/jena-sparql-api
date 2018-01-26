@@ -32,6 +32,7 @@ import org.jgrapht.DirectedGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codepoetics.protonpack.functions.TriFunction;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.HashBiMap;
@@ -126,7 +127,7 @@ public class QueryContainmentIndexImpl<K, TC, LC, G, L, V, A, R>
     //protected BiFunction<? super X, ? super X, ? extends NodeMapper<? super A, ? super A, ? super BiMap<Node, Node>, ? extends V>> nodeMapperFactory;
 
     
-    protected BiFunction<? super TC, ? super TC, ? extends NodeMapper<A, A, BiMap<V, V>, BiMap<V, V>, R>> nodeMapperFactory;
+    protected TriFunction<? super TC, ? super TC, ? super Table<A, A, BiMap<L, L>>, ? extends NodeMapper<A, A, BiMap<V, V>, BiMap<V, V>, R>> nodeMapperFactory;
     
     
     //protected NodeMapperFactory<A, A, BiMap<N, N>, BiMap<N, N>, V> nodeMapperFactory;
@@ -198,13 +199,13 @@ public class QueryContainmentIndexImpl<K, TC, LC, G, L, V, A, R>
 
     public static <K, R> QueryContainmentIndex<K, DirectedGraph<Node, Triple>, Var, Op, R> create(
     		SubgraphIsomorphismIndex<Entry<K, Long>, DirectedGraph<Node, Triple>, Node> sii,
-    		BiFunction<OpContext, OpContext, ? extends NodeMapper<Op, Op, BiMap<Var, Var>, BiMap<Var, Var>, R>> nodeMapperFactory) {
+    		TriFunction<? super OpContext, ? super OpContext, ? super Table<Op, Op, BiMap<Node, Node>>, ? extends NodeMapper<Op, Op, BiMap<Var, Var>, BiMap<Var, Var>, R>> nodeMapperFactory) {
 
     		QueryContainmentIndex<K, DirectedGraph<Node, Triple>, Var, Op, R> result =
         		new QueryContainmentIndexImpl<K, OpContext, OpGraph, DirectedGraph<Node, Triple>, Node, Var, Op, R>(
         				OpContext::create,
         				OpContext::getLeafOpGraphs,
-		                OpContext::getNormalizedOpTree,		                		                
+		                OpContext::getNormalizedOpTree,
 		                
 		                OpGraph::getJGraphTGraph,
 		                //opGraph -> opGraph.getJGraphTGraph(),//opContext.getOpAsGraph().getJGraphTGraph(),
@@ -259,7 +260,7 @@ public class QueryContainmentIndexImpl<K, TC, LC, G, L, V, A, R>
             Function<? super BiMap<V, V>, ? extends BiMap<L, L>> containmentMappingToSolutionContribution,            
             
             		
-            BiFunction<? super TC, ?super TC, ? extends NodeMapper<A, A, BiMap<V, V>, BiMap<V, V>, R>> nodeMapperFactory
+            TriFunction<? super TC, ? super TC, ? super Table<A, A, BiMap<L, L>>, ? extends NodeMapper<A, A, BiMap<V, V>, BiMap<V, V>, R>> nodeMapperFactory
     		) {
         super();
         this.treePreprocessor = preprocessor;
@@ -406,7 +407,7 @@ public class QueryContainmentIndexImpl<K, TC, LC, G, L, V, A, R>
         	logger.warn("Graph was null for node: " + userLeaf);
         	//throw new RuntimeException("Graph was null for node: " + leaf);
         } else {
-	        Multimap<Entry<K, Long>, BiMap<L, L>> matches = index.lookupX(graph, false);
+	        Multimap<Entry<K, Long>, BiMap<L, L>> matches = index.lookup(graph, false);
 	
 	        for(Entry<Entry<K, Long>, BiMap<L, L>> e : matches.entries()) {
 	            Entry<K, Long> f = e.getKey();

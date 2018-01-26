@@ -32,8 +32,10 @@ import org.aksw.commons.collections.trees.TreeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codepoetics.protonpack.StreamUtils;
 import com.codepoetics.protonpack.functions.TriFunction;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Streams;
 import com.google.common.collect.Table;
 import com.google.common.collect.Table.Cell;
 import com.google.common.collect.Tables;
@@ -78,7 +80,7 @@ public class TreeMapper<K, TCA, TCB, LCA, LCB, A, B, L, V, C, R> {
     
     //protected TriFunction<? super A, ? super B, TreeMapping<A, B, M, V>, ? extends Entry<C, V>> nodeMapper;
     //protected BiFunction<? super XA, ?super XB, ? extends NodeMapper<A, B, M, V>> nodeMapperFactory;
-    protected BiFunction<? super TCA, ?super TCB, ? extends NodeMapper<A, B, V, C, R>> nodeMapperFactory;
+    protected TriFunction<? super TCA, ? super TCB, ? super Table<A, B, L>, ? extends NodeMapper<A, B, V, C, R>> nodeMapperFactory;
     
     
     // Transformation function to obtain a 'node-level' mapping from the lower 'leaf-level' mapping
@@ -106,7 +108,7 @@ public class TreeMapper<K, TCA, TCB, LCA, LCB, A, B, L, V, C, R> {
             TriFunction<TCB, Entry<B, LCB>, V, Table<K, A, ? extends GenericProblem<L, ?>>> leafMatcher,
             //TriFunction<? super A, ? super B, TreeMapping<A, B, M, V>, ? extends Entry<C, V>> nodeMapper,
             //BiFunction<? super XA, ?super XB, ? extends NodeMapper<A, B, M, V>> nodeMapperFactory,
-            BiFunction<? super TCA, ? super TCB, ? extends NodeMapper<A, B, V, C, R>> nodeMapperFactory,
+            TriFunction<? super TCA, ? super TCB, ? super Table<A, B, L>, ? extends NodeMapper<A, B, V, C, R>> nodeMapperFactory,
             
             Function<? super L, ? extends V> matchingTransformer,
             		
@@ -179,16 +181,6 @@ public class TreeMapper<K, TCA, TCB, LCA, LCB, A, B, L, V, C, R> {
 
                 //XB xb = null;
                 //NodeMapper<A, B, M, V> 
-                NodeMapper<A, B, V, C, R> nodeMapper = nodeMapperFactory.apply(viewContext, queryContext);
-                
-                BottomUpTreeMapper<A, B, V, C, R> treeMapper = new BottomUpTreeMapper<A, B, V, C, R>(
-                        viewTree,
-                        queryTree,
-                        nodeMapper,
-                        addMatchingContribution, isMatchingUnsatisfiable,
-                        () -> createTable(aIdentity, bIdentity)
-//                        BottomUpTreeTraversals::postOrder//bottomUpTraverser
-                        );
 
 
                 Table<A, B, ? extends GenericProblem<L, ?>> alignmentProblems = e.getValue();
@@ -307,12 +299,35 @@ public class TreeMapper<K, TCA, TCB, LCA, LCB, A, B, L, V, C, R> {
                         // For each alignment and matching perform the tree mapping
                     	
                     	// TODO probable we should create an instance of the tree mapper for each solution
-                    	
                     	List<L> contribs = solution.getContributions();
-                    	Table<A, B, L> table = null;
+                    	Table<A, B, L> table = createTable(aIdentity, bIdentity);
+
+                    	StreamUtils.zipWithIndex(leafAlignment.entrySet().stream()).forEach(entry -> {
+                    		int index = (int)entry.getIndex();
+                    		L contrib = contribs.get(index);
+                    		
+                    		A a = entry.getValue().getKey();
+                    		B b = entry.getValue().getValue();
+                    		
+                    		table.put(a, b, contrib);
+                    	});
+                    	
                     	
                     	V matching = solution.getSolution();
                     	
+                    	// TODO Revise which arguments of the treeMapper should go to the ctor and which are part of the solve method
+                    	// TODO Maybe turn the whole treemapper into a static function?
+                        NodeMapper<A, B, V, C, R> nodeMapper = nodeMapperFactory.apply(viewContext, queryContext, table);
+                        
+                        BottomUpTreeMapper<A, B, V, C, R> treeMapper = new BottomUpTreeMapper<A, B, V, C, R>(
+                                viewTree,
+                                queryTree,
+                                nodeMapper,
+                                addMatchingContribution, isMatchingUnsatisfiable,
+                                () -> createTable(aIdentity, bIdentity)
+//                                BottomUpTreeTraversals::postOrder//bottomUpTraverser
+                                );
+
                         TreeMapping<A, B, V, R> s = treeMapper.solve(matching, leafAlignment);
 
                         return s;

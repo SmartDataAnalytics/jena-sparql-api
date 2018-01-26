@@ -190,7 +190,7 @@ public class ExpressionMapper {
 		return result;
 	}
 	
-
+		
 
 	public static String getString(Expr expr) {
 		String result = null;
@@ -281,7 +281,6 @@ public class ExpressionMapper {
 		SubgraphIsomorphismIndex<Long, DirectedGraph<Node, Triple>, Node> sii = createIndex();
 		//Predicate<Expr> isVar = (e) -> e.isVariable();
         Supplier<Supplier<Node>> ssn = () -> { int[] x = {0}; return () -> NodeFactory.createBlankNode("_" + x[0]++); };
-        BiFunction<Expr, BiMap<Node, Node>, Expr> applyExprIso = (e, iso) -> e.applyNodeTransform(new NodeTransformRenameMap(iso));
     
 		OpGraph viewOpGraph = toOpGraph(viewExprs, HashBiMap.create(), ssn.get());
 		OpGraph queryOpGraph = toOpGraph(queryExprs, HashBiMap.create(), ssn.get());
@@ -290,32 +289,60 @@ public class ExpressionMapper {
 		System.out.println(queryOpGraph.getJenaGraph());
 		
 		sii.put(0l, viewOpGraph.getJGraphTGraph());
-		Multimap<Long, BiMap<Node, Node>> cands = sii.lookupX(queryOpGraph.getJGraphTGraph(), false);
+		Multimap<Long, BiMap<Node, Node>> cands = sii.lookup(queryOpGraph.getJGraphTGraph(), false);
 		
 		
 		Set<Expr> result = null;
 		for(BiMap<Node, Node> baseIso : cands.values()) {
 			
-			result = computeResidualConjunction(
-					viewExprs,
-					queryExprs,
-					
-					ExpressionMapper::clauseHandler,
-					
-					viewOpGraph,
-					queryOpGraph,
-					//ExpressionMapper::toOpGraph,
-					OpGraph::getJGraphTGraph,
-					OpGraph::getNodeToExpr,
-					
-					baseIso,
-					applyExprIso);			
+//			result = computeResidualConjunction(
+//					viewExprs,
+//					queryExprs,
+//					
+//					ExpressionMapper::clauseHandler,
+//					
+//					viewOpGraph,
+//					queryOpGraph,
+//					//ExpressionMapper::toOpGraph,
+//					OpGraph::getJGraphTGraph,
+//					OpGraph::getNodeToExpr,
+//					
+//					baseIso,
+//					applyExprIso);
+			
+			result = computeResidualConjunction(baseIso, viewOpGraph, queryOpGraph);
+			
 			break;
 		}
 		
 
 		return result;
 	}
+	
+	public static Set<Expr> computeResidualConjunction(BiMap<Node, Node> baseIso, OpGraph viewOpGraph, OpGraph queryOpGraph) {
+		Set<Expr> viewExprs = viewOpGraph.getNodeToExpr().inverse().keySet();
+		Set<Expr> queryExprs = queryOpGraph.getNodeToExpr().inverse().keySet();
+		
+        BiFunction<Expr, BiMap<Node, Node>, Expr> applyExprIso = (e, iso) -> e.applyNodeTransform(new NodeTransformRenameMap(iso));
+
+		Set<Expr> result = computeResidualConjunction(
+				viewExprs,
+				queryExprs,
+				
+				ExpressionMapper::clauseHandler,
+				
+				viewOpGraph,
+				queryOpGraph,
+				//ExpressionMapper::toOpGraph,
+				OpGraph::getJGraphTGraph,
+				OpGraph::getNodeToExpr,
+				
+				baseIso,
+				applyExprIso);	
+		
+		return result;
+	}
+
 	
 	
 	//Multimap<BiMap<N, N>, Set<Set<E>>>
@@ -472,7 +499,7 @@ public class ExpressionMapper {
         	
         	// This returns candidate clauses of the query that may be more restrictive than those
         	// of the view
-        	Multimap<Long, BiMap<N, N>> userClauseCands = sii.lookupX(g, false, baseIsoUserToView);
+        	Multimap<Long, BiMap<N, N>> userClauseCands = sii.lookup(g, false, baseIsoUserToView);
 
         	candList.add(new ArrayList<>(userClauseCands.entries()));
         }
