@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -16,7 +15,6 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -28,13 +26,16 @@ import org.aksw.commons.graph.index.jena.transform.QueryToJenaGraph;
 import org.aksw.commons.jena.graph.GraphVarImpl;
 import org.aksw.jena_sparql_api.algebra.transform.ExprTransformVariableOrder;
 import org.aksw.jena_sparql_api.utils.CnfUtils;
+import org.aksw.jena_sparql_api.utils.DnfUtils;
 import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_StrContains;
 import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprFunction;
 import org.apache.jena.sparql.expr.ExprTransformer;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.util.ExprUtils;
@@ -47,19 +48,83 @@ import com.codepoetics.protonpack.functions.TriFunction;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 
 
+
 public class ExpressionMapper {
+
+	// The idea of reassamble is to rebuild a view expr based on the mapping to a query expr,
+	// so that the view expr becomes a sub-expr - as-is - of the query expr.
+	// However, this concept would break as soon as we converted args of n-ary commutative operators to binary operators....
+	// TODO: Do we need a reassemble function? Actually we can just check whether a view expr's root node could be mapped to that
+	// (root) of a query expr
+	public static void reassemble(
+			Expr viewExpr,
+			BiMap<Node, Expr> viewNodeToExpr,
+			
+			Expr queryExpr,
+			BiMap<Node, Expr> queryNodeToExpr,
+			
+			BiMap<Node, Node> iso			
+			) {
+		// If the
+		
+		Node queryNode = queryNodeToExpr.inverse().get(queryExpr);
+		Node viewNode = iso.inverse().get(queryNode);
+		
+		
+		if(queryExpr.isFunction()) {
+			ExprFunction fn = queryExpr.getFunction();
+			for(Expr arg : fn.getArgs()) {
+				
+				
+			}
+			
+		}
+		
+	}
 	
-	public static Set<Expr> clauseHandler(Set<Expr> residualClause, Expr viewExpr, Expr userExpr) {
+	
+//	public static Expr mapExpression(
+//			Expr viewExpr,
+//			BiMap<Node, Expr> viewNodeToExpr,
+//
+//			Expr queryExpr,
+//			BiMap<Node, Expr> queryNodeToExpr			
+//	) {
+//
+//		
+//		// 
+//	}
+//	
+	
+//	public static <O> mapExpression(
+//			O viewOpGraph,
+//			O queryOpGraph,
+//			Function
+//		
+//			BiMap<N, N> graphIso,
+//	) {
+//		
+//	}
+	
+	/**
+	 * 
+	 * @param residualClause
+	 * @param viewExpr
+	 * @param queryExpr
+	 * @return The residualClause extended with appropriate residual conditions if the query is equal-or-more restrictive, null otherwise
+	 */
+	public static Set<Expr> clauseHandler(Set<Expr> residualClause, Expr viewExpr, Expr queryExpr) {
 		Set<Expr> result = residualClause;
 		
 		// Handle regex
-		if(userExpr instanceof E_StrContains) {
+		if(queryExpr instanceof E_StrContains) {
 			E_StrContains aExpr = (E_StrContains)viewExpr;
-			E_StrContains bExpr = (E_StrContains)userExpr;
+			E_StrContains bExpr = (E_StrContains)queryExpr;
 	
 			Expr a = aExpr.getArg2();
 			Expr b = bExpr.getArg2();
@@ -68,8 +133,11 @@ public class ExpressionMapper {
 			String bStr = getString(b);
 			
 			
-			if(aStr != null && bStr != null && bStr.contains(aStr)) {
-				result.add(new E_StrContains(bExpr.getArg1(), b));
+			if(aStr != null && bStr != null) {
+				if(bStr.contains(aStr) && !bStr.equals(aStr)) {
+					result.add(new E_StrContains(bExpr.getArg1(), b));
+				}
+				// If the strings are equal, there is no need to yield a constraint
 			} else {
 				result = null;
 			}
@@ -78,7 +146,7 @@ public class ExpressionMapper {
 		return result;
 	}
 	
-	public static Multimap<BiMap<Node, Node>, Set<Set<Expr>>> computeResidualExpressions(BiMap<Node, Node> baseIso, Expr view, Expr user) {
+	public static Multimap<BiMap<Var, Var>, Set<Set<Expr>>> computeResidualExpressions(BiMap<? extends Node, ? extends Node> baseIso, Expr view, Expr user) {
 		view = ExprTransformer.transform(new ExprTransformVariableOrder(), view);
 		user = ExprTransformer.transform(new ExprTransformVariableOrder(), user);
 
@@ -87,11 +155,11 @@ public class ExpressionMapper {
 		Set<Set<Expr>> viewCnf = CnfUtils.toSetCnf(view);
 		Set<Set<Expr>> userCnf = CnfUtils.toSetCnf(user);
 		
-		Multimap<BiMap<Node, Node>, Set<Set<Expr>>> result = computeResidualExpressions(baseIso, viewCnf, userCnf);
+		Multimap<BiMap<Var, Var>, Set<Set<Expr>>> result = computeResidualExpressions(baseIso, viewCnf, userCnf);
 		return result;
 	}
 	
-	public static Multimap<BiMap<Node, Node>, Set<Set<Expr>>> computeResidualExpressions(BiMap<Node, Node> baseIso, Set<Set<Expr>> viewCnf, Set<Set<Expr>> userCnf) {
+	public static Multimap<BiMap<Var, Var>, Set<Set<Expr>>> computeResidualExpressions(BiMap<? extends Node, ? extends Node> baseIso, Set<Set<Expr>> viewCnf, Set<Set<Expr>> userCnf) {
 
 //		System.out.println("viewNf: " + viewDnf);
 //		System.out.println("userNf: " + userDnf);
@@ -101,11 +169,12 @@ public class ExpressionMapper {
 		SubgraphIsomorphismIndex<Long, DirectedGraph<Node, Triple>, Node> sii = createIndex();
 		//Predicate<Expr> isVar = (e) -> e.isVariable();
         Supplier<Supplier<Node>> ssn = () -> { int[] x = {0}; return () -> NodeFactory.createBlankNode("_" + x[0]++); };
-        BiFunction<Expr, BiMap<Node, Node>, Expr> applyExprIso = (e, iso) -> e.applyNodeTransform(new NodeTransformRenameMap(iso));
+        BiFunction<Expr, BiMap<? extends Node, ? extends Node>, Expr> applyExprIso = (e, iso) -> e.applyNodeTransform(new NodeTransformRenameMap(iso));
         
 		
-		Multimap<BiMap<Node, Node>, Set<Set<Expr>>> result = computeResidualCnf(
+		Multimap<BiMap<Var, Var>, Set<Set<Expr>>> result = ExpressionMapper.<Expr, Node, Var, OpGraph, DirectedGraph<Node, Triple>>computeResidualCnf(
 				Node::isVariable,
+				node -> (Var)node,
 				applyExprIso,
 				sii,
 				ssn,
@@ -113,8 +182,7 @@ public class ExpressionMapper {
 				
 				ExpressionMapper::toOpGraph,
 				OpGraph::getJGraphTGraph,
-				OpGraph::getNodeToExpr,
-				
+				OpGraph::getNodeToExpr,				
 				
 				baseIso,
 				viewCnf,
@@ -122,6 +190,8 @@ public class ExpressionMapper {
 		return result;
 	}
 	
+
+
 	public static String getString(Expr expr) {
 		String result = null;
 		
@@ -174,30 +244,6 @@ public class ExpressionMapper {
         return sii;
 	}
 	
-
-	public static <T, K, U, M extends Map<K, U>> Collector<T, ?, M> toMap(
-			Function<? super T, ? extends K> keyMapper,
-			Function<? super T, ? extends U> valueMapper,
-			Supplier<M> mapSupplier) {
-		Collector<T, ?, M> result = Collectors.toMap(
-				keyMapper,
-				valueMapper,
-				(u, v) -> { throw new RuntimeException("should not happen"); },
-				mapSupplier);
-		return result;
-	}
-
-	public static <T, K, U> Collector<T, ?, Map<K, U>> toLinkedHashMap(
-			Function<? super T, ? extends K> keyMapper,
-			Function<? super T, ? extends U> valueMapper) {
-		Collector<T, ?, Map<K, U>> result = Collectors.toMap(
-				keyMapper,
-				valueMapper,
-				(u, v) -> { throw new RuntimeException("should not happen"); },
-				LinkedHashMap::new);
-		return result;
-	}
-	
 	public static Set<Expr> commonConstraintsInDnf(Set<Set<Expr>> dnf) {
 		Map<Expr, Integer> exprToCount = new HashMap<>();
 		
@@ -217,6 +263,122 @@ public class ExpressionMapper {
 		return result;
 	}
 	
+
+	
+	
+	public static Set<Expr> computeResidualConjunction(Expr viewExpr, Expr queryExpr) {
+		Set<Set<Expr>> viewDnf = DnfUtils.toSetDnf(viewExpr);
+		Set<Set<Expr>> queryDnf = DnfUtils.toSetDnf(queryExpr);
+
+		if(viewDnf.size() != 1 || queryDnf.size() != 1) {
+			throw new RuntimeException("DNFs with exactly one clause expected");
+		}
+				
+		Set<Expr> viewExprs = Iterables.getFirst(viewDnf, null);
+		Set<Expr> queryExprs = Iterables.getFirst(queryDnf, null);
+	
+		
+		SubgraphIsomorphismIndex<Long, DirectedGraph<Node, Triple>, Node> sii = createIndex();
+		//Predicate<Expr> isVar = (e) -> e.isVariable();
+        Supplier<Supplier<Node>> ssn = () -> { int[] x = {0}; return () -> NodeFactory.createBlankNode("_" + x[0]++); };
+        BiFunction<Expr, BiMap<Node, Node>, Expr> applyExprIso = (e, iso) -> e.applyNodeTransform(new NodeTransformRenameMap(iso));
+    
+		OpGraph viewOpGraph = toOpGraph(viewExprs, HashBiMap.create(), ssn.get());
+		OpGraph queryOpGraph = toOpGraph(queryExprs, HashBiMap.create(), ssn.get());
+
+		System.out.println(viewOpGraph.getJenaGraph());
+		System.out.println(queryOpGraph.getJenaGraph());
+		
+		sii.put(0l, viewOpGraph.getJGraphTGraph());
+		Multimap<Long, BiMap<Node, Node>> cands = sii.lookupX(queryOpGraph.getJGraphTGraph(), false);
+		
+		
+		Set<Expr> result = null;
+		for(BiMap<Node, Node> baseIso : cands.values()) {
+			
+			result = computeResidualConjunction(
+					viewExprs,
+					queryExprs,
+					
+					ExpressionMapper::clauseHandler,
+					
+					viewOpGraph,
+					queryOpGraph,
+					//ExpressionMapper::toOpGraph,
+					OpGraph::getJGraphTGraph,
+					OpGraph::getNodeToExpr,
+					
+					baseIso,
+					applyExprIso);			
+			break;
+		}
+		
+
+		return result;
+	}
+	
+	
+	//Multimap<BiMap<N, N>, Set<Set<E>>>
+	/**
+	 * E Expr
+	 * N Node or Var
+	 * O OpGraph
+	 * G graph (derived from O)
+	 * @return
+	 */
+	public static <E, N, O, G> Set<E> computeResidualConjunction(
+			Set<E> viewExprs,
+			Set<E> queryExprs,
+
+			TriFunction<Set<E>, E,  E, Set<E>> clauseHandler,
+
+			O viewOpGraph,
+			O queryOpGraph,
+			Function<O, G> opGraphToGraph,
+			Function<O, BiMap<N, E>> opGraphToNodeToExpr,
+
+			BiMap<N, N> baseIsoViewToQuery,
+
+			BiFunction<? super E, BiMap<N, N>, E> applyExprIso
+		) {
+		
+		// The query must be more selective than the view - hence, 
+		// each view expression must be covered by the query
+
+		BiMap<N, E> viewNodeToExpr = opGraphToNodeToExpr.apply(viewOpGraph); //.getNodeToExpr();
+		BiMap<E, N> viewExprToNode = viewNodeToExpr.inverse();
+
+		BiMap<N, E> queryNodeToExpr = opGraphToNodeToExpr.apply(queryOpGraph); //.getNodeToExpr();
+
+
+		Set<E> residualClause = new LinkedHashSet<>();
+		for(E viewExpr : viewExprs) {
+			N viewExprNode = viewExprToNode.get(viewExpr);
+			N queryExprNode = baseIsoViewToQuery.get(viewExprNode);
+			E queryExpr = queryNodeToExpr.get(queryExprNode);
+			
+			E renamedViewExpr = applyExprIso.apply(viewExpr, baseIsoViewToQuery);
+
+			// TODO Re-assemble the view expression based on the graph isomorphism - so that the re-assembled
+			// expression has the argument order aligned with that of the query
+			
+			// TODO An equals check is insufficient - we need a more sophi
+			
+			if(queryExpr != null) {
+				residualClause = clauseHandler.apply(residualClause, renamedViewExpr, queryExpr);	        						
+			} else {
+				residualClause = null;
+			}
+			
+//			if(Objects.equals(renamedViewExpr, queryExpr)) {
+//				// If the view expression is covered, it is not a residual expression and can be skipped in the output
+//			} else {
+//				residualClause.add(viewExpr);
+//			}
+		}
+		
+		return residualClause;
+	}
 	
 	/**
 	 * The residual expression is expressed over the variables of the view
@@ -226,10 +388,12 @@ public class ExpressionMapper {
 	 * @param userCnf
 	 * @return
 	 */
-	public static <E, N, T, O, G> Multimap<BiMap<N, N>, Set<Set<E>>> computeResidualCnf(
+	public static <E, N, V, O, G> Multimap<BiMap<V, V>, Set<Set<E>>> computeResidualCnf(
 			// Basic Node and Expr handling
 			Predicate<? super N> isVar,
-			BiFunction<? super E, BiMap<N, N>, E> applyExprIso,
+			Function<? super N, ? extends V> asVar,
+
+			BiFunction<? super E, BiMap<? extends N, ? extends N>, E> applyExprIso,
 			
 			// Indexing
 			SubgraphIsomorphismIndex<Long, G, N> sii,
@@ -244,7 +408,7 @@ public class ExpressionMapper {
 			Function<O, BiMap<N, E>> opGraphToNodeToExpr,
 			
 			// Actual expressions
-			BiMap<N, N> baseIsoViewToUser,
+			BiMap<? extends N, ? extends N> baseIsoViewToUser,
 			Set<Set<E>> viewCnf,
 			Set<Set<E>> userCnf)
 	{        
@@ -253,12 +417,12 @@ public class ExpressionMapper {
         BiMap<N, E> userNodeToExpr = HashBiMap.create();
         BiMap<N, E> viewNodeToExpr = HashBiMap.create();
         
-        BiMap<N, N> baseIsoUserToView = baseIsoViewToUser.inverse();
+        BiMap<? extends N, ? extends N> baseIsoUserToView = baseIsoViewToUser.inverse();
         
         
         //HashMap<Integer, Set<Expr>> idToViewClause = new LinkedHashMap<>();
         Map<Long, Set<E>> idToUserClause = StreamUtils.zipWithIndex(userCnf.stream())
-        		.collect(toLinkedHashMap(Indexed::getIndex, Indexed::getValue));
+        		.collect(CollectorUtils.toLinkedHashMap(Indexed::getIndex, Indexed::getValue));
       //viewExpr.applyNodeTransform(new NodeTransformRenameMap(viewToUser));
         Map<Long, O> idToUserOpGraph = new HashMap<>();
 
@@ -343,23 +507,25 @@ public class ExpressionMapper {
         	//StateCartesian<Set<Expr>, Long, BiMap<Node, Node>> cart = null;
         	
         	
-        Multimap<BiMap<N, N>, Set<Set<E>>> result = ArrayListMultimap.create();
+        Multimap<BiMap<V, V>, Set<Set<E>>> result = ArrayListMultimap.create();
 
         //compats.forEach(compat -> {
         for(Entry<List<Entry<Long, BiMap<N, N>>>, BiMap<N, N>> compat : l) {
         	
         	BiMap<N, N> rawIso = compat.getValue();
         	
-        	BiMap<N, N> totalIso = rawIso.inverse().entrySet().stream()
+        	BiMap<V, V> totalIso = rawIso.inverse().entrySet().stream()
         			.filter(e -> isVar.test(e.getKey()) || isVar.test(e.getValue()))
-        			.collect(toMap(Entry::getKey, Entry::getValue, HashBiMap::create));
+//        			.map(e -> new SimpleEntry(asVar.apply(e.ge)))
+//        			.collect(CollectorUtils.toMap(Entry::getKey, Entry::getValue, HashBiMap::create));
+        			.collect(CollectorUtils.toMap(e -> asVar.apply(e.getKey()), e -> asVar.apply(e.getValue()), HashBiMap::create));
         	
             Set<Set<E>> residualCnf = new LinkedHashSet<>();
             Set<Long> coveredUserClauseIds = new LinkedHashSet<>();
 
         	for(int i = 0; i < viewClausesBySize.size(); ++i) {
         		Set<E> viewClause = viewClausesBySize.get(i);
-        		System.out.println("viewClause: " + viewClause);
+        		//System.out.println("viewClause: " + viewClause);
 	        		
 	        	Entry<Long, BiMap<N, N>> e = compat.getKey().get(i);
 	        	
@@ -375,7 +541,7 @@ public class ExpressionMapper {
         		BiMap<N, N> userToView = e.getValue();
         		BiMap<N, N> viewToUser = userToView.inverse(); 
 
-        		System.out.println("  Candidate user clause: " + idToUserClause.get(userId));
+        		//System.out.println("  Candidate user clause: " + idToUserClause.get(userId));
 
         		
         		O userOpGraph = idToUserOpGraph.get(userId);
@@ -472,19 +638,40 @@ public class ExpressionMapper {
 	
 
 	public static void main(String[] args) {
-		Expr view = ExprUtils.parse("1 + ?y * ?x = ?h && contains(?i, 'foo') && (?a = 1 || ?a = 2 || ?a = 3)");
-		Expr user = ExprUtils.parse("(?a * ?b) + 1 = ?z && contains(?j, 'foobar') && (?o = 1 || ?o = 2) && ?a = 4");
-		
-		// TODO Should the result include identity mappings? Probably yes for the sake of
-		// future compatibility checking 
-		//Expr view = ExprUtils.parse("?i = ?y");
-		//Expr user = ExprUtils.parse("?x = ?y && ?a = ?b");
-		
-		// Expected: [(contains(?j, 'foobar'), !?o = ?3)]
-		
-		
-		Multimap<BiMap<Node, Node>, Set<Set<Expr>>> residualDnf = computeResidualExpressions(HashBiMap.create(), view, user);
-		System.out.println("Residual DNF: " + residualDnf);
+		if(false) {			
+			Expr view = ExprUtils.parse("1 + ?y * ?x = ?h && contains(?i, 'foo') && (?a = 1 || ?a = 2 || ?a = 3)");
+			Expr user = ExprUtils.parse("(?a * ?b) + 1 = ?z && contains(?j, 'foobar') && (?o = 1 || ?o = 2) && ?a = 4");
+			
+			// TODO Should the result include identity mappings? Probably yes for the sake of
+			// future compatibility checking 
+			//Expr view = ExprUtils.parse("?i = ?y");
+			//Expr user = ExprUtils.parse("?x = ?y && ?a = ?b");
+			
+			// Expected: [(contains(?j, 'foobar'), !?o = ?3)]
+			
+			
+			Multimap<BiMap<Var, Var>, Set<Set<Expr>>> residualDnf = computeResidualExpressions(HashBiMap.create(), view, user);
+			System.out.println("Residual DNF: " + residualDnf);
+		}		
+
+		if(true) {
+//			Expr view = ExprUtils.parse("1 + ?y * ?x = ?h");
+//			Expr query = ExprUtils.parse("(?a * ?b) + 1 = ?z");
+
+			
+			Expr view = ExprUtils.parse("1 + ?y * ?x = ?h && contains(?i, 'foo') && ?a = 1");
+			Expr query = ExprUtils.parse("(?a * ?b) + 1 = ?z && contains(?j, 'foobar') && ?o = 1");
+			
+			// This below works even without commutative graph conversion
+//			Expr view = ExprUtils.parse("1 + ?y * ?x = ?h && contains(?i, 'foobar') && ?a = 1");
+//			Expr query = ExprUtils.parse("1 + ?a * ?b = ?z && contains(?j, 'foobar') && ?o = 1");
+
+//			Expr view = ExprUtils.parse("?a = 1");
+//			Expr user = ExprUtils.parse("?o = 1");
+
+			Set<Expr> residualConjunction = computeResidualConjunction(view, query);
+			System.out.println("Residual conjunction: " + residualConjunction);
+		}
 	}
 }
 

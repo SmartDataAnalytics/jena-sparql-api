@@ -22,7 +22,7 @@ public class ContainmentSolverWrapperJsaBase
 
     @Override
     public boolean entailed(Query q1, Query q2) {// throws ContainmentTestException {
-        boolean result = SparqlQueryContainmentUtils.tryMatch(q2, q1, qfpcMatcher);
+        boolean result = SparqlQueryContainmentUtils.tryMatchOld(q2, q1, qfpcMatcher);
         return result;
     }
 

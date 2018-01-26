@@ -222,14 +222,14 @@ public class ExprUtils {
         return result;
     }
 
-    public static Expr signaturize(Expr expr, Map<? extends Node, ? extends Node> nodeMap) {
+    public static Expr signaturize(Expr expr, Map<?, ? extends Node> nodeMap) {
         NodeTransform baseTransform = new NodeTransformRenameMap(nodeMap);
         NodeTransform nodeTransform = new NodeTransformSignaturize(baseTransform);
         Expr result = NodeTransformLib.transform(nodeTransform, expr);
         return result;
     }
 
-    public static Expr applyNodeTransform(Expr expr, Map<? extends Node, ? extends Node> nodeMap) {
+    public static Expr applyNodeTransform(Expr expr, Map<?, ? extends Node> nodeMap) {
         NodeTransform nodeTransform = new NodeTransformRenameMap(nodeMap);
         Expr result = NodeTransformLib.transform(nodeTransform, expr);
         //Expr result = applyNodeTransform(expr, nodeTransform);

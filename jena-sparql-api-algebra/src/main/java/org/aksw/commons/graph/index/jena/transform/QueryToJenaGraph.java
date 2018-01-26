@@ -7,6 +7,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import org.aksw.jena_sparql_api.algebra.transform.ExprTransformVariableOrder;
 import org.aksw.jena_sparql_api.utils.DnfUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
@@ -123,11 +124,15 @@ public class QueryToJenaGraph {
 
             nodeToExpr.put(result, expr);
             
-            
-            
-            // We use normalization on expressions instead
-            boolean isCommutative = false; //expr instanceof E_Equals;
+            // TODO Why did i disable commutative checks???? Was it due to performance issues?
 
+            // We use normalization on expressions instead
+            // boolean isCommutative = false; //expr instanceof E_Equals;
+
+            boolean isCommutative = ExprTransformVariableOrder.isCommutative(expr);
+            
+            
+            
             ExprFunction ef = expr.getFunction();
             String fnId = ExprUtils.getFunctionId(ef);
 

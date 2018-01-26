@@ -1,6 +1,5 @@
 package fr.inrialpes.tyrexmo.testqc;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,6 +21,7 @@ import org.aksw.beast.benchmark.performance.PerformanceBenchmark;
 import org.aksw.beast.enhanced.ResourceEnh;
 import org.aksw.beast.rdfstream.RdfGroupBy;
 import org.aksw.beast.rdfstream.RdfStream;
+import org.aksw.beast.viz.xchart.XChartStatBarChartBuilder;
 import org.aksw.beast.viz.xchart.XChartStatBarChartProcessor;
 import org.aksw.beast.vocabs.CV;
 import org.aksw.beast.vocabs.IV;
@@ -32,11 +32,9 @@ import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcReader;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.expr.aggregate.AggAvg;
 import org.apache.jena.sparql.expr.aggregate.lib.AccStatStdDevPopulation;
-import org.apache.jena.util.ResourceUtils;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.knowm.xchart.CategoryChart;
@@ -139,6 +137,12 @@ public class MainTestContain {
         List<String> jarFileNames = Arrays.asList("jsa", "sparqlalgebra", "afmu", "treesolver");
         //List<String> jarFileNames = Arrays.asList("jsa");
 
+//        List<String> algos = Arrays.asList();
+//        boolean isBlacklist = true;
+
+        List<String> algos = Arrays.asList("JSAC", "AFMU", "TS");
+        boolean isBlacklist = true;
+
         List<File> jarFiles = jarFileNames.stream().map(implStr -> {
         //List<File> jarFiles = Arrays.asList("treesolver").stream().map(implStr -> {
             String jarPathStr = String
@@ -149,9 +153,9 @@ public class MainTestContain {
 
         // TODO Ideally have the blacklist in the data
         Map<String, Predicate<String>> blackLists = new HashMap<>();
-        blackLists.put("AFMU", (r) -> Arrays.asList("#nop3", "#nop4", "#nop15", "#nop16", "#p3", "#p4", "#p15", "#p16", "#p23", "#p24", "#p25", "#p26").stream().anyMatch(r::contains));
-        blackLists.put("SA", (r) -> Arrays.asList("UCQProj").stream().anyMatch(r::contains));
-        blackLists.put("TS", (r) -> Arrays.asList("#p23", "#p24", "#p15", "#p25", "#p26").stream().anyMatch(r::contains));         // slow p15, p25, p26
+        blackLists.put("AFMU", r -> Arrays.asList("#nop3", "#nop4", "#nop15", "#nop16", "#p3", "#p4", "#p15", "#p16", "#p23", "#p24", "#p25", "#p26").stream().anyMatch(r::contains));
+        blackLists.put("SA", r -> Arrays.asList("UCQProj").stream().anyMatch(r::contains));
+        blackLists.put("TS", r -> Arrays.asList("#p23", "#p24", "#p15", "#p25", "#p26").stream().anyMatch(r::contains));         // slow p15, p25, p26
 
         //blackLists.put("JSAC", (r) -> true);
 
@@ -176,6 +180,10 @@ public class MainTestContain {
         allTasks.addAll(SparqlQcReader.loadTasks("sparqlqc/1.4/benchmark/cqnoproj.rdf"));
         allTasks.addAll(SparqlQcReader.loadTasks("sparqlqc/1.4/benchmark/ucqproj.rdf"));
 
+        allTasks = allTasks.stream()
+        		.filter(t -> t.getURI().equals("http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop16"))
+        		.collect(Collectors.toList());
+        		
 //        allTasks.addAll(SparqlQcReader.loadTasksSqcf("saleem-swdf-benchmark.ttl"));
 
 //        params.addAll(createTestParams("sparqlqc/1.4/benchmark/cqnoproj.rdf", "sparqlqc/1.4/benchmark/noprojection/*"));
@@ -217,6 +225,11 @@ public class MainTestContain {
                             shortLabel = "ANON" + ++anonId;
                         }
 
+                        boolean contained = algos.contains(shortLabel);
+                        boolean skip = isBlacklist ? contained : !contained;
+                        if(skip) {
+                        	continue;
+                        }
                         
 //                        System.out.println("[HACK] Remove this line eventually!");
 //                        if(!shortLabel.equals("JSAG")) {
@@ -325,7 +338,13 @@ public class MainTestContain {
               .yAxisTitle("Time (s)")
               .build();
 
-      XChartStatBarChartProcessor.addSeries(xChart, avgs, null, null, null, null, true);
+      XChartStatBarChartBuilder
+      	.from(xChart)
+      	.setErrorBarsEnabled(true)
+      	.setAutoRange(true)
+      	.processSeries(avgs);
+      
+      //XChartStatBarChartProcessor.addSeries(xChart, avgs, null, null, null, null, true);
 
       xChart.getStyler().setLegendPosition(LegendPosition.InsideNW);
 
@@ -362,8 +381,8 @@ public class MainTestContain {
 
     public static Stream<Resource> run(Collection<Resource> tasks, String methodLabel, Object solver, BiFunction<Resource, Object, TaskImpl> taskParser) throws Exception {
 
-        int warmUpRuns = 1;
-        int evalRuns = 1;
+        int warmUpRuns = 10;
+        int evalRuns = 10;
 
         Consumer<Resource> postProcess = (r) -> {
                 TaskImpl task = r.as(ResourceEnh.class).getTag(TaskImpl.class).get();

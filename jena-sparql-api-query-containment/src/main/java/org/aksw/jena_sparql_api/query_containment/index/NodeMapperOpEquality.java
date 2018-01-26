@@ -13,6 +13,7 @@ import org.aksw.jena_sparql_api.utils.NodeTransformRenameMap;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.op.OpNull;
+import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.graph.NodeTransformLib;
 
@@ -24,7 +25,7 @@ public class NodeMapperOpEquality
 	implements NodeMapperOp
 {
     @Override
-    public Entry<BiMap<Node, Node>, ResidualMatching> apply(Op viewOp, Op userOp, TreeMapping<Op, Op, BiMap<Node, Node>, ResidualMatching> tm) {
+    public Entry<BiMap<Var, Var>, ResidualMatching> apply(Op viewOp, Op userOp, TreeMapping<Op, Op, BiMap<Var, Var>, ResidualMatching> tm) {
 //        Class<?> viewOpClass = viewOp == null ? null : viewOp.getClass();
 //        Class<?> userOpClass = userOp == null ? null : userOp.getClass();
 
@@ -40,7 +41,7 @@ public class NodeMapperOpEquality
         
         
         
-        Entry<BiMap<Node, Node>, ResidualMatching> result;
+        Entry<BiMap<Var, Var>, ResidualMatching> result;
         if(!Objects.equals(viewOpClass, userOpClass)) {
             result = null;
         } else {
@@ -67,7 +68,7 @@ public class NodeMapperOpEquality
     }
 
 
-    public Entry<BiMap<Node, Node>, ResidualMatching> map(OpExtConjunctiveQuery viewOp, OpExtConjunctiveQuery userOp, TreeMapping<Op, Op, BiMap<Node, Node>, ResidualMatching> tm) {
+    public Entry<BiMap<Var, Var>, ResidualMatching> map(OpExtConjunctiveQuery viewOp, OpExtConjunctiveQuery userOp, TreeMapping<Op, Op, BiMap<Var, Var>, ResidualMatching> tm) {
         QuadFilterPatternCanonical view = viewOp.getQfpc().getPattern().applyNodeTransform(new NodeTransformRenameMap(tm.getOverallMatching()));
         QuadFilterPatternCanonical user = userOp.getQfpc().getPattern();
 
@@ -81,7 +82,7 @@ public class NodeMapperOpEquality
     }
 
 
-    public Entry<BiMap<Node, Node>, ResidualMatching> map(OpDistinctExtendFilter viewOp, OpDistinctExtendFilter userOp, TreeMapping<Op, Op, BiMap<Node, Node>, ResidualMatching> tm) {
+    public Entry<BiMap<Var, Var>, ResidualMatching> map(OpDistinctExtendFilter viewOp, OpDistinctExtendFilter userOp, TreeMapping<Op, Op, BiMap<Var, Var>, ResidualMatching> tm) {
         DistinctExtendFilter view = viewOp.getDef().applyNodeTransform(new NodeTransformRenameMap(tm.getOverallMatching()));
         DistinctExtendFilter user = userOp.getDef();
 

@@ -8,7 +8,7 @@ public class ContainmentSolverWrapperJsaSubgraphIsomorphismIndex
 {
 	@Override
 	public boolean entailed(Query q1, Query q2) {
-        boolean result = SparqlQueryContainmentUtils.tryMatchNew(q2, q1);
+        boolean result = SparqlQueryContainmentUtils.tryMatch(q2, q1);
 
         return result;
 	}

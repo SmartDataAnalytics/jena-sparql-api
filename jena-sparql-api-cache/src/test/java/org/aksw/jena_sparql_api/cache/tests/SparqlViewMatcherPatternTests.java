@@ -6,40 +6,15 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.BiFunction;
-import java.util.stream.Collectors;
 
-import org.aksw.commons.collections.tagmap.TagMapSetTrie;
-import org.aksw.commons.collections.tagmap.ValidationUtils;
-import org.aksw.commons.graph.index.core.SubgraphIsomorphismIndex;
-import org.aksw.commons.graph.index.jena.SubgraphIsomorphismIndexJena;
-import org.aksw.commons.graph.index.jena.transform.QueryToGraph;
-import org.aksw.jena_sparql_api.algebra.analysis.VarUsage2;
-import org.aksw.jena_sparql_api.algebra.analysis.VarUsageAnalyzer2Visitor;
 import org.aksw.jena_sparql_api.concept_cache.core.SparqlQueryContainmentUtils;
-import org.aksw.jena_sparql_api.query_containment.index.NodeMapperOp;
-import org.aksw.jena_sparql_api.query_containment.index.NodeMapperOpContainment;
-import org.aksw.jena_sparql_api.query_containment.index.OpContext;
-import org.aksw.jena_sparql_api.query_containment.index.QueryContainmentIndex;
-import org.aksw.jena_sparql_api.query_containment.index.QueryContainmentIndexImpl;
-import org.aksw.jena_sparql_api.query_containment.index.ResidualMatching;
-import org.aksw.jena_sparql_api.query_containment.index.TreeMapping;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcReader;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcVocab;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.VarMapper;
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.NodeFactory;
-import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.sparql.algebra.Algebra;
-import org.apache.jena.sparql.algebra.Op;
-import org.apache.jena.sparql.util.NodeUtils;
-import org.jgrapht.DirectedGraph;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,8 +22,6 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.collect.BiMap;
 
 
 //@FixMethodOrder
@@ -77,15 +50,22 @@ public class SparqlViewMatcherPatternTests {
         List<Resource> ts = SparqlQcReader.loadTasks(testCases);
         //List<Resource> ts = tests.listResourcesWithProperty(RDF.type, SparqlQcVocab.ContainmentTest).toList();
 
-        Object data[][] = new Object[ts.size()][3];
+        Collection<Object[]> result = new ArrayList<>();
+        //Object data[][] = new Object[ts.size()][3];
         for(int i = 0; i < ts.size(); ++i) {
             Resource t = ts.get(i);
-            data[i][0] = t.getURI(); //testCase.getName();
-            data[i][1] = t.getModel();
-            data[i][2] = t;
+            Object[] data = new Object[3];
+            data[0] = t.getURI(); //testCase.getName();
+            data[1] = t.getModel();
+            data[2] = t;
+        
+            
+//            if(!t.getURI().equals("http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop16")) {
+//            	continue;
+//            }
+            
+            result.add(data);
         }
-
-        Collection<Object[]> result = Arrays.asList(data);
 
         return result;
     }
@@ -227,12 +207,18 @@ public class SparqlViewMatcherPatternTests {
         
         
         boolean useOldCode = false;
-        boolean actualVerdict;
+        
+        // Should be true for 'production' test cases
+        boolean useValidation = false;
+        
+        boolean actualVerdict = false;
         
         if(useOldCode) {
-        	actualVerdict = SparqlQueryContainmentUtils.tryMatch(viewQuery, userQuery, VarMapper::createVarMapCandidates);
+        	actualVerdict = SparqlQueryContainmentUtils.tryMatchOld(viewQuery, userQuery, VarMapper::createVarMapCandidates);
         } else {
-        	actualVerdict = SparqlQueryContainmentUtils.tryMatchNew(viewQuery, userQuery, true);	
+//        	for(int i = 0; i < 1000; ++i) {
+        		actualVerdict = SparqlQueryContainmentUtils.tryMatch(viewQuery, userQuery, useValidation);
+//        	}
         }
         logger.debug("Expected: " + expectedVerdict + " " + (overridden ? "(overridden)" : "") + " - Actual: " + actualVerdict + " Mismatch: " + (expectedVerdict != actualVerdict));
 

@@ -1,5 +1,6 @@
 package fr.inrialpes.tyrexmo.testqc;
 
+import org.aksw.jena_sparql_api.concept_cache.core.SparqlQueryContainmentUtils;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcVocab;
 import org.aksw.simba.lsq.vocab.LSQ;
 import org.apache.jena.query.Query;
@@ -75,23 +76,34 @@ public class SparqlQcPreparation {
 
         return new TaskImpl(
             testCase,
-            () -> { // try {
-            boolean actual = solver.entailed(testCase.getSource(), testCase.getTarget());
-            //boolean actual = solver.entailed(testCase.getTarget(), testCase.getSource());
-            //String str = actual == testCase.getExpectedResult() ? "CORRECT" : "WRONG";
-            //System.out.println(str);
-            return actual;
-            //r.addLiteral(RDFS.label, str);
-            // } catch (ContainmentTestException e) {
-            // throw new RuntimeException(e);
-            // }
-        }, () -> {
-            try {
-                solver.cleanup();
-            } catch (ContainmentTestException e) {
-                throw new RuntimeException();
-            }
-        });
+	        () -> { // try {
+	        	boolean hack = false;
+	        	boolean actual;
+	        	if(hack) {
+		            System.out.println("HACK - Testing only our tool for debugging - results for other tools are garbage!!!");
+		        	actual = SparqlQueryContainmentUtils.tryMatch(testCase.getSource(), testCase.getTarget());
+	        	} else {
+	        		actual = solver.entailed(testCase.getSource(), testCase.getTarget());
+	        	}
+        		
+	        	//boolean actual = solver.entailed(testCase.getSource(), testCase.getTarget());
+
+        		
+	            //boolean actual = solver.entailed(testCase.getTarget(), testCase.getSource());
+	            //String str = actual == testCase.getExpectedResult() ? "CORRECT" : "WRONG";
+	            //System.out.println(str);
+	            return actual;
+	            //r.addLiteral(RDFS.label, str);
+	            // } catch (ContainmentTestException e) {
+	            // throw new RuntimeException(e);
+	            // }
+	        }, () -> {
+	            try {
+	                solver.cleanup();
+	            } catch (ContainmentTestException e) {
+	                throw new RuntimeException();
+	            }
+	        });
     }
 
 }
