@@ -59,11 +59,14 @@ public class SparqlViewMatcherPatternTests {
             data[1] = t.getModel();
             data[2] = t;
         
-            
-//            if(!t.getURI().equals("http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop16")) {
-//            	continue;
-//            }
-            
+
+            boolean hackToTestOnlyASingleTask = true;
+            if(hackToTestOnlyASingleTask) {
+	            if(!t.getURI().equals("http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop16")) {
+	            	continue;
+	            }
+            }
+
             result.add(data);
         }
 
@@ -74,6 +77,16 @@ public class SparqlViewMatcherPatternTests {
     protected Model model;
     protected Resource t;
 
+    
+    // Main method for profiling the test cases with visualvm ; the junit stuff is distracting...
+    public static void main(String[] args) throws Exception {
+    	Collection<Object[]> data = data();
+    	for(Object[] o : data) {
+    		SparqlViewMatcherPatternTests tmp = new SparqlViewMatcherPatternTests((String)o[0], (Model)o[1], (Resource)o[2]);
+    		tmp.runTest();
+    	}
+    }
+    
     public SparqlViewMatcherPatternTests(String name, Model model, Resource resource) {
         this.name = name;
         this.model = model;
@@ -216,9 +229,9 @@ public class SparqlViewMatcherPatternTests {
         if(useOldCode) {
         	actualVerdict = SparqlQueryContainmentUtils.tryMatchOld(viewQuery, userQuery, VarMapper::createVarMapCandidates);
         } else {
-//        	for(int i = 0; i < 1000; ++i) {
+        	for(int i = 0; i < 1000; ++i) {
         		actualVerdict = SparqlQueryContainmentUtils.tryMatch(viewQuery, userQuery, useValidation);
-//        	}
+        	}
         }
         logger.debug("Expected: " + expectedVerdict + " " + (overridden ? "(overridden)" : "") + " - Actual: " + actualVerdict + " Mismatch: " + (expectedVerdict != actualVerdict));
 

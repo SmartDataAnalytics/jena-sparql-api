@@ -137,11 +137,11 @@ public class MainTestContain {
         List<String> jarFileNames = Arrays.asList("jsa", "sparqlalgebra", "afmu", "treesolver");
         //List<String> jarFileNames = Arrays.asList("jsa");
 
-//        List<String> algos = Arrays.asList();
-//        boolean isBlacklist = true;
-
-        List<String> algos = Arrays.asList("JSAC", "AFMU", "TS");
+        List<String> algos = Arrays.asList();
         boolean isBlacklist = true;
+
+//        List<String> algos = Arrays.asList("JSAC", "AFMU", "TS");
+//        boolean isBlacklist = true;
 
         List<File> jarFiles = jarFileNames.stream().map(implStr -> {
         //List<File> jarFiles = Arrays.asList("treesolver").stream().map(implStr -> {
@@ -180,10 +180,14 @@ public class MainTestContain {
         allTasks.addAll(SparqlQcReader.loadTasks("sparqlqc/1.4/benchmark/cqnoproj.rdf"));
         allTasks.addAll(SparqlQcReader.loadTasks("sparqlqc/1.4/benchmark/ucqproj.rdf"));
 
-        allTasks = allTasks.stream()
-        		.filter(t -> t.getURI().equals("http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop16"))
-        		.collect(Collectors.toList());
-        		
+
+        boolean debugASpecificTask = false;
+        if(debugASpecificTask) {
+	        allTasks = allTasks.stream()
+	        		.filter(t -> t.getURI().equals("http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop16"))
+	        		.collect(Collectors.toList());
+        }
+
 //        allTasks.addAll(SparqlQcReader.loadTasksSqcf("saleem-swdf-benchmark.ttl"));
 
 //        params.addAll(createTestParams("sparqlqc/1.4/benchmark/cqnoproj.rdf", "sparqlqc/1.4/benchmark/noprojection/*"));
