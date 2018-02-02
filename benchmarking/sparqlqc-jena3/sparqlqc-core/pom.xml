@@ -18,6 +18,12 @@
             <artifactId>jena-sparql-api-resources-sparqlqc</artifactId>
         </dependency>
 
+		<!-- TODO Remove this dependency eventually; its here only for debugging our system -->
+        <dependency>
+            <groupId>org.aksw.jena-sparql-api</groupId>
+            <artifactId>jena-sparql-api-cache</artifactId>
+        </dependency>
+
 
         <dependency>
             <!-- <groupId>${project.groupId}</groupId> -->

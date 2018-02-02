@@ -43,7 +43,7 @@ public class ExpressionMappingTests {
         //, "="="=", http://www.example.org/takesCourse=http://www.example.org/takesCourse, _6=_8, ?x=?x, _4=_5, _5=_6,
         // _2=_3, _3=_4, _0=_0, ?v_1=?v_1, _1=_1, "Course10"="Course10"
         
-        Multimap<BiMap<Node, Node>, Set<Set<Expr>>> x = ExpressionMapper.computeResidualExpressions(map,
+        Multimap<BiMap<Var, Var>, Set<Set<Expr>>> x = ExpressionMapper.computeResidualExpressions(map,
         		ExprUtils.parse("?v_1 = <http://www.example.org/takesCourse> && ?v_2 = \"Course10\""),
         		ExprUtils.parse("?v_1 = <http://www.example.org/takesCourse> && ?v_2 = \"Course10\" && ?v_2 = \"Course20\""));
         

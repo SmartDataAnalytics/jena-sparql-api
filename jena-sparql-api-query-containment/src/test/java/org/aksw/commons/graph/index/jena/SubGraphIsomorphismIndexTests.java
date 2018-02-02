@@ -72,7 +72,7 @@ public class SubGraphIsomorphismIndexTests {
 
             String queryStr = lsqQuery.getText();
             System.out.println("Lookup result for " + queryId + ": " + queryStr);
-            Multimap<String, BiMap<Node, Node>> r = index.lookupX(queryStr, false);
+            Multimap<String, BiMap<Node, Node>> r = index.lookup(queryStr, false);
 
             r.asMap().forEach((k, isos) -> {
                 isos.forEach(iso -> {

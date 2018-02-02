@@ -27,11 +27,12 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.core.Var;
 import org.jgrapht.DirectedGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codepoetics.protonpack.collectors.CollectorUtils;
+import com.codepoetics.protonpack.functions.TriFunction;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.HashBiMap;
@@ -78,41 +79,61 @@ import com.google.common.collect.Table;
  * - For each leaf node combination, enumerate the isomorphism
  * - perform the tree matching / mapping upwards
  *
+ *
+ * @param <K> Key type for views
+ * @param <TC> TreeContext type (object to hold meta information about algebra objects of type A)
+ * @param <LC> LeafContext type (matching of expression works leaf based; leaf context may e.g.g comprise graph representations)
+ * @param <G> The graph type (the leaf context must provide this)
+ * @param <V> The node type in the graph which will be used in graph isomorphisms (e.g. jena Nodes)
+ * @param <I> The containment mapping type (e.g. Jena Vars)
+ * @param <A> The type for view algebra expressions
+ * @param <R> Type for residual information (obtained during the mapping phase)
  */
-public class QueryContainmentIndexImpl<K, X, Y, G, N, A, V>
-	implements QueryContainmentIndex<K, G, N, A, V>
+public class QueryContainmentIndexImpl<K, TC, LC, G, L, V, A, R>
+	implements QueryContainmentIndex<K, G, V, A, R>
 {	
 	private static final Logger logger = LoggerFactory.getLogger(QueryContainmentIndexImpl.class);
 
 	
     //protected Function<? super A, A> normalizer;
     
-    protected Function<? super A, X> treePreprocessor;    
+    protected Function<? super A, TC> treePreprocessor;    
     
-    protected Function<? super X, Map<A, Y>> preprocessLeafs;
+    protected Function<? super TC, Map<A, LC>> preprocessLeafs;
     
-    protected Function<? super X, ? extends Tree<A>> getTree;
+    protected Function<? super TC, ? extends Tree<A>> getTree;
     
     
     //protected BiFunction<? super A, ? super X, Y> leafPreprocessor;
-    protected Function<? super Y, G> getGraph;
+    protected Function<? super LC, G> getGraph;
 
     // We do not map inputs directly to graphs, but to an intermediate object of type X from which the graph for indexing is obtained
     //protected Function<? super A, G> opToGraph;
 
     //protected Function<A, List<A>> parentToChildren;
 
-    protected SubgraphIsomorphismIndex<Entry<K, Long>, G, N> index;
+    protected SubgraphIsomorphismIndex<Entry<K, Long>, G, L> index;
     
-    protected Function<? super BiMap<N, N>, ? extends BiMap<N, N>> matchingCleaner;
-
+    // This function transforms yields a containment mapping from an sub graph isomorphism
+    // Essentially it returns a mapping of only the variables
+    protected Function<? super BiMap<L, L>, ? extends BiMap<V, V>> graphIsoToContainmentMapping;
+    protected Function<? super BiMap<V, V>, ? extends BiMap<L, L>> containmentMappingToSolutionContribution;
+    
+    
+    
     //protected TriFunction<? super A, ? super A, TreeMapping<A, A, BiMap<N, N>, V>, ? extends Entry<BiMap<N, N>, V>> nodeMapper;
     
     //protected BiFunction<? super X, ?super X, ? extends NodeMapper<A, A, BiMap<N, N>, V>> nodeMapperFactory;
     //protected BiFunction<? super X, ? super X, ? extends NodeMapper<? super A, ? super A, ? super BiMap<Node, Node>, ? extends V>> nodeMapperFactory;
-    protected BiFunction<? super X, ? super X, ? extends NodeMapper<A, A, BiMap<N, N>, BiMap<N, N>, V>> nodeMapperFactory;
+
     
-    protected Table<K, Long, LeafInfo<Entry<K, Long>, A, X, Y, G>> keyToNodeIndexToInfo = HashBasedTable.create();
+    protected TriFunction<? super TC, ? super TC, ? super Table<A, A, BiMap<L, L>>, ? extends NodeMapper<A, A, BiMap<V, V>, BiMap<V, V>, R>> nodeMapperFactory;
+    
+    
+    //protected NodeMapperFactory<A, A, BiMap<N, N>, BiMap<N, N>, V> nodeMapperFactory;
+    
+    
+    protected Table<K, Long, LeafInfo<Entry<K, Long>, A, TC, LC, G>> keyToNodeIndexToInfo = HashBasedTable.create();
 
 
 
@@ -150,10 +171,10 @@ public class QueryContainmentIndexImpl<K, X, Y, G, N, A, V>
     /* (non-Javadoc)
 	 * @see org.aksw.jena_sparql_api.query_containment.index.QueryContainmentIndex#getIndex()
 	 */
-    @Override
-	public SubgraphIsomorphismIndex<Entry<K, Long>, G, N> getIndex() {
-		return index;
-	}
+//    @Override
+//	public SubgraphIsomorphismIndex<Entry<K, Long>, G, L> getIndex() {
+//		return index;
+//	}
 
     /**
      * Creates a QueryContainmentIndex instance for SPARQL queries
@@ -176,41 +197,70 @@ public class QueryContainmentIndexImpl<K, X, Y, G, N, A, V>
 //        return result;
 //    }
 
-    public static <K, V> QueryContainmentIndex<K, DirectedGraph<Node, Triple>, Node, Op, V> create(
+    public static <K, R> QueryContainmentIndex<K, DirectedGraph<Node, Triple>, Var, Op, R> create(
     		SubgraphIsomorphismIndex<Entry<K, Long>, DirectedGraph<Node, Triple>, Node> sii,
-    		BiFunction<OpContext, OpContext, ? extends NodeMapper<Op, Op, BiMap<Node, Node>, BiMap<Node, Node>, V>> nodeMapperFactory) {
+    		TriFunction<? super OpContext, ? super OpContext, ? super Table<Op, Op, BiMap<Node, Node>>, ? extends NodeMapper<Op, Op, BiMap<Var, Var>, BiMap<Var, Var>, R>> nodeMapperFactory) {
 
-    		QueryContainmentIndex<K, DirectedGraph<Node, Triple>, Node, Op, V> result =
-        		new QueryContainmentIndexImpl<K, OpContext, OpGraph, DirectedGraph<Node, Triple>, Node, Op, V>(
+    		QueryContainmentIndex<K, DirectedGraph<Node, Triple>, Var, Op, R> result =
+        		new QueryContainmentIndexImpl<K, OpContext, OpGraph, DirectedGraph<Node, Triple>, Node, Var, Op, R>(
         				OpContext::create,
         				OpContext::getLeafOpGraphs,
-		                OpContext::getNormalizedOpTree,		                
-		                //(op, opContext) -> QueryContainmentIndexImpl.queryToOpGraph(op),
-		                opGraph -> opGraph.getJGraphTGraph(),//opContext.getOpAsGraph().getJGraphTGraph(),
+		                OpContext::getNormalizedOpTree,
+		                
+		                OpGraph::getJGraphTGraph,
+		                //opGraph -> opGraph.getJGraphTGraph(),//opContext.getOpAsGraph().getJGraphTGraph(),
+
 		                sii,
-		                QueryContainmentIndexImpl::retainVarMappingsOnly,
+
+		                QueryContainmentIndexImpl::retainVarMappingsOnlyAsVars,
+		                QueryContainmentIndexImpl::toNodes,
+		                
 		                nodeMapperFactory
 		                );
         return result;
     }
+
     
+    public static BiMap<Var, Var> retainVarMappingsOnlyAsVars(BiMap<Node, Node> iso) {
+    	return toVars(retainVarMappingsOnly(iso));
+    }
+
     public static BiMap<Node, Node> retainVarMappingsOnly(BiMap<Node, Node> iso) {
     	BiMap<Node, Node> result = iso.entrySet().stream()
     		.filter(e -> e.getKey().isVariable())
-    		.collect(ExpressionMapper.toMap(Entry::getKey, Entry::getValue, HashBiMap::create));
+    		.collect(CollectorUtils.toMap(Entry::getKey, Entry::getValue, HashBiMap::create));
     	return result;
     }
 
+    
+    public static BiMap<Var, Var> toVars(BiMap<Node, Node> iso) {
+    	BiMap<Var, Var> result = iso.entrySet().stream()
+        		.filter(e -> e.getKey().isVariable() && e.getValue().isVariable())
+        		.collect(CollectorUtils.toMap(e -> (Var)e.getKey(), e -> (Var)e.getValue(), HashBiMap::create));
+        	return result;    	
+    }
+    
+    public static BiMap<Node, Node> toNodes(BiMap<Var, Var> containmentMapping) {
+    	BiMap<Node, Node> result = containmentMapping.entrySet().stream()
+        		.collect(CollectorUtils.toMap(Entry::getKey, Entry::getValue, HashBiMap::create));
+        	return result;    	
+    }
+    
+    
+    
     public QueryContainmentIndexImpl(
-            Function<? super A, X> preprocessor,
-            Function<? super X, Map<A, Y>> preprocessLeafs,
-            Function<? super X, Tree<A>> getTree,            		
+            Function<? super A, TC> preprocessor,
+            Function<? super TC, Map<A, LC>> preprocessLeafs,
+            Function<? super TC, Tree<A>> getTree,            		
             //BiFunction<? super A, ? super X, Y> leafPreprocessor,
-            Function<? super Y, G> getGraph,
+            Function<? super LC, G> getGraph,
             
-            SubgraphIsomorphismIndex<Entry<K, Long>, G, N> index,
-            Function<? super BiMap<N, N>, ? extends BiMap<N, N>> matchingCleaner,
-            BiFunction<? super X, ?super X, ? extends NodeMapper<A, A, BiMap<N, N>, BiMap<N, N>, V>> nodeMapperFactory
+            SubgraphIsomorphismIndex<Entry<K, Long>, G, L> index,
+            Function<? super BiMap<L, L>, ? extends BiMap<V, V>> graphIsoToContainmentMapping,
+            Function<? super BiMap<V, V>, ? extends BiMap<L, L>> containmentMappingToSolutionContribution,            
+            
+            		
+            TriFunction<? super TC, ? super TC, ? super Table<A, A, BiMap<L, L>>, ? extends NodeMapper<A, A, BiMap<V, V>, BiMap<V, V>, R>> nodeMapperFactory
     		) {
         super();
         this.treePreprocessor = preprocessor;
@@ -220,12 +270,14 @@ public class QueryContainmentIndexImpl<K, X, Y, G, N, A, V>
         this.getGraph = getGraph;
         //this.metaGraphToGraph = metaGraphToGraph;        
         this.index = index;
-        this.matchingCleaner = matchingCleaner;
+        this.graphIsoToContainmentMapping = graphIsoToContainmentMapping;
+        this.containmentMappingToSolutionContribution = containmentMappingToSolutionContribution;
+        
         this.nodeMapperFactory = nodeMapperFactory;
     }
 
 
-    /* (non-Javadoc)
+	/* (non-Javadoc)
 	 * @see org.aksw.jena_sparql_api.query_containment.index.QueryContainmentIndex#remove(K)
 	 */
     @Override
@@ -249,21 +301,21 @@ public class QueryContainmentIndexImpl<K, X, Y, G, N, A, V>
     	// TODO The normalizer should become part of the preprocessor
         //A normViewOp = normalizer.apply(viewOp);
         
-    	X preprocessedA = treePreprocessor.apply(viewOp);
-    	Tree<A> tree = getTree.apply(preprocessedA);
+    	TC treeContextA = treePreprocessor.apply(viewOp);
+    	Tree<A> tree = getTree.apply(treeContextA);
 
         long leafNodeId = 0;
     	
-    	Map<A, Y> leafToPreprocessed = preprocessLeafs.apply(preprocessedA);
-    	for(Entry<A, Y> x : leafToPreprocessed.entrySet()) {
-    		A op = x.getKey();
+    	Map<A, LC> leafContextMap = preprocessLeafs.apply(treeContextA);
+    	for(Entry<A, LC> leafContextEntry : leafContextMap.entrySet()) {
+    		A op = leafContextEntry.getKey();
             TreeNode<A> node = new TreeNodeImpl<>(tree, op);
 
-            Y leafPreprocessed = x.getValue();
+            LC leafContext = leafContextEntry.getValue();
             //Y leafPreprocessed = leafPreprocessor.apply(op, preprocessedA);
             
             //X preprocessed = treePreprocessor.apply(op);
-            G graph = getGraph.apply(leafPreprocessed);
+            G graph = getGraph.apply(leafContext);
             
             //G graph = getGraph.apply(preprocessed);//opToGraph.apply(op);
             
@@ -275,7 +327,7 @@ public class QueryContainmentIndexImpl<K, X, Y, G, N, A, V>
             if(graph != null) {
                 Entry<K, Long> e = new SimpleEntry<>(key, leafNodeId);
 
-                LeafInfo<Entry<K, Long>, A, X, Y, G> leafInfo = new LeafInfo<>(e, preprocessedA, leafPreprocessed, graph, node);
+                LeafInfo<Entry<K, Long>, A, TC, LC, G> leafInfo = new LeafInfo<>(e, treeContextA, leafContext, graph, node);
                 
                 keyToNodeIndexToInfo.put(key, leafNodeId, leafInfo);
                 //System.out.println("Insert: " + e);
@@ -337,10 +389,10 @@ public class QueryContainmentIndexImpl<K, X, Y, G, N, A, V>
 
 
     // Tree<A> tree
-    public Table<K, A, ProblemNeighborhoodAware<BiMap<N, N>, ?>> lookupLeaf(X userContext, Entry<A, Y> userLeaf, BiMap<N, N> baseMatching) {
+    public Table<K, A, ProblemNeighborhoodAware<BiMap<L, L>, ?>> lookupLeaf(TC userContext, Entry<A, LC> userLeaf, BiMap<V, V> baseMatching) {
         
     	// FIXME Make identities configurable
-    	Table<K, A, ProblemNeighborhoodAware<BiMap<N, N>, ?>> result = TreeMapper.createTable(true, true);
+    	Table<K, A, ProblemNeighborhoodAware<BiMap<L, L>, ?>> result = TreeMapper.createTable(true, true);
 
         // FIXME the user processing may require different preprocessing efforts than that of the view, so enhance to different preprocessors
         
@@ -348,31 +400,35 @@ public class QueryContainmentIndexImpl<K, X, Y, G, N, A, V>
         
         //Y preprocessed = leafPreprocessor.apply(userLeaf, null);
         //G graph = opToGraph.apply(leaf);
-        Y preprocessed = userLeaf.getValue();//leafMap.get(userLeaf);
+        LC preprocessed = userLeaf.getValue();//leafMap.get(userLeaf);
         G graph = getGraph.apply(preprocessed);
         if(graph == null) {
         	// TODO Maybe we should raise an exception here
         	logger.warn("Graph was null for node: " + userLeaf);
         	//throw new RuntimeException("Graph was null for node: " + leaf);
         } else {
-	        Multimap<Entry<K, Long>, BiMap<N, N>> matches = index.lookupX(graph, false);
+	        Multimap<Entry<K, Long>, BiMap<L, L>> matches = index.lookup(graph, false);
 	
-	        for(Entry<Entry<K, Long>, BiMap<N, N>> e : matches.entries()) {
+	        for(Entry<Entry<K, Long>, BiMap<L, L>> e : matches.entries()) {
 	            Entry<K, Long> f = e.getKey();
 	            K viewKey = f.getKey();
 	            Long leafIndex = f.getValue();
 	
-	            LeafInfo<Entry<K, Long>, A, X, Y, G> leafInfo = keyToNodeIndexToInfo.get(viewKey, leafIndex); 
+	            LeafInfo<Entry<K, Long>, A, TC, LC, G> leafInfo = keyToNodeIndexToInfo.get(viewKey, leafIndex); 
 	            
 	            TreeNode<A> viewTreeNode = leafInfo.getNode();
 	            A leafNode = viewTreeNode.getNode();
-	            BiMap<N, N> rawMatching = e.getValue();
+	            BiMap<L, L> rawMatching = e.getValue();
 	
-	            // TODO Filter solutions
-	            BiMap<N, N> matching = matchingCleaner.apply(rawMatching);
+	            // Filter solutions
+	            //BiMap<N, N> matching = matchingCleaner.apply(rawMatching);
 	            
+	            // NOTE We are NOT filtering out non-variable node here, because we want to pass the complete matching for a leaf on to the
+	            // nodeMapper
 	            
-	            ProblemNeighborhoodAware<BiMap<N, N>, ?> problems = new ProblemStaticSolutions<>(Collections.singleton(matching));
+	            // However, for non-leaf nodes, the matching needs to be converted to the containmentMapping
+	            
+	            ProblemNeighborhoodAware<BiMap<L, L>, ?> problems = new ProblemStaticSolutions<>(Collections.singleton(rawMatching));
 	
 	            result.put(viewKey, leafNode, problems);
 	        }	
@@ -384,8 +440,8 @@ public class QueryContainmentIndexImpl<K, X, Y, G, N, A, V>
 	 * @see org.aksw.jena_sparql_api.query_containment.index.QueryContainmentIndex#match(A)
 	 */
     @Override
-	public Stream<Entry<K, TreeMapping<A, A, BiMap<N, N>, V>>> match(A userOp) {
-        TreeMapper<K, X, X, Y, Y, A, A, BiMap<N, N>, BiMap<N, N>, V> treeMapper = new TreeMapper<K, X, X, Y, Y, A, A, BiMap<N, N>, BiMap<N, N>, V>(
+	public Stream<Entry<K, TreeMapping<A, A, BiMap<V, V>, R>>> match(A userOp) {
+        TreeMapper<K, TC, TC, LC, LC, A, A, BiMap<L, L>, BiMap<V, V>, BiMap<V, V>, R> treeMapper = new TreeMapper<K, TC, TC, LC, LC, A, A, BiMap<L, L>, BiMap<V, V>, BiMap<V, V>, R>(
             key -> keyToNodeIndexToInfo.row(key).values().iterator().next().getMetaGraph(),
             getTree,
             
@@ -394,6 +450,9 @@ public class QueryContainmentIndexImpl<K, X, Y, G, N, A, V>
             //(preprocessed) -> preprocessed.getNormalizedOpTree(), 
             this::lookupLeaf,
             nodeMapperFactory,
+            
+            graphIsoToContainmentMapping,
+            
             (m, c) -> MapUtils.mergeCompatible(m, c, HashBiMap::create),
             (m1, m2) -> MapUtils.mergeCompatible(m1, m2, HashBiMap::create),
             Objects::isNull,
@@ -402,15 +461,15 @@ public class QueryContainmentIndexImpl<K, X, Y, G, N, A, V>
         );
 
         //A normUserOp = normalizer.apply(userOp);
-        X preprocessedUserOp = treePreprocessor.apply(userOp);
+        TC preprocessedUserOp = treePreprocessor.apply(userOp);
         //A normUserOp = getNormalizedOp.apply(normUserContext);
         
         //Tree<A> userTree = TreeImpl.create(normUserOp, parentToChildren);//OpUtils.createTree((Op)normViewOp);
         //Tree<A> userTree = getTree.apply(preprocessedUserOp);
         
         
-        BiMap<N, N> baseMatching = HashBiMap.create();                
-        Stream<Entry<K, TreeMapping<A, A, BiMap<N, N>, V>>> result = treeMapper.createMappings(baseMatching, preprocessedUserOp);
+        BiMap<V, V> baseMatching = HashBiMap.create();                
+        Stream<Entry<K, TreeMapping<A, A, BiMap<V, V>, R>>> result = treeMapper.createMappings(baseMatching, preprocessedUserOp);
 
         return result;
     }

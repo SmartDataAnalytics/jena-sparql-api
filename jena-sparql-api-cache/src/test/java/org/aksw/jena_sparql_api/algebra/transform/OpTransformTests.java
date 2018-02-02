@@ -122,7 +122,7 @@ public class OpTransformTests {
 
         // TODO: Filter order is non deterministic; use LinkedHashSets
         // For new assert using our query equivalence algo
-        boolean isMatch = SparqlQueryContainmentUtils.tryMatch(query, actual, VarMapper::createVarMapCandidates);
+        boolean isMatch = SparqlQueryContainmentUtils.tryMatchOld(query, actual, VarMapper::createVarMapCandidates);
         Assert.assertEquals(true, isMatch);
     }
 
@@ -148,7 +148,7 @@ public class OpTransformTests {
         Query actual = OpAsQuery.asQuery(op);
         actual.setPrefix("skos", "http://www.w3.org/2004/02/skos/core#");
 
-        boolean isMatch = SparqlQueryContainmentUtils.tryMatch(query, actual, VarMapper::createVarMapCandidates);
+        boolean isMatch = SparqlQueryContainmentUtils.tryMatchOld(query, actual, VarMapper::createVarMapCandidates);
         Assert.assertEquals(true, isMatch);
     }
 

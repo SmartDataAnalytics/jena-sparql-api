@@ -27,11 +27,11 @@ public class Refinement {
         return result;
     }
 
-    public static <T> Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> groupsToProblems(
+    public static <T, V> Collection<ProblemNeighborhoodAware<Map<V, V>, V>> groupsToProblems(
             Map<?, Entry<Set<T>, Set<T>>> groups,
-            Map<Var, Var> newBase,
-            TriFunction<Set<T>, Set<T>, Map<Var, Var>, ProblemNeighborhoodAware<Map<Var, Var>, Var>> groupToProblem) {
-        Collection<ProblemNeighborhoodAware<Map<Var, Var>, Var>> result = groups.values().stream()
+            Map<V, V> newBase,
+            TriFunction<Set<T>, Set<T>, Map<V, V>, ProblemNeighborhoodAware<Map<V, V>, V>> groupToProblem) {
+        Collection<ProblemNeighborhoodAware<Map<V, V>, V>> result = groups.values().stream()
                 .map(e -> groupToProblem.apply(e.getKey(), e.getValue(), newBase)) //new ProblemVarMappingQuad(e.getKey(), e.getValue(), newBase))
                 .collect(Collectors.toList());
 

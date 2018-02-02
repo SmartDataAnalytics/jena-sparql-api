@@ -26,10 +26,10 @@ public class QuerySupplierImpl
 
         if(prologue != null) {
             result.setBaseURI(prologue.getBaseURI());
-            PrefixMappingImpl tmp = new PrefixMappingImpl();
-            // Note: Query parsing may modify the prefixes, hence create a copy of the prefix mappings
-            tmp.setNsPrefixes(prologue.getPrefixMapping());
-            result.setPrefixMapping(tmp);
+//            PrefixMappingImpl tmp = new PrefixMappingImpl();
+//            // Note: Query parsing may modify the prefixes, hence create a copy of the prefix mappings
+//            tmp.setNsPrefixes(prologue.getPrefixMapping());
+            result.getPrefixMapping().setNsPrefixes(prologue.getPrefixMapping());
         }
 
         return result;

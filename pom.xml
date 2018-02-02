@@ -6,7 +6,7 @@
 	<artifactId>jena-sparql-api-parent</artifactId>
 
 	<packaging>pom</packaging>
-	<version>3.5.0-2</version>
+	<version>3.5.0-3</version>
 	<name>Jena SPARQL API - Parent</name>
 	<description>An RDF library for abstracting SPARQL queries.</description>
 	<url>https://github.com/SmartDataAnalytics/jena-sparql-api</url>
@@ -71,7 +71,7 @@
 		<url>https://github.com/SmartDataAnalytics/jena-sparql-api</url>
 		<connection>scm:git:git://github.com/SmartDataAnalytics/jena-sparql-api.git</connection>
 		<developerConnection>scm:git:git@github.com:SmartDataAnalytics/jena-sparql-api.git</developerConnection>
-		<tag>jena-sparql-api-parent-3.5.0-2</tag>
+		<tag>HEAD</tag>
 	</scm>
 
 	<developers>
@@ -105,7 +105,7 @@
 
 		<spring.version>4.3.10.RELEASE</spring.version>
 		<spring.batch.version>3.0.8.RELEASE</spring.batch.version>
-		<aksw.commons.version>0.8.7</aksw.commons.version>
+		<aksw.commons.version>0.8.8</aksw.commons.version>
 
 		<atmosphere.version>2.0.0.RC3</atmosphere.version>
 		<atmosphere-spring.version>1.1.0.RC5</atmosphere-spring.version>
@@ -500,13 +500,13 @@
 			<dependency>
 				<groupId>org.aksw.commons</groupId>
 				<artifactId>jena-jgrapht-bindings</artifactId>
-				<version>1.0.0</version>
+				<version>1.0.2</version>
 			</dependency>
 
 			<dependency>
 				<groupId>org.aksw.commons</groupId>
 				<artifactId>subgraph-isomorphism-index-jena</artifactId>
-				<version>1.0.1</version>
+				<version>1.0.2</version>
 			</dependency>
 
 

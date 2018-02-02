@@ -14,6 +14,6 @@ public class JenaExtensionCsv {
     }
     
     public static void addPrefixes(PrefixMapping pm) {
-		pm.setNsPrefix("csv", JenaExtensionCsv.ns);
+		pm.setNsPrefix("csv", ns);
     }
 }

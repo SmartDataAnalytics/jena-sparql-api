@@ -1,6 +1,5 @@
 package fr.inrialpes.tyrexmo.testqc;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,6 +21,7 @@ import org.aksw.beast.benchmark.performance.PerformanceBenchmark;
 import org.aksw.beast.enhanced.ResourceEnh;
 import org.aksw.beast.rdfstream.RdfGroupBy;
 import org.aksw.beast.rdfstream.RdfStream;
+import org.aksw.beast.viz.xchart.XChartStatBarChartBuilder;
 import org.aksw.beast.viz.xchart.XChartStatBarChartProcessor;
 import org.aksw.beast.vocabs.CV;
 import org.aksw.beast.vocabs.IV;
@@ -32,11 +32,9 @@ import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcReader;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.expr.aggregate.AggAvg;
 import org.apache.jena.sparql.expr.aggregate.lib.AccStatStdDevPopulation;
-import org.apache.jena.util.ResourceUtils;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.knowm.xchart.CategoryChart;
@@ -81,19 +79,25 @@ public class MainTestContain {
             "fr.inrialpes.tyrexmo.queryanalysis;version=\"1.0.0\"",
 
             // Jena 3
+            "org.apache.jena.atlas.io;version=\"1.0.0\"",
+            "org.apache.jena.ext.com.google.common.collect;version=\"1.0.0\"",
+            "org.apache.jena.graph;version=\"1.0.0\"",
+            "org.apache.jena.graph.impl;version=\"1.0.0\"",
+            "org.apache.jena.rdf.model;version=\"1.0.0\"",
+            "org.apache.jena.shared;version=\"1.0.0\"",
+            "org.apache.jena.query;version=\"1.0.0\"",
             "org.apache.jena.sparql.algebra;version=\"1.0.0\"",
             "org.apache.jena.sparql.algebra.optimize;version=\"1.0.0\"",
             "org.apache.jena.sparql.algebra.op;version=\"1.0.0\"",
             "org.apache.jena.sparql.algebra.expr;version=\"1.0.0\"",
             "org.apache.jena.sparql.core;version=\"1.0.0\"",
-            "org.apache.jena.sparql.syntax;version=\"1.0.0\"",
-            "org.apache.jena.sparql.expr;version=\"1.0.0\"",
             "org.apache.jena.sparql.graph;version=\"1.0.0\"",
-            "org.apache.jena.query;version=\"1.0.0\"",
-            "org.apache.jena.graph;version=\"1.0.0\"",
-            "org.apache.jena.ext.com.google.common.collect;version=\"1.0.0\"",
             "org.apache.jena.sparql.engine.binding;version=\"1.0.0\"",
-            "org.apache.jena.atlas.io;version=\"1.0.0\"",
+            "org.apache.jena.sparql.expr;version=\"1.0.0\"",
+            "org.apache.jena.sparql.syntax;version=\"1.0.0\"",
+            "org.apache.jena.sparql.util;version=\"1.0.0\"",
+            "org.apache.jena.util.iterator;version=\"1.0.0\"",
+            "org.apache.jena.vocabulary;version=\"1.0.0\"",
 
             // Jena 2 (legacy)
             "com.hp.hpl.jena.sparql;version=\"1.0.0\"",
@@ -130,8 +134,17 @@ public class MainTestContain {
             //"java_cup.runtime;version=\"1.0.0\""
         ));
 
-        //List<String> jarFileNames = Arrays.asList("jsa", "sparqlalgebra", "afmu", "treesolver");
-        List<String> jarFileNames = Arrays.asList("jsa");
+        List<String> jarFileNames = Arrays.asList("jsa", "sparqlalgebra", "afmu", "treesolver");
+        //List<String> jarFileNames = Arrays.asList("jsa");
+
+//        List<String> algos = Arrays.asList();
+//        boolean isBlacklist = true;
+
+//        List<String> algos = Arrays.asList("JSAI", "JSAC", "AFMU", "TS");
+        List<String> algos = Arrays.asList("JSAI", "JSAC", "TS");
+//        List<String> algos = Arrays.asList("JSAI", "JSAC");
+//        List<String> algos = Arrays.asList("JSAC", "AFMU", "TS");
+        boolean isBlacklist = true;
 
         List<File> jarFiles = jarFileNames.stream().map(implStr -> {
         //List<File> jarFiles = Arrays.asList("treesolver").stream().map(implStr -> {
@@ -143,9 +156,9 @@ public class MainTestContain {
 
         // TODO Ideally have the blacklist in the data
         Map<String, Predicate<String>> blackLists = new HashMap<>();
-        blackLists.put("AFMU", (r) -> Arrays.asList("#nop3", "#nop4", "#nop15", "#nop16", "#p3", "#p4", "#p15", "#p16", "#p23", "#p24", "#p25", "#p26").stream().anyMatch(r::contains));
-        blackLists.put("SA", (r) -> Arrays.asList("UCQProj").stream().anyMatch(r::contains));
-        blackLists.put("TS", (r) -> Arrays.asList("#p23", "#p24", "#p15", "#p25", "#p26").stream().anyMatch(r::contains));         // slow p15, p25, p26
+        blackLists.put("AFMU", r -> Arrays.asList("#nop3", "#nop4", "#nop15", "#nop16", "#p3", "#p4", "#p15", "#p16", "#p23", "#p24", "#p25", "#p26").stream().anyMatch(r::contains));
+        blackLists.put("SA", r -> Arrays.asList("UCQProj").stream().anyMatch(r::contains));
+        blackLists.put("TS", r -> Arrays.asList("#p23", "#p24", "#p15", "#p25", "#p26").stream().anyMatch(r::contains));         // slow p15, p25, p26
 
         //blackLists.put("JSAC", (r) -> true);
 
@@ -159,7 +172,7 @@ public class MainTestContain {
         Map<String, Predicate<String>> overrides = new HashMap<>();
         overrides.put("JSAI", jsaOverrides::contains);
         overrides.put("JSAC", jsaOverrides::contains);
-
+        overrides.put("JSAG", jsaOverrides::contains);
 
 
 
@@ -167,9 +180,18 @@ public class MainTestContain {
         //RDFDataMgr.read(model, new ClassPathResource("tree-matcher-queries.ttl").getInputStream(), Lang.TURTLE);
         //allTasks.addAll(model.listSubjectsWithProperty(RDF.type, SparqlQcVocab.ContainmentTest).toSet());
 
-//        allTasks.addAll(SparqlQcReader.loadTasks("sparqlqc/1.4/benchmark/cqnoproj.rdf"));
-//        allTasks.addAll(SparqlQcReader.loadTasks("sparqlqc/1.4/benchmark/ucqproj.rdf"));
-        allTasks.addAll(SparqlQcReader.loadTasksSqcf("saleem-swdf-benchmark.ttl"));
+        allTasks.addAll(SparqlQcReader.loadTasks("sparqlqc/1.4/benchmark/cqnoproj.rdf"));
+        allTasks.addAll(SparqlQcReader.loadTasks("sparqlqc/1.4/benchmark/ucqproj.rdf"));
+
+
+        boolean debugASpecificTask = false;
+        if(debugASpecificTask) {
+	        allTasks = allTasks.stream()
+	        		.filter(t -> t.getURI().equals("http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop16"))
+	        		.collect(Collectors.toList());
+        }
+
+//        allTasks.addAll(SparqlQcReader.loadTasksSqcf("saleem-swdf-benchmark.ttl"));
 
 //        params.addAll(createTestParams("sparqlqc/1.4/benchmark/cqnoproj.rdf", "sparqlqc/1.4/benchmark/noprojection/*"));
 //        params.addAll(createTestParams("sparqlqc/1.4/benchmark/ucqproj.rdf", "sparqlqc/1.4/benchmark/projection/*"));
@@ -210,6 +232,17 @@ public class MainTestContain {
                             shortLabel = "ANON" + ++anonId;
                         }
 
+                        boolean contained = algos.contains(shortLabel);
+                        boolean skip = isBlacklist ? contained : !contained;
+                        if(skip) {
+                        	continue;
+                        }
+                        
+//                        System.out.println("[HACK] Remove this line eventually!");
+//                        if(!shortLabel.equals("JSAG")) {
+//                        	continue;
+//                        }
+                        
                         Object service = context.getService(sr);
 
                         if(service instanceof ContainmentSolver || service instanceof LegacyContainmentSolver) {
@@ -312,7 +345,13 @@ public class MainTestContain {
               .yAxisTitle("Time (s)")
               .build();
 
-      XChartStatBarChartProcessor.addSeries(xChart, avgs, null, null, null, null, true);
+      XChartStatBarChartBuilder
+      	.from(xChart)
+      	.setErrorBarsEnabled(true)
+      	.setAutoRange(true)
+      	.processSeries(avgs);
+      
+      //XChartStatBarChartProcessor.addSeries(xChart, avgs, null, null, null, null, true);
 
       xChart.getStyler().setLegendPosition(LegendPosition.InsideNW);
 
@@ -349,8 +388,8 @@ public class MainTestContain {
 
     public static Stream<Resource> run(Collection<Resource> tasks, String methodLabel, Object solver, BiFunction<Resource, Object, TaskImpl> taskParser) throws Exception {
 
-        int warmUpRuns = 0;
-        int evalRuns = 1;
+        int warmUpRuns = 3;
+        int evalRuns = 3;
 
         Consumer<Resource> postProcess = (r) -> {
                 TaskImpl task = r.as(ResourceEnh.class).getTag(TaskImpl.class).get();
@@ -358,7 +397,8 @@ public class MainTestContain {
 
                   if(!r.getRequiredProperty(IV.assessment).getString().equals("CORRECT")) {
                       logger.warn("Incorrect test result for task " + r + "(" + task + "): " + FactoryBeanRdfBenchmarkRunner.toString(r, RDFFormat.TURTLE_BLOCKS));
-
+                  } else {
+                	  logger.debug("Correct result for task " + r);
                   }
               };
 
@@ -385,10 +425,10 @@ public class MainTestContain {
         //"http://example.org/query-" + runName + "-" + workloadLabel + "-run" + runId
         Stream<Resource> result = workflow
             .apply(tasks).get()
-            .peek(r -> r.addProperty(RDFS.comment, r.getProperty(IguanaVocab.workload).getProperty(RDFS.label).getString()))
+            .peek(r -> r.addProperty(IV.job, r.getProperty(IguanaVocab.workload).getProperty(RDFS.label).getString()))
             //.peek(r -> System.out.println(r.getProperty(RDFS.comment)))
             .peek(r -> r.addProperty(IV.method, methodLabel))
-            .map(r -> r.as(ResourceEnh.class).rename(uriPattern, IV.method, IV.run, RDFS.comment));
+            .map(r -> r.as(ResourceEnh.class).rename(uriPattern, IV.method, IV.run, IV.job));
             //.peek(r -> r.getModel().write(System.out, "TURTLE"));
             //.forEach(r -> result.add(r.getModel()));
 

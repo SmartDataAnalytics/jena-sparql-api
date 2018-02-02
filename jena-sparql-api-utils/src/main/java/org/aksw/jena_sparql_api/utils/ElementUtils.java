@@ -219,7 +219,7 @@ public class ElementUtils {
         return result;
     }
 
-    public static Element createRenamedElement(Element element, Map<? extends Node, ? extends Node> nodeMap) {
+    public static Element createRenamedElement(Element element, Map<?, ? extends Node> nodeMap) {
         NodeTransform nodeTransform = new NodeTransformRenameMap(nodeMap);
         Element result = applyNodeTransform(element, nodeTransform);
         return result;

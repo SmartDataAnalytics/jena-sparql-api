@@ -25,6 +25,13 @@ public class Activator implements BundleActivator
 
             context.registerService(ContainmentSolver.class, new ContainmentSolverWrapperJsaSubGraphIsomorphism(), meta);
         }
+
+        {
+            Hashtable<String, String> meta = new Hashtable<>();
+            meta.put("SHORT_LABEL", "JSAG");
+
+            context.registerService(ContainmentSolver.class, new ContainmentSolverWrapperJsaSubgraphIsomorphismIndex(), meta);
+        }
     }
 
     public void stop(BundleContext context)

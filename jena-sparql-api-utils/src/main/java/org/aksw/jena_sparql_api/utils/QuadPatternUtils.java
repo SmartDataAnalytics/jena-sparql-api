@@ -38,7 +38,7 @@ public class QuadPatternUtils {
         return result;
     }
 
-    public static QuadPattern signaturize(QuadPattern quadPattern, Map<? extends Node, ? extends Node> nodeMap) {
+    public static QuadPattern signaturize(QuadPattern quadPattern, Map<?, ? extends Node> nodeMap) {
         NodeTransform baseTransform = new NodeTransformRenameMap(nodeMap);
         NodeTransform nodeTransform = new NodeTransformSignaturize(baseTransform);
         QuadPattern result = NodeTransformLib.transform(nodeTransform, quadPattern);

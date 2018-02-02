@@ -13,12 +13,15 @@ import org.aksw.jena_sparql_api.core.SparqlServiceImpl;
 import org.aksw.jena_sparql_api.core.SparqlServiceReference;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryHttp;
+import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
+import org.aksw.jena_sparql_api.core.connection.UpdateExecutionFactorySparqlUpdateConnection;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.apache.http.client.HttpClient;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
@@ -191,4 +194,15 @@ public class FluentSparqlService<P>
         return result;
     }
 
+    
+    public static FluentSparqlService<?> from(RDFConnection conn) {
+        SparqlService sparqlService = new SparqlServiceImpl(
+        		null,
+        		null,
+        		new QueryExecutionFactorySparqlQueryConnection(conn),
+        		new UpdateExecutionFactorySparqlUpdateConnection(conn));
+    	
+        FluentSparqlService<?> result = from(sparqlService);
+    	return result;
+    }
 }

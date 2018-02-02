@@ -18,21 +18,21 @@ import org.apache.jena.sparql.expr.ExprTransformCopy;
 public class ExprTransformVariableOrder
 	extends ExprTransformCopy
 {
-	protected Predicate<Expr> isSymmetric;
+	protected Predicate<Expr> isCommutative;
 
 	public ExprTransformVariableOrder() {
-		this(ExprTransformVariableOrder::isSymmetric);
+		this(ExprTransformVariableOrder::isCommutative);
 	}
 
-	public ExprTransformVariableOrder(Predicate<Expr> isSymmetric) {
+	public ExprTransformVariableOrder(Predicate<Expr> isCommutative) {
 		super();
-		this.isSymmetric = isSymmetric;
+		this.isCommutative = isCommutative;
 	}
 
 	@Override
 	public Expr transform(ExprFunction2 func, Expr a, Expr b) {
 		List<Expr> args = Arrays.asList(a, b);
-		if(isSymmetric.test(func)) {
+		if(isCommutative.test(func)) {
 			Collections.sort(args, ExprUtils::compare);
 		}
 
@@ -45,7 +45,7 @@ public class ExprTransformVariableOrder
 			E_Multiply.class
 			));
 
-	public static boolean isSymmetric(Expr e) {
+	public static boolean isCommutative(Expr e) {
 		boolean result = symmetricExprClasses.contains(e.getClass());
 		return result;
 	}
