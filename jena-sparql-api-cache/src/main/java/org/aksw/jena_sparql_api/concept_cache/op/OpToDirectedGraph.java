@@ -2,11 +2,10 @@ package org.aksw.jena_sparql_api.concept_cache.op;
 
 import java.util.List;
 
-import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
-import org.jgrapht.experimental.dag.DirectedAcyclicGraph.CycleFoundException;
-import org.jgrapht.graph.DefaultEdge;
 import org.aksw.jena_sparql_api.algebra.utils.OpUtils;
 import org.apache.jena.sparql.algebra.Op;
+import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DirectedAcyclicGraph;
 
 public class OpToDirectedGraph {
 
@@ -27,12 +26,8 @@ public class OpToDirectedGraph {
 
         List<Op> children = OpUtils.getSubOps(op);
         for(Op child : children) {
-            try {
-                result.addVertex(child);
-                result.addDagEdge(op, child);
-            } catch (CycleFoundException e) {
-                throw new RuntimeException(e);
-            }
+            result.addVertex(child);
+            result.addEdge(op, child);
 
             convert(child, result);
         }

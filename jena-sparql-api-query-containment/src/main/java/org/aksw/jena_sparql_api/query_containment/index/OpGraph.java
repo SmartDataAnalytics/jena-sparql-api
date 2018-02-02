@@ -6,7 +6,6 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.expr.Expr;
-import org.jgrapht.DirectedGraph;
 
 import com.google.common.collect.BiMap;
 
@@ -26,7 +25,7 @@ public class OpGraph {
 	protected BiMap<Node, Quad> nodeToQuad;
 	
 	protected Graph jenaGraph;
-	protected DirectedGraph<Node, Triple> jgraphTGraph;
+	protected org.jgrapht.Graph<Node, Triple> jgraphTGraph;
 
 	public OpGraph(Graph jenaGraph, BiMap<Node, Expr> nodeToExpr, BiMap<Node, Quad> nodeToQuad) {
 		super();
@@ -48,7 +47,7 @@ public class OpGraph {
 		return jenaGraph;
 	}
 	
-	public DirectedGraph<Node, Triple> getJGraphTGraph() {
+	public org.jgrapht.Graph<Node, Triple> getJGraphTGraph() {
 		return jgraphTGraph;
 	}
 	

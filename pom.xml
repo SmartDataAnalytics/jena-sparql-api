@@ -6,7 +6,7 @@
 	<artifactId>jena-sparql-api-parent</artifactId>
 
 	<packaging>pom</packaging>
-	<version>3.5.0-4-SNAPSHOT</version>
+	<version>3.6.0-1-SNAPSHOT</version>
 	<name>Jena SPARQL API - Parent</name>
 	<description>An RDF library for abstracting SPARQL queries.</description>
 	<url>https://github.com/SmartDataAnalytics/jena-sparql-api</url>
@@ -91,11 +91,11 @@
 		<!-- <jetty.version>8.1.16.v20140903</jetty.version> -->
 
 
-		<jena.version>3.5.0</jena.version>
+		<jena.version>3.6.0</jena.version>
 		<jetty.version>9.4.8.v20171121</jetty.version>
 <!--		<jetty.jsp.version>9.2.22.v20170606</jetty.jsp.version> -->
 
-		<jgrapht.version>1.0.1</jgrapht.version>
+		<jgrapht.version>1.1.0</jgrapht.version>
 
 		<!-- <jetty-plugin.version>8.1.10.v20130312</jetty-plugin.version> -->
 		<!-- <jersey-spring.version>1.17.1</jersey-spring.version> -->
@@ -500,13 +500,13 @@
 			<dependency>
 				<groupId>org.aksw.commons</groupId>
 				<artifactId>jena-jgrapht-bindings</artifactId>
-				<version>1.0.2</version>
+				<version>1.1.0-SNAPSHOT</version>
 			</dependency>
 
 			<dependency>
 				<groupId>org.aksw.commons</groupId>
 				<artifactId>subgraph-isomorphism-index-jena</artifactId>
-				<version>1.0.2</version>
+				<version>1.1.0-SNAPSHOT</version>
 			</dependency>
 
 

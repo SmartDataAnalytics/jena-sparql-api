@@ -53,7 +53,7 @@ import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.syntax.Element;
-import org.jgrapht.DirectedGraph;
+import org.jgrapht.Graph;
 
 import com.codepoetics.protonpack.StreamUtils;
 import com.codepoetics.protonpack.functions.TriFunction;
@@ -171,9 +171,9 @@ public class SparqlQueryContainmentUtils {
 //        SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> sii = siiValidating;
 //        SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> sii = siiTreeTags;
         
-        SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> sii = ExpressionMapper.createIndex(validate);
+        SubgraphIsomorphismIndex<Entry<Node, Long>, Graph<Node, Triple>, Node> sii = ExpressionMapper.createIndex(validate);
         
-        QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Var, Op, ResidualMatching> index = QueryContainmentIndexImpl.create(sii, nodeMapperFactory);
+        QueryContainmentIndex<Node, Graph<Node, Triple>, Var, Op, ResidualMatching> index = QueryContainmentIndexImpl.create(sii, nodeMapperFactory);
 
  
         //view = QueryFactory.create("PREFIX ex: <http://ex.org/> SELECT * { ?s a ex:Person ; ex:name ?n . FILTER(contains(?n, 'fr')) }");
