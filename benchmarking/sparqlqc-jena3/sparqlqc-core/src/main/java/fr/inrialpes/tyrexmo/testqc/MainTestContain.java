@@ -137,11 +137,14 @@ public class MainTestContain {
         List<String> jarFileNames = Arrays.asList("jsa", "sparqlalgebra", "afmu", "treesolver");
         //List<String> jarFileNames = Arrays.asList("jsa");
 
-        List<String> algos = Arrays.asList();
-        boolean isBlacklist = true;
-
-//        List<String> algos = Arrays.asList("JSAC", "AFMU", "TS");
+//        List<String> algos = Arrays.asList();
 //        boolean isBlacklist = true;
+
+//        List<String> algos = Arrays.asList("JSAI", "JSAC", "AFMU", "TS");
+        List<String> algos = Arrays.asList("JSAI", "JSAC", "TS");
+//        List<String> algos = Arrays.asList("JSAI", "JSAC");
+//        List<String> algos = Arrays.asList("JSAC", "AFMU", "TS");
+        boolean isBlacklist = true;
 
         List<File> jarFiles = jarFileNames.stream().map(implStr -> {
         //List<File> jarFiles = Arrays.asList("treesolver").stream().map(implStr -> {
@@ -385,8 +388,8 @@ public class MainTestContain {
 
     public static Stream<Resource> run(Collection<Resource> tasks, String methodLabel, Object solver, BiFunction<Resource, Object, TaskImpl> taskParser) throws Exception {
 
-        int warmUpRuns = 10;
-        int evalRuns = 10;
+        int warmUpRuns = 3;
+        int evalRuns = 3;
 
         Consumer<Resource> postProcess = (r) -> {
                 TaskImpl task = r.as(ResourceEnh.class).getTag(TaskImpl.class).get();

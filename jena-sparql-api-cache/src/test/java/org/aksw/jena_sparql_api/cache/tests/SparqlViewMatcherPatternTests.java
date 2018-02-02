@@ -60,7 +60,7 @@ public class SparqlViewMatcherPatternTests {
             data[2] = t;
         
 
-            boolean hackToTestOnlyASingleTask = true;
+            boolean hackToTestOnlyASingleTask = false;
             if(hackToTestOnlyASingleTask) {
 	            if(!t.getURI().equals("http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop16")) {
 	            	continue;
@@ -229,9 +229,9 @@ public class SparqlViewMatcherPatternTests {
         if(useOldCode) {
         	actualVerdict = SparqlQueryContainmentUtils.tryMatchOld(viewQuery, userQuery, VarMapper::createVarMapCandidates);
         } else {
-        	for(int i = 0; i < 1000; ++i) {
+        	//for(int i = 0; i < 1000; ++i) {
         		actualVerdict = SparqlQueryContainmentUtils.tryMatch(viewQuery, userQuery, useValidation);
-        	}
+        	//}
         }
         logger.debug("Expected: " + expectedVerdict + " " + (overridden ? "(overridden)" : "") + " - Actual: " + actualVerdict + " Mismatch: " + (expectedVerdict != actualVerdict));
 
