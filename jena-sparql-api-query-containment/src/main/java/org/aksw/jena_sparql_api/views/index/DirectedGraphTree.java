@@ -10,8 +10,10 @@ import org.aksw.commons.collections.trees.TreeUtils;
 import org.aksw.commons.jena.jgrapht.LabeledEdge;
 import org.aksw.commons.jena.jgrapht.LabeledEdgeImpl;
 import org.apache.jena.ext.com.google.common.collect.Sets;
-import org.jgrapht.DirectedGraph;
 import org.jgrapht.EdgeFactory;
+import org.jgrapht.Graph;
+import org.jgrapht.GraphType;
+import org.jgrapht.graph.DefaultGraphType;
 
 import com.google.common.base.Objects;
 
@@ -27,7 +29,7 @@ import com.google.common.base.Objects;
  * @param <E>
  */
 public class DirectedGraphTree<T, E>
-    implements DirectedGraph<T, LabeledEdge<T, E>>
+    implements Graph<T, LabeledEdge<T, E>>
 {
     protected Tree<T> tree;
 
@@ -193,5 +195,20 @@ public class DirectedGraphTree<T, E>
     public boolean removeVertex(T v) {
         throw new UnsupportedOperationException();
     }
+
+	@Override
+	public int degreeOf(T vertex) {
+		return inDegreeOf(vertex) + outDegreeOf(vertex);
+	}
+
+	@Override
+	public GraphType getType() {
+		return DefaultGraphType.directedSimple();
+	}
+
+	@Override
+	public void setEdgeWeight(LabeledEdge<T, E> e, double weight) {
+		throw new UnsupportedOperationException();
+	}
 
 }

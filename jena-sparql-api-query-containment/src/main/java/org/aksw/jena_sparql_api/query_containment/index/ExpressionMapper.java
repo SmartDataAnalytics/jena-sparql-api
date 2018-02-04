@@ -166,13 +166,13 @@ public class ExpressionMapper {
 		//if(viewDnf.size() >= 1 || userDnf.)
 		
 		
-		SubgraphIsomorphismIndex<Long, DirectedGraph<Node, Triple>, Node> sii = createIndex();
+		SubgraphIsomorphismIndex<Long, org.jgrapht.Graph<Node, Triple>, Node> sii = createIndex();
 		//Predicate<Expr> isVar = (e) -> e.isVariable();
         Supplier<Supplier<Node>> ssn = () -> { int[] x = {0}; return () -> NodeFactory.createBlankNode("_" + x[0]++); };
         BiFunction<Expr, BiMap<? extends Node, ? extends Node>, Expr> applyExprIso = (e, iso) -> e.applyNodeTransform(new NodeTransformRenameMap(iso));
         
 		
-		Multimap<BiMap<Var, Var>, Set<Set<Expr>>> result = ExpressionMapper.<Expr, Node, Var, OpGraph, DirectedGraph<Node, Triple>>computeResidualCnf(
+		Multimap<BiMap<Var, Var>, Set<Set<Expr>>> result = ExpressionMapper.<Expr, Node, Var, OpGraph, org.jgrapht.Graph<Node, Triple>>computeResidualCnf(
 				Node::isVariable,
 				node -> (Var)node,
 				applyExprIso,
@@ -217,25 +217,25 @@ public class ExpressionMapper {
         return result;
 	}
 
-	public static SubgraphIsomorphismIndex<Long, DirectedGraph<Node, Triple>, Node> createIndex() {
+	public static SubgraphIsomorphismIndex<Long, org.jgrapht.Graph<Node, Triple>, Node> createIndex() {
 		return createIndex(false);
 	}
 	
 	
-	public static <K> SubgraphIsomorphismIndex<K, DirectedGraph<Node, Triple>, Node> createIndex(boolean validate) {
+	public static <K> SubgraphIsomorphismIndex<K, org.jgrapht.Graph<Node, Triple>, Node> createIndex(boolean validate) {
 		// Create an index entry for each view clause
 		// Then, perform a lookup with each user clause whether there is an entry.
 		// If there is none, the view cannot be used to answer the query
 		
-		SubgraphIsomorphismIndex<K, DirectedGraph<Node, Triple>, Node> siiTreeTags = SubgraphIsomorphismIndexJena.create();
+		SubgraphIsomorphismIndex<K, org.jgrapht.Graph<Node, Triple>, Node> siiTreeTags = SubgraphIsomorphismIndexJena.create();
 
-        SubgraphIsomorphismIndex<K, DirectedGraph<Node, Triple>, Node> sii;
+        SubgraphIsomorphismIndex<K, org.jgrapht.Graph<Node, Triple>, Node> sii;
 
         if(validate) {
 			//SubgraphIsomorphismIndex<Long, DirectedGraph<Node, Triple>, Node> siiFlat = SubgraphIsomorphismIndexJena.createFlat();
-	        SubgraphIsomorphismIndex<K, DirectedGraph<Node, Triple>, Node> siiTagBased = SubgraphIsomorphismIndexJena.createTagBased(new TagMapSetTrie<>(NodeUtils::compareRDFTerms));
+	        SubgraphIsomorphismIndex<K, org.jgrapht.Graph<Node, Triple>, Node> siiTagBased = SubgraphIsomorphismIndexJena.createTagBased(new TagMapSetTrie<>(NodeUtils::compareRDFTerms));
 	
-	        SubgraphIsomorphismIndex<K, DirectedGraph<Node, Triple>, Node> siiValidating = ValidationUtils.createValidatingProxy(SubgraphIsomorphismIndex.class, siiTreeTags, siiTagBased);
+	        SubgraphIsomorphismIndex<K, org.jgrapht.Graph<Node, Triple>, Node> siiValidating = ValidationUtils.createValidatingProxy(SubgraphIsomorphismIndex.class, siiTreeTags, siiTagBased);
 	        sii = siiValidating;
         } else {
         	sii = siiTreeTags;
@@ -278,7 +278,7 @@ public class ExpressionMapper {
 		Set<Expr> queryExprs = Iterables.getFirst(queryDnf, null);
 	
 		
-		SubgraphIsomorphismIndex<Long, DirectedGraph<Node, Triple>, Node> sii = createIndex();
+		SubgraphIsomorphismIndex<Long, org.jgrapht.Graph<Node, Triple>, Node> sii = createIndex();
 		//Predicate<Expr> isVar = (e) -> e.isVariable();
         Supplier<Supplier<Node>> ssn = () -> { int[] x = {0}; return () -> NodeFactory.createBlankNode("_" + x[0]++); };
     

@@ -137,8 +137,8 @@ public class QueryContainmentIndexImpl<K, TC, LC, G, L, V, A, R>
 
 
 
-    public static DirectedGraph<Node, Triple> queryToJGraphT(Op op) {
-        DirectedGraph<Node, Triple> result = null;
+    public static org.jgrapht.Graph<Node, Triple> queryToJGraphT(Op op) {
+    	org.jgrapht.Graph<Node, Triple> result = null;
 
         if(op instanceof OpExtConjunctiveQuery) {
             Graph jenaGraph = QueryToGraph.queryToGraph(op);
@@ -197,12 +197,12 @@ public class QueryContainmentIndexImpl<K, TC, LC, G, L, V, A, R>
 //        return result;
 //    }
 
-    public static <K, R> QueryContainmentIndex<K, DirectedGraph<Node, Triple>, Var, Op, R> create(
-    		SubgraphIsomorphismIndex<Entry<K, Long>, DirectedGraph<Node, Triple>, Node> sii,
+    public static <K, R> QueryContainmentIndex<K, org.jgrapht.Graph<Node, Triple>, Var, Op, R> create(
+    		SubgraphIsomorphismIndex<Entry<K, Long>, org.jgrapht.Graph<Node, Triple>, Node> sii,
     		TriFunction<? super OpContext, ? super OpContext, ? super Table<Op, Op, BiMap<Node, Node>>, ? extends NodeMapper<Op, Op, BiMap<Var, Var>, BiMap<Var, Var>, R>> nodeMapperFactory) {
 
-    		QueryContainmentIndex<K, DirectedGraph<Node, Triple>, Var, Op, R> result =
-        		new QueryContainmentIndexImpl<K, OpContext, OpGraph, DirectedGraph<Node, Triple>, Node, Var, Op, R>(
+    		QueryContainmentIndex<K, org.jgrapht.Graph<Node, Triple>, Var, Op, R> result =
+        		new QueryContainmentIndexImpl<K, OpContext, OpGraph, org.jgrapht.Graph<Node, Triple>, Node, Var, Op, R>(
         				OpContext::create,
         				OpContext::getLeafOpGraphs,
 		                OpContext::getNormalizedOpTree,
