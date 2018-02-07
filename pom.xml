@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>org.aksw.jena-sparql-api</groupId>
@@ -84,31 +85,24 @@
 	</developers>
 
 	<properties>
-		<!-- <jetty.version>8.1.12.v20130726</jetty.version> -->
-		<!-- <jetty.version>9.3.0.M1</jetty.version> -->
-
-		<!-- working -->
-		<!-- <jetty.version>8.1.16.v20140903</jetty.version> -->
-
-
 		<jena.version>3.6.0</jena.version>
 		<jetty.version>9.4.8.v20171121</jetty.version>
-<!--		<jetty.jsp.version>9.2.22.v20170606</jetty.jsp.version> -->
 
 		<jgrapht.version>1.1.0</jgrapht.version>
 
-		<!-- <jetty-plugin.version>8.1.10.v20130312</jetty-plugin.version> -->
-		<!-- <jersey-spring.version>1.17.1</jersey-spring.version> -->
 
 		<!-- 2.18 could be tried out next -->
-		<jersey.version>2.22.2</jersey.version>
+		<jersey.version>2.26-b03</jersey.version>
 
-		<spring.version>4.3.10.RELEASE</spring.version>
-		<spring.batch.version>3.0.8.RELEASE</spring.batch.version>
+		<spring.version>4.3.14.RELEASE</spring.version>
+		<spring.batch.version>4.0.0.RELEASE</spring.batch.version>
 		<aksw.commons.version>0.8.8</aksw.commons.version>
 
-		<atmosphere.version>2.0.0.RC3</atmosphere.version>
-		<atmosphere-spring.version>1.1.0.RC5</atmosphere-spring.version>
+<!-- 		<atmosphere.version>2.0.0.RC3</atmosphere.version> -->
+<!-- 		<atmosphere-spring.version>1.1.0.RC5</atmosphere-spring.version> -->
+		<!-- <jetty-plugin.version>8.1.10.v20130312</jetty-plugin.version> -->
+		<!-- <jersey-spring.version>1.17.1</jersey-spring.version> -->
+		<!-- <jetty.jsp.version>9.2.22.v20170606</jetty.jsp.version> -->
 
 		<javaee-api.version>6.0</javaee-api.version>
 
@@ -231,7 +225,8 @@
 				<attach>false</attach> <descriptorRefs> <descriptorRef>jar-with-dependencies</descriptorRef> 
 				</descriptorRefs> <filters> <filter> <artifact>*:*</artifact> <excludes> 
 				<exclude>META-INF/*.SF</exclude> <exclude>META-INF/*.DSA</exclude> <exclude>META-INF/*.RSA</exclude> 
-				</excludes> </filter> </filters> <transformers> <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" /> </transformers> </configuration> </execution> </executions> </plugin> -->
+				</excludes> </filter> </filters> <transformers> <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" 
+				/> </transformers> </configuration> </execution> </executions> </plugin> -->
 			<plugin>
 				<groupId>org.jboss.tattletale</groupId>
 				<artifactId>tattletale-maven</artifactId>
@@ -618,19 +613,11 @@
 				<version>${jersey.version}</version>
 
 				<exclusions>
-					<!-- <exclusion> <groupId>javax.validation</groupId> <artifactId>validation-api</artifactId> 
-						</exclusion> -->
 					<exclusion>
 						<groupId>aopalliance</groupId>
 						<artifactId>aopalliance</artifactId>
 					</exclusion>
-					<!-- <exclusion> <groupId>org.glassfish.hk2.external</groupId> <artifactId>aopalliance-repackaged</artifactId> 
-						</exclusion> <exclusion> <groupId>org.glassfish.hk2.external</groupId> <artifactId>javax.inject</artifactId> 
-						</exclusion> -->
 				</exclusions>
-
-
-				<!-- <scope>provided</scope> -->
 			</dependency>
 
 			<dependency>
@@ -643,6 +630,7 @@
 			<dependency>
 				<groupId>org.glassfish.jersey.ext</groupId>
 				<artifactId>jersey-spring3</artifactId>
+				<!-- <version>${jersey.version}</version> -->
 				<version>${jersey.version}</version>
 
 				<exclusions>
@@ -681,83 +669,6 @@
 				</exclusions>
 			</dependency>
 
-			<!-- <dependency> -->
-			<!-- <groupId>com.sun.jersey</groupId> -->
-			<!-- <artifactId>jersey-servlet</artifactId> -->
-			<!-- <version>${jersey-spring.version}</version> -->
-
-			<!-- <exclusions> -->
-			<!-- <exclusion> -->
-			<!-- <groupId>org.springframework</groupId> -->
-			<!-- <artifactId>spring-aop</artifactId> -->
-			<!-- </exclusion> -->
-			<!-- </exclusions> -->
-			<!-- </dependency> -->
-
-
-			<!-- <dependency> -->
-			<!-- <groupId>com.sun.jersey.contribs</groupId> -->
-			<!-- <artifactId>jersey-spring</artifactId> -->
-			<!-- <version>${jersey-spring.version}</version> -->
-
-			<!-- <exclusions> -->
-			<!-- <exclusion> -->
-			<!-- <groupId>com.sun.jersey</groupId> -->
-			<!-- <artifactId>jersey-servlet</artifactId> -->
-			<!-- </exclusion> -->
-			<!-- <exclusion> -->
-			<!-- <groupId>org.springframework</groupId> -->
-			<!-- <artifactId>spring-core</artifactId> -->
-			<!-- </exclusion> -->
-			<!-- <exclusion> -->
-			<!-- <groupId>org.springframework</groupId> -->
-			<!-- <artifactId>spring-beans</artifactId> -->
-			<!-- </exclusion> -->
-			<!-- <exclusion> -->
-			<!-- <groupId>org.springframework</groupId> -->
-			<!-- <artifactId>spring-context</artifactId> -->
-			<!-- </exclusion> -->
-
-			<!-- <exclusion> -->
-			<!-- <groupId>org.springframework</groupId> -->
-			<!-- <artifactId>spring-web</artifactId> -->
-			<!-- </exclusion> -->
-			<!-- <exclusion> -->
-			<!-- <groupId>org.springframework</groupId> -->
-			<!-- <artifactId>spring-aop</artifactId> -->
-			<!-- </exclusion> -->
-			<!-- </exclusions> -->
-			<!-- </dependency> -->
-
-
-			<!-- Atmosphere framework -->
-			<!-- <dependency> -->
-			<!-- <groupId>org.atmosphere</groupId> -->
-			<!-- <artifactId>atmosphere-runtime</artifactId> -->
-			<!-- <version>${atmosphere.version}</version> -->
-			<!-- </dependency> -->
-			<!-- <dependency> -->
-			<!-- <groupId>org.atmosphere</groupId> -->
-			<!-- <artifactId>atmosphere-jersey</artifactId> -->
-			<!-- <version>${atmosphere.version}</version> -->
-			<!-- </dependency> -->
-
-			<!-- <dependency> -->
-			<!-- <groupId>org.atmosphere</groupId> -->
-			<!-- <artifactId>atmosphere-spring</artifactId> -->
-			<!-- <version>${atmosphere-spring.version}</version> -->
-
-			<!-- <exclusions> -->
-			<!-- <exclusion> -->
-			<!-- <groupId>org.atmosphere</groupId> -->
-			<!-- <artifactId>atmosphere-runtime</artifactId> -->
-			<!-- </exclusion> -->
-			<!-- <exclusion> -->
-			<!-- <groupId>org.springframework</groupId> -->
-			<!-- <artifactId>spring-webmvc</artifactId> -->
-			<!-- </exclusion> -->
-			<!-- </exclusions> -->
-			<!-- </dependency> -->
 
 			<!-- For some reason atmosphere is not finding this class -->
 			<dependency>
@@ -1139,12 +1050,13 @@
 			</dependency>
 
 			<!-- experimental dependencies -->
+<!--
 			<dependency>
 				<groupId>org.quartz-scheduler</groupId>
 				<artifactId>quartz</artifactId>
 				<version>2.3.0</version>
 			</dependency>
-
+-->
 
 			<dependency>
 				<groupId>org.springframework.boot</groupId>
@@ -1164,17 +1076,17 @@
 			<!-- <artifactId>opencsv</artifactId> -->
 			<!-- <version>2.3</version> -->
 			<!-- </dependency> -->
-<!-- 			<dependency> -->
-<!-- 				<groupId>com.opencsv</groupId> -->
-<!-- 				<artifactId>opencsv</artifactId> -->
-<!-- 				<version>4.0</version> -->
-<!-- 			</dependency> -->
+			<!-- <dependency> -->
+			<!-- <groupId>com.opencsv</groupId> -->
+			<!-- <artifactId>opencsv</artifactId> -->
+			<!-- <version>4.0</version> -->
+			<!-- </dependency> -->
 
 			<!-- For CommandLineUtils.translateCommandline in sparql-ext csv parsing -->
 			<dependency>
-			    <groupId>org.codehaus.plexus</groupId>
-			    <artifactId>plexus-utils</artifactId>
-			    <version>3.1.0</version>
+				<groupId>org.codehaus.plexus</groupId>
+				<artifactId>plexus-utils</artifactId>
+				<version>3.1.0</version>
 			</dependency>
 
 		</dependencies>
