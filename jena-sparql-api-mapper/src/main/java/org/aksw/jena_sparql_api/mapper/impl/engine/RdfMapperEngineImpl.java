@@ -698,7 +698,7 @@ public class RdfMapperEngineImpl
 //                    if(valueClass == null) {
 //                        throw new RuntimeException("Should not happen got " + valueRdfNode + " without corresponding java class");
 //                    }
-                    if(targetRdfType.isSimpleType()) {
+                    if(targetRdfType != null && targetRdfType.isSimpleType()) {
                     	Object obj = targetRdfType.createJavaObject(valueRdfNode);
                     	params.add(null);
                     	resolution.add(obj);
