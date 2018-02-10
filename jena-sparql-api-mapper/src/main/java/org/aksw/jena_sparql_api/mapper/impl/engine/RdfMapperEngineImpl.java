@@ -53,8 +53,9 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
@@ -62,6 +63,7 @@ import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.util.ModelUtils;
+import org.apache.jena.util.ResourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -212,16 +214,16 @@ public class RdfMapperEngineImpl
     }
 
 
-    public static RDFNode fetch(Prologue prologue, SparqlService sparqlService, ShapeExposable shapeSupplier, Node node) {
-        Map<Node, RDFNode> tmp = fetch(prologue, sparqlService, shapeSupplier, Collections.singletonList(node));
-        RDFNode result = tmp.get(node);
-        return result;
-    }
+//    public static RDFNode fetch(Prologue prologue, SparqlService sparqlService, ShapeExposable shapeSupplier, Node node) {
+//        Map<Node, RDFNode> tmp = fetch(prologue, sparqlService, shapeSupplier, Collections.singletonList(node));
+//        RDFNode result = tmp.get(node);
+//        return result;
+//    }
 
-    public Map<Node, RDFNode> fetch(ShapeExposable shapeSupplier, Collection<Node> nodes) {
-        Map<Node, RDFNode> result = fetch(prologue, sparqlService, shapeSupplier, nodes);
-        return result;
-    }
+//    public Map<Node, RDFNode> fetch(ShapeExposable shapeSupplier, Collection<Node> nodes) {
+//        Map<Node, RDFNode> result = fetch(prologue, sparqlService, shapeSupplier, nodes);
+//        return result;
+//    }
 
     public static Map<Node, RDFNode> fetch(Prologue prologue, SparqlService sparqlService, ShapeExposable shapeSupplier, Collection<Node> nodes) {
         //RdfType type = typeFactory.forJavaType(clazz);
@@ -257,51 +259,51 @@ public class RdfMapperEngineImpl
 
 
     //public Graph fetch(Class<?> clazz, Node node) {
-    public Map<Node, Resource> fetch(RdfType type, Collection<Node> nodes) {
-        //RdfType type = typeFactory.forJavaType(clazz);
-
-
-        ResourceShapeBuilder builder = new ResourceShapeBuilder(prologue);
-        type.exposeShape(builder);
-        ResourceShape shape = builder.getResourceShape();
-
-        // TODO The lookup service should deal with empty concepts
-        //Resource result;
-        Map<Node, Resource> result;
-        if(!shape.isEmpty()) {
-//            MappedConcept<Graph> mc = ResourceShape.createMappedConcept(shape, null, false);
-            QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
-            LookupService<Node, Graph> ls = MapServiceResourceShape.createLookupService(qef, shape);
-
-            Map<Node, Graph> map = ls.apply(nodes);
-
-            result = map.entrySet().stream().collect(Collectors.toMap(
-                    Entry::getKey,
-                    e -> {
-                        Node node = e.getKey();
-                        Graph g = e.getValue();
-                        Model m = g == null ? ModelFactory.createDefaultModel() : ModelFactory.createModelForGraph(g);
-                        RDFNode n = ModelUtils.convertGraphNodeToRDFNode(node, m);
-                        Resource r = n.asResource();
-                        return r;
-                    }));
-
-//            Graph g = map.get(node);
-//            Model m = g == null ? ModelFactory.createDefaultModel() : ModelFactory.createModelForGraph(g);
-//            RDFNode n = ModelUtils.convertGraphNodeToRDFNode(node, m);
-//            result = n.asResource();
-        } else {
-            result = Collections.emptyMap();//null;
-        }
-
-//        if(result == null) {
-//        	Model
-//            result =
+//    public Map<Node, Resource> fetch(RdfType type, Collection<Node> nodes) {
+//        //RdfType type = typeFactory.forJavaType(clazz);
+//
+//
+//        ResourceShapeBuilder builder = new ResourceShapeBuilder(prologue);
+//        type.exposeShape(builder);
+//        ResourceShape shape = builder.getResourceShape();
+//
+//        // TODO The lookup service should deal with empty concepts
+//        //Resource result;
+//        Map<Node, Resource> result;
+//        if(!shape.isEmpty()) {
+////            MappedConcept<Graph> mc = ResourceShape.createMappedConcept(shape, null, false);
+//            QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
+//            LookupService<Node, Graph> ls = MapServiceResourceShape.createLookupService(qef, shape);
+//
+//            Map<Node, Graph> map = ls.apply(nodes);
+//
+//            result = map.entrySet().stream().collect(Collectors.toMap(
+//                    Entry::getKey,
+//                    e -> {
+//                        Node node = e.getKey();
+//                        Graph g = e.getValue();
+//                        Model m = g == null ? ModelFactory.createDefaultModel() : ModelFactory.createModelForGraph(g);
+//                        RDFNode n = ModelUtils.convertGraphNodeToRDFNode(node, m);
+//                        Resource r = n.asResource();
+//                        return r;
+//                    }));
+//
+////            Graph g = map.get(node);
+////            Model m = g == null ? ModelFactory.createDefaultModel() : ModelFactory.createModelForGraph(g);
+////            RDFNode n = ModelUtils.convertGraphNodeToRDFNode(node, m);
+////            result = n.asResource();
+//        } else {
+//            result = Collections.emptyMap();//null;
 //        }
-
-
-        return result;
-    }
+//
+////        if(result == null) {
+////        	Model
+////            result =
+////        }
+//
+//
+//        return result;
+//    }
 
 //    public <T> T find(EntityId entityId) {
 //    	Class<?> clazz = entityId.getEntityClass();
@@ -355,6 +357,11 @@ public class RdfMapperEngineImpl
         return result;
     }
 
+    public static RDFNode copy(RDFNode source) {
+        RDFNode result = source.inModel(ModelFactory.createDefaultModel().add(source.getModel()));
+	
+        return result;
+    }
 
     public Map<Node, EntityState> loadEntities(Class<?> clazz, Collection<Node> nodes) {
         Objects.requireNonNull(clazz);
@@ -443,7 +450,7 @@ public class RdfMapperEngineImpl
 
             RdfType rdfType = typeFactory.forJavaType(actualClazz);
 
-            Map<Node, Resource> tmp = fetch(rdfType, nodesToLoad);
+            Map<Node, RDFNode> backendStates = fetch(prologue, sparqlService, rsb -> { rdfType.exposeShape(rsb); typeDecider.exposeShape(rsb); }, nodesToLoad);
 
             //tmp.forEach((node, r) -> map.put(new EntityId(actualClazz, node), r));
 
@@ -453,25 +460,32 @@ public class RdfMapperEngineImpl
                 EntityState entityState = originalState.get(entityId);
                 Object entity = entityState == null ? null : entityState.getEntity();
 
+                RDFNode backendState;
+
                 //
-                RDFNode rn;// = entityState.getShapeResource();
+                RDFNode workingState;// = entityState.getShapeResource();
                 EntityFragment entityFragment;
                 if(entity == null) {
-                    rn = tmp.get(node);//fetch(rdfType, node);
-                    if(rn == null) {
-                        rn = ModelUtils.convertGraphNodeToRDFNode(node, ModelFactory.createDefaultModel());
+                    backendState = backendStates.get(node);//fetch(rdfType, node);
+                    if(backendState == null) {
+                        backendState = ModelUtils.convertGraphNodeToRDFNode(node, ModelFactory.createDefaultModel());
                     }
 
-                    entity = rdfType.createJavaObject(rn);
+                    workingState = copy(backendState);
+
+                    entity = rdfType.createJavaObject(workingState);
                 } else {
-                    rn = entityState.getCurrentResource();
-                    if(rn == null) {
-                        rn = entityState.getShapeResource();
+                	backendState = entityState.getShapeResource();
+
+                    workingState = entityState.getCurrentResource();
+                    if(workingState == null) {
+                    	throw new RuntimeException("should not happen");
+                    	//rn = entityState.getShapeResource();
                     }
                 }
 
-                if(rn.isResource()) {
-                    Resource r = rn.asResource();
+                if(workingState.isResource()) {
+                    Resource r = workingState.asResource();
                     entityFragment = rdfType.populate(r, entity);
 
                     // Add the type triples
@@ -491,7 +505,7 @@ public class RdfMapperEngineImpl
 
                 ResourceFragment resourceFragment = null;
                 //originalState.get(entityId
-                EntityState result = new EntityState(entity, rn, resourceFragment, entityFragment);
+                EntityState result = new EntityState(entity, backendState, workingState, resourceFragment, entityFragment);
                 originalState.merge(entityId, result, (o, n) -> { n.getDependentEntityIds().addAll(o.getDependentEntityIds()); return n; });
 
             }
@@ -622,51 +636,88 @@ public class RdfMapperEngineImpl
 
         //Multimap<EntityId, Indexed<ResolutionTask<PlaceholderInfo>>> valueToResolutionSlot = ArrayListMultimap.create();
         //Set<EntityId> workload = new HashSet<>();
-        Map<ResolutionTask<PlaceholderInfo>, List<EntityId>> taskToParams = new HashMap<>();
+        //Map<ResolutionTask<PlaceholderInfo>, List<EntityId>> taskToParams = new HashMap<>();
 //        Multimap<ResolutionTask<PlaceholderInfo>, EntityId> taskToParams = ArrayListMultimap.create()//new HashMap<>();
 
-        for(EntityFragment entityFragment : entityFragments) {
+        // Create a linear list of tasks
+        List<ResolutionTask<PlaceholderInfo>> tasks = entityFragments.stream()
+        		.map(EntityFragment::getTasks)
+        		.flatMap(Collection::stream)
+        		.collect(Collectors.toList());
+        
+        // NOTE Instead of a list, we could use a Map<Entry<taskId, paramIndex>, EntityId> to associate entityIds with the task's args
+        List<List<EntityId>> taskParams = new ArrayList<>(tasks.size());
+        List<List<Object>> taskResolutions = new ArrayList<>(tasks.size());
+        
+        
+        for(int i = 0; i < tasks.size(); ++i) {
+        	ResolutionTask<PlaceholderInfo> task = tasks.get(i);
+        	
+            List<PlaceholderInfo> placeholders = task.getPlaceholders();
 
-            for(ResolutionTask<PlaceholderInfo> task : entityFragment.getTasks()) {
-                List<PlaceholderInfo> placeholders = task.getPlaceholders();
+            List<EntityId> params = new ArrayList<>(placeholders.size());
+            taskParams.add(params);
 
-                List<EntityId> params = new ArrayList<>(placeholders.size());
-                //int taskId = MapUtils.addWithIntegerAutoIncrement(taskToId, task);
+            List<Object> resolution = new ArrayList<>(placeholders.size()); 
+            taskResolutions.add(resolution);
+            
+            
+            
 
-                //List<Object> resolutions = new ArrayList<>();
-                for(PlaceholderInfo placeholder : placeholders) {
-                    RdfType targetRdfType = placeholder.getTargetRdfType();
-                    Class<?> valueClass = targetRdfType != null
-                            ? targetRdfType.getEntityClass()
-                            : placeholder.getTargetClass();
+            //int taskId = MapUtils.addWithIntegerAutoIncrement(taskToId, task);
 
-                    Objects.requireNonNull(valueClass);
-                    //Class<?> valueClass = placeholder.getTargetRdfType().getEntityClass();
+            //List<Object> resolutions = new ArrayList<>();
+            for(int j = 0; j < placeholders.size(); ++j) {
+            	PlaceholderInfo placeholder = placeholders.get(j);
+
+//            	params.add(null);
+//            	resolution.add(null)
+            	
+//            for(PlaceholderInfo placeholder : placeholders) {
+                RdfType targetRdfType = placeholder.getTargetRdfType();
+                Class<?> valueClass = targetRdfType != null
+                        ? targetRdfType.getEntityClass()
+                        : placeholder.getTargetClass();
+
+                Objects.requireNonNull(valueClass);
+                //Class<?> valueClass = placeholder.getTargetRdfType().getEntityClass();
 
 
-                    // TODO Property-based identity
+                // TODO Property-based identity
 
-    //                RdfMapperProperty propertyMapper = placeholder.getMapper();
-    //                if(propertyMapper != null) {
-    //                    propertyMapper.getTargetNode(subjectUri, entity);
-    //                }
+//                RdfMapperProperty propertyMapper = placeholder.getMapper();
+//                if(propertyMapper != null) {
+//                    propertyMapper.getTargetNode(subjectUri, entity);
+//                }
 
-                    RDFNode valueRdfNode = placeholder.getRdfNode();
-                    //Object value;
-                    if(valueRdfNode != null) {
-    //                    if(valueClass == null) {
-    //                        throw new RuntimeException("Should not happen got " + valueRdfNode + " without corresponding java class");
-    //                    }
-                        Node valueNode = valueRdfNode.asNode();
-                        EntityId entityId = new EntityId(valueClass, valueNode);
-                        entityIdsByClass.put(valueClass, entityId);
-
-                        params.add(entityId);
-                    } else {
+                
+                // TODO Handle IriType cases here: If the RdfType is IriStr, then we interpret IRIs as literals instead of as objects                    
+                RDFNode valueRdfNode = placeholder.getRdfNode();
+                //Object value;
+                if(valueRdfNode != null) {
+//                    if(valueClass == null) {
+//                        throw new RuntimeException("Should not happen got " + valueRdfNode + " without corresponding java class");
+//                    }
+                    if(targetRdfType.isSimpleType()) {
+                    	Object obj = targetRdfType.createJavaObject(valueRdfNode);
                     	params.add(null);
+                    	resolution.add(obj);
+
+//                    	System.out.println("Primitive value: " + obj);
+                    } else {
+
+	                	
+	                    Node valueNode = valueRdfNode.asNode();
+	                    EntityId entityId = new EntityId(valueClass, valueNode);
+	                    entityIdsByClass.put(valueClass, entityId);
+	
+	                    params.add(entityId);
+	                    resolution.add(null);
                     }
+                } else {
+                	params.add(null);
+                    resolution.add(null);
                 }
-                taskToParams.put(task, params);
             }
         }
 
@@ -686,35 +737,58 @@ public class RdfMapperEngineImpl
             //nodeToState.putAll(tmpNodeToState);
         }
 
-
+        
         // Pass resolved entities back to the population task object
-        for(Entry<ResolutionTask<PlaceholderInfo>, List<EntityId>> e : taskToParams.entrySet()) {
-            ResolutionTask<PlaceholderInfo> task = e.getKey();
+        for(int i = 0; i < tasks.size(); ++i) {
+        	ResolutionTask<PlaceholderInfo> task = tasks.get(i);
+        	List<EntityId> paramEntityIds = taskParams.get(i);
 
-            List<EntityId> paramEntityIds = e.getValue();
-            List<Object> argEntities = paramEntityIds
-                    .stream()
-                    .map(nodeToState::get)
-                    .map(state -> state == null ? null : state.getEntity())
-                    .collect(Collectors.toList());
-
-            Collection<? extends ResolutionTask<PlaceholderInfo>> newTasks = task.resolve(argEntities);
-
+        	List<Object> resolution = taskResolutions.get(i);
+            //List<EntityId> paramEntityIds = e.getValue();
+            for(int j = 0; j < paramEntityIds.size(); ++j) {
+            	EntityId entityId = paramEntityIds.get(j);
+            	if(entityId != null) {
+            		EntityState state = nodeToState.get(entityId);
+            		Object value = state == null ? null : state.getEntity();
+            		resolution.set(j, value);
+            	}
+            }
+        	
+            Collection<? extends ResolutionTask<PlaceholderInfo>> newTasks = task.resolve(resolution);
+        	
             // TODO Process any newTasks
+            if(!newTasks.isEmpty()) {
+            	throw new UnsupportedOperationException("not implemented yet :(");
+            }
         }
+
+//        for(Entry<ResolutionTask<PlaceholderInfo>, List<EntityId>> e : taskToParams.entrySet()) {
+//            ResolutionTask<PlaceholderInfo> task = e.getKey();
+//
+//            List<EntityId> paramEntityIds = e.getValue();
+//            List<Object> argEntities = paramEntityIds
+//                    .stream()
+//                    .map(nodeToState::get)
+//                    .map(state -> state == null ? null : state.getEntity())
+//                    .collect(Collectors.toList());
+//
+//            Collection<? extends ResolutionTask<PlaceholderInfo>> newTasks = task.resolve(argEntities);
+//
+//            // TODO Process any newTasks
+//        }
     }
 
-    public Node resolve(Node s, Node p) {
-        ResourceShapeBuilder rsb = new ResourceShapeBuilder();
-        rsb.out(p);
-        ShapeExposable se = x-> x.getResourceShape();
-        Property pp = ResourceFactory.createProperty(p.getURI());
-        RDFNode rdfNode = fetch(se, Collections.singleton(s)).get(s);
-        rdfNode = rdfNode == null ? null : rdfNode.asResource().getProperty(pp).getObject();
-        Node result = rdfNode.asNode();
-        //Collection<Node> result =
-        return result;
-    }
+//    public Node resolve(Node s, Node p) {
+//        ResourceShapeBuilder rsb = new ResourceShapeBuilder();
+//        rsb.out(p);
+//        ShapeExposable se = x -> x.getResourceShape();
+//        Property pp = ResourceFactory.createProperty(p.getURI());
+//        RDFNode rdfNode = fetch(prologue, sparqlService, se, Collections.singleton(s)).get(s);
+//        rdfNode = rdfNode == null ? null : rdfNode.asResource().getProperty(pp).getObject();
+//        Node result = rdfNode.asNode();
+//        //Collection<Node> result =
+//        return result;
+//    }
 
     /*
      *
@@ -959,6 +1033,8 @@ public class RdfMapperEngineImpl
 
                             // TODO get the parent now
                             s.addProperty(p, o);
+                            
+                            //typeDecider.writeTypeTriples(s, entityClass);
                         }
                     }
 
@@ -977,6 +1053,7 @@ public class RdfMapperEngineImpl
 
 
         Resource resolvedS = resolutions.get(exposedS).asResource();
+        typeDecider.writeTypeTriples(resolvedS, entityClass);
 
         // TODO Make sure to actually resolve any loose ends in the fragment
         EntityFragment entityFragment = rdfClass.populate(resolvedS, tgtEntity);
@@ -1012,10 +1089,15 @@ public class RdfMapperEngineImpl
             EntityState state = e.getValue();
             RDFNode current = state.getCurrentResource();
             if(current != null) {
-                Graph oldGraph = state.getShapeResource().getModel().getGraph();
+            	Graph oldGraph = state.getShapeResource().getModel().getGraph();
+                
+            	// We need to compare to the old graph which comprises the content + type triples
+            	//Graph oldGraph = state.getCurrentResource().getModel().getGraph(); 
                 Graph newGraph = current.getModel().getGraph();
 
                 oldState.addGraph(g, oldGraph);
+//                System.err.println("OLD STATE");
+//                RDFDataMgr.write(System.err, state.getShapeResource().getModel(), RDFFormat.TURTLE_PRETTY);
                 newState.addGraph(g, newGraph);
             }
 
@@ -1030,11 +1112,22 @@ public class RdfMapperEngineImpl
 
         Diff<Set<Quad>> diff = UpdateDiffUtils.computeDelta(newState, oldState);
 
+        if(!diff.getRemoved().isEmpty()) {
+        	System.out.println("Removed: " + diff.getRemoved());
+        }
         System.out.println("Applying diff: " + diff);
 
         UpdateExecutionFactory uef = sparqlService.getUpdateExecutionFactory();
         UpdateExecutionUtils.executeUpdate(uef, diff);
 
+        // TODO We need to update the entity state
+        // We can have 2 strategies here: Either we require re-fetching the state from the backend,
+        // or we trust the diff to work and just perform the update in memory
+        for(Entry<EntityId, EntityState> e : originalState.entrySet()) {
+        	e.getValue().shapeResource = copy(e.getValue().getCurrentResource());
+        }
+        
+        
 //        Graph outGraph = Quad.defaultGraphIRI.equals(g) ? newState.getDefaultGraph() : newState.getGraph(g);
         //rdfClass.emitTriples(out, entity);
         //emitTriples(outGraph, tgtEntity);

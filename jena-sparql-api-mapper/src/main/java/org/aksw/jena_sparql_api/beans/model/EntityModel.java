@@ -14,6 +14,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.annotation.AnnotationUtils;
@@ -220,12 +221,24 @@ public class EntityModel
 
             BiConsumer<Object, Object> setter = null;
             Method writeMethod = pd.getWriteMethod();
+            
+            // BeanInfo may only search for setters returning void
+            // We allow setters returning arbiratry values
+            if(writeMethod == null) {
+            	try {
+					writeMethod = clazz.getMethod("set" + StringUtils.capitalize(propertyName), propertyType);
+				} catch (NoSuchMethodException | SecurityException e) {
+					// Nothing to do
+				}
+            }
+            
             if(writeMethod != null) {
+            	Method tmp = writeMethod;
                 setter = (entity, value) -> {
                     try {
-                        writeMethod.invoke(entity, value);
+                        tmp.invoke(entity, value);
                     } catch (Exception e) {
-                        throw new RuntimeException("Failed to invoke " + writeMethod + " with " + (value == null ? null : value.getClass()) + " (" + value + ")", e);
+                        throw new RuntimeException("Failed to invoke " + tmp + " with " + (value == null ? null : value.getClass()) + " (" + value + ")", e);
                     }
                 };
             }

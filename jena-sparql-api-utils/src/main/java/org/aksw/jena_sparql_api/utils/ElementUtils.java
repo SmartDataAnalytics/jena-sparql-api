@@ -11,7 +11,6 @@ import java.util.Set;
 import org.aksw.commons.collections.MapUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.sdb.compiler.QuadBlock;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.TriplePath;
@@ -224,13 +223,16 @@ public class ElementUtils {
         Element result = applyNodeTransform(element, nodeTransform);
         return result;
     }
-
+    
     @Deprecated // Use TransformElementLib.transform instead
     public static Element applyNodeTransform(Element element, NodeTransform nodeTransform) {
         org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform elementTransform = new ElementTransformSubst2(nodeTransform);//new ElementTransformSubst2(nodeTransform);
         ExprTransform exprTransform = new org.apache.jena.sparql.syntax.syntaxtransform.ExprTransformNodeElement(nodeTransform, elementTransform);
+
         //Element result = ElementTransformer.transform(element, elementTransform, exprTransform);
+//      Element result = org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformer.transform(element, elementTransform, exprTransform);
         Element result = org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformer.transform(element, elementTransform, exprTransform);
+        
         return result;
     }
 

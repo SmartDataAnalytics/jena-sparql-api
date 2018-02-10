@@ -16,6 +16,8 @@ public class LookupServiceListService<V>
         this.listService = listService;
     }
 
+    public static boolean jena_jira_bug_1484_message_displayed = false;
+
     @Override
     public Map<Node, V> apply(Iterable<Node> nodes) {
 //        ExprList args = new ExprList();
@@ -27,7 +29,16 @@ public class LookupServiceListService<V>
 //        Expr e = new E_OneOf(new ExprVar(Vars.s), args);
 //        Element filter = new ElementFilter(e);
 //        Concept concept = new Concept(filter, Vars.s);
-        Concept concept = ConceptUtils.createConcept(nodes);
+    	
+    	
+
+    	if(!jena_jira_bug_1484_message_displayed) {
+    		System.err.println("JENA BUG 1484: FIXME - Once the bug is fixed - switch implementation to use VALUE instead of FILTER");
+    		jena_jira_bug_1484_message_displayed = true;
+    	}
+
+    	// Concept concept = ConceptUtils.createConcept(nodes);
+    	Concept concept = ConceptUtils.createFilterConcept(nodes);
 
         Map<Node, V> result = listService.fetchData(concept, null, null);
         return result;
