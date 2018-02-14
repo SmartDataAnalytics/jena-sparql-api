@@ -1000,12 +1000,17 @@ public class RdfMapperEngineImpl
                                 if(o.isResource()) {
                                     // If the entity's identity is dependent, link it to the parent entity
                                     // so that deletes can cascade.
-                                    EntityId valueEntityId = merge(entity, n, valueClass, targetRdfType);
+                                    if(!targetRdfType.isSimpleType()) {
 
-                                    if(hasDependentIdentity) {
-                                        entityState.getDependentEntityIds().add(valueEntityId);
+	                                    EntityId valueEntityId = merge(entity, n, valueClass, targetRdfType);
+	
+	                                    
+	                                    if(hasDependentIdentity) {
+	                                        entityState.getDependentEntityIds().add(valueEntityId);
+	                                    }
+                                    } else {
+                                    	// Nothing to do (such as further recursion) for simple types
                                     }
-
                                 }
 
 //                                if(n == null) {

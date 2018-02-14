@@ -63,7 +63,7 @@ public class RdfTypeLiteralTyped
             result = rdfDatatype.parse(lexicalForm);
 
         } else {
-            throw new RuntimeException("Literal node expected");
+            throw new RuntimeException("Literal node expected, but got: " + node);
         }
 
         return result;
