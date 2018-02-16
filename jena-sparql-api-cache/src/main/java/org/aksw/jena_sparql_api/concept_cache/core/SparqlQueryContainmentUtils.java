@@ -26,9 +26,10 @@ import org.aksw.jena_sparql_api.query_containment.index.ExpressionMapper;
 import org.aksw.jena_sparql_api.query_containment.index.NodeMapperOp;
 import org.aksw.jena_sparql_api.query_containment.index.NodeMapperOpContainment;
 import org.aksw.jena_sparql_api.query_containment.index.OpContext;
-import org.aksw.jena_sparql_api.query_containment.index.QueryContainmentIndex;
-import org.aksw.jena_sparql_api.query_containment.index.QueryContainmentIndexImpl;
 import org.aksw.jena_sparql_api.query_containment.index.ResidualMatching;
+import org.aksw.jena_sparql_api.query_containment.index.SparqlQueryContainmentIndex;
+import org.aksw.jena_sparql_api.query_containment.index.SparqlQueryContainmentIndexImpl;
+import org.aksw.jena_sparql_api.query_containment.index.SparqlTreeMapping;
 import org.aksw.jena_sparql_api.query_containment.index.TreeMapping;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.VarMapper;
 import org.aksw.jena_sparql_api.stmt.SparqlElementParser;
@@ -173,8 +174,9 @@ public class SparqlQueryContainmentUtils {
         
         SubgraphIsomorphismIndex<Entry<Node, Long>, Graph<Node, Triple>, Node> sii = ExpressionMapper.createIndex(validate);
         
-        QueryContainmentIndex<Node, Var, Op, ResidualMatching> index = QueryContainmentIndexImpl.create(sii, nodeMapperFactory);
+        //QueryContainmentIndex<Node, Var, Op, ResidualMatching, TreeMapping<Op, Op, BiMap<Var, Var>, ResidualMatching>> index = QueryContainmentIndexImpl.create(sii, nodeMapperFactory);
 
+        SparqlQueryContainmentIndex<Node, ResidualMatching> index = SparqlQueryContainmentIndexImpl.create(sii, nodeMapperFactory);
  
         //view = QueryFactory.create("PREFIX ex: <http://ex.org/> SELECT * { ?s a ex:Person ; ex:name ?n . FILTER(contains(?n, 'fr')) }");
         //user = QueryFactory.create("PREFIX ex: <http://ex.org/> SELECT DISTINCT ?s { ?s a ex:Person ; ex:name ?n . FILTER(contains(?n, 'franz')) }");
@@ -206,15 +208,15 @@ public class SparqlQueryContainmentUtils {
         
         index.put(viewKey, viewOp);
 
-        Stream<Entry<Node, TreeMapping<Op, Op, BiMap<Var, Var>, ResidualMatching>>> tmp = index.match(userOp);
+        Stream<Entry<Node, SparqlTreeMapping<ResidualMatching>>> tmp = index.match(userOp);
 
-        List<Entry<Node, TreeMapping<Op, Op, BiMap<Var, Var>, ResidualMatching>>> matches = 
+        List<Entry<Node, SparqlTreeMapping<ResidualMatching>>> matches = 
         		tmp.collect(Collectors.toList());
 
         boolean printOutMappings = false;
         if(printOutMappings) {
 	        System.out.println("Begin of matches:");
-			for(Entry<Node, TreeMapping<Op, Op, BiMap<Var, Var>, ResidualMatching>> match : matches) {
+			for(Entry<Node, SparqlTreeMapping<ResidualMatching>> match : matches) {
 	        	System.out.println("  Match: " + match);
 	        }
 	        System.out.println("End of matches");

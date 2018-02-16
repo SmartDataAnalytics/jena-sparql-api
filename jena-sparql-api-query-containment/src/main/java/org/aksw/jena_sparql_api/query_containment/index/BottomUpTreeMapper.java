@@ -12,7 +12,6 @@ import java.util.stream.Stream;
 
 import org.aksw.commons.collections.trees.Tree;
 
-import com.codepoetics.protonpack.functions.TriFunction;
 import com.google.common.collect.Table;
 
 
@@ -26,7 +25,7 @@ import com.google.common.collect.Table;
  * @param <C> Type of the matching contribution object
  * @param <V> The value of the mapping computation
  */
-public class BottomUpTreeMapper<A, B, M, C, V> {
+public class BottomUpTreeMapper<A, B, M, C, V, TM extends TreeMapping<A, B, M, V>> {
 
     protected Tree<A> viewTree;
     protected Tree<B> userTree;
@@ -42,6 +41,7 @@ public class BottomUpTreeMapper<A, B, M, C, V> {
     protected Supplier<Table<A, B, V>> tableSupplier;
     protected Function<Tree<A>, Stream<A>> bottomUpTraverser;
 
+    protected TreeMappingFactory<A, B, M, V, ? extends TM> treeMappingFactory;
 
     public BottomUpTreeMapper(
             Tree<A> viewTree,
@@ -52,7 +52,8 @@ public class BottomUpTreeMapper<A, B, M, C, V> {
             //TriFunction<? super A, ? super B, TreeMapping<A, B, M, V>, ? extends Entry<C, V>> nodeMapper,
             BiFunction<M, C, M> addMatchingContribution,
             Predicate<M> isMatchingUnsatisfiable,
-            Supplier<Table<A, B, V>> tableSupplier
+            Supplier<Table<A, B, V>> tableSupplier,
+            TreeMappingFactory<A, B, M, V, ? extends TM> treeMappingFactory
             ) {
             //Function<Tree<A>, Stream<A>> bottomUpTraverser) {
         super();
@@ -64,6 +65,8 @@ public class BottomUpTreeMapper<A, B, M, C, V> {
         this.tableSupplier = tableSupplier;
         //this.bottomUpTraverser = bottomUpTraverser;
         this.bottomUpTraverser = BottomUpTreeTraversals::postOrder;
+        
+        this.treeMappingFactory = treeMappingFactory;
     }
 
 
@@ -75,7 +78,7 @@ public class BottomUpTreeMapper<A, B, M, C, V> {
      * @return
      */
     @SuppressWarnings("unchecked")
-    public TreeMapping<A, B, M, V> solve(M baseSolution, Map<A, B> leafAlignment) {
+    public TM solve(M baseSolution, Map<A, B> leafAlignment) {
         //Table<A, B, V> t = tableSupplier.get();//HashBasedTable.create();
 
     	Table<A, B, V> nodeMapping = tableSupplier.get();//HashBasedTable.create();
@@ -83,8 +86,9 @@ public class BottomUpTreeMapper<A, B, M, C, V> {
     	Table<A, B, V> parentMapping = tableSupplier.get();//HashBasedTable.create();
 
     	//tableSupplier.get();
-        TreeMapping<A, B, M, V> result = new TreeMapping<>(viewTree, userTree, baseSolution, nodeMapping);
-
+        //TreeMapping<A, B, M, V> result = new TreeMapping<>(viewTree, userTree, baseSolution, nodeMapping);
+    	TM result = treeMappingFactory.create(viewTree, userTree, baseSolution, nodeMapping);
+    	
         Iterator<A> it = bottomUpTraverser.apply(viewTree).iterator();
 
         //boolean foundMatch = false;

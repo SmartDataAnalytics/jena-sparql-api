@@ -15,7 +15,7 @@ import com.google.common.collect.Table;
 
 
 public class SparqlQueryContainmentIndexImpl<K, R>
-	extends QueryContainmentIndexImpl<K, OpContext, OpGraph, org.jgrapht.Graph<Node, Triple>, Node, Var, Op, R>
+	extends QueryContainmentIndexImpl<K, OpContext, OpGraph, org.jgrapht.Graph<Node, Triple>, Node, Var, Op, R, SparqlTreeMapping<R>>
 	implements SparqlQueryContainmentIndex<K, R>
 {
 
@@ -35,27 +35,34 @@ public class SparqlQueryContainmentIndexImpl<K, R>
 	        QueryContainmentIndexImpl::retainVarMappingsOnlyAsVars,
 	        QueryContainmentIndexImpl::toNodes,
 	        
-	        nodeMapperFactory);
+	        nodeMapperFactory,
+	        (TreeMappingFactory<Op, Op, BiMap<Var, Var>, R, SparqlTreeMapping<R>>)SparqlTreeMapping<R>::new
+			);
+
+//        TreeMappingFactory<Op, Op, BiMap<Var, Var>, R, TreeMapping<Op, Op, BiMap<Var, Var>, R>> sparqlTreeMappingFactory = SparqlTreeMapping<R>::new;
+
 	}
 
 	public static <K> SparqlQueryContainmentIndex<K, ResidualMatching> create() {
-		return create(NodeMapperOpContainment::new);
+		SparqlQueryContainmentIndex<K, ResidualMatching> result =  create(NodeMapperOpContainment::new);
+		return result;
 	}
-
 
 	public static <K, R> SparqlQueryContainmentIndex<K, R> create(
 			TriFunction<? super OpContext, ? super OpContext, ? super Table<Op, Op, BiMap<Node, Node>>, ? extends NodeMapper<Op, Op, BiMap<Var, Var>, BiMap<Var, Var>, R>> nodeMapperFactory
 	) {
         SubgraphIsomorphismIndex<Entry<K, Long>, Graph<Node, Triple>, Node> index = ExpressionMapper.createIndex(false);
 
-		return create(index, nodeMapperFactory);
+        SparqlQueryContainmentIndex<K, R> result = create(index, nodeMapperFactory);
+        return result;
 	}
 
 	public static <K, R> SparqlQueryContainmentIndex<K, R> create(
 			SubgraphIsomorphismIndex<Entry<K, Long>, Graph<Node, Triple>, Node> index,
 			TriFunction<? super OpContext, ? super OpContext, ? super Table<Op, Op, BiMap<Node, Node>>, ? extends NodeMapper<Op, Op, BiMap<Var, Var>, BiMap<Var, Var>, R>> nodeMapperFactory
 	) {
-		return new SparqlQueryContainmentIndexImpl<>(index, nodeMapperFactory);
+		SparqlQueryContainmentIndex<K, R> result =  new SparqlQueryContainmentIndexImpl<>(index, nodeMapperFactory);
+		return result;
 	}
 }
 
