@@ -90,7 +90,7 @@ import com.google.common.collect.Table;
  * @param <R> Type for residual information (obtained during the mapping phase)
  */
 public class QueryContainmentIndexImpl<K, TC, LC, G, L, V, A, R>
-	implements QueryContainmentIndex<K, G, V, A, R>
+	implements QueryContainmentIndex<K, V, A, R>
 {	
 	private static final Logger logger = LoggerFactory.getLogger(QueryContainmentIndexImpl.class);
 
@@ -197,11 +197,11 @@ public class QueryContainmentIndexImpl<K, TC, LC, G, L, V, A, R>
 //        return result;
 //    }
 
-    public static <K, R> QueryContainmentIndex<K, org.jgrapht.Graph<Node, Triple>, Var, Op, R> create(
+    public static <K, R> QueryContainmentIndex<K, Var, Op, R> create(
     		SubgraphIsomorphismIndex<Entry<K, Long>, org.jgrapht.Graph<Node, Triple>, Node> sii,
     		TriFunction<? super OpContext, ? super OpContext, ? super Table<Op, Op, BiMap<Node, Node>>, ? extends NodeMapper<Op, Op, BiMap<Var, Var>, BiMap<Var, Var>, R>> nodeMapperFactory) {
 
-    		QueryContainmentIndex<K, org.jgrapht.Graph<Node, Triple>, Var, Op, R> result =
+    		QueryContainmentIndex<K, Var, Op, R> result =
         		new QueryContainmentIndexImpl<K, OpContext, OpGraph, org.jgrapht.Graph<Node, Triple>, Node, Var, Op, R>(
         				OpContext::create,
         				OpContext::getLeafOpGraphs,

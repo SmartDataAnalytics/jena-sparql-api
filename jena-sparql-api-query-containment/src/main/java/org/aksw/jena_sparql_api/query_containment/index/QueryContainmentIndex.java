@@ -18,7 +18,7 @@ import com.google.common.collect.BiMap;
  * @param <A> algebra expression type
  * @param <R> residual information
  */
-public interface QueryContainmentIndex<K, G, V, A, R> {
+public interface QueryContainmentIndex<K, V, A, R> {
 
 	// K is the type of the key for a whole query, whereas Entry<K, Long> is the key
 	// referring to a specific leaf in such a query

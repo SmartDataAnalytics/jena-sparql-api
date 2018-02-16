@@ -173,7 +173,7 @@ public class SparqlQueryContainmentUtils {
         
         SubgraphIsomorphismIndex<Entry<Node, Long>, Graph<Node, Triple>, Node> sii = ExpressionMapper.createIndex(validate);
         
-        QueryContainmentIndex<Node, Graph<Node, Triple>, Var, Op, ResidualMatching> index = QueryContainmentIndexImpl.create(sii, nodeMapperFactory);
+        QueryContainmentIndex<Node, Var, Op, ResidualMatching> index = QueryContainmentIndexImpl.create(sii, nodeMapperFactory);
 
  
         //view = QueryFactory.create("PREFIX ex: <http://ex.org/> SELECT * { ?s a ex:Person ; ex:name ?n . FILTER(contains(?n, 'fr')) }");
