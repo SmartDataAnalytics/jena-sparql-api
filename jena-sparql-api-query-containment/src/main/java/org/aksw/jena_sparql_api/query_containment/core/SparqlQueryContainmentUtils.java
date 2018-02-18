@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.concept_cache.core;
+package org.aksw.jena_sparql_api.query_containment.core;
 
 import java.util.Collection;
 import java.util.Collections;

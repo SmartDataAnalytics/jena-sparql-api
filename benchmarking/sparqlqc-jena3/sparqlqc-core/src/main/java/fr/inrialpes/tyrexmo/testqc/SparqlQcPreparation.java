@@ -1,6 +1,6 @@
 package fr.inrialpes.tyrexmo.testqc;
 
-import org.aksw.jena_sparql_api.concept_cache.core.SparqlQueryContainmentUtils;
+import org.aksw.jena_sparql_api.query_containment.core.SparqlQueryContainmentUtils;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcVocab;
 import org.aksw.simba.lsq.vocab.LSQ;
 import org.apache.jena.query.Query;
