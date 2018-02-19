@@ -47,10 +47,6 @@ Complete simple examples can be found at these locations:
 * [Test cases for the Inrialpes QC benchmark](src/test/java/org/aksw/jena_sparql_api/query_containment/core/TestSparqlQueryContainmentWithInrialpesQcBenchmark.java)
 
 
-
-
-
-
 ## Advanced Usage
 
 There exist further create() methods on [SparqlQueryContainmentIndexImpl](src/main/java/org/aksw/jena_sparql_api/query_containment/index/SparqlQueryContainmentIndexImpl.java), of which the most generic one takes two arguments:
@@ -80,6 +76,13 @@ class SparqlQueryContainmentIndexImpl {
 
 }
 ```
+
+## Benchmarking
+We set up a [separate project for QC benchmarking](/benchmarking/sparqlqc-jena3) based on [Inrialpe's QC Benchmark v1.4](http://sparql-qc-bench.inrialpes.fr/download.html). Please refer to this site for further information.
+
+Note, that you need to manually fix the download URL as it points to v1.2.
+We fixed existing QC checkers to make them reentrant and - because of conflicting versions of their dependencies - bundled them as OSGI plugins such that multiple QC checkers can still be used from the same JVM process by having each of them loaded with a separate class loader.
+
 
 ## License
 The source code of this repo is published under the [Apache License Version 2.0](/LICENSE).
