@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.query_containment.index;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -97,10 +98,12 @@ public class QueryContainmentIndexImpl<K, TC, LC, G, L, V, A, R, TM extends Tree
     
     protected Function<? super A, TC> treePreprocessor;    
     
+    // TODO Group all TC-based functions into an 'accessor' style interface
     protected Function<? super TC, Map<A, LC>> preprocessLeafs;
     
     protected Function<? super TC, ? extends Tree<A>> getTree;
     
+    protected Function<? super TC, ? extends A> getNormalizedOp;
     
     //protected BiFunction<? super A, ? super X, Y> leafPreprocessor;
     protected Function<? super LC, G> getGraph;
@@ -110,6 +113,7 @@ public class QueryContainmentIndexImpl<K, TC, LC, G, L, V, A, R, TM extends Tree
 
     //protected Function<A, List<A>> parentToChildren;
 
+    protected Map<K, TC> keyToTreeContext = new LinkedHashMap<>();
     protected SubgraphIsomorphismIndex<Entry<K, Long>, G, L> index;
     
     // This function transforms yields a containment mapping from an sub graph isomorphism
@@ -215,6 +219,7 @@ public class QueryContainmentIndexImpl<K, TC, LC, G, L, V, A, R, TM extends Tree
     		QueryContainmentIndex<K, Var, Op, R, TreeMapping<Op, Op, BiMap<Var, Var>, R>> result =
         		new QueryContainmentIndexImpl<K, OpContext, OpGraph, org.jgrapht.Graph<Node, Triple>, Node, Var, Op, R, TreeMapping<Op, Op, BiMap<Var, Var>, R>>(
         				OpContext::create,
+        				OpContext::getNormalizedOp,
         				OpContext::getLeafOpGraphs,
 		                OpContext::getNormalizedOpTree,
 		                
@@ -263,6 +268,7 @@ public class QueryContainmentIndexImpl<K, TC, LC, G, L, V, A, R, TM extends Tree
     
     public QueryContainmentIndexImpl(
             Function<? super A, TC> preprocessor,
+    		Function<? super TC, ? extends A> getNormalizedOp,
             Function<? super TC, Map<A, LC>> preprocessLeafs,
             Function<? super TC, Tree<A>> getTree,            		
             //BiFunction<? super A, ? super X, Y> leafPreprocessor,
@@ -278,6 +284,7 @@ public class QueryContainmentIndexImpl<K, TC, LC, G, L, V, A, R, TM extends Tree
     ) {
         super();
         this.treePreprocessor = preprocessor;
+        this.getNormalizedOp = getNormalizedOp;
         this.preprocessLeafs = preprocessLeafs;
         this.getTree = getTree;
         //this.leafPreprocessor = leafPreprocessor;
@@ -291,6 +298,12 @@ public class QueryContainmentIndexImpl<K, TC, LC, G, L, V, A, R, TM extends Tree
         this.treeMappingFactory = treeMappingFactory;        
     }
 
+    
+    public A get(Object key) {
+    	TC treeContext = keyToTreeContext.get(key);
+    	A result = getNormalizedOp.apply(treeContext);
+    	return result;
+    }
 
 	/* (non-Javadoc)
 	 * @see org.aksw.jena_sparql_api.query_containment.index.QueryContainmentIndex#remove(K)
@@ -316,7 +329,12 @@ public class QueryContainmentIndexImpl<K, TC, LC, G, L, V, A, R, TM extends Tree
     	// TODO The normalizer should become part of the preprocessor
         //A normViewOp = normalizer.apply(viewOp);
         
+    	// Remove any prior binding of the key
+    	remove(key);
+    	
     	TC treeContextA = treePreprocessor.apply(viewOp);
+    	keyToTreeContext.put(key, treeContextA);
+    	
     	Tree<A> tree = getTree.apply(treeContextA);
 
         long leafNodeId = 0;

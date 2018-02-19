@@ -1,91 +1,88 @@
 # Query Containment Module
 
-This module contains interfaces and abstract algorithms for query containment.
-"Abstract" means, that these implementations are not bound to a specific API, but instead are parameterized using a combination of generics and lambdas.
+This module contains interfaces and abstract and concrete algorithms for query containment (QC).
+"Abstract" means, that these implementations are not bound to a specific API, but instead are parameterized using a combination of generics and lambdas. Presently, there is one concrete parametrization for SPARQL based on the [Apache Jena](https://jena.apache.org/) framework.
+
+## Artifact
+```xml
+<dependency>
+    <groupId>org.aksw.jena-sparql-api</groupId>
+    <artifactId>jena-sparql-api-query-containment</artifactId>
+    <version><!-- Check link below --></version>
+</dependency>
+```
+Check here for the [latest version](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22org.aksw.jena-sparql-api%22%20a%3A%22jena-sparql-api-query-containment%22).
 
 
-## The Query Containment API
-The index works by transforming SPARQL queries such that their leaf nodes become conjunctive queries.
-Checking for query containments works by creating candidate matchings between these leaf nodes as the basis for performing a bottom-up
-traversal of the algebra expression trees.
-
-
-### Simple Usage
-Testing for homomorphic query containment can be done using
-
+## Usage
+A simple boolean QC check can be performed using:
 ```java
-boolean isContained = SparqlQueryContainmentUtils.checkContainment("", "");
+Query vStr = "SELECT * { ?a ?b ?c }";
+Query qStr = "SELECT * { ?s ?p ?o . FILTER(?p = <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>) }";
+boolean isContained = SparqlQueryContainmentUtils.checkContainment(vStr, qStr);
 ```
 
-```java
-SparqlQueryContainmentIndex<Node, ResidualMatching> index = SparqlQueryContainmentIndex.create();
-
-
-
-index.put(viewKey, viewOp);
-Stream<Entry<Node, SparqlTreeMapping>> tmp = index.match(userOp)
-
-```
-
-Using the method signatures of the index directly is actually simple, although the low level result types are somewhat unwieldly due to their gener
-
+QC Testing for homomorphic query containment can be done using:
 
 
 ```java
-SubgraphIsomorphismIndex<Entry<Node, Long>, Graph<Node, Triple>, Node> sii = ExpressionMapper.createIndex(validate);
+Query v = QueryFactory.create(vStr, Syntax.syntaxSPARQL_10);
+Query q = QueryFactory.create(qStr, Syntax.syntaxSPARQL_10);
 
-TriFunction<OpContext, OpContext, Table<Op, Op, BiMap<Node, Node>>, NodeMapperOp> nodeMapperFactory = NodeMapperOpContainment::new;  
-QueryContainmentIndex<Node, Graph<Node, Triple>, Var, Op, ResidualMatching> index = QueryContainmentIndexImpl.create(sii, nodeMapperFactory);
+Op vOp = Algebra.compile(v);
+Op qOp = Algebra.compile(q);
 
-index.put(viewKey, viewOp);
-Stream<Entry<Node, TreeMapping<Op, Op, BiMap<Var, Var>, ResidualMatching>>> tmp = index.match(userOp)
+SparqlQueryContainmentIndex<String, ResidualMatching> index = SparqlQueryContainmentIndexImpl.create();
+index.put("v", vOp);
+
+// The result is a stream of entries, where the key is the matching index entry,
+// and value carries information about how the normalized algebra expression tree of that entry can be aligned to one of q.
+Stream<Entry<String, SparqlTreeMapping<ResidualMatching>>> candidates = index.match(qOp);
 
 ```
 
+Complete simple examples can be found at these locations:
 
+* [A simple example test case](src/test/java/org/aksw/jena_sparql_api/query_containment/core/TestSparqlQueryContainmentSimple.java)
+* [Test cases for the Inrialpes QC benchmark](src/test/java/org/aksw/jena_sparql_api/query_containment/core/TestSparqlQueryContainmentWithInrialpesQcBenchmark.java)
+
+
+
+
+
+
+## Advanced Usage
+
+There exist further create() methods on [SparqlQueryContainmentIndexImpl](src/main/java/org/aksw/jena_sparql_api/query_containment/index/SparqlQueryContainmentIndexImpl.java), of which the most generic one takes two arguments:
+
+* The [Subgraph Isomorphism Index](https://github.com/SmartDataAnalytics/SubgraphIsomorphismIndex) to use for indexing conjunctive queries.
+  * This repository provides a simple interface for a Subgraph Isomorphism index together with a JGraphT-based implementation.
+  * Othear index implementations with different performance characteristics can thus be easily used for QC testing.
+* The factory for creating "NodeMapper" instances: A NodeMapper takes as input
+  * a pair of nodes of the AETs of v and q
+  * the so far computed containment mapping (i.e. how variables of v are mapped to those of q)
+  * a map, which associates every prior pair-wise mapping of the children with an object holding information about the mapping.
+  There exist two implementations:
+  * [NodeMapperOpEquality](src/main/java/org/aksw/jena_sparql_api/query_containment/index/NodeMapperOpEquality.java) only checks whether for a given pair of AET nodes, the mapped subtrees so far are equivalent
+  * [NodeMapperOpContainment](src/main/java/org/aksw/jena_sparql_api/query_containment/index/NodeMapperOpContainment.java) performs additional work. Most prominently, it computes residual filter expressions, such that two AETs `v := FILTER(x, e1 && ... && en)` and q := FILTER(y, f1 && ... && fm)` match, if q's filter expressions are more restrictive than v - or conversely: if q could be derived from v by introducing additional filters to v. 
 
 ```java
-QueryContainmentIndex<K, org.jgrapht.Graph<Node, Triple>, Var, Op, R> index = QueryContainmentIndexSparql.create();
+class SparqlQueryContainmentIndexImpl {
+    public static <K, R> SparqlQueryContainmentIndex<K, R> create(
+        SubgraphIsomorphismIndex<Entry<K, Long>, Graph<Node, Triple>, Node> index,
+        TriFunction<
+            ? super OpContext,
+            ? super OpContext,
+            ? super Table<Op, Op, BiMap<Node, Node>>,
+            ? extends NodeMapper<Op, Op, BiMap<Var, Var>, BiMap<Var, Var>, R>> nodeMapperFactory) {
+        ...
+    }
 
-
-```
-
-
-
-
-
-## Related Resources
-* The query containment benchmark is located in this repository at [/benchmarking/sparqlqc-jena3]
-* Our index structure for subgraph isomorphisms is located at [https://github.com/SmartDataAnalytics/SubgraphIsomorphismIndex].
-
-
-## Graph based containment checks
-
-
-### Converting algebra expressions to RDF graphs
-```
-QueryToJenaGraph.
-```
-
-### Converting predicate expressions to RDF graphs
-```
-QueryToJenaGraph.
-```
-
-
-
-### Abstract Interfaces
-
-```java
-public interface QueryContainmentIndex<K, G, N, A, V> {
 }
 ```
 
+## License
+The source code of this repo is published under the [Apache License Version 2.0](/LICENSE).
 
-```
-```
-
-
-### Mapping Expression
 
 

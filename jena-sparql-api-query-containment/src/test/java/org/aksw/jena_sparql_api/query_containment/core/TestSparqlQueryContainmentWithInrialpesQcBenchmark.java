@@ -25,9 +25,9 @@ import org.slf4j.LoggerFactory;
 //@FixMethodOrder
 //@Ignore
 @RunWith(Parameterized.class)
-public class TestSparqlQueryContainment {
+public class TestSparqlQueryContainmentWithInrialpesQcBenchmark {
 
-    private static final Logger logger = LoggerFactory.getLogger(TestSparqlQueryContainment.class);
+    private static final Logger logger = LoggerFactory.getLogger(TestSparqlQueryContainmentWithInrialpesQcBenchmark.class);
 
 
     @Parameters(name = "Query Containment {index}: {0}")
@@ -75,12 +75,12 @@ public class TestSparqlQueryContainment {
     public static void main(String[] args) throws Exception {
     	Collection<Object[]> data = data();
     	for(Object[] o : data) {
-    		TestSparqlQueryContainment tmp = new TestSparqlQueryContainment((String)o[0], (Model)o[1], (Resource)o[2]);
+    		TestSparqlQueryContainmentWithInrialpesQcBenchmark tmp = new TestSparqlQueryContainmentWithInrialpesQcBenchmark((String)o[0], (Model)o[1], (Resource)o[2]);
     		tmp.runTest();
     	}
     }
     
-    public TestSparqlQueryContainment(String name, Model model, Resource resource) {
+    public TestSparqlQueryContainmentWithInrialpesQcBenchmark(String name, Model model, Resource resource) {
         this.name = name;
         this.model = model;
         this.t = resource;

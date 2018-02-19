@@ -26,6 +26,14 @@ public interface QueryContainmentIndex<K, V, A, R, M extends TreeMapping<A, A, B
 	void remove(K key);
 
 	void put(K key, A viewOp);
+	
+	/**
+	 * Retrieves the possibly transformed algebra expression associated with the key
+	 * 
+	 * @param key
+	 * @return
+	 */
+	A get(K key);
 
 	Stream<Entry<K, M>> match(A userOp);
 

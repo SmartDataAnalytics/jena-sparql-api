@@ -25,6 +25,7 @@ public class SparqlQueryContainmentIndexImpl<K, R>
 
 		super(
 			OpContext::create,
+			OpContext::getNormalizedOp,
 			OpContext::getLeafOpGraphs,
 	        OpContext::getNormalizedOpTree,
 	        
