@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.mapper.jpa.core;
 
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 
 import javax.persistence.EntityManager;
@@ -52,6 +53,26 @@ public class SparqlEntityManagerFactory
         return result;
     }
 
+    public SparqlEntityManagerFactory setPrefixMapping(PrefixMapping prefixMapping) {
+        getPrologue().setPrefixMapping(prefixMapping);
+        return this;
+    }
+
+    public SparqlEntityManagerFactory setNsPrefixes(PrefixMapping other) {
+    	getPrologue().getPrefixMapping().setNsPrefixes(other);
+    	return this;
+    }
+
+    public SparqlEntityManagerFactory setNsPrefix(String prefix, String uri) {
+    	getPrologue().getPrefixMapping().setNsPrefix(prefix, uri);
+    	return this;
+    }
+
+    public SparqlEntityManagerFactory setNsPrefixes(Map<String, String> map) {
+    	getPrologue().getPrefixMapping().setNsPrefixes(map);
+    	return this;
+    }
+    
     public Set<String> getScanPackageNames() {
         return scanPackageNames;
     }

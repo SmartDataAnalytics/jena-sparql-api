@@ -17,14 +17,14 @@ public class EntityState {
 	
 	protected Set<EntityId> dependentEntityIds = new HashSet<>();
 		
-	public EntityState(Object entity, RDFNode shapeResource, ResourceFragment resourceFragment,
+	public EntityState(Object entity, RDFNode shapeResource, RDFNode currentResource, ResourceFragment resourceFragment,
 			EntityFragment entityFragment) {
 		super();
 		this.entity = entity;
 		this.shapeResource = shapeResource;
 		this.resourceFragment = resourceFragment;
 		this.entityFragment = entityFragment;
-		this.currentResource = null;
+		this.currentResource = currentResource;
 	}
 
 	public Object getEntity() {

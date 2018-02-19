@@ -66,7 +66,7 @@ public class ConceptUtils {
 
     }
 
-    public static Concept createFilterConcept(Collection<Node> nodes) {
+    public static Concept createFilterConcept(Iterable<Node> nodes) {
 
         Element el = new ElementFilter(new E_OneOf(new ExprVar(Vars.s), ExprListUtils.nodesToExprs(nodes)));
 

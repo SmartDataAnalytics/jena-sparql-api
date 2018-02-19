@@ -3,8 +3,6 @@ package org.aksw.jena_sparql_api.query_containment.index;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
-import org.aksw.commons.graph.index.core.SubgraphIsomorphismIndex;
-
 import com.google.common.collect.BiMap;
 
 /**
@@ -18,7 +16,7 @@ import com.google.common.collect.BiMap;
  * @param <A> algebra expression type
  * @param <R> residual information
  */
-public interface QueryContainmentIndex<K, G, V, A, R> {
+public interface QueryContainmentIndex<K, V, A, R, M extends TreeMapping<A, A, BiMap<V, V>, R>> {
 
 	// K is the type of the key for a whole query, whereas Entry<K, Long> is the key
 	// referring to a specific leaf in such a query
@@ -28,7 +26,15 @@ public interface QueryContainmentIndex<K, G, V, A, R> {
 	void remove(K key);
 
 	void put(K key, A viewOp);
+	
+	/**
+	 * Retrieves the possibly transformed algebra expression associated with the key
+	 * 
+	 * @param key
+	 * @return
+	 */
+	A get(K key);
 
-	Stream<Entry<K, TreeMapping<A, A, BiMap<V, V>, R>>> match(A userOp);
+	Stream<Entry<K, M>> match(A userOp);
 
 }

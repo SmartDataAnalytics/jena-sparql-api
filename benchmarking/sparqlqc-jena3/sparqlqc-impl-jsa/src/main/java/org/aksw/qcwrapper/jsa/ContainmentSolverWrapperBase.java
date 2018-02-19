@@ -1,6 +1,6 @@
 package org.aksw.qcwrapper.jsa;
 
-import org.aksw.jena_sparql_api.concept_cache.core.SparqlQueryContainmentUtils;
+import org.aksw.jena_sparql_api.query_containment.core.SparqlQueryContainmentUtils;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Model;

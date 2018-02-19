@@ -20,10 +20,6 @@ import java.util.stream.Stream;
 
 import org.aksw.combinatorics.algos.KPermutationsOfNUtils;
 import org.aksw.combinatorics.solvers.GenericProblem;
-import org.aksw.combinatorics.solvers.ProblemNeighborhoodAware;
-import org.aksw.combinatorics.solvers.collections.ProblemContainer;
-import org.aksw.combinatorics.solvers.collections.ProblemContainerImpl;
-import org.aksw.combinatorics.solvers.collections.ProblemSolver;
 import org.aksw.combinatorics.solvers.collections.ProblemSolver2;
 import org.aksw.combinatorics.solvers.collections.Solution;
 import org.aksw.commons.collections.multimaps.MultimapUtils;
@@ -35,7 +31,6 @@ import org.slf4j.LoggerFactory;
 import com.codepoetics.protonpack.StreamUtils;
 import com.codepoetics.protonpack.functions.TriFunction;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Streams;
 import com.google.common.collect.Table;
 import com.google.common.collect.Table.Cell;
 import com.google.common.collect.Tables;
@@ -57,7 +52,7 @@ import com.google.common.collect.Tables;
  * @param <L> leaf matching type - may differ from the node matching type M
  * @param <V>
  */
-public class TreeMapper<K, TCA, TCB, LCA, LCB, A, B, L, V, C, R> {
+public class TreeMapper<K, TCA, TCB, LCA, LCB, A, B, L, V, C, R, TM extends TreeMapping<A, B, V, R>> {
 
 	private static final Logger logger = LoggerFactory.getLogger(TreeMapper.class);
 
@@ -94,6 +89,8 @@ public class TreeMapper<K, TCA, TCB, LCA, LCB, A, B, L, V, C, R> {
     protected BinaryOperator<V> matchingCombiner;
     protected Predicate<V> isMatchingUnsatisfiable;
 
+    protected TreeMappingFactory<A, B, V, R, ? extends TM> treeMappingFactory;
+    
     // Whether nodes of a tree are to be compared by .equals or ==
     protected boolean aIdentity;
     protected boolean bIdentity;
@@ -118,6 +115,9 @@ public class TreeMapper<K, TCA, TCB, LCA, LCB, A, B, L, V, C, R> {
             //Supplier<M> createEmptyMatching,
             BinaryOperator<V> matchingCombiner,
             Predicate<V> isMatchingUnsatisfiable,
+            
+            TreeMappingFactory<A, B, V, R, ? extends TM> treeMappingFactory,
+            
             boolean aIdentity,
             boolean bIdentity) {
         super();
@@ -138,6 +138,9 @@ public class TreeMapper<K, TCA, TCB, LCA, LCB, A, B, L, V, C, R> {
         //this.createEmptyMatching = createEmptyMatching;
         this.matchingCombiner = matchingCombiner;
         this.isMatchingUnsatisfiable = isMatchingUnsatisfiable;
+        
+        this.treeMappingFactory = treeMappingFactory;
+        
         this.aIdentity = aIdentity;
         this.bIdentity = bIdentity;
     }
@@ -164,14 +167,14 @@ public class TreeMapper<K, TCA, TCB, LCA, LCB, A, B, L, V, C, R> {
         return result;
     }
 
-    public Stream<Entry<K, TreeMapping<A, B, V, R>>> createMappings(V baseMatching, TCB queryContext) {
+    public Stream<Entry<K, TM>> createMappings(V baseMatching, TCB queryContext) {
 
         //Table<K, Entry<A, B>, Table<A, B, ProblemNeighborhoodAware<S, S>>> leafMappings = createLeafMappings(userTree);
         Map<K, Table<A, B, GenericProblem<L, ?>>> leafMappingPerView = createLeafMappings(baseMatching, queryContext);
 
         Tree<B> queryTree = getTree.apply(queryContext);
 
-        Stream<Entry<K, TreeMapping<A, B, V, R>>> result = leafMappingPerView.entrySet().stream()
+        Stream<Entry<K, TM>> result = leafMappingPerView.entrySet().stream()
             .flatMap(e -> {
                 K viewKey = e.getKey();
                 //logger.debug("Processing view with key: " + viewKey);
@@ -259,7 +262,7 @@ public class TreeMapper<K, TCA, TCB, LCA, LCB, A, B, L, V, C, R> {
                 //Stream<Map<A, B>> xxx = KPermutationsOfNUtils.kPermutationsOfN(mm, this::createMap);
 
 
-                Stream<TreeMapping<A, B, V, R>> r = childAlignmentStream.flatMap(leafAlignment -> {
+                Stream<TM> r = childAlignmentStream.flatMap(leafAlignment -> {
                 	// TODO On the one hand, we need to compute an overall matching from all leaf alignments
                 	// on the other hand, we want to pass each raw (= the graph isomorphism) matching contribution
                 	// to the node mapper
@@ -319,22 +322,23 @@ public class TreeMapper<K, TCA, TCB, LCA, LCB, A, B, L, V, C, R> {
                     	// TODO Maybe turn the whole treemapper into a static function?
                         NodeMapper<A, B, V, C, R> nodeMapper = nodeMapperFactory.apply(viewContext, queryContext, table);
                         
-                        BottomUpTreeMapper<A, B, V, C, R> treeMapper = new BottomUpTreeMapper<A, B, V, C, R>(
+                        BottomUpTreeMapper<A, B, V, C, R, TM> treeMapper = new BottomUpTreeMapper<A, B, V, C, R, TM>(
                                 viewTree,
                                 queryTree,
                                 nodeMapper,
                                 addMatchingContribution, isMatchingUnsatisfiable,
-                                () -> createTable(aIdentity, bIdentity)
+                                () -> createTable(aIdentity, bIdentity),
+                                treeMappingFactory
 //                                BottomUpTreeTraversals::postOrder//bottomUpTraverser
                                 );
 
-                        TreeMapping<A, B, V, R> s = treeMapper.solve(matching, leafAlignment);
+                        TM s = treeMapper.solve(matching, leafAlignment);
 
                         return s;
                     });
                 });
 
-                Stream<Entry<K, TreeMapping<A, B, V, R>>> t = r
+                Stream<Entry<K, TM>> t = r
                 		.filter(item -> item != null)
                 		.map(item -> new SimpleEntry<>(viewKey, item));
                 return t;

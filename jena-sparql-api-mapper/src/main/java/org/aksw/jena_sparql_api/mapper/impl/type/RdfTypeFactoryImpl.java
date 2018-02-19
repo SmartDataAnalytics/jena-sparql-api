@@ -373,7 +373,7 @@ public class RdfTypeFactoryImpl
               }
             }
         } else {
-            Assert.isTrue(String.class.isAssignableFrom(propertyType));
+            Assert.isTrue(String.class.isAssignableFrom(propertyType), "propertyType expected to be (a subclass) of String - but got: " + propertyType);
             targetRdfType = new RdfTypeIriStr();
         }
 
@@ -472,6 +472,9 @@ public class RdfTypeFactoryImpl
         RdfTypeFactoryImpl result = new RdfTypeFactoryImpl(parser, parserContext, evalContext, typeMapper, prologue, relationParser, entityOpsFactory, conversionService);
 
         result.getClassToRdfType().put(Map.class, new RdfTypeMap(x -> (Map)x));
+        
+        
+        result.getClassToRdfType().put(Node.class, new RdfTypeNode());
         return result;
     }
 }

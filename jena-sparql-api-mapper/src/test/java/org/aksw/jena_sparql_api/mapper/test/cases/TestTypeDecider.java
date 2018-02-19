@@ -90,7 +90,8 @@ public class TestTypeDecider extends TestMapperBase {
         System.out.println("TRIPLES:");
         RDFDataMgr.write(System.out, rdf, RDFFormat.TURTLE);
 
-        mapperEngine.fetch(typeDecider, Collections.singleton(id)).get(id);
+        
+        //mapperEngine.fetch(typeDecider, Collections.singleton(id)).get(id);
 
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Person> cq = cb.createQuery(Person.class);

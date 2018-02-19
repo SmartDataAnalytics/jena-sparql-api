@@ -3,14 +3,20 @@ package org.aksw.jena_sparql_api.core.connection;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
+import org.apache.jena.sparql.core.Transactional;
 
 public class SparqlQueryConnectionJsa
-    implements SparqlQueryConnectionTmp
+	extends TransactionalDelegate
+	implements SparqlQueryConnectionTmp
 {
-    protected QueryExecutionFactory queryExecutionFactory;
+	protected QueryExecutionFactory queryExecutionFactory;
 
     public SparqlQueryConnectionJsa(QueryExecutionFactory queryExecutionFactory) {
-        super();
+    	this(queryExecutionFactory, new TransactionalTmp() {});
+    }
+
+    public SparqlQueryConnectionJsa(QueryExecutionFactory queryExecutionFactory, Transactional transactional) {
+        super(transactional);
         this.queryExecutionFactory = queryExecutionFactory;
     }
 

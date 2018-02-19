@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.algebra.transform;
 
-import org.aksw.jena_sparql_api.concept_cache.core.SparqlQueryContainmentUtils;
+import org.aksw.jena_sparql_api.query_containment.core.SparqlQueryContainmentUtils;
 import org.aksw.jena_sparql_api.sparql.algebra.mapping.VarMapper;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;

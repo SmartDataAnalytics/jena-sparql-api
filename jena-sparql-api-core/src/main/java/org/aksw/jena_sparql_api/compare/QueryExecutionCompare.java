@@ -168,6 +168,7 @@ public class QueryExecutionCompare
     private QueryExecution b;
 
     private Query query = null;
+    private String queryString;
 
     private Diff<ResultSetPart> resultSetDiff = null; // The diff after the query execution
     private ModelDiff modelDiff = null;
@@ -187,7 +188,12 @@ public class QueryExecutionCompare
     }
 
     public QueryExecutionCompare(Query query, QueryExecution a, QueryExecution b, boolean isOrdered) {
+        this(query, "" + query, a, b, isOrdered);
+    }
+
+    public QueryExecutionCompare(Query query, String queryString, QueryExecution a, QueryExecution b, boolean isOrdered) {
         this.query = query;
+        this.queryString = queryString;
         this.a = a;
         this.b = b;
         this.isOrdered = isOrdered;
@@ -309,6 +315,7 @@ public class QueryExecutionCompare
             ResultSet rsa = ResultSetPart.toResultSet(ra);
             ResultSet rsb = ResultSetPart.toResultSet(rb);
 
+            logger.debug("Differences detected for query: \n" + queryString);
             logger.debug("Excessive:\n" + ResultSetFormatter.asText(rsa));
             logger.debug("Missing:\n" + ResultSetFormatter.asText(rsb));
         }

@@ -22,17 +22,24 @@ package org.aksw.jena_sparql_api.utils;
 import org.apache.jena.graph.Node ;
 import org.apache.jena.graph.Node_Variable ;
 import org.apache.jena.graph.Triple ;
+import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.core.TriplePath ;
 import org.apache.jena.sparql.core.Var ;
 import org.apache.jena.sparql.graph.NodeTransform ;
+import org.apache.jena.sparql.graph.NodeTransformLib;
 import org.apache.jena.sparql.syntax.Element ;
-import org.apache.jena.sparql.syntax.ElementNamedGraph;
+import org.apache.jena.sparql.syntax.ElementData;
 import org.apache.jena.sparql.syntax.ElementPathBlock ;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock ;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformCopyBase;
 
-// The only difference to jena's ElementTransformSubst is that this class accepts a NodeTransformer for the ctor-arg.
+import com.google.common.collect.Streams;
+
+
+// THERE ARE TWO DIFFERENCES TO Jena's ElementTransformSubst:
+// This class accepts a NodeTransformer for the ctor-arg.
+// It transforms within ElementData elements
 
 /** An {@link ElementTransform} which replaces occurences of a variable with a Node value.
  * Because a {@link Var} is a subclass of {@link Node_Variable} which is a {@link Node},
@@ -111,5 +118,25 @@ public class ElementTransformSubst2 extends ElementTransformCopyBase {
 
     private Node transform(Node n) {
         return nodeTransform.apply(n) ;
+    }
+    
+    @Override
+    public Element transform(ElementData el) {
+    	Table inTable = el.getTable();
+    	Table outTable = NodeTransformLib.transform(inTable, nodeTransform);
+    	
+    	ElementData result = new ElementData();
+
+    	outTable.getVars().forEach(result::add);
+    	Streams.stream(outTable.rows()).forEach(result::add);
+    	
+    	return result;
+    	
+    	//    	List<Var> vars = el.getVars().stream()
+//    			.map(v -> Optional.ofNullable((Var)nodeTransform.apply(v)).orElse(v))
+//    			.collect(Collectors.toList());
+//
+//    	
+//    	TableData table = new TableData(vars, bindings);
     }
 }
