@@ -1,7 +1,9 @@
 # Sparql Query Containment Benchmark
 
+# Overview
+
 This repository contains a SPARQL query containment benchmark runner, together with the benchmarkseveral implementations of SPARQL query containment checkers.
-Besides our own approaches, we included all implementations from the download bundle of
+Besides our own approaches (JSAG), we included all implementations from the download bundle of
 http://sparql-qc-bench.inrialpes.fr/ version 1.4, namely *SparqlAlgebra* aka *SA*, *TreeSolver* aka *LMU*, and *AFMU*.
 
 Thereby, our own benchmark runner is a *significantly* improved version of that included in the download bundle:
@@ -12,6 +14,28 @@ Thereby, our own benchmark runner is a *significantly* improved version of that 
 
 ***For above reasons we consider our results more accurate. Especially, we show that containment checking is significantly faster than being suggested in the orginal evaluation***
 
+
+Before running the main class, you need to build all OSGI plugin JARs (so that they can be loaded for benchmarking) using `mvn clean install`.
 The main class is [this one](develop/benchmarking/sparqlqc-jena3/sparqlqc-core/src/main/java/fr/inrialpes/tyrexmo/testqc/MainTestContain.java)
+
+## Results
+
+The benchmark runner generates RDF datasets with the result statistics. It is not yet a perfect datacube, but we are
+working on the [beast tool](https://github.com/SmartDataAnalytics/Beast) to do the heavy lifting of creating nice RDF datasets.
+Most prominently, our datasets contain - besides observation data - RDF resources that map these data to charts using our [Chart Vocabulary](https://github.com/SmartDataAnalytics/Beast/tree/develop#charts-in-rdf---the-chart-vocabulary).
+If you install the beast debian package, you can recreate the charts using `ldcharts dataset.ttl`.
+
+
+### JSAG vs SA
+A comparision of our sparql query containment system vs SA
+
+![Chart for JSAG vs SA](sparqlqc-results/sparqlqc-results_jsag_sa-charts/Performance%20Histogram.png)
+
+* [Result dataset for JSAG vs SA](sparqlqc-results/sparqlqc-results_jsag_sa.ttl)
+
+
+### Overall statistics
+* [Result dataset for JSAG, SA, AFMU, and TS](sparqlqc-results/sparqlqc-results_jsag_sa_afmu_ts.ttl)
+
 
 

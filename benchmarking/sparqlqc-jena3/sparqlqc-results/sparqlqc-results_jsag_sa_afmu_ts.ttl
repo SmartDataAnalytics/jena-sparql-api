@@ -1,0 +1,2517 @@
+@prefix qb:    <http://purl.org/linked-data/cube#> .
+@prefix bsbm:  <http://bsbm.org/> .
+@prefix eg:    <http://example.org/> .
+@prefix iguana: <http://iguana.aksw.org/ontology#> .
+@prefix cv:    <http://aksw.org/chart-vocab/> .
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix iv:    <http://iv.aksw.org/vocab#> .
+
+<http://ex.org/avg/query-UCQProj_p8_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p8> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        5.396506119681099E-4 ;
+        cv:value         0.0013978943333333334e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p8> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p8" ;
+        iv:method        "JSAG" .
+
+<http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop1>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "CQNoProj_nop1" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "true" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q1a> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q1b> .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#p14>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "UCQProj_p14" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "false" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q16c> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q16a> .
+
+<http://ex.org/avg/query-UCQProj_p2_method-AFMU>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p2> ;
+        cv:series        "AFMU" ;
+        cv:stdDev        3.701104847402552E-4 ;
+        cv:value         0.0016720700000000001e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p2> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p2" ;
+        iv:method        "AFMU" .
+
+<http://ex.org/avg/query-UCQProj_p16_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p16> ;
+        cv:series        "TS" ;
+        cv:stdDev        0.06250374483126044e0 ;
+        cv:value         1.0303967263333333e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p16> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p16" ;
+        iv:method        "TS" .
+
+<http://ex.org/avg/query-CQNoProj_nop5_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop5> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        3.175013357546705E-4 ;
+        cv:value         0.0024176790000000003e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop5> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop5" ;
+        iv:method        "JSAG" .
+
+<http://ex.org/avg/query-UCQProj_p25_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p25> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        3.722188067423068E-4 ;
+        cv:value         0.002912463e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p25> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p25" ;
+        iv:method        "JSAG" .
+
+<http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop20>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "CQNoProj_nop20" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "false" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q9b> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q9a> .
+
+<http://ex.org/avg/query-UCQProj_p4_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p4> ;
+        cv:series        "TS" ;
+        cv:stdDev        0.0012300656663587716e0 ;
+        cv:value         0.196921869e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p4> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p4" ;
+        iv:method        "TS" .
+
+<http://ex.org/avg/query-CQNoProj_nop9_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop9> ;
+        cv:series        "TS" ;
+        cv:stdDev        6.426521207003572E-4 ;
+        cv:value         0.012531668000000001e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop9> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop9" ;
+        iv:method        "TS" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q16c>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.example.org/>\n\nSELECT  ?z WHERE {\n\t?x ?z ?y .\n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "16"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "c" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q14b>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.example.org/>\n\nSELECT ?x WHERE {\n\t?x :takesCourse ?c1 .\n\t?c1 :shortName \"Cs200\" .\n\t?x :takesCourse ?c2 .\n\t?c2 :shortName \"Cs301\" .\n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "14"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "b" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#p8>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "UCQProj_p8" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "false" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q14b> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q14c> .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q12a>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.example.org/>\n\nSELECT ?x ?y ?z WHERE {\n\t?x a :Student .\n\t?x :registeredAt ?y .\n\t?y a :University .\n\t?x :placeOfBirth ?z .\n\t?z a :City .\n\t?y :locatedAt ?z .\t\n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "12"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "a" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#p22>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "UCQProj_p22" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "true" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q19b> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q19c> .
+
+<http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop9>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "CQNoProj_nop9" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "false" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q6a> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q6b> .
+
+<http://ex.org/avg/query-UCQProj_p4_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p4> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        0.005268592631244789e0 ;
+        cv:value         0.0074710926666666675e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p4> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p4" ;
+        iv:method        "JSAG" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q22a>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.lehigh.edu//univ-bench.owl#>\n\nSELECT ?x ?y WHERE \n{\n  {\n    { ?x a :UndergradStudent .  \n      ?x :takesCourse ?y }\n       UNION \n    { ?x a :GraduateStudent .\n      ?x :takesCourse ?y \n    }\n  } \n  ?y a :CsCourse .\n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "22"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "a" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q19b>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.example.org/>\n\nSELECT ?x  ?z WHERE {\n\t?x a :GraduateStudent .\n\t?y a :Department .\n\t?x :memberOf ?y .\n\t?y :subOrganizationOf :University1 .\n\t?x :email ?z .\n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "19"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "b" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q17a>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.lehigh.edu//univ-bench.owl#>\n\nSELECT ?x ?y ?z ?t ?s ?ag ?sx ?email ?dept ?course WHERE \n{ \n  ?x a :Student .\n  ?x :name ?y . \n  ?x :nickName ?z . \n  ?x :telephone ?t . \n  ?x :ssn ?s . \n  ?x :age ?ag . \n  ?x :sex ?sx . \n  ?x :emailAddress ?email . \n  ?x :memberOf ?dept . \n  ?x :takesCourse ?course . \n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "17"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "a" .
+
+<http://ex.org/avg/query-UCQProj_p18_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p18> ;
+        cv:series        "TS" ;
+        cv:stdDev        2.967463486619873E-4 ;
+        cv:value         0.018704012333333336e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p18> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p18" ;
+        iv:method        "TS" .
+
+<http://ex.org/avg/query-UCQProj_p21_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p21> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        4.845331019307831E-5 ;
+        cv:value         0.001155856e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p21> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p21" ;
+        iv:method        "JSAG" .
+
+<http://ex.org/avg/query-CQNoProj_nop8_method-AFMU>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop8> ;
+        cv:series        "AFMU" ;
+        cv:stdDev        0.0031311128661245823e0 ;
+        cv:value         0.048868461333333335e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop8> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop8" ;
+        iv:method        "AFMU" .
+
+<http://ex.org/avg/query-UCQProj_p28_method-AFMU>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p28> ;
+        cv:series        "AFMU" ;
+        cv:stdDev        0.007800621967561602e0 ;
+        cv:value         0.030255994999999997e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p28> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p28" ;
+        iv:method        "AFMU" .
+
+<http://ex.org/avg/query-CQNoProj_nop18_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop18> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        1.5266502991044008E-4 ;
+        cv:value         9.514996666666666E-4 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop18> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop18" ;
+        iv:method        "JSAG" .
+
+<http://ex.org/avg/query-UCQProj_p6_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p6> ;
+        cv:series        "TS" ;
+        cv:stdDev        2.004461384212726E-4 ;
+        cv:value         0.009878985e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p6> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p6" ;
+        iv:method        "TS" .
+
+<http://ex.org/avg/query-CQNoProj_nop10_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop10> ;
+        cv:series        "TS" ;
+        cv:stdDev        2.733260149833286E-5 ;
+        cv:value         0.01243532e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop10> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop10" ;
+        iv:method        "TS" .
+
+<http://ex.org/avg/query-CQNoProj_nop19_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop19> ;
+        cv:series        "TS" ;
+        cv:stdDev        0.0015499508944488015e0 ;
+        cv:value         0.200338672e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop19> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop19" ;
+        iv:method        "TS" .
+
+<http://ex.org/avg/query-CQNoProj_nop12_method-AFMU>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop12> ;
+        cv:series        "AFMU" ;
+        cv:stdDev        5.5828586478812334E-5 ;
+        cv:value         0.0013535336666666668e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop12> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop12" ;
+        iv:method        "AFMU" .
+
+<http://ex.org/avg/query-CQNoProj_nop16_method-SA>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop16> ;
+        cv:series        "SA" ;
+        cv:stdDev        4.129893999446798E-4 ;
+        cv:value         0.0014583369999999999e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop16> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop16" ;
+        iv:method        "SA" .
+
+<http://ex.org/avg/query-UCQProj_p18_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p18> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        1.0724028423436156E-4 ;
+        cv:value         8.785339999999999E-4 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p18> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p18" ;
+        iv:method        "JSAG" .
+
+<http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop15>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "CQNoProj_nop15" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "false" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q7a> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q7b> .
+
+<http://ex.org/avg/query-UCQProj_p12_method-AFMU>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p12> ;
+        cv:series        "AFMU" ;
+        cv:stdDev        4.0847530168692224E-4 ;
+        cv:value         0.0025679666666666664e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p12> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p12" ;
+        iv:method        "AFMU" .
+
+<http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q1b>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.example.org/>\n\n\nSELECT * WHERE { \n   ?x :takesCourse \"Course10\" .\n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "1"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "b" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#p3>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "UCQProj_p3" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "true" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q12a> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q12b> .
+
+<http://ex.org/avg/query-UCQProj_p2_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p2> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        7.808076012693534E-5 ;
+        cv:value         0.0011521380000000003e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p2> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p2" ;
+        iv:method        "JSAG" .
+
+<http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop4>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "CQNoProj_nop4" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "true" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q2b> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q2a> .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#p17>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "UCQProj_p17" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "true" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q18a> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q18b> .
+
+<http://ex.org/avg/query-CQNoProj_nop6_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop6> ;
+        cv:series        "TS" ;
+        cv:stdDev        1.9387431022242774E-4 ;
+        cv:value         0.009988105333333332e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop6> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop6" ;
+        iv:method        "TS" .
+
+<http://ex.org/avg/query-CQNoProj_nop3_method-SA>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop3> ;
+        cv:series        "SA" ;
+        cv:stdDev        2.0187770494919872E-5 ;
+        cv:value         9.567333333333332E-4 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop3> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop3" ;
+        iv:method        "SA" .
+
+<http://ex.org/avg/query-CQNoProj_nop14_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop14> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        1.4632851232984862E-4 ;
+        cv:value         0.001085885e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop14> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop14" ;
+        iv:method        "JSAG" .
+
+<http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q6b>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.example.org/>\n\nSELECT * WHERE {\n\t?x a :Faculty .\n\t?y a :University .\n\t?x ?z ?y .\n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "6"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "b" .
+
+<http://ex.org/avg/query-CQNoProj_nop6_method-AFMU>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop6> ;
+        cv:series        "AFMU" ;
+        cv:stdDev        6.342847892339493E-4 ;
+        cv:value         0.002309704666666667e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop6> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop6" ;
+        iv:method        "AFMU" .
+
+<http://ex.org/avg/query-UCQProj_p8_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p8> ;
+        cv:series        "TS" ;
+        cv:stdDev        0.0012766130319919002e0 ;
+        cv:value         0.04419489866666667e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p8> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p8" ;
+        iv:method        "TS" .
+
+<http://ex.org/avg/query-UCQProj_p14_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p14> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        1.277950377866405E-4 ;
+        cv:value         9.151813333333333E-4 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p14> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p14" ;
+        iv:method        "JSAG" .
+
+<http://ex.org/avg/query-CQNoProj_nop12_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop12> ;
+        cv:series        "TS" ;
+        cv:stdDev        5.101312479354917E-4 ;
+        cv:value         0.009126917333333333e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop12> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop12" ;
+        iv:method        "TS" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#p25>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "UCQProj_p25" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "false" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q21a> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q21b> .
+
+<http://ex.org/avg/query-CQNoProj_nop18_method-SA>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop18> ;
+        cv:series        "SA" ;
+        cv:stdDev        9.921765020398338E-5 ;
+        cv:value         7.87977E-4 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop18> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop18" ;
+        iv:method        "SA" .
+
+<http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q9a>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.example.org/>\n\nSELECT * WHERE {\n\t?x a :GraduateStudent .\n\t?y a :Department .\n\t?x :memberOf ?y .\n\t?y :subOrganizationOf :UniversityO .\n\t?x :email ?z .\n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "9"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "a" .
+
+<http://ex.org/avg/query-UCQProj_p5_method-AFMU>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p5> ;
+        cv:series        "AFMU" ;
+        cv:stdDev        1.4193209311576518E-4 ;
+        cv:value         0.003002344666666667e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p5> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p5" ;
+        iv:method        "AFMU" .
+
+<http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop10>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "CQNoProj_nop10" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "false" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q6b> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q6a> .
+
+<http://ex.org/avg/query-CQNoProj_nop8_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop8> ;
+        cv:series        "TS" ;
+        cv:stdDev        0.001886400128962096e0 ;
+        cv:value         0.21858497833333335e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop8> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop8" ;
+        iv:method        "TS" .
+
+<http://ex.org/avg/query-CQNoProj_nop8_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop8> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        3.172876312688886E-4 ;
+        cv:value         0.0013410223333333332e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop8> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop8" ;
+        iv:method        "JSAG" .
+
+<http://ex.org/avg/query-CQNoProj_nop5_method-SA>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop5> ;
+        cv:series        "SA" ;
+        cv:stdDev        3.419080403006373E-5 ;
+        cv:value         7.418996666666666E-4 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop5> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop5" ;
+        iv:method        "SA" .
+
+<http://ex.org/avg/query-UCQProj_p28_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p28> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        9.211937002708316E-4 ;
+        cv:value         0.0038850720000000003e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p28> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p28" ;
+        iv:method        "JSAG" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q13b>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.example.org/>\n\nSELECT ?x ?y WHERE {\n\t?x a :Professor .\n\t?x :memeberOf ?y \n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "13"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "b" .
+
+<http://ex.org/avg/query-CQNoProj_nop17_method-AFMU>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop17> ;
+        cv:series        "AFMU" ;
+        cv:stdDev        2.6271262157895835E-4 ;
+        cv:value         0.009216853666666665e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop17> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop17" ;
+        iv:method        "AFMU" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q11a>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.example.org/>\n\nSELECT ?x WHERE { \n   ?x :takesCourse \"Course10\" . ?x :takesCourse \"Course20\" . \n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "11"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "a" .
+
+<http://ex.org/avg/query-CQNoProj_nop2_method-AFMU>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop2> ;
+        cv:series        "AFMU" ;
+        cv:stdDev        9.776339710523339E-5 ;
+        cv:value         0.0011509893333333332e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop2> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop2" ;
+        iv:method        "AFMU" .
+
+<http://ex.org/avg/query-UCQProj_p22_method-AFMU>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p22> ;
+        cv:series        "AFMU" ;
+        cv:stdDev        0.003738910038294167e0 ;
+        cv:value         0.043104148333333335e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p22> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p22" ;
+        iv:method        "AFMU" .
+
+<http://ex.org/avg/query-UCQProj_p28_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p28> ;
+        cv:series        "TS" ;
+        cv:stdDev        0.0015825828856063846e0 ;
+        cv:value         0.24150169633333332e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p28> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p28" ;
+        iv:method        "TS" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#p12>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "UCQProj_p12" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "false" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q16b> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q16a> .
+
+<http://ex.org/avg/query-UCQProj_p17_method-AFMU>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p17> ;
+        cv:series        "AFMU" ;
+        cv:stdDev        0.0035231119689012004e0 ;
+        cv:value         0.012826345666666667e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p17> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p17" ;
+        iv:method        "AFMU" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q21a>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.lehigh.edu//univ-bench.owl#>\n\nSELECT ?name ?email \nWHERE \n{ \n  ?x a :Student . \n  ?x :name ?name . \n  ?x :email ?email .\n  { \n    ?x :takesCourse ?c . \n    ?c :shortName \"Course10\" .\n  }\n  UNION \n  { ?x :takesCourse ?c .\n    ?c :shortName \"Course20\" .\n  }\n  UNION \n  { ?x :takesCourse ?c .\n    ?c :shortName \"Course30\" .\n  }\n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "21"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "a" .
+
+<http://ex.org/avg/query-CQNoProj_nop14_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop14> ;
+        cv:series        "TS" ;
+        cv:stdDev        0.0020513258573792922e0 ;
+        cv:value         0.010294318666666665e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop14> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop14" ;
+        iv:method        "TS" .
+
+<http://ex.org/avg/query-CQNoProj_nop20_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop20> ;
+        cv:series        "TS" ;
+        cv:stdDev        0.01031047811282855e0 ;
+        cv:value         0.20005543e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop20> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop20" ;
+        iv:method        "TS" .
+
+<http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop18>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "CQNoProj_nop18" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "false" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q8b> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q8a> .
+
+<http://ex.org/avg/query-UCQProj_p7_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p7> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        7.134489201922976E-4 ;
+        cv:value         0.0029148476666666667e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p7> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p7" ;
+        iv:method        "JSAG" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q18b>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.example.org/>\n\nSELECT ?x ?y ?z ?r WHERE {\n\t?x :subOrganizationOf ?y .\n\t?y :subOrganizationOf ?z .\n\t?z :subOrganizationOf ?r .\n}\n\n\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "18"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "b" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q16a>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.example.org/>\n\nSELECT ?z WHERE {\n\t?x a :Department .\n\t?y a :University .\n\t?x ?z ?y .\n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "16"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "a" .
+
+<http://ex.org/avg/query-UCQProj_p1_method-AFMU>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p1> ;
+        cv:series        "AFMU" ;
+        cv:stdDev        2.9026985572317966E-4 ;
+        cv:value         0.002182228666666667e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p1> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p1" ;
+        iv:method        "AFMU" .
+
+<http://ex.org/avg/query-UCQProj_p17_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p17> ;
+        cv:series        "TS" ;
+        cv:stdDev        3.448002471808858E-4 ;
+        cv:value         0.011728332000000001e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p17> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p17" ;
+        iv:method        "TS" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#p6>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "UCQProj_p6" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "false" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q13b> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q13a> .
+
+<http://ex.org/avg/query-CQNoProj_nop4_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop4> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        5.509310884917156E-4 ;
+        cv:value         0.003001811e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop4> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop4" ;
+        iv:method        "JSAG" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#p20>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "UCQProj_p20" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "false" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q19b> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q19a> .
+
+<http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop7>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "CQNoProj_nop7" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "true" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q4c> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q4b> .
+
+<http://ex.org/avg/query-UCQProj_p24_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p24> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        0.0021694361066560337e0 ;
+        cv:value         0.016846351333333332e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p24> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p24" ;
+        iv:method        "JSAG" .
+
+<http://ex.org/avg/query-CQNoProj_nop1_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop1> ;
+        cv:series        "TS" ;
+        cv:stdDev        2.715755172523637E-4 ;
+        cv:value         0.006426622666666666e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop1> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop1" ;
+        iv:method        "TS" .
+
+<http://ex.org/avg/query-CQNoProj_nop7_method-SA>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop7> ;
+        cv:series        "SA" ;
+        cv:stdDev        1.4712384776779055E-4 ;
+        cv:value         0.001135924e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop7> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop7" ;
+        iv:method        "SA" .
+
+<http://ex.org/avg/query-UCQProj_p3_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p3> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        4.085958451953333E-4 ;
+        cv:value         0.004242903333333333e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p3> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p3" ;
+        iv:method        "JSAG" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#p28>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "UCQProj_p28" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "false" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q22b> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q22a> .
+
+<http://ex.org/avg/query-UCQProj_p10_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p10> ;
+        cv:series        "TS" ;
+        cv:stdDev        2.2463912037507832E-4 ;
+        cv:value         0.005813986333333333e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p10> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p10" ;
+        iv:method        "TS" .
+
+<http://ex.org/avg/query-UCQProj_p19_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p19> ;
+        cv:series        "TS" ;
+        cv:stdDev        0.004043257867038192e0 ;
+        cv:value         0.20890365766666666e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p19> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p19" ;
+        iv:method        "TS" .
+
+<http://ex.org/avg/query-UCQProj_p20_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p20> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        3.105546579829208E-4 ;
+        cv:value         0.0014333003333333334e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p20> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p20" ;
+        iv:method        "JSAG" .
+
+<http://ex.org/avg/query-UCQProj_p27_method-AFMU>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p27> ;
+        cv:series        "AFMU" ;
+        cv:stdDev        0.003787367126315794e0 ;
+        cv:value         0.025067509333333335e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p27> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p27" ;
+        iv:method        "AFMU" .
+
+<http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop13>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "CQNoProj_nop13" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "true" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q6b> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q6c> .
+
+<http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q3a>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.example.org/>\n\nSELECT * WHERE {\n\t?x a :Professor .\n\t?x :graduatedFrom ?y .\n\t?x :memeberOf ?y \n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "3"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "a" .
+
+<http://ex.org/avg/query-CQNoProj_nop17_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop17> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        2.580493729209372E-4 ;
+        cv:value         0.0024791493333333335e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop17> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop17" ;
+        iv:method        "JSAG" .
+
+<http://ex.org/avg/query-CQNoProj_nop2_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop2> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        1.1111974808686755E-4 ;
+        cv:value         0.0011566626666666667e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop2> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop2" ;
+        iv:method        "JSAG" .
+
+<http://ex.org/avg/query-CQNoProj_nop9_method-SA>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop9> ;
+        cv:series        "SA" ;
+        cv:stdDev        1.1766092327814977E-5 ;
+        cv:value         7.80645E-4 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop9> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop9" ;
+        iv:method        "SA" .
+
+<http://ex.org/avg/query-CQNoProj_nop11_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop11> ;
+        cv:series        "TS" ;
+        cv:stdDev        9.135183015223185E-4 ;
+        cv:value         0.007665543666666667e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop11> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop11" ;
+        iv:method        "TS" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#p1>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "UCQProj_p1" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "true" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q11a> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q11b> .
+
+<http://ex.org/avg/query-CQNoProj_nop11_method-AFMU>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop11> ;
+        cv:series        "AFMU" ;
+        cv:stdDev        2.0308495672993616E-4 ;
+        cv:value         0.00229248e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop11> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop11" ;
+        iv:method        "AFMU" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#p15>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "UCQProj_p15" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "false" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q17a> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q17b> .
+
+<http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop2>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "CQNoProj_nop2" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "false" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q1b> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q1a> .
+
+<http://ex.org/avg/query-UCQProj_p17_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p17> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        4.0175497662879063E-4 ;
+        cv:value         0.0025022020000000002e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p17> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p17" ;
+        iv:method        "JSAG" .
+
+<http://ex.org/avg/query-UCQProj_p11_method-AFMU>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p11> ;
+        cv:series        "AFMU" ;
+        cv:stdDev        2.6659308399631574E-4 ;
+        cv:value         0.002629079e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p11> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p11" ;
+        iv:method        "AFMU" .
+
+<http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q8a>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.example.org/>\n\nSELECT * WHERE {\n\t?x :subOrganizationOf ?y .\n\t?y :subOrganizationOf ?z .\n\t?z :subOrganizationOf ?r .\n\t?r :subOrganizationOf :Unibz .\n}\n\n\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "8"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "a" .
+
+<http://ex.org/avg/query-UCQProj_p1_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p1> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        1.0300331743632784E-4 ;
+        cv:value         0.0021483496666666667e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p1> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p1" ;
+        iv:method        "JSAG" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q14c>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.example.org/>\n\nSELECT ?x   WHERE {\n\t?x :takesCourse ?c1 .\n\t?c1 :shortName \"Cs200\" .\n\t?x :takesCourse ?c2 .\n\t?c2 :shortName \"Cs301\" .\n\t?x :takesCourse _:b .\n\t_:b :shortName \"Cs401\" .\n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "14"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "c" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#p9>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "UCQProj_p9" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "false" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q15a> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q15b> .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q12b>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.example.org/>\n\nSELECT ?x ?y ?z WHERE {\n\t?x a :Student .\n\t?x :registeredAt ?y .\n\t?x :placeOfBirth ?z .\n\t?y a :University .\n\t?y :locatedAt ?z .\t\n\t?z a :City .\n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "12"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "b" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#p23>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "UCQProj_p23" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "false" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q20a> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q20b> .
+
+<http://ex.org/avg/query-CQNoProj_nop13_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop13> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        3.6176394540362916E-4 ;
+        cv:value         0.002178937e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop13> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop13" ;
+        iv:method        "JSAG" .
+
+<http://ex.org/avg/query-UCQProj_p9_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p9> ;
+        cv:series        "TS" ;
+        cv:stdDev        7.607588497458755E-5 ;
+        cv:value         0.008203137000000001e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p9> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p9" ;
+        iv:method        "TS" .
+
+<http://ex.org/avg/query-CQNoProj_nop5_method-AFMU>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop5> ;
+        cv:series        "AFMU" ;
+        cv:stdDev        9.355006484626294E-4 ;
+        cv:value         0.003199181e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop5> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop5" ;
+        iv:method        "AFMU" .
+
+<http://ex.org/avg/query-CQNoProj_nop10_method-SA>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop10> ;
+        cv:series        "SA" ;
+        cv:stdDev        5.060142846688114E-5 ;
+        cv:value         7.030803333333333E-4 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop10> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop10" ;
+        iv:method        "SA" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q22b>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.lehigh.edu//univ-bench.owl#>\n\nSELECT ?x ?y WHERE \n{ \n  { ?x a :UndergradStudent .\n    ?x :takesCourse ?y . \n    ?y a :CsCourse \n  }\n    UNION \n  { \n     ?x a :GraduateStudent .\n     ?x :takesCourse ?y \n  }\n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "22"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "b" .
+
+<http://ex.org/avg/query-CQNoProj_nop13_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop13> ;
+        cv:series        "TS" ;
+        cv:stdDev        5.630588023858809E-4 ;
+        cv:value         0.007513157666666667e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop13> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop13" ;
+        iv:method        "TS" .
+
+<http://ex.org/avg/query-UCQProj_p13_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p13> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        5.874332122175438E-4 ;
+        cv:value         0.0028977726666666666e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p13> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p13" ;
+        iv:method        "JSAG" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q20a>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://example.org/>\n\n\n\n\n\n\n\nSELECT * WHERE \n{ \n  ?x a :Student .  \n  {?x :name ?y } \n    UNION \n  {?x :nickName ?z } \n  UNION \n  {?x :telephone ?tel } \n  UNION \n  {?x :ssn ?ssn } \n     UNION \n  {?x :sex ?sex }\n   UNION \n  {?x :memberOf ?dept } \n UNION \n  {?x :emailAddress ?email }\n  UNION \n  {?x :age ?age }  \n ?x :takesCourse ?course .\n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "20"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "a" .
+
+<http://ex.org/avg/query-CQNoProj_nop19_method-SA>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop19> ;
+        cv:series        "SA" ;
+        cv:stdDev        8.797885378127332E-5 ;
+        cv:value         8.81728E-4 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop19> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop19" ;
+        iv:method        "SA" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q19c>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.example.org/>\n\nSELECT ?x  ?z WHERE {\n\t?x a :GraduateStudent .\n\t?y a :Department .\n\t?x :memberOf ?y .\n\t?y :subOrganizationOf ?u .\n\t?x :email ?z .\n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "19"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "c" .
+
+eg:exp1-series  a            cv:ConceptBasedSeries ;
+        cv:categoryProperty  iv:job ;
+        cv:errorProperty     cv:stdDev ;
+        cv:seriesProperty    iv:method ;
+        cv:sliceProperty     iv:experiment ;
+        cv:sliceType         qb:Observation ;
+        cv:valueProperty     cv:value ;
+        iv:experiment        <http://sparqlqc.aksw.org/my-experiment> .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q17b>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.lehigh.edu//univ-bench.owl#>\n\nSELECT ?x ?y ?z ?t ?s ?ag ?sx ?email ?dept ?course  WHERE \n{ \n  ?x a :Student .\n  ?x :name ?y . \n  ?x :nickName ?z . \n  ?x :telephone ?t . \n  ?x :ssn ?s . \n  ?x :age ?ag . \n  ?x :sex ?sx . \n  ?x :emailAddress ?email . \n  ?x :memberOf ?dept . \n  ?x :takesCourse ?course . \n  ?x :masterDegreeFrom ?master .\n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "17"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "b" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q15a>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "SELECT ?x ?y  WHERE {\n\t?x ?z ?y \n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "15"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "a" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#p10>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "UCQProj_p10" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "true" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q15b> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q15a> .
+
+<http://ex.org/avg/query-CQNoProj_nop6_method-SA>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop6> ;
+        cv:series        "SA" ;
+        cv:stdDev        9.82483794008272E-5 ;
+        cv:value         8.434393333333333E-4 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop6> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop6" ;
+        iv:method        "SA" .
+
+<http://ex.org/avg/query-CQNoProj_nop7_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop7> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        0.0012713376803640943e0 ;
+        cv:value         0.004492461333333334e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop7> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop7" ;
+        iv:method        "JSAG" .
+
+<http://ex.org/avg/query-UCQProj_p27_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p27> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        6.196080137486564E-4 ;
+        cv:value         0.004814441333333333e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p27> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p27" ;
+        iv:method        "JSAG" .
+
+<http://ex.org/avg/query-UCQProj_p20_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p20> ;
+        cv:series        "TS" ;
+        cv:stdDev        0.013876184992031018e0 ;
+        cv:value         0.21437095533333336e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p20> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p20" ;
+        iv:method        "TS" .
+
+<http://ex.org/avg/query-CQNoProj_nop1_method-AFMU>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop1> ;
+        cv:series        "AFMU" ;
+        cv:stdDev        5.420408938922925E-4 ;
+        cv:value         0.0018472996666666667e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop1> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop1" ;
+        iv:method        "AFMU" .
+
+<http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop16>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "CQNoProj_nop16" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "true" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q7b> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q7a> .
+
+<http://ex.org/avg/query-UCQProj_p21_method-AFMU>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p21> ;
+        cv:series        "AFMU" ;
+        cv:stdDev        0.005833771215426489e0 ;
+        cv:value         0.025994233999999995e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p21> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p21" ;
+        iv:method        "AFMU" .
+
+<http://ex.org/avg/query-UCQProj_p2_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p2> ;
+        cv:series        "TS" ;
+        cv:stdDev        1.544352657703398E-4 ;
+        cv:value         0.007428306333333333e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p2> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p2" ;
+        iv:method        "TS" .
+
+<http://ex.org/avg/query-CQNoProj_nop11_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop11> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        8.356354413658303E-5 ;
+        cv:value         0.0019473649999999997e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop11> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop11" ;
+        iv:method        "JSAG" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#p4>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "UCQProj_p4" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "true" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q12b> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q12a> .
+
+<http://ex.org/avg/query-CQNoProj_nop15_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop15> ;
+        cv:series        "TS" ;
+        cv:stdDev        0.020628624413721323e0 ;
+        cv:value         4.83182967e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop15> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop15" ;
+        iv:method        "TS" .
+
+<http://ex.org/avg/query-CQNoProj_nop12_method-SA>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop12> ;
+        cv:series        "SA" ;
+        cv:stdDev        5.223634369823371E-4 ;
+        cv:value         0.001122502e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop12> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop12" ;
+        iv:method        "SA" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#p18>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "UCQProj_p18" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "false" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q18b> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q18a> .
+
+<http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop5>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "CQNoProj_nop5" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "true" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q3a> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q3b> .
+
+<http://ex.org/avg/query-UCQProj_p6_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p6> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        1.7254508997553852E-4 ;
+        cv:value         0.0011167010000000001e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p6> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p6" ;
+        iv:method        "JSAG" .
+
+<http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q6c>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.example.org/>\n\nSELECT * WHERE {\n\t?x ?z ?y .\n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "6"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "c" .
+
+<http://ex.org/avg/query-CQNoProj_nop3_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop3> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        4.7265353030264757E-4 ;
+        cv:value         0.0037436263333333335e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop3> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop3" ;
+        iv:method        "JSAG" .
+
+<http://ex.org/avg/query-CQNoProj_nop2_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop2> ;
+        cv:series        "TS" ;
+        cv:stdDev        7.80153893599632E-4 ;
+        cv:value         0.008627151e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop2> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop2" ;
+        iv:method        "TS" .
+
+<http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q4b>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.example.org/>\n\nSELECT * WHERE {\n\t?x :takesCourse ?c1 .\n\t?c1 :shortName \"Cs200\" .\n\t?x :takesCourse ?c2 .\n\t?c2 :shortName \"Cs301\" .\n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "4"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "b" .
+
+<http://ex.org/avg/query-CQNoProj_nop8_method-SA>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop8> ;
+        cv:series        "SA" ;
+        cv:stdDev        3.5076318148986066E-5 ;
+        cv:value         9.872463333333334E-4 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop8> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop8" ;
+        iv:method        "SA" .
+
+<http://ex.org/avg/query-UCQProj_p23_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p23> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        4.265432421806727E-4 ;
+        cv:value         0.0051565709999999996e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p23> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p23" ;
+        iv:method        "JSAG" .
+
+<http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q2a>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.example.org/>\n\n\n\nSELECT * WHERE {\n\t?x a :Student .\n\t?x :registeredAt ?y .\n\t?y a :University .\n\t?x :placeOfBirth ?z .\n\t?z a :City .\n\t?y :locatedAt ?z .\t\n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "2"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "a" .
+
+<http://ex.org/avg/query-UCQProj_p22_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p22> ;
+        cv:series        "TS" ;
+        cv:stdDev        0.010899273945475945e0 ;
+        cv:value         0.19334855399999998e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p22> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p22" ;
+        iv:method        "TS" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#p26>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "UCQProj_p26" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "true" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q21b> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q21a> .
+
+eg:exp1  a             cv:StatisticalBarChart ;
+        rdfs:label     "Performance Histogram" ;
+        cv:height      1050 ;
+        cv:series      eg:exp1-series ;
+        cv:style       eg:exp1-style ;
+        cv:width       1650 ;
+        cv:xAxisTitle  "Workload" ;
+        cv:yAxisTitle  "Time (s)" .
+
+<http://ex.org/avg/query-CQNoProj_nop14_method-AFMU>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop14> ;
+        cv:series        "AFMU" ;
+        cv:stdDev        4.139425738295914E-4 ;
+        cv:value         0.0016010090000000002e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop14> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop14" ;
+        iv:method        "AFMU" .
+
+<http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q9b>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.example.org/>\n\nSELECT * WHERE {\n\t?x a :GraduateStudent .\n\t?y a :Department .\n\t?x :memberOf ?y .\n\t?y :subOrganizationOf :University1 .\n\t?x :email ?z .\n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "9"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "b" .
+
+<http://ex.org/avg/query-CQNoProj_nop14_method-SA>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop14> ;
+        cv:series        "SA" ;
+        cv:stdDev        1.2617645853680014E-5 ;
+        cv:value         7.444906666666667E-4 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop14> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop14" ;
+        iv:method        "SA" .
+
+<http://ex.org/avg/query-CQNoProj_nop17_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop17> ;
+        cv:series        "TS" ;
+        cv:stdDev        5.815632179504555E-4 ;
+        cv:value         0.012747246666666665e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop17> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop17" ;
+        iv:method        "TS" .
+
+<http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q7a>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.lehigh.edu//univ-bench.owl#>\n\nSELECT * WHERE \n{ \n  ?x a :Student .\n  ?x :name ?y . \n  ?x :nickName ?z . \n  ?x :telephone ?tel . \n  ?x :ssn ?ssn . \n  ?x :age ?age . \n  ?x :sex ?sex . \n  ?x :emailAddress ?email . \n  ?x :memberOf ?dept . \n  ?x :takesCourse ?course . \n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "7"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "a" .
+
+<http://ex.org/avg/query-UCQProj_p9_method-AFMU>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p9> ;
+        cv:series        "AFMU" ;
+        cv:stdDev        2.2696025683806404E-4 ;
+        cv:value         0.001328182e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p9> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p9" ;
+        iv:method        "AFMU" .
+
+<http://ex.org/avg/query-UCQProj_p14_method-AFMU>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p14> ;
+        cv:series        "AFMU" ;
+        cv:stdDev        3.1728566303989637E-4 ;
+        cv:value         0.0015777379999999998e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p14> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p14" ;
+        iv:method        "AFMU" .
+
+<http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop11>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "CQNoProj_nop11" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "true" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q6a> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q6c> .
+
+<http://ex.org/avg/query-CQNoProj_nop20_method-SA>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop20> ;
+        cv:series        "SA" ;
+        cv:stdDev        1.236987036022969E-4 ;
+        cv:value         8.707503333333335E-4 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop20> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop20" ;
+        iv:method        "SA" .
+
+<http://ex.org/avg/query-UCQProj_p11_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p11> ;
+        cv:series        "TS" ;
+        cv:stdDev        5.7718983554171E-4 ;
+        cv:value         0.014546133000000001e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p11> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p11" ;
+        iv:method        "TS" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q11b>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.example.org/>\n\n\nSELECT ?x WHERE { \n   ?x :takesCourse \"Course10\" .\n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "11"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "b" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#p13>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "UCQProj_p13" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "true" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q16a> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q16c> .
+
+<http://ex.org/avg/query-CQNoProj_nop4_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop4> ;
+        cv:series        "TS" ;
+        cv:stdDev        0.0017492952842470275e0 ;
+        cv:value         0.19694880166666665e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop4> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop4" ;
+        iv:method        "TS" .
+
+<http://ex.org/avg/query-CQNoProj_nop1_method-SA>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop1> ;
+        cv:series        "SA" ;
+        cv:stdDev        6.540143706032427E-5 ;
+        cv:value         7.969626666666667E-4 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop1> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop1" ;
+        iv:method        "SA" .
+
+<http://ex.org/avg/query-CQNoProj_nop16_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop16> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        0.0030533006072277834e0 ;
+        cv:value         0.046009647666666674e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop16> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop16" ;
+        iv:method        "JSAG" .
+
+<http://ex.org/avg/query-CQNoProj_nop1_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop1> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        2.9148371738667593E-4 ;
+        cv:value         0.002676264333333334e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop1> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop1" ;
+        iv:method        "JSAG" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q21b>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.lehigh.edu//univ-bench.owl#>\n\nSELECT ?name ?email \nWHERE { \n  ?x a :Student . \n  ?x :name ?name . \n  ?x :email ?email .\n  ?x :takesCourse ?c1 . \n  ?c1 :shortName \"Course10\" . \n  ?x :takesCourse ?c2 . \n  ?c2 :shortName \"Course20\" . \n  ?x :takesCourse ?c . \n  ?c :shortName \"Course30\" .\n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "21"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "b" .
+
+<http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop19>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "CQNoProj_nop19" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "false" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q9a> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q9b> .
+
+<http://ex.org/avg/query-CQNoProj_nop10_method-AFMU>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop10> ;
+        cv:series        "AFMU" ;
+        cv:stdDev        2.979679779040395E-4 ;
+        cv:value         0.0038498083333333333e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop10> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop10" ;
+        iv:method        "AFMU" .
+
+<http://ex.org/avg/query-UCQProj_p16_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p16> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        0.00368133063847363e0 ;
+        cv:value         0.019092635e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p16> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p16" ;
+        iv:method        "JSAG" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q16b>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.example.org/>\n\nSELECT  ?z WHERE {\n\t?x a :Faculty .\n\t?y a :University .\n\t?x ?z ?y .\n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "16"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "b" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#p7>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "UCQProj_p7" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "true" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q14c> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q14b> .
+
+<http://ex.org/avg/query-UCQProj_p10_method-AFMU>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p10> ;
+        cv:series        "AFMU" ;
+        cv:stdDev        3.0925557993061696E-4 ;
+        cv:value         0.0014826186666666667e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p10> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p10" ;
+        iv:method        "AFMU" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#p21>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "UCQProj_p21" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "false" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q19c> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q19b> .
+
+<http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop8>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "CQNoProj_nop8" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "false" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q4b> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q4c> .
+
+<http://ex.org/avg/query-UCQProj_p7_method-AFMU>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p7> ;
+        cv:series        "AFMU" ;
+        cv:stdDev        0.002777628998423056e0 ;
+        cv:value         0.012561153e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p7> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p7" ;
+        iv:method        "AFMU" .
+
+<http://ex.org/avg/query-UCQProj_p13_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p13> ;
+        cv:series        "TS" ;
+        cv:stdDev        3.607635802636773E-4 ;
+        cv:value         0.006612312999999999e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p13> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p13" ;
+        iv:method        "TS" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q19a>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.example.org/>\n\nSELECT ?x ?z WHERE {\n\t?x a :GraduateStudent .\n\t?y a :Department .\n\t?x :memberOf ?y .\n\t?y :subOrganizationOf :UniversityO .\n\t?x :email ?z .\n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "19"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "a" .
+
+<http://ex.org/avg/query-UCQProj_p1_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p1> ;
+        cv:series        "TS" ;
+        cv:stdDev        1.8006543615277457E-4 ;
+        cv:value         0.006076682666666666e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p1> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p1" ;
+        iv:method        "TS" .
+
+<http://ex.org/avg/query-CQNoProj_nop12_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop12> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        1.0614612231049963E-4 ;
+        cv:value         8.310196666666665E-4 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop12> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop12" ;
+        iv:method        "JSAG" .
+
+<http://ex.org/avg/query-CQNoProj_nop19_method-AFMU>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop19> ;
+        cv:series        "AFMU" ;
+        cv:stdDev        9.705296419736723E-4 ;
+        cv:value         0.16970793666666664e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop19> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop19" ;
+        iv:method        "AFMU" .
+
+<http://ex.org/avg/query-CQNoProj_nop11_method-SA>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop11> ;
+        cv:series        "SA" ;
+        cv:stdDev        1.491388206411133E-5 ;
+        cv:value         7.323976666666667E-4 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop11> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop11" ;
+        iv:method        "SA" .
+
+<http://ex.org/avg/query-UCQProj_p12_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p12> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        2.7933125600301557E-4 ;
+        cv:value         0.0011535646666666667e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p12> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p12" ;
+        iv:method        "JSAG" .
+
+<http://ex.org/avg/query-UCQProj_p19_method-AFMU>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p19> ;
+        cv:series        "AFMU" ;
+        cv:stdDev        0.0022683369924093436e0 ;
+        cv:value         0.023413554e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p19> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p19" ;
+        iv:method        "AFMU" .
+
+<http://ex.org/avg/query-UCQProj_p9_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p9> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        1.6856934870122613E-4 ;
+        cv:value         9.805496666666668E-4 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p9> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p9" ;
+        iv:method        "JSAG" .
+
+<http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop14>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "CQNoProj_nop14" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "false" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q6c> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q6b> .
+
+<http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q3b>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.example.org/>\n\nSELECT * WHERE {\n\t?x a :Professor .\n\t?x :memeberOf ?y \n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "3"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "b" .
+
+<http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q1a>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.example.org/>\n\nSELECT * WHERE { \n   ?x :takesCourse \"Course10\" . ?x :takesCourse \"Course20\" . \n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "1"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "a" .
+
+<http://ex.org/avg/query-CQNoProj_nop20_method-AFMU>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop20> ;
+        cv:series        "AFMU" ;
+        cv:stdDev        0.0036821684871667995e0 ;
+        cv:value         0.1713847116666667e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop20> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop20" ;
+        iv:method        "AFMU" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#p2>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "UCQProj_p2" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "false" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q11b> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q11a> .
+
+<http://ex.org/avg/query-CQNoProj_nop6_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop6> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        3.9511903316426895E-4 ;
+        cv:value         0.001441469e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop6> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop6" ;
+        iv:method        "JSAG" .
+
+<http://ex.org/avg/query-UCQProj_p21_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p21> ;
+        cv:series        "TS" ;
+        cv:stdDev        8.860914807510356E-4 ;
+        cv:value         0.20252468866666665e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p21> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p21" ;
+        iv:method        "TS" .
+
+<http://ex.org/avg/query-UCQProj_p26_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p26> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        0.0010147437986155257e0 ;
+        cv:value         0.006901487e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p26> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p26" ;
+        iv:method        "JSAG" .
+
+<http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop3>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "CQNoProj_nop3" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "true" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q2a> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q2b> .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#p16>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "UCQProj_p16" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "true" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q17b> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q17a> .
+
+<http://ex.org/avg/query-UCQProj_p20_method-AFMU>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p20> ;
+        cv:series        "AFMU" ;
+        cv:stdDev        0.0035452047630418885e0 ;
+        cv:value         0.025652274666666666e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p20> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p20" ;
+        iv:method        "AFMU" .
+
+<http://ex.org/avg/query-UCQProj_p3_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p3> ;
+        cv:series        "TS" ;
+        cv:stdDev        0.004157240423402228e0 ;
+        cv:value         0.20900668033333333e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p3> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p3" ;
+        iv:method        "TS" .
+
+<http://ex.org/avg/query-CQNoProj_nop10_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop10> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        1.2815331896079266E-4 ;
+        cv:value         0.0010405879999999998e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop10> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop10" ;
+        iv:method        "JSAG" .
+
+<http://ex.org/avg/query-CQNoProj_nop16_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop16> ;
+        cv:series        "TS" ;
+        cv:stdDev        0.0064926917299863935e0 ;
+        cv:value         1.0124936036666667e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop16> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop16" ;
+        iv:method        "TS" .
+
+<http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q8b>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.example.org/>\n\nSELECT * WHERE {\n\t?x :subOrganizationOf ?y .\n\t?y :subOrganizationOf ?z .\n\t?z :subOrganizationOf ?r .\n}\n\n\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "8"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "b" .
+
+<http://ex.org/avg/query-CQNoProj_nop13_method-SA>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop13> ;
+        cv:series        "SA" ;
+        cv:stdDev        8.184015386104793E-5 ;
+        cv:value         6.33691E-4 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop13> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop13" ;
+        iv:method        "SA" .
+
+<http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q6a>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.example.org/>\n\nSELECT * WHERE {\n\t?x a :Department .\n\t?y a :University .\n\t?x ?z ?y .\n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "6"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "a" .
+
+<http://ex.org/avg/query-UCQProj_p5_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p5> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        3.787388690239696E-4 ;
+        cv:value         0.0023752686666666666e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p5> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p5" ;
+        iv:method        "JSAG" .
+
+<http://ex.org/avg/query-UCQProj_p10_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p10> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        2.247052686466331E-4 ;
+        cv:value         0.0017677243333333334e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p10> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p10" ;
+        iv:method        "JSAG" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#p24>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "UCQProj_p24" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "true" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q20b> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q20a> .
+
+<http://ex.org/avg/query-CQNoProj_nop3_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop3> ;
+        cv:series        "TS" ;
+        cv:stdDev        6.619917612610872E-4 ;
+        cv:value         0.20475589533333335e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop3> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop3" ;
+        iv:method        "TS" .
+
+<http://ex.org/avg/query-UCQProj_p22_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p22> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        2.482564041152256E-4 ;
+        cv:value         0.0033701216666666665e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p22> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p22" ;
+        iv:method        "JSAG" .
+
+<http://ex.org/avg/query-CQNoProj_nop9_method-AFMU>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop9> ;
+        cv:series        "AFMU" ;
+        cv:stdDev        9.56327448835504E-4 ;
+        cv:value         0.004095783666666666e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop9> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop9" ;
+        iv:method        "AFMU" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q20b>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://example.org/>\n\n\n\n\n\n\nSELECT * WHERE { \n  ?x a :Student . \n  {?x :name ?y } \n    UNION \n  {?x :nickName ?z .\n   ?x :telephone ?tel .\n   ?x :ssn ?ssn .\n   ?x :sex ?sex . \n   ?x :memberOf ?dept .\n   ?x :emailAddress ?email .\n   ?x :age ?age  .\n    } \n ?x :takesCourse ?course .\n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "20"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "b" .
+
+<http://ex.org/avg/query-CQNoProj_nop19_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop19> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        2.0905761679658233E-4 ;
+        cv:value         0.001215519e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop19> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop19" ;
+        iv:method        "JSAG" .
+
+<http://ex.org/avg/query-UCQProj_p5_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p5> ;
+        cv:series        "TS" ;
+        cv:stdDev        4.716582892306677E-4 ;
+        cv:value         0.007803597e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p5> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p5" ;
+        iv:method        "TS" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q15b>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.example.org/>\n\nSELECT ?x ?y  WHERE {\n\t?x :name ?y .\n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "15"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "b" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q13a>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.example.org/>\n\nSELECT ?x ?y WHERE {\n\t?x a :Professor .\n\t?x :graduatedFrom ?y .\n\t?x :memeberOf ?y \n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "13"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "a" .
+
+<http://ex.org/avg/query-CQNoProj_nop13_method-AFMU>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop13> ;
+        cv:series        "AFMU" ;
+        cv:stdDev        6.665727686878772E-4 ;
+        cv:value         0.003027810666666667e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop13> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop13" ;
+        iv:method        "AFMU" .
+
+<http://ex.org/avg/query-CQNoProj_nop18_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop18> ;
+        cv:series        "TS" ;
+        cv:stdDev        0.0012189583851120137e0 ;
+        cv:value         0.021061436333333333e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop18> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop18" ;
+        iv:method        "TS" .
+
+<http://ex.org/avg/query-UCQProj_p19_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p19> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        1.4091872263668714E-4 ;
+        cv:value         0.0011822783333333333e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p19> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p19" ;
+        iv:method        "JSAG" .
+
+<http://ex.org/avg/query-CQNoProj_nop15_method-SA>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop15> ;
+        cv:series        "SA" ;
+        cv:stdDev        5.227610955959392E-4 ;
+        cv:value         0.001599514e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop15> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop15" ;
+        iv:method        "SA" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#p11>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "UCQProj_p11" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "false" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q16a> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q16b> .
+
+<http://ex.org/avg/query-UCQProj_p8_method-AFMU>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p8> ;
+        cv:series        "AFMU" ;
+        cv:stdDev        0.0012903307757598007e0 ;
+        cv:value         0.006483761333333333e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p8> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p8" ;
+        iv:method        "AFMU" .
+
+<http://ex.org/avg/query-UCQProj_p13_method-AFMU>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p13> ;
+        cv:series        "AFMU" ;
+        cv:stdDev        4.1386059888593184E-4 ;
+        cv:value         0.0024948566666666665e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p13> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p13" ;
+        iv:method        "AFMU" .
+
+<http://ex.org/avg/query-UCQProj_p12_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p12> ;
+        cv:series        "TS" ;
+        cv:stdDev        4.8497727823155746E-4 ;
+        cv:value         0.013594953333333333e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p12> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p12" ;
+        iv:method        "TS" .
+
+<http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop17>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "CQNoProj_nop17" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "true" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q8a> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q8b> .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q18a>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.example.org/>\n\nSELECT ?x ?y ?z ?r  WHERE {\n\t?x :subOrganizationOf ?y .\n\t?y :subOrganizationOf ?z .\n\t?z :subOrganizationOf ?r .\n\t?r :subOrganizationOf :Unibz .\n}\n\n\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "18"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "a" .
+
+<http://ex.org/avg/query-CQNoProj_nop5_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop5> ;
+        cv:series        "TS" ;
+        cv:stdDev        1.345906079148501E-4 ;
+        cv:value         0.007639774666666667e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop5> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop5" ;
+        iv:method        "TS" .
+
+<http://ex.org/avg/query-CQNoProj_nop20_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop20> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        2.4187651155221053E-4 ;
+        cv:value         0.001477864e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop20> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop20" ;
+        iv:method        "JSAG" .
+
+<http://ex.org/avg/query-CQNoProj_nop2_method-SA>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop2> ;
+        cv:series        "SA" ;
+        cv:stdDev        6.639126362707676E-5 ;
+        cv:value         7.3069E-4 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop2> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop2" ;
+        iv:method        "SA" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#p5>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "UCQProj_p5" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "true" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q13a> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q13b> .
+
+<http://ex.org/avg/query-CQNoProj_nop15_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop15> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        1.6681349367682056E-4 ;
+        cv:value         0.0019294129999999998e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop15> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop15" ;
+        iv:method        "JSAG" .
+
+<http://ex.org/avg/query-CQNoProj_nop7_method-AFMU>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop7> ;
+        cv:series        "AFMU" ;
+        cv:stdDev        0.009543480909360667e0 ;
+        cv:value         0.12404810566666667e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop7> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop7" ;
+        iv:method        "AFMU" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#p19>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "UCQProj_p19" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "false" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q19a> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q19b> .
+
+<http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop6>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "CQNoProj_nop6" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "false" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q3b> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q3a> .
+
+<http://ex.org/avg/query-UCQProj_p7_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p7> ;
+        cv:series        "TS" ;
+        cv:stdDev        7.673719430771574E-4 ;
+        cv:value         0.183331345e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p7> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p7" ;
+        iv:method        "TS" .
+
+<http://ex.org/avg/query-UCQProj_p15_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p15> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        1.5689815429832915E-5 ;
+        cv:value         0.0014209916666666665e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p15> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p15" ;
+        iv:method        "JSAG" .
+
+<http://ex.org/avg/query-CQNoProj_nop17_method-SA>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop17> ;
+        cv:series        "SA" ;
+        cv:stdDev        1.664235050733186E-4 ;
+        cv:value         8.388263333333335E-4 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop17> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop17" ;
+        iv:method        "SA" .
+
+<http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q4c>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.example.org/>\n\nSELECT * WHERE {\n\t?x :takesCourse ?c1 .\n\t?c1 :shortName \"Cs200\" .\n\t?x :takesCourse ?c2 .\n\t?c2 :shortName \"Cs301\" .\n\t?x :takesCourse _:b .\n\t_:b :shortName \"Cs401\" .\n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "4"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "c" .
+
+<http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q2b>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.example.org/>\n\n\n\n\n\nSELECT * WHERE {\n\t?x a :Student .\n\t?x :registeredAt ?y .\n\t?x :placeOfBirth ?z .\n\t?y a :University .\n\t?y :locatedAt ?z .\t\n\t?z a :City .\n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "2"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "b" .
+
+<http://ex.org/avg/query-UCQProj_p14_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p14> ;
+        cv:series        "TS" ;
+        cv:stdDev        4.4507319312096186E-4 ;
+        cv:value         0.008426018666666668e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p14> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p14" ;
+        iv:method        "TS" .
+
+<http://ex.org/avg/query-UCQProj_p6_method-AFMU>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p6> ;
+        cv:series        "AFMU" ;
+        cv:stdDev        1.037821294710971E-4 ;
+        cv:value         0.0023929046666666663e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p6> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p6" ;
+        iv:method        "AFMU" .
+
+<http://sparql-qc-bench.inrialpes.fr/UCQProj#p27>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "UCQProj_p27" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "true" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q22a> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/UCQProj#UCQProj-Q22b> .
+
+eg:exp1-style  a                cv:ChartStyle ;
+        cv:legendPosition       "InsideNW" ;
+        cv:xAxisLabelRotation   45 ;
+        cv:yAxisDecimalPattern  "###,###,###,###,###.#####" ;
+        cv:yAxisLogarithmic     true ;
+        cv:yAxisTicksVisible    true .
+
+<http://ex.org/avg/query-CQNoProj_nop9_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop9> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        0.0038346450894917966e0 ;
+        cv:value         0.0036452286666666667e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop9> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop9" ;
+        iv:method        "JSAG" .
+
+<http://ex.org/avg/query-CQNoProj_nop7_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop7> ;
+        cv:series        "TS" ;
+        cv:stdDev        0.004389342691140465e0 ;
+        cv:value         0.18072576466666668e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop7> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop7" ;
+        iv:method        "TS" .
+
+<http://ex.org/avg/query-CQNoProj_nop4_method-SA>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop4> ;
+        cv:series        "SA" ;
+        cv:stdDev        2.2112914563867178E-4 ;
+        cv:value         0.0010007216666666667e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop4> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop4" ;
+        iv:method        "SA" .
+
+<http://ex.org/avg/query-CQNoProj_nop18_method-AFMU>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop18> ;
+        cv:series        "AFMU" ;
+        cv:stdDev        4.4634869447203365E-4 ;
+        cv:value         0.005253000666666666e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop18> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "CQNoProj_nop18" ;
+        iv:method        "AFMU" .
+
+<http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q7b>
+        a       <http://lsq.aksw.org/vocab#Query> ;
+        <http://lsq.aksw.org/vocab#text>
+                "PREFIX : <http://www.lehigh.edu//univ-bench.owl#>\n\nSELECT * WHERE \n{ \n  ?x a :Student .\n  ?x :name ?y . \n  ?x :nickName ?z . \n  ?x :telephone ?tel . \n  ?x :ssn ?ssn . \n  ?x :age ?age . \n  ?x :sex ?sex . \n  ?x :emailAddress ?email . \n  ?x :memberOf ?dept . \n  ?x :takesCourse ?course . \n  ?x :masterDegreeFrom :OklahomaUniversity .\n}\n" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#id>
+                "7"^^<http://www.w3.org/2001/XMLSchema#long> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#variant>
+                "b" .
+
+<http://ex.org/avg/query-UCQProj_p27_method-TS>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p27> ;
+        cv:series        "TS" ;
+        cv:stdDev        0.0027531264178168283e0 ;
+        cv:value         0.18691454533333332e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p27> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p27" ;
+        iv:method        "TS" .
+
+<http://sparql-qc-bench.inrialpes.fr/CQNoProj#nop12>
+        a           <http://sparql-qc-bench.inrialpes.fr/testsuite#ContainmentTest> ;
+        rdfs:label  "CQNoProj_nop12" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#result>
+                "false" ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#sourceQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q6c> ;
+        <http://sparql-qc-bench.inrialpes.fr/testsuite#targetQuery>
+                <http://sparql-qc-bench.inrialpes.fr/CQNoProj#CQNoProj-Q6a> .
+
+<http://ex.org/avg/query-UCQProj_p11_method-JSAG>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p11> ;
+        cv:series        "JSAG" ;
+        cv:stdDev        8.414394271722709E-5 ;
+        cv:value         0.001166256e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p11> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p11" ;
+        iv:method        "JSAG" .
+
+<http://ex.org/avg/query-UCQProj_p18_method-AFMU>
+        a                qb:Observation ;
+        cv:category      <http://sparql-qc-bench.inrialpes.fr/UCQProj#p18> ;
+        cv:series        "AFMU" ;
+        cv:stdDev        7.390527532931749E-4 ;
+        cv:value         0.006656032333333333e0 ;
+        iguana:workload  <http://sparql-qc-bench.inrialpes.fr/UCQProj#p18> ;
+        iv:experiment    <http://sparqlqc.aksw.org/my-experiment> ;
+        iv:job           "UCQProj_p18" ;
+        iv:method        "AFMU" .
