@@ -90,7 +90,6 @@
 
 		<jgrapht.version>1.1.0</jgrapht.version>
 
-
 		<!-- 2.18 could be tried out next -->
 		<jersey.version>2.26-b03</jersey.version>
 
@@ -495,13 +494,13 @@
 			<dependency>
 				<groupId>org.aksw.commons</groupId>
 				<artifactId>jena-jgrapht-bindings</artifactId>
-				<version>1.1.0</version>
+				<version>1.1.1-SNAPSHOT</version>
 			</dependency>
 
 			<dependency>
 				<groupId>org.aksw.commons</groupId>
 				<artifactId>subgraph-isomorphism-index-jena</artifactId>
-				<version>1.1.0</version>
+				<version>1.1.1-SNAPSHOT</version>
 			</dependency>
 
 

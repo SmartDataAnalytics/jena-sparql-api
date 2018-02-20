@@ -1,6 +1,7 @@
 package fr.inrialpes.tyrexmo.testqc;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -18,11 +19,12 @@ import java.util.stream.Stream;
 
 import org.aksw.beast.benchmark.performance.BenchmarkTime;
 import org.aksw.beast.benchmark.performance.PerformanceBenchmark;
+import org.aksw.beast.chart.ChartTransform;
+import org.aksw.beast.chart.model.StatisticalBarChart;
 import org.aksw.beast.enhanced.ResourceEnh;
 import org.aksw.beast.rdfstream.RdfGroupBy;
 import org.aksw.beast.rdfstream.RdfStream;
-import org.aksw.beast.viz.xchart.XChartStatBarChartBuilder;
-import org.aksw.beast.viz.xchart.XChartStatBarChartProcessor;
+import org.aksw.beast.viz.xchart.ChartModelConfigurerXChart;
 import org.aksw.beast.vocabs.CV;
 import org.aksw.beast.vocabs.IV;
 import org.aksw.beast.vocabs.OWLTIME;
@@ -31,18 +33,17 @@ import org.aksw.iguana.vocab.IguanaVocab;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcReader;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.expr.aggregate.AggAvg;
 import org.apache.jena.sparql.expr.aggregate.lib.AccStatStdDevPopulation;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.knowm.xchart.CategoryChart;
-import org.knowm.xchart.CategoryChartBuilder;
 import org.knowm.xchart.SwingWrapper;
-import org.knowm.xchart.VectorGraphicsEncoder;
-import org.knowm.xchart.VectorGraphicsEncoder.VectorGraphicsFormat;
-import org.knowm.xchart.style.Styler.LegendPosition;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
@@ -140,10 +141,12 @@ public class MainTestContain {
 //        List<String> algos = Arrays.asList();
 //        boolean isBlacklist = true;
 
-//        List<String> algos = Arrays.asList("JSAI", "JSAC", "AFMU", "TS");
-        List<String> algos = Arrays.asList("JSAI", "JSAC", "TS");
-//        List<String> algos = Arrays.asList("JSAI", "JSAC");
+        //List<String> algos = Arrays.asList("JSAI", "JSAC", "AFMU", "TS");
+        //List<String> algos = Arrays.asList("JSAI", "JSAC", "TS");
+        List<String> algos = Arrays.asList("JSAI", "JSAC");
 //        List<String> algos = Arrays.asList("JSAC", "AFMU", "TS");
+        //List<String> algos = Arrays.asList();
+        //List<String> algos = Arrays.asList("AFMU", "TS");
         boolean isBlacklist = true;
 
         List<File> jarFiles = jarFileNames.stream().map(implStr -> {
@@ -323,58 +326,87 @@ public class MainTestContain {
             .agg(CV.stDev, OWLTIME.numericDuration, AccStatStdDevPopulation.class)
             .apply(observations.stream())
             //.map(g -> g.rename("http://ex.org/avg/query{0}-user{1}", IV.job, IV.thread, IV.thread))
-            .map(g -> g.rename("http://ex.org/avg/query{0}-user{1}", IV.job, IV.method))
+            .map(g -> g.rename("http://ex.org/avg/query-{0}_method-{1}", IV.job, IV.method))
             .collect(Collectors.toList());
 
+        
+        Resource expRes = ResourceFactory.createResource("http://sparqlqc.aksw.org/my-experiment");
 
+        // TODO We might be able to use PROV-O to denote the generating experiment
+        
         // Augment the observation resources with chart information
         // Note: This is a hack, as the chart information is highly context dependent and 2 resources with these annotations cannot be fused consistently
         avgs.forEach(g -> g
+        		.addProperty(RDF.type, QB.Observation)
                 .addProperty(CV.category, g.getProperty(IguanaVocab.workload).getObject())
                 .addLiteral(CV.series, g.getProperty(IV.method).getString()) // g.getProperty(IV.job).getObject()
+                .addProperty(IV.experiment, expRes)
         );
 
+        
+        Model resultModel = ModelFactory.createDefaultModel();
+        avgs.stream().map(RDFNode::getModel).forEach(resultModel::add);
+        
+        Model chartModel = RDFDataMgr.loadModel("sparqlqc-chart-configs.ttl");
+        chartModel
+    		.listSubjectsWithProperty(RDF.type, CV.ConceptBasedSeries)        	
+    		.forEachRemaining(r -> r
+    			.addProperty(CV.sliceProperty, IV.experiment)
+    			.addProperty(IV.experiment, expRes));
+        
+        resultModel.add(chartModel);
+
+        RDFDataMgr.write(new FileOutputStream("/tmp/chart.ttl"), resultModel, RDFFormat.TURTLE_PRETTY);
+
+    	List<Entry<StatisticalBarChart, Model>> chartSpecs = ChartTransform.transform(resultModel);
+    	
+    	for(Entry<StatisticalBarChart, Model> chartSpec : chartSpecs) {
+            CategoryChart xChart = ChartModelConfigurerXChart.toChart(chartSpec.getValue(), chartSpec.getKey());
+            new SwingWrapper<CategoryChart>(xChart).displayChart();
+
+    	}        
+        
 //        avgs.forEach(r -> RDFDataMgr.write(System.out, r.getModel(), RDFFormat.TURTLE_BLOCKS));
 
 //      File outFile = File.createTempFile("beast-", ".pdf").getAbsoluteFile();
-      CategoryChart xChart = new CategoryChartBuilder()
-              .width(1650)
-              .height(1050)
-              .title("Performance Histogram")
-              .xAxisTitle("Workload")
-              .yAxisTitle("Time (s)")
-              .build();
-
-      XChartStatBarChartBuilder
-      	.from(xChart)
-      	.setErrorBarsEnabled(true)
-      	.setAutoRange(true)
-      	.processSeries(avgs);
-      
-      //XChartStatBarChartProcessor.addSeries(xChart, avgs, null, null, null, null, true);
-
-      xChart.getStyler().setLegendPosition(LegendPosition.InsideNW);
-
-      xChart.getStyler().setYAxisLogarithmic(true);
-      //xChart.getStyler().setYAxisDecimalPattern(yAxisDecimalPattern)
-      xChart.getStyler().setYAxisTicksVisible(true);
-      xChart.getStyler().setXAxisLabelRotation(45);
-      //System.out.println(xChart.getStyler().getYAxisDecimalPattern());
-      xChart.getStyler().setYAxisDecimalPattern("###,###,###,###,###.#####");
-
-      //xChart.getStyler().setYAxisTickMarkSpacingHint(yAxisTickMarkSpacingHint)
-
-      VectorGraphicsEncoder.saveVectorGraphic(xChart, "/tmp/Sample_Chart", VectorGraphicsFormat.SVG);
-//SSystem.out.println("exp: " + Math.pow(10, Math.floor(Math.log10(0.0123))));
-      new SwingWrapper<CategoryChart>(xChart).displayChart();
-
-
-
-
-
-
-
-        logger.info("Done.");
+//      CategoryChart xChart = new CategoryChartBuilder()
+//              .width(1650)
+//              .height(1050)
+//              .title("Performance Histogram")
+//              .xAxisTitle("Workload")
+//              .yAxisTitle("Time (s)")
+//              .build();
+//
+//      XChartStatBarChartBuilder
+//      	.from(xChart)
+//      	.setErrorBarsEnabled(true)
+//      	.setAutoRange(true)
+//      	.processSeries(avgs);
+//      
+//      //XChartStatBarChartProcessor.addSeries(xChart, avgs, null, null, null, null, true);
+//
+//      xChart.getStyler().setLegendPosition(LegendPosition.InsideNW);
+//
+//      xChart.getStyler().setYAxisLogarithmic(true);
+//      //xChart.getStyler().setYAxisDecimalPattern(yAxisDecimalPattern)
+//      xChart.getStyler().setYAxisTicksVisible(true);
+//      xChart.getStyler().setXAxisLabelRotation(45);
+//      //System.out.println(xChart.getStyler().getYAxisDecimalPattern());
+//      xChart.getStyler().setYAxisDecimalPattern("###,###,###,###,###.#####");
+//
+//      //xChart.getStyler().setYAxisTickMarkSpacingHint(yAxisTickMarkSpacingHint)
+//
+//      VectorGraphicsEncoder.saveVectorGraphic(xChart, "/tmp/Sample_Chart", VectorGraphicsFormat.SVG);
+////SSystem.out.println("exp: " + Math.pow(10, Math.floor(Math.log10(0.0123))));
+//      new SwingWrapper<CategoryChart>(xChart).displayChart();
+//
+//
+//
+//
+//
+//
+//
+//        logger.info("Done.");
 
 
         // Force exit due to threads of the osgi framework that stay alive for another minute

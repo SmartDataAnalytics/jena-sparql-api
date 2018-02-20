@@ -57,7 +57,7 @@
 		<gpg.keyname>AKSW</gpg.keyname>
 
 		<jena.version>3.6.0</jena.version>
-		<jsa.subversion>2-SNAPSHOT</jsa.subversion>
+		<jsa.subversion>3-SNAPSHOT</jsa.subversion>
 
 		<jsa.version>${jena.version}-${jsa.subversion}</jsa.version>
 		<slf4j.version>1.7.21</slf4j.version>
@@ -129,12 +129,6 @@
 			</dependency>
 
 			<dependency>
-				<groupId>org.aksw.sparqlqc</groupId>
-				<artifactId>sparqlqc-api-simple</artifactId>
-				<version>${project.version}</version>
-			</dependency>
-
-			<dependency>
 				<!-- <groupId>${project.groupId}</groupId> -->
 				<groupId>org.aksw.sparqlqc</groupId>
 				<artifactId>sparqlqc-api</artifactId>
@@ -202,12 +196,14 @@
 
 			</dependency>
 
+<!-- JGraphT version is plugin specific - hence it is configured individually in the child modules -->
+<!--
 			<dependency>
 				<groupId>org.jgrapht</groupId>
 				<artifactId>jgrapht-core</artifactId>
-				<version>1.0.0</version>
+				<version>1.1.0</version>
 			</dependency>
-
+-->
 
 			<!-- <dependency> <groupId>fr.inrialpes.sparqlqc</groupId> <artifactId>sparqlqc-containmenttester</artifactId> 
 				<version>1.4</version> </dependency> -->
