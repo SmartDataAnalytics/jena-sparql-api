@@ -28,7 +28,7 @@ If you install the beast debian package, you can recreate the charts using `ldch
 
 ### JSAG vs SA
 A comparision of our sparql query containment system vs SA
-![Chart for JSAG vs SA](sparqlqc-results/sparqlqc-results_jsag_sa-charts/Performance Histogram.png)
+![Chart for JSAG vs SA](sparqlqc-results/sparqlqc-results_jsag_sa-charts/Performance\ Histogram.png)
 
 * [Result dataset for JSAG vs SA](sparqlqc-results/sparqlqc-results_jsag_sa.ttl)
 
