@@ -161,8 +161,9 @@ public class MainTestContain {
         Map<String, Predicate<String>> blackLists = new HashMap<>();
         blackLists.put("AFMU", r -> Arrays.asList("#nop3", "#nop4", "#nop15", "#nop16", "#p3", "#p4", "#p15", "#p16", "#p23", "#p24", "#p25", "#p26").stream().anyMatch(r::contains));
         blackLists.put("SA", r -> Arrays.asList("UCQProj").stream().anyMatch(r::contains));
-        blackLists.put("TS", r -> Arrays.asList("#p23", "#p24", "#p15", "#p25", "#p26").stream().anyMatch(r::contains));         // slow p15, p25, p26
-
+        // Note nop15 actually works but it isexcluded because it takes significantly longer than the rest
+        blackLists.put("TS", r -> Arrays.asList("#p23", "#p24", "#p15", "#p25", "#p26", "#nop15", "#nop16", "#p16").stream().anyMatch(r::contains));         // slow p15, p25, p26
+        
         //blackLists.put("JSAC", (r) -> true);
 
         Set<String> jsaOverrides = new HashSet<>(Arrays.asList(
@@ -269,6 +270,7 @@ public class MainTestContain {
 
                         List<Resource> tasks = allTasks.stream()
                                 .filter(r -> p == null ? true : !p.apply(r.getURI()))
+//                                .peek(r -> System.out.println("Accepted task: " + r.getURI()))
                                 .collect(Collectors.toList());
 
 
@@ -420,8 +422,8 @@ public class MainTestContain {
 
     public static Stream<Resource> run(Collection<Resource> tasks, String methodLabel, Object solver, BiFunction<Resource, Object, TaskImpl> taskParser) throws Exception {
 
-        int warmUpRuns = 3;
-        int evalRuns = 3;
+        int warmUpRuns = 5;
+        int evalRuns = 5;
 
         Consumer<Resource> postProcess = (r) -> {
                 TaskImpl task = r.as(ResourceEnh.class).getTag(TaskImpl.class).get();
