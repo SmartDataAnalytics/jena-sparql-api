@@ -49,6 +49,8 @@ public class PropertyFunctionFactoryJsonUnnest
     @Override
     public PropertyFunction create(final String uri)
     {
+    	// TODO Allow indexed access if the index variable is bound
+    	// Consider reusing ListBaseList or listIndex
         return new PFuncSimpleAndList()
         {
             @Override

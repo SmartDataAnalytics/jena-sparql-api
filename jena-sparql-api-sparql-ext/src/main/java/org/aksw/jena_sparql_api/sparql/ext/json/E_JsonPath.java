@@ -87,7 +87,8 @@ public class E_JsonPath
             Object o = gson.fromJson(e, Object.class); //JsonTransformerUtils.toJavaObject(p);
 
             if(o != null) {
-                result = NodeFactory.createLiteralByValue(o, jsonDatatype);
+            	RDFDatatype dtype = TypeMapper.getInstance().getTypeByValue(o);
+                result = NodeFactory.createLiteralByValue(o, dtype);
             } else {
                 throw new RuntimeException("Datatype not supported " + e);
             }
