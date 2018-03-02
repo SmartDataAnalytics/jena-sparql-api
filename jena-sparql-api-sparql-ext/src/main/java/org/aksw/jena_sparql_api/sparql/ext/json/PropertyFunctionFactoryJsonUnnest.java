@@ -73,7 +73,7 @@ public class PropertyFunctionFactoryJsonUnnest
                         List<Binding> bindings = new ArrayList<Binding>(arr.size());
 
                         for(JsonElement item : arr) {
-                        	RDFDatatype jsonDatatype = TypeMapper.getInstance().getTypeByValue(item);
+                        	RDFDatatype jsonDatatype = TypeMapper.getInstance().getTypeByClass(JsonElement.class);
 
                             Node n = E_JsonPath.jsonToNode(item, gson, jsonDatatype);
                             NodeValue nv = NodeValue.makeNode(n);

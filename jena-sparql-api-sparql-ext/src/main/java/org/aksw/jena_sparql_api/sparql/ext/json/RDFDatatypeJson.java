@@ -1,10 +1,11 @@
 package org.aksw.jena_sparql_api.sparql.ext.json;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import org.apache.jena.datatypes.BaseDatatype;
 import org.apache.jena.datatypes.DatatypeFormatException;
 import org.apache.jena.vocabulary.XSD;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 
 public class RDFDatatypeJson
     extends BaseDatatype
@@ -29,7 +30,7 @@ public class RDFDatatypeJson
 
     @Override
     public Class<?> getJavaClass() {
-        return Gson.class;
+        return JsonElement.class;
     }
 
     /**
