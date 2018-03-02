@@ -53,13 +53,13 @@ public class E_XPath
 	            	XPathExpression expr = xPath.compile(queryStr);
 	            	Object tmp = expr.evaluate(xml, XPathConstants.STRING);
 	            	
-	            	if(tmp instanceof NodeList) {
-	            		NodeList nodes = (NodeList)tmp;
-	            		for(int i = 0; i < nodes.getLength(); ++i) {
-	            			Node node = nodes.item(i);
-	            			System.out.println("" + node);
-	            		}
-	            	}
+//	            	if(tmp instanceof NodeList) {
+//	            		NodeList nodes = (NodeList)tmp;
+//	            		for(int i = 0; i < nodes.getLength(); ++i) {
+//	            			Node node = nodes.item(i);
+//	            			//System.out.println("" + node);
+//	            		}
+//	            	}
 	            	
 		        	//Object tmp = xPath.evaluate(queryStr, xml, XPathConstants.STRING);
 		        	// FIXME Hack

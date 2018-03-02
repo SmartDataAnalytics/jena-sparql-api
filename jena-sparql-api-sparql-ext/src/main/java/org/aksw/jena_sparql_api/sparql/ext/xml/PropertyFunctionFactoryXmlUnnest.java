@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import javax.xml.namespace.NamespaceContext;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
@@ -93,15 +94,14 @@ public class PropertyFunctionFactoryXmlUnnest
                 boolean isXml = node.isLiteral() && node.getLiteralDatatype() instanceof RDFDatatypeXml;
                 if(isXml) {
                     org.w3c.dom.Node xml = (org.w3c.dom.Node)node.getLiteralValue();
-                    //xpathNode.getL
-                    //String str = Optional.ofNullable(xpathNode.getLiteral()).map(x -> x.str)
+
                     Object queryObj = xpathNode.isLiteral() ? xpathNode.getLiteralValue() : null;
                     String queryStr = queryObj instanceof String ? (String)queryObj : null;
                     
         	        if(queryStr != null && xml != null) {
-                        List<Binding> bindings = new ArrayList<Binding>();
-
-        	            try {
+                        List<Binding> bindings = new ArrayList<Binding>();                        
+                        
+        	            try {                            
         	            	XPathExpression expr = xPath.compile(queryStr);
         	            	Object tmp = expr.evaluate(xml, XPathConstants.NODESET);
         	            	
