@@ -86,8 +86,8 @@ This means, that all JSON extensions can be used for further processing, and no 
 | Category  | Synopsis    | Description | 
 | --------- | ----------- | ------------|
 | **Namespaces**          | `csv: <http://jsa.aksw.org/fn/csv/>`  | Namespace for CSV (property) function extensions |
-| **Functions**           | `xsd:json csv:parse(string literal, "optionsString")` | Parse CSV data provided as a string literal into a `xsd:json literal` holding the corresponding JSON array. |
-| **Property Functions**  | `?csvUrl csv:parse (?rowJsonObj "optionsString")` | Parse the data at the URL in the subject position as a CSV resource with the given options. **Streams** each row and binds it as a JSON object to `?rowJsonObj`. |
+| **Functions**           | `xsd:json csv:parse(string literal, "optionsString")` | Parse CSV data provided as a string literal into a `xsd:json literal` holding the corresponding JSON array of rows. |
+| **Property Functions**  | `?csvUrl csv:parse (?rowJson "optionsString")` | Parse the data at the URL in the subject position as a CSV resource with the given options. **Streams** each row and binds it as a JSON element to `?rowJson`. The options control whether rows are represented as JSON arrays (default) or objects. |
 |                         | `?csvUrl csv:parse ?rowJsonObj` | Equivalent to `?csvUrl csv:parse (?rowJsonObj "excel")` |
 
 #### CSV option strings
@@ -97,14 +97,16 @@ This means, that all JSON extensions can be used for further processing, and no 
 ```
 
 * Base format: One of the predefined [CSV Formats](https://commons.apache.org/proper/commons-csv/apidocs/org/apache/commons/csv/CSVFormat.html) defined by [Apache Commons CSV](https://commons.apache.org/proper/commons-csv/). Defaults to `excel`.
-* `-s`: Field separator, such as `,`
-* `-d`: Field delimitor, such as `"`
-* `-e`: Escape charater, such as `\`
+* `-d`: Field delimiter, such as `,`
+* `-q`: Optional field quote character, such as `"`.
+* `-e`: Optional escape charater, such as `\`
 * `-h`: User first row as headers, defaults to `false`.
+* `-o`: Enables object mode: rows are then returned as JSON objects rather than arrays.
 
-The defaults are determined by the base format and can be overridden using the options.
-Without headers, the row json object's keys are labeled `col0` to `coln`.
-
+Notes:
+* The defaults are determined by the base format and can be overridden using the options.
+* Without headers, the row json object's keys are labeled `col0` to `coln`.
+* Using the options`-q` or `-e` without argument sets the corresponding character in the base format to NULL. 
 
 ### XML
 At present there is XPath integration.

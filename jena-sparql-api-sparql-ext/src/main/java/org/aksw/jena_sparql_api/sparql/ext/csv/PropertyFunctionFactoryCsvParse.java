@@ -29,7 +29,7 @@ import org.apache.jena.vocabulary.XSD;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.JsonObject;
+import com.google.gson.JsonElement;
 
 /**
  * Function for parsing a given CSV resource as a stream of JSON objects
@@ -49,8 +49,7 @@ public class PropertyFunctionFactoryCsvParse
 {
 	private static final Logger logger = LoggerFactory.getLogger(PropertyFunctionFactoryCsvParse.class);
 
-	
-    @Override
+	@Override
     public PropertyFunction create(final String uri)
     {
         return new PropertyFunctionEval(PropFuncArgType.PF_ARG_SINGLE, PropFuncArgType.PF_ARG_EITHER) {
@@ -114,12 +113,12 @@ public class PropertyFunctionFactoryCsvParse
                 
                 String optionStr = options.getLiteralValue().toString();
 
-                Stream<JsonObject> jsonObjStream;
+                Stream<JsonElement> jsonObjStream;
 				try {
 					jsonObjStream = E_CsvParse.parseCsv(reader, optionStr);
 				} catch (IOException e) {
 					logger.warn("Failed to process csv input", e);
-					jsonObjStream = Collections.<JsonObject>emptySet().stream();
+					jsonObjStream = Collections.<JsonElement>emptySet().stream();
 				}
                 
                 QueryIterator result = new QueryIterPlainWrapper(
