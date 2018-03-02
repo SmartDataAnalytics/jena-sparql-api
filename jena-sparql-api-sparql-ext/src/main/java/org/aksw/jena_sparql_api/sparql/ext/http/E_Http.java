@@ -3,7 +3,6 @@ package org.aksw.jena_sparql_api.sparql.ext.http;
 import java.nio.charset.StandardCharsets;
 import java.util.function.Supplier;
 
-import org.aksw.jena_sparql_api.sparql.ext.json.NodeValueJson;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -12,11 +11,15 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
+import org.apache.jena.datatypes.RDFDatatype;
+import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.function.FunctionBase1;
 
 import com.google.common.net.MediaType;
+import com.google.gson.JsonElement;
 
 /**
  * jsonLiteral jsonp(jsonLiteral, queryString)
@@ -104,7 +107,9 @@ public class E_Http
 
                     boolean isJson = MediaType.parse(contentTypeValue).is(MediaType.JSON_UTF_8);
                     if(isJson) {
-                        result = NodeValueJson.create(str);
+                    	RDFDatatype jsonDatatype = TypeMapper.getInstance().getTypeByClass(JsonElement.class);
+                        Node jsonNode = NodeFactory.createLiteral(str, jsonDatatype);
+                    	result = NodeValue.makeNode(jsonNode);
                     } else {
                         result = NodeValue.makeString(str);
                     }

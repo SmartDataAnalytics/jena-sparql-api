@@ -1,12 +1,15 @@
 package org.aksw.jena_sparql_api.sparql.ext.csv;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
 import java.net.URI;
 import java.net.URL;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.aksw.jena_sparql_api.utils.IteratorClosable;
 import org.apache.jena.graph.Node;
@@ -23,6 +26,10 @@ import org.apache.jena.sparql.pfunction.PropertyFunction;
 import org.apache.jena.sparql.pfunction.PropertyFunctionEval;
 import org.apache.jena.sparql.pfunction.PropertyFunctionFactory;
 import org.apache.jena.vocabulary.XSD;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.gson.JsonObject;
 
 /**
  * Function for parsing a given CSV resource as a stream of JSON objects
@@ -38,8 +45,11 @@ import org.apache.jena.vocabulary.XSD;
  *
  */
 public class PropertyFunctionFactoryCsvParse
-    implements PropertyFunctionFactory {
+    implements PropertyFunctionFactory
+{
+	private static final Logger logger = LoggerFactory.getLogger(PropertyFunctionFactoryCsvParse.class);
 
+	
     @Override
     public PropertyFunction create(final String uri)
     {
@@ -104,11 +114,17 @@ public class PropertyFunctionFactoryCsvParse
                 
                 String optionStr = options.getLiteralValue().toString();
 
+                Stream<JsonObject> jsonObjStream;
+				try {
+					jsonObjStream = E_CsvParse.parseCsv(reader, optionStr);
+				} catch (IOException e) {
+					logger.warn("Failed to process csv input", e);
+					jsonObjStream = Collections.<JsonObject>emptySet().stream();
+				}
                 
                 QueryIterator result = new QueryIterPlainWrapper(
             		new IteratorClosable<>(
-	            		E_CsvParse
-	            			.parseCsv(reader, optionStr)
+            				jsonObjStream
 		            		.map(rowJsonObj -> E_CsvParse.jsonToNode(rowJsonObj))
 		            		.map(n -> BindingFactory.binding(outputVar, n))
 		            		.iterator(),

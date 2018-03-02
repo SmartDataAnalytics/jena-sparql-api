@@ -39,13 +39,8 @@ public class E_JsonPath
     public static JsonElement asJson(NodeValue nv) {
         Node asNode = nv.asNode();
         JsonElement result;
-        if(nv instanceof NodeValueJson) {
-            result = ((NodeValueJson)nv).getJson();
-        } else if(asNode.getLiteralDatatype() instanceof RDFDatatypeJson) {
+        if(asNode.getLiteralDatatype() instanceof RDFDatatypeJson) {
             result = (JsonElement)asNode.getLiteralValue();
-//        } else if(nv.isString()) {
-//            String str = nv.getString();
-//            result = gson.fromJson(str, Object.class);
         } else {
             result = null;
         }
@@ -53,29 +48,28 @@ public class E_JsonPath
         return result;
     }
 
-    public static NodeValue createPrimitiveNodeValue(Object o) {
-        RDFDatatype dtype = TypeMapper.getInstance().getTypeByValue(o);
-        Node node = NodeFactory.createLiteralByValue(o, dtype);
-        NodeValue result = NodeValue.makeNode(node);
-        return result;
-    }
+//    public static Node createPrimitiveNodeValue(Object o) {
+//        RDFDatatype dtype = TypeMapper.getInstance().getTypeByValue(o);
+//        Node result = NodeFactory.createLiteralByValue(o, dtype);
+//        return result;
+//    }
 
-    public static NodeValue jsonToNodeValue(Object o, Gson gson) {
+    public static Node jsonToNode(Object o, Gson gson, RDFDatatype jsonDatatype) {
         boolean isPrimitive = o instanceof Boolean || o instanceof Number || o instanceof String;
 
-        NodeValue result;
+        Node result;
         if(o == null) {
-            result = NodeValue.nvNothing;
+            result = null;
         } else if(isPrimitive) {
-            result = createPrimitiveNodeValue(o);
+            result = NodeFactory.createLiteralByValue(o, jsonDatatype);
         } else if(o instanceof JsonElement) {
             JsonElement e = (JsonElement)o;
-            result = jsonToNodeValue(e, gson);
+            result = jsonToNode(e, gson, jsonDatatype);
         } else {
             // Write the object to json and re-read it as a json-element
             String str = gson.toJson(o);
             JsonElement e = gson.fromJson(str, JsonElement.class);
-            result = jsonToNodeValue(e, gson);
+            result = jsonToNode(e, gson, jsonDatatype);
         }
 //    	else {
 //    		throw new RuntimeException("Unknown type: " + o);
@@ -84,21 +78,21 @@ public class E_JsonPath
         return result;
     }
 
-    public static NodeValue jsonToNodeValue(JsonElement e, Gson gson) {
-        NodeValue result;
+    public static Node jsonToNode(JsonElement e, Gson gson, RDFDatatype jsonDatatype) {
+        Node result;
         if(e == null) {
-            result = NodeValue.nvNothing;
+            result = null;
         } else if(e.isJsonPrimitive()) {
             //JsonPrimitive p = e.getAsJsonPrimitive();
             Object o = gson.fromJson(e, Object.class); //JsonTransformerUtils.toJavaObject(p);
 
             if(o != null) {
-                result = createPrimitiveNodeValue(o);
+                result = NodeFactory.createLiteralByValue(o, jsonDatatype);
             } else {
                 throw new RuntimeException("Datatype not supported " + e);
             }
         } else if(e.isJsonObject() || e.isJsonArray()) { // arrays are json objects / array e.isJsonArray() ||
-            result = new NodeValueJson(e);
+            result = NodeFactory.createLiteralByValue(e, jsonDatatype);//new NodeValueJson(e);
         } else {
             throw new RuntimeException("Datatype not supported " + e);
         }
@@ -136,7 +130,10 @@ public class E_JsonPath
             try {
                 // If parsing the JSON fails, we return nothing, yet we log an error
                 Object o = JsonPath.read(tmp, queryStr);
-                result = jsonToNodeValue(o, gson);
+                RDFDatatype jsonDatatype = TypeMapper.getInstance().getTypeByValue(o);
+                
+                Node node = jsonToNode(o, gson, jsonDatatype);
+                result = NodeValue.makeNode(node);
             } catch(Exception e) {
                 logger.warn(e.getLocalizedMessage());
                 result = NodeValue.nvNothing;

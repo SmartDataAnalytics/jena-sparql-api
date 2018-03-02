@@ -3,9 +3,8 @@ package org.aksw.jena_sparql_api.sparql.ext.json;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
+import org.apache.jena.datatypes.RDFDatatype;
+import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.QueryIterator;
@@ -17,6 +16,10 @@ import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.pfunction.PFuncSimple;
 import org.apache.jena.sparql.pfunction.PropertyFunction;
 import org.apache.jena.sparql.pfunction.PropertyFunctionFactory;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 
 /**
  * {
@@ -49,7 +52,8 @@ public class PropertyFunctionFactoryJsonUnnest
             @Override
             public QueryIterator execEvaluated(Binding binding, Node subject, Node predicate, Node object,
                     org.apache.jena.sparql.engine.ExecutionContext execCtx) {
-                // Get the subject's value
+
+            	// Get the subject's value
                 Node node = subject.isVariable()
                         ? binding.get((Var)subject)
                         : subject;
@@ -69,7 +73,10 @@ public class PropertyFunctionFactoryJsonUnnest
                         List<Binding> bindings = new ArrayList<Binding>(arr.size());
 
                         for(JsonElement item : arr) {
-                            NodeValue nv = E_JsonPath.jsonToNodeValue(item, gson);
+                        	RDFDatatype jsonDatatype = TypeMapper.getInstance().getTypeByValue(item);
+
+                            Node n = E_JsonPath.jsonToNode(item, gson, jsonDatatype);
+                            NodeValue nv = NodeValue.makeNode(n);
 
                             Binding b = BindingFactory.binding(binding, outputVar, nv.asNode());
                             bindings.add(b);
