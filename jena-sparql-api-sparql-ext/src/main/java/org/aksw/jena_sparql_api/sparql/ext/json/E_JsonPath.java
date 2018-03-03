@@ -61,7 +61,8 @@ public class E_JsonPath
         if(o == null) {
             result = null;
         } else if(isPrimitive) {
-            result = NodeFactory.createLiteralByValue(o, jsonDatatype);
+        	RDFDatatype dtype = TypeMapper.getInstance().getTypeByValue(o);
+            result = NodeFactory.createLiteralByValue(o, dtype);
         } else if(o instanceof JsonElement) {
             JsonElement e = (JsonElement)o;
             result = jsonToNode(e, gson, jsonDatatype);
@@ -129,6 +130,9 @@ public class E_JsonPath
             Object tmp = gson.fromJson(json, Object.class); //JsonTransformerObject.toJava.apply(json);
             String queryStr = query.getString();
 
+            if(queryStr.contains("tripId")) {
+            	System.out.println("here");
+            }
             try {
                 // If parsing the JSON fails, we return nothing, yet we log an error
                 Object o = JsonPath.read(tmp, queryStr);
