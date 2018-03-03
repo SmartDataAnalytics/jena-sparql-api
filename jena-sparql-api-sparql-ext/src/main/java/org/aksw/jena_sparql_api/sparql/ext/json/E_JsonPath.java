@@ -120,6 +120,7 @@ public class E_JsonPath
 
     @Override
     public NodeValue exec(NodeValue nv, NodeValue query) {
+        RDFDatatype jsonDatatype = TypeMapper.getInstance().getTypeByClass(JsonElement.class);
 
         JsonElement json = asJson(nv);
 
@@ -131,7 +132,6 @@ public class E_JsonPath
             try {
                 // If parsing the JSON fails, we return nothing, yet we log an error
                 Object o = JsonPath.read(tmp, queryStr);
-                RDFDatatype jsonDatatype = TypeMapper.getInstance().getTypeByValue(o);
                 
                 Node node = jsonToNode(o, gson, jsonDatatype);
                 result = NodeValue.makeNode(node);
