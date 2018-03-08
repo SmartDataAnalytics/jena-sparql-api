@@ -45,7 +45,7 @@ public class TestElementTransformVirtualPredicates {
         prologue.setPrefixMapping(PrefixMapping.Extended);
         
         // Load a simple RDF model about people and their birth date
-        // Note, that there is no explicit data attribute in the data
+        // Note, that there is no explicit 'age' attribute in the data
         Model model = RDFDataMgr.loadModel("virtual-predicates-example.ttl");
         RDFDataMgr.write(System.out, model, RDFFormat.TURTLE_PRETTY);
 
