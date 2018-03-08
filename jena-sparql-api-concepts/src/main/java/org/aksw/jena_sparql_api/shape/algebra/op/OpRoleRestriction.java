@@ -1,13 +1,13 @@
 package org.aksw.jena_sparql_api.shape.algebra.op;
 
-import org.aksw.jena_sparql_api.concepts.Relation;
+import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 
 public abstract class OpRoleRestriction
     extends Op1 // TODO use the appropriate one
 {
-    protected Relation role;
+    protected BinaryRelation role;
 
-    public OpRoleRestriction(Relation role, Op filler) {
+    public OpRoleRestriction(BinaryRelation role, Op filler) {
         super(filler);
         this.role = role;
         //this.filler = filler;
@@ -18,7 +18,7 @@ public abstract class OpRoleRestriction
         return subOp;
     }
 
-    public Relation getRole() {
+    public BinaryRelation getRole() {
         return role;
     }
 }

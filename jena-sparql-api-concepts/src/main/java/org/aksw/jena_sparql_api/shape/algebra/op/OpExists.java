@@ -1,11 +1,11 @@
 package org.aksw.jena_sparql_api.shape.algebra.op;
 
-import org.aksw.jena_sparql_api.concepts.Relation;
+import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 
 public class OpExists
     extends OpRoleRestriction
 {
-    public OpExists(Relation role, Op filler) {
+    public OpExists(BinaryRelation role, Op filler) {
         super(role, filler);
     }
 

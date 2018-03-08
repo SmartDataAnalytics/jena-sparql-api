@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.mapper.impl.type;
 
-import org.aksw.jena_sparql_api.concepts.Relation;
+import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
 
 
@@ -19,14 +19,14 @@ public class PathFragment
 {
     // TODO: We could add attributes to keep track of by which (RdfType, attributeName) this path fragement was obtained.
 
-    protected Relation relation;
+    protected BinaryRelation relation;
 
     // An RDF type can yield one of the following means (in descending priority) to report further resolution:
     protected PathResolver nextResolver;
     protected RdfType rdfType;
     protected Class<?> javaClass;
 
-    public PathFragment(Relation relation, Class<?> javaClass, RdfType rdfType, PathResolver nextResolver) {
+    public PathFragment(BinaryRelation relation, Class<?> javaClass, RdfType rdfType, PathResolver nextResolver) {
         super();
         this.relation = relation;
         this.javaClass = javaClass;
@@ -42,7 +42,7 @@ public class PathFragment
      * @param newRelation
      * @return
      */
-    public PathFragment cloneWithNewRelation(Relation newRelation) {
+    public PathFragment cloneWithNewRelation(BinaryRelation newRelation) {
         return new PathFragment(newRelation, javaClass, rdfType, nextResolver);
     }
 
@@ -52,7 +52,7 @@ public class PathFragment
     }
 
     //@Override
-    public Relation getRelation() {
+    public BinaryRelation getRelation() {
         return relation;
     }
 

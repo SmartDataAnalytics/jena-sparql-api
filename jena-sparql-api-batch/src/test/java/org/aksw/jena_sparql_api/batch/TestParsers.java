@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.batch;
 
-import org.aksw.jena_sparql_api.concepts.Relation;
+import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.stmt.SparqlElementParserImpl;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.stmt.SparqlRelationParser;
@@ -15,7 +15,7 @@ public class TestParsers {
     public void testRelationParser() {
         SparqlRelationParser parser = new SparqlRelationParserImpl(new SparqlElementParserImpl(SparqlQueryParserImpl.create(Syntax.syntaxSPARQL_10)));
 
-        Relation actual = parser.apply("?s ?o | ?s <http://foo.bar/baz> ?o");
+        BinaryRelation actual = parser.apply("?s ?o | ?s <http://foo.bar/baz> ?o");
 
         Assert.equals("?s ?o | ?s  <http://foo.bar/baz>  ?o", actual.toString());
     }

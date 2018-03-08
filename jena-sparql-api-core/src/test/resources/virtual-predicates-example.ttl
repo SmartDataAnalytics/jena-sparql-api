@@ -1,0 +1,18 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix eg: <http://www.example.org/> .
+
+eg:Anne
+  a eg:Person ;
+  eg:birthDate "1984-05-12"^^xsd:date ;
+  eg:profession eg:researcher ;
+  eg:gender eg:female ;
+  .
+
+eg:Bob
+  a eg:Person ;
+  eg:birthDate "1984-05-12"^^xsd:date ;
+  eg:profession eg:manager ;
+  eg:gender eg:male ;
+  .
+

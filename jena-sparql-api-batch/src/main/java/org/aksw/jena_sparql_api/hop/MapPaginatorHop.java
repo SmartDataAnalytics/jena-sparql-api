@@ -9,7 +9,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.concepts.Relation;
+import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.utils.ServiceUtils;
 import org.aksw.jena_sparql_api.lookup.CountInfo;
@@ -145,7 +145,7 @@ public class MapPaginatorHop
         QueryExecutionFactory qef = hopRelation.getQef();
         qef = (qef == null ? defaultQef : qef);
 
-        Relation relation = hopRelation.getRelation();
+        BinaryRelation relation = hopRelation.getRelation();
         LookupService<Node, List<Node>> ls = LookupServiceUtils.createLookupService(qef, relation);
         ls = LookupServicePartition.create(ls, chunkSize);
 

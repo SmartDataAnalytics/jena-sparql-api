@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.lookup;
 import java.util.List;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.concepts.Relation;
+import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.mapper.Agg;
@@ -46,7 +46,7 @@ public class LookupServiceUtils {
 //        LookupService<Node, T> result = LookupServiceTransformValue.create(base, transform);
 //        return result;
 //    }
-    public static <T> LookupService<Node, List<Node>> createLookupService(QueryExecutionFactory qef, Relation relation) {
+    public static <T> LookupService<Node, List<Node>> createLookupService(QueryExecutionFactory qef, BinaryRelation relation) {
         Var sourceVar = relation.getSourceVar();
 
         AggList<Node> agg = AggList.create(AggLiteral.create(BindingMapperProjectVar.create(relation.getTargetVar())));

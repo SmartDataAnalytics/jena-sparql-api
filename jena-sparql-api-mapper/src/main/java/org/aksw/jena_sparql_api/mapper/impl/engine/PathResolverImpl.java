@@ -5,7 +5,7 @@ import java.util.function.Function;
 
 import javax.persistence.criteria.Expression;
 
-import org.aksw.jena_sparql_api.concepts.Relation;
+import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.mapper.impl.type.PathFragment;
 import org.aksw.jena_sparql_api.mapper.impl.type.PathResolver;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
@@ -188,8 +188,8 @@ public class PathResolverImpl
 //    }
 
     @Override
-    public Relation getRelation() {
-        Relation result = pathFragment.getRelation();
+    public BinaryRelation getRelation() {
+        BinaryRelation result = pathFragment.getRelation();
         return result;
     }
 

@@ -15,7 +15,7 @@ import org.apache.jena.sparql.syntax.Element;
  *
  */
 public class PropertyRelation
-    extends Relation
+    extends BinaryRelation
 {
     protected Var propertyVar;
 

@@ -14,7 +14,7 @@ import org.aksw.commons.collections.MapUtils;
 import org.aksw.jena_sparql_api.concept.builder.api.ConceptExpr;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptOps;
-import org.aksw.jena_sparql_api.concepts.Relation;
+import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.lookup.LookupService;
@@ -143,8 +143,8 @@ public class ResourceShape {
 
     private static final Logger logger = LoggerFactory.getLogger(ResourceShape.class);
 
-    private Map<Relation, ResourceShape> out = new HashMap<Relation, ResourceShape>();
-    private Map<Relation, ResourceShape> in = new HashMap<Relation, ResourceShape>();
+    private Map<BinaryRelation, ResourceShape> out = new HashMap<BinaryRelation, ResourceShape>();
+    private Map<BinaryRelation, ResourceShape> in = new HashMap<BinaryRelation, ResourceShape>();
 
     private ConceptExpr expr;
 
@@ -153,11 +153,11 @@ public class ResourceShape {
         return result;
     }
 
-    public Map<Relation, ResourceShape> getOutgoing() {
+    public Map<BinaryRelation, ResourceShape> getOutgoing() {
         return out;
     }
 
-    public Map<Relation, ResourceShape> getIngoing() {
+    public Map<BinaryRelation, ResourceShape> getIngoing() {
         return in;
     }
 
@@ -187,8 +187,8 @@ public class ResourceShape {
 
     public static void collectConcepts(Collection<Concept> result, Concept baseConcept, ResourceShape source, Generator<Var> vargen, boolean includeGraph) {
 
-        Map<Relation, ResourceShape> outgoing = source.getOutgoing();
-        Map<Relation, ResourceShape> ingoing = source.getIngoing();
+        Map<BinaryRelation, ResourceShape> outgoing = source.getOutgoing();
+        Map<BinaryRelation, ResourceShape> ingoing = source.getIngoing();
 
         collectConcepts(result, baseConcept, outgoing, false, vargen, includeGraph);
         collectConcepts(result, baseConcept, ingoing, true, vargen, includeGraph);
@@ -196,15 +196,15 @@ public class ResourceShape {
         //collectConcepts(result, null, source,);
     }
 
-    public static void collectConcepts(Collection<Concept> result, Concept baseConcept, Map<Relation, ResourceShape> map, boolean isInverse, Generator<Var> vargen, boolean includeGraph) {
+    public static void collectConcepts(Collection<Concept> result, Concept baseConcept, Map<BinaryRelation, ResourceShape> map, boolean isInverse, Generator<Var> vargen, boolean includeGraph) {
 
 //        Var baseVar = baseConcept.getVar();
 
         {
-            Set<Relation> raw = map.keySet();
-            Collection<Relation> opt = group(raw);
+            Set<BinaryRelation> raw = map.keySet();
+            Collection<BinaryRelation> opt = group(raw);
 
-            for(Relation relation : opt) {
+            for(BinaryRelation relation : opt) {
                 //Concept sc = new Concept(relation.getElement(), baseVar);
                 Concept sc = baseConcept;
                 Concept item = createConcept(sc, vargen, relation, isInverse, includeGraph);
@@ -213,20 +213,20 @@ public class ResourceShape {
         }
 
 
-        Multimap<ResourceShape, Relation> groups = HashMultimap.create();
+        Multimap<ResourceShape, BinaryRelation> groups = HashMultimap.create();
 
-        for(Entry<Relation, ResourceShape> entry : map.entrySet()) {
+        for(Entry<BinaryRelation, ResourceShape> entry : map.entrySet()) {
             groups.put(entry.getValue(), entry.getKey());
         }
 
-        for(Entry<ResourceShape, Collection<Relation>> group : groups.asMap().entrySet()) {
+        for(Entry<ResourceShape, Collection<BinaryRelation>> group : groups.asMap().entrySet()) {
             ResourceShape target = group.getKey();
-            Collection<Relation> raw = group.getValue();
+            Collection<BinaryRelation> raw = group.getValue();
 
-            Collection<Relation> opt = group(raw);
+            Collection<BinaryRelation> opt = group(raw);
 
 
-            for(Relation relation : opt) {
+            for(BinaryRelation relation : opt) {
                 //Concept sc = new Concept(relation.getElement(), baseVar);
                 Concept sc = baseConcept;
 
@@ -245,15 +245,15 @@ public class ResourceShape {
     }
 
 
-    public static List<Relation> group(Collection<Relation> relations) {
-        List<Relation> result = new ArrayList<Relation>();
+    public static List<BinaryRelation> group(Collection<BinaryRelation> relations) {
+        List<BinaryRelation> result = new ArrayList<BinaryRelation>();
 
 
         Set<Node> concretePredicates = new HashSet<Node>();
         Set<Expr> simpleExprs = new HashSet<Expr>();
 
         // Find all relations that are simply ?p = expr
-        for(Relation relation : relations) {
+        for(BinaryRelation relation : relations) {
             Var s = relation.getSourceVar();
 //            Var t = relation.getTargetVar();
             Element e = relation.getElement();
@@ -277,7 +277,7 @@ public class ResourceShape {
 
         if(!simpleExprs.isEmpty()) {
             Expr orified = ExprUtils.orifyBalanced(simpleExprs);
-            Relation r = asRelation(orified);
+            BinaryRelation r = asRelation(orified);
             result.add(r);
         }
 
@@ -293,7 +293,7 @@ public class ResourceShape {
                     ? new E_OneOf(ep, exprs)
                     : new E_Equals(ep, exprs.get(0));
 
-            Relation r = asRelation(ex);
+            BinaryRelation r = asRelation(ex);
             result.add(r);
         }
 
@@ -301,9 +301,9 @@ public class ResourceShape {
     }
 
 
-    public static Relation asRelation(Expr expr) {
+    public static BinaryRelation asRelation(Expr expr) {
         ElementFilter e = new ElementFilter(expr);
-        Relation result = new Relation(e, Vars.p, Vars.o);
+        BinaryRelation result = new BinaryRelation(e, Vars.p, Vars.o);
 
         return result;
     }
@@ -483,7 +483,7 @@ public class ResourceShape {
      * @param isInverse
      * @return
      */
-    public static Concept createConcept(Concept baseConcept, Generator<Var> vargen, Relation predicateRelation, boolean isInverse, boolean includeGraph) {
+    public static Concept createConcept(Concept baseConcept, Generator<Var> vargen, BinaryRelation predicateRelation, boolean isInverse, boolean includeGraph) {
         Var sourceVar;
 
         Var baseVar = baseConcept.getVar();
