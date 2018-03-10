@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformCopyBase;
+import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformer;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
@@ -26,8 +28,8 @@ import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementBind;
 import org.apache.jena.sparql.syntax.ElementPathBlock;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
-import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformCopyBase;
-import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformer;
+//import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformCopyBase;
+//import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -263,6 +265,9 @@ public class ElementTransformVirtualPredicates
 
         nodeMap.put(sourceVar, s);
         nodeMap.put(targetVar, o);
+        
+//        System.out.println("Relation: " + relation);
+//        System.out.println("NodeMap: " + nodeMap);
         Element fragment = ElementUtils.createRenamedElement(relation.getElement(), nodeMap);
         Element result = ElementUtils.groupIfNeeded(fragment, bind);
 

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import org.apache.jena.query.ReadWrite;
+import org.apache.jena.query.TxnType;
 import org.apache.jena.sparql.core.Transactional;
 
 public class TransactionalMultiplex<T extends Transactional>
@@ -65,4 +66,30 @@ public class TransactionalMultiplex<T extends Transactional>
 		boolean result = delegates.isEmpty() ? false : delegates.iterator().next().isInTransaction();
 		return result;
 	}
+
+	@Override
+	public void begin(TxnType type) {
+		TransactionalMultiplex.forEach(delegates, Transactional::begin);
+	}
+
+	@Override
+	public boolean promote(Promote mode) {
+		TransactionalMultiplex.forEach(delegates, Transactional::promote);
+		return false;
+	}
+
+	@Override
+	public ReadWrite transactionMode() {
+		TransactionalMultiplex.forEach(delegates, Transactional::transactionMode);
+		return null;
+	}
+
+	@Override
+	public TxnType transactionType() {
+		TxnType result = delegates.isEmpty() ? null : delegates.iterator().next().transactionType();
+		return result;
+	}
+	
+	
+	
 }

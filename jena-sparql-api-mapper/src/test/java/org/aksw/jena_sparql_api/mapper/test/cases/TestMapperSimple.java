@@ -13,10 +13,13 @@ import org.aksw.jena_sparql_api.update.FluentSparqlService;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.rdf.model.Model;
+import org.junit.Test;
+
+import com.google.common.collect.ImmutableMap;
 
 public class TestMapperSimple {
 
-    //@Test // TODO Fix and re-enable test
+    @Test // TODO Fix and re-enable test
     public void test1() throws ParseException {
         TypeMapper.getInstance().registerDatatype(new RDFDatatypeCalendar());
         RDFDatatype calendarType = TypeMapper.getInstance().getTypeByClass(Calendar.class);
@@ -29,6 +32,10 @@ public class TestMapperSimple {
         //DateFormat df = new SimpleDateFormat("yyyy/MM/dd");
         person.setBirthDate(new GregorianCalendar(2000, 0, 0));
 
+//        person.setTags(ImmutableMap.<String, Person>builder()
+//        		.put("friend", new Person())
+//        		.build());
+        
         SparqlService sparqlService = FluentSparqlService.forModel().create();
         EntityManagerImpl em = new EntityManagerImpl(new RdfMapperEngineImpl(sparqlService));
         em.persist(person);

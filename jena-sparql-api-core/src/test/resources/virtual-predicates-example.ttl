@@ -2,17 +2,48 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix eg: <http://www.example.org/> .
 
-eg:Anne
+eg:anne
   a eg:Person ;
   eg:birthDate "1984-05-12"^^xsd:date ;
   eg:profession eg:researcher ;
   eg:gender eg:female ;
   .
 
-eg:Bob
+eg:bob
   a eg:Person ;
   eg:birthDate "1984-05-12"^^xsd:date ;
   eg:profession eg:manager ;
   eg:gender eg:male ;
   .
 
+
+
+eg:fundedProjectX
+  a eg:Project ;
+  eg:beneficiary [
+    eg:address [
+      eg:country eg:austria
+    ]
+  ] ;
+  eg:beneficiary [
+    eg:address [
+      eg:country eg:germany
+    ]
+  ] ;
+  .
+
+eg:fundedProjectY
+  a eg:FundedProject ;
+  eg:beneficiary [
+    eg:address [
+      eg:country eg:germany
+    ]
+  ] ;
+  eg:beneficiary [
+    eg:address [
+      eg:country eg:germany
+    ]
+  ] ;
+  .
+
+  

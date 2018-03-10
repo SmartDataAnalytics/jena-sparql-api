@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.mapper.model;
 
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiFunction;
 
@@ -53,6 +54,8 @@ public abstract class RdfMapperPropertyBase
 
     public RdfMapperPropertyBase(PropertyOps propertyOps, Property predicate, RdfType targetRdfType, BiFunction<Object, Object, Node> createTargetNode, TypeConverter typeConverter) { //, String fetchMode) {
         super();
+        Objects.requireNonNull(predicate);
+        
         //this.propertyName = propertyName;
         this.propertyOps = propertyOps;
         this.predicate = predicate;

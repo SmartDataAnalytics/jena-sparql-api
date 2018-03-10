@@ -85,7 +85,7 @@
 	</developers>
 
 	<properties>
-		<jena.version>3.6.0</jena.version>
+		<jena.version>3.7.0-SNAPSHOT</jena.version>
 		<jetty.version>9.4.8.v20171121</jetty.version>
 
 		<jgrapht.version>1.1.0</jgrapht.version>

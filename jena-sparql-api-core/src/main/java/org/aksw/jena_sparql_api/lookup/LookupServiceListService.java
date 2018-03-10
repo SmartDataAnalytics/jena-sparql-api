@@ -37,8 +37,8 @@ public class LookupServiceListService<V>
     		jena_jira_bug_1484_message_displayed = true;
     	}
 
-    	// Concept concept = ConceptUtils.createConcept(nodes);
-    	Concept concept = ConceptUtils.createFilterConcept(nodes);
+    	Concept concept = ConceptUtils.createConcept(nodes);
+    	//Concept concept = ConceptUtils.createFilterConcept(nodes);
 
         Map<Node, V> result = listService.fetchData(concept, null, null);
         return result;

@@ -2,14 +2,16 @@ package org.aksw.jena_sparql_api.batch.cli.main;
 
 import java.util.Iterator;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterators;
+import org.aksw.jena_sparql_api.core.connection.TransactionalTmp;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.ReadWrite;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphBase;
 import org.apache.jena.sparql.core.Quad;
+
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterators;
 
 class PredicateIfQuadExists
     implements Predicate<Quad>
@@ -30,6 +32,7 @@ class PredicateIfQuadExists
 
 public class DatasetGraphDiff
     extends DatasetGraphBase
+    implements TransactionalTmp
 {
     protected DatasetGraph core;
 

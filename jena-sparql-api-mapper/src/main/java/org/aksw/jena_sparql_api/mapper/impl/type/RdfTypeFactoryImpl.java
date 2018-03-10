@@ -303,7 +303,9 @@ public class RdfTypeFactoryImpl
         if(isCandidate && (hasIri || isMappedBy)) {
             logger.debug("Annotation on property " + propertyName + " detected: " + iriStr);
 
-            Property predicate = iriStr != null ? ResourceFactory.createProperty(iriStr) : null;
+            String iri = iriStr != null ? iriStr : mappedBy;
+            
+            Property predicate = iri != null ? ResourceFactory.createProperty(iri) : null;
 
             processProperty(rdfClass, entityOps, pd, predicate, frontier);
 

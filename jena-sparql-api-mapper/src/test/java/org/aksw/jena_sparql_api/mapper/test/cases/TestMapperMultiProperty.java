@@ -46,7 +46,7 @@ public class TestMapperMultiProperty {
      *
      * @throws ParseException
      */
-    //@Test // TODO Fix and re-enable this test
+    @Test // TODO Fix and re-enable this test
     public void testCherryPicking() throws Exception {
         Dataset ds = DatasetFactory.createGeneral();
         RDFDataMgr.read(ds, new ClassPathResource("test-country.nq").getInputStream(), Lang.NQUADS);
@@ -103,7 +103,7 @@ public class TestMapperMultiProperty {
      * Test setting inial data on the persistence context rather than the sparql endpoint
      * @throws ParseException
      */
-    //@Test
+    @Test
     public void testLowLevelCherryPicking() throws ParseException {
         RDFDatatype intType = TypeMapper.getInstance().getTypeByClass(Integer.class);
 

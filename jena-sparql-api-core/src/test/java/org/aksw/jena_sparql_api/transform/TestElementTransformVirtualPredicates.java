@@ -60,22 +60,42 @@ public class TestElementTransformVirtualPredicates {
         		        "BIND(NOW() AS ?end) " +
         				"BIND(YEAR(?end) - YEAR(?start) - IF(MONTH(?end) < MONTH(?start) || (MONTH(?end) = MONTH(?start) && DAY(?end) < DAY(?start)), 1, 0) as ?age)",
                         "s", "age", prologue));
+        
+        // Another virtual predicate 
+        // for whether all beneficiaries of a project are located in the same country
+        
+        // TODO we should generalize the concept of virtual predicate to virtual triples...
+        virtualPredicates.put(NodeFactory.createURI("http://www.example.org/isNationalProject"),
+        		BinaryRelation.create(
+					"?s\n" + 
+					"  a eg:FundedProject .\n" + 
+					"  { SELECT ?s (COUNT(DISTINCT ?x) AS ?numSatisfying) {\n" + 
+					"      ?s eg:beneficiary/eg:address/eg:country ?x\n" + 
+					"    }\n" + 
+					"    GROUP BY ?s\n" +
+					"  }\n" + 
+					"  FILTER(?numSatisfying = 1)\n" + 
+					"BIND(true AS ?o)",
+        			"s", "o", prologue));
 
         
         // Set up some queries and run them
         SparqlQueryParser parser = SparqlQueryParserImpl.create(Syntax.syntaxARQ, prologue);
         
         List<Query> queries = Arrays.asList(
-            parser.apply("Select (year(NOW()) - year('1984-01-01'^^xsd:date) AS ?d) { }"),
-        	parser.apply("Select * { ?s ?p ?o  }"),
-        	parser.apply("Select * { ?s eg:age ?o  }"),
-        	parser.apply("Select * { ?s a eg:Person ; eg:age ?a }"),
-        	parser.apply("Select * { ?s a eg:Person ; ?p ?o . FILTER(?p = eg:age) }")
+//            parser.apply("Select (year(NOW()) - year('1984-01-01'^^xsd:date) AS ?d) { }"),
+//        	parser.apply("Select * { ?s ?p ?o  }"),
+//        	parser.apply("Select * { ?s eg:age ?o  }"),
+//        	parser.apply("Select * { ?s a eg:Person ; eg:age ?a }"),
+//        	parser.apply("Select * { ?s a eg:Person ; ?p ?o . FILTER(?p = eg:age) }"),
+        	parser.apply("Select * { ?s eg:isNationalProject ?y . FILTER(?y = true) }")
         );
 
         for(Query query : queries) {
         	if(query.isQueryResultStar()) {
-	        	query.getProjectVars().addAll(query.getResultVars().stream().map(Var::alloc).collect(Collectors.toList()));
+        		List<Var> vars = query.getResultVars().stream().map(Var::alloc).collect(Collectors.toList());
+        		query.getProject().clear();
+        		vars.forEach(query.getProject()::add);
 	        	query.setQueryResultStar(false);
 	        	System.out.println(query);
         	}
