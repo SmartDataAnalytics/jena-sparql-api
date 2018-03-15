@@ -138,4 +138,15 @@ public class QueryExecutionTimeoutHelper {
     public void setTimeout(long timeout1, long timeout2) {
         setTimeout(timeout1, TimeUnit.MILLISECONDS, timeout2, TimeUnit.MILLISECONDS);
     }
+    
+    public long getExecutionTime() {
+    	long result = maxExecutionTime == null ? -1 : maxExecutionTime.getTimeUnit().toMillis(maxExecutionTime.getTime());
+    	return result;
+    }
+    
+    public long getRetrievalTime() {
+    	long result = maxRetrievalTime == null ? -1 : maxRetrievalTime.getTimeUnit().toMillis(maxRetrievalTime.getTime());
+    	return result;
+    	
+    }
 }
