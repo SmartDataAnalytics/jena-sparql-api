@@ -128,4 +128,11 @@ public class CacheFrontendImpl
 	public void write(String service, Query query, boolean value) {
 		write(service, query.toString(), value);
 	}
+
+
+	@Override
+	public boolean isReadOnly() {
+		boolean result = cacheBackend.isReadOnly();
+		return result;
+	}
 }

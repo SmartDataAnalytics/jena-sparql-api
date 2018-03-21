@@ -128,6 +128,8 @@ public class RdfTypeFactoryImpl
             populateClasses(tmp);
         }
 
+        //System.out.println(clazz + " -> " + result);
+        
         return result;
     }
 

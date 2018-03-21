@@ -14,4 +14,6 @@ import java.io.InputStream;
 public interface CacheBackend {
     CacheEntry lookup(String service, String queryString);
     void write(String service, String queryString, InputStream in);
+    
+    boolean isReadOnly();
 }

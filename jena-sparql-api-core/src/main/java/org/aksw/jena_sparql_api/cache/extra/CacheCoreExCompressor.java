@@ -110,6 +110,11 @@ public class CacheCoreExCompressor
         return decoratee;
     }
 
+	@Override
+	public boolean isReadOnly() {
+		return false;
+	}
+
     /*
     public static void main(String[] args)
             throws Exception

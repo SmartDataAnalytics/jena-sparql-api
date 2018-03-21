@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.cache.file;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
 
 import org.aksw.commons.util.StreamUtils;
 import org.aksw.commons.util.strings.StringUtils;
@@ -13,20 +14,28 @@ import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream
 public class CacheBackendFile
     implements CacheBackend
 {
-    private File parentFile;
-    private long lifespan;
+    protected File parentFile;
+    protected long lifespan;
 
+    protected boolean useCompression;
+    protected boolean isReadonly;
 
     public CacheBackendFile(File parentFile, long lifespan) {
+    	this(parentFile, lifespan, true, false);
+    }
+    
+    public CacheBackendFile(File parentFile, long lifespan, boolean useCompression, boolean isReadonly) {
         this.parentFile = parentFile;
         this.lifespan = lifespan;
+        this.useCompression = useCompression;
+        this.isReadonly = isReadonly;
 
         if(!parentFile.exists()) {
             parentFile.mkdirs();
         }
 
         boolean canWrite = parentFile.canWrite();
-        if(!canWrite) {
+        if(!isReadonly && !canWrite) {
             throw new RuntimeException("Cache cannot write to: " + parentFile.getAbsolutePath());
         }
     }
@@ -46,7 +55,10 @@ public class CacheBackendFile
 
     @Override
     public void write(String service, String queryString, InputStream in) {
-
+    	if(isReadonly) {
+    		throw new RuntimeException("Cannot write to readonly cache");
+    	}
+    	
         String fileName = StringUtils.urlEncode(service) + "-" + StringUtils.md5Hash(queryString) + ".dat.bz2";
 
         // Rename the file once done with writing
@@ -65,7 +77,7 @@ public class CacheBackendFile
             }
 
             FileOutputStream fos = new FileOutputStream(tmpFile);
-            BZip2CompressorOutputStream out = new BZip2CompressorOutputStream(fos);
+            OutputStream out = useCompression ? new BZip2CompressorOutputStream(fos) : fos;
 
             StreamUtils.copyThenClose(in, out);
 //            in.close();
@@ -78,5 +90,10 @@ public class CacheBackendFile
 
         tmpFile.renameTo(file);
     }
+
+	@Override
+	public boolean isReadOnly() {
+		return isReadonly;
+	}
 
 }
