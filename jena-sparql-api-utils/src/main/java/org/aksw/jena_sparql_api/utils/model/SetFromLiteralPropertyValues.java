@@ -15,14 +15,14 @@ import org.apache.jena.rdf.model.Resource;
  *
  * @param <T>
  */
-public class SetFromResourceAndProperty<T extends RDFNode>
+public class SetFromLiteralPropertyValues<T>
 	extends AbstractSet<T>
 {
 	protected Resource subject;
 	protected Property property;
 	protected Class<T> clazz;
 
-	public SetFromResourceAndProperty(Resource subject, Property property, Class<T> clazz) {
+	public SetFromLiteralPropertyValues(Resource subject, Property property, Class<T> clazz) {
 		super();
 		this.subject = subject;
 		this.property = property;
@@ -31,10 +31,15 @@ public class SetFromResourceAndProperty<T extends RDFNode>
 
 	@Override
 	public boolean add(T o) {
-		boolean result = ResourceUtils.addProperty(subject, property, o);
+		boolean result = ResourceUtils.addLiteral(subject, property, o);
 		return result;
 	}
-		
+
+	@Override
+	public void clear() {
+		ResourceUtils.updateLiteralProperty(subject, property, clazz, null);
+	}
+
 	@Override
 	public Iterator<T> iterator() {
 		Iterator<T> result = stream().iterator();
@@ -43,7 +48,7 @@ public class SetFromResourceAndProperty<T extends RDFNode>
 
 	@Override
 	public Stream<T> stream() {
-		Stream<T> result = ResourceUtils.listPropertyValues(subject, property, clazz);
+		Stream<T> result = ResourceUtils.listLiteralPropertyValues(subject, property, clazz);
 		return result;
 	}
 
@@ -51,4 +56,5 @@ public class SetFromResourceAndProperty<T extends RDFNode>
 	public int size() {
 		int result = (int)stream().count();
 		return result;
-	}}
+	}
+}
