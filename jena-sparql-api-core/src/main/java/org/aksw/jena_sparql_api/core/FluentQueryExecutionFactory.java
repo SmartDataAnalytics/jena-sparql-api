@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.core.utils.GraphResource;
+import org.aksw.jena_sparql_api.fail.QueryExecutionFactoryAlwaysFail;
 import org.aksw.jena_sparql_api.fallback.QueryExecutionFactoryFallback;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.model.QueryExecutionFactoryModel;
@@ -18,6 +19,7 @@ import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.core.DatasetImpl;
@@ -62,6 +64,19 @@ public class FluentQueryExecutionFactory<P>
         return from(dataset, context);
     }
 
+    public static FluentQueryExecutionFactory<?> alwaysFail(String serviceUrl) {
+    	return alwaysFail(serviceUrl, new DatasetDescription());
+    }
+
+    public static FluentQueryExecutionFactory<?> alwaysFail(String serviceUrl, String ... defaultGraphs) {
+    	DatasetDescription dd = new DatasetDescription();
+    	dd.addAllDefaultGraphURIs(Arrays.asList(defaultGraphs));
+    	return alwaysFail(serviceUrl, dd);
+    }
+
+    public static FluentQueryExecutionFactory<?> alwaysFail(String serviceUrl, DatasetDescription datasetDescription) {
+        return new FluentQueryExecutionFactory<Object>(new QueryExecutionFactoryAlwaysFail(serviceUrl, datasetDescription));
+    }
 
     public static FluentQueryExecutionFactory<?> from(Model model) {
         return new FluentQueryExecutionFactory<Object>(new QueryExecutionFactoryModel(model));

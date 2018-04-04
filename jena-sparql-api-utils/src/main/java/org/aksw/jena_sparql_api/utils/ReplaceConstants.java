@@ -35,6 +35,8 @@ import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprList;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.NodeValue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -56,7 +58,11 @@ import org.apache.jena.sparql.expr.NodeValue;
  */
 @Deprecated // "Use TransformReplaceConstants instead"
 public class ReplaceConstants {
-    private static Generator generator = Gensym.create("var", 0);
+
+	private static final Logger logger = LoggerFactory.getLogger(ReplaceConstants.class);
+
+	
+	private static Generator generator = Gensym.create("var", 0);
 
 
 
@@ -78,7 +84,7 @@ public class ReplaceConstants {
 
     public static Op replace(Op op)
     {
-        System.out.println("TODO Get rid of reflection for replacement - its slow!");
+        logger.warn("TODO Get rid of reflection for replacement - its slow!");
         return MultiMethod.invokeStatic(ReplaceConstants.class, "_replace", op);
     }
 

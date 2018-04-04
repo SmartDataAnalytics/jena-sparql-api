@@ -67,54 +67,61 @@ public class QueryExecutionCacheEx
 
     public synchronized ResultSet doCacheResultSet()
     {
+        ResultSet result = null;
+
         CacheResource resource = cache.lookup(service, queryString);
 
-        ResultSet rs;
         if(needsCaching(resource)) {
+            ResultSet rs = getDecoratee().execSelect();
 
-            try {
-                rs = getDecoratee().execSelect();
-                logger.trace("Cache write [" + service + "]: " + queryString);
-                cache.write(service, queryString, rs);
-
-            } catch(Exception e) {
-                // New strategie:
-                // If something goes wrong, just pass the exception on
-                // Don't try to return a resource from cache instead
-
-                /*
-                logger.warn("Error communicating with backend", e);
-
-                if(resource != null) {
-                    //logger.trace("Cache hit for " + queryString);
-                    return resource.asResultSet();
-                } else {
-                    throw new RuntimeException(e);
-                }*/
-
-                try {
-                    getDecoratee().abort();
-                } catch(Exception x) {
-                    logger.warn("Error", x);
-                }
-
-                throw new RuntimeException(e);
-            } finally {
-                getDecoratee().close();
+            if(cache.isReadOnly()) {
+            	result = rs;
+            } else {
+	            try {
+	                logger.trace("Cache write [" + service + "]: " + queryString);
+	                cache.write(service, queryString, rs);
+	
+	            } catch(Exception e) {
+	                // New strategie:
+	                // If something goes wrong, just pass the exception on
+	                // Don't try to return a resource from cache instead
+	
+	                /*
+	                logger.warn("Error communicating with backend", e);
+	
+	                if(resource != null) {
+	                    //logger.trace("Cache hit for " + queryString);
+	                    return resource.asResultSet();
+	                } else {
+	                    throw new RuntimeException(e);
+	                }*/
+	
+	                try {
+	                    getDecoratee().abort();
+	                } catch(Exception x) {
+	                    logger.warn("Error", x);
+	                }
+	
+	                throw new RuntimeException(e);
+	            } finally {
+	                getDecoratee().close();
+	            }
+	
+	            resource = cache.lookup(service, queryString);
+	            if(resource == null) {
+	                throw new RuntimeException("Cache error: Lookup of just written data failed");
+	            }
             }
-
-            resource = cache.lookup(service, queryString);
-            if(resource == null) {
-                throw new RuntimeException("Cache error: Lookup of just written data failed");
-            }
-
         } else {
-            logger.trace("Cache hit [" + service + "]:" + queryString);
+            logger.trace("Cache hit [" + service + "]:" + queryString);   
         }
 
-        currentResource = resource;
-
-        return resource.asResultSet();
+        if(result == null) {
+        	currentResource = resource;
+        	result = resource.asResultSet();
+        }
+        
+        return result;
     }
 
     public synchronized Model doCacheModel(Model result, ModelProvider modelProvider) {

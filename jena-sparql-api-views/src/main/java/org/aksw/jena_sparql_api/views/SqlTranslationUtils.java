@@ -288,6 +288,7 @@ public class SqlTranslationUtils {
      * @param expr
      * @return
      */
+    @Deprecated // Use E_RdfTerm.expand() - it makes use of standard sparql functions
     public static E_RdfTerm expandRdfTerm(ExprFunction expr) {
 
         if(expr instanceof E_RdfTerm) {

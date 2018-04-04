@@ -1,8 +1,10 @@
 package org.aksw.jena_sparql_api.cache.file;
 
-import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import org.aksw.commons.util.compress.MetaBZip2CompressorInputStream;
 import org.aksw.jena_sparql_api.cache.extra.CacheEntry;
@@ -10,18 +12,25 @@ import org.aksw.jena_sparql_api.cache.extra.CacheEntry;
 public class CacheEntryFile
     implements CacheEntry
 {
-    private File file;
-    private long lifespan;
+	protected Path file;
+    protected long lifespan;
+    protected boolean isCompressed;
 
-    public CacheEntryFile(File file, long lifespan) {
+    public CacheEntryFile(Path file, long lifespan, boolean isCompressed) {
         super();
         this.file = file;
         this.lifespan = lifespan;
+        this.isCompressed = isCompressed;
     }
 
     @Override
     public long getTimestamp() {
-        long result = file.lastModified();
+        long result;
+		try {
+			result = Files.getLastModifiedTime(file).toMillis();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
         return result;
     }
 
@@ -34,8 +43,10 @@ public class CacheEntryFile
     public InputStream getInputStream() {
         InputStream result;
         try {
-            InputStream in = new FileInputStream(file);
-            result = new MetaBZip2CompressorInputStream(in);
+            result = Files.newInputStream(file);//new FileInputStream(file);
+            if(isCompressed) {
+            	result = new MetaBZip2CompressorInputStream(result);
+            }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
