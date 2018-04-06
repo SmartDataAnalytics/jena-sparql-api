@@ -169,7 +169,7 @@ public class ResourceUtils {
 
 	public static <T> Optional<Statement> getLiteralProperty(Resource s, Property p, Class<T> clazz) {
 		Optional<Statement> result = findFirst(listLiteralProperties(s, p, clazz));
-		return result;		
+		return result;
 	}
 	
 	public static <T> Optional<T> getLiteralPropertyValue(Resource s, Property p, Class<T> clazz) {
