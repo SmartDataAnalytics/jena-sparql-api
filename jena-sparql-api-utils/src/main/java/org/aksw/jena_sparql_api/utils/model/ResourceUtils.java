@@ -297,7 +297,7 @@ public class ResourceUtils {
 		
 		m.remove(stmts);
 		
-		boolean result = !m.contains(stmt);
+		boolean result = stmt == null ? !stmts.isEmpty() : !m.contains(stmt);
 		
 		if(stmt != null) {
 			m.add(stmt);
