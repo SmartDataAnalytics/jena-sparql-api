@@ -39,3 +39,47 @@ A comparision of our sparql query containment system vs SA
 
 
 
+### Useful queries
+Note: In the future, the ldcharts tool (or a more general sdmx tool) should generate these queries from the metadata contained in the rdf datasets.
+
+* Create a table with for every category, having series information in the some row
+
+```
+PREFIX cv: <http://aksw.org/chart-vocab/>
+PREFIX iv: <http://iv.aksw.org/vocab#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?category_name ?value_jsag ?stdev_jsag ?value_sa ?stdev_sa {
+  { SELECT DISTINCT ?category { 
+    ?x
+      cv:category ?category ;
+      iv:experiment <http://sparqlqc.aksw.org/my-experiment>
+      .
+  } }
+
+  ?category rdfs:label ?category_name .
+
+  OPTIONAL {
+    ?jsag_observation
+      cv:category ?category ;
+      cv:series ?series_jsag ;
+      cv:value ?value_jsag ;
+      cv:stdDev ?stdev_jsag
+      .
+      FILTER(?series_jsag = "JSAG")
+  }
+
+  OPTIONAL {
+    ?sa_observation
+      cv:category ?category ;
+      cv:series ?series_sa ;
+      cv:value ?value_sa ;
+      cv:stdDev ?stdev_sa
+      .
+      FILTER(?series_sa = "SA")
+
+  }
+
+}
+ORDER BY ?category_name
+```
+
