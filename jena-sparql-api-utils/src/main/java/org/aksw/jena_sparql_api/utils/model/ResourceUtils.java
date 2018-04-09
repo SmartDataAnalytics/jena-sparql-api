@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.utils.model;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -67,8 +68,20 @@ public class ResourceUtils {
 		return result;
 	}
 
+	public static <T extends RDFNode> boolean canAsProperty(Statement stmt, Predicate<Node> nodeTest) {
+		Node node = stmt.getObject().asNode();
+		boolean result = nodeTest.test(node);
+		return result;
+	}
+
 	public static <T extends RDFNode> T getPropertyValue(Statement stmt, Class<T> clazz) {
 		T result = stmt.getObject().as(clazz);
+		return result;
+	}
+
+	public static <T> T getPropertyValue(Statement stmt, NodeMapper<T> nodeMapper) {
+		Node node = stmt.getObject().asNode();
+		T result = nodeMapper.toJava(node);
 		return result;
 	}
 
@@ -138,6 +151,19 @@ public class ResourceUtils {
 	public static <T extends RDFNode> Stream<T> listPropertyValues(Resource s, Property p, Class<T> clazz) {
 		Stream<T> result = listProperties(s, p, clazz)
 				.map(stmt -> getPropertyValue(stmt, clazz));
+		return result;
+	}
+
+	
+	public static <T> Stream<Statement> listProperties(Resource s, Property p, NodeMapper<T> nodeMapper) {
+		Stream<Statement> result = listProperties(s, p)
+				.filter(stmt -> canAsProperty(stmt, nodeMapper::canMap));
+		return result;
+	}
+
+	public static <T> Stream<T> listPropertyValues(Resource s, Property p, NodeMapper<T> nodeMapper) {
+		Stream<T> result = listProperties(s, p, nodeMapper)
+				.map(stmt -> getPropertyValue(stmt, nodeMapper));
 		return result;
 	}
 
@@ -337,6 +363,15 @@ public class ResourceUtils {
 		return s;
 	}
 	
+	public static <T> boolean setProperty(Resource s, Property p, NodeMapper<T> nodeMapper, T value) {
+		
+		RDFNode o = value == null ? null : s.getModel().asRDFNode(nodeMapper.toNode(value));
+		boolean result = replaceProperties(s.getModel(),
+				listProperties(s, p, nodeMapper),
+				o == null ? null : s.getModel().createStatement(s, p, o));
+		return result;
+	}
+
 //	public static Predicate<Statement> createPredicateIsObjectOfType(Class<?> clazz) {
 //		return stmt -> isObjectOfType()
 //	}

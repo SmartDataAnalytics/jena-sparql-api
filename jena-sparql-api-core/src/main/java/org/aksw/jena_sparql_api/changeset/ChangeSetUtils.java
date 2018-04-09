@@ -21,7 +21,7 @@ import org.aksw.jena_sparql_api.utils.GraphUtils;
 import org.aksw.jena_sparql_api.utils.NodeUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.ResultSetPart;
-import org.aksw.jena_sparql_api.utils.SetGraph;
+import org.aksw.jena_sparql_api.utils.SetFromGraph;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.jena.graph.Graph;
@@ -272,7 +272,7 @@ public class ChangeSetUtils {
 
         String prefix = "http://example.org/";
 
-        for(Triple triple : SetGraph.wrap(cs.getAddition())) {
+        for(Triple triple : SetFromGraph.wrap(cs.getAddition())) {
             String uri = prefix + FN_TripleToMd5.fn.apply(triple);
             Resource o = ResourceFactory.createResource(uri);
             Statement stmt = ModelUtils.tripleToStatement(model, triple);
@@ -281,7 +281,7 @@ public class ChangeSetUtils {
             model.add(s, CS.statement, o);
         }
 
-        for(Triple triple : SetGraph.wrap(cs.getRemoval())) {
+        for(Triple triple : SetFromGraph.wrap(cs.getRemoval())) {
             String uri = prefix + FN_TripleToMd5.fn.apply(triple);
             Resource o = ResourceFactory.createResource(uri);
             Statement stmt = ModelUtils.tripleToStatement(model, triple);

@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.core.utils;
 
 import java.util.Set;
 
-import org.aksw.jena_sparql_api.utils.SetGraph;
+import org.aksw.jena_sparql_api.utils.SetFromGraph;
 
 import com.google.common.base.Function;
 import org.apache.jena.graph.Graph;
@@ -13,7 +13,7 @@ public class FN_GraphToSet
 {
     @Override
     public Set<Triple> apply(Graph input) {
-        Set<Triple> result = new SetGraph(input);
+        Set<Triple> result = new SetFromGraph(input);
         return result;
     }
 
