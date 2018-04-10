@@ -6,6 +6,9 @@ public interface PropertyOps {
     String getName();
     Class<?> getType();
 
+    boolean acceptsType(Class<?> clazz);
+    //boolean acceptsValue(Object entity);
+    
     void setValue(Object entity, Object value);
     Object getValue(Object entity);
     

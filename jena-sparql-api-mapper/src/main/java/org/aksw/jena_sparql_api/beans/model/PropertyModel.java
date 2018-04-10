@@ -81,7 +81,7 @@ public class PropertyModel
     public void setValue(Object entity, Object value) {
     	if(value != null) {
     		Class<?> valueClass = value.getClass();
-    		if(!type.equals(valueClass) && conversionService != null) {
+    		if(!type.isAssignableFrom(valueClass) && conversionService != null) {
     			boolean canConvert = conversionService.canConvert(valueClass, type);
     			if(canConvert) {
     				value = conversionService.convert(value, type);
@@ -145,6 +145,13 @@ public class PropertyModel
     public void setType(Class<?> type) {
         this.type = type;
     }
-    
+
+	@Override
+	public boolean acceptsType(Class<?> clazz) {
+		boolean isAssignable = type.isAssignableFrom(clazz);
+		boolean result = isAssignable ||
+				(conversionService != null && conversionService.canConvert(clazz, type));
+		return result;
+	}
     
 }
