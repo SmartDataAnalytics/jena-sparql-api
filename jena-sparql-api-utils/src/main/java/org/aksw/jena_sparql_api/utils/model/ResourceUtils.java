@@ -1,12 +1,9 @@
 package org.aksw.jena_sparql_api.utils.model;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
@@ -15,8 +12,17 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.util.iterator.ExtendedIterator;
 
+import com.google.common.collect.Streams;
+
+/**
+ * TODO Move back to jena's iterator API, it allows removing items - which does not work with streams
+ * 
+ * @author raven Apr 11, 2018
+ *
+ */
 public class ResourceUtils {
 
 
@@ -63,6 +69,13 @@ public class ResourceUtils {
 		return result;
 	}
 
+	public static <T> Optional<T> findFirst(ExtendedIterator<T> stream) {
+		Optional<T> result = stream.nextOptional();
+		stream.close();
+
+		return result;
+	}
+
 	public static <T extends RDFNode> boolean canAsProperty(Statement stmt, Class<T> clazz) {
 		boolean result = stmt.getObject().canAs(clazz);
 		return result;
@@ -99,18 +112,37 @@ public class ResourceUtils {
 	}
 
 	
+	
+	public static <T extends RDFNode> ExtendedIterator<Statement> listProperties(Resource s, Property p, Class<T> clazz) {
+		ExtendedIterator<Statement> result = listProperties(s, p)
+				.filterKeep(stmt -> canAsProperty(stmt, clazz));
+		return result;
+	}
+
+	
+	public static <T extends RDFNode> ExtendedIterator<T> listPropertyValues(Resource s, Property p, Class<T> clazz) {
+		ExtendedIterator<T> result = listProperties(s, p, clazz)
+				.mapWith(stmt -> getPropertyValue(stmt, clazz));
+		return result;
+	}
+
 	/*
 	 * properties
 	 */
 
-	public static Stream<Statement> listProperties(Resource s, Property p) {
-		Stream<Statement> result = asStream(s.listProperties(p));
+//	public static Stream<Statement> listProperties(Resource s, Property p) {
+//		Stream<Statement> result = asStream(s.listProperties(p));
+//		return result;
+//	}
+
+	public static StmtIterator listProperties(Resource s, Property p) {
+		StmtIterator result = s.listProperties(p);
 		return result;
 	}
 
-	public static Stream<RDFNode> listPropertyValues(Resource s, Property p) {
-		Stream<RDFNode> result = listProperties(s, p)
-				.map(Statement::getObject);
+	public static ExtendedIterator<RDFNode> listPropertyValues(Resource s, Property p) {
+		ExtendedIterator<RDFNode> result = listProperties(s, p)
+				.mapWith(Statement::getObject);
 		return result;
 	}
 
@@ -141,29 +173,29 @@ public class ResourceUtils {
 		return result;		
 	}
 
-	public static <T extends RDFNode> Stream<Statement> listProperties(Resource s, Property p, Class<T> clazz) {
-		Stream<Statement> result = listProperties(s, p)
-				.filter(stmt -> canAsProperty(stmt, clazz));
-		return result;
-	}
+//	public static <T extends RDFNode> ExtendedIterator<Statement> listProperties(Resource s, Property p, Class<T> clazz) {
+//		ExtendedIterator<Statement> result = listProperties(s, p)
+//				.filterKeep(stmt -> canAsProperty(stmt, clazz));
+//		return result;
+//	}
+//
+//	
+//	public static <T extends RDFNode> ExtendedIterator<T> listPropertyValues(Resource s, Property p, Class<T> clazz) {
+//		ExtendedIterator<T> result = listProperties(s, p, clazz)
+//				.mapWith(stmt -> getPropertyValue(stmt, clazz));
+//		return result;
+//	}
 
 	
-	public static <T extends RDFNode> Stream<T> listPropertyValues(Resource s, Property p, Class<T> clazz) {
-		Stream<T> result = listProperties(s, p, clazz)
-				.map(stmt -> getPropertyValue(stmt, clazz));
+	public static <T> ExtendedIterator<Statement> listProperties(Resource s, Property p, NodeMapper<T> nodeMapper) {
+		ExtendedIterator<Statement> result = listProperties(s, p)
+				.filterKeep(stmt -> canAsProperty(stmt, nodeMapper::canMap));
 		return result;
 	}
 
-	
-	public static <T> Stream<Statement> listProperties(Resource s, Property p, NodeMapper<T> nodeMapper) {
-		Stream<Statement> result = listProperties(s, p)
-				.filter(stmt -> canAsProperty(stmt, nodeMapper::canMap));
-		return result;
-	}
-
-	public static <T> Stream<T> listPropertyValues(Resource s, Property p, NodeMapper<T> nodeMapper) {
-		Stream<T> result = listProperties(s, p, nodeMapper)
-				.map(stmt -> getPropertyValue(stmt, nodeMapper));
+	public static <T> ExtendedIterator<T> listPropertyValues(Resource s, Property p, NodeMapper<T> nodeMapper) {
+		ExtendedIterator<T> result = listProperties(s, p, nodeMapper)
+				.mapWith(stmt -> getPropertyValue(stmt, nodeMapper));
 		return result;
 	}
 
@@ -180,15 +212,15 @@ public class ResourceUtils {
 	}
 	
 
-	public static <T> Stream<Statement> listLiteralProperties(Resource s, Property p, Class<T> clazz) {
-		Stream<Statement> result = listProperties(s, p)
-				.filter(stmt -> canAsLiteral(stmt, clazz));
+	public static <T> ExtendedIterator<Statement> listLiteralProperties(Resource s, Property p, Class<T> clazz) {
+		ExtendedIterator<Statement> result = listProperties(s, p)
+				.filterKeep(stmt -> canAsLiteral(stmt, clazz));
 		return result;
 	}
 	
-	public static <T> Stream<T> listLiteralPropertyValues(Resource s, Property p, Class<T> clazz) {
-		Stream<T> result = listLiteralProperties(s, p, clazz)
-				.map(stmt -> getLiteralValue(stmt, clazz));
+	public static <T> ExtendedIterator<T> listLiteralPropertyValues(Resource s, Property p, Class<T> clazz) {
+		ExtendedIterator<T> result = listLiteralProperties(s, p, clazz)
+				.mapWith(stmt -> getLiteralValue(stmt, clazz));
 
 		return result;
 	}
@@ -206,8 +238,8 @@ public class ResourceUtils {
 
 	
 	// NOTE Inverse properties cannot refer to literals
-	public static Stream<Statement> listReverseProperties(RDFNode s, Property p) {		
-		Stream<Statement> result = asStream(s.getModel().listStatements(null, p, s));
+	public static StmtIterator listReverseProperties(RDFNode s, Property p) {		
+		StmtIterator result = s.getModel().listStatements(null, p, s);
 		return result;
 	}
 
@@ -221,9 +253,9 @@ public class ResourceUtils {
 		return result;
 	}
 
-	public static <T extends Resource> Stream<Statement> listReverseProperties(RDFNode s, Property p, Class<T> clazz) {
-		Stream<Statement> result = listReverseProperties(s, p)
-				.filter(stmt -> isReverseProperty(stmt, clazz));
+	public static <T extends Resource> ExtendedIterator<Statement> listReverseProperties(RDFNode s, Property p, Class<T> clazz) {
+		ExtendedIterator<Statement> result = listReverseProperties(s, p)
+				.filterKeep(stmt -> isReverseProperty(stmt, clazz));
 		return result;
 	}
 	
@@ -234,16 +266,16 @@ public class ResourceUtils {
 	}
 
 
-	public static Stream<Resource> listReversePropertyValues(Resource s, Property p) {
-		Stream<Resource> result = listReverseProperties(s, p)
-				.map(Statement::getSubject);
+	public static ExtendedIterator<Resource> listReversePropertyValues(Resource s, Property p) {
+		ExtendedIterator<Resource> result = listReverseProperties(s, p)
+				.mapWith(Statement::getSubject);
 		
 		return result;
 	}	
 
-	public static <T extends Resource> Stream<T> listReversePropertyValues(RDFNode s, Property p, Class<T> clazz) {
-		Stream<T> result = listReverseProperties(s, p, clazz)
-				.map(stmt -> stmt.getSubject().as(clazz));
+	public static <T extends Resource> ExtendedIterator<T> listReversePropertyValues(RDFNode s, Property p, Class<T> clazz) {
+		ExtendedIterator<T> result = listReverseProperties(s, p, clazz)
+				.mapWith(stmt -> stmt.getSubject().as(clazz));
 
 		return result;
 	}
@@ -316,21 +348,53 @@ public class ResourceUtils {
 	 * @param stmt The statement to insert after the removal of context statements. May be null.
 	 * @return
 	 */
-	public static boolean replaceProperties(Model m, Stream<Statement> removals, Statement stmt) {
-		List<Statement> stmts = removals
-				.filter(item -> !item.equals(stmt))
-				.collect(Collectors.toList());
+	public static boolean replaceProperties(Model m, ExtendedIterator<Statement> removals, Statement stmt) {
+		boolean stmtSeen = false;
+		while(removals.hasNext()) {
+			Statement item = removals.next();
+			if(item.equals(stmt)) {
+				stmtSeen = true;
+			} else {
+				removals.remove();
+			}
+		}
 		
-		m.remove(stmts);
-		
-		boolean result = stmt == null ? !stmts.isEmpty() : !m.contains(stmt);
-		
-		if(stmt != null) {
+		boolean result = stmt != null && !stmtSeen; 
+		if(result) {
 			m.add(stmt);
 		}
-
+		
 		return result;
+
+//		List<Statement> stmts = removals
+//				.filter(item -> !item.equals(stmt))
+//				.collect(Collectors.toList());
+//		
+//		m.remove(stmts);
+//		
+//		boolean result = stmt == null ? !stmts.isEmpty() : !m.contains(stmt);
+//		
+//		if(stmt != null) {
+//			m.add(stmt);
+//		}
+//
+//		return result;
 	}
+//	public static boolean replaceProperties(Model m, Stream<Statement> removals, Statement stmt) {
+//		List<Statement> stmts = removals
+//				.filter(item -> !item.equals(stmt))
+//				.collect(Collectors.toList());
+//		
+//		m.remove(stmts);
+//		
+//		boolean result = stmt == null ? !stmts.isEmpty() : !m.contains(stmt);
+//		
+//		if(stmt != null) {
+//			m.add(stmt);
+//		}
+//
+//		return result;
+//	}
 
 	/*             
 	 * set: replaces all properties resource

@@ -2,11 +2,12 @@ package org.aksw.jena_sparql_api.utils.model;
 
 import java.util.AbstractSet;
 import java.util.Iterator;
-import java.util.stream.Stream;
 
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
+
+import com.google.common.collect.Iterators;
 
 /**
  * Set view over the values of a property of a given subject resource.
@@ -34,21 +35,16 @@ public class SetFromPropertyValues<T extends RDFNode>
 		boolean result = ResourceUtils.addProperty(subject, property, o);
 		return result;
 	}
-		
+
 	@Override
 	public Iterator<T> iterator() {
-		Iterator<T> result = stream().iterator();
+		Iterator<T> result = ResourceUtils.listPropertyValues(subject, property, clazz);
 		return result;
 	}
 
-	@Override
-	public Stream<T> stream() {
-		Stream<T> result = ResourceUtils.listPropertyValues(subject, property, clazz);
-		return result;
-	}
 
 	@Override
 	public int size() {
-		int result = (int)stream().count();
+		int result = Iterators.size(iterator());
 		return result;
 	}}

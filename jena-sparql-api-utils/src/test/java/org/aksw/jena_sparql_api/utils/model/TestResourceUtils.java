@@ -86,6 +86,26 @@ public class TestResourceUtils {
 		
 		Assert.assertTrue(sameModel);
 	}
+
+	@Test
+	public void testNodeMapperUriOrString() {
+		NodeMapper<String> m = NodeMapperFactory.DEFAULT_URI_OR_STRING;
+	
+		Assert.assertTrue(m.canMap(NodeFactory.createURI("http://example.org")));
+		Assert.assertTrue(m.canMap(NodeFactory.createLiteral("hi")));
+		Assert.assertTrue(m.canMap(NodeFactory.createLiteral("there")));
+		
+		Assert.assertFalse(m.canMap(NodeFactory.createLiteral("there", "en")));
+
+		
+		Assert.assertFalse(m.toNode("hi").isURI()); 
+		Assert.assertTrue(m.toNode("http://foobar.org/baz").isURI()); 
+		Assert.assertFalse(m.toNode("http://foob ar.org/baz").isURI()); 
+		Assert.assertFalse(m.toNode("mailto://foo@bar.baz").isURI()); 
+//		Assert.assertTrue(m.toNode("mailto:foo@bar.baz").isURI()); 
+		
+	}
+	
 	
 	@Test
 	public void testNodeMapper() {
