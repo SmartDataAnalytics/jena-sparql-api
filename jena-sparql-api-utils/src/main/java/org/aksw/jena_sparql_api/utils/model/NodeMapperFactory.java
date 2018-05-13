@@ -7,6 +7,9 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 
 public class NodeMapperFactory {
+	public static final NodeMapper<Node> PASSTHROUGH = new NodeMapperPassthrough();
+
+	
 	public static final NodeMapper<String> string = NodeMapperFactory.from(String.class);
 	
 	

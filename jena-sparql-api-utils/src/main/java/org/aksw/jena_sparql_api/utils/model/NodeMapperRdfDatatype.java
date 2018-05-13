@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.utils.model;
 
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.graph.Node;
@@ -26,8 +27,14 @@ public class NodeMapperRdfDatatype<T>
 	@Override
 	public boolean canMap(Node node) {
 		// TODO we could make use of spring's conversion service to allow implicit conversions (e.g. int -> long)
-		boolean result = node.isLiteral() && dtype.isValidValue(node.getLiteralValue());
+		boolean result = canMapCore(node, dtype);
 		return result;
+	}
+	
+	public static boolean canMapCore(Node node, RDFDatatype dtype) {
+		// TODO we could make use of spring's conversion service to allow implicit conversions (e.g. int -> long)
+		boolean result = node.isLiteral() && dtype.isValidValue(node.getLiteralValue());
+		return result;		
 	}
 	
 	@Override
@@ -37,9 +44,14 @@ public class NodeMapperRdfDatatype<T>
 		return result;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public T toJava(Node node) {
+		T result = toJavaCore(node, dtype);
+		return result;
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <T> T toJavaCore(Node node, RDFDatatype dtype) {
 		Object obj;
 		Class<?> javaClass = dtype.getJavaClass();
 		
@@ -51,20 +63,27 @@ public class NodeMapperRdfDatatype<T>
 		 */
 		if(Number.class.isAssignableFrom(javaClass)) {
 			String lex = node.getLiteralLexicalForm();
-			Method m;
-			try {
-				m = javaClass.getMethod("valueOf", String.class);
-				obj = m.invoke(null, lex);
-			} catch (Exception e) {
-				throw new RuntimeException(e);
+			if(javaClass.equals(BigDecimal.class)) {
+				obj = new BigDecimal(lex);
+			} else {
+				Method m;
+				try {
+					try {
+						m = javaClass.getMethod("valueOf", String.class);
+					} catch(Exception e) {
+						throw new RuntimeException("No 'valueOf' method found on Numeric for parsing " + node + " against java type " + javaClass + " based on RDF type " + dtype);
+					}
+					obj = m.invoke(null, lex);
+				} catch (Exception e) {
+					throw new RuntimeException(e);
+				}
 			}
 		} else {
 			obj = node.getLiteralValue();
 		}
 
-		return (T)obj;
+		return (T)obj;		
 	}
-
 
 
 	@Override

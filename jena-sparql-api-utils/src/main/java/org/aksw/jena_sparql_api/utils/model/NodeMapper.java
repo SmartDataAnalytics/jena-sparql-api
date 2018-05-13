@@ -1,5 +1,7 @@
 package org.aksw.jena_sparql_api.utils.model;
 
+import java.util.Objects;
+
 import org.apache.jena.graph.Node;
 
 //TODO There is a NodeMapper in the mapper module which only differs from this class by not having a generic type
@@ -21,4 +23,15 @@ public interface NodeMapper<T>
 	
 	Node toNode(T obj);
 	T toJava(Node node);
+	
+	default Node toNodeFromObject(Object obj) {
+		Objects.requireNonNull(obj);
+		Class<?> clazz = getJavaClass();
+		@SuppressWarnings("unchecked")
+		Node result = clazz.isAssignableFrom(obj.getClass())
+				? toNode((T)obj)
+				: null;
+
+		return result;
+	}
 }

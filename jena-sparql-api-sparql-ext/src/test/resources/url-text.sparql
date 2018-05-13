@@ -1,0 +1,30 @@
+PREFIX wgs: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+PREFIX q: <http://qrowd-project.eu/ontology/>
+CONSTRUCT {
+  ?s
+    a q:BikeStation ;
+    q:id ?id ;
+    rdfs:label ?name ;
+    wgs:long ?x ;
+    wgs:lat ?y ;
+    .
+}
+{
+  # url:text is a property function that fetches the content of subject URL and
+  # makes it available as a SPARQL result set row via the object variable
+  #<https://raw.githubusercontent.com/QROWD/QROWD-RDF-Data-Integration/master/datasets/1014-electric-bikesharing-stations/trento-bike-sharing.json> url:text ?src .
+  #BIND(STRDT(?src, xsd:json) AS ?json) .
+  BIND(STRDT(url:text(<https://raw.githubusercontent.com/QROWD/QROWD-RDF-Data-Integration/master/datasets/1014-electric-bikesharing-stations/trento-bike-sharing.json>), xsd:json) AS ?json)
+
+  # Unnest each item of the json array into its own SPARQL result set row
+  ?json json:unnest (?i ?index) .
+
+  # For each row, craft the values for the CONSTRUCT template
+  BIND("http://qrowd-project.eu/resource/" AS ?ns)
+
+  BIND(json:path(?i, "$.id") AS ?id)
+  BIND(URI(CONCAT(?ns, ENCODE_FOR_URI(?id))) AS ?s)
+  BIND(json:path(?i, "$.name") AS ?name)
+  BIND(json:path(?i, "$.position[0]") AS ?x)
+  BIND(json:path(?i, "$.position[1]") AS ?y)
+}
