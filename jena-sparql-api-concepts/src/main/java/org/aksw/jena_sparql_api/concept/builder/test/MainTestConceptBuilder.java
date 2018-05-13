@@ -7,7 +7,7 @@ import org.aksw.jena_sparql_api.concept.builder.api.NodeBuilder;
 import org.aksw.jena_sparql_api.concept.builder.impl.NodeBuilderFluent;
 import org.aksw.jena_sparql_api.concept.builder.utils.Exprs;
 import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.concepts.Relation;
+import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.RelationOps;
 import org.aksw.jena_sparql_api.shape.algebra.op.Algebra;
 import org.aksw.jena_sparql_api.shape.syntax.Element;
@@ -40,7 +40,7 @@ public class MainTestConceptBuilder {
         //Function<String, Element> elementParser = SparqlElementParserImpl.create(Syntax.syntaxARQ, prologue);
 
 
-        Map<Node, Relation> virtualPredicates = new HashMap<>();
+        Map<Node, BinaryRelation> virtualPredicates = new HashMap<>();
         Node mypred = NodeFactory.createURI("http://transitive");
         //virtualPredicates.put(mypred, Relation.create("?s foaf:knows+ ?o", "s", "o", elementParser));
         //pm.getLocalPrefixMapping().

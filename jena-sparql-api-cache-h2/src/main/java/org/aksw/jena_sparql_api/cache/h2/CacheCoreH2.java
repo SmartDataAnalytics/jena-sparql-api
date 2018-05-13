@@ -288,4 +288,10 @@ public class CacheCoreH2
         return service + queryString;
     }
 
+	@Override
+	public boolean isReadOnly() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
 }

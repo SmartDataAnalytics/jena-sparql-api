@@ -38,7 +38,7 @@ public class RelationUtils {
 //    }
 
 
-    public static Triple extractTriple(Relation relation) {
+    public static Triple extractTriple(BinaryRelation relation) {
         Element e = relation.getElement();
         Triple result = ElementUtils.extractTriple(e);
         return result;
@@ -53,7 +53,7 @@ public class RelationUtils {
 //    	
 //    }
     
-    public static Relation and(Relation a, Relation b, boolean transformInPlaceIfApplicable) {
+    public static BinaryRelation and(BinaryRelation a, BinaryRelation b, boolean transformInPlaceIfApplicable) {
     	Element ae = a.getElement();
     	Element be = b.getElement();
     	
@@ -74,7 +74,7 @@ public class RelationUtils {
     	}
     	eg.addElement(ce);;
 		
-    	Relation result = new Relation(eg, a.getSourceVar(), varMap.getOrDefault(b.getTargetVar(), a.getSourceVar()));
+    	BinaryRelation result = new BinaryRelation(eg, a.getSourceVar(), varMap.getOrDefault(b.getTargetVar(), a.getSourceVar()));
     	
     	return result;    	
     }
@@ -88,7 +88,7 @@ public class RelationUtils {
      * @param transformInPlaceIfApplicable Add 'b' to to 'a' if a's element already is a union
      * @return
      */
-    public static Relation union(Relation a, Relation b, boolean transformInPlaceIfApplicable) {
+    public static BinaryRelation union(BinaryRelation a, BinaryRelation b, boolean transformInPlaceIfApplicable) {
     	Element ae = a.getElement();
 
     	ElementUnion u;
@@ -114,20 +114,20 @@ public class RelationUtils {
     	Element c = ElementUtils.createRenamedElement(b.getElement(), varMap);
     	u.addElement(c);
 
-    	Relation result = isInPlace ? a : new Relation(u, a.getSourceVar(), a.getTargetVar());
+    	BinaryRelation result = isInPlace ? a : new BinaryRelation(u, a.getSourceVar(), a.getTargetVar());
     	return result;
     }
     
-    public static Relation createRelation(String propertyUri, boolean isInverse, PrefixMapping prefixMapping) {
+    public static BinaryRelation createRelation(String propertyUri, boolean isInverse, PrefixMapping prefixMapping) {
 
         String p = prefixMapping == null ? propertyUri : prefixMapping.expandPrefix(propertyUri);
         Node node = NodeFactory.createURI(p);
-        Relation result = createRelation(node, isInverse);
+        BinaryRelation result = createRelation(node, isInverse);
         return result;
     }
 
 
-    public static Relation createRelation(Node property, boolean isInverse) {
+    public static BinaryRelation createRelation(Node property, boolean isInverse) {
     	
         //Expr expr = new E_Equals(new ExprVar(Vars.p), ExprUtils.nodeToExpr(property));
     	
@@ -137,18 +137,18 @@ public class RelationUtils {
     	    	
     	Element element = ElementUtils.createElement(t);
     	//Element element = new ElementTriplesBlock(bgp);
-        Relation result = new Relation(element, Vars.s, Vars.o);//createRelation(expr, isInverse);
+        BinaryRelation result = new BinaryRelation(element, Vars.s, Vars.o);//createRelation(expr, isInverse);
         return result;
     }
 
-    public static Relation createRelation(Property property, boolean isInverse) {
-        Relation result = createRelation(property.asNode(), isInverse);
+    public static BinaryRelation createRelation(Property property, boolean isInverse) {
+        BinaryRelation result = createRelation(property.asNode(), isInverse);
         return result;
     }
 
 
-    public static Relation createRelation(Expr expr, boolean isInverse) {
-        Relation result = new Relation(new ElementFilter(expr), Vars.p, Vars.o);
+    public static BinaryRelation createRelation(Expr expr, boolean isInverse) {
+        BinaryRelation result = new BinaryRelation(new ElementFilter(expr), Vars.p, Vars.o);
         return result;
     }
 
@@ -159,7 +159,7 @@ public class RelationUtils {
 //    }
 
 
-    public static Query createQuery(Relation relation) {
+    public static Query createQuery(BinaryRelation relation) {
         Query result = new Query();
         result.setQuerySelectType();
 

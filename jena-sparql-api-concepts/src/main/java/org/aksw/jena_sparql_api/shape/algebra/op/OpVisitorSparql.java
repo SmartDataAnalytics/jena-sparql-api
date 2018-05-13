@@ -7,7 +7,7 @@ import java.util.Map;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptOps;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
-import org.aksw.jena_sparql_api.concepts.Relation;
+import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
@@ -57,7 +57,7 @@ public class OpVisitorSparql
 
     @Override
     public Concept visit(OpExists op) {
-        Relation relation = op.getRole();
+        BinaryRelation relation = op.getRole();
         Concept filler = op.getSubOp().accept(this);
         Concept result = ConceptOps.exists(relation, filler, generator);
         return result;
@@ -65,7 +65,7 @@ public class OpVisitorSparql
 
     @Override
     public Concept visit(OpForAll op) {
-        Relation relation = op.getRole();
+        BinaryRelation relation = op.getRole();
         Concept filler = op.getSubOp().accept(this);
         Concept result = ConceptOps.forAllIfRolePresent(relation, filler, generator);
         return result;
@@ -115,7 +115,7 @@ public class OpVisitorSparql
     public Concept visit(OpFocus op) {
         Concept concept = op.getSubOp().accept(this);
         Path path = op.getPath();
-        Relation relation = Relation.create(path);
+        BinaryRelation relation = BinaryRelation.create(path);
         Concept result = ConceptUtils.getRelatedConcept(concept, relation);
         return result;
     }

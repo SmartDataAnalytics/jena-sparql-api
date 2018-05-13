@@ -6,17 +6,15 @@ import java.security.ProtectionDomain;
 
 import javax.servlet.ServletException;
 
-import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
-import org.aksw.jena_sparql_api.stmt.SparqlStmtParser;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandler.Context;
 import org.eclipse.jetty.util.component.AbstractLifeCycle.AbstractLifeCycleListener;
 import org.eclipse.jetty.util.component.LifeCycle;
+import org.eclipse.jetty.webapp.Configuration;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.WebApplicationInitializer;
-import org.springframework.web.context.support.GenericWebApplicationContext;
 
 /**
  *
@@ -113,7 +111,7 @@ public class ServerUtils {
         // server.setConnectors(new Connector[] { connector });
 
         final WebAppContext webAppContext = new WebAppContext();
-
+//webAppContext.setInitParameter("org.apache.tomcat.InstanceManager", "org.apache.tomcat.SimpleInstanceManager");
 
         // AnnotationConfigWebApplicationContext rootContext = new
         // AnnotationConfigWebApplicationContext();
@@ -127,6 +125,14 @@ public class ServerUtils {
         // webAppContext.addEventListener(new ContextLoaderListener(context);
         // Context servletContext = webAppContext.getServletContext();
 
+        // These lines are required to get JSP working with jetty
+        // https://github.com/puppetlabs/trapperkeeper-webserver-jetty9/issues/140
+        Configuration.ClassList classlist = Configuration.ClassList
+                .setServerDefault( server );
+        classlist.addBefore(
+                "org.eclipse.jetty.webapp.JettyWebXmlConfiguration",
+                "org.eclipse.jetty.annotations.AnnotationConfiguration" );
+        
         webAppContext.addLifeCycleListener(new AbstractLifeCycleListener() {
             @Override
             public void lifeCycleStarting(LifeCycle arg0) {
@@ -147,6 +153,9 @@ public class ServerUtils {
 
         // context.setDescriptor(externalForm + "/WEB-INF/web.xml");
         webAppContext.setWar(externalForm);
+
+        
+      //webAppContext.setInitParameter("org.apache.tomcat.InstanceManager", "org.apache.tomcat.SimpleInstanceManager");
 
         server.setHandler(webAppContext);
         return server;

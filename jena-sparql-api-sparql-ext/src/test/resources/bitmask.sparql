@@ -1,0 +1,18 @@
+# We exploit RDF to model associative arrays (i.e. Maps)
+# and use named graphs to discriminate between them
+INSERT DATA {
+  GRAPH eg:modeOfTransportation {
+    eg:bitBike      eg:hasBit 1 .
+    eg:bitCar       eg:hasBit 2 .
+    eg:bitTrain     eg:hasBit 4 .
+    eg:bitAirplane  eg:hasBit 8 .
+  }
+}
+
+# Convert the integer to a JSON array
+SELECT * {
+  BIND(json:reverse(json:split(json:binaryString(?bitmask), "(?!$)")) AS ?bitarr)
+
+  # Unnest the bit string array with index
+  ?bitarr json:unnest (?bitstr ?bitindex)
+}

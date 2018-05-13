@@ -148,6 +148,12 @@ public class CacheBackendDataSource
         }
     }
 
+	@Override
+	public boolean isReadOnly() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
 
 
 //	public void commit() {

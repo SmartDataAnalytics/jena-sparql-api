@@ -90,20 +90,22 @@ public class QueryExecutionCacheFrontend
                 throw new RuntimeException(e);
             }
 
-            logger.trace("Cache write [" + service + "]: " + queryString);
-
-            // TODO We need to get a promise for the write action so we can cancel it
-            cacheFrontend.write(service, queryString, rs);
-
-            synchronized(this) {
-                resource = cacheFrontend.lookup(service, queryString);
-                setResource(resource);
+            if(!cacheFrontend.isReadOnly()) {
+            
+	            logger.trace("Cache write [" + service + "]: " + queryString);
+	
+	            // TODO We need to get a promise for the write action so we can cancel it
+	            cacheFrontend.write(service, queryString, rs);
+	
+	            synchronized(this) {
+	                resource = cacheFrontend.lookup(service, queryString);
+	                setResource(resource);
+	            }
+	
+	            if(resource == null) {
+	                throw new RuntimeException("Cache error: Lookup of just written data failed");
+	            }
             }
-
-            if(resource == null) {
-                throw new RuntimeException("Cache error: Lookup of just written data failed");
-            }
-
         } else {
             logger.trace("Cache hit [" + service + "]:" + queryString);
         }

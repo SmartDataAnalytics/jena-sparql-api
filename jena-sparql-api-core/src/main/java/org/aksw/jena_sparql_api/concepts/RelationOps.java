@@ -21,11 +21,11 @@ import org.apache.jena.sparql.syntax.ElementSubQuery;
 
 public class RelationOps {
 
-    public static Relation from(org.apache.jena.sparql.path.Path path) {
+    public static BinaryRelation from(org.apache.jena.sparql.path.Path path) {
         TriplePath tp = new TriplePath(Vars.s, path, Vars.o);
         ElementPathBlock e = new ElementPathBlock();
         e.addTriplePath(tp);
-        Relation result = new Relation(e, Vars.s, Vars.o);
+        BinaryRelation result = new BinaryRelation(e, Vars.s, Vars.o);
         return result;
     }
 
@@ -41,7 +41,7 @@ public class RelationOps {
      * @param relation
      * @return
      */
-    public static Relation forAllHavingTheSameValue(Relation role, Generator<Var> baseGenerator) {
+    public static BinaryRelation forAllHavingTheSameValue(BinaryRelation role, Generator<Var> baseGenerator) {
 //      Select ?x Count(?c) As ?cnt1{ ?a hasPartner/inCountry ?x } Group By ?s
 //      Select ?s ?x (Count(?c) As ?cnt2){ ?a hasPartner/inCountry ?x } Group By ?s ?x
 //      Filter(?cnt1 = ?cnt2)
@@ -84,7 +84,7 @@ public class RelationOps {
         e.addElement(new ElementSubQuery(qb));
         e.addElement(new ElementFilter(new E_Equals(new ExprVar(cnta), new ExprVar(cntb))));
 
-        Relation result = new Relation(e, sourceVar, targetVar);
+        BinaryRelation result = new BinaryRelation(e, sourceVar, targetVar);
         return result;
     }
 }

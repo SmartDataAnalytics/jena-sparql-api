@@ -74,7 +74,7 @@ public class ConceptUtils {
         return result;
     }
 
-    public static Concept createRelatedConcept(Collection<Node> nodes, Relation relation) {
+    public static Concept createRelatedConcept(Collection<Node> nodes, BinaryRelation relation) {
         Var sourceVar = relation.getSourceVar();
         Var targetVar = relation.getTargetVar();
         Element relationEl = relation.getElement();
@@ -90,7 +90,7 @@ public class ConceptUtils {
     }
 
 
-    public static Concept getRelatedConcept(Concept source, Relation relation) {
+    public static Concept getRelatedConcept(Concept source, BinaryRelation relation) {
         Concept renamedSource = createRenamedSourceConcept(source, relation);
 
         Element merged = ElementUtils.mergeElements(renamedSource.getElement(), relation.getElement());
@@ -252,7 +252,7 @@ public class ConceptUtils {
      * @param relation The relation; variables will remain unchanged
      * @return
      */
-    public static Concept createRenamedSourceConcept(Concept concept, Relation relation) {
+    public static Concept createRenamedSourceConcept(Concept concept, BinaryRelation relation) {
         Concept attrConcept = new Concept(relation.getElement(), relation.getSourceVar());
         Concept result = createRenamedConcept(attrConcept, concept);
         return result;

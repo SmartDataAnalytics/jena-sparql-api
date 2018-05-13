@@ -1,6 +1,5 @@
 package org.aksw.jena_sparql_api.mapper.test.cases;
 
-import java.util.Collections;
 import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Map;
@@ -18,12 +17,15 @@ import org.aksw.jena_sparql_api.mapper.model.RdfType;
 import org.aksw.jena_sparql_api.mapper.model.TypeDecider;
 import org.aksw.jena_sparql_api.mapper.model.TypeDeciderImpl;
 import org.aksw.jena_sparql_api.mapper.test.domain.Person;
-import org.aksw.jena_sparql_api.mapper.test.domain.PersonOld;
+import org.aksw.jena_sparql_api.sparql.ext.datatypes.RDFDatatypeCalendar;
+import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 class JobExecution {
@@ -31,8 +33,19 @@ class JobExecution {
 
 public class TestTypeDecider extends TestMapperBase {
 
+	@Before
+	public void init() {
+    	TypeMapper.getInstance().registerDatatype(new RDFDatatypeCalendar());		
+	}
+	
+	@After
+	public void reset() {
+		TypeMapper.reset();
+	}
+	
     @Test
     public void test() {
+		
         Map<Class<?>, Node> map = TypeDeciderImpl.scan("org.aksw.jena_sparql_api.mapper.test");
         Assert.assertNotEquals(0, map.size());
 

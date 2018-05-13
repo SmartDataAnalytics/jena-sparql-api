@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.shape;
 import java.util.Map;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.concepts.Relation;
+import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -103,7 +103,7 @@ public class ResourceShapeBuilder {
     }
 
 
-    public ResourceShapeBuilder out(Relation relation) {
+    public ResourceShapeBuilder out(BinaryRelation relation) {
         ResourceShapeBuilder result = nav(relation, false);
         return result;
     }
@@ -129,7 +129,7 @@ public class ResourceShapeBuilder {
     }
 
 
-    public ResourceShapeBuilder in(Relation relation) {
+    public ResourceShapeBuilder in(BinaryRelation relation) {
         ResourceShapeBuilder result = nav(relation, true);
         return result;
     }
@@ -156,7 +156,7 @@ public class ResourceShapeBuilder {
 
 
     public ResourceShapeBuilder nav(Expr expr, boolean isInverse) {
-        Relation relation = new Relation(new ElementFilter(expr), Vars.p, Vars.o);
+        BinaryRelation relation = new BinaryRelation(new ElementFilter(expr), Vars.p, Vars.o);
         ResourceShapeBuilder result = nav(relation, isInverse);
         return result;
     }
@@ -167,8 +167,8 @@ public class ResourceShapeBuilder {
         return result;
     }
 
-    public ResourceShapeBuilder nav(Relation relation, boolean isInverse) {
-        Map<Relation, ResourceShape> map = isInverse
+    public ResourceShapeBuilder nav(BinaryRelation relation, boolean isInverse) {
+        Map<BinaryRelation, ResourceShape> map = isInverse
                 ? resourceShape.getIngoing()
                 : resourceShape.getOutgoing();
 

@@ -20,7 +20,7 @@ public class CsvFormatParser {
 	
 	protected NonOptionArgumentSpec<String> baseCsvFormatOs;
 	protected OptionSpec<Character> fieldDelimiterOs;
-    protected OptionSpec<String> fieldSeparatorOs;
+    protected OptionSpec<Character> quoteOs;
     protected OptionSpec<Character> escapeCharacterOs;
 
     protected OptionParser optionParser;
@@ -61,10 +61,12 @@ public class CsvFormatParser {
     	baseCsvFormatOs = optionParser
     		.nonOptions("Base predefined CSV format, one of " + predefinedFormats.values());
     	
-    	fieldSeparatorOs = optionParser
-                .acceptsAll(Arrays.asList("s", "separator"), "CSV field separator")
-                .withRequiredArg()
-                //.defaultsTo(defaultCsvFormat.getRecordSeparator())
+    	quoteOs = optionParser
+                .acceptsAll(Arrays.asList("q", "quote"), "CSV field quote character")
+                .withOptionalArg()
+                .withValuesConvertedBy(new ValueConverterCharacter())
+                //.withRequiredArg()
+                .defaultsTo(defaultCsvFormat.getQuoteCharacter())
                 ;
 
     	fieldDelimiterOs = optionParser
@@ -76,15 +78,17 @@ public class CsvFormatParser {
 
     	escapeCharacterOs = optionParser
                 .acceptsAll(Arrays.asList("e", "escape"), "CSV field escape symbol")
-                .withRequiredArg()
+                //.withRequiredArg()
+                .withOptionalArg()
                 .withValuesConvertedBy(new ValueConverterCharacter())
                 //.defaultsTo(defaultCsvFormat.getEscapeCharacter())
                 ;
     }
 
 
-    public CSVFormat parse(String[] args, CSVFormat fallBackCsvFormat) {    	
-        OptionSet options = optionParser.parse(args);
+//    public CSVFormat parse(String[] args, CSVFormat fallBackCsvFormat) {  
+//    }
+    public CSVFormat parse(OptionSet options, CSVFormat fallBackCsvFormat) {  
 
         CSVFormat csvFormat = null;
         if(options.has(baseCsvFormatOs)) {
@@ -122,11 +126,13 @@ public class CsvFormatParser {
     	}
 
     	csvFormat = csvFormat
-    		.withRecordSeparator(fieldSeparatorOs.value(options))
     		.withDelimiter(fieldDelimiterOs.value(options))
+    		.withQuote(quoteOs.value(options))
     		.withEscape(escapeCharacterOs.value(options))
         	;
-        
+
+//    	csvFormat = CSVFormat.DEFAULT
+//    		.dele
         return csvFormat;
     }
 }

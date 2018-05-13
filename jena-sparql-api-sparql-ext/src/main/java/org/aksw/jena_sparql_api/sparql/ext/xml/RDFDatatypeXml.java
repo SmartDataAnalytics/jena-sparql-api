@@ -96,7 +96,7 @@ public class RDFDatatypeXml
      * @throws DatatypeFormatException if the lexical form is not legal
      */
     @Override
-    public Document parse(String lexicalForm) throws DatatypeFormatException {
+    public Node parse(String lexicalForm) throws DatatypeFormatException {
         Document result;
 		try {
 			result = documentBuilder.parse(new InputSource(new StringReader(lexicalForm)));

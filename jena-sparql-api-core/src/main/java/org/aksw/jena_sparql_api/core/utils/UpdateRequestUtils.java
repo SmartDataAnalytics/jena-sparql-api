@@ -7,7 +7,7 @@ import java.util.Set;
 
 import org.aksw.commons.collections.diff.Diff;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
-import org.aksw.jena_sparql_api.utils.SetGraph;
+import org.aksw.jena_sparql_api.utils.SetFromGraph;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -101,8 +101,8 @@ public class UpdateRequestUtils {
 
     public static UpdateRequest createUpdateRequest(Model added, Model removed)
     {
-        Set<Triple> _a = added == null ? Collections.<Triple>emptySet() : SetGraph.wrap(added.getGraph());
-        Set<Triple> _r = removed == null ? Collections.<Triple>emptySet() :  SetGraph.wrap(removed.getGraph());
+        Set<Triple> _a = added == null ? Collections.<Triple>emptySet() : SetFromGraph.wrap(added.getGraph());
+        Set<Triple> _r = removed == null ? Collections.<Triple>emptySet() :  SetFromGraph.wrap(removed.getGraph());
 
         Iterable<Quad> a = Iterables.transform(_a, FN_QuadFromTriple.fnDefaultGraphNodeGenerated);
         Iterable<Quad> r = Iterables.transform(_r, FN_QuadFromTriple.fnDefaultGraphNodeGenerated);

@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.aksw.jena_sparql_api.concepts.Relation;
+import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
@@ -57,18 +57,18 @@ public class ElementTransformVirtualPredicates
 {
     private static final Logger logger = LoggerFactory.getLogger(ElementTransformVirtualPredicates.class);
 
-    protected Map<Node, Relation> virtualPredicates;
+    protected Map<Node, BinaryRelation> virtualPredicates;
     protected Generator<Var> varGen;
 
     public ElementTransformVirtualPredicates() {
-        this(new HashMap<Node, Relation>());
+        this(new HashMap<Node, BinaryRelation>());
     }
 
-    public ElementTransformVirtualPredicates(Map<Node, Relation> virtualPredicates) {
+    public ElementTransformVirtualPredicates(Map<Node, BinaryRelation> virtualPredicates) {
         this(virtualPredicates, VarGeneratorImpl2.create("v"));
     }
 
-    public ElementTransformVirtualPredicates(Map<Node, Relation> virtualPredicates, Generator<Var> varGen) {
+    public ElementTransformVirtualPredicates(Map<Node, BinaryRelation> virtualPredicates, Generator<Var> varGen) {
         super();
         this.virtualPredicates = virtualPredicates;
         this.varGen = varGen;
@@ -94,7 +94,7 @@ public class ElementTransformVirtualPredicates
 
     // Constraint: mayEqual(
 
-    public static Element applyTransform(ElementTriplesBlock el, Map<Node, Relation> virtualPredicates, Generator<Var> rootVarGen) {
+    public static Element applyTransform(ElementTriplesBlock el, Map<Node, BinaryRelation> virtualPredicates, Generator<Var> rootVarGen) {
         BasicPattern bgp = el.getPattern();
 
         BasicPattern newPattern = new BasicPattern();
@@ -119,7 +119,7 @@ public class ElementTransformVirtualPredicates
     }
 
 
-    public static Element applyTransform(ElementPathBlock el, Map<Node, Relation> virtualPredicates, Generator<Var> rootVarGen) {
+    public static Element applyTransform(ElementPathBlock el, Map<Node, BinaryRelation> virtualPredicates, Generator<Var> rootVarGen) {
         PathBlock bgp = el.getPattern();
 
         ElementPathBlock newPattern = new ElementPathBlock();
@@ -160,7 +160,7 @@ public class ElementTransformVirtualPredicates
      * @param varGen
      * @return
      */
-    public static Element applyTransform(Triple triple, Map<Node, Relation> virtualPredicates, Generator<Var> varGen) {
+    public static Element applyTransform(Triple triple, Map<Node, BinaryRelation> virtualPredicates, Generator<Var> varGen) {
         Node p = triple.getPredicate();
 
         Node s = triple.getSubject();
@@ -170,7 +170,7 @@ public class ElementTransformVirtualPredicates
 
         Element result = null;
         if(p.isConcrete()) {
-            Relation relation = virtualPredicates.get(p);
+            BinaryRelation relation = virtualPredicates.get(p);
             if(relation != null) {
                 result = createElementForConcretePredicate(pVar, p, s, o, relation, varGen);
             }
@@ -215,7 +215,7 @@ public class ElementTransformVirtualPredicates
 //
 //    }
 
-    public static Element createElementForVariablePredicate(Var pVar, Node s, Node o, Map<Node, Relation> virtualPredicates, Generator<Var> varGen)
+    public static Element createElementForVariablePredicate(Var pVar, Node s, Node o, Map<Node, BinaryRelation> virtualPredicates, Generator<Var> varGen)
     {
         Triple orig = new Triple(s, pVar, o);
         ElementUtils.createElement(orig);
@@ -224,9 +224,9 @@ public class ElementTransformVirtualPredicates
 
         unionMembers.add(ElementUtils.createElement(new Triple(s, pVar, o)));
 
-        for(Entry<Node, Relation> entry : virtualPredicates.entrySet()) {
+        for(Entry<Node, BinaryRelation> entry : virtualPredicates.entrySet()) {
             Node pRef = entry.getKey();
-            Relation relation = entry.getValue();
+            BinaryRelation relation = entry.getValue();
 
             Element e = createElementForConcretePredicate(pVar, pRef, s, o, relation, varGen);
             unionMembers.add(e);
@@ -242,7 +242,7 @@ public class ElementTransformVirtualPredicates
      * @param o
      * @param virtualPredicates
      */
-    public static Element createElementForConcretePredicate(Var pVar, Node pRef, Node s, Node o, Relation relation, Generator<Var> varGen) {
+    public static Element createElementForConcretePredicate(Var pVar, Node pRef, Node s, Node o, BinaryRelation relation, Generator<Var> varGen) {
         //Relation relation = virtualProperties.get(pRef);
 
         Var sourceVar = relation.getSourceVar();
@@ -269,7 +269,7 @@ public class ElementTransformVirtualPredicates
         return result;
     }
 
-    public static Query transform(Query query, Map<Node, Relation> virtualPredicates, boolean cloneOnChange) {
+    public static Query transform(Query query, Map<Node, BinaryRelation> virtualPredicates, boolean cloneOnChange) {
         Element oldQueryPattern = query.getQueryPattern();
         Element newQueryPattern = transform(oldQueryPattern, virtualPredicates);
 
@@ -284,7 +284,7 @@ public class ElementTransformVirtualPredicates
         return result;
     }
 
-    public static Element transform(Element element, Map<Node, Relation> virtualPredicates) {
+    public static Element transform(Element element, Map<Node, BinaryRelation> virtualPredicates) {
         ElementTransformVirtualPredicates elementTransform = new ElementTransformVirtualPredicates(virtualPredicates);
         Element result = ElementTransformer.transform(element, elementTransform, new ExprTransformCopy(false));
         return result;

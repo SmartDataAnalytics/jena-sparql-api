@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.shape.syntax;
 
-import org.aksw.jena_sparql_api.concepts.Relation;
+import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.util.NodeIsomorphismMap;
 
@@ -13,7 +13,7 @@ import org.apache.jena.sparql.util.NodeIsomorphismMap;
 public class P_Relation
     extends PathBaseEx
 {
-    protected Relation relation;
+    protected BinaryRelation relation;
 
     @Override
     public void visit(PathExVisitor visitor) {

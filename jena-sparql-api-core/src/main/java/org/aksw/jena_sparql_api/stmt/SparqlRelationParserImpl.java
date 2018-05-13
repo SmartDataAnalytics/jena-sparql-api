@@ -6,7 +6,7 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.aksw.jena_sparql_api.concepts.Relation;
+import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.core.Var;
@@ -35,8 +35,8 @@ public class SparqlRelationParserImpl
     }
 
     @Override
-    public Relation apply(String input) {
-        Relation result = parse(input, elementParser);
+    public BinaryRelation apply(String input) {
+        BinaryRelation result = parse(input, elementParser);
         return result;
     }
 
@@ -44,7 +44,7 @@ public class SparqlRelationParserImpl
     public static Pattern VAR_PATTERN = Pattern.compile(VAR_PATTERN_STR);
     //public static Pattern VAR_PATTERN = Pattern.compile("\\s*(" + VAR_PATTERN_STR + "\\s+" + VAR_PATTERN_STR + ")\\s*");
 
-    public static Relation parse(String relationStr, Function<String, Element> elementParser) {
+    public static BinaryRelation parse(String relationStr, Function<String, Element> elementParser) {
         String[] splits = relationStr.split("\\|", 2);
         if(splits.length != 2) {
             throw new RuntimeException("Invalid string: " + relationStr);
@@ -70,7 +70,7 @@ public class SparqlRelationParserImpl
 
         Element element = elementParser.apply(elementStr);
 
-        Relation result = new Relation(element, sourceVar, targetVar);
+        BinaryRelation result = new BinaryRelation(element, sourceVar, targetVar);
 
         return result;
     }

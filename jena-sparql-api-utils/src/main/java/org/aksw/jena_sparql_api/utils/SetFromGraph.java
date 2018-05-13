@@ -7,12 +7,12 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.util.iterator.ExtendedIterator;
 
-public class SetGraph
+public class SetFromGraph
     extends AbstractSet<Triple>
 {
     private Graph graph;
 
-    public SetGraph(Graph graph) {
+    public SetFromGraph(Graph graph) {
         this.graph = graph;
     }
 
@@ -28,8 +28,8 @@ public class SetGraph
         return result;
     }
 
-    public static SetGraph wrap(Graph graph) {
-        SetGraph result = new SetGraph(graph);
+    public static SetFromGraph wrap(Graph graph) {
+        SetFromGraph result = new SetFromGraph(graph);
         return result;
     }
 }

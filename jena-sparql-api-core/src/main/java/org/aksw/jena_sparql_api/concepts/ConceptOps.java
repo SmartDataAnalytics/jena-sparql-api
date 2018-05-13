@@ -63,7 +63,7 @@ public class ConceptOps {
     }
 
 
-    public static Concept forAllIfRolePresent(Relation role, Concept filler, Generator<Var> generator) {
+    public static Concept forAllIfRolePresent(BinaryRelation role, Concept filler, Generator<Var> generator) {
 
         Concept result;
         if(filler == Concept.TOP) {
@@ -118,7 +118,7 @@ public class ConceptOps {
 //        return result;
 //    }
 
-    public static Concept exists(Relation relation, Concept filler, Generator<Var> generator) {
+    public static Concept exists(BinaryRelation relation, Concept filler, Generator<Var> generator) {
         Concept targetConcept = relation.getTargetConcept();
         Concept aligned = align(filler, targetConcept, generator);
         Element x = ElementUtils.mergeElements(relation.getElement(), aligned.getElement());

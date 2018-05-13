@@ -12,7 +12,7 @@ import javax.persistence.criteria.Expression;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
 
-import org.aksw.jena_sparql_api.concepts.Relation;
+import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.mapper.impl.type.PathResolver;
 import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.PathVisitor;
 import org.aksw.jena_sparql_api.mapper.jpa.criteria.expr.VPath;
@@ -82,7 +82,7 @@ public class PathResolverVarMapper
                 String targetAlias = aliasMapper.apply(path);
                 Var targetVar = Var.alloc(targetAlias);
 
-                Relation r = currentState.getRelation();
+                BinaryRelation r = currentState.getRelation();
                 Map<Var, Var> varMap = new HashMap<>();
                 varMap.put(r.getSourceVar(), sourceVar);
                 varMap.put(r.getTargetVar(), targetVar);

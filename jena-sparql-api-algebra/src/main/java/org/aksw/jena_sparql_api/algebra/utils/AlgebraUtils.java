@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.FeatureMap;
@@ -119,16 +118,6 @@ public class AlgebraUtils {
         Op resOp = op.getResidualOp();
         QuadFilterPatternCanonical result = AlgebraUtils.extractQuadFilterPatternCanonical(resOp);
         return result;
-    }
-
-    public static <T> T repeatTransformUntilNoMoreChange(T op, Function<? super T, ? extends T> transform) {
-    	T current;
-        do {
-            current = op;
-            op = transform.apply(current);
-        } while(!current.equals(op));
-        
-        return current;
     }
 
     public static ProjectedOp toProjectedOp(Query query) {

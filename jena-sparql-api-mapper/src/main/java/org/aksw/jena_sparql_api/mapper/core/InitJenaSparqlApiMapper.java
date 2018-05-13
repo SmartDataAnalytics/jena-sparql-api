@@ -8,7 +8,7 @@ public class InitJenaSparqlApiMapper
 	implements JenaSubsystemLifecycle
 {
 	public void start() {
-		TypeMapper.getInstance().registerDatatype(new RDFDatatypeCalendar());
+		//TypeMapper.getInstance().registerDatatype(new RDFDatatypeCalendar());
 	}
 
 	@Override

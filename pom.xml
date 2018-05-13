@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
@@ -7,7 +8,7 @@
 	<artifactId>jena-sparql-api-parent</artifactId>
 
 	<packaging>pom</packaging>
-	<version>3.6.0-2</version>
+	<version>3.6.0-3</version>
 	<name>Jena SPARQL API - Parent</name>
 	<description>An RDF library for abstracting SPARQL queries.</description>
 	<url>https://github.com/SmartDataAnalytics/jena-sparql-api</url>
@@ -53,6 +54,8 @@
 
 		<module>jena-sparql-api-example-views</module>
 		<!-- <module>jena-sparql-api-playground</module> -->
+
+		<module>jena-sparql-api-virtuoso</module>
 	</modules>
 
 	<issueManagement>
@@ -90,16 +93,15 @@
 
 		<jgrapht.version>1.1.0</jgrapht.version>
 
-
 		<!-- 2.18 could be tried out next -->
 		<jersey.version>2.26-b03</jersey.version>
 
 		<spring.version>4.3.14.RELEASE</spring.version>
 		<spring.batch.version>4.0.0.RELEASE</spring.batch.version>
-		<aksw.commons.version>0.8.8</aksw.commons.version>
+		<aksw.commons.version>0.8.9</aksw.commons.version>
 
-<!-- 		<atmosphere.version>2.0.0.RC3</atmosphere.version> -->
-<!-- 		<atmosphere-spring.version>1.1.0.RC5</atmosphere-spring.version> -->
+		<!-- <atmosphere.version>2.0.0.RC3</atmosphere.version> -->
+		<!-- <atmosphere-spring.version>1.1.0.RC5</atmosphere-spring.version> -->
 		<!-- <jetty-plugin.version>8.1.10.v20130312</jetty-plugin.version> -->
 		<!-- <jersey-spring.version>1.17.1</jersey-spring.version> -->
 		<!-- <jetty.jsp.version>9.2.22.v20170606</jetty.jsp.version> -->
@@ -495,13 +497,13 @@
 			<dependency>
 				<groupId>org.aksw.commons</groupId>
 				<artifactId>jena-jgrapht-bindings</artifactId>
-				<version>1.1.0</version>
+				<version>1.1.1</version>
 			</dependency>
 
 			<dependency>
 				<groupId>org.aksw.commons</groupId>
 				<artifactId>subgraph-isomorphism-index-jena</artifactId>
-				<version>1.1.0</version>
+				<version>1.1.1</version>
 			</dependency>
 
 
@@ -516,6 +518,20 @@
 				<!-- </exclusion> -->
 				<!-- </exclusions> -->
 			</dependency>
+
+			<dependency>
+				<groupId>org.apache.jena</groupId>
+				<artifactId>jena-rdfconnection</artifactId>
+				<version>${jena.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.ini4j</groupId>
+				<artifactId>ini4j</artifactId>
+				<version>0.5.4</version>
+			</dependency>
+
+
 			<dependency>
 				<groupId>org.apache.jena</groupId>
 				<artifactId>jena-core</artifactId>
@@ -575,9 +591,9 @@
 			</dependency>
 
 			<dependency>
-				<groupId>org.postgis</groupId>
+				<groupId>net.postgis</groupId>
 				<artifactId>postgis-jdbc</artifactId>
-				<version>1.3.3</version>
+				<version>2.2.1</version>
 			</dependency>
 
 			<!-- <dependency> -->
@@ -1050,13 +1066,8 @@
 			</dependency>
 
 			<!-- experimental dependencies -->
-<!--
-			<dependency>
-				<groupId>org.quartz-scheduler</groupId>
-				<artifactId>quartz</artifactId>
-				<version>2.3.0</version>
-			</dependency>
--->
+			<!-- <dependency> <groupId>org.quartz-scheduler</groupId> <artifactId>quartz</artifactId> 
+				<version>2.3.0</version> </dependency> -->
 
 			<dependency>
 				<groupId>org.springframework.boot</groupId>

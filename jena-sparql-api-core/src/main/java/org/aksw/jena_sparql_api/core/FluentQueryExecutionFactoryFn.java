@@ -5,7 +5,9 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.cache.core.QueryExecutionFactoryCacheEx;
+import org.aksw.jena_sparql_api.cache.extra.CacheBackend;
 import org.aksw.jena_sparql_api.cache.extra.CacheFrontend;
+import org.aksw.jena_sparql_api.cache.extra.CacheFrontendImpl;
 import org.aksw.jena_sparql_api.delay.core.QueryExecutionFactoryDelay;
 import org.aksw.jena_sparql_api.limit.QueryExecutionFactoryLimit;
 import org.aksw.jena_sparql_api.pagination.core.QueryExecutionFactoryPaginated;
@@ -13,7 +15,6 @@ import org.aksw.jena_sparql_api.parse.QueryExecutionFactoryParse;
 import org.aksw.jena_sparql_api.post_process.QueryExecutionFactoryPostProcess;
 import org.aksw.jena_sparql_api.prefix.core.QueryExecutionFactoryPrefix;
 import org.aksw.jena_sparql_api.retry.core.QueryExecutionFactoryRetry;
-import org.aksw.jena_sparql_api.stmt.SparqlStmtQuery;
 import org.aksw.jena_sparql_api.transform.QueryExecutionFactoryQueryTransform;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
@@ -120,6 +121,10 @@ public class FluentQueryExecutionFactoryFn<P>
         return this;
     }
 
+    public FluentQueryExecutionFactoryFn<P> withCache(final CacheBackend cache){
+    	return withCache(new CacheFrontendImpl(cache));
+    }
+    
     public FluentQueryExecutionFactoryFn<P> withCache(final CacheFrontend cache){
     	compose(qef -> new QueryExecutionFactoryCacheEx(qef, cache));
 

@@ -3,26 +3,33 @@ package org.aksw.jena_sparql_api.sparql.ext.csv;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.aksw.jena_sparql_api.sparql.ext.json.RDFDatatypeJson;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-import org.apache.commons.io.IOUtils;
 import org.apache.jena.datatypes.RDFDatatype;
-import org.apache.jena.ext.com.google.common.collect.Lists;
 import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.function.FunctionBase2;
 import org.codehaus.plexus.util.cli.CommandLineUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+
+import joptsimple.OptionParser;
+import joptsimple.OptionSet;
+import joptsimple.OptionSpec;
 
 
 /**
@@ -35,9 +42,11 @@ import com.google.gson.JsonObject;
  */
 public class E_CsvParse
 	extends FunctionBase2
-{
+{	
+	private static final Logger logger = LoggerFactory.getLogger(E_CsvParse.class);
+
 	
-	public static Stream<JsonObject> parseCsv(Reader reader, String optionStr) {
+	public static Stream<JsonElement> parseCsv(Reader reader, String optionStr) throws IOException {
 		// Parse options
 		String[] args;
 		try {
@@ -46,14 +55,56 @@ public class E_CsvParse
 			throw new RuntimeException(e);
 		}
 		
-		CsvFormatParser csvFormatParser = new CsvFormatParser();
-		CSVFormat csvFormat = csvFormatParser.parse(args, CSVFormat.EXCEL);
+		OptionParser optionParser = new OptionParser();
 
-		Stream<JsonObject> result = parseCsv(reader, csvFormat);
+		OptionSpec<?> rowAsObjectOs = optionParser
+                .acceptsAll(Arrays.asList("o"), "Output rows as objects")
+                ;
+
+		
+		CsvFormatParser csvFormatParser = new CsvFormatParser(optionParser);
+
+        OptionSet options = optionParser.parse(args);
+
+		CSVFormat csvFormat = csvFormatParser.parse(options, CSVFormat.EXCEL);
+		
+		boolean rowAsObject = options.has(rowAsObjectOs);
+		
+		Stream<JsonElement> result = parseCsv(reader, csvFormat, rowAsObject);
 		return result;
 	}
 	
-	public static Stream<JsonObject> parseCsv(Reader reader, CSVFormat csvFormat) {
+	public static JsonArray csvRecordToJsonArray(CSVRecord row) {
+		JsonArray result = new JsonArray();
+		
+		for(int i = 0; i < row.size(); ++i) {
+			String value = row.get(i);
+
+			result.add(value);
+		}
+		return result;
+	}
+	
+	public static JsonObject csvRecordToJsonObject(CSVRecord row, String[] labels) {
+		JsonObject obj = new JsonObject();
+		
+		for(int i = 0; i < row.size(); ++i) {
+			String value = row.get(i);
+			
+			String label = labels != null && i < labels.length ? labels[i] : null;
+			label = label == null ? "" + "col" + i : label;
+			
+			obj.addProperty(label, value);			
+		}
+
+		return obj;
+	}
+	
+	
+	public static Stream<JsonElement> parseCsv(
+			Reader reader,
+			CSVFormat csvFormat,
+			boolean rowAsObject) throws IOException {
 //		CSVParserBuilder csvParserBuilder = new CSVParserBuilder();
 //		ICSVParser csvParser = csvParserBuilder
 //				.build();
@@ -67,7 +118,8 @@ public class E_CsvParse
 		try {
 			csvParser = new CSVParser(reader, csvFormat);
 		} catch (IOException e) {
-			IOUtils.closeQuietly(reader);
+			reader.close();
+			//IOUtils.closeQuietly(reader);
 			throw new RuntimeException(e);
 		}
 
@@ -83,24 +135,14 @@ public class E_CsvParse
 			
 		}
 		
-		
 
-		Stream<JsonObject> rowObjStream = Streams.stream(it)
-			.map(csvRecord -> Lists.newArrayList(csvRecord))
-			.map(row -> {
-				JsonObject obj = new JsonObject();
-				
-				for(int i = 0; i < row.size(); ++i) {
-					String value = row.get(i);
-					
-					String label = labels != null && i < labels.length ? labels[i] : null;
-					label = label == null ? "" + "col" + i : label;
-	
-					
-					obj.addProperty(label, value);			
-				}
-				return obj;
-			})
+		Function<? super CSVRecord, ? extends JsonElement> rowJsonEncoder = rowAsObject
+				? r -> csvRecordToJsonObject(r, labels)
+				: E_CsvParse::csvRecordToJsonArray;
+
+		Stream<JsonElement> rowObjStream = Streams.stream(it)
+			// Obtain the list of cells of the csvRecord
+			.map(x -> (JsonElement)rowJsonEncoder.apply(x))
 			.onClose(() -> {
 				try { csvParser.close(); } catch(Exception e) { throw new RuntimeException(e); }
 			});
@@ -115,17 +157,23 @@ public class E_CsvParse
 		String optionStr = v2.isBlank() ? "" : v2.isString() ? v2.getString() : null;
 
 		// Parse options
-		String[] args;
+//		String[] args;
+//		try {
+//			args = CommandLineUtils.translateCommandline(optionStr);
+//		} catch(Exception e) {
+//			throw new RuntimeException(e);
+//		}
+		
+//		CsvFormatParser csvFormatParser = new CsvFormatParser();
+//		CSVFormat csvFormat = csvFormatParser.parse(args, CSVFormat.EXCEL);
+		
+		Stream<JsonElement> rowObjStream;
 		try {
-			args = CommandLineUtils.translateCommandline(optionStr);
-		} catch(Exception e) {
-			throw new RuntimeException(e);
+			rowObjStream = parseCsv(new StringReader(csvStr), optionStr);
+		} catch (IOException e) {
+			logger.warn("Failed to parse csv input", e);
+			rowObjStream = Collections.<JsonElement>emptySet().stream();
 		}
-		
-		CsvFormatParser csvFormatParser = new CsvFormatParser();
-		CSVFormat csvFormat = csvFormatParser.parse(args, CSVFormat.EXCEL);
-		
-		Stream<JsonObject> rowObjStream = parseCsv(new StringReader(csvStr), csvFormat);
 		
 		JsonArray arr = new JsonArray();
 		rowObjStream.forEach(arr::add);

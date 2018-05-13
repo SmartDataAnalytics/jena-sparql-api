@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.mapper.impl.type;
 
-import org.aksw.jena_sparql_api.concepts.Relation;
+import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 
 
 /**
@@ -21,7 +21,7 @@ public interface PathResolver {
 
     PathResolver resolve(String propertyName);
 
-    Relation getRelation();
+    BinaryRelation getRelation();
     //Relation getOverallRelation(Generator<Var> varGen);
 
 //    PathResolver setAlias(String alias);

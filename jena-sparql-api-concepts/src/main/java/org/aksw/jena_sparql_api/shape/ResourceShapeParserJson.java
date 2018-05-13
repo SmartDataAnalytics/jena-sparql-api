@@ -4,7 +4,7 @@ import java.util.Map.Entry;
 
 import org.aksw.gson.utils.JsonVisitor;
 import org.aksw.gson.utils.JsonWalker;
-import org.aksw.jena_sparql_api.concepts.Relation;
+import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.utils.Vars;
 
 import com.google.gson.JsonArray;
@@ -136,7 +136,7 @@ public class ResourceShapeParserJson
             expr = new E_Equals(new ExprVar(Vars.p), NodeValue.makeNode(np));
         }
 
-        Relation relation = new Relation(new ElementFilter(expr), Vars.p, Vars.o);
+        BinaryRelation relation = new BinaryRelation(new ElementFilter(expr), Vars.p, Vars.o);
 
         StepRelation result = new StepRelation(relation, isInverse);
         return result;

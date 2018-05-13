@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.function.BiFunction;
 
 import org.aksw.jena_sparql_api.beans.model.PropertyOps;
-import org.aksw.jena_sparql_api.concepts.Relation;
+import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.aksw.jena_sparql_api.mapper.impl.type.EntityFragment;
 import org.aksw.jena_sparql_api.mapper.impl.type.PathFragment;
@@ -187,7 +187,7 @@ public class RdfMapperPropertySingle
         boolean isMatchingProperty = propertyOps.getName().equals(propertyName);
 
         if(isMatchingProperty) {
-            Relation relation;
+            BinaryRelation relation;
             if(typeConverter == null) {
                 relation = RelationUtils.createRelation(predicate.asNode(), false);
             } else {
@@ -195,7 +195,7 @@ public class RdfMapperPropertySingle
                 group.addElement(ElementUtils.createElement(new Triple(Vars.s, predicate.asNode(), Vars.x)));
                 Expr expr = typeConverter.toJava(new ExprVar(Vars.x));
                 group.addElement(new ElementBind(Vars.o, expr));
-                relation = new Relation(group, Vars.s, Vars.o);
+                relation = new BinaryRelation(group, Vars.s, Vars.o);
             }
 
 

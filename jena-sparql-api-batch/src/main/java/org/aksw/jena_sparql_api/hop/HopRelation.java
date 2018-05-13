@@ -2,26 +2,26 @@ package org.aksw.jena_sparql_api.hop;
 
 import java.util.List;
 
-import org.aksw.jena_sparql_api.concepts.Relation;
+import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 
 public class HopRelation
     extends HopBase
 {
-    protected Relation relation;
+    protected BinaryRelation relation;
     protected List<Hop> hops;
 
     public HopRelation(QueryExecutionFactory qef) {
         super(qef);
     }
 
-    public HopRelation(QueryExecutionFactory qef, Relation relation, List<Hop> hops) {
+    public HopRelation(QueryExecutionFactory qef, BinaryRelation relation, List<Hop> hops) {
         super(qef);
         this.relation = relation;
         this.hops = hops;
     }
 
-    public Relation getRelation() {
+    public BinaryRelation getRelation() {
         return relation;
     }
 

@@ -35,6 +35,12 @@ public interface QueryContainmentIndex<K, V, A, R, M extends TreeMapping<A, A, B
 	 */
 	A get(K key);
 
+	/**
+	 * The 'Matcher' indirection is used as the index implementation compute an effective op by applying
+	 * (semantically equivalent) transformations of the input expression.
+	 * 
+	 */
+//	QueryContainmentMatcher<A, K, M> QueryContainmentMatcher(A userOp);
+	
 	Stream<Entry<K, M>> match(A userOp);
-
 }

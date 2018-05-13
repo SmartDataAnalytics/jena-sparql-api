@@ -30,4 +30,6 @@ public interface CacheFrontend
 
     CacheResource lookup(String service, String queryString);
     CacheResource lookup(String service, Query query);
+    
+    boolean isReadOnly();
 }
