@@ -5,8 +5,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import org.apache.jena.query.ReadWrite;
+import org.apache.jena.query.TxnType;
 import org.apache.jena.sparql.core.Transactional;
 
 public class TransactionalMultiplex<T extends Transactional>
@@ -28,6 +30,29 @@ public class TransactionalMultiplex<T extends Transactional>
 		if(!throwables.isEmpty()) {
 			throw new RuntimeException(throwables.iterator().next());
 		}
+	}
+
+	public static <T, X> X forEachR(Collection<? extends T> items, Function<? super T, X> handler) {
+		List<Throwable> throwables = new ArrayList<>();
+		X result = null;
+		boolean isFirst = true;
+		for(T item : items) {
+			try {
+				X tmp = handler.apply(item);
+				if(isFirst) {
+					result = tmp;
+					isFirst = false;
+				}
+			} catch(Exception e) {
+				throwables.add(e);
+			}
+		}
+
+		// TODO Throw a multi exception
+		if(!throwables.isEmpty()) {
+			throw new RuntimeException(throwables.iterator().next());
+		}
+		return result;
 	}
 
 	@SafeVarargs
@@ -64,5 +89,25 @@ public class TransactionalMultiplex<T extends Transactional>
 	public boolean isInTransaction() {
 		boolean result = delegates.isEmpty() ? false : delegates.iterator().next().isInTransaction();
 		return result;
+	}
+
+	@Override
+	public void begin(TxnType type) {
+		TransactionalMultiplex.forEach(delegates, d -> d.begin(type));		
+	}
+
+	@Override
+	public boolean promote(Promote mode) {
+		return TransactionalMultiplex.forEachR(delegates, d -> d.promote(mode));
+	}
+
+	@Override
+	public ReadWrite transactionMode() {
+		return TransactionalMultiplex.forEachR(delegates, Transactional::transactionMode);
+	}
+
+	@Override
+	public TxnType transactionType() {
+		return TransactionalMultiplex.forEachR(delegates, Transactional::transactionType);
 	}
 }

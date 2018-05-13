@@ -9,9 +9,6 @@ import org.aksw.jena_sparql_api.concepts.Path;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.sparql_path.core.algorithm.ConceptPathFinder;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.util.iterator.Map1;
 
 //class EdgeTransition
 //	extends DefaultEdge
@@ -86,14 +83,14 @@ public class MainCli {
 }
 
 
-class Map1StatementToSubject
-    implements Map1<Statement, Resource>
-{
-    @Override
-    public Resource apply(Statement stmt) {
-        return stmt.getSubject().asResource();
-    }
-}
+//class Map1StatementToSubject
+//    implements Map1<Statement, Resource>
+//{
+//    @Override
+//    public Resource apply(Statement stmt) {
+//        return stmt.getSubject().asResource();
+//    }
+//}
 
 /*
  * Note: Dijkstra would only keep the shortest path to a node - but here we want all paths...
