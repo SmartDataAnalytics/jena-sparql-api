@@ -31,6 +31,7 @@
 
 		<module>jena-sparql-api-cache</module>
 
+		<module>jena-sparql-api-rdf-view</module>
 		<module>jena-sparql-api-views</module>
 
 		<module>jena-sparql-api-concepts</module>
