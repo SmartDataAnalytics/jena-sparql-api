@@ -27,7 +27,7 @@ public class TernaryRelationImpl
 
 	protected Element element;
 
-	public TernaryRelationImpl(Var s, Var p, Var o, Element element) {
+	public TernaryRelationImpl(Element element, Var s, Var p, Var o) {
 		super();
 		this.s = s;
 		this.p = p;
@@ -69,7 +69,7 @@ public class TernaryRelationImpl
 	public TernaryRelation filterP(Node node) {
 		List<Element> es = ElementUtils.toElementList(element);
 		es.add(new ElementFilter(new E_Equals(new ExprVar(p), NodeValue.makeNode(node))));
-		TernaryRelation result = new TernaryRelationImpl(s, p, o, ElementUtils.groupIfNeeded(es));
+		TernaryRelation result = new TernaryRelationImpl(ElementUtils.groupIfNeeded(es), s, p, o);
 		return result;
 	}
 	

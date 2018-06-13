@@ -3,7 +3,6 @@ package org.aksw.jena_sparql_api.util.collection;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 import org.aksw.commons.collections.cache.IndexBasedIterator;
 import org.aksw.jena_sparql_api.util.collection.RangedSupplierLazyLoadingListCache.CacheEntry;
@@ -14,6 +13,8 @@ import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeMap;
 
+import io.reactivex.Flowable;
+
 public class LazyLoadingCachingListIterator<T>
     extends AbstractIterator<T>
     implements ClosableIterator<T>
@@ -23,14 +24,14 @@ public class LazyLoadingCachingListIterator<T>
 
     protected long offset;
     protected RangeMap<Long, RangedSupplierLazyLoadingListCache.CacheEntry<T>> rangeMap;
-    protected Function<Range<Long>, Stream<T>> delegate;
+    protected Function<Range<Long>, Flowable<T>> delegate;
 
     protected boolean usedDelegate;
 
     public LazyLoadingCachingListIterator(
             Range<Long> canonicalRequestRange,
             RangeMap<Long, CacheEntry<T>> rangeMap,
-            Function<Range<Long>, Stream<T>> delegate) {
+            Function<Range<Long>, Flowable<T>> delegate) {
         super();
         this.canonicalRequestRange = canonicalRequestRange;
         this.rangeMap = rangeMap;
@@ -77,8 +78,9 @@ public class LazyLoadingCachingListIterator<T>
                 if(e == null) {
                     if(delegate != null && !usedDelegate) {
                         Range<Long> r = Range.atLeast(offset).intersection(canonicalRequestRange);
-                        Stream<T> stream = delegate.apply(r);
-                        currentIterator = new IteratorClosable<>(stream.iterator(), stream::close);
+                        Flowable<T> stream = delegate.apply(r);
+                        Iterator<T> it = stream.blockingIterable().iterator();
+                        currentIterator = new IteratorClosable<>(it, stream::close);
                         usedDelegate = true;
                     } else {
                         result = endOfData();

@@ -37,25 +37,25 @@ public class MapPaginatorConcept
         this.concept = concept;
     }
 
-    @Override
-    public Map<Node, Node> fetchMap(Range<Long> range) {
-        Query query = concept.asQuery();
-        QueryUtils.applyRange(query, range);
-//        query.setLimit(limit == null ? Query.NOLIMIT : limit);
-//        query.setOffset(offset == null ? Query.NOLIMIT : offset);
-
-        List<Node> tmp = QueryExecutionUtils.executeList(qef, query, concept.getVar());
-
-        //List<Entry<Node, Node>> result = new ArrayList<Entry<Node, Node>>(tmp.size());
-        Map<Node, Node> result = new LinkedHashMap<Node, Node>();
-        for(Node node : tmp) {
-            //Entry<Node, Node> item = Pair.create(node, node);
-            result.put(node, node);
-        }
-
-
-        return result;
-    }
+//    @Override
+//    public Map<Node, Node> fetchMap(Range<Long> range) {
+//        Query query = concept.asQuery();
+//        QueryUtils.applyRange(query, range);
+////        query.setLimit(limit == null ? Query.NOLIMIT : limit);
+////        query.setOffset(offset == null ? Query.NOLIMIT : offset);
+//
+//        List<Node> tmp = QueryExecutionUtils.executeList(qef, query, concept.getVar());
+//
+//        //List<Entry<Node, Node>> result = new ArrayList<Entry<Node, Node>>(tmp.size());
+//        Map<Node, Node> result = new LinkedHashMap<Node, Node>();
+//        for(Node node : tmp) {
+//            //Entry<Node, Node> item = Pair.create(node, node);
+//            result.put(node, node);
+//        }
+//
+//
+//        return result;
+//    }
 
     public static Query createSubQuery(Query query, Var var) {
         Element esq = new ElementSubQuery(query);
@@ -122,7 +122,7 @@ public class MapPaginatorConcept
     }
 
     @Override
-    public Stream<Entry<Node, Node>> apply(Range<Long> range) {
+    public Flowable<Entry<Node, Node>> apply(Range<Long> range) {
         Map<Node, Node> map = fetchMap(range);
         return map.entrySet().stream();
     }

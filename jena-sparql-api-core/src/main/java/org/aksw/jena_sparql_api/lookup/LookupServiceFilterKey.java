@@ -1,12 +1,13 @@
 package org.aksw.jena_sparql_api.lookup;
 
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Streams;
+
+import io.reactivex.Flowable;
 
 public class LookupServiceFilterKey<K, V>
     implements LookupService<K, V>
@@ -20,7 +21,7 @@ public class LookupServiceFilterKey<K, V>
     }
 
     @Override
-    public CompletableFuture<Map<K, V>> apply(Iterable<K> t) {
+    public Flowable<Entry<K, V>> apply(Iterable<K> t) {
     	List<K> keys = Streams.stream(t)
     			.filter(key -> filter.test(key))
     			.collect(Collectors.toList());

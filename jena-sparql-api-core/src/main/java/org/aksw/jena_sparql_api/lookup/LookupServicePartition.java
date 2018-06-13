@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.lookup;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
@@ -13,6 +14,8 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.MoreExecutors;
+
+import io.reactivex.Flowable;
 
 
 public class LookupServicePartition<K, V>
@@ -39,17 +42,17 @@ public class LookupServicePartition<K, V>
     }
 
     @Override
-    public Map<K, V> apply(Iterable<K> keys)
+    public Flowable<Entry<K, V>> apply(Iterable<K> keys)
     {
         try {
-            Map<K, V> result = doLookup(keys);
+        	Flowable<Entry<K, V>> result = doLookup(keys);
             return result;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    protected Map<K, V> doLookup(Iterable<K> keys) throws InterruptedException, ExecutionException
+    protected Flowable<Entry<K, V>> doLookup(Iterable<K> keys) throws InterruptedException, ExecutionException
     {
 
         Iterable<List<K>> lists = Iterables.partition(keys, partitionSize);

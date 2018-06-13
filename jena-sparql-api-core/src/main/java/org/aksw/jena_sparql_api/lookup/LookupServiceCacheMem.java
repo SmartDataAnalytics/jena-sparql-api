@@ -36,7 +36,7 @@ public class LookupServiceCacheMem<K, V>
 
     @Override
     public Flowable<Entry<K, V>> apply(Iterable<K> keys) {
-        Map<K, V> map = new HashMap<K, V>();
+        Map<K, CompletableFuture<V>> map = new HashMap<K, V>();
 
     	
         Set<K> open = new HashSet<K>();
@@ -44,8 +44,6 @@ public class LookupServiceCacheMem<K, V>
         for(K key : keys) {
             CompletableFuture<V> v = cache.getIfPresent(key);
             // Whenever a future finishes, trigger onNext
-            
-                V v = cache.get(key);
 
                 map.put(key, v);
             } else {

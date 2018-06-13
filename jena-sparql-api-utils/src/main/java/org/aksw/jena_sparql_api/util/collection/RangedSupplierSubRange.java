@@ -1,12 +1,13 @@
 package org.aksw.jena_sparql_api.util.collection;
 
 import java.util.function.BiFunction;
-import java.util.stream.Stream;
 
 import org.aksw.jena_sparql_api.utils.RangeUtils;
 
 import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.Range;
+
+import io.reactivex.Flowable;
 
 public class RangedSupplierSubRange<I extends Comparable<I>, T>
 	extends RangedSupplierDelegated<I, T>
@@ -25,10 +26,10 @@ public class RangedSupplierSubRange<I extends Comparable<I>, T>
 	}
 
 	@Override
-	public Stream<T> apply(Range<I> rawRequestRange) {
+	public Flowable<T> apply(Range<I> rawRequestRange) {
 		Range<I> effectiveRange = RangeUtils.makeAbsolute(subRange, rawRequestRange, domain, addition);
 
-		Stream<T> result = delegate.apply(effectiveRange);
+		Flowable<T> result = delegate.apply(effectiveRange);
 		return result;
 	}
 //

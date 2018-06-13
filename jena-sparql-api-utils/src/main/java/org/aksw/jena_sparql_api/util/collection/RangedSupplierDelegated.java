@@ -1,10 +1,10 @@
 package org.aksw.jena_sparql_api.util.collection;
 
-import java.util.stream.Stream;
-
 import org.aksw.commons.util.contextual.AbstractDelegated;
 
 import com.google.common.collect.Range;
+
+import io.reactivex.Flowable;
 
 public abstract class RangedSupplierDelegated<I extends Comparable<I>, P>
 	extends AbstractDelegated<RangedSupplier<I, P>>
@@ -15,7 +15,7 @@ public abstract class RangedSupplierDelegated<I extends Comparable<I>, P>
 	}
 
 	@Override
-	public Stream<P> apply(Range<I> t) {
+	public Flowable<P> apply(Range<I> t) {
 		return delegate.apply(t);
 	}
 //	@Override

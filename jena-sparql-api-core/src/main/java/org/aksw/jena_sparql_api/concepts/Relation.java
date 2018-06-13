@@ -66,7 +66,7 @@ public interface Relation {
 		TernaryRelation result;
 		if(vars.size() == 3) {
 			Element e = getElement();
-			result = new TernaryRelationImpl(vars.get(0), vars.get(1), vars.get(2), e);
+			result = new TernaryRelationImpl(e, vars.get(0), vars.get(1), vars.get(2));
 		} else {
 			throw new UnsupportedOperationException();
 		}

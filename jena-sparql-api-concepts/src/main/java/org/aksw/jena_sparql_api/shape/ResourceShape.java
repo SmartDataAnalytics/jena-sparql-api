@@ -12,19 +12,18 @@ import java.util.Set;
 
 import org.aksw.commons.collections.MapUtils;
 import org.aksw.jena_sparql_api.concept.builder.api.ConceptExpr;
+import org.aksw.jena_sparql_api.concepts.BinaryRelation;
+import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptOps;
-import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.lookup.LookupService;
-import org.aksw.jena_sparql_api.lookup.LookupServiceListService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
 import org.aksw.jena_sparql_api.mapper.Agg;
 import org.aksw.jena_sparql_api.mapper.AggDatasetGraph;
 import org.aksw.jena_sparql_api.mapper.AggGraph;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
-import org.aksw.jena_sparql_api.shape.lookup.MapServiceResourceShape;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
@@ -303,7 +302,7 @@ public class ResourceShape {
 
     public static BinaryRelation asRelation(Expr expr) {
         ElementFilter e = new ElementFilter(expr);
-        BinaryRelation result = new BinaryRelation(e, Vars.p, Vars.o);
+        BinaryRelation result = new BinaryRelationImpl(e, Vars.p, Vars.o);
 
         return result;
     }
@@ -672,7 +671,7 @@ public class ResourceShape {
     public static Graph fetchData(QueryExecutionFactory qef, ResourceShape shape, Node node) {
         MappedConcept<Graph> mc = ResourceShape.createMappedConcept(shape, null, false);
         LookupService<Node, Graph> ls = LookupServiceUtils.createLookupService(qef, mc);
-        Map<Node, Graph> map = ls.apply(Collections.singleton(node));
+        Map<Node, Graph> map = ls.fetchMap(Collections.singleton(node));
 //        if(map.size() > 1) {
 //            throw new RuntimeException("Should not happen");
 //        }

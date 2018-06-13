@@ -7,7 +7,6 @@ import java.util.stream.Stream;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.utils.ServiceUtils;
-import org.aksw.jena_sparql_api.lookup.CountInfo;
 import org.aksw.jena_sparql_api.lookup.MapPaginatorSparqlQueryBase;
 import org.aksw.jena_sparql_api.lookup.MapService;
 import org.aksw.jena_sparql_api.lookup.MapServiceUtils;
@@ -39,8 +38,8 @@ public class MapPaginatorMappedConcept<G>
     }
 
     @Override
-    public CountInfo fetchCount(Long itemLimit, Long rowLimit) {
-        CountInfo result = ServiceUtils.fetchCountConcept(qef, mappedConcept.getConcept(), itemLimit, rowLimit);
+    public Range<Long> fetchCount(Long itemLimit, Long rowLimit) {
+        Range<Long> result = ServiceUtils.fetchCountConcept(qef, mappedConcept.getConcept(), itemLimit, rowLimit);
         return result;
     }
 

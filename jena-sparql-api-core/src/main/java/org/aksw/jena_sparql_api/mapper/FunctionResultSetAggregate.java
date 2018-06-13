@@ -2,11 +2,10 @@ package org.aksw.jena_sparql_api.mapper;
 
 import java.util.function.Function;
 
-import org.aksw.jena_sparql_api.utils.ResultSetPart;
-import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.algebra.Table;
 
 public class FunctionResultSetAggregate<T>
-    implements Function<ResultSetPart, T>
+    implements Function<Table, T>
 {
     private Agg<T> agg;
 
@@ -15,12 +14,10 @@ public class FunctionResultSetAggregate<T>
     }
 
     @Override
-    public T apply(ResultSetPart rs) {
+    public T apply(Table table) {
         Acc<T> acc = agg.createAccumulator();
 
-        for(Binding binding : rs.getBindings()) {
-            acc.accumulate(binding);
-        }
+        table.rows().forEachRemaining(acc::accumulate);
 
         T result = acc.getValue();
 

@@ -12,13 +12,15 @@ import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.utils.ServiceUtils;
 import org.aksw.jena_sparql_api.utils.IteratorResultSetBinding;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
-import org.aksw.jena_sparql_api.utils.ResultSetPart;
+import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.apache.jena.ext.com.google.common.base.Objects;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.SortCondition;
+import org.apache.jena.sparql.algebra.Table;
+import org.apache.jena.sparql.algebra.table.TableN;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.expr.ExprVar;
@@ -31,7 +33,7 @@ import com.google.common.collect.Range;
 import com.google.common.collect.Streams;
 
 public class MapPaginatorSparqlQuery
-    extends MapPaginatorSparqlQueryBase<Node, ResultSetPart>
+    extends MapPaginatorSparqlQueryBase<Node, Table>
 {
     private static final Logger logger = LoggerFactory.getLogger(MapPaginatorSparqlQuery.class);
 
@@ -78,7 +80,7 @@ public class MapPaginatorSparqlQuery
     }
 
     @Override
-    public Stream<Entry<Node, ResultSetPart>> apply(Range<Long> range) {
+    public Stream<Entry<Node, Table>> apply(Range<Long> range) {
         if(filterConcept != null) {
 //          filterConcept = ConceptUtils.createSubjectConcept();
           if(!attrVar.equals(filterConcept.getVar())) {
@@ -118,15 +120,15 @@ public class MapPaginatorSparqlQuery
       QueryExecution qe = qef.createQueryExecution(query);
       //ResultSet rs = qe.execSelect();
       ResultSet rs = ServiceUtils.forceExecResultSet(qe, query);
-      List<String> varNames = rs.getResultVars();
+      List<Var> varNames = VarUtils.toList(rs.getResultVars());
       Iterator<Binding> base = new IteratorResultSetBinding(rs);
 
-      Iterator<Entry<Node, ResultSetPart>> it = new AbstractIterator<Entry<Node, ResultSetPart>>() {
+      Iterator<Entry<Node, Table>> it = new AbstractIterator<Entry<Node, Table>>() {
           protected Node currentNode = null;
           protected Binding lookAhead = null;
           @Override
-          protected Entry<Node, ResultSetPart> computeNext() {
-              ResultSetPart rsp = new ResultSetPart(varNames);
+          protected Entry<Node, Table> computeNext() {
+              Table rsp = new TableN(varNames);
 
               // First time init
               if(lookAhead == null) {
@@ -137,7 +139,7 @@ public class MapPaginatorSparqlQuery
 
               // Set currentNode from the lookAhead if available
               if(lookAhead != null) {
-                  rsp.getBindings().add(lookAhead);
+                  rsp.addBinding(lookAhead);
                   currentNode = lookAhead.get(attrVar);
                   lookAhead = null;
               }
@@ -149,14 +151,14 @@ public class MapPaginatorSparqlQuery
                   groupNode = lookAhead.get(attrVar);
 
                   if(Objects.equal(groupNode, currentNode)) {
-                      rsp.getBindings().add(lookAhead);
+                      rsp.addBinding(lookAhead);
                       lookAhead = null;
                   } else {
                       break;
                   }
               }
 
-              Entry<Node, ResultSetPart> r = lookAhead == null && rsp.getBindings().isEmpty()
+              Entry<Node, Table> r = lookAhead == null && rsp.isEmpty()
                       ? null //endOfData()
                       : new SimpleEntry<>(currentNode, rsp);
 
@@ -171,7 +173,7 @@ public class MapPaginatorSparqlQuery
           }
       };
 
-      Stream<Entry<Node, ResultSetPart>> result = Streams.stream(it);
+      Stream<Entry<Node, Table>> result = Streams.stream(it);
       result.onClose(() -> qe.close());
 
       return result;
