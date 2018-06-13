@@ -1,126 +1,126 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
 
-    <artifactId>jena-sparql-api-core</artifactId>
-    <packaging>jar</packaging>
+	<artifactId>jena-sparql-api-core</artifactId>
+	<packaging>jar</packaging>
 
-    <name>Jena SPARQL API - Core</name>
-    <url>http://github.org/AKSW/jena-sparql-api</url>
+	<name>Jena SPARQL API - Core</name>
+	<url>http://github.org/AKSW/jena-sparql-api</url>
 
-    <parent>
-        <groupId>org.aksw.jena-sparql-api</groupId>
-        <artifactId>jena-sparql-api-parent</artifactId>
-        <version>3.7.0-1-SNAPSHOT</version>
-    </parent>
+	<parent>
+		<groupId>org.aksw.jena-sparql-api</groupId>
+		<artifactId>jena-sparql-api-parent</artifactId>
+		<version>3.7.0-1-SNAPSHOT</version>
+	</parent>
 
-    <dependencies>
-        <!-- Self Dependencies -->
-        <dependency>
-            <groupId>org.aksw.jena-sparql-api</groupId>
-            <artifactId>jena-sparql-api-utils</artifactId>
-        </dependency>
+	<dependencies>
+		<!-- Self Dependencies -->
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-utils</artifactId>
+		</dependency>
 
-        <dependency>
-            <groupId>org.aksw.jena-sparql-api</groupId>
-            <artifactId>jena-sparql-api-vocabs</artifactId>
-        </dependency>
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-vocabs</artifactId>
+		</dependency>
 
-        <!-- Needed for representing SPARQL Paths as json objects -->
-        <dependency>
-            <groupId>org.aksw.jena-sparql-api</groupId>
-            <artifactId>jena-sparql-api-sparql-ext</artifactId>
-        </dependency>
+		<!-- Needed for representing SPARQL Paths as json objects -->
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-sparql-ext</artifactId>
+		</dependency>
 
-
-        <!-- Jena -->
-        <dependency>
-            <groupId>org.apache.jena</groupId>
-            <artifactId>jena-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.jena</groupId>
-            <artifactId>jena-arq</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.jena</groupId>
-            <artifactId>jena-iri</artifactId>
-        </dependency>
-
-<!-- 		<dependency> required at least by Jena 2.9.0-incubating -->
-<!-- 			<groupId>xerces</groupId> -->
-<!-- 			<artifactId>xercesImpl</artifactId> -->
-<!-- 		</dependency> -->
+		<dependency>
+			<groupId>io.reactivex.rxjava2</groupId>
+			<artifactId>rxjava</artifactId>
+		</dependency>
 
 
-        <!-- Database - used for SPARQL caching, Runtime dep, as the DB is started automatically on connection -->
-<!--         <dependency> -->
-<!--             <groupId>com.h2database</groupId> -->
-<!--             <artifactId>h2</artifactId> -->
-<!--             <scope>runtime</scope> -->
-<!--         </dependency> -->
+		<!-- Jena -->
+		<dependency>
+			<groupId>org.apache.jena</groupId>
+			<artifactId>jena-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.jena</groupId>
+			<artifactId>jena-arq</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.jena</groupId>
+			<artifactId>jena-iri</artifactId>
+		</dependency>
+
+		<!-- <dependency> required at least by Jena 2.9.0-incubating -->
+		<!-- <groupId>xerces</groupId> -->
+		<!-- <artifactId>xercesImpl</artifactId> -->
+		<!-- </dependency> -->
 
 
-<!--
-<dependency>
-    <groupId>org.quartz-scheduler</groupId>
-    <artifactId>quartz</artifactId>
-</dependency>
--->
-
-        <!-- Utils -->
-        <dependency>
-            <groupId>org.aksw.commons</groupId>
-            <artifactId>aksw-commons-collections</artifactId>
-        </dependency>
-<!--         <dependency> -->
-<!--             <groupId>org.aksw.commons</groupId> -->
-<!--             <artifactId>aksw-commons-util</artifactId> -->
-<!--         </dependency> -->
+		<!-- Database - used for SPARQL caching, Runtime dep, as the DB is started 
+			automatically on connection -->
+		<!-- <dependency> -->
+		<!-- <groupId>com.h2database</groupId> -->
+		<!-- <artifactId>h2</artifactId> -->
+		<!-- <scope>runtime</scope> -->
+		<!-- </dependency> -->
 
 
-        <!-- Collections -->
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-        </dependency>
+		<!-- <dependency> <groupId>org.quartz-scheduler</groupId> <artifactId>quartz</artifactId> 
+			</dependency> -->
+
+		<!-- Utils -->
+		<dependency>
+			<groupId>org.aksw.commons</groupId>
+			<artifactId>aksw-commons-collections</artifactId>
+		</dependency>
+		<!-- <dependency> -->
+		<!-- <groupId>org.aksw.commons</groupId> -->
+		<!-- <artifactId>aksw-commons-util</artifactId> -->
+		<!-- </dependency> -->
 
 
-        <!-- Compression -->
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-compress</artifactId>
-        </dependency>
-
-        <!-- Logging -->
-<!--
-        <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-        </dependency>
--->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-        </dependency>
-
-        <!-- Unit Testing -->
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.aksw.jena-sparql-api</groupId>
-            <artifactId>jena-sparql-api-resources-test-config</artifactId>
-        </dependency>
+		<!-- Collections -->
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+		</dependency>
 
 
-        <!-- Async-Retry API from https://github.com/nurkiewicz/async-retry -->
-        <dependency>
-            <groupId>com.nurkiewicz.asyncretry</groupId>
-            <artifactId>asyncretry-jdk7</artifactId>
-        </dependency>
+		<!-- Compression -->
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-compress</artifactId>
+		</dependency>
 
-    </dependencies>
+		<!-- Logging -->
+		<!-- <dependency> <groupId>log4j</groupId> <artifactId>log4j</artifactId> 
+			</dependency> -->
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+		</dependency>
+
+		<!-- Unit Testing -->
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-resources-test-config</artifactId>
+		</dependency>
+
+
+		<!-- Async-Retry API from https://github.com/nurkiewicz/async-retry -->
+		<dependency>
+			<groupId>com.nurkiewicz.asyncretry</groupId>
+			<artifactId>asyncretry-jdk7</artifactId>
+		</dependency>
+
+	</dependencies>
 </project>

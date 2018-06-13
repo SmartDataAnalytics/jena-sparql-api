@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.lookup;
 
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
@@ -19,7 +20,7 @@ public class LookupServiceListService<V>
     public static boolean jena_jira_bug_1484_message_displayed = false;
 
     @Override
-    public Map<Node, V> apply(Iterable<Node> nodes) {
+    public CompletableFuture<Map<Node, V>> apply(Iterable<Node> nodes) {
 //        ExprList args = new ExprList();
 //        for(Node node : nodes) {
 //            Expr expr = NodeValue.makeNode(node);
@@ -40,7 +41,8 @@ public class LookupServiceListService<V>
     	// Concept concept = ConceptUtils.createConcept(nodes);
     	Concept concept = ConceptUtils.createFilterConcept(nodes);
 
-        Map<Node, V> result = listService.fetchData(concept, null, null);
+    	// TODO update once list service also uses futures or flows
+    	CompletableFuture<Map<Node, V>> result = CompletableFuture.completedFuture(listService.fetchData(concept, null, null));
         return result;
     }
 

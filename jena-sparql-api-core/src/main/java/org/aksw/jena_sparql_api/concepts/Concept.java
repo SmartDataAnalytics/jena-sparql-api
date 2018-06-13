@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.concepts;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -32,7 +33,6 @@ import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.PatternVars;
-import org.apache.jena.sparql.syntax.syntaxtransform.TransformElementLib;
 
 import com.google.common.collect.Sets;
 
@@ -44,7 +44,9 @@ import com.google.common.collect.Sets;
  * @author raven
  *
  */
-public class Concept {
+public class Concept
+	implements Relation
+{
     private Element element;//List<Element> elements;
     private Var var;
 
@@ -345,4 +347,9 @@ public class Concept {
     public String toString() {
         return "Concept [element=" + element + ", var=" + var + "]";
     }
+
+	@Override
+	public List<Var> getVars() {
+		return Collections.singletonList(var);
+	}
 }

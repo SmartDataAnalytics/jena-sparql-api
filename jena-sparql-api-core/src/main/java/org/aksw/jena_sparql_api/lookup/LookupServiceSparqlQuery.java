@@ -2,35 +2,43 @@ package org.aksw.jena_sparql_api.lookup;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprListUtils;
-import org.aksw.jena_sparql_api.utils.ResultSetPart;
-
-import com.google.common.collect.Iterables;
+import org.aksw.jena_sparql_api.utils.IteratorResultSetBinding;
+import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
+import org.apache.jena.sparql.algebra.Table;
+import org.apache.jena.sparql.algebra.table.TableData;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.expr.E_OneOf;
-import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprList;
 import org.apache.jena.sparql.expr.ExprVar;
-import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.Iterables;
+
+import io.reactivex.BackpressureStrategy;
+import io.reactivex.Flowable;
+import io.reactivex.FlowableEmitter;
+
 
 public class LookupServiceSparqlQuery
-    implements LookupService<Node, ResultSetPart>
+    implements LookupService<Node, Table>
 {
     private static final Logger logger = LoggerFactory.getLogger(LookupServiceSparqlQuery.class);
 
@@ -44,11 +52,12 @@ public class LookupServiceSparqlQuery
         this.var = var;
     }
 
+ 
     @Override
-    public Map<Node, ResultSetPart> apply(Iterable<Node> keys) {
+    public Flowable<Entry<Node, Table>> apply(Iterable<Node> keys) {
         //System.out.println("Lookup Request with " + Iterables.size(keys) + " keys: " + keys);
 
-        Map<Node, ResultSetPart> result = new HashMap<Node, ResultSetPart>();
+        Map<Node, Table> result = new HashMap<Node, Table>();
 
         if(!Iterables.isEmpty(keys)) {
 
@@ -66,11 +75,15 @@ public class LookupServiceSparqlQuery
             logger.debug("Looking up: " + q);
 
             Map<Node, List<Binding>> map = new HashMap<Node, List<Binding>>();
+            
+            CompletableFuture<ResultSet> future = new CompletableFuture<ResultSet>();
+
+            
             QueryExecution qe = sparqlService.createQueryExecution(q);
             //List<String> resultVars;
             try {
                 ResultSet rs = qe.execSelect();
-                List<String> resultVars = new ArrayList<String>(rs.getResultVars());
+                List<Var> resultVars = VarUtils.toList(rs.getResultVars()); //new ArrayList<String>(rs.getResultVars());
 
                 while(rs.hasNext()) {
                     Binding binding = rs.nextBinding();
@@ -91,15 +104,17 @@ public class LookupServiceSparqlQuery
                 for(Entry<Node, List<Binding>> entry : map.entrySet()) {
                     //ResultSetStream r = new ResultSetStream(rs.getResultVars(), null, entry.getValue().iterator());
                     //ResultSetRewindable rsw = ResultSetFactory.makeRewindable(r);
+                	Table table = new TableData(resultVars, entry.getValue());
+                    //ResultSetPart rsp = new ResultSetPart(resultVars, entry.getValue());
 
-                    ResultSetPart rsp = new ResultSetPart(resultVars, entry.getValue());
-
-                    result.put(entry.getKey(), rsp);
+                    result.put(entry.getKey(), table);
                 }
             } finally {
                 qe.close();
             }
         }
+        
+        Flo
 
         return result;
     }

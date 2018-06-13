@@ -2,7 +2,10 @@ package org.aksw.jena_sparql_api.concepts;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.VarUtils;
@@ -19,8 +22,11 @@ import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.ElementGroup;
+import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.ElementUnion;
 import org.apache.jena.sparql.syntax.PatternVars;
+
+import com.google.common.collect.Sets;
 
 public class RelationUtils {
 
@@ -74,7 +80,7 @@ public class RelationUtils {
     	}
     	eg.addElement(ce);;
 		
-    	BinaryRelation result = new BinaryRelation(eg, a.getSourceVar(), varMap.getOrDefault(b.getTargetVar(), a.getSourceVar()));
+    	BinaryRelation result = new BinaryRelationImpl(eg, a.getSourceVar(), varMap.getOrDefault(b.getTargetVar(), a.getSourceVar()));
     	
     	return result;    	
     }
@@ -114,7 +120,7 @@ public class RelationUtils {
     	Element c = ElementUtils.createRenamedElement(b.getElement(), varMap);
     	u.addElement(c);
 
-    	BinaryRelation result = isInPlace ? a : new BinaryRelation(u, a.getSourceVar(), a.getTargetVar());
+    	BinaryRelation result = isInPlace ? a : new BinaryRelationImpl(u, a.getSourceVar(), a.getTargetVar());
     	return result;
     }
     
@@ -137,7 +143,7 @@ public class RelationUtils {
     	    	
     	Element element = ElementUtils.createElement(t);
     	//Element element = new ElementTriplesBlock(bgp);
-        BinaryRelation result = new BinaryRelation(element, Vars.s, Vars.o);//createRelation(expr, isInverse);
+        BinaryRelation result = new BinaryRelationImpl(element, Vars.s, Vars.o);//createRelation(expr, isInverse);
         return result;
     }
 
@@ -148,7 +154,7 @@ public class RelationUtils {
 
 
     public static BinaryRelation createRelation(Expr expr, boolean isInverse) {
-        BinaryRelation result = new BinaryRelation(new ElementFilter(expr), Vars.p, Vars.o);
+        BinaryRelation result = new BinaryRelationImpl(new ElementFilter(expr), Vars.p, Vars.o);
         return result;
     }
 
@@ -159,16 +165,31 @@ public class RelationUtils {
 //    }
 
 
-    public static Query createQuery(BinaryRelation relation) {
-        Query result = new Query();
-        result.setQuerySelectType();
+    public static Query createQuery(Relation relation) {
+    	// If the element is already a query, just limit the projection
+        Element e = relation.getElement();
+        List<Var> vars = relation.getVars();
 
-        Element e = relation.getElement();;
-        result.setQueryPattern(e);
+        Query result;
+        if(e instanceof ElementSubQuery) {
+        	result = ((ElementSubQuery)e).getQuery().cloneQuery();
+        	
+        	// Update the projection
+        	Set<Var> removals = new HashSet<>(result.getProject().getVars());
+        	removals.removeAll(vars);
 
-        VarExprList project = result.getProject();
-        project.add(relation.getSourceVar());
-        project.add(relation.getTargetVar());
+        	VarExprList project = result.getProject();
+        	removals.forEach(project::remove);
+        	
+        } else {
+	        result = new Query();
+	        result.setQuerySelectType();
+	
+	        result.setQueryPattern(e);
+	
+	        VarExprList project = result.getProject();
+	        vars.forEach(project::add);
+        }
 
         return result;
     }

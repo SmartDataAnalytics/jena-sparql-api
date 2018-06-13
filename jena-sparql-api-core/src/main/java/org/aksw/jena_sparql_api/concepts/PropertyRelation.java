@@ -2,7 +2,6 @@ package org.aksw.jena_sparql_api.concepts;
 
 import org.aksw.jena_sparql_api.stmt.SparqlElementParser;
 import org.aksw.jena_sparql_api.stmt.SparqlElementParserImpl;
-
 import org.apache.jena.query.Syntax;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.core.Var;
@@ -15,7 +14,7 @@ import org.apache.jena.sparql.syntax.Element;
  *
  */
 public class PropertyRelation
-    extends BinaryRelation
+    extends BinaryRelationImpl
 {
     protected Var propertyVar;
 

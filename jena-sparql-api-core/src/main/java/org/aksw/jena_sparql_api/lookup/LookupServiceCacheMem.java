@@ -3,50 +3,71 @@ package org.aksw.jena_sparql_api.lookup;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
-import org.apache.commons.collections15.map.LRUMap;
+import org.apache.jena.ext.com.google.common.cache.CacheBuilder;
+
+import com.google.common.cache.Cache;
+
+import io.reactivex.Flowable;
 
 public class LookupServiceCacheMem<K, V>
     implements LookupService<K, V>
 {
-    private Map<K, V> cache = new LRUMap<K, V>();
+	// A cache; CompletableFuture allows for pending values
+    private Cache<K, CompletableFuture<V>> cache;//new LRUMap<K, V>();
 
     private LookupService<K, V> base;
 
     public LookupServiceCacheMem(LookupService<K, V> base) {
-        this(base, 1000);
+        this(base, 10000);
     }
 
-    public LookupServiceCacheMem(LookupService<K, V> base, int maxCacheSize) {
-        this(base, new LRUMap<K, V>(maxCacheSize));
+    public LookupServiceCacheMem(LookupService<K, V> base, long maxCacheSize) {
+        this(base, CacheBuilder.newBuilder().maximumSize(maxCacheSize).build());
     }
 
-    public LookupServiceCacheMem(LookupService<K, V> base, Map<K, V> cache) {
+    public LookupServiceCacheMem(LookupService<K, V> base, Cache<K, CompletableFuture<V>> cache) {
         this.base = base;
         this.cache = cache;
     }
 
     @Override
-    public Map<K, V> apply(Iterable<K> keys) {
-        Map<K, V> result = new HashMap<K, V>();
+    public Flowable<Entry<K, V>> apply(Iterable<K> keys) {
+        Map<K, V> map = new HashMap<K, V>();
 
+    	
         Set<K> open = new HashSet<K>();
 
         for(K key : keys) {
-            if(cache.containsKey(key)) {
+            CompletableFuture<V> v = cache.getIfPresent(key);
+            // Whenever a future finishes, trigger onNext
+            
                 V v = cache.get(key);
 
-                result.put(key, v);
+                map.put(key, v);
             } else {
                 open.add(key);
             }
         }
 
-        Map<K, V> remaining = base.apply(open);
+//    	Flowable.concat(
+//        Flowable<Entry<K, V>> tmp = Flowable.fromIterable(map.entrySet());
 
-        cache.putAll(remaining);
-        result.putAll(remaining);
+        
+        Flowable<Entry<K, V>> requestPart = base.apply(open).subscribe(remaining -> {
+            K k = remaining.getKey();
+            V v = remaining.getValue();
+        	cache.putAll(remaining);
+            result.putAll(remaining);
+
+            return result;
+        });
+
+        Flowable.conc
+        Flowable<Entry<K, V>> result = Flowable.fromIterable(map.entrySet());
 
         return result;
     }

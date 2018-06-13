@@ -1,10 +1,12 @@
 package org.aksw.jena_sparql_api.lookup;
 
-import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 
+import io.reactivex.Flowable;
+
 public class LookupTask<K, V>
-    implements Callable<Map<K, V>>
+    implements Callable<Flowable<Entry<K, V>>>
 {
     private LookupService<K, V> base;
     private Iterable<K> keys;
@@ -15,8 +17,8 @@ public class LookupTask<K, V>
     }
 
     @Override
-    public Map<K, V> call() throws Exception {
-        Map<K, V> result = base.apply(keys);
+    public Flowable<Entry<K, V>> call() throws Exception {
+        Flowable<Entry<K, V>> result = base.apply(keys);
         return result;
     }
 }
