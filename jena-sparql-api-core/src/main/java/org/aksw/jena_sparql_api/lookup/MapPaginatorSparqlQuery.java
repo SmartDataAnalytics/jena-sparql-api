@@ -32,6 +32,8 @@ import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Range;
 import com.google.common.collect.Streams;
 
+import io.reactivex.Flowable;
+
 public class MapPaginatorSparqlQuery
     extends MapPaginatorSparqlQueryBase<Node, Table>
 {
@@ -51,7 +53,7 @@ public class MapPaginatorSparqlQuery
     }
 
     @Override
-    public CountInfo fetchCount(Long itemLimit, Long rowLimit) {
+    public Range<Long> fetchCount(Long itemLimit, Long rowLimit) {
 
         if(filterConcept != null) {
             filterConcept = ConceptUtils.createSubjectConcept();
@@ -75,12 +77,12 @@ public class MapPaginatorSparqlQuery
 //            console.log('ROW ' + rowLimit);
         }
 
-        CountInfo result = ServiceUtils.fetchCountConcept(qef, countConcept, itemLimit, null); //rowLimit
+        Range<Long> result = ServiceUtils.fetchCountConcept(qef, countConcept, itemLimit, null); //rowLimit
         return result;
     }
 
     @Override
-    public Stream<Entry<Node, Table>> apply(Range<Long> range) {
+    public Flowable<Entry<Node, Table>> apply(Range<Long> range) {
         if(filterConcept != null) {
 //          filterConcept = ConceptUtils.createSubjectConcept();
           if(!attrVar.equals(filterConcept.getVar())) {

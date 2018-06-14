@@ -1,11 +1,14 @@
 package org.aksw.jena_sparql_api.lookup;
 
-import java.util.Iterator;
+import java.util.function.Supplier;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
+
+import io.reactivex.Flowable;
 
 public class PaginatorQueryTriple
     extends PaginatorQueryBase<Triple>
@@ -16,8 +19,9 @@ public class PaginatorQueryTriple
     }
 
     @Override
-    protected Iterator<Triple> obtainResultIterator(QueryExecution qe) {
-        Iterator<Triple> result = qe.execConstructTriples();
+    protected Flowable<Triple> obtainResultIterator(Supplier<QueryExecution> qeSupplier) {
+    	Flowable<Triple> result = ReactiveSparqlUtils.execConstructTriples(qeSupplier);
+        //Iterator<Triple> result = qe.execConstructTriples();
         return result;
     }
 }

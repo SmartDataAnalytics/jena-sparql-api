@@ -11,6 +11,7 @@ import java.util.function.Supplier;
 import org.aksw.jena_sparql_api.utils.IteratorResultSetBinding;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.ResultSet;
@@ -37,26 +38,66 @@ public class ReactiveSparqlUtils {
 		return result;
 	}
 
-	public static void process(FlowableEmitter<ResultSet> emitter, QueryExecution qe) {
+	public static void processExecSelect(FlowableEmitter<Binding> emitter, QueryExecution qe) {
 		try {
 			emitter.setCancellable(qe::abort);
 			ResultSet rs = qe.execSelect();
-			emitter.onNext(rs);
+			while(!emitter.isCancelled() && rs.hasNext()) {
+				Binding binding = rs.nextBinding();
+				emitter.onNext(binding);
+			}
+			emitter.onComplete();
+		} catch (Exception e) {
+			emitter.onError(e);
+		}
+	}
+	
+	public static void processExecConstructTriples(FlowableEmitter<Triple> emitter, QueryExecution qe) {
+		try {
+			emitter.setCancellable(qe::abort);
+			Iterator<Triple> it = qe.execConstructTriples();
+			while(!emitter.isCancelled() && it.hasNext()) {
+				Triple item = it.next();
+				emitter.onNext(item);
+			}
 			emitter.onComplete();
 		} catch (Exception e) {
 			emitter.onError(e);
 		}
 	}
 
-	public static Flowable<ResultSet> queryCore(Supplier<QueryExecution> qes) {
-		Flowable<ResultSet> result = Flowable.create(emitter -> {
+//
+//	public static void processExecConstructTriples(SingleEmitter<ResultSet> emitter, QueryExecution qe) {
+//		try {
+//			emitter.setCancellable(qe::abort);
+//			Iterator<Triple> = qe.execConstructTriples();
+//			emitter.onSuccess(rs);
+//			//emitter.onComplete();
+//		} catch (Exception e) {
+//			emitter.onError(e);
+//		}
+//	}
+
+	public static Flowable<Binding> execSelect(Supplier<QueryExecution> qes) {
+		Flowable<Binding> result = Flowable.create(emitter -> {
 			QueryExecution qe = qes.get();
-			new Thread(() -> process(emitter, qe)).start();
+			processExecSelect(emitter, qe);
+			//new Thread(() -> process(emitter, qe)).start();
 		}, BackpressureStrategy.BUFFER);
 
 		return result;
 	}
 
+	public static Flowable<Triple> execConstructTriples(Supplier<QueryExecution> qes) {
+		Flowable<Triple> result = Flowable.create(emitter -> {
+			QueryExecution qe = qes.get();
+			processExecConstructTriples(emitter, qe);
+			//new Thread(() -> process(emitter, qe)).start();
+		}, BackpressureStrategy.BUFFER);
+
+		return result;
+	}
+	
 	public static Entry<List<Var>, Flowable<Binding>> mapToFlowable(ResultSet rs) {
 		Iterator<Binding> it = new IteratorResultSetBinding(rs);
 		Iterable<Binding> i = () -> it;
@@ -103,6 +144,14 @@ public class ReactiveSparqlUtils {
 			return groupKey;
 		};
 	}
+	
+	public static Function<Binding, Node> createGrouper(Var var) {
+		return b -> {
+			Node groupKey = b.get(var);
+			return groupKey;
+		};
+	}
+
 //	public static Flowable<Table> groupBy(Flowable<Binding> )
 	
 	// /**
@@ -117,8 +166,8 @@ public class ReactiveSparqlUtils {
 		for(int j = 0; j < 10; ++j) {
 			int i[] = { 0 };
 			System.out.println("HERE");
-			queryCore(() -> QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql",
-					"SELECT * { ?s a <http://dbpedia.org/ontology/Person> }")).flatMap(ReactiveSparqlUtils::mapToBinding)
+			execSelect(() -> QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql",
+					"SELECT * { ?s a <http://dbpedia.org/ontology/Person> }"))
 							.takeUntil(b -> i[0] == 10).subscribe(x -> {
 								i[0]++;
 								System.out.println("x: " + x);

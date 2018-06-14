@@ -1,15 +1,12 @@
 package org.aksw.jena_sparql_api.lookup;
 
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.stream.Stream;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.utils.QueryExecutionUtils;
-import org.aksw.jena_sparql_api.utils.QueryUtils;
+import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.core.Var;
@@ -19,6 +16,8 @@ import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
 
 import com.google.common.collect.Range;
+
+import io.reactivex.Flowable;
 
 /**
  * TODO Convert to a ListService
@@ -98,7 +97,7 @@ public class MapPaginatorConcept
      * @param itemLimit number of distinct resources to scan before returning a count early
      */
     @Override
-    public CountInfo fetchCount(Long itemLimit, Long rowLimit) {
+    public Range<Long> fetchCount(Long itemLimit, Long rowLimit) {
         Var c = Var.alloc("_c_");
         Long limit = itemLimit == null ? null : itemLimit + 1;
         Query query = createQueryCount(concept, limit, rowLimit, c);
@@ -116,15 +115,19 @@ public class MapPaginatorConcept
         }
 
 
-        CountInfo result = new CountInfo(count, hasMoreItems, itemLimit);
+        Range<Long> result = hasMoreItems ? Range.atLeast(itemLimit) : Range.singleton(count);
 
         return result;
     }
 
     @Override
     public Flowable<Entry<Node, Node>> apply(Range<Long> range) {
-        Map<Node, Node> map = fetchMap(range);
-        return map.entrySet().stream();
+    	//Query query = createQueryCount(concept, itemLimit, rowLimit, resultVar)
+    	ReactiveSparqlUtils.execSelect(() -> qef.createQueryExecution(query))
+    	
+//    	apply(range);
+//        Map<Node, Node> map = fetchMap(range);
+//        return map.entrySet().stream();
     }
 
 }

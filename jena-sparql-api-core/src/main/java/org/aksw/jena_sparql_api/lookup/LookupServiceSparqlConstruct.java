@@ -3,12 +3,11 @@ package org.aksw.jena_sparql_api.lookup;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ModelUtils;
-
-import com.google.common.collect.Iterables;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
@@ -24,6 +23,10 @@ import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
+
+import com.google.common.collect.Iterables;
+
+import io.reactivex.Flowable;
 
 
 /**
@@ -45,7 +48,7 @@ public class LookupServiceSparqlConstruct
     }
 
     @Override
-    public Map<Node, Model> apply(Iterable<Node> keys) {
+    public Flowable<Entry<Node, Model>> apply(Iterable<Node> keys) {
         //System.out.println("Lookup Request with " + Iterables.size(keys) + " keys: " + keys);
 
         Map<Node, Model> result = new HashMap<Node, Model>();
