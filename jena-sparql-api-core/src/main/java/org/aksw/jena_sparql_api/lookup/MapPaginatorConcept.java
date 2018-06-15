@@ -1,12 +1,11 @@
 package org.aksw.jena_sparql_api.lookup;
 
-import java.util.Map;
 import java.util.Map.Entry;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.core.utils.QueryExecutionUtils;
 import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
+import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.core.Var;
@@ -15,9 +14,11 @@ import org.apache.jena.sparql.expr.aggregate.AggCount;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
 
+import com.google.common.collect.Maps;
 import com.google.common.collect.Range;
 
 import io.reactivex.Flowable;
+import io.reactivex.Single;
 
 /**
  * TODO Convert to a ListService
@@ -97,33 +98,40 @@ public class MapPaginatorConcept
      * @param itemLimit number of distinct resources to scan before returning a count early
      */
     @Override
-    public Range<Long> fetchCount(Long itemLimit, Long rowLimit) {
+    public Single<Range<Long>> fetchCount(Long itemLimit, Long rowLimit) {
         Var c = Var.alloc("_c_");
         Long limit = itemLimit == null ? null : itemLimit + 1;
         Query query = createQueryCount(concept, limit, rowLimit, c);
 
         //if(true) { return null; }
 
-        Node countNode = QueryExecutionUtils.executeSingle(qef, query, c);
-        long count = ((Number)countNode.getLiteralValue()).longValue();
+        Single<Range<Long>> result = ReactiveSparqlUtils.execSelect(() -> qef.createQueryExecution(query))
+        	.map(b -> b.get(c))
+        	.map(countNode -> ((Number)countNode.getLiteralValue()).longValue())
+        	.map(count -> {
+        		boolean hasMoreItems = false;
+                if(itemLimit != null && count > itemLimit) {
+                    count = itemLimit;
+                    hasMoreItems = true;
+                }
 
-        boolean hasMoreItems = false;
-
-        if(itemLimit != null && count > itemLimit) {
-            count = itemLimit;
-            hasMoreItems = true;
-        }
-
-
-        Range<Long> result = hasMoreItems ? Range.atLeast(itemLimit) : Range.singleton(count);
-
+                Range<Long> r = hasMoreItems ? Range.atLeast(itemLimit) : Range.singleton(count);        		
+                return r;
+        	})
+        	.single(null);
+        
         return result;
     }
 
     @Override
     public Flowable<Entry<Node, Node>> apply(Range<Long> range) {
+    	Query query = concept.asQuery();
+    	QueryUtils.applyRange(query, range);
+
     	//Query query = createQueryCount(concept, itemLimit, rowLimit, resultVar)
-    	ReactiveSparqlUtils.execSelect(() -> qef.createQueryExecution(query))
+    	return ReactiveSparqlUtils.execSelect(() -> qef.createQueryExecution(query))
+    			.map(b -> b.get(b.vars().next()))
+    			.map(node -> Maps.immutableEntry(node, node));
     	
 //    	apply(range);
 //        Map<Node, Node> map = fetchMap(range);

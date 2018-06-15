@@ -1,26 +1,32 @@
 package org.aksw.jena_sparql_api.lookup;
 
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-
-import org.apache.jena.ext.com.google.common.cache.CacheBuilder;
 
 import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.Sets;
 
 import io.reactivex.Flowable;
 
+
+/**
+ * A cache for <b>already retrieved</b> values. This is not a cache for requests.
+ *
+ * @author raven
+ *
+ * @param <K>
+ * @param <V>
+ */
 public class LookupServiceCacheMem<K, V>
     implements LookupService<K, V>
 {
-	// A cache; CompletableFuture allows for pending values
-    private Cache<K, CompletableFuture<V>> cache;//new LRUMap<K, V>();
-
+    protected Cache<K, V> cache;//new LRUMap<K, V>();
     private LookupService<K, V> base;
 
+    
+    
     public LookupServiceCacheMem(LookupService<K, V> base) {
         this(base, 10000);
     }
@@ -29,43 +35,19 @@ public class LookupServiceCacheMem<K, V>
         this(base, CacheBuilder.newBuilder().maximumSize(maxCacheSize).build());
     }
 
-    public LookupServiceCacheMem(LookupService<K, V> base, Cache<K, CompletableFuture<V>> cache) {
+    public LookupServiceCacheMem(LookupService<K, V> base, Cache<K, V> cache) {
         this.base = base;
         this.cache = cache;
     }
 
     @Override
     public Flowable<Entry<K, V>> apply(Iterable<K> keys) {
-        Map<K, CompletableFuture<V>> map = new HashMap<K, V>();
+    	Map<K, V> cachedEntries = cache.getAllPresent(keys);
+    	Set<K> remaining = Sets.difference(Sets.newHashSet(keys), cachedEntries.keySet());
 
-    	
-        Set<K> open = new HashSet<K>();
-
-        for(K key : keys) {
-            CompletableFuture<V> v = cache.getIfPresent(key);
-            // Whenever a future finishes, trigger onNext
-
-                map.put(key, v);
-            } else {
-                open.add(key);
-            }
-        }
-
-//    	Flowable.concat(
-//        Flowable<Entry<K, V>> tmp = Flowable.fromIterable(map.entrySet());
-
-        
-        Flowable<Entry<K, V>> requestPart = base.apply(open).subscribe(remaining -> {
-            K k = remaining.getKey();
-            V v = remaining.getValue();
-        	cache.putAll(remaining);
-            result.putAll(remaining);
-
-            return result;
-        });
-
-        Flowable.conc
-        Flowable<Entry<K, V>> result = Flowable.fromIterable(map.entrySet());
+    	Flowable<Entry<K, V>> result = Flowable
+    			.fromIterable(cachedEntries.entrySet())
+    			.concatWith(base.apply(remaining));
 
         return result;
     }
@@ -80,8 +62,8 @@ public class LookupServiceCacheMem<K, V>
         return result;
     }
 
-    public static <K, V> LookupServiceCacheMem<K, V> create(LookupService<K, V> base, Map<K, V> cache) {
-        LookupServiceCacheMem<K, V> result = new LookupServiceCacheMem<K, V>(base, cache);
-        return result;
-    }
+//    public static <K, V> LookupServiceCacheMem<K, V> create(LookupService<K, V> base, Map<K, V> cache) {
+//        LookupServiceCacheMem<K, V> result = new LookupServiceCacheMem<K, V>(base, cache);
+//        return result;
+//    }
 }

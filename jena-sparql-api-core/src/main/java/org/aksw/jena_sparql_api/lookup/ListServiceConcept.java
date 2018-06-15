@@ -8,6 +8,8 @@ import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.apache.jena.graph.Node;
 
+import com.google.common.collect.Range;
+
 
 public class ListServiceConcept
     implements MapService<Concept, Node, Node>
@@ -32,18 +34,18 @@ public class ListServiceConcept
 
         Concept concept = ConceptUtils.listAllPredicates;
 
-        CountInfo countInfo;
+        Range<Long> countInfo;
 
-        countInfo = ls.fetchCount(concept, 2l, null);
+        countInfo = ls.fetchCount(concept, 2l, null).blockingGet();
         System.out.println(countInfo);
 
-        countInfo = ls.fetchCount(concept, 3l, null);
+        countInfo = ls.fetchCount(concept, 3l, null).blockingGet();
         System.out.println(countInfo);
 
-        countInfo = ls.fetchCount(concept, 4l, null);
+        countInfo = ls.fetchCount(concept, 4l, null).blockingGet();
         System.out.println(countInfo);
 
-        countInfo = ls.fetchCount(concept, null, null);
+        countInfo = ls.fetchCount(concept, null, null).blockingGet();
         System.out.println(countInfo);
 
 

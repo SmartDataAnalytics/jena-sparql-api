@@ -9,6 +9,7 @@ import java.util.stream.Stream;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
 import org.aksw.jena_sparql_api.core.utils.ServiceUtils;
 import org.aksw.jena_sparql_api.utils.IteratorResultSetBinding;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
@@ -33,6 +34,7 @@ import com.google.common.collect.Range;
 import com.google.common.collect.Streams;
 
 import io.reactivex.Flowable;
+import io.reactivex.Single;
 
 public class MapPaginatorSparqlQuery
     extends MapPaginatorSparqlQueryBase<Node, Table>
@@ -53,7 +55,7 @@ public class MapPaginatorSparqlQuery
     }
 
     @Override
-    public Range<Long> fetchCount(Long itemLimit, Long rowLimit) {
+    public Single<Range<Long>> fetchCount(Long itemLimit, Long rowLimit) {
 
         if(filterConcept != null) {
             filterConcept = ConceptUtils.createSubjectConcept();
@@ -77,7 +79,7 @@ public class MapPaginatorSparqlQuery
 //            console.log('ROW ' + rowLimit);
         }
 
-        Range<Long> result = ServiceUtils.fetchCountConcept(qef, countConcept, itemLimit, null); //rowLimit
+        Single<Range<Long>> result = ReactiveSparqlUtils.fetchCountConcept(qef, countConcept, itemLimit, null); //rowLimit
         return result;
     }
 

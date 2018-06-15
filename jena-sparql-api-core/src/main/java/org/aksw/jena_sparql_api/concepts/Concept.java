@@ -1,6 +1,5 @@
 package org.aksw.jena_sparql_api.concepts;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -45,7 +44,7 @@ import com.google.common.collect.Sets;
  *
  */
 public class Concept
-	implements Relation
+	implements UnaryRelation
 {
     private Element element;//List<Element> elements;
     private Var var;
@@ -347,9 +346,4 @@ public class Concept
     public String toString() {
         return "Concept [element=" + element + ", var=" + var + "]";
     }
-
-	@Override
-	public List<Var> getVars() {
-		return Collections.singletonList(var);
-	}
 }

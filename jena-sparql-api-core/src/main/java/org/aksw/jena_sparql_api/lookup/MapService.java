@@ -7,6 +7,8 @@ import org.aksw.jena_sparql_api.utils.QueryUtils;
 
 import com.google.common.collect.Range;
 
+import io.reactivex.Single;
+
 /**
  * A list service is actually quite similar to JPA's TypedQuery,
  * the main difference is, that we use a Map<K, V> here instead of a
@@ -47,8 +49,8 @@ public interface MapService<C, K, V>
      * //@param rowLimit Limits the number of rows to scan before applying distinct
      * @return
      */
-    default CountInfo fetchCount(C concept, Long itemLimit, Long rowLimit) {
-        CountInfo result = createPaginator(concept).fetchCount(itemLimit, rowLimit);
+    default Single<Range<Long>> fetchCount(C concept, Long itemLimit, Long rowLimit) {
+        Single<Range<Long>> result = createPaginator(concept).fetchCount(itemLimit, rowLimit);
         return result;
     }
 

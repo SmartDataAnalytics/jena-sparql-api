@@ -5,6 +5,7 @@ import java.util.function.BiFunction;
 import com.google.common.collect.Range;
 
 import io.reactivex.Flowable;
+import io.reactivex.Single;
 
 public class ListPaginatorMapWrapper<K, V, T>
     implements ListPaginator<T>
@@ -24,8 +25,8 @@ public class ListPaginatorMapWrapper<K, V, T>
     }
 
     @Override
-    public Range<Long> fetchCount(Long itemLimit, Long rowLimit) {
-        Range<Long> result = delegate.fetchCount(itemLimit, rowLimit);
+    public Single<Range<Long>> fetchCount(Long itemLimit, Long rowLimit) {
+        Single<Range<Long>> result = delegate.fetchCount(itemLimit, rowLimit);
         return result;
     }
 

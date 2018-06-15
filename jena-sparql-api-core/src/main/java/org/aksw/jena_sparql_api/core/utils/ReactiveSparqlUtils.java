@@ -8,10 +8,13 @@ import java.util.Map.Entry;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.utils.IteratorResultSetBinding;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.ResultSet;
@@ -21,9 +24,14 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingHashMap;
 
+import com.google.common.collect.Maps;
+import com.google.common.collect.Range;
+
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.FlowableEmitter;
+import io.reactivex.Single;
+import io.reactivex.processors.PublishProcessor;
 
 public class ReactiveSparqlUtils {
 	/**
@@ -163,6 +171,21 @@ public class ReactiveSparqlUtils {
 	// }
 
 	public static void main(String[] args) {
+		PublishProcessor<String> queue = PublishProcessor.create();
+		queue.buffer(3).subscribe(x -> System.out.println("Buffer: " + x));
+
+		for(int i = 0; i < 10; ++i) {
+			String item = "item" + i;
+			System.out.println("Adding " + item);
+			queue.onNext(item);
+		}
+		queue.onComplete();
+		
+
+		if(true) {
+			return;
+		}
+		
 		for(int j = 0; j < 10; ++j) {
 			int i[] = { 0 };
 			System.out.println("HERE");
@@ -176,4 +199,31 @@ public class ReactiveSparqlUtils {
 		}
 		// NOTE This way, the main thread will terminate before the queries are processed
 	}
+	
+    public static Single<Range<Long>> fetchCountConcept(org.aksw.jena_sparql_api.core.QueryExecutionFactory qef, Concept concept, Long itemLimit, Long rowLimit) {
+
+        Var outputVar = ConceptUtils.freshVar(concept);
+
+        Long xitemLimit = itemLimit == null ? null : itemLimit + 1;
+        Long xrowLimit = rowLimit == null ? null : rowLimit + 1;
+
+        Query countQuery = ConceptUtils.createQueryCount(concept, outputVar, xitemLimit, xrowLimit);
+
+        //var qe = sparqlService.createQueryExecution(countQuery);
+
+        //Integer count = ServiceUtils.fetchInteger(sparqlService, countQuery, outputVar);
+    	return ReactiveSparqlUtils.execSelect(() -> qef.createQueryExecution(countQuery))
+            	.map(b -> b.get(outputVar))
+            	.map(countNode -> ((Number)countNode.getLiteralValue()).longValue())
+            	.map(count -> {
+            		boolean mayHaveMoreItems = rowLimit != null
+            				? true
+            				: itemLimit != null && count > itemLimit;
+
+                    Range<Long> r = mayHaveMoreItems ? Range.atLeast(itemLimit) : Range.singleton(count);        		
+                    return r;
+            	})
+            	.single(null);
+    }
+
 }

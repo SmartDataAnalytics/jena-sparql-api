@@ -66,9 +66,6 @@ public class LookupServiceSparqlQuery
             //System.out.println("Lookup query: " + q);
             logger.debug("Looking up: " + q);
 
-            Map<Node, List<Binding>> map = new HashMap<Node, List<Binding>>();
-           
-                        
             result = ReactiveSparqlUtils.execSelect(() -> sparqlService.createQueryExecution(q))
             	.groupBy(b -> b.get(var))
             	.flatMapSingle(groups -> groups

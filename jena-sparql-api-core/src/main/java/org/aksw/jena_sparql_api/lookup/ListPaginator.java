@@ -6,10 +6,12 @@ import org.aksw.jena_sparql_api.util.collection.RangedSupplier;
 
 import com.google.common.collect.Range;
 
+import io.reactivex.Single;
+
 public interface ListPaginator<T>
     extends RangedSupplier<Long, T>
 {
-    Range<Long> fetchCount(Long itemLimit, Long rowLimit);
+    Single<Range<Long>> fetchCount(Long itemLimit, Long rowLimit);
 
     default List<T> fetchList(Range<Long> range) {
         List<T> result = apply(range).toList().blockingGet(); //.collect(Collectors.toList());

@@ -1,14 +1,13 @@
 package org.aksw.jena_sparql_api.lookup;
 
 import java.util.List;
-import java.util.stream.Stream;
 
-import org.aksw.commons.collections.utils.StreamUtils;
 import org.aksw.jena_sparql_api.utils.RangeUtils;
 
 import com.google.common.collect.Range;
 
 import io.reactivex.Flowable;
+import io.reactivex.Single;
 
 
 /**
@@ -43,18 +42,18 @@ public class ListPaginatorBatch<I>
     }
 
     @Override
-    public Range<Long> fetchCount(Long itemLimit, Long rowLimit) {
-        Range<Long> countInfo = base.fetchCount(itemLimit, rowLimit);
+    public Single<Range<Long>> fetchCount(Long itemLimit, Long rowLimit) {
+    	return base.fetchCount(itemLimit, rowLimit).map(countInfo -> {
+	        long baseCount = countInfo.lowerEndpoint();
+	        long n = (baseCount + batchSize - 1) / batchSize;
 
-        long baseCount = countInfo.lowerEndpoint();
-        long n = (baseCount + batchSize - 1) / batchSize;
-
-        // TODO We silently assume the range to be a singleton if is has an upperBound
-        // TODO Add a method that correctly captures the corner cases to RangeUtils.
-        Range<Long> result = countInfo.hasUpperBound() ? Range.singleton(n) : Range.atLeast(n);
-        
-        //CountInfo result = new CountInfo(n, countInfo.isHasMoreItems(), itemLimit);
-        return result;
+	        // TODO We silently assume the range to be a singleton if is has an upperBound
+	        // TODO Add a method that correctly captures the corner cases to RangeUtils.
+	        Range<Long> result = countInfo.hasUpperBound() ? Range.singleton(n) : Range.atLeast(n);
+	        
+	        //CountInfo result = new CountInfo(n, countInfo.isHasMoreItems(), itemLimit);
+	        return result;
+    	});
     }
 
 }

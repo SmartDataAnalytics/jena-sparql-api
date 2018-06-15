@@ -1,30 +1,27 @@
 package org.aksw.jena_sparql_api.lookup;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.Map.Entry;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
-import org.aksw.jena_sparql_api.utils.ModelUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryExecution;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.impl.ModelCom;
-import org.apache.jena.rdf.model.impl.ResourceImpl;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_OneOf;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprList;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
 
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 
 import io.reactivex.Flowable;
 
@@ -51,7 +48,9 @@ public class LookupServiceSparqlConstruct
     public Flowable<Entry<Node, Model>> apply(Iterable<Node> keys) {
         //System.out.println("Lookup Request with " + Iterables.size(keys) + " keys: " + keys);
 
-        Map<Node, Model> result = new HashMap<Node, Model>();
+        //Map<Node, Model> result = new HashMap<Node, Model>();
+
+    	Flowable<Entry<Node, Model>> result;
 
         if(!Iterables.isEmpty(keys)) {
 
@@ -71,17 +70,25 @@ public class LookupServiceSparqlConstruct
 
             //System.out.println("Lookup query: " + q);
 
-            QueryExecution qe = qef.createQueryExecution(q);
-            Model fullModel = qe.execConstruct();
+            result = ReactiveSparqlUtils.execConstructTriples(() -> qef.createQueryExecution(q))
+                	.groupBy(t -> t.getSubject())
+                	.flatMapSingle(groups -> groups
+                			.collectInto(GraphFactory.createDefaultGraph(), (g, t) -> g.add(t))
+                			.map(x -> (Entry<Node, Model>)Maps.immutableEntry(groups.getKey(), ModelFactory.createModelForGraph(x))));
 
-            Iterator<Node> it = keys.iterator();
-            while(it.hasNext()) {
-                Node key = it.next();
-
-                Resource s = new ResourceImpl(key, (ModelCom)fullModel);
-                Model tmp = ModelUtils.filterBySubject(fullModel, s);
-                result.put(key, tmp);
-            }
+//            QueryExecution qe = qef.createQueryExecution(q);
+//            Model fullModel = qe.execConstruct();
+//
+//            Iterator<Node> it = keys.iterator();
+//            while(it.hasNext()) {
+//                Node key = it.next();
+//
+//                Resource s = new ResourceImpl(key, (ModelCom)fullModel);
+//                Model tmp = ModelUtils.filterBySubject(fullModel, s);
+//                result.put(key, tmp);
+//            }
+        } else {
+        	result = Flowable.empty();
         }
 
         return result;

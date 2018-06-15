@@ -1,12 +1,11 @@
 package org.aksw.jena_sparql_api.lookup;
 
-import java.util.Collection;
-import java.util.Map;
 import java.util.Map.Entry;
 
 import com.google.common.collect.Range;
 
 import io.reactivex.Flowable;
+import io.reactivex.Single;
 
 /**
  * This paginator maps each item through a lookup service by batching the lookup requests
@@ -49,8 +48,8 @@ public class PaginatorBatchedLookup<I, O>
     }
 
     @Override
-    public CountInfo fetchCount(Long itemLimit, Long rowLimit) {
-        CountInfo result = base.fetchCount(itemLimit, rowLimit);
+    public Single<Range<Long>> fetchCount(Long itemLimit, Long rowLimit) {
+        Single<Range<Long>> result = base.fetchCount(itemLimit, rowLimit);
         return result;
     }
 }
