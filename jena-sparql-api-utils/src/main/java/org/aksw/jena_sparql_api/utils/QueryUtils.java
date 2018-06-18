@@ -215,7 +215,7 @@ public class QueryUtils {
     //public static LimitAndOffset rangeToLimitAndOffset(Range<Long> range)
 
     public static long rangeToOffset(Range<Long> range) {
-        long result = range == null ? 0 : range.lowerEndpoint();
+        long result = range == null || !range.hasLowerBound() ? 0 : range.lowerEndpoint();
 
         result = result == 0 ? Query.NOLIMIT : result;
         return result;

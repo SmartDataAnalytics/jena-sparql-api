@@ -1,24 +1,15 @@
 package org.aksw.jena_sparql_api.lookup;
 
-import java.util.AbstractMap.SimpleEntry;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map.Entry;
-import java.util.stream.Stream;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.utils.OperatorOrderedGroupBy;
 import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
-import org.aksw.jena_sparql_api.core.utils.ServiceUtils;
-import org.aksw.jena_sparql_api.utils.IteratorResultSetBinding;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
-import org.aksw.jena_sparql_api.utils.VarUtils;
-import org.apache.jena.ext.com.google.common.base.Objects;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryExecution;
-import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.SortCondition;
 import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.table.TableN;
@@ -29,9 +20,7 @@ import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Range;
-import com.google.common.collect.Streams;
 
 import io.reactivex.Flowable;
 import io.reactivex.Single;
@@ -121,65 +110,84 @@ public class MapPaginatorSparqlQuery
       //System.out.println(query);
       //if(true) {throw new RuntimeException(""); }
 
-      QueryExecution qe = qef.createQueryExecution(query);
-      //ResultSet rs = qe.execSelect();
-      ResultSet rs = ServiceUtils.forceExecResultSet(qe, query);
-      List<Var> varNames = VarUtils.toList(rs.getResultVars());
-      Iterator<Binding> base = new IteratorResultSetBinding(rs);
+      
+//      Node[] current = {null};
+//      Node[] prior = {null};
+//      PublishProcessor<Node> boundaryIndicator = PublishProcessor.create();
 
-      Iterator<Entry<Node, Table>> it = new AbstractIterator<Entry<Node, Table>>() {
-          protected Node currentNode = null;
-          protected Binding lookAhead = null;
-          @Override
-          protected Entry<Node, Table> computeNext() {
-              Table rsp = new TableN(varNames);
-
-              // First time init
-              if(lookAhead == null) {
-                  if(base.hasNext()) {
-                      lookAhead = base.next();
-                  }
-              }
-
-              // Set currentNode from the lookAhead if available
-              if(lookAhead != null) {
-                  rsp.addBinding(lookAhead);
-                  currentNode = lookAhead.get(attrVar);
-                  lookAhead = null;
-              }
-
-              // Iterate until the groupNode no longer equals currentNode
-              Node groupNode = null;
-              while(base.hasNext()) {
-                  lookAhead = base.next();
-                  groupNode = lookAhead.get(attrVar);
-
-                  if(Objects.equal(groupNode, currentNode)) {
-                      rsp.addBinding(lookAhead);
-                      lookAhead = null;
-                  } else {
-                      break;
-                  }
-              }
-
-              Entry<Node, Table> r = lookAhead == null && rsp.isEmpty()
-                      ? null //endOfData()
-                      : new SimpleEntry<>(currentNode, rsp);
-
-              if(r == null) {
-                  endOfData();
-                  // Make sure to close the query execution or we will
-                  // cause starvation in jena's connection pool
-                  qe.close();
-              }
-
-              return r;
-          }
-      };
-
-      Stream<Entry<Node, Table>> result = Streams.stream(it);
-      result.onClose(() -> qe.close());
-
-      return result;
+      return ReactiveSparqlUtils.execSelect(() -> qef.createQueryExecution(query))
+    		  .lift(new OperatorOrderedGroupBy<Binding, Node, Table>(b -> b.get(attrVar), TableN::new, Table::addBinding));
+//      return ReactiveSparqlUtils.groupByOrdered(
+//    		  ReactiveSparqlUtils.execSelect(() -> qef.createQueryExecution(query)),
+//    		  b -> b.get(attrVar))
+//    	  .map(e -> {
+//	    	  Node groupKey = e.getKey();
+//	    	  TableN table = new TableN();
+//	    	  e.getValue().forEach(table::addBinding);
+//	    	  
+//	    	  return Maps.immutableEntry(groupKey, table);
+//	      });
+      
+//      
+//      QueryExecution qe = qef.createQueryExecution(query);
+//      //ResultSet rs = qe.execSelect();
+//      ResultSet rs = ServiceUtils.forceExecResultSet(qe, query);
+//      List<Var> varNames = VarUtils.toList(rs.getResultVars());
+//      Iterator<Binding> base = new IteratorResultSetBinding(rs);
+//
+//      Iterator<Entry<Node, Table>> it = new AbstractIterator<Entry<Node, Table>>() {
+//          protected Node currentNode = null;
+//          protected Binding lookAhead = null;
+//          @Override
+//          protected Entry<Node, Table> computeNext() {
+//              Table rsp = new TableN(varNames);
+//
+//              // First time init
+//              if(lookAhead == null) {
+//                  if(base.hasNext()) {
+//                      lookAhead = base.next();
+//                  }
+//              }
+//
+//              // Set currentNode from the lookAhead if available
+//              if(lookAhead != null) {
+//                  rsp.addBinding(lookAhead);
+//                  currentNode = lookAhead.get(attrVar);
+//                  lookAhead = null;
+//              }
+//
+//              // Iterate until the groupNode no longer equals currentNode
+//              Node groupNode = null;
+//              while(base.hasNext()) {
+//                  lookAhead = base.next();
+//                  groupNode = lookAhead.get(attrVar);
+//
+//                  if(Objects.equal(groupNode, currentNode)) {
+//                      rsp.addBinding(lookAhead);
+//                      lookAhead = null;
+//                  } else {
+//                      break;
+//                  }
+//              }
+//
+//              Entry<Node, Table> r = lookAhead == null && rsp.isEmpty()
+//                      ? null //endOfData()
+//                      : new SimpleEntry<>(currentNode, rsp);
+//
+//              if(r == null) {
+//                  endOfData();
+//                  // Make sure to close the query execution or we will
+//                  // cause starvation in jena's connection pool
+//                  qe.close();
+//              }
+//
+//              return r;
+//          }
+//      };
+//
+//      Stream<Entry<Node, Table>> result = Streams.stream(it);
+//      result.onClose(() -> qe.close());
+//
+//      return result;
     }
 }

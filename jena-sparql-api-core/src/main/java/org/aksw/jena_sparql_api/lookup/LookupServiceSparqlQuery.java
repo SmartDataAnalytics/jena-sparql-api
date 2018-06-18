@@ -1,8 +1,5 @@
 package org.aksw.jena_sparql_api.lookup;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
@@ -11,10 +8,12 @@ import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprListUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryFactory;
+import org.apache.jena.query.Syntax;
+import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.table.TableN;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.expr.E_OneOf;
 import org.apache.jena.sparql.expr.ExprList;
 import org.apache.jena.sparql.expr.ExprVar;
@@ -28,12 +27,54 @@ import com.google.common.collect.Maps;
 
 import io.reactivex.Flowable;
 
+interface TraitQueryBuilder {
+	void setQuery(Query query);
+	
+	default void setQuery(String queryString, Syntax syntax) {
+//		QueryFactory.parse(query, queryString, baseURI, syntaxURI)
+	}
+	
+}
+
+interface TraitConnectionBuilder {
+	
+}
+
 
 public class LookupServiceSparqlQuery
     implements LookupService<Node, Table>
 {
     private static final Logger logger = LoggerFactory.getLogger(LookupServiceSparqlQuery.class);
 
+    public static class Builder {
+    	protected QueryExecutionFactory qef;
+    	protected Query query;
+    	protected String queryString;
+    	protected Syntax syntax;
+    	
+    	public void setConnection(RDFConnection conn) {
+    		
+    	}
+    	
+    	public void setQuery(Query query) {
+    		
+    	}
+    	
+    	public void setQuery(String queryString, Syntax syntax) {
+    		
+    	}
+    	
+    	
+    	public LookupServiceSparqlQuery build() {
+//    		if(queryString != null) {
+//    			query
+//    		}
+    		return null;
+    	}
+    
+    }
+    
+    
     protected QueryExecutionFactory sparqlService;
     protected Query query;
     protected Var var;

@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.core.utils;
 
 import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -12,11 +13,12 @@ import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.utils.IteratorResultSetBinding;
 import org.aksw.jena_sparql_api.utils.VarUtils;
+import org.apache.jena.ext.com.google.common.base.Objects;
+import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
-import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.table.TableData;
@@ -24,16 +26,52 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingHashMap;
 
-import com.google.common.collect.Maps;
 import com.google.common.collect.Range;
 
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.FlowableEmitter;
 import io.reactivex.Single;
+import io.reactivex.functions.Predicate;
 import io.reactivex.processors.PublishProcessor;
 
 public class ReactiveSparqlUtils {
+	
+	public static <K, X> Flowable<Entry<K, List<X>>> groupByOrdered(
+			Flowable<X> in, Function<X, K> getGroupKey) {
+
+	      Object[] current = {null};
+	      Object[] prior = {null};
+	      PublishProcessor<K> boundaryIndicator = PublishProcessor.create();
+
+	      return in
+	    	 .doOnComplete(boundaryIndicator::onComplete)
+	    	 .doOnNext(item -> {
+		    		K groupKey = getGroupKey.apply(item);
+		    		boolean isEqual = Objects.equal(current, groupKey);
+
+		    		prior[0] = current[0];
+		    		if(prior[0] == null) {
+		    			prior[0] = groupKey;
+		    		}
+
+		    		current[0] = groupKey;
+		
+		    		
+		    		if(!isEqual) {
+		    			boundaryIndicator.onNext(groupKey);
+		    		}
+		      })
+		      .buffer(boundaryIndicator)
+		      .map(buffer -> {
+		    	  K tmp = (K)prior[0];
+		    	  K groupKey = tmp;
+		    	  
+		    	  return Maps.immutableEntry(groupKey, buffer);
+		      });
+	      
+	}
+	
 	/**
 	 * 
 	 * 
@@ -171,6 +209,38 @@ public class ReactiveSparqlUtils {
 	// }
 
 	public static void main(String[] args) {
+//		List<Entry<Integer, List<Entry<Integer, Integer>>>> list = groupByOrdered(Flowable.range(0, 10).map(i -> Maps.immutableEntry((int)(i / 3), i)),
+//		e -> e.getKey())
+//		.toList().blockingGet();
+
+
+		Integer currentValue[] = {null};
+		boolean isCancelled[] = {false};
+		
+		Flowable<Entry<Integer, List<Integer>>> list = Flowable
+				.range(0, 10)
+				.doOnNext(i -> currentValue[0] = i)
+				.doOnCancel(() -> isCancelled[0] = true)
+				.map(i -> Maps.immutableEntry((int)(i / 3), i))
+				.lift(new OperatorOrderedGroupBy<Entry<Integer, Integer>, Integer, List<Integer>>(Entry::getKey, ArrayList::new, (acc, e) -> acc.add(e.getValue())));
+
+		Predicate<Entry<Integer, List<Integer>>> p = e -> e.getKey().equals(1); 
+		list.takeUntil(p).subscribe(x -> System.out.println("Item: " + x));
+		
+		System.out.println("Value = " + currentValue[0] + ", isCancelled = " + isCancelled[0]);
+		
+//		Disposable d = list.defe
+//		
+//		Iterator<Entry<Integer, List<Integer>>> it = list.iterator();
+//		for(int i = 0; i < 2 && it.hasNext(); ++i) {
+//			Entry<Integer, List<Integer>> item = it.next();
+//			System.out.println("Item: " + item);
+//		}
+//		
+//		
+//		System.out.println("List: " + list);
+		
+		
 		PublishProcessor<String> queue = PublishProcessor.create();
 		queue.buffer(3).subscribe(x -> System.out.println("Buffer: " + x));
 
@@ -189,7 +259,7 @@ public class ReactiveSparqlUtils {
 		for(int j = 0; j < 10; ++j) {
 			int i[] = { 0 };
 			System.out.println("HERE");
-			execSelect(() -> QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql",
+			execSelect(() -> org.apache.jena.query.QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql",
 					"SELECT * { ?s a <http://dbpedia.org/ontology/Person> }"))
 							.takeUntil(b -> i[0] == 10).subscribe(x -> {
 								i[0]++;
@@ -200,6 +270,14 @@ public class ReactiveSparqlUtils {
 		// NOTE This way, the main thread will terminate before the queries are processed
 	}
 	
+	public static Single<Number> fetchNumber(org.aksw.jena_sparql_api.core.QueryExecutionFactory qef, Query query, Var var) {
+    	return ReactiveSparqlUtils.execSelect(() -> qef.createQueryExecution(query))
+            	.map(b -> b.get(var))
+            	.map(countNode -> ((Number)countNode.getLiteralValue()))
+            	.single(null);
+	}
+	
+	
     public static Single<Range<Long>> fetchCountConcept(org.aksw.jena_sparql_api.core.QueryExecutionFactory qef, Concept concept, Long itemLimit, Long rowLimit) {
 
         Var outputVar = ConceptUtils.freshVar(concept);
@@ -209,21 +287,43 @@ public class ReactiveSparqlUtils {
 
         Query countQuery = ConceptUtils.createQueryCount(concept, outputVar, xitemLimit, xrowLimit);
 
-        //var qe = sparqlService.createQueryExecution(countQuery);
+        return ReactiveSparqlUtils.fetchNumber(qef, countQuery, outputVar)
+        		.map(count -> ReactiveSparqlUtils.toRange(count.longValue(), xitemLimit, xrowLimit));
+    }
+//	return ReactiveSparqlUtils.execSelect(() -> qef.createQueryExecution(countQuery))
+//        	.map(b -> b.get(outputVar))
+//        	.map(countNode -> ((Number)countNode.getLiteralValue()).longValue())
+//        	.map(count -> {
+//        		boolean mayHaveMoreItems = rowLimit != null
+//        				? true
+//        				: itemLimit != null && count > itemLimit;
+//
+//                Range<Long> r = mayHaveMoreItems ? Range.atLeast(itemLimit) : Range.singleton(count);        		
+//                return r;
+//        	})
+//        	.single(null);
 
-        //Integer count = ServiceUtils.fetchInteger(sparqlService, countQuery, outputVar);
-    	return ReactiveSparqlUtils.execSelect(() -> qef.createQueryExecution(countQuery))
-            	.map(b -> b.get(outputVar))
-            	.map(countNode -> ((Number)countNode.getLiteralValue()).longValue())
-            	.map(count -> {
-            		boolean mayHaveMoreItems = rowLimit != null
-            				? true
-            				: itemLimit != null && count > itemLimit;
+    public static Single<Range<Long>> fetchCountQuery(org.aksw.jena_sparql_api.core.QueryExecutionFactory qef, Query query, Long itemLimit, Long rowLimit) {
 
-                    Range<Long> r = mayHaveMoreItems ? Range.atLeast(itemLimit) : Range.singleton(count);        		
-                    return r;
-            	})
-            	.single(null);
+        Var outputVar = Var.alloc("_count_"); //ConceptUtils.freshVar(concept);
+
+        Long xitemLimit = itemLimit == null ? null : itemLimit + 1;
+        Long xrowLimit = rowLimit == null ? null : rowLimit + 1;
+
+        Query countQuery = QueryGenerationUtils.createQueryCount(query, outputVar, xitemLimit, xrowLimit);
+
+        return ReactiveSparqlUtils.fetchNumber(qef, countQuery, outputVar)
+        		.map(count -> ReactiveSparqlUtils.toRange(count.longValue(), xitemLimit, xrowLimit));
+    }
+
+    
+    public static Range<Long> toRange(Long count, Long itemLimit, Long rowLimit) {
+		boolean mayHaveMoreItems = rowLimit != null
+				? true
+				: itemLimit != null && count > itemLimit;
+	
+	    Range<Long> r = mayHaveMoreItems ? Range.atLeast(itemLimit) : Range.singleton(count);        		
+	    return r;
     }
 
 }
