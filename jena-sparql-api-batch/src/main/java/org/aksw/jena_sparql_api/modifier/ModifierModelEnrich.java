@@ -40,7 +40,7 @@ public class ModifierModelEnrich
         QueryExecutionFactory qef = new QueryExecutionFactoryModel(input);
         List<Resource> resources = ServiceUtils.fetchListResources(qef, concept);
 
-        Map<Resource, Model> extra = lookupService.apply(resources);
+        Map<Resource, Model> extra = lookupService.fetchMap(resources);
         for(Entry<Resource, Model> entry : extra.entrySet()) {
             Model m = entry.getValue();
             input.add(m);

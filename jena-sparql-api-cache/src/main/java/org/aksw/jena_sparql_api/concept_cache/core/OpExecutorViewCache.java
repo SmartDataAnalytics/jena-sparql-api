@@ -84,7 +84,7 @@ public class OpExecutorViewCache
                 throw new RuntimeException("Could not find a " + StorageEntry.class.getSimpleName() + " instance for " + serviceUri);
             }
 
-            Stream<Binding> stream = storageEntry.storage.apply(range);
+            Stream<Binding> stream = storageEntry.storage.apply(range).toList().blockingGet().stream();
 
 //        	while(it.hasNext()) { System.out.println("item: " + it.next()); }
 

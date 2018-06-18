@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.shape.syntax;
 import java.util.List;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
+import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.shape.algebra.op.Op;
 import org.aksw.jena_sparql_api.shape.algebra.op.OpAnd;
 import org.aksw.jena_sparql_api.shape.algebra.op.OpConcept;
@@ -117,7 +118,7 @@ public class ElementVisitorSparql
 
     @Override
     public OpExists visit(ElementExists el) {
-        BinaryRelation relation = BinaryRelation.create(el.getPath());
+        BinaryRelation relation = BinaryRelationImpl.create(el.getPath());
         Op op = el.getFiller().accept(this);
         OpExists result = new OpExists(relation, op);
         return result;
@@ -125,7 +126,7 @@ public class ElementVisitorSparql
 
     @Override
     public Op visit(ElementForAll el) {
-        BinaryRelation relation = BinaryRelation.create(el.getPath());
+        BinaryRelation relation = BinaryRelationImpl.create(el.getPath());
         Op op = el.getFiller().accept(this);
         OpForAll result = new OpForAll(relation, op);
         return result;

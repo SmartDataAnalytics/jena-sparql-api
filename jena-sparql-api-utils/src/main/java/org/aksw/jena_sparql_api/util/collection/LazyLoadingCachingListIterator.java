@@ -78,9 +78,12 @@ public class LazyLoadingCachingListIterator<T>
                 if(e == null) {
                     if(delegate != null && !usedDelegate) {
                         Range<Long> r = Range.atLeast(offset).intersection(canonicalRequestRange);
-                        Flowable<T> stream = delegate.apply(r);
+                        boolean cancelled[] = {false};
+                        Flowable<T> stream = delegate.apply(r)
+                        		.takeWhile(x -> !cancelled[0]);
+
                         Iterator<T> it = stream.blockingIterable().iterator();
-                        currentIterator = new IteratorClosable<>(it, stream::close);
+                        currentIterator = new IteratorClosable<>(it, () -> cancelled[0] = true); //stream::close);
                         usedDelegate = true;
                     } else {
                         result = endOfData();

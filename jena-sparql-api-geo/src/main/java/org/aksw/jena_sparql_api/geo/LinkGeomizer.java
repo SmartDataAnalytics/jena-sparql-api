@@ -30,8 +30,8 @@ public class LinkGeomizer {
             objects.add(triple.getObject());
         }
 
-        Map<Node, Geometry> mapSubjects = lookupServiceSubjects.apply(subjects);
-        Map<Node, Geometry> mapObjects = lookupServiceObjects.apply(objects);
+        Map<Node, Geometry> mapSubjects = lookupServiceSubjects.fetchMap(subjects);
+        Map<Node, Geometry> mapObjects = lookupServiceObjects.fetchMap(objects);
 
         System.out.println("mapSubjects: " + mapSubjects);
         System.out.println("mapObjects: " + mapObjects);

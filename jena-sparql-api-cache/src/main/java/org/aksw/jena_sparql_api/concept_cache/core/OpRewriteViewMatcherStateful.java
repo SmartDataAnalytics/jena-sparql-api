@@ -254,7 +254,7 @@ public class OpRewriteViewMatcherStateful
             Range<Long> atLeastZero = Range.atLeast(0l);
             boolean isAllCached = cri.isCached(atLeastZero);
             if(isAllCached) {
-                Stream<Binding> bindings = rangedSupplier.apply(atLeastZero);
+                Stream<Binding> bindings = rangedSupplier.apply(atLeastZero).toList().blockingGet().stream();
                 Iterator<Binding> it = bindings.iterator();
                 ResultSet rs = ResultSetUtils.create2(storageEntry.varInfo.getProjectVars(), it);
                 result = TableUtils.createTable(rs);

@@ -493,7 +493,8 @@ public class TypedQueryImpl<X>
         ListPaginator<Entry<Node, Node>> paginator = ls.createPaginator(new Concept(new ElementSubQuery(query), resultVar));
 
 
-        Stream<Entry<Node, Node>> rawItems = paginator.apply(requestRange);
+        // TODO Use flowable for proper cancellation
+        Stream<Entry<Node, Node>> rawItems = paginator.fetchList(requestRange).stream();
 
         Stream<Node> items = rawItems.map(Entry::getKey);
         //List<Node> items = ServiceUtils.fetchList(qef, query, resultVar);

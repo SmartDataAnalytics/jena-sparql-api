@@ -42,11 +42,11 @@ public class TestLazyLoadingCachingList {
                 new RangeCostModel());
 
 
-        Stream<String> itA = llcl.apply(Range.closedOpen(0l, 10l));
-        Stream<String> itB = llcl.apply(Range.closedOpen(5l, 15l));
-        Stream<String> itC = llcl.apply(Range.openClosed(3l, 13l));
-        Stream<String> itD = llcl.apply(Range.closedOpen(15l, 20l));
-        Stream<String> itE = llcl.apply(Range.closedOpen(15l, 20l));
+        Stream<String> itA = llcl.apply(Range.closedOpen(0l, 10l)).toList().blockingGet().stream();
+        Stream<String> itB = llcl.apply(Range.closedOpen(5l, 15l)).toList().blockingGet().stream();
+        Stream<String> itC = llcl.apply(Range.openClosed(3l, 13l)).toList().blockingGet().stream();
+        Stream<String> itD = llcl.apply(Range.closedOpen(15l, 20l)).toList().blockingGet().stream();
+        Stream<String> itE = llcl.apply(Range.closedOpen(15l, 20l)).toList().blockingGet().stream();
 
         itA.forEach(x -> System.out.println("[A] got item: " + x));
         itB.forEach(x -> System.out.println("[B] got item: " + x));

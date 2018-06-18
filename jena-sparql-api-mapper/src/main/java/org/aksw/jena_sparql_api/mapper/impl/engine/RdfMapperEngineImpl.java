@@ -17,8 +17,8 @@ import java.util.stream.Collectors;
 import org.aksw.commons.collections.diff.Diff;
 import org.aksw.jena_sparql_api.beans.model.EntityOps;
 import org.aksw.jena_sparql_api.beans.model.PropertyOps;
+import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
@@ -54,8 +54,6 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
@@ -63,7 +61,6 @@ import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.util.ModelUtils;
-import org.apache.jena.util.ResourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -238,7 +235,7 @@ public class RdfMapperEngineImpl
         if(!shape.isEmpty()) {
             QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
             LookupService<Node, Graph> ls = MapServiceResourceShape.createLookupService(qef, shape);
-            Map<Node, Graph> map = ls.apply(nodes);
+            Map<Node, Graph> map = ls.fetchMap(nodes);
 
             result = map.entrySet().stream()
                 .collect(Collectors.toMap(
@@ -1288,7 +1285,7 @@ public class RdfMapperEngineImpl
     }
 
     public PathResolver createResolver(Class<?> javaClass) {
-        PathFragment pathFragment = new PathFragment(BinaryRelation.empty(Var.alloc("root")), javaClass, null, null);
+        PathFragment pathFragment = new PathFragment(BinaryRelationImpl.empty(Var.alloc("root")), javaClass, null, null);
         PathResolver result = new PathResolverImpl(pathFragment, this, null, null);
         return result;
     }

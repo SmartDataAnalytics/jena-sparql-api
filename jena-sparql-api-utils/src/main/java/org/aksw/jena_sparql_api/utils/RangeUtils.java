@@ -12,6 +12,17 @@ import com.google.common.collect.Range;
 public class RangeUtils {
     public static final Range<Long> rangeStartingWithZero = Range.atLeast(0l);
 
+    public static CountInfo toCountInfo(Range<? extends Number> range) {
+    	Long min = range.hasLowerBound() ? range.lowerEndpoint().longValue() : 0;
+    	Long max = range.hasUpperBound() ? range.upperEndpoint().longValue() : null;
+
+    	CountInfo result = new CountInfo(
+    			min,
+    			max == null ? true : !max.equals(min),
+    			max
+    	);
+    	return result;
+    }
 
     /**
      * Convert a range relative within another one to an absolute range
