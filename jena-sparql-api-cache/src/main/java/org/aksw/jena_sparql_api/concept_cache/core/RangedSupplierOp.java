@@ -23,6 +23,8 @@ import org.apache.jena.sparql.util.Context;
 
 import com.google.common.collect.Range;
 
+import io.reactivex.Flowable;
+
 public class RangedSupplierOp
     implements RangedSupplier<Long, Binding>, OpAttribute
 {
@@ -37,7 +39,7 @@ public class RangedSupplierOp
     }
 
     @Override
-    public Stream<Binding> apply(Range<Long> range) {
+    public Flowable<Binding> apply(Range<Long> range) {
         long offset = QueryUtils.rangeToOffset(range);
         long limit = QueryUtils.rangeToLimit(range);
 
@@ -48,11 +50,13 @@ public class RangedSupplierOp
         //effectiveOp = Transformer.transform(TransformPushSlice.fn, effectiveOp);
 
         // TODO Make this transformation configurable
-        effectiveOp = RewriteUtils.transformUntilNoChange(effectiveOp, op -> Transformer.transform(TransformPushSlice.fn, op));
+        Op finalEffectiveOp = RewriteUtils.transformUntilNoChange(effectiveOp, op -> Transformer.transform(TransformPushSlice.fn, op));
 
 
-        QueryIterator it = execute(effectiveOp, context);
-        Stream<Binding> result = StreamUtils.stream(it);
+        //QueryIterator it = execute(effectiveOp, context);
+        //Stream<Binding> result = StreamUtils.stream(it);
+        
+        Flowable<Binding> result = Flowable.fromIterable(() -> execute(finalEffectiveOp, context));
         //ClosableIterator<Binding> result = new IteratorClosable<>(it, () -> it.close());
         return result;
     }

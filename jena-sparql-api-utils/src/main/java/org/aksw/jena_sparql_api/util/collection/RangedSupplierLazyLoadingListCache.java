@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
-import java.util.stream.Stream;
 
 import org.aksw.commons.collections.cache.Cache;
 import org.aksw.commons.collections.cache.CacheImpl;
@@ -18,6 +17,8 @@ import com.google.common.collect.Range;
 import com.google.common.collect.RangeMap;
 import com.google.common.collect.TreeRangeMap;
 
+import io.reactivex.Flowable;
+
 
 /**
  * TODO Create an iterator that can trigger loading of further data once a certain amount has been consumed
@@ -28,7 +29,7 @@ import com.google.common.collect.TreeRangeMap;
  */
 public class RangedSupplierLazyLoadingListCache<T>
     extends RangedSupplierDelegated<Long, T>
-    implements CacheRangeInfo<Long>
+    implements CacheRangeInfo<Long> // TODO Turn into a list service - but then we have to change packages...
 {
 
     /**
@@ -157,12 +158,12 @@ public class RangedSupplierLazyLoadingListCache<T>
     }
 
 
-    public Stream<T> apply(Range<Long> range) {
+    public Flowable<T> apply(Range<Long> range) {
         range = normalize(range);
 
-        Stream<T> result;
+        Flowable<T> result;
         if(range.isEmpty()) {
-            result = Stream.empty(); //new IteratorClosable<>(Collections.emptyIterator());
+            result = Flowable.empty();//Stream.empty(); //new IteratorClosable<>(Collections.emptyIterator());
         } else {
             // Prevent changes to the map while we check its content
             synchronized(rangesToData) {
@@ -220,8 +221,10 @@ public class RangedSupplierLazyLoadingListCache<T>
                 fetchGaps(subMap, rangeInfos);
             }
 
-            ClosableIterator<T> it = new LazyLoadingCachingListIterator<>(range, rangesToData, delegate);
-            result = org.aksw.jena_sparql_api.util.collection.StreamUtils.stream(it);
+            ClosableIterator<T> it = new LazyLoadingCachingListIterator<T>(range, rangesToData, delegate);
+            result = Flowable.fromIterable(() -> it);
+            result.doOnCancel(it::close);
+            //result = org.aksw.jena_sparql_api.util.collection.StreamUtils.stream(it);
         }
         return result;
     }
@@ -254,8 +257,8 @@ public class RangedSupplierLazyLoadingListCache<T>
 
 
         // Start a task to fill the cache
-        Stream<T> stream = delegate.apply(range);
-        Iterator<T> ci = stream.iterator();
+        Flowable<T> stream = delegate.apply(range);
+        Iterator<T> ci = stream.blockingIterable().iterator();
 
         // TODO Return an iterator that triggers caching
         long maxCacheSize = cacheRange.hasUpperBound() ? cacheRange.upperEndpoint() : Long.MAX_VALUE;
@@ -316,7 +319,7 @@ public class RangedSupplierLazyLoadingListCache<T>
 
                 //ci.close();
                 // Close underlying stream
-                stream.close();
+                //stream.close();
             }
         };
 

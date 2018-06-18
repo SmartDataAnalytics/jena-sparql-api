@@ -2,14 +2,14 @@ package org.aksw.jena_sparql_api.lookup;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.utils.ResultSetPart;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
+import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.core.Var;
 
 
 public class MapServiceSparqlQuery
-    implements MapService<Concept, Node, ResultSetPart>
+    implements MapService<Concept, Node, Table>
 {
     protected QueryExecutionFactory qef;
     protected boolean isLeftJoin;
@@ -37,7 +37,7 @@ public class MapServiceSparqlQuery
     }
 
     @Override
-    public MapPaginator<Node, ResultSetPart> createPaginator(Concept filterConcept) {
+    public MapPaginator<Node, Table> createPaginator(Concept filterConcept) {
         MapPaginatorSparqlQuery result = new MapPaginatorSparqlQuery(qef, filterConcept, isLeftJoin, attrQuery, attrVar, forceSubQuery);
         return result;
     }

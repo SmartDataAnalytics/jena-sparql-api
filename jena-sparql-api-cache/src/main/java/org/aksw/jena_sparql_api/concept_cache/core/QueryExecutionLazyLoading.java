@@ -28,7 +28,7 @@ public class QueryExecutionLazyLoading {
 
 
 	public ResultSet execSelect() {
-		execution = cache.apply(range);
+		execution = cache.apply(range).toList().blockingGet().stream();
 		ResultSet rs = ResultSetUtils.create(varNames, execution.iterator());
 		ResultSet result = new ResultSetCloseable(rs, () -> execution.close());
 		return result;

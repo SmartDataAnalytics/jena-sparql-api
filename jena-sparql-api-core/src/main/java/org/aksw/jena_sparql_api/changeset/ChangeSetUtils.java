@@ -20,7 +20,6 @@ import org.aksw.jena_sparql_api.update.DiffQuadUtils;
 import org.aksw.jena_sparql_api.utils.GraphUtils;
 import org.aksw.jena_sparql_api.utils.NodeUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
-import org.aksw.jena_sparql_api.utils.ResultSetPart;
 import org.aksw.jena_sparql_api.utils.SetFromGraph;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -39,6 +38,7 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.ExprVar;
@@ -134,12 +134,12 @@ public class ChangeSetUtils {
             //QueryUtils.injectElement(query, ElementUtils.createElement(new Triple(Vars.s, NodeFactory.createURI("http://purl.org/vocab/changeset/schema#graph"), Vars.z)));
         }
 
-        LookupService<Node, ResultSetPart> ls = new LookupServiceSparqlQuery(qef, query, Vars.o);
+        LookupService<Node, Table> ls = new LookupServiceSparqlQuery(qef, query, Vars.o);
 
         // We filter by o, but project by s
         LookupService<Node, Node> result =
                 LookupServiceTransformValue.create(ls, (k, v) ->
-                        FunctionResultSetPartFirstRow.fn.andThen(
+                        FunctionTableFirstRow.fn.andThen(
                         FunctionBindingMapper.create(BindingMapperProjectVar.create(Vars.s))).apply(v));
 
         return result;
@@ -368,7 +368,7 @@ public class ChangeSetUtils {
 
         // Perform a lookup of latest changesets for the given subjects and create
         // a writeable copy of the map
-        Map<Node, Node> tmp = precedingChangeSetLs.apply(subjects);
+        Map<Node, Node> tmp = precedingChangeSetLs.fetchMap(subjects);
         Map<Node, Node> subjectToRecentChangeSet = new HashMap<Node, Node>(tmp);
 
         Map<Node, ChangeSet> result = new HashMap<Node, ChangeSet>();

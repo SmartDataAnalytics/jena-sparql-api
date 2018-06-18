@@ -5,13 +5,8 @@ import java.util.Map.Entry;
 import org.aksw.gson.utils.JsonVisitor;
 import org.aksw.gson.utils.JsonWalker;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
+import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.utils.Vars;
-
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonNull;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.shared.PrefixMapping;
@@ -23,6 +18,12 @@ import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.util.ExprUtils;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 
 
 /**
@@ -136,7 +137,7 @@ public class ResourceShapeParserJson
             expr = new E_Equals(new ExprVar(Vars.p), NodeValue.makeNode(np));
         }
 
-        BinaryRelation relation = new BinaryRelation(new ElementFilter(expr), Vars.p, Vars.o);
+        BinaryRelation relation = new BinaryRelationImpl(new ElementFilter(expr), Vars.p, Vars.o);
 
         StepRelation result = new StepRelation(relation, isInverse);
         return result;

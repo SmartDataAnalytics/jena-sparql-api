@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<artifactId>jena-sparql-api-utils</artifactId>
@@ -11,31 +12,35 @@
 	<parent>
 		<groupId>org.aksw.jena-sparql-api</groupId>
 		<artifactId>jena-sparql-api-parent</artifactId>
-		<version>3.6.0-3</version>
+		<version>3.7.0-1-SNAPSHOT</version>
 	</parent>
 
-    <dependencies>
+	<dependencies>
 
-        <!-- Jena -->
-        <dependency>
-            <groupId>org.apache.jena</groupId>
-            <artifactId>jena-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.jena</groupId>
-            <artifactId>jena-arq</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.jena</groupId>
-            <artifactId>jena-sdb</artifactId>
-        </dependency>
-<!--         <dependency> -->
-<!--             <groupId>com.hp.hpl.jena</groupId> -->
-<!--             <artifactId>sdb</artifactId> -->
-<!--         </dependency> -->
+		<!-- Jena -->
+		<dependency>
+			<groupId>org.apache.jena</groupId>
+			<artifactId>jena-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.jena</groupId>
+			<artifactId>jena-arq</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.jena</groupId>
+			<artifactId>jena-sdb</artifactId>
+		</dependency>
+		<!-- <dependency> -->
+		<!-- <groupId>com.hp.hpl.jena</groupId> -->
+		<!-- <artifactId>sdb</artifactId> -->
+		<!-- </dependency> -->
 
+		<dependency>
+			<groupId>io.reactivex.rxjava2</groupId>
+			<artifactId>rxjava</artifactId>
+		</dependency>
 
-        <!-- Utils -->
+		<!-- Utils -->
 		<dependency>
 			<groupId>org.aksw.commons</groupId>
 			<artifactId>aksw-commons-collections</artifactId>
@@ -44,46 +49,42 @@
 			<groupId>org.aksw.commons</groupId>
 			<artifactId>aksw-commons-util</artifactId>
 		</dependency>
-        
+
 
 		<!-- Collections -->
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
 		</dependency>
-		
+
 		<dependency>
-		    <groupId>com.google.code.gson</groupId>
-		    <artifactId>gson</artifactId>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
 		</dependency>
-		
 
-        <!-- Compression -->
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-compress</artifactId>
-            <version>1.15</version>
-            <type>jar</type>
-            <scope>compile</scope>
-        </dependency>
 
-        <!-- Logging -->
-<!--
-        <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-        </dependency>
--->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-        </dependency>
+		<!-- Compression -->
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-compress</artifactId>
+			<version>1.15</version>
+			<type>jar</type>
+			<scope>compile</scope>
+		</dependency>
 
-        <!-- Unit Testing -->
-        <dependency>
-            <groupId>org.aksw.jena-sparql-api</groupId>
-            <artifactId>jena-sparql-api-resources-test-config</artifactId>
-        </dependency>
+		<!-- Logging -->
+		<!-- <dependency> <groupId>log4j</groupId> <artifactId>log4j</artifactId> 
+			</dependency> -->
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+		</dependency>
 
-    </dependencies>
+		<!-- Unit Testing -->
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-resources-test-config</artifactId>
+		</dependency>
+
+	</dependencies>
 </project>

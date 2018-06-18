@@ -1,18 +1,17 @@
 package org.aksw.jena_sparql_api.lookup;
 
-import java.util.Iterator;
-import java.util.function.Function;
-import java.util.stream.Stream;
+import java.util.function.Supplier;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.core.utils.ServiceUtils;
+import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
-import org.apache.jena.sparql.engine.binding.Binding;
 
 import com.google.common.collect.Range;
-import com.google.common.collect.Streams;
+
+import io.reactivex.Flowable;
+import io.reactivex.Single;
 
 public abstract class PaginatorQueryBase<T>
     implements ListPaginator<T>
@@ -20,7 +19,7 @@ public abstract class PaginatorQueryBase<T>
     protected QueryExecutionFactory qef;
     protected Query query;
 
-    protected abstract Iterator<T> obtainResultIterator(QueryExecution qe);
+    protected abstract Flowable<T> obtainResultIterator(Supplier<QueryExecution> qe);
 
 
     public PaginatorQueryBase(QueryExecutionFactory qef, Query query) {
@@ -29,28 +28,29 @@ public abstract class PaginatorQueryBase<T>
         this.query = query;
     }
 
-    public <X> ListPaginator<X> map(Function<Binding, X> fn) {
-        //ListPaginator<X>
-        return null;
-    }
+//    public <X> ListPaginator<X> map(Function<Binding, X> fn) {
+//        //ListPaginator<X>
+//        return null;
+//    }
 
     @Override
-    public Stream<T> apply(Range<Long> range) {
+    public Flowable<T> apply(Range<Long> range) {
         Query clonedQuery = query.cloneQuery();
         range = Range.atLeast(0l).intersection(range);
         QueryUtils.applyRange(clonedQuery, range);
 
-        QueryExecution qe = qef.createQueryExecution(clonedQuery);
-        Iterator<T> it = obtainResultIterator(qe); // new IteratorResultSetBinding(qe.execSelect());
 
-        Stream<T> result = Streams.stream(it);
-        result.onClose(() -> qe.close());
+        Flowable<T> result = obtainResultIterator(() -> qef.createQueryExecution(clonedQuery)); // new IteratorResultSetBinding(qe.execSelect());
+
+//        Stream<T> result = Streams.stream(it);
+//        result.onClose(() -> qe.close());
         return result;
     }
 
     @Override
-    public CountInfo fetchCount(Long itemLimit, Long rowLimit) {
-        CountInfo result = ServiceUtils.fetchCountQuery(qef, query, itemLimit, rowLimit);
+    public Single<Range<Long>> fetchCount(Long itemLimit, Long rowLimit) {
+    	Single<Range<Long>> result = ReactiveSparqlUtils.fetchCountQuery(qef, query, itemLimit, rowLimit);
+        //Range<Long> result = ServiceUtils.fetchCountQuery(qef, query, itemLimit, rowLimit);
         return result;
     }
 }

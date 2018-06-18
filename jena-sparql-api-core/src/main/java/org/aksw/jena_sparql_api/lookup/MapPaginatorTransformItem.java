@@ -2,14 +2,17 @@ package org.aksw.jena_sparql_api.lookup;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
+import org.apache.jena.ext.com.google.common.collect.Maps;
 
 import com.google.common.collect.Range;
+
+import io.reactivex.Flowable;
+import io.reactivex.Single;
 
 /**
  * FIXME Possibly extend with generic transform instead of just value
@@ -31,44 +34,44 @@ public class MapPaginatorTransformItem<K, I, O>
         this.fnTransformItem = fnTransformItem;
     }
 
-    @Override
-    public Map<K, O> fetchMap(Range<Long> range) {
-        //Map<K, I> map = delegate.fetchData(range);
-
-        // Create an intermediary list so that in case of any
-        // error, such as duplicate key, we can investigate the problem
-        //List<Entry<K, O>> items = apply(range).collect(Collectors.toList());
-
-//        Map<K, O> result = items.stream()//apply(range)
-          Map<K, O> result = apply(range)
-                .collect(Collectors.toMap(
-                        Entry<K, O>::getKey,
-                        Entry<K, O>::getValue,
-                        (u, v) -> { throw new IllegalStateException(String.format("Duplicate key %s", u)); },
-                        LinkedHashMap::new));
-
-//        Map<K, O> result = new LinkedHashMap<K, O>();
-//        for(Entry<K, I> entry : map.entrySet()) {
-//            K k = entry.getKey();
-//            I i = entry.getValue();
-//            O o = fnTransformItem.apply(i);
+//    @Override
+//    public Map<K, O> fetchMap(Range<Long> range) {
+//        //Map<K, I> map = delegate.fetchData(range);
 //
-//            result.put(k, o);
-//        }
-
-        return result;
-    }
+//        // Create an intermediary list so that in case of any
+//        // error, such as duplicate key, we can investigate the problem
+//        //List<Entry<K, O>> items = apply(range).collect(Collectors.toList());
+//
+////        Map<K, O> result = items.stream()//apply(range)
+//          Map<K, O> result = apply(range)
+//                .collect(Collectors.toMap(
+//                        Entry<K, O>::getKey,
+//                        Entry<K, O>::getValue,
+//                        (u, v) -> { throw new IllegalStateException(String.format("Duplicate key %s", u)); },
+//                        LinkedHashMap::new));
+//
+////        Map<K, O> result = new LinkedHashMap<K, O>();
+////        for(Entry<K, I> entry : map.entrySet()) {
+////            K k = entry.getKey();
+////            I i = entry.getValue();
+////            O o = fnTransformItem.apply(i);
+////
+////            result.put(k, o);
+////        }
+//
+//        return result;
+//    }
 
     @Override
-    public Stream<Entry<K, O>> apply(Range<Long> range) {
+    public Flowable<Entry<K, O>> apply(Range<Long> range) {
         return delegate.apply(range).map(e ->
-            new SimpleEntry<>(e.getKey(), fnTransformItem.apply(e.getValue())));
+            Maps.immutableEntry(e.getKey(), fnTransformItem.apply(e.getValue())));
     }
 
 
     @Override
-    public CountInfo fetchCount(Long itemLimit, Long rowLimit) {
-        CountInfo result = delegate.fetchCount(itemLimit, rowLimit);
+    public Single<Range<Long>> fetchCount(Long itemLimit, Long rowLimit) {
+        Single<Range<Long>> result = delegate.fetchCount(itemLimit, rowLimit);
         return result;
     }
 

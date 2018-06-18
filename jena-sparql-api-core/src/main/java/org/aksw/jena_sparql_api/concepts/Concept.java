@@ -32,7 +32,6 @@ import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.PatternVars;
-import org.apache.jena.sparql.syntax.syntaxtransform.TransformElementLib;
 
 import com.google.common.collect.Sets;
 
@@ -44,7 +43,9 @@ import com.google.common.collect.Sets;
  * @author raven
  *
  */
-public class Concept {
+public class Concept
+	implements UnaryRelation
+{
     private Element element;//List<Element> elements;
     private Var var;
 

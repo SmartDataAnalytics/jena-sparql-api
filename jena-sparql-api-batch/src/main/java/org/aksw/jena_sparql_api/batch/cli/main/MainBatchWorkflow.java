@@ -649,7 +649,7 @@ public class MainBatchWorkflow {
 
         System.out.println(mc);
         LookupService<Node, DatasetGraph> ls = LookupServiceUtils.createLookupService(qef, mc);
-        Map<Node, DatasetGraph> map = ls.apply(Arrays.<Node>asList(NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/project/231648"),  NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/project/231549")));
+        Map<Node, DatasetGraph> map = ls.fetchMap(Arrays.<Node>asList(NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/project/231648"),  NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/project/231549")));
         //ListService<Concept, Node, Graph> ls = ListServiceUtils.createListServiceMappedConcept(qef, mc, false);
         //Map<Node, Graph> map = ls.fetchData(null, 10l, 0l);
 

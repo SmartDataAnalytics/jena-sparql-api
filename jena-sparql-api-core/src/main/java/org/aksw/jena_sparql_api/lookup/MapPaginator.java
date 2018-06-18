@@ -1,9 +1,7 @@
 package org.aksw.jena_sparql_api.lookup;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.util.collection.RangedEntrySupplier;
 
@@ -23,11 +21,13 @@ public interface MapPaginator<K, V>
 {
     default Map<K, V> fetchMap(Range<Long> range) {
         Map<K, V> result = apply(range)
-                .collect(Collectors.toMap(
-                        Entry::getKey,
-                        Entry::getValue,
-                        (u, v) -> { throw new IllegalStateException(String.format("Duplicate key %s", u)); },
-                        LinkedHashMap::new));
+        		.toMap(Entry::getKey, Entry::getValue)
+        		.blockingGet();
+//                .collect(Collectors.toMap(
+//                        Entry::getKey,
+//                        Entry::getValue,
+//                        (u, v) -> { throw new IllegalStateException(String.format("Duplicate key %s", u)); },
+//                        LinkedHashMap::new));
         return result;
     }
 }

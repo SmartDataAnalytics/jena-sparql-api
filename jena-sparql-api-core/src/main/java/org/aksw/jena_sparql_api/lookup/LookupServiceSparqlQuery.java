@@ -1,39 +1,80 @@
 package org.aksw.jena_sparql_api.lookup;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprListUtils;
-import org.aksw.jena_sparql_api.utils.ResultSetPart;
-
-import com.google.common.collect.Iterables;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryExecution;
-import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.QueryFactory;
+import org.apache.jena.query.Syntax;
+import org.apache.jena.rdfconnection.RDFConnection;
+import org.apache.jena.sparql.algebra.Table;
+import org.apache.jena.sparql.algebra.table.TableN;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.expr.E_OneOf;
-import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprList;
 import org.apache.jena.sparql.expr.ExprVar;
-import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
+
+import io.reactivex.Flowable;
+
+interface TraitQueryBuilder {
+	void setQuery(Query query);
+	
+	default void setQuery(String queryString, Syntax syntax) {
+//		QueryFactory.parse(query, queryString, baseURI, syntaxURI)
+	}
+	
+}
+
+interface TraitConnectionBuilder {
+	
+}
+
 
 public class LookupServiceSparqlQuery
-    implements LookupService<Node, ResultSetPart>
+    implements LookupService<Node, Table>
 {
     private static final Logger logger = LoggerFactory.getLogger(LookupServiceSparqlQuery.class);
 
+    public static class Builder {
+    	protected QueryExecutionFactory qef;
+    	protected Query query;
+    	protected String queryString;
+    	protected Syntax syntax;
+    	
+    	public void setConnection(RDFConnection conn) {
+    		
+    	}
+    	
+    	public void setQuery(Query query) {
+    		
+    	}
+    	
+    	public void setQuery(String queryString, Syntax syntax) {
+    		
+    	}
+    	
+    	
+    	public LookupServiceSparqlQuery build() {
+//    		if(queryString != null) {
+//    			query
+//    		}
+    		return null;
+    	}
+    
+    }
+    
+    
     protected QueryExecutionFactory sparqlService;
     protected Query query;
     protected Var var;
@@ -44,11 +85,12 @@ public class LookupServiceSparqlQuery
         this.var = var;
     }
 
+ 
     @Override
-    public Map<Node, ResultSetPart> apply(Iterable<Node> keys) {
+    public Flowable<Entry<Node, Table>> apply(Iterable<Node> keys) {
         //System.out.println("Lookup Request with " + Iterables.size(keys) + " keys: " + keys);
 
-        Map<Node, ResultSetPart> result = new HashMap<Node, ResultSetPart>();
+    	Flowable<Entry<Node, Table>> result;
 
         if(!Iterables.isEmpty(keys)) {
 
@@ -65,42 +107,54 @@ public class LookupServiceSparqlQuery
             //System.out.println("Lookup query: " + q);
             logger.debug("Looking up: " + q);
 
-            Map<Node, List<Binding>> map = new HashMap<Node, List<Binding>>();
-            QueryExecution qe = sparqlService.createQueryExecution(q);
-            //List<String> resultVars;
-            try {
-                ResultSet rs = qe.execSelect();
-                List<String> resultVars = new ArrayList<String>(rs.getResultVars());
-
-                while(rs.hasNext()) {
-                    Binding binding = rs.nextBinding();
-
-                    Node key = binding.get(var);
-
-                    //ResultSetMem x = (ResultSetMem)result.get(key);
-                    List<Binding> x = map.get(key);
-                    if(x == null) {
-                        //x = new ResultSetMem();
-                        x = new ArrayList<Binding>();
-                        map.put(key, x);
-                    }
-
-                    x.add(binding);
-                }
-
-                for(Entry<Node, List<Binding>> entry : map.entrySet()) {
-                    //ResultSetStream r = new ResultSetStream(rs.getResultVars(), null, entry.getValue().iterator());
-                    //ResultSetRewindable rsw = ResultSetFactory.makeRewindable(r);
-
-                    ResultSetPart rsp = new ResultSetPart(resultVars, entry.getValue());
-
-                    result.put(entry.getKey(), rsp);
-                }
-            } finally {
-                qe.close();
-            }
+            result = ReactiveSparqlUtils.execSelect(() -> sparqlService.createQueryExecution(q))
+            	.groupBy(b -> b.get(var))
+            	.flatMapSingle(groups -> groups
+            			.collectInto((Table)new TableN(), (t, b) -> t.addBinding(b))
+            			.map(x -> (Entry<Node, Table>)Maps.immutableEntry(groups.getKey(), x)));
+        } else {
+        	result = Flowable.empty();
         }
+            
+//            CompletableFuture<ResultSet> future = new CompletableFuture<ResultSet>();
+//
+//            
+//            QueryExecution qe = sparqlService.createQueryExecution(q);
+//            //List<String> resultVars;
+//            try {
+//                ResultSet rs = qe.execSelect();
+//                List<Var> resultVars = VarUtils.toList(rs.getResultVars()); //new ArrayList<String>(rs.getResultVars());
+//
+//                while(rs.hasNext()) {
+//                    Binding binding = rs.nextBinding();
+//
+//                    Node key = binding.get(var);
+//
+//                    //ResultSetMem x = (ResultSetMem)result.get(key);
+//                    List<Binding> x = map.get(key);
+//                    if(x == null) {
+//                        //x = new ResultSetMem();
+//                        x = new ArrayList<Binding>();
+//                        map.put(key, x);
+//                    }
+//
+//                    x.add(binding);
+//                }
+//
+//                for(Entry<Node, List<Binding>> entry : map.entrySet()) {
+//                    //ResultSetStream r = new ResultSetStream(rs.getResultVars(), null, entry.getValue().iterator());
+//                    //ResultSetRewindable rsw = ResultSetFactory.makeRewindable(r);
+//                	Table table = new TableData(resultVars, entry.getValue());
+//                    //ResultSetPart rsp = new ResultSetPart(resultVars, entry.getValue());
+//
+//                    result.put(entry.getKey(), table);
+//                }
+//            } finally {
+//                qe.close();
+//            }
+//        }
 
+        
         return result;
     }
 }

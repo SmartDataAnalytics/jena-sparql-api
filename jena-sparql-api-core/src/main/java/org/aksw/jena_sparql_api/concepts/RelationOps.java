@@ -19,13 +19,16 @@ import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementPathBlock;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
 
+
 public class RelationOps {
 
+	
+	
     public static BinaryRelation from(org.apache.jena.sparql.path.Path path) {
         TriplePath tp = new TriplePath(Vars.s, path, Vars.o);
         ElementPathBlock e = new ElementPathBlock();
         e.addTriplePath(tp);
-        BinaryRelation result = new BinaryRelation(e, Vars.s, Vars.o);
+        BinaryRelation result = new BinaryRelationImpl(e, Vars.s, Vars.o);
         return result;
     }
 
@@ -84,7 +87,7 @@ public class RelationOps {
         e.addElement(new ElementSubQuery(qb));
         e.addElement(new ElementFilter(new E_Equals(new ExprVar(cnta), new ExprVar(cntb))));
 
-        BinaryRelation result = new BinaryRelation(e, sourceVar, targetVar);
+        BinaryRelation result = new BinaryRelationImpl(e, sourceVar, targetVar);
         return result;
     }
 }

@@ -6,13 +6,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.Stream;
 
-import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
+import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
 import org.aksw.jena_sparql_api.core.utils.ServiceUtils;
-import org.aksw.jena_sparql_api.lookup.CountInfo;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceListService;
 import org.aksw.jena_sparql_api.lookup.LookupServicePartition;
@@ -33,6 +32,9 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.Range;
 import com.google.common.collect.Sets;
+
+import io.reactivex.Flowable;
+import io.reactivex.Single;
 
 public class MapPaginatorHop
     implements MapPaginator<Node, DatasetGraph>
@@ -71,8 +73,9 @@ public class MapPaginatorHop
 
 
     @Override
-    public CountInfo fetchCount(Long itemLimit, Long rowLimit) {
-        CountInfo result = ServiceUtils.fetchCountConcept(defaultQef, concept, itemLimit, rowLimit);
+    public Single<Range<Long>> fetchCount(Long itemLimit, Long rowLimit) {
+    	Single<Range<Long>> result = ReactiveSparqlUtils.fetchCountConcept(defaultQef, concept, itemLimit, rowLimit);
+        //CountInfo result = ServiceUtils.fetchCountConcept(defaultQef, concept, itemLimit, rowLimit);
         return result;
     }
 
@@ -86,7 +89,7 @@ public class MapPaginatorHop
             lookupService = LookupServicePartition.create(lookupService, chunkSize);
 
 
-            Map<Node,DatasetGraph> nodeToGraph = lookupService.apply(nodes);
+            Map<Node,DatasetGraph> nodeToGraph = lookupService.fetchMap(nodes);
             DatasetGraphUtils.mergeInPlace(result, nodeToGraph);
         }
     }
@@ -100,7 +103,7 @@ public class MapPaginatorHop
 
         ls = LookupServicePartition.create(ls, chunkSize);
 
-        Map<Node, DatasetGraph> tmpMap = ls.apply(sourceNodes);
+        Map<Node, DatasetGraph> tmpMap = ls.fetchMap(sourceNodes);
 
 
         Map<Node, DatasetGraph> map;
@@ -150,7 +153,7 @@ public class MapPaginatorHop
         ls = LookupServicePartition.create(ls, chunkSize);
 
 
-        Map<Node, List<Node>> map = ls.apply(sourceNodes);
+        Map<Node, List<Node>> map = ls.fetchMap(sourceNodes);
 
         Multimap<Node, Node> tmpMm = HashMultimap.create();
         for (Entry<Node, List<Node>> entry : map.entrySet()) {
@@ -198,8 +201,9 @@ public class MapPaginatorHop
     }
 
     @Override
-    public Stream<Entry<Node, DatasetGraph>> apply(Range<Long> range) {
-        return fetchMap(range).entrySet().stream();
+    public Flowable<Entry<Node, DatasetGraph>> apply(Range<Long> range) {
+        // TODO This kind of implementation does not support canceling requests
+    	return Flowable.fromIterable(fetchMap(range).entrySet());
     }
 
 }

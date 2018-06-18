@@ -10,12 +10,10 @@ import org.aksw.jena_sparql_api.mapper.FunctionResultSetAggregate;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.aksw.jena_sparql_api.mapper.MappedQuery;
 import org.aksw.jena_sparql_api.mapper.PartitionedQuery1;
-import org.aksw.jena_sparql_api.utils.ResultSetPart;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
-import org.apache.jena.query.SortCondition;
+import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.expr.ExprVar;
 
 public class MapServiceUtils {
     public static <T> MapService<Concept, Node, T> createListServiceMappedQuery(QueryExecutionFactory qef, MappedQuery<T> mappedQuery, boolean isLeftJoin) {
@@ -56,7 +54,7 @@ public class MapServiceUtils {
 
         MapServiceSparqlQuery ls = new MapServiceSparqlQuery(qef, query, partVar, isLeftJoin);
         FunctionResultSetAggregate<T> fn = new FunctionResultSetAggregate<T>(agg);
-        MapServiceTransformItem<Concept, Node, ResultSetPart, T> result = MapServiceTransformItem.create(ls, fn);
+        MapServiceTransformItem<Concept, Node, Table, T> result = MapServiceTransformItem.create(ls, fn);
 
         return result;
     }
@@ -87,7 +85,7 @@ public class MapServiceUtils {
 
         MapServiceSparqlQuery ls = new MapServiceSparqlQuery(qef, query, concept.getVar(), isLeftJoin);
         FunctionResultSetAggregate<T> fn = new FunctionResultSetAggregate<T>(agg);
-        MapServiceTransformItem<Concept, Node, ResultSetPart, T> result = MapServiceTransformItem.create(ls, fn);
+        MapServiceTransformItem<Concept, Node, Table, T> result = MapServiceTransformItem.create(ls, fn);
 
         return result;
     }

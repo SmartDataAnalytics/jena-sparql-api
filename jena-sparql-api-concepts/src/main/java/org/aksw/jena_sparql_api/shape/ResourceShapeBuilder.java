@@ -2,8 +2,9 @@ package org.aksw.jena_sparql_api.shape;
 
 import java.util.Map;
 
-import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
+import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
+import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -156,7 +157,7 @@ public class ResourceShapeBuilder {
 
 
     public ResourceShapeBuilder nav(Expr expr, boolean isInverse) {
-        BinaryRelation relation = new BinaryRelation(new ElementFilter(expr), Vars.p, Vars.o);
+        BinaryRelation relation = new BinaryRelationImpl(new ElementFilter(expr), Vars.p, Vars.o);
         ResourceShapeBuilder result = nav(relation, isInverse);
         return result;
     }

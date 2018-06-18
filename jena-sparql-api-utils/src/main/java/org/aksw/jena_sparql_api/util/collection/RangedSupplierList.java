@@ -1,10 +1,11 @@
 package org.aksw.jena_sparql_api.util.collection;
 
 import java.util.List;
-import java.util.stream.Stream;
 
 import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.Range;
+
+import io.reactivex.Flowable;
 
 public class RangedSupplierList<T>
     implements RangedSupplier<Long, T>//Function<Range<Long>, ClosableIterator<T>>
@@ -17,13 +18,15 @@ public class RangedSupplierList<T>
     }
 
     @Override
-    public Stream<T> apply(Range<Long> range) {
+    public Flowable<T> apply(Range<Long> range) {
         Range<Long> validRange = Range.closedOpen(0l, (long)items.size());
         Range<Long> effectiveRange = range.intersection(validRange).canonical(DiscreteDomain.longs());
 
         List<T> subList = items.subList(effectiveRange.lowerEndpoint().intValue(), effectiveRange.upperEndpoint().intValue());
 
-        return subList.stream();
+        Flowable<T> result = Flowable.fromIterable(subList);
+        return result;
+        //return subList.stream();
     }
 
     @Override

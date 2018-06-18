@@ -87,7 +87,7 @@ public class QueryExecutionViewMatcherMaster
 
 
     public static ResultSetCloseable createResultSet(List<String> varNames, RangedSupplier<Long, Binding> rangedSupplier, Range<Long> range, Map<Var, Var> varMap) {
-        Stream<Binding> stream = rangedSupplier.apply(range);
+        Stream<Binding> stream = rangedSupplier.apply(range).toList().blockingGet().stream();
         if(varMap != null) {
             stream = stream.map(b -> BindingUtils.rename(b, varMap));
         }

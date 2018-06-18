@@ -42,7 +42,7 @@ public class ModifierDatasetGraphEnrich
         QueryExecutionFactory qef = new QueryExecutionFactoryDatasetGraph(input, false);
         List<Node> nodes = ServiceUtils.fetchList(qef, concept);
 
-        Map<Node, DatasetGraph> extra = lookupService.apply(nodes);
+        Map<Node, DatasetGraph> extra = lookupService.fetchMap(nodes);
         for(Entry<Node, DatasetGraph> entry : extra.entrySet()) {
             DatasetGraph m = entry.getValue();
             Iterator<Quad> it = m.find();

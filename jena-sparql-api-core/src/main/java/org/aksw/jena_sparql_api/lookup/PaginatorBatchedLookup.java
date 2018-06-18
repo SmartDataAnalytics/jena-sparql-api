@@ -1,13 +1,11 @@
 package org.aksw.jena_sparql_api.lookup;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Stream;
-
-import org.aksw.commons.collections.utils.StreamUtils;
+import java.util.Map.Entry;
 
 import com.google.common.collect.Range;
+
+import io.reactivex.Flowable;
+import io.reactivex.Single;
 
 /**
  * This paginator maps each item through a lookup service by batching the lookup requests
@@ -28,23 +26,30 @@ public class PaginatorBatchedLookup<I, O>
     protected int batchSize;
 
     @Override
-    public Stream<O> apply(Range<Long> range) {
-        Stream<I> baseInStream = base.apply(range);
+    public Flowable<O> apply(Range<Long> range) {
+        Flowable<I> baseInStream = base.apply(range);
 
-        Stream<O> result = StreamUtils.mapToBatch(baseInStream, batchSize)
-            .flatMap(batch -> {
-                Map<I, O> map = lookup.apply(batch);
-                Collection<O> values = map.values();
+        Flowable<O> result = baseInStream.buffer(batchSize).flatMap(batch -> {
+        	// Map<I, O> map
+        	Flowable<O> r = lookup.apply(batch).map(Entry::getValue);
+        	return r;
+        });
 
-                return values.stream();
-            });
+        
+//        Stream<O> result = StreamUtils.mapToBatch(baseInStream, batchSize)
+//            .flatMap(batch -> {
+//                Map<I, O> map = lookup.apply(batch);
+//                Collection<O> values = map.values();
+//
+//                return values.stream();
+//            });
 
         return result;
     }
 
     @Override
-    public CountInfo fetchCount(Long itemLimit, Long rowLimit) {
-        CountInfo result = base.fetchCount(itemLimit, rowLimit);
+    public Single<Range<Long>> fetchCount(Long itemLimit, Long rowLimit) {
+        Single<Range<Long>> result = base.fetchCount(itemLimit, rowLimit);
         return result;
     }
 }

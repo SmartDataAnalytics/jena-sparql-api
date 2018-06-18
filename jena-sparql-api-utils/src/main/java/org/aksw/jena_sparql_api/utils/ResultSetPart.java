@@ -14,6 +14,7 @@ import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.iterator.QueryIter;
 import org.apache.jena.sparql.engine.iterator.QueryIterPlainWrapper;
 
+@Deprecated /* Switch to jena's Table object */
 public class ResultSetPart {
     private List<String> varNames;
     private List<Binding> rows;

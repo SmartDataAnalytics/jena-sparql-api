@@ -1,9 +1,11 @@
 package org.aksw.jena_sparql_api.lookup;
 
 import java.util.function.BiFunction;
-import java.util.stream.Stream;
 
 import com.google.common.collect.Range;
+
+import io.reactivex.Flowable;
+import io.reactivex.Single;
 
 public class ListPaginatorMapWrapper<K, V, T>
     implements ListPaginator<T>
@@ -18,13 +20,13 @@ public class ListPaginatorMapWrapper<K, V, T>
     }
 
     @Override
-    public Stream<T> apply(Range<Long> range) {
+    public Flowable<T> apply(Range<Long> range) {
         return delegate.apply(range).map(e -> fn.apply(e.getKey(), e.getValue()));
     }
 
     @Override
-    public CountInfo fetchCount(Long itemLimit, Long rowLimit) {
-        CountInfo result = delegate.fetchCount(itemLimit, rowLimit);
+    public Single<Range<Long>> fetchCount(Long itemLimit, Long rowLimit) {
+        Single<Range<Long>> result = delegate.fetchCount(itemLimit, rowLimit);
         return result;
     }
 

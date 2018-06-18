@@ -8,18 +8,19 @@ import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.concepts.OrderedConcept;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.lookup.CountInfo;
 import org.aksw.jena_sparql_api.utils.CloseableQueryExecution;
+import org.aksw.jena_sparql_api.utils.CountInfo;
 import org.aksw.jena_sparql_api.utils.ResultSetUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
-import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.sparql.core.Var;
+
+import com.google.common.collect.Range;
 
 public class ServiceUtils {
 //    public static fetchList(QueryExecutionFactory, QueryExecutionFactory)
@@ -119,7 +120,7 @@ public class ServiceUtils {
         return result;
     }
 
-    public static CountInfo fetchCountQuery(QueryExecutionFactory sparqlService, Query query, Long itemLimit, Long rowLimit) {
+    public static Range<Long> fetchCountQuery(QueryExecutionFactory sparqlService, Query query, Long itemLimit, Long rowLimit) {
 
         Var outputVar = Var.alloc("_count_"); //ConceptUtils.freshVar(concept);
 
@@ -136,8 +137,9 @@ public class ServiceUtils {
             : (itemLimit != null ? count > itemLimit : false)
             ;
 
-        Long c = hasMoreItems ? itemLimit : count;
-        CountInfo result = new CountInfo(c, hasMoreItems, itemLimit);
+        //Long c = hasMoreItems ? itemLimit : count;
+        Range<Long> result = hasMoreItems ? Range.atLeast(itemLimit) : Range.singleton(count.longValue());
+        //CountInfo result = new CountInfo(c, hasMoreItems, itemLimit);
         return result;
     }
 

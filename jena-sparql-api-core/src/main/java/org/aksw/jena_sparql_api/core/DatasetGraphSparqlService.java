@@ -11,6 +11,7 @@ import org.aksw.jena_sparql_api.lookup.ListServiceConcept;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.ReadWrite;
+import org.apache.jena.query.TxnType;
 import org.apache.jena.sparql.core.DatasetGraphBaseFind;
 import org.apache.jena.sparql.core.Quad;
 
@@ -115,5 +116,29 @@ public class DatasetGraphSparqlService
         // TODO Auto-generated method stub
         return false;
     }
+
+	@Override
+	public void begin(TxnType type) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public boolean promote(Promote mode) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public ReadWrite transactionMode() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public TxnType transactionType() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
 }

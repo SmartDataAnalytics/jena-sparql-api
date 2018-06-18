@@ -2,8 +2,8 @@ package org.aksw.jena_sparql_api.lookup;
 
 import java.util.List;
 
-import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
+import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.mapper.Agg;
@@ -14,9 +14,9 @@ import org.aksw.jena_sparql_api.mapper.FunctionResultSetAggregate;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.aksw.jena_sparql_api.mapper.MappedQuery;
 import org.aksw.jena_sparql_api.mapper.PartitionedQuery1;
-import org.aksw.jena_sparql_api.utils.ResultSetPart;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
+import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.core.Var;
 
 public class LookupServiceUtils {
@@ -64,7 +64,7 @@ public class LookupServiceUtils {
         Var partVar = partQuery.getPartitionVar();
         Agg<T> agg = mappedQuery.getAgg();
 
-        LookupService<Node, ResultSetPart> base = new LookupServiceSparqlQuery(sparqlService, query, partVar);
+        LookupService<Node, Table> base = new LookupServiceSparqlQuery(sparqlService, query, partVar);
         FunctionResultSetAggregate<T> transform = FunctionResultSetAggregate.create(agg);
         LookupService<Node, T> result = LookupServiceTransformValue.create(base, transform);
         return result;
@@ -91,7 +91,7 @@ public class LookupServiceUtils {
 
         // TODO Set up a projection using the grouping variable and the variables referenced by the aggregator
 
-        LookupService<Node, ResultSetPart> base = new LookupServiceSparqlQuery(sparqlService, query, concept.getVar());
+        LookupService<Node, Table> base = new LookupServiceSparqlQuery(sparqlService, query, concept.getVar());
 
         FunctionResultSetAggregate<T> transform = FunctionResultSetAggregate.create(mappedConcept.getAggregator());
 

@@ -7,6 +7,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
+import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.core.Var;
@@ -70,7 +71,7 @@ public class SparqlRelationParserImpl
 
         Element element = elementParser.apply(elementStr);
 
-        BinaryRelation result = new BinaryRelation(element, sourceVar, targetVar);
+        BinaryRelation result = new BinaryRelationImpl(element, sourceVar, targetVar);
 
         return result;
     }

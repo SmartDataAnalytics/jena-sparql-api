@@ -4,6 +4,7 @@ import java.util.Iterator;
 import java.util.stream.Stream;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
 import org.aksw.jena_sparql_api.util.collection.RangedSupplier;
 import org.aksw.jena_sparql_api.utils.IteratorResultSetBinding;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
@@ -16,6 +17,8 @@ import org.apache.jena.sparql.engine.binding.Binding;
 
 import com.google.common.collect.Range;
 import com.google.common.collect.Streams;
+
+import io.reactivex.Flowable;
 
 public class RangedSupplierQuery
     implements RangedSupplier<Long, Binding>, OpAttribute
@@ -30,17 +33,18 @@ public class RangedSupplierQuery
     }
 
     @Override
-    public Stream<Binding> apply(Range<Long> range) {
+    public Flowable<Binding> apply(Range<Long> range) {
         Query clone = query.cloneQuery();
         QueryUtils.applyRange(clone, range);
 
-        QueryExecution qe = qef.createQueryExecution(clone);
-        ResultSet rs = qe.execSelect();
-
-
-        Iterator<Binding> it = new IteratorResultSetBinding(rs);
-        Stream<Binding> result = Streams.stream(it);
-        result.onClose(qe::close);
+        Flowable<Binding> result = ReactiveSparqlUtils.execSelect(() -> qef.createQueryExecution(clone));
+//        QueryExecution qe = qef.createQueryExecution(clone);
+//        ResultSet rs = qe.execSelect();
+//
+//
+//        Iterator<Binding> it = new IteratorResultSetBinding(rs);
+//        Stream<Binding> result = Streams.stream(it);
+//        result.onClose(qe::close);
 
         return result;
 //

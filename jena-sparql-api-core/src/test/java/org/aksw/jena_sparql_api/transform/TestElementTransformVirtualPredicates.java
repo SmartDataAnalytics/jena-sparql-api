@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
+import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParser;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
@@ -23,7 +24,6 @@ import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpAsQuery;
-import org.apache.jena.sparql.algebra.optimize.Optimize;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.util.Context;
@@ -56,7 +56,7 @@ public class TestElementTransformVirtualPredicates {
     	// Register a virtual predicate that computes the age from the current
     	// date and birth date of a person
         virtualPredicates.put(NodeFactory.createURI("http://www.example.org/age"),
-        		BinaryRelation.create("?s a eg:Person ; eg:birthDate ?start . " + 
+        		BinaryRelationImpl.create("?s a eg:Person ; eg:birthDate ?start . " + 
         		        "BIND(NOW() AS ?end) " +
         				"BIND(YEAR(?end) - YEAR(?start) - IF(MONTH(?end) < MONTH(?start) || (MONTH(?end) = MONTH(?start) && DAY(?end) < DAY(?start)), 1, 0) as ?age)",
                         "s", "age", prologue));
@@ -130,7 +130,7 @@ public class TestElementTransformVirtualPredicates {
 
 
 
-        virtualPredicates.put(NodeFactory.createURI(RDFS.label.getURI()), BinaryRelation.create("?s <skos:label> [ <skos:value> ?l]", "s", "l"));
+        virtualPredicates.put(NodeFactory.createURI(RDFS.label.getURI()), BinaryRelationImpl.create("?s <skos:label> [ <skos:value> ?l]", "s", "l"));
 
 
         //Query query = QueryFactory.create("Select * { ?s <http://ex.org/label> ?o }");

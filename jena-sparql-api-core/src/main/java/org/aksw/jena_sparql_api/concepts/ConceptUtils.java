@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.concepts;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -21,16 +22,19 @@ import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
+import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.SortCondition;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.BindingHashMap;
+import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.E_OneOf;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprAggregator;
 import org.apache.jena.sparql.expr.ExprList;
 import org.apache.jena.sparql.expr.ExprVar;
+import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.expr.aggregate.AggCount;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementData;
@@ -52,6 +56,11 @@ public class ConceptUtils {
     public static Concept listAllGraphs = Concept.create("Graph ?g { ?s ?p ?o }", "g");
 
 
+    public static Concept createConcept(Node ... nodes) {
+    	Concept result = createConcept(Arrays.asList(nodes));
+    	return result;
+    }
+    
     public static Concept createConcept(Iterable<Node> nodes) {
         ElementData data = new ElementData();
         data.add(Vars.s);
@@ -66,10 +75,29 @@ public class ConceptUtils {
 
     }
 
+    public static Concept createFilterConcept(Node ... nodes) {
+    	Concept result = createFilterConcept(Arrays.asList(nodes));
+    	return result;
+    }
+
+
     public static Concept createFilterConcept(Iterable<Node> nodes) {
 
-        Element el = new ElementFilter(new E_OneOf(new ExprVar(Vars.s), ExprListUtils.nodesToExprs(nodes)));
-
+    	int size = Iterables.size(nodes);
+    	Element el;
+    	switch(size) {
+    	case 0:
+    		el = new ElementFilter(NodeValue.FALSE);
+    		break;
+    	case 1:
+    		Node node = nodes.iterator().next();
+    		el = new ElementFilter(new E_Equals(new ExprVar(Vars.s), NodeValue.makeNode(node)));
+    		break;
+    	default:
+    		el = new ElementFilter(new E_OneOf(new ExprVar(Vars.s), ExprListUtils.nodesToExprs(nodes)));
+    		break;
+    	}
+    	
         Concept result = new Concept(el, Vars.s);
         return result;
     }

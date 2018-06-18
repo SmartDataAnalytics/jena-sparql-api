@@ -1,10 +1,13 @@
 package org.aksw.jena_sparql_api.lookup;
 
+import java.util.AbstractMap.SimpleEntry;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import com.google.common.base.Function;
+
+import io.reactivex.Flowable;
 
 public class LookupServiceTransformKey<KI, KO, V>
 	implements LookupService<KI, V>
@@ -19,17 +22,16 @@ public class LookupServiceTransformKey<KI, KO, V>
 	}
 
 	@Override
-	public Map<KI, V> apply(Iterable<KI> keys) {
+	public Flowable<Entry<KI, V>> apply(Iterable<KI> keys) {
 		Map<KO, KI> keyMap = new LinkedHashMap<KO, KI>();
 		for(KI ki : keys) {
 			KO ko = keyMapper.apply(ki);
 			keyMap.put(ko, ki);
 		}
 		
-		Map<KO, V> tmp = delegate.apply(keyMap.keySet());
+		Flowable<Entry<KO, V>> tmp = delegate.apply(keyMap.keySet());
 
-		Map<KI, V> result = new LinkedHashMap<KI, V>();
-		for(Entry<KO, V> entry : tmp.entrySet()) {
+		Flowable<Entry<KI, V>> result = tmp.map(entry -> {
 			KO ko = entry.getKey();
 			V v = entry.getValue();
 			
@@ -38,9 +40,24 @@ public class LookupServiceTransformKey<KI, KO, V>
 				throw new RuntimeException("should not happen");
 			}
 			KI ki = keyMap.get(ko);
-			result.put(ki, v);
-		}
+			//result.put(ki, v);
+
+			return new SimpleEntry<>(ki, v);
+		});
 		
+//		Map<KI, V> result = new LinkedHashMap<KI, V>();
+//		for(Entry<KO, V> entry : tmp.entrySet()) {
+//			KO ko = entry.getKey();
+//			V v = entry.getValue();
+//			
+//			boolean isMapped = keyMap.containsKey(ko);
+//			if(!isMapped) {
+//				throw new RuntimeException("should not happen");
+//			}
+//			KI ki = keyMap.get(ko);
+//			result.put(ki, v);
+//		}
+//		
 		return result;
 	}
 	
