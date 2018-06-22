@@ -193,7 +193,7 @@ public class E_RdfTerm
            Tags.tagIri.equals(symbol)) {
             result = createUri(fn.getArg(1));
         } else if (Tags.tagStrLang.equals(symbol)) {
-        	result = createPlainLiteral(fn.getArg(1));
+        	result = createPlainLiteral(fn.getArg(1), fn.getArg(2));
         } else if (Tags.tagStrDatatype.equals(symbol)) { 
         	result = createTypedLiteral(fn.getArg(1), fn.getArg(2));
         } else if (Tags.tagBNode.equals(symbol)) {
