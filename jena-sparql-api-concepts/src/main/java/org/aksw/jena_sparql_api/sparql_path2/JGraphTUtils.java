@@ -12,12 +12,11 @@ import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.utils.model.Triplet;
 import org.aksw.jena_sparql_api.utils.model.TripletImpl;
-import org.jgrapht.DirectedGraph;
 import org.jgrapht.Graph;
 
 public class JGraphTUtils {
 
-//    public static <V, E> DirectedGraph<V, E> createReachabilityGraph(DirectedGraph<V, E> graph, Collection<V> start, Collection<V> end) {
+//    public static <V, E> Graph<V, E> createReachabilityGraph(Graph<V, E> graph, Collection<V> start, Collection<V> end) {
 //        List<NestedPath<V, E>> paths = getAllPaths(graph, start, end);
 //
 //
@@ -32,7 +31,7 @@ public class JGraphTUtils {
         return result;
     }
 
-    public static <V, E> List<NestedPath<V, E>> getAllPaths(DirectedGraph<V, E> graph, Collection<V> starts, Collection<V> ends) {
+    public static <V, E> List<NestedPath<V, E>> getAllPaths(Graph<V, E> graph, Collection<V> starts, Collection<V> ends) {
         SimplePathBfsIterator<V, E> it = new SimplePathBfsIterator<>(graph, starts,
                 nestedPath -> ends.contains(nestedPath.getCurrent()));
 
@@ -41,7 +40,7 @@ public class JGraphTUtils {
         return result;
     }
 
-    public static <V, E> List<NestedPath<V, E>> getAllPaths(DirectedGraph<V, E> graph, V start, V end) {
+    public static <V, E> List<NestedPath<V, E>> getAllPaths(Graph<V, E> graph, V start, V end) {
         List<NestedPath<V, E>> result = getAllPaths(graph, Collections.singleton(start), Collections.singleton(end));
         return result;
     }
@@ -61,7 +60,7 @@ public class JGraphTUtils {
     }
 
 
-    public static <V, E> Set<V> transitiveGet(DirectedGraph<V, E> graph, Set<V> startVertices, int mode, Predicate<E> isEpsilon) {
+    public static <V, E> Set<V> transitiveGet(Graph<V, E> graph, Set<V> startVertices, int mode, Predicate<E> isEpsilon) {
         Set<V> result = startVertices.stream()
                 .flatMap(v -> transitiveGet(graph, v, mode, isEpsilon).stream())
                 .collect(Collectors.toSet());
@@ -78,7 +77,7 @@ public class JGraphTUtils {
      * @param edgeFilter
      * @return
      */
-    public static <V, E> Set<V> transitiveGet(DirectedGraph<V, E> graph, V startVertex, int mode, Predicate<E> edgeFilter) {
+    public static <V, E> Set<V> transitiveGet(Graph<V, E> graph, V startVertex, int mode, Predicate<E> edgeFilter) {
         Set<V> result = new HashSet<V>();
         Set<V> open = new HashSet<V>(Collections.singleton(startVertex));
 
@@ -118,7 +117,7 @@ public class JGraphTUtils {
         return result;
     }
 
-    public static <V, E> Set<E> resolveTransitions(DirectedGraph<V, E> graph, Predicate<E> isEpsilon, Collection<V> vertices, boolean reverse) {
+    public static <V, E> Set<E> resolveTransitions(Graph<V, E> graph, Predicate<E> isEpsilon, Collection<V> vertices, boolean reverse) {
         Set<E> result = vertices
                 .stream()
                 .flatMap(v -> resolveTransitions(graph, isEpsilon, v, reverse).stream())
@@ -131,7 +130,7 @@ public class JGraphTUtils {
      * Returns the set of non-epsilon edges reachable via epsilon transitions from the given vertex
      *  // Check if a state is implicitly final if it has an epsilon transition to a final state
      */
-    public static <V, E> Set<E> resolveTransitions(DirectedGraph<V, E> graph, Predicate<E> isEpsilon, V vertex, boolean reverse) {
+    public static <V, E> Set<E> resolveTransitions(Graph<V, E> graph, Predicate<E> isEpsilon, V vertex, boolean reverse) {
 
         Set<E> result = new HashSet<>();
         Set<E> visited = new HashSet<>();
@@ -168,7 +167,7 @@ public class JGraphTUtils {
      *
      */
 
-    public static <V, E> void addSuperVertex(DirectedGraph<V, E> graph, V vertex, Set<V> fwdConns, Set<V> bwdConns) {
+    public static <V, E> void addSuperVertex(Graph<V, E> graph, V vertex, Set<V> fwdConns, Set<V> bwdConns) {
         addSuperVertex(graph, vertex, fwdConns, false);
         addSuperVertex(graph, vertex, fwdConns, true);
     }
@@ -179,7 +178,7 @@ public class JGraphTUtils {
      *
      */
 
-    public static <V, E> void addSuperVertex(DirectedGraph<V, E> graph, V vertex, Set<V> conns, boolean reverse) {
+    public static <V, E> void addSuperVertex(Graph<V, E> graph, V vertex, Set<V> conns, boolean reverse) {
         graph.addVertex(vertex);
         if(!reverse) {
             conns.forEach(conn -> {
@@ -194,7 +193,7 @@ public class JGraphTUtils {
         }
     }
 
-    public static <V, E> void addSuperVertex(DirectedGraph<V, E> graph, V vertex, V conn, boolean reverse) {
+    public static <V, E> void addSuperVertex(Graph<V, E> graph, V vertex, V conn, boolean reverse) {
         addSuperVertex(graph, vertex, Collections.singleton(conn), reverse);
     }
 

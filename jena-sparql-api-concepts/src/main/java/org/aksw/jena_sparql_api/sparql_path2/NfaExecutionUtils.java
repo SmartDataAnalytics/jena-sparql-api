@@ -19,7 +19,7 @@ import org.aksw.jena_sparql_api.utils.Pair;
 import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.aksw.jena_sparql_api.utils.model.Triplet;
 import org.aksw.jena_sparql_api.utils.model.TripletImpl;
-import org.jgrapht.DirectedGraph;
+import org.jgrapht.Graph;
 
 import com.google.common.collect.Multimap;
 
@@ -61,7 +61,7 @@ public class NfaExecutionUtils {
     }
 
 
-    public static <S, D, T extends LabeledEdge<S, ? extends Directed<? extends ValueSet<D>>>> Pair<ValueSet<D>> extractNextPropertyClasses(DirectedGraph<S, T> nfaGraph, Predicate<T> isEpsilon, Set<S> states, boolean reverse) {
+    public static <S, D, T extends LabeledEdge<S, ? extends Directed<? extends ValueSet<D>>>> Pair<ValueSet<D>> extractNextPropertyClasses(Graph<S, T> nfaGraph, Predicate<T> isEpsilon, Set<S> states, boolean reverse) {
         Set<T> transitions = JGraphTUtils.resolveTransitions(nfaGraph, isEpsilon, states, false);
 
         ValueSet<D> fwd = ValueSet.createEmpty();
@@ -127,7 +127,7 @@ public class NfaExecutionUtils {
      */
     public static <S, T, G, V, E> NfaFrontier<S, G, V, E> advanceFrontier(
             NfaFrontier<S, G, V, E> frontier,
-            DirectedGraph<S, T> nfaGraph,
+            Graph<S, T> nfaGraph,
             Predicate<T> isEpsilon,
             BiFunction<T, Multimap<G, NestedPath<V, E>>, Map<V, Set<Triplet<V, E>>>> getMatchingTriplets,
             Function<NestedPath<V, E>, G> pathGrouper,
@@ -211,7 +211,7 @@ public class NfaExecutionUtils {
      * @return
      */
     public static <S, T> boolean isFinalState(Nfa<S, T> nfa, S state, Predicate<T> isEpsilon) {
-        DirectedGraph<S, T> graph = nfa.getGraph();
+        Graph<S, T> graph = nfa.getGraph();
         Set<S> endStates = nfa.getEndStates();
         Set<S> reachableStates = JGraphTUtils.transitiveGet(graph, state, 1, x -> isEpsilon.test(x));
         boolean result = reachableStates.stream().anyMatch(s -> endStates.contains(s));
@@ -219,7 +219,7 @@ public class NfaExecutionUtils {
     }
 
     public static <S, T> boolean isStartState(Nfa<S, T> nfa, S state, Predicate<T> isEpsilon) {
-        DirectedGraph<S, T> graph = nfa.getGraph();
+        Graph<S, T> graph = nfa.getGraph();
         Set<S> startStates = nfa.getStartStates();
         Set<S> reachableStates = JGraphTUtils.transitiveGet(graph, state, -1, x -> isEpsilon.test(x));
         boolean result = reachableStates.stream().anyMatch(s -> startStates.contains(s));
@@ -242,7 +242,7 @@ public class NfaExecutionUtils {
      * BiFunction<Set<V>, Directed<T>, Map<V, Set<Triplet<V, E>>>> getMatchingTriplets
      */
 
-    public static <S, T, P, Q> boolean isTargetReachable(Nfa<S, T> nfa, Predicate<T> isEpsilon, Set<S> states, BiPredicate<Directed<T>, Q> matcher, DirectedGraph<P, Q> joinGraph, Directed<P> diPredicate, Pair<Set<P>> targetPreds) {
+    public static <S, T, P, Q> boolean isTargetReachable(Nfa<S, T> nfa, Predicate<T> isEpsilon, Set<S> states, BiPredicate<Directed<T>, Q> matcher, Graph<P, Q> joinGraph, Directed<P> diPredicate, Pair<Set<P>> targetPreds) {
         // Return true if there is at least 1 path
         return false;
     }
@@ -265,7 +265,7 @@ public class NfaExecutionUtils {
             Nfa<S, T> nfa,
             Predicate<T> isEpsilon,
             Set<S> states,
-            DirectedGraph<P, Q> joinGraph,
+            Graph<P, Q> joinGraph,
             P startVertex, // the start vertex
             Long k,
             BiFunction<T, P, Set<Directed<P>>> initPred,  //Triplet<P, Q>>
@@ -370,7 +370,7 @@ public class NfaExecutionUtils {
                 break;
             }
 
-            DirectedGraph<S, T> nfaGraph = nfa.getGraph();
+            Graph<S, T> nfaGraph = nfa.getGraph();
 
             NfaFrontier<S, G, V, E> nextFrontier = advanceFrontier(
                     frontier,
@@ -388,6 +388,6 @@ public class NfaExecutionUtils {
 //
 //@FunctionalInterface
 //interface NfaDataGraphMatcher<T, V, E> {
-//    boolean matches(Directed<T> trans, DirectedGraph<V, E> graph, V vertex);
+//    boolean matches(Directed<T> trans, Graph<V, E> graph, V vertex);
 //}
 

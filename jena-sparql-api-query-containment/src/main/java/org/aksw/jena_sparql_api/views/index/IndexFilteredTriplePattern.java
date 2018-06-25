@@ -9,8 +9,8 @@ import org.aksw.commons.jena.jgrapht.LabeledEdgeImpl;
 import org.aksw.jena_sparql_api.algebra.utils.FilteredQuad;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Var;
-import org.jgrapht.DirectedGraph;
-import org.jgrapht.graph.SimpleDirectedGraph;
+import org.jgrapht.Graph;
+import org.jgrapht.graph.SimpleGraph;
 
 public class IndexFilteredTriplePattern<K>
     implements PatternIndex<K, FilteredQuad, Map<Var, Var>>
@@ -19,10 +19,10 @@ public class IndexFilteredTriplePattern<K>
 
     // Map keys to internal keys (which are nodes)
     protected ReversibleMap<K, Node> keyToNode;
-    protected DirectedGraph<Node, LabeledEdge<Node, Node>> graph;
+    protected Graph<Node, LabeledEdge<Node, Node>> graph;
 
     public IndexFilteredTriplePattern() {
-        this.graph = new SimpleDirectedGraph<>((v, e) -> new LabeledEdgeImpl<>(v, e, null));
+        this.graph = new SimpleGraph<>((v, e) -> new LabeledEdgeImpl<>(v, e, null));
         this.keyToNode = new ReversibleMapImpl<>();
     }
 

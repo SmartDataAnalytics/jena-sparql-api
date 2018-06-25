@@ -12,10 +12,10 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.rdf.model.Model;
-import org.jgrapht.DirectedGraph;
-import org.jgrapht.graph.DefaultDirectedGraph;
+import org.jgrapht.Graph;
+import org.jgrapht.graph.AsGraphUnion;
 import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.DirectedGraphUnion;
+import org.jgrapht.graph.SimpleGraph;
 
 public class JoinSummaryUtils {
 
@@ -78,7 +78,7 @@ public class JoinSummaryUtils {
     public static List<NestedPath<Node, DefaultEdge>> findJoinSummaryPaths(
             Nfa<Integer, LabeledEdge<Integer, PredicateClass>> nfa,
             Set<Integer> states,
-            DirectedGraph<Node, DefaultEdge> joinGraph,
+            Graph<Node, DefaultEdge> joinGraph,
             Node augStart,
             Node augEnd,
             Long k) {
@@ -184,7 +184,7 @@ public class JoinSummaryUtils {
     public static boolean existsJoinSummaryPath(
             Nfa<Integer, LabeledEdge<Integer, PredicateClass>> nfa,
             Set<Integer> states,
-            DirectedGraph<Node, DefaultEdge> joinGraph,
+            Graph<Node, DefaultEdge> joinGraph,
             Node augStart,
             Node augEnd) {
 
@@ -213,19 +213,19 @@ public class JoinSummaryUtils {
     public static boolean existsReachability(
             Nfa<Integer, LabeledEdge<Integer, PredicateClass>> nfa,
             Set<Integer> states,
-            DirectedGraph<Node, DefaultEdge> endAugJoinGraph, // joinGraph that was augmented with targets
+            Graph<Node, DefaultEdge> endAugJoinGraph, // joinGraph that was augmented with targets
             Node augEnd,
             Node predicate,
             boolean reverse) {
 
-        DirectedGraph<Node, DefaultEdge> augJoinGraph = new DefaultDirectedGraph<>(DefaultEdge.class);
+        Graph<Node, DefaultEdge> augJoinGraph = new SimpleGraph<>(DefaultEdge.class);
 
         // TODO Dynamically allocate a start and end vertex that is not part of the rawJoinGraph
         Node augStart = NodeFactory.createURI("http://start.org");
         //Node augEnd = NodeFactory.createURI("http://end.org");
         JGraphTUtils.addSuperVertex(augJoinGraph, augStart, predicate, reverse);
 
-        DirectedGraph<Node, DefaultEdge> joinGraph = new DirectedGraphUnion<Node, DefaultEdge>(augJoinGraph, endAugJoinGraph);
+        Graph<Node, DefaultEdge> joinGraph = new AsGraphUnion<Node, DefaultEdge>(augJoinGraph, endAugJoinGraph);
 
         boolean result = existsJoinSummaryPath(
                 nfa,

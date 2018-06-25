@@ -3,14 +3,14 @@ package org.aksw.jena_sparql_api.sparql_path2;
 import java.util.Collections;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.apache.jena.sparql.path.P_Inverse;
 import org.apache.jena.sparql.path.P_Link;
 import org.apache.jena.sparql.path.P_NegPropSet;
 import org.apache.jena.sparql.path.P_ReverseLink;
 import org.apache.jena.sparql.path.Path;
-import org.jgrapht.DirectedGraph;
-import org.jgrapht.VertexFactory;
+import org.jgrapht.Graph;
 
 public class PathVisitorNfaCompilerImpl<V, E, D>
     extends PathVisitorNfaCompilerBase<V, E, D>
@@ -18,8 +18,8 @@ public class PathVisitorNfaCompilerImpl<V, E, D>
     protected Function<Path, D> primitivePathMapper;
 
     public PathVisitorNfaCompilerImpl(
-            DirectedGraph<V, E> graph,
-            VertexFactory<V> vertexFactory,
+            Graph<V, E> graph,
+            Supplier<V> vertexFactory,
             EdgeLabelAccessor<E, D> edgeLabelAccessor,
             Function<Path, D> primitivePathMapper) {
         super(graph, vertexFactory, edgeLabelAccessor);
@@ -29,7 +29,7 @@ public class PathVisitorNfaCompilerImpl<V, E, D>
 
     public void processPrimitivePath(Path path) {
         D edgeLabel = primitivePathMapper.apply(path);
-        V s = vertexFactory.createVertex();
+        V s = vertexFactory.get();
         graph.addVertex(s);
         PartialNfa<V, D> partialNfa = PartialNfa.create(s, Collections.singletonList(new HalfEdge<V, D>(s, edgeLabel)));
 
@@ -62,7 +62,7 @@ public class PathVisitorNfaCompilerImpl<V, E, D>
     public Nfa<V, E> complete() {
         PartialNfa<V, D> partialNfa = this.peek();
 
-        V finalVertex = vertexFactory.createVertex();
+        V finalVertex = vertexFactory.get();
         graph.addVertex(finalVertex);
 
         for(HalfEdge<V, D> looseEnd : partialNfa.getLooseEnds()) {

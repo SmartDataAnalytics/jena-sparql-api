@@ -8,7 +8,7 @@ import org.apache.jena.sparql.algebra.op.OpExtend;
 import org.apache.jena.sparql.algebra.op.OpFilter;
 import org.apache.jena.sparql.algebra.op.OpProject;
 import org.apache.jena.sparql.algebra.op.OpSequence;
-import org.jgrapht.DirectedGraph;
+import org.jgrapht.Graph;
 
 
 /**
@@ -28,7 +28,7 @@ import org.jgrapht.DirectedGraph;
 public class OpToGraph
     extends OpVisitorBase
 {
-    protected DirectedGraph<Op, NaEdge> tree;
+    protected Graph<Op, NaEdge> tree;
 
     @Override
     public void visit(OpDisjunction opDisjunction) {

@@ -2,17 +2,17 @@ package org.aksw.jena_sparql_api.sparql_path2;
 
 import java.util.Set;
 
-import org.jgrapht.DirectedGraph;
+import org.jgrapht.Graph;
 import org.jgrapht.graph.EdgeReversedGraph;
 
 public class NfaImpl<V, E>
     implements Nfa<V, E>
 {
-    protected DirectedGraph<V, E> graph;
+    protected Graph<V, E> graph;
     protected Set<V> startStates;
     protected Set<V> endStates;
 
-    public NfaImpl(DirectedGraph<V, E> graph, Set<V> startStates,
+    public NfaImpl(Graph<V, E> graph, Set<V> startStates,
             Set<V> endStates) {
         super();
         this.graph = graph;
@@ -20,7 +20,7 @@ public class NfaImpl<V, E>
         this.endStates = endStates;
     }
 
-    public DirectedGraph<V, E> getGraph() {
+    public Graph<V, E> getGraph() {
         return graph;
     }
 
@@ -88,10 +88,10 @@ public class NfaImpl<V, E>
         return result;
     }
 
-//    public static <V, E, I> Nfa<V, I> invert(DirectedGraph<V, I> invGraph, DirectedGraph<V, E> graph, Function<E, I> edgeInvertFn) {
-//        //DirectedGraph<V, E> graph = nfa.getGraph();
+//    public static <V, E, I> Nfa<V, I> invert(Graph<V, I> invGraph, Graph<V, E> graph, Function<E, I> edgeInvertFn) {
+//        //Graph<V, E> graph = nfa.getGraph();
 //
-//        //Graph<V, I> invGraph = new SimpleDirectedGraph<V, I>();
+//        //Graph<V, I> invGraph = new SimpleGraph<V, I>();
 //
 //
 //        for(V sourceVertex : graph.vertexSet()) {

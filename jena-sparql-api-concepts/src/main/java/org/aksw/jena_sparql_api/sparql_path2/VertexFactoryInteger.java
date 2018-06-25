@@ -1,10 +1,11 @@
 package org.aksw.jena_sparql_api.sparql_path2;
 
+import java.util.function.Supplier;
+
 import org.jgrapht.Graph;
-import org.jgrapht.VertexFactory;
 
 public class VertexFactoryInteger
-    implements VertexFactory<Integer>
+    implements Supplier<Integer>
 {
     protected Graph<Integer, ?> graph;
     int nextId;
@@ -23,7 +24,7 @@ public class VertexFactoryInteger
 
 
     @Override
-    public Integer createVertex() {
+    public Integer get() {
 
         while(graph.containsVertex(nextId)) {
             ++nextId;

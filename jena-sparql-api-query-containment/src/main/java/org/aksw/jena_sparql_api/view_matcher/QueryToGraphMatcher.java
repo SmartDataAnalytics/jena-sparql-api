@@ -11,33 +11,33 @@ import org.aksw.jena_sparql_api.algebra.utils.QuadFilterPatternCanonical;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.core.Var;
-import org.jgrapht.DirectedGraph;
-import org.jgrapht.graph.SimpleDirectedGraph;
+import org.jgrapht.Graph;
+import org.jgrapht.graph.SimpleGraph;
 
 public class QueryToGraphMatcher {
 
 
-    public static void toGraph(DirectedGraph<Node, LabeledEdge<Node, Node>> graph, QuadFilterPatternCanonical qfpc) {
+    public static void toGraph(Graph<Node, LabeledEdge<Node, Node>> graph, QuadFilterPatternCanonical qfpc) {
         QueryToGraph.quadsToGraph(graph, qfpc.getQuads());
         QueryToGraph.equalExprsToGraph(graph, qfpc.getFilterDnf());
     }
 
-    public static void toGraph(DirectedGraph<Node, LabeledEdge<Node, Node>> graph, Query query) {
+    public static void toGraph(Graph<Node, LabeledEdge<Node, Node>> graph, Query query) {
         QuadFilterPatternCanonical qfpc = AlgebraUtils.fromQuery(query);
         toGraph(graph, qfpc);
     }
 
-    public static DirectedGraph<Node, LabeledEdge<Node, Node>> toGraph(QuadFilterPatternCanonical qfpc) {
+    public static Graph<Node, LabeledEdge<Node, Node>> toGraph(QuadFilterPatternCanonical qfpc) {
         //EdgeFactory <Node, LabeledEdge<Node, Node>> edgeFactory = (v, e) -> new LabeledEdgeImpl<>(v, e, null);
-        DirectedGraph<Node, LabeledEdge<Node, Node>> graph = new SimpleDirectedGraph<>((v, e) -> new LabeledEdgeImpl<>(v, e, null));
+        Graph<Node, LabeledEdge<Node, Node>> graph = new SimpleGraph<>((v, e) -> new LabeledEdgeImpl<>(v, e, null));
 
         toGraph(graph, qfpc);
 
         return graph;
     }
     public static Stream<Map<Var, Var>> match(QuadFilterPatternCanonical view, QuadFilterPatternCanonical user) {
-        DirectedGraph<Node, LabeledEdge<Node, Node>> a = toGraph(view);
-        DirectedGraph<Node, LabeledEdge<Node, Node>> b = toGraph(user);
+        Graph<Node, LabeledEdge<Node, Node>> a = toGraph(view);
+        Graph<Node, LabeledEdge<Node, Node>> b = toGraph(user);
 
         Stream<Map<Var, Var>> result = QueryToGraph.match(a, b);
         return result;
@@ -52,8 +52,8 @@ public class QueryToGraphMatcher {
      * @return
      */
     public static boolean tryMatch(Query view, Query user) {
-        DirectedGraph<Node, LabeledEdge<Node, Node>> a = new SimpleDirectedGraph<>((v, e) -> new LabeledEdgeImpl<>(v, e, null));
-        DirectedGraph<Node, LabeledEdge<Node, Node>> b = new SimpleDirectedGraph<>((v, e) -> new LabeledEdgeImpl<>(v, e, null));
+        Graph<Node, LabeledEdge<Node, Node>> a = new SimpleGraph<>((v, e) -> new LabeledEdgeImpl<>(v, e, null));
+        Graph<Node, LabeledEdge<Node, Node>> b = new SimpleGraph<>((v, e) -> new LabeledEdgeImpl<>(v, e, null));
 
         toGraph(a, view);
         toGraph(b, user);
