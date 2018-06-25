@@ -32,7 +32,8 @@ public class WebAppInitializerSparqlServiceUtils {
 
         {
             ServletRegistration.Dynamic servlet = servletContext.addServlet("sparqlServiceServlet", new ServletContainer());
-            servlet.setInitParameter(ServerProperties.PROVIDER_CLASSNAMES, "org.aksw.jena_sparql_api.web.servlets.ServletSparqlServiceImpl");
+            //servlet.setInitParameter("contextConfigLocation", "workaround-for-JERSEY-2038");
+            servlet.setInitParameter(ServerProperties.PROVIDER_CLASSNAMES, org.aksw.jena_sparql_api.web.servlets.ServletSparqlServiceImpl.class.getCanonicalName());
 //            servlet.setInitParameter(ServletProperties.FILTER_FORWARD_ON_404, "true");
 //            servlet.setInitParameter(ServletProperties.FILTER_STATIC_CONTENT_REGEX, ".*(html|css|js)");
             servlet.addMapping("/sparql/*");

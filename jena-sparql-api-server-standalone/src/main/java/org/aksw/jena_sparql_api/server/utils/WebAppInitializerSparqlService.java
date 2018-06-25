@@ -6,7 +6,6 @@ import javax.servlet.ServletException;
 import org.aksw.jena_sparql_api.web.server.WebAppInitializerSparqlServiceUtils;
 import org.springframework.web.WebApplicationInitializer;
 import org.springframework.web.context.WebApplicationContext;
-import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 
 public class WebAppInitializerSparqlService
     implements  WebApplicationInitializer
@@ -23,12 +22,12 @@ public class WebAppInitializerSparqlService
         WebAppInitializerSparqlServiceUtils.init(servletContext, rootContext);
     }
 
-    public static WebApplicationInitializer create(Class<?> config) {
-        AnnotationConfigWebApplicationContext rootContext = new AnnotationConfigWebApplicationContext();
-        rootContext.register(config);
-
-        WebApplicationInitializer result = new WebAppInitializerSparqlService(rootContext);
-
-        return result;
-    }
+//    public static WebApplicationInitializer create(Class<?> config) {
+//        AnnotationConfigWebApplicationContext rootContext = new AnnotationConfigWebApplicationContext();
+//        rootContext.register(config);
+//
+//        WebApplicationInitializer result = new WebAppInitializerSparqlService(rootContext);
+//
+//        return result;
+//    }
 }

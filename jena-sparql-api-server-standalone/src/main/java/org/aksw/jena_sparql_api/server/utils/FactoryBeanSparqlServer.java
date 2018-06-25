@@ -78,6 +78,7 @@ public class FactoryBeanSparqlServer {
         }
 
         GenericWebApplicationContext rootContext = new GenericWebApplicationContext();
+        
         rootContext.getBeanFactory().registerSingleton("sparqlServiceFactory", sparqlServiceFactory);
         rootContext.getBeanFactory().registerSingleton("sparqlStmtParser", sparqlStmtParser);
 
