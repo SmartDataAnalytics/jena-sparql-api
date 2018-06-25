@@ -1,9 +1,9 @@
 package org.aksw.jena_sparql_api.sparql_path2;
 
 import java.util.Collections;
+import java.util.function.Supplier;
 
-import org.jgrapht.DirectedGraph;
-import org.jgrapht.VertexFactory;
+import org.jgrapht.Graph;
 
 import com.google.common.collect.FluentIterable;
 
@@ -18,7 +18,7 @@ public class NfaOps {
      * @param b
      * @return
      */
-    public static <V, E, T> PartialNfa<V, T> concatenate(DirectedGraph<V, E> graph, PartialNfa<V, T> a, PartialNfa<V, T> b, EdgeLabelAccessor<E, T> edgeLabelAccessor) {
+    public static <V, E, T> PartialNfa<V, T> concatenate(Graph<V, E> graph, PartialNfa<V, T> a, PartialNfa<V, T> b, EdgeLabelAccessor<E, T> edgeLabelAccessor) {
         V target = b.getStartVertex();
         for(HalfEdge<V, T> looseEnd : a.getLooseEnds()) {
             V start = looseEnd.getStartVertex();
@@ -42,8 +42,8 @@ public class NfaOps {
      * @param b
      * @return
      */
-    public static <V, E, T> PartialNfa<V, T> alternate(DirectedGraph<V, E> graph, VertexFactory<V> vertexFactory, PartialNfa<V, T> a, PartialNfa<V, T> b) {
-        V newStartVertex = vertexFactory.createVertex();
+    public static <V, E, T> PartialNfa<V, T> alternate(Graph<V, E> graph, Supplier<V> vertexFactory, PartialNfa<V, T> a, PartialNfa<V, T> b) {
+    	V newStartVertex = vertexFactory.get();
         graph.addVertex(newStartVertex);
 
         graph.addEdge(newStartVertex, a.getStartVertex());
@@ -65,8 +65,8 @@ public class NfaOps {
      * @param a
      * @return
      */
-    public static <V, E, T> PartialNfa<V, T> zeroOrOne(DirectedGraph<V, E> graph, VertexFactory<V> vertexFactory, PartialNfa<V, T> a) {
-        V newStartVertex = vertexFactory.createVertex();
+    public static <V, E, T> PartialNfa<V, T> zeroOrOne(Graph<V, E> graph, Supplier<V> vertexFactory, PartialNfa<V, T> a) {
+        V newStartVertex = vertexFactory.get();
         graph.addVertex(newStartVertex);
 
         V oldStartVertex = a.getStartVertex();
@@ -88,8 +88,8 @@ public class NfaOps {
      * @param a
      * @return
      */
-    public static <V, E, T> PartialNfa<V, T> zeroOrMore(DirectedGraph<V, E> graph, VertexFactory<V> vertexFactory, PartialNfa<V, T> a, EdgeLabelAccessor<E, T> edgeLabelAccessor) {
-        V newStartVertex = vertexFactory.createVertex();
+    public static <V, E, T> PartialNfa<V, T> zeroOrMore(Graph<V, E> graph, Supplier<V> vertexFactory, PartialNfa<V, T> a, EdgeLabelAccessor<E, T> edgeLabelAccessor) {
+        V newStartVertex = vertexFactory.get();
         graph.addVertex(newStartVertex);
 
         V oldStartVertex = a.getStartVertex();
@@ -113,8 +113,8 @@ public class NfaOps {
      * @param a
      * @return
      */
-    public static <V, E, T> PartialNfa<V, T> oneOrMore(DirectedGraph<V, E> graph, VertexFactory<V> vertexFactory, PartialNfa<V, T> a, EdgeLabelAccessor<E, T> edgeLabelAccessor) {
-        V tmpVertex = vertexFactory.createVertex();
+    public static <V, E, T> PartialNfa<V, T> oneOrMore(Graph<V, E> graph, Supplier<V> vertexFactory, PartialNfa<V, T> a, EdgeLabelAccessor<E, T> edgeLabelAccessor) {
+        V tmpVertex = vertexFactory.get();
         graph.addVertex(tmpVertex);
 
         for(HalfEdge<V, T> looseEnd : a.getLooseEnds()) {

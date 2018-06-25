@@ -39,7 +39,6 @@ import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.NodeValue;
-import org.jgrapht.DirectedGraph;
 import org.jgrapht.GraphMapping;
 import org.jgrapht.alg.isomorphism.IsomorphicGraphMapping;
 import org.jgrapht.alg.isomorphism.VF2SubgraphIsomorphismInspector;
@@ -151,15 +150,15 @@ public class QueryToGraph {
     public static Node filtered = NodeFactory.createURI("http://ex.org/filtered");
 //
 //
-//    //public static unionToGraph(DirectedGraph<Node, LabeledEdge<Node, Node>>)
+//    //public static unionToGraph(org.jgrapht.Graph<Node, LabeledEdge<Node, Node>>)
 //
-    public static void addEdge(DirectedGraph<Node, LabeledEdge<Node, Node>> graph, Node edgeLabel, Node source, Node target) {
+    public static void addEdge(org.jgrapht.Graph<Node, LabeledEdge<Node, Node>> graph, Node edgeLabel, Node source, Node target) {
         graph.addVertex(source);
         graph.addVertex(target);
         graph.addEdge(source, target, new LabeledEdgeImpl<>(source, target, edgeLabel));
     }
 
-    public static Node addQuad(DirectedGraph<Node, LabeledEdge<Node, Node>> graph, Quad quad) {
+    public static Node addQuad(org.jgrapht.Graph<Node, LabeledEdge<Node, Node>> graph, Quad quad) {
         // Allocate a fresh node for the quad
         Node quadNode = NodeFactory.createBlankNode();
         addEdge(graph, Vars.s, quad.getSubject(), quadNode);
@@ -178,9 +177,9 @@ public class QueryToGraph {
      * @param quads
      * @return
      */
-    public static Node quadsToGraphNode(DirectedGraph<Node, LabeledEdge<Node, Node>> graph, Collection<Quad> quads) {
+    public static Node quadsToGraphNode(org.jgrapht.Graph<Node, LabeledEdge<Node, Node>> graph, Collection<Quad> quads) {
         Node quadBlockNode = NodeFactory.createBlankNode();
-        //graph = new DirectedPseudograph<>(LabeledEdgeImpl.class);
+        //graph = new DirectedPseudoorg.jgrapht.Graph<>(LabeledEdgeImpl.class);
         for(Quad quad : quads) {
             Node quadNode = addQuad(graph, quad);
             addEdge(graph, quadBlockMember, quadBlockNode, quadNode);
@@ -190,15 +189,15 @@ public class QueryToGraph {
     }
 
 
-    public static void quadsToGraph(DirectedGraph<Node, LabeledEdge<Node, Node>> graph, Collection<Quad> quads) {
-        //graph = new DirectedPseudograph<>(LabeledEdgeImpl.class);
+    public static void quadsToGraph(org.jgrapht.Graph<Node, LabeledEdge<Node, Node>> graph, Collection<Quad> quads) {
+        //graph = new DirectedPseudoorg.jgrapht.Graph<>(LabeledEdgeImpl.class);
         for(Quad quad : quads) {
             addQuad(graph, quad);
         }
     }
 //
 //    // Filters: Extract all equality filters
-    public static void equalExprsToGraph(DirectedGraph<Node, LabeledEdge<Node, Node>> graph, Collection<? extends Collection<? extends Expr>> dnf) {
+    public static void equalExprsToGraph(org.jgrapht.Graph<Node, LabeledEdge<Node, Node>> graph, Collection<? extends Collection<? extends Expr>> dnf) {
         Set<Map<Var, NodeValue>> maps = DnfUtils.extractConstantConstraints(dnf);
 
         for(Map<Var, NodeValue> map : maps) {
@@ -244,7 +243,7 @@ public class QueryToGraph {
 //
 //
 //
-    public static Stream<Map<Var, Var>> match(DirectedGraph<Node, LabeledEdge<Node, Node>> a, DirectedGraph<Node, LabeledEdge<Node, Node>> b) {
+    public static Stream<Map<Var, Var>> match(org.jgrapht.Graph<Node, LabeledEdge<Node, Node>> a, org.jgrapht.Graph<Node, LabeledEdge<Node, Node>> b) {
 
 //		System.out.println("EDGES:");
 //		a.edgeSet().forEach(System.out::println);

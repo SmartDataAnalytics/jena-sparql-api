@@ -8,18 +8,18 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.utils.model.Directed;
-import org.jgrapht.DirectedGraph;
+import org.jgrapht.Graph;
 
 import com.google.common.collect.AbstractIterator;
 
 public class SimplePathBfsIterator<V, E>
     extends AbstractIterator<List<NestedPath<V, E>>>
 {
-    protected DirectedGraph<V, E> graph;
+    protected Graph<V, E> graph;
     protected List<NestedPath<V, E>> frontier;
     protected Predicate<NestedPath<V, E>> isAccepted;
 
-    public SimplePathBfsIterator(DirectedGraph<V, E> graph, Collection<V> start, Predicate<NestedPath<V, E>> isAccepted) {
+    public SimplePathBfsIterator(Graph<V, E> graph, Collection<V> start, Predicate<NestedPath<V, E>> isAccepted) {
         super();
         this.graph = graph;
         this.frontier = start.stream()
@@ -35,7 +35,7 @@ public class SimplePathBfsIterator<V, E>
         return result;
     }
 
-    public static <V, E> List<NestedPath<V, E>> advanceFrontier(DirectedGraph<V, E> graph, Collection<NestedPath<V, E>> paths) {
+    public static <V, E> List<NestedPath<V, E>> advanceFrontier(Graph<V, E> graph, Collection<NestedPath<V, E>> paths) {
         List<NestedPath<V, E>> result = new ArrayList<>();
 
         for(NestedPath<V, E> path : paths) {

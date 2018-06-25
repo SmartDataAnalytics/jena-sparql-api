@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.views.index;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.trees.Tree;
@@ -209,6 +210,24 @@ public class DirectedGraphTree<T, E>
 	@Override
 	public void setEdgeWeight(LabeledEdge<T, E> e, double weight) {
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Supplier<T> getVertexSupplier() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Supplier<LabeledEdge<T, E>> getEdgeSupplier() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public T addVertex() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

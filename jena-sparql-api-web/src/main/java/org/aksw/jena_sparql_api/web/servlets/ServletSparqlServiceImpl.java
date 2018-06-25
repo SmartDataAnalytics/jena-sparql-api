@@ -21,18 +21,18 @@ public class ServletSparqlServiceImpl
     extends ServletSparqlServiceBase
 {
     @Autowired
-    protected SparqlServiceFactory ssf;
+    protected SparqlServiceFactory sparqlServiceFactory;
 
     @Autowired(required=false)
     protected SparqlStmtParser sparqlStmtParser;
 
     public ServletSparqlServiceImpl() {
-        ssf = null;
+        sparqlServiceFactory = null;
     }
 
     @Override
     protected SparqlServiceFactory getSparqlServiceFactory() {
-        return ssf;
+        return sparqlServiceFactory;
     }
 
     @Override

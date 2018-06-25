@@ -40,7 +40,6 @@ import org.apache.jena.sparql.expr.ExprTransformer;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.util.ExprUtils;
 import org.apache.jena.sparql.util.NodeUtils;
-import org.jgrapht.DirectedGraph;
 
 import com.codepoetics.protonpack.Indexed;
 import com.codepoetics.protonpack.StreamUtils;

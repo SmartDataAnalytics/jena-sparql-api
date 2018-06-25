@@ -2,11 +2,10 @@ package org.aksw.jena_sparql_api.sparql_path2;
 
 import java.util.Set;
 
-import org.jgrapht.DirectedGraph;
-import org.jgrapht.VertexFactory;
+import org.jgrapht.Graph;
 
 public interface Nfa<V, E> {
-    DirectedGraph<V, E> getGraph();
+    Graph<V, E> getGraph();
     Set<V> getStartStates();
     Set<V> getEndStates();
 

@@ -1,17 +1,15 @@
 package org.aksw.jena_sparql_api.sparql_path2;
 
 import java.util.Stack;
+import java.util.function.Supplier;
 
 import org.apache.jena.sparql.path.P_Alt;
 import org.apache.jena.sparql.path.P_Distinct;
 import org.apache.jena.sparql.path.P_FixedLength;
-import org.apache.jena.sparql.path.P_Inverse;
 import org.apache.jena.sparql.path.P_Mod;
 import org.apache.jena.sparql.path.P_Multi;
-import org.apache.jena.sparql.path.P_NegPropSet;
 import org.apache.jena.sparql.path.P_OneOrMore1;
 import org.apache.jena.sparql.path.P_OneOrMoreN;
-import org.apache.jena.sparql.path.P_ReverseLink;
 import org.apache.jena.sparql.path.P_Seq;
 import org.apache.jena.sparql.path.P_Shortest;
 import org.apache.jena.sparql.path.P_ZeroOrMore1;
@@ -19,14 +17,13 @@ import org.apache.jena.sparql.path.P_ZeroOrMoreN;
 import org.apache.jena.sparql.path.P_ZeroOrOne;
 import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.path.PathVisitor;
-import org.jgrapht.DirectedGraph;
-import org.jgrapht.VertexFactory;
+import org.jgrapht.Graph;
 
 abstract class PathVisitorNfaCompilerBase<V, E, T>
     implements PathVisitor
 {
-    protected DirectedGraph<V, E> graph;
-    protected VertexFactory<V> vertexFactory;
+    protected Graph<V, E> graph;
+    protected Supplier<V> vertexFactory;
     protected EdgeLabelAccessor<E, T> edgeLabelAccessor;
 
     protected Stack<PartialNfa<V, T>> stack;
@@ -37,14 +34,14 @@ abstract class PathVisitorNfaCompilerBase<V, E, T>
     }
 
 
-    public PathVisitorNfaCompilerBase(DirectedGraph<V, E> graph,
-            VertexFactory<V> vertexFactory,
+    public PathVisitorNfaCompilerBase(Graph<V, E> graph,
+            Supplier<V> vertexFactory,
             EdgeLabelAccessor<E, T> edgeLabelAccessor) {
         this(graph, vertexFactory, edgeLabelAccessor, new Stack<PartialNfa<V, T>>());
     }
 
-    public PathVisitorNfaCompilerBase(DirectedGraph<V, E> graph,
-            VertexFactory<V> vertexFactory, EdgeLabelAccessor<E, T> edgeLabelAccessor, Stack<PartialNfa<V, T>> stack) {
+    public PathVisitorNfaCompilerBase(Graph<V, E> graph,
+            Supplier<V> vertexFactory, EdgeLabelAccessor<E, T> edgeLabelAccessor, Stack<PartialNfa<V, T>> stack) {
         super();
         this.graph = graph;
         this.vertexFactory = vertexFactory;

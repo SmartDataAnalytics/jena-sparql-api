@@ -22,6 +22,7 @@ import org.apache.jena.sparql.core.DatasetDescription;
 import org.eclipse.jetty.server.Server;
 import org.junit.Assert;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 
 public class TestServletSparqlUpdate {
     // TODO Make this test work in offline mode
@@ -41,7 +42,10 @@ public class TestServletSparqlUpdate {
         UpdateExecutionUtils.copyByConstruct(ssLocal, ssDBpedia, s, 1000);
 
 
-        Server server = ServerUtils.startServer(port, WebAppInitializerSparqlService.create(ConfigApp.class));
+        AnnotationConfigWebApplicationContext rootContext = new AnnotationConfigWebApplicationContext();
+        rootContext.register(ConfigApp.class);
+
+        Server server = ServerUtils.startServer(port, new WebAppInitializerSparqlService(rootContext));
 
 
 
@@ -77,7 +81,10 @@ public class TestServletSparqlUpdate {
     //@Test
     public void test2() throws Exception {
         int port = 7533;
-        Server server = ServerUtils.startServer(port, WebAppInitializerSparqlService.create(ConfigApp.class));
+        AnnotationConfigWebApplicationContext rootContext = new AnnotationConfigWebApplicationContext();
+        rootContext.register(ConfigApp.class);
+
+        Server server = ServerUtils.startServer(port, new WebAppInitializerSparqlService(rootContext));
         server.join();
 
 //      ResourceHandler resHandler = new ResourceHandler();

@@ -1,7 +1,6 @@
 package org.aksw.jena_sparql_api.web.server.spring_boot_playground;
 
 import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.servlet.ServletProperties;
 import org.springframework.stereotype.Component;
 
 @Component

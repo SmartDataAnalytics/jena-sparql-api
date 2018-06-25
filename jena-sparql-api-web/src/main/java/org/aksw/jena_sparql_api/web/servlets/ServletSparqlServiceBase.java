@@ -69,7 +69,7 @@ public abstract class ServletSparqlServiceBase
     @Override
     public QueryExecution createQueryExecution(Query query) {
         SparqlServiceFactory ssf = getSparqlServiceFactory();
-        Assert.notNull(ssf, "Got null for SparqlServiceFactory");
+        Assert.notNull(ssf, "Got null for sparqlServiceFactory");
 
         String serviceUri = getServiceUri();
 
