@@ -22,7 +22,7 @@ import org.apache.jena.sparql.algebra.Op;
 import org.junit.Test;
 
 public class TestUrlText {
-	@Test
+	//@Test
 	public void testUrlTest() throws IOException {
 		PrefixMapping pm = new PrefixMappingImpl();
 		pm.setNsPrefixes(PrefixMapping.Extended);
