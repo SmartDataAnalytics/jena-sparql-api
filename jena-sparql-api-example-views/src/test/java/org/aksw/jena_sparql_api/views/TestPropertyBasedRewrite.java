@@ -68,7 +68,7 @@ public class TestPropertyBasedRewrite {
 	}
 
 	
-	@Test
+	//@Test
 	public void testPropertyBasedRewriteFromCmem() throws Exception {
 		ValueSet<Node> valueSet = ValueSet.create(true, RDF.type.asNode(), RDFS.label.asNode());
 
