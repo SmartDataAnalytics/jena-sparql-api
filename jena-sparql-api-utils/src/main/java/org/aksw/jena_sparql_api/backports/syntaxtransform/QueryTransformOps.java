@@ -207,6 +207,12 @@ public class QueryTransformOps {
 
         @Override
         public void finishVisit(Query query) {}
+
+		@Override
+		public void visitJsonResultForm(Query arg0) {
+			// TODO Auto-generated method stub
+			
+		}
     }
 
     public static Query shallowCopy(Query query) {

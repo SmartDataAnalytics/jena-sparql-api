@@ -5,6 +5,8 @@ import java.util.Iterator;
 import org.aksw.commons.collections.SinglePrefetchIterator;
 import org.aksw.jena_sparql_api.utils.CloseableQueryExecution;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
+import org.apache.jena.atlas.json.JsonArray;
+import org.apache.jena.atlas.json.JsonObject;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
@@ -388,4 +390,14 @@ public abstract class QueryExecutionBaseSelect
     {
         throw new RuntimeException("Not implemented");
     }
+    
+	@Override
+	public JsonArray execJson() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Iterator<JsonObject> execJsonItems() {
+		throw new UnsupportedOperationException();
+	}
 }

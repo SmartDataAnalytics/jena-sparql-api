@@ -3,6 +3,8 @@ package org.aksw.jena_sparql_api.core;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.jena.atlas.json.JsonArray;
+import org.apache.jena.atlas.json.JsonObject;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.Query;
@@ -147,4 +149,14 @@ public class QueryExecutionAdapter
     public Iterator<Quad> execConstructQuads() {
         throw new RuntimeException("Not Implemented.");
     }
+
+	@Override
+	public JsonArray execJson() {
+        throw new RuntimeException("Not Implemented.");
+	}
+
+	@Override
+	public Iterator<JsonObject> execJsonItems() {
+        throw new RuntimeException("Not Implemented.");
+	}
 }

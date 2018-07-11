@@ -7,6 +7,8 @@ import com.nurkiewicz.asyncretry.backoff.Backoff;
 import com.nurkiewicz.asyncretry.policy.AbortRetryException;
 import com.nurkiewicz.asyncretry.policy.RetryPolicy;
 import org.aksw.jena_sparql_api.core.QueryExecutionDecorator;
+import org.apache.jena.atlas.json.JsonArray;
+import org.apache.jena.atlas.json.JsonObject;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.Model;
@@ -221,10 +223,20 @@ public class QueryExecutionRetry
 		public Iterator<Triple> execDescribeTriples() {
 			return owner.execDescribeTriples();
 		}
-
+		
 		@Override
 		public boolean execAsk() {
 			return owner.execAsk();
+		}
+		
+		@Override
+		public JsonArray execJson() {
+			return owner.execJson();
+		}
+
+		@Override
+		public Iterator<JsonObject> execJsonItems() {
+			return owner.execJsonItems();
 		}
 
 		@Override

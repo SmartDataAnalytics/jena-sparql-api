@@ -1,8 +1,6 @@
 package org.aksw.jena_sparql_api.mapper.core;
 
-import org.aksw.jena_sparql_api.sparql.ext.datatypes.RDFDatatypeCalendar;
-import org.apache.jena.datatypes.TypeMapper;
-import org.apache.jena.system.JenaSubsystemLifecycle;
+import org.apache.jena.sys.JenaSubsystemLifecycle;
 
 public class InitJenaSparqlApiMapper
 	implements JenaSubsystemLifecycle

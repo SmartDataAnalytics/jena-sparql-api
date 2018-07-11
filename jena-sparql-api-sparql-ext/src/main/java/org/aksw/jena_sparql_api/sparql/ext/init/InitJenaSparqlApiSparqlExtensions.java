@@ -5,9 +5,8 @@ import org.aksw.jena_sparql_api.sparql.ext.geosparql.JenaExtensionsGeoSparql;
 import org.aksw.jena_sparql_api.sparql.ext.json.JenaExtensionJson;
 import org.aksw.jena_sparql_api.sparql.ext.url.JenaExtensionUrl;
 import org.aksw.jena_sparql_api.sparql.ext.xml.JenaExtensionXml;
-import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.function.FunctionRegistry;
-import org.apache.jena.system.JenaSubsystemLifecycle;
+import org.apache.jena.sys.JenaSubsystemLifecycle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

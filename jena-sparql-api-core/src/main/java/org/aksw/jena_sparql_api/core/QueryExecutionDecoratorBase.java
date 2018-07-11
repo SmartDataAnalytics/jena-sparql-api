@@ -3,6 +3,8 @@ package org.aksw.jena_sparql_api.core;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.jena.atlas.json.JsonArray;
+import org.apache.jena.atlas.json.JsonObject;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.Query;
@@ -278,6 +280,33 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
             afterExec();
         }
     }
+    
+	@Override
+	public JsonArray execJson() {
+        beforeExec();
+        try {
+            return decoratee.execJson();
+        } catch(Exception e) {
+        	onException(e);
+        	throw new RuntimeException(e);
+        } finally {
+            afterExec();
+        }
+	}
+
+	@Override
+	public Iterator<JsonObject> execJsonItems() {
+        beforeExec();
+        try {
+            return decoratee.execJsonItems();
+        } catch(Exception e) {
+        	onException(e);
+        	throw new RuntimeException(e);
+        } finally {
+            afterExec();
+        }
+	}
+
 
     @SuppressWarnings("unchecked")
     public <X> X unwrap(Class<X> clazz) {
@@ -300,4 +329,6 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
     	X result = (X)tmp;
     	return result;
     }
+    
+    
 }
