@@ -152,7 +152,13 @@ public class ValueSet<T>
 		return result;
 	}
 	
+	public boolean isPositive() {
+		return isPositive;
+	}
 	
+	public Set<T> getValue() {
+		return values;
+	}
 	
 	
 	@Override

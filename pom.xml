@@ -774,8 +774,8 @@
 			<!-- Java Topology Suite -->
 			<dependency>
 				<groupId>com.vividsolutions</groupId>
-				<artifactId>jts</artifactId>
-				<version>1.13</version>
+				<artifactId>jts-core</artifactId>
+				<version>1.14.0</version>
 				<!-- Xerces delivered by Jena -->
 				<exclusions>
 					<exclusion>

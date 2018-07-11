@@ -7,9 +7,9 @@ import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.VarUtils;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.core.VarExprList;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.PatternVars;
@@ -126,4 +126,9 @@ public interface Relation {
 //
 //        return result;
     }
+    
+    
+//	public static TernaryRelation from(Triple t) {
+//		new TernaryRelationImpl(ElementUtils.createElement(t), t.getSubject(), t.getPredicate(), t.getObject())
+//	}
 }

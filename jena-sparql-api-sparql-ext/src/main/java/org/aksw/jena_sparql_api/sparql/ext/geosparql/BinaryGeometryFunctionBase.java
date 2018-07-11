@@ -54,7 +54,7 @@ public abstract class BinaryGeometryFunctionBase
 		if(aGeo != null && bGeo != null) {
 			Geometry g = eval(aGeo, bGeo);
 	
-			RDFDatatype dtype = TypeMapper.getInstance().getSafeTypeByName("http://www.opengis.net/ont/geosparql#Geometry");
+			RDFDatatype dtype = TypeMapper.getInstance().getSafeTypeByName("http://www.opengis.net/ont/geosparql#wktLiteral");
 			
 			String str = g != null ? wktWriter.apply(g) : null;
 			result = str == null ? NodeValue.nvNothing : NodeValue.makeNode(NodeFactory.createLiteral(str, dtype));

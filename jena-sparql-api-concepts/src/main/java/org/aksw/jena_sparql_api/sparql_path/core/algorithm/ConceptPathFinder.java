@@ -81,7 +81,7 @@ public class ConceptPathFinder {
     public static ResultSet getPropertyAdjacency(QueryExecutionFactory qef) {
         //String queryStr = "Select Distinct ?x ?y { ?a ?x ?b . ?b ?y ?c }";
         // Exclude RDF memberships
-        String queryStr = "Select Distinct ?x ?y { ?a ?x ?b . ?b ?y ?c . Filter(!regex(?x, '^http://www.w3.org/1999/02/22-rdf-syntax-ns#_') && !regex(?y, '^http://www.w3.org/1999/02/22-rdf-syntax-ns#_')) }";
+        String queryStr = "Select Distinct ?x ?y { ?a ?x ?b . ?b ?y ?c . Filter(!regex(str(?x), '^http://www.w3.org/1999/02/22-rdf-syntax-ns#_') && !regex(str(?y), '^http://www.w3.org/1999/02/22-rdf-syntax-ns#_')) }";
         QueryExecution qe = qef.createQueryExecution(queryStr);
         ResultSet result = qe.execSelect();
 
