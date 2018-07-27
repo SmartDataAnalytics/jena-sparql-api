@@ -22,7 +22,7 @@ import com.google.common.io.CharStreams;
 
 public class TestValidateSparqlQueryList {
 
-	@Test
+//	@Test
 	public void testSparqlTestSuite() throws Exception {
 		InputStream in = new FileInputStream(new File("/home/raven/Projects/Eclipse/eccenca/cmem/raw-queries.sparql"));
 		String str = CharStreams.toString(new InputStreamReader(in, StandardCharsets.UTF_8));
