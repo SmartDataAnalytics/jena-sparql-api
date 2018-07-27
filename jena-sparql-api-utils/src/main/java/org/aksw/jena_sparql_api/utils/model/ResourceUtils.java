@@ -4,6 +4,8 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import org.apache.jena.datatypes.RDFDatatype;
+import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
@@ -99,17 +101,35 @@ public class ResourceUtils {
 	}
 
 	public static boolean canAsLiteral(Statement stmt, Class<?> clazz) {
-		boolean result = stmt.getObject().isLiteral() &&
-				Optional.ofNullable(stmt.getObject().asLiteral().getValue())
-				.map(v -> clazz.isAssignableFrom(v.getClass())).isPresent();
+		TypeMapper tm = TypeMapper.getInstance();
+		RDFDatatype dtype = tm.getTypeByClass(clazz);
+
+		RDFNode o = stmt.getObject();
+				
+		boolean result = o.isLiteral() && NodeMapperRdfDatatype.canMapCore(o.asNode(), dtype);
 		return result;
 	}
 
-	@SuppressWarnings("unchecked")
+//	public static boolean canAsLiteral(Statement stmt, Class<?> clazz) {
+//		boolean result = stmt.getObject().isLiteral() &&
+//				Optional.ofNullable(stmt.getObject().asLiteral().getValue())
+//				.map(v -> clazz.isAssignableFrom(v.getClass())).isPresent();
+//		return result;
+//	}
+
 	public static <T> T getLiteralValue(Statement stmt, Class<T> clazz) {
-		T result = (T)stmt.getObject().asLiteral().getValue();
+		TypeMapper tm = TypeMapper.getInstance();
+		RDFDatatype dtype = tm.getTypeByClass(clazz);
+		RDFNode o = stmt.getObject();
+		T result = NodeMapperRdfDatatype.toJavaCore(o.asNode(), dtype);
 		return result;
 	}
+
+//	@SuppressWarnings("unchecked")
+//	public static <T> T getLiteralValue(Statement stmt, Class<T> clazz) {
+//		T result = (T)stmt.getObject().asLiteral().getValue();
+//		return result;
+//	}
 
 	
 	
