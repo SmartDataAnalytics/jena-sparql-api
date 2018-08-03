@@ -27,6 +27,7 @@ import org.apache.jena.sparql.expr.ExprFunctionOp;
 import org.apache.jena.sparql.expr.ExprList;
 import org.apache.jena.sparql.expr.ExprTransformCopy;
 import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
 
 /**
  * A copying transform that applies an ElementTransform syntax pattern of

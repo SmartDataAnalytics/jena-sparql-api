@@ -36,6 +36,8 @@ import org.apache.jena.sparql.expr.ExprTransform;
 import org.apache.jena.sparql.graph.NodeTransform ;
 import org.apache.jena.sparql.syntax.Element ;
 import org.apache.jena.sparql.syntax.ElementGroup ;
+import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
+import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformSubst;
 
 /** Support for transformation of query abstract syntax. */
 

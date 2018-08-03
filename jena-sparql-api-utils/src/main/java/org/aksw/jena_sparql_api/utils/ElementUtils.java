@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.aksw.commons.collections.MapUtils;
+import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformer;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.core.BasicPattern;
@@ -26,6 +27,8 @@ import org.apache.jena.sparql.syntax.ElementPathBlock;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.ElementUnion;
 import org.apache.jena.sparql.syntax.PatternVars;
+import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
+import org.apache.jena.sparql.syntax.syntaxtransform.ExprTransformNodeElement;
 //import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
 //import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformer;
 //import org.apache.jena.sparql.syntax.syntaxtransform.ExprTransformNodeElement;
@@ -223,9 +226,16 @@ public class ElementUtils {
         Element result = applyNodeTransform(element, nodeTransform);
         return result;
     }
-    
-    @Deprecated // Use TransformElementLib.transform instead
+
+//    public static Element createRenamedElement(Element element, NodeTransform nodeTransform) {
+//    	return applyNodeTransform(element, nodeTransform);
+//    }
+
     public static Element applyNodeTransform(Element element, NodeTransform nodeTransform) {
+    	return applyNodeTransformBackport(element, nodeTransform);
+    }
+
+    public static Element applyNodeTransformJena(Element element, NodeTransform nodeTransform) {
         org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform elementTransform = new ElementTransformSubst2(nodeTransform);//new ElementTransformSubst2(nodeTransform);
         ExprTransform exprTransform = new org.apache.jena.sparql.syntax.syntaxtransform.ExprTransformNodeElement(nodeTransform, elementTransform);
 
@@ -235,6 +245,18 @@ public class ElementUtils {
         
         return result;
     }
+
+    // TODO As long as ApplyElementTransformVistitor cannot change the behavior to simply substitute variables - istead of doing 'SELECT (?x AS ?y)', this method is still needed...
+    @Deprecated // Use TransformElementLib.transform instead
+    public static Element applyNodeTransformBackport(Element element, NodeTransform nodeTransform) {
+        ElementTransform elementTransform = new ElementTransformSubst2(nodeTransform);//new ElementTransformSubst2(nodeTransform);
+        ExprTransform exprTransform = new ExprTransformNodeElement(nodeTransform, elementTransform);
+
+        Element result = ElementTransformer.transform(element, elementTransform, exprTransform);
+        
+        return result;
+    }
+
 
     public static void copyElements(ElementGroup target, Element source) {
         if(source instanceof ElementGroup) {
