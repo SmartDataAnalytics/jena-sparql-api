@@ -15,7 +15,6 @@ import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.shared.impl.PrefixMappingImpl;
-import org.junit.Test;
 
 import com.google.common.collect.Streams;
 import com.google.common.io.CharStreams;
