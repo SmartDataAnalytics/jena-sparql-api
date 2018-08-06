@@ -428,7 +428,7 @@ public class ConceptUtils {
     }
 
 
-    public static Query createQueryList(Concept concept) {
+    public static Query createQueryList(UnaryRelation concept) {
         Query result = createQueryList(concept, null, null);
         return result;
     }
@@ -456,7 +456,7 @@ public class ConceptUtils {
     }
 
 
-    public static Query createQueryList(Concept concept, Range<Long> range) {
+    public static Query createQueryList(UnaryRelation concept, Range<Long> range) {
         long offset = QueryUtils.rangeToOffset(range);
         long limit = QueryUtils.rangeToLimit(range);
 
@@ -464,7 +464,7 @@ public class ConceptUtils {
         return result;
     }
 
-    public static Query createQueryList(Concept concept, Long limit, Long offset) {
+    public static Query createQueryList(UnaryRelation concept, Long limit, Long offset) {
         Query result = new Query();
         result.setQuerySelectType();
         result.setDistinct(true);
