@@ -21,6 +21,7 @@ import org.aksw.commons.collections.IterableCollection;
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeImpl;
 import org.aksw.commons.util.Pair;
+import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_Equals;
@@ -42,6 +43,62 @@ import org.apache.jena.sparql.graph.NodeTransformLib;
  */
 public class ExprUtils {
 
+    public static Entry<Var, Node> tryGetVarConst(Expr a, Expr b) {
+        Entry<Var, Node> result = a.isVariable() && b.isConstant()
+                ? Maps.immutableEntry(a.asVar(), b.getConstant().asNode())
+                : null
+                ;
+
+        return result;
+	}
+    
+    
+    public static Entry<Var, Var> tryGetVarVar(Expr e) {
+     	Entry<Var, Var> result = null;
+
+    	if(e.isFunction()) {
+    		ExprFunction fn = e.getFunction();
+    		List<Expr> args = fn.getArgs();
+    		if(args.size() == 2) {
+    			Expr a = args.get(0);
+    			Expr b = args.get(1);
+    			result = tryGetVarVar(a, b);
+    			if(result == null) {
+    				result = tryGetVarVar(b, a);
+    			}
+    		}
+    	}
+    	
+        return result;	
+    }
+    
+    public static Entry<Var, Var> tryGetVarVar(Expr a, Expr b) {
+    	Entry<Var, Var> result = a.isVariable() && b.isVariable()
+    			? Maps.immutableEntry(a.asVar(), b.asVar())
+    			: null;
+    			
+    	return result;
+    }
+   
+    public static Entry<Var, Node> tryGetVarConst(Expr e) {
+    	Entry<Var, Node> result = null;
+
+    	if(e.isFunction()) {
+    		ExprFunction fn = e.getFunction();
+    		List<Expr> args = fn.getArgs();
+    		if(args.size() == 2) {
+    			Expr a = args.get(0);
+    			Expr b = args.get(1);
+    			result = tryGetVarConst(a, b);
+    			if(result == null) {
+    				result = tryGetVarConst(b, a);
+    			}
+    		}
+    	}
+    	
+        return result;
+	}
+	
 	public static int classify(Expr e) {
 		int result = e.isConstant() ? 0
 				   : e.isVariable() ? 1
