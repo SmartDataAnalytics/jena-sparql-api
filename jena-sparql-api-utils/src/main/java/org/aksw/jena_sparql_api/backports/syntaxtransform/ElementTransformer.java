@@ -23,7 +23,6 @@ import java.util.Deque ;
 import java.util.List ;
 
 import org.apache.jena.atlas.logging.Log ;
-
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.core.Var;
@@ -51,6 +50,8 @@ import org.apache.jena.sparql.syntax.ElementUnion;
 import org.apache.jena.sparql.syntax.ElementVisitor;
 import org.apache.jena.sparql.syntax.ElementVisitorBase;
 import org.apache.jena.sparql.syntax.ElementWalker;
+import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
+import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformCopyBase;
 
 /** A bottom-up application of a transformation of SPARQL syntax Elements.
  * {@linkplain QueryTransformOps#transform} provides the mechanism

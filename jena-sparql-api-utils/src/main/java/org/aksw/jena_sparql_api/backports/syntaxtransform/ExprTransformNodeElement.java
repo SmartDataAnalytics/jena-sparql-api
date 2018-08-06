@@ -19,7 +19,6 @@
 package org.aksw.jena_sparql_api.backports.syntaxtransform;
 
 import org.apache.jena.atlas.lib.InternalErrorException ;
-
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.core.Var;
@@ -33,6 +32,7 @@ import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
 
 /**
  * Special version of ExprTransform for applying a node transform on syntax

@@ -8,8 +8,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransform;
-import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformSubst;
 import org.aksw.jena_sparql_api.backports.syntaxtransform.ExprTransformNodeElement;
 import org.aksw.jena_sparql_api.backports.syntaxtransform.QueryTransformOps;
 import org.aksw.jena_sparql_api.utils.transform.NodeTransformCollectNodes;
@@ -29,6 +27,8 @@ import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.PatternVars;
+import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
+import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformSubst;
 import org.apache.jena.sparql.util.ExprUtils;
 
 import com.google.common.collect.DiscreteDomain;
@@ -38,7 +38,7 @@ public class QueryUtils {
 
     public static Query applyNodeTransform(Query query, NodeTransform nodeTransform) {
 
-        ElementTransform eltrans = new ElementTransformSubst(nodeTransform) ;
+        ElementTransform eltrans = new ElementTransformSubst2(nodeTransform) ;
         //NodeTransform nodeTransform = new NodeTransformSubst(nodeTransform) ;
         ExprTransform exprTrans = new ExprTransformNodeElement(nodeTransform, eltrans) ;
         Query result = QueryTransformOps.transform(query, eltrans, exprTrans) ;

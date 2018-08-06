@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.VarUtils;
-import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.graph.NodeTransform;
@@ -47,6 +46,19 @@ public interface Relation {
 	}
 
 	
+	default UnaryRelation toUnaryRelation() {
+		List<Var> vars = getVars();
+		UnaryRelation result;
+		if(vars.size() == 1) {
+			Element e = getElement();
+			result = new Concept(e, vars.get(0));
+		} else {
+			throw new UnsupportedOperationException();
+		}
+		
+		return result;
+	}
+
 	default BinaryRelation toBinaryRelation() {
 		List<Var> vars = getVars();
 		BinaryRelation result;

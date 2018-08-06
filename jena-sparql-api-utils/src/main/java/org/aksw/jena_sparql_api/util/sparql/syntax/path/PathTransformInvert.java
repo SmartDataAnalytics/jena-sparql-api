@@ -1,13 +1,8 @@
 package org.aksw.jena_sparql_api.util.sparql.syntax.path;
 
 import java.util.List;
-import java.util.function.Function;
 
-import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransform;
-import org.aksw.jena_sparql_api.utils.transform.NodeTransformCollectNodes;
 import org.apache.jena.graph.Node;
-import org.apache.jena.sparql.expr.ExprTransform;
-import org.apache.jena.sparql.graph.NodeTransformLib;
 import org.apache.jena.sparql.path.P_Alt;
 import org.apache.jena.sparql.path.P_Distinct;
 import org.apache.jena.sparql.path.P_FixedLength;
@@ -25,7 +20,6 @@ import org.apache.jena.sparql.path.P_ZeroOrMore1;
 import org.apache.jena.sparql.path.P_ZeroOrMoreN;
 import org.apache.jena.sparql.path.P_ZeroOrOne;
 import org.apache.jena.sparql.path.Path;
-import org.apache.jena.sparql.syntax.Element;
 
 
 
