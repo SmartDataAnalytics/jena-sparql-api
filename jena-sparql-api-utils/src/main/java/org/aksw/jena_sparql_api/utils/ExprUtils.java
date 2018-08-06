@@ -44,8 +44,16 @@ import org.apache.jena.sparql.graph.NodeTransformLib;
 public class ExprUtils {
 
     public static Entry<Var, Node> tryGetVarConst(Expr a, Expr b) {
-        Entry<Var, Node> result = a.isVariable() && b.isConstant()
-                ? Maps.immutableEntry(a.asVar(), b.getConstant().asNode())
+    	Var v = a.isVariable()
+    			? a.asVar()
+    			// Hack to unwrap variables from NodeValue
+    			: Optional.of(a).filter(Expr::isConstant)
+    				.map(Expr::getConstant).map(NodeValue::asNode).filter(Node::isVariable).map(n -> (Var)n)
+    				.orElse(null)
+    			;
+
+    	Entry<Var, Node> result = v != null && b.isConstant()
+                ? Maps.immutableEntry(v, b.getConstant().asNode())
                 : null
                 ;
 
