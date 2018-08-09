@@ -315,7 +315,8 @@ public class PathConstraint {
             Resource s = stmt.getSubject();
             Property p = stmt.getPredicate();
 
-            Triple t = new Triple(p.asNode(), VocabPath.joinsWith.asNode(), node);
+            //Triple t = new Triple(p.asNode(), VocabPath.joinsWith.asNode(), node);
+            Triple t = new Triple(node, VocabPath.joinsWith.asNode(), p.asNode());
             if(!result.contains(t)) {
                 result.add(t);
                 createQueryBackward(model, s.asNode(), p.asResource(), result);

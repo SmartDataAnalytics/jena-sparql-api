@@ -4,10 +4,14 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.sdb.core.Generator;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.path.P_Link;
+import org.apache.jena.sparql.path.P_ReverseLink;
+import org.apache.jena.sparql.path.P_Seq;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 
@@ -27,6 +31,29 @@ public class Path {
 
     public List<Step> getSteps() {
         return steps;
+    }
+    
+    public static org.apache.jena.sparql.path.Path toJena(Step step) {
+    	Node node = NodeFactory.createURI(step.getPropertyName());
+    	org.apache.jena.sparql.path.Path result = step.isInverse()
+    			? new P_ReverseLink(node)
+    			: new P_Link(node);
+    			
+    	return result;
+    }
+
+    public static org.apache.jena.sparql.path.Path toJena(Path path) {
+    	org.apache.jena.sparql.path.Path result = null;
+
+    	List<Step> steps = path.getSteps();
+    	for(int i = 0; i < steps.size(); ++i) {
+    		Step step = steps.get(i);
+    		org.apache.jena.sparql.path.Path contrib = toJena(step);
+    		
+    		result = result == null ? contrib : new P_Seq(result, contrib);
+    	}
+    	
+    	return result;
     }
 
     @Override
