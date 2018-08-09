@@ -15,4 +15,9 @@ public interface UnaryRelation
 		Var v = getVar();
 		return Collections.singletonList(v);		
 	}
+	
+	
+	default boolean isSubjectConcept() {
+		return ConceptUtils.isSubjectConcept(this);
+	}
 }

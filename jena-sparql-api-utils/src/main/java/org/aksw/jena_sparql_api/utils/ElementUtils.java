@@ -49,6 +49,9 @@ public class ElementUtils {
 //        return result;
 //    }
 
+	public static ElementTriplesBlock createElementTriple(Node s, Node p, Node o) {
+		return createElement(new Triple(s, p, o));
+	}
 
     public static ElementTriplesBlock createElement(Triple triple) {
         BasicPattern bgp = new BasicPattern();

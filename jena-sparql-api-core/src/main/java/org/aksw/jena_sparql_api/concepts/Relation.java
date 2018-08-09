@@ -139,6 +139,9 @@ public interface Relation {
 //        return result;
     }
     
+    default List<Element> getElements() {
+        return ElementUtils.toElementList(getElement());
+    }
     
 //	public static TernaryRelation from(Triple t) {
 //		new TernaryRelationImpl(ElementUtils.createElement(t), t.getSubject(), t.getPredicate(), t.getObject())

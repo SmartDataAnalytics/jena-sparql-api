@@ -19,6 +19,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.table.TableData;
@@ -84,12 +85,12 @@ public class ReactiveSparqlUtils {
 		return result;
 	}
 
-	public static void processExecSelect(FlowableEmitter<Binding> emitter, QueryExecution qe) {
+	public static <T> void processExecSelect(FlowableEmitter<T> emitter, QueryExecution qe, Function<? super ResultSet, ? extends T> next) {
 		try {
 			emitter.setCancellable(qe::abort);
 			ResultSet rs = qe.execSelect();
 			while(!emitter.isCancelled() && rs.hasNext()) {
-				Binding binding = rs.nextBinding();
+				T binding = next.apply(rs);
 				emitter.onNext(binding);
 			}
 			emitter.onComplete();
@@ -97,6 +98,7 @@ public class ReactiveSparqlUtils {
 			emitter.onError(e);
 		}
 	}
+
 	
 	public static void processExecConstructTriples(FlowableEmitter<Triple> emitter, QueryExecution qe) {
 		try {
@@ -124,14 +126,22 @@ public class ReactiveSparqlUtils {
 //		}
 //	}
 
-	public static Flowable<Binding> execSelect(Supplier<QueryExecution> qes) {
-		Flowable<Binding> result = Flowable.create(emitter -> {
+	public static <T> Flowable<T> execSelect(Supplier<QueryExecution> qes, Function<? super ResultSet, ? extends T> next) {
+		Flowable<T> result = Flowable.create(emitter -> {
 			QueryExecution qe = qes.get();
-			processExecSelect(emitter, qe);
+			processExecSelect(emitter, qe, next);
 			//new Thread(() -> process(emitter, qe)).start();
 		}, BackpressureStrategy.BUFFER);
 
 		return result;
+	}
+
+	public static Flowable<Binding> execSelect(Supplier<QueryExecution> qes) {
+		return execSelect(qes, ResultSet::nextBinding);
+	}
+
+	public static Flowable<QuerySolution> execSelectQs(Supplier<QueryExecution> qes) {
+		return execSelect(qes, ResultSet::next);
 	}
 
 	public static Flowable<Triple> execConstructTriples(Supplier<QueryExecution> qes) {

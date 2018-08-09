@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.utils.CnfUtils;
 import org.aksw.jena_sparql_api.utils.ElementTreeAnalyser;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
@@ -178,7 +179,7 @@ public class PathConstraint {
         return result;
     }
 
-    public static Concept getPathConstraintsSimple(Concept concept) {
+    public static Concept getPathConstraintsSimple(UnaryRelation concept) {
         Model model = ModelFactory.createDefaultModel();
 
 

@@ -9,8 +9,10 @@ import java.util.Set;
 
 import org.aksw.commons.util.strings.StringUtils;
 import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.concepts.Path;
 import org.aksw.jena_sparql_api.concepts.Step;
+import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.utils.QueryExecutionUtils;
 import org.aksw.jena_sparql_api.core.utils.QueryGenerationUtils;
@@ -134,13 +136,13 @@ public class ConceptPathFinder {
         return joinSummaryModel;
     }
 
-    public static List<Path> findPaths(QueryExecutionFactory qef, Concept sourceConcept, Concept tmpTargetConcept, int nPaths, int maxHops) {
+    public static List<Path> findPaths(QueryExecutionFactory qef, UnaryRelation sourceConcept, UnaryRelation tmpTargetConcept, int nPaths, int maxHops) {
         Model joinSummaryModel = createDefaultJoinSummaryModel(qef);
         List<Path> result = findPaths(qef, sourceConcept, tmpTargetConcept, nPaths, maxHops, joinSummaryModel);
         return result;
     }
 
-    public static List<Path> findPaths(QueryExecutionFactory qef, Concept sourceConcept, Concept tmpTargetConcept, int nPaths, int maxHops, Model joinSummaryModel) {
+    public static List<Path> findPaths(QueryExecutionFactory qef, UnaryRelation sourceConcept, UnaryRelation tmpTargetConcept, int nPaths, int maxHops, Model joinSummaryModel) {
 
         /*
         if(joinSummaryModel == null) {
@@ -148,7 +150,7 @@ public class ConceptPathFinder {
         }*/
 
 
-        Concept targetConcept = tmpTargetConcept.makeDistinctFrom(sourceConcept);
+    	UnaryRelation targetConcept = ConceptUtils.makeDistinctFrom(tmpTargetConcept, sourceConcept);
 
         logger.debug("Distinguished target concept: " + targetConcept);
 

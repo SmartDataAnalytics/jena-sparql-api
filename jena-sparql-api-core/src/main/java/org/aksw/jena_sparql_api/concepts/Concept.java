@@ -157,35 +157,6 @@ public class Concept
         return result;
     }
 
-    /**
-     * True if the concept is isomorph to { ?s ?p ?o }, ?s
-     *
-     * @return
-     */
-    public boolean isSubjectConcept() {
-        if(element instanceof ElementTriplesBlock) {
-            List<Triple> triples = ((ElementTriplesBlock)element).getPattern().getList();
-
-            if(triples.size() == 1) {
-
-                Triple triple = triples.get(0);
-
-                // TODO Refactor into e.g. ElementUtils.isVarsOnly(element)
-                boolean condition =
-                        triple.getSubject().isVariable() &&
-                        triple.getSubject().equals(var) &&
-                        triple.getPredicate().isVariable() &&
-                        triple.getObject().isVariable();
-
-                if(condition) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
     public Concept applyNodeTransform(NodeTransform nodeTransform) {
         Var tmpVar = (Var)nodeTransform.apply(var);
 
@@ -240,65 +211,6 @@ public class Concept
     }
 
 
-    /**
-     * Create a new concept that has no variables with the given one in common
-     *
-     *
-     *
-     * @param that
-     * @return
-     */
-    public Concept makeDistinctFrom(Concept that) {
-
-        Set<String> thisVarNames = new HashSet<String>(VarUtils.getVarNames(PatternVars.vars(this.getElement())));
-        Set<String> thatVarNames = new HashSet<String>(VarUtils.getVarNames(PatternVars.vars(that.getElement())));
-
-        Set<String> commonVarNames = Sets.intersection(thisVarNames, thatVarNames);
-        Set<String> combinedVarNames = Sets.union(thisVarNames, thatVarNames);
-
-        GeneratorBlacklist generator = new GeneratorBlacklist(Gensym.create("v"), combinedVarNames);
-
-        BindingHashMap binding = new BindingHashMap();
-        for(String varName : commonVarNames) {
-            Var oldVar = Var.alloc(varName);
-            Var newVar = Var.alloc(generator.next());
-
-            binding.add(oldVar, newVar);
-        }
-
-        Op op = Algebra.compile(this.element);
-        Op substOp = Substitute.substitute(op, binding);
-        Query tmp = OpAsQuery.asQuery(substOp);
-
-        //Element newElement = tmp.getQueryPattern();
-        ElementGroup newElement = new ElementGroup();
-        newElement.addElement(tmp.getQueryPattern());
-
-        /*
-        if(newElement instanceof ElementGroup) {
-
-
-            ElementPathBlock) {
-        }
-            List<TriplePath> triplePaths = ((ElementPathBlock)newElement).getPattern().getList();
-
-            ElementTriplesBlock block = new ElementTriplesBlock();
-            for(TriplePath triplePath : triplePaths) {
-                block.addTriple(triplePath.asTriple());
-            }
-
-            newElement = block;
-            //newElement = new ElementTriplesBlock(pattern);
-        }
-        */
-
-        Var tmpVar = (Var)binding.get(this.var);
-
-        Var newVar = tmpVar != null ? tmpVar : this.var;
-
-        Concept result = new Concept(newElement, newVar);
-        return result;
-    }
 
     public Query asQuery() {
         Query result = new Query();
