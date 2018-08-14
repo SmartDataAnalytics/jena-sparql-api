@@ -48,6 +48,17 @@ public class ElementUtils {
 //
 //        return result;
 //    }
+	
+	public static ElementTriplesBlock createElementTriple(Triple ... triples) {
+		return createElementTriple(Arrays.asList(triples));
+	}
+
+	public static ElementTriplesBlock createElementTriple(Iterable<Triple> triples) {
+		BasicPattern bgp = new BasicPattern();
+		triples.forEach(bgp::add);
+		ElementTriplesBlock result = new ElementTriplesBlock(bgp);
+		return result;
+	}
 
 	public static ElementTriplesBlock createElementTriple(Node s, Node p, Node o) {
 		return createElement(new Triple(s, p, o));
