@@ -179,7 +179,13 @@ public class ResourceUtils {
 		Optional<Statement> result = findFirst(listProperties(s, p));
 		return result;		
 	}
-	
+
+	public static Optional<RDFNode> tryGetPropertyValue(Resource s, Property p) {
+		Optional<RDFNode> result = getProperty(s, p)
+				.map(Statement::getObject);	
+		return result;		
+	}
+
 	/**
 	 * Get a single value chosen at random from all available values of the given property.
 	 * 
@@ -187,9 +193,8 @@ public class ResourceUtils {
 	 * @param p
 	 * @return
 	 */
-	public static Optional<RDFNode> getPropertyValue(Resource s, Property p) {
-		Optional<RDFNode> result = getProperty(s, p)
-				.map(Statement::getObject);	
+	public static RDFNode getPropertyValue(Resource s, Property p) {
+		RDFNode result = tryGetPropertyValue(s, p).orElse(null);
 		return result;		
 	}
 
@@ -212,6 +217,18 @@ public class ResourceUtils {
 				.filterKeep(stmt -> canAsProperty(stmt, nodeMapper::canMap));
 		return result;
 	}
+	
+	
+	public static <T> Optional<T> tryGetPropertyValue(Resource s, Property p, NodeMapper<T> nodeMapper) {
+		Optional<T> result = findFirst(listPropertyValues(s, p, nodeMapper));
+		return result;		
+	}
+	
+	public static <T> T getPropertyValue(Resource s, Property p, NodeMapper<T> nodeMapper) {
+		T result = tryGetPropertyValue(s, p, nodeMapper).orElse(null);
+		return result;
+	}
+	
 
 	public static <T> ExtendedIterator<T> listPropertyValues(Resource s, Property p, NodeMapper<T> nodeMapper) {
 		ExtendedIterator<T> result = listProperties(s, p, nodeMapper)
@@ -225,12 +242,17 @@ public class ResourceUtils {
 		return result;		
 	}
 
-	public static <T extends RDFNode> Optional<T> getPropertyValue(Resource s, Property p, Class<T> clazz) {
+	public static <T extends RDFNode> Optional<T> tryGetPropertyValue(Resource s, Property p, Class<T> clazz) {
 		Optional<T> result = getProperty(s, p, clazz)
 				.map(stmt -> getPropertyValue(stmt, clazz));
 		return result;		
 	}
-	
+
+	public static <T extends RDFNode> T getPropertyValue(Resource s, Property p, Class<T> clazz) {
+		T result = tryGetPropertyValue(s, p, clazz).orElse(null);
+		return result;		
+	}
+
 
 	public static <T> ExtendedIterator<Statement> listLiteralProperties(Resource s, Property p, Class<T> clazz) {
 		ExtendedIterator<Statement> result = listProperties(s, p)

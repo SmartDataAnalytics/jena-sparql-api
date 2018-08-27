@@ -22,7 +22,7 @@ public abstract class BinaryGeometryFunctionBase
 
 	private static final Logger logger = LoggerFactory.getLogger(E_ST_NearestPoints.class);
 
-	protected Function<String, Geometry> wktParser = new FN_ParseWkt();    
+	protected Function<String, Geometry> wktParser = new FN_ParseWkt();
 	protected Function<Geometry, String> wktWriter = new WKTWriter()::write;
 
     protected GeometryFactory gf = new GeometryFactory(new PrecisionModel(PrecisionModel.FLOATING), 4326);

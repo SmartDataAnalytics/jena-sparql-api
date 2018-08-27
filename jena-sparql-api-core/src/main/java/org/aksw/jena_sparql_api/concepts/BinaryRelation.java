@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.concepts;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -12,11 +13,21 @@ import org.apache.jena.sparql.syntax.ElementGroup;
 import com.google.common.collect.Sets;
 
 public interface BinaryRelation 
-	extends Relation
+	extends GeneralizedBinaryRelation
 {
 	Var getSourceVar();
 	Var getTargetVar();
 	
+	@Override
+	default Set<Var> getSourceVars() {
+		return Collections.singleton(getSourceVar());
+	}
+
+	@Override
+	default Set<Var> getTargetVars() {
+		return Collections.singleton(getTargetVar());
+	}
+
 	default Set<Var> getMarkedVars() {
 		Set<Var> result = new LinkedHashSet<>(Arrays.asList(getSourceVar(), getTargetVar()));
 		return result;
