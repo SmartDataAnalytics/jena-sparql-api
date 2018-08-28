@@ -272,9 +272,14 @@ public class ResourceUtils {
 		return result;
 	}
 	
-	public static <T> Optional<T> getLiteralPropertyValue(Resource s, Property p, Class<T> clazz) {
+	public static <T> Optional<T> tryGetLiteralPropertyValue(Resource s, Property p, Class<T> clazz) {
 		Optional<T> result = getLiteralProperty(s, p, clazz)
 				.map(stmt -> getLiteralValue(stmt, clazz));
+		return result;		
+	}
+
+	public static <T> T getLiteralPropertyValue(Resource s, Property p, Class<T> clazz) {
+		T result = tryGetLiteralPropertyValue(s, p, clazz).orElse(null);
 		return result;		
 	}
 
