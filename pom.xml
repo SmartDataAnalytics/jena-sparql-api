@@ -784,6 +784,12 @@
 					</exclusion>
 				</exclusions>
 			</dependency>
+            <!-- https://mvnrepository.com/artifact/com.vividsolutions/jts-io -->
+            <dependency>
+                <groupId>com.vividsolutions</groupId>
+                <artifactId>jts-io</artifactId>
+                <version>1.14.0</version>
+            </dependency>
 
 			<!-- Embedded Databases (will be moved to separate package) -->
 			<dependency>
