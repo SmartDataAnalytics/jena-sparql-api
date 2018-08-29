@@ -14,9 +14,7 @@ public class TestE_Gml2Wkt {
     QueryExecutionFactory.create(queryStr, ModelFactory.createDefaultModel())
         .execSelect()
         .forEachRemaining(qs -> tmpActual[0] = qs.get("g").asNode().getLiteralLexicalForm());
-
     String actual = tmpActual[0];
-    // TODO Compare the geometry objects
     String expected = "LINESTRING (6.8 5.3, 6.1 5.1)";
     Assert.assertEquals(expected, actual);
   }

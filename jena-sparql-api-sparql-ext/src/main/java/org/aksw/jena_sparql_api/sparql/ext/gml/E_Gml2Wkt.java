@@ -9,7 +9,6 @@ import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.NodeValue;
-import org.apache.jena.sparql.expr.nodevalue.NodeValueString;
 import org.apache.jena.sparql.function.FunctionBase1;
 
 public class E_Gml2Wkt extends FunctionBase1 {
@@ -27,10 +26,8 @@ public class E_Gml2Wkt extends FunctionBase1 {
         RDFDatatype datatype =
             TypeMapper.getInstance()
                 .getSafeTypeByName("http://www.opengis.net/ont/geosparql#wktLiteral");
-        String str = geometry != null ? wktWriter.write(geometry) : null;
-        result =
-            str != null ? NodeValue.makeNode(NodeFactory.createLiteral(str, datatype)) : result;
-        result = new NodeValueString(wktWriter.write(geometry));
+        String wktString = wktWriter.write(geometry);
+        result = NodeValue.makeNode(NodeFactory.createLiteral(wktString, datatype));
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
