@@ -312,6 +312,31 @@ public class ResourceUtils {
 		return result;
 	}
 
+	public static Optional<Resource> tryGetReversePropertyValue(Resource s, Property p) {
+		Optional<Resource> result = getReverseProperty(s, p)
+				.map(Statement::getSubject);	
+		return result;		
+	}
+
+	public static Resource getReversePropertyValue(Resource s, Property p) {
+		Resource result = tryGetReversePropertyValue(s, p).orElse(null);
+		return result;		
+	}
+
+	public static <T extends Resource> Optional<T> tryGetReversePropertyValue(Resource s, Property p, Class<T> clazz) {
+		Optional<T> result = getReverseProperty(s, p, clazz)
+				.map(Statement::getSubject)
+				.map(r -> r.as(clazz));
+
+		return result;		
+	}
+
+	public static <T extends Resource> T getReversePropertyValue(Resource s, Property p, Class<T> clazz) {
+		T result = tryGetReversePropertyValue(s, p, clazz).orElse(null);
+		return result;		
+	}
+
+
 
 	public static ExtendedIterator<Resource> listReversePropertyValues(Resource s, Property p) {
 		ExtendedIterator<Resource> result = listReverseProperties(s, p)
