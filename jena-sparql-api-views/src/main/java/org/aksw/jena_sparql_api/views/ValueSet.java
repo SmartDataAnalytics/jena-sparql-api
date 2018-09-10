@@ -4,6 +4,13 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * 
+ * 
+ * @author Claus Stadler, Aug 1, 2018
+ *
+ * @param <T>
+ */
 public class ValueSet<T>
 {
 	private Set<T> values;

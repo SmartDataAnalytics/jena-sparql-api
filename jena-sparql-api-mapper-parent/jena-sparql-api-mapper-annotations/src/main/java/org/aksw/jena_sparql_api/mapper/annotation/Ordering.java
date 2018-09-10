@@ -5,8 +5,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import org.aksw.commons.collections.NaturalComparator;
-
 /**
  * This annotation is used to resolve which value
  * to set as a property value if there are multiple
@@ -18,5 +16,5 @@ import org.aksw.commons.collections.NaturalComparator;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.METHOD})
 public @interface Ordering {
-    Class<?> value() default NaturalComparator.class;
+    Class<?> value(); // default NaturalComparator.class;
 }

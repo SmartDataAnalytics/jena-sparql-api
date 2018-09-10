@@ -319,7 +319,7 @@ public class DnfUtils
 
 
     public static ExprList eval(ExprList exprs) {
-        System.out.println("ExprList.size = " + exprs.size());
+        //System.out.println("ExprList.size = " + exprs.size());
 
         ExprList result = new ExprList();
         for(Expr expr : exprs) {

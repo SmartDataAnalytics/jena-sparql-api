@@ -70,8 +70,8 @@ public class MainLsqQueryContainmentEvaluation {
         SparqlEntityManagerFactory emf = new SparqlEntityManagerFactory();
         //Model model = RDFDataMgr.loadModel("lsq-sparqlqc-synthetic-simple.ttl", Lang.TURTLE);
         //SparqlService ss = FluentSparqlService.from(model).create();
-        SparqlService ss = FluentSparqlService.http("http://localhost:8950/sparql").create();
-        //SparqlService ss = FluentSparqlService.http("http://lsq.aksw.org/sparql").create();
+        //SparqlService ss = FluentSparqlService.http("http://localhost:8950/sparql").create();
+        SparqlService ss = FluentSparqlService.http("http://lsq.aksw.org/sparql").create();
 
         emf.setSparqlService(ss);
         emf.addScanPackageName(MainSparqlQueryToGraph.class.getPackage().getName());

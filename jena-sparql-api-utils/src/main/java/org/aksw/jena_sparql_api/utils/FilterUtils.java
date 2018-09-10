@@ -337,7 +337,7 @@ public class FilterUtils
 		Set<Set<Expr>> result = new HashSet<Set<Expr>>();
 		
 		for(ExprList clause : clauses) {
-			result.add(new HashSet<Expr>(IterableCollection.wrap(clause)));
+			result.add(new HashSet<Expr>(clause.getList()));
 		}
 		
 		return result;

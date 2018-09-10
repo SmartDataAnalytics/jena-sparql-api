@@ -8,6 +8,7 @@ import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
+import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
@@ -107,6 +108,14 @@ public class ResourceUtils {
 		RDFNode o = stmt.getObject();
 				
 		boolean result = o.isLiteral() && NodeMapperRdfDatatype.canMapCore(o.asNode(), dtype);
+		return result;
+	}
+
+	public static <T> Literal createTypedLiteral(Model model, Class<T> clazz, T o) {
+		TypeMapper tm = TypeMapper.getInstance();
+		RDFDatatype dtype = tm.getTypeByClass(clazz);
+
+		Literal result = model.createTypedLiteral((Object)o, dtype);
 		return result;
 	}
 
@@ -514,9 +523,11 @@ public class ResourceUtils {
 		
 
 	public static <T> boolean updateLiteralProperty(Resource s, Property p, Class<T> clazz, T o) {
-		boolean result = replaceProperties(s.getModel(),
+		Model m = s.getModel();
+		
+		boolean result = replaceProperties(m,
 				listLiteralProperties(s, p, clazz),
-				o == null ? null : s.getModel().createLiteralStatement(s, p, o));
+				o == null ? null : m.createStatement(s, p, createTypedLiteral(m, clazz, o)));
 		
 		return result;
 	}
