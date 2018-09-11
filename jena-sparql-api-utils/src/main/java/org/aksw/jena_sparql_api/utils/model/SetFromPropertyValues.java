@@ -37,6 +37,15 @@ public class SetFromPropertyValues<T extends RDFNode>
 	}
 
 	@Override
+	public boolean contains(Object o) {
+		boolean result = o instanceof RDFNode
+				? subject.getModel().contains(subject, property, (RDFNode)o)
+				: false;
+				
+		return result;
+	}
+	
+	@Override
 	public Iterator<T> iterator() {
 		Iterator<T> result = ResourceUtils.listPropertyValues(subject, property, clazz);
 		return result;
