@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.utils;
 
 import java.util.Collection;
+import java.util.Random;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -12,6 +13,26 @@ import com.google.common.collect.Range;
 public class RangeUtils {
     public static final Range<Long> rangeStartingWithZero = Range.atLeast(0l);
 
+    public static long pickLong(Range<Long> range, Random random) {
+    	Range<Long> norm = range.intersection(Range.closed(Long.MIN_VALUE, Long.MAX_VALUE));
+    	long l = norm.lowerEndpoint();
+    	long u = norm.upperEndpoint();
+    	double pick = random.nextDouble();
+    	long result = l + Math.round(pick * (u - l));
+    	return result;
+    }
+
+    public static double pickDouble(Range<Double> range, Random random) {
+    	Range<Double> norm = range.intersection(Range.closed(Double.MIN_VALUE, Double.MAX_VALUE));
+    	double l = norm.lowerEndpoint();
+    	double u = norm.upperEndpoint();
+    	double pick = random.nextDouble();
+    	double result = l + pick * (u - l);
+    	return result;
+    }
+    
+    
+    
     public static CountInfo toCountInfo(Range<? extends Number> range) {
     	Long min = range.hasLowerBound() ? range.lowerEndpoint().longValue() : 0;
     	Long max = range.hasUpperBound() ? range.upperEndpoint().longValue() : null;
