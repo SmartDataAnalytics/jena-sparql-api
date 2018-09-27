@@ -21,9 +21,8 @@ public abstract class DelayerBase
 
     @Override
     public synchronized void doDelay() throws InterruptedException{
-        long now = System.currentTimeMillis();
 
-        long remainingDelay = getDelay() - (now - getLastRequestTime());
+        long remainingDelay = computeRemainingDelayInMs();
 
         if (remainingDelay > 0l) {
             logger.debug("Delaying by " + remainingDelay + "ms.");
@@ -33,4 +32,15 @@ public abstract class DelayerBase
         setLastRequestTime(System.currentTimeMillis());
     }
 
+    public long computeRemainingDelayInMs() {
+        long now = System.currentTimeMillis();
+        long tmp = getDelay() - (now - getLastRequestTime());
+        long result = Math.max(0, tmp);
+        return result;
+    }
+    
+    @Override
+    public String toString() {
+    	return "Delayer with " + computeRemainingDelayInMs() + "ms remaining";
+    }
 }

@@ -145,7 +145,8 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
             return decoratee.execSelect();
         } catch(Exception e) {
         	onException(e);
-        	throw new RuntimeException(e);
+        	throw e;
+//        	throw new RuntimeException(e);
         } finally {
             afterExec();
         }
@@ -158,7 +159,8 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
             return decoratee.execConstruct();
         } catch(Exception e) {
         	onException(e);
-        	throw new RuntimeException(e);
+        	//throw new RuntimeException(e);
+        	throw e;
         } finally {
             afterExec();
         }
@@ -171,7 +173,8 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
             return decoratee.execConstruct(model);
         } catch(Exception e) {
         	onException(e);
-        	throw new RuntimeException(e);
+//        	throw new RuntimeException(e);
+        	throw e;
         } finally {
             afterExec();
         }
@@ -184,7 +187,8 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
             return decoratee.execDescribe();
         } catch(Exception e) {
         	onException(e);
-        	throw new RuntimeException(e);
+//        	throw new RuntimeException(e);
+        	throw e;
         } finally {
             afterExec();
         }
@@ -197,7 +201,8 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
             return decoratee.execDescribe(model);
         } catch(Exception e) {
         	onException(e);
-        	throw new RuntimeException(e);
+//        	throw new RuntimeException(e);
+        	throw e;
         } finally {
             afterExec();
         }
@@ -210,7 +215,8 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
             return decoratee.execAsk();
         } catch(Exception e) {
         	onException(e);
-        	throw new RuntimeException(e);
+//        	throw new RuntimeException(e);
+        	throw e;
         } finally {
             afterExec();
         }
@@ -223,7 +229,8 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
             return decoratee.execConstructTriples();
         } catch(Exception e) {
         	onException(e);
-        	throw new RuntimeException(e);
+//        	throw new RuntimeException(e);
+        	throw e;
         } finally {
             afterExec();
         }
@@ -236,7 +243,8 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
             return decoratee.execDescribeTriples();
         } catch(Exception e) {
         	onException(e);
-        	throw new RuntimeException(e);
+//        	throw new RuntimeException(e);
+        	throw e;
         } finally {
             afterExec();
         }
@@ -249,7 +257,8 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
             return decoratee.execConstructQuads();
         } catch(Exception e) {
         	onException(e);
-        	throw new RuntimeException(e);
+//        	throw new RuntimeException(e);
+        	throw e;
         } finally {
             afterExec();
         }
@@ -262,7 +271,8 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
             return decoratee.execConstructDataset();
         } catch(Exception e) {
         	onException(e);
-        	throw new RuntimeException(e);
+//        	throw new RuntimeException(e);
+        	throw e;
         } finally {
             afterExec();
         }
@@ -275,7 +285,8 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
             return decoratee.execConstructDataset(dataset);
         } catch(Exception e) {
         	onException(e);
-        	throw new RuntimeException(e);
+//        	throw new RuntimeException(e);
+        	throw e;
         } finally {
             afterExec();
         }
@@ -288,7 +299,8 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
             return decoratee.execJson();
         } catch(Exception e) {
         	onException(e);
-        	throw new RuntimeException(e);
+//        	throw new RuntimeException(e);
+        	throw e;
         } finally {
             afterExec();
         }
@@ -301,7 +313,8 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
             return decoratee.execJsonItems();
         } catch(Exception e) {
         	onException(e);
-        	throw new RuntimeException(e);
+//        	throw new RuntimeException(e);
+        	throw e;
         } finally {
             afterExec();
         }

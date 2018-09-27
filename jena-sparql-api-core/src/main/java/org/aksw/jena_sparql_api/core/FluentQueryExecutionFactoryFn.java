@@ -9,12 +9,14 @@ import org.aksw.jena_sparql_api.cache.extra.CacheBackend;
 import org.aksw.jena_sparql_api.cache.extra.CacheFrontend;
 import org.aksw.jena_sparql_api.cache.extra.CacheFrontendImpl;
 import org.aksw.jena_sparql_api.delay.core.QueryExecutionFactoryDelay;
+import org.aksw.jena_sparql_api.delay.extra.DelayerDefault;
 import org.aksw.jena_sparql_api.limit.QueryExecutionFactoryLimit;
 import org.aksw.jena_sparql_api.pagination.core.QueryExecutionFactoryPaginated;
 import org.aksw.jena_sparql_api.parse.QueryExecutionFactoryParse;
 import org.aksw.jena_sparql_api.post_process.QueryExecutionFactoryPostProcess;
 import org.aksw.jena_sparql_api.prefix.core.QueryExecutionFactoryPrefix;
 import org.aksw.jena_sparql_api.retry.core.QueryExecutionFactoryRetry;
+import org.aksw.jena_sparql_api.timeout.QueryExecutionTimeoutExogeneous;
 import org.aksw.jena_sparql_api.transform.QueryExecutionFactoryQueryTransform;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
@@ -51,6 +53,13 @@ public class FluentQueryExecutionFactoryFn<P>
         this.parentSupplier = parentSupplier;
         this.fn = fn;
     }
+
+//    public FluentQueryExecutionFactoryFn<P> withDelayFromNow(final int delayDuration, final TimeUnit delayTimeUnit) {
+//    	Delayer delayer = DelayerDefault.createFromNow(delay)
+//    	delayTimeUnit.toMillis(delayDuration)
+//    	
+//        compose(qef -> new QueryExecutionFactoryDelay(qef, delayDuration, delayTimeUnit));
+//    }
 
     public FluentQueryExecutionFactoryFn<P> withDelay(final int delayDuration, final TimeUnit delayTimeUnit) {
         compose(qef -> new QueryExecutionFactoryDelay(qef, delayDuration, delayTimeUnit));
@@ -168,6 +177,18 @@ public class FluentQueryExecutionFactoryFn<P>
     }
 
     /**
+     * Given a consumer of 'x', return a function that
+     * first invokes the consumer and then yields 'x'.
+     * (i.e. return an identity function with the consumer's side effect)
+     * 
+     * @param consumer
+     * @return
+     */
+    public static <T> Function<T, T> toFunction(Consumer<T> consumer) {
+    	return x -> { consumer.accept(x); return x; };
+    }
+    
+    /**
      * Configure a function for post processing QueryExecution instances before returning them to the application.
      *
      * Note: consumer is probably not the semantically appropriate interface
@@ -176,19 +197,41 @@ public class FluentQueryExecutionFactoryFn<P>
      * @return
      */
     public FluentQueryExecutionFactoryFn<P> withPostProcessor(final Consumer<QueryExecution> postProcessor) {
-        compose(qef -> new QueryExecutionFactoryPostProcess(qef, postProcessor));
-
-//    	compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
-//            @Override
-//            public QueryExecutionFactory apply(QueryExecutionFactory qef) {
-//                QueryExecutionFactory r = new QueryExecutionFactoryPostProcess(qef, postProcessor);
-//                return r;
-//            }
-//        });
-
+        withPostProcessor(toFunction(postProcessor));
         return this;
     }
 
+    public FluentQueryExecutionFactoryFn<P> withPostProcessor(final Function<? super QueryExecution, ? extends QueryExecution> postProcessor) {
+        compose(qef -> new QueryExecutionFactoryPostProcess(qef, postProcessor));
+        
+        return this;
+    }
+
+	public FluentQueryExecutionFactoryFn<P> withExogeneousTimeout() {
+		withPostProcessor(qe -> {
+			QueryExecution r = new QueryExecutionTimeoutExogeneous(qe);
+			return r;
+		});
+	
+		return this;
+	}
+
+//	public FluentQueryExecutionFactoryFn<P> withExogeneousTimeout(long millis) {
+//		withPostProcessor(qe -> {
+//			QueryExecution r = new QueryExecutionTimeoutExogeneous(qe);
+//			r.setTimeout(millis);
+//			return r;
+//		});
+////		compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
+////			@Override
+////			public QueryExecutionFactory apply(QueryExecutionFactory qef) {
+////				QueryExecutionFactory r = new QueryExecutionTimeoutExogeneous(qef, postProcessor);
+////				return r;
+////			}
+////		});
+//
+//		return this;
+//	}
 
 //    public FluentQueryExecutionFactoryFn<P> withTimeoutHandler(final Consumer<SparqlStmtQuery> callback) {
 //        compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
