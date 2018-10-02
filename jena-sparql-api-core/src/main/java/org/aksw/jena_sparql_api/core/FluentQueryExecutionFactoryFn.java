@@ -196,7 +196,7 @@ public class FluentQueryExecutionFactoryFn<P>
      * @param postProcessor
      * @return
      */
-    public FluentQueryExecutionFactoryFn<P> withPostProcessor(final Consumer<QueryExecution> postProcessor) {
+    public FluentQueryExecutionFactoryFn<P> withInPlacePostProcessor(final Consumer<QueryExecution> postProcessor) {
         withPostProcessor(toFunction(postProcessor));
         return this;
     }

@@ -32,15 +32,15 @@ public class MainSparqlView {
 
         QueryExecutionFactory xxx = FluentQueryExecutionFactory.http("http://dbpedia.org/sparql", "http://dbpedia.org")
                 .config()
-                    .withPostProcessor(qe ->
+                    .withInPlacePostProcessor(qe ->
                             ((QueryEngineHTTP)((QueryExecutionHttpWrapper)qe).getDecoratee())
                             .setModelContentType(WebContent.contentTypeRDFXML))
-                    .withPostProcessor(aoeu -> System.out.println("a" + aoeu))
+                    .withInPlacePostProcessor(aoeu -> System.out.println("a" + aoeu))
                     .withParser(SparqlQueryParserImpl.create(Syntax.syntaxARQ))
                     .withDefaultLimit(10, true)
-                    .withPostProcessor(aoeu -> System.out.println("b" + aoeu))
+                    .withInPlacePostProcessor(aoeu -> System.out.println("b" + aoeu))
                     .withPagination(1000)
-                    .withPostProcessor(aoeu -> System.out.println("c" + aoeu))
+                    .withInPlacePostProcessor(aoeu -> System.out.println("c" + aoeu))
                 .end()
                 .create();
 
