@@ -196,19 +196,19 @@ public class FluentQueryExecutionFactoryFn<P>
      * @param postProcessor
      * @return
      */
-    public FluentQueryExecutionFactoryFn<P> withInPlacePostProcessor(final Consumer<QueryExecution> postProcessor) {
-        withPostProcessor(toFunction(postProcessor));
+    public FluentQueryExecutionFactoryFn<P> withPostProcessor(final Consumer<QueryExecution> postProcessor) {
+        withPostTransformer(toFunction(postProcessor));
         return this;
     }
 
-    public FluentQueryExecutionFactoryFn<P> withPostProcessor(final Function<? super QueryExecution, ? extends QueryExecution> postProcessor) {
+    public FluentQueryExecutionFactoryFn<P> withPostTransformer(final Function<? super QueryExecution, ? extends QueryExecution> postProcessor) {
         compose(qef -> new QueryExecutionFactoryPostProcess(qef, postProcessor));
         
         return this;
     }
 
 	public FluentQueryExecutionFactoryFn<P> withExogeneousTimeout() {
-		withPostProcessor(qe -> {
+		withPostTransformer(qe -> {
 			QueryExecution r = new QueryExecutionTimeoutExogeneous(qe);
 			return r;
 		});
