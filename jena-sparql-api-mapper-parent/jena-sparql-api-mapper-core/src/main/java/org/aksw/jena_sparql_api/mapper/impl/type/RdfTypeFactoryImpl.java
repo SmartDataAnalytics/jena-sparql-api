@@ -5,6 +5,7 @@ import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -55,6 +56,8 @@ import org.springframework.expression.common.TemplateParserContext;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.util.Assert;
+
+import com.google.common.base.Strings;
 
 public class RdfTypeFactoryImpl
     implements RdfTypeFactory
@@ -257,6 +260,45 @@ public class RdfTypeFactoryImpl
         rdfClass.setPopulated(true);
     }
 
+    
+    public String getIri(EntityOps entityOps, PropertyOps pd) {
+
+        String propertyName = pd.getName();
+
+        Optional<Iri> iriOpt = Optional.ofNullable(pd.findAnnotation(Iri.class));
+        String iriStr = iriOpt
+        		.map(Iri::value)
+        		.map(iriExprStr -> resolveIriExpr(iriExprStr, null))
+        		.orElse(null);
+
+        Optional<IriNs> propertyIriNsOpt = Optional.ofNullable(pd.findAnnotation(IriNs.class));
+        
+        Optional<IriNs> effectiveIriNsOpt = propertyIriNsOpt;
+
+        // If an Iri annotation without value is present, require a IriNs on class level
+        if(iriOpt.isPresent() && Strings.isNullOrEmpty(iriStr)) {
+            Optional<IriNs> classIriNs = Optional.ofNullable(entityOps.findAnnotation(IriNs.class));
+
+            effectiveIriNsOpt = classIriNs;
+        }
+        
+        String iriNsStr = effectiveIriNsOpt
+        		.map(IriNs::value)
+        		.map(iriNsExprStr -> iriNsExprStr + (iriNsExprStr.contains(":") ? "" : ":") + propertyName)
+        		.map(iriNsExprStr -> resolveIriExpr(iriNsExprStr, null))
+        		.orElse(null);
+
+        
+        if(iriNsStr != null) {
+            if(!Strings.isNullOrEmpty(iriStr)) {
+                throw new RuntimeException("@Iri and @IriNs annotations on same element is invalid");
+            }
+
+            iriStr = iriNsStr;
+        }
+
+        return iriStr;
+    }
 
     //RdfPopulatorProperty
     protected void processProperty(RdfClass rdfClass, EntityOps entityOps, PropertyOps pd, Frontier<RdfClass> frontier) {
@@ -272,24 +314,7 @@ public class RdfTypeFactoryImpl
         boolean isCandidate = isReadable && isWritable;
 
 
-        Iri iriAnn = pd.findAnnotation(Iri.class); //findPropertyAnnotation(clazz, pd, Iri.class);
-        String iriExprStr = iriAnn == null ? null : iriAnn.value();
-        String iriStr = iriExprStr == null ? null : resolveIriExpr(iriExprStr, null);
-
-        IriNs iriNsAnn = pd.findAnnotation(IriNs.class);
-        String iriNsExprStr = iriNsAnn == null ? null : iriNsAnn.value();
-        iriNsExprStr = iriNsExprStr == null ? null : iriNsExprStr + (iriNsExprStr.contains(":") ? "" : ":") + propertyName;
-        String iriNsStr = iriNsExprStr == null ? null : resolveIriExpr(iriNsExprStr, null);
-
-        if(iriNsStr != null) {
-            if(iriStr != null) {
-                throw new RuntimeException("@Iri and @IriNs annotations on same element is invalid");
-            }
-
-            iriStr = iriNsStr;
-        }
-
-
+        String iriStr = getIri(entityOps, pd);
 
 
         boolean hasIri = iriStr != null && !iriStr.isEmpty();

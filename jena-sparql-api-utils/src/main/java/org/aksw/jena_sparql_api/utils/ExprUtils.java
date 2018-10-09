@@ -27,8 +27,11 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.E_LogicalAnd;
 import org.apache.jena.sparql.expr.E_LogicalOr;
+import org.apache.jena.sparql.expr.E_OneOf;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprFunction;
+import org.apache.jena.sparql.expr.ExprList;
+import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.FunctionLabel;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.graph.NodeTransform;
@@ -42,6 +45,14 @@ import org.apache.jena.sparql.graph.NodeTransformLib;
  *         Time: 6:18 PM
  */
 public class ExprUtils {
+
+	public static E_OneOf oneOf(Node v, Node ... args) {
+		ExprList el = new ExprList();
+		el.addAll(ExprListUtils.nodesToExprs(Arrays.asList(args)));
+
+		Expr base = v.isVariable() ? new ExprVar(v) : NodeValue.makeNode(v);
+		return new E_OneOf(base, el);
+	}
 
     public static Entry<Var, Node> tryGetVarConst(Expr a, Expr b) {
     	Var v = a.isVariable()

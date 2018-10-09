@@ -29,6 +29,8 @@ import org.apache.jena.sparql.syntax.ElementUnion;
 import org.apache.jena.sparql.syntax.PatternVars;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
 import org.apache.jena.sparql.syntax.syntaxtransform.ExprTransformNodeElement;
+
+import com.google.common.collect.Iterables;
 //import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
 //import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformer;
 //import org.apache.jena.sparql.syntax.syntaxtransform.ExprTransformNodeElement;
@@ -204,8 +206,8 @@ public class ElementUtils {
         return result;
     }
 
-    public static Element groupIfNeeded(Collection<Element> members) {
-        Element result = members.size() == 1
+    public static Element groupIfNeeded(Iterable<? extends Element> members) {
+        Element result = Iterables.size(members) == 1
                 ? members.iterator().next()
                 : createElementGroup(members)
                 ;
@@ -219,7 +221,7 @@ public class ElementUtils {
         return result;
     }
 
-    public static ElementGroup createElementGroup(Iterable<Element> members) {
+    public static ElementGroup createElementGroup(Iterable<? extends Element> members) {
         ElementGroup result = new ElementGroup();
         for(Element member : members) {
             result.addElement(member);

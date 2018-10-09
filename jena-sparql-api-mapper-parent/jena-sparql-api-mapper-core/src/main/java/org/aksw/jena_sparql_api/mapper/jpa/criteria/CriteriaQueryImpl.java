@@ -28,17 +28,8 @@ import com.google.common.collect.Iterables;
 /**
  * Criteria query implementation.
  *
- * Collects clauses of criteria query (e.g. select projections, from/join, where
- * conditions, order by). Eventually translates these clauses to a similar form
- * of Expression tree that can be interpreted and executed against a data store
- * by OpenJPA kernel.
- *
- * @author Pinaki Poddar
- * @author Fay Wang
- *
- * @since 2.0.0
  */
-class CriteriaQueryImpl<T> implements CriteriaQuery<T> {
+public class CriteriaQueryImpl<T> implements CriteriaQuery<T> {
 //    private static final Localizer _loc = Localizer.forPackage(CriteriaQueryImpl.class);
 
     protected Metamodel model;
