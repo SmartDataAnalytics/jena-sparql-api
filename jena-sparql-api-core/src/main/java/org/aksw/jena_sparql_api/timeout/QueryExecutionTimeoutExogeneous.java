@@ -11,6 +11,14 @@ import org.apache.jena.query.QueryExecution;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Query execution that applies a timeout "from the outside" (= exogeneous).
+ * Upon query execution, a new thread is created that calls .abort() on the
+ * underlying query execution once the timeout is reached.
+ * 
+ * @author Claus Stadler, Oct 9, 2018
+ *
+ */
 public class QueryExecutionTimeoutExogeneous
 	extends QueryExecutionDecorator
 {

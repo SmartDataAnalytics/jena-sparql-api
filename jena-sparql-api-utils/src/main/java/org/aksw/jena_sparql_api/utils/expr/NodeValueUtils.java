@@ -26,6 +26,13 @@ public class NodeValueUtils {
         return result;
     }
 
+    public static Number getNumber(NodeValue expr) {
+    	Object obj = getValue(expr);
+    	
+    	Number result = obj instanceof Number ? (Number)obj : null;
+    	return result;
+    }
+    
     public static Object getValue(NodeValue expr) {
         if(expr == null) {
             return NodeValue.nvNothing;
