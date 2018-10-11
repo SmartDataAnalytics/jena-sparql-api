@@ -1,17 +1,77 @@
 package org.aksw.jena_sparql_api.utils;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Random;
+import java.util.List;
 import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
+import org.apache.jena.graph.Node;
+import org.apache.jena.sparql.expr.E_Equals;
+import org.apache.jena.sparql.expr.E_GreaterThan;
+import org.apache.jena.sparql.expr.E_GreaterThanOrEqual;
+import org.apache.jena.sparql.expr.E_LessThan;
+import org.apache.jena.sparql.expr.E_LessThanOrEqual;
+import org.apache.jena.sparql.expr.Expr;
+
+import com.google.common.collect.BoundType;
 import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.Range;
 
 public class RangeUtils {
     public static final Range<Long> rangeStartingWithZero = Range.atLeast(0l);
+
+    // Note: This method is tied to Jena, whereas all other RangeUtils only depend on Java/Guava.
+    // So we should separate these utils
+	public static Expr createExpr(Node node, Range<? extends NodeHolder> range) {
+		Expr n = ExprUtils.makeNode(node);
+
+		List<Expr> parts = new ArrayList<>();
+
+		if(RangeUtils.isSingleton(range)) {
+			parts.add(new E_Equals(n, ExprUtils.makeNode(range.lowerEndpoint().getNode())));
+		} else {
+		
+			if(range.hasLowerBound()) {			
+				if(range.lowerBoundType().equals(BoundType.OPEN)) {
+					parts.add(new E_GreaterThan(n, ExprUtils.makeNode(range.lowerEndpoint().getNode())));
+				} else {
+					parts.add(new E_GreaterThanOrEqual(n, ExprUtils.makeNode(range.lowerEndpoint().getNode())));					
+				}
+			}
+	
+			if(range.hasUpperBound()) {			
+				if(range.upperBoundType().equals(BoundType.OPEN)) {
+					parts.add(new E_LessThan(n, ExprUtils.makeNode(range.upperEndpoint().getNode())));
+				} else {
+					parts.add(new E_LessThanOrEqual(n, ExprUtils.makeNode(range.upperEndpoint().getNode())));					
+				}
+			}
+		}
+		
+		Expr result = ExprUtils.andifyBalanced(parts);
+		return result;
+	}
+
+    
+    public static <T extends Comparable<T>> Optional<T> tryGetSingleton(Range<T> range) {
+    	boolean isSingleton = isSingleton(range);
+    	return Optional.ofNullable(isSingleton ? range.lowerEndpoint() : null);
+    }
+    
+    public static boolean isSingleton(Range<?> range) {
+    	boolean result =
+    			range.hasLowerBound() &&
+    			range.hasUpperBound() &&
+    			range.lowerBoundType().equals(BoundType.CLOSED) &&
+    			range.upperBoundType().equals(BoundType.CLOSED);
+    	
+    	return result;
+    }
 
     public static long pickLong(Range<Long> range, Random random) {
     	Range<Long> norm = range.intersection(Range.closed(Long.MIN_VALUE, Long.MAX_VALUE));

@@ -21,6 +21,10 @@ public class NodeHolder
 		this.node = node;
 	}
 
+	public Node getNode() {
+		return node;
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;

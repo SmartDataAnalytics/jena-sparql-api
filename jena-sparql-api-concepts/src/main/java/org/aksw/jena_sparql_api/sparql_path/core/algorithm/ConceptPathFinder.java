@@ -27,6 +27,7 @@ import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -200,6 +201,8 @@ public class ConceptPathFinder {
         logger.debug("Property query: " + propertyQuery);
 
 
+        //System.out.println(ResultSetFormatter.asText(qef.createQueryExecution("SELECT * { ?s ?p ?o }").execSelect()));
+        //System.out.println(ResultSetFormatter.asText(qef.createQueryExecution("" + propertyQuery).execSelect()));
         List<Node> nodes = QueryExecutionUtils.executeList(qef, propertyQuery);
         logger.debug("Retrieved " + nodes.size() + " properties");// + nodes);
 

@@ -46,6 +46,21 @@ import org.apache.jena.sparql.graph.NodeTransformLib;
  */
 public class ExprUtils {
 
+	/**
+	 * A variable-aware version of NodeValue.makeNode(Node node)
+	 * 
+	 * @param node
+	 * @return
+	 */
+	public static Expr makeNode(Node node) {
+    	Expr result = node.isVariable()
+    			? new ExprVar(node.getName())
+    			: NodeValue.makeNode(node);
+
+    	return result;
+    }
+
+	
 	public static E_OneOf oneOf(Node v, Node ... args) {
 		ExprList el = new ExprList();
 		el.addAll(ExprListUtils.nodesToExprs(Arrays.asList(args)));
