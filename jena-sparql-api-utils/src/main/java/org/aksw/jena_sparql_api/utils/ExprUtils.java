@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -403,7 +404,7 @@ public class ExprUtils {
      * @param exprs
      * @return
      */
-    public static <T> T opifyBalanced(Iterable<T> exprs, BinaryOperator<T> exprFactory) {
+    public static <T> T opifyBalanced(Iterable<? extends T> exprs, BiFunction<? super T, ? super T, ? extends T> exprFactory) {//BinaryOperator<T> exprFactory) {
         if(exprs.iterator().hasNext() == false) { //isEmpty()) {
             return null;
         }
