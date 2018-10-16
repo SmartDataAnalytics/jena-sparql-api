@@ -6,6 +6,8 @@ public interface SparqlStmt {
     boolean isQuery();
     boolean isUpdateRequest();
 
+    boolean isParsed();
+    
     SparqlStmtUpdate getAsUpdateStmt();
     SparqlStmtQuery getAsQueryStmt();
 

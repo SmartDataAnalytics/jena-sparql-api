@@ -42,6 +42,7 @@ public class SparqlStmtQuery
         return true;
     }
 
+    @Override
     public boolean isParsed() {
         return this.query != null;
     }
