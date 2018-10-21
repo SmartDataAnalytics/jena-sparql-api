@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.mapper.proxy;
 
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -21,14 +22,14 @@ import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.Node;
-import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.impl.ResourceImpl;
-import org.apache.jena.sparql.path.P_Link;
+import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.path.P_Path0;
+import org.apache.jena.sparql.path.PathParser;
 
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.MethodInterceptor;
@@ -146,9 +147,12 @@ public class MapperProxyUtils {
 		Iri iri = method.getAnnotation(Iri.class);
 		if(iri != null) {
 			String rdfPropertyStr = iri.value();
-			Node p = NodeFactory.createURI(rdfPropertyStr);
+			// Expand against default namespaces
+			result = (P_Path0)PathParser.parse(rdfPropertyStr, PrefixMapping.Extended);
 			
-			result = new P_Link(p);
+			//Node p = NodeFactory.createURI(rdfPropertyStr);
+			
+			//result = new P_Link(p);
 		}
 		
 		return result;
@@ -179,7 +183,7 @@ public class MapperProxyUtils {
 		Map<Method, BiFunction<Object, Object[], Object>> methodMap = new LinkedHashMap<>();
 		
 		for(Method method : clazz.getMethods()) {
-			
+			// System.out.println("Method " + method);
 			P_Path0 path = Optional.ofNullable(derivePathFromMethod(method))
 					.orElseGet(() -> beanPropertyNameToPath.get(deriveBeanPropertyName(method.getName())));
 
@@ -214,12 +218,27 @@ public class MapperProxyUtils {
 			enhancer.setCallback(new MethodInterceptor() {				
 			    public Object intercept(Object obj, java.lang.reflect.Method method, Object[] args,
                         MethodProxy proxy) throws Throwable {
-			    
+			    	
 				    BiFunction<Object, Object[], Object> delegate = methodMap.get(method);
 //				    System.out.println(methodMap);
-				    Object r = delegate != null
-				    		? delegate.apply(obj, args)
-				    		: proxy.invokeSuper(obj, args);
+				    Object r;
+				    if(delegate != null) {
+				    	r = delegate.apply(obj, args);
+				    } else if(method.isDefault()) {
+				    	throw new RuntimeException("Cannot handle default method yet; TODO Implement something from https://stackoverflow.com/questions/22614746/how-do-i-invoke-java-8-default-methods-reflectively");
+//				    	declaringClass = method.getDeclaringClass();
+//				    	   constructor = MethodHandles.Lookup.class.getDeclaredConstructor(Class.class, int.class);
+//
+//				    	   constructor.setAccessible(true);
+//
+//				    	   result = constructor.
+//				    	      newInstance(declaringClass, MethodHandles.Lookup.PRIVATE).
+//				    	      unreflectSpecial(method, declaringClass).
+//				    	      bindTo(proxy).
+//				    	      invokeWithArguments(args);
+				    } else {
+				    	r = proxy.invokeSuper(obj, args);
+				    }
 				    return r;
 				}
 			});
