@@ -201,7 +201,14 @@ public class MapperProxyUtils {
 						BiConsumer<Resource, Object> s = setter.apply(p);
 						methodMap.put(method, (o, args) -> {
 							s.accept((Resource)o, args[0]);
-							return null;
+							
+							// Detect fluent API style methods - i.e.
+							// methods that return the class it is defined in or one of its super types.
+							Object r = method.getReturnType().isAssignableFrom(clazz)
+								? o
+								: null;
+							
+							return r;
 						});
 					}
 				}
