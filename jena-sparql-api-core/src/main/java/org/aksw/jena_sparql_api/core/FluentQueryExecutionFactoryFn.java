@@ -9,7 +9,6 @@ import org.aksw.jena_sparql_api.cache.extra.CacheBackend;
 import org.aksw.jena_sparql_api.cache.extra.CacheFrontend;
 import org.aksw.jena_sparql_api.cache.extra.CacheFrontendImpl;
 import org.aksw.jena_sparql_api.delay.core.QueryExecutionFactoryDelay;
-import org.aksw.jena_sparql_api.delay.extra.DelayerDefault;
 import org.aksw.jena_sparql_api.limit.QueryExecutionFactoryLimit;
 import org.aksw.jena_sparql_api.pagination.core.QueryExecutionFactoryPaginated;
 import org.aksw.jena_sparql_api.parse.QueryExecutionFactoryParse;
@@ -103,8 +102,23 @@ public class FluentQueryExecutionFactoryFn<P>
 //        });
 
         return this;
+
     }
 
+    
+    public FluentQueryExecutionFactoryFn<P> withClientSideConstruct() {
+        compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
+            @Override
+            public QueryExecutionFactory apply(QueryExecutionFactory qef) {
+                QueryExecutionFactory r = new QueryExecutionFactorySelect(qef);
+                return r;
+            }
+        });
+
+        return this;
+    }
+
+    
     public FluentQueryExecutionFactoryFn<P> withPagination(final int pageSize) {
         compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
             @Override

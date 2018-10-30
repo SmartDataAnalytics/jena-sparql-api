@@ -340,6 +340,7 @@ public abstract class QueryExecutionBaseSelect
         clone.setQueryResultStar(true);
         ResultSetCloseable rs = executeCoreSelect(clone);
 
+        System.out.println("Executing query as: " + clone);
 
         // insertPrefixesInto(result) ;
         Template template = query.getConstructTemplate();
