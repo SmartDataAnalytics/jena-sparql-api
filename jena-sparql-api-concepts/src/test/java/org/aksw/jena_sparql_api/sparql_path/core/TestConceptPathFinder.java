@@ -3,11 +3,11 @@ package org.aksw.jena_sparql_api.sparql_path.core;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.aksw.commons.jena.jgrapht.PseudoGraphJenaGraph;
@@ -19,7 +19,6 @@ import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
 import org.aksw.jena_sparql_api.core.utils.QueryExecutionUtils;
-import org.aksw.jena_sparql_api.core.utils.QueryGenerationUtils;
 import org.aksw.jena_sparql_api.model.QueryExecutionFactoryModel;
 import org.aksw.jena_sparql_api.sparql_path.core.algorithm.GraphPathComparator;
 import org.aksw.jena_sparql_api.stmt.SparqlStmt;
@@ -45,29 +44,23 @@ import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sdb.core.Generator;
 import org.apache.jena.sdb.core.Gensym;
 import org.apache.jena.shared.PrefixMapping;
-import org.apache.jena.sparql.core.BasicPattern;
-import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_Equals;
-import org.apache.jena.sparql.expr.E_OneOf;
-import org.apache.jena.sparql.expr.ExprList;
 import org.apache.jena.sparql.expr.ExprVar;
-import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sparql.lang.arq.ParseException;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.ElementGroup;
-import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.PatternVars;
-import org.apache.jena.vocabulary.OWL;
-import org.apache.jena.vocabulary.RDF;
 import org.jgrapht.Graph;
 import org.jgrapht.GraphPath;
 import org.jgrapht.alg.shortestpath.AllDirectedPaths;
-import org.jgrapht.graph.GraphWalk;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.Maps;
+import com.google.common.collect.Streams;
 
 public class TestConceptPathFinder {
 	
@@ -131,7 +124,7 @@ public class TestConceptPathFinder {
 //                ext.add(triple);
 //        	}
 
-            Triple triple = new Triple(VocabPath.start.asNode(), VocabPath.joinsWith.asNode(), node);
+            Triple triple = new Triple(VocabPath.start.asNode(), VocabPath.connectsWith.asNode(), node);
             ext.add(triple);
 
 //			System.out.println("JoinSummaryTriple: " + triple);
@@ -170,6 +163,10 @@ public class TestConceptPathFinder {
         List<Node> candidates = QueryExecutionUtils.executeList(qefMeta, targetCandidateQuery);
         logger.debug("Got " + candidates.size() + " candidates: " + candidates);
 
+        for(Node candidate : candidates) {
+            Triple triple = new Triple(candidate, VocabPath.connectsWith.asNode(), VocabPath.end.asNode());
+            ext.add(triple);
+        }
 
         // Now that we know the candidates, we can start with out breath first search
 
@@ -205,26 +202,25 @@ public class TestConceptPathFinder {
         //PathCallbackList callback = new PathCallbackList();
         //xx//KShortestPaths<Node, DefaultEdge> kShortestPaths = new KShortestPaths<Node, DefaultEdge>(graph, startVertex, nPaths, maxHops);
 
-        List<GraphPath<Node, Triple>> candidateGraphPaths = new ArrayList<GraphPath<Node, Triple>>();
-        int i = 0;
-        for(Node candidate : candidates) {
-            ++i;
-            logger.debug("Processing candidate " + i + "/" + candidates.size() + ": " + candidate + " (nPaths = " + nPaths + ", maxHops = " + maxHops + ")");
+//        List<GraphPath<Node, Triple>> candidateGraphPaths = new ArrayList<GraphPath<Node, Triple>>();
+//        int i = 0;
+//        for(Node candidate : candidates) {
+//            ++i;
+//            logger.debug("Processing candidate " + i + "/" + candidates.size() + ": " + candidate + " (nPaths = " + nPaths + ", maxHops = " + maxHops + ")");
             //Resource dest = joinSummaryModel.asRDFNode(candidate).asResource();
 
-            if(startVertex.equals(candidate)) {
-                GraphPath<Node, Triple> graphPath = new GraphWalk<Node, Triple>(graph, startVertex, candidate, new ArrayList<Triple>(), 0.0);
-                candidateGraphPaths.add(graphPath);
-            }
-            else {
+//            if(startVertex.equals(candidate)) {
+//                GraphPath<Node, Triple> graphPath = new GraphWalk<Node, Triple>(graph, startVertex, candidate, new ArrayList<Triple>(), 0.0);
+//                candidateGraphPaths.add(graphPath);
+//            }
+//            else {
             	AllDirectedPaths<Node, Triple> pathAlgo = new AllDirectedPaths<>(graph);
                 //DijkstraShortestPath<Node, Triple> dijkstraShortestPath = new DijkstraShortestPath<>(graph);
                 //GraphPath<Node, Triple> tmp = dijkstraShortestPath.getPath(startVertex, candidate);
-            	List<GraphPath<Node, Triple>> paths = pathAlgo.getAllPaths(startVertex, candidate, true, 10);
-            	paths.forEach(p -> logger.debug("  " + p));
+            	List<GraphPath<Node, Triple>> candidateGraphPaths = pathAlgo.getAllPaths(startVertex, VocabPath.end.asNode(), true, 10);
+            	candidateGraphPaths.forEach(p -> logger.debug("  " + p));
             	
-            	candidateGraphPaths.addAll(paths);
-//            	if(tmp != null) {
+ //            	if(tmp != null) {
 //                    candidateGraphPaths.add(tmp);
 //                    System.out.println("  " + tmp);
 //                }
@@ -237,54 +233,23 @@ public class TestConceptPathFinder {
                     candidateGraphPaths.addAll(tmp);
                 }
                 */
-            }
+//            }
 
             //NeighborProvider<Resource> np = new NeighborProviderModel(joinSummaryModel);
 
 
             //BreathFirstTask.run(np, VocabPath.start, dest, new ArrayList<Step>(), callback);
             //BreathFirstTask.runFoo(np, VocabPath.start, dest, new ArrayList<Step>(), new ArrayList<Step>(), callback);
-        }
+        //}
 
         Collections.sort(candidateGraphPaths, new GraphPathComparator<>());
 
 
-        // Convert the graph paths to 'ConceptPaths'
-        List<Path> paths = new ArrayList<Path>();
-        for(GraphPath<Node, Triple> graphPath : candidateGraphPaths) {
-
-            Node current = graphPath.getStartVertex();
-
-            List<Step> steps = new ArrayList<Step>();
-
-            for(Triple edge : graphPath.getEdgeList()) {
-                Node source = graph.getEdgeSource(edge);
-                Node target = graph.getEdgeTarget(edge);
-
-                boolean isInverse;
-
-                if(current.equals(source)) {
-                    current = target;
-                    isInverse = false;
-                }
-                else if(current.equals(target)) {
-                    current = source;
-                    isInverse = true;
-                }
-                else {
-                    throw new RuntimeException("Should not happen");
-                }
-
-                String propertyName = current.getURI();
-                Step step = new Step(propertyName, isInverse);
-
-                steps.add(step);
-            }
-
-            Path path = new Path(steps);
-            paths.add(path);
-        }
-
+        // Convert the graph paths to 'ConceptPaths'        
+        List<Path> paths = candidateGraphPaths.stream()
+        	.map(TestConceptPathFinder::convertToSparqlPath)
+        	.filter(x -> x != null)
+        	.collect(Collectors.toList());
 
         //List<Path> paths = callback.getCandidates();
 
@@ -342,6 +307,85 @@ public class TestConceptPathFinder {
     }
 
 	
+    public static Boolean isFwd(Node p) {
+        Boolean result =
+        		VocabPath.hasOutgoingPredicate.asNode().equals(p) ? (Boolean)true :
+        		VocabPath.hasIngoingPredicate.asNode().equals(p) ? (Boolean)false :
+        		null;
+
+        return result;
+    }
+
+    
+    public static Path convertToSparqlPath(GraphPath<Node, Triple> graphPath) {
+    	
+        List<Triple> el = graphPath.getEdgeList();
+        List<Triple> effectiveEdgeList = el.subList(1, el.size() - 1);
+        
+        Path result = null;
+        try {
+	        List<Step> steps = Streams.mapWithIndex(effectiveEdgeList.stream(), Maps::immutableEntry)
+	        	.filter(e -> e.getValue() % 2 == 0)
+	        	.map(e -> e.getKey())
+	        	// We may get a NPE here if t.getPredicate() could not be classified
+	        	.map(t -> new Step(t.getObject().getURI(), !isFwd(t.getPredicate())))
+	        	.collect(Collectors.toList())
+	        	;
+
+	        result = new Path(steps);
+        } catch(Exception e) {
+        	logger.debug("Harmless exception - but may indicate a bug in the algo or issue with input data: ", e);
+        }
+        
+//        effectiveEdgeList
+//        	.stream().fi
+//        for(int i = 0; i < effectiveEdgeList.size(); i += 2) {
+//        	Triple t = effectiveEdgeList.get(i);
+//        	
+//        	Node p = t.getPredicate();
+//            String propertyName = t.getObject().getURI();
+//
+//            Boolean isFwd =
+//            		VocabPath.hasOutgoingPredicate.asNode().equals(p) ? (Boolean)true :
+//            		VocabPath.hasIngoingPredicate.asNode().equals(p) ? (Boolean)false :
+//            		null;
+//
+//            if(isFwd == null) {
+//            	continue;
+//            }
+//
+//            Step step = new Step(propertyName, !isFwd);
+//            steps.add(step);
+//        }
+//        
+//        Path result = new Path(steps);
+        return result;
+
+    }
+//        for(Triple edge : graphPath.getEdgeList()) {
+//            Node source = graph.getEdgeSource(edge);
+//            Node target = graph.getEdgeTarget(edge);
+//
+//            boolean isInverse;
+//
+//            if(current.equals(source)) {
+//                current = target;
+//                isInverse = false;
+//            }
+//            else if(current.equals(target)) {
+//                current = source;
+//                isInverse = true;
+//            }
+//            else {
+//                throw new RuntimeException("Should not happen");
+//            }
+//
+//            String propertyName = current.getURI();
+//            Step step = new Step(propertyName, isInverse);
+//
+//            steps.add(step);
+//        }
+
 	
 	@Test
 	public void testConceptPathFinder() throws IOException, ParseException {
