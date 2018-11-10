@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.aksw.jena_sparql_api.utils.Generator;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.sdb.core.Generator;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.path.P_Link;
 import org.apache.jena.sparql.path.P_ReverseLink;
@@ -106,7 +106,7 @@ public class Path {
     }
 
 
-    public static List<Triple> pathToTriples(Path path, Var start, Var end, Generator generator) {
+    public static List<Triple> pathToTriples(Path path, Var start, Var end, Generator<Var> generator) {
         List<Triple> result = new ArrayList<Triple>();
 
         Var a = start;
@@ -117,7 +117,7 @@ public class Path {
 
             Var b;
             if(it.hasNext()) {
-                b = Var.alloc(generator.next());
+                b = generator.next();//Var.alloc(generator.next());
             } else {
                 b = end;
             }

@@ -3,8 +3,10 @@ package org.aksw.jena_sparql_api.sparql_path.core;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -25,8 +27,8 @@ import org.aksw.jena_sparql_api.stmt.SparqlStmt;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtQuery;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtUtils;
-import org.aksw.jena_sparql_api.utils.GeneratorBlacklist;
-import org.aksw.jena_sparql_api.utils.VarUtils;
+import org.aksw.jena_sparql_api.utils.Generator;
+import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -41,9 +43,8 @@ import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
-import org.apache.jena.sdb.core.Generator;
-import org.apache.jena.sdb.core.Gensym;
 import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.graph.GraphFactory;
@@ -51,7 +52,6 @@ import org.apache.jena.sparql.lang.arq.ParseException;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.ElementGroup;
-import org.apache.jena.sparql.syntax.PatternVars;
 import org.jgrapht.Graph;
 import org.jgrapht.GraphPath;
 import org.jgrapht.alg.shortestpath.AllDirectedPaths;
@@ -247,18 +247,18 @@ public class TestConceptPathFinder {
 
         // Convert the graph paths to 'ConceptPaths'        
         List<Path> paths = candidateGraphPaths.stream()
-        	.map(TestConceptPathFinder::convertToSparqlPath)
+        	.map(TestConceptPathFinder::convertGraphPathToSparqlPath)
         	.filter(x -> x != null)
         	.collect(Collectors.toList());
 
         //List<Path> paths = callback.getCandidates();
 
         // Cross check whether the path actually connects the source and target concepts
-        Set<String> varNames = new HashSet<String>();
-        varNames.addAll(VarUtils.getVarNames(PatternVars.vars(sourceConcept.getElement())));
-        varNames.addAll(VarUtils.getVarNames(PatternVars.vars(targetConcept.getElement())));
+        Set<Var> vars = new HashSet<>();
+        vars.addAll(sourceConcept.getVarsMentioned());
+        vars.addAll(targetConcept.getVarsMentioned());
 
-        Generator generator = GeneratorBlacklist.create(Gensym.create("v"), varNames);
+        Generator<Var> generator = VarGeneratorBlacklist.create("v", vars);
 
         List<Path> result = new ArrayList<Path>();
 
@@ -306,6 +306,73 @@ public class TestConceptPathFinder {
         return result;
     }
 
+    
+    /**
+     * 
+     * @param paths
+     * @return (LinkedHash)Set of paths that validated
+     */
+    public static Set<Path> validatePaths(
+    		Generator<Var> generator,
+    		UnaryRelation sourceConcept,
+    		UnaryRelation targetConcept,
+    		RDFConnection conn,
+    		Collection<Path> paths) {
+    	Set<Path> result = paths.stream()
+    		.filter(path -> TestConceptPathFinder.validatePath(generator, sourceConcept, targetConcept, conn, path))
+    		.collect(Collectors.toCollection(LinkedHashSet::new));
+    	return result;
+    }
+    
+    
+
+    public static boolean validatePath(
+    		Generator<Var> generator,
+    		UnaryRelation sourceConcept,
+    		UnaryRelation targetConcept,
+    		RDFConnection conn,
+    		Path path) {
+        List<Element> pathElements = Path.pathToElements(path, sourceConcept.getVar(), targetConcept.getVar(), generator);
+
+        List<Element> tmp = new ArrayList<Element>();
+        if(!sourceConcept.isSubjectConcept()) {
+            tmp.addAll(sourceConcept.getElements());
+        }
+
+        // TODO Should we treat the case where the target concept is a subject concept in a special way?
+        //if(!targetConcept.isSubjectConcept()) {
+            tmp.addAll(targetConcept.getElements());
+        //}
+
+        tmp.addAll(pathElements);
+
+        if(pathElements.isEmpty()) {
+            if(!sourceConcept.getVar().equals(targetConcept.getVar()) && !sourceConcept.isSubjectConcept()) {
+                tmp.add(new ElementFilter(new E_Equals(new ExprVar(sourceConcept.getVar()), new ExprVar(targetConcept.getVar()))));
+            }
+        }
+
+        ElementGroup group = new ElementGroup();
+        for(Element t : tmp) {
+            group.addElement(t);
+        }
+
+        Query query = new Query();
+        query.setQueryAskType();
+        query.setQueryPattern(group);
+
+        logger.debug("Verifying candidate with query: " + query);
+
+        QueryExecution xqe = conn.query(query);
+        boolean isCandidate = xqe.execAsk();
+        logger.debug("Verification result is [" + isCandidate + "] for " + query);
+
+        
+        return isCandidate;
+//        if(isCandidate) {
+//            result.add(path);
+//        }
+    }
 	
     public static Boolean isFwd(Node p) {
         Boolean result =
@@ -317,7 +384,7 @@ public class TestConceptPathFinder {
     }
 
     
-    public static Path convertToSparqlPath(GraphPath<Node, Triple> graphPath) {
+    public static Path convertGraphPathToSparqlPath(GraphPath<Node, Triple> graphPath) {
     	
         List<Triple> el = graphPath.getEdgeList();
         List<Triple> effectiveEdgeList = el.subList(1, el.size() - 1);

@@ -2,7 +2,6 @@ package org.aksw.jena_sparql_api.sparql_path.core.algorithm;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -19,15 +18,14 @@ import org.aksw.jena_sparql_api.core.utils.QueryGenerationUtils;
 import org.aksw.jena_sparql_api.model.QueryExecutionFactoryModel;
 import org.aksw.jena_sparql_api.sparql_path.core.PathConstraint;
 import org.aksw.jena_sparql_api.sparql_path.core.VocabPath;
-import org.aksw.jena_sparql_api.utils.GeneratorBlacklist;
-import org.aksw.jena_sparql_api.utils.VarUtils;
+import org.aksw.jena_sparql_api.utils.Generator;
+import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
-import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -37,8 +35,6 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
-import org.apache.jena.sdb.core.Generator;
-import org.apache.jena.sdb.core.Gensym;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.E_OneOf;
@@ -49,7 +45,6 @@ import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
-import org.apache.jena.sparql.syntax.PatternVars;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
@@ -339,11 +334,11 @@ public class ConceptPathFinder {
         //List<Path> paths = callback.getCandidates();
 
         // Cross check whether the path actually connects the source and target concepts
-        Set<String> varNames = new HashSet<String>();
-        varNames.addAll(VarUtils.getVarNames(PatternVars.vars(sourceConcept.getElement())));
-        varNames.addAll(VarUtils.getVarNames(PatternVars.vars(targetConcept.getElement())));
+        Set<Var> varNames = new HashSet<>();
+        varNames.addAll(sourceConcept.getVarsMentioned());
+        varNames.addAll(targetConcept.getVarsMentioned());
 
-        Generator generator = GeneratorBlacklist.create(Gensym.create("v"), varNames);
+        Generator<Var> generator = VarGeneratorBlacklist.create("v", varNames);
 
         List<Path> result = new ArrayList<Path>();
 
