@@ -18,12 +18,20 @@ public class RelationJoiner {
 	protected Relation filterRelation;
 	protected List<Var> filterJoinVars;
 	
+	protected boolean filterRelationFirst;
+	
 	public RelationJoiner(Relation attrRelation, List<Var> attrJoinVars) {
+		this(attrRelation, attrJoinVars, false);
+	}
+
+	public RelationJoiner(Relation attrRelation, List<Var> attrJoinVars, boolean filterRelationFirst) {
 		super();
 		this.attrRelation = attrRelation;
 		this.attrJoinVars = attrJoinVars;
+		this.filterRelationFirst = filterRelationFirst;
 	}
 
+	
 	public static RelationJoiner from(Relation r, Var ... vars) {
 		RelationJoiner result = new RelationJoiner(r, new ArrayList<>(Arrays.asList(vars)));
 		return result;
@@ -33,6 +41,12 @@ public class RelationJoiner {
 		attrJoinVars.add(var);
 		return this;
 	}
+
+	public RelationJoiner filterRelationFirst(boolean onOrOff) {
+		this.filterRelationFirst = onOrOff;
+		return this;
+	}
+
 	
 	/**
 	 * Join with null is a no-op - i.e. it yields the original relation
@@ -67,7 +81,9 @@ public class RelationJoiner {
         Element filterElement = filterRelation.getElement();
         Element newFilterElement = ElementUtils.createRenamedElement(filterElement, varMap);
 
-        Element newElement = ElementUtils.groupIfNeeded(attrElement, newFilterElement);
+        Element newElement = filterRelationFirst
+        		? ElementUtils.groupIfNeeded(newFilterElement, attrElement)
+        		: ElementUtils.groupIfNeeded(attrElement, newFilterElement);
         
         Relation result = new RelationImpl(newElement, attrProjVars);
         return result;

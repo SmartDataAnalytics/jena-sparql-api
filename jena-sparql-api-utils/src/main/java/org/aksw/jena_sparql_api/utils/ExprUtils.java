@@ -61,13 +61,17 @@ public class ExprUtils {
     	return result;
     }
 
-	
-	public static E_OneOf oneOf(Node v, Node ... args) {
+	public static E_OneOf oneOf(Node v, Collection<Node> args) {
 		ExprList el = new ExprList();
-		el.addAll(ExprListUtils.nodesToExprs(Arrays.asList(args)));
+		el.addAll(ExprListUtils.nodesToExprs(args));
 
 		Expr base = v.isVariable() ? new ExprVar(v) : NodeValue.makeNode(v);
 		return new E_OneOf(base, el);
+	}
+
+	
+	public static E_OneOf oneOf(Node v, Node ... args) {
+		return oneOf(v, Arrays.asList(args));
 	}
 
     public static Entry<Var, Node> tryGetVarConst(Expr a, Expr b) {

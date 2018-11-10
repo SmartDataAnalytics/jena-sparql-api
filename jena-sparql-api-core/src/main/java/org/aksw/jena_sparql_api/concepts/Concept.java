@@ -124,21 +124,7 @@ public class Concept
     public static Concept create(String elementStr, String varName, PrefixMapping prefixMapping) {
         Var var = Var.alloc(varName);
 
-        String tmp = elementStr.trim();
-        boolean isEnclosed = tmp.startsWith("{") && tmp.endsWith("}");
-        if(!isEnclosed) {
-            tmp = "{" + tmp + "}";
-        }
-
-        //ParserSparql10 p;
-        tmp = "Select * " + tmp;
-
-        Query query = new Query();
-        query.setPrefixMapping(prefixMapping);
-        SPARQLParser parser = new ParserSPARQL11();
-        parser.parse(query, tmp);
-        Element element = query.getQueryPattern();
-
+        Element element = parseElement(elementStr, prefixMapping);
         //Element element = ParserSPARQL10.parseElement(tmp);
 
         //Element element = ParserSPARQL11.parseElement(tmp);
@@ -153,6 +139,26 @@ public class Concept
         }
 
         Concept result = new Concept(element, var);
+
+        return result;
+    }
+    
+    public static Element parseElement(String elementStr, PrefixMapping prefixMapping) {
+        String tmp = elementStr.trim();
+        boolean isEnclosed = tmp.startsWith("{") && tmp.endsWith("}");
+        if(!isEnclosed) {
+            tmp = "{" + tmp + "}";
+        }
+
+        //ParserSparql10 p;
+        tmp = "SELECT * " + tmp;
+
+        Query query = new Query();
+        query.setPrefixMapping(prefixMapping);
+        // TODO Make parser configurable
+        SPARQLParser parser = new ParserSPARQL11();
+        parser.parse(query, tmp);
+        Element result = query.getQueryPattern();
 
         return result;
     }
@@ -210,18 +216,6 @@ public class Concept
         return var;
     }
 
-
-
-    public Query asQuery() {
-        Query result = new Query();
-        result.setQuerySelectType();
-
-        result.setQueryPattern(element);
-        result.setDistinct(true);
-        result.getProjectVars().add(var);
-
-        return result;
-    }
 
     @Override
     public int hashCode() {

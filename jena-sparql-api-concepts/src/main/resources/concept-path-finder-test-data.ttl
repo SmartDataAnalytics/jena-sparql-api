@@ -1,0 +1,13 @@
+@prefix eg: <http://www.example.org/> .
+
+eg:a a eg:A .
+eg:b a eg:B .
+eg:c a eg:C .
+eg:d a eg:D .
+
+eg:a eg:ab eg:b .
+eg:b eg:bc eg:c .
+eg:c eg:cd eg:d .
+#eg:d eg:da eg:a .
+
+# eg:b eg:ba eg:a .

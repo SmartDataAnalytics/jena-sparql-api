@@ -61,21 +61,6 @@ import org.jgrapht.graph.GraphWalk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class GraphPathComparator<V, E>
-    implements Comparator<GraphPath<V, E>> {
-
-    @Override
-    public int compare(
-            GraphPath<V, E> a,
-            GraphPath<V, E> b) {
-        int x = a.getEdgeList().size();
-        int y = b.getEdgeList().size();
-
-        return x - y;
-    }
-
-}
-
 public class ConceptPathFinder {
 
     private static final Logger logger = LoggerFactory.getLogger(ConceptPathFinder.class);

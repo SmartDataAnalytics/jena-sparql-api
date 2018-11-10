@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.concepts;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -118,8 +119,22 @@ public interface Relation {
     }
 
     
+    // Keeps all variables of this relation intact, and appends the element of another relation
     default RelationJoiner joinOn(Var ... vars) {
     	return RelationJoiner.from(this, vars);
+    }
+
+    // Similar to joinOn - but *prepends* the elements of the other relation
+    default RelationJoiner injectOn(Var ... vars) {
+    	return RelationJoiner.from(this, vars).filterRelationFirst(true);
+    }
+
+    default Relation project(List<Var> vars) {
+    	return new RelationImpl(getElement(), vars);
+    }
+
+    default Relation project(Var ... vars) {
+    	return project(Arrays.asList(vars));
     }
     
     default Query toQuery() {
