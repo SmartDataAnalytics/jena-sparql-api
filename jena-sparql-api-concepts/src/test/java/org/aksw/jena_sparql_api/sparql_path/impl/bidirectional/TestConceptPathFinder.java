@@ -8,7 +8,6 @@ import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.Path;
 import org.aksw.jena_sparql_api.concepts.Step;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinder;
-import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinderSystem;
 import org.aksw.jena_sparql_api.sparql_path.api.PathSearch;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
@@ -40,7 +39,7 @@ public class TestConceptPathFinder {
 		dataConnection.update("DELETE WHERE { ?s a ?t }");
 		
 		// Set up a path finding system
-		ConceptPathFinderSystem system = new ConceptPathFinderSystemBidirectional();
+		ConceptPathFinderSystemBidirectional system = new ConceptPathFinderSystemBidirectional();
 		
 		// Use the system to compute a data summary
 		// Note, that the summary could be loaded from any place, such as a file used for caching
@@ -51,6 +50,7 @@ public class TestConceptPathFinder {
 		ConceptPathFinder pathFinder = system.newPathFinderBuilder()
 			.setDataSummary(dataSummary)
 			.setDataConnection(dataConnection)
+			.setShortestPathsOnly(false)
 			.build();
 				
 		

@@ -127,7 +127,10 @@ public class ConceptPathFinderBidirectionalUtils {
         return result;
     }
 	
-    public static Flowable<Path> findPaths(SparqlQueryConnection conn, UnaryRelation sourceConcept, UnaryRelation tmpTargetConcept, Long nPaths, Long maxHops, org.apache.jena.graph.Graph baseDataguide) {
+    public static Flowable<Path> findPaths(SparqlQueryConnection conn, UnaryRelation sourceConcept, UnaryRelation tmpTargetConcept, Long nPaths, Long maxHops, org.apache.jena.graph.Graph baseDataSummary, Boolean shortestPathsOnly, Boolean simplePathsOnly) {
+    	shortestPathsOnly = shortestPathsOnly == null ? false : shortestPathsOnly;
+    	simplePathsOnly = simplePathsOnly == null ? false : simplePathsOnly;    	
+    	
     	UnaryRelation targetConcept = ConceptUtils.makeDistinctFrom(tmpTargetConcept, sourceConcept);
 
         logger.debug("Distinguished target concept: " + targetConcept);
@@ -171,7 +174,7 @@ public class ConceptPathFinderBidirectionalUtils {
         }
 
         
-        org.apache.jena.graph.Graph union = new Union(baseDataguide, ext);
+        org.apache.jena.graph.Graph union = new Union(baseDataSummary, ext);
         Model joinSummaryGraph = ModelFactory.createModelForGraph(union);
         
 		RDFDataMgr.write(System.out, joinSummaryGraph, RDFFormat.TURTLE_PRETTY);
@@ -265,10 +268,9 @@ public class ConceptPathFinderBidirectionalUtils {
 
     	int n = nPaths == null ? - 1 : Ints.checkedCast(nPaths);
 
-    	nPaths = null;
-    	if(nPaths == null) {
+    	if(!shortestPathsOnly) {
         	AllDirectedPaths<Node, Triple> pathAlgo = new AllDirectedPaths<>(graph);
-        	candidateGraphPaths = pathAlgo.getAllPaths(startVertex, VocabPath.end.asNode(), false, _maxPathLength);
+        	candidateGraphPaths = pathAlgo.getAllPaths(startVertex, VocabPath.end.asNode(), simplePathsOnly, _maxPathLength);
         } else {
         	
         	if(n <= 0) {

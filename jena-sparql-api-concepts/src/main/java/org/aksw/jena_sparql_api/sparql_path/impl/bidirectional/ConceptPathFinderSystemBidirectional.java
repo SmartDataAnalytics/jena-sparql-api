@@ -4,7 +4,6 @@ import org.aksw.jena_sparql_api.concepts.Path;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinder;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinderBase;
-import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinderFactory;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinderFactorySummaryBase;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinderSystem;
 import org.aksw.jena_sparql_api.sparql_path.api.PathSearch;
@@ -27,24 +26,33 @@ public class ConceptPathFinderSystemBidirectional
 	}
 
 	@Override
-	public ConceptPathFinderFactory newPathFinderBuilder() {
-		return new ConceptPathFinderFactorySummaryBase() {
-			@Override
-			public ConceptPathFinder build() {
-				return new ConceptPathFinderBase(dataSummary.getGraph(), dataConnection) {
+	public ConceptPathFinderFactoryBidirectional<?> newPathFinderBuilder() {
+		return new ConceptPathFinderFactoryBidirectional<>();
+	}
+	
+	
+	
+	public static class ConceptPathFinderFactoryBidirectional<T extends ConceptPathFinderFactoryBidirectional<T>>
+		extends ConceptPathFinderFactorySummaryBase<T>
+	{
+		
+		// NOTE We could add more specific attributes here if we wanted
 
-					@Override
-					public PathSearch<Path> createSearch(UnaryRelation sourceConcept, UnaryRelation targetConcept) {
-						return new PathSearchBase<Path>() {
-							@Override
-							public Flowable<Path> exec() {
-								return ConceptPathFinderBidirectionalUtils
-									.findPaths(dataConnection, sourceConcept, targetConcept, maxResults, maxLength, dataSummary);
-							}
-						};
-					}					
-				};
-			}			
-		};
+		@Override
+		public ConceptPathFinder build() {
+			return new ConceptPathFinderBase(dataSummary.getGraph(), dataConnection) {
+
+				@Override
+				public PathSearch<Path> createSearch(UnaryRelation sourceConcept, UnaryRelation targetConcept) {
+					return new PathSearchBase<Path>() {
+						@Override
+						public Flowable<Path> exec() {
+							return ConceptPathFinderBidirectionalUtils
+								.findPaths(dataConnection, sourceConcept, targetConcept, maxResults, maxLength, dataSummary, shortestPathsOnly, simplePathsOnly);
+						}
+					};
+				}					
+			};
+		}
 	}
 }

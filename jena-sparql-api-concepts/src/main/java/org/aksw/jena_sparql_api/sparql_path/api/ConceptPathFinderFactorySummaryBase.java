@@ -12,29 +12,50 @@ import org.apache.jena.rdfconnection.SparqlQueryConnection;
  * @author Claus Stadler, Nov 11, 2018
  *
  */
-public abstract class ConceptPathFinderFactorySummaryBase
-	implements ConceptPathFinderFactory
+public abstract class ConceptPathFinderFactorySummaryBase<T extends ConceptPathFinderFactorySummaryBase<T>>
+	implements ConceptPathFinderFactory<T>
 {
 	protected Model dataSummary;
 	protected SparqlQueryConnection dataConnection;
+
+	// These flags are so general, it probably makes sense to add them here
+	// We can add traits on the concept path finder system level, whether implementations actually make use of these flags
+	protected Boolean shortestPathsOnly;
 	
+	/**
+	 * Shortest paths are always simple paths - so if shortestPathsOnly is enabled, this attribute
+	 * has no effect
+	 */
+	protected Boolean simplePathsOnly;
+
 	@Override
-	public ConceptPathFinderFactory setDataSummary(Graph dataSummary) {
+	public T setDataSummary(Graph dataSummary) {
 		this.dataSummary = ModelFactory.createModelForGraph(dataSummary);
-		return this;
+		return (T)this;
 	}
 
 	@Override
-	public ConceptPathFinderFactory setDataSummary(Model dataSummary) {
+	public T setDataSummary(Model dataSummary) {
 		this.dataSummary = dataSummary;
-		return this;
+		return (T)this;
 	}
 
 	@Override
-	public ConceptPathFinderFactory setDataConnection(SparqlQueryConnection dataConnection) {
+	public T setDataConnection(SparqlQueryConnection dataConnection) {
 		this.dataConnection = dataConnection;
-		return this;
+		return (T)this;
 	}
+	
+	public T setShortestPathsOnly(Boolean onOrOff) {
+		this.shortestPathsOnly = onOrOff;
+		return (T)this;
+	}
+
+	public T setSimplePathsOnly(Boolean onOrOff) {
+		this.simplePathsOnly = onOrOff;
+		return (T)this;
+	}
+
 
 	@Override
 	public Model getDataSummary() {
@@ -44,6 +65,16 @@ public abstract class ConceptPathFinderFactorySummaryBase
 	@Override
 	public SparqlQueryConnection getDataConnection() {
 		return dataConnection;
+	}
+	
+	@Override
+	public Boolean getShortestPathsOnly() {
+		return shortestPathsOnly;
+	}
+	
+	@Override
+	public Boolean getSimplePathsOnly() {
+		return simplePathsOnly;
 	}
 
 }
