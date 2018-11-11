@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -60,7 +61,10 @@ import org.jgrapht.alg.shortestpath.KShortestSimplePaths;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import com.google.common.collect.Streams;
 import com.google.common.primitives.Ints;
 
@@ -261,9 +265,10 @@ public class ConceptPathFinderBidirectionalUtils {
 
     	int n = nPaths == null ? - 1 : Ints.checkedCast(nPaths);
 
+    	nPaths = null;
     	if(nPaths == null) {
         	AllDirectedPaths<Node, Triple> pathAlgo = new AllDirectedPaths<>(graph);
-        	candidateGraphPaths = pathAlgo.getAllPaths(startVertex, VocabPath.end.asNode(), true, _maxPathLength);
+        	candidateGraphPaths = pathAlgo.getAllPaths(startVertex, VocabPath.end.asNode(), false, _maxPathLength);
         } else {
         	
         	if(n <= 0) {
@@ -278,7 +283,7 @@ public class ConceptPathFinderBidirectionalUtils {
         	candidateGraphPaths = candidateGraphPaths.subList(0, Math.min(n, candidateGraphPaths.size()));
         }
         
-        		candidateGraphPaths.forEach(p -> logger.debug("  " + p));
+        		//candidateGraphPaths.forEach(p -> logger.debug("  Candidate Path: " + p));
             	
  //            	if(tmp != null) {
 //                    candidateGraphPaths.add(tmp);
@@ -304,6 +309,18 @@ public class ConceptPathFinderBidirectionalUtils {
 
         Collections.sort(candidateGraphPaths, new GraphPathComparator<>());
 
+
+
+        boolean detectEquivalentPaths = false;
+        if(detectEquivalentPaths) {
+            Multimap<Path, GraphPath<Node, Triple>> index = Multimaps.index(candidateGraphPaths, ConceptPathFinderBidirectionalUtils::convertGraphPathToSparqlPath);
+	        for(Entry<Path, Collection<GraphPath<Node, Triple>>> entry : index.asMap().entrySet()) {
+	        	if(entry.getValue().size() > 1) {
+	        		System.out.println("MULTI MAP " + entry.getKey());
+	        		entry.getValue().forEach(System.out::println);
+	        	}
+	        }
+        }
 
         // Convert the graph paths to 'ConceptPaths'        
         List<Path> paths = candidateGraphPaths.stream()

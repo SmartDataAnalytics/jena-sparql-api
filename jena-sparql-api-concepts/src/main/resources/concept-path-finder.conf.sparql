@@ -19,7 +19,7 @@ PREFIX eg: <http://www.example.org/>
 
 CONSTRUCT {
   ?t eg:hasOutgoingPredicate ?p .
-  ?p eg:isOutgoingPredicateOf ?t
+#  ?p eg:isOutgoingPredicateOf ?t
   
 } {
   { SELECT DISTINCT ?t ?p {

@@ -37,6 +37,8 @@ public class TestConceptPathFinder {
 		Dataset ds = RDFDataMgr.loadDataset("concept-path-finder-test-data.ttl");
 		RDFConnection dataConnection = RDFConnectionFactory.connect(ds);
 		
+		dataConnection.update("DELETE WHERE { ?s a ?t }");
+		
 		// Set up a path finding system
 		ConceptPathFinderSystem system = new ConceptPathFinderSystemBidirectional();
 		
@@ -57,16 +59,20 @@ public class TestConceptPathFinder {
 		// Create search for paths between two given sparql concepts
 		PathSearch<Path> pathSearch = pathFinder.createSearch(
 			Concept.parse("?s | ?s eg:cd ?o", PrefixMapping.Extended),
-			Concept.parse("?s | ?s a eg:A", PrefixMapping.Extended));
+			Concept.parse("?s | ?s eg:ab ?o", PrefixMapping.Extended));
+			//Concept.parse("?s | ?s a eg:A", PrefixMapping.Extended));
 		
 		// Set parameters on the search, such as max path length and the max number of results
 		// Invocation of .exec() executes the search and yields the flow of results
 		List<Path> actual = pathSearch
-				.setMaxLength(10)
-				.setMaxResults(10)
+				.setMaxLength(7)
+				//.setMaxResults(100)
 				.exec()
 				.toList().blockingGet();
-		
+
+		System.out.println("Paths");
+		actual.forEach(System.out::println);
+
 		// TODO Simply specification of reference paths such as by adding a Path.parse method
 		List<Path> expected = Arrays.asList(new Path(ImmutableList.<Step>builder()
 				.add(new Step("http://www.example.org/bc", true))
@@ -74,7 +80,5 @@ public class TestConceptPathFinder {
 				.build()));
 
 		Assert.assertEquals(expected, actual);
-//		System.out.println("Paths");
-//		actual.forEach(System.out::println);
 	}
 }
