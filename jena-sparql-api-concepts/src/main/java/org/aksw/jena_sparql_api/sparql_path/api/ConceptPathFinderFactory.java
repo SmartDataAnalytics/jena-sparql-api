@@ -20,5 +20,5 @@ public interface ConceptPathFinderFactory {
 
 	SparqlQueryConnection getDataConnection();
 	
-	ConceptPathFinder create();
+	ConceptPathFinder build();
 }

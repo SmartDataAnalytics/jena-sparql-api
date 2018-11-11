@@ -27,10 +27,10 @@ public class ConceptPathFinderSystemBidirectional
 	}
 
 	@Override
-	public ConceptPathFinderFactory newFactory() {
+	public ConceptPathFinderFactory newPathFinderBuilder() {
 		return new ConceptPathFinderFactorySummaryBase() {
 			@Override
-			public ConceptPathFinder create() {
+			public ConceptPathFinder build() {
 				return new ConceptPathFinderBase(dataSummary.getGraph(), dataConnection) {
 
 					@Override

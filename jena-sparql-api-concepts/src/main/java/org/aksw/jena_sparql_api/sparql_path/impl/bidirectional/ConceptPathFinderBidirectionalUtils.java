@@ -115,9 +115,9 @@ public class ConceptPathFinderBidirectionalUtils {
 
         Concept fragment = Concept.parse("?t | OPTIONAL { ?s a ?tmp } BIND(IF(BOUND(?tmp), ?tmp, eg:unbound) AS ?t)", PrefixMapping.Extended);
         UnaryRelation result = fragment
-        		.injectOn(Vars.s)
+        		.prependOn(Vars.s)
         		.with(concept)
-        		.project(fragment.getVars())
+        		//.project(fragment.getVars())
         		.toUnaryRelation();
         
         return result;

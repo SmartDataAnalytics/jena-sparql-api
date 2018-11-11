@@ -8,5 +8,5 @@ import io.reactivex.Single;
 public interface ConceptPathFinderSystem {
 	Single<Model> computeDataSummary(SparqlQueryConnection dataConnection);
 
-	ConceptPathFinderFactory newFactory();
+	ConceptPathFinderFactory newPathFinderBuilder();
 }

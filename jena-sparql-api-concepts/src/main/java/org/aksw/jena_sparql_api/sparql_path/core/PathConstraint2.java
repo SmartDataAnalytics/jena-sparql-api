@@ -273,7 +273,7 @@ public class PathConstraint2 {
         	UnaryRelation tmp = ConceptUtils.createSubjectConcept();
         	Triple tr = ElementUtils.extractTriple(
         			new Concept(new ElementGroup(), concept.getVar())
-        			.injectOn(concept.getVar())
+        			.prependOn(concept.getVar())
         			.with(tmp)
         			.getElement());
         	result.add(tr);

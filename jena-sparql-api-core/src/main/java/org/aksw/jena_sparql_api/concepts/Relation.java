@@ -125,7 +125,7 @@ public interface Relation {
     }
 
     // Similar to joinOn - but *prepends* the elements of the other relation
-    default RelationJoiner injectOn(Var ... vars) {
+    default RelationJoiner prependOn(Var ... vars) {
     	return RelationJoiner.from(this, vars).filterRelationFirst(true);
     }
 
