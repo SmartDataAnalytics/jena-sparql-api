@@ -6,21 +6,12 @@ import java.util.List;
 import java.util.Set;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.concepts.Path;
-import org.aksw.jena_sparql_api.concepts.Step;
 import org.aksw.jena_sparql_api.geo.GeoMapSupplierUtils;
-import org.aksw.jena_sparql_api.utils.ElementTreeAnalyser;
-
+import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.sparql.algebra.optimize.Optimize;
-import org.apache.jena.sparql.expr.ExprTransformCopy;
-import org.apache.jena.sparql.graph.NodeTransform;
-import org.apache.jena.sparql.syntax.ElementSubQuery;
-import org.apache.jena.sparql.syntax.ElementUnion;
-import org.apache.jena.sparql.syntax.ElementVisitor;
-import org.apache.jena.sparql.syntax.ElementVisitorBase;
+import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.update.Update;
 
 class ModelUtils {
@@ -44,15 +35,15 @@ class ModelUtils {
     /**
      * Find the set of resources referenced by the path
      */
-    public static Set<RDFNode> getNodes(Model model, RDFNode first, Path path) {
-        List<Step> steps = path.getSteps();
+    public static Set<RDFNode> getNodes(Model model, RDFNode first, SimplePath path) {
+        List<P_Path0> steps = path.getSteps();
         
         Set<RDFNode> starts = Collections.singleton(first);
         
         
-        for(Step step : steps) {
-            String propertyName = step.getPropertyName();
-            boolean isInverse = step.isInverse();
+        for(P_Path0 step : steps) {
+            String propertyName = step.getNode().getURI();
+            boolean isFwd = step.isForward();
 
             Property property = model.createProperty(propertyName);
 
@@ -61,7 +52,7 @@ class ModelUtils {
             
             for(RDFNode start : starts) {
                 Set<RDFNode> tmp;
-                if(!isInverse) {
+                if(isFwd) {
                     tmp = model.listObjectsOfProperty(start.asResource(), property).toSet();
                 } else if(start.isResource()) {
                     tmp =  new HashSet<RDFNode>(model.listSubjectsWithProperty(property, start).toSet());
@@ -79,5 +70,5 @@ class ModelUtils {
 }
 
 public class PathSpec {
-    private Path path;
+    private SimplePath path;
 }

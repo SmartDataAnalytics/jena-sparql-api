@@ -16,12 +16,12 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.concepts.Path;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
 import org.aksw.jena_sparql_api.model.QueryExecutionFactoryModel;
 import org.aksw.jena_sparql_api.sparql_path.core.algorithm.ConceptPathFinder;
+import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.aksw.jena_sparql_api.utils.SparqlFormatterUtils;
 import org.aksw.jena_sparql_api.web.utils.AuthenticatorUtils;
 import org.aksw.jena_sparql_api.web.utils.ThreadUtils;
@@ -144,7 +144,7 @@ public class PathFindingApi {
                     joinSummaryModel = ConceptPathFinder.createDefaultJoinSummaryModel(qef);
                 }
 
-                List<Path> paths = ConceptPathFinder.findPaths(qef, sourceConcept, targetConcept, _nPaths, _maxHops, joinSummaryModel);
+                List<SimplePath> paths = ConceptPathFinder.findPaths(qef, sourceConcept, targetConcept, _nPaths, _maxHops, joinSummaryModel);
 
                 String result;
 
@@ -164,7 +164,7 @@ public class PathFindingApi {
                 }
                 else {
                     List<String> tmp = new ArrayList<String>();
-                    for(Path path : paths) {
+                    for(SimplePath path : paths) {
                         tmp.add(path.toPathString());
                     }
 

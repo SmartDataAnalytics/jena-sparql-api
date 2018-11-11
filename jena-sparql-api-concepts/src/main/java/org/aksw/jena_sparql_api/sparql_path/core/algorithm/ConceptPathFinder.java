@@ -9,8 +9,6 @@ import java.util.Set;
 import org.aksw.commons.util.strings.StringUtils;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
-import org.aksw.jena_sparql_api.concepts.Path;
-import org.aksw.jena_sparql_api.concepts.Step;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.utils.QueryExecutionUtils;
@@ -18,6 +16,8 @@ import org.aksw.jena_sparql_api.core.utils.QueryGenerationUtils;
 import org.aksw.jena_sparql_api.model.QueryExecutionFactoryModel;
 import org.aksw.jena_sparql_api.sparql_path.core.PathConstraint;
 import org.aksw.jena_sparql_api.sparql_path.core.VocabPath;
+import org.aksw.jena_sparql_api.util.sparql.syntax.path.PathUtils;
+import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.apache.jena.graph.Node;
@@ -41,6 +41,7 @@ import org.apache.jena.sparql.expr.E_OneOf;
 import org.apache.jena.sparql.expr.ExprList;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.ElementGroup;
@@ -117,13 +118,13 @@ public class ConceptPathFinder {
         return joinSummaryModel;
     }
 
-    public static List<Path> findPaths(QueryExecutionFactory qef, UnaryRelation sourceConcept, UnaryRelation tmpTargetConcept, int nPaths, int maxHops) {
+    public static List<SimplePath> findPaths(QueryExecutionFactory qef, UnaryRelation sourceConcept, UnaryRelation tmpTargetConcept, int nPaths, int maxHops) {
         Model joinSummaryModel = createDefaultJoinSummaryModel(qef);
-        List<Path> result = findPaths(qef, sourceConcept, tmpTargetConcept, nPaths, maxHops, joinSummaryModel);
+        List<SimplePath> result = findPaths(qef, sourceConcept, tmpTargetConcept, nPaths, maxHops, joinSummaryModel);
         return result;
     }
 
-    public static List<Path> findPaths(QueryExecutionFactory qef, UnaryRelation sourceConcept, UnaryRelation tmpTargetConcept, int nPaths, int maxHops, Model joinSummaryModel) {
+    public static List<SimplePath> findPaths(QueryExecutionFactory qef, UnaryRelation sourceConcept, UnaryRelation tmpTargetConcept, int nPaths, int maxHops, Model joinSummaryModel) {
 
         /*
         if(joinSummaryModel == null) {
@@ -295,38 +296,37 @@ public class ConceptPathFinder {
 
 
         // Convert the graph paths to 'ConceptPaths'
-        List<Path> paths = new ArrayList<Path>();
+        List<SimplePath> paths = new ArrayList<>();
         for(GraphPath<Node, DefaultEdge> graphPath : candidateGraphPaths) {
 
             Node current = graphPath.getStartVertex();
 
-            List<Step> steps = new ArrayList<Step>();
+            List<P_Path0> steps = new ArrayList<>();
 
             for(DefaultEdge edge : graphPath.getEdgeList()) {
                 Node source = graph.getEdgeSource(edge);
                 Node target = graph.getEdgeTarget(edge);
 
-                boolean isInverse;
+                boolean isFwd;
 
                 if(current.equals(source)) {
                     current = target;
-                    isInverse = false;
+                    isFwd = true;
                 }
                 else if(current.equals(target)) {
                     current = source;
-                    isInverse = true;
+                    isFwd = false;
                 }
                 else {
                     throw new RuntimeException("Should not happen");
                 }
 
-                String propertyName = current.getURI();
-                Step step = new Step(propertyName, isInverse);
+                P_Path0 step = PathUtils.createStep(current, isFwd);
 
                 steps.add(step);
             }
 
-            Path path = new Path(steps);
+            SimplePath path = new SimplePath(steps);
             paths.add(path);
         }
 
@@ -340,10 +340,10 @@ public class ConceptPathFinder {
 
         Generator<Var> generator = VarGeneratorBlacklist.create("v", varNames);
 
-        List<Path> result = new ArrayList<Path>();
+        List<SimplePath> result = new ArrayList<SimplePath>();
 
-        for(Path path : paths) {
-            List<Element> pathElements = Path.pathToElements(path, sourceConcept.getVar(), targetConcept.getVar(), generator);
+        for(SimplePath path : paths) {
+            List<Element> pathElements = SimplePath.pathToElements(path, sourceConcept.getVar(), targetConcept.getVar(), generator);
 
             List<Element> tmp = new ArrayList<Element>();
             if(!sourceConcept.isSubjectConcept()) {
@@ -394,14 +394,14 @@ public class ConceptPathFinder {
      * @param paths
      * @return
      */
-    public static Model createModel(List<Path> paths) {
+    public static Model createModel(List<SimplePath> paths) {
         Model result = ModelFactory.createDefaultModel();
 
         Resource Path = ResourceFactory.createResource("http://ns.aksw.org/jassa/ontology/Path");
         Property length = ResourceFactory.createProperty("http://ns.aksw.org/jassa/ontology/pathLength");
 
         int i = 0;
-        for(Path path : paths) {
+        for(SimplePath path : paths) {
             String pathStr = path.toPathString();
 
             Resource s = result.createResource("http://example.org/path/" + StringUtils.urlEncode(pathStr));

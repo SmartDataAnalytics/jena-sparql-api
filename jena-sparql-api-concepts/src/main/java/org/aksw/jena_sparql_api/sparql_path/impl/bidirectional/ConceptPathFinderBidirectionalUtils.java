@@ -15,8 +15,6 @@ import java.util.stream.Collectors;
 import org.aksw.commons.jena.jgrapht.PseudoGraphJenaGraph;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
-import org.aksw.jena_sparql_api.concepts.Path;
-import org.aksw.jena_sparql_api.concepts.Step;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
@@ -29,6 +27,8 @@ import org.aksw.jena_sparql_api.stmt.SparqlStmt;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtQuery;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtUtils;
+import org.aksw.jena_sparql_api.util.sparql.syntax.path.PathUtils;
+import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.Vars;
@@ -42,14 +42,13 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
-import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sparql.lang.arq.ParseException;
+import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.ElementGroup;
@@ -61,7 +60,6 @@ import org.jgrapht.alg.shortestpath.KShortestSimplePaths;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
@@ -127,7 +125,7 @@ public class ConceptPathFinderBidirectionalUtils {
         return result;
     }
 	
-    public static Flowable<Path> findPaths(SparqlQueryConnection conn, UnaryRelation sourceConcept, UnaryRelation tmpTargetConcept, Long nPaths, Long maxHops, org.apache.jena.graph.Graph baseDataSummary, Boolean shortestPathsOnly, Boolean simplePathsOnly) {
+    public static Flowable<SimplePath> findPaths(SparqlQueryConnection conn, UnaryRelation sourceConcept, UnaryRelation tmpTargetConcept, Long nPaths, Long maxHops, org.apache.jena.graph.Graph baseDataSummary, Boolean shortestPathsOnly, Boolean simplePathsOnly) {
     	shortestPathsOnly = shortestPathsOnly == null ? false : shortestPathsOnly;
     	simplePathsOnly = simplePathsOnly == null ? false : simplePathsOnly;    	
     	
@@ -177,7 +175,7 @@ public class ConceptPathFinderBidirectionalUtils {
         org.apache.jena.graph.Graph union = new Union(baseDataSummary, ext);
         Model joinSummaryGraph = ModelFactory.createModelForGraph(union);
         
-		RDFDataMgr.write(System.out, joinSummaryGraph, RDFFormat.TURTLE_PRETTY);
+		//RDFDataMgr.write(System.out, joinSummaryGraph, RDFFormat.TURTLE_PRETTY);
 
         
         
@@ -315,8 +313,8 @@ public class ConceptPathFinderBidirectionalUtils {
 
         boolean detectEquivalentPaths = false;
         if(detectEquivalentPaths) {
-            Multimap<Path, GraphPath<Node, Triple>> index = Multimaps.index(candidateGraphPaths, ConceptPathFinderBidirectionalUtils::convertGraphPathToSparqlPath);
-	        for(Entry<Path, Collection<GraphPath<Node, Triple>>> entry : index.asMap().entrySet()) {
+            Multimap<SimplePath, GraphPath<Node, Triple>> index = Multimaps.index(candidateGraphPaths, ConceptPathFinderBidirectionalUtils::convertGraphPathToSparqlPath);
+	        for(Entry<SimplePath, Collection<GraphPath<Node, Triple>>> entry : index.asMap().entrySet()) {
 	        	if(entry.getValue().size() > 1) {
 	        		System.out.println("MULTI MAP " + entry.getKey());
 	        		entry.getValue().forEach(System.out::println);
@@ -325,7 +323,7 @@ public class ConceptPathFinderBidirectionalUtils {
         }
 
         // Convert the graph paths to 'ConceptPaths'        
-        List<Path> paths = candidateGraphPaths.stream()
+        List<SimplePath> paths = candidateGraphPaths.stream()
         	.map(ConceptPathFinderBidirectionalUtils::convertGraphPathToSparqlPath)
         	.filter(x -> x != null)
         	.collect(Collectors.toList());
@@ -339,10 +337,10 @@ public class ConceptPathFinderBidirectionalUtils {
 
         Generator<Var> generator = VarGeneratorBlacklist.create("v", vars);
 
-        List<Path> result = new ArrayList<Path>();
+        List<SimplePath> result = new ArrayList<SimplePath>();
 
-        for(Path path : paths) {
-            List<Element> pathElements = Path.pathToElements(path, sourceConcept.getVar(), targetConcept.getVar(), generator);
+        for(SimplePath path : paths) {
+            List<Element> pathElements = SimplePath.pathToElements(path, sourceConcept.getVar(), targetConcept.getVar(), generator);
 
             List<Element> tmp = new ArrayList<Element>();
             if(!sourceConcept.isSubjectConcept()) {
@@ -391,13 +389,13 @@ public class ConceptPathFinderBidirectionalUtils {
      * @param paths
      * @return (LinkedHash)Set of paths that validated
      */
-    public static Set<Path> validatePaths(
+    public static Set<SimplePath> validatePaths(
     		Generator<Var> generator,
     		UnaryRelation sourceConcept,
     		UnaryRelation targetConcept,
     		RDFConnection conn,
-    		Collection<Path> paths) {
-    	Set<Path> result = paths.stream()
+    		Collection<SimplePath> paths) {
+    	Set<SimplePath> result = paths.stream()
     		.filter(path -> ConceptPathFinderBidirectionalUtils.validatePath(generator, sourceConcept, targetConcept, conn, path))
     		.collect(Collectors.toCollection(LinkedHashSet::new));
     	return result;
@@ -410,8 +408,8 @@ public class ConceptPathFinderBidirectionalUtils {
     		UnaryRelation sourceConcept,
     		UnaryRelation targetConcept,
     		RDFConnection conn,
-    		Path path) {
-        List<Element> pathElements = Path.pathToElements(path, sourceConcept.getVar(), targetConcept.getVar(), generator);
+    		SimplePath path) {
+        List<Element> pathElements = SimplePath.pathToElements(path, sourceConcept.getVar(), targetConcept.getVar(), generator);
 
         List<Element> tmp = new ArrayList<Element>();
         if(!sourceConcept.isSubjectConcept()) {
@@ -463,22 +461,22 @@ public class ConceptPathFinderBidirectionalUtils {
     }
 
     
-    public static Path convertGraphPathToSparqlPath(GraphPath<Node, Triple> graphPath) {
+    public static SimplePath convertGraphPathToSparqlPath(GraphPath<Node, Triple> graphPath) {
     	
         List<Triple> el = graphPath.getEdgeList();
         List<Triple> effectiveEdgeList = el.subList(1, el.size() - 1);
         
-        Path result = null;
+        SimplePath result = null;
         try {
-	        List<Step> steps = Streams.mapWithIndex(effectiveEdgeList.stream(), Maps::immutableEntry)
+	        List<P_Path0> steps = Streams.mapWithIndex(effectiveEdgeList.stream(), Maps::immutableEntry)
 	        	.filter(e -> e.getValue() % 2 == 0)
 	        	.map(e -> e.getKey())
 	        	// We may get a NPE here if t.getPredicate() could not be classified
-	        	.map(t -> new Step(t.getObject().getURI(), !isFwd(t.getPredicate())))
+	        	.map(t -> PathUtils.createStep(t.getObject(), isFwd(t.getPredicate())))
 	        	.collect(Collectors.toList())
 	        	;
 
-	        result = new Path(steps);
+	        result = new SimplePath(steps);
         } catch(Exception e) {
         	logger.debug("Harmless exception - but may indicate a bug in the algo or issue with input data: ", e);
         }

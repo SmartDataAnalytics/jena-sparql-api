@@ -1,54 +1,58 @@
-package org.aksw.jena_sparql_api.concepts;
+package org.aksw.jena_sparql_api.util.sparql.syntax.path;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 import org.aksw.jena_sparql_api.utils.Generator;
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.path.P_Link;
-import org.apache.jena.sparql.path.P_ReverseLink;
+import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.path.P_Seq;
+import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 
 import com.google.common.base.Joiner;
 
 
-public class Path {
-    private List<Step> steps;
+public class SimplePath {
+    private List<P_Path0> steps;
 
-    public Path() {
-        this(new ArrayList<Step>());
+    public SimplePath() {
+        this(new ArrayList<P_Path0>());
     }
 
-    public Path(List<Step> steps) {
+    public SimplePath(List<P_Path0> steps) {
         this.steps = steps;
     }
 
-    public List<Step> getSteps() {
+    public List<P_Path0> getSteps() {
         return steps;
     }
     
-    public static org.apache.jena.sparql.path.Path toJena(Step step) {
-    	Node node = NodeFactory.createURI(step.getPropertyName());
-    	org.apache.jena.sparql.path.Path result = step.isInverse()
-    			? new P_ReverseLink(node)
-    			: new P_Link(node);
-    			
-    	return result;
-    }
+//    public static org.apache.jena.sparql.path.Path toJena(Step step) {
+//    	Node node = NodeFactory.createURI(step.getPropertyName());
+//    	org.apache.jena.sparql.path.Path result = step.isInverse()
+//    			? new P_ReverseLink(node)
+//    			: new P_Link(node);
+//    			
+//    	return result;
+//    }
 
-    public static org.apache.jena.sparql.path.Path toJena(Path path) {
+    
+    public static SimplePath fromPropertyPath(Path path) {
+    	List<P_Path0> steps = PathUtils.toList(path);
+    	return new SimplePath(steps);
+    }
+    
+    public static Path toPropertyPath(SimplePath path) {
     	org.apache.jena.sparql.path.Path result = null;
 
-    	List<Step> steps = path.getSteps();
+    	List<P_Path0> steps = path.getSteps();
     	for(int i = 0; i < steps.size(); ++i) {
-    		Step step = steps.get(i);
-    		org.apache.jena.sparql.path.Path contrib = toJena(step);
+    		P_Path0 contrib = steps.get(i);
+    		//org.apache.jena.sparql.path.Path contrib = step;//toJena(step);
     		
     		result = result == null ? contrib : new P_Seq(result, contrib);
     	}
@@ -72,7 +76,7 @@ public class Path {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        Path other = (Path) obj;
+        SimplePath other = (SimplePath) obj;
         if (steps == null) {
             if (other.steps != null)
                 return false;
@@ -87,7 +91,7 @@ public class Path {
     }
 
 
-    public static List<Element> pathToElements(Path path, Var start, Var end, Generator generator) {
+    public static List<Element> pathToElements(SimplePath path, Var start, Var end, Generator generator) {
         List<Element> result = new ArrayList<Element>();
 
         ElementTriplesBlock tmp = new ElementTriplesBlock();
@@ -106,14 +110,14 @@ public class Path {
     }
 
 
-    public static List<Triple> pathToTriples(Path path, Var start, Var end, Generator<Var> generator) {
+    public static List<Triple> pathToTriples(SimplePath path, Var start, Var end, Generator<Var> generator) {
         List<Triple> result = new ArrayList<Triple>();
 
         Var a = start;
 
-        Iterator<Step> it = path.getSteps().iterator();
+        Iterator<P_Path0> it = path.getSteps().iterator();
         while(it.hasNext()) {
-            Step step = it.next();
+            P_Path0 step = it.next();
 
             Var b;
             if(it.hasNext()) {
@@ -123,11 +127,11 @@ public class Path {
             }
 
             Triple t;
-            if(!step.isInverse()) {
-                t = new Triple(a, NodeFactory.createURI(step.getPropertyName()), b);
+            if(step.isForward()) {
+                t = new Triple(a, step.getNode(), b);
             }
             else {
-                t = new Triple(b, NodeFactory.createURI(step.getPropertyName()), a);
+                t = new Triple(b, step.getNode(), a);
             }
 
             result.add(t);

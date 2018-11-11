@@ -1,6 +1,5 @@
 package org.aksw.jena_sparql_api.sparql_path.impl.bidirectional;
 
-import org.aksw.jena_sparql_api.concepts.Path;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinder;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinderBase;
@@ -8,6 +7,7 @@ import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinderFactorySummaryB
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinderSystem;
 import org.aksw.jena_sparql_api.sparql_path.api.PathSearch;
 import org.aksw.jena_sparql_api.sparql_path.api.PathSearchBase;
+import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 
@@ -43,10 +43,10 @@ public class ConceptPathFinderSystemBidirectional
 			return new ConceptPathFinderBase(dataSummary.getGraph(), dataConnection) {
 
 				@Override
-				public PathSearch<Path> createSearch(UnaryRelation sourceConcept, UnaryRelation targetConcept) {
-					return new PathSearchBase<Path>() {
+				public PathSearch<SimplePath> createSearch(UnaryRelation sourceConcept, UnaryRelation targetConcept) {
+					return new PathSearchBase<SimplePath>() {
 						@Override
-						public Flowable<Path> exec() {
+						public Flowable<SimplePath> exec() {
 							return ConceptPathFinderBidirectionalUtils
 								.findPaths(dataConnection, sourceConcept, targetConcept, maxResults, maxLength, dataSummary, shortestPathsOnly, simplePathsOnly);
 						}
