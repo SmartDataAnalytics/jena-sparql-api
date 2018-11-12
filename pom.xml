@@ -22,7 +22,7 @@
 
 		<module>jena-sparql-api-resources-sparqlqc</module>
 
-<!--		<module>jena-sparql-api-jgrapht</module> -->
+		<!-- <module>jena-sparql-api-jgrapht</module> -->
 
 		<module>jena-sparql-api-utils</module>
 		<module>jena-sparql-api-sparql-ext</module>
@@ -92,7 +92,7 @@
 		<jena.version>3.8.0</jena.version>
 		<jetty.version>9.4.8.v20171121</jetty.version>
 
-<!--		<jgrapht.version>1.1.0</jgrapht.version> -->
+		<!-- <jgrapht.version>1.1.0</jgrapht.version> -->
 
 		<!-- 2.18 could be tried out next -->
 		<jersey.version>2.26-b03</jersey.version>
@@ -302,23 +302,23 @@
 		</pluginManagement>
 	</build>
 
-<!-- 	<dependencies> -->
-<!-- 		<dependency> -->
-<!-- 			<groupId>junit</groupId> -->
-<!-- 			<artifactId>junit</artifactId> -->
-<!-- 		</dependency> -->
+	<!-- <dependencies> -->
+	<!-- <dependency> -->
+	<!-- <groupId>junit</groupId> -->
+	<!-- <artifactId>junit</artifactId> -->
+	<!-- </dependency> -->
 
-<!-- 		<dependency> -->
-<!-- 			<groupId>log4j</groupId> -->
-<!-- 			<artifactId>log4j</artifactId> -->
-<!-- 		</dependency> -->
+	<!-- <dependency> -->
+	<!-- <groupId>log4j</groupId> -->
+	<!-- <artifactId>log4j</artifactId> -->
+	<!-- </dependency> -->
 
-<!-- 		<dependency> -->
-<!-- 			<groupId>org.slf4j</groupId> -->
-<!-- 			<artifactId>slf4j-log4j12</artifactId> -->
-<!-- 		</dependency> -->
+	<!-- <dependency> -->
+	<!-- <groupId>org.slf4j</groupId> -->
+	<!-- <artifactId>slf4j-log4j12</artifactId> -->
+	<!-- </dependency> -->
 
-<!-- 	</dependencies> -->
+	<!-- </dependencies> -->
 
 
 	<dependencyManagement>
@@ -595,22 +595,12 @@
 			<!-- <version>0.6</version> -->
 			<!-- </dependency> -->
 
-<!--
-			<dependency>
-				<groupId>org.jgrapht</groupId>
-				<artifactId>jgrapht-core</artifactId>
-				<version>${jgrapht.version}</version>
-			</dependency>
--->
+			<!-- <dependency> <groupId>org.jgrapht</groupId> <artifactId>jgrapht-core</artifactId> 
+				<version>${jgrapht.version}</version> </dependency> -->
 
 			<!-- Present for playground and potential demos -->
-<!--
-			<dependency>
-				<groupId>org.jgrapht</groupId>
-				<artifactId>jgrapht-ext</artifactId>
-				<version>${jgrapht.version}</version>
-			</dependency>
--->
+			<!-- <dependency> <groupId>org.jgrapht</groupId> <artifactId>jgrapht-ext</artifactId> 
+				<version>${jgrapht.version}</version> </dependency> -->
 			<!-- Java8 stream utilities, such as zip -->
 			<dependency>
 				<groupId>com.codepoetics</groupId>
@@ -790,12 +780,12 @@
 					</exclusion>
 				</exclusions>
 			</dependency>
-            <!-- https://mvnrepository.com/artifact/com.vividsolutions/jts-io -->
-            <dependency>
-                <groupId>com.vividsolutions</groupId>
-                <artifactId>jts-io</artifactId>
-                <version>1.14.0</version>
-            </dependency>
+			<!-- https://mvnrepository.com/artifact/com.vividsolutions/jts-io -->
+			<dependency>
+				<groupId>com.vividsolutions</groupId>
+				<artifactId>jts-io</artifactId>
+				<version>1.14.0</version>
+			</dependency>
 
 			<!-- Embedded Databases (will be moved to separate package) -->
 			<dependency>
@@ -1053,6 +1043,12 @@
 				<groupId>io.reactivex.rxjava2</groupId>
 				<artifactId>rxjava</artifactId>
 				<version>2.1.14</version>
+			</dependency>
+
+			<dependency>
+				<groupId>com.github.davidmoten</groupId>
+				<artifactId>rxjava2-extras</artifactId>
+				<version>0.1.28</version>
 			</dependency>
 
 			<!-- <dependency> -->
