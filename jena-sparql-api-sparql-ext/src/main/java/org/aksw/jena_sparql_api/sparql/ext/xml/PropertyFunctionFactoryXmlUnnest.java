@@ -109,6 +109,11 @@ public class PropertyFunctionFactoryXmlUnnest
         	            		NodeList nodes = (NodeList)tmp;
         	            		for(int i = 0; i < nodes.getLength(); ++i) {
         	            			org.w3c.dom.Node item = nodes.item(i);
+        	            			
+        	            			// It seems running xpath queries on nodes returned as
+        	            			// xpaths results is not supported - hence we need to serialize xml Nodes
+        	            			item = (org.w3c.dom.Node)xmlDatatype.parse(xmlDatatype.unparse(item));
+        	            			
         	            			//System.out.println("" + node);
 
         	            			Node xmlNode = NodeFactory.createLiteralByValue(item, xmlDatatype);

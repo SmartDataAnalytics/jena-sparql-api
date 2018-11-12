@@ -1,0 +1,15 @@
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX xml: <http://jsa.aksw.org/fn/xml/>
+
+SELECT * {
+# The following is just a triple pattern of the form
+# "xmlString"^^xsdx:xml xml:unnest("xPathExpressionString" ?o)
+"""
+<ul>
+  <li id="a" />
+  <li id="b" />
+</ul>"""^^xsd:xml xml:unnest ("//*[local-name()='li']" ?o)
+
+BIND(xml:path(?o, "//*/@id") AS ?t)
+}
+
