@@ -20,7 +20,7 @@ public class PathUtils {
 		return result;
 	}
 	
-	public static Path toPath(List<P_Path0> steps) {
+	public static Path toSparqlPath(List<P_Path0> steps) {
 		return ExprUtils.<Path>opifyBalanced(steps, (a, b) -> new P_Seq(a, b));
 		//return ExprUtils.opifyBalanced(steps, P_Seq::new);
 	}

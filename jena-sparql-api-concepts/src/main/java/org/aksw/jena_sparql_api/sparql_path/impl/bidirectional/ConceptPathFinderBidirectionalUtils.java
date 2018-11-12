@@ -264,19 +264,28 @@ public class ConceptPathFinderBidirectionalUtils {
         List<GraphPath<Node, Triple>> candidateGraphPaths;
     	Integer _maxPathLength = maxHops == null ? null : maxHops.intValue();
 
-    	int n = nPaths == null ? - 1 : Ints.checkedCast(nPaths);
+    	int n = nPaths == null ? Integer.MAX_VALUE : Ints.checkedCast(nPaths);
 
     	if(!shortestPathsOnly) {
         	AllDirectedPaths<Node, Triple> pathAlgo = new AllDirectedPaths<>(graph);
-        	candidateGraphPaths = pathAlgo.getAllPaths(startVertex, VocabPath.end.asNode(), simplePathsOnly, _maxPathLength);
+        	candidateGraphPaths = pathAlgo.getAllPaths(startVertex, endVertex, simplePathsOnly, _maxPathLength);
         } else {
         	
-        	if(n <= 0) {
-            	candidateGraphPaths = Collections.emptyList();         		
+        	if(n == 0) {
+        		// Prevent illegale argument exception at jgrapht
+        		candidateGraphPaths = Collections.emptyList();         		        		
         	} else {
-                KShortestPathAlgorithm<Node, Triple> kShortestPaths = new KShortestSimplePaths<>(graph, n);
-                candidateGraphPaths = kShortestPaths.getPaths(startVertex, endVertex, n);
-        	}                	
+	        	KShortestPathAlgorithm<Node, Triple> kShortestPaths = _maxPathLength == null
+	        			? new KShortestSimplePaths<>(graph)
+	        			: new KShortestSimplePaths<>(graph, _maxPathLength);
+
+	        	candidateGraphPaths = kShortestPaths.getPaths(startVertex, endVertex, n);
+        	}        	
+//        	if(n < 0) {
+////            	candidateGraphPaths = Collections.emptyList();         		
+//        	} else {
+//                KShortestPathAlgorithm<Node, Triple> kShortestPaths = new KShortestSimplePaths<>(graph, n);
+//        	}                	
         }
         
         if(n >= 0) {
