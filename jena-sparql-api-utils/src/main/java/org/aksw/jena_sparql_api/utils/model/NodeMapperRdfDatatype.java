@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.utils.model;
 
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
+import java.util.Objects;
 
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.graph.Node;

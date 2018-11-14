@@ -105,9 +105,10 @@ public class ResourceUtils {
 		TypeMapper tm = TypeMapper.getInstance();
 		RDFDatatype dtype = tm.getTypeByClass(clazz);
 
+		
 		RDFNode o = stmt.getObject();
 				
-		boolean result = o.isLiteral() && NodeMapperRdfDatatype.canMapCore(o.asNode(), dtype);
+		boolean result = dtype != null && o.isLiteral() && NodeMapperRdfDatatype.canMapCore(o.asNode(), dtype);
 		return result;
 	}
 

@@ -14,6 +14,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.lang.arq.ParseException;
 import org.apache.jena.sparql.path.PathParser;
@@ -35,7 +36,7 @@ public class TestConceptPathFinder {
 		Dataset ds = RDFDataMgr.loadDataset("concept-path-finder-test-data.ttl");
 		RDFConnection dataConnection = RDFConnectionFactory.connect(ds);
 		
-		dataConnection.update("DELETE WHERE { ?s a ?t }");
+		//dataConnection.update("DELETE WHERE { ?s a ?t }");
 		
 		// Set up a path finding system
 		ConceptPathFinderSystem system = new ConceptPathFinderSystemBidirectional();
@@ -43,6 +44,8 @@ public class TestConceptPathFinder {
 		// Use the system to compute a data summary
 		// Note, that the summary could be loaded from any place, such as a file used for caching
 		Model dataSummary = system.computeDataSummary(dataConnection).blockingGet();
+		
+		RDFDataMgr.write(System.out, dataSummary, RDFFormat.TURTLE_PRETTY);
 		
 		// Build a path finder; for this, first obtain a factory from the system
 		// set its attributes and eventually build the path finder.

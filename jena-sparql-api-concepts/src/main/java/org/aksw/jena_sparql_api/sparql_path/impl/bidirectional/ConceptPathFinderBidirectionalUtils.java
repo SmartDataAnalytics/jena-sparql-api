@@ -331,10 +331,13 @@ public class ConceptPathFinderBidirectionalUtils {
 	        }
         }
 
+        
+        
         // Convert the graph paths to 'ConceptPaths'        
         List<SimplePath> paths = candidateGraphPaths.stream()
         	.map(ConceptPathFinderBidirectionalUtils::convertGraphPathToSparqlPath)
         	.filter(x -> x != null)
+        	.distinct() // TODO I would like to get rid of this distinct here; I am not totally sure how duplicates come into existence in the first place; it has something to do with enumeration of paths in the data summary
         	.collect(Collectors.toList());
 
         //List<Path> paths = callback.getCandidates();
