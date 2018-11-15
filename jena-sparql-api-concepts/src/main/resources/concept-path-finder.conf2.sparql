@@ -1,0 +1,19 @@
+PREFIX eg: <http://www.example.org/>
+
+# A note on naming: Predicates have subject-centric names:
+# T hasOutgoingPredicate ...
+# p isIngoingPredicateOf ...
+
+CONSTRUCT {
+  ?st ?p ?ot  
+} {
+  { SELECT DISTINCT ?st ?p ?ot {
+    ?s ?p ?o
+    OPTIONAL { ?s a ?stmp }
+    OPTIONAL { ?o a ?otmp }
+    BIND(IF(BOUND(?stmp), ?stmp, eg:unbound) AS ?st)
+    BIND(IF(BOUND(?otmp), ?otmp, eg:unbound) AS ?ot)
+    FILTER(!STRSTARTS(STR(?p), 'http://www.w3.org/1999/02/22-rdf-syntax-ns#_'))
+    FILTER(?p NOT IN (rdf:type))
+  } }
+}
