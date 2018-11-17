@@ -151,6 +151,9 @@ public class TransformPushFiltersIntoBGP
 
             Op newSubOp = map.isEmpty() ? subOp : NodeTransformLib.transform(new NodeTransformRenameMap(map), subOp);
 
+//            System.out.println("OLD SUBOP: " + subOp);
+//            System.out.println("NEW SUBOP: " + newSubOp);
+            
             ExprList exprList = CnfUtils.toExprList(residualClauses);
             result = OpFilter.filterBy(exprList, newSubOp);
 

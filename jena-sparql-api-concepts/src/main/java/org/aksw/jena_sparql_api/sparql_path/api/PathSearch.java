@@ -14,7 +14,7 @@ import io.reactivex.Flowable;
  */
 public interface PathSearch<P> {
 	
-	default PathSearch<P> setMaxLength(Integer maxLength) {
+	default PathSearch<P> setMaxPathLength(Integer maxLength) {
 		return setMaxLength(maxLength == null ? null : maxLength.longValue());
 	}
 

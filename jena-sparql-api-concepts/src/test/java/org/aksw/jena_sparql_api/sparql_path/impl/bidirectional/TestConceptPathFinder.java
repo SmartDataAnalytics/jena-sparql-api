@@ -67,7 +67,7 @@ public class TestConceptPathFinder {
 		// Set parameters on the search, such as max path length and the max number of results
 		// Invocation of .exec() executes the search and yields the flow of results
 		List<SimplePath> actual = pathSearch
-				.setMaxLength(7)
+				.setMaxPathLength(7)
 				//.setMaxResults(100)
 				.exec()
 				.toList().blockingGet();
