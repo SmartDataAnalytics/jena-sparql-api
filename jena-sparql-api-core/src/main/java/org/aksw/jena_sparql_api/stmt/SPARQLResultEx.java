@@ -60,7 +60,7 @@ public class SPARQLResultEx
 	}
 
 	public boolean isTriples() {
-        if (isHasBeenSet() )
+        if ( !isHasBeenSet() )
             throw new ResultSetException("Not set");
         return triples != null;
 	}
@@ -74,7 +74,7 @@ public class SPARQLResultEx
 	}
 	
 	public boolean isQuads() {
-        if (isHasBeenSet() )
+        if ( !isHasBeenSet() )
             throw new ResultSetException("Not set");
         return quads != null;
 	}
@@ -89,7 +89,7 @@ public class SPARQLResultEx
 	
 	
 	public boolean isUpdateType() {
-        if (isHasBeenSet() )
+        if ( !isHasBeenSet() )
             throw new ResultSetException("Not set");
         return updateType;
 	}
