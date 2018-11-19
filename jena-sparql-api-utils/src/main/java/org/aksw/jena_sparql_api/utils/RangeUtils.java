@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
@@ -68,7 +69,8 @@ public class RangeUtils {
     			range.hasLowerBound() &&
     			range.hasUpperBound() &&
     			range.lowerBoundType().equals(BoundType.CLOSED) &&
-    			range.upperBoundType().equals(BoundType.CLOSED);
+    			range.upperBoundType().equals(BoundType.CLOSED) &&
+    			Objects.equals(range.lowerEndpoint(), range.upperEndpoint());
     	
     	return result;
     }
