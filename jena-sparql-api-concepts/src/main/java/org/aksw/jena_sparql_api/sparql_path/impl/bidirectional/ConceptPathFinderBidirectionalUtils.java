@@ -125,9 +125,11 @@ public class ConceptPathFinderBidirectionalUtils {
         return result;
     }
 	
-    public static Flowable<SimplePath> findPaths(SparqlQueryConnection conn, UnaryRelation sourceConcept, UnaryRelation tmpTargetConcept, Long nPaths, Long maxHops, org.apache.jena.graph.Graph baseDataSummary, Boolean shortestPathsOnly, Boolean simplePathsOnly) {
+    public static Flowable<SimplePath> findPaths(SparqlQueryConnection conn, UnaryRelation sourceConcept, UnaryRelation tmpTargetConcept, Long nPaths, Long maxLength, org.apache.jena.graph.Graph baseDataSummary, Boolean shortestPathsOnly, Boolean simplePathsOnly) {
     	shortestPathsOnly = shortestPathsOnly == null ? false : shortestPathsOnly;
-    	simplePathsOnly = simplePathsOnly == null ? false : simplePathsOnly;    	
+    	simplePathsOnly = simplePathsOnly == null ? false : simplePathsOnly;
+    	
+    	
     	
     	UnaryRelation targetConcept = ConceptUtils.makeDistinctFrom(tmpTargetConcept, sourceConcept);
 
@@ -262,7 +264,7 @@ public class ConceptPathFinderBidirectionalUtils {
                 //GraphPath<Node, Triple> tmp = dijkstraShortestPath.getPath(startVertex, candidate);
         
         List<GraphPath<Node, Triple>> candidateGraphPaths;
-    	Integer _maxPathLength = maxHops == null ? null : maxHops.intValue();
+    	Integer _maxPathLength = maxLength == null ? null : maxLength.intValue() * 2;
 
     	int n = nPaths == null ? Integer.MAX_VALUE : Ints.checkedCast(nPaths);
 
@@ -349,78 +351,60 @@ public class ConceptPathFinderBidirectionalUtils {
 
         Generator<Var> generator = VarGeneratorBlacklist.create("v", vars);
 
-        List<SimplePath> result = new ArrayList<SimplePath>();
+        //List<SimplePath> result = new ArrayList<SimplePath>();
 
-        for(SimplePath path : paths) {
-            List<Element> pathElements = SimplePath.pathToElements(path, sourceConcept.getVar(), targetConcept.getVar(), generator);
-
-            List<Element> tmp = new ArrayList<Element>();
-            if(!sourceConcept.isSubjectConcept()) {
-                tmp.addAll(sourceConcept.getElements());
-            }
-
-            // TODO Should we treat the case where the target concept is a subject concept in a special way?
-            //if(!targetConcept.isSubjectConcept()) {
-                tmp.addAll(targetConcept.getElements());
-            //}
-
-            tmp.addAll(pathElements);
-
-            if(pathElements.isEmpty()) {
-                if(!sourceConcept.getVar().equals(targetConcept.getVar()) && !sourceConcept.isSubjectConcept()) {
-                    tmp.add(new ElementFilter(new E_Equals(new ExprVar(sourceConcept.getVar()), new ExprVar(targetConcept.getVar()))));
-                }
-            }
-
-            ElementGroup group = new ElementGroup();
-            for(Element t : tmp) {
-                group.addElement(t);
-            }
-
-            Query query = new Query();
-            query.setQueryAskType();
-            query.setQueryPattern(group);
-
-            logger.debug("Verifying candidate with query: " + query);
-
-            QueryExecution xqe = conn.query(query);
-            boolean isCandidate = xqe.execAsk();
-            logger.debug("Verification result is [" + isCandidate + "] for " + query);
-
-            if(isCandidate) {
-                result.add(path);
-            }
-        }
-
-        return Flowable.fromIterable(result);
+        Flowable<SimplePath> result = Flowable.fromIterable(paths)
+        	.filter(path -> validatePath(conn, sourceConcept, targetConcept, path, generator));
+        	
+        return result;
+        	
+//        
+//        for(SimplePath path : paths) {
+//            List<Element> pathElements = SimplePath.pathToElements(path, sourceConcept.getVar(), targetConcept.getVar(), generator);
+//
+//            List<Element> tmp = new ArrayList<Element>();
+//            if(!sourceConcept.isSubjectConcept()) {
+//                tmp.addAll(sourceConcept.getElements());
+//            }
+//
+//            // TODO Should we treat the case where the target concept is a subject concept in a special way?
+//            //if(!targetConcept.isSubjectConcept()) {
+//                tmp.addAll(targetConcept.getElements());
+//            //}
+//
+//            tmp.addAll(pathElements);
+//
+//            if(pathElements.isEmpty()) {
+//                if(!sourceConcept.getVar().equals(targetConcept.getVar()) && !sourceConcept.isSubjectConcept()) {
+//                    tmp.add(new ElementFilter(new E_Equals(new ExprVar(sourceConcept.getVar()), new ExprVar(targetConcept.getVar()))));
+//                }
+//            }
+//
+//            ElementGroup group = new ElementGroup();
+//            for(Element t : tmp) {
+//                group.addElement(t);
+//            }
+//
+//            Query query = new Query();
+//            query.setQueryAskType();
+//            query.setQueryPattern(group);
+//
+//            logger.debug("Verifying candidate with query: " + query);
+//
+//            QueryExecution xqe = conn.query(query);
+//            boolean isCandidate = xqe.execAsk();
+//            logger.debug("Verification result is [" + isCandidate + "] for " + query);
+//
+//            if(isCandidate) {
+//                result.add(path);
+//            }
+//        }
+//
+//        return Flowable.fromIterable(result);
     }
 
     
-    /**
-     * 
-     * @param paths
-     * @return (LinkedHash)Set of paths that validated
-     */
-    public static Set<SimplePath> validatePaths(
-    		Generator<Var> generator,
-    		UnaryRelation sourceConcept,
-    		UnaryRelation targetConcept,
-    		RDFConnection conn,
-    		Collection<SimplePath> paths) {
-    	Set<SimplePath> result = paths.stream()
-    		.filter(path -> ConceptPathFinderBidirectionalUtils.validatePath(generator, sourceConcept, targetConcept, conn, path))
-    		.collect(Collectors.toCollection(LinkedHashSet::new));
-    	return result;
-    }
-    
-    
-
-    public static boolean validatePath(
-    		Generator<Var> generator,
-    		UnaryRelation sourceConcept,
-    		UnaryRelation targetConcept,
-    		RDFConnection conn,
-    		SimplePath path) {
+    public static boolean validatePath(SparqlQueryConnection conn, UnaryRelation sourceConcept, UnaryRelation targetConcept, SimplePath path, Generator<Var> generator) {
         List<Element> pathElements = SimplePath.pathToElements(path, sourceConcept.getVar(), targetConcept.getVar(), generator);
 
         List<Element> tmp = new ArrayList<Element>();
@@ -456,12 +440,78 @@ public class ConceptPathFinderBidirectionalUtils {
         boolean isCandidate = xqe.execAsk();
         logger.debug("Verification result is [" + isCandidate + "] for " + query);
 
-        
-        return isCandidate;
 //        if(isCandidate) {
 //            result.add(path);
 //        }
+        return isCandidate;
     }
+    
+    /**
+     * 
+     * @param paths
+     * @return (LinkedHash)Set of paths that validated
+     */
+//    public static Set<SimplePath> validatePaths(
+//    		Generator<Var> generator,
+//    		UnaryRelation sourceConcept,
+//    		UnaryRelation targetConcept,
+//    		RDFConnection conn,
+//    		Collection<SimplePath> paths) {
+//    	Set<SimplePath> result = paths.stream()
+//    		.filter(path -> ConceptPathFinderBidirectionalUtils.validatePath(generator, sourceConcept, targetConcept, conn, path))
+//    		.collect(Collectors.toCollection(LinkedHashSet::new));
+//    	return result;
+//    }
+    
+    
+//
+//    public static boolean validatePath(
+//    		Generator<Var> generator,
+//    		UnaryRelation sourceConcept,
+//    		UnaryRelation targetConcept,
+//    		RDFConnection conn,
+//    		SimplePath path) {
+//        List<Element> pathElements = SimplePath.pathToElements(path, sourceConcept.getVar(), targetConcept.getVar(), generator);
+//
+//        List<Element> tmp = new ArrayList<Element>();
+//        if(!sourceConcept.isSubjectConcept()) {
+//            tmp.addAll(sourceConcept.getElements());
+//        }
+//
+//        // TODO Should we treat the case where the target concept is a subject concept in a special way?
+//        //if(!targetConcept.isSubjectConcept()) {
+//            tmp.addAll(targetConcept.getElements());
+//        //}
+//
+//        tmp.addAll(pathElements);
+//
+//        if(pathElements.isEmpty()) {
+//            if(!sourceConcept.getVar().equals(targetConcept.getVar()) && !sourceConcept.isSubjectConcept()) {
+//                tmp.add(new ElementFilter(new E_Equals(new ExprVar(sourceConcept.getVar()), new ExprVar(targetConcept.getVar()))));
+//            }
+//        }
+//
+//        ElementGroup group = new ElementGroup();
+//        for(Element t : tmp) {
+//            group.addElement(t);
+//        }
+//
+//        Query query = new Query();
+//        query.setQueryAskType();
+//        query.setQueryPattern(group);
+//
+//        logger.debug("Verifying candidate with query: " + query);
+//
+//        QueryExecution xqe = conn.query(query);
+//        boolean isCandidate = xqe.execAsk();
+//        logger.debug("Verification result is [" + isCandidate + "] for " + query);
+//
+//        
+//        return isCandidate;
+////        if(isCandidate) {
+////            result.add(path);
+////        }
+//    }
 	
     public static Boolean isFwd(Node p) {
         Boolean result =

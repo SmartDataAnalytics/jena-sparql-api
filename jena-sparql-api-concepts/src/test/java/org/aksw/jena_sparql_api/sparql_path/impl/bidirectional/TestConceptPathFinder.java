@@ -67,13 +67,13 @@ public class TestConceptPathFinder {
 		// Set parameters on the search, such as max path length and the max number of results
 		// Invocation of .exec() executes the search and yields the flow of results
 		List<SimplePath> actual = pathSearch
-				.setMaxPathLength(7)
+				.setMaxPathLength(3)
 				//.setMaxResults(100)
 				.exec()
 				.toList().blockingGet();
 
-		System.out.println("Paths");
-		actual.forEach(System.out::println);
+//		System.out.println("Paths");
+//		actual.forEach(System.out::println);
 
 		// TODO Simply specification of reference paths such as by adding a Path.parse method
 		List<SimplePath> expected = Arrays.asList(
