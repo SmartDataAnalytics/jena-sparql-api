@@ -342,6 +342,8 @@ public class ConceptPathFinderBidirectionalUtils {
         	.distinct() // TODO I would like to get rid of this distinct here; I am not totally sure how duplicates come into existence in the first place; it has something to do with enumeration of paths in the data summary
         	.collect(Collectors.toList());
 
+        // Sort paths for determinism
+        Collections.sort(paths);
         //List<Path> paths = callback.getCandidates();
 
         // Cross check whether the path actually connects the source and target concepts
