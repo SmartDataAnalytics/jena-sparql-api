@@ -290,10 +290,6 @@ public class ConceptPathFinderBidirectionalUtils {
 //        	}                	
         }
         
-        if(n >= 0) {
-        	candidateGraphPaths = candidateGraphPaths.subList(0, Math.min(n, candidateGraphPaths.size()));
-        }
-        
         		//candidateGraphPaths.forEach(p -> logger.debug("  Candidate Path: " + p));
             	
  //            	if(tmp != null) {
@@ -344,6 +340,11 @@ public class ConceptPathFinderBidirectionalUtils {
 
         // Sort paths for determinism
         Collections.sort(paths);
+        
+        if(n >= 0) {
+        	paths = paths.subList(0, Math.min(n, paths.size()));
+        }
+
         //List<Path> paths = callback.getCandidates();
 
         // Cross check whether the path actually connects the source and target concepts
