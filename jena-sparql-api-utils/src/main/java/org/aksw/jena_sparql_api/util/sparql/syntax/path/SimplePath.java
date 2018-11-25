@@ -1,11 +1,10 @@
 package org.aksw.jena_sparql_api.util.sparql.syntax.path;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
+import org.aksw.commons.collections.IterableUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.core.Var;
@@ -14,12 +13,8 @@ import org.apache.jena.sparql.path.P_Seq;
 import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
-import org.apache.jena.sparql.util.NodeUtils;
 
 import com.google.common.base.Joiner;
-import com.google.common.collect.ComparisonChain;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Streams;
 
 
 public class SimplePath
@@ -174,37 +169,9 @@ public class SimplePath
         */
     }
 
-    public static int compareStep(P_Path0 a, P_Path0 b) {
-		int result = ComparisonChain.start()
-			.compareTrueFirst(a.isForward(), b.isForward())
-			.compare(a.getNode(), b.getNode(), NodeUtils::compareRDFTerms)
-			.result();
-		return result;
-    }
-    
-    public static <T> Comparator<? super Collection<? extends T>> createCollectionComparator(Comparator<? super T> itemComparator) {
-    	return (a, b) -> compareCollectionsOfEqualLength(a, b, itemComparator);
-    }
-    
-    public static <T> int compareCollectionsOfEqualLength(
-    		Collection<? extends T> a,
-    		Collection<? extends T> b,
-    		Comparator<? super T> itemComparator) {
-    	int result = Streams.zip(a.stream(), b.stream(), (x, y) -> itemComparator.compare(x, y))
-    		.mapToInt(x -> x)
-    		.filter(x -> x != 0)
-    		.findFirst().orElse(0);
-    	
-    	return result;
-    }
-    
 	@Override
 	public int compareTo(SimplePath o) {
-		int result = ComparisonChain.start()
-			.compare(this.steps.size(), o.steps.size())
-			.compare(this.steps, o.steps, createCollectionComparator(SimplePath::compareStep))
-			.result();
-
+		int result = IterableUtils.compareByLengthThenItems(this.steps, o.steps, PathUtils::compareStep);
 		return result;
 	}
 	

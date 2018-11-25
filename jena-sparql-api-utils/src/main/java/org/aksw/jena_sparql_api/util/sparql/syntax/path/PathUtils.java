@@ -10,7 +10,9 @@ import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.path.P_ReverseLink;
 import org.apache.jena.sparql.path.P_Seq;
 import org.apache.jena.sparql.path.Path;
+import org.apache.jena.sparql.util.NodeUtils;
 
+import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Streams;
 
 public class PathUtils {
@@ -56,5 +58,12 @@ public class PathUtils {
 				.count();
 		return result;		
 	}
-
+	
+    public static int compareStep(P_Path0 a, P_Path0 b) {
+		int result = ComparisonChain.start()
+			.compareTrueFirst(a.isForward(), b.isForward())
+			.compare(a.getNode(), b.getNode(), NodeUtils::compareRDFTerms)
+			.result();
+		return result;
+    }
 }
