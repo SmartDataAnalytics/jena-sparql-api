@@ -8,6 +8,10 @@ import java.util.Set;
 
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.VarUtils;
+import org.apache.jena.atlas.lib.tuple.Tuple;
+import org.apache.jena.sparql.algebra.Algebra;
+import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.syntax.Element;
 
@@ -77,13 +81,31 @@ public class RelationJoiner {
 		
 		Map<Var, Var> varMap = VarUtils.createJoinVarMap(attrVarsMentioned, filterVarsMentioned, attrJoinVars, filterJoinVars, null); //, varNameGenerator);
 
-		Element attrElement = attrRelation.getElement();
+		Element attrElement = attrRelation.getElement();		
         Element filterElement = filterRelation.getElement();
         Element newFilterElement = ElementUtils.createRenamedElement(filterElement, varMap);
 
-        Element newElement = filterRelationFirst
-        		? ElementUtils.groupIfNeeded(newFilterElement, attrElement)
-        		: ElementUtils.groupIfNeeded(attrElement, newFilterElement);
+        // TODO Maybe add a flag whether omission of joins should actually be applied
+		// If the filter is a subject concept and its variable appears
+        // in the subject position of the attr element,
+		// we can omit the filter
+        boolean canOmitJoin = false;
+		if(filterRelation.getVars().size() == 1) {
+			UnaryRelation fr = filterRelation.toUnaryRelation();
+			Var rawFilterVar = fr.getVar();
+			if(fr.isSubjectConcept()) {
+				Var effectiveFilterVar = varMap.get(rawFilterVar);
+				Op attrOp = Algebra.compile(attrElement);
+				Tuple<Set<Var>> tuple = OpVars.mentionedVarsByPosition(attrOp);
+				canOmitJoin = tuple.get(1).contains(effectiveFilterVar);
+			}
+		}
+
+        
+        Element newElement = canOmitJoin ?
+        		attrElement : filterRelationFirst
+        			? ElementUtils.groupIfNeeded(newFilterElement, attrElement)
+        			: ElementUtils.groupIfNeeded(attrElement, newFilterElement);
         
         Relation result = new RelationImpl(newElement, attrProjVars);
         return result;
