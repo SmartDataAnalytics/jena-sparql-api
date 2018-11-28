@@ -196,7 +196,7 @@ public class PathVisitorTopDown
 
         result = path.getLeft() == newLeft && path.getRight() == newRight
                 ? path
-                : new P_Seq(newLeft, newRight)
+                : new P_Alt(newLeft, newRight)
                 ;
     }
 
