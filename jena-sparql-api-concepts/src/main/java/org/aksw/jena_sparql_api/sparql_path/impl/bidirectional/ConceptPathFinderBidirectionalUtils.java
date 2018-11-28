@@ -6,11 +6,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.aksw.commons.jena.jgrapht.PseudoGraphJenaGraph;
 import org.aksw.jena_sparql_api.concepts.Concept;
@@ -40,7 +41,6 @@ import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.Var;
@@ -125,7 +125,16 @@ public class ConceptPathFinderBidirectionalUtils {
         return result;
     }
 	
-    public static Flowable<SimplePath> findPaths(SparqlQueryConnection conn, UnaryRelation sourceConcept, UnaryRelation tmpTargetConcept, Long nPaths, Long maxLength, org.apache.jena.graph.Graph baseDataSummary, Boolean shortestPathsOnly, Boolean simplePathsOnly) {
+    public static Flowable<SimplePath> findPaths(
+    		SparqlQueryConnection conn,
+    		UnaryRelation sourceConcept,
+    		UnaryRelation tmpTargetConcept,
+    		Long nPaths,
+    		Long maxLength,
+    		org.apache.jena.graph.Graph baseDataSummary,
+    		Boolean shortestPathsOnly,
+    		Boolean simplePathsOnly,
+    		Collection<BiPredicate<? super SimplePath, ? super P_Path0>> pathValidators) {
     	shortestPathsOnly = shortestPathsOnly == null ? false : shortestPathsOnly;
     	simplePathsOnly = simplePathsOnly == null ? false : simplePathsOnly;
     	
@@ -264,7 +273,7 @@ public class ConceptPathFinderBidirectionalUtils {
                 //GraphPath<Node, Triple> tmp = dijkstraShortestPath.getPath(startVertex, candidate);
         
         List<GraphPath<Node, Triple>> candidateGraphPaths;
-    	Integer _maxPathLength = maxLength == null ? null : maxLength.intValue() * 2;
+    	Integer _maxPathLength = maxLength == null ? null : maxLength.intValue() * 2 + 2; // The '+ 2' is for the edges of the start and end vertex
 
     	int n = nPaths == null ? Integer.MAX_VALUE : Ints.checkedCast(nPaths);
 
@@ -331,12 +340,25 @@ public class ConceptPathFinderBidirectionalUtils {
 
         
         
-        // Convert the graph paths to 'ConceptPaths'        
-        List<SimplePath> paths = candidateGraphPaths.stream()
-        	.map(ConceptPathFinderBidirectionalUtils::convertGraphPathToSparqlPath)
-        	.filter(x -> x != null)
+        // Convert the graph paths to 'ConceptPaths'   
+        Stream<SimplePath> tmp = candidateGraphPaths.stream()
+            	.map(ConceptPathFinderBidirectionalUtils::convertGraphPathToSparqlPath)
+            	.filter(x -> x != null);
+        
+        if(pathValidators != null && !pathValidators.isEmpty()) {
+        	tmp = tmp.filter(x -> {
+        		Entry<SimplePath, P_Path0> e = SimplePath.seperateLastStep(x);
+        		boolean r = pathValidators.stream().allMatch(p -> p.test(e.getKey(), e.getValue()));
+        		return r;
+        	});
+        }
+        
+            	
+        List<SimplePath> paths = tmp 
         	.distinct() // TODO I would like to get rid of this distinct here; I am not totally sure how duplicates come into existence in the first place; it has something to do with enumeration of paths in the data summary
         	.collect(Collectors.toList());
+
+
 
         // Sort paths for determinism
         Collections.sort(paths);

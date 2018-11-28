@@ -1,8 +1,12 @@
 package org.aksw.jena_sparql_api.sparql_path.api;
 
+import java.util.function.BiPredicate;
+
+import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
+import org.apache.jena.sparql.path.P_Path0;
 
 public interface ConceptPathFinderFactory<T extends ConceptPathFinderFactory<T>> {
 	T setDataSummary(Graph dataSummary);
@@ -25,4 +29,6 @@ public interface ConceptPathFinderFactory<T extends ConceptPathFinderFactory<T>>
 	ConceptPathFinder build();
 	Boolean getShortestPathsOnly();
 	Boolean getSimplePathsOnly();
+	
+	T addPathValidator(BiPredicate<? super SimplePath, ? super P_Path0> validator);
 }

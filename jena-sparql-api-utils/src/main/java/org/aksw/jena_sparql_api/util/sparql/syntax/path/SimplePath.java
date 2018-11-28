@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.util.sparql.syntax.path;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 
 import org.aksw.commons.collections.IterableUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
@@ -15,6 +16,7 @@ import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.Maps;
 
 
 public class SimplePath
@@ -32,6 +34,23 @@ public class SimplePath
 
     public List<P_Path0> getSteps() {
         return steps;
+    }
+    
+    /**
+     * Returns an entry with the last step separated from the rest of the steps
+     * Useful for compatibility with jgrapht's path validator which uses the same model.
+     * 
+     * In case of empty path, the result is (empty path, null)
+     * 
+     * @param path
+     * @return
+     */
+    public static Entry<SimplePath, P_Path0> seperateLastStep(SimplePath path) {
+    	List<P_Path0> steps = path.getSteps();
+    	int n = steps.size();
+    	return Maps.immutableEntry(new SimplePath(
+    				steps.subList(0, Math.min(0, n - 2))), 
+    				steps.isEmpty() ? null : steps.get(n - 1));
     }
     
 //    public static org.apache.jena.sparql.path.Path toJena(Step step) {

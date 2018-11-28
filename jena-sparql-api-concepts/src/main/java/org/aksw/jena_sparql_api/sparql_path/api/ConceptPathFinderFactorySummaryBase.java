@@ -1,9 +1,16 @@
 package org.aksw.jena_sparql_api.sparql_path.api;
 
+import java.util.LinkedHashSet;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.BiPredicate;
+
+import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
+import org.apache.jena.sparql.path.P_Path0;
 
 /**
  * Abstract base class for concept path finders that use
@@ -28,6 +35,9 @@ public abstract class ConceptPathFinderFactorySummaryBase<T extends ConceptPathF
 	 */
 	protected Boolean simplePathsOnly;
 
+	
+	protected Set<BiPredicate<? super SimplePath, ? super P_Path0>> pathValidators = new LinkedHashSet<>();
+	
 	@Override
 	public T setDataSummary(Graph dataSummary) {
 		this.dataSummary = ModelFactory.createModelForGraph(dataSummary);
@@ -56,6 +66,13 @@ public abstract class ConceptPathFinderFactorySummaryBase<T extends ConceptPathF
 		return (T)this;
 	}
 
+	@Override
+	public T addPathValidator(BiPredicate<? super SimplePath, ? super P_Path0> pathValidator) {
+		Objects.requireNonNull(pathValidator);
+		pathValidators.add(pathValidator);
+		return (T)this;
+	}
+
 
 	@Override
 	public Model getDataSummary() {
@@ -76,5 +93,4 @@ public abstract class ConceptPathFinderFactorySummaryBase<T extends ConceptPathF
 	public Boolean getSimplePathsOnly() {
 		return simplePathsOnly;
 	}
-
 }

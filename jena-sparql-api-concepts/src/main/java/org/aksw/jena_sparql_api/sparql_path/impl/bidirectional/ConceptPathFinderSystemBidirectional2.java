@@ -48,7 +48,7 @@ public class ConceptPathFinderSystemBidirectional2
 						@Override
 						public Flowable<SimplePath> exec() {
 							return ConceptPathFinderBidirectionalUtils
-								.findPaths(dataConnection, sourceConcept, targetConcept, maxResults, maxLength, dataSummary, shortestPathsOnly, simplePathsOnly);
+								.findPaths(dataConnection, sourceConcept, targetConcept, maxResults, maxLength, dataSummary, shortestPathsOnly, simplePathsOnly, pathValidators);
 						}
 					};
 				}					
