@@ -29,7 +29,8 @@ public class DeltaWithFixedIterator
     @Override
     protected ExtendedIterator<Triple> graphBaseFind(Triple t)
     {
-    	ExtendedIterator<Triple> base = super.graphBaseFind(t);
+    	//ExtendedIterator<Triple> base = super.graphBaseFind(t);
+    	ExtendedIterator<Triple> base = WrappedIterator.create(super.graphBaseFind(t).toList().iterator());
     	
     	ExtendedIterator<Triple> fixed = WrappedIterator.create(new IteratorClosable<Triple>(new TrackingTripleIterator(base) {
     		public void remove() {
