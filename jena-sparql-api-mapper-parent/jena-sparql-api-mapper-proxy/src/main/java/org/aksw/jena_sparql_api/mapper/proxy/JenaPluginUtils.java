@@ -6,12 +6,14 @@ import java.util.Arrays;
 import java.util.Set;
 
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
+import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.apache.jena.enhanced.BuiltinPersonalities;
 import org.apache.jena.enhanced.Personality;
 import org.apache.jena.ext.com.google.common.reflect.ClassPath;
 import org.apache.jena.ext.com.google.common.reflect.ClassPath.ClassInfo;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.shared.PrefixMapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,8 +26,11 @@ public class JenaPluginUtils {
 		registerJenaResourceClassesUsingPackageScan(basePackage, BuiltinPersonalities.model);
 	}
 
-
 	public static void registerJenaResourceClassesUsingPackageScan(String basePackage, Personality<RDFNode> p) {
+		registerJenaResourceClassesUsingPackageScan(basePackage, p, PrefixMapping.Extended);
+	}
+	
+	public static void registerJenaResourceClassesUsingPackageScan(String basePackage, Personality<RDFNode> p, PrefixMapping pm) {
 		Set<ClassInfo> classInfos;
 		try {
 			classInfos = ClassPath.from(Thread.currentThread().getContextClassLoader()).getTopLevelClassesRecursive(basePackage);
@@ -41,7 +46,7 @@ public class JenaPluginUtils {
 				Class<? extends Resource> cls = (Class<? extends Resource>)clazz;
 				
 				logger.debug("Registering " + clazz);
-				p.add(cls, new ProxyImplementation(MapperProxyUtils.createProxyFactory(cls)));
+				p.add(cls, new ProxyImplementation(MapperProxyUtils.createProxyFactory(cls, pm)));
 			}
 		}
 	}
@@ -53,7 +58,7 @@ public class JenaPluginUtils {
 		if(Modifier.isInterface(mods) || !Modifier.isAbstract(mods)) {
 			// Check if there ary any @Iri annotations
 			result = Arrays.asList(clazz.getDeclaredMethods()).stream()
-				.anyMatch(m -> m.getAnnotation(Iri.class) != null);
+				.anyMatch(m -> m.getAnnotation(Iri.class) != null || m.getAnnotation(IriNs.class) != null);
 		}
 		
 		return result;

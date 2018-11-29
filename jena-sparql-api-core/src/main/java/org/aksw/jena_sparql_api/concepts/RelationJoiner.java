@@ -89,18 +89,24 @@ public class RelationJoiner {
 		// If the filter is a subject concept and its variable appears
         // in the subject position of the attr element,
 		// we can omit the filter
-        boolean canOmitJoin = false;
-		if(filterRelation.getVars().size() == 1) {
-			UnaryRelation fr = filterRelation.toUnaryRelation();
-			Var rawFilterVar = fr.getVar();
-			if(fr.isSubjectConcept()) {
-				Var effectiveFilterVar = varMap.get(rawFilterVar);
-				Op attrOp = Algebra.compile(attrElement);
-				Tuple<Set<Var>> tuple = OpVars.mentionedVarsByPosition(attrOp);
-				canOmitJoin = tuple.get(1).contains(effectiveFilterVar);
-			}
-		}
+        boolean allowOmitJoin = true;
 
+        boolean canOmitJoin = false;
+        if(allowOmitJoin) {
+        	if(filterRelation.getElements().isEmpty()) {
+        		// TODO We may want to apply normalization - e.g. detect a group with an empty bgb
+        		canOmitJoin = true;
+        	} else if(filterRelation.getVars().size() == 1) {
+				UnaryRelation fr = filterRelation.toUnaryRelation();
+				Var rawFilterVar = fr.getVar();
+				if(fr.isSubjectConcept()) {
+					Var effectiveFilterVar = varMap.get(rawFilterVar);
+					Op attrOp = Algebra.compile(attrElement);
+					Tuple<Set<Var>> tuple = OpVars.mentionedVarsByPosition(attrOp);
+					canOmitJoin = tuple.get(1).contains(effectiveFilterVar);
+				}
+			}
+	}
         
         Element newElement = canOmitJoin ?
         		attrElement : filterRelationFirst

@@ -1,6 +1,5 @@
 package org.aksw.jena_sparql_api.mapper.proxy;
 
-import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -12,22 +11,27 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
+import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.aksw.jena_sparql_api.mapper.annotation.IriType;
+import org.aksw.jena_sparql_api.utils.model.NodeMapper;
 import org.aksw.jena_sparql_api.utils.model.NodeMapperFactory;
 import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.aksw.jena_sparql_api.utils.model.SetFromLiteralPropertyValues;
 import org.aksw.jena_sparql_api.utils.model.SetFromMappedPropertyValues;
 import org.aksw.jena_sparql_api.utils.model.SetFromPropertyValues;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.impl.ResourceImpl;
 import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.sparql.path.P_Link;
 import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.path.PathParser;
 
@@ -36,7 +40,13 @@ import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
 import net.sf.cglib.proxy.Proxy;
 
-
+/**
+ * 
+ * TODO IriType annotation currently has to be provided on both getter and setter
+ * 
+ * @author Claus Stadler, Nov 29, 2018
+ *
+ */
 public class MapperProxyUtils {
 
 	
@@ -98,10 +108,20 @@ public class MapperProxyUtils {
 				Class<? extends RDFNode> rdfType = (Class<? extends RDFNode>)returnType;
 				result = p -> s -> ResourceUtils.getPropertyValue(s, p, rdfType);
 			} else {
-				RDFDatatype dtype = typeMapper.getTypeByClass(returnType);
-				
-				if(dtype != null) {
-					result = p -> s -> ResourceUtils.getLiteralPropertyValue(s, p, returnType);
+				boolean isIriType = m.getAnnotation(IriType.class) != null;
+				if(isIriType) {
+					if(!String.class.isAssignableFrom(returnType)) {
+						// TODO Change to warning
+						throw new RuntimeException("@IriType annotation requires String type");
+					}
+					
+					result = p -> s -> ResourceUtils.getPropertyValue(s, p, NodeMapperFactory.uriString);					
+				} else {
+					RDFDatatype dtype = typeMapper.getTypeByClass(returnType);
+	
+					if(dtype != null) {
+						result = p -> s -> ResourceUtils.getLiteralPropertyValue(s, p, returnType);
+					}
 				}
 			}
 		}
@@ -124,10 +144,19 @@ public class MapperProxyUtils {
 //				Class<? extends RDFNode> rdfType = (Class<? extends RDFNode>)paramType;
 				result = p -> (s, o) -> ResourceUtils.setProperty(s, p, (RDFNode)o);
 			} else {
-				RDFDatatype dtype = typeMapper.getTypeByClass(paramType);
-				
-				if(dtype != null) {
-					result = p -> (s, o) -> ResourceUtils.updateLiteralProperty(s, p, (Class)paramType, o);
+				boolean isIriType = m.getAnnotation(IriType.class) != null;
+				if(isIriType) {
+					if(!String.class.isAssignableFrom(paramType)) {
+						// TODO Change to warning
+						throw new RuntimeException("@IriType annotation requires String type");
+					}
+					result = p -> (s, o) -> ResourceUtils.updateProperty(s, p, (NodeMapper)NodeMapperFactory.uriString, o);					
+				} else {
+					RDFDatatype dtype = typeMapper.getTypeByClass(paramType);
+					
+					if(dtype != null) {
+						result = p -> (s, o) -> ResourceUtils.updateLiteralProperty(s, p, (Class)paramType, o);
+					}
 				}
 			}
 		}
@@ -136,34 +165,65 @@ public class MapperProxyUtils {
 	}
 	
 	public static String deriveBeanPropertyName(String methodName) {
-		boolean isGetterOrSetter = methodName.startsWith("get") || methodName.startsWith("set");
+		boolean isGetterOrSetter = methodName.startsWith("get") || methodName.startsWith("set") || methodName.startsWith("is");
 		String result = isGetterOrSetter ? methodName.substring(3) : methodName;
+		
+		result = StringUtils.uncapitalize(result);
+		
 		return result;
 	}
 	
-	public static P_Path0 derivePathFromMethod(Method method) {
+	public static P_Path0 derivePathFromMethod(Method method, PrefixMapping pm) {
 		P_Path0 result = null;
 		
 		Iri iri = method.getAnnotation(Iri.class);
+		IriNs iriNs = method.getAnnotation(IriNs.class);
 		if(iri != null) {
 			String rdfPropertyStr = iri.value();
 			// Expand against default namespaces
-			result = (P_Path0)PathParser.parse(rdfPropertyStr, PrefixMapping.Extended);
+			result = (P_Path0)PathParser.parse(rdfPropertyStr, pm);
 			
 			//Node p = NodeFactory.createURI(rdfPropertyStr);
 			
 			//result = new P_Link(p);
+		} else if(iriNs != null) {
+			String ns = iriNs.value();
+			String uri = pm.getNsPrefixURI(ns);
+			if(uri == null) {
+				throw new RuntimeException("Undefined prefix: " + ns);
+			}
+			String localName = deriveBeanPropertyName(method.getName());
+			
+			result = new P_Link(NodeFactory.createURI(uri + localName));
+			//result = (P_Path0)PathParser.parse(uri + localName, pm);
 		}
 		
+//		System.out.println(method + " -> " + result);
+//		if(result != null && result.toString().contains("style")) {
+//			System.out.println("style here");
+//		}
 		return result;
 	}
 
-	public static Map<String, P_Path0> indexPathsByBeanPropertyName(Class<?> clazz) {
+//	public static Multimap<String, Method> indexMethodsByBeanPropertyName(Class<?> clazz) {
+//		Multimap<String, Method> result = ArrayListMultimap.create();
+//		for(Method method : clazz.getMethods()) {
+//			String methodName = method.getName();
+//			String beanPropertyName = deriveBeanPropertyName(methodName);
+//
+//			result.put(beanPropertyName, method);
+//		}
+//		
+//		return result;
+//
+//	}
+
+	public static Map<String, P_Path0> indexPathsByBeanPropertyName(Class<?> clazz, PrefixMapping pm) {
 		Map<String, P_Path0> result = new LinkedHashMap<>();
 		for(Method method : clazz.getMethods()) {
 			String methodName = method.getName();
 			String beanPropertyName = deriveBeanPropertyName(methodName);
-			P_Path0 path = derivePathFromMethod(method);
+			P_Path0 path = derivePathFromMethod(method, pm);
 			
 			if(path != null) {
 				result.put(beanPropertyName, path);
@@ -172,22 +232,30 @@ public class MapperProxyUtils {
 		
 		return result;
 	}
-	
+
 	public static <T extends Resource> BiFunction<Node, EnhGraph, T> createProxyFactory(Class<T> clazz) {
+		return createProxyFactory(clazz, PrefixMapping.Extended);
+	}
+	
+	public static <T extends Resource> BiFunction<Node, EnhGraph, T> createProxyFactory(Class<T> clazz, PrefixMapping pm) {
 		// Search for methods with @Iri annotation
 		// getter pattern: any x()
 
 		TypeMapper typeMapper = TypeMapper.getInstance();
-		Map<String, P_Path0> beanPropertyNameToPath = indexPathsByBeanPropertyName(clazz);
+		Map<String, P_Path0> beanPropertyNameToPath = indexPathsByBeanPropertyName(clazz, pm);
 		
 		Map<Method, BiFunction<Object, Object[], Object>> methodMap = new LinkedHashMap<>();
 		
 		for(Method method : clazz.getMethods()) {
 			// System.out.println("Method " + method);
-			P_Path0 path = Optional.ofNullable(derivePathFromMethod(method))
+			P_Path0 path = Optional.ofNullable(derivePathFromMethod(method, pm))
 					.orElseGet(() -> beanPropertyNameToPath.get(deriveBeanPropertyName(method.getName())));
 
 			if(path != null) {
+//				if(path != null && path.toString().contains("style")) {
+//					System.out.println("style here");
+//				}
+
 				Property p = ResourceFactory.createProperty(path.getNode().getURI());
 
 				Function<Property, Function<Resource, Object>> getter = viewAsGetter(method, typeMapper);				

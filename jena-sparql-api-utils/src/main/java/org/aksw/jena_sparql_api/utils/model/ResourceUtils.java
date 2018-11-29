@@ -522,6 +522,16 @@ public class ResourceUtils {
 //		return stmt -> isObjectOfType()
 //	}
 		
+	public static <T> boolean updateProperty(Resource s, Property p, NodeMapper<T> nodeMapper, T o) {
+		Model m = s.getModel();
+
+		boolean result = replaceProperties(m,
+				listProperties(s, p, nodeMapper),
+				o == null ? null : m.createStatement(s, p, m.asRDFNode(nodeMapper.toNode(o))));
+		
+		return result;
+	}
+
 
 	public static <T> boolean updateLiteralProperty(Resource s, Property p, Class<T> clazz, T o) {
 		Model m = s.getModel();
