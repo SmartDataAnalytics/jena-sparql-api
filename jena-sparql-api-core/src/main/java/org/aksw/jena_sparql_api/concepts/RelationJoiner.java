@@ -9,6 +9,7 @@ import java.util.Set;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.apache.jena.atlas.lib.tuple.Tuple;
+import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpVars;
@@ -106,12 +107,16 @@ public class RelationJoiner {
 					canOmitJoin = tuple.get(1).contains(effectiveFilterVar);
 				}
 			}
-	}
+        }
+        
+        List<Element> fes = ElementUtils.toElementList(newFilterElement);
+        List<Element> aes = ElementUtils.toElementList(attrElement);
+        //List<Element> combined = ElementUtils.groupIfNeeded(Iterables.concat(fes, aes));
         
         Element newElement = canOmitJoin ?
         		attrElement : filterRelationFirst
-        			? ElementUtils.groupIfNeeded(newFilterElement, attrElement)
-        			: ElementUtils.groupIfNeeded(attrElement, newFilterElement);
+        			? ElementUtils.groupIfNeeded(Iterables.concat(fes, aes))
+        			: ElementUtils.groupIfNeeded(Iterables.concat(aes, fes));
         
         Relation result = new RelationImpl(newElement, attrProjVars);
         return result;

@@ -345,10 +345,35 @@ public class ConceptPathFinderBidirectionalUtils {
             	.map(ConceptPathFinderBidirectionalUtils::convertGraphPathToSparqlPath)
             	.filter(x -> x != null);
         
+        
+        
         if(pathValidators != null && !pathValidators.isEmpty()) {
+        	Set<SimplePath> rejectedPaths = new HashSet<>();
         	tmp = tmp.filter(x -> {
-        		Entry<SimplePath, P_Path0> e = SimplePath.seperateLastStep(x);
-        		boolean r = pathValidators.stream().allMatch(p -> p.test(e.getKey(), e.getValue()));
+        		
+        		SimplePath parent = x.parentPath();
+        		boolean hasRejectedParent = false;
+        		while(parent != null) {
+        			hasRejectedParent = rejectedPaths.contains(parent);
+        			if(hasRejectedParent) {
+        				break;
+        			} else {
+        				parent = parent.parentPath();
+        			}
+        		}
+        		
+        		boolean r;
+        		if(!hasRejectedParent) {
+	        		Entry<SimplePath, P_Path0> e = SimplePath.seperateLastStep(x);
+	        		r = pathValidators.stream().allMatch(p -> p.test(e.getKey(), e.getValue()));	        		
+
+	        		if(!r) {
+	        			rejectedPaths.add(x);
+	        		}
+        		} else {
+        			r = false;
+        		}
+
         		return r;
         	});
         }

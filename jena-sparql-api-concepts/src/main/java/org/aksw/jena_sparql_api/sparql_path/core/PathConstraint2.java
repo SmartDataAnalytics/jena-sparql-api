@@ -252,7 +252,12 @@ public class PathConstraint2 {
         Function<Node, Var> nodeToVar = n -> map.computeIfAbsent(n, k -> generator.next());
         
         // Derive enumerations from rdf:type
-        Set<Node> types = model.find(concept.getVar(), RDF.type.asNode(), Node.ANY).mapWith(Triple::getObject).toSet();
+        // If we had multiple types, such as ?s a Vehicle, Car
+        // both Vehicle and Car in the schema graph were independent candidates
+        // TODO is this really correct?
+        Set<Node> types = model.find(concept.getVar(), RDF.type.asNode(), Node.ANY).mapWith(Triple::getObject)
+        		.filterDrop(Node::isVariable)
+        		.toSet();
         if(!types.isEmpty()) {
         	Expr ex = ExprUtils.oneOf(concept.getVar(), types);
         	predExpr = predExpr == null ? ex : new E_LogicalAnd(predExpr, ex);
@@ -269,8 +274,9 @@ public class PathConstraint2 {
         //createQueryBackward(model, concept.getVar(), , result);
 
         if(result.isEmpty()) {
-        	// Create a concept ?s | ?s ?p ?o - where ?s = concept.getVar() and the other variables properly renaming 
-        	UnaryRelation tmp = ConceptUtils.createSubjectConcept();
+        	// WRONG: Create a concept ?s | ?s ?p ?o - where ?s = concept.getVar() and the other variables properly renaming 
+        	// If we have no constraints, pick all nodes in the schema graph that have an outgoing property
+        	UnaryRelation tmp = new Concept(ElementUtils.createElementTriple(Vars.s, VocabPath.hasOutgoingPredicate.asNode(), Vars.o), Vars.s);//ConceptUtils.createSubjectConcept();
         	Triple tr = ElementUtils.extractTriple(
         			new Concept(new ElementGroup(), concept.getVar())
         			.prependOn(concept.getVar())

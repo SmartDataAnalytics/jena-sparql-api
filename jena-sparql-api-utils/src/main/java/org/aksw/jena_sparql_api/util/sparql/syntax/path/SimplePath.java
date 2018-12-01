@@ -4,14 +4,19 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Objects;
 
 import org.aksw.commons.collections.IterableUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.path.P_Seq;
 import org.apache.jena.sparql.path.Path;
+import org.apache.jena.sparql.path.PathLib;
+import org.apache.jena.sparql.path.PathWriter;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 
@@ -48,9 +53,10 @@ public class SimplePath
     public static Entry<SimplePath, P_Path0> seperateLastStep(SimplePath path) {
     	List<P_Path0> steps = path.getSteps();
     	int n = steps.size();
-    	return Maps.immutableEntry(new SimplePath(
-    				steps.subList(0, Math.min(0, n - 2))), 
+    	Entry<SimplePath, P_Path0> result = Maps.immutableEntry(new SimplePath(
+    				steps.subList(0, Math.max(0, n - 1))), 
     				steps.isEmpty() ? null : steps.get(n - 1));
+    	return result;
     }
     
 //    public static org.apache.jena.sparql.path.Path toJena(Step step) {
@@ -109,10 +115,30 @@ public class SimplePath
 
     @Override
     public String toString() {
-        return "Path [steps=" + steps + "]";
+    	String str = steps == null || steps.isEmpty()
+    			? ""
+    			: PathWriter.asString(toPropertyPath(this), new Prologue(PrefixMapping.Extended));
+    	
+    	str = str.replaceAll("\\^(\r|\n)+", "^");
+    	
+        return "SimplePath [" + str + "]";
     }
 
+    public boolean isEmpty() {
+    	return steps.isEmpty();
+    }
+    
+    public P_Path0 lastStep() {
+    	return steps.isEmpty() ? null : steps.get(steps.size() - 1);
+    }
 
+    public SimplePath parentPath() {
+    	SimplePath result = steps.isEmpty()
+    			? null
+    			: new SimplePath(steps.subList(0, steps.size() - 1));
+    	return result;
+    }
+    
     public static List<Element> pathToElements(SimplePath path, Var start, Var end, Generator generator) {
         List<Element> result = new ArrayList<Element>();
 
