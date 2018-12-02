@@ -19,6 +19,7 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprTransform;
 import org.apache.jena.sparql.graph.NodeTransform;
+import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.ElementGroup;
@@ -64,6 +65,26 @@ public class ElementUtils {
 
 	public static ElementTriplesBlock createElementTriple(Node s, Node p, Node o) {
 		return createElement(new Triple(s, p, o));
+	}
+	
+	
+
+	public static ElementPathBlock createElementPath(Node s, Path p, Node o) {
+		ElementPathBlock result = createElementPath(new TriplePath(s, p, o));
+		return result;
+	}
+
+	public static ElementPathBlock createElementPath(TriplePath ... tps) {
+		ElementPathBlock result = createElementPath(Arrays.asList(tps));
+		return result;
+	}
+
+	public static ElementPathBlock createElementPath(Iterable<TriplePath> it) {
+		ElementPathBlock result = new ElementPathBlock();
+		for(TriplePath tp : it) {
+			result.addTriple(tp);
+		}
+		return result;
 	}
 
     public static ElementTriplesBlock createElement(Triple triple) {

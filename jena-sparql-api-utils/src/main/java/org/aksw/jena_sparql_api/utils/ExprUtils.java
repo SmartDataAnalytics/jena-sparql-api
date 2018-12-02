@@ -28,6 +28,7 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.E_LogicalAnd;
 import org.apache.jena.sparql.expr.E_LogicalOr;
+import org.apache.jena.sparql.expr.E_NotOneOf;
 import org.apache.jena.sparql.expr.E_OneOf;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprFunction;
@@ -72,6 +73,20 @@ public class ExprUtils {
 	
 	public static E_OneOf oneOf(Node v, Node ... args) {
 		return oneOf(v, Arrays.asList(args));
+	}
+
+	
+	public static E_NotOneOf notOneOf(Node v, Collection<Node> args) {
+		ExprList el = new ExprList();
+		el.addAll(ExprListUtils.nodesToExprs(args));
+
+		Expr base = v.isVariable() ? new ExprVar(v) : NodeValue.makeNode(v);
+		return new E_NotOneOf(base, el);
+	}
+
+	
+	public static E_NotOneOf notOneOf(Node v, Node ... args) {
+		return notOneOf(v, Arrays.asList(args));
 	}
 
     public static Entry<Var, Node> tryGetVarConst(Expr a, Expr b) {
