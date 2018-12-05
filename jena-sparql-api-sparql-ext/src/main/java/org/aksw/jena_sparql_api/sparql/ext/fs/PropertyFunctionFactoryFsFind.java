@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.sparql.ext.io;
+package org.aksw.jena_sparql_api.sparql.ext.fs;
 
 import java.net.URI;
 import java.nio.file.Files;

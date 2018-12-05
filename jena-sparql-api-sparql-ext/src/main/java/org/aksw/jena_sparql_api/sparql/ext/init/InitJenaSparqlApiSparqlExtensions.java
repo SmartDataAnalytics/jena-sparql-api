@@ -1,9 +1,9 @@
 package org.aksw.jena_sparql_api.sparql.ext.init;
 
 import org.aksw.jena_sparql_api.sparql.ext.csv.JenaExtensionCsv;
+import org.aksw.jena_sparql_api.sparql.ext.fs.JenaExtensionFs;
 import org.aksw.jena_sparql_api.sparql.ext.geosparql.JenaExtensionsGeoSparql;
 import org.aksw.jena_sparql_api.sparql.ext.gml.JenaExtensionGml;
-import org.aksw.jena_sparql_api.sparql.ext.io.JenaExtensionFs;
 import org.aksw.jena_sparql_api.sparql.ext.json.JenaExtensionJson;
 import org.aksw.jena_sparql_api.sparql.ext.url.JenaExtensionUrl;
 import org.aksw.jena_sparql_api.sparql.ext.xml.JenaExtensionXml;

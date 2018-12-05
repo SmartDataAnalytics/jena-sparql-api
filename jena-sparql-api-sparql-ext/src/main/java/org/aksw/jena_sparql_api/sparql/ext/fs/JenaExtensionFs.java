@@ -1,6 +1,8 @@
-package org.aksw.jena_sparql_api.sparql.ext.io;
+package org.aksw.jena_sparql_api.sparql.ext.fs;
 
+import org.apache.jena.query.ARQ;
 import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.sparql.engine.main.QC;
 import org.apache.jena.sparql.pfunction.PropertyFunctionRegistry;
 
 public class JenaExtensionFs {
@@ -12,5 +14,10 @@ public class JenaExtensionFs {
     
     public static void addPrefixes(PrefixMapping pm) {
 		pm.setNsPrefix("fs", ns);
+    }
+
+    // Better not register the handler automatically; it is a quite intrusive deed
+    public static void registerFileServiceHandler() {
+        QC.setFactory(ARQ.getContext(), execCxt -> new OpExecutorServiceOrFile(execCxt));
     }
 }
