@@ -3,12 +3,17 @@ package org.aksw.jena_sparql_api.sparql.ext.fs;
 import org.apache.jena.query.ARQ;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.engine.main.QC;
+import org.apache.jena.sparql.function.FunctionRegistry;
 import org.apache.jena.sparql.pfunction.PropertyFunctionRegistry;
 
 public class JenaExtensionFs {
     public static String ns = "http://jsa.aksw.org/fn/fs/";
     
     public static void register() {
+        FunctionRegistry.get().put(ns + "rdfLang", E_RdfLang.class);
+        FunctionRegistry.get().put(ns + "isRdf", E_IsRdf.class);
+
+        
 		PropertyFunctionRegistry.get().put(ns + "find", new PropertyFunctionFactoryFsFind());
     }
     

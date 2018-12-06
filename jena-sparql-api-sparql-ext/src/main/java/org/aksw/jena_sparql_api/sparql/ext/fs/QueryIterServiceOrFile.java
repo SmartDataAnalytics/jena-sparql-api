@@ -30,7 +30,7 @@ import org.apache.jena.sparql.engine.main.iterator.QueryIterService;
  * @author Claus Stadler, Dec 5, 2018
  *
  */
-class QueryIterServiceOrFile extends QueryIterService {
+public class QueryIterServiceOrFile extends QueryIterService {
 
 	protected OpService opService ;
 

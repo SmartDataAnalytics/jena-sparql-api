@@ -4,7 +4,6 @@ import org.aksw.jena_sparql_api.sparql.ext.url.JenaExtensionUrl;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.QueryExecution;
-import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
@@ -41,6 +40,14 @@ public class TestSparqlFs {
 			"  ?s ?p ?o\n" + 
 			"} }";
 
+	
+	String queryStr6 = "PREFIX fs: <" + JenaExtensionFs.ns + ">\n" +
+			"SELECT * {\n" + 
+			"  <file:///home/raven/Projects/Eclipse/qrowd-rdf-data-integration/datasets/1014-electric-bikesharing-stations/> fs:find ?file\n" + 
+			"  BIND(fs:isRdf(?file) AS ?isRdf)\n" + 
+			"  BIND(fs:rdfLang(?file) AS ?lang)\n" + 
+			"}";
+	
 	String queryStr = queryStr2;
 
 	
@@ -58,6 +65,18 @@ public class TestSparqlFs {
 		}
 	}
 	
+	//@Test
+	public void testSparqlLang() {
+
+		Dataset dataset = DatasetFactory.wrap(ModelFactory.createDefaultModel());//DatasetFactory.create();
+		try(RDFConnection conn = RDFConnectionFactory.connect(dataset)) {
+			//try(QueryExecution qe = QueryExecutionFactory.create(queryStr, (Dataset)null)) {
+			try(QueryExecution qe = conn.query(queryStr6)) {
+				System.out.println(ResultSetFormatter.asText(qe.execSelect()));
+			}
+		}
+	}
+
 //	@Test
 //	public void testSparqlFs2() {
 //
