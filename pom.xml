@@ -8,7 +8,7 @@
 	<artifactId>jena-sparql-api-parent</artifactId>
 
 	<packaging>pom</packaging>
-	<version>3.8.0-1-SNAPSHOT</version>
+	<version>3.9.0-1-SNAPSHOT</version>
 	<name>Jena SPARQL API - Parent</name>
 	<description>An RDF library for abstracting SPARQL queries.</description>
 	<url>https://github.com/SmartDataAnalytics/jena-sparql-api</url>
@@ -89,7 +89,7 @@
 	</developers>
 
 	<properties>
-		<jena.version>3.8.0</jena.version>
+		<jena.version>3.9.0</jena.version>
 		<jetty.version>9.4.8.v20171121</jetty.version>
 
 		<!-- <jgrapht.version>1.1.0</jgrapht.version> -->
@@ -398,9 +398,15 @@
 
 			<dependency>
 				<groupId>org.aksw.jena-sparql-api</groupId>
-				<artifactId>jena-sparql-api-mapper</artifactId>
+				<artifactId>jena-sparql-api-mapper-core</artifactId>
 				<version>${project.version}</version>
 			</dependency>
+
+                        <dependency>
+                                <groupId>org.aksw.jena-sparql-api</groupId>
+                                <artifactId>jena-sparql-api-mapper-proxy</artifactId>
+                                <version>${project.version}</version>
+                        </dependency>
 
 
 			<dependency>
