@@ -104,7 +104,8 @@ public class VarExprListUtils {
             Expr newVE = exprTransform.transform(new ExprVar(v));
             Var newV = newVE == null ? v : ((ExprVar)newVE).asVar();
 
-            changed = !v.equals(newV);
+            // Once changed is true, it stays true
+            changed = changed || !v.equals(newV);
 
             Expr e = varExpr.getExpr(v) ;
             Expr e2 =  e ;

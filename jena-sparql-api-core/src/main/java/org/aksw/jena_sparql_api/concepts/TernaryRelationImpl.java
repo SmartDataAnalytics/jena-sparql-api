@@ -58,21 +58,6 @@ public class TernaryRelationImpl
 //	public TernaryRelation filterP(Concept concept) {
 //		
 //	}
-
-	/**
-	 * TODO Make the API more generic to filter on arbitrary variables
-	 * Something like relation.p().filter(...)
-	 * 
-	 * @param node
-	 * @return
-	 */
-	public TernaryRelation filterP(Node node) {
-		List<Element> es = ElementUtils.toElementList(element);
-		es.add(new ElementFilter(new E_Equals(new ExprVar(p), NodeValue.makeNode(node))));
-		TernaryRelation result = new TernaryRelationImpl(ElementUtils.groupIfNeeded(es), s, p, o);
-		return result;
-	}
-	
 	@Override
 	public String toString() {
 		return "TernaryRelation [s=" + s + ", p=" + p + ", o=" + o + ", element=" + element + "]";

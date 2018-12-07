@@ -3,13 +3,10 @@ package org.aksw.jena_sparql_api.utils.transform;
 import java.util.Collection;
 import java.util.Stack;
 
-import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransform;
-import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformCopyBase;
 import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformer;
 import org.aksw.jena_sparql_api.utils.ExprListUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
-
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
@@ -35,6 +32,8 @@ import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.ElementVisitor;
 import org.apache.jena.sparql.syntax.ElementVisitorBase;
 import org.apache.jena.sparql.syntax.PatternVars;
+import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
+import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformCopyBase;
 
 /**
  * Rewrites a query's dataset description so that it becomes part of the query pattern.

@@ -1,3 +1,5 @@
+package org.aksw.jena_sparql_api.backports.syntaxtransform;
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -16,14 +18,12 @@
  * limitations under the License.
  */
 
-package org.aksw.jena_sparql_api.backports.syntaxtransform;
-
 import java.util.List ;
 
-import org.apache.jena.graph.Node;
-import org.apache.jena.query.Query;
-import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.graph.Node ;
+import org.apache.jena.query.Query ;
+import org.apache.jena.sparql.core.Var ;
+import org.apache.jena.sparql.expr.Expr ;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementAssign;
 import org.apache.jena.sparql.syntax.ElementBind;
@@ -41,6 +41,8 @@ import org.apache.jena.sparql.syntax.ElementService;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.ElementUnion;
+import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
+import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformCopyBase;
 
 /** Transformation function on an Element that does nothing.
  * Do not extend - it assumes that no change below happens.
@@ -50,9 +52,9 @@ import org.apache.jena.sparql.syntax.ElementUnion;
  */
 public final class ElementTransformIdentity implements ElementTransform
 {
-    private ElementTransformIdentity() {}
+    public ElementTransformIdentity() {}
     private static ElementTransformIdentity singleton = new ElementTransformIdentity() ;
-    static ElementTransform get() { return singleton ; }
+    public static ElementTransform get() { return singleton ; }
     
     @Override
     public Element transform(ElementTriplesBlock el) { return el ; }

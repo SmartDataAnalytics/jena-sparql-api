@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -21,13 +22,18 @@ import org.aksw.commons.collections.IterableCollection;
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeImpl;
 import org.aksw.commons.util.Pair;
+import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_Equals;
 import org.apache.jena.sparql.expr.E_LogicalAnd;
 import org.apache.jena.sparql.expr.E_LogicalOr;
+import org.apache.jena.sparql.expr.E_NotOneOf;
+import org.apache.jena.sparql.expr.E_OneOf;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprFunction;
+import org.apache.jena.sparql.expr.ExprList;
+import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.FunctionLabel;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.graph.NodeTransform;
@@ -42,6 +48,111 @@ import org.apache.jena.sparql.graph.NodeTransformLib;
  */
 public class ExprUtils {
 
+	/**
+	 * A variable-aware version of NodeValue.makeNode(Node node)
+	 * 
+	 * @param node
+	 * @return
+	 */
+	public static Expr makeNode(Node node) {
+    	Expr result = node.isVariable()
+    			? new ExprVar(node.getName())
+    			: NodeValue.makeNode(node);
+
+    	return result;
+    }
+
+	public static E_OneOf oneOf(Node v, Collection<Node> args) {
+		ExprList el = new ExprList();
+		el.addAll(ExprListUtils.nodesToExprs(args));
+
+		Expr base = v.isVariable() ? new ExprVar(v) : NodeValue.makeNode(v);
+		return new E_OneOf(base, el);
+	}
+
+	
+	public static E_OneOf oneOf(Node v, Node ... args) {
+		return oneOf(v, Arrays.asList(args));
+	}
+
+	
+	public static E_NotOneOf notOneOf(Node v, Collection<Node> args) {
+		ExprList el = new ExprList();
+		el.addAll(ExprListUtils.nodesToExprs(args));
+
+		Expr base = v.isVariable() ? new ExprVar(v) : NodeValue.makeNode(v);
+		return new E_NotOneOf(base, el);
+	}
+
+	
+	public static E_NotOneOf notOneOf(Node v, Node ... args) {
+		return notOneOf(v, Arrays.asList(args));
+	}
+
+    public static Entry<Var, Node> tryGetVarConst(Expr a, Expr b) {
+    	Var v = a.isVariable()
+    			? a.asVar()
+    			// Hack to unwrap variables from NodeValue
+    			: Optional.of(a).filter(Expr::isConstant)
+    				.map(Expr::getConstant).map(NodeValue::asNode).filter(Node::isVariable).map(n -> (Var)n)
+    				.orElse(null)
+    			;
+
+    	Entry<Var, Node> result = v != null && b.isConstant()
+                ? Maps.immutableEntry(v, b.getConstant().asNode())
+                : null
+                ;
+
+        return result;
+	}
+    
+    
+    public static Entry<Var, Var> tryGetVarVar(Expr e) {
+     	Entry<Var, Var> result = null;
+
+    	if(e.isFunction()) {
+    		ExprFunction fn = e.getFunction();
+    		List<Expr> args = fn.getArgs();
+    		if(args.size() == 2) {
+    			Expr a = args.get(0);
+    			Expr b = args.get(1);
+    			result = tryGetVarVar(a, b);
+    			if(result == null) {
+    				result = tryGetVarVar(b, a);
+    			}
+    		}
+    	}
+    	
+        return result;	
+    }
+    
+    public static Entry<Var, Var> tryGetVarVar(Expr a, Expr b) {
+    	Entry<Var, Var> result = a.isVariable() && b.isVariable()
+    			? Maps.immutableEntry(a.asVar(), b.asVar())
+    			: null;
+    			
+    	return result;
+    }
+   
+    public static Entry<Var, Node> tryGetVarConst(Expr e) {
+    	Entry<Var, Node> result = null;
+
+    	if(e.isFunction()) {
+    		ExprFunction fn = e.getFunction();
+    		List<Expr> args = fn.getArgs();
+    		if(args.size() == 2) {
+    			Expr a = args.get(0);
+    			Expr b = args.get(1);
+    			result = tryGetVarConst(a, b);
+    			if(result == null) {
+    				result = tryGetVarConst(b, a);
+    			}
+    		}
+    	}
+    	
+        return result;
+	}
+	
 	public static int classify(Expr e) {
 		int result = e.isConstant() ? 0
 				   : e.isVariable() ? 1
@@ -312,7 +423,7 @@ public class ExprUtils {
      * @param exprs
      * @return
      */
-    public static <T> T opifyBalanced(Iterable<T> exprs, BinaryOperator<T> exprFactory) {
+    public static <T> T opifyBalanced(Iterable<? extends T> exprs, BiFunction<? super T, ? super T, ? extends T> exprFactory) {//BinaryOperator<T> exprFactory) {
         if(exprs.iterator().hasNext() == false) { //isEmpty()) {
             return null;
         }

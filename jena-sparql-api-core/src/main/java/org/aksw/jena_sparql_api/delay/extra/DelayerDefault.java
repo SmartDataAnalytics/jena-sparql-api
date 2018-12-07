@@ -19,6 +19,11 @@ public class DelayerDefault
         this.delay = delay;
     }
 
+    public DelayerDefault(long delay, long lastRequestTime) {
+        this.delay = delay;
+        this.lastRequestTime = lastRequestTime;
+    }
+
 
     @Override
     public long getDelay() {
@@ -33,5 +38,9 @@ public class DelayerDefault
     @Override
     public void setLastRequestTime(long lastRequestTime) {
         this.lastRequestTime = lastRequestTime;
+    }
+    
+    public static DelayerDefault createFromNow(long delay) {
+    	return new DelayerDefault(delay, System.currentTimeMillis());
     }
 }

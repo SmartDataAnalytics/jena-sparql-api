@@ -3,6 +3,8 @@ package org.aksw.jena_sparql_api.core;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.jena.atlas.json.JsonArray;
+import org.apache.jena.atlas.json.JsonObject;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.Query;
@@ -143,7 +145,8 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
             return decoratee.execSelect();
         } catch(Exception e) {
         	onException(e);
-        	throw new RuntimeException(e);
+        	throw e;
+//        	throw new RuntimeException(e);
         } finally {
             afterExec();
         }
@@ -156,7 +159,8 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
             return decoratee.execConstruct();
         } catch(Exception e) {
         	onException(e);
-        	throw new RuntimeException(e);
+        	//throw new RuntimeException(e);
+        	throw e;
         } finally {
             afterExec();
         }
@@ -169,7 +173,8 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
             return decoratee.execConstruct(model);
         } catch(Exception e) {
         	onException(e);
-        	throw new RuntimeException(e);
+//        	throw new RuntimeException(e);
+        	throw e;
         } finally {
             afterExec();
         }
@@ -182,7 +187,8 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
             return decoratee.execDescribe();
         } catch(Exception e) {
         	onException(e);
-        	throw new RuntimeException(e);
+//        	throw new RuntimeException(e);
+        	throw e;
         } finally {
             afterExec();
         }
@@ -195,7 +201,8 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
             return decoratee.execDescribe(model);
         } catch(Exception e) {
         	onException(e);
-        	throw new RuntimeException(e);
+//        	throw new RuntimeException(e);
+        	throw e;
         } finally {
             afterExec();
         }
@@ -208,7 +215,8 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
             return decoratee.execAsk();
         } catch(Exception e) {
         	onException(e);
-        	throw new RuntimeException(e);
+//        	throw new RuntimeException(e);
+        	throw e;
         } finally {
             afterExec();
         }
@@ -221,7 +229,8 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
             return decoratee.execConstructTriples();
         } catch(Exception e) {
         	onException(e);
-        	throw new RuntimeException(e);
+//        	throw new RuntimeException(e);
+        	throw e;
         } finally {
             afterExec();
         }
@@ -234,7 +243,8 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
             return decoratee.execDescribeTriples();
         } catch(Exception e) {
         	onException(e);
-        	throw new RuntimeException(e);
+//        	throw new RuntimeException(e);
+        	throw e;
         } finally {
             afterExec();
         }
@@ -247,7 +257,8 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
             return decoratee.execConstructQuads();
         } catch(Exception e) {
         	onException(e);
-        	throw new RuntimeException(e);
+//        	throw new RuntimeException(e);
+        	throw e;
         } finally {
             afterExec();
         }
@@ -260,7 +271,8 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
             return decoratee.execConstructDataset();
         } catch(Exception e) {
         	onException(e);
-        	throw new RuntimeException(e);
+//        	throw new RuntimeException(e);
+        	throw e;
         } finally {
             afterExec();
         }
@@ -273,11 +285,41 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
             return decoratee.execConstructDataset(dataset);
         } catch(Exception e) {
         	onException(e);
-        	throw new RuntimeException(e);
+//        	throw new RuntimeException(e);
+        	throw e;
         } finally {
             afterExec();
         }
     }
+    
+	@Override
+	public JsonArray execJson() {
+        beforeExec();
+        try {
+            return decoratee.execJson();
+        } catch(Exception e) {
+        	onException(e);
+//        	throw new RuntimeException(e);
+        	throw e;
+        } finally {
+            afterExec();
+        }
+	}
+
+	@Override
+	public Iterator<JsonObject> execJsonItems() {
+        beforeExec();
+        try {
+            return decoratee.execJsonItems();
+        } catch(Exception e) {
+        	onException(e);
+//        	throw new RuntimeException(e);
+        	throw e;
+        } finally {
+            afterExec();
+        }
+	}
+
 
     @SuppressWarnings("unchecked")
     public <X> X unwrap(Class<X> clazz) {
@@ -300,4 +342,6 @@ public class QueryExecutionDecoratorBase<T extends QueryExecution>
     	X result = (X)tmp;
     	return result;
     }
+    
+    
 }

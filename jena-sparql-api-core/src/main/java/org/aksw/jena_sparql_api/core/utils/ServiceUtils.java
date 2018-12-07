@@ -7,6 +7,7 @@ import java.util.List;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.concepts.OrderedConcept;
+import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.utils.CloseableQueryExecution;
 import org.aksw.jena_sparql_api.utils.CountInfo;
@@ -44,13 +45,13 @@ public class ServiceUtils {
         return result;
     }
 
-    public static List<Node> fetchList(QueryExecutionFactory qef, Concept concept, Long limit, Long offset) {
+    public static List<Node> fetchList(QueryExecutionFactory qef, UnaryRelation concept, Long limit, Long offset) {
         Query query = ConceptUtils.createQueryList(concept, limit, offset);
         List<Node> result = fetchList(qef, query, concept.getVar());
         return result;
     }
 
-    public static List<Node> fetchList(QueryExecutionFactory qef, Concept concept) {
+    public static List<Node> fetchList(QueryExecutionFactory qef, UnaryRelation concept) {
         Query query = ConceptUtils.createQueryList(concept);
         List<Node> result = fetchList(qef, query, concept.getVar());
         return result;

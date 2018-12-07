@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.post_process;
 
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactoryDecorator;
@@ -10,24 +11,24 @@ import org.apache.jena.query.QueryExecution;
 public class QueryExecutionFactoryPostProcess
     extends QueryExecutionFactoryDecorator
 {
-    protected Consumer<QueryExecution> postProcessor;
+    protected Function<? super QueryExecution, ? extends QueryExecution> postProcessor;
 
-    public QueryExecutionFactoryPostProcess(QueryExecutionFactory decoratee, Consumer<QueryExecution> postProcessor) {
+    public QueryExecutionFactoryPostProcess(QueryExecutionFactory decoratee, Function<? super QueryExecution, ? extends QueryExecution> postProcessor) {
         super(decoratee);
         this.postProcessor = postProcessor;
     }
 
     @Override
     public QueryExecution createQueryExecution(Query query) {
-        QueryExecution result = super.createQueryExecution(query);
-        postProcessor.accept(result);
+        QueryExecution tmp = super.createQueryExecution(query);
+        QueryExecution result = postProcessor.apply(tmp);
         return result;
     }
 
     @Override
     public QueryExecution createQueryExecution(String queryStr) {
-        QueryExecution result = super.createQueryExecution(queryStr);
-        postProcessor.accept(result);
+        QueryExecution tmp = super.createQueryExecution(queryStr);
+        QueryExecution result = postProcessor.apply(tmp);
         return result;
     }
 }

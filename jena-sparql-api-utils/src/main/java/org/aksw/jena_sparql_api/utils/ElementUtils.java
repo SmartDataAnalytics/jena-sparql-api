@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.aksw.commons.collections.MapUtils;
+import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformer;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.core.BasicPattern;
@@ -18,6 +19,7 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprTransform;
 import org.apache.jena.sparql.graph.NodeTransform;
+import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.ElementGroup;
@@ -26,6 +28,10 @@ import org.apache.jena.sparql.syntax.ElementPathBlock;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.ElementUnion;
 import org.apache.jena.sparql.syntax.PatternVars;
+import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
+import org.apache.jena.sparql.syntax.syntaxtransform.ExprTransformNodeElement;
+
+import com.google.common.collect.Iterables;
 //import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
 //import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformer;
 //import org.apache.jena.sparql.syntax.syntaxtransform.ExprTransformNodeElement;
@@ -45,7 +51,41 @@ public class ElementUtils {
 //
 //        return result;
 //    }
+	
+	public static ElementTriplesBlock createElementTriple(Triple ... triples) {
+		return createElementTriple(Arrays.asList(triples));
+	}
 
+	public static ElementTriplesBlock createElementTriple(Iterable<Triple> triples) {
+		BasicPattern bgp = new BasicPattern();
+		triples.forEach(bgp::add);
+		ElementTriplesBlock result = new ElementTriplesBlock(bgp);
+		return result;
+	}
+
+	public static ElementTriplesBlock createElementTriple(Node s, Node p, Node o) {
+		return createElement(new Triple(s, p, o));
+	}
+	
+	
+
+	public static ElementPathBlock createElementPath(Node s, Path p, Node o) {
+		ElementPathBlock result = createElementPath(new TriplePath(s, p, o));
+		return result;
+	}
+
+	public static ElementPathBlock createElementPath(TriplePath ... tps) {
+		ElementPathBlock result = createElementPath(Arrays.asList(tps));
+		return result;
+	}
+
+	public static ElementPathBlock createElementPath(Iterable<TriplePath> it) {
+		ElementPathBlock result = new ElementPathBlock();
+		for(TriplePath tp : it) {
+			result.addTriple(tp);
+		}
+		return result;
+	}
 
     public static ElementTriplesBlock createElement(Triple triple) {
         BasicPattern bgp = new BasicPattern();
@@ -187,8 +227,8 @@ public class ElementUtils {
         return result;
     }
 
-    public static Element groupIfNeeded(Collection<Element> members) {
-        Element result = members.size() == 1
+    public static Element groupIfNeeded(Iterable<? extends Element> members) {
+        Element result = Iterables.size(members) == 1
                 ? members.iterator().next()
                 : createElementGroup(members)
                 ;
@@ -202,7 +242,7 @@ public class ElementUtils {
         return result;
     }
 
-    public static ElementGroup createElementGroup(Iterable<Element> members) {
+    public static ElementGroup createElementGroup(Iterable<? extends Element> members) {
         ElementGroup result = new ElementGroup();
         for(Element member : members) {
             result.addElement(member);
@@ -223,9 +263,16 @@ public class ElementUtils {
         Element result = applyNodeTransform(element, nodeTransform);
         return result;
     }
-    
-    @Deprecated // Use TransformElementLib.transform instead
+
+//    public static Element createRenamedElement(Element element, NodeTransform nodeTransform) {
+//    	return applyNodeTransform(element, nodeTransform);
+//    }
+
     public static Element applyNodeTransform(Element element, NodeTransform nodeTransform) {
+    	return applyNodeTransformBackport(element, nodeTransform);
+    }
+
+    public static Element applyNodeTransformJena(Element element, NodeTransform nodeTransform) {
         org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform elementTransform = new ElementTransformSubst2(nodeTransform);//new ElementTransformSubst2(nodeTransform);
         ExprTransform exprTransform = new org.apache.jena.sparql.syntax.syntaxtransform.ExprTransformNodeElement(nodeTransform, elementTransform);
 
@@ -235,6 +282,18 @@ public class ElementUtils {
         
         return result;
     }
+
+    // TODO As long as ApplyElementTransformVistitor cannot change the behavior to simply substitute variables - istead of doing 'SELECT (?x AS ?y)', this method is still needed...
+    @Deprecated // Use TransformElementLib.transform instead
+    public static Element applyNodeTransformBackport(Element element, NodeTransform nodeTransform) {
+        ElementTransform elementTransform = new ElementTransformSubst2(nodeTransform);//new ElementTransformSubst2(nodeTransform);
+        ExprTransform exprTransform = new ExprTransformNodeElement(nodeTransform, elementTransform);
+
+        Element result = ElementTransformer.transform(element, elementTransform, exprTransform);
+        
+        return result;
+    }
+
 
     public static void copyElements(ElementGroup target, Element source) {
         if(source instanceof ElementGroup) {

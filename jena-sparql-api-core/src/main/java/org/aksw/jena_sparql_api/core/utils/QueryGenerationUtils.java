@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.List;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.utils.GeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
@@ -140,7 +141,7 @@ public class QueryGenerationUtils {
      *
      * @return
      */
-    public static Concept createPredicateQuery(Concept concept) {
+    public static Concept createPredicateQuery(UnaryRelation concept) {
         Collection<Var> vars = PatternVars.vars(concept.getElement());
         List<String> varNames = VarUtils.getVarNames(vars);
 

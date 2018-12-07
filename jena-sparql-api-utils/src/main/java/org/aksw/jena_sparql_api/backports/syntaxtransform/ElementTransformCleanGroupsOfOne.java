@@ -26,6 +26,7 @@ import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementOptional;
 import org.apache.jena.sparql.syntax.ElementPathBlock;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
+import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformCopyBase;
 
 /** Unwrap groups of one where they do not matter.
  * <p>

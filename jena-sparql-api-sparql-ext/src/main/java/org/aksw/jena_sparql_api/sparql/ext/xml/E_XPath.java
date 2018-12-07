@@ -5,12 +5,13 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 
+import org.aksw.commons.util.XPathUtils;
+import org.aksw.commons.util.XmlUtils;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.function.FunctionBase2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 /**
  * Use the property function ?s xml:unnest (xpathexpr ?o) for dealing with (/iterating) NodeList
@@ -45,7 +46,8 @@ public class E_XPath
         Object obj = nv.asNode().getLiteralValue();
     	if(obj instanceof Node) {
 	    	Node xml = (Node)obj;
-	    	
+	    	//System.out.println(XmlUtils.toString(xml));
+
 	        if(query.isString() && xml != null) {
 	        	String queryStr = query.getString();	        	
 	        		        	
@@ -74,6 +76,7 @@ public class E_XPath
         } else {
             result = NodeValue.nvNothing; //Expr.NONE.getConstant();
         }
+    	//System.out.println(result);
 
         return result;
     }

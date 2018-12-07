@@ -8,7 +8,7 @@
 	<artifactId>jena-sparql-api-parent</artifactId>
 
 	<packaging>pom</packaging>
-	<version>3.7.0-3</version>
+	<version>3.9.0-1</version>
 	<name>Jena SPARQL API - Parent</name>
 	<description>An RDF library for abstracting SPARQL queries.</description>
 	<url>https://github.com/SmartDataAnalytics/jena-sparql-api</url>
@@ -22,7 +22,7 @@
 
 		<module>jena-sparql-api-resources-sparqlqc</module>
 
-<!--		<module>jena-sparql-api-jgrapht</module> -->
+		<!-- <module>jena-sparql-api-jgrapht</module> -->
 
 		<module>jena-sparql-api-utils</module>
 		<module>jena-sparql-api-sparql-ext</module>
@@ -45,7 +45,7 @@
 
 		<module>jena-sparql-api-geo</module>
 
-		<module>jena-sparql-api-mapper</module>
+		<module>jena-sparql-api-mapper-parent</module>
 		<module>jena-sparql-api-batch</module>
 
 		<module>jena-sparql-api-web</module>
@@ -89,17 +89,17 @@
 	</developers>
 
 	<properties>
-		<jena.version>3.7.0</jena.version>
+		<jena.version>3.9.0</jena.version>
 		<jetty.version>9.4.8.v20171121</jetty.version>
 
-<!--		<jgrapht.version>1.1.0</jgrapht.version> -->
+		<!-- <jgrapht.version>1.1.0</jgrapht.version> -->
 
 		<!-- 2.18 could be tried out next -->
 		<jersey.version>2.26-b03</jersey.version>
 
 		<spring.version>4.3.14.RELEASE</spring.version>
 		<spring.batch.version>4.0.0.RELEASE</spring.batch.version>
-		<aksw.commons.version>0.8.9</aksw.commons.version>
+		<aksw.commons.version>0.8.10</aksw.commons.version>
 
 		<!-- <atmosphere.version>2.0.0.RC3</atmosphere.version> -->
 		<!-- <atmosphere-spring.version>1.1.0.RC5</atmosphere-spring.version> -->
@@ -197,7 +197,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.20</version>
+				<version>3.0.0-M1</version>
 				<configuration>
 					<skipTests>false</skipTests>
 				</configuration>
@@ -302,23 +302,23 @@
 		</pluginManagement>
 	</build>
 
-<!-- 	<dependencies> -->
-<!-- 		<dependency> -->
-<!-- 			<groupId>junit</groupId> -->
-<!-- 			<artifactId>junit</artifactId> -->
-<!-- 		</dependency> -->
+	<!-- <dependencies> -->
+	<!-- <dependency> -->
+	<!-- <groupId>junit</groupId> -->
+	<!-- <artifactId>junit</artifactId> -->
+	<!-- </dependency> -->
 
-<!-- 		<dependency> -->
-<!-- 			<groupId>log4j</groupId> -->
-<!-- 			<artifactId>log4j</artifactId> -->
-<!-- 		</dependency> -->
+	<!-- <dependency> -->
+	<!-- <groupId>log4j</groupId> -->
+	<!-- <artifactId>log4j</artifactId> -->
+	<!-- </dependency> -->
 
-<!-- 		<dependency> -->
-<!-- 			<groupId>org.slf4j</groupId> -->
-<!-- 			<artifactId>slf4j-log4j12</artifactId> -->
-<!-- 		</dependency> -->
+	<!-- <dependency> -->
+	<!-- <groupId>org.slf4j</groupId> -->
+	<!-- <artifactId>slf4j-log4j12</artifactId> -->
+	<!-- </dependency> -->
 
-<!-- 	</dependencies> -->
+	<!-- </dependencies> -->
 
 
 	<dependencyManagement>
@@ -398,9 +398,15 @@
 
 			<dependency>
 				<groupId>org.aksw.jena-sparql-api</groupId>
-				<artifactId>jena-sparql-api-mapper</artifactId>
+				<artifactId>jena-sparql-api-mapper-core</artifactId>
 				<version>${project.version}</version>
 			</dependency>
+
+                        <dependency>
+                                <groupId>org.aksw.jena-sparql-api</groupId>
+                                <artifactId>jena-sparql-api-mapper-proxy</artifactId>
+                                <version>${project.version}</version>
+                        </dependency>
 
 
 			<dependency>
@@ -418,6 +424,12 @@
 			<dependency>
 				<groupId>org.aksw.jena-sparql-api</groupId>
 				<artifactId>jena-sparql-api-utils</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.jena-sparql-api</groupId>
+				<artifactId>jena-sparql-api-mapper-annotations</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 
@@ -589,22 +601,12 @@
 			<!-- <version>0.6</version> -->
 			<!-- </dependency> -->
 
-<!--
-			<dependency>
-				<groupId>org.jgrapht</groupId>
-				<artifactId>jgrapht-core</artifactId>
-				<version>${jgrapht.version}</version>
-			</dependency>
--->
+			<!-- <dependency> <groupId>org.jgrapht</groupId> <artifactId>jgrapht-core</artifactId> 
+				<version>${jgrapht.version}</version> </dependency> -->
 
 			<!-- Present for playground and potential demos -->
-<!--
-			<dependency>
-				<groupId>org.jgrapht</groupId>
-				<artifactId>jgrapht-ext</artifactId>
-				<version>${jgrapht.version}</version>
-			</dependency>
--->
+			<!-- <dependency> <groupId>org.jgrapht</groupId> <artifactId>jgrapht-ext</artifactId> 
+				<version>${jgrapht.version}</version> </dependency> -->
 			<!-- Java8 stream utilities, such as zip -->
 			<dependency>
 				<groupId>com.codepoetics</groupId>
@@ -774,8 +776,8 @@
 			<!-- Java Topology Suite -->
 			<dependency>
 				<groupId>com.vividsolutions</groupId>
-				<artifactId>jts</artifactId>
-				<version>1.13</version>
+				<artifactId>jts-core</artifactId>
+				<version>1.14.0</version>
 				<!-- Xerces delivered by Jena -->
 				<exclusions>
 					<exclusion>
@@ -783,6 +785,12 @@
 						<artifactId>xercesImpl</artifactId>
 					</exclusion>
 				</exclusions>
+			</dependency>
+			<!-- https://mvnrepository.com/artifact/com.vividsolutions/jts-io -->
+			<dependency>
+				<groupId>com.vividsolutions</groupId>
+				<artifactId>jts-io</artifactId>
+				<version>1.14.0</version>
 			</dependency>
 
 			<!-- Embedded Databases (will be moved to separate package) -->
@@ -1041,6 +1049,12 @@
 				<groupId>io.reactivex.rxjava2</groupId>
 				<artifactId>rxjava</artifactId>
 				<version>2.1.14</version>
+			</dependency>
+
+			<dependency>
+				<groupId>com.github.davidmoten</groupId>
+				<artifactId>rxjava2-extras</artifactId>
+				<version>0.1.28</version>
 			</dependency>
 
 			<!-- <dependency> -->

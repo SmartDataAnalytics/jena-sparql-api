@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.sparql.ext.json;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.aksw.jena_sparql_api.utils.model.NodeMapperRdfDatatype;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Node;
@@ -13,6 +14,7 @@ import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingFactory;
 import org.apache.jena.sparql.engine.iterator.QueryIterNullIterator;
 import org.apache.jena.sparql.engine.iterator.QueryIterPlainWrapper;
+import org.apache.jena.sparql.expr.ExprEvalException;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.pfunction.PFuncSimpleAndList;
 import org.apache.jena.sparql.pfunction.PropFuncArg;
@@ -70,10 +72,19 @@ public class PropertyFunctionFactoryJsonUnnest
                 Var outputVar = (Var)object;
 
                 Node index = objects.getArgListSize() > 1 ? objects.getArg(1) : null;
-                if(index != null && !index.isVariable()) {
-                    throw new RuntimeException("Index of json array unnesting must be a variable");
+                Var indexVar = null;
+                Integer indexVal = null;
+                
+                if(index != null && index.isVariable()) {
+                    indexVar = (Var)index;
+//                    throw new RuntimeException("Index of json array unnesting must be a variable");
+                } else if(index.isLiteral()) {
+                	Object obj = NodeMapperRdfDatatype.toJavaCore(index, index.getLiteralDatatype());
+                	if(obj instanceof Number) {
+                		indexVal = ((Number)obj).intValue();
+                	}
                 }
-                Var indexVar = (Var)index;
+                
 
                 
                 QueryIterator result = null;
@@ -86,22 +97,15 @@ public class PropertyFunctionFactoryJsonUnnest
                         List<Binding> bindings = new ArrayList<Binding>(arr.size());
 
                         //for(JsonElement item : arr) {
-                        for(int i = 0; i < arr.size(); ++i) {
-                        	JsonElement item = arr.get(i);
-                        	RDFDatatype jsonDatatype = TypeMapper.getInstance().getTypeByClass(JsonElement.class);
-
-                            Node n = E_JsonPath.jsonToNode(item, gson, jsonDatatype);
-                            NodeValue nv = NodeValue.makeNode(n);
-
-                            Binding b = BindingFactory.binding(binding, outputVar, nv.asNode());
-                            
-                            if(index != null) {
-                            	b = BindingFactory.binding(b, indexVar, NodeValue.makeInteger(i).asNode());
-                            }
-
-                            bindings.add(b);
-                        }
-
+                        if(indexVal != null) {
+                        	Binding b = itemToBinding(binding, arr, indexVal, gson, indexVar, outputVar);
+                            bindings.add(b);                        	
+                        } else {
+	                        for(int i = 0; i < arr.size(); ++i) {
+	                        	Binding b = itemToBinding(binding, arr, i, gson, indexVar, outputVar);
+	                            bindings.add(b);
+	                        }	
+	                    }
                         result = new QueryIterPlainWrapper(bindings.iterator());
                     }
                 }
@@ -113,5 +117,27 @@ public class PropertyFunctionFactoryJsonUnnest
                 return result;
             }
         };
+    }
+    
+    public static Binding itemToBinding(Binding binding, JsonArray arr, int i, Gson gson, Var indexVar, Var outputVar) {
+    	JsonElement item;
+    	
+    	try {
+    		item = arr.get(i);
+    	} catch(Exception e) {
+    		throw new ExprEvalException(e);
+    	}
+    	RDFDatatype jsonDatatype = TypeMapper.getInstance().getTypeByClass(JsonElement.class);
+
+        Node n = E_JsonPath.jsonToNode(item, gson, jsonDatatype);
+        NodeValue nv = NodeValue.makeNode(n);
+
+        Binding b = BindingFactory.binding(binding, outputVar, nv.asNode());
+        
+        if(indexVar != null) {
+        	b = BindingFactory.binding(b, indexVar, NodeValue.makeInteger(i).asNode());
+        }
+        
+        return b;
     }
 }

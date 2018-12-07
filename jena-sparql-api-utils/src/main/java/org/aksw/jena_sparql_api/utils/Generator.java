@@ -9,7 +9,7 @@ public interface Generator<T>
     //T prefer(T item);
 
     /**
-     * Clones should idependently yield the same sequences of items as the original object
+     * Clones should independently yield the same sequences of items as the original object
      *
      * @return
      */

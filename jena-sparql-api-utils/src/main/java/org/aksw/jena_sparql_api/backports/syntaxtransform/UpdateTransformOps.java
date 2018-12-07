@@ -23,7 +23,6 @@ import java.util.List ;
 import java.util.Map ;
 
 import org.apache.jena.atlas.lib.Sink ;
-
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
@@ -43,6 +42,8 @@ import org.apache.jena.sparql.modify.request.UpdateModify;
 import org.apache.jena.sparql.modify.request.UpdateMove;
 import org.apache.jena.sparql.modify.request.UpdateVisitor;
 import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
+import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformSubst;
 import org.apache.jena.update.Update;
 import org.apache.jena.update.UpdateRequest;
 

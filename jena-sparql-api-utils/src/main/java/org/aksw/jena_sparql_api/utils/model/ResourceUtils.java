@@ -4,8 +4,11 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import org.apache.jena.datatypes.RDFDatatype;
+import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
+import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
@@ -99,17 +102,44 @@ public class ResourceUtils {
 	}
 
 	public static boolean canAsLiteral(Statement stmt, Class<?> clazz) {
-		boolean result = stmt.getObject().isLiteral() &&
-				Optional.ofNullable(stmt.getObject().asLiteral().getValue())
-				.map(v -> clazz.isAssignableFrom(v.getClass())).isPresent();
+		TypeMapper tm = TypeMapper.getInstance();
+		RDFDatatype dtype = tm.getTypeByClass(clazz);
+
+		
+		RDFNode o = stmt.getObject();
+				
+		boolean result = dtype != null && o.isLiteral() && NodeMapperRdfDatatype.canMapCore(o.asNode(), dtype);
 		return result;
 	}
 
-	@SuppressWarnings("unchecked")
-	public static <T> T getLiteralValue(Statement stmt, Class<T> clazz) {
-		T result = (T)stmt.getObject().asLiteral().getValue();
+	public static <T> Literal createTypedLiteral(Model model, Class<T> clazz, T o) {
+		TypeMapper tm = TypeMapper.getInstance();
+		RDFDatatype dtype = tm.getTypeByClass(clazz);
+
+		Literal result = model.createTypedLiteral((Object)o, dtype);
 		return result;
 	}
+
+//	public static boolean canAsLiteral(Statement stmt, Class<?> clazz) {
+//		boolean result = stmt.getObject().isLiteral() &&
+//				Optional.ofNullable(stmt.getObject().asLiteral().getValue())
+//				.map(v -> clazz.isAssignableFrom(v.getClass())).isPresent();
+//		return result;
+//	}
+
+	public static <T> T getLiteralValue(Statement stmt, Class<T> clazz) {
+		TypeMapper tm = TypeMapper.getInstance();
+		RDFDatatype dtype = tm.getTypeByClass(clazz);
+		RDFNode o = stmt.getObject();
+		T result = NodeMapperRdfDatatype.toJavaCore(o.asNode(), dtype);
+		return result;
+	}
+
+//	@SuppressWarnings("unchecked")
+//	public static <T> T getLiteralValue(Statement stmt, Class<T> clazz) {
+//		T result = (T)stmt.getObject().asLiteral().getValue();
+//		return result;
+//	}
 
 	
 	
@@ -159,7 +189,13 @@ public class ResourceUtils {
 		Optional<Statement> result = findFirst(listProperties(s, p));
 		return result;		
 	}
-	
+
+	public static Optional<RDFNode> tryGetPropertyValue(Resource s, Property p) {
+		Optional<RDFNode> result = getProperty(s, p)
+				.map(Statement::getObject);	
+		return result;		
+	}
+
 	/**
 	 * Get a single value chosen at random from all available values of the given property.
 	 * 
@@ -167,9 +203,8 @@ public class ResourceUtils {
 	 * @param p
 	 * @return
 	 */
-	public static Optional<RDFNode> getPropertyValue(Resource s, Property p) {
-		Optional<RDFNode> result = getProperty(s, p)
-				.map(Statement::getObject);	
+	public static RDFNode getPropertyValue(Resource s, Property p) {
+		RDFNode result = tryGetPropertyValue(s, p).orElse(null);
 		return result;		
 	}
 
@@ -192,6 +227,18 @@ public class ResourceUtils {
 				.filterKeep(stmt -> canAsProperty(stmt, nodeMapper::canMap));
 		return result;
 	}
+	
+	
+	public static <T> Optional<T> tryGetPropertyValue(Resource s, Property p, NodeMapper<T> nodeMapper) {
+		Optional<T> result = findFirst(listPropertyValues(s, p, nodeMapper));
+		return result;		
+	}
+	
+	public static <T> T getPropertyValue(Resource s, Property p, NodeMapper<T> nodeMapper) {
+		T result = tryGetPropertyValue(s, p, nodeMapper).orElse(null);
+		return result;
+	}
+	
 
 	public static <T> ExtendedIterator<T> listPropertyValues(Resource s, Property p, NodeMapper<T> nodeMapper) {
 		ExtendedIterator<T> result = listProperties(s, p, nodeMapper)
@@ -205,12 +252,17 @@ public class ResourceUtils {
 		return result;		
 	}
 
-	public static <T extends RDFNode> Optional<T> getPropertyValue(Resource s, Property p, Class<T> clazz) {
+	public static <T extends RDFNode> Optional<T> tryGetPropertyValue(Resource s, Property p, Class<T> clazz) {
 		Optional<T> result = getProperty(s, p, clazz)
 				.map(stmt -> getPropertyValue(stmt, clazz));
 		return result;		
 	}
-	
+
+	public static <T extends RDFNode> T getPropertyValue(Resource s, Property p, Class<T> clazz) {
+		T result = tryGetPropertyValue(s, p, clazz).orElse(null);
+		return result;		
+	}
+
 
 	public static <T> ExtendedIterator<Statement> listLiteralProperties(Resource s, Property p, Class<T> clazz) {
 		ExtendedIterator<Statement> result = listProperties(s, p)
@@ -230,9 +282,14 @@ public class ResourceUtils {
 		return result;
 	}
 	
-	public static <T> Optional<T> getLiteralPropertyValue(Resource s, Property p, Class<T> clazz) {
+	public static <T> Optional<T> tryGetLiteralPropertyValue(Resource s, Property p, Class<T> clazz) {
 		Optional<T> result = getLiteralProperty(s, p, clazz)
 				.map(stmt -> getLiteralValue(stmt, clazz));
+		return result;		
+	}
+
+	public static <T> T getLiteralPropertyValue(Resource s, Property p, Class<T> clazz) {
+		T result = tryGetLiteralPropertyValue(s, p, clazz).orElse(null);
 		return result;		
 	}
 
@@ -264,6 +321,31 @@ public class ResourceUtils {
 		
 		return result;
 	}
+
+	public static Optional<Resource> tryGetReversePropertyValue(Resource s, Property p) {
+		Optional<Resource> result = getReverseProperty(s, p)
+				.map(Statement::getSubject);	
+		return result;		
+	}
+
+	public static Resource getReversePropertyValue(Resource s, Property p) {
+		Resource result = tryGetReversePropertyValue(s, p).orElse(null);
+		return result;		
+	}
+
+	public static <T extends Resource> Optional<T> tryGetReversePropertyValue(Resource s, Property p, Class<T> clazz) {
+		Optional<T> result = getReverseProperty(s, p, clazz)
+				.map(Statement::getSubject)
+				.map(r -> r.as(clazz));
+
+		return result;		
+	}
+
+	public static <T extends Resource> T getReversePropertyValue(Resource s, Property p, Class<T> clazz) {
+		T result = tryGetReversePropertyValue(s, p, clazz).orElse(null);
+		return result;		
+	}
+
 
 
 	public static ExtendedIterator<Resource> listReversePropertyValues(Resource s, Property p) {
@@ -440,11 +522,23 @@ public class ResourceUtils {
 //		return stmt -> isObjectOfType()
 //	}
 		
+	public static <T> boolean updateProperty(Resource s, Property p, NodeMapper<T> nodeMapper, T o) {
+		Model m = s.getModel();
+
+		boolean result = replaceProperties(m,
+				listProperties(s, p, nodeMapper),
+				o == null ? null : m.createStatement(s, p, m.asRDFNode(nodeMapper.toNode(o))));
+		
+		return result;
+	}
+
 
 	public static <T> boolean updateLiteralProperty(Resource s, Property p, Class<T> clazz, T o) {
-		boolean result = replaceProperties(s.getModel(),
+		Model m = s.getModel();
+		
+		boolean result = replaceProperties(m,
 				listLiteralProperties(s, p, clazz),
-				o == null ? null : s.getModel().createLiteralStatement(s, p, o));
+				o == null ? null : m.createStatement(s, p, createTypedLiteral(m, clazz, o)));
 		
 		return result;
 	}

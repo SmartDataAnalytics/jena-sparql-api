@@ -1,0 +1,50 @@
+PREFIX eg: <http://www.example.org/>
+
+# A note on naming: Predicates have subject-centric names:
+# T hasOutgoingPredicate ...
+# p isIngoingPredicateOf ...
+
+# Join summary
+# Actually we no longer need it as it is subsumed by sequences of
+# the form T1 hasOutgoingPredicate p hasIngoingPredicate T2
+#CONSTRUCT {
+#  ?x eg:joinsWith ?y
+#} {
+#  { SELECT DISTINCT ?x ?y {
+#    [] ?x [ ?y [] ]
+#    FILTER(!STRSTARTS(STR(?x), 'http://www.w3.org/1999/02/22-rdf-syntax-ns#_'))
+#    FILTER(!STRSTARTS(STR(?y), 'http://www.w3.org/1999/02/22-rdf-syntax-ns#_'))
+#  } }
+#}
+
+CONSTRUCT {
+  ?t eg:hasOutgoingPredicate ?p .
+  ?p eg:isOutgoingPredicateOf ?t
+  
+} {
+  { SELECT DISTINCT ?t ?p {
+    ?s ?p []
+    OPTIONAL { ?s a ?tmp }
+    BIND(IF(BOUND(?tmp), ?tmp, eg:unbound) AS ?t)
+    FILTER(!STRSTARTS(STR(?p), 'http://www.w3.org/1999/02/22-rdf-syntax-ns#_'))
+    FILTER(?p NOT IN (rdf:type))
+  } }
+}
+
+# Note: Representing inverse predicates as forward traversals has two advantages:
+# (1) works with literals
+# (from predicate to reachable type)
+# may simplify things in the algorithm, but I might be wrong ~ Claus
+CONSTRUCT {
+  ?p eg:isIngoingPredicateOf ?t .
+  ?t eg:hasIngoingPredicate ?p
+} {
+  { SELECT DISTINCT ?t ?p {
+    [] ?p ?o
+    FILTER(ISURI(?o))
+    OPTIONAL { ?o a ?tmp }
+    BIND(IF(BOUND(?tmp), ?tmp, eg:unbound) AS ?t)
+    FILTER(!STRSTARTS(STR(?p), 'http://www.w3.org/1999/02/22-rdf-syntax-ns#_'))
+    FILTER(?p NOT IN (rdf:type))
+  } }
+}

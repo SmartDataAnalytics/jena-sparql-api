@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -15,6 +16,7 @@ import org.aksw.jena_sparql_api.core.utils.QueryGenerationUtils;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprListUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
+import org.aksw.jena_sparql_api.utils.GeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.Triples;
 import org.aksw.jena_sparql_api.utils.VarExprListUtils;
@@ -24,8 +26,14 @@ import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.SortCondition;
+import org.apache.jena.sdb.core.Gensym;
+import org.apache.jena.sparql.algebra.Algebra;
+import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.OpAsQuery;
+import org.apache.jena.sparql.core.Substitute;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.BindingHashMap;
 import org.apache.jena.sparql.expr.E_Equals;
@@ -46,6 +54,7 @@ import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.PatternVars;
 
 import com.google.common.collect.Range;
+import com.google.common.collect.Sets;
 
 public class ConceptUtils {
     public static Concept listDeclaredProperties = Concept.create("?s a ?t . Filter(?t = <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> || ?t = <http://www.w3.org/2002/07/owl#ObjectProperty> || ?t = <http://www.w3.org/2002/07/owl#DataTypeProperty>)", "s");
@@ -55,6 +64,99 @@ public class ConceptUtils {
     public static Concept listAllPredicates = Concept.create("?s ?p ?o", "p");
     public static Concept listAllGraphs = Concept.create("Graph ?g { ?s ?p ?o }", "g");
 
+    /**
+     * True if the concept is isomorph to { ?s ?p ?o }, ?s
+     *
+     * @return
+     */
+    public static boolean isSubjectConcept(UnaryRelation r) {
+    	Element element = r.getElement();
+    	Var var = r.getVar();
+   
+        if(element instanceof ElementTriplesBlock) {
+            List<Triple> triples = ((ElementTriplesBlock)element).getPattern().getList();
+
+            if(triples.size() == 1) {
+
+                Triple triple = triples.get(0);
+
+                // TODO Refactor into e.g. ElementUtils.isVarsOnly(element)
+                boolean condition =
+                        triple.getSubject().isVariable() &&
+                        triple.getSubject().equals(var) &&
+                        triple.getPredicate().isVariable() &&
+                        triple.getObject().isVariable();
+
+                if(condition) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+
+    
+    /**
+     * Create a new concept that has no variables with the given one in common
+     *
+     *
+     *
+     * @param that
+     * @return
+     */
+    public static UnaryRelation makeDistinctFrom(UnaryRelation a, UnaryRelation that) {
+
+        Set<String> thisVarNames = new HashSet<String>(VarUtils.getVarNames(PatternVars.vars(a.getElement())));
+        Set<String> thatVarNames = new HashSet<String>(VarUtils.getVarNames(PatternVars.vars(that.getElement())));
+
+        Set<String> commonVarNames = Sets.intersection(thisVarNames, thatVarNames);
+        Set<String> combinedVarNames = Sets.union(thisVarNames, thatVarNames);
+
+        GeneratorBlacklist generator = new GeneratorBlacklist(Gensym.create("v"), combinedVarNames);
+
+        BindingHashMap binding = new BindingHashMap();
+        for(String varName : commonVarNames) {
+            Var oldVar = Var.alloc(varName);
+            Var newVar = Var.alloc(generator.next());
+
+            binding.add(oldVar, newVar);
+        }
+
+        Op op = Algebra.compile(a.getElement());
+        Op substOp = Substitute.substitute(op, binding);
+        Query tmp = OpAsQuery.asQuery(substOp);
+
+        //Element newElement = tmp.getQueryPattern();
+        ElementGroup newElement = new ElementGroup();
+        newElement.addElement(tmp.getQueryPattern());
+
+        /*
+        if(newElement instanceof ElementGroup) {
+
+
+            ElementPathBlock) {
+        }
+            List<TriplePath> triplePaths = ((ElementPathBlock)newElement).getPattern().getList();
+
+            ElementTriplesBlock block = new ElementTriplesBlock();
+            for(TriplePath triplePath : triplePaths) {
+                block.addTriple(triplePath.asTriple());
+            }
+
+            newElement = block;
+            //newElement = new ElementTriplesBlock(pattern);
+        }
+        */
+
+        Var tmpVar = (Var)binding.get(a.getVar());
+
+        Var newVar = tmpVar != null ? tmpVar : a.getVar();
+
+        Concept result = new Concept(newElement, newVar);
+        return result;
+    }
 
     public static Concept createConcept(Node ... nodes) {
     	Concept result = createConcept(Arrays.asList(nodes));
@@ -428,7 +530,7 @@ public class ConceptUtils {
     }
 
 
-    public static Query createQueryList(Concept concept) {
+    public static Query createQueryList(UnaryRelation concept) {
         Query result = createQueryList(concept, null, null);
         return result;
     }
@@ -456,7 +558,7 @@ public class ConceptUtils {
     }
 
 
-    public static Query createQueryList(Concept concept, Range<Long> range) {
+    public static Query createQueryList(UnaryRelation concept, Range<Long> range) {
         long offset = QueryUtils.rangeToOffset(range);
         long limit = QueryUtils.rangeToLimit(range);
 
@@ -464,7 +566,7 @@ public class ConceptUtils {
         return result;
     }
 
-    public static Query createQueryList(Concept concept, Long limit, Long offset) {
+    public static Query createQueryList(UnaryRelation concept, Long limit, Long offset) {
         Query result = new Query();
         result.setQuerySelectType();
         result.setDistinct(true);

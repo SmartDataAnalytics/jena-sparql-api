@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api.sparql_path.core;
 
-import org.aksw.jena_sparql_api.concepts.Path;
+import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 
 public interface PathCallback {
-	void handle(Path path);
+	void handle(SimplePath path);
 }

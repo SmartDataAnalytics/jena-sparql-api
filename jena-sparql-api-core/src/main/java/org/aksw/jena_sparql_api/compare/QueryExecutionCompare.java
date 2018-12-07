@@ -10,6 +10,8 @@ import org.aksw.commons.collections.diff.ListDiff;
 import org.aksw.commons.util.strings.StringUtils;
 import org.aksw.jena_sparql_api.utils.ModelDiff;
 import org.aksw.jena_sparql_api.utils.ResultSetPart;
+import org.apache.jena.atlas.json.JsonArray;
+import org.apache.jena.atlas.json.JsonObject;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Dataset;
@@ -576,6 +578,16 @@ public class QueryExecutionCompare
     public Dataset execConstructDataset(Dataset dataset) {
         throw new RuntimeException("Not implemented yet");
     }
+
+	@Override
+	public JsonArray execJson() {
+        throw new RuntimeException("Not implemented yet");
+	}
+
+	@Override
+	public Iterator<JsonObject> execJsonItems() {
+        throw new RuntimeException("Not implemented yet");
+	}
 
     /*
     @Override

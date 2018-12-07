@@ -2,6 +2,9 @@ package org.aksw.jena_sparql_api.utils.expr;
 
 import java.math.BigDecimal;
 
+import org.apache.jena.graph.Node;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.expr.nodevalue.NodeValueNode;
 import org.slf4j.Logger;
@@ -10,7 +13,7 @@ import org.slf4j.LoggerFactory;
 public class NodeValueUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(NodeValueUtils.class);
-
+    
     public static int getInteger(NodeValue expr) {
         int result;
         if(expr.isInteger()) {
@@ -26,6 +29,13 @@ public class NodeValueUtils {
         return result;
     }
 
+    public static Number getNumber(NodeValue expr) {
+    	Object obj = getValue(expr);
+    	
+    	Number result = obj instanceof Number ? (Number)obj : null;
+    	return result;
+    }
+    
     public static Object getValue(NodeValue expr) {
         if(expr == null) {
             return NodeValue.nvNothing;

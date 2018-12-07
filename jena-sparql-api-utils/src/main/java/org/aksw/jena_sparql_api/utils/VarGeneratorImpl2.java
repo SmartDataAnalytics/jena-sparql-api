@@ -45,7 +45,15 @@ public class VarGeneratorImpl2
         return result;
     }
 
+    /**
+     * 
+     * If base is null, the default ("v") is used.
+     * 
+     * @param base
+     * @return
+     */
     public static VarGeneratorImpl2 create(String base) {
+    	base = base == null ? "v" : base;
         VarGeneratorImpl2 result = new VarGeneratorImpl2(base, 1);
         return result;
     }

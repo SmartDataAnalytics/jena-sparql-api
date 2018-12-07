@@ -112,8 +112,8 @@ public class UpdateRequestUtils {
     }
 
     public static UpdateRequest createUpdateRequest(Iterable<? extends Quad> added, Iterable<? extends Quad> removed) {
-        Iterator<? extends Quad> a = added.iterator();
-        Iterator<? extends Quad> b = removed.iterator();
+        Iterator<? extends Quad> a = added == null ? null : added.iterator();
+        Iterator<? extends Quad> b = removed == null ? null : removed.iterator();
 
         UpdateRequest result = createUpdateRequest(a, b);
         return result;

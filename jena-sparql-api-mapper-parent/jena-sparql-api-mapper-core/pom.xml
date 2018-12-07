@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>jena-sparql-api-mapper-core</artifactId>
+    <packaging>jar</packaging>
+
+    <name>Jena SPARQL API - Mapper - Core</name>
+
+    <parent>
+        <groupId>org.aksw.jena-sparql-api</groupId>
+        <artifactId>jena-sparql-api-mapper-parent</artifactId>
+        <version>3.9.0-1</version>
+    </parent>
+
+    <dependencies>
+
+        <!-- Self Dependencies -->
+        <dependency>
+            <groupId>org.aksw.jena-sparql-api</groupId>
+            <artifactId>jena-sparql-api-core</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.aksw.jena-sparql-api</groupId>
+            <artifactId>jena-sparql-api-update</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.aksw.jena-sparql-api</groupId>
+            <artifactId>jena-sparql-api-concepts</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.aksw.spring</groupId>
+            <artifactId>spring-json-core</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.aksw.commons</groupId>
+            <artifactId>subgraph-isomorphism-index-jena</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.aksw.jena-sparql-api</groupId>
+            <artifactId>jena-sparql-api-resources-test-config</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.eclipse.persistence</groupId>
+            <artifactId>javax.persistence</artifactId>
+            <version>2.2.0</version>
+        </dependency>
+
+    </dependencies>
+</project>

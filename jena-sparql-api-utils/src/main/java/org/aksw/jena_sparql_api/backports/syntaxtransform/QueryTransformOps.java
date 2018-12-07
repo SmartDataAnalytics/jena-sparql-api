@@ -36,6 +36,8 @@ import org.apache.jena.sparql.expr.ExprTransform;
 import org.apache.jena.sparql.graph.NodeTransform ;
 import org.apache.jena.sparql.syntax.Element ;
 import org.apache.jena.sparql.syntax.ElementGroup ;
+import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
+import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformSubst;
 
 /** Support for transformation of query abstract syntax. */
 
@@ -207,6 +209,12 @@ public class QueryTransformOps {
 
         @Override
         public void finishVisit(Query query) {}
+
+		@Override
+		public void visitJsonResultForm(Query arg0) {
+			// TODO Auto-generated method stub
+			
+		}
     }
 
     public static Query shallowCopy(Query query) {

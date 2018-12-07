@@ -11,7 +11,11 @@ import org.aksw.jena_sparql_api.stmt.SparqlElementParserImpl;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Syntax;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.core.TriplePath;
 import org.apache.jena.sparql.core.Var;
@@ -125,6 +129,21 @@ public class BinaryRelationImpl
 
     public static BinaryRelation create(org.apache.jena.sparql.path.Path path) {
         BinaryRelation result = new BinaryRelationImpl(ElementUtils.createElement(new TriplePath(Vars.s, path, Vars.o)), Vars.s, Vars.o);
+        return result;
+    }
+
+    public static BinaryRelation create(Node p) {
+        BinaryRelation result = new BinaryRelationImpl(ElementUtils.createElement(new Triple(Vars.s, p, Vars.o)), Vars.s, Vars.o);
+        return result;
+    }
+
+    public static BinaryRelation create(Resource p) {
+        BinaryRelation result = create(p.asNode());
+        return result;
+    }
+
+    public static BinaryRelation create(String p) {
+        BinaryRelation result = create(NodeFactory.createURI(p));
         return result;
     }
 

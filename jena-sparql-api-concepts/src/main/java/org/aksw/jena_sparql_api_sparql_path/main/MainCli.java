@@ -5,10 +5,10 @@ import java.sql.SQLException;
 import java.util.List;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.concepts.Path;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.sparql_path.core.algorithm.ConceptPathFinder;
+import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 
 //class EdgeTransition
 //	extends DefaultEdge
@@ -76,7 +76,7 @@ public class MainCli {
 
         Concept tmpTargetConcept = Concept.create("?s <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?lon ; <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?lat", "s");
 
-        List<Path> paths = ConceptPathFinder.findPaths(qef, sourceConcept, tmpTargetConcept, 10, 10);
+        List<SimplePath> paths = ConceptPathFinder.findPaths(qef, sourceConcept, tmpTargetConcept, 10, 10);
         System.out.println(paths);
     }
 

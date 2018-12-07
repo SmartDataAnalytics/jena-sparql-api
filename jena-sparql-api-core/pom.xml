@@ -13,11 +13,16 @@
 	<parent>
 		<groupId>org.aksw.jena-sparql-api</groupId>
 		<artifactId>jena-sparql-api-parent</artifactId>
-		<version>3.7.0-3</version>
+		<version>3.9.0-1</version>
 	</parent>
 
 	<dependencies>
 		<!-- Self Dependencies -->
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-mapper-annotations</artifactId>
+		</dependency>
+
 		<dependency>
 			<groupId>org.aksw.jena-sparql-api</groupId>
 			<artifactId>jena-sparql-api-utils</artifactId>
@@ -39,6 +44,10 @@
 			<artifactId>rxjava</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>com.github.davidmoten</groupId>
+			<artifactId>rxjava2-extras</artifactId>
+		</dependency>
 
 		<!-- Jena -->
 		<dependency>

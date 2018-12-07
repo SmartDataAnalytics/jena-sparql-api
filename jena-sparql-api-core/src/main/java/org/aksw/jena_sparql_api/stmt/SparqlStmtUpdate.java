@@ -33,6 +33,7 @@ public class SparqlStmtUpdate
         return updateRequest;
     }
 
+    @Override
     public boolean isParsed() {
         return updateRequest != null;
     }

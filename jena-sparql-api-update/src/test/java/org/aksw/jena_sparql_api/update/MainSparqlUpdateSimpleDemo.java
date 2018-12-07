@@ -37,10 +37,20 @@ class MainSparqlUpdateSimpleDemo {
             .create();
 
         // Perform the request - the listeners will be notified appropriately
-        UpdateRequest updateRequest = UpdateRequestUtils.parse("Prefix ex: <http://example.org/> Insert Data { ex:s ex:p ex:o }");
-        sparqlService
-            .getUpdateExecutionFactory()
-            .createUpdateProcessor(updateRequest)
-            .execute();
+        {
+        	UpdateRequest updateRequest = UpdateRequestUtils.parse("Prefix ex: <http://example.org/> Insert Data { ex:s ex:p ex:o }");
+	        sparqlService
+	            .getUpdateExecutionFactory()
+	            .createUpdateProcessor(updateRequest)
+	            .execute();
+        }
+        {
+        	UpdateRequest updateRequest = UpdateRequestUtils.parse("DELETE { ?s ?p ?o } WHERE { ?s ?p ?o }");
+	        sparqlService
+	            .getUpdateExecutionFactory()
+	            .createUpdateProcessor(updateRequest)
+	            .execute();
+        }
     }
+    
 }

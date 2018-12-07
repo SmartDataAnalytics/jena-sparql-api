@@ -1,7 +1,7 @@
 package org.aksw.jena_sparql_api.concept_cache.init;
 
 import org.aksw.jena_sparql_api.concept_cache.core.JenaExtensionViewMatcher;
-import org.apache.jena.system.JenaSubsystemLifecycle;
+import org.apache.jena.sys.JenaSubsystemLifecycle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

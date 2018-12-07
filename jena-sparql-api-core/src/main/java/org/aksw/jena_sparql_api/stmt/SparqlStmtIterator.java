@@ -2,12 +2,19 @@ package org.aksw.jena_sparql_api.stmt;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
+import org.apache.jena.ext.com.google.common.collect.Streams;
+import org.apache.jena.ext.com.google.common.io.CharStreams;
 import org.apache.jena.query.QueryParseException;
+import org.apache.jena.sparql.lang.arq.ParseException;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.AbstractIterator;
@@ -124,4 +131,5 @@ public class SparqlStmtIterator extends AbstractIterator<SparqlStmt> {
 
 		return result;
 	}
+
 }

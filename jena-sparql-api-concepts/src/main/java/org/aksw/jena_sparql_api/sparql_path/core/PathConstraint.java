@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.utils.CnfUtils;
 import org.aksw.jena_sparql_api.utils.ElementTreeAnalyser;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
@@ -178,7 +179,7 @@ public class PathConstraint {
         return result;
     }
 
-    public static Concept getPathConstraintsSimple(Concept concept) {
+    public static Concept getPathConstraintsSimple(UnaryRelation concept) {
         Model model = ModelFactory.createDefaultModel();
 
 
@@ -314,7 +315,8 @@ public class PathConstraint {
             Resource s = stmt.getSubject();
             Property p = stmt.getPredicate();
 
-            Triple t = new Triple(p.asNode(), VocabPath.joinsWith.asNode(), node);
+            //Triple t = new Triple(p.asNode(), VocabPath.joinsWith.asNode(), node);
+            Triple t = new Triple(node, VocabPath.joinsWith.asNode(), p.asNode());
             if(!result.contains(t)) {
                 result.add(t);
                 createQueryBackward(model, s.asNode(), p.asResource(), result);
