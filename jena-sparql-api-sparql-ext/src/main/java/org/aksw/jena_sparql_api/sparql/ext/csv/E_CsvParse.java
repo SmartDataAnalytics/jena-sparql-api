@@ -14,6 +14,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.jena.datatypes.RDFDatatype;
+import org.apache.jena.ext.com.google.common.collect.Iterators;
 import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -61,6 +62,9 @@ public class E_CsvParse
                 .acceptsAll(Arrays.asList("o"), "Output rows as objects")
                 ;
 
+		OptionSpec<?> firstRowAsHeadersOs = optionParser
+                .acceptsAll(Arrays.asList("h"), "First row as headers")
+                ;
 		
 		CsvFormatParser csvFormatParser = new CsvFormatParser(optionParser);
 
@@ -68,9 +72,12 @@ public class E_CsvParse
 
 		CSVFormat csvFormat = csvFormatParser.parse(options, CSVFormat.EXCEL);
 		
-		boolean rowAsObject = options.has(rowAsObjectOs);
+
+		boolean firstRowAsHeaders = options.has(firstRowAsHeadersOs);
+		boolean rowAsObject = options.has(rowAsObjectOs) || firstRowAsHeaders;
+
 		
-		Stream<JsonElement> result = parseCsv(reader, csvFormat, rowAsObject);
+		Stream<JsonElement> result = parseCsv(reader, csvFormat, rowAsObject, firstRowAsHeaders);
 		return result;
 	}
 	
@@ -104,7 +111,8 @@ public class E_CsvParse
 	public static Stream<JsonElement> parseCsv(
 			Reader reader,
 			CSVFormat csvFormat,
-			boolean rowAsObject) throws IOException {
+			boolean rowAsObject,
+			boolean firstRowAsLabels) throws IOException {
 //		CSVParserBuilder csvParserBuilder = new CSVParserBuilder();
 //		ICSVParser csvParser = csvParserBuilder
 //				.build();
@@ -127,13 +135,16 @@ public class E_CsvParse
 		Iterator<CSVRecord> it = csvParser.iterator();
 		
 		
-		boolean firstRowAsLabels = true;
+		//boolean firstRowAsLabels = true;
 		
 		//List<String> headers = new ArrayList<>();
-		String[] labels = null;
-		if(firstRowAsLabels) {
-			
+		String[] tmp = null;
+		if(firstRowAsLabels && it.hasNext()) {
+			CSVRecord r = it.next();
+			tmp = Iterators.toArray(r.iterator(), String.class);
 		}
+		
+		String[] labels = tmp;
 		
 
 		Function<? super CSVRecord, ? extends JsonElement> rowJsonEncoder = rowAsObject
