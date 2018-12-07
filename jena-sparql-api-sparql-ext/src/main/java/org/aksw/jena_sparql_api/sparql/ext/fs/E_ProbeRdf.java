@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Iterator;
 
+import org.apache.commons.io.input.BoundedInputStream;
 import org.apache.jena.atlas.iterator.IteratorResourceClosing;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -22,11 +23,16 @@ import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.function.FunctionBase1;
 import org.apache.jena.sparql.util.Context;
 
-public class E_IsRdf
+public class E_ProbeRdf
 	extends FunctionBase1
 {
 	// File is considered RDF if it is non-empty and at least 'n' triples could be parsed
 	protected int n = 1;
+	
+	// Because of the way some parser in jena works, it seams reasonable to limit the input used for
+	// probing. Note that this may fail if an RDF file contains e.g. a large polygon WKT string
+	// as its first triple.
+	protected int probeBytes = 4096;
 
 	@Override
 	public NodeValue exec(NodeValue nv) {
@@ -40,7 +46,7 @@ public class E_IsRdf
 	    		if(lang != null) {
 	    			Path path = QueryIterServiceOrFile.toPath(node);
 	            	
-	    			try(InputStream in = Files.newInputStream(path)) {
+	    			try(InputStream in = new BoundedInputStream(Files.newInputStream(path), probeBytes)) {
     					Iterator<?> it = createIteratorQuads(in, null, iri);
     					int i;
     					for(i = 0; i < n && it.hasNext(); ++i) {

@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.utils.model;
 
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Objects;
 
 import org.apache.jena.datatypes.RDFDatatype;
@@ -66,6 +67,8 @@ public class NodeMapperRdfDatatype<T>
 			String lex = node.getLiteralLexicalForm();
 			if(javaClass.equals(BigDecimal.class)) {
 				obj = new BigDecimal(lex);
+			} else if(javaClass.equals(BigInteger.class)) {
+				obj = new BigInteger(lex);
 			} else {
 				Method m;
 				try {

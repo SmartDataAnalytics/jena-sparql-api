@@ -33,7 +33,7 @@ public class TestSparqlXPath {
 		
 		List<String> actual = new ArrayList<>();
 		try(RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.create())) {
-			conn.querySelect(query, b -> actual.add(b.get("t").toString()));
+			conn.querySelect(query, b -> actual.add(b.get("str").toString()));
 //			try(QueryExecution qe = conn.query(query)) {
 //				System.out.println(ResultSetFormatter.asText(qe.execSelect()));
 //			}
@@ -41,6 +41,6 @@ public class TestSparqlXPath {
 			//RDFDataMgr.write();
 		}
 		
-		Assert.assertEquals(Arrays.asList("a", "b"), actual);
+		Assert.assertEquals(Arrays.asList("1", "2"), actual);
 	}
 }
