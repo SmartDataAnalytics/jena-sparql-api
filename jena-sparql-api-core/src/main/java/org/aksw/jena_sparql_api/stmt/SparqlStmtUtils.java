@@ -1,9 +1,12 @@
 package org.aksw.jena_sparql_api.stmt;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -11,9 +14,11 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import org.apache.http.client.HttpClient;
 import org.apache.jena.atlas.json.JsonArray;
 import org.apache.jena.atlas.json.JsonObject;
 import org.apache.jena.atlas.lib.Sink;
+import org.apache.jena.atlas.web.TypedInputStream;
 import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.apache.jena.ext.com.google.common.io.CharStreams;
 import org.apache.jena.graph.Triple;
@@ -24,18 +29,97 @@ import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ReadWrite;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFormatter;
+import org.apache.jena.query.Syntax;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.riot.WebContent;
 import org.apache.jena.riot.lang.SinkQuadsToDataset;
 import org.apache.jena.riot.out.SinkQuadOutput;
 import org.apache.jena.riot.out.SinkTripleOutput;
+import org.apache.jena.riot.system.stream.StreamManager;
+import org.apache.jena.riot.web.HttpOp;
+import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.lang.arq.ParseException;
+import org.apache.jena.sparql.util.Context;
 import org.apache.jena.update.UpdateRequest;
 
 public class SparqlStmtUtils {
+
+
+	public static Stream<SparqlStmt> processFile(RDFConnection conn, PrefixMapping pm, String filenameOrURI)
+			throws FileNotFoundException, IOException, ParseException {
+		
+		Context context = null;
+		StreamManager streamManager = StreamManager.get(context);
+
+		// Code taken from jena's RDFParser
+		String urlStr = streamManager.mapURI(filenameOrURI);
+        TypedInputStream in;
+        urlStr = StreamManager.get(context).mapURI(urlStr);
+        if ( urlStr.startsWith("http://") || urlStr.startsWith("https://") ) {
+            HttpClient httpClient = null;
+        	String acceptHeader = 
+                ( httpClient == null ) ? WebContent.defaultRDFAcceptHeader : null; 
+            in = HttpOp.execHttpGet(urlStr, acceptHeader, httpClient, null);
+        } else { 
+            in = streamManager.open(urlStr);
+        }
+
+        URI uri;
+		try {
+			uri = new URI(urlStr);
+		} catch (URISyntaxException e) {
+			throw new RuntimeException(e);
+		}
+        URI parent = uri.getPath().endsWith("/") ? uri.resolve("..") : uri.resolve(".");
+		String dirName = parent.toString();
+
+//		File file = new File(filename).getAbsoluteFile();
+//		if(!file.exists()) {
+//			throw new FileNotFoundException(file.getAbsolutePath() + " does not exist");
+//		}
+//		
+//		String dirName = file.getParentFile().getAbsoluteFile().toURI().toString();
+
+		Prologue prologue = new Prologue();
+		prologue.setPrefixMapping(pm);
+
+		prologue.setBaseURI(dirName);
+
+		Function<String, SparqlStmt> rawSparqlStmtParser = SparqlStmtParserImpl.create(Syntax.syntaxARQ,
+				prologue, true);// .getQueryParser();
+
+		
+		// Wrap the parser with tracking the prefixes
+		SparqlStmtParser sparqlStmtParser = SparqlStmtParser.wrapWithNamespaceTracking(pm, rawSparqlStmtParser);
+//				Function<String, SparqlStmt> sparqlStmtParser = s -> {
+//					SparqlStmt r = rawSparqlStmtParser.apply(s);
+//					if(r.isParsed()) {
+//						PrefixMapping pm2 = null;
+//						if(r.isQuery()) {
+//							pm2 = r.getAsQueryStmt().getQuery().getPrefixMapping();
+//						} else if(r.isUpdateRequest()) {
+//							pm2 = pm.setNsPrefixes(r.getAsUpdateStmt().getUpdateRequest().getPrefixMapping());
+//						}
+//						
+//						if(pm2 != null) {
+//							pm.setNsPrefixes(pm2);
+//						}
+//					}
+//					return r;
+//				};
+		
+		//InputStream in = new FileInputStream(filename);
+		Stream<SparqlStmt> stmts = SparqlStmtUtils.parse(in, sparqlStmtParser);
+
+		return stmts;
+		//stmts.forEach(stmt -> process(conn, stmt, sink));
+	}
+
 
 	public static Stream<SparqlStmt> parse(InputStream in, Function<String, SparqlStmt> parser)
 			throws IOException, ParseException {
@@ -145,8 +229,10 @@ public class SparqlStmtUtils {
 
 	public static void output(
 		SPARQLResultEx r,
-		Consumer<Quad> dataSink
+		Consumer<Quad> sink
 	) {
+		Consumer<Quad> dataSink = sink == null ? q -> {} : sink;
+		
 		//logger.info("Processing SPARQL Statement: " + stmt);
 		if (r.isQuads()) {
 			//SinkQuadOutput sink = new SinkQuadOutput(System.out, null, null);
