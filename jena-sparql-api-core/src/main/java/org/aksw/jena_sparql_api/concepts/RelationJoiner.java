@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.VarUtils;
@@ -71,6 +72,46 @@ public class RelationJoiner {
 		}
 		return result;
 		//return this;
+	}
+
+	
+	// This API for this method is somewhat hacky as it conflates joining with renaming; it should be revised.
+	// Maybe introduce some generic operation class?
+	// relation.opOn(vars).joinWith(otherRelation)
+	// relation.opOn(vars).yieldRenamedFilter(filterRelation)
+	public Relation yieldRenamedFilter(Relation c) {
+		filterRelation = c;
+		filterJoinVars = c.getVars();
+
+		Relation result = yieldRenamedFilterCore();
+
+		return result;
+	}
+
+	/**
+	 * Only yield the renamed filter portion of a 'join':
+	 * 
+	 * newFilter = attrRelation.joinOn(vars).yieldRenamedFilter(filter);
+	 * 
+	 * 
+	 * @return
+	 */
+	public Relation yieldRenamedFilterCore() {
+		Set<Var> attrVarsMentioned = attrRelation.getVarsMentioned();
+		Set<Var> filterVarsMentioned = filterRelation.getVarsMentioned();
+		
+		Map<Var, Var> varMap = VarUtils.createJoinVarMap(attrVarsMentioned, filterVarsMentioned, attrJoinVars, filterJoinVars, null); //, varNameGenerator);
+
+//		Element attrElement = attrRelation.getElement();		
+        Element filterElement = filterRelation.getElement();
+        Element newFilterElement = ElementUtils.createRenamedElement(filterElement, varMap);
+
+        List<Var> newFilterVars = filterRelation.getVars().stream()
+        	.map(v -> varMap.getOrDefault(v, v))
+        	.collect(Collectors.toList());
+        
+        Relation result = new RelationImpl(newFilterElement, newFilterVars);
+        return result;
 	}
 	
 	public Relation get() {

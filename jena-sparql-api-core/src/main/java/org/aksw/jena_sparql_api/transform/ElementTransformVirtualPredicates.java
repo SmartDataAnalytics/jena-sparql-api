@@ -232,7 +232,7 @@ public class ElementTransformVirtualPredicates
             unionMembers.add(e);
         }
 
-        Element result = ElementUtils.union(unionMembers);
+        Element result = ElementUtils.unionIfNeeded(unionMembers);
         return result;
     }
     /**

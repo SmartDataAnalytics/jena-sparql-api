@@ -212,7 +212,12 @@ public class ElementUtils {
         return result;
     }
 
-    public static Element union(Collection<Element> elements) {
+    public static Element unionIfNeeded(Element ... elements) {
+    	Element result = unionIfNeeded(Arrays.asList(elements));
+    	return result;
+    }
+    
+    public static Element unionIfNeeded(Collection<Element> elements) {
         Element result;
         if(elements.size() == 1) {
             result = elements.iterator().next();

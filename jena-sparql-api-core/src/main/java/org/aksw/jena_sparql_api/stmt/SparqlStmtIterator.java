@@ -120,7 +120,7 @@ public class SparqlStmtIterator extends AbstractIterator<SparqlStmt> {
 
 			QueryParseException retryEx = result.getParseException();
 			if (retryEx != null) {
-				throw new RuntimeException("Error near line " + line + ", column " + column + ".", ex);
+				throw new RuntimeException("Error near line " + line + ", column " + column + ".", retryEx);
 			}
 
 			str = str.substring(pos);

@@ -343,7 +343,7 @@ public class ResourceShape {
             elements.add(e);
         }
 
-        Element element = ElementUtils.union(elements);
+        Element element = ElementUtils.unionIfNeeded(elements);
 
 
         Query result = new Query();
@@ -453,7 +453,7 @@ public class ResourceShape {
             elements.add(e);
         }
 
-        Element element = ElementUtils.union(elements);
+        Element element = ElementUtils.unionIfNeeded(elements);
 
         Query result;
         if(elements.size() > 1) {

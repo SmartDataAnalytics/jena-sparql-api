@@ -1,9 +1,12 @@
 package org.aksw.jena_sparql_api.concepts;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.utils.ElementUtils;
@@ -46,6 +49,21 @@ public interface Relation {
 		return result;
 	}
 
+	
+	default Relation rename(Function<String, String> renameFn, Var ... constantVars) {
+		
+		Collection<Var> constants = new HashSet<>(Arrays.asList(constantVars));
+		Set<Var> vars = getVarsMentioned();
+		Map<Var, Var> oldToNew = vars.stream()
+			.filter(v -> !constants.contains(v))
+			.collect(Collectors.toMap(v -> v, v -> Var.alloc(renameFn.apply(v.getName()))));
+		
+		Element newElement = ElementUtils.createRenamedElement(getElement(), oldToNew);
+		List<Var> newVars = getVars().stream().map(v -> oldToNew.getOrDefault(v, v)).collect(Collectors.toList());
+		
+		Relation result = new RelationImpl(newElement, newVars);
+		return result;
+	}
 	
 	default UnaryRelation toUnaryRelation() {
 		List<Var> vars = getVars();
@@ -120,6 +138,8 @@ public interface Relation {
 
     
     // Keeps all variables of this relation intact, and appends the element of another relation
+    // TODO Better rename to appendOn(...) - join is misleading, as we are talking about a
+    // syntactic transformation - which usually - but not always - corresponds to a join
     default RelationJoiner joinOn(Var ... vars) {
     	return RelationJoiner.from(this, vars);
     }
