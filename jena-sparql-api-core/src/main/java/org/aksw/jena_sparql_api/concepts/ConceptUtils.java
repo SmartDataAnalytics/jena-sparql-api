@@ -57,6 +57,8 @@ import com.google.common.collect.Range;
 import com.google.common.collect.Sets;
 
 public class ConceptUtils {
+	public static final Concept subjectConcept = createSubjectConcept();
+	
     public static Concept listDeclaredProperties = Concept.create("?s a ?t . Filter(?t = <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> || ?t = <http://www.w3.org/2002/07/owl#ObjectProperty> || ?t = <http://www.w3.org/2002/07/owl#DataTypeProperty>)", "s");
     public static Concept listDeclaredClasses = Concept.create("?s a ?t . Filter(?t = <http://www.w3.org/2000/01/rdf-schema#Class> || ?t = <http://www.w3.org/2002/07/owl#Class>)", "s");
     public static Concept listUsedClasses = Concept.create("?s a ?t", "t");

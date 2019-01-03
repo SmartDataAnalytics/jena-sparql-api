@@ -16,6 +16,7 @@ import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementOptional;
 
 public class RelationJoiner {
 	protected Relation attrRelation;
@@ -142,10 +143,27 @@ public class RelationJoiner {
 				UnaryRelation fr = filterRelation.toUnaryRelation();
 				Var rawFilterVar = fr.getVar();
 				if(fr.isSubjectConcept()) {
-					Var effectiveFilterVar = varMap.get(rawFilterVar);
-					Op attrOp = Algebra.compile(attrElement);
-					Tuple<Set<Var>> tuple = OpVars.mentionedVarsByPosition(attrOp);
-					canOmitJoin = tuple.get(1).contains(effectiveFilterVar);
+					
+					boolean requiresJoin = false;
+					// If we are prepending an attr element that starts with
+					// OPTIONAL, we cannot omit the join
+					
+					// TODO This rule is quite simple yet effective - we should
+					// make this more flexible though
+					if(filterRelationFirst) {
+						List<Element> elts = attrRelation.getElements();
+						if(!elts.isEmpty()) {
+							requiresJoin = elts.get(0) instanceof ElementOptional;
+						}						
+					}
+					
+					if(!requiresJoin) {
+						// We can omit with a subject concept if there is a join on the subject position
+						Var effectiveFilterVar = varMap.get(rawFilterVar);
+						Op attrOp = Algebra.compile(attrElement);
+						Tuple<Set<Var>> tuple = OpVars.mentionedVarsByPosition(attrOp);
+						canOmitJoin = tuple.get(1).contains(effectiveFilterVar);
+					}
 				}
 			}
         }
