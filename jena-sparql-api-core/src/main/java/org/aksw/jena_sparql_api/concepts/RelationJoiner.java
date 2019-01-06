@@ -39,6 +39,11 @@ public class RelationJoiner {
 	}
 
 	
+//	public static RelationJoiner from(Relation r, Collection<Var> vars) {
+//		RelationJoiner result = new RelationJoiner(r, vars));
+//		return result;
+//	}
+
 	public static RelationJoiner from(Relation r, Var ... vars) {
 		RelationJoiner result = new RelationJoiner(r, new ArrayList<>(Arrays.asList(vars)));
 		return result;

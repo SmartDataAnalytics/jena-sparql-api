@@ -140,6 +140,10 @@ public interface Relation {
     // Keeps all variables of this relation intact, and appends the element of another relation
     // TODO Better rename to appendOn(...) - join is misleading, as we are talking about a
     // syntactic transformation - which usually - but not always - corresponds to a join
+    default RelationJoiner joinOn(List<Var> vars) {
+    	return new RelationJoiner(this, vars);
+    }
+
     default RelationJoiner joinOn(Var ... vars) {
     	return RelationJoiner.from(this, vars);
     }

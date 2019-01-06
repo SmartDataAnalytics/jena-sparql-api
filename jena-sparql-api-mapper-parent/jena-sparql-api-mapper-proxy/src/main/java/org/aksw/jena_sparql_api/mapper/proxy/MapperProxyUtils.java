@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.mapper.proxy;
 
+import java.beans.Introspector;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -165,9 +166,12 @@ public class MapperProxyUtils {
 	}
 	
 	public static String deriveBeanPropertyName(String methodName) {
+		// TODO Check whether the subsequent character is upper case
 		boolean isGetterOrSetter = methodName.startsWith("get") || methodName.startsWith("set") || methodName.startsWith("is");
 		String result = isGetterOrSetter ? methodName.substring(3) : methodName;
 		
+		// TODO We may want to use the Introspector's public decapitalize method
+		//Introspector.decapitalize(na;me)
 		result = StringUtils.uncapitalize(result);
 		
 		return result;

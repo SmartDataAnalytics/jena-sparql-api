@@ -6,17 +6,22 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.apache.commons.lang.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.ExtendedBeanInfoFactory;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.convert.ConversionService;
 
@@ -142,15 +147,60 @@ public class EntityModel
         }
         return result;
     }
+    
+    public static Collection<PropertyDescriptor> getAllPropertyDescriptors(Class<?> clazz) {
+    	Set<Class<?>> classes = getAllInvolvedClasses(clazz);
+    	
+    	Set<PropertyDescriptor> result = new LinkedHashSet<>();
+    	for(Class<?> c : classes) {
+	        try {
+	        	BeanInfo beanInfo = Introspector.getBeanInfo(c);
+	        	PropertyDescriptor[] pds = beanInfo.getPropertyDescriptors();
+	        	result.addAll(Arrays.asList(pds));
+	        } catch (IntrospectionException e) {
+	        	throw new RuntimeException(e);
+	        }
+    	}
+    	
+    	return result;
+    }
+
+    @SuppressWarnings("unchecked")
+	public static Set<Class<?>> getAllInvolvedClasses(Class<?> clazz) {
+    	Set<Class<?>> result = new LinkedHashSet<>();
+    	result.add(clazz);
+    	
+    	result.addAll(ClassUtils.getAllInterfaces(clazz));
+    	result.addAll(ClassUtils.getAllSuperclasses(clazz));
+    	
+
+    	return result;
+    }
 
     public static EntityModel createDefaultModel(Class<?> clazz, ConversionService conversionService) {
-        BeanInfo beanInfo;
-        try {
-            beanInfo = Introspector.getBeanInfo(clazz);
-        } catch (IntrospectionException e1) {
-            throw new RuntimeException(e1);
-        }
-
+//    	PropertyDescriptor[] propertyDescriptors;
+//		try {
+//			propertyDescriptors = new ExtendedBeanInfoFactory().getBeanInfo(clazz).getPropertyDescriptors();
+//		} catch (IntrospectionException e1) {
+//			throw new RuntimeException(e1);
+//		}
+    	// The method for obtaining all property descriptors still sucks
+    	// It seems even spring's BeanUtils and apache's BeanUtils do not provide
+    	// a simple way to simply get all property descriptors of any class (even those
+    	// that do not strictly satisfy the bean contract); but maybe I just overlooked something... 2019 Claus Stadler
+    	Collection<PropertyDescriptor> propertyDescriptors = getAllPropertyDescriptors(clazz);
+//               if(true) {
+//        } else {
+//	        try {
+//	            beanInfo = Introspector.getBeanInfo(clazz);
+//	        } catch (IntrospectionException e1) {
+//	            throw new RuntimeException(e1);
+//	        }
+//            propertyDescriptors = beanInfo.getPropertyDescriptors();
+//
+//        	// Does not work for interfaces - BeanWrapper tries to create an instance
+//        	//propertyDescriptors = new BeanWrapperImpl(clazz).getPropertyDescriptors();
+//        }
 
 
         // Check if the entity can act as a collection (TODO: Delegate this check to a separate module)
@@ -202,7 +252,7 @@ public class EntityModel
 
         // TODO Add support for public fields
 
-        for(PropertyDescriptor pd : beanInfo.getPropertyDescriptors()) {
+        for(PropertyDescriptor pd : propertyDescriptors) {
             Class<?> propertyType = pd.getPropertyType();
             String propertyName = pd.getName();
 
