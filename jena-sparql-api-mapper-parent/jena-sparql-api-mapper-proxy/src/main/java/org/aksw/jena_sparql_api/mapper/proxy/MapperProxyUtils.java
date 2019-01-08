@@ -1,12 +1,15 @@
 package org.aksw.jena_sparql_api.mapper.proxy;
 
-import java.beans.Introspector;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -35,11 +38,34 @@ import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.path.P_Link;
 import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.path.PathParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
 import net.sf.cglib.proxy.Proxy;
+
+
+
+/*
+ * The getter/setter detection is suboptimal, due to the following issues
+ * - IriType needs to be present on both getter and setter, as the information is not stored
+ *   on the property (so the setter does not know about the annotation if there is a getter)
+ * - Collection views are not supported; (but halfway implemented)
+ * - In general bean property detection is messy, although we just want to check all available
+ *   methods on a type (for now let's not bother about declared methods), and then assemble the
+ *   properties.
+ *   
+ * 
+ * 
+ *   
+ * 
+ * 
+ * 
+ * 
+ * 
+ */
 
 /**
  * 
@@ -49,6 +75,9 @@ import net.sf.cglib.proxy.Proxy;
  *
  */
 public class MapperProxyUtils {
+
+	
+	private static final Logger logger = LoggerFactory.getLogger(MapperProxyUtils.class);
 
 	
 	// Getter must be no-arg methods, whose result type is either a subclass of
@@ -68,6 +97,58 @@ public class MapperProxyUtils {
         return result;
     }
    
+    
+    /**
+     * The collection view factory first takes the class that denotes the item type as argument.
+     * Then, for a given property, it yields a function that for a given subject
+     * yields a collection view of the objects
+     * 
+     * TODO We should reuse the code from 'viewAsGetter': This class only differs in the aspect
+     * that the item type is dynamic,
+     * whereas viewAsGetter attempts to obtain a static item type using reflection.
+     * 
+     * @param m
+     * @param typeMapper
+     * @return
+     */
+	public static Function<Class<?>, Function<Property, Function<Resource, Object>>> viewAsCollectionViewer(Method m, TypeMapper typeMapper) {		
+		Function<Class<?>, Function<Property, Function<Resource, Object>>> result = null;
+
+		Class<?> baseItemType = canActAsCollectionView(m, Set.class, null);
+
+
+		if(baseItemType != null) {
+			result = clazz -> viewAsCollectionViewer(m, typeMapper, clazz);
+		}
+		
+		return result;
+	}
+
+    
+	public static Function<Property, Function<Resource, Object>> viewAsCollectionViewer(Method m, TypeMapper typeMapper, Class<?> itemType) {
+		Function<Property, Function<Resource, Object>> result = null;
+
+		boolean isIriType = m.getAnnotation(IriType.class) != null;
+		if(String.class.isAssignableFrom(itemType) && isIriType) {
+			result = p -> s -> new SetFromMappedPropertyValues<>(s, p, NodeMapperFactory.uriString);						
+		} else if(RDFNode.class.isAssignableFrom(itemType)) {
+			@SuppressWarnings("unchecked")
+			Class<? extends RDFNode> rdfType = (Class<? extends RDFNode>)itemType;
+			result = p -> s -> new SetFromPropertyValues<>(s, p, rdfType);						
+		} else {
+			RDFDatatype dtype = typeMapper.getTypeByClass(itemType);
+			
+			if(dtype != null) {
+				result = p -> s -> new SetFromLiteralPropertyValues<>(s, p, itemType);
+			}
+			
+			// This method can only return null, if itemType is neither a subclass of
+			// RDFNode nor registered in the given type mapper
+		}
+
+		return result;
+	}
+	
 	/**
 	 * If the method qualifies as a getter, returns a factory function
 	 * that for a given property yields another function that accesses this property for a 
@@ -79,31 +160,21 @@ public class MapperProxyUtils {
 	public static Function<Property, Function<Resource, Object>> viewAsGetter(Method m, TypeMapper typeMapper) {
 		Class<?> returnType = m.getReturnType();
 		
-		Function<Property, Function<Resource, Object>> result = null;
+		Function<Property, Function<Resource, Object>> result = null;		
+		int paramCount = m.getParameterCount();
 
-		if(m.getParameterCount() == 0) {
+		//boolean isIterableReturnType = false;
+		// Class<?> itemType = null;
+		
+		
+		
+		if(paramCount == 0) {
 			// Deal with (non-nested) collections first
 			if(Iterable.class.isAssignableFrom(returnType)) {
 				Class<?> itemType = extractItemType(m.getGenericReturnType());
-				
 				if(itemType != null) {
-					boolean isIriType = m.getAnnotation(IriType.class) != null;
-					if(String.class.isAssignableFrom(itemType) && isIriType) {
-						result = p -> s -> new SetFromMappedPropertyValues<>(s, p, NodeMapperFactory.uriString);						
-					} else if(RDFNode.class.isAssignableFrom(itemType)) {
-						@SuppressWarnings("unchecked")
-						Class<? extends RDFNode> rdfType = (Class<? extends RDFNode>)itemType;
-						result = p -> s -> new SetFromPropertyValues<>(s, p, rdfType);						
-					} else {
-						RDFDatatype dtype = typeMapper.getTypeByClass(returnType);
-						
-						if(dtype != null) {
-							result = p -> s -> new SetFromLiteralPropertyValues<>(s, p, returnType);
-						}
-					}
-				
-				}
-				
+					result = viewAsCollectionViewer(m, typeMapper, itemType);
+				}				
 			} else if(RDFNode.class.isAssignableFrom(returnType)) {
 				@SuppressWarnings("unchecked")
 				Class<? extends RDFNode> rdfType = (Class<? extends RDFNode>)returnType;
@@ -126,16 +197,131 @@ public class MapperProxyUtils {
 				}
 			}
 		}
+//		else if(paramCount == 1) {
+//			// Match getters that return collection views, such as
+//			// <T> Iterable<T> getSomeCollection(Class<T> itemClazz)
+//		}
 		
 		return result;
 	}
 	
+	
+	/**
+	 * Check whether the method is compatible with the signature
+	 * 
+	 * Iterable myMethod(Class);
+	 * 
+	 * This means the following conditions are satisfied:
+	 * <ul>
+	 *   <li>The method's result is a super (or equal) class of the returnType argument</li>
+	 *   <li>There exists exactly one argument</li>
+	 *   <li>The argument is a super (or equal) class of the given argType argument</li> 
+	 * </ul>
+	 * 
+	 * 
+	 * @param m
+	 * @param iterableClass
+	 * @param typeVariableBound
+	 * @return
+	 */
+	public static boolean matches(Method m, Class<?> expectedReturnType, Class<?> expectedArgType) {
+		boolean result = false;
 
+		Class<?> actualReturnType = m.getReturnType();
+		
+		
+		if(actualReturnType.isAssignableFrom(expectedReturnType)) {
+			Class<?>[] pts = m.getParameterTypes();
+			if(pts.length == 1) {
+				Class<?> pt = pts[0];
+				
+				if(pt.isAssignableFrom(expectedArgType)) {
+					result = true;
+				}
+			}
+		}
+		
+		return result;
+	}
+	
+	/**
+	 * Check if the method signature matches the pattern:
+	 * 
+	 * <T extends SomeSubClassOfResource> IterableBaseClass[T] method(Class[T])
+	 * 
+	 * IterableClass: A candidate method must return a this class or a super class.
+	 * Example: If a method with a return type of Set.class is searched, then methods with return type Iterable and Collection
+	 * are matches, but HashSet and List are not.
+	 * 
+	 * Returns the itemType if the method is a match - null otherwise.
+	 * 
+	 * 
+	 * @param m
+	 * @param iterableClass
+	 * @param typeVariableBound The 
+	 * @return
+	 */
+	public static Class<?> canActAsCollectionView(Method m, Class<?> iterableClass, Class<?> typeVariableBound) {
+		// Check if there is exactly one type variable
+		Class<?> result = null;
+		boolean isRawMatch = matches(m, iterableClass, Class.class);
+
+		if(isRawMatch) {
+			
+			TypeVariable<Method>[] tps = m.getTypeParameters();
+			if(tps.length == 1) {
+				// Check whether there is exactly 1 type variable that is bound to a subclass
+				// of resource
+				TypeVariable<Method> tv = tps[0];
+				Type[] bounds = tv.getBounds();
+				
+				Type bound = null;
+				switch(bounds.length) {
+				case 0:
+					bound = Object.class;
+					break;
+				case 1:
+					bound = bounds[0];
+					break;
+				default:
+					logger.debug("Candidate collection view rejected, because exactly 1 bound expected, got: " + bounds.length + " " + Arrays.asList(bounds) + "; " + m);
+					break;
+				}
+				
+				if(bound != null && bound instanceof Class<?>) {
+					Class<?> boundClass = (Class<?>)bound;
+					
+					// Check if the boundClass is a sub class of the given bound
+					boolean isCompatibleBound = typeVariableBound == null || typeVariableBound.isAssignableFrom(boundClass);
+					
+					if(isCompatibleBound) {
+						result = boundClass;
+						logger.debug("Candidate collection view accepted; detected item type " + result + "; " + m);
+					} else {
+						logger.debug("Candidate collection view rejected, because bound class " + boundClass + " does not satisfy compatibility with " + typeVariableBound);
+					}
+				} else {
+					logger.debug("Candidate collection view rejected, because bound is a type but not a class " + bound + "; " + m);
+					
+				}
+			}
+		}
+		return result;
+	}
+
+	@SuppressWarnings("unchecked")
+	public static Function<Property, BiConsumer<Resource, Object>> viewAsCollectionView(Method m, TypeMapper typeMapper) {
+		///boolean canAct
+		return null;
+	}
+	
+	
 	@SuppressWarnings("unchecked")
 	public static Function<Property, BiConsumer<Resource, Object>> viewAsSetter(Method m, TypeMapper typeMapper) {
 		// Strict setters return void, but e.g. in the case of fluent APIs return types may vary 
 
 		Function<Property, BiConsumer<Resource, Object>> result = null;
+		
 		
 		Class<?>[] paramTypes = m.getParameterTypes();
 		if(paramTypes.length == 1) {
@@ -171,7 +357,7 @@ public class MapperProxyUtils {
 		String result = isGetterOrSetter ? methodName.substring(3) : methodName;
 		
 		// TODO We may want to use the Introspector's public decapitalize method
-		//Introspector.decapitalize(na;me)
+		//result = Introspector.decapitalize(result);
 		result = StringUtils.uncapitalize(result);
 		
 		return result;
@@ -262,29 +448,41 @@ public class MapperProxyUtils {
 
 				Property p = ResourceFactory.createProperty(path.getNode().getURI());
 
-				Function<Property, Function<Resource, Object>> getter = viewAsGetter(method, typeMapper);				
-				if(getter != null) {
-					Function<Resource, Object> g = getter.apply(p);
-					methodMap.put(method, (o, args) -> g.apply((Resource)o)); 
+				Function<Class<?>, Function<Property, Function<Resource, Object>>> collectionViewer = viewAsCollectionViewer(method, typeMapper);
+				if(collectionViewer != null) {
+					methodMap.put(method, (o, args) -> {
+						Class<?> clz = Objects.requireNonNull((Class<?>)args[0]);
+						Function<Property, Function<Resource, Object>> ps = collectionViewer.apply(clz);
+						Function<Resource, Object> s = ps.apply(p);
+						Object r = s.apply((Resource)o);
+						return r;
+					});
 				} else {
-					Function<Property, BiConsumer<Resource, Object>> setter = viewAsSetter(method, typeMapper);
 					
-					if(setter != null) {
-						BiConsumer<Resource, Object> s = setter.apply(p);
-						methodMap.put(method, (o, args) -> {
-							s.accept((Resource)o, args[0]);
-							
-							// Detect fluent API style methods - i.e.
-							// methods that return the class it is defined in or one of its super types.
-							Object r = method.getReturnType().isAssignableFrom(clazz)
-								? o
-								: null;
-							
-							return r;
-						});
+					
+					Function<Property, Function<Resource, Object>> getter = viewAsGetter(method, typeMapper);				
+					if(getter != null) {
+						Function<Resource, Object> g = getter.apply(p);
+						methodMap.put(method, (o, args) -> g.apply((Resource)o)); 
+					} else {
+						Function<Property, BiConsumer<Resource, Object>> setter = viewAsSetter(method, typeMapper);
+						
+						if(setter != null) {
+							BiConsumer<Resource, Object> s = setter.apply(p);
+							methodMap.put(method, (o, args) -> {
+								s.accept((Resource)o, args[0]);
+								
+								// Detect fluent API style methods - i.e.
+								// methods that return the class it is defined in or one of its super types.
+								Object r = method.getReturnType().isAssignableFrom(clazz)
+									? o
+									: null;
+								
+								return r;
+							});
+						}
 					}
 				}
-			
 			}
 		}
 		

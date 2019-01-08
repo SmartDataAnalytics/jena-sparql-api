@@ -4,13 +4,16 @@ import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Set;
+import java.util.function.BiFunction;
 
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.apache.jena.enhanced.BuiltinPersonalities;
+import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.enhanced.Personality;
 import org.apache.jena.ext.com.google.common.reflect.ClassPath;
 import org.apache.jena.ext.com.google.common.reflect.ClassPath.ClassInfo;
+import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.shared.PrefixMapping;
@@ -41,12 +44,16 @@ public class JenaPluginUtils {
 		for(ClassInfo classInfo : classInfos) {
 			Class<?> clazz = classInfo.load();
 			
-			if(Resource.class.isAssignableFrom(clazz) && supportsProxying(clazz)) {
-				@SuppressWarnings("unchecked")
-				Class<? extends Resource> cls = (Class<? extends Resource>)clazz;
-				
-				logger.debug("Registering " + clazz);
-				p.add(cls, new ProxyImplementation(MapperProxyUtils.createProxyFactory(cls, pm)));
+			if(Resource.class.isAssignableFrom(clazz)) {
+				boolean supportsProxying = supportsProxying(clazz);
+				if(supportsProxying) {
+					@SuppressWarnings("unchecked")
+					Class<? extends Resource> cls = (Class<? extends Resource>)clazz;
+					
+					logger.debug("Registering " + clazz);
+					BiFunction<Node, EnhGraph, ? extends Resource> proxyFactory = MapperProxyUtils.createProxyFactory(cls, pm);
+					p.add(cls, new ProxyImplementation(proxyFactory));
+				}
 			}
 		}
 	}
