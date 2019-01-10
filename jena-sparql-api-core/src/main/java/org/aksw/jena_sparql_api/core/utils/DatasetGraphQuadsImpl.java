@@ -11,6 +11,7 @@ import org.apache.jena.sparql.core.DatasetGraphQuads;
 import org.apache.jena.sparql.core.GraphView;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.mem.QuadTable;
+import org.apache.jena.sparql.graph.GraphOps;
 
 public class DatasetGraphQuadsImpl
 	extends DatasetGraphQuads
@@ -83,14 +84,22 @@ public class DatasetGraphQuadsImpl
 
 	@Override
 	public Iterator<Quad> findNG(Node g, Node s, Node p, Node o) {
-		Node gm = g == null ? Node.ANY : g;
+
+		Node gm = g == null || Quad.isUnionGraph(g) ? Node.ANY : g;
 		
-			Iterator<Quad> result = Quad.isDefaultGraph(gm)
-					? Collections.emptyIterator()//NiceIterator.emptyIterator()
-					: table.find(gm, s, p, o)
-						.filter(q -> !Quad.isDefaultGraph(q.getGraph()))
-						.iterator();
-			return result;
+		Iterator<Quad> result;
+		if(Quad.isDefaultGraph(gm)) {
+			result = Collections.emptyIterator();
+//		} else if(Quad.isUnionGraph(gm)) {
+//			result = GraphOps.unionGraph(this).find(s, p, o).mapWith(t -> new Quad(Quad.unionGraph, t));
+		} else {
+			result = table.find(gm, s, p, o)
+					.filter(q -> !Quad.isDefaultGraph(q.getGraph()))
+					.iterator();
+
+		}
+				
+		return result;
 	}
 
 	@Override
