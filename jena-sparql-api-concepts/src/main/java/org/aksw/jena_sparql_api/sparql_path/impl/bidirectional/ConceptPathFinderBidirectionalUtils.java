@@ -2,7 +2,6 @@ package org.aksw.jena_sparql_api.sparql_path.impl.bidirectional;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -14,6 +13,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.aksw.commons.jena.jgrapht.PseudoGraphJenaGraph;
+import org.aksw.jena_sparql_api.concepts.BinaryRelation;
+import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
@@ -30,6 +31,7 @@ import org.aksw.jena_sparql_api.stmt.SparqlStmtQuery;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtUtils;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.PathUtils;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
+import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.Vars;
@@ -37,21 +39,16 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.graph.compose.Union;
 import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.expr.E_Equals;
-import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sparql.lang.arq.ParseException;
 import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.syntax.Element;
-import org.apache.jena.sparql.syntax.ElementFilter;
-import org.apache.jena.sparql.syntax.ElementGroup;
 import org.jgrapht.Graph;
 import org.jgrapht.GraphPath;
 import org.jgrapht.alg.interfaces.KShortestPathAlgorithm;
@@ -457,37 +454,48 @@ public class ConceptPathFinderBidirectionalUtils {
     public static boolean validatePath(SparqlQueryConnection conn, UnaryRelation sourceConcept, UnaryRelation targetConcept, SimplePath path, Generator<Var> generator) {
         List<Element> pathElements = SimplePath.pathToElements(path, sourceConcept.getVar(), targetConcept.getVar(), generator);
 
-        List<Element> tmp = new ArrayList<Element>();
-        if(!sourceConcept.isSubjectConcept()) {
-            tmp.addAll(sourceConcept.getElements());
-        }
-
-        // TODO Should we treat the case where the target concept is a subject concept in a special way?
-        //if(!targetConcept.isSubjectConcept()) {
-            tmp.addAll(targetConcept.getElements());
-        //}
-
-        tmp.addAll(pathElements);
-
-        if(pathElements.isEmpty()) {
-            if(!sourceConcept.getVar().equals(targetConcept.getVar()) && !sourceConcept.isSubjectConcept()) {
-                tmp.add(new ElementFilter(new E_Equals(new ExprVar(sourceConcept.getVar()), new ExprVar(targetConcept.getVar()))));
-            }
-        }
-
-        ElementGroup group = new ElementGroup();
-        for(Element t : tmp) {
-            group.addElement(t);
-        }
-
+        BinaryRelation pathRelation = new BinaryRelationImpl(ElementUtils.groupIfNeeded(pathElements), sourceConcept.getVar(), targetConcept.getVar());
+        Element group = pathRelation
+        	.prependOn(pathRelation.getSourceVar()).with(sourceConcept)
+        	.joinOn(pathRelation.getTargetVar()).with(targetConcept)
+        	.getElement();
+        
+//        
+//        List<Element> tmp = new ArrayList<Element>();
+//        if(!sourceConcept.isSubjectConcept()) {
+//            tmp.addAll(sourceConcept.getElements());
+//        }
+//
+//        tmp.addAll(pathElements);
+//
+//        // TODO Should we treat the case where the target concept is a subject concept in a special way?
+//        //if(!targetConcept.isSubjectConcept()) {
+//            tmp.addAll(targetConcept.getElements());
+//        //}
+//
+//
+//        if(pathElements.isEmpty()) {
+//            if(!sourceConcept.getVar().equals(targetConcept.getVar()) && !sourceConcept.isSubjectConcept()) {
+//                tmp.add(new ElementFilter(new E_Equals(new ExprVar(sourceConcept.getVar()), new ExprVar(targetConcept.getVar()))));
+//            }
+//        }
+//
+//        Element group = ElementUtils.groupIfNeeded(tmp);
+//        
+//        ElementGroup group = new ElementGroup();
+//        for(Element t : tmp) {
+//            group.addElement(t);
+//        }
+//
         Query query = new Query();
         query.setQueryAskType();
         query.setQueryPattern(group);
 
         logger.debug("Verifying candidate with query: " + query);
 
-        QueryExecution xqe = conn.query(query);
-        boolean isCandidate = xqe.execAsk();
+//        QueryExecution xqe = conn.query(query);
+//        boolean isCandidate = xqe.execAsk();
+        boolean isCandidate = conn.queryAsk(query);
         logger.debug("Verification result is [" + isCandidate + "] for " + query);
 
 //        if(isCandidate) {

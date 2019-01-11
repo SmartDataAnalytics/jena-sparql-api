@@ -158,19 +158,19 @@ public class SparqlStmtUtils {
 	
 			if (q.isConstructQuad()) {
 				Iterator<Quad> it = qe.execConstructQuads();
-				result = SPARQLResultEx.createQuads(it);
+				result = SPARQLResultEx.createQuads(it, qe::close);
 				
 			} else if (q.isConstructType()) {
 				// System.out.println(Algebra.compile(q));
 	
 				Iterator<Triple> it = qe.execConstructTriples();
-				result = SPARQLResultEx.createTriples(it);
+				result = SPARQLResultEx.createTriples(it, qe::close);
 			} else if (q.isSelectType()) {
 				ResultSet rs = qe.execSelect();
-				result = new SPARQLResultEx(rs);
+				result = new SPARQLResultEx(rs, qe::close);
 			} else if(q.isJsonType()) {
 				Iterator<JsonObject> it = qe.execJsonItems();
-				result = new SPARQLResultEx(it);
+				result = new SPARQLResultEx(it, qe::close);
 			} else {
 				throw new RuntimeException("Unsupported query type");
 			}
@@ -228,42 +228,46 @@ public class SparqlStmtUtils {
 	}
 
 	public static void output(
-		SPARQLResultEx r,
+		SPARQLResultEx rr,
 		Consumer<Quad> sink
 	) {
-		Consumer<Quad> dataSink = sink == null ? q -> {} : sink;
-		
-		//logger.info("Processing SPARQL Statement: " + stmt);
-		if (r.isQuads()) {
-			//SinkQuadOutput sink = new SinkQuadOutput(System.out, null, null);
-			Iterator<Quad> it = r.getQuads();
-			while (it.hasNext()) {
-				Quad t = it.next();
-				dataSink.accept(t);
+		try(SPARQLResultEx r = rr) {
+			Consumer<Quad> dataSink = sink == null ? q -> {} : sink;
+			
+			//logger.info("Processing SPARQL Statement: " + stmt);
+			if (r.isQuads()) {
+				//SinkQuadOutput sink = new SinkQuadOutput(System.out, null, null);
+				Iterator<Quad> it = r.getQuads();
+				while (it.hasNext()) {
+					Quad t = it.next();
+					dataSink.accept(t);
+				}
+	
+			} else if (r.isTriples()) {
+				// System.out.println(Algebra.compile(q));
+	
+				Iterator<Triple> it = r.getTriples();
+				while (it.hasNext()) {
+					Triple t = it.next();
+					Quad quad = new Quad(null, t);
+					dataSink.accept(quad);
+				}
+			} else if (r.isResultSet()) {
+				ResultSet rs = r.getResultSet();
+				String str = ResultSetFormatter.asText(rs);
+				System.err.println(str);
+			} else if(r.isJson()) {
+				JsonArray tmp = new JsonArray();
+				r.getJsonItems().forEachRemaining(tmp::add);
+				String json = tmp.toString();
+				System.out.println(json);
+			} else if(r.isUpdateType()) {
+				// nothing to do
+			} else {
+				throw new RuntimeException("Unsupported query type");
 			}
-
-		} else if (r.isTriples()) {
-			// System.out.println(Algebra.compile(q));
-
-			Iterator<Triple> it = r.getTriples();
-			while (it.hasNext()) {
-				Triple t = it.next();
-				Quad quad = new Quad(null, t);
-				dataSink.accept(quad);
-			}
-		} else if (r.isResultSet()) {
-			ResultSet rs = r.getResultSet();
-			String str = ResultSetFormatter.asText(rs);
-			System.err.println(str);
-		} else if(r.isJson()) {
-			JsonArray tmp = new JsonArray();
-			r.getJsonItems().forEachRemaining(tmp::add);
-			String json = tmp.toString();
-			System.out.println(json);
-		} else if(r.isUpdateType()) {
-			// nothing to do
-		} else {
-			throw new RuntimeException("Unsupported query type");
+		} catch (Exception e) {
+			throw new RuntimeException(e);
 		}
 	}
 

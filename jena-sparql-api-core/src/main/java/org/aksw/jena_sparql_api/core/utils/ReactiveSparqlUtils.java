@@ -85,8 +85,8 @@ public class ReactiveSparqlUtils {
 		return result;
 	}
 
-	public static <T> void processExecSelect(FlowableEmitter<T> emitter, QueryExecution qe, Function<? super ResultSet, ? extends T> next) {
-		try {
+	public static <T> void processExecSelect(FlowableEmitter<T> emitter, QueryExecution qex, Function<? super ResultSet, ? extends T> next) {
+		try(QueryExecution qe = qex) {
 			emitter.setCancellable(qe::abort);
 			ResultSet rs = qe.execSelect();
 			while(!emitter.isCancelled() && rs.hasNext()) {
@@ -100,8 +100,8 @@ public class ReactiveSparqlUtils {
 	}
 
 	
-	public static void processExecConstructTriples(FlowableEmitter<Triple> emitter, QueryExecution qe) {
-		try {
+	public static void processExecConstructTriples(FlowableEmitter<Triple> emitter, QueryExecution qex) {
+		try(QueryExecution qe = qex) {
 			emitter.setCancellable(qe::abort);
 			Iterator<Triple> it = qe.execConstructTriples();
 			while(!emitter.isCancelled() && it.hasNext()) {

@@ -130,9 +130,9 @@ public class ConceptUtils {
         Op substOp = Substitute.substitute(op, binding);
         Query tmp = OpAsQuery.asQuery(substOp);
 
-        //Element newElement = tmp.getQueryPattern();
-        ElementGroup newElement = new ElementGroup();
-        newElement.addElement(tmp.getQueryPattern());
+        Element newElement = tmp.getQueryPattern();
+        //ElementGroup newElement = new ElementGroup();
+        //newElement.addElement(tmp.getQueryPattern());
 
         /*
         if(newElement instanceof ElementGroup) {

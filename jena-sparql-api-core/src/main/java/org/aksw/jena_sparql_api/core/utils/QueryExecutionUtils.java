@@ -298,18 +298,18 @@ public class QueryExecutionUtils {
     public static Node executeSingle(QueryExecutionFactory qef, Query query, Var var) {
         Node result = null;
 
-        QueryExecution qe = qef.createQueryExecution(query);
-        ResultSet rs = qe.execSelect();
-
-        if(rs.hasNext()) {
-            Binding binding = rs.nextBinding();
-            result = binding.get(var);
+        try(QueryExecution qe = qef.createQueryExecution(query)) {
+	        ResultSet rs = qe.execSelect();
+	
+	        if(rs.hasNext()) {
+	            Binding binding = rs.nextBinding();
+	            result = binding.get(var);
+	        }
+	
+	        if(rs.hasNext()) {
+	            logger.warn("A single result was retrieved, but more results exist - is this intended?");
+	        }
         }
-
-        if(rs.hasNext()) {
-            logger.warn("A single result was retrieved, but more results exist - is this intended?");
-        }
-
         return result;
     }
 
@@ -325,45 +325,46 @@ public class QueryExecutionUtils {
     public static List<Node> executeList(QueryExecutionFactory qef, Query query, Var var) {
         List<Node> result = new ArrayList<Node>();
 
-        QueryExecution qe = qef.createQueryExecution(query);
-        ResultSet rs = qe.execSelect();
-        while(rs.hasNext()) {
-            //QuerySolutiors.next()
-            Binding binding = rs.nextBinding();
-            Node node = binding.get(var);
-
-            result.add(node);
+        try(QueryExecution qe = qef.createQueryExecution(query)) {
+	        ResultSet rs = qe.execSelect();
+	        while(rs.hasNext()) {
+	            //QuerySolutiors.next()
+	            Binding binding = rs.nextBinding();
+	            Node node = binding.get(var);
+	
+	            result.add(node);
+	        }
         }
 
         return result;
     }
 
-    public static Iterator<Node> executeIterator(QueryExecutionFactory qef, Query query) {
-        Var var = extractProjectVar(query);
-
-        Iterator<Node> result = executeIterator(qef, query, var);
-        return result;
-    }
-
-
-    /**
-     * Warning: the iterator must be consumed, otherwise there will be a resource leak!!!
-     *
-     * @param qef
-     * @param query
-     * @param var
-     * @return
-     */
-    public static Iterator<Node> executeIterator(QueryExecutionFactory qef, Query query, Var var) {
-        QueryExecution qe = qef.createQueryExecution(query);
-        ResultSet rs = qe.execSelect();
-
-        Iterator<Binding> itBinding = new IteratorResultSetBinding(rs);
-        Function<Binding, Node> fn = FunctionBindingMapper.create(new BindingMapperProjectVar(var));
-
-        Iterator<Node> result = Iterators.transform(itBinding, new GuavaFunctionWrapper<>(fn));
-
-        return result;
-    }
+//    public static Iterator<Node> executeIterator(QueryExecutionFactory qef, Query query) {
+//        Var var = extractProjectVar(query);
+//
+//        Iterator<Node> result = executeIterator(qef, query, var);
+//        return result;
+//    }
+//
+//
+//    /**
+//     * Warning: the iterator must be consumed, otherwise there will be a resource leak!!!
+//     *
+//     * @param qef
+//     * @param query
+//     * @param var
+//     * @return
+//     */
+//    public static Iterator<Node> executeIterator(QueryExecutionFactory qef, Query query, Var var) {
+//        QueryExecution qe = qef.createQueryExecution(query);
+//        ResultSet rs = qe.execSelect();
+//
+//        Iterator<Binding> itBinding = new IteratorResultSetBinding(rs);
+//        Function<Binding, Node> fn = FunctionBindingMapper.create(new BindingMapperProjectVar(var));
+//
+//        Iterator<Node> result = Iterators.transform(itBinding, new GuavaFunctionWrapper<>(fn));
+//
+//        return result;
+//    }
 
 }
