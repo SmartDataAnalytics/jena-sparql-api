@@ -122,7 +122,8 @@ public class SimplePath
     	
     	str = str.replaceAll("\\^(\r|\n)+", "^");
     	
-        return "SimplePath [" + str + "]";
+        //return "SimplePath [" + str + "]";
+    	return str;
     }
 
     public boolean isEmpty() {
