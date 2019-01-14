@@ -65,18 +65,27 @@ public class RDFDataMgrRx {
 					return new IteratorClosable<>(it, new Closeable() {
 						@Override
 						public void close() throws IOException {
-							// Try to close the iterator 'it'
-							// Otherwise, forcefully close the stream
-							// (may cause a (usually/hopefully) harmless exception)
+							// FIXME Looks like Jena's producer thread can get block when parsed items are not consumed
+							// So we have to consume the iterator for now
 							try {
-								if(it instanceof Closeable) {
-						            ((Closeable)it).close();
-								} else if (it instanceof org.apache.jena.atlas.lib.Closeable) {
-						            ((org.apache.jena.atlas.lib.Closeable)it).close();								
+								while(it.hasNext()) {
+									it.next();
 								}
 							} finally {
-								// Close the backing input stream in any case
-								in.close();
+								
+								// Try to close the iterator 'it'
+								// Otherwise, forcefully close the stream
+								// (may cause a (usually/hopefully) harmless exception)
+								try {
+									if(it instanceof Closeable) {
+							            ((Closeable)it).close();
+									} else if (it instanceof org.apache.jena.atlas.lib.Closeable) {
+							            ((org.apache.jena.atlas.lib.Closeable)it).close();								
+									}
+								} finally {
+									// Close the backing input stream in any case
+									in.close();
+								}
 							}
 						}
 					});

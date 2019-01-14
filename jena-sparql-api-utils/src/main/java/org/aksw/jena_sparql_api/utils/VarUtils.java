@@ -166,7 +166,10 @@ public class VarUtils {
             //var vans = vas.map(VarUtils.getVarName);
 
         if (generator == null) {
-            generator = VarGeneratorBlacklist.create(vas);
+        	Set<Var> forbidden = new HashSet<>();
+        	forbidden.addAll(vas);
+        	forbidden.addAll(vbs);
+            generator = VarGeneratorBlacklist.create(forbidden); //vas);
                     //new VarGeneratorBlacklist(new VarGeneratorImpl(Gensym.create("v")), vas);
         }
 
