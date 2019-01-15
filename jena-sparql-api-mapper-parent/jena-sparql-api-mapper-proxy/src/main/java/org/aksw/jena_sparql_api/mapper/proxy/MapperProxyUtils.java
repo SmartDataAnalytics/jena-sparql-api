@@ -370,8 +370,15 @@ public class MapperProxyUtils {
 		IriNs iriNs = method.getAnnotation(IriNs.class);
 		if(iri != null) {
 			String rdfPropertyStr = iri.value();
+			
+			String prefix = pm.getNsURIPrefix(rdfPropertyStr);
+			// If there is no prefix, we assume an uri
+			String pathStr = prefix == null ? "<" + rdfPropertyStr + ">" : rdfPropertyStr;
+			
 			// Expand against default namespaces
-			result = (P_Path0)PathParser.parse(rdfPropertyStr, pm);
+			result = (P_Path0)PathParser.parse(pathStr, pm);
+			
+			logger.debug("Parsed path " + pathStr + " into " + result);
 			
 			//Node p = NodeFactory.createURI(rdfPropertyStr);
 			
