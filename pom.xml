@@ -352,6 +352,7 @@
 				<groupId>org.aksw.jena-sparql-api</groupId>
 				<artifactId>jena-sparql-api-resources-test-config</artifactId>
 				<version>${project.version}</version>
+				<scope>test</scope>
 			</dependency>
 
 			<dependency>
