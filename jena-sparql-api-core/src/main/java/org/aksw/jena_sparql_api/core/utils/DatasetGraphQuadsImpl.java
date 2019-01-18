@@ -137,4 +137,9 @@ public class DatasetGraphQuadsImpl
     	quads.forEach(result::add);
     	return result;
     }
+    
+    @Override
+    public long size() {
+    	return table.find(Node.ANY, Node.ANY, Node.ANY, Node.ANY).count();
+    }
 }

@@ -300,11 +300,16 @@ public class ResourceUtils {
 		return result;
 	}
 
-	public static Optional<Statement> getReverseProperty(RDFNode s, Property p) {
+	public static Statement getReverseProperty(RDFNode s, Property p) {
+		Statement result = tryGetReverseProperty(s, p).orElse(null);
+		return result;
+	}
+
+	public static Optional<Statement> tryGetReverseProperty(RDFNode s, Property p) {
 		Optional<Statement> result = findFirst(listReverseProperties(s, p));
 		return result;
 	}
-	
+
 	public static <T extends Resource> boolean isReverseProperty(Statement stmt, Class<T> clazz) {
 		boolean result = stmt.getSubject().canAs(clazz);
 		return result;
@@ -323,7 +328,7 @@ public class ResourceUtils {
 	}
 
 	public static Optional<Resource> tryGetReversePropertyValue(Resource s, Property p) {
-		Optional<Resource> result = getReverseProperty(s, p)
+		Optional<Resource> result = tryGetReverseProperty(s, p)
 				.map(Statement::getSubject);	
 		return result;		
 	}
@@ -578,7 +583,7 @@ public class ResourceUtils {
 	}
 	
 	public static boolean hasReverseProperty(RDFNode s, Property p) {
-		boolean result = getReverseProperty(s, p).isPresent();
+		boolean result = tryGetReverseProperty(s, p).isPresent();
 		return result;
 	}
 	

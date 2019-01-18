@@ -44,16 +44,24 @@ public class JenaPluginUtils {
 		for(ClassInfo classInfo : classInfos) {
 			Class<?> clazz = classInfo.load();
 			
-			if(Resource.class.isAssignableFrom(clazz)) {
-				boolean supportsProxying = supportsProxying(clazz);
-				if(supportsProxying) {
-					@SuppressWarnings("unchecked")
-					Class<? extends Resource> cls = (Class<? extends Resource>)clazz;
-					
-					logger.debug("Registering " + clazz);
-					BiFunction<Node, EnhGraph, ? extends Resource> proxyFactory = MapperProxyUtils.createProxyFactory(cls, pm);
-					p.add(cls, new ProxyImplementation(proxyFactory));
-				}
+			registerJenaResourceClass(clazz, p, pm);
+		}
+	}
+
+	public static void registerJenaResourceClass(Class<?> clazz) {
+		registerJenaResourceClass(clazz, BuiltinPersonalities.model, PrefixMapping.Extended);
+	}
+	
+	public static void registerJenaResourceClass(Class<?> clazz, Personality<RDFNode> p, PrefixMapping pm) {
+		if(Resource.class.isAssignableFrom(clazz)) {
+			boolean supportsProxying = supportsProxying(clazz);
+			if(supportsProxying) {
+				@SuppressWarnings("unchecked")
+				Class<? extends Resource> cls = (Class<? extends Resource>)clazz;
+				
+				logger.debug("Registering " + clazz);
+				BiFunction<Node, EnhGraph, ? extends Resource> proxyFactory = MapperProxyUtils.createProxyFactory(cls, pm);
+				p.add(cls, new ProxyImplementation(proxyFactory));
 			}
 		}
 	}

@@ -4,8 +4,11 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -30,6 +33,7 @@ import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFList;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
@@ -40,6 +44,8 @@ import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.path.PathParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.ClassToInstanceMap;
 
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.MethodInterceptor;
@@ -66,6 +72,79 @@ import net.sf.cglib.proxy.Proxy;
  * 
  * 
  */
+
+interface MethodDescriptor {
+	boolean isGetter();
+	boolean isSetter();
+	boolean isCollectionValued();
+	
+	boolean isDynamicCollection();
+	
+	/**
+	 * Only applicable to setters - is the method's return type
+	 * assignable from the method's declaring class?
+	 *  
+	 * @return
+	 */
+	boolean isFluentCompatible();
+	
+	public static MethodDescriptor simpleGetter(Class<?> type) {
+		return null;
+	}
+
+	public static MethodDescriptor simpleSetter(Class<?> type, boolean fluentCapable) {
+		return null;		
+	}
+	
+	public static MethodDescriptor collectionGetter(Class<?> collectionType, Class<?> itemType) {
+		return new MethodDescriptorCollectionGetter(collectionType, itemType);
+	}
+
+	public static MethodDescriptor dynamicCollectionGetter(Class<?> collectionType, Class<?> boundedItemType) {
+		return null;		
+	}
+
+	public static MethodDescriptor collectionSetter(Class<?> collectionType, Class<?> itemType) {
+		return null;
+		
+	}
+}
+
+class MethodDescriptorCollectionGetter
+	implements MethodDescriptor
+{
+	protected Class<?> collectionType;
+	protected Class<?> itemType;
+	
+	public MethodDescriptorCollectionGetter(Class<?> collectionType, Class<?> itemType) {
+		super();
+		this.collectionType = collectionType;
+		this.itemType = itemType;
+	}
+
+	@Override public boolean isGetter() { return true; }
+	@Override public boolean isSetter() { return false; }
+	@Override public boolean isCollectionValued() { return true; }
+	@Override public boolean isDynamicCollection() { return false; }
+	@Override public boolean isFluentCompatible() { return false; } //throw new RuntimeException("not applicable"); }
+}
+
+//class CollectionGetter {
+//	
+//}
+//
+//class MethodDescriptorCollection {
+//	
+//}
+//
+//class MethodDescriptorCollectionSetter {
+//	protected Class<?> collectionType;
+//	protected Class<?> itemType;
+//	
+//	protected Class<?> returnType;
+//	protected boolean isReturnTypeFluentCompatible;
+//}
+//
 
 /**
  * 
@@ -149,6 +228,31 @@ public class MapperProxyUtils {
 		return result;
 	}
 	
+	
+	public static MethodDescriptor classifyMethod(Method m) {
+		MethodDescriptor result = null;
+		
+		Class<?> returnType = m.getReturnType();
+		
+		int paramCount = m.getParameterCount();
+
+		//boolean isIterableReturnType = false;
+		// Class<?> itemType = null;
+	
+		
+		if(paramCount == 0) {
+			// Deal with (non-nested) collections first
+			if(Iterable.class.isAssignableFrom(returnType)) {
+				Class<?> itemType = extractItemType(m.getGenericReturnType());
+				if(itemType != null) {
+					result = MethodDescriptor.collectionGetter(returnType, itemType);
+				}				
+			}
+		}
+		
+		return result;
+	}
+	
 	/**
 	 * If the method qualifies as a getter, returns a factory function
 	 * that for a given property yields another function that accesses this property for a 
@@ -158,6 +262,10 @@ public class MapperProxyUtils {
 	 * @return
 	 */
 	public static Function<Property, Function<Resource, Object>> viewAsGetter(Method m, TypeMapper typeMapper) {
+		//MethodInfo result;
+		//PropertyDescriptor
+		//TypeResolver.
+		
 		Class<?> returnType = m.getReturnType();
 		
 		Function<Property, Function<Resource, Object>> result = null;		
@@ -209,6 +317,25 @@ public class MapperProxyUtils {
 	/**
 	 * Check whether the method is compatible with the signature
 	 * 
+	 * VoidOrSuperClassOfDeclaringClass myCandidateSetter(Iterable<?>)
+	 * 
+	 * @return
+	 */
+	public static boolean matchesCollectionViewSetter(Method m) {
+		// Check whether this is a setter of a collection
+		// If so, check whether there is collection view getter
+		// If so, simply create a setter implementation that
+		//   calls the getter, clears the items of the returned collection
+		//   and then copies items from the argument collection
+				
+		
+		return false;
+	}
+	
+
+	/**
+	 * Check whether the method is compatible with the signature
+	 * 
 	 * Iterable myMethod(Class);
 	 * 
 	 * This means the following conditions are satisfied:
@@ -224,7 +351,7 @@ public class MapperProxyUtils {
 	 * @param typeVariableBound
 	 * @return
 	 */
-	public static boolean matches(Method m, Class<?> expectedReturnType, Class<?> expectedArgType) {
+	public static boolean matchesCollectionViewGetter(Method m, Class<?> expectedReturnType, Class<?> expectedArgType) {
 		boolean result = false;
 
 		Class<?> actualReturnType = m.getReturnType();
@@ -264,7 +391,7 @@ public class MapperProxyUtils {
 	public static Class<?> canActAsCollectionView(Method m, Class<?> iterableClass, Class<?> typeVariableBound) {
 		// Check if there is exactly one type variable
 		Class<?> result = null;
-		boolean isRawMatch = matches(m, iterableClass, Class.class);
+		boolean isRawMatch = matchesCollectionViewGetter(m, iterableClass, Class.class);
 
 		if(isRawMatch) {
 			
@@ -440,10 +567,21 @@ public class MapperProxyUtils {
 
 		TypeMapper typeMapper = TypeMapper.getInstance();
 		Map<String, P_Path0> beanPropertyNameToPath = indexPathsByBeanPropertyName(clazz, pm);
-		
+
+		Map<Method, MethodDescriptor> methodClassifications = new HashMap<>();		
 		Map<Method, BiFunction<Object, Object[], Object>> methodMap = new LinkedHashMap<>();
 		
+		
+		// Postponed methods will be processed in a subsequent phase
+		// - collection setters need access to a collection getter
+		List<Method> phaseTwoMethods = new ArrayList<>();
+		
 		for(Method method : clazz.getMethods()) {
+			MethodDescriptor descriptor = classifyMethod(method);
+			
+			methodClassifications.put(method, descriptor);
+			
+			
 			// System.out.println("Method " + method);
 			P_Path0 path = Optional.ofNullable(derivePathFromMethod(method, pm))
 					.orElseGet(() -> beanPropertyNameToPath.get(deriveBeanPropertyName(method.getName())));
@@ -465,30 +603,53 @@ public class MapperProxyUtils {
 						return r;
 					});
 				} else {
-					
-					
+
+
 					Function<Property, Function<Resource, Object>> getter = viewAsGetter(method, typeMapper);				
 					if(getter != null) {
 						Function<Resource, Object> g = getter.apply(p);
 						methodMap.put(method, (o, args) -> g.apply((Resource)o)); 
 					} else {
-						Function<Property, BiConsumer<Resource, Object>> setter = viewAsSetter(method, typeMapper);
-						
-						if(setter != null) {
-							BiConsumer<Resource, Object> s = setter.apply(p);
-							methodMap.put(method, (o, args) -> {
-								s.accept((Resource)o, args[0]);
-								
-								// Detect fluent API style methods - i.e.
-								// methods that return the class it is defined in or one of its super types.
-								Object r = method.getReturnType().isAssignableFrom(clazz)
-									? o
-									: null;
-								
-								return r;
-							});
-						}
+						phaseTwoMethods.add(method);
 					}
+				}
+			}
+		}
+		
+		for(Method method : phaseTwoMethods) {
+
+			// Check whether a method is a collection setter
+			P_Path0 path = Optional.ofNullable(derivePathFromMethod(method, pm))
+					.orElseGet(() -> beanPropertyNameToPath.get(deriveBeanPropertyName(method.getName())));
+
+			if(path != null) {
+//				if(path != null && path.toString().contains("style")) {
+//					System.out.println("style here");
+//				}
+
+				Property p = ResourceFactory.createProperty(path.getNode().getURI());
+
+				
+				
+				//MethodDescriptor d = methodClassifications.get(method);
+				
+				
+				
+				Function<Property, BiConsumer<Resource, Object>> setter = viewAsSetter(method, typeMapper);
+				
+				if(setter != null) {
+					BiConsumer<Resource, Object> s = setter.apply(p);
+					methodMap.put(method, (o, args) -> {
+						s.accept((Resource)o, args[0]);
+						
+						// Detect fluent API style methods - i.e.
+						// methods that return the class it is defined in or one of its super types.
+						Object r = method.getReturnType().isAssignableFrom(clazz)
+							? o
+							: null;
+						
+						return r;
+					});
 				}
 			}
 		}
