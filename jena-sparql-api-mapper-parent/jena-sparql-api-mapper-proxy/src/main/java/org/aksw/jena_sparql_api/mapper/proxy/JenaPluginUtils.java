@@ -52,6 +52,8 @@ public class JenaPluginUtils {
 		registerJenaResourceClass(clazz, BuiltinPersonalities.model, PrefixMapping.Extended);
 	}
 	
+	
+	
 	public static void registerJenaResourceClass(Class<?> clazz, Personality<RDFNode> p, PrefixMapping pm) {
 		if(Resource.class.isAssignableFrom(clazz)) {
 			boolean supportsProxying = supportsProxying(clazz);

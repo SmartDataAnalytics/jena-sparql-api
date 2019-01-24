@@ -57,7 +57,7 @@ public class ListFromRDFList
 	public boolean add(RDFNode e) {
 		RDFList newList = getList().with(e);
 		ResourceUtils.setProperty(s, p, newList);
-		
+		System.out.println("list prop: " + s.getProperty(p));
 		return true;
 	}
 	
@@ -86,7 +86,7 @@ public class ListFromRDFList
     	return result;
 	}
 	
-	public static void linkTo(RDFList parent, RDFList element, Resource s, Property p) {
+	public static void setTail(RDFList parent, RDFList element, Resource s, Property p) {
     	if(parent == null) {
         	ResourceUtils.setProperty(s, p, element);            		
     	} else {
@@ -96,7 +96,7 @@ public class ListFromRDFList
 
 	public static void linkParentTo(RDFList element, Resource s, Property p) {
     	RDFList parent = getParent(element);
-    	linkTo(parent, element, s, p);
+    	setTail(parent, element, s, p);
 	}
 //	
 //	public static shiftValue(RDFList parent) {
@@ -252,7 +252,7 @@ public class ListFromRDFList
 
         	//RDFList element = m_seen.getTail();
         	RDFList parent = getParent(m_seen);
-        	linkTo(parent, m_head, s, p);
+        	setTail(parent, m_head, s, p);
         	
             //linkParentTo(element, s, p);
 //        	RDFNode _parent = ResourceUtils.getReversePropertyValue(m_head, RDF.rest);

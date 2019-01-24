@@ -51,6 +51,7 @@ public class PropertyFunctionFactoryUrlText
             @Override
             public QueryIterator execEvaluated(Binding binding, Node subject, Node predicate, Node object,
                     org.apache.jena.sparql.engine.ExecutionContext execCtx) {
+            	            	
                 // Get the subject's value
                 Node node = subject.isVariable()
                         ? binding.get((Var)subject)
@@ -72,7 +73,11 @@ public class PropertyFunctionFactoryUrlText
 
                 	bindings = Collections.emptyList();
                 }
-                
+
+
+//            	Map<String, String> overrides = execCtx.getContext().get("urlTextOverrides", Collections.emptyMap());
+//            	if()
+
 
 //                boolean isJson = node.isLiteral() && node.getLiteralDatatype() instanceof RDFDatatypeJson;
 //                if(isJson) {
