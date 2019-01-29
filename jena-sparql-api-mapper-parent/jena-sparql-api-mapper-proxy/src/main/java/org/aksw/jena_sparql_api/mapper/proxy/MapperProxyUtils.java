@@ -45,6 +45,7 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.impl.ResourceImpl;
+import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.path.P_Link;
 import org.apache.jena.sparql.path.P_Path0;
@@ -939,7 +940,7 @@ public class MapperProxyUtils {
 		}
 		
 		
-		System.out.println("BeanPropertyNames: " + beanPropertyNames);
+//		System.out.println("BeanPropertyNames: " + beanPropertyNames);
 		
 		// Process properties
 		for(String beanPropertyName : beanPropertyNames) {
@@ -1005,9 +1006,9 @@ public class MapperProxyUtils {
 				boolean isCollectionValued = readMethodDescriptor.isCollectionValued();
 				boolean isDynamicGetter = readMethodDescriptor.isDynamicCollection();
 
-				if(isDynamicGetter) {
-					System.out.println("DEBUG POINT");
-				}
+//				if(isDynamicGetter) {
+//					System.out.println("DEBUG POINT");
+//				}
 				if(isCollectionValued) {
 
 					// Check if the write method is consistent
