@@ -1,7 +1,11 @@
 package org.aksw.jena_sparql_api.web.server;
 
 import java.io.File;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.ProtectionDomain;
 
 import javax.servlet.ServletException;
@@ -71,18 +75,31 @@ public class ServerUtils {
         URL location = protectionDomain.getCodeSource().getLocation();
         String externalForm = location.toExternalForm();
 
-        logger.debug("External form: " + externalForm);
+        logger.debug("Trying to resolve webapp by starting from location (external form): " + externalForm);
+
+    	Path path;
+    	try {
+    		// TODO This assumes that builds are done under /target/classes/
+    		path = Paths.get(location.toURI()).resolve("../../src/main/webapp").normalize();
+		} catch (URISyntaxException e) {
+			throw new RuntimeException(e);
+		}
 
         // Try to detect whether we are being run from an
         // archive (uber jar / war) or just from compiled classes
-        if (externalForm.endsWith("/classes/")) {
-
-            String test = "src/main/webapp";
-            File file = new File(test);
-            if(file.exists()) {
-                externalForm = test;
+        if (externalForm.endsWith("/classes/")) {        	
+            if(Files.exists(path)) {
+            	externalForm = path.toString();
             }
+        } else if(externalForm.endsWith("-classes.jar")) {
+        	// Try if replacing '-classes.jar' with '.war' also exists        	
+        	Path warPath = path.getParent().resolve(path.getFileName().toString().replace("-classes.jar", ".war"));
+        	if(Files.exists(warPath)) {
+        		externalForm = warPath.toString();
+        	}
         }
+        logger.debug("Resolved webapp location to: " + externalForm);
+
         return externalForm;
     }
 
