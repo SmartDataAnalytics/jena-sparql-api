@@ -5,6 +5,7 @@ import java.util.Map;
 import org.aksw.commons.collections.reversible.ReversibleMap;
 import org.aksw.commons.collections.reversible.ReversibleMapImpl;
 import org.aksw.commons.jena.jgrapht.LabeledEdge;
+import org.aksw.commons.jena.jgrapht.LabeledEdgeImpl;
 import org.aksw.jena_sparql_api.algebra.utils.FilteredQuad;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Var;
@@ -21,7 +22,7 @@ public class IndexFilteredTriplePattern<K>
     protected Graph<Node, LabeledEdge<Node, Node>> graph;
 
     public IndexFilteredTriplePattern() {
-        this.graph = new SimpleGraph<>(null); //(v, e) -> new LabeledEdgeImpl<>(v, e, null));
+        this.graph = new SimpleGraph<>((v, e) -> new LabeledEdgeImpl<>(v, e, null));
         this.keyToNode = new ReversibleMapImpl<>();
     }
 

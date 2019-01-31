@@ -29,7 +29,7 @@ public class QueryToGraphMatcher {
 
     public static Graph<Node, LabeledEdge<Node, Node>> toGraph(QuadFilterPatternCanonical qfpc) {
         //EdgeFactory <Node, LabeledEdge<Node, Node>> edgeFactory = (v, e) -> new LabeledEdgeImpl<>(v, e, null);
-        Graph<Node, LabeledEdge<Node, Node>> graph = new SimpleGraph<>(null); //(v, e) -> new LabeledEdgeImpl<>(v, e, null));
+        Graph<Node, LabeledEdge<Node, Node>> graph = new SimpleGraph<>((v, e) -> new LabeledEdgeImpl<>(v, e, null));
 
         toGraph(graph, qfpc);
 
@@ -52,8 +52,8 @@ public class QueryToGraphMatcher {
      * @return
      */
     public static boolean tryMatch(Query view, Query user) {
-        Graph<Node, LabeledEdge<Node, Node>> a = new SimpleGraph<>(null); //(v, e) -> new LabeledEdgeImpl<>(v, e, null));
-        Graph<Node, LabeledEdge<Node, Node>> b = new SimpleGraph<>(null); //(v, e) -> new LabeledEdgeImpl<>(v, e, null));
+        Graph<Node, LabeledEdge<Node, Node>> a = new SimpleGraph<>((v, e) -> new LabeledEdgeImpl<>(v, e, null));
+        Graph<Node, LabeledEdge<Node, Node>> b = new SimpleGraph<>((v, e) -> new LabeledEdgeImpl<>(v, e, null));
 
         toGraph(a, view);
         toGraph(b, user);

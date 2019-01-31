@@ -11,6 +11,7 @@ import org.aksw.commons.collections.trees.TreeUtils;
 import org.aksw.commons.jena.jgrapht.LabeledEdge;
 import org.aksw.commons.jena.jgrapht.LabeledEdgeImpl;
 import org.apache.jena.ext.com.google.common.collect.Sets;
+import org.jgrapht.EdgeFactory;
 import org.jgrapht.Graph;
 import org.jgrapht.GraphType;
 import org.jgrapht.graph.DefaultGraphType;
@@ -54,10 +55,10 @@ public class DirectedGraphTree<T, E>
         return result;
     }
 
-//    @Override
-//    public EdgeFactory<T, LabeledEdge<T, E>> getEdgeFactory() {
-//        return null;
-//    }
+    @Override
+    public EdgeFactory<T, LabeledEdge<T, E>> getEdgeFactory() {
+        return null;
+    }
 
     @Override
     public boolean containsEdge(T sourceVertex, T targetVertex) {
