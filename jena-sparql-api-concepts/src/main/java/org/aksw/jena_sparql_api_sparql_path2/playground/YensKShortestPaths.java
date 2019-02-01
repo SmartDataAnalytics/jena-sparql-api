@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api_sparql_path2;
+package org.aksw.jena_sparql_api_sparql_path2.playground;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;

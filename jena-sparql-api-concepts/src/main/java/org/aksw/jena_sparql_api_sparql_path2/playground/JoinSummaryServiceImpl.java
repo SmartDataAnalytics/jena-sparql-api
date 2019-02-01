@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api_sparql_path2;
+package org.aksw.jena_sparql_api_sparql_path2.playground;
 
 import java.util.Map;
 
@@ -22,8 +22,8 @@ public class JoinSummaryServiceImpl
     public Map<Node, Map<Node, Number>> fetch(Iterable<Node> predicates, boolean reverse) {
 
         Map<Node, Map<Node, Number>> result = !reverse
-                ? fwdLookup.apply(predicates)
-                : bwdLookup.apply(predicates)
+                ? fwdLookup.fetchMap(predicates)
+                : bwdLookup.fetchMap(predicates)
                 ;
 
         return result;

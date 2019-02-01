@@ -1,10 +1,10 @@
-package org.aksw.jena_sparql_api_sparql_path2;
+package org.aksw.jena_sparql_api_sparql_path2.playground;
 
 import java.util.function.Predicate;
 
 import org.aksw.jena_sparql_api.sparql_path2.NestedPath;
 import org.aksw.jena_sparql_api.utils.model.Directed;
-import org.jgrapht.DirectedGraph;
+import org.jgrapht.Graph;
 
 /**
  * Tests nested paths instances for whether the last two edges
@@ -14,10 +14,10 @@ import org.jgrapht.DirectedGraph;
 public class JoinSummaryPredicate<V, E>
     implements Predicate<NestedPath<V, E>>
 {
-    protected DirectedGraph<E, ?> joinSummary;
+    protected Graph<E, ?> joinSummary;
     //protected targetEdges;
 
-    public JoinSummaryPredicate(DirectedGraph<E, ?> joinSummary) {
+    public JoinSummaryPredicate(Graph<E, ?> joinSummary) {
         this.joinSummary = joinSummary;
     }
 

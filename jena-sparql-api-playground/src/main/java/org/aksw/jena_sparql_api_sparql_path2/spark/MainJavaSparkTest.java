@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api_sparql_path2;
+package org.aksw.jena_sparql_api_sparql_path2.spark;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -18,6 +18,7 @@ import org.aksw.jena_sparql_api.stmt.SparqlParserConfig;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
 import org.aksw.jena_sparql_api.update.FluentSparqlServiceFactory;
+import org.aksw.jena_sparql_api_sparql_path2.playground.main.MainSparqlPath2;
 import org.apache.http.client.HttpClient;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;

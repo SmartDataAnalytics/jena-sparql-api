@@ -1,9 +1,10 @@
-package org.aksw.jena_sparql_api_sparql_path2;
+package org.aksw.jena_sparql_api_sparql_path2.spark;
 
 import java.util.Set;
 
 import org.aksw.jena_sparql_api.sparql_path2.NestedPath;
 import org.aksw.jena_sparql_api.utils.model.Directed;
+import org.aksw.jena_sparql_api_sparql_path2.playground.FrontierData;
 import org.apache.jena.graph.Node;
 
 import scala.Tuple2;

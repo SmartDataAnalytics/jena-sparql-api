@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api_sparql_path2;
+package org.aksw.jena_sparql_api_sparql_path2.playground;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
@@ -24,7 +24,7 @@ import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.aksw.jena_sparql_api.utils.model.Triplet;
 import org.aksw.jena_sparql_api.utils.model.TripletImpl;
 import org.aksw.jena_sparql_api.utils.model.TripletPath;
-import org.jgrapht.DirectedGraph;
+import org.jgrapht.Graph;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -501,7 +501,7 @@ public class NfaDijkstra {
 //        stateVertexPairs.forEach(e -> open.add(e));
 
 
-        DirectedGraph<S, T> nfaGraph = nfa.getGraph();
+        Graph<S, T> nfaGraph = nfa.getGraph();
 //        while(!open.isEmpty()) {
         //open.asMap().entrySet().forEach(e -> {
         for(Entry<S, Collection<V>> e : open.asMap().entrySet()) {

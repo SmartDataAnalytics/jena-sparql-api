@@ -1,14 +1,14 @@
-package org.aksw.jena_sparql_api_sparql_path2;
+package org.aksw.jena_sparql_api_sparql_path2.playground;
 
 import org.aksw.jena_sparql_api.sparql_path2.Nfa;
 import org.aksw.jena_sparql_api.sparql_path2.NfaImpl;
-import org.jgrapht.DirectedGraph;
+import org.jgrapht.Graph;
 import org.jgrapht.graph.EdgeReversedGraph;
 
 public class NfaUtils {
 
     public static <S, T> Nfa<S, T> reverse(Nfa<S, T> nfa) {
-        DirectedGraph<S, T> reverseGraph = new EdgeReversedGraph<>(nfa.getGraph());
+        Graph<S, T> reverseGraph = new EdgeReversedGraph<>(nfa.getGraph());
         Nfa<S, T> result = new NfaImpl<>(reverseGraph, nfa.getEndStates(), nfa.getStartStates());
         return result;
     }

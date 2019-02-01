@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api_sparql_path2;
+package org.aksw.jena_sparql_api_sparql_path2.main;
 
 import java.io.IOException;
 import java.util.AbstractMap.SimpleEntry;
@@ -33,7 +33,7 @@ import org.aksw.jena_sparql_api.mapper.AggMap;
 import org.aksw.jena_sparql_api.mapper.AggTransform;
 import org.aksw.jena_sparql_api.mapper.BindingMapperProjectVar;
 import org.aksw.jena_sparql_api.mapper.MappedQuery;
-import org.aksw.jena_sparql_api.server.utils.SparqlServerUtils;
+//import org.aksw.jena_sparql_api.server.utils.SparqlServerUtils;
 import org.aksw.jena_sparql_api.sparql_path2.EdgeFactoryLabeledEdge;
 import org.aksw.jena_sparql_api.sparql_path2.JGraphTUtils;
 import org.aksw.jena_sparql_api.sparql_path2.JoinSummaryUtils;
@@ -57,6 +57,13 @@ import org.aksw.jena_sparql_api.utils.Vars;
 import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.aksw.jena_sparql_api.utils.model.Triplet;
 import org.aksw.jena_sparql_api.utils.model.TripletPath;
+import org.aksw.jena_sparql_api_sparql_path2.playground.EdgeReducer;
+import org.aksw.jena_sparql_api_sparql_path2.playground.JoinSummaryService;
+import org.aksw.jena_sparql_api_sparql_path2.playground.JoinSummaryService2;
+import org.aksw.jena_sparql_api_sparql_path2.playground.JoinSummaryService2Impl;
+import org.aksw.jena_sparql_api_sparql_path2.playground.JoinSummaryServiceImpl;
+import org.aksw.jena_sparql_api_sparql_path2.playground.NfaAnalysisResult;
+import org.aksw.jena_sparql_api_sparql_path2.playground.YensKShortestPaths;
 import org.apache.http.client.HttpClient;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -87,16 +94,13 @@ import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.path.PathParser;
 import org.apache.jena.sparql.pfunction.PropertyFunctionRegistry;
 import org.apache.jena.sparql.util.Context;
-import org.eclipse.jetty.server.Server;
-import org.jgrapht.DirectedGraph;
 import org.jgrapht.Graph;
 import org.jgrapht.VertexFactory;
+import org.jgrapht.graph.AsGraphUnion;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.DirectedGraphUnion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.ClassPathResource;
 
 import com.google.common.base.Stopwatch;
 
@@ -183,12 +187,12 @@ public class MainSparqlPath2 {
 
     public static <S> Nfa<S, LabeledEdge<S, PredicateClass>> reverseNfa(Nfa<S, LabeledEdge<S, PredicateClass>> nfa) {
         EdgeFactoryLabeledEdge<S, PredicateClass> edgeFactory = new EdgeFactoryLabeledEdge<S, PredicateClass>();
-        DirectedGraph<S, LabeledEdge<S, PredicateClass>> bwdGraph = new DefaultDirectedGraph<S, LabeledEdge<S, PredicateClass>>(edgeFactory);
+        Graph<S, LabeledEdge<S, PredicateClass>> bwdGraph = new DefaultDirectedGraph<S, LabeledEdge<S, PredicateClass>>(edgeFactory);
 
 
         //DirectedGraph<S, LabeledEdge<S, PredicateClass>> bwdGraph = new SimpleDirectedGraph<>(new LabeledEdgeFactoryImpl<S, PredicateClass>());
 
-        DirectedGraph<S, LabeledEdge<S, PredicateClass>> fwdGraph = nfa.getGraph();
+        Graph<S, LabeledEdge<S, PredicateClass>> fwdGraph = nfa.getGraph();
 
         fwdGraph.vertexSet().stream().forEach(v -> bwdGraph.addVertex(v));
         fwdGraph.edgeSet().stream().forEach(
@@ -271,7 +275,7 @@ public class MainSparqlPath2 {
      * https://en.wikipedia.org/wiki/Maximum_flow_problem#Multi-source_multi-sink_maximum_flow_problem
      */
     public static <S, T> void makeConsolidated(Nfa<S, T> nfa, VertexFactory<S> vertexFactory) {
-        DirectedGraph<S, T> graph = nfa.getGraph();
+        Graph<S, T> graph = nfa.getGraph();
 
         makeConsolidated(graph, nfa.getStartStates(), vertexFactory, false);
         makeConsolidated(graph, nfa.getEndStates(), vertexFactory, true);
@@ -293,7 +297,7 @@ public class MainSparqlPath2 {
 //
 //    }
 
-    public static DirectedGraph<Node, DefaultEdge> createJoinSummaryGraph(QueryExecutionFactory qef) { //Model model) {
+    public static Graph<Node, DefaultEdge> createJoinSummaryGraph(QueryExecutionFactory qef) { //Model model) {
         //QueryExecutionFactory qef = FluentQueryExecutionFactory.model(model).create();
 
         String queryStr = "PREFIX o: <http://example.org/ontology/> \n"
@@ -306,7 +310,7 @@ public class MainSparqlPath2 {
         System.out.println(queryStr);
         ResultSet rs = qef.createQueryExecution(queryStr).execSelect();
 
-        DirectedGraph<Node, DefaultEdge> result = new DefaultDirectedGraph<>(DefaultEdge.class);
+        Graph<Node, DefaultEdge> result = new DefaultDirectedGraph<>(DefaultEdge.class);
         while(rs.hasNext()) {
             Binding binding = rs.nextBinding();
             Node x = binding.get(Vars.x);
@@ -333,7 +337,7 @@ public class MainSparqlPath2 {
         Model joinSummaryModel;
         Node desiredPred;
 
-        DirectedGraph<Node, DefaultEdge> fullJoinSummaryBaseGraph;
+        Graph<Node, DefaultEdge> fullJoinSummaryBaseGraph;
 
         if(true) {
             Stopwatch sw = Stopwatch.createStarted();
@@ -343,7 +347,7 @@ public class MainSparqlPath2 {
 
             Model model = ModelFactory.createDefaultModel();
             //RDFDataMgr.read(model, "classpath://dataset-fp7.ttl");
-            RDFDataMgr.read(model, (new ClassPathResource("dataset-fp7.ttl").getInputStream()), Lang.TTL);
+            RDFDataMgr.read(model, "dataset-fp7.ttl", Lang.TTL);
 
             Resource ds = ResourceFactory.createResource("http://example.org/resource/data-fp7");
 
@@ -502,8 +506,8 @@ public class MainSparqlPath2 {
             LookupService<Node, Map<Node, Number>> bwdLs = createListServicePredicates(qef, true);
 
             // Fetch the properties for the source and end states
-            Map<Node, Map<Node, Number>> fwdPreds = fwdLs.apply(Arrays.asList(startNode, endNode));
-            Map<Node, Map<Node, Number>> bwdPreds = bwdLs.apply(Arrays.asList(startNode, endNode));
+            Map<Node, Map<Node, Number>> fwdPreds = fwdLs.fetchMap(Arrays.asList(startNode, endNode));
+            Map<Node, Map<Node, Number>> bwdPreds = bwdLs.fetchMap(Arrays.asList(startNode, endNode));
 
             Pair<Map<Node, Number>> startPredFreqs =
                     new Pair<>(fwdPreds.getOrDefault(startNode, Collections.emptyMap()), bwdPreds.getOrDefault(startNode, Collections.emptyMap()));
@@ -526,8 +530,8 @@ public class MainSparqlPath2 {
 
             QueryExecutionFactory rawQef = ssf2.createSparqlService(null, dataset, null).getQueryExecutionFactory();
 
-            Function<Pair<ValueSet<Node>>, LookupService<Node, Set<Triplet<Node, Node>>>> createTripletLookupService =
-                    pc -> PathExecutionUtils.createLookupService(rawQef, pc);
+            Function<Pair<ValueSet<Node>>, Function<Iterable<Node>, Map<Node, Set<Triplet<Node, Node>>>>> createTripletLookupService =
+                    pc -> f -> PathExecutionUtils.createLookupService(rawQef, pc).fetchMap(f);
 
             Set<Entry<Integer, Node>> starts = new HashSet<>();
             nfa.getStartStates().forEach(s -> starts.add(new SimpleEntry<>(s, startNode)));
@@ -638,16 +642,16 @@ public class MainSparqlPath2 {
 //            DirectedGraph<Node, DefaultaEdge> rawJoinGraph = fwdCosts.joinGraph;
 
 
-            DirectedGraph<Node, DefaultEdge> rawJoinGraph = fullJoinSummaryBaseGraph;
+            Graph<Node, DefaultEdge> rawJoinGraph = fullJoinSummaryBaseGraph;
 
-            DirectedGraph<Node, DefaultEdge> tmpEndAugJoinGraph = new DefaultDirectedGraph<>(DefaultEdge.class);
+            Graph<Node, DefaultEdge> tmpEndAugJoinGraph = new DefaultDirectedGraph<>(DefaultEdge.class);
             Node augStart = NodeFactory.createURI("http://start.org");
             Node augEnd = NodeFactory.createURI("http://end.org");
 
 
             JGraphTUtils.addSuperVertex(tmpEndAugJoinGraph, augEnd, endPredFreqs.get(1).keySet(), endPredFreqs.get(0).keySet());
 
-            DirectedGraph<Node, DefaultEdge> endAugJoinGraph = new DirectedGraphUnion<Node, DefaultEdge>(rawJoinGraph, tmpEndAugJoinGraph);
+            Graph<Node, DefaultEdge> endAugJoinGraph = new AsGraphUnion<Node, DefaultEdge>(rawJoinGraph, tmpEndAugJoinGraph);
 
 //
 //            augJoinGraph.addVertex(augStart);
@@ -742,8 +746,8 @@ public class MainSparqlPath2 {
 
 
         } else {
-            Server server = SparqlServerUtils.startSparqlEndpoint(ssf, sparqlStmtParser, 7533);
-            server.join();
+//            Server server = SparqlServerUtils.startSparqlEndpoint(ssf, sparqlStmtParser, 7533);
+//            server.join();
         }
 
 

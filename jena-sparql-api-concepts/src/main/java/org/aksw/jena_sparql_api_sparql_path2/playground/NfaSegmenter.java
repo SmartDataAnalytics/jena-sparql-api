@@ -1,10 +1,10 @@
-package org.aksw.jena_sparql_api_sparql_path2;
+package org.aksw.jena_sparql_api_sparql_path2.playground;
 
 import java.util.List;
 import java.util.Set;
 
 import org.aksw.jena_sparql_api.sparql_path2.Nfa;
-import org.jgrapht.DirectedGraph;
+import org.jgrapht.Graph;
 import org.jgrapht.alg.ConnectivityInspector;
 
 /**
@@ -25,7 +25,7 @@ public class NfaSegmenter {
      * @return
      */
     public <S, T> Set<T> segment(Nfa<S, T> nfa) {
-        DirectedGraph<S, T> graph = nfa.getGraph();
+        Graph<S, T> graph = nfa.getGraph();
 
 
 

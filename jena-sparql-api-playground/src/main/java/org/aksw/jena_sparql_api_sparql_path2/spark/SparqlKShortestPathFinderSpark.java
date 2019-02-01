@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api_sparql_path2;
+package org.aksw.jena_sparql_api_sparql_path2.spark;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -16,6 +16,7 @@ import org.aksw.jena_sparql_api.utils.Pair;
 import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.aksw.jena_sparql_api.utils.model.TripletPath;
 import org.aksw.jena_sparql_api_sparql_path.spark.NfaExecutionSpark;
+import org.aksw.jena_sparql_api_sparql_path2.playground.FrontierData;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.path.Path;
 import org.apache.spark.Partitioner;

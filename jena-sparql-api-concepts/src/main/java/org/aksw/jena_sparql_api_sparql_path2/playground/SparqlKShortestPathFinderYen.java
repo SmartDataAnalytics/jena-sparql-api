@@ -1,7 +1,8 @@
-package org.aksw.jena_sparql_api_sparql_path2;
+package org.aksw.jena_sparql_api_sparql_path2.playground;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
@@ -9,7 +10,6 @@ import java.util.stream.Collectors;
 
 import org.aksw.commons.jena.jgrapht.LabeledEdge;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.sparql_path2.Nfa;
 import org.aksw.jena_sparql_api.sparql_path2.PathCompiler;
 import org.aksw.jena_sparql_api.sparql_path2.PathExecutionUtils;
@@ -52,12 +52,16 @@ public class SparqlKShortestPathFinderYen
     public Iterator<TripletPath<Node, Directed<Node>>> findPaths(Node start, Node end, Path path, Long k) {
         Nfa<Integer, LabeledEdge<Integer, PredicateClass>> nfa = PathCompiler.compileToNfa(path);
 
-        Function<Pair<ValueSet<Node>>, LookupService<Node, Set<Triplet<Node, Node>>>> createTripletLookupService =
-                pc -> PathExecutionUtils.createLookupService(qef, pc).partition(resourceBatchSize);
+//        Function<Pair<ValueSet<Node>>, LookupService<Node, Set<Triplet<Node, Node>>>> createTripletLookupService =
+//                pc -> PathExecutionUtils.createLookupService(qef, pc).partition(resourceBatchSize);
+
+            Function<Pair<ValueSet<Node>>, Function<Iterable<Node>, Map<Node, Set<Triplet<Node, Node>>>>> createTripletLookupService =
+                    pc -> f -> PathExecutionUtils.createLookupService(qef, pc).partition(resourceBatchSize).fetchMap(f);
 
 
         List<TripletPath<Entry<Integer, Node>, Directed<Node>>> kPaths =
-                YensKShortestPaths.findPaths(
+                //.<Integer, LabeledEdge<Integer, PredicateClass>, Node, Node>
+        		YensKShortestPaths.findPaths(
                       nfa,
                       x -> x.getLabel() == null, //LabeledEdgeImpl::isEpsilon,
                       e -> e.getLabel(),

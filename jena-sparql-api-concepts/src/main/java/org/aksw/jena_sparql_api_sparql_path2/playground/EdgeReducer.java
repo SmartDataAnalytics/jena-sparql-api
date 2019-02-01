@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api_sparql_path2;
+package org.aksw.jena_sparql_api_sparql_path2.playground;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Collection;
@@ -24,7 +24,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.engine.binding.Binding;
-import org.jgrapht.DirectedGraph;
+import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 
@@ -346,7 +346,7 @@ public class EdgeReducer {
         //Pair</Se>
 
         // Excerpt of the join summary used for reachability
-        DirectedGraph<Node, DefaultEdge> joinGraph = new DefaultDirectedGraph<>(DefaultEdge.class);
+        Graph<Node, DefaultEdge> joinGraph = new DefaultDirectedGraph<>(DefaultEdge.class);
 
 
 
@@ -373,7 +373,7 @@ public class EdgeReducer {
         }
 
 
-        DirectedGraph<S, T> graph = nfa.getGraph();
+        Graph<S, T> graph = nfa.getGraph();
 
         //Multimap<T, Node> transitionToPreds = HashMultimap.create();
 
@@ -579,7 +579,7 @@ public class EdgeReducer {
             Map<S, Pair<Map<Node, Number>>> stateToDiPredToCost,
             JoinSummaryService joinSummaryService) {
 
-        DirectedGraph<S, T> graph = nfa.getGraph();
+        Graph<S, T> graph = nfa.getGraph();
 
 
         // The set of remaining predicates per state
@@ -663,7 +663,7 @@ public class EdgeReducer {
      * @param toPredicateClass
      * @return
      */
-    public static <S, T> int determineRequiredPredicateDirectionsForRetrieval(DirectedGraph<S, T> graph, S state, Function<T, PredicateClass> toPredicateClass) {
+    public static <S, T> int determineRequiredPredicateDirectionsForRetrieval(Graph<S, T> graph, S state, Function<T, PredicateClass> toPredicateClass) {
         Collection<T> edges = graph.outgoingEdgesOf(state);
 
         int result = 0;
@@ -745,7 +745,7 @@ public class EdgeReducer {
      */
     public static <S, T, P> Set<P> getReferencedPredicates(Nfa<S, T> nfa, Predicate<Entry<P, P>> joins, Predicate<T> isEpsilon, Function<Set<T>, Set<P>> transitionsToPredicates) {
         Set<T> result = new HashSet<>();
-        DirectedGraph<S, T> graph = nfa.getGraph();
+        Graph<S, T> graph = nfa.getGraph();
 
 
         boolean change = true;
