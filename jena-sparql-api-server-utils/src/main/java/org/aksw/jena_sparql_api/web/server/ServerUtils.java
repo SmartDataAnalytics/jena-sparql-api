@@ -1,21 +1,27 @@
 package org.aksw.jena_sparql_api.web.server;
 
-import java.io.File;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.ProtectionDomain;
+import java.util.Objects;
 
 import javax.servlet.ServletException;
 
+import org.eclipse.jetty.annotations.AnnotationConfiguration;
+import org.eclipse.jetty.plus.webapp.PlusConfiguration;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandler.Context;
 import org.eclipse.jetty.util.component.AbstractLifeCycle.AbstractLifeCycleListener;
 import org.eclipse.jetty.util.component.LifeCycle;
 import org.eclipse.jetty.webapp.Configuration;
+import org.eclipse.jetty.webapp.JettyWebXmlConfiguration;
+import org.eclipse.jetty.webapp.MetaInfConfiguration;
 import org.eclipse.jetty.webapp.WebAppContext;
+import org.eclipse.jetty.webapp.WebInfConfiguration;
+import org.eclipse.jetty.webapp.WebXmlConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.WebApplicationInitializer;
@@ -80,20 +86,24 @@ public class ServerUtils {
     	Path path;
     	try {
     		// TODO This assumes that builds are done under /target/classes/
-    		path = Paths.get(location.toURI()).resolve("../../src/main/webapp").normalize();
+    		path = Paths.get(location.toURI());
 		} catch (URISyntaxException e) {
 			throw new RuntimeException(e);
 		}
 
         // Try to detect whether we are being run from an
         // archive (uber jar / war) or just from compiled classes
-        if (externalForm.endsWith("/classes/")) {        	
-            if(Files.exists(path)) {
-            	externalForm = path.toString();
+        if (externalForm.endsWith("/classes/")) {
+        	Path webappFolder = path.resolve("../../src/main/webapp").normalize();
+            if(Files.exists(webappFolder)) {
+            	externalForm = webappFolder.toString();
             }
         } else if(externalForm.endsWith("-classes.jar")) {
+        	Path parent = path.getParent();
+        	String rawFilename = "" + path.getFileName();
+        	String filename = rawFilename.replace("-classes.jar", ".war");
         	// Try if replacing '-classes.jar' with '.war' also exists        	
-        	Path warPath = path.getParent().resolve(path.getFileName().toString().replace("-classes.jar", ".war"));
+        	Path warPath = parent.resolve(filename);
         	if(Files.exists(warPath)) {
         		externalForm = warPath.toString();
         	}
@@ -150,20 +160,36 @@ public class ServerUtils {
                 "org.eclipse.jetty.webapp.JettyWebXmlConfiguration",
                 "org.eclipse.jetty.annotations.AnnotationConfiguration" );
         
-        webAppContext.addLifeCycleListener(new AbstractLifeCycleListener() {
-            @Override
-            public void lifeCycleStarting(LifeCycle arg0) {
-                // WebAppInitializer initializer = new WebAppInitializer();
-                try {
-                    Context servletContext = webAppContext.getServletContext();
-                    servletContext.setExtendedListenerTypes(true);
-                    // servletContext.setExtendedListenerTypes(true);
-                    initializer.onStartup(servletContext);
-                } catch (ServletException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        });
+        
+        webAppContext.setConfigurations( new Configuration[] { 
+        		  new WebInfConfiguration(), 
+        		  new WebXmlConfiguration(),
+        		  new MetaInfConfiguration(),
+        		  new PlusConfiguration(), 
+        		  new JettyWebXmlConfiguration(), 
+        		  new AnnotationConfiguration()
+        		} );
+
+        // If we are running not from a war but a src/main/webapp folder,
+        // register the listener programmatically
+        if(!externalForm.endsWith(".war")) {
+        	Objects.requireNonNull(initializer, "Configuration from non-war file requires an WebAppInitializer");
+        	
+	        webAppContext.addLifeCycleListener(new AbstractLifeCycleListener() {
+	            @Override
+	            public void lifeCycleStarting(LifeCycle arg0) {
+	                // WebAppInitializer initializer = new WebAppInitializer();
+	                try {
+	                    Context servletContext = webAppContext.getServletContext();
+	                    servletContext.setExtendedListenerTypes(true);
+	                    // servletContext.setExtendedListenerTypes(true);
+	                    initializer.onStartup(servletContext);
+	                } catch (ServletException e) {
+	                    throw new RuntimeException(e);
+	                }
+	            }
+	        });
+        }
 
         webAppContext.setServer(server);
         webAppContext.setContextPath("/");
