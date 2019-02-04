@@ -7,6 +7,7 @@ import java.util.List;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.aksw.jena_sparql_api.utils.model.TripletPath;
+import org.aksw.jena_sparql_api_sparql_path2.playground.SparqlKShortestPathFinderYen;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.path.Path;
 
@@ -29,8 +30,13 @@ public class SparqlKShortestPathFinderMem
             boolean r = k == null ? false : rdfPaths.size() >= k;
             return r; });
 
-        Iterator<NestedPath<Node, Node>> result = rdfPaths.iterator();
-        //return result;
-        return null;
+        
+        Iterator<TripletPath<Node, Directed<Node>>> result = rdfPaths.stream()
+        	.map(NestedPath::asSimpleDirectedPath)
+        	.iterator();
+//        Iterator<NestedPath<Node, Node>> result = rdfPaths.iterator();
+//        SparqlKShortestPathFinderYen.convertPath(path)
+        return result;
+//        return null;
     }
 }

@@ -364,7 +364,7 @@ public class MainSparqlPath2 {
             startNode = NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/project/257943");
             endNode = NodeFactory.createURI("http://fp7-pp.publicdata.eu/resource/city/France-PARIS");
 
-            queryStr = "SELECT ?path { <" + startNode.getURI() + "> jsafn:kShortestPaths ('" + pathExprStr + "' ?path <" + endNode.getURI() + "> 471199) }";
+            queryStr = "PREFIX jsafn: <http://jsa.aksw.org/fn/> SELECT ?path { <" + startNode.getURI() + "> jsafn:kShortestPaths ('" + pathExprStr + "' ?path <" + endNode.getURI() + "> 471199) }";
 
         } else {
             Stopwatch sw = Stopwatch.createStarted();
@@ -737,9 +737,10 @@ public class MainSparqlPath2 {
 
 
 
-            boolean execQuery = false;
+            boolean execQuery = true;
             if(execQuery) {
-                QueryExecution qe = qef.createQueryExecution(queryStr);
+            	Query query = QueryFactory.create(queryStr);
+                QueryExecution qe = qef.createQueryExecution(query);
                 ResultSet rs = qe.execSelect();
                 ResultSetFormatter.outputAsJSON(System.out, rs);
             }

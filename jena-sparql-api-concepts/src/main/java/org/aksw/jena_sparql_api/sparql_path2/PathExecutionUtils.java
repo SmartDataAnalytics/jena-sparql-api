@@ -1,7 +1,9 @@
 package org.aksw.jena_sparql_api.sparql_path2;
 
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.aksw.commons.jena.jgrapht.LabeledEdge;
 import org.aksw.commons.jena.jgrapht.LabeledEdgeImpl;
@@ -21,6 +23,8 @@ import org.aksw.jena_sparql_api.utils.model.TripletImpl;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.path.Path;
+
+
 
 public class PathExecutionUtils {
 
@@ -68,10 +72,11 @@ public class PathExecutionUtils {
 
         Nfa<Integer, LabeledEdge<Integer, PredicateClass>> nfa = PathCompiler.compileToNfa(path);
 
+        org.jgrapht.Graph<Integer, LabeledEdge<Integer, PredicateClass>> nfaGraph = nfa.getGraph();
 
         System.out.println("NFA");
         System.out.println(nfa);
-        for(LabeledEdge<Integer, PredicateClass> edge : nfa.getGraph().edgeSet()) {
+        for(LabeledEdge<Integer, PredicateClass> edge : nfaGraph.edgeSet()) {
             System.out.println(edge);
         }
 
@@ -112,20 +117,37 @@ public class PathExecutionUtils {
                 break;
             }
 
-            if(true) {
-                throw new RuntimeException("Adjust the code");
-            }
+//            if(true) {
+//                throw new RuntimeException("Adjust the code");
+//            }
+            
+            int resourceBatchSize = 100;
+//            Function<Pair<ValueSet<Node>>, Function<Iterable<Node>, Map<Node, Set<Triplet<Node, Node>>>>> createTripletLookupService =
+//                    pc -> f -> PathExecutionUtils.createLookupService(qef, pc).partition(resourceBatchSize).fetchMap(f);
+
+                    //getMatchingTriplets.apply(trans, nestedPath))
+            TripletLookup<LabeledEdge<Integer, PredicateClass>, Node, Node, Node> getMatchingTriplets =
+            		(trans, vToNestedPaths) -> PathExecutionUtils.createLookupService(qef, trans.getLabel()).partition(resourceBatchSize).fetchMap(vToNestedPaths.keySet());
+                  //.collect(Collectors.toSet());
+//            BiFunction<
+//                LabeledEdge<Integer, PredicateClass>,
+//                Multimap<Node, NestedPath<Node, Triplet<Node, Node>>>,
+//                Map<Node, Set<Triplet<Node, Node>>>
+//             > getMatchingTriplets = null;
+            
             //NfaFrontier<Integer, Node, Node, Node> nextFrontier = null; //
-//            NfaFrontier<Integer, Node, Node, Node> nextFrontier = NfaExecutionUtils.advanceFrontier(
-//                    frontier,
-//                    nfa,
-//                    LabeledEdgeImpl::isEpsilon,
-//                    createLookupService, // getTriplets
-//                    nestedPath -> nestedPath.getCurrent(),
-//                    false
-//                    );
-//            //System.out.println("advancing...");
-//            frontier = nextFrontier;
+            NfaFrontier<Integer, Node, Node, Node> nextFrontier = NfaExecutionUtils.advanceFrontier(
+                    frontier,
+                    nfaGraph,
+                    x -> x.getLabel() == null,
+                    //LabeledEdgeImpl::isEpsilon,
+                    //createTripletLookupService, // getTriplets
+                    getMatchingTriplets,
+                    nestedPath -> nestedPath.getCurrent(),
+                    p -> false
+                    );
+            //System.out.println("advancing...");
+            frontier = nextFrontier;
         }
 
     }
