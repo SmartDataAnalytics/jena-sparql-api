@@ -139,12 +139,13 @@ public class E_JsonPath
                 result = NodeValue.makeNode(node);
             } catch(Exception e) {
                 logger.warn(e.getLocalizedMessage());
-                //NodeValue.raise(new ExprTypeException(e));
+                NodeValue.raise(new ExprTypeException("Error evaluating json path", e));
                 result = null;
                 //result = NodeValue.nvNothing;
             }
 
         } else {
+        	NodeValue.raise(new ExprTypeException("Invalid arguments to json path"));
             result = null; //NodeValue.nvNothing;
         }
 
