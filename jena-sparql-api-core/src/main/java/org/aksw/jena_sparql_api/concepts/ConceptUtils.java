@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.MapUtils;
 import org.aksw.commons.collections.SetUtils;
@@ -29,6 +30,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.SortCondition;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.sdb.core.Gensym;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
@@ -55,6 +57,7 @@ import org.apache.jena.sparql.syntax.PatternVars;
 
 import com.google.common.collect.Range;
 import com.google.common.collect.Sets;
+import com.google.common.collect.Streams;
 
 public class ConceptUtils {
 	public static final Concept subjectConcept = createSubjectConcept();
@@ -163,6 +166,12 @@ public class ConceptUtils {
     public static Concept createConcept(Node ... nodes) {
     	Concept result = createConcept(Arrays.asList(nodes));
     	return result;
+    }
+
+    public static UnaryRelation createConceptFromRdfNodes(Iterable<? extends RDFNode> rdfNodes) {
+    	Iterable<Node> nodes = Streams.stream(rdfNodes).map(RDFNode::asNode).collect(Collectors.toList());
+		UnaryRelation result = ConceptUtils.createConcept(nodes);
+		return result;
     }
     
     public static Concept createConcept(Iterable<Node> nodes) {

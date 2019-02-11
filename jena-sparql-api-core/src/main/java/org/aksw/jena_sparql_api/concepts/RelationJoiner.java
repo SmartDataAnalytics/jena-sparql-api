@@ -2,21 +2,31 @@ package org.aksw.jena_sparql_api.concepts;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.utils.ElementUtils;
+import org.aksw.jena_sparql_api.utils.Generator;
+import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.apache.jena.atlas.lib.tuple.Tuple;
-import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementOptional;
+
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 
 public class RelationJoiner {
 	protected Relation attrRelation;
@@ -26,6 +36,21 @@ public class RelationJoiner {
 	protected List<Var> filterJoinVars;
 	
 	protected boolean filterRelationFirst;
+	
+	// Variables of the filter relation to be appended to the variables of the resulting relation
+	// Note, that the variables may be renamed
+	//protected List<Var> filterExtensionVars;
+	
+	
+	/**
+	 * Idea to create a new projection as part of the join creation:
+	 * addSrcVar and addTgtVar add entries to the linked map varToOrigin
+	 * origin==false means, use the variable from the lhs of the join
+	 * origin==true means, use the variable from the rhs of the join
+	 * 
+	 * 
+	 */
+	protected Map<Var, Boolean> varToOrigin = null;
 	
 	public RelationJoiner(Relation attrRelation, List<Var> attrJoinVars) {
 		this(attrRelation, attrJoinVars, false);
@@ -60,17 +85,40 @@ public class RelationJoiner {
 	}
 
 	
+	public RelationJoiner projectSrcVars(Var ... vars) {
+		varToOrigin = varToOrigin != null ? varToOrigin : new LinkedHashMap<>();
+		for(Var v : vars) {
+			Boolean prior = varToOrigin.put(v, true);
+			if(prior != null) {
+				throw new RuntimeException("Variable " + v + " was already projected; prior value: " + prior + " - current value: " + true);
+			}
+ 		}
+		return this;
+	}
+	
+	public RelationJoiner projectTgtVars(Var ... vars) {
+		varToOrigin = varToOrigin != null ? varToOrigin : new LinkedHashMap<>();
+		for(Var v : vars) {
+			Boolean prior = varToOrigin.put(v, false);
+			if(prior != null) {
+				throw new RuntimeException("Variable " + v + " was already projected; prior value: " + prior + " - current value: " + false);
+			}
+		}
+		return this;		
+	}
+	
 	/**
 	 * Join with null is a no-op - i.e. it yields the original relation
 	 * 
 	 * @param c
+	 * @param joinVars If empty, all vars of c will be used for the join
 	 * @return
 	 */
-	public Relation with(Relation c) {
+	public Relation with(Relation c, Var ... joinVars) {
 		Relation result;
 		if(c != null) {
 			filterRelation = c;
-			filterJoinVars = c.getVars();
+			filterJoinVars = joinVars.length == 0 ? c.getVars() : Arrays.asList(joinVars);
 		
 			result = get();
 		} else {
@@ -120,19 +168,110 @@ public class RelationJoiner {
         return result;
 	}
 	
+//	public List<Var> getAttrP
+	
+	/**
+	 * Perform variable renaming according the configuration and yield a resulting element.
+	 * By default, all variables of lhs are considered fixed, whereas all variables of rhs
+	 * are subject to renaming.
+	 * 
+	 * 
+	 * TODO This method could use some clean up.
+	 * 
+	 * 
+	 * @return
+	 */
 	public Relation get() {
-		List<Var> attrProjVars = attrRelation.getVars();
-		
+		List<Var> attrProjVars = varToOrigin == null ? attrRelation.getVars() : new ArrayList<>(varToOrigin.keySet());
 		
 		Set<Var> attrVarsMentioned = attrRelation.getVarsMentioned();
 		Set<Var> filterVarsMentioned = filterRelation.getVarsMentioned();
 		
-		Map<Var, Var> varMap = VarUtils.createJoinVarMap(attrVarsMentioned, filterVarsMentioned, attrJoinVars, filterJoinVars, null); //, varNameGenerator);
+//		System.out.println("JOIN ON " + attrJoinVars + " --- " + filterJoinVars);
+//		System.out.println(attrRelation);
+//		System.out.println(filterRelation);
+		
+		// all projected attr and filters vars must NOT be renamed
+		// 
+		// Conversely,
+		
+		// attrVars are all projected variables
+		
+		// Convention: if no projection was specified, all variables of lhs
+		// are fixed (so none is undistinguished),
+		// and all vars of rhs are non-distinguished
+//		Set<Var> nonDistVarsLHs = Collections.emptySet();
+//		Set<Var> nonDistVarsRhs = filterVarsMentioned;
 
-		Element attrElement = attrRelation.getElement();		
+		Set<Var> fixedVarsLhs = attrVarsMentioned;
+		Set<Var> fixedVarsRhs = Collections.emptySet();
+		if(varToOrigin != null) {
+			fixedVarsLhs = varToOrigin.entrySet().stream().filter(e -> e.getValue()).map(Entry::getKey).collect(Collectors.toSet());
+			fixedVarsRhs = varToOrigin.entrySet().stream().filter(e -> !e.getValue()).map(Entry::getKey).collect(Collectors.toSet());
+			
+			// non distinguished vars = those that are not projected
+//			nonDistVarsLHs = Sets.difference(attrVarsMentioned, fixedVarsLhs);
+//			nonDistVarsRhs = Sets.difference(filterVarsMentioned, fixedVarsRhs);
+		}
+		
+		Set<Var> conflictVars = new HashSet<>(Sets.intersection(attrVarsMentioned, filterVarsMentioned));
+
+		//Set<Var> conflictsRhs = Sets.intersection(set1, set2)
+		
+		//BiMap<Var, Var> rhsToLhs = HashBiMap.create();
+        Map<Var, Var> lhsMap = new HashMap<>();
+        Map<Var, Var> rhsMap = new HashMap<>();
+
+        for (int i = 0; i < attrJoinVars.size(); ++i) {
+            Var sourceJoinVar = attrJoinVars.get(i);
+            Var targetJoinVar = filterJoinVars.get(i);
+
+            rhsMap.put(targetJoinVar, sourceJoinVar);
+            //lhsMap.put(key, value)
+            // Map targetVar to sourceVar
+            //rhsToLhs.put(targetJoinVar, sourceJoinVar);
+            // rename[targetVar.getName()] = sourceVar;
+        }
+        
+        Generator<Var> gen = VarGeneratorBlacklist.create(Sets.union(attrVarsMentioned, filterVarsMentioned));
+        
+        
+        // Remap rhs
+        resolveConflicts(filterVarsMentioned, fixedVarsRhs, conflictVars, lhsMap, rhsMap, gen);
+        resolveConflicts(attrVarsMentioned, fixedVarsLhs, conflictVars, rhsMap, lhsMap, gen);
+
+        // Resolve remaining conflicts; rename for lhs
+        
+        
+		
+		
+		// [?a ?b] join [?x ?y] on [?b=?x] projSrc(?a) projTgt(?y)-> [?a ?y]
+		// Note: It is invalid for the the same variable to be projected from lhs and rhs
+		//       (even if it is used in a join (lhs.?x = rhs.?x), it should only be projected once) 
+		//
+		// src
+		//   attrFixedVars = all its projected vars
+		//   varsThatMustBeRenamed = attr vars common with filter
+		//
+		
+		//Map<Var, Var> varMapRhs = VarUtils.createJoinVarMap(attrVarsMentioned, nonDistVarsRhs, attrJoinVars, filterJoinVars, null); //, varNameGenerator);
         Element filterElement = filterRelation.getElement();
-        Element newFilterElement = ElementUtils.createRenamedElement(filterElement, varMap);
+        Element newFilterElement = ElementUtils.createRenamedElement(filterElement, rhsMap);
 
+        
+        // All non-distinguished attr vars are subject to renaming
+		//Map<Var, Var> attrVarMap = VarUtils.createJoinVarMap(filterVarsMentioned, nonDistVarsLHs, attrJoinVars, filterJoinVars, null); //, varNameGenerator);
+		Element attrElement = attrRelation.getElement();
+		Element newAttrElement = ElementUtils.createRenamedElement(attrElement, lhsMap);
+
+//        System.out.println("-----------------------");
+//        if(!newAttrElement.equals(attrElement)) {
+//        	System.out.println("DEBUG POINT");
+//        }
+//		System.out.println(newAttrElement);
+//		System.out.println(newFilterElement);
+
+        
         // TODO Maybe add a flag whether omission of joins should actually be applied
 		// If the filter is a subject concept and its variable appears
         // in the subject position of the attr element,
@@ -164,8 +303,8 @@ public class RelationJoiner {
 					
 					if(!requiresJoin) {
 						// We can omit with a subject concept if there is a join on the subject position
-						Var effectiveFilterVar = varMap.get(rawFilterVar);
-						Op attrOp = Algebra.compile(attrElement);
+						Var effectiveFilterVar = rhsMap.get(rawFilterVar);
+						Op attrOp = Algebra.compile(newAttrElement);
 						Tuple<Set<Var>> tuple = OpVars.mentionedVarsByPosition(attrOp);
 						canOmitJoin = tuple.get(1).contains(effectiveFilterVar);
 					}
@@ -174,15 +313,57 @@ public class RelationJoiner {
         }
         
         List<Element> fes = ElementUtils.toElementList(newFilterElement);
-        List<Element> aes = ElementUtils.toElementList(attrElement);
+        List<Element> aes = ElementUtils.toElementList(newAttrElement);
         //List<Element> combined = ElementUtils.groupIfNeeded(Iterables.concat(fes, aes));
         
         Element newElement = canOmitJoin ?
-        		attrElement : filterRelationFirst
+        		newAttrElement : filterRelationFirst
         			? ElementUtils.groupIfNeeded(Iterables.concat(fes, aes))
         			: ElementUtils.groupIfNeeded(Iterables.concat(aes, fes));
         
         Relation result = new RelationImpl(newElement, attrProjVars);
         return result;
 	}
+
+	public void resolveConflicts(Set<Var> filterVarsMentioned, Set<Var> fixedVarsRhs, Set<Var> conflictVars,
+			Map<Var, Var> lhsMap, Map<Var, Var> rhsMap, Generator<Var> gen) {
+		for(Var v : new HashSet<>(conflictVars)) {
+    		// If the variable is fixed in rhs, its occurrence in in lhs has to be renamed
+    		if(!fixedVarsRhs.contains(v)) {
+    			
+        		// note: A variable can only be fixed in both lhs and rhs if it used on both sides of a join
+        	
+        	
+        		// If the variable is part of the join, try the join var first
+        		Var joinVar = rhsMap.get(v);
+        		Var targetVar = joinVar == null ? v : joinVar;
+        		// If the target var is also in conflict, allocate a fresh variable
+        		// A conflict exists, if the targetVar in mentioned in rhs
+        		// [(?s) x ?o ] X [?s y (?o)]
+        		Var resolvedVar = !Objects.equals(v, joinVar) && filterVarsMentioned.contains(targetVar)
+        				? gen.next()
+        				: targetVar;
+        				
+        		
+        		
+                //rhsToLhs.put(v, resolvedVar);
+        		rhsMap.put(v, resolvedVar);
+        		
+        		// Conflict for this variable resolved
+        		conflictVars.remove(v);
+        		
+        		if(joinVar != null) {
+        			conflictVars.remove(joinVar);
+        			lhsMap.put(joinVar, resolvedVar);
+        			// Update the join entry in the lhs map
+        		}
+    		}
+        }
+	}
+	
+//	
+//	public static RelationJoiner join(Element a, Element b) {
+//		
+//	}
+	
 }
