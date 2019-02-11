@@ -147,6 +147,31 @@ public class BinaryRelationImpl
         return result;
     }
 
+    /**
+     * Create a relation ?s ?o | ?s p ?o
+     * 
+     * @param s
+     * @param p
+     * @param o
+     * @return
+     */
+    public static BinaryRelation createFwd(Var s, Node p, Var o) {
+        BinaryRelation result = new BinaryRelationImpl(ElementUtils.createElementTriple(s, p, o), s, o);
+        return result;
+    }
+
+    /**
+     * Create a relation ?o ?s | ?s p ?o
+     * 
+     * @param s
+     * @param p
+     * @param o
+     * @return
+     */
+    public static BinaryRelation createBwd(Var s, Node p, Var o) {
+        BinaryRelation result = new BinaryRelationImpl(ElementUtils.createElementTriple(s, p, o), o, s);
+        return result;
+    }
 
     @Override
     public int hashCode() {
