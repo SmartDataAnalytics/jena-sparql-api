@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.jgrapht;
+package org.aksw.commons.graph.index.jena;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -18,7 +18,6 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import javax.persistence.criteria.Root;
@@ -26,17 +25,17 @@ import javax.persistence.criteria.Root;
 import org.aksw.commons.collections.tagmap.TagMapSetTrie;
 import org.aksw.commons.collections.tagmap.ValidationUtils;
 import org.aksw.commons.graph.index.core.SubgraphIsomorphismIndex;
-import org.aksw.commons.graph.index.jena.SubgraphIsomorphismIndexJena;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.mapper.jpa.core.RdfEntityManager;
 import org.aksw.jena_sparql_api.mapper.jpa.core.SparqlEntityManagerFactory;
 import org.aksw.jena_sparql_api.mapper.util.JpaUtils;
 import org.aksw.jena_sparql_api.query_containment.index.NodeMapperOp;
-import org.aksw.jena_sparql_api.query_containment.index.NodeMapperOpEquality;
+import org.aksw.jena_sparql_api.query_containment.index.NodeMapperOpContainment;
 import org.aksw.jena_sparql_api.query_containment.index.OpContext;
-import org.aksw.jena_sparql_api.query_containment.index.QueryContainmentIndex;
-import org.aksw.jena_sparql_api.query_containment.index.QueryContainmentIndexImpl;
 import org.aksw.jena_sparql_api.query_containment.index.ResidualMatching;
+import org.aksw.jena_sparql_api.query_containment.index.SparqlQueryContainmentIndex;
+import org.aksw.jena_sparql_api.query_containment.index.SparqlQueryContainmentIndexImpl;
+import org.aksw.jena_sparql_api.query_containment.index.SparqlTreeMapping;
 import org.aksw.jena_sparql_api.query_containment.index.TreeMapping;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.update.FluentSparqlService;
@@ -49,10 +48,11 @@ import org.apache.jena.query.Query;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.util.NodeUtils;
-import org.jgrapht.DirectedGraph;
+import org.jgrapht.Graph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codepoetics.protonpack.functions.TriFunction;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.BiMap;
@@ -74,7 +74,7 @@ public class MainLsqQueryContainmentEvaluation {
         SparqlService ss = FluentSparqlService.http("http://lsq.aksw.org/sparql").create();
 
         emf.setSparqlService(ss);
-        emf.addScanPackageName(MainSparqlQueryToGraph.class.getPackage().getName());
+        emf.addScanPackageName(SubGraphIsomorphismIndexTests.class.getPackage().getName());
         RdfEntityManager em = emf.getObject();
 
         List<LsqQuery> lsqQueries;
@@ -457,19 +457,22 @@ public class MainLsqQueryContainmentEvaluation {
         }
 
     	
-		BiFunction<OpContext, OpContext, NodeMapperOp> nodeMapperFactory = (a, b) -> new NodeMapperOpEquality();
-                
+		//BiFunction<OpContext, OpContext, NodeMapperOp> nodeMapperFactory = (a, b) -> new NodeMapperOpEquality();
+          
+    	TriFunction<OpContext, OpContext, Table<Op, Op, BiMap<Node, Node>>, NodeMapperOp> nodeMapperFactory = NodeMapperOpContainment::new; //(aContext, bContext) -> new NodeMapperOpContainment(aContext, bContext);
+
+        //TriFunction<OpContext, OpContext, Table<Op, Op, BiMap<Node, Node>>, NodeMapperOp> nodeMapperFactory = NodeMapperOpEquality::new;
         //QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, Op> indexA = QueryContainmentIndexImpl.create(nodeMapper);
         //QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, Op> indexB = QueryContainmentIndexImpl.createFlat(nodeMapper);
 
-        SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> siiTreeTags = SubgraphIsomorphismIndexJena.create();
-        SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> siiFlat = SubgraphIsomorphismIndexJena.createFlat();
-        SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> siiTagBased = SubgraphIsomorphismIndexJena.createTagBased(new TagMapSetTrie<>(NodeUtils::compareRDFTerms));
+        SubgraphIsomorphismIndex<Entry<Node, Long>, Graph<Node, Triple>, Node> siiTreeTags = SubgraphIsomorphismIndexJena.create();
+        SubgraphIsomorphismIndex<Entry<Node, Long>, Graph<Node, Triple>, Node> siiFlat = SubgraphIsomorphismIndexJena.createFlat();
+        SubgraphIsomorphismIndex<Entry<Node, Long>, Graph<Node, Triple>, Node> siiTagBased = SubgraphIsomorphismIndexJena.createTagBased(new TagMapSetTrie<>(NodeUtils::compareRDFTerms));
 
-        SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> siiValidating = ValidationUtils.createValidatingProxy(SubgraphIsomorphismIndex.class, siiTreeTags, siiTagBased);
-        SubgraphIsomorphismIndex<Entry<Node, Long>, DirectedGraph<Node, Triple>, Node> sii = siiTreeTags; //siiValidating;
+        SubgraphIsomorphismIndex<Entry<Node, Long>, Graph<Node, Triple>, Node> siiValidating = ValidationUtils.createValidatingProxy(SubgraphIsomorphismIndex.class, siiTreeTags, siiTagBased);
+        SubgraphIsomorphismIndex<Entry<Node, Long>, Graph<Node, Triple>, Node> sii = siiTreeTags; //siiValidating;
         
-        QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, ResidualMatching> index = QueryContainmentIndexImpl.create(sii, nodeMapperFactory);
+        SparqlQueryContainmentIndex<Node, ResidualMatching>index = SparqlQueryContainmentIndexImpl.create(sii, nodeMapperFactory);
                
         //QueryContainmentIndex<Node, DirectedGraph<Node, Triple>, Node, Op, Op> index = ValidationUtils.createValidatingProxy(QueryContainmentIndex.class, indexA, indexB);
         
@@ -653,7 +656,7 @@ public class MainLsqQueryContainmentEvaluation {
 //                    siiA.printTree();
 
                     //Thread.sleep(5000);
-	        		Multimap<Node, TreeMapping<Op, Op, BiMap<Node, Node>, ResidualMatching>> matches = ArrayListMultimap.create();
+	        		Multimap<Node, SparqlTreeMapping<ResidualMatching>> matches = ArrayListMultimap.create();
 	        		
                     System.out.println("Querying view candidates of: " + e.getKey());                    
                     Op op = e.getValue();
@@ -681,7 +684,8 @@ public class MainLsqQueryContainmentEvaluation {
 	            	 
 	               	 // Find all isomorphic ones:
 	               	Set<Node> isomorphicKeys = matches.entries().stream().filter(jj -> {
-	               		TreeMapping<Op, Op, BiMap<Node, Node>, ResidualMatching> treeMapping = jj.getValue();
+	               		SparqlTreeMapping<ResidualMatching> treeMapping = jj.getValue();
+	               		//TreeMapping<Op, Op, BiMap<Node, Node>, ResidualMatching> treeMapping = jj.getValue();
 	               		Op rootA = treeMapping.getaTree().getRoot();
 	               		Op rootB = treeMapping.getbTree().getRoot();
 	               		
