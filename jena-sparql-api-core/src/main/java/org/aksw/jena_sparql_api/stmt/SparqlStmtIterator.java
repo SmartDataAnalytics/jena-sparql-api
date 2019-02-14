@@ -73,7 +73,7 @@ public class SparqlStmtIterator extends AbstractIterator<SparqlStmt> {
 	}
 
 	public static boolean isEmptyString(String str) {
-		return Strings.isNullOrEmpty(str.trim());
+        return str == null ? true : str.trim().isEmpty();
 	}
 
 	// public static raiseException(QueryParseException ex) {
