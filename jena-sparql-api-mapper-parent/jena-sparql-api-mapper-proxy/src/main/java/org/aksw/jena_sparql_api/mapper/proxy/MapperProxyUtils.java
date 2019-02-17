@@ -45,7 +45,6 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.impl.ResourceImpl;
-import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.path.P_Link;
 import org.apache.jena.sparql.path.P_Path0;
@@ -53,6 +52,7 @@ import org.apache.jena.sparql.path.PathParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Defaults;
 import com.google.common.collect.Lists;
 
 import net.sf.cglib.proxy.Enhancer;
@@ -555,10 +555,21 @@ public class MapperProxyUtils {
 					
 					result = p -> s -> ResourceUtils.getPropertyValue(s, p, NodeMapperFactory.uriString);					
 				} else {
+					Object defaultValue = effectiveType.isPrimitive()
+							? Defaults.defaultValue(effectiveType)
+							: null;
+					
 					RDFDatatype dtype = typeMapper.getTypeByClass(effectiveType);
 	
 					if(dtype != null) {
-						result = p -> s -> ResourceUtils.getLiteralPropertyValue(s, p, effectiveType);
+						result = p -> s -> {
+							Object r = ResourceUtils.getLiteralPropertyValue(s, p, effectiveType);
+							if(r == null) {
+								r = defaultValue;
+//								System.out.println(p + " " + effectiveType + " " + defaultValue);
+							}
+							return r;
+						};
 					}
 				}
 			}
@@ -1096,7 +1107,7 @@ public class MapperProxyUtils {
 									return r;
 								});
 								
-								System.out.println("list type");
+//								System.out.println("list type");
 							} else { //if(effectiveCollectionType.isAssignableFrom(Set.class) ||
 									//Set.class.isAssignableFrom(effectiveCollectionType)) {
 								throw new RuntimeException("todo implement");
