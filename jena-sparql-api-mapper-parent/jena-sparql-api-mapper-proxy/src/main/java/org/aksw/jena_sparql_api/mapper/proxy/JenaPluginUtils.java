@@ -17,13 +17,16 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.sys.JenaSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class JenaPluginUtils {
-	
+
 	private static final Logger logger = LoggerFactory.getLogger(JenaPluginUtils.class);
 
+	static { JenaSystem.init(); }
+	
 
 	public static void registerJenaResourceClassesUsingPackageScan(String basePackage) {
 		registerJenaResourceClassesUsingPackageScan(basePackage, BuiltinPersonalities.model);
