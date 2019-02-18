@@ -57,7 +57,7 @@ public class ListFromRDFList
 	public boolean add(RDFNode e) {
 		RDFList newList = getList().with(e);
 		ResourceUtils.setProperty(s, p, newList);
-		System.out.println("list prop: " + s.getProperty(p));
+		//System.out.println("list prop: " + s.getProperty(p));
 		return true;
 	}
 	
@@ -239,7 +239,7 @@ public class ListFromRDFList
          * @see Iterator#remove
          */
         @Override public void remove() {
-        	RDFDataMgr.write(System.out, s.getModel(), RDFFormat.TURTLE_FLAT);
+        	//RDFDataMgr.write(System.out, s.getModel(), RDFFormat.TURTLE_FLAT);
         	
         	
             if (m_seen == null) {
