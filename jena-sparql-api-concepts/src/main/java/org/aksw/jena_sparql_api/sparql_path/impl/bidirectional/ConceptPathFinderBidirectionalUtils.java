@@ -6,13 +6,15 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.aksw.commons.jena.jgrapht.PseudoGraphJenaGraph;
+import org.aksw.commons.jena.jgrapht.PseudoGraphJenaModel;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
@@ -22,7 +24,7 @@ import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
 import org.aksw.jena_sparql_api.core.utils.QueryExecutionUtils;
 import org.aksw.jena_sparql_api.model.QueryExecutionFactoryModel;
-import org.aksw.jena_sparql_api.sparql_path.core.PathConstraint2;
+import org.aksw.jena_sparql_api.sparql_path.core.PathConstraintBase;
 import org.aksw.jena_sparql_api.sparql_path.core.VocabPath;
 import org.aksw.jena_sparql_api.sparql_path.core.algorithm.GraphPathComparator;
 import org.aksw.jena_sparql_api.stmt.SparqlStmt;
@@ -42,6 +44,9 @@ import org.apache.jena.query.Query;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.Var;
@@ -49,6 +54,7 @@ import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sparql.lang.arq.ParseException;
 import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.vocabulary.OWL2;
 import org.jgrapht.Graph;
 import org.jgrapht.GraphPath;
 import org.jgrapht.alg.interfaces.KShortestPathAlgorithm;
@@ -131,7 +137,9 @@ public class ConceptPathFinderBidirectionalUtils {
     		org.apache.jena.graph.Graph baseDataSummary,
     		Boolean shortestPathsOnly,
     		Boolean simplePathsOnly,
-    		Collection<BiPredicate<? super SimplePath, ? super P_Path0>> pathValidators) {
+    		Collection<BiPredicate<? super SimplePath, ? super P_Path0>> pathValidators,
+    		PathConstraintBase pathConstraint,
+    		BiFunction<? super GraphPath<RDFNode, Statement>, ? super Model, SimplePath> convertGraphPathToSparqlPath) {
     	shortestPathsOnly = shortestPathsOnly == null ? false : shortestPathsOnly;
     	simplePathsOnly = simplePathsOnly == null ? false : simplePathsOnly;
     	
@@ -143,19 +151,19 @@ public class ConceptPathFinderBidirectionalUtils {
 
         UnaryRelation typeConcept = createUnboundAwareTypeQuery(sourceConcept);
         
-        Query propertyQuery = typeConcept.asQuery();
-        logger.debug("Property query: " + propertyQuery);
+        Query typeQuery = typeConcept.asQuery();
+        logger.debug("Property query: " + typeQuery);
 
 
         //System.out.println(ResultSetFormatter.asText(qef.createQueryExecution("SELECT * { ?s ?p ?o }").execSelect()));
         //System.out.println(ResultSetFormatter.asText(qef.createQueryExecution("" + propertyQuery).execSelect()));
-        List<Node> nodes = QueryExecutionUtils.executeList(new QueryExecutionFactorySparqlQueryConnection(conn), propertyQuery);
-        logger.debug("Retrieved " + nodes.size() + " properties: " + nodes);
+        List<Node> types = QueryExecutionUtils.executeList(new QueryExecutionFactorySparqlQueryConnection(conn), typeQuery);
+        logger.debug("Retrieved " + types.size() + " properties: " + types);
 
         org.apache.jena.graph.Graph ext = GraphFactory.createDefaultGraph();
 
-        // Add the start node to the transition model
-        for(Node node : nodes) {
+        // Add the start nodes (types) to the transition model
+        for(Node node : types) {
 
             // TODO Hack to see how this affects performance and quality
 //		    if(node.getURI().startsWith("http://dbpedia.org/property/")) {
@@ -190,8 +198,10 @@ public class ConceptPathFinderBidirectionalUtils {
         QueryExecutionFactory qefMeta = new QueryExecutionFactoryModel(joinSummaryGraph);
 
         
-		Graph<Node, Triple> graph = new PseudoGraphJenaGraph(union);
-
+        Model unionModel = ModelFactory.createModelForGraph(union);
+		//Graph<Node, Triple> graph = new PseudoGraphJenaGraph(union);
+        Graph<RDFNode, Statement> graph = new PseudoGraphJenaModel(unionModel);
+        
         // Now transform the target query so the find candidate nodes in the transition graph
 
         // Essentially:
@@ -202,7 +212,8 @@ public class ConceptPathFinderBidirectionalUtils {
 
         //String test = "Prefix o:<http://foo.bar/> Prefix geo:<http://www.w3.org/2003/01/geo/wgs84_pos#> Select ?s { ?s o:connectsTo geo:long ; o:connectsTo geo:lat }";
 
-        Concept targetCandidateConcept = PathConstraint2.getPathConstraintsSimple(targetConcept);
+		
+        Concept targetCandidateConcept = pathConstraint.getPathConstraintsSimple(targetConcept);
         Query targetCandidateQuery = targetCandidateConcept.asQuery();
 
         //Query query = QueryFactory.create(test);
@@ -221,8 +232,11 @@ public class ConceptPathFinderBidirectionalUtils {
 
 
 //        // Convert the join summary to a jGraphT object
-        Node startVertex = VocabPath.start.asNode();
-        Node endVertex = VocabPath.end.asNode();
+//        Node startVertex = VocabPath.start.asNode();
+//        Node endVertex = VocabPath.end.asNode();
+        RDFNode startVertex = VocabPath.start;
+        RDFNode endVertex = VocabPath.end;
+        
 //        DefaultDirectedGraph<Node, DefaultEdge> graph = new DefaultDirectedGraph<Node, DefaultEdge>(DefaultEdge.class);
 //
 //
@@ -269,13 +283,16 @@ public class ConceptPathFinderBidirectionalUtils {
             	//DijkstraShortestPath<Node, Triple> dijkstraShortestPath = new DijkstraShortestPath<>(graph);
                 //GraphPath<Node, Triple> tmp = dijkstraShortestPath.getPath(startVertex, candidate);
         
-        List<GraphPath<Node, Triple>> candidateGraphPaths;
-    	Integer _maxPathLength = maxLength == null ? null : maxLength.intValue() * 2 + 2; // The '+ 2' is for the edges of the start and end vertex
+        List<GraphPath<RDFNode, Statement>> candidateGraphPaths;
+        // TODO version 2 of the path finder needs to multiple path length by 2
+    	Integer _maxPathLength = maxLength == null ? null : maxLength.intValue() + 2; // The '+ 2' is for the edges of the start and end vertex
 
     	int n = nPaths == null ? Integer.MAX_VALUE : Ints.checkedCast(nPaths);
 
     	if(!shortestPathsOnly) {
-        	AllDirectedPaths<Node, Triple> pathAlgo = new AllDirectedPaths<>(graph);
+    		//graph.edgeSet().forEach(System.out::println);
+    		
+        	AllDirectedPaths<RDFNode, Statement> pathAlgo = new AllDirectedPaths<>(graph);
         	candidateGraphPaths = pathAlgo.getAllPaths(startVertex, endVertex, simplePathsOnly, _maxPathLength);
         } else {
         	
@@ -283,7 +300,7 @@ public class ConceptPathFinderBidirectionalUtils {
         		// Prevent illegale argument exception at jgrapht
         		candidateGraphPaths = Collections.emptyList();         		        		
         	} else {
-	        	KShortestPathAlgorithm<Node, Triple> kShortestPaths = _maxPathLength == null
+	        	KShortestPathAlgorithm<RDFNode, Statement> kShortestPaths = _maxPathLength == null
 	        			? new KShortestSimplePaths<>(graph)
 	        			: new KShortestSimplePaths<>(graph, _maxPathLength);
 
@@ -326,8 +343,8 @@ public class ConceptPathFinderBidirectionalUtils {
 
         boolean detectEquivalentPaths = false;
         if(detectEquivalentPaths) {
-            Multimap<SimplePath, GraphPath<Node, Triple>> index = Multimaps.index(candidateGraphPaths, ConceptPathFinderBidirectionalUtils::convertGraphPathToSparqlPath);
-	        for(Entry<SimplePath, Collection<GraphPath<Node, Triple>>> entry : index.asMap().entrySet()) {
+            Multimap<SimplePath, GraphPath<RDFNode, Statement>> index = Multimaps.index(candidateGraphPaths, path -> convertGraphPathToSparqlPath.apply(path, joinSummaryGraph));
+	        for(Entry<SimplePath, Collection<GraphPath<RDFNode, Statement>>> entry : index.asMap().entrySet()) {
 	        	if(entry.getValue().size() > 1) {
 	        		System.out.println("MULTI MAP " + entry.getKey());
 	        		entry.getValue().forEach(System.out::println);
@@ -339,7 +356,7 @@ public class ConceptPathFinderBidirectionalUtils {
         
         // Convert the graph paths to 'ConceptPaths'   
         Stream<SimplePath> tmp = candidateGraphPaths.stream()
-            	.map(ConceptPathFinderBidirectionalUtils::convertGraphPathToSparqlPath)
+            	.map(path -> convertGraphPathToSparqlPath.apply(path, unionModel))
             	.filter(x -> x != null);
         
         
@@ -580,11 +597,79 @@ public class ConceptPathFinderBidirectionalUtils {
         return result;
     }
 
+    public static boolean isFwd3(Node p) {
+        boolean result = !p.toString().contains("transition-inverse");
+        return result;
+    }
     
-    public static SimplePath convertGraphPathToSparqlPath(GraphPath<Node, Triple> graphPath) {
+    
+    // TODO We need access to the model in order to retrieve attributes of singular predicates
+    // Either change Graph<Node, Triple> to Graph<RDFNode, Statement>, or pass the model as an argument
+    public static SimplePath convertGraphPathToSparqlPath3(GraphPath<RDFNode, Statement> graphPath, Model model) {
     	
-        List<Triple> el = graphPath.getEdgeList();
-        List<Triple> effectiveEdgeList = el.subList(1, el.size() - 1);
+        List<Statement> el = graphPath.getEdgeList();
+        List<Statement> effectiveEdgeList = el.subList(1, el.size() - 1);
+        
+        SimplePath result = null;
+        try {
+	        List<P_Path0> steps = Streams.mapWithIndex(effectiveEdgeList.stream(), Maps::immutableEntry)
+//	        	.filter(e -> e.getValue() % 2 == 0)
+	        	.map(e -> e.getKey())
+	        	// We may get a NPE here if t.getPredicate() could not be classified
+	        	.map(t -> {	        		
+	        		// We always access transititon data via the non-inverse edge
+	        		Resource p = t.getPredicate();
+	        		
+	        		boolean isFwd = true;
+	        		Resource transitionPredicate = p.getPropertyResourceValue(OWL2.annotatedProperty);
+	        		if(transitionPredicate == null) {
+		        		transitionPredicate = Optional.ofNullable(p.getPropertyResourceValue(OWL2.inverseOf))
+		        				.map(x -> x.getPropertyResourceValue(OWL2.annotatedProperty)).orElse(null);
+	        			isFwd = false;
+	        		}
+	        		// transitionPredicate should never be null at this stage
+	        		
+	        		P_Path0 step = PathUtils.createStep(transitionPredicate.asNode(), isFwd);
+	        		return step;
+	        	})
+	        	.collect(Collectors.toList())
+	        	;
+
+	        result = new SimplePath(steps);
+        } catch(Exception e) {
+        	logger.debug("Harmless exception - but may indicate a bug in the algo or issue with input data: ", e);
+        }
+        
+//        effectiveEdgeList
+//        	.stream().fi
+//        for(int i = 0; i < effectiveEdgeList.size(); i += 2) {
+//        	Triple t = effectiveEdgeList.get(i);
+//        	
+//        	Node p = t.getPredicate();
+//            String propertyName = t.getObject().getURI();
+//
+//            Boolean isFwd =
+//            		VocabPath.hasOutgoingPredicate.asNode().equals(p) ? (Boolean)true :
+//            		VocabPath.hasIngoingPredicate.asNode().equals(p) ? (Boolean)false :
+//            		null;
+//
+//            if(isFwd == null) {
+//            	continue;
+//            }
+//
+//            Step step = new Step(propertyName, !isFwd);
+//            steps.add(step);
+//        }
+//        
+//        Path result = new Path(steps);
+        return result;
+
+    }
+
+    public static SimplePath convertGraphPathToSparqlPath(GraphPath<RDFNode, Statement> graphPath, Model model) {
+    	
+        List<Statement> el = graphPath.getEdgeList();
+        List<Statement> effectiveEdgeList = el.subList(1, el.size() - 1);
         
         SimplePath result = null;
         try {
@@ -592,7 +677,7 @@ public class ConceptPathFinderBidirectionalUtils {
 	        	.filter(e -> e.getValue() % 2 == 0)
 	        	.map(e -> e.getKey())
 	        	// We may get a NPE here if t.getPredicate() could not be classified
-	        	.map(t -> PathUtils.createStep(t.getObject(), isFwd(t.getPredicate())))
+	        	.map(t -> PathUtils.createStep(t.getObject().asNode(), isFwd(t.getPredicate().asNode())))
 	        	.collect(Collectors.toList())
 	        	;
 
