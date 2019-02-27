@@ -18,7 +18,7 @@ CONSTRUCT {
     ?s ?p ?o
     FILTER(!STRSTARTS(STR(?p), 'http://www.w3.org/1999/02/22-rdf-syntax-ns#_'))
     FILTER(?p NOT IN (rdf:type))
-    FILTER(!isLiteral(?o))
+    # FILTER(!isLiteral(?o))
 
     OPTIONAL { ?s a ?stmp }
     OPTIONAL { ?o a ?otmp }
