@@ -52,6 +52,7 @@ import org.apache.jena.sparql.path.PathParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Converter;
 import com.google.common.base.Defaults;
 import com.google.common.collect.Lists;
 
@@ -241,22 +242,22 @@ public class MapperProxyUtils {
         return result;
     }
    
-	public static Function<Class<?>, Function<Property, Function<Resource, Object>>>
-		viewAsDynamicList(Method m, boolean isIriType, TypeMapper typeMapper)
-	{
-//		Function<Class<?>, Function<Property, Function<Resource, Object>>> result = null;
-//
-//		// Check for subClassOf List
-//		Class<?> baseItemType = canActAsCollectionView(m, List.class, true, null);
-//		if(baseItemType != null) {
-//
-//			
-//			
-//			result = clazz -> viewAsCollectionViewer(m, isIriType, typeMapper, clazz);
-//
-//		}
-		return null;
-	}
+//	public static Function<Class<?>, Function<Property, Function<Resource, Object>>>
+//		viewAsDynamicList(Method m, boolean isIriType, TypeMapper typeMapper)
+//	{
+////		Function<Class<?>, Function<Property, Function<Resource, Object>>> result = null;
+////
+////		// Check for subClassOf List
+////		Class<?> baseItemType = canActAsCollectionView(m, List.class, true, null);
+////		if(baseItemType != null) {
+////
+////			
+////			
+////			result = clazz -> viewAsCollectionViewer(m, isIriType, typeMapper, clazz);
+////
+////		}
+//		return null;
+//	}
     
     /**
      * The collection view factory first takes the class that denotes the item type as argument.
@@ -298,7 +299,23 @@ public class MapperProxyUtils {
 		return result;
 	}
 
-    
+
+	public static Function<Class<?>, Function<Property, Function<Resource, Object>>>
+		viewAsDynamicList(Method m, boolean isIriType, TypeMapper typeMapper)
+	{		
+		Function<Class<?>, Function<Property, Function<Resource, Object>>> result = null;
+
+		// Check for superClassOfSet
+		Class<?> baseItemType = canActAsCollectionView(m, List.class, true, null);
+	
+	
+		if(baseItemType != null) {
+			result = clazz -> viewAsList(m, isIriType, typeMapper, clazz);
+		}
+		
+		return result;
+	}
+
 	public static Function<Property, Function<Resource, Object>> viewAsSet(Method m, boolean isIriType, TypeMapper typeMapper, Class<?> itemType) {
 		Function<Property, Function<Resource, Object>> result = null;
 
@@ -337,7 +354,10 @@ public class MapperProxyUtils {
 		} else if(RDFNode.class.isAssignableFrom(itemType)) {
 			@SuppressWarnings("unchecked")
 			Class<? extends RDFNode> rdfType = (Class<? extends RDFNode>)itemType;
-			result = p -> s -> new ListFromRDFList(s, p);//new SetFromPropertyValues<>(s, p, rdfType);						
+			
+			// TODO Apply a filter to the list
+			
+			result = p -> s -> new ListFromConverter<>(new ListFromRDFList(s, p), Converter.<RDFNode, RDFNode>from(r -> r, r -> r.as(rdfType)));//new SetFromPropertyValues<>(s, p, rdfType);						
 		} else {
 			RDFDatatype dtype = typeMapper.getTypeByClass(itemType);
 			
@@ -677,7 +697,7 @@ public class MapperProxyUtils {
 	/**
 	 * Check if the method signature matches the pattern:
 	 * 
-	 * <T extends SomeSubClassOfResource> IterableBaseClass[T] method(Class[T])
+	 * IterableClass<T extends SomeSubClassOfResource> IterableBaseClass[T] method(Class[T])
 	 * 
 	 * IterableClass: A candidate method must return a this class or a super class.
 	 * Example: If a method with a return type of Set.class is searched, then methods with return type Iterable and Collection
@@ -1050,23 +1070,26 @@ public class MapperProxyUtils {
 
 					
 					if(isDynamicGetter) {
+						Function<Class<?>, Function<Property, Function<Resource, Object>>> collectionGetter;
 						if(isSetType) {
-							Function<Class<?>, Function<Property, Function<Resource, Object>>> collectionGetter = viewAsDynamicSet(readMethod, isIriType, typeMapper);
-							if(collectionGetter != null) {
-								readImpl = (o, args) -> {
-									Class<?> clz = Objects.requireNonNull((Class<?>)args[0]);
-									Function<Property, Function<Resource, Object>> ps = collectionGetter.apply(clz);
-									Function<Resource, Object> s = ps.apply(p);
-									Object r = s.apply((Resource)o);
-									return r;
-								};
-								
-								methodImplMap.put(readMethod, readImpl);
-							}
-						}
-						else {
+							collectionGetter = viewAsDynamicSet(readMethod, isIriType, typeMapper);
+						} else if(isListType) {
+							collectionGetter = viewAsDynamicList(readMethod, isIriType, typeMapper);
+						} else {
 							throw new RuntimeException("todo dynamic collection support implement");
+						}
+
+
+						if(collectionGetter != null) {
+							readImpl = (o, args) -> {
+								Class<?> clz = Objects.requireNonNull((Class<?>)args[0]);
+								Function<Property, Function<Resource, Object>> ps = collectionGetter.apply(clz);
+								Function<Resource, Object> s = ps.apply(p);
+								Object r = s.apply((Resource)o);
+								return r;
+							};
 							
+							methodImplMap.put(readMethod, readImpl);
 						}
 							
 							
