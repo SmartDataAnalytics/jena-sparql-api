@@ -26,6 +26,16 @@ import org.apache.jena.sparql.lang.arq.ParseException;
  */
 public class RDFDataMgrEx {
 
+	public static void execSparql(Model model, String filenameOrURI) {
+		try(RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.wrap(model))) {
+			execSparql(conn, filenameOrURI);
+		}
+	}
+	
+	public static void execSparql(RDFConnection conn, String filenameOrURI) {
+		readConnection(conn, filenameOrURI, null);
+	}
+	
 	public static void readConnection(RDFConnection conn, String filenameOrURI, Consumer<Quad> quadConsumer) {
 		//Sink<Quad> sink = SparqlStmtUtils.createSink(outFormat, System.out);
 		

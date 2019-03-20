@@ -27,6 +27,10 @@ public class JenaPluginUtils {
 
 	static { JenaSystem.init(); }
 	
+	public static void registerJenaResourceClassesUsingPackageScan(Class<?> prototypeClass) {
+		String basePackage = prototypeClass.getPackage().getName();
+		registerJenaResourceClassesUsingPackageScan(basePackage, BuiltinPersonalities.model);
+	}
 
 	public static void registerJenaResourceClassesUsingPackageScan(String basePackage) {
 		registerJenaResourceClassesUsingPackageScan(basePackage, BuiltinPersonalities.model);

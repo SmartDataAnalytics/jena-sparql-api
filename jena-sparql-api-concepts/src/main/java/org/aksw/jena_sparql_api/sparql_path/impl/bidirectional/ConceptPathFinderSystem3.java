@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.sparql_path.impl.bidirectional;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -100,34 +101,57 @@ public class ConceptPathFinderSystem3
 	}
 
 	
+	public static void main(String[] args) throws Exception {
+		DatasetDescription datasetDescription = new DatasetDescription();
+		//datasetDescription.addDefaultGraphURI("http://dbpedia.org/wkd_uris");
+		datasetDescription.addDefaultGraphURI("http://dbpedia.org");
+		
+		try(RDFConnection conn = wrapWithDatasetAndXmlContentType("http://localhost:8890/sparql", datasetDescription)) {
+			ConceptPathFinderSystem system = new ConceptPathFinderSystem3();
+			Model model = system.computeDataSummary(conn).blockingGet();
+
+			RDFDataMgr.write(new FileOutputStream("/home/raven/dbpedia-data-summary.ttl"), model, RDFFormat.TURTLE_PRETTY);
+		}
+	}
+
+	public static RDFConnection wrapWithDatasetAndXmlContentType(String url, DatasetDescription datasetDescription) {
+		RDFConnection rawConn = RDFConnectionFactory.connect("http://localhost:8890/sparql");
+		RDFConnection result = wrapWithDatasetAndXmlContentType(rawConn, datasetDescription);
+		return result;
+	}
 	
-	public static void main(String[] args) {
+	public static RDFConnection wrapWithDatasetAndXmlContentType(RDFConnection rawConn, DatasetDescription datasetDescription) {
+		RDFConnection result =
+				new RDFConnectionModular(new SparqlQueryConnectionJsa(
+						FluentQueryExecutionFactory
+							.from(new QueryExecutionFactorySparqlQueryConnection(rawConn))
+							.config()
+							.withClientSideConstruct()
+							.withDatasetDescription(datasetDescription)
+							.withPostProcessor(qe -> {
+								if(qe instanceof QueryEngineHTTP) {
+									((QueryEngineHTTP)qe).setSelectContentType(WebContent.contentTypeResultsXML);
+								}
+							})
+							.end()
+							.create()
+							), rawConn, rawConn);
+
+		return result;
+	}
+	
+	public static void main2(String[] args) {
 		DatasetDescription datasetDescription = new DatasetDescription();
 		//datasetDescription.addDefaultGraphURI("http://dbpedia.org/wkd_uris");
 		datasetDescription.addDefaultGraphURI("http://project-hobbit.eu/benchmark/fbb2/");
 		
-		try(RDFConnection rawConn = RDFConnectionFactory.connect("http://localhost:8890/sparql")) {
+		try(RDFConnection conn = wrapWithDatasetAndXmlContentType("http://localhost:8890/sparql", datasetDescription)) {
 		
 			
 			//RDFConnection baseConn = RDFConnectionFactory.connect(DatasetFactory.create());
 
 			// Wrap the connection to use a different content type for queries...
 			// Jena rejects some of Virtuoso's json output
-			@SuppressWarnings("resource")
-			RDFConnection conn =
-					new RDFConnectionModular(new SparqlQueryConnectionJsa(
-							FluentQueryExecutionFactory
-								.from(new QueryExecutionFactorySparqlQueryConnection(rawConn))
-								.config()
-								.withDatasetDescription(datasetDescription)
-								.withPostProcessor(qe -> {
-									if(qe instanceof QueryEngineHTTP) {
-										((QueryEngineHTTP)qe).setSelectContentType(WebContent.contentTypeResultsXML);
-									}
-								})
-								.end()
-								.create()
-								), rawConn, rawConn);
 
 //			ConceptPathFinderSystem system = new ConceptPathFinderSystemBidirectional();
 			ConceptPathFinderSystem system = new ConceptPathFinderSystem3();

@@ -1167,7 +1167,7 @@ public class MapperProxyUtils {
 				} else { // Case for scalar values / non-collections
 					
 					if(effectiveType == null) {
-						throw new RuntimeException("Incompatible types on getter / setter for property " + beanPropertyName);
+						throw new RuntimeException("Incompatible types on getter / setter for property '" + beanPropertyName + "'");
 					}
 					
 					// Scalar case
