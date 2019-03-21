@@ -6,8 +6,10 @@ import java.math.BigInteger;
 import java.util.Objects;
 
 import org.apache.jena.datatypes.RDFDatatype;
+import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.rdf.model.RDFNode;
 
 /**
  * NodeMapper based on an RDFDatatype
@@ -35,7 +37,8 @@ public class NodeMapperRdfDatatype<T>
 	
 	public static boolean canMapCore(Node node, RDFDatatype dtype) {
 		// TODO we could make use of spring's conversion service to allow implicit conversions (e.g. int -> long)
-		boolean result = node.isLiteral() && dtype.isValidValue(node.getLiteralValue());
+		Object value = node.getLiteralValue();
+		boolean result = node.isLiteral() && dtype.isValidValue(value);
 		return result;		
 	}
 	
@@ -52,6 +55,25 @@ public class NodeMapperRdfDatatype<T>
 		return result;
 	}
 
+	public static <T> T toJavaCore(Node node, Class<?> clazz) {
+		Object obj = node.isLiteral() ? node.getLiteralValue() : null;
+		Class<?> objClass = obj == null ? null : obj.getClass();
+		
+		T result;
+		if(objClass != null && clazz.isAssignableFrom(objClass)) {
+			result = (T)obj;
+		} else {
+			TypeMapper tm = TypeMapper.getInstance();
+			RDFDatatype dtype = tm.getTypeByClass(clazz);
+
+			Objects.requireNonNull(dtype, "Expected an RDFDatatype for java class '" + clazz + "'");
+			
+			result = toJavaCore(node, dtype);
+		}
+
+		return result;
+	}
+	
 	@SuppressWarnings("unchecked")
 	public static <T> T toJavaCore(Node node, RDFDatatype dtype) {
 		Object obj;

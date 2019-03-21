@@ -104,11 +104,19 @@ public class ResourceUtils {
 	public static boolean canAsLiteral(Statement stmt, Class<?> clazz) {
 		TypeMapper tm = TypeMapper.getInstance();
 		RDFDatatype dtype = tm.getTypeByClass(clazz);
-
 		
 		RDFNode o = stmt.getObject();
-				
-		boolean result = dtype != null && o.isLiteral() && NodeMapperRdfDatatype.canMapCore(o.asNode(), dtype);
+		
+		Node node = o.asNode();
+		Object obj = node.isLiteral() ? node.getLiteral().getValue() : null;
+		Class<?> oClass = obj == null ? null : obj.getClass();
+		
+		// We check on two levels:
+		// (a) Is 'clazz' assignable to the Java type of stmt's object? 
+		// (b) Is there an RDFDatatype corresponding to the requested clazz
+		boolean result = oClass != null && clazz.isAssignableFrom(oClass)
+				|| dtype != null && o.isLiteral() && NodeMapperRdfDatatype.canMapCore(node, dtype);
+		
 		return result;
 	}
 
@@ -128,10 +136,11 @@ public class ResourceUtils {
 //	}
 
 	public static <T> T getLiteralValue(Statement stmt, Class<T> clazz) {
-		TypeMapper tm = TypeMapper.getInstance();
-		RDFDatatype dtype = tm.getTypeByClass(clazz);
+//		TypeMapper tm = TypeMapper.getInstance();
+//		RDFDatatype dtype = tm.getTypeByClass(clazz);
 		RDFNode o = stmt.getObject();
-		T result = NodeMapperRdfDatatype.toJavaCore(o.asNode(), dtype);
+		Node node = o.asNode();
+		T result = NodeMapperRdfDatatype.toJavaCore(node, clazz);
 		return result;
 	}
 
@@ -293,6 +302,10 @@ public class ResourceUtils {
 		return result;		
 	}
 
+	public static StmtIterator listReverseProperties(RDFNode s) {		
+		StmtIterator result = s.getModel().listStatements(null, null, s);
+		return result;
+	}
 	
 	// NOTE Inverse properties cannot refer to literals
 	public static StmtIterator listReverseProperties(RDFNode s, Property p) {		

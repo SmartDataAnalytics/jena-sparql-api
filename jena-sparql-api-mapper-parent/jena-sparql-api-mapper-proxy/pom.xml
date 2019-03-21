@@ -31,5 +31,10 @@
 			<artifactId>cglib</artifactId>
 		</dependency>
 
+<!-- 		<dependency> -->
+<!-- 			<groupId>net.bytebuddy</groupId> -->
+<!-- 			<artifactId>byte-buddy</artifactId> -->
+<!-- 			<version>1.9.10</version> -->
+<!-- 		</dependency> -->
 	</dependencies>
 </project>

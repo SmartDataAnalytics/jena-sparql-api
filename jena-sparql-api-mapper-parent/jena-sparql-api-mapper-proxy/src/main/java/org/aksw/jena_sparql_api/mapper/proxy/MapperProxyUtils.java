@@ -1,6 +1,8 @@
 package org.aksw.jena_sparql_api.mapper.proxy;
 
 import java.beans.Introspector;
+import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -1311,7 +1313,19 @@ public class MapperProxyUtils {
 		
 		BiFunction<Node, EnhGraph, T> result;
 		boolean useCgLib = true;
+		
+		
 		if(useCgLib) {
+//			new ByteBuddy()
+//			.subclass(ResourceImpl.class)
+//			.implement(clazz)
+//			.method(ElementMatchers.any())
+//				.intercept(InvocationHandlerAdapter.of((proxy, method, args) -> {
+//					return null;
+//				}))
+//			.make()
+//			.load(clazz.getClassLoader());
+
 			Enhancer enhancer = new Enhancer();
 			enhancer.setSuperclass(ResourceImpl.class);
 			enhancer.setInterfaces(new Class<?>[] { clazz });
@@ -1325,7 +1339,26 @@ public class MapperProxyUtils {
 				    if(delegate != null) {
 				    	r = delegate.apply(obj, args);
 				    } else if(method.isDefault()) {
-				    	throw new RuntimeException("Cannot handle default method yet; TODO Implement something from https://stackoverflow.com/questions/22614746/how-do-i-invoke-java-8-default-methods-reflectively");
+				    	Class<?> declaringClass = method.getDeclaringClass();
+				    	Constructor<Lookup> constructor =
+			    			Lookup.class.getDeclaredConstructor(Class.class);
+		                constructor.setAccessible(true);
+
+		                r = constructor.newInstance(declaringClass)
+	                    .in(declaringClass)
+	                    .unreflectSpecial(method, declaringClass)
+	                    .bindTo(obj)
+	                    .invokeWithArguments(args);
+			                
+
+			                //r = method.invoke(hack, args);
+			                
+			                //				    	r = MethodHandles.lookup()
+//					    	.in(declaringClass)
+//					    	.unreflectSpecial(method, declaringClass)
+//					    	.bindTo(proxy)
+//					    	.invokeWithArguments(args);
+				    	//throw new RuntimeException("Cannot handle default method yet; TODO Implement something from https://stackoverflow.com/questions/22614746/how-do-i-invoke-java-8-default-methods-reflectively");
 //				    	declaringClass = method.getDeclaringClass();
 //				    	   constructor = MethodHandles.Lookup.class.getDeclaredConstructor(Class.class, int.class);
 //
