@@ -50,7 +50,16 @@ import org.apache.jena.update.UpdateRequest;
 public class SparqlStmtUtils {
 
 
-	public static Stream<SparqlStmt> processFile(RDFConnection conn, PrefixMapping pm, String filenameOrURI)
+	/**
+	 * 
+	 * @param pm A <b>modifiable<b> prefix mapping
+	 * @param filenameOrURI
+	 * @return
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 * @throws ParseException
+	 */
+	public static Stream<SparqlStmt> processFile(PrefixMapping pm, String filenameOrURI)
 			throws FileNotFoundException, IOException, ParseException {
 		
 		Context context = null;
@@ -86,6 +95,7 @@ public class SparqlStmtUtils {
 //		String dirName = file.getParentFile().getAbsoluteFile().toURI().toString();
 
 		Prologue prologue = new Prologue();
+		//prologue.getPrefixMapping().setNsPrefixes(pm);
 		prologue.setPrefixMapping(pm);
 
 		prologue.setBaseURI(dirName);
@@ -95,6 +105,7 @@ public class SparqlStmtUtils {
 
 		
 		// Wrap the parser with tracking the prefixes
+		//SparqlStmtParser sparqlStmtParser = SparqlStmtParser.wrapWithNamespaceTracking(prologue.getPrefixMapping(), rawSparqlStmtParser);
 		SparqlStmtParser sparqlStmtParser = SparqlStmtParser.wrapWithNamespaceTracking(pm, rawSparqlStmtParser);
 //				Function<String, SparqlStmt> sparqlStmtParser = s -> {
 //					SparqlStmt r = rawSparqlStmtParser.apply(s);

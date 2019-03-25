@@ -8,9 +8,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
-import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
-import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
-import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
+import org.aksw.jena_sparql_api.core.RDFConnectionFactoryEx;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinder;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinderBase;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinderFactorySummaryBase;
@@ -28,14 +26,11 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
-import org.apache.jena.rdfconnection.RDFConnectionModular;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
-import org.apache.jena.riot.WebContent;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.DatasetDescription;
-import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
 import org.apache.jena.sparql.lang.arq.ParseException;
 
 import io.reactivex.Flowable;
@@ -116,29 +111,10 @@ public class ConceptPathFinderSystem3
 
 	public static RDFConnection wrapWithDatasetAndXmlContentType(String url, DatasetDescription datasetDescription) {
 		RDFConnection rawConn = RDFConnectionFactory.connect("http://localhost:8890/sparql");
-		RDFConnection result = wrapWithDatasetAndXmlContentType(rawConn, datasetDescription);
+		RDFConnection result = RDFConnectionFactoryEx.wrapWithDatasetAndXmlContentType(rawConn, datasetDescription);
 		return result;
 	}
 	
-	public static RDFConnection wrapWithDatasetAndXmlContentType(RDFConnection rawConn, DatasetDescription datasetDescription) {
-		RDFConnection result =
-				new RDFConnectionModular(new SparqlQueryConnectionJsa(
-						FluentQueryExecutionFactory
-							.from(new QueryExecutionFactorySparqlQueryConnection(rawConn))
-							.config()
-							.withClientSideConstruct()
-							.withDatasetDescription(datasetDescription)
-							.withPostProcessor(qe -> {
-								if(qe instanceof QueryEngineHTTP) {
-									((QueryEngineHTTP)qe).setSelectContentType(WebContent.contentTypeResultsXML);
-								}
-							})
-							.end()
-							.create()
-							), rawConn, rawConn);
-
-		return result;
-	}
 	
 	public static void main2(String[] args) {
 		DatasetDescription datasetDescription = new DatasetDescription();

@@ -66,7 +66,7 @@ public class TestMapperProxyUtils {
 	@Test
 	public void testScalarString() {
 		JenaSystem.init();
-		JenaPluginUtils.registerJenaResourceClass(TestResource.class);
+		JenaPluginUtils.registerJenaResourceClasses(TestResource.class);
 		TestResource sb = ModelFactory.createDefaultModel().createResource().as(TestResource.class);
 		
 		Assert.assertNull(sb.getString());
@@ -77,7 +77,7 @@ public class TestMapperProxyUtils {
 	@Test
 	public void testScalarInteger() {
 		JenaSystem.init();
-		JenaPluginUtils.registerJenaResourceClass(TestResource.class);
+		JenaPluginUtils.registerJenaResourceClasses(TestResource.class);
 		TestResource sb = ModelFactory.createDefaultModel().createResource().as(TestResource.class);
 		
 		Assert.assertNull(sb.getInteger());
@@ -88,7 +88,7 @@ public class TestMapperProxyUtils {
 	@Test
 	public void testScalarIri() {
 		JenaSystem.init();
-		JenaPluginUtils.registerJenaResourceClass(TestResource.class);
+		JenaPluginUtils.registerJenaResourceClasses(TestResource.class);
 		TestResource sb = ModelFactory.createDefaultModel().createResource().as(TestResource.class);
 		
 		
@@ -107,7 +107,7 @@ public class TestMapperProxyUtils {
 	@Test
 	public void testList() {
 		JenaSystem.init();
-		JenaPluginUtils.registerJenaResourceClass(TestResource.class);
+		JenaPluginUtils.registerJenaResourceClasses(TestResource.class);
 		TestResource sb = ModelFactory.createDefaultModel().createResource().as(TestResource.class);
 		
 		
@@ -128,7 +128,7 @@ public class TestMapperProxyUtils {
 	@Test
 	public void testDynamicSet() {		
 		JenaSystem.init();
-		JenaPluginUtils.registerJenaResourceClass(TestResource.class);
+		JenaPluginUtils.registerJenaResourceClasses(TestResource.class);
 		TestResource sb = ModelFactory.createDefaultModel().createResource().as(TestResource.class);
 		
 		Assert.assertEquals(Collections.emptySet(), sb.getDynamicSet(Integer.class));

@@ -55,8 +55,10 @@ public class JenaPluginUtils {
 		}
 	}
 
-	public static void registerJenaResourceClass(Class<?> clazz) {
-		registerJenaResourceClass(clazz, BuiltinPersonalities.model, PrefixMapping.Extended);
+	public static void registerJenaResourceClasses(Class<?> ... classes) {
+		for(Class<?> clazz : classes) {
+			registerJenaResourceClass(clazz, BuiltinPersonalities.model, PrefixMapping.Extended);
+		}
 	}
 	
 	
