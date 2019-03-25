@@ -90,7 +90,8 @@ public class NodeMapperRdfDatatype<T>
 			if(javaClass.equals(BigDecimal.class)) {
 				obj = new BigDecimal(lex);
 			} else if(javaClass.equals(BigInteger.class)) {
-				obj = new BigInteger(lex);
+				BigDecimal tmp = new BigDecimal(lex);
+				obj = tmp.toBigInteger();//new BigInteger(lex);
 			} else {
 				Method m;
 				try {
