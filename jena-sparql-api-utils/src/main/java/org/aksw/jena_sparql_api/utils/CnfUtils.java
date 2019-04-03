@@ -91,12 +91,17 @@ public class CnfUtils {
     /**
      * Extract from the CNF all mappings from a variable to constant, i.e.
      * if there is ?x = foo, then the result will contain the mapping ?x -> foo.
-     *
+     * 
+     * 
+     * If there are conflicting mappings, return an arbitrary one.
+     * The idea is, that using these mappings, one can evaluate remaining expressions.
+     * In the case of conflicts, these will simply evaluate to FALSE.
+     * 
      *
      * @param cnf
      * @return
      */
-    public static Map<Var, Node> getConstants(Iterable<? extends Collection <? extends Expr>> cnf) {
+    public static Map<Var, Node> getConstants(Iterable<? extends Collection <? extends Expr>> cnf, boolean suppressConflicts) {
         Map<Var, Node> result = new HashMap<Var, Node>();
 
         // Inconsistent variables are those mapping to different values
@@ -115,8 +120,10 @@ public class CnfUtils {
                 Node o = result.get(v);
                 if(o != null && !o.equals(c) && !inconsistent.contains(v)) {
                     inconsistent.add(v);
+                    if(suppressConflicts) {
+                        result.remove(v);                    	
+                    }
                     //c = NodeValue.FALSE.getNode();
-                    result.remove(v);
                 } else {
                     result.put(v, c);
                 }

@@ -24,6 +24,7 @@ public class ClauseUtils
 {
 
     public static final Set<Expr> TRUE = Collections.<Expr>singleton(NodeValue.TRUE);
+    public static final Set<Expr> FALSE = Collections.<Expr>singleton(NodeValue.FALSE);
 
 
     public static Map<Var, NodeValue> extractConstantConstraints(Collection<? extends Expr> clause) {

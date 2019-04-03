@@ -144,7 +144,7 @@ public class AlgebraUtils {
         Set<Quad> quads = qfpc.getQuads();
         Set<Set<Expr>> cnf = qfpc.getFilterCnf();
 
-        Map<Var, Node> varToNode = CnfUtils.getConstants(cnf);
+        Map<Var, Node> varToNode = CnfUtils.getConstants(cnf, true);
         Map<Var, Node> candMap = varToNode.entrySet().stream().filter(
                 e -> (Quad.defaultGraphIRI.equals(e.getValue())
                     || Quad.defaultGraphNodeGenerated.equals(e.getValue())))
@@ -186,7 +186,7 @@ public class AlgebraUtils {
 
     public static QuadFilterPatternCanonical optimizeFilters(Collection<Quad> quads, Set<Set<Expr>> cnf, Set<Var> projection) {
 
-        Map<Var, Node> varToNode = CnfUtils.getConstants(cnf);
+        Map<Var, Node> varToNode = CnfUtils.getConstants(cnf, true);
 
         // A view on the set of variables subject the optimization
         Set<Var> optVars = varToNode.keySet();

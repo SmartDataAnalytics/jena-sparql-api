@@ -128,7 +128,7 @@ public class ElementUtils {
             ElementFilter x = (ElementFilter)e;
             Expr expr = x.getExpr();
             Set<Set<Expr>> cnf = CnfUtils.toSetCnf(expr);
-            Map<Var, Node> map = CnfUtils.getConstants(cnf);
+            Map<Var, Node> map = CnfUtils.getConstants(cnf, true);
 
             //Node g = MapUtils.getOrElse(map, Vars.g, Node.ANY);
             Node s = MapUtils.getOrElse(map, Vars.s, Node.ANY);
