@@ -1,6 +1,10 @@
 package org.aksw.jena_sparql_api.utils;
 
-public class CountInfo {
+import com.google.common.collect.ComparisonChain;
+
+public class CountInfo
+	implements Comparable<CountInfo>
+{
     private long count;
     private boolean hasMoreItems;
     private Long itemLimit;
@@ -61,6 +65,22 @@ public class CountInfo {
             return false;
         return true;
     }
+
+    /**
+     * All exact counts are sorted first.
+     * Item limit is not used in comparison. 
+     * 
+     */
+	@Override
+	public int compareTo(CountInfo o) {
+		int result = ComparisonChain.start()
+			.compareFalseFirst(hasMoreItems, o.hasMoreItems)
+			.compare(count, o.count)
+			.compareTrueFirst(itemLimit == null, o.itemLimit == null)
+			.result();
+
+		return result;
+	}
     
     
 }

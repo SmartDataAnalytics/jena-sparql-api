@@ -117,14 +117,20 @@ public class ConceptPathFinderBidirectionalUtils {
     public static UnaryRelation createUnboundAwareTypeQuery(UnaryRelation concept) {
 //        Set<Var> vars = concept.getVarsMentioned();
 //        Var s = concept.getVar();
+    	
+    	UnaryRelation result;
+    	if(concept.isSubjectConcept()) {
+    		result = Concept.parse("?t | ?s a ?t");
+    	} else {
+	    	
+	        Concept fragment = Concept.parse("?t | OPTIONAL { ?s a ?tmp } BIND(IF(BOUND(?tmp), ?tmp, eg:unbound) AS ?t)", PrefixMapping.Extended);
+	        result = fragment
+	        		.prependOn(Vars.s)
+	        		.with(concept)
+	        		//.project(fragment.getVars())
+	        		.toUnaryRelation();
+    	}
 
-        Concept fragment = Concept.parse("?t | OPTIONAL { ?s a ?tmp } BIND(IF(BOUND(?tmp), ?tmp, eg:unbound) AS ?t)", PrefixMapping.Extended);
-        UnaryRelation result = fragment
-        		.prependOn(Vars.s)
-        		.with(concept)
-        		//.project(fragment.getVars())
-        		.toUnaryRelation();
-        
         return result;
     }
 	
@@ -158,7 +164,7 @@ public class ConceptPathFinderBidirectionalUtils {
         //System.out.println(ResultSetFormatter.asText(qef.createQueryExecution("SELECT * { ?s ?p ?o }").execSelect()));
         //System.out.println(ResultSetFormatter.asText(qef.createQueryExecution("" + propertyQuery).execSelect()));
         List<Node> types = QueryExecutionUtils.executeList(new QueryExecutionFactorySparqlQueryConnection(conn), typeQuery);
-        logger.debug("Retrieved " + types.size() + " properties: " + types);
+        logger.debug("Retrieved " + types.size()); // + " properties: " + types);
 
         org.apache.jena.graph.Graph ext = GraphFactory.createDefaultGraph();
 
@@ -219,7 +225,7 @@ public class ConceptPathFinderBidirectionalUtils {
         //Query query = QueryFactory.create(test);
         logger.debug("TargetCandidateQuery: " + targetCandidateQuery);
         List<Node> candidates = QueryExecutionUtils.executeList(qefMeta, targetCandidateQuery);
-        logger.debug("Got " + candidates.size() + " candidates: " + candidates);
+        logger.debug("Got " + candidates.size() + " candidate target nodes"); // + " candidates: " + candidates);
 
         for(Node candidate : candidates) {
             Triple triple = new Triple(candidate, VocabPath.connectsWith.asNode(), VocabPath.end.asNode());
@@ -283,6 +289,9 @@ public class ConceptPathFinderBidirectionalUtils {
             	//DijkstraShortestPath<Node, Triple> dijkstraShortestPath = new DijkstraShortestPath<>(graph);
                 //GraphPath<Node, Triple> tmp = dijkstraShortestPath.getPath(startVertex, candidate);
         
+        
+        logger.info("Invoking path finder...");
+        
         List<GraphPath<RDFNode, Statement>> candidateGraphPaths;
         // TODO version 2 of the path finder needs to multiple path length by 2
     	Integer _maxPathLength = maxLength == null ? null : maxLength.intValue() + 2; // The '+ 2' is for the edges of the start and end vertex
@@ -336,6 +345,8 @@ public class ConceptPathFinderBidirectionalUtils {
             //BreathFirstTask.run(np, VocabPath.start, dest, new ArrayList<Step>(), callback);
             //BreathFirstTask.runFoo(np, VocabPath.start, dest, new ArrayList<Step>(), new ArrayList<Step>(), callback);
         //}
+    	
+    	logger.info("Found " + candidateGraphPaths.size() + " candidate paths");
 
         Collections.sort(candidateGraphPaths, new GraphPathComparator<>());
 

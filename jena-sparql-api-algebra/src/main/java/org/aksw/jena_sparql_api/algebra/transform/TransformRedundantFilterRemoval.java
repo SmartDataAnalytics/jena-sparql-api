@@ -26,11 +26,12 @@ import org.apache.jena.sparql.expr.NodeValue;
 
 /**
  * Remove filters in patterns such as
+
+ * 
+ * OpFilter(OpExtend(constant AS ?x, (subOp)), ?x = constant)
  * 
  * Currently this works only if the OpExtend is an immediate child of OpFilter
  * 
- * BIND(constant AS ?x)
- * FILTER(?x = constant)
  * 
  * Mainly needed as a workaround for Virtuoso...
  * 

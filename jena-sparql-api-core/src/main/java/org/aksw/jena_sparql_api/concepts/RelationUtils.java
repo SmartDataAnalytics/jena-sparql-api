@@ -14,11 +14,14 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
 import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.lang.ParserSPARQL11;
+import org.apache.jena.sparql.lang.SPARQLParser;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.ElementGroup;
@@ -43,6 +46,35 @@ public class RelationUtils {
 //
 //    }
 
+	public static Relation fromQuery(String queryStr) {
+		return fromQuery(queryStr, PrefixMapping.Extended);
+	}
+
+	public static Relation fromQuery(String queryStr, PrefixMapping prefixMapping) {
+        Query query = new Query();
+        query.setPrefixMapping(prefixMapping);
+        // TODO Make parser configurable
+        SPARQLParser parser = new ParserSPARQL11();
+        parser.parse(query, queryStr);
+
+    	Relation result = fromQuery(query);
+    	return result;
+	}
+	
+	public static Relation fromQuery(Query query) {
+		Relation result;
+		if(query.isSelectType()) {
+			List<Var> vars = query.getProjectVars();
+			Element element = query.getQueryPattern();
+			result = new RelationImpl(element, vars);
+		} else {
+			throw new RuntimeException("SELECT query form expected, instead got " + query);
+		}
+		
+		return result;
+	}
+
+	
 
     public static Triple extractTriple(BinaryRelation relation) {
         Element e = relation.getElement();
