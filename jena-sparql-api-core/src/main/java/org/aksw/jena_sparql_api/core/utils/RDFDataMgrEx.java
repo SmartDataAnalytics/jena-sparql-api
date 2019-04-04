@@ -78,6 +78,13 @@ public class RDFDataMgrEx {
 		return result;
 	}
 
+//	public static Model execConstruct(RDFConnection conn, String queryStr) {
+//		Model result = ModelFactory.createDefaultModel();
+//		readConnection(conn, filenameOrURI,
+//				q -> result.add(ModelUtils.tripleToStatement(result, q.asTriple())));
+//		return result;
+//	}
+
 	public static void readDataset(Dataset dataset, String filenameOrURI, Consumer<Quad> quadConsumer) {
 		RDFConnection conn = RDFConnectionFactory.connect(dataset);
 		readConnection(conn, filenameOrURI, quadConsumer);

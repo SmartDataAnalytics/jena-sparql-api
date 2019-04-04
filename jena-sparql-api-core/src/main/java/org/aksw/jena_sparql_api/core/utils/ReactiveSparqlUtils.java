@@ -4,29 +4,44 @@ import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.aksw.commons.collections.SetUtils;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.utils.IteratorResultSetBinding;
+import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.apache.jena.ext.com.google.common.base.Objects;
 import org.apache.jena.ext.com.google.common.collect.Maps;
+import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.table.TableData;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingHashMap;
+import org.apache.jena.sparql.graph.GraphFactory;
+import org.apache.jena.sparql.modify.TemplateLib;
+import org.apache.jena.sparql.syntax.PatternVars;
+import org.apache.jena.sparql.syntax.Template;
 
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Range;
 
 import io.reactivex.BackpressureStrategy;
@@ -336,4 +351,72 @@ public class ReactiveSparqlUtils {
 	    return r;
     }
 
+    public static Flowable<Resource> execPartitioned(SparqlQueryConnection conn, Entry<? extends Node, Query> e) {
+    	Node s = e.getKey();
+    	Query q = e.getValue();
+    	
+    	return execPartitioned(conn, s, q);
+    }
+    
+    public static Flowable<Resource> execPartitioned(SparqlQueryConnection conn, Node s, Query q) {
+
+    	Template template = q.getConstructTemplate();
+        Set<Var> projectVars = new LinkedHashSet<>();
+        if(s instanceof Var) {
+        	projectVars.add((Var)s);
+        }
+        projectVars.addAll(QuadPatternUtils.getVarsMentioned(template.getQuads()));
+        
+        Query clone = q.cloneQuery();
+        clone.setQuerySelectType();
+    	clone.getProject().clear();
+    	
+    	
+    	if(projectVars.isEmpty()) {
+        	// If the template is variable free then project the first variable of the query pattern
+    		// If the query pattern is variable free then just use the result star
+        	Set<Var> patternVars = SetUtils.asSet(PatternVars.vars(q.getQueryPattern()));
+        	if(patternVars.isEmpty()) {
+        		clone.setQueryResultStar(true);
+        	} else {
+        		Var v = patternVars.iterator().next();
+            	clone.setQueryResultStar(false);
+            	clone.getProject().add(v);        		
+        	}
+        } else {
+        	clone.setQueryResultStar(false);
+        	clone.addProjectVars(projectVars);
+        }
+
+    	
+		Flowable<Resource> result = ReactiveSparqlUtils
+				// For future reference: If we get an empty results by using the query object, we probably have wrapped a variable with NodeValue.makeNode. 
+				.execSelect(() -> conn.query(clone))
+				.map(b -> {
+					Graph graph = GraphFactory.createDefaultGraph();
+
+					// TODO Re-allocate blank nodes
+					if(template != null) {
+						Iterator<Triple> it = TemplateLib.calcTriples(template.getTriples(), Iterators.singletonIterator(b));
+						while(it.hasNext()) {
+							Triple t = it.next();
+							graph.add(t);
+						}
+					}
+
+					Node rootNode = s.isVariable() ? b.get((Var)s) : s;
+					
+					Model m = ModelFactory.createModelForGraph(graph);
+					RDFNode n = m.asRDFNode(rootNode);
+					Resource r = n.asResource();
+//					Resource r = m.createResource()
+//					.addProperty(RDF.predicate, m.asRDFNode(valueNode))
+//					.addProperty(Vocab.facetValueCount, );
+//				//m.wrapAsResource(valueNode);
+//				return r;
+
+					return r;
+				});
+		return result;
+    }
 }

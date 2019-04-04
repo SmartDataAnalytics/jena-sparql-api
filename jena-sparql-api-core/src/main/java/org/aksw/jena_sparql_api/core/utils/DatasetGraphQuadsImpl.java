@@ -11,7 +11,6 @@ import org.apache.jena.sparql.core.DatasetGraphQuads;
 import org.apache.jena.sparql.core.GraphView;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.mem.QuadTable;
-import org.apache.jena.sparql.graph.GraphOps;
 
 public class DatasetGraphQuadsImpl
 	extends DatasetGraphQuads
@@ -132,6 +131,15 @@ public class DatasetGraphQuadsImpl
     	return table.listGraphNodes().iterator();
     }
     
+    public static DatasetGraphQuadsImpl create(Iterator<Quad> it) {
+    	DatasetGraphQuadsImpl result = new DatasetGraphQuadsImpl();
+    	while(it.hasNext()) {
+    		Quad quad = it.next();
+    		result.add(quad);
+    	}
+    	return result;
+    }
+
     public static DatasetGraphQuadsImpl create(Iterable<Quad> quads) {
     	DatasetGraphQuadsImpl result = new DatasetGraphQuadsImpl();
     	quads.forEach(result::add);
