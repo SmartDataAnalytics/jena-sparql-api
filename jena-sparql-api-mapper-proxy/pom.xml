@@ -11,7 +11,8 @@
 
 	<parent>
 		<groupId>org.aksw.jena-sparql-api</groupId>
-		<artifactId>jena-sparql-api-mapper-parent</artifactId>
+		<artifactId>jena-sparql-api-parent</artifactId>
+<!--<		<artifactId>jena-sparql-api-mapper-parent</artifactId> -->
 		<version>3.10.0-1-SNAPSHOT</version>
 	</parent>
 

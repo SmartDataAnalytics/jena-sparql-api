@@ -388,6 +388,7 @@ public class ReactiveSparqlUtils {
         	clone.addProjectVars(projectVars);
         }
 
+    	clone.setDistinct(true);
     	
 		Flowable<Resource> result = ReactiveSparqlUtils
 				// For future reference: If we get an empty results by using the query object, we probably have wrapped a variable with NodeValue.makeNode. 

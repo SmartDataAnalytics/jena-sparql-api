@@ -14,8 +14,10 @@
     </parent>
 
     <modules>
+<!--
         <module>jena-sparql-api-mapper-annotations</module>
         <module>jena-sparql-api-mapper-proxy</module>
+-->
         <module>jena-sparql-api-mapper-core</module>
     </modules>
 

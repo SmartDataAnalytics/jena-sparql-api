@@ -26,6 +26,7 @@ import org.apache.jena.sparql.expr.ExprTransform;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
+import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.PatternVars;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformSubst;
@@ -36,6 +37,20 @@ import com.google.common.collect.Range;
 
 public class QueryUtils {
 
+	// Get a query pattern (of a select query) in a way that it can be injected as a query pattern of a construct query
+	public static Element asPatternForConstruct(Query q) {
+		Element result = canActAsConstruct(q)
+			? q.getQueryPattern()
+			: new ElementSubQuery(q);
+			
+		return result;
+	}
+	
+	public static boolean canActAsConstruct(Query q) {
+		boolean result = !(q.hasAggregators() && q.hasGroupBy() && q.hasValues() && q.hasHaving());
+		return result;
+	}
+	
     public static Query applyNodeTransform(Query query, NodeTransform nodeTransform) {
 
         ElementTransform eltrans = new ElementTransformSubst2(nodeTransform) ;

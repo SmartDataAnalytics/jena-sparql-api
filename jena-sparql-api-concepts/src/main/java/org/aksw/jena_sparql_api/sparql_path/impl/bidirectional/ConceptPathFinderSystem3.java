@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.core.RDFConnectionFactoryEx;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinder;
@@ -21,6 +22,7 @@ import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtQuery;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtUtils;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
+import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -95,8 +97,31 @@ public class ConceptPathFinderSystem3
 		}
 	}
 
-	
 	public static void main(String[] args) throws Exception {
+		Model m = RDFDataMgr.loadModel("/home/raven/Projects/Eclipse/faceted-browsing-benchmark-parent/faceted-browsing-benchmark-parent/faceted-browsing-benchmark-v2-parent/faceted-browsing-benchmark-v2-core/src/main/resources/path-data-simple.ttl");
+		
+		try(RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.wrap(m))) {
+			ConceptPathFinderSystem system = new ConceptPathFinderSystem3();
+			Model dataSummary = system.computeDataSummary(conn).blockingGet();
+
+			ConceptPathFinder pathFinder = system.newPathFinderBuilder()
+				.setDataConnection(conn)
+				.setDataSummary(dataSummary)
+				.build();
+			
+			
+			List<SimplePath> paths = pathFinder.createSearch(ConceptUtils.createSubjectConcept(), ConceptUtils.createSubjectConcept())
+				.setMaxLength(1l)
+				.exec()
+				.toList()
+				.blockingGet();
+			
+			System.out.println("Paths: " + paths);
+		}
+	}
+
+	
+	public static void main3(String[] args) throws Exception {
 		DatasetDescription datasetDescription = new DatasetDescription();
 		//datasetDescription.addDefaultGraphURI("http://dbpedia.org/wkd_uris");
 		datasetDescription.addDefaultGraphURI("http://dbpedia.org");

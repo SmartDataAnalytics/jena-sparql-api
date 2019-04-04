@@ -27,6 +27,9 @@
 		<module>jena-sparql-api-utils</module>
 		<module>jena-sparql-api-sparql-ext</module>
 
+		<module>jena-sparql-api-mapper-annotations</module>
+		<module>jena-sparql-api-mapper-proxy</module>
+
 		<module>jena-sparql-api-core</module>
 
 		<module>jena-sparql-api-cache</module>
