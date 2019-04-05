@@ -17,6 +17,24 @@ import com.google.common.collect.Streams;
 
 public class PathUtils {
 	
+	public static final Path nullPath = new P_Link(org.aksw.jena_sparql_api.utils.NodeUtils.nullUriNode);
+	
+	public static boolean isNull(Path path) {
+		boolean result = nullPath.equals(path);
+		return result;
+		
+//		boolean result = ExprEvalValueSet.tryCastAs(P_Path0.class, path)
+//				.filter(p -> NULL.equals(p))
+//				//.filter(p -> Node.NULL.equals(p.getNode()))
+//				.isPresent();
+//		return result;
+	}
+
+	public static Path foldNulls(Path path) {
+		Path result = PathTransformer.transform(path, new PathTransformerNullFold());
+		return result;
+	}
+
 	public static Path canonicalizeReverseLinks(Path path) {
 		Path result = PathTransformer.transform(path, new PathTransformCanonicalizeReverseLinks());
 		return result;

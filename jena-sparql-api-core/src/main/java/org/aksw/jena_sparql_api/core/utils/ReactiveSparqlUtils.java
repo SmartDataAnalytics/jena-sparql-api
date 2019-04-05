@@ -351,14 +351,14 @@ public class ReactiveSparqlUtils {
 	    return r;
     }
 
-    public static Flowable<Resource> execPartitioned(SparqlQueryConnection conn, Entry<? extends Node, Query> e) {
+    public static Flowable<RDFNode> execPartitioned(SparqlQueryConnection conn, Entry<? extends Node, Query> e) {
     	Node s = e.getKey();
     	Query q = e.getValue();
     	
     	return execPartitioned(conn, s, q);
     }
     
-    public static Flowable<Resource> execPartitioned(SparqlQueryConnection conn, Node s, Query q) {
+    public static Flowable<RDFNode> execPartitioned(SparqlQueryConnection conn, Node s, Query q) {
 
     	Template template = q.getConstructTemplate();
         Set<Var> projectVars = new LinkedHashSet<>();
@@ -390,7 +390,7 @@ public class ReactiveSparqlUtils {
 
     	clone.setDistinct(true);
     	
-		Flowable<Resource> result = ReactiveSparqlUtils
+		Flowable<RDFNode> result = ReactiveSparqlUtils
 				// For future reference: If we get an empty results by using the query object, we probably have wrapped a variable with NodeValue.makeNode. 
 				.execSelect(() -> conn.query(clone))
 				.map(b -> {
@@ -408,8 +408,8 @@ public class ReactiveSparqlUtils {
 					Node rootNode = s.isVariable() ? b.get((Var)s) : s;
 					
 					Model m = ModelFactory.createModelForGraph(graph);
-					RDFNode n = m.asRDFNode(rootNode);
-					Resource r = n.asResource();
+					RDFNode r = m.asRDFNode(rootNode);
+					//Resource r = n.asResource();
 //					Resource r = m.createResource()
 //					.addProperty(RDF.predicate, m.asRDFNode(valueNode))
 //					.addProperty(Vocab.facetValueCount, );

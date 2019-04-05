@@ -52,6 +52,8 @@ public class ElementUtils {
 //        return result;
 //    }
 	
+	
+	
 	public static ElementTriplesBlock createElementTriple(Triple ... triples) {
 		return createElementTriple(Arrays.asList(triples));
 	}

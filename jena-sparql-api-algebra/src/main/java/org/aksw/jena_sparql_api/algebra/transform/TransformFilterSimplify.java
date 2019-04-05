@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -174,7 +175,8 @@ public class TransformFilterSimplify
 		// If any clause is FALSE, the whole result is false
 		if(cnf.contains(ClauseUtils.FALSE)) {
 			cnf.clear();
-			cnf.add(ClauseUtils.FALSE);
+			// Mutable instance of FALSE required as otherwise in place ExprTransform may raise an exception
+			cnf.add(ClauseUtils.newFalse());
 		}
 
 		return cnf;
@@ -205,9 +207,11 @@ public class TransformFilterSimplify
 
 		tidyBooleanConstants(cnf);
 		
-		// Add the constant contsraints again
+		// Add the constant constraints again
 		for(Entry<Var, Node> e : varMap.entrySet()) {
-			cnf.add(Collections.singleton(new E_Equals(new ExprVar(e.getKey()), NodeValue.makeNode(e.getValue()))));
+			//new LinkedHashSet<>()
+//			cnf.add(Collections.singleton(new E_Equals(new ExprVar(e.getKey()), NodeValue.makeNode(e.getValue()))));
+			cnf.add(new LinkedHashSet<>(Collections.singleton(new E_Equals(new ExprVar(e.getKey()), NodeValue.makeNode(e.getValue())))));
 		}
 		
 		removeSubsumedCnfClause(cnf);

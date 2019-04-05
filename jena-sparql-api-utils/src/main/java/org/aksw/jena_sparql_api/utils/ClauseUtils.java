@@ -4,13 +4,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.algebra.optimize.ExprTransformConstantFold;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.BindingRoot;
@@ -25,6 +25,14 @@ public class ClauseUtils
 
     public static final Set<Expr> TRUE = Collections.<Expr>singleton(NodeValue.TRUE);
     public static final Set<Expr> FALSE = Collections.<Expr>singleton(NodeValue.FALSE);
+
+    public static Set<Expr> newTrue() {
+    	return new LinkedHashSet<>(ClauseUtils.TRUE);
+    }
+
+    public static Set<Expr> newFalse() {
+    	return new LinkedHashSet<>(ClauseUtils.FALSE);
+    }
 
 
     public static Map<Var, NodeValue> extractConstantConstraints(Collection<? extends Expr> clause) {

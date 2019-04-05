@@ -12,12 +12,13 @@ import java.util.Set;
  *
  * @param <T>
  */
-public class ValueSet<T>
+@Deprecated // This class allows for undefined sets of values, which I am doubtful is a good design
+public class ValueSetOld<T>
 {
 	private Set<T> values;
 	private Boolean polarity;
 
-	public ValueSet(Set<T> values, Boolean isPositive)
+	public ValueSetOld(Set<T> values, Boolean isPositive)
 	{
 		super();
 		this.values = values;
@@ -31,12 +32,12 @@ public class ValueSet<T>
 	 * @param <T>
 	 * @return
 	 */
-	public static <T> ValueSet<T> create() {
-		return new ValueSet<T>(new HashSet<T>(), null);
+	public static <T> ValueSetOld<T> create() {
+		return new ValueSetOld<T>(new HashSet<T>(), null);
 	}
 	
-	public static <T> ValueSet<T> create(Set<T> values, boolean polarity) {
-		return new ValueSet<T>(values, polarity);
+	public static <T> ValueSetOld<T> create(Set<T> values, boolean polarity) {
+		return new ValueSetOld<T>(values, polarity);
 	}
 
 
@@ -61,7 +62,7 @@ public class ValueSet<T>
 	}
 	
 	
-	public void merge(ValueSet<T> other) {
+	public void merge(ValueSetOld<T> other) {
 		if(other.isUnknown()) {
 			if(this.isUnknown()) {
 				this.values = null;

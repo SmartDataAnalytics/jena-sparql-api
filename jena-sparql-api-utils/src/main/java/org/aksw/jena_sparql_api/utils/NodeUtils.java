@@ -17,6 +17,9 @@ import org.apache.jena.sparql.core.Var;
 import com.google.common.collect.Iterables;
 
 public class NodeUtils {
+	
+	public static final Node nullUriNode = NodeFactory.createURI("http://null.null/null");
+
     public static Node asNullableNode(String uri) {
         Node result = uri == null ? null : NodeFactory.createURI(uri);
         return result;

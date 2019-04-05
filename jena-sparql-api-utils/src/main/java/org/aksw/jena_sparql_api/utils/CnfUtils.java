@@ -6,13 +6,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.Function;
 
-import org.apache.jena.ext.com.google.common.collect.HashMultimap;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
@@ -282,13 +281,13 @@ public class CnfUtils {
     public static List<ExprList> toClauses(Expr expr)
     {
         Expr evaluated = eval(expr);
-        return evaluated == null ? null : cnfToClauses(Collections.singleton(evaluated));
+        return evaluated == null ? null : cnfToClauses(new LinkedHashSet<>(Collections.singleton(evaluated)));
     }
 
     public static List<ExprList> toClauses(ExprList exprs)
     {
         Expr evaluated = eval(ExprUtils.andifyBalanced(exprs));
-        return evaluated == null ? null : cnfToClauses(Collections.singleton(evaluated));
+        return evaluated == null ? null : cnfToClauses(new LinkedHashSet<>(Collections.singleton(evaluated)));
     }
 
 
