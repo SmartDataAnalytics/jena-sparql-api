@@ -3,15 +3,13 @@ package org.aksw.jena_sparql_api.utils;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.aksw.commons.collections.IterableCollection;
 import org.aksw.commons.collections.Sample;
 import org.aksw.commons.util.Pair;
-
-import com.google.common.collect.Sets;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.op.OpFilter;
 import org.apache.jena.sparql.algebra.op.OpJoin;
@@ -29,6 +27,8 @@ import org.apache.jena.sparql.expr.ExprFunction;
 import org.apache.jena.sparql.expr.ExprFunction2;
 import org.apache.jena.sparql.expr.ExprList;
 import org.apache.jena.sparql.expr.NodeValue;
+
+import com.google.common.collect.Sets;
 
 
 
@@ -334,10 +334,10 @@ public class FilterUtils
 			return null;
 		}
 		
-		Set<Set<Expr>> result = new HashSet<Set<Expr>>();
+		Set<Set<Expr>> result = new LinkedHashSet<Set<Expr>>();
 		
 		for(ExprList clause : clauses) {
-			result.add(new HashSet<Expr>(clause.getList()));
+			result.add(new LinkedHashSet<Expr>(clause.getList()));
 		}
 		
 		return result;

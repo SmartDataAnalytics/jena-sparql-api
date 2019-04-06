@@ -269,7 +269,7 @@ public class CnfUtils {
     {
         Set<Set<Expr>> result;
         if(NodeValue.TRUE.equals(expr)) {
-            result = new HashSet<>(); // Return a new set, as callers may want to extend the set//Collections.emptySet();
+            result = new LinkedHashSet<>(); // Return a new set, as callers may want to extend the set//Collections.emptySet();
         } else {
             List<ExprList> clauses = toClauses(expr);
             result = FilterUtils.toSets(clauses);
