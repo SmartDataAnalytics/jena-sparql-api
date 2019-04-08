@@ -191,15 +191,19 @@ public class VarUsageAnalyzerVisitor
         exprAggs.forEach(ea -> {
             Var v = ea.getVar();
             ExprList el = ea.getAggregator().getExprList();
-            Set<Var> vars = ExprVars.getVarsMentioned(el);
-            Set<Var> origVars = MultimapUtils.getAll(varDeps, vars);
-            // It is possible that a variable did not occurr in the sub tree under investigation
-            // in that case add it to the mapping
-            if(origVars.isEmpty()) {
-                origVars = Collections.singleton(v);
+            
+            // el will be null e.g. for COUNT(*)
+            if(el != null) {
+                Set<Var> vars = ExprVars.getVarsMentioned(el);
+                Set<Var> origVars = MultimapUtils.getAll(varDeps, vars);
+                // It is possible that a variable did not occurr in the sub tree under investigation
+                // in that case add it to the mapping
+                if(origVars.isEmpty()) {
+                    origVars = Collections.singleton(v);
+                }
+                //referencedVars.addAll(origVars);
+                updates.putAll(v, origVars);
             }
-            //referencedVars.addAll(origVars);
-            updates.putAll(v, origVars);
         });
 
         updates.asMap().forEach((k, w) -> {

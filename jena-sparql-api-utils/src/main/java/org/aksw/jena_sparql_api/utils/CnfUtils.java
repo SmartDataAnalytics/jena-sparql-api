@@ -352,6 +352,7 @@ public class CnfUtils {
 
     public static Expr handle(ExprFunction expr)
     {
+    	Expr result;
         //System.out.println("Converting to KNF: [" + expr.getClass() + "]: " + expr);
 
         // not(and(A, B)) -> or(not A, not B)
@@ -362,34 +363,36 @@ public class CnfUtils {
 
             Expr tmp = ((E_LogicalNot)expr).getArg();
             if (!(tmp instanceof ExprFunction)) {
-                return expr;
+                result = expr;
+            } else {
+	
+	            ExprFunction child = (ExprFunction)tmp;
+	
+	            Expr newExpr = null;
+	
+	            if (child instanceof E_LogicalAnd) {
+	                newExpr = new E_LogicalOr(eval(new E_LogicalNot(child.getArg(1))), eval(new E_LogicalNot(child.getArg(2))));
+	            }
+	            else if (child instanceof E_LogicalOr) {
+	                newExpr = new E_LogicalAnd(eval(new E_LogicalNot(child.getArg(1))), eval(new E_LogicalNot(child.getArg(2))));
+	            }
+	            else if (child instanceof E_LogicalNot) { // Remove double negation
+	                newExpr = eval(child.getArg(1));
+	            }
+	            
+	            if(newExpr != null) {	
+	            	result = eval(newExpr);
+	            } else {
+	            	result = expr;
+	            }
             }
-
-            ExprFunction child = (ExprFunction)tmp;
-
-            Expr newExpr = expr;
-
-            if (child instanceof E_LogicalAnd) {
-                newExpr = new E_LogicalOr(eval(new E_LogicalNot(child.getArg(1))), eval(new E_LogicalNot(child.getArg(2))));
-            }
-            else if (child instanceof E_LogicalOr) {
-                newExpr = new E_LogicalAnd(eval(new E_LogicalNot(child.getArg(1))), eval(new E_LogicalNot(child.getArg(2))));
-            }
-            else if (child instanceof E_LogicalNot) { // Remove double negation
-                newExpr = eval(child.getArg(1));
-            }
-            else {
-                return expr;
-            }
-
-            return eval(newExpr);
         }
 
 
         else if (expr instanceof E_LogicalAnd) {
             //return expr;
             //return eval(expr);
-            return new E_LogicalAnd(eval(expr.getArg(1)), eval(expr.getArg(2)));
+            result = new E_LogicalAnd(eval(expr.getArg(1)), eval(expr.getArg(2)));
         }
 
 
@@ -409,9 +412,11 @@ public class CnfUtils {
          * (A and (c x D)) OR (B and (c x D))
          */
         else if (expr instanceof E_LogicalOr) {
-
-            Expr aa = eval(expr.getArg(1));
-            Expr bb = eval(expr.getArg(2));
+            Expr rawA = expr.getArg(1);
+            Expr rawB = expr.getArg(2);
+            		
+        	Expr aa = eval(rawA);
+            Expr bb = eval(rawB);
 
             E_LogicalAnd a = null;
             Expr b = null;
@@ -426,17 +431,24 @@ public class CnfUtils {
             }
 
             if(a == null) {
-                return new E_LogicalOr(aa, bb);
+                result = new E_LogicalOr(aa, bb);
             } else {
-                return new E_LogicalAnd(eval(new E_LogicalOr(a.getArg(1), b)), eval(new E_LogicalOr(a.getArg(2), b)));
+            	Expr rawX = new E_LogicalOr(a.getArg1(), b);
+            	Expr x = eval(rawX);
+            	
+            	Expr rawY = new E_LogicalOr(a.getArg2(), b);
+            	Expr y = eval(rawY);
+                result = new E_LogicalAnd(x, y);
             }
         }
 
         else if (expr instanceof E_NotEquals) { // Normalize (a != b) to !(a = b) --- this makes it easier to find "a and !a" cases
-            return new E_LogicalNot(eval(new E_Equals(expr.getArg(1), expr.getArg(2))));
+            result = new E_LogicalNot(eval(new E_Equals(expr.getArg(1), expr.getArg(2))));
+        } else {
+        	result = expr;
         }
 
 
-        return expr;
+        return result;
     }
 }
