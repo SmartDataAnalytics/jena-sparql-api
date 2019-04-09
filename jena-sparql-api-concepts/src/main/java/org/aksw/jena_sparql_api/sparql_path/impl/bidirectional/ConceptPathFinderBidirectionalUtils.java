@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
@@ -164,7 +165,7 @@ public class ConceptPathFinderBidirectionalUtils {
         //System.out.println(ResultSetFormatter.asText(qef.createQueryExecution("SELECT * { ?s ?p ?o }").execSelect()));
         //System.out.println(ResultSetFormatter.asText(qef.createQueryExecution("" + propertyQuery).execSelect()));
         List<Node> types = QueryExecutionUtils.executeList(new QueryExecutionFactorySparqlQueryConnection(conn), typeQuery);
-        logger.debug("Retrieved " + types.size()); // + " properties: " + types);
+        logger.debug("Retrieved " + types.size() + " types"); // + " properties: " + types);
 
         org.apache.jena.graph.Graph ext = GraphFactory.createDefaultGraph();
 
@@ -482,7 +483,14 @@ public class ConceptPathFinderBidirectionalUtils {
     public static boolean validatePath(SparqlQueryConnection conn, UnaryRelation sourceConcept, UnaryRelation targetConcept, SimplePath path, Generator<Var> generator) {
         List<Element> pathElements = SimplePath.pathToElements(path, sourceConcept.getVar(), targetConcept.getVar(), generator);
 
-        BinaryRelation pathRelation = new BinaryRelationImpl(ElementUtils.groupIfNeeded(pathElements), sourceConcept.getVar(), targetConcept.getVar());
+        Var sourceVar = sourceConcept.getVar();
+        Var targetVar = pathElements.isEmpty() ?sourceVar : targetConcept.getVar();
+        
+        if(Objects.equals(sourceVar, targetVar)) {
+        	System.out.println("Equal var");
+        }
+        
+        BinaryRelation pathRelation = new BinaryRelationImpl(ElementUtils.groupIfNeeded(pathElements), sourceVar, targetVar);
         Element group = pathRelation
         	.prependOn(pathRelation.getSourceVar()).with(sourceConcept)
         	.joinOn(pathRelation.getTargetVar()).with(targetConcept)

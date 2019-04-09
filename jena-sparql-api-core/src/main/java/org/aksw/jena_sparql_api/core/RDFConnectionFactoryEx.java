@@ -63,14 +63,17 @@ public class RDFConnectionFactoryEx {
 						FluentQueryExecutionFactory
 							.from(new QueryExecutionFactorySparqlQueryConnection(rawConn))
 							.config()
-							.withClientSideConstruct()
-							.withDatasetDescription(datasetDescription)
-							.withPostProcessor(qe -> {
-								if(qe instanceof QueryEngineHTTP) {
-									((QueryEngineHTTP)qe).setSelectContentType(WebContent.contentTypeResultsXML);
-								}
-							})
-							.end()
+								.withClientSideConstruct()
+								.withDatasetDescription(datasetDescription)
+								.withPostProcessor(qe -> {
+									if(qe instanceof QueryEngineHTTP) {
+										QueryEngineHTTP qeh = (QueryEngineHTTP)qe;
+										qeh.setSelectContentType(WebContent.contentTypeResultsXML);
+										qeh.setModelContentType(WebContent.contentTypeNTriples);
+										qeh.setDatasetContentType(WebContent.contentTypeNQuads);
+									}
+								})
+								.end()
 							.create()
 							), rawConn, rawConn);
 
