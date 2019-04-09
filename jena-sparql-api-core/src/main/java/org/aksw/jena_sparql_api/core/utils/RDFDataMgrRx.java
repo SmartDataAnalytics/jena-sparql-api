@@ -262,7 +262,10 @@ public class RDFDataMgrRx {
 	public static void writeDatasets(Flowable<? extends Dataset> flowable, OutputStream out, RDFFormat format) throws Exception {
 		try {
 			QuadEncoderDistinguish encoder = new QuadEncoderDistinguish();
-			flowable.blockingForEach(d -> RDFDataMgr.write(out, encoder.encode(d), format));
+			flowable.forEach(d -> {
+				RDFDataMgr.write(out, encoder.encode(d), format);
+//				out.flush();
+			});
 		} finally {
 			out.flush();
 		}
