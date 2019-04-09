@@ -2,9 +2,9 @@ package org.aksw.jena_sparql_api.batch.processor;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
+import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
-
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.modify.request.UpdateDeleteWhere;
@@ -55,7 +55,7 @@ public class UpdateServiceSparql
         } else {
             // TODO Rename the filter.var 
             
-            Concept renamed = ConceptUtils.renameVar(concept, updateVar);
+            UnaryRelation renamed = ConceptUtils.renameVar(concept, updateVar);
             Element renamedElement = renamed.getElement();
             //ElementUtils.
             //renamedElement.

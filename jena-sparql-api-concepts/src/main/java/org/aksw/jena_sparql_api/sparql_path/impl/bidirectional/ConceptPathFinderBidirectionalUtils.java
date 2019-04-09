@@ -6,9 +6,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Map.Entry;
-import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
@@ -374,34 +373,35 @@ public class ConceptPathFinderBidirectionalUtils {
         
         
         if(pathValidators != null && !pathValidators.isEmpty()) {
-        	Set<SimplePath> rejectedPaths = new HashSet<>();
-        	tmp = tmp.filter(x -> {
-        		
-        		SimplePath parent = x.parentPath();
-        		boolean hasRejectedParent = false;
-        		while(parent != null) {
-        			hasRejectedParent = rejectedPaths.contains(parent);
-        			if(hasRejectedParent) {
-        				break;
-        			} else {
-        				parent = parent.parentPath();
-        			}
-        		}
-        		
-        		boolean r;
-        		if(!hasRejectedParent) {
-	        		Entry<SimplePath, P_Path0> e = SimplePath.seperateLastStep(x);
-	        		r = pathValidators.stream().allMatch(p -> p.test(e.getKey(), e.getValue()));	        		
-
-	        		if(!r) {
-	        			rejectedPaths.add(x);
-	        		}
-        		} else {
-        			r = false;
-        		}
-
-        		return r;
-        	});
+        	//Set<SimplePath> rejectedPaths = new HashSet<>();
+        	tmp = tmp.filter(x -> testPath(x, pathValidators));
+//        	tmp = tmp.filter(x -> {
+//        		
+//        		SimplePath parent = x.parentPath();
+//        		boolean hasRejectedParent = false;
+//        		while(parent != null) {
+//        			hasRejectedParent = rejectedPaths.contains(parent);
+//        			if(hasRejectedParent) {
+//        				break;
+//        			} else {
+//        				parent = parent.parentPath();
+//        			}
+//        		}
+//        		
+//        		boolean r;
+//        		if(!hasRejectedParent) {
+//	        		Entry<SimplePath, P_Path0> e = SimplePath.seperateLastStep(x);
+//	        		r = pathValidators.stream().allMatch(p -> p.test(e.getKey(), e.getValue()));	        		
+//
+//	        		if(!r) {
+//	        			rejectedPaths.add(x);
+//	        		}
+//        		} else {
+//        			r = false;
+//        		}
+//
+//        		return r;
+//        	});
         }
         
             	
@@ -478,65 +478,88 @@ public class ConceptPathFinderBidirectionalUtils {
 //
 //        return Flowable.fromIterable(result);
     }
+    
+    
+    public static boolean testPath(SimplePath path, Collection<BiPredicate<? super SimplePath, ? super P_Path0>> validators) {
+    	List<P_Path0> steps = path.getSteps();
+    	int n = steps.size();
+    	
+    	boolean result = true;
+    	outer: for(int i = 0; i < n; ++i) {
+    		List<P_Path0> base = steps.subList(0, i);
+    		P_Path0 contrib = steps.get(i);
+    		
+    		for(BiPredicate<? super SimplePath, ? super P_Path0> validator : validators) {
+    			result = validator.test(new SimplePath(base), contrib);
+    			if(!result) {
+    				break outer;
+    			}
+    		}
+    		
+    	}
+    	
+//    	System.out.println("PATHVALIDATION [" + result + "] " + path);
+//    	if(result == false) {
+//    		System.out.println("DEBUG POINT");
+//    	}
+    	return result;
+    }
 
     
     public static boolean validatePath(SparqlQueryConnection conn, UnaryRelation sourceConcept, UnaryRelation targetConcept, SimplePath path, Generator<Var> generator) {
+
         List<Element> pathElements = SimplePath.pathToElements(path, sourceConcept.getVar(), targetConcept.getVar(), generator);
 
         Var sourceVar = sourceConcept.getVar();
-        Var targetVar = pathElements.isEmpty() ?sourceVar : targetConcept.getVar();
+        Var targetVar = pathElements.isEmpty() ? sourceVar : targetConcept.getVar();
         
-        if(Objects.equals(sourceVar, targetVar)) {
-        	System.out.println("Equal var");
-        }
+        UnaryRelation src = sourceConcept;
+        UnaryRelation tgt = targetConcept;
+        Var sourceJoinVar = sourceVar;
+        Var targetJoinVar = targetVar;
+
+	    // If the source concept is a subject concept, possibly swap it
+	    if(sourceConcept.isSubjectConcept()) {
+	    	if(!targetConcept.isSubjectConcept()) {
+	    		src = targetConcept;
+	    		tgt = sourceConcept;
+	    		
+	    		sourceJoinVar = targetVar;
+	    		targetJoinVar = sourceVar;
+	    	}
+	    }
+
+//	    if(Objects.equals(sourceJoinVar, targetJoinVar)) {
+//        	System.out.println("DEBUG POINT Equal var");
+//        }
         
         BinaryRelation pathRelation = new BinaryRelationImpl(ElementUtils.groupIfNeeded(pathElements), sourceVar, targetVar);
         Element group = pathRelation
-        	.prependOn(pathRelation.getSourceVar()).with(sourceConcept)
-        	.joinOn(pathRelation.getTargetVar()).with(targetConcept)
+        	.prependOn(sourceJoinVar).with(src)
+        	.joinOn(targetJoinVar).with(tgt)
         	.getElement();
-        
-//        
-//        List<Element> tmp = new ArrayList<Element>();
-//        if(!sourceConcept.isSubjectConcept()) {
-//            tmp.addAll(sourceConcept.getElements());
-//        }
-//
-//        tmp.addAll(pathElements);
-//
-//        // TODO Should we treat the case where the target concept is a subject concept in a special way?
-//        //if(!targetConcept.isSubjectConcept()) {
-//            tmp.addAll(targetConcept.getElements());
-//        //}
-//
-//
-//        if(pathElements.isEmpty()) {
-//            if(!sourceConcept.getVar().equals(targetConcept.getVar()) && !sourceConcept.isSubjectConcept()) {
-//                tmp.add(new ElementFilter(new E_Equals(new ExprVar(sourceConcept.getVar()), new ExprVar(targetConcept.getVar()))));
-//            }
-//        }
-//
-//        Element group = ElementUtils.groupIfNeeded(tmp);
-//        
-//        ElementGroup group = new ElementGroup();
-//        for(Element t : tmp) {
-//            group.addElement(t);
-//        }
-//
+
         Query query = new Query();
         query.setQueryAskType();
         query.setQueryPattern(group);
 
+        
         logger.debug("Verifying candidate with query: " + query);
 
-//        QueryExecution xqe = conn.query(query);
-//        boolean isCandidate = xqe.execAsk();
+        // For future reference: If the query is
+    	// { ?s  <http://vocab.gtfs.org/terms#parentStation>  ?v_1 . 
+    	// ?v_1  ?p  ?o }
+        // Then the second pattern actually expresses the constraint
+        // that v_1 must appear as a subject
+        // This is not optimal, but correct!
+
+//        if(("" + query).contains("?v_1  ?p  ?o")) {
+//        	System.out.println("DEBUG POINT");
+//        }
+
         boolean isCandidate = conn.queryAsk(query);
         logger.debug("Verification result is [" + isCandidate + "] for " + query);
 
-//        if(isCandidate) {
-//            result.add(path);
-//        }
         return isCandidate;
     }
     

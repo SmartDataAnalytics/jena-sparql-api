@@ -29,7 +29,6 @@ import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.table.TableData;
@@ -40,6 +39,8 @@ import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sparql.modify.TemplateLib;
 import org.apache.jena.sparql.syntax.PatternVars;
 import org.apache.jena.sparql.syntax.Template;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Range;
@@ -52,6 +53,8 @@ import io.reactivex.functions.Predicate;
 import io.reactivex.processors.PublishProcessor;
 
 public class ReactiveSparqlUtils {
+	
+	private static final Logger logger = LoggerFactory.getLogger(ReactiveSparqlUtils.class);
 	
 	public static <K, X> Flowable<Entry<K, List<X>>> groupByOrdered(
 			Flowable<X> in, Function<X, K> getGroupKey) {
@@ -389,6 +392,9 @@ public class ReactiveSparqlUtils {
         }
 
     	clone.setDistinct(true);
+    	
+    	logger.debug("Converted query to: " + clone);
+    	
     	
 		Flowable<RDFNode> result = ReactiveSparqlUtils
 				// For future reference: If we get an empty results by using the query object, we probably have wrapped a variable with NodeValue.makeNode. 
