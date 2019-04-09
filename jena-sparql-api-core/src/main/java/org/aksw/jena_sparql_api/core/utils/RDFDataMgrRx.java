@@ -3,9 +3,9 @@ package org.aksw.jena_sparql_api.core.utils;
 import java.io.Closeable;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -27,7 +27,6 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
-import org.apache.jena.sparql.core.DatasetImpl;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.util.iterator.ClosableIterator;
 
@@ -254,14 +253,18 @@ public class RDFDataMgrRx {
 	// A better approach would be to transform a flowable to write to a file as a side effect
 	// Upon flowable completion, copy the file to its final location
 	public static void writeDatasets(Flowable<? extends Dataset> flowable, Path file, RDFFormat format) throws Exception {
-		try(FileOutputStream out = new FileOutputStream(file.toFile())) {
-			try {
-				QuadEncoderDistinguish encoder = new QuadEncoderDistinguish();
-				flowable.blockingForEach(d -> RDFDataMgr.write(out, encoder.encode(d), format));
-			} finally {
-				out.flush();
-				out.close();				
-			}
+		try(OutputStream out = new FileOutputStream(file.toFile())) {
+			writeDatasets(flowable, out, format);
+		}
+	}
+
+	// Does not close the stream
+	public static void writeDatasets(Flowable<? extends Dataset> flowable, OutputStream out, RDFFormat format) throws Exception {
+		try {
+			QuadEncoderDistinguish encoder = new QuadEncoderDistinguish();
+			flowable.blockingForEach(d -> RDFDataMgr.write(out, encoder.encode(d), format));
+		} finally {
+			out.flush();
 		}
 	}
 

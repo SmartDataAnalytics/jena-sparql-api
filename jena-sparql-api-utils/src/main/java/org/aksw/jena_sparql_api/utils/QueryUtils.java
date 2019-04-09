@@ -47,7 +47,7 @@ public class QueryUtils {
 	}
 	
 	public static boolean canActAsConstruct(Query q) {
-		boolean result = !(q.hasAggregators() && q.hasGroupBy() && q.hasValues() && q.hasHaving());
+		boolean result = !q.hasAggregators() && !q.hasGroupBy() && !q.hasValues() && !q.hasHaving();
 		return result;
 	}
 	
