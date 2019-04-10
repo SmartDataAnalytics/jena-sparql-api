@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
@@ -41,6 +42,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.graph.compose.Union;
 import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -429,8 +431,23 @@ public class ConceptPathFinderBidirectionalUtils {
 
         //List<SimplePath> result = new ArrayList<SimplePath>();
 
+        // TODO Make configurable
+        boolean abortOnFailedValidation = true;
         Flowable<SimplePath> result = Flowable.fromIterable(paths)
-        	.filter(path -> validatePath(conn, sourceConcept, targetConcept, path, generator));
+        	.filter(path -> {
+        		boolean r;
+        		try {
+        			r = validatePath(conn, sourceConcept, targetConcept, path, generator);
+        		} catch(Exception e) {
+        			if(abortOnFailedValidation) {
+        				throw new RuntimeException(e);
+        			} else {
+        				r = false;
+        			}
+        		}
+        		
+        		return r;
+        	});
         	
         return result;
         	
@@ -557,10 +574,16 @@ public class ConceptPathFinderBidirectionalUtils {
 //        	System.out.println("DEBUG POINT");
 //        }
 
-        boolean isCandidate = conn.queryAsk(query);
-        logger.debug("Verification result is [" + isCandidate + "] for " + query);
+        // TODO Make timeouts configurable
+        boolean result;
+        try(QueryExecution qe = conn.query(query)) {
+        	qe.setTimeout(30, TimeUnit.SECONDS, 30, TimeUnit.SECONDS);
+        	result = qe.execAsk();
+        }
 
-        return isCandidate;
+        logger.debug("Verification result is [" + result + "] for " + query);
+
+        return result;
     }
     
     /**
