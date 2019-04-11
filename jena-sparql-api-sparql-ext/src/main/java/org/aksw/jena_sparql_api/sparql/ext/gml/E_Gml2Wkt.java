@@ -13,25 +13,24 @@ import org.apache.jena.sparql.function.FunctionBase1;
 
 public class E_Gml2Wkt extends FunctionBase1 {
 
-  private GMLReader gmlReader = new GMLReader();
-  private WKTWriter wktWriter = new WKTWriter();
-  private GeometryFactory geometryFactory = new GeometryFactory();
+    private GMLReader gmlReader = new GMLReader();
+    private WKTWriter wktWriter = new WKTWriter();
+    private GeometryFactory geometryFactory = new GeometryFactory();
 
-  @Override
-  public NodeValue exec(NodeValue nodeValue) {
-    NodeValue result = Expr.NONE.getConstant();
-    if (nodeValue.isString()) {
-      try {
-        Geometry geometry = gmlReader.read(nodeValue.getString(), geometryFactory);
-        RDFDatatype datatype =
-            TypeMapper.getInstance()
-                .getSafeTypeByName("http://www.opengis.net/ont/geosparql#wktLiteral");
-        String wktString = wktWriter.write(geometry);
-        result = NodeValue.makeNode(NodeFactory.createLiteral(wktString, datatype));
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
+    @Override
+    public NodeValue exec(NodeValue nodeValue) {
+        NodeValue result = Expr.NONE.getConstant();
+        if (nodeValue.isString()) {
+            try {
+                Geometry geometry = gmlReader.read(nodeValue.getString(), geometryFactory);
+                RDFDatatype datatype = TypeMapper.getInstance()
+                        .getSafeTypeByName("http://www.opengis.net/ont/geosparql#wktLiteral");
+                String wktString = wktWriter.write(geometry);
+                result = NodeValue.makeNode(NodeFactory.createLiteral(wktString, datatype));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return result;
     }
-    return result;
-  }
 }
