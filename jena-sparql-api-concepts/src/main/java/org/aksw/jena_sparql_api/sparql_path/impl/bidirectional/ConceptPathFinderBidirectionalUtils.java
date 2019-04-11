@@ -577,7 +577,7 @@ public class ConceptPathFinderBidirectionalUtils {
         // TODO Make timeouts configurable
         boolean result;
         try(QueryExecution qe = conn.query(query)) {
-        	qe.setTimeout(30, TimeUnit.SECONDS, 30, TimeUnit.SECONDS);
+        	//qe.setTimeout(30, TimeUnit.SECONDS, 30, TimeUnit.SECONDS);
         	result = qe.execAsk();
         }
 
