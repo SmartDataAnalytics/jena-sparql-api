@@ -26,6 +26,7 @@ import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.ReadWrite;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFormatter;
@@ -49,20 +50,35 @@ import org.apache.jena.update.UpdateRequest;
 
 public class SparqlStmtUtils {
 
-
-	/**
-	 * 
-	 * @param pm A <b>modifiable<b> prefix mapping
-	 * @param filenameOrURI
-	 * @return
-	 * @throws FileNotFoundException
-	 * @throws IOException
-	 * @throws ParseException
-	 */
 	public static Stream<SparqlStmt> processFile(PrefixMapping pm, String filenameOrURI)
 			throws FileNotFoundException, IOException, ParseException {
-		
+
+		return processFile(pm, filenameOrURI, null);
+	}
+
+	
+	public static URI extractBaseIri(String filenameOrURI) {
 		Context context = null;
+		StreamManager streamManager = StreamManager.get(context);
+
+		// Code taken from jena's RDFParser
+		String urlStr = streamManager.mapURI(filenameOrURI);
+
+        URI uri;
+		try {
+			uri = new URI(urlStr);
+		} catch (URISyntaxException e) {
+			throw new RuntimeException(e);
+		}
+        URI parent = uri.getPath().endsWith("/") ? uri.resolve("..") : uri.resolve(".");
+//		String result = parent.toString();
+//		return result;
+        return parent;
+	}
+	
+	public static TypedInputStream openInputStream(String filenameOrURI) {
+		Context context = null;
+
 		StreamManager streamManager = StreamManager.get(context);
 
 		// Code taken from jena's RDFParser
@@ -78,14 +94,34 @@ public class SparqlStmtUtils {
             in = streamManager.open(urlStr);
         }
 
-        URI uri;
-		try {
-			uri = new URI(urlStr);
-		} catch (URISyntaxException e) {
-			throw new RuntimeException(e);
-		}
-        URI parent = uri.getPath().endsWith("/") ? uri.resolve("..") : uri.resolve(".");
-		String dirName = parent.toString();
+        return in;
+	}
+	
+	/**
+	 * 
+	 * @param pm A <b>modifiable<b> prefix mapping
+	 * @param filenameOrURI
+	 * @return
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 * @throws ParseException
+	 */
+	public static Stream<SparqlStmt> processFile(PrefixMapping pm, String filenameOrURI, String baseIri)
+			throws FileNotFoundException, IOException, ParseException {
+		
+		InputStream in = openInputStream(filenameOrURI);
+        if(baseIri == null) {
+        	URI tmp = extractBaseIri(filenameOrURI);
+	        baseIri = tmp.toString();
+//	        URI uri;
+//			try {
+//				uri = new URI(urlStr);
+//			} catch (URISyntaxException e) {
+//				throw new RuntimeException(e);
+//			}
+//	        URI parent = uri.getPath().endsWith("/") ? uri.resolve("..") : uri.resolve(".");
+//			baseIri = parent.toString();
+        }
 
 //		File file = new File(filename).getAbsoluteFile();
 //		if(!file.exists()) {
@@ -98,7 +134,7 @@ public class SparqlStmtUtils {
 		//prologue.getPrefixMapping().setNsPrefixes(pm);
 		prologue.setPrefixMapping(pm);
 
-		prologue.setBaseURI(dirName);
+		prologue.setBaseURI(baseIri);
 
 		Function<String, SparqlStmt> rawSparqlStmtParser = SparqlStmtParserImpl.create(Syntax.syntaxARQ,
 				prologue, true);// .getQueryParser();
@@ -163,6 +199,12 @@ public class SparqlStmtUtils {
 		if (stmt.isQuery()) {
 			SparqlStmtQuery qs = stmt.getAsQueryStmt();
 			Query q = qs.getQuery();
+			
+			if(q == null) {
+				String queryStr = qs.getOriginalString();
+				q = QueryFactory.create(queryStr, Syntax.syntaxARQ);
+			}
+			
 			//conn.begin(ReadWrite.READ);
 			// SELECT -> STDERR, CONSTRUCT -> STDOUT
 			QueryExecution qe = conn.query(q);
