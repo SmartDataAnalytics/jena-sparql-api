@@ -14,7 +14,8 @@ public class JenaExtensionFs {
         FunctionRegistry.get().put(ns + "probeRdf", E_ProbeRdf.class);
 
         
-		PropertyFunctionRegistry.get().put(ns + "find", new PropertyFunctionFactoryFsFind());
+		PropertyFunctionRegistry.get().put(ns + "find", new PropertyFunctionFactoryFsFind(PropertyFunctionFactoryFsFind::find));
+		PropertyFunctionRegistry.get().put(ns + "parents", new PropertyFunctionFactoryFsFind(PropertyFunctionFactoryFsFind::parents));
     }
     
     public static void addPrefixes(PrefixMapping pm) {
