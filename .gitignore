@@ -28,3 +28,5 @@ JSA-NOP.tsv
 results.tsv
 
 *.swp
+
+.vscode
