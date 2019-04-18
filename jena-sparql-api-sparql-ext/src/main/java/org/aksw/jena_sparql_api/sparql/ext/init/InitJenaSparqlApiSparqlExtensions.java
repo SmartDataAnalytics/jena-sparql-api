@@ -5,6 +5,7 @@ import org.aksw.jena_sparql_api.sparql.ext.fs.JenaExtensionFs;
 import org.aksw.jena_sparql_api.sparql.ext.geosparql.JenaExtensionsGeoSparql;
 import org.aksw.jena_sparql_api.sparql.ext.gml.JenaExtensionGml;
 import org.aksw.jena_sparql_api.sparql.ext.json.JenaExtensionJson;
+import org.aksw.jena_sparql_api.sparql.ext.sys.JenaExtensionSys;
 import org.aksw.jena_sparql_api.sparql.ext.url.JenaExtensionUrl;
 import org.aksw.jena_sparql_api.sparql.ext.xml.JenaExtensionXml;
 import org.apache.jena.sparql.function.FunctionRegistry;
@@ -28,6 +29,7 @@ public class InitJenaSparqlApiSparqlExtensions
         JenaExtensionXml.register();
         JenaExtensionUrl.register();
         JenaExtensionFs.register();
+        JenaExtensionSys.register();
         JenaExtensionsGeoSparql.loadDefs(registry);
     }
     
