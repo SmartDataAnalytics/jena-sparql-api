@@ -6,6 +6,7 @@ import java.util.function.Consumer;
 import org.aksw.jena_sparql_api.sparql.ext.fs.JenaExtensionFs;
 import org.aksw.jena_sparql_api.sparql.ext.http.JenaExtensionHttp;
 import org.aksw.jena_sparql_api.sparql.ext.util.JenaExtensionUtil;
+import org.aksw.jena_sparql_api.stmt.SPARQLResultSinkQuads;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtUtils;
 import org.aksw.jena_sparql_api.utils.SinkModel;
 import org.apache.jena.query.Dataset;
@@ -59,7 +60,7 @@ public class RDFDataMgrEx {
 		
 		try {
 			SparqlStmtUtils.processFile(pm, filenameOrURI)
-				.forEach(stmt -> SparqlStmtUtils.process(conn, stmt, quadConsumer));
+				.forEach(stmt -> SparqlStmtUtils.process(conn, stmt, new SPARQLResultSinkQuads(quadConsumer)));
 		} catch (IOException | ParseException e) {
 			throw new RuntimeException(e);
 		}

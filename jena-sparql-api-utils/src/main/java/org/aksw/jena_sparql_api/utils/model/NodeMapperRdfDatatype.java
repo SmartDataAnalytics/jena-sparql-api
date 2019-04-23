@@ -34,7 +34,26 @@ public class NodeMapperRdfDatatype<T>
 		boolean result = canMapCore(node, dtype);
 		return result;
 	}
+
+	public static boolean canMapCore(Node node, Class<?> clazz) {
+		boolean result;
+		
+		Object obj = node.isLiteral() ? node.getLiteralValue() : null;
+		Class<?> objClass = obj == null ? null : obj.getClass();
+
+		if(objClass != null && clazz.isAssignableFrom(objClass)) {
+			result = true;
+		} else {
+			TypeMapper tm = TypeMapper.getInstance();
+			RDFDatatype dtype = tm.getTypeByClass(clazz);
+
+			result = canMapCore(node, dtype);
+		}
+		
+		return result;
+	}
 	
+		
 	public static boolean canMapCore(Node node, RDFDatatype dtype) {
 		// TODO we could make use of spring's conversion service to allow implicit conversions (e.g. int -> long)
 		Object value = node.getLiteralValue();

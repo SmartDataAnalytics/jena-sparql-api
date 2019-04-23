@@ -15,7 +15,6 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.apache.http.client.HttpClient;
-import org.apache.jena.atlas.json.JsonArray;
 import org.apache.jena.atlas.json.JsonObject;
 import org.apache.jena.atlas.lib.Sink;
 import org.apache.jena.atlas.web.TypedInputStream;
@@ -50,6 +49,9 @@ import org.apache.jena.update.UpdateRequest;
 
 public class SparqlStmtUtils {
 
+
+
+	
 	public static Stream<SparqlStmt> processFile(PrefixMapping pm, String filenameOrURI)
 			throws FileNotFoundException, IOException, ParseException {
 
@@ -280,48 +282,23 @@ public class SparqlStmtUtils {
 		return result;
 	}
 
+	
+	public static void output(
+			SPARQLResultEx rr,
+			SPARQLResultVisitor sink) {		
+		try(SPARQLResultEx r = rr) {
+			SPARQLResultVisitor.forward(r, sink);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	public static void output(
 		SPARQLResultEx rr,
 		Consumer<Quad> sink
 	) {
-		try(SPARQLResultEx r = rr) {
-			Consumer<Quad> dataSink = sink == null ? q -> {} : sink;
-			
-			//logger.info("Processing SPARQL Statement: " + stmt);
-			if (r.isQuads()) {
-				//SinkQuadOutput sink = new SinkQuadOutput(System.out, null, null);
-				Iterator<Quad> it = r.getQuads();
-				while (it.hasNext()) {
-					Quad t = it.next();
-					dataSink.accept(t);
-				}
-	
-			} else if (r.isTriples()) {
-				// System.out.println(Algebra.compile(q));
-	
-				Iterator<Triple> it = r.getTriples();
-				while (it.hasNext()) {
-					Triple t = it.next();
-					Quad quad = new Quad(null, t);
-					dataSink.accept(quad);
-				}
-			} else if (r.isResultSet()) {
-				ResultSet rs = r.getResultSet();
-				String str = ResultSetFormatter.asText(rs);
-				System.err.println(str);
-			} else if(r.isJson()) {
-				JsonArray tmp = new JsonArray();
-				r.getJsonItems().forEachRemaining(tmp::add);
-				String json = tmp.toString();
-				System.out.println(json);
-			} else if(r.isUpdateType()) {
-				// nothing to do
-			} else {
-				throw new RuntimeException("Unsupported query type");
-			}
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
+		SPARQLResultVisitor tmp = new SPARQLResultSinkQuads(sink);		
+		output(rr, tmp);
 	}
 
 	public static void output(SPARQLResultEx r) {
@@ -371,7 +348,7 @@ public class SparqlStmtUtils {
 //		}
 //	}
 
-	public static void process(RDFConnection conn, SparqlStmt stmt, Consumer<Quad> sink) {
+	public static void process(RDFConnection conn, SparqlStmt stmt, SPARQLResultVisitor sink) {
 		SPARQLResultEx sr = execAny(conn, stmt);
 		output(sr, sink);
 	}
