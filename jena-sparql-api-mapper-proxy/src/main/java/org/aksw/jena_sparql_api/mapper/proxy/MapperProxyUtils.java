@@ -886,7 +886,7 @@ public class MapperProxyUtils {
 	}
 
 	public static <T extends Resource> BiFunction<Node, EnhGraph, T> createProxyFactory(Class<T> clazz) {
-		return createProxyFactory(clazz, PrefixMapping.Extended);
+		return createProxyFactory(clazz, RDFa.prefixes);
 	}
 	
 	static class MyPropertyDescriptor {

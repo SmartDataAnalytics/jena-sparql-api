@@ -100,13 +100,6 @@ public class TypeDeciderImpl
     }
 
     public static Map<Class<?>, Node> scan(String basePackage) {
-    	// The explicit call to .init() is needed because:
-    	// new Prologue() will transitively trigger initializing the PrefixMapping.Extended attribute
-    	// but only as a reaction to this the jena plugins will be initalized.
-    	// This means, that plugins that depend on PrefixMapping.Extended will see a null value.
-    	// By calling JenaSystem.init() we ensure initaliazation of the prefix mapping
-    	// occurs before that of the plugins 
-    	JenaSystem.init();
         Map<Class<?>, Node> result = scan(basePackage, new Prologue());
         return result;
     }

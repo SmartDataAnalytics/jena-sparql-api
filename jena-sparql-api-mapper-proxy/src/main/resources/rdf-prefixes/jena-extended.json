@@ -1,0 +1,13 @@
+{
+  "@context": {
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "dc": "http://purl.org/dc/terms/",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "rss": "http://purl.org/rss/1.0/",
+    "vcard": "http://www.w3.org/2006/vcard/ns#",
+    "ja": "http://jena.hpl.hp.com/2005/11/Assembler#",
+    "eg": "http://www.example.org/"
+  }
+}

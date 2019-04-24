@@ -37,7 +37,7 @@ public class JenaPluginUtils {
 	}
 
 	public static void registerJenaResourceClassesUsingPackageScan(String basePackage, Personality<RDFNode> p) {
-		registerJenaResourceClassesUsingPackageScan(basePackage, p, PrefixMapping.Extended);
+		registerJenaResourceClassesUsingPackageScan(basePackage, p, RDFa.prefixes);
 	}
 	
 	public static void registerJenaResourceClassesUsingPackageScan(String basePackage, Personality<RDFNode> p, PrefixMapping pm) {
@@ -57,7 +57,7 @@ public class JenaPluginUtils {
 
 	public static void registerJenaResourceClasses(Class<?> ... classes) {
 		for(Class<?> clazz : classes) {
-			registerJenaResourceClass(clazz, BuiltinPersonalities.model, PrefixMapping.Extended);
+			registerJenaResourceClass(clazz, BuiltinPersonalities.model, RDFa.prefixes);
 		}
 	}
 	
