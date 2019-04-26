@@ -36,6 +36,14 @@ public class SparqlStmtIterator extends AbstractIterator<SparqlStmt> {
 	protected int line = 1;
 	protected int column = 1;
 
+	public int getLine() {
+		return line;
+	}
+	
+	public int getColumn() {
+		return column;
+	}
+	
 	public SparqlStmtIterator(Function<String, SparqlStmt> parser, String str) {
 		this(parser, str, 1, 1);
 	}	

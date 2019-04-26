@@ -8,7 +8,6 @@ import org.aksw.jena_sparql_api.sparql.ext.http.JenaExtensionHttp;
 import org.aksw.jena_sparql_api.sparql.ext.util.JenaExtensionUtil;
 import org.aksw.jena_sparql_api.stmt.SPARQLResultSinkQuads;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtUtils;
-import org.aksw.jena_sparql_api.utils.SinkModel;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
@@ -20,6 +19,8 @@ import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.lang.arq.ParseException;
 import org.apache.jena.sparql.util.ModelUtils;
+
+import com.google.common.collect.Streams;
 
 /**
  * Extensions to load models from .sparql files
@@ -59,7 +60,7 @@ public class RDFDataMgrEx {
 		JenaExtensionFs.registerFileServiceHandler();
 		
 		try {
-			SparqlStmtUtils.processFile(pm, filenameOrURI)
+			Streams.stream(SparqlStmtUtils.processFile(pm, filenameOrURI))
 				.forEach(stmt -> SparqlStmtUtils.process(conn, stmt, new SPARQLResultSinkQuads(quadConsumer)));
 		} catch (IOException | ParseException e) {
 			throw new RuntimeException(e);

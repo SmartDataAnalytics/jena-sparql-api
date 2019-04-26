@@ -12,13 +12,11 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 import org.apache.http.client.HttpClient;
 import org.apache.jena.atlas.json.JsonObject;
 import org.apache.jena.atlas.lib.Sink;
 import org.apache.jena.atlas.web.TypedInputStream;
-import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.apache.jena.ext.com.google.common.io.CharStreams;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Dataset;
@@ -52,7 +50,7 @@ public class SparqlStmtUtils {
 
 
 	
-	public static Stream<SparqlStmt> processFile(PrefixMapping pm, String filenameOrURI)
+	public static SparqlStmtIterator processFile(PrefixMapping pm, String filenameOrURI)
 			throws FileNotFoundException, IOException, ParseException {
 
 		return processFile(pm, filenameOrURI, null);
@@ -108,7 +106,7 @@ public class SparqlStmtUtils {
 	 * @throws IOException
 	 * @throws ParseException
 	 */
-	public static Stream<SparqlStmt> processFile(PrefixMapping pm, String filenameOrURI, String baseIri)
+	public static SparqlStmtIterator processFile(PrefixMapping pm, String filenameOrURI, String baseIri)
 			throws FileNotFoundException, IOException, ParseException {
 		
 		InputStream in = openInputStream(filenameOrURI);
@@ -163,14 +161,14 @@ public class SparqlStmtUtils {
 //				};
 		
 		//InputStream in = new FileInputStream(filename);
-		Stream<SparqlStmt> stmts = SparqlStmtUtils.parse(in, sparqlStmtParser);
+		SparqlStmtIterator stmts = SparqlStmtUtils.parse(in, sparqlStmtParser);
 
 		return stmts;
 		//stmts.forEach(stmt -> process(conn, stmt, sink));
 	}
 
 
-	public static Stream<SparqlStmt> parse(InputStream in, Function<String, SparqlStmt> parser)
+	public static SparqlStmtIterator parse(InputStream in, Function<String, SparqlStmt> parser)
 			throws IOException, ParseException {
 		// try(QueryExecution qe = qef.createQueryExecution(q)) {
 		// Model result = qe.execConstruct();
@@ -182,8 +180,12 @@ public class SparqlStmtUtils {
 		// File("/home/raven/Projects/Eclipse/trento-bike-racks/datasets/test/test.sparql");
 		// String str = Files.asCharSource(, StandardCharsets.UTF_8).read();
 
-		String str = CharStreams.toString(new InputStreamReader(in, StandardCharsets.UTF_8));
-
+		String str;
+		try {
+			str = CharStreams.toString(new InputStreamReader(in, StandardCharsets.UTF_8));
+		} finally {
+			in.close();
+		}
 		// ARQParser parser = new ARQParser(new FileInputStream(file));
 		// parser.setQuery(new Query());
 		// parser.
@@ -191,7 +193,8 @@ public class SparqlStmtUtils {
 		// SparqlStmtParser parser = SparqlStmtParserImpl.create(Syntax.syntaxARQ,
 		// PrefixMapping.Extended, true);
 
-		Stream<SparqlStmt> result = Streams.stream(new SparqlStmtIterator(parser, str));
+		//Stream<SparqlStmt> result = Streams.stream(new SparqlStmtIterator(parser, str));
+		SparqlStmtIterator result = new SparqlStmtIterator(parser, str);
 		return result;
 	}
 

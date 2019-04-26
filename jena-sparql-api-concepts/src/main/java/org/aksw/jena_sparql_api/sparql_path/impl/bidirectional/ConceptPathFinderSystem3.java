@@ -48,7 +48,7 @@ public class ConceptPathFinderSystem3
 		Flowable<SparqlStmt> stmts;
 		stmts = Flowable.fromIterable(() -> {
 			try {
-				return SparqlStmtUtils.parse(in, SparqlStmtParserImpl.create(Syntax.syntaxARQ, true)).iterator();
+				return SparqlStmtUtils.parse(in, SparqlStmtParserImpl.create(Syntax.syntaxARQ, true));
 			} catch (IOException | ParseException e) {
 				throw new RuntimeException(e);
 			}

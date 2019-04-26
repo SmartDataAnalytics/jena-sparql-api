@@ -9,5 +9,6 @@ public class RDFa {
 	public static final PrefixMapping prefixes = new PrefixMappingImpl()
 			.setNsPrefixes(RDFDataMgr.loadModel("rdf-prefixes/jena-extended.json", Lang.JSONLD))
 			.setNsPrefixes(RDFDataMgr.loadModel("rdf-prefixes/rdfa11.json", Lang.JSONLD))
+			.setNsPrefix("afn", "http://jena.apache.org/ARQ/function#")
 			.lock();
 }
