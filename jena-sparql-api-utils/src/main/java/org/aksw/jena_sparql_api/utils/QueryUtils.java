@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.backports.syntaxtransform.ExprTransformNodeElement;
@@ -15,7 +16,9 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.shared.impl.PrefixMappingImpl;
+import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.OpAsQuery;
 import org.apache.jena.sparql.algebra.op.OpSlice;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.core.Quad;
@@ -28,6 +31,7 @@ import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.PatternVars;
+import org.apache.jena.sparql.syntax.Template;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformSubst;
 import org.apache.jena.sparql.util.ExprUtils;
@@ -36,6 +40,29 @@ import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.Range;
 
 public class QueryUtils {
+
+	/**
+	 * Rewrite a query based on an algebraic transformation; preserves the construct
+	 * template
+	 * 
+	 * 
+	 * @param beforeQuery
+	 * @param xform
+	 * @return
+	 */
+	public static Query rewrite(Query beforeQuery, Function<? super Op, ? extends Op> xform) {
+		Op beforeOp = Algebra.compile(beforeQuery);
+		Op afterOp = xform.apply(beforeOp);// Transformer.transform(xform, beforeOp);
+		Query result = OpAsQuery.asQuery(afterOp);
+		
+		if(beforeQuery.isConstructType()) {
+			result.setQueryConstructType();
+			Template template = beforeQuery.getConstructTemplate();
+			result.setConstructTemplate(template);
+		}
+		
+		return result;
+	}
 
 	// Get a query pattern (of a select query) in a way that it can be injected as a query pattern of a construct query
 	public static Element asPatternForConstruct(Query q) {

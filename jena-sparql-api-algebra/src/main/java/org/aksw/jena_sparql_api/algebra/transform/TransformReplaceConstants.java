@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
@@ -16,6 +17,7 @@ import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.algebra.Transform;
 import org.apache.jena.sparql.algebra.TransformCopy;
 import org.apache.jena.sparql.algebra.Transformer;
+import org.apache.jena.sparql.algebra.op.OpBGP;
 import org.apache.jena.sparql.algebra.op.OpFilter;
 import org.apache.jena.sparql.algebra.op.OpProject;
 import org.apache.jena.sparql.algebra.op.OpQuadPattern;
@@ -36,9 +38,18 @@ public class TransformReplaceConstants
     protected Generator<Var> generator;
     protected boolean omitDefaultGraphFilter;
 
+    // TODO The test method might need additional arguments in the future,
+    // such as the occurrences (gspo) of the node
+    protected Predicate<Node> testTransform;
+
     public TransformReplaceConstants(Generator<Var> generator, boolean omitDefaultGraphFilter) {
+    	this(generator, omitDefaultGraphFilter, null);
+    }
+
+    public TransformReplaceConstants(Generator<Var> generator, boolean omitDefaultGraphFilter, Predicate<Node> testTransform) {
         this.generator = generator;
         this.omitDefaultGraphFilter = omitDefaultGraphFilter;
+        this.testTransform = testTransform == null ? x -> true : testTransform;
     }
 
 
@@ -58,15 +69,15 @@ public class TransformReplaceConstants
 
 
 
-    public static Op transform(Op op)
+    public static Op transform(Op op, Predicate<Node> testTransform)
     {
         Collection<Var> mentionedVars = OpVars.mentionedVars(op);
 
-        Set<Var> oldVisibleVars = OpVars.visibleVars(op);
+        //Set<Var> oldVisibleVars = OpVars.visibleVars(op);
 
         Generator<Var> gen = VarGeneratorBlacklist.create("v", mentionedVars);
 
-        Transform transform = new TransformReplaceConstants(gen, false);
+        Transform transform = new TransformReplaceConstants(gen, false, testTransform);
         Op result = Transformer.transform(transform, op);
 
         // Ensure the correct projection
@@ -78,6 +89,12 @@ public class TransformReplaceConstants
 
 
         return result;
+    }
+    
+    public static Op transform(Op op)
+    {
+    	Op result = transform(op, null);
+    	return result;
     }
 
     public static Node transform(Map<Node, Var> nodeToVar, Node node, boolean isGraphNode, Generator<Var> generator, ExprList filters, boolean omitDefaultGraphFilter) {
@@ -105,30 +122,48 @@ public class TransformReplaceConstants
 
     }
 
-    public Op transform(OpQuadPattern op) {
-
-        //List<Var> vars = new ArrayList<>(OpVars.visibleVars(op));
-
+    @Override
+    public Op transform(OpBGP opBGP) {
         Map<Node, Var> nodeToVar = new HashMap<>();
-
-
         ExprList filters = new ExprList();
 
+        List<Triple> ts = opBGP.getPattern().getList();
+        BasicPattern triples = transform(ts, nodeToVar, filters);
+        Op result = new OpBGP(triples);
+
+        if(!filters.isEmpty()) {
+            result = OpFilter.filterBy(filters, result);
+        }
+
+        Set<Var> oldVisibleVars = OpVars.visibleVars(opBGP);
+        Set<Var> newVisibleVars = OpVars.visibleVars(result);
+        if(!oldVisibleVars.equals(newVisibleVars)) {
+            result = new OpProject(result, new ArrayList<>(oldVisibleVars));
+        }
+
+        // Note: We need to add a projection here, so we do not suddely yield more variables than
+        // in the original pattern - otherwise, we could break e.g. SELECT * { ... } queries.
+//        result = new OpProject(result, vars);
+
+        return result;
+    }
+
+    
+    public BasicPattern transform(
+    		Collection<Triple> ts,
+            Map<Node, Var> nodeToVar,
+            ExprList filters) {
+
         BasicPattern triples = new BasicPattern();
-
-        boolean retainDefaultGraphNode = true;
-        Node graphNode = retainDefaultGraphNode && op.getGraphNode().equals(Quad.defaultGraphNodeGenerated)
-                ? Quad.defaultGraphNodeGenerated
-                : transform(nodeToVar, op.getGraphNode(), true, generator, filters, omitDefaultGraphFilter);
-
-
         // TODO Mapping of nodes might be doable with jena transform
         List<Node> nodes = new ArrayList<Node>();
-        for(Triple triple : op.getBasicPattern().getList()) {
+        for(Triple triple : ts) {
 
 
             for(Node node : tripleToList(triple)) {
-                Node n = transform(nodeToVar, node, false, generator, filters, omitDefaultGraphFilter);
+                Node n = testTransform.test(node)
+                		? transform(nodeToVar, node, false, generator, filters, omitDefaultGraphFilter)
+                		: node;
                 nodes.add(n);
             }
 
@@ -138,6 +173,29 @@ public class TransformReplaceConstants
 
             nodes.clear();
         }
+ 
+        return triples;
+    }
+    
+    public Op transform(OpQuadPattern op) {
+
+        //List<Var> vars = new ArrayList<>(OpVars.visibleVars(op));
+        Map<Node, Var> nodeToVar = new HashMap<>();
+        ExprList filters = new ExprList();
+        //BasicPattern triples = new BasicPattern();
+
+        boolean retainDefaultGraphNode = true;
+        Node gn = op.getGraphNode();
+        Node graphNode = retainDefaultGraphNode && gn.equals(Quad.defaultGraphNodeGenerated)
+                ? Quad.defaultGraphNodeGenerated
+                : testTransform.test(gn)
+                	? transform(nodeToVar, gn, true, generator, filters, omitDefaultGraphFilter)
+                	: gn;
+
+
+        List<Triple> ts = op.getBasicPattern().getList();
+        BasicPattern triples = transform(ts, nodeToVar, filters);
+
 
         Op result = new OpQuadPattern(graphNode, triples);
 
