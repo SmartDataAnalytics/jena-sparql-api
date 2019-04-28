@@ -76,7 +76,7 @@ import org.apache.jena.sparql.util.ExprUtils;
  * @author raven
  *
  */
-public class ExprTransformBnodeDecode
+public class ExprTransformVirtualBnodeUris
 	extends ExprTransformCopy
 {
 	
@@ -95,7 +95,7 @@ public class ExprTransformBnodeDecode
 	public static String decodeBnodeUriFnUri = ns + "decodeBnodeUri";
 	public static final String forceBnodeUriFnUri = ns + "forceBnodeUri";
 
-	public ExprTransformBnodeDecode() {
+	public ExprTransformVirtualBnodeUris() {
 		try {
 			registerFunctions();
 		} catch(Exception e) {
@@ -111,10 +111,10 @@ public class ExprTransformBnodeDecode
 //ARQ.constantBNodeLabels
 
 		String bnodePrefix = "bnode://";
-		f.add(typeErrorFnUri, "abs('')", Collections.emptyList());	
+		f.add(typeErrorFnUri, "ABS('')", Collections.emptyList());	
 		f.add(encodeBnodeFnUri, "URI(CONCAT('bnode://', ?x))", x);
-		f.add(isBnodeUriFnUri, "isURI(?x) && STRSTARTS(STR(?x), '" + bnodePrefix + "')", x);
-		f.add(decodeBnodeUriFnUri, "STRAFTER(STR(?x), '" + bnodePrefix + "')", x);
+		f.add(isBnodeUriFnUri, "ISURI(?x) && STRSTARTS(STR(?x), '" + bnodePrefix + "')", x);
+		f.add(decodeBnodeUriFnUri, "IF(<" + isBnodeUriFnUri + ">(?x), STRAFTER(STR(?x), '" + bnodePrefix + "'), <" + typeErrorFnUri + "()>)", x);
 		f.add(forceBnodeUriFnUri, "IF(isBlank(?x), <" + encodeBnodeFnUri + ">(<" + bnodeLabelFnUri + ">(?x)), ?x)", x);
 	}
 	
@@ -198,9 +198,9 @@ public class ExprTransformBnodeDecode
 	
 	public static Query rewrite(Query query) {
 		Query result = QueryUtils.rewrite(query, op -> {
-			Op a = TransformReplaceConstants.transform(op, x -> eval(isBnodeUriFnUri, NodeValue.makeNode(x)).getBoolean());
-			Op b = Transformer.transform(null, new ExprTransformBnodeDecode(), a);
-			Op c = ExprTransformBnodeDecode.forceBnodeUris(b);
+			Op a = TransformReplaceConstants.transform(op, x -> x.isURI() ? eval(isBnodeUriFnUri, NodeValue.makeNode(x)).getBoolean() : false);
+			Op b = Transformer.transform(null, new ExprTransformVirtualBnodeUris(), a);
+			Op c = ExprTransformVirtualBnodeUris.forceBnodeUris(b);
 			return c;
 		});
 
@@ -211,7 +211,7 @@ public class ExprTransformBnodeDecode
 	public static void main(String[] args) {
 		Expr input = ExprUtils.parse("?x = <bnode://foobar>");
 //		Expr input = ExprUtils.parse("<bnode://foo> = <bnode://bar>");
-		new ExprTransformBnodeDecode();
+		new ExprTransformVirtualBnodeUris();
 		//Expr actual = ExprTransformer.transform(new ExprTransformBnodeDecode(), input);
 		//System.out.println(actual);
 		
@@ -246,5 +246,6 @@ public class ExprTransformBnodeDecode
 
 		return result;
 	}
+	
 }
 
