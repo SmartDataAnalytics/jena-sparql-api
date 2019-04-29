@@ -226,7 +226,7 @@ public class ExprTransformVirtualBnodeUris
 		//System.out.println(actual);
 		
 //		Query query = QueryFactory.create("SELECT * { ?s a ?t . ?s ?p ?o }");
-		Query query = QueryFactory.create("CONSTRUCT { ?s ?p ?o } { ?s <bnode://foobar> ?t . ?s ?p ?o . FILTER(?p = <bnode://foobar>)}");
+		Query query = QueryFactory.create("CONSTRUCT { ?s ?p ?o } { ?s <bnode://foo> ?t . ?s ?p ?o . FILTER(?p = <bnode://bar>)}");
 		Query actual = xform.rewrite(query);
 
 		//		Op op = Algebra.compile(query);
