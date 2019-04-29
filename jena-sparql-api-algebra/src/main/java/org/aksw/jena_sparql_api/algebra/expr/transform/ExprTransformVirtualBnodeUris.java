@@ -88,14 +88,21 @@ public class ExprTransformVirtualBnodeUris
 
 	public static final String ns = "http://www.example.org/fn/";
 	
-	public static String bnodeLabelFnUri = ns + "bnodeLabel";
-	public static String typeErrorFnUri = ns + "typeError";
-	public static String encodeBnodeFnUri = ns + "encodeBnodeFnUri";
-	public static String isBnodeUriFnUri = ns + "isBnodeUri";
-	public static String decodeBnodeUriFnUri = ns + "decodeBnodeUri";
-	public static final String forceBnodeUriFnUri = ns + "forceBnodeUri";
+	public static final String typeErrorFnUri = ns + "typeError";
+	public static final String encodeBnodeFnUri = ns + "encodeBnodeFnUri";
+	public static final String isBnodeUriFnUri = ns + "isBnodeUri";
+	public static final String decodeBnodeUriFnUri = ns + "decodeBnodeUri";
 
-	public ExprTransformVirtualBnodeUris() {
+	// The bnodeLabelFnUri is vendor specific, others may depend on it
+	public String bnodeLabelFnUri;
+	public String bnodeLabelFnSymbol;
+	public transient String forceBnodeUriFnUri;
+
+	public ExprTransformVirtualBnodeUris(String vendorLabel, String bnodeLabelFnSymbol) {
+		this.bnodeLabelFnSymbol = bnodeLabelFnSymbol;
+		this.bnodeLabelFnUri = ns + vendorLabel + "bnode";
+		this.forceBnodeUriFnUri = ns + vendorLabel + "/forceBnodeUri";
+
 		try {
 			registerFunctions();
 		} catch(Exception e) {
@@ -106,7 +113,8 @@ public class ExprTransformVirtualBnodeUris
 	public void registerFunctions() throws ParseException {
 		List<Var> x = Collections.singletonList(Vars.x);
 
-		f.add(bnodeLabelFnUri, "<http://jena.apache.org/ARQ/function#bnode>(?x)", x);
+		f.add(bnodeLabelFnUri, bnodeLabelFnSymbol + "(?x)", x);
+		//f.add(bnodeLabelFnUri, "<http://jena.apache.org/ARQ/function#bnode>(?x)", x);
 //ARQ.enableBlankNodeResultLabels(false);
 //ARQ.constantBNodeLabels
 
@@ -115,7 +123,8 @@ public class ExprTransformVirtualBnodeUris
 		f.add(encodeBnodeFnUri, "URI(CONCAT('bnode://', ?x))", x);
 		f.add(isBnodeUriFnUri, "ISURI(?x) && STRSTARTS(STR(?x), '" + bnodePrefix + "')", x);
 		f.add(decodeBnodeUriFnUri, "IF(<" + isBnodeUriFnUri + ">(?x), STRAFTER(STR(?x), '" + bnodePrefix + "'), <" + typeErrorFnUri + "()>)", x);
-		f.add(forceBnodeUriFnUri, "IF(isBlank(?x), <" + encodeBnodeFnUri + ">(<" + bnodeLabelFnUri + ">(?x)), ?x)", x);
+
+		f.add(forceBnodeUriFnUri, "IF(isBlank(?x), <" + encodeBnodeFnUri + ">(" + bnodeLabelFnSymbol + "(?x)), ?x)", x);
 	}
 	
 //	@Override
@@ -196,11 +205,12 @@ public class ExprTransformVirtualBnodeUris
 		return result;
 	}
 	
-	public static Query rewrite(Query query) {
+	public Query rewrite(Query query) {
 		Query result = QueryUtils.rewrite(query, op -> {
 			Op a = TransformReplaceConstants.transform(op, x -> x.isURI() ? eval(isBnodeUriFnUri, NodeValue.makeNode(x)).getBoolean() : false);
-			Op b = Transformer.transform(null, new ExprTransformVirtualBnodeUris(), a);
-			Op c = ExprTransformVirtualBnodeUris.forceBnodeUris(b);
+			// new ExprTransformVirtualBnodeUris()
+			Op b = Transformer.transform(null, this, a);
+			Op c = forceBnodeUris(b);//ExprTransformVirtualBnodeUris.forceBnodeUris(b);
 			return c;
 		});
 
@@ -211,13 +221,13 @@ public class ExprTransformVirtualBnodeUris
 	public static void main(String[] args) {
 		Expr input = ExprUtils.parse("?x = <bnode://foobar>");
 //		Expr input = ExprUtils.parse("<bnode://foo> = <bnode://bar>");
-		new ExprTransformVirtualBnodeUris();
+		ExprTransformVirtualBnodeUris xform = new ExprTransformVirtualBnodeUris("virtuoso", "STR");
 		//Expr actual = ExprTransformer.transform(new ExprTransformBnodeDecode(), input);
 		//System.out.println(actual);
 		
 //		Query query = QueryFactory.create("SELECT * { ?s a ?t . ?s ?p ?o }");
 		Query query = QueryFactory.create("CONSTRUCT { ?s ?p ?o } { ?s <bnode://foobar> ?t . ?s ?p ?o . FILTER(?p = <bnode://foobar>)}");
-		Query actual = rewrite(query);
+		Query actual = xform.rewrite(query);
 
 		//		Op op = Algebra.compile(query);
 //		op = forceBnodeUris(op);
@@ -227,7 +237,7 @@ public class ExprTransformVirtualBnodeUris
 	}
 
 
-	public static Op forceBnodeUris(Op op) {
+	public Op forceBnodeUris(Op op) {
 		List<Var> visibleVars = new ArrayList<>(OpVars.visibleVars(op));
 		Set<Var> forbiddenVars = new HashSet<>(OpVars.mentionedVars(op));
 		

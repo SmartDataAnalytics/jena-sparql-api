@@ -1,7 +1,10 @@
 package org.aksw.jena_sparql_api.core;
 
+import java.util.function.Function;
+
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
 import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
+import org.apache.jena.query.Query;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
@@ -54,6 +57,21 @@ public class RDFConnectionFactoryEx {
 		RDFConnectionMetaData md = metadata.as(RDFConnectionMetaData.class);
 		
 		RDFConnectionEx result = new RDFConnectionExImpl(rawConn, md);
+		return result;
+	}
+
+	
+	public static RDFConnection wrapWithQueryTransform(RDFConnection conn, Function<? super Query, ? extends Query> fn) {
+		RDFConnection result =
+				new RDFConnectionModular(new SparqlQueryConnectionJsa(
+						FluentQueryExecutionFactory
+							.from(new QueryExecutionFactorySparqlQueryConnection(conn))
+							.config()
+								.withQueryTransform(fn)
+								.end()
+							.create()
+							), conn, conn);
+	
 		return result;
 	}
 

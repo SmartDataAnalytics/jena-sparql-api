@@ -184,7 +184,7 @@ public class FluentQueryExecutionFactoryFn<P>
         return this;
     }
 
-    public FluentQueryExecutionFactoryFn<P> withQueryTransform(final Function<Query, Query> queryTransform){
+    public FluentQueryExecutionFactoryFn<P> withQueryTransform(final Function<? super Query, ? extends Query> queryTransform){
     	compose(qef -> new QueryExecutionFactoryQueryTransform(qef, queryTransform));
 
 //        compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
