@@ -93,14 +93,15 @@
 
 	<properties>
 		<jena.version>3.11.0</jena.version>
-		<jetty.version>9.4.8.v20171121</jetty.version>
+<!--		<jetty.version>9.4.8.v20171121</jetty.version> -->
+		<jetty.version>9.4.18.v20190429</jetty.version>
 
 		<!-- <jgrapht.version>1.1.0</jgrapht.version> -->
 
 		<!-- 2.18 could be tried out next -->
 		<jersey.version>2.26-b03</jersey.version>
 
-		<spring.version>4.3.14.RELEASE</spring.version>
+		<spring.version>4.3.23.RELEASE</spring.version>
 		<spring.batch.version>4.0.0.RELEASE</spring.batch.version>
 		<aksw.commons.version>0.8.11-SNAPSHOT</aksw.commons.version>
 
