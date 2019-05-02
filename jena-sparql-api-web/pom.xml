@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>org.aksw.jena-sparql-api</groupId>
 		<artifactId>jena-sparql-api-parent</artifactId>
-		<version>3.10.0-1-SNAPSHOT</version>
+		<version>3.11.0-1-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>jena-sparql-api-web</artifactId>

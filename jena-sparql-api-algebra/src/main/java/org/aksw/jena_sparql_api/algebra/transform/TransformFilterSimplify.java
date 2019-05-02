@@ -37,7 +37,7 @@ import org.apache.jena.sparql.expr.ExprTransform;
 import org.apache.jena.sparql.expr.ExprTransformer;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.NodeValue;
-import org.apache.jena.sparql.function.FunctionEnvBase;
+import org.apache.jena.sparql.util.ExprUtils;
 
 public class TransformFilterSimplify
 	extends TransformCopy
@@ -59,7 +59,7 @@ public class TransformFilterSimplify
     	if(!(expr instanceof ExprSystem) && boundVars.containsAll(vars)) {
         	Binding binding = BindingUtils.fromMap(map);
 
-        	result = expr.eval(binding, FunctionEnvBase.createTest());
+        	result = ExprUtils.eval(expr, binding);
     	} else {
     		result = expr;
     	}

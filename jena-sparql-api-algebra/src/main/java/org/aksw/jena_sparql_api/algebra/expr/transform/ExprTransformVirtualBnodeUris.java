@@ -13,14 +13,17 @@ import org.aksw.jena_sparql_api.algebra.transform.TransformReplaceConstants;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.Vars;
+import org.apache.jena.query.ARQ;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
+import org.apache.jena.sparql.ARQConstants;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.op.OpExtend;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
+import org.apache.jena.sparql.engine.ExecutionContext;
 import org.apache.jena.sparql.engine.binding.BindingFactory;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprFunction2;
@@ -30,13 +33,16 @@ import org.apache.jena.sparql.expr.ExprTransformSubstitute;
 import org.apache.jena.sparql.expr.ExprTransformer;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.function.FunctionEnv;
 import org.apache.jena.sparql.function.FunctionEnvBase;
 import org.apache.jena.sparql.function.user.UserDefinedFunction;
 import org.apache.jena.sparql.function.user.UserDefinedFunctionDefinition;
 import org.apache.jena.sparql.function.user.UserDefinedFunctionFactory;
 import org.apache.jena.sparql.graph.NodeTransformLib;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
+import org.apache.jena.sparql.util.Context;
 import org.apache.jena.sparql.util.ExprUtils;
+import org.apache.jena.sparql.util.NodeFactoryExtra;
 
 /**
  * Decode "blanknode URIs" - i.e. URIs that represent blank nodes, such as bnode://{blank-node-label}
@@ -179,10 +185,15 @@ public class ExprTransformVirtualBnodeUris
 		UserDefinedFunctionDefinition udfd = f.get(udfUri);
 		org.apache.jena.sparql.function.Function fi = udfd.newFunctionInstance();
 		
-		//ExprUtils.eval
 		ExprList el = new ExprList(Arrays.asList(args));
 		fi.build(udfUri, el);
-		NodeValue result = fi.exec(BindingFactory.binding(), el, udfUri, FunctionEnvBase.createTest());
+
+		// Taken from ExprUtils.eval
+		Context context = ARQ.getContext().copy() ;
+        context.set(ARQConstants.sysCurrentTime, NodeFactoryExtra.nowAsDateTime()) ;
+        FunctionEnv env = new ExecutionContext(context, null, null, null) ; 
+
+		NodeValue result = fi.exec(BindingFactory.binding(), el, udfUri, env);
 		return result;
 	}
 
