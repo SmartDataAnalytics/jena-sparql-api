@@ -9,10 +9,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.aksw.jena_sparql_api.algebra.transform.TransformExprToBasicPattern;
+import org.aksw.jena_sparql_api.algebra.transform.TransformPullFiltersIfCanMergeBGPs;
 import org.aksw.jena_sparql_api.algebra.transform.TransformReplaceConstants;
+import org.aksw.jena_sparql_api.algebra.utils.FixpointIteration;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.Vars;
+import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.apache.jena.query.ARQ;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
@@ -21,6 +25,7 @@ import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.op.OpExtend;
+import org.apache.jena.sparql.algebra.optimize.TransformMergeBGPs;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
 import org.apache.jena.sparql.engine.ExecutionContext;
@@ -34,7 +39,6 @@ import org.apache.jena.sparql.expr.ExprTransformer;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.function.FunctionEnv;
-import org.apache.jena.sparql.function.FunctionEnvBase;
 import org.apache.jena.sparql.function.user.UserDefinedFunction;
 import org.apache.jena.sparql.function.user.UserDefinedFunctionDefinition;
 import org.apache.jena.sparql.function.user.UserDefinedFunctionFactory;
@@ -43,6 +47,8 @@ import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.apache.jena.sparql.util.Context;
 import org.apache.jena.sparql.util.ExprUtils;
 import org.apache.jena.sparql.util.NodeFactoryExtra;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Decode "blanknode URIs" - i.e. URIs that represent blank nodes, such as bnode://{blank-node-label}
@@ -215,6 +221,8 @@ public class ExprTransformVirtualBnodeUris
 		
 		return result;
 	}
+
+	private static final Logger logger = LoggerFactory.getLogger(ExprTransformVirtualBnodeUris.class);
 	
 	public Query rewrite(Query query) {
 		Query result = QueryUtils.rewrite(query, op -> {
@@ -222,9 +230,27 @@ public class ExprTransformVirtualBnodeUris
 			// new ExprTransformVirtualBnodeUris()
 			Op b = Transformer.transform(null, this, a);
 			Op c = forceBnodeUris(b);//ExprTransformVirtualBnodeUris.forceBnodeUris(b);
-			return c;
+			
+			Op d = TransformExprToBasicPattern.transform(c, fn -> {
+				String id = org.aksw.jena_sparql_api.utils.ExprUtils.getFunctionId(fn.getFunction());
+				//System.out.println(id);
+				if("str".equals(id)) {
+					return Maps.immutableEntry("http://foo.bar/baz", false);
+				}
+				return null;
+			});
+			
+    		Op e = FixpointIteration.apply(c, x -> {
+        		x = TransformPullFiltersIfCanMergeBGPs.transform(x);
+        		x = Transformer.transform(new TransformMergeBGPs(), x);
+        		return x;
+    		});
+
+			
+			return e;
 		});
 
+		logger.debug("Rewrote query\n" + query + " to\n" + result);
 		return result;
 	}
 	

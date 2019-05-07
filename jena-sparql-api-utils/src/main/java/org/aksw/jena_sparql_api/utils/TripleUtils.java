@@ -32,6 +32,14 @@ public class TripleUtils {
 //        return result;
 //    }
 
+	public static Triple create(Node s, Node p, Node o, boolean swapSO) {
+		Triple result = swapSO
+			? new Triple(o, p, s)
+			: new Triple(s, p, o);
+			
+		return result;
+	}
+
     public static Node[] toArray(Triple t) {
         Node[] result = new Node[] { t.getSubject(), t.getPredicate(), t.getObject() };
         return result;
