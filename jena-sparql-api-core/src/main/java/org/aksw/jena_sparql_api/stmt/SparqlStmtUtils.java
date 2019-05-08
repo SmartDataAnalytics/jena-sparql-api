@@ -13,7 +13,10 @@ import java.util.Iterator;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
+import org.aksw.jena_sparql_api.core.utils.UpdateUtils;
 import org.aksw.jena_sparql_api.utils.ElementTransformSubst2;
+import org.aksw.jena_sparql_api.utils.QuadUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.http.client.HttpClient;
 import org.apache.jena.atlas.json.JsonObject;
@@ -45,11 +48,12 @@ import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.lang.arq.ParseException;
+import org.apache.jena.sparql.modify.request.UpdateData;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
-import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformCopyBase;
 import org.apache.jena.sparql.syntax.syntaxtransform.ExprTransformNodeElement;
 import org.apache.jena.sparql.syntax.syntaxtransform.UpdateTransformOps;
 import org.apache.jena.sparql.util.Context;
+import org.apache.jena.update.Update;
 import org.apache.jena.update.UpdateRequest;
 
 public class SparqlStmtUtils {
@@ -62,9 +66,19 @@ public class SparqlStmtUtils {
 			Query after = QueryUtils.applyNodeTransform(before, xform);
 			result = new SparqlStmtQuery(after);
 		} else if(stmt.isUpdateRequest()) {
-			UpdateRequest before = stmt.getAsUpdateStmt().getUpdateRequest();
 			ElementTransform elform = new ElementTransformSubst2(xform);
-			UpdateRequest after = UpdateTransformOps.transform(before, elform, new ExprTransformNodeElement(xform, elform));
+
+			UpdateRequest before = stmt.getAsUpdateStmt().getUpdateRequest();
+			UpdateRequest after = UpdateRequestUtils.copyTransform(before, update -> {
+				// Up to Jena 3.11.0 (inclusive) transforms do not aaffect UpdateData objects
+				Update r = update instanceof UpdateData
+					? UpdateUtils.copyWithQuadTransform((UpdateData)update, q -> QuadUtils.applyNodeTransform(q, xform))
+					: UpdateTransformOps.transform(update, elform, new ExprTransformNodeElement(xform, elform));					
+			    return r;
+			});
+			
+//			ElementTransform elform = new ElementTransformSubst2(xform);
+//			UpdateRequest after = UpdateTransformOps.transform(before, elform, new ExprTransformNodeElement(xform, elform));
 			result = new SparqlStmtUpdate(after);
 		} else {
 			result = stmt;
