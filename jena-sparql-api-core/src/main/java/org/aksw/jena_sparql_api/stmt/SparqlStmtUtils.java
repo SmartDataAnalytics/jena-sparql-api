@@ -44,9 +44,14 @@ import org.apache.jena.riot.out.SinkTripleOutput;
 import org.apache.jena.riot.system.stream.StreamManager;
 import org.apache.jena.riot.web.HttpOp;
 import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.sparql.algebra.Algebra;
+import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.OpAsQuery;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.expr.ExprTransform;
 import org.apache.jena.sparql.graph.NodeTransform;
+import org.apache.jena.sparql.graph.NodeTransformLib;
 import org.apache.jena.sparql.lang.arq.ParseException;
 import org.apache.jena.sparql.modify.request.UpdateData;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
@@ -61,19 +66,34 @@ public class SparqlStmtUtils {
 
 	public static SparqlStmt applyNodeTransform(SparqlStmt stmt, NodeTransform xform) {
 		SparqlStmt result;
+
+		ElementTransform elform = new ElementTransformSubst2(xform);
+		ExprTransform exform = new ExprTransformNodeElement(xform, elform);
+
 		if(stmt.isQuery()) {
 			Query before = stmt.getAsQueryStmt().getQuery();
-			Query after = QueryUtils.applyNodeTransform(before, xform);
+			Op beforeOp = Algebra.compile(before);
+			Op afterOp = NodeTransformLib.transform(xform, beforeOp);
+			Query after = OpAsQuery.asQuery(afterOp);
+			QueryUtils.restoreQueryForm(after, before);
+			
+//			Transformer.transform(new TransformCopy(), op)
+//			= OpAsQuery.asQu)
+			
+			//Query after = QueryTransformOps.transform(before, elform, exform);
+
+			
+//			QueryUtils.applyNodeTransform(query, nodeTransform)			
+			//Query after = org.apache.jena.sparql.util.QueryUtils.applyNodeTransform(before, xform);
 			result = new SparqlStmtQuery(after);
 		} else if(stmt.isUpdateRequest()) {
-			ElementTransform elform = new ElementTransformSubst2(xform);
 
 			UpdateRequest before = stmt.getAsUpdateStmt().getUpdateRequest();
 			UpdateRequest after = UpdateRequestUtils.copyTransform(before, update -> {
 				// Up to Jena 3.11.0 (inclusive) transforms do not aaffect UpdateData objects
 				Update r = update instanceof UpdateData
 					? UpdateUtils.copyWithQuadTransform((UpdateData)update, q -> QuadUtils.applyNodeTransform(q, xform))
-					: UpdateTransformOps.transform(update, elform, new ExprTransformNodeElement(xform, elform));					
+					: UpdateTransformOps.transform(update, elform, exform);					
 			    return r;
 			});
 			

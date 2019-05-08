@@ -14,12 +14,14 @@ import org.aksw.jena_sparql_api.backports.syntaxtransform.QueryTransformOps;
 import org.aksw.jena_sparql_api.utils.transform.NodeTransformCollectNodes;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
+import org.apache.jena.query.SortCondition;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpAsQuery;
 import org.apache.jena.sparql.algebra.op.OpSlice;
+import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
@@ -33,14 +35,88 @@ import org.apache.jena.sparql.syntax.ElementSubQuery;
 import org.apache.jena.sparql.syntax.PatternVars;
 import org.apache.jena.sparql.syntax.Template;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
-import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformSubst;
 import org.apache.jena.sparql.util.ExprUtils;
 
 import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.Range;
 
 public class QueryUtils {
+	
+	/**
+	 * Restore a query form from a prototype.
+	 * Typical use case is when a query form should be restored after
+	 * it was compiled using Algebra.compile(). 
+	 * 
+	 * @param query
+	 * @param proto
+	 * @return
+	 */
+	public static Query restoreQueryForm(Query query, Query proto) {
+		if(!query.isSelectType()) {
+			throw new RuntimeException("SELECT query expected - got: " + query);
+		}
 
+		Query result;
+		int tgtQueryType = proto.getQueryType();
+		switch(tgtQueryType) {
+		case Query.QueryTypeSelect:
+			result = query.cloneQuery();
+			break;
+		case Query.QueryTypeConstruct:
+			result = selectToConstruct(query, proto.getConstructTemplate());
+			break;
+		case Query.QueryTypeAsk:
+			result = query.cloneQuery();
+			query.setQueryAskType();
+			break;
+		case Query.QueryTypeDescribe:
+			result = query.cloneQuery();
+			query.setQueryDescribeType();
+			for(Node node : proto.getResultURIs()) {
+				query.addDescribeNode(node);
+			}
+			for(Var var : proto.getProjectVars()) {
+				query.addDescribeNode(var);
+			}
+			break;
+		default:
+			throw new RuntimeException("unsupported query type");
+			//proto.result
+		}
+
+		result.setPrefixMapping(proto.getPrefixMapping());
+
+		return result;
+	}
+
+	// Create a construct query from a select query and a template
+	public static Query selectToConstruct(Query query, Template template) {
+		Query result = new Query();
+		result.setQueryConstructType();
+		result.setConstructTemplate(template != null ? template : new Template(new BasicPattern()));
+		
+		boolean canActAsConstruct = QueryUtils.canActAsConstruct(query);
+		if(canActAsConstruct) {
+			result.setQueryPattern(query.getQueryPattern());
+		} else {
+			result.setQueryPattern(new ElementSubQuery(query));
+		}
+
+		result.setLimit(query.getLimit());
+		result.setOffset(query.getOffset());
+		List<SortCondition> scs = query.getOrderBy();
+		if(scs != null) {
+			for(SortCondition sc : scs) {
+				result.addOrderBy(sc);
+			}
+			scs.clear();
+		}
+		
+		query.setLimit(Query.NOLIMIT);
+		query.setOffset(Query.NOLIMIT);
+
+		return result;
+	}
 	/**
 	 * Rewrite a query based on an algebraic transformation; preserves the construct
 	 * template
