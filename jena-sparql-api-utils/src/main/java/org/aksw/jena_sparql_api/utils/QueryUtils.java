@@ -9,7 +9,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.aksw.jena_sparql_api.backports.syntaxtransform.ExprTransformNodeElement;
 import org.aksw.jena_sparql_api.backports.syntaxtransform.QueryTransformOps;
 import org.aksw.jena_sparql_api.utils.transform.NodeTransformCollectNodes;
 import org.apache.jena.graph.Node;
@@ -32,9 +31,14 @@ import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
+import org.apache.jena.sparql.syntax.ElementVisitor;
+import org.apache.jena.sparql.syntax.ElementVisitorBase;
+import org.apache.jena.sparql.syntax.ElementWalker;
 import org.apache.jena.sparql.syntax.PatternVars;
 import org.apache.jena.sparql.syntax.Template;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
+import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformCopyBase;
+import org.apache.jena.sparql.syntax.syntaxtransform.ExprTransformNodeElement;
 import org.apache.jena.sparql.util.ExprUtils;
 
 import com.google.common.collect.DiscreteDomain;
@@ -158,9 +162,35 @@ public class QueryUtils {
 
         ElementTransform eltrans = new ElementTransformSubst2(nodeTransform) ;
         //NodeTransform nodeTransform = new NodeTransformSubst(nodeTransform) ;
-        ExprTransform exprTrans = new ExprTransformNodeElement(nodeTransform, eltrans) ;
-        Query result = QueryTransformOps.transform(query, eltrans, exprTrans) ;
+        ExprTransform exprTrans = new ExprTransformNodeElement(nodeTransform, eltrans);
+        
+        
+        Query result = org.apache.jena.sparql.syntax.syntaxtransform.QueryTransformOps.transform(query, eltrans, exprTrans) ;
 
+        // Fix prefixes in sub queries by clearing them
+        ElementWalker.walk(result.getQueryPattern(), new ElementVisitorBase() {
+        	@Override
+        	public void visit(ElementSubQuery el) {
+        		el.getQuery().getPrefixMapping().clearNsPrefixMap();
+        	}
+        });
+
+//        Query result = tmp;
+//       ElementVisitor
+//        //tmp.getQueryPattern().vi
+//        ElementTransform clearPrefixesInSubQuery = new ElementTransformCopyBase() {
+//    		@Override
+//    		public Element transform(ElementSubQuery el, Query query) {
+//    			ElementSubQuery x = (ElementSubQuery)super.transform(el, query);
+//    			x.getQuery().getPrefixMapping().clearNsPrefixMap();
+//    			
+//    			return x;
+//    		}
+//    	};
+ 
+//        Query result = org.apache.jena.sparql.syntax.syntaxtransform.QueryTransformOps.transform(tmp, clearPrefixesInSubQuery);
+  
+        
         return result;
     }
 
@@ -215,7 +245,7 @@ public class QueryUtils {
 
     public static Query randomizeVars(Query query) {
         Map<Var, Var> varMap = createRandomVarMap(query, "rv");
-        Query result = QueryTransformOps.transform(query, varMap);
+        Query result = org.aksw.jena_sparql_api.backports.syntaxtransform.QueryTransformOps.transform(query, varMap);
         //System.out.println(query + "now:\n" + result);
         return result;
     }

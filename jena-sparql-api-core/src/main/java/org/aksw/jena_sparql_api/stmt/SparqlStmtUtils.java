@@ -44,14 +44,10 @@ import org.apache.jena.riot.out.SinkTripleOutput;
 import org.apache.jena.riot.system.stream.StreamManager;
 import org.apache.jena.riot.web.HttpOp;
 import org.apache.jena.shared.PrefixMapping;
-import org.apache.jena.sparql.algebra.Algebra;
-import org.apache.jena.sparql.algebra.Op;
-import org.apache.jena.sparql.algebra.OpAsQuery;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.expr.ExprTransform;
 import org.apache.jena.sparql.graph.NodeTransform;
-import org.apache.jena.sparql.graph.NodeTransformLib;
 import org.apache.jena.sparql.lang.arq.ParseException;
 import org.apache.jena.sparql.modify.request.UpdateData;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
@@ -72,10 +68,13 @@ public class SparqlStmtUtils {
 
 		if(stmt.isQuery()) {
 			Query before = stmt.getAsQueryStmt().getQuery();
-			Op beforeOp = Algebra.compile(before);
-			Op afterOp = NodeTransformLib.transform(xform, beforeOp);
-			Query after = OpAsQuery.asQuery(afterOp);
-			QueryUtils.restoreQueryForm(after, before);
+//			Op beforeOp = Algebra.compile(before);
+//			Op afterOp = NodeTransformLib.transform(xform, beforeOp);
+			
+//			NodeTransformLib.transform
+//			Transformer.transform(transform, exprTransform, op)
+//			Query after = OpAsQuery.asQuery(afterOp);
+//			QueryUtils.restoreQueryForm(after, before);
 			
 //			Transformer.transform(new TransformCopy(), op)
 //			= OpAsQuery.asQu)
@@ -83,8 +82,9 @@ public class SparqlStmtUtils {
 			//Query after = QueryTransformOps.transform(before, elform, exform);
 
 			
+			//QueryTransformOps.
 //			QueryUtils.applyNodeTransform(query, nodeTransform)			
-			//Query after = org.apache.jena.sparql.util.QueryUtils.applyNodeTransform(before, xform);
+			Query after = QueryUtils.applyNodeTransform(before, xform);
 			result = new SparqlStmtQuery(after);
 		} else if(stmt.isUpdateRequest()) {
 
