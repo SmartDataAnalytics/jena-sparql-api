@@ -1,5 +1,9 @@
 package org.aksw.jena_sparql_api.utils;
 
+import java.util.List;
+
+import org.apache.jena.atlas.iterator.Iter;
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -25,6 +29,9 @@ import org.apache.jena.graph.Triple ;
 import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.core.TriplePath ;
 import org.apache.jena.sparql.core.Var ;
+import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.engine.binding.BindingFactory;
+import org.apache.jena.sparql.engine.binding.BindingMap;
 import org.apache.jena.sparql.graph.NodeTransform ;
 import org.apache.jena.sparql.graph.NodeTransformLib;
 import org.apache.jena.sparql.syntax.Element ;
@@ -116,22 +123,40 @@ public class ElementTransformSubst2 extends ElementTransformCopyBase {
         return Triple.create(s1, p1, o1) ;
     }
 
-    private Node transform(Node n) {
+    protected Node transform(Node n) {
         return nodeTransform.apply(n) ;
     }
+
     
-    @Override
-    public Element transform(ElementData el) {
+    public static ElementData transform(ElementData el, NodeTransform nodeTransform) {
     	Table inTable = el.getTable();
-    	Table outTable = NodeTransformLib.transform(inTable, nodeTransform);
+    	// Does not transform data in tables - only the result vars (jena 3.11.0)
+    	//Table outTable = NodeTransformLib.transform(inTable, nodeTransform);
     	
     	ElementData result = new ElementData();
 
-    	outTable.getVars().forEach(result::add);
-    	Streams.stream(outTable.rows()).forEach(result::add);
+    	inTable.getVars().stream().map(nodeTransform).map(v -> (Var)v).forEach(result::add);
+    	Streams.stream(inTable.rows()).map(b -> transform(b, nodeTransform)).forEach(result::add);
     	
     	return result;
-    	
+    }
+
+    public static Binding transform(Binding b, NodeTransform transform) {
+        BindingMap b2 = BindingFactory.create() ;
+        List<Var> vars = Iter.toList(b.vars()) ;
+        for ( Var v : vars ) {
+            Node n = b.get(v);
+            Var v2 = (Var)transform.apply(v) ;
+            Node n2 = transform.apply(n);
+            b2.add(v2, n2);
+        }
+        return b2 ;
+    }
+
+    @Override
+    public Element transform(ElementData el) {
+    	Element result = transform(el, nodeTransform);
+    	return result;
     	//    	List<Var> vars = el.getVars().stream()
 //    			.map(v -> Optional.ofNullable((Var)nodeTransform.apply(v)).orElse(v))
 //    			.collect(Collectors.toList());
