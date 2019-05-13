@@ -42,6 +42,7 @@ public class E_Benchmark
 		}
 		
 		if(conn == null) {
+			logger.info("No connection in context, falling back to dataset");
 			DatasetGraph dsg = env.getDataset();
 			if(dsg != null) {
 				Dataset ds = DatasetFactory.wrap(dsg);
@@ -56,6 +57,8 @@ public class E_Benchmark
 		NodeValue result;
     	if(nv.isString()) {
     		String queryStr = nv.getString();
+    		
+    		logger.info("Benchmarking query: " + queryStr);
     		
     		Stopwatch sw = Stopwatch.createStarted();
     		long resultSetSize;

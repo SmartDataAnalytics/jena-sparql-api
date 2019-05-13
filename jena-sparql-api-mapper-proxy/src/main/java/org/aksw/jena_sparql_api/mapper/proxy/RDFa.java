@@ -10,5 +10,8 @@ public class RDFa {
 			.setNsPrefixes(RDFDataMgr.loadModel("rdf-prefixes/jena-extended.json", Lang.JSONLD))
 			.setNsPrefixes(RDFDataMgr.loadModel("rdf-prefixes/rdfa11.json", Lang.JSONLD))
 			.setNsPrefix("afn", "http://jena.apache.org/ARQ/function#")
+			.setNsPrefix("apf", "http://jena.hpl.hp.com/ARQ/property#")
+			.setNsPrefix("list", "http://jena.apache.org/ARQ/list#")
+			.setNsPrefix("agg", "http://jena.apache.org/ARQ/function/aggregate#")
 			.lock();
 }
