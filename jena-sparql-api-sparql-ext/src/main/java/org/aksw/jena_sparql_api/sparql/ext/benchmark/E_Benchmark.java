@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.aksw.jena_sparql_api.sparql.ext.json.RDFDatatypeJson;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.QueryExecution;
@@ -22,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Stopwatch;
+import com.google.gson.JsonObject;
 
 public class E_Benchmark
 	extends FunctionBase1
@@ -56,9 +58,10 @@ public class E_Benchmark
     		String queryStr = nv.getString();
     		
     		Stopwatch sw = Stopwatch.createStarted();
+    		long resultSetSize;
     		try(QueryExecution qe = conn.query(queryStr)) {
     			ResultSet rs = qe.execSelect();
-    			ResultSetFormatter.consume(rs);
+    			resultSetSize = ResultSetFormatter.consume(rs);
     		} catch(Exception e) {
 	    		logger.warn("Failure executing benchmark request", e);
     			throw new ExprTypeException("Failure executing benchmark request", e);
@@ -66,7 +69,13 @@ public class E_Benchmark
 
     		long ms = sw.stop().elapsed(TimeUnit.NANOSECONDS);
     		BigDecimal s = new BigDecimal(ms).divide(new BigDecimal(1000000000l));
-    		result =  NodeValue.makeDecimal(s);
+
+    		JsonObject json = new JsonObject();
+    		json.addProperty("time", s);
+    		json.addProperty("size", resultSetSize);
+    				
+    		result = RDFDatatypeJson.jsonToNodeValue(json);
+    		//result =  NodeValue.makeDecimal(s);
     	} else { 	
 	    	throw new ExprTypeException("Incorrect node value type " + nv);//": " + node)) ;
 	    }

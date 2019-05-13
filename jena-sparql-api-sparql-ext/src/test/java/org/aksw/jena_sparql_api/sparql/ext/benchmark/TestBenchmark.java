@@ -14,7 +14,7 @@ public class TestBenchmark {
 	public void testBenchmark() 
 	{
 		String queryStr = "" +
-"SELECT * { BIND(<http://jsa.aksw.org/fn/benchmark>('SELECT * { ?s ?p ?o }') AS ?x) }";
+"SELECT * { BIND(<http://jsa.aksw.org/fn/sys/benchmark>('SELECT * { ?s ?p ?o }') AS ?x) }";
 		Model model = ModelFactory.createDefaultModel();
 		try(QueryExecution qe = QueryExecutionFactory.create(queryStr, model)) {
 			ResultSet rs = qe.execSelect();
