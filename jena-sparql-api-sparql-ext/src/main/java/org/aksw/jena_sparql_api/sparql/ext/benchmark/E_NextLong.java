@@ -8,10 +8,10 @@ import org.apache.jena.sparql.function.FunctionEnv;
 import org.apache.jena.sparql.util.Context;
 import org.apache.jena.sparql.util.Symbol;
 
-public class E_NextId
+public class E_NextLong
     extends FunctionBase0
 {
-	public static final Symbol symNextId = Symbol.create("http://jsa.aksw.org/nextId");
+	public static final Symbol symNextLong = Symbol.create("http://jsa.aksw.org/nextLong");
 	
 	@Override
 	protected NodeValue exec(List<NodeValue> args, FunctionEnv env) {
@@ -20,12 +20,12 @@ public class E_NextId
 			throw new RuntimeException("Cannot use nextId function without a context");			
 		}
 		
-		Long value = cxt.get(symNextId);
+		Long value = cxt.get(symNextLong);
 		if(value == null) {
 			value = 0l;
 		}
 		
-		cxt.set(symNextId, value + 1);
+		cxt.set(symNextLong, value + 1);
 
 		return NodeValue.makeInteger(value);
 	}
