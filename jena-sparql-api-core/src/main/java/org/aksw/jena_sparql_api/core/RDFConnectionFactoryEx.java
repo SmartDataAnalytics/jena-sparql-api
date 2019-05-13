@@ -5,6 +5,7 @@ import java.util.function.Function;
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
 import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
 import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
@@ -13,6 +14,8 @@ import org.apache.jena.rdfconnection.RDFConnectionModular;
 import org.apache.jena.riot.WebContent;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
+import org.apache.jena.sparql.util.Context;
+import org.apache.jena.sparql.util.Symbol;
 
 public class RDFConnectionFactoryEx {
 
@@ -98,4 +101,57 @@ public class RDFConnectionFactoryEx {
 		
 		return result;
 	}
+	
+	public static final Symbol symConnection = Symbol.create("http://jsa.aksw.org/connection");
+
+	
+	public static RDFConnection wrapWithQueryParser(RDFConnection rawConn, Function<String, Query> parser) {
+		RDFConnection result =
+			new RDFConnectionModular(rawConn, rawConn, rawConn) {
+				@Override
+				public QueryExecution query(String queryString) {
+					Query query = parser.apply(queryString);
+					QueryExecution result = query(query);
+					return result;
+				}
+			};
+//					new SparqlQueryConnectionJsa(
+//				FluentQueryExecutionFactory
+//					.from(new QueryExecutionFactorySparqlQueryConnection(rawConn))
+//					.config()
+//						.withParser(parser)
+//						.end()
+//					.create()
+//					), rawConn, rawConn);
+
+		
+		return result;
+	}
+	public static RDFConnection wrapWithContext(RDFConnection rawConn) {
+		RDFConnection[] result = {null}; 
+			
+		result[0] =
+			new RDFConnectionModular(rawConn, rawConn, rawConn) {
+				public QueryExecution query(Query query) {
+					return postProcess(rawConn.query(query));
+				}
+				
+				@Override
+				public QueryExecution query(String queryString) {
+					return postProcess(rawConn.query(queryString));
+				}
+				
+				public QueryExecution postProcess(QueryExecution qe) {
+					Context cxt = qe.getContext();
+					if(cxt != null) {
+						cxt.set(symConnection, result[0]);
+					}
+					
+					return qe;
+				}
+			};
+		
+		return result[0];
+	}
+
 }

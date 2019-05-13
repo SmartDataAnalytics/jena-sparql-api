@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.stmt;
 
-import com.google.common.base.Supplier;
+import java.util.function.Supplier;
+
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.Syntax;

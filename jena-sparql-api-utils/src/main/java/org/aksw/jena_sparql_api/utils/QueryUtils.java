@@ -198,7 +198,8 @@ public class QueryUtils {
      * Scans the query for all occurrences of URI nodes and returns the applicable subset of its
      * prefix mapping.
      *
-     * Note: In principle sub queries may define their own prefixes
+     * Note: In principle Jena allows sub queries to define their own prefixes
+     * However, this is non-standard and jena raises syntax exception when trying to clone such a query
      *
      * <pre>
      * {@code
@@ -212,8 +213,8 @@ public class QueryUtils {
      * }
      * </pre>
      *
-     * This method ignores 'inner' prefixes, so for the example above, the method will
-     * incorrectly return foo as a used prefix.
+     * This method ignores non-standard 'inner' prefixes, so for the example above, the method will
+     * "incorrectly" return foo as a used prefix.
      *
      * @param query
      * @return

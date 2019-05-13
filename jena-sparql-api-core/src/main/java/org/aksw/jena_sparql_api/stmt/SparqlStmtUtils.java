@@ -54,10 +54,14 @@ import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
 import org.apache.jena.sparql.syntax.syntaxtransform.ExprTransformNodeElement;
 import org.apache.jena.sparql.syntax.syntaxtransform.UpdateTransformOps;
 import org.apache.jena.sparql.util.Context;
+import org.apache.jena.sparql.util.Symbol;
 import org.apache.jena.update.Update;
 import org.apache.jena.update.UpdateRequest;
 
 public class SparqlStmtUtils {
+
+	// TODO Duplicate symbol definition; exists in E_Benchmark
+	public static final Symbol symConnection = Symbol.create("http://jsa.aksw.org/connection");
 
 
 	public static SparqlStmt applyNodeTransform(SparqlStmt stmt, NodeTransform xform) {
@@ -255,6 +259,7 @@ public class SparqlStmtUtils {
 		SparqlStmtIterator result = new SparqlStmtIterator(parser, str);
 		return result;
 	}
+	
 
 	public static SPARQLResultEx execAny(RDFConnection conn, SparqlStmt stmt) {
 		SPARQLResultEx result = null;
@@ -271,6 +276,10 @@ public class SparqlStmtUtils {
 			//conn.begin(ReadWrite.READ);
 			// SELECT -> STDERR, CONSTRUCT -> STDOUT
 			QueryExecution qe = conn.query(q);
+			Context cxt = qe.getContext();
+			if(cxt != null) {
+				cxt.set(symConnection, conn);
+			}
 	
 			if (q.isConstructQuad()) {
 				Iterator<Quad> it = qe.execConstructQuads();
