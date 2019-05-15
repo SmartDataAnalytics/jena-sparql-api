@@ -2,13 +2,21 @@ package org.aksw.jena_sparql_api.sparql.ext.sys;
 
 import org.aksw.jena_sparql_api.sparql.ext.benchmark.E_Benchmark;
 import org.aksw.jena_sparql_api.sparql.ext.benchmark.E_NextLong;
+import org.aksw.jena_sparql_api.sparql.ext.benchmark.PropertyFunctionFactoryBenchmark;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.function.FunctionRegistry;
+import org.apache.jena.sparql.pfunction.PropertyFunctionRegistry;
 
 public class JenaExtensionSys {
     public static String ns = "http://jsa.aksw.org/fn/sys/";
     
     public static void register() {
+    	
+    	PropertyFunctionRegistry pfRegistry = PropertyFunctionRegistry.get();
+		
+    	pfRegistry.put(ns + "benchmark", new PropertyFunctionFactoryBenchmark());
+
+    	
         FunctionRegistry registry = FunctionRegistry.get();
         
         registry.put(ns + "getenv", E_Getenv.class);

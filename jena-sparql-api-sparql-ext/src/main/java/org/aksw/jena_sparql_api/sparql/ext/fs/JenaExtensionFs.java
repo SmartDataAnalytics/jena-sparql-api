@@ -12,6 +12,7 @@ public class JenaExtensionFs {
     public static void register() {
         FunctionRegistry.get().put(ns + "rdfLang", E_RdfLang.class);
         FunctionRegistry.get().put(ns + "probeRdf", E_ProbeRdf.class);
+        FunctionRegistry.get().put(ns + "get", E_PathGet.class);
 
         
 		PropertyFunctionRegistry.get().put(ns + "find", new PropertyFunctionFactoryFsFind(PropertyFunctionFactoryFsFind::find));

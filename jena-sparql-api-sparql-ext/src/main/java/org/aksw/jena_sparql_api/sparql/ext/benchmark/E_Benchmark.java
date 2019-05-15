@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.aksw.jena_sparql_api.sparql.ext.json.RDFDatatypeJson;
+import org.apache.jena.graph.Node;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.QueryExecution;
@@ -13,6 +14,7 @@ import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.engine.ExecutionContext;
 import org.apache.jena.sparql.expr.ExprTypeException;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.function.FunctionBase1;
@@ -33,8 +35,29 @@ public class E_Benchmark
 	
 	@Override
 	protected NodeValue exec(List<NodeValue> args, FunctionEnv env) {
-		NodeValue nv = args.get(0);
-		
+		Node node = args.get(0).asNode();	
+		RDFConnection conn = getConnection(env);
+		JsonObject json = benchmark(conn, node);
+		NodeValue result = RDFDatatypeJson.jsonToNodeValue(json);
+
+	    return result;
+	}
+
+	public static JsonObject benchmark(RDFConnection conn, Node node) {
+		JsonObject result;
+		NodeValue nv = NodeValue.makeNode(node);
+
+		if(nv.isString()) {
+    		String queryStr = nv.getString();
+    		result = benchmark(conn, queryStr);
+    	} else { 	
+	    	throw new ExprTypeException("Incorrect node value type " + nv);//": " + node)) ;
+	    }
+	
+	    return result;
+	}
+	
+	public static RDFConnection getConnection(ExecutionContext env) {
 		RDFConnection conn = null;
 		Context cxt = env.getContext();
 		if(cxt != null) {
@@ -50,40 +73,55 @@ public class E_Benchmark
 			}
 		}
 		
+		return conn;
+	}
+
+
+	public static RDFConnection getConnection(FunctionEnv env) {
+		RDFConnection conn = null;
+		Context cxt = env.getContext();
+		if(cxt != null) {
+			conn = cxt.get(symConnection);
+		}
+		
+		if(conn == null) {
+			logger.info("No connection in context, falling back to dataset");
+			DatasetGraph dsg = env.getDataset();
+			if(dsg != null) {
+				Dataset ds = DatasetFactory.wrap(dsg);
+				conn = RDFConnectionFactory.connect(ds);
+			}
+		}
+		
+		return conn;
+	}
+
+	public static JsonObject benchmark(RDFConnection conn, String queryStr) {
+		
 		if(conn == null) {
 			throw new RuntimeException("No connection or dataset specified in context");
 		}
+
+		logger.info("Benchmarking query: " + queryStr);
 		
-		NodeValue result;
-    	if(nv.isString()) {
-    		String queryStr = nv.getString();
-    		
-    		logger.info("Benchmarking query: " + queryStr);
-    		
-    		Stopwatch sw = Stopwatch.createStarted();
-    		long resultSetSize;
-    		try(QueryExecution qe = conn.query(queryStr)) {
-    			ResultSet rs = qe.execSelect();
-    			resultSetSize = ResultSetFormatter.consume(rs);
-    		} catch(Exception e) {
-	    		logger.warn("Failure executing benchmark request", e);
-    			throw new ExprTypeException("Failure executing benchmark request", e);
-    		}
+		Stopwatch sw = Stopwatch.createStarted();
+		long resultSetSize;
+		try(QueryExecution qe = conn.query(queryStr)) {
+			ResultSet rs = qe.execSelect();
+			resultSetSize = ResultSetFormatter.consume(rs);
+		} catch(Exception e) {
+    		logger.warn("Failure executing benchmark request", e);
+			throw new ExprTypeException("Failure executing benchmark request", e);
+		}
 
-    		long ms = sw.stop().elapsed(TimeUnit.NANOSECONDS);
-    		BigDecimal s = new BigDecimal(ms).divide(new BigDecimal(1000000000l));
+		long ms = sw.stop().elapsed(TimeUnit.NANOSECONDS);
+		BigDecimal s = new BigDecimal(ms).divide(new BigDecimal(1000000000l));
 
-    		JsonObject json = new JsonObject();
-    		json.addProperty("time", s);
-    		json.addProperty("size", resultSetSize);
-    				
-    		result = RDFDatatypeJson.jsonToNodeValue(json);
-    		//result =  NodeValue.makeDecimal(s);
-    	} else { 	
-	    	throw new ExprTypeException("Incorrect node value type " + nv);//": " + node)) ;
-	    }
-	
-	    return result;
+		JsonObject json = new JsonObject();
+		json.addProperty("time", s);
+		json.addProperty("size", resultSetSize);
+
+		return json;
 	}
 
 	@Override
