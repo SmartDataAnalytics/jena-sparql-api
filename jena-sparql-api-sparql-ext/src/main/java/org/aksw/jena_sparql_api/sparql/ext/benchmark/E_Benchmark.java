@@ -38,6 +38,9 @@ public class E_Benchmark
 		Node node = args.get(0).asNode();	
 		RDFConnection conn = getConnection(env);
 		JsonObject json = benchmark(conn, node);
+		if(json == null) {
+			throw new ExprTypeException("no node value obtained");
+		}
 		NodeValue result = RDFDatatypeJson.jsonToNodeValue(json);
 
 	    return result;
@@ -45,15 +48,18 @@ public class E_Benchmark
 
 	public static JsonObject benchmark(RDFConnection conn, Node node) {
 		JsonObject result;
-		NodeValue nv = NodeValue.makeNode(node);
-
-		if(nv.isString()) {
-    		String queryStr = nv.getString();
-    		result = benchmark(conn, queryStr);
-    	} else { 	
-	    	throw new ExprTypeException("Incorrect node value type " + nv);//": " + node)) ;
-	    }
+		if(node.isVariable()) {
+			result = null;
+		} else {
+			NodeValue nv = NodeValue.makeNode(node);
 	
+			if(nv.isString()) {
+	    		String queryStr = nv.getString();
+	    		result = benchmark(conn, queryStr);
+	    	} else { 	
+		    	throw new ExprTypeException("Incorrect node value type " + nv);//": " + node)) ;
+		    }
+		}		
 	    return result;
 	}
 	

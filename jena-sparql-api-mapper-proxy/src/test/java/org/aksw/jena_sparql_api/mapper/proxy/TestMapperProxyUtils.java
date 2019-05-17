@@ -1,6 +1,5 @@
 package org.aksw.jena_sparql_api.mapper.proxy;
 
-import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;

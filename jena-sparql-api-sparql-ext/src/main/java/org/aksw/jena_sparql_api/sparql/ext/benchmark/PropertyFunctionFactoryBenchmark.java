@@ -14,11 +14,13 @@ import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingFactory;
 import org.apache.jena.sparql.engine.binding.BindingMap;
 import org.apache.jena.sparql.engine.iterator.QueryIterPlainWrapper;
+import org.apache.jena.sparql.expr.ExprTypeException;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.pfunction.PFuncSimpleAndList;
 import org.apache.jena.sparql.pfunction.PropFuncArg;
 import org.apache.jena.sparql.pfunction.PropertyFunction;
 import org.apache.jena.sparql.pfunction.PropertyFunctionFactory;
+import org.apache.jena.sparql.util.IterLib;
 
 import com.google.gson.JsonObject;
 
@@ -53,19 +55,27 @@ public class PropertyFunctionFactoryBenchmark
 			RDFConnection conn = E_Benchmark.getConnection(execCxt);
 			JsonObject json = E_Benchmark.benchmark(conn, subject);
 			
-			Node timeNode = object.getArg(0);
-			Node sizeNode = object.getArg(1);
+			QueryIterator result;
+			if(json == null) {
+				//throw new ExprTypeException("no node value obtained");
+				result = IterLib.noResults(execCxt);
+			} else {
+	
+				Node timeNode = object.getArg(0);
+				Node sizeNode = object.getArg(1);
+	
+	            BindingMap b = BindingFactory.create(binding) ;
+	
+	
+	            b.add((Var)timeNode,
+						NodeValue.makeDecimal(json.get("time").getAsBigDecimal()).asNode());
+	
+	            b.add((Var)sizeNode,
+						NodeValue.makeInteger(json.get("size").getAsBigInteger()).asNode());
 
-            BindingMap b = BindingFactory.create(binding) ;
-
-
-            b.add((Var)timeNode,
-					NodeValue.makeDecimal(json.get("time").getAsBigDecimal()).asNode());
-
-            b.add((Var)sizeNode,
-					NodeValue.makeInteger(json.get("size").getAsBigInteger()).asNode());
-			
-			return new QueryIterPlainWrapper(Iterators.singletonIterator(b), execCxt) ;
+	            result = new QueryIterPlainWrapper(Iterators.singletonIterator(b), execCxt) ;
+			}
+			return result;
 		}
     	
 //		@Override

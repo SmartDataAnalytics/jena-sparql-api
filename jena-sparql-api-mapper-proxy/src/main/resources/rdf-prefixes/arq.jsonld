@@ -1,0 +1,8 @@
+{
+  "@context": {
+    "afn": "http://jena.apache.org/ARQ/function#",
+    "apf": "http://jena.hpl.hp.com/ARQ/property#",
+    "list": "http://jena.apache.org/ARQ/list#",
+    "agg": "http://jena.apache.org/ARQ/function/aggregate#"
+  }
+}
