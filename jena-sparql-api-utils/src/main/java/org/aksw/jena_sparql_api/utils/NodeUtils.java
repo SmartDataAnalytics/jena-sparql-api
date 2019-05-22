@@ -13,6 +13,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.riot.out.NodeFormatterNT;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.expr.NodeValue;
 
 import com.google.common.collect.Iterables;
 
@@ -20,6 +21,9 @@ public class NodeUtils {
 	
 	public static final Node nullUriNode = NodeFactory.createURI("http://null.null/null");
 
+//	public static final Node N_ABSENT = NodeFactory.createURI("http://special.absent/none");
+
+	
     public static Node asNullableNode(String uri) {
         Node result = uri == null ? null : NodeFactory.createURI(uri);
         return result;

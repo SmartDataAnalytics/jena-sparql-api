@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.changeset;
+package org.aksw.jena_sparql_api.changeset.vocab;
 
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
