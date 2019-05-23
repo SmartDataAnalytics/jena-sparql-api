@@ -12,16 +12,20 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
 import org.aksw.jena_sparql_api.core.utils.UpdateUtils;
 import org.aksw.jena_sparql_api.utils.ElementTransformSubst2;
+import org.aksw.jena_sparql_api.utils.GraphUtils;
+import org.aksw.jena_sparql_api.utils.PrefixUtils;
 import org.aksw.jena_sparql_api.utils.QuadUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.http.client.HttpClient;
 import org.apache.jena.atlas.json.JsonObject;
 import org.apache.jena.atlas.lib.Sink;
 import org.apache.jena.atlas.web.TypedInputStream;
+import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.apache.jena.ext.com.google.common.io.CharStreams;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Dataset;
@@ -44,6 +48,7 @@ import org.apache.jena.riot.out.SinkTripleOutput;
 import org.apache.jena.riot.system.stream.StreamManager;
 import org.apache.jena.riot.web.HttpOp;
 import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.expr.ExprTransform;
@@ -319,7 +324,7 @@ public class SparqlStmtUtils {
 	 * @param out
 	 * @return
 	 */
-	public static Sink<Quad> createSink(RDFFormat format, OutputStream out) {
+	public static Sink<Quad> createSink(RDFFormat format, OutputStream out, PrefixMapping pm) {
 		boolean useStreaming = format == null ||
 				Arrays.asList(Lang.NTRIPLES, Lang.NQUADS).contains(format.getLang());
 
@@ -343,7 +348,20 @@ public class SparqlStmtUtils {
 
 				@Override
 				public void flush() {
-					core.flush();					
+					core.flush();
+					
+					// TODO Prefixed graph names may break
+					// (where to define their namespace anyway? - e.g. in the default or the named graph?)
+					Stream.concat(
+							Stream.of(ds.getDefaultModel()),
+							Streams.stream(ds.listNames()).map(ds::getNamedModel))
+					.forEach(m -> {
+						PrefixMapping usedPrefixes = new PrefixMappingImpl();
+						PrefixUtils.usedPrefixes(pm, GraphUtils.streamNodes(m.getGraph()), usedPrefixes);
+						m.clearNsPrefixMap();
+						m.setNsPrefixes(usedPrefixes);
+					});
+
 					RDFDataMgr.write(out, ds, format);
 				}			
 			};

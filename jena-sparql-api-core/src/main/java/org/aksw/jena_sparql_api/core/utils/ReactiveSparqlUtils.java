@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -14,6 +15,7 @@ import java.util.function.Supplier;
 import org.aksw.commons.collections.SetUtils;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
+import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
 import org.aksw.jena_sparql_api.utils.IteratorResultSetBinding;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.aksw.jena_sparql_api.utils.VarUtils;
@@ -302,7 +304,9 @@ public class ReactiveSparqlUtils {
     	return ReactiveSparqlUtils.execSelect(() -> qef.createQueryExecution(query))
             	.map(b -> b.get(var))
             	.map(countNode -> ((Number)countNode.getLiteralValue()))
-            	.single(null);
+            	.map(Optional::ofNullable)
+            	.single(Optional.empty())
+            	.map(Optional::get); // Should never be null here
 	}
 	
 	
@@ -331,16 +335,23 @@ public class ReactiveSparqlUtils {
 //        	})
 //        	.single(null);
 
+    public static Single<Range<Long>> fetchCountQuery(SparqlQueryConnection conn, Query query, Long itemLimit, Long rowLimit) {
+    	Single<Range<Long>> result = fetchCountQuery(new QueryExecutionFactorySparqlQueryConnection(conn), query, itemLimit, rowLimit);
+    	return result;
+    }
+
     public static Single<Range<Long>> fetchCountQuery(org.aksw.jena_sparql_api.core.QueryExecutionFactory qef, Query query, Long itemLimit, Long rowLimit) {
 
-        Var outputVar = Var.alloc("_count_"); //ConceptUtils.freshVar(concept);
+        //Var outputVar = Var.alloc("_count_"); //ConceptUtils.freshVar(concept);
 
         Long xitemLimit = itemLimit == null ? null : itemLimit + 1;
         Long xrowLimit = rowLimit == null ? null : rowLimit + 1;
 
-        Query countQuery = QueryGenerationUtils.createQueryCount(query, outputVar, xitemLimit, xrowLimit);
-
-        return ReactiveSparqlUtils.fetchNumber(qef, countQuery, outputVar)
+        Entry<Var, Query> countQuery = QueryGenerationUtils.createQueryCount(query, xitemLimit, xrowLimit);
+        Var v = countQuery.getKey();
+        Query q = countQuery.getValue();
+        
+        return ReactiveSparqlUtils.fetchNumber(qef, q, v)
         		.map(count -> ReactiveSparqlUtils.toRange(count.longValue(), xitemLimit, xrowLimit));
     }
 

@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.aksw.commons.util.strings.StringUtils;
 import org.apache.jena.graph.Node;
@@ -14,6 +15,9 @@ import org.apache.jena.sparql.engine.binding.BindingHashMap;
 
 public class TripleUtils {
 
+	public static Stream<Node> streamNodes(Triple t) {
+		return Stream.of(t.getSubject(), t.getPredicate(), t.getObject());
+	}
 
 //    public static Multimap<Node, Triple> indexBySubject(Iterable<Triple> triples) {
 //        Multimap<Node, Triple> result = indexBySubject(triples.iterator());

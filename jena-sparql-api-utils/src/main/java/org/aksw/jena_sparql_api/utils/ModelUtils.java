@@ -1,21 +1,44 @@
 package org.aksw.jena_sparql_api.utils;
 
-import org.apache.jena.rdf.model.*;
-import org.apache.jena.vocabulary.RDFS;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Set;
+
 import org.aksw.commons.collections.MultiMaps;
 import org.aksw.commons.util.strings.StringUtils;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.RDFWriter;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.vocabulary.RDFS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.*;
-import java.util.*;
 
 /**
  * @author Claus Stadler
  */
 public class ModelUtils {
 
-
+	
     /**
      * Extracts a mapping childClass -> parentClass from a given Model.
      * You can use TransitiveClosure.transitiveClosure for "inferring" the whole hierarchy.

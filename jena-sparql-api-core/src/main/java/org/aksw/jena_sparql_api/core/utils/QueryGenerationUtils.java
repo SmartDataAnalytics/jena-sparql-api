@@ -3,21 +3,32 @@ package org.aksw.jena_sparql_api.core.utils;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
 import org.aksw.jena_sparql_api.utils.GeneratorBlacklist;
+import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
+import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.VarUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
+import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.sdb.core.Generator;
+import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.core.VarExprList;
 import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.aggregate.AggCount;
+import org.apache.jena.sparql.expr.aggregate.AggCountDistinct;
+import org.apache.jena.sparql.expr.aggregate.AggCountVarDistinct;
+import org.apache.jena.sparql.expr.aggregate.Aggregator;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementNamedGraph;
 import org.apache.jena.sparql.syntax.ElementSubQuery;
@@ -107,32 +118,119 @@ public class QueryGenerationUtils {
         return result;
     }
 
+    public static Entry<Var, Query> createQueryCount(Query query) {
+    	return createQueryCount(query, null, null);
+    }
+    
+    public static Entry<Var, Query> createQueryCount(Query query, Long itemLimit, Long rowLimit) {
+        Var resultVar = Vars.c;
+    	
+    	query = query.cloneQuery();
 
-    public static Query createQueryCount(Query query, Var outputVar, Long itemLimit, Long rowLimit) {
-        Query subQuery = query.cloneQuery();
-
-        if(rowLimit != null) {
-            subQuery.setDistinct(false);
-            subQuery.setLimit(rowLimit);
-
-            subQuery = QueryGenerationUtils.wrapAsSubQuery(subQuery);
-            subQuery.setDistinct(true);
+    	if(query.isConstructType()) {
+        	Template template = query.getConstructTemplate();
+        	Set<Var> vars = QuadPatternUtils.getVarsMentioned(template.getQuads());
+        	// TODO Vars may be empty, in case we deal with a partitioned query
+        	
+        	query.setQuerySelectType();
+        	if(vars.isEmpty()) {
+        		query.setQueryResultStar(true);
+        	} else {
+	        	query.addProjectVars(vars);
+        	}
         }
 
-        if(itemLimit != null) {
-            subQuery.setLimit(itemLimit);
-        }
+    	
+    	boolean needsWrapping = !query.getGroupBy().isEmpty() || !query.getAggregators().isEmpty();
+	
+	      if(rowLimit != null) {
+		      query.setDistinct(false);
+		      query.setLimit(rowLimit);
+		
+		      query = QueryGenerationUtils.wrapAsSubQuery(query);
+		      query.setDistinct(true);
+		      needsWrapping = true;
+	      }
+	
+		  if(itemLimit != null) {
+		      query.setLimit(itemLimit);
+		      needsWrapping = true;
+		  }
 
-        Element esq = new ElementSubQuery(subQuery);
+	  //Element esq = new ElementSubQuery(subQuery);
+
+        Var singleResultVar = null;
+        VarExprList project = query.getProject();
+        if(project.size() == 1) {
+        	Entry<Var, Expr> tmp = project.getExprs().entrySet().iterator().next();
+        	Var v = tmp.getKey();
+        	Expr e = tmp.getValue();
+        	if(e == null || (e.isVariable() && e.asVar().equals(v))) {
+        		singleResultVar = v;
+        	}
+        }
+        
+        boolean useCountDistinct = !needsWrapping && query.isDistinct() && (query.isQueryResultStar() || singleResultVar != null);
+        // TODO If there is only a single result variable (without mapping to an expr)
+        // we can also use count distinct
+        
+
+
+        Aggregator agg = useCountDistinct
+                ? singleResultVar == null
+            		? new AggCountDistinct()
+            		: new AggCountVarDistinct(new ExprVar(singleResultVar))
+                : new AggCount();
 
         Query result = new Query();
-        Expr aggCount = result.allocAggregate(new AggCount());
         result.setQuerySelectType();
-        result.getProject().add(outputVar, aggCount);
-        result.setQueryPattern(esq);
+        result.setPrefixMapping(query.getPrefixMapping());
+        //cQuery.getProject().add(Vars.c, new ExprAggregator(Vars.x, agg));
+        Expr aggCount = result.allocAggregate(agg);
+        result.getProject().add(resultVar, aggCount);
 
-        return result;
+        Element queryPattern;
+        if(needsWrapping) {
+            Query q = query.cloneQuery();            
+            q.setPrefixMapping(new PrefixMappingImpl());
+            queryPattern = new ElementSubQuery(q);
+        } else {
+            queryPattern = query.getQueryPattern();
+        }
+
+
+        result.setQueryPattern(queryPattern);
+        
+        return Maps.immutableEntry(resultVar, result);
     }
+
+//    public static Query createQueryCount(Query query, Var outputVar, Long itemLimit, Long rowLimit) {
+//        Query subQuery = query.cloneQuery();
+//        subQuery.setQuerySelectType();
+//        subQuery.setQueryResultStar(true);
+//
+//        if(rowLimit != null) {
+//            subQuery.setDistinct(false);
+//            subQuery.setLimit(rowLimit);
+//
+//            subQuery = QueryGenerationUtils.wrapAsSubQuery(subQuery);
+//            subQuery.setDistinct(true);
+//        }
+//
+//        if(itemLimit != null) {
+//            subQuery.setLimit(itemLimit);
+//        }
+//
+//        Element esq = new ElementSubQuery(subQuery);
+//
+//        Query result = new Query();
+//        result.setQuerySelectType();
+//        Expr aggCount = result.allocAggregate(new AggCount());
+//        result.getProject().add(outputVar, aggCount);
+//        result.setQueryPattern(esq);
+//
+//        return result;
+//    }
 
 
 
