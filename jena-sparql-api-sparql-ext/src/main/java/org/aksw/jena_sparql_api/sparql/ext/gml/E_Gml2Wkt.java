@@ -39,7 +39,7 @@ public class E_Gml2Wkt extends FunctionBase1 {
                 if (m.find()) {
                     String srs = m.group(1);
                     CoordinateReferenceSystem crsSource = CRS.forCode(srs);
-                    CoordinateReferenceSystem crsTarget = CRS.forCode("EPSG:4326");
+                    CoordinateReferenceSystem crsTarget = CRS.forCode("CRS:84");
                     CoordinateOperation operation = CRS.findOperation(crsSource, crsTarget, null);
                     MathTransform transform = operation.getMathTransform();
                     geometry = GeometryTransformation.transform(geometry, transform);
