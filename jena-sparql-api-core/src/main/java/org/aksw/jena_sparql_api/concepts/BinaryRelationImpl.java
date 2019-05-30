@@ -111,12 +111,12 @@ public class BinaryRelationImpl
         return result;
     }
 
-    public Set<Var> getVarsMentioned() {
-        Set<Var> result = SetUtils.asSet(PatternVars.vars(element));
-        result.add(sourceVar);
-        result.add(targetVar);
-        return result;
-    }
+//    public Set<Var> getVarsMentioned() {
+//        Set<Var> result = SetUtils.asSet(PatternVars.vars(element));
+//        result.add(sourceVar);
+//        result.add(targetVar);
+//        return result;
+//    }
 
     public BinaryRelation applyNodeTransform(NodeTransform nodeTransform) {
         Var s = VarUtils.applyNodeTransform(sourceVar, nodeTransform);

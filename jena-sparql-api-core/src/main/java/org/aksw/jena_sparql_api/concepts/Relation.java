@@ -129,6 +129,9 @@ public interface Relation {
 				.map(n -> (Var)n)
 				.collect(Collectors.toSet());
 		
+		List<Var> distinguishedVars = getVars();
+		result.addAll(distinguishedVars);
+		
 //		Op op = Algebra.compile(e);
 //		Collection<Var> tmp = OpVars.mentionedVars(op);
 		
