@@ -16,6 +16,9 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.rdf.model.impl.PropertyImpl;
+import org.apache.jena.sparql.path.P_Path0;
+import org.apache.jena.sparql.util.ModelUtils;
 import org.apache.jena.util.iterator.ExtendedIterator;
 
 import com.google.common.collect.Streams;
@@ -174,6 +177,11 @@ public class ResourceUtils {
 //		return result;
 //	}
 
+	public static StmtIterator listProperties(Resource s) {
+		StmtIterator result = s.listProperties();
+		return result;
+	}
+
 	public static StmtIterator listProperties(Resource s, Property p) {
 		StmtIterator result = s.listProperties(p);
 		return result;
@@ -300,6 +308,13 @@ public class ResourceUtils {
 	public static <T> T getLiteralPropertyValue(Resource s, Property p, Class<T> clazz) {
 		T result = tryGetLiteralPropertyValue(s, p, clazz).orElse(null);
 		return result;		
+	}
+
+	public static StmtIterator listProperties(RDFNode s, boolean isFwd) {		
+		StmtIterator result = isFwd
+				? s.asResource().listProperties()
+				: listReverseProperties(s);
+		return result;
 	}
 
 	public static StmtIterator listReverseProperties(RDFNode s) {		
@@ -622,5 +637,54 @@ public class ResourceUtils {
 //		
 //		return result;
 //	}
+	
+	/**************************************
+	 * Utils with direction flag
+	 **************************************/
+
+	public static RDFNode getSource(Statement stmt, boolean isFwd) {
+		RDFNode result = isFwd ? stmt.getSubject() : stmt.getObject();
+		return result;
+	}
+
+	public static RDFNode getTarget(Statement stmt, boolean isFwd) {
+		RDFNode result = isFwd ? stmt.getObject() : stmt.getSubject();
+		return result;
+	}
+	
+	public static Property getProperty(P_Path0 link) {
+		Property result = new PropertyImpl(link.getNode(), null);
+		return result;
+//		Model m = s.getModel();
+//		Node n = step.getNode();
+//		RDFNode rn = m.getRDFNode(n);
+//		Property p = rn.as(Property.class);
+	}
+	
+	public static ExtendedIterator<RDFNode> listPropertyValues(Resource s, P_Path0 step) {
+		boolean isFwd = step.isForward();
+		return listProperties(s, step)
+				.mapWith(stmt -> getTarget(stmt, isFwd));
+	}
+	
+	public static StmtIterator listProperties(Resource s, P_Path0 step) {
+		boolean isFwd = step.isForward();
+		Property p = getProperty(step);
+		StmtIterator result = listProperties(s, p, isFwd);
+		return result;
+	}
+
+	public static ExtendedIterator<RDFNode> listPropertyValues(Resource s, Property p, boolean isFwd) {
+		return listProperties(s, p, isFwd)
+				.mapWith(stmt -> getTarget(stmt, isFwd));		
+	}
+
+	public static StmtIterator listProperties(Resource s, Property p, boolean isFwd) {
+		StmtIterator result = isFwd
+				? ResourceUtils.listProperties(s, p)
+				: ResourceUtils.listReverseProperties(s, p);
+		return result;
+	}
+
 
 }

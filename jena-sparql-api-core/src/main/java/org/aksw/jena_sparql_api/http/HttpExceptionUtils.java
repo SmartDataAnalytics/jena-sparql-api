@@ -12,7 +12,7 @@ public class HttpExceptionUtils {
             result = new HttpException(x.getResponse(), e);
         } else if(e instanceof QueryExceptionHTTP) {
             QueryExceptionHTTP x = (QueryExceptionHTTP)e;
-            result = new QueryExceptionHTTP(x.getResponseMessage() + " " + x.getMessage(), e);
+            result = new QueryExceptionHTTP(x.getResponse() + " " + x.getMessage(), e);
         } else {
             result = new RuntimeException(e);
         }

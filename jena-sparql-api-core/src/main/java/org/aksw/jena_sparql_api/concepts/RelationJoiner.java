@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -178,7 +179,14 @@ public class RelationJoiner {
 	 * 
 	 * TODO This method could use some clean up.
 	 * 
+	 * If we have { ?s ?p ?o }(?s) join { ?p ?s ?o }(?p)
+	 * we not only have to map rhs.?p->?s, but also add rhs.?s -> freshVar
 	 * 
+	 * So after having set up rhs join var map,
+	 * for each rhs.var that maps to a var which is exists in rhs.mentionedVars, remap it to a fresh variable  
+     *
+	 * If we have { ?s ?p ?o }(?s, ?p) join { ?p ?s ?o }(?p, ?s)
+	 * { ?s ?p ?o } { ?s ?p ?x }
 	 * @return
 	 */
 	public Relation get() {
@@ -325,37 +333,73 @@ public class RelationJoiner {
         return result;
 	}
 
-	public void resolveConflicts(Set<Var> filterVarsMentioned, Set<Var> fixedVarsRhs, Set<Var> conflictVars,
+	public static <T> T pop(Iterable<T> items) {
+		Iterator<T> it = items.iterator();
+		T result = it.next();
+		it.remove();
+		return result;
+	}
+	
+	public void resolveConflicts(Set<Var> rhsVarsMentioned, Set<Var> rhsFixedVars, Set<Var> conflictVars,
 			Map<Var, Var> lhsMap, Map<Var, Var> rhsMap, Generator<Var> gen) {
-		for(Var v : new HashSet<>(conflictVars)) {
+		//for(Var rhsJoinVar : new HashSet<>(conflictVars)) {
+		while(!conflictVars.isEmpty()) {
+			Var rhsJoinVar = pop(conflictVars);
+			
     		// If the variable is fixed in rhs, its occurrence in in lhs has to be renamed
-    		if(!fixedVarsRhs.contains(v)) {
+    		if(!rhsFixedVars.contains(rhsJoinVar)) {
     			
         		// note: A variable can only be fixed in both lhs and rhs if it used on both sides of a join
         	
-        	
+    			Set<Var> rhsJoinVars = rhsMap.keySet();
+    			Set<Var> rhsNonJoinVars = Sets.difference(rhsVarsMentioned, rhsJoinVars);
+    			
         		// If the variable is part of the join, try the join var first
-        		Var joinVar = rhsMap.get(v);
-        		Var targetVar = joinVar == null ? v : joinVar;
-        		// If the target var is also in conflict, allocate a fresh variable
-        		// A conflict exists, if the targetVar in mentioned in rhs
-        		// [(?s) x ?o ] X [?s y (?o)]
-        		Var resolvedVar = !Objects.equals(v, joinVar) && filterVarsMentioned.contains(targetVar)
-        				? gen.next()
-        				: targetVar;
-        				
+        		Var targetLhsVar = rhsMap.get(rhsJoinVar);
         		
+        		if(targetLhsVar != null) {
+        			// Here is the case where a rhs var joins with a target var X where X occurrs
+        			// as a non-joining variable in rhs
+        			
+        			// If rhs.joinVar joins with another variable targetLhsVar X,
+        			// where X happens to be in rhs.nonJoinVars, rename X in rhs
+        			if(rhsNonJoinVars.contains(targetLhsVar)) {
+        				Var rhsFreshVar = gen.next();
+        				conflictVars.remove(targetLhsVar);
+        				rhsMap.put(targetLhsVar, rhsFreshVar);
+        			}
+        		} else {
+        			// Here is the case where the conflict variable simply overlaps with one of lhs
+        			// Here is the case where a variable X of rhs overlaps with one of lhs
+            		// // an *effective* conflict variable X
+    				Var rhsFreshVar = gen.next();
+    				//conflictVars.remove(rhsJoinVar);
+    				rhsMap.put(rhsJoinVar, rhsFreshVar);
+        		}        			
         		
-                //rhsToLhs.put(v, resolvedVar);
-        		rhsMap.put(v, resolvedVar);
-        		
+        		if(false) {
+	        		Var targetVar = targetLhsVar == null ? rhsJoinVar : targetLhsVar;
+	        		// If the target var is also in conflict, allocate a fresh variable
+	        		// A conflict exists, if the targetVar in mentioned in rhs
+	        		// [(?s) x ?o ] X [?s y (?o)]
+	        		Var resolvedVar = !Objects.equals(rhsJoinVar, targetLhsVar) && rhsVarsMentioned.contains(targetVar)
+	        				? gen.next()
+	        				: targetVar;
+	        				
+	        		
+	        		
+	                //rhsToLhs.put(v, resolvedVar);
+	        		rhsMap.put(rhsJoinVar, resolvedVar);
+        		}
         		// Conflict for this variable resolved
-        		conflictVars.remove(v);
+        		//conflictVars.remove(rhsJoinVar);
         		
-        		if(joinVar != null) {
-        			conflictVars.remove(joinVar);
-        			lhsMap.put(joinVar, resolvedVar);
-        			// Update the join entry in the lhs map
+        		if(false) {
+//        		if(targetLhsVar != null) {
+//        			conflictVars.remove(targetLhsVar);
+//        			lhsMap.put(targetLhsVar, resolvedVar);
+//        			// Update the join entry in the lhs map
+//        		}
         		}
     		}
         }

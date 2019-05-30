@@ -173,11 +173,11 @@ public class Concept
         return result;
     }
 
-    public Set<Var> getVarsMentioned() {
-        Set<Var> result = SetUtils.asSet(PatternVars.vars(element));
-        result.add(var); // Var should always be part of element - but better add it here explicitly
-        return result;
-    }
+//    public Set<Var> getVarsMentioned() {
+//        Set<Var> result = SetUtils.asSet(PatternVars.vars(element));
+//        result.add(var); // Var should always be part of element - but better add it here explicitly
+//        return result;
+//    }
 
     public Concept(Element element, Var var) {
         super();

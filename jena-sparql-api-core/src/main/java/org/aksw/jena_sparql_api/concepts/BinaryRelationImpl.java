@@ -173,6 +173,21 @@ public class BinaryRelationImpl
         return result;
     }
 
+    /**
+     * 
+     * @param s
+     * @param p
+     * @param o
+     * @return
+     */
+    public static BinaryRelation create(Var s, Node p, Var o, boolean isFwd) {
+        BinaryRelation result = isFwd
+        		? createFwd(s, p, o)
+        		: createBwd(s, p, o);
+
+        return result;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;

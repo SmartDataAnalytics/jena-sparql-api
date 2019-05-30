@@ -14,8 +14,10 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import org.aksw.commons.util.exception.ExceptionUtilsAksw;
 import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
 import org.aksw.jena_sparql_api.core.utils.UpdateUtils;
+import org.aksw.jena_sparql_api.http.HttpExceptionUtils;
 import org.aksw.jena_sparql_api.utils.ElementTransformSubst2;
 import org.aksw.jena_sparql_api.utils.GraphUtils;
 import org.aksw.jena_sparql_api.utils.PrefixUtils;
@@ -377,7 +379,7 @@ public class SparqlStmtUtils {
 		try(SPARQLResultEx r = rr) {
 			SPARQLResultVisitor.forward(r, sink);
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			throw HttpExceptionUtils.makeHumanFriendly(e);
 		}
 	}
 
