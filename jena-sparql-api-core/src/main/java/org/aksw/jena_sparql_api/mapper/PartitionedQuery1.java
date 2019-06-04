@@ -67,4 +67,8 @@ public class PartitionedQuery1
         String result = "" + partitionVar + " | " + query;
         return result;
     }
+    
+    public static PartitionedQuery1 from(Query view, Var viewVar) {
+    	return new PartitionedQuery1(view, viewVar);
+    }
 }

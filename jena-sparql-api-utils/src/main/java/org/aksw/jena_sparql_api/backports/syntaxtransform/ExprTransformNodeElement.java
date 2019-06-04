@@ -25,6 +25,7 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_Exists;
 import org.apache.jena.sparql.expr.E_NotExists;
 import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprAggregator;
 import org.apache.jena.sparql.expr.ExprFunctionOp;
 import org.apache.jena.sparql.expr.ExprList;
 import org.apache.jena.sparql.expr.ExprTransformCopy;
@@ -32,7 +33,12 @@ import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementVisitor;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
+import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformer;
+
+// Copied version from jena 3.11.0 and added missing transformation for aggregators 
+//     ~ Claus, 2019 Jun 4
 
 /**
  * Special version of ExprTransform for applying a node transform on syntax
@@ -41,10 +47,19 @@ import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
 public class ExprTransformNodeElement extends ExprTransformCopy {
     private final NodeTransform    nodeTransform ;
     private final ElementTransform elementTransform ;
+    private final ElementVisitor beforeVisitor;
+    private final ElementVisitor afterVisitor;
 
     public ExprTransformNodeElement(NodeTransform nodeTransform, ElementTransform eltrans) {
+        this(nodeTransform, eltrans, null, null) ;
+    }
+    
+    public ExprTransformNodeElement(NodeTransform nodeTransform, ElementTransform eltrans, 
+                                    ElementVisitor beforeVisitor, ElementVisitor afterVisitor) {
         this.nodeTransform = nodeTransform ;
         this.elementTransform = eltrans ;
+        this.beforeVisitor = beforeVisitor ;
+        this.afterVisitor = afterVisitor ;
     }
 
     @Override
@@ -71,7 +86,7 @@ public class ExprTransformNodeElement extends ExprTransformCopy {
     public Expr transform(ExprFunctionOp funcOp, ExprList args, Op opArg) {
         // Syntax phased only - ignore args and opArg
         Element elt = funcOp.getElement() ;
-        Element elt1 = ElementTransformer.transform(elt, elementTransform) ;
+        Element elt1 = ElementTransformer.transform(elt, elementTransform, this, beforeVisitor, afterVisitor) ;
         if ( elt == elt1 )
             return funcOp ;
         else {
@@ -81,5 +96,11 @@ public class ExprTransformNodeElement extends ExprTransformCopy {
                 return new E_NotExists(elt1) ;
             throw new InternalErrorException("Unknown ExprFunctionOp: " + funcOp.getFunctionSymbol()) ;
         }
+    }
+    
+    @Override
+    public Expr transform(ExprAggregator eAgg) {
+    	Expr result = eAgg.applyNodeTransform(nodeTransform);
+    	return result;
     }
 }
