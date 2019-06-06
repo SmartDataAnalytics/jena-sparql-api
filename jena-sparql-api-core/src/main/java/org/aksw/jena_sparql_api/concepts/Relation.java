@@ -121,14 +121,16 @@ public interface Relation {
 		//Set<Var> result = SetUtils.asSet(PatternVars.vars(e));
 
 		//ElementTransformer
-		NodeTransformCollectNodes tmp = new NodeTransformCollectNodes();
-		this.applyNodeTransform(tmp);
-		Set<Node> nodes = tmp.getNodes();
-		Set<Var> result = nodes.stream()
-				.filter(Node::isVariable)
-				.map(n -> (Var)n)
-				.collect(Collectors.toSet());
-		
+//		NodeTransformCollectNodes tmp = new NodeTransformCollectNodes();
+//		this.applyNodeTransform(tmp);
+//		Set<Node> nodes = tmp.getNodes();
+//		Set<Var> result = nodes.stream()
+//				.filter(Node::isVariable)
+//				.map(n -> (Var)n)
+//				.collect(Collectors.toSet());
+
+		Element e = getElement();
+		Set<Var> result = ElementUtils.getMentionedVars(e);
 		List<Var> distinguishedVars = getVars();
 		result.addAll(distinguishedVars);
 		

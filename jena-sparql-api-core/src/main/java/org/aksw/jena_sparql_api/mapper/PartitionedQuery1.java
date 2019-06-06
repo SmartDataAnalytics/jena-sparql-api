@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.util.OneToManyMap.Entry;
 
 public class PartitionedQuery1
     implements PartitionedQuery
@@ -68,6 +69,10 @@ public class PartitionedQuery1
         return result;
     }
     
+//    public static PartitionedQuery1 from(Entry<Query, Var> e) {
+//    	return from(e.getKey(), e.getValue());
+//    }
+
     public static PartitionedQuery1 from(Query view, Var viewVar) {
     	return new PartitionedQuery1(view, viewVar);
     }

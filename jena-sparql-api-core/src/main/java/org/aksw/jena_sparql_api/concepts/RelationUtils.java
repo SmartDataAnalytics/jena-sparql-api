@@ -57,15 +57,35 @@ public class RelationUtils {
 	 * @return
 	 */
 	public static Relation rename(Relation r, List<Var> targetVars) {
+		List<Var> rVars = r.getVars();
+		Map<Var, Node> map = createRenameVarMap(r.getVarsMentioned(), rVars, targetVars);
 		
+		Relation result = r.applyNodeTransform(new NodeTransformSubst(map));
+
+		return result;
+	}
+	
+	
+	public static Element renameNodes(Relation r, List<? extends Node> targetNodes) {
+		List<Var> rVars = r.getVars();
+		Element e = r.getElement();
+		Map<Var, Node> map = createRenameVarMap(r.getVarsMentioned(), rVars, targetNodes);
 		
-		Set<Var> relationVars = new LinkedHashSet<>(r.getVars());
-		Set<Var> vs = new LinkedHashSet<>(targetVars);
+		Element result = ElementUtils.applyNodeTransform(e, new NodeTransformSubst(map));
+
+		return result;
+	}
+
+	public static Map<Var, Node> createRenameVarMap(Set<Var> mentionedVars, List<Var> rVars, List<? extends Node> targetNodes) {
+		//Set<Var> rVars = ElementUtils.getMentionedVars(e);
+		
+		Set<Var> relationVars = new LinkedHashSet<>(rVars);
+		Set<Node> vs = new LinkedHashSet<>(targetNodes);
 		if(vs.size() != relationVars.size()) {
 			throw new IllegalArgumentException("Number of distinct variables of the relation must match the number of distinct target variables");
 		}
 		
-		Map<Var, Var> rename = Streams.zip(
+		Map<Var, Node> rename = Streams.zip(
 			relationVars.stream(),
 			vs.stream(),
 			(a, b) -> new SimpleEntry<>(a, b))
@@ -73,25 +93,21 @@ public class RelationUtils {
 		
 		
 		// Extend the map by renaming all remaining variables
-		Set<Var> mentionedVars = r.getVarsMentioned();
+		//Set<Var> mentionedVars = ElementUtils.getMentionedVars(e); //r.getVarsMentioned();
 		Set<Var> remainingVars = Sets.difference(mentionedVars, relationVars);
 
 		//Set<Var> forbiddenVars = Sets.union(vs, mentionedVars);
 		Generator<Var> varGen = VarGeneratorBlacklist.create(remainingVars);
 
+		Set<Var> targetVars = targetNodes.stream().filter(Node::isVariable).map(x -> (Var)x).collect(Collectors.toSet());
 		// targetVars
 		Map<Var, Var> map = VarUtils.createDistinctVarMap(targetVars, remainingVars, true, varGen);
-		map.putAll(rename);
-		
-		Relation result = r.applyNodeTransform(new NodeTransformSubst(map));
-		
-//		System.out.println("RENAMED");
-//		System.out.println(r);
-//		System.out.println("TO");
-//		System.out.println(result);
-		
-		return result;
+		//map.putAll(rename);
+		rename.putAll(map);
+
+		return rename;
 	}
+	
 	
 	/**
 	 * Rename variables of all relations to the given list of variables

@@ -14,7 +14,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import org.aksw.commons.util.exception.ExceptionUtilsAksw;
+import org.aksw.jena_sparql_api.backports.syntaxtransform.ExprTransformNodeElement;
 import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
 import org.aksw.jena_sparql_api.core.utils.UpdateUtils;
 import org.aksw.jena_sparql_api.http.HttpExceptionUtils;
@@ -58,7 +58,6 @@ import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.lang.arq.ParseException;
 import org.apache.jena.sparql.modify.request.UpdateData;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
-import org.apache.jena.sparql.syntax.syntaxtransform.ExprTransformNodeElement;
 import org.apache.jena.sparql.syntax.syntaxtransform.UpdateTransformOps;
 import org.apache.jena.sparql.util.Context;
 import org.apache.jena.sparql.util.Symbol;
