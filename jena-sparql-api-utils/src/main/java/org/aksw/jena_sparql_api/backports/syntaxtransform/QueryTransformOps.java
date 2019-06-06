@@ -41,7 +41,6 @@ import org.apache.jena.sparql.syntax.Element ;
 import org.apache.jena.sparql.syntax.ElementGroup ;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformSubst;
-import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformer;
 
 /* MODIFIED VERSION WITH FIX FOR PROJECTIONS AND AGGREGATIONS (VarExprList) 
 
