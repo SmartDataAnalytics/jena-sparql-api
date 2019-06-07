@@ -1,0 +1,10 @@
+{
+  "@context": {
+    "json": "http://jsa.aksw.org/fn/json/",
+    "csv": "http://jsa.aksw.org/fn/csv/",
+    "xml": "http://jsa.aksw.org/fn/xml/",
+    "url": "http://jsa.aksw.org/fn/url/",
+    "sys": "http://jsa.aksw.org/fn/sys/",
+    "fs": "http://jsa.aksw.org/fn/fs/"
+  }
+}

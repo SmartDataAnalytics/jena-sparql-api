@@ -80,7 +80,7 @@
         <dependency> <!-- Used for @Configuration annotation so we can inject an ApplicationContext
                 into servlets -->
             <groupId>cglib</groupId>
-            <artifactId>cglib</artifactId>
+            <artifactId>cglib-nodep</artifactId>
         </dependency>
         <!-- <dependency> -->
         <!-- <groupId>com.sun.jersey</groupId> -->

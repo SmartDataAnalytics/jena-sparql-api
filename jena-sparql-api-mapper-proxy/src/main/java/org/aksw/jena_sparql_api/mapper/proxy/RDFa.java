@@ -28,7 +28,8 @@ public class RDFa {
 			.setNsPrefixes(RDFDataMgr.loadModel("rdf-prefixes/jena-extended.jsonld"))
 			.setNsPrefixes(RDFDataMgr.loadModel("rdf-prefixes/arq.jsonld"))
 			.setNsPrefixes(RDFDataMgr.loadModel("rdf-prefixes/rdfa11.jsonld"))
-			.setNsPrefixes(RDFDataMgr.loadModel("rdf-prefixes/geosparql.jsonld"));
+			.setNsPrefixes(RDFDataMgr.loadModel("rdf-prefixes/geosparql.jsonld"))
+			.setNsPrefixes(RDFDataMgr.loadModel("rdf-prefixes/jsa.jsonld"));
 	}
 	
 	// Apparently scanning folders in class path resources is still a pain...

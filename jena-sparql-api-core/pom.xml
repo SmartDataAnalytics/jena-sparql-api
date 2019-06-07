@@ -40,10 +40,12 @@
 		</dependency>
 
 		<!-- Needed for representing SPARQL Paths as json objects -->
+<!--
 		<dependency>
 			<groupId>org.aksw.jena-sparql-api</groupId>
 			<artifactId>jena-sparql-api-sparql-ext</artifactId>
 		</dependency>
+-->
 
 		<dependency>
 			<groupId>io.reactivex.rxjava2</groupId>

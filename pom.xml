@@ -93,7 +93,7 @@
 
 	<properties>
 		<jena.version>3.11.0</jena.version>
-<!--		<jetty.version>9.4.8.v20171121</jetty.version> -->
+		<!-- <jetty.version>9.4.8.v20171121</jetty.version> -->
 		<jetty.version>9.4.18.v20190429</jetty.version>
 
 		<!-- <jgrapht.version>1.1.0</jgrapht.version> -->
@@ -350,13 +350,8 @@
 				<version>1.1.1</version>
 			</dependency>
 
-<!--
-			<dependency>
-                                <groupId>javax.xml.bind</groupId>
-                                <artifactId>jaxb-core</artifactId>
-                                <version>2.3.0.1</version>
-                        </dependency>
--->
+			<!-- <dependency> <groupId>javax.xml.bind</groupId> <artifactId>jaxb-core</artifactId> 
+				<version>2.3.0.1</version> </dependency> -->
 
 			<dependency>
 				<groupId>net.sourceforge.owlapi</groupId>
@@ -715,8 +710,8 @@
 			<dependency> <!-- Used for @Configuration annotation so we can inject an ApplicationContext 
 					into servlets -->
 				<groupId>cglib</groupId>
-				<artifactId>cglib</artifactId>
-				<version>3.2.6</version>
+				<artifactId>cglib-nodep</artifactId>
+				<version>3.2.12</version>
 			</dependency>
 
 
@@ -987,6 +982,12 @@
 				<groupId>org.springframework.batch</groupId>
 				<artifactId>spring-batch-core</artifactId>
 				<version>${spring.batch.version}</version>
+				<exclusions>
+					<exclusion>
+						<groupId>com.fasterxml.jackson.core</groupId>
+						<artifactId>jackson-databind</artifactId>
+					</exclusion>
+				</exclusions>
 			</dependency>
 			<dependency>
 				<groupId>org.springframework.batch</groupId>

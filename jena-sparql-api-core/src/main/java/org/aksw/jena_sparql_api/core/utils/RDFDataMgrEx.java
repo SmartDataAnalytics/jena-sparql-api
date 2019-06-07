@@ -3,9 +3,7 @@ package org.aksw.jena_sparql_api.core.utils;
 import java.io.IOException;
 import java.util.function.Consumer;
 
-import org.aksw.jena_sparql_api.sparql.ext.fs.JenaExtensionFs;
-import org.aksw.jena_sparql_api.sparql.ext.http.JenaExtensionHttp;
-import org.aksw.jena_sparql_api.sparql.ext.util.JenaExtensionUtil;
+import org.aksw.jena_sparql_api.mapper.proxy.RDFa;
 import org.aksw.jena_sparql_api.stmt.SPARQLResultSinkQuads;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtUtils;
 import org.apache.jena.query.Dataset;
@@ -51,13 +49,14 @@ public class RDFDataMgrEx {
 		//Sink<Quad> sink = SparqlStmtUtils.createSink(outFormat, System.out);
 		
 		PrefixMapping pm = new PrefixMappingImpl();
-		pm.setNsPrefixes(PrefixMapping.Extended);
-		JenaExtensionUtil.addPrefixes(pm);
-
-		JenaExtensionHttp.addPrefixes(pm);
-
-		// Extended SERVICE <> keyword implementation
-		JenaExtensionFs.registerFileServiceHandler();
+//		pm.setNsPrefixes(PrefixMapping.Extended);
+//		JenaExtensionUtil.addPrefixes(pm);
+//
+//		JenaExtensionHttp.addPrefixes(pm);
+//
+//		// Extended SERVICE <> keyword implementation
+//		JenaExtensionFs.registerFileServiceHandler();
+		pm.setNsPrefixes(RDFa.prefixes);
 		
 		try {
 			Streams.stream(SparqlStmtUtils.processFile(pm, filenameOrURI))
