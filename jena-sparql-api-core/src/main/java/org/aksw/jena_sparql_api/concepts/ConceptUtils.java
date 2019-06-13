@@ -13,10 +13,10 @@ import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.MapUtils;
 import org.aksw.commons.collections.SetUtils;
+import org.aksw.commons.collections.generator.Generator;
 import org.aksw.jena_sparql_api.core.utils.QueryGenerationUtils;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprListUtils;
-import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.GeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.Triples;

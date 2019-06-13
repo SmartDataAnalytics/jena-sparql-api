@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import org.aksw.commons.collections.generator.Generator;
 import org.aksw.commons.jena.jgrapht.LabeledEdge;
 import org.aksw.commons.jena.jgrapht.LabeledEdgeImpl;
 import org.aksw.jena_sparql_api.algebra.transform.TransformDistributeJoinOverUnion;
@@ -22,7 +23,6 @@ import org.aksw.jena_sparql_api.algebra.utils.ExtendedQueryToGraphVisitor;
 import org.aksw.jena_sparql_api.algebra.utils.OpExtConjunctiveQuery;
 import org.aksw.jena_sparql_api.algebra.utils.OpUtils;
 import org.aksw.jena_sparql_api.utils.DnfUtils;
-import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Graph;

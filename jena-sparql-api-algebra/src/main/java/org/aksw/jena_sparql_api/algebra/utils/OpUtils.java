@@ -16,6 +16,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.aksw.commons.collections.generator.Generator;
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeImpl;
 import org.aksw.commons.collections.trees.TreeUtils;
@@ -23,7 +24,6 @@ import org.aksw.jena_sparql_api.algebra.analysis.VarUsage;
 import org.aksw.jena_sparql_api.algebra.analysis.VarUsageAnalyzerVisitor;
 import org.aksw.jena_sparql_api.utils.CnfUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
-import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.aksw.jena_sparql_api.utils.VarExprListUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;

@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.aksw.commons.collections.generator.Generator;
 import org.aksw.jena_sparql_api.backports.syntaxtransform.ExprTransformNodeElement;
 import org.aksw.jena_sparql_api.utils.transform.NodeTransformCollectNodes;
 import org.apache.jena.graph.Node;

@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.concepts;
 
 import java.util.Set;
 
-import org.aksw.jena_sparql_api.utils.Generator;
+import org.aksw.commons.collections.generator.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.query.Query;

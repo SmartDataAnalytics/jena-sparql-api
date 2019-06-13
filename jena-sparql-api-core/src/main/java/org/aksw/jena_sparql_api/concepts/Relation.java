@@ -130,7 +130,7 @@ public interface Relation {
 //				.collect(Collectors.toSet());
 
 		Element e = getElement();
-		Set<Var> result = ElementUtils.getMentionedVars(e);
+		Set<Var> result = ElementUtils.getVarsMentioned(e);
 		List<Var> distinguishedVars = getVars();
 		result.addAll(distinguishedVars);
 		

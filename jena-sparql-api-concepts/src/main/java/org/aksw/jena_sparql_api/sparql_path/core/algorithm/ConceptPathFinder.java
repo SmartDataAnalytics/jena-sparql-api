@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.aksw.commons.collections.generator.Generator;
 import org.aksw.commons.util.strings.StringUtils;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
@@ -18,7 +19,6 @@ import org.aksw.jena_sparql_api.sparql_path.core.PathConstraint;
 import org.aksw.jena_sparql_api.sparql_path.core.VocabPath;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.PathUtils;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
-import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;

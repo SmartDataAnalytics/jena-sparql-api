@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.MapUtils;
+import org.aksw.commons.collections.generator.Generator;
 import org.aksw.jena_sparql_api.backports.syntaxtransform.ExprTransformNodeElement;
 import org.aksw.jena_sparql_api.utils.transform.NodeTransformCollectNodes;
 import org.apache.jena.graph.Node;
@@ -55,7 +56,7 @@ public class ElementUtils {
 	
 	
 	// PatternVars only returns visible vars, this returns all mentioned vars
-	public static Set<Var> getMentionedVars(Element e) {
+	public static Set<Var> getVarsMentioned(Element e) {
 		NodeTransformCollectNodes tmp = new NodeTransformCollectNodes();
         ElementUtils.applyNodeTransform(e, tmp);
 

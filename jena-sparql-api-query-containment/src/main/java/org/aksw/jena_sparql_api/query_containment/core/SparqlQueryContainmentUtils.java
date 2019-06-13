@@ -10,6 +10,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.aksw.commons.collections.generator.Generator;
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.graph.index.core.SubgraphIsomorphismIndex;
 import org.aksw.commons.graph.index.jena.transform.QueryToGraph;
@@ -36,7 +37,6 @@ import org.aksw.jena_sparql_api.stmt.SparqlElementParser;
 import org.aksw.jena_sparql_api.stmt.SparqlElementParserImpl;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParser;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
-import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.aksw.jena_sparql_api.view_matcher.OpVarMap;
 import org.aksw.jena_sparql_api.view_matcher.SparqlViewMatcherUtils;

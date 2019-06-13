@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.utils;
 
+import org.aksw.commons.collections.generator.Generator;
 import org.apache.jena.sdb.core.Gensym;
 import org.apache.jena.sparql.core.Var;
 

@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.utils;
 
 import java.util.Collection;
 
+import org.aksw.commons.collections.generator.Generator;
 import org.apache.jena.sparql.core.Var;
 
 public class VarGeneratorBlacklist
