@@ -1,0 +1,34 @@
+PREFIX eg: <http://www.example.org/>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+
+CONSTRUCT {
+  ?x
+    a eg:Transition ;
+    owl:annotatedSubject ?st ;
+    owl:annotatedProperty ?p ;
+    owl:annotatedObject ?ot ;
+    eg:count ?c .
+
+  ?st ?x ?ot .
+  ?ot ?y ?st .
+  
+  ?y owl:inverseOf ?x .
+} {
+  { SELECT DISTINCT ?st ?p ?ot (COUNT(*) AS ?c) {
+    ?s ?p ?o
+    FILTER(!STRSTARTS(STR(?p), 'http://www.w3.org/1999/02/22-rdf-syntax-ns#_'))
+    FILTER(?p NOT IN (rdf:type))
+    # FILTER(!isLiteral(?o))
+
+    OPTIONAL { ?s a ?stmp }
+    OPTIONAL { ?o a ?otmp }
+    BIND(IF(BOUND(?stmp), ?stmp, eg:unbound) AS ?st)
+    BIND(IF(BOUND(?otmp), ?otmp, eg:unbound) AS ?ot)
+    
+  } GROUP BY ?st ?p ?ot }
+
+  BIND(MD5(CONCAT(STR(?st), STR(?p), STR(?ot))) AS ?hash)
+  BIND(IRI(CONCAT("http://www.example.org/transition-", ?hash)) AS ?x)
+  BIND(IRI(CONCAT("http://www.example.org/transition-inverse-", ?hash)) AS ?y)  
+}
+

@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.aksw.commons.collections.generator.Generator;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.graph.NodeTransform;
 
@@ -166,7 +167,10 @@ public class VarUtils {
             //var vans = vas.map(VarUtils.getVarName);
 
         if (generator == null) {
-            generator = VarGeneratorBlacklist.create(vas);
+        	Set<Var> forbidden = new HashSet<>();
+        	forbidden.addAll(vas);
+        	forbidden.addAll(vbs);
+            generator = VarGeneratorBlacklist.create(forbidden); //vas);
                     //new VarGeneratorBlacklist(new VarGeneratorImpl(Gensym.create("v")), vas);
         }
 

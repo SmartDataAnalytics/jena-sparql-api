@@ -4,13 +4,12 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.aksw.commons.collections.diff.Diff;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.SetFromGraph;
-
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
+import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.sparql.core.DatasetDescription;
@@ -27,6 +26,9 @@ import org.apache.jena.update.Update;
 import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
 
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+
 public class UpdateRequestUtils {
 
     /**
@@ -41,16 +43,46 @@ public class UpdateRequestUtils {
     }
 
     public static UpdateRequest clone(UpdateRequest request) {
+    	UpdateRequest result = copyTransform(request, UpdateUtils::clone);
+    	return result;
+    }
+    
+//    	UpdateRequest result = new UpdateRequest();
+//        result.setBaseURI(request.getBaseURI());
+//        result.setPrefixMapping(request.getPrefixMapping());
+//        result.setResolver(request.getResolver());
+//
+//        for(Update update : request.getOperations()) {
+//            Update clone = UpdateUtils.clone(update);
+//            result.add(clone);
+//        }
+//        return result;
+//    }
+
+    public static UpdateRequest copyTransform(UpdateRequest request, Function<? super Update, ? extends Update> updateTransform) {
         UpdateRequest result = new UpdateRequest();
         result.setBaseURI(request.getBaseURI());
         result.setPrefixMapping(request.getPrefixMapping());
         result.setResolver(request.getResolver());
 
         for(Update update : request.getOperations()) {
-            Update clone = UpdateUtils.clone(update);
-            result.add(clone);
+        	Update newUpdate = updateTransform.apply(update);
+        	if(newUpdate != null) {
+            //Update clone = UpdateUtils.clone(update);
+        		result.add(newUpdate);
+        	}
         }
         return result;
+    }
+    
+    public static UpdateRequest copyWithIri(UpdateRequest updateRequest, String withIri, boolean substituteDefaultGraph) {
+    	UpdateRequest result = copyTransform(updateRequest, update -> UpdateUtils.copyWithIri(update, withIri, substituteDefaultGraph));
+    	return result;
+    }
+
+    public static UpdateRequest copyWithIri(UpdateRequest updateRequest, Node withIri, boolean substituteDefaultGraph) {
+    	UpdateRequest result = copyTransform(updateRequest, update -> UpdateUtils.copyWithIri(update, withIri, substituteDefaultGraph));
+    	return result;
     }
 
     public static void applyWithIri(UpdateRequest updateRequest, String withIri) {

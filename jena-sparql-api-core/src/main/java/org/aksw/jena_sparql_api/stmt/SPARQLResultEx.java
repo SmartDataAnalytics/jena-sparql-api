@@ -20,12 +20,15 @@ import org.apache.jena.sparql.resultset.SPARQLResult;
  */
 public class SPARQLResultEx
 	extends SPARQLResult
+	implements AutoCloseable
 {	
 	protected Iterator<Triple> triples;
 	protected Iterator<Quad> quads;
 	
 	protected boolean updateType;
 
+	protected Runnable closeAction = null;
+	
 	public SPARQLResultEx() {
 		//super()
 	}
@@ -34,8 +37,9 @@ public class SPARQLResultEx
         super(model);
     }
 
-    public SPARQLResultEx(ResultSet resultSet) {
+    public SPARQLResultEx(ResultSet resultSet, Runnable closeAction) {
         super(resultSet);
+        this.closeAction = closeAction;
     }
 
     public SPARQLResultEx(boolean booleanResult) {
@@ -46,8 +50,9 @@ public class SPARQLResultEx
         super(dataset);
     }
 
-    public SPARQLResultEx(Iterator<JsonObject> jsonItems) {
+    public SPARQLResultEx(Iterator<JsonObject> jsonItems, Runnable closeAction) {
         super(jsonItems); 
+        this.closeAction = closeAction;
     }
 	
 	public SPARQLResultEx(SPARQLResult that) {
@@ -105,13 +110,15 @@ public class SPARQLResultEx
 		return result;
 	}
 	
-	protected void setTriples(Iterator<Triple> triples) {
+	protected void setTriples(Iterator<Triple> triples, Runnable closeAction) {
 		this.triples = triples;
+		this.closeAction = closeAction;
 		set((ResultSet)null);
 	}
 
-	protected void setQuads(Iterator<Quad> quads) {
+	protected void setQuads(Iterator<Quad> quads, Runnable closeAction) {
 		this.quads = quads;
+		this.closeAction = closeAction;
 		set((ResultSet)null);
 	}
 	
@@ -121,15 +128,15 @@ public class SPARQLResultEx
 	}
 
 
-	public static SPARQLResultEx createTriples(Iterator<Triple> triples) {
+	public static SPARQLResultEx createTriples(Iterator<Triple> triples, Runnable closeAction) {
 		SPARQLResultEx result = new SPARQLResultEx(); 
-		result.setTriples(triples);
+		result.setTriples(triples, closeAction);
 		return result;
 	}
 
-	public static SPARQLResultEx createQuads(Iterator<Quad> quads) {
+	public static SPARQLResultEx createQuads(Iterator<Quad> quads, Runnable closeAction) {
 		SPARQLResultEx result = new SPARQLResultEx(); 
-		result.setQuads(quads);
+		result.setQuads(quads, closeAction);
 		return result;
 	}
 
@@ -137,5 +144,12 @@ public class SPARQLResultEx
 		SPARQLResultEx result = new SPARQLResultEx(); 
 		result.setUpdateType();
 		return result;
+	}
+
+	@Override
+	public void close() throws Exception {
+		if(closeAction != null) {
+			closeAction.run();
+		}
 	}
 }

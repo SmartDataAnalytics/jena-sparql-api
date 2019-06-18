@@ -4,10 +4,12 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.IterableUtils;
-import org.aksw.jena_sparql_api.utils.Generator;
+import org.aksw.commons.collections.generator.Generator;
+import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.Prologue;
@@ -15,7 +17,6 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.sparql.path.P_Seq;
 import org.apache.jena.sparql.path.Path;
-import org.apache.jena.sparql.path.PathLib;
 import org.apache.jena.sparql.path.PathWriter;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
@@ -121,7 +122,8 @@ public class SimplePath
     	
     	str = str.replaceAll("\\^(\r|\n)+", "^");
     	
-        return "SimplePath [" + str + "]";
+        //return "SimplePath [" + str + "]";
+    	return str;
     }
 
     public boolean isEmpty() {
@@ -217,6 +219,12 @@ public class SimplePath
 	@Override
 	public int compareTo(SimplePath o) {
 		int result = IterableUtils.compareByLengthThenItems(this.steps, o.steps, PathUtils::compareStep);
+		return result;
+	}
+	
+	
+	public static Set<Node> mentionedNodes(SimplePath sp) {
+		Set<Node> result = sp.getSteps().stream().map(P_Path0::getNode).collect(Collectors.toSet());
 		return result;
 	}
 	

@@ -7,20 +7,19 @@ import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.function.FunctionBase2;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.PrecisionModel;
+import org.locationtech.jts.io.WKTWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.PrecisionModel;
-import com.vividsolutions.jts.io.WKTWriter;
 
 public abstract class BinaryGeometryFunctionBase
 	extends FunctionBase2
 {
 	public abstract Geometry eval(Geometry a, Geometry b);
 
-	private static final Logger logger = LoggerFactory.getLogger(E_ST_NearestPoints.class);
+	private static final Logger logger = LoggerFactory.getLogger(BinaryGeometryFunctionBase.class);
 
 	protected Function<String, Geometry> wktParser = new FN_ParseWkt();
 	protected Function<Geometry, String> wktWriter = new WKTWriter()::write;

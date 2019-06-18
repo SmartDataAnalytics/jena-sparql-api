@@ -3,15 +3,13 @@ package org.aksw.jena_sparql_api.utils;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.aksw.commons.collections.IterableCollection;
 import org.aksw.commons.collections.Sample;
 import org.aksw.commons.util.Pair;
-
-import com.google.common.collect.Sets;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.op.OpFilter;
 import org.apache.jena.sparql.algebra.op.OpJoin;
@@ -29,6 +27,8 @@ import org.apache.jena.sparql.expr.ExprFunction;
 import org.apache.jena.sparql.expr.ExprFunction2;
 import org.apache.jena.sparql.expr.ExprList;
 import org.apache.jena.sparql.expr.NodeValue;
+
+import com.google.common.collect.Sets;
 
 
 
@@ -78,7 +78,7 @@ public class FilterUtils
 	 * @param sample
 	 * @return
 	 */
-	public static ValueSet<NodeValue> toValueSet(Sample<NodeValue> sample)
+	public static ValueSetOld<NodeValue> toValueSet(Sample<NodeValue> sample)
 	{
 		if(sample.getPositives().size() > 1 || (!sample.getPositives().isEmpty() && sample.getNegatives().containsAll(sample.getPositives()))) {
 			/**
@@ -87,7 +87,7 @@ public class FilterUtils
 			 * .) or the negatives contain the positive, such as in [?x = a, !(?x = a)]
 			 * then the clause is unsatisfiable and no value contraint can be derived 
 			 */
-			return ValueSet.create();
+			return ValueSetOld.create();
 
 		}
 		
@@ -101,8 +101,8 @@ public class FilterUtils
 		}
 		
 		return sample.getPositives().isEmpty()
-			? ValueSet.create(sample.getNegatives(), false)
-			: ValueSet.create(sample.getPositives(), true);
+			? ValueSetOld.create(sample.getNegatives(), false)
+			: ValueSetOld.create(sample.getPositives(), true);
 	}
 	                           
 	
@@ -118,9 +118,9 @@ public class FilterUtils
 	 * @param clause
 	 * @return
 	 */
-	public static Map<Var, ValueSet<NodeValue>> extractValueConstraintsDnf(Set<Set<Expr>> dnf)
+	public static Map<Var, ValueSetOld<NodeValue>> extractValueConstraintsDnf(Set<Set<Expr>> dnf)
 	{		
-		Map<Var, ValueSet<NodeValue>> result = null;
+		Map<Var, ValueSetOld<NodeValue>> result = null;
 	
 		if(dnf == null) {
 			return result;
@@ -128,20 +128,20 @@ public class FilterUtils
 
 		
 		for(Set<Expr> clause : dnf) {
-			Map<Var, ValueSet<NodeValue>> map = extractValueConstraintsDnfClause(clause);
+			Map<Var, ValueSetOld<NodeValue>> map = extractValueConstraintsDnfClause(clause);
 
 			if(result == null) {
 				result = map;
 				continue;
 			}
 			
-			Iterator<Map.Entry<Var, ValueSet<NodeValue>>> itEntry = result.entrySet().iterator();
+			Iterator<Map.Entry<Var, ValueSetOld<NodeValue>>> itEntry = result.entrySet().iterator();
 			//for(Map.Entry<Var, ValueSet<NodeValue>> entry : result.entrySet()) {
 			while(itEntry.hasNext()) {
-				Map.Entry<Var, ValueSet<NodeValue>> entry = itEntry.next();
+				Map.Entry<Var, ValueSetOld<NodeValue>> entry = itEntry.next();
 				
-				ValueSet<NodeValue> a = entry.getValue();
-				ValueSet<NodeValue> b = map.get(entry.getKey());
+				ValueSetOld<NodeValue> a = entry.getValue();
+				ValueSetOld<NodeValue> b = map.get(entry.getKey());
 				
 				a.merge(b);
 				
@@ -155,7 +155,7 @@ public class FilterUtils
 			}
 		}
 		
-		return (result == null) ? new HashMap<Var, ValueSet<NodeValue>>() : result; 
+		return (result == null) ? new HashMap<Var, ValueSetOld<NodeValue>>() : result; 
 	}
 	
 	
@@ -189,7 +189,7 @@ public class FilterUtils
 
 	
 	
-	public static Map<Var, ValueSet<NodeValue>> extractValueConstraintsDnfClause(Set<Expr> dnfClause)
+	public static Map<Var, ValueSetOld<NodeValue>> extractValueConstraintsDnfClause(Set<Expr> dnfClause)
 	{
 		Map<Var, Sample<NodeValue>> tmp = new HashMap<Var, Sample<NodeValue>>();
 
@@ -226,11 +226,11 @@ public class FilterUtils
 		}
 		
 		
-		Map<Var, ValueSet<NodeValue>> result = new HashMap<Var, ValueSet<NodeValue>>();  
+		Map<Var, ValueSetOld<NodeValue>> result = new HashMap<Var, ValueSetOld<NodeValue>>();  
 
 		// Phase 2: Create the value sets
 		for(Map.Entry<Var, Sample<NodeValue>> entry : tmp.entrySet()) {
-			ValueSet<NodeValue> valueSet = toValueSet(entry.getValue());
+			ValueSetOld<NodeValue> valueSet = toValueSet(entry.getValue());
 			
 			if(valueSet.isUnknown()) {
 				continue;
@@ -334,10 +334,10 @@ public class FilterUtils
 			return null;
 		}
 		
-		Set<Set<Expr>> result = new HashSet<Set<Expr>>();
+		Set<Set<Expr>> result = new LinkedHashSet<Set<Expr>>();
 		
 		for(ExprList clause : clauses) {
-			result.add(new HashSet<Expr>(clause.getList()));
+			result.add(new LinkedHashSet<Expr>(clause.getList()));
 		}
 		
 		return result;

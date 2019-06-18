@@ -10,17 +10,22 @@
     <parent>
         <groupId>org.aksw.jena-sparql-api</groupId>
         <artifactId>jena-sparql-api-parent</artifactId>
-        <version>3.9.0-1</version>
+        <version>3.11.0-1</version>
     </parent>
 
     <modules>
+<!--
         <module>jena-sparql-api-mapper-annotations</module>
         <module>jena-sparql-api-mapper-proxy</module>
+-->
         <module>jena-sparql-api-mapper-core</module>
     </modules>
 
     <dependencies>
-
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-sparql-ext</artifactId>
+		</dependency>
 
     </dependencies>
 </project>

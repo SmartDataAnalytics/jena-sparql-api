@@ -33,14 +33,17 @@ public class LookupServiceListService<V>
 //        Concept concept = new Concept(filter, Vars.s);
     	
     	
+    	// VALUES vs FILTER has dire consequences when using GraphSparqlService:
+    	// Jena will prioritize a VALUES clause, over triple patterns, however
+    	// if a filter is given, triple patterns are evaluated first    	
 
     	if(!jena_jira_bug_1484_message_displayed) {
     		System.err.println("JENA BUG 1484: FIXME - Once the bug is fixed - switch implementation to use VALUE instead of FILTER");
     		jena_jira_bug_1484_message_displayed = true;
     	}
 
-    	// Concept concept = ConceptUtils.createConcept(nodes);
-    	Concept concept = ConceptUtils.createFilterConcept(nodes);
+    	 Concept concept = ConceptUtils.createConcept(nodes);
+    	//Concept concept = ConceptUtils.createFilterConcept(nodes);
 
     	// TODO update once list service also uses futures or flows
     	//result = CompletableFuture.completedFuture(listService.fetchData(concept, null, null));

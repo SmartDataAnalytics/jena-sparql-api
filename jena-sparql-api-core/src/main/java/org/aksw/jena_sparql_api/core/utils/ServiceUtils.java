@@ -3,6 +3,7 @@ package org.aksw.jena_sparql_api.core.utils;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
@@ -123,13 +124,15 @@ public class ServiceUtils {
 
     public static Range<Long> fetchCountQuery(QueryExecutionFactory sparqlService, Query query, Long itemLimit, Long rowLimit) {
 
-        Var outputVar = Var.alloc("_count_"); //ConceptUtils.freshVar(concept);
+        //Var outputVar = Var.alloc("_count_"); //ConceptUtils.freshVar(concept);
 
         Long xitemLimit = itemLimit == null ? null : itemLimit + 1;
         Long xrowLimit = rowLimit == null ? null : rowLimit + 1;
 
-        Query countQuery = QueryGenerationUtils.createQueryCount(query, outputVar, xitemLimit, xrowLimit);
-
+        Entry<Var, Query> e = QueryGenerationUtils.createQueryCount(query, xitemLimit, xrowLimit);
+        Var outputVar = e.getKey();
+        Query countQuery = e.getValue();
+        
         //var qe = sparqlService.createQueryExecution(countQuery);
 
         Integer count = ServiceUtils.fetchInteger(sparqlService, countQuery, outputVar);

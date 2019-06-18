@@ -2,15 +2,16 @@ package org.aksw.jena_sparql_api.utils;
 
 import java.util.Collection;
 
+import org.aksw.commons.collections.generator.Generator;
 import org.apache.jena.sparql.core.Var;
 
 public class VarGeneratorBlacklist
     implements Generator<Var>
 {
     private Generator<Var> generator;
-    private Collection<Var> blacklist;
+    private Collection<?> blacklist;
 
-    public VarGeneratorBlacklist(Generator<Var> generator, Collection<Var> blacklist) {
+    public VarGeneratorBlacklist(Generator<Var> generator, Collection<?> blacklist) {
         this.generator = generator;
         this.blacklist = blacklist;
     }
@@ -40,18 +41,18 @@ public class VarGeneratorBlacklist
         return result;
     }
 
-    public static VarGeneratorBlacklist create(Collection<Var> blacklist) {
+    public static VarGeneratorBlacklist create(Collection<?> blacklist) {
         VarGeneratorBlacklist result = create("v", blacklist);
         return result;
     }
 
-    public static VarGeneratorBlacklist create(String base, Collection<Var> blacklist) {
+    public static VarGeneratorBlacklist create(String base, Collection<?> blacklist) {
         Generator<Var> generator = VarGeneratorImpl2.create(base);
         VarGeneratorBlacklist result = create(generator, blacklist);
         return result;
     }
 
-    public static VarGeneratorBlacklist create(Generator<Var> generator, Collection<Var> blacklist) {
+    public static VarGeneratorBlacklist create(Generator<Var> generator, Collection<?> blacklist) {
         generator = generator == null ? VarGeneratorImpl2.create() : generator;
         VarGeneratorBlacklist result = new VarGeneratorBlacklist(generator, blacklist);
         return result;

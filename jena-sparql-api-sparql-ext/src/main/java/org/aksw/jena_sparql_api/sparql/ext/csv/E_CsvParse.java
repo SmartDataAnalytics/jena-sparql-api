@@ -13,11 +13,9 @@ import org.aksw.jena_sparql_api.sparql.ext.json.RDFDatatypeJson;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.ext.com.google.common.collect.Iterators;
 import org.apache.jena.ext.com.google.common.collect.Streams;
 import org.apache.jena.graph.Node;
-import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.function.FunctionBase2;
 import org.codehaus.plexus.util.cli.CommandLineUtils;
@@ -191,15 +189,9 @@ public class E_CsvParse
 
 		
 //		RDFDatatype dtype = TypeMapper.getInstance().getSafeTypeByName(RDFDatatypeJson.IRI);
-		Node node = jsonToNode(arr);
+		Node node = RDFDatatypeJson.jsonToNode(arr);
 		NodeValue result = NodeValue.makeNode(node);
 
-		return result;
-	}
-
-	public static Node jsonToNode(JsonElement json) {
-		RDFDatatype dtype = RDFDatatypeJson.INSTANCE;
-		Node result = NodeFactory.createLiteralByValue(json, dtype);
 		return result;
 	}
 }

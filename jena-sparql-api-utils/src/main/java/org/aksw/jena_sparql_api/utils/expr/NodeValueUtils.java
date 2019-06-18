@@ -2,15 +2,15 @@ package org.aksw.jena_sparql_api.utils.expr;
 
 import java.math.BigDecimal;
 
-import org.apache.jena.graph.Node;
-import org.apache.jena.sparql.expr.Expr;
-import org.apache.jena.sparql.expr.ExprVar;
+import org.aksw.jena_sparql_api.utils.NodeUtils;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.expr.nodevalue.NodeValueNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class NodeValueUtils {
+
+	public static final NodeValue NV_ABSENT = NodeValue.makeNode(NodeUtils.nullUriNode);
 
     private static final Logger logger = LoggerFactory.getLogger(NodeValueUtils.class);
     

@@ -11,6 +11,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.aksw.commons.collections.MapUtils;
+import org.aksw.commons.collections.generator.Generator;
 import org.aksw.jena_sparql_api.concept.builder.api.ConceptExpr;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
@@ -26,7 +27,6 @@ import org.aksw.jena_sparql_api.mapper.AggGraph;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
-import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.TripleUtils;
 import org.aksw.jena_sparql_api.utils.Triples;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl;
@@ -343,7 +343,7 @@ public class ResourceShape {
             elements.add(e);
         }
 
-        Element element = ElementUtils.union(elements);
+        Element element = ElementUtils.unionIfNeeded(elements);
 
 
         Query result = new Query();
@@ -453,7 +453,7 @@ public class ResourceShape {
             elements.add(e);
         }
 
-        Element element = ElementUtils.union(elements);
+        Element element = ElementUtils.unionIfNeeded(elements);
 
         Query result;
         if(elements.size() > 1) {

@@ -1,18 +1,22 @@
 package org.aksw.jena_sparql_api.concepts;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.VarUtils;
+import org.aksw.jena_sparql_api.utils.transform.NodeTransformCollectNodes;
+import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.syntax.Element;
-import org.apache.jena.sparql.syntax.PatternVars;
 
 import com.google.common.collect.Sets;
 
@@ -46,6 +50,21 @@ public interface Relation {
 		return result;
 	}
 
+	
+	default Relation rename(Function<String, String> renameFn, Var ... constantVars) {
+		
+		Collection<Var> constants = new HashSet<>(Arrays.asList(constantVars));
+		Set<Var> vars = getVarsMentioned();
+		Map<Var, Var> oldToNew = vars.stream()
+			.filter(v -> !constants.contains(v))
+			.collect(Collectors.toMap(v -> v, v -> Var.alloc(renameFn.apply(v.getName()))));
+		
+		Element newElement = ElementUtils.createRenamedElement(getElement(), oldToNew);
+		List<Var> newVars = getVars().stream().map(v -> oldToNew.getOrDefault(v, v)).collect(Collectors.toList());
+		
+		Relation result = new RelationImpl(newElement, newVars);
+		return result;
+	}
 	
 	default UnaryRelation toUnaryRelation() {
 		List<Var> vars = getVars();
@@ -93,12 +112,38 @@ public interface Relation {
 	
 	
 	default Set<Var> getVarsMentioned() {
+		//Element e = getElement();
+
+		// We cannot use PatternVars here, as this only returns the visible vars -
+		// which can break global substitutions -
+		// e.g. ?p is not visible in SELECT ?s ?o { ?s ?p ?o } - so if we worngly think ?p is a free
+		// variable name and substituted ?s with ?p, we would alter the query to SELECT ?s ?o { ?p ?p ?o } 
+		//Set<Var> result = SetUtils.asSet(PatternVars.vars(e));
+
+		//ElementTransformer
+//		NodeTransformCollectNodes tmp = new NodeTransformCollectNodes();
+//		this.applyNodeTransform(tmp);
+//		Set<Node> nodes = tmp.getNodes();
+//		Set<Var> result = nodes.stream()
+//				.filter(Node::isVariable)
+//				.map(n -> (Var)n)
+//				.collect(Collectors.toSet());
+
 		Element e = getElement();
-		Set<Var> result = new HashSet<>(PatternVars.vars(e));
+		Set<Var> result = ElementUtils.getVarsMentioned(e);
+		List<Var> distinguishedVars = getVars();
+		result.addAll(distinguishedVars);
 		
-		// Note: Usually the relation can be considered inconsistent if the vars are not
-		// mentioned in element; however, it is useful for empty relations
-		result.addAll(getVars());
+//		Op op = Algebra.compile(e);
+//		Collection<Var> tmp = OpVars.mentionedVars(op);
+		
+//		Set<Var> result = SetUtils.asSet(tmp);
+
+//		Set<Var> result = new HashSet<>(PatternVars.vars(e));
+//		
+//		// Note: Usually the relation can be considered inconsistent if the vars are not
+//		// mentioned in element; however, it is useful for empty relations
+//		result.addAll(getVars());
 		return result;
 	}
 	
@@ -120,6 +165,12 @@ public interface Relation {
 
     
     // Keeps all variables of this relation intact, and appends the element of another relation
+    // TODO Better rename to appendOn(...) - join is misleading, as we are talking about a
+    // syntactic transformation - which usually - but not always - corresponds to a join
+    default RelationJoiner joinOn(List<Var> vars) {
+    	return new RelationJoiner(this, vars);
+    }
+
     default RelationJoiner joinOn(Var ... vars) {
     	return RelationJoiner.from(this, vars);
     }

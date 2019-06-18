@@ -9,13 +9,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.MapUtils;
 import org.aksw.commons.collections.SetUtils;
+import org.aksw.commons.collections.generator.Generator;
 import org.aksw.jena_sparql_api.core.utils.QueryGenerationUtils;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprListUtils;
-import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.GeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.Triples;
@@ -29,10 +30,13 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.SortCondition;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.sdb.core.Gensym;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpAsQuery;
+import org.apache.jena.sparql.algebra.op.OpBGP;
+import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Substitute;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.BindingHashMap;
@@ -55,8 +59,11 @@ import org.apache.jena.sparql.syntax.PatternVars;
 
 import com.google.common.collect.Range;
 import com.google.common.collect.Sets;
+import com.google.common.collect.Streams;
 
 public class ConceptUtils {
+	public static final Concept subjectConcept = createSubjectConcept();
+	
     public static Concept listDeclaredProperties = Concept.create("?s a ?t . Filter(?t = <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> || ?t = <http://www.w3.org/2002/07/owl#ObjectProperty> || ?t = <http://www.w3.org/2002/07/owl#DataTypeProperty>)", "s");
     public static Concept listDeclaredClasses = Concept.create("?s a ?t . Filter(?t = <http://www.w3.org/2000/01/rdf-schema#Class> || ?t = <http://www.w3.org/2002/07/owl#Class>)", "s");
     public static Concept listUsedClasses = Concept.create("?s a ?t", "t");
@@ -126,11 +133,17 @@ public class ConceptUtils {
 
         Op op = Algebra.compile(a.getElement());
         Op substOp = Substitute.substitute(op, binding);
-        Query tmp = OpAsQuery.asQuery(substOp);
-
-        //Element newElement = tmp.getQueryPattern();
-        ElementGroup newElement = new ElementGroup();
-        newElement.addElement(tmp.getQueryPattern());
+        
+        Element newElement;
+        if(substOp instanceof OpBGP) {
+        	BasicPattern bp = ((OpBGP)substOp).getPattern();
+        	newElement = new ElementTriplesBlock(bp);
+        } else {
+        	Query tmp = OpAsQuery.asQuery(substOp);
+        	newElement = tmp.getQueryPattern();
+        }
+        //ElementGroup newElement = new ElementGroup();
+        //newElement.addElement(tmp.getQueryPattern());
 
         /*
         if(newElement instanceof ElementGroup) {
@@ -161,6 +174,12 @@ public class ConceptUtils {
     public static Concept createConcept(Node ... nodes) {
     	Concept result = createConcept(Arrays.asList(nodes));
     	return result;
+    }
+
+    public static UnaryRelation createConceptFromRdfNodes(Iterable<? extends RDFNode> rdfNodes) {
+    	Iterable<Node> nodes = Streams.stream(rdfNodes).map(RDFNode::asNode).collect(Collectors.toList());
+		UnaryRelation result = ConceptUtils.createConcept(nodes);
+		return result;
     }
     
     public static Concept createConcept(Iterable<Node> nodes) {
@@ -257,7 +276,7 @@ public class ConceptUtils {
         return result;
     }
 
-    public static Set<Var> getVarsMentioned(Concept concept) {
+    public static Set<Var> getVarsMentioned(UnaryRelation concept) {
         Collection<Var> tmp = PatternVars.vars(concept.getElement());
         Set<Var> result = SetUtils.asSet(tmp);
         return result;
@@ -315,9 +334,9 @@ public class ConceptUtils {
 //        return result;
 //    }
 
-    public static Concept renameVar(Concept concept, Var targetVar) {
+    public static UnaryRelation renameVar(UnaryRelation concept, Var targetVar) {
 
-        Concept result;
+    	UnaryRelation result;
         if(concept.getVar().equals(targetVar)) {
             // Nothing to do since we are renaming the variable to itself
             result = concept;

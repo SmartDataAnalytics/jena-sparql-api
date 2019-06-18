@@ -33,10 +33,12 @@ import org.apache.jena.sparql.expr.E_OneOf;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprFunction;
 import org.apache.jena.sparql.expr.ExprList;
+import org.apache.jena.sparql.expr.ExprTransformer;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.FunctionLabel;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.graph.NodeTransform;
+import org.apache.jena.sparql.graph.NodeTransformExpr;
 import org.apache.jena.sparql.graph.NodeTransformLib;
 
 
@@ -48,6 +50,24 @@ import org.apache.jena.sparql.graph.NodeTransformLib;
  */
 public class ExprUtils {
 
+	/**
+	 * Node transform version that
+	 * (a) handles blank nodes correctly; in constrast to Expr.applyNodeTransform
+	 * [disabled (b) treats null mappings as identity mapping]
+	 *  
+	 *  
+	 * 
+	 * @return
+	 */
+	public static Expr applyNodeTransform(Expr expr, NodeTransform xform) {
+		Expr result = ExprTransformer.transform(new NodeTransformExpr(node -> {
+			Node r = xform.apply(node);
+			//Node r = Optional.ofNullable(xform.apply(node)).orElse(node);
+			return r;
+		}), expr);
+		return result;
+	}
+	
 	/**
 	 * A variable-aware version of NodeValue.makeNode(Node node)
 	 * 

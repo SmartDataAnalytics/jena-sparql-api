@@ -47,7 +47,14 @@ public class TestSparqlFs {
 			"  BIND(fs:isRdf(?file) AS ?isRdf)\n" + 
 			"  BIND(fs:rdfLang(?file) AS ?lang)\n" + 
 			"}";
-	
+
+	String queryStr7 = "PREFIX fs: <" + JenaExtensionFs.ns + ">\n" +
+			"PREFIX url: <http://jsa.aksw.org/fn/url/>\n" +
+			"SELECT * {\n" + 
+			"  <file:///home/raven/Projects/limbo/git/claus-playground-dataset/04-dcat-sparql> fs:parents ?file .\n" + 
+			" FILTER(url:text(IRI(CONCAT(STR(?file), '.git')))) \n" +
+			"}";
+
 	String queryStr = queryStr2;
 
 	
@@ -71,7 +78,7 @@ public class TestSparqlFs {
 		Dataset dataset = DatasetFactory.wrap(ModelFactory.createDefaultModel());//DatasetFactory.create();
 		try(RDFConnection conn = RDFConnectionFactory.connect(dataset)) {
 			//try(QueryExecution qe = QueryExecutionFactory.create(queryStr, (Dataset)null)) {
-			try(QueryExecution qe = conn.query(queryStr6)) {
+			try(QueryExecution qe = conn.query(queryStr7)) {
 				System.out.println(ResultSetFormatter.asText(qe.execSelect()));
 			}
 		}

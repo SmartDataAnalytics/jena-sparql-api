@@ -6,13 +6,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.Function;
 
-import org.apache.jena.ext.com.google.common.collect.HashMultimap;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
@@ -91,12 +90,17 @@ public class CnfUtils {
     /**
      * Extract from the CNF all mappings from a variable to constant, i.e.
      * if there is ?x = foo, then the result will contain the mapping ?x -> foo.
-     *
+     * 
+     * 
+     * If there are conflicting mappings, return an arbitrary one.
+     * The idea is, that using these mappings, one can evaluate remaining expressions.
+     * In the case of conflicts, these will simply evaluate to FALSE.
+     * 
      *
      * @param cnf
      * @return
      */
-    public static Map<Var, Node> getConstants(Iterable<? extends Collection <? extends Expr>> cnf) {
+    public static Map<Var, Node> getConstants(Iterable<? extends Collection <? extends Expr>> cnf, boolean suppressConflicts) {
         Map<Var, Node> result = new HashMap<Var, Node>();
 
         // Inconsistent variables are those mapping to different values
@@ -115,8 +119,10 @@ public class CnfUtils {
                 Node o = result.get(v);
                 if(o != null && !o.equals(c) && !inconsistent.contains(v)) {
                     inconsistent.add(v);
+                    if(suppressConflicts) {
+                        result.remove(v);                    	
+                    }
                     //c = NodeValue.FALSE.getNode();
-                    result.remove(v);
                 } else {
                     result.put(v, c);
                 }
@@ -263,7 +269,7 @@ public class CnfUtils {
     {
         Set<Set<Expr>> result;
         if(NodeValue.TRUE.equals(expr)) {
-            result = new HashSet<>(); // Return a new set, as callers may want to extend the set//Collections.emptySet();
+            result = new LinkedHashSet<>(); // Return a new set, as callers may want to extend the set//Collections.emptySet();
         } else {
             List<ExprList> clauses = toClauses(expr);
             result = FilterUtils.toSets(clauses);
@@ -275,13 +281,13 @@ public class CnfUtils {
     public static List<ExprList> toClauses(Expr expr)
     {
         Expr evaluated = eval(expr);
-        return evaluated == null ? null : cnfToClauses(Collections.singleton(evaluated));
+        return evaluated == null ? null : cnfToClauses(new LinkedHashSet<>(Collections.singleton(evaluated)));
     }
 
     public static List<ExprList> toClauses(ExprList exprs)
     {
         Expr evaluated = eval(ExprUtils.andifyBalanced(exprs));
-        return evaluated == null ? null : cnfToClauses(Collections.singleton(evaluated));
+        return evaluated == null ? null : cnfToClauses(new LinkedHashSet<>(Collections.singleton(evaluated)));
     }
 
 
@@ -346,6 +352,7 @@ public class CnfUtils {
 
     public static Expr handle(ExprFunction expr)
     {
+    	Expr result;
         //System.out.println("Converting to KNF: [" + expr.getClass() + "]: " + expr);
 
         // not(and(A, B)) -> or(not A, not B)
@@ -356,34 +363,36 @@ public class CnfUtils {
 
             Expr tmp = ((E_LogicalNot)expr).getArg();
             if (!(tmp instanceof ExprFunction)) {
-                return expr;
+                result = expr;
+            } else {
+	
+	            ExprFunction child = (ExprFunction)tmp;
+	
+	            Expr newExpr = null;
+	
+	            if (child instanceof E_LogicalAnd) {
+	                newExpr = new E_LogicalOr(eval(new E_LogicalNot(child.getArg(1))), eval(new E_LogicalNot(child.getArg(2))));
+	            }
+	            else if (child instanceof E_LogicalOr) {
+	                newExpr = new E_LogicalAnd(eval(new E_LogicalNot(child.getArg(1))), eval(new E_LogicalNot(child.getArg(2))));
+	            }
+	            else if (child instanceof E_LogicalNot) { // Remove double negation
+	                newExpr = eval(child.getArg(1));
+	            }
+	            
+	            if(newExpr != null) {	
+	            	result = eval(newExpr);
+	            } else {
+	            	result = expr;
+	            }
             }
-
-            ExprFunction child = (ExprFunction)tmp;
-
-            Expr newExpr = expr;
-
-            if (child instanceof E_LogicalAnd) {
-                newExpr = new E_LogicalOr(eval(new E_LogicalNot(child.getArg(1))), eval(new E_LogicalNot(child.getArg(2))));
-            }
-            else if (child instanceof E_LogicalOr) {
-                newExpr = new E_LogicalAnd(eval(new E_LogicalNot(child.getArg(1))), eval(new E_LogicalNot(child.getArg(2))));
-            }
-            else if (child instanceof E_LogicalNot) { // Remove double negation
-                newExpr = eval(child.getArg(1));
-            }
-            else {
-                return expr;
-            }
-
-            return eval(newExpr);
         }
 
 
         else if (expr instanceof E_LogicalAnd) {
             //return expr;
             //return eval(expr);
-            return new E_LogicalAnd(eval(expr.getArg(1)), eval(expr.getArg(2)));
+            result = new E_LogicalAnd(eval(expr.getArg(1)), eval(expr.getArg(2)));
         }
 
 
@@ -403,9 +412,11 @@ public class CnfUtils {
          * (A and (c x D)) OR (B and (c x D))
          */
         else if (expr instanceof E_LogicalOr) {
-
-            Expr aa = eval(expr.getArg(1));
-            Expr bb = eval(expr.getArg(2));
+            Expr rawA = expr.getArg(1);
+            Expr rawB = expr.getArg(2);
+            		
+        	Expr aa = eval(rawA);
+            Expr bb = eval(rawB);
 
             E_LogicalAnd a = null;
             Expr b = null;
@@ -420,17 +431,24 @@ public class CnfUtils {
             }
 
             if(a == null) {
-                return new E_LogicalOr(aa, bb);
+                result = new E_LogicalOr(aa, bb);
             } else {
-                return new E_LogicalAnd(eval(new E_LogicalOr(a.getArg(1), b)), eval(new E_LogicalOr(a.getArg(2), b)));
+            	Expr rawX = new E_LogicalOr(a.getArg1(), b);
+            	Expr x = eval(rawX);
+            	
+            	Expr rawY = new E_LogicalOr(a.getArg2(), b);
+            	Expr y = eval(rawY);
+                result = new E_LogicalAnd(x, y);
             }
         }
 
         else if (expr instanceof E_NotEquals) { // Normalize (a != b) to !(a = b) --- this makes it easier to find "a and !a" cases
-            return new E_LogicalNot(eval(new E_Equals(expr.getArg(1), expr.getArg(2))));
+            result = new E_LogicalNot(eval(new E_Equals(expr.getArg(1), expr.getArg(2))));
+        } else {
+        	result = expr;
         }
 
 
-        return expr;
+        return result;
     }
 }

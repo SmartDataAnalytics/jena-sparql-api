@@ -9,9 +9,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.aksw.commons.collections.generator.Generator;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
-import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -232,7 +232,7 @@ public class ElementTransformVirtualPredicates
             unionMembers.add(e);
         }
 
-        Element result = ElementUtils.union(unionMembers);
+        Element result = ElementUtils.unionIfNeeded(unionMembers);
         return result;
     }
     /**

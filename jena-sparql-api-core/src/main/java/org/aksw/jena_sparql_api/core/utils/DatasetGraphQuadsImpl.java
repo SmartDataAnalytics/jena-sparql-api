@@ -83,14 +83,22 @@ public class DatasetGraphQuadsImpl
 
 	@Override
 	public Iterator<Quad> findNG(Node g, Node s, Node p, Node o) {
-		Node gm = g == null ? Node.ANY : g;
+
+		Node gm = g == null || Quad.isUnionGraph(g) ? Node.ANY : g;
 		
-			Iterator<Quad> result = Quad.isDefaultGraph(gm)
-					? Collections.emptyIterator()//NiceIterator.emptyIterator()
-					: table.find(gm, s, p, o)
-						.filter(q -> !Quad.isDefaultGraph(q.getGraph()))
-						.iterator();
-			return result;
+		Iterator<Quad> result;
+		if(Quad.isDefaultGraph(gm)) {
+			result = Collections.emptyIterator();
+//		} else if(Quad.isUnionGraph(gm)) {
+//			result = GraphOps.unionGraph(this).find(s, p, o).mapWith(t -> new Quad(Quad.unionGraph, t));
+		} else {
+			result = table.find(gm, s, p, o)
+					.filter(q -> !Quad.isDefaultGraph(q.getGraph()))
+					.iterator();
+
+		}
+				
+		return result;
 	}
 
 	@Override
@@ -123,9 +131,23 @@ public class DatasetGraphQuadsImpl
     	return table.listGraphNodes().iterator();
     }
     
+    public static DatasetGraphQuadsImpl create(Iterator<Quad> it) {
+    	DatasetGraphQuadsImpl result = new DatasetGraphQuadsImpl();
+    	while(it.hasNext()) {
+    		Quad quad = it.next();
+    		result.add(quad);
+    	}
+    	return result;
+    }
+
     public static DatasetGraphQuadsImpl create(Iterable<Quad> quads) {
     	DatasetGraphQuadsImpl result = new DatasetGraphQuadsImpl();
     	quads.forEach(result::add);
     	return result;
+    }
+    
+    @Override
+    public long size() {
+    	return table.find(Node.ANY, Node.ANY, Node.ANY, Node.ANY).count();
     }
 }

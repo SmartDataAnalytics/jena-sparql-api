@@ -6,17 +6,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.aksw.commons.collections.generator.Generator;
 import org.aksw.jena_sparql_api.backports.syntaxtransform.ExprTransformNodeElement;
-import org.aksw.jena_sparql_api.backports.syntaxtransform.QueryTransformOps;
 import org.aksw.jena_sparql_api.utils.transform.NodeTransformCollectNodes;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
+import org.apache.jena.query.SortCondition;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.shared.impl.PrefixMappingImpl;
+import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.OpAsQuery;
 import org.apache.jena.sparql.algebra.op.OpSlice;
+import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
@@ -24,25 +29,183 @@ import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprTransform;
 import org.apache.jena.sparql.graph.NodeTransform;
+import org.apache.jena.sparql.graph.NodeTransformLib;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
+import org.apache.jena.sparql.syntax.ElementSubQuery;
+import org.apache.jena.sparql.syntax.ElementVisitorBase;
+import org.apache.jena.sparql.syntax.ElementWalker;
 import org.apache.jena.sparql.syntax.PatternVars;
+import org.apache.jena.sparql.syntax.Template;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
-import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformSubst;
 import org.apache.jena.sparql.util.ExprUtils;
 
 import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.Range;
 
 public class QueryUtils {
+	
+	/**
+	 * Restore a query form from a prototype.
+	 * Typical use case is when a query form should be restored after
+	 * it was compiled using Algebra.compile(). 
+	 * 
+	 * @param query
+	 * @param proto
+	 * @return
+	 */
+	public static Query restoreQueryForm(Query query, Query proto) {
+		if(!query.isSelectType()) {
+			throw new RuntimeException("SELECT query expected - got: " + query);
+		}
 
+		Query result;
+		int tgtQueryType = proto.getQueryType();
+		switch(tgtQueryType) {
+		case Query.QueryTypeSelect:
+			result = query.cloneQuery();
+			break;
+		case Query.QueryTypeConstruct:
+			result = selectToConstruct(query, proto.getConstructTemplate());
+			break;
+		case Query.QueryTypeAsk:
+			result = query.cloneQuery();
+			query.setQueryAskType();
+			break;
+		case Query.QueryTypeDescribe:
+			result = query.cloneQuery();
+			query.setQueryDescribeType();
+			for(Node node : proto.getResultURIs()) {
+				query.addDescribeNode(node);
+			}
+			for(Var var : proto.getProjectVars()) {
+				query.addDescribeNode(var);
+			}
+			break;
+		default:
+			throw new RuntimeException("unsupported query type");
+			//proto.result
+		}
+
+		result.setPrefixMapping(proto.getPrefixMapping());
+
+		return result;
+	}
+
+	// Create a construct query from a select query and a template
+	public static Query selectToConstruct(Query query, Template template) {
+		Query result = new Query();
+		result.setQueryConstructType();
+		result.setConstructTemplate(template != null ? template : new Template(new BasicPattern()));
+		
+		boolean canActAsConstruct = QueryUtils.canActAsConstruct(query);
+		if(canActAsConstruct) {
+			result.setQueryPattern(query.getQueryPattern());
+		} else {
+			result.setQueryPattern(new ElementSubQuery(query));
+		}
+
+		result.setLimit(query.getLimit());
+		result.setOffset(query.getOffset());
+		List<SortCondition> scs = query.getOrderBy();
+		if(scs != null) {
+			for(SortCondition sc : scs) {
+				result.addOrderBy(sc);
+			}
+			scs.clear();
+		}
+		
+		query.setLimit(Query.NOLIMIT);
+		query.setOffset(Query.NOLIMIT);
+
+		return result;
+	}
+	/**
+	 * Rewrite a query based on an algebraic transformation; preserves the construct
+	 * template
+	 * 
+	 * 
+	 * @param beforeQuery
+	 * @param xform
+	 * @return
+	 */
+	public static Query rewrite(Query beforeQuery, Function<? super Op, ? extends Op> xform) {
+		Op beforeOp = Algebra.compile(beforeQuery);
+		Op afterOp = xform.apply(beforeOp);// Transformer.transform(xform, beforeOp);
+		Query result = OpAsQuery.asQuery(afterOp);
+		
+		if(beforeQuery.isConstructType()) {
+			result.setQueryConstructType();
+			Template template = beforeQuery.getConstructTemplate();
+			result.setConstructTemplate(template);
+		}
+		
+		return result;
+	}
+
+	// Get a query pattern (of a select query) in a way that it can be injected as a query pattern of a construct query
+	public static Element asPatternForConstruct(Query q) {
+		Element result = canActAsConstruct(q)
+			? q.getQueryPattern()
+			: new ElementSubQuery(q);
+			
+		return result;
+	}
+	
+	public static boolean canActAsConstruct(Query q) {
+		boolean result = !q.hasAggregators() && !q.hasGroupBy() && !q.hasValues() && !q.hasHaving();
+		return result;
+	}
+	
     public static Query applyNodeTransform(Query query, NodeTransform nodeTransform) {
 
         ElementTransform eltrans = new ElementTransformSubst2(nodeTransform) ;
         //NodeTransform nodeTransform = new NodeTransformSubst(nodeTransform) ;
-        ExprTransform exprTrans = new ExprTransformNodeElement(nodeTransform, eltrans) ;
-        Query result = QueryTransformOps.transform(query, eltrans, exprTrans) ;
+        ExprTransform exprTrans = new ExprTransformNodeElement(nodeTransform, eltrans);
 
+        Template template = null;
+        if(query.isConstructType()) {
+        	Template tmp = query.getConstructTemplate();
+        	BasicPattern before = tmp.getBGP();
+        	BasicPattern after = NodeTransformLib.transform(nodeTransform, before);
+        	template = new Template(after);
+        }
+
+        
+        //Query result = org.apache.jena.sparql.syntax.syntaxtransform.QueryTransformOps.transform(query, eltrans, exprTrans) ;
+        Query result = org.aksw.jena_sparql_api.backports.syntaxtransform.QueryTransformOps.transform(query, eltrans, exprTrans) ;
+        
+        // QueryTransformOps creates a shallow copy of the query which causes problems
+        // if a PrefixMapping2 is used; the PM2 is materialized into a PM
+        // Fix prefixes in sub queries by clearing them
+        ElementWalker.walk(result.getQueryPattern(), new ElementVisitorBase() {
+        	@Override
+        	public void visit(ElementSubQuery el) {
+        		el.getQuery().getPrefixMapping().clearNsPrefixMap();
+        	}
+        });
+        
+        if(template != null) {
+        	result.setQueryConstructType();
+        	result.setConstructTemplate(template);
+        }
+
+//        Query result = tmp;
+//       ElementVisitor
+//        //tmp.getQueryPattern().vi
+//        ElementTransform clearPrefixesInSubQuery = new ElementTransformCopyBase() {
+//    		@Override
+//    		public Element transform(ElementSubQuery el, Query query) {
+//    			ElementSubQuery x = (ElementSubQuery)super.transform(el, query);
+//    			x.getQuery().getPrefixMapping().clearNsPrefixMap();
+//    			
+//    			return x;
+//    		}
+//    	};
+ 
+//        Query result = org.apache.jena.sparql.syntax.syntaxtransform.QueryTransformOps.transform(tmp, clearPrefixesInSubQuery);
+  
+        
         return result;
     }
 
@@ -50,7 +213,8 @@ public class QueryUtils {
      * Scans the query for all occurrences of URI nodes and returns the applicable subset of its
      * prefix mapping.
      *
-     * Note: In principle sub queries may define their own prefixes
+     * Note: In principle Jena allows sub queries to define their own prefixes
+     * However, this is non-standard and jena raises syntax exception when trying to clone such a query
      *
      * <pre>
      * {@code
@@ -64,8 +228,8 @@ public class QueryUtils {
      * }
      * </pre>
      *
-     * This method ignores 'inner' prefixes, so for the example above, the method will
-     * incorrectly return foo as a used prefix.
+     * This method ignores non-standard 'inner' prefixes, so for the example above, the method will
+     * "incorrectly" return foo as a used prefix.
      *
      * @param query
      * @return
@@ -97,7 +261,7 @@ public class QueryUtils {
 
     public static Query randomizeVars(Query query) {
         Map<Var, Var> varMap = createRandomVarMap(query, "rv");
-        Query result = QueryTransformOps.transform(query, varMap);
+        Query result = org.aksw.jena_sparql_api.backports.syntaxtransform.QueryTransformOps.transform(query, varMap);
         //System.out.println(query + "now:\n" + result);
         return result;
     }

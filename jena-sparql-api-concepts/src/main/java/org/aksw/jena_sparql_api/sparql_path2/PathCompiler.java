@@ -15,6 +15,8 @@ public class PathCompiler {
 
         path = PathVisitorTopDown.apply(path, new PathVisitorRewriteInvert());
 
+        //DefaultDirectedGraph.createBuilder(Triple.class).
+        
         /*
          * Some ugly set up of graph related stuff
          */

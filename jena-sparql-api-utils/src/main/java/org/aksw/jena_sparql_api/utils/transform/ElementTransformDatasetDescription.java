@@ -3,9 +3,9 @@ package org.aksw.jena_sparql_api.utils.transform;
 import java.util.Collection;
 import java.util.Stack;
 
+import org.aksw.commons.collections.generator.Generator;
 import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformer;
 import org.aksw.jena_sparql_api.utils.ExprListUtils;
-import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;

@@ -1,16 +1,17 @@
 package org.aksw.jena_sparql_api.sparql.ext.json;
 
+import org.apache.jena.datatypes.RDFDatatype;
+import org.apache.jena.datatypes.TypeMapper;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.sparql.expr.ExprTypeException;
+import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.function.FunctionBase2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
-import org.apache.jena.datatypes.RDFDatatype;
-import org.apache.jena.datatypes.TypeMapper;
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.NodeFactory;
-import org.apache.jena.sparql.expr.NodeValue;
-import org.apache.jena.sparql.function.FunctionBase2;
 import com.jayway.jsonpath.JsonPath;
 
 /**
@@ -138,11 +139,14 @@ public class E_JsonPath
                 result = NodeValue.makeNode(node);
             } catch(Exception e) {
                 logger.warn(e.getLocalizedMessage());
-                result = NodeValue.nvNothing;
+                NodeValue.raise(new ExprTypeException("Error evaluating json path", e));
+                result = null;
+                //result = NodeValue.nvNothing;
             }
 
         } else {
-            result = NodeValue.nvNothing;
+        	NodeValue.raise(new ExprTypeException("Invalid arguments to json path"));
+            result = null; //NodeValue.nvNothing;
         }
 
         return result;

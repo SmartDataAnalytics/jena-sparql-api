@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<artifactId>jena-sparql-api-mapper-proxy</artifactId>
+	<packaging>jar</packaging>
+
+	<name>Jena SPARQL API - Mapper - Proxy</name>
+
+	<parent>
+		<groupId>org.aksw.jena-sparql-api</groupId>
+		<artifactId>jena-sparql-api-parent</artifactId>
+<!--<		<artifactId>jena-sparql-api-mapper-parent</artifactId> -->
+		<version>3.11.0-1</version>
+	</parent>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-mapper-annotations</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-utils</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>cglib</groupId>
+			<artifactId>cglib-nodep</artifactId>
+		</dependency>
+
+<!-- 		<dependency> -->
+<!-- 			<groupId>net.bytebuddy</groupId> -->
+<!-- 			<artifactId>byte-buddy</artifactId> -->
+<!-- 			<version>1.9.10</version> -->
+<!-- 		</dependency> -->
+	</dependencies>
+</project>

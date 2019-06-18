@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import org.aksw.jena_sparql_api.util.collection.StreamUtils;
 import org.apache.jena.atlas.web.TypedInputStream;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
@@ -18,9 +19,21 @@ import com.google.common.collect.Streams;
 
 public class GraphUtils {
 
+	
+	public static Stream<Node> streamNodes(Graph graph) {
+		return stream(graph)
+			.flatMap(TripleUtils::streamNodes);
+	}
+	
+	public static Stream<Triple> stream(Graph graph) {
+		return StreamUtils.stream(graph.find());
+	}
+
     /**
      * Small convenience wrapper for default-loading of an RDF resource,
      * which would actually fit for RDFDataMgr
+     *
+     * FIXME Consolidate with RDFDataMgr{Ex, Rx}
      *
      * @param resourceName
      * @return

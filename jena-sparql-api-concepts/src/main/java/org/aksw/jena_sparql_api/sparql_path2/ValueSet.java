@@ -8,6 +8,7 @@ import java.util.function.Predicate;
 
 import org.aksw.commons.collections.SetUtils;
 
+@Deprecated //Use from a better location (aksw-commons?)
 public class ValueSet<T>
     implements Predicate<T>
 {

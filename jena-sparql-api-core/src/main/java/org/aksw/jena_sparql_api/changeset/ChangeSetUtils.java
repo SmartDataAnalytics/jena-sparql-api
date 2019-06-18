@@ -8,6 +8,7 @@ import java.util.Set;
 
 import org.aksw.commons.collections.diff.Diff;
 import org.aksw.commons.util.strings.StringUtils;
+import org.aksw.jena_sparql_api.changeset.vocab.CS;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlServiceReference;
 import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;

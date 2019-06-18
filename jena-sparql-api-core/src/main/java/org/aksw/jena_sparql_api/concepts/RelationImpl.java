@@ -1,5 +1,6 @@
 package org.aksw.jena_sparql_api.concepts;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.jena.sparql.core.Var;
@@ -71,5 +72,8 @@ public class RelationImpl
 		return "RelationImpl [element=" + element + ", vars=" + vars + "]";
 	}
 	
-	
+	public static Relation create(Element element, Var ... vars) {
+		return new RelationImpl(element, Arrays.asList(vars));
+	}
+
 }

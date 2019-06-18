@@ -1,3 +1,5 @@
+evaluations
+
 *.class
 .classpath
 .project
@@ -28,3 +30,5 @@ JSA-NOP.tsv
 results.tsv
 
 *.swp
+
+.vscode

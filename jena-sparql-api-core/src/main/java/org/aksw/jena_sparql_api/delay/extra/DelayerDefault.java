@@ -9,25 +9,25 @@ package org.aksw.jena_sparql_api.delay.extra;
 public class DelayerDefault
     extends DelayerBase
 {
-    private long delay = 1000;
+    private long delayInMs = 1000;
     private long lastRequestTime = 0;
 
     public DelayerDefault() {
     }
 
-    public DelayerDefault(long delay) {
-        this.delay = delay;
+    public DelayerDefault(long delayInMs) {
+        this.delayInMs = delayInMs;
     }
 
     public DelayerDefault(long delay, long lastRequestTime) {
-        this.delay = delay;
+        this.delayInMs = delay;
         this.lastRequestTime = lastRequestTime;
     }
 
 
     @Override
     public long getDelay() {
-        return delay;
+        return delayInMs;
     }
 
     @Override

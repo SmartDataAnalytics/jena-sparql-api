@@ -1,43 +1,64 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
 
-    <artifactId>jena-sparql-api-server-standalone</artifactId>
-    <packaging>jar</packaging>
+	<artifactId>jena-sparql-api-server-standalone</artifactId>
+	<packaging>jar</packaging>
 
-    <name>Jena SPARQL API - Server Standalone</name>
-    <url>http://github.org/AKSW/jena-sparql-api</url>
+	<name>Jena SPARQL API - Server Standalone</name>
+	<url>http://github.org/AKSW/jena-sparql-api</url>
 
-    <parent>
-        <groupId>org.aksw.jena-sparql-api</groupId>
-        <artifactId>jena-sparql-api-parent</artifactId>
-        <version>3.9.0-1</version>
-    </parent>
+	<parent>
+		<groupId>org.aksw.jena-sparql-api</groupId>
+		<artifactId>jena-sparql-api-parent</artifactId>
+		<version>3.11.0-1</version>
+	</parent>
 
 
-    <dependencies>
-        <dependency>
-            <groupId>org.aksw.jena-sparql-api</groupId>
-            <artifactId>jena-sparql-api-server-utils</artifactId>
-        </dependency>
+	<dependencies>
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-server-utils</artifactId>
+		</dependency>
 
-<!--         <dependency> -->
-<!--             <groupId>org.springframework.boot</groupId> -->
-<!--             <artifactId>spring-boot</artifactId> -->
-<!--         </dependency> -->
 
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-        </dependency>
+		<dependency>
+			<groupId>javax.xml.bind</groupId>
+			<artifactId>jaxb-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.sun.xml.bind</groupId>
+			<artifactId>jaxb-impl</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.glassfish.jaxb</groupId>
+			<artifactId>jaxb-runtime</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>javax.activation</groupId>
+			<artifactId>activation</artifactId>
+		</dependency>
 
-        <dependency>
-            <groupId>org.aksw.jena-sparql-api</groupId>
-            <artifactId>jena-sparql-api-resources-test-config</artifactId>
-            <scope>test</scope>
-        </dependency>
 
-    </dependencies>
+		<!-- <dependency> -->
+		<!-- <groupId>org.springframework.boot</groupId> -->
+		<!-- <artifactId>spring-boot</artifactId> -->
+		<!-- </dependency> -->
+
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-resources-test-config</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+	</dependencies>
 
 </project>
 

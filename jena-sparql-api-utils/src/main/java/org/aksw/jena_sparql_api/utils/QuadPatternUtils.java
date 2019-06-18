@@ -1,22 +1,29 @@
 package org.aksw.jena_sparql_api.utils;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.QuadPattern;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sparql.graph.NodeTransform;
 import org.apache.jena.sparql.graph.NodeTransformLib;
@@ -147,27 +154,54 @@ public class QuadPatternUtils {
         return result;
     }
 
-    public static Map<Node, Graph> indexAsGraphs(Iterable<Quad> quads) {
+    public static Map<Node, Graph> indexAsGraphs(Iterable<? extends Quad> quads) {
         Map<Node, Graph> result = indexAsGraphs(quads.iterator());
         return result;
     }
 
-    public static Map<Node, Graph> indexAsGraphs(Iterator<Quad> it) {
-        Map<Node, Graph> result = new HashMap<Node, Graph>();
+    // Supports null values for graphs
+    public static Map<Node, Graph> indexAsGraphs(Iterator<? extends Quad> it) {
+        Map<Node, Graph> result = new LinkedHashMap<Node, Graph>();
+
+        // Slightly optimize sequences of the same graph
+        // by caching the least recently used graph
+        Graph activeGraph = null;
+        Node activeG = NodeFactory.createBlankNode(); // Create a node that does not exist elsewhere
         while(it.hasNext()) {
             Quad quad = it.next();
 
-            Graph graph = result.get(quad.getGraph());
-            if(graph == null) {
-                graph = GraphFactory.createDefaultGraph();
-                result.put(quad.getGraph(), graph);
+            Node g = quad.getGraph();
+            if(!Objects.equals(g, activeG)) {
+            	activeGraph = result.computeIfAbsent(g, x -> GraphFactory.createDefaultGraph());
+            	activeG = g;
             }
 
-            graph.add(quad.asTriple());
+            activeGraph.add(quad.asTriple());
         }
 
         return result;
     }
+    
+	public static Resource createResourceFromQuads(Collection<? extends Quad> quads) {
+		Map<Node, Graph> index = QuadPatternUtils.indexAsGraphs(quads);
+		
+		if(index.isEmpty()) {
+			throw new RuntimeException("At least one quad expected");
+		}
+
+		if(index.size() > 1) {
+			throw new RuntimeException("All quads must have the same graph");
+		}
+		
+		Entry<Node, Graph> e = index.entrySet().iterator().next();
+		Node sn = e.getKey();
+		Graph g = e.getValue();
+		
+		Model m = ModelFactory.createModelForGraph(g);
+		Resource result = m.asRDFNode(sn).asResource();
+		return result;
+	}
+
 
     public static Set<Var> getVarsMentioned(Iterable<? extends Quad> quadPattern) {
         Set<Var> result = new HashSet<Var>();

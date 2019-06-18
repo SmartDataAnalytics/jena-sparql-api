@@ -2,7 +2,11 @@ package org.aksw.jena_sparql_api.sparql.ext.json;
 
 import org.apache.jena.datatypes.BaseDatatype;
 import org.apache.jena.datatypes.DatatypeFormatException;
+import org.apache.jena.datatypes.RDFDatatype;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.expr.ExprEvalException;
+import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.vocabulary.XSD;
 
 import com.google.gson.Gson;
@@ -61,5 +65,16 @@ public class RDFDatatypeJson
     	}
         return result;
     }
+    
+	public static Node jsonToNode(JsonElement json) {
+		RDFDatatype dtype = RDFDatatypeJson.INSTANCE;
+		Node result = NodeFactory.createLiteralByValue(json, dtype);
+		return result;
+	}
 
+	public static NodeValue jsonToNodeValue(JsonElement json) {
+		Node node = jsonToNode(json);
+		NodeValue result = NodeValue.makeNode(node);
+		return result;
+	}
 }

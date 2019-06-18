@@ -10,6 +10,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import org.aksw.commons.collections.generator.Generator;
 import org.aksw.jena_sparql_api.algebra.utils.AlgebraUtils;
 import org.aksw.jena_sparql_api.algebra.utils.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.backports.syntaxtransform.QueryTransformOps;
@@ -22,7 +23,6 @@ import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcReader;
 import org.aksw.jena_sparql_api.resources.sparqlqc.SparqlQcVocab;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParser;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
-import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;

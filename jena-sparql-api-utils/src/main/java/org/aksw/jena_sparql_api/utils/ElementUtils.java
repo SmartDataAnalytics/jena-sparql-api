@@ -7,9 +7,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.MapUtils;
-import org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformer;
+import org.aksw.commons.collections.generator.Generator;
+import org.aksw.jena_sparql_api.backports.syntaxtransform.ExprTransformNodeElement;
+import org.aksw.jena_sparql_api.utils.transform.NodeTransformCollectNodes;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.core.BasicPattern;
@@ -29,7 +32,6 @@ import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.ElementUnion;
 import org.apache.jena.sparql.syntax.PatternVars;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
-import org.apache.jena.sparql.syntax.syntaxtransform.ExprTransformNodeElement;
 
 import com.google.common.collect.Iterables;
 //import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
@@ -51,6 +53,22 @@ public class ElementUtils {
 //
 //        return result;
 //    }
+	
+	
+	// PatternVars only returns visible vars, this returns all mentioned vars
+	public static Set<Var> getVarsMentioned(Element e) {
+		NodeTransformCollectNodes tmp = new NodeTransformCollectNodes();
+        ElementUtils.applyNodeTransform(e, tmp);
+
+		Set<Node> nodes = tmp.getNodes();
+		Set<Var> result = nodes.stream()
+				.filter(Node::isVariable)
+				.map(n -> (Var)n)
+				.collect(Collectors.toSet());
+
+		return result;
+	}
+	
 	
 	public static ElementTriplesBlock createElementTriple(Triple ... triples) {
 		return createElementTriple(Arrays.asList(triples));
@@ -128,7 +146,7 @@ public class ElementUtils {
             ElementFilter x = (ElementFilter)e;
             Expr expr = x.getExpr();
             Set<Set<Expr>> cnf = CnfUtils.toSetCnf(expr);
-            Map<Var, Node> map = CnfUtils.getConstants(cnf);
+            Map<Var, Node> map = CnfUtils.getConstants(cnf, true);
 
             //Node g = MapUtils.getOrElse(map, Vars.g, Node.ANY);
             Node s = MapUtils.getOrElse(map, Vars.s, Node.ANY);
@@ -212,7 +230,12 @@ public class ElementUtils {
         return result;
     }
 
-    public static Element union(Collection<Element> elements) {
+    public static Element unionIfNeeded(Element ... elements) {
+    	Element result = unionIfNeeded(Arrays.asList(elements));
+    	return result;
+    }
+    
+    public static Element unionIfNeeded(Collection<Element> elements) {
         Element result;
         if(elements.size() == 1) {
             result = elements.iterator().next();
@@ -274,7 +297,7 @@ public class ElementUtils {
 
     public static Element applyNodeTransformJena(Element element, NodeTransform nodeTransform) {
         org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform elementTransform = new ElementTransformSubst2(nodeTransform);//new ElementTransformSubst2(nodeTransform);
-        ExprTransform exprTransform = new org.apache.jena.sparql.syntax.syntaxtransform.ExprTransformNodeElement(nodeTransform, elementTransform);
+        ExprTransform exprTransform = new ExprTransformNodeElement(nodeTransform, elementTransform);
 
         //Element result = ElementTransformer.transform(element, elementTransform, exprTransform);
 //      Element result = org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformer.transform(element, elementTransform, exprTransform);
@@ -289,7 +312,7 @@ public class ElementUtils {
         ElementTransform elementTransform = new ElementTransformSubst2(nodeTransform);//new ElementTransformSubst2(nodeTransform);
         ExprTransform exprTransform = new ExprTransformNodeElement(nodeTransform, elementTransform);
 
-        Element result = ElementTransformer.transform(element, elementTransform, exprTransform);
+        Element result = org.aksw.jena_sparql_api.backports.syntaxtransform.ElementTransformer.transform(element, elementTransform, exprTransform);
         
         return result;
     }

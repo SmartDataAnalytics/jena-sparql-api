@@ -6,11 +6,14 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.engine.binding.BindingFactory;
 import org.apache.jena.sparql.engine.binding.BindingHashMap;
+import org.apache.jena.sparql.engine.binding.BindingMap;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.graph.NodeTransform;
 
@@ -20,6 +23,15 @@ public class BindingUtils {
 //        Binding result = new BindingHashMap();
 //    }
 
+	
+	public static Binding fromMap(Map<? extends Var, ? extends Node> map) {
+		BindingMap result = BindingFactory.create();
+		for(Entry<? extends Var, ? extends Node> e : map.entrySet()) {
+			result.add(e.getKey(), e.getValue());
+		}
+		return result;
+	}
+	
     public static Binding transformKeys(Binding binding, NodeTransform transform) {
         Iterator<Var> it = binding.vars();
 

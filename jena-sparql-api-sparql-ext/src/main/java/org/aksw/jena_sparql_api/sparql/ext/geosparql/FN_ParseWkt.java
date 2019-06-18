@@ -2,9 +2,9 @@ package org.aksw.jena_sparql_api.sparql.ext.geosparql;
 
 import java.util.function.Function;
 
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.io.WKTReader;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.io.WKTReader;
 
 /** TODO This should either become a datatype or a real jena function */
 public class FN_ParseWkt implements Function<String, Geometry> {

@@ -11,7 +11,7 @@
     <parent>
         <groupId>org.aksw.jena-sparql-api</groupId>
         <artifactId>jena-sparql-api-parent</artifactId>
-        <version>3.9.0-1</version>
+        <version>3.11.0-1</version>
     </parent>
 
 
@@ -80,7 +80,7 @@
         <dependency> <!-- Used for @Configuration annotation so we can inject an ApplicationContext
                 into servlets -->
             <groupId>cglib</groupId>
-            <artifactId>cglib</artifactId>
+            <artifactId>cglib-nodep</artifactId>
         </dependency>
         <!-- <dependency> -->
         <!-- <groupId>com.sun.jersey</groupId> -->

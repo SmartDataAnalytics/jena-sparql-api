@@ -19,8 +19,6 @@ import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import javax.xml.ws.handler.LogicalMessageContext;
-
 import org.aksw.combinatorics.algos.KPermutationsOfNUtils;
 import org.aksw.combinatorics.collections.Combination;
 import org.aksw.combinatorics.solvers.ProblemContainerNeighbourhoodAware;
@@ -29,6 +27,7 @@ import org.aksw.commons.collections.CartesianProduct;
 import org.aksw.commons.collections.FeatureMap;
 import org.aksw.commons.collections.FeatureMapImpl;
 import org.aksw.commons.collections.cache.RemovalListenerMultiplexer;
+import org.aksw.commons.collections.generator.Generator;
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeImpl;
 import org.aksw.commons.collections.trees.TreeUtils;
@@ -53,7 +52,6 @@ import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.aksw.jena_sparql_api.unsorted.ExprMatcher;
 import org.aksw.jena_sparql_api.util.collection.RangedSupplier;
 import org.aksw.jena_sparql_api.utils.DnfUtils;
-import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorImpl2;
 import org.aksw.jena_sparql_api.view_matcher.OpVarMap;
 import org.aksw.jena_sparql_api.view_matcher.SparqlViewMatcherUtils;

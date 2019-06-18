@@ -53,6 +53,8 @@ import org.apache.jena.sparql.syntax.ElementWalker;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransform;
 import org.apache.jena.sparql.syntax.syntaxtransform.ElementTransformCopyBase;
 
+// TODO Part of this class is by now part of ApplyElementTransformVisitor ~ Claus 2019-06-06
+
 /** A bottom-up application of a transformation of SPARQL syntax Elements.
  * {@linkplain QueryTransformOps#transform} provides the mechanism
  * to apply to a {@linkplain Query}.
@@ -278,13 +280,18 @@ public class ElementTransformer {
 
         @Override
         public void visit(ElementService el) {
-            boolean b = el.getSilent() ;
             Node n = el.getServiceNode() ;
             Node n1 = transformNode(n) ;
-            Element elt = el.getElement() ;
             Element elt1 = pop() ;
             Element el2 = transform.transform(el, n1, elt1) ;
             push(el2) ;
+//            boolean b = el.getSilent() ;
+//            Node n = el.getServiceNode() ;
+//            Node n1 = transformNode(n) ;
+//            Element elt = el.getElement() ;
+//            Element elt1 = pop() ;
+//            Element el2 = transform.transform(el, n1, elt1) ;
+//            push(el2) ;
         }
 
         @Override

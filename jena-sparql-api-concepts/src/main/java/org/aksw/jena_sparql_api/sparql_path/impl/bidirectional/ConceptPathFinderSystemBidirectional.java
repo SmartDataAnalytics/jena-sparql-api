@@ -7,6 +7,7 @@ import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinderFactorySummaryB
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinderSystem;
 import org.aksw.jena_sparql_api.sparql_path.api.PathSearch;
 import org.aksw.jena_sparql_api.sparql_path.api.PathSearchBase;
+import org.aksw.jena_sparql_api.sparql_path.core.PathConstraint2;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
@@ -47,8 +48,10 @@ public class ConceptPathFinderSystemBidirectional
 					return new PathSearchBase<SimplePath>() {
 						@Override
 						public Flowable<SimplePath> exec() {
+							Long effectiveLength = maxLength == null ? null : 2 * maxLength;
+							
 							return ConceptPathFinderBidirectionalUtils
-								.findPaths(dataConnection, sourceConcept, targetConcept, maxResults, maxLength, dataSummary, shortestPathsOnly, simplePathsOnly, pathValidators);
+								.findPaths(dataConnection, sourceConcept, targetConcept, maxResults, effectiveLength, dataSummary, shortestPathsOnly, simplePathsOnly, pathValidators, new PathConstraint2(), ConceptPathFinderBidirectionalUtils::convertGraphPathToSparqlPath);
 						}
 					};
 				}					

@@ -7,11 +7,12 @@ import java.util.Map;
 import java.util.Set;
 
 import org.aksw.commons.collections.PrefetchIterator;
-
+import org.apache.jena.ext.com.google.common.collect.Iterators;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.modify.TemplateLib;
 import org.apache.jena.sparql.syntax.Template;
 
 /**
@@ -51,12 +52,15 @@ public class ConstructIterator
 
         // Build each template substitution as triples.
         while(rs.hasNext()) {
-            Set<Triple> set = new HashSet<Triple>();
-            Map<Node, Node> bNodeMap = new HashMap<Node, Node>();
+//            Set<Triple> set = new HashSet<Triple>();
+//            Map<Node, Node> bNodeMap = new HashMap<Node, Node>();
             Binding binding = rs.nextBinding();
-            template.subst(set, bNodeMap, binding);
+            // calcTriples ensures that only valid triples are emitted
+            // i.e. literals in subject positions are discarded
+            Iterator<Triple> r = TemplateLib.calcTriples(template.getTriples(), Iterators.singletonIterator(binding));
+//            template.subst(set, bNodeMap, binding);
 
-            return set.iterator();
+            return r;
         }
 
         return null;

@@ -5,11 +5,11 @@ import java.util.function.Function;
 
 import javax.persistence.criteria.Expression;
 
+import org.aksw.commons.collections.generator.Generator;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.mapper.impl.type.PathFragment;
 import org.aksw.jena_sparql_api.mapper.impl.type.PathResolver;
 import org.aksw.jena_sparql_api.mapper.model.RdfType;
-import org.aksw.jena_sparql_api.utils.Generator;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.syntax.Element;
 //

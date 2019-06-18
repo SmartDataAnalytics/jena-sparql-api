@@ -6,13 +6,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.FeatureMap;
+import org.aksw.commons.collections.generator.Generator;
 import org.aksw.jena_sparql_api.algebra.utils.OpUtils;
 import org.aksw.jena_sparql_api.algebra.utils.ProjectedQuadFilterPattern;
 import org.aksw.jena_sparql_api.algebra.utils.QuadFilterPattern;
 import org.aksw.jena_sparql_api.algebra.utils.QuadFilterPatternCanonical;
 import org.aksw.jena_sparql_api.algebra.utils.AlgebraUtils;
 import org.aksw.jena_sparql_api.concept_cache.trash.OpVisitorViewCacheApplier;
-import org.aksw.jena_sparql_api.utils.Generator;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.op.OpProject;

@@ -129,7 +129,8 @@ public class NfaExecutionUtils {
             NfaFrontier<S, G, V, E> frontier,
             Graph<S, T> nfaGraph,
             Predicate<T> isEpsilon,
-            BiFunction<T, Multimap<G, NestedPath<V, E>>, Map<V, Set<Triplet<V, E>>>> getMatchingTriplets,
+            TripletLookup<T, G, V, E> getMatchingTriplets,
+            //BiFunction<T, Multimap<G, NestedPath<V, E>>, Map<V, Set<Triplet<V, E>>>> getMatchingTriplets,
             Function<NestedPath<V, E>, G> pathGrouper,
             Predicate<NestedPath<V, E>> earlyPathReject // Function that can reject paths before they are added to the frontier, such as by consulting a join summary or performing a reachability test to the target
             ) {
@@ -143,7 +144,7 @@ public class NfaExecutionUtils {
 
             for(T trans : transitions) {
 
-                Map<V, Set<Triplet<V, E>>> vToTriplets = getMatchingTriplets.apply(trans, ps);
+                Map<V, Set<Triplet<V, E>>> vToTriplets = getMatchingTriplets.lookup(trans, ps);
                 Collection<NestedPath<V, E>> allPaths = ps.values();
 
                 for(NestedPath<V, E> parentPath : allPaths) {
@@ -357,7 +358,8 @@ public class NfaExecutionUtils {
             Predicate<T> isEpsilon,
             Set<V> startVertices,
             Function<NestedPath<V, E>, G> pathGrouper,
-            BiFunction<T, Multimap<G, NestedPath<V, E>>, Map<V, Set<Triplet<V, E>>>> getMatchingTriplets,
+            TripletLookup<T, G, V, E> getMatchingTriplets,
+            //BiFunction<T, Multimap<G, NestedPath<V, E>>, Map<V, Set<Triplet<V, E>>>> getMatchingTriplets,
             Function<NestedPath<V, E>, Boolean> pathCallback) {
 
         NfaFrontier<S, G, V, E> frontier = new NfaFrontier<>();

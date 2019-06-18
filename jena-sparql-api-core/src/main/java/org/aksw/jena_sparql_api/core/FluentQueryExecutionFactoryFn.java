@@ -9,6 +9,7 @@ import org.aksw.jena_sparql_api.cache.extra.CacheBackend;
 import org.aksw.jena_sparql_api.cache.extra.CacheFrontend;
 import org.aksw.jena_sparql_api.cache.extra.CacheFrontendImpl;
 import org.aksw.jena_sparql_api.delay.core.QueryExecutionFactoryDelay;
+import org.aksw.jena_sparql_api.delay.extra.Delayer;
 import org.aksw.jena_sparql_api.limit.QueryExecutionFactoryLimit;
 import org.aksw.jena_sparql_api.pagination.core.QueryExecutionFactoryPaginated;
 import org.aksw.jena_sparql_api.parse.QueryExecutionFactoryParse;
@@ -70,6 +71,13 @@ public class FluentQueryExecutionFactoryFn<P>
 //                return r;
 //            }
 //        });
+
+        return this;
+    }
+
+    
+    public FluentQueryExecutionFactoryFn<P> withDelay(final Delayer delayer) {
+        compose(qef -> new QueryExecutionFactoryDelay(qef, delayer));
 
         return this;
     }
@@ -176,7 +184,7 @@ public class FluentQueryExecutionFactoryFn<P>
         return this;
     }
 
-    public FluentQueryExecutionFactoryFn<P> withQueryTransform(final Function<Query, Query> queryTransform){
+    public FluentQueryExecutionFactoryFn<P> withQueryTransform(final Function<? super Query, ? extends Query> queryTransform){
     	compose(qef -> new QueryExecutionFactoryQueryTransform(qef, queryTransform));
 
 //        compose(new Function<QueryExecutionFactory, QueryExecutionFactory>() {
