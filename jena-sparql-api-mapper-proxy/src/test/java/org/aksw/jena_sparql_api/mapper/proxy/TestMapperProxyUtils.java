@@ -103,7 +103,7 @@ public class TestMapperProxyUtils {
 		Assert.assertEquals(sb, sb.setString("Hello World"));
 		Assert.assertEquals("Hello World", sb.getString());
 		
-		RDFDataMgr.write(System.out, sb.getModel(), RDFFormat.TURTLE_PRETTY);
+//		RDFDataMgr.write(System.out, sb.getModel(), RDFFormat.TURTLE_PRETTY);
 	}
 
 	@Test

@@ -943,11 +943,18 @@ public class MapperProxyUtils {
 		
 		Map<Method, MethodDescriptor> methodDescriptors = new HashMap<>();		
 		
+		Method[] methods = clazz.getMethods();
 		
-		
-		for(Method method : clazz.getMethods()) {
+		for(Method method : methods) {
 			MethodDescriptor descriptor = classifyMethod(method);
 			if(descriptor == null) {
+				continue;
+			}
+			
+			// Filter out brige methods that get introduced in case of covariant return types
+			// - https://stackoverflow.com/questions/6204339/java-class-getmethods-behavior-on-overridden-methods
+			// - https://stackoverflow.com/questions/1961350/problem-in-the-getdeclaredmethods-java
+			if(method.isBridge()) {
 				continue;
 			}
 			
@@ -961,8 +968,10 @@ public class MapperProxyUtils {
 			methodDescriptors.put(method, descriptor);
 
 			if(descriptor.isGetter()) {
+//				System.out.println("READ: " + beanPropertyName + " " + method.isBridge() + " " + method);
 				readMethods.put(beanPropertyName, method);
 			} else if(descriptor.isSetter()) {
+//				System.out.println("WRITE: " + beanPropertyName + " " + method.isBridge() + " " + method);
 				writeMethods.put(beanPropertyName, method);				
 			}
 			
