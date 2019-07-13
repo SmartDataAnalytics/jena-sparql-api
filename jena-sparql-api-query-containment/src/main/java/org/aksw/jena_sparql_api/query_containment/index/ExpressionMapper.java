@@ -18,6 +18,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.aksw.commons.collections.collectors.CollectorUtils;
 import org.aksw.commons.collections.tagmap.TagMapSetTrie;
 import org.aksw.commons.collections.tagmap.ValidationUtils;
 import org.aksw.commons.graph.index.core.SubgraphIsomorphismIndex;

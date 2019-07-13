@@ -34,6 +34,7 @@ public interface Relation {
 	 */
 	List<Var> getVars();
 	
+	// Set<Var> getFixedVars();
 	
 	Element getElement();
 	

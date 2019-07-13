@@ -2,6 +2,7 @@ package org.aksw.jena_sparql_api.algebra.transform;
 
 import org.aksw.jena_sparql_api.algebra.utils.OpUtils;
 import org.apache.jena.sparql.algebra.Op;
+import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.Transform;
 import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.op.OpJoin;
@@ -10,6 +11,7 @@ import org.apache.jena.sparql.algebra.op.OpMinus;
 import org.apache.jena.sparql.algebra.op.OpTable;
 import org.apache.jena.sparql.algebra.op.OpUnion;
 import org.apache.jena.sparql.algebra.optimize.TransformPromoteTableEmpty;
+import org.apache.jena.sparql.algebra.table.TableUnit;
 
 /**
  * 
@@ -77,11 +79,25 @@ public class TransformPromoteTableEmptyVarPreserving
     }
     
 
-    public boolean isTableEmpty(Op op) {
-        if (op instanceof OpTable) {
-            return ((OpTable) op).getTable().isEmpty();
+    public static boolean isTableEmpty(Op op) {
+        boolean result;
+    	if (op instanceof OpTable) {
+    		Table table = ((OpTable)op).getTable();
+            result = table.isEmpty();
         } else {
-            return false;
+            result = false;
         }
+    	return result;
+    }
+    
+    public static boolean isTableUnit(Op op) {
+        boolean result;
+    	if (op instanceof OpTable) {
+    		Table table = ((OpTable)op).getTable();
+            result = table instanceof TableUnit;
+        } else {
+            result = false;
+        }
+    	return result;
     }
 }

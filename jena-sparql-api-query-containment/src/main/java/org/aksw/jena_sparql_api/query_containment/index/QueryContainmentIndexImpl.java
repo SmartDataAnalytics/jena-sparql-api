@@ -13,6 +13,7 @@ import java.util.stream.Stream;
 import org.aksw.combinatorics.solvers.ProblemNeighborhoodAware;
 import org.aksw.combinatorics.solvers.ProblemStaticSolutions;
 import org.aksw.commons.collections.MapUtils;
+import org.aksw.commons.collections.collectors.CollectorUtils;
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeNode;
 import org.aksw.commons.collections.trees.TreeNodeImpl;

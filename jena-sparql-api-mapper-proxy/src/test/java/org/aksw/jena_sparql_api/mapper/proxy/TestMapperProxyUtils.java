@@ -13,6 +13,8 @@ import org.aksw.jena_sparql_api.mapper.annotation.IriType;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sys.JenaSystem;
 import org.apache.jena.vocabulary.RDFS;
 import org.junit.Assert;
@@ -20,31 +22,25 @@ import org.junit.Test;
 
 
 public class TestMapperProxyUtils {
-	public static interface TestResource
+	
+	public static interface TestResourceBase
 		extends Resource
 	{
-		@Iri("rdfs:label")
 		String getString();		
-		TestResource setString(String str);
+		TestResourceBase setString(String str);
 
-		String getIri();		
-
-		@IriType
-		@Iri("rdfs:seeAlso")
-		TestResource setIri(String str);
+		String getIri();
+		TestResourceBase setIri(String str);
 
 		
-		@Iri("owl:maxCardinality")
 		Integer getInteger();
 		TestResource setInteger(Integer str);
 
 
-		@Iri("eg:stringList")
-		TestResource setList(List<String> strs);
+		TestResourceBase setList(List<String> strs);
 		List<String> getList();
 
 		
-		@Iri("eg:dynamicSet")
 		<T> Collection<T> getDynamicSet(Class<T> clazz);
 		//TestResource setDynamicSet(Iterable<T> items);
 		
@@ -61,6 +57,41 @@ public class TestMapperProxyUtils {
 //		List<?> getRDFNodes();
 	}
 
+	public static interface TestResource
+		extends TestResourceBase
+	{
+		@Iri("rdfs:label")
+		String getString();		
+		
+		@IriType
+		@Iri("rdfs:seeAlso")
+		TestResource setIri(String str);
+	
+		
+		@Iri("owl:maxCardinality")
+		Integer getInteger();
+	
+	
+		@Iri("eg:stringList")
+		TestResource setList(List<String> strs);
+	
+		
+		@Iri("eg:dynamicSet")
+		<T> Collection<T> getDynamicSet(Class<T> clazz);
+		//TestResource setDynamicSet(Iterable<T> items);
+		
+	
+//	@Iri("eg:collection")
+//	TestResource setList(List<String> strs);
+//	List<String> getList();
+	
+	
+	
+//	@Iri("eg:list")
+//	TestResource setRDFNodes(List<?> strs);
+//
+//	List<?> getRDFNodes();
+	}
 	
 	@Test
 	public void testScalarString() {
@@ -70,7 +101,9 @@ public class TestMapperProxyUtils {
 		
 		Assert.assertNull(sb.getString());
 		Assert.assertEquals(sb, sb.setString("Hello World"));
-		Assert.assertEquals("Hello World", sb.getString());		
+		Assert.assertEquals("Hello World", sb.getString());
+		
+		RDFDataMgr.write(System.out, sb.getModel(), RDFFormat.TURTLE_PRETTY);
 	}
 
 	@Test
@@ -78,7 +111,7 @@ public class TestMapperProxyUtils {
 		JenaSystem.init();
 		JenaPluginUtils.registerJenaResourceClasses(TestResource.class);
 		TestResource sb = ModelFactory.createDefaultModel().createResource().as(TestResource.class);
-		
+
 		Assert.assertNull(sb.getInteger());
 		Assert.assertEquals(sb, sb.setInteger(10));
 		Assert.assertEquals(10l, (long)sb.getInteger());		
