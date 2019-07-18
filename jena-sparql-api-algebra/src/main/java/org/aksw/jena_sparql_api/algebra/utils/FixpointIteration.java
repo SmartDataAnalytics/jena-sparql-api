@@ -20,7 +20,7 @@ public class FixpointIteration {
 	    return current;
 	}
 	
-	public static <T> T fixpointIteration(int max, T init, Function<? super T, ? extends T> fn) {
+	public static <T> T apply(int max, T init, Function<? super T, ? extends T> fn) {
 		T result = init;
 		
 		int i = 0;

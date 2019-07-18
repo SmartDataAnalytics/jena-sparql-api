@@ -2,7 +2,6 @@ package org.aksw.jena_sparql_api.algebra.expr.transform;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -13,14 +12,16 @@ import org.aksw.jena_sparql_api.algebra.transform.TransformExprToBasicPattern;
 import org.aksw.jena_sparql_api.algebra.transform.TransformPullFiltersIfCanMergeBGPs;
 import org.aksw.jena_sparql_api.algebra.transform.TransformReplaceConstants;
 import org.aksw.jena_sparql_api.algebra.utils.FixpointIteration;
+import org.aksw.jena_sparql_api.core.utils.RDFDataMgrEx;
+import org.aksw.jena_sparql_api.user_defined_function.UserDefinedFunctions;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.ext.com.google.common.collect.Maps;
-import org.apache.jena.query.ARQ;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
-import org.apache.jena.sparql.ARQConstants;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.algebra.Transformer;
@@ -28,25 +29,21 @@ import org.apache.jena.sparql.algebra.op.OpExtend;
 import org.apache.jena.sparql.algebra.optimize.TransformMergeBGPs;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
-import org.apache.jena.sparql.engine.ExecutionContext;
-import org.apache.jena.sparql.engine.binding.BindingFactory;
+import org.apache.jena.sparql.expr.E_Function;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.ExprFunction2;
+import org.apache.jena.sparql.expr.ExprLib;
 import org.apache.jena.sparql.expr.ExprList;
+import org.apache.jena.sparql.expr.ExprTransform;
 import org.apache.jena.sparql.expr.ExprTransformCopy;
 import org.apache.jena.sparql.expr.ExprTransformSubstitute;
 import org.apache.jena.sparql.expr.ExprTransformer;
 import org.apache.jena.sparql.expr.ExprVar;
 import org.apache.jena.sparql.expr.NodeValue;
-import org.apache.jena.sparql.function.FunctionEnv;
-import org.apache.jena.sparql.function.user.UserDefinedFunction;
+import org.apache.jena.sparql.function.user.ExprTransformExpand;
 import org.apache.jena.sparql.function.user.UserDefinedFunctionDefinition;
-import org.apache.jena.sparql.function.user.UserDefinedFunctionFactory;
 import org.apache.jena.sparql.graph.NodeTransformLib;
-import org.apache.jena.sparql.lang.sparql_11.ParseException;
-import org.apache.jena.sparql.util.Context;
 import org.apache.jena.sparql.util.ExprUtils;
-import org.apache.jena.sparql.util.NodeFactoryExtra;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,59 +63,59 @@ import org.slf4j.LoggerFactory;
 //	
 //}
 
-class BnodeRewriteConfig {
-	String vendorLabel;
-	//String bnodeLabelFnSymbol;
-	//UserDefinedFunctionDefinition
-	
-	//Function<String, String> bnodeLabelFn;
-	//Function
-	
-	public static final String ns = "http://www.aksw.org/bnode/fn/";
-	
-	public static final String typeErrorFnUri = ns + "typeError";
-	public static final String encodeBnodeFnUri = ns + "encodeBnodeFnUri";
-	public static final String isBnodeUriFnUri = ns + "isBnodeUri";
-	public static final String decodeBnodeUriFnUri = ns + "decodeBnodeUri";
-	
-	public void registerParseBid(String exprStr, String argVarName) {
-		add("tmp:parseBid", exprStr, Collections.singletonList(Var.alloc(argVarName));		
-	}
-
-	public void registerUnparseBid(String exprStr, String argVarName) {
-		add("tmp:parseBid", exprStr, Collections.singletonList(Var.alloc(argVarName));		
-	}
-
-	public void add(String uri, String expr, List<Var> args) {
-		
-	}
-	
-	
-	public static void foobar() {
-//		this.bnodeLabelFnSymbol = bnodeLabelFnSymbol;
-//		this.bnodeLabelFnUri = ns + vendorLabel + "bnode";
-//		this.forceBnodeUriFnUri = ns + vendorLabel + "/forceBnodeUri";
-
-		List<Var> x = Collections.singletonList(Vars.x);
-
-		UserDefinedFunctionFactory f = new UserDefinedFunctionFactory();
-//		f.add(bnodeLabelFnUri, bnodeLabelFnSymbol + "(?x)", x);
-		//f.add(bnodeLabelFnUri, "<http://jena.apache.org/ARQ/function#bnode>(?x)", x);
-	//ARQ.enableBlankNodeResultLabels(false);
-	//ARQ.constantBNodeLabels
-	
-		String bnodePrefix = "bnode://";
-		f.add(typeErrorFnUri, "ABS('')", Collections.emptyList());
-		//f.add(unparseBnodeIdFnUri, )
-		f.add(encodeBnodeFnUri, "URI(CONCAT('bnode://', <tmp:unparseBid>(?x)))", x);
-		f.add(isBnodeUriFnUri, "ISURI(?x) && STRSTARTS(STR(?x), '" + bnodePrefix + "')", x);
-		f.add(decodeBnodeUriFnUri, "IF(<" + isBnodeUriFnUri + ">(?x), <tmp:parseBid>(STRAFTER(STR(?x), '" + bnodePrefix + "')), <" + typeErrorFnUri + "()>)", x);
-
-		f.add(forceBnodeUriFnUri, "IF(isBlank(?x), <" + encodeBnodeFnUri + ">(" + bnodeLabelFnSymbol + "(?x)), ?x)", x);
-	}
-	
-	
-}
+//class BnodeRewriteConfig {
+//	String vendorLabel;
+//	//String bnodeLabelFnSymbol;
+//	//UserDefinedFunctionDefinition
+//	
+//	//Function<String, String> bnodeLabelFn;
+//	//Function
+//	
+//	public static final String ns = "http://www.aksw.org/bnode/fn/";
+//	
+//	public static final String typeErrorFnUri = ns + "typeError";
+//	public static final String encodeBnodeFnUri = ns + "encodeBnodeFnUri";
+//	public static final String isBnodeUriFnUri = ns + "isBnodeUri";
+//	public static final String decodeBnodeUriFnUri = ns + "decodeBnodeUri";
+//	
+//	public void registerParseBid(String exprStr, String argVarName) {
+//		add("tmp:parseBid", exprStr, Collections.singletonList(Var.alloc(argVarName));		
+//	}
+//
+//	public void registerUnparseBid(String exprStr, String argVarName) {
+//		add("tmp:parseBid", exprStr, Collections.singletonList(Var.alloc(argVarName));		
+//	}
+//
+//	public void add(String uri, String expr, List<Var> args) {
+//		
+//	}
+//	
+//	
+//	public static void foobar() {
+////		this.bnodeLabelFnSymbol = bnodeLabelFnSymbol;
+////		this.bnodeLabelFnUri = ns + vendorLabel + "bnode";
+////		this.forceBnodeUriFnUri = ns + vendorLabel + "/forceBnodeUri";
+//
+//		List<Var> x = Collections.singletonList(Vars.x);
+//
+//		UserDefinedFunctionFactory f = new UserDefinedFunctionFactory();
+////		f.add(bnodeLabelFnUri, bnodeLabelFnSymbol + "(?x)", x);
+//		//f.add(bnodeLabelFnUri, "<http://jena.apache.org/ARQ/function#bnode>(?x)", x);
+//	//ARQ.enableBlankNodeResultLabels(false);
+//	//ARQ.constantBNodeLabels
+//	
+//		String bnodePrefix = "bnode://";
+//		f.add(typeErrorFnUri, "ABS('')", Collections.emptyList());
+//		//f.add(unparseBnodeIdFnUri, )
+//		f.add(encodeBnodeFnUri, "URI(CONCAT('bnode://', <tmp:unparseBid>(?x)))", x);
+//		f.add(isBnodeUriFnUri, "ISURI(?x) && STRSTARTS(STR(?x), '" + bnodePrefix + "')", x);
+//		f.add(decodeBnodeUriFnUri, "IF(<" + isBnodeUriFnUri + ">(?x), <tmp:parseBid>(STRAFTER(STR(?x), '" + bnodePrefix + "')), <" + typeErrorFnUri + "()>)", x);
+//
+//		f.add(forceBnodeUriFnUri, "IF(isBlank(?x), <" + encodeBnodeFnUri + ">(" + bnodeLabelFnSymbol + "(?x)), ?x)", x);
+//	}
+//	
+//	
+//}
 
 /**
  * Decode "blanknode URIs" - i.e. URIs that represent blank nodes, such as bnode://{blank-node-label}
@@ -171,42 +168,44 @@ public class ExprTransformVirtualBnodeUris
 //	protected Function<? super Expr, ? extends Expr> decodeBnodeUri = null;
 //	protected Function<? super Expr, ? extends Expr> isBnodeUriFn = null;
 
-	public static final UserDefinedFunctionFactory f = UserDefinedFunctionFactory.getFactory();
+//	public static final UserDefinedFunctionFactory f = UserDefinedFunctionFactory.getFactory();
 
 	// The bnodeLabelFnUri is vendor specific, others may depend on it
-	public String bnodeLabelFnUri;
-	public String bnodeLabelFnSymbol;
-	public transient String forceBnodeUriFnUri;
+//	public String bnodeLabelFnUri;
+//	public String bnodeLabelFnSymbol;
+//	public transient String forceBnodeUriFnUri;
 
-	public ExprTransformVirtualBnodeUris(String vendorLabel, String bnodeLabelFnSymbol) {
-		this.bnodeLabelFnSymbol = bnodeLabelFnSymbol;
-		this.bnodeLabelFnUri = ns + vendorLabel + "bnode";
-		this.forceBnodeUriFnUri = ns + vendorLabel + "/forceBnodeUri";
+	public static final String ns = "http://ns.aksw.org/function/";
 
-		try {
-			registerFunctions();
-		} catch(Exception e) {
-			throw new RuntimeException(e);
-		}		
+	// These function IRIs must be provided as macros
+	public static final String bidOfFnIri = ns + "bidOf";
+	public static final String decodeBnodeIriFnIri = ns + "decodeBnodeIri";
+	public static final String isBnodeIriFnIri = ns + "isBnodeIri";
+	public static final String forceBnodeIriFnIri = ns + "forceBnodeIri";
+
+	protected Map<String, UserDefinedFunctionDefinition> macros;
+	
+	public ExprTransformVirtualBnodeUris(Map<String, UserDefinedFunctionDefinition> macros) {
+		this.macros = macros;
 	}
 
-	public void registerFunctions() throws ParseException {
-		List<Var> x = Collections.singletonList(Vars.x);
-
-		f.add(bnodeLabelFnUri, bnodeLabelFnSymbol + "(?x)", x);
-		//f.add(bnodeLabelFnUri, "<http://jena.apache.org/ARQ/function#bnode>(?x)", x);
-//ARQ.enableBlankNodeResultLabels(false);
-//ARQ.constantBNodeLabels
-
-		String bnodePrefix = "bnode://";
-		f.add(typeErrorFnUri, "ABS('')", Collections.emptyList());
-		//f.add(unparseBnodeIdFnUri, )
-		f.add(encodeBnodeFnUri, "URI(CONCAT('bnode://', ?x))", x);
-		f.add(isBnodeUriFnUri, "ISURI(?x) && STRSTARTS(STR(?x), '" + bnodePrefix + "')", x);
-		f.add(decodeBnodeUriFnUri, "IF(<" + isBnodeUriFnUri + ">(?x), STRAFTER(STR(?x), '" + bnodePrefix + "'), <" + typeErrorFnUri + "()>)", x);
-
-		f.add(forceBnodeUriFnUri, "IF(isBlank(?x), <" + encodeBnodeFnUri + ">(" + bnodeLabelFnSymbol + "(?x)), ?x)", x);
-	}
+//	public void registerFunctions() throws ParseException {
+//		List<Var> x = Collections.singletonList(Vars.x);
+//
+//		f.add(bnodeLabelFnUri, bnodeLabelFnSymbol + "(?x)", x);
+//		//f.add(bnodeLabelFnUri, "<http://jena.apache.org/ARQ/function#bnode>(?x)", x);
+////ARQ.enableBlankNodeResultLabels(false);
+////ARQ.constantBNodeLabels
+//
+//		String bnodePrefix = "bnode://";
+//		f.add(typeErrorFnUri, "ABS('')", Collections.emptyList());
+//		//f.add(unparseBnodeIdFnUri, )
+//		f.add(encodeBnodeFnUri, "URI(CONCAT('bnode://', ?x))", x);
+//		f.add(isBnodeUriFnUri, "ISURI(?x) && STRSTARTS(STR(?x), '" + bnodePrefix + "')", x);
+//		f.add(decodeBnodeUriFnUri, "IF(<" + isBnodeUriFnUri + ">(?x), STRAFTER(STR(?x), '" + bnodePrefix + "'), <" + typeErrorFnUri + "()>)", x);
+//
+//		f.add(forceBnodeUriFnUri, "IF(isBlank(?x), <" + encodeBnodeFnUri + ">(" + bnodeLabelFnSymbol + "(?x)), ?x)", x);
+//	}
 	
 //	@Override
 //	public Expr transform(ExprFunction1 func, Expr a) {
@@ -228,7 +227,7 @@ public class ExprTransformVirtualBnodeUris
 			b = result.getArg2();
 		}
 
-		if(a.isConstant()&& !b.isConstant()) {
+		if(a.isConstant() && !b.isConstant()) {
 			result = trySubst(func, b, a, true);
 		}
 
@@ -244,42 +243,60 @@ public class ExprTransformVirtualBnodeUris
 		T result = swapped ? (T)func.copy(b, a) : (T)func.copy(a, b);
 		return result;
 	}
-
-	public static Expr subst(String udfUri, Expr ... args) {
-		UserDefinedFunctionDefinition udfd = f.get(udfUri);
-		UserDefinedFunction fi = (UserDefinedFunction)udfd.newFunctionInstance();
-		
-		//ExprUtils.eval
-		ExprList el = new ExprList(Arrays.asList(args));
-		fi.build(udfUri, el);
-		Expr expr = fi.getActualExpr();
-		return expr;
-	}
+//
+//	public static Expr subst(Map<String, UserDefinedFunctionDefinition> macros, String udfUri, Expr ... args) {
+//		UserDefinedFunctionDefinition udfd = macros.get(udfUri); //f.get(udfUri);
+//		UserDefinedFunction fi = (UserDefinedFunction)udfd.newFunctionInstance();
+//		
+//		//ExprUtils.eval
+//		ExprList el = new ExprList(Arrays.asList(args));
+//		fi.build(udfUri, el);
+//		Expr expr = fi.getActualExpr();
+//		return expr;
+//	}
 	
-	public static NodeValue eval(String udfUri, Expr ... args) {
-		UserDefinedFunctionDefinition udfd = f.get(udfUri);
-		org.apache.jena.sparql.function.Function fi = udfd.newFunctionInstance();
+	public static Expr expandMacro(Map<String, UserDefinedFunctionDefinition> macros, String udfUri, Expr ... args) {
+		Expr e = new E_Function(udfUri, new ExprList(Arrays.asList(args)));
+
+		ExprTransform xform = new ExprTransformExpand(macros);
+		e = FixpointIteration.apply(100, e, x -> ExprTransformer.transform(xform, x));
+		e = FixpointIteration.apply(100, e, ExprLib::foldConstants);
+		//e = ExprLib.foldConstants(e);
+	
+		return e;
+	}
+
+	
+	public static NodeValue eval(Map<String, UserDefinedFunctionDefinition> macros, String udfUri, Expr ... args) {
+		//UserDefinedFunctionDefinition udfd = macros.get(udfUri);
 		
-		ExprList el = new ExprList(Arrays.asList(args));
-		fi.build(udfUri, el);
-
-		// Taken from ExprUtils.eval
-		Context context = ARQ.getContext().copy() ;
-        context.set(ARQConstants.sysCurrentTime, NodeFactoryExtra.nowAsDateTime()) ;
-        FunctionEnv env = new ExecutionContext(context, null, null, null) ; 
-
-		NodeValue result = fi.exec(BindingFactory.binding(), el, udfUri, env);
+		Expr expr = expandMacro(macros, udfUri, args);
+		NodeValue result = ExprUtils.eval(expr);
+		
+		//org.apache.jena.sparql.function.Function fi = udfd.newFunctionInstance();
+		
+		
+//		ExprList el = new ExprList(Arrays.asList(args));
+//		//fi.build(udfUri, el);
+//
+//		// Taken from ExprUtils.eval
+//		Context context = ARQ.getContext().copy() ;
+//        context.set(ARQConstants.sysCurrentTime, NodeFactoryExtra.nowAsDateTime()) ;
+//        FunctionEnv env = new ExecutionContext(context, null, null, null) ; 
+//
+//		NodeValue result = fi.exec(BindingFactory.binding(), el, udfUri, env);
 		return result;
 	}
 
+	// x = <bnode://foo> --> bidOf(?x) = decodeBnodeIri(<bnode://foo>)
 	public ExprFunction2 trySubst(ExprFunction2 func, Expr lhs, Expr b, boolean swapped) {
 		NodeValue rhs = b.getConstant();
 		
-		boolean isRhsBnodeUri = eval(isBnodeUriFnUri, rhs).getBoolean();
+		boolean isRhsBnodeUri = eval(macros, isBnodeIriFnIri, rhs).getBoolean();
 		ExprFunction2 result;
 		if(isRhsBnodeUri) {
-			NodeValue rhsLabel = eval(decodeBnodeUriFnUri, rhs);
-			Expr x = f.get(bnodeLabelFnUri).getBaseExpr();
+			NodeValue rhsLabel = eval(macros, decodeBnodeIriFnIri, rhs);
+			Expr x = macros.get(bidOfFnIri).getBaseExpr();
 			
 			
 			Expr aaLabel = ExprTransformer.transform(new ExprTransformSubstitute(Vars.x, lhs), x);
@@ -295,7 +312,7 @@ public class ExprTransformVirtualBnodeUris
 	
 	public Query rewrite(Query query) {
 		Query result = QueryUtils.rewrite(query, op -> {
-			Op a = TransformReplaceConstants.transform(op, x -> x.isURI() ? eval(isBnodeUriFnUri, NodeValue.makeNode(x)).getBoolean() : false);
+			Op a = TransformReplaceConstants.transform(op, x -> x.isURI() ? eval(macros, isBnodeIriFnIri, NodeValue.makeNode(x)).getBoolean() : false);
 			// new ExprTransformVirtualBnodeUris()
 			Op b = Transformer.transform(null, this, a);
 			Op c = forceBnodeUris(b);//ExprTransformVirtualBnodeUris.forceBnodeUris(b);
@@ -327,7 +344,15 @@ public class ExprTransformVirtualBnodeUris
 	public static void main(String[] args) {
 		Expr input = ExprUtils.parse("?x = <bnode://foobar>");
 //		Expr input = ExprUtils.parse("<bnode://foo> = <bnode://bar>");
-		ExprTransformVirtualBnodeUris xform = new ExprTransformVirtualBnodeUris("virtuoso", "STR");
+		
+		Model model = RDFDataMgr.loadModel("bnode-rewrites.ttl");
+		RDFDataMgrEx.execSparql(model, "udf-inferences.sparql");
+
+		Set<String> profiles = new HashSet<>(Arrays.asList("http://ns.aksw.org/profile/jena"));
+		Map<String, UserDefinedFunctionDefinition> map = UserDefinedFunctions.load(model, profiles);
+
+		
+		ExprTransformVirtualBnodeUris xform = new ExprTransformVirtualBnodeUris(map);
 		//Expr actual = ExprTransformer.transform(new ExprTransformBnodeDecode(), input);
 		//System.out.println(actual);
 		
@@ -357,7 +382,7 @@ public class ExprTransformVirtualBnodeUris
 
 		VarExprList vel = new VarExprList();
 		for(Var v : visibleVars) {
-			vel.add(v, subst(forceBnodeUriFnUri, new ExprVar(map.get(v))));
+			vel.add(v, expandMacro(macros, forceBnodeIriFnIri, new ExprVar(map.get(v))));
 		}
 		OpExtend result = OpExtend.create(tmp, vel);
 

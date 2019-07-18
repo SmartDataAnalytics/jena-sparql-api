@@ -1,7 +1,9 @@
 package org.aksw.jena_sparql_api.user_defined_function;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -24,23 +26,35 @@ public class UserDefinedFunctions {
 		return model.listSubjectsWithProperty(RDF.type, UdfVocab.UserDefinedFunction)
 				.mapWith(x -> x.as(UserDefinedFunctionResource.class));
 	}
-	
-	public static void load(Model model, Set<String> activeProfiles) {
+
+	public static void registerAll(Map<String, UserDefinedFunctionDefinition> map) {
 		UserDefinedFunctionFactory f = UserDefinedFunctionFactory.getFactory();
+		
+		for(UserDefinedFunctionDefinition udfd : map.values()) {
+			f.add(udfd.getUri(), udfd.getBaseExpr(), udfd.getArgList());
+		}
+
+	}
+	
+	public static Map<String, UserDefinedFunctionDefinition> load(Model model, Set<String> activeProfiles) {
+		Map<String, UserDefinedFunctionDefinition> result = new LinkedHashMap<>();
 		
 		List<UserDefinedFunctionResource> fns = listUserDefinedFunctions(model).toList();
 		for(UserDefinedFunctionResource fn : fns) {
-			resolveUdf(f, fn, activeProfiles);
+			resolveUdf(result, fn, activeProfiles);
 		}
+		
+		return result;
 	}
 	
 	public static void resolveUdf(
-			UserDefinedFunctionFactory f,
+			Map<String, UserDefinedFunctionDefinition> result,
+			//UserDefinedFunctionFactory f,
 			UserDefinedFunctionResource fn,
 			Set<String> activeProfiles)
 	{
 		String fnIri = fn.getURI();
-		UserDefinedFunctionDefinition fnUdfd = f.get(fnIri);
+		UserDefinedFunctionDefinition fnUdfd = result.get(fnIri);
 
 		if(fnUdfd == null) {
 			
@@ -74,26 +88,28 @@ public class UserDefinedFunctions {
 				} else if(ra != null) {
 					UserDefinedFunctionResource alias = ra.as(UserDefinedFunctionResource.class);
 					if(alias != null) {
-						resolveUdf(f, alias, activeProfiles);
+						resolveUdf(result, alias, activeProfiles);
 						
 						String iri = alias.getURI();
 						// Try to resolve the definition
-						UserDefinedFunctionDefinition udfd = f.get(iri);
+						// TODO Possible try to resolve against Jena's function registry
+						UserDefinedFunctionDefinition udfd = result.get(iri);
 						if(udfd == null) {
 							throw new RuntimeException("Could not resolve " + iri);						
 						}
 						
 						//UserDefinedFunctionResource udf = alias.as(UserDefinedFunctionResource.class);
-						//UserDefinedFunctionDefinition ud = udf.toJena();
+						UserDefinedFunctionDefinition ud = new UserDefinedFunctionDefinition(fnIri, udfd.getBaseExpr(), udfd.getArgList());
 						
-						f.add(fnIri, udfd.getBaseExpr(), udfd.getArgList());							
+						result.put(ud.getUri(), ud);
+						//f.add(fnIri, udfd.getBaseExpr(), udfd.getArgList());							
 					}
 				} else {
 					UserDefinedFunctionDefinition udfd = UdfDefinition.toJena(fnIri, activeUdf);
 					
 					logger.debug("Registering " + udfd);
 					
-					f.add(udfd.getUri(), udfd.getBaseExpr(), udfd.getArgList());
+					result.put(udfd.getUri(), udfd);
 				}
 					
 		}

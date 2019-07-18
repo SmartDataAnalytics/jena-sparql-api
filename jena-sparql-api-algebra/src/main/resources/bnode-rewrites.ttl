@@ -7,6 +7,24 @@
 
 @prefix ent: <http://www.ontotext.com/owlim/entity#>
 
+
+
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+
+o:UserDefinedFunction
+  a owl:Class ;
+  rdfs:label "User Defined Function"@en ;
+  rdfs:comment "Instances of this class declare IRIs as functions for use in SPARQL expressions." ;
+  .
+
+o:profile
+  a owl:ObjectProperty ;
+  rdfs:label "profile"@en ;
+  rdfs:comment "Links a resource to a set of profiles within it is valid or active" ;
+  .
+
 # UserDefinedFunction = Named function, can be referenced by its IRI from SPARQL queries
 # UserDefinedFunctionMacro = Anonymous function, can be referenced from other macros, but not from SPARQL queries
 
