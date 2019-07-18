@@ -27,20 +27,20 @@ public class JenaPluginUtils {
 
 	static { JenaSystem.init(); }
 	
-	public static void registerJenaResourceClassesUsingPackageScan(Class<?> prototypeClass) {
+	public static void scan(Class<?> prototypeClass) {
 		String basePackage = prototypeClass.getPackage().getName();
-		registerJenaResourceClassesUsingPackageScan(basePackage, BuiltinPersonalities.model);
+		scan(basePackage, BuiltinPersonalities.model);
 	}
 
-	public static void registerJenaResourceClassesUsingPackageScan(String basePackage) {
-		registerJenaResourceClassesUsingPackageScan(basePackage, BuiltinPersonalities.model);
+	public static void scan(String basePackage) {
+		scan(basePackage, BuiltinPersonalities.model);
 	}
 
-	public static void registerJenaResourceClassesUsingPackageScan(String basePackage, Personality<RDFNode> p) {
-		registerJenaResourceClassesUsingPackageScan(basePackage, p, RDFa.prefixes);
+	public static void scan(String basePackage, Personality<RDFNode> p) {
+		scan(basePackage, p, RDFa.prefixes);
 	}
 	
-	public static void registerJenaResourceClassesUsingPackageScan(String basePackage, Personality<RDFNode> p, PrefixMapping pm) {
+	public static void scan(String basePackage, Personality<RDFNode> p, PrefixMapping pm) {
 		Set<ClassInfo> classInfos;
 		try {
 			classInfos = ClassPath.from(Thread.currentThread().getContextClassLoader()).getTopLevelClassesRecursive(basePackage);
@@ -51,19 +51,19 @@ public class JenaPluginUtils {
 		for(ClassInfo classInfo : classInfos) {
 			Class<?> clazz = classInfo.load();
 			
-			registerJenaResourceClass(clazz, p, pm);
+			registerResourceClass(clazz, p, pm);
 		}
 	}
 
-	public static void registerJenaResourceClasses(Class<?> ... classes) {
+	public static void registerResourceClasses(Class<?> ... classes) {
 		for(Class<?> clazz : classes) {
-			registerJenaResourceClass(clazz, BuiltinPersonalities.model, RDFa.prefixes);
+			registerResourceClass(clazz, BuiltinPersonalities.model, RDFa.prefixes);
 		}
 	}
 	
 	
 	
-	public static void registerJenaResourceClass(Class<?> clazz, Personality<RDFNode> p, PrefixMapping pm) {
+	public static void registerResourceClass(Class<?> clazz, Personality<RDFNode> p, PrefixMapping pm) {
 		if(Resource.class.isAssignableFrom(clazz)) {
 			boolean supportsProxying = supportsProxying(clazz);
 			if(supportsProxying) {

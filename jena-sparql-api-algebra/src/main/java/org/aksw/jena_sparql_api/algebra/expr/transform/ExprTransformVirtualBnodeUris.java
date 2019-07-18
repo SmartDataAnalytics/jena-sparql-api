@@ -50,6 +50,76 @@ import org.apache.jena.sparql.util.NodeFactoryExtra;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+//interface NameOrExpr {
+//	String makeString(String arg);
+//}
+//
+//class Name
+//	implements NameOrExpr
+//{
+//	protected String fnName;
+//
+//	@Override
+//	public String makeString(String arg) {
+//		String result = fnName + "(" + arg + ")";
+//	}
+//	
+//}
+
+class BnodeRewriteConfig {
+	String vendorLabel;
+	//String bnodeLabelFnSymbol;
+	//UserDefinedFunctionDefinition
+	
+	//Function<String, String> bnodeLabelFn;
+	//Function
+	
+	public static final String ns = "http://www.aksw.org/bnode/fn/";
+	
+	public static final String typeErrorFnUri = ns + "typeError";
+	public static final String encodeBnodeFnUri = ns + "encodeBnodeFnUri";
+	public static final String isBnodeUriFnUri = ns + "isBnodeUri";
+	public static final String decodeBnodeUriFnUri = ns + "decodeBnodeUri";
+	
+	public void registerParseBid(String exprStr, String argVarName) {
+		add("tmp:parseBid", exprStr, Collections.singletonList(Var.alloc(argVarName));		
+	}
+
+	public void registerUnparseBid(String exprStr, String argVarName) {
+		add("tmp:parseBid", exprStr, Collections.singletonList(Var.alloc(argVarName));		
+	}
+
+	public void add(String uri, String expr, List<Var> args) {
+		
+	}
+	
+	
+	public static void foobar() {
+//		this.bnodeLabelFnSymbol = bnodeLabelFnSymbol;
+//		this.bnodeLabelFnUri = ns + vendorLabel + "bnode";
+//		this.forceBnodeUriFnUri = ns + vendorLabel + "/forceBnodeUri";
+
+		List<Var> x = Collections.singletonList(Vars.x);
+
+		UserDefinedFunctionFactory f = new UserDefinedFunctionFactory();
+//		f.add(bnodeLabelFnUri, bnodeLabelFnSymbol + "(?x)", x);
+		//f.add(bnodeLabelFnUri, "<http://jena.apache.org/ARQ/function#bnode>(?x)", x);
+	//ARQ.enableBlankNodeResultLabels(false);
+	//ARQ.constantBNodeLabels
+	
+		String bnodePrefix = "bnode://";
+		f.add(typeErrorFnUri, "ABS('')", Collections.emptyList());
+		//f.add(unparseBnodeIdFnUri, )
+		f.add(encodeBnodeFnUri, "URI(CONCAT('bnode://', <tmp:unparseBid>(?x)))", x);
+		f.add(isBnodeUriFnUri, "ISURI(?x) && STRSTARTS(STR(?x), '" + bnodePrefix + "')", x);
+		f.add(decodeBnodeUriFnUri, "IF(<" + isBnodeUriFnUri + ">(?x), <tmp:parseBid>(STRAFTER(STR(?x), '" + bnodePrefix + "')), <" + typeErrorFnUri + "()>)", x);
+
+		f.add(forceBnodeUriFnUri, "IF(isBlank(?x), <" + encodeBnodeFnUri + ">(" + bnodeLabelFnSymbol + "(?x)), ?x)", x);
+	}
+	
+	
+}
+
 /**
  * Decode "blanknode URIs" - i.e. URIs that represent blank nodes, such as bnode://{blank-node-label}
  * This means
@@ -92,18 +162,16 @@ public class ExprTransformVirtualBnodeUris
 	extends ExprTransformCopy
 {
 	
+	//parseBid()
+	//unparseBid()
+	//bidOf(?x)
+	
+	
 //	protected Function<? super Expr, ? extends Expr> bnodeLabelFn = null;
 //	protected Function<? super Expr, ? extends Expr> decodeBnodeUri = null;
 //	protected Function<? super Expr, ? extends Expr> isBnodeUriFn = null;
 
 	public static final UserDefinedFunctionFactory f = UserDefinedFunctionFactory.getFactory();
-
-	public static final String ns = "http://www.example.org/fn/";
-	
-	public static final String typeErrorFnUri = ns + "typeError";
-	public static final String encodeBnodeFnUri = ns + "encodeBnodeFnUri";
-	public static final String isBnodeUriFnUri = ns + "isBnodeUri";
-	public static final String decodeBnodeUriFnUri = ns + "decodeBnodeUri";
 
 	// The bnodeLabelFnUri is vendor specific, others may depend on it
 	public String bnodeLabelFnUri;
@@ -131,7 +199,8 @@ public class ExprTransformVirtualBnodeUris
 //ARQ.constantBNodeLabels
 
 		String bnodePrefix = "bnode://";
-		f.add(typeErrorFnUri, "ABS('')", Collections.emptyList());	
+		f.add(typeErrorFnUri, "ABS('')", Collections.emptyList());
+		//f.add(unparseBnodeIdFnUri, )
 		f.add(encodeBnodeFnUri, "URI(CONCAT('bnode://', ?x))", x);
 		f.add(isBnodeUriFnUri, "ISURI(?x) && STRSTARTS(STR(?x), '" + bnodePrefix + "')", x);
 		f.add(decodeBnodeUriFnUri, "IF(<" + isBnodeUriFnUri + ">(?x), STRAFTER(STR(?x), '" + bnodePrefix + "'), <" + typeErrorFnUri + "()>)", x);
@@ -263,7 +332,8 @@ public class ExprTransformVirtualBnodeUris
 		//System.out.println(actual);
 		
 //		Query query = QueryFactory.create("SELECT * { ?s a ?t . ?s ?p ?o }");
-		Query query = QueryFactory.create("CONSTRUCT { ?s ?p ?o } { ?s <bnode://foo> ?t . ?s ?p ?o . FILTER(?p = <bnode://bar>)}");
+//		Query query = QueryFactory.create("CONSTRUCT { ?s ?p ?o } { ?s <bnode://foo> ?t . ?s ?p ?o . FILTER(?p = <bnode://bar>)}");
+		Query query = QueryFactory.create("CONSTRUCT { ?s ?p ?o } { ?s <bnode://foo> ?t . ?s ?p ?o . FILTER(?p = <bnode://bar>)} ORDER BY ?s");
 		Query actual = xform.rewrite(query);
 
 		//		Op op = Algebra.compile(query);

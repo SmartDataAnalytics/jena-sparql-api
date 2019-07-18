@@ -1,0 +1,107 @@
+@prefix o: <http://ns.aksw.org/jena/udf/> .
+@prefix r: <http://ns.aksw.org/bnode/resource/> .
+
+@prefix fn: <http://ns.aksw.org/function/> .
+@prefix pfn: <http://ns.aksw.org/pfunction/> .
+@prefix p: <http://ns.aksw.org/profile/> .
+
+@prefix ent: <http://www.ontotext.com/owlim/entity#>
+
+# UserDefinedFunction = Named function, can be referenced by its IRI from SPARQL queries
+# UserDefinedFunctionMacro = Anonymous function, can be referenced from other macros, but not from SPARQL queries
+
+r:prologue
+  o:simpleNs ("fn" fn:)
+  .
+
+fn:afnBnode
+  a o:UserDefinedFunction ;
+  o:simpleDefinition ("<http://jena.apache.org/ARQ/function#bnode>(?x)" "x") ;
+  .
+
+ent:id
+  a o:UserDefinedFunction ;
+  o:definition [
+    o:mapsToPropertyFunction true ;
+  ]
+  .
+
+fn:identity
+  a o:UserDefinedFunction ;
+  o:simpleDefinition ("?x" "x") ;
+  .
+
+fn:str
+  a o:UserDefinedFunction ;
+  o:simpleDefinition ("STR(?x)" "x") ;
+  .
+
+fn:xsdLong
+  a o:UserDefinedFunction ;
+  o:simpleDefinition ("<http://www.w3.org/2001/XMLSchema#long>(?x)" "x") ;
+  .
+
+
+# SPARQL-query level function definitions
+# Note: These function definitions do not apply to post-processing blank nodes in result sets,
+# which can be done for e.g. virtuoso and stardog.
+
+fn:bidOf a o:UserDefinedFunction .
+fn:parseBid a o:UserDefinedFunction .
+fn:unparseBid a o:UserDefinedFunction .
+
+# jena
+fn:bidOf      o:definition [ o:profile p:jena ; o:aliasFor fn:afnBnode ; ] .
+fn:parseBid   o:definition [ o:profile p:jena ; o:aliasFor fn:identity ; ] .
+fn:unparseBid o:definition [ o:profile p:jena ; o:aliasFor fn:identity ; ] .
+
+# virtuoso
+fn:bidOf      o:definition [ o:profile p:virtuoso ; o:aliasFor fn:str ; ] .
+fn:parseBid   o:definition [ o:profile p:virtuoso ; o:aliasFor fn:identity ; ] .
+fn:unparseBid o:definition [ o:profile p:virtuoso ; o:aliasFor fn:identity ; ] .
+
+# graphdb
+fn:bidOf      o:definition [ o:profile p:graphdb ; o:aliasFor ent:id ; ] .
+fn:parseBid   o:definition [ o:profile p:graphdb ; o:aliasFor fn:str ; ] .
+fn:unparseBid o:definition [ o:profile p:graphdb ; o:aliasFor fn:xsdLong ; ] .
+
+
+# Result set post processors
+#fn:postProcessBNode a o:UserDefinedFunction .
+
+
+
+# Constant
+fn:bnodePrefix
+  a o:UserDefinedFunction ;
+  o:simpleDefinition ("'bnode://'") ;
+  .
+
+fn:typeError
+  a o:UserDefinedFunction ;
+  o:simpleDefinition ("ABS('')") ;
+  .
+
+fn:encodeBnodeIri
+  a o:UserDefinedFunction ;
+  o:prologue r:prologue;
+  o:simpleDefinition ("URI(CONCAT(fn:bnodePrefix(), fn:unparseBid(fn:bidOf(?x))))" "x") ;
+  .
+
+fn:isBnodeIri
+  a o:UserDefinedFunction ;
+  o:prologue r:prologue;
+  o:simpleDefinition ("ISURI(?x) && STRSTARTS(STR(?x), fn:bnodePrefix())" "x") ;
+  .
+
+fn:decodeBnodeIri
+  a o:UserDefinedFunction ;
+  o:prologue r:prologue;
+  o:simpleDefinition ("IF(fn:isBnodeIri(?x), fn:parseBid(STRAFTER(STR(?x), fn:bnodePrefix())), fn:typeError())" "x") ;
+  .
+
+fn:forceBnodeIri
+  a o:UserDefinedFunction ;
+  o:prologue r:prologue;
+  o:simpleDefinition ("IF(ISBLANK(?x), fn:encodeBnodeIri(?x), ?x)" "x") ;
+  .
