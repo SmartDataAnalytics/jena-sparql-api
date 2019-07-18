@@ -1,5 +1,6 @@
 
-# Expand simple prefix mappings
+# Expand convenience list-based prefix mappings
+# Note, this also works without a local name, as in ("ns2" foo:)
 PREFIX o: <http://ns.aksw.org/jena/udf/>
 INSERT {
   ?s
@@ -13,7 +14,7 @@ WHERE {
 }
 
 
-# Expand simple function definitions
+# Expand convenience list-based function definitions
 PREFIX o: <http://ns.aksw.org/jena/udf/>
 INSERT {
   ?s
