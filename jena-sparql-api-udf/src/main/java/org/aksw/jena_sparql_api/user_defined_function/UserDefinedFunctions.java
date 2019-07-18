@@ -44,13 +44,6 @@ public class UserDefinedFunctions {
 
 		if(fnUdfd == null) {
 			
-			if(!fn.getSimpleDefinition().isEmpty()) {
-				UserDefinedFunctionDefinition udfd = fn.toJena();
-				
-				logger.debug("Registering " + udfd);
-				
-				f.add(udfd.getUri(), udfd.getBaseExpr(), udfd.getArgList());
-			} else {
 				// First check which of the udf definitions are active under the given profiles
 				// If there are multiple ones, raise an exception with the conflicts
 				List<UdfDefinition> activeUdfs = new ArrayList<>();
@@ -71,13 +64,14 @@ public class UserDefinedFunctions {
 					throw new RuntimeException("Expected exactly 1 definition for " + fnIri + "; got: " + activeUdfs);
 				}
 				
+				
 				UdfDefinition activeUdf = Iterables.getFirst(activeUdfs, null);
+
+				Resource ra = activeUdf.getAliasFor();
+
 				if(activeUdf.mapsToPropertyFunction()) {
 					System.out.println("Mapped pfn");
-				}
-				
-				Resource ra = activeUdf.getAliasFor();
-				if(ra != null) {
+				} else if(ra != null) {
 					UserDefinedFunctionResource alias = ra.as(UserDefinedFunctionResource.class);
 					if(alias != null) {
 						resolveUdf(f, alias, activeProfiles);
@@ -94,9 +88,14 @@ public class UserDefinedFunctions {
 						
 						f.add(fnIri, udfd.getBaseExpr(), udfd.getArgList());							
 					}
+				} else {
+					UserDefinedFunctionDefinition udfd = UdfDefinition.toJena(fnIri, activeUdf);
+					
+					logger.debug("Registering " + udfd);
+					
+					f.add(udfd.getUri(), udfd.getBaseExpr(), udfd.getArgList());
 				}
 					
-			}
 		}
 	}
 }

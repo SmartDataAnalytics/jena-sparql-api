@@ -21,11 +21,11 @@ public class UdfTest {
 		RDFDataMgr.read(m, new ByteArrayInputStream(tmp.getBytes()), Lang.TURTLE);
 		
 		UserDefinedFunctionResource d = m.createResource("http://www.example.org/myfn").as(UserDefinedFunctionResource.class);
-		UserDefinedFunctionDefinition udfd = d.toJena();
-		System.out.println(udfd.getUri());
-		System.out.println(udfd.getBaseExpr());
-		System.out.println(udfd.getArgList());
-		System.out.println(d.getDefinitions().stream().filter(x -> x.mapsToPropertyFunction()).findAny());
+//		//UserDefinedFunctionDefinition udfd = d.toJena();
+//		System.out.println(udfd.getUri());
+//		System.out.println(udfd.getBaseExpr());
+//		System.out.println(udfd.getArgList());
+//		System.out.println(d.getDefinitions().stream().filter(x -> x.mapsToPropertyFunction()).findAny());
 	}
 
 }

@@ -1,0 +1,30 @@
+
+
+/*
+ Inference / Transformation rules for normalizing convenience constructs of
+ User Defined Functions
+
+ * o:simpleDefinition ("STR(?x)" "x") ->
+ * 
+ * o:definition [ o:expr "STR(?x)" ; o:paramList ("x") ]
+
+PREFIX o: <http://ns.aksw.org/jena/udf/> .
+INSERT {
+  ?s
+    o:definition [
+      o:expr ?e ;
+      o:paramList ?pl ;
+    ] ;
+  .
+}
+WHERE {
+  ?s
+    a o:UserDefinedFunction ;
+    a o:simpleDefinition [
+      rdf:first ?e ;
+      rdf:rest ?pl
+    ]
+}
+*/
+
+SELECT * { }

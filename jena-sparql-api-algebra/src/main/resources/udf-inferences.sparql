@@ -1,25 +1,48 @@
-# Inference / Transformation rules for normalizing convenience constructs of
-# User Defined Functions
 
-/**
- * o:simpleDefinition ("STR(?x)" "x") ->
- * 
- * o:definition [ o:expr "STR(?x)" ; o:paramList ("x") ]
- */
-PREFIX o: <http://ns.aksw.org/jena/udf/> .
+# Expand simple prefix mappings
+PREFIX o: <http://ns.aksw.org/jena/udf/>
+INSERT {
+  ?s
+    o:mapping [
+      o:prefix ?ns ;
+      o:iri ?iri
+    ]
+}
+WHERE {
+  ?s o:ns (?ns ?iri)
+}
+
+
+# Expand simple function definitions
+PREFIX o: <http://ns.aksw.org/jena/udf/>
 INSERT {
   ?s
     o:definition [
       o:expr ?e ;
-      o:paramList ?pl ;
-    ] ;
-  .
+      o:params ?pl
+    ]
 }
 WHERE {
   ?s
     a o:UserDefinedFunction ;
-    a o:simpleDefinition [
+    o:simpleDefinition [
       rdf:first ?e ;
       rdf:rest ?pl
     ]
 }
+
+
+# Attach a prefixSet on the function level to all definitions without prefixes
+PREFIX o: <http://ns.aksw.org/jena/udf/>
+INSERT {
+  ?d o:prefixMapping ?ps
+}
+WHERE {
+  ?s
+    a o:UserDefinedFunction ;
+    o:prefixMapping ?ps ;
+    o:definition ?d
+    FILTER(!EXISTS { ?d o:prefixSet [] })
+}
+
+

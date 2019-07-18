@@ -10,8 +10,8 @@
 # UserDefinedFunction = Named function, can be referenced by its IRI from SPARQL queries
 # UserDefinedFunctionMacro = Anonymous function, can be referenced from other macros, but not from SPARQL queries
 
-r:prologue
-  o:simpleNs ("fn" fn:)
+r:prefixMapping
+  o:ns ("fn" fn:)
   .
 
 fn:afnBnode
@@ -84,24 +84,24 @@ fn:typeError
 
 fn:encodeBnodeIri
   a o:UserDefinedFunction ;
-  o:prologue r:prologue;
+  o:prefixMapping r:prefixMapping ;
   o:simpleDefinition ("URI(CONCAT(fn:bnodePrefix(), fn:unparseBid(fn:bidOf(?x))))" "x") ;
   .
 
 fn:isBnodeIri
   a o:UserDefinedFunction ;
-  o:prologue r:prologue;
+  o:prefixMapping r:prefixMapping;
   o:simpleDefinition ("ISURI(?x) && STRSTARTS(STR(?x), fn:bnodePrefix())" "x") ;
   .
 
 fn:decodeBnodeIri
   a o:UserDefinedFunction ;
-  o:prologue r:prologue;
+  o:prefixMapping r:prefixMapping ;
   o:simpleDefinition ("IF(fn:isBnodeIri(?x), fn:parseBid(STRAFTER(STR(?x), fn:bnodePrefix())), fn:typeError())" "x") ;
   .
 
 fn:forceBnodeIri
   a o:UserDefinedFunction ;
-  o:prologue r:prologue;
+  o:prefixMapping r:prefixMapping ;
   o:simpleDefinition ("IF(ISBLANK(?x), fn:encodeBnodeIri(?x), ?x)" "x") ;
   .
