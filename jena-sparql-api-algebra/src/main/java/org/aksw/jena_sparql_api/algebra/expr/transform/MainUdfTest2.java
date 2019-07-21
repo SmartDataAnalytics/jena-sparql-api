@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.aksw.jena_sparql_api.algebra.utils.FixpointIteration;
 import org.aksw.jena_sparql_api.core.utils.RDFDataMgrEx;
+import org.aksw.jena_sparql_api.user_defined_function.UserDefinedFunctionResource;
 import org.aksw.jena_sparql_api.user_defined_function.UserDefinedFunctions;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.rdf.model.Model;
@@ -36,6 +37,17 @@ public class MainUdfTest2 {
 		ExprTransform xform = new ExprTransformExpand(map);
 		e = FixpointIteration.apply(100, e, x -> ExprTransformer.transform(xform, x));
 				
+		
+		System.out.println("INVERSES: " + model.createResource("http://ns.aksw.org/function/skolemizeBnodeLabel")
+			.as(UserDefinedFunctionResource.class)
+			.getDefinitions().iterator().next()
+			.getInverses()
+			.iterator().next()
+			.getFunction()
+			.getDefinitions().iterator().next()
+			.getExpr()
+        );
+
 //		NodeValue x = ExprTransformVirtualBnodeUris.eval("http://ns.aksw.org/function/str", NodeValue.makeInteger(666));
 		System.out.println(e);
 		

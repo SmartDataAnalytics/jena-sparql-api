@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -47,71 +48,82 @@ public class UserDefinedFunctions {
 		return result;
 	}
 	
+	public static String forceIri(Resource r) {
+		String result = r.isURIResource()
+				? r.getURI()
+				: "_:" + r.getId().getBlankNodeId().getLabelString();
+				
+		Objects.requireNonNull(result, "Could not craft IRI from " + r);
+
+		return result;
+	}
+	
 	public static void resolveUdf(
 			Map<String, UserDefinedFunctionDefinition> result,
 			//UserDefinedFunctionFactory f,
 			UserDefinedFunctionResource fn,
 			Set<String> activeProfiles)
 	{
-		String fnIri = fn.getURI();
+		String fnIri = forceIri(fn);
+				
 		UserDefinedFunctionDefinition fnUdfd = result.get(fnIri);
 
 		if(fnUdfd == null) {
 			
-				// First check which of the udf definitions are active under the given profiles
-				// If there are multiple ones, raise an exception with the conflicts
-				List<UdfDefinition> activeUdfs = new ArrayList<>();
-				for(UdfDefinition def : fn.getDefinitions()) {
-					Set<Resource> requiredProfiles = def.getProfiles();
-					Set<String> requiredProfileIris = requiredProfiles.stream()
-							.filter(RDFNode::isURIResource)
-							.map(Resource::getURI)
-							.collect(Collectors.toSet());;
-					
-					Set<String> overlap = Sets.intersection(requiredProfileIris, activeProfiles);
-					if(requiredProfiles.isEmpty() || !overlap.isEmpty()) {
-						activeUdfs.add(def);
-					}
-				}
-	
-				if(activeUdfs.size() != 1) {
-					throw new RuntimeException("Expected exactly 1 definition for " + fnIri + "; got: " + activeUdfs);
-				}
+			// First check which of the udf definitions are active under the given profiles
+			// If there are multiple ones, raise an exception with the conflicts
+			List<UdfDefinition> activeUdfs = new ArrayList<>();
+			for(UdfDefinition def : fn.getDefinitions()) {
+				Set<Resource> requiredProfiles = def.getProfiles();
+				Set<String> requiredProfileIris = requiredProfiles.stream()
+						.filter(RDFNode::isURIResource)
+						.map(Resource::getURI)
+						.collect(Collectors.toSet());;
 				
-				
-				UdfDefinition activeUdf = Iterables.getFirst(activeUdfs, null);
-
-				Resource ra = activeUdf.getAliasFor();
-
-				if(activeUdf.mapsToPropertyFunction()) {
-					System.out.println("Mapped pfn");
-				} else if(ra != null) {
-					UserDefinedFunctionResource alias = ra.as(UserDefinedFunctionResource.class);
-					if(alias != null) {
-						resolveUdf(result, alias, activeProfiles);
-						
-						String iri = alias.getURI();
-						// Try to resolve the definition
-						// TODO Possible try to resolve against Jena's function registry
-						UserDefinedFunctionDefinition udfd = result.get(iri);
-						if(udfd == null) {
-							throw new RuntimeException("Could not resolve " + iri);						
-						}
-						
-						//UserDefinedFunctionResource udf = alias.as(UserDefinedFunctionResource.class);
-						UserDefinedFunctionDefinition ud = new UserDefinedFunctionDefinition(fnIri, udfd.getBaseExpr(), udfd.getArgList());
-						
-						result.put(ud.getUri(), ud);
-						//f.add(fnIri, udfd.getBaseExpr(), udfd.getArgList());							
-					}
-				} else {
-					UserDefinedFunctionDefinition udfd = UdfDefinition.toJena(fnIri, activeUdf);
-					
-					logger.debug("Registering " + udfd);
-					
-					result.put(udfd.getUri(), udfd);
+				Set<String> overlap = Sets.intersection(requiredProfileIris, activeProfiles);
+				if(requiredProfiles.isEmpty() || !overlap.isEmpty()) {
+					activeUdfs.add(def);
 				}
+			}
+
+			if(activeUdfs.size() != 1) {
+				throw new RuntimeException("Expected exactly 1 definition for " + fnIri + "; got: " + activeUdfs);
+			}
+			
+			
+			UdfDefinition activeUdf = Iterables.getFirst(activeUdfs, null);
+
+			Resource ra = activeUdf.getAliasFor();
+
+			if(activeUdf.mapsToPropertyFunction()) {
+				System.out.println("Mapped pfn");
+			} else if(ra != null) {
+				UserDefinedFunctionResource alias = ra.as(UserDefinedFunctionResource.class);
+				if(alias != null) {
+					resolveUdf(result, alias, activeProfiles);
 					
+					String iri = forceIri(alias);
+					// Try to resolve the definition
+					// TODO Possible try to resolve against Jena's function registry
+					UserDefinedFunctionDefinition udfd = result.get(iri);
+					if(udfd == null) {
+						throw new RuntimeException("Could not resolve " + iri);						
+					}
+					
+					//UserDefinedFunctionResource udf = alias.as(UserDefinedFunctionResource.class);
+					UserDefinedFunctionDefinition ud = new UserDefinedFunctionDefinition(fnIri, udfd.getBaseExpr(), udfd.getArgList());
+					
+					result.put(ud.getUri(), ud);
+					//f.add(fnIri, udfd.getBaseExpr(), udfd.getArgList());							
+				}
+			} else {
+				UserDefinedFunctionDefinition udfd = UdfDefinition.toJena(fnIri, activeUdf);
+				
+				logger.debug("Registering " + udfd);
+				
+				result.put(udfd.getUri(), udfd);
+			}
+
 		}
 	}
 }

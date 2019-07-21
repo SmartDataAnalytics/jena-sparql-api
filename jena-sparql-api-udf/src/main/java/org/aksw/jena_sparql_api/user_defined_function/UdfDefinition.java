@@ -44,6 +44,9 @@ public interface UdfDefinition
 	@Iri("http://ns.aksw.org/jena/udf/profile")
 	Set<Resource> getProfiles();
 
+	@Iri("http://ns.aksw.org/jena/udf/inverse")
+	Set<InverseDefinition> getInverses();
+
 //	<T> Set<T> getProfiles(Class<T> x);
 
 	/**

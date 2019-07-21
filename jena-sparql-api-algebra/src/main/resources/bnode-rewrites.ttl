@@ -13,6 +13,10 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 
+r:prefixMapping
+  o:ns ("fn" fn:)
+  .
+
 o:UserDefinedFunction
   a owl:Class ;
   rdfs:label "User Defined Function"@en ;
@@ -27,10 +31,6 @@ o:profile
 
 # UserDefinedFunction = Named function, can be referenced by its IRI from SPARQL queries
 # UserDefinedFunctionMacro = Anonymous function, can be referenced from other macros, but not from SPARQL queries
-
-r:prefixMapping
-  o:ns ("fn" fn:)
-  .
 
 fn:afnBnode
   a o:UserDefinedFunction ;
@@ -123,3 +123,40 @@ fn:forceBnodeIri
   o:prefixMapping r:prefixMapping ;
   o:simpleDefinition ("IF(ISBLANK(?x), fn:encodeBnodeIri(?x), ?x)" "x") ;
   .
+
+
+# Result set transformation
+# Here we are dealing with (result set) blank node labels in accordance with the SPARQL standard
+# The purpose of fn:skolemizeBnodeLabel is to convert a blank node label into a string that can e
+# used as an IRI in queries
+# So an inverse function is not strictly needed, but it allows for also wrapping Jena's
+# graph's add and find methods to perform the conversion in both directions.  
+
+fn:skolemizeBnodeLabel a fn:UserDefinedFunction .
+
+fn:skolemizeBnodeLabel
+  o:definition [
+    o:profile p:jena ;
+    o:expr "CONCAT('_:', ?x)" ;
+    o:params ("x") ;
+    o:inverse [
+      o:ofParam "x" ;
+      o:fn [
+        a o:UserDefinedFunction ;
+        o:definition [
+          o:expr "STRAFTER(?x, '_:')" ;
+          o:params ("x")
+        ]
+      ]
+    ]
+  ]
+  .
+  
+#fn:skolemizeBnodeLabel
+#  o:definition [
+#    o:profile p:virtuoso ;
+#    o:aliasFor fn:identity
+#  ]
+#  .
+
+
