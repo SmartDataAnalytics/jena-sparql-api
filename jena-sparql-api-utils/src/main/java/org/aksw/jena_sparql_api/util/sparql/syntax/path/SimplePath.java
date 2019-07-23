@@ -8,7 +8,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.IterableUtils;
-import org.aksw.jena_sparql_api.utils.Generator;
+import org.aksw.commons.collections.generator.Generator;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.shared.PrefixMapping;

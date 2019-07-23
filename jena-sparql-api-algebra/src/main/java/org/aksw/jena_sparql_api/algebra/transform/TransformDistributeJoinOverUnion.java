@@ -15,7 +15,7 @@ import org.apache.jena.sparql.algebra.op.OpUnion;
 /**
  * Turn a join of unions into a union of joins.
  * It is recommended to use this transformation with the triple-based (i.e. NOT the quad based) form
- * and afterwards use another transfor to merge BGPs:
+ * and afterwards use another transform to merge BGPs:
  *
  * 		op = TransformDistributeJoinOverUnion.transform(op);
  *		op = Optimize.apply(new TransformMergeBGPs(), op);

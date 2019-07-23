@@ -1,6 +1,5 @@
 package org.aksw.jena_sparql_api.ext.virtuoso;
 
-import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -13,6 +12,8 @@ import org.slf4j.LoggerFactory;
 public class HealthcheckRunner
 	implements Runnable
 {
+	private static final Logger logger = LoggerFactory.getLogger(HealthcheckRunner.class);
+	
 	protected long healthcheckRetryCount;
 	protected long healthcheckInterval;
 	protected TimeUnit healthcheckIntervalUnit;
@@ -38,9 +39,11 @@ public class HealthcheckRunner
 		for(; i < healthcheckRetryCount; ++i) {
 			try {
 				healthcheckAction.run();
+		    	logger.debug("Health check status: success");
 				success = true;
 				break;
 			} catch(Exception e) {
+	        	logger.debug("Health check status: not ok - " + (healthcheckRetryCount - i) + " retries remaining");
 				lastException = e;
 			}
 			
@@ -74,13 +77,11 @@ public class HealthcheckRunner
 		        connection.connect();
 		        int code = connection.getResponseCode();
 		        if(code != 200) {
-		        	//logger.info("Health check status: fail");
 		        	throw new NotFoundException(url.toString());
 		        }
 			} finally {
 				connection.disconnect();
 			}
-	    	//logger.info("Health check status: success");
 		} catch(Exception e) {
 			throw new RuntimeException(e);
 		}

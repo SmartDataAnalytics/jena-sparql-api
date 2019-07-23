@@ -36,6 +36,14 @@ public class SparqlStmtIterator extends AbstractIterator<SparqlStmt> {
 	protected int line = 1;
 	protected int column = 1;
 
+	public int getLine() {
+		return line;
+	}
+	
+	public int getColumn() {
+		return column;
+	}
+	
 	public SparqlStmtIterator(Function<String, SparqlStmt> parser, String str) {
 		this(parser, str, 1, 1);
 	}	
@@ -109,7 +117,12 @@ public class SparqlStmtIterator extends AbstractIterator<SparqlStmt> {
 			line = line + Math.max(0, exPos[0] - 1);
 			column = column + Math.max(0, exPos[1] - 1);
 
-			String retryStr = str.substring(0, pos);
+			String retryStr;
+			try {
+				retryStr = str.substring(0, pos);
+			} catch(StringIndexOutOfBoundsException e) {
+				throw new RuntimeException("Error near line " + line + ", column " + column + ".", ex);
+			}
 
 			// Note: Jena parses an empty string as a sparql update statement without errors
 			if (isEmptyString(retryStr)) {

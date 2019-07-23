@@ -6,14 +6,16 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.aksw.commons.collections.generator.Generator;
 import org.aksw.commons.jena.jgrapht.PseudoGraphJenaModel;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
@@ -34,13 +36,13 @@ import org.aksw.jena_sparql_api.stmt.SparqlStmtUtils;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.PathUtils;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
-import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.graph.compose.Union;
 import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -83,7 +85,7 @@ public class ConceptPathFinderBidirectionalUtils {
 		Flowable<SparqlStmt> stmts;
 		stmts = Flowable.fromIterable(() -> {
 			try {
-				return SparqlStmtUtils.parse(in, SparqlStmtParserImpl.create(Syntax.syntaxARQ, true)).iterator();
+				return SparqlStmtUtils.parse(in, SparqlStmtParserImpl.create(Syntax.syntaxARQ, true));
 			} catch (IOException | ParseException e) {
 				throw new RuntimeException(e);
 			}
@@ -117,14 +119,20 @@ public class ConceptPathFinderBidirectionalUtils {
     public static UnaryRelation createUnboundAwareTypeQuery(UnaryRelation concept) {
 //        Set<Var> vars = concept.getVarsMentioned();
 //        Var s = concept.getVar();
+    	
+    	UnaryRelation result;
+    	if(concept.isSubjectConcept()) {
+    		result = Concept.parse("?t | ?s a ?t");
+    	} else {
+	    	
+	        Concept fragment = Concept.parse("?t | OPTIONAL { ?s a ?tmp } BIND(IF(BOUND(?tmp), ?tmp, eg:unbound) AS ?t)", PrefixMapping.Extended);
+	        result = fragment
+	        		.prependOn(Vars.s)
+	        		.with(concept)
+	        		//.project(fragment.getVars())
+	        		.toUnaryRelation();
+    	}
 
-        Concept fragment = Concept.parse("?t | OPTIONAL { ?s a ?tmp } BIND(IF(BOUND(?tmp), ?tmp, eg:unbound) AS ?t)", PrefixMapping.Extended);
-        UnaryRelation result = fragment
-        		.prependOn(Vars.s)
-        		.with(concept)
-        		//.project(fragment.getVars())
-        		.toUnaryRelation();
-        
         return result;
     }
 	
@@ -158,7 +166,7 @@ public class ConceptPathFinderBidirectionalUtils {
         //System.out.println(ResultSetFormatter.asText(qef.createQueryExecution("SELECT * { ?s ?p ?o }").execSelect()));
         //System.out.println(ResultSetFormatter.asText(qef.createQueryExecution("" + propertyQuery).execSelect()));
         List<Node> types = QueryExecutionUtils.executeList(new QueryExecutionFactorySparqlQueryConnection(conn), typeQuery);
-        logger.debug("Retrieved " + types.size() + " properties: " + types);
+        logger.debug("Retrieved " + types.size() + " types"); // + " properties: " + types);
 
         org.apache.jena.graph.Graph ext = GraphFactory.createDefaultGraph();
 
@@ -219,7 +227,7 @@ public class ConceptPathFinderBidirectionalUtils {
         //Query query = QueryFactory.create(test);
         logger.debug("TargetCandidateQuery: " + targetCandidateQuery);
         List<Node> candidates = QueryExecutionUtils.executeList(qefMeta, targetCandidateQuery);
-        logger.debug("Got " + candidates.size() + " candidates: " + candidates);
+        logger.debug("Got " + candidates.size() + " candidate target nodes"); // + " candidates: " + candidates);
 
         for(Node candidate : candidates) {
             Triple triple = new Triple(candidate, VocabPath.connectsWith.asNode(), VocabPath.end.asNode());
@@ -283,6 +291,9 @@ public class ConceptPathFinderBidirectionalUtils {
             	//DijkstraShortestPath<Node, Triple> dijkstraShortestPath = new DijkstraShortestPath<>(graph);
                 //GraphPath<Node, Triple> tmp = dijkstraShortestPath.getPath(startVertex, candidate);
         
+        
+        logger.info("Invoking path finder...");
+        
         List<GraphPath<RDFNode, Statement>> candidateGraphPaths;
         // TODO version 2 of the path finder needs to multiple path length by 2
     	Integer _maxPathLength = maxLength == null ? null : maxLength.intValue() + 2; // The '+ 2' is for the edges of the start and end vertex
@@ -336,6 +347,8 @@ public class ConceptPathFinderBidirectionalUtils {
             //BreathFirstTask.run(np, VocabPath.start, dest, new ArrayList<Step>(), callback);
             //BreathFirstTask.runFoo(np, VocabPath.start, dest, new ArrayList<Step>(), new ArrayList<Step>(), callback);
         //}
+    	
+    	logger.info("Found " + candidateGraphPaths.size() + " candidate paths");
 
         Collections.sort(candidateGraphPaths, new GraphPathComparator<>());
 
@@ -362,34 +375,35 @@ public class ConceptPathFinderBidirectionalUtils {
         
         
         if(pathValidators != null && !pathValidators.isEmpty()) {
-        	Set<SimplePath> rejectedPaths = new HashSet<>();
-        	tmp = tmp.filter(x -> {
-        		
-        		SimplePath parent = x.parentPath();
-        		boolean hasRejectedParent = false;
-        		while(parent != null) {
-        			hasRejectedParent = rejectedPaths.contains(parent);
-        			if(hasRejectedParent) {
-        				break;
-        			} else {
-        				parent = parent.parentPath();
-        			}
-        		}
-        		
-        		boolean r;
-        		if(!hasRejectedParent) {
-	        		Entry<SimplePath, P_Path0> e = SimplePath.seperateLastStep(x);
-	        		r = pathValidators.stream().allMatch(p -> p.test(e.getKey(), e.getValue()));	        		
-
-	        		if(!r) {
-	        			rejectedPaths.add(x);
-	        		}
-        		} else {
-        			r = false;
-        		}
-
-        		return r;
-        	});
+        	//Set<SimplePath> rejectedPaths = new HashSet<>();
+        	tmp = tmp.filter(x -> testPath(x, pathValidators));
+//        	tmp = tmp.filter(x -> {
+//        		
+//        		SimplePath parent = x.parentPath();
+//        		boolean hasRejectedParent = false;
+//        		while(parent != null) {
+//        			hasRejectedParent = rejectedPaths.contains(parent);
+//        			if(hasRejectedParent) {
+//        				break;
+//        			} else {
+//        				parent = parent.parentPath();
+//        			}
+//        		}
+//        		
+//        		boolean r;
+//        		if(!hasRejectedParent) {
+//	        		Entry<SimplePath, P_Path0> e = SimplePath.seperateLastStep(x);
+//	        		r = pathValidators.stream().allMatch(p -> p.test(e.getKey(), e.getValue()));	        		
+//
+//	        		if(!r) {
+//	        			rejectedPaths.add(x);
+//	        		}
+//        		} else {
+//        			r = false;
+//        		}
+//
+//        		return r;
+//        	});
         }
         
             	
@@ -417,8 +431,23 @@ public class ConceptPathFinderBidirectionalUtils {
 
         //List<SimplePath> result = new ArrayList<SimplePath>();
 
+        // TODO Make configurable
+        boolean abortOnFailedValidation = true;
         Flowable<SimplePath> result = Flowable.fromIterable(paths)
-        	.filter(path -> validatePath(conn, sourceConcept, targetConcept, path, generator));
+        	.filter(path -> {
+        		boolean r;
+        		try {
+        			r = validatePath(conn, sourceConcept, targetConcept, path, generator);
+        		} catch(Exception e) {
+        			if(abortOnFailedValidation) {
+        				throw new RuntimeException(e);
+        			} else {
+        				r = false;
+        			}
+        		}
+        		
+        		return r;
+        	});
         	
         return result;
         	
@@ -466,59 +495,95 @@ public class ConceptPathFinderBidirectionalUtils {
 //
 //        return Flowable.fromIterable(result);
     }
+    
+    
+    public static boolean testPath(SimplePath path, Collection<BiPredicate<? super SimplePath, ? super P_Path0>> validators) {
+    	List<P_Path0> steps = path.getSteps();
+    	int n = steps.size();
+    	
+    	boolean result = true;
+    	outer: for(int i = 0; i < n; ++i) {
+    		List<P_Path0> base = steps.subList(0, i);
+    		P_Path0 contrib = steps.get(i);
+    		
+    		for(BiPredicate<? super SimplePath, ? super P_Path0> validator : validators) {
+    			result = validator.test(new SimplePath(base), contrib);
+    			if(!result) {
+    				break outer;
+    			}
+    		}
+    		
+    	}
+    	
+//    	System.out.println("PATHVALIDATION [" + result + "] " + path);
+//    	if(result == false) {
+//    		System.out.println("DEBUG POINT");
+//    	}
+    	return result;
+    }
 
     
     public static boolean validatePath(SparqlQueryConnection conn, UnaryRelation sourceConcept, UnaryRelation targetConcept, SimplePath path, Generator<Var> generator) {
+
         List<Element> pathElements = SimplePath.pathToElements(path, sourceConcept.getVar(), targetConcept.getVar(), generator);
 
-        BinaryRelation pathRelation = new BinaryRelationImpl(ElementUtils.groupIfNeeded(pathElements), sourceConcept.getVar(), targetConcept.getVar());
-        Element group = pathRelation
-        	.prependOn(pathRelation.getSourceVar()).with(sourceConcept)
-        	.joinOn(pathRelation.getTargetVar()).with(targetConcept)
-        	.getElement();
+        Var sourceVar = sourceConcept.getVar();
+        Var targetVar = pathElements.isEmpty() ? sourceVar : targetConcept.getVar();
         
-//        
-//        List<Element> tmp = new ArrayList<Element>();
-//        if(!sourceConcept.isSubjectConcept()) {
-//            tmp.addAll(sourceConcept.getElements());
+        UnaryRelation src = sourceConcept;
+        UnaryRelation tgt = targetConcept;
+        Var sourceJoinVar = sourceVar;
+        Var targetJoinVar = targetVar;
+
+	    // If the source concept is a subject concept, possibly swap it
+	    if(sourceConcept.isSubjectConcept()) {
+	    	if(!targetConcept.isSubjectConcept()) {
+	    		src = targetConcept;
+	    		tgt = sourceConcept;
+	    		
+	    		sourceJoinVar = targetVar;
+	    		targetJoinVar = sourceVar;
+	    	}
+	    }
+
+//	    if(Objects.equals(sourceJoinVar, targetJoinVar)) {
+//        	System.out.println("DEBUG POINT Equal var");
 //        }
-//
-//        tmp.addAll(pathElements);
-//
-//        // TODO Should we treat the case where the target concept is a subject concept in a special way?
-//        //if(!targetConcept.isSubjectConcept()) {
-//            tmp.addAll(targetConcept.getElements());
-//        //}
-//
-//
-//        if(pathElements.isEmpty()) {
-//            if(!sourceConcept.getVar().equals(targetConcept.getVar()) && !sourceConcept.isSubjectConcept()) {
-//                tmp.add(new ElementFilter(new E_Equals(new ExprVar(sourceConcept.getVar()), new ExprVar(targetConcept.getVar()))));
-//            }
-//        }
-//
-//        Element group = ElementUtils.groupIfNeeded(tmp);
-//        
-//        ElementGroup group = new ElementGroup();
-//        for(Element t : tmp) {
-//            group.addElement(t);
-//        }
-//
+        
+        BinaryRelation pathRelation = new BinaryRelationImpl(ElementUtils.groupIfNeeded(pathElements), sourceVar, targetVar);
+        Element group = pathRelation
+        	.prependOn(sourceJoinVar).with(src)
+        	.joinOn(targetJoinVar).with(tgt)
+        	.getElement();
+
         Query query = new Query();
         query.setQueryAskType();
         query.setQueryPattern(group);
 
+        
         logger.debug("Verifying candidate with query: " + query);
 
-//        QueryExecution xqe = conn.query(query);
-//        boolean isCandidate = xqe.execAsk();
-        boolean isCandidate = conn.queryAsk(query);
-        logger.debug("Verification result is [" + isCandidate + "] for " + query);
+        // For future reference: If the query is
+    	// { ?s  <http://vocab.gtfs.org/terms#parentStation>  ?v_1 . 
+    	// ?v_1  ?p  ?o }
+        // Then the second pattern actually expresses the constraint
+        // that v_1 must appear as a subject
+        // This is not optimal, but correct!
 
-//        if(isCandidate) {
-//            result.add(path);
+//        if(("" + query).contains("?v_1  ?p  ?o")) {
+//        	System.out.println("DEBUG POINT");
 //        }
-        return isCandidate;
+
+        // TODO Make timeouts configurable
+        boolean result;
+        try(QueryExecution qe = conn.query(query)) {
+        	//qe.setTimeout(30, TimeUnit.SECONDS, 30, TimeUnit.SECONDS);
+        	result = qe.execAsk();
+        }
+
+        logger.debug("Verification result is [" + result + "] for " + query);
+
+        return result;
     }
     
     /**

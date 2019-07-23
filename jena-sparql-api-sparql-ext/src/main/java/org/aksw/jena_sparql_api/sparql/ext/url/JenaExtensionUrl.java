@@ -9,6 +9,7 @@ public class JenaExtensionUrl {
     
     public static void register() {
         FunctionRegistry.get().put(ns + "text", E_UrlText.class);
+        FunctionRegistry.get().put(ns + "normalize", E_UrlNormalize.class);
 
         PropertyFunctionRegistry.get().put(ns + "text", new PropertyFunctionFactoryUrlText());
     }

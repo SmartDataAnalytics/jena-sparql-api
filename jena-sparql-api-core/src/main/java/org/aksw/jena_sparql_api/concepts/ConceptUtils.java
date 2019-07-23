@@ -13,10 +13,10 @@ import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.MapUtils;
 import org.aksw.commons.collections.SetUtils;
+import org.aksw.commons.collections.generator.Generator;
 import org.aksw.jena_sparql_api.core.utils.QueryGenerationUtils;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprListUtils;
-import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.GeneratorBlacklist;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.aksw.jena_sparql_api.utils.Triples;
@@ -35,6 +35,8 @@ import org.apache.jena.sdb.core.Gensym;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpAsQuery;
+import org.apache.jena.sparql.algebra.op.OpBGP;
+import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Substitute;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.BindingHashMap;
@@ -131,9 +133,15 @@ public class ConceptUtils {
 
         Op op = Algebra.compile(a.getElement());
         Op substOp = Substitute.substitute(op, binding);
-        Query tmp = OpAsQuery.asQuery(substOp);
-
-        Element newElement = tmp.getQueryPattern();
+        
+        Element newElement;
+        if(substOp instanceof OpBGP) {
+        	BasicPattern bp = ((OpBGP)substOp).getPattern();
+        	newElement = new ElementTriplesBlock(bp);
+        } else {
+        	Query tmp = OpAsQuery.asQuery(substOp);
+        	newElement = tmp.getQueryPattern();
+        }
         //ElementGroup newElement = new ElementGroup();
         //newElement.addElement(tmp.getQueryPattern());
 
@@ -268,7 +276,7 @@ public class ConceptUtils {
         return result;
     }
 
-    public static Set<Var> getVarsMentioned(Concept concept) {
+    public static Set<Var> getVarsMentioned(UnaryRelation concept) {
         Collection<Var> tmp = PatternVars.vars(concept.getElement());
         Set<Var> result = SetUtils.asSet(tmp);
         return result;
@@ -326,9 +334,9 @@ public class ConceptUtils {
 //        return result;
 //    }
 
-    public static Concept renameVar(Concept concept, Var targetVar) {
+    public static UnaryRelation renameVar(UnaryRelation concept, Var targetVar) {
 
-        Concept result;
+    	UnaryRelation result;
         if(concept.getVar().equals(targetVar)) {
             // Nothing to do since we are renaming the variable to itself
             result = concept;

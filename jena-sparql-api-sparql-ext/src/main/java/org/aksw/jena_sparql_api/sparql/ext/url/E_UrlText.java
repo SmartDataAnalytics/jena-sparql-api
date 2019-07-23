@@ -8,6 +8,7 @@ import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 
 import org.apache.jena.graph.Node;
+import org.apache.jena.sparql.expr.ExprTypeException;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.function.FunctionBase1;
 
@@ -22,7 +23,8 @@ public class E_UrlText
         try {
             result = resolve(nv);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+        	throw new ExprTypeException("Failed to resolve URL from " + nv);//": " + node)) ;
+            //throw new RuntimeException(e);
         }
 
         return result;

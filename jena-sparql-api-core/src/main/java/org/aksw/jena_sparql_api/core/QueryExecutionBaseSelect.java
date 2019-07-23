@@ -1,9 +1,13 @@
 package org.aksw.jena_sparql_api.core;
 
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.Set;
 
+import org.aksw.commons.collections.SetUtils;
 import org.aksw.commons.collections.SinglePrefetchIterator;
 import org.aksw.jena_sparql_api.utils.CloseableQueryExecution;
+import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.jena.atlas.json.JsonArray;
 import org.apache.jena.atlas.json.JsonObject;
@@ -16,10 +20,13 @@ import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.syntax.PatternVars;
 import org.apache.jena.sparql.syntax.Template;
 import org.apache.jena.update.UpdateRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 
 class IteratorWrapperClose<T>
@@ -333,17 +340,36 @@ public abstract class QueryExecutionBaseSelect
                     + query.toString() + "]");
         }
 
+        Template template = query.getConstructTemplate();
+        Set<Var> projectVars = QuadPatternUtils.getVarsMentioned(template.getQuads());
+        
         Query clone = query.cloneQuery();
         clone.setQuerySelectType();
 
         //Query selectQuery = QueryUtils.elementToQuery(query.getQueryPattern());
-        clone.setQueryResultStar(true);
+        
+    	clone.getProject().clear();
+    	if(projectVars.isEmpty()) {
+        	// If the template is variable free then project the first variable of the query pattern
+    		// If the query pattern is variable free then just use the result star
+        	Set<Var> patternVars = SetUtils.asSet(PatternVars.vars(query.getQueryPattern()));
+        	if(patternVars.isEmpty()) {
+        		clone.setQueryResultStar(true);
+        	} else {
+        		Var v = patternVars.iterator().next();
+            	clone.setQueryResultStar(false);
+            	clone.getProject().add(v);        		
+        	}
+        } else {
+        	clone.setQueryResultStar(false);
+        	clone.addProjectVars(projectVars);
+        }
+
         ResultSetCloseable rs = executeCoreSelect(clone);
 
-        System.out.println("Executing query as: " + clone);
+        //System.out.println("Executing query as: " + clone);
 
         // insertPrefixesInto(result) ;
-        Template template = query.getConstructTemplate();
 
         Iterator<Triple> result = new ConstructIterator(template, rs);
         return result;

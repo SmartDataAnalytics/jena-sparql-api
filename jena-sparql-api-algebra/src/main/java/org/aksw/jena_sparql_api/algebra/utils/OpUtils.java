@@ -16,6 +16,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.aksw.commons.collections.generator.Generator;
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeImpl;
 import org.aksw.commons.collections.trees.TreeUtils;
@@ -23,7 +24,6 @@ import org.aksw.jena_sparql_api.algebra.analysis.VarUsage;
 import org.aksw.jena_sparql_api.algebra.analysis.VarUsageAnalyzerVisitor;
 import org.aksw.jena_sparql_api.utils.CnfUtils;
 import org.aksw.jena_sparql_api.utils.ExprUtils;
-import org.aksw.jena_sparql_api.utils.Generator;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.aksw.jena_sparql_api.utils.VarExprListUtils;
 import org.aksw.jena_sparql_api.utils.VarGeneratorBlacklist;
@@ -48,8 +48,10 @@ import org.apache.jena.sparql.algebra.op.OpQuadBlock;
 import org.apache.jena.sparql.algebra.op.OpQuadPattern;
 import org.apache.jena.sparql.algebra.op.OpSequence;
 import org.apache.jena.sparql.algebra.op.OpService;
+import org.apache.jena.sparql.algebra.op.OpTable;
 import org.apache.jena.sparql.algebra.op.OpTriple;
 import org.apache.jena.sparql.algebra.op.OpUnion;
+import org.apache.jena.sparql.algebra.table.TableData;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
@@ -60,6 +62,16 @@ import org.apache.jena.sparql.expr.ExprList;
 import com.google.common.collect.Lists;
 
 public class OpUtils {
+    public static OpTable createEmptyTableUnionVars(Op ... subOps) {
+    	List<Var> vars = Arrays.asList(subOps).stream()
+    			.flatMap(op -> OpVars.visibleVars(op).stream())
+    			.distinct()
+    			.collect(Collectors.toList());
+    	
+		TableData table = new TableData(vars, Collections.emptyList());
+		OpTable result = OpTable.create(table);
+		return result;
+    }
 
     /**
      * Like OpVars.visibleVars, but filters out non-named vars Filter out

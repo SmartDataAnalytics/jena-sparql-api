@@ -9,6 +9,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 
+import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
+import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
 import org.aksw.jena_sparql_api.core.utils.GraphResource;
 import org.aksw.jena_sparql_api.fail.QueryExecutionFactoryAlwaysFail;
 import org.aksw.jena_sparql_api.fallback.QueryExecutionFactoryFallback;
@@ -19,10 +21,15 @@ import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdfconnection.RDFConnection;
+import org.apache.jena.rdfconnection.RDFConnectionFactory;
+import org.apache.jena.rdfconnection.RDFConnectionModular;
+import org.apache.jena.riot.WebContent;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.core.DatasetImpl;
+import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
 import org.apache.jena.sparql.util.Context;
 
 import com.google.common.base.Supplier;
@@ -213,4 +220,7 @@ public class FluentQueryExecutionFactory<P>
 //    public T end() {
 //        throw new RuntimeException("A call to .end() is invalid here");
 //    }
+    
+
+
 }

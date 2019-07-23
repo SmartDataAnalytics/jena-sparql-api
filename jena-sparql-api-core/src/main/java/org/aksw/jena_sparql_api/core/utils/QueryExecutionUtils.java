@@ -215,6 +215,7 @@ public class QueryExecutionUtils {
 
 
 
+    // TODO Consolidate with QueryGenerationUtils
     public static long countQuery(Query query, QueryExecutionFactory qef) {
         boolean needsWrapping = !query.getGroupBy().isEmpty() || !query.getAggregators().isEmpty();
 

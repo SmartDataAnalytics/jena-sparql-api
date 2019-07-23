@@ -92,7 +92,7 @@ public class PropertyFunctionFactoryJsonUnnest
                 boolean isJson = node.isLiteral() && node.getLiteralDatatype() instanceof RDFDatatypeJson;
                 if(isJson) {
                     JsonElement data = (JsonElement)node.getLiteralValue();
-                    if(data.isJsonArray()) {
+                    if(data != null && data.isJsonArray()) {
                         JsonArray arr = data.getAsJsonArray();
                         List<Binding> bindings = new ArrayList<Binding>(arr.size());
 

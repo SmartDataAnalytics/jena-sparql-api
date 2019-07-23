@@ -1,42 +1,43 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
 
-    <artifactId>jena-sparql-api-views</artifactId>
-    <packaging>jar</packaging>
+	<artifactId>jena-sparql-api-views</artifactId>
+	<packaging>jar</packaging>
 
-    <parent>
-        <groupId>org.aksw.jena-sparql-api</groupId>
-        <artifactId>jena-sparql-api-parent</artifactId>
-        <version>3.10.0-1-SNAPSHOT</version>
-    </parent>
+	<parent>
+		<groupId>org.aksw.jena-sparql-api</groupId>
+		<artifactId>jena-sparql-api-parent</artifactId>
+		<version>3.11.0-2-SNAPSHOT</version>
+	</parent>
 
-    <dependencies>
-        <!-- Self Dependencies -->
-        <dependency>
-            <groupId>org.aksw.jena-sparql-api</groupId>
-            <artifactId>jena-sparql-api-core</artifactId>
-        </dependency>
+	<dependencies>
+		<!-- Self Dependencies -->
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-core</artifactId>
+		</dependency>
 
-        <!-- <dependency> -->
-        <!-- <groupId>com.vividsolutions</groupId> -->
-        <!-- <artifactId>jts</artifactId> -->
-        <!-- </dependency> -->
+		<!-- <dependency> -->
+		<!-- <groupId>com.vividsolutions</groupId> -->
+		<!-- <artifactId>jts</artifactId> -->
+		<!-- </dependency> -->
+		<dependency>
+			<groupId>net.postgis</groupId>
+			<artifactId>postgis-jdbc</artifactId>
+		</dependency>
 
-        <dependency>
-            <groupId>net.postgis</groupId>
-            <artifactId>postgis-jdbc</artifactId>
-        </dependency>
+		<!-- <dependency> -->
+		<!-- <groupId>code.google.com</groupId> -->
+		<!-- <artifactId>patricia-trie</artifactId> -->
+		<!-- </dependency> -->
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-resources-test-config</artifactId>
+			<scope>test</scope>
+		</dependency>
 
-<!--         <dependency> -->
-<!--             <groupId>code.google.com</groupId> -->
-<!--             <artifactId>patricia-trie</artifactId> -->
-<!--         </dependency> -->
-        <dependency>
-            <groupId>org.aksw.jena-sparql-api</groupId>
-            <artifactId>jena-sparql-api-resources-test-config</artifactId>
-            <scope>test</scope>
-       </dependency>
-
-    </dependencies>
+	</dependencies>
 </project>

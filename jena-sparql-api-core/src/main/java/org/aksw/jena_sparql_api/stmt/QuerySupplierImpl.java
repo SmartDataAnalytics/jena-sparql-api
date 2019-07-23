@@ -1,9 +1,10 @@
 package org.aksw.jena_sparql_api.stmt;
 
-import com.google.common.base.Supplier;
+import java.util.function.Supplier;
+
 import org.apache.jena.query.Query;
-import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.core.Prologue;
+
 
 public class QuerySupplierImpl
     implements Supplier<Query>

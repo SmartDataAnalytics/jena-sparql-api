@@ -1,15 +1,15 @@
 package org.aksw.jena_sparql_api.sparql_path.impl.bidirectional;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
+import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
-import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
-import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
-import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
+import org.aksw.jena_sparql_api.core.RDFConnectionFactoryEx;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinder;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinderBase;
 import org.aksw.jena_sparql_api.sparql_path.api.ConceptPathFinderFactorySummaryBase;
@@ -22,19 +22,17 @@ import org.aksw.jena_sparql_api.stmt.SparqlStmtParserImpl;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtQuery;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtUtils;
 import org.aksw.jena_sparql_api.util.sparql.syntax.path.SimplePath;
+import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
-import org.apache.jena.rdfconnection.RDFConnectionModular;
 import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
-import org.apache.jena.riot.WebContent;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.DatasetDescription;
-import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
 import org.apache.jena.sparql.lang.arq.ParseException;
 
 import io.reactivex.Flowable;
@@ -50,7 +48,7 @@ public class ConceptPathFinderSystem3
 		Flowable<SparqlStmt> stmts;
 		stmts = Flowable.fromIterable(() -> {
 			try {
-				return SparqlStmtUtils.parse(in, SparqlStmtParserImpl.create(Syntax.syntaxARQ, true)).iterator();
+				return SparqlStmtUtils.parse(in, SparqlStmtParserImpl.create(Syntax.syntaxARQ, true));
 			} catch (IOException | ParseException e) {
 				throw new RuntimeException(e);
 			}
@@ -99,35 +97,62 @@ public class ConceptPathFinderSystem3
 		}
 	}
 
+	public static void main(String[] args) throws Exception {
+		Model m = RDFDataMgr.loadModel("/home/raven/Projects/Eclipse/faceted-browsing-benchmark-parent/faceted-browsing-benchmark-parent/faceted-browsing-benchmark-v2-parent/faceted-browsing-benchmark-v2-core/src/main/resources/path-data-simple.ttl");
+		
+		try(RDFConnection conn = RDFConnectionFactory.connect(DatasetFactory.wrap(m))) {
+			ConceptPathFinderSystem system = new ConceptPathFinderSystem3();
+			Model dataSummary = system.computeDataSummary(conn).blockingGet();
+
+			ConceptPathFinder pathFinder = system.newPathFinderBuilder()
+				.setDataConnection(conn)
+				.setDataSummary(dataSummary)
+				.build();
+			
+			
+			List<SimplePath> paths = pathFinder.createSearch(ConceptUtils.createSubjectConcept(), ConceptUtils.createSubjectConcept())
+				.setMaxLength(1l)
+				.exec()
+				.toList()
+				.blockingGet();
+			
+			System.out.println("Paths: " + paths);
+		}
+	}
+
+	
+	public static void main3(String[] args) throws Exception {
+		DatasetDescription datasetDescription = new DatasetDescription();
+		//datasetDescription.addDefaultGraphURI("http://dbpedia.org/wkd_uris");
+		datasetDescription.addDefaultGraphURI("http://dbpedia.org");
+		
+		try(RDFConnection conn = wrapWithDatasetAndXmlContentType("http://localhost:8890/sparql", datasetDescription)) {
+			ConceptPathFinderSystem system = new ConceptPathFinderSystem3();
+			Model model = system.computeDataSummary(conn).blockingGet();
+
+			RDFDataMgr.write(new FileOutputStream("/home/raven/dbpedia-data-summary.ttl"), model, RDFFormat.TURTLE_PRETTY);
+		}
+	}
+
+	public static RDFConnection wrapWithDatasetAndXmlContentType(String url, DatasetDescription datasetDescription) {
+		RDFConnection rawConn = RDFConnectionFactory.connect("http://localhost:8890/sparql");
+		RDFConnection result = RDFConnectionFactoryEx.wrapWithDatasetAndXmlContentType(rawConn, datasetDescription);
+		return result;
+	}
 	
 	
-	public static void main(String[] args) {
+	public static void main2(String[] args) {
 		DatasetDescription datasetDescription = new DatasetDescription();
 		//datasetDescription.addDefaultGraphURI("http://dbpedia.org/wkd_uris");
 		datasetDescription.addDefaultGraphURI("http://project-hobbit.eu/benchmark/fbb2/");
 		
-		try(RDFConnection rawConn = RDFConnectionFactory.connect("http://localhost:8890/sparql")) {
+		try(RDFConnection conn = wrapWithDatasetAndXmlContentType("http://localhost:8890/sparql", datasetDescription)) {
 		
 			
 			//RDFConnection baseConn = RDFConnectionFactory.connect(DatasetFactory.create());
 
 			// Wrap the connection to use a different content type for queries...
 			// Jena rejects some of Virtuoso's json output
-			@SuppressWarnings("resource")
-			RDFConnection conn =
-					new RDFConnectionModular(new SparqlQueryConnectionJsa(
-							FluentQueryExecutionFactory
-								.from(new QueryExecutionFactorySparqlQueryConnection(rawConn))
-								.config()
-								.withDatasetDescription(datasetDescription)
-								.withPostProcessor(qe -> {
-									if(qe instanceof QueryEngineHTTP) {
-										((QueryEngineHTTP)qe).setSelectContentType(WebContent.contentTypeResultsXML);
-									}
-								})
-								.end()
-								.create()
-								), rawConn, rawConn);
 
 //			ConceptPathFinderSystem system = new ConceptPathFinderSystemBidirectional();
 			ConceptPathFinderSystem system = new ConceptPathFinderSystem3();

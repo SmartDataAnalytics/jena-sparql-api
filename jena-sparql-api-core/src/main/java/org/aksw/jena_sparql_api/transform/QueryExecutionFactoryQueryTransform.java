@@ -10,9 +10,9 @@ import org.apache.jena.query.QueryExecution;
 public class QueryExecutionFactoryQueryTransform
     extends QueryExecutionFactoryDecorator
 {
-    protected Function<Query, Query> transform;
+    protected Function<? super Query, ? extends Query> transform;
 
-    public QueryExecutionFactoryQueryTransform(QueryExecutionFactory decoratee, Function<Query, Query> transform) {
+    public QueryExecutionFactoryQueryTransform(QueryExecutionFactory decoratee, Function<? super Query, ? extends Query> transform) {
         super(decoratee);
         this.transform = transform;
     }

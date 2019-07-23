@@ -111,12 +111,12 @@ public class BinaryRelationImpl
         return result;
     }
 
-    public Set<Var> getVarsMentioned() {
-        Set<Var> result = SetUtils.asSet(PatternVars.vars(element));
-        result.add(sourceVar);
-        result.add(targetVar);
-        return result;
-    }
+//    public Set<Var> getVarsMentioned() {
+//        Set<Var> result = SetUtils.asSet(PatternVars.vars(element));
+//        result.add(sourceVar);
+//        result.add(targetVar);
+//        return result;
+//    }
 
     public BinaryRelation applyNodeTransform(NodeTransform nodeTransform) {
         Var s = VarUtils.applyNodeTransform(sourceVar, nodeTransform);
@@ -170,6 +170,21 @@ public class BinaryRelationImpl
      */
     public static BinaryRelation createBwd(Var s, Node p, Var o) {
         BinaryRelation result = new BinaryRelationImpl(ElementUtils.createElementTriple(s, p, o), o, s);
+        return result;
+    }
+
+    /**
+     * 
+     * @param s
+     * @param p
+     * @param o
+     * @return
+     */
+    public static BinaryRelation create(Var s, Node p, Var o, boolean isFwd) {
+        BinaryRelation result = isFwd
+        		? createFwd(s, p, o)
+        		: createBwd(s, p, o);
+
         return result;
     }
 

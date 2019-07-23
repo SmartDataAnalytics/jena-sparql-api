@@ -34,7 +34,7 @@ public static class Company {
 
 ```
 
-This is an excerpt from the [ExampleMapperDBpedia.java](src/main/java/org/aksw/jena_sparql_api/mapper/examples/ExampleMapperDBpedia.java) class:
+This is an excerpt from the [MainExampleMapperDBpedia.java](src/test/java/org/aksw/jena_sparql_api/mapper/test/cases/MainExampleMapperDBpedia.java) class:
 
 ```java
 public class MainMapperDBpedia {

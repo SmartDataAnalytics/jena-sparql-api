@@ -11,6 +11,7 @@ import java.util.Set;
  *
  * @param <T>
  */
+@Deprecated //Use from a better location (aksw-commons?)
 public class ValueSet<T>
 {
 	private Set<T> values;
