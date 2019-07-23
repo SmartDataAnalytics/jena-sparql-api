@@ -75,9 +75,18 @@ public class FluentQueryExecutionFactoryFn<P>
         return this;
     }
 
-    
+
+    /**
+     * Wraps the current {@link QueryExecutionFactory} with a delayer.
+     * Returns 'this' without further action if the argument is null.
+     * 
+     * @param delayer
+     * @return
+     */
     public FluentQueryExecutionFactoryFn<P> withDelay(final Delayer delayer) {
-        compose(qef -> new QueryExecutionFactoryDelay(qef, delayer));
+    	if(delayer != null) {
+    		compose(qef -> new QueryExecutionFactoryDelay(qef, delayer));
+    	}
 
         return this;
     }
