@@ -293,7 +293,7 @@ public class MainSparqlQcDatasetAnalysis {
             }).map(graph -> {
                 // For all nodes in the graph, fetch all associated information according to the shape
                 // FIXME: We should exclude predicate nodes
-                Map<Node, Resource> map = dataLs.apply(() -> GraphUtils.allNodes(graph));
+                Map<Node, Resource> map = dataLs.fetchMap(() -> GraphUtils.allNodes(graph));
 
                 // Extract the value of LSQ.text and parse it as a query
                 Map<Node, Query> m = map.entrySet().stream().collect(Collectors.toMap(

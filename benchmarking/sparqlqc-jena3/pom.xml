@@ -56,8 +56,8 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<gpg.keyname>AKSW</gpg.keyname>
 
-		<jena.version>3.6.0</jena.version>
-		<jsa.subversion>3-SNAPSHOT</jsa.subversion>
+		<jena.version>3.11.0</jena.version>
+		<jsa.subversion>2-SNAPSHOT</jsa.subversion>
 
 		<jsa.version>${jena.version}-${jsa.subversion}</jsa.version>
 		<slf4j.version>1.7.21</slf4j.version>
@@ -100,7 +100,7 @@
 
 			<dependency>
 				<groupId>org.aksw.jena-sparql-api</groupId>
-				<artifactId>jena-sparql-api-mapper</artifactId>
+				<artifactId>jena-sparql-api-mapper-proxy</artifactId>
 				<version>${jsa.version}</version>
 			</dependency>
 
