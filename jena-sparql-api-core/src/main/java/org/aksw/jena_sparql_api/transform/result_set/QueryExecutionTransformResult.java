@@ -90,7 +90,7 @@ public class QueryExecutionTransformResult
     }
 
 
-	public ResultSet applyNodeTransform(NodeTransform nodeTransform, ResultSet rs) {
+	public static ResultSet applyNodeTransform(NodeTransform nodeTransform, ResultSet rs) {
 		Closeable closeable = rs instanceof Closeable ? (Closeable)rs : null;
 		List<String> vars = rs.getResultVars();
 
@@ -104,21 +104,21 @@ public class QueryExecutionTransformResult
 		return result;
 	}
 	
-	public Graph applyNodeTransform(NodeTransform nodeTransform, Graph graph) {
+	public static Graph applyNodeTransform(NodeTransform nodeTransform, Graph graph) {
 		Graph result = GraphFactory.createDefaultGraph();
 		graph.find().mapWith(t -> NodeTransformLib.transform(nodeTransform, t))
 			.forEachRemaining(result::add);
 		return result;
 	}
 
-	public Model applyNodeTransform(NodeTransform nodeTransform, Model model) {
+	public static Model applyNodeTransform(NodeTransform nodeTransform, Model model) {
 		Graph oldGraph = model.getGraph();
 		Graph newGraph = applyNodeTransform(nodeTransform, oldGraph);
 		Model result = ModelFactory.createModelForGraph(newGraph);
 		return result;
 	}
 	
-	public DatasetGraph applyNodeTransform(NodeTransform nodeTransform, DatasetGraph dg) {
+	public static DatasetGraph applyNodeTransform(NodeTransform nodeTransform, DatasetGraph dg) {
 		DatasetGraph result = DatasetGraphFactory.create();
 		WrappedIterator.create(dg.find())
 			.mapWith(q -> NodeTransformLib.transform(nodeTransform, q))
@@ -126,7 +126,7 @@ public class QueryExecutionTransformResult
 		return result;
 	}
 
-	public Dataset applyNodeTransform(NodeTransform nodeTransform, Dataset dataset) {
+	public static Dataset applyNodeTransform(NodeTransform nodeTransform, Dataset dataset) {
 		DatasetGraph oldDg = dataset.asDatasetGraph();
 		DatasetGraph newDg = applyNodeTransform(nodeTransform, oldDg);
 		Dataset result = DatasetFactory.wrap(newDg);
@@ -236,7 +236,7 @@ public class QueryExecutionTransformResult
 	 */
 	public static NodeTransform createBnodeLabelTransform(Expr bnodeLabelTransform, Var v) {
 		Expr conditionalExpr = addBnodeCheckAndTransform(bnodeLabelTransform, v);
-		NodeTransform result = createBnodeLabelTransform(conditionalExpr, v);
+		NodeTransform result = createNodeTransform(conditionalExpr, v);
 		return result;
 	}
 

@@ -7,8 +7,6 @@
 
 @prefix ent: <http://www.ontotext.com/owlim/entity#>
 
-
-
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
@@ -132,9 +130,8 @@ fn:forceBnodeIri
 # So an inverse function is not strictly needed, but it allows for also wrapping Jena's
 # graph's add and find methods to perform the conversion in both directions.  
 
-fn:skolemizeBnodeLabel a fn:UserDefinedFunction .
 
-fn:skolemizeBnodeLabel
+fn:prependBnodePrefix
   o:definition [
     o:profile p:jena ;
     o:expr "CONCAT('_:', ?x)" ;
@@ -151,12 +148,21 @@ fn:skolemizeBnodeLabel
     ]
   ]
   .
-  
-#fn:skolemizeBnodeLabel
-#  o:definition [
-#    o:profile p:virtuoso ;
-#    o:aliasFor fn:identity
-#  ]
-#  .
+
+fn:skolemizeBnodeLabel a o:UserDefinedFunction .
+
+fn:skolemizeBnodeLabel
+  o:definition [
+    o:profile p:jena, p:stardog ;
+    o:aliasFor fn:prependBnodePrefix ;
+  ]
+  .
+
+fn:skolemizeBnodeLabel
+  o:definition [
+    o:profile p:virtuoso ;
+    o:aliasFor fn:identity ;
+  ]
+  .
 
 

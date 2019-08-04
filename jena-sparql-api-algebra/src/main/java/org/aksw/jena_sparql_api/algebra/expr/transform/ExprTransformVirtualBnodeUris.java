@@ -26,6 +26,7 @@ import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpVars;
 import org.apache.jena.sparql.algebra.Transformer;
 import org.apache.jena.sparql.algebra.op.OpExtend;
+import org.apache.jena.sparql.algebra.op.OpProject;
 import org.apache.jena.sparql.algebra.optimize.TransformMergeBGPs;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.core.VarExprList;
@@ -258,6 +259,11 @@ public class ExprTransformVirtualBnodeUris
 	public static Expr expandMacro(Map<String, UserDefinedFunctionDefinition> macros, String udfUri, Expr ... args) {
 		Expr e = new E_Function(udfUri, new ExprList(Arrays.asList(args)));
 
+		Expr result = expandMacro(macros, e);
+		return result;
+	}
+
+	public static Expr expandMacro(Map<String, UserDefinedFunctionDefinition> macros, Expr e) {
 		ExprTransform xform = new ExprTransformExpand(macros);
 		e = FixpointIteration.apply(100, e, x -> ExprTransformer.transform(xform, x));
 		e = FixpointIteration.apply(100, e, ExprLib::foldConstants);
@@ -265,7 +271,6 @@ public class ExprTransformVirtualBnodeUris
 	
 		return e;
 	}
-
 	
 	public static NodeValue eval(Map<String, UserDefinedFunctionDefinition> macros, String udfUri, Expr ... args) {
 		//UserDefinedFunctionDefinition udfd = macros.get(udfUri);
@@ -384,8 +389,9 @@ public class ExprTransformVirtualBnodeUris
 		for(Var v : visibleVars) {
 			vel.add(v, expandMacro(macros, forceBnodeIriFnIri, new ExprVar(map.get(v))));
 		}
-		OpExtend result = OpExtend.create(tmp, vel);
+		Op result = new OpProject(OpExtend.create(tmp, vel), visibleVars);
 
+		
 		return result;
 	}
 	
