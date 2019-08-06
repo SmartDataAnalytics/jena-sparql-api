@@ -1,6 +1,6 @@
 package org.aksw.jena_sparql_api.utils.transform;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import org.apache.jena.graph.Node;
@@ -14,7 +14,7 @@ import org.apache.jena.sparql.graph.NodeTransform;
 public class NodeTransformCollectNodes
     implements NodeTransform
 {
-    public Set<Node> nodes = new HashSet<Node>();
+    public Set<Node> nodes = new LinkedHashSet<Node>();
 
     @Override
     public Node apply(Node node) {

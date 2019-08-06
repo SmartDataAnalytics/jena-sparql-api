@@ -1,107 +1,115 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
 
-    <artifactId>sparqlqc-core</artifactId>
+	<artifactId>sparqlqc-core</artifactId>
 
-    <parent>
-        <groupId>org.aksw.sparqlqc</groupId>
-        <artifactId>sparqlqc-benchmark</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
-    </parent>
+	<parent>
+		<groupId>org.aksw.sparqlqc</groupId>
+		<artifactId>sparqlqc-benchmark</artifactId>
+		<version>1.0.0-SNAPSHOT</version>
+	</parent>
 
-    <dependencies>
+	<dependencies>
 
-        <dependency>
-            <groupId>org.aksw.jena-sparql-api</groupId>
-            <artifactId>jena-sparql-api-resources-sparqlqc</artifactId>
-        </dependency>
+		<dependency>
+			<groupId>org.apache.jena</groupId>
+			<artifactId>jena-arq</artifactId>
+			<scope>provided</scope>
+		</dependency>
 
-		<!-- TODO Remove this dependency eventually; its here only for debugging our system -->
-        <dependency>
-            <groupId>org.aksw.jena-sparql-api</groupId>
-            <artifactId>jena-sparql-api-cache</artifactId>
-        </dependency>
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-resources-sparqlqc</artifactId>
+		</dependency>
 
-        <dependency>
-            <groupId>org.aksw.jena-sparql-api</groupId>
-            <artifactId>jena-sparql-api-mapper-proxy</artifactId>
-        </dependency>
+		<!-- TODO Remove this dependency eventually; its here only for debugging 
+			our system -->
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-cache</artifactId>
+		</dependency>
 
-
-        <dependency>
-            <!-- <groupId>${project.groupId}</groupId> -->
-            <groupId>org.aksw.sparqlqc</groupId>
-            <artifactId>sparqlqc-api-simple</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.aksw.sparqlqc</groupId>
-            <artifactId>sparqlqc-api</artifactId>
-        </dependency>
-
-        <!-- <dependency> -->
-        <!-- <groupId>org.aksw.sparqlqc</groupId> -->
-        <!-- <artifactId>sparqlqc-impl-fragment</artifactId> -->
-        <!-- </dependency> -->
-
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.aksw.jena-sparql-api</groupId>
-            <artifactId>jena-sparql-api-core</artifactId>
-        </dependency>
-
-        <!-- <dependency> -->
-        <!-- <groupId>org.aksw.jena-sparql-api</groupId> -->
-        <!-- <artifactId>jena-sparql-api-vocabs</artifactId> -->
-        <!-- </dependency> -->
-
-        <dependency>
-            <groupId>org.aksw.beast</groupId>
-            <artifactId>beast-viz-jfreechart</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.aksw.beast</groupId>
-            <artifactId>beast-viz-xchart</artifactId>
-        </dependency>
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-mapper-proxy</artifactId>
+		</dependency>
 
 
-        <!-- <dependency> -->
-        <!-- <groupId>org.slf4j</groupId> -->
-        <!-- <artifactId>jcl-over-slf4j</artifactId> -->
-        <!-- </dependency> -->
+		<dependency>
+			<!-- <groupId>${project.groupId}</groupId> -->
+			<groupId>org.aksw.sparqlqc</groupId>
+			<artifactId>sparqlqc-api-simple</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.aksw.sparqlqc</groupId>
+			<artifactId>sparqlqc-api</artifactId>
+		</dependency>
+
+		<!-- <dependency> -->
+		<!-- <groupId>org.aksw.sparqlqc</groupId> -->
+		<!-- <artifactId>sparqlqc-impl-fragment</artifactId> -->
+		<!-- </dependency> -->
+
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-log4j12</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-core</artifactId>
+		</dependency>
+
+		<!-- <dependency> -->
+		<!-- <groupId>org.aksw.jena-sparql-api</groupId> -->
+		<!-- <artifactId>jena-sparql-api-vocabs</artifactId> -->
+		<!-- </dependency> -->
+
+		<dependency>
+			<groupId>org.aksw.beast</groupId>
+			<artifactId>beast-viz-jfreechart</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.aksw.beast</groupId>
+			<artifactId>beast-viz-xchart</artifactId>
+		</dependency>
 
 
-<!--         <dependency> -->
-<!--             <groupId>org.aksw.iguana</groupId> -->
-<!--             <artifactId>iguana-core</artifactId> -->
-<!--         </dependency> -->
+		<!-- <dependency> -->
+		<!-- <groupId>org.slf4j</groupId> -->
+		<!-- <artifactId>jcl-over-slf4j</artifactId> -->
+		<!-- </dependency> -->
 
 
-        <!-- <dependency> -->
-        <!-- <groupId>org.slf4j</groupId> -->
-        <!-- <artifactId>slf4j-api</artifactId> -->
-        <!-- </dependency> -->
+		<!-- <dependency> -->
+		<!-- <groupId>org.aksw.iguana</groupId> -->
+		<!-- <artifactId>iguana-core</artifactId> -->
+		<!-- </dependency> -->
 
-        <!-- <dependency> -->
-        <!-- <groupId>org.slf4j</groupId> -->
-        <!-- <artifactId>slf4j-log4j12</artifactId> -->
-        <!-- </dependency> -->
 
-        <dependency>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>org.apache.felix.framework</artifactId>
-        </dependency>
-    </dependencies>
+		<!-- <dependency> -->
+		<!-- <groupId>org.slf4j</groupId> -->
+		<!-- <artifactId>slf4j-api</artifactId> -->
+		<!-- </dependency> -->
+
+		<!-- <dependency> -->
+		<!-- <groupId>org.slf4j</groupId> -->
+		<!-- <artifactId>slf4j-log4j12</artifactId> -->
+		<!-- </dependency> -->
+
+		<dependency>
+			<groupId>org.apache.felix</groupId>
+			<artifactId>org.apache.felix.framework</artifactId>
+		</dependency>
+	</dependencies>
 </project>
