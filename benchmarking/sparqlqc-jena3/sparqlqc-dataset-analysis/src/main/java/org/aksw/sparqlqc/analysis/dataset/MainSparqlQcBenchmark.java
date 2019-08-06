@@ -374,7 +374,7 @@ public class MainSparqlQcBenchmark {
               .build();
 
       XChartStatBarChartBuilder.from(xChart)
-      	.processObservations(avgs);
+      	.processSeries(avgs);
       	
       
       //XChartStatBarChartProcessor.addSeries(xChart, avgs, null, null, null, null, true);

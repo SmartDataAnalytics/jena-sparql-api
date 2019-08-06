@@ -40,13 +40,6 @@
         <dependency>
             <groupId>org.aksw.jena-sparql-api</groupId>
             <artifactId>jena-sparql-api-cache</artifactId>
-            <version>${jsa.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-ext</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
 
     </dependencies>
@@ -56,7 +49,7 @@
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
-                <version>3.2.0</version>
+                <version>4.2.0</version>
                 <extensions>true</extensions>
                 <configuration>
                     <instructions>

@@ -20,7 +20,7 @@ import java.util.stream.Stream;
 import org.aksw.beast.benchmark.performance.BenchmarkTime;
 import org.aksw.beast.benchmark.performance.PerformanceBenchmark;
 import org.aksw.beast.chart.ChartTransform;
-import org.aksw.beast.chart.model.StatisticalBarChartImpl;
+import org.aksw.beast.chart.model.StatisticalBarChart;
 import org.aksw.beast.enhanced.ResourceEnh;
 import org.aksw.beast.rdfstream.RdfGroupBy;
 import org.aksw.beast.rdfstream.RdfStream;
@@ -360,9 +360,9 @@ public class MainTestContain {
 
         RDFDataMgr.write(new FileOutputStream("/tmp/chart.ttl"), resultModel, RDFFormat.TURTLE_PRETTY);
 
-    	List<Entry<StatisticalBarChartImpl, Model>> chartSpecs = ChartTransform.transform(resultModel);
+    	List<Entry<StatisticalBarChart, Model>> chartSpecs = ChartTransform.transform(resultModel);
     	
-    	for(Entry<StatisticalBarChartImpl, Model> chartSpec : chartSpecs) {
+    	for(Entry<StatisticalBarChart, Model> chartSpec : chartSpecs) {
             CategoryChart xChart = ChartModelConfigurerXChart.toChart(chartSpec.getValue(), chartSpec.getKey());
             new SwingWrapper<CategoryChart>(xChart).displayChart();
 

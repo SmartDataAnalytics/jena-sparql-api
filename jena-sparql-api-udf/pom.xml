@@ -2,10 +2,10 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>jena-sparql-api-algebra</artifactId>
+    <artifactId>jena-sparql-api-udf</artifactId>
     <packaging>jar</packaging>
 
-    <name>Jena SPARQL API - Algebra</name>
+    <name>Jena SPARQL API - User Defined Functions</name>
 
     <parent>
         <groupId>org.aksw.jena-sparql-api</groupId>
@@ -15,18 +15,13 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.aksw.commons</groupId>
-            <artifactId>subgraph-isomorphism-index-jena</artifactId>
+            <groupId>org.aksw.jena-sparql-api</groupId>
+            <artifactId>jena-sparql-api-core</artifactId>
         </dependency>
 
         <dependency>
             <groupId>org.aksw.jena-sparql-api</groupId>
             <artifactId>jena-sparql-api-utils</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.aksw.jena-sparql-api</groupId>
-            <artifactId>jena-sparql-api-udf</artifactId>
         </dependency>
 
 

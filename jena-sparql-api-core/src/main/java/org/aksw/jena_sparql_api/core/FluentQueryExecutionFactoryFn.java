@@ -18,10 +18,12 @@ import org.aksw.jena_sparql_api.prefix.core.QueryExecutionFactoryPrefix;
 import org.aksw.jena_sparql_api.retry.core.QueryExecutionFactoryRetry;
 import org.aksw.jena_sparql_api.timeout.QueryExecutionTimeoutExogeneous;
 import org.aksw.jena_sparql_api.transform.QueryExecutionFactoryQueryTransform;
+import org.aksw.jena_sparql_api.transform.result_set.QueryExecutionFactoryTransformResult;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.DatasetDescription;
+import org.apache.jena.sparql.graph.NodeTransform;
 
 import com.google.common.base.Supplier;
 
@@ -175,6 +177,19 @@ public class FluentQueryExecutionFactoryFn<P>
 //                return r;
 //            }
 //        });
+
+        return this;
+    }
+
+    /**
+     * Transform nodes of SPARQL results (models, datasets, result sets).
+     * Can be used for e.g. for blank node skolemization.
+     * 
+     * @param nodeTransform
+     * @return
+     */
+    public FluentQueryExecutionFactoryFn<P> withResultTransform(final NodeTransform nodeTransform) {
+        compose(qef -> new QueryExecutionFactoryTransformResult(qef, nodeTransform));
 
         return this;
     }

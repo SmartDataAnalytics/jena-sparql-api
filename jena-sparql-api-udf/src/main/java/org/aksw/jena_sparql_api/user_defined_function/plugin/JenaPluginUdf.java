@@ -1,12 +1,13 @@
-package org.aksw.jena_sparql_api.core.plugin;
+package org.aksw.jena_sparql_api.user_defined_function.plugin;
 
-import org.aksw.jena_sparql_api.core.RDFConnectionMetaData;
+
 import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
+import org.aksw.jena_sparql_api.user_defined_function.UserDefinedFunctionResource;
 import org.apache.jena.enhanced.Personality;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.sys.JenaSubsystemLifecycle;
 
-public class JenaPluginJsaCore
+public class JenaPluginUdf
 	implements JenaSubsystemLifecycle
 {
 	public void start() {
@@ -18,7 +19,7 @@ public class JenaPluginJsaCore
 	}
 
 	public static void init() {
-		JenaPluginUtils.registerResourceClasses(RDFConnectionMetaData.class);
+		JenaPluginUtils.scan(UserDefinedFunctionResource.class);		
 	}
 	
 	public static void init(Personality<RDFNode> p) {

@@ -1,0 +1,49 @@
+
+# Expand convenience list-based prefix mappings
+# Note, this also works without a local name, as in ("ns2" foo:)
+PREFIX o: <http://ns.aksw.org/jena/udf/>
+INSERT {
+  ?s
+    o:mapping [
+      o:prefix ?ns ;
+      o:iri ?iri
+    ]
+}
+WHERE {
+  ?s o:ns (?ns ?iri)
+}
+
+
+# Expand convenience list-based function definitions
+PREFIX o: <http://ns.aksw.org/jena/udf/>
+INSERT {
+  ?s
+    o:definition [
+      o:expr ?e ;
+      o:params ?pl
+    ]
+}
+WHERE {
+  ?s
+    a o:UserDefinedFunction ;
+    o:simpleDefinition [
+      rdf:first ?e ;
+      rdf:rest ?pl
+    ]
+}
+
+
+# Attach a prefixSet on the function level to all definitions without prefixes
+PREFIX o: <http://ns.aksw.org/jena/udf/>
+INSERT {
+  ?d o:prefixMapping ?ps
+}
+WHERE {
+  ?s
+    a o:UserDefinedFunction ;
+    o:prefixMapping ?ps ;
+    o:definition ?d
+    FILTER(!EXISTS { ?d o:prefixSet [] })
+}
+
+

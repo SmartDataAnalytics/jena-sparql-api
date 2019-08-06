@@ -25,6 +25,9 @@
 		<!-- <module>jena-sparql-api-jgrapht</module> -->
 
 		<module>jena-sparql-api-utils</module>
+
+		<module>jena-sparql-api-udf</module>
+
 		<module>jena-sparql-api-sparql-ext</module>
 
 		<module>jena-sparql-api-mapper-annotations</module>
@@ -455,6 +458,12 @@
 			<dependency>
 				<groupId>org.aksw.jena-sparql-api</groupId>
 				<artifactId>jena-sparql-api-utils</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.jena-sparql-api</groupId>
+				<artifactId>jena-sparql-api-udf</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 
