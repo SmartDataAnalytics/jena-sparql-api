@@ -29,6 +29,7 @@ public class RDFa {
 			.setNsPrefixes(RDFDataMgr.loadModel("rdf-prefixes/arq.jsonld"))
 			.setNsPrefixes(RDFDataMgr.loadModel("rdf-prefixes/rdfa11.jsonld"))
 			.setNsPrefixes(RDFDataMgr.loadModel("rdf-prefixes/geosparql.jsonld"))
+			.setNsPrefixes(RDFDataMgr.loadModel("rdf-prefixes/dataid.jsonld"))
 			.setNsPrefixes(RDFDataMgr.loadModel("rdf-prefixes/jsa.jsonld"));
 	}
 	

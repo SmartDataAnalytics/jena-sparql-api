@@ -36,8 +36,8 @@ public class MainUdfTest2 {
 		Expr e = new E_Function("http://ns.aksw.org/function/decodeBnodeIri", new ExprList(new ExprVar(Vars.x)));
 		ExprTransform xform = new ExprTransformExpand(map);
 		e = FixpointIteration.apply(100, e, x -> ExprTransformer.transform(xform, x));
-				
-		
+
+
 		System.out.println("INVERSES: " + model.createResource("http://ns.aksw.org/function/skolemizeBnodeLabel")
 			.as(UserDefinedFunctionResource.class)
 			.getDefinitions().iterator().next()

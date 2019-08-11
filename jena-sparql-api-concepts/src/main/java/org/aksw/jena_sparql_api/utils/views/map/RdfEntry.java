@@ -42,4 +42,8 @@ public class RdfEntry
 		return result;
 	}
 
+	public void clear() {
+		this.removeAll(valueProperty);
+		this.removeAll(keyProperty);
+	}
 }

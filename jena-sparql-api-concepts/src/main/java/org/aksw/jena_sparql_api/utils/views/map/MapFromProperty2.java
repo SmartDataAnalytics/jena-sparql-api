@@ -1,9 +1,11 @@
 package org.aksw.jena_sparql_api.utils.views.map;
 
 import java.util.AbstractMap;
+import java.util.Iterator;
 import java.util.Set;
 
 import org.aksw.commons.accessors.CollectionFromConverter;
+import org.aksw.commons.collections.SinglePrefetchIterator;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
@@ -161,11 +163,51 @@ public class MapFromProperty2
 		Set<Entry<RDFNode, RDFNode>> result =
 			new SetFromCollection<>(
 				new CollectionFromConverter<>(
-					new SetFromPropertyValues<>(subject, entryProperty, Resource.class),
+					new SetFromPropertyValues<Resource>(subject, entryProperty, Resource.class) {
+						public Iterator<Resource> iterator() {
+							Iterator<Resource> baseIt = super.iterator();
+
+							return new SinglePrefetchIterator<Resource>() {
+								@Override
+								protected Resource prefetch() throws Exception {
+									return baseIt.hasNext() ? baseIt.next() : finish();
+								}
+								
+								protected void doRemove(Resource item) {
+									item.removeAll(keyProperty);
+									item.removeAll(valueProperty);
+									baseIt.remove();
+								};
+								
+							};
+						};
+//						@Override
+//						public void clear() {
+//							System.out.println("here");
+//							super.clear();
+//						}
+//						@Override
+//						public boolean remove(Object key) {
+//							boolean r = super.remove(key);
+//							if(r) {
+//								((RdfEntry)key).clear();
+//							}
+//							return r;
+//						}
+					},
 					converter.reverse()));
 		
 		return result;
 	}
 	
+//	@Override
+//	public void clear() {
+//		for(Object r : entrySet()) {
+//			RdfEntry e = (RdfEntry)r;
+//			e.clear();
+//		}
+//		
+//		super.clear();
+//	}
 	
 }
