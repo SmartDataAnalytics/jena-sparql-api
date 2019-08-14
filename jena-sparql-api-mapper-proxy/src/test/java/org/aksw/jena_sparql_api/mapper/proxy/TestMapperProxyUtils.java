@@ -10,12 +10,15 @@ import java.util.Set;
 
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
 import org.aksw.jena_sparql_api.mapper.annotation.IriType;
+import org.aksw.jena_sparql_api.mapper.annotation.RdfType;
+import org.aksw.jena_sparql_api.utils.model.NodeMapperFactory;
+import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
+import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sys.JenaSystem;
+import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.junit.Assert;
 import org.junit.Test;
@@ -57,6 +60,7 @@ public class TestMapperProxyUtils {
 //		List<?> getRDFNodes();
 	}
 
+	@RdfType
 	public static interface TestResource
 		extends TestResourceBase
 	{
@@ -74,7 +78,12 @@ public class TestMapperProxyUtils {
 	
 		@Iri("eg:stringList")
 		TestResource setList(List<String> strs);
-	
+
+		@Iri("eg:set")
+		Set<String> getItems();
+		
+		@Iri("eg:set")
+		String getRandomItem();
 		
 		@Iri("eg:dynamicSet")
 		<T> Collection<T> getDynamicSet(Class<T> clazz);
@@ -92,6 +101,36 @@ public class TestMapperProxyUtils {
 //
 //	List<?> getRDFNodes();
 	}
+	
+
+	@Test
+	public void testTypeDecider() {
+		JenaSystem.init();
+		
+		JenaPluginUtils.registerResourceClasses(TestResource.class);
+		TestResource sb = ModelFactory.createDefaultModel().createResource().as(TestResource.class);
+		String iri = ResourceUtils.getPropertyValue(sb, RDF.type, NodeMapperFactory.uriString);
+//		System.out.println("Iri is " + iri);
+		Assert.assertEquals(iri, "java://" + TestResource.class.getCanonicalName());
+	}
+	
+	
+	@Test
+	public void testMixedUseOfScalarAndCollectionGetter() {
+		JenaSystem.init();
+		JenaPluginUtils.registerResourceClasses(TestResource.class);
+		TestResource sb = ModelFactory.createDefaultModel().createResource().as(TestResource.class);
+		
+		Set<String> items = Sets.newHashSet("hello", "world");
+		sb.getItems().addAll(items);
+		
+		String randomItem = sb.getRandomItem();
+//		System.out.println(randomItem + " " + sb.getItems());
+		Assert.assertEquals(sb.getItems(), items);
+		Assert.assertTrue(items.contains(randomItem));
+
+	}
+
 	
 	@Test
 	public void testScalarString() {

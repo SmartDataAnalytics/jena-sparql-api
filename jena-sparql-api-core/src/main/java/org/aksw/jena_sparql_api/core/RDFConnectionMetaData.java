@@ -38,4 +38,8 @@ public interface RDFConnectionMetaData
 	 */
 	@Iri("eg:dataset")
 	Set<Resource> getDatasets();
+	
+	@Iri("eg:dataset")
+	Resource getDataset();
+
 }

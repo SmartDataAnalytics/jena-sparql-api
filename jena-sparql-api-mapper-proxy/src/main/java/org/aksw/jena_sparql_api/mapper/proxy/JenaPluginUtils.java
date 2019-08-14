@@ -16,6 +16,7 @@ import org.apache.jena.ext.com.google.common.reflect.ClassPath.ClassInfo;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.impl.ResourceImpl;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sys.JenaSystem;
 import org.slf4j.Logger;
@@ -26,6 +27,9 @@ public class JenaPluginUtils {
 	private static final Logger logger = LoggerFactory.getLogger(JenaPluginUtils.class);
 
 	static { JenaSystem.init(); }
+
+	protected static TypeDeciderImpl typeDecider = new TypeDeciderImpl();
+
 	
 	public static void scan(Class<?> prototypeClass) {
 		String basePackage = prototypeClass.getPackage().getName();
@@ -72,7 +76,18 @@ public class JenaPluginUtils {
 				
 				logger.debug("Registering " + clazz);
 				BiFunction<Node, EnhGraph, ? extends Resource> proxyFactory = MapperProxyUtils.createProxyFactory(cls, pm);
-				p.add(cls, new ProxyImplementation(proxyFactory));
+
+				
+				typeDecider.registerClasses(clazz);
+
+				BiFunction<Node, EnhGraph, ? extends Resource> proxyFactory2 = (n, m) -> {
+					Resource r = new ResourceImpl(n, m);
+					typeDecider.writeTypeTriples(r, cls);
+					
+					return proxyFactory.apply(n, m);
+				};
+				
+				p.add(cls, new ProxyImplementation(proxyFactory2));
 			}
 		}
 	}
