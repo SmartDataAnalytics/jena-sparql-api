@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.hop;
 import java.util.List;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
-import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.apache.jena.rdfconnection.SparqlQueryConnection;
 
 public class HopRelation
     extends HopBase
@@ -11,11 +11,11 @@ public class HopRelation
     protected BinaryRelation relation;
     protected List<Hop> hops;
 
-    public HopRelation(QueryExecutionFactory qef) {
+    public HopRelation(SparqlQueryConnection qef) {
         super(qef);
     }
 
-    public HopRelation(QueryExecutionFactory qef, BinaryRelation relation, List<Hop> hops) {
+    public HopRelation(SparqlQueryConnection qef, BinaryRelation relation, List<Hop> hops) {
         super(qef);
         this.relation = relation;
         this.hops = hops;

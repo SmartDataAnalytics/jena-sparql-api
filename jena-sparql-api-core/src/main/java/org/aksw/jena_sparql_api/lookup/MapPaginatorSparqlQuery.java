@@ -4,13 +4,13 @@ import java.util.Map.Entry;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
-import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.utils.OperatorOrderedGroupBy;
 import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.SortCondition;
+import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.table.TableN;
 import org.apache.jena.sparql.core.Var;
@@ -36,7 +36,7 @@ public class MapPaginatorSparqlQuery
     protected boolean forceSubQuery;
 
 
-    public MapPaginatorSparqlQuery(QueryExecutionFactory qef, Concept filterConcept, boolean isLeftJoin, Query attrQuery, Var attrVar, boolean forceSubQuery) {
+    public MapPaginatorSparqlQuery(SparqlQueryConnection qef, Concept filterConcept, boolean isLeftJoin, Query attrQuery, Var attrVar, boolean forceSubQuery) {
         super(qef, filterConcept, isLeftJoin);
         this.attrQuery = attrQuery;
         this.attrVar = attrVar;
@@ -115,7 +115,7 @@ public class MapPaginatorSparqlQuery
 //      Node[] prior = {null};
 //      PublishProcessor<Node> boundaryIndicator = PublishProcessor.create();
 
-      return ReactiveSparqlUtils.execSelect(() -> qef.createQueryExecution(query))
+      return ReactiveSparqlUtils.execSelect(() -> qef.query(query))
     		  .lift(new OperatorOrderedGroupBy<Binding, Node, Table>(b -> b.get(attrVar), TableN::new, Table::addBinding));
 //      return ReactiveSparqlUtils.groupByOrdered(
 //    		  ReactiveSparqlUtils.execSelect(() -> qef.createQueryExecution(query)),

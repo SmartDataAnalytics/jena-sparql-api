@@ -21,6 +21,7 @@ import org.aksw.jena_sparql_api.core.GraphSparqlService;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.SparqlServiceFactory;
+import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceCacheMem;
 import org.aksw.jena_sparql_api.lookup.LookupServiceListService;
@@ -79,6 +80,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.shared.PrefixMapping;
@@ -140,7 +142,7 @@ public class MainSparqlPath2 {
     }
 
 
-    public static LookupService<Node, Map<Node, Number>> createJoinSummaryLookupService(QueryExecutionFactory qef, boolean reverse) {
+    public static LookupService<Node, Map<Node, Number>> createJoinSummaryLookupService(SparqlQueryConnection qef, boolean reverse) {
 
         Query query = new Query();
         QueryFactory.parse(query, "PREFIX o: <http://example.org/ontology/> SELECT ?x ?y ((<http://www.w3.org/2001/XMLSchema#double>(?fy) / <http://www.w3.org/2001/XMLSchema#double>(?fx)) As ?z) { ?s o:sourcePredicate ?x ; o:targetPredicate ?y ; o:freqSource ?fx ; o:freqTarget ?fy }", "http://example.org/base/", Syntax.syntaxARQ);
@@ -176,7 +178,7 @@ public class MainSparqlPath2 {
         return result;
     }
 
-    public static JoinSummaryService createJoinSummaryService(QueryExecutionFactory qef) {
+    public static JoinSummaryService createJoinSummaryService(SparqlQueryConnection qef) {
         JoinSummaryServiceImpl result = new JoinSummaryServiceImpl(
                 createJoinSummaryLookupService(qef, false),
                 createJoinSummaryLookupService(qef, true));
@@ -214,7 +216,7 @@ public class MainSparqlPath2 {
      * @param reverse
      * @return
      */
-    public static LookupService<Node, Map<Node, Number>> createListServicePredicates(QueryExecutionFactory qef, boolean reverse) {
+    public static LookupService<Node, Map<Node, Number>> createListServicePredicates(SparqlQueryConnection qef, boolean reverse) {
         Query query = new Query();
         query.setQuerySelectType();
         query.setDistinct(true);
@@ -499,7 +501,8 @@ public class MainSparqlPath2 {
             //ssf.createSparqlService("http://, datasetDescription, authenticator)
             SparqlService ss = ssf.createSparqlService(null, dataset, null);
 
-            QueryExecutionFactory qef = ss.getQueryExecutionFactory();
+            QueryExecutionFactory tmp = ss.getQueryExecutionFactory();
+            SparqlQueryConnection qef = new SparqlQueryConnectionJsa(tmp);
             //ListService<Concept, Node, List<Node>> lsx =
             //LookupService<Node, List<Node>> ls = LookupServiceListService.create(lsx);
             LookupService<Node, Map<Node, Number>> fwdLs = createListServicePredicates(qef, false);
@@ -531,7 +534,7 @@ public class MainSparqlPath2 {
             QueryExecutionFactory rawQef = ssf2.createSparqlService(null, dataset, null).getQueryExecutionFactory();
 
             Function<Pair<ValueSet<Node>>, Function<Iterable<Node>, Map<Node, Set<Triplet<Node, Node>>>>> createTripletLookupService =
-                    pc -> f -> PathExecutionUtils.createLookupService(rawQef, pc).fetchMap(f);
+                    pc -> f -> PathExecutionUtils.createLookupService(new SparqlQueryConnectionJsa(rawQef), pc).fetchMap(f);
 
             Set<Entry<Integer, Node>> starts = new HashSet<>();
             nfa.getStartStates().forEach(s -> starts.add(new SimpleEntry<>(s, startNode)));
@@ -574,7 +577,7 @@ public class MainSparqlPath2 {
             //Set<?> cut = x.getCutEdges();
             //System.out.println("CUT: " + cut);
 
-            JoinSummaryService joinSummaryService = createJoinSummaryService(sspjs.getQueryExecutionFactory());
+            JoinSummaryService joinSummaryService = createJoinSummaryService(new SparqlQueryConnectionJsa(sspjs.getQueryExecutionFactory()));
 
             fullJoinSummaryBaseGraph = createJoinSummaryGraph(sspjs.getQueryExecutionFactory());//joinSummaryModel);
 
@@ -740,7 +743,7 @@ public class MainSparqlPath2 {
             boolean execQuery = true;
             if(execQuery) {
             	Query query = QueryFactory.create(queryStr);
-                QueryExecution qe = qef.createQueryExecution(query);
+                QueryExecution qe = qef.query(query);
                 ResultSet rs = qe.execSelect();
                 ResultSetFormatter.outputAsJSON(System.out, rs);
             }

@@ -1,9 +1,9 @@
 package org.aksw.jena_sparql_api.lookup;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
+import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.core.Var;
 
@@ -11,22 +11,22 @@ import org.apache.jena.sparql.core.Var;
 public class MapServiceSparqlQuery
     implements MapService<Concept, Node, Table>
 {
-    protected QueryExecutionFactory qef;
+    protected SparqlQueryConnection qef;
     protected boolean isLeftJoin;
 
     protected Query attrQuery;
     protected Var attrVar;
     protected boolean forceSubQuery;
 
-    public MapServiceSparqlQuery(QueryExecutionFactory qef, Query attrQuery, Var attrVar) {
+    public MapServiceSparqlQuery(SparqlQueryConnection qef, Query attrQuery, Var attrVar) {
         this(qef, attrQuery, attrVar, true, false);
     }
 
-    public MapServiceSparqlQuery(QueryExecutionFactory qef, Query attrQuery, Var attrVar, boolean isLeftJoin) {
+    public MapServiceSparqlQuery(SparqlQueryConnection qef, Query attrQuery, Var attrVar, boolean isLeftJoin) {
         this(qef, attrQuery, attrVar, isLeftJoin, false);
     }
 
-    public MapServiceSparqlQuery(QueryExecutionFactory qef, Query attrQuery,
+    public MapServiceSparqlQuery(SparqlQueryConnection qef, Query attrQuery,
             Var attrVar, boolean isLeftJoin, boolean forceSubQuery) {
         super();
         this.qef = qef;

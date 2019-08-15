@@ -1,8 +1,7 @@
 package org.aksw.jena_sparql_api.hop;
 
-import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.mapper.MappedQuery;
-
+import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.core.DatasetGraph;
 
 public class HopQuery
@@ -10,7 +9,7 @@ public class HopQuery
 {
     protected MappedQuery<DatasetGraph> mappedQuery;
 
-    public HopQuery(MappedQuery<DatasetGraph> mappedQuery, QueryExecutionFactory qef) {
+    public HopQuery(MappedQuery<DatasetGraph> mappedQuery, SparqlQueryConnection qef) {
         super(qef);
         this.mappedQuery = mappedQuery;
     }

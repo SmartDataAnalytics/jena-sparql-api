@@ -52,12 +52,18 @@
     </repositories>
 
 	<dependencies>
-		<!-- Used only for IteratorClosable -->
+		<!-- Used only for IteratorClosable and NodeMapperRdfDatatype; try to get rid of this dep -->
 		<dependency>
 			<groupId>org.aksw.jena-sparql-api</groupId>
-			<artifactId>jena-sparql-api-utils</artifactId>
+			<artifactId>jena-sparql-api-collections</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>org.apache.jena</groupId>
+			<artifactId>jena-rdfconnection</artifactId>
+		</dependency>
+
+		<!-- Used for parsing the CSV options -->
 		<dependency>
 			<groupId>net.sf.jopt-simple</groupId>
 			<artifactId>jopt-simple</artifactId>

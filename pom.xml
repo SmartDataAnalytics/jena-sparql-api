@@ -17,11 +17,14 @@
 		<module>jena-sparql-api-vocabs</module>
 		<module>jena-sparql-api-rdf-stream</module>
 
+		<module>jena-sparql-api-stmt</module>
+		<module>jena-sparql-api-rx</module>
 		<module>jena-sparql-api-resources-test-config</module>
 		<module>jena-sparql-api-resources</module>
 
 		<module>jena-sparql-api-resources-sparqlqc</module>
 
+		<module>jena-sparql-api-collections</module>
 		<!-- <module>jena-sparql-api-jgrapht</module> -->
 
 		<module>jena-sparql-api-utils</module>
@@ -442,6 +445,11 @@
 				<version>${project.version}</version>
 			</dependency>
 
+			<dependency>
+				<groupId>org.aksw.jena-sparql-api</groupId>
+				<artifactId>jena-sparql-api-rx</artifactId>
+				<version>${project.version}</version>
+			</dependency>
 
 			<dependency>
 				<groupId>org.aksw.jena-sparql-api</groupId>
@@ -463,6 +471,12 @@
 
 			<dependency>
 				<groupId>org.aksw.jena-sparql-api</groupId>
+				<artifactId>jena-sparql-api-stmt</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.jena-sparql-api</groupId>
 				<artifactId>jena-sparql-api-udf</artifactId>
 				<version>${project.version}</version>
 			</dependency>
@@ -470,6 +484,12 @@
 			<dependency>
 				<groupId>org.aksw.jena-sparql-api</groupId>
 				<artifactId>jena-sparql-api-mapper-annotations</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.jena-sparql-api</groupId>
+				<artifactId>jena-sparql-api-collections</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 

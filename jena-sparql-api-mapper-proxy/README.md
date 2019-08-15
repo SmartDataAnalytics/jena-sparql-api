@@ -10,7 +10,9 @@ the provided annotations. Furthermore, collection views backed by Jena Model's a
 * Method implementation generation works with interfaces, default methods, abstract classes, and classes.
 * Support for dynamic RDF collection views* using [TODO link to module]()- i.e. modifications of these views propagate to the resource's backing model.
 * All namespaces of the [RDFa initial context](https://www.w3.org/2011/rdfa-context/rdfa-1.1) (and more) pre-registered.
-    * Map view generation not yet supported, although the Map implementation already exists.
+
+
+Note: Map view generation is not yet supported, although the Map implementation already exists.
 
 
 The snippet below summarizes the mapping capabilities by the proxy system.
@@ -50,7 +52,7 @@ public interface ExampleResource
 ### Dynamic collections
 Assume the following interface:
 
-```
+```java
 interface Person {
   @Iri("foaf:knows")
   Set<Agent> getAcquaintances();
@@ -93,7 +95,7 @@ BuiltinPersonalities.model.add(Person.class, new SimpleImplementation(PersonImpl
 ```
 
 This allows for requesting specific views on Resources:
-```
+```java
 Person person = ModelFactory.createDefaultModel().createResource().as(Person.class).setFirstName("Tim");
 ```
 
@@ -130,12 +132,12 @@ The generated proxy itself just delegates getter/setter invocations to the appro
 * **Step 1a: Create an interface extending Resource **
 
 ```java
-public interface LsqQuery
+public interface Person
 	extends Resource
 {
-    @Iri("http://lsq.aksw.org/vocab#text")
-	String getText();
-    void setText(String text);
+    @Iri("foaf:firstName")
+	String getFirstName();
+    void setFirstName(String fn);
 }
 ```
 
@@ -163,7 +165,7 @@ public interface LsqQuery
 * **Step 2a: Use the package scanning utility to automatically register annotated interfaces (or classes) with Jena**.
 
 ```java
-JenaPluginUtils.registerJenaResourceClassesUsingPackageScan(LsqQuery.class.getPackage().getName(), BuiltinPersonalities.model);
+JenaPluginUtils.scan(LsqQuery.class.getPackage().getName(), BuiltinPersonalities.model);
 ```
 
 Under the hood, this effectively performs the following registration for each class `cls` having appropriate annotations:
@@ -177,7 +179,7 @@ BuiltinPersonalities.model
 * **Step 2b: Register Proxy Implementations as part of Jena's Life Cycle Management**
 
 ```java
-package com.eccenca.mymodule;
+package org.myproject.plugin;
 
 public class JenaPluginMyModule
 	implements JenaSubsystemLifecycle
@@ -188,9 +190,7 @@ public class JenaPluginMyModule
 	}
 
 	public static void init() {
-		JenaPluginUtils.registerJenaResourceClassesUsingPackageScan(
-		    MyDomainInterface.class.getPackage().getName(),
-		    BuiltinPersonalities.model);
+		JenaPluginUtils.scan(MyDomainInterface.class);
 	}
 }
 ```
@@ -198,9 +198,9 @@ public class JenaPluginMyModule
 Add the fully qualified class name to the file
 
 ```
-echo "package com.eccenca.mymodule.JenaPluginMyModule" > src/main/resources/META-INF/services/org.apache.jena.sys.JenaSubsystemLifecycle
+echo "package org.myproject.plugin.JenaPluginMyModule" > src/main/resources/META-INF/services/org.apache.jena.sys.JenaSubsystemLifecycle
 ```
-Note: prior to Jena 3.8.0 its `.system.` instead of `.sys.`.
+Note: prior to Jena 3.8.0 it used to be `.system.` instead of `.sys.`.
 
 
 * **Step 3: Use it!**

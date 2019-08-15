@@ -17,7 +17,6 @@ import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptOps;
-import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceUtils;
@@ -36,6 +35,8 @@ import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
+import org.apache.jena.rdfconnection.RDFConnection;
+import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.Quad;
@@ -661,14 +662,14 @@ public class ResourceShape {
     }
 
     public static Graph fetchData(SparqlService sparqlService, ResourceShape shape, Node node) {
-        QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
+        RDFConnection qef = sparqlService.getRDFConnection();
 
         Graph result = fetchData(qef, shape, node);
         return result;
     }
 
 
-    public static Graph fetchData(QueryExecutionFactory qef, ResourceShape shape, Node node) {
+    public static Graph fetchData(SparqlQueryConnection qef, ResourceShape shape, Node node) {
         MappedConcept<Graph> mc = ResourceShape.createMappedConcept(shape, null, false);
         LookupService<Node, Graph> ls = LookupServiceUtils.createLookupService(qef, mc);
         Map<Node, Graph> map = ls.fetchMap(Collections.singleton(node));

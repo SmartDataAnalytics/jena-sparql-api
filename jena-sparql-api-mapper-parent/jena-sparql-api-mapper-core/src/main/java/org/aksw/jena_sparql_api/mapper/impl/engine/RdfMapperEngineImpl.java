@@ -19,7 +19,6 @@ import org.aksw.jena_sparql_api.beans.model.EntityOps;
 import org.aksw.jena_sparql_api.beans.model.PropertyOps;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
 import org.aksw.jena_sparql_api.core.utils.ServiceUtils;
@@ -54,6 +53,8 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdfconnection.RDFConnection;
+import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
@@ -182,7 +183,7 @@ public class RdfMapperEngineImpl
 //Collection<TypedNode> typedNodes
     @Override
     public <T> List<T> list(Class<T> clazz, Concept filterConcept) {
-        QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
+    	SparqlQueryConnection qef = sparqlService.getRDFConnection();
 
         List<Node> nodes = ServiceUtils.fetchList(qef, filterConcept);
 
@@ -233,7 +234,7 @@ public class RdfMapperEngineImpl
         //Graph result;
         Map<Node, RDFNode> result;
         if(!shape.isEmpty()) {
-            QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
+            RDFConnection qef = sparqlService.getRDFConnection();
             LookupService<Node, Graph> ls = MapServiceResourceShape.createLookupService(qef, shape);
             Map<Node, Graph> map = ls.fetchMap(nodes);
 

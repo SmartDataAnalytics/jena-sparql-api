@@ -5,8 +5,6 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 
-import org.aksw.commons.util.XPathUtils;
-import org.aksw.commons.util.XmlUtils;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.function.FunctionBase2;
 import org.slf4j.Logger;

@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.sparql.ext.json;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.aksw.jena_sparql_api.utils.model.NodeMapperRdfDatatype;
+import org.aksw.jena_sparql_api.rdf.collections.NodeMapperRdfDatatype;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Node;

@@ -5,7 +5,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import org.aksw.jena_sparql_api.util.collection.StreamUtils;
 import org.apache.jena.atlas.web.TypedInputStream;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
@@ -26,7 +25,7 @@ public class GraphUtils {
 	}
 	
 	public static Stream<Triple> stream(Graph graph) {
-		return StreamUtils.stream(graph.find());
+		return Streams.stream(graph.find());
 	}
 
     /**

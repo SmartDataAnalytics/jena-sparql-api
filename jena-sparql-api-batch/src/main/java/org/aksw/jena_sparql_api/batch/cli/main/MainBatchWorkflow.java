@@ -47,7 +47,7 @@ import org.aksw.jena_sparql_api.batch.to_review.MapTransformerSimple;
 import org.aksw.jena_sparql_api.beans.json.JsonProcessorContext;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
-import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceListService;
@@ -69,6 +69,7 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.Syntax;
+import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.core.DatasetGraph;
@@ -645,7 +646,7 @@ public class MainBatchWorkflow {
 
         Query q = QueryFactory.create(str, Syntax.syntaxSPARQL_11);
         MappedConcept<DatasetGraph> mc = QueryTransformConstructGroupedGraph.query2(q, Vars.s);
-        QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://fp7-pp.publicdata.eu/sparql", "http://fp7-pp.publicdata.eu/").create();
+        SparqlQueryConnection qef = new SparqlQueryConnectionJsa(FluentQueryExecutionFactory.http("http://fp7-pp.publicdata.eu/sparql", "http://fp7-pp.publicdata.eu/").create());
 
         System.out.println(mc);
         LookupService<Node, DatasetGraph> ls = LookupServiceUtils.createLookupService(qef, mc);
@@ -771,9 +772,9 @@ we can then use an automaton representation and minimize the states, and convert
         //LookupServiceTransformKey.create(LookupServiceTransformValue.create(base, fn), keyMapper)
         //LookupServiceListService
 
-            QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://fp7-pp.publicdata.eu/sparql", "http://fp7-pp.publicdata.eu/").create();
+        SparqlQueryConnection qef = new SparqlQueryConnectionJsa(FluentQueryExecutionFactory.http("http://fp7-pp.publicdata.eu/sparql", "http://fp7-pp.publicdata.eu/").create());
 
-        QueryExecutionFactory qefLgd = FluentQueryExecutionFactory.http("http://linkedgeodata.org/sparql", "http://linkedgeodata.org").create();
+        SparqlQueryConnection qefLgd = new SparqlQueryConnectionJsa(FluentQueryExecutionFactory.http("http://linkedgeodata.org/sparql", "http://linkedgeodata.org").create());
 
         //tmp:enrich
 

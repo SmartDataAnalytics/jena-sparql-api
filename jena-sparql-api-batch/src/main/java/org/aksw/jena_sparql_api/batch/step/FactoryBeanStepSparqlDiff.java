@@ -11,6 +11,7 @@ import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
+import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
 import org.aksw.jena_sparql_api.hop.Hop;
 import org.aksw.jena_sparql_api.hop.MapServiceHop;
 import org.aksw.jena_sparql_api.lookup.MapService;
@@ -20,6 +21,9 @@ import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.aksw.jena_sparql_api.shape.ResourceShapeParser;
 import org.aksw.jena_sparql_api.shape.lookup.MapServiceResourceShapeDataset;
 import org.aksw.jena_sparql_api.stmt.SparqlUpdateParser;
+import org.apache.jena.graph.Node;
+import org.apache.jena.rdfconnection.SparqlQueryConnection;
+import org.apache.jena.sparql.core.DatasetGraph;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.step.builder.StepBuilder;
@@ -27,9 +31,6 @@ import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.AbstractFactoryBean;
-
-import org.apache.jena.graph.Node;
-import org.apache.jena.sparql.core.DatasetGraph;
 
 
 public class FactoryBeanStepSparqlDiff
@@ -56,7 +57,7 @@ public class FactoryBeanStepSparqlDiff
     protected String name;
     //protected TODO How to represent the shape?
     protected int chunkSize;
-    protected QueryExecutionFactory sourceQef;
+    protected SparqlQueryConnection sourceQef;
     protected Concept concept;
     //protected ListService<>
 
@@ -150,6 +151,11 @@ public class FactoryBeanStepSparqlDiff
     }
 
     public FactoryBeanStepSparqlDiff setSource(QueryExecutionFactory sourceQef) {
+        setSource(new SparqlQueryConnectionJsa(sourceQef));
+        return this;
+    }
+
+    public FactoryBeanStepSparqlDiff setSource(SparqlQueryConnection sourceQef) {
         this.sourceQef = sourceQef;
         return this;
     }
@@ -167,8 +173,8 @@ public class FactoryBeanStepSparqlDiff
 
 
     public FactoryBeanStepSparqlDiff setService(SparqlService sparqlService) {
-        this.sourceQef = sparqlService.getQueryExecutionFactory();
-        this.targetUef = sparqlService.getUpdateExecutionFactory();
+        setSource(sparqlService.getQueryExecutionFactory());
+        setTarget(sparqlService.getUpdateExecutionFactory());
         return this;
     }
 
@@ -189,7 +195,7 @@ public class FactoryBeanStepSparqlDiff
         return chunkSize;
     }
 
-    public QueryExecutionFactory getSource() {
+    public SparqlQueryConnection getSource() {
         return sourceQef;
     }
 

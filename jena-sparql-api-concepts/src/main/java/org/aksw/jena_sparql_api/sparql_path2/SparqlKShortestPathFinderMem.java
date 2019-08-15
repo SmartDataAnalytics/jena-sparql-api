@@ -4,19 +4,18 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.aksw.jena_sparql_api.utils.model.TripletPath;
-import org.aksw.jena_sparql_api_sparql_path2.playground.SparqlKShortestPathFinderYen;
 import org.apache.jena.graph.Node;
+import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.path.Path;
 
 public class SparqlKShortestPathFinderMem
     implements SparqlKShortestPathFinder
 {
-    protected QueryExecutionFactory qef;
+    protected SparqlQueryConnection qef;
 
-    public SparqlKShortestPathFinderMem(QueryExecutionFactory qef) {
+    public SparqlKShortestPathFinderMem(SparqlQueryConnection qef) {
         this.qef = qef;
     }
 
