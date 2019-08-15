@@ -154,7 +154,9 @@ public class Concept
         tmp = "SELECT * " + tmp;
 
         Query query = new Query();
-        query.setPrefixMapping(prefixMapping);
+        if(prefixMapping != null) {
+        	query.setPrefixMapping(prefixMapping);
+        }
         // TODO Make parser configurable
         SPARQLParser parser = new ParserSPARQL11();
         parser.parse(query, tmp);
