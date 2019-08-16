@@ -1,6 +1,7 @@
 package org.aksw.jena_sparql_api.mapper.proxy;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -9,8 +10,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.aksw.jena_sparql_api.mapper.annotation.RdfType;
-import org.apache.jena.ext.com.google.common.reflect.ClassPath;
-import org.apache.jena.ext.com.google.common.reflect.ClassPath.ClassInfo;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Model;
@@ -20,16 +19,17 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.util.ModelUtils;
 import org.apache.jena.vocabulary.RDF;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import com.github.jsonldjava.shaded.com.google.common.base.Strings;
+import com.google.common.base.Strings;
+import com.google.common.reflect.ClassPath;
+import com.google.common.reflect.ClassPath.ClassInfo;
+
 
 
 public class TypeDeciderImpl
     implements TypeDecider
 {
-    private static final Logger logger = LoggerFactory.getLogger(TypeDeciderImpl.class);
+//    private static final Logger logger = LoggerFactory.getLogger(TypeDeciderImpl.class);
 
     protected PrefixMapping prefixMapping;
     protected Property typeProperty;
@@ -61,6 +61,15 @@ public class TypeDeciderImpl
         map.entrySet().forEach(e -> put(e.getKey(), e.getValue()));
     }
 
+    public TypeDeciderImpl scan(Class<?> protoClass) {
+		String basePackage = protoClass.getPackage().getName();
+		
+		Map<Class<?>, Node> map = scan(basePackage);
+		putAll(map);
+    	
+    	return this;
+    }
+    
     // TODO We may want to take the type hierarchy on the RDF level into account
     // However, we should not require to rely on it
 
@@ -104,13 +113,17 @@ public class TypeDeciderImpl
         }
     }
     
-  public TypeDeciderImpl registerClasses(Class<?> ...classes) {
-	  for(Class<?> clazz : classes) {
-		  Map<Class<?>, Node> map = processClass(clazz, prefixMapping);
-		  putAll(map);
-	  }
-	  return this;
-  }
+	public TypeDeciderImpl registerClasses(Class<?> ... classes) {
+		return registerClasses(Arrays.asList(classes));
+	}
+  
+    public TypeDeciderImpl registerClasses(Iterable<Class<?>> classes) {
+	    for(Class<?> clazz : classes) {
+		    Map<Class<?>, Node> map = processClass(clazz, prefixMapping);
+		    putAll(map);
+	    }
+	    return this;
+    }
 
 
     public static Map<Class<?>, Node> scan(String basePackage) {

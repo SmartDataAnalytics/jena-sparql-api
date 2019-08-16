@@ -11,6 +11,7 @@ import java.util.Set;
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
 import org.aksw.jena_sparql_api.mapper.annotation.IriType;
 import org.aksw.jena_sparql_api.mapper.annotation.RdfType;
+import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
 import org.aksw.jena_sparql_api.rdf.collections.NodeMapperFactory;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.apache.jena.ext.com.google.common.collect.Sets;

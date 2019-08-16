@@ -1,9 +1,14 @@
 package org.aksw.jena_sparql_api.rdf.collections;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import org.aksw.commons.util.reflect.ClassUtils;
+import org.aksw.jena_sparql_api.mapper.proxy.TypeDecider;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Graph;
@@ -19,7 +24,9 @@ import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.rdf.model.impl.PropertyImpl;
 import org.apache.jena.sparql.path.P_Path0;
 import org.apache.jena.util.iterator.ExtendedIterator;
+import org.apache.jena.util.iterator.WrappedIterator;
 
+import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
 
 /**
@@ -92,6 +99,15 @@ public class ResourceUtils {
 		return result;
 	}
 
+//	public static <T extends RDFNode> boolean canAsProperty(Statement stmt, Class<T> viewClass, TypeDecider typeDecider) {
+//		boolean result = stmt.getObject().canAs(clazz);
+//		return result;
+//	}
+
+	
+
+	
+	
 	public static <T extends RDFNode> T getPropertyValue(Statement stmt, Class<T> clazz) {
 		T result = stmt.getObject().as(clazz);
 		return result;
@@ -237,13 +253,61 @@ public class ResourceUtils {
 //		return result;
 //	}
 
-	
+// Note: There is not much benefit in a listProperties function that takes a generic predicate
+//       - just use filterKeep instead
+//	public static <T> ExtendedIterator<Statement> listProperties(Resource s, Property p, Predicate<Statement> predicate) {
+//		ExtendedIterator<Statement> result = listProperties(s, p)
+//				.filterKeep(predicate);
+//		return result;
+//	}
+
 	public static <T> ExtendedIterator<Statement> listProperties(Resource s, Property p, NodeMapper<T> nodeMapper) {
 		ExtendedIterator<Statement> result = listProperties(s, p)
 				.filterKeep(stmt -> canAsProperty(stmt, nodeMapper::canMap));
 		return result;
 	}
+
 	
+	public static Class<?> getMostSpecificSubclass(Resource s, Class<?> viewClass, TypeDecider typeDecider) {
+	    Collection<Class<?>> classes = typeDecider.getApplicableTypes(s);
+	
+	    Set<Class<?>> mscs = ClassUtils.getMostSpecificSubclasses(viewClass, classes);
+	
+	    Class<?> result = mscs.size() == 1 ? mscs.iterator().next() : null;
+	    
+//	    if(mscs.isEmpty()) {
+//	        throw new RuntimeException("No applicable type found for " + r + " [" + clazz.getName() + "]");
+//	    } else if(mscs.size() > 1) {
+//	        throw new RuntimeException("Multiple non-subsumed sub-class candidates of " + clazz + " found: " + mscs);
+//	    } else {
+//	        r = mscs.iterator().next();
+//	    }
+	    
+	    return result;
+	}
+
+	
+	public static <T extends RDFNode> ExtendedIterator<T> transformIteratorForTypeDecider(Iterator<? extends RDFNode> it, Class<T> viewClass, TypeDecider typeDecider) {
+		
+		ExtendedIterator<T> result = WrappedIterator.create(it)
+				.mapWith(RDFNode::asResource)
+				.mapWith(o -> Maps.immutableEntry(o, getMostSpecificSubclass(o, viewClass, typeDecider)))
+				.filterKeep(e -> e.getValue() != null)
+				.mapWith(e -> (T)e.getKey().as((Class)e.getValue()));
+				
+		return result;
+	}
+	
+	public static <T extends RDFNode> ExtendedIterator<T> listPropertyValues(Resource s, Property p, Class<T> viewClass, TypeDecider typeDecider) {
+		ExtendedIterator<T> result =
+				transformIteratorForTypeDecider(
+					listProperties(s, p, viewClass).mapWith(Statement::getObject),
+					viewClass,
+					typeDecider);
+			
+		return result;
+	}
+
 	
 	public static <T> Optional<T> tryGetPropertyValue(Resource s, Property p, NodeMapper<T> nodeMapper) {
 		Optional<T> result = findFirst(listPropertyValues(s, p, nodeMapper));

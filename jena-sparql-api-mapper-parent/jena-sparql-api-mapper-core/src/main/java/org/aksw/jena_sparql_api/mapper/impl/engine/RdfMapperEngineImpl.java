@@ -15,6 +15,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.diff.Diff;
+import org.aksw.commons.util.reflect.ClassUtils;
 import org.aksw.jena_sparql_api.beans.model.EntityOps;
 import org.aksw.jena_sparql_api.beans.model.PropertyOps;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
@@ -312,27 +313,6 @@ public class RdfMapperEngineImpl
 //    	return result;
 //    }
 
-    public static Set<Class<?>> getNonSubsumedClasses(Collection<Class<?>> classes) {
-        // Retain all classes which are not a super class of any other
-        Set<Class<?>> result = classes.stream()
-            .filter(c -> classes.stream()
-                    .filter(d -> !c.equals(d)) // Do not compare classes to itself
-                    .noneMatch(c::isAssignableFrom))
-            .collect(Collectors.toSet());
-
-        return result;
-    }
-
-    public static Set<Class<?>> getMostSpecificSubclasses(Class<?> given, Collection<Class<?>> classes) {
-        // Filter the set by all classes that are a subclass of the given one
-        Set<Class<?>> tmp = classes.stream()
-            .filter(given::isAssignableFrom)
-            .collect(Collectors.toSet());
-
-        Set<Class<?>> result = getNonSubsumedClasses(tmp);
-        return result;
-    }
-
     /**
      * Perform a lookup in the persistence context for an entity with id 'node'
      * of type 'clazz'.
@@ -401,7 +381,7 @@ public class RdfMapperEngineImpl
 
             Collection<Class<?>> classes = typeDecider.getApplicableTypes(rdfNode.asResource());
 
-            Set<Class<?>> mscs = getMostSpecificSubclasses(clazz, classes);
+            Set<Class<?>> mscs = ClassUtils.getMostSpecificSubclasses(clazz, classes);
 
             if(mscs.isEmpty()) {
                 throw new RuntimeException("No applicable type found for " + node + " [" + clazz.getName() + "]");

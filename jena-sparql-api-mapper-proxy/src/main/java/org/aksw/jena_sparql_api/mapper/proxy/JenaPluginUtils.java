@@ -8,6 +8,7 @@ import java.util.function.BiFunction;
 
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
+import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
 import org.apache.jena.enhanced.BuiltinPersonalities;
 import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.enhanced.Personality;
@@ -30,6 +31,9 @@ public class JenaPluginUtils {
 
 	protected static TypeDeciderImpl typeDecider = new TypeDeciderImpl();
 
+	public static TypeDecider getTypeDecider() {
+		return typeDecider;
+	}
 	
 	public static void scan(Class<?> prototypeClass) {
 		String basePackage = prototypeClass.getPackage().getName();
@@ -60,11 +64,14 @@ public class JenaPluginUtils {
 	}
 
 	public static void registerResourceClasses(Class<?> ... classes) {
-		for(Class<?> clazz : classes) {
-			registerResourceClass(clazz, BuiltinPersonalities.model, RDFa.prefixes);
-		}
+		registerResourceClasses(Arrays.asList(classes));
 	}
 	
+	public static void registerResourceClasses(Iterable<Class<?>> classes) {
+		for(Class<?> clazz : classes) {
+			registerResourceClass(clazz, BuiltinPersonalities.model, RDFa.prefixes);
+		}		
+	}
 	
 	
 	public static void registerResourceClass(Class<?> clazz, Personality<RDFNode> p, PrefixMapping pm) {
@@ -97,8 +104,11 @@ public class JenaPluginUtils {
 		boolean result = false;
 		int mods = clazz.getModifiers();
 		if(Modifier.isInterface(mods) || !Modifier.isAbstract(mods)) {
+			// Check if the class is annotated by @ResourceView
+			result = clazz.getAnnotationsByType(ResourceView.class).length != 0;
+			
 			// Check if there ary any @Iri annotations
-			result = Arrays.asList(clazz.getDeclaredMethods()).stream()
+			result = result || Arrays.asList(clazz.getDeclaredMethods()).stream()
 				.anyMatch(m -> m.getAnnotation(Iri.class) != null || m.getAnnotation(IriNs.class) != null);
 		}
 		

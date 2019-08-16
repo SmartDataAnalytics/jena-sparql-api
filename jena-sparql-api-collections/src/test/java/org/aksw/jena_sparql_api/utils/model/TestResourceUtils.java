@@ -26,6 +26,7 @@ import org.junit.Test;
 
 public class TestResourceUtils {
 
+	
 	@Test
 	public void testUriStringMapper() {
 		NodeMapper<String> m = NodeMapperFactory.uriString;

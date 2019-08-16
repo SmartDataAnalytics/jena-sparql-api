@@ -1336,8 +1336,18 @@ public class MapperProxyUtils {
 //			.load(clazz.getClassLoader());
 
 			Enhancer enhancer = new Enhancer();
-			enhancer.setSuperclass(ResourceImpl.class);
-			enhancer.setInterfaces(new Class<?>[] { clazz });
+			if(clazz.isInterface()) {
+				enhancer.setSuperclass(ResourceImpl.class);
+				enhancer.setInterfaces(new Class<?>[] { clazz });
+			} else {
+				if(!Resource.class.isAssignableFrom(clazz)) {
+					throw new RuntimeException("Failed to use " + clazz + " as a resource view because but it does not extend  " + Resource.class);
+				}
+				
+				// TODO Check for a (Node, EnhGraph) ctor
+				
+				enhancer.setSuperclass(clazz);
+			}
 			enhancer.setCallback(new MethodInterceptor() {				
 			    public Object intercept(Object obj, java.lang.reflect.Method method, Object[] args,
                         MethodProxy proxy) throws Throwable {
