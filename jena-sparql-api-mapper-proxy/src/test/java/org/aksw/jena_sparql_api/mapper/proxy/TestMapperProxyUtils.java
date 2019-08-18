@@ -12,7 +12,7 @@ import org.aksw.jena_sparql_api.mapper.annotation.Iri;
 import org.aksw.jena_sparql_api.mapper.annotation.IriType;
 import org.aksw.jena_sparql_api.mapper.annotation.RdfType;
 import org.aksw.jena_sparql_api.mapper.proxy.JenaPluginUtils;
-import org.aksw.jena_sparql_api.rdf.collections.NodeMapperFactory;
+import org.aksw.jena_sparql_api.rdf.collections.NodeMappers;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -108,7 +108,7 @@ public class TestMapperProxyUtils {
 		
 		JenaPluginUtils.registerResourceClasses(TestResource.class);
 		TestResource sb = ModelFactory.createDefaultModel().createResource().as(TestResource.class);
-		String iri = ResourceUtils.getPropertyValue(sb, RDF.type, NodeMapperFactory.uriString);
+		String iri = ResourceUtils.getPropertyValue(sb, RDF.type, NodeMappers.uriString);
 //		System.out.println("Iri is " + iri);
 		Assert.assertEquals(iri, "java://" + TestResource.class.getCanonicalName());
 	}

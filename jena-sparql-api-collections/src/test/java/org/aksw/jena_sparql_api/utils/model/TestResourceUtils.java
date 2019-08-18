@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.aksw.jena_sparql_api.rdf.collections.NodeMapper;
-import org.aksw.jena_sparql_api.rdf.collections.NodeMapperFactory;
+import org.aksw.jena_sparql_api.rdf.collections.NodeMappers;
 import org.aksw.jena_sparql_api.rdf.collections.SetFromMappedPropertyValues;
 import org.aksw.jena_sparql_api.utils.SetFromGraph;
 import org.apache.jena.datatypes.TypeMapper;
@@ -29,7 +29,7 @@ public class TestResourceUtils {
 	
 	@Test
 	public void testUriStringMapper() {
-		NodeMapper<String> m = NodeMapperFactory.uriString;
+		NodeMapper<String> m = NodeMappers.uriString;
 		{
 			boolean canMap = m.canMap(NodeFactory.createURI("http://example.org/foo"));
 			Assert.assertTrue(canMap);
@@ -57,7 +57,7 @@ public class TestResourceUtils {
 		model.add(finalExpectedModel);
 		model.add(s, RDFS.label, OWL.Class);
 		
-		SetFromMappedPropertyValues<String> actual = new SetFromMappedPropertyValues<>(s, RDFS.label, NodeMapperFactory.uriString);
+		SetFromMappedPropertyValues<String> actual = new SetFromMappedPropertyValues<>(s, RDFS.label, NodeMappers.uriString);
 		Set<String> expected = new HashSet<>(Arrays.asList(OWL.Class.getURI()));	
 		Assert.assertEquals(expected, actual);
 		
@@ -93,7 +93,7 @@ public class TestResourceUtils {
 
 	@Test
 	public void testNodeMapperUriOrString() {
-		NodeMapper<String> m = NodeMapperFactory.DEFAULT_URI_OR_STRING;
+		NodeMapper<String> m = NodeMappers.DEFAULT_URI_OR_STRING;
 	
 		Assert.assertTrue(m.canMap(NodeFactory.createURI("http://example.org")));
 		Assert.assertTrue(m.canMap(NodeFactory.createLiteral("hi")));
@@ -114,7 +114,7 @@ public class TestResourceUtils {
 	@Test
 	public void testNodeMapper() {
 		
-		NodeMapper<Long> m = NodeMapperFactory.from(Long.class);
+		NodeMapper<Long> m = NodeMappers.from(Long.class);
 		
 		{
 			Node node = m.toNode(5l);

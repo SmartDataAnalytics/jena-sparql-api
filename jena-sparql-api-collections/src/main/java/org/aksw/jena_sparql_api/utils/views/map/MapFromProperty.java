@@ -1,10 +1,8 @@
 package org.aksw.jena_sparql_api.utils.views.map;
 
 import java.util.AbstractMap;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import org.aksw.commons.accessors.CollectionFromConverter;
 import org.aksw.commons.collections.sets.SetFromCollection;
@@ -25,7 +23,6 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 
-import com.github.jsonldjava.shaded.com.google.common.base.Stopwatch;
 import com.google.common.base.Converter;
 import com.google.common.collect.Maps;
 
@@ -148,7 +145,7 @@ public class MapFromProperty
 			new SetFromCollection<>(
 				new CollectionFromConverter<>(
 					new SetFromPropertyValues<>(subject, entryProperty, Resource.class),
-					converter.reverse()));
+					converter));
 		
 		return result;
 	}

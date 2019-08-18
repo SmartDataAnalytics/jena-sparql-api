@@ -51,7 +51,7 @@ public class MapFromValueConverter<K, U, V>
 	
 	@Override
 	public Collection<V> values() {
-		return new CollectionFromConverter<>(map.values(), converter.reverse());
+		return new CollectionFromConverter<>(map.values(), converter);
 	}
 
 	// public static <K, L> Entry<L, V> transform(Entry<K, V>, Function<? super K, ?
@@ -60,7 +60,7 @@ public class MapFromValueConverter<K, U, V>
 	@Override
 	public Set<Entry<K, V>> entrySet() {
 		return new SetFromCollection<>(
-				new CollectionFromConverter<>(map.entrySet(), EntryConverterByKey.converterByValue(converter.reverse())));
+				new CollectionFromConverter<>(map.entrySet(), EntryConverterByKey.converterByValue(converter)));
 	}
 
 }

@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.sparql.ext.json;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.aksw.jena_sparql_api.rdf.collections.NodeMapperRdfDatatype;
+import org.aksw.jena_sparql_api.rdf.collections.NodeMapperFromRdfDatatype;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Node;
@@ -79,7 +79,7 @@ public class PropertyFunctionFactoryJsonUnnest
                     indexVar = (Var)index;
 //                    throw new RuntimeException("Index of json array unnesting must be a variable");
                 } else if(index.isLiteral()) {
-                	Object obj = NodeMapperRdfDatatype.toJavaCore(index, index.getLiteralDatatype());
+                	Object obj = NodeMapperFromRdfDatatype.toJavaCore(index, index.getLiteralDatatype());
                 	if(obj instanceof Number) {
                 		indexVal = ((Number)obj).intValue();
                 	}

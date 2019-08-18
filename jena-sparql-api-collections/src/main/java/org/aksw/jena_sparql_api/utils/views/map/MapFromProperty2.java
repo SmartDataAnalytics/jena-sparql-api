@@ -196,7 +196,7 @@ public class MapFromProperty2
 //							return r;
 //						}
 					},
-					converter.reverse()));
+					converter));
 		
 		return result;
 	}

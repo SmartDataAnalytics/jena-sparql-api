@@ -6,11 +6,11 @@ import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 
-public class NodeMapperFactory {
+public class NodeMappers {
 	public static final NodeMapper<Node> PASSTHROUGH = new NodeMapperPassthrough();
 
 	
-	public static final NodeMapper<String> string = NodeMapperFactory.from(String.class);
+	public static final NodeMapper<String> string = NodeMappers.from(String.class);
 	
 	
 	public static final NodeMapper<String> DEFAULT_URI_OR_STRING = new NodeMapperUriOrString(
@@ -28,7 +28,7 @@ public class NodeMapperFactory {
 	public static <T> NodeMapper<T> from(Class<T> clazz, TypeMapper typeMapper) {
 		RDFDatatype dtype = typeMapper.getTypeByClass(clazz);
 
-		NodeMapper<T> result = new NodeMapperRdfDatatype<>(dtype);
+		NodeMapper<T> result = new NodeMapperFromRdfDatatype<>(dtype);
 		return result;
 	}
 }

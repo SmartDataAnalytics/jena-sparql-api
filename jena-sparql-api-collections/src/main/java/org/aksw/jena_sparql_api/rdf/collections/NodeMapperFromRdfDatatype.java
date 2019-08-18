@@ -12,18 +12,20 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.RDFNode;
 
 /**
- * NodeMapper based on an RDFDatatype
+ * NodeMapper for a specific given RDFDatatype
+ * 
+ * If the given datatype is null, canMap will always return false.
  * 
  * @author raven Apr 9, 2018
  *
  * @param <T>
  */
-public class NodeMapperRdfDatatype<T>
+public class NodeMapperFromRdfDatatype<T>
 	implements NodeMapper<T>
 {
 	protected RDFDatatype dtype;
 	
-	public NodeMapperRdfDatatype(RDFDatatype dtype) {
+	public NodeMapperFromRdfDatatype(RDFDatatype dtype) {
 		super();
 		this.dtype = dtype;
 	}
@@ -31,7 +33,7 @@ public class NodeMapperRdfDatatype<T>
 	@Override
 	public boolean canMap(Node node) {
 		// TODO we could make use of spring's conversion service to allow implicit conversions (e.g. int -> long)
-		boolean result = canMapCore(node, dtype);
+		boolean result = dtype != null && canMapCore(node, dtype);
 		return result;
 	}
 
@@ -56,8 +58,13 @@ public class NodeMapperRdfDatatype<T>
 		
 	public static boolean canMapCore(Node node, RDFDatatype dtype) {
 		// TODO we could make use of spring's conversion service to allow implicit conversions (e.g. int -> long)
-		Object value = node.getLiteralValue();
-		boolean result = node.isLiteral() && dtype.isValidValue(value);
+		boolean result;
+		if(node.isLiteral()) {
+			Object value = node.getLiteralValue();
+			result = dtype.isValidValue(value);
+		} else {
+			result = false;
+		}
 		return result;		
 	}
 	

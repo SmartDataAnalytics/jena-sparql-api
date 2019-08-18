@@ -82,7 +82,8 @@ public class JenaPluginUtils {
 				Class<? extends Resource> cls = (Class<? extends Resource>)clazz;
 				
 				logger.debug("Registering " + clazz);
-				BiFunction<Node, EnhGraph, ? extends Resource> proxyFactory = MapperProxyUtils.createProxyFactory(cls, pm);
+				BiFunction<Node, EnhGraph, ? extends Resource> proxyFactory = 
+						MapperProxyUtils.createProxyFactory(cls, pm, typeDecider);
 
 				
 				typeDecider.registerClasses(clazz);
@@ -102,15 +103,15 @@ public class JenaPluginUtils {
 	public static boolean supportsProxying(Class<?> clazz) {
 
 		boolean result = false;
-		int mods = clazz.getModifiers();
-		if(Modifier.isInterface(mods) || !Modifier.isAbstract(mods)) {
+		//int mods = clazz.getModifiers();
+		//if(Modifier.isInterface(mods) || !Modifier.isAbstract(mods)) {
 			// Check if the class is annotated by @ResourceView
 			result = clazz.getAnnotationsByType(ResourceView.class).length != 0;
 			
 			// Check if there ary any @Iri annotations
 			result = result || Arrays.asList(clazz.getDeclaredMethods()).stream()
 				.anyMatch(m -> m.getAnnotation(Iri.class) != null || m.getAnnotation(IriNs.class) != null);
-		}
+		//}
 		
 		return result;
 	}

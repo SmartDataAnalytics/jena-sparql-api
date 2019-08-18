@@ -104,13 +104,13 @@ public class MapFromKeyConverter<K, J, V>
 	
 	@Override
 	public Set<K> keySet() {
-		return new SetFromCollection<>(new CollectionFromConverter<>(map.keySet(), converter.reverse()));
+		return new SetFromCollection<>(new CollectionFromConverter<>(map.keySet(), converter));
 	}
 	
 	//public static <K, L> Entry<L, V> transform(Entry<K, V>, Function<? super K, ? extends V> )
 	
 	@Override
 	public Set<Entry<K, V>> entrySet() {
-		return new SetFromCollection<>(new CollectionFromConverter<>(map.entrySet(), new EntryConverterByKey<>(converter.reverse())));
+		return new SetFromCollection<>(new CollectionFromConverter<>(map.entrySet(), new EntryConverterByKey<>(converter)));
 	}
 }

@@ -93,9 +93,15 @@ public class ResourceUtils {
 		return result;
 	}
 
-	public static <T extends RDFNode> boolean canAsProperty(Statement stmt, Predicate<Node> nodeTest) {
+	public static <T extends RDFNode> boolean canAsPropertyNode(Statement stmt, Predicate<Node> nodeTest) {
 		Node node = stmt.getObject().asNode();
 		boolean result = nodeTest.test(node);
+		return result;
+	}
+
+	public static <T extends RDFNode> boolean canAsProperty(Statement stmt, Predicate<RDFNode> nodeTest) {
+		RDFNode rdfNode = stmt.getObject();;
+		boolean result = nodeTest.test(rdfNode);
 		return result;
 	}
 
@@ -119,6 +125,14 @@ public class ResourceUtils {
 		return result;
 	}
 
+	
+	public static <T> T getPropertyValue(Statement stmt, RDFNodeMapper<T> rdfNodeMapper) {
+		RDFNode rdfNode = stmt.getObject();
+		T result = rdfNodeMapper.toJava(rdfNode);
+		return result;
+	}
+
+	
 	public static boolean canAsLiteral(Statement stmt, Class<?> clazz) {
 		TypeMapper tm = TypeMapper.getInstance();
 		RDFDatatype dtype = tm.getTypeByClass(clazz);
@@ -133,7 +147,7 @@ public class ResourceUtils {
 		// (a) Is 'clazz' assignable to the Java type of stmt's object? 
 		// (b) Is there an RDFDatatype corresponding to the requested clazz
 		boolean result = oClass != null && clazz.isAssignableFrom(oClass)
-				|| dtype != null && o.isLiteral() && NodeMapperRdfDatatype.canMapCore(node, dtype);
+				|| dtype != null && o.isLiteral() && NodeMapperFromRdfDatatype.canMapCore(node, dtype);
 		
 		return result;
 	}
@@ -158,7 +172,7 @@ public class ResourceUtils {
 //		RDFDatatype dtype = tm.getTypeByClass(clazz);
 		RDFNode o = stmt.getObject();
 		Node node = o.asNode();
-		T result = NodeMapperRdfDatatype.toJavaCore(node, clazz);
+		T result = NodeMapperFromRdfDatatype.toJavaCore(node, clazz);
 		return result;
 	}
 
@@ -263,7 +277,13 @@ public class ResourceUtils {
 
 	public static <T> ExtendedIterator<Statement> listProperties(Resource s, Property p, NodeMapper<T> nodeMapper) {
 		ExtendedIterator<Statement> result = listProperties(s, p)
-				.filterKeep(stmt -> canAsProperty(stmt, nodeMapper::canMap));
+				.filterKeep(stmt -> canAsPropertyNode(stmt, nodeMapper::canMap));
+		return result;
+	}
+
+	public static <T> ExtendedIterator<Statement> listProperties(Resource s, Property p, RDFNodeMapper<T> rdfNodeMapper) {
+		ExtendedIterator<Statement> result = listProperties(s, p)
+				.filterKeep(stmt -> canAsProperty(stmt, rdfNodeMapper::canMap));
 		return result;
 	}
 
@@ -287,27 +307,83 @@ public class ResourceUtils {
 	}
 
 	
-	public static <T extends RDFNode> ExtendedIterator<T> transformIteratorForTypeDecider(Iterator<? extends RDFNode> it, Class<T> viewClass, TypeDecider typeDecider) {
+	void setObject(Object o) {
+		// Check if the object's class is registered with the TypeMapper
+		
+		// Otherwise, if the object is a subclass of RDF term, just set it directly
+	}
+	
+	
+	/**
+	 * Map any RDF term to an appropriate RDFNode by trying to map with the NodeMapper
+	 * and the TypeDecider
+	 * 
+	 * @param <T>
+	 * @param it
+	 * @param viewClass
+	 * @param nodeMapper
+	 * @param typeDecider
+	 * @return
+	 */
+	public static <T extends RDFNode> ExtendedIterator<T> transformIteratorForTypeDecider(Iterator<? extends RDFNode> it, Class<T> viewClass,
+			NodeMapper nodeMapper,
+			TypeDecider typeDecider) {
 		
 		ExtendedIterator<T> result = WrappedIterator.create(it)
 				.mapWith(RDFNode::asResource)
 				.mapWith(o -> Maps.immutableEntry(o, getMostSpecificSubclass(o, viewClass, typeDecider)))
+				// If the type decider did not yield a class, fall back to the requested view class
+//				.mapWith(e -> e.getValue() != null ? e : Maps.immutableEntry(e.getKey(), viewClass))
 				.filterKeep(e -> e.getValue() != null)
+				// Only retain items we can cast to
+				.filterKeep(e -> e.getKey().canAs((Class)e.getValue()))
 				.mapWith(e -> (T)e.getKey().as((Class)e.getValue()));
 				
 		return result;
 	}
-	
-	public static <T extends RDFNode> ExtendedIterator<T> listPropertyValues(Resource s, Property p, Class<T> viewClass, TypeDecider typeDecider) {
-		ExtendedIterator<T> result =
-				transformIteratorForTypeDecider(
-					listProperties(s, p, viewClass).mapWith(Statement::getObject),
-					viewClass,
-					typeDecider);
-			
-		return result;
-	}
 
+	
+	/**
+	 * Extend the given iterator with filtering and transformation of its RDF nodes to
+	 * its most specific Java type w.r.t. a type decider.
+	 * 
+	 * @param <T>
+	 * @param it
+	 * @param viewClass
+	 * @param typeDecider
+	 * @return
+	 */
+//	public static <T extends RDFNode> ExtendedIterator<T> transformIteratorForTypeDecider(Iterator<? extends RDFNode> it, Class<T> viewClass, TypeDecider typeDecider) {
+//		
+//		ExtendedIterator<T> result = WrappedIterator.create(it)
+//				.mapWith(RDFNode::asResource)
+//				.mapWith(o -> Maps.immutableEntry(o, getMostSpecificSubclass(o, viewClass, typeDecider)))
+//				// If the type decider did not yield a class, fall back to the requested view class
+////				.mapWith(e -> e.getValue() != null ? e : Maps.immutableEntry(e.getKey(), viewClass))
+//				.filterKeep(e -> e.getValue() != null)
+//				// Only retain items we can cast to
+//				.filterKeep(e -> e.getKey().canAs((Class)e.getValue()))
+//				.mapWith(e -> (T)e.getKey().as((Class)e.getValue()));
+//				
+//		return result;
+//	}
+	
+//	public static <T extends RDFNode> ExtendedIterator<T> listPropertyValues(Resource s, Property p, RDFNodeMapper<T> rdfNodeMapper) {
+//		ExtendedIterator<T> result =
+//				transformIteratorForTypeDecider(
+//					listProperties(s, p, viewClass).mapWith(Statement::getObject),
+//					viewClass,
+//					typeDecider);
+//			
+//		return result;
+//	}
+
+	
+	public static <T extends RDFNode> Optional<T> tryGetPropertyValue(Resource s, Property p, RDFNodeMapper<T> rdfNodeMapper) {
+		Optional<T> result = findFirst(listPropertyValues(s, p, rdfNodeMapper));
+		return result;		
+	}
+	
 	
 	public static <T> Optional<T> tryGetPropertyValue(Resource s, Property p, NodeMapper<T> nodeMapper) {
 		Optional<T> result = findFirst(listPropertyValues(s, p, nodeMapper));
@@ -318,7 +394,12 @@ public class ResourceUtils {
 		T result = tryGetPropertyValue(s, p, nodeMapper).orElse(null);
 		return result;
 	}
-	
+
+	public static <T extends RDFNode> T getPropertyValue(Resource s, Property p, RDFNodeMapper<T> rdfNodeMapper) {
+		T result = tryGetPropertyValue(s, p, rdfNodeMapper).orElse(null);
+		return result;		
+	}
+
 
 	public static <T> ExtendedIterator<T> listPropertyValues(Resource s, Property p, NodeMapper<T> nodeMapper) {
 		ExtendedIterator<T> result = listProperties(s, p, nodeMapper)
@@ -326,6 +407,11 @@ public class ResourceUtils {
 		return result;
 	}
 
+	public static <T> ExtendedIterator<T> listPropertyValues(Resource s, Property p, RDFNodeMapper<T> rdfNodeMapper) {
+		ExtendedIterator<T> result = listProperties(s, p, rdfNodeMapper)
+				.mapWith(stmt -> getPropertyValue(stmt, rdfNodeMapper));
+		return result;
+	}
 	
 	public static <T extends RDFNode> Optional<Statement> getProperty(Resource s, Property p, Class<T> clazz) {
 		Optional<Statement> result = findFirst(listProperties(s, p, clazz));

@@ -1,16 +1,25 @@
 package org.aksw.jena_sparql_api.mapper.proxy;
 
-import java.util.AbstractCollection;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
+import org.aksw.commons.accessors.CollectionFromConverter;
+import org.aksw.commons.collections.CollectionFromIterable;
+import org.aksw.commons.collections.sets.SetFromCollection;
+import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.aksw.jena_sparql_api.mapper.annotation.RdfType;
 import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
+import org.aksw.jena_sparql_api.rdf.collections.ConverterFromRDFNodeMapper;
+import org.aksw.jena_sparql_api.rdf.collections.RDFNodeMapper;
+import org.aksw.jena_sparql_api.rdf.collections.RDFNodeMapperImpl;
+import org.aksw.jena_sparql_api.rdf.collections.RDFNodeMappers;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
+import org.aksw.jena_sparql_api.rdf.collections.SetFromPropertyValues;
+import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.enhanced.EnhGraph;
-import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -22,51 +31,20 @@ import org.apache.jena.rdf.model.impl.ResourceImpl;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.vocabulary.RDFS;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.google.common.collect.Iterators;
+import com.github.jsonldjava.shaded.com.google.common.collect.Lists;
+import com.google.common.base.Converter;
 
-
-class CollectionFromIterable<T>
-	extends AbstractCollection<T>
-{
-	protected Iterable<T> iterable;
-	
-	public CollectionFromIterable(Iterable<T> iterable) {
-		super();
-		this.iterable = iterable;
-	}
-
-	@Override
-	public Iterator<T> iterator() {
-		Iterator<T> result = iterable.iterator();
-		return result;
-	}
-
-	@Override
-	public int size() {
-		int result = Iterators.size(iterator());
-		return result;
-	}
-	
-	@Override
-	public String toString() {
-		String result = Iterables.toString(iterable);
-		return result;
-	}
-	
-	public static <T> CollectionFromIterable<T> create(Iterable<T> iterable) {
-		return new CollectionFromIterable<>(iterable);
-	}
-}
 
 public class TestDynamicViews {
 
 	public static final Property p = ResourceFactory.createProperty("http://foobar");
 	
-	public static final List<Class<?>> classes = Arrays.asList(Car.class, Vessel.class, Motorboat.class, Sailboat.class, SailingYacht.class,
-			Port.class);
+	public static final List<Class<?>> classes = Arrays.asList(
+			Port.class, Car.class, Vessel.class, Motorboat.class, Sailboat.class, SailingYacht.class);
 
 	@RdfType
 	@ResourceView
@@ -107,22 +85,88 @@ public class TestDynamicViews {
 	}
 	
 	@ResourceView
-	public static class Port
+	public static abstract class Port
 		extends ResourceImpl
 	{		
 	    public Port(Node n, EnhGraph m) {
 	        super( n, m );
 	    }
 
-		
+	    @IriNs("eg")
+	    public abstract void setObject(Object o);
+	    public abstract Object getObject();
+	    
+	    
+	    @IriNs("eg")
+	    public abstract Vessel getBiggestVessel();
+	   
+	    public abstract void setBiggestVessel(Vessel vessel);
+
+	    
+	    public Vessel getBiggestVesselAdvanced() {
+	    	Vessel result = ResourceUtils.getPropertyValue(this, ResourceFactory.createProperty("http://www.example.org/biggestVessel"), RDFNodeMappers.from(Vessel.class, JenaPluginUtils.getTypeDecider()));
+	    	return result;
+	    }
+
+	    
 		//@IriNs("eg")
 		public <T extends Vessel> Collection<T> getVessels(Class<T> clazz) {
 			//TypeDecider typeDecider = new TypeDeciderImpl().registerClasses(classes);
 			TypeDecider typeDecider = JenaPluginUtils.getTypeDecider();
 			
-			Collection<T> it = CollectionFromIterable.create(() -> ResourceUtils.listPropertyValues(this, p, clazz, typeDecider));
+			Collection<T> it = CollectionFromIterable.create(() -> ResourceUtils.listPropertyValues(this, p, RDFNodeMappers.from(clazz, typeDecider)));
 			return it;
 		}
+	}
+
+	@Test
+	public void testTypeDecider() {
+		
+		List<Integer> b = Lists.newArrayList(1, 1, 2, 2, 2, 3, 3, 3);
+		Set<Integer> test = new SetFromCollection<>(b);
+		System.out.println(test + " " + test.size() + " " + b);
+		
+		test.remove(1);
+		System.out.println(test + " " + test.size() + " " + b);
+
+		Iterator<Integer> it = test.iterator();
+		it.next();
+		it.remove();
+		System.out.println(test + " " + test.size() + " " + b);
+		
+		
+		JenaPluginUtils.registerResourceClasses(classes);
+		
+//		TypeDecider typeDecider = new TypeDeciderImpl().scan(TestDynamicViews.class);
+		
+		Model m = ModelFactory.createDefaultModel();
+		
+		Resource root = m.createResource()
+			.addLiteral(RDFS.label, 1)
+			.addLiteral(RDFS.label, 2.0)
+			.addProperty(RDFS.label, m.createResource("x:mb1").as(Motorboat.class))
+			.addProperty(RDFS.label, m.createResource("x:sb1").as(Sailboat.class))
+			.addProperty(RDFS.label, m.createResource("x:sy1").as(SailingYacht.class));
+
+		TypeMapper typeMapper = TypeMapper.getInstance();
+		TypeDecider typeDecider = JenaPluginUtils.getTypeDecider();
+		
+		RDFNodeMapper<?> mapper = new RDFNodeMapperImpl<>(Long.class, typeMapper, typeDecider);
+
+		Collection<RDFNode> backend = new SetFromPropertyValues<RDFNode>(root, RDFS.label, RDFNode.class);
+		
+		
+		Converter<RDFNode, ?> converter = new ConverterFromRDFNodeMapper<>(mapper);
+		Collection<?> col = new CollectionFromConverter<>(backend, converter);
+
+		for(Object o : col) {
+			System.out.println(o + " -> " + o.getClass());
+		}
+		
+		
+//		ResourceUtils.listProperties(root, RDFS.label, )
+		
+
 	}
 	
 	@Test
@@ -134,6 +178,7 @@ public class TestDynamicViews {
 		
 		JenaPluginUtils.registerResourceClasses(classes);
 
+		
 		
 		
 //		TypeDecider typeDecider = new TypeDeciderImpl().scan(TestDynamicViews.class);
@@ -156,6 +201,10 @@ public class TestDynamicViews {
 		for(Resource vessel : vessels) {
 			port.addProperty(p, vessel);
 		}
+		
+		
+		port.setBiggestVessel(sy1);
+
 
 		Assert.assertEquals(6, port.getVessels(Vessel.class).size());
 
@@ -188,6 +237,17 @@ public class TestDynamicViews {
 			Assert.assertEquals(2, types.size());
 		}
 
+		
+		System.out.println("Biggest vessel: " + port.getBiggestVessel() + " " + SailingYacht.class.isAssignableFrom(port.getBiggestVessel().getClass()));
+		System.out.println("Biggest vessel: " + port.getBiggestVesselAdvanced() + " " + SailingYacht.class.isAssignableFrom(port.getBiggestVesselAdvanced().getClass()));
+		
+		
+		Port port2 = ModelFactory.createDefaultModel().createResource().as(Port.class);
+		port2.setObject(1);
+		port2.setObject(2);
+		RDFDataMgr.write(System.out, port2.getModel(), RDFFormat.TURTLE_PRETTY);
+		
+		
 	}
 	
 
