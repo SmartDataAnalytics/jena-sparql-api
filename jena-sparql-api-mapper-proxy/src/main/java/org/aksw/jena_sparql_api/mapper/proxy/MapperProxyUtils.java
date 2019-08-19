@@ -27,6 +27,7 @@ import org.aksw.commons.collections.sets.SetFromCollection;
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.aksw.jena_sparql_api.mapper.annotation.IriType;
+import org.aksw.jena_sparql_api.mapper.annotation.PolymorphicOnly;
 import org.aksw.jena_sparql_api.rdf.collections.ConverterFromNodeMapper;
 import org.aksw.jena_sparql_api.rdf.collections.ConverterFromNodeMapperAndModel;
 import org.aksw.jena_sparql_api.rdf.collections.ConverterFromRDFNodeMapper;
@@ -1137,6 +1138,7 @@ public class MapperProxyUtils {
 				readCollectionType = readMethodDescriptor.getCollectionType();
 				readItemType = readMethodDescriptor.getItemType();
 				isReadIriType = readMethod.getAnnotation(IriType.class) != null; 
+				isReadViewAll = readMethod.getAnnotation(PolymorphicOnly.class) == null; 
 			}
 			
 			if(writeMethodDescriptor != null) {
@@ -1144,6 +1146,7 @@ public class MapperProxyUtils {
 				writeCollectionType = writeMethodDescriptor.getCollectionType();
 				writeItemType = writeMethodDescriptor.getItemType();
 				isWriteIriType = writeMethod.getAnnotation(IriType.class) != null; 
+				isWriteViewAll = writeMethod.getAnnotation(PolymorphicOnly.class) == null; 
 			}
 
 			Class<?> effectiveType = getStricterType(readType, writeType);

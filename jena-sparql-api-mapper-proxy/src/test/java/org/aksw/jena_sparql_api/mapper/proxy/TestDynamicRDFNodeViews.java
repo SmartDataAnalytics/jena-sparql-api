@@ -9,6 +9,7 @@ import java.util.Set;
 import org.aksw.commons.accessors.CollectionFromConverter;
 import org.aksw.commons.collections.sets.SetFromCollection;
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
+import org.aksw.jena_sparql_api.mapper.annotation.PolymorphicOnly;
 import org.aksw.jena_sparql_api.mapper.annotation.RdfType;
 import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
 import org.aksw.jena_sparql_api.rdf.collections.ConverterFromRDFNodeMapper;
@@ -116,6 +117,7 @@ public class TestDynamicRDFNodeViews {
 	    public abstract void setBiggestVessel(Vessel vessel);
 	    
 		@IriNs("eg")
+		@PolymorphicOnly
 		public abstract <T extends Vessel> Collection<T> getVessels(Class<T> clazz);
 
 		// Test case for setting/getting an arbitrary object
