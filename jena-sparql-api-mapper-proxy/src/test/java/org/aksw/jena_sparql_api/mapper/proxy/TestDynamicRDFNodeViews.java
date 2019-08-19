@@ -117,6 +117,10 @@ public class TestDynamicRDFNodeViews {
 	    public abstract void setBiggestVessel(Vessel vessel);
 	    
 		@IriNs("eg")
+		// PolymoprhicOnly: Yield a collection that only exposes those resources that are known subclasses
+		// of Vessel - no views are requested or returned for resources with other or unknown types. 
+		// Example: With @PolymorphicOnly, getVessel(Motorboat.class) will only return known instances of Motorboat and its subclasses.
+		//          Without @PolymorphicOnly, getVessel(Motorboat.class) will in addition return any other resource using a Motorboat view.
 		@PolymorphicOnly
 		public abstract <T extends Vessel> Collection<T> getVessels(Class<T> clazz);
 
