@@ -379,22 +379,22 @@ public class ResourceUtils {
 	 * @param typeDecider
 	 * @return
 	 */
-	public static <T extends RDFNode> ExtendedIterator<T> transformIteratorForTypeDecider(Iterator<? extends RDFNode> it, Class<T> viewClass,
-			NodeMapper nodeMapper,
-			TypeDecider typeDecider) {
-		
-		ExtendedIterator<T> result = WrappedIterator.create(it)
-				.mapWith(RDFNode::asResource)
-				.mapWith(o -> Maps.immutableEntry(o, getMostSpecificSubclass(o, viewClass, typeDecider)))
-				// If the type decider did not yield a class, fall back to the requested view class
-//				.mapWith(e -> e.getValue() != null ? e : Maps.immutableEntry(e.getKey(), viewClass))
-				.filterKeep(e -> e.getValue() != null)
-				// Only retain items we can cast to
-				.filterKeep(e -> e.getKey().canAs((Class)e.getValue()))
-				.mapWith(e -> (T)e.getKey().as((Class)e.getValue()));
-				
-		return result;
-	}
+//	public static <T extends RDFNode> ExtendedIterator<T> transformIteratorForTypeDecider(Iterator<? extends RDFNode> it, Class<T> viewClass,
+//			NodeMapper nodeMapper,
+//			TypeDecider typeDecider) {
+//		
+//		ExtendedIterator<T> result = WrappedIterator.create(it)
+//				.mapWith(RDFNode::asResource)
+//				.mapWith(o -> Maps.immutableEntry(o, getMostSpecificSubclass(o, viewClass, typeDecider)))
+//				// If the type decider did not yield a class, fall back to the requested view class
+////				.mapWith(e -> e.getValue() != null ? e : Maps.immutableEntry(e.getKey(), viewClass))
+//				.filterKeep(e -> e.getValue() != null)
+//				// Only retain items we can cast to
+//				.filterKeep(e -> e.getKey().canAs((Class)e.getValue()))
+//				.mapWith(e -> (T)e.getKey().as((Class)e.getValue()));
+//				
+//		return result;
+//	}
 
 	
 	/**
