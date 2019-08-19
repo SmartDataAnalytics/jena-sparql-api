@@ -158,7 +158,7 @@ List<Person> people = SparqlRx.execPartitioned(conn, var, query)
 ```
 
 This approach is **extremely powerful** when used in conjunction with annotation-driven resource view generation using the
-(jena-sparql-api-mapper-proxy)[../jena-sparql-api-mapper-proxy] module.
+[jena-sparql-api-mapper-proxy](../jena-sparql-api-mapper-proxy) module.
 
 It is valid to create a flow from a CONSTRUCT query with an empty template, such as `CONSTRUCT { } { ?s a :Person }`. In this case the result is still a flow of RDFNode / Resource objects based on the partition variable. However, these nodes are than backed by an empty model.
 
