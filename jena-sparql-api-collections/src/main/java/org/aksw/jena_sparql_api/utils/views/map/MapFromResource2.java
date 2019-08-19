@@ -10,9 +10,9 @@ import org.aksw.commons.collections.sets.SetFromCollection;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
-import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jena_sparql_api.rdf.collections.SetFromPropertyValues;
+import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.enhanced.EnhGraph;
@@ -45,7 +45,7 @@ import com.google.common.base.Converter;
  * @author raven
  *
  */
-public class MapFromProperty2
+public class MapFromResource2
 	extends AbstractMap<RDFNode, RDFNode>
 {
 	protected final Resource subject;
@@ -56,7 +56,7 @@ public class MapFromProperty2
 	//protected fin
 	//protected Function<String, Resource> entryResourceFactory;
 	
-	public MapFromProperty2(
+	public MapFromResource2(
 			Resource subject,
 			Property entryProperty,
 			Property keyProperty,
@@ -114,7 +114,7 @@ public class MapFromProperty2
 			
 			Model model = subject.getModel();
 			
-			Resource result = ReactiveSparqlUtils.execSelectQs(() -> QueryExecutionFactory.create(query, model))
+			Resource result = SparqlRx.execSelect(() -> QueryExecutionFactory.create(query, model))
 				.map(qs -> qs.get(e.getVar().getName()).asResource())
 				.singleElement()
 				.blockingGet();

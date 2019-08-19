@@ -9,7 +9,6 @@ import java.util.Set;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
 import org.aksw.jena_sparql_api.core.utils.ServiceUtils;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceListService;
@@ -19,6 +18,7 @@ import org.aksw.jena_sparql_api.lookup.MapPaginator;
 import org.aksw.jena_sparql_api.lookup.MapService;
 import org.aksw.jena_sparql_api.lookup.MapServiceUtils;
 import org.aksw.jena_sparql_api.mapper.MappedQuery;
+import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.jena.graph.Node;
@@ -74,7 +74,7 @@ public class MapPaginatorHop
 
     @Override
     public Single<Range<Long>> fetchCount(Long itemLimit, Long rowLimit) {
-    	Single<Range<Long>> result = ReactiveSparqlUtils.fetchCountConcept(defaultQef, concept, itemLimit, rowLimit);
+    	Single<Range<Long>> result = SparqlRx.fetchCountConcept(defaultQef, concept, itemLimit, rowLimit);
         //CountInfo result = ServiceUtils.fetchCountConcept(defaultQef, concept, itemLimit, rowLimit);
         return result;
     }

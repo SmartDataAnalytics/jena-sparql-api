@@ -1,9 +1,9 @@
-package org.aksw.jena_sparql_api.core.utils;
+package org.aksw.jena_sparql_api.rx;
 
 import java.io.IOException;
 import java.util.function.Consumer;
 
-import org.aksw.jena_sparql_api.mapper.proxy.DefaultPrefixes;
+import org.aksw.jena_sparql_api.common.DefaultPrefixes;
 import org.aksw.jena_sparql_api.stmt.SPARQLResultSinkQuads;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtUtils;
 import org.apache.jena.query.Dataset;

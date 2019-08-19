@@ -1,4 +1,4 @@
-## Reactive RDF / SPARQL Utils
+## Reactive RDF / SPARQL Stream Processing
 
 This module provides reactive wrappers for reading RDF files and executing SPARQL queries based on RxJava.
 In a nutshell, reactive streams are similar yet more powerful than Java's standard `java.util.Stream`s because of their support
@@ -103,14 +103,14 @@ void writeDatasets(Flowable<? extends Dataset> flowable, Path file, RDFFormat fo
 Note, at present there is no mechanism for cancelling the write process.
 
 
-### ReactiveSparqlUtils
+### SparqlRx
 The main advantace of the reactive SPARQL utils is to easily facilitate sophisticated SPARQL response processing using a stream API, which in addition allows for cancellation at any time.
 
 
 The core functions only depend on the supplier of a Jena Query Execution object:
 ```
-Flowable<Binding> execSelect(Supplier<QueryExecution> qes);
-Flowable<QuerySolution> execSelectQs(Supplier<QueryExecution> qes);
+Flowable<QuerySolution> execSelect(Supplier<QueryExecution> qes);
+Flowable<Binding> execSelectRaw(Supplier<QueryExecution> qes);
 ```
 
 Hence, these methods can be easily used with different query execution generation approaches:
@@ -118,12 +118,12 @@ Hence, these methods can be easily used with different query execution generatio
 ```
 String queryString = "SELECT * { ?s ?p ?o } LIMIT 10";
 
-Flowable<QuerySolution> qsFlow1 =  ReactiveSparqlUtils.execSelectQs(
+Flowable<QuerySolution> qsFlow1 =  SparqlRx.execSelect(
     () -> QueryExecutionFactory.create(queryString, model));
 
 RDFConnection conn = RDFConnectionFactory.connect("http://dbpedia.org", sparql);
 
-Flowable<QuerySolution> qsFlow2 = ReactiveSparqlUtils.execSelectQs(
+Flowable<QuerySolution> qsFlow2 = SparqlRx.execSelect(
     () -> conn.query(queryString));
 ```
 
@@ -136,22 +136,31 @@ over processing of bindings and query solutions:
 * Attributes can be accessed using standard vocabularies rather than ad-hoc variable names.
 * Serialization of resources is essentially an RDF graph or dataset and can be done using the util methods of RDFDataMgrRx.
 
-The basic ideo of resource-centric processing is to take a SPARQL CONSTRUCT query and select one its nodes (typically variables) as the *root*.
+The basic idea of resource-centric processing is to take a SPARQL CONSTRUCT query and select one its nodes (typically variables) as the *root*.
 
 ```java
 Flowable<RDFNode> execPartitioned(SparqlQueryConnection conn, Node s, Query q);
 ```
 
+The flow of `RDFNode`s can now be easiliy mapped to e.g. Resource or a custom resource view:
 ```java
+Flowable<RDFNode> nodeFlow = SparqlRx.execPartitioned(conn, Var.alloc("s"), QueryFactory.create("CONSTRUCT { ?s ?p ?o } WHERE { ?s a :Person }"));
 
-Flowable<RDFNode> nodeFlow = ReactiveSparqlUtils.execPartitioned(conn, Var.alloc("s"), QueryFactory.create("CONSTRUCT { ?s ?p ?o } WHERE { ?s a :Person }"));
-
-
-Flowable<Person> resourceFlow = nodeFlow.map(RDFNode::asResource);
+Flowable<Resource> resourceFlow = nodeFlow.map(RDFNode::asResource);
 Flowable<Person> personFlow = nodeFlow.map(n -> n.as(Person.class));
 ```
 
-**It is valid to create a flow from a CONSTRUCT query with an empty template, such as `CONSTRUCT { } { ?s a :Person }`. In this case the result is still a flow of RDFNode / Resource objects based on the partition variable. However, these nodes are than backed by an empty model**
+Putting it together yields:
+```java
+List<Person> people = SparqlRx.execPartitioned(conn, var, query)
+    .map(r -> r.as(Person.class))
+    .toList().timeout(10, TimeUnit.SECONDS).blockingGet());
+```
+
+This approach is **extremely powerful** when used in conjunction with annotation-driven resource view generation using the
+(jena-sparql-api-mapper-proxy)[../jena-sparql-api-mapper-proxy] module.
+
+It is valid to create a flow from a CONSTRUCT query with an empty template, such as `CONSTRUCT { } { ?s a :Person }`. In this case the result is still a flow of RDFNode / Resource objects based on the partition variable. However, these nodes are than backed by an empty model.
 
 
 

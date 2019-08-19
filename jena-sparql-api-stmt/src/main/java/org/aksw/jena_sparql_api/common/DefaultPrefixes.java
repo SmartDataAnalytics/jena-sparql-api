@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.mapper.proxy;
+package org.aksw.jena_sparql_api.common;
 
 
 import java.io.IOException;
@@ -18,7 +18,15 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.io.Resources;
 
-// TODO This class no longer only defines RDFa namespaces - hence rename to e.g. to simply "Prefixes" or "PrefixRegistry"
+/**
+ * Default prefixes used throughout jena-sparql-api
+ * 
+ * NOTE on package / module: This class could go to a common package, on the other hand,
+ * the 'stmt' module is the first to make use of it
+ * 
+ * @author raven
+ *
+ */
 public class DefaultPrefixes {
 	private static final Logger logger = LoggerFactory.getLogger(DefaultPrefixes.class);
 
@@ -34,11 +42,9 @@ public class DefaultPrefixes {
 			.setNsPrefixes(RDFDataMgr.loadModel("rdf-prefixes/jsa.jsonld"));
 	}
 	
-	// Apparently scanning folders in class path resources is still a pain...
-	// PatternMatchingResourceResolver used to work, but I'd like to avoid a spring
-	// dependency here...
-	// TODO The issue here is, that if we load prefixes as part of JenaSystem.init(),
-	// we cause a chicken-egg problem with some static initializers
+	// TODO The issue with dynamic loading of namespaces based on class path scanning is,
+	// that if we load prefixes as part of JenaSystem.init(),
+	// we cause a chicken-egg-based NPE exception due to static initializers
 	public static void toImproveInTheFuture() {
 		String folder = "rdf-prefixes";
 		String rootStr = Resources.getResource(folder).getPath();

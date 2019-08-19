@@ -9,9 +9,9 @@ import org.aksw.commons.collections.sets.SetFromCollection;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.RelationUtils;
 import org.aksw.jena_sparql_api.concepts.UnaryRelation;
-import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jena_sparql_api.rdf.collections.SetFromPropertyValues;
+import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.Vars;
 import org.apache.jena.graph.Triple;
@@ -44,7 +44,7 @@ import com.google.common.collect.Maps;
  * @author raven
  *
  */
-public class MapFromProperty
+public class MapFromResource
 	extends AbstractMap<RDFNode, Resource>
 {
 	protected final Resource subject;
@@ -54,7 +54,7 @@ public class MapFromProperty
 	//protected fin
 	//protected Function<String, Resource> entryResourceFactory;
 	
-	public MapFromProperty(
+	public MapFromResource(
 			Resource subject, Property entryProperty, Property keyProperty) {
 		super();
 		this.subject = subject;
@@ -100,7 +100,7 @@ public class MapFromProperty
 			
 			Model model = subject.getModel();
 			
-			Resource result = ReactiveSparqlUtils.execSelectQs(() -> QueryExecutionFactory.create(query, model))
+			Resource result = SparqlRx.execSelect(() -> QueryExecutionFactory.create(query, model))
 				.map(qs -> qs.get(e.getVar().getName()).asResource())
 				.singleElement()
 				.blockingGet();

@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.aksw.jena_sparql_api.algebra.utils.FixpointIteration;
-import org.aksw.jena_sparql_api.core.utils.RDFDataMgrEx;
+import org.aksw.jena_sparql_api.rx.RDFDataMgrEx;
 import org.aksw.jena_sparql_api.user_defined_function.UserDefinedFunctionResource;
 import org.aksw.jena_sparql_api.user_defined_function.UserDefinedFunctions;
 import org.aksw.jena_sparql_api.utils.Vars;

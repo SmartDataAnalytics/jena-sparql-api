@@ -4,20 +4,25 @@
 Jena `Resource`s are stateless views over an RDF Graph (EnhGraph to be precise).
 This system simplifies the process of creating such custom views by creating a dynamic proxies that implement missing methods based on
 the provided annotations. Furthermore, collection views backed by Jena Model's are supported.
+The system is this module is 
 
 ### Features
 
 * Method implementation generation works with interfaces, default methods, abstract classes, and classes.
-* Support for dynamic RDF collection views* using [TODO link to module]()- i.e. modifications of these views propagate to the resource's backing model.
-* All namespaces of the [RDFa initial context](https://www.w3.org/2011/rdfa-context/rdfa-1.1) (and more) pre-registered.
+* Support for dynamic RDF collection views using [jena-sparql-api-collections](../jena-sparql-api-collections) module. Modifications of these views propagate to the resource's backing model.
+* Polymorphism based on `@RdfType` annotations. Collection views will only expose resources of the requested type or its sub-types.
+* All namespaces of the [RDFa initial context](https://www.w3.org/2011/rdfa-context/rdfa-1.1) plus other well known vocabularies, such as GeoSPARQL and Jena's namespaces, pre-registered in the class `DefaultPrefixes` which is loaded by default.
 
 
-Note: Map view generation is not yet supported, although the Map implementation already exists.
+Note: `Map` view generation is not yet supported, although the `MapFromResource` implementations already exists.
 
 
 The snippet below summarizes the mapping capabilities by the proxy system.
 
 ```java
+// If omitted, the IRI defaults to "java://" + class.getCanonicalName()
+@RdfType("http://my.rdf/Resource")
+@ResourceView // Mark as subject to classpath scanning by JenaPluginUtils
 public interface ExampleResource
 	extends Resource
 {
@@ -31,10 +36,12 @@ public interface ExampleResource
 	@Iri("owl:maxCardinality")
 	Integer getInteger();
 
-    /** Copies the elements of the provided list into its list view; i.e. invokes getList(); **/
+    // The returned list is a *view* over the RDF model
 	@Iri("eg:stringList")
-	TestResource setList(List<String> strs);
 	List<String> getList();
+
+    /** The generated setter invokes getList().addAll(strs) **/
+	TestResource setList(List<String> strs);
 
 	@Iri("eg:set")
 	Set<String> getItems();
@@ -49,30 +56,95 @@ public interface ExampleResource
 }
 ```
 
-### Dynamic collections
-Assume the following interface:
+### Maven
 
-```java
-interface Person {
-  @Iri("foaf:knows")
-  Set<Agent> getAcquaintances();
+```xml
+<dependency>
+    <groupId>org.aksw.jena_sparql_api</groupId>
+    <artifactId>jena-sparql-api-mapper-proxy</artifactId>
+</dependency>
+```
+Check for the latest version on [Maven Central](https://search.maven.org/search?q=a:jena-sparql-api-mapper-proxy).
 
-  @Iri("foaf:knows")
-  <T extends Resource> Set<T> getDynamicAcquaintances(Class<T> viewClass);
+
+### Dynamic polymorphic collection views
+Dynamic collection view have the signature
+```
+<T extends BOUND> Set<T> getCollection(Class<T> viewClass);
+<T extends BOUND> List<T> getCollection(Class<T> viewClass);
+```
+
+`BOUND` is optional and thus defaults to `Object`. If a bound is given, only
+resources that can be viewed as BOUND or its sub-classes are exposed in the
+requested set.
+
+One key advantage of dynamic collections is extensibility:
+Assume a simple model for [DCAT](https://www.w3.org/TR/vocab-dcat/) dataset descriptions:
+
+```
+interface DcatDistribution {
+  @IriType
+  @IriNs("dcat")
+  String getDownloadURL();
+}
+
+interface DcatDataset {
+  @Iri("dcat:distribution")
+  Collection<DcatDistribution> getDistributions();
 }
 ```
 
-The problem here is, that we cannot add an arbitrary RDF resource using `person.getAcquaintances().add(someResource)` - because the set is of type
-`Person`.
-However, using `person.getDynamicAcquaintances(Resource.class).add(someResource)` we can add any instance of RDF resource (but not its superclass RDFNode) as an acquaintance.
+Now assume you want to reuse this model, however, you would also like to have some additional properties on `DcatDistribution`,
+such as whether the distribution has been downloaded to a local file:
+```
+interface MyCustomDcatDistribution {
+  @IriNs("eg")
+   String getLocalCacheLocation();
+}
+```
 
+Clearly, you want to be able to conveniently access the properties of your custom distributions when iterating the distributions of a dataset.
+However, the signature `Collection<DcatDistribution> getDistributions()` does not allow for it - it is not even possible to override this method.
+Besides, subclassing DcatDataset only shifts the problem - just assume there was a `DcatCatalog` class with a `getDatasets()` method.
+So at this point, traditionally you are left with these two choices:
 
-**Known issue** Items in dynamic sets are not yet filtered by the @RdfType annotation of the requested class - this means, that
+* Subclass all domain classes and add getters / setters for you custom classes - cumbersome. 
+* Perform casting in your business logic - ugly.
 
+You may be inclined to think that the issue may be solved if the signature of `getDistributions()` was
+```java
+interface DcatDataset {
+    Collection<? extends DcatDistribution> getDistributions();
+    ...
+}
+This indeed allows subclasses to override the method, however, you can no longer add items to the collection:
+
+DcatDataset dcatDataset = ...
+dcatDataset.getDistributions().add(/* no argument is valid here */);
+
+```
+
+With the dynamic collection view, it is possible to set up the view as
+
+```
+class DcatDataset {
+    @Iri("dcat:distribution")
+    <T> Collection<T extends DcatDistribution> getDistributions(Class<T> viewClass);
+}
+```
+
+Now you can view **any** distribution using your own implementaion - without the cumbersome or ugly drawbacks!
+```
+DcatDataset dcatDataset = ModelFactory.createDefaultModel().createResource().as(DcatDataset.class);
+Collection<MyCustomDistribution> myDistributions = dcatDataset.getDistributions(MyCustomDistribution.class);
+```
 
 ### Proxy vs Traditional Approach Comparision
+The purpose of this section is to give insight into the inner working of the proxy generation.
+In principle, based on the method signature, Jena's configuration and information collected during class path scanning, methods are
+mapped to appropriate static utility functions in the `ResourceUtils` class. Hence, most proxy methods can be implemented manually using a one-liner.
 
-Here we provide a comparision of the resource implementation approaches based an a simply Person class, whose `firstName` property maps to `foaf:firstName`.
+Here we provide a comparision of the resource implementation approaches based an a simple Person class, whose `firstName` property maps to `foaf:firstName`.
 
 ```java
 public interface Person extends Resource {
@@ -122,16 +194,13 @@ JenaPluginUtils.registerResourceClasses(Person.class);
 ```
 
 
-###
-
-It is a nice utility that eases creating "POJOs" backed by RDF data. More precise: It allows one to create domain interfaces that (a) extend Jena's 'Resource interface and (b) provide domain specific getters and setters with annotations for RDF mapping.
-A proxy utility method (based on cglib) then dynamically creates approprate implementations.
-The generated proxy itself just delegates getter/setter invocations to the appropriate methods in jena-sparql-api's `ResourceUtils` (not to be confused with that of Jena). Hence, if one wanted to implement getters/setters manually, the `ResourceUtils` provide useful methods based on Jena's usual Resource class. Thus, the proxy util actually just does the wiring-part which one would otherwise do with repetetive manual efforts.
+### Step-by-step setup guide
 
 
-* **Step 1a: Create an interface extending Resource **
+* **Step 1a: Create your annotated interfaces/classes extending Resource, such as **
 
 ```java
+@RdfType("foaf:Person")
 public interface Person
 	extends Resource
 {
@@ -140,27 +209,6 @@ public interface Person
     void setFirstName(String fn);
 }
 ```
-
-* **Step 1b: Optionally, add @RdfType annotation to the class **
-
-If `@RdfType` is used without argument, a default IRI of pattern `"java://" + class.getCanonicalName()` will be created.
-In this example, it would evaluate to `java://foo.bar.LsqQuery`.
-
-```java
-package foo.bar;
-
-@RdfType("eg:MyType")
-public interface LsqQuery
-	extends Resource
-{
-    @Iri("http://lsq.aksw.org/vocab#text")
-	String getText();
-    void setText(String text);
-}
-```
-
-
-
 
 * **Step 2a: Use the package scanning utility to automatically register annotated interfaces (or classes) with Jena**.
 
@@ -190,7 +238,7 @@ public class JenaPluginMyModule
 	}
 
 	public static void init() {
-		JenaPluginUtils.scan(MyDomainInterface.class);
+		JenaPluginUtils.scan(Person.class);
 	}
 }
 ```
@@ -208,13 +256,13 @@ Note: prior to Jena 3.8.0 it used to be `.system.` instead of `.sys.`.
 Jena will out of the box support viewing resources as instances of the given class, and the proxy will take care of the bidirectional mapping between the bean methods and the RDF model.
 
 ```
-LsqQuery q = Model.createResource().as(LsqQuery.class);
-q.setText("hi");
+LsqQuery q = Model.createResource().as(Person.class);
+q.setFirstName("John");
 
-System.out.println(q.getText());
-// Prints "hi"
+System.out.println(q.getFirstName());
+// Prints "John"
 
 RDFDataMgr.write(System.out, q.getModel, RDFFormat.NTRIPLES);
-// Prints _:b0 <http://lsq.aksw.org/vocab#text> "hi" .
+// Prints _:b0 <http://xmlns.com/foaf/0.1/firstName> "John" .
 
 ```

@@ -1,4 +1,4 @@
-package org.aksw.jena_sparql_api.core.utils;
+package org.aksw.jena_sparql_api.rx;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
@@ -15,6 +15,7 @@ import java.util.function.Supplier;
 import org.aksw.commons.collections.SetUtils;
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
+import org.aksw.jena_sparql_api.core.utils.QueryGenerationUtils;
 import org.aksw.jena_sparql_api.utils.IteratorResultSetBinding;
 import org.aksw.jena_sparql_api.utils.QuadPatternUtils;
 import org.aksw.jena_sparql_api.utils.VarUtils;
@@ -53,9 +54,15 @@ import io.reactivex.Single;
 import io.reactivex.functions.Predicate;
 import io.reactivex.processors.PublishProcessor;
 
-public class ReactiveSparqlUtils {
+/**
+ * Utilities for wrapping SPARQL query execution with flows.
+ * 
+ * @author raven
+ *
+ */
+public class SparqlRx {
 	
-	private static final Logger logger = LoggerFactory.getLogger(ReactiveSparqlUtils.class);
+	private static final Logger logger = LoggerFactory.getLogger(SparqlRx.class);
 	
 	public static <K, X> Flowable<Entry<K, List<X>>> groupByOrdered(
 			Flowable<X> in, Function<X, K> getGroupKey) {
@@ -155,11 +162,11 @@ public class ReactiveSparqlUtils {
 		return result;
 	}
 
-	public static Flowable<Binding> execSelect(Supplier<QueryExecution> qes) {
+	public static Flowable<Binding> execSelectRaw(Supplier<QueryExecution> qes) {
 		return execSelect(qes, ResultSet::nextBinding);
 	}
 
-	public static Flowable<QuerySolution> execSelectQs(Supplier<QueryExecution> qes) {
+	public static Flowable<QuerySolution> execSelect(Supplier<QueryExecution> qes) {
 		return execSelect(qes, ResultSet::next);
 	}
 
@@ -288,7 +295,7 @@ public class ReactiveSparqlUtils {
 		for(int j = 0; j < 10; ++j) {
 			int i[] = { 0 };
 			System.out.println("HERE");
-			execSelect(() -> org.apache.jena.query.QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql",
+			execSelectRaw(() -> org.apache.jena.query.QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql",
 					"SELECT * { ?s a <http://dbpedia.org/ontology/Person> }"))
 							.takeUntil(b -> i[0] == 10).subscribe(x -> {
 								i[0]++;
@@ -300,7 +307,7 @@ public class ReactiveSparqlUtils {
 	}
 	
 	public static Single<Number> fetchNumber(SparqlQueryConnection qef, Query query, Var var) {
-    	return ReactiveSparqlUtils.execSelect(() -> qef.query(query))
+    	return SparqlRx.execSelectRaw(() -> qef.query(query))
             	.map(b -> b.get(var))
             	.map(countNode -> ((Number)countNode.getLiteralValue()))
             	.map(Optional::ofNullable)
@@ -318,8 +325,8 @@ public class ReactiveSparqlUtils {
 
         Query countQuery = ConceptUtils.createQueryCount(concept, outputVar, xitemLimit, xrowLimit);
 
-        return ReactiveSparqlUtils.fetchNumber(qef, countQuery, outputVar)
-        		.map(count -> ReactiveSparqlUtils.toRange(count.longValue(), xitemLimit, xrowLimit));
+        return SparqlRx.fetchNumber(qef, countQuery, outputVar)
+        		.map(count -> SparqlRx.toRange(count.longValue(), xitemLimit, xrowLimit));
     }
 //	return ReactiveSparqlUtils.execSelect(() -> qef.createQueryExecution(countQuery))
 //        	.map(b -> b.get(outputVar))
@@ -350,8 +357,8 @@ public class ReactiveSparqlUtils {
         Var v = countQuery.getKey();
         Query q = countQuery.getValue();
         
-        return ReactiveSparqlUtils.fetchNumber(qef, q, v)
-        		.map(count -> ReactiveSparqlUtils.toRange(count.longValue(), xitemLimit, xrowLimit));
+        return SparqlRx.fetchNumber(qef, q, v)
+        		.map(count -> SparqlRx.toRange(count.longValue(), xitemLimit, xrowLimit));
     }
 
     
@@ -406,9 +413,9 @@ public class ReactiveSparqlUtils {
     	logger.debug("Converted query to: " + clone);
     	
     	
-		Flowable<RDFNode> result = ReactiveSparqlUtils
+		Flowable<RDFNode> result = SparqlRx
 				// For future reference: If we get an empty results by using the query object, we probably have wrapped a variable with NodeValue.makeNode. 
-				.execSelect(() -> conn.query(clone))
+				.execSelectRaw(() -> conn.query(clone))
 				.map(b -> {
 					Graph graph = GraphFactory.createDefaultGraph();
 

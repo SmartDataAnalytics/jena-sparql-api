@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.function.BiFunction;
 
+import org.aksw.jena_sparql_api.common.DefaultPrefixes;
 import org.aksw.jena_sparql_api.mapper.annotation.Iri;
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;

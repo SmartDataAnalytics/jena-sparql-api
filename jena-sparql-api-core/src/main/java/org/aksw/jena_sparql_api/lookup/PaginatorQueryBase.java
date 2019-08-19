@@ -2,7 +2,7 @@ package org.aksw.jena_sparql_api.lookup;
 
 import java.util.function.Supplier;
 
-import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
+import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
@@ -49,7 +49,7 @@ public abstract class PaginatorQueryBase<T>
 
     @Override
     public Single<Range<Long>> fetchCount(Long itemLimit, Long rowLimit) {
-    	Single<Range<Long>> result = ReactiveSparqlUtils.fetchCountQuery(qef, query, itemLimit, rowLimit);
+    	Single<Range<Long>> result = SparqlRx.fetchCountQuery(qef, query, itemLimit, rowLimit);
         //Range<Long> result = ServiceUtils.fetchCountQuery(qef, query, itemLimit, rowLimit);
         return result;
     }

@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.lookup;
 import java.util.Map.Entry;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
+import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprListUtils;
 import org.apache.jena.graph.Node;
@@ -107,7 +107,7 @@ public class LookupServiceSparqlQuery
             //System.out.println("Lookup query: " + q);
             logger.debug("Looking up: " + q);
 
-            result = ReactiveSparqlUtils.execSelect(() -> sparqlService.query(q))
+            result = SparqlRx.execSelectRaw(() -> sparqlService.query(q))
             	.groupBy(b -> b.get(var))
             	.flatMapSingle(groups -> groups
             			.collectInto((Table)new TableN(), (t, b) -> t.addBinding(b))

@@ -56,7 +56,7 @@ public class RDFNodeMapperImpl<T>
 					// In this case, all triples and thus the type information is lost, so no more
 					// specific type is found
 					
-					// If we could not obtain a specific type, and the request was
+					// If we could not obtain a specific type, and the request was for
 					// a super class of RDFNode/Resource, yield a generic RDFNode view
 					if(viewClass.isAssignableFrom(Resource.class)) {
 						effectiveType = RDFNode.class;

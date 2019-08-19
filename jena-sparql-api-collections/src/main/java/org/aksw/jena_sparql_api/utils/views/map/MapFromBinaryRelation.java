@@ -9,7 +9,7 @@ import java.util.Set;
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.concepts.RelationUtils;
-import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
+import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.rdf.model.Model;
@@ -72,7 +72,7 @@ public class MapFromBinaryRelation
 	public static Flowable<Entry<RDFNode, RDFNode>> fetch(Model model, BinaryRelation relation) {
 		Query query = RelationUtils.createQuery(relation);
 		
-		Flowable<Entry<RDFNode, RDFNode>> result = ReactiveSparqlUtils.execSelectQs(() -> QueryExecutionFactory.create(query, model))
+		Flowable<Entry<RDFNode, RDFNode>> result = SparqlRx.execSelect(() -> QueryExecutionFactory.create(query, model))
 			.map(qs -> Maps.immutableEntry(
 					qs.get(relation.getSourceVar().getName()),
 					qs.get(relation.getTargetVar().getName())));

@@ -4,8 +4,8 @@ import java.util.Map.Entry;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
-import org.aksw.jena_sparql_api.core.utils.OperatorOrderedGroupBy;
-import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
+import org.aksw.jena_sparql_api.rx.OperatorOrderedGroupBy;
+import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
@@ -68,7 +68,7 @@ public class MapPaginatorSparqlQuery
 //            console.log('ROW ' + rowLimit);
         }
 
-        Single<Range<Long>> result = ReactiveSparqlUtils.fetchCountConcept(qef, countConcept, itemLimit, null); //rowLimit
+        Single<Range<Long>> result = SparqlRx.fetchCountConcept(qef, countConcept, itemLimit, null); //rowLimit
         return result;
     }
 
@@ -115,7 +115,7 @@ public class MapPaginatorSparqlQuery
 //      Node[] prior = {null};
 //      PublishProcessor<Node> boundaryIndicator = PublishProcessor.create();
 
-      return ReactiveSparqlUtils.execSelect(() -> qef.query(query))
+      return SparqlRx.execSelectRaw(() -> qef.query(query))
     		  .lift(new OperatorOrderedGroupBy<Binding, Node, Table>(b -> b.get(attrVar), TableN::new, Table::addBinding));
 //      return ReactiveSparqlUtils.groupByOrdered(
 //    		  ReactiveSparqlUtils.execSelect(() -> qef.createQueryExecution(query)),

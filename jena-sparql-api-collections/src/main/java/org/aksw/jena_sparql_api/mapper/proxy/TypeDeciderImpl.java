@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.aksw.jena_sparql_api.common.DefaultPrefixes;
 import org.aksw.jena_sparql_api.mapper.annotation.RdfType;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
