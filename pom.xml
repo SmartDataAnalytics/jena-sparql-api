@@ -98,7 +98,7 @@
 	</developers>
 
 	<properties>
-		<jena.version>3.11.0</jena.version>
+		<jena.version>3.12.0</jena.version>
 		<!-- <jetty.version>9.4.8.v20171121</jetty.version> -->
 		<jetty.version>9.4.18.v20190429</jetty.version>
 
