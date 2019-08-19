@@ -45,7 +45,7 @@ public class JenaPluginUtils {
 	}
 
 	public static void scan(String basePackage, Personality<RDFNode> p) {
-		scan(basePackage, p, RDFa.prefixes);
+		scan(basePackage, p, DefaultPrefixes.prefixes);
 	}
 	
 	public static void scan(String basePackage, Personality<RDFNode> p, PrefixMapping pm) {
@@ -69,7 +69,7 @@ public class JenaPluginUtils {
 	
 	public static void registerResourceClasses(Iterable<Class<?>> classes) {
 		for(Class<?> clazz : classes) {
-			registerResourceClass(clazz, BuiltinPersonalities.model, RDFa.prefixes);
+			registerResourceClass(clazz, BuiltinPersonalities.model, DefaultPrefixes.prefixes);
 		}		
 	}
 	

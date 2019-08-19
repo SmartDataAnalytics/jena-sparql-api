@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.aksw.commons.accessors.CollectionFromConverter;
-import org.aksw.commons.collections.CollectionFromIterable;
 import org.aksw.commons.collections.sets.SetFromCollection;
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
 import org.aksw.jena_sparql_api.mapper.annotation.RdfType;
@@ -15,7 +14,6 @@ import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
 import org.aksw.jena_sparql_api.rdf.collections.ConverterFromRDFNodeMapper;
 import org.aksw.jena_sparql_api.rdf.collections.RDFNodeMapper;
 import org.aksw.jena_sparql_api.rdf.collections.RDFNodeMapperImpl;
-import org.aksw.jena_sparql_api.rdf.collections.RDFNodeMappers;
 import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jena_sparql_api.rdf.collections.SetFromPropertyValues;
 import org.apache.jena.datatypes.TypeMapper;
@@ -23,10 +21,8 @@ import org.apache.jena.enhanced.EnhGraph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.impl.ResourceImpl;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
@@ -39,29 +35,38 @@ import com.github.jsonldjava.shaded.com.google.common.collect.Lists;
 import com.google.common.base.Converter;
 
 
-public class TestDynamicViews {
-
-	public static final Property p = ResourceFactory.createProperty("http://foobar");
+/**
+ * Test cases for the annotation-driven Resource proxy generation.
+ * These tests making use of the simple port / vessels model
+ * with the following type hierarchy:
+ * 
+ * 
+ *        Vessel          Port     Car
+ *    /           \
+ * Sailboat    Motorboat
+ *    \           /
+ *    Sailing yacht
+ *    
+ * @author raven
+ *
+ */
+public class TestDynamicRDFNodeViews {
 	
+	// Workaround for Guava's package scanning not picking up nested classes
+	// For the sake of keeping this demonstration self contained we enumerate these classes
+	// here.
 	public static final List<Class<?>> classes = Arrays.asList(
-			Port.class, Car.class, Vessel.class, Motorboat.class, Sailboat.class, SailingYacht.class);
+			Port.class, Vessel.class, Motorboat.class, Sailboat.class, SailingYacht.class, Car.class);
 
-	@RdfType
-	@ResourceView
-	public static interface Car
-		extends Resource
-	{
-		
-	}
-
-	@RdfType
 	@ResourceView
 	public static interface Vessel
 		extends Resource
 	{
-		
 	}
 
+	// The @RdfType annotation indicates to generate an appropriate rdf:type whenever
+	// rdfNode.as(View.class) is invoked.
+	// @ResourceView indicates that the interface/class is subject to classpath scanning
 	@RdfType
 	@ResourceView
 	public static interface Motorboat
@@ -84,39 +89,48 @@ public class TestDynamicViews {
 	{
 	}
 	
+	@RdfType
+	@ResourceView
+	public static interface Car
+		extends Resource
+	{
+	}
+
+	
+	/**
+	 * 
+	 * @author raven
+	 *
+	 */
+	@RdfType("http://www.example.org/Port")
 	@ResourceView
 	public static abstract class Port
 		extends ResourceImpl
 	{		
 	    public Port(Node n, EnhGraph m) {
 	        super( n, m );
-	    }
+	    }	    
+	    
+	    @IriNs("eg")
+	    public abstract Vessel getBiggestVessel();	   
+	    public abstract void setBiggestVessel(Vessel vessel);
+	    
+		@IriNs("eg")
+		public abstract <T extends Vessel> Collection<T> getVessels(Class<T> clazz);
 
+		// Test case for setting/getting an arbitrary object
 	    @IriNs("eg")
 	    public abstract void setObject(Object o);
 	    public abstract Object getObject();
-	    
-	    
-	    @IriNs("eg")
-	    public abstract Vessel getBiggestVessel();
-	   
-	    public abstract void setBiggestVessel(Vessel vessel);
 
-	    
-	    public Vessel getBiggestVesselAdvanced() {
-	    	Vessel result = ResourceUtils.getPropertyValue(this, ResourceFactory.createProperty("http://www.example.org/biggestVessel"), RDFNodeMappers.from(Vessel.class, JenaPluginUtils.getTypeDecider()));
-	    	return result;
-	    }
-
-	    
 		//@IriNs("eg")
-		public <T extends Vessel> Collection<T> getVessels(Class<T> clazz) {
-			//TypeDecider typeDecider = new TypeDeciderImpl().registerClasses(classes);
-			TypeDecider typeDecider = JenaPluginUtils.getTypeDecider();
-			
-			Collection<T> it = CollectionFromIterable.create(() -> ResourceUtils.listPropertyValues(this, p, RDFNodeMappers.from(clazz, typeDecider)));
-			return it;
-		}
+//		public <T extends Vessel> Collection<T> getVessels(Class<T> clazz) {
+//			//TypeDecider typeDecider = new TypeDeciderImpl().registerClasses(classes);
+//			TypeDecider typeDecider = JenaPluginUtils.getTypeDecider();
+//			
+//			Collection<T> it = CollectionFromIterable.create(() -> ResourceUtils.listPropertyValues(this, p, RDFNodeMappers.from(clazz, typeDecider)));
+//			return it;
+//		}
 	}
 
 	@Test
@@ -162,26 +176,12 @@ public class TestDynamicViews {
 		for(Object o : col) {
 			System.out.println(o + " -> " + o.getClass());
 		}
-		
-		
-//		ResourceUtils.listProperties(root, RDFS.label, )
-		
-
 	}
 	
 	@Test
 	public void testDynamicSetViewsWithTypes() {
-		//JenaSystem.init();
-		
-		// TODO Guava only scans top level classes...
-		//JenaPluginUtils.scan(TestDynamicViews.class);
-		
+		// Register the view classes
 		JenaPluginUtils.registerResourceClasses(classes);
-
-		
-		
-		
-//		TypeDecider typeDecider = new TypeDeciderImpl().scan(TestDynamicViews.class);
 		
 		Model m = ModelFactory.createDefaultModel();
 		
@@ -196,13 +196,15 @@ public class TestDynamicViews {
 		
 		Port port = m.createResource("x:port").as(Port.class);
 
-		Collection<Resource> vessels = Arrays.asList(mb1, mb2, mb3, sb1, sb2, sy1);
-//		Collection<Resource> vessels = Collections.emptySet();
-		for(Resource vessel : vessels) {
-			port.addProperty(p, vessel);
-		}
+		// Port has a custom @RdfType annotation - check that an RDF type was generated by
+		// requesting the Port.class view
+		Assert.assertEquals("http://www.example.org/Port",
+				port.getPropertyResourceValue(RDF.type).getURI());
 		
 		
+		Collection<Vessel> vessels = Arrays.asList(mb1, mb2, mb3, sb1, sb2, sy1);
+		port.getVessels(Vessel.class).addAll(vessels);
+
 		port.setBiggestVessel(sy1);
 
 
@@ -222,14 +224,15 @@ public class TestDynamicViews {
 		RDFDataMgr.write(System.out, port.getModel(), RDFFormat.TURTLE_PRETTY);
 		
 		
-		// Adding a superclass type should not add another type
-		
+		// Ensure that adding a superclass w.r.t. the TypeDecider type does not add a subsumed type		
 		{
 			List<RDFNode> types = ResourceUtils.listPropertyValues(sy1.as(Motorboat.class), RDF.type).toList();
 			System.out.println("Sailying yacht types after viewing as super class: " + types);
 			Assert.assertEquals(1, types.size());
 		}
 
+		
+		// Requesting a view with an unrelated type however adds that type
 		{
 			List<RDFNode> types = ResourceUtils.listPropertyValues(sy1.as(Car.class), RDF.type).toList();
 			System.out.println("Sailying yacht types after viewing as unrelated class: " + types);
@@ -239,15 +242,30 @@ public class TestDynamicViews {
 
 		
 		System.out.println("Biggest vessel: " + port.getBiggestVessel() + " " + SailingYacht.class.isAssignableFrom(port.getBiggestVessel().getClass()));
-		System.out.println("Biggest vessel: " + port.getBiggestVesselAdvanced() + " " + SailingYacht.class.isAssignableFrom(port.getBiggestVesselAdvanced().getClass()));
 		
 		
 		Port port2 = ModelFactory.createDefaultModel().createResource().as(Port.class);
 		port2.setObject(1);
-		port2.setObject(2);
-		RDFDataMgr.write(System.out, port2.getModel(), RDFFormat.TURTLE_PRETTY);
+		Assert.assertEquals(1, port2.getObject());
 		
+		port2.setObject(2l);
+		// ISSUE Jena's Node.getLiteralValue() may narrow the type (e.g. a Longs may be converter to Int)
+		Assert.assertEquals(2, port2.getObject());
+		System.out.println("Object is: " + port2.getObject());
+
+		// This only adds the sy1 resource to port2's model.
+		// However, no triples are copied, hence sy1's type information is lost
+		port2.setObject(sy1);
+		Assert.assertFalse(port2.getObject() instanceof SailingYacht);
 		
+		// Add the sy1 to port2's model and generate the rdf:type triples
+		// by requesting the SailingYacht.class view
+		port2.setObject(sy1.inModel(port2.getModel()).as(SailingYacht.class));
+		Assert.assertTrue(port2.getObject() instanceof SailingYacht);
+
+		RDFDataMgr.write(System.out, port2.getModel(), RDFFormat.TURTLE_PRETTY);		
+		System.out.println("Object is: " + port2.getObject());
+		Assert.assertEquals(sy1, port2.getObject());	
 	}
 	
 

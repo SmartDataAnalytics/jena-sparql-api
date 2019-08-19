@@ -37,7 +37,7 @@ public class TypeDeciderImpl
     protected Map<Class<?>, Node> classToNode;
 
     public TypeDeciderImpl() {
-        this(RDF.type, new HashMap<>(), new HashMap<>(), RDFa.prefixes);
+        this(RDF.type, new HashMap<>(), new HashMap<>(), DefaultPrefixes.prefixes);
     }
 
     public TypeDeciderImpl(
@@ -127,7 +127,7 @@ public class TypeDeciderImpl
 
 
     public static Map<Class<?>, Node> scan(String basePackage) {
-        Map<Class<?>, Node> result = scan(basePackage, RDFa.prefixes);
+        Map<Class<?>, Node> result = scan(basePackage, DefaultPrefixes.prefixes);
         return result;
     }
     

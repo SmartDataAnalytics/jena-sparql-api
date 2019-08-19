@@ -15,8 +15,9 @@ public class NodeMapperFromTypeMapper<T>
 
 	
 	// Base class for acceptable literal types - this only acts as a filter
-	public NodeMapperFromTypeMapper(Class<?> viewClass) {
+	public NodeMapperFromTypeMapper(Class<?> viewClass, TypeMapper typeMapper) {
 		this.viewClass = viewClass;
+		this.typeMapper = typeMapper;
 	}
 	
 	@Override

@@ -1,9 +1,13 @@
 package org.aksw.jena_sparql_api.rdf.collections;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -11,6 +15,8 @@ import org.aksw.commons.util.reflect.ClassUtils;
 import org.aksw.jena_sparql_api.mapper.proxy.TypeDecider;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
+import org.apache.jena.ext.com.google.common.collect.Iterables;
+import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Literal;
@@ -287,13 +293,61 @@ public class ResourceUtils {
 		return result;
 	}
 
+	// Not used yet; this only covers the binary case, but in general we need to consider
+	// an arbitrary set of subclasse for whether there is a single set of classes common to all of them
+	public static <T> Set<T> lowestCommonAncestors(T a, T b, Function<? super T, ? extends Iterable<? extends T>> successor) {
+		Set<T> parentsA = new HashSet<>();
+		Set<T> parentsB = new HashSet<>();
+		
+		parentsA.add(a);
+		parentsB.add(b);
+		
+		Set<T> intersection = Sets.intersection(parentsA, parentsB);
+		while(intersection.isEmpty() && !(a == null && b == null)) {
+			Iterable<? extends T> pa = a == null ? null : successor.apply(a);
+			Iterable<? extends T> pb = b == null ? null : successor.apply(b);
+
+			Iterables.addAll(parentsA, pa);
+			if(!intersection.isEmpty()) {
+				break;
+			}
+			
+			Iterables.addAll(parentsB, pb);
+		}
+
+//		T result = intersection.isEmpty()
+//				? null
+//				: intersection.iterator().next();
+//		
+		Set<T> result = new HashSet<>(intersection);
+		return result;
+	}
+	
+	public static Iterable<Class<?>> getParentClasses(Class<?> child) {
+		return Iterables.concat(
+				Collections.singleton(child.getSuperclass()),
+				Arrays.asList(child.getInterfaces())
+				);
+	}
+	
+	
+//	public static lowestCommonClasses(Collection<Class<?>> candidates, Class<?> bound) {
+//		lowestCommonAncestors(a, b, successor)
+//	}
 	
 	public static Class<?> getMostSpecificSubclass(Resource s, Class<?> viewClass, TypeDecider typeDecider) {
 	    Collection<Class<?>> classes = typeDecider.getApplicableTypes(s);
 	
 	    Set<Class<?>> mscs = ClassUtils.getMostSpecificSubclasses(viewClass, classes);
-	
-	    Class<?> result = mscs.size() == 1 ? mscs.iterator().next() : null;
+
+	    // TODO If there are multiple specific subclasses, check if there is a lowest common ancestor below viewClass
+	    
+	    
+	    Class<?> result = mscs.size() == 1
+	    		? mscs.iterator().next()
+	    		: mscs.size() > 1
+	    			? viewClass /* TODO LCA */
+	    			: null;
 	    
 //	    if(mscs.isEmpty()) {
 //	        throw new RuntimeException("No applicable type found for " + r + " [" + clazz.getName() + "]");
@@ -379,7 +433,7 @@ public class ResourceUtils {
 //	}
 
 	
-	public static <T extends RDFNode> Optional<T> tryGetPropertyValue(Resource s, Property p, RDFNodeMapper<T> rdfNodeMapper) {
+	public static <T> Optional<T> tryGetPropertyValue(Resource s, Property p, RDFNodeMapper<T> rdfNodeMapper) {
 		Optional<T> result = findFirst(listPropertyValues(s, p, rdfNodeMapper));
 		return result;		
 	}
@@ -395,7 +449,7 @@ public class ResourceUtils {
 		return result;
 	}
 
-	public static <T extends RDFNode> T getPropertyValue(Resource s, Property p, RDFNodeMapper<T> rdfNodeMapper) {
+	public static <T> T getPropertyValue(Resource s, Property p, RDFNodeMapper<T> rdfNodeMapper) {
 		T result = tryGetPropertyValue(s, p, rdfNodeMapper).orElse(null);
 		return result;		
 	}
@@ -725,6 +779,17 @@ public class ResourceUtils {
 		return result;
 	}
 
+	public static <T> boolean updateProperty(Resource s, Property p, RDFNodeMapper<T> rdfNodeMapper, T o) {
+		Model m = s.getModel();
+		
+		boolean result = replaceProperties(m,
+				listProperties(s, p, rdfNodeMapper),
+				o == null ? null : m.createStatement(s, p, rdfNodeMapper.toNode(o)));
+		
+		return result;
+	}
+
+	
 	/**
 	 * Replaces all properties that can act as the given class - other properties remain unaffected.
 	 * 

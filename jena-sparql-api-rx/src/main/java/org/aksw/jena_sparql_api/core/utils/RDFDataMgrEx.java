@@ -3,7 +3,7 @@ package org.aksw.jena_sparql_api.core.utils;
 import java.io.IOException;
 import java.util.function.Consumer;
 
-import org.aksw.jena_sparql_api.mapper.proxy.RDFa;
+import org.aksw.jena_sparql_api.mapper.proxy.DefaultPrefixes;
 import org.aksw.jena_sparql_api.stmt.SPARQLResultSinkQuads;
 import org.aksw.jena_sparql_api.stmt.SparqlStmtUtils;
 import org.apache.jena.query.Dataset;
@@ -56,7 +56,7 @@ public class RDFDataMgrEx {
 //
 //		// Extended SERVICE <> keyword implementation
 //		JenaExtensionFs.registerFileServiceHandler();
-		pm.setNsPrefixes(RDFa.prefixes);
+		pm.setNsPrefixes(DefaultPrefixes.prefixes);
 		
 		try {
 			Streams.stream(SparqlStmtUtils.processFile(pm, filenameOrURI))

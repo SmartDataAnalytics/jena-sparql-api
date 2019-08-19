@@ -25,7 +25,7 @@ public class RDFNodeMapperImpl<T>
 		this.typeDecider = typeDecider;
 		this.viewClass = viewClass;
 
-		this.nodeMapper = new NodeMapperFromTypeMapper<>(viewClass); //NodeMapperFactory.from(viewClass, typeMapper);
+		this.nodeMapper = new NodeMapperFromTypeMapper<>(viewClass, typeMapper); //NodeMapperFactory.from(viewClass, typeMapper);
 	}
 	
 	public boolean canMap(RDFNode rdfNode) {			
@@ -48,6 +48,20 @@ public class RDFNodeMapperImpl<T>
 			if(rdfNode.isResource()) {
 				Resource r = rdfNode.asResource();
 				effectiveType = ResourceUtils.getMostSpecificSubclass(r, viewClass, typeDecider);
+				
+				if(effectiveType == null) {
+					// We could not obtain a more specific type that the one requested -
+					// try the requested type as a fallback
+					// NOTE This case happens, if a resource with a model x was added to a model y:
+					// In this case, all triples and thus the type information is lost, so no more
+					// specific type is found
+					
+					// If we could not obtain a specific type, and the request was
+					// a super class of RDFNode/Resource, yield a generic RDFNode view
+					if(viewClass.isAssignableFrom(Resource.class)) {
+						effectiveType = RDFNode.class;
+					}
+				}
 			} else {
 				effectiveType = viewClass;
 			}
@@ -72,11 +86,20 @@ public class RDFNodeMapperImpl<T>
 		RDFNode result;
 		
 		// If the view demands subclasses of RDFNode, use the type decider system
-		if(RDFNode.class.isAssignableFrom(viewClass) && obj instanceof Resource) {
+//		if(RDFNode.class.isAssignableFrom(viewClass) && obj instanceof Resource) {
+		if(obj instanceof Resource) {
 			Resource r = (Resource)obj;
 			Class<?> effectiveViewClass = ResourceUtils.getMostSpecificSubclass(r, viewClass, typeDecider);
 			
-			result = r.as((Class)effectiveViewClass);
+			// If we ended up with parent of RDFNode, constrain to RDFNode 
+			if(effectiveViewClass.isAssignableFrom(RDFNode.class)) {
+				effectiveViewClass = RDFNode.class;
+			}
+			
+			// TODO If there are multiple types, we return null  for now
+			// We could however under certain circumstances create a proxy that implements all types
+			// (i.e. all but one types must be interfaces)
+			result = effectiveViewClass == null ? null : r.as((Class)effectiveViewClass);
 		} else {
 			Node n = nodeMapper.toNode(obj);
 			result = ModelUtils.convertGraphNodeToRDFNode(n);

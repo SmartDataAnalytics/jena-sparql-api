@@ -19,8 +19,8 @@ import org.slf4j.LoggerFactory;
 import com.google.common.io.Resources;
 
 // TODO This class no longer only defines RDFa namespaces - hence rename to e.g. to simply "Prefixes" or "PrefixRegistry"
-public class RDFa {
-	private static final Logger logger = LoggerFactory.getLogger(RDFa.class);
+public class DefaultPrefixes {
+	private static final Logger logger = LoggerFactory.getLogger(DefaultPrefixes.class);
 
 	public static final PrefixMapping prefixes = new PrefixMappingImpl();
 
@@ -37,6 +37,8 @@ public class RDFa {
 	// Apparently scanning folders in class path resources is still a pain...
 	// PatternMatchingResourceResolver used to work, but I'd like to avoid a spring
 	// dependency here...
+	// TODO The issue here is, that if we load prefixes as part of JenaSystem.init(),
+	// we cause a chicken-egg problem with some static initializers
 	public static void toImproveInTheFuture() {
 		String folder = "rdf-prefixes";
 		String rootStr = Resources.getResource(folder).getPath();

@@ -9,7 +9,6 @@ import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
-import org.apache.jena.rdf.model.RDFNode;
 
 /**
  * NodeMapper for a specific given RDFDatatype
@@ -39,6 +38,11 @@ public class NodeMapperFromRdfDatatype<T>
 
 	public static boolean canMapCore(Node node, Class<?> clazz) {
 		boolean result;
+		
+//		String lex = node.getLiteralLexicalForm();
+//		RDFDatatype xdtype = node.getLiteralDatatype();
+//		Object x = xdtype.parse(lex);
+
 		
 		Object obj = node.isLiteral() ? node.getLiteralValue() : null;
 		Class<?> objClass = obj == null ? null : obj.getClass();
