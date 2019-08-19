@@ -15,15 +15,19 @@ public class RDFNodeMapperImpl<T>
 	protected TypeMapper typeMapper;
 	protected TypeDecider typeDecider;
 	protected Class<T> viewClass;
+	
+	// Flag to indicate that requested resource views should be applied even if the TypeDecider cannot find a better view classs
+	protected boolean isViewAll;
 
 	protected transient NodeMapper<T> nodeMapper;
 
 	
-	public RDFNodeMapperImpl(Class<T> viewClass, TypeMapper typeMapper, TypeDecider typeDecider) {
+	public RDFNodeMapperImpl(Class<T> viewClass, TypeMapper typeMapper, TypeDecider typeDecider, boolean isViewAll) {
 		super();
 		this.typeMapper = typeMapper;
 		this.typeDecider = typeDecider;
 		this.viewClass = viewClass;
+		this.isViewAll = isViewAll;
 
 		this.nodeMapper = new NodeMapperFromTypeMapper<>(viewClass, typeMapper); //NodeMapperFactory.from(viewClass, typeMapper);
 	}
@@ -50,17 +54,21 @@ public class RDFNodeMapperImpl<T>
 				effectiveType = ResourceUtils.getMostSpecificSubclass(r, viewClass, typeDecider);
 				
 				if(effectiveType == null) {
+					// If we could not obtain a specific type, and the request was for
+					// a super class of RDFNode/Resource, yield a generic RDFNode view
+					if(viewClass.isAssignableFrom(Resource.class)) {
+						effectiveType = RDFNode.class;
+					} else if(Resource.class.isAssignableFrom(viewClass)) {
+						if(isViewAll) {
+							effectiveType = viewClass;
+						}
+					}
+
 					// We could not obtain a more specific type that the one requested -
 					// try the requested type as a fallback
 					// NOTE This case happens, if a resource with a model x was added to a model y:
 					// In this case, all triples and thus the type information is lost, so no more
 					// specific type is found
-					
-					// If we could not obtain a specific type, and the request was for
-					// a super class of RDFNode/Resource, yield a generic RDFNode view
-					if(viewClass.isAssignableFrom(Resource.class)) {
-						effectiveType = RDFNode.class;
-					}
 				}
 			} else {
 				effectiveType = viewClass;

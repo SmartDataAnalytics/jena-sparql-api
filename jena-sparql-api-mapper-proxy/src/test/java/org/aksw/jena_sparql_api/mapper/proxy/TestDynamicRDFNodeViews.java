@@ -9,6 +9,7 @@ import java.util.Set;
 import org.aksw.commons.accessors.CollectionFromConverter;
 import org.aksw.commons.collections.sets.SetFromCollection;
 import org.aksw.jena_sparql_api.mapper.annotation.IriNs;
+import org.aksw.jena_sparql_api.mapper.annotation.PolymorphicOnly;
 import org.aksw.jena_sparql_api.mapper.annotation.RdfType;
 import org.aksw.jena_sparql_api.mapper.annotation.ResourceView;
 import org.aksw.jena_sparql_api.rdf.collections.ConverterFromRDFNodeMapper;
@@ -115,7 +116,12 @@ public class TestDynamicRDFNodeViews {
 	    public abstract Vessel getBiggestVessel();	   
 	    public abstract void setBiggestVessel(Vessel vessel);
 	    
+		// PolymorphicOnly: Yield a collection that only exposes those resources that are known subclasses
+		// of Vessel - no views are requested or returned for resources with other or unknown types. 
+		// Example: With @PolymorphicOnly, getVessel(Motorboat.class) will only return known instances of Motorboat and its subclasses.
+		//          Without @PolymorphicOnly, getVessel(Motorboat.class) will in addition return any other resource using a Motorboat view.
 		@IriNs("eg")
+		@PolymorphicOnly
 		public abstract <T extends Vessel> Collection<T> getVessels(Class<T> clazz);
 
 		// Test case for setting/getting an arbitrary object
@@ -165,7 +171,7 @@ public class TestDynamicRDFNodeViews {
 		TypeMapper typeMapper = TypeMapper.getInstance();
 		TypeDecider typeDecider = JenaPluginUtils.getTypeDecider();
 		
-		RDFNodeMapper<?> mapper = new RDFNodeMapperImpl<>(Long.class, typeMapper, typeDecider);
+		RDFNodeMapper<?> mapper = new RDFNodeMapperImpl<>(Long.class, typeMapper, typeDecider, true);
 
 		Collection<RDFNode> backend = new SetFromPropertyValues<RDFNode>(root, RDFS.label, RDFNode.class);
 		
