@@ -341,6 +341,7 @@ public class ExprTransformVirtualBnodeUris
 			return e;
 		});
 
+		System.out.println("Rewrote query\n" + query + " to\n" + result);
 		logger.debug("Rewrote query\n" + query + " to\n" + result);
 		return result;
 	}

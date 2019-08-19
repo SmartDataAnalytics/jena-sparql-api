@@ -2,9 +2,15 @@
 
 ### Introduction
 Jena `Resource`s are stateless views over an RDF Graph (EnhGraph to be precise).
-This system simplifies the process of creating such custom views by creating a dynamic proxies that implement missing methods based on
-the provided annotations. Furthermore, collection views backed by Jena Model's are supported.
-The system is this module is 
+Our system simplifies the process of creating custom views by creating a dynamic proxies that implement missing methods based on
+the provided annotations. Furthermore, collection *views* backed by Jena Model's are supported.
+
+From our experience, the paradigm shift is instead of trying to map RDF into Java classes, it is much easier
+to have Java views over RDF - as this way one retains access to all the flexibility of RDF while at the
+same time gaining the convenience of a Java domain model. With Java view backed by an RDF resource, one can idiomatically add any triples to that resource (either directly as triples or using the methods of the view). Conversely, adding arbitrary triples to a Java POJO is much more difficult to accomplish - essentially it requires interfacing against some sort of EntityManger.
+
+The ingenious Apache Jena framework already provided most of the conceptual foundations and building blocks - our contribution is to make this sub-system more easily accessible.
+
 
 ### Features
 
@@ -20,7 +26,8 @@ Note: `Map` view generation is not yet supported, although the `MapFromResource`
 The snippet below summarizes the mapping capabilities by the proxy system.
 
 ```java
-// If omitted, the IRI defaults to "java://" + class.getCanonicalName()
+// RdfType: Upon request to view a Resource using this class, append this type to it
+// If the argument to @RdfType is omitted, it defaults to "java://" + class.getCanonicalName()
 @RdfType("http://my.rdf/Resource")
 @ResourceView // Mark as subject to classpath scanning by JenaPluginUtils
 public interface ExampleResource
@@ -50,7 +57,7 @@ public interface ExampleResource
 	String getRandomItem();
 
     /** Return a collection view for the given type */
-    /** By default, Set view implemnetations are returned for collections */
+    /** By default, Set view implementations are returned for collections */
 	@Iri("eg:dynamicSet")
 	<T> Collection<T> getDynamicSet(Class<T> clazz);
 }
@@ -266,3 +273,19 @@ RDFDataMgr.write(System.out, q.getModel, RDFFormat.NTRIPLES);
 // Prints _:b0 <http://xmlns.com/foaf/0.1/firstName> "John" .
 
 ```
+
+
+### Technical Stuff / Under the Hood / Behind the Scenesn
+The proxy system relies heavily on the following Jena's fundamental classes
+
+* TypeMapper
+* Resource
+* ExtendedIterator
+
+Based on these building blocks, we added the following wrappers:
+
+* NodeMapper - this is a component that can convert a Jena Node and a Java object. It differs from the type mapper that it allows for mapping a URI to a String or reverse mapping a String to a Node with a pre-configured language literal.
+* TypeDecider - an interface which (a) maps a resource to a set of applicable types w.r.t. a base type and (b) can attach the appropriate triples to a given resource to make it recognizable as an instance of a certain type. This approach is generic - i.e. not limited to individual rdf:type triples. 
+* RDFNodeMapper - this mapper bundles TypeMapper, TypeDecider and TypeMapper together into a single comprehensive mapper - it can dynamically convert between RDFNodes and Java primitives, as well as Resources and Java RDF views.
+* ConverterFrom(RDF)NodeMapper - A wrapper which makes the mappers usable with guava. In particular, our jena-sparql-api-collections module provides mutable collection view classes such as ListFromRDFList and SetFromResource which can be subsequently transformed with a CollectionFromConverter.
+

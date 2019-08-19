@@ -112,6 +112,7 @@ public class SparqlRx {
 	}
 
 	public static <T> void processExecSelect(FlowableEmitter<T> emitter, QueryExecution qex, Function<? super ResultSet, ? extends T> next) {
+		Query q = qex.getQuery();
 		try(QueryExecution qe = qex) {
 			emitter.setCancellable(qe::abort);
 			ResultSet rs = qe.execSelect();
@@ -121,7 +122,7 @@ public class SparqlRx {
 			}
 			emitter.onComplete();
 		} catch (Exception e) {
-			emitter.onError(e);
+			emitter.onError(new Throwable("Error executing " + q, e));
 		}
 	}
 
