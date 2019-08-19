@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import org.aksw.commons.collections.IterableCollection;
+import org.aksw.commons.collections.CollectionFromIterable;
 import org.aksw.commons.collections.trees.Tree;
 import org.aksw.commons.collections.trees.TreeImpl;
 import org.aksw.commons.util.Pair;
@@ -448,7 +448,7 @@ public class ExprUtils {
             return null;
         }
 
-        List<T> current = new ArrayList<T>(IterableCollection.wrap(exprs));
+        List<T> current = new ArrayList<T>(CollectionFromIterable.wrap(exprs));
 
         while(current.size() > 1) {
 

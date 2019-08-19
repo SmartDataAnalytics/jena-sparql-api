@@ -12,19 +12,15 @@
 	<parent>
 		<groupId>org.aksw.jena-sparql-api</groupId>
 		<artifactId>jena-sparql-api-parent</artifactId>
-<!--<		<artifactId>jena-sparql-api-mapper-parent</artifactId> -->
-		<version>3.11.0-1</version>
+		<!--< <artifactId>jena-sparql-api-mapper-parent</artifactId> -->
+		<version>3.12.0</version>
 	</parent>
 
 	<dependencies>
-		<dependency>
-			<groupId>org.aksw.jena-sparql-api</groupId>
-			<artifactId>jena-sparql-api-mapper-annotations</artifactId>
-		</dependency>
 
 		<dependency>
 			<groupId>org.aksw.jena-sparql-api</groupId>
-			<artifactId>jena-sparql-api-utils</artifactId>
+			<artifactId>jena-sparql-api-collections</artifactId>
 		</dependency>
 
 		<dependency>
@@ -32,10 +28,16 @@
 			<artifactId>cglib-nodep</artifactId>
 		</dependency>
 
-<!-- 		<dependency> -->
-<!-- 			<groupId>net.bytebuddy</groupId> -->
-<!-- 			<artifactId>byte-buddy</artifactId> -->
-<!-- 			<version>1.9.10</version> -->
-<!-- 		</dependency> -->
+		<dependency>
+			<groupId>org.aksw.jena-sparql-api</groupId>
+			<artifactId>jena-sparql-api-resources-test-config</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- <dependency> -->
+		<!-- <groupId>net.bytebuddy</groupId> -->
+		<!-- <artifactId>byte-buddy</artifactId> -->
+		<!-- <version>1.9.10</version> -->
+		<!-- </dependency> -->
 	</dependencies>
 </project>

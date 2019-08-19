@@ -20,7 +20,7 @@ import java.util.stream.Stream;
 import org.aksw.beast.benchmark.performance.BenchmarkTime;
 import org.aksw.beast.benchmark.performance.PerformanceBenchmark;
 import org.aksw.beast.chart.ChartTransform;
-import org.aksw.beast.chart.model.StatisticalBarChartImpl;
+import org.aksw.beast.chart.model.StatisticalBarChart;
 import org.aksw.beast.enhanced.ResourceEnh;
 import org.aksw.beast.rdfstream.RdfGroupBy;
 import org.aksw.beast.rdfstream.RdfStream;
@@ -85,6 +85,7 @@ public class MainTestContain {
             "org.apache.jena.graph;version=\"1.0.0\"",
             "org.apache.jena.graph.impl;version=\"1.0.0\"",
             "org.apache.jena.rdf.model;version=\"1.0.0\"",
+            "org.apache.jena.rdf.model.impl;version=\"1.0.0\"",
             "org.apache.jena.shared;version=\"1.0.0\"",
             "org.apache.jena.query;version=\"1.0.0\"",
             "org.apache.jena.sparql.algebra;version=\"1.0.0\"",
@@ -99,6 +100,14 @@ public class MainTestContain {
             "org.apache.jena.sparql.util;version=\"1.0.0\"",
             "org.apache.jena.util.iterator;version=\"1.0.0\"",
             "org.apache.jena.vocabulary;version=\"1.0.0\"",
+
+            "org.apache.jena.vocabulary.RDF;version=\"1.0.0\"",
+            "org.apache.jena.vocabulary.RDF$Init;version=\"1.0.0\"",
+            "org.apache.jena.sys;version=\"1.0.0\"",
+            "org.apache.jena.sys.JenaSystem.lambda$init$2;version=\"1.0.0\"",
+            "org.apache.jena.sys.JenaSystem.lambda$init$1;version=\"1.0.0\"",
+            "org.apache.jena.rdf.model.ResourceFactory;version=\"1.0.0\"",
+            "org.apache.jena.rdf.model.ResourceFactory$Impl;version=\"1.0.0\"",
 
             // Jena 2 (legacy)
             "com.hp.hpl.jena.sparql;version=\"1.0.0\"",
@@ -127,9 +136,9 @@ public class MainTestContain {
             "com.ibm.icu.text;version=\"1.0.0\"",
 
             // Logging
-            "org.slf4j;version=\"1.7.0\""
+            "org.slf4j;version=\"1.7.0\"",
 //                "org.slf4j.impl;version=\"1.0.0\"",
-//                "org.apache.log4j;version=\"1.0.0\""
+            "org.apache.log4j;version=\"1.0.0\""
 
             // ??? What packages are that?
             //"java_cup.runtime;version=\"1.0.0\""
@@ -360,9 +369,9 @@ public class MainTestContain {
 
         RDFDataMgr.write(new FileOutputStream("/tmp/chart.ttl"), resultModel, RDFFormat.TURTLE_PRETTY);
 
-    	List<Entry<StatisticalBarChartImpl, Model>> chartSpecs = ChartTransform.transform(resultModel);
+    	List<Entry<StatisticalBarChart, Model>> chartSpecs = ChartTransform.transform(resultModel);
     	
-    	for(Entry<StatisticalBarChartImpl, Model> chartSpec : chartSpecs) {
+    	for(Entry<StatisticalBarChart, Model> chartSpec : chartSpecs) {
             CategoryChart xChart = ChartModelConfigurerXChart.toChart(chartSpec.getValue(), chartSpec.getKey());
             new SwingWrapper<CategoryChart>(xChart).displayChart();
 

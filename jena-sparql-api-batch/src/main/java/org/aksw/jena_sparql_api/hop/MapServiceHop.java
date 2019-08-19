@@ -1,22 +1,22 @@
 package org.aksw.jena_sparql_api.hop;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.lookup.MapPaginator;
 import org.aksw.jena_sparql_api.lookup.MapService;
 import org.apache.jena.graph.Node;
+import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.core.DatasetGraph;
 
 public class MapServiceHop
     implements MapService<Concept, Node, DatasetGraph>
 {
-    protected QueryExecutionFactory defaultQef;
+    protected SparqlQueryConnection defaultQef;
     protected Hop root;
     protected Concept concept;
 
     public int chunkSize = 30;
 
-    public MapServiceHop(QueryExecutionFactory defaultQef, Hop root, int chunkSize) {
+    public MapServiceHop(SparqlQueryConnection defaultQef, Hop root, int chunkSize) {
         super();
         this.defaultQef = defaultQef;
         this.root = root;

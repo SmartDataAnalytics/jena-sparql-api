@@ -1,6 +1,5 @@
 package org.aksw.jena_sparql_api.post_process;
 
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;

@@ -9,7 +9,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.aksw.commons.jena.jgrapht.LabeledEdge;
-import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.sparql_path2.Nfa;
 import org.aksw.jena_sparql_api.sparql_path2.PathCompiler;
 import org.aksw.jena_sparql_api.sparql_path2.PathExecutionUtils;
@@ -22,15 +21,16 @@ import org.aksw.jena_sparql_api.utils.model.Triplet;
 import org.aksw.jena_sparql_api.utils.model.TripletImpl;
 import org.aksw.jena_sparql_api.utils.model.TripletPath;
 import org.apache.jena.graph.Node;
+import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.path.Path;
 
 public class SparqlKShortestPathFinderYen
     implements SparqlKShortestPathFinder
 {
-    protected QueryExecutionFactory qef;
+    protected SparqlQueryConnection qef;
     protected int resourceBatchSize;
 
-    public SparqlKShortestPathFinderYen(QueryExecutionFactory qef, int resourceBatchSize) {
+    public SparqlKShortestPathFinderYen(SparqlQueryConnection qef, int resourceBatchSize) {
         this.qef = qef;
         this.resourceBatchSize = resourceBatchSize;
     }

@@ -6,7 +6,6 @@ import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.QuerySolution;
-import org.apache.jena.query.ReadWrite;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdfconnection.JenaConnectionException;
@@ -156,4 +155,16 @@ public interface SparqlQueryConnectionTmp
     public default QueryExecution query(String queryString) {
         return query(QueryFactory.create(queryString));
     }
+    
+//    
+//	@Override
+//	public default void querySelect(String query, Consumer<QuerySolution> rowAction) {
+//		this.queryResultSet(query, rs -> {
+//			while(rs.hasNext()) {
+//				QuerySolution qs = rs.next();
+//				rowAction.accept(qs);
+//			}
+//		});
+//	}
+
 }

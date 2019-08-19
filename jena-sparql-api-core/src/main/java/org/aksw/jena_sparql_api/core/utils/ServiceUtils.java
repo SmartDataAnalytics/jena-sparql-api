@@ -20,6 +20,7 @@ import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.core.Var;
 
 import com.google.common.collect.Range;
@@ -28,7 +29,7 @@ public class ServiceUtils {
 //    public static fetchList(QueryExecutionFactory, QueryExecutionFactory)
 
 
-    public static List<Resource> fetchListResources(QueryExecutionFactory qef, Concept concept) {
+    public static List<Resource> fetchListResources(SparqlQueryConnection qef, Concept concept) {
         List<Node> tmp = fetchList(qef, concept);
         List<Resource> result = new ArrayList<Resource>(tmp.size());
         for(Node node : tmp) {
@@ -39,27 +40,27 @@ public class ServiceUtils {
         return result;
     }
 
-    public static List<Node> fetchList(QueryExecutionFactory qef, OrderedConcept orderedConcept, Long limit, Long offset) {
+    public static List<Node> fetchList(SparqlQueryConnection qef, OrderedConcept orderedConcept, Long limit, Long offset) {
         Query query = ConceptUtils.createQueryList(orderedConcept, limit, offset);
         //System.out.println("Query: " + query);
         List<Node> result = fetchList(qef, query, orderedConcept.getConcept().getVar());
         return result;
     }
 
-    public static List<Node> fetchList(QueryExecutionFactory qef, UnaryRelation concept, Long limit, Long offset) {
+    public static List<Node> fetchList(SparqlQueryConnection qef, UnaryRelation concept, Long limit, Long offset) {
         Query query = ConceptUtils.createQueryList(concept, limit, offset);
         List<Node> result = fetchList(qef, query, concept.getVar());
         return result;
     }
 
-    public static List<Node> fetchList(QueryExecutionFactory qef, UnaryRelation concept) {
+    public static List<Node> fetchList(SparqlQueryConnection qef, UnaryRelation concept) {
         Query query = ConceptUtils.createQueryList(concept);
         List<Node> result = fetchList(qef, query, concept.getVar());
         return result;
     }
 
-    public static List<Node> fetchList(QueryExecutionFactory qef, Query query, Var v) {
-        QueryExecution qe = qef.createQueryExecution(query);
+    public static List<Node> fetchList(SparqlQueryConnection qef, Query query, Var v) {
+        QueryExecution qe = qef.query(query);
         List<Node> result = fetchList(qe, v);
         return result;
     }

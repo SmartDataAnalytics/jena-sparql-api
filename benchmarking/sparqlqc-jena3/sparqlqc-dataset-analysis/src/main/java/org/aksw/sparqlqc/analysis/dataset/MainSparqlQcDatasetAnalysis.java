@@ -22,11 +22,11 @@ import org.aksw.jena_sparql_api.core.SparqlServiceReference;
 import org.aksw.jena_sparql_api.lookup.ListPaginator;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.SparqlFlowEngine;
+import org.aksw.jena_sparql_api.rdf.collections.ResourceUtils;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.aksw.jena_sparql_api.shape.ResourceShapeBuilder;
 import org.aksw.jena_sparql_api.shape.lookup.MapServiceResourceShape;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
-import org.aksw.jena_sparql_api.utils.model.ResourceUtils;
 import org.aksw.simba.lsq.vocab.LSQ;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.GraphUtil;
@@ -293,7 +293,7 @@ public class MainSparqlQcDatasetAnalysis {
             }).map(graph -> {
                 // For all nodes in the graph, fetch all associated information according to the shape
                 // FIXME: We should exclude predicate nodes
-                Map<Node, Resource> map = dataLs.apply(() -> GraphUtils.allNodes(graph));
+                Map<Node, Resource> map = dataLs.fetchMap(() -> GraphUtils.allNodes(graph));
 
                 // Extract the value of LSQ.text and parse it as a query
                 Map<Node, Query> m = map.entrySet().stream().collect(Collectors.toMap(

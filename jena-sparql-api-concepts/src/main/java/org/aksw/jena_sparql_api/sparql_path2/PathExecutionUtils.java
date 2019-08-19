@@ -1,14 +1,11 @@
 package org.aksw.jena_sparql_api.sparql_path2;
 
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.aksw.commons.jena.jgrapht.LabeledEdge;
 import org.aksw.commons.jena.jgrapht.LabeledEdgeImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceFilterKey;
 import org.aksw.jena_sparql_api.lookup.LookupServiceListService;
@@ -22,6 +19,7 @@ import org.aksw.jena_sparql_api.utils.model.Triplet;
 import org.aksw.jena_sparql_api.utils.model.TripletImpl;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
+import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.path.Path;
 
 
@@ -32,7 +30,7 @@ public class PathExecutionUtils {
      * A function that creates a lookup service for a given qef and predicate class
      *
      */
-    public static <S, T> LookupService<Node, Set<Triplet<Node, Node>>> createLookupService(QueryExecutionFactory qef, Pair<ValueSet<Node>> predicateClass) {
+    public static <S, T> LookupService<Node, Set<Triplet<Node, Node>>> createLookupService(SparqlQueryConnection qef, Pair<ValueSet<Node>> predicateClass) {
         ResourceShapeBuilder rsb = new ResourceShapeBuilder();
         PathVisitorResourceShapeBuilder.apply(rsb, predicateClass, false);
 
@@ -68,7 +66,7 @@ public class PathExecutionUtils {
         return result;
     }
 
-    public static void executePath(Path path, Node startNode, Node targetNode, QueryExecutionFactory qef, Function<NestedPath<Node, Node>, Boolean> pathCallback) {
+    public static void executePath(Path path, Node startNode, Node targetNode, SparqlQueryConnection qef, Function<NestedPath<Node, Node>, Boolean> pathCallback) {
 
         Nfa<Integer, LabeledEdge<Integer, PredicateClass>> nfa = PathCompiler.compileToNfa(path);
 

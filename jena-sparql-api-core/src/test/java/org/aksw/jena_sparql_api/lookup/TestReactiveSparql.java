@@ -4,11 +4,11 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.concepts.ConceptUtils;
 import org.aksw.jena_sparql_api.core.connection.QueryExecutionFactorySparqlQueryConnection;
+import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
 import org.aksw.jena_sparql_api.delay.core.QueryExecutionFactoryDelay;
 import org.aksw.jena_sparql_api.delay.extra.DelayerDefault;
 import org.aksw.jena_sparql_api.utils.Vars;
@@ -35,7 +35,7 @@ public class TestReactiveSparql {
 		RDFConnection conn = RDFConnectionFactory.connect(RDFDataMgr.loadDataset("virtual-predicates-example.ttl"));
 		
 		LookupService<Node, Table> ls = new LookupServiceSparqlQuery(
-				new QueryExecutionFactorySparqlQueryConnection(conn),
+				conn,
 				QueryFactory.create("SELECT * { ?s ?p ?o }"),
 				Vars.s);
 
@@ -56,7 +56,8 @@ public class TestReactiveSparql {
 		delayer.setLastRequestTime(System.currentTimeMillis());
 		
 		MapService<Concept, Node, Table> ms = new MapServiceSparqlQuery(
-				new QueryExecutionFactoryDelay(new QueryExecutionFactorySparqlQueryConnection(conn), delayer),
+				new SparqlQueryConnectionJsa(
+				new QueryExecutionFactoryDelay(new QueryExecutionFactorySparqlQueryConnection(conn), delayer)),
 				QueryFactory.create("SELECT * { ?s ?p ?o }"),
 				Vars.s);
 
@@ -77,8 +78,8 @@ public class TestReactiveSparql {
 		DelayerDefault delayer = new DelayerDefault(5000);
 		delayer.setLastRequestTime(System.currentTimeMillis());
 		
-		MapService<Concept, Node, Table> ms = new MapServiceSparqlQuery(
-				new QueryExecutionFactoryDelay(new QueryExecutionFactorySparqlQueryConnection(conn), delayer),
+		MapService<Concept, Node, Table> ms = new MapServiceSparqlQuery(new SparqlQueryConnectionJsa(
+				new QueryExecutionFactoryDelay(new QueryExecutionFactorySparqlQueryConnection(conn), delayer)),
 				QueryFactory.create("SELECT * { ?s ?p ?o }"),
 				Vars.s);
 

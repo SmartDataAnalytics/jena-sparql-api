@@ -1,16 +1,16 @@
 package org.aksw.jena_sparql_api.hop;
 
-import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
+import org.apache.jena.rdfconnection.SparqlQueryConnection;
 
 public class HopBase {
-    protected QueryExecutionFactory qef;
+    protected SparqlQueryConnection qef;
 
-    public HopBase(QueryExecutionFactory qef) {
+    public HopBase(SparqlQueryConnection qef) {
         super();
         this.qef = qef;
     }
 
-    public QueryExecutionFactory getQef() {
+    public SparqlQueryConnection getQef() {
         return qef;
     }
 

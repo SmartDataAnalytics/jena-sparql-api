@@ -15,11 +15,11 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.aksw.commons.collections.diff.Diff;
+import org.aksw.commons.util.reflect.ClassUtils;
 import org.aksw.jena_sparql_api.beans.model.EntityOps;
 import org.aksw.jena_sparql_api.beans.model.PropertyOps;
 import org.aksw.jena_sparql_api.concepts.BinaryRelationImpl;
 import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactory;
 import org.aksw.jena_sparql_api.core.utils.ServiceUtils;
@@ -54,6 +54,8 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdfconnection.RDFConnection;
+import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
@@ -182,7 +184,7 @@ public class RdfMapperEngineImpl
 //Collection<TypedNode> typedNodes
     @Override
     public <T> List<T> list(Class<T> clazz, Concept filterConcept) {
-        QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
+    	SparqlQueryConnection qef = sparqlService.getRDFConnection();
 
         List<Node> nodes = ServiceUtils.fetchList(qef, filterConcept);
 
@@ -233,7 +235,7 @@ public class RdfMapperEngineImpl
         //Graph result;
         Map<Node, RDFNode> result;
         if(!shape.isEmpty()) {
-            QueryExecutionFactory qef = sparqlService.getQueryExecutionFactory();
+            RDFConnection qef = sparqlService.getRDFConnection();
             LookupService<Node, Graph> ls = MapServiceResourceShape.createLookupService(qef, shape);
             Map<Node, Graph> map = ls.fetchMap(nodes);
 
@@ -311,27 +313,6 @@ public class RdfMapperEngineImpl
 //    	return result;
 //    }
 
-    public static Set<Class<?>> getNonSubsumedClasses(Collection<Class<?>> classes) {
-        // Retain all classes which are not a super class of any other
-        Set<Class<?>> result = classes.stream()
-            .filter(c -> classes.stream()
-                    .filter(d -> !c.equals(d)) // Do not compare classes to itself
-                    .noneMatch(c::isAssignableFrom))
-            .collect(Collectors.toSet());
-
-        return result;
-    }
-
-    public static Set<Class<?>> getMostSpecificSubclasses(Class<?> given, Collection<Class<?>> classes) {
-        // Filter the set by all classes that are a subclass of the given one
-        Set<Class<?>> tmp = classes.stream()
-            .filter(given::isAssignableFrom)
-            .collect(Collectors.toSet());
-
-        Set<Class<?>> result = getNonSubsumedClasses(tmp);
-        return result;
-    }
-
     /**
      * Perform a lookup in the persistence context for an entity with id 'node'
      * of type 'clazz'.
@@ -400,7 +381,7 @@ public class RdfMapperEngineImpl
 
             Collection<Class<?>> classes = typeDecider.getApplicableTypes(rdfNode.asResource());
 
-            Set<Class<?>> mscs = getMostSpecificSubclasses(clazz, classes);
+            Set<Class<?>> mscs = ClassUtils.getMostSpecificSubclasses(clazz, classes);
 
             if(mscs.isEmpty()) {
                 throw new RuntimeException("No applicable type found for " + node + " [" + clazz.getName() + "]");

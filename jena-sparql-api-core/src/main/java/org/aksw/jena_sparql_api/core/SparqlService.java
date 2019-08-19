@@ -1,5 +1,9 @@
 package org.aksw.jena_sparql_api.core;
 
+import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
+import org.aksw.jena_sparql_api.core.connection.SparqlUpdateConnectionJsa;
+import org.apache.jena.rdfconnection.RDFConnection;
+import org.apache.jena.rdfconnection.RDFConnectionModular;
 import org.apache.jena.sparql.core.DatasetDescription;
 
 /**
@@ -23,4 +27,11 @@ public interface SparqlService
 
     QueryExecutionFactory getQueryExecutionFactory();
     UpdateExecutionFactory getUpdateExecutionFactory();
+    
+    default RDFConnection getRDFConnection() {
+    	return new RDFConnectionModular(
+    			new SparqlQueryConnectionJsa(getQueryExecutionFactory()),
+    			new SparqlUpdateConnectionJsa(getUpdateExecutionFactory()),
+    			null);
+    }
 }

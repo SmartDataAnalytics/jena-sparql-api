@@ -9,8 +9,6 @@ import java.util.Set;
 
 import org.aksw.jena_sparql_api.concepts.BinaryRelation;
 import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
 import org.aksw.jena_sparql_api.core.utils.ServiceUtils;
 import org.aksw.jena_sparql_api.lookup.LookupService;
 import org.aksw.jena_sparql_api.lookup.LookupServiceListService;
@@ -20,9 +18,11 @@ import org.aksw.jena_sparql_api.lookup.MapPaginator;
 import org.aksw.jena_sparql_api.lookup.MapService;
 import org.aksw.jena_sparql_api.lookup.MapServiceUtils;
 import org.aksw.jena_sparql_api.mapper.MappedQuery;
+import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.utils.DatasetGraphUtils;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.jena.graph.Node;
+import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.core.DatasetGraph;
 
 import com.google.common.base.Functions;
@@ -39,13 +39,13 @@ import io.reactivex.Single;
 public class MapPaginatorHop
     implements MapPaginator<Node, DatasetGraph>
 {
-    protected QueryExecutionFactory defaultQef;
+    protected SparqlQueryConnection defaultQef;
     protected Hop root;
     protected Concept concept;
 
     public static int chunkSize = 30;
 
-    public MapPaginatorHop(QueryExecutionFactory defaultQef, Hop root, Concept concept, int chunkSize) {
+    public MapPaginatorHop(SparqlQueryConnection defaultQef, Hop root, Concept concept, int chunkSize) {
         super();
         this.defaultQef = defaultQef;
         this.root = root;
@@ -74,14 +74,14 @@ public class MapPaginatorHop
 
     @Override
     public Single<Range<Long>> fetchCount(Long itemLimit, Long rowLimit) {
-    	Single<Range<Long>> result = ReactiveSparqlUtils.fetchCountConcept(defaultQef, concept, itemLimit, rowLimit);
+    	Single<Range<Long>> result = SparqlRx.fetchCountConcept(defaultQef, concept, itemLimit, rowLimit);
         //CountInfo result = ServiceUtils.fetchCountConcept(defaultQef, concept, itemLimit, rowLimit);
         return result;
     }
 
 
 
-    public static void execQueriesHop(QueryExecutionFactory qef, Collection<Node> nodes, Collection<MappedQuery<DatasetGraph>> mappedQueries, Map<Node, DatasetGraph> result) {
+    public static void execQueriesHop(SparqlQueryConnection qef, Collection<Node> nodes, Collection<MappedQuery<DatasetGraph>> mappedQueries, Map<Node, DatasetGraph> result) {
         for(MappedQuery<DatasetGraph> mappedQuery : mappedQueries) {
             MapService<Concept, Node, DatasetGraph> listService = MapServiceUtils.createListServiceMappedQuery(qef, mappedQuery, true);
             LookupService<Node, DatasetGraph> lookupService = LookupServiceListService.create(listService);
@@ -94,8 +94,8 @@ public class MapPaginatorHop
         }
     }
 
-    public static void processHopQuery(HopQuery hopQuery, Collection<Node> sourceNodes, Map<Node, DatasetGraph> result, QueryExecutionFactory defaultQef, Multimap<Node, Node> back) {
-        QueryExecutionFactory qef = hopQuery.getQef();
+    public static void processHopQuery(HopQuery hopQuery, Collection<Node> sourceNodes, Map<Node, DatasetGraph> result, SparqlQueryConnection defaultQef, Multimap<Node, Node> back) {
+        SparqlQueryConnection qef = hopQuery.getQef();
         qef = (qef == null ? defaultQef : qef);
 
         MappedQuery<DatasetGraph> mappedQuery = hopQuery.getMappedQuery();
@@ -127,7 +127,7 @@ public class MapPaginatorHop
         DatasetGraphUtils.mergeInPlace(result, map);
     }
 
-    public static void processHopQueries(List<HopQuery> hopQueries, Collection<Node> sourceNodes, Map<Node, DatasetGraph> result, QueryExecutionFactory defaultQef, Multimap<Node, Node> back) {
+    public static void processHopQueries(List<HopQuery> hopQueries, Collection<Node> sourceNodes, Map<Node, DatasetGraph> result, SparqlQueryConnection defaultQef, Multimap<Node, Node> back) {
         for(HopQuery hopQuery : hopQueries) {
             processHopQuery(hopQuery, sourceNodes, result, defaultQef, back);
         }
@@ -138,14 +138,14 @@ public class MapPaginatorHop
         return result;
     }
 
-    public static void processHopRelations(List<HopRelation> hopRelations, Collection<Node> sourceNodes, Map<Node, DatasetGraph> result, QueryExecutionFactory defaultQef, Multimap<Node, Node> back) {
+    public static void processHopRelations(List<HopRelation> hopRelations, Collection<Node> sourceNodes, Map<Node, DatasetGraph> result, SparqlQueryConnection defaultQef, Multimap<Node, Node> back) {
         for(HopRelation hopRelation : hopRelations) {
             processHopRelation(hopRelation, sourceNodes, result, defaultQef, back);
         }
     }
 
-    public static void processHopRelation(HopRelation hopRelation, Collection<Node> sourceNodes, Map<Node, DatasetGraph> result, QueryExecutionFactory defaultQef, Multimap<Node, Node> back) {
-        QueryExecutionFactory qef = hopRelation.getQef();
+    public static void processHopRelation(HopRelation hopRelation, Collection<Node> sourceNodes, Map<Node, DatasetGraph> result, SparqlQueryConnection defaultQef, Multimap<Node, Node> back) {
+    	SparqlQueryConnection qef = hopRelation.getQef();
         qef = (qef == null ? defaultQef : qef);
 
         BinaryRelation relation = hopRelation.getRelation();
@@ -191,7 +191,7 @@ public class MapPaginatorHop
         }
     }
 
-    public static void execRec(Hop hop,  Collection<Node> sourceNodes,  Map<Node, DatasetGraph> result, QueryExecutionFactory defaultQef, Multimap<Node, Node> back) {
+    public static void execRec(Hop hop,  Collection<Node> sourceNodes,  Map<Node, DatasetGraph> result, SparqlQueryConnection defaultQef, Multimap<Node, Node> back) {
 
         List<HopQuery> hopQueries = hop.getHopQueries();
         List<HopRelation> hopRelations = hop.getHopRelations();

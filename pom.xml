@@ -8,7 +8,7 @@
 	<artifactId>jena-sparql-api-parent</artifactId>
 
 	<packaging>pom</packaging>
-	<version>3.11.0-1</version>
+	<version>3.12.0</version>
 	<name>Jena SPARQL API - Parent</name>
 	<description>An RDF library for abstracting SPARQL queries.</description>
 	<url>https://github.com/SmartDataAnalytics/jena-sparql-api</url>
@@ -17,14 +17,20 @@
 		<module>jena-sparql-api-vocabs</module>
 		<module>jena-sparql-api-rdf-stream</module>
 
+		<module>jena-sparql-api-stmt</module>
+		<module>jena-sparql-api-rx</module>
 		<module>jena-sparql-api-resources-test-config</module>
 		<module>jena-sparql-api-resources</module>
 
 		<module>jena-sparql-api-resources-sparqlqc</module>
 
+		<module>jena-sparql-api-collections</module>
 		<!-- <module>jena-sparql-api-jgrapht</module> -->
 
 		<module>jena-sparql-api-utils</module>
+
+		<module>jena-sparql-api-udf</module>
+
 		<module>jena-sparql-api-sparql-ext</module>
 
 		<module>jena-sparql-api-mapper-annotations</module>
@@ -92,7 +98,7 @@
 	</developers>
 
 	<properties>
-		<jena.version>3.11.0</jena.version>
+		<jena.version>3.12.0</jena.version>
 		<!-- <jetty.version>9.4.8.v20171121</jetty.version> -->
 		<jetty.version>9.4.18.v20190429</jetty.version>
 
@@ -104,7 +110,7 @@
 
 		<spring.version>4.3.23.RELEASE</spring.version>
 		<spring.batch.version>4.0.0.RELEASE</spring.batch.version>
-		<aksw.commons.version>0.8.11</aksw.commons.version>
+		<aksw.commons.version>0.8.12</aksw.commons.version>
 
 		<!-- <atmosphere.version>2.0.0.RC3</atmosphere.version> -->
 		<!-- <atmosphere-spring.version>1.1.0.RC5</atmosphere-spring.version> -->
@@ -439,6 +445,11 @@
 				<version>${project.version}</version>
 			</dependency>
 
+			<dependency>
+				<groupId>org.aksw.jena-sparql-api</groupId>
+				<artifactId>jena-sparql-api-rx</artifactId>
+				<version>${project.version}</version>
+			</dependency>
 
 			<dependency>
 				<groupId>org.aksw.jena-sparql-api</groupId>
@@ -460,7 +471,25 @@
 
 			<dependency>
 				<groupId>org.aksw.jena-sparql-api</groupId>
+				<artifactId>jena-sparql-api-stmt</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.jena-sparql-api</groupId>
+				<artifactId>jena-sparql-api-udf</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.jena-sparql-api</groupId>
 				<artifactId>jena-sparql-api-mapper-annotations</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.aksw.jena-sparql-api</groupId>
+				<artifactId>jena-sparql-api-collections</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 
@@ -623,7 +652,7 @@
 			<dependency>
 				<groupId>net.postgis</groupId>
 				<artifactId>postgis-jdbc</artifactId>
-				<version>2.2.1</version>
+				<version>2.3.0</version>
 			</dependency>
 
 			<!-- <dependency> -->

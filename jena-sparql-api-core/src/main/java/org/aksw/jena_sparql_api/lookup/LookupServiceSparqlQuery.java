@@ -3,14 +3,14 @@ package org.aksw.jena_sparql_api.lookup;
 import java.util.Map.Entry;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
+import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.utils.ElementUtils;
 import org.aksw.jena_sparql_api.utils.ExprListUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdfconnection.RDFConnection;
+import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.algebra.Table;
 import org.apache.jena.sparql.algebra.table.TableN;
 import org.apache.jena.sparql.core.Var;
@@ -75,11 +75,11 @@ public class LookupServiceSparqlQuery
     }
     
     
-    protected QueryExecutionFactory sparqlService;
+    protected SparqlQueryConnection sparqlService;
     protected Query query;
     protected Var var;
 
-    public LookupServiceSparqlQuery(QueryExecutionFactory sparqlService, Query query, Var var) {
+    public LookupServiceSparqlQuery(SparqlQueryConnection sparqlService, Query query, Var var) {
         this.sparqlService = sparqlService;
         this.query = query;
         this.var = var;
@@ -107,7 +107,7 @@ public class LookupServiceSparqlQuery
             //System.out.println("Lookup query: " + q);
             logger.debug("Looking up: " + q);
 
-            result = ReactiveSparqlUtils.execSelect(() -> sparqlService.createQueryExecution(q))
+            result = SparqlRx.execSelectRaw(() -> sparqlService.query(q))
             	.groupBy(b -> b.get(var))
             	.flatMapSingle(groups -> groups
             			.collectInto((Table)new TableN(), (t, b) -> t.addBinding(b))

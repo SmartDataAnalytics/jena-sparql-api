@@ -4,7 +4,7 @@ import java.util.Iterator;
 import java.util.stream.Stream;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
+import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.util.collection.RangedSupplier;
 import org.aksw.jena_sparql_api.utils.IteratorResultSetBinding;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
@@ -37,7 +37,7 @@ public class RangedSupplierQuery
         Query clone = query.cloneQuery();
         QueryUtils.applyRange(clone, range);
 
-        Flowable<Binding> result = ReactiveSparqlUtils.execSelect(() -> qef.createQueryExecution(clone));
+        Flowable<Binding> result = SparqlRx.execSelectRaw(() -> qef.createQueryExecution(clone));
 //        QueryExecution qe = qef.createQueryExecution(clone);
 //        ResultSet rs = qe.execSelect();
 //

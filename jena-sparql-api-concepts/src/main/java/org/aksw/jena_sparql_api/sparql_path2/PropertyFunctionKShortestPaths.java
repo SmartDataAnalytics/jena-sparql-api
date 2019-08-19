@@ -9,6 +9,7 @@ import java.util.stream.StreamSupport;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.SparqlService;
+import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
 import org.aksw.jena_sparql_api.utils.ListUtils;
 import org.aksw.jena_sparql_api.utils.model.Directed;
 import org.aksw.jena_sparql_api.utils.model.TripletPath;
@@ -142,7 +143,7 @@ public class PropertyFunctionKShortestPaths
         SparqlKShortestPathFinder pathFinder = serviceToPathFinder.apply(ss);
         if(pathFinder == null) {
             logger.info("Falling back on default k shortest path finder service");
-            pathFinder = new SparqlKShortestPathFinderMem(ss.getQueryExecutionFactory());
+            pathFinder = new SparqlKShortestPathFinderMem(new SparqlQueryConnectionJsa(ss.getQueryExecutionFactory()));
         }
 
         Iterator<TripletPath<Node, Directed<Node>>> itPaths = pathFinder.findPaths(s, targetNode,path, k);

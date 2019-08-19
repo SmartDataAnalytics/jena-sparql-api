@@ -4,7 +4,7 @@ import java.util.Map.Entry;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
+import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.utils.QueryUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
@@ -105,7 +105,7 @@ public class MapPaginatorConcept
 
         //if(true) { return null; }
 
-        Single<Range<Long>> result = ReactiveSparqlUtils.execSelect(() -> qef.createQueryExecution(query))
+        Single<Range<Long>> result = SparqlRx.execSelectRaw(() -> qef.createQueryExecution(query))
         	.map(b -> b.get(c))
         	.map(countNode -> ((Number)countNode.getLiteralValue()).longValue())
         	.map(count -> {
@@ -129,7 +129,7 @@ public class MapPaginatorConcept
     	QueryUtils.applyRange(query, range);
 
     	//Query query = createQueryCount(concept, itemLimit, rowLimit, resultVar)
-    	return ReactiveSparqlUtils.execSelect(() -> qef.createQueryExecution(query))
+    	return SparqlRx.execSelectRaw(() -> qef.createQueryExecution(query))
     			.map(b -> b.get(b.vars().next()))
     			.map(node -> Maps.immutableEntry(node, node));
     	

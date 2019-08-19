@@ -3,13 +3,13 @@ package org.aksw.jena_sparql_api.shape.lookup;
 import java.util.Map.Entry;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
-import org.aksw.jena_sparql_api.core.utils.ReactiveSparqlUtils;
 import org.aksw.jena_sparql_api.lookup.MapPaginatorSparqlQueryBase;
 import org.aksw.jena_sparql_api.lookup.MapServiceUtils;
 import org.aksw.jena_sparql_api.mapper.MappedConcept;
+import org.aksw.jena_sparql_api.rx.SparqlRx;
 import org.aksw.jena_sparql_api.shape.ResourceShape;
 import org.apache.jena.graph.Node;
+import org.apache.jena.rdfconnection.SparqlQueryConnection;
 
 import com.google.common.collect.Range;
 
@@ -22,7 +22,7 @@ public class MapPaginatorMappedConcept<G>
     protected ResourceShape resourceShape;
     protected MappedConcept<G> mappedConcept;
 
-    public MapPaginatorMappedConcept(QueryExecutionFactory qef,
+    public MapPaginatorMappedConcept(SparqlQueryConnection qef,
             Concept filterConcept,
             boolean isLeftJoin,
             MappedConcept<G> mappedConcept) {
@@ -39,7 +39,7 @@ public class MapPaginatorMappedConcept<G>
 
     @Override
     public Single<Range<Long>> fetchCount(Long itemLimit, Long rowLimit) {
-    	Single<Range<Long>> result = ReactiveSparqlUtils.fetchCountConcept(qef, mappedConcept.getConcept(), itemLimit, rowLimit);
+    	Single<Range<Long>> result = SparqlRx.fetchCountConcept(qef, mappedConcept.getConcept(), itemLimit, rowLimit);
     	//Range<Long> result = ServiceUtils.fetchCountConcept(qef, mappedConcept.getConcept(), itemLimit, rowLimit);
         return result;
     }

@@ -6,12 +6,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.aksw.jena_sparql_api.concepts.Concept;
-import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactoryDatasetGraph;
+import org.aksw.jena_sparql_api.core.connection.SparqlQueryConnectionJsa;
 import org.aksw.jena_sparql_api.core.utils.ServiceUtils;
 import org.aksw.jena_sparql_api.lookup.LookupService;
-
 import org.apache.jena.graph.Node;
+import org.apache.jena.rdfconnection.SparqlQueryConnection;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.Quad;
 
@@ -39,7 +39,7 @@ public class ModifierDatasetGraphEnrich
 
     @Override
     public void apply(DatasetGraph input) {
-        QueryExecutionFactory qef = new QueryExecutionFactoryDatasetGraph(input, false);
+    	SparqlQueryConnection qef = new SparqlQueryConnectionJsa(new QueryExecutionFactoryDatasetGraph(input, false));
         List<Node> nodes = ServiceUtils.fetchList(qef, concept);
 
         Map<Node, DatasetGraph> extra = lookupService.fetchMap(nodes);
